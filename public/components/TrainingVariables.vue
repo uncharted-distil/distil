@@ -1,5 +1,5 @@
 <template>
-	<div class="training-variables">
+	<div class="training-variables" v-bind:class='{"included": includedActive, "excluded": !includedActive }'>
 		<p class="nav-link font-weight-bold">Features to Model
 			<i class="float-right fa fa-angle-right fa-lg"></i>
 		</p>
@@ -54,6 +54,9 @@ export default Vue.extend({
 		numRowsPerPage(): number {
 			return NUM_PER_PAGE;
 		},
+		includedActive(): boolean {
+			return routeGetters.getRouteInclude(this.$store);
+		},
 		highlight(): Highlight {
 			return routeGetters.getDecodedHighlight(this.$store);
 		},
@@ -76,7 +79,7 @@ export default Vue.extend({
 				remove.className += 'btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2';
 				remove.innerHTML = 'Remove';
 				remove.addEventListener('click', () => {
-					const training = routeGetters.getRouteTrainingVariables(this.$store).split(',');
+					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 					training.splice(training.indexOf(group.colName), 1);
 					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 						training: training.join(',')
@@ -93,13 +96,12 @@ export default Vue.extend({
 	methods: {
 		removeAll() {
 			const facets = this.$refs.facets as any;
-			const training = routeGetters.getRouteTrainingVariables(this.$store);
-			const trainingArray = training ? training.split(',') : [];
+			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 			facets.availableVariables().forEach(variable => {
-				trainingArray.splice(trainingArray.indexOf(variable), 1);
+				training.splice(training.indexOf(variable), 1);
 			});
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-				training: trainingArray.join(',')
+				training: training.join(',')
 			});
 			this.$router.push(entry);
 		}

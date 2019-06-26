@@ -59,7 +59,7 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterP
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchHistogram(filterParams, invert)
 			if err != nil {
 				return nil, err
@@ -70,7 +70,7 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterP
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams)
 			if err != nil {
 				return nil, err
@@ -93,7 +93,7 @@ func (f *TextField) getTimeMinMaxAggsQuery(timeVar *model.Variable) string {
 	minAggName := api.MinAggPrefix + timeVar.Name
 	maxAggName := api.MaxAggPrefix + timeVar.Name
 
-	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", timeVar.Name)
+	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER)", timeVar.Name)
 	if timeVar.Type == model.DateTimeType {
 		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", timeVar.Name)
 	}
@@ -180,7 +180,7 @@ func (f *TextField) getTimeseriesHistogramAggQuery(extrema *api.Extrema, interva
 
 	binning := extrema.GetTimeseriesBinningArgs(interval)
 
-	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", extrema.Key)
+	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER)", extrema.Key)
 	if extrema.Type == model.DateTimeType {
 		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", extrema.Key)
 	}
@@ -318,7 +318,7 @@ func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams, invert)
 			if err != nil {
 				return nil, err
@@ -329,7 +329,7 @@ func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams)
 			if err != nil {
 				return nil, err
@@ -581,7 +581,7 @@ func (f *TextField) FetchPredictedSummaryData(resultURI string, datasetResult st
 	if err != nil {
 		return nil, err
 	}
-	if filterParams.Filters != nil {
+	if !filterParams.Empty() {
 		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
 		if err != nil {
 			return nil, err

@@ -62,8 +62,7 @@ export default Vue.extend({
 				targetElem.addEventListener('click', () => {
 					const target = group.colName;
 					// remove from training
-					const trainingStr = routeGetters.getRouteTrainingVariables(this.$store);
-					const training = trainingStr ? trainingStr.split(',') : [];
+					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 					const index = training.indexOf(target);
 					if (index !== -1) {
 						training.splice(index, 1);

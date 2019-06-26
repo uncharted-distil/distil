@@ -57,3 +57,37 @@ type VariableSummary struct {
 	Baseline   *Histogram `json:"baseline"`
 	Filtered   *Histogram `json:"filtered"`
 }
+
+// EmptyFilteredHistogram fills the filtered portion of the summary with empty
+// bucket counts
+func (s *VariableSummary) EmptyFilteredHistogram() {
+
+	if s.Baseline.Buckets != nil {
+		s.Filtered = &Histogram{
+			Extrema: s.Baseline.Extrema,
+		}
+		for _, bucket := range s.Baseline.Buckets {
+			s.Filtered.Buckets = append(s.Filtered.Buckets, &Bucket{
+				Key:   bucket.Key,
+				Count: 0,
+			})
+		}
+	}
+
+	if s.Baseline.CategoryBuckets != nil {
+		s.Filtered = &Histogram{
+			Extrema: s.Baseline.Extrema,
+		}
+		for category, buckets := range s.Baseline.CategoryBuckets {
+			var filtered []*Bucket
+			for _, bucket := range buckets {
+				filtered = append(filtered, &Bucket{
+					Key:   bucket.Key,
+					Count: 0,
+				})
+			}
+			s.Filtered.CategoryBuckets[category] = filtered
+		}
+	}
+
+}

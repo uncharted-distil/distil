@@ -163,7 +163,6 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 	}
 
 	// get the histogram by using the variable type.
-
 	var field Field
 
 	if variable.Grouping != nil {
@@ -176,7 +175,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 	} else {
 
-		if model.IsNumerical(variable.Type) {
+		if model.IsNumerical(variable.Type) || model.IsTimestamp(variable.Type) {
 			field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else if model.IsCategorical(variable.Type) {
 			field = NewCategoricalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
@@ -201,6 +200,12 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 	// add dataset
 	summary.Dataset = dataset
+
+	// if there are no filters, and we are returning the exclude set, we expect
+	// no results in the filtered set
+	if invert && filterParams.Filters == nil {
+		summary.EmptyFilteredHistogram()
+	}
 
 	return summary, err
 }

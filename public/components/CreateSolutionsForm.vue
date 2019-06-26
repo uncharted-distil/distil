@@ -143,8 +143,8 @@ export default Vue.extend({
 		targetSelected(): boolean {
 			return !_.isEmpty(this.target);
 		},
-		training(): string {
-			return routeGetters.getRouteTrainingVariables(this.$store);
+		training(): string[] {
+			return routeGetters.getDecodedTrainingVariableNames(this.$store);
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
@@ -191,6 +191,7 @@ export default Vue.extend({
 				target: routeGetters.getRouteTargetVariable(this.$store),
 				task: this.taskType,
 				subTask: this.taskSubType,
+				timestampField: routeGetters.getRouteTimeseriesAnalysis(this.$store),
 				metrics: this.metrics,
 				maxSolutions: NUM_SOLUTIONS,
 				// intentionally nulled for now - should be made user settable in the future

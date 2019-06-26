@@ -4,12 +4,6 @@ import { Dictionary } from './dict';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { D3M_INDEX_FIELD } from '../store/dataset/index';
 
-const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-const URI_REGEX = /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i;
-const BOOL_REGEX = /^(0|1|true|false|t|f)$/i;
-const PHONE_REGEX = /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$/;
-const IMAGE_REGEX = /\.(gif|jpg|jpeg|png|tif|tiff|bmp)$/i;
-
 export const FEATURE_PREFIX = '_feature_';
 export const CLUSTER_PREFIX = '_cluster_';
 export const GEOCODED_LAT_PREFIX = '_lat_';
@@ -26,7 +20,7 @@ export const REAL_VECTOR_TYPE = 'realVector';
 export const BOOL_TYPE = 'boolean';
 export const DATE_TIME_TYPE = 'dateTime';
 export const DATE_TIME_LOWER_TYPE = 'datetime';
-export const TIMESTAMP_TYPE = 'timestmap';
+export const TIMESTAMP_TYPE = 'timestamp';
 export const ORDINAL_TYPE = 'ordinal';
 export const CATEGORICAL_TYPE = 'categorical';
 export const TEXT_TYPE = 'text';
@@ -62,6 +56,7 @@ const TYPES_TO_LABELS: Dictionary<string> = {
 	[POSTAL_CODE_TYPE]: 'Postal Code',
 	[COUNTRY_CODE_TYPE]: 'Country Code',
 	[URI_TYPE]: 'URI',
+	[TIMESTAMP_TYPE]: 'Timestamp',
 	[DATE_TIME_TYPE]: 'Date/Time',
 	[BOOL_TYPE]: 'Boolean',
 	[IMAGE_TYPE]: 'Image',
@@ -144,22 +139,19 @@ const TEXT_SIMPLE_TYPES = [
 	POSTAL_CODE_TYPE,
 	URI_TYPE,
 	DATE_TIME_TYPE,
-	BOOL_TYPE,
-	UNKNOWN_TYPE
+	BOOL_TYPE
 ];
 
 const BOOL_SUGGESTIONS = [
 	TEXT_TYPE,
 	CATEGORICAL_TYPE,
 	BOOL_TYPE,
-	INTEGER_TYPE,
-	UNKNOWN_TYPE
+	INTEGER_TYPE
 ];
 
 const EMAIL_SUGGESTIONS = [
 	TEXT_TYPE,
-	EMAIL_TYPE,
-	UNKNOWN_TYPE
+	EMAIL_TYPE
 ];
 
 const URI_SUGGESTIONS = [
@@ -171,15 +163,13 @@ const URI_SUGGESTIONS = [
 const TIME_SUGGESTIONS = [
 	DATE_TIME_TYPE,
 	TEXT_TYPE,
-	CATEGORICAL_TYPE,
-	UNKNOWN_TYPE
+	CATEGORICAL_TYPE
 ];
 
 const PHONE_SUGGESTIONS = [
 	TEXT_TYPE,
 	INTEGER_TYPE,
-	PHONE_TYPE,
-	UNKNOWN_TYPE
+	PHONE_TYPE
 ];
 
 const TEXT_SUGGESTIONS = [
@@ -192,8 +182,7 @@ const TEXT_SUGGESTIONS = [
 	COUNTRY_TYPE,
 	POSTAL_CODE_TYPE,
 	DATE_TIME_TYPE,
-	IMAGE_TYPE,
-	UNKNOWN_TYPE
+	IMAGE_TYPE
 ];
 
 const INTEGER_SUGGESTIONS = [
@@ -203,7 +192,7 @@ const INTEGER_SUGGESTIONS = [
 	LONGITUDE_TYPE,
 	CATEGORICAL_TYPE,
 	ORDINAL_TYPE,
-	UNKNOWN_TYPE
+	TIMESTAMP_TYPE
 ];
 
 const DECIMAL_SUGGESTIONS = [
@@ -211,14 +200,23 @@ const DECIMAL_SUGGESTIONS = [
 	REAL_TYPE,
 	REAL_VECTOR_TYPE,
 	LATITUDE_TYPE,
+	LONGITUDE_TYPE
+];
+
+const COORDINATE_SUGGESTIONS = [
+	INTEGER_TYPE,
+	REAL_TYPE,
+	REAL_VECTOR_TYPE,
+	LATITUDE_TYPE,
 	LONGITUDE_TYPE,
-	UNKNOWN_TYPE
+	CATEGORICAL_TYPE,
+	ORDINAL_TYPE,
 ];
 
 const IMAGE_SUGGESTIONS = [
 	IMAGE_TYPE,
 	TEXT_TYPE,
-	CATEGORICAL_TYPE
+	CATEGORICAL_TYPE,
 ];
 
 export const BASIC_SUGGESTIONS = [
@@ -229,6 +227,7 @@ export const BASIC_SUGGESTIONS = [
 	TEXT_TYPE,
 	IMAGE_TYPE,
 	DATE_TIME_TYPE,
+	TIMESTAMP_TYPE,
 	TIMESERIES_TYPE,
 	UNKNOWN_TYPE
 ];
@@ -250,12 +249,39 @@ const EQUIV_TYPES = {
 	[PHONE_TYPE]: [ PHONE_TYPE ],
 	[POSTAL_CODE_TYPE]: [ POSTAL_CODE_TYPE ],
 	[URI_TYPE]: [ URI_TYPE ],
-	[DATE_TIME_TYPE]: [ DATE_TIME_TYPE ],
-	[DATE_TIME_LOWER_TYPE]: [ DATE_TIME_TYPE ],
+	[DATE_TIME_TYPE]: [ DATE_TIME_TYPE, DATE_TIME_LOWER_TYPE ],
+	[DATE_TIME_LOWER_TYPE]: [ DATE_TIME_TYPE, DATE_TIME_LOWER_TYPE ],
 	[BOOL_TYPE]: [ BOOL_TYPE ],
 	[IMAGE_TYPE]: [ IMAGE_TYPE ],
 	[TIMESERIES_TYPE]: [ TIMESERIES_TYPE ],
 	[UNKNOWN_TYPE]: [ UNKNOWN_TYPE ]
+};
+
+const TYPE_TO_SUGGESTIONS = {
+	[ADDRESS_TYPE]: TEXT_SUGGESTIONS,
+	[INDEX_TYPE]: TEXT_SUGGESTIONS,
+	[INTEGER_TYPE]: INTEGER_SUGGESTIONS,
+	[REAL_TYPE]: DECIMAL_SUGGESTIONS,
+	[REAL_VECTOR_TYPE]: DECIMAL_SUGGESTIONS,
+	[BOOL_TYPE]: BOOL_SUGGESTIONS,
+	[DATE_TIME_TYPE]: TIME_SUGGESTIONS,
+	[TIMESTAMP_TYPE]: TIME_SUGGESTIONS,
+	[ORDINAL_TYPE]: TEXT_SUGGESTIONS,
+	[CATEGORICAL_TYPE]: TEXT_SUGGESTIONS,
+	[TEXT_TYPE]: TEXT_SUGGESTIONS,
+	[CITY_TYPE]: TEXT_SUGGESTIONS,
+	[STATE_TYPE]: TEXT_SUGGESTIONS,
+	[COUNTRY_TYPE]: TEXT_SUGGESTIONS,
+	[COUNTRY_CODE_TYPE]: TEXT_SUGGESTIONS,
+	[EMAIL_TYPE]: EMAIL_SUGGESTIONS,
+	[LATITUDE_TYPE]: COORDINATE_SUGGESTIONS,
+	[LONGITUDE_TYPE]: COORDINATE_SUGGESTIONS,
+	[PHONE_TYPE]: PHONE_SUGGESTIONS,
+	[POSTAL_CODE_TYPE]: TEXT_SUGGESTIONS,
+	[URI_TYPE]: URI_SUGGESTIONS,
+	[IMAGE_TYPE]: IMAGE_SUGGESTIONS,
+	[TIMESERIES_TYPE]: TIME_SUGGESTIONS,
+	[UNKNOWN_TYPE]: TEXT_SUGGESTIONS,
 };
 
 export function isEquivalentType(a: string, b: string): boolean {
@@ -386,92 +412,23 @@ export function isJoinable(type: string, otherType: string): boolean {
 	return isSameType || isBothNumericType;
 }
 
-export function addTypeSuggestions(type: string, values: any[]): string[] {
-	let suggestions = guessTypeByValue(values);
-	if (!suggestions || suggestions.length === 0) {
-		suggestions = BASIC_SUGGESTIONS;
-	}
-	return suggestions;
+export function addTypeSuggestions(types: any[]): string[] {
+	const suggestions = types.reduce((allSuggestions, type) => {
+		allSuggestions = allSuggestions.concat(getSuggestionsByType(normalizedEquivalentType(type)));
+		return allSuggestions;
+	}, []);
+	suggestions.push(UNKNOWN_TYPE);
+	return _.uniq(suggestions);
 }
 
-export function guessTypeByType(type: string): string[] {
-	if (isNumericType(type)) {
-		return isFloatingPointType(type) ? DECIMAL_SUGGESTIONS : INTEGER_SUGGESTIONS;
-	}
-	return TEXT_SUGGESTIONS;
-}
 
-function combineTypeWithUnion(types: string[][]): string[] {
-	let res = [];
-	types.forEach(ts => {
-		res = res.concat(ts);
-	});
-	return _.uniq(res);
+export function getSuggestionsByType (type: string): string[] {
+	const types = TYPE_TO_SUGGESTIONS[type];
+	if (types.length === 0) {
+		return BASIC_SUGGESTIONS;
+	}
+	return types;
 }
-
-function combineTypeWithIntersection(types: string[][]): string[] {
-	const counts = {};
-	types.forEach(ts => {
-		ts.forEach(type => {
-			if (counts[type] === undefined) {
-				counts[type] = 0;
-			}
-			counts[type]++;
-		});
-	});
-	const res = [];
-	_.forIn(counts, (val, key) => {
-		if (val === types.length) {
-			res.push(key);
-		}
-	});
-	return res;
-}
-
-function combineSampledTypes(types: string[][]): string[] {
-	const USE_INTERSECTION = true;
-	if (USE_INTERSECTION) {
-		return combineTypeWithIntersection(types);
-	}
-	return combineTypeWithUnion(types);
-}
-
-export function guessTypeByValue(value: any): string[] {
-	if (value === undefined) {
-		return TEXT_SUGGESTIONS;
-	}
-	if (_.isArray(value)) {
-		const types = [];
-		value.forEach(val => {
-			types.push(guessTypeByValue(val));
-		});
-		return combineSampledTypes(types);
-	}
-	if (BOOL_REGEX.test(value)) {
-		return BOOL_SUGGESTIONS;
-	}
-	if (_.isNumber(value) || !_.isNaN(_.toNumber(value))) {
-		const num = _.toNumber(value);
-		return _.isInteger(num) ? INTEGER_SUGGESTIONS : DECIMAL_SUGGESTIONS;
-	}
-	if (EMAIL_REGEX.test(value)) {
-		return EMAIL_SUGGESTIONS;
-	}
-	if (URI_REGEX.test(value)) {
-		return URI_SUGGESTIONS;
-	}
-	if (PHONE_REGEX.test(value)) {
-		return PHONE_SUGGESTIONS;
-	}
-	if (IMAGE_REGEX.test(value)) {
-		return IMAGE_SUGGESTIONS;
-	}
-	if (Date.parse(value)) {
-		return TIME_SUGGESTIONS;
-	}
-	return TEXT_SUGGESTIONS;
-}
-
 
 /**
  * Returns a UI-ready label for a given schema type.

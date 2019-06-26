@@ -46,7 +46,7 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, re
 	if err != nil {
 		return nil, err
 	}
-	if filterParams.Filters != nil {
+	if !filterParams.Empty() {
 		filtered, err = s.fetchHistogram(dataset, storageName, variable, targetName, resultURI, filterParams)
 		if err != nil {
 			return nil, err

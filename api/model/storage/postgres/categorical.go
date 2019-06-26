@@ -76,7 +76,7 @@ func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchHistogram(filterParams, invert)
 			if err != nil {
 				return nil, err
@@ -87,7 +87,7 @@ func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams)
 			if err != nil {
 				return nil, err
@@ -110,7 +110,7 @@ func (f *CategoricalField) getTimeMinMaxAggsQuery(timeVar *model.Variable) strin
 	minAggName := api.MinAggPrefix + timeVar.Name
 	maxAggName := api.MaxAggPrefix + timeVar.Name
 
-	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", timeVar.Name)
+	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER)", timeVar.Name)
 	if timeVar.Type == model.DateTimeType {
 		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", timeVar.Name)
 	}
@@ -198,7 +198,7 @@ func (f *CategoricalField) getTimeseriesHistogramAggQuery(extrema *api.Extrema, 
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
 
 	binning := extrema.GetTimeseriesBinningArgs(interval)
-	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER", extrema.Key)
+	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER)", extrema.Key)
 	if extrema.Type == model.DateTimeType {
 		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", extrema.Key)
 	}
@@ -333,7 +333,7 @@ func (f *CategoricalField) FetchTimeseriesSummaryData(timeVar *model.Variable, i
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchTimeseriesHistogram(timeVar, interval, filterParams, invert)
 			if err != nil {
 				return nil, err
@@ -344,7 +344,7 @@ func (f *CategoricalField) FetchTimeseriesSummaryData(timeVar *model.Variable, i
 		if err != nil {
 			return nil, err
 		}
-		if filterParams.Filters != nil {
+		if !filterParams.Empty() {
 			filtered, err = f.fetchTimeseriesHistogramByResultURI(timeVar, interval, resultURI, filterParams)
 			if err != nil {
 				return nil, err
@@ -589,7 +589,7 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, datasetRe
 	if err != nil {
 		return nil, err
 	}
-	if filterParams.Filters != nil {
+	if !filterParams.Empty() {
 		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
 		if err != nil {
 			return nil, err
@@ -659,7 +659,7 @@ func (f *CategoricalField) FetchForecastingSummaryData(timeVar *model.Variable, 
 	if err != nil {
 		return nil, err
 	}
-	if filterParams.Filters != nil {
+	if !filterParams.Empty() {
 		filtered, err = f.fetchForecastingSummaryData(timeVar, interval, resultURI, filterParams)
 		if err != nil {
 			return nil, err

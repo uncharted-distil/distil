@@ -16,7 +16,7 @@
 package routes
 
 import (
-	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -25,6 +25,7 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/util/json"
 )
 
 // VariableTypeHandler generates a route handler that facilitates the update
@@ -36,8 +37,16 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
 			return
 		}
-		field := params["field"].(string)
-		typ := params["type"].(string)
+		field, ok := json.String(params, "field")
+		if !ok {
+			handleError(w, errors.Wrap(err, "Unable to parse `field` parameter"))
+			return
+		}
+		typ, ok := json.String(params, "type")
+		if !ok {
+			handleError(w, errors.Wrap(err, "Unable to parse `type` parameter"))
+			return
+		}
 		dataset := pat.Param(r, "dataset")
 		storageName := model.NormalizeDatasetID(dataset)
 
@@ -62,7 +71,7 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 		if !isValid {
 			handleErrorType(
 				w,
-				errors.Wrap(err, "unable to verify the data type in storage"),
+				fmt.Errorf("unable to verify the data type in storage"),
 				http.StatusBadRequest)
 			return
 		}
@@ -106,8 +115,5 @@ func getPostParameters(r *http.Request) (map[string]interface{}, error) {
 		return nil, errors.Wrap(err, "unable to parse POST request")
 	}
 
-	params := make(map[string]interface{})
-	err = json.Unmarshal(body, &params)
-
-	return params, err
+	return json.Unmarshal(body)
 }

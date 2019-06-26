@@ -1,5 +1,5 @@
 <template>
-	<div class="available-training-variables">
+	<div class="available-training-variables" v-bind:class='{"included": includedActive, "excluded": !includedActive }'>
 		<p class="nav-link font-weight-bold">Available Features
 			<i class="float-right fa fa-angle-right fa-lg"></i>
 		</p>
@@ -47,6 +47,9 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
+		includedActive(): boolean {
+			return routeGetters.getRouteInclude(this.$store);
+		},
 		availableVariableSummaries(): VariableSummary[] {
 			const summaries = routeGetters.getAvailableVariableSummaries(this.$store);
 			return filterSummariesByDataset(summaries, this.dataset);
@@ -70,10 +73,9 @@ export default Vue.extend({
 				trainingElem.className += 'btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2';
 				trainingElem.innerHTML = 'Add';
 				trainingElem.addEventListener('click', () => {
-					const training = routeGetters.getRouteTrainingVariables(this.$store);
-					const trainingArray = training ? training.split(',') : [];
+					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-						training: trainingArray.concat([ group.colName ]).join(',')
+						training: training.concat([ group.colName ]).join(',')
 					});
 					this.$router.push(entry);
 				});
@@ -86,13 +88,12 @@ export default Vue.extend({
 	methods: {
 		addAll() {
 			const facets = this.$refs.facets as any;
-			const training = routeGetters.getRouteTrainingVariables(this.$store);
-			const trainingArray = training ? training.split(',') : [];
+			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 			facets.availableVariables().forEach(variable => {
-				trainingArray.push(variable);
+				training.push(variable);
 			});
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-				training: trainingArray.join(',')
+				training: training.join(',')
 			});
 			this.$router.push(entry);
 		}

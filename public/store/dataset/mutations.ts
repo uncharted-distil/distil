@@ -111,14 +111,14 @@ export const mutations = {
 		}
 
 		// update table data
-		if (state.includedTableData) {
-			const col = state.includedTableData.columns.find(c => c.key === args.field);
+		if (state.includedSet.tableData) {
+			const col = state.includedSet.tableData.columns.find(c => c.key === args.field);
 			if (col) {
 				col.type = args.type;
 			}
 		}
-		if (state.includedTableData) {
-			const col = state.excludedTableData.columns.find(c => c.key === args.field);
+		if (state.excludedSet.tableData) {
+			const col = state.excludedSet.tableData.columns.find(c => c.key === args.field);
 			if (col) {
 				col.type = args.type;
 			}
@@ -140,12 +140,17 @@ export const mutations = {
 		state.variables[index].isColTypeReviewed = update.isColTypeReviewed;
 	},
 
-	updateVariableSummaries(state: DatasetState, summary: VariableSummary) {
-		updateSummaries(summary, state.variableSummaries);
+	updateIncludedVariableSummaries(state: DatasetState, summary: VariableSummary) {
+		updateSummaries(summary, state.includedSet.variableSummaries);
+	},
+
+	updateExcludedVariableSummaries(state: DatasetState, summary: VariableSummary) {
+		updateSummaries(summary, state.excludedSet.variableSummaries);
 	},
 
 	clearVariableSummaries(state: DatasetState) {
-		state.variableSummaries = [];
+		state.includedSet.variableSummaries = [];
+		state.excludedSet.variableSummaries = [];
 	},
 
 	setVariableRankings(state: DatasetState, args: { dataset: string, rankings: Dictionary<number>  }) {
@@ -230,13 +235,13 @@ export const mutations = {
 	},
 
 	// sets the current selected data into the store
-	setIncludedTableData(state: DatasetState, includedTableData: TableData) {
-		state.includedTableData = includedTableData;
+	setIncludedTableData(state: DatasetState, tableData: TableData) {
+		state.includedSet.tableData = tableData;
 	},
 
 	// sets the current excluded data into the store
-	setExcludedTableData(state: DatasetState, excludedTableData: TableData) {
-		state.excludedTableData = excludedTableData;
+	setExcludedTableData(state: DatasetState, tableData: TableData) {
+		state.excludedSet.tableData = tableData;
 	}
 
 };

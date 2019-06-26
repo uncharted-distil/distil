@@ -36,7 +36,7 @@ func handleError(w http.ResponseWriter, err error) {
 }
 
 func handleErrorType(w http.ResponseWriter, err error, code int) {
-	log.Errorf("code %d:%+v", code, err)
+	log.Errorf("%+v", err)
 	errMessage := "An error occured on the server while processing the request"
 	if verboseError {
 		errMessage = err.Error()
