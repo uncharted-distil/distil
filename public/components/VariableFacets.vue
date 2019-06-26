@@ -18,45 +18,20 @@
 			</div>
 			<div class="row flex-1">
 				<div class="col-12 flex-column variable-facets-container h-100">
-					<div class="variable-facets-item" v-for="summary in paginatedSummaries" :key="summary.key">
-						<template v-if="summary.type === 'timeseries'">
-							<facet-timeseries
-								:summary="summary"
-								:summaryHistogram="timeseriesAnalysisVariableSummary"
-								:highlight="highlight"
-								:row-selection="rowSelection"
-								:html="html"
-								:enable-type-change="enableTypeChange"
-								:enable-highlighting="[enableHighlighting, enableHighlighting]"
-								:ignore-highlights="[ignoreHighlights, ignoreHighlights]"
-								:instanceName="instanceName"
-								:expanded="timeseriesExpandedFacets === summary.key.toLowerCase()"
-								@numerical-click="onNumericalClick"
-								@categorical-click="onCategoricalClick"
-								@range-change="onRangeChange"
-								@histogram-numerical-click="onNumericalClick"
-								@histogram-categorical-click="onCategoricalClick"
-								@histogram-range-change="onRangeChange"
-							>
-							</facet-timeseries>
-						</template>
-						<template v-else>
-							<facet-entry
-								:summary="summary"
-								:highlight="highlight"
-								:row-selection="rowSelection"
-								:html="html"
-								:enable-type-change="enableTypeChange"
-								:enable-highlighting="enableHighlighting"
-								:ignore-highlights="ignoreHighlights"
-								:instanceName="instanceName"
-								@numerical-click="onNumericalClick"
-								@categorical-click="onCategoricalClick"
-								@range-change="onRangeChange"
-								@facet-click="onFacetClick">
-							</facet-entry>
-						</template>
-					</div>
+					<facet-entry v-for="summary in paginatedSummaries" :key="summary.key"
+						:summary="summary"
+						:highlight="highlight"
+						:row-selection="rowSelection"
+						:html="html"
+						:enable-type-change="enableTypeChange"
+						:enable-highlighting="enableHighlighting"
+						:ignore-highlights="ignoreHighlights"
+						:instanceName="instanceName"
+						@numerical-click="onNumericalClick"
+						@categorical-click="onCategoricalClick"
+						@range-change="onRangeChange"
+						@facet-click="onFacetClick">
+					</facet-entry>
 				</div>
 			</div>
 			<div v-if="numSummaries > rowsPerPage" class="row align-items-center variable-page-nav">
@@ -72,12 +47,11 @@
 
 import _ from 'lodash';
 import FacetEntry from '../components/FacetEntry';
-import FacetTimeseries from '../components/FacetTimeseries';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { sortSummariesByImportance, filterVariablesByPage, getVariableImportance } from '../util/data';
 import { Highlight, RowSelection, Variable, VariableSummary } from '../store/dataset/index';
-import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { ROUTE_PAGE_SUFFIX } from '../store/route/index';
 import { Group } from '../util/facets';
@@ -88,8 +62,7 @@ export default Vue.extend({
 	name: 'variable-facets',
 
 	components: {
-		FacetEntry,
-		FacetTimeseries,
+		FacetEntry
 	},
 
 	props: {
@@ -102,7 +75,7 @@ export default Vue.extend({
 		subtitle: String as () => string,
 		html: [ String as () => string, Object as () => any, Function as () => Function ],
 		instanceName: { type: String as () => string, default: 'variableFacets' },
-		rowsPerPage: { type: Number as () => number, default: 10 },
+		rowsPerPage: { type: Number as () => number, default: 10 }
 	},
 
 	data() {
@@ -129,10 +102,6 @@ export default Vue.extend({
 			return datasetGetters.getVariables(this.$store);
 		},
 
-		timeseriesAnalysisVariableSummary(): VariableSummary {
-			return datasetGetters.getTimeseriesAnalysisVariableSummary(this.$store);
-		},
-
 		filteredSummaries(): VariableSummary[] {
 			return this.summaries.filter(summary => {
 				return this.filter === '' || summary.key.toLowerCase().includes(this.filter.toLowerCase());
@@ -157,10 +126,6 @@ export default Vue.extend({
 
 		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
-		},
-
-		timeseriesExpandedFacets(): string {
-			return (routeGetters.getTimeseriesExpandedFacet(this.$store) || '').toLowerCase();
 		},
 
 		importance(): Dictionary<number> {
@@ -255,14 +220,15 @@ button {
 	overflow-x: hidden;
 	overflow-y: auto;
 }
-.variable-facets-container .variable-facets-item {
-	margin: 2px 2px 4px 2px;
+.variable-facets-container .facets-root-container{
+	margin: 2px;
 }
 .variable-facets-container .facets-root-container .facets-group-container{
 	background-color: inherit;
 }
 .variable-facets-container .facets-root-container .facets-group-container .facets-group {
 	background: white;
+	margin: 2px 2px 4px 2px;
 	font-size: 0.867rem;
 	color: rgba(0,0,0,0.87);
 	box-shadow: 0 1px 2px 0 rgba(0,0,0,0.10);

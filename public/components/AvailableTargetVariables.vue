@@ -118,11 +118,14 @@ export default Vue.extend({
 	cursor: pointer !important;
 }
 
+.available-target-variables .facets-group {
+	margin: 5px;
+}
 .available-target-variables .facet-filters {
 	padding: 2rem;
 }
 
-.available-target-variables .variable-facets-item {
+.available-target-variables .facets-root {
 	flex-grow: 1;
 	display: inline-block;
 	width: 30%;

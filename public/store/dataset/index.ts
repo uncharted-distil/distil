@@ -227,7 +227,6 @@ export interface DatasetState {
 	files: Dictionary<any>;
 	timeseries: Dictionary<Dictionary<number[][]>>;
 	timeseriesExtrema: Dictionary<TimeseriesExtrema>;
-	timeseriesAnalysisVariableSummaries: VariableSummary[];
 	joinTableData: Dictionary<TableData>;
 	includedSet: WorkingSet;
 	excludedSet: WorkingSet;
@@ -257,10 +256,6 @@ export const state: DatasetState = {
 		variableSummaries: [],
 		tableData: null
 	},
-
-	// variable summary data for the variable used for time series analysis
-	// TODO: split this into included and excluded summaries
-	timeseriesAnalysisVariableSummaries: [],
 
 	// linked files / representation data
 	files: {},
