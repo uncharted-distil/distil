@@ -15,11 +15,11 @@
 					</div>
 
 					<div class="col-5">
-						<b-form-select v-model="idCol.value" :options="idOptions(idCol.value)" @change="onIdChange"/>
+						<b-form-select v-model="idCol.value" :options="idOptions(idCol.value)" @input="onIdChange"/>
 					</div>
 
 					<div class="col-4">
-						<b-form-checkbox button v-model="hideIdCol">
+						<b-form-checkbox button v-model="hideIdCol[index]">
 							Hide Column
 						</b-form-checkbox>
 					</div>
@@ -118,7 +118,8 @@ import Vue from 'vue';
 import { Variable } from '../store/dataset/index';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { INTEGER_TYPE, TEXT_TYPE, ORDINAL_TYPE, CATEGORICAL_TYPE,
+import { actions as viewActions } from '../store/view/module';
+import { INTEGER_TYPE, TEXT_TYPE, ORDINAL_TYPE, TIMESTAMP_TYPE, CATEGORICAL_TYPE,
 	DATE_TIME_TYPE, REAL_TYPE } from '../util/types';
 
 export default Vue.extend({
@@ -131,10 +132,11 @@ export default Vue.extend({
 		return {
 			groupingType: null,
 			idCols: [ { value: null } ],
+			prevIdCols: 0,
 			xCol: null,
 			yCol: null,
 			clusterCol: null,
-			hideIdCol: true,
+			hideIdCol: [ true ],
 			hideXCol: true,
 			hideYCol: true,
 			hideClusterCol: true,
@@ -158,7 +160,7 @@ export default Vue.extend({
 			const X_COL_TYPES = {
 				[INTEGER_TYPE]: true,
 				[DATE_TIME_TYPE]: true,
-				// [TIMESTAMP_TYPE]: true
+				[TIMESTAMP_TYPE]: true
 			};
 			const def = [
 				{ value: null, text: 'Choose column', disabled: true }
@@ -221,11 +223,15 @@ export default Vue.extend({
 			// }
 
 			return [].concat(def, suggestions);
-		},,
+		},
 
 		isReady(): boolean {
 			return this.idCols.length > 1 && this.xCol && this.yCol && this.groupingType;
 		}
+	},
+
+	beforeMount() {
+		viewActions.fetchSelectTargetData(this.$store, false);
 	},
 
 	methods: {
@@ -250,8 +256,13 @@ export default Vue.extend({
 
 			return [].concat(def, suggestions);
 		},
-		onIdChange(arg, other) {
+		onIdChange(arg) {
+			const values = this.idCols.map(c => c.value).filter(v => v);
+			if (values.length === this.prevIdCols) {
+				return;
+			}
 			this.idCols.push({ value: null });
+			this.prevIdCols++;
 		},
 		isIDCol(arg): boolean {
 			return !!this.idCols.find(id => id.value === arg);
@@ -272,28 +283,48 @@ export default Vue.extend({
 				[this.yCol]: this.hideYCol,
 				[this.clusterCol]: this.hideClusterCol
 			};
-			this.idCols.forEach(id => {
+			this.idCols.forEach((id, index) => {
 				if (id) {
-					hidden[id.value] = this.hideIdCol;
+					hidden[id.value] = this.hideIdCol[index];
 				}
+			});
 
+			let idKey = '';
+			let p = null;
+			const ids = this.idCols.map(c => c.value).filter(v => v);
+			if (ids.length > 1) {
+				idKey = ids.join('-');
+				hidden[idKey] = true;
+				p = datasetActions.composeVariables(this.$store, {
+					dataset: this.dataset,
+					key: idKey,
+					vars: ids
+				});
+			} else {
+				idKey = ids[0];
+				p = new Promise(resolve => {
+					resolve();
+				});
+			}
+
+			return p.then(() => {
+				const grouping =  {
+					type: this.groupingType,
+					dataset: this.dataset,
+					idCol: idKey,
+					hidden: Object.keys(hidden).filter(v => hidden[v]),
+					properties: {
+						xCol: this.xCol,
+						yCol: this.yCol,
+						clusterCol: this.clusterCol
+					}
+				};
+				datasetActions.setGrouping(this.$store, {
+					dataset: this.dataset,
+					grouping: grouping
+				});
+				this.$emit('close');
 			});
-			const grouping =  {
-				type: this.groupingType,
-				dataset: this.dataset,
-				idCols: this.idCols.map(id => id.value).filter(id => id),
-				hidden: Object.keys(hidden).filter(v => hidden[v]),
-				properties: {
-					xCol: this.xCol,
-					yCol: this.yCol,
-					clusterCol: this.clusterCol
-				}
-			};
-			datasetActions.setGrouping(this.$store, {
-				dataset: this.dataset,
-				grouping: grouping
-			});
-			this.$emit('close');
 		},
 		onClose() {
 			this.$emit('close');

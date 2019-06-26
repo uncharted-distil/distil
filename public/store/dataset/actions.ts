@@ -266,6 +266,26 @@ export const actions = {
 			});
 	},
 
+	composeVariables(context: DatasetContext, args: { dataset: string, key: string, vars: string[] }): Promise<void>  {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.key) {
+			console.warn('`key` argument is missing');
+			return null;
+		}
+		if (!args.vars) {
+			console.warn('`vars` argument is missing');
+			return null;
+
+		}
+		return axios.post(`/distil/compose/${args.dataset}`, {
+				varName: args.key,
+				variables: args.vars
+			});
+	},
+
 	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, datasetAColumn: string, datasetBColumn: string, joinAccuracy: number }): Promise<void>  {
 		if (!args.datasetA) {
 			console.warn('`datasetA` argument is missing');

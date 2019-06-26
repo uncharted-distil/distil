@@ -25,9 +25,9 @@ export function gotoJoinDatasets(router: VueRouter) {
 	gotoView(router, JOIN_DATASETS_ROUTE);
 }
 
-export function gotoVariableGrouping(router: VueRouter) {
-	gotoView(router, GROUPING_ROUTE);
-}
+// export function gotoVariableGrouping(router: VueRouter) {
+// 	gotoView(router, GROUPING_ROUTE);
+// }
 
 export function gotoSelectTarget(router: VueRouter) {
 	gotoView(router, SELECT_TARGET_ROUTE);

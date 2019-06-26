@@ -69,33 +69,32 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 
 			storageName := model.NormalizeDatasetID(dataset)
 
-			// ensure id is int
-			err = meta.SetDataType(dataset, grouping.IDCol, model.IntegerType)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-				return
+			// // ensure id is int
+			// err = meta.SetDataType(dataset, grouping.IDCol, model.IntegerType)
+			// if err != nil {
+			// 	handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
+			// 	return
+			// }
+			// err = data.SetDataType(dataset, storageName, grouping.IDCol, model.IntegerType)
+			// if err != nil {
+			// 	handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
+			// 	return
+			// }
+
+			if grouping.Properties.ClusterCol != "" {
+				// ensure cluster is categorical
+				err = meta.SetDataType(dataset, grouping.Properties.ClusterCol, model.CategoricalType)
+				if err != nil {
+					handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
+					return
+				}
+				err = data.SetDataType(dataset, storageName, grouping.Properties.ClusterCol, model.CategoricalType)
+				if err != nil {
+					handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
+					return
+				}
 			}
 
-			// ensure cluster is categorical
-			err = meta.SetDataType(dataset, grouping.Properties.ClusterCol, model.CategoricalType)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-				return
-			}
-
-			// ensure id is int
-			err = data.SetDataType(dataset, storageName, grouping.IDCol, model.IntegerType)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-				return
-			}
-
-			// ensure cluster is categorical
-			err = data.SetDataType(dataset, storageName, grouping.Properties.ClusterCol, model.CategoricalType)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-				return
-			}
 		}
 
 		err = meta.AddGrouping(dataset, grouping)

@@ -2,7 +2,7 @@
 
 	<div class="container-fluid d-flex flex-column h-100 select-view">
 		<div class="row flex-0-nav"></div>
-		
+
 		<div class="row flex-shrink-0 align-items-center bg-white">
 			<div class="col-4 offset-md-1">
 				<h5 class="header-label">Select Feature to Predict</h5>
@@ -36,9 +36,9 @@ import AvailableTargetVariables from '../components/AvailableTargetVariables';
 import { actions as viewActions } from '../store/view/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { gotoVariableGrouping } from '../util/nav';
 import { isTimeType } from '../util/types';
-import { overlayRouteEntry } from '../util/routes';
+import { createRouteEntry, overlayRouteEntry } from '../util/routes';
+import { GROUPING_ROUTE } from '../store/route';
 
 export default Vue.extend({
 	name: 'select-target-view',
@@ -103,7 +103,10 @@ export default Vue.extend({
 			this.showTimeseriesChoice = false;
 		},
 		onGroupingClick() {
-			gotoVariableGrouping(this.$router);
+			const entry = createRouteEntry(GROUPING_ROUTE, {
+				dataset: routeGetters.getRouteDataset(this.$store)
+			});
+			this.$router.push(entry);
 		}
 	}
 });

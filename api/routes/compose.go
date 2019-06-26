@@ -40,8 +40,16 @@ func ComposeHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorage
 			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
 			return
 		}
-		varName, _ := params["varName"].(string)
-		variables, _ := json.StringArray(params, "variables")
+		varName, ok := json.String(params, "varName")
+		if !ok {
+			handleError(w, errors.Wrap(err, "Unable to parse `varName` parameter"))
+			return
+		}
+		variables, ok := json.StringArray(params, "variables")
+		if !ok {
+			handleError(w, errors.Wrap(err, "Unable to parse `variables` parameter"))
+			return
+		}
 
 		// initialize the storage
 		metaStorage, err := esMetaCtor()
