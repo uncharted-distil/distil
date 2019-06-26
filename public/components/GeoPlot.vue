@@ -30,6 +30,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import leaflet from 'leaflet';
 import Vue from 'vue';
+import * as turf from '@turf/turf';
 import IconBase from './icons/IconBase';
 import IconCropFree from './icons/IconCropFree';
 import { getters as datasetGetters } from '../store/dataset/module';
@@ -160,7 +161,8 @@ export default Vue.extend({
 					lat = null;
 				}
 			});
-
+			console.log('fields', fields);
+			
 			return fields;
 		},
 
@@ -190,7 +192,8 @@ export default Vue.extend({
 				}).filter(p => !!p);
 				groups.push(group);
 			});
-
+			console.log('groups', groups);
+			
 			return groups;
 		},
 
@@ -460,6 +463,8 @@ export default Vue.extend({
 						lng: this.mapCenter[0]
 					}, { animate: true });
 				}
+				
+				
 				this.baseLayer = leaflet.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png');
 				this.baseLayer.addTo(this.map);
 				// this.map.on('click', this.clearSelection);
@@ -468,10 +473,17 @@ export default Vue.extend({
 			this.clear();
 
 			const bounds = leaflet.latLngBounds();
+
+			const pointLength = this.pointGroups.length;
+			
 			this.pointGroups.forEach(group => {
 				const hash = this.fieldHash(group.field);
+				console.log('hash',  hash);
+				
 				const layer = leaflet.layerGroup([]);
 				group.points.forEach(p => {
+					// console.log('p', p);
+					
 					const marker =  leaflet.marker(p, { row: p.row });
 					bounds.extend([p.lat, p.lng]);
 					marker.bindTooltip(() => {
@@ -494,10 +506,39 @@ export default Vue.extend({
 				layer.on('add', () => this.updateMarkerSelection(layer.getLayers()));
 				layer.addTo(this.map);
 
-			});
+				console.log('mapCenter', this.mapCenter);
 
+			});
+			//console.log('bounds', bounds.getSize());
+			// let bbox = turf.bbox(bounds);
+			// console.log('bbox', bbox);
+			
 			if (bounds.isValid()) {
+
+
 				this.map.fitBounds(bounds);
+				
+				// create a turf BBox
+				let bbox = bounds.toBBoxString().split(',').map(Number);
+
+				// get distance of one side of bbox 
+				// const bboxVertexCoordA = turf.point([bbox[0], bbox[1]]);
+				// const bboxVertexCoordB = turf.point([bbox[0], bbox[3]])
+				
+
+				// const sideDistance = turf.distance(bboxVertexCoordA, bboxVertexCoordB, {units: 'kilometers'});
+                // console.log('sideDistance', sideDistance);
+				
+				let squareGrid = turf.squareGrid(bbox, 15, {units: 'kilometers'});
+				let gridLayer = leaflet.geoJSON(squareGrid, {
+					    style: function (feature) {
+        					return {color: "#008800", weight: 1, fill: 0};
+						},
+						onEachFeature: function (feature, layer) {
+							// console.log('feature', feature)
+						}
+				}).addTo(this.map);
+
 			}
 
 			this.drawHighlight();
@@ -520,6 +561,7 @@ export default Vue.extend({
 
 	mounted() {
 		this.paint();
+		// console.log('mapCenter', this.mapCenter);
 	}
 });
 
