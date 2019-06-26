@@ -505,6 +505,40 @@ export const actions = {
 			});
 	},
 
+	fetchTimeseriesAnalysisVariableSummaries(context: DatasetContext, args: { dataset: string, highlight: Highlight, filterParams: FilterParams }): Promise<any[]>  {
+		// update variable summary
+		const timeVariables = [context.getters.getTimeseriesAnalysisVariable];
+		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlight, INCLUDE_FILTER);
+
+		const promises = timeVariables.map(timeVar => {
+			const key = timeVar.colName;
+			const label = timeVar.colDisplayName;
+			const dataset = args.dataset;
+
+			const exists = _.find(context.getters.getTimeseriesAnalysisVariableSummary , summary => {
+				return summary.dataset === dataset && summary.key === key;
+			});
+			if (!exists) {
+				mutations.updateTimeseriesAnalysisVariableSummaries(context, createPendingSummary(key, label, dataset));
+			}
+			return axios.post(`/distil/variable-summary/${args.dataset}/${timeVar.colName}/false`, filterParams)
+			.then(response => {
+
+				const summary = response.data.summary;
+				return fetchSummaryExemplars(args.dataset, timeVar.colName, summary, true)
+					.then(() => {
+						mutations.updateTimeseriesAnalysisVariableSummaries(context, summary);
+					});
+
+			})
+			.catch(error => {
+				console.error(error);
+				mutations.updateTimeseriesAnalysisVariableSummaries(context,  createErrorSummary(key, label, dataset, error));
+			});
+		});
+		return Promise.all(promises);
+	},
+
 	reviewVariableType(context: DatasetContext, args: { dataset: string, field: string, isColTypeReviewed: boolean }) {
 		mutations.reviewVariableType(context, args);
 	},

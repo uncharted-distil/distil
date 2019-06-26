@@ -122,10 +122,10 @@ export function getTimeseriesAnalysisIntervals(timeVar: Variable, range: number)
 	];
 }
 
-export function fetchSummaryExemplars(datasetName: string, variableName: string, summary: VariableSummary) {
+export function fetchSummaryExemplars(datasetName: string, variableName: string, summary: VariableSummary, isTimeVar?: boolean) {
 
 	const variables = datasetGetters.getVariables(store);
-	const variable = variables.find(v => v.colName === variableName);
+	const variable = isTimeVar ? datasetGetters.getTimeseriesAnalysisVariable(store) : variables.find(v => v.colName === variableName);
 
 	const baselineExemplars = summary.baseline.exemplars;
 	const filteredExemplars = summary.filtered && summary.filtered.exemplars ? summary.filtered.exemplars : null;

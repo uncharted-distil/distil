@@ -63,6 +63,11 @@ const fetchVariableSummaries = createCacheable(ParamCacheKey.VARIABLE_SUMMARIES,
 				variables: variables,
 				filterParams: filterParams,
 				highlight: highlight
+			}),
+			datasetActions.fetchTimeseriesAnalysisVariableSummaries(store, {
+				dataset: dataset,
+				filterParams: filterParams,
+				highlight: highlight
 			})
 		]);
 	});
