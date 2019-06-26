@@ -264,6 +264,10 @@ export default Vue.extend({
 
 		deemphasis(currDemphasis: any) {
 			this.injectHighlights(this.highlight, this.rowSelection, currDemphasis);
+		},
+		html(customHtml: () => HTMLElement) {
+			const $elem = this.facets.getGroup(this.groupSpec.key)._element;
+			this.updateCustomHtml(this.groupSpec, $elem, customHtml);
 		}
 	},
 
@@ -271,8 +275,7 @@ export default Vue.extend({
 
 		injectHTML(group: Group, $elem: JQuery) {
 
-			const $groupFooter = $('<div class="group-footer"></div>').appendTo($elem.find('.facets-group'));
-
+			const $groupFooter = $('<div class="group-footer"><div class="html-slot"></div></div>').appendTo($elem.find('.facets-group'));
 			$elem.click(event => {
 				if (group.facets.length >= 1) {
 					const facet = group.facets[0];
@@ -340,18 +343,24 @@ export default Vue.extend({
 			// inject type change header menus
 			this.injectTypeChangeHeaders(group, $elem);
 
+			// inject html
+			this.updateCustomHtml(group, $elem, this.html);
+
 			// inject image preview if image type
 			this.injectImagePreview(group, $elem);
 
-			if (this.html) {
-				if (_.isFunction(this.html)) {
-					$groupFooter.append(this.html(group));
-				} else {
-					$groupFooter.append(this.html);
-				}
+			this.injectImportantBadge(group, $elem);
+		},
+
+		updateCustomHtml(group: Group, $elem: JQuery, html: any) {
+			if (html) {
+				const $htmlSlot = $elem.find('.html-slot');
+				const customHtml = _.isFunction(this.html) ? this.html(group) : this.html;
+				$htmlSlot.empty();
+				$htmlSlot.append(customHtml);
+				this.$emit('html-appended', customHtml);
 			}
 
-			this.injectImportantBadge(group, $elem);
 		},
 
 		addHighlightArrow(highlight: Highlight) {

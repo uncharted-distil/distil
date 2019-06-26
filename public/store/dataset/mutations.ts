@@ -148,6 +148,10 @@ export const mutations = {
 		updateSummaries(summary, state.excludedSet.variableSummaries);
 	},
 
+	updateTimeseriesAnalysisVariableSummaries(state: DatasetState, summary: VariableSummary) {
+		updateSummaries(summary, state.timeseriesAnalysisVariableSummaries);
+	},
+
 	clearVariableSummaries(state: DatasetState) {
 		state.includedSet.variableSummaries = [];
 		state.excludedSet.variableSummaries = [];
