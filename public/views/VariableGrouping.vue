@@ -262,6 +262,7 @@ export default Vue.extend({
 				return;
 			}
 			this.idCols.push({ value: null });
+			this.hideIdCol.push(true);
 			this.prevIdCols++;
 		},
 		isIDCol(arg): boolean {
@@ -283,17 +284,17 @@ export default Vue.extend({
 				[this.yCol]: this.hideYCol,
 				[this.clusterCol]: this.hideClusterCol
 			};
-			this.idCols.forEach((id, index) => {
-				if (id) {
-					hidden[id.value] = this.hideIdCol[index];
-				}
+			const ids = this.idCols.map(c => c.value).filter(v => v);
+
+
+			ids.forEach((id, index) => {
+				hidden[id] = this.hideIdCol[index];
 			});
 
 			let idKey = '';
 			let p = null;
-			const ids = this.idCols.map(c => c.value).filter(v => v);
 			if (ids.length > 1) {
-				idKey = ids.join('-');
+				idKey = ids.join('_');
 				hidden[idKey] = true;
 				p = datasetActions.composeVariables(this.$store, {
 					dataset: this.dataset,
