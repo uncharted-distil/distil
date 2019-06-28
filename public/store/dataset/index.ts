@@ -52,6 +52,7 @@ export interface GroupingProperties {
 export interface Grouping {
 	dataset: string;
 	idCol: string;
+	subIds: string[];
 	type: string;
 	hidden: string[];
 	properties?: GroupingProperties;

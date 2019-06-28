@@ -90,21 +90,31 @@
 
 				</div>
 
-				<div v-if="isReady" class="row justify-content-center">
-					<b-btn class="mt-3 var-grouping-button" variant="outline-success" @click="onGroup">
+				<div v-if="isReady"  class="row justify-content-center">
+					<b-btn class="mt-3 var-grouping-button" variant="outline-success" :disabled="isPending" @click="onGroup">
 						<div class="row justify-content-center">
 							<i class="fa fa-check-circle fa-2x mr-2"></i>
 							<b>Submit</b>
 						</div>
 					</b-btn>
-					<b-btn class="mt-3 var-grouping-button" variant="outline-danger" @click="onClose">
+					<b-btn class="mt-3 var-grouping-button" variant="outline-danger" :disabled="isPending" @click="onClose">
 						<div class="row justify-content-center">
 							<i class="fa fa-times-circle fa-2x mr-2"></i>
 							<b>Cancel</b>
 						</div>
 					</b-btn>
 				</div>
+
+				<div class="grouping-progress">
+					<b-progress v-if="isPending"
+						:value="percentComplete"
+						variant="outline-secondary"
+						striped
+						:animated="true"></b-progress>
+				</div>
+
 			</div>
+
 		</div>
 
 	</div>
@@ -121,6 +131,9 @@ import { getters as routeGetters } from '../store/route/module';
 import { actions as viewActions } from '../store/view/module';
 import { INTEGER_TYPE, TEXT_TYPE, ORDINAL_TYPE, TIMESTAMP_TYPE, CATEGORICAL_TYPE,
 	DATE_TIME_TYPE, REAL_TYPE } from '../util/types';
+import { getComposedVariableKey } from '../util/data';
+import { SELECT_TARGET_ROUTE } from '../store/route/index';
+import { createRouteEntry } from '../util/routes';
 
 export default Vue.extend({
 	name: 'variable-grouping',
@@ -140,7 +153,9 @@ export default Vue.extend({
 			hideXCol: true,
 			hideYCol: true,
 			hideClusterCol: true,
-			other: []
+			other: [],
+			isPending: false,
+			percentComplete: 100
 		};
 	},
 	computed: {
@@ -279,13 +294,11 @@ export default Vue.extend({
 		},
 		onGroup() {
 			const hidden = {
-				// [this.idCol]: this.hideIdCol,
 				[this.xCol]: this.hideXCol,
 				[this.yCol]: this.hideYCol,
 				[this.clusterCol]: this.hideClusterCol
 			};
 			const ids = this.idCols.map(c => c.value).filter(v => v);
-
 
 			ids.forEach((id, index) => {
 				hidden[id] = this.hideIdCol[index];
@@ -294,7 +307,7 @@ export default Vue.extend({
 			let idKey = '';
 			let p = null;
 			if (ids.length > 1) {
-				idKey = ids.join('_');
+				idKey = getComposedVariableKey(ids);
 				hidden[idKey] = true;
 				p = datasetActions.composeVariables(this.$store, {
 					dataset: this.dataset,
@@ -308,11 +321,14 @@ export default Vue.extend({
 				});
 			}
 
+			this.isPending = true;
+
 			return p.then(() => {
 				const grouping =  {
 					type: this.groupingType,
 					dataset: this.dataset,
 					idCol: idKey,
+					subIds: ids,
 					hidden: Object.keys(hidden).filter(v => hidden[v]),
 					properties: {
 						xCol: this.xCol,
@@ -323,12 +339,19 @@ export default Vue.extend({
 				datasetActions.setGrouping(this.$store, {
 					dataset: this.dataset,
 					grouping: grouping
+				}).then(() => {
+					this.gotoTargetSelection();
 				});
-				this.$emit('close');
 			});
 		},
 		onClose() {
-			this.$emit('close');
+			this.gotoTargetSelection();
+		},
+		gotoTargetSelection() {
+			const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
+				dataset: this.dataset
+			});
+			this.$router.push(entry);
 		}
 	}
 
@@ -340,5 +363,8 @@ export default Vue.extend({
 	margin: 0 8px;
 	width: 25% !important;
 	line-height: 32px !important;
+}
+.grouping-progress {
+	margin: 6px 10%;
 }
 </style>

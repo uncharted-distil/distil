@@ -272,6 +272,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string, va
 		OriginalVariable: varName,
 		DisplayName:      varName,
 		DistilRole:       varRole,
+		Deleted:          false,
 		SuggestedTypes:   make([]*model.SuggestedType, 0),
 	})
 

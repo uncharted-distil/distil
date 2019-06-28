@@ -45,6 +45,10 @@ export function getTimeseriesGroupingsFromFields(variables: Variable[], fields: 
 		});
 }
 
+export function getComposedVariableKey(keys: string[]): string {
+	return keys.join('_');
+}
+
 export function getTimeseriesAnalysisIntervals(timeVar: Variable, range: number): any[] {
 	const SECONDS_VALUE = 1;
 	const MINUTES_VALUE = SECONDS_VALUE * 60;
