@@ -45,6 +45,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet/dist/images/marker-icon.png';
 import 'leaflet/dist/images/marker-icon-2x.png';
 import 'leaflet/dist/images/marker-shadow.png';
+import { convertLength } from '@turf/turf';
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
@@ -447,6 +448,17 @@ export default Vue.extend({
 			});
 		},
 
+		getColor(d) {
+    		return d > 50 ? '#800026' :
+           			d > 30  ? '#BD0026' :
+           			d > 25  ? '#E31A1C' :
+           			d > 20  ? '#FC4E2A' :
+           			d > 15   ? '#FD8D3C' :
+           			d > 10   ? '#FEB24C' :
+           			d > 5  ? '#FED976' : '#FFEDA0';
+		},
+
+
 		paint() {
 			if (!this.map) {
 				// NOTE: this component re-mounts on any change, so do everything in here
@@ -478,9 +490,10 @@ export default Vue.extend({
 			
 			this.pointGroups.forEach(group => {
 				const hash = this.fieldHash(group.field);
-				console.log('hash',  hash);
 				
 				const layer = leaflet.layerGroup([]);
+				console.log('group.point', group.points);
+				
 				group.points.forEach(p => {
 					// console.log('p', p);
 					
@@ -506,36 +519,118 @@ export default Vue.extend({
 				layer.on('add', () => this.updateMarkerSelection(layer.getLayers()));
 				layer.addTo(this.map);
 
-				console.log('mapCenter', this.mapCenter);
-
 			});
 			//console.log('bounds', bounds.getSize());
 			// let bbox = turf.bbox(bounds);
 			// console.log('bbox', bbox);
 			
+			
 			if (bounds.isValid()) {
-
+				console.log('this.pointGroups', this.pointGroups);
+				
 
 				this.map.fitBounds(bounds);
 				
 				// create a turf BBox
-				let bbox = bounds.toBBoxString().split(',').map(Number);
+				let bbox = turf.square(turf.square(bounds.toBBoxString().split(',').map(Number)));
+				console.log('bbox', bbox);
+				
+				//let bbox = turf.bbox(turf.envelope(turf.multiPoint(points)));
+				
+				
 
 				// get distance of one side of bbox 
-				// const bboxVertexCoordA = turf.point([bbox[0], bbox[1]]);
-				// const bboxVertexCoordB = turf.point([bbox[0], bbox[3]])
+				const bboxVertexCoordA = turf.point([bbox[0], bbox[1]]);
+				const bboxVertexCoordB = turf.point([bbox[0], bbox[3]])
 				
 
-				// const sideDistance = turf.distance(bboxVertexCoordA, bboxVertexCoordB, {units: 'kilometers'});
-                // console.log('sideDistance', sideDistance);
+				const sideDistance = turf.distance(bboxVertexCoordA, bboxVertexCoordB, {units: 'kilometers'});
 				
-				let squareGrid = turf.squareGrid(bbox, 15, {units: 'kilometers'});
-				let gridLayer = leaflet.geoJSON(squareGrid, {
+				// round to nearest 10
+				const roundedDistance = Math.ceil((sideDistance) /10) * 10;
+					
+
+				let points = [];
+				this.pointGroups.forEach((group) => {
+					if(group.points.length){
+						group.points.forEach((latLng) => {
+							points.push([Number(latLng.lat), Number(latLng.lng)])
+						});
+					}
+				})
+				
+				points.map((val)=> {
+					console.log('val', val);
+					
+					return turf.point(val, {z: 1});
+
+				})
+
+				const multiPointFeature = turf.featureCollection(points)
+				console.log('points1', multiPointFeature)
+				// console.log('bad points', multiPointFeature.features[0]);
+
+				var points2 = turf.randomPoint(100, {
+  					bbox: bbox
+					});
+
+				points2.features.forEach(function(d){
+    d.properties.z = ~~(Math.random() * 50);
+});
+
+
+
+
+				console.log('good points', points2.features[0]);
+				
+				let squareGrid = turf.squareGrid(bbox, (sideDistance/ 10), {units: 'kilometers'});
+				
+				let count = turf.collect(squareGrid, points2, 'z', 'z');
+
+				console.log('count', count);
+
+				// count.features.forEach((val)=>{
+				// 	console.log('val', val.properties.z);
+					
+				// 	if(val.properties.z > 1){
+				// 		console.log('val.properties.value', val.properties.z);
+				// 	} else {
+				// 		console.log('wat');
+						
+				// 	}
+				// })
+
+				let getColor2 = function getColor(d) {
+    return d > 50 ? '#800026' :
+           d > 30  ? '#BD0026' :
+           d > 25  ? '#E31A1C' :
+           d > 20  ? '#FC4E2A' :
+           d > 15   ? '#FD8D3C' :
+           d > 10   ? '#FEB24C' :
+           d > 5  ? '#FED976' :
+                      '#FFEDA0';
+}
+
+				let getColor = function getColor(d) {
+    				return d > 50 ? '#800026' :
+           				   d > 30  ? '#BD0026' :
+           				   d > 25  ? '#E31A1C' :
+           				   d > 20  ? '#FC4E2A' :
+                           d > 15   ? '#FD8D3C' :
+           				   d > 10   ? '#FEB24C' :
+           				   d > 5  ? '#FED976' : '#FFEDA0';
+}
+				
+				let gridLayer = leaflet.geoJSON(count, {
 					    style: function (feature) {
-        					return {color: "#008800", weight: 1, fill: 0};
-						},
-						onEachFeature: function (feature, layer) {
-							// console.log('feature', feature)
+        					return {
+        						fillColor: getColor2(feature.properties.z),
+        						weight: 2,
+        						opacity: 1,
+        						color: 'white',
+        						dashArray: '3',
+        						fillOpacity: 0.7
+    						};
 						}
 				}).addTo(this.map);
 
