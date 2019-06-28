@@ -23,7 +23,7 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -159,7 +159,7 @@ func NewClient(host string, port int, user string, password string, database str
 				Password: password,
 				Database: database,
 				Logger:   logAdapter,
-				LogLevel: int(level),
+				LogLevel: level,
 			}
 
 			poolConfig := pgx.ConnPoolConfig{

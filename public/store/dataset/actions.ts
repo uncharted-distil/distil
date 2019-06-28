@@ -176,7 +176,9 @@ export const actions = {
 			})
 			.then((response) => {
 				const suggestions = (response[0].data && response[0].data.datasets) || [];
-				const employmentData = ((response[1].data && response[1].data.datasets) || []).filter(dataset => dataset.id === 'datamart.upload.fc0ceee28cb74bad83e4f8872979b111');
+				const employmentData = ((response[1].data && response[1].data.datasets) || []).filter(dataset =>
+					dataset.id === 'datamart.upload.fc0ceee28cb74bad83e4f8872979b111' ||
+					dataset.id === 'world_bank_2018');
 				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, suggestions: [...employmentData, ...suggestions] });
 			})
 			.catch(error => {
