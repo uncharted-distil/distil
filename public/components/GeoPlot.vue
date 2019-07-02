@@ -33,6 +33,7 @@ import Vue from 'vue';
 import * as turf from '@turf/turf';
 import IconBase from './icons/IconBase';
 import IconCropFree from './icons/IconCropFree';
+import { scaleThreshold }  from 'd3';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
@@ -448,14 +449,13 @@ export default Vue.extend({
 			});
 		},
 
-		getColor(d) {
-    		return d > 50 ? '#800026' :
-           			d > 30  ? '#BD0026' :
-           			d > 25  ? '#E31A1C' :
-           			d > 20  ? '#FC4E2A' :
-           			d > 15   ? '#FD8D3C' :
-           			d > 10   ? '#FEB24C' :
-           			d > 5  ? '#FED976' : '#FFEDA0';
+		createPointGroup(points) {
+			const count = points.length;
+			const features = [];
+   			for (let i = 0; i < count; i++) {
+        		features.push(turf.point(points[i]));
+			}
+			return turf.featureCollection(features)
 		},
 
 
@@ -517,7 +517,7 @@ export default Vue.extend({
 				});
 				this.markers[hash] = layer;
 				layer.on('add', () => this.updateMarkerSelection(layer.getLayers()));
-				layer.addTo(this.map);
+				// layer.addTo(this.map);
 
 			});
 			//console.log('bounds', bounds.getSize());
@@ -551,83 +551,54 @@ export default Vue.extend({
 					
 
 				let points = [];
-				this.pointGroups.forEach((group) => {
-					if(group.points.length){
-						group.points.forEach((latLng) => {
-							points.push([Number(latLng.lat), Number(latLng.lng)])
-						});
-					}
-				})
-				
-				points.map((val)=> {
-					console.log('val', val);
-					
-					return turf.point(val, {z: 1});
-
-				})
-
-				const multiPointFeature = turf.featureCollection(points)
-				console.log('points1', multiPointFeature)
-				// console.log('bad points', multiPointFeature.features[0]);
-
-				var points2 = turf.randomPoint(100, {
-  					bbox: bbox
-					});
-
-				points2.features.forEach(function(d){
-    d.properties.z = ~~(Math.random() * 50);
-});
-
-
-
-
-				console.log('good points', points2.features[0]);
-				
-				let squareGrid = turf.squareGrid(bbox, (sideDistance/ 10), {units: 'kilometers'});
-				
-				let count = turf.collect(squareGrid, points2, 'z', 'z');
-
-				console.log('count', count);
-
-				// count.features.forEach((val)=>{
-				// 	console.log('val', val.properties.z);
-					
-				// 	if(val.properties.z > 1){
-				// 		console.log('val.properties.value', val.properties.z);
-				// 	} else {
-				// 		console.log('wat');
-						
+				// this.pointGroups.forEach((group) => {
+				// 	if(group.points.length){
+				// 		group.points.forEach((latLng) => {
+				// 			points.push(turf.point([Number(latLng.lng), Number(latLng.lat)], {z: 1}, {bbox: bbox}))
+				// 		});
 				// 	}
 				// })
 
-				let getColor2 = function getColor(d) {
-    return d > 50 ? '#800026' :
-           d > 30  ? '#BD0026' :
-           d > 25  ? '#E31A1C' :
-           d > 20  ? '#FC4E2A' :
-           d > 15   ? '#FD8D3C' :
-           d > 10   ? '#FEB24C' :
-           d > 5  ? '#FED976' :
-                      '#FFEDA0';
-}
+				this.pointGroups.forEach((group) => {
+					if(group.points.length){
+						group.points.forEach((latLng) => {
+							points.push([Number(latLng.lng), Number(latLng.lat)])
+						});
+					}
+				})
+			
+				let multiPointFeature = this.createPointGroup(points);
 
-				let getColor = function getColor(d) {
-    				return d > 50 ? '#800026' :
-           				   d > 30  ? '#BD0026' :
-           				   d > 25  ? '#E31A1C' :
-           				   d > 20  ? '#FC4E2A' :
-                           d > 15   ? '#FD8D3C' :
-           				   d > 10   ? '#FEB24C' :
-           				   d > 5  ? '#FED976' : '#FFEDA0';
-}
+				multiPointFeature.features.forEach(function(d){
+    				d.properties.z = 1;
+				});
+
+				let squareGrid = turf.squareGrid(bbox, (sideDistance/ 10), {units: 'kilometers'});
+				
+				let count = turf.collect(squareGrid, multiPointFeature, 'z', 'z');
+
+				console.log('count', count);
+				
+			const pallete =  ["rgba(0,0,0,0)", "#F4F8FB", "#E9F2F8", "#DEEBF5", "#D3E5F1", "#C8DFEE", "#BDD8EB", "#B2D2E8", "#A7CCE4", "#9CC5E1", "#91BFDE", "#86B8DB", "#7BB2D7", "#70ACD4", "#65A5D1", "#5A9FCE", "#4F99CA", "#4492C7", "#398CC4", "#2E86C1"];
+
+			const maxVal = _.maxBy(count.features,(i) => i.properties.z).properties.z.length;
+			const minVal = _.minBy(count.features,(i) => i.properties.z).properties.z.length;
+
+			const d = (maxVal-minVal)/pallete.length;
+			const domain = pallete.map((val,index) => minVal + d*(index+1));
+			
+			const scaleColors = scaleThreshold().range(pallete).domain(domain);
+
+				
+			console.log('getColorThresholdScale', scaleColors(2));
 				
 				let gridLayer = leaflet.geoJSON(count, {
 					    style: function (feature) {
         					return {
-        						fillColor: getColor2(feature.properties.z),
+        						fillColor: scaleColors(feature.properties.z.length),
         						weight: 2,
         						opacity: 1,
-        						color: 'white',
+        						color: 'rgba(0,0,0,0)',
         						dashArray: '3',
         						fillOpacity: 0.7
     						};
