@@ -42,9 +42,3 @@ runner:
     - $PWD/datasets:/$PWD/datasets
     - $PWD/outputs:/$PWD/outputs
     - $PWD/static_resources:/$PWD/static_resources
-
-resources:
-  image:
-    docker.uncharted.software/distil_res_server:latest
-  ports:
-    - "5440:5440"
