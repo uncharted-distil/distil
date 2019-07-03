@@ -525,9 +525,11 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// remove generated features from our var list
+	// TODO: imported datasets have d3m index as distil role = "index".
+	//       need to figure out if that causes issues!!!
 	dataVariables := []*model.Variable{}
 	for _, variable := range variables {
-		if variable.DistilRole != "metadata" {
+		if variable.DistilRole != "metadata" && variable.DistilRole != "geocoding" {
 			dataVariables = append(dataVariables, variable)
 		}
 	}
