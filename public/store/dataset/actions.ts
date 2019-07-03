@@ -266,6 +266,71 @@ export const actions = {
 			});
 	},
 
+	composeVariables(context: DatasetContext, args: { dataset: string, key: string, vars: string[] }): Promise<void>  {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.key) {
+			console.warn('`key` argument is missing');
+			return null;
+		}
+		if (!args.vars) {
+			console.warn('`vars` argument is missing');
+			return null;
+
+		}
+		return axios.post(`/distil/compose/${args.dataset}`, {
+				varName: args.key,
+				variables: args.vars
+			});
+	},
+
+	deleteVariable(context: DatasetContext, args: { dataset: string, key: string }): Promise<any>  {
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.key) {
+			console.warn('`key` argument is missing');
+			return null;
+		}
+		return axios.post(`/distil/delete/${args.dataset}/${args.key}`, {})
+			.then(() => {
+				// update dataset
+				return Promise.all([
+					actions.fetchDataset(context, {
+						dataset: args.dataset
+					}),
+					actions.fetchVariables(context, {
+						dataset: args.dataset
+					}),
+				]).then(() => {
+					mutations.clearVariableSummaries(context);
+					const variables = context.getters.getVariables;
+					const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+					const highlight = context.getters.getDecodedHighlight;
+					return Promise.all([
+						actions.fetchIncludedVariableSummaries(context, {
+							dataset: args.dataset,
+							variables: variables,
+							filterParams:  filterParams,
+							highlight: highlight
+						}),
+						actions.fetchExcludedVariableSummaries(context, {
+							dataset: args.dataset,
+							variables: variables,
+							filterParams:  filterParams,
+							highlight: highlight
+						})
+					]);
+				});
+			})
+			.catch(error => {
+				console.error(error);
+			});
+	},
+
 	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, datasetAColumn: string, datasetBColumn: string, joinAccuracy: number }): Promise<void>  {
 		if (!args.datasetA) {
 			console.warn('`datasetA` argument is missing');

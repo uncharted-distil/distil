@@ -109,7 +109,8 @@ export default Vue.extend({
 					// has not yet rendered. Use this to ensure the DOM updates
 					// before attempting to inject
 
-					if (newExtrema.x.min === oldExtrema.x.min &&
+					if (oldExtrema &&
+						newExtrema.x.min === oldExtrema.x.min &&
 						newExtrema.x.max === oldExtrema.x.max &&
 						newExtrema.y.min === oldExtrema.y.min &&
 						newExtrema.y.max === oldExtrema.y.max) {

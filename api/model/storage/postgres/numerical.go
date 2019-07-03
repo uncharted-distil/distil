@@ -17,6 +17,7 @@ package postgres
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -120,6 +121,11 @@ func (f *NumericalField) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
 			points = append(points, []float64{float64(x), y})
 		}
 	}
+
+	sort.Slice(points, func(i, j int) bool {
+		return points[i][0] < points[j][0]
+	})
+
 	return points, nil
 }
 

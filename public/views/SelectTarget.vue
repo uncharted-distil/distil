@@ -1,14 +1,14 @@
 <template>
 
 	<div class="container-fluid d-flex flex-column h-100 select-view">
-		<div class="row flex-0-nav">
-		</div>
+		<div class="row flex-0-nav"></div>
+
 		<div class="row flex-shrink-0 align-items-center bg-white">
 			<div class="col-4 offset-md-1">
 				<h5 class="header-label">Select Feature to Predict</h5>
 			</div>
 			<div class="col-2 offset-md-4">
-				<b-button class="grouping-button" variant="primary" @click="showGroupingModal = !showGroupingModal">
+				<b-button class="grouping-button" variant="primary" @click="onGroupingClick">
 					Create Variable Grouping
 				</b-button>
 			</div>
@@ -19,10 +19,6 @@
 				</available-target-variables>
 			</div>
 		</div>
-		<grouping-modal
-			:show="showGroupingModal"
-			@close="showGroupingModal = !showGroupingModal">
-		</grouping-modal>
 		<timeseries-analysis-modal
 			:show="showTimeseriesChoice"
 			@close="onTimeseriesChoice">
@@ -36,20 +32,19 @@
 import Vue from 'vue';
 import { Variable } from '../store/dataset/index';
 import TimeseriesAnalysisModal from '../components/TimeseriesAnalysisModal';
-import GroupingModal from '../components/GroupingModal';
 import AvailableTargetVariables from '../components/AvailableTargetVariables';
 import { actions as viewActions } from '../store/view/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { isTimeType } from '../util/types';
-import { overlayRouteEntry } from '../util/routes';
+import { createRouteEntry, overlayRouteEntry } from '../util/routes';
+import { GROUPING_ROUTE } from '../store/route';
 
 export default Vue.extend({
 	name: 'select-target-view',
 
 	data() {
 		return {
-			showGroupingModal: false,
 			showTimeseriesChoice: false,
 			haveVariablesLoaded: false
 		};
@@ -57,7 +52,6 @@ export default Vue.extend({
 
 	components: {
 		AvailableTargetVariables,
-		GroupingModal,
 		TimeseriesAnalysisModal
 	},
 
@@ -107,6 +101,12 @@ export default Vue.extend({
 				this.$router.push(entry);
 			}
 			this.showTimeseriesChoice = false;
+		},
+		onGroupingClick() {
+			const entry = createRouteEntry(GROUPING_ROUTE, {
+				dataset: routeGetters.getRouteDataset(this.$store)
+			});
+			this.$router.push(entry);
 		}
 	}
 });

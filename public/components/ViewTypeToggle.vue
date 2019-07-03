@@ -17,7 +17,7 @@
 						<b-form-radio :value="GEO_VIEW" v-if="hasGeoVariables" class="view-button">
 							<i class="fa fa-globe"></i>
 						</b-form-radio >
-						<b-form-radio :value="TIMESERIES_VIEW" v-if="isTimeseriesAnalysis" class="view-button">
+						<b-form-radio :value="TIMESERIES_VIEW" v-if="hasTimeseriesVariables" class="view-button">
 							<i class="fa fa-line-chart"></i>
 						</b-form-radio >
 					</b-form-radio-group>
@@ -90,6 +90,9 @@ export default Vue.extend({
 			const hasLat = this.variables.filter(v => v.colType === LONGITUDE_TYPE).length  > 0;
 			const hasLon = this.variables.filter(v => v.colType === LATITUDE_TYPE).length  > 0;
 			return hasLat && hasLon;
+		},
+		hasTimeseriesVariables(): boolean {
+			return this.isTimeseriesAnalysis || this.variables.filter(v => v.grouping && v.grouping.type === TIMESERIES_TYPE).length  > 0;
 		}
 	}
 

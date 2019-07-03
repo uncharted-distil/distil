@@ -201,35 +201,32 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 			break
 		}
 	}
-	if found {
-		return errors.Errorf("dataset %s already has variable '%s' in postgres", storageName, varName)
-	}
 
-	// add the empty column
-	sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT;", storageName, varName)
-	_, err = s.client.Exec(sql)
-	if err != nil {
-		return errors.Wrap(err, "Unable to add new column to database table")
+	if !found {
+		// add the empty column
+		sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT;", storageName, varName)
+		_, err = s.client.Exec(sql)
+		if err != nil {
+			return errors.Wrap(err, "unable to add new column to database table")
+		}
 	}
 
 	// recreate the view with the new column
 	fields, err := s.getExistingFields(dataset)
 	if err != nil {
-		return errors.Wrap(err, "Unable to read existing fields")
+		return errors.Wrap(err, "unable to read existing fields")
 	}
 
-	if fields[varName] == nil {
-		// need to add the field to the view
-		fields[varName] = &model.Variable{
-			Name:             varName,
-			OriginalVariable: varName,
-			Type:             varType,
-		}
+	// need to add the field to the view
+	fields[varName] = &model.Variable{
+		Name:             varName,
+		OriginalVariable: varName,
+		Type:             varType,
 	}
 
 	err = s.createViewFromMetadataFields(storageName, fields)
 	if err != nil {
-		return errors.Wrap(err, "Unable to create the new view")
+		return errors.Wrap(err, "unable to create the new view")
 	}
 
 	return nil

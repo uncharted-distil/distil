@@ -37,8 +37,12 @@ export function createFilterFromHighlight(highlight: Highlight, mode: string): F
 	let grouping = null;
 	if (variable && variable.grouping) {
 		if (variable.grouping.type === 'timeseries') {
-			key = variable.grouping.properties.clusterCol;
-			key = addClusterPrefix(key);
+			if (variable.grouping.properties.clusterCol) {
+				key = variable.grouping.properties.clusterCol;
+				key = addClusterPrefix(key);
+			} else {
+				key = variable.grouping.idCol;
+			}
 		}
 		grouping = variable.grouping;
 	}

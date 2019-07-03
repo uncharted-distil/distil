@@ -257,23 +257,46 @@ func (s *Storage) SetExtrema(dataset string, varName string, extrema *api.Extrem
 
 // AddVariable adds a new variable to the dataset.
 func (s *Storage) AddVariable(dataset string, varName string, varType string, varRole string) error {
+
+	// new variable definition
+	variable := &model.Variable{
+		Name:             varName,
+		Type:             varType,
+		OriginalType:     varType,
+		OriginalVariable: varName,
+		DisplayName:      varName,
+		DistilRole:       varRole,
+		Deleted:          false,
+		SuggestedTypes:   make([]*model.SuggestedType, 0),
+	}
+
 	// query for existing variables
 	vars, err := s.FetchVariables(dataset, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
 
-	// add the new variables
-	vars = append(vars, &model.Variable{
-		Name:             varName,
-		Index:            len(vars),
-		Type:             varType,
-		OriginalType:     varType,
-		OriginalVariable: varName,
-		DisplayName:      varName,
-		DistilRole:       varRole,
-		SuggestedTypes:   make([]*model.SuggestedType, 0),
-	})
+	// check if var already exists
+	found := false
+	for index, v := range vars {
+		if v.Name == varName {
+			// check if it has been deleted
+			if v.Deleted == false {
+				return fmt.Errorf("variable already exists under this key")
+			}
+
+			// deleted, add the new var in its place
+			variable.Index = index
+			vars[index] = variable
+			found = true
+		}
+	}
+
+	if !found {
+		// add the new variable
+		variable.Index = len(vars)
+		vars = append(vars, variable)
+	}
 
 	return s.updateVariables(dataset, vars)
 }

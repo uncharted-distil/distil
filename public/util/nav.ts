@@ -2,7 +2,7 @@ import VueRouter from 'vue-router';
 import store from '../store/store';
 import { createRouteEntry } from '../util/routes';
 import { restoreView } from '../util/view';
-import { HOME_ROUTE, SEARCH_ROUTE, JOIN_DATASETS_ROUTE, SELECT_TARGET_ROUTE, SELECT_TRAINING_ROUTE, RESULTS_ROUTE } from '../store/route/index';
+import { HOME_ROUTE, SEARCH_ROUTE, GROUPING_ROUTE, JOIN_DATASETS_ROUTE, SELECT_TARGET_ROUTE, SELECT_TRAINING_ROUTE, RESULTS_ROUTE } from '../store/route/index';
 import { getters as routeGetters } from '../store/route/module';
 
 export function gotoView(router: VueRouter, view: string) {
@@ -24,6 +24,10 @@ export function gotoSearch(router: VueRouter) {
 export function gotoJoinDatasets(router: VueRouter) {
 	gotoView(router, JOIN_DATASETS_ROUTE);
 }
+
+// export function gotoVariableGrouping(router: VueRouter) {
+// 	gotoView(router, GROUPING_ROUTE);
+// }
 
 export function gotoSelectTarget(router: VueRouter) {
 	gotoView(router, SELECT_TARGET_ROUTE);
