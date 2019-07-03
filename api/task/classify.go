@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	defaultEmptyType = model.TextType
+	defaultEmptyType = model.StringType
 	defaultEmptyProb = "1.0"
 )
 

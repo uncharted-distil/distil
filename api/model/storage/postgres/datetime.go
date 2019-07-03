@@ -407,7 +407,7 @@ func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResul
 func (f *DateTimeField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
-		Type: model.TextType,
+		Type: model.StringType,
 	}
 
 	// need the extrema to calculate the histogram interval
