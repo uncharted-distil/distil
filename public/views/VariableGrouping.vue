@@ -3,8 +3,15 @@
 	<div class="container-fluid d-flex flex-column h-100">
 		<div class="row flex-0-nav"></div>
 
-		<div class="row justify-content-center h-100">
-			<div class="col-12 col-md-10 flex-column d-flex h-100">
+		<div class="row flex-shrink-0 align-items-center bg-white">
+			<div class="col-4 offset-md-1">
+				<h5 class="header-label">Select Grouping Properties</h5>
+			</div>
+		</div>
+
+		<div class="row justify-content-center h-100 p-3">
+
+			<div class="col-12 col-md-8 flex-column d-flex h-100">
 
 				<div class="row mt-1 mb-1" v-for="(idCol, index) in idCols" :key="idCol.value">
 
