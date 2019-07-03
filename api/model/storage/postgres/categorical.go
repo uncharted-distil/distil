@@ -678,7 +678,7 @@ func (f *CategoricalField) FetchForecastingSummaryData(timeVar *model.Variable, 
 func (f *CategoricalField) fetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
-		Type: model.TextType,
+		Type: model.StringType,
 	}
 
 	categories, err := f.getTopCategories(filterParams, false)

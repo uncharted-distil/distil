@@ -563,7 +563,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, storageName string, r
 	}
 	resultVariable := &model.Variable{
 		Name: "value",
-		Type: model.TextType,
+		Type: model.StringType,
 	}
 
 	field := NewNumericalField(s, storageName, targetVariable.Name, targetVariable.DisplayName, targetVariable.Type)

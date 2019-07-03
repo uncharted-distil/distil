@@ -726,7 +726,7 @@ func (f *NumericalField) FetchPredictedSummaryData(resultURI string, datasetResu
 func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
-		Type: model.TextType,
+		Type: model.StringType,
 	}
 
 	// need the extrema to calculate the histogram interval
@@ -969,7 +969,7 @@ func (f *NumericalField) FetchForecastingSummaryData(timeVar *model.Variable, in
 func (f *NumericalField) fetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
-		Type: model.TextType,
+		Type: model.StringType,
 	}
 
 	extrema, err := f.fetchTimeExtremaByResultURI(timeVar, resultURI)

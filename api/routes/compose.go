@@ -73,12 +73,12 @@ func ComposeHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorage
 
 		if !composeExists {
 			// create the new field
-			err = metaStorage.AddVariable(dataset, varName, model.TextType, "grouping")
+			err = metaStorage.AddVariable(dataset, varName, model.StringType, "grouping")
 			if err != nil {
 				handleError(w, err)
 				return
 			}
-			err = dataStorage.AddVariable(dataset, storageName, varName, model.TextType)
+			err = dataStorage.AddVariable(dataset, storageName, varName, model.StringType)
 			if err != nil {
 				handleError(w, err)
 				return
