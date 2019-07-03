@@ -168,7 +168,13 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 	if variable.Grouping != nil {
 
 		if model.IsTimeSeries(variable.Grouping.Type) {
-			field = NewTimeSeriesField(s, storageName, variable.Grouping.Properties.ClusterCol, variable.Grouping.IDCol, variable.Grouping.IDCol, variable.Grouping.Type)
+
+			timeColVar, err := s.metadata.FetchVariable(dataset, variable.Grouping.Properties.XCol)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
+			}
+
+			field = NewTimeSeriesField(s, storageName, variable.Grouping.Properties.ClusterCol, variable.Grouping.IDCol, variable.Grouping.IDCol, variable.Grouping.Type, timeColVar.Name, timeColVar.Type)
 		} else {
 			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.IDCol, variable.Grouping.Type)
 		}

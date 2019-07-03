@@ -56,6 +56,7 @@ type VariableSummary struct {
 	SolutionID string     `json:"solutionId,omitempty"`
 	Baseline   *Histogram `json:"baseline"`
 	Filtered   *Histogram `json:"filtered"`
+	Timeline   *Histogram `json:"timeline"`
 }
 
 // EmptyFilteredHistogram fills the filtered portion of the summary with empty

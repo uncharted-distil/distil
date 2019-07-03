@@ -36,7 +36,6 @@ export const getters = {
 	getTimeseriesExtrema: read(moduleGetters.getTimeseriesExtrema),
 	// timeseries analysis
 	getTimeseriesAnalysisVariable: read(moduleGetters.getTimeseriesAnalysisVariable),
-	getTimeseriesAnalysisVariableSummary: read(moduleGetters.getTimeseriesAnalysisVariableSummary),
 	getTimeseriesAnalysisExtrema: read(moduleGetters.getTimeseriesAnalysisExtrema),
 	getTimeseriesAnalysisRange: read(moduleGetters.getTimeseriesAnalysisRange),
 	// join data
@@ -74,7 +73,6 @@ export const actions = {
 	reviewVariableType: dispatch(moduleActions.reviewVariableType),
 	fetchIncludedVariableSummaries: dispatch(moduleActions.fetchIncludedVariableSummaries),
 	fetchExcludedVariableSummaries: dispatch(moduleActions.fetchExcludedVariableSummaries),
-	fetchTimeseriesAnalysisVariableSummaries: dispatch(moduleActions.fetchTimeseriesAnalysisVariableSummaries),
 	fetchGeocodingResults: dispatch(moduleActions.fetchGeocodingResults),
 	// ranking
 	fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
@@ -110,7 +108,6 @@ export const mutations = {
 	reviewVariableType: commit(moduleMutations.reviewVariableType),
 	updateIncludedVariableSummaries: commit(moduleMutations.updateIncludedVariableSummaries),
 	updateExcludedVariableSummaries: commit(moduleMutations.updateExcludedVariableSummaries),
-	updateTimeseriesAnalysisVariableSummaries: commit(moduleMutations.updateTimeseriesAnalysisVariableSummaries),
 	clearVariableSummaries: commit(moduleMutations.clearVariableSummaries),
 	// ranking
 	setVariableRankings: commit(moduleMutations.setVariableRankings),

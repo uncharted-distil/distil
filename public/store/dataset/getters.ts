@@ -67,15 +67,6 @@ export const getters = {
 		return null;
 	},
 
-	getTimeseriesAnalysisVariableSummary(state: DatasetState, getters: any): VariableSummary {
-		const timeseriesAnalysisVariable = getters.getTimeseriesAnalysisVariable;
-		return state.timeseriesAnalysisVariableSummaries
-			.find(summary =>
-				timeseriesAnalysisVariable
-				&& summary.dataset === timeseriesAnalysisVariable.datasetName
-				&& summary.key === timeseriesAnalysisVariable.colName);
-	},
-
 	getTimeseriesAnalysisExtrema(state: DatasetState, getters: any): Extrema {
 		const v = getters.getTimeseriesAnalysisVariable;
 		if (v) {

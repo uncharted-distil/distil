@@ -1,35 +1,32 @@
 <template>
-    <div class="facet-timeseries">
-        <facet-entry
-            :summary="summary"
-            :highlight="highlight"
-            :row-selection="rowSelection"
+	<div class="facet-timeseries">
+		<facet-entry
+			:summary="summary"
+			:highlight="highlight"
+			:row-selection="rowSelection"
 			:enable-type-change="enableTypeChange"
-            :enable-highlighting="Boolean(enableHighlighting) && enableHighlighting[0]"
-            :ignore-highlights="Boolean(ignoreHighlights) && ignoreHighlights[0]"
-            :instanceName="instanceName"
-            :html="customHtml"
+			:enable-highlighting="Boolean(enableHighlighting) && enableHighlighting[0]"
+			:ignore-highlights="Boolean(ignoreHighlights) && ignoreHighlights[0]"
+			:instanceName="instanceName"
+			:html="customHtml"
 			@html-appended="onHtmlAppend"
-            @numerical-click="onNumericalClick"
-            @categorical-click="onCategoricalClick"
-            @range-change="onRangeChange"
-        >
-        </facet-entry>
-        <facet-entry
-			v-if="expanded"
-            :summary="summaryHistogram"
-            :highlight="highlight"
-            :row-selection="rowSelection"
-            :instanceName="instanceName"
-            :enable-highlighting="Boolean(enableHighlighting) && enableHighlighting[1]"
-            :ignore-highlights="Boolean(ignoreHighlights) && ignoreHighlights[1]"
+			@numerical-click="onNumericalClick"
+			@categorical-click="onCategoricalClick"
+			@range-change="onRangeChange">
+		</facet-entry>
+		<facet-entry v-if="expanded"
+			:summary="timelineSummary"
+			:highlight="highlight"
+			:row-selection="rowSelection"
+			:instanceName="instanceName"
+			:enable-highlighting="Boolean(enableHighlighting) && enableHighlighting[1]"
+			:ignore-highlights="Boolean(ignoreHighlights) && ignoreHighlights[1]"
 			:html="footerHtml"
-            @numerical-click="onHistogramNumericalClick"
-            @categorical-click="onHistogramCategoricalClick"
-            @range-change="onHistogramRangeChange"
-        >
-        </facet-entry>
-    </div>
+			@numerical-click="onHistogramNumericalClick"
+			@categorical-click="onHistogramCategoricalClick"
+			@range-change="onHistogramRangeChange">
+		</facet-entry>
+	</div>
 </template>
 
 <script lang="ts">
@@ -47,7 +44,6 @@ export default Vue.extend({
 
 	props: {
 		summary: Object as () => VariableSummary,
-		summaryHistogram: Object as () => VariableSummary,
 		expanded: Boolean as () => boolean,
 		highlight: Object as () => Highlight,
 		rowSelection: Object as () => RowSelection,
@@ -66,6 +62,10 @@ export default Vue.extend({
 	},
 
 	computed: {
+		timelineSummary(): VariableSummary {
+			// TODO: impl this
+			return null;
+		}
 	},
 
 	watch: {
