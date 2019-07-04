@@ -47,10 +47,10 @@ type SearchResult struct {
 
 // SearchResultAugmentation contains data augmentation info.
 type SearchResultAugmentation struct {
-	Type             string   `json:"type"`
-	LeftColumns      [][]int  `json:"left_columns"`
-	RightColumns     [][]int  `json:"right_columns"`
-	LeftColumnsNames []string `json:"left_columns_names"`
+	Type             string     `json:"type"`
+	LeftColumns      [][]int    `json:"left_columns"`
+	RightColumns     [][]int    `json:"right_columns"`
+	LeftColumnsNames [][]string `json:"left_columns_names"`
 }
 
 // SearchResultMetadata represents the dataset metadata.
@@ -100,9 +100,14 @@ func parseJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) []*api.
 			}
 			rightColumnNames = append(rightColumnNames, strings.Join(colNames[:], ", "))
 		}
+		leftColumnNames := []string{}
+		for _, joinColumns := range result.Augmentation.LeftColumnsNames {
+			leftColumnNames = append(leftColumnNames, strings.Join(joinColumns, ", "))
+		}
+
 		joins = append(joins, &api.JoinSuggestion{
 			BaseDataset: baseDataset.ID,
-			BaseColumns: result.Augmentation.LeftColumnsNames,
+			BaseColumns: leftColumnNames,
 			JoinColumns: rightColumnNames,
 		})
 	}

@@ -12,4 +12,4 @@ docker run \
     -e D3MINPUTDIR=$D3MINPUTDIR
     -e SOLUTION_COMPUTE_TRACE=true \
     -e PG_LOG_LEVEL=none \
-    $DOCKER_IMAGE_NAME/$DOCKER_IMAGE:latest
+    $DOCKER_REPO/$DOCKER_IMAGE_NAME:latest
