@@ -34,16 +34,20 @@ type TimeSeriesField struct {
 	StorageName string
 	ClusterCol  string
 	IDCol       string
+	XCol        string
+	XColType    string
 	Label       string
 	Type        string
 }
 
 // NewTimeSeriesField creates a new field for timeseries types.
-func NewTimeSeriesField(storage *Storage, storageName string, clusterCol string, idCol string, label string, typ string) *TimeSeriesField {
+func NewTimeSeriesField(storage *Storage, storageName string, clusterCol string, idCol string, label string, typ string, xCol string, xColType string) *TimeSeriesField {
 	field := &TimeSeriesField{
 		Storage:     storage,
 		StorageName: storageName,
 		IDCol:       idCol,
+		XCol:        xCol,
+		XColType:    xColType,
 		ClusterCol:  clusterCol,
 		Label:       label,
 		Type:        typ,
@@ -166,6 +170,7 @@ func (f *TimeSeriesField) FetchTimeseriesSummaryData(timeVar *model.Variable, in
 func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
+	var timeline *api.Histogram
 	var err error
 
 	if resultURI == "" {
@@ -192,6 +197,13 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		}
 	}
 
+	timelineField := NewNumericalField(f.Storage, f.StorageName, f.XCol, f.XCol, f.XColType)
+
+	timeline, err = timelineField.fetchHistogram(nil, invert)
+	if err != nil {
+		return nil, err
+	}
+
 	return &api.VariableSummary{
 		Key:      f.IDCol,
 		Label:    f.Label,
@@ -199,6 +211,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		VarType:  f.Type,
 		Baseline: baseline,
 		Filtered: filtered,
+		Timeline: timeline,
 	}, nil
 }
 
