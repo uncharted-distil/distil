@@ -11,16 +11,19 @@
 				Unexpected error has occured while importing <b>{{ importedDataset.name }}</b>
 			</b-alert>
 		</div>
+		<div class="suggestion-search">
+			<b-input v-model="filterString" placeholder="Search Join Suggestions" />
+		</div>
 		<div class="suggestion-heading">
 			<h6>Select a dataset to join with: </h6>
 		</div>
-		<div class="suggstion-list">
-			<div v-if="suggestionItems.length === 0">
+		<div class="suggestion-list">
+			<div v-if="filteredSuggestedItems.length === 0">
 				No datasets are found
 			</div>
 			<b-list-group>
 				<b-list-group-item
-					v-for="item in suggestionItems"
+					v-for="item in filteredSuggestedItems"
 					:key="item.key"
 					href="#"
 					v-bind:class="{ selected: item.selected }"
@@ -31,8 +34,8 @@
 					<div class="description" v-html="item.dataset.description">
 						{{item.dataset.description}}
 					</div>
-					<div class="suggested-columns">
-						<b>Suggested Join Columns: </b>{{item.dataset.joinSuggestion[0].joinColumns[0]}}
+					<div v-if="item.dataset.joinSuggestion" class="suggested-columns">
+						<b>Suggested Join Columns: </b>{{item.dataset.joinSuggestion[0].joinColumns}}
 					</div>
 					<div>
 						<span>
@@ -92,6 +95,7 @@ interface JoinSuggestionItem {
 interface StatusPanelJoinState {
 	suggestionItems: JoinSuggestionItem[];
 	showStatusMessage: boolean;
+	filterString: string;
 }
 
 export default Vue.extend({
@@ -100,6 +104,7 @@ export default Vue.extend({
 		return {
 			showStatusMessage: true,
 			suggestionItems: [],
+			filterString: ''
 		};
 	},
 	computed: {
@@ -114,15 +119,24 @@ export default Vue.extend({
 				.find(request => request.dataset === this.dataset && request.type === DatasetPendingRequestType.JOIN_SUGGESTION);
 			return <JoinSuggestionPendingRequest>request;
 		},
-		joinSuggestoins(): Dataset[] {
+		joinSuggestions(): Dataset[] {
 			const joinSuggestions = this.joinSuggestionRequestData && this.joinSuggestionRequestData.suggestions;
 			return joinSuggestions || [];
+		},
+		filteredSuggestedItems(): JoinSuggestionItem[] {
+			const filteredItems = this.filterString.length > 0 && this.suggestionItems.length > 0
+				? this.suggestionItems.filter(item => (
+					item.dataset.name.indexOf(this.filterString) > -1
+					|| item.dataset.description.indexOf(this.filterString) > -1
+				))
+				: this.suggestionItems;
+			return filteredItems;
 		},
 		joinDatasetImportRequestData(): JoinDatasetImportPendingRequest {
 			// get importing request for a dataset that is in the suggestion list.
 			const request = datasetGetters.getPendingRequests(this.$store)
 				.find(request => request.type === DatasetPendingRequestType.JOIN_DATASET_IMPORT);
-			const isInSuggestionList = Boolean(this.joinSuggestoins.find(item => item.id === (request && request.dataset)));
+			const isInSuggestionList = Boolean(this.joinSuggestions.find(item => item.id === (request && request.dataset)));
 			return isInSuggestionList ? <JoinDatasetImportPendingRequest>request : undefined;
 		},
 		isImporting(): boolean {
@@ -151,19 +165,19 @@ export default Vue.extend({
 			return this.selectedItem && this.selectedItem.isAvailable !== undefined && !this.isImporting;
 		},
 		baseColumnSuggestions(): string[] {
-			return this.selectedDataset && this.selectedDataset.joinSuggestion[0]
+			return this.selectedDataset && this.selectedDataset.joinSuggestion && this.selectedDataset.joinSuggestion[0]
 				? this.selectedDataset.joinSuggestion[0].baseColumns
 				: [];
 		},
 		joinColumnSuggestions(): string[] {
-			return this.selectedDataset && this.selectedDataset.joinSuggestion[0]
+			return this.selectedDataset && this.selectedDataset.joinSuggestion && this.selectedDataset.joinSuggestion[0]
 				? this.selectedDataset.joinSuggestion[0].joinColumns
 				: [];
 		},
 	},
 	methods: {
 		initSuggestionItems() {
-			const items = this.joinSuggestoins || [];
+			const items = this.joinSuggestions || [];
 			// resolve join availablity of the importing dataset
 			const isImporting = this.isImporting || this.isImportRequestResolved;
 			this.suggestionItems = items.map(suggestion => {
@@ -174,14 +188,14 @@ export default Vue.extend({
 				const selected = isImporting && isImportingDataset;
 				return {
 					dataset: suggestion,
-					// There could be multiple item with same dataset id with diffrent join suggestions.
+					// There could be multiple items with same dataset id with different join suggestions.
 					// So item key must be a combination of id and the join suggestions to be unique
-					key: suggestion.id +
-						`${
+					key: suggestion.id
+						+ (suggestion.joinSuggestion && suggestion.joinSuggestion[0] ? `${
 							suggestion.joinSuggestion[0].baseColumns
 							.concat(suggestion.joinSuggestion[0].joinColumns)
 							.join('-')
-						}`,
+						}` : ''),
 					isAvailable,
 					selected,
 				};
@@ -274,13 +288,19 @@ export default Vue.extend({
 .status-panel-join .suggestion-heading h6{
 	margin: 0;
 }
-.status-panel-join .suggstion-list {
+.status-panel-join .suggestion-list {
 	overflow: auto;
 	overflow-wrap: break-word;
 }
 
-.status-panel-join .suggstion-list .suggested-columns {
+.status-panel-join .suggestion-list .suggested-columns {
 	font-size: .75rem;
+}
+
+.status-panel-join .suggestion-search {
+	height: 2em;
+	margin-bottom: 20px;
+	flex-shrink: 0;
 }
 
 .status-panel-join .list-group-item.selected{
