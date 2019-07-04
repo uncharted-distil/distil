@@ -32,7 +32,7 @@ const (
 var (
 	samples = []*Extrema{
 		{
-			Type: model.FloatType,
+			Type: model.RealType,
 			Min:  0.2667,
 			Max:  1.4630,
 		},
@@ -47,7 +47,7 @@ var (
 			Max:  60,
 		},
 		{
-			Type: model.FloatType,
+			Type: model.RealType,
 			Min:  -1.4630,
 			Max:  -0.2667,
 		},
@@ -62,7 +62,7 @@ var (
 			Max:  -1,
 		},
 		{
-			Type: model.FloatType,
+			Type: model.RealType,
 			Min:  -1.4630,
 			Max:  3.2667,
 		},
@@ -77,7 +77,7 @@ var (
 			Max:  5,
 		},
 		{
-			Type: model.FloatType,
+			Type: model.RealType,
 			Min:  -512.4630,
 			Max:  1097.2667,
 		},

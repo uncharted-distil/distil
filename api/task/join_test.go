@@ -45,7 +45,7 @@ func TestJoin(t *testing.T) {
 		{
 			Name:        "alpha",
 			DisplayName: "Alpha",
-			Type:        model.FloatType,
+			Type:        model.RealType,
 		},
 		{
 			Name:        "bravo",
@@ -129,7 +129,7 @@ func TestJoin(t *testing.T) {
 		{
 			Label: "Alpha",
 			Key:   "alpha",
-			Type:  model.FloatType,
+			Type:  model.RealType,
 		},
 		{
 			Label: "Charlie",
