@@ -36,7 +36,7 @@ func (s *Storage) FetchResidualsExtremaByURI(dataset string, storageName string,
 	}
 	resultVariable := &model.Variable{
 		Name: "value",
-		Type: model.TextType,
+		Type: model.StringType,
 	}
 	return s.fetchResidualsExtrema(resultURI, storageName, targetVariable, resultVariable)
 }
@@ -155,7 +155,7 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, storageName string, va
 func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, variable *model.Variable, extrema *api.Extrema) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
-		Type: model.TextType,
+		Type: model.StringType,
 	}
 
 	// need the extrema to calculate the histogram interval

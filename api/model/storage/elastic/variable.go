@@ -210,7 +210,7 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 	var filtered []*model.Variable
 	for _, v := range variables {
 		_, isHidden := hidden[v.Name]
-		if v.Grouping != nil || !isHidden {
+		if !v.Deleted && (v.Grouping != nil || !isHidden) {
 			filtered = append(filtered, v)
 		}
 	}
@@ -243,11 +243,11 @@ func (s *Storage) DoesVariableExist(dataset string, varName string) (bool, error
 	if len(res.Hits.Hits) > 1 {
 		return false, errors.New("elasticSearch variable fetch query len(hits) > 1")
 	}
-	_, err = s.parseVariable(res.Hits.Hits[0], varName)
+	v, err := s.parseVariable(res.Hits.Hits[0], varName)
 	if err != nil {
 		return false, nil
 	}
-	return true, nil
+	return !v.Deleted, nil
 }
 
 // FetchVariable returns the variable for the provided index, dataset, and variable.

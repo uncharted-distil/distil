@@ -19,7 +19,7 @@ import 'jquery';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
-import { filterSummariesByDataset } from '../util/data';
+import { filterSummariesByDataset, getComposedVariableKey } from '../util/data';
 import VariableFacets from '../components/VariableFacets';
 import { Grouping, Variable, VariableSummary } from '../store/dataset/index';
 import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
@@ -89,6 +89,14 @@ export default Vue.extend({
 						datasetActions.removeGrouping(this.$store, {
 							dataset: this.dataset,
 							grouping: v.grouping
+						}).then(() => {
+							if (v.grouping.subIds.length > 0) {
+								const composedKey = getComposedVariableKey(v.grouping.subIds);
+								datasetActions.deleteVariable(this.$store, {
+									dataset: this.dataset,
+									key: getComposedVariableKey(v.grouping.subIds)
+								});
+							}
 						});
 					});
 					container.appendChild(groupingElem);

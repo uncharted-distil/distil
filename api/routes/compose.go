@@ -40,8 +40,16 @@ func ComposeHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorage
 			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
 			return
 		}
-		varName, _ := params["varName"].(string)
-		variables, _ := json.StringArray(params, "variables")
+		varName, ok := json.String(params, "varName")
+		if !ok {
+			handleError(w, errors.Wrap(err, "Unable to parse `varName` parameter"))
+			return
+		}
+		variables, ok := json.StringArray(params, "variables")
+		if !ok {
+			handleError(w, errors.Wrap(err, "Unable to parse `variables` parameter"))
+			return
+		}
 
 		// initialize the storage
 		metaStorage, err := esMetaCtor()
@@ -65,12 +73,12 @@ func ComposeHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorage
 
 		if !composeExists {
 			// create the new field
-			err = metaStorage.AddVariable(dataset, varName, model.TextType, "grouping")
+			err = metaStorage.AddVariable(dataset, varName, model.StringType, "grouping")
 			if err != nil {
 				handleError(w, err)
 				return
 			}
-			err = dataStorage.AddVariable(dataset, storageName, varName, model.TextType)
+			err = dataStorage.AddVariable(dataset, storageName, varName, model.StringType)
 			if err != nil {
 				handleError(w, err)
 				return

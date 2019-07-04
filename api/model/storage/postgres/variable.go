@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	catResultLimit = 100
+	catResultLimit = 10
 )
 
 func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*api.Extrema, error) {

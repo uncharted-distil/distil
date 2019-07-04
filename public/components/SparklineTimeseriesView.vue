@@ -611,6 +611,8 @@ svg.axis {
 	position: relative;
 	height: calc(100% - 64px);
 	z-index: 0;
+	font-size: 10px;
+	font-weight: bold;
 	overflow-x: hidden;
 	overflow-y: auto;
 }

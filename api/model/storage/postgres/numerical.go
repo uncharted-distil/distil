@@ -17,6 +17,7 @@ package postgres
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -120,6 +121,11 @@ func (f *NumericalField) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
 			points = append(points, []float64{float64(x), y})
 		}
 	}
+
+	sort.Slice(points, func(i, j int) bool {
+		return points[i][0] < points[j][0]
+	})
+
 	return points, nil
 }
 
@@ -720,7 +726,7 @@ func (f *NumericalField) FetchPredictedSummaryData(resultURI string, datasetResu
 func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
-		Type: model.TextType,
+		Type: model.StringType,
 	}
 
 	// need the extrema to calculate the histogram interval
@@ -963,7 +969,7 @@ func (f *NumericalField) FetchForecastingSummaryData(timeVar *model.Variable, in
 func (f *NumericalField) fetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
-		Type: model.TextType,
+		Type: model.StringType,
 	}
 
 	extrema, err := f.fetchTimeExtremaByResultURI(timeVar, resultURI)

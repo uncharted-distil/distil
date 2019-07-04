@@ -18,6 +18,7 @@ package postgres
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -64,6 +65,11 @@ func (s *Storage) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
 			points = append(points, []float64{x, y})
 		}
 	}
+
+	sort.Slice(points, func(i, j int) bool {
+		return points[i][0] < points[j][0]
+	})
+
 	return points, nil
 }
 
@@ -73,13 +79,11 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 
 	for _, bucket := range categoryBuckets {
 
-		timeseriesIDField := "series_id"
-
-		prefixedVarName := f.clusterVarName(f.ClusterCol)
+		clusteringColName := f.clusteringColName()
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
-			timeseriesIDField, f.StorageName, prefixedVarName)
+			f.IDCol, f.StorageName, clusteringColName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -88,14 +92,34 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 		}
 
 		if rows.Next() {
-			var timeseriesExemplar int
-			err = rows.Scan(&timeseriesExemplar)
+
+			values, err := rows.Values()
 			if err != nil {
-				return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
+				rows.Close()
+				return nil, errors.Wrap(err, "unable to parse solution from Postgres")
 			}
-			timeseriesExemplars = append(timeseriesExemplars, strconv.FormatInt(int64(timeseriesExemplar), 10))
+
+			if len(values) < 1 {
+				return nil, errors.Wrap(fmt.Errorf("missing values"), "unable to parse timeseries id")
+			}
+
+			timeseriesExemplarInt, ok := values[0].(int)
+			if ok {
+				timeseriesExemplars = append(timeseriesExemplars, strconv.FormatInt(int64(timeseriesExemplarInt), 10))
+				rows.Close()
+				continue
+			}
+
+			timeseriesExemplar, ok := values[0].(string)
+			if ok {
+				timeseriesExemplars = append(timeseriesExemplars, timeseriesExemplar)
+				rows.Close()
+				continue
+			}
+
+			rows.Close()
+			return nil, errors.Wrap(fmt.Errorf("timeseries id type not recognized %v", values[0]), "unable to parse timeseries id")
 		}
-		rows.Close()
 	}
 
 	if len(timeseriesExemplars) == 0 {
@@ -143,6 +167,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
+
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, invert)
 		if err != nil {
@@ -177,8 +202,11 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	}, nil
 }
 
-func (f *TimeSeriesField) clusterVarName(varName string) string {
-	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, varName)
+func (f *TimeSeriesField) clusteringColName() string {
+	if f.ClusterCol != "" {
+		return fmt.Sprintf("%s%s", model.ClusterVarPrefix, f.ClusterCol)
+	}
+	return f.IDCol
 }
 
 func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
@@ -187,7 +215,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, false)
 
-	prefixedVarName := f.clusterVarName(f.ClusterCol)
+	clusteringColName := f.clusteringColName()
 
 	where := ""
 	if len(wheres) > 0 {
@@ -196,7 +224,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 
 	// Get count by category.
 	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
-		prefixedVarName, f.StorageName, where, prefixedVarName, prefixedVarName, catResultLimit)
+		clusteringColName, f.StorageName, where, clusteringColName, clusteringColName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -235,7 +263,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	prefixedVarName := f.clusterVarName(f.ClusterCol)
+	clusteringColName := f.clusteringColName()
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -244,9 +272,9 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
-		prefixedVarName, f.StorageName, f.Storage.getResultTable(f.StorageName),
-		model.D3MIndexFieldName, len(params), where, prefixedVarName,
-		prefixedVarName, catResultLimit)
+		clusteringColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
+		model.D3MIndexFieldName, len(params), where, clusteringColName,
+		clusteringColName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -271,9 +299,9 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 }
 
 func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
-	prefixedVarName := f.clusterVarName(f.ClusterCol)
+	clusteringColName := f.clusteringColName()
 
-	termsAggName := api.TermsAggPrefix + prefixedVarName
+	termsAggName := api.TermsAggPrefix + clusteringColName
 
 	// Parse bucket results.
 	buckets := make([]*api.Bucket, 0)
@@ -340,7 +368,7 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 }
 
 func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	targetName := f.clusterVarName(f.ClusterCol)
+	targetName := f.clusteringColName()
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)

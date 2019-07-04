@@ -45,6 +45,10 @@ export function getTimeseriesGroupingsFromFields(variables: Variable[], fields: 
 		});
 }
 
+export function getComposedVariableKey(keys: string[]): string {
+	return keys.join('_');
+}
+
 export function getTimeseriesAnalysisIntervals(timeVar: Variable, range: number): any[] {
 	const SECONDS_VALUE = 1;
 	const MINUTES_VALUE = SECONDS_VALUE * 60;
@@ -124,8 +128,8 @@ export function fetchSummaryExemplars(datasetName: string, variableName: string,
 	const variable = variables.find(v => v.colName === variableName);
 
 	const baselineExemplars = summary.baseline.exemplars;
-	const filteredExemplars = summary.filtered ? summary.filtered.exemplars : [];
-	const exemplars = baselineExemplars ? baselineExemplars.concat(filteredExemplars) : filteredExemplars;
+	const filteredExemplars = summary.filtered && summary.filtered.exemplars ? summary.filtered.exemplars : null;
+	const exemplars = filteredExemplars ? filteredExemplars : baselineExemplars;
 
 	if (exemplars) {
 		if (variable.grouping) {

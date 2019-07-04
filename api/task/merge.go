@@ -45,9 +45,9 @@ func Merge(datasetSource metadata.DatasetSource, schemaFile string, index string
 
 	// create & submit the solution request
 	var pip *pipeline.PipelineDescription
-	timeseries, mainResID, refIndex := isTimeseriesDataset(meta)
+	timeseries, linkResID, _ := isTimeseriesDataset(meta)
 	if timeseries {
-		pip, err = description.CreateTimeseriesFormatterPipeline("Time Cop", "", mainResID, refIndex)
+		pip, err = description.CreateTimeseriesFormatterPipeline("Time Cop", "", linkResID)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to create denormalize pipeline")
 		}
@@ -85,7 +85,7 @@ func Merge(datasetSource metadata.DatasetSource, schemaFile string, index string
 		v := vars[field]
 		if v == nil {
 			// create new variables (ex: series_id)
-			v = model.NewVariable(i, field, field, field, model.TextType, model.TextType, []string{"attribute"}, model.VarRoleData, nil, outputMeta.DataResources[0].Variables, false)
+			v = model.NewVariable(i, field, field, field, model.StringType, model.StringType, []string{"attribute"}, model.VarRoleData, nil, outputMeta.DataResources[0].Variables, false)
 		}
 		v.Index = i
 		outputMeta.DataResources[0].Variables = append(outputMeta.DataResources[0].Variables, v)
@@ -136,7 +136,7 @@ func isTimeseriesDataset(meta *model.Metadata) (bool, string, int) {
 			resID := v.RefersTo["resID"].(string)
 			res := getResource(meta, resID)
 			if res != nil && res.ResType == "timeseries" {
-				return true, mainDR.ResID, v.Index
+				return true, resID, v.Index
 			}
 		}
 	}
