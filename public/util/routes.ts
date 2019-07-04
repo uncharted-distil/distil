@@ -25,7 +25,6 @@ export interface RouteArgs {
 	joinColumnSuggestions?: string; // suggested target join columns
 	timeseriesAnalysis?: string;
 	timeseriesBinningInterval?: string;
-	timeseriesExpandedFacets?: string;
 
 	// we currently don't have a way to add these to the interface
 	//
@@ -97,7 +96,6 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
 	if (!_.isUndefined(args.joinAccuracy)) { query.joinAccuracy = args.joinAccuracy; }
 	if (!_.isUndefined(args.timeseriesAnalysis)) { query.timeseriesAnalysis = args.timeseriesAnalysis; }
 	if (!_.isUndefined(args.timeseriesBinningInterval)) { query.timeseriesBinningInterval = args.timeseriesBinningInterval; }
-	if (!_.isUndefined(args.timeseriesExpandedFacets)) { query.timeseriesExpandedFacets = args.timeseriesExpandedFacets; }
 
 	if (args[JOINED_VARS_INSTANCE_PAGE]) { query[JOINED_VARS_INSTANCE_PAGE] = args[JOINED_VARS_INSTANCE_PAGE]; }
 	if (args[AVAILABLE_TARGET_VARS_INSTANCE_PAGE]) { query[AVAILABLE_TARGET_VARS_INSTANCE_PAGE] = args[AVAILABLE_TARGET_VARS_INSTANCE_PAGE]; }

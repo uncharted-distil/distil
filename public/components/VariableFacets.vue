@@ -29,7 +29,6 @@
 								:enable-highlighting="[enableHighlighting, enableHighlighting]"
 								:ignore-highlights="[ignoreHighlights, ignoreHighlights]"
 								:instanceName="instanceName"
-								:expanded="timeseriesExpandedFacets === summary.key.toLowerCase()"
 								@numerical-click="onNumericalClick"
 								@categorical-click="onCategoricalClick"
 								@range-change="onRangeChange"
@@ -151,10 +150,6 @@ export default Vue.extend({
 
 		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
-		},
-
-		timeseriesExpandedFacets(): string {
-			return (routeGetters.getTimeseriesExpandedFacet(this.$store) || '').toLowerCase();
 		},
 
 		importance(): Dictionary<number> {

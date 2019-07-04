@@ -14,7 +14,7 @@
 			@categorical-click="onCategoricalClick"
 			@range-change="onRangeChange">
 		</facet-entry>
-		<facet-entry v-if="expanded"
+		<facet-entry v-if="!!timelineSummary"
 			:summary="timelineSummary"
 			:highlight="highlight"
 			:row-selection="rowSelection"
@@ -31,9 +31,11 @@
 
 <script lang="ts">
 
-import FacetEntry from '../components/FacetEntry';
-import { VariableSummary, Highlight, RowSelection, Row } from '../store/dataset/index';
 import Vue from 'vue';
+import FacetEntry from '../components/FacetEntry';
+import { getters as datasetGetters } from '../store/dataset/module';
+import { Variable, VariableSummary, Highlight, RowSelection, Row, NUMERICAL_SUMMARY } from '../store/dataset/index';
+import { INTEGER_TYPE } from '../util/types';
 
 export default Vue.extend({
 	name: 'facet-timeseries',
@@ -44,7 +46,6 @@ export default Vue.extend({
 
 	props: {
 		summary: Object as () => VariableSummary,
-		expanded: Boolean as () => boolean,
 		highlight: Object as () => Highlight,
 		rowSelection: Object as () => RowSelection,
 		instanceName: String as () => string,
@@ -62,20 +63,28 @@ export default Vue.extend({
 	},
 
 	computed: {
+		variable(): Variable {
+			const vars = datasetGetters.getVariables(this.$store);
+			return vars.find(v => v.colName === this.summary.key);
+		},
 		timelineSummary(): VariableSummary {
-			// TODO: impl this
-			return null;
+			if (this.summary.pending || !this.variable) {
+				return null;
+			}
+
+			const grouping = this.variable.grouping;
+
+			return {
+				label: grouping.properties.xCol,
+				key: grouping.properties.xCol,
+				dataset: this.summary.dataset,
+				type: NUMERICAL_SUMMARY,
+				varType: INTEGER_TYPE,
+				baseline: this.summary.timeline
+			};
 		}
 	},
 
-	watch: {
-		expanded(newExpanded: boolean) {
-			if (!newExpanded) {
-				// new function that returns the result of this.html
-				this.customHtml = (...args) => this.html(...args);
-			}
-		},
-	},
 	methods: {
 		onCategoricalClick(...args) {
 			this.$emit('categorical-click', ...args);

@@ -49,9 +49,6 @@ export const getters = {
 	getRouteTimeseriesBinningInterval(state: Route): string {
 		return state.query.timeseriesBinningInterval as string;
 	},
-	getTimeseriesExpandedFacet(state: Route): string {
-		return state.query.timeseriesExpandedFacets as string;
-	},
 
 	getJoinDatasetsVariables(state: Route, getters: any): Variable[] {
 		const datasetIDs = getters.getRouteJoinDatasets;

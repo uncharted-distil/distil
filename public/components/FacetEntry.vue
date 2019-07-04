@@ -840,23 +840,6 @@ export default Vue.extend({
 			}
 		},
 
-		getGroupSampleValues(group: Group): any[] {
-			let values = [];
-			group.facets.forEach(facet => {
-				if (isNumericalFacet(facet)) {
-					values = facet.histogram.slices.slice(0, 10).map(b => _.toNumber(b.label));
-				} else if (isSparklineFacet(facet)) {
-					if (facet.sparklines) {
-						values = facet.sparkline[0].slice(0, 10).map(p => _.isArray(p) ? p[1] : p);
-					} else {
-						values = facet.sparkline.slice(0, 10).map(p => _.isArray(p) ? p[1] : p);
-					}
-				} else if (isCategoricalFacet(facet)) {
-					values.push(facet.value);
-				}
-			});
-			return values.filter(v => v !== undefined);
-		},
 
 		// inject type headers
 		injectTypeChangeHeaders(group: Group, $elem: JQuery) {
@@ -873,8 +856,7 @@ export default Vue.extend({
 						store: this.$store,
 						propsData: {
 							dataset: group.dataset,
-							field: group.colName,
-							values: this.getGroupSampleValues(group)
+							field: group.colName
 						}
 					});
 				menu.$mount($slot[0]);
