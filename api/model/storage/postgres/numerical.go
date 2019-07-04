@@ -301,6 +301,7 @@ func (f *NumericalField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema
 func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
+	var timeline *api.Histogram
 	var err error
 	if resultURI == "" {
 		baseline, err = f.fetchTimeseriesHistogram(timeVar, interval, nil, invert)
@@ -326,6 +327,13 @@ func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, int
 		}
 	}
 
+	timelineField := NewNumericalField(f.Storage, f.StorageName, timeVar.Name, timeVar.Name, timeVar.Type)
+
+	timeline, err = timelineField.fetchHistogram(nil, invert)
+	if err != nil {
+		return nil, err
+	}
+
 	return &api.VariableSummary{
 		Label:    f.Label,
 		Key:      f.Key,
@@ -333,6 +341,7 @@ func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, int
 		VarType:  f.Type,
 		Baseline: baseline,
 		Filtered: filtered,
+		Timeline: timeline,
 	}, nil
 }
 
