@@ -8,4 +8,4 @@ cd ..
 make build_static
 yarn build
 popd
-docker build -t $DOCKER_REPO/$IMAGE_NAME:latest ..
+docker build -t $DOCKER_REPO/$DOCKER_IMAGE_NAME:latest ..
