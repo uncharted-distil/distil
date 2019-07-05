@@ -46,7 +46,7 @@ export default Vue.extend({
 	data() {
 		return {
 			showTimeseriesChoice: false,
-			haveVariablesLoaded: false
+			havePromptedAlready: false
 		};
 	},
 
@@ -78,13 +78,16 @@ export default Vue.extend({
 		timeseriesAnalysis() {
 			viewActions.fetchSelectTargetData(this.$store, true);
 		},
-		variables() {
-			if (this.variables.length > 0 && !this.timeseriesAnalysis && !this.haveVariablesLoaded) {
-				if (this.hasTimeVariable) {
-					this.showTimeseriesChoice = true;
+		variables: {
+			handler() {
+				if (this.variables.length > 0 && !this.timeseriesAnalysis && !this.havePromptedAlready) {
+					if (this.hasTimeVariable) {
+						this.showTimeseriesChoice = true;
+						this.havePromptedAlready = true;
+					}
 				}
-				this.haveVariablesLoaded = true;
-			}
+			},
+			deep: true
 		}
 	},
 
