@@ -327,7 +327,7 @@ func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, int
 		}
 	}
 
-	if model.IsNumerical(timeVar.Type) {
+	if model.IsNumerical(timeVar.Type) || model.IsTimestamp(timeVar.Type) {
 
 		timelineField := NewNumericalField(f.Storage, f.StorageName, timeVar.Name, timeVar.Name, timeVar.Type)
 		timeline, err = timelineField.fetchHistogram(nil, invert)
