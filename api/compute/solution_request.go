@@ -61,6 +61,11 @@ const (
 var (
 	// folder for dataset data exchanged with TA2
 	datasetDir string
+
+	ta2RoleMap = map[string]bool{
+		"data":  true,
+		"index": true,
+	}
 )
 
 // SetDatasetDir sets the output data dir
@@ -529,7 +534,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	//       need to figure out if that causes issues!!!
 	dataVariables := []*model.Variable{}
 	for _, variable := range variables {
-		if variable.DistilRole != "metadata" && variable.DistilRole != "geocoding" {
+		if isTA2Field(variable.DistilRole) {
 			dataVariables = append(dataVariables, variable)
 		}
 	}
@@ -698,4 +703,8 @@ func getColumnIndex(variable *model.Variable, selectedVariables []string) int {
 	}
 
 	return colIndex
+}
+
+func isTA2Field(distilRole string) bool {
+	return ta2RoleMap[distilRole]
 }
