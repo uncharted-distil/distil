@@ -327,11 +327,22 @@ func (f *NumericalField) FetchTimeseriesSummaryData(timeVar *model.Variable, int
 		}
 	}
 
-	timelineField := NewNumericalField(f.Storage, f.StorageName, timeVar.Name, timeVar.Name, timeVar.Type)
+	if model.IsNumerical(timeVar.Type) {
 
-	timeline, err = timelineField.fetchHistogram(nil, invert)
-	if err != nil {
-		return nil, err
+		timelineField := NewNumericalField(f.Storage, f.StorageName, timeVar.Name, timeVar.Name, timeVar.Type)
+		timeline, err = timelineField.fetchHistogram(nil, invert)
+		if err != nil {
+			return nil, err
+		}
+
+	} else if model.IsDateTime(timeVar.Type) {
+
+		timelineField := NewDateTimeField(f.Storage, f.StorageName, timeVar.Name, timeVar.Name, timeVar.Type)
+		timeline, err = timelineField.fetchHistogram(nil, invert)
+		if err != nil {
+			return nil, err
+		}
+
 	}
 
 	return &api.VariableSummary{
