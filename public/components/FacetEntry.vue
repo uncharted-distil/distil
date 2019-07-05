@@ -921,6 +921,10 @@ export default Vue.extend({
 	margin-bottom: 6px;
 }
 
+.facets-root {
+	position: relative;
+}
+
 .facets-group-container.deemphasis {
 	opacity: 0.5;
 }
