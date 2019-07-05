@@ -35,7 +35,7 @@ import Vue from 'vue';
 import FacetEntry from '../components/FacetEntry';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { Variable, VariableSummary, Highlight, RowSelection, Row, NUMERICAL_SUMMARY } from '../store/dataset/index';
+import { Dataset, Variable, VariableSummary, Highlight, RowSelection, Row, NUMERICAL_SUMMARY } from '../store/dataset/index';
 import { INTEGER_TYPE } from '../util/types';
 
 export default Vue.extend({
@@ -64,8 +64,11 @@ export default Vue.extend({
 	},
 
 	computed: {
-		timeseriesAnalysisVariable(): string {
+		timeseriesAnalysisVariableName(): string {
 			return routeGetters.getRouteTimeseriesAnalysis(this.$store);
+		},
+		timeseriesAnalysisVariable(): Variable {
+			return datasetGetters.getTimeseriesAnalysisVariable(this.$store);
 		},
 		isTimeseriesAnalysis(): boolean {
 			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
@@ -83,16 +86,22 @@ export default Vue.extend({
 			}
 
 			let timeVarName = '';
+			let timeVarType = '';
+			let timeVar = null;
 			if (this.isTimeseriesAnalysis) {
-				timeVarName = this.timeseriesAnalysisVariable;
+				timeVarName = this.timeseriesAnalysisVariableName;
+				timeVar = this.timeseriesAnalysisVariable;
+				timeVarType = timeVar ? timeVar.colType : INTEGER_TYPE;
 			} else {
-				const timeVar = this.variables.find(v => v.colName === this.summary.key);
-				if (!timeVar) {
+				const summaryVar = this.variables.find(v => v.colName === this.summary.key);
+				if (!summaryVar) {
 					return null;
 				}
 
 				const grouping = this.variable.grouping;
 				timeVarName = grouping.properties.xCol;
+				timeVar = this.variables.find(v => v.colName === timeVarName);
+				timeVarType = timeVar ? timeVar.colType : INTEGER_TYPE;
 			}
 
 			if (this.summary.pending || !this.variable) {
@@ -104,7 +113,7 @@ export default Vue.extend({
 				key: timeVarName,
 				dataset: this.summary.dataset,
 				type: NUMERICAL_SUMMARY,
-				varType: INTEGER_TYPE,
+				varType: timeVarType,
 				baseline: this.summary.timeline
 			};
 		}
