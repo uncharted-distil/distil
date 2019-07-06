@@ -70,7 +70,10 @@ type SearchResultColumn struct {
 }
 
 func nyuSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]byte, error) {
-	queryJSON, err := json.Marshal(query)
+	queryNYU := map[string]interface{}{
+		"keywords": query.Dataset.Keywords,
+	}
+	queryJSON, err := json.Marshal(queryNYU)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to marshal datamart query")
 	}
