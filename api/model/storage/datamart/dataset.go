@@ -113,10 +113,10 @@ func (s *Storage) searchREST(searchText string, baseDataset *api.Dataset) ([]*ap
 	searchQueryDatasetProperties := &SearchQueryDatasetProperties{}
 	if len(terms) > 0 {
 		searchQueryDatasetProperties = &SearchQueryDatasetProperties{
-			About: searchText,
+			//About: searchText,
 			//Name:        terms,
-			Description: terms,
-			//Keywords:    terms,
+			//Description: terms,
+			Keywords: []string{searchText},
 		}
 	}
 	// get complete URI for the endpoint
