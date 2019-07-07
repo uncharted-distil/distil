@@ -147,7 +147,7 @@ func Cluster(datasetInputDir string, dataset string, variable string) ([]*Cluste
 	}
 
 	// find the field with the feature output
-	clusterIndex := getFieldIndex(header, slothResultFieldName)
+	clusterIndex := getFieldIndex(header, "cluster_labels")
 	d3mIndexIndex := getFieldIndex(header, model.D3MIndexName)
 
 	// build the output (skipping the header)
@@ -156,7 +156,7 @@ func Cluster(datasetInputDir string, dataset string, variable string) ([]*Cluste
 		label := v[clusterIndex].(string)
 		d3mIndex := v[d3mIndexIndex].(string)
 
-		clusteredData[i-1] = &ClusterPoint{
+		clusteredData[i] = &ClusterPoint{
 			D3MIndex:    d3mIndex,
 			SourceField: variable,
 			Label:       label,
