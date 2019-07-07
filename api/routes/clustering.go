@@ -1,0 +1,117 @@
+//
+//   Copyright © 2019 Uncharted Software Inc.
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+
+package routes
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/pkg/errors"
+	"goji.io/pat"
+
+	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil/api/env"
+	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/task"
+)
+
+// GeocodingResult represents a geocoding response for a variable.
+type ClusteringResult struct {
+	ClusterField string `json:"cluster"`
+}
+
+// ClusteringHandler generates a route handler that enables clustering
+// of a variable and the creation of the new column to hold the cluster label.
+func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// get dataset name
+		dataset := pat.Param(r, "dataset")
+		storageName := model.NormalizeDatasetID(dataset)
+		// get variable name
+		variable := pat.Param(r, "variable")
+
+		// get storage clients
+		metaStorage, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		dataStorage, err := dataCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		clusterVarName := fmt.Sprintf("_cluster_%s", variable)
+
+		// check if the cluster variables exist
+		clusterVarExist, err := metaStorage.DoesVariableExist(dataset, clusterVarName)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// create the new metadata and database variables
+		if !clusterVarExist {
+			err = metaStorage.AddVariable(dataset, clusterVarName, model.StringType, "metadata")
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			err = dataStorage.AddVariable(dataset, storageName, clusterVarName, model.StringType)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+		}
+
+		// get the source dataset folder
+		datasetMeta, err := metaStorage.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		sourceFolder := env.ResolvePath(datasetMeta.Source, datasetMeta.Folder)
+
+		// cluster data
+		clustered, err := task.Cluster(sourceFolder, dataset, variable)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// build the data for batching
+		clusteredData := make(map[string]string)
+		for _, cluster := range clustered {
+			clusteredData[cluster.D3MIndex] = cluster.Label
+		}
+
+		// update the batches
+		err = dataStorage.UpdateVariableBatch(storageName, clusterVarName, clusteredData)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// marshal output into JSON
+		err = handleJSON(w, ClusteringResult{
+			ClusterField: clusterVarName,
+		})
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal clustering result into JSON"))
+			return
+		}
+	}
+}

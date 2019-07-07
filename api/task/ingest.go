@@ -113,7 +113,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	log.Infof("finished cleaning the dataset")
 
 	if config.ClusteringEnabled {
-		output, err = Cluster(datasetSource, latestSchemaOutput, index, dataset, config)
+		output, err = ClusterDataset(datasetSource, latestSchemaOutput, index, dataset, config)
 		if err != nil {
 			if config.HardFail {
 				return errors.Wrap(err, "unable to cluster all data")
