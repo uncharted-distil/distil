@@ -42,6 +42,7 @@ type ClusterPoint struct {
 	Label       string
 }
 
+// ClusterDataset will cluster the dataset fields using a primitive.
 func ClusterDataset(datasetSource metadata.DatasetSource, schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
 	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative)
 	if err != nil {
@@ -130,7 +131,7 @@ func Cluster(datasetInputDir string, dataset string, variable string) ([]*Cluste
 		return nil, errors.Wrap(err, "unable to create sloth pipeline")
 	}
 
-	datasetURI, err := submitPipeline([]string{dataset}, step)
+	datasetURI, err := submitPipeline([]string{datasetInputDir}, step)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run pipeline primitive")
 	}

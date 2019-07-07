@@ -28,7 +28,7 @@ import (
 	"github.com/uncharted-distil/distil/api/task"
 )
 
-// GeocodingResult represents a geocoding response for a variable.
+// ClusteringResult represents a clustering response for a variable.
 type ClusteringResult struct {
 	ClusterField string `json:"cluster"`
 }
