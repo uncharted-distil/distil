@@ -46,8 +46,7 @@ export default Vue.extend({
 	},
 	props: {
 		dataset: String as () => string,
-		field: String as () => string,
-		values: Array as () => any[],
+		field: String as () => string
 	},
 
 	computed: {

@@ -127,6 +127,7 @@ export interface VariableSummary {
 	solutionId?: string;
 	baseline: Histogram;
 	filtered?: Histogram;
+	timeline?: Histogram;
 	err?: string;
 	pending?: boolean;
 }

@@ -69,17 +69,17 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 
 			storageName := model.NormalizeDatasetID(dataset)
 
-			// // ensure id is int
-			// err = meta.SetDataType(dataset, grouping.IDCol, model.IntegerType)
-			// if err != nil {
-			// 	handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-			// 	return
-			// }
-			// err = data.SetDataType(dataset, storageName, grouping.IDCol, model.IntegerType)
-			// if err != nil {
-			// 	handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-			// 	return
-			// }
+			// ensure id is timeseries
+			err = meta.SetDataType(dataset, grouping.IDCol, model.TimeSeriesType)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
+				return
+			}
+			err = data.SetDataType(dataset, storageName, grouping.IDCol, model.TimeSeriesType)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
+				return
+			}
 
 			if grouping.Properties.ClusterCol != "" {
 				// ensure cluster is categorical

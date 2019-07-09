@@ -149,8 +149,6 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read header line")
 	}
-	// first column will be the dataframe index which we should ignore
-	fields = fields[1:]
 
 	metadata := model.NewMetadata(datasetName, datasetName, datasetName, model.NormalizeDatasetID(datasetName))
 	dataResource := model.NewDataResource("learningData", compute.D3MResourceType, []string{compute.D3MResourceFormat})
@@ -208,7 +206,7 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 			errors.Wrap(err, "failed to parse joined csv row")
 			continue
 		}
-		writer.Write(row[1:])
+		writer.Write(row)
 	}
 
 	return mergedVariables, nil
@@ -255,22 +253,22 @@ func createFilteredData(csvFile *os.File, variables []*model.Variable, lineCount
 			continue
 		}
 
-		// convert row values to schema type, ignoring first column (contains dataframe index)
+		// convert row values to schema type
 		// rows that are malformed are discarded
-		typedRow := make([]interface{}, len(row)-1)
+		typedRow := make([]interface{}, len(row))
 		var rowError error
-		for j := 1; j < len(row); j++ {
-			varType := variables[j-1].Type
+		for j := 0; j < len(row); j++ {
+			varType := variables[j].Type
 			if model.IsNumerical(varType) {
 				if model.IsFloatingPoint(varType) {
-					typedRow[j-1], err = strconv.ParseFloat(row[j], 64)
+					typedRow[j], err = strconv.ParseFloat(row[j], 64)
 					if err != nil {
 						rowError = errors.Wrapf(err, "failed conversion for row %d", i)
 						errorCount++
 						break
 					}
 				} else {
-					typedRow[j-1], err = strconv.ParseInt(row[j], 10, 64)
+					typedRow[j], err = strconv.ParseInt(row[j], 10, 64)
 					if err != nil {
 						flt, err := strconv.ParseFloat(row[j], 64)
 						if err != nil {
@@ -278,11 +276,11 @@ func createFilteredData(csvFile *os.File, variables []*model.Variable, lineCount
 							errorCount++
 							break
 						}
-						typedRow[j-1] = int64(flt)
+						typedRow[j] = int64(flt)
 					}
 				}
 			} else {
-				typedRow[j-1] = row[j]
+				typedRow[j] = row[j]
 			}
 		}
 		if rowError != nil {
