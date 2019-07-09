@@ -3,7 +3,7 @@
 
 		<b-modal
 			v-model="showJoinSuccess"
-			class="join-preview-modal"
+			modal-class="join-preview-modal"
 			@shown="onSuccessModalShwon"
 			cancel-disabled
 			hide-header
