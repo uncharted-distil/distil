@@ -6,7 +6,19 @@
   </url>
   
   <url>
+    <loc>/reference-create-models.html</loc>
+  </url>
+  
+  <url>
+    <loc>/problem-discovery-create-models.html</loc>
+  </url>
+  
+  <url>
     <loc>/create-models.html</loc>
+  </url>
+  
+  <url>
+    <loc>/model-generation-create-models.html</loc>
   </url>
   
   <url>
@@ -18,7 +30,7 @@
   </url>
   
   <url>
-    <loc>/home.html</loc>
+    <loc>/reference-home.html</loc>
   </url>
   
   <url>
@@ -30,11 +42,27 @@
   </url>
   
   <url>
+    <loc>/reference-join-datasets.html</loc>
+  </url>
+  
+  <url>
     <loc>/select-data.html</loc>
   </url>
   
   <url>
+    <loc>/reference-select-data.html</loc>
+  </url>
+  
+  <url>
+    <loc>/reference-select-target.html</loc>
+  </url>
+  
+  <url>
     <loc>/select-target.html</loc>
+  </url>
+  
+  <url>
+    <loc>/problem-discovery-select-target.html</loc>
   </url>
   
   <url>
@@ -46,11 +74,27 @@
   </url>
   
   <url>
+    <loc>/model-generation-view-models.html</loc>
+  </url>
+  
+  <url>
+    <loc>/reference-view-models.html</loc>
+  </url>
+  
+  <url>
     <loc>/view-models.html</loc>
   </url>
   
   <url>
     <loc>/workflow-overview.html</loc>
+  </url>
+  
+  <url>
+    <loc>/problem-discovery-overview.html</loc>
+  </url>
+  
+  <url>
+    <loc>/model-generation-overview.html</loc>
   </url>
   
 </urlset>
