@@ -81,16 +81,18 @@ func newStatusChannel() chan SolutionStatus {
 
 // SolutionRequest represents a solution search request.
 type SolutionRequest struct {
-	Dataset        string
-	TargetFeature  string
-	Task           string
-	SubTask        string
-	TimestampField string
-	MaxSolutions   int
-	MaxTime        int
-	ProblemType    string
-	Metrics        []string
-	Filters        *api.FilterParams
+	Dataset          string
+	TargetFeature    string
+	Task             string
+	SubTask          string
+	TimestampField   string
+	MaxSolutions     int
+	MaxTime          int
+	ProblemType      string
+	Metrics          []string
+	Filters          *api.FilterParams
+	SearchResult     string
+	SearchProvenance string
 
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
@@ -253,18 +255,27 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 }
 
 // createPreprocessingPipeline creates pipeline to enfore user feature selection and typing
-func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable, targetVariable string, variables []string) (*pipeline.PipelineDescription, error) {
+func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable) (*pipeline.PipelineDescription, error) {
 	uuid := uuid.NewV4()
 	name := fmt.Sprintf("preprocessing-%s-%s", s.Dataset, uuid.String())
 	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
 
+	var augment *description.UserDatasetAugmentation
+	if s.SearchResult != "" {
+		augment = &description.UserDatasetAugmentation{
+			SearchResult:  s.SearchResult,
+			SystemID:      s.SearchProvenance,
+			BaseDatasetID: s.Dataset,
+		}
+	}
+
 	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc,
 		&description.UserDatasetDescription{
 			AllFeatures:      featureVariables,
-			TargetFeature:    targetVariable,
-			SelectedFeatures: variables,
+			TargetFeature:    s.TargetFeature,
+			SelectedFeatures: s.Filters.Variables,
 			Filters:          s.Filters.Filters,
-		}, nil)
+		}, augment)
 	if err != nil {
 		return nil, err
 	}
@@ -600,7 +611,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
-		preprocessing, err = s.createPreprocessingPipeline(dataVariables, s.TargetFeature, s.Filters.Variables)
+		preprocessing, err = s.createPreprocessingPipeline(dataVariables)
 		if err != nil {
 			return err
 		}

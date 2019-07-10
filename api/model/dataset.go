@@ -42,6 +42,7 @@ type Dataset struct {
 	Source          metadata.DatasetSource `json:"source"`
 	JoinSuggestions []*JoinSuggestion      `json:"joinSuggestion"`
 	JoinScore       float64                `json:"joinScore"`
+	SearchResult    string                 `json:"searchResult"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.

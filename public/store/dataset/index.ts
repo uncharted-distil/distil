@@ -90,6 +90,7 @@ export interface Dataset {
 	source: string;
 	joinSuggestion?: JoinSuggestion[];
 	joinScore?: number;
+	searchResult?: string;
 }
 
 export interface JoinSuggestion {

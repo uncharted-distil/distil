@@ -22,6 +22,8 @@ interface CreateSolutionRequest {
 	maxSolutions: number;
 	maxTime: number;
 	filters: FilterParams;
+	searchResult: string;
+	searchProvenance: string;
 }
 
 interface SolutionStatus {

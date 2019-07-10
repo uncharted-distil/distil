@@ -165,6 +165,7 @@ func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			Summary:         res.Summary,
 			JoinSuggestions: joinSuggestions,
 			JoinScore:       joinScore,
+			SearchResult:    string(responseRaw),
 		})
 	}
 
