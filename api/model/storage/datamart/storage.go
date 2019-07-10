@@ -24,7 +24,7 @@ import (
 const (
 	nyuSearchFunction = "search"
 	nyuGetFunction    = "download"
-	isiSearchFunction = "new/search_data"
+	isiSearchFunction = "search"
 	isiGetFunction    = "new/materialize_data"
 )
 

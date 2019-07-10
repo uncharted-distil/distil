@@ -14,13 +14,13 @@
 			instance-name="join-dataset-bottom"></join-data-preview-slot>
 
 		<div class="row justify-content-center">
-			<b-btn class="mt-3 join-modal-button" variant="outline-success" @click="commitJoin">
+			<b-btn class="mt-3 join-modal-button" variant="outline-success" @click="commitJoin" :disabled="isPending">
 				<div class="row justify-content-center">
 					<i class="fa fa-check-circle fa-2x mr-2"></i>
 					<b>Commit join</b>
 				</div>
 			</b-btn>
-			<b-btn class="mt-3 join-modal-button" variant="outline-danger" @click="onClose">
+			<b-btn class="mt-3 join-modal-button" variant="outline-danger" @click="onClose" :disabled="isPending">
 				<div class="row justify-content-center">
 					<i class="fa fa-times-circle fa-2x mr-2"></i>
 					<b>Cancel</b>

@@ -34,7 +34,7 @@
 					<div class="description" v-html="item.dataset.description">
 						{{item.dataset.description}}
 					</div>
-					<div v-if="item.dataset.joinSuggestion" class="suggested-columns">
+					<div v-if="item.dataset.joinSuggestion && item.dataset.joinSuggestion[0]" class="suggested-columns">
 						<b>Suggested Join Columns: </b>{{item.dataset.joinSuggestion[0].joinColumns}}
 					</div>
 					<div>

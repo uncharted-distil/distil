@@ -258,7 +258,13 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 	name := fmt.Sprintf("preprocessing-%s-%s", s.Dataset, uuid.String())
 	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
 
-	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, featureVariables, targetVariable, variables, s.Filters.Filters)
+	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc,
+		&description.UserDatasetDescription{
+			AllFeatures:      featureVariables,
+			TargetFeature:    targetVariable,
+			SelectedFeatures: variables,
+			Filters:          s.Filters.Filters,
+		}, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -677,7 +683,13 @@ func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	var err error
 	var preprocessingPipeline *pipeline.PipelineDescription
 	if !skipPreprocessing {
-		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc, allFeatures, target, selectedFeatures, nil)
+		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc,
+			&description.UserDatasetDescription{
+				AllFeatures:      allFeatures,
+				TargetFeature:    target,
+				SelectedFeatures: selectedFeatures,
+				Filters:          nil,
+			}, nil)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create preprocessing pipeline")
 		}
