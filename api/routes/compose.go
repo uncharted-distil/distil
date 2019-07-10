@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
@@ -122,22 +121,6 @@ func ComposeHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorage
 			return
 		}
 	}
-}
-
-func createFieldHash(data []interface{}, fields []string, mappedFields map[string]int) (string, error) {
-	// pull the fields to hash
-	dataToHash := make([]interface{}, 0)
-	for i := 0; i < len(fields); i++ {
-		fieldIndex := mappedFields[fields[i]]
-		dataToHash = append(dataToHash, data[fieldIndex])
-	}
-
-	// hash the desired fields
-	hashInt, err := hashstructure.Hash(dataToHash, nil)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%v", hashInt), nil
 }
 
 func createComposedFields(data []interface{}, fields []string, mappedFields map[string]int) string {
