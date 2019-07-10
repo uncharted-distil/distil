@@ -533,9 +533,25 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// TODO: imported datasets have d3m index as distil role = "index".
 	//       need to figure out if that causes issues!!!
 	dataVariables := []*model.Variable{}
+	var targetVariable *model.Variable
 	for _, variable := range variables {
 		if isTA2Field(variable.DistilRole) {
 			dataVariables = append(dataVariables, variable)
+		}
+		if variable.Name == s.TargetFeature {
+			targetVariable = variable
+		}
+	}
+
+	targetVarName := s.TargetFeature
+	if targetVariable.Grouping != nil && model.IsTimeSeries(targetVariable.Grouping.Type) {
+
+		// we need to use the yCol var instead as target
+		for _, variable := range variables {
+			if variable.Name == targetVariable.Grouping.Properties.YCol {
+				targetVariable = variable
+				targetVarName = variable.Name
+			}
 		}
 	}
 
@@ -545,15 +561,12 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	allVarFilters := s.Filters.Clone()
 	allVarFilters.Variables = []string{}
-	var targetVariable *model.Variable
 	var timeseriesField *model.Variable
 	for _, variable := range dataVariables {
 
 		// exclude cluster/feature generated columns
 		allVarFilters.AddVariable(variable.Name)
-		if variable.Name == s.TargetFeature {
-			targetVariable = variable
-		} else if variable.Name == s.TimestampField {
+		if variable.Name == s.TimestampField {
 			timeseriesField = variable
 		}
 	}
@@ -594,14 +607,15 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
-		preprocessing, err = s.createPreprocessingPipeline(dataVariables, s.TargetFeature, s.Filters.Variables)
+		preprocessing, err = s.createPreprocessingPipeline(dataVariables, targetVarName, s.Filters.Variables)
 		if err != nil {
 			return err
 		}
 	}
 
 	// create search solutions request
-	searchRequest, err := s.createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent)
+	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVarName, s.Dataset, s.Metrics, s.Task, s.SubTask, int64(s.MaxTime))
+
 	if err != nil {
 		return err
 	}
@@ -626,7 +640,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			continue
 		}
 
-		if v == s.TargetFeature {
+		if v == targetVarName {
 			// store target feature
 			typ = model.FeatureTypeTarget
 		} else {
