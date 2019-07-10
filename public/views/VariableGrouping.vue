@@ -254,7 +254,8 @@ export default Vue.extend({
 		},
 
 		isTimeseriesAnalysis(): boolean {
-			return this.xCol && (this.idCols.length === 0 && this.yCol === 0);
+			const ids = this.idCols.filter(id => !!id.value);
+			return this.xCol && (ids.length === 0 && this.yCol === 0);
 		}
 	},
 
@@ -307,9 +308,9 @@ export default Vue.extend({
 		},
 		onGroup() {
 			if (this.isTimeseriesAnalysis) {
-				this.submitGrouping();
-			} else {
 				this.submitTimeseriesAnalysis();
+			} else {
+				this.submitGrouping();
 			}
 		},
 		submitGrouping() {
