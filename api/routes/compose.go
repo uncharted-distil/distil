@@ -18,6 +18,7 @@ package routes
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
@@ -107,19 +108,15 @@ func ComposeHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorage
 		}
 
 		// cycle through all the data
-		hashData := make(map[string]string)
+		composedData := make(map[string]string)
 		for _, r := range rawData.Values {
 			// create the hash from the specified columns
-			hash, err := createFieldHash(r, variables, mappedFields)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			hashData[fmt.Sprintf("%v", r[d3mIndexFieldindex])] = hash
+			composed := createComposedFields(r, variables, mappedFields)
+			composedData[fmt.Sprintf("%v", r[d3mIndexFieldindex])] = composed
 		}
 
 		// save the new column
-		err = dataStorage.UpdateVariableBatch(storageName, varName, hashData)
+		err = dataStorage.UpdateVariableBatch(storageName, varName, composedData)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -141,4 +138,12 @@ func createFieldHash(data []interface{}, fields []string, mappedFields map[strin
 		return "", err
 	}
 	return fmt.Sprintf("%v", hashInt), nil
+}
+
+func createComposedFields(data []interface{}, fields []string, mappedFields map[string]int) string {
+	dataToJoin := make([]string, len(fields))
+	for i, field := range fields {
+		dataToJoin[i] = fmt.Sprintf("%s", data[mappedFields[field]])
+	}
+	return strings.Join(dataToJoin, "_")
 }
