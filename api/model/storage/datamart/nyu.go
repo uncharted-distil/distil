@@ -92,7 +92,7 @@ func nyuSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]by
 	return responseRaw, nil
 }
 
-func parseJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) []*api.JoinSuggestion {
+func parseNYUJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) []*api.JoinSuggestion {
 	joins := make([]*api.JoinSuggestion, 0)
 	if result.Augmentation != nil && result.Augmentation.Type == "join" {
 		rightColumnNames := []string{}
@@ -143,7 +143,7 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			NumBytes:        int64(res.Metadata.Size),
 			Variables:       vars,
 			Provenance:      ProvenanceNYU,
-			JoinSuggestions: parseJoinSuggestion(res, baseDataset),
+			JoinSuggestions: parseNYUJoinSuggestion(res, baseDataset),
 			JoinScore:       res.Score,
 		})
 	}
