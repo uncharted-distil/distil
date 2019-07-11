@@ -164,7 +164,7 @@ export default Vue.extend({
 			return appGetters.isTask2(this.$store);
 		},
 		disableCreate(): boolean {
-			return this.isPending || (!this.targetSelected || !this.trainingSelected);
+			return this.isPending || !this.targetSelected; // || !this.trainingSelected);
 		},
 		disableExport(): boolean {
 			return !this.targetSelected || !this.trainingSelected;

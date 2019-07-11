@@ -140,7 +140,7 @@ import { INTEGER_TYPE, TEXT_TYPE, ORDINAL_TYPE, TIMESTAMP_TYPE, CATEGORICAL_TYPE
 	DATE_TIME_TYPE, REAL_TYPE } from '../util/types';
 import { getComposedVariableKey } from '../util/data';
 import { SELECT_TARGET_ROUTE } from '../store/route/index';
-import { createRouteEntry } from '../util/routes';
+import { createRouteEntry, overlayRouteEntry } from '../util/routes';
 
 export default Vue.extend({
 	name: 'variable-grouping',
@@ -248,7 +248,14 @@ export default Vue.extend({
 		},
 
 		isReady(): boolean {
-			return this.idCols.length > 1 && this.xCol && this.yCol && this.groupingType;
+			return this.xCol && this.groupingType;
+
+			// return this.idCols.length > 1 && this.xCol && this.yCol && this.groupingType;
+		},
+
+		isTimeseriesAnalysis(): boolean {
+			const ids = this.idCols.filter(id => !!id.value);
+			return this.xCol && (ids.length === 0 && this.yCol === 0);
 		}
 	},
 
@@ -300,6 +307,13 @@ export default Vue.extend({
 			return this.other.indexOf(arg) !== -1;
 		},
 		onGroup() {
+			if (this.isTimeseriesAnalysis) {
+				this.submitTimeseriesAnalysis();
+			} else {
+				this.submitGrouping();
+			}
+		},
+		submitGrouping() {
 			const hidden = {
 				[this.xCol]: this.hideXCol,
 				[this.yCol]: this.hideYCol,
@@ -350,6 +364,13 @@ export default Vue.extend({
 					this.gotoTargetSelection();
 				});
 			});
+		},
+		submitTimeseriesAnalysis() {
+			const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
+				dataset: this.dataset,
+				timeseriesAnalysis: this.xCol
+			});
+			this.$router.push(entry);
 		},
 		onClose() {
 			this.gotoTargetSelection();

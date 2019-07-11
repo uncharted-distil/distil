@@ -19,10 +19,6 @@
 				</available-target-variables>
 			</div>
 		</div>
-		<timeseries-analysis-modal
-			:show="showTimeseriesChoice"
-			@close="onTimeseriesChoice">
-		</timeseries-analysis-modal>
 	</div>
 
 </template>
@@ -31,7 +27,6 @@
 
 import Vue from 'vue';
 import { Variable } from '../store/dataset/index';
-import TimeseriesAnalysisModal from '../components/TimeseriesAnalysisModal';
 import AvailableTargetVariables from '../components/AvailableTargetVariables';
 import { actions as viewActions } from '../store/view/module';
 import { getters as datasetGetters } from '../store/dataset/module';
@@ -43,16 +38,8 @@ import { GROUPING_ROUTE } from '../store/route';
 export default Vue.extend({
 	name: 'select-target-view',
 
-	data() {
-		return {
-			showTimeseriesChoice: false,
-			havePromptedAlready: false
-		};
-	},
-
 	components: {
-		AvailableTargetVariables,
-		TimeseriesAnalysisModal
+		AvailableTargetVariables
 	},
 
 	computed: {
@@ -77,34 +64,14 @@ export default Vue.extend({
 		},
 		timeseriesAnalysis() {
 			viewActions.fetchSelectTargetData(this.$store, true);
-		},
-		variables: {
-			handler() {
-				if (this.variables.length > 0 && !this.timeseriesAnalysis && !this.havePromptedAlready) {
-					if (this.hasTimeVariable) {
-						this.showTimeseriesChoice = true;
-						this.havePromptedAlready = true;
-					}
-				}
-			},
-			deep: true
 		}
 	},
 
 	beforeMount() {
-		viewActions.fetchSelectTargetData(this.$store, false);
+		viewActions.fetchSelectTargetData(this.$store, true);
 	},
 
 	methods: {
-		onTimeseriesChoice(event: any) {
-			if (event) {
-				const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-					timeseriesAnalysis: event.col
-				});
-				this.$router.push(entry);
-			}
-			this.showTimeseriesChoice = false;
-		},
 		onGroupingClick() {
 			const entry = createRouteEntry(GROUPING_ROUTE, {
 				dataset: routeGetters.getRouteDataset(this.$store)
