@@ -303,7 +303,8 @@ li.dropdownActive a {
   color: #248EC2; }
 
 footer {
-  font-size: smaller; }
+  font-size: smaller;
+  color: #333333; }
 
 /* FAQ page */
 #accordion .panel-heading {
@@ -407,15 +408,19 @@ ul#mysidebar {
 span.projectTitle {
   font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif; }
 
+footer {
+  margin-top: 30px;
+  margin-bottom: 32px; }
+
 .footer {
-  text-align: right; }
+  text-align: center; }
 
 .footerMeta {
   background-color: whitesmoke;
   padding: 10px;
   max-width: 250px;
   border-radius: 5px;
-  margin-top: 50px;
+  margin-top: 30px;
   font-style: italic;
   font-size: 12px; }
 
@@ -1035,7 +1040,7 @@ h4.panel-title {
   margin-top: 0px; }
 
 .footer .logo {
-  max-width: 236px;
+  max-width: 191px;
   padding-top: 10px; }
 
 .navbar-brand .navbar-logo {
