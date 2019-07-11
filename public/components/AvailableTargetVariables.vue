@@ -20,7 +20,7 @@ import { getters as datasetGetters, actions as datasetActions } from '../store/d
 import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
 import { filterSummariesByDataset, getComposedVariableKey } from '../util/data';
-import VariableFacets from '../components/VariableFacets';
+import VariableFacets from '../components/VariableFacets.vue';
 import { Grouping, Variable, VariableSummary } from '../store/dataset/index';
 import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
 import { Group } from '../util/facets';
@@ -60,7 +60,7 @@ export default Vue.extend({
 				targetElem.className += 'btn btn-sm btn-success ml-2 mr-2 mb-2';
 				targetElem.innerHTML = 'Select Target';
 				targetElem.addEventListener('click', () => {
-					const target = group.colName;
+					const target = group.colName
 					// remove from training
 					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 					const index = training.indexOf(target);

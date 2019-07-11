@@ -5,7 +5,7 @@
 
 		<div class="row flex-shrink-0 align-items-center bg-white">
 			<div class="col-4 offset-md-1">
-				<h5 class="header-label">Select Grouping Properties</h5>
+				<h5 class="header-label">Configure Time Series</h5>
 			</div>
 		</div>
 
@@ -17,86 +17,35 @@
 
 					<div class="col-3">
 						<template v-if="index===0">
-							<b>Group ID:</b>
+							<b>Series ID:</b>
 						</template>
 					</div>
 
 					<div class="col-5">
 						<b-form-select v-model="idCol.value" :options="idOptions(idCol.value)" @input="onIdChange"/>
 					</div>
+				</div>
+			
+				<div class="row mt-1 mb-1">
+					<div class="col-3">
+						<b>X-Axis:</b>
+					</div>
 
-					<div class="col-4">
-						<b-form-checkbox button v-model="hideIdCol[index]">
-							Hide Column
-						</b-form-checkbox>
+					<div class="col-5">
+						<b-form-select v-model="xCol" :options="xColOptions" />
 					</div>
 				</div>
 
 				<div class="row mt-1 mb-1">
-
 					<div class="col-3">
-						<b>Group Type:</b>
+						<b>Y-Axis:</b>
 					</div>
+
 					<div class="col-5">
-						<b-form-select v-model="groupingType" :options="typeOptions"/>
+						<b-form-select v-model="yCol" :options="yColOptions" />
 					</div>
 				</div>
-
-				<div v-if="groupingType==='timeseries'">
-					<div class="row justify-content-center mt-3 mb-3">
-						<b>Timeseries Grouping</b>
-					</div>
-
-					<div class="row mt-1 mb-1">
-						<div class="col-3">
-							<b>X-Axis:</b>
-						</div>
-
-						<div class="col-5">
-							<b-form-select v-model="xCol" :options="xColOptions" />
-						</div>
-
-						<div class="col-4">
-							<b-form-checkbox button v-model="hideXCol">
-								Hide Column
-							</b-form-checkbox>
-						</div>
-					</div>
-
-					<div class="row mt-1 mb-1">
-						<div class="col-3">
-							<b>Y-Axis:</b>
-						</div>
-
-						<div class="col-5">
-							<b-form-select v-model="yCol" :options="yColOptions" />
-						</div>
-
-						<div class="col-4">
-							<b-form-checkbox button v-model="hideYCol">
-								Hide Column
-							</b-form-checkbox>
-						</div>
-					</div>
-
-					<div class="row mt-1 mb-1">
-						<div class="col-3">
-							<b>Featurize:</b>
-						</div>
-
-						<div class="col-5">
-							<b-form-select v-model="clusterCol" :options="clusterColOptions" />
-						</div>
-
-						<div class="col-4">
-							<b-form-checkbox button v-model="hideClusterCol">
-								Hide Column
-							</b-form-checkbox>
-						</div>
-					</div>
-
-				</div>
-
+			
 				<div v-if="isReady"  class="row justify-content-center">
 					<b-btn class="mt-3 var-grouping-button" variant="outline-success" :disabled="isPending" @click="onGroup">
 						<div class="row justify-content-center">
@@ -150,13 +99,12 @@ export default Vue.extend({
 
 	data() {
 		return {
-			groupingType: null,
+			groupingType: "timeseries",
 			idCols: [ { value: null } ],
 			prevIdCols: 0,
 			xCol: null,
 			yCol: null,
-			clusterCol: null,
-			hideIdCol: [ true ],
+			hideIdCol: [ false ],
 			hideXCol: true,
 			hideYCol: true,
 			hideClusterCol: true,
@@ -171,13 +119,7 @@ export default Vue.extend({
 		},
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
-		},
-		typeOptions(): Object[] {
-			return [
-				{ value: null, text: 'Choose group type', disabled: true },
-				{ value: 'timeseries', text: 'Timeseries' }
-			];
-		},
+		},		
 		xColOptions(): Object[] {
 			const X_COL_TYPES = {
 				[INTEGER_TYPE]: true,
@@ -227,26 +169,6 @@ export default Vue.extend({
 			return [].concat(def, suggestions);
 		},
 
-		clusterColOptions(): Object[] {
-			const def = [
-				{ value: null, text: 'Choose column', disabled: true }
-			];
-			const suggestions = this.variables
-				.filter(v => !this.isIDCol(v.colName))
-				.filter(v => !this.isXCol(v.colName))
-				.filter(v => !this.isYCol(v.colName))
-				.map(v => {
-					return {value: v.colName, text: v.colDisplayName };
-				});
-
-			// if (suggestions.length === 1) {
-			// 	this.clusterCol = suggestions[0].value;
-			// 	return suggestions;
-			// }
-
-			return [].concat(def, suggestions);
-		},
-
 		isReady(): boolean {
 			return this.xCol && this.groupingType;
 
@@ -262,11 +184,9 @@ export default Vue.extend({
 	beforeMount() {
 		viewActions.fetchSelectTargetData(this.$store, false);
 	},
-
 	methods: {
 		idOptions(idCol): Object[] {
 			const ID_COL_TYPES = {
-				[INTEGER_TYPE]: true,
 				[TEXT_TYPE]: true,
 				[ORDINAL_TYPE]: true,
 				[CATEGORICAL_TYPE]: true
@@ -283,6 +203,9 @@ export default Vue.extend({
 					return { value: v.colName, text: v.colDisplayName };
 				});
 
+			this.idCols.push({value: "sector"})
+			this.idCols.push({value: "species"})
+
 			return [].concat(def, suggestions);
 		},
 		onIdChange(arg) {
@@ -291,7 +214,7 @@ export default Vue.extend({
 				return;
 			}
 			this.idCols.push({ value: null });
-			this.hideIdCol.push(true);
+			this.hideIdCol.push(false);
 			this.prevIdCols++;
 		},
 		isIDCol(arg): boolean {
@@ -315,9 +238,8 @@ export default Vue.extend({
 		},
 		submitGrouping() {
 			const hidden = {
-				[this.xCol]: this.hideXCol,
-				[this.yCol]: this.hideYCol,
-				[this.clusterCol]: this.hideClusterCol
+				[this.xCol]: true,
+				[this.yCol]: true
 			};
 			const ids = this.idCols.map(c => c.value).filter(v => v);
 
@@ -329,7 +251,7 @@ export default Vue.extend({
 			let p = null;
 			if (ids.length > 1) {
 				idKey = getComposedVariableKey(ids);
-				hidden[idKey] = true;
+				hidden[idKey] = false;
 				p = datasetActions.composeVariables(this.$store, {
 					dataset: this.dataset,
 					key: idKey,
@@ -354,7 +276,6 @@ export default Vue.extend({
 					properties: {
 						xCol: this.xCol,
 						yCol: this.yCol,
-						clusterCol: this.clusterCol
 					}
 				};
 				datasetActions.setGrouping(this.$store, {

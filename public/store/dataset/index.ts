@@ -46,7 +46,6 @@ export interface SuggestedType {
 export interface GroupingProperties {
 	xCol: string;
 	yCol: string;
-	clusterCol: string;
 }
 
 export interface Grouping {
