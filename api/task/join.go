@@ -114,7 +114,7 @@ func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *pipeline.Pipe
 func createVarMap(vars []*model.Variable) map[string]*model.Variable {
 	varsMap := map[string]*model.Variable{}
 	for _, v := range vars {
-		varsMap[v.DisplayName] = v
+		varsMap[v.Name] = v
 	}
 	return varsMap
 }
