@@ -62,9 +62,12 @@ func Join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 
 func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable, submitter primitiveSubmitter,
 	config *env.Config) (*apiModel.FilteredData, error) {
+	// put the vars into a map for quick lookup
+	leftVarsMap := createVarMap(varsLeft)
+	rightVarsMap := createVarMap(varsRight)
 
 	// create & submit the solution request
-	pipelineDesc, err := description.CreateJoinPipeline("Join Preview", "Join to be reviewed by user", joinLeft.Column, joinRight.Column, 0.8)
+	pipelineDesc, err := description.CreateJoinPipeline("Join Preview", "Join to be reviewed by user", leftVarsMap[joinLeft.Column], rightVarsMap[joinRight.Column], 0.8)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create join pipeline")
 	}
@@ -88,7 +91,7 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 	leftName := joinLeft.DatasetID
 	rightName := joinRight.DatasetID
 	datasetName := strings.Join([]string{leftName, rightName}, "-")
-	mergedVariables, err := createDatasetFromCSV(config, csvFile, datasetName, varsLeft, varsRight)
+	mergedVariables, err := createDatasetFromCSV(config, csvFile, datasetName, leftVarsMap, rightVarsMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create dataset from result CSV")
 	}
@@ -116,11 +119,7 @@ func createVarMap(vars []*model.Variable) map[string]*model.Variable {
 	return varsMap
 }
 
-func createMergedVariables(varNames []string, varsLeft []*model.Variable, varsRight []*model.Variable) ([]*model.Variable, error) {
-	// put the vars into a map for quick lookup
-	leftVarsMap := createVarMap(varsLeft)
-	rightVarsMap := createVarMap(varsRight)
-
+func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Variable, rightVarsMap map[string]*model.Variable) ([]*model.Variable, error) {
 	mergedVariables := []*model.Variable{}
 	for i, varName := range varNames {
 		v, ok := leftVarsMap[varName]
@@ -143,7 +142,9 @@ func createMergedVariables(varNames []string, varsLeft []*model.Variable, varsRi
 	return mergedVariables, nil
 }
 
-func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName string, varsLeft []*model.Variable, varsRight []*model.Variable) ([]*model.Variable, error) {
+func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName string,
+	leftVarsMap map[string]*model.Variable, rightVarsMap map[string]*model.Variable) ([]*model.Variable, error) {
+
 	reader := csv.NewReader(csvFile)
 	fields, err := reader.Read()
 	if err != nil {
@@ -153,7 +154,7 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 	metadata := model.NewMetadata(datasetName, datasetName, datasetName, model.NormalizeDatasetID(datasetName))
 	dataResource := model.NewDataResource("learningData", compute.D3MResourceType, []string{compute.D3MResourceFormat})
 
-	mergedVariables, err := createMergedVariables(fields, varsLeft, varsRight)
+	mergedVariables, err := createMergedVariables(fields, leftVarsMap, rightVarsMap)
 	if err != nil {
 		return nil, err
 	}

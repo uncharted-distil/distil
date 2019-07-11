@@ -31,7 +31,7 @@ import (
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/otiai10/copy"
-	"github.com/phorne-uncharted/dateparse"
+	"github.com/araddon/dateparse"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 
