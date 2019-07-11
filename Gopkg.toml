@@ -50,7 +50,7 @@
   version = "=0.0.2"
 
 [[constraint]]
-  name = "github.com/phorne-uncharted/dateparse"
+  name = "github.com/araddon/dateparse"
   branch = "master"
 
 [[constraint]]
