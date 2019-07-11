@@ -175,6 +175,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 			}
 
 			field = NewTimeSeriesField(s, storageName, variable.Grouping.Properties.ClusterCol, variable.Grouping.IDCol, variable.Grouping.IDCol, variable.Grouping.Type, timeColVar.Name, timeColVar.Type)
+
 		} else {
 			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.IDCol, variable.Grouping.Type)
 		}
@@ -206,6 +207,12 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 	// add dataset
 	summary.Dataset = dataset
+
+	if variable.Grouping != nil {
+		if model.IsTimeSeries(variable.Grouping.Type) {
+			summary.Label = variable.Grouping.Properties.YCol
+		}
+	}
 
 	// if there are no filters, and we are returning the exclude set, we expect
 	// no results in the filtered set
