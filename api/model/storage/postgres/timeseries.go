@@ -237,7 +237,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 
 	// Get count by category.
 	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
-		clusteringColName, f.StorageName, where, clusteringColName, clusteringColName, catResultLimit)
+		clusteringColName, f.StorageName, where, clusteringColName, clusteringColName, timeSeriesCatResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -287,7 +287,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		 ORDER BY count desc, "%s" LIMIT %d;`,
 		clusteringColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
 		model.D3MIndexFieldName, len(params), where, clusteringColName,
-		clusteringColName, catResultLimit)
+		clusteringColName, timeSeriesCatResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
