@@ -23,6 +23,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 	"github.com/uncharted-distil/distil-ingest/metadata"
 
 	"github.com/uncharted-distil/distil/api/util"
@@ -33,8 +35,15 @@ const (
 	slothResultFieldName   = "0"
 )
 
-// Cluster will cluster the dataset fields using a primitive.
-func Cluster(datasetSource metadata.DatasetSource, schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
+// ClusterPoint contains data that has been clustered.
+type ClusterPoint struct {
+	D3MIndex    string
+	SourceField string
+	Label       string
+}
+
+// ClusterDataset will cluster the dataset fields using a primitive.
+func ClusterDataset(datasetSource metadata.DatasetSource, schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
 	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to copy source data folder")
@@ -112,4 +121,47 @@ func Cluster(datasetSource metadata.DatasetSource, schemaFile string, index stri
 	}
 
 	return outputPath.outputSchema, nil
+}
+
+// Cluster will cluster the dataset fields using a primitive.
+func Cluster(datasetInputDir string, dataset string, variable string) ([]*ClusterPoint, error) {
+	step, err := description.CreateSlothPipeline("time series clustering",
+		"k-means time series clustering", "", "", nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create sloth pipeline")
+	}
+
+	datasetURI, err := submitPipeline([]string{datasetInputDir}, step)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to run pipeline primitive")
+	}
+
+	// parse primitive response (new field contains output)
+	res, err := result.ParseResultCSV(datasetURI)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to parse pipeline primitive result")
+	}
+	header, err := castTypeArray(res[0])
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to parse Goat pipeline header")
+	}
+
+	// find the field with the feature output
+	clusterIndex := getFieldIndex(header, "cluster_labels")
+	d3mIndexIndex := getFieldIndex(header, model.D3MIndexName)
+
+	// build the output (skipping the header)
+	clusteredData := make([]*ClusterPoint, len(res)-1)
+	for i, v := range res[1:] {
+		label := v[clusterIndex].(string)
+		d3mIndex := v[d3mIndexIndex].(string)
+
+		clusteredData[i] = &ClusterPoint{
+			D3MIndex:    d3mIndex,
+			SourceField: variable,
+			Label:       label,
+		}
+	}
+
+	return clusteredData, nil
 }
