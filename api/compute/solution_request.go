@@ -24,8 +24,8 @@ import (
 	"sync"
 	"time"
 
+	uuid "github.com/gofrs/uuid"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -254,7 +254,11 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 
 // createPreprocessingPipeline creates pipeline to enfore user feature selection and typing
 func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable, targetVariable string, variables []string) (*pipeline.PipelineDescription, error) {
-	uuid := uuid.NewV4()
+	uuid, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
 	name := fmt.Sprintf("preprocessing-%s-%s", s.Dataset, uuid.String())
 	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
 
@@ -662,11 +666,14 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 func CreateSearchSolutionRequest(allFeatures []*model.Variable,
 	selectedFeatures []string, target string, sourceURI string, dataset string,
 	userAgent string, skipPreprocessing bool) (*pipeline.SearchSolutionsRequest, error) {
-	uuid := uuid.NewV4()
+	uuid, err := uuid.NewV4()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create uuid")
+	}
+
 	name := fmt.Sprintf("preprocessing-%s-%s", dataset, uuid.String())
 	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", dataset, uuid.String())
 
-	var err error
 	var preprocessingPipeline *pipeline.PipelineDescription
 	if !skipPreprocessing {
 		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc,
