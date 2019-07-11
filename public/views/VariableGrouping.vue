@@ -170,8 +170,7 @@ export default Vue.extend({
 		},
 
 		isReady(): boolean {
-			return this.xCol && this.groupingType;
-
+			return this.xCol != null && this.groupingType != null;
 			// return this.idCols.length > 1 && this.xCol && this.yCol && this.groupingType;
 		},
 
@@ -202,9 +201,6 @@ export default Vue.extend({
 				.map(v => {
 					return { value: v.colName, text: v.colDisplayName };
 				});
-
-			this.idCols.push({value: "sector"})
-			this.idCols.push({value: "species"})
 
 			return [].concat(def, suggestions);
 		},
