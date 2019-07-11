@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>Step 2 - View models | Distil Help</title>
+<link rel="stylesheet" href="css/syntax.css">
+
+
+<link rel="stylesheet" type="text/css" href="css/lib/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
+<link rel="stylesheet" href="css/modern-business.css">
+<link rel="stylesheet" href="css/lavish-bootstrap.css">
+<link rel="stylesheet" href="css/customstyles.css?1562699720597540000">
+<link rel="stylesheet" href="css/theme-black.css?1562699720597540000">
+
+<script src="js/lib/jquery.min.js"></script>
+<script src="js/lib/jquery.cookie.min.js"></script>
+<script src="js/jquery.navgoco.min.js"></script>
+
+
+<script src="js/lib/bootstrap.min.js"></script>
+<script src="js/lib/anchor.min.js"></script>
+<script src="js/toc.js"></script>
+<script src="js/customscripts.js"></script>
+
+<link rel="shortcut icon" href="images/favicon.ico">
+    <script>
+        $(document).ready(function() {
+            // Initialize navgoco with default options
+            $("#mysidebar").navgoco({
+                caretHtml: '',
+                accordion: false,
+                openClass: 'active', // open
+                save: false, // leave false or nav highlighting doesn't work right
+                cookie: {
+                    name: 'navgoco',
+                    expires: false,
+                    path: '/'
+                },
+                slide: {
+                    duration: 400,
+                    easing: 'swing'
+                }
+            });
+
+            $("#collapseAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', false);
+            });
+
+            $("#expandAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', true);
+            });
+
+        });
+
+    </script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    
+
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container topnavlinks">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="index.html"><img class="navbar-logo" src="images/logo.png" alt="Distil">&nbsp;<span class="projectTitle"> Distil Help</span></a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <!-- entries without drop-downs appear here -->
+                
+                
+                
+                <li><a href="index.html">Topics</a></li>
+                
+                
+                
+                <li><a href="glossary.html">Glossary</a></li>
+                
+                
+                
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                
+            </ul>
+        </div>
+        </div>
+        <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="col-lg-12">&nbsp;</div>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Sidebar Column -->
+        <div class="col-md-3">
+
+          
+
+<ul id="mysidebar" class="nav">
+    <li class="sidebarTitle">Getting Started </li>
+    
+    
+    
+        
+    
+    <li>
+        <a href="#">Getting started</a>
+        <ul>
+            
+            
+            
+            <li><a href="index.html">Introduction</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Problem discovery</a>
+        <ul>
+            
+            
+            
+            <li><a href="problem-discovery-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="problem-discovery-select-target.html">1. Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="problem-discovery-create-models.html">2. Create models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Model generation</a>
+        <ul>
+            
+            
+            
+            <li><a href="model-generation-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="model-generation-create-models.html">1. Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li class="active"><a href="model-generation-view-models.html">2. View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Data augmentation</a>
+        <ul>
+            
+            
+            
+            <li><a href="workflow-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="select-data.html">1. Select data</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="select-target.html">2. Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="create-models.html">3. Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="join-datasets.html">4. Join datasets</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="view-models.html">5. View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Reference</a>
+        <ul>
+            
+            
+            
+            <li><a href="reference-home.html">Home</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-select-data.html">Select data</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-select-target.html">Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-create-models.html">Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-join-datasets.html">Join datasets</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-view-models.html">View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Videos</a>
+        <ul>
+            
+            
+            
+            <li><a href="videos.html">Workflow demonstrations</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+        
+           <p class="external">
+               <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
+           </p>
+    </li>
+</ul>
+</div>
+
+<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
+<script>$("li.active").parents('li').toggleClass("active");</script>
+    <!-- Content Column -->
+    <div class="col-md-9">
+        <div class="post-header">
+   <h1 class="post-title-main">Step 2 - View models</h1>
+</div>
+
+
+
+<div class="post-content">
+
+   
+
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+  <p>The View Models view lets you compare the accuracy of models generated from your feature selections. Depending on your target, Distil builds models of the following types:</p>
+
+<ul>
+  <li><strong>Regression models</strong> when your target is <a href="#" data-toggle="tooltip" data-original-title="Has values that are real numbers">continuous</a></li>
+  <li><strong>Classification models</strong> when your target is <a href="#" data-toggle="tooltip" data-original-title="Has a finite set of categories reused across records">categorical</a></li>
+</ul>
+
+<p>Because <strong>acceleration</strong> is a continuous feature, Distil generates regression models for this example. Once you have inspected them, you can either:</p>
+
+<ul>
+  <li>Return to the previous step to refine your model definition, or</li>
+  <li>Export the one you think is most accurate</li>
+</ul>
+
+<h2 id="review-model-results">Review model results</h2>
+
+<p>In the View Models view, you can inspect the models generated by Distil to:</p>
+
+<ul>
+  <li>Determine which one is most accurate</li>
+  <li>Understand how specific features and values influence the results.</li>
+</ul>
+
+<p>The View Models view is made up of the following components:</p>
+
+<ul>
+  <li><a href="#model-results-pane">Model Results pane</a></li>
+  <li><a href="#prediction-tables">Prediction tables</a></li>
+  <li><a href="#feature-summaries">Feature summaries</a></li>
+</ul>
+
+<div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> The models only predict values for a subset of the actual dataset. The rest of the actual data is used to train the models.</div>
+
+<h3 id="model-results-pane">Model Results pane</h3>
+
+<p>The Model Results pane on the right lists each model that Distil generated for your problem. Distil ranks the models in descending order of estimated accuracy.</p>
+
+<div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> A progress bar under a model indicates that Distil is still generating the results.</div>
+
+<h5 class="procedure">To inspect the predictions generated by the model:</h5>
+
+<ol>
+  <li>Scroll through the models at the bottom of the pane.</li>
+  <li>Compare the distribution of predictions in each model against the distribution of the actual values from the dataset. Which model looks most similar to the actual target feature?
+    <figure><img class="docimage" src="images/model-generation/view-models/results.png?1562699720597540000" alt="Compare model results to actual results" /></figure>
+  </li>
+  <li>Select a range in the Predicted distribution chart to split the Prediction tables based on the corresponding values.
+    <figure><img class="docimage" src="images/model-generation/view-models/predicted-highlight.png?1562699720597540000" alt="Highlight distribution of predicted values to view context of correct/incorrect predictions" /></figure>
+    <p>The top table lists records that match your selection, while the bottom table lists all other records.</p>
+  </li>
+  <li>Click a different model to load its results in the <a href="#prediction-tables">Prediction Tables</a>.</li>
+</ol>
+
+<h5 class="procedure">To adjust the acceptable error for the models:</h5>
+
+<p>Each regression model also includes the prediction error, which is calculated as the distance of the predicted value from the actual value.</p>
+
+<ol>
+  <li>Review the distribution of error in the predicted results. Is the error relatively consistent across all the predictions?
+    <figure><img class="docimage" src="images/model-generation/view-models/predictions-by-model-error-distribution.png?1562699720597540000" alt="Compare distribution of error across models" /></figure>
+    <p>Error charts are centered on 0. Positive error values indicate that the prediction was higher than the actual value, while negative error values indicate the opposite.</p>
+  </li>
+  <li>Drag the left or right error sliders to adjust the acceptable error in the predictions. By default, Distil sets the acceptable error to the 25th percentile. How does changing this value affect the number of correct/incorrect predictions?
+    <figure><img class="docimage" src="images/model-generation/view-models/results-error-adjust.png?1562699720597540000" alt="Adjust acceptable error in models" /></figure>
+    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> Toggle between the buttons above the <strong>Error</strong> bar to adjust the range symmetrically (default) or one at a time.</div>
+  </li>
+</ol>
+
+<h5 class="procedure">To view a different model:</h5>
+
+<ol>
+  <li>Compare the ranges of predicted values and error in the model summaries.</li>
+  <li>Click the model you want to review to refresh the <a href="#prediction-tables">Prediction Tables</a>.</li>
+</ol>
+
+<h3 id="prediction-tables">Prediction tables</h3>
+
+<p>The Prediction tables list records that the model predicted. When you first access the View Models page, a single Prediction table lists all the records. As you interact with feature summaries or model predictions to filter the view, the Prediction table is split into:</p>
+
+<ul>
+  <li><strong>Matching</strong> samples that contain the selected values.</li>
+  <li><strong>Other</strong> samples that do not.</li>
+</ul>
+
+<p>You can compare the results in the two tables to understand how certain values affect the correctness of the predictions. In regression models, like the one you generated for <strong>acceleration</strong>, correctness is determined by the configurable error threshold.</p>
+
+<h5 class="procedure">To split the predictions tables:</h5>
+
+<ul>
+  <li>Select a category or a range of values in the target feature, feature summaries, or model predictions. What values do correct and incorrect predictions tend to have?
+    <figure><img class="docimage" src="images/model-generation/view-models/correct-predictions-highlight.png?1562699720597540000" alt="View values for specific records in context of the whole dataset" /></figure>
+  </li>
+</ul>
+
+<h3 id="feature-summaries">Feature summaries</h3>
+
+<p>The Feature summaries show the range of values in the features used to model the predictions. The distribution of values can help you understand how they influence correct/predictions. You can filter the Prediction tables on specific values to understand how results would change if you omitted them from the model.</p>
+
+<h5 class="procedure">To understand how the models would change if you omitted records with specific values:</h5>
+
+<ul>
+  <li>For continuous features, drag the sliders on either end of the timeline to focus records that contain values beyond the new placement. Does this improve the predictions?
+    <figure><img class="docimage" src="images/model-generation/view-models/feature-summaries-range-adjust.png?1562699720597540000" alt="Drag range sliders to omit outliers" /></figure>
+  </li>
+  <li>For categorical features, click to select individual values. Does this improve the predictions?</li>
+</ul>
+
+<h2 id="refine-a-model">Refine a model</h2>
+
+<p>To refine the models that Distil produced, click <span class="fa fa-dot-circle-o" aria-hidden="true"></span> <strong>Select Target</strong> or <span class="fa fa-code-fork" aria-hidden="true"></span> <strong>Create Models</strong> to go back to a previous step.</p>
+
+<figure><img class="docimage" src="images/model-generation/view-models/return-to-select-target.png?1562699720597540000" alt="Return to Select to refine the models" /></figure>
+
+<p>When refining the model, you can change the target feature, add or remove features used to model the predictions, or adjust the values included for specific features.</p>
+
+<h2 id="finish-a-problem">Finish a problem</h2>
+
+<p>When you are satisfied with the results of a model, click <strong>Export Model</strong> to save it and move on to the next problem.</p>
+
+<figure><img class="docimage" src="images/model-generation/view-models/export-model.png?1562699720597540000" alt="Export models" /></figure>
+
+<div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> If you want to abandon your model configuration and move on to the next problem, click <strong>Abort</strong> in the header.</div>
+
+  
+  <div class="section-nav">
+    <div class="nav-left align-right">
+        
+          <a href="model-generation-create-models.html" class="prev-pg">Back</a>
+        
+    </div>
+    <div class="nav-right align-left">
+        
+          <span class="next-pg btn-disabled">Next</span>
+        
+    </div>
+  </div>
+  <div class="clear-nav"></div>
+
+
+    <div class="tags">
+        
+    </div>
+</div>
+
+<hr class="shaded"/>
+
+<footer>
+            <div class="row">
+                <div class="col-lg-12 footer">
+               &copy;2019 Uncharted Software Inc.<br />
+<p><img class="logo" src="images/uncharted.png" alt="Uncharted Software Inc."/></p>
+                </div>
+            </div>
+</footer>
+
+
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /.container -->
+    </div>
+
+</body>
+</html>
