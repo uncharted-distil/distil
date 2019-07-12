@@ -561,9 +561,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		targetVariable, err = metaStorage.FetchVariable(s.Dataset, targetVarName)
 		if err != nil {
 			return err
-				targetVariable = variable
-				targetVarName = variable.Name
-			}
 		}
 	}
 
