@@ -128,6 +128,8 @@ export default Vue.extend({
 				return appGetters.getProblemTaskType(this.$store);
 			} else if (!!routeGetters.getRouteTimeseriesAnalysis(this.$store)) {
 				return TIMESERIES_FORECASTING_TASK.schemaName;
+			} else if (this.targetVariable.colType === "timeseries") {
+				return TIMESERIES_FORECASTING_TASK.schemaName;
 			}
 			return null;
 		},

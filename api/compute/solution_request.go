@@ -553,12 +553,14 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		}
 	}
 
+	// Timeseries are grouped entries and we want to use the Y Col from the group as the target
+	// rather than the group itself
 	targetVarName := s.TargetFeature
 	if targetVariable.Grouping != nil && model.IsTimeSeries(targetVariable.Grouping.Type) {
-
-		// we need to use the yCol var instead as target
-		for _, variable := range variables {
-			if variable.Name == targetVariable.Grouping.Properties.YCol {
+		targetVarName = targetVariable.Grouping.Properties.YCol
+		targetVariable, err = metaStorage.FetchVariable(s.Dataset, targetVarName)
+		if err != nil {
+			return err
 				targetVariable = variable
 				targetVarName = variable.Name
 			}
