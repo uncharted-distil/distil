@@ -60,7 +60,7 @@ export default Vue.extend({
 				targetElem.className += 'btn btn-sm btn-success ml-2 mr-2 mb-2';
 				targetElem.innerHTML = 'Select Target';
 				targetElem.addEventListener('click', () => {
-					const target = group.colName
+					const target = group.colName;
 					// remove from training
 					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 					const index = training.indexOf(target);

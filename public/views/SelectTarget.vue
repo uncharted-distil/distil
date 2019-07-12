@@ -7,11 +7,11 @@
 			<div class="col-4 offset-md-1">
 				<h5 class="header-label">Select Feature to Predict</h5>
 			</div>
-			<div class="col-2 offset-md-4">
+			<!-- <div class="col-2 offset-md-4">
 				<b-button class="grouping-button" variant="primary" @click="onGroupingClick">
 					Create Variable Grouping
 				</b-button>
-			</div>
+			</div> -->
 		</div>
 		<div class="row justify-content-center pb-3 h-100">
 			<div class="col-12 col-md-10 flex-column d-flex h-100">

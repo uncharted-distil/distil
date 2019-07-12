@@ -14,6 +14,18 @@
 					{{suggested.label}}
 					<icon-base v-if="suggested.isRecommended" icon-name="bookmark" class="recommended-icon"><icon-bookmark /></icon-base>
 				</b-dropdown-item>
+
+				<template v-if="showGroupingOptions">
+					<b-dropdown-divider></b-dropdown-divider>
+					<b-dropdown-item
+						v-for="grouping in groupingOptions()"
+						@click.stop="onGroupingSelect(grouping.type)"
+						:key="grouping.type">
+						{{grouping.label}}
+					</b-dropdown-item>
+				</template>
+
+
 			</b-dropdown>
 			<i v-if="isUnsure" class="unsure-type-icon fa fa-circle"></i>
 		</div>
@@ -32,8 +44,10 @@ import IconBookmark from './icons/IconBookmark';
 import { SuggestedType, Variable, Highlight } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, TIMESERIES_TYPE, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
+import { createRouteEntry } from '../util/routes';
+import { GROUPING_ROUTE } from '../store/route';
 
 const PROBABILITY_THRESHOLD = 0.8;
 
@@ -119,10 +133,30 @@ export default Vue.extend({
 				show: 10,
 				hide: 10
 			};
+		},
+		showGroupingOptions(): boolean {
+			return true;
 		}
 	},
 
 	methods: {
+
+		groupingOptions() {
+			return [
+				{
+					type: TIMESERIES_TYPE,
+					label: 'Timeseries'
+				}
+			];
+		},
+
+		onGroupingSelect() {
+			const entry = createRouteEntry(GROUPING_ROUTE, {
+				dataset: routeGetters.getRouteDataset(this.$store)
+			});
+			this.$router.push(entry);
+		},
+
 		addMissingSuggestions() {
 			const flatSuggestedTypes = this.suggestedTypes.map(st => st.type);
 			const missingSuggestions = addTypeSuggestions(flatSuggestedTypes);

@@ -29,9 +29,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/araddon/dateparse"
 	"github.com/mitchellh/hashstructure"
 	"github.com/otiai10/copy"
-	"github.com/araddon/dateparse"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 

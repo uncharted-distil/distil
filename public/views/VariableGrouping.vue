@@ -25,7 +25,7 @@
 						<b-form-select v-model="idCol.value" :options="idOptions(idCol.value)" @input="onIdChange"/>
 					</div>
 				</div>
-			
+
 				<div class="row mt-1 mb-1">
 					<div class="col-3">
 						<b>X-Axis:</b>
@@ -45,7 +45,7 @@
 						<b-form-select v-model="yCol" :options="yColOptions" />
 					</div>
 				</div>
-			
+
 				<div v-if="isReady"  class="row justify-content-center">
 					<b-btn class="mt-3 var-grouping-button" variant="outline-success" :disabled="isPending" @click="onGroup">
 						<div class="row justify-content-center">
@@ -99,7 +99,7 @@ export default Vue.extend({
 
 	data() {
 		return {
-			groupingType: "timeseries",
+			groupingType: 'timeseries',
 			idCols: [ { value: null } ],
 			prevIdCols: 0,
 			xCol: null,
@@ -119,7 +119,7 @@ export default Vue.extend({
 		},
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
-		},		
+		},
 		xColOptions(): Object[] {
 			const X_COL_TYPES = {
 				[INTEGER_TYPE]: true,
@@ -170,7 +170,7 @@ export default Vue.extend({
 		},
 
 		isReady(): boolean {
-			return this.xCol != null && this.groupingType != null;
+			return this.xCol !== null && this.groupingType !== null;
 			// return this.idCols.length > 1 && this.xCol && this.yCol && this.groupingType;
 		},
 

@@ -854,6 +854,7 @@ export default Vue.extend({
 				const menu = new TypeChangeMenu(
 					{
 						store: this.$store,
+						router: this.$router,
 						propsData: {
 							dataset: group.dataset,
 							field: group.colName
@@ -874,6 +875,7 @@ export default Vue.extend({
 					const preview = new ImagePreview(
 						{
 							store: this.$store,
+							router: this.$router,
 							propsData: {
 								// NOTE: there seems to be an issue with the visibility plugin used
 								// when injecting this way. Cancel the visibility flagging for facets.
