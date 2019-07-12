@@ -77,6 +77,7 @@ import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as solutionActions } from '../store/solutions/module';
 import { Solution, NUM_SOLUTIONS } from '../store/solutions/index';
 import { Variable } from '../store/dataset/index';
+import { TIMESERIES_TYPE } from '../util/types';
 import { FilterParams } from '../util/filters';
 import { TIMESERIES_FORECASTING_TASK } from '../util/solutions';
 import Vue from 'vue';
@@ -128,7 +129,7 @@ export default Vue.extend({
 				return appGetters.getProblemTaskType(this.$store);
 			} else if (!!routeGetters.getRouteTimeseriesAnalysis(this.$store)) {
 				return TIMESERIES_FORECASTING_TASK.schemaName;
-			} else if (this.targetVariable.colType === "timeseries") {
+			} else if (this.targetVariable.colType === TIMESERIES_TYPE) {
 				return TIMESERIES_FORECASTING_TASK.schemaName;
 			}
 			return null;
