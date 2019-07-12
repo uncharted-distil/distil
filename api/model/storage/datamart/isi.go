@@ -156,6 +156,12 @@ func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			return nil, errors.Wrap(err, "unable to parse ISI datamart join suggestions")
 		}
 
+		// need to get the specific search result string
+		searchResultRaw, err := json.Marshal(res)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to marshal NYU search result")
+		}
+
 		datasets = append(datasets, &api.Dataset{
 			ID:              res.DatamartID,
 			Name:            res.DatamartID,
@@ -165,7 +171,7 @@ func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			Summary:         res.Summary,
 			JoinSuggestions: joinSuggestions,
 			JoinScore:       joinScore,
-			SearchResult:    string(responseRaw),
+			SearchResult:    string(searchResultRaw),
 		})
 	}
 
