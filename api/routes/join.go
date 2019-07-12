@@ -50,6 +50,11 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 			handleError(w, errors.Errorf("joining requires the search result from the join suggestion"))
 			return
 		}
+		provenance, ok := params["provenance"].(string)
+		if !ok {
+			handleError(w, errors.Errorf("joining requires the provenance from the join suggestion"))
+			return
+		}
 
 		// get storage client
 		storage, err := metaCtor()
@@ -85,7 +90,7 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		}
 
 		// run joining pipeline
-		data, err := task.Join(leftJoin, rightJoin, datasetLeft.Variables, datasetRight.Variables, searchResult)
+		data, err := task.Join(leftJoin, rightJoin, datasetLeft.Variables, datasetRight.Variables, provenance, searchResult)
 		if err != nil {
 			handleError(w, err)
 			return
