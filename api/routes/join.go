@@ -39,6 +39,18 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		columnRight := pat.Param(r, "column-right")
 		sourceRight := pat.Param(r, "source-right")
 
+		// parse POST params
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
+		searchResult, ok := params["searchResult"].(string)
+		if !ok {
+			handleError(w, errors.Errorf("joining requires the search result from the join suggestion"))
+			return
+		}
+
 		// get storage client
 		storage, err := metaCtor()
 		if err != nil {
@@ -73,7 +85,7 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		}
 
 		// run joining pipeline
-		data, err := task.Join(leftJoin, rightJoin, datasetLeft.Variables, datasetRight.Variables)
+		data, err := task.Join(leftJoin, rightJoin, datasetLeft.Variables, datasetRight.Variables, searchResult)
 		if err != nil {
 			handleError(w, err)
 			return
