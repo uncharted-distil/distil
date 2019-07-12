@@ -99,6 +99,9 @@ export default Vue.extend({
 				}
 
 				const grouping = this.variable.grouping;
+				if (!grouping) {
+					return null;
+				}
 				timeVarName = grouping.properties.xCol;
 				timeVar = this.variables.find(v => v.colName === timeVarName);
 				timeVarType = timeVar ? timeVar.colType : INTEGER_TYPE;
