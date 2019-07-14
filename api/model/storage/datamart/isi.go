@@ -162,6 +162,11 @@ func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			return nil, errors.Wrap(err, "unable to marshal NYU search result")
 		}
 
+		origin := &api.DatasetOrigin{
+			SearchResult: string(searchResultRaw),
+			Provenance:   ProvenanceNYU,
+		}
+
 		datasets = append(datasets, &api.Dataset{
 			ID:              res.DatamartID,
 			Name:            res.DatamartID,
@@ -171,7 +176,7 @@ func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			Summary:         res.Summary,
 			JoinSuggestions: joinSuggestions,
 			JoinScore:       joinScore,
-			SearchResult:    string(searchResultRaw),
+			DatasetOrigin:   origin,
 		})
 	}
 

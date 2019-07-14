@@ -141,6 +141,11 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			return nil, errors.Wrap(err, "unable to marshal NYU search result")
 		}
 
+		origin := &api.DatasetOrigin{
+			SearchResult: string(searchResultRaw),
+			Provenance:   ProvenanceNYU,
+		}
+
 		datasets = append(datasets, &api.Dataset{
 			ID:              res.ID,
 			Name:            res.Metadata.Name,
@@ -151,7 +156,7 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			Provenance:      ProvenanceNYU,
 			JoinSuggestions: parseNYUJoinSuggestion(res, baseDataset),
 			JoinScore:       res.Score,
-			SearchResult:    string(searchResultRaw),
+			DatasetOrigin:   origin,
 		})
 	}
 

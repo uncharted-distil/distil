@@ -35,6 +35,22 @@ func ImportHandler(dataCtor model.DataStorageCtor, datamartCtors map[string]mode
 		source := metadata.DatasetSource(pat.Param(r, "source"))
 		provenance := pat.Param(r, "provenance")
 
+		// parse POST params
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
+
+		var origin *model.DatasetOrigin
+		searchResult, ok := params["searchResult"].(string)
+		if ok {
+			origin = &model.DatasetOrigin{
+				SearchResult: searchResult,
+				Provenance:   provenance,
+			}
+		}
+
 		// update ingest config to use ingest URI.
 		cfg, err := env.LoadConfig()
 		if err != nil {
@@ -61,7 +77,7 @@ func ImportHandler(dataCtor model.DataStorageCtor, datamartCtors map[string]mode
 		}
 
 		// ingest the imported dataset
-		err = task.IngestDataset(source, dataCtor, esMetaCtor, cfg.ESDatasetsIndex, datasetID, &ingestConfig)
+		err = task.IngestDataset(source, dataCtor, esMetaCtor, cfg.ESDatasetsIndex, datasetID, origin, &ingestConfig)
 		if err != nil {
 			handleError(w, err)
 			return
