@@ -227,9 +227,9 @@ export default Vue.extend({
 		},
 		importDataset(args: {datasetID: string, source: string, provenance: string}) {
             const { id, provenance, datasetOrigin } = this.selectedDataset;
-			let searchResult, provenance;
+			let searchResult;
 			if (datasetOrigin) {
-			    {searchResult, provenance} = datasetOrigin;
+			    searchResult = datasetOrigin.searchResult;
 			}
 			this.showStatusMessage = true;
 			if (!this.isImporting) {

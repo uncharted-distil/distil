@@ -278,7 +278,7 @@ export const actions = {
 		};
 		mutations.updatePendingRequests(context, update);
 		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {
-			searchResult: searchResult
+			searchResult: args.searchResult
 		}).then(response => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
 				return response && response.data;
