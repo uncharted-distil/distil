@@ -381,43 +381,7 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 }
 
 func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	targetName := f.clusteringColName()
-
-	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
-	if err != nil {
-		return nil, err
-	}
-
-	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
-	params = append(params, resultURI, targetName)
-
-	query := fmt.Sprintf(
-		`SELECT data."%s", result.value, COUNT(*) AS count
-		 FROM %s AS result INNER JOIN %s AS data ON result.index = data."%s"
-		 WHERE %s
-		 GROUP BY result.value, data."%s"
-		 ORDER BY count desc;`,
-		targetName, datasetResult, f.StorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
-
-	// execute the postgres query
-	res, err := f.Storage.client.Query(query, params...)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch histograms for result summaries from postgres")
-	}
-	defer res.Close()
-
-	histogram, err := f.parseHistogram(res)
-	if err != nil {
-		return nil, err
-	}
-
-	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
-	if err != nil {
-		return nil, err
-	}
-	histogram.Exemplars = files
-	return histogram, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 // FetchForecastingSummaryData pulls data from the result table and builds the
