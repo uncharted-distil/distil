@@ -10,6 +10,7 @@ export D3MINPUTDIR=`pwd`/datasets
 export USER_PROBLEM_PATH=`pwd`/outputs/problems
 export SOLUTION_SEARCH_MAX_TIME=3
 export SOLUTION_COMPUTE_PULL_MAX=900
+export SOLUTION_COMPUTE_TIMEOUT=600
 export USE_TA2_RUNNER=true #false
 export DATAMART_IMPORT_FOLDER=`pwd`/datamart
 export TEMP_STORAGE_ROOT=`pwd`/datasets
