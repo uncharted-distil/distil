@@ -646,7 +646,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// persist the request
-	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.Metadata.Name, RequestPendingStatus)
+	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.Metadata.ID, RequestPendingStatus)
 	if err != nil {
 		return err
 	}
@@ -659,7 +659,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			continue
 		}
 
-		if v == targetVarName {
+		if v == s.TargetFeature {
 			// store target feature
 			typ = model.FeatureTypeTarget
 		} else {
