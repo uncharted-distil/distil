@@ -45,7 +45,7 @@ type Dataset struct {
 	DatasetOrigin   *DatasetOrigin         `json:"datasetOrigin"`
 }
 
-// DatasetSource represents the originating information for a dataset
+// DatasetOrigin represents the originating information for a dataset
 type DatasetOrigin struct {
 	SearchResult string `json:"searchResult"`
 	Provenance   string `json:"provenance"`
