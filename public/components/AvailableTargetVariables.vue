@@ -67,6 +67,30 @@ export default Vue.extend({
 					if (index !== -1) {
 						training.splice(index, 1);
 					}
+
+					const v = this.variables.find(v => {
+						return v.colName === group.colName;
+					});
+					if (v && v.grouping) {
+						if (v.grouping.subIds.length > 0) {
+							v.grouping.subIds.forEach(subId => {
+								const exists = training.find(t => {
+									return t === subId;
+								});
+								if (!exists) {
+									training.push(subId);
+								}
+							});
+						} else {
+							const exists = training.find(t => {
+								return t === v.grouping.idCol;
+							});
+							if (!exists) {
+								training.push(v.grouping.idCol);
+							}
+						}
+					}
+
 					const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
 						target: group.colName,
 						dataset: routeGetters.getRouteDataset(this.$store),
@@ -77,30 +101,6 @@ export default Vue.extend({
 					this.$router.push(entry);
 				});
 				container.appendChild(targetElem);
-
-				const v = this.variables.find(v => {
-					return v.colName === group.colName;
-				});
-				if (v && v.grouping) {
-					const groupingElem = document.createElement('button');
-					groupingElem.className += 'btn btn-sm btn-primary ml-2 mr-2 mb-2 float-right';
-					groupingElem.innerHTML = 'Remove Grouping';
-					groupingElem.addEventListener('click', () => {
-						datasetActions.removeGrouping(this.$store, {
-							dataset: this.dataset,
-							grouping: v.grouping
-						}).then(() => {
-							if (v.grouping.subIds.length > 0) {
-								const composedKey = getComposedVariableKey(v.grouping.subIds);
-								datasetActions.deleteVariable(this.$store, {
-									dataset: this.dataset,
-									key: getComposedVariableKey(v.grouping.subIds)
-								});
-							}
-						});
-					});
-					container.appendChild(groupingElem);
-				}
 
 				return container;
 			};

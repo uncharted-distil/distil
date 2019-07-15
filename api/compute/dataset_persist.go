@@ -22,12 +22,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"os"
 	"path"
 	"sort"
+	"strconv"
 	"strings"
-	"time"
 
 	"github.com/araddon/dateparse"
 	"github.com/mitchellh/hashstructure"
@@ -154,7 +155,7 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 
 	// find the desired timeseries threshold
 	// load the parsed timestamp into a list and read all raw data in memory
-	timestamps := make([]time.Time, 0)
+	timestamps := make([]float64, 0)
 	data := make([][]string, 0)
 	for {
 		line, err := reader.Read()
@@ -164,9 +165,10 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 			return errors.Wrap(err, "failed to read line from file")
 		}
 		data = append(data, line)
-		t, err := dateparse.ParseAny(line[timeseriesCol])
+		// attempt to parse as float
+		t, err := parseTimeColValue(line[timeseriesCol])
 		if err != nil {
-			return errors.Wrap(err, "failed to parse timeseries column")
+			return err
 		}
 		timestamps = append(timestamps, t)
 	}
@@ -175,7 +177,7 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 	// the right split (ie value where we would send roughly 90% of
 	// the data to train and 10% to test)
 	sort.Slice(timestamps, func(i int, j int) bool {
-		return timestamps[i].Before(timestamps[j])
+		return timestamps[i] <= timestamps[j]
 	})
 	thresholdIndex := int(trainTestSplitThreshold * float64(len(timestamps)-1))
 	threshold := timestamps[thresholdIndex]
@@ -185,10 +187,10 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 		// since we parsed it above, then the parsing here should succeed
 		// TODO: the timestamps list is already sorted but we really should
 		// reuse it to not double parse things
-		t, _ := dateparse.ParseAny(line[timeseriesCol])
+		t, _ := parseTimeColValue(line[timeseriesCol])
 
 		// !After == Before || Equal
-		if !t.After(threshold) {
+		if t <= threshold {
 			err = writerTrain.Write(line)
 			if err != nil {
 				return errors.Wrap(err, "unable to write data to train output")
@@ -214,6 +216,18 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 	}
 
 	return nil
+}
+
+func parseTimeColValue(timeColValue string) (float64, error) {
+	f, err := strconv.ParseFloat(timeColValue, 64)
+	if err != nil {
+		t, err := dateparse.ParseAny(timeColValue)
+		if err != nil {
+			return math.NaN(), errors.Wrapf(err, "failed to parse timeseries column val [%s]", timeColValue)
+		}
+		return float64(t.Unix()), nil
+	}
+	return f, nil
 }
 
 func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool) error {
