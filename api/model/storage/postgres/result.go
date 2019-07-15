@@ -89,11 +89,28 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		log.Warnf("Result contains %d columns, expected 2.  Additional columns will be ignored.", len(records[0]))
 	}
 
-	// Translate from display name to storage name.
 	targetName := target
+
+	// Translate from display name to storage name.
 	targetDisplayName, err := s.getDisplayName(dataset, targetName)
 	if err != nil {
 		return errors.Wrap(err, "unable to map target name")
+	}
+
+	// A target that is a grouping won't have the correct name for now.  We need to check to see
+	// if the target is a grouping, and use the Y Col as the target for purposes of dealing with the TA2.
+	targetVariable, err := s.getResultTargetVariable(dataset, target)
+	if targetVariable.Grouping != nil && model.IsTimeSeries(targetVariable.Grouping.Type) {
+		// extract the time series value column
+		targetName = targetVariable.Grouping.Properties.YCol
+		targetVariable, err = s.metadata.FetchVariable(dataset, targetName)
+		if err != nil {
+			return err
+		}
+		targetDisplayName = targetVariable.DisplayName
+		if err != nil {
+			return err
+		}
 	}
 
 	// Header row will have the target. Find the index.
@@ -105,6 +122,13 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		} else if v == model.D3MIndexFieldName {
 			d3mIndexIndex = i
 		}
+	}
+	// result is not in valid format - d3mIndex and target col need to have correct name
+	if targetIndex == -1 {
+		return errors.Wrapf(err, "unable to find target col '%s' in result header", targetDisplayName)
+	}
+	if d3mIndexIndex == -1 {
+		return errors.Wrapf(err, "unabled to find d3m index col '%s' in result header", model.D3MIndexFieldName)
 	}
 
 	// store all results to the storage
@@ -126,7 +150,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		}
 
 		// store the result to the storage
-		err = s.executeInsertResultStatement(storageName, resultURI, parsedVal, targetName, records[i][targetIndex])
+		err = s.executeInsertResultStatement(storageName, resultURI, parsedVal, target, records[i][targetIndex])
 		if err != nil {
 			return errors.Wrap(err, "failed to insert result in database")
 		}

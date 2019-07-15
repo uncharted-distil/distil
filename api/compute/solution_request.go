@@ -554,9 +554,11 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// Timeseries are grouped entries and we want to use the Y Col from the group as the target
-	// rather than the group itself
+	// rather than the group itself, and the X col as the timestamp variable
 	targetVarName := s.TargetFeature
+	var groupingTargetVariable = targetVariable
 	if targetVariable.Grouping != nil && model.IsTimeSeries(targetVariable.Grouping.Type) {
+		// extract the time series value column
 		targetVarName = targetVariable.Grouping.Properties.YCol
 		targetVariable, err = metaStorage.FetchVariable(s.Dataset, targetVarName)
 		if err != nil {
@@ -572,7 +574,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	allVarFilters.Variables = []string{}
 	var timeseriesField *model.Variable
 	for _, variable := range dataVariables {
-
 		// exclude cluster/feature generated columns
 		allVarFilters.AddVariable(variable.Name)
 		if variable.Name == s.TimestampField {
@@ -589,7 +590,16 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	columnIndex := getColumnIndex(targetVariable, dataset.Filters.Variables)
 	timeseriesColumnIndex := -1
 	if timeseriesField != nil {
+		// extract timeseries timestamp column from solution request
 		timeseriesColumnIndex = getColumnIndex(timeseriesField, dataset.Filters.Variables)
+	} else if groupingTargetVariable.Grouping != nil {
+		// extract the timeseries timestamp column from a grouping
+		timeseriesVarName := groupingTargetVariable.Grouping.Properties.XCol
+		timeseriesVariable, err := metaStorage.FetchVariable(s.Dataset, timeseriesVarName)
+		if err != nil {
+			return err
+		}
+		timeseriesColumnIndex = getColumnIndex(timeseriesVariable, dataset.Filters.Variables)
 	}
 
 	// add dataset name to path
@@ -636,7 +646,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// persist the request
-	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.Metadata.Name, RequestPendingStatus)
+	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.Metadata.ID, RequestPendingStatus)
 	if err != nil {
 		return err
 	}
@@ -649,7 +659,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			continue
 		}
 
-		if v == targetVarName {
+		if v == s.TargetFeature {
 			// store target feature
 			typ = model.FeatureTypeTarget
 		} else {
