@@ -52,20 +52,26 @@ type JoinSpec struct {
 }
 
 // Join will make all your dreams come true.
-func Join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable, provenance string, searchResult string) (*apiModel.FilteredData, error) {
+func Join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable, rightOrigin *apiModel.DatasetOrigin) (*apiModel.FilteredData, error) {
 	cfg, err := env.LoadConfig()
 	if err != nil {
 		return nil, err
 	}
-	return join(joinLeft, joinRight, varsLeft, varsRight, provenance, searchResult, defaultSubmitter{}, &cfg)
+	return join(joinLeft, joinRight, varsLeft, varsRight, rightOrigin, defaultSubmitter{}, &cfg)
 }
 
 func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
-	varsRight []*model.Variable, provenance string, searchResult string, submitter primitiveSubmitter,
+	varsRight []*model.Variable, rightOrigin *apiModel.DatasetOrigin, submitter primitiveSubmitter,
 	config *env.Config) (*apiModel.FilteredData, error) {
 	// put the vars into a map for quick lookup
 	leftVarsMap := createVarMap(varsLeft)
 	rightVarsMap := createVarMap(varsRight)
+	searchResult := ""
+	provenance := ""
+	if rightOrigin != nil {
+		provenance = rightOrigin.Provenance
+		searchResult = rightOrigin.SearchResult
+	}
 
 	// create & submit the solution request
 	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview", "Join to be reviewed by user",

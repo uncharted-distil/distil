@@ -262,7 +262,7 @@ export const actions = {
 			});
 	},
 
-	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string }): Promise<any>  {
+	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, searchResult: string }): Promise<any>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
@@ -277,8 +277,9 @@ export const actions = {
 			status: DatasetPendingRequestStatus.PENDING,
 		};
 		mutations.updatePendingRequests(context, update);
-		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
-			.then(response => {
+		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {
+			searchResult: searchResult
+		}).then(response => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
 				return response && response.data;
 			})
