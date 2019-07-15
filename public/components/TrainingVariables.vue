@@ -48,6 +48,9 @@ export default Vue.extend({
 	},
 
 	computed: {
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
@@ -74,10 +77,33 @@ export default Vue.extend({
 		},
 		html(): (Group) => HTMLDivElement {
 			return (group: Group) => {
+
+				// exclude remove button if the var is an id / sub-id of the
+				// timeseries grouping.
+
+				const targetVar = this.variables.find(v => {
+					return v.colName === this.target;
+				});
+
+				if (targetVar.grouping) {
+					let isGroupingID = false;
+					if (targetVar.grouping.subIds.length > 0) {
+						isGroupingID = !!targetVar.grouping.subIds.find(v => {
+							return v === group.colName;
+						});
+					} else {
+						isGroupingID = targetVar.grouping.idCol === group.key;
+					}
+					if (isGroupingID) {
+						return;
+					}
+				}
+
 				const container = document.createElement('div');
 				const remove = document.createElement('button');
 				remove.className += 'btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2';
 				remove.innerHTML = 'Remove';
+
 				remove.addEventListener('click', () => {
 					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 					training.splice(training.indexOf(group.colName), 1);
