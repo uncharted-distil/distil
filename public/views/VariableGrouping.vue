@@ -17,7 +17,7 @@
 
 					<div class="col-3">
 						<template v-if="index===0">
-							<b>Series ID:</b>
+							<b>Series ID Column(s):</b>
 						</template>
 					</div>
 
@@ -28,7 +28,7 @@
 
 				<div class="row mt-1 mb-1">
 					<div class="col-3">
-						<b>X-Axis:</b>
+						<b>Time Column:</b>
 					</div>
 
 					<div class="col-5">
@@ -38,7 +38,7 @@
 
 				<div class="row mt-1 mb-1">
 					<div class="col-3">
-						<b>Y-Axis:</b>
+						<b>Value Column:</b>
 					</div>
 
 					<div class="col-5">
