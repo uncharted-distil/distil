@@ -226,10 +226,10 @@ export default Vue.extend({
 			this.$router.push(entry);
 		},
 		importDataset(args: {datasetID: string, source: string, provenance: string}) {
-            const { id, provenance, datasetOrigin } = this.selectedDataset;
+			const { id, provenance, datasetOrigin } = this.selectedDataset;
 			let searchResult;
 			if (datasetOrigin) {
-			    searchResult = datasetOrigin.searchResult;
+				searchResult = datasetOrigin.searchResult;
 			}
 			this.showStatusMessage = true;
 			if (!this.isImporting) {
