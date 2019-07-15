@@ -38,11 +38,13 @@ type SearchResults struct {
 
 // SearchResult contains the basic dataset info.
 type SearchResult struct {
-	ID           string                    `json:"id"`
-	Score        float64                   `json:"score"`
-	Discoverer   string                    `json:"discoverer"`
-	Metadata     *SearchResultMetadata     `json:"metadata"`
-	Augmentation *SearchResultAugmentation `json:"augmentation,omitempty"`
+	ID                 string                    `json:"id"`
+	Score              float64                   `json:"score"`
+	Discoverer         string                    `json:"discoverer"`
+	Metadata           *SearchResultMetadata     `json:"metadata"`
+	Augmentation       *SearchResultAugmentation `json:"augmentation,omitempty"`
+	SuppliedID         string                    `json:"supplied_id"`
+	SuppliedResourceID string                    `json:"supplied_resource_id"`
 }
 
 // SearchResultAugmentation contains data augmentation info.
@@ -55,18 +57,26 @@ type SearchResultAugmentation struct {
 
 // SearchResultMetadata represents the dataset metadata.
 type SearchResultMetadata struct {
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Size        float64               `json:"size"`
-	NumRows     float64               `json:"nb_rows"`
-	Columns     []*SearchResultColumn `json:"columns"`
-	Date        string                `json:"date"`
+	Name        string                   `json:"name"`
+	Description string                   `json:"description"`
+	Size        float64                  `json:"size"`
+	NumRows     float64                  `json:"nb_rows"`
+	Columns     []*SearchResultColumn    `json:"columns"`
+	Materialize *SearchResultMaterialize `json:"materialize"`
+	Date        string                   `json:"date"`
 }
 
 // SearchResultColumn has information on a dataset column.
 type SearchResultColumn struct {
-	Name           string `json:"name"`
-	StructuralType string `json:"structural_type"`
+	Name           string   `json:"name"`
+	StructuralType string   `json:"structural_type"`
+	SemanticTypes  []string `json:"semantic_types"`
+}
+
+// SearchResultMaterialize contains the materialization info.
+type SearchResultMaterialize struct {
+	DirectURL string `json:"direct_url"`
+	ID        string `json:"identifier"`
 }
 
 func nyuSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]byte, error) {

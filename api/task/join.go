@@ -82,10 +82,9 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 	}
 
 	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
-	datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
 
 	// returns a URI pointing to the merged CSV file
-	resultURI, err := submitter.submit([]string{datasetLeftURI, datasetRightURI}, pipelineDesc)
+	resultURI, err := submitter.submit([]string{datasetLeftURI}, pipelineDesc)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run join pipeline")
 	}
