@@ -48,6 +48,7 @@ import { addTypeSuggestions, getLabelFromType, TIMESERIES_TYPE, getTypeFromLabel
 import { hasFilterInRoute } from '../util/filters';
 import { createRouteEntry } from '../util/routes';
 import { GROUPING_ROUTE } from '../store/route';
+import { getComposedVariableKey } from '../util/data';
 
 const PROBABILITY_THRESHOLD = 0.8;
 
@@ -73,6 +74,12 @@ export default Vue.extend({
 				return v.colName.toLowerCase() === this.field.toLowerCase() &&
 					v.datasetName === this.dataset;
 			});
+		},
+		isGrouping(): boolean {
+			if (!this.variable) {
+				return false;
+			}
+			return !!this.variable.grouping;
 		},
 		type(): string {
 			return this.variable ? this.variable.colType : '';
@@ -142,6 +149,14 @@ export default Vue.extend({
 	methods: {
 
 		groupingOptions() {
+			if (this.isGrouping) {
+				return [
+					{
+						type: 'Explode',
+						label: 'Explode'
+					}
+				];
+			}
 			return [
 				{
 					type: TIMESERIES_TYPE,
@@ -150,11 +165,29 @@ export default Vue.extend({
 			];
 		},
 
-		onGroupingSelect() {
-			const entry = createRouteEntry(GROUPING_ROUTE, {
-				dataset: routeGetters.getRouteDataset(this.$store)
-			});
-			this.$router.push(entry);
+		onGroupingSelect(type) {
+			if (type === TIMESERIES_TYPE) {
+				const entry = createRouteEntry(GROUPING_ROUTE, {
+					dataset: routeGetters.getRouteDataset(this.$store)
+				});
+				this.$router.push(entry);
+			} else {
+
+				const grouping = this.variable.grouping;
+				datasetActions.removeGrouping(this.$store, {
+					dataset: this.dataset,
+					grouping: grouping
+				}).then(() => {
+					if (grouping.subIds.length > 0) {
+						const composedKey = getComposedVariableKey(grouping.subIds);
+						datasetActions.deleteVariable(this.$store, {
+							dataset: this.dataset,
+							key: getComposedVariableKey(grouping.subIds)
+						});
+					}
+				});
+			}
+
 		},
 
 		addMissingSuggestions() {
