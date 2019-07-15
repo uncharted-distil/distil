@@ -16,9 +16,10 @@
 package task
 
 import (
-	"bufio"
 	"context"
+	"encoding/csv"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -318,14 +319,23 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 
 	// Load the data.
 	log.Infof("inserting rows into database based on data found in %s", dataDir)
-	reader, err := os.Open(dataDir)
-	scanner := bufio.NewScanner(reader)
+	csvFile, err := os.Open(dataDir)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to open input data")
+	}
+	defer csvFile.Close()
+	reader := csv.NewReader(csvFile)
 
 	// skip header
-	scanner.Scan()
+	reader.Read()
 	count := 0
-	for scanner.Scan() {
-		line := scanner.Text()
+	for {
+		line, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return "", errors.Wrap(err, "unable to read input line")
+		}
 
 		err = pg.AddWordStems(line)
 		if err != nil {
