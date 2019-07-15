@@ -554,9 +554,24 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// TODO: imported datasets have d3m index as distil role = "index".
 	//       need to figure out if that causes issues!!!
 	dataVariables := []*model.Variable{}
+	var targetVariable *model.Variable
 	for _, variable := range variables {
 		if isTA2Field(variable.DistilRole) {
 			dataVariables = append(dataVariables, variable)
+		}
+		if variable.Name == s.TargetFeature {
+			targetVariable = variable
+		}
+	}
+
+	// Timeseries are grouped entries and we want to use the Y Col from the group as the target
+	// rather than the group itself
+	targetVarName := s.TargetFeature
+	if targetVariable.Grouping != nil && model.IsTimeSeries(targetVariable.Grouping.Type) {
+		targetVarName = targetVariable.Grouping.Properties.YCol
+		targetVariable, err = metaStorage.FetchVariable(s.Dataset, targetVarName)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -566,15 +581,12 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	allVarFilters := s.Filters.Clone()
 	allVarFilters.Variables = []string{}
-	var targetVariable *model.Variable
 	var timeseriesField *model.Variable
 	for _, variable := range dataVariables {
 
 		// exclude cluster/feature generated columns
 		allVarFilters.AddVariable(variable.Name)
-		if variable.Name == s.TargetFeature {
-			targetVariable = variable
-		} else if variable.Name == s.TimestampField {
+		if variable.Name == s.TimestampField {
 			timeseriesField = variable
 		}
 	}
@@ -622,7 +634,8 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// create search solutions request
-	searchRequest, err := s.createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent)
+	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVarName, s.Dataset, s.Metrics, s.Task, s.SubTask, int64(s.MaxTime))
+
 	if err != nil {
 		return err
 	}
@@ -647,7 +660,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			continue
 		}
 
-		if v == s.TargetFeature {
+		if v == targetVarName {
 			// store target feature
 			typ = model.FeatureTypeTarget
 		} else {

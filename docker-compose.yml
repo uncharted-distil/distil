@@ -4,21 +4,21 @@ elastic:
   ports:
     - "9200:9200"
 
-pipeline_server:
-  image:
-    docker.uncharted.software/distil-pipeline-server:latest
-  ports:
-    - "45042:45042"
-  environment:
-    - SOLUTION_SERVER_RESULT_DIR=$PWD/outputs/temp
-    - SOLUTION_SEND_DELAY=2000
-    - SOLUTION_NUM_UPDATES=3
-    - SOLUTION_MAX_SOLUTIONS=3
-    - SOLUTION_ERR_PERCENT=0.1
-  volumes:
-    - $PWD/datasets:$PWD/datasets
-    - $PWD/datamart:$PWD/datamart
-    - $PWD/outputs/temp:$PWD/outputs/temp
+# pipeline_server:
+#   image:
+#     docker.uncharted.software/distil-pipeline-server:latest
+#   ports:
+#     - "45042:45042"
+#   environment:
+#     - SOLUTION_SERVER_RESULT_DIR=$PWD/outputs/temp
+#     - SOLUTION_SEND_DELAY=2000
+#     - SOLUTION_NUM_UPDATES=3
+#     - SOLUTION_MAX_SOLUTIONS=3
+#     - SOLUTION_ERR_PERCENT=0.1
+#   volumes:
+#     - $PWD/datasets:$PWD/datasets
+#     - $PWD/datamart:$PWD/datamart
+#     - $PWD/outputs/temp:$PWD/outputs/temp
 
 postgres:
   image:
@@ -27,6 +27,22 @@ postgres:
     - "5432:5432"
   command:
     -d postgres
+
+distil-auto-ml:
+  image:
+    registry.datadrivendiscovery.org/uncharted/distil-integration/distil-auto-ml:latest
+  environment:
+    - D3MINPUTDIR=/input
+    - D3MOUTPUTDIR=/output
+    - D3MSTATICDIR=/static_resources
+    - D3MRUN=ta2
+  volumes:
+    - $PWD/datamart:/input
+    - $PWD/datamart:/datamart
+    - $PWD/outputs:/output
+    - $PWD/static_resources:/static_resources
+  ports:
+    - "45042:45042"
 
 runner:
   image:
