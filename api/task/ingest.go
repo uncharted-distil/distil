@@ -80,7 +80,8 @@ type IngestTaskConfig struct {
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
-func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor, index string, dataset string, config *IngestTaskConfig) error {
+func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor,
+	index string, dataset string, origin *api.DatasetOrigin, config *IngestTaskConfig) error {
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
@@ -171,7 +172,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished geocoding the dataset")
 	}
 
-	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, config)
+	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, origin, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -187,7 +188,8 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 }
 
 // Ingest the metadata to ES and the data to Postgres.
-func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string, dataset string, source metadata.DatasetSource, config *IngestTaskConfig) (string, error) {
+func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string,
+	dataset string, source metadata.DatasetSource, origin *api.DatasetOrigin, config *IngestTaskConfig) (string, error) {
 	datasetDir := path.Dir(schemaFile)
 	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative), true)
 	if err != nil {
@@ -218,6 +220,13 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	// NOTE: For now ignore summary errors!
 	if err != nil {
 		log.Errorf("unable to load machine summary: %v", err)
+	}
+
+	// set the origin
+	if origin != nil {
+		meta.SearchResult = origin.SearchResult
+		meta.SearchProvenance = origin.Provenance
+		meta.SourceDataset = origin.SourceDataset
 	}
 
 	// check and fix metadata issues

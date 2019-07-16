@@ -105,20 +105,44 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			source = string(metadata.Seed)
 		}
 
+		// extract dataset source information
+		var datasetOrigin *api.DatasetOrigin
+		if src["datasetOrigin"] != nil {
+			searchResult, ok := json.String(src["datasetOrigin"].(map[string]interface{}), "searchResult")
+			if !ok {
+				searchResult = ""
+			}
+			searchProvenance, ok := json.String(src["datasetOrigin"].(map[string]interface{}), "provenance")
+			if !ok {
+				searchProvenance = ""
+			}
+			sourceDataset, ok := json.String(src["datasetOrigin"].(map[string]interface{}), "sourceDataset")
+			if !ok {
+				sourceDataset = ""
+			}
+
+			datasetOrigin = &api.DatasetOrigin{
+				SearchResult:  searchResult,
+				Provenance:    searchProvenance,
+				SourceDataset: sourceDataset,
+			}
+		}
+
 		// write everythign out to result struct
 		datasets = append(datasets, &api.Dataset{
-			ID:          id,
-			Name:        name,
-			StorageName: storageName,
-			Description: description,
-			Folder:      folder,
-			Summary:     summary,
-			SummaryML:   summaryMachine,
-			NumRows:     int64(numRows),
-			NumBytes:    int64(numBytes),
-			Variables:   variables,
-			Provenance:  Provenance,
-			Source:      metadata.DatasetSource(source),
+			ID:            id,
+			Name:          name,
+			StorageName:   storageName,
+			Description:   description,
+			Folder:        folder,
+			Summary:       summary,
+			SummaryML:     summaryMachine,
+			NumRows:       int64(numRows),
+			NumBytes:      int64(numBytes),
+			Variables:     variables,
+			Provenance:    Provenance,
+			Source:        metadata.DatasetSource(source),
+			DatasetOrigin: datasetOrigin,
 		})
 	}
 	return datasets, nil

@@ -126,7 +126,9 @@ export default Vue.extend({
 				datasetID: this.joinedDatasetID,
 				terms: this.terms,
 				source: 'augmented',
-				provenance: 'local'
+				provenance: 'local',
+				originalDatasetID: this.datasetA,
+				joinedDatasetID: this.datasetB
 			}).then(() => {
 				this.$emit('success', this.joinedDatasetID);
 				this.pending = false;
