@@ -290,21 +290,23 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 
 	// loop through the updates, building batches to minimize overhead
 	db := s.client.GetUpdateClient()
-	dataSQL := ""
+	tableNameTmp := fmt.Sprintf("\"%s_utmp\"", storageName)
+	dataSQL := fmt.Sprintf("CREATE TEMP TABLE %s (\"%s\" TEXT NOT NULL, \"%s\" TEXT);",
+		tableNameTmp, model.D3MIndexName, varName)
 	count := 0
 	params := make([]interface{}, 0)
 	for index, value := range updates {
-		dataSQL = fmt.Sprintf("%s UPDATE %s.%s.%s_base SET \"%s\" = ? WHERE \"%s\" = ?;",
-			dataSQL, "distil", "public", storageName, varName, model.D3MIndexName)
-		params = append(params, value)
+		dataSQL = fmt.Sprintf("%s INSERT INTO %s VALUES (?, ?);",
+			dataSQL, tableNameTmp)
 		params = append(params, index)
+		params = append(params, value)
 		count = count + 1
 
 		if count > maxBatchSize {
 			// submit the batch
 			_, err := db.Exec(dataSQL, params...)
 			if err != nil {
-				return errors.Wrap(err, "unable to update batch")
+				return errors.Wrap(err, "unable to insert batch")
 			}
 
 			// reset the batch
@@ -318,8 +320,16 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 	if count > 0 {
 		_, err := db.Exec(dataSQL, params...)
 		if err != nil {
-			return errors.Wrap(err, "unable to update batch")
+			return errors.Wrap(err, "unable to insert batch")
 		}
+	}
+
+	// run the update
+	updateSQL := fmt.Sprintf("UPDATE %s.%s.\"%s_base\" AS b SET \"%s\" = t.\"%s\" FROM %s AS t WHERE t.\"%s\" = b.\"%s\";",
+		"distil", "public", storageName, varName, varName, tableNameTmp, model.D3MIndexName, model.D3MIndexName)
+	_, err := db.Exec(updateSQL, params...)
+	if err != nil {
+		return errors.Wrap(err, "unable to update base data")
 	}
 
 	db.Close()
