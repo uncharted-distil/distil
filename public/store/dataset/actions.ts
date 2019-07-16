@@ -241,7 +241,9 @@ export const actions = {
 				datasetID: args.datasetID,
 				source: 'augmented',
 				provenance: 'local',
-				terms: args.datasetID
+				terms: args.datasetID,
+				originalDatasetID: null,
+				joinedDatasetID: null
 			});
 		});
 	},
@@ -256,10 +258,13 @@ export const actions = {
 			return null;
 
 		}
-		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {
-			originalDatasetID: args.originalDatasetID,
-			joinedDatasetID: args.joinedDatasetID
-		})
+
+		let postParams = {};
+		if (originalDatasetID != null) {
+			postParams = {originalDatasetID: args.originalDatasetID, joinedDatasetID: args.joinedDatasetID}
+		}
+
+		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, postParams)
 			.then(response => {
 				return actions.searchDatasets(context, args.terms);
 			});
