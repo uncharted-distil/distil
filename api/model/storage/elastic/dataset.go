@@ -413,6 +413,7 @@ func (s *Storage) RemoveGrouping(datasetName string, grouping model.Grouping) er
 		name, ok := json.String(variable, "colName")
 		if ok && name == grouping.IDCol {
 			delete(variable, model.VarGroupingField)
+			variable["colType"] = variable["colOriginalType"]
 			found = true
 		}
 	}
