@@ -106,22 +106,25 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		}
 
 		// extract dataset source information
-		searchResult := ""
-		searchProvenance := ""
 		var datasetOrigin *api.DatasetOrigin
 		if src["datasetOrigin"] != nil {
-			searchResult, ok = json.String(src["datasetOrigin"].(map[string]interface{}), "searchResult")
+			searchResult, ok := json.String(src["datasetOrigin"].(map[string]interface{}), "searchResult")
 			if !ok {
 				searchResult = ""
 			}
-			searchProvenance, ok = json.String(src["datasetOrigin"].(map[string]interface{}), "provenance")
+			searchProvenance, ok := json.String(src["datasetOrigin"].(map[string]interface{}), "provenance")
 			if !ok {
 				searchProvenance = ""
 			}
+			sourceDataset, ok := json.String(src["datasetOrigin"].(map[string]interface{}), "sourceDataset")
+			if !ok {
+				sourceDataset = ""
+			}
 
 			datasetOrigin = &api.DatasetOrigin{
-				SearchResult: searchResult,
-				Provenance:   searchProvenance,
+				SearchResult:  searchResult,
+				Provenance:    searchProvenance,
+				SourceDataset: sourceDataset,
 			}
 		}
 

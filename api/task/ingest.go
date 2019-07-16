@@ -226,6 +226,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	if origin != nil {
 		meta.SearchResult = origin.SearchResult
 		meta.SearchProvenance = origin.Provenance
+		meta.SourceDataset = origin.SourceDataset
 	}
 
 	// check and fix metadata issues

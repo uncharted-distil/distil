@@ -42,12 +42,36 @@ func ImportHandler(dataCtor model.DataStorageCtor, datamartCtors map[string]mode
 			return
 		}
 
+		// get elasticsearch client
+		esStorage, err := esMetaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// set the origin information
 		var origin *model.DatasetOrigin
 		searchResult, ok := params["searchResult"].(string)
 		if ok {
 			origin = &model.DatasetOrigin{
 				SearchResult: searchResult,
 				Provenance:   provenance,
+			}
+		}
+
+		originalDatasetID, ok := params["originalDataset"].(string)
+		joinedDatasetID, ok := params["joinedDataset"].(string)
+		if ok {
+			// get the joined dataset for the search result
+			joinedDataset, err := storage.FetchDataset(joinedDatasetID, true, true)
+			if err != nil {
+				handleError(w, err)
+			}
+
+			origin = &model.DatasetOrigin{
+				SearchResult:  joinedDataset.DatasetOrigin.SearchResult,
+				Provenance:    joinedDataset.DatasetOrigin.Provenance,
+				SourceDataset: originalDatasetID,
 			}
 		}
 

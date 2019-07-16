@@ -47,8 +47,9 @@ type Dataset struct {
 
 // DatasetOrigin represents the originating information for a dataset
 type DatasetOrigin struct {
-	SearchResult string `json:"searchResult"`
-	Provenance   string `json:"provenance"`
+	SearchResult  string `json:"searchResult"`
+	Provenance    string `json:"provenance"`
+	SourceDataset string `json:"sourceDataset"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.

@@ -164,6 +164,18 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		log.Infof("Defaulting max search time to `%d`", request.MaxTime)
 	}
 
+	// set augmentation info
+	requestDataset, err := metaStorage.FetchDataset(request.Dataset, true, true)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to pull joined dataset"))
+	}
+
+	if requestDataset.DatasetOrigin != nil {
+		request.Dataset = requestDataset.DatasetOrigin.SourceDataset
+		request.SearchResult = requestDataset.DatasetOrigin.SearchResult
+		request.SearchProvenance = requestDataset.DatasetOrigin.Provenance
+	}
+
 	// persist the request information and dispatch the request
 	err = request.PersistAndDispatch(client, solutionStorage, metaStorage, dataStorage)
 	if err != nil {
