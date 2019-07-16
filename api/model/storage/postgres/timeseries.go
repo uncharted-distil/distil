@@ -161,6 +161,41 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	return s.parseTimeseries(res)
 }
 
+// FetchTimeseriesForecast fetches a timeseries.
+func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultURI string, filterParams *api.FilterParams) ([][]float64, error) {
+	// create the filter for the query.
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+
+	wheres = append(wheres, fmt.Sprintf("\"%s\" = $1", timeseriesColName))
+	params = append(params, timeseriesURI)
+
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams, false)
+
+	params = append(params, resultURI)
+	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))
+
+	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+
+	// Get count by category.
+	query := fmt.Sprintf(`SELECT "%s", CAST(result.value as double precision)
+		FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		%s`,
+		xColName, storageName, s.getResultTable(storageName),
+		model.D3MIndexFieldName, where)
+
+	// execute the postgres query
+	res, err := s.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch timeseries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return s.parseTimeseries(res)
+}
+
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
 func (f *TimeSeriesField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
@@ -381,7 +416,53 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 }
 
 func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	return nil, fmt.Errorf("not implemented")
+
+	// get filter where / params
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+	if err != nil {
+		return nil, err
+	}
+
+	params = append(params, resultURI)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
+	}
+
+	clusteringColName := f.clusteringColName()
+
+	// Get count by category.
+	query := fmt.Sprintf(
+		`SELECT data."%s", COUNT(*) AS count
+		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		 WHERE result.result_id = $%d %s
+		 GROUP BY "%s"
+		 ORDER BY count desc, "%s" LIMIT %d;`,
+		clusteringColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
+		model.D3MIndexFieldName, len(params), where, clusteringColName,
+		clusteringColName, timeSeriesCatResultLimit)
+
+	// execute the postgres query
+	res, err := f.Storage.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	histogram, err := f.parseHistogram(res)
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
+	if err != nil {
+		return nil, err
+	}
+	histogram.Exemplars = files
+	return histogram, nil
 }
 
 // FetchForecastingSummaryData pulls data from the result table and builds the

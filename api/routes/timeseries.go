@@ -25,10 +25,6 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
-const (
-	timeseriesFolder = "timeseries"
-)
-
 // TimeseriesResult represents the result of a timeseries request.
 type TimeseriesResult struct {
 	Timeseries [][]float64 `json:"timeseries"`

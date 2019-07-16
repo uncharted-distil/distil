@@ -71,5 +71,11 @@ export const getters = {
 
 	getCorrectnessSummaries(state: ResultsState): VariableSummary[] {
 		return state.correctnessSummaries;
+	},
+
+	// forecasts
+
+	getTimeseriesForecasts(state: ResultsState): Dictionary<Dictionary<Dictionary<number[][]>>> {
+		return state.timeseries;
 	}
 };

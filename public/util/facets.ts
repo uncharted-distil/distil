@@ -9,6 +9,7 @@ import { Variable, VariableSummary, TimeseriesSummary, CATEGORICAL_SUMMARY, NUME
 import store from '../store/store';
 import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from './data';
 import { getters as datasetGetters } from '../store/dataset/module';
+import { getters as resultGetters } from '../store/results/module';
 
 export const CATEGORICAL_CHUNK_SIZE = 5;
 export const IMAGE_CHUNK_SIZE = 5;
@@ -320,7 +321,13 @@ function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary): Grou
 
 function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 	const group = createCategoricalSummaryFacet(summary);
-	const timeseries = datasetGetters.getTimeseries(store);
+
+	let timeseries = null;
+	if (summary.solutionId) {
+		timeseries = resultGetters.getTimeseriesForecasts(store);
+	} else {
+		timeseries = datasetGetters.getTimeseries(store);
+	}
 
 	group.facets.forEach((facet: CategoricalFacet) => {
 		facet.timeseries = timeseries[group.dataset][facet.file];

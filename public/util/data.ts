@@ -7,6 +7,7 @@ import { Dictionary } from './dict';
 import { Group } from './facets';
 import { FilterParams } from './filters';
 import store from '../store/store';
+import { actions as resultsActions } from '../store/results/module';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { formatValue, TIMESERIES_TYPE, isTimeType, isIntegerType } from '../util/types';
 
@@ -160,6 +161,52 @@ export function fetchSummaryExemplars(datasetName: string, variableName: string,
 	return new Promise(res => res());
 }
 
+export function fetchResultExemplars(datasetName: string, variableName: string, key: string, resultID: string, summary: VariableSummary) {
+
+	const variables = datasetGetters.getVariables(store);
+	const variable = variables.find(v => v.colName === variableName);
+
+	const baselineExemplars = summary.baseline.exemplars;
+	const filteredExemplars = summary.filtered && summary.filtered.exemplars ? summary.filtered.exemplars : null;
+	const exemplars = filteredExemplars ? filteredExemplars : baselineExemplars;
+
+	if (exemplars) {
+		if (variable.grouping) {
+			if (variable.grouping.type === 'timeseries') {
+
+				// if there a linked exemplars, fetch those before resolving
+				return Promise.all(exemplars.map(exemplar => {
+					return resultsActions.fetchForecastedTimeseries(store, {
+						dataset: datasetName,
+						timeseriesColName: variable.grouping.idCol,
+						xColName: variable.grouping.properties.xCol,
+						yColName: variable.grouping.properties.yCol,
+						timeseriesID: exemplar,
+						resultID: resultID
+					});
+					// return resultsActions.fetchForecastedTimeseries(store, {
+					// 	dataset: datasetName,
+					// 	timeseriesColName: variable.grouping.idCol,
+					// 	xColName: variable.grouping.properties.xCol,
+					// 	yColName: variable.grouping.properties.yCol,
+					// 	timeseriesID: exemplar,
+					// });
+				}));
+			}
+
+		} else {
+			// if there a linked files, fetch those before resolving
+			return datasetActions.fetchFiles(store, {
+				dataset: datasetName,
+				variable: variableName,
+				urls: exemplars
+			});
+		}
+	}
+
+	return new Promise(res => res());
+}
+
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[]) {
 	const index = _.findIndex(summaries, s => {
 		return s.dataset === summary.dataset && s.key === summary.key;
@@ -208,10 +255,11 @@ export function createErrorSummary(key: string, label: string, dataset: string, 
 	};
 }
 
-export function getSummary(
+export function fetchSolutionResultSummary(
 	context: any,
 	endpoint: string,
 	solution: Solution,
+	target: string,
 	key: string,
 	label: string,
 	updateFunction: (arg: any, summary: VariableSummary) => void,
@@ -235,9 +283,12 @@ export function getSummary(
 		.then(response => {
 			// save the histogram data
 			const summary = response.data.summary;
-			summary.solutionId = solutionId;
-			summary.dataset = dataset;
-			updateFunction(context, summary);
+			return fetchResultExemplars(dataset, target, key, solution.resultId, summary)
+				.then(() => {
+					summary.solutionId = solutionId;
+					summary.dataset = dataset;
+					updateFunction(context, summary);
+				});
 		})
 		.catch(error => {
 			console.error(error);

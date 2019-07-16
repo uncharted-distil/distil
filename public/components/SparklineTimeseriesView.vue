@@ -141,8 +141,12 @@ export default Vue.extend({
 			return !!this.predictedCol;
 		},
 
+		isForecasting(): boolean {
+			return solutionGetters.isForecasting(this.$store);
+		},
+
 		showPredicted(): boolean {
-			return this.hasPredictedCol && !this.isTimeseriesAnalysis;
+			return this.hasPredictedCol && !this.isForecasting;
 		},
 
 		timeseriesGrouping(): Grouping {
