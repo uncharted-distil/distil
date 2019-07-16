@@ -75,7 +75,11 @@ export const getters = {
 
 	// forecasts
 
-	getTimeseriesForecasts(state: ResultsState): Dictionary<Dictionary<Dictionary<number[][]>>> {
+	getPredictedTimeseries(state: ResultsState): Dictionary<Dictionary<number[][]>> {
 		return state.timeseries;
+	},
+
+	getPredictedForecasts(state: ResultsState): Dictionary<Dictionary<number[][]>> {
+		return state.forecasts;
 	}
 };

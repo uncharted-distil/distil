@@ -16,7 +16,8 @@ export interface ResultsState {
 	// correctness summary (correct vs. incorrect) for predicted categorical data
 	correctnessSummaries: VariableSummary[];
 	// forecasts
-	timeseries: Dictionary<Dictionary<Dictionary<number[][]>>>;
+	timeseries: Dictionary<Dictionary<number[][]>>;
+	forecasts: Dictionary<Dictionary<number[][]>>;
 }
 
 export const state: ResultsState = {
@@ -34,5 +35,6 @@ export const state: ResultsState = {
 	// correctness summary (correct vs. incorrect) for predicted categorical data
 	correctnessSummaries: [],
 	// forecasts
-	timeseries: {}
+	timeseries: {},
+	forecasts: {}
 };

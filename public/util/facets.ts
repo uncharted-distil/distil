@@ -324,13 +324,15 @@ function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 
 	let timeseries = null;
 	if (summary.solutionId) {
-		timeseries = resultGetters.getTimeseriesForecasts(store);
+		timeseries = resultGetters.getPredictedTimeseries(store);
+		timeseries = timeseries[summary.solutionId];
 	} else {
 		timeseries = datasetGetters.getTimeseries(store);
+		timeseries = timeseries[group.dataset];
 	}
 
 	group.facets.forEach((facet: CategoricalFacet) => {
-		facet.timeseries = timeseries[group.dataset][facet.file];
+		facet.timeseries = timeseries[facet.file];
 	});
 	return group;
 }

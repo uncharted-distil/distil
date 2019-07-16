@@ -65,10 +65,17 @@ export const mutations = {
 
 	// forecast
 
-	updateTimeseriesForecast(state: ResultsState, args: { dataset: string, id: string, timeseries: number[][] }) {
-		if (!state.timeseries[args.dataset]) {
-			Vue.set(state.timeseries, args.dataset, {});
+	updatePredictedTimeseries(state: ResultsState, args: { solutionId: string, id: string, timeseries: number[][] }) {
+		if (!state.timeseries[args.solutionId]) {
+			Vue.set(state.timeseries, args.solutionId, {});
 		}
-		Vue.set(state.timeseries[args.dataset], args.id, args.timeseries);
+		Vue.set(state.timeseries[args.solutionId], args.id, args.timeseries);
+	},
+
+	updatePredictedForecast(state: ResultsState, args: { solutionId: string, id: string, forecast: number[][] }) {
+		if (!state.forecasts[args.solutionId]) {
+			Vue.set(state.forecasts, args.solutionId, {});
+		}
+		Vue.set(state.forecasts[args.solutionId], args.id, args.forecast);
 	},
 };

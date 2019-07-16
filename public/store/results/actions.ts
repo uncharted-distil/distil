@@ -442,7 +442,7 @@ export const actions = {
 		}));
 	},
 
-	fetchForecastedTimeseries(context: ResultsContext, args: { dataset: string, xColName: string, yColName: string, timeseriesColName: string, timeseriesID: any, resultID: string }) {
+	fetchForecastedTimeseries(context: ResultsContext, args: { dataset: string, xColName: string, yColName: string, timeseriesColName: string, timeseriesID: any, solutionId: string }) {
 
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
@@ -464,17 +464,28 @@ export const actions = {
 			console.warn('`timeseriesID` argument is missing');
 			return null;
 		}
-		if (!args.resultID) {
-			console.warn('`timeseriesID` argument is missing');
+		if (!args.solutionId) {
+			console.warn('`solutionId` argument is missing');
 			return null;
 		}
 
-		return axios.post(`distil/timeseries-forecast/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}/${args.resultID}`, {})
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
+			// no results ready to pull
+			return null;
+		}
+
+		return axios.post(`distil/timeseries-forecast/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}/${solution.resultId}`, {})
 			.then(response => {
-				mutations.updateTimeseriesForecast(context, {
-					dataset: args.dataset,
+				mutations.updatePredictedTimeseries(context, {
+					solutionId: args.solutionId,
 					id: args.timeseriesID,
 					timeseries: response.data.timeseries
+				});
+				mutations.updatePredictedForecast(context, {
+					solutionId: args.solutionId,
+					id: args.timeseriesID,
+					forecast: response.data.forecast
 				});
 			})
 			.catch(error => {

@@ -7,7 +7,8 @@
 		<sparkline-svg class="sparkline-row-chart" v-bind:class="{'has-prediction': !!prediction}"
 			:highlight-pixel-x="highlightPixelX"
 			:timeseries-extrema="timeseriesExtrema"
-			:timeseries="timeseries">
+			:timeseries="timeseries"
+			:forecast="forecast">
 		</sparkline-svg>
 		<div v-if="prediction"
 			class="timeseries-prediction-col"
@@ -25,6 +26,7 @@ import SparklineSvg from './SparklineSvg';
 import { getters as routeGetters } from '../store/route/module';
 import { TimeseriesExtrema } from '../store/dataset/index';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
+import { getters as resultsGetters, actions as resultsActions } from '../store/results/module';
 
 export default Vue.extend({
 	name: 'sparkline-row',
@@ -44,6 +46,7 @@ export default Vue.extend({
 		timeseriesExtrema: {
 			type: Object as () => TimeseriesExtrema
 		},
+		solutionId: String as () => string,
 		prediction: Object as () => any
 	},
 	data() {
@@ -57,7 +60,23 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 		},
 		timeseries(): number[][] {
-			return datasetGetters.getTimeseries(this.$store)[this.dataset][this.timeseriesId];
+			if (this.solutionId) {
+				return resultsGetters.getPredictedTimeseries(this.$store)[this.solutionId][this.timeseriesId];
+			} else {
+				return datasetGetters.getTimeseries(this.$store)[this.dataset][this.timeseriesId];
+			}
+		},
+		forecast(): number[][] {
+			if (this.solutionId) {
+				const forecasts = resultsGetters.getPredictedForecasts(this.$store);
+				const solutions = forecasts[this.solutionId];
+				if (!solutions) {
+					return null;
+				}
+				return solutions[this.timeseriesId];
+			} else {
+				return null;
+			}
 		},
 		min(): number {
 			return this.timeseries ? d3.min(this.timeseries, d => d[1]) : 0;
@@ -77,13 +96,25 @@ export default Vue.extend({
 		},
 		requestTimeseries() {
 			this.hasRequested = true;
-			datasetActions.fetchTimeseries(this.$store, {
-				dataset: this.dataset,
-				xColName: this.xCol,
-				yColName: this.yCol,
-				timeseriesColName: this.timeseriesCol,
-				timeseriesID: this.timeseriesId
-			});
+			if (this.solutionId) {
+				resultsActions.fetchForecastedTimeseries(this.$store, {
+					dataset: this.dataset,
+					xColName: this.xCol,
+					yColName: this.yCol,
+					timeseriesColName: this.timeseriesCol,
+					timeseriesID: this.timeseriesId,
+					solutionId: this.solutionId
+				});
+			} else {
+				datasetActions.fetchTimeseries(this.$store, {
+					dataset: this.dataset,
+					xColName: this.xCol,
+					yColName: this.yCol,
+					timeseriesColName: this.timeseriesCol,
+					timeseriesID: this.timeseriesId
+				});
+			}
+
 		}
 	}
 

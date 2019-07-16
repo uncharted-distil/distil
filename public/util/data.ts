@@ -161,7 +161,7 @@ export function fetchSummaryExemplars(datasetName: string, variableName: string,
 	return new Promise(res => res());
 }
 
-export function fetchResultExemplars(datasetName: string, variableName: string, key: string, resultID: string, summary: VariableSummary) {
+export function fetchResultExemplars(datasetName: string, variableName: string, key: string, solutionId: string, summary: VariableSummary) {
 
 	const variables = datasetGetters.getVariables(store);
 	const variable = variables.find(v => v.colName === variableName);
@@ -182,15 +182,8 @@ export function fetchResultExemplars(datasetName: string, variableName: string, 
 						xColName: variable.grouping.properties.xCol,
 						yColName: variable.grouping.properties.yCol,
 						timeseriesID: exemplar,
-						resultID: resultID
+						solutionId: solutionId
 					});
-					// return resultsActions.fetchForecastedTimeseries(store, {
-					// 	dataset: datasetName,
-					// 	timeseriesColName: variable.grouping.idCol,
-					// 	xColName: variable.grouping.properties.xCol,
-					// 	yColName: variable.grouping.properties.yCol,
-					// 	timeseriesID: exemplar,
-					// });
 				}));
 			}
 
@@ -283,7 +276,7 @@ export function fetchSolutionResultSummary(
 		.then(response => {
 			// save the histogram data
 			const summary = response.data.summary;
-			return fetchResultExemplars(dataset, target, key, solution.resultId, summary)
+			return fetchResultExemplars(dataset, target, key, solutionId, summary)
 				.then(() => {
 					summary.solutionId = solutionId;
 					summary.dataset = dataset;

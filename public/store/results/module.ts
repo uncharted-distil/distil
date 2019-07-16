@@ -39,7 +39,8 @@ export const getters = {
 	// result table data
 	getResultDataNumRows: read(moduleGetters.getResultDataNumRows),
 	// forecasts
-	getTimeseriesForecasts: read(moduleGetters.getTimeseriesForecasts)
+	getPredictedTimeseries: read(moduleGetters.getPredictedTimeseries),
+	getPredictedForecasts: read(moduleGetters.getPredictedForecasts)
 };
 
 // Typed actions
@@ -84,5 +85,6 @@ export const mutations = {
 	// correctness
 	updateCorrectnessSummaries: commit(moduleMutations.updateCorrectnessSummaries),
 	// forecasts
-	updateTimeseriesForecast: commit(moduleMutations.updateTimeseriesForecast)
+	updatePredictedTimeseries: commit(moduleMutations.updatePredictedTimeseries),
+	updatePredictedForecast: commit(moduleMutations.updatePredictedForecast)
 };
