@@ -76,7 +76,6 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 	// create & submit the solution request
 	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview", "Join to be reviewed by user",
 		searchResult, provenance, joinLeft.DatasetID)
-	//pipelineDesc, err := description.CreateJoinPipeline("Join Preview", "Join to be reviewed by user", leftVarsMap[joinLeft.Column], rightVarsMap[joinRight.Column], 0.8)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create join pipeline")
 	}
@@ -122,7 +121,7 @@ func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *pipeline.Pipe
 func createVarMap(vars []*model.Variable) map[string]*model.Variable {
 	varsMap := map[string]*model.Variable{}
 	for _, v := range vars {
-		varsMap[v.Name] = v
+		varsMap[v.DisplayName] = v
 	}
 	return varsMap
 }

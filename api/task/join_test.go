@@ -106,7 +106,7 @@ func TestJoin(t *testing.T) {
 	assert.NotNil(t, result)
 
 	expected := [][]string{
-		{"d3mIndex", "alpha", "charlie"},
+		{"D3M Index", "Alpha", "Charlie"},
 		{"0", "1.0", "a"},
 		{"1", "2.0", "b"},
 		{"2", "3.0", "c"},
