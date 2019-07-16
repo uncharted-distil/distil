@@ -82,6 +82,7 @@ func newStatusChannel() chan SolutionStatus {
 // SolutionRequest represents a solution search request.
 type SolutionRequest struct {
 	Dataset          string
+	DatasetInput     string
 	TargetFeature    string
 	Task             string
 	SubTask          string
@@ -122,6 +123,7 @@ func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
 	if !ok {
 		return nil, fmt.Errorf("no `dataset` in solution request")
 	}
+	req.DatasetInput = req.Dataset
 
 	req.TargetFeature, ok = json.String(j, "target")
 	if !ok {
@@ -598,6 +600,12 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		return err
 	}
 
+	// fetch the input dataset (should only differ on augmented)
+	datasetInput, err := metaStorage.FetchDataset(s.DatasetInput, true, true)
+	if err != nil {
+		return err
+	}
+
 	columnIndex := getColumnIndex(targetVariable, dataset.Filters.Variables)
 	timeseriesColumnIndex := -1
 	if timeseriesField != nil {
@@ -614,10 +622,10 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// add dataset name to path
-	datasetInputDir := env.ResolvePath(dataset.Metadata.Source, dataset.Metadata.Folder)
+	datasetInputDir := env.ResolvePath(datasetInput.Source, datasetInput.Folder)
 
 	// perist the datasets and get URI
-	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, compute.D3MDataSchema, datasetInputDir, datasetDir, s.Task, timeseriesColumnIndex)
+	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.DatasetInput, compute.D3MDataSchema, datasetInputDir, datasetDir, s.Task, timeseriesColumnIndex)
 	if err != nil {
 		return err
 	}
@@ -644,7 +652,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVarName, s.Dataset, s.Metrics, s.Task, s.SubTask, int64(s.MaxTime))
+	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVarName, s.DatasetInput, s.Metrics, s.Task, s.SubTask, int64(s.MaxTime))
 
 	if err != nil {
 		return err

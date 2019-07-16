@@ -171,7 +171,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	}
 
 	if requestDataset.DatasetOrigin != nil {
-		request.Dataset = requestDataset.DatasetOrigin.SourceDataset
+		request.DatasetInput = requestDataset.DatasetOrigin.SourceDataset
 		request.SearchResult = requestDataset.DatasetOrigin.SearchResult
 		request.SearchProvenance = requestDataset.DatasetOrigin.Provenance
 	}
