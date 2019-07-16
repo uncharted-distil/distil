@@ -260,8 +260,8 @@ export const actions = {
 		}
 
 		let postParams = {};
-		if (originalDatasetID != null) {
-			postParams = {originalDatasetID: args.originalDatasetID, joinedDatasetID: args.joinedDatasetID}
+		if (args.originalDatasetID !== null) {
+			postParams = {originalDatasetID: args.originalDatasetID, joinedDatasetID: args.joinedDatasetID};
 		}
 
 		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, postParams)
