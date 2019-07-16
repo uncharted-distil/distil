@@ -21,7 +21,8 @@ import { FilterParams, INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters
 import { createPendingSummary, createErrorSummary, createEmptyTableData, fetchSummaryExemplars, getTimeseriesAnalysisIntervals } from '../../util/data';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
-import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX } from '../../util/types';
+import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX, GEOCOORDINATE_TYPE, LATITUDE_TYPE } from '../../util/types';
+import { longStackSupport } from 'q';
 
 // fetches variables and add dataset name to each variable
 function getVariables(dataset: string): Promise<Variable[]> {
@@ -491,9 +492,20 @@ export const actions = {
 			console.warn('`type` argument is missing');
 			return null;
 		}
+		
+		let type = args.type;
+
+		if (args.type === GEOCOORDINATE_TYPE) {
+			console.log('geocoord selected');
+			mutations.updateVariableType(context, args);
+			mutations.setDataset(context, args.dataset);
+			type = LATITUDE_TYPE;
+
+			return;
+		}
 		return axios.post(`/distil/variables/${args.dataset}`, {
 				field: args.field,
-				type: args.type
+				type: type
 			})
 			.then(() => {
 				mutations.updateVariableType(context, args);
@@ -518,7 +530,6 @@ export const actions = {
 				]);
 			})
 			.catch(error => {
-				console.error(error);
 				const key = args.field;
 				const label = args.field;
 				const dataset = args.dataset;

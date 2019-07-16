@@ -233,6 +233,7 @@ export interface DatasetState {
 	includedSet: WorkingSet;
 	excludedSet: WorkingSet;
 	pendingRequests: DatasetPendingRequest[];
+	isGeocoordinateFacet: string[];
 }
 
 export interface WorkingSet {
@@ -269,4 +270,6 @@ export const state: DatasetState = {
 
 	// pending requests for the active dataset
 	pendingRequests: [],
+
+	isGeocoordinateFacet: []
 };

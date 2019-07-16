@@ -13,6 +13,19 @@
 					<i v-if="suggested.isSelected" class="fa fa-check" aria-hidden="true"></i>
 					{{suggested.label}}
 					<icon-base v-if="suggested.isRecommended" icon-name="bookmark" class="recommended-icon"><icon-bookmark /></icon-base>
+					<b-dropdown variant="secondary"
+						v-if="suggested.type === 'geocoordinate'"
+						class="var-type-button"
+						id="type-change-dropdown"
+						:text="'Latitude'">
+					</b-dropdown>
+					
+					<b-dropdown variant="secondary"
+						v-if="suggested.type === 'geocoordinate'"
+						class="var-type-button"
+						id="type-change-dropdown"
+						:text="'Longitude'">
+					</b-dropdown>
 				</b-dropdown-item>
 			</b-dropdown>
 			<i v-if="isUnsure" class="unsure-type-icon fa fa-circle"></i>
@@ -32,7 +45,7 @@ import IconBookmark from './icons/IconBookmark';
 import { SuggestedType, Variable, Highlight } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, GEOCOORDINATE_TYPE } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
 
 const PROBABILITY_THRESHOLD = 0.8;
@@ -52,6 +65,7 @@ export default Vue.extend({
 	computed: {
 		variable(): Variable {
 			const vars = datasetGetters.getVariables(this.$store);
+			
 			if (!vars) {
 				return null;
 			}
@@ -119,6 +133,9 @@ export default Vue.extend({
 				show: 10,
 				hide: 10
 			};
+		},
+		isGeocoordSelected(){
+			
 		}
 	},
 
@@ -147,9 +164,23 @@ export default Vue.extend({
 			return combinedSuggestions;
 		},
 		onTypeChange(suggestedType) {
+
+			console.log('suggestedType', suggestedType);
+			
 			const type = suggestedType;
-			const dataset = this.dataset;
 			const field = this.field;
+			const dataset = this.dataset;
+
+			if (type === GEOCOORDINATE_TYPE){
+				datasetActions.setVariableType(this.$store, {
+					dataset: dataset,
+					field: field,
+					type: type
+				})
+				return;
+				
+			}
+
 			datasetActions.setVariableType(this.$store, {
 				dataset: dataset,
 				field: field,
@@ -169,6 +200,10 @@ export default Vue.extend({
 				}
 			});
 		},
+		onGeocoordTypeChange(type){
+			console.log('onGeocoordTypeChange', type);
+			
+		}
 	},
 
 	mounted() {
