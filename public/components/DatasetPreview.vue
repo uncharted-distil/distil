@@ -159,7 +159,9 @@ export default Vue.extend({
 				datasetID: this.dataset.id,
 				terms: this.terms,
 				source: 'contrib',
-				provenance: this.dataset.provenance
+				provenance: this.dataset.provenance,
+				originalDatasetID: null,
+				joinedDatasetID: null
 			}).then(() => {
 				this.importPending = false;
 			}).catch(() => {

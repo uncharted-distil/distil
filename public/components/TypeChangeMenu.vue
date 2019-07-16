@@ -160,7 +160,7 @@ export default Vue.extend({
 			return [
 				{
 					type: TIMESERIES_TYPE,
-					label: 'Timeseries'
+					label: 'Timeseries...'
 				}
 			];
 		},
@@ -180,10 +180,15 @@ export default Vue.extend({
 				}).then(() => {
 					if (grouping.subIds.length > 0) {
 						const composedKey = getComposedVariableKey(grouping.subIds);
-						datasetActions.deleteVariable(this.$store, {
-							dataset: this.dataset,
-							key: getComposedVariableKey(grouping.subIds)
-						});
+						// if there was more than one sub ID, the IDs would have been composed into a single
+						// grouping ID that we need to delete when we revert back to the exploded version of the
+						// compound facet.
+						if (grouping.subIds.length > 1) {
+							datasetActions.deleteVariable(this.$store, {
+								dataset: this.dataset,
+								key: getComposedVariableKey(grouping.subIds)
+							});
+						}
 					}
 				});
 			}

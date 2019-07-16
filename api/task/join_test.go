@@ -95,7 +95,12 @@ func TestJoin(t *testing.T) {
 		DatasetSource: "contrib",
 	}
 
-	result, err := join(leftJoin, rightJoin, varsLeft, varsRight, testSubmitter{}, &cfg)
+	rightOrigin := &apiModel.DatasetOrigin{
+		SearchResult: "{}",
+		Provenance:   "NYU",
+	}
+
+	result, err := join(leftJoin, rightJoin, varsLeft, varsRight, rightOrigin, testSubmitter{}, &cfg)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)

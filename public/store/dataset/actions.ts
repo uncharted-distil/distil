@@ -241,12 +241,14 @@ export const actions = {
 				datasetID: args.datasetID,
 				source: 'augmented',
 				provenance: 'local',
-				terms: args.datasetID
+				terms: args.datasetID,
+				originalDatasetID: null,
+				joinedDatasetID: null
 			});
 		});
 	},
 
-	importDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, terms: string }): Promise<void>  {
+	importDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, terms: string, originalDatasetID: string, joinedDatasetID: string }): Promise<void>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
@@ -256,13 +258,19 @@ export const actions = {
 			return null;
 
 		}
-		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
+
+		let postParams = {};
+		if (args.originalDatasetID !== null) {
+			postParams = {originalDatasetID: args.originalDatasetID, joinedDatasetID: args.joinedDatasetID};
+		}
+
+		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, postParams)
 			.then(response => {
 				return actions.searchDatasets(context, args.terms);
 			});
 	},
 
-	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string }): Promise<any>  {
+	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, searchResult: string }): Promise<any>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
@@ -277,8 +285,9 @@ export const actions = {
 			status: DatasetPendingRequestStatus.PENDING,
 		};
 		mutations.updatePendingRequests(context, update);
-		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
-			.then(response => {
+		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {
+			searchResult: args.searchResult
+		}).then(response => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
 				return response && response.data;
 			})

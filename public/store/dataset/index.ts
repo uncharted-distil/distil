@@ -89,12 +89,18 @@ export interface Dataset {
 	source: string;
 	joinSuggestion?: JoinSuggestion[];
 	joinScore?: number;
+	datasetOrigin?: DatasetOrigin;
 }
 
 export interface JoinSuggestion {
 	baseDataset: string;
 	baseColumns: string[];
 	joinColumns: string[];
+}
+
+export interface DatasetOrigin {
+	searchResult: string;
+	provenance: string;
 }
 
 export interface Extrema {

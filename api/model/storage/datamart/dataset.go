@@ -32,9 +32,9 @@ const (
 	metadataType     = "metadata"
 	datasetsListSize = 1000
 	// ProvenanceNYU for NYU datamart
-	ProvenanceNYU = "datamartNYU"
+	ProvenanceNYU = "NYU"
 	// ProvenanceISI for ISI datamart
-	ProvenanceISI   = "datamartISI"
+	ProvenanceISI   = "ISI"
 	getRESTFunction = "download"
 )
 

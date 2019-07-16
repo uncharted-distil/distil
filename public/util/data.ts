@@ -17,8 +17,8 @@ export const ERROR_SUFFIX = '_error';
 
 export const NUM_PER_PAGE = 10;
 
-export const DATAMART_PROVENANCE_NYU = 'datamartNYU';
-export const DATAMART_PROVENANCE_ISI = 'datamartISI';
+export const DATAMART_PROVENANCE_NYU = 'NYU';
+export const DATAMART_PROVENANCE_ISI = 'ISI';
 export const ELASTIC_PROVENANCE = 'elastic';
 export const FILE_PROVENANCE = 'file';
 
