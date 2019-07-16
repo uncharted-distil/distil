@@ -59,8 +59,8 @@ func ImportHandler(dataCtor model.DataStorageCtor, datamartCtors map[string]mode
 			}
 		}
 
-		originalDatasetID, ok := params["originalDataset"].(string)
-		joinedDatasetID, ok := params["joinedDataset"].(string)
+		originalDatasetID, ok := params["originalDatasetID"].(string)
+		joinedDatasetID, ok := params["joinedDatasetID"].(string)
 		if ok {
 			// get the joined dataset for the search result
 			joinedDataset, err := esStorage.FetchDataset(joinedDatasetID, true, true)
