@@ -36,7 +36,7 @@ const (
 	D3MProblem = "problemDoc.json"
 
 	problemVersion       = "2.0"
-	problemSchemaVersion = "3.2"
+	problemSchemaVersion = "3.2.0"
 
 	problemTypeForecasting = "forecasting"
 
@@ -167,12 +167,10 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 	taskSubType := DefaultTaskSubType(taskType)
 	metrics := DefaultMetrics(taskType)
 
-	targetIdx := -1
-
 	pTarget := &ProblemPersistTarget{
 		TargetIndex: 0,
 		ResID:       defaultResourceID,
-		ColIndex:    targetIdx,
+		ColIndex:    targetVar.Index,
 		ColName:     targetVar.DisplayName,
 	}
 
