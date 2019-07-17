@@ -48,7 +48,7 @@
 		</error-modal>
 
 		<div class="row justify-content-center">
-			<b-button class="export-button" :variant="exportVariant" @click="showExport = !showExport" v-if="isTask1">
+			<b-button class="export-button" :variant="exportVariant" @click="showExport = !showExport" :disabled="disableExport" v-if="isTask1">
 				Task 1: Export Problem
 			</b-button>
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">

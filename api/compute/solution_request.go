@@ -762,7 +762,7 @@ func CreateSearchSolutionRequest(request *SolutionRequestDiscovery, skipPreproce
 	}
 	columnIndex := getColumnIndex(targetVariable, request.SelectedFeatures)
 	task := DefaultTaskType(targetVariable.Type, "")
-	taskSubType := DefaultTaskSubType(targetVariable.Type)
+	taskSubType := DefaultTaskSubType(task)
 	metrics := DefaultMetrics(task)
 
 	// create search solutions request
