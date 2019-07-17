@@ -9,6 +9,7 @@ import { Variable, VariableSummary, TimeseriesSummary, CATEGORICAL_SUMMARY, NUME
 import store from '../store/store';
 import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from './data';
 import { getters as datasetGetters } from '../store/dataset/module';
+import { getters as resultGetters } from '../store/results/module';
 
 export const CATEGORICAL_CHUNK_SIZE = 5;
 export const IMAGE_CHUNK_SIZE = 5;
@@ -43,6 +44,8 @@ export interface CategoricalFacet {
 	filterable: boolean;
 	segments: Segment[];
 	timeseries?: number[][];
+	multipleTimeseries?: number[][];
+	colors?: string[];
 	file: string;
 }
 
@@ -262,6 +265,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary): Group {
 	let total = 0;
 	const histogram = summary.filtered ? summary.filtered : summary.baseline;
+
 	const facets =  _.map(histogram.categoryBuckets, (buckets, category) => {
 		const segments = [];
 		const count = _.sumBy(buckets, b => b.count);
@@ -320,11 +324,31 @@ function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary): Grou
 
 function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 	const group = createCategoricalSummaryFacet(summary);
-	const timeseries = datasetGetters.getTimeseries(store);
+
+	let timeseries = null;
+	let forecasts = null;
+	if (summary.solutionId) {
+		timeseries = resultGetters.getPredictedTimeseries(store);
+		timeseries = timeseries[summary.solutionId];
+		forecasts = resultGetters.getPredictedForecasts(store);
+		forecasts = forecasts[summary.solutionId];
+	} else {
+		timeseries = datasetGetters.getTimeseries(store);
+		timeseries = timeseries[group.dataset];
+	}
 
 	group.facets.forEach((facet: CategoricalFacet) => {
-		facet.timeseries = timeseries[group.dataset][facet.file];
+		if (summary.solutionId) {
+			facet.multipleTimeseries = [
+				timeseries[facet.file],
+				forecasts[facet.file]
+			];
+			facet.colors = [ '#000', '#00c6e1' ];
+		} else {
+			facet.timeseries = timeseries[facet.file];
+		}
 	});
+
 	return group;
 }
 

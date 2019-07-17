@@ -25,26 +25,23 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
-// TimeseriesResult represents the result of a timeseries request.
-type TimeseriesResult struct {
+// TimeseriesForecastResult represents the result of a timeseries request.
+type TimeseriesForecastResult struct {
 	Timeseries [][]float64 `json:"timeseries"`
+	Forecast   [][]float64 `json:"forecast"`
 }
 
-// TimeseriesHandler returns timeseries data.
-func TimeseriesHandler(ctorStorage api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+// TimeseriesForecastHandler returns timeseries data.
+func TimeseriesForecastHandler(dataCtor api.DataStorageCtor, solutionCtor api.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		dataset := pat.Param(r, "dataset")
 		timeseriesColName := pat.Param(r, "timeseriesColName")
 		xColName := pat.Param(r, "xColName")
 		yColName := pat.Param(r, "yColName")
+		resultUUID := pat.Param(r, "result-uuid")
 		timeseriesURI := pat.Param(r, "timeseriesURI")
 		storageName := model.NormalizeDatasetID(dataset)
-		invert := pat.Param(r, "invert")
-		invertBool := false
-		if invert == "true" {
-			invertBool = true
-		}
 
 		// parse POST params
 		params, err := getPostParameters(r)
@@ -61,21 +58,41 @@ func TimeseriesHandler(ctorStorage api.DataStorageCtor) func(http.ResponseWriter
 		}
 
 		// get storage client
-		storage, err := ctorStorage()
+		data, err := dataCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		solution, err := solutionCtor()
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// fetch timeseries
-		timeseries, err := storage.FetchTimeseries(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURI, filterParams, invertBool)
+		timeseries, err := data.FetchTimeseries(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURI, filterParams, false)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		err = handleJSON(w, TimeseriesResult{
+		// get the result URI. Error ignored to make it ES compatible.
+		res, err := solution.FetchSolutionResultByUUID(resultUUID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		forecast, err := data.FetchTimeseriesForecast(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURI, res.ResultURI, filterParams)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		err = handleJSON(w, TimeseriesForecastResult{
 			Timeseries: timeseries,
+			Forecast:   forecast,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))

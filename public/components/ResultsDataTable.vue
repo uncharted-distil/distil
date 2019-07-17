@@ -30,7 +30,8 @@
 					:x-col="timeseriesGrouping.properties.xCol"
 					:y-col="timeseriesGrouping.properties.yCol"
 					:timeseries-col="timeseriesGrouping.idCol"
-					:timeseries-id="data.item[timeseriesGrouping.idCol]">
+					:timeseries-id="data.item[timeseriesGrouping.idCol]"
+					:solution-id="solutionId">
 				</sparkline-preview>
 
 			</template>
@@ -111,6 +112,10 @@ export default Vue.extend({
 
 		solution(): Solution {
 			return solutionGetters.getActiveSolution(this.$store);
+		},
+
+		solutionId(): string {
+			return routeGetters.getRouteSolutionId(this.$store);
 		},
 
 		solutionIndex(): number {

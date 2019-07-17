@@ -46,7 +46,8 @@
 						:timeseries-id="item[timeseriesGrouping.idCol]"
 						:timeseries-extrema="timeseriesRowExtrema"
 						:highlight-pixel-x="highlightPixelX"
-						:prediction="getPrediction(item)">
+						:prediction="getPrediction(item)"
+						:solution-id="solutionId">
 					</sparkline-row>
 				</div>
 			</div>
@@ -133,6 +134,10 @@ export default Vue.extend({
 			return routeGetters.getRouteTimeseriesAnalysis(this.$store);
 		},
 
+		solutionId(): string {
+			return routeGetters.getRouteSolutionId(this.$store);
+		},
+
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
 		},
@@ -141,8 +146,12 @@ export default Vue.extend({
 			return !!this.predictedCol;
 		},
 
+		isForecasting(): boolean {
+			return solutionGetters.isForecasting(this.$store);
+		},
+
 		showPredicted(): boolean {
-			return this.hasPredictedCol && !this.isTimeseriesAnalysis;
+			return this.hasPredictedCol && !this.isForecasting;
 		},
 
 		timeseriesGrouping(): Grouping {

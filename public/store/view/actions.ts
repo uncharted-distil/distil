@@ -341,6 +341,7 @@ export const actions = {
 		} else if (isClassification) {
 			resultActions.fetchCorrectnessSummaries(store, {
 				dataset: dataset,
+				target: target,
 				requestIds: requestIds,
 				highlight: highlight
 			});

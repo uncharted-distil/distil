@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import moment from 'moment';
 import { Variable } from '../dataset/index';
-import { REGRESSION_TASK, CLASSIFICATION_TASK, getTask } from '../../util/solutions';
+import { REGRESSION_TASK, CLASSIFICATION_TASK, TIMESERIES_FORECASTING_TASK, getTask } from '../../util/solutions';
 import { SolutionState, Solution, SolutionRequest, SOLUTION_RUNNING, SOLUTION_ERRORED, SOLUTION_COMPLETED } from './index';
 import { Dictionary } from '../../util/dict';
 import { Stream } from '../../util/ws';
@@ -150,7 +150,19 @@ export const getters = {
 	},
 
 	isForecasting(state: SolutionState, getters: any): boolean {
-		return !!getters.getRouteTimeseriesAnalysis;
+
+		const variables = getters.getVariables;
+		const target = getters.getRouteTargetVariable;
+		const targetVariable = variables.find(s => _.toLower(s.colName) === _.toLower(target));
+		if (!targetVariable) {
+			return false;
+		}
+		const task = getTask(targetVariable.colType);
+		if (!task) {
+			console.error('NULL task for forecasting task type check - defaulting to FALSE.  This should not happen.');
+			return false;
+		}
+		return task.schemaName === TIMESERIES_FORECASTING_TASK.schemaName;
 	},
 
 	getRequestStreams(state: SolutionState, getters: any): Dictionary<Stream> {
