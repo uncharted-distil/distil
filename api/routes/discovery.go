@@ -33,8 +33,8 @@ import (
 )
 
 const (
-	apiExportFile     = "ssapi.json"
-	problemSchemaFile = "schema.json"
+	apiExportFile     = "ss_api.json"
+	problemSchemaFile = "problem_schema.json"
 
 	// ProblemLabelFile is the file listing the exported problems.
 	ProblemLabelFile = "labels.csv"

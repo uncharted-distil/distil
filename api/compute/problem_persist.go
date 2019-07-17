@@ -35,8 +35,8 @@ const (
 	// D3MProblem name of the expected problem file.
 	D3MProblem = "problemDoc.json"
 
-	problemVersion       = "1.0"
-	problemSchemaVersion = "3.0"
+	problemVersion       = "2.0"
+	problemSchemaVersion = "3.2"
 
 	problemTypeForecasting = "forecasting"
 
@@ -58,13 +58,14 @@ type VariableProvider func(dataset string, index string, name string) (*model.Va
 type ProblemPersist struct {
 	About           *ProblemPersistAbout          `json:"about"`
 	Inputs          *ProblemPersistInput          `json:"inputs"`
-	ExpectedOutputs *ProblemPersistExpectedOutput `json:"expectedOutputs"`
+	ExpectedOutputs *ProblemPersistExpectedOutput `json:"expectedOutputs,omitempty"`
 }
 
 // ProblemPersistAbout represents the basic information of a problem.
 type ProblemPersistAbout struct {
 	ProblemID            string `json:"problemID"`
 	ProblemName          string `json:"problemName"`
+	ProblemDescription   string `json:"problemDescription"`
 	TaskType             string `json:"taskType"`
 	TaskSubType          string `json:"taskSubType"`
 	ProblemVersion       string `json:"problemVersion"`
@@ -75,7 +76,7 @@ type ProblemPersistAbout struct {
 type ProblemPersistInput struct {
 	Data               []*ProblemPersistData              `json:"data"`
 	PerformanceMetrics []*ProblemPersistPerformanceMetric `json:"performanceMetrics"`
-	DataSplits         *ProblemPersistDataSplits          `json:"dataSplits"`
+	DataSplits         *ProblemPersistDataSplits          `json:"dataSplits,omitempty"`
 }
 
 // ProblemPersistDataSplits contains the information about the data splits.
@@ -170,7 +171,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 
 	pTarget := &ProblemPersistTarget{
 		TargetIndex: 0,
-		ResID:       "learningData",
+		ResID:       defaultResourceID,
 		ColIndex:    targetIdx,
 		ColName:     targetVar.DisplayName,
 	}
