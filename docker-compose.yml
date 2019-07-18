@@ -28,21 +28,21 @@ postgres:
   command:
     -d postgres
 
-# distil-auto-ml:
-#   image:
-#     registry.datadrivendiscovery.org/uncharted/distil-integration/distil-auto-ml:latest
-#   environment:
-#     - D3MINPUTDIR=/home/chris/data/d3m
-#     - D3MOUTPUTDIR=/home/chris/temp/outputs
-#     - D3MSTATICDIR=/static_resources
-#     - D3MRUN=ta2
-#   volumes:
-#     - /home/chris/data/d3m:/home/chris/data/d3m
-#     - $PWD/datamart:/datamart
-#     - /home/chris/temp/outputs:/home/chris/temp/outputs
-#     - $PWD/static_resources:/static_resources
-#   ports:
-#     - "45042:45042"
+distil-auto-ml:
+  image:
+    registry.datadrivendiscovery.org/uncharted/distil-integration/distil-auto-ml:latest
+  environment:
+    - D3MINPUTDIR=/input
+    - D3MOUTPUTDIR=/output
+    - D3MSTATICDIR=/static_resources
+    - D3MRUN=ta2
+  volumes:
+    - $PWD/datamart:/input
+    - $PWD/datamart:/datamart
+    - $PWD/outputs:/output
+    - $PWD/static_resources:/static_resources
+  ports:
+    - "45042:45042"
 
 runner:
   image:
@@ -55,6 +55,6 @@ runner:
     - D3MSTATICDIR=$PWD/static_resources
   volumes:
     - $PWD/datamart:/$PWD/datamart
-    - /home/chris/data/d3m:/home/chris/data/d3m
-    - /home/chris/temp/outputs:/home/chris/temp/outputs
+    - $PWD/datasets:/$PWD/datasets
+    - $PWD/outputs:/$PWD/outputs
     - $PWD/static_resources:/$PWD/static_resources
