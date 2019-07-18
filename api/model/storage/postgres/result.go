@@ -539,7 +539,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 		joinAlias:     "joined",
 		joinColumn:    "index",
 	}
-	numRows, err := s.fetchNumRowsJoined(storageNameResult, variables, countFilter, joinDef)
+	numRows, err := s.fetchNumRowsJoined(storageName, variables, countFilter, joinDef)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
