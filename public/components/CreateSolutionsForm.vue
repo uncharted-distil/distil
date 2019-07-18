@@ -125,9 +125,6 @@ export default Vue.extend({
 			}
 			return filters;
 		},
-		trainingVariableSummaries(): number {
-			return routeGetters.getTrainingVariableSummaries(this.$store).length;
-		},
 		metrics(): string[] {
 			if (this.isTask2) {
 				return appGetters.getProblemMetrics(this.$store);
@@ -177,7 +174,7 @@ export default Vue.extend({
 			return appGetters.isTask2(this.$store);
 		},
 		disableCreate(): boolean {
-			return this.isPending || !this.targetSelected || !this.trainingVariableSummaries; // || !this.trainingSelected);
+			return this.isPending || !this.targetSelected || !this.trainingSelected;
 		},
 		disableExport(): boolean {
 			return !this.targetSelected || !this.trainingSelected;
