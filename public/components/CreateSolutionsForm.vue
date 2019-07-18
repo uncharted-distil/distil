@@ -24,17 +24,24 @@
 		</error-modal>
 
 		<b-modal
+			id="meaningful-modal"
 			v-model="showExport"
 			cancel-disabled
 			hide-header
 			hide-footer>
 			<div class="row justify-content-center">
-				<b-radio-group v-model="meaningful">
-					<div class="meaningful-text">Is this a meaningful problem?</div>
-					<b-radio value=true>Yes</b-radio>
-					<b-radio value=false>No</b-radio>
-				</b-radio-group>
+				<div class="meaningful-text">Is this a meaningful problem?</div>
 			</div>
+			    <div class="row justify-content-center">
+                    <div class="radio-container">
+                        <input type="radio" v-model="meaningful" :value=true id="yes_radio">
+                        <label for="yes_radio">Yes</label>
+                    </div>
+					<div class="radio-container">
+                        <input type="radio" v-model="meaningful" :value=false id="no_radio">
+                        <label for="no_radio">No</label>
+					</div>
+            </div>
 			<div class="row justify-content-center">
 				<b-btn class="mt-3 close-modal" variant="success" block @click="exportData">Export</b-btn>
 			</div>
@@ -97,7 +104,8 @@ export default Vue.extend({
 			showExportSuccess: false,
 			showExportFailure: false,
 			showCreateFailure: false,
-			createErrorMessage: null
+			createErrorMessage: null,
+			$bvModal: null,
 		};
 	},
 
@@ -226,10 +234,14 @@ export default Vue.extend({
 			}).then(res => {
 				this.showExportSuccess = !this.showExportSuccess;
 				this.meaningful = true;
+				this.$bvModal.hide('meaningful-modal')
 			}).catch(err => {
 				this.showExportFailure = !this.showExportFailure;
 				this.meaningful = true;
+				this.$bvModal.hide('meaningful-modal')
 			});
+
+
 		}
 	}
 });
@@ -273,5 +285,9 @@ export default Vue.extend({
 	flex-shrink: 0;
 	color: #ee0701;
 	padding-right: 15px;
+}
+
+.radio-container {
+	padding: 0 15px;
 }
 </style>
