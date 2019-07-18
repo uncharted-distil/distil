@@ -345,19 +345,43 @@ export function getTableDataItems(data: TableData): TableRow[] {
 	return !_.isEmpty(data) ? [] : null;
 }
 
+function isPredictedCol(arg: string): boolean {
+	return arg.endsWith(':predicted');
+}
+
 export function getTableDataFields(data: TableData) {
 	if (validateData(data)) {
 		const result = {};
+
 		for (const col of data.columns) {
-			if (col.key !== D3M_INDEX_FIELD) {
-				result[col.key] = {
-					label: col.label,
-					key: col.key,
-					type: col.type,
-					sortable: true
-				};
+			if (col.key === D3M_INDEX_FIELD) {
+				continue;
 			}
+
+			let label = col.label;
+
+			if (col.type === TIMESERIES_TYPE) {
+
+				if (isPredictedCol(col.key)) {
+					// do not display predicted col for timeseries
+					continue;
+				}
+
+				const variables = datasetGetters.getVariables(store);
+				const variable = variables.find(v => v.colName === col.key);
+				if (variable && variable.grouping) {
+					label = variable.grouping.properties.yCol;
+				}
+			}
+
+			result[col.key] = {
+				label: label,
+				key: col.key,
+				type: col.type,
+				sortable: true
+			};
 		}
+
 		return result;
 	}
 	return {};
