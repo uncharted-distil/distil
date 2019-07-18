@@ -44,7 +44,7 @@
 						:y-col="timeseriesGrouping.properties.yCol"
 						:timeseries-col="timeseriesGrouping.idCol"
 						:timeseries-id="item[timeseriesGrouping.idCol]"
-						:timeseries-extrema="timeseriesRowExtrema"
+						:timeseries-extrema="timeseriesRowLocalExtrema(item[timeseriesGrouping.idCol])"
 						:highlight-pixel-x="highlightPixelX"
 						:prediction="getPrediction(item)"
 						:solution-id="solutionId">
@@ -246,7 +246,7 @@ export default Vue.extend({
 			return routeGetters.getDecodedHighlight(this.$store);
 		},
 
-		timeseriesRowExtrema(): TimeseriesExtrema {
+		timeseriesRowGlobalExtrema(): TimeseriesExtrema {
 			return {
 				x: {
 					min: this.microMin,
@@ -319,6 +319,62 @@ export default Vue.extend({
 	},
 
 	methods: {
+
+		getTimeseries(timeseriesId: string): number[][] {
+			const timeseries = datasetGetters.getTimeseries(this.$store);
+			const datasets = timeseries[this.dataset];
+			if (!datasets) {
+				return [];
+			}
+			return datasets[timeseriesId] ? datasets[timeseriesId] : [];
+		},
+
+		getPredictedTimeseries(timeseriesId: string): number[][] {
+			const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
+			const solutions = timeseries[this.solutionId];
+			if (!solutions) {
+				return [];
+			}
+			return solutions[timeseriesId] ? solutions[timeseriesId] : [];
+		},
+
+		getPredictedForecasts(timeseriesId: string): number[][] {
+			const forecasts = resultsGetters.getPredictedForecasts(this.$store);
+			const solutions = forecasts[this.solutionId];
+			if (!solutions) {
+				return [];
+			}
+			return solutions[timeseriesId] ? solutions[timeseriesId] : [];
+		},
+
+		timeseriesRowLocalExtrema(timeseriesId: string): TimeseriesExtrema {
+
+			let yValues = null;
+
+			if (this.solutionId) {
+				const timeseries = this.getPredictedTimeseries(timeseriesId);
+				const forecasts = this.getPredictedForecasts(timeseriesId);
+				const both = timeseries.concat(forecasts);
+				yValues = both.map(v => v[1]);
+			} else {
+				const timeseries = this.getTimeseries(timeseriesId);
+				yValues = timeseries.map(v => v[1]);
+			}
+
+			const yMin: number = _.min(yValues);
+			const yMax: number = _.max(yValues);
+
+			return {
+				x: {
+					min: this.microMin,
+					max: this.microMax
+				},
+				y: {
+					min: yMin !== undefined ? yMin : 0,
+					max: yMax !== undefined ? yMax : 1
+				}
+			};
+		},
 
 		getPrediction(row: TableRow): any {
 			if (!this.showPredicted) {
