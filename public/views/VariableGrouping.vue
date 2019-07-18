@@ -176,7 +176,8 @@ export default Vue.extend({
 
 		isTimeseriesAnalysis(): boolean {
 			const ids = this.idCols.filter(id => !!id.value);
-			return this.xCol && (ids.length === 0 && this.yCol === 0);
+			console.log(this.xCol, ids.length, this.yCol);
+			return this.xCol && (ids.length === 0) && !this.yCol;
 		}
 	},
 
@@ -226,6 +227,7 @@ export default Vue.extend({
 			return this.other.indexOf(arg) !== -1;
 		},
 		onGroup() {
+			console.log(this.isTimeseriesAnalysis, 'isTimeseriesAnalysis');
 			if (this.isTimeseriesAnalysis) {
 				this.submitTimeseriesAnalysis();
 			} else {
