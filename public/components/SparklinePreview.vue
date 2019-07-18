@@ -11,7 +11,7 @@
 			@hide="hideModal"
 			:visible="zoomSparkline"
 			hide-footer>
-			<sparkline-chart :timeseries="timeseries" v-if="zoomSparkline"></sparkline-chart>
+			<sparkline-chart :timeseries="timeseries" :forecast="forecast" v-if="zoomSparkline"></sparkline-chart>
 		</b-modal>
 	</div>
 
@@ -63,6 +63,9 @@ export default Vue.extend({
 			} else {
 				const timeseries = datasetGetters.getTimeseries(this.$store);
 				const datasets = timeseries[this.dataset];
+				if (!datasets) {
+					return null;
+				}
 				return datasets[this.timeseriesId];
 			}
 		},

@@ -24,6 +24,9 @@ export default Vue.extend({
 		},
 		timeseries: {
 			type: Array as () => number[][]
+		},
+		forecast: {
+			type: Array as () => number[][]
 		}
 	},
 	data() {
@@ -48,12 +51,27 @@ export default Vue.extend({
 			const $svg = this.$refs.svg as any;
 			const dims = $svg.getBoundingClientRect();
 			return dims.height - this.margin.top - this.margin.bottom;
+		},
+		minX(): number {
+			const min = d3.min(this.timeseries, d => d[0]);
+			return this.forecast ? Math.min(min, d3.min(this.forecast, d => d[0])) : min;
+		},
+		maxX(): number {
+			const max = d3.max(this.timeseries, d => d[0]);
+			return this.forecast ? Math.max(max, d3.max(this.forecast, d => d[0])) : max;
+		},
+		minY(): number {
+			const min = d3.min(this.timeseries, d => d[1]);
+			return this.forecast ? Math.min(min, d3.min(this.forecast, d => d[1])) : min;
+		},
+		maxY(): number {
+			const max = d3.max(this.timeseries, d => d[1]);
+			return this.forecast ? Math.max(max, d3.max(this.forecast, d => d[1])) : max;
 		}
 	},
 	mounted() {
 		setTimeout(() => {
-			// vue.js sucks
-			this.injectTimeseries();
+			this.draw();
 		});
 	},
 	methods: {
@@ -61,18 +79,15 @@ export default Vue.extend({
 			this.svg.selectAll('*').remove();
 		},
 		injectAxes() {
-			const timeseries = this.timeseries;
-
 			this.xScale = d3.scalePoint()
 				.rangeRound([0, this.width]);
 
-			this.xScale.domain(timeseries.map(d => d[0]));
+			const xDomain = _.uniq(this.timeseries.map(d => d[0]).concat(this.forecast ? this.forecast.map(d => d[0]) : []));
 
-			const min = d3.min(timeseries, d => d[1]);
-			const max = d3.max(timeseries, d => d[1]);
+			this.xScale.domain(xDomain);
 
 			this.yScale = d3.scaleLinear()
-				.domain([min, max])
+				.domain([this.minY, this.maxY])
 				.range([this.height, 0]);
 
 			// Create axes
@@ -111,11 +126,11 @@ export default Vue.extend({
 				.style('text-anchor', 'middle')
 				.text(this.yAxisTitle);
 		},
-		injectSparkline() {
+		injectTimeseries() {
 			const line = d3.line()
 				.x(d => this.xScale(d[0]))
 				.y(d => this.yScale(d[1]))
-				.curve(d3.curveBasis);
+				.curve(d3.curveLinear);
 
 			const g = this.svg.append('g')
 				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom})`)
@@ -128,7 +143,25 @@ export default Vue.extend({
 				.attr('class', 'line')
 				.attr('d', line);
 		},
-		injectTimeseries() {
+		injectForecast() {
+			const line = d3.line()
+				.x(d => this.xScale(d[0]))
+				.y(d => this.yScale(d[1]))
+				.curve(d3.curveLinear);
+
+			const g = this.svg.append('g')
+				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom})`)
+				.attr('class', 'line-chart');
+
+			g.datum(this.forecast);
+
+			g.append('path')
+				.attr('fill', 'none')
+				.attr('class', 'line')
+				.attr('stroke', '#00c6e1')
+				.attr('d', line);
+		},
+		draw() {
 			if (_.isEmpty(this.timeseries)) {
 				return;
 			}
@@ -145,7 +178,10 @@ export default Vue.extend({
 
 			this.clearSVG();
 			this.injectAxes();
-			this.injectSparkline();
+			this.injectTimeseries();
+			if (this.forecast) {
+				this.injectForecast();
+			}
 		}
 	}
 
