@@ -234,14 +234,12 @@ export default Vue.extend({
 			}).then(res => {
 				this.showExportSuccess = !this.showExportSuccess;
 				this.meaningful = true;
-				this.$bvModal.hide('meaningful-modal')
+				this.$bvModal.hide('meaningful-modal');
 			}).catch(err => {
 				this.showExportFailure = !this.showExportFailure;
 				this.meaningful = true;
-				this.$bvModal.hide('meaningful-modal')
+				this.$bvModal.hide('meaningful-modal');
 			});
-
-
 		}
 	}
 });
