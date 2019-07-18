@@ -270,6 +270,7 @@ func (s *Storage) DeleteVariable(dataset string, storageName string, varName str
 	return nil
 }
 
+// InsertBatch batches the data to insert for increased performance.
 func (s *Storage) InsertBatch(storageName string, varNames []string, inserts [][]interface{}) error {
 	db := s.client.GetBatchClient()
 	defer db.Close()
@@ -286,8 +287,13 @@ func (s *Storage) insertBatchData(db *pg.DB, storageName string, varNames []stri
 	// get the boiler plater of the query
 	fieldCount := len(varNames)
 	basicInsert := "INSERT INTO \"%s\" (%s) VALUES (%s);"
-	fieldList := strings.Join(varNames, ",")
 	paramList := strings.Repeat(", ?", fieldCount)[2:]
+
+	// need to quote the fields
+	// after joining, the first and last fields are missing a quote
+	fieldList := strings.Join(varNames, "\", \"")
+	fieldList = fmt.Sprintf("\"%s\"", fieldList)
+
 	basicInsert = fmt.Sprintf(basicInsert, storageName, fieldList, paramList)
 
 	// build the batches and run the queries
@@ -354,21 +360,21 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 	// loop through the updates, building batches to minimize overhead
 	db := s.client.GetBatchClient()
 	defer db.Close()
-	tableNameTmp := fmt.Sprintf("\"%s_utmp\"", storageName)
-	dataSQL := fmt.Sprintf("CREATE TEMP TABLE %s (\"%s\" TEXT NOT NULL, \"%s\" TEXT);",
+	tableNameTmp := fmt.Sprintf("%s_utmp", storageName)
+	dataSQL := fmt.Sprintf("CREATE TEMP TABLE \"%s\" (\"%s\" TEXT NOT NULL, \"%s\" TEXT);",
 		tableNameTmp, model.D3MIndexName, varName)
 	_, err := db.Exec(dataSQL)
 	if err != nil {
 		return errors.Wrap(err, "unable to create temp table")
 	}
 
-	err = s.insertBatchData(db, storageName, []string{model.D3MIndexName, varName}, params)
+	err = s.insertBatchData(db, tableNameTmp, []string{model.D3MIndexName, varName}, params)
 	if err != nil {
 		return errors.Wrap(err, "unable to insert into temp table")
 	}
 
 	// run the update
-	updateSQL := fmt.Sprintf("UPDATE %s.%s.\"%s_base\" AS b SET \"%s\" = t.\"%s\" FROM %s AS t WHERE t.\"%s\" = b.\"%s\";",
+	updateSQL := fmt.Sprintf("UPDATE %s.%s.\"%s_base\" AS b SET \"%s\" = t.\"%s\" FROM \"%s\" AS t WHERE t.\"%s\" = b.\"%s\";",
 		"distil", "public", storageName, varName, varName, tableNameTmp, model.D3MIndexName, model.D3MIndexName)
 	_, err = db.Exec(updateSQL)
 	if err != nil {
