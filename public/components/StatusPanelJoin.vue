@@ -11,9 +11,6 @@
 				Unexpected error has occured while importing <b>{{ importedDataset.name }}</b>
 			</b-alert>
 		</div>
-		<div class="suggestion-search">
-			<b-input v-model="filterString" placeholder="Search Join Suggestions" />
-		</div>
 		<div class="suggestion-heading">
 			<h6>Select a dataset to join with: </h6>
 		</div>
@@ -51,7 +48,8 @@
 			</b-list-group>
 		</div>
 		<div class="join-button-container">
-        	<b-button :disabled="!isJoinReady" variant="primary" @click="join">Join</b-button>
+			<b-input v-model="filterString" placeholder="Filter Join Suggestion List" />
+        	<b-button :disabled="!isJoinReady || isAttemptingJoin" variant="primary" @click="join">Join</b-button>
 		</div>
 		<b-modal
 			v-if="selectedDataset"
@@ -62,11 +60,37 @@
 		>
 			<p class="">Dataset, <b>{{ selectedDataset.name }}</b> is not available in the system. Would you like to import the dataset?</p>
 		</b-modal>
+
+		<b-modal
+			v-model="showJoinSuccess"
+			modal-class="join-preview-modal"
+			@shown="onSuccessModalShown"
+			cancel-disabled
+			hide-header
+			hide-footer>
+			<join-datasets-preview
+				:preview-table-data="previewTableData"
+				:dataset-a="datasetAid"
+				:dataset-b="datasetBid"
+				:joined-column="joinedColumn"
+				@success="onJoinCommitSuccess"
+				@failure="onJoinCommitFailure"
+				@close="showJoinSuccess = !showJoinSuccess;">
+			</join-datasets-preview>
+		</b-modal>
+
+		<error-modal
+			:show="showJoinFailure"
+			title="Join Failed"
+			@close="showJoinFailure = !showJoinFailure">
+		</error-modal>
     </div>
 </template>
 
 <script lang="ts">
 
+
+import _ from 'lodash';
 import Vue from 'vue';
 import axios from 'axios';
 import {
@@ -76,14 +100,19 @@ import {
 	JoinSuggestionPendingRequest,
 	JoinDatasetImportPendingRequest,
 } from '../store/dataset/index';
+import JoinDatasetsPreview from '../components/JoinDatasetsPreview';
+import ErrorModal from '../components/ErrorModal';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
+import { actions as viewActions } from '../store/view/module';
 import { StatusPanelState, StatusPanelContentType } from '../store/app';
 import { createRouteEntry } from '../util/routes';
 import { formatBytes } from '../util/bytes';
 import { isDatamartProvenance } from '../util/data';
 import { JOIN_DATASETS_ROUTE } from '../store/route/index';
+import { SELECT_TRAINING_ROUTE } from '../store/route';
+import localStorage from 'store';
 
 interface JoinSuggestionItem {
 	dataset: Dataset;
@@ -96,6 +125,14 @@ interface StatusPanelJoinState {
 	suggestionItems: JoinSuggestionItem[];
 	showStatusMessage: boolean;
 	filterString: string;
+	isAttemptingJoin: boolean;
+	showJoinFailure: boolean;
+	showJoinSuccess: boolean;
+	previewTableData: any;
+	datasetAid: string;
+	datasetBid: string;
+	datasetAColumn: any;
+	datasetBColumn: any;
 }
 
 export default Vue.extend({
@@ -104,12 +141,27 @@ export default Vue.extend({
 		return {
 			showStatusMessage: true,
 			suggestionItems: [],
-			filterString: ''
+			filterString: '',
+			isAttemptingJoin: false,
+			showJoinFailure: false,
+			showJoinSuccess: false,
+			previewTableData: null,
+			datasetAid: '',
+			datasetBid: '',
+			datasetAColumn: '',
+			datasetBColumn: '',
 		};
+	},
+	components: {
+		JoinDatasetsPreview,
+		ErrorModal
 	},
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+		datasets(): Dataset[] {
+			return datasetGetters.getDatasets(this.$store);
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
@@ -123,11 +175,17 @@ export default Vue.extend({
 			const joinSuggestions = this.joinSuggestionRequestData && this.joinSuggestionRequestData.suggestions;
 			return joinSuggestions || [];
 		},
+		joinedColumn(): string {
+			const a = this.datasetAColumn ? this.datasetAColumn : '';
+			const b = this.datasetBColumn ? this.datasetBColumn : '';
+			// Note: It looks like joined column name is set to same as left column (a) name
+			return  a;
+		},
 		filteredSuggestedItems(): JoinSuggestionItem[] {
 			const filteredItems = this.filterString.length > 0 && this.suggestionItems.length > 0
 				? this.suggestionItems.filter(item => (
-					item.dataset.name.indexOf(this.filterString) > -1
-					|| item.dataset.description.indexOf(this.filterString) > -1
+					item.dataset.name.toLowerCase().indexOf(this.filterString.toLowerCase()) > -1
+					|| item.dataset.description.toLowerCase().indexOf(this.filterString.toLowerCase()) > -1
 				))
 				: this.suggestionItems;
 			return filteredItems;
@@ -176,6 +234,13 @@ export default Vue.extend({
 		},
 	},
 	methods: {
+		addRecentDataset(dataset: string) {
+			const datasets = localStorage.get('recent-datasets') || [];
+			if (datasets.indexOf(dataset) === -1) {
+				datasets.unshift(dataset);
+				localStorage.set('recent-datasets', datasets);
+			}
+		},
 		initSuggestionItems() {
 			const items = this.joinSuggestions || [];
 			// resolve join availablity of the importing dataset
@@ -215,15 +280,38 @@ export default Vue.extend({
 				const importAskModal: any = this.$refs['import-ask-modal'];
 				return importAskModal.show();
 			}
-			const replaceComma = str => str.replace(/, /g, '+');
-			// navigate to join
-			const entry = createRouteEntry(JOIN_DATASETS_ROUTE, {
-				joinDatasets: `${this.dataset},${selected.dataset.id}`,
-				target: this.target,
-				baseColumnSuggestions: this.baseColumnSuggestions.map(replaceComma).join(','),
-				joinColumnSuggestions: this.joinColumnSuggestions.map(replaceComma).join(','),
+			this.previewJoin(this.dataset, selected.dataset, this.baseColumnSuggestions[0], this.joinColumnSuggestions[0]);
+		},
+		previewJoin(datasetA, datasetB, datasetAColumn, datasetBColumn) {
+			this.isAttemptingJoin = true;
+			const a = _.find(this.datasets, d => {
+				return d.id === datasetA;
 			});
-			this.$router.push(entry);
+
+			this.datasetAid = datasetA;
+			this.datasetBid = datasetB.id;
+			this.datasetAColumn = datasetAColumn;
+			this.datasetBColumn = datasetBColumn;
+			const datasetJoinInfo = {
+				datasetA: a,
+				datasetB: datasetB,
+				datasetAColumn: datasetAColumn,
+				datasetBColumn: datasetBColumn,
+				joinAccuracy: 1
+			};
+
+			// dispatch action that triggers request send to server
+			datasetActions.joinDatasetsPreview(this.$store, datasetJoinInfo).then(tableData => {
+				// display join preview modal
+				this.previewTableData = tableData;
+				this.isAttemptingJoin = false;
+				this.showJoinSuccess = true;
+			}).catch(err => {
+				// display error modal
+				this.previewTableData = null;
+				this.isAttemptingJoin = false;
+				this.showJoinFailure = true;
+			});
 		},
 		importDataset(args: {datasetID: string, source: string, provenance: string}) {
 			const { id, provenance, datasetOrigin } = this.selectedDataset;
@@ -265,7 +353,25 @@ export default Vue.extend({
 						: DatasetPendingRequestStatus.REVIEWED,
 				});
 			}
-		}
+		},
+		onJoinCommitFailure() {
+			this.showJoinFailure = true;
+			this.showJoinSuccess = false;
+		},
+		onJoinCommitSuccess(datasetID: string) {
+			console.log(this.target);
+			const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
+				dataset: datasetID,
+				target: this.target,
+			});
+			this.$router.push(entry);
+			this.addRecentDataset(datasetID);
+		},
+		onSuccessModalShown() {
+			// trigger window resize event to notify modal content dimension has changed
+			// (fixed-header-table component will listen to this event to resize itself)
+			window.dispatchEvent(new Event('resize'));
+		},
 	},
 	created() {
 		this.initSuggestionItems();
@@ -323,10 +429,11 @@ export default Vue.extend({
 }
 .status-panel-join .join-button-container {
 	min-height: 0;
-	padding: 5px 0;
+	padding: 10px 0 5px;
 	flex-shrink: 0;
 }
 .status-panel-join .join-button-container button {
+	margin-top: 5px;
 	width: 100%;
 }
 
