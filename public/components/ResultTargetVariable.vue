@@ -60,71 +60,71 @@ export default Vue.extend({
 			return RESULT_TARGET_VAR_INSTANCE;
 		},
 
-		defaultHighlightType(): string {
-			return TOP_RANGE_HIGHLIGHT;
-		}
+		// defaultHighlightType(): string {
+		// 	return TOP_RANGE_HIGHLIGHT;
+		// }
 	},
 
-	data() {
-		return {
-			hasDefaultedAlready: false
-		};
-	},
-
-	watch: {
-		targetSummaries() {
-			this.defaultTargetHighlight();
-		},
-		targetVariable() {
-			this.defaultTargetHighlight();
-		}
-	},
-
-	mounted() {
-		this.defaultTargetHighlight();
-	},
-
-	methods: {
-
-		defaultTargetHighlight() {
-			// only default higlight numeric types
-			if (!this.targetVariable) {
-				return;
-			}
-
-			// if we have no current highlight, and no filters, highlight default range
-			if (this.highlight || this.hasFilters || this.hasDefaultedAlready) {
-				return;
-			}
-
-			if (this.resultTargetSummary && !this.resultTargetSummary.pending) {
-				if (isNumericType(this.targetVariable.colType)) {
-					this.selectDefaultNumerical();
-				} else {
-					this.selectDefaultCategorical();
-				}
-				this.hasDefaultedAlready = true;
-			}
-		},
-
-		selectDefaultNumerical() {
-			updateHighlight(this.$router, {
-				context: this.instanceName,
-				dataset: this.dataset,
-				key: this.target,
-				value: getNumericalFacetValue(this.resultTargetSummary, this.defaultHighlightType)
-			});
-		},
-
-		selectDefaultCategorical() {
-			updateHighlight(this.$router, {
-				context: this.instanceName,
-				dataset: this.dataset,
-				key: this.target,
-				value: getCategoricalFacetValue(this.resultTargetSummary)
-			});
-		}
-	}
+	// data() {
+	// 	return {
+	// 		hasDefaultedAlready: false
+	// 	};
+	// },
+	//
+	// watch: {
+	// 	targetSummaries() {
+	// 		this.defaultTargetHighlight();
+	// 	},
+	// 	targetVariable() {
+	// 		this.defaultTargetHighlight();
+	// 	}
+	// },
+	//
+	// mounted() {
+	// 	this.defaultTargetHighlight();
+	// },
+	//
+	// methods: {
+	//
+	// 	defaultTargetHighlight() {
+	// 		// only default higlight numeric types
+	// 		if (!this.targetVariable) {
+	// 			return;
+	// 		}
+	//
+	// 		// if we have no current highlight, and no filters, highlight default range
+	// 		if (this.highlight || this.hasFilters || this.hasDefaultedAlready) {
+	// 			return;
+	// 		}
+	//
+	// 		if (this.resultTargetSummary && !this.resultTargetSummary.pending) {
+	// 			if (isNumericType(this.targetVariable.colType)) {
+	// 				this.selectDefaultNumerical();
+	// 			} else {
+	// 				this.selectDefaultCategorical();
+	// 			}
+	// 			this.hasDefaultedAlready = true;
+	// 		}
+	// 	},
+	//
+	// 	selectDefaultNumerical() {
+	// 		updateHighlight(this.$router, {
+	// 			context: this.instanceName,
+	// 			dataset: this.dataset,
+	// 			key: this.target,
+	// 			value: getNumericalFacetValue(this.resultTargetSummary, this.defaultHighlightType)
+	// 		});
+	// 	},
+	//
+	// 	selectDefaultCategorical() {
+	// 		updateHighlight(this.$router, {
+	// 			context: this.instanceName,
+	// 			dataset: this.dataset,
+	// 			key: this.target,
+	// 			value: getCategoricalFacetValue(this.resultTargetSummary)
+	// 		});
+	// 	}
+	// }
 
 });
 </script>
