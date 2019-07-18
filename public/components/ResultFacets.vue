@@ -25,9 +25,7 @@
 				:target-summary="group.targetSummary"
 				:predicted-summary="group.predictedSummary"
 				:residuals-summary="group.residualsSummary"
-				:correctness-summary="group.correctnessSummary"
-				:resultHtml="html"
-				:residualHtml="html">
+				:correctness-summary="group.correctnessSummary">
 			</result-group>
 
 		</div>
@@ -69,7 +67,6 @@ export default Vue.extend({
 	},
 
 	props: {
-		html: String as () => string,
 		regression: Boolean as () => boolean
 	},
 

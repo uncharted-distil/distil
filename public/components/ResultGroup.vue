@@ -33,17 +33,33 @@
 		</div>
 		<div class="result-group-body" v-if="isMaximized">
 			<template v-if="isCompleted">
-				<facet-entry v-for="summary in predictedSummaries" :key="summary.key"
-					enable-highlighting
-					:summary="summary"
-					:highlight="highlight"
-					:row-selection="rowSelection"
-					:html="residualHtml"
-					:instanceName="predictedInstanceName"
-					@numerical-click="onResultNumericalClick"
-					@range-change="onResultRangeChange"
-					@facet-click="onResultCategoricalClick">
-				</facet-entry>
+				<div v-for="summary in predictedSummaries" :key="summary.key">
+					<template v-if="summary.varType === 'timeseries' || isTimeseriesAnalysis">
+						<facet-timeseries
+							:summary="summary"
+							:highlight="highlight"
+							:row-selection="rowSelection"
+							:instanceName="predictedInstanceName"
+							:enable-highlighting="[true, true]"
+							@numerical-click="onResultNumericalClick"
+							@range-change="onResultRangeChange"
+							@histogram-numerical-click="onResultNumericalClick"
+							@histogram-range-change="onResultRangeChange">
+						</facet-timeseries>
+					</template>
+					<template v-else>
+						<facet-entry
+							enable-highlighting
+							:summary="summary"
+							:highlight="highlight"
+							:row-selection="rowSelection"
+							:instanceName="predictedInstanceName"
+							@numerical-click="onResultNumericalClick"
+							@range-change="onResultRangeChange"
+							@facet-click="onResultCategoricalClick">
+						</facet-entry>
+					</template>
+				</div>
 
 				<div class="residual-group-container">
 					<facet-entry v-for="summary in residualSummaries" :key="summary.key" class="residual-container"
@@ -52,7 +68,6 @@
 						:summary="summary"
 						:highlight="highlight"
 						:row-selection="rowSelection"
-						:html="resultHtml"
 						:instanceName="residualInstanceName"
 						:deemphasis="residualThreshold"
 						@numerical-click="onResidualNumericalClick"
@@ -66,44 +81,10 @@
 					:summary="summary"
 					:highlight="highlight"
 					:row-selection="rowSelection"
-					:html="residualHtml"
 					:instanceName="correctnessInstanceName"
 					@facet-click="onCorrectnessCategoricalClick">
 				</facet-entry>
 
-				<!-- <facets v-if="predictedGroups.length" class="result-container"
-					@facet-click="onResultCategoricalClick"
-					@numerical-click="onResultNumericalClick"
-					@range-change="onResultRangeChange"
-					:solution-id="solutionId"
-					:groups="predictedGroups"
-					:highlight="highlight"
-					:instanceName="predictedInstanceName"
-					:row-selection="rowSelection"
-					:html="residualHtml">
-				</facets>
-				<div class="residual-group-container">
-					<facets v-if="residualGroups.length" class="residual-container"
-						@numerical-click="onResidualNumericalClick"
-						@range-change="onResidualRangeChange"
-						:solution-id="solutionId"
-						:groups="residualGroups"
-						:highlight="highlight"
-						:deemphasis="residualThreshold"
-						:instanceName="residualInstanceName"
-						:row-selection="rowSelection"
-						:html="resultHtml">
-					</facets>
-				</div>
-				<facets v-if="correctnessGroups.length" class="result-container"
-					@facet-click="onCorrectnessCategoricalClick"
-					:solution-id="solutionId"
-					:groups="correctnessGroups"
-					:highlight="highlight"
-					:instanceName="correctnessInstanceName"
-					:row-selection="rowSelection"
-					:html="residualHtml">
-				</facets> -->
 			</template>
 		</div>
 		<b-modal v-model="openDeleteModal" hide-footer hide-header>
@@ -123,6 +104,7 @@
 
 import Vue from 'vue';
 import FacetEntry from '../components/FacetEntry';
+import FacetTimeseries from '../components/FacetTimeseries';
 import { Extrema, VariableSummary, RowSelection, Highlight } from '../store/dataset/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { getters as routeGetters } from '../store/route/module';
@@ -136,7 +118,8 @@ export default Vue.extend({
 	name: 'result-group',
 
 	components: {
-		FacetEntry
+		FacetEntry,
+		FacetTimeseries
 	},
 
 	props: {
@@ -148,9 +131,7 @@ export default Vue.extend({
 		targetSummary: Object as () => VariableSummary,
 		predictedSummary: Object as () => VariableSummary,
 		residualsSummary: Object as () => VariableSummary,
-		correctnessSummary: Object as () => VariableSummary,
-		resultHtml: String as () => string,
-		residualHtml: String as () => string
+		correctnessSummary: Object as () => VariableSummary
 	},
 
 	data() {
@@ -168,6 +149,10 @@ export default Vue.extend({
 
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
+		isTimeseriesAnalysis(): boolean {
+			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
 		},
 
 		predictedInstanceName(): string {
