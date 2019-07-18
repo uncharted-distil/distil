@@ -547,7 +547,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	s.Filters.AddVariable(model.D3MIndexFieldName)
 
 	// fetch the full set of variables associated with the dataset
-	variables, err := metaStorage.FetchVariables(s.Dataset, true, true)
+	variables, err := metaStorage.FetchVariables(s.Dataset, true, true, true)
 	if err != nil {
 		return err
 	}
@@ -571,12 +571,20 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	targetVarName := s.TargetFeature
 	var groupingTargetVariable = targetVariable
 	if targetVariable.Grouping != nil && model.IsTimeSeries(targetVariable.Grouping.Type) {
+		// filter list needs to include all the individual grouping components
+		for _, subID := range targetVariable.Grouping.SubIDs {
+			s.Filters.AddVariable(subID)
+		}
+		s.Filters.AddVariable(targetVariable.Grouping.Properties.XCol)
+		s.Filters.AddVariable(targetVariable.Grouping.Properties.YCol)
+
 		// extract the time series value column
 		targetVarName = targetVariable.Grouping.Properties.YCol
 		targetVariable, err = metaStorage.FetchVariable(s.Dataset, targetVarName)
 		if err != nil {
 			return err
 		}
+
 	}
 
 	// make sure that we include all non-generated variables in our persisted
