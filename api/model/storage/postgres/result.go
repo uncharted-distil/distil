@@ -422,7 +422,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// fetch variable metadata
-	variables, err := s.metadata.FetchVariables(dataset, false, false)
+	variables, err := s.metadata.FetchVariables(dataset, false, false, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
@@ -650,7 +650,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 
 func (s *Storage) getDisplayName(dataset string, columnName string) (string, error) {
 	displayName := ""
-	variables, err := s.metadata.FetchVariables(dataset, false, false)
+	variables, err := s.metadata.FetchVariables(dataset, false, false, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable fetch variables for name mapping")
 	}
