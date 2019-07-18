@@ -224,9 +224,12 @@ export const actions = {
 			dataset: dataset
 		});
 
-		return fetchVariables(context, {
+		return Promise.all([fetchVariables(context, {
 			dataset: dataset
-		}).then(() => {
+		}),
+		datasetActions.fetchDataset(store, {
+			dataset: dataset
+		})]).then(() => {
 			fetchVariableRankings(context, { dataset, target });
 
 			return actions.updateSelectTrainingData(context);

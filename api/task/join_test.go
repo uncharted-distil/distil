@@ -82,14 +82,12 @@ func TestJoin(t *testing.T) {
 	env.Initialize(&cfg)
 
 	leftJoin := &JoinSpec{
-		Column:        "alpha",
 		DatasetID:     "test_1",
 		DatasetFolder: "test_1_TRAIN",
 		DatasetSource: "contrib",
 	}
 
 	rightJoin := &JoinSpec{
-		Column:        "charlie",
 		DatasetID:     "test_2",
 		DatasetFolder: "test_2_TRAIN",
 		DatasetSource: "contrib",
@@ -128,17 +126,17 @@ func TestJoin(t *testing.T) {
 	assert.ElementsMatch(t, result.Columns, []apiModel.Column{
 		{
 			Label: "D3M Index",
-			Key:   "d3mIndex",
+			Key:   "D3M Index",
 			Type:  model.IntegerType,
 		},
 		{
 			Label: "Alpha",
-			Key:   "alpha",
+			Key:   "Alpha",
 			Type:  model.RealType,
 		},
 		{
 			Label: "Charlie",
-			Key:   "charlie",
+			Key:   "Charlie",
 			Type:  model.CategoricalType,
 		},
 	})

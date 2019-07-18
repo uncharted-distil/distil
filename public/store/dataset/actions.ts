@@ -188,6 +188,7 @@ export const actions = {
 		mutations.updatePendingRequests(context, request);
 
 		// Hack: force to include datamart.upload.fc0ceee28cb74bad83e4f8872979b111 to the result since that data set does not appear on the suggestion list.
+		/*
 		return axios.get(`/distil/datasets/${args.dataset}`)
 			.then(res => {
 				const dataset = res.data.dataset;
@@ -207,7 +208,7 @@ export const actions = {
 				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.ERROR });
 				console.error(error);
 			});
-		/*
+		*/
 		return axios.get(`/distil/datasets/${args.dataset}`)
 			.then(res => {
 				return axios.get(`/distil/join-suggestions/${args.dataset}`);
@@ -220,7 +221,6 @@ export const actions = {
 				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.ERROR });
 				console.error(error);
 			});
-		*/
 	},
 
 	uploadDataFile(context: DatasetContext, args: { datasetID: string, file: File }) {
@@ -385,7 +385,7 @@ export const actions = {
 			return null;
 		}
 
-		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetAColumn}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetBColumn}/${args.datasetB.source}`, {
+		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetB.source}`, {
 			accuracy: args.joinAccuracy
 		})
 			.then(response => {

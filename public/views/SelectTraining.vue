@@ -179,6 +179,9 @@ export default Vue.extend({
 		},
 		binningIntervalModel() {
 			viewActions.fetchSelectTrainingData(this.$store, true);
+		},
+		dataset() {
+			viewActions.fetchSelectTrainingData(this.$store, true);
 		}
 	},
 	beforeMount() {

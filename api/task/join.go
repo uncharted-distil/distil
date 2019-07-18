@@ -48,7 +48,6 @@ type JoinSpec struct {
 	DatasetID     string
 	DatasetFolder string
 	DatasetSource ingestMetadata.DatasetSource
-	Column        string
 }
 
 // Join will make all your dreams come true.
@@ -133,7 +132,19 @@ func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Vari
 		if !ok {
 			v, ok = rightVarsMap[varName]
 			if !ok {
-				return nil, errors.Errorf("can't find data for result var \"%s\"", varName)
+				// variable is probably an aggregation
+				// create a new variable and default type to string
+				// ingest process should be able to provide better info
+				v = &model.Variable{
+					Name:             varName,
+					Type:             model.StringType,
+					OriginalType:     model.StringType,
+					SelectedRole:     "attribute",
+					Role:             []string{"attribute"},
+					DistilRole:       "data",
+					OriginalVariable: varName,
+					DisplayName:      varName,
+				}
 			}
 		}
 
@@ -142,6 +153,8 @@ func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Vari
 		if v.OriginalType != "" {
 			v.Type = v.OriginalType
 		}
+		v.Name = v.DisplayName
+		v.OriginalVariable = v.DisplayName
 
 		v.Index = i
 		mergedVariables = append(mergedVariables, v)
