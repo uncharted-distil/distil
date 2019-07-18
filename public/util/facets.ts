@@ -337,7 +337,7 @@ function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 		timeseries = timeseries[group.dataset];
 	}
 
-	group.facets.forEach((facet: CategoricalFacet) => {
+	group.all.forEach((facet: CategoricalFacet) => {
 		if (summary.solutionId) {
 			facet.multipleTimeseries = [
 				timeseries[facet.file],
