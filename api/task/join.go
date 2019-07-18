@@ -140,6 +140,7 @@ func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Vari
 		// map any distil types (country, city, etc.) back to LL schema types since we are
 		// persisting as an LL dataset
 		if v.OriginalType != "" {
+			v.Type = v.OriginalType
 			v.Name = v.DisplayName
 			v.OriginalVariable = v.DisplayName
 		}
