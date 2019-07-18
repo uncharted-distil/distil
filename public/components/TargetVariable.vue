@@ -96,7 +96,7 @@ export default Vue.extend({
 				return;
 			}
 
-			if (this.targetVariable.grouping && this.targetVariable.grouping.type == TIMESERIES_TYPE) {
+			if (this.targetVariable.grouping && this.targetVariable.grouping.type === TIMESERIES_TYPE) {
 				// dont default timeseries groupings
 				return;
 			}

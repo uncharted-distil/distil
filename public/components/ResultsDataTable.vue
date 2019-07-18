@@ -23,9 +23,9 @@
 				<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
 			</template>
 
-			<template v-for="timeseriesGrouping in timeseriesGroupings" :slot="timeseriesGrouping.idCol" slot-scope="data">
+			<template v-for="timeseriesGrouping in timeseriesGroupings" :slot="timeseriesGrouping.idCol" slot-scope="data" >
 
-				<sparkline-preview :key="timeseriesGrouping.idCol"
+				<sparkline-preview :key="data.item[timeseriesGrouping.idCol]"
 					:dataset="dataset"
 					:x-col="timeseriesGrouping.properties.xCol"
 					:y-col="timeseriesGrouping.properties.yCol"

@@ -18,14 +18,13 @@
 			</template>
 
 			<template v-for="timeseriesGrouping in timeseriesGroupings" :slot="timeseriesGrouping.idCol" slot-scope="data">
-				<div class="container">
+				<div class="container" :key="data.item[timeseriesGrouping.idCol]">
 					<div class="row">
 						<!-- <div class="col-2">
 							<b>{{data.item[timeseriesGrouping.idCol]}}</b>
 						</div>
 						<div class="col-10"> -->
 							<sparkline-preview
-								:key="timeseriesGrouping.idCol"
 								:dataset="dataset"
 								:x-col="timeseriesGrouping.properties.xCol"
 								:y-col="timeseriesGrouping.properties.yCol"

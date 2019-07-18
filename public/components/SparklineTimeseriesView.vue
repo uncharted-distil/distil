@@ -9,7 +9,7 @@
 			<div class="timeseries-min-col pad-top"><b>MIN</b></div>
 			<div class="timeseries-max-col pad-top"><b>MAX</b></div>
 			<div class="timeseries-chart-axis" v-bind:class="{'has-prediction': showPredicted}">
-				<template v-if="hasData">
+				<template>
 					<svg ref="svg" class="axis"></svg>
 				</template>
 			</div>
@@ -38,7 +38,7 @@
 
 			</div>
 			<div v-if="!isTimeseriesAnalysis">
-				<div class="sparkline-row-container" v-for="item in items">
+				<div class="sparkline-row-container" v-for="item in items" :key="item[timeseriesGrouping.idCol]">
 					<sparkline-row
 						:x-col="timeseriesGrouping.properties.xCol"
 						:y-col="timeseriesGrouping.properties.yCol"
