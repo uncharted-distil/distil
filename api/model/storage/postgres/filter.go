@@ -444,6 +444,12 @@ func (s *Storage) splitFilters(filterParams *api.FilterParams) *filters {
 // FetchNumRows pulls the number of rows in the table.
 func (s *Storage) FetchNumRows(storageName string, variables []*model.Variable, filters map[string]interface{}) (int, error) {
 
+	return s.fetchNumRowsJoined(storageName, variables, filters, nil)
+}
+
+// FetchNumRows pulls the number of rows in the table.
+func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Variable, filters map[string]interface{}, join *joinDefinition) (int, error) {
+
 	countTarget := "*"
 
 	// match order by for distinct
@@ -466,7 +472,13 @@ func (s *Storage) FetchNumRows(storageName string, variables []*model.Variable, 
 		}
 	}
 
-	query := fmt.Sprintf("SELECT count(%s) FROM %s", countTarget, storageName)
+	joinSQL := ""
+	if join != nil {
+		join.baseAlias = "base_data"
+		joinSQL = getJoinSQL(join, true)
+	}
+
+	query := fmt.Sprintf("SELECT count(%s) FROM %s AS base_data %s", countTarget, storageName, joinSQL)
 	params := make([]interface{}, 0)
 	if filters != nil && len(filters) > 0 {
 		clauses := make([]string, 0)

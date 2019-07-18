@@ -28,6 +28,14 @@ const (
 	maxBatchSize = 250
 )
 
+type joinDefinition struct {
+	baseAlias     string
+	baseColumn    string
+	joinTableName string
+	joinAlias     string
+	joinColumn    string
+}
+
 func (s *Storage) getViewField(name string, displayName string, typ string, defaultValue interface{}) string {
 	return fmt.Sprintf("COALESCE(CAST(\"%s\" AS %s), %v) AS \"%s\"",
 		name, typ, defaultValue, displayName)
@@ -382,4 +390,14 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 	}
 
 	return nil
+}
+
+func getJoinSQL(join *joinDefinition, inner bool) string {
+	joinType := "INNER JOIN"
+	if !inner {
+		joinType = "LEFT OUTER JOIN"
+	}
+	return fmt.Sprintf("%s %s AS %s ON %s.\"%s\" = %s.\"%s\"",
+		joinType, join.joinTableName, join.joinAlias, join.joinAlias,
+		join.joinColumn, join.baseAlias, join.baseColumn)
 }
