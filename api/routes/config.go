@@ -38,7 +38,7 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 			// load dataset file
 			dataDoc, err := compute.LoadDatasetSchemaFromFile(datasetDocPath)
 			if err == nil {
-				dataset = "d_" + dataDoc.About.DatasetID
+				dataset = dataDoc.About.DatasetID
 			}
 		}
 

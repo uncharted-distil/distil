@@ -33,8 +33,8 @@ import (
 )
 
 const (
-	apiExportFile     = "ssapi.json"
-	problemSchemaFile = "schema.json"
+	apiExportFile     = "ss_api.json"
+	problemSchemaFile = "problem_schema.json"
 
 	// ProblemLabelFile is the file listing the exported problems.
 	ProblemLabelFile = "labels.csv"
@@ -120,9 +120,31 @@ func ProblemDiscoveryHandler(ctorData api.DataStorageCtor, ctorMeta api.Metadata
 			return
 		}
 
+		// build the discovery solution request
+		req := &compute.SolutionRequestDiscovery{
+			Dataset:          dataset,
+			DatasetInput:     dataset,
+			TargetFeature:    target,
+			AllFeatures:      ds.Metadata.Variables,
+			SelectedFeatures: filterParams.Variables,
+			SourceURI:        problemDir,
+			UserAgent:        userAgent,
+		}
+
+		// get augmentation info
+		requestDataset, err := metadataStorage.FetchDataset(dataset, true, true)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to pull dataset info"))
+		}
+		if requestDataset.DatasetOrigin != nil {
+			req.DatasetInput = requestDataset.DatasetOrigin.SourceDataset
+			req.SearchResult = requestDataset.DatasetOrigin.SearchResult
+			req.SearchProvenance = requestDataset.DatasetOrigin.Provenance
+		}
+
 		// store the search solution request for this problem
 		// TODO: NEED TO FIGURE OUT IF THE PROBLEM IS TIME SERIES!!!
-		request, err := compute.CreateSearchSolutionRequest(ds.Metadata.Variables, filterParams.Variables, target, problemDir, dataset, userAgent, skipPrepends)
+		request, err := compute.CreateSearchSolutionRequest(req, skipPrepends)
 		if err != nil {
 			handleError(w, err)
 			return
