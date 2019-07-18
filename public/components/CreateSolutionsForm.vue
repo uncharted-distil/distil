@@ -84,6 +84,7 @@ import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as solutionActions } from '../store/solutions/module';
 import { Solution, NUM_SOLUTIONS } from '../store/solutions/index';
 import { Variable } from '../store/dataset/index';
+import { filterSummariesByDataset } from '../util/data';
 import { TIMESERIES_TYPE } from '../util/types';
 import { FilterParams } from '../util/filters';
 import { TIMESERIES_FORECASTING_TASK } from '../util/solutions';
@@ -108,7 +109,10 @@ export default Vue.extend({
 			$bvModal: null,
 		};
 	},
-
+	updated(){
+		console.log('trainingVariableSummaries()', this.trainingVariableSummaries);
+		
+	},
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
@@ -125,6 +129,9 @@ export default Vue.extend({
 				filters.variables.push(timeSeries);
 			}
 			return filters;
+		},
+		trainingVariableSummaries(): number {
+			return routeGetters.getTrainingVariableSummaries(this.$store).length;
 		},
 		metrics(): string[] {
 			if (this.isTask2) {
@@ -175,7 +182,7 @@ export default Vue.extend({
 			return appGetters.isTask2(this.$store);
 		},
 		disableCreate(): boolean {
-			return this.isPending || !this.targetSelected; // || !this.trainingSelected);
+			return this.isPending || !this.targetSelected || !this.trainingVariableSummaries;
 		},
 		disableExport(): boolean {
 			return !this.targetSelected || !this.trainingSelected;
