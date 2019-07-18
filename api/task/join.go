@@ -48,7 +48,6 @@ type JoinSpec struct {
 	DatasetID     string
 	DatasetFolder string
 	DatasetSource ingestMetadata.DatasetSource
-	Column        string
 }
 
 // Join will make all your dreams come true.
@@ -141,9 +140,9 @@ func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Vari
 		// persisting as an LL dataset
 		if v.OriginalType != "" {
 			v.Type = v.OriginalType
-			v.Name = v.DisplayName
-			v.OriginalVariable = v.DisplayName
 		}
+		v.Name = v.DisplayName
+		v.OriginalVariable = v.DisplayName
 
 		v.Index = i
 		mergedVariables = append(mergedVariables, v)

@@ -385,7 +385,7 @@ export const actions = {
 			return null;
 		}
 
-		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetAColumn}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetBColumn}/${args.datasetB.source}`, {
+		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetB.source}`, {
 			accuracy: args.joinAccuracy
 		})
 			.then(response => {
