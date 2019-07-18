@@ -44,7 +44,7 @@ type DatabaseDriver interface {
 	Query(string, ...interface{}) (*pgx.Rows, error)
 	QueryRow(string, ...interface{}) *pgx.Row
 	Exec(string, ...interface{}) (pgx.CommandTag, error)
-	GetUpdateClient() *pg.DB
+	GetBatchClient() *pg.DB
 }
 
 // ClientCtor repressents a client constructor to instantiate a postgres client.
@@ -64,8 +64,8 @@ type IntegratedClient struct {
 	database  string
 }
 
-// GetUpdateClient returns the client to use for updates.
-func (ic IntegratedClient) GetUpdateClient() *pg.DB {
+// GetBatchClient returns the client to use for updates.
+func (ic IntegratedClient) GetBatchClient() *pg.DB {
 	return pg.Connect(&pg.Options{
 		Addr:     ic.host,
 		User:     ic.user,

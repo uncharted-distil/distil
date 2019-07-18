@@ -131,15 +131,11 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		return errors.Wrapf(err, "unabled to find d3m index col '%s' in result header", model.D3MIndexFieldName)
 	}
 
-	// store all results to the storage
+	// build the batch data
+	insertData := make([][]interface{}, 0)
 	for i := 1; i < len(records); i++ {
 		// Each data row is index, target.
-		err = nil
-
 		// handle the parsed result/error - should be an int some TA2 systems return floats
-		if err != nil {
-			return errors.Wrap(err, "failed csv value parsing")
-		}
 		parsedVal, err := strconv.ParseInt(records[i][d3mIndexIndex], 10, 64)
 		if err != nil {
 			parsedValFloat, err := strconv.ParseFloat(records[i][d3mIndexIndex], 64)
@@ -149,11 +145,13 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			parsedVal = int64(parsedValFloat)
 		}
 
-		// store the result to the storage
-		err = s.executeInsertResultStatement(storageName, resultURI, parsedVal, target, records[i][targetIndex])
-		if err != nil {
-			return errors.Wrap(err, "failed to insert result in database")
-		}
+		insertData = append(insertData, []interface{}{resultURI, parsedVal, target, records[i][targetIndex]})
+	}
+
+	// store all results to the storage
+	err = s.InsertBatch(s.getResultTable(storageName), []string{"result_id", "index", "target", "value"}, insertData)
+	if err != nil {
+		return errors.Wrap(err, "failed to insert result in database")
 	}
 
 	return nil
