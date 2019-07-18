@@ -109,10 +109,6 @@ export default Vue.extend({
 			$bvModal: null,
 		};
 	},
-	updated(){
-		console.log('trainingVariableSummaries()', this.trainingVariableSummaries);
-		
-	},
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
