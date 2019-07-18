@@ -533,7 +533,13 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	countFilter := map[string]interface{}{
 		"result_id": resultURI,
 	}
-	numRows, err := s.FetchNumRows(storageNameResult, nil, countFilter)
+	joinDef := &joinDefinition{
+		baseColumn:    model.D3MIndexFieldName,
+		joinTableName: storageNameResult,
+		joinAlias:     "joined",
+		joinColumn:    "index",
+	}
+	numRows, err := s.fetchNumRowsJoined(storageName, variables, countFilter, joinDef)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
