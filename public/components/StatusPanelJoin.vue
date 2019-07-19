@@ -48,7 +48,9 @@
 			</b-list-group>
 		</div>
 		<div class="join-button-container">
-			<b-input v-model="filterString" placeholder="Filter Join Suggestion List" />
+
+			<b-input v-model="searchQuery" placeholder="Refine Suggestions Via Search" @keydown.enter.native="refineSuggestedItems" />
+        	<b-button  variant="" @click="refineSuggestedItems">Refine Join Suggestions</b-button>
         	<b-button :disabled="!isJoinReady || isAttemptingJoin" variant="primary" @click="join">Join</b-button>
 		</div>
 		<b-modal
@@ -133,6 +135,7 @@ interface StatusPanelJoinState {
 	datasetBid: string;
 	datasetAColumn: any;
 	datasetBColumn: any;
+	searchQuery: string;
 }
 
 export default Vue.extend({
@@ -150,6 +153,7 @@ export default Vue.extend({
 			datasetBid: '',
 			datasetAColumn: '',
 			datasetBColumn: '',
+			searchQuery: '',
 		};
 	},
 	components: {
@@ -265,6 +269,12 @@ export default Vue.extend({
 					selected,
 				};
 			});
+		},
+		refineSuggestedItems() {
+			datasetActions.fetchJoinSuggestions(this.$store, {
+				dataset: this.dataset,
+				searchQuery: this.searchQuery
+			})
 		},
 		selectItem(item) {
 			if (this.isImporting) { return; }
