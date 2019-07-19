@@ -189,6 +189,13 @@
             
             
             
+            <li><a href="#forecast">Forecast</a></li>
+            
+            
+            
+            
+            
+            
             <li><a href="#importance">Importance</a></li>
             
             
@@ -240,6 +247,13 @@
             
             
             <li><a href="#target">Target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="#timeseries">Timeseries</a></li>
             
             
             
@@ -337,6 +351,11 @@
           
         
           
+            <dt id="forecast">Forecast</dt>
+            <dd>When you choose to predict a timeseries feature, Distil produces forecasting results. Forecasting results show the predicted future values for each value in the timeseries feature.</dd>
+          
+        
+          
             <dt id="importance">Importance</dt>
             <dd>Available features are listed in descending order by how much influence they have on other features in the dataset. Importance is calculated using Principal Component Analysis.</dd>
           
@@ -378,6 +397,17 @@ On the View Models page, the feature summaries show the range of values in resul
           
             <dt id="target">Target</dt>
             <dd>The feature that you want the model to predict.</dd>
+          
+        
+          
+            <dt id="timeseries">Timeseries</dt>
+            <dd>A compound feature that you can create to track a value over time. To create a timeseries feature, you must group together the following features from your selected dataset:
+<ul>
+  <li><b>Series ID Columns</b>: The label or name of the variables being tracked across dataset rows. You can construct series ID from one or more features.</li>
+  <li><b>Time Column</b>: The timestamp or date/time feature. Serves as the X-axis in the compound feature.</li>
+  <li><b>Value Column</b>: The unique value for the group in each row. Serves as the Y-axis in the compound feature.</li>
+</ul>
+</dd>
           
         
           

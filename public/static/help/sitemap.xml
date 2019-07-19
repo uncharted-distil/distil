@@ -46,15 +46,15 @@
   </url>
   
   <url>
-    <loc>/select-data.html</loc>
-  </url>
-  
-  <url>
     <loc>/reference-select-data.html</loc>
   </url>
   
   <url>
-    <loc>/reference-select-target.html</loc>
+    <loc>/select-data.html</loc>
+  </url>
+  
+  <url>
+    <loc>/problem-discovery-select-target.html</loc>
   </url>
   
   <url>
@@ -62,7 +62,7 @@
   </url>
   
   <url>
-    <loc>/problem-discovery-select-target.html</loc>
+    <loc>/reference-select-target.html</loc>
   </url>
   
   <url>
@@ -74,11 +74,11 @@
   </url>
   
   <url>
-    <loc>/model-generation-view-models.html</loc>
+    <loc>/reference-view-models.html</loc>
   </url>
   
   <url>
-    <loc>/reference-view-models.html</loc>
+    <loc>/model-generation-view-models.html</loc>
   </url>
   
   <url>
@@ -90,11 +90,15 @@
   </url>
   
   <url>
-    <loc>/problem-discovery-overview.html</loc>
+    <loc>/forecasting-overview.html</loc>
   </url>
   
   <url>
     <loc>/model-generation-overview.html</loc>
+  </url>
+  
+  <url>
+    <loc>/problem-discovery-overview.html</loc>
   </url>
   
 </urlset>
