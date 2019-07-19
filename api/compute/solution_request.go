@@ -646,7 +646,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	datasetInputDir := env.ResolvePath(datasetInput.Source, datasetInput.Folder)
 
 	// perist the datasets and get URI
-	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.DatasetInput, compute.D3MDataSchema, datasetInputDir, datasetDir, s.Task, timeseriesColumnIndex)
+	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.DatasetInput, compute.D3MDataSchema, datasetInputDir, datasetDir, s.Task, timeseriesColumnIndex, columnIndex)
 	if err != nil {
 		return err
 	}
