@@ -233,12 +233,15 @@ export default Vue.extend({
 						target: this.target
 					});
 				}
-				if (isLocationType(type)) {
-					datasetActions.geocodeVariable(this.$store, {
-						dataset: dataset,
-						field: field
-					});
-				}
+				// Temporarily prevent geocoding that causes empty lat/lon fields to the dataset
+				// until geocoding service is operational
+
+				// if (isLocationType(type)) {
+				// 	datasetActions.geocodeVariable(this.$store, {
+				// 		dataset: dataset,
+				// 		field: field
+				// 	});
+				// }
 			});
 		},
 	},
