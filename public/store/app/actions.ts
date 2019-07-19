@@ -65,7 +65,6 @@ export const actions = {
 	fetchConfig(context: AppContext) {
 		return axios.get(`/distil/config`)
 			.then(response => {
-				console.log(response.data);
 				mutations.setVersionNumber(context, response.data.version);
 				mutations.setVersionTimestamp(context, response.data.timestamp);
 				mutations.setIsTask1(context, response.data.isTask1);
