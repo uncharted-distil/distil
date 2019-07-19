@@ -244,6 +244,21 @@
         
     
     <li>
+        <a href="#">Forecasting</a>
+        <ul>
+            
+            
+            
+            <li><a href="forecasting-overview.html">Overview</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
         <a href="#">Reference</a>
         <ul>
             
@@ -401,10 +416,10 @@ $('#toc').on('click', 'a', function() {
 <ol>
   <li>Scroll through the models at the bottom of the pane.</li>
   <li>Compare the distribution of predictions in each model against the distribution of the actual values from the dataset. Which model looks most similar to the actual target feature?
-    <figure><img class="docimage" src="images/workflow/view-models/results.png?1562699720597540000" alt="Compare model results to actual results" /></figure>
+    <figure><img class="docimage" src="images/data-augmentation/view-models/results.png?1563567841544422000" alt="Compare model results to actual results" /></figure>
   </li>
   <li>Select a category in the results to split the Prediction tables based on the corresponding values.
-    <figure><img class="docimage" src="images/workflow/view-models/predicted-highlight.png?1562699720597540000" alt="Highlight predicted values to view context of correct/incorrect predictions" /></figure>
+    <figure><img class="docimage" src="images/data-augmentation/view-models/predicted-highlight.png?1563567841544422000" alt="Highlight predicted values to view context of correct/incorrect predictions" /></figure>
     <p>The top table lists records that match your selection, while the bottom table lists all other records.</p>
   </li>
   <li>Click a different model to load its results in the <a href="#prediction-tables">Prediction Tables</a>.</li>
@@ -422,11 +437,11 @@ $('#toc').on('click', 'a', function() {
         <ol>
           <li>
             <p>Review the distribution of error in the predicted results. Is the error relatively consistent across all the predictions?</p>
-            <figure><img class="docimage" src="images/workflow/view-models/predictions-by-model-error-distribution.png?1562699720597540000" alt="Compare distribution of error across models" /></figure>
+            <figure><img class="docimage" src="images/data-augmentation/view-models/predictions-by-model-error-distribution.png?1563567841544422000" alt="Compare distribution of error across models" /></figure>
             <p>Error charts are centered on 0. Positive error values indicate that the prediction was higher than the actual value, while negative error values indicate the opposite.</p>
           </li>
           <li>Drag the left or right error sliders to adjust the acceptable error in the predictions. By default, Distil sets the acceptable error to the 25th percentile. How does changing this value affect the number of correct/incorrect predictions?</li>
-          <figure><img class="docimage" src="images/workflow/view-models/results-error-adjust.png?1562699720597540000" alt="Adjust acceptable error in models" /></figure>
+          <figure><img class="docimage" src="images/data-augmentation/view-models/results-error-adjust.png?1563567841544422000" alt="Adjust acceptable error in models" /></figure>
           <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> Toggle between the buttons above the <strong>Error</strong> bar to adjust the range symmetrically (default) or one at a time.</div>
 
         </ol>
@@ -459,7 +474,7 @@ $('#toc').on('click', 'a', function() {
 
 <ul>
   <li>Select a category or a range of values in the target feature, feature summaries, or model predictions. What values do correct and incorrect predictions tend to have?
-    <figure><img class="docimage" src="images/workflow/view-models/correct-predictions-highlight.png?1562699720597540000" alt="View values for specific records in context of the whole dataset" /></figure>
+    <figure><img class="docimage" src="images/data-augmentation/view-models/correct-predictions-highlight.png?1563567841544422000" alt="View values for specific records in context of the whole dataset" /></figure>
   </li>
 </ul>
 
@@ -471,7 +486,7 @@ $('#toc').on('click', 'a', function() {
 
 <ul>
   <li>For continuous features, drag the sliders on either end of the timeline to focus records that contain values beyond the new placement. Does this improve the predictions?
-    <figure><img class="docimage" src="images/workflow/view-models/feature-summaries-range-adjust.png?1562699720597540000" alt="Drag range sliders to omit outliers" /></figure>
+    <figure><img class="docimage" src="images/data-augmentation/view-models/feature-summaries-range-adjust.png?1563567841544422000" alt="Drag range sliders to omit outliers" /></figure>
   </li>
   <li>For categorical features, click to select individual values. Does this improve the predictions?</li>
 </ul>
@@ -480,7 +495,7 @@ $('#toc').on('click', 'a', function() {
 
 <p>To refine the models that Distil produced, click <span class="fa fa-dot-circle-o" aria-hidden="true"></span> <strong>Select Target</strong> or <span class="fa fa-code-fork" aria-hidden="true"></span> <strong>Create Models</strong> to go back to a previous step.</p>
 
-<figure><img class="docimage" src="images/workflow/view-models/return-to-select-target.png?1562699720597540000" alt="Return to Select to refine the models" /></figure>
+<figure><img class="docimage" src="images/data-augmentation/view-models/return-to-select-target.png?1563567841544422000" alt="Return to Select to refine the models" /></figure>
 
 <p>When refining the model, you can change the target feature, add or remove features used to model the predictions, or adjust the values included for specific features.</p>
 
@@ -488,7 +503,7 @@ $('#toc').on('click', 'a', function() {
 
 <p>When you are satisfied with the results of a model, click <strong>Export Model</strong> to save it and move on to the next problem.</p>
 
-<figure><img class="docimage" src="images/workflow/view-models/export-model.png?1562699720597540000" alt="Export models" /></figure>
+<figure><img class="docimage" src="images/data-augmentation/view-models/export-model.png?1563567841544422000" alt="Export models" /></figure>
 
 <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> If you want to abandon your model configuration and move on to the next problem, click <strong>Abort</strong> in the header.</div>
 
