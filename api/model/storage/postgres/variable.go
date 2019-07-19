@@ -104,8 +104,14 @@ func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*a
 	// add min / max aggregation
 	aggQuery := s.getMinMaxAggsQuery(variable)
 
+	// numerical columns need to filter NaN out
+	filter := ""
+	if model.IsNumerical(variable.Type) {
+		filter = fmt.Sprintf("WHERE \"%s\" != 'NaN'", variable.Name)
+	}
+
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s", aggQuery, storageName)
+	queryString := fmt.Sprintf("SELECT %s FROM %s %s;", aggQuery, storageName, filter)
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow

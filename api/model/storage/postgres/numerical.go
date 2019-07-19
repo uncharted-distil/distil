@@ -447,6 +447,7 @@ func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, invert b
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
+	wheres = append(wheres, f.getNaNFilter())
 
 	// need the extrema to calculate the histogram interval
 	extrema, err := f.fetchExtrema()
@@ -499,6 +500,7 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 	if err != nil {
 		return nil, err
 	}
+	wheres = append(wheres, f.getNaNFilter())
 
 	params = append(params, resultURI)
 
@@ -561,7 +563,8 @@ func (f *NumericalField) fetchExtrema() (*api.Extrema, error) {
 	aggQuery := f.getMinMaxAggsQuery(f.Key)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, fromClause)
+	// need to ignore the NaN values
+	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE %s;", aggQuery, fromClause, f.getNaNFilter())
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -699,8 +702,8 @@ func (f *NumericalField) fetchExtremaByURI(resultURI string) (*api.Extrema, erro
 	aggQuery := f.getMinMaxAggsQuery(f.Key)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
-		aggQuery, fromClause, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName)
+	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1 AND %s;",
+		aggQuery, fromClause, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName, f.getNaNFilter())
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -857,6 +860,7 @@ func (f *NumericalField) FetchNumericalStats(filterParams *api.FilterParams, inv
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
+	wheres = append(wheres, f.getNaNFilter())
 
 	where := ""
 	if len(wheres) > 0 {
@@ -887,6 +891,7 @@ func (f *NumericalField) FetchNumericalStatsByResult(resultURI string, filterPar
 	if err != nil {
 		return nil, err
 	}
+	wheres = append(wheres, f.getNaNFilter())
 
 	params = append(params, resultURI)
 
@@ -1037,4 +1042,8 @@ func (f *NumericalField) fetchForecastingSummaryData(timeVar *model.Variable, in
 	}
 
 	return f.parseTimeHistogram(res, extrema, interval)
+}
+
+func (f *NumericalField) getNaNFilter() string {
+	return fmt.Sprintf("\"%s\" != 'NaN'", f.Key)
 }

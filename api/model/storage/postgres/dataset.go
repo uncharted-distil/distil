@@ -40,7 +40,7 @@ func (s *Storage) getViewField(name string, displayName string, typ string, defa
 	viewField := fmt.Sprintf("COALESCE(CAST(\"%s\" AS %s), %v)", name, typ, defaultValue)
 	if model.IsDatabaseFloatingPoint(typ) {
 		// handle missing values
-		viewField = fmt.Sprintf("CASE WHEN \"%\" = '' THEN %v ELSE %s END", name, defaultValue, viewField)
+		viewField = fmt.Sprintf("CASE WHEN \"%s\" = '' THEN %v ELSE %s END", name, defaultValue, viewField)
 	}
 	viewField = fmt.Sprintf("%s AS \"%s\"", viewField, displayName)
 	return viewField
