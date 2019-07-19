@@ -45,7 +45,7 @@ const (
 
 	defaultTaskTypeNumerical   = "regression"
 	defaultTaskTypeCategorical = "classification"
-	defaultTaskTypeForecasting = "time_series_forecasting"
+	defaultTaskTypeForecasting = "timeSeriesForecasting"
 
 	defaultTaskSubTypeNumerical   = "univariate"
 	defaultTaskSubTypeCategorical = "multiClass"

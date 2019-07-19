@@ -16,8 +16,11 @@ import store from './store/store';
 import router from './router/router';
 import { getters as routeGetters } from './store/route/module';
 import { getters as appGetters, actions as appActions } from './store/app/module';
+import { getters as datasetGetters, actions as datasetActions } from './store/dataset/module';
 import { HOME_ROUTE, SELECT_TARGET_ROUTE, SELECT_TRAINING_ROUTE } from './store/route';
 import { createRouteEntry } from './util/routes';
+import { CATEGORICAL_TYPE, INTEGER_TYPE } from './util/types';
+import { getComposedVariableKey } from './util/data';
 
 import 'font-awesome/css/font-awesome.css';
 import 'bootstrap-vue/dist/bootstrap-vue.css';
@@ -59,13 +62,81 @@ export default Vue.extend({
 
 			if (appGetters.isTask2(this.$store) && (path === HOME_ROUTE || path === SELECT_TARGET_ROUTE)) {
 				const dataset = appGetters.getProblemDataset(this.$store);
-				const target = appGetters.getProblemTarget(this.$store);
+				let target = appGetters.getProblemTarget(this.$store);
+				const taskType = appGetters.getProblemTaskType(this.$store);
+				let training = [];
+
+				let promise = Promise.resolve();
+
+				// TASK 2 hack
+				if (taskType === 'timeSeriesForecasting') {
+					promise = datasetActions.fetchVariables(this.$store, {
+						dataset: dataset
+					}).then(() => {
+						let variables = datasetGetters.getVariables(this.$store);
+
+						const ids = variables.filter(v => v.colType === CATEGORICAL_TYPE).map(v => v.colName);
+						const idKey = getComposedVariableKey(ids);
+
+						// set the target / training to the grouping properties
+						target = idKey;
+						training = ids;
+
+						const alreadyComposed = variables.find(v => v.colName === idKey);
+
+						let nextPromise = Promise.resolve();
+						if (!alreadyComposed && ids.length > 1) {
+							console.log(`Task 2: Composing ids for grouping`, ids.join(', '));
+							nextPromise = datasetActions.composeVariables(this.$store, {
+								dataset: dataset,
+								key: idKey,
+								vars: ids
+							});
+						}
+						return nextPromise.then(() => {
+
+							variables = datasetGetters.getVariables(this.$store);
+							const alreadyGrouped = !!variables.find(v => v.colName === idKey).grouping;
+
+							if (alreadyGrouped) {
+								// grouping already exists
+								return;
+							}
+
+							const yCol = target;
+							const xCol = variables.filter(v => v.colName !== target && v.colType === INTEGER_TYPE).map(v => v.colName)[0];
+
+							const grouping =  {
+								type: 'timeseries',
+								dataset: dataset,
+								idCol: idKey,
+								subIds: ids,
+								hidden: [ xCol, yCol ],
+								properties: {
+									xCol: xCol,
+									yCol: yCol,
+								}
+							};
+
+							console.log(`Task 2: Creating timeseries grouping for `, idKey);
+							return datasetActions.setGrouping(this.$store, {
+								dataset: dataset,
+								grouping: grouping
+							});
+						});
+					});
+				}
+				// TASK 2 hack
+
 				console.log(`Task 2: Routing directly to create models view with dataset=\`${dataset}\` and target=\`${target}\``, dataset, target);
-				const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
-					dataset: dataset,
-					target: target
+				promise.then(() => {
+					const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
+						dataset: dataset,
+						target: target,
+						training: training.join(',')
+					});
+					this.$router.push(entry);
 				});
-				this.$router.push(entry);
 			}
 		});
 
