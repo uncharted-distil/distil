@@ -202,6 +202,9 @@ func (s *Storage) SearchDatasets(terms string, baseDataset *api.Dataset, include
 
 func (s *Storage) updateVariables(dataset string, variables []*model.Variable) error {
 	// reserialize the data
+	// HACK: DO NOT STORE EXTREMA VALUES AS THERE ARE CURRENTLY ISSUES WITH
+	// SCIENTIFIC NOTATION FLOATS SINCE THEY ARE TYPED AS LONG IN ES.
+	//   TO REPRODUCE: run startup ingest on SEMI_1217_click_prediction_small
 	var serialized []map[string]interface{}
 	for _, v := range variables {
 		serialized = append(serialized, map[string]interface{}{
@@ -218,8 +221,8 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 			model.VarDistilRole:            v.DistilRole,
 			model.VarDeleted:               v.Deleted,
 			model.VarGroupingField:         v.Grouping,
-			model.VarMinField:              v.Min,
-			model.VarMaxField:              v.Max,
+			//			model.VarMinField:              v.Min,
+			//			model.VarMaxField:              v.Max,
 		})
 	}
 

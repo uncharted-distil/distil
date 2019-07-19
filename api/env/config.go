@@ -38,9 +38,9 @@ type Config struct {
 	SolutionSearchMaxTime              int     `env:"SOLUTION_SEARCH_MAX_TIME" envDefault:"10"`
 	AugmentedSubFolder                 string  `env:"AUGMENTED_SUBFOLDER" envDefault:"augmented"`
 	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:""`
-	DatamartURIISI                     string  `env:"DATAMART_URI_ISI" envDefault:"http://dsbox02.isi.edu:9000"`
-	DatamartURINYU                     string  `env:"DATAMART_URI_NYU" envDefault:"https://datamart.d3m.vida-nyu.org"`
-	DatamartISIEnabled                 bool    `env:"DATAMART_ISI_ENABLED" envDefault:"true"`
+	DatamartURIISI                     string  `env:"DATAMART_URL_ISI" envDefault:"http://dsbox02.isi.edu:9000"`
+	DatamartURINYU                     string  `env:"DATAMART_URL_NYU" envDefault:"https://datamart.d3m.vida-nyu.org"`
+	DatamartISIEnabled                 bool    `env:"DATAMART_ISI_ENABLED" envDefault:"false"`
 	DatamartNYUEnabled                 bool    `env:"DATAMART_NYU_ENABLED" envDefault:"true"`
 	DatamartImportFolder               string  `env:"DATAMART_IMPORT_FOLDER" envDefault:"/data/datamart"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`

@@ -173,7 +173,7 @@ export const actions = {
 		]);
 	},
 
-	fetchJoinSuggestions(context: DatasetContext, args: { dataset: string }) {
+	fetchJoinSuggestions(context: DatasetContext, args: { dataset: string, searchQuery: string }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -209,9 +209,10 @@ export const actions = {
 				console.error(error);
 			});
 		*/
-		return axios.get(`/distil/datasets/${args.dataset}`)
+		const query = args.searchQuery ? `?search=${args.searchQuery.split(' ').join(',')}` : '';
+		return axios.get(`/distil/join-suggestions/${args.dataset + query}`)
 			.then(res => {
-				return axios.get(`/distil/join-suggestions/${args.dataset}`);
+				return axios.get(`/distil/join-suggestions/${args.dataset + query}`);
 			})
 			.then((response) => {
 				const suggestions = (response.data && response.data.datasets) || [];

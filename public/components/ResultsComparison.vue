@@ -167,16 +167,27 @@ export default Vue.extend({
 			return resultsGetters.getResultDataNumRows(this.$store);
 		},
 
+
+		isForecasting(): boolean {
+			return solutionGetters.isForecasting(this.$store);
+		},
+
 		topSlotTitle(): string {
-			return `${this.numIncludedResultItems} <b class="matching-color">matching</b> samples of ${this.numRows}, including ${this.numIncludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+			const matchesLabel = `${this.numIncludedResultItems} <b class="matching-color">matching</b> samples of ${this.numRows}`;
+			const erroneousLabel = `, including ${this.numIncludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+			return this.isForecasting ? matchesLabel : matchesLabel + erroneousLabel;
 		},
 
 		bottomSlotTitle(): string {
-			return `${this.numExcludedResultItems} <b class="other-color">other</b> samples of ${this.numRows}, including ${this.numExcludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+			const matchesLabel = `${this.numExcludedResultItems} <b class="other-color">other</b> samples of ${this.numRows}`;
+			const erroneousLabel = `, including ${this.numExcludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
+			return this.isForecasting ? matchesLabel : matchesLabel + erroneousLabel;
 		},
 
 		singleSlotTitle(): string {
-			return `Displaying ${this.numExcludedResultItems} of ${this.numRows}, including ${this.numExcludedResultErrors} <b>erroneous</b> predictions`;
+			const matchesLabel = `Displaying ${this.numExcludedResultItems} of ${this.numRows}`;
+			const erroneousLabel = `, including ${this.numExcludedResultErrors} <b>erroneous</b> predictions`;
+			return this.isForecasting ? matchesLabel : matchesLabel + erroneousLabel;
 		}
 	}
 });

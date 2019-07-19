@@ -16,6 +16,7 @@
 package routes
 
 import (
+	"math"
 	"net/http"
 	"net/url"
 
@@ -101,6 +102,25 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 		if err != nil {
 			handleError(w, err)
 			return
+		}
+
+		// go does not marshal NaN values properly so make them empty
+		numericColumns := make([]int, 0)
+		for i, c := range results.Columns {
+			if model.IsNumerical(c.Type) {
+				numericColumns = append(numericColumns, i)
+			}
+		}
+
+		if len(numericColumns) > 0 {
+			for _, r := range results.Values {
+				for _, nc := range numericColumns {
+					f, ok := r[nc].(float64)
+					if ok && math.IsNaN(f) {
+						r[nc] = ""
+					}
+				}
+			}
 		}
 
 		// marshal data and sent the response back
