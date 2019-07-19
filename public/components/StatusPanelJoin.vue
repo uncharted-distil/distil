@@ -274,7 +274,7 @@ export default Vue.extend({
 			datasetActions.fetchJoinSuggestions(this.$store, {
 				dataset: this.dataset,
 				searchQuery: this.searchQuery
-			})
+			});
 		},
 		selectItem(item) {
 			if (this.isImporting) { return; }

@@ -34,7 +34,8 @@ function createCacheable(key: ParamCacheKey, func: (context: ViewContext, args: 
 
 const fetchJoinSuggestions = createCacheable(ParamCacheKey.JOIN_SUGGESTIONS, (context, args) => {
 	return datasetActions.fetchJoinSuggestions(store, {
-		dataset: args.dataset
+		dataset: args.dataset,
+		searchQuery: args.searchQuery
 	});
 });
 
