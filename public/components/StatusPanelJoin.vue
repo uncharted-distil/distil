@@ -334,6 +334,7 @@ export default Vue.extend({
 				datasetActions.importJoinDataset(this.$store, {datasetID: id, source: 'contrib', provenance, searchResult}).then(res => {
 					if (res && (res.result === 'ingested')) {
 						this.importedItem.isAvailable = true;
+						this.importedDataset.source = 'contrib';
 					}
 				});
 			}
