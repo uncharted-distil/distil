@@ -37,8 +37,13 @@ type joinDefinition struct {
 }
 
 func (s *Storage) getViewField(name string, displayName string, typ string, defaultValue interface{}) string {
-	return fmt.Sprintf("COALESCE(CAST(\"%s\" AS %s), %v) AS \"%s\"",
-		name, typ, defaultValue, displayName)
+	viewField := fmt.Sprintf("COALESCE(CAST(\"%s\" AS %s), %v)", name, typ, defaultValue)
+	if model.IsDatabaseFloatingPoint(typ) {
+		// handle missing values
+		viewField = fmt.Sprintf("CASE WHEN \"%\" = '' THEN %v ELSE %s END", name, defaultValue, viewField)
+	}
+	viewField = fmt.Sprintf("%s AS \"%s\"", viewField, displayName)
+	return viewField
 }
 
 func (s *Storage) getDatabaseFields(tableName string) ([]string, error) {
