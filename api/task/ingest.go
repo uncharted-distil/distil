@@ -100,20 +100,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	originalSchemaFile := path.Join(sourceFolder, config.SchemaPathRelative)
 	latestSchemaOutput := originalSchemaFile
 
-	output, err := Merge(datasetSource, latestSchemaOutput, index, dataset, config)
-	if err != nil {
-		return errors.Wrap(err, "unable to merge all data into a single file")
-	}
-	latestSchemaOutput = output
-	log.Infof("finished merging the dataset")
-
-	output, err = Clean(datasetSource, latestSchemaOutput, index, dataset, config)
-	if err != nil {
-		return errors.Wrap(err, "unable to clean all data")
-	}
-	latestSchemaOutput = output
-	log.Infof("finished cleaning the dataset")
-
+	output := latestSchemaOutput
 	if config.ClusteringEnabled {
 		output, err = ClusterDataset(datasetSource, latestSchemaOutput, index, dataset, config)
 		if err != nil {
@@ -137,6 +124,20 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		latestSchemaOutput = output
 	}
 	log.Infof("finished featurizing the dataset")
+
+	output, err = Merge(datasetSource, latestSchemaOutput, index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to merge all data into a single file")
+	}
+	latestSchemaOutput = output
+	log.Infof("finished merging the dataset")
+
+	output, err = Clean(datasetSource, latestSchemaOutput, index, dataset, config)
+	if err != nil {
+		return errors.Wrap(err, "unable to clean all data")
+	}
+	latestSchemaOutput = output
+	log.Infof("finished cleaning the dataset")
 
 	err = Classify(latestSchemaOutput, index, dataset, config)
 	if err != nil {
