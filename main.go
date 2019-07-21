@@ -89,7 +89,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = env.InitializeLog("systemLog.csv", &config)
+	discoveryLogger, err := env.InitializeLog("systemLog.csv", &config)
 	if err != nil {
 		log.Errorf("%+v", err)
 		os.Exit(1)
@@ -151,7 +151,8 @@ func main() {
 			userAgent,
 			time.Duration(config.SolutionComputePullTimeout)*time.Second,
 			config.SolutionComputePullMax,
-			config.SkipPreprocessing)
+			config.SkipPreprocessing,
+			discoveryLogger)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -164,7 +165,8 @@ func main() {
 			userAgent,
 			time.Duration(config.SolutionComputePullTimeout)*time.Second,
 			config.SolutionComputePullMax,
-			config.SkipPreprocessing)
+			config.SkipPreprocessing,
+			discoveryLogger)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)

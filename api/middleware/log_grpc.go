@@ -23,8 +23,6 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-
-	"github.com/uncharted-distil/distil/api/env"
 )
 
 // GenerateUnaryClientInterceptor creates an interceptor function that will log unary grpc calls.
@@ -101,7 +99,6 @@ func (c *LoggingClientStream) RecvMsg(m interface{}) error {
 // SendMsg logs messages sent out over a GRPC stream
 func (c *LoggingClientStream) SendMsg(m interface{}) error {
 	request := fmt.Sprintf("%s [SEND]", c.requestType)
-	env.LogAPIAction(c.method)
 	if c.trace {
 		newRequestLogger().
 			requestType(request).
