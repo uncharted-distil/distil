@@ -26,8 +26,9 @@ const (
 )
 
 var (
-	csvFilename = ""
-	mu          = &sync.Mutex{}
+	csvFilename    = ""
+	mu             = &sync.Mutex{}
+	initializedLog = false
 
 	featureMap = map[string]string{
 		searchSolutionMethod:     "SearchSolutions",
@@ -65,6 +66,11 @@ var (
 )
 
 func InitializeLog(filename string, config *Config) error {
+
+	if initializedLog {
+		return errors.Errorf("d3m system log already initialized")
+	}
+
 	// write the logs to the output log directory
 	csvFilename = path.Join(config.D3MOutputDir, "logs", filename)
 
@@ -73,6 +79,8 @@ func InitializeLog(filename string, config *Config) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize the activity log")
 	}
+
+	initializedLog = true
 
 	return nil
 }

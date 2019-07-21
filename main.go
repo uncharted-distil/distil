@@ -89,6 +89,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	err = env.InitializeLog("systemLog.csv", &config)
+	if err != nil {
+		log.Errorf("%+v", err)
+		os.Exit(1)
+	}
+
 	// set dataset directory
 	api.SetDatasetDir(config.TmpDataPath)
 
