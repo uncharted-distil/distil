@@ -34,26 +34,28 @@ type downloadDataset func(datamart *Storage, id string, uri string) (string, err
 
 // Storage accesses the underlying datamart instance.
 type Storage struct {
-	client      *rest.Client
-	outputPath  string
-	getFunction string
-	config      *task.IngestTaskConfig
-	search      searchQuery
-	parse       parseSearchResult
-	download    downloadDataset
+	client         *rest.Client
+	outputPath     string
+	getFunction    string
+	searchFunction string
+	config         *task.IngestTaskConfig
+	search         searchQuery
+	parse          parseSearchResult
+	download       downloadDataset
 }
 
 // NewNYUMetadataStorage returns a constructor for an NYU datamart.
 func NewNYUMetadataStorage(outputPath string, config *task.IngestTaskConfig, clientCtor rest.ClientCtor) model.MetadataStorageCtor {
 	return func() (model.MetadataStorage, error) {
 		return &Storage{
-			client:      clientCtor(),
-			outputPath:  outputPath,
-			getFunction: nyuGetFunction,
-			config:      config,
-			search:      nyuSearch,
-			parse:       parseNYUSearchResult,
-			download:    materializeNYUDataset,
+			client:         clientCtor(),
+			outputPath:     outputPath,
+			getFunction:    nyuGetFunction,
+			searchFunction: nyuSearchFunction,
+			config:         config,
+			search:         nyuSearch,
+			parse:          parseNYUSearchResult,
+			download:       materializeNYUDataset,
 		}, nil
 	}
 }
@@ -62,13 +64,14 @@ func NewNYUMetadataStorage(outputPath string, config *task.IngestTaskConfig, cli
 func NewISIMetadataStorage(outputPath string, config *task.IngestTaskConfig, clientCtor rest.ClientCtor) model.MetadataStorageCtor {
 	return func() (model.MetadataStorage, error) {
 		return &Storage{
-			client:      clientCtor(),
-			outputPath:  outputPath,
-			getFunction: isiGetFunction,
-			config:      config,
-			search:      isiSearch,
-			parse:       parseISISearchResult,
-			download:    materializeISIDataset,
+			client:         clientCtor(),
+			outputPath:     outputPath,
+			getFunction:    isiGetFunction,
+			searchFunction: isiSearchFunction,
+			config:         config,
+			search:         isiSearch,
+			parse:          parseISISearchResult,
+			download:       materializeISIDataset,
 		}, nil
 	}
 }
