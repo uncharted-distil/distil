@@ -105,8 +105,12 @@ func (l *DiscoveryLogger) LogSystemAction(feature string, activity string, subAc
 
 // LogAPIAction logs a TA2TA3 API call to the discovery log.
 func (l *DiscoveryLogger) LogAPIAction(method string) {
-	// look up the activity and sub activity based on the grpc method
-	l.logAction(featureMap[method], "TA2TA3", activityMap[method], subActivityMap[method])
+	// look up the feature, the activity and sub activity based on the grpc method
+	feature := featureMap[method]
+	if feature == "" {
+		feature = method
+	}
+	l.logAction(feature, "TA2TA3", activityMap[method], subActivityMap[method])
 }
 
 // LogDatamartAction logs a datamart fuction call to the discovery log.
