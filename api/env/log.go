@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/uncharted-distil/distil/api/util"
-	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -81,7 +80,7 @@ func InitializeLog(filename string, config *Config) (*DiscoveryLogger, error) {
 	csvFilename := path.Join(config.D3MOutputDir, "logs", filename)
 
 	// initialize the log with the header
-	err := util.WriteFileWithDirs(csvFilename, []byte("timestamp,feature_id,type,activity_l1,activity_l2,other"), os.ModePerm)
+	err := util.WriteFileWithDirs(csvFilename, []byte("timestamp,feature_id,type,activity_l1,activity_l2,other\n"), os.ModePerm)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to initialize the activity log")
 	}
@@ -119,7 +118,6 @@ func (l *DiscoveryLogger) LogDatamartAction(feature string, activity string, sub
 }
 
 func (l *DiscoveryLogger) logAction(feature string, typ string, activity string, subActivity string) {
-	log.Infof("GOT ME A LOG")
 	timestamp := fmt.Sprintf(time.Now().Format(time.RFC3339))
 
 	mu.Lock()
