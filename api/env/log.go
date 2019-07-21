@@ -93,8 +93,9 @@ func InitializeLog(filename string, config *Config) (*DiscoveryLogger, error) {
 	return logger, nil
 }
 
+// LogDatamartActionGlobal logs a datamart fuction call to the discovery log.
 func LogDatamartActionGlobal(feature string, activity string, subActivity string) {
-	logger.logAction(feature, "DATAMART", activity, subActivity)
+	logger.LogDatamartAction(feature, activity, subActivity)
 }
 
 // LogSystemAction logs a system action to the discovery log.
@@ -121,8 +122,6 @@ func (l *DiscoveryLogger) logAction(feature string, typ string, activity string,
 	defer mu.Unlock()
 	f, _ := os.OpenFile(l.csvFilename, os.O_WRONLY|os.O_APPEND, os.ModePerm)
 	w := csv.NewWriter(f)
-	for i := 0; i < 10; i++ {
-		w.Write([]string{timestamp, feature, typ, activity, subActivity, "{}"})
-	}
+	w.Write([]string{timestamp, feature, typ, activity, subActivity, "{}"})
 	w.Flush()
 }
