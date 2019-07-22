@@ -96,7 +96,8 @@ export default Vue.extend({
 						return nextPromise.then(() => {
 
 							variables = datasetGetters.getVariables(this.$store);
-							const alreadyGrouped = !!variables.find(v => v.colName === idKey).grouping;
+							const existingGrouping = variables.find(v => v.colName === idKey);
+							const alreadyGrouped = existingGrouping && !!existingGrouping.grouping;
 
 							if (alreadyGrouped) {
 								// grouping already exists
@@ -118,10 +119,9 @@ export default Vue.extend({
 								}
 							};
 
-							console.log(`Task 2: Creating timeseries grouping for `, idKey);
-							return datasetActions.setGrouping(this.$store, {
-								dataset: dataset,
-								grouping: grouping
+							console.log(`Task 2: Fetching timeseries variables for `, dataset);
+							return datasetActions.fetchVariables(this.$store, {
+								dataset: dataset
 							});
 						});
 					});
