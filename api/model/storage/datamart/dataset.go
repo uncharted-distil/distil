@@ -32,9 +32,9 @@ const (
 	metadataType     = "metadata"
 	datasetsListSize = 1000
 	// ProvenanceNYU for NYU datamart
-	ProvenanceNYU = "datamartNYU"
+	ProvenanceNYU = "NYU"
 	// ProvenanceISI for ISI datamart
-	ProvenanceISI   = "datamartISI"
+	ProvenanceISI   = "ISI"
 	getRESTFunction = "download"
 )
 
@@ -137,6 +137,7 @@ func (s *Storage) searchREST(searchText string, baseDataset *api.Dataset) ([]*ap
 		dataPath = path.Join(datasetPath, dr.ResPath)
 	}
 
+	env.LogDatamartActionGlobal(s.searchFunction, "DATA_PREPARATION", "DATA_SEARCH")
 	responseRaw, err := s.search(s, query, dataPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to post datamart search request")

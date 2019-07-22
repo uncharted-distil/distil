@@ -1,3 +1,4 @@
+import { Dictionary } from '../../util/dict';
 import { VariableSummary, Extrema, TableData } from '../dataset/index';
 
 export interface ResultsState {
@@ -14,6 +15,9 @@ export interface ResultsState {
 	residualsExtrema: Extrema;
 	// correctness summary (correct vs. incorrect) for predicted categorical data
 	correctnessSummaries: VariableSummary[];
+	// forecasts
+	timeseries: Dictionary<Dictionary<number[][]>>;
+	forecasts: Dictionary<Dictionary<number[][]>>;
 }
 
 export const state: ResultsState = {
@@ -29,5 +33,8 @@ export const state: ResultsState = {
 	residualSummaries: [],
 	residualsExtrema: { min: null, max: null },
 	// correctness summary (correct vs. incorrect) for predicted categorical data
-	correctnessSummaries: []
+	correctnessSummaries: [],
+	// forecasts
+	timeseries: {},
+	forecasts: {}
 };

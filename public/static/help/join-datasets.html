@@ -13,8 +13,8 @@
 <!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
-<link rel="stylesheet" href="css/customstyles.css?1561748759511796000">
-<link rel="stylesheet" href="css/theme-black.css?1561748759511796000">
+<link rel="stylesheet" href="css/customstyles.css?1562699720597540000">
+<link rel="stylesheet" href="css/theme-black.css?1562699720597540000">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -131,9 +131,31 @@
             
             
             
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Problem discovery</a>
+        <ul>
             
             
-            <li><a href="home.html">Home</a></li>
+            
+            <li><a href="problem-discovery-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="problem-discovery-select-target.html">1. Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="problem-discovery-create-models.html">2. Create models</a></li>
             
             
             
@@ -143,7 +165,36 @@
         
     
     <li>
-        <a href="#">Workflow</a>
+        <a href="#">Model generation</a>
+        <ul>
+            
+            
+            
+            <li><a href="model-generation-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="model-generation-create-models.html">1. Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="model-generation-view-models.html">2. View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Data augmentation</a>
         <ul>
             
             
@@ -184,6 +235,71 @@
             
             
             <li><a href="view-models.html">5. View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Forecasting</a>
+        <ul>
+            
+            
+            
+            <li><a href="forecasting-overview.html">Overview</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Reference</a>
+        <ul>
+            
+            
+            
+            <li><a href="reference-home.html">Home</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-select-data.html">Select data</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-select-target.html">Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-create-models.html">Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-join-datasets.html">Join datasets</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-view-models.html">View models</a></li>
             
             
             
@@ -258,18 +374,6 @@ $('#toc').on('click', 'a', function() {
 
   <p>Use the optional Join Datasets step to add new features that add more context. Distil’s data augmentation recommendation services suggest data that can be joined to expand the model.</p>
 
-<h2 id="overview">Overview</h2>
-
-<p>Choose features that both datasets have in common to begin the join.</p>
-
-<figure id="#select-join-view-close"><a href="#select-join-view"><img class="diagram" src="images/diagrams/select-join.png?1561748759511796000" alt="Join Datasets" /><figcaption>Click to enlarge</figcaption></a></figure>
-<div class="lightbox-target" id="select-join-view"><img src="images/diagrams/select-join.png?1561748759511796000" /><a class="lightbox-close" href="#select-join-view-close"></a></div>
-
-<p>Preview the records in the joined datasets before creating a new dataset.</p>
-
-<figure id="#join-preview-view-close"><a href="#join-preview-view"><img class="diagram" src="images/diagrams/join-preview.png?1561748759511796000" alt="Join Preview" /><figcaption>Click to enlarge</figcaption></a></figure>
-<div class="lightbox-target" id="join-preview-view"><img src="images/diagrams/join-preview.png?1561748759511796000" /><a class="lightbox-close" href="#join-preview-view-close"></a></div>
-
 <h2 id="review-dataset-suggestions">Review dataset suggestions</h2>
 
 <h5 class="procedure">To view datasets suggested by Distil's data augmentation recommendation services:</h5>
@@ -278,24 +382,18 @@ $('#toc').on('click', 'a', function() {
   <li>
     <p>Click <span class="fa fa-table"> in the Alerts sidebar.</span></p>
 
-    <figure><img class="docimage" src="images/workflow/join-datasets/open-join-suggestions.png?1561748759511796000" alt="Access Join Suggestions" /></figure>
+    <figure><img class="docimage" src="images/data-augmentation/join-datasets/open-join-suggestions.png?1563567841544422000" alt="Access Join Suggestions" /></figure>
   </li>
   <li>
     <p>Click the <strong>World Bank Employment Indicators</strong> dataset to select it, then click <strong>Join</strong>.</p>
 
-    <figure><img class="docimage" src="images/workflow/join-datasets/join-suggestion.png?1561748759511796000" alt="Select the World Bank Employment Indicators dataset" /></figure>
-  </li>
-  <li>In the Join Datasets view, click the <strong>Country</strong> feature in both your original dataset (ACLED, top) and the dataset to join (World Bank Employment indicators, bottom).</li>
-  <li>
-    <p>Click <strong>Join Datasets</strong>.</p>
-
-    <figure><img class="docimage" src="images/workflow/join-datasets/join-columns.png?1561748759511796000" alt="Select the features that the two datasets have in common" /></figure>
+    <figure><img class="docimage" src="images/data-augmentation/join-datasets/join-suggestion.png?1563567841544422000" alt="Select the World Bank Employment Indicators dataset" /></figure>
   </li>
   <li>Scroll through a sample of records to preview the join. Evaluate how the features from the join dataset have been added to your original selection.</li>
   <li>
     <p>Click <strong>Commit Join</strong> to return to the Create Models stage and add any new features to your model.</p>
 
-    <figure><img class="docimage" src="images/workflow/join-datasets/join-preview.png?1561748759511796000" alt="Preview the join before committing" /></figure>
+    <figure><img class="docimage" src="images/data-augmentation/join-datasets/join-preview.png?1563567841544422000" alt="Preview the join before committing" /></figure>
   </li>
 </ol>
 

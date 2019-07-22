@@ -42,6 +42,14 @@ type Dataset struct {
 	Source          metadata.DatasetSource `json:"source"`
 	JoinSuggestions []*JoinSuggestion      `json:"joinSuggestion"`
 	JoinScore       float64                `json:"joinScore"`
+	DatasetOrigin   *DatasetOrigin         `json:"datasetOrigin"`
+}
+
+// DatasetOrigin represents the originating information for a dataset
+type DatasetOrigin struct {
+	SearchResult  string `json:"searchResult"`
+	Provenance    string `json:"provenance"`
+	SourceDataset string `json:"sourceDataset"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.

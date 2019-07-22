@@ -82,26 +82,29 @@ func TestJoin(t *testing.T) {
 	env.Initialize(&cfg)
 
 	leftJoin := &JoinSpec{
-		Column:        "alpha",
 		DatasetID:     "test_1",
 		DatasetFolder: "test_1_TRAIN",
 		DatasetSource: "contrib",
 	}
 
 	rightJoin := &JoinSpec{
-		Column:        "charlie",
 		DatasetID:     "test_2",
 		DatasetFolder: "test_2_TRAIN",
 		DatasetSource: "contrib",
 	}
 
-	result, err := join(leftJoin, rightJoin, varsLeft, varsRight, testSubmitter{}, &cfg)
+	rightOrigin := &apiModel.DatasetOrigin{
+		SearchResult: "{}",
+		Provenance:   "NYU",
+	}
+
+	result, err := join(leftJoin, rightJoin, varsLeft, varsRight, rightOrigin, testSubmitter{}, &cfg)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 
 	expected := [][]string{
-		{"d3mIndex", "alpha", "charlie"},
+		{"D3M Index", "Alpha", "Charlie"},
 		{"0", "1.0", "a"},
 		{"1", "2.0", "b"},
 		{"2", "3.0", "c"},
@@ -123,17 +126,17 @@ func TestJoin(t *testing.T) {
 	assert.ElementsMatch(t, result.Columns, []apiModel.Column{
 		{
 			Label: "D3M Index",
-			Key:   "d3mIndex",
+			Key:   "D3M Index",
 			Type:  model.IntegerType,
 		},
 		{
 			Label: "Alpha",
-			Key:   "alpha",
+			Key:   "Alpha",
 			Type:  model.RealType,
 		},
 		{
 			Label: "Charlie",
-			Key:   "charlie",
+			Key:   "Charlie",
 			Type:  model.CategoricalType,
 		},
 	})

@@ -95,7 +95,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			summary = ""
 		}
 		// extract the variables list
-		variables, err := s.parseVariables(hit, includeIndex, includeMeta)
+		variables, err := s.parseVariables(hit, includeIndex, includeMeta, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
@@ -105,20 +105,44 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			source = string(metadata.Seed)
 		}
 
+		// extract dataset source information
+		var datasetOrigin *api.DatasetOrigin
+		if src["datasetOrigin"] != nil {
+			searchResult, ok := json.String(src["datasetOrigin"].(map[string]interface{}), "searchResult")
+			if !ok {
+				searchResult = ""
+			}
+			searchProvenance, ok := json.String(src["datasetOrigin"].(map[string]interface{}), "provenance")
+			if !ok {
+				searchProvenance = ""
+			}
+			sourceDataset, ok := json.String(src["datasetOrigin"].(map[string]interface{}), "sourceDataset")
+			if !ok {
+				sourceDataset = ""
+			}
+
+			datasetOrigin = &api.DatasetOrigin{
+				SearchResult:  searchResult,
+				Provenance:    searchProvenance,
+				SourceDataset: sourceDataset,
+			}
+		}
+
 		// write everythign out to result struct
 		datasets = append(datasets, &api.Dataset{
-			ID:          id,
-			Name:        name,
-			StorageName: storageName,
-			Description: description,
-			Folder:      folder,
-			Summary:     summary,
-			SummaryML:   summaryMachine,
-			NumRows:     int64(numRows),
-			NumBytes:    int64(numBytes),
-			Variables:   variables,
-			Provenance:  Provenance,
-			Source:      metadata.DatasetSource(source),
+			ID:            id,
+			Name:          name,
+			StorageName:   storageName,
+			Description:   description,
+			Folder:        folder,
+			Summary:       summary,
+			SummaryML:     summaryMachine,
+			NumRows:       int64(numRows),
+			NumBytes:      int64(numBytes),
+			Variables:     variables,
+			Provenance:    Provenance,
+			Source:        metadata.DatasetSource(source),
+			DatasetOrigin: datasetOrigin,
 		})
 	}
 	return datasets, nil
@@ -178,6 +202,9 @@ func (s *Storage) SearchDatasets(terms string, baseDataset *api.Dataset, include
 
 func (s *Storage) updateVariables(dataset string, variables []*model.Variable) error {
 	// reserialize the data
+	// HACK: DO NOT STORE EXTREMA VALUES AS THERE ARE CURRENTLY ISSUES WITH
+	// SCIENTIFIC NOTATION FLOATS SINCE THEY ARE TYPED AS LONG IN ES.
+	//   TO REPRODUCE: run startup ingest on SEMI_1217_click_prediction_small
 	var serialized []map[string]interface{}
 	for _, v := range variables {
 		serialized = append(serialized, map[string]interface{}{
@@ -194,8 +221,8 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 			model.VarDistilRole:            v.DistilRole,
 			model.VarDeleted:               v.Deleted,
 			model.VarGroupingField:         v.Grouping,
-			model.VarMinField:              v.Min,
-			model.VarMaxField:              v.Max,
+			//			model.VarMinField:              v.Min,
+			//			model.VarMaxField:              v.Max,
 		})
 	}
 
@@ -221,7 +248,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 // SetDataType updates the data type of the field in ES.
 func (s *Storage) SetDataType(dataset string, varName string, varType string) error {
 	// Fetch all existing variables
-	vars, err := s.FetchVariables(dataset, true, true)
+	vars, err := s.FetchVariables(dataset, true, true, false)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -239,7 +266,7 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 // SetExtrema updates the min & max values of a field in ES.
 func (s *Storage) SetExtrema(dataset string, varName string, extrema *api.Extrema) error {
 	// Fetch all existing variables
-	vars, err := s.FetchVariables(dataset, true, true)
+	vars, err := s.FetchVariables(dataset, true, true, false)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -271,7 +298,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string, va
 	}
 
 	// query for existing variables
-	vars, err := s.FetchVariables(dataset, true, true)
+	vars, err := s.FetchVariables(dataset, true, true, false)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -304,7 +331,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string, va
 // DeleteVariable flags a variable as deleted.
 func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	// query for existing variables
-	vars, err := s.FetchVariables(dataset, true, true)
+	vars, err := s.FetchVariables(dataset, true, true, false)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -413,6 +440,7 @@ func (s *Storage) RemoveGrouping(datasetName string, grouping model.Grouping) er
 		name, ok := json.String(variable, "colName")
 		if ok && name == grouping.IDCol {
 			delete(variable, model.VarGroupingField)
+			variable["colType"] = variable["colOriginalType"]
 			found = true
 		}
 	}

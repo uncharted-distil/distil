@@ -6,9 +6,10 @@ import { INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
 import { Variable, Highlight } from '../dataset/index';
 import { mutations } from './module';
+import { mutations as datasetMutations } from '../dataset/module';
 import { ResultsState } from './index';
 import { addHighlightToFilterParams } from '../../util/highlights';
-import { getSummary, createPendingSummary, createErrorSummary, createEmptyTableData, fetchSummaryExemplars, getTimeseriesAnalysisIntervals } from '../../util/data';
+import { fetchSolutionResultSummary, createPendingSummary, createErrorSummary, createEmptyTableData, fetchSummaryExemplars, getTimeseriesAnalysisIntervals } from '../../util/data';
 
 export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
@@ -317,13 +318,13 @@ export const actions = {
 			const endPoint = `distil/forecasting-summary/${args.dataset}/${timeseries}/${args.target}/${interval}`;
 			const key = solution.predictedKey;
 			const label = 'Forecasted';
-			return getSummary(context, endPoint, solution, key, label, mutations.updatePredictedSummaries, filterParams);
+			return fetchSolutionResultSummary(context, endPoint, solution, args.target, key, label, mutations.updatePredictedSummaries, filterParams);
 		}
 
 		const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
 		const key = solution.predictedKey;
 		const label = 'Predicted';
-		return getSummary(context, endpoint, solution, key, label, mutations.updatePredictedSummaries, filterParams);
+		return fetchSolutionResultSummary(context, endpoint, solution, args.target, key, label, mutations.updatePredictedSummaries, filterParams);
 	},
 
 	// fetches result summaries for a given solution create request
@@ -374,7 +375,7 @@ export const actions = {
 		const endPoint = `/distil/residuals-summary/${args.dataset}/${args.target}`;
 		const key = solution.errorKey;
 		const label = 'Error';
-		return getSummary(context, endPoint, solution, key, label, mutations.updateResidualsSummaries, filterParams);
+		return fetchSolutionResultSummary(context, endPoint, solution, args.target, key, label, mutations.updateResidualsSummaries, filterParams);
 	},
 
 	// fetches result summaries for a given solution create request
@@ -395,7 +396,7 @@ export const actions = {
 	},
 
 	// fetches result summary for a given pipeline id.
-	fetchCorrectnessSummary(context: ResultsContext, args: { dataset: string, solutionId: string, highlight: Highlight }) {
+	fetchCorrectnessSummary(context: ResultsContext, args: { dataset: string, target: string, solutionId: string, highlight: Highlight }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -421,11 +422,11 @@ export const actions = {
 		const endPoint = `/distil/correctness-summary/${args.dataset}`;
 		const key = solution.errorKey;
 		const label = 'Error';
-		return getSummary(context, endPoint, solution, key, label, mutations.updateCorrectnessSummaries, filterParams);
+		return fetchSolutionResultSummary(context, endPoint, solution, args.target, key, label, mutations.updateCorrectnessSummaries, filterParams);
 	},
 
 	// fetches result summaries for a given pipeline create request
-	fetchCorrectnessSummaries(context: ResultsContext, args: { dataset: string, requestIds: string[], highlight: Highlight }) {
+	fetchCorrectnessSummaries(context: ResultsContext, args: { dataset: string, target: string, requestIds: string[], highlight: Highlight }) {
 		if (!args.requestIds) {
 			console.warn('`requestIds` argument is missing');
 			return null;
@@ -434,10 +435,62 @@ export const actions = {
 		return Promise.all(solutions.map(solution => {
 			return actions.fetchCorrectnessSummary(context, {
 				dataset: args.dataset,
+				target: args.target,
 				solutionId: solution.solutionId,
 				highlight: args.highlight
 			});
 		}));
+	},
+
+	fetchForecastedTimeseries(context: ResultsContext, args: { dataset: string, xColName: string, yColName: string, timeseriesColName: string, timeseriesID: any, solutionId: string }) {
+
+		if (!args.dataset) {
+			console.warn('`dataset` argument is missing');
+			return null;
+		}
+		if (!args.xColName) {
+			console.warn('`xColName` argument is missing');
+			return null;
+		}
+		if (!args.yColName) {
+			console.warn('`yColName` argument is missing');
+			return null;
+		}
+		if (!args.timeseriesColName) {
+			console.warn('`timeseriesColName` argument is missing');
+			return null;
+		}
+		if (!args.timeseriesID) {
+			console.warn('`timeseriesID` argument is missing');
+			return null;
+		}
+		if (!args.solutionId) {
+			console.warn('`solutionId` argument is missing');
+			return null;
+		}
+
+		const solution = getSolutionById(context.rootState.solutionModule, args.solutionId);
+		if (!solution.resultId) {
+			// no results ready to pull
+			return null;
+		}
+
+		return axios.post(`distil/timeseries-forecast/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}/${solution.resultId}`, {})
+			.then(response => {
+				mutations.updatePredictedTimeseries(context, {
+					solutionId: args.solutionId,
+					id: args.timeseriesID,
+					timeseries: response.data.timeseries
+				});
+				mutations.updatePredictedForecast(context, {
+					solutionId: args.solutionId,
+					id: args.timeseriesID,
+					forecast: response.data.forecast
+				});
+			})
+			.catch(error => {
+				console.error(error);
+			});
 	}
 
 };

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>Step 1 - Create Models | Distil Help</title>
+<link rel="stylesheet" href="css/syntax.css">
+
+
+<link rel="stylesheet" type="text/css" href="css/lib/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
+<link rel="stylesheet" href="css/modern-business.css">
+<link rel="stylesheet" href="css/lavish-bootstrap.css">
+<link rel="stylesheet" href="css/customstyles.css?1562699720597540000">
+<link rel="stylesheet" href="css/theme-black.css?1562699720597540000">
+
+<script src="js/lib/jquery.min.js"></script>
+<script src="js/lib/jquery.cookie.min.js"></script>
+<script src="js/jquery.navgoco.min.js"></script>
+
+
+<script src="js/lib/bootstrap.min.js"></script>
+<script src="js/lib/anchor.min.js"></script>
+<script src="js/toc.js"></script>
+<script src="js/customscripts.js"></script>
+
+<link rel="shortcut icon" href="images/favicon.ico">
+    <script>
+        $(document).ready(function() {
+            // Initialize navgoco with default options
+            $("#mysidebar").navgoco({
+                caretHtml: '',
+                accordion: false,
+                openClass: 'active', // open
+                save: false, // leave false or nav highlighting doesn't work right
+                cookie: {
+                    name: 'navgoco',
+                    expires: false,
+                    path: '/'
+                },
+                slide: {
+                    duration: 400,
+                    easing: 'swing'
+                }
+            });
+
+            $("#collapseAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', false);
+            });
+
+            $("#expandAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', true);
+            });
+
+        });
+
+    </script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    
+
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container topnavlinks">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="index.html"><img class="navbar-logo" src="images/logo.png" alt="Distil">&nbsp;<span class="projectTitle"> Distil Help</span></a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <!-- entries without drop-downs appear here -->
+                
+                
+                
+                <li><a href="index.html">Topics</a></li>
+                
+                
+                
+                <li><a href="glossary.html">Glossary</a></li>
+                
+                
+                
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                
+            </ul>
+        </div>
+        </div>
+        <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="col-lg-12">&nbsp;</div>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Sidebar Column -->
+        <div class="col-md-3">
+
+          
+
+<ul id="mysidebar" class="nav">
+    <li class="sidebarTitle">Getting Started </li>
+    
+    
+    
+        
+    
+    <li>
+        <a href="#">Getting started</a>
+        <ul>
+            
+            
+            
+            <li><a href="index.html">Introduction</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Problem discovery</a>
+        <ul>
+            
+            
+            
+            <li><a href="problem-discovery-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="problem-discovery-select-target.html">1. Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="problem-discovery-create-models.html">2. Create models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Model generation</a>
+        <ul>
+            
+            
+            
+            <li><a href="model-generation-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li class="active"><a href="model-generation-create-models.html">1. Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="model-generation-view-models.html">2. View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Data augmentation</a>
+        <ul>
+            
+            
+            
+            <li><a href="workflow-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="select-data.html">1. Select data</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="select-target.html">2. Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="create-models.html">3. Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="join-datasets.html">4. Join datasets</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="view-models.html">5. View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Forecasting</a>
+        <ul>
+            
+            
+            
+            <li><a href="forecasting-overview.html">Overview</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Reference</a>
+        <ul>
+            
+            
+            
+            <li><a href="reference-home.html">Home</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-select-data.html">Select data</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-select-target.html">Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-create-models.html">Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-join-datasets.html">Join datasets</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-view-models.html">View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Videos</a>
+        <ul>
+            
+            
+            
+            <li><a href="videos.html">Workflow demonstrations</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+        
+           <p class="external">
+               <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
+           </p>
+    </li>
+</ul>
+</div>
+
+<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
+<script>$("li.active").parents('li').toggleClass("active");</script>
+    <!-- Content Column -->
+    <div class="col-md-9">
+        <div class="post-header">
+   <h1 class="post-title-main">Step 1 - Create Models</h1>
+</div>
+
+
+
+<div class="post-content">
+
+   
+
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+  <p>To begin, you must choose features that you think will inform the predictions. Distil will use the chosen features to automatically generate models that predict the target.</p>
+
+<h2 id="select-the-features-to-model">Select the features to model</h2>
+
+<h5 class="procedure">To choose the features that your model should use in its predictions:</h5>
+
+<ol>
+  <li>
+    <p>Click <strong>Add</strong> under the <strong>horsepower</strong> and <strong>cylinders</strong> features.</p>
+
+    <figure><img class="docimage" src="images/problem-discovery/create-models/available-features-add.png?1563567841544422000" alt="Add cylinders to features to model" /></figure>
+
+    <p>In this example, Distil adds the selected features to the list of Features to Model. You can filter or change the <strong>type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></strong> of any of the features to model.</p>
+
+    <figure><img class="docimage" src="images/problem-discovery/create-models/features-to-model.png?1563567841544422000" alt="Cylinders and horsepower added as features that inform the prediction made by the model" /></figure>
+
+    <div class="panel-group" id="accordion">
+ <div class="panel panel-default">
+   <div class="panel-heading">
+     <h4 class="panel-title"><a class="noCrossRef accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"><span class="fa fa-plus" aria-hidden="true"></span> To remove a feature from the features to model</a></h4>
+   </div>
+   <div id="collapseOne" class="panel-collapse collapse noCrossRef">
+     <div class="panel-body">
+       Click <strong>Remove</strong> under the feature name in the Features to Model pane or click **Remove All** above the list of features.
+       <figure><img class="docimage" src="images/problem-discovery/create-models/features-to-model-remove.png?1563567841544422000" alt="Remove feature from the features to model" /></figure>
+     </div>
+   </div>
+ </div>
+</div>
+  </li>
+  <li>
+    <p>Note the distribution of categories for the <strong>cylinders</strong> feature. Four, six and eight cylinder engines appear often, while three and five cylinder engines appear much less frequently.</p>
+
+    <figure><img class="docimage" src="images/problem-discovery/create-models/cylinders.png?1563567841544422000" alt="Distribution of cylinder values in the dataset" /></figure>
+  </li>
+  <li>Click the three-cylinder category to view samples that match the value in the Samples to Model From table.</li>
+  <li>To exclude these samples from the model, click <span class="fa fa-minus-circle pr-1 exclude-highlight"></span> <strong>Exclude</strong>.
+    <figure><img class="docimage" src="images/problem-discovery/create-models/exclude-category.png?1563567841544422000" alt="Omit records with a specific categorical value" /></figure>
+  </li>
+  <li>Repeat steps 3–4 for the five-cylinder category as well.</li>
+  <li>
+    <p>Review the updated Samples to Model From table. Click the column headers to sort by feature and check for extreme values that may indicate problems with the data. Note that one row has a value of <em>0</em> for <strong>horsepower</strong>, which is likely an error.</p>
+
+    <figure><img class="docimage" src="images/problem-discovery/create-models/samples-to-model-from-error.png?1563567841544422000" alt="Record with 0 horsepower value" /></figure>
+  </li>
+  <li>To focus on records with this value, drag the slider at the end of the distribution of <strong>horsepower</strong> values to the left so the range ends at <em>5</em>.</li>
+  <li>
+    <p>To remove these records, click <span class="fa fa-minus-circle pr-1 exclude-highlight"></span> <strong>Exclude</strong>.</p>
+
+    <figure><img class="docimage" src="images/problem-discovery/create-models/features-to-model-range.png?1563567841544422000" alt="Omit records with 0 horsepower" /></figure>
+  </li>
+  <li>
+    <p>Click Excluded Samples to review the records you removed. There is a collection of three and five cylinder vehicles, as well as some four cylinder vehicles with horsepower 0.</p>
+
+    <figure><img class="docimage" src="images/problem-discovery/create-models/excluded-samples.png?1563567841544422000" alt="Samples removed from consideration" /></figure>
+  </li>
+</ol>
+
+<h2 id="generate-the-models">Generate the models</h2>
+
+<p>You can now begin the model generation. Based on your selections, Distil:</p>
+
+<ol>
+  <li>Automatically determines the number and type of models to predict your target feature.</li>
+  <li>Uses a subset of the actual data to train the models to predict the target using the features selected in this step.</li>
+  <li>Applies the trained models to the rest of the actual data to predict the target feature value in each record.</li>
+</ol>
+
+<h5 class="procedure">To begin the model generation with the current feature selections:</h5>
+
+<ul>
+  <li>Click <strong>Create Models</strong>.</li>
+</ul>
+
+<figure><img class="docimage" src="images/model-generation/create-models/create-models.png?1563567841544422000" alt="Create models" /></figure>
+
+<p>In this example, Distil will attempt to predict the <strong>acceleration</strong> based on the <strong>horsepower</strong> and <strong>cylinders</strong> features for a subset of the dataset.</p>
+
+<h2 id="next-steps">Next steps</h2>
+
+<p>Review the generated models to determine whether they accurately predict the target feature.</p>
+
+  
+  <div class="section-nav">
+    <div class="nav-left align-right">
+        
+          <a href="model-generation-overview.html" class="prev-pg">Back</a>
+        
+    </div>
+    <div class="nav-right align-left">
+        
+          <a href="model-generation-view-models.html" class="next-pg">Next</a>
+        
+    </div>
+  </div>
+  <div class="clear-nav"></div>
+
+
+    <div class="tags">
+        
+    </div>
+</div>
+
+<hr class="shaded"/>
+
+<footer>
+            <div class="row">
+                <div class="col-lg-12 footer">
+               &copy;2019 Uncharted Software Inc.<br />
+<p><img class="logo" src="images/uncharted.png" alt="Uncharted Software Inc."/></p>
+                </div>
+            </div>
+</footer>
+
+
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /.container -->
+    </div>
+
+</body>
+</html>

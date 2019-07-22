@@ -78,6 +78,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 	} else if (isClassification) {
 		resultsActions.fetchCorrectnessSummary(store, {
 			dataset: req.dataset,
+			target: req.target,
 			solutionId: res.solutionId,
 			highlight: context.getters.getDecodedHighlight
 		});
@@ -111,6 +112,7 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 	} else if (isClassification) {
 		resultsActions.fetchCorrectnessSummary(store, {
 			dataset: req.dataset,
+			target: req.target,
 			solutionId: res.solutionId,
 			highlight: context.getters.getDecodedHighlight
 		});

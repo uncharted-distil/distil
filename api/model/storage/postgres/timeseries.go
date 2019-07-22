@@ -161,6 +161,41 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	return s.parseTimeseries(res)
 }
 
+// FetchTimeseriesForecast fetches a timeseries.
+func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultURI string, filterParams *api.FilterParams) ([][]float64, error) {
+	// create the filter for the query.
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+
+	wheres = append(wheres, fmt.Sprintf("\"%s\" = $1", timeseriesColName))
+	params = append(params, timeseriesURI)
+
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams, false)
+
+	params = append(params, resultURI)
+	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))
+
+	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+
+	// Get count by category.
+	query := fmt.Sprintf(`SELECT "%s", CAST(result.value as double precision)
+		FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		%s`,
+		xColName, storageName, s.getResultTable(storageName),
+		model.D3MIndexFieldName, where)
+
+	// execute the postgres query
+	res, err := s.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch timeseries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return s.parseTimeseries(res)
+}
+
 // FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
 func (f *TimeSeriesField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
@@ -237,7 +272,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 
 	// Get count by category.
 	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
-		clusteringColName, f.StorageName, where, clusteringColName, clusteringColName, catResultLimit)
+		clusteringColName, f.StorageName, where, clusteringColName, clusteringColName, timeSeriesCatResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -287,7 +322,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		 ORDER BY count desc, "%s" LIMIT %d;`,
 		clusteringColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
 		model.D3MIndexFieldName, len(params), where, clusteringColName,
-		clusteringColName, catResultLimit)
+		clusteringColName, timeSeriesCatResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -381,7 +416,6 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 }
 
 func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	targetName := f.clusteringColName()
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
@@ -389,23 +423,34 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 		return nil, err
 	}
 
-	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
-	params = append(params, resultURI, targetName)
+	params = append(params, resultURI)
 
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
+	}
+
+	clusteringColName := f.clusteringColName()
+
+	// Get count by category.
 	query := fmt.Sprintf(
-		`SELECT data."%s", result.value, COUNT(*) AS count
-		 FROM %s AS result INNER JOIN %s AS data ON result.index = data."%s"
-		 WHERE %s
-		 GROUP BY result.value, data."%s"
-		 ORDER BY count desc;`,
-		targetName, datasetResult, f.StorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
+		`SELECT data."%s", COUNT(*) AS count
+		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		 WHERE result.result_id = $%d %s
+		 GROUP BY "%s"
+		 ORDER BY count desc, "%s" LIMIT %d;`,
+		clusteringColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
+		model.D3MIndexFieldName, len(params), where, clusteringColName,
+		clusteringColName, timeSeriesCatResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch histograms for result summaries from postgres")
+		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
 	}
-	defer res.Close()
+	if res != nil {
+		defer res.Close()
+	}
 
 	histogram, err := f.parseHistogram(res)
 	if err != nil {

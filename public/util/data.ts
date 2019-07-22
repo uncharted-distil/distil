@@ -7,6 +7,7 @@ import { Dictionary } from './dict';
 import { Group } from './facets';
 import { FilterParams } from './filters';
 import store from '../store/store';
+import { actions as resultsActions } from '../store/results/module';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { formatValue, TIMESERIES_TYPE, isTimeType, isIntegerType } from '../util/types';
 
@@ -16,8 +17,8 @@ export const ERROR_SUFFIX = '_error';
 
 export const NUM_PER_PAGE = 10;
 
-export const DATAMART_PROVENANCE_NYU = 'datamartNYU';
-export const DATAMART_PROVENANCE_ISI = 'datamartISI';
+export const DATAMART_PROVENANCE_NYU = 'NYU';
+export const DATAMART_PROVENANCE_ISI = 'ISI';
 export const ELASTIC_PROVENANCE = 'elastic';
 export const FILE_PROVENANCE = 'file';
 
@@ -160,6 +161,45 @@ export function fetchSummaryExemplars(datasetName: string, variableName: string,
 	return new Promise(res => res());
 }
 
+export function fetchResultExemplars(datasetName: string, variableName: string, key: string, solutionId: string, summary: VariableSummary) {
+
+	const variables = datasetGetters.getVariables(store);
+	const variable = variables.find(v => v.colName === variableName);
+
+	const baselineExemplars = summary.baseline.exemplars;
+	const filteredExemplars = summary.filtered && summary.filtered.exemplars ? summary.filtered.exemplars : null;
+	const exemplars = filteredExemplars ? filteredExemplars : baselineExemplars;
+
+	if (exemplars) {
+		if (variable.grouping) {
+			if (variable.grouping.type === 'timeseries') {
+
+				// if there a linked exemplars, fetch those before resolving
+				return Promise.all(exemplars.map(exemplar => {
+					return resultsActions.fetchForecastedTimeseries(store, {
+						dataset: datasetName,
+						timeseriesColName: variable.grouping.idCol,
+						xColName: variable.grouping.properties.xCol,
+						yColName: variable.grouping.properties.yCol,
+						timeseriesID: exemplar,
+						solutionId: solutionId
+					});
+				}));
+			}
+
+		} else {
+			// if there a linked files, fetch those before resolving
+			return datasetActions.fetchFiles(store, {
+				dataset: datasetName,
+				variable: variableName,
+				urls: exemplars
+			});
+		}
+	}
+
+	return new Promise(res => res());
+}
+
 export function updateSummaries(summary: VariableSummary, summaries: VariableSummary[]) {
 	const index = _.findIndex(summaries, s => {
 		return s.dataset === summary.dataset && s.key === summary.key;
@@ -208,10 +248,11 @@ export function createErrorSummary(key: string, label: string, dataset: string, 
 	};
 }
 
-export function getSummary(
+export function fetchSolutionResultSummary(
 	context: any,
 	endpoint: string,
 	solution: Solution,
+	target: string,
 	key: string,
 	label: string,
 	updateFunction: (arg: any, summary: VariableSummary) => void,
@@ -235,9 +276,12 @@ export function getSummary(
 		.then(response => {
 			// save the histogram data
 			const summary = response.data.summary;
-			summary.solutionId = solutionId;
-			summary.dataset = dataset;
-			updateFunction(context, summary);
+			return fetchResultExemplars(dataset, target, key, solutionId, summary)
+				.then(() => {
+					summary.solutionId = solutionId;
+					summary.dataset = dataset;
+					updateFunction(context, summary);
+				});
 		})
 		.catch(error => {
 			console.error(error);
@@ -301,19 +345,43 @@ export function getTableDataItems(data: TableData): TableRow[] {
 	return !_.isEmpty(data) ? [] : null;
 }
 
+function isPredictedCol(arg: string): boolean {
+	return arg.endsWith(':predicted');
+}
+
 export function getTableDataFields(data: TableData) {
 	if (validateData(data)) {
 		const result = {};
+
 		for (const col of data.columns) {
-			if (col.key !== D3M_INDEX_FIELD) {
-				result[col.key] = {
-					label: col.label,
-					key: col.key,
-					type: col.type,
-					sortable: true
-				};
+			if (col.key === D3M_INDEX_FIELD) {
+				continue;
 			}
+
+			let label = col.label;
+
+			if (col.type === TIMESERIES_TYPE) {
+
+				if (isPredictedCol(col.key)) {
+					// do not display predicted col for timeseries
+					continue;
+				}
+
+				const variables = datasetGetters.getVariables(store);
+				const variable = variables.find(v => v.colName === col.key);
+				if (variable && variable.grouping) {
+					label = variable.grouping.properties.yCol;
+				}
+			}
+
+			result[col.key] = {
+				label: label,
+				key: col.key,
+				type: col.type,
+				sortable: true
+			};
 		}
+
 		return result;
 	}
 	return {};

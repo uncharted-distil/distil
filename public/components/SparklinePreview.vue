@@ -3,14 +3,15 @@
 	<div class="sparkline-container" v-observe-visibility="visibilityChanged">
 		<sparkline-svg
 			:timeseries-extrema="timeseriesExtrema"
-			:timeseries="timeseries">
+			:timeseries="timeseries"
+			:forecast="forecast">
 		</sparkline-svg>
 		<i class="fa fa-plus zoom-sparkline-icon" @click.stop="onClick"></i>
 		<b-modal id="sparkline-zoom-modal" :title="timeseriesId"
 			@hide="hideModal"
 			:visible="zoomSparkline"
 			hide-footer>
-			<sparkline-chart :timeseries="timeseries" v-if="zoomSparkline"></sparkline-chart>
+			<sparkline-chart :timeseries="timeseries" :forecast="forecast" v-if="zoomSparkline"></sparkline-chart>
 		</b-modal>
 	</div>
 
@@ -25,6 +26,7 @@ import SparklineSvg from '../components/SparklineSvg';
 import { Dictionary } from '../util/dict';
 import { TimeseriesExtrema } from '../store/dataset/index';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
+import { getters as resultsGetters, actions as resultsActions } from '../store/results/module';
 
 export default Vue.extend({
 	name: 'sparkline-preview',
@@ -39,7 +41,8 @@ export default Vue.extend({
 		xCol: String as () => string,
 		yCol: String as () => string,
 		timeseriesCol: String as () => string,
-		timeseriesId: String as () => string
+		timeseriesId: String as () => string,
+		solutionId: String as () => string
 	},
 	data() {
 		return {
@@ -49,15 +52,34 @@ export default Vue.extend({
 		};
 	},
 	computed: {
-		timeseriesForDataset(): Dictionary<number[][]> {
-			const timeseries = datasetGetters.getTimeseries(this.$store);
-			return timeseries[this.dataset];
-		},
 		timeseries(): number[][] {
-			if (!this.timeseriesForDataset) {
+			if (this.solutionId) {
+				const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
+				const solutions = timeseries[this.solutionId];
+				if (!solutions) {
+					return null;
+				}
+				return solutions[this.timeseriesId];
+			} else {
+				const timeseries = datasetGetters.getTimeseries(this.$store);
+				const datasets = timeseries[this.dataset];
+				if (!datasets) {
+					return null;
+				}
+				return datasets[this.timeseriesId];
+			}
+		},
+		forecast(): number[][] {
+			if (this.solutionId) {
+				const forecasts = resultsGetters.getPredictedForecasts(this.$store);
+				const solutions = forecasts[this.solutionId];
+				if (!solutions) {
+					return null;
+				}
+				return solutions[this.timeseriesId];
+			} else {
 				return null;
 			}
-			return this.timeseriesForDataset[this.timeseriesId];
 		},
 		timeseriesExtrema(): TimeseriesExtrema {
 			if (!this.timeseries) {
@@ -91,13 +113,25 @@ export default Vue.extend({
 		},
 		requestTimeseries() {
 			this.hasRequested = true;
-			datasetActions.fetchTimeseries(this.$store, {
-				dataset: this.dataset,
-				xColName: this.xCol,
-				yColName: this.yCol,
-				timeseriesColName: this.timeseriesCol,
-				timeseriesID: this.timeseriesId
-			});
+
+			if (this.solutionId) {
+				resultsActions.fetchForecastedTimeseries(this.$store, {
+					dataset: this.dataset,
+					xColName: this.xCol,
+					yColName: this.yCol,
+					timeseriesColName: this.timeseriesCol,
+					timeseriesID: this.timeseriesId,
+					solutionId: this.solutionId
+				});
+			} else {
+				datasetActions.fetchTimeseries(this.$store, {
+					dataset: this.dataset,
+					xColName: this.xCol,
+					yColName: this.yCol,
+					timeseriesColName: this.timeseriesCol,
+					timeseriesID: this.timeseriesId
+				});
+			}
 		}
 	}
 

@@ -13,8 +13,8 @@
 <!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
 <link rel="stylesheet" href="css/modern-business.css">
 <link rel="stylesheet" href="css/lavish-bootstrap.css">
-<link rel="stylesheet" href="css/customstyles.css?1561649428989099000">
-<link rel="stylesheet" href="css/theme-black.css?1561649428989099000">
+<link rel="stylesheet" href="css/customstyles.css?1562699720597540000">
+<link rel="stylesheet" href="css/theme-black.css?1562699720597540000">
 
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/jquery.cookie.min.js"></script>
@@ -131,9 +131,31 @@
             
             
             
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Problem discovery</a>
+        <ul>
             
             
-            <li><a href="home.html">Home</a></li>
+            
+            <li><a href="problem-discovery-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="problem-discovery-select-target.html">1. Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="problem-discovery-create-models.html">2. Create models</a></li>
             
             
             
@@ -143,7 +165,36 @@
         
     
     <li>
-        <a href="#">Workflow</a>
+        <a href="#">Model generation</a>
+        <ul>
+            
+            
+            
+            <li><a href="model-generation-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="model-generation-create-models.html">1. Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="model-generation-view-models.html">2. View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Data augmentation</a>
         <ul>
             
             
@@ -184,6 +235,71 @@
             
             
             <li><a href="view-models.html">5. View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Forecasting</a>
+        <ul>
+            
+            
+            
+            <li><a href="forecasting-overview.html">Overview</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Reference</a>
+        <ul>
+            
+            
+            
+            <li><a href="reference-home.html">Home</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-select-data.html">Select data</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-select-target.html">Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-create-models.html">Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-join-datasets.html">Join datasets</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-view-models.html">View models</a></li>
             
             
             
@@ -258,36 +374,6 @@ $('#toc').on('click', 'a', function() {
 
   <p>You must choose features that you think will inform the predictions. Distil will use the chosen features to automatically generate models that predict the target.</p>
 
-<h2 id="overview">Overview</h2>
-
-<p>Select the features you think will predict the target.</p>
-
-<figure id="#create-models-view-close"><a href="#create-models-view"><img class="diagram" src="images/diagrams/create-models.png?1561649428989099000" alt="Create Models" /><figcaption>Click to enlarge</figcaption></a></figure>
-<div class="lightbox-target" id="create-models-view"><img src="images/diagrams/create-models.png?1561649428989099000" /><a class="lightbox-close" href="#create-models-view-close"></a></div>
-
-<div class="panel-group" id="accordion">
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h4 class="panel-title"><a class="noCrossRef accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne"><span class="fa fa-plus" aria-hidden="true"></span> Browse your data on a map to understand geographic distribution</a></h4>
-    </div>
-    <div id="collapseOne" class="panel-collapse collapse noCrossRef">
-      <div class="panel-body">
-        <figure id="#geographic-samples-close"><a href="#geographic-samples"><img class="diagram" src="images/diagrams/geographic-samples.png?1561649428989099000" alt="View samples on a map" /><figcaption>Click to enlarge</figcaption></a></figure><div class="lightbox-target" id="geographic-samples"><img src="images/diagrams/geographic-samples.png?1561649428989099000" /><a class="lightbox-close" href="#geographic-samples-close"></a></div>
-      </div>
-    </div>
-  </div>
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h4 class="panel-title"><a class="noCrossRef accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo"><span class="fa fa-plus" aria-hidden="true"></span> Manage alerts to add more information to your data.</a></h4>
-    </div>
-    <div id="collapseTwo" class="panel-collapse collapse noCrossRef">
-      <div class="panel-body">
-        <figure id="#alerts-close"><a href="#alerts"><img class="diagram" src="images/diagrams/alerts.png?1561649428989099000" alt="Manage alerts" /><figcaption>Click to enlarge</figcaption></a></figure><div class="lightbox-target" id="alerts"><img src="images/diagrams/alerts.png?1561649428989099000" /><a class="lightbox-close" href="#alerts-close"></a></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <h2 id="select-the-features-to-model">Select the features to model</h2>
 
 <h5 class="procedure">To choose the features that your model should use in its predictions:</h5>
@@ -308,11 +394,11 @@ $('#toc').on('click', 'a', function() {
       <li><strong>Fatalities</strong></li>
     </ul>
 
-    <figure><img class="docimage" src="images/workflow/create-models/available-features-add.png?1561649428989099000" alt="Add actors to features to model" /></figure>
+    <figure><img class="docimage" src="images/data-augmentation/create-models/available-features-add.png?1563567841544422000" alt="Add actors to features to model" /></figure>
 
     <p>In this example, Distil adds the selected features to the list of Features to Model. You can filter or change the <strong>type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></strong> of any of the features to model.</p>
 
-    <figure><img class="docimage" src="images/workflow/create-models/features-to-model.png?1561649428989099000" alt="Main Actor and Other Main Actor added as features that inform the prediction made by the model" /></figure>
+    <figure><img class="docimage" src="images/data-augmentation/create-models/features-to-model.png?1563567841544422000" alt="Main Actor and Other Main Actor added as features that inform the prediction made by the model" /></figure>
 
     <div class="panel-group" id="accordion">
  <div class="panel panel-default">
@@ -322,7 +408,7 @@ $('#toc').on('click', 'a', function() {
    <div id="collapseOne" class="panel-collapse collapse noCrossRef">
      <div class="panel-body">
        Click <strong>Remove</strong> under the feature name in the Features to Model pane or click <strong>Remove All</strong> above the list of features.
-       <figure><img class="docimage" src="images/workflow/create-models/features-to-model-remove.png?1561649428989099000" alt="Remove feature from the features to model" /></figure>
+       <figure><img class="docimage" src="images/data-augmentation/create-models/features-to-model-remove.png?1563567841544422000" alt="Remove feature from the features to model" /></figure>
      </div>
    </div>
  </div>
@@ -331,11 +417,11 @@ $('#toc').on('click', 'a', function() {
   <li>Click <strong>show more</strong> on the <strong>Main_Actor</strong> card to see more values.</li>
   <li>Click <em>Protestors (Iran)</em> to view samples that match the value in the Samples to Model From table.</li>
   <li>To exclude these samples from the model, click <span class="fa fa-minus-circle pr-1 exclude-highlight"></span> <strong>Exclude</strong>.
-    <figure><img class="docimage" src="images/workflow/create-models/exclude-category.png?1561649428989099000" alt="Omit records with a specific categorical value" /></figure>
+    <figure><img class="docimage" src="images/data-augmentation/create-models/exclude-category.png?1563567841544422000" alt="Omit records with a specific categorical value" /></figure>
   </li>
   <li>Click Excluded Samples to review the records you removed.</li>
   <li>Click <span class="fa fa-globe"></span> to see where those records are located.
-    <figure><img class="docimage" src="images/workflow/create-models/geographic-data.png?1561649428989099000" alt="View records on a map" /></figure>
+    <figure><img class="docimage" src="images/data-augmentation/create-models/geographic-data.png?1563567841544422000" alt="View records on a map" /></figure>
   </li>
 </ol>
 
@@ -343,23 +429,10 @@ $('#toc').on('click', 'a', function() {
 
 <ul>
   <li><a href="join-datasets.html">Join a dataset</a> to find and incorporate other datasets that may contain additional features that could help improve your models.</li>
-  <li><a href="#export-the-problem">Export the problem</a> to export the model definition without generating models or predicting <strong>Event_Type</strong></li>
   <li><a href="#generate-the-models">Generate the models</a> to predict <strong>Event_Type</strong> using the selected features.</li>
 </ul>
 
 <div class="alert alert-warning" role="alert"><i class="fa fa-warning"></i> <b>Important:</b> You must select at least one feature to model from before you can proceed.</div>
-
-<h2 id="export-the-problem">Export the problem</h2>
-
-<p>If your task is to discover a problem without generating a predictive model, you can now export your model definition. Otherwise, skip ahead to <a href="#generate-the-models">Generate the Models</a>.</p>
-
-<h5 class="procedure">To export the problem:</h5>
-
-<ul>
-  <li>Click <strong>Export Problem</strong>.</li>
-</ul>
-
-<figure><img class="docimage" src="images/workflow/create-models/export-problem.png?1561748759511796000" alt="Export Problem" /></figure>
 
 <h2 id="generate-the-models">Generate the models</h2>
 
@@ -377,7 +450,7 @@ $('#toc').on('click', 'a', function() {
   <li>Click <strong>Create Models</strong>.</li>
 </ul>
 
-<figure><img class="docimage" src="images/workflow/create-models/create-models.png?1561649428989099000" alt="Create models" /></figure>
+<figure><img class="docimage" src="images/data-augmentation/create-models/create-models.png?1563567841544422000" alt="Create models" /></figure>
 
 <p>In this example, Distil will try to predict the <strong>Event_Type</strong> based on the selected features for a subset of the dataset.</p>
 

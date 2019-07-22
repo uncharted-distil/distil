@@ -27,6 +27,18 @@
 						:text="'Longitude'">
 					</b-dropdown>
 				</b-dropdown-item>
+
+				<template v-if="showGroupingOptions">
+					<b-dropdown-divider></b-dropdown-divider>
+					<b-dropdown-item
+						v-for="grouping in groupingOptions()"
+						@click.stop="onGroupingSelect(grouping.type)"
+						:key="grouping.type">
+						{{grouping.label}}
+					</b-dropdown-item>
+				</template>
+
+
 			</b-dropdown>
 			<i v-if="isUnsure" class="unsure-type-icon fa fa-circle"></i>
 		</div>
@@ -45,8 +57,11 @@ import IconBookmark from './icons/IconBookmark';
 import { SuggestedType, Variable, Highlight } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, GEOCOORDINATE_TYPE } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, TIMESERIES_TYPE, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
+import { createRouteEntry } from '../util/routes';
+import { GROUPING_ROUTE } from '../store/route';
+import { getComposedVariableKey } from '../util/data';
 
 const PROBABILITY_THRESHOLD = 0.8;
 
@@ -73,6 +88,12 @@ export default Vue.extend({
 				return v.colName.toLowerCase() === this.field.toLowerCase() &&
 					v.datasetName === this.dataset;
 			});
+		},
+		isGrouping(): boolean {
+			if (!this.variable) {
+				return false;
+			}
+			return !!this.variable.grouping;
 		},
 		type(): string {
 			return this.variable ? this.variable.colType : '';
@@ -134,12 +155,60 @@ export default Vue.extend({
 				hide: 10
 			};
 		},
-		isGeocoordSelected(){
-			
+		showGroupingOptions(): boolean {
+			return true;
 		}
 	},
 
 	methods: {
+
+		groupingOptions() {
+			if (this.isGrouping) {
+				return [
+					{
+						type: 'Explode',
+						label: 'Explode'
+					}
+				];
+			}
+			return [
+				{
+					type: TIMESERIES_TYPE,
+					label: 'Timeseries...'
+				}
+			];
+		},
+
+		onGroupingSelect(type) {
+			if (type === TIMESERIES_TYPE) {
+				const entry = createRouteEntry(GROUPING_ROUTE, {
+					dataset: routeGetters.getRouteDataset(this.$store)
+				});
+				this.$router.push(entry);
+			} else {
+
+				const grouping = this.variable.grouping;
+				datasetActions.removeGrouping(this.$store, {
+					dataset: this.dataset,
+					grouping: grouping
+				}).then(() => {
+					if (grouping.subIds.length > 0) {
+						const composedKey = getComposedVariableKey(grouping.subIds);
+						// if there was more than one sub ID, the IDs would have been composed into a single
+						// grouping ID that we need to delete when we revert back to the exploded version of the
+						// compound facet.
+						if (grouping.subIds.length > 1) {
+							datasetActions.deleteVariable(this.$store, {
+								dataset: this.dataset,
+								key: getComposedVariableKey(grouping.subIds)
+							});
+						}
+					}
+				});
+			}
+
+		},
+
 		addMissingSuggestions() {
 			const flatSuggestedTypes = this.suggestedTypes.map(st => st.type);
 			const missingSuggestions = addTypeSuggestions(flatSuggestedTypes);
@@ -192,12 +261,15 @@ export default Vue.extend({
 						target: this.target
 					});
 				}
-				if (isLocationType(type)) {
-					datasetActions.geocodeVariable(this.$store, {
-						dataset: dataset,
-						field: field
-					});
-				}
+				// Temporarily prevent geocoding that causes empty lat/lon fields to the dataset
+				// until geocoding service is operational
+
+				// if (isLocationType(type)) {
+				// 	datasetActions.geocodeVariable(this.$store, {
+				// 		dataset: dataset,
+				// 		field: field
+				// 	});
+				// }
 			});
 		},
 		onGeocoordTypeChange(type){

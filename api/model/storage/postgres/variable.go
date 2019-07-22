@@ -25,7 +25,8 @@ import (
 )
 
 const (
-	catResultLimit = 10
+	catResultLimit           = 100
+	timeSeriesCatResultLimit = 10
 )
 
 func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*api.Extrema, error) {
@@ -103,8 +104,14 @@ func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*a
 	// add min / max aggregation
 	aggQuery := s.getMinMaxAggsQuery(variable)
 
+	// numerical columns need to filter NaN out
+	filter := ""
+	if model.IsNumerical(variable.Type) {
+		filter = fmt.Sprintf("WHERE \"%s\" != 'NaN'", variable.Name)
+	}
+
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s", aggQuery, storageName)
+	queryString := fmt.Sprintf("SELECT %s FROM %s %s;", aggQuery, storageName, filter)
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -175,6 +182,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 			}
 
 			field = NewTimeSeriesField(s, storageName, variable.Grouping.Properties.ClusterCol, variable.Grouping.IDCol, variable.Grouping.IDCol, variable.Grouping.Type, timeColVar.Name, timeColVar.Type)
+
 		} else {
 			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.IDCol, variable.Grouping.Type)
 		}
@@ -206,6 +214,12 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 	// add dataset
 	summary.Dataset = dataset
+
+	if variable.Grouping != nil {
+		if model.IsTimeSeries(variable.Grouping.Type) {
+			summary.Label = variable.Grouping.Properties.YCol
+		}
+	}
 
 	// if there are no filters, and we are returning the exclude set, we expect
 	// no results in the filtered set

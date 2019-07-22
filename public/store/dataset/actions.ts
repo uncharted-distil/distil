@@ -174,7 +174,7 @@ export const actions = {
 		]);
 	},
 
-	fetchJoinSuggestions(context: DatasetContext, args: { dataset: string }) {
+	fetchJoinSuggestions(context: DatasetContext, args: { dataset: string, searchQuery: string }) {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -189,6 +189,7 @@ export const actions = {
 		mutations.updatePendingRequests(context, request);
 
 		// Hack: force to include datamart.upload.fc0ceee28cb74bad83e4f8872979b111 to the result since that data set does not appear on the suggestion list.
+		/*
 		return axios.get(`/distil/datasets/${args.dataset}`)
 			.then(res => {
 				const dataset = res.data.dataset;
@@ -208,10 +209,11 @@ export const actions = {
 				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.ERROR });
 				console.error(error);
 			});
-		/*
-		return axios.get(`/distil/datasets/${args.dataset}`)
+		*/
+		const query = args.searchQuery ? `?search=${args.searchQuery.split(' ').join(',')}` : '';
+		return axios.get(`/distil/join-suggestions/${args.dataset + query}`)
 			.then(res => {
-				return axios.get(`/distil/join-suggestions/${args.dataset}`);
+				return axios.get(`/distil/join-suggestions/${args.dataset + query}`);
 			})
 			.then((response) => {
 				const suggestions = (response.data && response.data.datasets) || [];
@@ -221,7 +223,6 @@ export const actions = {
 				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.ERROR });
 				console.error(error);
 			});
-		*/
 	},
 
 	uploadDataFile(context: DatasetContext, args: { datasetID: string, file: File }) {
@@ -242,12 +243,14 @@ export const actions = {
 				datasetID: args.datasetID,
 				source: 'augmented',
 				provenance: 'local',
-				terms: args.datasetID
+				terms: args.datasetID,
+				originalDatasetID: null,
+				joinedDatasetID: null
 			});
 		});
 	},
 
-	importDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, terms: string }): Promise<void>  {
+	importDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, terms: string, originalDatasetID: string, joinedDatasetID: string }): Promise<void>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
@@ -257,13 +260,19 @@ export const actions = {
 			return null;
 
 		}
-		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
+
+		let postParams = {};
+		if (args.originalDatasetID !== null) {
+			postParams = {originalDatasetID: args.originalDatasetID, joinedDatasetID: args.joinedDatasetID};
+		}
+
+		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, postParams)
 			.then(response => {
 				return actions.searchDatasets(context, args.terms);
 			});
 	},
 
-	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string }): Promise<any>  {
+	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, searchResult: string }): Promise<any>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
@@ -278,8 +287,9 @@ export const actions = {
 			status: DatasetPendingRequestStatus.PENDING,
 		};
 		mutations.updatePendingRequests(context, update);
-		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {})
-			.then(response => {
+		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {
+			searchResult: args.searchResult
+		}).then(response => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
 				return response && response.data;
 			})
@@ -377,7 +387,7 @@ export const actions = {
 			return null;
 		}
 
-		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetAColumn}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetBColumn}/${args.datasetB.source}`, {
+		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetB.source}`, {
 			accuracy: args.joinAccuracy
 		})
 			.then(response => {

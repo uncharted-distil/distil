@@ -1,3 +1,5 @@
+import Vue from 'vue';
+import _ from 'lodash';
 import { ResultsState } from './index';
 import { VariableSummary, Extrema, TableData } from '../dataset/index';
 import { updateSummaries } from '../../util/data';
@@ -59,5 +61,21 @@ export const mutations = {
 
 	updateCorrectnessSummaries(state: ResultsState, summary: VariableSummary) {
 		updateSummaries(summary, state.correctnessSummaries);
-	}
+	},
+
+	// forecast
+
+	updatePredictedTimeseries(state: ResultsState, args: { solutionId: string, id: string, timeseries: number[][] }) {
+		if (!state.timeseries[args.solutionId]) {
+			Vue.set(state.timeseries, args.solutionId, {});
+		}
+		Vue.set(state.timeseries[args.solutionId], args.id, args.timeseries);
+	},
+
+	updatePredictedForecast(state: ResultsState, args: { solutionId: string, id: string, forecast: number[][] }) {
+		if (!state.forecasts[args.solutionId]) {
+			Vue.set(state.forecasts, args.solutionId, {});
+		}
+		Vue.set(state.forecasts[args.solutionId], args.id, args.forecast);
+	},
 };

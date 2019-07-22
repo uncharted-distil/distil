@@ -168,7 +168,7 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 	return nil, errors.Errorf("unable to find variable `%s`", varName)
 }
 
-func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
+func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool, includeMeta bool, includeHidden bool) ([]*model.Variable, error) {
 	// unmarshal the hit source
 	src, err := json.Unmarshal(*searchHit.Source)
 	if err != nil {
@@ -207,14 +207,17 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 	}
 
 	// hide hidden variables
-	var filtered []*model.Variable
-	for _, v := range variables {
-		_, isHidden := hidden[v.Name]
-		if !v.Deleted && (v.Grouping != nil || !isHidden) {
-			filtered = append(filtered, v)
+	if !includeHidden {
+		var filtered []*model.Variable
+		for _, v := range variables {
+			_, isHidden := hidden[v.Name]
+			if !v.Deleted && (v.Grouping != nil || !isHidden) {
+				filtered = append(filtered, v)
+			}
 		}
+		return filtered, nil
 	}
-	return filtered, nil
+	return variables, nil
 }
 
 // DoesVariableExist returns whether or not a variable exists.
@@ -299,7 +302,7 @@ func (s *Storage) FetchVariableDisplay(dataset string, varName string) (*model.V
 }
 
 // FetchVariables returns all the variables for the provided index and dataset.
-func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
+func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta bool, includeHidden bool) ([]*model.Variable, error) {
 	// get dataset id
 	datasetID := dataset
 	// create match query
@@ -322,13 +325,13 @@ func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta 
 		return nil, errors.New("elasticSearch variable fetch query len(hits) != 1")
 	}
 	// extract output into JSON ready structs
-	return s.parseVariables(res.Hits.Hits[0], includeIndex, includeMeta)
+	return s.parseVariables(res.Hits.Hits[0], includeIndex, includeMeta, includeHidden)
 }
 
 // FetchVariablesDisplay returns all the display variables for the provided index and dataset.
 func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, error) {
 	// get all variables.
-	vars, err := s.FetchVariables(dataset, false, true)
+	vars, err := s.FetchVariables(dataset, false, true, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch dataset variables")
 	}

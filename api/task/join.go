@@ -48,32 +48,41 @@ type JoinSpec struct {
 	DatasetID     string
 	DatasetFolder string
 	DatasetSource ingestMetadata.DatasetSource
-	Column        string
 }
 
 // Join will make all your dreams come true.
-func Join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable) (*apiModel.FilteredData, error) {
+func Join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable, rightOrigin *apiModel.DatasetOrigin) (*apiModel.FilteredData, error) {
 	cfg, err := env.LoadConfig()
 	if err != nil {
 		return nil, err
 	}
-	return join(joinLeft, joinRight, varsLeft, varsRight, defaultSubmitter{}, &cfg)
+	return join(joinLeft, joinRight, varsLeft, varsRight, rightOrigin, defaultSubmitter{}, &cfg)
 }
 
-func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable, submitter primitiveSubmitter,
+func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
+	varsRight []*model.Variable, rightOrigin *apiModel.DatasetOrigin, submitter primitiveSubmitter,
 	config *env.Config) (*apiModel.FilteredData, error) {
+	// put the vars into a map for quick lookup
+	leftVarsMap := createVarMap(varsLeft)
+	rightVarsMap := createVarMap(varsRight)
+	searchResult := ""
+	provenance := ""
+	if rightOrigin != nil {
+		provenance = rightOrigin.Provenance
+		searchResult = rightOrigin.SearchResult
+	}
 
 	// create & submit the solution request
-	pipelineDesc, err := description.CreateJoinPipeline("Join Preview", "Join to be reviewed by user", joinLeft.Column, joinRight.Column, 0.8)
+	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview", "Join to be reviewed by user",
+		searchResult, provenance, joinLeft.DatasetID)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create join pipeline")
 	}
 
 	datasetLeftURI := env.ResolvePath(joinLeft.DatasetSource, joinLeft.DatasetFolder)
-	datasetRightURI := env.ResolvePath(joinRight.DatasetSource, joinRight.DatasetFolder)
 
 	// returns a URI pointing to the merged CSV file
-	resultURI, err := submitter.submit([]string{datasetLeftURI, datasetRightURI}, pipelineDesc)
+	resultURI, err := submitter.submit([]string{datasetLeftURI}, pipelineDesc)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run join pipeline")
 	}
@@ -88,7 +97,7 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 	leftName := joinLeft.DatasetID
 	rightName := joinRight.DatasetID
 	datasetName := strings.Join([]string{leftName, rightName}, "-")
-	mergedVariables, err := createDatasetFromCSV(config, csvFile, datasetName, varsLeft, varsRight)
+	mergedVariables, err := createDatasetFromCSV(config, csvFile, datasetName, leftVarsMap, rightVarsMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create dataset from result CSV")
 	}
@@ -111,23 +120,31 @@ func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *pipeline.Pipe
 func createVarMap(vars []*model.Variable) map[string]*model.Variable {
 	varsMap := map[string]*model.Variable{}
 	for _, v := range vars {
-		varsMap[v.Name] = v
+		varsMap[v.DisplayName] = v
 	}
 	return varsMap
 }
 
-func createMergedVariables(varNames []string, varsLeft []*model.Variable, varsRight []*model.Variable) ([]*model.Variable, error) {
-	// put the vars into a map for quick lookup
-	leftVarsMap := createVarMap(varsLeft)
-	rightVarsMap := createVarMap(varsRight)
-
+func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Variable, rightVarsMap map[string]*model.Variable) ([]*model.Variable, error) {
 	mergedVariables := []*model.Variable{}
 	for i, varName := range varNames {
 		v, ok := leftVarsMap[varName]
 		if !ok {
 			v, ok = rightVarsMap[varName]
 			if !ok {
-				return nil, errors.Errorf("can't find data for result var \"%s\"", varName)
+				// variable is probably an aggregation
+				// create a new variable and default type to string
+				// ingest process should be able to provide better info
+				v = &model.Variable{
+					Name:             varName,
+					Type:             model.StringType,
+					OriginalType:     model.StringType,
+					SelectedRole:     "attribute",
+					Role:             []string{"attribute"},
+					DistilRole:       "data",
+					OriginalVariable: varName,
+					DisplayName:      varName,
+				}
 			}
 		}
 
@@ -136,6 +153,8 @@ func createMergedVariables(varNames []string, varsLeft []*model.Variable, varsRi
 		if v.OriginalType != "" {
 			v.Type = v.OriginalType
 		}
+		v.Name = v.DisplayName
+		v.OriginalVariable = v.DisplayName
 
 		v.Index = i
 		mergedVariables = append(mergedVariables, v)
@@ -143,7 +162,9 @@ func createMergedVariables(varNames []string, varsLeft []*model.Variable, varsRi
 	return mergedVariables, nil
 }
 
-func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName string, varsLeft []*model.Variable, varsRight []*model.Variable) ([]*model.Variable, error) {
+func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName string,
+	leftVarsMap map[string]*model.Variable, rightVarsMap map[string]*model.Variable) ([]*model.Variable, error) {
+
 	reader := csv.NewReader(csvFile)
 	fields, err := reader.Read()
 	if err != nil {
@@ -153,7 +174,7 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 	metadata := model.NewMetadata(datasetName, datasetName, datasetName, model.NormalizeDatasetID(datasetName))
 	dataResource := model.NewDataResource("learningData", compute.D3MResourceType, []string{compute.D3MResourceFormat})
 
-	mergedVariables, err := createMergedVariables(fields, varsLeft, varsRight)
+	mergedVariables, err := createMergedVariables(fields, leftVarsMap, rightVarsMap)
 	if err != nil {
 		return nil, err
 	}

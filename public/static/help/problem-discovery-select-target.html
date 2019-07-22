@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="keywords" content=" ">
+<title>Step 1 - Select Target | Distil Help</title>
+<link rel="stylesheet" href="css/syntax.css">
+
+
+<link rel="stylesheet" type="text/css" href="css/lib/font-awesome-4.7.0/css/font-awesome.min.css">
+<!--<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">-->
+<link rel="stylesheet" href="css/modern-business.css">
+<link rel="stylesheet" href="css/lavish-bootstrap.css">
+<link rel="stylesheet" href="css/customstyles.css?1562699720597540000">
+<link rel="stylesheet" href="css/theme-black.css?1562699720597540000">
+
+<script src="js/lib/jquery.min.js"></script>
+<script src="js/lib/jquery.cookie.min.js"></script>
+<script src="js/jquery.navgoco.min.js"></script>
+
+
+<script src="js/lib/bootstrap.min.js"></script>
+<script src="js/lib/anchor.min.js"></script>
+<script src="js/toc.js"></script>
+<script src="js/customscripts.js"></script>
+
+<link rel="shortcut icon" href="images/favicon.ico">
+    <script>
+        $(document).ready(function() {
+            // Initialize navgoco with default options
+            $("#mysidebar").navgoco({
+                caretHtml: '',
+                accordion: false,
+                openClass: 'active', // open
+                save: false, // leave false or nav highlighting doesn't work right
+                cookie: {
+                    name: 'navgoco',
+                    expires: false,
+                    path: '/'
+                },
+                slide: {
+                    duration: 400,
+                    easing: 'swing'
+                }
+            });
+
+            $("#collapseAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', false);
+            });
+
+            $("#expandAll").click(function(e) {
+                e.preventDefault();
+                $("#mysidebar").navgoco('toggle', true);
+            });
+
+        });
+
+    </script>
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+    </script>
+    
+
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container topnavlinks">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="index.html"><img class="navbar-logo" src="images/logo.png" alt="Distil">&nbsp;<span class="projectTitle"> Distil Help</span></a>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <!-- entries without drop-downs appear here -->
+                
+                
+                
+                <li><a href="index.html">Topics</a></li>
+                
+                
+                
+                <li><a href="glossary.html">Glossary</a></li>
+                
+                
+                
+                <!-- entries with drop-downs appear here -->
+                <!-- conditional logic to control which topnav appears for the audience defined in the configuration file.-->
+                
+            </ul>
+        </div>
+        </div>
+        <!-- /.container -->
+</nav>
+
+<!-- Page Content -->
+<div class="container">
+    <div class="col-lg-12">&nbsp;</div>
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Sidebar Column -->
+        <div class="col-md-3">
+
+          
+
+<ul id="mysidebar" class="nav">
+    <li class="sidebarTitle">Getting Started </li>
+    
+    
+    
+        
+    
+    <li>
+        <a href="#">Getting started</a>
+        <ul>
+            
+            
+            
+            <li><a href="index.html">Introduction</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Problem discovery</a>
+        <ul>
+            
+            
+            
+            <li><a href="problem-discovery-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li class="active"><a href="problem-discovery-select-target.html">1. Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="problem-discovery-create-models.html">2. Create models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Model generation</a>
+        <ul>
+            
+            
+            
+            <li><a href="model-generation-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="model-generation-create-models.html">1. Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="model-generation-view-models.html">2. View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Data augmentation</a>
+        <ul>
+            
+            
+            
+            <li><a href="workflow-overview.html">Overview</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="select-data.html">1. Select data</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="select-target.html">2. Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="create-models.html">3. Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="join-datasets.html">4. Join datasets</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="view-models.html">5. View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Forecasting</a>
+        <ul>
+            
+            
+            
+            <li><a href="forecasting-overview.html">Overview</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Reference</a>
+        <ul>
+            
+            
+            
+            <li><a href="reference-home.html">Home</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-select-data.html">Select data</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-select-target.html">Select target</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-create-models.html">Create models</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-join-datasets.html">Join datasets</a></li>
+            
+            
+            
+            
+            
+            
+            <li><a href="reference-view-models.html">View models</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+    
+    <li>
+        <a href="#">Videos</a>
+        <ul>
+            
+            
+            
+            <li><a href="videos.html">Workflow demonstrations</a></li>
+            
+            
+            
+            
+        </ul>
+        
+        
+        
+           <p class="external">
+               <a href="#" id="collapseAll">Collapse All</a> | <a href="#" id="expandAll">Expand All</a>
+           </p>
+    </li>
+</ul>
+</div>
+
+<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
+<script>$("li.active").parents('li').toggleClass("active");</script>
+    <!-- Content Column -->
+    <div class="col-md-9">
+        <div class="post-header">
+   <h1 class="post-title-main">Step 1 - Select Target</h1>
+</div>
+
+
+
+<div class="post-content">
+
+   
+
+    
+    
+<!-- this handles the automatic toc. use ## for subheads to auto-generate the on-page minitoc. if you use html tags, you must supply an ID for the heading element in order for it to appear in the minitoc. -->
+<script>
+$( document ).ready(function() {
+  // Handler for .ready() called.
+
+$('#toc').toc({ minimumHeaders: 0, listType: 'ul', showSpeed: 0, headers: 'h2' });
+
+/* this offset helps account for the space taken up by the floating toolbar. */
+$('#toc').on('click', 'a', function() {
+  var target = $(this.getAttribute('href'))
+    , scroll_target = target.offset().top
+
+  $(window).scrollTop(scroll_target - 10);
+  return false
+})
+  
+});
+</script>
+
+<div id="toc"></div>
+
+    
+
+
+    
+
+  <p>To begin, you must choose the target feature that you want to explore.</p>
+
+<h2 id="select-the-target-feature-to-explore">Select the target feature to explore</h2>
+
+<h5 class="procedure">To choose the target feature that you want to explore:</h5>
+
+<ol>
+  <li>Review the list of available features in the Select Target view.
+    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> Feature summaries show the values for each column/field in the dataset. Distil automatically infers the type of data stored for each feature. To change the inferred value, use the <strong>type <sup class="fa fa-sort-desc" aria-hidden="true" style="display: inline;"></sup></strong> drop-down on the upper right corner of the summary.</div>
+  </li>
+  <li>Use the <strong>Search</strong> field to filter on <em>acceleration</em>.</li>
+  <li>
+    <p>On the <strong>acceleration</strong> feature summary, click <strong>Select Target</strong>.</p>
+
+    <figure><img class="docimage" src="images/problem-discovery/select-target/target-feature-select.png?1563567841544422000" alt="Set acceleration feature as target" /></figure>
+
+    <p>Distil automatically sends you to the next step, adding the feature to the model definition and listing a sample of actual acceleration values.</p>
+
+    <figure><img class="docimage" src="images/problem-discovery/select-target/target-feature-samples.png?1563567841544422000" alt="Sample of values for selected target (acceleration)" /></figure>
+
+    <div class="alert alert-info" role="alert"><i class="fa fa-info-circle"></i> <b>Note:</b> You can change the target at any time by returning to the Select Target view. Click <strong>Select Target</strong> in the navigation bar to go back.</div>
+  </li>
+</ol>
+
+<p>The target you select determines the type of results the model will generate.</p>
+
+<table>
+  <thead>
+    <tr class="header">
+      <th>Feature type</th>
+      <th>Model type</th>
+      <th>Prediction</th>
+      <th>Results</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="#" data-toggle="tooltip" data-original-title="Has values that are real numbers">Continuous</a></td>
+      <td>Regression</td>
+      <td>Numerical value</td>
+      <td>Correct and incorrect predictions based on a configurable distance from the actual target feature values</td>
+    </tr>
+    <tr>
+      <td><a href="#" data-toggle="tooltip" data-original-title="Has a finite set of categories reused across records">Categorical</a></td>
+      <td>Classification</td>
+      <td>Category</td>
+      <td>Correct and incorrect predictions based the actual target feature category</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Acceleration</strong> is a continuous feature that will produce regression results.</p>
+
+<h2 id="next-steps">Next steps</h2>
+
+<p>Select the features that you think should predict the target feature and export the problem definition.</p>
+
+  
+  <div class="section-nav">
+    <div class="nav-left align-right">
+        
+          <a href="problem-discovery-overview.html" class="prev-pg">Back</a>
+        
+    </div>
+    <div class="nav-right align-left">
+        
+          <a href="problem-discovery-create-models.html" class="next-pg">Next</a>
+        
+    </div>
+  </div>
+  <div class="clear-nav"></div>
+
+
+    <div class="tags">
+        
+    </div>
+</div>
+
+<hr class="shaded"/>
+
+<footer>
+            <div class="row">
+                <div class="col-lg-12 footer">
+               &copy;2019 Uncharted Software Inc.<br />
+<p><img class="logo" src="images/uncharted.png" alt="Uncharted Software Inc."/></p>
+                </div>
+            </div>
+</footer>
+
+
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /.container -->
+    </div>
+
+</body>
+</html>

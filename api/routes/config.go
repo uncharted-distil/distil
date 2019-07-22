@@ -19,6 +19,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	"github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/env"
@@ -37,14 +38,20 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 		if config.IsTask1 {
 			// load dataset file
 			dataDoc, err := compute.LoadDatasetSchemaFromFile(datasetDocPath)
+			if err != nil {
+				log.Warnf("unable to load %s: %s", datasetDocPath, err)
+			}
 			if err == nil {
-				dataset = "d_" + dataDoc.About.DatasetID
+				dataset = dataDoc.About.DatasetID
 			}
 		}
 
 		if config.IsTask2 {
 			// load problem file
 			problem, err := compute.LoadProblemSchemaFromFile(problemPath)
+			if err != nil {
+				log.Warnf("unable to load %s: %s", problemPath, err)
+			}
 			if err == nil {
 				// get inputs
 				if problem.Inputs != nil {

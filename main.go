@@ -89,6 +89,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	discoveryLogger, err := env.InitializeLog("systemLog.csv", &config)
+	if err != nil {
+		log.Errorf("%+v", err)
+		os.Exit(1)
+	}
+
 	// set dataset directory
 	api.SetDatasetDir(config.TmpDataPath)
 
@@ -145,7 +151,8 @@ func main() {
 			userAgent,
 			time.Duration(config.SolutionComputePullTimeout)*time.Second,
 			config.SolutionComputePullMax,
-			config.SkipPreprocessing)
+			config.SkipPreprocessing,
+			discoveryLogger)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -158,7 +165,8 @@ func main() {
 			userAgent,
 			time.Duration(config.SolutionComputePullTimeout)*time.Second,
 			config.SolutionComputePullMax,
-			config.SkipPreprocessing)
+			config.SkipPreprocessing,
+			discoveryLogger)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -267,7 +275,7 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
-		err = task.IngestDataset(metadata.Contrib, pgDataStorageCtor, esMetadataStorageCtor, config.ESDatasetsIndex, "initial", ingestConfig)
+		err = task.IngestDataset(metadata.Contrib, pgDataStorageCtor, esMetadataStorageCtor, config.ESDatasetsIndex, "initial", nil, ingestConfig)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -318,9 +326,11 @@ func main() {
 	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid", routes.PredictedSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/cluster/:dataset/:variable", routes.ClusteringHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.TmpDataPath, config.AugmentedSubFolder), ingestConfig))
-	registerRoutePost(mux, "/distil/join/:dataset-left/:column-left/:source-left/:dataset-right/:column-right/:source-right", routes.JoinHandler(esMetadataStorageCtor))
+	registerRoutePost(mux, "/distil/join/:dataset-left/:source-left/:dataset-right/:source-right", routes.JoinHandler(esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:invert", routes.TimeseriesHandler(pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/timeseries-forecast/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:result-uuid", routes.TimeseriesForecastHandler(pgDataStorageCtor, pgSolutionStorageCtor))
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:source/:file", routes.ImageHandler(esMetadataStorageCtor, &config))

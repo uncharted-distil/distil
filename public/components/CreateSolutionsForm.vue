@@ -24,17 +24,24 @@
 		</error-modal>
 
 		<b-modal
+			id="meaningful-modal"
 			v-model="showExport"
 			cancel-disabled
 			hide-header
 			hide-footer>
 			<div class="row justify-content-center">
-				<b-radio-group v-model="meaningful">
-					<div class="meaningful-text">Is this a meaningful problem?</div>
-					<b-radio value=true>Yes</b-radio>
-					<b-radio value=false>No</b-radio>
-				</b-radio-group>
+				<div class="meaningful-text">Is this a meaningful problem?</div>
 			</div>
+			    <div class="row justify-content-center">
+                    <div class="radio-container">
+                        <input type="radio" v-model="meaningful" :value=true id="yes_radio">
+                        <label for="yes_radio">Yes</label>
+                    </div>
+					<div class="radio-container">
+                        <input type="radio" v-model="meaningful" :value=false id="no_radio">
+                        <label for="no_radio">No</label>
+					</div>
+            </div>
 			<div class="row justify-content-center">
 				<b-btn class="mt-3 close-modal" variant="success" block @click="exportData">Export</b-btn>
 			</div>
@@ -48,7 +55,7 @@
 		</error-modal>
 
 		<div class="row justify-content-center">
-			<b-button class="export-button" :variant="exportVariant" @click="showExport = !showExport" v-if="isTask1">
+			<b-button class="export-button" :variant="exportVariant" @click="showExport = !showExport" :disabled="disableExport" v-if="isTask1">
 				Task 1: Export Problem
 			</b-button>
 			<b-button class="create-button" :variant="createVariant" @click="create" :disabled="disableCreate">
@@ -77,6 +84,7 @@ import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as solutionActions } from '../store/solutions/module';
 import { Solution, NUM_SOLUTIONS } from '../store/solutions/index';
 import { Variable } from '../store/dataset/index';
+import { TIMESERIES_TYPE } from '../util/types';
 import { FilterParams } from '../util/filters';
 import { TIMESERIES_FORECASTING_TASK } from '../util/solutions';
 import Vue from 'vue';
@@ -96,10 +104,10 @@ export default Vue.extend({
 			showExportSuccess: false,
 			showExportFailure: false,
 			showCreateFailure: false,
-			createErrorMessage: null
+			createErrorMessage: null,
+			$bvModal: null,
 		};
 	},
-
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
@@ -127,6 +135,8 @@ export default Vue.extend({
 			if (this.isTask2) {
 				return appGetters.getProblemTaskType(this.$store);
 			} else if (!!routeGetters.getRouteTimeseriesAnalysis(this.$store)) {
+				return TIMESERIES_FORECASTING_TASK.schemaName;
+			} else if (this.targetVariable.colType === TIMESERIES_TYPE) {
 				return TIMESERIES_FORECASTING_TASK.schemaName;
 			}
 			return null;
@@ -164,7 +174,7 @@ export default Vue.extend({
 			return appGetters.isTask2(this.$store);
 		},
 		disableCreate(): boolean {
-			return this.isPending || (!this.targetSelected || !this.trainingSelected);
+			return this.isPending || !this.targetSelected || !this.trainingSelected;
 		},
 		disableExport(): boolean {
 			return !this.targetSelected || !this.trainingSelected;
@@ -223,9 +233,11 @@ export default Vue.extend({
 			}).then(res => {
 				this.showExportSuccess = !this.showExportSuccess;
 				this.meaningful = true;
+				this.$bvModal.hide('meaningful-modal');
 			}).catch(err => {
 				this.showExportFailure = !this.showExportFailure;
 				this.meaningful = true;
+				this.$bvModal.hide('meaningful-modal');
 			});
 		}
 	}
@@ -270,5 +282,9 @@ export default Vue.extend({
 	flex-shrink: 0;
 	color: #ee0701;
 	padding-right: 15px;
+}
+
+.radio-container {
+	padding: 0 15px;
 }
 </style>

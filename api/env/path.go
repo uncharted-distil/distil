@@ -16,7 +16,9 @@
 package env
 
 import (
+	"os"
 	"path"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-ingest/metadata"
@@ -38,6 +40,7 @@ var (
 	augmentedPath = ""
 
 	initialized = false
+	isTask      = false
 )
 
 // Initialize the path resolution.
@@ -59,11 +62,14 @@ func Initialize(config *Config) error {
 	contribPath = config.DatamartImportFolder
 	augmentedPath = path.Join(config.TmpDataPath, config.AugmentedSubFolder)
 
+	isTask = config.IsTask1 || config.IsTask2
+
 	log.Infof("using '%s' as seed path", seedPath)
 	log.Infof("using '%s' as seed sub path", seedSubPath)
 	log.Infof("using '%s' as tmp path", tmpPath)
 	log.Infof("using '%s' as contrib path", contribPath)
 	log.Infof("using '%s' as augmented path", augmentedPath)
+	log.Infof("isTask set to '%v'", isTask)
 
 	initialized = true
 
@@ -146,7 +152,19 @@ func ResolvePath(datasetSource metadata.DatasetSource, relativePath string) stri
 }
 
 func resolveSeedPath(relativePath string) string {
-	return path.Join(seedPath, relativePath, seedSubPath)
+	dirToUse := seedPath
+	if isTask {
+		// when running in task mode (1 or 2), there can be overlap between paths
+		// since task mode sets the seed path to a specific dataset directory
+		dir, file := path.Split(seedPath)
+		relativeSplits := strings.Split(relativePath, string(os.PathSeparator))
+		if len(file) > 0 && relativeSplits[0] == file {
+			// overlap between relative path and seed path needs to be removed
+			dirToUse = dir
+			log.Infof("removing '%s' path overlap when resolving", file)
+		}
+	}
+	return path.Join(dirToUse, relativePath, seedSubPath)
 }
 
 func resolveContribPath(relativePath string) string {

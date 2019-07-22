@@ -17,7 +17,7 @@ import { getNumericalFacetValue, getCategoricalFacetValue, getTimeseriesFacetVal
 import { TARGET_VAR_INSTANCE } from '../store/route/index';
 import { Variable, VariableSummary, Highlight } from '../store/dataset/index';
 import { updateHighlight } from '../util/highlights';
-import { isNumericType } from '../util/types';
+import { isNumericType, TIMESERIES_TYPE } from '../util/types';
 
 export default Vue.extend({
 	name: 'target-variable',
@@ -93,6 +93,11 @@ export default Vue.extend({
 		defaultTargetHighlight() {
 			// only default higlight numeric types
 			if (!this.targetVariable) {
+				return;
+			}
+
+			if (this.targetVariable.grouping && this.targetVariable.grouping.type === TIMESERIES_TYPE) {
+				// dont default timeseries groupings
 				return;
 			}
 

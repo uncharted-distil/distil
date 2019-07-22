@@ -89,11 +89,28 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		log.Warnf("Result contains %d columns, expected 2.  Additional columns will be ignored.", len(records[0]))
 	}
 
-	// Translate from display name to storage name.
 	targetName := target
+
+	// Translate from display name to storage name.
 	targetDisplayName, err := s.getDisplayName(dataset, targetName)
 	if err != nil {
 		return errors.Wrap(err, "unable to map target name")
+	}
+
+	// A target that is a grouping won't have the correct name for now.  We need to check to see
+	// if the target is a grouping, and use the Y Col as the target for purposes of dealing with the TA2.
+	targetVariable, err := s.getResultTargetVariable(dataset, target)
+	if targetVariable.Grouping != nil && model.IsTimeSeries(targetVariable.Grouping.Type) {
+		// extract the time series value column
+		targetName = targetVariable.Grouping.Properties.YCol
+		targetVariable, err = s.metadata.FetchVariable(dataset, targetName)
+		if err != nil {
+			return err
+		}
+		targetDisplayName = targetVariable.DisplayName
+		if err != nil {
+			return err
+		}
 	}
 
 	// Header row will have the target. Find the index.
@@ -106,16 +123,19 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			d3mIndexIndex = i
 		}
 	}
+	// result is not in valid format - d3mIndex and target col need to have correct name
+	if targetIndex == -1 {
+		return errors.Wrapf(err, "unable to find target col '%s' in result header", targetDisplayName)
+	}
+	if d3mIndexIndex == -1 {
+		return errors.Wrapf(err, "unabled to find d3m index col '%s' in result header", model.D3MIndexFieldName)
+	}
 
-	// store all results to the storage
+	// build the batch data
+	insertData := make([][]interface{}, 0)
 	for i := 1; i < len(records); i++ {
 		// Each data row is index, target.
-		err = nil
-
 		// handle the parsed result/error - should be an int some TA2 systems return floats
-		if err != nil {
-			return errors.Wrap(err, "failed csv value parsing")
-		}
 		parsedVal, err := strconv.ParseInt(records[i][d3mIndexIndex], 10, 64)
 		if err != nil {
 			parsedValFloat, err := strconv.ParseFloat(records[i][d3mIndexIndex], 64)
@@ -125,11 +145,13 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			parsedVal = int64(parsedValFloat)
 		}
 
-		// store the result to the storage
-		err = s.executeInsertResultStatement(storageName, resultURI, parsedVal, targetName, records[i][targetIndex])
-		if err != nil {
-			return errors.Wrap(err, "failed to insert result in database")
-		}
+		insertData = append(insertData, []interface{}{resultURI, parsedVal, target, records[i][targetIndex]})
+	}
+
+	// store all results to the storage
+	err = s.InsertBatch(s.getResultTable(storageName), []string{"result_id", "index", "target", "value"}, insertData)
+	if err != nil {
+		return errors.Wrap(err, "failed to insert result in database")
 	}
 
 	return nil
@@ -400,7 +422,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// fetch variable metadata
-	variables, err := s.metadata.FetchVariables(dataset, false, false)
+	variables, err := s.metadata.FetchVariables(dataset, false, false, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
@@ -511,7 +533,13 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	countFilter := map[string]interface{}{
 		"result_id": resultURI,
 	}
-	numRows, err := s.FetchNumRows(storageNameResult, nil, countFilter)
+	joinDef := &joinDefinition{
+		baseColumn:    model.D3MIndexFieldName,
+		joinTableName: storageNameResult,
+		joinAlias:     "joined",
+		joinColumn:    "index",
+	}
+	numRows, err := s.fetchNumRowsJoined(storageName, variables, countFilter, joinDef)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
@@ -584,20 +612,38 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 		return nil, err
 	}
 
-	// use the variable type to guide the summary creation.
 	var field Field
-	var summary *api.VariableSummary
-	if model.IsNumerical(variable.Type) {
-		field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
-	} else if model.IsCategorical(variable.Type) {
-		field = NewCategoricalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
-	} else if model.IsVector(variable.Type) {
-		field = NewVectorField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+
+	if variable.Grouping != nil {
+		if model.IsTimeSeries(variable.Grouping.Type) {
+
+			timeColVar, err := s.metadata.FetchVariable(dataset, variable.Grouping.Properties.XCol)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
+			}
+
+			field = NewTimeSeriesField(s, storageName, variable.Grouping.Properties.ClusterCol, variable.Grouping.IDCol, variable.Grouping.IDCol, variable.Grouping.Type, timeColVar.Name, timeColVar.Type)
+
+		} else {
+			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.IDCol, variable.Grouping.Type)
+		}
+
 	} else {
-		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+
+		// use the variable type to guide the summary creation
+
+		if model.IsNumerical(variable.Type) {
+			field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+		} else if model.IsCategorical(variable.Type) {
+			field = NewCategoricalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+		} else if model.IsVector(variable.Type) {
+			field = NewVectorField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+		} else {
+			return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+		}
 	}
 
-	summary, err = field.FetchPredictedSummaryData(resultURI, storageNameResult, filterParams, extrema)
+	summary, err := field.FetchPredictedSummaryData(resultURI, storageNameResult, filterParams, extrema)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch result summary")
 	}
@@ -610,7 +656,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 
 func (s *Storage) getDisplayName(dataset string, columnName string) (string, error) {
 	displayName := ""
-	variables, err := s.metadata.FetchVariables(dataset, false, false)
+	variables, err := s.metadata.FetchVariables(dataset, false, false, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable fetch variables for name mapping")
 	}

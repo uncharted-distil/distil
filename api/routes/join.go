@@ -34,9 +34,7 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		// get dataset name
 		datasetIDLeft := pat.Param(r, "dataset-left")
 		sourceLeft := pat.Param(r, "source-left")
-		columnLeft := pat.Param(r, "column-left")
 		datasetIDRight := pat.Param(r, "dataset-right")
-		columnRight := pat.Param(r, "column-right")
 		sourceRight := pat.Param(r, "source-right")
 
 		// get storage client
@@ -59,21 +57,19 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		}
 
 		leftJoin := &task.JoinSpec{
-			Column:        columnLeft,
 			DatasetID:     datasetLeft.ID,
 			DatasetFolder: datasetLeft.Folder,
 			DatasetSource: metadata.DatasetSource(sourceLeft),
 		}
 
 		rightJoin := &task.JoinSpec{
-			Column:        columnRight,
 			DatasetID:     datasetRight.ID,
 			DatasetFolder: datasetRight.Folder,
 			DatasetSource: metadata.DatasetSource(sourceRight),
 		}
 
 		// run joining pipeline
-		data, err := task.Join(leftJoin, rightJoin, datasetLeft.Variables, datasetRight.Variables)
+		data, err := task.Join(leftJoin, rightJoin, datasetLeft.Variables, datasetRight.Variables, datasetRight.DatasetOrigin)
 		if err != nil {
 			handleError(w, err)
 			return

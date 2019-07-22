@@ -24,8 +24,8 @@ import (
 	"sync"
 	"time"
 
+	uuid "github.com/gofrs/uuid"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -81,16 +81,19 @@ func newStatusChannel() chan SolutionStatus {
 
 // SolutionRequest represents a solution search request.
 type SolutionRequest struct {
-	Dataset        string
-	TargetFeature  string
-	Task           string
-	SubTask        string
-	TimestampField string
-	MaxSolutions   int
-	MaxTime        int
-	ProblemType    string
-	Metrics        []string
-	Filters        *api.FilterParams
+	Dataset          string
+	DatasetInput     string
+	TargetFeature    string
+	Task             string
+	SubTask          string
+	TimestampField   string
+	MaxSolutions     int
+	MaxTime          int
+	ProblemType      string
+	Metrics          []string
+	Filters          *api.FilterParams
+	SearchResult     string
+	SearchProvenance string
 
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
@@ -98,6 +101,19 @@ type SolutionRequest struct {
 	solutionChannels []chan SolutionStatus
 	listener         SolutionStatusListener
 	finished         chan error
+}
+
+// SolutionRequestDiscovery represents a discovered problem solution request.
+type SolutionRequestDiscovery struct {
+	Dataset          string
+	DatasetInput     string
+	TargetFeature    string
+	AllFeatures      []*model.Variable
+	SelectedFeatures []string
+	SourceURI        string
+	UserAgent        string
+	SearchResult     string
+	SearchProvenance string
 }
 
 // NewSolutionRequest instantiates a new SolutionRequest.
@@ -120,6 +136,7 @@ func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
 	if !ok {
 		return nil, fmt.Errorf("no `dataset` in solution request")
 	}
+	req.DatasetInput = req.Dataset
 
 	req.TargetFeature, ok = json.String(j, "target")
 	if !ok {
@@ -253,12 +270,31 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 }
 
 // createPreprocessingPipeline creates pipeline to enfore user feature selection and typing
-func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable, targetVariable string, variables []string) (*pipeline.PipelineDescription, error) {
-	uuid := uuid.NewV4()
+func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable) (*pipeline.PipelineDescription, error) {
+	uuid, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
 	name := fmt.Sprintf("preprocessing-%s-%s", s.Dataset, uuid.String())
 	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
 
-	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc, featureVariables, targetVariable, variables, s.Filters.Filters)
+	var augment *description.UserDatasetAugmentation
+	if s.SearchResult != "" {
+		augment = &description.UserDatasetAugmentation{
+			SearchResult:  s.SearchResult,
+			SystemID:      s.SearchProvenance,
+			BaseDatasetID: s.Dataset,
+		}
+	}
+
+	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc,
+		&description.UserDatasetDescription{
+			AllFeatures:      featureVariables,
+			TargetFeature:    s.TargetFeature,
+			SelectedFeatures: s.Filters.Variables,
+			Filters:          s.Filters.Filters,
+		}, augment)
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +560,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	s.Filters.AddVariable(model.D3MIndexFieldName)
 
 	// fetch the full set of variables associated with the dataset
-	variables, err := metaStorage.FetchVariables(s.Dataset, true, true)
+	variables, err := metaStorage.FetchVariables(s.Dataset, true, true, true)
 	if err != nil {
 		return err
 	}
@@ -533,10 +569,35 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// TODO: imported datasets have d3m index as distil role = "index".
 	//       need to figure out if that causes issues!!!
 	dataVariables := []*model.Variable{}
+	var targetVariable *model.Variable
 	for _, variable := range variables {
 		if isTA2Field(variable.DistilRole) {
 			dataVariables = append(dataVariables, variable)
 		}
+		if variable.Name == s.TargetFeature {
+			targetVariable = variable
+		}
+	}
+
+	// Timeseries are grouped entries and we want to use the Y Col from the group as the target
+	// rather than the group itself, and the X col as the timestamp variable
+	targetVarName := s.TargetFeature
+	var groupingTargetVariable = targetVariable
+	if targetVariable.Grouping != nil && model.IsTimeSeries(targetVariable.Grouping.Type) {
+		// filter list needs to include all the individual grouping components
+		for _, subID := range targetVariable.Grouping.SubIDs {
+			s.Filters.AddVariable(subID)
+		}
+		s.Filters.AddVariable(targetVariable.Grouping.Properties.XCol)
+		s.Filters.AddVariable(targetVariable.Grouping.Properties.YCol)
+
+		// extract the time series value column
+		targetVarName = targetVariable.Grouping.Properties.YCol
+		targetVariable, err = metaStorage.FetchVariable(s.Dataset, targetVarName)
+		if err != nil {
+			return err
+		}
+
 	}
 
 	// make sure that we include all non-generated variables in our persisted
@@ -545,15 +606,11 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	allVarFilters := s.Filters.Clone()
 	allVarFilters.Variables = []string{}
-	var targetVariable *model.Variable
 	var timeseriesField *model.Variable
 	for _, variable := range dataVariables {
-
 		// exclude cluster/feature generated columns
 		allVarFilters.AddVariable(variable.Name)
-		if variable.Name == s.TargetFeature {
-			targetVariable = variable
-		} else if variable.Name == s.TimestampField {
+		if variable.Name == s.TimestampField {
 			timeseriesField = variable
 		}
 	}
@@ -564,17 +621,32 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		return err
 	}
 
+	// fetch the input dataset (should only differ on augmented)
+	datasetInput, err := metaStorage.FetchDataset(s.DatasetInput, true, true)
+	if err != nil {
+		return err
+	}
+
 	columnIndex := getColumnIndex(targetVariable, dataset.Filters.Variables)
 	timeseriesColumnIndex := -1
 	if timeseriesField != nil {
+		// extract timeseries timestamp column from solution request
 		timeseriesColumnIndex = getColumnIndex(timeseriesField, dataset.Filters.Variables)
+	} else if groupingTargetVariable.Grouping != nil {
+		// extract the timeseries timestamp column from a grouping
+		timeseriesVarName := groupingTargetVariable.Grouping.Properties.XCol
+		timeseriesVariable, err := metaStorage.FetchVariable(s.Dataset, timeseriesVarName)
+		if err != nil {
+			return err
+		}
+		timeseriesColumnIndex = getColumnIndex(timeseriesVariable, dataset.Filters.Variables)
 	}
 
 	// add dataset name to path
-	datasetInputDir := env.ResolvePath(dataset.Metadata.Source, dataset.Metadata.Folder)
+	datasetInputDir := env.ResolvePath(datasetInput.Source, datasetInput.Folder)
 
 	// perist the datasets and get URI
-	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.Dataset, compute.D3MDataSchema, datasetInputDir, datasetDir, s.Task, timeseriesColumnIndex)
+	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.DatasetInput, compute.D3MDataSchema, datasetInputDir, datasetDir, s.Task, timeseriesColumnIndex, columnIndex)
 	if err != nil {
 		return err
 	}
@@ -594,14 +666,15 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
-		preprocessing, err = s.createPreprocessingPipeline(dataVariables, s.TargetFeature, s.Filters.Variables)
+		preprocessing, err = s.createPreprocessingPipeline(dataVariables)
 		if err != nil {
 			return err
 		}
 	}
 
 	// create search solutions request
-	searchRequest, err := s.createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent)
+	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVarName, s.DatasetInput, s.Metrics, s.Task, s.SubTask, int64(s.MaxTime))
+
 	if err != nil {
 		return err
 	}
@@ -613,7 +686,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// persist the request
-	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.Metadata.Name, RequestPendingStatus)
+	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.Metadata.ID, RequestPendingStatus)
 	if err != nil {
 		return err
 	}
@@ -653,39 +726,56 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 // CreateSearchSolutionRequest creates a search solution request, including
 // the pipeline steps required to process the data.
-func CreateSearchSolutionRequest(allFeatures []*model.Variable,
-	selectedFeatures []string, target string, sourceURI string, dataset string,
-	userAgent string, skipPreprocessing bool) (*pipeline.SearchSolutionsRequest, error) {
-	uuid := uuid.NewV4()
-	name := fmt.Sprintf("preprocessing-%s-%s", dataset, uuid.String())
-	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", dataset, uuid.String())
+func CreateSearchSolutionRequest(request *SolutionRequestDiscovery, skipPreprocessing bool) (*pipeline.SearchSolutionsRequest, error) {
+	uuid, err := uuid.NewV4()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create uuid")
+	}
 
-	var err error
+	name := fmt.Sprintf("preprocessing-%s-%s", request.Dataset, uuid.String())
+	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", request.Dataset, uuid.String())
+
 	var preprocessingPipeline *pipeline.PipelineDescription
 	if !skipPreprocessing {
-		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc, allFeatures, target, selectedFeatures, nil)
+		var augment *description.UserDatasetAugmentation
+		if request.SearchResult != "" {
+			augment = &description.UserDatasetAugmentation{
+				SearchResult:  request.SearchResult,
+				SystemID:      request.SearchProvenance,
+				BaseDatasetID: request.Dataset,
+			}
+		}
+
+		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc,
+			&description.UserDatasetDescription{
+				AllFeatures:      request.AllFeatures,
+				TargetFeature:    request.TargetFeature,
+				SelectedFeatures: request.SelectedFeatures,
+				Filters:          nil,
+			}, augment)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create preprocessing pipeline")
 		}
 	}
 
 	var targetVariable *model.Variable
-	for _, v := range allFeatures {
-		if v.Name == target {
+	for _, v := range request.AllFeatures {
+		if v.Name == request.TargetFeature {
 			targetVariable = v
 			break
 		}
 	}
 	if targetVariable == nil {
-		return nil, errors.Errorf("unable to find target variable '%s'", target)
+		return nil, errors.Errorf("unable to find target variable '%s'", request.TargetFeature)
 	}
-	columnIndex := getColumnIndex(targetVariable, selectedFeatures)
+	columnIndex := getColumnIndex(targetVariable, request.SelectedFeatures)
 	task := DefaultTaskType(targetVariable.Type, "")
-	taskSubType := DefaultTaskSubType(targetVariable.Type)
+	taskSubType := DefaultTaskSubType(task)
 	metrics := DefaultMetrics(task)
 
 	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessingPipeline, sourceURI, userAgent, target, dataset, metrics, task, taskSubType, 600)
+	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessingPipeline, request.SourceURI,
+		request.UserAgent, request.TargetFeature, request.DatasetInput, metrics, task, taskSubType, 600)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create search solution request")
 	}

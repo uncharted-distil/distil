@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
@@ -31,32 +32,27 @@ import (
 	log "github.com/unchartedsoftware/plog"
 )
 
-// ISISearchResults wraps the response from the ISI datamart.
-type ISISearchResults struct {
-	Code    string             `json:"code"`
-	Message string             `json:"message"`
-	Data    []*ISISearchResult `json:"data"`
-}
-
 // ISISearchResult contains a single result from a query to the ISI datamart.
 type ISISearchResult struct {
-	Summary    string                   `json:"summary"`
-	Score      float64                  `json:"score"`
-	DatamartID string                   `json:"datamart_id"`
-	Metadata   *ISISearchResultMetadata `json:"metadata"`
+	Summary         string                     `json:"summary"`
+	Score           float64                    `json:"score"`
+	DatamartID      string                     `json:"datamart_id"`
+	Metadata        []*ISISearchResultMetadata `json:"metadata"`
+	MaterializeInfo string                     `json:"materialize_info"`
 }
 
-// ISISearchResultMetadata specifies the structure of the datamart dataset.
+// ISISearchResultMetadata specifies the metadata of the datamart dataset.
 type ISISearchResultMetadata struct {
-	DatamartID      float64                         `json:"datamart_id"`
-	Title           string                          `json:"title"`
-	Description     string                          `json:"description"`
-	URL             string                          `json:"url"`
-	DateUpdated     string                          `json:"date_updated"`
-	Provenance      *ISISearchResultProvenance      `json:"provenance"`
-	Materialization *ISISearchResultMaterialization `json:"materialization"`
-	Variables       []*ISISearchResultVariable      `json:"variables"`
-	Keywords        []string                        `json:"keywords"`
+	Selector []interface{}                    `json:"selector"`
+	Metadata *ISISearchResultMetadataMetadata `json:"metadata"`
+}
+
+// ISISearchResultMetadataMetadata specifies the structure of the datamart dataset.
+type ISISearchResultMetadataMetadata struct {
+	StructuralType string                                    `json:"structural_type"`
+	SemanticTypes  []string                                  `json:"semantic_types"`
+	Dimension      *ISISearchResultMetadataMetadataDimension `json:"dimension"`
+	Schema         string                                    `json:"schema"`
 }
 
 // ISISearchResultProvenance defines the source of the data.
@@ -66,15 +62,40 @@ type ISISearchResultProvenance struct {
 
 // ISISearchResultMaterialization specifies how to materialize the dataset.
 type ISISearchResultMaterialization struct {
-	PythonPath string `json:"python_path"`
+	ID           string                                      `json:"id"`
+	Score        float64                                     `json:"score"`
+	Metadata     *ISISearchResultMaterializationMetadata     `json:"metadata"`
+	Augmentation *ISISearchResultMaterializationAugmentation `json:"augmentation"`
+	DatamartType string                                      `json:"datamart_type"`
 }
 
-// ISISearchResultVariable has the specification for a variable in a dataset.
-type ISISearchResultVariable struct {
-	DatamartID    float64  `json:"datamart_id"`
+// ISISearchResultMaterializationMetadata specifies the materialization metadata.
+type ISISearchResultMaterializationMetadata struct {
+	ConnectionURL string                                              `json:"connection_url"`
+	SearchResult  *ISISearchResultMaterializationMetadataSearchResult `json:"search_result"`
+	QueryJSON     string                                              `json:"query_json"`
+	SearchType    string                                              `json:"search_type"`
+}
+
+// ISISearchResultMaterializationMetadataSearchResult specifies the materialization
+// search results.
+type ISISearchResultMaterializationMetadataSearchResult struct {
+	PNodesNeeded          []string `json:"p_nodes_needed"`
+	TargetQNodeColumnName string   `json:"target_q_node_column_name"`
+}
+
+// ISISearchResultMaterializationAugmentation specifies the materialization augmentation.
+type ISISearchResultMaterializationAugmentation struct {
+	Properties   string    `json:"properties"`
+	LeftColumns  []float64 `json:"left_columns"`
+	RightColumns []float64 `json:"right_columns"`
+}
+
+// ISISearchResultMetadataMetadataDimension has the specification for a dimension in a dataset.
+type ISISearchResultMetadataMetadataDimension struct {
 	Name          string   `json:"name"`
-	Description   string   `json:"description"`
-	SemanticTypes []string `json:"semantic_type"`
+	SemanticTypes []string `json:"semantic_types"`
+	Length        float64  `json:"length"`
 }
 
 // ISIMaterializedDataset container for the raw response from a materialize
@@ -114,33 +135,85 @@ func isiSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]by
 }
 
 func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.Dataset, error) {
-	var dmResult ISISearchResults
-	err := json.Unmarshal(responseRaw, &dmResult)
+	var dmResults []*ISISearchResult
+	err := json.Unmarshal(responseRaw, &dmResults)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse ISI datamart search request")
 	}
 
 	datasets := make([]*api.Dataset, 0)
 
-	for _, res := range dmResult.Data {
+	for _, res := range dmResults {
 		vars := make([]*model.Variable, 0)
-		for _, c := range res.Metadata.Variables {
+		for _, c := range res.Metadata {
 			vars = append(vars, &model.Variable{
-				Name:        c.Name,
-				DisplayName: c.Name,
+				Name:        c.Metadata.Dimension.Name,
+				DisplayName: c.Metadata.Dimension.Name,
 			})
 		}
+		joinSuggestions, joinScore, err := parseISIJoinSuggestion(res, baseDataset)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to parse ISI datamart join suggestions")
+		}
+
+		// need to get the specific search result string
+		searchResultRaw, err := json.Marshal(res)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to marshal NYU search result")
+		}
+
+		origin := &api.DatasetOrigin{
+			SearchResult: string(searchResultRaw),
+			Provenance:   ProvenanceNYU,
+		}
+
 		datasets = append(datasets, &api.Dataset{
-			ID:          res.DatamartID,
-			Name:        res.Metadata.Title,
-			Description: res.Metadata.Description,
-			Variables:   vars,
-			Provenance:  ProvenanceISI,
-			Summary:     res.Summary,
+			ID:              res.DatamartID,
+			Name:            res.DatamartID,
+			Description:     res.Summary,
+			Variables:       vars,
+			Provenance:      ProvenanceISI,
+			Summary:         res.Summary,
+			JoinSuggestions: joinSuggestions,
+			JoinScore:       joinScore,
+			DatasetOrigin:   origin,
 		})
 	}
 
 	return datasets, nil
+}
+
+func parseISIJoinSuggestion(result *ISISearchResult, baseDataset *api.Dataset) ([]*api.JoinSuggestion, float64, error) {
+	// materialize_info has the join data in json structure
+	var materialization ISISearchResultMaterialization
+	err := json.Unmarshal([]byte(result.MaterializeInfo), &materialization)
+	if err != nil {
+		return nil, 0, errors.Wrap(err, "unable to unmarshal ISI datamart join suggestions")
+	}
+
+	joins := make([]*api.JoinSuggestion, 0)
+	if materialization.Augmentation != nil && materialization.Augmentation.Properties == "join" {
+		rightColumnNames := []string{}
+		colNames := []string{}
+		for _, colIndex := range materialization.Augmentation.RightColumns {
+			colNames = append(colNames, result.Metadata[int(colIndex)].Metadata.Dimension.Name)
+		}
+		rightColumnNames = append(rightColumnNames, strings.Join(colNames[:], ", "))
+
+		leftColumnNames := []string{}
+		colNames = []string{}
+		for _, colIndex := range materialization.Augmentation.LeftColumns {
+			colNames = append(colNames, baseDataset.Variables[int(colIndex)].Name)
+		}
+		rightColumnNames = append(rightColumnNames, strings.Join(colNames[:], ", "))
+
+		joins = append(joins, &api.JoinSuggestion{
+			BaseDataset: baseDataset.ID,
+			BaseColumns: leftColumnNames,
+			JoinColumns: rightColumnNames,
+		})
+	}
+	return joins, materialization.Score, nil
 }
 
 // materializeISIDataset pulls a csv file from the ISI datamart.

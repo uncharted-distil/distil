@@ -22,16 +22,18 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"math/rand"
 	"os"
 	"path"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/araddon/dateparse"
 	"github.com/mitchellh/hashstructure"
 	"github.com/otiai10/copy"
-	"github.com/phorne-uncharted/dateparse"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
 
@@ -154,7 +156,7 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 
 	// find the desired timeseries threshold
 	// load the parsed timestamp into a list and read all raw data in memory
-	timestamps := make([]time.Time, 0)
+	timestamps := make([]float64, 0)
 	data := make([][]string, 0)
 	for {
 		line, err := reader.Read()
@@ -164,9 +166,10 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 			return errors.Wrap(err, "failed to read line from file")
 		}
 		data = append(data, line)
-		t, err := dateparse.ParseAny(line[timeseriesCol])
+		// attempt to parse as float
+		t, err := parseTimeColValue(line[timeseriesCol])
 		if err != nil {
-			return errors.Wrap(err, "failed to parse timeseries column")
+			return err
 		}
 		timestamps = append(timestamps, t)
 	}
@@ -175,7 +178,7 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 	// the right split (ie value where we would send roughly 90% of
 	// the data to train and 10% to test)
 	sort.Slice(timestamps, func(i int, j int) bool {
-		return timestamps[i].Before(timestamps[j])
+		return timestamps[i] <= timestamps[j]
 	})
 	thresholdIndex := int(trainTestSplitThreshold * float64(len(timestamps)-1))
 	threshold := timestamps[thresholdIndex]
@@ -185,10 +188,10 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 		// since we parsed it above, then the parsing here should succeed
 		// TODO: the timestamps list is already sorted but we really should
 		// reuse it to not double parse things
-		t, _ := dateparse.ParseAny(line[timeseriesCol])
+		t, _ := parseTimeColValue(line[timeseriesCol])
 
 		// !After == Before || Equal
-		if !t.After(threshold) {
+		if t <= threshold {
 			err = writerTrain.Write(line)
 			if err != nil {
 				return errors.Wrap(err, "unable to write data to train output")
@@ -216,7 +219,19 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 	return nil
 }
 
-func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool) error {
+func parseTimeColValue(timeColValue string) (float64, error) {
+	f, err := strconv.ParseFloat(timeColValue, 64)
+	if err != nil {
+		t, err := dateparse.ParseAny(timeColValue)
+		if err != nil {
+			return math.NaN(), errors.Wrapf(err, "failed to parse timeseries column val [%s]", timeColValue)
+		}
+		return float64(t.Unix()), nil
+	}
+	return f, nil
+}
+
+func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool, targetCol int) error {
 	// create the writers
 	outputTrain := &bytes.Buffer{}
 	writerTrain := csv.NewWriter(outputTrain)
@@ -236,7 +251,8 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 		return errors.Wrap(err, "failed to open source file")
 	}
 
-	// randomly assign rows to either train or test
+	// load train test
+	rowData := [][]string{}
 	for {
 		line, err := reader.Read()
 		if err == io.EOF {
@@ -244,18 +260,31 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 		} else if err != nil {
 			return errors.Wrap(err, "failed to read line from file")
 		}
-		if rand.Float64() < trainTestSplitThreshold {
-			err = writerTrain.Write(line)
+		rowData = append(rowData, line)
+	}
+
+	// shuffle array
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(rowData), func(i, j int) { rowData[i], rowData[j] = rowData[j], rowData[i] })
+
+	// Write out to train test, aiming to put non-empty label data in test
+	numTest := int(float32(len(rowData)) * (1.0 - trainTestSplitThreshold))
+	testCount := 0
+	for _, row := range rowData {
+		if row[targetCol] != "" && testCount < numTest {
+			testCount++
+			err = writerTest.Write(row)
 			if err != nil {
 				return errors.Wrap(err, "unable to write data to train output")
 			}
 		} else {
-			err = writerTest.Write(line)
+			err = writerTrain.Write(row)
 			if err != nil {
 				return errors.Wrap(err, "unable to write data to test output")
 			}
 		}
 	}
+
 	writerTrain.Flush()
 	writerTest.Flush()
 
@@ -274,7 +303,9 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 
 // PersistOriginalData copies the original data and splits it into a train &
 // test subset to be used as needed.
-func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder string, tmpDataFolder string, taskType string, timeseriesFieldIndex int) (string, string, error) {
+func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder string, tmpDataFolder string, taskType string,
+	timeseriesFieldIndex int, targetFieldIndex int) (string, string, error) {
+
 	// The complete data is copied into separate train & test folders.
 	// The main data is then split randomly.
 	trainFolder := path.Join(tmpDataFolder, datasetName, trainFilenamePrefix)
@@ -331,7 +362,7 @@ func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder
 	if taskType == compute.TaskTypeTimeseries {
 		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, timeseriesFieldIndex)
 	} else {
-		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true)
+		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, targetFieldIndex)
 	}
 	if err != nil {
 		return "", "", err
