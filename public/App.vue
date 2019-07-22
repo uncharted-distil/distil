@@ -79,6 +79,7 @@ export default Vue.extend({
 						const idKey = getComposedVariableKey(ids);
 
 						// set the target / training to the grouping properties
+						const yCol = target;
 						target = idKey;
 						training = ids;
 
@@ -96,14 +97,15 @@ export default Vue.extend({
 						return nextPromise.then(() => {
 
 							variables = datasetGetters.getVariables(this.$store);
-							const alreadyGrouped = !!variables.find(v => v.colName === idKey).grouping;
+							const existingGrouping = variables.find(v => v.colName === idKey);
+							const alreadyGrouped = existingGrouping && !!existingGrouping.grouping;
 
 							if (alreadyGrouped) {
 								// grouping already exists
+								console.log(`Task 2: grouping already exists`);
 								return;
 							}
 
-							const yCol = target;
 							const xCol = variables.filter(v => v.colName !== target && v.colType === INTEGER_TYPE).map(v => v.colName)[0];
 
 							const grouping =  {
@@ -118,7 +120,7 @@ export default Vue.extend({
 								}
 							};
 
-							console.log(`Task 2: Creating timeseries grouping for `, idKey);
+							console.log(`Task 2: Setting grouping for id`, idKey);
 							return datasetActions.setGrouping(this.$store, {
 								dataset: dataset,
 								grouping: grouping
