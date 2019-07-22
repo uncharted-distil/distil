@@ -50,7 +50,7 @@ runner:
   ports:
     - "50051:50051"
   environment:
-    - D3MOUTPUTDIR=/home/chris/temp/outputs
+    - D3MOUTPUTDIR=$PWD/outputs
     - VERBOSE_PRIMITIVE_OUTPUT=1
     - D3MSTATICDIR=$PWD/static_resources
   volumes:
