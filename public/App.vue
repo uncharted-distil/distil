@@ -79,6 +79,7 @@ export default Vue.extend({
 						const idKey = getComposedVariableKey(ids);
 
 						// set the target / training to the grouping properties
+						const yCol = target;
 						target = idKey;
 						training = ids;
 
@@ -101,10 +102,10 @@ export default Vue.extend({
 
 							if (alreadyGrouped) {
 								// grouping already exists
+								console.log(`Task 2: grouping already exists`);
 								return;
 							}
 
-							const yCol = target;
 							const xCol = variables.filter(v => v.colName !== target && v.colType === INTEGER_TYPE).map(v => v.colName)[0];
 
 							const grouping =  {
@@ -119,9 +120,10 @@ export default Vue.extend({
 								}
 							};
 
-							console.log(`Task 2: Fetching timeseries variables for `, dataset);
-							return datasetActions.fetchVariables(this.$store, {
-								dataset: dataset
+							console.log(`Task 2: Setting grouping for id`, idKey);
+							return datasetActions.setGrouping(this.$store, {
+								dataset: dataset,
+								grouping: grouping
 							});
 						});
 					});
