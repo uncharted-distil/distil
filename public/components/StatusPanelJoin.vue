@@ -18,7 +18,7 @@
 			<div v-if="filteredSuggestedItems.length === 0">
 				No datasets are found
 			</div>
-			<div v-if="isAttemptingJoin || isImporting || importedDataset">
+			<div v-if="isAttemptingJoin || isImporting && importedDataset">
 				<div v-html="spinnerHTML"></div>
 			</div>
 			<b-list-group v-else>
