@@ -106,43 +106,51 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		}
 
 		// extract dataset source information
-		var datasetOrigin *api.DatasetOrigin
-		if src["datasetOrigin"] != nil {
-			searchResult, ok := json.String(src["datasetOrigin"].(map[string]interface{}), "searchResult")
-			if !ok {
-				searchResult = ""
-			}
-			searchProvenance, ok := json.String(src["datasetOrigin"].(map[string]interface{}), "provenance")
-			if !ok {
-				searchProvenance = ""
-			}
-			sourceDataset, ok := json.String(src["datasetOrigin"].(map[string]interface{}), "sourceDataset")
-			if !ok {
-				sourceDataset = ""
-			}
+		var datasetOrigins []*api.JoinSuggestion
+		if src["datasetOrigins"] != nil {
+			origins, ok := json.Array(src, "datasetOrigins")
+			if ok {
+				datasetOrigins := make([]*api.JoinSuggestion, len(origins))
+				for i, origin := range origins {
+					searchResult, ok := json.String(origin, "searchResult")
+					if !ok {
+						searchResult = ""
+					}
+					searchProvenance, ok := json.String(origin, "provenance")
+					if !ok {
+						searchProvenance = ""
+					}
+					sourceDataset, ok := json.String(origin, "sourceDataset")
+					if !ok {
+						sourceDataset = ""
+					}
 
-			datasetOrigin = &api.DatasetOrigin{
-				SearchResult:  searchResult,
-				Provenance:    searchProvenance,
-				SourceDataset: sourceDataset,
+					datasetOrigins[i] = &api.JoinSuggestion{
+						DatasetOrigin: &model.DatasetOrigin{
+							SearchResult:  searchResult,
+							Provenance:    searchProvenance,
+							SourceDataset: sourceDataset,
+						},
+					}
+				}
 			}
 		}
 
 		// write everythign out to result struct
 		datasets = append(datasets, &api.Dataset{
-			ID:            id,
-			Name:          name,
-			StorageName:   storageName,
-			Description:   description,
-			Folder:        folder,
-			Summary:       summary,
-			SummaryML:     summaryMachine,
-			NumRows:       int64(numRows),
-			NumBytes:      int64(numBytes),
-			Variables:     variables,
-			Provenance:    Provenance,
-			Source:        metadata.DatasetSource(source),
-			DatasetOrigin: datasetOrigin,
+			ID:              id,
+			Name:            name,
+			StorageName:     storageName,
+			Description:     description,
+			Folder:          folder,
+			Summary:         summary,
+			SummaryML:       summaryMachine,
+			NumRows:         int64(numRows),
+			NumBytes:        int64(numBytes),
+			Variables:       variables,
+			Provenance:      Provenance,
+			Source:          metadata.DatasetSource(source),
+			JoinSuggestions: datasetOrigins,
 		})
 	}
 	return datasets, nil

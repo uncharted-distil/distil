@@ -20,6 +20,7 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-ingest/metadata"
+	"github.com/uncharted-distil/distil/api/util/json"
 )
 
 const (
@@ -42,14 +43,6 @@ type Dataset struct {
 	Source          metadata.DatasetSource `json:"source"`
 	JoinSuggestions []*JoinSuggestion      `json:"joinSuggestion"`
 	JoinScore       float64                `json:"joinScore"`
-	DatasetOrigin   *DatasetOrigin         `json:"datasetOrigin"`
-}
-
-// DatasetOrigin represents the originating information for a dataset
-type DatasetOrigin struct {
-	SearchResult  string `json:"searchResult"`
-	Provenance    string `json:"provenance"`
-	SourceDataset string `json:"sourceDataset"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.
@@ -62,9 +55,10 @@ type QueriedDataset struct {
 
 // JoinSuggestion specifies potential joins between datasets.
 type JoinSuggestion struct {
-	BaseDataset string   `json:"baseDataset"`
-	BaseColumns []string `json:"baseColumns"`
-	JoinColumns []string `json:"joinColumns"`
+	BaseDataset   string               `json:"baseDataset"`
+	BaseColumns   []string             `json:"baseColumns"`
+	JoinColumns   []string             `json:"joinColumns"`
+	DatasetOrigin *model.DatasetOrigin `json:"datasetOrigin"`
 }
 
 // FetchDataset builds a QueriedDataset from the needed parameters.
@@ -141,4 +135,37 @@ func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage,
 	}
 
 	return nil
+}
+
+// ParseDatasetOriginsFromJSON parses dataset origins from string maps.
+func ParseDatasetOriginsFromJSON(originsJSON []map[string]interface{}) []*model.DatasetOrigin {
+
+	origins := make([]*model.DatasetOrigin, len(originsJSON))
+
+	for i, originJSON := range originsJSON {
+		origins[i] = parseDatasetOriginFromJSON(originJSON)
+	}
+
+	return origins
+}
+
+func parseDatasetOriginFromJSON(originJSON map[string]interface{}) *model.DatasetOrigin {
+	searchResult, ok := json.String(originJSON, "searchResult")
+	if !ok {
+		searchResult = ""
+	}
+	provenance, ok := json.String(originJSON, "provenance")
+	if !ok {
+		provenance = ""
+	}
+	sourceDataset, ok := json.String(originJSON, "sourceDataset")
+	if !ok {
+		sourceDataset = ""
+	}
+
+	return &model.DatasetOrigin{
+		SearchResult:  searchResult,
+		Provenance:    provenance,
+		SourceDataset: sourceDataset,
+	}
 }

@@ -102,7 +102,18 @@ func nyuSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]by
 	return responseRaw, nil
 }
 
-func parseNYUJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) []*api.JoinSuggestion {
+func parseNYUJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) ([]*api.JoinSuggestion, error) {
+	// need to get the specific search result string
+	searchResultRaw, err := json.Marshal(result)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to marshal NYU search result")
+	}
+
+	origin := &model.DatasetOrigin{
+		SearchResult: string(searchResultRaw),
+		Provenance:   ProvenanceNYU,
+	}
+
 	joins := make([]*api.JoinSuggestion, 0)
 	if result.Augmentation != nil && result.Augmentation.Type == "join" {
 		rightColumnNames := []string{}
@@ -119,12 +130,13 @@ func parseNYUJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) []*a
 		}
 
 		joins = append(joins, &api.JoinSuggestion{
-			BaseDataset: baseDataset.ID,
-			BaseColumns: leftColumnNames,
-			JoinColumns: rightColumnNames,
+			BaseDataset:   baseDataset.ID,
+			BaseColumns:   leftColumnNames,
+			JoinColumns:   rightColumnNames,
+			DatasetOrigin: origin,
 		})
 	}
-	return joins
+	return joins, nil
 }
 
 func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.Dataset, error) {
@@ -145,15 +157,9 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			})
 		}
 
-		// need to get the specific search result string
-		searchResultRaw, err := json.Marshal(res)
+		joinSuggestions, err := parseNYUJoinSuggestion(res, baseDataset)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to marshal NYU search result")
-		}
-
-		origin := &api.DatasetOrigin{
-			SearchResult: string(searchResultRaw),
-			Provenance:   ProvenanceNYU,
+			return nil, errors.Wrap(err, "unable to parse NYU datamart join suggestions")
 		}
 
 		datasets = append(datasets, &api.Dataset{
@@ -164,9 +170,8 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			NumBytes:        int64(res.Metadata.Size),
 			Variables:       vars,
 			Provenance:      ProvenanceNYU,
-			JoinSuggestions: parseNYUJoinSuggestion(res, baseDataset),
+			JoinSuggestions: joinSuggestions,
 			JoinScore:       res.Score,
-			DatasetOrigin:   origin,
 		})
 	}
 

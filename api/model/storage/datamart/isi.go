@@ -156,17 +156,6 @@ func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			return nil, errors.Wrap(err, "unable to parse ISI datamart join suggestions")
 		}
 
-		// need to get the specific search result string
-		searchResultRaw, err := json.Marshal(res)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to marshal NYU search result")
-		}
-
-		origin := &api.DatasetOrigin{
-			SearchResult: string(searchResultRaw),
-			Provenance:   ProvenanceNYU,
-		}
-
 		datasets = append(datasets, &api.Dataset{
 			ID:              res.DatamartID,
 			Name:            res.DatamartID,
@@ -176,7 +165,6 @@ func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			Summary:         res.Summary,
 			JoinSuggestions: joinSuggestions,
 			JoinScore:       joinScore,
-			DatasetOrigin:   origin,
 		})
 	}
 
@@ -184,9 +172,20 @@ func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 }
 
 func parseISIJoinSuggestion(result *ISISearchResult, baseDataset *api.Dataset) ([]*api.JoinSuggestion, float64, error) {
+	// need to get the specific search result string
+	searchResultRaw, err := json.Marshal(result)
+	if err != nil {
+		return nil, 0, errors.Wrap(err, "unable to marshal ISI search result")
+	}
+
+	origin := &model.DatasetOrigin{
+		SearchResult: string(searchResultRaw),
+		Provenance:   ProvenanceISI,
+	}
+
 	// materialize_info has the join data in json structure
 	var materialization ISISearchResultMaterialization
-	err := json.Unmarshal([]byte(result.MaterializeInfo), &materialization)
+	err = json.Unmarshal([]byte(result.MaterializeInfo), &materialization)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "unable to unmarshal ISI datamart join suggestions")
 	}
@@ -208,9 +207,10 @@ func parseISIJoinSuggestion(result *ISISearchResult, baseDataset *api.Dataset) (
 		rightColumnNames = append(rightColumnNames, strings.Join(colNames[:], ", "))
 
 		joins = append(joins, &api.JoinSuggestion{
-			BaseDataset: baseDataset.ID,
-			BaseColumns: leftColumnNames,
-			JoinColumns: rightColumnNames,
+			BaseDataset:   baseDataset.ID,
+			BaseColumns:   leftColumnNames,
+			JoinColumns:   rightColumnNames,
+			DatasetOrigin: origin,
 		})
 	}
 	return joins, materialization.Score, nil
