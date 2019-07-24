@@ -18,7 +18,10 @@
 			<div v-if="filteredSuggestedItems.length === 0">
 				No datasets are found
 			</div>
-			<b-list-group>
+			<div v-if="isAttemptingJoin || isImporting && importedDataset">
+				<div v-html="spinnerHTML"></div>
+			</div>
+			<b-list-group v-else>
 				<b-list-group-item
 					v-for="item in filteredSuggestedItems"
 					:key="item.key"
@@ -111,6 +114,7 @@ import { actions as viewActions } from '../store/view/module';
 import { StatusPanelState, StatusPanelContentType } from '../store/app';
 import { createRouteEntry } from '../util/routes';
 import { formatBytes } from '../util/bytes';
+import { circleSpinnerHTML } from '../util/spinner';
 import { isDatamartProvenance } from '../util/data';
 import { JOIN_DATASETS_ROUTE } from '../store/route/index';
 import { SELECT_TRAINING_ROUTE } from '../store/route';
@@ -236,6 +240,9 @@ export default Vue.extend({
 				? this.selectedDataset.joinSuggestion[0].joinColumns
 				: [];
 		},
+		spinnerHTML(): string {
+			return circleSpinnerHTML();
+		}
 	},
 	methods: {
 		addRecentDataset(dataset: string) {
