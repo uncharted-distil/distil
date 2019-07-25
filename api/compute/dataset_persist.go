@@ -35,11 +35,12 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-ingest/metadata"
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
 )
@@ -231,7 +232,7 @@ func parseTimeColValue(timeColValue string) (float64, error) {
 	return f, nil
 }
 
-func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool, targetCol int) error {
+func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool, targetCol int, maxTrainingCount int) error {
 	// create the writers
 	outputTrain := &bytes.Buffer{}
 	writerTrain := csv.NewWriter(outputTrain)
@@ -267,9 +268,17 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(rowData), func(i, j int) { rowData[i], rowData[j] = rowData[j], rowData[i] })
 
-	// Write out to train test, aiming to put non-empty label data in test
+	// figure out the numer of train and test rows to use - training rows are capped to avoid excessive
+	// fit times for users, although it results in poorer model fidelity
 	numTest := int(float32(len(rowData)) * (1.0 - trainTestSplitThreshold))
+	numTrain := min(maxTrainingCount, int(float32(len(rowData))*trainTestSplitThreshold))
+	if maxTrainingCount <= 0 {
+		maxTrainingCount = math.MaxInt64
+	}
+
+	// Write out to train test
 	testCount := 0
+	trainCount := 0
 	for _, row := range rowData {
 		if row[targetCol] != "" && testCount < numTest {
 			testCount++
@@ -277,11 +286,17 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 			if err != nil {
 				return errors.Wrap(err, "unable to write data to train output")
 			}
-		} else {
+		} else if trainCount < numTrain {
+			trainCount++
 			err = writerTrain.Write(row)
 			if err != nil {
 				return errors.Wrap(err, "unable to write data to test output")
 			}
+		}
+
+		// if we've hit our train and test targets, bail out
+		if testCount >= numTest && trainCount >= numTrain {
+			break
 		}
 	}
 
@@ -305,7 +320,6 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 // test subset to be used as needed.
 func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder string, tmpDataFolder string, taskType string,
 	timeseriesFieldIndex int, targetFieldIndex int) (string, string, error) {
-
 	// The complete data is copied into separate train & test folders.
 	// The main data is then split randomly.
 	trainFolder := path.Join(tmpDataFolder, datasetName, trainFilenamePrefix)
@@ -362,7 +376,11 @@ func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder
 	if taskType == compute.TaskTypeTimeseries {
 		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, timeseriesFieldIndex)
 	} else {
-		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, targetFieldIndex)
+		config, err := env.LoadConfig()
+		if err != nil {
+			return "", "", errors.Wrap(err, "unable to load config")
+		}
+		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, targetFieldIndex, config.MaxTrainingRows)
 	}
 	if err != nil {
 		return "", "", err
@@ -399,4 +417,11 @@ func referencesResource(variable *model.Variable) bool {
 	}
 
 	return false
+}
+
+func min(a, b int) int {
+	if a <= b {
+		return a
+	}
+	return b
 }
