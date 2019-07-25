@@ -55,6 +55,7 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		datasetRight, err := storage.FetchDataset(datasetIDRight, true, true)
 		if err != nil {
 			handleError(w, err)
+			return
 		}
 
 		leftJoin := &task.JoinSpec{
@@ -80,9 +81,13 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 				return
 			}
 
+			if params == nil || params["searchResultIndex"] == nil {
+				handleError(w, errors.Errorf("Search result index needed for joined dataset import"))
+				return
+			}
 			searchResultIndexF, ok := params["searchResultIndex"].(float64)
 			if !ok {
-				handleError(w, errors.Wrap(err, "Search result index needed for joined dataset import"))
+				handleError(w, errors.Errorf("Search result index needs to be an integer"))
 				return
 			}
 			searchResultIndex := int(searchResultIndexF)

@@ -58,7 +58,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		if ok {
 			searchResultIndexF, ok := params["searchResultIndex"].(float64)
 			if !ok {
-				handleError(w, errors.Wrap(err, "Search result index needed for joined dataset import"))
+				handleError(w, errors.Errorf("Search result index needed for joined dataset import"))
 				return
 			}
 			searchResultIndex := int(searchResultIndexF)
@@ -67,6 +67,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			joinedDataset, err := esStorage.FetchDataset(joinedDatasetID, true, true)
 			if err != nil {
 				handleError(w, err)
+				return
 			}
 
 			origins = []*model.DatasetOrigin{

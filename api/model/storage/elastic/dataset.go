@@ -110,7 +110,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		if src["datasetOrigins"] != nil {
 			origins, ok := json.Array(src, "datasetOrigins")
 			if ok {
-				datasetOrigins := make([]*api.JoinSuggestion, len(origins))
+				datasetOrigins = make([]*api.JoinSuggestion, len(origins))
 				for i, origin := range origins {
 					searchResult, ok := json.String(origin, "searchResult")
 					if !ok {

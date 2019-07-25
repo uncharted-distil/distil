@@ -89,13 +89,13 @@ export interface Dataset {
 	source: string;
 	joinSuggestion?: JoinSuggestion[];
 	joinScore?: number;
-	datasetOrigin?: DatasetOrigin;
 }
 
 export interface JoinSuggestion {
 	baseDataset: string;
 	baseColumns: string[];
 	joinColumns: string[];
+	datasetOrigin?: DatasetOrigin;
 }
 
 export interface DatasetOrigin {
