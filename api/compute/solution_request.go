@@ -81,19 +81,18 @@ func newStatusChannel() chan SolutionStatus {
 
 // SolutionRequest represents a solution search request.
 type SolutionRequest struct {
-	Dataset          string
-	DatasetInput     string
-	TargetFeature    string
-	Task             string
-	SubTask          string
-	TimestampField   string
-	MaxSolutions     int
-	MaxTime          int
-	ProblemType      string
-	Metrics          []string
-	Filters          *api.FilterParams
-	SearchResult     string
-	SearchProvenance string
+	Dataset              string
+	DatasetInput         string
+	TargetFeature        string
+	Task                 string
+	SubTask              string
+	TimestampField       string
+	MaxSolutions         int
+	MaxTime              int
+	ProblemType          string
+	Metrics              []string
+	Filters              *api.FilterParams
+	DatasetAugmentations []*model.DatasetOrigin
 
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
@@ -105,15 +104,14 @@ type SolutionRequest struct {
 
 // SolutionRequestDiscovery represents a discovered problem solution request.
 type SolutionRequestDiscovery struct {
-	Dataset          string
-	DatasetInput     string
-	TargetFeature    string
-	AllFeatures      []*model.Variable
-	SelectedFeatures []string
-	SourceURI        string
-	UserAgent        string
-	SearchResult     string
-	SearchProvenance string
+	Dataset              string
+	DatasetInput         string
+	TargetFeature        string
+	AllFeatures          []*model.Variable
+	SelectedFeatures     []string
+	SourceURI            string
+	UserAgent            string
+	DatasetAugmentations []*model.DatasetOrigin
 }
 
 // NewSolutionRequest instantiates a new SolutionRequest.
@@ -279,12 +277,15 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 	name := fmt.Sprintf("preprocessing-%s-%s", s.Dataset, uuid.String())
 	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
 
-	var augment *description.UserDatasetAugmentation
-	if s.SearchResult != "" {
-		augment = &description.UserDatasetAugmentation{
-			SearchResult:  s.SearchResult,
-			SystemID:      s.SearchProvenance,
-			BaseDatasetID: s.Dataset,
+	var augments []*description.UserDatasetAugmentation
+	if s.DatasetAugmentations != nil {
+		augments = make([]*description.UserDatasetAugmentation, len(s.DatasetAugmentations))
+		for i, da := range s.DatasetAugmentations {
+			augments[i] = &description.UserDatasetAugmentation{
+				SearchResult:  da.SearchResult,
+				SystemID:      da.Provenance,
+				BaseDatasetID: s.Dataset,
+			}
 		}
 	}
 
@@ -294,7 +295,7 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 			TargetFeature:    s.TargetFeature,
 			SelectedFeatures: s.Filters.Variables,
 			Filters:          s.Filters.Filters,
-		}, augment)
+		}, augments)
 	if err != nil {
 		return nil, err
 	}
@@ -737,12 +738,15 @@ func CreateSearchSolutionRequest(request *SolutionRequestDiscovery, skipPreproce
 
 	var preprocessingPipeline *pipeline.PipelineDescription
 	if !skipPreprocessing {
-		var augment *description.UserDatasetAugmentation
-		if request.SearchResult != "" {
-			augment = &description.UserDatasetAugmentation{
-				SearchResult:  request.SearchResult,
-				SystemID:      request.SearchProvenance,
-				BaseDatasetID: request.Dataset,
+		var augments []*description.UserDatasetAugmentation
+		if request.DatasetAugmentations != nil {
+			augments = make([]*description.UserDatasetAugmentation, len(request.DatasetAugmentations))
+			for i, da := range request.DatasetAugmentations {
+				augments[i] = &description.UserDatasetAugmentation{
+					SearchResult:  da.SearchResult,
+					SystemID:      da.Provenance,
+					BaseDatasetID: request.Dataset,
+				}
 			}
 		}
 
@@ -752,7 +756,7 @@ func CreateSearchSolutionRequest(request *SolutionRequestDiscovery, skipPreproce
 				TargetFeature:    request.TargetFeature,
 				SelectedFeatures: request.SelectedFeatures,
 				Filters:          nil,
-			}, augment)
+			}, augments)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to create preprocessing pipeline")
 		}

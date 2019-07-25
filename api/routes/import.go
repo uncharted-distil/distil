@@ -70,13 +70,17 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				return
 			}
 
-			origins = []*model.DatasetOrigin{
-				{
-					SearchResult:  joinedDataset.JoinSuggestions[searchResultIndex].DatasetOrigin.SearchResult,
-					Provenance:    joinedDataset.JoinSuggestions[searchResultIndex].DatasetOrigin.Provenance,
-					SourceDataset: originalDatasetID,
-				},
+			// add the joining origin to the source dataset joining
+			origins, err = getDatasetOrigins(esStorage, originalDatasetID)
+			if err != nil {
+				handleError(w, err)
+				return
 			}
+			origins = append(origins, &model.DatasetOrigin{
+				SearchResult:  joinedDataset.JoinSuggestions[searchResultIndex].DatasetOrigin.SearchResult,
+				Provenance:    joinedDataset.JoinSuggestions[searchResultIndex].DatasetOrigin.Provenance,
+				SourceDataset: originalDatasetID,
+			})
 		}
 
 		// multiple search results would be received if a single dataset has
@@ -125,6 +129,28 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			return
 		}
 	}
+}
+
+func getDatasetOrigins(esStorage api.MetadataStorage, dataset string) ([]*model.DatasetOrigin, error) {
+	ds, err := esStorage.FetchDataset(dataset, true, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if ds.JoinSuggestions == nil {
+		return make([]*model.DatasetOrigin, 0), nil
+	}
+
+	origins := make([]*model.DatasetOrigin, len(ds.JoinSuggestions))
+	for i, js := range ds.JoinSuggestions {
+		origins[i] = &model.DatasetOrigin{
+			SearchResult:  js.DatasetOrigin.SearchResult,
+			Provenance:    js.DatasetOrigin.Provenance,
+			SourceDataset: dataset,
+		}
+	}
+
+	return origins, nil
 }
 
 func createMetadataStorageForSource(datasetSource metadata.DatasetSource, provenance string,

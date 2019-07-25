@@ -73,8 +73,8 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 	}
 
 	// create & submit the solution request
-	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview", "Join to be reviewed by user",
-		searchResult, provenance, joinLeft.DatasetID)
+	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview",
+		"Join to be reviewed by user", searchResult, provenance)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create join pipeline")
 	}
