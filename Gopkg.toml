@@ -91,11 +91,11 @@
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-compute"
-  branch = "multiple-augment-prepend"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-ingest"
-  branch = "multiple-augment-prepend"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/unchartedsoftware/plog"
