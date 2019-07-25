@@ -163,8 +163,6 @@ export default Vue.extend({
 					lat = null;
 				}
 			});
-			console.log('fields', fields);
-			
 			return fields;
 		},
 
@@ -194,8 +192,6 @@ export default Vue.extend({
 				}).filter(p => !!p);
 				groups.push(group);
 			});
-			console.log('groups', groups);
-			
 			return groups;
 		},
 
@@ -492,10 +488,8 @@ export default Vue.extend({
 				const hash = this.fieldHash(group.field);
 				
 				const layer = leaflet.layerGroup([]);
-				console.log('group.point', group.points);
 				
 				group.points.forEach(p => {
-					// console.log('p', p);
 					
 					const marker =  leaflet.marker(p, { row: p.row });
 					bounds.extend([p.lat, p.lng]);
@@ -520,20 +514,14 @@ export default Vue.extend({
 				// layer.addTo(this.map);
 
 			});
-			//console.log('bounds', bounds.getSize());
-			// let bbox = turf.bbox(bounds);
-			// console.log('bbox', bbox);
-			
 			
 			if (bounds.isValid()) {
-				console.log('this.pointGroups', this.pointGroups);
-				
+
 
 				this.map.fitBounds(bounds);
 				
 				// create a turf BBox
 				let bbox = turf.square(turf.square(bounds.toBBoxString().split(',').map(Number)));
-				console.log('bbox', bbox);
 				
 				//let bbox = turf.bbox(turf.envelope(turf.multiPoint(points)));
 				
@@ -577,8 +565,6 @@ export default Vue.extend({
 				
 				let count = turf.collect(squareGrid, multiPointFeature, 'z', 'z');
 
-				console.log('count', count);
-				
 			const pallete =  ["rgba(0,0,0,0)", "#F4F8FB", "#E9F2F8", "#DEEBF5", "#D3E5F1", "#C8DFEE", "#BDD8EB", "#B2D2E8", "#A7CCE4", "#9CC5E1", "#91BFDE", "#86B8DB", "#7BB2D7", "#70ACD4", "#65A5D1", "#5A9FCE", "#4F99CA", "#4492C7", "#398CC4", "#2E86C1"];
 
 			const maxVal = _.maxBy(count.features,(i) => i.properties.z).properties.z.length;
@@ -588,9 +574,6 @@ export default Vue.extend({
 			const domain = pallete.map((val,index) => minVal + d*(index+1));
 			
 			const scaleColors = scaleThreshold().range(pallete).domain(domain);
-
-				
-			console.log('getColorThresholdScale', scaleColors(2));
 				
 				let gridLayer = leaflet.geoJSON(count, {
 					    style: function (feature) {
@@ -627,7 +610,6 @@ export default Vue.extend({
 
 	mounted() {
 		this.paint();
-		// console.log('mapCenter', this.mapCenter);
 	}
 });
 

@@ -502,20 +502,16 @@ export const actions = {
 			console.warn('`type` argument is missing');
 			return null;
 		}
-		
-		let type = args.type;
 
 		if (args.type === GEOCOORDINATE_TYPE) {
 			console.log('geocoord selected');
 			mutations.updateVariableType(context, args);
-			mutations.setDataset(context, args.dataset);
-			type = LATITUDE_TYPE;
 
 			return;
 		}
 		return axios.post(`/distil/variables/${args.dataset}`, {
 				field: args.field,
-				type: type
+				type: args.type
 			})
 			.then(() => {
 				mutations.updateVariableType(context, args);

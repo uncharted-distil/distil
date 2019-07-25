@@ -113,7 +113,7 @@ export const mutations = {
 			variable.colType = args.type;
 			const GeocoordType = state.variables.find(d => d.colType === GEOCOORDINATE_TYPE);
 			if (GeocoordType) {
-				this.updateGeocoordVariables(state, [LONGITUDE_TYPE, LATITUDE_TYPE]);
+				Vue.set(state, 'isGeocoordinateFacet', [LONGITUDE_TYPE, LATITUDE_TYPE]);
 			}
 			console.table('state', state);
 			
@@ -140,10 +140,6 @@ export const mutations = {
 				col.type = args.type;
 			}
 		}
-	},
-
-	updateGeocoordVariables(state: DatasetState, variables: string[]) {
-		Vue.set(state, 'isGeocoordinateFacet', [LONGITUDE_TYPE, LATITUDE_TYPE]);
 	},
 	reviewVariableType(state: DatasetState, update) {
 		const index = _.findIndex(state.variables, v => {

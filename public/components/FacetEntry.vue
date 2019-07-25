@@ -51,17 +51,10 @@ export default Vue.extend({
 		};
 	},
 
-	updated() {
-		console.log('summary', this.summary);
-		
-	},
-
 	mounted() {
 
 		
 		const component = this;
-
-		console.log('this.isFacetTypeGeocoord', this.isFacetTypeGeocoord);
 
 		// Instantiate the external facets widget. The facets maintain their own copies
 		// of group objects which are replaced wholesale on changes.  Elsewhere in the code
@@ -194,8 +187,6 @@ export default Vue.extend({
 
 	computed: {
 		isFacetTypeGeocoord(): boolean {
-			console.log(this.summary);
-			
 			return this.summary.type === GEOCOORDINATE_TYPE;
 		},
 		ranking(): number {

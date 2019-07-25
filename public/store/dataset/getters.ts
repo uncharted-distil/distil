@@ -140,5 +140,9 @@ export const getters = {
 
 	getExcludedTableDataFields(state: DatasetState, getters: any): Dictionary<TableColumn> {
 		return getTableDataFields(state.excludedSet.tableData);
+	},
+
+	getGeocoordinateTypes(state: DatasetState): string[]{
+		return state.isGeocoordinateFacet;
 	}
 };

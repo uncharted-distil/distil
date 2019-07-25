@@ -57,7 +57,7 @@ import IconBookmark from './icons/IconBookmark';
 import { SuggestedType, Variable, Highlight } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, TIMESERIES_TYPE, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, TIMESERIES_TYPE, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS, GEOCOORDINATE_TYPE } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
 import { createRouteEntry } from '../util/routes';
 import { GROUPING_ROUTE } from '../store/route';
@@ -233,9 +233,6 @@ export default Vue.extend({
 			return combinedSuggestions;
 		},
 		onTypeChange(suggestedType) {
-
-			console.log('suggestedType', suggestedType);
-			
 			const type = suggestedType;
 			const field = this.field;
 			const dataset = this.dataset;
@@ -271,10 +268,6 @@ export default Vue.extend({
 				// 	});
 				// }
 			});
-		},
-		onGeocoordTypeChange(type){
-			console.log('onGeocoordTypeChange', type);
-			
 		}
 	},
 

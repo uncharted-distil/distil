@@ -18,6 +18,10 @@
 			</div>
 			<div class="row flex-1">
 				<div class="col-12 flex-column variable-facets-container h-100">
+					<div class="variable-facet-item" v-if="isGeocoordinateFacetAvailable">
+						gecoordinate facet
+						<!-- <geocoordinate-facet></geocoordinate-facet> -->
+					</div>
 					<div class="variable-facets-item" v-for="summary in paginatedSummaries" :key="summary.key">
 						<template v-if="summary.varType === 'timeseries' || isTimeseriesAnalysis">
 							<facet-timeseries
@@ -128,6 +132,12 @@ export default Vue.extend({
 
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
+		},
+
+		isGeocoordinateFacetAvailable(): boolean {
+			console.log('isGeocoordinateFacetAvailable', datasetGetters.getGeocoordinateTypes(this.$store));
+			
+			return datasetGetters.getGeocoordinateTypes(this.$store).length > 0;
 		},
 
 		filteredSummaries(): VariableSummary[] {

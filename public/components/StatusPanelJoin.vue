@@ -370,7 +370,6 @@ export default Vue.extend({
 			this.showJoinSuccess = false;
 		},
 		onJoinCommitSuccess(datasetID: string) {
-			console.log(this.target);
 			const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
 				dataset: datasetID,
 				target: this.target,
