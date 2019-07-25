@@ -88,6 +88,7 @@ type Config struct {
 	IsTask1                            bool    `env:"TASK1" envDefault:"false"`
 	IsTask2                            bool    `env:"TASK2" envDefault:"false"`
 	SkipPreprocessing                  bool    `env:"SKIP_PREPROCESSING" envDefault:"false"`
+	MaxTrainingRows                    int     `env:"MAX_TRAINING_ROWS" envDefault:"10000"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a
