@@ -104,6 +104,7 @@ import {
 	DatasetPendingRequestStatus,
 	JoinSuggestionPendingRequest,
 	JoinDatasetImportPendingRequest,
+	JOIN_DATASET_MAX_SIZE
 } from '../store/dataset/index';
 import JoinDatasetsPreview from '../components/JoinDatasetsPreview';
 import ErrorModal from '../components/ErrorModal';
@@ -180,7 +181,8 @@ export default Vue.extend({
 			return <JoinSuggestionPendingRequest>request;
 		},
 		joinSuggestions(): Dataset[] {
-			const joinSuggestions = this.joinSuggestionRequestData && this.joinSuggestionRequestData.suggestions;
+			const joinSuggestions = (this.joinSuggestionRequestData && this.joinSuggestionRequestData.suggestions)
+				.filter(s => s.numRows <= 100000);
 			return joinSuggestions || [];
 		},
 		joinedColumn(): string {
