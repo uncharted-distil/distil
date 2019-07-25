@@ -71,7 +71,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			}
 
 			// add the joining origin to the source dataset joining
-			origins, err := getDatasetOrigins(esStorage, originalDatasetID)
+			origins, err = getDatasetOrigins(esStorage, originalDatasetID)
 			if err != nil {
 				handleError(w, err)
 				return
