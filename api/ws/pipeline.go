@@ -168,12 +168,17 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	requestDataset, err := metaStorage.FetchDataset(request.Dataset, true, true)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to pull joined dataset"))
+		return
 	}
 
-	if requestDataset.DatasetOrigin != nil {
-		request.DatasetInput = requestDataset.DatasetOrigin.SourceDataset
-		request.SearchResult = requestDataset.DatasetOrigin.SearchResult
-		request.SearchProvenance = requestDataset.DatasetOrigin.Provenance
+	if requestDataset.JoinSuggestions != nil {
+		if len(requestDataset.JoinSuggestions) != 1 {
+			handleErr(conn, msg, errors.Wrapf(err, "only one augmentation can be prepended but %d were provided", len(requestDataset.JoinSuggestions)))
+			return
+		}
+		request.DatasetInput = requestDataset.JoinSuggestions[0].DatasetOrigin.SourceDataset
+		request.SearchResult = requestDataset.JoinSuggestions[0].DatasetOrigin.SearchResult
+		request.SearchProvenance = requestDataset.JoinSuggestions[0].DatasetOrigin.Provenance
 	}
 
 	// persist the request information and dispatch the request

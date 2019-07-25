@@ -81,7 +81,7 @@ type IngestTaskConfig struct {
 
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor,
-	index string, dataset string, origin *api.DatasetOrigin, config *IngestTaskConfig) error {
+	index string, dataset string, origins []*model.DatasetOrigin, config *IngestTaskConfig) error {
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
@@ -173,7 +173,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished geocoding the dataset")
 	}
 
-	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, origin, config)
+	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, origins, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -190,7 +190,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string,
-	dataset string, source metadata.DatasetSource, origin *api.DatasetOrigin, config *IngestTaskConfig) (string, error) {
+	dataset string, source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig) (string, error) {
 	datasetDir := path.Dir(schemaFile)
 	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative), true)
 	if err != nil {
@@ -224,10 +224,8 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// set the origin
-	if origin != nil {
-		meta.SearchResult = origin.SearchResult
-		meta.SearchProvenance = origin.Provenance
-		meta.SourceDataset = origin.SourceDataset
+	if origins != nil {
+		meta.DatasetOrigins = origins
 	}
 
 	// check and fix metadata issues

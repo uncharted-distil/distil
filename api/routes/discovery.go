@@ -135,11 +135,16 @@ func ProblemDiscoveryHandler(ctorData api.DataStorageCtor, ctorMeta api.Metadata
 		requestDataset, err := metadataStorage.FetchDataset(dataset, true, true)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to pull dataset info"))
+			return
 		}
-		if requestDataset.DatasetOrigin != nil {
-			req.DatasetInput = requestDataset.DatasetOrigin.SourceDataset
-			req.SearchResult = requestDataset.DatasetOrigin.SearchResult
-			req.SearchProvenance = requestDataset.DatasetOrigin.Provenance
+		if requestDataset.JoinSuggestions != nil {
+			if len(requestDataset.JoinSuggestions) != 1 {
+				handleError(w, errors.Wrapf(err, "only one join allowed in prepend, whereas the requested data transform has %d", len(requestDataset.JoinSuggestions)))
+				return
+			}
+			req.DatasetInput = requestDataset.JoinSuggestions[0].DatasetOrigin.SourceDataset
+			req.SearchResult = requestDataset.JoinSuggestions[0].DatasetOrigin.SearchResult
+			req.SearchProvenance = requestDataset.JoinSuggestions[0].DatasetOrigin.Provenance
 		}
 
 		// store the search solution request for this problem

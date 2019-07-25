@@ -93,7 +93,7 @@ func TestJoin(t *testing.T) {
 		DatasetSource: "contrib",
 	}
 
-	rightOrigin := &apiModel.DatasetOrigin{
+	rightOrigin := &model.DatasetOrigin{
 		SearchResult: "{}",
 		Provenance:   "NYU",
 	}

@@ -21,6 +21,7 @@ import (
 	"goji.io/pat"
 
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-ingest/metadata"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
@@ -54,6 +55,7 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		datasetRight, err := storage.FetchDataset(datasetIDRight, true, true)
 		if err != nil {
 			handleError(w, err)
+			return
 		}
 
 		leftJoin := &task.JoinSpec{
@@ -68,8 +70,32 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 			DatasetSource: metadata.DatasetSource(sourceRight),
 		}
 
+		// need to find the right join suggestion since a single dataset
+		// can have multiple join suggestions
+		var origin *model.DatasetOrigin
+		if datasetRight.JoinSuggestions != nil {
+			// parse POST params
+			params, err := getPostParameters(r)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+				return
+			}
+
+			if params == nil || params["searchResultIndex"] == nil {
+				handleError(w, errors.Errorf("Search result index needed for joined dataset import"))
+				return
+			}
+			searchResultIndexF, ok := params["searchResultIndex"].(float64)
+			if !ok {
+				handleError(w, errors.Errorf("Search result index needs to be an integer"))
+				return
+			}
+			searchResultIndex := int(searchResultIndexF)
+			origin = datasetRight.JoinSuggestions[searchResultIndex].DatasetOrigin
+		}
+
 		// run joining pipeline
-		data, err := task.Join(leftJoin, rightJoin, datasetLeft.Variables, datasetRight.Variables, datasetRight.DatasetOrigin)
+		data, err := task.Join(leftJoin, rightJoin, datasetLeft.Variables, datasetRight.Variables, origin)
 		if err != nil {
 			handleError(w, err)
 			return

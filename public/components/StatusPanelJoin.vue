@@ -331,14 +331,11 @@ export default Vue.extend({
 			});
 		},
 		importDataset(args: {datasetID: string, source: string, provenance: string}) {
-			const { id, provenance, datasetOrigin } = this.selectedDataset;
-			let searchResult;
-			if (datasetOrigin) {
-				searchResult = datasetOrigin.searchResult;
-			}
+			const { id, provenance, joinSuggestion } = this.selectedDataset;
+			const searchResults = joinSuggestion.map(j => j.datasetOrigin);
 			this.showStatusMessage = true;
 			if (!this.isImporting) {
-				datasetActions.importJoinDataset(this.$store, {datasetID: id, source: 'contrib', provenance, searchResult}).then(res => {
+				datasetActions.importJoinDataset(this.$store, {datasetID: id, source: 'contrib', provenance, searchResults}).then(res => {
 					if (res && (res.result === 'ingested')) {
 						this.importedItem.isAvailable = true;
 						this.importedDataset.source = 'contrib';
