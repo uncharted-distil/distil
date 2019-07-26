@@ -60,6 +60,7 @@ type JoinSuggestion struct {
 	JoinColumns   []string             `json:"joinColumns"`
 	JoinScore     float64              `json:"joinScore"`
 	DatasetOrigin *model.DatasetOrigin `json:"datasetOrigin"`
+	Index         int                  `json:"index"`
 }
 
 // FetchDataset builds a QueriedDataset from the needed parameters.

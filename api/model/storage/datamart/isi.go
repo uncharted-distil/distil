@@ -211,6 +211,8 @@ func parseISIJoinSuggestion(result *ISISearchResult, baseDataset *api.Dataset) (
 			BaseColumns:   leftColumnNames,
 			JoinColumns:   rightColumnNames,
 			DatasetOrigin: origin,
+			Index:         len(joins),
+			JoinScore:     result.Score,
 		})
 	}
 	return joins, materialization.Score, nil

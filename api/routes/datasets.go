@@ -176,6 +176,9 @@ func loadDatasets(storage model.MetadataStorage, terms string, baseDataset *mode
 				if ds.JoinScore > existingDataset.JoinScore {
 					existingDataset.JoinScore = ds.JoinScore
 				}
+				for _, js := range ds.JoinSuggestions {
+					js.Index = js.Index + len(existingDataset.JoinSuggestions)
+				}
 				existingDataset.JoinSuggestions = append(existingDataset.JoinSuggestions, ds.JoinSuggestions...)
 			}
 		}

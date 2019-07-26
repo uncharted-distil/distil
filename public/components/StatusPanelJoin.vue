@@ -34,9 +34,20 @@
 					<div class="description" v-html="item.dataset.description">
 						{{item.dataset.description}}
 					</div>
-					<div v-if="item.dataset.joinSuggestion && item.dataset.joinSuggestion[0]" class="suggested-columns">
-						<b>Suggested Join Columns: </b>{{item.dataset.joinSuggestion[0].joinColumns}}
-					</div>
+					<b-list-group>
+						<b-list-group-item
+                            v-for="suggestion in item.dataset.joinSuggestion"
+                            :key="suggestion.index"
+                            href="#"
+        					v-bind:class="{ selected: suggestion.selected }"
+        					:disabled="isImporting"
+        					@click="selectItem(suggestion)"
+						>
+                            <div  class="suggested-columns">
+                                <b>Suggested Join Columns: </b>{{suggestion.joinColumns}}
+                            </div>
+						</b-list-group-item>
+					</b-list-group>
 					<div>
 						<span>
 							<small v-if="!item.isAvailable" class="text-info">Requires import</small>

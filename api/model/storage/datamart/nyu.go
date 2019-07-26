@@ -135,6 +135,7 @@ func parseNYUJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) ([]*
 			JoinColumns:   rightColumnNames,
 			JoinScore:     result.Score,
 			DatasetOrigin: origin,
+			Index:         len(joins),
 		})
 	}
 	return joins, nil
