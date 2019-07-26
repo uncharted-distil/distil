@@ -127,11 +127,14 @@ export const getters = {
 			return false;
 		}
 		const task = getTask(targetVariable.colType);
+		const taskOriginal = getTask(targetVariable.colOriginalType);
 		if (!task) {
 			console.error('NULL task for regression task type check - defaulting to FALSE.  This should not happen.');
 			return false;
 		}
-		return !getters.isForecasting && task.schemaName === REGRESSION_TASK.schemaName;
+		const isForecasting = getters.isForecasting;
+		return !getters.isForecasting && task.schemaName === REGRESSION_TASK.schemaName
+			|| (isForecasting && taskOriginal.schemaName === REGRESSION_TASK.schemaName);
 	},
 
 	isClassification(state: SolutionState, getters: any): boolean {
@@ -142,11 +145,14 @@ export const getters = {
 			return false;
 		}
 		const task = getTask(targetVariable.colType);
+		const taskOriginal = getTask(targetVariable.colOriginalType);
 		if (!task) {
 			console.error('NULL task for classification task type check - defaulting to FALSE.  This should not happen.');
 			return false;
 		}
-		return !getters.isForecasting && task.schemaName === CLASSIFICATION_TASK.schemaName;
+		const isForecasting = getters.isForecasting;
+		return (!isForecasting && task.schemaName === CLASSIFICATION_TASK.schemaName)
+			|| (isForecasting && taskOriginal.schemaName === CLASSIFICATION_TASK.schemaName);
 	},
 
 	isForecasting(state: SolutionState, getters: any): boolean {
@@ -162,6 +168,7 @@ export const getters = {
 			console.error('NULL task for forecasting task type check - defaulting to FALSE.  This should not happen.');
 			return false;
 		}
+		console.log({variables, target, targetVariable, task});
 		return task.schemaName === TIMESERIES_FORECASTING_TASK.schemaName;
 	},
 
