@@ -164,6 +164,27 @@ func loadDatasets(storage model.MetadataStorage, terms string, baseDataset *mode
 
 	if terms != "" || baseDataset != nil {
 		datasetsPart, err = storage.SearchDatasets(terms, baseDataset, false, false)
+
+		// combine the suggestions by dataset since the datamarts may break them up
+		joinedSuggestions := make(map[string]*model.Dataset)
+		for _, ds := range datasetsPart {
+			existingDataset := joinedSuggestions[ds.Name]
+			if existingDataset == nil {
+				joinedSuggestions[ds.Name] = ds
+			} else {
+				// merge the suggestions while keeping the highest score
+				if ds.JoinScore > existingDataset.JoinScore {
+					existingDataset.JoinScore = ds.JoinScore
+				}
+				existingDataset.JoinSuggestions = append(existingDataset.JoinSuggestions, ds.JoinSuggestions...)
+			}
+		}
+
+		// write out to datasetsPart
+		datasetsPart = make([]*model.Dataset, 0)
+		for _, ds := range joinedSuggestions {
+			datasetsPart = append(datasetsPart, ds)
+		}
 	} else {
 		datasetsPart, err = storage.FetchDatasets(false, false)
 	}

@@ -133,6 +133,7 @@ func parseNYUJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) ([]*
 			BaseDataset:   baseDataset.ID,
 			BaseColumns:   leftColumnNames,
 			JoinColumns:   rightColumnNames,
+			JoinScore:     result.Score,
 			DatasetOrigin: origin,
 		})
 	}

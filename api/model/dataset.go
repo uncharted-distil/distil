@@ -58,6 +58,7 @@ type JoinSuggestion struct {
 	BaseDataset   string               `json:"baseDataset"`
 	BaseColumns   []string             `json:"baseColumns"`
 	JoinColumns   []string             `json:"joinColumns"`
+	JoinScore     float64              `json:"joinScore"`
 	DatasetOrigin *model.DatasetOrigin `json:"datasetOrigin"`
 }
 
