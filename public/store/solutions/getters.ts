@@ -168,7 +168,6 @@ export const getters = {
 			console.error('NULL task for forecasting task type check - defaulting to FALSE.  This should not happen.');
 			return false;
 		}
-		console.log({variables, target, targetVariable, task});
 		return task.schemaName === TIMESERIES_FORECASTING_TASK.schemaName;
 	},
 
