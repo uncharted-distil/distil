@@ -6,6 +6,8 @@ export const TIMESERIES_SUMMMARY = 'timeseries';
 
 export const D3M_INDEX_FIELD = 'd3mIndex';
 
+export const JOIN_DATASET_MAX_SIZE = 100000;
+
 export interface Highlight {
 	context: string;
 	dataset: string;
@@ -89,13 +91,13 @@ export interface Dataset {
 	source: string;
 	joinSuggestion?: JoinSuggestion[];
 	joinScore?: number;
-	datasetOrigin?: DatasetOrigin;
 }
 
 export interface JoinSuggestion {
 	baseDataset: string;
 	baseColumns: string[];
 	joinColumns: string[];
+	datasetOrigin?: DatasetOrigin;
 }
 
 export interface DatasetOrigin {

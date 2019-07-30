@@ -22,14 +22,16 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
+	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-ingest/metadata"
 	"github.com/uncharted-distil/distil/api/env"
-	"github.com/uncharted-distil/distil/api/model"
+	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
+	"github.com/uncharted-distil/distil/api/util/json"
 )
 
 // ImportHandler imports a dataset to the local file system and then ingests it.
-func ImportHandler(dataCtor model.DataStorageCtor, datamartCtors map[string]model.MetadataStorageCtor, fileMetaCtor model.MetadataStorageCtor, esMetaCtor model.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
+func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.MetadataStorageCtor, fileMetaCtor api.MetadataStorageCtor, esMetaCtor api.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		datasetID := pat.Param(r, "datasetID")
 		source := metadata.DatasetSource(pat.Param(r, "source"))
@@ -50,29 +52,42 @@ func ImportHandler(dataCtor model.DataStorageCtor, datamartCtors map[string]mode
 		}
 
 		// set the origin information
-		var origin *model.DatasetOrigin
-		searchResult, ok := params["searchResult"].(string)
-		if ok {
-			origin = &model.DatasetOrigin{
-				SearchResult: searchResult,
-				Provenance:   provenance,
-			}
-		}
-
+		var origins []*model.DatasetOrigin
 		originalDatasetID, ok := params["originalDatasetID"].(string)
 		joinedDatasetID, ok := params["joinedDatasetID"].(string)
 		if ok {
+			searchResultIndexF, ok := params["searchResultIndex"].(float64)
+			if !ok {
+				handleError(w, errors.Errorf("Search result index needed for joined dataset import"))
+				return
+			}
+			searchResultIndex := int(searchResultIndexF)
+
 			// get the joined dataset for the search result
 			joinedDataset, err := esStorage.FetchDataset(joinedDatasetID, true, true)
 			if err != nil {
 				handleError(w, err)
+				return
 			}
 
-			origin = &model.DatasetOrigin{
-				SearchResult:  joinedDataset.DatasetOrigin.SearchResult,
-				Provenance:    joinedDataset.DatasetOrigin.Provenance,
-				SourceDataset: originalDatasetID,
+			// add the joining origin to the source dataset joining
+			origins, err = getDatasetOrigins(esStorage, originalDatasetID)
+			if err != nil {
+				handleError(w, err)
+				return
 			}
+			origins = append(origins, &model.DatasetOrigin{
+				SearchResult:  joinedDataset.JoinSuggestions[searchResultIndex].DatasetOrigin.SearchResult,
+				Provenance:    joinedDataset.JoinSuggestions[searchResultIndex].DatasetOrigin.Provenance,
+				SourceDataset: originalDatasetID,
+			})
+		}
+
+		// multiple search results would be received if a single dataset has
+		// multiple join suggestions
+		searchResults, ok := json.Array(params, "searchResults")
+		if ok {
+			origins = api.ParseDatasetOriginsFromJSON(searchResults)
 		}
 
 		// update ingest config to use ingest URI.
@@ -101,7 +116,7 @@ func ImportHandler(dataCtor model.DataStorageCtor, datamartCtors map[string]mode
 		}
 
 		// ingest the imported dataset
-		err = task.IngestDataset(source, dataCtor, esMetaCtor, cfg.ESDatasetsIndex, datasetID, origin, &ingestConfig)
+		err = task.IngestDataset(source, dataCtor, esMetaCtor, cfg.ESDatasetsIndex, datasetID, origins, &ingestConfig)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -116,9 +131,31 @@ func ImportHandler(dataCtor model.DataStorageCtor, datamartCtors map[string]mode
 	}
 }
 
+func getDatasetOrigins(esStorage api.MetadataStorage, dataset string) ([]*model.DatasetOrigin, error) {
+	ds, err := esStorage.FetchDataset(dataset, true, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if ds.JoinSuggestions == nil {
+		return make([]*model.DatasetOrigin, 0), nil
+	}
+
+	origins := make([]*model.DatasetOrigin, len(ds.JoinSuggestions))
+	for i, js := range ds.JoinSuggestions {
+		origins[i] = &model.DatasetOrigin{
+			SearchResult:  js.DatasetOrigin.SearchResult,
+			Provenance:    js.DatasetOrigin.Provenance,
+			SourceDataset: dataset,
+		}
+	}
+
+	return origins, nil
+}
+
 func createMetadataStorageForSource(datasetSource metadata.DatasetSource, provenance string,
-	datamartCtors map[string]model.MetadataStorageCtor,
-	fileMetaCtor model.MetadataStorageCtor, esMetaCtor model.MetadataStorageCtor) (model.MetadataStorage, error) {
+	datamartCtors map[string]api.MetadataStorageCtor,
+	fileMetaCtor api.MetadataStorageCtor, esMetaCtor api.MetadataStorageCtor) (api.MetadataStorage, error) {
 	if datasetSource == metadata.Contrib {
 		return datamartCtors[provenance]()
 	}

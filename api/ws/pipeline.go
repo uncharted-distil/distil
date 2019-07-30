@@ -25,10 +25,11 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 
+	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/env"
-	"github.com/uncharted-distil/distil/api/model"
+	apiModel "github.com/uncharted-distil/distil/api/model"
 	jutil "github.com/uncharted-distil/distil/api/util/json"
 )
 
@@ -52,7 +53,8 @@ func SetProblemFile(file string) {
 }
 
 // SolutionHandler represents a solution websocket handler.
-func SolutionHandler(client *compute.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+func SolutionHandler(client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
+	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// create conn
@@ -71,7 +73,8 @@ func SolutionHandler(client *compute.Client, metadataCtor model.MetadataStorageC
 	}
 }
 
-func handleSolutionMessage(client *compute.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor) func(conn *Connection, bytes []byte) {
+func handleSolutionMessage(client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
+	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor) func(conn *Connection, bytes []byte) {
 	return func(conn *Connection, bytes []byte) {
 		// parse the message
 		msg, err := NewMessage(bytes)
@@ -95,7 +98,8 @@ func parseMessage(bytes []byte) (*Message, error) {
 	return msg, nil
 }
 
-func handleMessage(conn *Connection, client *compute.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor, msg *Message) {
+func handleMessage(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
+	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor, msg *Message) {
 	switch msg.Type {
 	case createSolutions:
 		handleCreateSolutions(conn, client, metadataCtor, dataCtor, solutionCtor, msg)
@@ -110,7 +114,8 @@ func handleMessage(conn *Connection, client *compute.Client, metadataCtor model.
 	}
 }
 
-func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCtor model.MetadataStorageCtor, dataCtor model.DataStorageCtor, solutionCtor model.SolutionStorageCtor, msg *Message) {
+func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
+	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor, msg *Message) {
 	// unmarshal request
 	request, err := api.NewSolutionRequest(msg.Raw)
 	if err != nil {
@@ -168,12 +173,14 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	requestDataset, err := metaStorage.FetchDataset(request.Dataset, true, true)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to pull joined dataset"))
+		return
 	}
 
-	if requestDataset.DatasetOrigin != nil {
-		request.DatasetInput = requestDataset.DatasetOrigin.SourceDataset
-		request.SearchResult = requestDataset.DatasetOrigin.SearchResult
-		request.SearchProvenance = requestDataset.DatasetOrigin.Provenance
+	if requestDataset.JoinSuggestions != nil {
+		request.DatasetAugmentations = make([]*model.DatasetOrigin, len(requestDataset.JoinSuggestions))
+		for i, js := range requestDataset.JoinSuggestions {
+			request.DatasetAugmentations[i] = js.DatasetOrigin
+		}
 	}
 
 	// persist the request information and dispatch the request

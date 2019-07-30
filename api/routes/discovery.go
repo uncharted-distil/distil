@@ -135,11 +135,14 @@ func ProblemDiscoveryHandler(ctorData api.DataStorageCtor, ctorMeta api.Metadata
 		requestDataset, err := metadataStorage.FetchDataset(dataset, true, true)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to pull dataset info"))
+			return
 		}
-		if requestDataset.DatasetOrigin != nil {
-			req.DatasetInput = requestDataset.DatasetOrigin.SourceDataset
-			req.SearchResult = requestDataset.DatasetOrigin.SearchResult
-			req.SearchProvenance = requestDataset.DatasetOrigin.Provenance
+		if requestDataset.JoinSuggestions != nil {
+			req.DatasetAugmentations = make([]*model.DatasetOrigin, len(requestDataset.JoinSuggestions))
+			for i, js := range requestDataset.JoinSuggestions {
+				req.DatasetAugmentations[i] = js.DatasetOrigin
+			}
+			req.DatasetInput = requestDataset.JoinSuggestions[0].DatasetOrigin.SourceDataset
 		}
 
 		// store the search solution request for this problem

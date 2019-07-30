@@ -4,6 +4,7 @@ import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
 import {
 	Dataset,
+	DatasetOrigin,
 	DatasetState,
 	Variable,
 	Grouping,
@@ -263,7 +264,11 @@ export const actions = {
 
 		let postParams = {};
 		if (args.originalDatasetID !== null) {
-			postParams = {originalDatasetID: args.originalDatasetID, joinedDatasetID: args.joinedDatasetID};
+			postParams = {
+				originalDatasetID: args.originalDatasetID,
+				joinedDatasetID: args.joinedDatasetID,
+				searchResultIndex: 0
+			};
 		}
 
 		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, postParams)
@@ -272,7 +277,7 @@ export const actions = {
 			});
 	},
 
-	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, searchResult: string }): Promise<any>  {
+	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, searchResults: DatasetOrigin[] }): Promise<any>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
@@ -288,7 +293,7 @@ export const actions = {
 		};
 		mutations.updatePendingRequests(context, update);
 		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {
-			searchResult: args.searchResult
+			searchResults: args.searchResults
 		}).then(response => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
 				return response && response.data;
@@ -388,7 +393,8 @@ export const actions = {
 		}
 
 		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetB.source}`, {
-			accuracy: args.joinAccuracy
+			accuracy: args.joinAccuracy,
+			searchResultIndex: 0
 		})
 			.then(response => {
 				return response.data;

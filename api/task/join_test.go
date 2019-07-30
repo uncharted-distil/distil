@@ -76,7 +76,7 @@ func TestJoin(t *testing.T) {
 	cfg, err := env.LoadConfig()
 	assert.NoError(t, err)
 
-	cfg.TmpDataPath = "test_data"
+	cfg.D3MOutputDir = "test_data"
 	cfg.D3MInputDir = "test_data"
 	cfg.DatamartImportFolder = "test_data"
 	env.Initialize(&cfg)
@@ -93,7 +93,7 @@ func TestJoin(t *testing.T) {
 		DatasetSource: "contrib",
 	}
 
-	rightOrigin := &apiModel.DatasetOrigin{
+	rightOrigin := &model.DatasetOrigin{
 		SearchResult: "{}",
 		Provenance:   "NYU",
 	}

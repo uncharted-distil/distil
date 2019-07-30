@@ -18,7 +18,10 @@
 			<div v-if="filteredSuggestedItems.length === 0">
 				No datasets are found
 			</div>
-			<b-list-group>
+			<div v-if="isAttemptingJoin || isImporting && importedDataset">
+				<div v-html="spinnerHTML"></div>
+			</div>
+			<b-list-group v-else>
 				<b-list-group-item
 					v-for="item in filteredSuggestedItems"
 					:key="item.key"
@@ -101,6 +104,7 @@ import {
 	DatasetPendingRequestStatus,
 	JoinSuggestionPendingRequest,
 	JoinDatasetImportPendingRequest,
+	JOIN_DATASET_MAX_SIZE
 } from '../store/dataset/index';
 import JoinDatasetsPreview from '../components/JoinDatasetsPreview';
 import ErrorModal from '../components/ErrorModal';
@@ -111,6 +115,7 @@ import { actions as viewActions } from '../store/view/module';
 import { StatusPanelState, StatusPanelContentType } from '../store/app';
 import { createRouteEntry } from '../util/routes';
 import { formatBytes } from '../util/bytes';
+import { circleSpinnerHTML } from '../util/spinner';
 import { isDatamartProvenance } from '../util/data';
 import { JOIN_DATASETS_ROUTE } from '../store/route/index';
 import { SELECT_TRAINING_ROUTE } from '../store/route';
@@ -176,7 +181,8 @@ export default Vue.extend({
 			return <JoinSuggestionPendingRequest>request;
 		},
 		joinSuggestions(): Dataset[] {
-			const joinSuggestions = this.joinSuggestionRequestData && this.joinSuggestionRequestData.suggestions;
+			const joinSuggestions = (this.joinSuggestionRequestData && this.joinSuggestionRequestData.suggestions)
+				.filter(s => s.numRows <= 100000);
 			return joinSuggestions || [];
 		},
 		joinedColumn(): string {
@@ -236,6 +242,9 @@ export default Vue.extend({
 				? this.selectedDataset.joinSuggestion[0].joinColumns
 				: [];
 		},
+		spinnerHTML(): string {
+			return circleSpinnerHTML();
+		}
 	},
 	methods: {
 		addRecentDataset(dataset: string) {
@@ -324,14 +333,11 @@ export default Vue.extend({
 			});
 		},
 		importDataset(args: {datasetID: string, source: string, provenance: string}) {
-			const { id, provenance, datasetOrigin } = this.selectedDataset;
-			let searchResult;
-			if (datasetOrigin) {
-				searchResult = datasetOrigin.searchResult;
-			}
+			const { id, provenance, joinSuggestion } = this.selectedDataset;
+			const searchResults = joinSuggestion.map(j => j.datasetOrigin);
 			this.showStatusMessage = true;
 			if (!this.isImporting) {
-				datasetActions.importJoinDataset(this.$store, {datasetID: id, source: 'contrib', provenance, searchResult}).then(res => {
+				datasetActions.importJoinDataset(this.$store, {datasetID: id, source: 'contrib', provenance, searchResults}).then(res => {
 					if (res && (res.result === 'ingested')) {
 						this.importedItem.isAvailable = true;
 						this.importedDataset.source = 'contrib';
