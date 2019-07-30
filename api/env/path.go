@@ -34,7 +34,7 @@ const (
 var (
 	seedPath    = ""
 	contribPath = ""
-	tmpPath     = ""
+	outputPath  = ""
 
 	seedSubPath   = ""
 	augmentedPath = ""
@@ -57,16 +57,16 @@ func Initialize(config *Config) error {
 
 	seedPath = updatedInputPath
 	seedSubPath = path.Join("TRAIN", "dataset_TRAIN")
-	tmpPath = config.TmpDataPath
+	outputPath = config.D3MOutputDir
 
 	contribPath = config.DatamartImportFolder
-	augmentedPath = path.Join(config.TmpDataPath, config.AugmentedSubFolder)
+	augmentedPath = path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
 
 	isTask = config.IsTask1 || config.IsTask2
 
 	log.Infof("using '%s' as seed path", seedPath)
 	log.Infof("using '%s' as seed sub path", seedSubPath)
-	log.Infof("using '%s' as tmp path", tmpPath)
+	log.Infof("using '%s' as tmp path", outputPath)
 	log.Infof("using '%s' as contrib path", contribPath)
 	log.Infof("using '%s' as augmented path", augmentedPath)
 	log.Infof("isTask set to '%v'", isTask)
@@ -135,7 +135,7 @@ func findSeedDatasetDirectory(inputPath string) (string, error) {
 
 // GetTmpPath returns the tmp path as initialized.
 func GetTmpPath() string {
-	return tmpPath
+	return outputPath
 }
 
 // ResolvePath returns an absolute path based on the dataset source.
@@ -176,5 +176,5 @@ func resolveAugmentedPath(relativePath string) string {
 }
 
 func resolveTmpPath(relativePath string) string {
-	return path.Join(tmpPath, relativePath)
+	return path.Join(outputPath, relativePath)
 }
