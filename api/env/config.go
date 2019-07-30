@@ -37,22 +37,20 @@ type Config struct {
 	SolutionComputePullMax             int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
 	SolutionSearchMaxTime              int     `env:"SOLUTION_SEARCH_MAX_TIME" envDefault:"10"`
 	AugmentedSubFolder                 string  `env:"AUGMENTED_SUBFOLDER" envDefault:"augmented"`
-	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:""`
+	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:"datasets"`
+	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
 	DatamartURIISI                     string  `env:"DATAMART_URL_ISI" envDefault:"http://dsbox02.isi.edu:9000"`
 	DatamartURINYU                     string  `env:"DATAMART_URL_NYU" envDefault:"https://datamart.d3m.vida-nyu.org"`
 	DatamartISIEnabled                 bool    `env:"DATAMART_ISI_ENABLED" envDefault:"false"`
 	DatamartNYUEnabled                 bool    `env:"DATAMART_NYU_ENABLED" envDefault:"true"`
-	DatamartImportFolder               string  `env:"DATAMART_IMPORT_FOLDER" envDefault:"/data/datamart"`
+	DatamartImportFolder               string  `env:"DATAMART_IMPORT_FOLDER" envDefault:"datamart"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
-	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
 	PostgresPort                       int     `env:"PG_PORT" envDefault:"5432"`
 	PostgresUser                       string  `env:"PG_USER" envDefault:"distil"`
 	PostgresPassword                   string  `env:"PG_PASSWORD" envDefault:""`
 	PostgresDatabase                   string  `env:"PG_DATABASE" envDefault:"distil"`
 	PostgresLogLevel                   string  `env:"PG_LOG_LEVEL" envDefault:"none"`
-	TmpDataPath                        string  `env:"TEMP_STORAGE_ROOT" envDefault:"/d3m/data"`
-	DataFolderPath                     string  `env:"DATA_FOLDER_PATH" envDefault:"/d3m/data"`
 	ClusteringOutputDataRelative       string  `env:"CLUSTERING_OUTPUT_DATA" envDefault:"clusters/tables/learningData.csv"`
 	ClusteringOutputSchemaRelative     string  `env:"CLUSTERING_OUTPUT_SCHEMA" envDefault:"clusters/datasetDoc.json"`
 	ClusteringEnabled                  bool    `env:"CLUSTERING_ENABLED" envDefault:"false"`
@@ -80,7 +78,7 @@ type Config struct {
 	ElasticDatasetPrefix               string  `env:"ES_DATASET_PREFIX" envDefault:"d_"`
 	InitialDataset                     string  `env:"INITIAL_DATASET" envDefault:""`
 	ESDatasetsIndex                    string  `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
-	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"/outputs/problems"`
+	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"outputs/problems"`
 	SkipIngest                         bool    `env:"SKIP_INGEST" envDefault:"false"`
 	IngestHardFail                     bool    `env:"INGEST_HARD_FAIL" envDefault:"false"`
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`

@@ -96,7 +96,7 @@ func main() {
 	}
 
 	// set dataset directory
-	api.SetDatasetDir(config.TmpDataPath)
+	api.SetDatasetDir(config.D3MOutputDir)
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
@@ -133,7 +133,7 @@ func main() {
 	esMetadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
 
 	// instantiate the metadata storage (using filesystem).
-	fileMetadataStorageCtor := file.NewMetadataStorage(config.TmpDataPath)
+	fileMetadataStorageCtor := file.NewMetadataStorage(config.D3MOutputDir)
 
 	// instantiate the postgres data storage constructor.
 	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, esMetadataStorageCtor)
@@ -234,7 +234,7 @@ func main() {
 		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
 		HardFail:                           config.IngestHardFail,
 	}
-	sourceFolder := config.DataFolderPath
+	sourceFolder := config.D3MInputDir
 
 	// instantiate the metadata storage (using datamart).
 	datamartCtors := make(map[string]model.MetadataStorageCtor)
@@ -327,14 +327,14 @@ func main() {
 	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid", routes.PredictedSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/cluster/:dataset/:variable", routes.ClusteringHandler(esMetadataStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.TmpDataPath, config.AugmentedSubFolder), ingestConfig))
+	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), ingestConfig))
 	registerRoutePost(mux, "/distil/join/:dataset-left/:source-left/:dataset-right/:source-right", routes.JoinHandler(esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:invert", routes.TimeseriesHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries-forecast/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:result-uuid", routes.TimeseriesForecastHandler(pgDataStorageCtor, pgSolutionStorageCtor))
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:source/:file", routes.ImageHandler(esMetadataStorageCtor, &config))
-	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.DataFolderPath))
+	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.D3MInputDir))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown
