@@ -374,14 +374,6 @@ export const actions = {
 			console.warn('`datasetB` argument is missing');
 			return null;
 		}
-		if (!args.datasetAColumn) {
-			console.warn('`datasetAColumn` argument is missing');
-			return null;
-		}
-		if (!args.datasetBColumn) {
-			console.warn('`datasetBColumn` argument is missing');
-			return null;
-		}
 
 		if (_.isNil(args.joinAccuracy)) {
 			console.warn('`joinAccuracy` argument is missing');
