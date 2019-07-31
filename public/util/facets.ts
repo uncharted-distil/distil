@@ -336,19 +336,18 @@ function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 		timeseries = datasetGetters.getTimeseries(store);
 		timeseries = timeseries[group.dataset];
 	}
-	if (timeseries) {
-		group.all.forEach((facet: CategoricalFacet) => {
-			if (summary.solutionId) {
-				facet.multipleTimeseries = [
-					timeseries[facet.file],
-					forecasts[facet.file]
-				];
-				facet.colors = [ '#000', '#00c6e1' ];
-			} else {
-				facet.timeseries = timeseries[facet.file];
-			}
-		});
-	}
+
+	group.all.forEach((facet: CategoricalFacet) => {
+		if (summary.solutionId) {
+			facet.multipleTimeseries = [
+				timeseries[facet.file],
+				forecasts[facet.file]
+			];
+			facet.colors = [ '#000', '#00c6e1' ];
+		} else {
+			facet.timeseries = timeseries[facet.file];
+		}
+	});
 
 	return group;
 }
