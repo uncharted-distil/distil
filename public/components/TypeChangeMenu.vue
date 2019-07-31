@@ -175,18 +175,23 @@ export default Vue.extend({
 				{
 					type: TIMESERIES_TYPE,
 					label: 'Timeseries...'
+				},
+				{
+					type: GEOCOORDINATE_TYPE,
+					label: 'Geocoordinate...'
 				}
 			];
 		},
 
 		onGroupingSelect(type) {
-			if (type === TIMESERIES_TYPE) {
+			if (type === TIMESERIES_TYPE || type === GEOCOORDINATE_TYPE) {
 				const entry = createRouteEntry(GROUPING_ROUTE, {
-					dataset: routeGetters.getRouteDataset(this.$store)
+					dataset: routeGetters.getRouteDataset(this.$store),
+					groupingType: type
 				});
 				this.$router.push(entry);
 			} else {
-
+				console.log('hit')
 				const grouping = this.variable.grouping;
 				datasetActions.removeGrouping(this.$store, {
 					dataset: this.dataset,
@@ -237,15 +242,16 @@ export default Vue.extend({
 			const field = this.field;
 			const dataset = this.dataset;
 
-			if (type === GEOCOORDINATE_TYPE){
-				datasetActions.setVariableType(this.$store, {
-					dataset: dataset,
-					field: field,
-					type: type
-				})
-				return;
+			// old logic
+			// if (type === GEOCOORDINATE_TYPE){
+			// 	datasetActions.setVariableType(this.$store, {
+			// 		dataset: dataset,
+			// 		field: field,
+			// 		type: type
+			// 	})
+			// 	return;
 				
-			}
+			// }
 
 			datasetActions.setVariableType(this.$store, {
 				dataset: dataset,

@@ -325,5 +325,8 @@ export const getters = {
 		}
 		const split = geo.split(',');
 		return _.toNumber(split[2]);
+	},
+	getGroupingType(state: Route): string {
+		return state.query.groupingType as string;
 	}
 };

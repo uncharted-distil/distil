@@ -54,5 +54,6 @@ export const getters = {
 	getDecodedRowSelection: read(moduleGetters.getDecodedRowSelection),
 	getActiveSolutionIndex: read(moduleGetters.getActiveSolutionIndex),
 	getGeoCenter: read(moduleGetters.getGeoCenter),
-	getGeoZoom: read(moduleGetters.getGeoZoom)
+	getGeoZoom: read(moduleGetters.getGeoZoom),
+	getGroupingType: read(moduleGetters.getGroupingType)
 };
