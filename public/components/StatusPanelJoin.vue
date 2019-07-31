@@ -38,10 +38,11 @@
 						<b>Suggested Join Columns: </b>{{item.dataset.joinSuggestion[0].joinColumns}}
 					</div>
 					<div>
-						<span>
+						<!-- Skip import step for now -->
+						<!-- <span>
 							<small v-if="!item.isAvailable" class="text-info">Requires import</small>
 							<small v-if="item.isAvailable" class="text-success">Ready for join</small>
-						</span>
+						</span> -->
 						<span class="float-right">
 							<small class="text-muted">{{formatNumber(item.dataset.numRows)}} rows</small>
 							<small class="text-muted">{{formatBytes(item.dataset.numBytes)}}</small>
@@ -295,29 +296,27 @@ export default Vue.extend({
 		},
 		join() {
 			const selected = this.selectedItem;
-			if (selected.isAvailable === false) {
+			// skip import step for now
+			/* if (selected.isAvailable === false) {
 				const importAskModal: any = this.$refs['import-ask-modal'];
 				return importAskModal.show();
-			}
-			this.previewJoin(this.dataset, selected.dataset, this.baseColumnSuggestions[0], this.joinColumnSuggestions[0]);
-		},
-		previewJoin(datasetA, datasetB, datasetAColumn, datasetBColumn) {
-			this.isAttemptingJoin = true;
-			const a = _.find(this.datasets, d => {
-				return d.id === datasetA;
+			} */
+			const currentDataset = _.find(this.datasets, d => {
+				return d.id === this.dataset;
 			});
-
-			this.datasetAid = datasetA;
+			this.previewJoin(currentDataset, selected.dataset);
+		},
+		previewJoin(datasetA, datasetB) {
+			this.isAttemptingJoin = true;
+			this.datasetAid = datasetA.id;
 			this.datasetBid = datasetB.id;
-			this.datasetAColumn = datasetAColumn;
-			this.datasetBColumn = datasetBColumn;
 			const datasetJoinInfo = {
-				datasetA: a,
-				datasetB: datasetB,
-				datasetAColumn: datasetAColumn,
-				datasetBColumn: datasetBColumn,
+				datasetA,
+				datasetB,
 				joinAccuracy: 1
 			};
+
+			console.log(datasetJoinInfo);
 
 			// dispatch action that triggers request send to server
 			datasetActions.joinDatasetsPreview(this.$store, datasetJoinInfo).then(tableData => {

@@ -16,6 +16,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 
 	"goji.io/pat"
@@ -31,16 +32,21 @@ import (
 // JoinHandler generates a route handler that joins two datasets using caller supplied
 // columns.  The joined data is returned to the caller, but is NOT added to storage.
 func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+	fmt.Printf("testing\n")
 	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("testing 2\n")
 		// get dataset name
 		datasetIDLeft := pat.Param(r, "dataset-left")
 		sourceLeft := pat.Param(r, "source-left")
 		datasetIDRight := pat.Param(r, "dataset-right")
 		sourceRight := pat.Param(r, "source-right")
 
+		fmt.Printf("%v, %v, %v, %v\n", datasetIDLeft, sourceLeft, datasetIDRight, sourceRight)
+
 		// get storage client
 		storage, err := metaCtor()
 		if err != nil {
+			fmt.Printf("%v\n", err)
 			handleError(w, err)
 			return
 		}
@@ -48,15 +54,19 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		// fetch vars for each dataset
 		datasetLeft, err := storage.FetchDataset(datasetIDLeft, true, true)
 		if err != nil {
+			fmt.Printf("%v\n", err)
 			handleError(w, err)
 			return
 		}
+		fmt.Printf("dsl: %v, %v, %v, %v\n", datasetLeft.ID, datasetIDLeft, sourceLeft, metadata.DatasetSource(sourceLeft))
 
 		datasetRight, err := storage.FetchDataset(datasetIDRight, true, true)
 		if err != nil {
+			fmt.Printf("%v\n", err)
 			handleError(w, err)
 			return
 		}
+		fmt.Printf("dsr: %v\n", datasetRight)
 
 		leftJoin := &task.JoinSpec{
 			DatasetID:     datasetLeft.ID,
@@ -65,7 +75,7 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		}
 
 		rightJoin := &task.JoinSpec{
-			DatasetID:     datasetRight.ID,
+			DatasetID:     datasetIDRight,
 			DatasetFolder: datasetRight.Folder,
 			DatasetSource: metadata.DatasetSource(sourceRight),
 		}
@@ -77,26 +87,31 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 			// parse POST params
 			params, err := getPostParameters(r)
 			if err != nil {
+				fmt.Printf("%v\n", err)
 				handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
 				return
 			}
 
 			if params == nil || params["searchResultIndex"] == nil {
+				fmt.Printf("%v\n", err)
 				handleError(w, errors.Errorf("Search result index needed for joined dataset import"))
 				return
 			}
 			searchResultIndexF, ok := params["searchResultIndex"].(float64)
 			if !ok {
+				fmt.Printf("%v\n", err)
 				handleError(w, errors.Errorf("Search result index needs to be an integer"))
 				return
 			}
 			searchResultIndex := int(searchResultIndexF)
 			origin = datasetRight.JoinSuggestions[searchResultIndex].DatasetOrigin
+			fmt.Printf("%v, %v\n", origin, searchResultIndex)
 		}
 
 		// run joining pipeline
 		data, err := task.Join(leftJoin, rightJoin, datasetLeft.Variables, datasetRight.Variables, origin)
 		if err != nil {
+			fmt.Printf("%v\n", err)
 			handleError(w, err)
 			return
 		}
@@ -104,6 +119,7 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		// marshal output into JSON
 		bytes, err := json.Marshal(data)
 		if err != nil {
+			fmt.Printf("%v\n", err)
 			handleError(w, errors.Wrap(err, "unable marshal filtered data result into JSON"))
 			return
 		}

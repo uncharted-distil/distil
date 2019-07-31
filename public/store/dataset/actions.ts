@@ -212,9 +212,6 @@ export const actions = {
 		*/
 		const query = args.searchQuery ? `?search=${args.searchQuery.split(' ').join(',')}` : '';
 		return axios.get(`/distil/join-suggestions/${args.dataset + query}`)
-			.then(res => {
-				return axios.get(`/distil/join-suggestions/${args.dataset + query}`);
-			})
 			.then((response) => {
 				const suggestions = (response.data && response.data.datasets) || [];
 				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, suggestions });
@@ -368,7 +365,7 @@ export const actions = {
 			});
 	},
 
-	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, datasetAColumn: string, datasetBColumn: string, joinAccuracy: number }): Promise<void>  {
+	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, joinAccuracy: number }): Promise<void>  {
 		if (!args.datasetA) {
 			console.warn('`datasetA` argument is missing');
 			return null;
@@ -391,7 +388,9 @@ export const actions = {
 			return null;
 		}
 
-		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetB.source}`, {
+		console.log(args);
+
+		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetB.source || args.datasetB.provenance}`, {
 			accuracy: args.joinAccuracy,
 			searchResultIndex: 0
 		})
@@ -678,6 +677,7 @@ export const actions = {
 		mutations.updatePendingRequests(context, update);
 		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
 			.then(response => {
+				// console.log({response, data: response.data, rankings: response.data.rankings});
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED, rankings: response.data.rankings});
 			})
 			.catch(error => {

@@ -167,8 +167,9 @@ export default Vue.extend({
 			datasetActions.joinDatasetsPreview(this.$store, {
 				datasetA: a,
 				datasetB: b,
-				datasetAColumn: this.datasetAColumn.key,
-				datasetBColumn: this.datasetBColumn.key,
+				// commented out while join is simplified
+				// datasetAColumn: this.datasetAColumn.key,
+				// datasetBColumn: this.datasetBColumn.key,
 				joinAccuracy: this.joinAccuracy
 			}).then(tableData => {
 				this.pending = false;
