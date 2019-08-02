@@ -365,7 +365,7 @@ export const actions = {
 			});
 	},
 
-	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, joinAccuracy: number }): Promise<void>  {
+	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, joinAccuracy: number, joinSuggestionIndex: number }): Promise<void>  {
 		if (!args.datasetA) {
 			console.warn('`datasetA` argument is missing');
 			return null;
@@ -384,13 +384,12 @@ export const actions = {
 
 		return axios.post(`/distil/join`, {
 			accuracy: args.joinAccuracy,
-			searchResultIndex: 0,
 			datasetLeft: args.datasetA,
 			datasetRight: args.datasetB,
-		})
-			.then(response => {
-				return response.data;
-			});
+			searchResultIndex: args.joinSuggestionIndex
+		}).then(response => {
+			return response.data;
+		});
 	},
 
 	setGrouping(context: DatasetContext, args: { dataset: string, grouping: Grouping }): Promise<any>  {

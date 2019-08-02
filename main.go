@@ -105,30 +105,6 @@ func main() {
 	postgresClientCtor := postgres.NewClient(config.PostgresHost, config.PostgresPort, config.PostgresUser, config.PostgresPassword,
 		config.PostgresDatabase, config.PostgresLogLevel)
 
-	// wait for required services.
-	servicesToWait["postgres"] = func() bool {
-		_, err := postgresClientCtor()
-		return err == nil
-	}
-	servicesToWait["elastic"] = func() bool {
-		_, err := esClientCtor()
-		return err == nil
-	}
-
-	// make sure a connection can be made to postgres - doesn't appear to be thread safe and
-	// causes panic if deferred, so we'll do it an a retry loop here.  We need to provide
-	// flexibility on startup because we can't guarantee the DB will be up before the server.
-	for name, test := range servicesToWait {
-		log.Infof("Waiting for service '%s'", name)
-		err = service.WaitForService(name, &config, test)
-		if err == nil {
-			log.Infof("Service '%s' is up", name)
-		} else {
-			log.Errorf("%+v", err)
-			os.Exit(1)
-		}
-	}
-
 	// instantiate the metadata storage (using ES).
 	esMetadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
 
@@ -173,6 +149,34 @@ func main() {
 		}
 	}
 	defer solutionClient.Close()
+
+	// wait for required services.
+	servicesToWait["postgres"] = func() bool {
+		_, err := postgresClientCtor()
+		return err == nil
+	}
+	servicesToWait["elastic"] = func() bool {
+		_, err := esClientCtor()
+		return err == nil
+	}
+	servicesToWait["ta2"] = func() bool {
+		err := solutionClient.Hello()
+		return err == nil
+	}
+
+	// make sure a connection can be made to postgres - doesn't appear to be thread safe and
+	// causes panic if deferred, so we'll do it an a retry loop here.  We need to provide
+	// flexibility on startup because we can't guarantee the DB will be up before the server.
+	for name, test := range servicesToWait {
+		log.Infof("Waiting for service '%s'", name)
+		err = service.WaitForService(name, &config, test)
+		if err == nil {
+			log.Infof("Service '%s' is up", name)
+		} else {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
+	}
 
 	// reset the exported problem list
 	if config.IsTask1 {
