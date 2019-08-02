@@ -139,6 +139,27 @@ func parseNYUJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) ([]*
 	return joins, nil
 }
 
+func mapNYUDataTypesToDistil(nyuType string) string {
+	switch nyuType {
+	case "http://schema.org/Boolean":
+		return model.BoolType
+	case "http://schema.org/DateTime":
+		return model.DateTimeType
+	case "http://schema.org/Float":
+		return model.RealType
+	case "http://schema.org/Integer":
+		return model.IntegerType
+	case "http://schema.org/latitude":
+		return model.LatitudeType
+	case "http://schema.org/longitude":
+		return model.LongitudeType
+	case "http://schema.org/Text":
+		return model.StringType
+	default:
+		return model.UnknownType
+	}
+}
+
 func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.Dataset, error) {
 	var dmResult SearchResults
 	err := json.Unmarshal(responseRaw, &dmResult)
@@ -146,15 +167,23 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 		return nil, errors.Wrap(err, "unable to parse NYU datamart search request")
 	}
 
+	var allTypes = make(map[string]int, 100)
+
 	datasets := make([]*api.Dataset, 0)
 
 	for _, res := range dmResult.Results {
 		vars := make([]*model.Variable, 0)
 		for _, c := range res.Metadata.Columns {
 			vars = append(vars, &model.Variable{
-				Name:        c.Name,
-				DisplayName: c.Name,
+				Name:         c.Name,
+				DisplayName:  c.Name,
+				OriginalType: mapNYUDataTypesToDistil(c.StructuralType),
 			})
+			var allVarTypes []string
+			allVarTypes = append(allVarTypes, c.StructuralType)
+			for _, avt := range allVarTypes {
+				allTypes[avt] = 1
+			}
 		}
 
 		joinSuggestions, err := parseNYUJoinSuggestion(res, baseDataset)
@@ -170,11 +199,14 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			NumBytes:        int64(res.Metadata.Size),
 			Variables:       vars,
 			Provenance:      ProvenanceNYU,
+			Source:          "contrib",
 			JoinSuggestions: joinSuggestions,
 			JoinScore:       res.Score,
+			// parse out more information for type
 		})
 	}
 
+	fmt.Printf("%+v\n", allTypes)
 	return datasets, nil
 }
 

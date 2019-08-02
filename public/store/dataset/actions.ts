@@ -382,9 +382,11 @@ export const actions = {
 
 		console.log(args);
 
-		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetB.source || args.datasetB.provenance}`, {
+		return axios.post(`/distil/join`, {
 			accuracy: args.joinAccuracy,
-			searchResultIndex: 0
+			searchResultIndex: 0,
+			datasetLeft: args.datasetA,
+			datasetRight: args.datasetB,
 		})
 			.then(response => {
 				return response.data;
