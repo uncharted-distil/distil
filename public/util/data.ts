@@ -4,10 +4,10 @@ import Vue from 'vue';
 import { Variable, VariableSummary, TimeseriesSummary, TableData, TableRow, TableColumn, Grouping, D3M_INDEX_FIELD } from '../store/dataset/index';
 import { Solution, SOLUTION_COMPLETED } from '../store/solutions/index';
 import { Dictionary } from './dict';
-import { Group } from './facets';
 import { FilterParams } from './filters';
 import store from '../store/store';
 import { actions as resultsActions } from '../store/results/module';
+import { ResultsContext } from '../store/results/actions';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { formatValue, TIMESERIES_TYPE, isTimeType, isIntegerType } from '../util/types';
 
@@ -249,21 +249,25 @@ export function createErrorSummary(key: string, label: string, dataset: string, 
 }
 
 export function fetchSolutionResultSummary(
-	context: any,
+	context: ResultsContext,
 	endpoint: string,
 	solution: Solution,
 	target: string,
 	key: string,
 	label: string,
-	updateFunction: (arg: any, summary: VariableSummary) => void,
+	resultSummaries: VariableSummary[],
+	updateFunction: (arg: ResultsContext, summary: VariableSummary) => void,
 	filterParams: FilterParams): Promise<any> {
 
 	const dataset = solution.dataset;
 	const solutionId = solution.solutionId;
 	const resultId = solution.resultId;
 
-	// save a placeholder histogram
-	updateFunction(context, createPendingSummary(key, label, dataset, solutionId));
+	const exists = _.find(resultSummaries, v => v.dataset === dataset && v.key === key);
+	if (!exists) {
+		// add placeholder
+		updateFunction(context, createPendingSummary(key, label, dataset, solutionId));
+	}
 
 	// fetch the results for each solution
 	if (solution.progress !== SOLUTION_COMPLETED) {
