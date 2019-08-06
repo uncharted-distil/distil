@@ -18,6 +18,7 @@ package routes
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -81,24 +82,65 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 			DatasetSource: metadata.DatasetSource(datasetRight["source"].(string)),
 		}
 
-		leftVariables := datasetLeft["variables"].([]*model.Variable)
-		rightVariables := datasetRight["variables"].([]*model.Variable)
+		leftVariableInterfaces := datasetLeft["variables"].([]interface{})
+		rightVariableInterfaces := datasetRight["variables"].([]interface{})
+		leftVariables := make([]model.Variable, len(leftVariableInterfaces))
+		rightVariables := make([]model.Variable, len(rightVariableInterfaces))
+		for i := range leftVariableInterfaces {
+			v := model.Variable{}
+			err := json.MapToStruct(&v, leftVariableInterfaces[i].(map[string]interface{}))
+			if err != nil {
+				handleError(w, errors.Wrap(err, "Unable to parse Variable parameter"))
+				return
+			}
+			leftVariables[i] = v
+		}
 
-		fmt.Printf("jsl: %+v\n\n\n\njsr: %+v\n\n\n\n", leftJoin, rightJoin)
+		for i := range rightVariableInterfaces {
+			v := model.Variable{}
+			err := json.MapToStruct(&v, rightVariableInterfaces[i].(map[string]interface{}))
+			if err != nil {
+				handleError(w, errors.Wrap(err, "Unable to parse Variable parameter"))
+				return
+			}
+			rightVariables[i] = v
+		}
+		leftVariableReferences := make([]*model.Variable, len(leftVariables))
+		rightVariableReferences := make([]*model.Variable, len(rightVariables))
+
+		for i := range leftVariables {
+			leftVariableReferences[i] = &leftVariables[i]
+		}
+		for i := range rightVariables {
+			rightVariableReferences[i] = &rightVariables[i]
+		}
+
+		fmt.Printf("jl: %+v\n\n\n\njr: %+v\n\n\n\n", leftJoin, rightJoin)
+		fmt.Printf("vl: %+v\n\n\n\nvr: %+v\n\n\n\n", leftVariableInterfaces, rightVariableInterfaces)
+		fmt.Printf("vl: %+v\n\n\n\nvr: %+v\n\n\n\n", leftVariables, rightVariables)
+		fmt.Printf("type: %+v\n\n\n\nvariable: %+v\n\n\n\n", reflect.TypeOf(rightVariables[0]), rightVariables[0])
+		fmt.Printf("vl: %+v\n\n\n\nvr: %+v\n\n\n\n", rightVariableReferences, rightVariableReferences)
 
 		// need to find the right join suggestion since a single dataset
 		// can have multiple join suggestions
 		var origin model.DatasetOrigin
 		if datasetRight["joinSuggestion"] != nil {
-			joinSuggestion := datasetRight["joinSuggestion"].(map[string]interface{})
-			origin = joinSuggestion["datasetOrigin"].(model.DatasetOrigin)
+			fmt.Printf("%+v\n\n\n\n", datasetRight["joinSuggestion"])
+			joinSuggestions := datasetRight["joinSuggestion"].([]interface{})
+			modelDo := model.DatasetOrigin{}
+			err := json.MapToStruct(&modelDo, joinSuggestions[0].(map[string]interface{}))
+			if err != nil {
+				handleError(w, errors.Wrap(err, "Unable to parse join suggestion"))
+				return
+			}
+			origin = modelDo
 			fmt.Printf("%v\n\n\n", origin)
 		}
 
 		originRef := &origin
 
 		// run joining pipeline
-		data, err := task.Join(leftJoin, rightJoin, leftVariables, rightVariables, originRef)
+		data, err := task.Join(leftJoin, rightJoin, leftVariableReferences, rightVariableReferences, originRef)
 		if err != nil {
 			fmt.Printf("%v\n", err)
 			handleError(w, err)
