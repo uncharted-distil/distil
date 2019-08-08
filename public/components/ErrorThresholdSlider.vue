@@ -1,5 +1,5 @@
 <template>
-	<div class="error-threshold-slider" v-if="hasExtrema">
+	<div class="error-threshold-slider">
 
 		<div>
 			<div class="error-header">
@@ -59,9 +59,10 @@ export default Vue.extend({
 	data() {
 		return {
 			symmetricSlider: true,
-			min: null,
-			max: null,
-			hasModified: false
+			min: null as number,
+			max: null as number,
+			hasModified: false,
+			lastExtrema: { min: -1.0, max: 1.0 } as Extrema
 		};
 	},
 
@@ -88,10 +89,13 @@ export default Vue.extend({
 
 		residualExtrema(): Extrema {
 			const extrema = resultsGetters.getResidualsExtrema(this.$store);
+			// cache the last non-null max min we found - we display that until we get an update from the server
 			if (extrema.min === null || extrema.max === null) {
-				return {
-					min: null,
-					max: null
+				return this.lastExtrema;
+			} else {
+				this.lastExtrema = {
+					min: extrema.min,
+					max: extrema.max
 				};
 			}
 			return {
@@ -113,10 +117,6 @@ export default Vue.extend({
 		hasThreshold(): boolean {
 			return this.thresholdMin !== null && this.thresholdMax !== null;
 		},
-
-		hasExtrema(): boolean {
-			return this.residualExtrema.min !== null && this.residualExtrema.max !== null;
-		}
 	},
 
 	methods: {
@@ -189,8 +189,7 @@ export default Vue.extend({
 		residualExtrema() {
 			// update threshold if there isnt one, or if the user hasn't touched
 			// the slider yet.
-			if ((this.hasExtrema && !this.hasThreshold) ||
-				(this.hasExtrema && !this.hasModified)) {
+			if (!this.hasThreshold || !this.hasModified) {
 				// set the route
 				const ORIGIN = (NUM_STEPS / 2);
 				const DEVIATION = NUM_STEPS * DEFAULT_PERCENTILE;

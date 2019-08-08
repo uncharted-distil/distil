@@ -2,14 +2,14 @@ import axios from 'axios';
 import _ from 'lodash';
 import { ActionContext } from 'vuex';
 import { DistilState } from '../store';
-import { INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters';
+import { EXCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
 import { Variable, Highlight } from '../dataset/index';
 import { mutations } from './module';
-import { mutations as datasetMutations } from '../dataset/module';
 import { ResultsState } from './index';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { fetchSolutionResultSummary, createPendingSummary, createErrorSummary, createEmptyTableData, fetchSummaryExemplars, getTimeseriesAnalysisIntervals } from '../../util/data';
+import { getters as resultGetters } from '../results/module';
 
 export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
@@ -318,13 +318,15 @@ export const actions = {
 			const endPoint = `distil/forecasting-summary/${args.dataset}/${timeseries}/${args.target}/${interval}`;
 			const key = solution.predictedKey;
 			const label = 'Forecasted';
-			return fetchSolutionResultSummary(context, endPoint, solution, args.target, key, label, mutations.updatePredictedSummaries, filterParams);
+			return fetchSolutionResultSummary(context, endPoint, solution, args.target, key, label,
+				resultGetters.getPredictedSummaries(context), mutations.updatePredictedSummaries, filterParams);
 		}
 
 		const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
 		const key = solution.predictedKey;
 		const label = 'Predicted';
-		return fetchSolutionResultSummary(context, endpoint, solution, args.target, key, label, mutations.updatePredictedSummaries, filterParams);
+		return fetchSolutionResultSummary(context, endpoint, solution, args.target, key, label,
+			resultGetters.getPredictedSummaries(context), mutations.updatePredictedSummaries, filterParams);
 	},
 
 	// fetches result summaries for a given solution create request
@@ -375,7 +377,8 @@ export const actions = {
 		const endPoint = `/distil/residuals-summary/${args.dataset}/${args.target}`;
 		const key = solution.errorKey;
 		const label = 'Error';
-		return fetchSolutionResultSummary(context, endPoint, solution, args.target, key, label, mutations.updateResidualsSummaries, filterParams);
+		return fetchSolutionResultSummary(context, endPoint, solution, args.target, key, label,
+			resultGetters.getResidualsSummaries(context), mutations.updateResidualsSummaries, filterParams);
 	},
 
 	// fetches result summaries for a given solution create request
@@ -422,7 +425,8 @@ export const actions = {
 		const endPoint = `/distil/correctness-summary/${args.dataset}`;
 		const key = solution.errorKey;
 		const label = 'Error';
-		return fetchSolutionResultSummary(context, endPoint, solution, args.target, key, label, mutations.updateCorrectnessSummaries, filterParams);
+		return fetchSolutionResultSummary(context, endPoint, solution, args.target, key, label,
+			resultGetters.getCorrectnessSummaries(context), mutations.updateCorrectnessSummaries, filterParams);
 	},
 
 	// fetches result summaries for a given pipeline create request
