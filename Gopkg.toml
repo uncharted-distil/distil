@@ -91,11 +91,11 @@
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-compute"
-  branch = "master"
+  branch = "goat-column-update"
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-ingest"
-  branch = "master"
+  branch = "goat-column-update"
 
 [[constraint]]
   name = "github.com/unchartedsoftware/plog"
