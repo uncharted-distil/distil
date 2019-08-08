@@ -186,7 +186,7 @@ func GeocodeForward(datasetInputDir string, dataset string, variable *model.Vari
 
 		d3mIndex := v[d3mIndexIndex].(string)
 
-		geocodedData[i-1] = &GeocodedPoint{
+		geocodedData[i] = &GeocodedPoint{
 			D3MIndex:    d3mIndex,
 			SourceField: variable.Name,
 			Latitude:    lat,
