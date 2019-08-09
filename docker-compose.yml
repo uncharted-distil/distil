@@ -35,6 +35,7 @@ postgres:
 #     - D3MOUTPUTDIR=$D3MOUTPUTDIR
 #     - D3MSTATICDIR=$D3MSTATICDIR
 #     - D3MRUN=ta2
+#     - DATAMART_URL_NYU=https://auctus.vida-nyu.org
 #   volumes:
 #    - $D3MINPUTDIR:$D3MINPUTDIR
 #    - $D3MOUTPUTDIR:$D3MOUTPUTDIR
@@ -50,7 +51,7 @@ runner:
   environment:
     - D3MOUTPUTDIR=$D3MOUTPUTDIR
     - D3MSTATICDIR=$D3MSTATICDIR
-    - DATAMART_URL_NYU=$DATAMART_URL_NYU
+    - DATAMART_URL_NYU=https://auctus.vida-nyu.org
   volumes:
     - $D3MINPUTDIR:$D3MINPUTDIR
     - $D3MOUTPUTDIR:$D3MOUTPUTDIR
