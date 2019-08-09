@@ -59,10 +59,11 @@ export default Vue.extend({
 	},
 
 	props: {
-		datasetA: String as () => string,
-		datasetB: String as () => string,
+		datasetA: Object as () => Dataset,
+		datasetB: Object as () => Dataset,
 		joinedColumn: String as () => string,
-		previewTableData: Object as () => TableData
+		previewTableData: Object as () => TableData,
+		searchResultIndex: Number as () => number
 	},
 
 	data() {
@@ -82,7 +83,7 @@ export default Vue.extend({
 			return 100;
 		},
 		joinedDatasetID(): string {
-			return `${this.datasetA}-${this.datasetB}`;
+			return `${this.datasetA.id}-${this.datasetB.id}`;
 		},
 		joinDataPreviewItems(): TableRow[] {
 			return getTableDataItems(this.previewTableData);
@@ -126,9 +127,11 @@ export default Vue.extend({
 				terms: this.terms,
 				source: 'augmented',
 				provenance: 'local',
-				originalDatasetID: this.datasetA,
-				joinedDatasetID: this.datasetB
+				originalDataset: this.datasetA,
+				joinedDataset: this.datasetB,
+				searchResultIndex: this.searchResultIndex
 			};
+			console.log(importDatasetArgs);
 			datasetActions.importDataset(this.$store, importDatasetArgs).then(() => {
 				this.$emit('success', this.joinedDatasetID);
 				this.pending = false;

@@ -36,7 +36,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		datasetID := pat.Param(r, "datasetID")
 		source := metadata.DatasetSource(pat.Param(r, "source"))
 		provenance := pat.Param(r, "provenance")
-
 		// parse POST params
 		params, err := getPostParameters(r)
 		if err != nil {
@@ -44,52 +43,30 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			return
 		}
 
-		// get elasticsearch client
-		esStorage, err := esMetaCtor()
-		if err != nil {
-			handleError(w, err)
+		if params == nil {
+			missingParamErr(w, "parameters")
+			return
+		}
+
+		if params["originalDataset"] == nil {
+			missingParamErr(w, "originalDataset")
+			return
+		}
+
+		if params["joinedDataset"] == nil {
+			missingParamErr(w, "joinedDataset")
 			return
 		}
 
 		// set the origin information
 		var origins []*model.DatasetOrigin
-		originalDatasetID, ok := params["originalDatasetID"].(string)
-		joinedDatasetID, ok := params["joinedDatasetID"].(string)
+		originalDataset, ok := params["originalDataset"].(map[string]interface{})
+		joinedDataset, ok := params["joinedDataset"].(map[string]interface{})
 		if ok {
-			searchResultIndexF, ok := params["searchResultIndex"].(float64)
-			if !ok {
-				handleError(w, errors.Errorf("Search result index needed for joined dataset import"))
-				return
-			}
-			searchResultIndex := int(searchResultIndexF)
-
-			// get the joined dataset for the search result
-			joinedDataset, err := esStorage.FetchDataset(joinedDatasetID, true, true)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-
 			// add the joining origin to the source dataset joining
-			origins, err = getDatasetOrigins(esStorage, originalDatasetID)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			origins = append(origins, &model.DatasetOrigin{
-				SearchResult:  joinedDataset.JoinSuggestions[searchResultIndex].DatasetOrigin.SearchResult,
-				Provenance:    joinedDataset.JoinSuggestions[searchResultIndex].DatasetOrigin.Provenance,
-				SourceDataset: originalDatasetID,
-			})
+			origins = getOriginsFromMaps(originalDataset, joinedDataset)
+			fmt.Printf("origins: %v\n\n\n\n", origins)
 		}
-
-		// multiple search results would be received if a single dataset has
-		// multiple join suggestions
-		searchResults, ok := json.Array(params, "searchResults")
-		if ok {
-			origins = api.ParseDatasetOriginsFromJSON(searchResults)
-		}
-
 		// update ingest config to use ingest URI.
 		cfg, err := env.LoadConfig()
 		if err != nil {
@@ -129,6 +106,44 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			return
 		}
 	}
+}
+
+func getOriginsFromMaps(originalDataset map[string]interface{}, joinedDataset map[string]interface{}) []*model.DatasetOrigin {
+	fmt.Printf("og: %+v\n\n\n\njn: %+v\n\n\n\n", originalDataset, joinedDataset)
+	var origJoinSuggestions []interface{}
+	var joinJoinSuggestions []interface{}
+	origLength := 0
+	joinLength := 0
+
+	if originalDataset["joinSuggestion"] != nil {
+		origJoinSuggestions = originalDataset["joinSuggestion"].([]interface{})
+		origLength = len(origJoinSuggestions)
+	}
+	if joinedDataset["joinSuggestion"] != nil {
+		joinJoinSuggestions := joinedDataset["joinSuggestion"].([]interface{})
+		joinLength = len(joinJoinSuggestions)
+	}
+
+	origins := make([]*model.DatasetOrigin, len(origJoinSuggestions)+len(joinJoinSuggestions))
+	if origLength > 0 {
+		for i, js := range origJoinSuggestions {
+			targetOriginModel := model.DatasetOrigin{}
+			targetJoin := js.(map[string]interface{})
+			targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
+			json.MapToStruct(&targetOriginModel, targetJoinOrigin)
+			origins[i] = &targetOriginModel
+		}
+	}
+	if joinLength > 0 {
+		for i, js := range joinJoinSuggestions {
+			targetOriginModel := model.DatasetOrigin{}
+			targetJoin := js.(map[string]interface{})
+			targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
+			json.MapToStruct(&targetOriginModel, targetJoinOrigin)
+			origins[origLength+i] = &targetOriginModel
+		}
+	}
+	return origins
 }
 
 func getDatasetOrigins(esStorage api.MetadataStorage, dataset string) ([]*model.DatasetOrigin, error) {

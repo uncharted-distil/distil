@@ -241,29 +241,35 @@ export const actions = {
 				source: 'augmented',
 				provenance: 'local',
 				terms: args.datasetID,
-				originalDatasetID: null,
-				joinedDatasetID: null
+				originalDataset: null,
+				joinedDataset: null,
 			});
 		});
 	},
 
-	importDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, terms: string, originalDatasetID: string, joinedDatasetID: string }): Promise<void>  {
+	importDataset(context: DatasetContext, args: {
+		datasetID: string,
+		source: string,
+		provenance: string,
+		terms: string,
+		originalDataset: Dataset,
+		joinedDataset: Dataset,
+	}): Promise<void>  {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
 		}
 		if (!args.source) {
-			console.warn('`terms` argument is missing');
+			console.warn('`source` argument is missing');
 			return null;
 
 		}
-
+		console.log(args);
 		let postParams = {};
-		if (args.originalDatasetID !== null) {
+		if (args.originalDataset !== null) {
 			postParams = {
-				originalDatasetID: args.originalDatasetID,
-				joinedDatasetID: args.joinedDatasetID,
-				searchResultIndex: 0
+				originalDataset: args.originalDataset,
+				joinedDataset: args.joinedDataset,
 			};
 		}
 

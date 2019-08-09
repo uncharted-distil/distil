@@ -87,9 +87,10 @@
 			hide-footer>
 			<join-datasets-preview
 				:preview-table-data="previewTableData"
-				:dataset-a="datasetAid"
-				:dataset-b="datasetBid"
+				:dataset-a="datasetA"
+				:dataset-b="datasetB"
 				:joined-column="joinedColumn"
+				:search-result-index="searchResultIndex"
 				@success="onJoinCommitSuccess"
 				@failure="onJoinCommitFailure"
 				@close="showJoinSuccess = !showJoinSuccess;">
@@ -155,11 +156,12 @@ interface StatusPanelJoinState {
 	showJoinFailure: boolean;
 	showJoinSuccess: boolean;
 	previewTableData: any;
-	datasetAid: string;
-	datasetBid: string;
+	datasetA: Dataset;
+	datasetB: Dataset;
 	datasetAColumn: any;
 	datasetBColumn: any;
 	searchQuery: string;
+	searchResultIndex: number;
 }
 
 export default Vue.extend({
@@ -173,11 +175,12 @@ export default Vue.extend({
 			showJoinFailure: false,
 			showJoinSuccess: false,
 			previewTableData: null,
-			datasetAid: '',
-			datasetBid: '',
+			datasetA: null,
+			datasetB: null,
 			datasetAColumn: '',
 			datasetBColumn: '',
 			searchQuery: '',
+			searchResultIndex: null
 		};
 	},
 	components: {
@@ -351,8 +354,9 @@ export default Vue.extend({
 				this.previewTableData = tableData;
 				this.isAttemptingJoin = false;
 				this.showJoinSuccess = true;
-				this.datasetAid = datasetA.id;
-				this.datasetBid = datasetB.id;
+				this.datasetA = datasetA;
+				this.datasetB = datasetB;
+				this.searchResultIndex = joinSuggestionIndex;
 			}).catch(err => {
 				// display error modal
 				this.previewTableData = null;
