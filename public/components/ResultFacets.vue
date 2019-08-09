@@ -85,7 +85,7 @@ export default Vue.extend({
 		},
 
 		residualSummaries(): VariableSummary[] {
-			return this.regression ? resultsGetters.getResidualsSummaries(this.$store) : [];
+			return this.regression || solutionGetters.isForecasting ? resultsGetters.getResidualsSummaries(this.$store) : [];
 		},
 
 		correctnessSummaries(): VariableSummary[] {

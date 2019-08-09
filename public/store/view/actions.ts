@@ -301,6 +301,7 @@ export const actions = {
 		const target = context.getters.getRouteTargetVariable;
 		const isRegression = context.getters.isRegression;
 		const isClassification = context.getters.isClassification;
+		const isForecasting = context.getters.isForecasting;
 		const requestIds = context.getters.getRelevantSolutionRequestIds;
 		const solutionId = context.getters.getRouteSolutionId;
 		const trainingVariables = context.getters.getActiveSolutionTrainingVariables;
@@ -330,7 +331,7 @@ export const actions = {
 			highlight: highlight
 		});
 
-		if (isRegression) {
+		if (isRegression || isForecasting) {
 			resultActions.fetchResidualsExtrema(store, {
 				dataset: dataset,
 				target: target,

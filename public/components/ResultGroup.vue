@@ -34,31 +34,16 @@
 		<div class="result-group-body" v-if="isMaximized">
 			<template v-if="isCompleted">
 				<div v-for="summary in predictedSummaries" :key="summary.key">
-					<template v-if="summary.varType === 'timeseries' || isTimeseriesAnalysis">
-						<facet-timeseries
-							:summary="summary"
-							:highlight="highlight"
-							:row-selection="rowSelection"
-							:instanceName="predictedInstanceName"
-							:enable-highlighting="[true, true]"
-							@numerical-click="onResultNumericalClick"
-							@range-change="onResultRangeChange"
-							@histogram-numerical-click="onResultNumericalClick"
-							@histogram-range-change="onResultRangeChange">
-						</facet-timeseries>
-					</template>
-					<template v-else>
-						<facet-entry
-							enable-highlighting
-							:summary="summary"
-							:highlight="highlight"
-							:row-selection="rowSelection"
-							:instanceName="predictedInstanceName"
-							@numerical-click="onResultNumericalClick"
-							@range-change="onResultRangeChange"
-							@facet-click="onResultCategoricalClick">
-						</facet-entry>
-					</template>
+					<facet-entry
+						enable-highlighting
+						:summary="summary"
+						:highlight="highlight"
+						:row-selection="rowSelection"
+						:instanceName="predictedInstanceName"
+						@numerical-click="onResultNumericalClick"
+						@range-change="onResultRangeChange"
+						@facet-click="onResultCategoricalClick">
+					</facet-entry>
 				</div>
 
 				<div class="residual-group-container">
@@ -104,7 +89,6 @@
 
 import Vue from 'vue';
 import FacetEntry from '../components/FacetEntry';
-import FacetTimeseries from '../components/FacetTimeseries';
 import { Extrema, VariableSummary, RowSelection, Highlight } from '../store/dataset/index';
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from '../store/solutions/index';
 import { getters as routeGetters } from '../store/route/module';
@@ -119,7 +103,6 @@ export default Vue.extend({
 
 	components: {
 		FacetEntry,
-		FacetTimeseries
 	},
 
 	props: {
@@ -149,10 +132,6 @@ export default Vue.extend({
 
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
-		},
-
-		isTimeseriesAnalysis(): boolean {
-			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
 		},
 
 		predictedInstanceName(): string {
@@ -197,14 +176,6 @@ export default Vue.extend({
 
 		residualSummaries(): VariableSummary[] {
 			return this.residualsSummary ? [ this.residualsSummary ] : [];
-			// groups.forEach(group => {
-			// 	group.facets.forEach((facet: any) => {
-			// 		if (facet.histogram) {
-			// 			facet.histogram.showOrigin = true;
-			// 		}
-			// 	});
-			// });
-			// return groups;
 		},
 
 		highlight(): Highlight {

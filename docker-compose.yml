@@ -4,20 +4,20 @@ elastic:
   ports:
     - "9200:9200"
 
-pipeline_server:
-  image:
-    docker.uncharted.software/distil-pipeline-server:latest
-  ports:
-    - "45042:45042"
-  environment:
-    - SOLUTION_SERVER_RESULT_DIR=$D3MOUTPUTDIR
-    - SOLUTION_SEND_DELAY=2000
-    - SOLUTION_NUM_UPDATES=3
-    - SOLUTION_MAX_SOLUTIONS=3
-    - SOLUTION_ERR_PERCENT=0.1
-  volumes:
-    - $D3MINPUTDIR:$D3MINPUTDIR
-    - $D3MOUTPUTDIR:$D3MOUTPUTDIR
+# pipeline_server:
+#   image:
+#     docker.uncharted.software/distil-pipeline-server:latest
+#   ports:
+#     - "45042:45042"
+#   environment:
+#     - SOLUTION_SERVER_RESULT_DIR=$D3MOUTPUTDIR
+#     - SOLUTION_SEND_DELAY=2000
+#     - SOLUTION_NUM_UPDATES=3
+#     - SOLUTION_MAX_SOLUTIONS=3
+#     - SOLUTION_ERR_PERCENT=0.1
+#   volumes:
+#     - $D3MINPUTDIR:$D3MINPUTDIR
+#     - $D3MOUTPUTDIR:$D3MOUTPUTDIR
 
 postgres:
   image:

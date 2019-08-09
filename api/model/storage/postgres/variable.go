@@ -83,14 +83,14 @@ func (s *Storage) parseDateExtrema(row *pgx.Rows, variable *model.Variable) (*ap
 	}, nil
 }
 
-func (s *Storage) getMinMaxAggsQuery(variable *model.Variable) string {
+func (s *Storage) getMinMaxAggsQuery(variableName string, variableType string) string {
 	// get min / max agg names
-	minAggName := api.MinAggPrefix + variable.Name
-	maxAggName := api.MaxAggPrefix + variable.Name
+	minAggName := api.MinAggPrefix + variableName
+	maxAggName := api.MaxAggPrefix + variableName
 
-	vName := fmt.Sprintf("\"%s\"", variable.Name)
-	if variable.Type == model.DateTimeType {
-		vName = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", variable.Name)
+	vName := fmt.Sprintf("\"%s\"", variableName)
+	if variableType == model.DateTimeType {
+		vName = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", variableName)
 	}
 
 	// create aggregations
@@ -102,7 +102,7 @@ func (s *Storage) getMinMaxAggsQuery(variable *model.Variable) string {
 // FetchExtrema return extrema of a variable in a result set.
 func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*api.Extrema, error) {
 	// add min / max aggregation
-	aggQuery := s.getMinMaxAggsQuery(variable)
+	aggQuery := s.getMinMaxAggsQuery(variable.Name, variable.Type)
 
 	// numerical columns need to filter NaN out
 	filter := ""
@@ -131,8 +131,13 @@ func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*a
 }
 
 func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variable *model.Variable) (*api.Extrema, error) {
+	varName := variable.Name
+	if variable.Grouping != nil {
+		varName = variable.Grouping.Properties.YCol
+	}
+
 	// add min / max aggregation
-	aggQuery := s.getMinMaxAggsQuery(variable)
+	aggQuery := s.getMinMaxAggsQuery(varName, variable.Type)
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
