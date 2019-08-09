@@ -88,8 +88,8 @@ func GeocodeForwardDataset(datasetSource metadata.DatasetSource, schemaFile stri
 	for _, field := range geocodedData {
 		latName, lonName := getLatLonVariableNames(field[0].SourceField)
 		fields[field[0].SourceField] = []*model.Variable{
-			model.NewVariable(len(mainDR.Variables), latName, "label", latName, "string", "string", []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false),
-			model.NewVariable(len(mainDR.Variables)+1, lonName, "label", lonName, "string", "string", []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false),
+			model.NewVariable(len(mainDR.Variables), latName, "label", latName, model.LatitudeType, model.LatitudeType, []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false),
+			model.NewVariable(len(mainDR.Variables)+1, lonName, "label", lonName, model.LongitudeType, model.LongitudeType, []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false),
 		}
 		mainDR.Variables = append(mainDR.Variables, fields[field[0].SourceField]...)
 		for _, gc := range field {
@@ -151,7 +151,7 @@ func GeocodeForwardDataset(datasetSource metadata.DatasetSource, schemaFile stri
 }
 
 // GeocodeForward will geocode a column into lat & lon values.
-func GeocodeForward(datasetInputDir string, dataset string, variable string) ([]*GeocodedPoint, error) {
+func GeocodeForward(datasetInputDir string, dataset string, variable *model.Variable) ([]*GeocodedPoint, error) {
 
 	// create & submit the solution request
 	pip, err := description.CreateGoatForwardPipeline("mountain", "", variable)
@@ -171,14 +171,17 @@ func GeocodeForward(datasetInputDir string, dataset string, variable string) ([]
 	}
 
 	// result should be d3m index, lat, lon
-	geocodedData := make([]*GeocodedPoint, len(res)-1)
 	header, err := castTypeArray(res[0])
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse Goat pipeline header")
 	}
 
-	latIndex := getFieldIndex(header, fmt.Sprintf("%s_latitude", variable))
-	lonIndex := getFieldIndex(header, fmt.Sprintf("%s_longitude", variable))
+	// skip the header
+	res = res[1:]
+	geocodedData := make([]*GeocodedPoint, len(res))
+
+	latIndex := getFieldIndex(header, fmt.Sprintf("%s_latitude", variable.Name))
+	lonIndex := getFieldIndex(header, fmt.Sprintf("%s_longitude", variable.Name))
 	d3mIndexIndex := getFieldIndex(header, model.D3MIndexName)
 	for i, v := range res {
 		lat := v[latIndex].(string)
@@ -186,9 +189,9 @@ func GeocodeForward(datasetInputDir string, dataset string, variable string) ([]
 
 		d3mIndex := v[d3mIndexIndex].(string)
 
-		geocodedData[i-1] = &GeocodedPoint{
+		geocodedData[i] = &GeocodedPoint{
 			D3MIndex:    d3mIndex,
-			SourceField: variable,
+			SourceField: variable.Name,
 			Latitude:    lat,
 			Longitude:   lon,
 		}
@@ -204,13 +207,13 @@ func getLatLonVariableNames(variableName string) (string, string) {
 	return lat, lon
 }
 
-func geocodeColumns(meta *model.Metadata) []string {
+func geocodeColumns(meta *model.Metadata) []*model.Variable {
 	// cycle throught types to determine columns to geocode.
-	colsToGeocode := make([]string, 0)
+	colsToGeocode := make([]*model.Variable, 0)
 	for _, v := range meta.DataResources[0].Variables {
 		for _, t := range v.SuggestedTypes {
 			if isLocationType(t.Type) {
-				colsToGeocode = append(colsToGeocode, v.Name)
+				colsToGeocode = append(colsToGeocode, v)
 			}
 		}
 	}

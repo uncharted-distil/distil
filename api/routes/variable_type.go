@@ -77,16 +77,9 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 		}
 
 		// update the variable type in the storage
-		err = storage.SetDataType(dataset, storageName, field, typ)
+		err = setDataType(meta, storage, dataset, storageName, field, typ)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-			return
-		}
-
-		// update the variable type in the metadata
-		err = meta.SetDataType(dataset, field, typ)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to update the data type in metadata"))
 			return
 		}
 
