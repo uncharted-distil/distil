@@ -53,8 +53,6 @@ type JoinSpec struct {
 
 // Join will make all your dreams come true.
 func Join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable, rightOrigin *model.DatasetOrigin) (*apiModel.FilteredData, error) {
-
-	fmt.Printf("testing22\n")
 	cfg, err := env.LoadConfig()
 	if err != nil {
 		fmt.Printf("%v\n", err)
@@ -66,7 +64,6 @@ func Join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, v
 func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 	varsRight []*model.Variable, rightOrigin *model.DatasetOrigin, submitter primitiveSubmitter,
 	config *env.Config) (*apiModel.FilteredData, error) {
-	fmt.Printf("testing 2 2\n")
 	// put the vars into a map for quick lookup
 	leftVarsMap := createVarMap(varsLeft)
 	rightVarsMap := createVarMap(varsRight)

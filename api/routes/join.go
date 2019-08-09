@@ -16,9 +16,7 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
-	"reflect"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -35,16 +33,10 @@ func missingParamErr(w http.ResponseWriter, paramName string) {
 // JoinHandler generates a route handler that joins two datasets using caller supplied
 // columns.  The joined data is returned to the caller, but is NOT added to storage.
 func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
-	fmt.Printf("testing\n")
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("testing 2\n")
-
-		//replace with pulling info out of the post json here
-
 		// parse JSON from post
 		params, err := getPostParameters(r)
 		if err != nil {
-			fmt.Printf("%v\n", err)
 			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
 			return
 		}
@@ -64,11 +56,15 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 			return
 		}
 
-		// fetch vars for each dataset
+		if params["searchResultIndex"] == nil {
+			missingParamErr(w, "searchResultIndex")
+			return
+		}
+
+		// fetch vars from params
 		datasetLeft := params["datasetLeft"].(map[string]interface{})
 		datasetRight := params["datasetRight"].(map[string]interface{})
-
-		fmt.Printf("dsl: %+v\n\n\n\ndsr: %+v\n\n\n\n", datasetLeft["joinSuggestion"], datasetRight["joinSuggestion"])
+		searchResultIndex := int(params["searchResultIndex"].(float64))
 
 		leftJoin := &task.JoinSpec{
 			DatasetID:     datasetLeft["id"].(string),
@@ -115,26 +111,30 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 			rightVariableReferences[i] = &rightVariables[i]
 		}
 
-		fmt.Printf("jl: %+v\n\n\n\njr: %+v\n\n\n\n", leftJoin, rightJoin)
-		fmt.Printf("vl: %+v\n\n\n\nvr: %+v\n\n\n\n", leftVariableInterfaces, rightVariableInterfaces)
-		fmt.Printf("vl: %+v\n\n\n\nvr: %+v\n\n\n\n", leftVariables, rightVariables)
-		fmt.Printf("type: %+v\n\n\n\nvariable: %+v\n\n\n\n", reflect.TypeOf(rightVariables[0]), rightVariables[0])
-		fmt.Printf("vl: %+v\n\n\n\nvr: %+v\n\n\n\n", rightVariableReferences, rightVariableReferences)
-
 		// need to find the right join suggestion since a single dataset
 		// can have multiple join suggestions
 		var origin model.DatasetOrigin
 		if datasetRight["joinSuggestion"] != nil {
-			fmt.Printf("%+v\n\n\n\n", datasetRight["joinSuggestion"])
 			joinSuggestions := datasetRight["joinSuggestion"].([]interface{})
-			modelDo := model.DatasetOrigin{}
-			err := json.MapToStruct(&modelDo, joinSuggestions[0].(map[string]interface{}))
-			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse join suggestion"))
+			targetOriginModel := model.DatasetOrigin{}
+			targetJoin := joinSuggestions[searchResultIndex].(map[string]interface{})
+			if targetJoin == nil {
+				handleError(w, errors.Wrap(err, "Unable to find join suggestion at search result index"))
 				return
 			}
-			origin = modelDo
-			fmt.Printf("%v\n\n\n", origin)
+			targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
+			if targetJoinOrigin == nil {
+				handleError(w, errors.Wrap(err, "Unable to find join origin"))
+				return
+			}
+			err := json.MapToStruct(&targetOriginModel, targetJoinOrigin)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "Unable to parse join origin from JSON"))
+				return
+			}
+			origin = targetOriginModel
+		} else {
+			handleError(w, errors.Wrap(err, "Join Suggestion undefined"))
 		}
 
 		originRef := &origin
@@ -142,7 +142,6 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		// run joining pipeline
 		data, err := task.Join(leftJoin, rightJoin, leftVariableReferences, rightVariableReferences, originRef)
 		if err != nil {
-			fmt.Printf("%v\n", err)
 			handleError(w, err)
 			return
 		}
@@ -150,7 +149,6 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		// marshal output into JSON
 		bytes, err := json.Marshal(data)
 		if err != nil {
-			fmt.Printf("%v\n", err)
 			handleError(w, errors.Wrap(err, "unable marshal filtered data result into JSON"))
 			return
 		}

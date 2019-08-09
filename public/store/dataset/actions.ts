@@ -274,7 +274,7 @@ export const actions = {
 	},
 
 	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, searchResults: DatasetOrigin[] }): Promise<any>  {
-		if (!args.datasetID) {
+		if (!args.datasetID && args.datasetID.length > 0) {
 			console.warn('`datasetID` argument is missing');
 			return null;
 
@@ -379,8 +379,6 @@ export const actions = {
 			console.warn('`joinAccuracy` argument is missing');
 			return null;
 		}
-
-		console.log(args);
 
 		return axios.post(`/distil/join`, {
 			accuracy: args.joinAccuracy,

@@ -121,15 +121,15 @@ export default Vue.extend({
 	methods: {
 		commitJoin() {
 			this.pending = true;
-
-			datasetActions.importDataset(this.$store, {
+			let importDatasetArgs = {
 				datasetID: this.joinedDatasetID,
 				terms: this.terms,
 				source: 'augmented',
 				provenance: 'local',
 				originalDatasetID: this.datasetA,
 				joinedDatasetID: this.datasetB
-			}).then(() => {
+			}
+			datasetActions.importDataset(this.$store, importDatasetArgs).then(() => {
 				this.$emit('success', this.joinedDatasetID);
 				this.pending = false;
 			}).catch(() => {

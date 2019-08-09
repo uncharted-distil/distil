@@ -345,14 +345,14 @@ export default Vue.extend({
 				joinSuggestionIndex: joinSuggestionIndex
 			};
 
-			console.log(datasetJoinInfo);
-
 			// dispatch action that triggers request send to server
 			datasetActions.joinDatasetsPreview(this.$store, datasetJoinInfo).then(tableData => {
 				// display join preview modal
 				this.previewTableData = tableData;
 				this.isAttemptingJoin = false;
 				this.showJoinSuccess = true;
+				this.datasetAid = datasetA.id;
+				this.datasetBid = datasetB.id;
 			}).catch(err => {
 				// display error modal
 				this.previewTableData = null;
