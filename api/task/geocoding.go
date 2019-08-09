@@ -88,8 +88,8 @@ func GeocodeForwardDataset(datasetSource metadata.DatasetSource, schemaFile stri
 	for _, field := range geocodedData {
 		latName, lonName := getLatLonVariableNames(field[0].SourceField)
 		fields[field[0].SourceField] = []*model.Variable{
-			model.NewVariable(len(mainDR.Variables), latName, "label", latName, "string", "string", []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false),
-			model.NewVariable(len(mainDR.Variables)+1, lonName, "label", lonName, "string", "string", []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false),
+			model.NewVariable(len(mainDR.Variables), latName, "label", latName, model.LatitudeType, model.LatitudeType, []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false),
+			model.NewVariable(len(mainDR.Variables)+1, lonName, "label", lonName, model.LongitudeType, model.LongitudeType, []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false),
 		}
 		mainDR.Variables = append(mainDR.Variables, fields[field[0].SourceField]...)
 		for _, gc := range field {
@@ -171,11 +171,14 @@ func GeocodeForward(datasetInputDir string, dataset string, variable *model.Vari
 	}
 
 	// result should be d3m index, lat, lon
-	geocodedData := make([]*GeocodedPoint, len(res)-1)
 	header, err := castTypeArray(res[0])
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse Goat pipeline header")
 	}
+
+	// skip the header
+	res = res[1:]
+	geocodedData := make([]*GeocodedPoint, len(res))
 
 	latIndex := getFieldIndex(header, fmt.Sprintf("%s_latitude", variable.Name))
 	lonIndex := getFieldIndex(header, fmt.Sprintf("%s_longitude", variable.Name))
