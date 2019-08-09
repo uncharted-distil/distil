@@ -1,6 +1,7 @@
 # distil
 
 [![CircleCI](https://circleci.com/gh/uncharted-distil/distil/tree/master.svg?style=svg&&circle-token=ff61c235865dd699cc8b923035a80e6e8d39c63a)](https://circleci.com/gh/unchartedsoftware/distil/tree/master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/uncharted-distil/distil)](https://goreportcard.com/report/github.com/uncharted-distil/distil)
 
 ## Dependencies
 
