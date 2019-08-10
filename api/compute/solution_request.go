@@ -508,7 +508,10 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 		// get the result UUID. NOTE: Doing sha1 for now.
 		hasher := sha1.New()
-		hasher.Write([]byte(resultURI))
+		_, err = hasher.Write([]byte(resultURI))
+		if err != nil {
+			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+		}
 		bs := hasher.Sum(nil)
 		resultID := fmt.Sprintf("%x", bs)
 
