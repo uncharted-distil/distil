@@ -28,10 +28,6 @@ import (
 )
 
 const (
-	// DatasetSuffix is the suffix for the dataset entry when stored in
-	// elasticsearch.
-	metadataType     = "metadata"
-	datasetsListSize = 1000
 	// Provenance for file
 	Provenance = "file"
 )
