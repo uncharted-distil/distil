@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
 	"syscall"
 	"time"
 
@@ -354,36 +353,6 @@ func main() {
 
 	// wait until server gracefully exits
 	graceful.Wait()
-}
-
-func waitForPostEndpoint(endpoint string) bool {
-	up := false
-	resp, err := http.Post(endpoint, "application/json", strings.NewReader("test"))
-	log.Infof("Sent request to %s", endpoint)
-	log.Infof("response error: %v", err)
-	if err != nil {
-		// If the error indicates the service is up, then stop waiting.
-		if !strings.Contains(err.Error(), "connection refused") {
-			up = true
-		}
-	} else {
-		up = true
-	}
-	if resp != nil {
-		resp.Body.Close()
-	}
-
-	return up
-}
-
-func parseResourceProxy(datasets string) map[string]bool {
-	toProxy := make(map[string]bool)
-	datasetIds := strings.Split(datasets, ",")
-	for _, d := range datasetIds {
-		toProxy[d] = true
-	}
-
-	return toProxy
 }
 
 func updateExtremas(metaStorage model.MetadataStorage, dataStorage model.DataStorage) error {
