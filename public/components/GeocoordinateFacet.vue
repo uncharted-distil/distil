@@ -1,8 +1,6 @@
 <template>
 	<div class="geo-plot-container" v-bind:class="{ 'selection-mode': isSelectionMode }">
-		<div class="geo-plot"
-			v-bind:id="mapID"
-		></div>
+		<div class="geo-plot" v-bind:id="mapID"></div>
 	</div>
 </template>
 

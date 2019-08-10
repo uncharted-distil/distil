@@ -97,6 +97,14 @@ export default Vue.extend({
 			isSelectionMode: false,
 		};
 	},
+	created(){
+		console.log('hi');
+		
+		console.log('dataitems', this.dataItems);
+		console.log('dataFields', this.dataFields);
+		
+		
+	},
 
 
 	computed: {

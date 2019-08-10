@@ -496,6 +496,12 @@ export const actions = {
 	},
 
 	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<any>  {
+		if (args.type === GEOCOORDINATE_TYPE) {
+			console.log('geocoord selected');
+			mutations.updateVariableType(context, args);
+
+			return;
+		}
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -509,12 +515,6 @@ export const actions = {
 			return null;
 		}
 
-		if (args.type === GEOCOORDINATE_TYPE) {
-			console.log('geocoord selected');
-			mutations.updateVariableType(context, args);
-
-			return;
-		}
 		return axios.post(`/distil/variables/${args.dataset}`, {
 				field: args.field,
 				type: args.type

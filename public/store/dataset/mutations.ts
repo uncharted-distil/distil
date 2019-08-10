@@ -95,6 +95,12 @@ export const mutations = {
 		// Ideally we have it only in one state, or instead refresh all the
 		// relevant store data.
 
+		// geocoordinate temporary logic
+		if (args.type === GEOCOORDINATE_TYPE) {
+			Vue.set(state, 'isGeocoordinateFacet', [LONGITUDE_TYPE, LATITUDE_TYPE]);
+			console.table('state', state);
+		}
+
 		// update dataset variables
 		const dataset = state.datasets.find(d => d.name === args.dataset);
 		if (dataset) {
@@ -111,12 +117,6 @@ export const mutations = {
 
 		if (variable) {
 			variable.colType = args.type;
-			const GeocoordType = state.variables.find(d => d.colType === GEOCOORDINATE_TYPE);
-			if (GeocoordType) {
-				Vue.set(state, 'isGeocoordinateFacet', [LONGITUDE_TYPE, LATITUDE_TYPE]);
-			}
-			console.table('state', state);
-			
 		}
 
 		// update table data

@@ -13,19 +13,6 @@
 					<i v-if="suggested.isSelected" class="fa fa-check" aria-hidden="true"></i>
 					{{suggested.label}}
 					<icon-base v-if="suggested.isRecommended" icon-name="bookmark" class="recommended-icon"><icon-bookmark /></icon-base>
-					<b-dropdown variant="secondary"
-						v-if="suggested.type === 'geocoordinate'"
-						class="var-type-button"
-						id="type-change-dropdown"
-						:text="'Latitude'">
-					</b-dropdown>
-					
-					<b-dropdown variant="secondary"
-						v-if="suggested.type === 'geocoordinate'"
-						class="var-type-button"
-						id="type-change-dropdown"
-						:text="'Longitude'">
-					</b-dropdown>
 				</b-dropdown-item>
 
 				<template v-if="showGroupingOptions">

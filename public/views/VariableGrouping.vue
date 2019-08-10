@@ -12,8 +12,8 @@
 		<div class="row justify-content-center h-100 p-3">
 
 			<div class="col-12 col-md-8 flex-column d-flex h-100">
-
-				<div class="row mt-1 mb-1" v-for="(idCol, index) in idCols" :key="idCol.value" v-if="isTimeseries">
+				<div v-if="isTimeseries">
+				<div class="row mt-1 mb-1" v-for="(idCol, index) in idCols" :key="idCol.value">
 
 					<div class="col-3">
 						<template v-if="index===0">
@@ -45,6 +45,8 @@
 						<b-form-select v-model="yCol" :options="yColOptions" />
 					</div>
 				</div>
+				</div>
+
 
 				<div class="row mt-1 mb-1" v-if="isGeocoordinate">
 					<div class="col-3">
@@ -135,6 +137,9 @@ export default Vue.extend({
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
+		},
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
@@ -309,9 +314,16 @@ export default Vue.extend({
 			return this.other.indexOf(arg) !== -1;
 		},
 		onGroup() {
-			console.log(this.isTimeseriesAnalysis, 'isTimeseriesAnalysis');
 			if (this.isTimeseriesAnalysis) {
 				this.submitTimeseriesAnalysis();
+			} else if (this.isGeocoordinate) {
+				datasetActions.setVariableType(this.$store, {
+					dataset: this.dataset,
+					field: this.target,
+					type: GEOCOORDINATE_TYPE
+				});
+
+				this.gotoTargetSelection();
 			} else {
 				this.submitGrouping();
 			}
