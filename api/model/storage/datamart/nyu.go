@@ -132,8 +132,11 @@ func parseNYUJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) ([]*
 		joins = append(joins, &api.JoinSuggestion{
 			BaseDataset:   baseDataset.ID,
 			BaseColumns:   leftColumnNames,
+			JoinDataset:   result.Metadata.Name,
 			JoinColumns:   rightColumnNames,
+			JoinScore:     result.Score,
 			DatasetOrigin: origin,
+			Index:         len(joins),
 		})
 	}
 	return joins, nil

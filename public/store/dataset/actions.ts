@@ -368,21 +368,13 @@ export const actions = {
 			});
 	},
 
-	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, datasetAColumn: string, datasetBColumn: string, joinAccuracy: number }): Promise<void>  {
+	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, joinAccuracy: number, joinSuggestionIndex: number }): Promise<void>  {
 		if (!args.datasetA) {
 			console.warn('`datasetA` argument is missing');
 			return null;
 		}
 		if (!args.datasetB) {
 			console.warn('`datasetB` argument is missing');
-			return null;
-		}
-		if (!args.datasetAColumn) {
-			console.warn('`datasetAColumn` argument is missing');
-			return null;
-		}
-		if (!args.datasetBColumn) {
-			console.warn('`datasetBColumn` argument is missing');
 			return null;
 		}
 
@@ -393,7 +385,7 @@ export const actions = {
 
 		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetB.source}`, {
 			accuracy: args.joinAccuracy,
-			searchResultIndex: 0
+			searchResultIndex: args.joinSuggestionIndex
 		})
 			.then(response => {
 				return response.data;

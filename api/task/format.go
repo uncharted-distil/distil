@@ -92,6 +92,9 @@ func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]strin
 
 	// output the formatted data
 	err = writer.WriteAll(lines)
+	if err != nil {
+		return errors.Wrap(err, "error storing data")
+	}
 
 	// output the data with the new feature
 	writer.Flush()

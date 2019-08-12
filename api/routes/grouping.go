@@ -70,12 +70,7 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 			storageName := model.NormalizeDatasetID(dataset)
 
 			// ensure id is timeseries
-			err = meta.SetDataType(dataset, grouping.IDCol, model.TimeSeriesType)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-				return
-			}
-			err = data.SetDataType(dataset, storageName, grouping.IDCol, model.TimeSeriesType)
+			err = setDataType(meta, data, dataset, storageName, grouping.IDCol, model.TimeSeriesType)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
 				return
@@ -83,12 +78,7 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 
 			if grouping.Properties.ClusterCol != "" {
 				// ensure cluster is categorical
-				err = meta.SetDataType(dataset, grouping.Properties.ClusterCol, model.CategoricalType)
-				if err != nil {
-					handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-					return
-				}
-				err = data.SetDataType(dataset, storageName, grouping.Properties.ClusterCol, model.CategoricalType)
+				err = setDataType(meta, data, dataset, storageName, grouping.Properties.ClusterCol, model.CategoricalType)
 				if err != nil {
 					handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
 					return
@@ -182,4 +172,18 @@ func RemoveGroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataSt
 			return
 		}
 	}
+}
+
+func setDataType(esStorage api.MetadataStorage, pgStorage api.DataStorage,
+	dataset string, storageName string, field string, typ string) error {
+	err := esStorage.SetDataType(dataset, field, typ)
+	if err != nil {
+		return err
+	}
+	err = pgStorage.SetDataType(dataset, storageName, field, typ)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

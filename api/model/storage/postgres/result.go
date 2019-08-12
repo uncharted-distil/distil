@@ -108,9 +108,6 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			return err
 		}
 		targetDisplayName = targetVariable.DisplayName
-		if err != nil {
-			return err
-		}
 	}
 
 	// Header row will have the target. Find the index.

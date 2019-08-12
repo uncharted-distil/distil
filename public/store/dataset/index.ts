@@ -15,13 +15,6 @@ export interface Highlight {
 	value: any;
 }
 
-export interface Highlight {
-	context: string;
-	dataset: string;
-	key: string;
-	value: any;
-}
-
 export interface Column {
 	key: string;
 	value: any;
@@ -96,8 +89,11 @@ export interface Dataset {
 export interface JoinSuggestion {
 	baseDataset: string;
 	baseColumns: string[];
+	joinDataset: string;
 	joinColumns: string[];
+	joinScore: number;
 	datasetOrigin?: DatasetOrigin;
+	index: number;
 }
 
 export interface DatasetOrigin {
