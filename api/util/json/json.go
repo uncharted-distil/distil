@@ -83,10 +83,7 @@ func Struct(j map[string]interface{}, arg interface{}, path ...string) bool {
 		return false
 	}
 	err = json.Unmarshal(bs, &arg)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // Exists returns true if something exists under the provided path.

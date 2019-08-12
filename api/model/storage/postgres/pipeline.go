@@ -211,7 +211,7 @@ func (s *Storage) FetchSolutionResult(solutionID string) (*api.SolutionResult, e
 	}
 
 	var res *api.SolutionResult
-	if results != nil && len(results) > 0 {
+	if len(results) > 0 {
 		res = results[0]
 	}
 
@@ -240,7 +240,7 @@ func (s *Storage) FetchSolutionResultByUUID(resultUUID string) (*api.SolutionRes
 	}
 
 	var res *api.SolutionResult
-	if results != nil && len(results) > 0 {
+	if len(results) > 0 {
 		res = results[0]
 	}
 

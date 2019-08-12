@@ -93,16 +93,12 @@ func (p pgxLogAdapter) Log(level pgx.LogLevel, msg string, data map[string]inter
 	switch level {
 	case pgx.LogLevelDebug:
 		p.Debug(msg, data)
-		break
 	case pgx.LogLevelInfo:
 		p.Info(msg, data)
-		break
 	case pgx.LogLevelWarn:
 		p.Warn(msg, data)
-		break
 	case pgx.LogLevelError:
 		p.Error(msg, data)
-		break
 	}
 }
 

@@ -94,7 +94,10 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 
 		// if no result, return an empty map
 		if res == nil {
-			handleJSON(w, make(map[string]interface{}))
+			err = handleJSON(w, make(map[string]interface{}))
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))
+			}
 			return
 		}
 
@@ -129,7 +132,5 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 			handleError(w, errors.Wrap(err, "unable marshal solution result into JSON"))
 			return
 		}
-
-		return
 	}
 }

@@ -30,6 +30,5 @@ func AbortHandler() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("Received abort request - shutting down")
 		os.Exit(d3mAbort) // abort using the d3m-proscribed code
-		return
 	}
 }
