@@ -60,12 +60,6 @@ export default Vue.extend({
 			viewTypeModel: TABLE_VIEW
 		};
 	},
-
-	updated(){
-		console.log('data-items', this.includedResultTableDataItems);
-		console.log('data-fields', this.includedResultTableDataFields);
-	},
-
 	computed: {
 
 		dataset(): string {
@@ -106,14 +100,11 @@ export default Vue.extend({
 
 		includedResultTableDataItems(): TableRow[] {
 			const items = resultsGetters.getIncludedResultTableDataItems(this.$store);
-			console.log('data-items', items);
-			
 			return resultsGetters.getIncludedResultTableDataItems(this.$store);
 		},
 
 		includedResultTableDataFields(): Dictionary<TableColumn> {
 			const fields = resultsGetters.getIncludedResultTableDataFields(this.$store);
-			console.log('data-fields', fields);
 			return resultsGetters.getIncludedResultTableDataFields(this.$store);
 		},
 

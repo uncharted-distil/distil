@@ -67,7 +67,7 @@ export default Vue.extend({
 	computed: {
 		variable(): Variable {
 			const vars = datasetGetters.getVariables(this.$store);
-			
+
 			if (!vars) {
 				return null;
 			}
@@ -178,7 +178,6 @@ export default Vue.extend({
 				});
 				this.$router.push(entry);
 			} else {
-				console.log('hit')
 				const grouping = this.variable.grouping;
 				datasetActions.removeGrouping(this.$store, {
 					dataset: this.dataset,
@@ -237,7 +236,7 @@ export default Vue.extend({
 			// 		type: type
 			// 	})
 			// 	return;
-				
+
 			// }
 
 			datasetActions.setVariableType(this.$store, {

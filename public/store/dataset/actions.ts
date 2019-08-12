@@ -23,7 +23,6 @@ import { createPendingSummary, createErrorSummary, createEmptyTableData, fetchSu
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
 import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX, GEOCOORDINATE_TYPE, LATITUDE_TYPE } from '../../util/types';
-import { longStackSupport } from 'q';
 
 // fetches variables and add dataset name to each variable
 function getVariables(dataset: string): Promise<Variable[]> {
@@ -497,9 +496,7 @@ export const actions = {
 
 	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<any>  {
 		if (args.type === GEOCOORDINATE_TYPE) {
-			console.log('geocoord selected');
 			mutations.updateVariableType(context, args);
-
 			return;
 		}
 		if (!args.dataset) {

@@ -25,7 +25,7 @@ export interface RouteArgs {
 	joinColumnSuggestions?: string; // suggested target join columns
 	timeseriesAnalysis?: string;
 	timeseriesBinningInterval?: string;
-	groupingType?: string
+	groupingType?: string;
 
 	// we currently don't have a way to add these to the interface
 	//

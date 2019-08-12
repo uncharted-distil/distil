@@ -52,10 +52,7 @@ export default Vue.extend({
 	},
 
 	mounted() {
-
-		
 		const component = this;
-
 		// Instantiate the external facets widget. The facets maintain their own copies
 		// of group objects which are replaced wholesale on changes.  Elsewhere in the code
 		// we modify local copies of the group objects, then replace those in the Facet component

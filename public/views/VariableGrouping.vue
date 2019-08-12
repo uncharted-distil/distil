@@ -154,7 +154,7 @@ export default Vue.extend({
 			return this.groupingType === TIMESERIES_TYPE;
 		},
 		xColOptions(): Object[] {
-			if(this.isGeocoordinate){
+			if (this.isGeocoordinate) {
 				const X_COL_TYPES = {
 					[LATITUDE_TYPE]: true,
 					[REAL_TYPE]: true
@@ -174,8 +174,7 @@ export default Vue.extend({
 					this.xCol = suggestions[0].value;
 					return suggestions;
 				}
-
-				return [].concat(def, suggestions);					
+				return [].concat(def, suggestions);
 			} else if (this.isTimeseries) {
 				const X_COL_TYPES = {
 					[INTEGER_TYPE]: true,
@@ -199,12 +198,12 @@ export default Vue.extend({
 					return suggestions;
 				}
 
-				return [].concat(def, suggestions);		
+				return [].concat(def, suggestions);
 			}
 		},
 
 		yColOptions(): Object[] {
-			if(this.isGeocoordinate) {
+			if (this.isGeocoordinate) {
 				const Y_COL_TYPES = {
 					[LONGITUDE_TYPE]: true,
 					[REAL_TYPE]: true
@@ -226,8 +225,8 @@ export default Vue.extend({
 					return suggestions;
 				}
 
-				return [].concat(def, suggestions);			
-			} else if (this.isTimeseries) { 
+				return [].concat(def, suggestions);
+			} else if (this.isTimeseries) {
 				const Y_COL_TYPES = {
 					[INTEGER_TYPE]: true,
 					[REAL_TYPE]: true
@@ -250,7 +249,7 @@ export default Vue.extend({
 				}
 
 				return [].concat(def, suggestions);
-			}	
+			}
 		},
 
 		isReady(): boolean {
@@ -260,15 +259,14 @@ export default Vue.extend({
 
 		isTimeseriesAnalysis(): boolean {
 			const ids = this.idCols.filter(id => !!id.value);
-			console.log(this.xCol, ids.length, this.yCol);
 			return this.xCol && (ids.length === 0) && !this.yCol;
 		}
 	},
 
 	beforeMount() {
 		viewActions.fetchSelectTargetData(this.$store, false);
-		if(this.isGeocoordinate){
-			this.idCols = [ { value: GEOCOORDINATE_TYPE } ]
+		if (this.isGeocoordinate) {
+			this.idCols = [ { value: GEOCOORDINATE_TYPE } ];
 		}
 	},
 	methods: {
