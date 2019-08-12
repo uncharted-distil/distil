@@ -30,10 +30,8 @@ import _ from 'lodash';
 import $ from 'jquery';
 import leaflet from 'leaflet';
 import Vue from 'vue';
-import * as turf from '@turf/turf';
 import IconBase from './icons/IconBase';
 import IconCropFree from './icons/IconCropFree';
-import { scaleThreshold }  from 'd3';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
@@ -46,7 +44,6 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet/dist/images/marker-icon.png';
 import 'leaflet/dist/images/marker-icon-2x.png';
 import 'leaflet/dist/images/marker-shadow.png';
-import { convertLength } from '@turf/turf';
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
@@ -96,14 +93,6 @@ export default Vue.extend({
 			selectedRect: null,
 			isSelectionMode: false,
 		};
-	},
-	created(){
-		console.log('hi');
-		
-		console.log('dataitems', this.dataItems);
-		console.log('dataFields', this.dataFields);
-		
-		
 	},
 
 
@@ -171,6 +160,7 @@ export default Vue.extend({
 					lat = null;
 				}
 			});
+
 			return fields;
 		},
 
@@ -200,6 +190,7 @@ export default Vue.extend({
 				}).filter(p => !!p);
 				groups.push(group);
 			});
+
 			return groups;
 		},
 
@@ -453,16 +444,6 @@ export default Vue.extend({
 			});
 		},
 
-		createPointGroup(points) {
-			const count = points.length;
-			const features = [];
-   			for (let i = 0; i < count; i++) {
-        		features.push(turf.point(points[i]));
-			}
-			return turf.featureCollection(features)
-		},
-
-
 		paint() {
 			if (!this.map) {
 				// NOTE: this component re-mounts on any change, so do everything in here
@@ -479,8 +460,6 @@ export default Vue.extend({
 						lng: this.mapCenter[0]
 					}, { animate: true });
 				}
-				
-				
 				this.baseLayer = leaflet.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png');
 				this.baseLayer.addTo(this.map);
 				// this.map.on('click', this.clearSelection);
@@ -489,16 +468,10 @@ export default Vue.extend({
 			this.clear();
 
 			const bounds = leaflet.latLngBounds();
-
-			const pointLength = this.pointGroups.length;
-			
 			this.pointGroups.forEach(group => {
 				const hash = this.fieldHash(group.field);
-				
 				const layer = leaflet.layerGroup([]);
-				
 				group.points.forEach(p => {
-					
 					const marker =  leaflet.marker(p, { row: p.row });
 					bounds.extend([p.lat, p.lng]);
 					marker.bindTooltip(() => {
@@ -519,83 +492,12 @@ export default Vue.extend({
 				});
 				this.markers[hash] = layer;
 				layer.on('add', () => this.updateMarkerSelection(layer.getLayers()));
-				// layer.addTo(this.map);
+				layer.addTo(this.map);
 
 			});
-			
+
 			if (bounds.isValid()) {
-
-
 				this.map.fitBounds(bounds);
-				
-				// create a turf BBox
-				let bbox = turf.square(turf.square(bounds.toBBoxString().split(',').map(Number)));
-				
-				//let bbox = turf.bbox(turf.envelope(turf.multiPoint(points)));
-				
-				
-
-				// get distance of one side of bbox 
-				const bboxVertexCoordA = turf.point([bbox[0], bbox[1]]);
-				const bboxVertexCoordB = turf.point([bbox[0], bbox[3]])
-				
-
-				const sideDistance = turf.distance(bboxVertexCoordA, bboxVertexCoordB, {units: 'kilometers'});
-				
-				// round to nearest 10
-				const roundedDistance = Math.ceil((sideDistance) /10) * 10;
-					
-
-				let points = [];
-				// this.pointGroups.forEach((group) => {
-				// 	if(group.points.length){
-				// 		group.points.forEach((latLng) => {
-				// 			points.push(turf.point([Number(latLng.lng), Number(latLng.lat)], {z: 1}, {bbox: bbox}))
-				// 		});
-				// 	}
-				// })
-
-				this.pointGroups.forEach((group) => {
-					if(group.points.length){
-						group.points.forEach((latLng) => {
-							points.push([Number(latLng.lng), Number(latLng.lat)])
-						});
-					}
-				})
-			
-				let multiPointFeature = this.createPointGroup(points);
-
-				multiPointFeature.features.forEach(function(d){
-    				d.properties.z = 1;
-				});
-
-				let squareGrid = turf.squareGrid(bbox, (sideDistance/ 10), {units: 'kilometers'});
-				
-				let count = turf.collect(squareGrid, multiPointFeature, 'z', 'z');
-
-			const pallete =  ["rgba(0,0,0,0)", "#F4F8FB", "#E9F2F8", "#DEEBF5", "#D3E5F1", "#C8DFEE", "#BDD8EB", "#B2D2E8", "#A7CCE4", "#9CC5E1", "#91BFDE", "#86B8DB", "#7BB2D7", "#70ACD4", "#65A5D1", "#5A9FCE", "#4F99CA", "#4492C7", "#398CC4", "#2E86C1"];
-
-			const maxVal = _.maxBy(count.features,(i) => i.properties.z).properties.z.length;
-			const minVal = _.minBy(count.features,(i) => i.properties.z).properties.z.length;
-
-			const d = (maxVal-minVal)/pallete.length;
-			const domain = pallete.map((val,index) => minVal + d*(index+1));
-			
-			const scaleColors = scaleThreshold().range(pallete).domain(domain);
-				
-				let gridLayer = leaflet.geoJSON(count, {
-					    style: function (feature) {
-        					return {
-        						fillColor: scaleColors(feature.properties.z.length),
-        						weight: 2,
-        						opacity: 1,
-        						color: 'rgba(0,0,0,0)',
-        						dashArray: '3',
-        						fillOpacity: 0.7
-    						};
-						}
-				}).addTo(this.map);
-
 			}
 
 			this.drawHighlight();
