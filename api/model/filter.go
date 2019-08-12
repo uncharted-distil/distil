@@ -50,9 +50,7 @@ func (f *FilterParams) Clone() *FilterParams {
 		c := *f
 		clone.Filters = append(clone.Filters, &c)
 	}
-	for _, v := range f.Variables {
-		clone.Variables = append(clone.Variables, v)
-	}
+	clone.Variables = append(clone.Variables, f.Variables...)
 	clone.Size = f.Size
 	return clone
 }

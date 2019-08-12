@@ -413,11 +413,7 @@ func LoadDatasetSchemaFromFile(filename string) (*DataSchema, error) {
 }
 
 func referencesResource(variable *model.Variable) bool {
-	if variable.Type == model.ImageType {
-		return true
-	}
-
-	return false
+	return variable.Type == model.ImageType
 }
 
 func min(a, b int) int {
