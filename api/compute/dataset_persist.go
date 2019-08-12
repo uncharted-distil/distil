@@ -271,10 +271,10 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 	// figure out the numer of train and test rows to use - training rows are capped to avoid excessive
 	// fit times for users, although it results in poorer model fidelity
 	numTest := int(float32(len(rowData)) * (1.0 - trainTestSplitThreshold))
-	numTrain := min(maxTrainingCount, int(float32(len(rowData))*trainTestSplitThreshold))
 	if maxTrainingCount <= 0 {
 		maxTrainingCount = math.MaxInt64
 	}
+	numTrain := min(maxTrainingCount, int(float32(len(rowData))*trainTestSplitThreshold))
 
 	// Write out to train test
 	testCount := 0
@@ -370,13 +370,14 @@ func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder
 	mainDR := meta.GetMainDataResource()
 
 	// split the source data into train & test
+	var config env.Config
 	dataPath := path.Join(sourceDataFolder, mainDR.ResPath)
 	trainDataFile := path.Join(trainFolder, mainDR.ResPath)
 	testDataFile := path.Join(testFolder, mainDR.ResPath)
 	if taskType == compute.TaskTypeTimeseries {
 		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, timeseriesFieldIndex)
 	} else {
-		config, err := env.LoadConfig()
+		config, err = env.LoadConfig()
 		if err != nil {
 			return "", "", errors.Wrap(err, "unable to load config")
 		}

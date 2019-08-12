@@ -237,7 +237,6 @@ func main() {
 		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
 		HardFail:                           config.IngestHardFail,
 	}
-	sourceFolder := config.D3MInputDir
 
 	// instantiate the metadata storage (using datamart).
 	datamartCtors := make(map[string]model.MetadataStorageCtor)
@@ -283,9 +282,6 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
-
-		sourceFolder = env.ResolvePath(metadata.Contrib, ingestConfig.GeocodingOutputSchemaRelative)
-		sourceFolder = path.Dir(sourceFolder)
 	}
 
 	// register routes
