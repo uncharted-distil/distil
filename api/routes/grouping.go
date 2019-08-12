@@ -87,26 +87,6 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 
 		}
 
-		// geocoordinate
-		if grouping.Type == "geocoordinate" {
-			// ensure properties are typed correctly
-
-			storageName := model.NormalizeDatasetID(dataset)
-
-			// ensure id is timeseries
-			err = meta.SetDataType(dataset, grouping.IDCol, model.GeocoordinateType)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-				return
-			}
-			err = data.SetDataType(dataset, storageName, grouping.IDCol, model.GeocoordinateType)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-				return
-			}
-
-		}
-
 		err = meta.AddGrouping(dataset, grouping)
 		if err != nil {
 			handleError(w, err)
