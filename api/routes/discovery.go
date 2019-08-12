@@ -195,6 +195,10 @@ func ProblemDiscoveryHandler(ctorData api.DataStorageCtor, ctorMeta api.Metadata
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(bytes)
+		_, err = w.Write(bytes)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))
+			return
+		}
 	}
 }

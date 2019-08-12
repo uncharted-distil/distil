@@ -42,8 +42,7 @@ const (
 )
 
 var (
-	client       *compute.Client
-	inputRootDir string
+	client *compute.Client
 )
 
 // FeatureRequest captures the properties of a request to a primitive.

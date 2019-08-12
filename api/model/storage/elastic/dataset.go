@@ -316,7 +316,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string, va
 	for index, v := range vars {
 		if v.Name == varName {
 			// check if it has been deleted
-			if v.Deleted == false {
+			if !v.Deleted {
 				return fmt.Errorf("variable already exists under this key")
 			}
 

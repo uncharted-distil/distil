@@ -34,12 +34,8 @@ import (
 )
 
 const (
-	createSolutions   = "CREATE_SOLUTIONS"
-	stopSolutions     = "STOP_SOLUTIONS"
-	categoricalType   = "categorical"
-	numericalType     = "numerical"
-	defaultResourceID = "learningData"
-	datasetSizeLimit  = 10000
+	createSolutions = "CREATE_SOLUTIONS"
+	stopSolutions   = "STOP_SOLUTIONS"
 )
 
 var (
