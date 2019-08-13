@@ -94,8 +94,6 @@ export default Vue.extend({
 			isSelectionMode: false,
 		};
 	},
-
-
 	computed: {
 
 		dataset(): string {

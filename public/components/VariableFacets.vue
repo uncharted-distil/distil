@@ -18,9 +18,8 @@
 			</div>
 			<div class="row flex-1">
 				<div class="col-12 flex-column variable-facets-container h-100">
-					<div class="variable-facet-item" v-if="isGeocoordinateFacetAvailable">
-						<!-- <geocoordinate-facet :data-fields="dataFields" :data-items="dataItems"  :instance-name="instanceName">
-						</geocoordinate-facet> -->
+					<div class="variable-facet-item geocoordinate" v-if="isGeocoordinateFacetAvailable">
+						<geocoordinate-facet></geocoordinate-facet>
 					</div>
 					<div class="variable-facets-item" v-for="summary in paginatedSummaries" :key="summary.key">
 						<template v-if="summary.varType === 'timeseries' || isTimeseriesAnalysis">
@@ -74,6 +73,7 @@
 import _ from 'lodash';
 import FacetEntry from '../components/FacetEntry';
 import FacetTimeseries from '../components/FacetTimeseries';
+import GeocoordinateFacet from '../components/GeocoordinateFacet';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
 import { sortSummariesByImportance, filterVariablesByPage, getVariableImportance } from '../util/data';
@@ -82,6 +82,8 @@ import { getters as datasetGetters, actions as datasetActions } from '../store/d
 import { getters as routeGetters } from '../store/route/module';
 import { ROUTE_PAGE_SUFFIX } from '../store/route/index';
 import { Group } from '../util/facets';
+import { LATITUDE_TYPE, LONGITUDE_TYPE } from '../util/types';
+
 import { updateHighlight, clearHighlight } from '../util/highlights';
 import Vue from 'vue';
 
@@ -91,6 +93,7 @@ export default Vue.extend({
 	components: {
 		FacetEntry,
 		FacetTimeseries,
+		GeocoordinateFacet
 	},
 
 	props: {
@@ -135,6 +138,7 @@ export default Vue.extend({
 		},
 
 		isGeocoordinateFacetAvailable(): boolean {
+			const foo = datasetGetters.getGeocoordinateTypes(this.$store).length > 0;
 			return datasetGetters.getGeocoordinateTypes(this.$store).length > 0;
 		},
 
@@ -149,7 +153,13 @@ export default Vue.extend({
 		},
 
 		paginatedSummaries(): VariableSummary[] {
-			return filterVariablesByPage(this.currentPage, this.rowsPerPage, this.sortedFilteredSummaries);
+			let filteredVariables = filterVariablesByPage(this.currentPage, this.rowsPerPage, this.sortedFilteredSummaries);
+			if (this.isGeocoordinateFacetAvailable) {
+				filteredVariables = filteredVariables.filter((variable) => {
+					return variable.key !== LATITUDE_TYPE && variable.key !== LONGITUDE_TYPE;
+				});
+			}
+			return filteredVariables;
 		},
 
 		numSummaries(): number {
@@ -285,6 +295,11 @@ button {
 }
 .variable-page-nav {
 	padding-top: 10px;
+}
+
+.geocoordinate {
+	max-width: 500px;
+	height: 300px;
 }
 
 </style>
