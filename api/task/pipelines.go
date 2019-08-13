@@ -37,8 +37,7 @@ import (
 )
 
 const (
-	denormFieldName  = "filename"
-	useMockTA2System = true
+	denormFieldName = "filename"
 )
 
 var (
