@@ -587,12 +587,8 @@ export default Vue.extend({
 					units: 'kilometers'
 				});
 
-				const count = turf.collect(
-					squareGrid,
-					multiPointFeature,
-					'z',
-					'z'
-				);
+//  @ts-ignore
+				const count = turf.collect(squareGrid, multiPointFeature, 'z', 'z');
 
 				const pallete = [
 					'rgba(0,0,0,0)',
@@ -627,9 +623,8 @@ export default Vue.extend({
 					(val, index) => minVal + d * (index + 1)
 				);
 
-				const scaleColors = scaleThreshold()
-					.range(pallete)
-					.domain(domain);
+//  @ts-ignore
+const scaleColors = scaleThreshold().range(pallete).domain(domain);
 
 				const gridLayer = leaflet
 					.geoJSON(count, {
