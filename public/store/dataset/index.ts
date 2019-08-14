@@ -68,6 +68,7 @@ export interface Variable {
 	isColTypeReviewed: boolean;
 	min: number;
 	max: number;
+	role?: string[];
 }
 
 export interface Dataset {
@@ -219,7 +220,7 @@ export interface JoinDatasetImportPendingRequest {
 }
 
 export type DatasetPendingRequest =
-		VariableRankingPendingRequest
+	VariableRankingPendingRequest
 	| GeocodingPendingRequest
 	| JoinSuggestionPendingRequest
 	| JoinDatasetImportPendingRequest;
