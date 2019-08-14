@@ -65,7 +65,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		if ok {
 			// add the joining origin to the source dataset joining
 			origins = getOriginsFromMaps(originalDataset, joinedDataset)
-			fmt.Printf("origins: %v\n\n\n\n", origins)
 		}
 		// update ingest config to use ingest URI.
 		cfg, err := env.LoadConfig()
@@ -109,7 +108,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 }
 
 func getOriginsFromMaps(originalDataset map[string]interface{}, joinedDataset map[string]interface{}) []*model.DatasetOrigin {
-	fmt.Printf("og: %+v\n\n\n\njn: %+v\n\n\n\n", originalDataset, joinedDataset)
 	var origJoinSuggestions []interface{}
 	var joinJoinSuggestions []interface{}
 	origLength := 0

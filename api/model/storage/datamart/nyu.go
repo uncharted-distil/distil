@@ -208,8 +208,6 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			// parse out more information for type
 		})
 	}
-
-	fmt.Printf("%+v\n", allTypes)
 	return datasets, nil
 }
 

@@ -17,7 +17,6 @@ package task
 
 import (
 	"encoding/csv"
-	"fmt"
 	"io"
 	"os"
 	"path"
@@ -55,7 +54,6 @@ type JoinSpec struct {
 func Join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable, varsRight []*model.Variable, rightOrigin *model.DatasetOrigin) (*apiModel.FilteredData, error) {
 	cfg, err := env.LoadConfig()
 	if err != nil {
-		fmt.Printf("%v\n", err)
 		return nil, err
 	}
 	return join(joinLeft, joinRight, varsLeft, varsRight, rightOrigin, defaultSubmitter{}, &cfg)
@@ -99,7 +97,6 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 	leftName := joinLeft.DatasetID
 	rightName := joinRight.DatasetID
 	datasetName := strings.Join([]string{leftName, rightName}, "-")
-	fmt.Printf("datasetName at join: %v\n", datasetName)
 	mergedVariables, err := createDatasetFromCSV(config, csvFile, datasetName, leftVarsMap, rightVarsMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create dataset from result CSV")

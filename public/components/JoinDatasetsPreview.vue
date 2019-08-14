@@ -131,7 +131,6 @@ export default Vue.extend({
 				joinedDataset: this.datasetB,
 				searchResultIndex: this.searchResultIndex
 			};
-			console.log(importDatasetArgs);
 			datasetActions.importDataset(this.$store, importDatasetArgs).then(() => {
 				this.$emit('success', this.joinedDatasetID);
 				this.pending = false;
