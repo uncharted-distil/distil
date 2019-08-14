@@ -18,16 +18,11 @@ package postgres
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/go-pg/pg"
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
-)
-
-const (
-	defaultTimeout = time.Second * 30
 )
 
 var (
