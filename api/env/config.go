@@ -28,20 +28,19 @@ var (
 
 // Config represents the application configuration state loaded from env vars.
 type Config struct {
-	AppPort                     string `env:"PORT" envDefault:"8080"`
-	ElasticEndpoint             string `env:"ES_ENDPOINT" envDefault:"http://localhost:9200"`
-	UseTA2Runner                bool   `env:"USE_TA2_RUNNER" envDefault:"false"`
-	SolutionComputeEndpoint     string `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
-	SolutionComputeMockEndpoint string `env:"SOLUTION_COMPUTE_MOCK_ENDPOINT" envDefault:"localhost:50051"`
-	SolutionComputePullTimeout  int    `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`
-	SolutionComputePullMax      int    `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
-	SolutionSearchMaxTime       int    `env:"SOLUTION_SEARCH_MAX_TIME" envDefault:"10"`
-	AugmentedSubFolder          string `env:"AUGMENTED_SUBFOLDER" envDefault:"augmented"`
-	D3MInputDir                 string `env:"D3MINPUTDIR" envDefault:"datasets"`
-	D3MOutputDir                string `env:"D3MOUTPUTDIR" envDefault:"outputs"`
-	DatamartURIISI              string `env:"DATAMART_URL_ISI" envDefault:"http://dsbox02.isi.edu:9000"`
-	// DatamartURINYU                     string  `env:"DATAMART_URL_NYU" envDefault:"https://datamart.d3m.vida-nyu.org"`
-	DatamartURINYU                     string  `env:"DATAMART_URL_NYU" envDefault:"https://staging.auctus.vida-nyu.org"`
+	AppPort                            string  `env:"PORT" envDefault:"8080"`
+	ElasticEndpoint                    string  `env:"ES_ENDPOINT" envDefault:"http://localhost:9200"`
+	UseTA2Runner                       bool    `env:"USE_TA2_RUNNER" envDefault:"false"`
+	SolutionComputeEndpoint            string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
+	SolutionComputeMockEndpoint        string  `env:"SOLUTION_COMPUTE_MOCK_ENDPOINT" envDefault:"localhost:50051"`
+	SolutionComputePullTimeout         int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`
+	SolutionComputePullMax             int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
+	SolutionSearchMaxTime              int     `env:"SOLUTION_SEARCH_MAX_TIME" envDefault:"10"`
+	AugmentedSubFolder                 string  `env:"AUGMENTED_SUBFOLDER" envDefault:"augmented"`
+	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:"datasets"`
+	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
+	DatamartURIISI                     string  `env:"DATAMART_URL_ISI" envDefault:"http://dsbox02.isi.edu:9000"`
+	DatamartURINYU                     string  `env:"DATAMART_URL_NYU" envDefault:"https://auctus.vida-nyu.org"`
 	DatamartISIEnabled                 bool    `env:"DATAMART_ISI_ENABLED" envDefault:"false"`
 	DatamartNYUEnabled                 bool    `env:"DATAMART_NYU_ENABLED" envDefault:"true"`
 	DatamartImportFolder               string  `env:"DATAMART_IMPORT_FOLDER" envDefault:"datamart"`

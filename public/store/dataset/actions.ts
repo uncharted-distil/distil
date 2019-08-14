@@ -264,7 +264,7 @@ export const actions = {
 			return null;
 
 		}
-		console.log(args);
+
 		let postParams = {};
 		if (args.originalDataset !== null) {
 			postParams = {

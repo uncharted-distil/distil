@@ -329,11 +329,6 @@ export default Vue.extend({
 		},
 		join() {
 			const selected = this.selectedItem;
-			// skip import step for now
-			/* if (selected.isAvailable === false) {
-				const importAskModal: any = this.$refs['import-ask-modal'];
-				return importAskModal.show();
-			} */
 			const currentDataset = _.find(this.datasets, d => {
 				return d.id === this.dataset;
 			});

@@ -170,8 +170,6 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 		return nil, errors.Wrap(err, "unable to parse NYU datamart search request")
 	}
 
-	var allTypes = make(map[string]int, 100)
-
 	datasets := make([]*api.Dataset, 0)
 
 	for _, res := range dmResult.Results {
@@ -182,11 +180,6 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 				DisplayName:  c.Name,
 				OriginalType: mapNYUDataTypesToDistil(c.StructuralType),
 			})
-			var allVarTypes []string
-			allVarTypes = append(allVarTypes, c.StructuralType)
-			for _, avt := range allVarTypes {
-				allTypes[avt] = 1
-			}
 		}
 
 		joinSuggestions, err := parseNYUJoinSuggestion(res, baseDataset)
