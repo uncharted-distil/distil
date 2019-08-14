@@ -219,5 +219,4 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 		handleErr(conn, msg, errors.Wrap(err, "received error from TA2 system"))
 		return
 	}
-	return
 }

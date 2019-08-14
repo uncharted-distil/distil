@@ -104,8 +104,8 @@ func GeocodeForwardDataset(datasetSource metadata.DatasetSource, schemaFile stri
 	for i, line := range lines {
 		geocodedFields := indexedData[line[d3mIndexVariable]]
 		for _, geo := range geocodedFields {
-			line = append(line, fmt.Sprintf("%s", geo.Latitude))
-			line = append(line, fmt.Sprintf("%s", geo.Longitude))
+			line = append(line, geo.Latitude)
+			line = append(line, geo.Longitude)
 		}
 		lines[i] = line
 	}

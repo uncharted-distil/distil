@@ -55,7 +55,10 @@ func Unzip(zipFile string, destination string) error {
 		}
 	}()
 
-	os.MkdirAll(destination, os.ModePerm)
+	err = os.MkdirAll(destination, os.ModePerm)
+	if err != nil {
+		return errors.Wrap(err, "unable to make containing directory")
+	}
 
 	// Closure to address file descriptors issue with all the deferred .Close() methods
 	extractAndWriteFile := func(f *zip.File) error {
@@ -72,9 +75,15 @@ func Unzip(zipFile string, destination string) error {
 		path := filepath.Join(destination, f.Name)
 
 		if f.FileInfo().IsDir() {
-			os.MkdirAll(path, os.ModePerm)
+			err = os.MkdirAll(path, os.ModePerm)
+			if err != nil {
+				return errors.Wrap(err, "unable to make archive directory")
+			}
 		} else {
-			os.MkdirAll(filepath.Dir(path), os.ModePerm)
+			err = os.MkdirAll(filepath.Dir(path), os.ModePerm)
+			if err != nil {
+				return errors.Wrap(err, "unable to make file directory")
+			}
 			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 			if err != nil {
 				return errors.Wrap(err, "unable to write archived file")
