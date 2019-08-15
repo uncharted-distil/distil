@@ -75,6 +75,12 @@
 							<b>Submit</b>
 						</div>
 					</b-btn>
+					<b-btn class="mt-3 var-grouping-button" variant="outline-success" :disabled="isPending" @click="mockGroup">
+						<div class="row justify-content-center">
+							<i class="fa fa-check-circle fa-2x mr-2"></i>
+							<b>Mock Submit</b>
+						</div>
+					</b-btn>
 					<b-btn class="mt-3 var-grouping-button" variant="outline-danger" :disabled="isPending" @click="onClose">
 						<div class="row justify-content-center">
 							<i class="fa fa-times-circle fa-2x mr-2"></i>
@@ -311,7 +317,7 @@ export default Vue.extend({
 		isOtherCol(arg): boolean {
 			return this.other.indexOf(arg) !== -1;
 		},
-		onGroup() {
+		mockGroup() {
 			if (this.isTimeseriesAnalysis) {
 				this.submitTimeseriesAnalysis();
 			} else if (this.isGeocoordinate) {
@@ -322,6 +328,13 @@ export default Vue.extend({
 				});
 
 				this.gotoTargetSelection();
+			} else {
+				this.submitGrouping();
+			}
+		},
+		onGroup() {
+			if (this.isTimeseriesAnalysis) {
+				this.submitTimeseriesAnalysis();
 			} else {
 				this.submitGrouping();
 			}
