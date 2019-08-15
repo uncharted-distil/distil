@@ -498,15 +498,11 @@ export const actions = {
 			});
 	},
 
-<<<<<<< HEAD
 	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<any>  {
 		if (args.type === GEOCOORDINATE_TYPE) {
 			mutations.updateVariableType(context, args);
 			return;
 		}
-=======
-	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<any> {
->>>>>>> master
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
