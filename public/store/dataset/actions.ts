@@ -22,7 +22,7 @@ import { FilterParams, INCLUDE_FILTER, EXCLUDE_FILTER } from '../../util/filters
 import { createPendingSummary, createErrorSummary, createEmptyTableData, fetchSummaryExemplars, getTimeseriesAnalysisIntervals } from '../../util/data';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { loadImage } from '../../util/image';
-import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX } from '../../util/types';
+import { getVarType, IMAGE_TYPE, TIMESERIES_TYPE, GEOCODED_LON_PREFIX, GEOCODED_LAT_PREFIX, GEOCOORDINATE_TYPE, LATITUDE_TYPE } from '../../util/types';
 
 // fetches variables and add dataset name to each variable
 function getVariables(dataset: string): Promise<Variable[]> {
@@ -498,7 +498,11 @@ export const actions = {
 			});
 	},
 
-	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<any> {
+	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<any>  {
+		if (args.type === GEOCOORDINATE_TYPE) {
+			mutations.updateVariableType(context, args);
+			return;
+		}
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -511,6 +515,7 @@ export const actions = {
 			console.warn('`type` argument is missing');
 			return null;
 		}
+
 		return axios.post(`/distil/variables/${args.dataset}`, {
 			field: args.field,
 			type: args.type
@@ -538,7 +543,6 @@ export const actions = {
 				]);
 			})
 			.catch(error => {
-				console.error(error);
 				const key = args.field;
 				const label = args.field;
 				const dataset = args.dataset;

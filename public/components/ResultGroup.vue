@@ -345,7 +345,6 @@ export default Vue.extend({
 
 		deleteSolution() {
 			this.openDeleteModal = false;
-			console.log('Deleting', this.solutionId);
 		}
 	}
 });
