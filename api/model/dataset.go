@@ -23,10 +23,6 @@ import (
 	"github.com/uncharted-distil/distil/api/util/json"
 )
 
-const (
-	metadataType = "metadata"
-)
-
 // Dataset represents a decsription of a dataset.
 type Dataset struct {
 	ID              string                 `json:"id"`

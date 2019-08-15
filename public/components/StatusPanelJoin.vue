@@ -49,10 +49,11 @@
 						</b-list-group-item>
 					</b-list-group>
 					<div>
-						<span>
+						<!-- Skip import step for now -->
+						<!-- <span>
 							<small v-if="!item.isAvailable" class="text-info">Requires import</small>
 							<small v-if="item.isAvailable" class="text-success">Ready for join</small>
-						</span>
+						</span> -->
 						<span class="float-right">
 							<small class="text-muted">{{formatNumber(item.dataset.numRows)}} rows</small>
 							<small class="text-muted">{{formatBytes(item.dataset.numBytes)}}</small>
@@ -86,9 +87,10 @@
 			hide-footer>
 			<join-datasets-preview
 				:preview-table-data="previewTableData"
-				:dataset-a="datasetAid"
-				:dataset-b="datasetBid"
+				:dataset-a="datasetA"
+				:dataset-b="datasetB"
 				:joined-column="joinedColumn"
+				:search-result-index="searchResultIndex"
 				@success="onJoinCommitSuccess"
 				@failure="onJoinCommitFailure"
 				@close="showJoinSuccess = !showJoinSuccess;">
@@ -154,11 +156,12 @@ interface StatusPanelJoinState {
 	showJoinFailure: boolean;
 	showJoinSuccess: boolean;
 	previewTableData: any;
-	datasetAid: string;
-	datasetBid: string;
+	datasetA: Dataset;
+	datasetB: Dataset;
 	datasetAColumn: any;
 	datasetBColumn: any;
 	searchQuery: string;
+	searchResultIndex: number;
 }
 
 export default Vue.extend({
@@ -172,11 +175,12 @@ export default Vue.extend({
 			showJoinFailure: false,
 			showJoinSuccess: false,
 			previewTableData: null,
-			datasetAid: '',
-			datasetBid: '',
+			datasetA: null,
+			datasetB: null,
 			datasetAColumn: '',
 			datasetBColumn: '',
 			searchQuery: '',
+			searchResultIndex: null
 		};
 	},
 	components: {
@@ -325,24 +329,16 @@ export default Vue.extend({
 		},
 		join() {
 			const selected = this.selectedItem;
-			if (selected.isAvailable === false) {
-				const importAskModal: any = this.$refs['import-ask-modal'];
-				return importAskModal.show();
-			}
-			const selectedSuggestion = this.selectedSuggestion;
-			this.previewJoin(this.dataset, selected.dataset, selectedSuggestion.joinSuggestion.index);
+			const currentDataset = _.find(this.datasets, d => {
+				return d.id === this.dataset;
+			});
+			this.previewJoin(currentDataset, selected.dataset, this.selectedSuggestion.joinSuggestion.index);
 		},
 		previewJoin(datasetA, datasetB, joinSuggestionIndex) {
 			this.isAttemptingJoin = true;
-			const a = _.find(this.datasets, d => {
-				return d.id === datasetA;
-			});
-
-			this.datasetAid = datasetA;
-			this.datasetBid = datasetB.id;
 			const datasetJoinInfo = {
-				datasetA: a,
-				datasetB: datasetB,
+				datasetA,
+				datasetB,
 				joinAccuracy: 1,
 				joinSuggestionIndex: joinSuggestionIndex
 			};
@@ -353,6 +349,9 @@ export default Vue.extend({
 				this.previewTableData = tableData;
 				this.isAttemptingJoin = false;
 				this.showJoinSuccess = true;
+				this.datasetA = datasetA;
+				this.datasetB = datasetB;
+				this.searchResultIndex = joinSuggestionIndex;
 			}).catch(err => {
 				// display error modal
 				this.previewTableData = null;

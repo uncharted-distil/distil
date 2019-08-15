@@ -18,8 +18,6 @@ package routes
 import (
 	"net/http"
 
-	"goji.io/pat"
-
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-ingest/metadata"
@@ -28,74 +26,121 @@ import (
 	"github.com/uncharted-distil/distil/api/util/json"
 )
 
+func missingParamErr(w http.ResponseWriter, paramName string) {
+	handleError(w, errors.Errorf(paramName+" needed for joined dataset import"))
+}
+
 // JoinHandler generates a route handler that joins two datasets using caller supplied
 // columns.  The joined data is returned to the caller, but is NOT added to storage.
 func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// get dataset name
-		datasetIDLeft := pat.Param(r, "dataset-left")
-		sourceLeft := pat.Param(r, "source-left")
-		datasetIDRight := pat.Param(r, "dataset-right")
-		sourceRight := pat.Param(r, "source-right")
-
-		// get storage client
-		storage, err := metaCtor()
+		// parse JSON from post
+		params, err := getPostParameters(r)
 		if err != nil {
-			handleError(w, err)
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
 			return
 		}
 
-		// fetch vars for each dataset
-		datasetLeft, err := storage.FetchDataset(datasetIDLeft, true, true)
-		if err != nil {
-			handleError(w, err)
+		if params == nil {
+			missingParamErr(w, "parameters")
 			return
 		}
 
-		datasetRight, err := storage.FetchDataset(datasetIDRight, true, true)
-		if err != nil {
-			handleError(w, err)
+		if params["datasetLeft"] == nil {
+			missingParamErr(w, "datasetLeft")
 			return
 		}
+
+		if params["datasetRight"] == nil {
+			missingParamErr(w, "datasetRight")
+			return
+		}
+
+		if params["searchResultIndex"] == nil {
+			missingParamErr(w, "searchResultIndex")
+			return
+		}
+
+		// fetch vars from params
+		datasetLeft := params["datasetLeft"].(map[string]interface{})
+		datasetRight := params["datasetRight"].(map[string]interface{})
+		searchResultIndex := int(params["searchResultIndex"].(float64))
 
 		leftJoin := &task.JoinSpec{
-			DatasetID:     datasetLeft.ID,
-			DatasetFolder: datasetLeft.Folder,
-			DatasetSource: metadata.DatasetSource(sourceLeft),
+			DatasetID:     datasetLeft["id"].(string),
+			DatasetFolder: datasetLeft["folder"].(string),
+			DatasetSource: metadata.DatasetSource(datasetLeft["source"].(string)),
 		}
 
 		rightJoin := &task.JoinSpec{
-			DatasetID:     datasetRight.ID,
-			DatasetFolder: datasetRight.Folder,
-			DatasetSource: metadata.DatasetSource(sourceRight),
+			DatasetID:     datasetRight["id"].(string),
+			DatasetFolder: datasetRight["folder"].(string),
+			DatasetSource: metadata.DatasetSource(datasetRight["source"].(string)),
+		}
+
+		leftVariableInterfaces := datasetLeft["variables"].([]interface{})
+		rightVariableInterfaces := datasetRight["variables"].([]interface{})
+		leftVariables := make([]model.Variable, len(leftVariableInterfaces))
+		rightVariables := make([]model.Variable, len(rightVariableInterfaces))
+		for i := range leftVariableInterfaces {
+			v := model.Variable{}
+			err := json.MapToStruct(&v, leftVariableInterfaces[i].(map[string]interface{}))
+			if err != nil {
+				handleError(w, errors.Wrap(err, "Unable to parse Variable parameter"))
+				return
+			}
+			leftVariables[i] = v
+		}
+
+		for i := range rightVariableInterfaces {
+			v := model.Variable{}
+			err := json.MapToStruct(&v, rightVariableInterfaces[i].(map[string]interface{}))
+			if err != nil {
+				handleError(w, errors.Wrap(err, "Unable to parse Variable parameter"))
+				return
+			}
+			rightVariables[i] = v
+		}
+		leftVariableReferences := make([]*model.Variable, len(leftVariables))
+		rightVariableReferences := make([]*model.Variable, len(rightVariables))
+
+		for i := range leftVariables {
+			leftVariableReferences[i] = &leftVariables[i]
+		}
+		for i := range rightVariables {
+			rightVariableReferences[i] = &rightVariables[i]
 		}
 
 		// need to find the right join suggestion since a single dataset
 		// can have multiple join suggestions
-		var origin *model.DatasetOrigin
-		if datasetRight.JoinSuggestions != nil {
-			// parse POST params
-			params, err := getPostParameters(r)
+		var origin model.DatasetOrigin
+		if datasetRight["joinSuggestion"] != nil {
+			joinSuggestions := datasetRight["joinSuggestion"].([]interface{})
+			targetOriginModel := model.DatasetOrigin{}
+			targetJoin := joinSuggestions[searchResultIndex].(map[string]interface{})
+			if targetJoin == nil {
+				handleError(w, errors.Wrap(err, "Unable to find join suggestion at search result index"))
+				return
+			}
+			targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
+			if targetJoinOrigin == nil {
+				handleError(w, errors.Wrap(err, "Unable to find join origin"))
+				return
+			}
+			err := json.MapToStruct(&targetOriginModel, targetJoinOrigin)
 			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+				handleError(w, errors.Wrap(err, "Unable to parse join origin from JSON"))
 				return
 			}
-
-			if params == nil || params["searchResultIndex"] == nil {
-				handleError(w, errors.Errorf("Search result index needed for joined dataset import"))
-				return
-			}
-			searchResultIndexF, ok := params["searchResultIndex"].(float64)
-			if !ok {
-				handleError(w, errors.Errorf("Search result index needs to be an integer"))
-				return
-			}
-			searchResultIndex := int(searchResultIndexF)
-			origin = datasetRight.JoinSuggestions[searchResultIndex].DatasetOrigin
+			origin = targetOriginModel
+		} else {
+			handleError(w, errors.Wrap(err, "Join Suggestion undefined"))
 		}
 
+		originRef := &origin
+
 		// run joining pipeline
-		data, err := task.Join(leftJoin, rightJoin, datasetLeft.Variables, datasetRight.Variables, origin)
+		data, err := task.Join(leftJoin, rightJoin, leftVariableReferences, rightVariableReferences, originRef)
 		if err != nil {
 			handleError(w, err)
 			return
