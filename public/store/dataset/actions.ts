@@ -70,7 +70,7 @@ export const actions = {
 	},
 
 	// fetches all variables for a single dataset.
-	fetchVariables(context: DatasetContext, args: { dataset: string }): Promise<void>  {
+	fetchVariables(context: DatasetContext, args: { dataset: string }): Promise<void> {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -86,7 +86,7 @@ export const actions = {
 	},
 
 	// fetches all variables for a two datasets.
-	fetchJoinDatasetsVariables(context: DatasetContext, args: { datasets: string[] }): Promise<void>  {
+	fetchJoinDatasetsVariables(context: DatasetContext, args: { datasets: string[] }): Promise<void> {
 		if (!args.datasets) {
 			console.warn('`datasets` argument is missing');
 			return null;
@@ -99,13 +99,13 @@ export const actions = {
 			const varsB = res[1];
 			mutations.setVariables(context, varsA.concat(varsB));
 		})
-		.catch(error => {
-			console.error(error);
-			mutations.setVariables(context, []);
-		});
+			.catch(error => {
+				console.error(error);
+				mutations.setVariables(context, []);
+			});
 	},
 
-	geocodeVariable(context: DatasetContext, args: { dataset: string, field: string }): Promise<any>  {
+	geocodeVariable(context: DatasetContext, args: { dataset: string, field: string }): Promise<any> {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -124,7 +124,7 @@ export const actions = {
 		mutations.updatePendingRequests(context, update);
 		return axios.post(`/distil/geocode/${args.dataset}/${args.field}`, {})
 			.then(() => {
-			mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
+				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
 			})
 			.catch(error => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.ERROR });
@@ -212,9 +212,6 @@ export const actions = {
 		*/
 		const query = args.searchQuery ? `?search=${args.searchQuery.split(' ').join(',')}` : '';
 		return axios.get(`/distil/join-suggestions/${args.dataset + query}`)
-			.then(res => {
-				return axios.get(`/distil/join-suggestions/${args.dataset + query}`);
-			})
 			.then((response) => {
 				const suggestions = (response.data && response.data.datasets) || [];
 				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, suggestions });
@@ -244,29 +241,35 @@ export const actions = {
 				source: 'augmented',
 				provenance: 'local',
 				terms: args.datasetID,
-				originalDatasetID: null,
-				joinedDatasetID: null
+				originalDataset: null,
+				joinedDataset: null,
 			});
 		});
 	},
 
-	importDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, terms: string, originalDatasetID: string, joinedDatasetID: string }): Promise<void>  {
+	importDataset(context: DatasetContext, args: {
+		datasetID: string,
+		source: string,
+		provenance: string,
+		terms: string,
+		originalDataset: Dataset,
+		joinedDataset: Dataset,
+	}): Promise<void> {
 		if (!args.datasetID) {
 			console.warn('`datasetID` argument is missing');
 			return null;
 		}
 		if (!args.source) {
-			console.warn('`terms` argument is missing');
+			console.warn('`source` argument is missing');
 			return null;
 
 		}
 
 		let postParams = {};
-		if (args.originalDatasetID !== null) {
+		if (args.originalDataset !== null) {
 			postParams = {
-				originalDatasetID: args.originalDatasetID,
-				joinedDatasetID: args.joinedDatasetID,
-				searchResultIndex: 0
+				originalDataset: args.originalDataset,
+				joinedDataset: args.joinedDataset,
 			};
 		}
 
@@ -276,8 +279,8 @@ export const actions = {
 			});
 	},
 
-	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, searchResults: DatasetOrigin[] }): Promise<any>  {
-		if (!args.datasetID) {
+	importJoinDataset(context: DatasetContext, args: { datasetID: string, source: string, provenance: string, searchResults: DatasetOrigin[] }): Promise<any> {
+		if (!args.datasetID && args.datasetID.length > 0) {
 			console.warn('`datasetID` argument is missing');
 			return null;
 
@@ -294,16 +297,16 @@ export const actions = {
 		return axios.post(`/distil/import/${args.datasetID}/${args.source}/${args.provenance}`, {
 			searchResults: args.searchResults
 		}).then(response => {
-				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
-				return response && response.data;
-			})
+			mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED });
+			return response && response.data;
+		})
 			.catch(error => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.ERROR });
 				console.error(error);
 			});
 	},
 
-	composeVariables(context: DatasetContext, args: { dataset: string, key: string, vars: string[] }): Promise<void>  {
+	composeVariables(context: DatasetContext, args: { dataset: string, key: string, vars: string[] }): Promise<void> {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -318,12 +321,12 @@ export const actions = {
 
 		}
 		return axios.post(`/distil/compose/${args.dataset}`, {
-				varName: args.key,
-				variables: args.vars
-			});
+			varName: args.key,
+			variables: args.vars
+		});
 	},
 
-	deleteVariable(context: DatasetContext, args: { dataset: string, key: string }): Promise<any>  {
+	deleteVariable(context: DatasetContext, args: { dataset: string, key: string }): Promise<any> {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -351,13 +354,13 @@ export const actions = {
 						actions.fetchIncludedVariableSummaries(context, {
 							dataset: args.dataset,
 							variables: variables,
-							filterParams:  filterParams,
+							filterParams: filterParams,
 							highlight: highlight
 						}),
 						actions.fetchExcludedVariableSummaries(context, {
 							dataset: args.dataset,
 							variables: variables,
-							filterParams:  filterParams,
+							filterParams: filterParams,
 							highlight: highlight
 						})
 					]);
@@ -368,7 +371,7 @@ export const actions = {
 			});
 	},
 
-	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, joinAccuracy: number, joinSuggestionIndex: number }): Promise<void>  {
+	joinDatasetsPreview(context: DatasetContext, args: { datasetA: Dataset, datasetB: Dataset, joinAccuracy: number, joinSuggestionIndex: number }): Promise<void> {
 		if (!args.datasetA) {
 			console.warn('`datasetA` argument is missing');
 			return null;
@@ -383,16 +386,25 @@ export const actions = {
 			return null;
 		}
 
-		return axios.post(`/distil/join/${args.datasetA.id}/${args.datasetA.source}/${args.datasetB.id}/${args.datasetB.source}`, {
+		const datasetBrevised: Dataset = JSON.parse(JSON.stringify(args.datasetB));
+
+		datasetBrevised.variables = datasetBrevised.variables.map(v => {
+			const roledVar = v;
+			roledVar.role = ['attribute'];
+			return roledVar;
+		});
+
+		return axios.post(`/distil/join`, {
 			accuracy: args.joinAccuracy,
+			datasetLeft: args.datasetA,
+			datasetRight: datasetBrevised,
 			searchResultIndex: args.joinSuggestionIndex
-		})
-			.then(response => {
-				return response.data;
-			});
+		}).then(response => {
+			return response.data;
+		});
 	},
 
-	setGrouping(context: DatasetContext, args: { dataset: string, grouping: Grouping }): Promise<any>  {
+	setGrouping(context: DatasetContext, args: { dataset: string, grouping: Grouping }): Promise<any> {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -402,8 +414,8 @@ export const actions = {
 			return null;
 		}
 		return axios.post(`/distil/grouping/${args.dataset}`, {
-				grouping: args.grouping
-			})
+			grouping: args.grouping
+		})
 			.then(() => {
 				// update dataset
 				return Promise.all([
@@ -422,13 +434,13 @@ export const actions = {
 						actions.fetchIncludedVariableSummaries(context, {
 							dataset: args.dataset,
 							variables: variables,
-							filterParams:  filterParams,
+							filterParams: filterParams,
 							highlight: highlight
 						}),
 						actions.fetchExcludedVariableSummaries(context, {
 							dataset: args.dataset,
 							variables: variables,
-							filterParams:  filterParams,
+							filterParams: filterParams,
 							highlight: highlight
 						})
 					]);
@@ -439,7 +451,7 @@ export const actions = {
 			});
 	},
 
-	removeGrouping(context: DatasetContext, args: { dataset: string, grouping: Grouping }): Promise<any>  {
+	removeGrouping(context: DatasetContext, args: { dataset: string, grouping: Grouping }): Promise<any> {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -449,8 +461,8 @@ export const actions = {
 			return null;
 		}
 		return axios.post(`/distil/remove-grouping/${args.dataset}`, {
-				grouping: args.grouping
-			})
+			grouping: args.grouping
+		})
 			.then(() => {
 				// update dataset
 				return Promise.all([
@@ -469,13 +481,13 @@ export const actions = {
 						actions.fetchIncludedVariableSummaries(context, {
 							dataset: args.dataset,
 							variables: variables,
-							filterParams:  filterParams,
+							filterParams: filterParams,
 							highlight: highlight
 						}),
 						actions.fetchExcludedVariableSummaries(context, {
 							dataset: args.dataset,
 							variables: variables,
-							filterParams:  filterParams,
+							filterParams: filterParams,
 							highlight: highlight
 						})
 					]);
@@ -486,7 +498,7 @@ export const actions = {
 			});
 	},
 
-	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<any>  {
+	setVariableType(context: DatasetContext, args: { dataset: string, field: string, type: string }): Promise<any> {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -500,9 +512,9 @@ export const actions = {
 			return null;
 		}
 		return axios.post(`/distil/variables/${args.dataset}`, {
-				field: args.field,
-				type: args.type
-			})
+			field: args.field,
+			type: args.type
+		})
 			.then(() => {
 				mutations.updateVariableType(context, args);
 				// update variable summary
@@ -539,7 +551,7 @@ export const actions = {
 		mutations.reviewVariableType(context, args);
 	},
 
-	fetchIncludedVariableSummaries(context: DatasetContext, args: { dataset: string, variables: Variable[], highlight: Highlight, filterParams: FilterParams }): Promise<void[]>  {
+	fetchIncludedVariableSummaries(context: DatasetContext, args: { dataset: string, variables: Variable[], highlight: Highlight, filterParams: FilterParams }): Promise<void[]> {
 		return actions.fetchVariableSummaries(context, {
 			dataset: args.dataset,
 			variables: args.variables,
@@ -549,7 +561,7 @@ export const actions = {
 		});
 	},
 
-	fetchExcludedVariableSummaries(context: DatasetContext, args: { dataset: string, variables: Variable[], highlight: Highlight, filterParams: FilterParams }): Promise<void[]>  {
+	fetchExcludedVariableSummaries(context: DatasetContext, args: { dataset: string, variables: Variable[], highlight: Highlight, filterParams: FilterParams }): Promise<void[]> {
 		return actions.fetchVariableSummaries(context, {
 			dataset: args.dataset,
 			variables: args.variables,
@@ -559,7 +571,7 @@ export const actions = {
 		});
 	},
 
-	fetchVariableSummaries(context: DatasetContext, args: { dataset: string, variables: Variable[], highlight: Highlight, filterParams: FilterParams, include: boolean }): Promise<void[]>  {
+	fetchVariableSummaries(context: DatasetContext, args: { dataset: string, variables: Variable[], highlight: Highlight, filterParams: FilterParams, include: boolean }): Promise<void[]> {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -600,7 +612,7 @@ export const actions = {
 		return Promise.all(promises);
 	},
 
-	fetchVariableSummary(context: DatasetContext, args: { dataset: string, variable: string, highlight: Highlight, filterParams: FilterParams, include: boolean }): Promise<void>  {
+	fetchVariableSummary(context: DatasetContext, args: { dataset: string, variable: string, highlight: Highlight, filterParams: FilterParams, include: boolean }): Promise<void> {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;
@@ -635,7 +647,7 @@ export const actions = {
 					const key = args.variable;
 					const label = args.variable;
 					const dataset = args.dataset;
-					mutator(context,  createErrorSummary(key, label, dataset, error));
+					mutator(context, createErrorSummary(key, label, dataset, error));
 				});
 		}
 
@@ -653,7 +665,7 @@ export const actions = {
 				const key = args.variable;
 				const label = args.variable;
 				const dataset = args.dataset;
-				mutator(context,  createErrorSummary(key, label, dataset, error));
+				mutator(context, createErrorSummary(key, label, dataset, error));
 			});
 	},
 
@@ -670,7 +682,8 @@ export const actions = {
 		mutations.updatePendingRequests(context, update);
 		return axios.get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
 			.then(response => {
-				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED, rankings: response.data.rankings});
+				// console.log({response, data: response.data, rankings: response.data.rankings});
+				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.RESOLVED, rankings: response.data.rankings });
 			})
 			.catch(error => {
 				mutations.updatePendingRequests(context, { ...update, status: DatasetPendingRequestStatus.ERROR });
@@ -683,7 +696,7 @@ export const actions = {
 		mutations.updateVariableRankings(context, args.rankings);
 	},
 
-	updatePendingRequestStatus(context: DatasetContext, args: { id: string, status: DatasetPendingRequestStatus}) {
+	updatePendingRequestStatus(context: DatasetContext, args: { id: string, status: DatasetPendingRequestStatus }) {
 		const update = context.getters.getPendingRequests.find(item => item.id === args.id);
 		if (update) {
 			mutations.updatePendingRequests(context, { ...update, status: args.status });
