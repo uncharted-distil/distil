@@ -64,7 +64,11 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		joinedDataset, ok := params["joinedDataset"].(map[string]interface{})
 		if ok {
 			// add the joining origin to the source dataset joining
-			origins = getOriginsFromMaps(originalDataset, joinedDataset)
+			origins, err = getOriginsFromMaps(originalDataset, joinedDataset)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable marshal dataset origins from JSON to struct"))
+				return
+			}
 		}
 		// update ingest config to use ingest URI.
 		cfg, err := env.LoadConfig()
@@ -107,7 +111,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 	}
 }
 
-func getOriginsFromMaps(originalDataset map[string]interface{}, joinedDataset map[string]interface{}) []*model.DatasetOrigin {
+func getOriginsFromMaps(originalDataset map[string]interface{}, joinedDataset map[string]interface{}) ([]*model.DatasetOrigin, error) {
 	var origJoinSuggestions []interface{}
 	var joinJoinSuggestions []interface{}
 	origLength := 0
@@ -128,7 +132,10 @@ func getOriginsFromMaps(originalDataset map[string]interface{}, joinedDataset ma
 			targetOriginModel := model.DatasetOrigin{}
 			targetJoin := js.(map[string]interface{})
 			targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
-			json.MapToStruct(&targetOriginModel, targetJoinOrigin)
+			err := json.MapToStruct(&targetOriginModel, targetJoinOrigin)
+			if err != nil {
+				return nil, err
+			}
 			origins[i] = &targetOriginModel
 		}
 	}
@@ -137,11 +144,14 @@ func getOriginsFromMaps(originalDataset map[string]interface{}, joinedDataset ma
 			targetOriginModel := model.DatasetOrigin{}
 			targetJoin := js.(map[string]interface{})
 			targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
-			json.MapToStruct(&targetOriginModel, targetJoinOrigin)
+			err := json.MapToStruct(&targetOriginModel, targetJoinOrigin)
+			if err != nil {
+				return nil, err
+			}
 			origins[origLength+i] = &targetOriginModel
 		}
 	}
-	return origins
+	return origins, nil
 }
 
 func getDatasetOrigins(esStorage api.MetadataStorage, dataset string) ([]*model.DatasetOrigin, error) {
