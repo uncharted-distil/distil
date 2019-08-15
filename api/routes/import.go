@@ -60,10 +60,10 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 
 		// set the origin information
 		var origins []*model.DatasetOrigin
-		originalDataset, ok := params["originalDataset"].(map[string]interface{})
-		joinedDataset, ok := params["joinedDataset"].(map[string]interface{})
-		if ok {
-			// add the joining origin to the source dataset joining
+		originalDataset, okOriginal := params["originalDataset"].(map[string]interface{})
+		joinedDataset, okJoined := params["joinedDataset"].(map[string]interface{})
+		if okOriginal && okJoined {
+			// combine the origin and joined dateset into an array of structs
 			origins, err = getOriginsFromMaps(originalDataset, joinedDataset)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable marshal dataset origins from JSON to struct"))
