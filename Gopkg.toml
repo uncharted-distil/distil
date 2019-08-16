@@ -91,11 +91,11 @@
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-compute"
-  branch = "master"
+  branch = "geo-facet-query"
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-ingest"
-  branch = "master"
+  branch = "geo-facet-query"
 
 [[constraint]]
   name = "github.com/unchartedsoftware/plog"
