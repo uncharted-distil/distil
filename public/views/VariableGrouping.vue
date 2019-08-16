@@ -12,7 +12,7 @@
 		<div class="row justify-content-center h-100 p-3">
 
 			<div class="col-12 col-md-8 flex-column d-flex h-100">
-
+				<div v-if="isTimeseries">
 				<div class="row mt-1 mb-1" v-for="(idCol, index) in idCols" :key="idCol.value">
 
 					<div class="col-3">
@@ -26,7 +26,7 @@
 					</div>
 				</div>
 
-				<div class="row mt-1 mb-1">
+				<div class="row mt-1 mb-1" v-if="isTimeseries">
 					<div class="col-3">
 						<b>Time Column:</b>
 					</div>
@@ -36,9 +36,31 @@
 					</div>
 				</div>
 
-				<div class="row mt-1 mb-1">
+				<div class="row mt-1 mb-1" v-if="isTimeseries">
 					<div class="col-3">
 						<b>Value Column:</b>
+					</div>
+
+					<div class="col-5">
+						<b-form-select v-model="yCol" :options="yColOptions" />
+					</div>
+				</div>
+				</div>
+
+
+				<div class="row mt-1 mb-1" v-if="isGeocoordinate">
+					<div class="col-3">
+						<b>Latitude Column:</b>
+					</div>
+
+					<div class="col-5">
+						<b-form-select v-model="xCol" :options="xColOptions" />
+					</div>
+				</div>
+
+				<div class="row mt-1 mb-1" v-if="isGeocoordinate">
+					<div class="col-3">
+						<b>Longitude Column:</b>
 					</div>
 
 					<div class="col-5">
@@ -51,6 +73,12 @@
 						<div class="row justify-content-center">
 							<i class="fa fa-check-circle fa-2x mr-2"></i>
 							<b>Submit</b>
+						</div>
+					</b-btn>
+					<b-btn class="mt-3 var-grouping-button" variant="outline-success" :disabled="isPending" @click="mockGroup">
+						<div class="row justify-content-center">
+							<i class="fa fa-check-circle fa-2x mr-2"></i>
+							<b>Mock Submit</b>
 						</div>
 					</b-btn>
 					<b-btn class="mt-3 var-grouping-button" variant="outline-danger" :disabled="isPending" @click="onClose">
@@ -86,7 +114,7 @@ import { getters as datasetGetters, actions as datasetActions } from '../store/d
 import { getters as routeGetters } from '../store/route/module';
 import { actions as viewActions } from '../store/view/module';
 import { INTEGER_TYPE, TEXT_TYPE, ORDINAL_TYPE, TIMESTAMP_TYPE, CATEGORICAL_TYPE,
-	DATE_TIME_TYPE, REAL_TYPE } from '../util/types';
+	DATE_TIME_TYPE, REAL_TYPE, GEOCOORDINATE_TYPE, TIMESERIES_TYPE, LATITUDE_TYPE, LONGITUDE_TYPE } from '../util/types';
 import { getComposedVariableKey } from '../util/data';
 import { SELECT_TARGET_ROUTE } from '../store/route/index';
 import { createRouteEntry, overlayRouteEntry } from '../util/routes';
@@ -99,7 +127,6 @@ export default Vue.extend({
 
 	data() {
 		return {
-			groupingType: 'timeseries',
 			idCols: [ { value: null } ],
 			prevIdCols: 0,
 			xCol: null,
@@ -117,56 +144,118 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
+		target(): string {
+			return routeGetters.getRouteTargetVariable(this.$store);
+		},
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
 		},
+		groupingType(): string {
+			return routeGetters.getGroupingType(this.$store);
+		},
+		isGeocoordinate(): boolean {
+			return this.groupingType === GEOCOORDINATE_TYPE;
+		},
+		isTimeseries(): boolean {
+			return this.groupingType === TIMESERIES_TYPE;
+		},
 		xColOptions(): Object[] {
-			const X_COL_TYPES = {
-				[INTEGER_TYPE]: true,
-				[DATE_TIME_TYPE]: true,
-				[TIMESTAMP_TYPE]: true
-			};
-			const def = [
-				{ value: null, text: 'Choose column', disabled: true }
-			];
-			const suggestions = this.variables
-				.filter(v => X_COL_TYPES[v.colType])
-				.filter(v => !this.isIDCol(v.colName))
-				.filter(v => !this.isYCol(v.colName))
-				.map(v => {
-					return {value: v.colName, text: v.colDisplayName };
-				});
+			if (this.isGeocoordinate) {
+				const X_COL_TYPES = {
+					[LATITUDE_TYPE]: true,
+					[REAL_TYPE]: true
+				};
+				const def = [
+					{ value: null, text: `Choose ${LATITUDE_TYPE} column`, disabled: true }
+				];
+				const suggestions = this.variables
+					.filter(v => X_COL_TYPES[v.colType])
+					.filter(v => !this.isIDCol(v.colName))
+					.filter(v => !this.isYCol(v.colName))
+					.map(v => {
+						return {value: v.colName, text: v.colDisplayName };
+					});
 
-			if (suggestions.length === 1) {
-				this.xCol = suggestions[0].value;
-				return suggestions;
+				if (suggestions.length === 1) {
+					this.xCol = suggestions[0].value;
+					return suggestions;
+				}
+				return [].concat(def, suggestions);
+			} else if (this.isTimeseries) {
+				const X_COL_TYPES = {
+					[INTEGER_TYPE]: true,
+					[DATE_TIME_TYPE]: true,
+					[TIMESTAMP_TYPE]: true
+				};
+				const def = [
+					{ value: null, text: 'Choose column', disabled: true }
+				];
+
+				const suggestions = this.variables
+					.filter(v => X_COL_TYPES[v.colType])
+					.filter(v => !this.isIDCol(v.colName))
+					.filter(v => !this.isYCol(v.colName))
+					.map(v => {
+						return {value: v.colName, text: v.colDisplayName };
+					});
+
+				if (suggestions.length === 1) {
+					this.xCol = suggestions[0].value;
+					return suggestions;
+				}
+
+				return [].concat(def, suggestions);
 			}
-
-			return [].concat(def, suggestions);
 		},
 
 		yColOptions(): Object[] {
-			const Y_COL_TYPES = {
-				[INTEGER_TYPE]: true,
-				[REAL_TYPE]: true
-			};
-			const def = [
-				{ value: null, text: 'Choose column', disabled: true }
-			];
-			const suggestions = this.variables
-				.filter(v => Y_COL_TYPES[v.colType])
-				.filter(v => !this.isIDCol(v.colName))
-				.filter(v => !this.isXCol(v.colName))
-				.map(v => {
-					return {value: v.colName, text: v.colDisplayName };
-				});
+			if (this.isGeocoordinate) {
+				const Y_COL_TYPES = {
+					[LONGITUDE_TYPE]: true,
+					[REAL_TYPE]: true
+				};
+				const def = [
+					{ value: null, text: `Choose ${LONGITUDE_TYPE} column`, disabled: true }
+				];
 
-			if (suggestions.length === 1) {
-				this.yCol = suggestions[0].value;
-				return suggestions;
+				const suggestions = this.variables
+					.filter(v => Y_COL_TYPES[v.colType])
+					.filter(v => !this.isIDCol(v.colName))
+					.filter(v => !this.isXCol(v.colName))
+					.map(v => {
+						return {value: v.colName, text: v.colDisplayName };
+					});
+
+				if (suggestions.length === 1) {
+					this.yCol = suggestions[0].value;
+					return suggestions;
+				}
+
+				return [].concat(def, suggestions);
+			} else if (this.isTimeseries) {
+				const Y_COL_TYPES = {
+					[INTEGER_TYPE]: true,
+					[REAL_TYPE]: true
+				};
+				const def = [
+					{ value: null, text: 'Choose column', disabled: true }
+				];
+
+				const suggestions = this.variables
+					.filter(v => Y_COL_TYPES[v.colType])
+					.filter(v => !this.isIDCol(v.colName))
+					.filter(v => !this.isXCol(v.colName))
+					.map(v => {
+						return {value: v.colName, text: v.colDisplayName };
+					});
+
+				if (suggestions.length === 1) {
+					this.yCol = suggestions[0].value;
+					return suggestions;
+				}
+
+				return [].concat(def, suggestions);
 			}
-
-			return [].concat(def, suggestions);
 		},
 
 		isReady(): boolean {
@@ -176,13 +265,15 @@ export default Vue.extend({
 
 		isTimeseriesAnalysis(): boolean {
 			const ids = this.idCols.filter(id => !!id.value);
-			console.log(this.xCol, ids.length, this.yCol);
 			return this.xCol && (ids.length === 0) && !this.yCol;
 		}
 	},
 
 	beforeMount() {
 		viewActions.fetchSelectTargetData(this.$store, false);
+		if (this.isGeocoordinate) {
+			this.idCols = [ { value: GEOCOORDINATE_TYPE } ];
+		}
 	},
 	methods: {
 		idOptions(idCol): Object[] {
@@ -226,8 +317,22 @@ export default Vue.extend({
 		isOtherCol(arg): boolean {
 			return this.other.indexOf(arg) !== -1;
 		},
+		mockGroup() {
+			if (this.isTimeseriesAnalysis) {
+				this.submitTimeseriesAnalysis();
+			} else if (this.isGeocoordinate) {
+				datasetActions.setVariableType(this.$store, {
+					dataset: this.dataset,
+					field: this.target,
+					type: GEOCOORDINATE_TYPE
+				});
+
+				this.gotoTargetSelection();
+			} else {
+				this.submitGrouping();
+			}
+		},
 		onGroup() {
-			console.log(this.isTimeseriesAnalysis, 'isTimeseriesAnalysis');
 			if (this.isTimeseriesAnalysis) {
 				this.submitTimeseriesAnalysis();
 			} else {

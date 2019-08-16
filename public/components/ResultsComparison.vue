@@ -60,7 +60,6 @@ export default Vue.extend({
 			viewTypeModel: TABLE_VIEW
 		};
 	},
-
 	computed: {
 
 		dataset(): string {
@@ -100,10 +99,12 @@ export default Vue.extend({
 		},
 
 		includedResultTableDataItems(): TableRow[] {
+			const items = resultsGetters.getIncludedResultTableDataItems(this.$store);
 			return resultsGetters.getIncludedResultTableDataItems(this.$store);
 		},
 
 		includedResultTableDataFields(): Dictionary<TableColumn> {
+			const fields = resultsGetters.getIncludedResultTableDataFields(this.$store);
 			return resultsGetters.getIncludedResultTableDataFields(this.$store);
 		},
 

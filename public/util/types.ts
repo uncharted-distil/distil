@@ -37,6 +37,7 @@ export const URI_TYPE = 'uri';
 export const IMAGE_TYPE = 'image';
 export const TIMESERIES_TYPE = 'timeseries';
 export const UNKNOWN_TYPE = 'unknown';
+export const GEOCOORDINATE_TYPE = 'geocoordinate';
 
 const TYPES_TO_LABELS: Dictionary<string> = {
 	[INTEGER_TYPE]: 'Integer',
@@ -61,7 +62,8 @@ const TYPES_TO_LABELS: Dictionary<string> = {
 	[BOOL_TYPE]: 'Boolean',
 	[IMAGE_TYPE]: 'Image',
 	[TIMESERIES_TYPE]: 'Timeseries',
-	[UNKNOWN_TYPE]: 'Unknown'
+	[UNKNOWN_TYPE]: 'Unknown',
+	[GEOCOORDINATE_TYPE]: 'Geocoordinate'
 };
 
 const LABELS_TO_TYPES = _.invert(TYPES_TO_LABELS);
@@ -210,7 +212,7 @@ const COORDINATE_SUGGESTIONS = [
 	LATITUDE_TYPE,
 	LONGITUDE_TYPE,
 	CATEGORICAL_TYPE,
-	ORDINAL_TYPE,
+	ORDINAL_TYPE
 ];
 
 const IMAGE_SUGGESTIONS = [
@@ -281,7 +283,7 @@ const TYPE_TO_SUGGESTIONS = {
 	[URI_TYPE]: URI_SUGGESTIONS,
 	[IMAGE_TYPE]: IMAGE_SUGGESTIONS,
 	[TIMESERIES_TYPE]: TIME_SUGGESTIONS,
-	[UNKNOWN_TYPE]: TEXT_SUGGESTIONS,
+	[UNKNOWN_TYPE]: TEXT_SUGGESTIONS
 };
 
 export function isEquivalentType(a: string, b: string): boolean {

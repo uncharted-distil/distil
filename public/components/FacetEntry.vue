@@ -19,7 +19,7 @@ import { getSelectedRows } from '../util/row';
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
 import TypeChangeMenu from '../components/TypeChangeMenu';
-import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix, hasComputedVarPrefix } from '../util/types';
+import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix, hasComputedVarPrefix, GEOCOORDINATE_TYPE } from '../util/types';
 import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from '../util/data';
 import { getters as datasetGetters } from '../store/dataset/module';
 
@@ -53,7 +53,6 @@ export default Vue.extend({
 
 	mounted() {
 		const component = this;
-
 		// Instantiate the external facets widget. The facets maintain their own copies
 		// of group objects which are replaced wholesale on changes.  Elsewhere in the code
 		// we modify local copies of the group objects, then replace those in the Facet component
@@ -61,8 +60,10 @@ export default Vue.extend({
 		this.facets = new Facets(this.$el, [ this.groupSpec ]);
 
 		// Call customization hook
+
+		if (!this.isFacetTypeGeocoord) {
+			this.injectHTML(this.groupSpec, this.facets.getGroup(this.groupSpec.key)._element);
 		this.augmentGroup(this.groupSpec, this.facets.getGroup(this.groupSpec.key));
-		this.injectHTML(this.groupSpec, this.facets.getGroup(this.groupSpec.key)._element);
 		this.updateImportantBadge(this.groupSpec);
 
 		// proxy events
@@ -178,9 +179,13 @@ export default Vue.extend({
 		this.facets.on('facet-histogram:mouseleave', (event: Event, key: string, value: string) => {
 			$(this.$el).find('.facet-tooltip').hide();
 		});
+		}
 	},
 
 	computed: {
+		isFacetTypeGeocoord(): boolean {
+			return this.summary.type === GEOCOORDINATE_TYPE;
+		},
 		ranking(): number {
 			const variables = datasetGetters.getVariables(this.$store);
 			const v = variables.find(v => v.colName === this.summary.key);

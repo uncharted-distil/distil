@@ -44,7 +44,7 @@ import IconBookmark from './icons/IconBookmark';
 import { SuggestedType, Variable, Highlight } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, TIMESERIES_TYPE, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, TIMESERIES_TYPE, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS, GEOCOORDINATE_TYPE } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
 import { createRouteEntry } from '../util/routes';
 import { GROUPING_ROUTE } from '../store/route';
@@ -67,6 +67,7 @@ export default Vue.extend({
 	computed: {
 		variable(): Variable {
 			const vars = datasetGetters.getVariables(this.$store);
+
 			if (!vars) {
 				return null;
 			}
@@ -161,18 +162,22 @@ export default Vue.extend({
 				{
 					type: TIMESERIES_TYPE,
 					label: 'Timeseries...'
+				},
+				{
+					type: GEOCOORDINATE_TYPE,
+					label: 'Geocoordinate...'
 				}
 			];
 		},
 
 		onGroupingSelect(type) {
-			if (type === TIMESERIES_TYPE) {
+			if (type === TIMESERIES_TYPE || type === GEOCOORDINATE_TYPE) {
 				const entry = createRouteEntry(GROUPING_ROUTE, {
-					dataset: routeGetters.getRouteDataset(this.$store)
+					dataset: routeGetters.getRouteDataset(this.$store),
+					groupingType: type
 				});
 				this.$router.push(entry);
 			} else {
-
 				const grouping = this.variable.grouping;
 				datasetActions.removeGrouping(this.$store, {
 					dataset: this.dataset,
@@ -220,8 +225,20 @@ export default Vue.extend({
 		},
 		onTypeChange(suggestedType) {
 			const type = suggestedType;
-			const dataset = this.dataset;
 			const field = this.field;
+			const dataset = this.dataset;
+
+			// old logic
+			// if (type === GEOCOORDINATE_TYPE){
+			// 	datasetActions.setVariableType(this.$store, {
+			// 		dataset: dataset,
+			// 		field: field,
+			// 		type: type
+			// 	})
+			// 	return;
+
+			// }
+
 			datasetActions.setVariableType(this.$store, {
 				dataset: dataset,
 				field: field,
@@ -243,7 +260,7 @@ export default Vue.extend({
 				// 	});
 				// }
 			});
-		},
+		}
 	},
 
 	mounted() {

@@ -68,6 +68,7 @@ export interface Variable {
 	isColTypeReviewed: boolean;
 	min: number;
 	max: number;
+	role?: string[];
 }
 
 export interface Dataset {
@@ -219,7 +220,7 @@ export interface JoinDatasetImportPendingRequest {
 }
 
 export type DatasetPendingRequest =
-		VariableRankingPendingRequest
+	VariableRankingPendingRequest
 	| GeocodingPendingRequest
 	| JoinSuggestionPendingRequest
 	| JoinDatasetImportPendingRequest;
@@ -236,6 +237,7 @@ export interface DatasetState {
 	includedSet: WorkingSet;
 	excludedSet: WorkingSet;
 	pendingRequests: DatasetPendingRequest[];
+	isGeocoordinateFacet: string[];
 }
 
 export interface WorkingSet {
@@ -272,4 +274,6 @@ export const state: DatasetState = {
 
 	// pending requests for the active dataset
 	pendingRequests: [],
+
+	isGeocoordinateFacet: []
 };
