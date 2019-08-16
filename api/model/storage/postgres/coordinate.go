@@ -183,7 +183,7 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 
 	// Get count by x & y
 	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count, s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count, %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY %s, %s
