@@ -190,10 +190,8 @@ func filterDatasets(queryDataset *model.Dataset, datasets []*model.Dataset,
 
 func filterSuggestions(sourceDataset *model.Dataset, joinDataset *model.Dataset) bool {
 	// filter out datasets that have already been joined
-	for _, js := range sourceDataset.JoinSuggestions {
-		if joinDataset.Name == js.JoinDataset {
-			return false
-		}
+	if strings.Contains(sourceDataset.ID, joinDataset.ID) {
+		return false
 	}
 
 	// filter out join datasets with no suggestions
