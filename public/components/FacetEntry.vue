@@ -893,7 +893,7 @@ export default Vue.extend({
 			}
 		},
 		injectImportantBadge(group: Group, $elem: JQuery) {
-			const $groupFooter = $elem.find('.group-footer');
+			const $groupFooter = $elem.find('.group-footer').find('.html-slot');
 			const importantBadge = document.createElement('div');
 			importantBadge.className += 'important-badge';
 			const $bookMarkIcon = createIcon(IconBookmark);
@@ -996,8 +996,11 @@ export default Vue.extend({
 	overflow-y: auto;
     overflow-x: hidden;
 }
-.facets-group-container.important .group-footer .important-badge {
+.facets-group-container.important .group-footer .html-slot .important-badge {
 	display: block;
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
 }
 
 .facets-facet-horizontal .select-highlight,
