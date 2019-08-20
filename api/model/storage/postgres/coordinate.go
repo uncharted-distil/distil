@@ -17,6 +17,7 @@ package postgres
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/jackc/pgx"
@@ -100,17 +101,27 @@ func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.F
 func (f *CoordinateField) fetchExtrema(fieldName string, filterParams *api.FilterParams) *api.Extrema {
 	// cycle through the filters and find the one for the field
 	var filter *model.Filter
-	for _, p := range filterParams.Filters {
-		if p.Key == fieldName {
-			filter = p
-			break
+	if filterParams != nil {
+		for _, p := range filterParams.Filters {
+			if p.Key == fieldName {
+				filter = p
+				break
+			}
 		}
+	}
+	min := -float64(math.MaxInt64)
+	max := float64(math.MaxInt64)
+	if filter != nil {
+		min = *filter.Min
+		max = *filter.Max
 	}
 
 	// use the filter to build the extrema
 	return &api.Extrema{
-		Min: *filter.Min,
-		Max: *filter.Max,
+		Key:  fieldName,
+		Type: model.RealType,
+		Min:  min,
+		Max:  max,
 	}
 }
 
@@ -139,7 +150,7 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
         GROUP BY %s, %s
         ORDER BY %s, %s;`,
 		xBucketQuery, xHistogramQuery, xHistogramName, yBucketQuery, yHistogramQuery, yHistogramName,
-		f.StorageName, where, xHistogramQuery, yHistogramQuery, xHistogramName, yHistogramName)
+		f.StorageName, where, xBucketQuery, yBucketQuery, xHistogramName, yHistogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
