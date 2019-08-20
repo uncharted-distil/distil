@@ -85,6 +85,9 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 				}
 			}
 
+		} else if model.IsGeoCoordinate(grouping.Type) {
+			// make the lat column the id col for now since id col is what holds the info.
+			grouping.IDCol = grouping.Properties.XCol
 		}
 
 		err = meta.AddGrouping(dataset, grouping)

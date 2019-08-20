@@ -385,11 +385,16 @@ func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error
 		return errors.Wrap(err, "variables unmarshal failed")
 	}
 
+	found := false
 	for _, variable := range variables {
 		name, ok := json.String(variable, "colName")
 		if ok && name == grouping.IDCol {
 			variable[model.VarGroupingField] = json.StructToMap(grouping)
+			found = true
 		}
+	}
+	if !found {
+		return fmt.Errorf("no variable match found for grouping")
 	}
 
 	// push the document into the metadata index
@@ -438,12 +443,17 @@ func (s *Storage) RemoveGrouping(datasetName string, grouping model.Grouping) er
 		return errors.Wrap(err, "variables unmarshal failed")
 	}
 
+	found := false
 	for _, variable := range variables {
 		name, ok := json.String(variable, "colName")
 		if ok && name == grouping.IDCol {
 			delete(variable, model.VarGroupingField)
 			variable["colType"] = variable["colOriginalType"]
+			found = true
 		}
+	}
+	if !found {
+		return fmt.Errorf("no variable match found for grouping")
 	}
 
 	// push the document into the metadata index
