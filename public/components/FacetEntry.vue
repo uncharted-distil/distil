@@ -38,6 +38,7 @@ export default Vue.extend({
 		showOrigin: Boolean as () => boolean,
 		ignoreHighlights: Boolean as () => boolean,
 		instanceName: String as () => string,
+		ranking: Number as () => number,
 		html: [ String as () => string, Object as () => any, Function as () => Function ],
 	},
 
@@ -185,14 +186,6 @@ export default Vue.extend({
 	computed: {
 		isFacetTypeGeocoord(): boolean {
 			return this.summary.type === GEOCOORDINATE_TYPE;
-		},
-		ranking(): number {
-			const variables = datasetGetters.getVariables(this.$store);
-			const v = variables.find(v => v.colName === this.summary.key);
-			if (v && v.ranking !== undefined) {
-				return v.ranking;
-			}
-			return 0;
 		},
 		groupSpec(): Group {
 
@@ -973,6 +966,8 @@ export default Vue.extend({
 	font-size: 0.867rem;
 	font-weight: bold;
 	text-transform: uppercase;
+	word-wrap: break-word;
+	word-break: break-all;
 	color: rgba(0,0,0,.54);
 }
 .facets-group .group-header i {
@@ -986,8 +981,6 @@ export default Vue.extend({
 	display: flex;
 } */
 .facets-group .group-footer .important-badge {
-	align-self: center;
-	padding-bottom: 5px;
 	display: none;
 }
 .facets-group .group-facet-container {
