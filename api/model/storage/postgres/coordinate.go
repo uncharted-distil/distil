@@ -90,7 +90,7 @@ func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.F
 	return &api.VariableSummary{
 		Key:      f.Key,
 		Label:    f.Label,
-		Type:     model.CategoricalType,
+		Type:     model.GeoCoordinateType,
 		VarType:  f.Type,
 		Baseline: baseline,
 		Filtered: filtered,
