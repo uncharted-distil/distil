@@ -18,9 +18,6 @@
 			</div>
 			<div class="row flex-1">
 				<div class="col-12 flex-column variable-facets-container h-100">
-					<div class="variable-facet-item geocoordinate" v-if="isGeocoordinateFacetAvailable">
-						<geocoordinate-facet></geocoordinate-facet>
-					</div>
 					<div class="variable-facets-item" v-for="summary in paginatedSummaries" :key="summary.key">
 						<template v-if="summary.varType === 'timeseries' || isTimeseriesAnalysis">
 							<facet-timeseries
@@ -39,6 +36,9 @@
 								@histogram-categorical-click="onCategoricalClick"
 								@histogram-range-change="onRangeChange">
 							</facet-timeseries>
+						</template>
+						<template v-else-if="summary.varType === 'geocoordinate'">
+							<geocoordinate-facet :summary="summary"></geocoordinate-facet>
 						</template>
 						<template v-else>
 							<facet-entry
@@ -268,6 +268,7 @@ button {
 }
 .variable-facets-container .variable-facets-item {
 	margin: 2px 2px 4px 2px;
+	min-height: 150px;
 }
 .variable-facets-container .facets-root-container .facets-group-container{
 	background-color: inherit;

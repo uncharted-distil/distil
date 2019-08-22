@@ -21,7 +21,9 @@ import {
 	TableRow,
 	D3M_INDEX_FIELD,
 	Highlight,
-	RowSelection
+	RowSelection,
+	VariableSummary,
+	Bucket
 } from '../store/dataset/index';
 import { updateHighlight, clearHighlight } from '../util/highlights';
 import {
@@ -66,6 +68,10 @@ export default Vue.extend({
 	components: {
 		IconBase,
 		IconCropFree
+		},
+
+	props: {
+		summary: Object as () => VariableSummary,
 	},
 
 	data() {
@@ -79,13 +85,19 @@ export default Vue.extend({
 			selectedRect: null,
 			isSelectionMode: false
 		};
-	},
+		},
 
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
-		},
-
+			},
+			datasummary(): any {
+			console.log('summary', this.summary);
+			const key = this.summary.key;
+			const label = this.summary.label;
+			const buckets = this.summary.baseline.buckets;
+			return this.variableSummaryToGeocoordinate(key, label, buckets);
+			},
 		instanceName(): string {
 			return 'unique-map';
 		},
@@ -210,6 +222,17 @@ export default Vue.extend({
 	},
 
 	methods: {
+		variableSummaryToGeocoordinate(key: string, label: string, buckets: Bucket[]): any {
+			const geocoordinates = buckets.map(b => [ _.parseInt(b.key), b.count ]);
+
+			const summaries = [{
+				label: label,
+				key: key,
+				geocoordinates: geocoordinates
+			}];
+
+			return summaries;
+		},
 		clearSelectionRect() {
 			if (this.selectedRect) {
 				this.selectedRect.remove();
@@ -663,19 +686,14 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 
 	mounted() {
 		this.paint();
+		console.log('datasummary', this.datasummary);
 	}
 });
 </script>
 
 <style>
-.geo-plot-container {
-	position: relative;
-	z-index: 0;
-	height: 300px;
-	width: 100%;
-}
 
-.geo-plot {
+.geo-plot-container, .geo-plot {
 	position: relative;
 	z-index: 0;
 	height: 300px;
