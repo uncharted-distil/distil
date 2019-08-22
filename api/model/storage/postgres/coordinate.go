@@ -266,7 +266,7 @@ func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, 
 		} else if yBucket >= yBucketCount {
 			yBucket = yBucketCount - 1
 		}
-		buckets[yBucket*yBucketCount+xBucket].Count += bucketCount
+		buckets[xBucket*yBucketCount+yBucket].Count += bucketCount
 	}
 
 	// assign histogram attributes
