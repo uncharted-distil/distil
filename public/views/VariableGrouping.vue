@@ -50,7 +50,7 @@
 
 				<div class="row mt-1 mb-1" v-if="isGeocoordinate">
 					<div class="col-3">
-						<b>Latitude Column:</b>
+						<b>Longitude Column:</b>
 					</div>
 
 					<div class="col-5">
@@ -60,7 +60,7 @@
 
 				<div class="row mt-1 mb-1" v-if="isGeocoordinate">
 					<div class="col-3">
-						<b>Longitude Column:</b>
+						<b>Latitude Column:</b>
 					</div>
 
 					<div class="col-5">
@@ -166,7 +166,7 @@ export default Vue.extend({
 					[REAL_TYPE]: true
 				};
 				const def = [
-					{ value: null, text: `Choose ${LATITUDE_TYPE} column`, disabled: true }
+					{ value: null, text: `Choose ${LONGITUDE_TYPE} column`, disabled: true }
 				];
 				const suggestions = this.variables
 					.filter(v => X_COL_TYPES[v.colType])
@@ -215,7 +215,7 @@ export default Vue.extend({
 					[REAL_TYPE]: true
 				};
 				const def = [
-					{ value: null, text: `Choose ${LONGITUDE_TYPE} column`, disabled: true }
+					{ value: null, text: `Choose ${LATITUDE_TYPE} column`, disabled: true }
 				];
 
 				const suggestions = this.variables
