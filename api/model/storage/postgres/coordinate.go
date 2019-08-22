@@ -234,7 +234,7 @@ func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, 
 	for xVal := xRounded.Min; xVal < xRounded.Max; xVal += xInterval {
 		for yVal := yRounded.Min; yVal < yRounded.Max; yVal += yInterval {
 			buckets[i] = &api.Bucket{
-				Key:   fmt.Sprintf("%f, %f", xVal, yVal),
+				Key:   fmt.Sprintf("%f,%f", xVal, yVal),
 				Count: 0,
 			}
 			i++

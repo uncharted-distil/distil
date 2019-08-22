@@ -162,7 +162,7 @@ export default Vue.extend({
 		xColOptions(): Object[] {
 			if (this.isGeocoordinate) {
 				const X_COL_TYPES = {
-					[LATITUDE_TYPE]: true,
+					[LONGITUDE_TYPE]: true,
 					[REAL_TYPE]: true
 				};
 				const def = [
@@ -211,7 +211,7 @@ export default Vue.extend({
 		yColOptions(): Object[] {
 			if (this.isGeocoordinate) {
 				const Y_COL_TYPES = {
-					[LONGITUDE_TYPE]: true,
+					[LATITUDE_TYPE]: true,
 					[REAL_TYPE]: true
 				};
 				const def = [
