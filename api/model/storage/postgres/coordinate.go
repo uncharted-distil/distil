@@ -109,19 +109,16 @@ func (f *CoordinateField) fetchExtrema(fieldName string, filterParams *api.Filte
 			}
 		}
 	}
-	min := -float64(math.MaxInt64)
-	max := float64(math.MaxInt64)
-	if filter != nil {
-		min = *filter.Min
-		max = *filter.Max
+	if filter == nil {
+		filter = f.fetchDefaultFilter(fieldName)
 	}
 
 	// use the filter to build the extrema
 	return &api.Extrema{
 		Key:  fieldName,
 		Type: model.RealType,
-		Min:  min,
-		Max:  max,
+		Min:  *filter.Min,
+		Max:  *filter.Max,
 	}
 }
 
@@ -292,4 +289,25 @@ func (f *CoordinateField) fetchPredictedSummaryData(resultURI string, datasetRes
 // forecasting histogram for the field.
 func (f *CoordinateField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
+}
+
+func (f *CoordinateField) fetchDefaultFilter(fieldName string) *model.Filter {
+	// provide a useful default based on type
+	// geo can default to lat and lon max values
+	min := -float64(math.MaxInt64)
+	max := float64(math.MaxInt64)
+	if model.IsGeoCoordinate(f.Type) {
+		if fieldName == f.XCol {
+			min = float64(-180)
+			max = float64(180)
+		} else if fieldName == f.YCol {
+			min = float64(-90)
+			max = float64(90)
+		}
+	}
+
+	return &model.Filter{
+		Min: &min,
+		Max: &max,
+	}
 }
