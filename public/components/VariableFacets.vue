@@ -21,7 +21,7 @@
 					<div class="variable-facet-item geocoordinate" v-if="isGeocoordinateFacetAvailable">
 						<geocoordinate-facet></geocoordinate-facet>
 					</div>
-					<div class="variable-facets-item" v-for="summary in paginatedSummaries" :key="summary.key+ranking[summary.key]">
+					<div class="variable-facets-item" v-for="summary in paginatedSummaries" :key="summary.key">
 						<template v-if="summary.varType === 'timeseries' || isTimeseriesAnalysis">
 							<facet-timeseries
 								:summary="summary"

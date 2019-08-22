@@ -248,6 +248,12 @@ export default Vue.extend({
 			deep: true
 		},
 
+		ranking(currRanking: number, prevRanking: number) {
+			if (currRanking !== prevRanking) {
+				this.updateImportantBadge(this.groupSpec);
+			}
+		},
+
 		// handle external highlight changes by updating internal facet select states
 		highlight(currHighlights: Highlight) {
 			if (this.enableHighlighting) {
