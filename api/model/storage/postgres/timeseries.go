@@ -36,18 +36,23 @@ type TimeSeriesField struct {
 	IDCol       string
 	XCol        string
 	XColType    string
+	YCol        string
+	YColType    string
 	Label       string
 	Type        string
 }
 
 // NewTimeSeriesField creates a new field for timeseries types.
-func NewTimeSeriesField(storage *Storage, storageName string, clusterCol string, idCol string, label string, typ string, xCol string, xColType string) *TimeSeriesField {
+func NewTimeSeriesField(storage *Storage, storageName string, clusterCol string, idCol string, label string, typ string,
+	xCol string, xColType string, yCol string, yColType string) *TimeSeriesField {
 	field := &TimeSeriesField{
 		Storage:     storage,
 		StorageName: storageName,
 		IDCol:       idCol,
 		XCol:        xCol,
 		XColType:    xColType,
+		YCol:        yCol,
+		YColType:    yColType,
 		ClusterCol:  clusterCol,
 		Label:       label,
 		Type:        typ,
@@ -271,7 +276,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS __count__ FROM %s %s GROUP BY \"%s\" ORDER BY __count__ desc, \"%s\" LIMIT %d;",
 		clusteringColName, f.StorageName, where, clusteringColName, clusteringColName, timeSeriesCatResultLimit)
 
 	// execute the postgres query
@@ -298,10 +303,15 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 
 func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 
-	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
-	if err != nil {
-		return nil, err
+	wheres := []string{}
+	params := []interface{}{}
+	var err error
+	if f.Type != "timeseries" {
+		// get filter where / params
+		wheres, params, err = f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	params = append(params, resultURI)
@@ -315,11 +325,11 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 
 	// Get count by category.
 	query := fmt.Sprintf(
-		`SELECT data."%s", COUNT(*) AS count
+		`SELECT data."%s", COUNT(*) AS __count__
 		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
-		 ORDER BY count desc, "%s" LIMIT %d;`,
+		 ORDER BY __count__ desc, "%s" LIMIT %d;`,
 		clusteringColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
 		model.D3MIndexFieldName, len(params), where, clusteringColName,
 		clusteringColName, timeSeriesCatResultLimit)
@@ -417,10 +427,15 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 
 func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 
-	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
-	if err != nil {
-		return nil, err
+	wheres := []string{}
+	params := []interface{}{}
+	var err error
+	if f.Type != "timeseries" {
+		// get filter where / params
+		wheres, params, err = f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	params = append(params, resultURI)
@@ -434,11 +449,11 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 
 	// Get count by category.
 	query := fmt.Sprintf(
-		`SELECT data."%s", COUNT(*) AS count
+		`SELECT data."%s", COUNT(*) AS __count__
 		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
-		 ORDER BY count desc, "%s" LIMIT %d;`,
+		 ORDER BY __count__ desc, "%s" LIMIT %d;`,
 		clusteringColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
 		model.D3MIndexFieldName, len(params), where, clusteringColName,
 		clusteringColName, timeSeriesCatResultLimit)
