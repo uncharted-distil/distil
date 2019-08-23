@@ -1,6 +1,6 @@
 elastic:
   image:
-    docker.uncharted.software/distil_dev_es:latest
+    registry.datadrivendiscovery.org/ta3-submissions/ta2-uncharted/summer2019/distil_dev_es:latest
   ports:
     - "9200:9200"
 
@@ -22,7 +22,7 @@ elastic:
 
 postgres:
   image:
-    docker.uncharted.software/distil_dev_postgres:latest
+    registry.datadrivendiscovery.org/ta3-submissions/ta2-uncharted/summer2019/distil_dev_postgres:latest
   ports:
     - "5432:5432"
   command:
@@ -32,15 +32,14 @@ distil-auto-ml:
   image:
     registry.datadrivendiscovery.org/uncharted/distil-integration/distil-auto-ml:latest
   environment:
-    - D3MINPUTDIR=/input
-    - D3MOUTPUTDIR=/output
-    - D3MSTATICDIR=/static_resources
+    - D3MINPUTDIR=$D3MINPUTDIR
+    - D3MOUTPUTDIR=$D3MOUTPUTDIR
+    - D3MSTATICDIR=$D3MSTATICDIR
     - D3MRUN=ta2
   volumes:
-    - $PWD/datamart:/input
-    - $PWD/datamart:/datamart
-    - $PWD/outputs:/output
-    - $PWD/static_resources:/static_resources
+    - $D3MOUTPUTDIR:$D3MOUTPUTDIR
+    - $D3MINPUTDIR:$D3MINPUTDIR
+    - $D3MSTATICDIR:$D3MSTATICDIR
   ports:
     - "45042:45042"
 
@@ -50,11 +49,10 @@ runner:
   ports:
     - "50051:50051"
   environment:
-    - D3MOUTPUTDIR=$PWD/outputs
+    - D3MOUTPUTDIR=$D3MOUTPUTDIR
     - VERBOSE_PRIMITIVE_OUTPUT=1
-    - D3MSTATICDIR=$PWD/static_resources
+    - D3MSTATICDIR=$D3MSTATICDIR
   volumes:
-    - $PWD/datamart:/$PWD/datamart
-    - $PWD/datasets:/$PWD/datasets
-    - $PWD/outputs:/$PWD/outputs
-    - $PWD/static_resources:/$PWD/static_resources
+    - $D3MOUTPUTDIR:$D3MOUTPUTDIR
+    - $D3MINPUTDIR:$D3MINPUTDIR
+    - $D3MSTATICDIR:$D3MSTATICDIR

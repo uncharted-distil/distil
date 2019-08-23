@@ -44,13 +44,6 @@
 					Help
 					</b-nav-text>
 				</b-nav-item>
-				<b-btn v-b-modal.abort size="sm" variant="danger" class="abort-button">Abort</b-btn>
-				<b-modal id="abort" title="Abort" @ok="onAbort">
-					<div>
-						<i class="fa fa-exclamation-triangle fa-3x abort-icon"></i>
-						This action will terminate the session.
-					</div>
-				</b-modal>
 			</b-navbar-nav>
 		</b-collapse>
 	</b-navbar>
