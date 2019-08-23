@@ -305,6 +305,9 @@ export function filterVariablesByPage<T>(pageIndex: number, numPerPage: number, 
 export function getVariableImportance(v: Variable): number {
 	return v.ranking !== undefined ? v.ranking : v.importance;
 }
+export function getVariableRanking(v: Variable): number {
+	return v.ranking !== undefined ? v.ranking : 0;
+}
 
 export function sortVariablesByImportance(variables: Variable[]): Variable[] {
 	variables.sort((a, b) => {

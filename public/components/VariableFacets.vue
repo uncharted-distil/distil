@@ -45,6 +45,7 @@
 								:summary="summary"
 								:highlight="highlight"
 								:row-selection="rowSelection"
+								:ranking="ranking[summary.key]"
 								:html="html"
 								:enable-type-change="enableTypeChange"
 								:enable-highlighting="enableHighlighting"
@@ -76,7 +77,7 @@ import FacetTimeseries from '../components/FacetTimeseries';
 import GeocoordinateFacet from '../components/GeocoordinateFacet';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
-import { sortSummariesByImportance, filterVariablesByPage, getVariableImportance } from '../util/data';
+import { sortSummariesByImportance, filterVariablesByPage, getVariableRanking, getVariableImportance } from '../util/data';
 import { Highlight, RowSelection, Variable, VariableSummary } from '../store/dataset/index';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -174,12 +175,12 @@ export default Vue.extend({
 			return routeGetters.getDecodedRowSelection(this.$store);
 		},
 
-		importance(): Dictionary<number> {
-			const importance: Dictionary<number> = {};
+		ranking(): Dictionary<number> {
+			const ranking: Dictionary<number> = {};
 			this.variables.forEach(variable => {
-				importance[variable.colName] = getVariableImportance(variable);
+				ranking[variable.colName] = getVariableRanking(variable);
 			});
-			return importance;
+			return ranking;
 		}
 	},
 

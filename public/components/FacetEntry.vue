@@ -38,6 +38,7 @@ export default Vue.extend({
 		showOrigin: Boolean as () => boolean,
 		ignoreHighlights: Boolean as () => boolean,
 		instanceName: String as () => string,
+		ranking: Number as () => number,
 		html: [ String as () => string, Object as () => any, Function as () => Function ],
 	},
 
@@ -186,14 +187,6 @@ export default Vue.extend({
 		isFacetTypeGeocoord(): boolean {
 			return this.summary.type === GEOCOORDINATE_TYPE;
 		},
-		ranking(): number {
-			const variables = datasetGetters.getVariables(this.$store);
-			const v = variables.find(v => v.colName === this.summary.key);
-			if (v && v.ranking !== undefined) {
-				return v.ranking;
-			}
-			return 0;
-		},
 		groupSpec(): Group {
 
 			const group = createGroup(this.summary);
@@ -253,6 +246,12 @@ export default Vue.extend({
 				this.injectHighlights(this.highlight, this.rowSelection, this.deemphasis);
 			},
 			deep: true
+		},
+
+		ranking(currRanking: number, prevRanking: number) {
+			if (currRanking !== prevRanking) {
+				this.updateImportantBadge(this.groupSpec);
+			}
 		},
 
 		// handle external highlight changes by updating internal facet select states
@@ -893,7 +892,7 @@ export default Vue.extend({
 			}
 		},
 		injectImportantBadge(group: Group, $elem: JQuery) {
-			const $groupFooter = $elem.find('.group-footer');
+			const $groupFooter = $elem.find('.group-footer').find('.html-slot');
 			const importantBadge = document.createElement('div');
 			importantBadge.className += 'important-badge';
 			const $bookMarkIcon = createIcon(IconBookmark);
@@ -973,6 +972,8 @@ export default Vue.extend({
 	font-size: 0.867rem;
 	font-weight: bold;
 	text-transform: uppercase;
+	word-wrap: break-word;
+	word-break: break-all;
 	color: rgba(0,0,0,.54);
 }
 .facets-group .group-header i {
@@ -986,8 +987,6 @@ export default Vue.extend({
 	display: flex;
 } */
 .facets-group .group-footer .important-badge {
-	align-self: center;
-	padding-bottom: 5px;
 	display: none;
 }
 .facets-group .group-facet-container {
@@ -996,8 +995,11 @@ export default Vue.extend({
 	overflow-y: auto;
     overflow-x: hidden;
 }
-.facets-group-container.important .group-footer .important-badge {
+.facets-group-container.important .group-footer .html-slot .important-badge {
 	display: block;
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
 }
 
 .facets-facet-horizontal .select-highlight,
