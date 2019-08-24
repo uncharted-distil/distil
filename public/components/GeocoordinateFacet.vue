@@ -1,5 +1,9 @@
 <template>
 	<div class="geo-plot-container" v-bind:class="{ 'selection-mode': isSelectionMode }">
+		<type-change-menu
+			:dataset="dataset"
+			:field="target">
+		</type-change-menu>
 		<div class="geo-plot" v-bind:id="mapID"></div>
 	</div>
 </template>
@@ -33,6 +37,7 @@ import {
 } from '../util/row';
 import { LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
 import { DUMMY_GEODATA } from '../util/data';
+import TypeChangeMenu from '../components/TypeChangeMenu';
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet/dist/images/marker-icon.png';
@@ -67,7 +72,8 @@ export default Vue.extend({
 
 	components: {
 		IconBase,
-		IconCropFree
+		IconCropFree,
+		TypeChangeMenu
 		},
 
 	props: {
@@ -91,17 +97,16 @@ export default Vue.extend({
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 			},
-			datasummary(): any {
+		datasummary(): any {
 			console.log('summary', this.summary);
 			const key = this.summary.key;
 			const label = this.summary.label;
 			const buckets = this.summary.baseline.buckets;
 			return this.variableSummaryToGeocoordinate(key, label, buckets);
-			},
+		},
 		instanceName(): string {
 			return 'unique-map';
 		},
-
 		dataItems(): any {
 			return DUMMY_GEODATA;
 		},
@@ -109,7 +114,16 @@ export default Vue.extend({
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
-
+		targetSampleValues(): any[] {
+			const summaries = routeGetters.getTargetVariableSummaries(this.$store);
+			if (summaries.length > 0) {
+				const summary = summaries[0];
+				if (summary.baseline) {
+					return summary.baseline.buckets;
+				}
+			}
+			return [];
+		},
 		getTopVariables(): string[] {
 			const variables = datasetGetters
 				.getVariables(this.$store)
@@ -699,6 +713,25 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 	height: 300px;
 	width: 100%;
 }
+
+
+.geo-plot-container .type-change-dropdown-wrapper {
+	float: right;
+	z-index: 3;
+	top: 22px;
+}
+
+.geo-plot-container .type-change-dropdown-wrapper .dropdown-menu {
+	z-index: 3;
+}
+
+.geo-plot-container, .geo-plot {
+	position: relative;
+	z-index: 0;
+	height: 300px;
+	width: 100%;
+}
+
 .geo-plot-container .selection-toggle {
 	position: absolute;
 	z-index: 999;

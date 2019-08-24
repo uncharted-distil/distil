@@ -44,7 +44,7 @@ import IconBookmark from './icons/IconBookmark';
 import { SuggestedType, Variable, Highlight } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, TIMESERIES_TYPE, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS, GEOCOORDINATE_TYPE } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, TIMESERIES_TYPE, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS, GEOCOORDINATE_TYPE, LATITUDE_TYPE, LONGITUDE_TYPE } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
 import { createRouteEntry } from '../util/routes';
 import { GROUPING_ROUTE } from '../store/route';
@@ -67,14 +67,26 @@ export default Vue.extend({
 	computed: {
 		variable(): Variable {
 			const vars = datasetGetters.getVariables(this.$store);
+			const hasLat = vars.filter(variable => variable.colName === LATITUDE_TYPE).length;
+			const hasLon = vars.filter(variable => variable.colName === LONGITUDE_TYPE).length;
 
 			if (!vars) {
 				return null;
 			}
-			return vars.find(v => {
-				return v.colName.toLowerCase() === this.field.toLowerCase() &&
-					v.datasetName === this.dataset;
-			});
+
+			// Temporary Geocoordinate variable type inference to lat and lon
+			if (hasLat ^ hasLon) {
+				return vars.find(v => {
+					return v.colName.toLowerCase() === LATITUDE_TYPE ||
+						v.colName.toLowerCase() === LONGITUDE_TYPE;
+				});
+			} else {
+				return vars.find(v => {
+					return v.colName.toLowerCase() === this.field.toLowerCase() &&
+						v.datasetName === this.dataset;
+				});
+			}
+
 		},
 		isGrouping(): boolean {
 			if (!this.variable) {
