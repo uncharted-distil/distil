@@ -11,11 +11,11 @@
 			<div class="row align-items-center justify-content-center bg-white">
 
 				<div class="col-12 col-md-6 d-flex flex-column">
-					<h5 class="header-label">Select Features That May Predict {{target.toUpperCase()}}</h5>
+					<h5 class="header-label">Select Features That May Predict {{targetLabel.toUpperCase()}}</h5>
 
 					<div class="row col-12 pl-4">
 						<div>
-							{{target.toUpperCase()}} is being modeled as a
+							{{targetLabel.toUpperCase()}} is being modeled as a
 						</div>
 						<div class="pl-2">
 							<type-change-menu
@@ -26,7 +26,7 @@
 					</div>
 					<div class="row col-12 pl-4">
 						<p>
-							<b>Select Features That May Predict {{target.toUpperCase()}}</b> Use interactive feature highlighting to analyze relationships or to exclude samples from the model. Features which appear to have stronger relation are listed first.
+							<b>Select Features That May Predict {{targetLabel.toUpperCase()}}</b>. Use interactive feature highlighting to analyze relationships or to exclude samples from the model. Features which appear to have stronger relation are listed first.
 						</p>
 					</div>
 					<div v-if="isTimeseriesAnalysis">
@@ -99,6 +99,16 @@ export default Vue.extend({
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+		// Always use the label from the target summary facet as the displayed target name to ensure compund
+		// variables like a time series display the same name for the target as the value being predicted.
+		targetLabel(): string {
+			const summaries = routeGetters.getTargetVariableSummaries(this.$store);
+			if (summaries.length > 0) {
+				const summary = summaries[0];
+				return summary.label;
+			}
+			return this.target;
 		},
 		filtersStr(): string {
 			return routeGetters.getRouteFilters(this.$store);
