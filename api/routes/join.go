@@ -78,38 +78,8 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 			DatasetSource: metadata.DatasetSource(datasetRight["source"].(string)),
 		}
 
-		leftVariableInterfaces := datasetLeft["variables"].([]interface{})
-		rightVariableInterfaces := datasetRight["variables"].([]interface{})
-		leftVariables := make([]model.Variable, len(leftVariableInterfaces))
-		rightVariables := make([]model.Variable, len(rightVariableInterfaces))
-		for i := range leftVariableInterfaces {
-			v := model.Variable{}
-			err := json.MapToStruct(&v, leftVariableInterfaces[i].(map[string]interface{}))
-			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse Variable parameter"))
-				return
-			}
-			leftVariables[i] = v
-		}
-
-		for i := range rightVariableInterfaces {
-			v := model.Variable{}
-			err := json.MapToStruct(&v, rightVariableInterfaces[i].(map[string]interface{}))
-			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse Variable parameter"))
-				return
-			}
-			rightVariables[i] = v
-		}
-		leftVariableReferences := make([]*model.Variable, len(leftVariables))
-		rightVariableReferences := make([]*model.Variable, len(rightVariables))
-
-		for i := range leftVariables {
-			leftVariableReferences[i] = &leftVariables[i]
-		}
-		for i := range rightVariables {
-			rightVariableReferences[i] = &rightVariables[i]
-		}
+		leftVariables, err := parseVariables(datasetLeft["variables"].([]interface{}))
+		rightVariables, err := parseVariables(datasetRight["variables"].([]interface{}))
 
 		// need to find the right join suggestion since a single dataset
 		// can have multiple join suggestions
@@ -140,7 +110,7 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		originRef := &origin
 
 		// run joining pipeline
-		data, err := task.Join(leftJoin, rightJoin, leftVariableReferences, rightVariableReferences, originRef)
+		data, err := task.Join(leftJoin, rightJoin, leftVariables, rightVariables, originRef)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -156,4 +126,18 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(bytes)
 	}
+}
+
+func parseVariables(variablesRaw []interface{}) ([]*model.Variable, error) {
+	variables := make([]*model.Variable, len(variablesRaw))
+	for i, varRaw := range variablesRaw {
+		v := model.Variable{}
+		err := json.MapToStruct(&v, varRaw.(map[string]interface{}))
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse Variables")
+		}
+		variables[i] = &v
+	}
+
+	return variables, nil
 }
