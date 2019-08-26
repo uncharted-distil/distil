@@ -5,11 +5,11 @@
 		<div class="row align-items-center justify-content-center bg-white">
 
 			<div class="col-12 col-md-6 d-flex flex-column">
-				<h5 class="header-label">Select Model That Best Predicts {{target.toUpperCase()}}</h5>
+				<h5 class="header-label">Select Model That Best Predicts {{targetLabel.toUpperCase()}}</h5>
 
 				<div class="row col-12 pl-4">
 					<div>
-						{{target.toUpperCase()}} is being modeled as a {{targetType}}
+						{{targetLabel.toUpperCase()}} is being modeled as a {{targetType}}
 					</div>
 				</div>
 				<div class="row col-12 pl-4">
@@ -73,6 +73,15 @@ export default Vue.extend({
 		},
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+		// Always use the label from the target summary facet as the displayed target name to ensure compund
+		// variables like a time series display the same name for the target as the value being predicted.
+		targetLabel(): string {
+			const summary = resultGetters.getTargetSummary(this.$store);
+			if (summary !== null) {
+				return summary.label;
+			}
+			return this.target;
 		},
 		targetType(): string {
 			const variables = datasetGetters.getVariablesMap(this.$store);
