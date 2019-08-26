@@ -78,9 +78,8 @@ func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resu
 }
 
 func (s *Storage) fetchResidualsSummary(dataset string, storageName string, variable *model.Variable, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-
 	// Just return a nil in the case where we were asked to return residuals for a non-numeric variable.
-	if model.IsNumerical(variable.Type) {
+	if model.IsNumerical(variable.Type) || variable.Type == model.TimeSeriesType {
 		// fetch numeric histograms
 		residuals, err := s.fetchResidualsHistogram(resultURI, storageName, variable, extrema)
 		if err != nil {
@@ -88,19 +87,19 @@ func (s *Storage) fetchResidualsSummary(dataset string, storageName string, vari
 		}
 		return residuals, nil
 	}
-	return nil, fmt.Errorf("variable is not numeric")
+	return nil, errors.Errorf("variable of type %s - should be numeric", variable.Type)
 }
 
 func getErrorTyped(variableName string) string {
 	return fmt.Sprintf("(cast(value as double precision) - cast(\"%s\" as double precision))", variableName)
 }
 
-func (s *Storage) getResidualsHistogramAggQuery(extrema *api.Extrema, variable *model.Variable, resultVariable *model.Variable) (string, string, string) {
+func (s *Storage) getResidualsHistogramAggQuery(extrema *api.Extrema, variableName string, resultVariable *model.Variable) (string, string, string) {
 	// compute the bucket interval for the histogram
 	interval := extrema.GetBucketInterval()
 
 	// Only numeric types should occur.
-	errorTyped := getErrorTyped(variable.Name)
+	errorTyped := getErrorTyped(variableName)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
@@ -117,13 +116,13 @@ func getResultJoin(storageName string) string {
 	return fmt.Sprintf("%s_result as res inner join %s as data on data.\"%s\" = res.index", storageName, storageName, model.D3MIndexFieldName)
 }
 
-func getResidualsMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
+func getResidualsMinMaxAggsQuery(variableName string, resultVariable *model.Variable) string {
 	// get min / max agg names
 	minAggName := api.MinAggPrefix + resultVariable.Name
 	maxAggName := api.MaxAggPrefix + resultVariable.Name
 
 	// Only numeric types should occur.
-	errorTyped := getErrorTyped(variable.Name)
+	errorTyped := getErrorTyped(variableName)
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", errorTyped, minAggName, errorTyped, maxAggName)
@@ -133,8 +132,14 @@ func getResidualsMinMaxAggsQuery(variable *model.Variable, resultVariable *model
 
 func (s *Storage) fetchResidualsExtrema(resultURI string, storageName string, variable *model.Variable,
 	resultVariable *model.Variable) (*api.Extrema, error) {
+
+	targetName := variable.Name
+	if variable.Grouping != nil {
+		targetName = variable.Grouping.Properties.YCol
+	}
+
 	// add min / max aggregation
-	aggQuery := getResidualsMinMaxAggsQuery(variable, resultVariable)
+	aggQuery := getResidualsMinMaxAggsQuery(targetName, resultVariable)
 
 	// from clause to join result and base data
 	fromClause := getResultJoin(storageName)
@@ -158,6 +163,11 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, 
 		Type: model.StringType,
 	}
 
+	targetName := variable.Name
+	if variable.Grouping != nil {
+		targetName = variable.Grouping.Properties.YCol
+	}
+
 	// need the extrema to calculate the histogram interval
 	var err error
 	if extrema == nil {
@@ -171,7 +181,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, 
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, variable, resultVariable)
+	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, targetName, resultVariable)
 
 	fromClause := getResultJoin(storageName)
 

@@ -22,7 +22,7 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
+	log "github.com/unchartedsoftware/plog"
 )
 
 var (

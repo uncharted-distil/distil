@@ -38,6 +38,7 @@ export type SolutionContext = ActionContext<SolutionState, DistilState>;
 function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
 	const isRegression = context.getters.isRegression;
 	const isClassification = context.getters.isClassification;
+	const isForecasting = context.getters.isForecasting;
 
 	resultsActions.fetchResultTableData(store, {
 		dataset: req.dataset,
@@ -63,7 +64,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 		highlight: context.getters.getDecodedHighlight
 	});
 
-	if (isRegression) {
+	if (isRegression || isForecasting) {
 		resultsActions.fetchResidualsExtrema(store, {
 			dataset: req.dataset,
 			target: req.target,
@@ -88,6 +89,7 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
 	const isRegression = context.getters.isRegression;
 	const isClassification = context.getters.isClassification;
+	const isForecasting = context.getters.isForecasting;
 
 	// if current solutionId, pull result summaries
 	resultsActions.fetchPredictedSummary(store, {
@@ -97,7 +99,7 @@ function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequ
 		highlight: context.getters.getDecodedHighlight
 	});
 
-	if (isRegression) {
+	if (isRegression || isForecasting) {
 		resultsActions.fetchResidualsExtrema(store, {
 			dataset: req.dataset,
 			target: req.target,
