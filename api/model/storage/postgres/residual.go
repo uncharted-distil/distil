@@ -79,15 +79,15 @@ func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resu
 
 func (s *Storage) fetchResidualsSummary(dataset string, storageName string, variable *model.Variable, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	// Just return a nil in the case where we were asked to return residuals for a non-numeric variable.
-	// if model.IsNumerical(variable.Type) {
-	// fetch numeric histograms
-	residuals, err := s.fetchResidualsHistogram(resultURI, storageName, variable, extrema)
-	if err != nil {
-		return nil, err
+	if model.IsNumerical(variable.Type) || variable.Type == model.TimeSeriesType {
+		// fetch numeric histograms
+		residuals, err := s.fetchResidualsHistogram(resultURI, storageName, variable, extrema)
+		if err != nil {
+			return nil, err
+		}
+		return residuals, nil
 	}
-	return residuals, nil
-	// }
-	// return nil, errors.Errorf("variable of type %s - should be numeric", variable.Type)
+	return nil, errors.Errorf("variable of type %s - should be numeric", variable.Type)
 }
 
 func getErrorTyped(variableName string) string {

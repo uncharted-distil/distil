@@ -33,14 +33,14 @@ type ResidualsExtrema struct {
 
 func fetchSolutionResidualExtrema(meta api.MetadataStorage, data api.DataStorage, solution api.SolutionStorage, dataset string, storageName string, target string, solutionID string) (*api.Extrema, error) {
 	// check target var type
-	// variable, err := meta.FetchVariable(dataset, target)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	variable, err := meta.FetchVariable(dataset, target)
+	if err != nil {
+		return nil, err
+	}
 
-	// if !model.IsNumerical(variable.Type) {
-	// 	return nil, nil
-	// }
+	if !model.IsNumerical(variable.Type) && variable.Type != model.TimeSeriesType {
+		return nil, nil
+	}
 
 	// we need to get extrema min and max for all solutions sharing dataset and target
 	requests, err := solution.FetchRequestByDatasetTarget(dataset, target, solutionID)
