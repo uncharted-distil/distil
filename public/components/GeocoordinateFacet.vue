@@ -98,16 +98,33 @@ export default Vue.extend({
 			return routeGetters.getRouteDataset(this.$store);
 			},
 		datasummary(): any {
-			console.log('summary', this.summary);
-			const key = this.summary.key;
-			const label = this.summary.label;
 			const buckets = this.summary.baseline.buckets;
-			return this.variableSummaryToGeocoordinate(key, label, buckets);
+			const validPoints = buckets.filter((bucket)=> {
+				return bucket.count > 0
+			})
+
+
+			let dataPoints = validPoints.reduce((acc, curr) => {
+				console.log('curr', curr)
+				const coordinates = curr.key.split(',');
+				const lon = coordinates[0];
+				const lat = coordinates[1];
+				const points = Array(curr.count).fill({
+					latitude: lat,
+					longitude: lon
+				})
+				acc.push(...points)
+				return acc;
+				},[] as any);
+			console.log('dataPoints', dataPoints);
+			return dataPoints;
 		},
 		instanceName(): string {
 			return 'unique-map';
 		},
 		dataItems(): any {
+			console.log('good');
+
 			return DUMMY_GEODATA;
 		},
 
@@ -145,6 +162,7 @@ export default Vue.extend({
 
 		fieldSpecs(): GeoField[] {
 			const variables = datasetGetters.getVariables(this.$store);
+			console.log('variables', variables);
 
 			const matches = variables.filter(v => {
 				return (
@@ -183,6 +201,8 @@ export default Vue.extend({
 					lat = null;
 				}
 			});
+
+
 
 			return fields;
 		},

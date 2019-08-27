@@ -5,6 +5,7 @@
 				id="type-change-dropdown"
 				:text="label"
 				:disabled="isDisabled">
+				<template v-if="!isGeocoordinate">
 				<b-dropdown-item
 					v-for="suggested in getSuggestedList()"
 					v-bind:class="{ selected: suggested.isSelected, recommended: suggested.isRecommended }"
@@ -14,9 +15,11 @@
 					{{suggested.label}}
 					<icon-base v-if="suggested.isRecommended" icon-name="bookmark" class="recommended-icon"><icon-bookmark /></icon-base>
 				</b-dropdown-item>
-
-				<template v-if="showGroupingOptions">
+				</template>
+				<template  v-if="showGroupingOptions && !isGeocoordinate">
 					<b-dropdown-divider></b-dropdown-divider>
+				</template>
+				<template v-if="showGroupingOptions">
 					<b-dropdown-item
 						v-for="grouping in groupingOptions()"
 						@click.stop="onGroupingSelect(grouping.type)"
@@ -94,6 +97,9 @@ export default Vue.extend({
 			}
 			return !!this.variable.grouping;
 		},
+		isGeocoordinate(): boolean {
+			return this.field ? false : true;
+		},
 		type(): string {
 			return this.variable ? this.variable.colType : '';
 		},
@@ -101,6 +107,9 @@ export default Vue.extend({
 			return this.variable ? this.variable.isColTypeReviewed : false;
 		},
 		label(): string {
+			if (this.isGeocoordinate) {
+				return getLabelFromType(GEOCOORDINATE_TYPE);
+			}
 			return this.type !== '' ? getLabelFromType(this.type) : '';
 		},
 		originalType(): string {
@@ -279,11 +288,13 @@ export default Vue.extend({
 		this.$root.$on('bv::dropdown::show', () => {
 			const dataset = this.dataset;
 			const field = this.field;
-			datasetActions.reviewVariableType(this.$store, {
-				dataset: dataset,
-				field: field,
-				isColTypeReviewed: true,
-			});
+			if (!this.isGeocoordinate) {
+				datasetActions.reviewVariableType(this.$store, {
+					dataset: dataset,
+					field: field,
+					isColTypeReviewed: true,
+				});
+			}
 		});
 	},
 });
