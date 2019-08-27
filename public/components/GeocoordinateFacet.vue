@@ -99,33 +99,29 @@ export default Vue.extend({
 			},
 		datasummary(): any {
 			const buckets = this.summary.baseline.buckets;
-			const validPoints = buckets.filter((bucket)=> {
-				return bucket.count > 0
-			})
+			const validPoints = buckets.filter((bucket) => {
+				return bucket.count > 0;
+			});
 
-
-			let dataPoints = validPoints.reduce((acc, curr) => {
-				console.log('curr', curr)
+			const dataPoints = validPoints.reduce((acc, curr) => {
 				const coordinates = curr.key.split(',');
 				const lon = coordinates[0];
 				const lat = coordinates[1];
 				const points = Array(curr.count).fill({
 					latitude: lat,
 					longitude: lon
-				})
-				acc.push(...points)
+				});
+				acc.push(...points);
 				return acc;
-				},[] as any);
-			console.log('dataPoints', dataPoints);
+				}, [] as any);
+
 			return dataPoints;
 		},
 		instanceName(): string {
 			return 'unique-map';
 		},
 		dataItems(): any {
-			console.log('good');
-
-			return DUMMY_GEODATA;
+			return this.datasummary;
 		},
 
 		target(): string {
@@ -161,49 +157,11 @@ export default Vue.extend({
 		},
 
 		fieldSpecs(): GeoField[] {
-			const variables = datasetGetters.getVariables(this.$store);
-			console.log('variables', variables);
-
-			const matches = variables.filter(v => {
-				return (
-					v.colType === LONGITUDE_TYPE ||
-					v.colType === LATITUDE_TYPE ||
-					v.colType === REAL_VECTOR_TYPE
-				);
-			});
-
-			let lng = null;
-			let lat = null;
-			const fields = [];
-			matches.forEach(match => {
-				if (match.colType === LONGITUDE_TYPE) {
-					lng = match.colName;
-				}
-				if (match.colType === LATITUDE_TYPE) {
-					lat = match.colName;
-				}
-				if (match.colType === REAL_VECTOR_TYPE) {
-					fields.push({
-						type: SINGLE_FIELD,
-						field: match.colName
-					});
-				}
-				// TODO: currently we pair any two random lat / lngs, we should
-				// eventually use the groupings functionality to let the user
-				// group the two vars into a single point field.
-				if (lng && lat) {
-					fields.push({
-						type: SPLIT_FIELD,
-						lngField: lng,
-						latField: lat
-					});
-					lng = null;
-					lat = null;
-				}
-			});
-
-
-
+			const fields = [{
+				latField: `${LATITUDE_TYPE}`,
+				lngField: `${LONGITUDE_TYPE}`,
+				type: 2
+				}];
 			return fields;
 		},
 
