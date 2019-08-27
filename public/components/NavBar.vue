@@ -53,7 +53,7 @@ import { gotoHome, gotoSearch, gotoJoinDatasets, gotoSelectTarget,
 import { actions as appActions,  getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
 import { HOME_ROUTE, SEARCH_ROUTE, JOIN_DATASETS_ROUTE, SELECT_TARGET_ROUTE,
-	SELECT_TRAINING_ROUTE, RESULTS_ROUTE, ABORT_SUCCESS_ROUTE } from '../store/route/index';
+	SELECT_TRAINING_ROUTE, RESULTS_ROUTE } from '../store/route/index';
 import { restoreView } from '../util/view';
 import Vue from 'vue';
 
@@ -116,10 +116,6 @@ export default Vue.extend({
 		},
 		onResults() {
 			gotoResults(this.$router);
-		},
-		onAbort() {
-			this.$router.replace(ABORT_SUCCESS_ROUTE);
-			appActions.abort(this.$store);
 		},
 		hasJoinDatasetView(): boolean {
 			return !!restoreView(JOIN_DATASETS_ROUTE, this.joinDatasetsHash);
@@ -219,15 +215,6 @@ export default Vue.extend({
 }
 .app-icon path {
 	fill: #c90;
-}
-.abort-icon {
-	vertical-align: middle;
-	color: #cf3835;
-}
-.abort-button {
-	white-space: nowrap;
-	overflow: hidden;
-	margin-left: 20px;
 }
 .session-label {
 	padding-right: 4px;
