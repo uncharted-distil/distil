@@ -6,7 +6,7 @@ elastic:
 
 pipeline_server:
   image:
-    docker.uncharted.software/distil_dev_postgres:latest
+    docker.uncharted.software/distil-pipeline-server:latest
   ports:
     - "45042:45042"
   environment:
@@ -21,7 +21,7 @@ pipeline_server:
 
 postgres:
   image:
-    registry.datadrivendiscovery.org/ta3-submissions/ta2-uncharted/summer2019/distil_dev_postgres:latest
+    docker.uncharted.software/distil_dev_postgres:latest
   ports:
     - "5432:5432"
   command:
