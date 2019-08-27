@@ -1,12 +1,12 @@
 elastic:
   image:
-    registry.datadrivendiscovery.org/ta3-submissions/ta2-uncharted/summer2019/distil_dev_es:latest
+    docker.uncharted.software/distil_dev_es:latest
   ports:
     - "9200:9200"
 
 pipeline_server:
   image:
-    docker.uncharted.software/distil-pipeline-server:latest
+    docker.uncharted.software/distil_dev_postgres:latest
   ports:
     - "45042:45042"
   environment:
