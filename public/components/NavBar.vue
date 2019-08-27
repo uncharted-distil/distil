@@ -5,47 +5,44 @@
 
 		<img src="/images/uncharted.svg" class="app-icon">
 		<span class="navbar-brand">Distil</span>
-
-		<b-collapse v-if="!isAborted" is-nav id="nav-collapse">
-			<b-navbar-nav>
-				<b-nav-item @click="onHome" v-if="!isTask1 && !isTask2" :active="isActive(HOME_ROUTE)" v-bind:class="{ active: isActive(HOME_ROUTE) }">
-					<i class="fa fa-home nav-icon"></i>
-					<b-nav-text>Home</b-nav-text>
-				</b-nav-item>
-				<b-nav-item @click="onSearch" v-if="!isTask1 && !isTask2" :active="isActive(SEARCH_ROUTE)" v-bind:class="{ active: isActive(SEARCH_ROUTE) }">
-					<i class="fa fa-angle-right nav-arrow"></i>
-					<i class="fa fa-file-text-o nav-icon"></i>
-					<b-nav-text>Select Data</b-nav-text>
-				</b-nav-item>
-				<b-nav-item @click="onSelectTarget" v-if="!isTask2" :active="isActive(SELECT_TARGET_ROUTE)" :disabled="!hasSelectTargetView()" v-bind:class="{ active: isActive(SELECT_TARGET_ROUTE) }">
-					<i class="fa fa-angle-right nav-arrow"></i>
-					<i class="fa fa-dot-circle-o  nav-icon"></i>
-					<b-nav-text>Select Target</b-nav-text>
-				</b-nav-item>
-				<b-nav-item @click="onSelectData" :active="isActive(SELECT_TRAINING_ROUTE)" :disabled="!hasSelectTrainingView()" v-bind:class="{ active: isActive(SELECT_TRAINING_ROUTE) }">
-					<i class="fa fa-angle-right nav-arrow"></i>
-					<i class="fa fa-code-fork  nav-icon"></i>
-					<b-nav-text>Create Models</b-nav-text>
-				</b-nav-item>
-				<b-nav-item @click="onJoinDatasets" v-if="isJoinDatasets && isActive(JOIN_DATASETS_ROUTE)" :active="isActive(JOIN_DATASETS_ROUTE)" v-bind:class="{ active: isActive(JOIN_DATASETS_ROUTE) }">
-					<i class="fa fa-angle-right nav-arrow"></i>
-					<i class="fa fa-database nav-icon"></i>
-					<b-nav-text>Join Datasets</b-nav-text>
-				</b-nav-item>
-				<b-nav-item @click="onResults" :active="isActive(RESULTS_ROUTE)" :disabled="!hasResultView()" v-bind:class="{ active: isActive(RESULTS_ROUTE) }">
-					<i class="fa fa-angle-right nav-arrow"></i>
-					<i class="fa fa-line-chart nav-icon"></i>
-					<b-nav-text>View Models</b-nav-text>
-				</b-nav-item>
-			</b-navbar-nav>
-			<b-navbar-nav class="ml-auto">
-				<b-nav-item href="/help">
-					<b-nav-text>
-					Help
-					</b-nav-text>
-				</b-nav-item>
-			</b-navbar-nav>
-		</b-collapse>
+		<b-navbar-nav>
+			<b-nav-item @click="onHome" v-if="!isTask1 && !isTask2" :active="isActive(HOME_ROUTE)" v-bind:class="{ active: isActive(HOME_ROUTE) }">
+				<i class="fa fa-home nav-icon"></i>
+				<b-nav-text>Home</b-nav-text>
+			</b-nav-item>
+			<b-nav-item @click="onSearch" v-if="!isTask1 && !isTask2" :active="isActive(SEARCH_ROUTE)" v-bind:class="{ active: isActive(SEARCH_ROUTE) }">
+				<i class="fa fa-angle-right nav-arrow"></i>
+				<i class="fa fa-file-text-o nav-icon"></i>
+				<b-nav-text>Select Data</b-nav-text>
+			</b-nav-item>
+			<b-nav-item @click="onSelectTarget" v-if="!isTask2" :active="isActive(SELECT_TARGET_ROUTE)" :disabled="!hasSelectTargetView()" v-bind:class="{ active: isActive(SELECT_TARGET_ROUTE) }">
+				<i class="fa fa-angle-right nav-arrow"></i>
+				<i class="fa fa-dot-circle-o  nav-icon"></i>
+				<b-nav-text>Select Target</b-nav-text>
+			</b-nav-item>
+			<b-nav-item @click="onSelectData" :active="isActive(SELECT_TRAINING_ROUTE)" :disabled="!hasSelectTrainingView()" v-bind:class="{ active: isActive(SELECT_TRAINING_ROUTE) }">
+				<i class="fa fa-angle-right nav-arrow"></i>
+				<i class="fa fa-code-fork  nav-icon"></i>
+				<b-nav-text>Create Models</b-nav-text>
+			</b-nav-item>
+			<b-nav-item @click="onJoinDatasets" v-if="isJoinDatasets && isActive(JOIN_DATASETS_ROUTE)" :active="isActive(JOIN_DATASETS_ROUTE)" v-bind:class="{ active: isActive(JOIN_DATASETS_ROUTE) }">
+				<i class="fa fa-angle-right nav-arrow"></i>
+				<i class="fa fa-database nav-icon"></i>
+				<b-nav-text>Join Datasets</b-nav-text>
+			</b-nav-item>
+			<b-nav-item @click="onResults" :active="isActive(RESULTS_ROUTE)" :disabled="!hasResultView()" v-bind:class="{ active: isActive(RESULTS_ROUTE) }">
+				<i class="fa fa-angle-right nav-arrow"></i>
+				<i class="fa fa-line-chart nav-icon"></i>
+				<b-nav-text>View Models</b-nav-text>
+			</b-nav-item>
+		</b-navbar-nav>
+		<b-navbar-nav class="ml-auto">
+			<b-nav-item href="/help">
+				<b-nav-text>
+				Help
+				</b-nav-text>
+			</b-nav-item>
+		</b-navbar-nav>
 	</b-navbar>
 </template>
 
@@ -86,9 +83,6 @@ export default Vue.extend({
 		},
 		joinDatasetsHash(): string {
 			return routeGetters.getRouteJoinDatasetsHash(this.$store);
-		},
-		isAborted(): boolean {
-			return appGetters.isAborted(this.$store);
 		},
 		isTask1(): boolean {
 			return appGetters.isTask1(this.$store);
