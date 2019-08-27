@@ -72,6 +72,10 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(bytes)
+		_, err = w.Write(bytes)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))
+			return
+		}
 	}
 }

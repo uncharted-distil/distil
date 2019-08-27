@@ -138,13 +138,11 @@ func ProblemDiscoveryHandler(ctorData api.DataStorageCtor, ctorMeta api.Metadata
 			return
 		}
 		if requestDataset.JoinSuggestions != nil {
-			if len(requestDataset.JoinSuggestions) != 1 {
-				handleError(w, errors.Wrapf(err, "only one join allowed in prepend, whereas the requested data transform has %d", len(requestDataset.JoinSuggestions)))
-				return
+			req.DatasetAugmentations = make([]*model.DatasetOrigin, len(requestDataset.JoinSuggestions))
+			for i, js := range requestDataset.JoinSuggestions {
+				req.DatasetAugmentations[i] = js.DatasetOrigin
 			}
 			req.DatasetInput = requestDataset.JoinSuggestions[0].DatasetOrigin.SourceDataset
-			req.SearchResult = requestDataset.JoinSuggestions[0].DatasetOrigin.SearchResult
-			req.SearchProvenance = requestDataset.JoinSuggestions[0].DatasetOrigin.Provenance
 		}
 
 		// store the search solution request for this problem
@@ -197,6 +195,10 @@ func ProblemDiscoveryHandler(ctorData api.DataStorageCtor, ctorMeta api.Metadata
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(bytes)
+		_, err = w.Write(bytes)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))
+			return
+		}
 	}
 }

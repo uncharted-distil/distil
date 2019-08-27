@@ -102,7 +102,7 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 		}
 
 		datamartDatasets := append(datasetsMap[datamart.ProvenanceISI], datasetsMap[datamart.ProvenanceNYU]...)
-		datasets = filterDatasets(datamartDatasets, hasSuggestions)
+		datasets = filterDatasets(res, datamartDatasets, filterSuggestions)
 
 		localDatasets := make(map[string]*model.Dataset)
 		for provenance, datasets := range datasetsMap {
@@ -177,16 +177,23 @@ func getColNameByDisplayName(dataset model.Dataset, colDisplayName string) strin
 	return compute.NormalizeVariableName(colDisplayName) // fallback
 }
 
-func filterDatasets(datasets []*model.Dataset, predicate func(dataset *model.Dataset) bool) []*model.Dataset {
+func filterDatasets(queryDataset *model.Dataset, datasets []*model.Dataset,
+	predicate func(sourceDataset *model.Dataset, joinDataset *model.Dataset) bool) []*model.Dataset {
 	result := []*model.Dataset{}
 	for _, dataset := range datasets {
-		if predicate(dataset) {
+		if predicate(queryDataset, dataset) {
 			result = append(result, dataset)
 		}
 	}
 	return result
 }
 
-func hasSuggestions(dataset *model.Dataset) bool {
-	return dataset.JoinSuggestions != nil && len(dataset.JoinSuggestions) > 0
+func filterSuggestions(sourceDataset *model.Dataset, joinDataset *model.Dataset) bool {
+	// filter out datasets that have already been joined
+	if strings.Contains(sourceDataset.ID, joinDataset.ID) {
+		return false
+	}
+
+	// filter out join datasets with no suggestions
+	return joinDataset.JoinSuggestions != nil && len(joinDataset.JoinSuggestions) > 0
 }

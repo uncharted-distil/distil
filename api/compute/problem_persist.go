@@ -40,15 +40,9 @@ const (
 
 	problemTypeForecasting = "forecasting"
 
-	defaultNumericalMetric   = "rSquared"
-	defaultCategoricalMetric = "f1Micro"
-
 	defaultTaskTypeNumerical   = "regression"
 	defaultTaskTypeCategorical = "classification"
 	defaultTaskTypeForecasting = "timeSeriesForecasting"
-
-	defaultTaskSubTypeNumerical   = "univariate"
-	defaultTaskSubTypeCategorical = "multiClass"
 )
 
 // VariableProvider defines a function that will get the provided variable.

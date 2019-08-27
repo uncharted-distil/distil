@@ -38,6 +38,5 @@ func ExportHandler(client *compute.Client, exportPath string) func(http.Response
 		} else {
 			log.Infof("Completed export request for %s", solutionID)
 		}
-		return
 	}
 }

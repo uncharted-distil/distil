@@ -132,11 +132,35 @@ func parseNYUJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) ([]*
 		joins = append(joins, &api.JoinSuggestion{
 			BaseDataset:   baseDataset.ID,
 			BaseColumns:   leftColumnNames,
+			JoinDataset:   result.Metadata.Name,
 			JoinColumns:   rightColumnNames,
+			JoinScore:     result.Score,
 			DatasetOrigin: origin,
+			Index:         len(joins),
 		})
 	}
 	return joins, nil
+}
+
+func mapNYUDataTypesToDistil(nyuType string) string {
+	switch nyuType {
+	case "http://schema.org/Boolean":
+		return model.BoolType
+	case "http://schema.org/DateTime":
+		return model.DateTimeType
+	case "http://schema.org/Float":
+		return model.RealType
+	case "http://schema.org/Integer":
+		return model.IntegerType
+	case "http://schema.org/latitude":
+		return model.LatitudeType
+	case "http://schema.org/longitude":
+		return model.LongitudeType
+	case "http://schema.org/Text":
+		return model.StringType
+	default:
+		return model.UnknownType
+	}
 }
 
 func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.Dataset, error) {
@@ -152,8 +176,9 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 		vars := make([]*model.Variable, 0)
 		for _, c := range res.Metadata.Columns {
 			vars = append(vars, &model.Variable{
-				Name:        c.Name,
-				DisplayName: c.Name,
+				Name:         c.Name,
+				DisplayName:  c.Name,
+				OriginalType: mapNYUDataTypesToDistil(c.StructuralType),
 			})
 		}
 
@@ -170,11 +195,12 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 			NumBytes:        int64(res.Metadata.Size),
 			Variables:       vars,
 			Provenance:      ProvenanceNYU,
+			Source:          "contrib",
 			JoinSuggestions: joinSuggestions,
 			JoinScore:       res.Score,
+			// parse out more information for type
 		})
 	}
-
 	return datasets, nil
 }
 

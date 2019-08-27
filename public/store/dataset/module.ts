@@ -30,6 +30,7 @@ export const getters = {
 	getIncludedVariableSummaries: read(moduleGetters.getIncludedVariableSummaries),
 	getExcludedVariableSummaries: read(moduleGetters.getExcludedVariableSummaries),
 	getVariableRankings: read(moduleGetters.getVariableRankings),
+	getGeocoordinateTypes: read(moduleGetters.getGeocoordinateTypes),
 	// files
 	getFiles: read(moduleGetters.getFiles),
 	getTimeseries: read(moduleGetters.getTimeseries),
@@ -51,7 +52,7 @@ export const getters = {
 	getExcludedTableData: read(moduleGetters.getExcludedTableData),
 	getExcludedTableDataNumRows: read(moduleGetters.getExcludedTableDataNumRows),
 	getExcludedTableDataItems: read(moduleGetters.getExcludedTableDataItems),
-	getExcludedTableDataFields: read(moduleGetters.getExcludedTableDataFields),
+	getExcludedTableDataFields: read(moduleGetters.getExcludedTableDataFields)
 };
 
 // Typed actions

@@ -18,16 +18,11 @@ package postgres
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/go-pg/pg"
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
-)
-
-const (
-	defaultTimeout = time.Second * 30
+	log "github.com/unchartedsoftware/plog"
 )
 
 var (
@@ -93,16 +88,12 @@ func (p pgxLogAdapter) Log(level pgx.LogLevel, msg string, data map[string]inter
 	switch level {
 	case pgx.LogLevelDebug:
 		p.Debug(msg, data)
-		break
 	case pgx.LogLevelInfo:
 		p.Info(msg, data)
-		break
 	case pgx.LogLevelWarn:
 		p.Warn(msg, data)
-		break
 	case pgx.LogLevelError:
 		p.Error(msg, data)
-		break
 	}
 }
 

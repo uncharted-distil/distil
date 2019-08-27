@@ -73,8 +73,8 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 	}
 
 	// create & submit the solution request
-	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview", "Join to be reviewed by user",
-		searchResult, provenance, joinLeft.DatasetID)
+	pipelineDesc, err := description.CreateDatamartAugmentPipeline("Join Preview",
+		"Join to be reviewed by user", searchResult, provenance)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create join pipeline")
 	}
@@ -216,7 +216,11 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 	writer := csv.NewWriter(out)
 	defer writer.Flush()
 
-	writer.Write(fields) // header row
+	err = writer.Write(fields) // header row
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to write header row")
+	}
+
 	for {
 		row, err := reader.Read()
 		if err == io.EOF {
@@ -224,7 +228,6 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 		}
 		if err != nil {
 			// skip malformed input for now
-			errors.Wrap(err, "failed to parse joined csv row")
 			continue
 		}
 		writer.Write(row)

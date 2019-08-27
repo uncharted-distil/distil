@@ -454,11 +454,9 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 
 	// match order by for distinct
 	var groupings []string
-	if variables != nil {
-		for _, v := range variables {
-			if v.Grouping != nil {
-				groupings = append(groupings, v.Grouping.IDCol)
-			}
+	for _, v := range variables {
+		if v.Grouping != nil {
+			groupings = append(groupings, v.Grouping.IDCol)
 		}
 	}
 
@@ -480,7 +478,7 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 
 	query := fmt.Sprintf("SELECT count(%s) FROM %s AS base_data %s", countTarget, storageName, joinSQL)
 	params := make([]interface{}, 0)
-	if filters != nil && len(filters) > 0 {
+	if len(filters) > 0 {
 		clauses := make([]string, 0)
 		for field, value := range filters {
 			clauses = append(clauses, fmt.Sprintf("%s = $%d", field, len(clauses)+1))

@@ -38,7 +38,6 @@ import (
 )
 
 const (
-	rankingFilename = "rank-no-missing.csv"
 	baseTableSuffix = "_base"
 )
 

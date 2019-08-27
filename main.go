@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
 	"syscall"
 	"time"
 
@@ -96,7 +95,7 @@ func main() {
 	}
 
 	// set dataset directory
-	api.SetDatasetDir(config.TmpDataPath)
+	api.SetDatasetDir(config.D3MOutputDir)
 
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
@@ -105,35 +104,11 @@ func main() {
 	postgresClientCtor := postgres.NewClient(config.PostgresHost, config.PostgresPort, config.PostgresUser, config.PostgresPassword,
 		config.PostgresDatabase, config.PostgresLogLevel)
 
-	// wait for required services.
-	servicesToWait["postgres"] = func() bool {
-		_, err := postgresClientCtor()
-		return err == nil
-	}
-	servicesToWait["elastic"] = func() bool {
-		_, err := esClientCtor()
-		return err == nil
-	}
-
-	// make sure a connection can be made to postgres - doesn't appear to be thread safe and
-	// causes panic if deferred, so we'll do it an a retry loop here.  We need to provide
-	// flexibility on startup because we can't guarantee the DB will be up before the server.
-	for name, test := range servicesToWait {
-		log.Infof("Waiting for service '%s'", name)
-		err = service.WaitForService(name, &config, test)
-		if err == nil {
-			log.Infof("Service '%s' is up", name)
-		} else {
-			log.Errorf("%+v", err)
-			os.Exit(1)
-		}
-	}
-
 	// instantiate the metadata storage (using ES).
 	esMetadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
 
 	// instantiate the metadata storage (using filesystem).
-	fileMetadataStorageCtor := file.NewMetadataStorage(config.TmpDataPath)
+	fileMetadataStorageCtor := file.NewMetadataStorage(config.D3MOutputDir)
 
 	// instantiate the postgres data storage constructor.
 	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, esMetadataStorageCtor)
@@ -173,6 +148,34 @@ func main() {
 		}
 	}
 	defer solutionClient.Close()
+
+	// wait for required services.
+	servicesToWait["postgres"] = func() bool {
+		_, err := postgresClientCtor()
+		return err == nil
+	}
+	servicesToWait["elastic"] = func() bool {
+		_, err := esClientCtor()
+		return err == nil
+	}
+	servicesToWait["ta2"] = func() bool {
+		err := solutionClient.Hello()
+		return err == nil
+	}
+
+	// make sure a connection can be made to postgres - doesn't appear to be thread safe and
+	// causes panic if deferred, so we'll do it an a retry loop here.  We need to provide
+	// flexibility on startup because we can't guarantee the DB will be up before the server.
+	for name, test := range servicesToWait {
+		log.Infof("Waiting for service '%s'", name)
+		err = service.WaitForService(name, &config, test)
+		if err == nil {
+			log.Infof("Service '%s' is up", name)
+		} else {
+			log.Errorf("%+v", err)
+			os.Exit(1)
+		}
+	}
 
 	// reset the exported problem list
 	if config.IsTask1 {
@@ -234,7 +237,6 @@ func main() {
 		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
 		HardFail:                           config.IngestHardFail,
 	}
-	sourceFolder := config.DataFolderPath
 
 	// instantiate the metadata storage (using datamart).
 	datamartCtors := make(map[string]model.MetadataStorageCtor)
@@ -280,9 +282,6 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
-
-		sourceFolder = env.ResolvePath(metadata.Contrib, ingestConfig.GeocodingOutputSchemaRelative)
-		sourceFolder = path.Dir(sourceFolder)
 	}
 
 	// register routes
@@ -327,14 +326,14 @@ func main() {
 	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid", routes.PredictedSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/cluster/:dataset/:variable", routes.ClusteringHandler(esMetadataStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.TmpDataPath, config.AugmentedSubFolder), ingestConfig))
-	registerRoutePost(mux, "/distil/join/:dataset-left/:source-left/:dataset-right/:source-right", routes.JoinHandler(esMetadataStorageCtor))
+	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), ingestConfig))
+	registerRoutePost(mux, "/distil/join", routes.JoinHandler(esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:invert", routes.TimeseriesHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries-forecast/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:result-uuid", routes.TimeseriesForecastHandler(pgDataStorageCtor, pgSolutionStorageCtor))
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:source/:file", routes.ImageHandler(esMetadataStorageCtor, &config))
-	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.DataFolderPath))
+	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.D3MInputDir))
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))
 
 	// catch kill signals for graceful shutdown
@@ -350,36 +349,6 @@ func main() {
 
 	// wait until server gracefully exits
 	graceful.Wait()
-}
-
-func waitForPostEndpoint(endpoint string) bool {
-	up := false
-	resp, err := http.Post(endpoint, "application/json", strings.NewReader("test"))
-	log.Infof("Sent request to %s", endpoint)
-	log.Infof("response error: %v", err)
-	if err != nil {
-		// If the error indicates the service is up, then stop waiting.
-		if !strings.Contains(err.Error(), "connection refused") {
-			up = true
-		}
-	} else {
-		up = true
-	}
-	if resp != nil {
-		resp.Body.Close()
-	}
-
-	return up
-}
-
-func parseResourceProxy(datasets string) map[string]bool {
-	toProxy := make(map[string]bool)
-	datasetIds := strings.Split(datasets, ",")
-	for _, d := range datasetIds {
-		toProxy[d] = true
-	}
-
-	return toProxy
 }
 
 func updateExtremas(metaStorage model.MetadataStorage, dataStorage model.DataStorage) error {

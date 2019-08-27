@@ -4,21 +4,20 @@ elastic:
   ports:
     - "9200:9200"
 
-# pipeline_server:
-#   image:
-#     docker.uncharted.software/distil-pipeline-server:latest
-#   ports:
-#     - "45042:45042"
-#   environment:
-#     - SOLUTION_SERVER_RESULT_DIR=/home/chris/temp/outputs
-#     - SOLUTION_SEND_DELAY=2000
-#     - SOLUTION_NUM_UPDATES=3
-#     - SOLUTION_MAX_SOLUTIONS=3
-#     - SOLUTION_ERR_PERCENT=0.1
-#   volumes:
-#     - /home/chris/data/d3m:/home/chris/data/d3m
-#     - $PWD/datamart:$PWD/datamart
-#     - /home/chris/temp/outputs:/home/chris/temp/outputs
+pipeline_server:
+  image:
+    docker.uncharted.software/distil-pipeline-server:latest
+  ports:
+    - "45042:45042"
+  environment:
+    - SOLUTION_SERVER_RESULT_DIR=$D3MOUTPUTDIR
+    - SOLUTION_SEND_DELAY=2000
+    - SOLUTION_NUM_UPDATES=3
+    - SOLUTION_MAX_SOLUTIONS=3
+    - SOLUTION_ERR_PERCENT=0.1
+  volumes:
+    - $D3MINPUTDIR:$D3MINPUTDIR
+    - $D3MOUTPUTDIR:$D3MOUTPUTDIR
 
 postgres:
   image:
@@ -28,20 +27,21 @@ postgres:
   command:
     -d postgres
 
-distil-auto-ml:
-  image:
-    registry.datadrivendiscovery.org/uncharted/distil-integration/distil-auto-ml:latest
-  environment:
-    - D3MINPUTDIR=$D3MINPUTDIR
-    - D3MOUTPUTDIR=$D3MOUTPUTDIR
-    - D3MSTATICDIR=$D3MSTATICDIR
-    - D3MRUN=ta2
-  volumes:
-    - $D3MOUTPUTDIR:$D3MOUTPUTDIR
-    - $D3MINPUTDIR:$D3MINPUTDIR
-    - $D3MSTATICDIR:$D3MSTATICDIR
-  ports:
-    - "45042:45042"
+# distil-auto-ml:
+#   image:
+#     registry.datadrivendiscovery.org/uncharted/distil-integration/distil-auto-ml:latest
+#   environment:
+#     - D3MINPUTDIR=$D3MINPUTDIR
+#     - D3MOUTPUTDIR=$D3MOUTPUTDIR
+#     - D3MSTATICDIR=$D3MSTATICDIR
+#     - D3MRUN=ta2
+#     - DATAMART_URL_NYU=https://auctus.vida-nyu.org
+#   volumes:
+#    - $D3MINPUTDIR:$D3MINPUTDIR
+#    - $D3MOUTPUTDIR:$D3MOUTPUTDIR
+#    - $D3MSTATICDIR:$D3MSTATICDIR
+#   ports:
+#     - "45042:45042"
 
 runner:
   image:
@@ -50,9 +50,9 @@ runner:
     - "50051:50051"
   environment:
     - D3MOUTPUTDIR=$D3MOUTPUTDIR
-    - VERBOSE_PRIMITIVE_OUTPUT=1
     - D3MSTATICDIR=$D3MSTATICDIR
+    - DATAMART_URL_NYU=https://auctus.vida-nyu.org
   volumes:
-    - $D3MOUTPUTDIR:$D3MOUTPUTDIR
     - $D3MINPUTDIR:$D3MINPUTDIR
+    - $D3MOUTPUTDIR:$D3MOUTPUTDIR
     - $D3MSTATICDIR:$D3MSTATICDIR

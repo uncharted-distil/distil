@@ -1,6 +1,8 @@
 # distil
 
 [![CircleCI](https://circleci.com/gh/uncharted-distil/distil/tree/master.svg?style=svg&&circle-token=ff61c235865dd699cc8b923035a80e6e8d39c63a)](https://circleci.com/gh/unchartedsoftware/distil/tree/master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/uncharted-distil/distil)](https://goreportcard.com/report/github.com/uncharted-distil/distil)
+[![GolangCI](https://golangci.com/badges/github.com/uncharted-distil/distil.svg)](https://golangci.com/r/github.com/uncharted-distil/distil)
 
 ## Dependencies
 
@@ -84,7 +86,7 @@ Using three separate terminals:
 ##### Terminal 1 - Launch docker containers via [Docker Compose](https://docs.docker.com/compose/):
 
 ```bash
-docker-compose up
+./run_services.sh
 ```
 
 ##### Terminal 2 - Build and watch webapp:
@@ -97,6 +99,9 @@ yarn watch
 ```bash
 make watch
 ```
+
+#### Advanced Configuration
+The location of the dataset directory can be changed by setting the `D3MINPUTDIR` environment variable, and the location of the temporary data written out during model building can be set using the `D3MOUTPUTDIR` environment variable.  These are used by the other Distil services that are launched via the `run_services.sh` script, and are typically set as global environment variables in `.bashrc` or similar.
 
 ## Common Issues:
 

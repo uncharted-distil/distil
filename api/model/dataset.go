@@ -23,10 +23,6 @@ import (
 	"github.com/uncharted-distil/distil/api/util/json"
 )
 
-const (
-	metadataType = "metadata"
-)
-
 // Dataset represents a decsription of a dataset.
 type Dataset struct {
 	ID              string                 `json:"id"`
@@ -57,8 +53,11 @@ type QueriedDataset struct {
 type JoinSuggestion struct {
 	BaseDataset   string               `json:"baseDataset"`
 	BaseColumns   []string             `json:"baseColumns"`
+	JoinDataset   string               `json:"joinDataset"`
 	JoinColumns   []string             `json:"joinColumns"`
+	JoinScore     float64              `json:"joinScore"`
 	DatasetOrigin *model.DatasetOrigin `json:"datasetOrigin"`
+	Index         int                  `json:"index"`
 }
 
 // FetchDataset builds a QueriedDataset from the needed parameters.

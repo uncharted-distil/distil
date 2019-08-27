@@ -37,13 +37,11 @@ import (
 )
 
 const (
-	denormFieldName  = "filename"
-	useMockTA2System = true
+	denormFieldName = "filename"
 )
 
 var (
-	client       *compute.Client
-	inputRootDir string
+	client *compute.Client
 )
 
 // FeatureRequest captures the properties of a request to a primitive.

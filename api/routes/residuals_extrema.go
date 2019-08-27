@@ -38,7 +38,7 @@ func fetchSolutionResidualExtrema(meta api.MetadataStorage, data api.DataStorage
 		return nil, err
 	}
 
-	if !model.IsNumerical(variable.Type) {
+	if !model.IsNumerical(variable.Type) && variable.Type != model.TimeSeriesType {
 		return nil, nil
 	}
 

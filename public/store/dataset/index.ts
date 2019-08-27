@@ -15,13 +15,6 @@ export interface Highlight {
 	value: any;
 }
 
-export interface Highlight {
-	context: string;
-	dataset: string;
-	key: string;
-	value: any;
-}
-
 export interface Column {
 	key: string;
 	value: any;
@@ -75,6 +68,7 @@ export interface Variable {
 	isColTypeReviewed: boolean;
 	min: number;
 	max: number;
+	role?: string[];
 }
 
 export interface Dataset {
@@ -96,8 +90,11 @@ export interface Dataset {
 export interface JoinSuggestion {
 	baseDataset: string;
 	baseColumns: string[];
+	joinDataset: string;
 	joinColumns: string[];
+	joinScore: number;
 	datasetOrigin?: DatasetOrigin;
+	index: number;
 }
 
 export interface DatasetOrigin {
@@ -223,7 +220,7 @@ export interface JoinDatasetImportPendingRequest {
 }
 
 export type DatasetPendingRequest =
-		VariableRankingPendingRequest
+	VariableRankingPendingRequest
 	| GeocodingPendingRequest
 	| JoinSuggestionPendingRequest
 	| JoinDatasetImportPendingRequest;
@@ -240,6 +237,7 @@ export interface DatasetState {
 	includedSet: WorkingSet;
 	excludedSet: WorkingSet;
 	pendingRequests: DatasetPendingRequest[];
+	isGeocoordinateFacet: string[];
 }
 
 export interface WorkingSet {
@@ -276,4 +274,6 @@ export const state: DatasetState = {
 
 	// pending requests for the active dataset
 	pendingRequests: [],
+
+	isGeocoordinateFacet: []
 };

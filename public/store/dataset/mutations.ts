@@ -3,6 +3,8 @@ import Vue from 'vue';
 import { Dictionary } from '../../util/dict';
 import { DatasetState, Variable, Dataset, VariableSummary, TimeseriesSummary, TableData, DatasetPendingRequest, VariableRankingPendingRequest, GeocodingPendingRequest } from './index';
 import { updateSummaries, isDatamartProvenance } from '../../util/data';
+import { GEOCOORDINATE_TYPE, LONGITUDE_TYPE, LATITUDE_TYPE } from '../../util/types';
+
 
 function sortDatasets(a: Dataset, b: Dataset) {
 
@@ -93,6 +95,12 @@ export const mutations = {
 		// Ideally we have it only in one state, or instead refresh all the
 		// relevant store data.
 
+		// geocoordinate temporary logic
+		if (args.type === GEOCOORDINATE_TYPE) {
+			Vue.set(state, 'isGeocoordinateFacet', [LONGITUDE_TYPE, LATITUDE_TYPE]);
+			console.table('state', state);
+		}
+
 		// update dataset variables
 		const dataset = state.datasets.find(d => d.name === args.dataset);
 		if (dataset) {
@@ -106,6 +114,7 @@ export const mutations = {
 		const variable = state.variables.find(v => {
 			return v.colName === args.field && v.datasetName === args.dataset;
 		});
+
 		if (variable) {
 			variable.colType = args.type;
 		}
@@ -132,7 +141,6 @@ export const mutations = {
 			}
 		}
 	},
-
 	reviewVariableType(state: DatasetState, update) {
 		const index = _.findIndex(state.variables, v => {
 			return v.colName === update.field;

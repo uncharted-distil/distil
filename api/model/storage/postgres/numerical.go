@@ -91,6 +91,9 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 		}
 	} else {
 		baseline, err = f.fetchHistogramByResult(resultURI, nil, extrema)
+		if err != nil {
+			return nil, err
+		}
 		if !filterParams.Empty() {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, extrema)
 			if err != nil {
