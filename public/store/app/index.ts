@@ -1,7 +1,6 @@
 import { DatasetPendingRequestType } from '../dataset/index';
 
 export interface AppState {
-	isAborted: boolean;
 	versionNumber: string;
 	versionTimestamp: string;
 	isTask1: boolean;
@@ -21,7 +20,6 @@ export interface StatusPanelState {
 
 // shared data model
 export const state: AppState = {
-	isAborted: false,
 	versionNumber: 'unknown',
 	versionTimestamp: 'unknown',
 	isTask1: false,

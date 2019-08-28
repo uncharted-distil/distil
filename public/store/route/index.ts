@@ -8,7 +8,6 @@ export const SELECT_TARGET_ROUTE = '/select';
 export const SELECT_TRAINING_ROUTE = '/create';
 export const RESULTS_ROUTE = '/results';
 export const EXPORT_SUCCESS_ROUTE = '/export-success';
-export const ABORT_SUCCESS_ROUTE = '/abort-success';
 
 export const JOINED_VARS_INSTANCE = 'joinedVars';
 export const AVAILABLE_TRAINING_VARS_INSTANCE = 'availableTrainingVars';

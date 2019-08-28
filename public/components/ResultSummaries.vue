@@ -13,7 +13,18 @@
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
 				<i class="fa fa-check-circle fa-3x check-icon"></i>
-				<div>This action will export solution <b>{{activeSolutionName}}</b> and terminate the session.</div>
+				<div>This action will export solution <b>{{activeSolutionName}}</b> and return to the application start screen.</div>
+			</div>
+		</b-modal>
+
+		<b-modal ref="exportSuccessModal" title="Export Succeeded"
+			cancel-disabled
+			hide-header
+			hide-footer>
+			<div class="check-message-container">
+				<i class="fa fa-check-circle fa-3x check-icon"></i>
+				<div>Export Succeeded.</div>
+				<b-btn class="mt-3 ml-3 close-modal" variant="success" block @click="hideSuccessModal">OK</b-btn>
 			</div>
 		</b-modal>
 
@@ -24,7 +35,7 @@
 			<div class="check-message-container">
 				<i class="fa fa-exclamation-triangle fa-3x fail-icon"></i>
 				<div><b>Export Failed:</b> {{exportFailureMsg}} </div>
-				<b-btn class="mt-3 close-modal" variant="success" block @click="hideFailureModal">OK</b-btn>
+				<b-btn class="mt-3 ml-3 close-modal" variant="success" block @click="hideFailureModal">OK</b-btn>
 			</div>
 		</b-modal>
 	</div>
@@ -39,7 +50,7 @@ import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
-import { EXPORT_SUCCESS_ROUTE } from '../store/route/index';
+import { EXPORT_SUCCESS_ROUTE, ROOT_ROUTE } from '../store/route/index';
 import { Variable } from '../store/dataset/index';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
@@ -100,10 +111,6 @@ export default Vue.extend({
 		instanceName(): string {
 			return 'groundTruth';
 		},
-
-		isAborted(): boolean {
-			return appGetters.isAborted(this.$store);
-		}
 	},
 
 	methods: {
@@ -112,16 +119,14 @@ export default Vue.extend({
 			appActions.exportSolution(this.$store, {
 				solutionId: this.activeSolution.solutionId
 			}).then(err => {
-				if (this.isAborted) {
-					// the export was successful
-					this.$router.replace(EXPORT_SUCCESS_ROUTE);
+				if (err) {
+					// failed, this is because the wrong variable was selected
+					const modal = this.$refs.exportFailModal as any;
+					this.exportFailureMsg = err.message;
+					modal.show();
 				} else {
-					if (err) {
-						// failed, this is because the wrong variable was selected
-						const modal = this.$refs.exportFailModal as any;
-						this.exportFailureMsg = err.message;
-						modal.show();
-					}
+					const modal = this.$refs.exportSuccessModal as any;
+					modal.show();
 				}
 			});
 		},
@@ -129,6 +134,13 @@ export default Vue.extend({
 		hideFailureModal() {
 			const modal = this.$refs.exportFailModal as any;
 			modal.hide();
+		},
+
+		hideSuccessModal() {
+			const modal = this.$refs.exportSuccessModal as any;
+			modal.hide();
+			this.$router.replace(ROOT_ROUTE);
+			this.$router.go(0);
 		}
 	}
 });

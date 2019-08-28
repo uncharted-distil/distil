@@ -2,10 +2,6 @@ import { AppState, StatusPanelState } from './index';
 
 export const getters = {
 
-	isAborted(state: AppState): boolean {
-		return state.isAborted;
-	},
-
 	getVersionNumber(state: AppState): string {
 		return state.versionNumber;
 	},

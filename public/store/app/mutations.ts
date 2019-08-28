@@ -3,10 +3,6 @@ import Vue from 'vue';
 
 export const mutations = {
 
-	setAborted(state: AppState) {
-		state.isAborted = true;
-	},
-
 	setVersionNumber(state: AppState, versionNumber: string) {
 		state.versionNumber = versionNumber;
 	},

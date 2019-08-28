@@ -18,12 +18,11 @@ package routes
 import (
 	"context"
 	"net/http"
-	"os"
 
 	"goji.io/pat"
 
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
-	"github.com/unchartedsoftware/plog"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // ExportHandler exports the caller supplied solution by calling through to the compute
@@ -36,10 +35,8 @@ func ExportHandler(client *compute.Client, exportPath string) func(http.Response
 		err := client.ExportSolution(context.Background(), solutionID)
 		if err != nil {
 			log.Infof("Failed solution export request for %s", solutionID)
-			os.Exit(1)
 		} else {
 			log.Infof("Completed export request for %s", solutionID)
-			os.Exit(0)
 		}
 	}
 }
