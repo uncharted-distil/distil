@@ -111,10 +111,6 @@ export default Vue.extend({
 		instanceName(): string {
 			return 'groundTruth';
 		},
-
-		isAborted(): boolean {
-			return appGetters.isAborted(this.$store);
-		}
 	},
 
 	methods: {
@@ -123,18 +119,14 @@ export default Vue.extend({
 			appActions.exportSolution(this.$store, {
 				solutionId: this.activeSolution.solutionId
 			}).then(err => {
-				if (this.isAborted) {
-					// the export was successful
+				if (err) {
 					// failed, this is because the wrong variable was selected
-					const modal = this.$refs.exportSuccessModal as any;
+					const modal = this.$refs.exportFailModal as any;
+					this.exportFailureMsg = err.message;
 					modal.show();
 				} else {
-					if (err) {
-						// failed, this is because the wrong variable was selected
-						const modal = this.$refs.exportFailModal as any;
-						this.exportFailureMsg = err.message;
-						modal.show();
-					}
+					const modal = this.$refs.exportSuccessModal as any;
+					modal.show();
 				}
 			});
 		},

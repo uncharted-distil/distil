@@ -9,24 +9,10 @@ export type AppContext = ActionContext<AppState, DistilState>;
 
 export const actions = {
 
-	abort(context: AppContext) {
-		return axios.get('/distil/abort')
-			.then(() => {
-				console.warn('User initiated session abort');
-				mutations.setAborted(context);
-			})
-			.catch(error => {
-				// NOTE: request always fails because we exit on the server
-				console.warn('User initiated session abort');
-				mutations.setAborted(context);
-			});
-	},
-
 	exportSolution(context: AppContext, args: { solutionId: string}) {
 		return axios.get(`/distil/export/${args.solutionId}`)
 			.then(() => {
 				console.warn(`User exported solution ${args.solutionId}`);
-				mutations.setAborted(context);
 			})
 			.catch(error => {
 				// If there's a proxy involved (NGINX) we will end up getting a 502 on a successful export because
@@ -37,7 +23,6 @@ export const actions = {
 				} else {
 					// NOTE: request always fails because we exit on the server
 					console.warn(`User exported solution ${args.solutionId}`);
-					mutations.setAborted(context);
 				}
 			});
 	},

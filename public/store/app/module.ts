@@ -17,7 +17,6 @@ const { commit, read, dispatch } = getStoreAccessors<AppState, DistilState>(null
 
 // typed getters
 export const getters = {
-	isAborted: read(moduleGetters.isAborted),
 	getVersionNumber: read(moduleGetters.getVersionNumber),
 	getVersionTimestamp: read(moduleGetters.getVersionTimestamp),
 	isTask1: read(moduleGetters.isTask1),
@@ -32,7 +31,6 @@ export const getters = {
 
 // typed actions
 export const actions = {
-	abort: dispatch(moduleActions.abort),
 	exportSolution: dispatch(moduleActions.exportSolution),
 	exportProblem: dispatch(moduleActions.exportProblem),
 	fetchConfig: dispatch(moduleActions.fetchConfig),
@@ -42,7 +40,6 @@ export const actions = {
 
 // type mutators
 export const mutations = {
-	setAborted: commit(moduleMutations.setAborted),
 	setVersionNumber: commit(moduleMutations.setVersionNumber),
 	setVersionTimestamp: commit(moduleMutations.setVersionTimestamp),
 	setIsTask1: commit(moduleMutations.setIsTask1),
