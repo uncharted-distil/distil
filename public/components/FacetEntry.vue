@@ -33,7 +33,7 @@ export default Vue.extend({
 		highlight: Object as () => Highlight,
 		rowSelection: Object as () => RowSelection,
 		deemphasis: Object as () => any,
-		enableTypeChange: Boolean as () => boolean,
+		enabledTypeChanges: Array as () => string[],
 		enableHighlighting: Boolean as () => boolean,
 		showOrigin: Boolean as () => boolean,
 		ignoreHighlights: Boolean as () => boolean,
@@ -847,8 +847,8 @@ export default Vue.extend({
 
 		// inject type headers
 		injectTypeChangeHeaders(group: Group, $elem: JQuery) {
-			if (this.enableTypeChange) {
-				const facetId = `${group.dataset}:${group.colName}`;
+			const facetId = `${group.dataset}:${group.colName}`;
+			if (this.enabledTypeChanges.find(e => e === facetId)) {
 				// if we have a menu for this already, destroy it to replace it
 				if (this.menus[facetId]) {
 					this.menus[facetId].$destroy();

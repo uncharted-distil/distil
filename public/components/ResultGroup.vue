@@ -40,6 +40,7 @@
 							:highlight="highlight"
 							:row-selection="rowSelection"
 							:instanceName="predictedInstanceName"
+							:enabled-type-changes=[]
 							:enable-highlighting="[true, true]"
 							@numerical-click="onResultNumericalClick"
 							@range-change="onResultRangeChange"
@@ -52,6 +53,7 @@
 							enable-highlighting
 							:summary="summary"
 							:highlight="highlight"
+							:enabled-type-changes=[]
 							:row-selection="rowSelection"
 							:instanceName="predictedInstanceName"
 							@numerical-click="onResultNumericalClick"
@@ -67,6 +69,7 @@
 						enable-highlighting
 						:summary="summary"
 						:highlight="highlight"
+						:enabled-type-changes=[]
 						:row-selection="rowSelection"
 						:instanceName="residualInstanceName"
 						:deemphasis="residualThreshold"
@@ -80,6 +83,7 @@
 					enable-highlighting
 					:summary="summary"
 					:highlight="highlight"
+					:enabled-type-changes=[]
 					:row-selection="rowSelection"
 					:instanceName="correctnessInstanceName"
 					@facet-click="onCorrectnessCategoricalClick">
