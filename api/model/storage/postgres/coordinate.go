@@ -98,7 +98,7 @@ func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.F
 	}, nil
 }
 
-func (f *CoordinateField) fetchExtrema(fieldName string, filterParams *api.FilterParams) *api.Extrema {
+func (f *CoordinateField) fetchFilter(fieldName string, filterParams *api.FilterParams) *model.Filter {
 	// cycle through the filters and find the one for the field
 	var filter *model.Filter
 	if filterParams != nil {
@@ -113,13 +113,25 @@ func (f *CoordinateField) fetchExtrema(fieldName string, filterParams *api.Filte
 		filter = f.fetchDefaultFilter(fieldName)
 	}
 
-	// use the filter to build the extrema
-	return &api.Extrema{
-		Key:  fieldName,
+	return filter
+}
+
+func (f *CoordinateField) splitExtrema(xCol string, yCol string, boundsFilter *model.Filter) (*api.Extrema, *api.Extrema) {
+	xExtrema := &api.Extrema{
+		Key:  xCol,
 		Type: model.RealType,
-		Min:  *filter.Min,
-		Max:  *filter.Max,
+		Min:  boundsFilter.Bounds.MinX,
+		Max:  boundsFilter.Bounds.MaxX,
 	}
+
+	yExtrema := &api.Extrema{
+		Key:  yCol,
+		Type: model.RealType,
+		Min:  boundsFilter.Bounds.MinY,
+		Max:  boundsFilter.Bounds.MaxY,
+	}
+
+	return xExtrema, yExtrema
 }
 
 func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
@@ -133,10 +145,10 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 	}
 
+	fieldExtrema := f.fetchFilter(f.Key, filterParams)
 	xField := NewNumericalField(f.Storage, f.StorageName, f.XCol, f.XCol, model.RealType)
 	yField := NewNumericalField(f.Storage, f.StorageName, f.YCol, f.YCol, model.RealType)
-	xExtrema := f.fetchExtrema(f.XCol, filterParams)
-	yExtrema := f.fetchExtrema(f.YCol, filterParams)
+	xExtrema, yExtrema := f.splitExtrema(f.XCol, f.YCol, fieldExtrema)
 
 	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema)
 	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema)
@@ -181,10 +193,10 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
+	fieldExtrema := f.fetchFilter(f.Key, filterParams)
 	xField := NewNumericalField(f.Storage, f.StorageName, f.XCol, f.XCol, model.RealType)
 	yField := NewNumericalField(f.Storage, f.StorageName, f.YCol, f.YCol, model.RealType)
-	xExtrema := f.fetchExtrema(f.XCol, filterParams)
-	yExtrema := f.fetchExtrema(f.YCol, filterParams)
+	xExtrema, yExtrema := f.splitExtrema(f.XCol, f.YCol, fieldExtrema)
 
 	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema)
 	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema)
@@ -294,20 +306,26 @@ func (f *CoordinateField) FetchForecastingSummaryData(timeVar *model.Variable, i
 func (f *CoordinateField) fetchDefaultFilter(fieldName string) *model.Filter {
 	// provide a useful default based on type
 	// geo can default to lat and lon max values
-	min := -float64(math.MaxInt64)
-	max := float64(math.MaxInt64)
+	var filter *model.Filter
 	if model.IsGeoCoordinate(f.Type) {
-		if fieldName == f.XCol {
-			min = float64(-180)
-			max = float64(180)
-		} else if fieldName == f.YCol {
-			min = float64(-90)
-			max = float64(90)
+		filter = &model.Filter{
+			Key: f.Key,
+			Bounds: &model.Bounds{
+				MinX: float64(-180),
+				MaxX: float64(180),
+				MinY: float64(-90),
+				MaxY: float64(90),
+			},
+		}
+	} else {
+		min := -float64(math.MaxInt64)
+		max := float64(math.MaxInt64)
+		filter = &model.Filter{
+			Key: f.Key,
+			Min: &min,
+			Max: &max,
 		}
 	}
 
-	return &model.Filter{
-		Min: &min,
-		Max: &max,
-	}
+	return filter
 }
