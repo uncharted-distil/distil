@@ -4,7 +4,7 @@
 			:summary="summary"
 			:highlight="highlight"
 			:row-selection="rowSelection"
-			:enable-type-change="enableTypeChange"
+			:enabled-type-changes="enabledTypeChanges"
 			:enable-highlighting="Boolean(enableHighlighting) && enableHighlighting[0]"
 			:ignore-highlights="Boolean(ignoreHighlights) && ignoreHighlights[0]"
 			:instanceName="instanceName"
@@ -18,6 +18,7 @@
 			:summary="timelineSummary"
 			:highlight="highlight"
 			:row-selection="rowSelection"
+			:enabled-type-changes="enabledTypeChanges"
 			:instanceName="instanceName"
 			:enable-highlighting="Boolean(enableHighlighting) && enableHighlighting[1]"
 			:ignore-highlights="Boolean(ignoreHighlights) && ignoreHighlights[1]"
@@ -50,7 +51,7 @@ export default Vue.extend({
 		highlight: Object as () => Highlight,
 		rowSelection: Object as () => RowSelection,
 		instanceName: String as () => string,
-		enableTypeChange: Boolean as () => boolean,
+		enabledTypeChanges: Array as () => string[],
 		enableHighlighting: Array as () => boolean[],
 		ignoreHighlights: Array as () => boolean[],
 		html: [ String as () => string, Object as () => any, Function as () => Function ],

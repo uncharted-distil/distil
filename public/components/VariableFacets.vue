@@ -28,7 +28,7 @@
 								:highlight="highlight"
 								:row-selection="rowSelection"
 								:html="html"
-								:enable-type-change="enableTypeChange"
+								:enabled-type-changes="enabledTypeChanges"
 								:enable-highlighting="[enableHighlighting, enableHighlighting]"
 								:ignore-highlights="[ignoreHighlights, ignoreHighlights]"
 								:instanceName="instanceName"
@@ -47,7 +47,7 @@
 								:row-selection="rowSelection"
 								:ranking="ranking[summary.key]"
 								:html="html"
-								:enable-type-change="enableTypeChange"
+								:enabled-type-changes="enabledTypeChanges"
 								:enable-highlighting="enableHighlighting"
 								:ignore-highlights="ignoreHighlights"
 								:instanceName="instanceName"
@@ -181,7 +181,18 @@ export default Vue.extend({
 				ranking[variable.colName] = getVariableRanking(variable);
 			});
 			return ranking;
-		}
+		},
+
+		enabledTypeChanges(): string[] {
+			const typeChangeStatus: string[] = [];
+			this.variables.forEach(variable => {
+				if (this.enableTypeChange && !this.isSeriesID(variable.colName)) {
+					const datasetName = routeGetters.getRouteDataset(this.$store);
+					typeChangeStatus.push(`${variable.datasetName}:${variable.colName}`);
+				}
+			});
+			return typeChangeStatus;
+		},
 	},
 
 	methods: {
@@ -244,6 +255,17 @@ export default Vue.extend({
 				return this.filter === '' || summary.key.toLowerCase().includes(this.filter.toLowerCase());
 			});
 			return searchFiltered.map(v => v.key);
+		},
+
+		isSeriesID(colName: string): boolean {
+			// Check to see if this facet is being used as a series ID
+			const targetVar = routeGetters.getTargetVariable(this.$store);
+			if (targetVar && targetVar.grouping) {
+				if (targetVar.grouping.subIds.length > 0) {
+					return !!targetVar.grouping.subIds.find(v => v === colName);
+				}
+			}
+			return false;
 		}
 	}
 });
