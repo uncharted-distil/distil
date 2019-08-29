@@ -42,7 +42,8 @@ export default Vue.extend({
 		yCol: String as () => string,
 		timeseriesCol: String as () => string,
 		timeseriesId: String as () => string,
-		solutionId: String as () => string
+		solutionId: String as () => string,
+		includeForecast: Boolean as () => boolean
 	},
 	data() {
 		return {
@@ -70,7 +71,7 @@ export default Vue.extend({
 			}
 		},
 		forecast(): number[][] {
-			if (this.solutionId) {
+			if (this.solutionId && this.includeForecast) {
 				const forecasts = resultsGetters.getPredictedForecasts(this.$store);
 				const solutions = forecasts[this.solutionId];
 				if (!solutions) {
