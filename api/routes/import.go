@@ -112,45 +112,26 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 }
 
 func getOriginsFromMaps(originalDataset map[string]interface{}, joinedDataset map[string]interface{}) ([]*model.DatasetOrigin, error) {
-	var origJoinSuggestions []interface{}
-	var joinJoinSuggestions []interface{}
-	origLength := 0
-	joinLength := 0
-
+	joinSuggestions := make([]interface{}, 0)
 	if originalDataset["joinSuggestion"] != nil {
-		origJoinSuggestions = originalDataset["joinSuggestion"].([]interface{})
-		origLength = len(origJoinSuggestions)
+		joinSuggestions = append(joinSuggestions, originalDataset["joinSuggestion"].([]interface{})...)
 	}
 	if joinedDataset["joinSuggestion"] != nil {
-		joinJoinSuggestions := joinedDataset["joinSuggestion"].([]interface{})
-		joinLength = len(joinJoinSuggestions)
+		joinSuggestions = append(joinSuggestions, joinedDataset["joinSuggestion"].([]interface{})...)
 	}
 
-	origins := make([]*model.DatasetOrigin, len(origJoinSuggestions)+len(joinJoinSuggestions))
-	if origLength > 0 {
-		for i, js := range origJoinSuggestions {
-			targetOriginModel := model.DatasetOrigin{}
-			targetJoin := js.(map[string]interface{})
-			targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
-			err := json.MapToStruct(&targetOriginModel, targetJoinOrigin)
-			if err != nil {
-				return nil, err
-			}
-			origins[i] = &targetOriginModel
+	origins := make([]*model.DatasetOrigin, len(joinSuggestions))
+	for i, js := range joinSuggestions {
+		targetOriginModel := model.DatasetOrigin{}
+		targetJoin := js.(map[string]interface{})
+		targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
+		err := json.MapToStruct(&targetOriginModel, targetJoinOrigin)
+		if err != nil {
+			return nil, err
 		}
+		origins[i] = &targetOriginModel
 	}
-	if joinLength > 0 {
-		for i, js := range joinJoinSuggestions {
-			targetOriginModel := model.DatasetOrigin{}
-			targetJoin := js.(map[string]interface{})
-			targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
-			err := json.MapToStruct(&targetOriginModel, targetJoinOrigin)
-			if err != nil {
-				return nil, err
-			}
-			origins[origLength+i] = &targetOriginModel
-		}
-	}
+
 	return origins, nil
 }
 
