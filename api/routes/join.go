@@ -83,34 +83,33 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 
 		// need to find the right join suggestion since a single dataset
 		// can have multiple join suggestions
-		var origin model.DatasetOrigin
-		if datasetRight["joinSuggestion"] != nil {
-			joinSuggestions := datasetRight["joinSuggestion"].([]interface{})
-			targetOriginModel := model.DatasetOrigin{}
-			targetJoin := joinSuggestions[searchResultIndex].(map[string]interface{})
-			if targetJoin == nil {
-				handleError(w, errors.Wrap(err, "Unable to find join suggestion at search result index"))
-				return
-			}
-			targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
-			if targetJoinOrigin == nil {
-				handleError(w, errors.Wrap(err, "Unable to find join origin"))
-				return
-			}
-			err := json.MapToStruct(&targetOriginModel, targetJoinOrigin)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse join origin from JSON"))
-				return
-			}
-			origin = targetOriginModel
-		} else {
+		if datasetRight["joinSuggestion"] == nil {
 			handleError(w, errors.Wrap(err, "Join Suggestion undefined"))
+			return
 		}
 
-		originRef := &origin
+		joinSuggestions := datasetRight["joinSuggestion"].([]interface{})
+		targetJoin := joinSuggestions[searchResultIndex].(map[string]interface{})
+		if targetJoin == nil {
+			handleError(w, errors.Wrap(err, "Unable to find join suggestion at search result index"))
+			return
+		}
+
+		targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
+		if targetJoinOrigin == nil {
+			handleError(w, errors.Wrap(err, "Unable to find join origin"))
+			return
+		}
+
+		targetOriginModel := model.DatasetOrigin{}
+		err = json.MapToStruct(&targetOriginModel, targetJoinOrigin)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse join origin from JSON"))
+			return
+		}
 
 		// run joining pipeline
-		data, err := task.Join(leftJoin, rightJoin, leftVariables, rightVariables, originRef)
+		data, err := task.Join(leftJoin, rightJoin, leftVariables, rightVariables, &targetOriginModel)
 		if err != nil {
 			handleError(w, err)
 			return
