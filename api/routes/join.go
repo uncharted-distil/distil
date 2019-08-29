@@ -78,69 +78,46 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 			DatasetSource: metadata.DatasetSource(datasetRight["source"].(string)),
 		}
 
-		leftVariableInterfaces := datasetLeft["variables"].([]interface{})
-		rightVariableInterfaces := datasetRight["variables"].([]interface{})
-		leftVariables := make([]model.Variable, len(leftVariableInterfaces))
-		rightVariables := make([]model.Variable, len(rightVariableInterfaces))
-		for i := range leftVariableInterfaces {
-			v := model.Variable{}
-			err := json.MapToStruct(&v, leftVariableInterfaces[i].(map[string]interface{}))
-			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse Variable parameter"))
-				return
-			}
-			leftVariables[i] = v
+		leftVariables, err := parseVariables(datasetLeft["variables"].([]interface{}))
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to parse left variables"))
+			return
 		}
-
-		for i := range rightVariableInterfaces {
-			v := model.Variable{}
-			err := json.MapToStruct(&v, rightVariableInterfaces[i].(map[string]interface{}))
-			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse Variable parameter"))
-				return
-			}
-			rightVariables[i] = v
-		}
-		leftVariableReferences := make([]*model.Variable, len(leftVariables))
-		rightVariableReferences := make([]*model.Variable, len(rightVariables))
-
-		for i := range leftVariables {
-			leftVariableReferences[i] = &leftVariables[i]
-		}
-		for i := range rightVariables {
-			rightVariableReferences[i] = &rightVariables[i]
+		rightVariables, err := parseVariables(datasetRight["variables"].([]interface{}))
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to parse right variables"))
+			return
 		}
 
 		// need to find the right join suggestion since a single dataset
 		// can have multiple join suggestions
-		var origin model.DatasetOrigin
-		if datasetRight["joinSuggestion"] != nil {
-			joinSuggestions := datasetRight["joinSuggestion"].([]interface{})
-			targetOriginModel := model.DatasetOrigin{}
-			targetJoin := joinSuggestions[searchResultIndex].(map[string]interface{})
-			if targetJoin == nil {
-				handleError(w, errors.Wrap(err, "Unable to find join suggestion at search result index"))
-				return
-			}
-			targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
-			if targetJoinOrigin == nil {
-				handleError(w, errors.Wrap(err, "Unable to find join origin"))
-				return
-			}
-			err := json.MapToStruct(&targetOriginModel, targetJoinOrigin)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse join origin from JSON"))
-				return
-			}
-			origin = targetOriginModel
-		} else {
+		if datasetRight["joinSuggestion"] == nil {
 			handleError(w, errors.Wrap(err, "Join Suggestion undefined"))
+			return
 		}
 
-		originRef := &origin
+		joinSuggestions := datasetRight["joinSuggestion"].([]interface{})
+		targetJoin := joinSuggestions[searchResultIndex].(map[string]interface{})
+		if targetJoin == nil {
+			handleError(w, errors.Wrap(err, "Unable to find join suggestion at search result index"))
+			return
+		}
+
+		targetJoinOrigin := targetJoin["datasetOrigin"].(map[string]interface{})
+		if targetJoinOrigin == nil {
+			handleError(w, errors.Wrap(err, "Unable to find join origin"))
+			return
+		}
+
+		targetOriginModel := model.DatasetOrigin{}
+		err = json.MapToStruct(&targetOriginModel, targetJoinOrigin)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse join origin from JSON"))
+			return
+		}
 
 		// run joining pipeline
-		data, err := task.Join(leftJoin, rightJoin, leftVariableReferences, rightVariableReferences, originRef)
+		data, err := task.Join(leftJoin, rightJoin, leftVariables, rightVariables, &targetOriginModel)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -156,4 +133,18 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(bytes)
 	}
+}
+
+func parseVariables(variablesRaw []interface{}) ([]*model.Variable, error) {
+	variables := make([]*model.Variable, len(variablesRaw))
+	for i, varRaw := range variablesRaw {
+		v := model.Variable{}
+		err := json.MapToStruct(&v, varRaw.(map[string]interface{}))
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse Variables")
+		}
+		variables[i] = &v
+	}
+
+	return variables, nil
 }
