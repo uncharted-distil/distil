@@ -1,10 +1,13 @@
 <template>
+	<div class="facet-card">
 	<div class="geo-plot-container" v-bind:class="{ 'selection-mode': isSelectionMode }">
 		<type-change-menu
 			:dataset="dataset"
 			:field="target">
 		</type-change-menu>
 		<div class="geo-plot" v-bind:id="mapID"></div>
+	</div>
+
 	</div>
 </template>
 
@@ -35,9 +38,13 @@ import {
 	removeRowSelection,
 	isRowSelected
 } from '../util/row';
-import { LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
+import { LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE, GEOCOORDINATE_TYPE } from '../util/types';
 import { DUMMY_GEODATA } from '../util/data';
 import TypeChangeMenu from '../components/TypeChangeMenu';
+import { SELECT_TARGET_ROUTE } from '../store/route';
+import { createRouteEntry } from '../util/routes';
+import { Filter, addFilterToRoute, removeFilterFromRoute, FilterParams, INCLUDE_FILTER, GEOCOORDINATE_FILTER } from '../util/filters';
+
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet/dist/images/marker-icon.png';
@@ -89,7 +96,9 @@ export default Vue.extend({
 			startingLatLng: null,
 			currentRect: null,
 			selectedRect: null,
-			isSelectionMode: false
+			bounds: null,
+			isSelectionMode: false,
+			currentFilter: null
 		};
 		},
 
@@ -210,7 +219,10 @@ export default Vue.extend({
 		},
 		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
-		}
+		},
+		availableTargetVarsPage(): number {
+			return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
+		},
 	},
 
 	methods: {
@@ -490,7 +502,8 @@ export default Vue.extend({
 				// NOTE: this component re-mounts on any change, so do everything in here
 				this.map = leaflet.map(this.mapID, {
 					center: [30, 0],
-					zoom: 2
+					zoom: 2,
+					scrollWheelZoom: false
 				});
 				if (this.mapZoom) {
 					this.map.setZoom(this.mapZoom, { animate: true });
@@ -514,6 +527,7 @@ export default Vue.extend({
 			this.clear();
 
 			const bounds = leaflet.latLngBounds();
+			this.bounds = leaflet.latLngBounds();
 
 			const pointLength = this.pointGroups.length;
 
@@ -658,7 +672,6 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 					})
 					.addTo(this.map);
 			}
-
 			this.drawHighlight();
 			this.drawFilters();
 		}
@@ -678,7 +691,83 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 
 	mounted() {
 		this.paint();
-		console.log('datasummary', this.datasummary);
+		console.log('this.map.getBounds', this.map.getBounds());
+
+			// map action events
+
+
+// 			export interface Filter {
+// 	type: string;
+// 	mode: string;
+// 	key?: string;
+// 	min?: number;
+// 	max?: number;
+// 	minX?: number;
+// 	maxX?: number;
+// 	minY?: number;
+// 	maxY?: number;
+// 	categories?: string[];
+// 	d3mIndices?: string[];
+// }
+
+// export interface FilterParams {
+// 	highlight: Filter;
+// 	filters: Filter[];
+// 	variables: string[];
+// 	size?: number;
+// }
+		this.map.on('zoomend', () => {
+
+				if (this.currentFilter) {
+					removeFilterFromRoute(this.$router, this.currentFilter);
+				}
+
+				this.bounds = this.map.getBounds();
+				const maxY = this.bounds.getNorthEast().lat.toString();
+				const maxX = this.bounds.getNorthEast().lng.toString();
+				const minY = this.bounds.getSouthWest().lat.toString();
+				const minX = this.bounds.getSouthWest().lng.toString();
+
+				const filter: Filter = {
+					type: GEOCOORDINATE_FILTER,
+					mode: INCLUDE_FILTER,
+					minX: minX,
+					maxX: maxX,
+					minY: minY,
+					maxY: maxY
+				};
+
+				this.currentFilter = filter;
+
+				addFilterToRoute(this.$router, this.currentFilter);
+
+			});
+
+		this.map.on('moveend', () => {
+
+				if (this.currentFilter) {
+					removeFilterFromRoute(this.$router, this.currentFilter);
+				}
+
+				this.bounds = this.map.getBounds();
+				const maxY = this.bounds.getNorthEast().lat;
+				const maxX = this.bounds.getNorthEast().lng;
+				const minY = this.bounds.getSouthWest().lat;
+				const minX = this.bounds.getSouthWest().lng;
+
+				const filter: Filter = {
+					type: GEOCOORDINATE_FILTER,
+					mode: INCLUDE_FILTER,
+					minX: minX,
+					maxX: maxX,
+					minY: minY,
+					maxY: maxY
+				};
+
+				this.currentFilter = filter;
+
+				addFilterToRoute(this.$router, this.currentFilter);
+			});
 	}
 });
 </script>

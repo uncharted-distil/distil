@@ -77,6 +77,7 @@ export default Vue.extend({
 				return null;
 			}
 
+
 			// Temporary Geocoordinate variable type inference to lat and lon
 			if (hasLat ^ hasLon) {
 				return vars.find(v => {

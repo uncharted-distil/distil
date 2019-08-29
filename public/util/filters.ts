@@ -57,6 +57,12 @@ export const CLUSTER_FILTER = 'cluster';
 export const TEXT_FILTER = 'text';
 
 /**
+ * Geocoordinate filter, omitting documents that have the specified bounding box value;
+ * @constant {string}
+ */
+export const GEOCOORDINATE_FILTER = 'geocoordinate';
+
+/**
  * Include filter, excluding documents that do not fall within the filter.
  * @constant {string}
  */

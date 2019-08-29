@@ -75,12 +75,6 @@
 							<b>Submit</b>
 						</div>
 					</b-btn>
-					<b-btn class="mt-3 var-grouping-button" variant="outline-success" :disabled="isPending" @click="mockGroup">
-						<div class="row justify-content-center">
-							<i class="fa fa-check-circle fa-2x mr-2"></i>
-							<b>Mock Submit</b>
-						</div>
-					</b-btn>
 					<b-btn class="mt-3 var-grouping-button" variant="outline-danger" :disabled="isPending" @click="onClose">
 						<div class="row justify-content-center">
 							<i class="fa fa-times-circle fa-2x mr-2"></i>
