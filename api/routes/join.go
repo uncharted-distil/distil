@@ -79,7 +79,15 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		}
 
 		leftVariables, err := parseVariables(datasetLeft["variables"].([]interface{}))
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to parse left variables"))
+			return
+		}
 		rightVariables, err := parseVariables(datasetRight["variables"].([]interface{}))
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to parse right variables"))
+			return
+		}
 
 		// need to find the right join suggestion since a single dataset
 		// can have multiple join suggestions
