@@ -47,7 +47,8 @@ export default Vue.extend({
 			type: Object as () => TimeseriesExtrema
 		},
 		solutionId: String as () => string,
-		prediction: Object as () => any
+		prediction: Object as () => any,
+		includeForecast: Boolean as () => boolean
 	},
 	data() {
 		return {
@@ -67,7 +68,7 @@ export default Vue.extend({
 			}
 		},
 		forecast(): number[][] {
-			if (this.solutionId) {
+			if (this.solutionId && this.includeForecast) {
 				const forecasts = resultsGetters.getPredictedForecasts(this.$store);
 				const solutions = forecasts[this.solutionId];
 				if (!solutions) {

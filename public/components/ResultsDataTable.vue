@@ -31,7 +31,8 @@
 					:y-col="timeseriesGrouping.properties.yCol"
 					:timeseries-col="timeseriesGrouping.idCol"
 					:timeseries-id="data.item[timeseriesGrouping.idCol]"
-					:solution-id="solutionId">
+					:solution-id="solutionId"
+					:include-forecast="isTargetTimeseries">
 				</sparkline-preview>
 
 			</template>
@@ -136,6 +137,10 @@ export default Vue.extend({
 
 		isTargetNumerical(): boolean {
 			return !this.isTargetCategorical;
+		},
+
+		isTargetTimeseries(): boolean {
+			return (getVarType(this.target)) === 'timeseries';
 		},
 
 		predictedCol(): string {
