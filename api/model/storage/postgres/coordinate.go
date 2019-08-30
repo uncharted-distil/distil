@@ -290,7 +290,7 @@ func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the coordinate histogram for the field.
 func (f *CoordinateField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
-	return nil, fmt.Errorf("not implemented")
+	return f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
 }
 
 func (f *CoordinateField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
