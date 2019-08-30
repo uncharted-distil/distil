@@ -250,17 +250,6 @@ export default Vue.extend({
 			const field = this.field;
 			const dataset = this.dataset;
 
-			// old logic
-			// if (type === GEOCOORDINATE_TYPE){
-			// 	datasetActions.setVariableType(this.$store, {
-			// 		dataset: dataset,
-			// 		field: field,
-			// 		type: type
-			// 	})
-			// 	return;
-
-			// }
-
 			datasetActions.setVariableType(this.$store, {
 				dataset: dataset,
 				field: field,

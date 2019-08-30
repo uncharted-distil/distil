@@ -69,12 +69,14 @@ export const actions = {
 	uploadDataFile: dispatch(moduleActions.uploadDataFile),
 	// variables
 	fetchVariables: dispatch(moduleActions.fetchVariables),
+	fetchVariableSummary: dispatch(moduleActions.fetchVariableSummary),
 	fetchJoinDatasetsVariables: dispatch(moduleActions.fetchJoinDatasetsVariables),
 	setVariableType: dispatch(moduleActions.setVariableType),
 	reviewVariableType: dispatch(moduleActions.reviewVariableType),
 	fetchIncludedVariableSummaries: dispatch(moduleActions.fetchIncludedVariableSummaries),
 	fetchExcludedVariableSummaries: dispatch(moduleActions.fetchExcludedVariableSummaries),
 	fetchGeocodingResults: dispatch(moduleActions.fetchGeocodingResults),
+
 	// ranking
 	fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
 	updateVariableRankings: dispatch(moduleActions.updateVariableRankings),

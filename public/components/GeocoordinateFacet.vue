@@ -26,7 +26,7 @@ import * as turf from '@turf/turf';
 import IconBase from './icons/IconBase';
 import IconCropFree from './icons/IconCropFree';
 import { scaleThreshold } from 'd3';
-import { getters as datasetGetters } from '../store/dataset/module';
+import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import {
@@ -545,7 +545,6 @@ export default Vue.extend({
 				const northEast = leaflet.latLng(maxY, maxX);
 				const southWest = leaflet.latLng(minY, minX);
 				this.bounds = leaflet.latLngBounds(northEast, southWest);
-				console.log('bounds', this.bounds);
 			} else {
 				this.bounds = leaflet.latLngBounds();
 
@@ -719,9 +718,6 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 			// map action events
 
 		this.map.on('zoomend', () => {
-				console.log('this.filter', this.filter);
-				console.log('decode', decodeFilters(this.filter));
-
 				if (this.currentFilter) {
 					removeFilterFromRoute(this.$router, this.currentFilter);
 				}
@@ -741,10 +737,26 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 					maxY: maxY
 				};
 
+
+				const filterParams: FilterParams = {
+					highlight: filter,
+					filters: [filter],
+					variables: [GEOCOORDINATE_TYPE]
+				};
+
 				this.currentFilter = filter;
 
-				addFilterToRoute(this.$router, this.currentFilter);
 
+				const variableSummaryReq = {
+					dataset: this.dataset ,
+					variable: GEOCOORDINATE_TYPE,
+					filterParams: filterParams,
+					include: true
+				};
+
+				datasetActions.fetchVariableSummary(this.$store, variableSummaryReq);
+
+				addFilterToRoute(this.$router, this.currentFilter);
 			});
 
 		this.map.on('moveend', () => {
@@ -768,7 +780,23 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 					maxY: maxY
 				};
 
+				const filterParams: FilterParams = {
+					highlight: filter,
+					filters: [filter],
+					variables: [GEOCOORDINATE_TYPE]
+				};
+
 				this.currentFilter = filter;
+
+
+				const variableSummaryReq = {
+					dataset: this.dataset ,
+					variable: GEOCOORDINATE_TYPE,
+					filterParams: filterParams,
+					include: true
+				};
+
+				datasetActions.fetchVariableSummary(this.$store, variableSummaryReq);
 
 				addFilterToRoute(this.$router, this.currentFilter);
 			});
