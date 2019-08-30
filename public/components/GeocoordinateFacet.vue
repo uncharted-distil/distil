@@ -1,10 +1,16 @@
 <template>
 	<div class="facet-card">
-	<div class="geo-plot-container" v-bind:class="{ 'selection-mode': isSelectionMode }">
+		<div class="group-header">
+			<span class="header-title">
+				GEOCOORDINATE
+			</span>
+			<i class="fa fa-globe"></i>
 		<type-change-menu
 			:dataset="dataset"
 			:field="target">
 		</type-change-menu>
+		</div>
+	<div class="geo-plot-container" v-bind:class="{ 'selection-mode': isSelectionMode }">
 		<div class="geo-plot" v-bind:id="mapID"></div>
 	</div>
 
@@ -43,7 +49,7 @@ import { DUMMY_GEODATA } from '../util/data';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import { SELECT_TARGET_ROUTE } from '../store/route';
 import { createRouteEntry } from '../util/routes';
-import { Filter, addFilterToRoute, removeFilterFromRoute, FilterParams, INCLUDE_FILTER, GEOCOORDINATE_FILTER } from '../util/filters';
+import { Filter, addFilterToRoute, removeFilterFromRoute, FilterParams, INCLUDE_FILTER, GEOCOORDINATE_FILTER, decodeFilters } from '../util/filters';
 
 
 import 'leaflet/dist/leaflet.css';
@@ -223,6 +229,10 @@ export default Vue.extend({
 		availableTargetVarsPage(): number {
 			return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
 		},
+		filter(): any {
+			const filter = routeGetters.getRouteFilters(this.$store);
+			return filter;
+		}
 	},
 
 	methods: {
@@ -526,8 +536,20 @@ export default Vue.extend({
 
 			this.clear();
 
-			const bounds = leaflet.latLngBounds();
-			this.bounds = leaflet.latLngBounds();
+			if (this.filter) {
+				const boundsFilter = this.filter[0];
+				const maxX = boundsFilter.maxX;
+				const maxY = boundsFilter.maxY;
+				const minX = boundsFilter.minX;
+				const minY = boundsFilter.minY;
+				const northEast = leaflet.latLng(maxY, maxX);
+				const southWest = leaflet.latLng(minY, minX);
+				this.bounds = leaflet.latLngBounds(northEast, southWest);
+				console.log('bounds', this.bounds);
+			} else {
+				this.bounds = leaflet.latLngBounds();
+
+			}
 
 			const pointLength = this.pointGroups.length;
 
@@ -538,7 +560,7 @@ export default Vue.extend({
 
 				group.points.forEach(p => {
 					const marker = leaflet.marker(p, { row: p.row });
-					bounds.extend([p.lat, p.lng]);
+					this.bounds.extend([p.lat, p.lng]);
 					marker.bindTooltip(() => {
 						const target = p.row[this.target];
 						const values = [];
@@ -565,13 +587,13 @@ export default Vue.extend({
 				);
 			});
 
-			if (bounds.isValid()) {
-				this.map.fitBounds(bounds);
+			if (this.bounds.isValid()) {
+				this.map.fitBounds(this.bounds);
 
 				// create a turf BBox
 				const bbox = turf.square(
 					turf.square(
-						bounds
+						this.bounds
 							.toBBoxString()
 							.split(',')
 							.map(Number)
@@ -691,32 +713,14 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 
 	mounted() {
 		this.paint();
-		console.log('this.map.getBounds', this.map.getBounds());
+
+
 
 			// map action events
 
-
-// 			export interface Filter {
-// 	type: string;
-// 	mode: string;
-// 	key?: string;
-// 	min?: number;
-// 	max?: number;
-// 	minX?: number;
-// 	maxX?: number;
-// 	minY?: number;
-// 	maxY?: number;
-// 	categories?: string[];
-// 	d3mIndices?: string[];
-// }
-
-// export interface FilterParams {
-// 	highlight: Filter;
-// 	filters: Filter[];
-// 	variables: string[];
-// 	size?: number;
-// }
 		this.map.on('zoomend', () => {
+				console.log('this.filter', this.filter);
+				console.log('decode', decodeFilters(this.filter));
 
 				if (this.currentFilter) {
 					removeFilterFromRoute(this.$router, this.currentFilter);
@@ -774,6 +778,24 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 
 <style>
 
+.facet-card .group-header {
+	font-family: inherit;
+    font-size: 13.872px;
+    font-size: .867rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: rgba(0,0,0,.54);
+	background: white;
+	padding: 4px 8px 6px;
+	height: 50px;
+}
+
+.header-title{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .geo-plot-container, .geo-plot {
 	position: relative;
 	z-index: 0;
@@ -782,10 +804,9 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 }
 
 
-.geo-plot-container .type-change-dropdown-wrapper {
+.facet-card .group-header .type-change-dropdown-wrapper {
 	float: right;
-	z-index: 3;
-	top: 22px;
+	bottom: 20px;
 }
 
 .geo-plot-container .type-change-dropdown-wrapper .dropdown-menu {
