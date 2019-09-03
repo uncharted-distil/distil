@@ -163,6 +163,7 @@ func resolveSeedPath(relativePath string) string {
 			dirToUse = dir
 			log.Infof("removing '%s' path overlap when resolving", file)
 		}
+		return path.Join(seedPath, seedSubPath)
 	}
 	return path.Join(dirToUse, relativePath, seedSubPath)
 }
