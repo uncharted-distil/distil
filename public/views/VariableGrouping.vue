@@ -50,7 +50,7 @@
 
 				<div class="row mt-1 mb-1" v-if="isGeocoordinate">
 					<div class="col-3">
-						<b>Latitude Column:</b>
+						<b>Longitude Column:</b>
 					</div>
 
 					<div class="col-5">
@@ -60,7 +60,7 @@
 
 				<div class="row mt-1 mb-1" v-if="isGeocoordinate">
 					<div class="col-3">
-						<b>Longitude Column:</b>
+						<b>Latitude Column:</b>
 					</div>
 
 					<div class="col-5">
@@ -73,12 +73,6 @@
 						<div class="row justify-content-center">
 							<i class="fa fa-check-circle fa-2x mr-2"></i>
 							<b>Submit</b>
-						</div>
-					</b-btn>
-					<b-btn class="mt-3 var-grouping-button" variant="outline-success" :disabled="isPending" @click="mockGroup">
-						<div class="row justify-content-center">
-							<i class="fa fa-check-circle fa-2x mr-2"></i>
-							<b>Mock Submit</b>
 						</div>
 					</b-btn>
 					<b-btn class="mt-3 var-grouping-button" variant="outline-danger" :disabled="isPending" @click="onClose">
@@ -162,11 +156,11 @@ export default Vue.extend({
 		xColOptions(): Object[] {
 			if (this.isGeocoordinate) {
 				const X_COL_TYPES = {
-					[LATITUDE_TYPE]: true,
+					[LONGITUDE_TYPE]: true,
 					[REAL_TYPE]: true
 				};
 				const def = [
-					{ value: null, text: `Choose ${LATITUDE_TYPE} column`, disabled: true }
+					{ value: null, text: `Choose ${LONGITUDE_TYPE} column`, disabled: true }
 				];
 				const suggestions = this.variables
 					.filter(v => X_COL_TYPES[v.colType])
@@ -211,11 +205,11 @@ export default Vue.extend({
 		yColOptions(): Object[] {
 			if (this.isGeocoordinate) {
 				const Y_COL_TYPES = {
-					[LONGITUDE_TYPE]: true,
+					[LATITUDE_TYPE]: true,
 					[REAL_TYPE]: true
 				};
 				const def = [
-					{ value: null, text: `Choose ${LONGITUDE_TYPE} column`, disabled: true }
+					{ value: null, text: `Choose ${LATITUDE_TYPE} column`, disabled: true }
 				];
 
 				const suggestions = this.variables

@@ -1,6 +1,19 @@
 <template>
+	<div class="facet-card">
+		<div class="group-header">
+			<span class="header-title">
+				GEOCOORDINATE
+			</span>
+			<i class="fa fa-globe"></i>
+		<type-change-menu
+			:dataset="dataset"
+			:field="target">
+		</type-change-menu>
+		</div>
 	<div class="geo-plot-container" v-bind:class="{ 'selection-mode': isSelectionMode }">
 		<div class="geo-plot" v-bind:id="mapID"></div>
+	</div>
+
 	</div>
 </template>
 
@@ -13,7 +26,7 @@ import * as turf from '@turf/turf';
 import IconBase from './icons/IconBase';
 import IconCropFree from './icons/IconCropFree';
 import { scaleThreshold } from 'd3';
-import { getters as datasetGetters } from '../store/dataset/module';
+import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import {
@@ -21,7 +34,9 @@ import {
 	TableRow,
 	D3M_INDEX_FIELD,
 	Highlight,
-	RowSelection
+	RowSelection,
+	VariableSummary,
+	Bucket
 } from '../store/dataset/index';
 import { updateHighlight, clearHighlight } from '../util/highlights';
 import {
@@ -29,8 +44,13 @@ import {
 	removeRowSelection,
 	isRowSelected
 } from '../util/row';
-import { LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
+import { LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE, GEOCOORDINATE_TYPE } from '../util/types';
 import { DUMMY_GEODATA } from '../util/data';
+import TypeChangeMenu from '../components/TypeChangeMenu';
+import { SELECT_TARGET_ROUTE } from '../store/route';
+import { createRouteEntry } from '../util/routes';
+import { Filter, addFilterToRoute, removeFilterFromRoute, FilterParams, INCLUDE_FILTER, GEOCOORDINATE_FILTER, decodeFilters } from '../util/filters';
+
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet/dist/images/marker-icon.png';
@@ -65,7 +85,12 @@ export default Vue.extend({
 
 	components: {
 		IconBase,
-		IconCropFree
+		IconCropFree,
+		TypeChangeMenu
+		},
+
+	props: {
+		summary: Object as () => VariableSummary,
 	},
 
 	data() {
@@ -77,27 +102,56 @@ export default Vue.extend({
 			startingLatLng: null,
 			currentRect: null,
 			selectedRect: null,
-			isSelectionMode: false
+			bounds: null,
+			isSelectionMode: false,
+			currentFilter: null
 		};
-	},
+		},
 
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
-		},
+			},
+		datasummary(): any {
+			const buckets = this.summary.baseline.buckets;
+			const validPoints = buckets.filter((bucket) => {
+				return bucket.count > 0;
+			});
 
+			const dataPoints = validPoints.reduce((acc, curr) => {
+				const coordinates = curr.key.split(',');
+				const lon = coordinates[0];
+				const lat = coordinates[1];
+				const points = Array(curr.count).fill({
+					latitude: lat,
+					longitude: lon
+				});
+				acc.push(...points);
+				return acc;
+				}, [] as any);
+
+			return dataPoints;
+		},
 		instanceName(): string {
 			return 'unique-map';
 		},
-
 		dataItems(): any {
-			return DUMMY_GEODATA;
+			return this.datasummary;
 		},
 
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
-
+		targetSampleValues(): any[] {
+			const summaries = routeGetters.getTargetVariableSummaries(this.$store);
+			if (summaries.length > 0) {
+				const summary = summaries[0];
+				if (summary.baseline) {
+					return summary.baseline.buckets;
+				}
+			}
+			return [];
+		},
 		getTopVariables(): string[] {
 			const variables = datasetGetters
 				.getVariables(this.$store)
@@ -118,46 +172,11 @@ export default Vue.extend({
 		},
 
 		fieldSpecs(): GeoField[] {
-			const variables = datasetGetters.getVariables(this.$store);
-
-			const matches = variables.filter(v => {
-				return (
-					v.colType === LONGITUDE_TYPE ||
-					v.colType === LATITUDE_TYPE ||
-					v.colType === REAL_VECTOR_TYPE
-				);
-			});
-
-			let lng = null;
-			let lat = null;
-			const fields = [];
-			matches.forEach(match => {
-				if (match.colType === LONGITUDE_TYPE) {
-					lng = match.colName;
-				}
-				if (match.colType === LATITUDE_TYPE) {
-					lat = match.colName;
-				}
-				if (match.colType === REAL_VECTOR_TYPE) {
-					fields.push({
-						type: SINGLE_FIELD,
-						field: match.colName
-					});
-				}
-				// TODO: currently we pair any two random lat / lngs, we should
-				// eventually use the groupings functionality to let the user
-				// group the two vars into a single point field.
-				if (lng && lat) {
-					fields.push({
-						type: SPLIT_FIELD,
-						lngField: lng,
-						latField: lat
-					});
-					lng = null;
-					lat = null;
-				}
-			});
-
+			const fields = [{
+				latField: `${LATITUDE_TYPE}`,
+				lngField: `${LONGITUDE_TYPE}`,
+				type: 2
+				}];
 			return fields;
 		},
 
@@ -206,10 +225,25 @@ export default Vue.extend({
 		},
 		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
+		},
+		filter(): any {
+			const filter = routeGetters.getRouteFilters(this.$store);
+			return filter;
 		}
 	},
 
 	methods: {
+		variableSummaryToGeocoordinate(key: string, label: string, buckets: Bucket[]): any {
+			const geocoordinates = buckets.map(b => [ _.parseInt(b.key), b.count ]);
+
+			const summaries = [{
+				label: label,
+				key: key,
+				geocoordinates: geocoordinates
+			}];
+
+			return summaries;
+		},
 		clearSelectionRect() {
 			if (this.selectedRect) {
 				this.selectedRect.remove();
@@ -475,7 +509,8 @@ export default Vue.extend({
 				// NOTE: this component re-mounts on any change, so do everything in here
 				this.map = leaflet.map(this.mapID, {
 					center: [30, 0],
-					zoom: 2
+					zoom: 2,
+					scrollWheelZoom: false
 				});
 				if (this.mapZoom) {
 					this.map.setZoom(this.mapZoom, { animate: true });
@@ -498,7 +533,19 @@ export default Vue.extend({
 
 			this.clear();
 
-			const bounds = leaflet.latLngBounds();
+			if (this.filter) {
+				const boundsFilter = this.filter[0];
+				const maxX = boundsFilter.maxX;
+				const maxY = boundsFilter.maxY;
+				const minX = boundsFilter.minX;
+				const minY = boundsFilter.minY;
+				const northEast = leaflet.latLng(maxY, maxX);
+				const southWest = leaflet.latLng(minY, minX);
+				this.bounds = leaflet.latLngBounds(northEast, southWest);
+			} else {
+				this.bounds = leaflet.latLngBounds();
+
+			}
 
 			const pointLength = this.pointGroups.length;
 
@@ -509,7 +556,7 @@ export default Vue.extend({
 
 				group.points.forEach(p => {
 					const marker = leaflet.marker(p, { row: p.row });
-					bounds.extend([p.lat, p.lng]);
+					this.bounds.extend([p.lat, p.lng]);
 					marker.bindTooltip(() => {
 						const target = p.row[this.target];
 						const values = [];
@@ -536,13 +583,13 @@ export default Vue.extend({
 				);
 			});
 
-			if (bounds.isValid()) {
-				this.map.fitBounds(bounds);
+			if (this.bounds.isValid()) {
+				this.map.fitBounds(this.bounds);
 
 				// create a turf BBox
 				const bbox = turf.square(
 					turf.square(
-						bounds
+						this.bounds
 							.toBBoxString()
 							.split(',')
 							.map(Number)
@@ -643,7 +690,6 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 					})
 					.addTo(this.map);
 			}
-
 			this.drawHighlight();
 			this.drawFilters();
 		}
@@ -663,24 +709,142 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 
 	mounted() {
 		this.paint();
+
+
+
+			// map action events
+
+		this.map.on('zoomend', () => {
+				if (this.currentFilter) {
+					removeFilterFromRoute(this.$router, this.currentFilter);
+				}
+
+				this.bounds = this.map.getBounds();
+				const maxY = this.bounds.getNorthEast().lat.toString();
+				const maxX = this.bounds.getNorthEast().lng.toString();
+				const minY = this.bounds.getSouthWest().lat.toString();
+				const minX = this.bounds.getSouthWest().lng.toString();
+
+				const filter: Filter = {
+					type: GEOCOORDINATE_FILTER,
+					mode: INCLUDE_FILTER,
+					minX: minX,
+					maxX: maxX,
+					minY: minY,
+					maxY: maxY
+				};
+
+
+				const filterParams: FilterParams = {
+					highlight: filter,
+					filters: [filter],
+					variables: [GEOCOORDINATE_TYPE]
+				};
+
+				this.currentFilter = filter;
+
+
+				const variableSummaryReq = {
+					dataset: this.dataset ,
+					variable: GEOCOORDINATE_TYPE,
+					filterParams: filterParams,
+					include: true
+				};
+
+				datasetActions.fetchVariableSummary(this.$store, variableSummaryReq);
+
+				addFilterToRoute(this.$router, this.currentFilter);
+			});
+
+		this.map.on('moveend', () => {
+
+				if (this.currentFilter) {
+					removeFilterFromRoute(this.$router, this.currentFilter);
+				}
+
+				this.bounds = this.map.getBounds();
+				const maxY = this.bounds.getNorthEast().lat;
+				const maxX = this.bounds.getNorthEast().lng;
+				const minY = this.bounds.getSouthWest().lat;
+				const minX = this.bounds.getSouthWest().lng;
+
+				const filter: Filter = {
+					type: GEOCOORDINATE_FILTER,
+					mode: INCLUDE_FILTER,
+					minX: minX,
+					maxX: maxX,
+					minY: minY,
+					maxY: maxY
+				};
+
+				const filterParams: FilterParams = {
+					highlight: filter,
+					filters: [filter],
+					variables: [GEOCOORDINATE_TYPE]
+				};
+
+				this.currentFilter = filter;
+
+
+				const variableSummaryReq = {
+					dataset: this.dataset ,
+					variable: GEOCOORDINATE_TYPE,
+					filterParams: filterParams,
+					include: true
+				};
+
+				datasetActions.fetchVariableSummary(this.$store, variableSummaryReq);
+
+				addFilterToRoute(this.$router, this.currentFilter);
+			});
 	}
 });
 </script>
 
 <style>
-.geo-plot-container {
+
+.facet-card .group-header {
+	font-family: inherit;
+    font-size: 13.872px;
+    font-size: .867rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: rgba(0,0,0,.54);
+	background: white;
+	padding: 4px 8px 6px;
+	height: 50px;
+}
+
+.header-title{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.geo-plot-container, .geo-plot {
 	position: relative;
 	z-index: 0;
 	height: 300px;
 	width: 100%;
 }
 
-.geo-plot {
+
+.facet-card .group-header .type-change-dropdown-wrapper {
+	float: right;
+	bottom: 20px;
+}
+
+.geo-plot-container .type-change-dropdown-wrapper .dropdown-menu {
+	z-index: 3;
+}
+
+.geo-plot-container, .geo-plot {
 	position: relative;
 	z-index: 0;
 	height: 300px;
 	width: 100%;
 }
+
 .geo-plot-container .selection-toggle {
 	position: absolute;
 	z-index: 999;

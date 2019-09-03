@@ -616,7 +616,7 @@ export const actions = {
 		return Promise.all(promises);
 	},
 
-	fetchVariableSummary(context: DatasetContext, args: { dataset: string, variable: string, highlight: Highlight, filterParams: FilterParams, include: boolean }): Promise<void> {
+	fetchVariableSummary(context: DatasetContext, args: { dataset: string, variable: string, highlight?: Highlight, filterParams: FilterParams, include: boolean }): Promise<void> {
 		if (!args.dataset) {
 			console.warn('`dataset` argument is missing');
 			return null;

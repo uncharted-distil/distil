@@ -528,7 +528,6 @@ export default Vue.extend({
 .geo-plot-container, .geo-plot {
 	position: relative;
 	z-index: 0;
-	height: 100%;
 	width: 100%;
 }
 .geo-plot-container .selection-toggle {
