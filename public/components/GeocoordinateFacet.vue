@@ -226,9 +226,6 @@ export default Vue.extend({
 		rowSelection(): RowSelection {
 			return routeGetters.getDecodedRowSelection(this.$store);
 		},
-		availableTargetVarsPage(): number {
-			return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
-		},
 		filter(): any {
 			const filter = routeGetters.getRouteFilters(this.$store);
 			return filter;
