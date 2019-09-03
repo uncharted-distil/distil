@@ -293,10 +293,6 @@ func (f *CoordinateField) FetchPredictedSummaryData(resultURI string, datasetRes
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (f *CoordinateField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
 // FetchForecastingSummaryData pulls data from the result table and builds the
 // forecasting histogram for the field.
 func (f *CoordinateField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
