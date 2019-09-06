@@ -17,6 +17,7 @@ package postgres
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -81,7 +82,7 @@ func (s *Storage) fetchResidualsSummary(dataset string, storageName string, vari
 	// Just return a nil in the case where we were asked to return residuals for a non-numeric variable.
 	if model.IsNumerical(variable.Type) || variable.Type == model.TimeSeriesType {
 		// fetch numeric histograms
-		residuals, err := s.fetchResidualsHistogram(resultURI, storageName, variable, extrema)
+		residuals, err := s.fetchResidualsHistogram(resultURI, storageName, variable, filterParams, extrema)
 		if err != nil {
 			return nil, err
 		}
@@ -157,7 +158,7 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, storageName string, va
 	return s.parseExtrema(res, variable)
 }
 
-func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, variable *model.Variable, extrema *api.Extrema) (*api.Histogram, error) {
+func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, variable *model.Variable, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.StringType,
@@ -185,14 +186,28 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, 
 
 	fromClause := getResultJoin(storageName)
 
+	// create the filter for the query
+	params := make([]interface{}, 0)
+	params = append(params, resultURI)
+	params = append(params, variable.Name)
+
+	wheres := make([]string, 0)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams, false)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
+	}
+
 	// Create the complete query string.
 	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s
-		WHERE result_id = $1 AND target = $2
-		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName, fromClause, bucketQuery, histogramName)
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		FROM %s
+		WHERE result_id = $1 AND target = $2 %s
+		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName, fromClause, where, bucketQuery, histogramName)
 
 	// execute the postgres query
-	res, err := s.client.Query(query, resultURI, variable.Name)
+	res, err := s.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for result variable summaries from postgres")
 	}
