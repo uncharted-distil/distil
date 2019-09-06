@@ -187,8 +187,11 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, 
 	fromClause := getResultJoin(storageName)
 
 	// create the filter for the query
-	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
+	params = append(params, resultURI)
+	params = append(params, variable.Name)
+
+	wheres := make([]string, 0)
 	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams, false)
 
 	where := ""
@@ -204,7 +207,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, 
 		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName, fromClause, where, bucketQuery, histogramName)
 
 	// execute the postgres query
-	res, err := s.client.Query(query, resultURI, variable.Name)
+	res, err := s.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch histograms for result variable summaries from postgres")
 	}
