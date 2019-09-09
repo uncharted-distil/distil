@@ -31,8 +31,8 @@ import (
 )
 
 const (
-	unicornResultFieldName = "pred_class"
-	slothResultFieldName   = "0"
+	unicornResultFieldName = "label"
+	slothResultFieldName   = "cluster_labels"
 )
 
 // ClusterPoint contains data that has been clustered.
