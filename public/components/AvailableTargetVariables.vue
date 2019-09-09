@@ -60,7 +60,6 @@ export default Vue.extend({
 					const targetElem = document.createElement('button');
 					targetElem.className += 'btn btn-sm btn-success ml-2 mr-2 mb-2';
 					targetElem.innerHTML = 'Select Target';
-					console.log(group);
 					targetElem.addEventListener('click', () => {
 						const target = group.colName;
 						// remove from training
