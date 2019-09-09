@@ -20,6 +20,7 @@ import { getters as datasetGetters, actions as datasetActions } from '../store/d
 import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
 import { filterSummariesByDataset, getComposedVariableKey } from '../util/data';
+import { IMAGE_TYPE } from '../util/types';
 import VariableFacets from '../components/VariableFacets.vue';
 import { Grouping, Variable, VariableSummary } from '../store/dataset/index';
 import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
@@ -56,7 +57,7 @@ export default Vue.extend({
 		html(): (group: Group) => HTMLDivElement {
 			return (group: Group) => {
 				const container = document.createElement('div');
-				if (group.type && group.type.toLowerCase() !== 'image') {
+				if (group.type && group.type.toLowerCase() !== IMAGE_TYPE) {
 					const targetElem = document.createElement('button');
 					targetElem.className += 'btn btn-sm btn-success ml-2 mr-2 mb-2';
 					targetElem.innerHTML = 'Select Target';
