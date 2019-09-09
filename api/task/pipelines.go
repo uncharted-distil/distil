@@ -390,10 +390,6 @@ func initializeDatasetCopy(schemaFile string, dataset string, schemaPathRelative
 		return nil, errors.Wrap(err, "unable to copy source data")
 	}
 
-	// delete the existing files that will be overwritten
-	os.Remove(outputSchemaPath)
-	os.Remove(outputDataPath)
-
 	return &datasetCopyPath{
 		sourceFolder: sourceFolder,
 		outputFolder: outputFolder,

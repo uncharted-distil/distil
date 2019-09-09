@@ -76,7 +76,7 @@ func ClusterDataset(datasetSource metadata.DatasetSource, schemaFile string, ind
 		mainDR.Variables = append(mainDR.Variables, f.Variable)
 
 		// header already removed, lines does not have a header
-		lines, err = appendFeature(dataset, d3mIndexField, false, f, lines)
+		lines, err = appendFeature(outputPath.outputFolder, d3mIndexField, false, f, lines)
 		if err != nil {
 			return "", errors.Wrap(err, "error appending clustered data")
 		}
