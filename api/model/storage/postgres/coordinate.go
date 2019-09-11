@@ -241,16 +241,27 @@ func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, 
 
 	xBucketCount := int64(xExtrema.GetBucketCount())
 	yBucketCount := int64(yExtrema.GetBucketCount())
-	buckets := make([]*api.Bucket, xBucketCount*yBucketCount)
+	xBuckets := make([]*api.Bucket, xBucketCount)
+
+	// initialize empty histogram structure
 	i := 0
 	for xVal := xRounded.Min; xVal < xRounded.Max; xVal += xInterval {
+		yBuckets := make([]*api.Bucket, yBucketCount)
+		j := 0
 		for yVal := yRounded.Min; yVal < yRounded.Max; yVal += yInterval {
-			buckets[i] = &api.Bucket{
-				Key:   fmt.Sprintf("%f,%f", xVal, yVal),
-				Count: 0,
+			yBuckets[j] = &api.Bucket{
+				Key:     fmt.Sprintf("%f", yVal),
+				Count:   0,
+				Buckets: nil,
 			}
-			i++
+			j++
 		}
+		xBuckets[i] = &api.Bucket{
+			Key:     fmt.Sprintf("%f", xVal),
+			Count:   0,
+			Buckets: yBuckets,
+		}
+		i++
 	}
 
 	for rows.Next() {
@@ -278,12 +289,12 @@ func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, 
 		} else if yBucket >= yBucketCount {
 			yBucket = yBucketCount - 1
 		}
-		buckets[xBucket*yBucketCount+yBucket].Count += bucketCount
+		xBuckets[xBucket].Buckets[yBucket].Count += bucketCount
 	}
 
 	// assign histogram attributes
 	return &api.Histogram{
-		Buckets: buckets,
+		Buckets: xBuckets,
 	}, nil
 }
 
