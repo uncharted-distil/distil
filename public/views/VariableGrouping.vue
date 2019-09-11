@@ -4,8 +4,11 @@
 		<div class="row flex-0-nav"></div>
 
 		<div class="row flex-shrink-0 align-items-center bg-white">
-			<div class="col-4 offset-md-1">
+			<div v-if="isTimeseries" class="col-4 offset-md-1">
 				<h5 class="header-label">Configure Time Series</h5>
+			</div>
+			<div v-if="isGeocoordinate" class="col-4 offset-md-1">
+				<h5 class="header-label">Configure Geocoordinate</h5>
 			</div>
 		</div>
 
@@ -135,6 +138,9 @@ export default Vue.extend({
 		};
 	},
 	computed: {
+		availableTargetVarsPage(): number {
+			return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
+		},
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
 		},
@@ -395,7 +401,8 @@ export default Vue.extend({
 		},
 		gotoTargetSelection() {
 			const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
-				dataset: this.dataset
+				dataset: this.dataset,
+				availableTargetVarsPage: this.availableTargetVarsPage
 			});
 			this.$router.push(entry);
 		}

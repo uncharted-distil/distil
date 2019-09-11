@@ -26,6 +26,7 @@ export interface RouteArgs {
 	timeseriesAnalysis?: string;
 	timeseriesBinningInterval?: string;
 	groupingType?: string;
+	availableTargetVarsPage?: number;
 
 	// we currently don't have a way to add these to the interface
 	//
