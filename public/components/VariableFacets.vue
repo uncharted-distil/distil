@@ -77,7 +77,7 @@ import FacetTimeseries from '../components/FacetTimeseries';
 import GeocoordinateFacet from '../components/GeocoordinateFacet';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
-import { sortSummariesByImportance, filterVariablesByPage, getVariableRanking, getVariableImportance } from '../util/data';
+import { sortSummariesByImportance, filterVariablesByPage, getVariableRanking, getVariableImportance, filterUnsupportedTargets } from '../util/data';
 import { Highlight, RowSelection, Variable, VariableSummary } from '../store/dataset/index';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -150,7 +150,7 @@ export default Vue.extend({
 		},
 
 		sortedFilteredSummaries(): VariableSummary[] {
-			return sortSummariesByImportance(this.filteredSummaries, this.variables);
+			return filterUnsupportedTargets(sortSummariesByImportance(this.filteredSummaries, this.variables));
 		},
 
 		paginatedSummaries(): VariableSummary[] {
