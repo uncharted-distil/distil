@@ -295,7 +295,6 @@ export function fetchSolutionResultSummary(
 
 export function filterUnsupportedTargets(variables: VariableSummary[]): VariableSummary[] {
 	return variables.filter(variableSummary => {
-		console.log(variableSummary.key, variableSummary);
 		return !(variableSummary.varType && variableSummary.varType === IMAGE_TYPE) && !hasComputedVarPrefix(variableSummary.key);
 	});
 }
