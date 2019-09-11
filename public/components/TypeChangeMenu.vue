@@ -98,6 +98,9 @@ export default Vue.extend({
 			}
 			return !!this.variable.grouping;
 		},
+		availableTargetVarsPage(): number {
+			return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
+		},
 		isGeocoordinate(): boolean {
 			return this.field ? false : true;
 		},
@@ -196,7 +199,8 @@ export default Vue.extend({
 			if (type === TIMESERIES_TYPE || type === GEOCOORDINATE_TYPE) {
 				const entry = createRouteEntry(GROUPING_ROUTE, {
 					dataset: routeGetters.getRouteDataset(this.$store),
-					groupingType: type
+					groupingType: type,
+					availableTargetVarsPage: this.availableTargetVarsPage
 				});
 				this.$router.push(entry);
 			} else {
