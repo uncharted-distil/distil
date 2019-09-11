@@ -9,7 +9,7 @@ import store from '../store/store';
 import { actions as resultsActions } from '../store/results/module';
 import { ResultsContext } from '../store/results/actions';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
-import { formatValue, TIMESERIES_TYPE, isTimeType, isIntegerType } from '../util/types';
+import { formatValue, hasComputedVarPrefix, isIntegerType, isTimeType, IMAGE_TYPE, TIMESERIES_TYPE } from '../util/types';
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = '_predicted';
@@ -293,7 +293,13 @@ export function fetchSolutionResultSummary(
 		});
 }
 
-export function filterVariablesByPage<T>(pageIndex: number, numPerPage: number, variables: T[]): T[] {
+export function filterUnsupportedTargets(variables: VariableSummary[]): VariableSummary[] {
+	return variables.filter(variableSummary => {
+		return !(variableSummary.varType && variableSummary.varType === IMAGE_TYPE) && !hasComputedVarPrefix(variableSummary.key);
+	});
+}
+
+export function filterVariablesByPage(pageIndex: number, numPerPage: number, variables: VariableSummary[]): VariableSummary[] {
 	if (variables.length > numPerPage) {
 		const firstIndex = numPerPage * (pageIndex - 1);
 		const lastIndex = Math.min(firstIndex + numPerPage, variables.length);

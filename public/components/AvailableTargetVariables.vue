@@ -20,7 +20,6 @@ import { getters as datasetGetters, actions as datasetActions } from '../store/d
 import { getters as routeGetters } from '../store/route/module';
 import { createRouteEntry } from '../util/routes';
 import { filterSummariesByDataset, getComposedVariableKey } from '../util/data';
-import { IMAGE_TYPE } from '../util/types';
 import VariableFacets from '../components/VariableFacets.vue';
 import { Grouping, Variable, VariableSummary } from '../store/dataset/index';
 import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
@@ -57,53 +56,51 @@ export default Vue.extend({
 		html(): (group: Group) => HTMLDivElement {
 			return (group: Group) => {
 				const container = document.createElement('div');
-				if (group.type && group.type.toLowerCase() !== IMAGE_TYPE) {
-					const targetElem = document.createElement('button');
-					targetElem.className += 'btn btn-sm btn-success ml-2 mr-2 mb-2';
-					targetElem.innerHTML = 'Select Target';
-					targetElem.addEventListener('click', () => {
-						const target = group.colName;
-						// remove from training
-						const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
-						const index = training.indexOf(target);
-						if (index !== -1) {
-							training.splice(index, 1);
-						}
+				const targetElem = document.createElement('button');
+				targetElem.className += 'btn btn-sm btn-success ml-2 mr-2 mb-2';
+				targetElem.innerHTML = 'Select Target';
+				targetElem.addEventListener('click', () => {
+					const target = group.colName;
+					// remove from training
+					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
+					const index = training.indexOf(target);
+					if (index !== -1) {
+						training.splice(index, 1);
+					}
 
-						const v = this.variables.find(v => {
-							return v.colName === group.colName;
-						});
-						if (v && v.grouping) {
-							if (v.grouping.subIds.length > 0) {
-								v.grouping.subIds.forEach(subId => {
-									const exists = training.find(t => {
-										return t === subId;
-									});
-									if (!exists) {
-										training.push(subId);
-									}
-								});
-							} else {
+					const v = this.variables.find(v => {
+						return v.colName === group.colName;
+					});
+					if (v && v.grouping) {
+						if (v.grouping.subIds.length > 0) {
+							v.grouping.subIds.forEach(subId => {
 								const exists = training.find(t => {
-									return t === v.grouping.idCol;
+									return t === subId;
 								});
 								if (!exists) {
-									training.push(v.grouping.idCol);
+									training.push(subId);
 								}
+							});
+						} else {
+							const exists = training.find(t => {
+								return t === v.grouping.idCol;
+							});
+							if (!exists) {
+								training.push(v.grouping.idCol);
 							}
 						}
+					}
 
-						const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
-							target: group.colName,
-							dataset: routeGetters.getRouteDataset(this.$store),
-							filters: routeGetters.getRouteFilters(this.$store),
-							timeseriesAnalysis: routeGetters.getRouteTimeseriesAnalysis(this.$store),
-							training: training.join(',')
-						});
-						this.$router.push(entry);
+					const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
+						target: group.colName,
+						dataset: routeGetters.getRouteDataset(this.$store),
+						filters: routeGetters.getRouteFilters(this.$store),
+						timeseriesAnalysis: routeGetters.getRouteTimeseriesAnalysis(this.$store),
+						training: training.join(',')
 					});
-					container.appendChild(targetElem);
-				}
+					this.$router.push(entry);
+				});
+				container.appendChild(targetElem);
 				return container;
 			};
 		}
