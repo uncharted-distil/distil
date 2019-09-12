@@ -22,7 +22,6 @@ import _ from 'lodash';
 import $ from 'jquery';
 import leaflet from 'leaflet';
 import Vue from 'vue';
-import * as turf from '@turf/turf';
 import IconBase from './icons/IconBase';
 import IconCropFree from './icons/IconCropFree';
 import { scaleThreshold } from 'd3';
@@ -56,6 +55,8 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet/dist/images/marker-icon.png';
 import 'leaflet/dist/images/marker-icon-2x.png';
 import 'leaflet/dist/images/marker-shadow.png';
+import helpers, { polygon, featureCollection } from '@turf/helpers';
+import bbox from '@turf/bbox';
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
@@ -79,6 +80,29 @@ interface PointGroup {
 	field: GeoField;
 	points: LatLng[];
 }
+
+const PALETTE = [
+	'rgba(0,0,0,0)',
+	'#F4F8FB',
+	'#E9F2F8',
+	'#DEEBF5',
+	'#D3E5F1',
+	'#C8DFEE',
+	'#BDD8EB',
+	'#B2D2E8',
+	'#A7CCE4',
+	'#9CC5E1',
+	'#91BFDE',
+	'#86B8DB',
+	'#7BB2D7',
+	'#70ACD4',
+	'#65A5D1',
+	'#5A9FCE',
+	'#4F99CA',
+	'#4492C7',
+	'#398CC4',
+	'#2E86C1'
+];
 
 export default Vue.extend({
 	name: 'geocoordinate-facet',
@@ -131,6 +155,36 @@ export default Vue.extend({
 				}, [] as any);
 
 			return dataPoints;
+		},
+		// Computes the bounds of the summary data.
+		featureBounds(): helpers.BBox {
+			return bbox(this.featureCollection);
+		},
+		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.
+		featureCollection(): helpers.FeatureCollection {
+			// compute the bucket size in degrees
+			const buckets  = this.summary.baseline.buckets;
+			const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
+			const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
+
+			const features: helpers.Feature[] = [];
+			this.summary.baseline.buckets.forEach(lonBucket => {
+				lonBucket.buckets.forEach(latBucket => {
+
+					const xCoord = _.toNumber(lonBucket.key);
+					const yCoord = _.toNumber(latBucket.key);
+
+					const feature = polygon([[
+								[xCoord, yCoord],
+								[xCoord, yCoord + ySize],
+								[xCoord + xSize, yCoord + ySize],
+								[xCoord + xSize, yCoord],
+								[xCoord, yCoord]
+							]], { count: latBucket.count });
+					features.push(feature);
+				});
+			});
+			return featureCollection(features);
 		},
 		instanceName(): string {
 			return 'unique-map';
@@ -500,9 +554,9 @@ export default Vue.extend({
 			const count = points.length;
 			const features = [];
 			for (let i = 0; i < count; i++) {
-				features.push(turf.point(points[i]));
+				features.push(helpers.point(points[i]));
 			}
-			return turf.featureCollection(features);
+			return helpers.featureCollection(features);
 		},
 		paint() {
 			if (!this.map) {
@@ -510,8 +564,10 @@ export default Vue.extend({
 				this.map = leaflet.map(this.mapID, {
 					center: [30, 0],
 					zoom: 2,
-					scrollWheelZoom: false
+					// scrollWheelZoom: false,
+					zoomControl: false,
 				});
+				// this.map.dragging.disable();
 				if (this.mapZoom) {
 					this.map.setZoom(this.mapZoom, { animate: true });
 				}
@@ -533,152 +589,64 @@ export default Vue.extend({
 
 			this.clear();
 
-			if (this.filter) {
-				const boundsFilter = this.filter[0];
-				const maxX = boundsFilter.maxX;
-				const maxY = boundsFilter.maxY;
-				const minX = boundsFilter.minX;
-				const minY = boundsFilter.minY;
-				const northEast = leaflet.latLng(maxY, maxX);
-				const southWest = leaflet.latLng(minY, minX);
-				this.bounds = leaflet.latLngBounds(northEast, southWest);
-			} else {
-				this.bounds = leaflet.latLngBounds();
+			const bounds = this.featureBounds;
+			const northEast = leaflet.latLng(bounds[3], bounds[2]);
+			const southWest = leaflet.latLng(bounds[1], bounds[0]);
+			this.bounds = leaflet.latLngBounds(northEast, southWest);
 
-			}
+			// const pointLength = this.pointGroups.length;
 
-			const pointLength = this.pointGroups.length;
+			// this.pointGroups.forEach(group => {
+			// 	const hash = this.fieldHash(group.field);
 
-			this.pointGroups.forEach(group => {
-				const hash = this.fieldHash(group.field);
+			// 	const layer = leaflet.layerGroup([]);
 
-				const layer = leaflet.layerGroup([]);
+			// 	group.points.forEach(p => {
+			// 		const marker = leaflet.marker(p, { row: p.row });
+			// 		this.bounds.extend([p.lat, p.lng]);
+			// 		marker.bindTooltip(() => {
+			// 			const target = p.row[this.target];
+			// 			const values = [];
+			// 			const MAX_VALUES = 5;
+			// 			this.getTopVariables.forEach(v => {
+			// 				if (p.row[v] && values.length <= MAX_VALUES) {
+			// 					values.push(
+			// 						`<b>${_.capitalize(v)}:</b> ${p.row[v]}`
+			// 					);
+			// 				}
+			// 			});
+			// 			return [`<b>${_.capitalize(target)}</b>`]
+			// 				.concat(values)
+			// 				.join('<br>');
+			// 		});
 
-				group.points.forEach(p => {
-					const marker = leaflet.marker(p, { row: p.row });
-					this.bounds.extend([p.lat, p.lng]);
-					marker.bindTooltip(() => {
-						const target = p.row[this.target];
-						const values = [];
-						const MAX_VALUES = 5;
-						this.getTopVariables.forEach(v => {
-							if (p.row[v] && values.length <= MAX_VALUES) {
-								values.push(
-									`<b>${_.capitalize(v)}:</b> ${p.row[v]}`
-								);
-							}
-						});
-						return [`<b>${_.capitalize(target)}</b>`]
-							.concat(values)
-							.join('<br>');
-					});
+			// 		marker.on('click', this.toggleSelection);
 
-					marker.on('click', this.toggleSelection);
-
-					layer.addLayer(marker);
-				});
-				this.markers[hash] = layer;
-				layer.on('add', () =>
-					this.updateMarkerSelection(layer.getLayers())
-				);
-			});
+			// 		layer.addLayer(marker);
+			// 	});
+			// 	this.markers[hash] = layer;
+			// 	layer.on('add', () =>
+			// 		this.updateMarkerSelection(layer.getLayers())
+			// 	);
+			// });
 
 			if (this.bounds.isValid()) {
 				this.map.fitBounds(this.bounds);
 
-				// create a turf BBox
-				const bbox = turf.square(
-					turf.square(
-						this.bounds
-							.toBBoxString()
-							.split(',')
-							.map(Number)
-					)
-				);
-
-				// get distance of one side of bbox
-				const bboxVertexCoordA = turf.point([bbox[0], bbox[1]]);
-				const bboxVertexCoordB = turf.point([bbox[0], bbox[3]]);
-
-				const sideDistance = turf.distance(
-					bboxVertexCoordA,
-					bboxVertexCoordB,
-					{
-						units: 'kilometers'
-					}
-				);
-
-				// round to nearest 10
-				const roundedDistance = Math.ceil(sideDistance / 10) * 10;
-
-				const points = [];
-
-				this.pointGroups.forEach(group => {
-					if (group.points.length) {
-						group.points.forEach(latLng => {
-							points.push([
-								Number(latLng.lng),
-								Number(latLng.lat)
-							]);
-						});
-					}
-				});
-
-				const multiPointFeature = this.createPointGroup(points);
-
-				multiPointFeature.features.forEach(d => {
-					d.properties.z = 1;
-				});
-
-				const squareGrid = turf.squareGrid(bbox, sideDistance / 10, {
-					units: 'kilometers'
-				});
-
-//  @ts-ignore
-				const count = turf.collect(squareGrid, multiPointFeature, 'z', 'z');
-
-				const pallete = [
-					'rgba(0,0,0,0)',
-					'#F4F8FB',
-					'#E9F2F8',
-					'#DEEBF5',
-					'#D3E5F1',
-					'#C8DFEE',
-					'#BDD8EB',
-					'#B2D2E8',
-					'#A7CCE4',
-					'#9CC5E1',
-					'#91BFDE',
-					'#86B8DB',
-					'#7BB2D7',
-					'#70ACD4',
-					'#65A5D1',
-					'#5A9FCE',
-					'#4F99CA',
-					'#4492C7',
-					'#398CC4',
-					'#2E86C1'
-				];
-
-				const maxVal = _.maxBy(count.features, i => i.properties.z)
-					.properties.z.length;
-				const minVal = _.minBy(count.features, i => i.properties.z)
-					.properties.z.length;
-
-				const d = (maxVal - minVal) / pallete.length;
-				const domain = pallete.map(
+				const maxVal = 1000;
+				const minVal = 0;
+				const d = (maxVal - minVal) / PALETTE.length;
+				const domain = PALETTE.map(
 					(val, index) => minVal + d * (index + 1)
 				);
-
-//  @ts-ignore
-const scaleColors = scaleThreshold().range(pallete).domain(domain);
+				const scaleColors = scaleThreshold().range(PALETTE as any).domain(domain);
 
 				const gridLayer = leaflet
-					.geoJSON(count, {
+					.geoJSON(this.featureCollection, {
 						style: feature => {
 							return {
 								fillColor: scaleColors(
-									feature.properties.z.length
+									feature.properties.count
 								),
 								weight: 2,
 								opacity: 1,
@@ -709,94 +677,6 @@ const scaleColors = scaleThreshold().range(pallete).domain(domain);
 
 	mounted() {
 		this.paint();
-
-
-
-			// map action events
-
-		this.map.on('zoomend', () => {
-				if (this.currentFilter) {
-					removeFilterFromRoute(this.$router, this.currentFilter);
-				}
-
-				this.bounds = this.map.getBounds();
-				const maxY = this.bounds.getNorthEast().lat.toString();
-				const maxX = this.bounds.getNorthEast().lng.toString();
-				const minY = this.bounds.getSouthWest().lat.toString();
-				const minX = this.bounds.getSouthWest().lng.toString();
-
-				const filter: Filter = {
-					type: GEOCOORDINATE_FILTER,
-					mode: INCLUDE_FILTER,
-					minX: minX,
-					maxX: maxX,
-					minY: minY,
-					maxY: maxY
-				};
-
-
-				const filterParams: FilterParams = {
-					highlight: filter,
-					filters: [filter],
-					variables: [GEOCOORDINATE_TYPE]
-				};
-
-				this.currentFilter = filter;
-
-
-				const variableSummaryReq = {
-					dataset: this.dataset ,
-					variable: GEOCOORDINATE_TYPE,
-					filterParams: filterParams,
-					include: true
-				};
-
-				datasetActions.fetchVariableSummary(this.$store, variableSummaryReq);
-
-				addFilterToRoute(this.$router, this.currentFilter);
-			});
-
-		this.map.on('moveend', () => {
-
-				if (this.currentFilter) {
-					removeFilterFromRoute(this.$router, this.currentFilter);
-				}
-
-				this.bounds = this.map.getBounds();
-				const maxY = this.bounds.getNorthEast().lat;
-				const maxX = this.bounds.getNorthEast().lng;
-				const minY = this.bounds.getSouthWest().lat;
-				const minX = this.bounds.getSouthWest().lng;
-
-				const filter: Filter = {
-					type: GEOCOORDINATE_FILTER,
-					mode: INCLUDE_FILTER,
-					minX: minX,
-					maxX: maxX,
-					minY: minY,
-					maxY: maxY
-				};
-
-				const filterParams: FilterParams = {
-					highlight: filter,
-					filters: [filter],
-					variables: [GEOCOORDINATE_TYPE]
-				};
-
-				this.currentFilter = filter;
-
-
-				const variableSummaryReq = {
-					dataset: this.dataset ,
-					variable: GEOCOORDINATE_TYPE,
-					filterParams: filterParams,
-					include: true
-				};
-
-				datasetActions.fetchVariableSummary(this.$store, variableSummaryReq);
-
-				addFilterToRoute(this.$router, this.currentFilter);
-			});
 	}
 });
 </script>
