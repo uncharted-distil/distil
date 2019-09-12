@@ -5,6 +5,7 @@
 			enable-type-change
 			enable-title
 			ignore-highlights
+			enable-typefiltering
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
 			:summaries="summaries"
