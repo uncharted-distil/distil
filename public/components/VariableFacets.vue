@@ -153,9 +153,8 @@ export default Vue.extend({
 		sortedFilteredSummaries(): VariableSummary[] {
 			if (this.enableTypefiltering) {
 				return filterUnsupportedTargets(sortSummariesByImportance(this.filteredSummaries, this.variables));
-			} else {
-				return sortSummariesByImportance(this.filteredSummaries, this.variables);
 			}
+			return sortSummariesByImportance(this.filteredSummaries, this.variables);
 		},
 
 		paginatedSummaries(): VariableSummary[] {
