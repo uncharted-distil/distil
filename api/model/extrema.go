@@ -24,8 +24,8 @@ import (
 )
 
 const (
-	// maxNumBuckets is the maximum number of buckets to use for histograms
-	maxNumBuckets = 50
+	// MaxNumBuckets is the maximum number of buckets to use for histograms
+	MaxNumBuckets = 50
 
 	// HourInterval represents an hour time bucketing interval
 	HourInterval = 60 * 60
@@ -144,33 +144,35 @@ func (e *Extrema) GetTimeBucketMinMax(interval int) *Extrema {
 	}
 }
 
-// GetBucketInterval calculates the size of the buckets given the extrema.
-func (e *Extrema) GetBucketInterval() float64 {
+// GetBucketInterval calculates the size of the buckets given the extrema and a bucket
+// count.
+func (e *Extrema) GetBucketInterval(numBuckets int) float64 {
 	if model.IsFloatingPoint(e.Type) {
-		return e.getFloatingPointInterval()
+		return e.getFloatingPointInterval(numBuckets)
 	}
-	return e.getIntegerInterval()
+	return e.getIntegerInterval(numBuckets)
 }
 
-// GetBucketCount calculates the number of buckets for the extrema.
-func (e *Extrema) GetBucketCount() int {
-	interval := e.GetBucketInterval()
-	rounded := e.GetBucketMinMax()
+// GetBucketCount calculates the number of buckets for the extrema given a target
+// number of buckets.
+func (e *Extrema) GetBucketCount(numBuckets int) int {
+	interval := e.GetBucketInterval(numBuckets)
+	rounded := e.GetBucketMinMax(numBuckets)
 	rang := rounded.Max - rounded.Min
 
 	// rounding issues could lead to negative numbers
 	count := int(round(rang / interval))
 	if count <= 0 {
 		count = 1
-	} else if count > maxNumBuckets {
-		count = maxNumBuckets
+	} else if count > numBuckets {
+		count = numBuckets
 	}
 	return count
 }
 
 // GetBucketMinMax calculates the bucket min and max for the extrema.
-func (e *Extrema) GetBucketMinMax() *Extrema {
-	interval := e.GetBucketInterval()
+func (e *Extrema) GetBucketMinMax(numBuckets int) *Extrema {
+	interval := e.GetBucketInterval(numBuckets)
 
 	roundedMin := floorByUnit(e.Min, interval)
 	roundedMax := ceilByUnit(e.Max, interval)
@@ -224,18 +226,18 @@ func (e *Extrema) GetBucketMinMax() *Extrema {
 	}
 }
 
-func (e *Extrema) getFloatingPointInterval() float64 {
+func (e *Extrema) getFloatingPointInterval(numBuckets int) float64 {
 	rang := e.Max - e.Min
-	interval := math.Abs(rang / maxNumBuckets)
+	interval := math.Abs(rang / float64(numBuckets))
 	return roundInterval(interval)
 }
 
-func (e *Extrema) getIntegerInterval() float64 {
+func (e *Extrema) getIntegerInterval(numBuckets int) float64 {
 	rang := e.Max - e.Min
-	if int(rang) < maxNumBuckets {
+	if int(rang) < numBuckets {
 		return 1
 	}
-	return math.Ceil(rang / maxNumBuckets)
+	return math.Ceil(rang / float64(numBuckets))
 }
 
 func round(x float64) float64 {

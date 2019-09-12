@@ -341,7 +341,7 @@ func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval
 	if model.IsNumerical(timeVar.Type) || model.IsTimestamp(timeVar.Type) {
 
 		timelineField := NewNumericalField(f.Storage, f.StorageName, timeVar.Name, timeVar.Name, timeVar.Type)
-		timeline, err = timelineField.fetchHistogram(nil, invert)
+		timeline, err = timelineField.fetchHistogram(nil, invert, api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
 		}
@@ -349,7 +349,7 @@ func (f *TextField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval
 	} else if model.IsDateTime(timeVar.Type) {
 
 		timelineField := NewDateTimeField(f.Storage, f.StorageName, timeVar.Name, timeVar.Name, timeVar.Type)
-		timeline, err = timelineField.fetchHistogram(nil, invert)
+		timeline, err = timelineField.fetchHistogram(nil, invert, api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
 		}

@@ -72,23 +72,23 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 	var filtered *api.Histogram
 	var err error
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert)
+		baseline, err = f.fetchHistogram(nil, invert, api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty() {
-			filtered, err = f.fetchHistogram(filterParams, invert)
+			filtered, err = f.fetchHistogram(filterParams, invert, api.MaxNumBuckets)
 			if err != nil {
 				return nil, err
 			}
 		}
 	} else {
-		baseline, err = f.fetchHistogramByResult(resultURI, nil, extrema)
+		baseline, err = f.fetchHistogramByResult(resultURI, nil, extrema, api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty() {
-			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, extrema)
+			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, extrema, api.MaxNumBuckets)
 			if err != nil {
 				return nil, err
 			}
@@ -110,7 +110,7 @@ func (f *DateTimeField) FetchTimeseriesSummaryData(timeVar *model.Variable, inte
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
+func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query.
@@ -126,7 +126,7 @@ func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, invert bo
 
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema)
+	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema, numBuckets)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -146,10 +146,10 @@ func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, invert bo
 		defer res.Close()
 	}
 
-	return f.parseHistogram(res, extrema)
+	return f.parseHistogram(res, extrema, numBuckets)
 }
 
-func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
@@ -177,7 +177,7 @@ func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *a
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema)
+	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema, numBuckets)
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
@@ -198,7 +198,7 @@ func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *a
 		defer res.Close()
 	}
 
-	return f.parseHistogram(res, extrema)
+	return f.parseHistogram(res, extrema, numBuckets)
 }
 
 func (f *DateTimeField) fetchExtrema() (*api.Extrema, error) {
@@ -223,12 +223,12 @@ func (f *DateTimeField) fetchExtrema() (*api.Extrema, error) {
 	return f.parseExtrema(res)
 }
 
-func (f *DateTimeField) getHistogramAggQuery(extrema *api.Extrema) (string, string, string) {
-	interval := extrema.GetBucketInterval()
+func (f *DateTimeField) getHistogramAggQuery(extrema *api.Extrema, numBuckets int) (string, string, string) {
+	interval := extrema.GetBucketInterval(numBuckets)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
-	rounded := extrema.GetBucketMinMax()
+	rounded := extrema.GetBucketMinMax(numBuckets)
 
 	bucketQueryString := ""
 	// if only a single value, then return a simple count.
@@ -237,7 +237,7 @@ func (f *DateTimeField) getHistogramAggQuery(extrema *api.Extrema) (string, stri
 		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", extrema.Key, extrema.Key)
 	} else {
 		bucketQueryString = fmt.Sprintf("width_bucket(cast(extract(epoch from \"%s\") as integer), %d, %d, %d) - 1",
-			extrema.Key, int(rounded.Min), int(rounded.Max), extrema.GetBucketCount())
+			extrema.Key, int(rounded.Min), int(rounded.Max), extrema.GetBucketCount(numBuckets))
 	}
 
 	histogramQueryString := fmt.Sprintf("(%s) * %d + %d", bucketQueryString, int(interval), int(rounded.Min))
@@ -253,15 +253,15 @@ func (f *DateTimeField) parseValueToDateString(value string) (string, error) {
 	return time.Unix(ival, 0).Format(time.RFC3339), nil
 }
 
-func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := api.HistogramAggPrefix + extrema.Key
 
 	// Parse bucket results.
-	interval := extrema.GetBucketInterval()
+	interval := extrema.GetBucketInterval(numBuckets)
 
-	buckets := make([]*api.Bucket, extrema.GetBucketCount())
-	rounded := extrema.GetBucketMinMax()
+	buckets := make([]*api.Bucket, extrema.GetBucketCount(numBuckets))
+	rounded := extrema.GetBucketMinMax(numBuckets)
 	key := rounded.Min
 	for i := 0; i < len(buckets); i++ {
 		keyString := ""
@@ -384,12 +384,12 @@ func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResul
 	var filtered *api.Histogram
 	var err error
 
-	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
+	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema, api.MaxNumBuckets)
 	if err != nil {
 		return nil, err
 	}
 	if !filterParams.Empty() {
-		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
+		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema, api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
 		}
@@ -404,7 +404,7 @@ func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResul
 	}, nil
 }
 
-func (f *DateTimeField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *DateTimeField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.StringType,
@@ -423,7 +423,7 @@ func (f *DateTimeField) fetchPredictedSummaryData(resultURI string, datasetResul
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, resultVariable)
+	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, resultVariable, numBuckets)
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
@@ -451,7 +451,7 @@ func (f *DateTimeField) fetchPredictedSummaryData(resultURI string, datasetResul
 	}
 	defer res.Close()
 
-	return f.parseHistogram(res, extrema)
+	return f.parseHistogram(res, extrema, numBuckets)
 }
 
 func (f *DateTimeField) getResultMinMaxAggsQuery(resultVariable *model.Variable) string {
@@ -468,16 +468,16 @@ func (f *DateTimeField) getResultMinMaxAggsQuery(resultVariable *model.Variable)
 	return queryPart
 }
 
-func (f *DateTimeField) getResultHistogramAggQuery(extrema *api.Extrema, resultVariable *model.Variable) (string, string, string) {
+func (f *DateTimeField) getResultHistogramAggQuery(extrema *api.Extrema, resultVariable *model.Variable, numBuckets int) (string, string, string) {
 	// compute the bucket interval for the histogram
-	interval := extrema.GetBucketInterval()
+	interval := extrema.GetBucketInterval(numBuckets)
 
 	// Only numeric types should occur.
 	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
-	rounded := extrema.GetBucketMinMax()
+	rounded := extrema.GetBucketMinMax(numBuckets)
 
 	bucketQueryString := ""
 	// if only a single value, then return a simple count.
@@ -486,7 +486,7 @@ func (f *DateTimeField) getResultHistogramAggQuery(extrema *api.Extrema, resultV
 		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", fieldTyped, fieldTyped)
 	} else {
 		bucketQueryString = fmt.Sprintf("width_bucket(%s, %d, %d, %d) - 1",
-			fieldTyped, int(rounded.Min), int(rounded.Max), extrema.GetBucketCount())
+			fieldTyped, int(rounded.Min), int(rounded.Max), extrema.GetBucketCount(numBuckets))
 	}
 	histogramQueryString := fmt.Sprintf("(%s) * %d + %d", bucketQueryString, int(interval), int(rounded.Min))
 
