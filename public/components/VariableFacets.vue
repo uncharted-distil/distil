@@ -102,6 +102,7 @@ export default Vue.extend({
 		enableTitle: Boolean as () => boolean,
 		enableTypeChange: Boolean as () => boolean,
 		enableHighlighting: Boolean as () => boolean,
+		enableTypefiltering: Boolean as () => boolean,
 		ignoreHighlights: Boolean as () => boolean,
 		summaries: Array as () => VariableSummary[],
 		subtitle: String as () => string,
@@ -150,7 +151,11 @@ export default Vue.extend({
 		},
 
 		sortedFilteredSummaries(): VariableSummary[] {
-			return filterUnsupportedTargets(sortSummariesByImportance(this.filteredSummaries, this.variables));
+			if (this.enableTypefiltering) {
+				return filterUnsupportedTargets(sortSummariesByImportance(this.filteredSummaries, this.variables));
+			} else {
+				return sortSummariesByImportance(this.filteredSummaries, this.variables);
+			}
 		},
 
 		paginatedSummaries(): VariableSummary[] {
