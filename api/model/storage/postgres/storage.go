@@ -21,13 +21,14 @@ import (
 )
 
 const (
-	requestTableName        = "request"
-	solutionTableName       = "solution"
-	solutionResultTableName = "solution_result"
-	solutionScoreTableName  = "solution_score"
-	featureTableName        = "request_feature"
-	filterTableName         = "request_filter"
-	wordStemTableName       = "word_stem"
+	requestTableName               = "request"
+	solutionTableName              = "solution"
+	solutionFeatureWeightTableName = "solution_feature"
+	solutionResultTableName        = "solution_result"
+	solutionScoreTableName         = "solution_score"
+	featureTableName               = "request_feature"
+	filterTableName                = "request_filter"
+	wordStemTableName              = "word_stem"
 )
 
 // Storage accesses the underlying postgres database.

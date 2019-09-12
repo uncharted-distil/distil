@@ -16,7 +16,6 @@
 package task
 
 import (
-	"context"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -32,6 +31,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 	log "github.com/unchartedsoftware/plog"
 
+	sr "github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/distil/api/util"
 )
@@ -67,52 +67,7 @@ func SetClient(computeClient *compute.Client) {
 }
 
 func submitPipeline(datasets []string, step *pipeline.PipelineDescription) (string, error) {
-
-	config, err := env.LoadConfig()
-	if err != nil {
-		return "", errors.Wrap(err, "unable to load config")
-	}
-
-	if config.UseTA2Runner {
-		res, err := client.ExecutePipeline(context.Background(), datasets, step)
-		if err != nil {
-			return "", errors.Wrap(err, "unable to dispatch mocked pipeline")
-		}
-		resultURI := strings.Replace(res.ResultURI, "file://", "", -1)
-		return resultURI, nil
-	}
-
-	request := compute.NewExecPipelineRequest(datasets, step)
-
-	err = request.Dispatch(client)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to dispatch pipeline")
-	}
-
-	// listen for completion
-	var errPipeline error
-	var datasetURI string
-	err = request.Listen(func(status compute.ExecPipelineStatus) {
-		// check for error
-		if status.Error != nil {
-			errPipeline = status.Error
-		}
-
-		if status.Progress == compute.RequestCompletedStatus {
-			datasetURI = status.ResultURI
-		}
-	})
-	if err != nil {
-		return "", errors.Wrap(err, "unable to listen to pipeline")
-	}
-
-	if errPipeline != nil {
-		return "", errors.Wrap(errPipeline, "error executing pipeline")
-	}
-
-	datasetURI = strings.Replace(datasetURI, "file://", "", -1)
-
-	return datasetURI, nil
+	return sr.SubmitPipeline(client, datasets, step)
 }
 
 // ReadCSVFile reads a csv file and returns the string slice representation of the data.

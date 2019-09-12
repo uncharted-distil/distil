@@ -67,6 +67,14 @@ type Solution struct {
 	IsBad       bool             `json:"isBad"`
 }
 
+// SolutionFeatureWeight captures the weight given to a feature in a solution.
+type SolutionFeatureWeight struct {
+	SolutionID   string
+	FeatureIndex int64
+	FeatureName  string
+	Weight       float64
+}
+
 // SolutionResult represents the solution result metadata.
 type SolutionResult struct {
 	FittedSolutionID string    `json:"fittedSolutionId"`
