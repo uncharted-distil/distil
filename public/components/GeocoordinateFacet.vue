@@ -30,9 +30,6 @@ import { VariableSummary, Bucket } from '../store/dataset/index';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 
 import 'leaflet/dist/leaflet.css';
-import 'leaflet/dist/images/marker-icon.png';
-import 'leaflet/dist/images/marker-icon-2x.png';
-import 'leaflet/dist/images/marker-shadow.png';
 
 import helpers, { polygon, featureCollection } from '@turf/helpers';
 import bbox from '@turf/bbox';
@@ -75,7 +72,6 @@ export default Vue.extend({
 		return {
 			map: null,
 			baseLayer: null,
-			startingLatLng: null,
 			bounds: null,
 		};
 	},
@@ -89,38 +85,6 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
-		// Computes the bounds of the summary data.
-		featureBounds(): helpers.BBox {
-			return bbox(this.features);
-		},
-
-		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.
-		features(): helpers.FeatureCollection {
-			// compute the bucket size in degrees
-			const buckets  = this.summary.baseline.buckets;
-			const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
-			const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
-
-			const features: helpers.Feature[] = [];
-			this.summary.baseline.buckets.forEach(lonBucket => {
-				lonBucket.buckets.forEach(latBucket => {
-
-					const xCoord = _.toNumber(lonBucket.key);
-					const yCoord = _.toNumber(latBucket.key);
-
-					const feature = polygon([[
-								[xCoord, yCoord],
-								[xCoord, yCoord + ySize],
-								[xCoord + xSize, yCoord + ySize],
-								[xCoord + xSize, yCoord],
-								[xCoord, yCoord]
-							]], { count: latBucket.count });
-					features.push(feature);
-				});
-			});
-			return featureCollection(features);
-		},
-
 		instanceName(): string {
 			return 'unique-map';
 		},
@@ -128,19 +92,68 @@ export default Vue.extend({
 		mapID(): string {
 			return `map-${this.instanceName}`;
 		},
+
+		// Computes the bounds of the summary data.
+		bucketBounds(): helpers.BBox {
+			return bbox(this.bucketFeatures);
+		},
+
+		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.
+		bucketFeatures(): helpers.FeatureCollection {
+			// compute the bucket size in degrees
+			const buckets  = this.summary.baseline.buckets;
+			const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
+			const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
+
+			// create a feature collection from the server-supplied bucket data
+			const features: helpers.Feature[] = [];
+			this.summary.baseline.buckets.forEach(lonBucket => {
+				lonBucket.buckets.forEach(latBucket => {
+					// Don't include features with a count of 0.
+					if (latBucket.count > 0) {
+						const xCoord = _.toNumber(lonBucket.key);
+						const yCoord = _.toNumber(latBucket.key);
+						const feature = polygon([[
+									[xCoord, yCoord],
+									[xCoord, yCoord + ySize],
+									[xCoord + xSize, yCoord + ySize],
+									[xCoord + xSize, yCoord],
+									[xCoord, yCoord]
+								]], { count: latBucket.count });
+						features.push(feature);
+					}
+				});
+			});
+
+			return featureCollection(features);
+		},
+
+		// Returns the minimum non-zero bucket count value
+		minCount(): number {
+			return this.bucketFeatures.features.reduce((min, feature) =>
+				feature.properties.count < min ? feature.properties.count : min, Number.MAX_SAFE_INTEGER);
+		},
+
+		// Returns the maximum bucket count value
+		maxCount(): number {
+			return this.bucketFeatures.features.reduce((max, feature) =>
+				feature.properties.count > max ? feature.properties.count : max, Number.MIN_SAFE_INTEGER);
+		},
 	},
 
 	methods: {
 		paint() {
+			// NOTE: this component re-mounts on any change, so do everything in here
+
+			// Lazy map instantiation with a default zoom position
 			if (!this.map) {
-				// NOTE: this component re-mounts on any change, so do everything in here
 				this.map = leaflet.map(this.mapID, {
 					center: [30, 0],
 					zoom: 2,
-					// scrollWheelZoom: false,
+					scrollWheelZoom: false,
 					zoomControl: false,
 				});
-				// this.map.dragging.disable();
+				this.map.dragging.disable();
 
 				this.baseLayer = leaflet.tileLayer(
 					'http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png'
@@ -148,7 +161,8 @@ export default Vue.extend({
 				this.baseLayer.addTo(this.map);
 			}
 
-			const bounds = this.featureBounds;
+			// Restrict the bounds of the map to the bucket set
+			const bounds = this.bucketBounds;
 			const northEast = leaflet.latLng(bounds[3], bounds[2]);
 			const southWest = leaflet.latLng(bounds[1], bounds[0]);
 			this.bounds = leaflet.latLngBounds(northEast, southWest);
@@ -156,20 +170,18 @@ export default Vue.extend({
 			if (this.bounds.isValid()) {
 				this.map.fitBounds(this.bounds);
 
-				const maxVal = 1000;
-				const minVal = 0;
+				// Generate the colour ramp scaling function
+				const maxVal = this.maxCount;
+				const minVal = this.minCount;
 				const d = (maxVal - minVal) / PALETTE.length;
-				const domain = PALETTE.map(
-					(val, index) => minVal + d * (index + 1)
-				);
+				const domain = PALETTE.map((val, index) => minVal + d * (index + 1));
 				const scaleColors = scaleThreshold().range(PALETTE as any).domain(domain);
 
-				leaflet.geoJSON(this.features, {
+				// Render the heatmap buckets as a GeoJSON layer
+				leaflet.geoJSON(this.bucketFeatures, {
 					style: feature => {
 						return {
-							fillColor: scaleColors(
-								feature.properties.count
-							),
+							fillColor: scaleColors(feature.properties.count),
 							weight: 2,
 							opacity: 1,
 							color: 'rgba(0,0,0,0)',
@@ -184,7 +196,7 @@ export default Vue.extend({
 	},
 
 	watch: {
-		dataItems() {
+		bucketFeatures() {
 			this.paint();
 		},
 	},
@@ -222,7 +234,6 @@ export default Vue.extend({
 	width: 100%;
 }
 
-
 .facet-card .group-header .type-change-dropdown-wrapper {
 	float: right;
 	bottom: 20px;
@@ -237,76 +248,5 @@ export default Vue.extend({
 	z-index: 0;
 	height: 300px;
 	width: 100%;
-}
-
-.geo-plot-container .selection-toggle {
-	position: absolute;
-	z-index: 999;
-	top: 80px;
-	left: 10px;
-	width: 34px;
-	height: 34px;
-	background-color: #fff;
-	border: 2px solid rgba(0, 0, 0, 0.2);
-	background-clip: padding-box;
-	text-align: center;
-	border-radius: 4px;
-}
-.geo-plot-container .selection-toggle:hover {
-	background-color: #f4f4f4;
-}
-.geo-plot-container .selection-toggle-control {
-	text-decoration: none;
-	color: black;
-	cursor: pointer;
-}
-.geo-plot-container .selection-toggle-control:hover {
-	text-decoration: none;
-	color: black;
-}
-
-.geo-plot-container .selection-toggle.active {
-	position: absolute;
-}
-
-.geo-plot-container .selection-toggle.active .selection-toggle-control {
-	color: #26b8d1;
-}
-
-.geo-plot-container.selection-mode .geo-plot {
-	cursor: crosshair;
-}
-
-path.selected {
-	stroke-width: 2;
-	fill-opacity: 0.4;
-}
-
-.geo-plot .leaflet-marker-icon:hover {
-	filter: brightness(1.2);
-}
-
-.geo-plot .leaflet-marker-icon.selected {
-	filter: hue-rotate(150deg);
-}
-
-.geo-close-button {
-	position: absolute;
-	width: 24px;
-	height: 24px;
-	text-align: center;
-	line-height: 24px;
-
-	left: 8px;
-	top: -24px;
-	border: 1px solid #ccc;
-	border-radius: 4px;
-	background-color: #fff;
-	color: #000;
-	cursor: pointer;
-}
-
-.geo-close-button:hover {
-	background-color: #f4f4f4;
 }
 </style>
