@@ -2,7 +2,7 @@
 	<div class="facet-card">
 		<div class="group-header">
 			<span class="header-title">
-				GEOCOORDINATE
+				{{headerLabel}}
 			</span>
 			<i class="fa fa-globe"></i>
 		<type-change-menu
@@ -28,6 +28,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import { VariableSummary, Bucket } from '../store/dataset/index';
 import TypeChangeMenu from '../components/TypeChangeMenu';
+import { GEOCOORDINATE_TYPE } from '../util/types';
 
 import 'leaflet/dist/leaflet.css';
 
@@ -139,6 +140,9 @@ export default Vue.extend({
 			return this.bucketFeatures.features.reduce((max, feature) =>
 				feature.properties.count > max ? feature.properties.count : max, Number.MIN_SAFE_INTEGER);
 		},
+		headerLabel(): string {
+			return GEOCOORDINATE_TYPE.toUpperCase();
+		}
 	},
 
 	methods: {
@@ -211,14 +215,14 @@ export default Vue.extend({
 
 .facet-card .group-header {
 	font-family: inherit;
-    font-size: 13.872px;
     font-size: .867rem;
     font-weight: 700;
-    text-transform: uppercase;
     color: rgba(0,0,0,.54);
 	background: white;
 	padding: 4px 8px 6px;
-	height: 50px;
+	position: relative;
+    top: 30px;
+    z-index: 1;
 }
 
 .header-title{
@@ -228,10 +232,7 @@ export default Vue.extend({
 }
 
 .geo-plot-container, .geo-plot {
-	position: relative;
-	z-index: 0;
-	height: 300px;
-	width: 100%;
+	height: 214px;
 }
 
 .facet-card .group-header .type-change-dropdown-wrapper {
@@ -243,10 +244,4 @@ export default Vue.extend({
 	z-index: 3;
 }
 
-.geo-plot-container, .geo-plot {
-	position: relative;
-	z-index: 0;
-	height: 300px;
-	width: 100%;
-}
 </style>
