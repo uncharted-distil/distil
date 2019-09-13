@@ -57,12 +57,12 @@ func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resu
 
 	var baseline *api.Histogram
 	var filtered *api.Histogram
-	baseline, err = s.fetchResidualsSummary(dataset, storageName, variable, resultURI, nil, extrema)
+	baseline, err = s.fetchResidualsSummary(dataset, storageName, variable, resultURI, nil, extrema, api.MaxNumBuckets)
 	if err != nil {
 		return nil, err
 	}
 	if !filterParams.Empty() {
-		filtered, err = s.fetchResidualsSummary(dataset, storageName, variable, resultURI, filterParams, extrema)
+		filtered, err = s.fetchResidualsSummary(dataset, storageName, variable, resultURI, filterParams, extrema, api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
 		}
@@ -78,11 +78,11 @@ func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resu
 	}, nil
 }
 
-func (s *Storage) fetchResidualsSummary(dataset string, storageName string, variable *model.Variable, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (s *Storage) fetchResidualsSummary(dataset string, storageName string, variable *model.Variable, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	// Just return a nil in the case where we were asked to return residuals for a non-numeric variable.
 	if model.IsNumerical(variable.Type) || variable.Type == model.TimeSeriesType {
 		// fetch numeric histograms
-		residuals, err := s.fetchResidualsHistogram(resultURI, storageName, variable, filterParams, extrema)
+		residuals, err := s.fetchResidualsHistogram(resultURI, storageName, variable, filterParams, extrema, numBuckets)
 		if err != nil {
 			return nil, err
 		}
@@ -95,18 +95,18 @@ func getErrorTyped(variableName string) string {
 	return fmt.Sprintf("(cast(value as double precision) - cast(\"%s\" as double precision))", variableName)
 }
 
-func (s *Storage) getResidualsHistogramAggQuery(extrema *api.Extrema, variableName string, resultVariable *model.Variable) (string, string, string) {
+func (s *Storage) getResidualsHistogramAggQuery(extrema *api.Extrema, variableName string, resultVariable *model.Variable, numBuckets int) (string, string, string) {
 	// compute the bucket interval for the histogram
-	interval := extrema.GetBucketInterval()
+	interval := extrema.GetBucketInterval(numBuckets)
 
 	// Only numeric types should occur.
 	errorTyped := getErrorTyped(variableName)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
-	rounded := extrema.GetBucketMinMax()
+	rounded := extrema.GetBucketMinMax(numBuckets)
 	bucketQueryString := fmt.Sprintf("width_bucket(%s, %g, %g, %d) - 1",
-		errorTyped, rounded.Min, rounded.Max, extrema.GetBucketCount())
+		errorTyped, rounded.Min, rounded.Max, extrema.GetBucketCount(numBuckets))
 	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
 
 	return histogramAggName, bucketQueryString, histogramQueryString
@@ -158,7 +158,7 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, storageName string, va
 	return s.parseExtrema(res, variable)
 }
 
-func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, variable *model.Variable, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, variable *model.Variable, filterParams *api.FilterParams, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.StringType,
@@ -182,7 +182,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, 
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, targetName, resultVariable)
+	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, targetName, resultVariable, numBuckets)
 
 	fromClause := getResultJoin(storageName)
 
@@ -215,5 +215,5 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, 
 
 	field := NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 
-	return field.parseHistogram(res, extrema)
+	return field.parseHistogram(res, extrema, numBuckets)
 }
