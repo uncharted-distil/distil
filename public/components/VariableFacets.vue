@@ -296,6 +296,7 @@ button {
 .variable-facets-container .variable-facets-item {
 	margin: 2px 2px 4px 2px;
 	min-height: 150px;
+	vertical-align: bottom;
 }
 .variable-facets-container .facets-root-container .facets-group-container{
 	background-color: inherit;

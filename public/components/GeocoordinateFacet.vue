@@ -11,7 +11,24 @@
 		</type-change-menu>
 		</div>
 	<div class="geo-plot-container">
-		<div class="geo-plot" v-bind:id="mapID"></div>
+		<div
+			class="geo-plot"
+			v-bind:id="mapID"
+			v-on:mousedown="onMouseDown"
+			v-on:mouseup="onMouseUp"
+			v-on:mousemove="onMouseMove">
+		</div>
+		<div
+			class="selection-toggle"
+			v-bind:class="{ active: isSelectionMode }"
+			v-on:click="isSelectionMode = !isSelectionMode">
+			<a
+				class="selection-toggle-control"
+				title="Select area"
+				aria-label="Select area">
+			<icon-base width="100%" height="100%"> <icon-crop-free /> </icon-base>
+			</a>
+		</div>
 	</div>
 
 	</div>
@@ -22,11 +39,13 @@ import _ from 'lodash';
 import $ from 'jquery';
 import leaflet from 'leaflet';
 import Vue from 'vue';
+import IconBase from './icons/IconBase';
+import IconCropFree from './icons/IconCropFree';
 import { scaleThreshold } from 'd3';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
-import { VariableSummary, Bucket } from '../store/dataset/index';
+import { VariableSummary, Bucket, Highlight } from '../store/dataset/index';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import { GEOCOORDINATE_TYPE } from '../util/types';
 
@@ -34,6 +53,9 @@ import 'leaflet/dist/leaflet.css';
 
 import helpers, { polygon, featureCollection } from '@turf/helpers';
 import bbox from '@turf/bbox';
+
+const CLOSE_BUTTON_CLASS = 'geo-close-button';
+const CLOSE_ICON_CLASS = 'fa-times';
 
 const PALETTE = [
 	'rgba(0,0,0,0)',
@@ -62,7 +84,9 @@ export default Vue.extend({
 	name: 'geocoordinate-facet',
 
 	components: {
-		TypeChangeMenu
+		TypeChangeMenu,
+		IconBase,
+		IconCropFree
 	},
 
 	props: {
@@ -74,6 +98,11 @@ export default Vue.extend({
 			map: null,
 			baseLayer: null,
 			bounds: null,
+			closeButton: null,
+			startingLatLng: null,
+			currentRect: null,
+			selectedRect: null,
+			isSelectionMode: false,
 		};
 	},
 
@@ -142,10 +171,167 @@ export default Vue.extend({
 		},
 		headerLabel(): string {
 			return GEOCOORDINATE_TYPE.toUpperCase();
-		}
+		},
+		highlight(): Highlight {
+			return routeGetters.getDecodedHighlight(this.$store);
+		},
 	},
 
 	methods: {
+		clearSelectionRect() {
+			if (this.selectedRect) {
+				this.selectedRect.remove();
+				this.selectedRect = null;
+			}
+			if (this.currentRect) {
+				this.currentRect.remove();
+				this.currentRect = null;
+			}
+			if (this.closeButton) {
+				this.closeButton.remove();
+				this.closeButton = null;
+			}
+		},
+		onMouseUp(event: MouseEvent) {
+			if (this.currentRect) {
+				this.setSelection(this.currentRect);
+				this.currentRect = null;
+
+				// disable drawing mode
+				// this.map.dragging.enable();
+				// this.map.on('click', this.clearSelection);
+			}
+		},
+		onMouseMove(event: MouseEvent) {
+			if (this.currentRect) {
+				const offset = $(this.map.getContainer()).offset();
+				const latLng = this.map.containerPointToLatLng({
+					x: event.pageX - offset.left,
+					y: event.pageY - offset.top
+				});
+				const bounds = [
+					this.startingLatLng,
+					latLng
+				];
+				this.currentRect.setBounds(bounds);
+			}
+		},
+		onMouseDown(event: MouseEvent) {
+			console.log('selection mode', this.isSelectionMode);
+
+			if (this.isSelectionMode) {
+
+				this.clearSelectionRect();
+
+				const offset = $(this.map.getContainer()).offset();
+				console.log('offset', offset);
+
+				this.startingLatLng = this.map.containerPointToLatLng({
+					x: event.pageX - offset.left,
+					y: event.pageY - offset.top
+				});
+
+				const bounds = [this.startingLatLng, this.startingLatLng];
+				this.currentRect = leaflet.rectangle(bounds, {
+					color: '#00c6e1',
+					weight: 1,
+					bubblingMouseEvents: false
+				});
+				this.currentRect.on('click', e => {
+					this.setSelection(e.target);
+				});
+				this.currentRect.addTo(this.map);
+
+				// enable drawing mode
+				// this.map.off('click', this.clearSelection);
+				this.map.dragging.disable();
+			}
+		},
+		setSelection(rect) {
+
+			this.clearSelection();
+
+			this.selectedRect = rect;
+			const $selected = $(this.selectedRect._path);
+			$selected.addClass('selected');
+
+			const ne = rect.getBounds().getNorthEast();
+			const sw = rect.getBounds().getSouthWest();
+			const icon = leaflet.divIcon({
+				className: CLOSE_BUTTON_CLASS,
+				iconSize: null,
+				html: `<i class="fa ${CLOSE_ICON_CLASS}"></i>`
+			});
+			this.closeButton = leaflet.marker([ ne.lat, ne.lng ], {
+				icon: icon
+			});
+			this.closeButton.addTo(this.map);
+			this.createHighlight({
+				minX: sw.lng,
+				maxX: ne.lng,
+				minY: sw.lat,
+				maxY: ne.lat
+			});
+		},
+		clearSelection() {
+			if (this.selectedRect) {
+				$(this.selectedRect._path).removeClass('selected');
+				// clearHighlight(this.$router);
+			}
+			if (this.closeButton) {
+				this.closeButton.remove();
+			}
+		},
+		createHighlight(value: { minX: number, maxX: number, minY: number, maxY: number }) {
+
+			if (this.highlight &&
+				this.highlight.value.minX === value.minX &&
+				this.highlight.value.maxX === value.maxX &&
+				this.highlight.value.minY === value.minY &&
+				this.highlight.value.maxY === value.maxY) {
+				// dont push existing highlight
+				return;
+			}
+
+			// TODO: support filtering multiple vars?
+			// const fieldSpec = this.fieldSpecs[0];
+			// const key = fieldSpec.type === SINGLE_FIELD ? fieldSpec.field : this.fieldHash(fieldSpec);
+
+			// updateHighlight(this.$router, {
+			// 	context: this.instanceName,
+			// 	dataset: this.dataset,
+			// 	key: key,
+			// 	value: value
+			// });
+		},
+		drawHighlight() {
+			if (this.highlight &&
+				this.highlight.value.minX !== undefined &&
+				this.highlight.value.maxX !== undefined &&
+				this.highlight.value.minY !== undefined &&
+				this.highlight.value.maxY !== undefined) {
+
+				const rect = leaflet.rectangle([
+					[
+						this.highlight.value.minY,
+						this.highlight.value.minX
+					],
+					[
+						this.highlight.value.maxY,
+						this.highlight.value.maxX
+					]], {
+					color: '#00c6e1',
+					weight: 1,
+					bubblingMouseEvents: false
+				});
+				rect.on('click', e => {
+					this.setSelection(e.target);
+				});
+				rect.addTo(this.map);
+
+				this.setSelection(rect);
+			}
+		},
 		paint() {
 			// NOTE: this component re-mounts on any change, so do everything in here
 
@@ -156,6 +342,7 @@ export default Vue.extend({
 					zoom: 2,
 					scrollWheelZoom: false,
 					zoomControl: false,
+					doubleClickZoom: false
 				});
 				this.map.dragging.disable();
 
@@ -229,6 +416,10 @@ export default Vue.extend({
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.geo-plot-container {
+	bottom: 16px;
 }
 
 .geo-plot-container, .geo-plot {
