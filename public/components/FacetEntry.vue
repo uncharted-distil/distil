@@ -605,7 +605,7 @@ export default Vue.extend({
 			// if the dataset of the highlight does not match the dataset of this
 			// facet, deemphasis the group
 
-			if (!highlight || !highlight || highlight.dataset === group.dataset) {
+			if (!highlight || !group || highlight.dataset === group.dataset) {
 				group._element.removeClass('deemphasis');
 				return;
 			}
