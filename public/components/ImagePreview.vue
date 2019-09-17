@@ -58,10 +58,8 @@ export default Vue.extend({
 		};
 	},
 
-	updated: function () {
-		this.$nextTick(function () {
-			this.injectZoomedImage();
-		});
+	updated() {
+		this.$nextTick(this.injectZoomedImage);
 	},
 
 	computed: {
