@@ -58,6 +58,12 @@ export default Vue.extend({
 		};
 	},
 
+	updated: function () {
+		this.$nextTick(function () {
+			this.injectZoomedImage();
+		});
+	},
+
 	computed: {
 		files(): Dictionary<any> {
 			return datasetGetters.getFiles(this.$store);
@@ -110,12 +116,15 @@ export default Vue.extend({
 			}
 		},
 
-		showZoomedImage() {
-			if (this.image) {
-				const $elem = this.$refs.imageElemZoom as any;
+		injectZoomedImage () {
+			const $elem = this.$refs.imageElemZoom as any;
+			if (this.image && $elem) {
 				$elem.innerHTML = '';
 				$elem.appendChild(this.clonedImageElement(this.zoomedWidth, this.zoomedHeight));
 			}
+		},
+
+		showZoomedImage() {
 			this.zoomImage = true;
 		},
 
