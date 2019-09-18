@@ -237,7 +237,7 @@ export default Vue.extend({
 			this.$emit('categorical-click', key);
 		},
 
-		onNumericalClick(context: string, key: string, value: { from: number, to: number }, dataset: string) {
+		onNumericalClick(context: string, key: string, value: { from: number, to: number, type: string }, dataset: string) {
 			if (this.enableHighlighting) {
 				if (!this.highlight || this.highlight.key !== key) {
 					updateHighlight(this.$router, {

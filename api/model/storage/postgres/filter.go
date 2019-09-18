@@ -97,7 +97,7 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filt
 	case model.DatetimeFilter:
 		// datetime
 		// extract epoch for comparison
-		where := fmt.Sprintf("cast(extract(epoch from %s) as integer) >= $%d AND cast(extract(epoch from %s) as integer) <= $%d", name, len(params)+1, name, len(params)+2)
+		where := fmt.Sprintf("cast(extract(epoch from %s) as double precision) >= $%d AND cast(extract(epoch from %s) as double precision) <= $%d", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -166,8 +166,17 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filt
 	name := s.formatFilterKey(filter.Key)
 
 	switch filter.Type {
+	case model.DatetimeFilter:
+		// datetime
+		// extract epoch for comparison
+		where := fmt.Sprintf("cast(extract(epoch from %s) as double precision) < $%d OR cast(extract(epoch from %s) as double precision) > $%d", name, len(params)+1, name, len(params)+2)
+		wheres = append(wheres, where)
+		params = append(params, *filter.Min)
+		params = append(params, *filter.Max)
+
 	case model.NumericalFilter:
 		// numerical
+		//TODO: WHY DOES THIS QUERY NOT CAST TO DOUBLE LIKE THE INCLUDE???
 		where := fmt.Sprintf("(%s < $%d OR %s > $%d)", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)

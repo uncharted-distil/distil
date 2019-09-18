@@ -80,7 +80,7 @@ export function createFilterFromHighlight(highlight: Highlight, mode: string): F
 
 		return {
 			key: key,
-			type: NUMERICAL_FILTER,
+			type: highlight.value.type,
 			mode: mode,
 			min: highlight.value.from,
 			max: highlight.value.to

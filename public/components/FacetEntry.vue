@@ -12,6 +12,7 @@ import Vue from 'vue';
 import IconFork from './icons/IconFork';
 import IconBookmark from './icons/IconBookmark';
 import { createIcon } from '../util/icon';
+import { CATEGORICAL_FILTER, NUMERICAL_FILTER, BIVARIATE_FILTER, FEATURE_FILTER, TIMESERIES_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { createGroup, Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet, isSparklineFacet } from '../util/facets';
 import { VariableSummary, Highlight, RowSelection, Row } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
@@ -290,7 +291,8 @@ export default Vue.extend({
 						const last = slices[slices.length - 1];
 						const range = {
 							from: _.toNumber(first.label),
-							to: _.toNumber(last.toLabel)
+							to: _.toNumber(last.toLabel),
+							type: NUMERICAL_FILTER
 						};
 						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 
