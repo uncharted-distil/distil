@@ -12,7 +12,7 @@ import Vue from 'vue';
 import IconFork from './icons/IconFork';
 import IconBookmark from './icons/IconBookmark';
 import { createIcon } from '../util/icon';
-import { CATEGORICAL_FILTER, NUMERICAL_FILTER, BIVARIATE_FILTER, FEATURE_FILTER, TIMESERIES_FILTER, INCLUDE_FILTER } from '../util/filters';
+import { CATEGORICAL_FILTER, NUMERICAL_FILTER, DATETIME_FILTER, BIVARIATE_FILTER, FEATURE_FILTER, TIMESERIES_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { createGroup, Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet, isSparklineFacet } from '../util/facets';
 import { VariableSummary, Highlight, RowSelection, Row } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
@@ -79,8 +79,9 @@ export default Vue.extend({
 
 		this.facets.on('facet-histogram:rangechangeduser', (event: Event, key: string, value: any, facet: any) => {
 			const range = {
-				from: _.toNumber(value.from.label[0]),
-				to: _.toNumber(value.to.label[0])
+				from: _.isNumber(value.from.label[0]) ? _.toNumber(value.from.label[0]) : Date.parse(value.from.label[0]) / 1000,
+				to: _.isNumber(value.to.label[0]) ? _.toNumber(value.to.label[0]) : Date.parse(value.to.label[0]) / 1000,
+				type: _.isNumber(value.from.label[0]) ? NUMERICAL_FILTER : DATETIME_FILTER
 			};
 			component.$emit('range-change', this.instanceName, this.groupSpec.colName, range, facet.dataset);
 		});
@@ -290,9 +291,9 @@ export default Vue.extend({
 						const first = slices[0];
 						const last = slices[slices.length - 1];
 						const range = {
-							from: _.toNumber(first.label),
-							to: _.toNumber(last.toLabel),
-							type: NUMERICAL_FILTER
+							from: _.isNumber(first.label) ? _.toNumber(first.label) : Date.parse(first.label) / 1000,
+							to: _.isNumber(last.toLabel) ? _.toNumber(last.toLabel) : Date.parse(last.toLabel) / 1000,
+							type: _.isNumber(first.label) ? NUMERICAL_FILTER : DATETIME_FILTER
 						};
 						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 
@@ -323,8 +324,9 @@ export default Vue.extend({
 						const first = slices[0];
 						const last = slices[slices.length - 1];
 						const range = {
-							from: _.toNumber(first.label),
-							to: _.toNumber(last.toLabel)
+							from: _.isNumber(first.label) ? _.toNumber(first.label) : Date.parse(first.label) / 1000,
+							to: _.isNumber(last.toLabel) ? _.toNumber(last.toLabel) : Date.parse(last.toLabel) / 1000,
+							type: _.isNumber(first.label) ? NUMERICAL_FILTER : DATETIME_FILTER
 						};
 						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 

@@ -18,7 +18,6 @@ package model
 import (
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/pkg/errors"
 
@@ -184,26 +183,16 @@ func parseFilter(filter map[string]interface{}) (*model.Filter, error) {
 		if !ok {
 			return nil, errors.Errorf("no `key` provided for filter")
 		}
-
-		minStr, ok := json.String(filter, "min")
+		min, ok := json.Float(filter, "min")
 		if !ok {
 			return nil, errors.Errorf("no `min` provided for filter")
 		}
-		min, err := time.Parse("2006/01/02", minStr)
-		if err != nil {
-			return nil, err
-		}
-
-		maxStr, ok := json.String(filter, "max")
+		max, ok := json.Float(filter, "max")
 		if !ok {
 			return nil, errors.Errorf("no `max` provided for filter")
 		}
-		max, err := time.Parse("2006/01/02", maxStr)
-		if err != nil {
-			return nil, err
-		}
 
-		return model.NewDatetimeFilter(key, mode, float64(min.Unix()), float64(max.Unix())), nil
+		return model.NewDatetimeFilter(key, mode, min, max), nil
 	}
 
 	// numeric
