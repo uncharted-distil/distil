@@ -46,6 +46,19 @@ export default Vue.extend({
 		onClick: Function
 	},
 
+	watch: {
+		imageUrl(newUrl, oldUrl) {
+			if (newUrl !== oldUrl) {
+				this.clearImage();
+				if (!this.image) {
+					this.requestImage();
+				} else {
+					this.injectImage();
+				}
+			}
+		}
+	},
+
 	data() {
 		return {
 			zoomImage: false,
@@ -135,6 +148,13 @@ export default Vue.extend({
 			$(img).css('max-width', `${width}px`);
 			$(img).css('max-height', `${height}px`);
 			return img as HTMLImageElement;
+		},
+
+		clearImage () {
+			const $elem = this.$refs.imageElem as any;
+			if ($elem) {
+				$elem.innerHTML = '';
+			}
 		},
 
 		injectImage() {
