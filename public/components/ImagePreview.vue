@@ -46,6 +46,19 @@ export default Vue.extend({
 		onClick: Function
 	},
 
+	watch: {
+		imageUrl(newUrl, oldUrl) {
+			if (newUrl !== oldUrl) {
+				if (!this.image) {
+					this.clearImage();
+					this.requestImage();
+				} else {
+					this.injectImage();
+				}
+			}
+		}
+	},
+
 	data() {
 		return {
 			zoomImage: false,
@@ -137,13 +150,20 @@ export default Vue.extend({
 			return img as HTMLImageElement;
 		},
 
+		clearImage (elem?: any) {
+			const $elem = elem || this.$refs.imageElem as any;
+			if ($elem) {
+				$elem.innerHTML = '';
+			}
+		},
+
 		injectImage() {
 			if (!this.image) {
 				return;
 			}
 			const elem = this.$refs.imageElem as any;
 			if (elem) {
-				elem.innerHTML = '';
+				this.clearImage(elem);
 				elem.appendChild(this.clonedImageElement(this.width, this.height));
 				const icon = document.createElement('i');
 				icon.className += 'fa fa-search-plus zoom-icon';
