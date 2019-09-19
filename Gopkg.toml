@@ -91,11 +91,11 @@
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-compute"
-  branch = "date-filtering-min"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-ingest"
-  branch = "date-filtering-min"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/unchartedsoftware/plog"
