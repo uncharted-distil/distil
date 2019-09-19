@@ -365,9 +365,9 @@ function getHistogramSlices(summary: VariableSummary) {
 		let from: any, to: any;
 		if (summary.varType === DATE_TIME_TYPE) {
 			from = bucket.key;
-			to = (i < buckets.length - 1) ? buckets[i + 1].key : buckets[i].key;
-			from = moment(from).format('YYYY/MM/DD');
-			to = moment(to).format('YYYY/MM/DD');
+			to = (i < buckets.length - 1) ? buckets[i + 1].key : extrema.max;
+			from = moment.unix(_.toNumber(from)).utc().format('YYYY/MM/DD');
+			to = moment.unix(_.toNumber(to)).utc().format('YYYY/MM/DD');
 		} else {
 			from = _.toNumber(bucket.key);
 			to = (i < buckets.length - 1) ? _.toNumber(buckets[i + 1].key) : extrema.max;

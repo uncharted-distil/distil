@@ -8,6 +8,7 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
+import moment from 'moment';
 
 import IconFork from './icons/IconFork';
 import IconBookmark from './icons/IconBookmark';
@@ -78,10 +79,11 @@ export default Vue.extend({
 		});
 
 		this.facets.on('facet-histogram:rangechangeduser', (event: Event, key: string, value: any, facet: any) => {
+			const isNumber = !_.isNaN(_.toNumber(value.from.label[0]));
 			const range = {
-				from: _.isNumber(value.from.label[0]) ? _.toNumber(value.from.label[0]) : Date.parse(value.from.label[0]) / 1000,
-				to: _.isNumber(value.to.label[0]) ? _.toNumber(value.to.label[0]) : Date.parse(value.to.label[0]) / 1000,
-				type: _.isNumber(value.from.label[0]) ? NUMERICAL_FILTER : DATETIME_FILTER
+				from: isNumber ? _.toNumber(value.from.label[0]) : Date.parse(value.from.label[0]) / 1000,
+				to: isNumber ? _.toNumber(value.to.label[0]) : Date.parse(value.to.label[0]) / 1000,
+				type: isNumber ? NUMERICAL_FILTER : DATETIME_FILTER
 			};
 			component.$emit('range-change', this.instanceName, this.groupSpec.colName, range, facet.dataset);
 		});
@@ -290,10 +292,11 @@ export default Vue.extend({
 						const slices = facet.histogram.slices;
 						const first = slices[0];
 						const last = slices[slices.length - 1];
+						const isNumber = !_.isNaN(_.toNumber(first.label));
 						const range = {
-							from: _.isNumber(first.label) ? _.toNumber(first.label) : Date.parse(first.label) / 1000,
-							to: _.isNumber(last.toLabel) ? _.toNumber(last.toLabel) : Date.parse(last.toLabel) / 1000,
-							type: _.isNumber(first.label) ? NUMERICAL_FILTER : DATETIME_FILTER
+							from: isNumber ? _.toNumber(first.label) : Date.parse(first.label) / 1000,
+							to: isNumber ? _.toNumber(last.toLabel) : Date.parse(last.toLabel) / 1000,
+							type: isNumber ? NUMERICAL_FILTER : DATETIME_FILTER
 						};
 						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 
@@ -323,10 +326,11 @@ export default Vue.extend({
 						const slices = facet.histogram.slices;
 						const first = slices[0];
 						const last = slices[slices.length - 1];
+						const isNumber = !_.isNaN(_.toNumber(first.label));
 						const range = {
-							from: _.isNumber(first.label) ? _.toNumber(first.label) : Date.parse(first.label) / 1000,
-							to: _.isNumber(last.toLabel) ? _.toNumber(last.toLabel) : Date.parse(last.toLabel) / 1000,
-							type: _.isNumber(first.label) ? NUMERICAL_FILTER : DATETIME_FILTER
+							from: isNumber ? _.toNumber(first.label) : Date.parse(first.label) / 1000,
+							to: isNumber ? _.toNumber(last.toLabel) : Date.parse(last.toLabel) / 1000,
+							type: isNumber ? NUMERICAL_FILTER : DATETIME_FILTER
 						};
 						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 
@@ -407,9 +411,18 @@ export default Vue.extend({
 			if (_.isString(highlight.value)) {
 				return highlight.value === value;
 			}
+
+			// if datetime, convert value
+			let fromValue = value.from;
+			let toValue = value.to;
+			if (highlight.value.type === DATETIME_FILTER) {
+				fromValue = Date.parse(value.from) / 1000;
+				toValue = Date.parse(value.to) / 1000;
+			}
+
 			// otherwise, check range
-			return highlight.value.from === value.from &&
-				highlight.value.to === value.to;
+			return highlight.value.from === fromValue &&
+				highlight.value.to === toValue;
 		},
 
 		getHighlightValue(highlight: Highlight): any {
@@ -499,10 +512,19 @@ export default Vue.extend({
 			if (facet._histogram) {
 				facet._histogram.bars.forEach(bar => {
 					const entry: any = _.last(bar.metadata);
-					if (col.value >= _.toNumber(entry.label) &&
-						col.value < _.toNumber(entry.toLabel)) {
-						bar._element.css('fill', '#ff0067');
-						bar._element.addClass('row-selected');
+					if (!_.isNaN(_.toNumber(entry.label))) {
+						if (col.value >= _.toNumber(entry.label) &&
+							col.value < _.toNumber(entry.toLabel)) {
+							bar._element.css('fill', '#ff0067');
+							bar._element.addClass('row-selected');
+						}
+					} else {
+						// datetime labels
+						const dateString = moment(col.value).format('YYYY/MM/DD');
+						if (dateString >= entry.label && dateString < entry.toLabel) {
+							bar._element.css('fill', '#ff0067');
+							bar._element.addClass('row-selected');
+						}
 					}
 				});
 			} else if (facet._sparkline) {
@@ -661,9 +683,10 @@ export default Vue.extend({
 					if (this.isHighlightedGroup(highlight, this.groupSpec.colName)) {
 
 						// NOTE: the `from` / `to` values MUST be strings.
+						// if datetime, need to get date label back.
 						selection.range = {
-							from: `${highlightRootValue.from}`,
-							to: `${highlightRootValue.to}`
+							from: highlightRootValue.type === DATETIME_FILTER ? moment.unix(highlightRootValue.from).utc().format('YYYY/MM/DD') : `${highlightRootValue.from}`,
+							to: highlightRootValue.type === DATETIME_FILTER ? moment.unix(highlightRootValue.to).utc().format('YYYY/MM/DD') : `${highlightRootValue.from}`
 						};
 
 					} else {

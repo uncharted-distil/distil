@@ -228,19 +228,18 @@ func (f *DateTimeField) getHistogramAggQuery(extrema *api.Extrema, numBuckets in
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
-	rounded := extrema.GetBucketMinMax(numBuckets)
 
 	bucketQueryString := ""
 	// if only a single value, then return a simple count.
-	if rounded.Max == rounded.Min {
+	if extrema.Max == extrema.Min {
 		// want to return the count under bucket 0.
 		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", extrema.Key, extrema.Key)
 	} else {
 		bucketQueryString = fmt.Sprintf("width_bucket(cast(extract(epoch from \"%s\") as integer), %d, %d, %d) - 1",
-			extrema.Key, int(rounded.Min), int(rounded.Max), extrema.GetBucketCount(numBuckets))
+			extrema.Key, int(extrema.Min), int(extrema.Max), extrema.GetBucketCount(numBuckets))
 	}
 
-	histogramQueryString := fmt.Sprintf("(%s) * %d + %d", bucketQueryString, int(interval), int(rounded.Min))
+	histogramQueryString := fmt.Sprintf("(%s) * %d + %d", bucketQueryString, int(interval), int(extrema.Min))
 
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
@@ -261,8 +260,7 @@ func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema, num
 	interval := extrema.GetBucketInterval(numBuckets)
 
 	buckets := make([]*api.Bucket, extrema.GetBucketCount(numBuckets))
-	rounded := extrema.GetBucketMinMax(numBuckets)
-	key := rounded.Min
+	key := extrema.Min
 	for i := 0; i < len(buckets); i++ {
 		keyString := ""
 		if model.IsFloatingPoint(extrema.Type) {
@@ -271,13 +269,13 @@ func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema, num
 			keyString = strconv.Itoa(int(key))
 		}
 
-		dateString, err := f.parseValueToDateString(keyString)
-		if err != nil {
-			return nil, err
-		}
+		//dateString, err := f.parseValueToDateString(keyString)
+		//if err != nil {
+		//	return nil, err
+		//}
 
 		buckets[i] = &api.Bucket{
-			Key:   dateString,
+			Key:   keyString,
 			Count: 0,
 		}
 
@@ -309,7 +307,7 @@ func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema, num
 
 	// assign histogram attributes
 	return &api.Histogram{
-		Extrema: rounded,
+		Extrema: extrema,
 		Buckets: buckets,
 	}, nil
 }
