@@ -49,8 +49,8 @@ export default Vue.extend({
 	watch: {
 		imageUrl(newUrl, oldUrl) {
 			if (newUrl !== oldUrl) {
-				this.clearImage();
 				if (!this.image) {
+					this.clearImage();
 					this.requestImage();
 				} else {
 					this.injectImage();
@@ -150,8 +150,8 @@ export default Vue.extend({
 			return img as HTMLImageElement;
 		},
 
-		clearImage () {
-			const $elem = this.$refs.imageElem as any;
+		clearImage (elem?: any) {
+			const $elem = elem || this.$refs.imageElem as any;
 			if ($elem) {
 				$elem.innerHTML = '';
 			}
@@ -163,7 +163,7 @@ export default Vue.extend({
 			}
 			const elem = this.$refs.imageElem as any;
 			if (elem) {
-				elem.innerHTML = '';
+				this.clearImage(elem);
 				elem.appendChild(this.clonedImageElement(this.width, this.height));
 				const icon = document.createElement('i');
 				icon.className += 'fa fa-search-plus zoom-icon';
