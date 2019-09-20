@@ -47,15 +47,25 @@ import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
 import { VariableSummary, Bucket, Highlight } from '../store/dataset/index';
 import TypeChangeMenu from '../components/TypeChangeMenu';
-import { GEOCOORDINATE_TYPE } from '../util/types';
+import { updateHighlight, clearHighlight } from '../util/highlights';
+import { GEOCOORDINATE_TYPE, LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
 
 import 'leaflet/dist/leaflet.css';
 
 import helpers, { polygon, featureCollection } from '@turf/helpers';
 import bbox from '@turf/bbox';
 
+const SINGLE_FIELD = 1;
+const SPLIT_FIELD = 2;
 const CLOSE_BUTTON_CLASS = 'geo-close-button';
 const CLOSE_ICON_CLASS = 'fa-times';
+
+interface GeoField {
+	type: number;
+	latField?: string;
+	lngField?: string;
+	field?: string;
+}
 
 const PALETTE = [
 	'rgba(0,0,0,0)',
@@ -105,7 +115,6 @@ export default Vue.extend({
 			isSelectionMode: false,
 		};
 	},
-
 	computed: {
 		dataset(): string {
 			return routeGetters.getRouteDataset(this.$store);
@@ -175,9 +184,55 @@ export default Vue.extend({
 		highlight(): Highlight {
 			return routeGetters.getDecodedHighlight(this.$store);
 		},
+		fieldSpecs(): GeoField[] {
+
+			const variables = datasetGetters.getVariables(this.$store);
+
+			const matches = variables.filter(v => {
+				return v.colType === LONGITUDE_TYPE ||
+					v.colType === LATITUDE_TYPE ||
+					v.colType === REAL_VECTOR_TYPE;
+			});
+
+			let lng = null;
+			let lat = null;
+			const fields = [];
+			matches.forEach(match => {
+				if (match.colType === LONGITUDE_TYPE) {
+					lng = match.colName;
+				}
+				if (match.colType === LATITUDE_TYPE) {
+					lat = match.colName;
+				}
+				if (match.colType === REAL_VECTOR_TYPE) {
+					fields.push({
+						type: SINGLE_FIELD,
+						field: match.colName
+					});
+				}
+
+				if (lng && lat) {
+					fields.push({
+						type: SPLIT_FIELD,
+						lngField: lng,
+						latField: lat
+					});
+					lng = null;
+					lat = null;
+				}
+			});
+
+			return fields;
+		},
 	},
 
 	methods: {
+		fieldHash(fieldSpec: GeoField): string {
+			if (fieldSpec.type === SINGLE_FIELD) {
+				return fieldSpec.field;
+			}
+			return fieldSpec.lngField + ':' + fieldSpec.latField;
+		},
 		clearSelectionRect() {
 			if (this.selectedRect) {
 				this.selectedRect.remove();
@@ -217,14 +272,22 @@ export default Vue.extend({
 			}
 		},
 		onMouseDown(event: MouseEvent) {
-			console.log('selection mode', this.isSelectionMode);
+			const mapEventTarget = event.target as HTMLElement;
 
+			// check if mapEventTarget is the close button or icon
+			if (mapEventTarget.classList.contains(CLOSE_BUTTON_CLASS) ||  mapEventTarget.classList.contains(CLOSE_ICON_CLASS)) {
+				this.clearSelection();
+				this.selectedRect.remove();
+				this.selectedRect = null;
+				this.closeButton.remove();
+				this.closeButton = null;
+				return;
+			}
 			if (this.isSelectionMode) {
 
 				this.clearSelectionRect();
 
 				const offset = $(this.map.getContainer()).offset();
-				console.log('offset', offset);
 
 				this.startingLatLng = this.map.containerPointToLatLng({
 					x: event.pageX - offset.left,
@@ -276,7 +339,7 @@ export default Vue.extend({
 		clearSelection() {
 			if (this.selectedRect) {
 				$(this.selectedRect._path).removeClass('selected');
-				// clearHighlight(this.$router);
+				clearHighlight(this.$router);
 			}
 			if (this.closeButton) {
 				this.closeButton.remove();
@@ -289,20 +352,15 @@ export default Vue.extend({
 				this.highlight.value.maxX === value.maxX &&
 				this.highlight.value.minY === value.minY &&
 				this.highlight.value.maxY === value.maxY) {
-				// dont push existing highlight
 				return;
 			}
 
-			// TODO: support filtering multiple vars?
-			// const fieldSpec = this.fieldSpecs[0];
-			// const key = fieldSpec.type === SINGLE_FIELD ? fieldSpec.field : this.fieldHash(fieldSpec);
-
-			// updateHighlight(this.$router, {
-			// 	context: this.instanceName,
-			// 	dataset: this.dataset,
-			// 	key: key,
-			// 	value: value
-			// });
+			updateHighlight(this.$router, {
+				context: this.instanceName,
+				dataset: this.dataset,
+				key: 'longitude:latitude',
+				value: value
+			});
 		},
 		drawHighlight() {
 			if (this.highlight &&
@@ -433,6 +491,14 @@ export default Vue.extend({
 
 .geo-plot-container .type-change-dropdown-wrapper .dropdown-menu {
 	z-index: 3;
+}
+
+.geo-close-button {
+	z-index: 3;
+}
+
+.geo-plot-container .selection-toggle {
+	top: 55px;
 }
 
 </style>
