@@ -27,7 +27,7 @@ import (
 )
 
 // SubmitPipeline executes pipelines using the client and returns the result URI.
-func SubmitPipeline(client *compute.Client, datasets []string, step *pipeline.PipelineDescription) (string, error) {
+func SubmitPipeline(client *compute.Client, datasets []string, step *pipeline.PipelineDescription, useRunner bool) (string, error) {
 
 	config, err := env.LoadConfig()
 	if err != nil {
@@ -35,7 +35,7 @@ func SubmitPipeline(client *compute.Client, datasets []string, step *pipeline.Pi
 	}
 
 	if config.UseTA2Runner {
-		res, err := client.ExecutePipeline(context.Background(), datasets, step)
+		res, err := client.ExecutePipeline(context.Background(), datasets, step, useRunner)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to dispatch mocked pipeline")
 		}

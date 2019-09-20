@@ -67,7 +67,7 @@ func SetClient(computeClient *compute.Client) {
 }
 
 func submitPipeline(datasets []string, step *pipeline.PipelineDescription) (string, error) {
-	return sr.SubmitPipeline(client, datasets, step)
+	return sr.SubmitPipeline(client, datasets, step, true)
 }
 
 // ReadCSVFile reads a csv file and returns the string slice representation of the data.

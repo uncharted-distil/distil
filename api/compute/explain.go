@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	explainablePrimitives = map[string]bool{"test": true}
+	explainablePrimitives = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
 )
 
 func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string, datasetURI string, variables []*model.Variable) ([]*api.SolutionFeatureWeight, error) {
@@ -47,7 +47,7 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	}
 
 	// send the fully specified pipeline to TA2 (updated produce function call)
-	outputURI, err := SubmitPipeline(client, []string{datasetURI}, pipExplain)
+	outputURI, err := SubmitPipeline(client, []string{datasetURI}, pipExplain, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run the fully specified pipeline")
 	}
@@ -100,22 +100,28 @@ func (s *SolutionRequest) parseSolutionFeatureWeight(solutionID string, outputUR
 
 func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) (bool, *pipeline.PipelineDescription) {
 	pipelineDesc := solutionDesc.Pipeline
+	explainStep := -1
 	for si, ps := range pipelineDesc.Steps {
 		// get the step outputs
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
-			if s.explainablePrimitive(primitive.Primitive.Id) {
-				primitive.Outputs[0].Id = "produce_feature_importance"
-				pipelineDesc.Outputs[0].Data = fmt.Sprintf("steps.%d.outputs.0", si)
-
-				return true, pipelineDesc
+			if s.isExplainablePrimitive(primitive.Primitive.Id) {
+				primitive.Outputs[0].Id = "produce_feature_importances"
+				pipelineDesc.Outputs[0].Data = fmt.Sprintf("steps.%d.produce_feature_importances", si)
+				explainStep = si
+				break
 			}
 		}
 	}
 
-	return false, nil
+	if explainStep < 0 {
+		return false, nil
+	}
+	pipelineDesc.Steps = pipelineDesc.Steps[0 : explainStep+1]
+
+	return true, pipelineDesc
 }
 
-func (s *SolutionRequest) explainablePrimitive(primitive string) bool {
+func (s *SolutionRequest) isExplainablePrimitive(primitive string) bool {
 	return explainablePrimitives[primitive]
 }
