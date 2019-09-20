@@ -8,6 +8,7 @@ export const FEATURE_PREFIX = '_feature_';
 export const CLUSTER_PREFIX = '_cluster_';
 export const GEOCODED_LAT_PREFIX = '_lat_';
 export const GEOCODED_LON_PREFIX = '_lon_';
+export const DATETIME_UNIX_ADJUSTMENT = 1000;
 
 // NOTE: these are copied from `distil-compute/model/schema_types.go` and
 // should be kept up to date in case of changes.

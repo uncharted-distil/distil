@@ -21,7 +21,7 @@ import { getSelectedRows } from '../util/row';
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
 import TypeChangeMenu from '../components/TypeChangeMenu';
-import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix, hasComputedVarPrefix, GEOCOORDINATE_TYPE } from '../util/types';
+import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix, hasComputedVarPrefix, GEOCOORDINATE_TYPE, DATETIME_UNIX_ADJUSTMENT } from '../util/types';
 import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from '../util/data';
 import { getters as datasetGetters } from '../store/dataset/module';
 
@@ -79,12 +79,7 @@ export default Vue.extend({
 		});
 
 		this.facets.on('facet-histogram:rangechangeduser', (event: Event, key: string, value: any, facet: any) => {
-			const isNumber = !_.isNaN(_.toNumber(value.from.label[0]));
-			const range = {
-				from: isNumber ? _.toNumber(value.from.label[0]) : Date.parse(value.from.label[0]) / 1000,
-				to: isNumber ? _.toNumber(value.to.label[0]) : Date.parse(value.to.label[0]) / 1000,
-				type: isNumber ? NUMERICAL_FILTER : DATETIME_FILTER
-			};
+			const range = this.buildNumericalRange(value.from.label[0], value.to.label[0]);
 			component.$emit('range-change', this.instanceName, this.groupSpec.colName, range, facet.dataset);
 		});
 
@@ -292,12 +287,7 @@ export default Vue.extend({
 						const slices = facet.histogram.slices;
 						const first = slices[0];
 						const last = slices[slices.length - 1];
-						const isNumber = !_.isNaN(_.toNumber(first.label));
-						const range = {
-							from: isNumber ? _.toNumber(first.label) : Date.parse(first.label) / 1000,
-							to: isNumber ? _.toNumber(last.toLabel) : Date.parse(last.toLabel) / 1000,
-							type: isNumber ? NUMERICAL_FILTER : DATETIME_FILTER
-						};
+						const range = this.buildNumericalRange(first.label, last.toLabel);
 						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 
 					} else if (isSparklineFacet(facet)) {
@@ -326,12 +316,7 @@ export default Vue.extend({
 						const slices = facet.histogram.slices;
 						const first = slices[0];
 						const last = slices[slices.length - 1];
-						const isNumber = !_.isNaN(_.toNumber(first.label));
-						const range = {
-							from: isNumber ? _.toNumber(first.label) : Date.parse(first.label) / 1000,
-							to: isNumber ? _.toNumber(last.toLabel) : Date.parse(last.toLabel) / 1000,
-							type: isNumber ? NUMERICAL_FILTER : DATETIME_FILTER
-						};
+						const range = this.buildNumericalRange(first.label, last.toLabel);
 						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 
 					} else if (isSparklineFacet(facet)) {
@@ -416,8 +401,8 @@ export default Vue.extend({
 			let fromValue = value.from;
 			let toValue = value.to;
 			if (highlight.value.type === DATETIME_FILTER) {
-				fromValue = Date.parse(value.from) / 1000;
-				toValue = Date.parse(value.to) / 1000;
+				fromValue = Date.parse(value.from) / DATETIME_UNIX_ADJUSTMENT;
+				toValue = Date.parse(value.to) / DATETIME_UNIX_ADJUSTMENT;
 			}
 
 			// otherwise, check range
@@ -798,6 +783,15 @@ export default Vue.extend({
 			facetsGroup.facets.forEach(f => {
 				f.dataset = distilGroup.dataset;
 			});
+		},
+
+		buildNumericalRange(fromValue: string, toValue: string): any {
+			const isNumber = !_.isNaN(_.toNumber(fromValue));
+			const range = {
+				from: isNumber ? _.toNumber(fromValue) : Date.parse(fromValue) / DATETIME_UNIX_ADJUSTMENT,
+				to: isNumber ? _.toNumber(toValue) : Date.parse(toValue) / DATETIME_UNIX_ADJUSTMENT,
+				type: isNumber ? NUMERICAL_FILTER : DATETIME_FILTER
+			};
 		},
 
 		groupsEqual(a: Group, b: Group): boolean {

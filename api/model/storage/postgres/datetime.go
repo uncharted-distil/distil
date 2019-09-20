@@ -269,11 +269,6 @@ func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema, num
 			keyString = strconv.Itoa(int(key))
 		}
 
-		//dateString, err := f.parseValueToDateString(keyString)
-		//if err != nil {
-		//	return nil, err
-		//}
-
 		buckets[i] = &api.Bucket{
 			Key:   keyString,
 			Count: 0,
