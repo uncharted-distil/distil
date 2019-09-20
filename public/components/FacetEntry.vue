@@ -8,10 +8,12 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import Vue from 'vue';
+import moment from 'moment';
 
 import IconFork from './icons/IconFork';
 import IconBookmark from './icons/IconBookmark';
 import { createIcon } from '../util/icon';
+import { CATEGORICAL_FILTER, NUMERICAL_FILTER, DATETIME_FILTER, BIVARIATE_FILTER, FEATURE_FILTER, TIMESERIES_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { createGroup, Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet, isSparklineFacet } from '../util/facets';
 import { VariableSummary, Highlight, RowSelection, Row } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
@@ -19,7 +21,7 @@ import { getSelectedRows } from '../util/row';
 import Facets from '@uncharted.software/stories-facets';
 import ImagePreview from '../components/ImagePreview';
 import TypeChangeMenu from '../components/TypeChangeMenu';
-import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix, hasComputedVarPrefix, GEOCOORDINATE_TYPE } from '../util/types';
+import { getVarType, isClusterType, isFeatureType, addClusterPrefix, addFeaturePrefix, hasComputedVarPrefix, GEOCOORDINATE_TYPE, DATETIME_UNIX_ADJUSTMENT } from '../util/types';
 import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from '../util/data';
 import { getters as datasetGetters } from '../store/dataset/module';
 
@@ -77,10 +79,7 @@ export default Vue.extend({
 		});
 
 		this.facets.on('facet-histogram:rangechangeduser', (event: Event, key: string, value: any, facet: any) => {
-			const range = {
-				from: _.toNumber(value.from.label[0]),
-				to: _.toNumber(value.to.label[0])
-			};
+			const range = this.buildNumericalRange(value.from.label[0], value.to.label[0]);
 			component.$emit('range-change', this.instanceName, this.groupSpec.colName, range, facet.dataset);
 		});
 
@@ -288,10 +287,7 @@ export default Vue.extend({
 						const slices = facet.histogram.slices;
 						const first = slices[0];
 						const last = slices[slices.length - 1];
-						const range = {
-							from: _.toNumber(first.label),
-							to: _.toNumber(last.toLabel)
-						};
+						const range = this.buildNumericalRange(first.label, last.toLabel);
 						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 
 					} else if (isSparklineFacet(facet)) {
@@ -320,10 +316,7 @@ export default Vue.extend({
 						const slices = facet.histogram.slices;
 						const first = slices[0];
 						const last = slices[slices.length - 1];
-						const range = {
-							from: _.toNumber(first.label),
-							to: _.toNumber(last.toLabel)
-						};
+						const range = this.buildNumericalRange(first.label, last.toLabel);
 						this.$emit('numerical-click', this.instanceName, group.colName, range, group.dataset);
 
 					} else if (isSparklineFacet(facet)) {
@@ -403,9 +396,18 @@ export default Vue.extend({
 			if (_.isString(highlight.value)) {
 				return highlight.value === value;
 			}
+
+			// if datetime, convert value
+			let fromValue = value.from;
+			let toValue = value.to;
+			if (highlight.value.type === DATETIME_FILTER) {
+				fromValue = Date.parse(value.from) / DATETIME_UNIX_ADJUSTMENT;
+				toValue = Date.parse(value.to) / DATETIME_UNIX_ADJUSTMENT;
+			}
+
 			// otherwise, check range
-			return highlight.value.from === value.from &&
-				highlight.value.to === value.to;
+			return highlight.value.from === fromValue &&
+				highlight.value.to === toValue;
 		},
 
 		getHighlightValue(highlight: Highlight): any {
@@ -495,10 +497,19 @@ export default Vue.extend({
 			if (facet._histogram) {
 				facet._histogram.bars.forEach(bar => {
 					const entry: any = _.last(bar.metadata);
-					if (col.value >= _.toNumber(entry.label) &&
-						col.value < _.toNumber(entry.toLabel)) {
-						bar._element.css('fill', '#ff0067');
-						bar._element.addClass('row-selected');
+					if (!_.isNaN(_.toNumber(entry.label))) {
+						if (col.value >= _.toNumber(entry.label) &&
+							col.value < _.toNumber(entry.toLabel)) {
+							bar._element.css('fill', '#ff0067');
+							bar._element.addClass('row-selected');
+						}
+					} else {
+						// datetime labels
+						const dateString = moment(col.value).format('YYYY/MM/DD');
+						if (dateString >= entry.label && dateString < entry.toLabel) {
+							bar._element.css('fill', '#ff0067');
+							bar._element.addClass('row-selected');
+						}
 					}
 				});
 			} else if (facet._sparkline) {
@@ -605,7 +616,7 @@ export default Vue.extend({
 			// if the dataset of the highlight does not match the dataset of this
 			// facet, deemphasis the group
 
-			if (!highlight || !highlight || highlight.dataset === group.dataset) {
+			if (!highlight || !group || highlight.dataset === group.dataset) {
 				group._element.removeClass('deemphasis');
 				return;
 			}
@@ -657,9 +668,10 @@ export default Vue.extend({
 					if (this.isHighlightedGroup(highlight, this.groupSpec.colName)) {
 
 						// NOTE: the `from` / `to` values MUST be strings.
+						// if datetime, need to get date label back.
 						selection.range = {
-							from: `${highlightRootValue.from}`,
-							to: `${highlightRootValue.to}`
+							from: highlightRootValue.type === DATETIME_FILTER ? moment.unix(highlightRootValue.from).utc().format('YYYY/MM/DD') : `${highlightRootValue.from}`,
+							to: highlightRootValue.type === DATETIME_FILTER ? moment.unix(highlightRootValue.to).utc().format('YYYY/MM/DD') : `${highlightRootValue.from}`
 						};
 
 					} else {
@@ -771,6 +783,15 @@ export default Vue.extend({
 			facetsGroup.facets.forEach(f => {
 				f.dataset = distilGroup.dataset;
 			});
+		},
+
+		buildNumericalRange(fromValue: string, toValue: string): any {
+			const isNumber = !_.isNaN(_.toNumber(fromValue));
+			const range = {
+				from: isNumber ? _.toNumber(fromValue) : Date.parse(fromValue) / DATETIME_UNIX_ADJUSTMENT,
+				to: isNumber ? _.toNumber(toValue) : Date.parse(toValue) / DATETIME_UNIX_ADJUSTMENT,
+				type: isNumber ? NUMERICAL_FILTER : DATETIME_FILTER
+			};
 		},
 
 		groupsEqual(a: Group, b: Group): boolean {

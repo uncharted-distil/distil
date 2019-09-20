@@ -19,6 +19,13 @@ export const CATEGORICAL_FILTER = 'categorical';
 export const NUMERICAL_FILTER = 'numerical';
 
 /**
+ * Datetime filter, omitting documents that do not fall within the provided
+ * variable range.
+ * @constant {string}
+ */
+export const DATETIME_FILTER = 'datetime';
+
+/**
  * Bivariate filter, omitting documents that do not fall within the provided
  * variable range.
  * @constant {string}

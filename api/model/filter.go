@@ -177,6 +177,24 @@ func parseFilter(filter map[string]interface{}) (*model.Filter, error) {
 
 	// TODO: update to a switch statement with a default to error
 
+	// datetine
+	if typ == model.DatetimeFilter {
+		key, ok := json.String(filter, "key")
+		if !ok {
+			return nil, errors.Errorf("no `key` provided for filter")
+		}
+		min, ok := json.Float(filter, "min")
+		if !ok {
+			return nil, errors.Errorf("no `min` provided for filter")
+		}
+		max, ok := json.Float(filter, "max")
+		if !ok {
+			return nil, errors.Errorf("no `max` provided for filter")
+		}
+
+		return model.NewDatetimeFilter(key, mode, min, max), nil
+	}
+
 	// numeric
 	if typ == model.NumericalFilter {
 		key, ok := json.String(filter, "key")
