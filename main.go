@@ -138,6 +138,7 @@ func main() {
 			config.SolutionComputeEndpoint,
 			config.SolutionComputeTrace,
 			userAgent,
+			"TA2",
 			time.Duration(config.SolutionComputePullTimeout)*time.Second,
 			config.SolutionComputePullMax,
 			config.SkipPreprocessing,
