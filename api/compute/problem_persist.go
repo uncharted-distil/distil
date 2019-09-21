@@ -152,7 +152,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 	// if so
 	pPath := path.Join(datasetDir, problemIDHash)
 	pFilePath := path.Join(pPath, D3MProblem)
-	if dirExists(pPath) && fileExists(pFilePath) {
+	if pathExists(pPath) && fileExists(pFilePath) {
 		log.Infof("Found stored problem for %s with hash %s", dataset, problemIDHash)
 		return nil, pPath, nil
 	}

@@ -280,7 +280,7 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 
 		// second pass - randomly sample each category to generate train/test split
 		for _, data := range categoryRowData {
-			maxCategoryRows := len(rowData) / len(data) * maxTrainingCount
+			maxCategoryRows := int(float64(len(data)) / float64(len(rowData)) * float64(maxTrainingCount))
 			err := shuffleAndWrite(data, targetCol, maxCategoryRows, writerTrain, writerTest)
 			if err != nil {
 				return err
@@ -316,17 +316,10 @@ func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, wr
 	rand.Shuffle(len(rowData), func(i, j int) { rowData[i], rowData[j] = rowData[j], rowData[i] })
 
 	// Figure out the number of train and test rows to use capping on the limit supplied by the caller.
-	numTest := int(float32(len(rowData)) * (1.0 - trainTestSplitThreshold))
-	numTrain := min(maxTrainingCount, int(float32(len(rowData))*trainTestSplitThreshold))
+	numTest := int(math.Ceil((float64(len(rowData)) * (1.0 - trainTestSplitThreshold))))
+	numTrain := min(maxTrainingCount, int(math.Floor(float64(len(rowData))*trainTestSplitThreshold)))
 	if maxTrainingCount <= 0 {
 		maxTrainingCount = math.MaxInt64
-	}
-
-	// force at least 1 element to be in the test set and issue a warning
-	if numTest == 0 && numTrain > 1 {
-		numTest++
-		numTrain--
-		log.Warn("forcing test subset to contain at least one element")
 	}
 
 	// Write out to train test
@@ -355,35 +348,48 @@ func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, wr
 	return nil
 }
 
-// PersistOriginalData copies the original data and splits it into a train &
+// check if the data has already been split using the existing context
+type persistedDataParams struct {
+	DatasetName          string
+	SchemaFile           string
+	SourceDataFolder     string
+	TmpDataFolder        string
+	TaskType             string
+	TimeseriesFieldIndex int
+	TargetFieldIndex     int
+	Stratify             bool
+}
+
+// persistOriginalData copies the original data and splits it into a train &
 // test subset to be used as needed.
-func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder string, tmpDataFolder string, taskType string,
-	timeseriesFieldIndex int, targetFieldIndex int, stratify bool) (string, string, error) {
+func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	// The complete data is copied into separate train & test folders.
 	// The main data is then split randomly.
-	trainFolder := path.Join(tmpDataFolder, datasetName, trainFilenamePrefix)
-	testFolder := path.Join(tmpDataFolder, datasetName, testFilenamePrefix)
-	trainSchemaFile := path.Join(trainFolder, schemaFile)
-	testSchemaFile := path.Join(testFolder, schemaFile)
+	trainFolder := path.Join(params.TmpDataFolder, params.DatasetName, trainFilenamePrefix)
+	testFolder := path.Join(params.TmpDataFolder, params.DatasetName, testFilenamePrefix)
+	trainSchemaFile := path.Join(trainFolder, params.SchemaFile)
+	testSchemaFile := path.Join(testFolder, params.SchemaFile)
 
-	// Disabling for now - check should also take into account whether or not stratified samplling was applied.  Would
-	// require persisting information.
-	//
-	// log.Infof("checking folders `%s` & `%s` to see if the dataset has been previously split", trainFolder, testFolder)
-	// if fileExists(trainSchemaFile) && fileExists(testSchemaFile) {
-	// 	log.Infof("dataset '%s' already split", datasetName)
-	// 	return trainSchemaFile, testSchemaFile, nil
-	// }
+	// check to see if any parameters relevant to the split are unchanged since the last time it was run (if it was run at all)
+	keyMatch, err := checkAndUpdateCacheKey(params)
+	if err != nil {
+		log.Warn(err)
+	}
+	log.Infof("checking folders `%s` & `%s` to see if the dataset has been previously split", trainFolder, testFolder)
+	if fileExists(trainSchemaFile) && fileExists(testSchemaFile) && keyMatch {
+		log.Infof("dataset '%s' already split", params.DatasetName)
+		return trainSchemaFile, testSchemaFile, nil
+	}
 
 	// clean out existing data
-	if dirExists(trainFolder) {
+	if pathExists(trainFolder) {
 		err := os.RemoveAll(trainFolder)
 		if err != nil {
 			return "", "", errors.Wrap(err, "unable to remove train folder from previous split attempt")
 		}
 	}
 
-	if dirExists(testFolder) {
+	if pathExists(testFolder) {
 		err := os.RemoveAll(testFolder)
 		if err != nil {
 			return "", "", errors.Wrap(err, "unable to remove test folder from previous split attempt")
@@ -391,18 +397,18 @@ func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder
 	}
 
 	// copy the data over
-	err := copy.Copy(sourceDataFolder, trainFolder)
+	err = copy.Copy(params.SourceDataFolder, trainFolder)
 	if err != nil {
 		return "", "", errors.Wrap(err, "unable to copy dataset folder to train")
 	}
 
-	err = copy.Copy(sourceDataFolder, testFolder)
+	err = copy.Copy(params.SourceDataFolder, testFolder)
 	if err != nil {
 		return "", "", errors.Wrap(err, "unable to copy dataset folder to test")
 	}
 
 	// read the dataset document
-	schemaFilename := path.Join(sourceDataFolder, schemaFile)
+	schemaFilename := path.Join(params.SourceDataFolder, params.SchemaFile)
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFilename)
 	if err != nil {
 		return "", "", err
@@ -413,17 +419,17 @@ func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder
 
 	// split the source data into train & test
 	var config env.Config
-	dataPath := path.Join(sourceDataFolder, mainDR.ResPath)
+	dataPath := path.Join(params.SourceDataFolder, mainDR.ResPath)
 	trainDataFile := path.Join(trainFolder, mainDR.ResPath)
 	testDataFile := path.Join(testFolder, mainDR.ResPath)
-	if taskType == compute.TaskTypeTimeseries {
-		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, timeseriesFieldIndex)
+	if params.TaskType == compute.TaskTypeTimeseries {
+		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, params.TimeseriesFieldIndex)
 	} else {
 		config, err = env.LoadConfig()
 		if err != nil {
 			return "", "", errors.Wrap(err, "unable to load config")
 		}
-		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, targetFieldIndex, config.MaxTrainingRows, stratify)
+		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex, config.MaxTrainingRows, params.Stratify)
 	}
 	if err != nil {
 		return "", "", err
@@ -432,7 +438,29 @@ func PersistOriginalData(datasetName string, schemaFile string, sourceDataFolder
 	return trainSchemaFile, testSchemaFile, nil
 }
 
-func dirExists(path string) bool {
+func checkAndUpdateCacheKey(params *persistedDataParams) (bool, error) {
+	// generate the hash from the params
+	hash, err := hashstructure.Hash(params, nil)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to generate persisted data hash")
+	}
+
+	// check to see if the dataset hash exists
+	hashFileName := fmt.Sprintf(".split.%0x", hash)
+	hashFilePath := path.Join(params.TmpDataFolder, hashFileName)
+
+	// if it doesn't, create it
+	if !pathExists(hashFilePath) {
+		_, err := os.Create(hashFilePath)
+		if err != nil {
+			return false, errors.Wrap(err, "failed to persist hash")
+		}
+		return false, nil
+	}
+	return true, nil
+}
+
+func pathExists(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return false
 	}
