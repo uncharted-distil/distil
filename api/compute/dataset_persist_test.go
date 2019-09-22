@@ -16,6 +16,7 @@
 package compute
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,17 +30,24 @@ import (
 func TestPersistOriginalDataUnstratified(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
 	params := createTestParams(false)
-	trainFolder, testFolder, err := persistOriginalData(params)
 
+	splitDatasetName, err := generateSplitDatasetName(params)
 	assert.NoError(t, err)
-	assert.Equal(t, "test/tmp_data/test_dataset/train/datasetDoc.json", trainFolder)
-	assert.Equal(t, "test/tmp_data/test_dataset/test/datasetDoc.json", testFolder)
+	trainPath := fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName)
+	testPath := fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName)
 
-	lines, err := task.ReadCSVFile("test/tmp_data/test_dataset/train/tables/learningData.csv", true)
+	trainFolder, testFolder, err := persistOriginalData(params)
+	assert.NoError(t, err)
+	assert.Equal(t, trainPath, trainFolder)
+	assert.Equal(t, testPath, testFolder)
+
+	trainDataPath := fmt.Sprintf("test/tmp_data/%s/train/tables/learningData.csv", splitDatasetName)
+	testDataPath := fmt.Sprintf("test/tmp_data/%s/test/tables/learningData.csv", splitDatasetName)
+	lines, err := task.ReadCSVFile(trainDataPath, true)
 	assert.NoError(t, err)
 	assert.Equal(t, 29, len(lines))
 
-	lines, err = task.ReadCSVFile("test/tmp_data/test_dataset/test/tables/learningData.csv", true)
+	lines, err = task.ReadCSVFile(testDataPath, true)
 	assert.NoError(t, err)
 	assert.Equal(t, 4, len(lines))
 }
@@ -47,17 +55,24 @@ func TestPersistOriginalDataUnstratified(t *testing.T) {
 func TestPersistOriginalDataStratified(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
 	params := createTestParams(true)
-	trainFolder, testFolder, err := persistOriginalData(params)
 
+	splitDatasetName, err := generateSplitDatasetName(params)
 	assert.NoError(t, err)
-	assert.Equal(t, "test/tmp_data/test_dataset/train/datasetDoc.json", trainFolder)
-	assert.Equal(t, "test/tmp_data/test_dataset/test/datasetDoc.json", testFolder)
+	trainPath := fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName)
+	testPath := fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName)
 
-	lines, err := task.ReadCSVFile("test/tmp_data/test_dataset/train/tables/learningData.csv", true)
+	trainFolder, testFolder, err := persistOriginalData(params)
+	assert.NoError(t, err)
+	assert.Equal(t, trainPath, trainFolder)
+	assert.Equal(t, testPath, testFolder)
+
+	trainDataPath := fmt.Sprintf("test/tmp_data/%s/train/tables/learningData.csv", splitDatasetName)
+	testDataPath := fmt.Sprintf("test/tmp_data/%s/test/tables/learningData.csv", splitDatasetName)
+	lines, err := task.ReadCSVFile(trainDataPath, true)
 	assert.NoError(t, err)
 	assert.Equal(t, 28, len(lines))
 
-	lines, err = task.ReadCSVFile("test/tmp_data/test_dataset/test/tables/learningData.csv", true)
+	lines, err = task.ReadCSVFile(testDataPath, true)
 	assert.NoError(t, err)
 	assert.Equal(t, 5, len(lines))
 
@@ -71,26 +86,31 @@ func TestPersistOriginalDataStratified(t *testing.T) {
 	assert.Equal(t, 1, categoricalValues["d"])
 }
 
-func TestCacheHit(t *testing.T) {
+func TestParamChange(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
-	params := createTestParams(true)
-	_, err := checkAndUpdateCacheKey(params)
-	assert.NoError(t, err)
-	params = createTestParams(true)
-	keyMatch, err := checkAndUpdateCacheKey(params)
-	assert.NoError(t, err)
-	assert.True(t, keyMatch)
-}
 
-func TestCacheMiss(t *testing.T) {
-	assert.NoError(t, removeTestFiles())
-	params := createTestParams(true)
-	_, err := checkAndUpdateCacheKey(params)
+	params := createTestParams(false)
+	splitDatasetName0, err := generateSplitDatasetName(params)
 	assert.NoError(t, err)
-	params = createTestParams(false)
-	keyMatch, err := checkAndUpdateCacheKey(params)
+
+	_, _, err = persistOriginalData(params)
 	assert.NoError(t, err)
-	assert.False(t, keyMatch)
+	trainPath := fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName0)
+	assert.FileExists(t, trainPath)
+	testPath := fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName0)
+	assert.FileExists(t, testPath)
+
+	params = createTestParams(true)
+	splitDatasetName1, err := generateSplitDatasetName(params)
+	assert.NoError(t, err)
+	assert.NotEqual(t, splitDatasetName0, splitDatasetName1)
+
+	_, _, err = persistOriginalData(params)
+	assert.NoError(t, err)
+	trainPath = fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName1)
+	assert.FileExists(t, trainPath)
+	testPath = fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName1)
+	assert.FileExists(t, testPath)
 }
 
 func createTestParams(stratify bool) *persistedDataParams {
@@ -107,11 +127,10 @@ func createTestParams(stratify bool) *persistedDataParams {
 }
 
 func removeTestFiles() error {
-	files, err := filepath.Glob("./test/tmp_data/.split*")
+	files, err := filepath.Glob("./test/tmp_data/test_dataset*")
 	if err != nil {
 		return errors.Wrap(err, "temp file glob failed")
 	}
-	files = append(files, "./test/tmp_data/test_dataset/train/test_dataset", "./test/tmp_data/test_dataset/test/test_dataset")
 	for _, f := range files {
 		if pathExists(f) {
 			if err := os.RemoveAll(f); err != nil {

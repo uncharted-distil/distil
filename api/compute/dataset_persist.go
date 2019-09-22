@@ -363,20 +363,21 @@ type persistedDataParams struct {
 // persistOriginalData copies the original data and splits it into a train &
 // test subset to be used as needed.
 func persistOriginalData(params *persistedDataParams) (string, string, error) {
+
+	splitDatasetName, err := generateSplitDatasetName(params)
+	if err != nil {
+		return "", "", err
+	}
+
 	// The complete data is copied into separate train & test folders.
 	// The main data is then split randomly.
-	trainFolder := path.Join(params.TmpDataFolder, params.DatasetName, trainFilenamePrefix)
-	testFolder := path.Join(params.TmpDataFolder, params.DatasetName, testFilenamePrefix)
+	trainFolder := path.Join(params.TmpDataFolder, splitDatasetName, trainFilenamePrefix)
+	testFolder := path.Join(params.TmpDataFolder, splitDatasetName, testFilenamePrefix)
 	trainSchemaFile := path.Join(trainFolder, params.SchemaFile)
 	testSchemaFile := path.Join(testFolder, params.SchemaFile)
 
-	// check to see if any parameters relevant to the split are unchanged since the last time it was run (if it was run at all)
-	keyMatch, err := checkAndUpdateCacheKey(params)
-	if err != nil {
-		log.Warn(err)
-	}
 	log.Infof("checking folders `%s` & `%s` to see if the dataset has been previously split", trainFolder, testFolder)
-	if fileExists(trainSchemaFile) && fileExists(testSchemaFile) && keyMatch {
+	if fileExists(trainSchemaFile) && fileExists(testSchemaFile) {
 		log.Infof("dataset '%s' already split", params.DatasetName)
 		return trainSchemaFile, testSchemaFile, nil
 	}
@@ -438,26 +439,14 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	return trainSchemaFile, testSchemaFile, nil
 }
 
-func checkAndUpdateCacheKey(params *persistedDataParams) (bool, error) {
+func generateSplitDatasetName(params *persistedDataParams) (string, error) {
 	// generate the hash from the params
 	hash, err := hashstructure.Hash(params, nil)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to generate persisted data hash")
+		return "", errors.Wrap(err, "failed to generate persisted data hash")
 	}
-
-	// check to see if the dataset hash exists
-	hashFileName := fmt.Sprintf(".split.%0x", hash)
-	hashFilePath := path.Join(params.TmpDataFolder, hashFileName)
-
-	// if it doesn't, create it
-	if !pathExists(hashFilePath) {
-		_, err := os.Create(hashFilePath)
-		if err != nil {
-			return false, errors.Wrap(err, "failed to persist hash")
-		}
-		return false, nil
-	}
-	return true, nil
+	hashFileName := fmt.Sprintf("%s-%0x", params.DatasetName, hash)
+	return hashFileName, nil
 }
 
 func pathExists(path string) bool {
