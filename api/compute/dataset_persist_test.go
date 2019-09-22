@@ -74,10 +74,10 @@ func TestPersistOriginalDataStratified(t *testing.T) {
 func TestCacheHit(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
 	params := createTestParams(true)
-	keyMatch, err := checkAndUpdateCacheKey(params)
+	_, err := checkAndUpdateCacheKey(params)
 	assert.NoError(t, err)
 	params = createTestParams(true)
-	keyMatch, err = checkAndUpdateCacheKey(params)
+	keyMatch, err := checkAndUpdateCacheKey(params)
 	assert.NoError(t, err)
 	assert.True(t, keyMatch)
 }
@@ -85,9 +85,10 @@ func TestCacheHit(t *testing.T) {
 func TestCacheMiss(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
 	params := createTestParams(true)
-	keyMatch, err := checkAndUpdateCacheKey(params)
+	_, err := checkAndUpdateCacheKey(params)
+	assert.NoError(t, err)
 	params = createTestParams(false)
-	keyMatch, err = checkAndUpdateCacheKey(params)
+	keyMatch, err := checkAndUpdateCacheKey(params)
 	assert.NoError(t, err)
 	assert.False(t, keyMatch)
 }
