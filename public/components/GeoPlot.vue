@@ -341,7 +341,6 @@ export default Vue.extend({
 
 			// TODO: support filtering multiple vars?
 			const fieldSpec = this.fieldSpecs[0];
-
 			const key = fieldSpec.type === SINGLE_FIELD ? fieldSpec.field : this.fieldHash(fieldSpec);
 
 			updateHighlight(this.$router, {

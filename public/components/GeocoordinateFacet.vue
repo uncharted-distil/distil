@@ -59,6 +59,7 @@ const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
 const CLOSE_BUTTON_CLASS = 'geo-close-button';
 const CLOSE_ICON_CLASS = 'fa-times';
+const LON_LAT_KEY = 'longitude:latitude';
 
 interface GeoField {
 	type: number;
@@ -251,10 +252,6 @@ export default Vue.extend({
 			if (this.currentRect) {
 				this.setSelection(this.currentRect);
 				this.currentRect = null;
-
-				// disable drawing mode
-				// this.map.dragging.enable();
-				// this.map.on('click', this.clearSelection);
 			}
 		},
 		onMouseMove(event: MouseEvent) {
@@ -358,7 +355,7 @@ export default Vue.extend({
 			updateHighlight(this.$router, {
 				context: this.instanceName,
 				dataset: this.dataset,
-				key: 'longitude:latitude',
+				key: LON_LAT_KEY,
 				value: value
 			});
 		},
