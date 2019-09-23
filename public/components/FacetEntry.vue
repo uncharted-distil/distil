@@ -670,12 +670,11 @@ export default Vue.extend({
 						// NOTE: the `from` / `to` values MUST be strings.
 						// if datetime, need to get date label back.
 						selection.range = {
-							from: highlightRootValue.type === DATETIME_FILTER ? moment.unix(highlightRootValue.from).utc().format('YYYY/MM/DD') : `${highlightRootValue.from}`,
-							to: highlightRootValue.type === DATETIME_FILTER ? moment.unix(highlightRootValue.to).utc().format('YYYY/MM/DD') : `${highlightRootValue.from}`
+							from: highlightRootValue && highlightRootValue.type === DATETIME_FILTER ? moment.unix(highlightRootValue.from).utc().format('YYYY/MM/DD') : `${highlightRootValue.from}`,
+							to: highlightRootValue && highlightRootValue.type === DATETIME_FILTER ? moment.unix(highlightRootValue.to).utc().format('YYYY/MM/DD') : `${highlightRootValue.to}`
 						};
 
 					} else {
-
 						const bars = facet._histogram.bars;
 
 						if (highlightSummary && highlightSummary.buckets.length === bars.length) {
@@ -785,13 +784,14 @@ export default Vue.extend({
 			});
 		},
 
-		buildNumericalRange(fromValue: string, toValue: string): any {
+		buildNumericalRange(fromValue: string, toValue: string): {from: number, to: number, type: string} {
 			const isNumber = !_.isNaN(_.toNumber(fromValue));
 			const range = {
 				from: isNumber ? _.toNumber(fromValue) : Date.parse(fromValue) / DATETIME_UNIX_ADJUSTMENT,
 				to: isNumber ? _.toNumber(toValue) : Date.parse(toValue) / DATETIME_UNIX_ADJUSTMENT,
 				type: isNumber ? NUMERICAL_FILTER : DATETIME_FILTER
 			};
+			return range;
 		},
 
 		groupsEqual(a: Group, b: Group): boolean {
