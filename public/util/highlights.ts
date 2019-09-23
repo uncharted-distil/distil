@@ -24,7 +24,7 @@ export function decodeHighlights(highlight: string): Highlight {
 }
 
 export function createFilterFromHighlight(highlight: Highlight, mode: string): Filter {
-	if (!highlight || highlight.value === null) {
+	if (!highlight || highlight.value === null || highlight.value === undefined) {
 		return null;
 	}
 
