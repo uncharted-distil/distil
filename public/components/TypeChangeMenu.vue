@@ -5,27 +5,29 @@
 				id="type-change-dropdown"
 				:text="label"
 				:disabled="isDisabled">
-				<template v-if="!isGeocoordinate">
-				<b-dropdown-item
-					v-for="suggested in getSuggestedList()"
-					v-bind:class="{ selected: suggested.isSelected, recommended: suggested.isRecommended }"
-					@click.stop="onTypeChange(suggested.type)"
-					:key="suggested.type">
-					<i v-if="suggested.isSelected" class="fa fa-check" aria-hidden="true"></i>
-					{{suggested.label}}
-					<icon-base v-if="suggested.isRecommended" icon-name="bookmark" class="recommended-icon"><icon-bookmark /></icon-base>
-				</b-dropdown-item>
-				</template>
-				<template  v-if="showGroupingOptions && !isGeocoordinate && !isComputedFeature">
-					<b-dropdown-divider></b-dropdown-divider>
-				</template>
-				<template v-if="showGroupingOptions && !isComputedFeature">
+				<template v-if="!isComputedFeature">
+					<template v-if="!isGeocoordinate">
 					<b-dropdown-item
-						v-for="grouping in groupingOptions()"
-						@click.stop="onGroupingSelect(grouping.type)"
-						:key="grouping.type">
-						{{grouping.label}}
+						v-for="suggested in getSuggestedList()"
+						v-bind:class="{ selected: suggested.isSelected, recommended: suggested.isRecommended }"
+						@click.stop="onTypeChange(suggested.type)"
+						:key="suggested.type">
+						<i v-if="suggested.isSelected" class="fa fa-check" aria-hidden="true"></i>
+						{{suggested.label}}
+						<icon-base v-if="suggested.isRecommended" icon-name="bookmark" class="recommended-icon"><icon-bookmark /></icon-base>
 					</b-dropdown-item>
+					</template>
+					<template  v-if="showGroupingOptions && !isGeocoordinate">
+						<b-dropdown-divider></b-dropdown-divider>
+					</template>
+					<template v-if="showGroupingOptions">
+						<b-dropdown-item
+							v-for="grouping in groupingOptions()"
+							@click.stop="onGroupingSelect(grouping.type)"
+							:key="grouping.type">
+							{{grouping.label}}
+						</b-dropdown-item>
+					</template>
 				</template>
 
 
@@ -241,26 +243,16 @@ export default Vue.extend({
 		},
 		getSuggestedList() {
 			const currentNormalizedType = normalizedEquivalentType(this.type);
-			if (!this.isComputedFeature) {
-				const combinedSuggestions = this.addMissingSuggestions().map(type => {
-					const normalizedType = normalizedEquivalentType(type);
-					return {
-						type: normalizedType,
-						label: getLabelFromType(normalizedType),
-						isRecommended: this.topNonSchemaType && this.topNonSchemaType.type.toLowerCase() === type.toLowerCase(),
-						isSelected: currentNormalizedType === normalizedType,
-					};
-				});
-				return combinedSuggestions;
-			} else {
-				return [{
-					type: currentNormalizedType,
-					label: getLabelFromType(currentNormalizedType),
-					isRecommended: true,
-					isSelected: true,
-					isDisabled: true
-				}];
-			}
+			const combinedSuggestions = this.addMissingSuggestions().map(type => {
+				const normalizedType = normalizedEquivalentType(type);
+				return {
+					type: normalizedType,
+					label: getLabelFromType(normalizedType),
+					isRecommended: this.topNonSchemaType && this.topNonSchemaType.type.toLowerCase() === type.toLowerCase(),
+					isSelected: currentNormalizedType === normalizedType,
+				};
+			});
+			return combinedSuggestions;
 		},
 		onTypeChange(suggestedType) {
 			const type = suggestedType;
