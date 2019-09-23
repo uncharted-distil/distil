@@ -652,6 +652,7 @@ export default Vue.extend({
 
 			const highlightRootValue = this.getHighlightValue(highlight);
 			const highlightSummary = this.groupSpec.summary ? this.groupSpec.summary.filtered : null;
+			const isHighlightedGroup = this.isHighlightedGroup(highlight, this.groupSpec.colName);
 
 			for (const facet of group.facets) {
 
@@ -665,7 +666,7 @@ export default Vue.extend({
 					const selection = {} as any;
 
 					// if this is the highlighted group, create filter selection
-					if (this.isHighlightedGroup(highlight, this.groupSpec.colName)) {
+					if (isHighlightedGroup) {
 
 						// NOTE: the `from` / `to` values MUST be strings.
 						// if datetime, need to get date label back.
@@ -699,7 +700,7 @@ export default Vue.extend({
 					const selection = {} as any;
 
 					// if this is the highlighted group, create filter selection
-					if (this.isHighlightedGroup(highlight, this.groupSpec.colName)) {
+					if (isHighlightedGroup) {
 
 						// NOTE: the `from` / `to` values MUST be strings.
 						selection.range = {
@@ -731,7 +732,7 @@ export default Vue.extend({
 
 				} else {
 
-					if (this.isHighlightedGroup(highlight, this.groupSpec.colName)) {
+					if (isHighlightedGroup) {
 
 						const highlightValue = this.getHighlightValue(highlight);
 						if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
