@@ -8,6 +8,8 @@ import { mutations } from './module';
 import { getWebSocketConnection } from '../../util/ws';
 import { FilterParams } from '../../util/filters';
 import { actions as resultsActions } from '../results/module';
+import { getters as datasetGetters } from '../dataset/module';
+import { TaskTypes } from '../dataset';
 
 const CREATE_SOLUTIONS = 'CREATE_SOLUTIONS';
 const STOP_SOLUTIONS = 'STOP_SOLUTIONS';
@@ -15,8 +17,6 @@ const STOP_SOLUTIONS = 'STOP_SOLUTIONS';
 interface CreateSolutionRequest {
 	dataset: string;
 	target: string;
-	task?: string;
-	subTask?: string;
 	timestampField?: string;
 	metrics: string[];
 	maxSolutions: number;
@@ -36,9 +36,9 @@ interface SolutionStatus {
 export type SolutionContext = ActionContext<SolutionState, DistilState>;
 
 function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
-	const isRegression = context.getters.isRegression;
-	const isClassification = context.getters.isClassification;
-	const isForecasting = context.getters.isForecasting;
+	const isRegression = datasetGetters.getTask(store).task === TaskTypes.REGRESSION;
+	const isClassification = datasetGetters.getTask(store).task === TaskTypes.CLASSIFICATION;
+	const isForecasting = datasetGetters.getTask(store).task === TaskTypes.TIME_SERIES_FORECASTING;
 
 	resultsActions.fetchResultTableData(store, {
 		dataset: req.dataset,
@@ -87,9 +87,9 @@ function updateCurrentSolutionResults(context: SolutionContext, req: CreateSolut
 }
 
 function updateSolutionResults(context: SolutionContext, req: CreateSolutionRequest, res: SolutionStatus) {
-	const isRegression = context.getters.isRegression;
-	const isClassification = context.getters.isClassification;
-	const isForecasting = context.getters.isForecasting;
+	const isRegression = datasetGetters.getTask(store).task === TaskTypes.REGRESSION;
+	const isClassification = datasetGetters.getTask(store).task === TaskTypes.CLASSIFICATION;
+	const isForecasting = datasetGetters.getTask(store).task === TaskTypes.TIME_SERIES_FORECASTING;
 
 	// if current solutionId, pull result summaries
 	resultsActions.fetchPredictedSummary(store, {
@@ -184,7 +184,6 @@ function handleProgress(context: SolutionContext, request: CreateSolutionRequest
 }
 
 export const actions = {
-
 	fetchSolutionRequests(context: SolutionContext, args: { dataset?: string, target?: string, solutionId?: string }) {
 		if (!args.dataset) {
 			args.dataset = null;
@@ -268,9 +267,7 @@ export const actions = {
 				type: CREATE_SOLUTIONS,
 				dataset: request.dataset,
 				target: request.target,
-				task: request.task,
 				timestampField: request.timestampField,
-				subTask: request.subTask,
 				metrics: request.metrics,
 				maxSolutions: request.maxSolutions,
 				maxTime: request.maxTime,

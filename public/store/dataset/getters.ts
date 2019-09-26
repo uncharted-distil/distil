@@ -1,4 +1,4 @@
-import { Variable, Extrema, TimeseriesExtrema, DatasetState, Dataset, VariableSummary, TimeseriesSummary, TableData, TableRow, TableColumn } from './index';
+import { Variable, Extrema, TimeseriesExtrema, DatasetState, Dataset, VariableSummary, TimeseriesSummary, TableData, TableRow, TableColumn, Task } from './index';
 import { Dictionary } from '../../util/dict';
 import { getTableDataItems, getTableDataFields } from '../../util/data';
 
@@ -141,7 +141,12 @@ export const getters = {
 	getExcludedTableDataFields(state: DatasetState, getters: any): Dictionary<TableColumn> {
 		return getTableDataFields(state.excludedSet.tableData);
 	},
+
 	getGeocoordinateTypes(state: DatasetState): string[] {
 		return state.isGeocoordinateFacet;
+	},
+
+	getTask(state: DatasetState): Task {
+		return state.task;
 	}
 };

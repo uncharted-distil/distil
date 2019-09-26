@@ -51,7 +51,7 @@ import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { EXPORT_SUCCESS_ROUTE, ROOT_ROUTE } from '../store/route/index';
-import { Variable } from '../store/dataset/index';
+import { Variable, TaskTypes } from '../store/dataset/index';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import { Solution } from '../store/solutions/index';
@@ -89,7 +89,7 @@ export default Vue.extend({
 		},
 
 		regressionEnabled(): boolean {
-			return solutionGetters.isRegression(this.$store);
+			return datasetGetters.getTask(this.$store).task === TaskTypes.REGRESSION;
 		},
 
 		solutionId(): string {

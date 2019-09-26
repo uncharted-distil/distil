@@ -25,9 +25,6 @@ export const getters = {
 	getActiveSolution: read(moduleGetters.getActiveSolution),
 	getActiveSolutionTrainingVariables: read(moduleGetters.getActiveSolutionTrainingVariables),
 	getActiveSolutionTargetVariable: read(moduleGetters.getActiveSolutionTargetVariable),
-	isRegression: read(moduleGetters.isRegression),
-	isClassification: read(moduleGetters.isClassification),
-	isForecasting: read(moduleGetters.isForecasting),
 	getRequestStreams: read(moduleGetters.getRequestStreams),
 };
 
