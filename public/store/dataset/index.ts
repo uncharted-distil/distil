@@ -172,6 +172,11 @@ export interface TimeseriesExtrema {
 	sum?: number;
 }
 
+export interface Task {
+	task: string;
+	subTask: string;
+}
+
 export enum DatasetPendingRequestType {
 	VARIABLE_RANKING = 'VARIABLE_RANKING',
 	GEOCODING = 'GEOCODING',
@@ -238,6 +243,7 @@ export interface DatasetState {
 	excludedSet: WorkingSet;
 	pendingRequests: DatasetPendingRequest[];
 	isGeocoordinateFacet: string[];
+	task: Task;
 }
 
 export interface WorkingSet {
@@ -275,5 +281,11 @@ export const state: DatasetState = {
 	// pending requests for the active dataset
 	pendingRequests: [],
 
-	isGeocoordinateFacet: []
+	isGeocoordinateFacet: [],
+
+	// task information
+	task: {
+		task: '',
+		subTask: ''
+	},
 };
