@@ -19,7 +19,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/env"
@@ -31,8 +31,6 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 
 		target := "unknown"
 		dataset := "unknown"
-		taskType := "unknown"
-		taskSubType := "unknown"
 		var metrics []string
 
 		if config.IsTask1 {
@@ -70,25 +68,18 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 						}
 					}
 				}
-				// get task types
-				if problem.About != nil {
-					taskType = problem.About.TaskType
-					taskSubType = problem.About.TaskSubType
-				}
 			}
 		}
 
 		// marshal version
 		err := handleJSON(w, map[string]interface{}{
-			"version":     version,
-			"timestamp":   timestamp,
-			"isTask1":     config.IsTask1,
-			"isTask2":     config.IsTask2,
-			"dataset":     dataset,
-			"target":      target,
-			"taskType":    taskType,
-			"taskSubType": taskSubType,
-			"metrics":     metrics,
+			"version":   version,
+			"timestamp": timestamp,
+			"isTask1":   config.IsTask1,
+			"isTask2":   config.IsTask2,
+			"dataset":   dataset,
+			"target":    target,
+			"metrics":   metrics,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))

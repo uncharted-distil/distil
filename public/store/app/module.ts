@@ -23,8 +23,6 @@ export const getters = {
 	isTask2: read(moduleGetters.isTask2),
 	getProblemDataset: read(moduleGetters.getProblemDataset),
 	getProblemTarget: read(moduleGetters.getProblemTarget),
-	getProblemTaskType: read(moduleGetters.getProblemTaskType),
-	getProblemTaskSubType: read(moduleGetters.getProblemTaskSubType),
 	getProblemMetrics: read(moduleGetters.getProblemMetrics),
 	getStatusPanelState: read(moduleGetters.getStatusPanelState)
 };
@@ -46,8 +44,6 @@ export const mutations = {
 	setIsTask2: commit(moduleMutations.setIsTask2),
 	setProblemDataset: commit(moduleMutations.setProblemDataset),
 	setProblemTarget: commit(moduleMutations.setProblemTarget),
-	setProblemTaskType: commit(moduleMutations.setProblemTaskType),
-	setProblemTaskSubType: commit(moduleMutations.setProblemTaskSubType),
 	setProblemMetrics: commit(moduleMutations.setProblemMetrics),
 	setStatusPanelContentType: commit(moduleMutations.setStatusPanelContentType),
 	openStatusPanel: commit(moduleMutations.openStatusPanel),

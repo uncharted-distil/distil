@@ -7,8 +7,6 @@ export interface AppState {
 	isTask2: boolean;
 	problemDataset: string;
 	problemTarget: string;
-	problemTaskType: string;
-	problemTaskSubType: string;
 	problemMetrics: string[];
 	statusPanelState: StatusPanelState;
 }
@@ -26,8 +24,6 @@ export const state: AppState = {
 	isTask2: false,
 	problemDataset: 'unknown',
 	problemTarget: 'unknown',
-	problemTaskType: 'unknown',
-	problemTaskSubType: 'unknown',
 	problemMetrics: [],
 	statusPanelState: {
 		contentType: undefined,

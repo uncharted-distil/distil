@@ -43,6 +43,7 @@ import { REQUEST_COMPLETED, REQUEST_ERRORED } from '../store/solutions/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters, actions as solutionActions } from '../store/solutions/module';
+import { getters as datasetGetters } from '../store/dataset/module';
 import { getRequestIndex } from '../util/solutions';
 
 interface SummaryGroup {
@@ -85,7 +86,7 @@ export default Vue.extend({
 		},
 
 		residualSummaries(): VariableSummary[] {
-			return this.regression || solutionGetters.isForecasting ? resultsGetters.getResidualsSummaries(this.$store) : [];
+			return this.regression || datasetGetters.getTask(this.$store) ? resultsGetters.getResidualsSummaries(this.$store) : [];
 		},
 
 		correctnessSummaries(): VariableSummary[] {

@@ -423,7 +423,7 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	dataPath := path.Join(params.SourceDataFolder, mainDR.ResPath)
 	trainDataFile := path.Join(trainFolder, mainDR.ResPath)
 	testDataFile := path.Join(testFolder, mainDR.ResPath)
-	if params.TaskType == compute.TaskTypeTimeseries {
+	if params.TaskType == compute.TimeseriesForecastingTask {
 		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, params.TimeseriesFieldIndex)
 	} else {
 		config, err = env.LoadConfig()

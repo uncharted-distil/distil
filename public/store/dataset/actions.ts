@@ -14,6 +14,7 @@ import {
 	GeocodingPendingRequest,
 	JoinSuggestionPendingRequest,
 	JoinDatasetImportPendingRequest,
+	Task,
 } from './index';
 import { mutations } from './module';
 import { DistilState } from '../store';
@@ -923,6 +924,19 @@ export const actions = {
 			.catch(error => {
 				console.error(error);
 				mutator(context, createEmptyTableData());
+			});
+	},
+
+	fetchTask(context: DatasetContext, args: {dataset: string, targetName: string}) {
+		return axios.get<Task>(`/distil/task/${args.dataset}/${args.targetName}`)
+			.then(response => {
+				if (!response.data) {
+					return;
+				}
+				mutations.updateTask(context, response.data);
+			})
+			.catch(error => {
+				console.error(error);
 			});
 	}
 

@@ -26,14 +26,6 @@ export const getters = {
 		return state.isTask2;
 	},
 
-	getProblemTaskType(state: AppState): string {
-		return state.problemTaskType;
-	},
-
-	getProblemTaskSubType(state: AppState): string {
-		return state.problemTaskSubType;
-	},
-
 	getProblemMetrics(state: AppState): string[] {
 		return state.problemMetrics;
 	},

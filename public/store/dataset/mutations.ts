@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import Vue from 'vue';
 import { Dictionary } from '../../util/dict';
-import { DatasetState, Variable, Dataset, VariableSummary, TimeseriesSummary, TableData, DatasetPendingRequest, VariableRankingPendingRequest, GeocodingPendingRequest } from './index';
+import { DatasetState, Variable, Dataset, VariableSummary, TimeseriesSummary, TableData, DatasetPendingRequest, VariableRankingPendingRequest, GeocodingPendingRequest, Task } from './index';
 import { updateSummaries, isDatamartProvenance } from '../../util/data';
 import { GEOCOORDINATE_TYPE, LONGITUDE_TYPE, LATITUDE_TYPE } from '../../util/types';
 
@@ -250,6 +250,9 @@ export const mutations = {
 	// sets the current excluded data into the store
 	setExcludedTableData(state: DatasetState, tableData: TableData) {
 		state.excludedSet.tableData = tableData;
-	}
+	},
 
+	updateTask(state: DatasetState, task: Task) {
+		state.task = task;
+	}
 };
