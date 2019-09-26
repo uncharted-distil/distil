@@ -179,8 +179,7 @@ export default Vue.extend({
 		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.
 		bucketFeatures(): helpers.FeatureCollection {
 			// compute the bucket size in degrees
-			console.log('summary', this.summary);
-
+			if(this.summary.filtered.buckets) {
 			const buckets  = this.summary.baseline.buckets;
 			const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
 			const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
@@ -188,7 +187,6 @@ export default Vue.extend({
 			// create a feature collection from the server-supplied bucket data
 			const features: helpers.Feature[] = [];
 			this.summary.baseline.buckets.forEach(lonBucket => {
-				console.log('lon bucket', lonBucket);
 
 				lonBucket.buckets.forEach(latBucket => {
 					// Don't include features with a count of 0.
@@ -209,39 +207,47 @@ export default Vue.extend({
 			});
 
 			return featureCollection(features);
+			} else {
+				const features: helpers.Feature[] = [];
+				return featureCollection(features);
+			}
 		},
 
 		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.
 		filteredBucketFeatures(): helpers.FeatureCollection {
 			// compute the bucket size in degrees
-			const buckets  = this.summary.filtered.buckets;
-			const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
-			const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
 
-			// create a feature collection from the server-supplied bucket data
-			const features: helpers.Feature[] = [];
-			this.summary.filtered.buckets.forEach(lonBucket => {
-				console.log('lon bucket', lonBucket);
+			if(this.summary.filtered.buckets){
+				const buckets  = this.summary.filtered.buckets;
+				const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
+				const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
 
-				lonBucket.buckets.forEach(latBucket => {
-					// Don't include features with a count of 0.
-					if (latBucket.count > 0) {
-						const xCoord = _.toNumber(lonBucket.key);
-						const yCoord = _.toNumber(latBucket.key);
-						const feature = polygon([[
-									[xCoord, yCoord],
-									[xCoord, yCoord + ySize],
-									[xCoord + xSize, yCoord + ySize],
-									[xCoord + xSize, yCoord],
-									[xCoord, yCoord]
-								]], { selected: false,
-									count: latBucket.count });
-						features.push(feature);
-					}
+				// create a feature collection from the server-supplied bucket data
+				const features: helpers.Feature[] = [];
+				this.summary.filtered.buckets.forEach(lonBucket => {
+					lonBucket.buckets.forEach(latBucket => {
+						// Don't include features with a count of 0.
+						if (latBucket.count > 0) {
+							const xCoord = _.toNumber(lonBucket.key);
+							const yCoord = _.toNumber(latBucket.key);
+							const feature = polygon([[
+										[xCoord, yCoord],
+										[xCoord, yCoord + ySize],
+										[xCoord + xSize, yCoord + ySize],
+										[xCoord + xSize, yCoord],
+										[xCoord, yCoord]
+									]], { selected: false,
+										count: latBucket.count });
+							features.push(feature);
+						}
+					});
 				});
-			});
 
-			return featureCollection(features);
+				return featureCollection(features);
+			} else {
+				const features: helpers.Feature[] = [];
+				return featureCollection(features);
+			}
 		},
 
 		// Returns the minimum non-zero bucket count value
@@ -269,13 +275,8 @@ export default Vue.extend({
 			return GEOCOORDINATE_TYPE.toUpperCase();
 		},
 		highlight(): Highlight {
-			console.log('hightlight:', routeGetters.getDecodedHighlight(this.$store));
-
 			return routeGetters.getDecodedHighlight(this.$store);
 		}
-	},
-	updated() {
-		console.log('hightlight:', this.highlight);
 	},
 	methods: {
 		selectFeature() {
@@ -490,8 +491,6 @@ export default Vue.extend({
 				const scaleColors = scaleThreshold().range(PALETTE as any).domain(domain);
 
 				// Render the heatmap buckets as a GeoJSON layer
-				console.log('bucketFeatures', this.bucketFeatures);
-
 				baseLayer = leaflet.geoJSON(this.bucketFeatures, {
 					style: feature => {
 
