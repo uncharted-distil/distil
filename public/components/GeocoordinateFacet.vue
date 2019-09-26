@@ -469,7 +469,8 @@ export default Vue.extend({
 					}
 
 				// Generate the colour ramp scaling function
-				const colorPallete = !this.isAvailableFeatures && !this.isFeaturesToModel ? BLUE_PALETTE : PALETTE;
+				const colorPallete = !this.isAvailableFeatures && !this.isFeaturesToModel || !this.highlight ? BLUE_PALETTE : PALETTE;
+
 				const maxVal = this.maxCount;
 				const minVal = this.minCount;
 				const d = (maxVal - minVal) / colorPallete.length;
