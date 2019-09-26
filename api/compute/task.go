@@ -15,6 +15,8 @@ type Task struct {
 	SubTask string `json:"subtask"`
 }
 
+const semiSupervisedThreshold = 0.1
+
 // ResolveTask will determine the task and subtask given training and target variables, and the ability of the underlying target labels.
 func ResolveTask(storage api.DataStorage, datasetStorageName string, targetVariable *model.Variable) (*Task, error) {
 	// Given the target variable and dataset, compute the task and subtask.
@@ -53,7 +55,7 @@ func ResolveTask(storage api.DataStorage, datasetStorageName string, targetVaria
 			total += count
 		}
 		if emptyCount, ok := targetCounts[""]; ok {
-			if float32(emptyCount)/float32(total) > 0.1 {
+			if float32(emptyCount)/float32(total) > semiSupervisedThreshold {
 				task = compute.SemiSupervisedClassificationTask
 			}
 			// If there are 3 labels (2 + empty), update this as a binary classification task

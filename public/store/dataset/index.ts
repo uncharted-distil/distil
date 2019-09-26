@@ -172,9 +172,39 @@ export interface TimeseriesExtrema {
 	sum?: number;
 }
 
+
+// task string definitions - should mirror those defined in the MIT/LL d3m problem schema
+export enum TaskTypes {
+	CLASSIFICATION = 'classification',
+	REGRESSION = 'regression',
+	CLUSTERING = 'clustering',
+	LINK_PREDICTION = 'linkPrediction',
+	VERTEX_NOMINATION = 'vertexNomination',
+	VERTEX_CLASSIFICATION = 'vertexClassification',
+	COMMUNITY_DETECTION = 'communityDetection',
+	GRAPH_MATCHING = 'graphMatching',
+	TIME_SERIES_FORECASTING = 'timeSeriesForecasting',
+	COLLABORATIVE_FILTERING = 'collaborativeFiltering',
+	OBJECT_DETECTION = 'objectDetection',
+	SEMISUPERVISED_CLASSIFICATION = 'semiSupervisedClassification',
+	SEMISUPERVISED_REGRESSION = 'semiSupervisedRegression'
+}
+
+// sub-task string definitions - should mirror those defined in the MIT/LL d3m problem schema
+export enum TaskSubTypes {
+	NONE = 'none',
+	BINARY = 'binary',
+	MULTICLASS = 'multiclass',
+	MULTILABEL = 'multilabel',
+	UNIVARIATE = 'univariate',
+	MULTIVARIATE = 'multivariate',
+	OVERLAPPING = 'overlapping',
+	NONOVERLAPPING = 'nonOverlapping'
+}
+
 export interface Task {
-	task: string;
-	subTask: string;
+	task: TaskTypes;
+	subTask: TaskSubTypes;
 }
 
 export enum DatasetPendingRequestType {
@@ -285,7 +315,7 @@ export const state: DatasetState = {
 
 	// task information
 	task: {
-		task: '',
-		subTask: ''
+		task: TaskTypes.CLASSIFICATION,
+		subTask: TaskSubTypes.NONE
 	},
 };

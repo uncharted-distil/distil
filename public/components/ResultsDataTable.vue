@@ -67,7 +67,7 @@ import IconFork from './icons/IconFork';
 import FixedHeaderTable from './FixedHeaderTable';
 import SparklinePreview from './SparklinePreview';
 import ImagePreview from './ImagePreview';
-import { Extrema, TableRow, TableColumn, D3M_INDEX_FIELD, Grouping, Variable, RowSelection } from '../store/dataset/index';
+import { Extrema, TableRow, TableColumn, D3M_INDEX_FIELD, Grouping, Variable, RowSelection, TaskTypes } from '../store/dataset/index';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -201,7 +201,7 @@ export default Vue.extend({
 		},
 
 		isRegression(): boolean {
-			return solutionGetters.isRegression(this.$store);
+			return datasetGetters.getTask(this.$store).task === TaskTypes.REGRESSION;
 		},
 
 		sortingByResidualError(): boolean {

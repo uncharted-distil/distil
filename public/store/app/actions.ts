@@ -56,8 +56,6 @@ export const actions = {
 				mutations.setIsTask2(context, response.data.isTask2);
 				mutations.setProblemDataset(context, response.data.dataset);
 				mutations.setProblemTarget(context, response.data.target);
-				mutations.setProblemTaskType(context, response.data.taskType);
-				mutations.setProblemTaskSubType(context, response.data.taskSubType);
 				mutations.setProblemMetrics(context, response.data.metrics);
 			})
 			.catch((err: string) => {

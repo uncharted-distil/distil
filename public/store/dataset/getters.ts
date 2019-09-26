@@ -1,7 +1,6 @@
 import { Variable, Extrema, TimeseriesExtrema, DatasetState, Dataset, VariableSummary, TimeseriesSummary, TableData, TableRow, TableColumn, Task } from './index';
 import { Dictionary } from '../../util/dict';
 import { getTableDataItems, getTableDataFields } from '../../util/data';
-import { getTask } from '../../util/solutions';
 
 export const getters = {
 

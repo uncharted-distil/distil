@@ -83,10 +83,9 @@ import { getters as routeGetters } from '../store/route/module';
 import { RESULTS_ROUTE } from '../store/route/index';
 import { actions as solutionActions } from '../store/solutions/module';
 import { Solution, NUM_SOLUTIONS } from '../store/solutions/index';
-import { Variable } from '../store/dataset/index';
+import { Variable, TaskTypes, TaskSubTypes } from '../store/dataset/index';
 import { TIMESERIES_TYPE } from '../util/types';
 import { FilterParams } from '../util/filters';
-import { TIMESERIES_FORECASTING_TASK } from '../util/solutions';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -128,22 +127,6 @@ export default Vue.extend({
 		metrics(): string[] {
 			if (this.isTask2) {
 				return appGetters.getProblemMetrics(this.$store);
-			}
-			return null;
-		},
-		taskType(): string {
-			if (this.isTask2) {
-				return appGetters.getProblemTaskType(this.$store);
-			} else if (!!routeGetters.getRouteTimeseriesAnalysis(this.$store)) {
-				return TIMESERIES_FORECASTING_TASK.schemaName;
-			} else if (this.targetVariable.colType === TIMESERIES_TYPE) {
-				return TIMESERIES_FORECASTING_TASK.schemaName;
-			}
-			return null;
-		},
-		taskSubType(): string {
-			if (this.isTask2) {
-				return appGetters.getProblemTaskSubType(this.$store);
 			}
 			return null;
 		},
@@ -199,8 +182,6 @@ export default Vue.extend({
 				dataset: this.dataset,
 				filters: this.filterParams,
 				target: routeGetters.getRouteTargetVariable(this.$store),
-				task: this.taskType,
-				subTask: this.taskSubType,
 				timestampField: routeGetters.getRouteTimeseriesAnalysis(this.$store),
 				metrics: this.metrics,
 				maxSolutions: NUM_SOLUTIONS,

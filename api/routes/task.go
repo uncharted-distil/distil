@@ -30,7 +30,7 @@ import (
 func TaskHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
-		variableName := pat.Param(r, "variable")
+		variableName := pat.Param(r, "target")
 		storageName := model.NormalizeDatasetID(dataset)
 
 		// initialize the storage
@@ -47,7 +47,7 @@ func TaskHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageCto
 		}
 
 		// look up the target variable
-		variable, err := metaStorage.FetchVariable(storageName, variableName)
+		variable, err := metaStorage.FetchVariable(dataset, variableName)
 		if err != nil {
 			handleError(w, err)
 			return
