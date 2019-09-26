@@ -18,28 +18,17 @@
 			v-on:mouseup="onMouseUp"
 			v-on:mousemove="onMouseMove">
 		</div>
-		<div
-			class="selection-toggle"
-			v-bind:class="{ active: isSelectionMode }"
-			v-on:click="isSelectionMode = !isSelectionMode">
-			<a
-				class="selection-toggle-control"
-				title="Select area"
-				aria-label="Select area">
-			<icon-base width="100%" height="100%"> <icon-crop-free /> </icon-base>
-			</a>
-		</div>
 		<div v-if="isAvailableFeatures">
 			<button
 				class="action-btn btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2"
-				@click="selectFeature">
+				@click="selectFeature()">
 				Add
 			</button>
 		</div>
 		<div  v-if="isFeaturesToModel">
 			<button
 				class="action-btn btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2"
-				@click="removeFeature">
+				@click="removeFeature()">
 				Remove
 			</button>
 		</div>
@@ -152,7 +141,6 @@ export default Vue.extend({
 			startingLatLng: null,
 			currentRect: null,
 			selectedRect: null,
-			isSelectionMode: false,
 		};
 	},
 	computed: {
@@ -179,7 +167,7 @@ export default Vue.extend({
 		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.
 		bucketFeatures(): helpers.FeatureCollection {
 			// compute the bucket size in degrees
-			if(this.summary.filtered.buckets) {
+
 			const buckets  = this.summary.baseline.buckets;
 			const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
 			const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
@@ -207,17 +195,14 @@ export default Vue.extend({
 			});
 
 			return featureCollection(features);
-			} else {
-				const features: helpers.Feature[] = [];
-				return featureCollection(features);
-			}
+
 		},
 
 		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.
 		filteredBucketFeatures(): helpers.FeatureCollection {
 			// compute the bucket size in degrees
 
-			if(this.summary.filtered.buckets){
+			if (this.summary.filtered) {
 				const buckets  = this.summary.filtered.buckets;
 				const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
 				const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
@@ -282,18 +267,18 @@ export default Vue.extend({
 		selectFeature() {
 			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-				training: training.concat([ GEOCOORDINATE_TYPE ]).join(',')
+				training: training.concat([ 'Longitude' ]).join(',')
 			});
 			this.$router.push(entry);
 		},
 		removeFeature() {
 			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
-			training.splice(training.indexOf(GEOCOORDINATE_TYPE), 1);
+			training.splice(training.indexOf('Longitude'), 1);
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 				training: training.join(',')
 			});
 			this.$router.push(entry);
-			removeFiltersByName(this.$router, GEOCOORDINATE_TYPE);
+			removeFiltersByName(this.$router, 'Longitude');
 		},
 		clearSelectionRect() {
 			if (this.selectedRect) {
@@ -341,7 +326,7 @@ export default Vue.extend({
 				this.closeButton = null;
 				return;
 			}
-			if (this.isSelectionMode) {
+			if (this.isFeaturesToModel) {
 
 				this.clearSelectionRect();
 
@@ -484,11 +469,12 @@ export default Vue.extend({
 					}
 
 				// Generate the colour ramp scaling function
+				const colorPallete = !this.isAvailableFeatures && !this.isFeaturesToModel ? BLUE_PALETTE : PALETTE;
 				const maxVal = this.maxCount;
 				const minVal = this.minCount;
-				const d = (maxVal - minVal) / PALETTE.length;
-				const domain = PALETTE.map((val, index) => minVal + d * (index + 1));
-				const scaleColors = scaleThreshold().range(PALETTE as any).domain(domain);
+				const d = (maxVal - minVal) / colorPallete.length;
+				const domain = colorPallete.map((val, index) => minVal + d * (index + 1));
+				const scaleColors = scaleThreshold().range(colorPallete as any).domain(domain);
 
 				// Render the heatmap buckets as a GeoJSON layer
 				baseLayer = leaflet.geoJSON(this.bucketFeatures, {
@@ -534,10 +520,14 @@ export default Vue.extend({
 
 	watch: {
 		filteredBucketFeatures() {
-			this.paint();
+			if (this.summary.filtered) {
+				this.paint();
+			}
 		},
 		bucketFeatures() {
-			this.paint();
+			if (this.summary.baseline) {
+				this.paint();
+			}
 		},
 	},
 
