@@ -11,8 +11,8 @@
 				<filter-badge v-if="activeFilter"
 					active-filter
 					:filter="activeFilter">
-				</filter-badge><!--
-				--><filter-badge v-if="filter.type !== 'row'" v-for="filter in filters" :key="filterHash(filter)" :filter="filter">
+				</filter-badge>
+				<filter-badge v-if="filter.type !== 'row'" v-for="filter in filters" :key="filterHash(filter)" :filter="filter">
 				</filter-badge>
 			</div>
 		</div>

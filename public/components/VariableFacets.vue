@@ -38,7 +38,11 @@
 							</facet-timeseries>
 						</template>
 						<template v-else-if="summary.varType === 'geocoordinate'">
-							<geocoordinate-facet :summary="summary"></geocoordinate-facet>
+							<geocoordinate-facet
+								:summary="summary"
+								:isAvailableFeatures="isAvailableFeatures"
+								:isFeaturesToModel="isFeaturesToModel">
+							</geocoordinate-facet>
 						</template>
 						<template v-else>
 							<facet-entry
@@ -103,6 +107,8 @@ export default Vue.extend({
 		enableTypeChange: Boolean as () => boolean,
 		enableHighlighting: Boolean as () => boolean,
 		enableTypefiltering: Boolean as () => boolean,
+		isAvailableFeatures: Boolean as () => boolean,
+		isFeaturesToModel: Boolean as () => boolean,
 		ignoreHighlights: Boolean as () => boolean,
 		summaries: Array as () => VariableSummary[],
 		subtitle: String as () => string,
@@ -296,6 +302,7 @@ button {
 .variable-facets-container .variable-facets-item {
 	margin: 2px 2px 4px 2px;
 	min-height: 150px;
+	vertical-align: bottom;
 }
 .variable-facets-container .facets-root-container .facets-group-container{
 	background-color: inherit;
