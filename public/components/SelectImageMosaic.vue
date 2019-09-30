@@ -45,7 +45,9 @@ export default Vue.extend({
 
 	props: {
 		instanceName: String as () => string,
-		includedActive: Boolean as () => boolean
+		includedActive: Boolean as () => boolean,
+		dataItems: Array as () => any[],
+		dataFields: Object as () => Dictionary<TableColumn>,
 	},
 
 	data() {
@@ -58,11 +60,17 @@ export default Vue.extend({
 	computed: {
 
 		items(): TableRow[] {
+			if (this.dataItems) {
+				return this.dataItems;
+			}
 			const items = this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
 			return updateTableRowSelection(items, this.rowSelection, this.instanceName);
 		},
 
 		fields(): Dictionary<TableColumn> {
+			if (this.dataFields) {
+				return this.dataFields;
+			}
 			return this.includedActive ? datasetGetters.getIncludedTableDataFields(this.$store) : datasetGetters.getExcludedTableDataFields(this.$store);
 		},
 
@@ -120,5 +128,6 @@ export default Vue.extend({
 	background-color: #424242;
 	color: #fff;
 	padding: 0 4px;
+	z-index: 1;
 }
 </style>

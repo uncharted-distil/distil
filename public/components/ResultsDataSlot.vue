@@ -16,6 +16,7 @@
 				<results-data-table v-if="viewType===TABLE_VIEW" :data-fields="dataFields" :data-items="dataItems" :instance-name="instanceName"></results-data-table>
 				<results-timeseries-view v-if="viewType===TIMESERIES_VIEW" :fields="dataFields" :items="dataItems" :instance-name="instanceName"></results-timeseries-view>
 				<results-geo-plot v-if="viewType===GEO_VIEW" :data-fields="dataFields" :data-items="dataItems"  :instance-name="instanceName"></results-geo-plot>
+				<select-image-mosaic v-if="viewType===IMAGE_VIEW" :included-active="includedActive" :instance-name="instanceName" :data-fields="dataFields" :data-items="dataItems"></select-image-mosaic>
 			</template>
 		</div>
 	</div>
@@ -26,6 +27,7 @@
 import Vue from 'vue';
 import _ from 'lodash';
 import ResultsDataTable from './ResultsDataTable';
+import SelectImageMosaic from './SelectImageMosaic';
 import ResultsTimeseriesView from './ResultsTimeseriesView';
 import ResultsGeoPlot from './ResultsGeoPlot';
 import { spinnerHTML } from '../util/spinner';
@@ -49,7 +51,8 @@ export default Vue.extend({
 	components: {
 		ResultsDataTable,
 		ResultsTimeseriesView,
-		ResultsGeoPlot
+		ResultsGeoPlot,
+		SelectImageMosaic
 	},
 
 	props: {
