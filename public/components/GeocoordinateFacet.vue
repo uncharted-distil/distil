@@ -469,52 +469,56 @@ export default Vue.extend({
 					}
 
 				// Generate the colour ramp scaling function
-				const colorPallete = !this.isAvailableFeatures && !this.isFeaturesToModel || !this.highlight ? BLUE_PALETTE : PALETTE;
+					const maxVal = this.maxCount;
+					const minVal = this.minCount;
 
-				const maxVal = this.maxCount;
-				const minVal = this.minCount;
-				const d = (maxVal - minVal) / colorPallete.length;
-				const domain = colorPallete.map((val, index) => minVal + d * (index + 1));
-				const scaleColors = scaleThreshold().range(colorPallete as any).domain(domain);
+				if( !this.isAvailableFeatures && !this.isFeaturesToModel || !this.highlight ) {
+					const d = (maxVal - minVal) / BLUE_PALETTE.length;
+					const domain = BLUE_PALETTE.map((val, index) => minVal + d * (index + 1));
+					const scaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(domain);
 
-				// Render the heatmap buckets as a GeoJSON layer
-				baseLayer = leaflet.geoJSON(this.bucketFeatures, {
-					style: feature => {
+					// Render the heatmap buckets as a GeoJSON layer
+					baseLayer = leaflet.geoJSON(this.bucketFeatures, {
+						style: feature => {
 
-						return {
-							fillColor: scaleColors(feature.properties.count),
-							weight: 0,
-							opacity: 1,
-							color: 'rgba(0,0,0,0)',
-							dashArray: '3',
-							fillOpacity: 0.7
-						};
-					}
-				});
+							return {
+								fillColor: scaleColors(feature.properties.count),
+								weight: 0,
+								opacity: 1,
+								color: 'rgba(0,0,0,0)',
+								dashArray: '3',
+								fillOpacity: 0.7
+							};
+						}
+					});
 
-				baseLayer.addTo(this.map);
+					baseLayer.addTo(this.map);
+				} else {
+					const filteredMaxVal = this.filteredMaxCount;
+					const filteredMinVal = this.filteredMinCount;
+					const dVal = (filteredMaxVal - filteredMinVal) / BLUE_PALETTE.length;
+					const filteredDomain = BLUE_PALETTE.map((val, index) => minVal + dVal * (index + 1));
+					const filteredScaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(filteredDomain);
 
-				const filteredMaxVal = this.filteredMaxCount;
-				const filteredMinVal = this.filteredMinCount;
-				const dVal = (filteredMaxVal - filteredMinVal) / BLUE_PALETTE.length;
-				const filteredDomain = BLUE_PALETTE.map((val, index) => minVal + dVal * (index + 1));
-				const filteredScaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(filteredDomain);
-
-				filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
-					style: feature => {
-						return {
-							fillColor: filteredScaleColors(feature.properties.count),
-							weight: 0,
-							opacity: 1,
-							color: 'rgba(0,0,0,0)',
-							dashArray: '3',
-							fillOpacity: 0.7
-						};
-					}
-				});
+					filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
+						style: feature => {
+							return {
+								fillColor: filteredScaleColors(feature.properties.count),
+								weight: 0,
+								opacity: 1,
+								color: 'rgba(0,0,0,0)',
+								dashArray: '3',
+								fillOpacity: 0.7
+							};
+						}
+					});
 
 
-				filteredLayer.addTo(this.map);
+					filteredLayer.addTo(this.map);
+
+				}
+
+
 			}
 		}
 	},

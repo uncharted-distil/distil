@@ -72,26 +72,17 @@ export default Vue.extend({
 	computed: {
 		variable(): Variable {
 			const vars = datasetGetters.getVariables(this.$store);
+
 			const hasLat = vars.filter(variable => variable.colName === LATITUDE_TYPE).length;
 			const hasLon = vars.filter(variable => variable.colName === LONGITUDE_TYPE).length;
 
 			if (!vars) {
 				return null;
 			}
-
-
-			// Temporary Geocoordinate variable type inference to lat and lon
-			if (hasLat ^ hasLon) {
-				return vars.find(v => {
-					return v.colName.toLowerCase() === LATITUDE_TYPE ||
-						v.colName.toLowerCase() === LONGITUDE_TYPE;
-				});
-			} else {
-				return vars.find(v => {
-					return v.colName.toLowerCase() === this.field.toLowerCase() &&
-						v.datasetName === this.dataset;
-				});
-			}
+			return vars.find(v => {
+				return v.colName.toLowerCase() === this.field.toLowerCase() &&
+					v.datasetName === this.dataset;
+			});
 
 		},
 		isGrouping(): boolean {
@@ -104,6 +95,8 @@ export default Vue.extend({
 			return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
 		},
 		isGeocoordinate(): boolean {
+			console.log('this.variable', this.variable);
+
 			return this.field ? false : true;
 		},
 		type(): string {
