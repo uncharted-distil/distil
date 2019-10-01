@@ -1,6 +1,6 @@
 <template>
 
-	<div class="select-image-mosaic">
+	<div class="image-mosaic">
 		<template v-for="imageField in imageFields">
 			<template v-for="item in items">
 				<div class="image-tile">
@@ -37,7 +37,7 @@ import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelec
 import { IMAGE_TYPE } from '../util/types';
 
 export default Vue.extend({
-	name: 'select-image-mosaic',
+	name: 'image-mosaic',
 
 	components: {
 		ImagePreview
@@ -104,7 +104,7 @@ export default Vue.extend({
 
 <style>
 
-.select-image-mosaic {
+.image-mosaic {
 	display: flex;
 	overflow: auto;
 	flex-flow: wrap;
