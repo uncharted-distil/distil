@@ -33,7 +33,8 @@ var (
 	explainablePrimitives = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
 )
 
-func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string, datasetURI string, variables []*model.Variable) ([]*api.SolutionFeatureWeight, error) {
+func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string,
+	searchRequest *pipeline.SearchSolutionsRequest, variables []*model.Variable) ([]*api.SolutionFeatureWeight, error) {
 	// get the pipeline description
 	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
 	if err != nil {
@@ -47,7 +48,7 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	}
 
 	// send the fully specified pipeline to TA2 (updated produce function call)
-	outputURI, err := SubmitPipeline(client, []string{datasetURI}, pipExplain, false)
+	outputURI, err := SubmitPipeline(client, nil, searchRequest, pipExplain, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run the fully specified pipeline")
 	}

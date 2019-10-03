@@ -419,7 +419,8 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 }
 
 func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, searchID string, solutionID string, dataset string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
+	dataStorage api.DataStorage, searchID string, solutionID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
+	datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
 	// score solution
 	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID, datasetURITest, s.Metrics)
@@ -469,7 +470,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	}
 
 	// explain the pipeline
-	featureWeights, err := s.explainOutput(client, solutionID, datasetURITrain, variables)
+	featureWeights, err := s.explainOutput(client, solutionID, searchRequest, variables)
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return
@@ -536,7 +537,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 }
 
 func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage,
-	searchID string, dataset string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
+	searchID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
 	// update request status
 	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestRunningStatus)
@@ -554,7 +555,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		// persist the solution
 		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
 		// dispatch it
-		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, datasetURITrain, datasetURITest, variables)
+		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, searchRequest, datasetURITrain, datasetURITest, variables)
 		// once done, mark as complete
 		s.completeSolution()
 	})
@@ -762,7 +763,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// dispatch search request
-	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.Metadata.ID, datasetPathTrain, datasetPathTest, dataVariables)
+	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.Metadata.ID, searchRequest, datasetPathTrain, datasetPathTest, dataVariables)
 
 	return nil
 }
