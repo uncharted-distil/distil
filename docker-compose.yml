@@ -42,17 +42,3 @@ postgres:
 #    - $D3MSTATICDIR:$D3MSTATICDIR
 #   ports:
 #     - "45042:45042"
-
-runner:
-  image:
-    docker.uncharted.software/distil-pipeline-runner:latest
-  ports:
-    - "50051:50051"
-  environment:
-    - D3MOUTPUTDIR=$D3MOUTPUTDIR
-    - D3MSTATICDIR=$D3MSTATICDIR
-    - DATAMART_URL_NYU=https://auctus.vida-nyu.org
-  volumes:
-    - $D3MINPUTDIR:$D3MINPUTDIR
-    - $D3MOUTPUTDIR:$D3MOUTPUTDIR
-    - $D3MSTATICDIR:$D3MSTATICDIR

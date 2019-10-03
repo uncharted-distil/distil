@@ -239,7 +239,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 
 	timelineField := NewNumericalField(f.Storage, f.StorageName, f.XCol, f.XCol, f.XColType)
 
-	timeline, err = timelineField.fetchHistogram(nil, invert)
+	timeline, err = timelineField.fetchHistogram(nil, invert, api.MaxNumBuckets)
 	if err != nil {
 		return nil, err
 	}

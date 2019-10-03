@@ -52,7 +52,9 @@ export const getters = {
 	getExcludedTableData: read(moduleGetters.getExcludedTableData),
 	getExcludedTableDataNumRows: read(moduleGetters.getExcludedTableDataNumRows),
 	getExcludedTableDataItems: read(moduleGetters.getExcludedTableDataItems),
-	getExcludedTableDataFields: read(moduleGetters.getExcludedTableDataFields)
+	getExcludedTableDataFields: read(moduleGetters.getExcludedTableDataFields),
+	// task info
+	getTask: read(moduleGetters.getTask),
 };
 
 // Typed actions
@@ -98,6 +100,8 @@ export const actions = {
 	// included / excluded table data
 	fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),
 	fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
+	// task info
+	fetchTask: dispatch(moduleActions.fetchTask),
 };
 
 // Typed mutations
@@ -126,4 +130,6 @@ export const mutations = {
 	clearJoinDatasetsTableData: commit(moduleMutations.clearJoinDatasetsTableData),
 	setIncludedTableData: commit(moduleMutations.setIncludedTableData),
 	setExcludedTableData: commit(moduleMutations.setExcludedTableData),
+	// task
+	updateTask: commit(moduleMutations.updateTask),
 };

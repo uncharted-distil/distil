@@ -5,6 +5,7 @@
 			enable-type-change
 			enable-title
 			ignore-highlights
+			enable-typefiltering
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
 			:summaries="summaries"
@@ -91,17 +92,18 @@ export default Vue.extend({
 						}
 					}
 
-					const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
+					const routeArgs = {
 						target: group.colName,
 						dataset: routeGetters.getRouteDataset(this.$store),
 						filters: routeGetters.getRouteFilters(this.$store),
 						timeseriesAnalysis: routeGetters.getRouteTimeseriesAnalysis(this.$store),
 						training: training.join(',')
-					});
+					};
+					const entry = createRouteEntry(SELECT_TRAINING_ROUTE, routeArgs);
 					this.$router.push(entry);
+					datasetActions.fetchTask(this.$store, {dataset: routeArgs.dataset, targetName: routeArgs.target});
 				});
 				container.appendChild(targetElem);
-
 				return container;
 			};
 		}

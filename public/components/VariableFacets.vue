@@ -38,7 +38,11 @@
 							</facet-timeseries>
 						</template>
 						<template v-else-if="summary.varType === 'geocoordinate'">
-							<geocoordinate-facet :summary="summary"></geocoordinate-facet>
+							<geocoordinate-facet
+								:summary="summary"
+								:isAvailableFeatures="isAvailableFeatures"
+								:isFeaturesToModel="isFeaturesToModel">
+							</geocoordinate-facet>
 						</template>
 						<template v-else>
 							<facet-entry
@@ -77,7 +81,7 @@ import FacetTimeseries from '../components/FacetTimeseries';
 import GeocoordinateFacet from '../components/GeocoordinateFacet';
 import { overlayRouteEntry, getRouteFacetPage } from '../util/routes';
 import { Dictionary } from '../util/dict';
-import { sortSummariesByImportance, filterVariablesByPage, getVariableRanking, getVariableImportance } from '../util/data';
+import { sortSummariesByImportance, filterVariablesByPage, getVariableRanking, getVariableImportance, filterUnsupportedTargets } from '../util/data';
 import { Highlight, RowSelection, Variable, VariableSummary } from '../store/dataset/index';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
@@ -102,6 +106,9 @@ export default Vue.extend({
 		enableTitle: Boolean as () => boolean,
 		enableTypeChange: Boolean as () => boolean,
 		enableHighlighting: Boolean as () => boolean,
+		enableTypefiltering: Boolean as () => boolean,
+		isAvailableFeatures: Boolean as () => boolean,
+		isFeaturesToModel: Boolean as () => boolean,
 		ignoreHighlights: Boolean as () => boolean,
 		summaries: Array as () => VariableSummary[],
 		subtitle: String as () => string,
@@ -150,6 +157,9 @@ export default Vue.extend({
 		},
 
 		sortedFilteredSummaries(): VariableSummary[] {
+			if (this.enableTypefiltering) {
+				return filterUnsupportedTargets(sortSummariesByImportance(this.filteredSummaries, this.variables));
+			}
 			return sortSummariesByImportance(this.filteredSummaries, this.variables);
 		},
 
@@ -233,7 +243,7 @@ export default Vue.extend({
 			this.$emit('categorical-click', key);
 		},
 
-		onNumericalClick(context: string, key: string, value: { from: number, to: number }, dataset: string) {
+		onNumericalClick(context: string, key: string, value: { from: number, to: number, type: string }, dataset: string) {
 			if (this.enableHighlighting) {
 				if (!this.highlight || this.highlight.key !== key) {
 					updateHighlight(this.$router, {
@@ -292,6 +302,7 @@ button {
 .variable-facets-container .variable-facets-item {
 	margin: 2px 2px 4px 2px;
 	min-height: 150px;
+	vertical-align: bottom;
 }
 .variable-facets-container .facets-root-container .facets-group-container{
 	background-color: inherit;

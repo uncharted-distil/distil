@@ -42,7 +42,7 @@ import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { Solution } from '../store/solutions/index';
-import { Variable, TableRow, TableColumn } from '../store/dataset/index';
+import { Variable, TableRow, TableColumn, TaskTypes } from '../store/dataset/index';
 
 const TABLE_VIEW = 'table';
 const TIMESERIES_VIEW = 'timeseries';
@@ -161,7 +161,7 @@ export default Vue.extend({
 		},
 
 		regressionEnabled(): boolean {
-			return solutionGetters.isRegression(this.$store);
+			return datasetGetters.getTask(this.$store).task === TaskTypes.REGRESSION;
 		},
 
 		numRows(): number {
@@ -170,7 +170,7 @@ export default Vue.extend({
 
 
 		isForecasting(): boolean {
-			return solutionGetters.isForecasting(this.$store);
+			return datasetGetters.getTask(this.$store).task === TaskTypes.TIME_SERIES_FORECASTING;
 		},
 
 		topSlotTitle(): string {

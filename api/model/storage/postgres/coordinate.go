@@ -26,6 +26,8 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
+const coordinateBuckets = 20
+
 // CoordinateField defines behaviour for the coordinate field type.
 type CoordinateField struct {
 	Key         string
@@ -64,23 +66,23 @@ func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.F
 	var err error
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert)
+		baseline, err = f.fetchHistogram(nil, invert, coordinateBuckets)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty() {
-			filtered, err = f.fetchHistogram(filterParams, invert)
+			filtered, err = f.fetchHistogram(filterParams, invert, coordinateBuckets)
 			if err != nil {
 				return nil, err
 			}
 		}
 	} else {
-		baseline, err = f.fetchHistogramByResult(resultURI, nil)
+		baseline, err = f.fetchHistogramByResult(resultURI, nil, coordinateBuckets)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty() {
-			filtered, err = f.fetchHistogramByResult(resultURI, filterParams)
+			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, coordinateBuckets)
 			if err != nil {
 				return nil, err
 			}
@@ -116,25 +118,7 @@ func (f *CoordinateField) fetchFilter(fieldName string, filterParams *api.Filter
 	return filter
 }
 
-func (f *CoordinateField) splitExtrema(xCol string, yCol string, boundsFilter *model.Filter) (*api.Extrema, *api.Extrema) {
-	xExtrema := &api.Extrema{
-		Key:  xCol,
-		Type: model.RealType,
-		Min:  boundsFilter.Bounds.MinX,
-		Max:  boundsFilter.Bounds.MaxX,
-	}
-
-	yExtrema := &api.Extrema{
-		Key:  yCol,
-		Type: model.RealType,
-		Min:  boundsFilter.Bounds.MinY,
-		Max:  boundsFilter.Bounds.MaxY,
-	}
-
-	return xExtrema, yExtrema
-}
-
-func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
+func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -145,13 +129,25 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 	}
 
-	fieldExtrema := f.fetchFilter(f.Key, filterParams)
+	// treat each axis as a separte field for the purposes of query generation
 	xField := NewNumericalField(f.Storage, f.StorageName, f.XCol, f.XCol, model.RealType)
 	yField := NewNumericalField(f.Storage, f.StorageName, f.YCol, f.YCol, model.RealType)
-	xExtrema, yExtrema := f.splitExtrema(f.XCol, f.YCol, fieldExtrema)
 
-	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema)
-	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema)
+	// get the extrema for each axis
+	xExtrema, err := xField.fetchExtrema()
+	if err != nil {
+		return nil, err
+	}
+	yExtrema, err := yField.fetchExtrema()
+	if err != nil {
+		return nil, err
+	}
+
+	xNumBuckets, yNumBuckets := f.getNumBuckets(numBuckets, xExtrema, yExtrema)
+
+	// generate a histogram query for each
+	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema, xNumBuckets)
+	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema, yNumBuckets)
 
 	// Get count by x & y
 	query := fmt.Sprintf(`SELECT %s as bucket, CAST(%s as double precision) AS %s, %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
@@ -170,7 +166,7 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res, xExtrema, yExtrema)
+	histogram, err := f.parseHistogram(res, xExtrema, yExtrema, xNumBuckets, yNumBuckets)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +174,7 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 	return histogram, nil
 }
 
-func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error) {
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
@@ -193,13 +189,25 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	fieldExtrema := f.fetchFilter(f.Key, filterParams)
+	// create a numerical field for each of X and Y
 	xField := NewNumericalField(f.Storage, f.StorageName, f.XCol, f.XCol, model.RealType)
 	yField := NewNumericalField(f.Storage, f.StorageName, f.YCol, f.YCol, model.RealType)
-	xExtrema, yExtrema := f.splitExtrema(f.XCol, f.YCol, fieldExtrema)
 
-	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema)
-	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema)
+	// get the extrema for each
+	xExtrema, err := xField.fetchExtrema()
+	if err != nil {
+		return nil, err
+	}
+	yExtrema, err := yField.fetchExtrema()
+	if err != nil {
+		return nil, err
+	}
+
+	xNumBuckets, yNumBuckets := f.getNumBuckets(numBuckets, xExtrema, yExtrema)
+
+	// create histograms given the the extrema
+	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema, xNumBuckets)
+	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema, yNumBuckets)
 
 	// Get count by x & y
 	query := fmt.Sprintf(`
@@ -221,7 +229,7 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res, xExtrema, yExtrema)
+	histogram, err := f.parseHistogram(res, xExtrema, yExtrema, xNumBuckets, yNumBuckets)
 	if err != nil {
 		return nil, err
 	}
@@ -229,28 +237,39 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 	return histogram, nil
 }
 
-func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, yExtrema *api.Extrema) (*api.Histogram, error) {
+func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, yExtrema *api.Extrema, xNumBuckets int, yNumBuckets int) (*api.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := api.HistogramAggPrefix + f.Key
 
 	// Parse bucket results.
-	xInterval := xExtrema.GetBucketInterval()
-	yInterval := yExtrema.GetBucketInterval()
-	xRounded := xExtrema.GetBucketMinMax()
-	yRounded := yExtrema.GetBucketMinMax()
+	xInterval := xExtrema.GetBucketInterval(xNumBuckets)
+	yInterval := yExtrema.GetBucketInterval(yNumBuckets)
+	xRounded := xExtrema.GetBucketMinMax(xNumBuckets)
+	yRounded := yExtrema.GetBucketMinMax(yNumBuckets)
 
-	xBucketCount := int64(xExtrema.GetBucketCount())
-	yBucketCount := int64(yExtrema.GetBucketCount())
-	buckets := make([]*api.Bucket, xBucketCount*yBucketCount)
+	xBucketCount := int64(xExtrema.GetBucketCount(xNumBuckets))
+	yBucketCount := int64(yExtrema.GetBucketCount(yNumBuckets))
+	xBuckets := make([]*api.Bucket, xBucketCount)
+
+	// initialize empty histogram structure
 	i := 0
 	for xVal := xRounded.Min; xVal < xRounded.Max; xVal += xInterval {
+		yBuckets := make([]*api.Bucket, yBucketCount)
+		j := 0
 		for yVal := yRounded.Min; yVal < yRounded.Max; yVal += yInterval {
-			buckets[i] = &api.Bucket{
-				Key:   fmt.Sprintf("%f,%f", xVal, yVal),
-				Count: 0,
+			yBuckets[j] = &api.Bucket{
+				Key:     fmt.Sprintf("%f", yVal),
+				Count:   0,
+				Buckets: nil,
 			}
-			i++
+			j++
 		}
+		xBuckets[i] = &api.Bucket{
+			Key:     fmt.Sprintf("%f", xVal),
+			Count:   0,
+			Buckets: yBuckets,
+		}
+		i++
 	}
 
 	for rows.Next() {
@@ -278,12 +297,12 @@ func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, 
 		} else if yBucket >= yBucketCount {
 			yBucket = yBucketCount - 1
 		}
-		buckets[xBucket*yBucketCount+yBucket].Count += bucketCount
+		xBuckets[xBucket].Buckets[yBucket].Count += bucketCount
 	}
 
 	// assign histogram attributes
 	return &api.Histogram{
-		Buckets: buckets,
+		Buckets: xBuckets,
 	}, nil
 }
 
@@ -324,4 +343,18 @@ func (f *CoordinateField) fetchDefaultFilter(fieldName string) *model.Filter {
 	}
 
 	return filter
+}
+
+func (f *CoordinateField) getNumBuckets(numBuckets int, xExtrema *api.Extrema, yExtrema *api.Extrema) (int, int) {
+	// adjust the buckets to account for x/y ratio
+	xSize := xExtrema.Max - xExtrema.Min
+	ySize := yExtrema.Max - yExtrema.Min
+	xNumBuckets := numBuckets
+	yNumBuckets := numBuckets
+	if xSize > ySize {
+		yNumBuckets = int(ySize / xSize * float64(yNumBuckets))
+	} else {
+		xNumBuckets = int(xSize / ySize * float64(xNumBuckets))
+	}
+	return xNumBuckets, yNumBuckets
 }

@@ -46,6 +46,19 @@ export default Vue.extend({
 		onClick: Function
 	},
 
+	watch: {
+		imageUrl(newUrl, oldUrl) {
+			if (newUrl !== oldUrl) {
+				if (!this.image) {
+					this.clearImage();
+					this.requestImage();
+				} else {
+					this.injectImage();
+				}
+			}
+		}
+	},
+
 	data() {
 		return {
 			zoomImage: false,
@@ -56,6 +69,10 @@ export default Vue.extend({
 			hasRendered: false,
 			hasRequested: false
 		};
+	},
+
+	updated() {
+		this.$nextTick(this.injectZoomedImage);
 	},
 
 	computed: {
@@ -110,12 +127,15 @@ export default Vue.extend({
 			}
 		},
 
-		showZoomedImage() {
-			if (this.image) {
-				const $elem = this.$refs.imageElemZoom as any;
+		injectZoomedImage () {
+			const $elem = this.$refs.imageElemZoom as any;
+			if (this.image && $elem) {
 				$elem.innerHTML = '';
 				$elem.appendChild(this.clonedImageElement(this.zoomedWidth, this.zoomedHeight));
 			}
+		},
+
+		showZoomedImage() {
 			this.zoomImage = true;
 		},
 
@@ -130,13 +150,20 @@ export default Vue.extend({
 			return img as HTMLImageElement;
 		},
 
+		clearImage (elem?: any) {
+			const $elem = elem || this.$refs.imageElem as any;
+			if ($elem) {
+				$elem.innerHTML = '';
+			}
+		},
+
 		injectImage() {
 			if (!this.image) {
 				return;
 			}
 			const elem = this.$refs.imageElem as any;
 			if (elem) {
-				elem.innerHTML = '';
+				this.clearImage(elem);
 				elem.appendChild(this.clonedImageElement(this.width, this.height));
 				const icon = document.createElement('i');
 				icon.className += 'fa fa-search-plus zoom-icon';

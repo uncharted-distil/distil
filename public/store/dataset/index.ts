@@ -172,6 +172,41 @@ export interface TimeseriesExtrema {
 	sum?: number;
 }
 
+
+// task string definitions - should mirror those defined in the MIT/LL d3m problem schema
+export enum TaskTypes {
+	CLASSIFICATION = 'classification',
+	REGRESSION = 'regression',
+	CLUSTERING = 'clustering',
+	LINK_PREDICTION = 'linkPrediction',
+	VERTEX_NOMINATION = 'vertexNomination',
+	VERTEX_CLASSIFICATION = 'vertexClassification',
+	COMMUNITY_DETECTION = 'communityDetection',
+	GRAPH_MATCHING = 'graphMatching',
+	TIME_SERIES_FORECASTING = 'timeSeriesForecasting',
+	COLLABORATIVE_FILTERING = 'collaborativeFiltering',
+	OBJECT_DETECTION = 'objectDetection',
+	SEMISUPERVISED_CLASSIFICATION = 'semiSupervisedClassification',
+	SEMISUPERVISED_REGRESSION = 'semiSupervisedRegression'
+}
+
+// sub-task string definitions - should mirror those defined in the MIT/LL d3m problem schema
+export enum TaskSubTypes {
+	NONE = 'none',
+	BINARY = 'binary',
+	MULTICLASS = 'multiclass',
+	MULTILABEL = 'multilabel',
+	UNIVARIATE = 'univariate',
+	MULTIVARIATE = 'multivariate',
+	OVERLAPPING = 'overlapping',
+	NONOVERLAPPING = 'nonOverlapping'
+}
+
+export interface Task {
+	task: TaskTypes;
+	subTask: TaskSubTypes;
+}
+
 export enum DatasetPendingRequestType {
 	VARIABLE_RANKING = 'VARIABLE_RANKING',
 	GEOCODING = 'GEOCODING',
@@ -238,6 +273,7 @@ export interface DatasetState {
 	excludedSet: WorkingSet;
 	pendingRequests: DatasetPendingRequest[];
 	isGeocoordinateFacet: string[];
+	task: Task;
 }
 
 export interface WorkingSet {
@@ -275,5 +311,11 @@ export const state: DatasetState = {
 	// pending requests for the active dataset
 	pendingRequests: [],
 
-	isGeocoordinateFacet: []
+	isGeocoordinateFacet: [],
+
+	// task information
+	task: {
+		task: TaskTypes.CLASSIFICATION,
+		subTask: TaskSubTypes.NONE
+	},
 };

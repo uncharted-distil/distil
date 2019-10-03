@@ -623,7 +623,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// make sure that we include all non-generated variables in our persisted
 	// dataset - the column removal preprocessing step will mark them for
 	// removal by ta2
-
 	allVarFilters := s.Filters.Clone()
 	allVarFilters.Variables = []string{}
 	var timeseriesField *model.Variable
@@ -665,8 +664,32 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// add dataset name to path
 	datasetInputDir := env.ResolvePath(datasetInput.Source, datasetInput.Folder)
 
+	// compute the task and subtask from the target and dataset
+	task, err := ResolveTask(dataStorage, dataset.Metadata.StorageName, targetVariable)
+	if err != nil {
+		return err
+	}
+	s.Task = task.Task
+	s.SubTask = task.SubTask
+
+	// when dealing with categorical data we want to stratify
+	stratify := false
+	if targetVariable.Type == model.CategoricalType {
+		stratify = true
+	}
+
 	// perist the datasets and get URI
-	datasetPathTrain, datasetPathTest, err := PersistOriginalData(s.DatasetInput, compute.D3MDataSchema, datasetInputDir, datasetDir, s.Task, timeseriesColumnIndex, columnIndex)
+	params := &persistedDataParams{
+		DatasetName:          s.DatasetInput,
+		SchemaFile:           compute.D3MDataSchema,
+		SourceDataFolder:     datasetInputDir,
+		TmpDataFolder:        datasetDir,
+		TaskType:             s.Task,
+		TimeseriesFieldIndex: timeseriesColumnIndex,
+		TargetFieldIndex:     columnIndex,
+		Stratify:             stratify,
+	}
+	datasetPathTrain, datasetPathTest, err := persistOriginalData(params)
 	if err != nil {
 		return err
 	}

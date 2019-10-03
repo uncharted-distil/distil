@@ -140,14 +140,6 @@ func GetFilterVariables(filterVariables []string, variables []*model.Variable) [
 		}
 
 		filtered = append(filtered, v)
-		// check for feature var type
-		if model.HasFeatureVar(v.Type) {
-			featureVarName := fmt.Sprintf("%s%s", model.FeatureVarPrefix, variable)
-			featureVar, ok := variableLookup[featureVarName]
-			if ok {
-				filtered = append(filtered, featureVar)
-			}
-		}
 		// check for cluster var type
 		if model.HasClusterVar(v.Type) {
 			clusterVarName := fmt.Sprintf("%s%s", model.ClusterVarPrefix, variable)
@@ -176,6 +168,24 @@ func parseFilter(filter map[string]interface{}) (*model.Filter, error) {
 	}
 
 	// TODO: update to a switch statement with a default to error
+
+	// datetine
+	if typ == model.DatetimeFilter {
+		key, ok := json.String(filter, "key")
+		if !ok {
+			return nil, errors.Errorf("no `key` provided for filter")
+		}
+		min, ok := json.Float(filter, "min")
+		if !ok {
+			return nil, errors.Errorf("no `min` provided for filter")
+		}
+		max, ok := json.Float(filter, "max")
+		if !ok {
+			return nil, errors.Errorf("no `max` provided for filter")
+		}
+
+		return model.NewDatetimeFilter(key, mode, min, max), nil
+	}
 
 	// numeric
 	if typ == model.NumericalFilter {

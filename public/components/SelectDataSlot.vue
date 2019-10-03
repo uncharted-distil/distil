@@ -11,8 +11,8 @@
 				<filter-badge v-if="activeFilter"
 					active-filter
 					:filter="activeFilter">
-				</filter-badge><!--
-				--><filter-badge v-if="filter.type !== 'row'" v-for="filter in filters" :key="filterHash(filter)" :filter="filter">
+				</filter-badge>
+				<filter-badge v-if="filter.type !== 'row'" v-for="filter in filters" :key="filterHash(filter)" :filter="filter">
 				</filter-badge>
 			</div>
 		</div>
@@ -39,7 +39,7 @@
 			</div>
 			<template>
 				<select-data-table v-if="viewType===TABLE_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-data-table>
-				<select-image-mosaic v-if="viewType===IMAGE_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-image-mosaic>
+				<image-mosaic v-if="viewType===IMAGE_VIEW" :included-active="includedActive" :instance-name="instanceName"></image-mosaic>
 				<select-graph-view v-if="viewType===GRAPH_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-graph-view>
 				<select-geo-plot v-if="viewType===GEO_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-geo-plot>
 				<select-timeseries-view v-if="viewType===TIMESERIES_VIEW" :included-active="includedActive" :instance-name="instanceName"></select-timeseries-view>
@@ -54,7 +54,7 @@
 import Vue from 'vue';
 import { spinnerHTML } from '../util/spinner';
 import SelectDataTable from './SelectDataTable';
-import SelectImageMosaic from './SelectImageMosaic';
+import ImageMosaic from './ImageMosaic';
 import SelectTimeseriesView from './SelectTimeseriesView';
 import SelectGeoPlot from './SelectGeoPlot';
 import SelectGraphView from './SelectGraphView';
@@ -80,7 +80,7 @@ export default Vue.extend({
 	components: {
 		FilterBadge,
 		SelectDataTable,
-		SelectImageMosaic,
+		ImageMosaic,
 		SelectGraphView,
 		SelectGeoPlot,
 		SelectTimeseriesView,
@@ -255,6 +255,7 @@ export default Vue.extend({
 <style>
 
 .select-data-container {
+	overflow: auto;
 	position: relative;
 	display: flex;
 	background-color: white;

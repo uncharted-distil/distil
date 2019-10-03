@@ -17,7 +17,7 @@ import { getNumericalFacetValue, getCategoricalFacetValue, getTimeseriesFacetVal
 import { TARGET_VAR_INSTANCE } from '../store/route/index';
 import { Variable, VariableSummary, Highlight } from '../store/dataset/index';
 import { updateHighlight } from '../util/highlights';
-import { isNumericType, TIMESERIES_TYPE } from '../util/types';
+import { isNumericType, TIMESERIES_TYPE, DATE_TIME_TYPE } from '../util/types';
 
 export default Vue.extend({
 	name: 'target-variable',
@@ -107,7 +107,7 @@ export default Vue.extend({
 			}
 
 			if (this.targetSummaries.length > 0 && !this.targetSummaries[0].pending) {
-				if (isNumericType(this.targetVariable.colType)) {
+				if (isNumericType(this.targetVariable.colType) || this.targetVariable.colType === DATE_TIME_TYPE) {
 					this.selectDefaultNumerical();
 				} else {
 					this.selectDefaultCategorical();

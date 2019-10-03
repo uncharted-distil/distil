@@ -10,7 +10,9 @@
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
 			:summaries="availableVariableSummaries"
-			:html="html">
+			:html="html"
+			:isAvailableFeatures="true"
+			:isFeaturesToModel="false">
 			<div class="available-variables-menu">
 				<div>
 					{{subtitle}}

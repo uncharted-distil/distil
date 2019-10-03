@@ -68,7 +68,7 @@ import SparklineRow from './SparklineRow';
 import SparklineVariable from './SparklineVariable';
 import { Dictionary } from '../util/dict';
 import { Filter } from '../util/filters';
-import { TableRow, TableColumn, TimeseriesExtrema, Variable, Histogram, Bucket, VariableSummary, Grouping, RowSelection, Highlight } from '../store/dataset/index';
+import { TableRow, TableColumn, TimeseriesExtrema, Variable, Histogram, Bucket, VariableSummary, Grouping, RowSelection, Highlight, TaskTypes } from '../store/dataset/index';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';
@@ -147,7 +147,7 @@ export default Vue.extend({
 		},
 
 		isForecasting(): boolean {
-			return solutionGetters.isForecasting(this.$store);
+			return datasetGetters.getTask(this.$store).task === TaskTypes.TIME_SERIES_FORECASTING;
 		},
 
 		showPredicted(): boolean {

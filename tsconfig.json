@@ -6,7 +6,6 @@
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
         "target": "es6",
-        "noUnusedLocals": true,
         "noImplicitThis": true,
         "noImplicitAny": false,
         "noUnusedParameters": false,

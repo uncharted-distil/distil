@@ -63,85 +63,87 @@ export default Vue.extend({
 			if (appGetters.isTask2(this.$store) && (path === HOME_ROUTE || path === SELECT_TARGET_ROUTE)) {
 				const dataset = appGetters.getProblemDataset(this.$store);
 				let target = appGetters.getProblemTarget(this.$store);
-				const taskType = appGetters.getProblemTaskType(this.$store);
-				let training = [];
+				const taskPromise = datasetActions.fetchTask(this.$store, {
+					dataset: dataset,
+					targetName: target
+				}).then(() => {
+					let training = [];
+					let promise = Promise.resolve();
 
-				let promise = Promise.resolve();
+					// TASK 2 hack
+					if (datasetGetters.getTask(this.$store).task === 'timeSeriesForecasting') {
+						promise = datasetActions.fetchVariables(this.$store, {
+							dataset: dataset
+						}).then(() => {
+							let variables = datasetGetters.getVariables(this.$store);
 
-				// TASK 2 hack
-				if (taskType === 'timeSeriesForecasting') {
-					promise = datasetActions.fetchVariables(this.$store, {
-						dataset: dataset
-					}).then(() => {
-						let variables = datasetGetters.getVariables(this.$store);
+							const ids = variables.filter(v => v.colType === CATEGORICAL_TYPE).map(v => v.colName);
+							const idKey = getComposedVariableKey(ids);
 
-						const ids = variables.filter(v => v.colType === CATEGORICAL_TYPE).map(v => v.colName);
-						const idKey = getComposedVariableKey(ids);
+							// set the target / training to the grouping properties
+							const yCol = target;
+							target = idKey;
+							training = ids;
 
-						// set the target / training to the grouping properties
-						const yCol = target;
-						target = idKey;
-						training = ids;
+							const alreadyComposed = variables.find(v => v.colName === idKey);
 
-						const alreadyComposed = variables.find(v => v.colName === idKey);
-
-						let nextPromise = Promise.resolve();
-						if (!alreadyComposed && ids.length > 1) {
-							console.log(`Task 2: Composing ids for grouping`, ids.join(', '));
-							nextPromise = datasetActions.composeVariables(this.$store, {
-								dataset: dataset,
-								key: idKey,
-								vars: ids
-							});
-						}
-						return nextPromise.then(() => {
-
-							variables = datasetGetters.getVariables(this.$store);
-							const existingGrouping = variables.find(v => v.colName === idKey);
-							const alreadyGrouped = existingGrouping && !!existingGrouping.grouping;
-
-							if (alreadyGrouped) {
-								// grouping already exists
-								console.log(`Task 2: grouping already exists`);
-								return;
+							let nextPromise = Promise.resolve();
+							if (!alreadyComposed && ids.length > 1) {
+								console.log(`Task 2: Composing ids for grouping`, ids.join(', '));
+								nextPromise = datasetActions.composeVariables(this.$store, {
+									dataset: dataset,
+									key: idKey,
+									vars: ids
+								});
 							}
+							return nextPromise.then(() => {
 
-							const xCol = variables.filter(v => v.colName !== target && v.colType === INTEGER_TYPE).map(v => v.colName)[0];
+								variables = datasetGetters.getVariables(this.$store);
+								const existingGrouping = variables.find(v => v.colName === idKey);
+								const alreadyGrouped = existingGrouping && !!existingGrouping.grouping;
 
-							const grouping =  {
-								type: 'timeseries',
-								dataset: dataset,
-								idCol: idKey,
-								subIds: ids,
-								hidden: [ xCol, yCol ],
-								properties: {
-									xCol: xCol,
-									yCol: yCol,
+								if (alreadyGrouped) {
+									// grouping already exists
+									console.log(`Task 2: grouping already exists`);
+									return;
 								}
-							};
 
-							console.log(`Task 2: Setting grouping for id`, idKey);
-							return datasetActions.setGrouping(this.$store, {
-								dataset: dataset,
-								grouping: grouping
+								const xCol = variables.filter(v => v.colName !== target && v.colType === INTEGER_TYPE).map(v => v.colName)[0];
+
+								const grouping =  {
+									type: 'timeseries',
+									dataset: dataset,
+									idCol: idKey,
+									subIds: ids,
+									hidden: [ xCol, yCol ],
+									properties: {
+										xCol: xCol,
+										yCol: yCol,
+									}
+								};
+
+								console.log(`Task 2: Setting grouping for id`, idKey);
+								return datasetActions.setGrouping(this.$store, {
+									dataset: dataset,
+									grouping: grouping
+								});
 							});
 						});
-					});
-				}
-				// TASK 2 hack
+					}
+					// TASK 2 hack
 
-				console.log(`Task 2: Routing directly to create models view with dataset=\`${dataset}\` and target=\`${target}\``, dataset, target);
-				promise.then(() => {
-					const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
-						dataset: dataset,
-						target: target,
-						training: training.join(',')
+					console.log(`Task 2: Routing directly to create models view with dataset=\`${dataset}\` and target=\`${target}\``, dataset, target);
+					promise.then(() => {
+						const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
+							dataset: dataset,
+							target: target,
+							training: training.join(',')
+						});
+						this.$router.push(entry);
 					});
-					this.$router.push(entry);
 				});
 			}
 		});
-
 	}
 });
 </script>

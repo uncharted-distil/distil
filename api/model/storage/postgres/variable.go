@@ -312,3 +312,34 @@ func (s *Storage) FetchTimeseriesSummary(dataset string, storageName string, xCo
 func (s *Storage) FetchTimeseriesSummaryByResult(dataset string, storageName string, xColName string, yColName string, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
 	return s.fetchTimeseriesSummary(dataset, storageName, xColName, yColName, resultURI, interval, filterParams, false)
 }
+
+// FetchCategoryCounts fetches the count of each label that occurs for the supplied categorical variable.
+func (s *Storage) FetchCategoryCounts(storageName string, variable *model.Variable) (map[string]int, error) {
+	if !model.IsCategorical(variable.Type) {
+		return nil, errors.Errorf("supplied variable %s is of type %s", variable.Name, variable.Type)
+	}
+
+	// Run a query to count the categories in the given row
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(\"%s\") FROM %s GROUP BY \"%s\"", variable.Name, variable.Name, storageName, variable.Name)
+	rows, err := s.client.Query(query)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to count categories for %s", variable.Name)
+	}
+
+	// Exract into a (category,count) map
+	counts := map[string]int{}
+	if rows != nil {
+		defer rows.Close()
+
+		for rows.Next() {
+			var label string
+			var count int
+			err := rows.Scan(&label, &count)
+			if err != nil {
+				return nil, err
+			}
+			counts[label] = count
+		}
+	}
+	return counts, nil
+}

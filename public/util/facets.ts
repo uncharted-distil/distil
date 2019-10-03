@@ -3,7 +3,7 @@ import moment from 'moment';
 import { spinnerHTML } from '../util/spinner';
 import { formatValue, TIMESERIES_TYPE, CATEGORICAL_TYPE, ORDINAL_TYPE,
 	BOOL_TYPE, ADDRESS_TYPE, CITY_TYPE, STATE_TYPE, COUNTRY_TYPE, EMAIL_TYPE,
-	POSTAL_CODE_TYPE, PHONE_TYPE, URI_TYPE, DATE_TIME_TYPE, IMAGE_TYPE } from '../util/types';
+	POSTAL_CODE_TYPE, PHONE_TYPE, URI_TYPE, DATE_TIME_TYPE, IMAGE_TYPE, DATE_TIME_LOWER_TYPE } from '../util/types';
 import { getTimeseriesSummaryTopCategories } from '../util/data';
 import { Variable, VariableSummary, TimeseriesSummary, CATEGORICAL_SUMMARY, NUMERICAL_SUMMARY, TIMESERIES_SUMMMARY } from '../store/dataset/index';
 import store from '../store/store';
@@ -365,9 +365,9 @@ function getHistogramSlices(summary: VariableSummary) {
 		let from: any, to: any;
 		if (summary.varType === DATE_TIME_TYPE) {
 			from = bucket.key;
-			to = (i < buckets.length - 1) ? buckets[i + 1].key : buckets[i].key;
-			from = moment(from).format('YYYY/MM/DD');
-			to = moment(to).format('YYYY/MM/DD');
+			to = (i < buckets.length - 1) ? buckets[i + 1].key : extrema.max;
+			from = moment.unix(_.toNumber(from)).utc().format('YYYY/MM/DD');
+			to = moment.unix(_.toNumber(to)).utc().format('YYYY/MM/DD');
 		} else {
 			from = _.toNumber(bucket.key);
 			to = (i < buckets.length - 1) ? _.toNumber(buckets[i + 1].key) : extrema.max;
@@ -451,7 +451,7 @@ export function getCategoricalFacetValue(summary: VariableSummary): string {
 	return summary.baseline.categoryBuckets ? getTimeseriesSummaryTopCategories(summary)[0] : summary.baseline.buckets[0].key;
 }
 
-export function getNumericalFacetValue(summary: VariableSummary, type: string): {from: number, to: number} {
+export function getNumericalFacetValue(summary: VariableSummary, type: string): {from: number, to: number, type: string} {
 
 	// facet library is incapable of selecting a range that isnt exactly
 	// on a bin boundary, so we need to iterate through and find it
@@ -514,7 +514,8 @@ export function getNumericalFacetValue(summary: VariableSummary, type: string): 
 	}
 	return {
 		from: fromSlice,
-		to: toSlice
+		to: toSlice,
+		type: summary.varType === DATE_TIME_TYPE ? DATE_TIME_LOWER_TYPE : summary.type
 	};
 }
 

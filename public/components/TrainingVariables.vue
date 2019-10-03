@@ -11,7 +11,9 @@
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
 			:summaries="trainingVariableSummaries"
-			:html="html">
+			:html="html"
+			:isAvailableFeatures="false"
+			:isFeaturesToModel="true">
 			<div class="available-variables-menu">
 				<div>
 					{{subtitle}}
