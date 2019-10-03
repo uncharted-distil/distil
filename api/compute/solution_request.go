@@ -470,7 +470,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	}
 
 	// explain the pipeline
-	featureWeights, err := s.explainOutput(client, solutionID, searchRequest, variables)
+	featureWeights, err := s.explainOutput(client, solutionID, searchRequest, datasetURITrain, variables)
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 		return

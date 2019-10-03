@@ -34,7 +34,7 @@ var (
 )
 
 func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string,
-	searchRequest *pipeline.SearchSolutionsRequest, variables []*model.Variable) ([]*api.SolutionFeatureWeight, error) {
+	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, variables []*model.Variable) ([]*api.SolutionFeatureWeight, error) {
 	// get the pipeline description
 	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
 	if err != nil {
@@ -48,7 +48,7 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	}
 
 	// send the fully specified pipeline to TA2 (updated produce function call)
-	outputURI, err := SubmitPipeline(client, nil, searchRequest, pipExplain, false)
+	outputURI, err := SubmitPipeline(client, []string{datasetURI}, searchRequest, pipExplain, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run the fully specified pipeline")
 	}
