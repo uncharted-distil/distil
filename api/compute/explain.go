@@ -59,40 +59,36 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 		return nil, errors.Wrap(err, "unable to parse feature weight output")
 	}
 
-	// map column index to get the feature name
-	varsMapped := make(map[int64]*model.Variable)
+	// map column name to get the feature index
+	varsMapped := make(map[string]*model.Variable)
 	for _, v := range variables {
-		varsMapped[int64(v.Index)] = v
+		varsMapped[v.Name] = v
 	}
 
 	for _, fw := range output {
-		fw.FeatureName = varsMapped[fw.FeatureIndex].Name
+		fw.FeatureIndex = int64(varsMapped[fw.FeatureName].Index)
 	}
 
 	return output, nil
 }
 
 func (s *SolutionRequest) parseSolutionFeatureWeight(solutionID string, outputURI string) ([]*api.SolutionFeatureWeight, error) {
-	// each row represents one feature weight
+	// all results on one row, with header row having feature names
 	res, err := result.ParseResultCSV(outputURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read feature weight output")
 	}
 
 	weights := make([]*api.SolutionFeatureWeight, len(res)-1)
-	for i, v := range res[1:] {
-		colIndex, err := strconv.ParseInt(v[0].(string), 10, 64)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to parse feature col index")
-		}
-		weight, err := strconv.ParseFloat(v[1].(string), 64)
+	for i := 0; i < len(res[0]); i++ {
+		weight, err := strconv.ParseFloat(res[1][i].(string), 64)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to parse feature weight")
 		}
-		weights[i-1] = &api.SolutionFeatureWeight{
-			SolutionID:   solutionID,
-			FeatureIndex: colIndex,
-			Weight:       weight,
+		weights[i] = &api.SolutionFeatureWeight{
+			SolutionID:  solutionID,
+			FeatureName: res[0][i].(string),
+			Weight:      weight,
 		}
 	}
 
