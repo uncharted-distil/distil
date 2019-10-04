@@ -21,7 +21,8 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	//"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-ingest/metadata"
 
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
@@ -42,12 +43,24 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 		target := pat.Param(r, "target")
 		// get solution id (optional param)
 		queryValues := r.URL.Query()
-		solutionID := queryValues.Get("solution")
+		solutionID := queryValues.Get("solutionId")
 
-		var rankings map[string]interface{}
-		var err error
+		// get storage client
+		storage, err := metaCtor()
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to connect to ES"))
+			return
+		}
+
+		d, err := storage.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to fetch dataset"))
+			return
+		}
+
+		var rankings map[string]float64
 		if solutionID == "" {
-			rankings, err = targetRank(dataset, target, metaCtor)
+			rankings, err = targetRank(dataset, target, d.Folder, d.Variables, d.Source)
 		} else {
 			rankings, err = solutionRank(solutionID, solutionCtor)
 		}
@@ -57,9 +70,19 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 			return
 		}
 
+		res := make(map[string]interface{})
+		for _, variable := range d.Variables {
+			rank, ok := rankings[variable.Name]
+			if ok {
+				res[variable.Name] = rank
+			} else {
+				res[variable.Name] = 0
+			}
+		}
+
 		// marshal output into JSON
 		err = handleJSON(w, RankingResult{
-			Rankings: rankings,
+			Rankings: res,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))
@@ -68,7 +91,7 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 	}
 }
 
-func solutionRank(solutionID string, solutionCtor api.SolutionStorageCtor) (map[string]interface{}, error) {
+func solutionRank(solutionID string, solutionCtor api.SolutionStorageCtor) (map[string]float64, error) {
 	// get storage client
 	storage, err := solutionCtor()
 	if err != nil {
@@ -80,7 +103,7 @@ func solutionRank(solutionID string, solutionCtor api.SolutionStorageCtor) (map[
 		return nil, err
 	}
 
-	ranks := make(map[string]interface{})
+	ranks := make(map[string]float64)
 	for _, fw := range weights {
 		ranks[fw.FeatureName] = fw.Weight
 	}
@@ -88,33 +111,13 @@ func solutionRank(solutionID string, solutionCtor api.SolutionStorageCtor) (map[
 	return ranks, nil
 }
 
-func targetRank(dataset string, target string, metaCtor api.MetadataStorageCtor) (map[string]interface{}, error) {
-	// get storage client
-	storage, err := metaCtor()
-	if err != nil {
-		return nil, err
-	}
-
-	d, err := storage.FetchDataset(dataset, false, false)
-	if err != nil {
-		return nil, err
-	}
+func targetRank(dataset string, target string, folder string, variables []*model.Variable, source metadata.DatasetSource) (map[string]float64, error) {
 
 	// compute rankings
-	rankings, err := task.TargetRank(d.Folder, target, d.Variables, d.Source)
+	rankings, err := task.TargetRank(folder, target, variables, source)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make(map[string]interface{})
-	for _, variable := range d.Variables {
-		rank, ok := rankings[variable.Name]
-		if ok {
-			res[variable.Name] = rank
-		} else {
-			res[variable.Name] = 0
-		}
-	}
-
-	return res, nil
+	return rankings, nil
 }

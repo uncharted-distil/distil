@@ -223,7 +223,7 @@ func (s *Storage) parseSolutionFeatureWeight(rows *pgx.Rows) ([]*api.SolutionFea
 
 // FetchSolutionFeatureWeights fetches solution feature weights from Postgres.
 func (s *Storage) FetchSolutionFeatureWeights(solutionID string) ([]*api.SolutionFeatureWeight, error) {
-	sql := fmt.Sprintf("SELECT solution_id, feature_name, feature_index, weight FROM %s;", solutionFeatureWeightTableName)
+	sql := fmt.Sprintf("SELECT solution_id, feature_name, feature_index, weight FROM %s WHERE solution_id = $1;", solutionFeatureWeightTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {

@@ -54,7 +54,7 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	}
 
 	// parse the output for the explanations
-	output, err := s.parseSolutionFeatureWeight(solutionID, outputURI)
+	parsed, err := s.parseSolutionFeatureWeight(solutionID, outputURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse feature weight output")
 	}
@@ -65,8 +65,12 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 		varsMapped[v.Name] = v
 	}
 
-	for _, fw := range output {
-		fw.FeatureIndex = int64(varsMapped[fw.FeatureName].Index)
+	output := make([]*api.SolutionFeatureWeight, 0)
+	for _, fw := range parsed {
+		if varsMapped[fw.FeatureName] != nil {
+			fw.FeatureIndex = int64(varsMapped[fw.FeatureName].Index)
+			output = append(output, fw)
+		}
 	}
 
 	return output, nil
@@ -79,15 +83,16 @@ func (s *SolutionRequest) parseSolutionFeatureWeight(solutionID string, outputUR
 		return nil, errors.Wrap(err, "unable to read feature weight output")
 	}
 
-	weights := make([]*api.SolutionFeatureWeight, len(res)-1)
+	weights := make([]*api.SolutionFeatureWeight, len(res[0]))
 	for i := 0; i < len(res[0]); i++ {
 		weight, err := strconv.ParseFloat(res[1][i].(string), 64)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to parse feature weight")
 		}
+		featureName := res[0][i].(string)
 		weights[i] = &api.SolutionFeatureWeight{
 			SolutionID:  solutionID,
-			FeatureName: res[0][i].(string),
+			FeatureName: featureName,
 			Weight:      weight,
 		}
 	}
