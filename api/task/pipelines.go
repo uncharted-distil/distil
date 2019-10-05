@@ -84,7 +84,7 @@ func submitPipeline(datasets []string, step *pipeline.PipelineDescription) (stri
 
 	request := compute.NewExecPipelineRequest(datasets, step)
 
-	err = request.Dispatch(client)
+	err = request.Dispatch(client, nil)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to dispatch pipeline")
 	}
