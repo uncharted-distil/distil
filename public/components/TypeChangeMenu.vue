@@ -95,8 +95,6 @@ export default Vue.extend({
 			return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
 		},
 		isGeocoordinate(): boolean {
-			console.log('this.variable', this.variable);
-
 			return this.field ? false : true;
 		},
 		type(): string {

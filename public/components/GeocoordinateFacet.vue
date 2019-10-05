@@ -53,7 +53,7 @@ import TypeChangeMenu from '../components/TypeChangeMenu';
 import { updateHighlight, clearHighlight } from '../util/highlights';
 import { GEOCOORDINATE_TYPE, LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
 import { overlayRouteEntry } from '../util/routes';
-import { removeFiltersByName } from '../util/filters';
+import { Filter, removeFiltersByName } from '../util/filters';
 
 import 'leaflet/dist/leaflet.css';
 
@@ -72,6 +72,10 @@ interface GeoField {
 	lngField?: string;
 	field?: string;
 }
+
+const GEOCOORDINATE_LABEL = 'longitude';
+
+const BLACK_PALLETE = ['#000000'];
 
 const BLUE_PALETTE = [
 	'rgba(0,0,0,0)',
@@ -95,26 +99,26 @@ const BLUE_PALETTE = [
 	'#00C6E1'
 ];
 
-const PALETTE =  [
-	'rgba(0,0,0,0)',
-	'#F7F7F7',
-	'#F0F0F0',
-	'#E9E9E9',
+const PALETTE =   [
 	'#E2E2E2',
-	'#DBDBDB',
-	'#D4D4D4',
-	'#CDCDCD',
-	'#C6C6C6',
-	'#BFBFBF',
-	'#B8B8B8',
-	'#B1B1B1',
-	'#AAAAAA',
+	'#D5D5D5',
+	'#C8C8C8',
+	'#BCBCBC',
+	'#AFAFAF',
 	'#A3A3A3',
-	'#9C9C9C',
-	'#959595',
-	'#8E8E8E',
-	'#878787',
-	'#808080'
+	'#969696',
+	'#8A8A8A',
+	'#7D7D7D',
+	'#717171',
+	'#646464',
+	'#575757',
+	'#4B4B4B',
+	'#3E3E3E',
+	'#323232',
+	'#252525',
+	'#191919',
+	'#0C0C0C',
+	'#000000'
 ];
 
 export default Vue.extend({
@@ -141,6 +145,9 @@ export default Vue.extend({
 			startingLatLng: null,
 			currentRect: null,
 			selectedRect: null,
+			baseLineLayer: null,
+			filteredLayer: null,
+			excludedLayer: null
 		};
 	},
 	computed: {
@@ -150,6 +157,11 @@ export default Vue.extend({
 
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
+		},
+
+		excludedSummaries(): any {
+			return datasetGetters.getExcludedVariableSummaries(this.$store)
+				.filter(summary => summary.label === GEOCOORDINATE_LABEL)[0];
 		},
 
 		instanceName(): string {
@@ -234,7 +246,38 @@ export default Vue.extend({
 				return featureCollection(features);
 			}
 		},
+		excludedBucketFeatures(): helpers.FeatureCollection {
+			if (this.excludedSummaries.filtered) {
+				const buckets  = this.excludedSummaries.filtered.buckets;
+				const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
+				const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
+				// create a feature collection from the server-supplied bucket data
+				const features: helpers.Feature[] = [];
+				this.excludedSummaries.filtered.buckets.forEach(lonBucket => {
+					lonBucket.buckets.forEach(latBucket => {
+						// Don't include features with a count of 0.
+						if (latBucket.count > 0) {
+							const xCoord = _.toNumber(lonBucket.key);
+							const yCoord = _.toNumber(latBucket.key);
+							const feature = polygon([[
+										[xCoord, yCoord],
+										[xCoord, yCoord + ySize],
+										[xCoord + xSize, yCoord + ySize],
+										[xCoord + xSize, yCoord],
+										[xCoord, yCoord]
+									]], { selected: false,
+										count: latBucket.count });
+							features.push(feature);
+						}
+					});
+				});
 
+				return featureCollection(features);
+			} else {
+				const features: helpers.Feature[] = [];
+				return featureCollection(features);
+			}
+		},
 		// Returns the minimum non-zero bucket count value
 		minCount(): number {
 			return this.bucketFeatures.features.reduce((min, feature) =>
@@ -256,11 +299,27 @@ export default Vue.extend({
 			return this.filteredBucketFeatures.features.reduce((max, feature) =>
 				feature.properties.count > max ? feature.properties.count : max, Number.MIN_SAFE_INTEGER);
 		},
+		excludededMinCount(): number {
+			return this.excludedBucketFeatures.features.reduce((min, feature) =>
+				feature.properties.count < min ? feature.properties.count : min, Number.MAX_SAFE_INTEGER);
+		},
+
+		// Returns the maximum bucket count value
+		excludededMaxCount(): number {
+			return this.excludedBucketFeatures.features.reduce((max, feature) =>
+				feature.properties.count > max ? feature.properties.count : max, Number.MIN_SAFE_INTEGER);
+		},
 		headerLabel(): string {
 			return GEOCOORDINATE_TYPE.toUpperCase();
 		},
+		hasFilters(): boolean  {
+			return routeGetters.getDecodedFilters(this.$store).length > 0;
+		},
 		highlight(): Highlight {
 			return routeGetters.getDecodedHighlight(this.$store);
+		},
+		hasHighlightAndFilter(): boolean {
+			return !this.hasFilters && !this.highlight;
 		}
 	},
 	methods: {
@@ -435,6 +494,13 @@ export default Vue.extend({
 		},
 		paint() {
 			// NOTE: this component re-mounts on any change, so do everything in here
+			if (!this.highlight && !this.hasFilters) {
+				this.clearSelectionRect();
+			}
+
+			if (!this.hasFilters && this.excludedLayer) {
+				this.excludedLayer.removeFrom(this.map);
+			}
 
 			// Lazy map instantiation with a default zoom position
 			if (!this.map) {
@@ -458,49 +524,53 @@ export default Vue.extend({
 			const northEast = leaflet.latLng(bounds[3], bounds[2]);
 			const southWest = leaflet.latLng(bounds[1], bounds[0]);
 			this.bounds = leaflet.latLngBounds(northEast, southWest);
-			let filteredLayer, baseLayer;
 
 			if (this.bounds.isValid()) {
 
 				this.map.fitBounds(this.bounds);
-					if (this.map.hasLayer(filteredLayer) && this.map.hasLayer(baseLayer)) {
-						this.map.removeLayer(filteredLayer);
-						this.map.removeLayer(baseLayer);
-					}
 
 				// Generate the colour ramp scaling function
 					const maxVal = this.maxCount;
 					const minVal = this.minCount;
 
-				if( !this.isAvailableFeatures && !this.isFeaturesToModel || !this.highlight ) {
-					const d = (maxVal - minVal) / BLUE_PALETTE.length;
-					const domain = BLUE_PALETTE.map((val, index) => minVal + d * (index + 1));
-					const scaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(domain);
+				if (!this.isAvailableFeatures && !this.isFeaturesToModel || !this.highlight && !this.hasFilters) {
 
-					// Render the heatmap buckets as a GeoJSON layer
-					baseLayer = leaflet.geoJSON(this.bucketFeatures, {
-						style: feature => {
+					if (this.baseLineLayer) {
+						this.baseLineLayer.removeFrom(this.map);
+					}
+						const d = (maxVal - minVal) / BLUE_PALETTE.length;
+						const domain = BLUE_PALETTE.map((val, index) => minVal + d * (index + 1));
+						const scaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(domain);
 
-							return {
-								fillColor: scaleColors(feature.properties.count),
-								weight: 0,
-								opacity: 1,
-								color: 'rgba(0,0,0,0)',
-								dashArray: '3',
-								fillOpacity: 0.7
-							};
-						}
-					});
+						// Render the heatmap buckets as a GeoJSON layer
+						this.baseLineLayer = leaflet.geoJSON(this.bucketFeatures, {
+							style: feature => {
+								return {
+									fillColor: scaleColors(feature.properties.count),
+									weight: 0,
+									opacity: 1,
+									color: 'rgba(0,0,0,0)',
+									dashArray: '3',
+									fillOpacity: 0.7
+								};
+							}
+						});
 
-					baseLayer.addTo(this.map);
+					this.baseLineLayer.addTo(this.map);
 				} else {
+					if (this.filteredLayer) {
+						this.filteredLayer.removeFrom(this.map);
+					}
+
+					const colorPalette = BLUE_PALETTE;
+
 					const filteredMaxVal = this.filteredMaxCount;
 					const filteredMinVal = this.filteredMinCount;
-					const dVal = (filteredMaxVal - filteredMinVal) / BLUE_PALETTE.length;
-					const filteredDomain = BLUE_PALETTE.map((val, index) => minVal + dVal * (index + 1));
-					const filteredScaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(filteredDomain);
+					const dVal = (filteredMaxVal - filteredMinVal) / colorPalette.length;
+					const filteredDomain = colorPalette.map((val, index) => minVal + dVal * (index + 1));
+					const filteredScaleColors = scaleThreshold().range(colorPalette as any).domain(filteredDomain);
 
-					filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
+					this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
 						style: feature => {
 							return {
 								fillColor: filteredScaleColors(feature.properties.count),
@@ -514,26 +584,49 @@ export default Vue.extend({
 					});
 
 
-					filteredLayer.addTo(this.map);
+					this.filteredLayer.addTo(this.map);
 
 				}
 
+				if (this.hasFilters) {
+					if (this.excludedLayer) {
+						this.excludedLayer.removeFrom(this.map);
+					}
+
+					const excludedFeatures = _.differenceWith(this.bucketFeatures.features, this.filteredBucketFeatures.features, _.isEqual);
+					const excludedBucketFeatures = featureCollection(excludedFeatures);
+					this.excludedLayer = leaflet.geoJSON(excludedBucketFeatures, {
+						style: feature => {
+							return {
+								fillColor: BLACK_PALLETE[0],
+								weight: 0,
+								opacity: 1,
+								color: 'rgba(0,0,0,0)',
+								dashArray: '3',
+								fillOpacity: 1
+							};
+						}
+					});
+					this.excludedLayer.addTo(this.map);
+					this.clearSelectionRect();
+
+				}
 
 			}
 		}
 	},
 
 	watch: {
-		filteredBucketFeatures() {
-			if (this.summary.filtered) {
-				this.paint();
-			}
-		},
 		bucketFeatures() {
 			if (this.summary.baseline) {
 				this.paint();
 			}
 		},
+		filteredBucketFeatures() {
+			if (this.summary.filtered) {
+				this.paint();
+			}
+		}
 	},
 
 	mounted() {
