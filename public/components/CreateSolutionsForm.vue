@@ -175,7 +175,6 @@ export default Vue.extend({
 				dataset: this.dataset,
 				filters: this.filterParams,
 				target: routeGetters.getRouteTargetVariable(this.$store),
-				timestampField: null,
 				metrics: this.metrics,
 				maxSolutions: NUM_SOLUTIONS,
 				// intentionally nulled for now - should be made user settable in the future
