@@ -48,7 +48,7 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	}
 
 	// send the fully specified pipeline to TA2 (updated produce function call)
-	outputURI, err := SubmitPipeline(client, []string{datasetURI}, searchRequest, pipExplain, false)
+	outputURI, err := SubmitPipeline(client, []string{datasetURI}, searchRequest, pipExplain)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run the fully specified pipeline")
 	}
