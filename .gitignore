@@ -20,5 +20,6 @@ public/static
 outputs/
 /datamart
 /static_resources
+api/compute/test/tmp_data
 api/task/test_data/augmented
 Gopkg.lock

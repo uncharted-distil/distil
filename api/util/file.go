@@ -17,6 +17,7 @@ package util
 
 import (
 	"archive/zip"
+	"encoding/csv"
 	"io"
 	"io/ioutil"
 	"os"
@@ -165,4 +166,39 @@ func GetDirectories(inputPath string) ([]string, error) {
 	}
 
 	return dirs, nil
+}
+
+// ReadCSVFile reads a csv file and returns the string slice representation of the data.
+func ReadCSVFile(filename string, hasHeader bool) ([][]string, error) {
+	// open the file
+	csvFile, err := os.Open(filename)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to open data file")
+	}
+	defer csvFile.Close()
+	reader := csv.NewReader(csvFile)
+
+	lines := make([][]string, 0)
+
+	// skip the header as needed
+	if hasHeader {
+		_, err = reader.Read()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read header from file")
+		}
+	}
+
+	// read the raw data
+	for {
+		line, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, errors.Wrap(err, "failed to read line from file")
+		}
+
+		lines = append(lines, line)
+	}
+
+	return lines, nil
 }

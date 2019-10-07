@@ -16,40 +16,17 @@
 			<div v-if="showPredicted" class="timeseries-prediction-col pad-top"><b>PREDICTION</b></div>
 		</div>
 		<div class="timeseries-rows" v-if="hasData">
-			<div v-if="isTimeseriesAnalysis">
-
-				<div v-for="summary in predictedSummaries" :key="summary.key">
-					<sparkline-variable
-						:summary="summary"
-						:highlight-pixel-x="highlightPixelX"
-						:min-x="microMin"
-						:max-x="microMax">
-					</sparkline-variable>
-				</div>
-
-				<div v-for="summary in variableSummaries" :key="summary.key">
-					<sparkline-variable
-						:summary="summary"
-						:highlight-pixel-x="highlightPixelX"
-						:min-x="microMin"
-						:max-x="microMax">
-					</sparkline-variable>
-				</div>
-
-			</div>
-			<div v-if="!isTimeseriesAnalysis">
-				<div class="sparkline-row-container" v-for="item in items" :key="item[timeseriesGrouping.idCol]">
-					<sparkline-row
-						:x-col="timeseriesGrouping.properties.xCol"
-						:y-col="timeseriesGrouping.properties.yCol"
-						:timeseries-col="timeseriesGrouping.idCol"
-						:timeseries-id="item[timeseriesGrouping.idCol]"
-						:timeseries-extrema="timeseriesRowLocalExtrema(item[timeseriesGrouping.idCol])"
-						:highlight-pixel-x="highlightPixelX"
-						:prediction="getPrediction(item)"
-						:solution-id="solutionId">
-					</sparkline-row>
-				</div>
+			<div class="sparkline-row-container" v-for="item in items" :key="item[timeseriesGrouping.idCol]">
+				<sparkline-row
+					:x-col="timeseriesGrouping.properties.xCol"
+					:y-col="timeseriesGrouping.properties.yCol"
+					:timeseries-col="timeseriesGrouping.idCol"
+					:timeseries-id="item[timeseriesGrouping.idCol]"
+					:timeseries-extrema="timeseriesRowLocalExtrema(item[timeseriesGrouping.idCol])"
+					:highlight-pixel-x="highlightPixelX"
+					:prediction="getPrediction(item)"
+					:solution-id="solutionId">
+				</sparkline-row>
 			</div>
 		</div>
 		<div class="vertical-line"></div>
@@ -126,14 +103,6 @@ export default Vue.extend({
 			return routeGetters.getRouteTargetVariable(this.$store);
 		},
 
-		isTimeseriesAnalysis(): boolean {
-			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
-		},
-
-		timeseriesAnalysisVar(): string {
-			return routeGetters.getRouteTimeseriesAnalysis(this.$store);
-		},
-
 		solutionId(): string {
 			return routeGetters.getRouteSolutionId(this.$store);
 		},
@@ -161,24 +130,12 @@ export default Vue.extend({
 		},
 
 		hasData(): boolean {
-			if (this.isTimeseriesAnalysis && this.variableSummaries.length > 0) {
-				return true;
-			}
 			return this.timeseriesGrouping && !!this.timeseriesExtrema;
 		},
 
-		timeseriesAnalysisVariable(): Variable {
-			return datasetGetters.getTimeseriesAnalysisVariable(this.$store);
-		},
-
 		isDateScale(): boolean {
-			let timeVar = null;
-			if (this.isTimeseriesAnalysis) {
-				timeVar = datasetGetters.getTimeseriesAnalysisVariable(this.$store);
-			} else {
-				const grouping = this.timeseriesGrouping;
-				timeVar = this.variables.find(v => v.colName === grouping.properties.xCol);
-			}
+			const grouping = this.timeseriesGrouping;
+			const timeVar = this.variables.find(v => v.colName === grouping.properties.xCol);
 			return (timeVar && isTimeType(timeVar.colType));
 		},
 
@@ -196,28 +153,11 @@ export default Vue.extend({
 			}).filter(summary => !!summary); // remove errors
 		},
 
-		timeseriesVarsMinX(): number {
-			if (!this.timeseriesAnalysisVariable) {
-				return null;
-			}
-			return this.timeseriesAnalysisVariable.min;
-		},
-
-		timeseriesVarsMaxX(): number {
-			if (!this.timeseriesAnalysisVariable) {
-				return null;
-			}
-			return this.timeseriesAnalysisVariable.max;
-		},
-
 		timeseriesExtrema(): TimeseriesExtrema {
 			return datasetGetters.getTimeseriesExtrema(this.$store)[this.dataset];
 		},
 
 		timeseriesMinX(): number {
-			if (this.isTimeseriesAnalysis) {
-				return this.timeseriesVarsMinX;
-			}
 			if (this.timeseriesExtrema) {
 				return this.timeseriesExtrema.x.min;
 			}
@@ -225,9 +165,6 @@ export default Vue.extend({
 		},
 
 		timeseriesMaxX(): number {
-			if (this.isTimeseriesAnalysis) {
-				return this.timeseriesVarsMaxX;
-			}
 			if (this.timeseriesExtrema) {
 				return this.timeseriesExtrema.x.max;
 			}
@@ -279,7 +216,7 @@ export default Vue.extend({
 		isTimeseriesViewHighlight(): boolean {
 			// ignore any highlights unless they are range highlights
 			return this.highlight &&
-				(this.isTimeseriesAnalysis || this.highlight.key === this.timeseriesGrouping.idCol) &&
+				this.highlight.key === this.timeseriesGrouping.idCol &&
 				this.highlight.value.from !== undefined &&
 				this.highlight.value.to !== undefined;
 		},
@@ -534,7 +471,7 @@ export default Vue.extend({
 				updateHighlight(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
-					key: this.isTimeseriesAnalysis ? this.timeseriesAnalysisVar : this.timeseriesGrouping.idCol,
+					key: this.timeseriesGrouping.idCol,
 					value: {
 						from: this.microMin,
 						to: this.microMax
@@ -588,7 +525,7 @@ export default Vue.extend({
 				updateHighlight(this.$router, {
 					context: this.instanceName,
 					dataset: this.dataset,
-					key: this.isTimeseriesAnalysis ? this.timeseriesAnalysisVar : this.timeseriesGrouping.idCol,
+					key: this.timeseriesGrouping.idCol,
 					value: {
 						from: this.microMin,
 						to: this.microMax

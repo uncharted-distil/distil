@@ -6,7 +6,7 @@
 				:text="label"
 				:disabled="isDisabled">
 				<template v-if="!isComputedFeature">
-					<template v-if="!isGeocoordinate">
+					<template v-if="!isGeocoordinate && !isCluster">
 					<b-dropdown-item
 						v-for="suggested in getSuggestedList()"
 						v-bind:class="{ selected: suggested.isSelected, recommended: suggested.isRecommended }"
@@ -17,7 +17,7 @@
 						<icon-base v-if="suggested.isRecommended" icon-name="bookmark" class="recommended-icon"><icon-bookmark /></icon-base>
 					</b-dropdown-item>
 					</template>
-					<template  v-if="showGroupingOptions && !isGeocoordinate">
+					<template  v-if="showGroupingOptions && !isGeocoordinate && !isCluster">
 						<b-dropdown-divider></b-dropdown-divider>
 					</template>
 					<template v-if="showGroupingOptions">
@@ -49,7 +49,7 @@ import IconBookmark from './icons/IconBookmark';
 import { SuggestedType, Variable, Highlight } from '../store/dataset/index';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, TIMESERIES_TYPE, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS, GEOCOORDINATE_TYPE, LATITUDE_TYPE, LONGITUDE_TYPE, hasComputedVarPrefix } from '../util/types';
+import { addTypeSuggestions, getLabelFromType, TIMESERIES_TYPE, isClusterType, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS, GEOCOORDINATE_TYPE, LATITUDE_TYPE, LONGITUDE_TYPE, hasComputedVarPrefix } from '../util/types';
 import { hasFilterInRoute } from '../util/filters';
 import { createRouteEntry } from '../util/routes';
 import { GROUPING_ROUTE } from '../store/route';
@@ -130,6 +130,9 @@ export default Vue.extend({
 		},
 		highlight(): Highlight {
 			return routeGetters.getDecodedHighlight(this.$store);
+		},
+		isCluster(): boolean {
+			return isClusterType(normalizedEquivalentType(this.type));
 		},
 		isDisabled(): boolean {
 			return hasFilterInRoute(this.field) || (this.highlight && this.highlight.key === this.field) || this.isComputedFeature;

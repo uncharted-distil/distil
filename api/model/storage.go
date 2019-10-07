@@ -42,9 +42,6 @@ type DataStorage interface {
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
 	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams, invert bool) ([][]float64, error)
 	FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultUUID string, filterParams *FilterParams) ([][]float64, error)
-	FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, interval int, filterParams *FilterParams, invert bool) (*VariableSummary, error)
-	FetchTimeseriesSummaryByResult(dataset string, storageName string, xColName string, yColName string, interval int, resultURI string, filterParams *FilterParams) (*VariableSummary, error)
-	FetchForecastingSummary(dataset string, storageName string, xColName string, yColName string, interval int, resultURI string, filterParams *FilterParams) (*VariableSummary, error)
 	FetchCategoryCounts(storageName string, variable *model.Variable) (map[string]int, error)
 
 	// Dataset manipulation
@@ -67,6 +64,7 @@ type SolutionStorage interface {
 	PersistRequestFeature(requestID string, featureName string, featureType string) error
 	PersistRequestFilters(requestID string, filters *FilterParams) error
 	PersistSolution(requestID string, solutionID string, progress string, createdTime time.Time) error
+	PersistSolutionFeatureWeight(solutionID string, featureName string, featureIndex int64, weight float64) error
 	PersistSolutionResult(solutionID string, fittedSolutionID, resultUUID string, resultURI string, progress string, createdTime time.Time) error
 	PersistSolutionScore(solutionID string, metric string, score float64) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
@@ -76,6 +74,7 @@ type SolutionStorage interface {
 	FetchRequestFeatures(requestID string) ([]*Feature, error)
 	FetchRequestFilters(requestID string, features []*Feature) (*FilterParams, error)
 	FetchSolution(solutionID string) (*Solution, error)
+	FetchSolutionFeatureWeights(solutionID string) ([]*SolutionFeatureWeight, error)
 	FetchSolutionResultByUUID(resultUUID string) (*SolutionResult, error)
 	FetchSolutionResult(solutionID string) (*SolutionResult, error)
 	FetchSolutionScores(solutionID string) ([]*SolutionScore, error)

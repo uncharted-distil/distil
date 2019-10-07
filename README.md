@@ -56,8 +56,6 @@ The application requires:
 - ElasticSearch
 - PostgreSQL
 - TA2 Pipeline Server Stub
-- TA2 Pipeline Runner
-- D3M Resource Server
 
 Docker images for each are available at the following registry:
 

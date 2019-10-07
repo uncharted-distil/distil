@@ -50,7 +50,7 @@ func Format(datasetSource metadata.DatasetSource, schemaFile string, config *Ing
 
 	// read the raw data
 	dataPath := path.Join(path.Dir(schemaFile), dr.ResPath)
-	lines, err := ReadCSVFile(dataPath, config.HasHeader)
+	lines, err := util.ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return "", errors.Wrap(err, "error reading raw data")
 	}

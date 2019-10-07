@@ -138,6 +138,7 @@ func main() {
 			config.SolutionComputeEndpoint,
 			config.SolutionComputeTrace,
 			userAgent,
+			"TA2",
 			time.Duration(config.SolutionComputePullTimeout)*time.Second,
 			config.SolutionComputePullMax,
 			config.SkipPreprocessing,
@@ -297,7 +298,7 @@ func main() {
 	registerRoute(mux, "/distil/join-suggestions/:dataset", routes.JoinSuggestionHandler(esMetadataStorageCtor, datamartCtors))
 	registerRoute(mux, "/distil/solutions/:dataset/:target/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(esMetadataStorageCtor, pgDataStorageCtor))
-	registerRoute(mux, "/distil/variable-rankings/:dataset/:target", routes.VariableRankingHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/variable-rankings/:dataset/:target", routes.VariableRankingHandler(esMetadataStorageCtor, pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/residuals-extrema/:dataset/:target", routes.ResidualsExtremaHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(solutionClient, config.D3MOutputDir))
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath, datasetDocPath))
@@ -315,11 +316,7 @@ func main() {
 	registerRoutePost(mux, "/distil/delete/:dataset/:variable", routes.DeleteHandler(pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/results/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable/:invert", routes.VariableSummaryHandler(pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/timeseries-summary/:dataset/:xColName/:yColName/:binningInterval/:invert", routes.TimeseriesSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid", routes.TrainingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/training-timeseries-summary/:dataset/:xColName/:yColName/:binningInterval/:results-uuid", routes.TrainingTimeseriesSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/target-timeseries-summary/:dataset/:xColName/:yColName/:binningInterval/:results-uuid", routes.TargetTimeseriesSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/forecasting-summary/:dataset/:xColName/:yColName/:binningInterval/:results-uuid", routes.ForecastingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/target-summary/:dataset/:target/:results-uuid", routes.TargetSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/residuals-summary/:dataset/:target/:results-uuid", routes.ResidualsSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))

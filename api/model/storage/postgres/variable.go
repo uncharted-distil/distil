@@ -254,65 +254,6 @@ func (s *Storage) FetchSummaryByResult(dataset string, storageName string, varNa
 	return s.fetchSummaryData(dataset, storageName, varName, resultURI, filterParams, extrema, false)
 }
 
-func (s *Storage) fetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, resultURI string, interval int, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
-
-	// need description of the variables to request aggregation against.
-	timeColVar, err := s.metadata.FetchVariable(dataset, xColName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
-	}
-	variable, err := s.metadata.FetchVariable(dataset, yColName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
-	}
-
-	// get the histogram by using the variable type.
-	var field Field
-
-	if variable.Grouping != nil {
-		return nil, errors.Errorf("not implemented")
-	}
-
-	if model.IsNumerical(variable.Type) {
-		field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
-	} else if model.IsCategorical(variable.Type) {
-		field = NewCategoricalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
-	} else if model.IsVector(variable.Type) {
-		field = NewVectorField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
-	} else if model.IsText(variable.Type) {
-		field = NewTextField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
-	} else if model.IsImage(variable.Type) {
-		field = NewImageField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
-	} else if model.IsDateTime(variable.Type) {
-		field = NewDateTimeField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
-	} else {
-		return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
-	}
-
-	timeseries, err := field.FetchTimeseriesSummaryData(timeColVar, interval, resultURI, filterParams, invert)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch summary data")
-	}
-
-	// get number of rows
-	timeseries.Type = "timeseries"
-
-	// add dataset
-	timeseries.Dataset = dataset
-
-	return timeseries, err
-}
-
-// FetchTimeseriesSummary fetches a timeseries.
-func (s *Storage) FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, interval int, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
-	return s.fetchTimeseriesSummary(dataset, storageName, xColName, yColName, "", interval, filterParams, invert)
-}
-
-// FetchTimeseriesSummaryByResult fetches a timeseries for a given result.
-func (s *Storage) FetchTimeseriesSummaryByResult(dataset string, storageName string, xColName string, yColName string, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
-	return s.fetchTimeseriesSummary(dataset, storageName, xColName, yColName, resultURI, interval, filterParams, false)
-}
-
 // FetchCategoryCounts fetches the count of each label that occurs for the supplied categorical variable.
 func (s *Storage) FetchCategoryCounts(storageName string, variable *model.Variable) (map[string]int, error) {
 	if !model.IsCategorical(variable.Type) {
