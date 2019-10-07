@@ -171,7 +171,10 @@ export default Vue.extend({
 		mapID(): string {
 			return `map-${this.instanceName}`;
 		},
+		updated(){
+			console.log('excludedBucketFeature', this.excludedBucketFeatures);
 
+		},
 		// Computes the bounds of the summary data.
 		bucketBounds(): helpers.BBox {
 			return bbox(this.bucketFeatures);
@@ -247,8 +250,11 @@ export default Vue.extend({
 			}
 		},
 		excludedBucketFeatures(): helpers.FeatureCollection {
+			console.log('this.excludedSummaries', this.excludedSummaries);
+
 			if (this.excludedSummaries.filtered) {
 				const buckets  = this.excludedSummaries.filtered.buckets;
+
 				const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
 				const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
 				// create a feature collection from the server-supplied bucket data
@@ -297,16 +303,6 @@ export default Vue.extend({
 		// Returns the maximum bucket count value
 		filteredMaxCount(): number {
 			return this.filteredBucketFeatures.features.reduce((max, feature) =>
-				feature.properties.count > max ? feature.properties.count : max, Number.MIN_SAFE_INTEGER);
-		},
-		excludededMinCount(): number {
-			return this.excludedBucketFeatures.features.reduce((min, feature) =>
-				feature.properties.count < min ? feature.properties.count : min, Number.MAX_SAFE_INTEGER);
-		},
-
-		// Returns the maximum bucket count value
-		excludededMaxCount(): number {
-			return this.excludedBucketFeatures.features.reduce((max, feature) =>
 				feature.properties.count > max ? feature.properties.count : max, Number.MIN_SAFE_INTEGER);
 		},
 		headerLabel(): string {
@@ -530,8 +526,8 @@ export default Vue.extend({
 				this.map.fitBounds(this.bounds);
 
 				// Generate the colour ramp scaling function
-					const maxVal = this.maxCount;
-					const minVal = this.minCount;
+				const maxVal = this.maxCount;
+				const minVal = this.minCount;
 
 				if (!this.isAvailableFeatures && !this.isFeaturesToModel || !this.highlight && !this.hasFilters) {
 
@@ -593,9 +589,7 @@ export default Vue.extend({
 						this.excludedLayer.removeFrom(this.map);
 					}
 
-					const excludedFeatures = _.differenceWith(this.bucketFeatures.features, this.filteredBucketFeatures.features, _.isEqual);
-					const excludedBucketFeatures = featureCollection(excludedFeatures);
-					this.excludedLayer = leaflet.geoJSON(excludedBucketFeatures, {
+					this.excludedLayer = leaflet.geoJSON(this.excludedBucketFeatures, {
 						style: feature => {
 							return {
 								fillColor: BLACK_PALLETE[0],
