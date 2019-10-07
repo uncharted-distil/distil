@@ -21,7 +21,8 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/pat"
 
-	//"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-ingest/metadata"
 
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
@@ -34,30 +35,38 @@ type RankingResult struct {
 
 // VariableRankingHandler generates a route handler that allows to ranking
 // variables of a dataset relative to the importance of a selected variable.
-func VariableRankingHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
-		// get variabloe name
+		// get variable name
 		target := pat.Param(r, "target")
+		// get solution id (optional param)
+		queryValues := r.URL.Query()
+		solutionID := queryValues.Get("solutionId")
 
 		// get storage client
 		storage, err := metaCtor()
 		if err != nil {
-			handleError(w, err)
+			handleError(w, errors.Wrap(err, "unable to connect to ES"))
 			return
 		}
 
 		d, err := storage.FetchDataset(dataset, false, false)
 		if err != nil {
-			handleError(w, err)
+			handleError(w, errors.Wrap(err, "unable to fetch dataset"))
 			return
 		}
 
-		// compute rankings
-		rankings, err := task.TargetRank(d.Folder, target, d.Variables, d.Source)
+		var rankings map[string]float64
+		if solutionID == "" {
+			rankings, err = targetRank(dataset, target, d.Folder, d.Variables, d.Source)
+		} else {
+			rankings, err = solutionRank(solutionID, solutionCtor)
+		}
+
 		if err != nil {
-			handleError(w, err)
+			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))
 			return
 		}
 
@@ -80,4 +89,35 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor) func(http.Response
 			return
 		}
 	}
+}
+
+func solutionRank(solutionID string, solutionCtor api.SolutionStorageCtor) (map[string]float64, error) {
+	// get storage client
+	storage, err := solutionCtor()
+	if err != nil {
+		return nil, err
+	}
+
+	weights, err := storage.FetchSolutionFeatureWeights(solutionID)
+	if err != nil {
+		return nil, err
+	}
+
+	ranks := make(map[string]float64)
+	for _, fw := range weights {
+		ranks[fw.FeatureName] = fw.Weight
+	}
+
+	return ranks, nil
+}
+
+func targetRank(dataset string, target string, folder string, variables []*model.Variable, source metadata.DatasetSource) (map[string]float64, error) {
+
+	// compute rankings
+	rankings, err := task.TargetRank(folder, target, variables, source)
+	if err != nil {
+		return nil, err
+	}
+
+	return rankings, nil
 }

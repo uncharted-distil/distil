@@ -59,7 +59,7 @@ func Featurize(datasetSource metadata.DatasetSource, schemaFile string, index st
 
 	// open the input file
 	dataPath := path.Join(outputPath.sourceFolder, mainDR.ResPath)
-	lines, err := ReadCSVFile(dataPath, config.HasHeader)
+	lines, err := util.ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return "", errors.Wrap(err, "error reading raw data")
 	}

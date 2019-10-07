@@ -66,7 +66,7 @@ func Merge(datasetSource metadata.DatasetSource, schemaFile string, index string
 
 	// parse primitive response (raw data from the input dataset)
 	// first row of the data is the header
-	csvData, err := ReadCSVFile(datasetURI, false)
+	csvData, err := util.ReadCSVFile(datasetURI, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to parse denormalize result")
 	}
