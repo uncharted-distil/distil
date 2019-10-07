@@ -17,7 +17,6 @@ export const getters = {
 	getRouteDataset: read(moduleGetters.getRouteDataset),
 	getRouteInclude: read(moduleGetters.getRouteInclude),
 	getRouteJoinDatasets: read(moduleGetters.getRouteJoinDatasets),
-	getRouteTimeseriesAnalysis: read(moduleGetters.getRouteTimeseriesAnalysis),
 	getRouteTimeseriesBinningInterval: read(moduleGetters.getRouteTimeseriesBinningInterval),
 	getJoinDatasetColumnA: read(moduleGetters.getJoinDatasetColumnA),
 	getJoinDatasetColumnB: read(moduleGetters.getJoinDatasetColumnB),

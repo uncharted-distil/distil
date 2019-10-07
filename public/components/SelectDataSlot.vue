@@ -100,7 +100,7 @@ export default Vue.extend({
 	},
 
 	created() {
-		this.viewTypeModel =  this.isTimeseriesAnalysis ? TIMESERIES_VIEW : TABLE_VIEW;
+		this.viewTypeModel = TABLE_VIEW;
 	},
 
 	computed: {
@@ -123,10 +123,6 @@ export default Vue.extend({
 
 		highlight(): Highlight {
 			return routeGetters.getDecodedHighlight(this.$store);
-		},
-
-		isTimeseriesAnalysis(): boolean {
-			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
 		},
 
 		numRows(): number {

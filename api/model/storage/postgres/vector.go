@@ -70,11 +70,6 @@ func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.Filte
 	return histo, nil
 }
 
-// FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *VectorField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
 // FetchNumericalStats gets the variable's numerical summary info (mean, stddev).
 func (f *VectorField) FetchNumericalStats(filterParams *api.FilterParams, invert bool) (*NumericalStats, error) {
 	// confirm that the underlying type is numerical
@@ -114,10 +109,4 @@ func (f *VectorField) isNumerical() bool {
 func (f *VectorField) subSelect() string {
 	return fmt.Sprintf("(SELECT \"%s\", unnest(\"%s\") as %s FROM %s)",
 		model.D3MIndexFieldName, f.Unnested, f.Key, f.StorageName)
-}
-
-// FetchForecastingSummaryData pulls data from the result table and builds the
-// forecasting histogram for the field.
-func (f *VectorField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
-	return nil, fmt.Errorf("not implemented")
 }

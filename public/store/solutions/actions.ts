@@ -17,7 +17,6 @@ const STOP_SOLUTIONS = 'STOP_SOLUTIONS';
 interface CreateSolutionRequest {
 	dataset: string;
 	target: string;
-	timestampField?: string;
 	metrics: string[];
 	maxSolutions: number;
 	maxTime: number;
@@ -267,7 +266,6 @@ export const actions = {
 				type: CREATE_SOLUTIONS,
 				dataset: request.dataset,
 				target: request.target,
-				timestampField: request.timestampField,
 				metrics: request.metrics,
 				maxSolutions: request.maxSolutions,
 				maxTime: request.maxTime,

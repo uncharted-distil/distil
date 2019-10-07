@@ -143,7 +143,6 @@ func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
 
 	req.Task = json.StringDefault(j, "", "task")
 	req.SubTask = json.StringDefault(j, "", "subTask")
-	req.TimestampField = json.StringDefault(j, "", "timestampField")
 	req.MaxSolutions = json.IntDefault(j, 5, "maxSolutions")
 	req.MaxTime = json.IntDefault(j, 0, "maxTime")
 	req.ProblemType = json.StringDefault(j, "", "problemType")

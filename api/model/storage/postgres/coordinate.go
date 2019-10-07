@@ -54,11 +54,6 @@ func NewCoordinateField(key string, storage *Storage, storageName string, xCol s
 	return field
 }
 
-// FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *CoordinateField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
 // FetchSummaryData pulls summary data from the database and builds a histogram.
 func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
@@ -309,12 +304,6 @@ func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the coordinate histogram for the field.
 func (f *CoordinateField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
-// FetchForecastingSummaryData pulls data from the result table and builds the
-// forecasting histogram for the field.
-func (f *CoordinateField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
