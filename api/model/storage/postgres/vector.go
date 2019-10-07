@@ -70,11 +70,6 @@ func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.Filte
 	return histo, nil
 }
 
-// FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *VectorField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
 // FetchNumericalStats gets the variable's numerical summary info (mean, stddev).
 func (f *VectorField) FetchNumericalStats(filterParams *api.FilterParams, invert bool) (*NumericalStats, error) {
 	// confirm that the underlying type is numerical

@@ -42,8 +42,6 @@ type DataStorage interface {
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
 	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams, invert bool) ([][]float64, error)
 	FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultUUID string, filterParams *FilterParams) ([][]float64, error)
-	FetchTimeseriesSummary(dataset string, storageName string, xColName string, yColName string, interval int, filterParams *FilterParams, invert bool) (*VariableSummary, error)
-	FetchTimeseriesSummaryByResult(dataset string, storageName string, xColName string, yColName string, interval int, resultURI string, filterParams *FilterParams) (*VariableSummary, error)
 	FetchCategoryCounts(storageName string, variable *model.Variable) (map[string]int, error)
 
 	// Dataset manipulation

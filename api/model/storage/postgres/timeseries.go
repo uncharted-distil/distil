@@ -201,11 +201,6 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 	return s.parseTimeseries(res)
 }
 
-// FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *TimeSeriesField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
 // FetchSummaryData pulls summary data from the database and builds a histogram.
 func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
