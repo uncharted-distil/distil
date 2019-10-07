@@ -515,9 +515,3 @@ func (f *DateTimeField) getFromClause(alias bool) string {
 
 	return fromClause
 }
-
-// FetchForecastingSummaryData pulls data from the result table and builds the
-// forecasting histogram for the field.
-func (f *DateTimeField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
-	return nil, fmt.Errorf("not implemented")
-}

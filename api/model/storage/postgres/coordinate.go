@@ -312,12 +312,6 @@ func (f *CoordinateField) FetchPredictedSummaryData(resultURI string, datasetRes
 	return nil, fmt.Errorf("not implemented")
 }
 
-// FetchForecastingSummaryData pulls data from the result table and builds the
-// forecasting histogram for the field.
-func (f *CoordinateField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
 func (f *CoordinateField) fetchDefaultFilter(fieldName string) *model.Filter {
 	// provide a useful default based on type
 	// geo can default to lat and lon max values

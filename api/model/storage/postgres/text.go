@@ -417,7 +417,6 @@ func (f *TextField) fetchTimeseriesHistogram(timeVar *model.Variable, interval i
 
 	return f.parseTimeHistogram(res, extrema, interval)
 }
-
 func (f *TextField) fetchTimeseriesHistogramByResultURI(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 	categories, err := f.getTopCategories(filterParams, false)
 	if err != nil {
@@ -645,10 +644,4 @@ func (f *TextField) fetchPredictedSummaryData(resultURI string, datasetResult st
 	defer res.Close()
 
 	return f.parseHistogram(res)
-}
-
-// FetchForecastingSummaryData pulls data from the result table and builds the
-// forecasting histogram for the field.
-func (f *TextField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
-	return nil, fmt.Errorf("not implemented")
 }
