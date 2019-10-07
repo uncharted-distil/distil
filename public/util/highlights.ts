@@ -63,12 +63,6 @@ export function createFilterFromHighlight(highlight: Highlight, mode: string): F
 		};
 	}
 
-	const isTimeseriesAnalysis = !!routeGetters.getRouteTimeseriesAnalysis(store);
-	if (isTimeseriesAnalysis) {
-		// TODO: fix this later
-		return null;
-	}
-
 	if (highlight.value.from !== undefined &&
 		highlight.value.to !== undefined) {
 

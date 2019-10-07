@@ -66,12 +66,6 @@ export default Vue.extend({
 	},
 
 	computed: {
-		timeseriesAnalysisVariableName(): string {
-			return routeGetters.getRouteTimeseriesAnalysis(this.$store);
-		},
-		isTimeseriesAnalysis(): boolean {
-			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
-		},
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
 		},

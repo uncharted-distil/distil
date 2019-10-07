@@ -115,14 +115,7 @@ export default Vue.extend({
 			return datasetGetters.getVariables(this.$store);
 		},
 		filterParams(): FilterParams {
-			const filters = routeGetters.getDecodedSolutionRequestFilterParams(this.$store);
-
-			// if this is a timeseries task, we want to include the selected time column in the data
-			const timeSeries = routeGetters.getRouteTimeseriesAnalysis(this.$store);
-			if (!!timeSeries) {
-				filters.variables.push(timeSeries);
-			}
-			return filters;
+			return routeGetters.getDecodedSolutionRequestFilterParams(this.$store);
 		},
 		metrics(): string[] {
 			if (this.isTask2) {
@@ -182,7 +175,7 @@ export default Vue.extend({
 				dataset: this.dataset,
 				filters: this.filterParams,
 				target: routeGetters.getRouteTargetVariable(this.$store),
-				timestampField: routeGetters.getRouteTimeseriesAnalysis(this.$store),
+				timestampField: null,
 				metrics: this.metrics,
 				maxSolutions: NUM_SOLUTIONS,
 				// intentionally nulled for now - should be made user settable in the future
