@@ -391,8 +391,7 @@ export default Vue.extend({
 		},
 		submitTimeseriesAnalysis() {
 			const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
-				dataset: this.dataset,
-				timeseriesAnalysis: this.xCol
+				dataset: this.dataset
 			});
 			this.$router.push(entry);
 		},

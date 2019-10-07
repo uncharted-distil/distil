@@ -82,14 +82,7 @@ export default Vue.extend({
 			return datasetGetters.getVariables(this.$store);
 		},
 
-		isTimeseriesAnalysis(): boolean {
-			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
-		},
-
 		viewType(): string {
-			if (this.isTimeseriesAnalysis) {
-				return TIMESERIES_VIEW;
-			}
 			return this.viewTypeModel;
 		},
 

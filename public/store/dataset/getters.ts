@@ -13,11 +13,6 @@ export const getters = {
 	},
 
 	getVariables(state: DatasetState, getters: any): Variable[] {
-		const timeseriesAnalysis = getters.getRouteTimeseriesAnalysis;
-		if (timeseriesAnalysis) {
-			// don't return the time var
-			return state.variables.filter(v => v.colName !== timeseriesAnalysis);
-		}
 		return state.variables;
 	},
 
@@ -57,33 +52,6 @@ export const getters = {
 
 	getExcludedVariableSummaries(state: DatasetState): VariableSummary[] {
 		return state.excludedSet.variableSummaries;
-	},
-
-	getTimeseriesAnalysisVariable(state: DatasetState, getters: any): Variable {
-		const timeseriesAnalysis = getters.getRouteTimeseriesAnalysis;
-		if (timeseriesAnalysis) {
-			return getters.getVariablesMap[timeseriesAnalysis];
-		}
-		return null;
-	},
-
-	getTimeseriesAnalysisExtrema(state: DatasetState, getters: any): Extrema {
-		const v = getters.getTimeseriesAnalysisVariable;
-		if (v) {
-			return {
-				min: v.min,
-				max: v.max
-			};
-		}
-		return null;
-	},
-
-	getTimeseriesAnalysisRange(state: DatasetState, getters: any): number {
-		const extrema = getters.getTimeseriesAnalysisExtrema;
-		if (!extrema) {
-			return undefined;
-		}
-		return extrema.max - extrema.min;
 	},
 
 	getFiles(state: DatasetState): Dictionary<any> {

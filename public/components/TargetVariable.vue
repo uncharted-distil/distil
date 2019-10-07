@@ -63,10 +63,6 @@ export default Vue.extend({
 		defaultHighlightType(): string {
 			return TOP_RANGE_HIGHLIGHT;
 		},
-
-		isTimeseriesAnalysis(): boolean {
-			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
-		}
 	},
 
 	data() {
@@ -117,26 +113,12 @@ export default Vue.extend({
 		},
 
 		selectDefaultNumerical() {
-
-			if (this.isTimeseriesAnalysis) {
-
-				updateHighlight(this.$router, {
-					context: this.instanceName,
-					dataset: this.dataset,
-					key: this.target,
-					value: getTimeseriesFacetValue(this.targetSummaries[0], this.defaultHighlightType)
-				});
-
-			} else {
-
-				updateHighlight(this.$router, {
-					context: this.instanceName,
-					dataset: this.dataset,
-					key: this.target,
-					value: getNumericalFacetValue(this.targetSummaries[0], this.defaultHighlightType)
-				});
-			}
-
+			updateHighlight(this.$router, {
+				context: this.instanceName,
+				dataset: this.dataset,
+				key: this.target,
+				value: getNumericalFacetValue(this.targetSummaries[0], this.defaultHighlightType)
+			});
 		},
 
 		selectDefaultCategorical() {

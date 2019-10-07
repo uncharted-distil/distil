@@ -34,7 +34,7 @@
 		<div class="result-group-body" v-if="isMaximized">
 			<template v-if="isCompleted">
 				<div v-for="summary in predictedSummaries" :key="summary.key">
-					<template v-if="summary.varType === 'timeseries' || isTimeseriesAnalysis">
+					<template v-if="summary.varType === 'timeseries'">
 						<facet-timeseries
 							:summary="summary"
 							:highlight="highlight"
@@ -153,10 +153,6 @@ export default Vue.extend({
 
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
-		},
-
-		isTimeseriesAnalysis(): boolean {
-			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
 		},
 
 		predictedInstanceName(): string {

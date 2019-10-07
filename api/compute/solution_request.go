@@ -143,7 +143,6 @@ func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
 
 	req.Task = json.StringDefault(j, "", "task")
 	req.SubTask = json.StringDefault(j, "", "subTask")
-	req.TimestampField = json.StringDefault(j, "", "timestampField")
 	req.MaxSolutions = json.IntDefault(j, 5, "maxSolutions")
 	req.MaxTime = json.IntDefault(j, 0, "maxTime")
 	req.ProblemType = json.StringDefault(j, "", "problemType")
@@ -418,7 +417,9 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 	}
 }
 
-func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, solutionID string, dataset string, datasetURITrain string, datasetURITest string) {
+func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
+	dataStorage api.DataStorage, searchID string, solutionID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
+	datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
 	// score solution
 	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID, datasetURITest, s.Metrics)
@@ -465,6 +466,20 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	}
 	if fittedSolutionID == "" {
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, errors.Errorf("no fitted solution ID for solution `%s`", solutionID))
+	}
+
+	// explain the pipeline
+	featureWeights, err := s.explainOutput(client, solutionID, searchRequest, datasetURITrain, variables)
+	if err != nil {
+		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+		return
+	}
+	for _, fw := range featureWeights {
+		err = solutionStorage.PersistSolutionFeatureWeight(fw.SolutionID, fw.FeatureName, fw.FeatureIndex, fw.Weight)
+		if err != nil {
+			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+			return
+		}
 	}
 
 	// persist solution running status
@@ -520,7 +535,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	}
 }
 
-func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, dataset string, datasetURITrain string, datasetURITest string) {
+func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage,
+	searchID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
 	// update request status
 	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestRunningStatus)
@@ -538,7 +554,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		// persist the solution
 		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
 		// dispatch it
-		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, datasetURITrain, datasetURITest)
+		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, searchRequest, datasetURITrain, datasetURITest, variables)
 		// once done, mark as complete
 		s.completeSolution()
 	})
@@ -746,7 +762,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// dispatch search request
-	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.Metadata.ID, datasetPathTrain, datasetPathTest)
+	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.Metadata.ID, searchRequest, datasetPathTrain, datasetPathTest, dataVariables)
 
 	return nil
 }

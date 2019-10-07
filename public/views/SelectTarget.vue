@@ -50,9 +50,6 @@ export default Vue.extend({
 		variables(): Variable[] {
 			return datasetGetters.getVariables(this.$store);
 		},
-		timeseriesAnalysis(): string {
-			return routeGetters.getRouteTimeseriesAnalysis(this.$store);
-		},
 		hasTimeVariable(): boolean {
 			return this.variables.filter(v => isTimeType(v.colType)).length  > 0;
 		}
@@ -61,9 +58,6 @@ export default Vue.extend({
 	watch: {
 		availableTargetVarsPage() {
 			viewActions.fetchSelectTargetData(this.$store, false);
-		},
-		timeseriesAnalysis() {
-			viewActions.fetchSelectTargetData(this.$store, true);
 		}
 	},
 

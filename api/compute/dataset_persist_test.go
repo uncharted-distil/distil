@@ -24,7 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
-	"github.com/uncharted-distil/distil/api/task"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 func TestPersistOriginalDataUnstratified(t *testing.T) {
@@ -43,11 +43,11 @@ func TestPersistOriginalDataUnstratified(t *testing.T) {
 
 	trainDataPath := fmt.Sprintf("test/tmp_data/%s/train/tables/learningData.csv", splitDatasetName)
 	testDataPath := fmt.Sprintf("test/tmp_data/%s/test/tables/learningData.csv", splitDatasetName)
-	lines, err := task.ReadCSVFile(trainDataPath, true)
+	lines, err := util.ReadCSVFile(trainDataPath, true)
 	assert.NoError(t, err)
 	assert.Equal(t, 29, len(lines))
 
-	lines, err = task.ReadCSVFile(testDataPath, true)
+	lines, err = util.ReadCSVFile(testDataPath, true)
 	assert.NoError(t, err)
 	assert.Equal(t, 4, len(lines))
 }
@@ -68,11 +68,11 @@ func TestPersistOriginalDataStratified(t *testing.T) {
 
 	trainDataPath := fmt.Sprintf("test/tmp_data/%s/train/tables/learningData.csv", splitDatasetName)
 	testDataPath := fmt.Sprintf("test/tmp_data/%s/test/tables/learningData.csv", splitDatasetName)
-	lines, err := task.ReadCSVFile(trainDataPath, true)
+	lines, err := util.ReadCSVFile(trainDataPath, true)
 	assert.NoError(t, err)
 	assert.Equal(t, 28, len(lines))
 
-	lines, err = task.ReadCSVFile(testDataPath, true)
+	lines, err = util.ReadCSVFile(testDataPath, true)
 	assert.NoError(t, err)
 	assert.Equal(t, 5, len(lines))
 

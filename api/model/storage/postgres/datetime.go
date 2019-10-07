@@ -105,11 +105,6 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 	}, nil
 }
 
-// FetchTimeseriesSummaryData pulls summary data from the database and builds a histogram.
-func (f *DateTimeField) FetchTimeseriesSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
 func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 
@@ -514,10 +509,4 @@ func (f *DateTimeField) getFromClause(alias bool) string {
 	}
 
 	return fromClause
-}
-
-// FetchForecastingSummaryData pulls data from the result table and builds the
-// forecasting histogram for the field.
-func (f *DateTimeField) FetchForecastingSummaryData(timeVar *model.Variable, interval int, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
-	return nil, fmt.Errorf("not implemented")
 }
