@@ -69,9 +69,6 @@ export default Vue.extend({
 		timeseriesAnalysisVariableName(): string {
 			return routeGetters.getRouteTimeseriesAnalysis(this.$store);
 		},
-		timeseriesAnalysisVariable(): Variable {
-			return datasetGetters.getTimeseriesAnalysisVariable(this.$store);
-		},
 		isTimeseriesAnalysis(): boolean {
 			return !!routeGetters.getRouteTimeseriesAnalysis(this.$store);
 		},
@@ -90,24 +87,18 @@ export default Vue.extend({
 			let timeVarName = '';
 			let timeVarType = '';
 			let timeVar = null;
-			if (this.isTimeseriesAnalysis) {
-				timeVarName = this.timeseriesAnalysisVariableName;
-				timeVar = this.timeseriesAnalysisVariable;
-				timeVarType = timeVar ? timeVar.colType : INTEGER_TYPE;
-			} else {
-				const summaryVar = this.variables.find(v => v.colName === this.summary.key);
-				if (!summaryVar) {
-					return null;
-				}
-
-				const grouping = this.variable.grouping;
-				if (!grouping) {
-					return null;
-				}
-				timeVarName = grouping.properties.xCol;
-				timeVar = this.variables.find(v => v.colName === timeVarName);
-				timeVarType = timeVar ? timeVar.colType : INTEGER_TYPE;
+			const summaryVar = this.variables.find(v => v.colName === this.summary.key);
+			if (!summaryVar) {
+				return null;
 			}
+
+			const grouping = this.variable.grouping;
+			if (!grouping) {
+				return null;
+			}
+			timeVarName = grouping.properties.xCol;
+			timeVar = this.variables.find(v => v.colName === timeVarName);
+			timeVarType = timeVar ? timeVar.colType : INTEGER_TYPE;
 
 			if (this.summary.pending || !this.variable) {
 				return null;

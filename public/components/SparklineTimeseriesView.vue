@@ -167,18 +167,9 @@ export default Vue.extend({
 			return this.timeseriesGrouping && !!this.timeseriesExtrema;
 		},
 
-		timeseriesAnalysisVariable(): Variable {
-			return datasetGetters.getTimeseriesAnalysisVariable(this.$store);
-		},
-
 		isDateScale(): boolean {
-			let timeVar = null;
-			if (this.isTimeseriesAnalysis) {
-				timeVar = datasetGetters.getTimeseriesAnalysisVariable(this.$store);
-			} else {
-				const grouping = this.timeseriesGrouping;
-				timeVar = this.variables.find(v => v.colName === grouping.properties.xCol);
-			}
+			const grouping = this.timeseriesGrouping;
+			const timeVar = this.variables.find(v => v.colName === grouping.properties.xCol);
 			return (timeVar && isTimeType(timeVar.colType));
 		},
 
@@ -196,28 +187,11 @@ export default Vue.extend({
 			}).filter(summary => !!summary); // remove errors
 		},
 
-		timeseriesVarsMinX(): number {
-			if (!this.timeseriesAnalysisVariable) {
-				return null;
-			}
-			return this.timeseriesAnalysisVariable.min;
-		},
-
-		timeseriesVarsMaxX(): number {
-			if (!this.timeseriesAnalysisVariable) {
-				return null;
-			}
-			return this.timeseriesAnalysisVariable.max;
-		},
-
 		timeseriesExtrema(): TimeseriesExtrema {
 			return datasetGetters.getTimeseriesExtrema(this.$store)[this.dataset];
 		},
 
 		timeseriesMinX(): number {
-			if (this.isTimeseriesAnalysis) {
-				return this.timeseriesVarsMinX;
-			}
 			if (this.timeseriesExtrema) {
 				return this.timeseriesExtrema.x.min;
 			}
@@ -225,9 +199,6 @@ export default Vue.extend({
 		},
 
 		timeseriesMaxX(): number {
-			if (this.isTimeseriesAnalysis) {
-				return this.timeseriesVarsMaxX;
-			}
 			if (this.timeseriesExtrema) {
 				return this.timeseriesExtrema.x.max;
 			}
