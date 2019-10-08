@@ -147,7 +147,6 @@ export default Vue.extend({
 			selectedRect: null,
 			baseLineLayer: null,
 			filteredLayer: null,
-			excludedLayer: null
 		};
 	},
 	computed: {
@@ -157,11 +156,6 @@ export default Vue.extend({
 
 		target(): string {
 			return routeGetters.getRouteTargetVariable(this.$store);
-		},
-
-		excludedSummaries(): any {
-			return datasetGetters.getExcludedVariableSummaries(this.$store)
-				.filter(summary => summary.label === GEOCOORDINATE_LABEL)[0];
 		},
 
 		instanceName(): string {
@@ -176,10 +170,11 @@ export default Vue.extend({
 		bucketBounds(): helpers.BBox {
 			return bbox(this.bucketFeatures);
 		},
-		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.
+
+		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.  The collection represents
+		// the baseline bucket set for geocoordinate, and does not change as filters / highlights are introduced.
 		bucketFeatures(): helpers.FeatureCollection {
 			// compute the bucket size in degrees
-
 			const buckets  = this.summary.baseline.buckets;
 			const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
 			const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
@@ -210,7 +205,8 @@ export default Vue.extend({
 
 		},
 
-		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.
+		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.  The collection
+		// represents the subset of buckets to be rendered based on the currently applied filters and highlights.
 		filteredBucketFeatures(): helpers.FeatureCollection {
 			// compute the bucket size in degrees
 
@@ -246,38 +242,7 @@ export default Vue.extend({
 				return featureCollection(features);
 			}
 		},
-		excludedBucketFeatures(): helpers.FeatureCollection {
-			if (this.excludedSummaries.filtered) {
-				const buckets  = this.excludedSummaries.filtered.buckets;
-				const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
-				const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
-				// create a feature collection from the server-supplied bucket data
-				const features: helpers.Feature[] = [];
-				this.excludedSummaries.filtered.buckets.forEach(lonBucket => {
-					lonBucket.buckets.forEach(latBucket => {
-						// Don't include features with a count of 0.
-						if (latBucket.count > 0) {
-							const xCoord = _.toNumber(lonBucket.key);
-							const yCoord = _.toNumber(latBucket.key);
-							const feature = polygon([[
-										[xCoord, yCoord],
-										[xCoord, yCoord + ySize],
-										[xCoord + xSize, yCoord + ySize],
-										[xCoord + xSize, yCoord],
-										[xCoord, yCoord]
-									]], { selected: false,
-										count: latBucket.count });
-							features.push(feature);
-						}
-					});
-				});
 
-				return featureCollection(features);
-			} else {
-				const features: helpers.Feature[] = [];
-				return featureCollection(features);
-			}
-		},
 		// Returns the minimum non-zero bucket count value
 		minCount(): number {
 			return this.bucketFeatures.features.reduce((min, feature) =>
@@ -299,28 +264,17 @@ export default Vue.extend({
 			return this.filteredBucketFeatures.features.reduce((max, feature) =>
 				feature.properties.count > max ? feature.properties.count : max, Number.MIN_SAFE_INTEGER);
 		},
-		excludededMinCount(): number {
-			return this.excludedBucketFeatures.features.reduce((min, feature) =>
-				feature.properties.count < min ? feature.properties.count : min, Number.MAX_SAFE_INTEGER);
-		},
-
-		// Returns the maximum bucket count value
-		excludededMaxCount(): number {
-			return this.excludedBucketFeatures.features.reduce((max, feature) =>
-				feature.properties.count > max ? feature.properties.count : max, Number.MIN_SAFE_INTEGER);
-		},
 		headerLabel(): string {
 			return GEOCOORDINATE_TYPE.toUpperCase();
 		},
-		hasFilters(): boolean  {
-			return routeGetters.getDecodedFilters(this.$store).length > 0;
+		// is the display in included (blue) or excluded (black) mode
+		includedActive(): boolean {
+			return routeGetters.getRouteInclude(this.$store);
 		},
+		// is data currently being highlighted
 		highlight(): Highlight {
 			return routeGetters.getDecodedHighlight(this.$store);
 		},
-		hasHighlightAndFilter(): boolean {
-			return !this.hasFilters && !this.highlight;
-		}
 	},
 	methods: {
 		selectFeature() {
@@ -494,12 +448,16 @@ export default Vue.extend({
 		},
 		paint() {
 			// NOTE: this component re-mounts on any change, so do everything in here
-			if (!this.highlight && !this.hasFilters) {
+			if (!this.highlight) {
 				this.clearSelectionRect();
 			}
 
-			if (!this.hasFilters && this.excludedLayer) {
-				this.excludedLayer.removeFrom(this.map);
+			// remove previously added layers
+			if (this.baseLineLayer) {
+				this.baseLineLayer.removeFrom(this.map);
+			}
+			if (this.filteredLayer) {
+				this.filteredLayer.removeFrom(this.map);
 			}
 
 			// Lazy map instantiation with a default zoom position
@@ -530,14 +488,15 @@ export default Vue.extend({
 				this.map.fitBounds(this.bounds);
 
 				// Generate the colour ramp scaling function
-					const maxVal = this.maxCount;
-					const minVal = this.minCount;
+				const maxVal = this.maxCount;
+				const minVal = this.minCount;
 
-				if (!this.isAvailableFeatures && !this.isFeaturesToModel || !this.highlight && !this.hasFilters) {
-
-					if (this.baseLineLayer) {
-						this.baseLineLayer.removeFrom(this.map);
-					}
+				// Check to see if we're showing included or excluded mode, whichi based on the user's current
+				// tab setting.  In included mode we render all the currently included data in blue, in excluded
+				//  mode we show only excluded data and render it in black.
+				if (this.includedActive) {
+					if (!this.highlight) {
+						// if there's no highlight active render from the baseline (all) set of buckets.
 						const d = (maxVal - minVal) / BLUE_PALETTE.length;
 						const domain = BLUE_PALETTE.map((val, index) => minVal + d * (index + 1));
 						const scaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(domain);
@@ -555,47 +514,34 @@ export default Vue.extend({
 								};
 							}
 						});
+						this.baseLineLayer.addTo(this.map);
+					} else {
+						// there's a highlight active - render from the set of features returned in the filter portion of the
+						// variable summary strucure
+						const filteredMaxVal = this.filteredMaxCount;
+						const filteredMinVal = this.filteredMinCount;
+						const dVal = (filteredMaxVal - filteredMinVal) / BLUE_PALETTE.length;
+						const filteredDomain = BLUE_PALETTE.map((val, index) => minVal + dVal * (index + 1));
+						const filteredScaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(filteredDomain);
 
-					this.baseLineLayer.addTo(this.map);
+						this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
+							style: feature => {
+								return {
+									fillColor: filteredScaleColors(feature.properties.count),
+									weight: 0,
+									opacity: 1,
+									color: 'rgba(0,0,0,0)',
+									dashArray: '3',
+									fillOpacity: 0.7
+								};
+							}
+						});
+						this.filteredLayer.addTo(this.map);
+					}
 				} else {
-					if (this.filteredLayer) {
-						this.filteredLayer.removeFrom(this.map);
-					}
-
-					const colorPalette = BLUE_PALETTE;
-
-					const filteredMaxVal = this.filteredMaxCount;
-					const filteredMinVal = this.filteredMinCount;
-					const dVal = (filteredMaxVal - filteredMinVal) / colorPalette.length;
-					const filteredDomain = colorPalette.map((val, index) => minVal + dVal * (index + 1));
-					const filteredScaleColors = scaleThreshold().range(colorPalette as any).domain(filteredDomain);
-
+					// Excluded mode is active - render visuals using a black pallette.
+					// Any data we need to render is in the filter portion of variable summary structure.
 					this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
-						style: feature => {
-							return {
-								fillColor: filteredScaleColors(feature.properties.count),
-								weight: 0,
-								opacity: 1,
-								color: 'rgba(0,0,0,0)',
-								dashArray: '3',
-								fillOpacity: 0.7
-							};
-						}
-					});
-
-
-					this.filteredLayer.addTo(this.map);
-
-				}
-
-				if (this.hasFilters) {
-					if (this.excludedLayer) {
-						this.excludedLayer.removeFrom(this.map);
-					}
-
-					const excludedFeatures = _.differenceWith(this.bucketFeatures.features, this.filteredBucketFeatures.features, _.isEqual);
-					const excludedBucketFeatures = featureCollection(excludedFeatures);
-					this.excludedLayer = leaflet.geoJSON(excludedBucketFeatures, {
 						style: feature => {
 							return {
 								fillColor: BLACK_PALLETE[0],
@@ -607,11 +553,9 @@ export default Vue.extend({
 							};
 						}
 					});
-					this.excludedLayer.addTo(this.map);
+					this.filteredLayer.addTo(this.map);
 					this.clearSelectionRect();
-
 				}
-
 			}
 		}
 	},
