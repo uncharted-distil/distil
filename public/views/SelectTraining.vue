@@ -145,7 +145,7 @@ export default Vue.extend({
 		},
 		trainingVarsPage() {
 			viewActions.updateSelectTrainingData(this.$store);
-		},		
+		},
 		dataset() {
 			viewActions.fetchSelectTrainingData(this.$store, true);
 		}

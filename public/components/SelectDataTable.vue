@@ -85,6 +85,8 @@ export default Vue.extend({
 
 		items(): TableRow[] {
 			const items = this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
+			console.log('item', items);
+
 			return updateTableRowSelection(items, this.rowSelection, this.instanceName);
 		},
 

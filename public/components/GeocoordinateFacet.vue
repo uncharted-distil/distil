@@ -165,10 +165,6 @@ export default Vue.extend({
 		mapID(): string {
 			return `map-${this.instanceName}`;
 		},
-		updated(){
-			console.log('excludedBucketFeature', this.excludedBucketFeatures);
-
-		},
 		// Computes the bounds of the summary data.
 		bucketBounds(): helpers.BBox {
 			return bbox(this.bucketFeatures);
@@ -245,37 +241,6 @@ export default Vue.extend({
 				return featureCollection(features);
 			}
 		},
-<<<<<<< HEAD
-		excludedBucketFeatures(): helpers.FeatureCollection {
-			console.log('this.excludedSummaries', this.excludedSummaries);
-
-			if (this.excludedSummaries.filtered) {
-				const buckets  = this.excludedSummaries.filtered.buckets;
-
-				const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
-				const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
-				// create a feature collection from the server-supplied bucket data
-				const features: helpers.Feature[] = [];
-				this.excludedSummaries.filtered.buckets.forEach(lonBucket => {
-					lonBucket.buckets.forEach(latBucket => {
-						// Don't include features with a count of 0.
-						if (latBucket.count > 0) {
-							const xCoord = _.toNumber(lonBucket.key);
-							const yCoord = _.toNumber(latBucket.key);
-							const feature = polygon([[
-										[xCoord, yCoord],
-										[xCoord, yCoord + ySize],
-										[xCoord + xSize, yCoord + ySize],
-										[xCoord + xSize, yCoord],
-										[xCoord, yCoord]
-									]], { selected: false,
-										count: latBucket.count });
-							features.push(feature);
-						}
-					});
-				});
-=======
->>>>>>> filter-selection-logic-fixes
 
 		// Returns the minimum non-zero bucket count value
 		minCount(): number {
@@ -300,6 +265,11 @@ export default Vue.extend({
 		},
 		headerLabel(): string {
 			return GEOCOORDINATE_TYPE.toUpperCase();
+		},
+		hasFilters(): boolean  {
+			console.log('routeGetters.getDecodedFilters(this.$store)', routeGetters.getDecodedFilters(this.$store));
+
+			return routeGetters.getDecodedFilters(this.$store).length > 0;
 		},
 		// is the display in included (blue) or excluded (black) mode
 		includedActive(): boolean {
@@ -373,7 +343,7 @@ export default Vue.extend({
 				this.closeButton = null;
 				return;
 			}
-			if (this.isFeaturesToModel) {
+			if (this.isFeaturesToModel && this.includedActive) {
 
 				this.clearSelectionRect();
 
@@ -525,20 +495,12 @@ export default Vue.extend({
 				const maxVal = this.maxCount;
 				const minVal = this.minCount;
 
-<<<<<<< HEAD
-				if (!this.isAvailableFeatures && !this.isFeaturesToModel || !this.highlight && !this.hasFilters) {
-
-					if (this.baseLineLayer) {
-						this.baseLineLayer.removeFrom(this.map);
-					}
-=======
 				// Check to see if we're showing included or excluded mode, whichi based on the user's current
 				// tab setting.  In included mode we render all the currently included data in blue, in excluded
 				//  mode we show only excluded data and render it in black.
 				if (this.includedActive) {
-					if (!this.highlight) {
+					if (!this.highlight && !this.hasFilters) {
 						// if there's no highlight active render from the baseline (all) set of buckets.
->>>>>>> filter-selection-logic-fixes
 						const d = (maxVal - minVal) / BLUE_PALETTE.length;
 						const domain = BLUE_PALETTE.map((val, index) => minVal + d * (index + 1));
 						const scaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(domain);
@@ -580,38 +542,12 @@ export default Vue.extend({
 						});
 						this.filteredLayer.addTo(this.map);
 					}
-				} else {
+				} else if (this.hasFilters) {
 					// Excluded mode is active - render visuals using a black pallette.
 					// Any data we need to render is in the filter portion of variable summary structure.
 					this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
 						style: feature => {
 							return {
-<<<<<<< HEAD
-								fillColor: filteredScaleColors(feature.properties.count),
-								weight: 0,
-								opacity: 1,
-								color: 'rgba(0,0,0,0)',
-								dashArray: '3',
-								fillOpacity: 0.7
-							};
-						}
-					});
-
-
-					this.filteredLayer.addTo(this.map);
-
-				}
-
-				if (this.hasFilters) {
-					if (this.excludedLayer) {
-						this.excludedLayer.removeFrom(this.map);
-					}
-
-					this.excludedLayer = leaflet.geoJSON(this.excludedBucketFeatures, {
-						style: feature => {
-							return {
-=======
->>>>>>> filter-selection-logic-fixes
 								fillColor: BLACK_PALLETE[0],
 								weight: 0,
 								opacity: 1,
@@ -635,8 +571,15 @@ export default Vue.extend({
 			}
 		},
 		filteredBucketFeatures() {
+			console.log('added');
+
 			if (this.summary.filtered) {
 				this.paint();
+			}
+		},
+		includedActive() {
+			if (!this.includedActive) {
+				this.clearSelectionRect();
 			}
 		}
 	},
