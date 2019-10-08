@@ -117,7 +117,7 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, false)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {
