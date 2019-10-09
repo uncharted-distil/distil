@@ -15,7 +15,7 @@ jobs:
           command: /bin/sh -c "/build.sh"
       - run:
           name: run tests
-          command: /bin/sh -c 'go test ./...'
+          command: /bin/sh -c 'go test -v -vet=off ./...'
       - run:
           name: install docker client
           command: |
