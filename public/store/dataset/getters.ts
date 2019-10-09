@@ -103,8 +103,6 @@ export const getters = {
 	},
 
 	getExcludedTableDataItems(state: DatasetState, getters: any): TableRow[] {
-		console.log('getExcludedTableDataItems', getTableDataItems(state.excludedSet.tableData));
-
 		return getTableDataItems(state.excludedSet.tableData);
 	},
 

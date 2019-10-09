@@ -199,6 +199,8 @@ function dedupeRowFilters(filters: Filter[]): Filter[] {
 function addFilter(filters: string, filter: Filter): string {
 	const decoded = decodeFilters(filters);
 	decoded.push(filter);
+	console.log('added filter', filter);
+
 	return encodeFilters(dedupeRowFilters(decoded));
 }
 

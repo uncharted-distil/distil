@@ -17,10 +17,10 @@
 						<icon-base v-if="suggested.isRecommended" icon-name="bookmark" class="recommended-icon"><icon-bookmark /></icon-base>
 					</b-dropdown-item>
 					</template>
-					<template  v-if="showGroupingOptions && !isGeocoordinate && !isCluster">
+					<template  v-if="!isGeocoordinate && !isCluster">
 						<b-dropdown-divider></b-dropdown-divider>
 					</template>
-					<template v-if="showGroupingOptions">
+					<template>
 						<b-dropdown-item
 							v-for="grouping in groupingOptions()"
 							@click.stop="onGroupingSelect(grouping.type)"
@@ -72,7 +72,6 @@ export default Vue.extend({
 	computed: {
 		variable(): Variable {
 			const vars = datasetGetters.getVariables(this.$store);
-
 			const hasLat = vars.filter(variable => variable.colName === LATITUDE_TYPE).length;
 			const hasLon = vars.filter(variable => variable.colName === LONGITUDE_TYPE).length;
 
@@ -165,9 +164,6 @@ export default Vue.extend({
 				show: 10,
 				hide: 10
 			};
-		},
-		showGroupingOptions(): boolean {
-			return true;
 		}
 	},
 

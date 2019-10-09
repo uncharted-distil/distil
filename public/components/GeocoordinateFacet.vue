@@ -75,8 +75,6 @@ interface GeoField {
 
 const GEOCOORDINATE_LABEL = 'longitude';
 
-const BLACK_PALLETE = ['#000000'];
-
 const BLUE_PALETTE = [
 	'rgba(0,0,0,0)',
 	'#F0FBFD',
@@ -97,28 +95,6 @@ const BLUE_PALETTE = [
 	'#1CCCE4',
 	'#0EC9E2',
 	'#00C6E1'
-];
-
-const PALETTE =   [
-	'#E2E2E2',
-	'#D5D5D5',
-	'#C8C8C8',
-	'#BCBCBC',
-	'#AFAFAF',
-	'#A3A3A3',
-	'#969696',
-	'#8A8A8A',
-	'#7D7D7D',
-	'#717171',
-	'#646464',
-	'#575757',
-	'#4B4B4B',
-	'#3E3E3E',
-	'#323232',
-	'#252525',
-	'#191919',
-	'#0C0C0C',
-	'#000000'
 ];
 
 export default Vue.extend({
@@ -267,8 +243,6 @@ export default Vue.extend({
 			return GEOCOORDINATE_TYPE.toUpperCase();
 		},
 		hasFilters(): boolean  {
-			console.log('routeGetters.getDecodedFilters(this.$store)', routeGetters.getDecodedFilters(this.$store));
-
 			return routeGetters.getDecodedFilters(this.$store).length > 0;
 		},
 		// is the display in included (blue) or excluded (black) mode
@@ -548,12 +522,12 @@ export default Vue.extend({
 					this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
 						style: feature => {
 							return {
-								fillColor: BLACK_PALLETE[0],
+								fillColor: 'black',
 								weight: 0,
 								opacity: 1,
 								color: 'rgba(0,0,0,0)',
 								dashArray: '3',
-								fillOpacity: 1
+								fillOpacity: 0.7
 							};
 						}
 					});
@@ -571,8 +545,6 @@ export default Vue.extend({
 			}
 		},
 		filteredBucketFeatures() {
-			console.log('added');
-
 			if (this.summary.filtered) {
 				this.paint();
 			}
