@@ -407,6 +407,9 @@ func (f *CategoricalField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error
 			if err != nil {
 				return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", termsAggName))
 			}
+			if len(term) < 1 {
+				term = "&lt;empty&gt;"
+			}
 
 			buckets = append(buckets, &api.Bucket{
 				Key:   term,
