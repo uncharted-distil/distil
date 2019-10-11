@@ -123,6 +123,7 @@ export default Vue.extend({
 			selectedRect: null,
 			baseLineLayer: null,
 			filteredLayer: null,
+			selectedLayer: null
 		};
 	},
 	computed: {
@@ -218,6 +219,42 @@ export default Vue.extend({
 			}
 		},
 
+		selectedBucketFeatures(): helpers.FeatureCollection {
+			// compute the bucket size in degrees
+
+			if (this.summary.selected) {
+				const buckets  = this.summary.selected.buckets;
+				const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
+				const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
+
+				// create a feature collection from the server-supplied bucket data
+				const features: helpers.Feature[] = [];
+				this.summary.selected.buckets.forEach(lonBucket => {
+					lonBucket.buckets.forEach(latBucket => {
+						// Don't include features with a count of 0.
+						if (latBucket.count > 0) {
+							const xCoord = _.toNumber(lonBucket.key);
+							const yCoord = _.toNumber(latBucket.key);
+							const feature = polygon([[
+										[xCoord, yCoord],
+										[xCoord, yCoord + ySize],
+										[xCoord + xSize, yCoord + ySize],
+										[xCoord + xSize, yCoord],
+										[xCoord, yCoord]
+									]], { selected: false,
+										count: latBucket.count });
+							features.push(feature);
+						}
+					});
+				});
+
+				return featureCollection(features);
+			} else {
+				const features: helpers.Feature[] = [];
+				return featureCollection(features);
+			}
+		},
+
 		// Returns the minimum non-zero bucket count value
 		minCount(): number {
 			return this.bucketFeatures.features.reduce((min, feature) =>
@@ -253,6 +290,9 @@ export default Vue.extend({
 		highlight(): Highlight {
 			return routeGetters.getDecodedHighlight(this.$store);
 		},
+		selectedRows(): any {
+			return routeGetters.getDecodedRowSelection(this.$store);
+		}
 	},
 	methods: {
 		selectFeature() {
@@ -437,6 +477,9 @@ export default Vue.extend({
 			if (this.filteredLayer) {
 				this.filteredLayer.removeFrom(this.map);
 			}
+			if (this.selectedLayer) {
+				this.selectedLayer.removeFrom(this.map);
+			}
 
 			// Lazy map instantiation with a default zoom position
 			if (!this.map) {
@@ -473,6 +516,23 @@ export default Vue.extend({
 				// tab setting.  In included mode we render all the currently included data in blue, in excluded
 				//  mode we show only excluded data and render it in black.
 				if (this.includedActive) {
+					if (this.selectedRows) {
+						//if there are selected rows, draw pink squares
+						this.selectedLayer = leaflet.geoJSON(this.selectedBucketFeatures, {
+							style: feature => {
+								return {
+									fillColor: '#FF0067',
+									weight: 0,
+									opacity: 1,
+									color: 'rgba(0,0,0,0)',
+									dashArray: '3',
+									fillOpacity: 0.7
+								};
+							}
+						});
+						this.selectedLayer.addTo(this.map);
+					}
+
 					if (!this.highlight && !this.hasFilters) {
 						// if there's no highlight active render from the baseline (all) set of buckets.
 						const d = (maxVal - minVal) / BLUE_PALETTE.length;
