@@ -17,10 +17,10 @@
 						<icon-base v-if="suggested.isRecommended" icon-name="bookmark" class="recommended-icon"><icon-bookmark /></icon-base>
 					</b-dropdown-item>
 					</template>
-					<template  v-if="showGroupingOptions && !isGeocoordinate && !isCluster">
+					<template  v-if="!isGeocoordinate && !isCluster">
 						<b-dropdown-divider></b-dropdown-divider>
 					</template>
-					<template v-if="showGroupingOptions">
+					<template>
 						<b-dropdown-item
 							v-for="grouping in groupingOptions()"
 							@click.stop="onGroupingSelect(grouping.type)"
@@ -78,20 +78,10 @@ export default Vue.extend({
 			if (!vars) {
 				return null;
 			}
-
-
-			// Temporary Geocoordinate variable type inference to lat and lon
-			if (hasLat ^ hasLon) {
-				return vars.find(v => {
-					return v.colName.toLowerCase() === LATITUDE_TYPE ||
-						v.colName.toLowerCase() === LONGITUDE_TYPE;
-				});
-			} else {
-				return vars.find(v => {
-					return v.colName.toLowerCase() === this.field.toLowerCase() &&
-						v.datasetName === this.dataset;
-				});
-			}
+			return vars.find(v => {
+				return v.colName.toLowerCase() === this.field.toLowerCase() &&
+					v.datasetName === this.dataset;
+			});
 
 		},
 		isGrouping(): boolean {
@@ -174,9 +164,6 @@ export default Vue.extend({
 				show: 10,
 				hide: 10
 			};
-		},
-		showGroupingOptions(): boolean {
-			return true;
 		}
 	},
 

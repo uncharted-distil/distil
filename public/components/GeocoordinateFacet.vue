@@ -53,7 +53,7 @@ import TypeChangeMenu from '../components/TypeChangeMenu';
 import { updateHighlight, clearHighlight } from '../util/highlights';
 import { GEOCOORDINATE_TYPE, LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
 import { overlayRouteEntry } from '../util/routes';
-import { removeFiltersByName } from '../util/filters';
+import { Filter, removeFiltersByName } from '../util/filters';
 
 import 'leaflet/dist/leaflet.css';
 
@@ -72,6 +72,8 @@ interface GeoField {
 	lngField?: string;
 	field?: string;
 }
+
+const GEOCOORDINATE_LABEL = 'longitude';
 
 const BLUE_PALETTE = [
 	'rgba(0,0,0,0)',
@@ -93,28 +95,6 @@ const BLUE_PALETTE = [
 	'#1CCCE4',
 	'#0EC9E2',
 	'#00C6E1'
-];
-
-const PALETTE =  [
-	'rgba(0,0,0,0)',
-	'#F7F7F7',
-	'#F0F0F0',
-	'#E9E9E9',
-	'#E2E2E2',
-	'#DBDBDB',
-	'#D4D4D4',
-	'#CDCDCD',
-	'#C6C6C6',
-	'#BFBFBF',
-	'#B8B8B8',
-	'#B1B1B1',
-	'#AAAAAA',
-	'#A3A3A3',
-	'#9C9C9C',
-	'#959595',
-	'#8E8E8E',
-	'#878787',
-	'#808080'
 ];
 
 export default Vue.extend({
@@ -141,6 +121,8 @@ export default Vue.extend({
 			startingLatLng: null,
 			currentRect: null,
 			selectedRect: null,
+			baseLineLayer: null,
+			filteredLayer: null,
 		};
 	},
 	computed: {
@@ -159,15 +141,15 @@ export default Vue.extend({
 		mapID(): string {
 			return `map-${this.instanceName}`;
 		},
-
 		// Computes the bounds of the summary data.
 		bucketBounds(): helpers.BBox {
 			return bbox(this.bucketFeatures);
 		},
-		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.
+
+		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.  The collection represents
+		// the baseline bucket set for geocoordinate, and does not change as filters / highlights are introduced.
 		bucketFeatures(): helpers.FeatureCollection {
 			// compute the bucket size in degrees
-
 			const buckets  = this.summary.baseline.buckets;
 			const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
 			const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
@@ -198,7 +180,8 @@ export default Vue.extend({
 
 		},
 
-		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.
+		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.  The collection
+		// represents the subset of buckets to be rendered based on the currently applied filters and highlights.
 		filteredBucketFeatures(): helpers.FeatureCollection {
 			// compute the bucket size in degrees
 
@@ -259,9 +242,17 @@ export default Vue.extend({
 		headerLabel(): string {
 			return GEOCOORDINATE_TYPE.toUpperCase();
 		},
+		hasFilters(): boolean  {
+			return routeGetters.getDecodedFilters(this.$store).length > 0;
+		},
+		// is the display in included (blue) or excluded (black) mode
+		includedActive(): boolean {
+			return routeGetters.getRouteInclude(this.$store);
+		},
+		// is data currently being highlighted
 		highlight(): Highlight {
 			return routeGetters.getDecodedHighlight(this.$store);
-		}
+		},
 	},
 	methods: {
 		selectFeature() {
@@ -326,7 +317,7 @@ export default Vue.extend({
 				this.closeButton = null;
 				return;
 			}
-			if (this.isFeaturesToModel) {
+			if (this.isFeaturesToModel && this.includedActive) {
 
 				this.clearSelectionRect();
 
@@ -435,6 +426,17 @@ export default Vue.extend({
 		},
 		paint() {
 			// NOTE: this component re-mounts on any change, so do everything in here
+			if (!this.highlight) {
+				this.clearSelectionRect();
+			}
+
+			// remove previously added layers
+			if (this.baseLineLayer) {
+				this.baseLineLayer.removeFrom(this.map);
+			}
+			if (this.filteredLayer) {
+				this.filteredLayer.removeFrom(this.map);
+			}
 
 			// Lazy map instantiation with a default zoom position
 			if (!this.map) {
@@ -458,78 +460,100 @@ export default Vue.extend({
 			const northEast = leaflet.latLng(bounds[3], bounds[2]);
 			const southWest = leaflet.latLng(bounds[1], bounds[0]);
 			this.bounds = leaflet.latLngBounds(northEast, southWest);
-			let filteredLayer, baseLayer;
 
 			if (this.bounds.isValid()) {
 
 				this.map.fitBounds(this.bounds);
-					if (this.map.hasLayer(filteredLayer) && this.map.hasLayer(baseLayer)) {
-						this.map.removeLayer(filteredLayer);
-						this.map.removeLayer(baseLayer);
-					}
 
 				// Generate the colour ramp scaling function
-				const colorPallete = !this.isAvailableFeatures && !this.isFeaturesToModel || !this.highlight ? BLUE_PALETTE : PALETTE;
-
 				const maxVal = this.maxCount;
 				const minVal = this.minCount;
-				const d = (maxVal - minVal) / colorPallete.length;
-				const domain = colorPallete.map((val, index) => minVal + d * (index + 1));
-				const scaleColors = scaleThreshold().range(colorPallete as any).domain(domain);
 
-				// Render the heatmap buckets as a GeoJSON layer
-				baseLayer = leaflet.geoJSON(this.bucketFeatures, {
-					style: feature => {
+				// Check to see if we're showing included or excluded mode, whichi based on the user's current
+				// tab setting.  In included mode we render all the currently included data in blue, in excluded
+				//  mode we show only excluded data and render it in black.
+				if (this.includedActive) {
+					if (!this.highlight && !this.hasFilters) {
+						// if there's no highlight active render from the baseline (all) set of buckets.
+						const d = (maxVal - minVal) / BLUE_PALETTE.length;
+						const domain = BLUE_PALETTE.map((val, index) => minVal + d * (index + 1));
+						const scaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(domain);
 
-						return {
-							fillColor: scaleColors(feature.properties.count),
-							weight: 0,
-							opacity: 1,
-							color: 'rgba(0,0,0,0)',
-							dashArray: '3',
-							fillOpacity: 0.7
-						};
+						// Render the heatmap buckets as a GeoJSON layer
+						this.baseLineLayer = leaflet.geoJSON(this.bucketFeatures, {
+							style: feature => {
+								return {
+									fillColor: scaleColors(feature.properties.count),
+									weight: 0,
+									opacity: 1,
+									color: 'rgba(0,0,0,0)',
+									dashArray: '3',
+									fillOpacity: 0.7
+								};
+							}
+						});
+						this.baseLineLayer.addTo(this.map);
+					} else {
+						// there's a highlight active - render from the set of features returned in the filter portion of the
+						// variable summary strucure
+						const filteredMaxVal = this.filteredMaxCount;
+						const filteredMinVal = this.filteredMinCount;
+						const dVal = (filteredMaxVal - filteredMinVal) / BLUE_PALETTE.length;
+						const filteredDomain = BLUE_PALETTE.map((val, index) => minVal + dVal * (index + 1));
+						const filteredScaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(filteredDomain);
+
+						this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
+							style: feature => {
+								return {
+									fillColor: filteredScaleColors(feature.properties.count),
+									weight: 0,
+									opacity: 1,
+									color: 'rgba(0,0,0,0)',
+									dashArray: '3',
+									fillOpacity: 0.7
+								};
+							}
+						});
+						this.filteredLayer.addTo(this.map);
 					}
-				});
-
-				baseLayer.addTo(this.map);
-
-				const filteredMaxVal = this.filteredMaxCount;
-				const filteredMinVal = this.filteredMinCount;
-				const dVal = (filteredMaxVal - filteredMinVal) / BLUE_PALETTE.length;
-				const filteredDomain = BLUE_PALETTE.map((val, index) => minVal + dVal * (index + 1));
-				const filteredScaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(filteredDomain);
-
-				filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
-					style: feature => {
-						return {
-							fillColor: filteredScaleColors(feature.properties.count),
-							weight: 0,
-							opacity: 1,
-							color: 'rgba(0,0,0,0)',
-							dashArray: '3',
-							fillOpacity: 0.7
-						};
-					}
-				});
-
-
-				filteredLayer.addTo(this.map);
+				} else if (this.hasFilters) {
+					// Excluded mode is active - render visuals using a black pallette.
+					// Any data we need to render is in the filter portion of variable summary structure.
+					this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
+						style: feature => {
+							return {
+								fillColor: 'black',
+								weight: 0,
+								opacity: 1,
+								color: 'rgba(0,0,0,0)',
+								dashArray: '3',
+								fillOpacity: 0.7
+							};
+						}
+					});
+					this.filteredLayer.addTo(this.map);
+					this.clearSelectionRect();
+				}
 			}
 		}
 	},
 
 	watch: {
-		filteredBucketFeatures() {
-			if (this.summary.filtered) {
-				this.paint();
-			}
-		},
 		bucketFeatures() {
 			if (this.summary.baseline) {
 				this.paint();
 			}
 		},
+		filteredBucketFeatures() {
+			if (this.summary.filtered) {
+				this.paint();
+			}
+		},
+		includedActive() {
+			if (!this.includedActive) {
+				this.clearSelectionRect();
+			}
+		}
 	},
 
 	mounted() {
