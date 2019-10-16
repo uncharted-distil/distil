@@ -89,9 +89,11 @@ func GeocodeForwardDataset(datasetSource metadata.DatasetSource, schemaFile stri
 	fields := make(map[string][]*model.Variable)
 	for _, field := range geocodedData {
 		latName, lonName := getLatLonVariableNames(field[0].SourceField)
+		latDesc := fmt.Sprintf("latitude obtained from field %s", field[0].SourceField)
+		lonDesc := fmt.Sprintf("longitude obtained from field %s", field[0].SourceField)
 		fields[field[0].SourceField] = []*model.Variable{
-			model.NewVariable(len(mainDR.Variables), latName, "label", latName, model.LatitudeType, model.LatitudeType, []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false),
-			model.NewVariable(len(mainDR.Variables)+1, lonName, "label", lonName, model.LongitudeType, model.LongitudeType, []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false),
+			model.NewVariable(len(mainDR.Variables), latName, "label", latName, model.LatitudeType, model.LatitudeType, latDesc, []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false),
+			model.NewVariable(len(mainDR.Variables)+1, lonName, "label", lonName, model.LongitudeType, model.LongitudeType, lonDesc, []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false),
 		}
 		mainDR.Variables = append(mainDR.Variables, fields[field[0].SourceField]...)
 		for _, gc := range field {

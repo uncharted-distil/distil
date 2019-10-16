@@ -222,6 +222,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 			model.VarSelectedRoleField:     v.SelectedRole,
 			model.VarTypeField:             v.Type,
 			model.VarOriginalTypeField:     v.OriginalType,
+			model.VarDescriptionField:      v.Description,
 			model.VarImportanceField:       v.Importance,
 			model.VarSuggestedTypesField:   v.SuggestedTypes,
 			model.VarOriginalVariableField: v.OriginalVariable,
