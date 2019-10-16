@@ -327,7 +327,7 @@ export default Vue.extend({
 				this.closeButton = null;
 				return;
 			}
-			if (this.isFeaturesToModel && this.includedActive) {
+			if (this.isFeaturesToModel) {
 
 				this.clearSelectionRect();
 
@@ -341,7 +341,7 @@ export default Vue.extend({
 				const bounds = [this.startingLatLng, this.startingLatLng];
 
 				this.currentRect = leaflet.rectangle(bounds, {
-					color: '#00c6e1',
+					color: this.includedActive ? '#00c6e1' : 'black',
 					weight: 1,
 					bubblingMouseEvents: false
 				});
