@@ -91,11 +91,11 @@
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-compute"
-  branch = "add-var-description"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-ingest"
-  branch = "add-var-description"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/unchartedsoftware/plog"
