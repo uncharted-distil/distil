@@ -178,9 +178,10 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	}
 	log.Infof("finished ingesting the dataset")
 
+	// updating extremas is optional
 	err = UpdateExtremas(datasetID, metaStorage, dataStorage)
 	if err != nil {
-		return errors.Wrap(err, "unable to update extremas ranked data")
+		log.Errorf("unable to update extremas ranked data: %v", err)
 	}
 	log.Infof("finished updating extremas")
 
