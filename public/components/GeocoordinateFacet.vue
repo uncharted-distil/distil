@@ -122,7 +122,7 @@ export default Vue.extend({
 			currentRect: null,
 			selectedRect: null,
 			baseLineLayer: null,
-			filteredLayer: null,
+			filteredLayer: null
 		};
 	},
 	computed: {
@@ -287,7 +287,17 @@ export default Vue.extend({
 		},
 		onMouseUp(event: MouseEvent) {
 			if (this.currentRect) {
-				this.setSelection(this.currentRect);
+				// prevent creation of a single point highlight via click
+				const rectangleSize = this.currentRect._pxBounds.max.subtract(this.currentRect._pxBounds.min);
+				const singlePoint = leaflet.point(1, 1);
+
+				if (!rectangleSize.equals(singlePoint)) {
+					this.setSelection(this.currentRect);
+				} else {
+					this.clearSelection();
+					this.clearSelectionRect();
+				}
+
 				this.currentRect = null;
 			}
 		},
@@ -329,16 +339,18 @@ export default Vue.extend({
 				});
 
 				const bounds = [this.startingLatLng, this.startingLatLng];
+
 				this.currentRect = leaflet.rectangle(bounds, {
 					color: '#00c6e1',
 					weight: 1,
 					bubblingMouseEvents: false
 				});
+
 				this.currentRect.on('click', e => {
 					this.setSelection(e.target);
 				});
-				this.currentRect.addTo(this.map);
 
+				this.currentRect.addTo(this.map);
 				// enable drawing mode
 				// this.map.off('click', this.clearSelection);
 				this.map.dragging.disable();
