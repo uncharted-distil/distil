@@ -122,12 +122,7 @@ export default Vue.extend({
 			currentRect: null,
 			selectedRect: null,
 			baseLineLayer: null,
-<<<<<<< HEAD
-			filteredLayer: null,
-			selectedLayer: null
-=======
 			filteredLayer: null
->>>>>>> master
 		};
 	},
 	computed: {
@@ -493,9 +488,6 @@ export default Vue.extend({
 			if (this.filteredLayer) {
 				this.filteredLayer.removeFrom(this.map);
 			}
-			if (this.selectedLayer) {
-				this.selectedLayer.removeFrom(this.map);
-			}
 
 			// Lazy map instantiation with a default zoom position
 			if (!this.map) {
@@ -532,22 +524,6 @@ export default Vue.extend({
 				// tab setting.  In included mode we render all the currently included data in blue, in excluded
 				//  mode we show only excluded data and render it in black.
 				if (this.includedActive) {
-					if (this.selectedRows) {
-						//if there are selected rows, draw pink squares
-						this.selectedLayer = leaflet.geoJSON(this.selectedBucketFeatures, {
-							style: feature => {
-								return {
-									fillColor: '#FF0067',
-									weight: 0,
-									opacity: 1,
-									color: 'rgba(0,0,0,0)',
-									dashArray: '3',
-									fillOpacity: 0.7
-								};
-							}
-						});
-						this.selectedLayer.addTo(this.map);
-					}
 
 					if (!this.highlight && !this.hasFilters) {
 						// if there's no highlight active render from the baseline (all) set of buckets.
