@@ -18,6 +18,7 @@ package model
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -134,19 +135,20 @@ func GetFilterVariables(filterVariables []string, variables []*model.Variable) [
 	filtered := make([]*model.Variable, 0)
 	for _, variable := range filterVariables {
 
-		v := variableLookup[variable]
+		v := variableLookup[strings.ToLower(variable)]
 		if v == nil {
 			continue
 		}
 
-		filtered = append(filtered, v)
-		// check for cluster var type
-		if model.HasClusterVar(v.Type) {
-			clusterVarName := fmt.Sprintf("%s%s", model.ClusterVarPrefix, variable)
-			clusterVar, ok := variableLookup[clusterVarName]
-			if ok {
-				filtered = append(filtered, clusterVar)
-			}
+		// if this is a geo coordinate then we want to use the X,Y values of the grouped variable
+		// rather than the variable itself
+		if v.Grouping != nil && model.IsGeoCoordinate(v.Grouping.Type) {
+			lonVar := variableLookup[v.Grouping.Properties.XCol]
+			latVar := variableLookup[v.Grouping.Properties.YCol]
+			filtered = append(filtered, lonVar)
+			filtered = append(filtered, latVar)
+		} else {
+			filtered = append(filtered, v)
 		}
 	}
 
