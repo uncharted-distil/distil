@@ -262,18 +262,10 @@ export default Vue.extend({
 			return this.xCol !== null && this.groupingType !== null;
 			// return this.idCols.length > 1 && this.xCol && this.yCol && this.groupingType;
 		},
-
-		isTimeseriesAnalysis(): boolean {
-			const ids = this.idCols.filter(id => !!id.value);
-			return this.xCol && (ids.length === 0) && !this.yCol;
-		}
 	},
 
 	beforeMount() {
 		viewActions.fetchSelectTargetData(this.$store, false);
-		if (this.isGeocoordinate) {
-			this.idCols = [ { value: GEOCOORDINATE_TYPE } ];
-		}
 	},
 	methods: {
 		idOptions(idCol): Object[] {
@@ -317,27 +309,8 @@ export default Vue.extend({
 		isOtherCol(arg): boolean {
 			return this.other.indexOf(arg) !== -1;
 		},
-		mockGroup() {
-			if (this.isTimeseriesAnalysis) {
-				this.submitTimeseriesAnalysis();
-			} else if (this.isGeocoordinate) {
-				datasetActions.setVariableType(this.$store, {
-					dataset: this.dataset,
-					field: this.target,
-					type: GEOCOORDINATE_TYPE
-				});
-
-				this.gotoTargetSelection();
-			} else {
-				this.submitGrouping();
-			}
-		},
 		onGroup() {
-			if (this.isTimeseriesAnalysis) {
-				this.submitTimeseriesAnalysis();
-			} else {
 				this.submitGrouping();
-			}
 		},
 		submitGrouping() {
 			const hidden = {
@@ -388,12 +361,6 @@ export default Vue.extend({
 					this.gotoTargetSelection();
 				});
 			});
-		},
-		submitTimeseriesAnalysis() {
-			const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
-				dataset: this.dataset
-			});
-			this.$router.push(entry);
 		},
 		onClose() {
 			this.gotoTargetSelection();

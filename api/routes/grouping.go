@@ -64,7 +64,7 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 			return
 		}
 
-		if grouping.Type == "timeseries" {
+		if model.IsTimeSeries(grouping.Type) {
 			// ensure properties are typed correctly
 
 			storageName := model.NormalizeDatasetID(dataset)
