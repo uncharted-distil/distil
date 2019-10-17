@@ -76,7 +76,7 @@ interface GeoField {
 const GEOCOORDINATE_LABEL = 'longitude';
 
 const BLUE_PALETTE = [
-	'rgba(0,0,0,0)',
+	'#FFFFFF',
 	'#F0FBFD',
 	'#E2F8FB',
 	'#D4F5FA',
@@ -234,11 +234,6 @@ export default Vue.extend({
 				feature.properties.count < min ? feature.properties.count : min, Number.MAX_SAFE_INTEGER);
 		},
 
-		// Returns the maximum bucket count value
-		filteredMaxCount(): number {
-			return this.filteredBucketFeatures.features.reduce((max, feature) =>
-				feature.properties.count > max ? feature.properties.count : max, Number.MIN_SAFE_INTEGER);
-		},
 		headerLabel(): string {
 			return GEOCOORDINATE_TYPE.toUpperCase();
 		},
@@ -508,10 +503,9 @@ export default Vue.extend({
 					} else {
 						// there's a highlight active - render from the set of features returned in the filter portion of the
 						// variable summary strucure
-						const filteredMaxVal = this.filteredMaxCount;
 						const filteredMinVal = this.filteredMinCount;
-						const dVal = (filteredMaxVal - filteredMinVal) / BLUE_PALETTE.length;
-						const filteredDomain = BLUE_PALETTE.map((val, index) => minVal + dVal * (index + 1));
+						const dVal = (maxVal - minVal) / BLUE_PALETTE.length;
+						const filteredDomain = BLUE_PALETTE.map((val, index) => filteredMinVal + dVal * (index + 1));
 						const filteredScaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(filteredDomain);
 
 						this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
