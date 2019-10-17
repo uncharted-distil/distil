@@ -18,7 +18,6 @@ package model
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/pkg/errors"
 
@@ -127,6 +126,7 @@ type FilteredData struct {
 
 // GetFilterVariables builds the filtered list of fields based on the filtering parameters.
 func GetFilterVariables(filterVariables []string, variables []*model.Variable) []*model.Variable {
+
 	variableLookup := make(map[string]*model.Variable)
 	for _, v := range variables {
 		variableLookup[v.Name] = v
@@ -135,13 +135,13 @@ func GetFilterVariables(filterVariables []string, variables []*model.Variable) [
 	filtered := make([]*model.Variable, 0)
 	for _, variable := range filterVariables {
 
-		v := variableLookup[strings.ToLower(variable)]
+		v := variableLookup[variable]
 		if v == nil {
 			continue
 		}
 
 		// if this is a geo coordinate then we want to use the X,Y values of the grouped variable
-		// rather than the variable itself
+		// rather than the
 		if v.Grouping != nil && model.IsGeoCoordinate(v.Grouping.Type) {
 			lonVar := variableLookup[v.Grouping.Properties.XCol]
 			latVar := variableLookup[v.Grouping.Properties.YCol]
