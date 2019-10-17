@@ -131,7 +131,7 @@ func getFeatureVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest
 				indexName := fmt.Sprintf("%s%s", prefix, v.Name)
 
 				// add the feature variable
-				v := model.NewVariable(len(mainDR.Variables), indexName, "label", v.Name, model.StringType, model.StringType, []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false)
+				v := model.NewVariable(len(mainDR.Variables), indexName, "label", v.Name, model.StringType, model.StringType, "", []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false)
 
 				// create the required pipeline
 				step, err := description.CreateCrocPipeline("leather", "", []string{denormFieldName}, []string{indexName})
@@ -171,7 +171,7 @@ func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest
 
 				// add the feature variable
 				v := model.NewVariable(len(mainDR.Variables), indexName, "group", v.Name, model.CategoricalType,
-					model.CategoricalType, []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false)
+					model.CategoricalType, "", []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false)
 
 				// create the required pipeline
 				var step *pipeline.PipelineDescription

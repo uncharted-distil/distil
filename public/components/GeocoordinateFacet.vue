@@ -122,8 +122,12 @@ export default Vue.extend({
 			currentRect: null,
 			selectedRect: null,
 			baseLineLayer: null,
+<<<<<<< HEAD
 			filteredLayer: null,
 			selectedLayer: null
+=======
+			filteredLayer: null
+>>>>>>> master
 		};
 	},
 	computed: {
@@ -327,7 +331,17 @@ export default Vue.extend({
 		},
 		onMouseUp(event: MouseEvent) {
 			if (this.currentRect) {
-				this.setSelection(this.currentRect);
+				// prevent creation of a single point highlight via click
+				const rectangleSize = this.currentRect._pxBounds.max.subtract(this.currentRect._pxBounds.min);
+				const singlePoint = leaflet.point(1, 1);
+
+				if (!rectangleSize.equals(singlePoint)) {
+					this.setSelection(this.currentRect);
+				} else {
+					this.clearSelection();
+					this.clearSelectionRect();
+				}
+
 				this.currentRect = null;
 			}
 		},
@@ -357,7 +371,7 @@ export default Vue.extend({
 				this.closeButton = null;
 				return;
 			}
-			if (this.isFeaturesToModel && this.includedActive) {
+			if (this.isFeaturesToModel) {
 
 				this.clearSelectionRect();
 
@@ -369,16 +383,18 @@ export default Vue.extend({
 				});
 
 				const bounds = [this.startingLatLng, this.startingLatLng];
+
 				this.currentRect = leaflet.rectangle(bounds, {
-					color: '#00c6e1',
+					color: this.includedActive ? '#00c6e1' : 'black',
 					weight: 1,
 					bubblingMouseEvents: false
 				});
+
 				this.currentRect.on('click', e => {
 					this.setSelection(e.target);
 				});
-				this.currentRect.addTo(this.map);
 
+				this.currentRect.addTo(this.map);
 				// enable drawing mode
 				// this.map.off('click', this.clearSelection);
 				this.map.dragging.disable();
