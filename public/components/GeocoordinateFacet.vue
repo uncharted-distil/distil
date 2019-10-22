@@ -76,8 +76,6 @@ interface GeoField {
 const GEOCOORDINATE_LABEL = 'longitude';
 
 const BLUE_PALETTE = [
-	'#FFFFFF',
-	'#F0FBFD',
 	'#E2F8FB',
 	'#D4F5FA',
 	'#C6F2F8',
