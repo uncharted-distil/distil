@@ -258,18 +258,18 @@ export default Vue.extend({
 		selectFeature() {
 			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-				training: training.concat([ 'Longitude' ]).join(',')
+				training: training.concat([ this.summary.key ]).join(',')
 			});
 			this.$router.push(entry);
 		},
 		removeFeature() {
 			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
-			training.splice(training.indexOf('Longitude'), 1);
+			training.splice(training.indexOf(this.summary.key), 1);
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 				training: training.join(',')
 			});
 			this.$router.push(entry);
-			removeFiltersByName(this.$router, 'Longitude');
+			removeFiltersByName(this.$router, this.summary.key);
 		},
 		clearSelectionRect() {
 			if (this.selectedRect) {
