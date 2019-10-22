@@ -333,6 +333,8 @@ export default Vue.extend({
 					}
 				}
 			});
+			// inject type icon in group header
+			this.wrapGroupHeaderText(group, $elem);
 
 			// inject type icon in group header
 			this.injectTypeIcon(group, $elem);
@@ -850,6 +852,15 @@ export default Vue.extend({
 			const $group = this.facets.getGroup(group.key)._element;
 			const isImportant = this.ranking > IMPORTANT_VARIABLE_RANKING_THRESHOLD;
 			$group.toggleClass('important', Boolean(isImportant));
+		},
+
+		// wrap group header text
+		wrapGroupHeaderText(group: Group, $elem: JQuery) {
+			const $headerElement = $elem.find('.group-header');
+			const headerText = $headerElement.text();
+			$headerElement.empty();
+			const $headerTextWrapped = $(`<div class="header-text" v-b-tooltip.hover title=${headerText}>${headerText}</div>`);
+			$headerElement.append($headerTextWrapped);
 		},
 
 		// inject type icon

@@ -311,12 +311,37 @@ button {
 	transition: box-shadow 0.3s ease-in-out;
 }
 .variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header {
-	padding: 4px 8px 6px 8px;
+	margin: 0px !important;
+	padding: 0 0 4px !important;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-content: center;
+    align-items: stretch;
+}
+.variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .header-text {
+    order: 0;
+    flex: 1 1 auto;
+    align-self: auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	margin: 0 0 0 .5rem;
+	height: 20px;
+	white-space: nowrap;
+}
+.variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .fa-info {
+	margin: 5px 10px 5px 5px;
+    order: 1;
+    flex: 30 1 auto;
+    align-self: auto;
+	text-align: left;
 }
 .variable-facets-container .facets-root-container .facets-group-container .facets-group .group-header .type-change-menu {
-	float: right;
-	margin-top: -4px;
-	margin-right: -8px;
+    order: 2;
+    flex: none;
+    align-self: auto;
+	text-align: right;
 }
 .facet-filters {
 	margin: 0 -10px 4px -10px;
