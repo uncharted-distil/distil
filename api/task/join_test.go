@@ -151,6 +151,8 @@ func TestJoin(t *testing.T) {
 	assert.Equal(t, len(expectedTyped), len(records)-1)
 	assert.Equal(t, result.NumRows, 4)
 	for i := 0; i < len(expectedTyped); i++ {
-		assert.ElementsMatch(t, result.Values[i], expectedTyped[i])
+		for j := 0; j < len(expectedTyped[i]); j++ {
+			assert.Equal(t, result.Values[i][j].Value, expectedTyped[i][j])
+		}
 	}
 }

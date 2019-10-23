@@ -118,9 +118,9 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 		if len(numericColumns) > 0 {
 			for _, r := range results.Values {
 				for _, nc := range numericColumns {
-					f, ok := r[nc].(float64)
+					f, ok := r[nc].Value.(float64)
 					if ok && math.IsNaN(f) {
-						r[nc] = ""
+						r[nc].Value = ""
 					}
 				}
 			}

@@ -30,8 +30,17 @@ import (
 	log "github.com/unchartedsoftware/plog"
 )
 
+const (
+	resultTableSuffix        = "_result"
+	featureWeightTableSuffix = "_explain"
+)
+
 func (s *Storage) getResultTable(dataset string) string {
-	return fmt.Sprintf("%s_result", dataset)
+	return fmt.Sprintf("%s%s", dataset, resultTableSuffix)
+}
+
+func (s *Storage) getSolutionFeatureWeightTable(dataset string) string {
+	return fmt.Sprintf("%s%s", dataset, featureWeightTableSuffix)
 }
 
 func (s *Storage) getResultTargetName(storageName string, resultURI string) (string, error) {
@@ -67,21 +76,63 @@ func (s *Storage) getResultTargetVariable(dataset string, targetName string) (*m
 	return variable, nil
 }
 
-// PersistResult stores the solution result to Postgres.
-func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string) error {
-	// Read the results file.
-	file, err := os.Open(resultURI)
+func (s *Storage) readCSVFile(uri string) ([][]string, error) {
+	// open the file
+	file, err := os.Open(uri)
 	if err != nil {
-		return errors.Wrap(err, "unable open solution result file")
+		return nil, errors.Wrap(err, "unable open solution result file")
 	}
 	csvReader := csv.NewReader(bufio.NewReader(file))
 	csvReader.TrimLeadingSpace = true
+
+	// read the contents of the file
 	records, err := csvReader.ReadAll()
 	if err != nil {
-		return errors.Wrap(err, "unable load solution result as csv")
+		return nil, errors.Wrap(err, "unable load solution result as csv")
 	}
 	if len(records) <= 0 || len(records[0]) <= 0 {
-		return errors.Wrap(err, "solution csv empty")
+		return nil, errors.Wrap(err, "solution csv empty")
+	}
+
+	return records, nil
+}
+
+// PersistSolutionFeatureWeight persists the solution feature weight to Postgres.
+func (s *Storage) PersistSolutionFeatureWeight(dataset string, resultURI string, weights [][]string) error {
+	// weight structure is header row and then one row / d3m index
+	fields := []string{"solution_id"}
+	fields = append(fields, weights[0]...)
+	values := make([][]interface{}, 0)
+	for _, row := range weights[1:] {
+		// parse into floats for storage (and add solution id)
+		parsedWeights := make([]interface{}, len(row)+1)
+		parsedWeights[0] = resultURI
+		for i, weight := range row {
+			w, err := strconv.ParseFloat(weight, 64)
+			if err != nil {
+				return nil
+			}
+			parsedWeights[i+1] = w
+		}
+
+		values = append(values, parsedWeights)
+	}
+
+	// batch the data to the storage
+	err := s.InsertBatch(s.getSolutionFeatureWeightTable(dataset), fields, values)
+	if err != nil {
+		return errors.Wrap(err, "failed to insert result in database")
+	}
+
+	return nil
+}
+
+// PersistResult stores the solution result to Postgres.
+func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string) error {
+	// Read the results file.
+	records, err := s.readCSVFile(resultURI)
+	if err != nil {
+		return err
 	}
 
 	// currently only support a single result column.
@@ -165,7 +216,7 @@ func (s *Storage) executeInsertResultStatement(storageName string, resultID stri
 func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int, rows *pgx.Rows, target *model.Variable) (*api.FilteredData, error) {
 	result := &api.FilteredData{
 		NumRows: numRows,
-		Values:  make([][]interface{}, 0),
+		Values:  make([][]*api.FilteredDataValue, 0),
 	}
 
 	// Parse the columns.
@@ -205,9 +256,17 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract fields from query result")
 			}
-			result.Values = append(result.Values, columnValues)
-			result.Columns = columns
+
+			// match values with weights
+			weightedValues := make([]*api.FilteredDataValue, len(columnValues))
+			for i, cv := range columnValues {
+				weightedValues[i] = &api.FilteredDataValue{
+					Value: cv,
+				}
+			}
+			result.Values = append(result.Values, weightedValues)
 		}
+		result.Columns = columns
 	} else {
 		result.Columns = make([]api.Column, 0)
 	}
@@ -404,6 +463,15 @@ func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, targetN
 	return wheres, params, nil
 }
 
+func addTableAlias(prefix string, fields []string) []string {
+	fieldsPrepended := make([]string, len(fields))
+	for i, f := range fields {
+		fieldsPrepended[i] = fmt.Sprintf("%s.%s", prefix, f)
+	}
+
+	return fieldsPrepended
+}
+
 // FetchResults pulls the results from the Postgres database.
 func (s *Storage) FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *api.FilterParams) (*api.FilteredData, error) {
 	storageNameResult := s.getResultTable(storageName)
@@ -429,6 +497,8 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
+	fieldsData := addTableAlias("data", fields)
+	fieldsExplain := addTableAlias("weights", fields)
 
 	// break filters out groups for specific handling
 	filters := s.splitFilters(filterParams)
@@ -509,12 +579,16 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	query := fmt.Sprintf(
 		"SELECT %s predicted.value as \"%s\", "+
 			"\"%s\" as \"%s\", "+
-			"%s "+
+			"%s, "+
+			"%s, "+
 			"%s "+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
-			"WHERE result_id = $%d AND target = $%d",
-		distincts, predictedCol, targetName, targetCol, errorExpr, fields, storageNameResult, storageName,
-		model.D3MIndexFieldName, len(params)+1, len(params)+2)
+			"LEFT OUTER JOIN %s as weights on weights.\"%s\" == predicted.index"+
+			"WHERE predicted.result_id = $%d AND target = $%d and weights.result_id = %s",
+		distincts, predictedCol, targetName, targetCol, errorExpr, strings.Join(fieldsData, ","),
+		strings.Join(fieldsExplain, ","), storageNameResult, storageName, model.D3MIndexFieldName,
+		s.getSolutionFeatureWeightTable(dataset), model.D3MIndexFieldName,
+		len(params)+1, len(params)+2, resultURI)
 
 	params = append(params, resultURI)
 	params = append(params, targetName)

@@ -95,7 +95,7 @@
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-ingest"
-  branch = "master"
+  branch = "support-shap-values"
 
 [[constraint]]
   name = "github.com/unchartedsoftware/plog"

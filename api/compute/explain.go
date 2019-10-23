@@ -18,23 +18,22 @@ package compute
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
-	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 var (
 	explainablePrimitives = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
 )
 
-func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string,
-	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, variables []*model.Variable) ([]*api.SolutionFeatureWeight, error) {
+func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string, resultURI string,
+	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, variables []*model.Variable) (*api.SolutionFeatureWeights, error) {
 	// get the pipeline description
 	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
 	if err != nil {
@@ -54,50 +53,25 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	}
 
 	// parse the output for the explanations
-	parsed, err := s.parseSolutionFeatureWeight(solutionID, outputURI)
+	parsed, err := s.parseSolutionFeatureWeight(resultURI, outputURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse feature weight output")
 	}
 
-	// map column name to get the feature index
-	varsMapped := make(map[string]*model.Variable)
-	for _, v := range variables {
-		varsMapped[v.Name] = v
-	}
-
-	output := make([]*api.SolutionFeatureWeight, 0)
-	for _, fw := range parsed {
-		if varsMapped[fw.FeatureName] != nil {
-			fw.FeatureIndex = int64(varsMapped[fw.FeatureName].Index)
-			output = append(output, fw)
-		}
-	}
-
-	return output, nil
+	return parsed, nil
 }
 
-func (s *SolutionRequest) parseSolutionFeatureWeight(solutionID string, outputURI string) ([]*api.SolutionFeatureWeight, error) {
+func (s *SolutionRequest) parseSolutionFeatureWeight(resultURI string, outputURI string) (*api.SolutionFeatureWeights, error) {
 	// all results on one row, with header row having feature names
-	res, err := result.ParseResultCSV(outputURI)
+	res, err := util.ReadCSVFile(outputURI, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read feature weight output")
 	}
 
-	weights := make([]*api.SolutionFeatureWeight, len(res[0]))
-	for i := 0; i < len(res[0]); i++ {
-		weight, err := strconv.ParseFloat(res[1][i].(string), 64)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to parse feature weight")
-		}
-		featureName := res[0][i].(string)
-		weights[i] = &api.SolutionFeatureWeight{
-			SolutionID:  solutionID,
-			FeatureName: featureName,
-			Weight:      weight,
-		}
-	}
-
-	return weights, nil
+	return &api.SolutionFeatureWeights{
+		ResultURI: resultURI,
+		Weights:   res,
+	}, nil
 }
 
 func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) (bool, *pipeline.PipelineDescription) {

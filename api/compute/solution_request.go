@@ -468,20 +468,6 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, errors.Errorf("no fitted solution ID for solution `%s`", solutionID))
 	}
 
-	// explain the pipeline
-	featureWeights, err := s.explainOutput(client, solutionID, searchRequest, datasetURITrain, variables)
-	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
-		return
-	}
-	for _, fw := range featureWeights {
-		err = solutionStorage.PersistSolutionFeatureWeight(fw.SolutionID, fw.FeatureName, fw.FeatureIndex, fw.Weight)
-		if err != nil {
-			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
-			return
-		}
-	}
-
 	// persist solution running status
 	s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
 
@@ -532,6 +518,18 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 		// persist results
 		s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID, dataset, solutionID, fittedSolutionID, resultID, resultURI)
+
+		// explain the pipeline
+		featureWeights, err := s.explainOutput(client, solutionID, resultURI, searchRequest, datasetURITrain, variables)
+		if err != nil {
+			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+			return
+		}
+		err = dataStorage.PersistSolutionFeatureWeight(dataset, featureWeights.ResultURI, featureWeights.Weights)
+		if err != nil {
+			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+			return
+		}
 	}
 }
 

@@ -18,6 +18,7 @@ package postgres
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx"
@@ -33,15 +34,6 @@ func (s *Storage) PersistSolution(requestID string, solutionID string, progress 
 	sql := fmt.Sprintf("INSERT INTO %s (request_id, solution_id, progress, created_time) VALUES ($1, $2, $3, $4);", solutionTableName)
 
 	_, err := s.client.Exec(sql, requestID, solutionID, progress, createdTime)
-
-	return err
-}
-
-// PersistSolutionFeatureWeight persists the solution feature weight to Postgres.
-func (s *Storage) PersistSolutionFeatureWeight(solutionID string, featureName string, featureIndex int64, weight float64) error {
-	sql := fmt.Sprintf("INSERT INTO %s (solution_id, feature_name, feature_index, weight) VALUES ($1, $2, $3, $4);", solutionFeatureWeightTableName)
-
-	_, err := s.client.Exec(sql, solutionID, featureName, featureIndex, weight)
 
 	return err
 }
@@ -197,35 +189,20 @@ func (s *Storage) parseSolutionResult(rows *pgx.Rows) ([]*api.SolutionResult, er
 	return results, nil
 }
 
-func (s *Storage) parseSolutionFeatureWeight(rows *pgx.Rows) ([]*api.SolutionFeatureWeight, error) {
+func (s *Storage) parseSolutionFeatureWeight(rows *pgx.Rows, features []string) ([]*api.SolutionFeatureWeight, error) {
 	results := make([]*api.SolutionFeatureWeight, 0)
-	for rows.Next() {
-		var solutionID string
-		var featureName string
-		var featureIndex int64
-		var weight float64
-
-		err := rows.Scan(&solutionID, &featureName, &featureIndex, &weight)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse solution feature weight from Postgres")
-		}
-
-		results = append(results, &api.SolutionFeatureWeight{
-			SolutionID:   solutionID,
-			FeatureName:  featureName,
-			FeatureIndex: featureIndex,
-			Weight:       weight,
-		})
-	}
 
 	return results, nil
 }
 
 // FetchSolutionFeatureWeights fetches solution feature weights from Postgres.
-func (s *Storage) FetchSolutionFeatureWeights(solutionID string) ([]*api.SolutionFeatureWeight, error) {
-	sql := fmt.Sprintf("SELECT solution_id, feature_name, feature_index, weight FROM %s WHERE solution_id = $1;", solutionFeatureWeightTableName)
+func (s *Storage) FetchSolutionFeatureWeights(dataset string, resultURI string, features []string) ([]*api.SolutionFeatureWeight, error) {
+	featuresSQL := strings.Join(features, "\",\"")
+	featuresSQL = fmt.Sprintf("\"%s\"", featuresSQL)
+	sql := fmt.Sprintf("SELECT result_id, \"%s\", %s FROM %s WHERE result_id = $1;",
+		featuresSQL, model.D3MIndexFieldName, s.getSolutionFeatureWeightTable(dataset))
 
-	rows, err := s.client.Query(sql, solutionID)
+	rows, err := s.client.Query(sql, resultURI)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to pull solution feature weights from Postgres")
 	}
@@ -233,7 +210,7 @@ func (s *Storage) FetchSolutionFeatureWeights(solutionID string) ([]*api.Solutio
 		defer rows.Close()
 	}
 
-	results, err := s.parseSolutionFeatureWeight(rows)
+	results, err := s.parseSolutionFeatureWeight(rows, features)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to parse solution feature weights from Postgres")
 	}

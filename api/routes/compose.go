@@ -123,10 +123,10 @@ func ComposeHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorage
 	}
 }
 
-func createComposedFields(data []interface{}, fields []string, mappedFields map[string]int) string {
+func createComposedFields(data []*api.FilteredDataValue, fields []string, mappedFields map[string]int) string {
 	dataToJoin := make([]string, len(fields))
 	for i, field := range fields {
-		dataToJoin[i] = fmt.Sprintf("%s", data[mappedFields[field]])
+		dataToJoin[i] = fmt.Sprintf("%s", data[mappedFields[field]].Value)
 	}
 	return strings.Join(dataToJoin, "_")
 }

@@ -35,7 +35,7 @@ type RankingResult struct {
 
 // VariableRankingHandler generates a route handler that allows to ranking
 // variables of a dataset relative to the importance of a selected variable.
-func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+func VariableRankingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
@@ -43,7 +43,7 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 		target := pat.Param(r, "target")
 		// get solution id (optional param)
 		queryValues := r.URL.Query()
-		solutionID := queryValues.Get("solutionId")
+		resultURI := queryValues.Get("result")
 
 		// get storage client
 		storage, err := metaCtor()
@@ -59,10 +59,10 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 		}
 
 		var rankings map[string]float64
-		if solutionID == "" {
+		if resultURI == "" {
 			rankings, err = targetRank(dataset, target, d.Folder, d.Variables, d.Source)
 		} else {
-			rankings, err = solutionRank(solutionID, solutionCtor)
+			rankings, err = solutionRank(dataset, resultURI, dataCtor)
 		}
 
 		if err != nil {
@@ -91,22 +91,19 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 	}
 }
 
-func solutionRank(solutionID string, solutionCtor api.SolutionStorageCtor) (map[string]float64, error) {
+func solutionRank(dataset string, resultURI string, dataCtor api.DataStorageCtor) (map[string]float64, error) {
 	// get storage client
-	storage, err := solutionCtor()
+	storage, err := dataCtor()
 	if err != nil {
 		return nil, err
 	}
 
-	weights, err := storage.FetchSolutionFeatureWeights(solutionID)
+	_, err = storage.FetchSolutionFeatureWeights(dataset, resultURI, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	ranks := make(map[string]float64)
-	for _, fw := range weights {
-		ranks[fw.FeatureName] = fw.Weight
-	}
 
 	return ranks, nil
 }

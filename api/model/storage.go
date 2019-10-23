@@ -32,6 +32,7 @@ type DataStorage interface {
 	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams, invert bool) (*VariableSummary, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*VariableSummary, error)
 	PersistResult(dataset string, storageName string, resultURI string, target string) error
+	PersistSolutionFeatureWeight(dataset string, solutionID string, weights [][]string) error
 	FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *FilterParams) (*FilteredData, error)
 	FetchPredictedSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*VariableSummary, error)
 	FetchResultsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
@@ -43,6 +44,7 @@ type DataStorage interface {
 	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams, invert bool) ([][]float64, error)
 	FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultUUID string, filterParams *FilterParams) ([][]float64, error)
 	FetchCategoryCounts(storageName string, variable *model.Variable) (map[string]int, error)
+	FetchSolutionFeatureWeights(dataset string, resultURI string, features []string) ([]*SolutionFeatureWeight, error)
 
 	// Dataset manipulation
 	IsValidDataType(dataset string, storageName string, varName string, varType string) (bool, error)
@@ -64,7 +66,6 @@ type SolutionStorage interface {
 	PersistRequestFeature(requestID string, featureName string, featureType string) error
 	PersistRequestFilters(requestID string, filters *FilterParams) error
 	PersistSolution(requestID string, solutionID string, progress string, createdTime time.Time) error
-	PersistSolutionFeatureWeight(solutionID string, featureName string, featureIndex int64, weight float64) error
 	PersistSolutionResult(solutionID string, fittedSolutionID, resultUUID string, resultURI string, progress string, createdTime time.Time) error
 	PersistSolutionScore(solutionID string, metric string, score float64) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
@@ -74,7 +75,6 @@ type SolutionStorage interface {
 	FetchRequestFeatures(requestID string) ([]*Feature, error)
 	FetchRequestFilters(requestID string, features []*Feature) (*FilterParams, error)
 	FetchSolution(solutionID string) (*Solution, error)
-	FetchSolutionFeatureWeights(solutionID string) ([]*SolutionFeatureWeight, error)
 	FetchSolutionResultByUUID(resultUUID string) (*SolutionResult, error)
 	FetchSolutionResult(solutionID string) (*SolutionResult, error)
 	FetchSolutionScores(solutionID string) ([]*SolutionScore, error)
