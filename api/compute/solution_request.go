@@ -525,7 +525,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 			return
 		}
-		err = dataStorage.PersistSolutionFeatureWeight(dataset, featureWeights.ResultURI, featureWeights.Weights)
+		err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
 		if err != nil {
 			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 			return

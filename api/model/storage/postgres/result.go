@@ -98,7 +98,7 @@ func (s *Storage) readCSVFile(uri string) ([][]string, error) {
 }
 
 // PersistSolutionFeatureWeight persists the solution feature weight to Postgres.
-func (s *Storage) PersistSolutionFeatureWeight(dataset string, resultURI string, weights [][]string) error {
+func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName string, resultURI string, weights [][]string) error {
 	// weight structure is header row and then one row / d3m index
 	fields := []string{"solution_id"}
 	fields = append(fields, weights[0]...)
@@ -119,7 +119,7 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, resultURI string,
 	}
 
 	// batch the data to the storage
-	err := s.InsertBatch(s.getSolutionFeatureWeightTable(dataset), fields, values)
+	err := s.InsertBatch(s.getSolutionFeatureWeightTable(storageName), fields, values)
 	if err != nil {
 		return errors.Wrap(err, "failed to insert result in database")
 	}
@@ -587,7 +587,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			"WHERE predicted.result_id = $%d AND target = $%d and weights.result_id = %s",
 		distincts, predictedCol, targetName, targetCol, errorExpr, strings.Join(fieldsData, ","),
 		strings.Join(fieldsExplain, ","), storageNameResult, storageName, model.D3MIndexFieldName,
-		s.getSolutionFeatureWeightTable(dataset), model.D3MIndexFieldName,
+		s.getSolutionFeatureWeightTable(storageName), model.D3MIndexFieldName,
 		len(params)+1, len(params)+2, resultURI)
 
 	params = append(params, resultURI)

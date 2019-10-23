@@ -197,10 +197,11 @@ func (s *Storage) parseSolutionFeatureWeight(rows *pgx.Rows, features []string) 
 
 // FetchSolutionFeatureWeights fetches solution feature weights from Postgres.
 func (s *Storage) FetchSolutionFeatureWeights(dataset string, resultURI string, features []string) ([]*api.SolutionFeatureWeight, error) {
+	storageName := model.NormalizeDatasetID(dataset)
 	featuresSQL := strings.Join(features, "\",\"")
 	featuresSQL = fmt.Sprintf("\"%s\"", featuresSQL)
 	sql := fmt.Sprintf("SELECT result_id, \"%s\", %s FROM %s WHERE result_id = $1;",
-		featuresSQL, model.D3MIndexFieldName, s.getSolutionFeatureWeightTable(dataset))
+		featuresSQL, model.D3MIndexFieldName, s.getSolutionFeatureWeightTable(storageName))
 
 	rows, err := s.client.Query(sql, resultURI)
 	if err != nil {
