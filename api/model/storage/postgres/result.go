@@ -100,26 +100,43 @@ func (s *Storage) readCSVFile(uri string) ([][]string, error) {
 // PersistSolutionFeatureWeight persists the solution feature weight to Postgres.
 func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName string, resultURI string, weights [][]string) error {
 	// weight structure is header row and then one row / d3m index
-	fields := []string{"solution_id"}
-	fields = append(fields, weights[0]...)
+	// keep only weights that are tied to a variable in the base dataset
+	fieldsDatabase, err := s.getDatabaseFields(fmt.Sprintf("%s_explain", storageName))
+	if err != nil {
+		return err
+	}
+	fieldsWeight := weights[0]
+	fieldsMap := make(map[int]string)
+	fields := []string{"result_id"}
+	for _, dbField := range fieldsDatabase {
+		for i := 0; i < len(fieldsWeight); i++ {
+			if dbField == fieldsWeight[i] {
+				fieldsMap[i] = fieldsWeight[i]
+				fields = append(fields, fieldsWeight[i])
+			}
+		}
+	}
+
 	values := make([][]interface{}, 0)
 	for _, row := range weights[1:] {
 		// parse into floats for storage (and add solution id)
-		parsedWeights := make([]interface{}, len(row)+1)
+		parsedWeights := make([]interface{}, len(fields))
 		parsedWeights[0] = resultURI
-		for i, weight := range row {
-			w, err := strconv.ParseFloat(weight, 64)
-			if err != nil {
-				return nil
+		for i := 0; i < len(row); i++ {
+			if fieldsMap[i] != "" {
+				w, err := strconv.ParseFloat(row[i], 64)
+				if err != nil {
+					return nil
+				}
+				parsedWeights[i+1] = w
 			}
-			parsedWeights[i+1] = w
 		}
 
 		values = append(values, parsedWeights)
 	}
 
 	// batch the data to the storage
-	err := s.InsertBatch(s.getSolutionFeatureWeightTable(storageName), fields, values)
+	err = s.InsertBatch(s.getSolutionFeatureWeightTable(storageName), fields, values)
 	if err != nil {
 		return errors.Wrap(err, "failed to insert result in database")
 	}
