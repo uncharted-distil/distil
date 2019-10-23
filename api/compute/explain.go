@@ -82,8 +82,8 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
 			if s.isExplainablePrimitive(primitive.Primitive.Id) {
-				primitive.Outputs[0].Id = "produce_feature_importances"
-				pipelineDesc.Outputs[0].Data = fmt.Sprintf("steps.%d.produce_feature_importances", si)
+				primitive.Outputs[0].Id = "produce_shap_values"
+				pipelineDesc.Outputs[0].Data = fmt.Sprintf("steps.%d.produce_shap_values", si)
 				explainStep = si
 				break
 			}
