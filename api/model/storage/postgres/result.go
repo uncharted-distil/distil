@@ -122,13 +122,15 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 		// parse into floats for storage (and add solution id)
 		parsedWeights := make([]interface{}, len(fields))
 		parsedWeights[0] = resultURI
+		count := 1
 		for i := 0; i < len(row); i++ {
 			if fieldsMap[i] != "" {
 				w, err := strconv.ParseFloat(row[i], 64)
 				if err != nil {
 					return nil
 				}
-				parsedWeights[i+1] = w
+				parsedWeights[count] = w
+				count = count + 1
 			}
 		}
 

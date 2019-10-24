@@ -23,6 +23,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
@@ -94,6 +95,13 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 		return false, nil
 	}
 	pipelineDesc.Steps = pipelineDesc.Steps[0 : explainStep+1]
+
+	mappingStep, _ := description.NewConstructPredictionStep(
+		map[string]description.DataRef{"inputs": &description.StepDataRef{len(pipelineDesc.Steps), "produce"}},
+		[]string{"produce"},
+		&description.PipelineDataRef{0},
+	).BuildDescriptionStep()
+	pipelineDesc.Steps = append(pipelineDesc.Steps, mappingStep)
 
 	return true, pipelineDesc
 }
