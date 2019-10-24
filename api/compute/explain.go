@@ -97,9 +97,9 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 	pipelineDesc.Steps = pipelineDesc.Steps[0 : explainStep+1]
 
 	mappingStep, _ := description.NewConstructPredictionStep(
-		map[string]description.DataRef{"inputs": &description.StepDataRef{len(pipelineDesc.Steps), "produce"}},
+		map[string]description.DataRef{"inputs": &description.StepDataRef{StepNum: len(pipelineDesc.Steps), Output: "produce"}},
 		[]string{"produce"},
-		&description.PipelineDataRef{0},
+		&description.PipelineDataRef{InputNum: 0},
 	).BuildDescriptionStep()
 	pipelineDesc.Steps = append(pipelineDesc.Steps, mappingStep)
 
