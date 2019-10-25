@@ -37,9 +37,10 @@ var (
 )
 
 func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string, resultURI string,
-	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, variables []*model.Variable) (*api.SolutionFeatureWeights, error) {
+	searchRequest *pipeline.SearchSolutionsRequest, datasetURITrain string, datasetURITest string,
+	variables []*model.Variable) (*api.SolutionFeatureWeights, error) {
 	// get the d3m index lookup
-	rawData, err := readDatasetData(datasetURI)
+	rawData, err := readDatasetData(datasetURITest)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	}
 
 	// send the fully specified pipeline to TA2 (updated produce function call)
-	outputURI, err := SubmitPipeline(client, []string{datasetURI}, searchRequest, pipExplain)
+	outputURI, err := SubmitPipeline(client, []string{datasetURITrain}, []string{datasetURITest}, searchRequest, pipExplain)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run the fully specified pipeline")
 	}
@@ -81,6 +82,7 @@ func (s *SolutionRequest) parseSolutionFeatureWeight(resultURI string, outputURI
 	}
 
 	setD3MIndex(0, d3mIndexLookup, res)
+	res[0][0] = model.D3MIndexFieldName
 
 	return &api.SolutionFeatureWeights{
 		ResultURI: resultURI,
@@ -126,12 +128,12 @@ func mapRowIndex(d3mIndexCol int, data [][]string) map[int]string {
 }
 
 func setD3MIndex(indexCol int, d3mIndexLookup map[int]string, data [][]string) error {
-	for _, row := range data {
-		index, err := strconv.Atoi(row[indexCol])
+	for i := 1; i < len(data); i++ {
+		index, err := strconv.Atoi(data[i][indexCol])
 		if err != nil {
 			return err
 		}
-		row[indexCol] = d3mIndexLookup[index]
+		data[i][indexCol] = d3mIndexLookup[index]
 	}
 
 	return nil

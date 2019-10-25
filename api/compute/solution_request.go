@@ -520,7 +520,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID, dataset, solutionID, fittedSolutionID, resultID, resultURI)
 
 		// explain the pipeline
-		featureWeights, err := s.explainOutput(client, solutionID, resultURI, searchRequest, datasetURITrain, variables)
+		featureWeights, err := s.explainOutput(client, solutionID, resultURI, searchRequest, datasetURITrain, datasetURITest, variables)
 		if err != nil {
 			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
 			return

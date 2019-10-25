@@ -595,14 +595,15 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(variable.Name), errorCol)
 	}
 
+	// errorExpr will have the necessary comma if relevant
 	query := fmt.Sprintf(
 		"SELECT %s predicted.value as \"%s\", "+
-			"\"%s\" as \"%s\", "+
-			"%s, "+
+			"data.\"%s\" as \"%s\", "+
+			"%s"+
 			"%s, "+
 			"%s "+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
-			"LEFT OUTER JOIN %s as weights on weights.\"%s\" = predicted.index AND weights.result_id = predicted.result_id"+
+			"LEFT OUTER JOIN %s as weights on weights.\"%s\" = predicted.index AND weights.result_id = predicted.result_id "+
 			"WHERE predicted.result_id = $%d AND target = $%d",
 		distincts, predictedCol, targetName, targetCol, errorExpr, strings.Join(fieldsData, ","),
 		strings.Join(fieldsExplain, ","), storageNameResult, storageName, model.D3MIndexFieldName,
