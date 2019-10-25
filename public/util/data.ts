@@ -349,7 +349,7 @@ export function getTableDataItems(data: TableData): TableRow[] {
 			resultRow.forEach((colValue, colIndex) => {
 				const colName = data.columns[colIndex].key;
 				const colType = data.columns[colIndex].type;
-				row[colName] = formatValue(colValue.Value, colType);
+				row[colName] = formatValue(colValue.value, colType);
 			});
 			row._key = rowIndex;
 			return row;

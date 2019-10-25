@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -147,12 +148,13 @@ func getD3MFieldIndex(header []string) int {
 }
 
 func readDatasetData(uri string) ([][]string, error) {
-	meta, err := metadata.LoadMetadataFromOriginalSchema(uri)
+	uriRaw := strings.TrimPrefix(uri, "file://")
+	meta, err := metadata.LoadMetadataFromOriginalSchema(uriRaw)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to load original schema file")
 	}
 
-	dataPath := path.Join(uri, meta.DataResources[0].ResPath)
+	dataPath := path.Join(path.Dir(uriRaw), meta.DataResources[0].ResPath)
 	res, err := util.ReadCSVFile(dataPath, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read raw input data")
