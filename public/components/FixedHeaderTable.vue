@@ -35,7 +35,9 @@ export default Vue.extend({
 			}
 
 			const headTargetCells = [];
-			const maxCellWidth = Math.ceil(this.tbody.clientWidth / theadCells.length);
+			const minCellWidth = 100;
+			const evenCellWidth = Math.ceil(this.tbody.clientWidth / theadCells.length);
+			const maxCellWidth = minCellWidth > evenCellWidth ? minCellWidth : evenCellWidth;
 
 			// reset element style so that table renders with initial layout set by css
 			for (let i = 0; i < theadCells.length; i++) {
