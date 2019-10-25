@@ -35,6 +35,9 @@ export default Vue.extend({
 			}
 
 			const headTargetCells = [];
+			const minCellWidth = 100;
+			const evenCellWidth = Math.ceil(this.tbody.clientWidth / theadCells.length);
+			const maxCellWidth = minCellWidth > evenCellWidth ? minCellWidth : evenCellWidth;
 
 			// reset element style so that table renders with initial layout set by css
 			for (let i = 0; i < theadCells.length; i++) {
@@ -59,10 +62,24 @@ export default Vue.extend({
 			// get body and header cell width again from computed table header cells
 			const bodyCells = [];
 			const headCells = [];
+			const allRows =  this.tbody && this.tbody.querySelectorAll('tr');
+			const allBodyCellsAsRows = [];
+
+			allRows.forEach(row => {
+				const rowCells = row.querySelectorAll('td');
+				allBodyCellsAsRows.push(rowCells);
+			});
+			let remainingCellWidth = this.tbody.clientWidth;
 			for (let i = 0; i < theadCells.length; i++) {
-				const headCellWidth = theadCells[i].offsetWidth;
+				const cellOffsetWidth = theadCells[i].offsetWidth;
+				const headCellWidth = i + 1 === theadCells.length ?
+					(cellOffsetWidth > remainingCellWidth ? cellOffsetWidth : remainingCellWidth) :
+					(cellOffsetWidth < maxCellWidth ? cellOffsetWidth : maxCellWidth);
+				remainingCellWidth = remainingCellWidth - headCellWidth;
 				headCells.push({ elem: theadCells[i], width: headCellWidth });
-				bodyCells.push({ elem: tbodyCells[i], width: headCellWidth });
+				allBodyCellsAsRows.forEach(row => {
+					bodyCells.push({ elem: row[i], width: headCellWidth });
+				});
 			}
 			// set new cell width
 			headCells.forEach(setCellWidth);
@@ -85,12 +102,12 @@ export default Vue.extend({
 			const target = event.target;
 			if (!target) { return; }
 
-			const isTd = target.tagName === 'TD';
+			const isCell = target.tagName === 'TD' || target.tagName === 'TH';
 			const isLeafNode = target.childElementCount === 0;
 			const text = target.innerText;
 			const title = target.getAttribute('title');
 
-			if (isTd && isLeafNode && text && !title) {
+			if (isCell && isLeafNode && text && !title) {
 				// set title for displaying full text on hover
 				target.setAttribute('title', text);
 			}
@@ -112,6 +129,7 @@ export default Vue.extend({
 
 		this.tbody.addEventListener('scroll', this.onScroll);
 		this.tbody.addEventListener('mouseover', this.onMouseOverTableCell);
+		this.thead.addEventListener('mouseover', this.onMouseOverTableCell);
 
 		window.addEventListener('resize', this.resizeTableCells);
 
@@ -160,6 +178,9 @@ export default Vue.extend({
 	width: 100%;
 }
 .fixed-header-table thead th {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	flex-shrink: 0;
 	flex-grow: 1;
 }
@@ -172,6 +193,5 @@ export default Vue.extend({
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	max-width: 300px
 }
 </style>

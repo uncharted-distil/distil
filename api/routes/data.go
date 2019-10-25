@@ -64,6 +64,8 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 			return
 		}
 
+		// replace NaNs with an empty string to make them JSON encodable
+		data = api.ReplaceNaNs(data, api.EmptyString)
 		// marshal output into JSON
 		bytes, err := json.Marshal(data)
 		if err != nil {

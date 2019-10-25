@@ -76,8 +76,6 @@ interface GeoField {
 const GEOCOORDINATE_LABEL = 'longitude';
 
 const BLUE_PALETTE = [
-	'rgba(0,0,0,0)',
-	'#F0FBFD',
 	'#E2F8FB',
 	'#D4F5FA',
 	'#C6F2F8',
@@ -270,11 +268,6 @@ export default Vue.extend({
 				feature.properties.count < min ? feature.properties.count : min, Number.MAX_SAFE_INTEGER);
 		},
 
-		// Returns the maximum bucket count value
-		filteredMaxCount(): number {
-			return this.filteredBucketFeatures.features.reduce((max, feature) =>
-				feature.properties.count > max ? feature.properties.count : max, Number.MIN_SAFE_INTEGER);
-		},
 		headerLabel(): string {
 			return GEOCOORDINATE_TYPE.toUpperCase();
 		},
@@ -297,18 +290,18 @@ export default Vue.extend({
 		selectFeature() {
 			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-				training: training.concat([ 'Longitude' ]).join(',')
+				training: training.concat([ this.summary.key ]).join(',')
 			});
 			this.$router.push(entry);
 		},
 		removeFeature() {
 			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
-			training.splice(training.indexOf('Longitude'), 1);
+			training.splice(training.indexOf(this.summary.key), 1);
 			const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 				training: training.join(',')
 			});
 			this.$router.push(entry);
-			removeFiltersByName(this.$router, 'Longitude');
+			removeFiltersByName(this.$router, this.summary.key);
 		},
 		clearSelectionRect() {
 			if (this.selectedRect) {
@@ -548,10 +541,9 @@ export default Vue.extend({
 					} else {
 						// there's a highlight active - render from the set of features returned in the filter portion of the
 						// variable summary strucure
-						const filteredMaxVal = this.filteredMaxCount;
 						const filteredMinVal = this.filteredMinCount;
-						const dVal = (filteredMaxVal - filteredMinVal) / BLUE_PALETTE.length;
-						const filteredDomain = BLUE_PALETTE.map((val, index) => minVal + dVal * (index + 1));
+						const dVal = (maxVal - minVal) / BLUE_PALETTE.length;
+						const filteredDomain = BLUE_PALETTE.map((val, index) => filteredMinVal + dVal * (index + 1));
 						const filteredScaleColors = scaleThreshold().range(BLUE_PALETTE as any).domain(filteredDomain);
 
 						this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {

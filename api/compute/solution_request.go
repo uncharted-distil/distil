@@ -31,6 +31,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil/api/util/json"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -468,11 +469,11 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, errors.Errorf("no fitted solution ID for solution `%s`", solutionID))
 	}
 
-	// explain the pipeline
+	// explain the pipeline - if we can't fetch the explanation we just log the error and continue on without
 	featureWeights, err := s.explainOutput(client, solutionID, searchRequest, datasetURITrain, variables)
 	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
-		return
+		log.Warnf("failed to fetch output explanantion - %s", err)
+		featureWeights = []*api.SolutionFeatureWeight{}
 	}
 	for _, fw := range featureWeights {
 		err = solutionStorage.PersistSolutionFeatureWeight(fw.SolutionID, fw.FeatureName, fw.FeatureIndex, fw.Weight)
