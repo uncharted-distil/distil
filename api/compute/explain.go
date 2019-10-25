@@ -18,12 +18,14 @@ package compute
 import (
 	"context"
 	"fmt"
+	"path"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
-	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil-ingest/metadata"
 
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
@@ -35,6 +37,14 @@ var (
 
 func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string, resultURI string,
 	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, variables []*model.Variable) (*api.SolutionFeatureWeights, error) {
+	// get the d3m index lookup
+	rawData, err := readDatasetData(datasetURI)
+	if err != nil {
+		return nil, err
+	}
+	d3mIndexField := getD3MFieldIndex(rawData[0])
+	d3mIndexLookup := mapRowIndex(d3mIndexField, rawData[1:])
+
 	// get the pipeline description
 	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
 	if err != nil {
@@ -54,7 +64,7 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	}
 
 	// parse the output for the explanations
-	parsed, err := s.parseSolutionFeatureWeight(resultURI, outputURI)
+	parsed, err := s.parseSolutionFeatureWeight(resultURI, outputURI, d3mIndexLookup)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse feature weight output")
 	}
@@ -62,12 +72,14 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	return parsed, nil
 }
 
-func (s *SolutionRequest) parseSolutionFeatureWeight(resultURI string, outputURI string) (*api.SolutionFeatureWeights, error) {
+func (s *SolutionRequest) parseSolutionFeatureWeight(resultURI string, outputURI string, d3mIndexLookup map[int]string) (*api.SolutionFeatureWeights, error) {
 	// all results on one row, with header row having feature names
 	res, err := util.ReadCSVFile(outputURI, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read feature weight output")
 	}
+
+	setD3MIndex(0, d3mIndexLookup, res)
 
 	return &api.SolutionFeatureWeights{
 		ResultURI: resultURI,
@@ -84,7 +96,6 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 		if primitive != nil {
 			if s.isExplainablePrimitive(primitive.Primitive.Id) {
 				primitive.Outputs[0].Id = "produce_shap_values"
-				pipelineDesc.Outputs[0].Data = fmt.Sprintf("steps.%d.produce_shap_values", si)
 				explainStep = si
 				break
 			}
@@ -95,17 +106,57 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 		return false, nil
 	}
 	pipelineDesc.Steps = pipelineDesc.Steps[0 : explainStep+1]
-
-	mappingStep, _ := description.NewConstructPredictionStep(
-		map[string]description.DataRef{"inputs": &description.StepDataRef{StepNum: len(pipelineDesc.Steps), Output: "produce"}},
-		[]string{"produce"},
-		&description.PipelineDataRef{InputNum: 0},
-	).BuildDescriptionStep()
-	pipelineDesc.Steps = append(pipelineDesc.Steps, mappingStep)
+	pipelineDesc.Outputs[0].Data = fmt.Sprintf("steps.%d.produce_shap_values", len(pipelineDesc.Steps)-1)
 
 	return true, pipelineDesc
 }
 
 func (s *SolutionRequest) isExplainablePrimitive(primitive string) bool {
 	return explainablePrimitives[primitive]
+}
+
+func mapRowIndex(d3mIndexCol int, data [][]string) map[int]string {
+	indexMap := make(map[int]string)
+	for i, row := range data {
+		indexMap[i] = row[d3mIndexCol]
+	}
+
+	return indexMap
+}
+
+func setD3MIndex(indexCol int, d3mIndexLookup map[int]string, data [][]string) error {
+	for _, row := range data {
+		index, err := strconv.Atoi(row[indexCol])
+		if err != nil {
+			return err
+		}
+		row[indexCol] = d3mIndexLookup[index]
+	}
+
+	return nil
+}
+
+func getD3MFieldIndex(header []string) int {
+	for i, f := range header {
+		if f == model.D3MIndexFieldName {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func readDatasetData(uri string) ([][]string, error) {
+	meta, err := metadata.LoadMetadataFromOriginalSchema(uri)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to load original schema file")
+	}
+
+	dataPath := path.Join(uri, meta.DataResources[0].ResPath)
+	res, err := util.ReadCSVFile(dataPath, false)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read raw input data")
+	}
+
+	return res, nil
 }
