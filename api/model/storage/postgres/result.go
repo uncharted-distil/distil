@@ -238,10 +238,11 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 		Values:  make([][]*api.FilteredDataValue, 0),
 	}
 
-	// Parse the columns.
+	// Parse the columns (skipping weights columns)
 	if rows != nil {
 		fields := rows.FieldDescriptions()
-		columns := make([]api.Column, len(fields))
+		columns := make([]api.Column, 0)
+		weightCount := 0
 		for i := 0; i < len(fields); i++ {
 			key := fields[i].Name
 			label := key
@@ -252,6 +253,9 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 			} else if api.IsErrorKey(key) {
 				label = "Error"
 				typ = target.Type
+			} else if strings.HasPrefix(key, "__weights_") {
+				weightCount = weightCount + 1
+				continue
 			} else {
 				v := getVariableByKey(key, variables)
 				if v != nil {
@@ -259,11 +263,11 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 				}
 			}
 
-			columns[i] = api.Column{
+			columns = append(columns, api.Column{
 				Key:   key,
 				Label: label,
 				Type:  typ,
-			}
+			})
 		}
 
 		// Result type provided by DB needs to be overridden with defined target type.
@@ -277,10 +281,16 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 			}
 
 			// match values with weights
-			weightedValues := make([]*api.FilteredDataValue, len(columnValues))
-			for i, cv := range columnValues {
-				weightedValues[i] = &api.FilteredDataValue{
-					Value: cv,
+			// weights are always the last columns, and match in order
+			// with the value columns (skip the d3m index weight)
+			weightedValues := make([]*api.FilteredDataValue, len(columns))
+			for i := 0; i < len(columnValues); i++ {
+				if i < len(weightedValues) {
+					weightedValues[i] = &api.FilteredDataValue{
+						Value: columnValues[i],
+					}
+				} else if columnValues[i] != nil && columns[i-weightCount].Key != model.D3MIndexFieldName {
+					weightedValues[i-weightCount].Weight = columnValues[i].(float64)
 				}
 			}
 			result.Values = append(result.Values, weightedValues)
@@ -482,10 +492,16 @@ func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, targetN
 	return wheres, params, nil
 }
 
-func addTableAlias(prefix string, fields []string) []string {
+func addTableAlias(prefix string, fields []string, addToColumn bool) []string {
 	fieldsPrepended := make([]string, len(fields))
 	for i, f := range fields {
-		fieldsPrepended[i] = fmt.Sprintf("%s.%s", prefix, f)
+		// field name is quoted so need to prefix accordingly
+		name := f
+		if addToColumn {
+			unquoted := name[1 : len(name)-1]
+			name = fmt.Sprintf("%s as \"__%s_%s\"", name, prefix, unquoted)
+		}
+		fieldsPrepended[i] = fmt.Sprintf("%s.%s", prefix, name)
 	}
 
 	return fieldsPrepended
@@ -516,8 +532,8 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
-	fieldsData := addTableAlias("data", fields)
-	fieldsExplain := addTableAlias("weights", fields)
+	fieldsData := addTableAlias("data", fields, false)
+	fieldsExplain := addTableAlias("weights", fields, true)
 
 	// break filters out groups for specific handling
 	filters := s.splitFilters(filterParams)
@@ -605,8 +621,8 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"LEFT OUTER JOIN %s as weights on weights.\"%s\" = predicted.index AND weights.result_id = predicted.result_id "+
 			"WHERE predicted.result_id = $%d AND target = $%d",
-		distincts, predictedCol, targetName, targetCol, errorExpr, strings.Join(fieldsData, ","),
-		strings.Join(fieldsExplain, ","), storageNameResult, storageName, model.D3MIndexFieldName,
+		distincts, predictedCol, targetName, targetCol, errorExpr, strings.Join(fieldsData, ", "),
+		strings.Join(fieldsExplain, ", "), storageNameResult, storageName, model.D3MIndexFieldName,
 		s.getSolutionFeatureWeightTable(storageName), model.D3MIndexFieldName,
 		len(params)+1, len(params)+2)
 

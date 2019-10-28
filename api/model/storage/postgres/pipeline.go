@@ -18,7 +18,6 @@ package postgres
 import (
 	"fmt"
 	"math"
-	"strings"
 	"time"
 
 	"github.com/jackc/pgx"
@@ -189,21 +188,46 @@ func (s *Storage) parseSolutionResult(rows *pgx.Rows) ([]*api.SolutionResult, er
 	return results, nil
 }
 
-func (s *Storage) parseSolutionFeatureWeight(rows *pgx.Rows, features []string) ([]*api.SolutionFeatureWeight, error) {
-	results := make([]*api.SolutionFeatureWeight, 0)
+func (s *Storage) parseSolutionFeatureWeight(resultURI string, rows *pgx.Rows) (*api.SolutionFeatureWeight, error) {
+	result := &api.SolutionFeatureWeight{
+		ResultURI: resultURI,
+	}
 
-	return results, nil
+	if rows != nil {
+		fields := rows.FieldDescriptions()
+		columns := make([]string, len(fields))
+		for i, f := range fields {
+			columns[i] = f.Name
+		}
+
+		for rows.Next() {
+			columnValues, err := rows.Values()
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to extract fields from query result")
+			}
+
+			output := make(map[string]float64)
+			for i := 0; i < len(columnValues); i++ {
+				columnName := columns[i]
+				if columnName == model.D3MIndexFieldName {
+					result.D3MIndex = columnValues[i].(int64)
+				} else if columnName != "result_id" {
+					output[columnName] = columnValues[i].(float64)
+				}
+			}
+		}
+	}
+
+	return result, nil
 }
 
 // FetchSolutionFeatureWeights fetches solution feature weights from Postgres.
-func (s *Storage) FetchSolutionFeatureWeights(dataset string, resultURI string, features []string) ([]*api.SolutionFeatureWeight, error) {
+func (s *Storage) FetchSolutionFeatureWeights(dataset string, resultURI string, d3mIndex int64) (*api.SolutionFeatureWeight, error) {
 	storageName := model.NormalizeDatasetID(dataset)
-	featuresSQL := strings.Join(features, "\",\"")
-	featuresSQL = fmt.Sprintf("\"%s\"", featuresSQL)
-	sql := fmt.Sprintf("SELECT result_id, \"%s\", %s FROM %s WHERE result_id = $1;",
-		featuresSQL, model.D3MIndexFieldName, s.getSolutionFeatureWeightTable(storageName))
+	sql := fmt.Sprintf("SELECT * FROM %s WHERE result_id = $1 and \"d3mIndex\" = $2;",
+		s.getSolutionFeatureWeightTable(storageName))
 
-	rows, err := s.client.Query(sql, resultURI)
+	rows, err := s.client.Query(sql, resultURI, d3mIndex)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to pull solution feature weights from Postgres")
 	}
@@ -211,12 +235,12 @@ func (s *Storage) FetchSolutionFeatureWeights(dataset string, resultURI string, 
 		defer rows.Close()
 	}
 
-	results, err := s.parseSolutionFeatureWeight(rows, features)
+	result, err := s.parseSolutionFeatureWeight(resultURI, rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to parse solution feature weights from Postgres")
+		return nil, errors.Wrap(err, "Unable to parse solution feature weight from Postgres")
 	}
 
-	return results, nil
+	return result, nil
 }
 
 // FetchSolutionResult pulls solution result information from Postgres.

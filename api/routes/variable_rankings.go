@@ -17,6 +17,7 @@ package routes
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"goji.io/pat"
@@ -44,6 +45,7 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataS
 		// get solution id (optional param)
 		queryValues := r.URL.Query()
 		resultURI := queryValues.Get("result")
+		d3mIndexString := queryValues.Get("d3mindex")
 
 		// get storage client
 		storage, err := metaCtor()
@@ -62,11 +64,17 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataS
 		if resultURI == "" {
 			rankings, err = targetRank(dataset, target, d.Folder, d.Variables, d.Source)
 		} else {
-			rankings, err = solutionRank(dataset, resultURI, dataCtor)
+			var d3mIndex int64
+			d3mIndex, err = strconv.ParseInt(d3mIndexString, 10, 64)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to parse d3m index"))
+				return
+			}
+			rankings, err = solutionRank(dataset, resultURI, d3mIndex, dataCtor)
 		}
 
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal summary result into JSON"))
+			handleError(w, errors.Wrap(err, "unable get variable ranking"))
 			return
 		}
 
@@ -91,14 +99,14 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataS
 	}
 }
 
-func solutionRank(dataset string, resultURI string, dataCtor api.DataStorageCtor) (map[string]float64, error) {
+func solutionRank(dataset string, resultURI string, d3mIndex int64, dataCtor api.DataStorageCtor) (map[string]float64, error) {
 	// get storage client
 	storage, err := dataCtor()
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = storage.FetchSolutionFeatureWeights(dataset, resultURI, nil)
+	_, err = storage.FetchSolutionFeatureWeights(dataset, resultURI, d3mIndex)
 	if err != nil {
 		return nil, err
 	}
