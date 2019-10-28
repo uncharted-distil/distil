@@ -48,7 +48,7 @@ import { scaleThreshold } from 'd3';
 import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
 import { getters as routeGetters } from '../store/route/module';
 import { Dictionary } from '../util/dict';
-import { VariableSummary, Bucket, Highlight } from '../store/dataset/index';
+import { TableRow, VariableSummary, Bucket, Highlight } from '../store/dataset/index';
 import TypeChangeMenu from '../components/TypeChangeMenu';
 import { updateHighlight, clearHighlight } from '../util/highlights';
 import { GEOCOORDINATE_TYPE, LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from '../util/types';
@@ -57,8 +57,9 @@ import { Filter, removeFiltersByName } from '../util/filters';
 
 import 'leaflet/dist/leaflet.css';
 
-import helpers, { polygon, featureCollection } from '@turf/helpers';
+import helpers, { polygon, featureCollection, point } from '@turf/helpers';
 import bbox from '@turf/bbox';
+import booleanContains from '@turf/boolean-contains';
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
@@ -72,6 +73,7 @@ interface GeoField {
 	lngField?: string;
 	field?: string;
 }
+
 
 const GEOCOORDINATE_LABEL = 'longitude';
 
@@ -143,7 +145,6 @@ export default Vue.extend({
 		bucketBounds(): helpers.BBox {
 			return bbox(this.bucketFeatures);
 		},
-
 		// Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.  The collection represents
 		// the baseline bucket set for geocoordinate, and does not change as filters / highlights are introduced.
 		bucketFeatures(): helpers.FeatureCollection {
@@ -246,6 +247,21 @@ export default Vue.extend({
 		highlight(): Highlight {
 			return routeGetters.getDecodedHighlight(this.$store);
 		},
+		selectedRows(): any {
+			return routeGetters.getDecodedRowSelection(this.$store);
+		},
+		selectedPoints(): any {
+			if (this.selectedRows) {
+				const tableItems = this.includedActive ? datasetGetters.getIncludedTableDataItems(this.$store) : datasetGetters.getExcludedTableDataItems(this.$store);
+				const selectedItems = this.selectedRows.d3mIndices.flatMap((index) => {
+					return tableItems.filter(item => item.d3mIndex === index);
+				});
+				const selectedPoints = selectedItems.map((item) => point([Number(item.longitude), Number(item.latitude)]));
+				return selectedPoints;
+			} else {
+				return [];
+			}
+		}
 	},
 	methods: {
 		selectFeature() {
@@ -477,7 +493,9 @@ export default Vue.extend({
 				// Check to see if we're showing included or excluded mode, whichi based on the user's current
 				// tab setting.  In included mode we render all the currently included data in blue, in excluded
 				//  mode we show only excluded data and render it in black.
+
 				if (this.includedActive) {
+
 					if (!this.highlight && !this.hasFilters) {
 						// if there's no highlight active render from the baseline (all) set of buckets.
 						const d = (maxVal - minVal) / BLUE_PALETTE.length;
@@ -487,8 +505,18 @@ export default Vue.extend({
 						// Render the heatmap buckets as a GeoJSON layer
 						this.baseLineLayer = leaflet.geoJSON(this.bucketFeatures, {
 							style: feature => {
+								let containsSelected = false;
+
+								for (const point of this.selectedPoints) {
+									if (booleanContains(feature, point)) {
+										containsSelected = true;
+									}
+								}
+
+								const fill = containsSelected ? 'rgba(255,0,103,.2)' : scaleColors(feature.properties.count);
+
 								return {
-									fillColor: scaleColors(feature.properties.count),
+									fillColor: fill,
 									weight: 0,
 									opacity: 1,
 									color: 'rgba(0,0,0,0)',
@@ -508,8 +536,18 @@ export default Vue.extend({
 
 						this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
 							style: feature => {
+								let containsSelected = false;
+
+								for (const point of this.selectedPoints) {
+									if (booleanContains(feature, point)) {
+										containsSelected = true;
+									}
+								}
+
+								const fill = containsSelected ? 'rgba(255,0,103,.2)' : filteredScaleColors(feature.properties.count);
+
 								return {
-									fillColor: filteredScaleColors(feature.properties.count),
+									fillColor: fill,
 									weight: 0,
 									opacity: 1,
 									color: 'rgba(0,0,0,0)',
@@ -543,6 +581,9 @@ export default Vue.extend({
 	},
 
 	watch: {
+		selectedPoints() {
+			this.paint();
+		},
 		bucketFeatures() {
 			if (this.summary.baseline) {
 				this.paint();
