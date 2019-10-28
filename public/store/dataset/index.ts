@@ -165,6 +165,7 @@ export interface TableRow {
 	_key: number;
 	_rowVariant: string;
 	_cellVariants: Dictionary<string>;
+	d3mIndex?: number;
 }
 
 export interface TimeseriesExtrema {
