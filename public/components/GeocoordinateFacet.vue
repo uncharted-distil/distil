@@ -217,42 +217,6 @@ export default Vue.extend({
 			}
 		},
 
-		selectedBucketFeatures(): helpers.FeatureCollection {
-			// compute the bucket size in degrees
-
-			if (this.summary.selected) {
-				const buckets  = this.summary.selected.buckets;
-				const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
-				const ySize = _.toNumber(buckets[0].buckets[1].key) - _.toNumber(buckets[0].buckets[0].key);
-
-				// create a feature collection from the server-supplied bucket data
-				const features: helpers.Feature[] = [];
-				this.summary.selected.buckets.forEach(lonBucket => {
-					lonBucket.buckets.forEach(latBucket => {
-						// Don't include features with a count of 0.
-						if (latBucket.count > 0) {
-							const xCoord = _.toNumber(lonBucket.key);
-							const yCoord = _.toNumber(latBucket.key);
-							const feature = polygon([[
-										[xCoord, yCoord],
-										[xCoord, yCoord + ySize],
-										[xCoord + xSize, yCoord + ySize],
-										[xCoord + xSize, yCoord],
-										[xCoord, yCoord]
-									]], { selected: false,
-										count: latBucket.count });
-							features.push(feature);
-						}
-					});
-				});
-
-				return featureCollection(features);
-			} else {
-				const features: helpers.Feature[] = [];
-				return featureCollection(features);
-			}
-		},
-
 		// Returns the minimum non-zero bucket count value
 		minCount(): number {
 			return this.bucketFeatures.features.reduce((min, feature) =>
