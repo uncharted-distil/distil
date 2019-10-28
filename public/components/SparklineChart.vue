@@ -16,8 +16,8 @@ export default Vue.extend({
 		margin: {
 			type: Object as () => any,
 			default: () => ({
-				top: 16,
-				right: 32,
+				top: 40,
+				right: 0,
 				bottom: 16,
 				left: 32
 			})
@@ -50,7 +50,7 @@ export default Vue.extend({
 		height(): number {
 			const $svg = this.$refs.svg as any;
 			const dims = $svg.getBoundingClientRect();
-			return dims.height - this.margin.top - this.margin.bottom;
+			return dims.width / 8;
 		},
 		minX(): number {
 			const min = d3.min(this.timeseries, d => d[0]);
@@ -101,7 +101,7 @@ export default Vue.extend({
 			// Create x-axis
 			const svgXAxis = this.svg.append('g')
 				.attr('class', 'x axis')
-				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom + this.height})`)
+				.attr('transform', `translate(${this.margin.left}, ${this.height})`)
 				.call(xAxis);
 
 			svgXAxis.append('text')
@@ -115,7 +115,7 @@ export default Vue.extend({
 			// Create y-axis
 			const svgYAxis = this.svg.append('g')
 				.attr('class', 'y axis')
-				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom})`)
+				.attr('transform', `translate(${this.margin.left}, 0)`)
 				.call(yAxis);
 
 			svgYAxis.append('text')
@@ -133,7 +133,7 @@ export default Vue.extend({
 				.curve(d3.curveLinear);
 
 			const g = this.svg.append('g')
-				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom})`)
+				.attr('transform', `translate(${this.margin.left}, 0)`)
 				.attr('class', 'line-chart');
 
 			g.datum(this.timeseries);
@@ -150,7 +150,7 @@ export default Vue.extend({
 				.curve(d3.curveLinear);
 
 			const g = this.svg.append('g')
-				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom})`)
+				.attr('transform', `translate(${this.margin.left}, 0)`)
 				.attr('class', 'line-chart');
 
 			g.datum(this.forecast);
@@ -197,7 +197,6 @@ export default Vue.extend({
 
 .line-chart-big {
 	position: relative;
-	height: 512px;
 	width: 100%;
 	border: 1px solid rgba(0,0,0,0);
 }
