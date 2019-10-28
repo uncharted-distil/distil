@@ -513,7 +513,7 @@ export default Vue.extend({
 									}
 								}
 
-								const fill = containsSelected ? 'rgba(255,0,103,.2' : scaleColors(feature.properties.count);
+								const fill = containsSelected ? 'rgba(255,0,103,.2)' : scaleColors(feature.properties.count);
 
 								return {
 									fillColor: fill,
@@ -544,7 +544,7 @@ export default Vue.extend({
 									}
 								}
 
-								const fill = containsSelected ? 'rgba(255,0,103,.2' : filteredScaleColors(feature.properties.count);
+								const fill = containsSelected ? 'rgba(255,0,103,.2)' : filteredScaleColors(feature.properties.count);
 
 								return {
 									fillColor: fill,
