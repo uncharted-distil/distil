@@ -16,10 +16,10 @@ export default Vue.extend({
 		margin: {
 			type: Object as () => any,
 			default: () => ({
-				top: 40,
-				right: 0,
+				top: 24,
+				right: 48,
 				bottom: 16,
-				left: 32
+				left: 48
 			})
 		},
 		timeseries: {
@@ -50,7 +50,7 @@ export default Vue.extend({
 		height(): number {
 			const $svg = this.$refs.svg as any;
 			const dims = $svg.getBoundingClientRect();
-			return dims.width / 8;
+			return dims.height - this.margin.top - this.margin.bottom;
 		},
 		minX(): number {
 			const min = d3.min(this.timeseries, d => d[0]);
@@ -85,6 +85,7 @@ export default Vue.extend({
 			const xDomain = _.uniq(this.timeseries.map(d => d[0]).concat(this.forecast ? this.forecast.map(d => d[0]) : []));
 
 			this.xScale.domain(xDomain);
+
 
 			this.yScale = d3.scaleLinear()
 				.domain([this.minY, this.maxY])
@@ -122,7 +123,7 @@ export default Vue.extend({
 				.attr('class', 'axis-title')
 				.attr('transform', 'rotate(-90)')
 				.attr('x', -(this.height / 2))
-				.attr('y', -this.margin.left / 2)
+				.attr('y', -this.margin.left - 8)
 				.style('text-anchor', 'middle')
 				.text(this.yAxisTitle);
 		},
