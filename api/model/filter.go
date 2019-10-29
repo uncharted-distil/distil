@@ -117,12 +117,18 @@ type Column struct {
 	Type  string `json:"type"`
 }
 
+// FilteredDataValue represents a data value combined with an optional weight.
+type FilteredDataValue struct {
+	Value  interface{} `json:"value"`
+	Weight float64     `json:"weight,omitempty"`
+}
+
 // FilteredData provides the metadata and raw data values that match a supplied
 // input filter.
 type FilteredData struct {
-	NumRows int             `json:"numRows"`
-	Columns []Column        `json:"columns"`
-	Values  [][]interface{} `json:"values"`
+	NumRows int                    `json:"numRows"`
+	Columns []Column               `json:"columns"`
+	Values  [][]*FilteredDataValue `json:"values"`
 }
 
 // GetFilterVariables builds the filtered list of fields based on the filtering parameters.
@@ -349,12 +355,12 @@ func ReplaceNaNs(data *FilteredData, replacementType NaNReplacement) *FilteredDa
 	if len(numericColumns) > 0 {
 		for _, r := range data.Values {
 			for _, nc := range numericColumns {
-				f, ok := r[nc].(float64)
+				f, ok := r[nc].Value.(float64)
 				if ok && math.IsNaN(f) {
 					if replacementType == Null {
-						r[nc] = nil
+						r[nc].Value = nil
 					} else if replacementType == EmptyString {
-						r[nc] = ""
+						r[nc].Value = ""
 					}
 				}
 			}

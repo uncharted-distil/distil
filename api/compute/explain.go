@@ -18,23 +18,35 @@ package compute
 import (
 	"context"
 	"fmt"
+	"path"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
-	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
+	"github.com/uncharted-distil/distil-ingest/metadata"
 
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 var (
 	explainablePrimitives = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
 )
 
-func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string,
-	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, variables []*model.Variable) ([]*api.SolutionFeatureWeight, error) {
+func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string, resultURI string,
+	searchRequest *pipeline.SearchSolutionsRequest, datasetURITrain string, datasetURITest string,
+	variables []*model.Variable) (*api.SolutionFeatureWeights, error) {
+	// get the d3m index lookup
+	rawData, err := readDatasetData(datasetURITest)
+	if err != nil {
+		return nil, err
+	}
+	d3mIndexField := getD3MFieldIndex(rawData[0])
+	d3mIndexLookup := mapRowIndex(d3mIndexField, rawData[1:])
+
 	// get the pipeline description
 	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
 	if err != nil {
@@ -48,56 +60,37 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	}
 
 	// send the fully specified pipeline to TA2 (updated produce function call)
-	outputURI, err := SubmitPipeline(client, []string{datasetURI}, searchRequest, pipExplain)
+	outputURI, err := SubmitPipeline(client, []string{datasetURITrain}, []string{datasetURITest}, searchRequest, pipExplain)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run the fully specified pipeline")
 	}
 
 	// parse the output for the explanations
-	parsed, err := s.parseSolutionFeatureWeight(solutionID, outputURI)
+	parsed, err := s.parseSolutionFeatureWeight(resultURI, outputURI, d3mIndexLookup)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse feature weight output")
 	}
 
-	// map column name to get the feature index
-	varsMapped := make(map[string]*model.Variable)
-	for _, v := range variables {
-		varsMapped[v.Name] = v
-	}
-
-	output := make([]*api.SolutionFeatureWeight, 0)
-	for _, fw := range parsed {
-		if varsMapped[fw.FeatureName] != nil {
-			fw.FeatureIndex = int64(varsMapped[fw.FeatureName].Index)
-			output = append(output, fw)
-		}
-	}
-
-	return output, nil
+	return parsed, nil
 }
 
-func (s *SolutionRequest) parseSolutionFeatureWeight(solutionID string, outputURI string) ([]*api.SolutionFeatureWeight, error) {
+func (s *SolutionRequest) parseSolutionFeatureWeight(resultURI string, outputURI string, d3mIndexLookup map[int]string) (*api.SolutionFeatureWeights, error) {
 	// all results on one row, with header row having feature names
-	res, err := result.ParseResultCSV(outputURI)
+	res, err := util.ReadCSVFile(outputURI, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read feature weight output")
 	}
 
-	weights := make([]*api.SolutionFeatureWeight, len(res[0]))
-	for i := 0; i < len(res[0]); i++ {
-		weight, err := strconv.ParseFloat(res[1][i].(string), 64)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to parse feature weight")
-		}
-		featureName := res[0][i].(string)
-		weights[i] = &api.SolutionFeatureWeight{
-			SolutionID:  solutionID,
-			FeatureName: featureName,
-			Weight:      weight,
-		}
+	err = setD3MIndex(0, d3mIndexLookup, res)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to update d3m index")
 	}
+	res[0][0] = model.D3MIndexFieldName
 
-	return weights, nil
+	return &api.SolutionFeatureWeights{
+		ResultURI: resultURI,
+		Weights:   res,
+	}, nil
 }
 
 func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) (bool, *pipeline.PipelineDescription) {
@@ -108,8 +101,7 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
 			if s.isExplainablePrimitive(primitive.Primitive.Id) {
-				primitive.Outputs[0].Id = "produce_feature_importances"
-				pipelineDesc.Outputs[0].Data = fmt.Sprintf("steps.%d.produce_feature_importances", si)
+				primitive.Outputs[0].Id = "produce_shap_values"
 				explainStep = si
 				break
 			}
@@ -120,10 +112,58 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 		return false, nil
 	}
 	pipelineDesc.Steps = pipelineDesc.Steps[0 : explainStep+1]
+	pipelineDesc.Outputs[0].Data = fmt.Sprintf("steps.%d.produce_shap_values", len(pipelineDesc.Steps)-1)
 
 	return true, pipelineDesc
 }
 
 func (s *SolutionRequest) isExplainablePrimitive(primitive string) bool {
 	return explainablePrimitives[primitive]
+}
+
+func mapRowIndex(d3mIndexCol int, data [][]string) map[int]string {
+	indexMap := make(map[int]string)
+	for i, row := range data {
+		indexMap[i] = row[d3mIndexCol]
+	}
+
+	return indexMap
+}
+
+func setD3MIndex(indexCol int, d3mIndexLookup map[int]string, data [][]string) error {
+	for i := 1; i < len(data); i++ {
+		index, err := strconv.Atoi(data[i][indexCol])
+		if err != nil {
+			return err
+		}
+		data[i][indexCol] = d3mIndexLookup[index]
+	}
+
+	return nil
+}
+
+func getD3MFieldIndex(header []string) int {
+	for i, f := range header {
+		if f == model.D3MIndexFieldName {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func readDatasetData(uri string) ([][]string, error) {
+	uriRaw := strings.TrimPrefix(uri, "file://")
+	meta, err := metadata.LoadMetadataFromOriginalSchema(uriRaw)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to load original schema file")
+	}
+
+	dataPath := path.Join(path.Dir(uriRaw), meta.DataResources[0].ResPath)
+	res, err := util.ReadCSVFile(dataPath, false)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read raw input data")
+	}
+
+	return res, nil
 }

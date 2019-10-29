@@ -217,11 +217,17 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 	}
 
 	if !found {
-		// add the empty column
+		// add the empty column to the base table and the explain table
 		sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT;", storageName, varName)
 		_, err = s.client.Exec(sql)
 		if err != nil {
 			return errors.Wrap(err, "unable to add new column to database table")
+		}
+
+		sql = fmt.Sprintf("ALTER TABLE %s_explain ADD COLUMN \"%s\" DOUBLE PRECISION;", storageName, varName)
+		_, err = s.client.Exec(sql)
+		if err != nil {
+			return errors.Wrap(err, "unable to add new column to database explain table")
 		}
 	}
 
