@@ -61,6 +61,7 @@ export interface Variable {
 	ranking?: number;
 	novelty: number;
 	colOriginalType: string;
+	colDescription: string;
 	suggestedTypes: SuggestedType[];
 	isColTypeChanged: boolean;
 	isGrouping: boolean;
