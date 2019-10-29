@@ -16,10 +16,10 @@ export default Vue.extend({
 		margin: {
 			type: Object as () => any,
 			default: () => ({
-				top: 16,
-				right: 32,
+				top: 24,
+				right: 48,
 				bottom: 16,
-				left: 32
+				left: 48
 			})
 		},
 		timeseries: {
@@ -86,6 +86,7 @@ export default Vue.extend({
 
 			this.xScale.domain(xDomain);
 
+
 			this.yScale = d3.scaleLinear()
 				.domain([this.minY, this.maxY])
 				.range([this.height, 0]);
@@ -101,7 +102,7 @@ export default Vue.extend({
 			// Create x-axis
 			const svgXAxis = this.svg.append('g')
 				.attr('class', 'x axis')
-				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom + this.height})`)
+				.attr('transform', `translate(${this.margin.left}, ${this.height})`)
 				.call(xAxis);
 
 			svgXAxis.append('text')
@@ -115,14 +116,14 @@ export default Vue.extend({
 			// Create y-axis
 			const svgYAxis = this.svg.append('g')
 				.attr('class', 'y axis')
-				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom})`)
+				.attr('transform', `translate(${this.margin.left}, 0)`)
 				.call(yAxis);
 
 			svgYAxis.append('text')
 				.attr('class', 'axis-title')
 				.attr('transform', 'rotate(-90)')
 				.attr('x', -(this.height / 2))
-				.attr('y', -this.margin.left / 2)
+				.attr('y', -this.margin.left + 8)
 				.style('text-anchor', 'middle')
 				.text(this.yAxisTitle);
 		},
@@ -133,7 +134,7 @@ export default Vue.extend({
 				.curve(d3.curveLinear);
 
 			const g = this.svg.append('g')
-				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom})`)
+				.attr('transform', `translate(${this.margin.left}, 0)`)
 				.attr('class', 'line-chart');
 
 			g.datum(this.timeseries);
@@ -150,7 +151,7 @@ export default Vue.extend({
 				.curve(d3.curveLinear);
 
 			const g = this.svg.append('g')
-				.attr('transform', `translate(${this.margin.left}, ${-this.margin.bottom})`)
+				.attr('transform', `translate(${this.margin.left}, 0)`)
 				.attr('class', 'line-chart');
 
 			g.datum(this.forecast);
@@ -197,7 +198,6 @@ export default Vue.extend({
 
 .line-chart-big {
 	position: relative;
-	height: 512px;
 	width: 100%;
 	border: 1px solid rgba(0,0,0,0);
 }
