@@ -81,7 +81,10 @@ func (s *SolutionRequest) parseSolutionFeatureWeight(resultURI string, outputURI
 		return nil, errors.Wrap(err, "unable to read feature weight output")
 	}
 
-	setD3MIndex(0, d3mIndexLookup, res)
+	err = setD3MIndex(0, d3mIndexLookup, res)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to update d3m index")
+	}
 	res[0][0] = model.D3MIndexFieldName
 
 	return &api.SolutionFeatureWeights{
