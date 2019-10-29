@@ -97,6 +97,28 @@ const BLUE_PALETTE = [
 	'#00C6E1'
 ];
 
+const BLACK_PALETTE =  [
+	'#7F7F7F',
+	'#777777',
+	'#707070',
+	'#696969',
+	'#626262',
+	'#5B5B5B',
+	'#545454',
+	'#4D4D4D',
+	'#464646',
+	'#3F3F3F',
+	'#383838',
+	'#313131',
+	'#2A2A2A',
+	'#232323',
+	'#1C1C1C',
+	'#151515',
+	'#0E0E0E',
+	'#070707',
+	'#000000'
+];
+
 export default Vue.extend({
 	name: 'geocoordinate-facet',
 
@@ -561,10 +583,16 @@ export default Vue.extend({
 				} else if (this.hasFilters) {
 					// Excluded mode is active - render visuals using a black pallette.
 					// Any data we need to render is in the filter portion of variable summary structure.
+
+					const filteredMinVal = this.filteredMinCount;
+					const dVal = (maxVal - minVal) / BLACK_PALETTE.length;
+					const filteredDomain = BLACK_PALETTE.map((val, index) => filteredMinVal + dVal * (index + 1));
+					const filteredScaleColors = scaleThreshold().range(BLACK_PALETTE as any).domain(filteredDomain);
+
 					this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
 						style: feature => {
 							return {
-								fillColor: 'black',
+								fillColor: filteredScaleColors(feature.properties.count),
 								weight: 0,
 								opacity: 1,
 								color: 'rgba(0,0,0,0)',
