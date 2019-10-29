@@ -470,7 +470,7 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 
 func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
-	typedError := getErrorTyped(targetName)
+	typedError := getErrorTyped("", targetName)
 	where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
 	params = append(params, *residualFilter.Min)
 	params = append(params, *residualFilter.Max)
@@ -482,7 +482,7 @@ func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, targetN
 
 func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
-	typedError := getErrorTyped(targetName)
+	typedError := getErrorTyped("", targetName)
 	where := fmt.Sprintf("(%s < $%d OR %s > $%d)", typedError, len(params)+1, typedError, len(params)+2)
 	params = append(params, *residualFilter.Min)
 	params = append(params, *residualFilter.Max)
@@ -608,7 +608,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 
 	errorExpr := ""
 	if model.IsNumerical(variable.Type) {
-		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(variable.Name), errorCol)
+		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped("data", variable.Name), errorCol)
 	}
 
 	// errorExpr will have the necessary comma if relevant

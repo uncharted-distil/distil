@@ -353,7 +353,7 @@ func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interfac
 func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, residualFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
 	nameWithoutSuffix := api.StripKeySuffix(residualFilter.Key)
-	typedError := getErrorTyped(nameWithoutSuffix)
+	typedError := getErrorTyped("", nameWithoutSuffix)
 	where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
 	params = append(params, *residualFilter.Min)
 	params = append(params, *residualFilter.Max)
