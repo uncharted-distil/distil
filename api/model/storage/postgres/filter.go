@@ -45,7 +45,7 @@ func getVariableByKey(key string, variables []*model.Variable) *model.Variable {
 func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable, numRows int, rows *pgx.Rows) (*api.FilteredData, error) {
 	result := &api.FilteredData{
 		NumRows: numRows,
-		Values:  make([][]interface{}, 0),
+		Values:  make([][]*api.FilteredDataValue, 0),
 	}
 
 	// Parse the columns.
@@ -73,7 +73,16 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 			if err != nil {
 				return nil, err
 			}
-			result.Values = append(result.Values, columnValues)
+
+			// filtered data has no weights associated with it
+			weightedValues := make([]*api.FilteredDataValue, len(columnValues))
+			for i, cv := range columnValues {
+				weightedValues[i] = &api.FilteredDataValue{
+					Value: cv,
+				}
+			}
+
+			result.Values = append(result.Values, weightedValues)
 		}
 	} else {
 		result.Columns = make([]api.Column, 0)
@@ -294,7 +303,7 @@ func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVar
 	return strings.Join(distincts, ",") + " " + strings.Join(fields, ","), nil
 }
 
-func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, targetVariable *model.Variable, filterVariables []string) (string, string, error) {
+func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, targetVariable *model.Variable, filterVariables []string) (string, []string, error) {
 
 	distincts := make([]string, 0)
 	fields := make([]string, 0)
@@ -310,7 +319,7 @@ func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, tar
 		}
 	}
 	fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
-	return strings.Join(distincts, ","), strings.Join(fields, ","), nil
+	return strings.Join(distincts, ","), fields, nil
 }
 
 func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interface{}, storageName string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
@@ -542,7 +551,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 		return &api.FilteredData{
 			NumRows: numRows,
 			Columns: make([]api.Column, 0),
-			Values:  make([][]interface{}, 0),
+			Values:  make([][]*api.FilteredDataValue, 0),
 		}, nil
 	}
 

@@ -27,7 +27,7 @@ import (
 )
 
 // SubmitPipeline executes pipelines using the client and returns the result URI.
-func SubmitPipeline(client *compute.Client, datasets []string,
+func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce []string,
 	searchRequest *pipeline.SearchSolutionsRequest, step *pipeline.PipelineDescription) (string, error) {
 
 	config, err := env.LoadConfig()
@@ -44,7 +44,7 @@ func SubmitPipeline(client *compute.Client, datasets []string,
 		return resultURI, nil
 	}
 
-	request := compute.NewExecPipelineRequest(datasets, step)
+	request := compute.NewExecPipelineRequest(datasets, datasetsProduce, step)
 
 	err = request.Dispatch(client, searchRequest)
 	if err != nil {

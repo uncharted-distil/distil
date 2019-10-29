@@ -248,7 +248,7 @@ func createFilteredData(csvFile *os.File, variables []*model.Variable, lineCount
 		})
 	}
 
-	data.Values = [][]interface{}{}
+	data.Values = [][]*apiModel.FilteredDataValue{}
 
 	_, err := csvFile.Seek(0, 0)
 	if err != nil {
@@ -279,20 +279,21 @@ func createFilteredData(csvFile *os.File, variables []*model.Variable, lineCount
 
 		// convert row values to schema type
 		// rows that are malformed are discarded
-		typedRow := make([]interface{}, len(row))
+		typedRow := make([]*apiModel.FilteredDataValue, len(row))
 		var rowError error
 		for j := 0; j < len(row); j++ {
 			varType := variables[j].Type
+			typedRow[j] = &apiModel.FilteredDataValue{}
 			if model.IsNumerical(varType) {
 				if model.IsFloatingPoint(varType) {
-					typedRow[j], err = strconv.ParseFloat(row[j], 64)
+					typedRow[j].Value, err = strconv.ParseFloat(row[j], 64)
 					if err != nil {
 						rowError = errors.Wrapf(err, "failed conversion for row %d", i)
 						errorCount++
 						break
 					}
 				} else {
-					typedRow[j], err = strconv.ParseInt(row[j], 10, 64)
+					typedRow[j].Value, err = strconv.ParseInt(row[j], 10, 64)
 					if err != nil {
 						flt, err := strconv.ParseFloat(row[j], 64)
 						if err != nil {
@@ -300,11 +301,11 @@ func createFilteredData(csvFile *os.File, variables []*model.Variable, lineCount
 							errorCount++
 							break
 						}
-						typedRow[j] = int64(flt)
+						typedRow[j].Value = int64(flt)
 					}
 				}
 			} else {
-				typedRow[j] = row[j]
+				typedRow[j].Value = row[j]
 			}
 		}
 		if rowError != nil {
