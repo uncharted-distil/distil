@@ -123,7 +123,7 @@ export default Vue.extend({
 				.attr('class', 'axis-title')
 				.attr('transform', 'rotate(-90)')
 				.attr('x', -(this.height / 2))
-				.attr('y', -this.margin.left - 8)
+				.attr('y', -this.margin.left + 8)
 				.style('text-anchor', 'middle')
 				.text(this.yAxisTitle);
 		},
