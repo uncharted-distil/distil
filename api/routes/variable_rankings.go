@@ -106,14 +106,12 @@ func solutionRank(dataset string, resultURI string, d3mIndex int64, dataCtor api
 		return nil, err
 	}
 
-	_, err = storage.FetchSolutionFeatureWeights(dataset, resultURI, d3mIndex)
+	result, err := storage.FetchSolutionFeatureWeights(dataset, resultURI, d3mIndex)
 	if err != nil {
 		return nil, err
 	}
 
-	ranks := make(map[string]float64)
-
-	return ranks, nil
+	return result.Weights, nil
 }
 
 func targetRank(dataset string, target string, folder string, variables []*model.Variable, source metadata.DatasetSource) (map[string]float64, error) {

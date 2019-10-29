@@ -200,7 +200,7 @@ func (s *Storage) parseSolutionFeatureWeight(resultURI string, rows *pgx.Rows) (
 			columns[i] = f.Name
 		}
 
-		for rows.Next() {
+		if rows.Next() {
 			columnValues, err := rows.Values()
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract fields from query result")
@@ -210,11 +210,13 @@ func (s *Storage) parseSolutionFeatureWeight(resultURI string, rows *pgx.Rows) (
 			for i := 0; i < len(columnValues); i++ {
 				columnName := columns[i]
 				if columnName == model.D3MIndexFieldName {
-					result.D3MIndex = columnValues[i].(int64)
-				} else if columnName != "result_id" {
+					result.D3MIndex = int64(columnValues[i].(float64))
+				} else if columnName != "result_id" && columnValues[i] != nil {
 					output[columnName] = columnValues[i].(float64)
 				}
 			}
+
+			result.Weights = output
 		}
 	}
 
