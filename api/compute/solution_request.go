@@ -524,12 +524,13 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		featureWeights, err := s.explainOutput(client, solutionID, resultURI, searchRequest, datasetURITrain, datasetURITest, variables)
 		if err != nil {
 			log.Warnf("failed to fetch output explanantion - %s", err)
-			featureWeights = []*api.SolutionFeatureWeight{}
 		}
-		err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
-		if err != nil {
-			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
-			return
+		if featureWeights != nil {
+			err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
+			if err != nil {
+				s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+				return
+			}
 		}
 	}
 }
