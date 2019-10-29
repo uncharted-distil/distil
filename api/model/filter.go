@@ -17,6 +17,7 @@ package model
 
 import (
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/pkg/errors"
@@ -328,4 +329,43 @@ func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, er
 	})
 
 	return filterParams, nil
+}
+
+// NaNReplacement defines the type of replacement value to use for NaNs
+type NaNReplacement int
+
+const (
+	// Null replaces NaN values with Nil, which will result in 'null' being encoded into the JSON structure
+	Null NaNReplacement = iota + 1
+	// EmptyString replaces NaN values with an empty string, which will result in "" being encoded into the JSON structure
+	EmptyString
+)
+
+// ReplaceNaNs replaces NaN values found in numerical columns with empty values.  This allows
+// for downstream JSON encoding, as the Go JSON encoder doesn't properly handle NaN values.
+func ReplaceNaNs(data *FilteredData, replacementType NaNReplacement) *FilteredData {
+	// go does not marshal NaN values properly so make them empty
+	numericColumns := make([]int, 0)
+	for i, c := range data.Columns {
+		if model.IsNumerical(c.Type) {
+			numericColumns = append(numericColumns, i)
+		}
+	}
+
+	if len(numericColumns) > 0 {
+		for _, r := range data.Values {
+			for _, nc := range numericColumns {
+				f, ok := r[nc].Value.(float64)
+				if ok && math.IsNaN(f) {
+					if replacementType == Null {
+						r[nc].Value = nil
+					} else if replacementType == EmptyString {
+						r[nc].Value = ""
+					}
+				}
+			}
+		}
+	}
+
+	return data
 }

@@ -31,6 +31,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil/api/util/json"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -522,8 +523,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		// explain the pipeline
 		featureWeights, err := s.explainOutput(client, solutionID, resultURI, searchRequest, datasetURITrain, datasetURITest, variables)
 		if err != nil {
-			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
-			return
+			log.Warnf("failed to fetch output explanantion - %s", err)
+			featureWeights = []*api.SolutionFeatureWeight{}
 		}
 		err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
 		if err != nil {

@@ -132,6 +132,7 @@ export interface VariableSummary {
 	baseline: Histogram;
 	filtered?: Histogram;
 	timeline?: Histogram;
+	selected?: Histogram;
 	err?: string;
 	pending?: boolean;
 }
@@ -168,6 +169,7 @@ export interface TableRow {
 	_key: number;
 	_rowVariant: string;
 	_cellVariants: Dictionary<string>;
+	d3mIndex?: number;
 }
 
 export interface TimeseriesExtrema {

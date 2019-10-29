@@ -535,7 +535,7 @@ func (s *Storage) filterIncludesIndex(filterParams *api.FilterParams) bool {
 // categories.
 func (s *Storage) FetchData(dataset string, storageName string, filterParams *api.FilterParams, invert bool) (*api.FilteredData, error) {
 
-	variables, err := s.metadata.FetchVariables(dataset, true, true, false)
+	variables, err := s.metadata.FetchVariables(dataset, true, true, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
