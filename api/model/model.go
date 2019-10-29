@@ -67,12 +67,17 @@ type Solution struct {
 	IsBad       bool             `json:"isBad"`
 }
 
-// SolutionFeatureWeight captures the weight given to a feature in a solution.
+// SolutionFeatureWeights captures the weights given to all features of a result.
+type SolutionFeatureWeights struct {
+	ResultURI string
+	Weights   [][]string
+}
+
+// SolutionFeatureWeight captures the weights for a given d3m index and result.
 type SolutionFeatureWeight struct {
-	SolutionID   string
-	FeatureIndex int64
-	FeatureName  string
-	Weight       float64
+	ResultURI string
+	D3MIndex  int64
+	Weights   map[string]float64
 }
 
 // SolutionResult represents the solution result metadata.

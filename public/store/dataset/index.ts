@@ -147,10 +147,14 @@ export interface TimeseriesSummary {
 	pending?: boolean;
 }
 
+export interface TableValue {
+	value: any;
+	weight: number;
+}
 export interface TableData {
 	numRows: number;
 	columns: TableColumn[];
-	values: any[][];
+	values: TableValue[][];
 }
 
 export interface TableColumn {

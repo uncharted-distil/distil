@@ -37,15 +37,6 @@ func (s *Storage) PersistSolution(requestID string, solutionID string, progress 
 	return err
 }
 
-// PersistSolutionFeatureWeight persists the solution feature weight to Postgres.
-func (s *Storage) PersistSolutionFeatureWeight(solutionID string, featureName string, featureIndex int64, weight float64) error {
-	sql := fmt.Sprintf("INSERT INTO %s (solution_id, feature_name, feature_index, weight) VALUES ($1, $2, $3, $4);", solutionFeatureWeightTableName)
-
-	_, err := s.client.Exec(sql, solutionID, featureName, featureIndex, weight)
-
-	return err
-}
-
 // PersistSolutionResult persists the solution result metadata to Postgres.
 func (s *Storage) PersistSolutionResult(solutionID string, fittedSolutionID string, resultUUID string, resultURI string, progress string, createdTime time.Time) error {
 	sql := fmt.Sprintf("INSERT INTO %s (solution_id, fitted_solution_id, result_uuid, result_uri, progress, created_time) VALUES ($1, $2, $3, $4, $5, $6);", solutionResultTableName)
@@ -197,35 +188,48 @@ func (s *Storage) parseSolutionResult(rows *pgx.Rows) ([]*api.SolutionResult, er
 	return results, nil
 }
 
-func (s *Storage) parseSolutionFeatureWeight(rows *pgx.Rows) ([]*api.SolutionFeatureWeight, error) {
-	results := make([]*api.SolutionFeatureWeight, 0)
-	for rows.Next() {
-		var solutionID string
-		var featureName string
-		var featureIndex int64
-		var weight float64
-
-		err := rows.Scan(&solutionID, &featureName, &featureIndex, &weight)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse solution feature weight from Postgres")
-		}
-
-		results = append(results, &api.SolutionFeatureWeight{
-			SolutionID:   solutionID,
-			FeatureName:  featureName,
-			FeatureIndex: featureIndex,
-			Weight:       weight,
-		})
+func (s *Storage) parseSolutionFeatureWeight(resultURI string, rows *pgx.Rows) (*api.SolutionFeatureWeight, error) {
+	result := &api.SolutionFeatureWeight{
+		ResultURI: resultURI,
 	}
 
-	return results, nil
+	if rows != nil {
+		fields := rows.FieldDescriptions()
+		columns := make([]string, len(fields))
+		for i, f := range fields {
+			columns[i] = f.Name
+		}
+
+		if rows.Next() {
+			columnValues, err := rows.Values()
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to extract fields from query result")
+			}
+
+			output := make(map[string]float64)
+			for i := 0; i < len(columnValues); i++ {
+				columnName := columns[i]
+				if columnName == model.D3MIndexFieldName {
+					result.D3MIndex = int64(columnValues[i].(float64))
+				} else if columnName != "result_id" && columnValues[i] != nil {
+					output[columnName] = columnValues[i].(float64)
+				}
+			}
+
+			result.Weights = output
+		}
+	}
+
+	return result, nil
 }
 
 // FetchSolutionFeatureWeights fetches solution feature weights from Postgres.
-func (s *Storage) FetchSolutionFeatureWeights(solutionID string) ([]*api.SolutionFeatureWeight, error) {
-	sql := fmt.Sprintf("SELECT solution_id, feature_name, feature_index, weight FROM %s WHERE solution_id = $1;", solutionFeatureWeightTableName)
+func (s *Storage) FetchSolutionFeatureWeights(dataset string, resultURI string, d3mIndex int64) (*api.SolutionFeatureWeight, error) {
+	storageName := model.NormalizeDatasetID(dataset)
+	sql := fmt.Sprintf("SELECT * FROM %s WHERE result_id = $1 and \"d3mIndex\" = $2;",
+		s.getSolutionFeatureWeightTable(storageName))
 
-	rows, err := s.client.Query(sql, solutionID)
+	rows, err := s.client.Query(sql, resultURI, d3mIndex)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to pull solution feature weights from Postgres")
 	}
@@ -233,12 +237,12 @@ func (s *Storage) FetchSolutionFeatureWeights(solutionID string) ([]*api.Solutio
 		defer rows.Close()
 	}
 
-	results, err := s.parseSolutionFeatureWeight(rows)
+	result, err := s.parseSolutionFeatureWeight(resultURI, rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to parse solution feature weights from Postgres")
+		return nil, errors.Wrap(err, "Unable to parse solution feature weight from Postgres")
 	}
 
-	return results, nil
+	return result, nil
 }
 
 // FetchSolutionResult pulls solution result information from Postgres.
