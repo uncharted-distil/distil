@@ -96,7 +96,7 @@ func getErrorTyped(alias string, variableName string) string {
 	if alias != "" {
 		fullName = fmt.Sprintf("%s.%s", alias, fullName)
 	}
-	return fmt.Sprintf("(cast(value as double precision) - cast(\"%s\" as double precision))", fullName)
+	return fmt.Sprintf("(cast(value as double precision) - cast(%s as double precision))", fullName)
 }
 
 func (s *Storage) getResidualsHistogramAggQuery(extrema *api.Extrema, variableName string, resultVariable *model.Variable, numBuckets int) (string, string, string) {
