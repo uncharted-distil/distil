@@ -196,7 +196,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, 
 	params = append(params, variable.Name)
 
 	wheres := make([]string, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, "", filterParams, false)
 
 	where := ""
 	if len(wheres) > 0 {

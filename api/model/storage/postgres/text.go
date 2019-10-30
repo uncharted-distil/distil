@@ -270,7 +270,7 @@ func (f *TextField) getTopCategories(filterParams *api.FilterParams, invert bool
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -312,7 +312,7 @@ func (f *TextField) fetchHistogram(filterParams *api.FilterParams, invert bool) 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {

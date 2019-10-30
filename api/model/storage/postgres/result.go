@@ -352,6 +352,15 @@ func addExcludeCorrectnessFilterToWhere(wheres []string, params []interface{}, c
 	return wheres, params, nil
 }
 
+func getFullName(alias string, column string) string {
+	fullName := fmt.Sprintf("\"%s\"", column)
+	if alias != "" {
+		fullName = fmt.Sprintf("%s.%s", alias, fullName)
+	}
+
+	return fullName
+}
+
 func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, predictedFilter *model.Filter, target *model.Variable) ([]string, []interface{}, error) {
 	// Handle the predicted column, which is accessed as `value` in the result query
 	where := ""
@@ -550,7 +559,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	// Create the filter portion of the where clause.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, genericFilterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, dataTableAlias, genericFilterParams, false)
 
 	// Add the predicted filter into the where clause if it was included in the filter set
 	if filters.predictedFilter != nil {

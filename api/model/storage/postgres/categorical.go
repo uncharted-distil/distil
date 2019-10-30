@@ -289,7 +289,7 @@ func (f *CategoricalField) getTopCategories(filterParams *api.FilterParams, inve
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -329,7 +329,7 @@ func (f *CategoricalField) fetchHistogram(filterParams *api.FilterParams, invert
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -552,7 +552,7 @@ func (f *CategoricalField) fetchForecastingSummaryData(timeVar *model.Variable, 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, filterParams, false)
+	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, false)
 
 	categoryWhere := fmt.Sprintf("\"%s\" in (", resultVariable.Name)
 	for index, category := range categories {
