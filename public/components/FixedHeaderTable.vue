@@ -102,7 +102,7 @@ export default Vue.extend({
 			const target = event.target;
 			if (!target) { return; }
 
-			const isCell = target.tagName === 'TD' || target.tagName === 'TH';
+			const isCell = target.tagName === 'TD';
 			const isLeafNode = target.childElementCount === 0;
 			const text = target.innerText;
 			const title = target.getAttribute('title');
