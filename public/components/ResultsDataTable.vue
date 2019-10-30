@@ -201,7 +201,7 @@ export default Vue.extend({
 		},
 
 		isRegression(): boolean {
-			return routeGetters.getRouteTask(this.$store).task === TaskTypes.REGRESSION;
+			return routeGetters.getRouteTask(this.$store) === TaskTypes.REGRESSION;
 		},
 
 		sortingByResidualError(): boolean {
