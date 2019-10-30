@@ -25,6 +25,7 @@ export interface RouteArgs {
 	joinColumnSuggestions?: string; // suggested target join columns
 	groupingType?: string;
 	availableTargetVarsPage?: number;
+	task?: string;
 
 	// we currently don't have a way to add these to the interface
 	//
@@ -95,6 +96,7 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
 	if (!_.isUndefined(args.joinColumnSuggestions)) { query.joinColumnSuggestions = args.joinColumnSuggestions; }
 	if (!_.isUndefined(args.joinAccuracy)) { query.joinAccuracy = args.joinAccuracy; }
 	if (!_.isUndefined(args.groupingType)) { query.groupingType = args.groupingType; }
+	if (!_.isUndefined(args.task)) { query.task = args.task; }
 
 
 	if (args[JOINED_VARS_INSTANCE_PAGE]) { query[JOINED_VARS_INSTANCE_PAGE] = args[JOINED_VARS_INSTANCE_PAGE]; }

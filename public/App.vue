@@ -66,12 +66,13 @@ export default Vue.extend({
 				const taskPromise = datasetActions.fetchTask(this.$store, {
 					dataset: dataset,
 					targetName: target
-				}).then(() => {
+				}).then(response => {
 					let training = [];
 					let promise = Promise.resolve();
+					const task = response.data;
 
 					// TASK 2 hack
-					if (datasetGetters.getTask(this.$store).task === 'timeSeriesForecasting') {
+					if ( task.task === 'timeSeriesForecasting') {
 						promise = datasetActions.fetchVariables(this.$store, {
 							dataset: dataset
 						}).then(() => {
@@ -137,7 +138,8 @@ export default Vue.extend({
 						const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
 							dataset: dataset,
 							target: target,
-							training: training.join(',')
+							training: training.join(','),
+							task: task.task
 						});
 						this.$router.push(entry);
 					});

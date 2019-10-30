@@ -86,7 +86,7 @@ export default Vue.extend({
 		},
 
 		residualSummaries(): VariableSummary[] {
-			return this.regression || datasetGetters.getTask(this.$store) ? resultsGetters.getResidualsSummaries(this.$store) : [];
+			return this.regression || routeGetters.getRouteTask(this.$store) ? resultsGetters.getResidualsSummaries(this.$store) : [];
 		},
 
 		correctnessSummaries(): VariableSummary[] {

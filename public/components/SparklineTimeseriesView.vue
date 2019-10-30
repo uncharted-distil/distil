@@ -116,7 +116,7 @@ export default Vue.extend({
 		},
 
 		isForecasting(): boolean {
-			return datasetGetters.getTask(this.$store).task === TaskTypes.TIME_SERIES_FORECASTING;
+			return routeGetters.getRouteTask(this.$store).task === TaskTypes.TIME_SERIES_FORECASTING;
 		},
 
 		showPredicted(): boolean {

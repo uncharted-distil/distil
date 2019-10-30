@@ -154,7 +154,7 @@ export default Vue.extend({
 		},
 
 		regressionEnabled(): boolean {
-			return datasetGetters.getTask(this.$store).task === TaskTypes.REGRESSION;
+			return routeGetters.getRouteTask(this.$store).task === TaskTypes.REGRESSION;
 		},
 
 		numRows(): number {
@@ -163,7 +163,7 @@ export default Vue.extend({
 
 
 		isForecasting(): boolean {
-			return datasetGetters.getTask(this.$store).task === TaskTypes.TIME_SERIES_FORECASTING;
+			return routeGetters.getRouteTask(this.$store).task === TaskTypes.TIME_SERIES_FORECASTING;
 		},
 
 		topSlotTitle(): string {

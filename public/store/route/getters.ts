@@ -1,4 +1,4 @@
-import { Variable, VariableSummary, Highlight, RowSelection } from '../dataset/index';
+import { Variable, VariableSummary, Highlight, RowSelection, Task, TaskTypes, TaskSubTypes } from '../dataset/index';
 import { JOINED_VARS_INSTANCE_PAGE, AVAILABLE_TARGET_VARS_INSTANCE_PAGE,
 	AVAILABLE_TRAINING_VARS_INSTANCE_PAGE, TRAINING_VARS_INSTANCE_PAGE,
 	RESULT_TRAINING_VARS_INSTANCE_PAGE } from '../route/index';
@@ -9,6 +9,7 @@ import { Dictionary } from '../../util/dict';
 import { buildLookup } from '../../util/lookup';
 import { Route } from 'vue-router';
 import _ from 'lodash';
+import { getCategoricalChunkSize } from '../../util/facets';
 
 export const getters = {
 	getRoute(state: Route): Route {
@@ -324,5 +325,12 @@ export const getters = {
 	},
 	getGroupingType(state: Route): string {
 		return state.query.groupingType as string;
+	},
+	getRouteTask(state: Route, getters: any): string {
+		const task = state.query.task as string;
+		if (!task) {
+			return null;
+		}
+		return task;
 	}
 };
