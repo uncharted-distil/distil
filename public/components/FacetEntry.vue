@@ -865,7 +865,9 @@ export default Vue.extend({
 		wrapGroupHeaderText(group: Group, $elem: JQuery) {
 			const $headerElement = $elem.find('.group-header');
 			const headerText = $headerElement.text();
-			const tooltipText =  headerText.concat(': ', this.currentVariable.colDescription).replace(/(\r\n|\n|\r|\t)/gm, '');
+			const tooltipText = (this.currentVariable.colDescription ?
+				headerText.concat(': ', this.currentVariable.colDescription) :
+				headerText).replace(/(\r\n|\n|\r|\t)/gm, '');
 			$headerElement.empty();
 			const $headerTextWrapped = $(`<div class="header-text" v-b-tooltip.hover title="${tooltipText}">${headerText}</div>`);
 			$headerElement.append($headerTextWrapped);
