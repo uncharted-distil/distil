@@ -29,6 +29,7 @@ import './styles/main.css';
 
 // DEBUG: this is a mocked graph until we support actual graph data
 import './assets/graphs/G1.gml';
+import { TaskTypes } from './store/dataset';
 
 Vue.use(BootstrapVue);
 Vue.use(VueObserveVisibility);
@@ -66,12 +67,13 @@ export default Vue.extend({
 				const taskPromise = datasetActions.fetchTask(this.$store, {
 					dataset: dataset,
 					targetName: target
-				}).then(() => {
+				}).then(response => {
 					let training = [];
 					let promise = Promise.resolve();
+					const task = response.data;
 
 					// TASK 2 hack
-					if (datasetGetters.getTask(this.$store).task === 'timeSeriesForecasting') {
+					if (routeGetters.getRouteTask(this.$store) === TaskTypes.TIME_SERIES_FORECASTING) {
 						promise = datasetActions.fetchVariables(this.$store, {
 							dataset: dataset
 						}).then(() => {
@@ -137,7 +139,8 @@ export default Vue.extend({
 						const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
 							dataset: dataset,
 							target: target,
-							training: training.join(',')
+							training: training.join(','),
+							task: task.task
 						});
 						this.$router.push(entry);
 					});

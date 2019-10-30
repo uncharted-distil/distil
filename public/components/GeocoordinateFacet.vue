@@ -637,6 +637,10 @@ export default Vue.extend({
 
 <style>
 
+.training-variables .facet-card {
+	padding-left: 32px;
+}
+
 .facet-card .group-header {
 	font-family: inherit;
     font-size: .867rem;
@@ -645,7 +649,6 @@ export default Vue.extend({
 	background: white;
 	padding: 4px 8px 6px;
 	position: relative;
-    top: 30px;
     z-index: 1;
 }
 

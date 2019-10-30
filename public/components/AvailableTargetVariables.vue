@@ -92,15 +92,23 @@ export default Vue.extend({
 						}
 					}
 
-					const routeArgs = {
-						target: group.colName,
-						dataset: routeGetters.getRouteDataset(this.$store),
-						filters: routeGetters.getRouteFilters(this.$store),
-						training: training.join(',')
-					};
-					const entry = createRouteEntry(SELECT_TRAINING_ROUTE, routeArgs);
-					this.$router.push(entry);
-					datasetActions.fetchTask(this.$store, {dataset: routeArgs.dataset, targetName: routeArgs.target});
+					// kick off the fetch task and wait for the result - when we've got it, update the route with info
+					const dataset = routeGetters.getRouteDataset(this.$store);
+					datasetActions.fetchTask(this.$store, {dataset: dataset, targetName: group.colName})
+						.then(response => {
+							const routeArgs = {
+								target: group.colName,
+								dataset: dataset,
+								filters: routeGetters.getRouteFilters(this.$store),
+								training: training.join(','),
+								task: response.data.task
+							};
+							const entry = createRouteEntry(SELECT_TRAINING_ROUTE, routeArgs);
+							this.$router.push(entry);
+						})
+						.catch(error => {
+							console.error(error);
+						});
 				});
 				container.appendChild(targetElem);
 				return container;
