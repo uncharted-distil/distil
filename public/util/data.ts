@@ -365,13 +365,16 @@ function isPredictedCol(arg: string): boolean {
 export function getTableDataFields(data: TableData) {
 	if (validateData(data)) {
 		const result = {};
+		const variables = datasetGetters.getVariables(store);
 
 		for (const col of data.columns) {
 			if (col.key === D3M_INDEX_FIELD) {
 				continue;
 			}
+			const variable = variables.find(v => v.colName === col.key);
 
 			let label = col.label;
+			const description = variable.colDescription;
 
 			if (col.type === TIMESERIES_TYPE) {
 
@@ -380,17 +383,17 @@ export function getTableDataFields(data: TableData) {
 					continue;
 				}
 
-				const variables = datasetGetters.getVariables(store);
-				const variable = variables.find(v => v.colName === col.key);
 				if (variable && variable.grouping) {
 					label = variable.grouping.properties.yCol;
 				}
 			}
 
+
 			result[col.key] = {
 				label: label,
 				key: col.key,
 				type: col.type,
+				headerTitle: description ? label.concat(': ', description) : label,
 				sortable: true
 			};
 		}

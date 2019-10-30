@@ -15,7 +15,7 @@ import IconBookmark from './icons/IconBookmark';
 import { createIcon } from '../util/icon';
 import { CATEGORICAL_FILTER, NUMERICAL_FILTER, DATETIME_FILTER, BIVARIATE_FILTER, FEATURE_FILTER, TIMESERIES_FILTER, INCLUDE_FILTER } from '../util/filters';
 import { createGroup, Group, CategoricalFacet, isCategoricalFacet, getCategoricalChunkSize, isNumericalFacet, isSparklineFacet } from '../util/facets';
-import { VariableSummary, Highlight, RowSelection, Row } from '../store/dataset/index';
+import { VariableSummary, Highlight, RowSelection, Row, Variable } from '../store/dataset/index';
 import { Dictionary } from '../util/dict';
 import { getSelectedRows } from '../util/row';
 import Facets from '@uncharted.software/stories-facets';
@@ -232,6 +232,13 @@ export default Vue.extend({
 			}
 
 			return group;
+		},
+		currentVariable(): Variable {
+			const variables = datasetGetters.getVariables(this.$store);
+			const currentVariable = variables.filter(v => {
+				return v.colName === this.groupSpec.colName;
+			})[0];
+			return currentVariable;
 		}
 	},
 
@@ -858,8 +865,11 @@ export default Vue.extend({
 		wrapGroupHeaderText(group: Group, $elem: JQuery) {
 			const $headerElement = $elem.find('.group-header');
 			const headerText = $headerElement.text();
+			const tooltipText = (this.currentVariable.colDescription ?
+				headerText.concat(': ', this.currentVariable.colDescription) :
+				headerText).replace(/(\r\n|\n|\r|\t)/gm, '');
 			$headerElement.empty();
-			const $headerTextWrapped = $(`<div class="header-text" v-b-tooltip.hover title=${headerText}>${headerText}</div>`);
+			const $headerTextWrapped = $(`<div class="header-text" v-b-tooltip.hover title="${tooltipText}">${headerText}</div>`);
 			$headerElement.append($headerTextWrapped);
 		},
 
