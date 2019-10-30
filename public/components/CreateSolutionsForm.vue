@@ -185,7 +185,8 @@ export default Vue.extend({
 				const entry = createRouteEntry(RESULTS_ROUTE, {
 					dataset: routeGetters.getRouteDataset(this.$store),
 					target: routeGetters.getRouteTargetVariable(this.$store),
-					solutionId: res.solutionId
+					solutionId: res.solutionId,
+					task: routeGetters.getRouteTask(this.$store)
 				});
 				this.$router.push(entry);
 			}).catch(err => {

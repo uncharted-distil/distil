@@ -49,8 +49,6 @@ export const getters = {
 	getExcludedTableDataNumRows: read(moduleGetters.getExcludedTableDataNumRows),
 	getExcludedTableDataItems: read(moduleGetters.getExcludedTableDataItems),
 	getExcludedTableDataFields: read(moduleGetters.getExcludedTableDataFields),
-	// task info
-	getTask: read(moduleGetters.getTask),
 };
 
 // Typed actions
@@ -126,6 +124,4 @@ export const mutations = {
 	clearJoinDatasetsTableData: commit(moduleMutations.clearJoinDatasetsTableData),
 	setIncludedTableData: commit(moduleMutations.setIncludedTableData),
 	setExcludedTableData: commit(moduleMutations.setExcludedTableData),
-	// task
-	updateTask: commit(moduleMutations.updateTask),
 };

@@ -54,5 +54,6 @@ export const getters = {
 	getActiveSolutionIndex: read(moduleGetters.getActiveSolutionIndex),
 	getGeoCenter: read(moduleGetters.getGeoCenter),
 	getGeoZoom: read(moduleGetters.getGeoZoom),
-	getGroupingType: read(moduleGetters.getGroupingType)
+	getGroupingType: read(moduleGetters.getGroupingType),
+	getRouteTask: read(moduleGetters.getRouteTask)
 };

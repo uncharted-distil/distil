@@ -89,7 +89,7 @@ export default Vue.extend({
 		},
 
 		regressionEnabled(): boolean {
-			return datasetGetters.getTask(this.$store).task === TaskTypes.REGRESSION;
+			return routeGetters.getRouteTask(this.$store) === TaskTypes.REGRESSION;
 		},
 
 		solutionId(): string {

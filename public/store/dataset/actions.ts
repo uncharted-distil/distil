@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { Dictionary } from '../../util/dict';
 import { ActionContext } from 'vuex';
 import {
@@ -927,17 +927,7 @@ export const actions = {
 			});
 	},
 
-	fetchTask(context: DatasetContext, args: {dataset: string, targetName: string}) {
-		return axios.get<Task>(`/distil/task/${args.dataset}/${args.targetName}`)
-			.then(response => {
-				if (!response.data) {
-					return;
-				}
-				mutations.updateTask(context, response.data);
-			})
-			.catch(error => {
-				console.error(error);
-			});
+	fetchTask(context: DatasetContext, args: {dataset: string, targetName: string}): Promise<AxiosResponse<Task>> {
+		return axios.get<Task>(`/distil/task/${args.dataset}/${args.targetName}`);
 	}
-
 };

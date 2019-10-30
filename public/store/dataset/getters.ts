@@ -112,9 +112,5 @@ export const getters = {
 
 	getGeocoordinateTypes(state: DatasetState): string[] {
 		return state.isGeocoordinateFacet;
-	},
-
-	getTask(state: DatasetState): Task {
-		return state.task;
 	}
 };
