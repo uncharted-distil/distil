@@ -46,8 +46,8 @@
 <script lang="ts">
 import moment from 'moment';
 import { createRouteEntry } from '../util/routes';
-import { getters as routeGetters } from '../store/route/module'
-import { actions as dataActions } from '../store/dataset/module'
+import { getters as routeGetters } from '../store/route/module';
+import { actions as dataActions } from '../store/dataset/module';
 import { SOLUTION_PENDING, SOLUTION_RUNNING, SOLUTION_COMPLETED, SOLUTION_ERRORED, Solution } from '../store/solutions/index';
 import { RESULTS_ROUTE } from '../store/route/index';
 import Vue from 'vue';
@@ -91,10 +91,10 @@ export default Vue.extend({
 	methods: {
 		onResult() {
 			// In the case of launching into a solution from the home screen, we may not yet have fetched the task yet.
-			let task = routeGetters.getRouteTask(this.$store)
+			const task = routeGetters.getRouteTask(this.$store);
 			if (!task) {
 				dataActions.fetchTask(this.$store, { dataset: this.solution.dataset, targetName: this.solution.feature })
-					.then( result => this.pushRouteEntry(result.data.task))
+					.then(result => this.pushRouteEntry(result.data.task))
 					.catch(error => console.error(error));
 			} else {
 				this.pushRouteEntry(task);
