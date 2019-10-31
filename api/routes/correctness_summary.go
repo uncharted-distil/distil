@@ -83,7 +83,7 @@ func CorrectnessSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor ap
 			handleError(w, err)
 			return
 		}
-		summary.Key = api.GetErrorKey(summary.Key, res.SolutionID)
+		summary.Key = api.GetErrorKey(res.SolutionID)
 		summary.Label = "Error"
 		summary.SolutionID = res.SolutionID
 

@@ -612,8 +612,8 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// If our results are numerical we need to compute residuals and store them in a column called 'error'
-	predictedCol := api.GetPredictedStorageKey(solutionID)
-	errorCol := api.GetErrorStorageKey(solutionID)
+	predictedCol := api.GetPredictedKey(solutionID)
+	errorCol := api.GetErrorKey(solutionID)
 	targetCol := targetName
 
 	errorExpr := ""

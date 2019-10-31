@@ -101,27 +101,13 @@ type SolutionScore struct {
 	SortMultiplier float64 `json:"sortMultiplier"`
 }
 
-// GetPredictedKey returns a solutions predicted col key.  This is not suitable to use as a
-// DB col name as it can be > 63 char limit.
-func GetPredictedKey(target string, solutionID string) string {
-	return target + ":" + solutionID + ":predicted"
-}
-
-// GetPredictedStorageKey returns a solution predicted col key that can be used as a DB col name,
-// but is less descriptive.
-func GetPredictedStorageKey(solutionID string) string {
+// GetPredictedKey returns a solutions predicted col key.
+func GetPredictedKey(solutionID string) string {
 	return solutionID + ":predicted"
 }
 
-// GetErrorKey returns a solutions error col key.  This is not suitable to use as a
-// DB col name as it can be > 63 char limit.
-func GetErrorKey(target string, solutionID string) string {
-	return target + ":" + solutionID + ":error"
-}
-
-// GetErrorStorageKey returns a solution predicted col key that can be used as a DB col name,
-// but is less descriptive.
-func GetErrorStorageKey(solutionID string) string {
+// GetErrorKey returns a solutions error col key.
+func GetErrorKey(solutionID string) string {
 	return solutionID + ":error"
 }
 
