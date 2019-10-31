@@ -91,16 +91,16 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 	return result, nil
 }
 
-func (s *Storage) formatFilterKey(key string) string {
+func (s *Storage) formatFilterKey(alias string, key string) string {
 	if api.IsResultKey(key) {
 		return "result.value"
 	}
-	return fmt.Sprintf("\"%s\"", key)
+	return getFullName(alias, key)
 }
 
-func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filter *model.Filter) ([]string, []interface{}) {
+func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, alias string, filter *model.Filter) ([]string, []interface{}) {
 
-	name := s.formatFilterKey(filter.Key)
+	name := s.formatFilterKey(alias, filter.Key)
 
 	switch filter.Type {
 	case model.DatetimeFilter:
@@ -170,9 +170,9 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, filt
 	return wheres, params
 }
 
-func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filter *model.Filter) ([]string, []interface{}) {
+func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, alias string, filter *model.Filter) ([]string, []interface{}) {
 
-	name := s.formatFilterKey(filter.Key)
+	name := s.formatFilterKey(alias, filter.Key)
 
 	switch filter.Type {
 	case model.DatetimeFilter:
@@ -242,7 +242,7 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, filt
 	return wheres, params
 }
 
-func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{}, filterParams *api.FilterParams, invert bool) ([]string, []interface{}) {
+func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{}, alias string, filterParams *api.FilterParams, invert bool) ([]string, []interface{}) {
 
 	if filterParams == nil {
 		return wheres, params
@@ -252,9 +252,9 @@ func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{},
 	if highlight != nil {
 		switch highlight.Mode {
 		case model.IncludeFilter:
-			wheres, params = s.buildIncludeFilter(wheres, params, highlight)
+			wheres, params = s.buildIncludeFilter(wheres, params, alias, highlight)
 		case model.ExcludeFilter:
-			wheres, params = s.buildExcludeFilter(wheres, params, highlight)
+			wheres, params = s.buildExcludeFilter(wheres, params, alias, highlight)
 		}
 	}
 
@@ -262,9 +262,9 @@ func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{},
 	for _, filter := range filterParams.Filters {
 		switch filter.Mode {
 		case model.IncludeFilter:
-			filterWheres, params = s.buildIncludeFilter(filterWheres, params, filter)
+			filterWheres, params = s.buildIncludeFilter(filterWheres, params, alias, filter)
 		case model.ExcludeFilter:
-			filterWheres, params = s.buildExcludeFilter(filterWheres, params, filter)
+			filterWheres, params = s.buildExcludeFilter(filterWheres, params, alias, filter)
 		}
 	}
 	if len(filterWheres) > 0 {
@@ -353,7 +353,7 @@ func (s *Storage) buildCorrectnessResultWhere(wheres []string, params []interfac
 func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, residualFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
 	nameWithoutSuffix := api.StripKeySuffix(residualFilter.Key)
-	typedError := getErrorTyped(nameWithoutSuffix)
+	typedError := getErrorTyped("", nameWithoutSuffix)
 	where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
 	params = append(params, *residualFilter.Min)
 	params = append(params, *residualFilter.Max)
@@ -370,7 +370,7 @@ func (s *Storage) buildPredictedResultWhere(wheres []string, params []interface{
 		Filters: []*model.Filter{resultFilter},
 	}
 
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, "", filterParams, false)
 	return wheres, params, nil
 }
 
@@ -389,7 +389,7 @@ func (s *Storage) buildResultQueryFilters(storageName string, resultURI string, 
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, genericFilterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, "", genericFilterParams, false)
 
 	// assemble split filters
 	var err error
@@ -565,7 +565,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams, invert)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
 
 	if len(wheres) > 0 {
 		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))

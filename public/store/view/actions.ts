@@ -7,6 +7,8 @@ import { Dictionary } from '../../util/dict';
 import { actions as datasetActions, mutations as datasetMutations } from '../dataset/module';
 import { actions as solutionActions, mutations as solutionMutations } from '../solutions/module';
 import { actions as resultActions, mutations as resultMutations } from '../results/module';
+import { getters as routeGetters } from '../route/module';
+import { TaskTypes } from '../dataset';
 
 enum ParamCacheKey {
 	VARIABLES = 'VARIABLES',
@@ -299,9 +301,6 @@ export const actions = {
 		// fetch new state
 		const dataset = context.getters.getRouteDataset;
 		const target = context.getters.getRouteTargetVariable;
-		const isRegression = context.getters.isRegression;
-		const isClassification = context.getters.isClassification;
-		const isForecasting = context.getters.isForecasting;
 		const requestIds = context.getters.getRelevantSolutionRequestIds;
 		const solutionId = context.getters.getRouteSolutionId;
 		const trainingVariables = context.getters.getActiveSolutionTrainingVariables;
@@ -331,7 +330,8 @@ export const actions = {
 			highlight: highlight
 		});
 
-		if (isRegression || isForecasting) {
+		const task = routeGetters.getRouteTask(store);
+		if (task === TaskTypes.REGRESSION || task === TaskTypes.TIME_SERIES_FORECASTING) {
 			resultActions.fetchResidualsExtrema(store, {
 				dataset: dataset,
 				target: target,
@@ -343,13 +343,15 @@ export const actions = {
 				requestIds: requestIds,
 				highlight: highlight
 			});
-		} else if (isClassification) {
+		} else if (task === TaskTypes.CLASSIFICATION) {
 			resultActions.fetchCorrectnessSummaries(store, {
 				dataset: dataset,
 				target: target,
 				requestIds: requestIds,
 				highlight: highlight
 			});
+		} else {
+			console.error(`unhandled task type ${task}`);
 		}
 	}
 };

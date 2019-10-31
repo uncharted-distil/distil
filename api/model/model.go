@@ -102,13 +102,13 @@ type SolutionScore struct {
 }
 
 // GetPredictedKey returns a solutions predicted col key.
-func GetPredictedKey(target string, solutionID string) string {
-	return target + ":" + solutionID + ":predicted"
+func GetPredictedKey(solutionID string) string {
+	return solutionID + ":predicted"
 }
 
 // GetErrorKey returns a solutions error col key.
-func GetErrorKey(target string, solutionID string) string {
-	return target + ":" + solutionID + ":error"
+func GetErrorKey(solutionID string) string {
+	return solutionID + ":error"
 }
 
 // IsPredictedKey returns true if the key matches a predicted key.

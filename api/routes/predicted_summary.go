@@ -143,7 +143,7 @@ func PredictedSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 			handleError(w, err)
 			return
 		}
-		summary.Key = api.GetPredictedKey(summary.Key, res.SolutionID)
+		summary.Key = api.GetPredictedKey(res.SolutionID)
 		summary.Label = "Predicted"
 		summary.SolutionID = res.SolutionID
 

@@ -91,8 +91,12 @@ func (s *Storage) fetchResidualsSummary(dataset string, storageName string, vari
 	return nil, errors.Errorf("variable of type %s - should be numeric", variable.Type)
 }
 
-func getErrorTyped(variableName string) string {
-	return fmt.Sprintf("(cast(value as double precision) - cast(\"%s\" as double precision))", variableName)
+func getErrorTyped(alias string, variableName string) string {
+	fullName := fmt.Sprintf("\"%s\"", variableName)
+	if alias != "" {
+		fullName = fmt.Sprintf("%s.%s", alias, fullName)
+	}
+	return fmt.Sprintf("(cast(value as double precision) - cast(%s as double precision))", fullName)
 }
 
 func (s *Storage) getResidualsHistogramAggQuery(extrema *api.Extrema, variableName string, resultVariable *model.Variable, numBuckets int) (string, string, string) {
@@ -100,7 +104,7 @@ func (s *Storage) getResidualsHistogramAggQuery(extrema *api.Extrema, variableNa
 	interval := extrema.GetBucketInterval(numBuckets)
 
 	// Only numeric types should occur.
-	errorTyped := getErrorTyped(variableName)
+	errorTyped := getErrorTyped("", variableName)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
@@ -123,7 +127,7 @@ func getResidualsMinMaxAggsQuery(variableName string, resultVariable *model.Vari
 	maxAggName := api.MaxAggPrefix + resultVariable.Name
 
 	// Only numeric types should occur.
-	errorTyped := getErrorTyped(variableName)
+	errorTyped := getErrorTyped("", variableName)
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", errorTyped, minAggName, errorTyped, maxAggName)
@@ -192,7 +196,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, 
 	params = append(params, variable.Name)
 
 	wheres := make([]string, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, filterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, "", filterParams, false)
 
 	where := ""
 	if len(wheres) > 0 {

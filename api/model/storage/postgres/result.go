@@ -33,6 +33,7 @@ import (
 const (
 	resultTableSuffix        = "_result"
 	featureWeightTableSuffix = "_explain"
+	dataTableAlias           = "data"
 )
 
 func (s *Storage) getResultTable(dataset string) string {
@@ -351,6 +352,15 @@ func addExcludeCorrectnessFilterToWhere(wheres []string, params []interface{}, c
 	return wheres, params, nil
 }
 
+func getFullName(alias string, column string) string {
+	fullName := fmt.Sprintf("\"%s\"", column)
+	if alias != "" {
+		fullName = fmt.Sprintf("%s.%s", alias, fullName)
+	}
+
+	return fullName
+}
+
 func addIncludePredictedFilterToWhere(wheres []string, params []interface{}, predictedFilter *model.Filter, target *model.Variable) ([]string, []interface{}, error) {
 	// Handle the predicted column, which is accessed as `value` in the result query
 	where := ""
@@ -468,9 +478,9 @@ func addExcludePredictedFilterToWhere(wheres []string, params []interface{}, pre
 	return wheres, params, nil
 }
 
-func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
+func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, alias string, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
-	typedError := getErrorTyped(targetName)
+	typedError := getErrorTyped(alias, targetName)
 	where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
 	params = append(params, *residualFilter.Min)
 	params = append(params, *residualFilter.Max)
@@ -480,9 +490,9 @@ func addIncludeErrorFilterToWhere(wheres []string, params []interface{}, targetN
 	return wheres, params, nil
 }
 
-func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
+func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, alias string, targetName string, residualFilter *model.Filter) ([]string, []interface{}, error) {
 	// Add a clause to filter residuals to the existing where
-	typedError := getErrorTyped(targetName)
+	typedError := getErrorTyped(alias, targetName)
 	where := fmt.Sprintf("(%s < $%d OR %s > $%d)", typedError, len(params)+1, typedError, len(params)+2)
 	params = append(params, *residualFilter.Min)
 	params = append(params, *residualFilter.Max)
@@ -532,7 +542,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
 	}
-	fieldsData := addTableAlias("data", fields, false)
+	fieldsData := addTableAlias(dataTableAlias, fields, false)
 	fieldsExplain := addTableAlias("weights", fields, true)
 
 	// break filters out groups for specific handling
@@ -549,7 +559,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	// Create the filter portion of the where clause.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, genericFilterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(wheres, params, dataTableAlias, genericFilterParams, false)
 
 	// Add the predicted filter into the where clause if it was included in the filter set
 	if filters.predictedFilter != nil {
@@ -589,12 +599,12 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 		}
 
 		if filters.residualFilter.Mode == model.IncludeFilter {
-			wheres, params, err = addIncludeErrorFilterToWhere(wheres, params, filterTargetName, filters.residualFilter)
+			wheres, params, err = addIncludeErrorFilterToWhere(wheres, params, dataTableAlias, filterTargetName, filters.residualFilter)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add error to where clause")
 			}
 		} else {
-			wheres, params, err = addExcludeErrorFilterToWhere(wheres, params, filterTargetName, filters.residualFilter)
+			wheres, params, err = addExcludeErrorFilterToWhere(wheres, params, dataTableAlias, filterTargetName, filters.residualFilter)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add error to where clause")
 			}
@@ -602,13 +612,13 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// If our results are numerical we need to compute residuals and store them in a column called 'error'
-	predictedCol := api.GetPredictedKey(targetName, solutionID)
-	errorCol := api.GetErrorKey(targetName, solutionID)
+	predictedCol := api.GetPredictedKey(solutionID)
+	errorCol := api.GetErrorKey(solutionID)
 	targetCol := targetName
 
 	errorExpr := ""
 	if model.IsNumerical(variable.Type) {
-		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(variable.Name), errorCol)
+		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(dataTableAlias, variable.Name), errorCol)
 	}
 
 	// errorExpr will have the necessary comma if relevant
