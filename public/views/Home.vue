@@ -24,7 +24,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="row flex-10 justify-content-center pb-3">
+		<div class="row flex-10 justify-content-center pb-3 home-item-container">
 			<div class="col-12 col-md-10 d-flex">
 				<div class="home-items">
 					<recent-datasets
@@ -119,6 +119,9 @@ export default Vue.extend({
 }
 .home-view .file-uploader-status {
 	padding: 0;
+}
+.home-item-container {
+	overflow: scroll;
 }
 
 </style>
