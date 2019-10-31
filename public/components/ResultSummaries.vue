@@ -8,7 +8,7 @@
 		<result-facets
 			:regression="regressionEnabled">
 		</result-facets>
-		<b-btn v-b-modal.export variant="primary" class="check-button" v-if="isTask2">Task 2: Export Model</b-btn>
+		<b-btn v-b-modal.export variant="primary" class="check-button">Export Model</b-btn>
 
 		<b-modal id="export" title="Export" @ok="onExport">
 			<div class="check-message-container">
@@ -98,10 +98,6 @@ export default Vue.extend({
 
 		activeSolution(): Solution {
 			return getSolutionById(this.$store.state.solutionModule, this.solutionId);
-		},
-
-		isTask2(): boolean {
-			return appGetters.isTask2(this.$store);
 		},
 
 		activeSolutionName(): string {
