@@ -9,6 +9,7 @@ import store from '../store/store';
 import { actions as resultsActions } from '../store/results/module';
 import { ResultsContext } from '../store/results/actions';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
+import { getters as solutionGetters } from '../store/solutions/module';
 import { formatValue, hasComputedVarPrefix, isIntegerType, isTimeType, IMAGE_TYPE, TIMESERIES_TYPE } from '../util/types';
 
 // Postfixes for special variable names
@@ -225,10 +226,11 @@ export function createEmptyTableData(): TableData {
 	};
 }
 
-export function createPendingSummary(key: string, label: string, dataset: string, solutionId?: string): VariableSummary {
+export function createPendingSummary(key: string, label: string, description: string, dataset: string, solutionId?: string): VariableSummary {
 	return {
 		key: key,
 		label: label,
+		description: description,
 		dataset: dataset,
 		pending: true,
 		baseline: null,
@@ -241,6 +243,7 @@ export function createErrorSummary(key: string, label: string, dataset: string, 
 	return {
 		key: key,
 		label: label,
+		description: null,
 		dataset: dataset,
 		baseline: null,
 		filtered: null,
@@ -371,8 +374,15 @@ export function getTableDataFields(data: TableData) {
 			if (col.key === D3M_INDEX_FIELD) {
 				continue;
 			}
-			const variable = variables.find(v => v.colName === col.key);
 
+			// predicted column key is not in the list of variables - we'll just explicitly grab the target
+			// and use its description
+			let variable = null;
+			if (isPredictedCol(col.key)) {
+				variable = solutionGetters.getActiveSolutionTargetVariable(store);
+			} else {
+				variable = variables.find(v => v.colName === col.key);
+			}
 			let label = col.label;
 			const description = variable.colDescription;
 
@@ -387,7 +397,6 @@ export function getTableDataFields(data: TableData) {
 					label = variable.grouping.properties.yCol;
 				}
 			}
-
 
 			result[col.key] = {
 				label: label,

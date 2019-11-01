@@ -1,7 +1,7 @@
 import axios from 'axios';
 import _ from 'lodash';
 import { ActionContext } from 'vuex';
-import { DistilState } from '../store';
+import store, { DistilState } from '../store';
 import { EXCLUDE_FILTER } from '../../util/filters';
 import { getSolutionsByRequestIds, getSolutionById } from '../../util/solutions';
 import { Variable, Highlight } from '../dataset/index';
@@ -10,6 +10,7 @@ import { ResultsState } from './index';
 import { addHighlightToFilterParams } from '../../util/highlights';
 import { fetchSolutionResultSummary, createPendingSummary, createErrorSummary, createEmptyTableData, fetchSummaryExemplars, getTimeseriesAnalysisIntervals } from '../../util/data';
 import { getters as resultGetters } from '../results/module';
+import { getters as dataGetters } from '../dataset/module';
 
 export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
@@ -42,12 +43,13 @@ export const actions = {
 		args.training.forEach(variable => {
 			const key = variable.colName;
 			const label = variable.colDisplayName;
+			const description = variable.colDescription;
 			const exists = _.find(context.state.trainingSummaries, v => {
 				return v.dataset === args.dataset && v.key === variable.colName;
 			});
 			if (!exists) {
 				// add placeholder
-				mutations.updateTrainingSummary(context, createPendingSummary(key, label, dataset, solutionId));
+				mutations.updateTrainingSummary(context, createPendingSummary(key, label, description, dataset, solutionId));
 			}
 			// fetch summary
 			promises.push(actions.fetchTrainingSummary(context, {
@@ -141,7 +143,9 @@ export const actions = {
 		const dataset = args.dataset;
 
 		if (!context.state.targetSummary) {
-			mutations.updateTargetSummary(context, createPendingSummary(key, label, dataset, args.solutionId));
+			// fetch the target var so we can pull the description out
+			const targetVar = dataGetters.getVariablesMap(store)[args.target];
+			mutations.updateTargetSummary(context, createPendingSummary(key, label, targetVar.colDescription, dataset, args.solutionId));
 		}
 
 

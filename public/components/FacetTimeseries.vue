@@ -102,6 +102,7 @@ export default Vue.extend({
 				label: timeVarName,
 				key: timeVarName,
 				dataset: this.summary.dataset,
+				description: this.summary.description,
 				type: NUMERICAL_SUMMARY,
 				varType: timeVarType,
 				baseline: this.summary.timeline

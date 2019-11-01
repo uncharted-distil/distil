@@ -601,7 +601,8 @@ export const actions = {
 				const key = variable.colName;
 				const label = variable.colDisplayName;
 				const dataset = args.dataset;
-				mutator(context, createPendingSummary(key, label, dataset));
+				const desciption = variable.colDescription;
+				mutator(context, createPendingSummary(key, label, desciption, dataset));
 			}
 
 			// fetch summary
