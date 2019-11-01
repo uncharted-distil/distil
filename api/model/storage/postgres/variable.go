@@ -228,6 +228,9 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 	// add dataset
 	summary.Dataset = dataset
 
+	// add description
+	summary.Description = variable.Description
+
 	if variable.Grouping != nil {
 		if model.IsTimeSeries(variable.Grouping.Type) {
 			summary.Label = variable.Grouping.Properties.YCol

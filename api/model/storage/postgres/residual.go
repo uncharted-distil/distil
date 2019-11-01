@@ -116,9 +116,10 @@ func (s *Storage) getResidualsHistogramAggQuery(extrema *api.Extrema, variableNa
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
-func getResultJoin(storageName string) string {
+func getResultJoin(alias string, storageName string) string {
 	// FROM clause to join result and base data on d3mIdex value
-	return fmt.Sprintf("%s_result as res inner join %s as data on data.\"%s\" = res.index", storageName, storageName, model.D3MIndexFieldName)
+	return fmt.Sprintf("%s_result as %s inner join %s as data on data.\"%s\" = %s.index",
+		storageName, alias, storageName, model.D3MIndexFieldName, alias)
 }
 
 func getResidualsMinMaxAggsQuery(variableName string, resultVariable *model.Variable) string {
@@ -147,7 +148,7 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, storageName string, va
 	aggQuery := getResidualsMinMaxAggsQuery(targetName, resultVariable)
 
 	// from clause to join result and base data
-	fromClause := getResultJoin(storageName)
+	fromClause := getResultJoin("res", storageName)
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, fromClause)
@@ -188,7 +189,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, 
 	// size is derived from the min/max and desired bucket count.
 	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, targetName, resultVariable, numBuckets)
 
-	fromClause := getResultJoin(storageName)
+	fromClause := getResultJoin("result", storageName)
 
 	// create the filter for the query
 	params := make([]interface{}, 0)

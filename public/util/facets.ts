@@ -80,6 +80,7 @@ export interface Group {
 	dataset: string;
 	colName: string;
 	label: string;
+	description: string;
 	key: string;
 	type: string;
 	collapsible: boolean;
@@ -112,6 +113,7 @@ export function createErrorFacet(summary: VariableSummary): Group {
 	return {
 		dataset: summary.dataset,
 		colName: summary.key,
+		description: summary.description,
 		label: summary.label,
 		key: `${summary.dataset}:${summary.key}`,
 		type: summary.varType,
@@ -132,6 +134,7 @@ export function createPendingFacet(summary: VariableSummary): Group {
 		dataset: summary.dataset,
 		colName: summary.key,
 		label: summary.label,
+		description: summary.description,
 		key: `${summary.dataset}:${summary.key}`,
 		type: summary.varType,
 		collapsible: false,
@@ -249,6 +252,7 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
 		dataset: summary.dataset,
 		colName: summary.key,
 		label: summary.label,
+		description: summary.description,
 		key: `${summary.dataset}:${summary.key}`,
 		type: summary.varType,
 		collapsible: false,
@@ -309,6 +313,7 @@ function createCategoricalTimeseriesSummaryFacet(summary: VariableSummary): Grou
 		dataset: summary.dataset,
 		colName: summary.key,
 		label: summary.label,
+		description: summary.description,
 		key: `${summary.dataset}:${summary.key}`,
 		type: summary.varType,
 		collapsible: false,
@@ -387,6 +392,7 @@ function createNumericalSummaryFacet(summary: VariableSummary): Group {
 		dataset: summary.dataset,
 		colName: summary.key,
 		label: summary.label,
+		description: summary.description,
 		key: `${summary.dataset}:${summary.key}`,
 		type: summary.varType,
 		collapsible: false,
@@ -414,6 +420,7 @@ function createNumericalTimeseriesFacet(summary: VariableSummary): Group {
 		dataset: summary.dataset,
 		colName: summary.key,
 		label: summary.label,
+		description: summary.description,
 		key: `${summary.dataset}:${summary.key}`,
 		type: summary.varType,
 		collapsible: false,

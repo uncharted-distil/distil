@@ -9,6 +9,7 @@ import store from '../store/store';
 import { actions as resultsActions } from '../store/results/module';
 import { ResultsContext } from '../store/results/actions';
 import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
+import { getters as solutionGetters } from '../store/solutions/module';
 import { formatValue, hasComputedVarPrefix, isIntegerType, isTimeType, IMAGE_TYPE, TIMESERIES_TYPE } from '../util/types';
 
 // Postfixes for special variable names
@@ -225,10 +226,11 @@ export function createEmptyTableData(): TableData {
 	};
 }
 
-export function createPendingSummary(key: string, label: string, dataset: string, solutionId?: string): VariableSummary {
+export function createPendingSummary(key: string, label: string, description: string, dataset: string, solutionId?: string): VariableSummary {
 	return {
 		key: key,
 		label: label,
+		description: description,
 		dataset: dataset,
 		pending: true,
 		baseline: null,
@@ -241,6 +243,7 @@ export function createErrorSummary(key: string, label: string, dataset: string, 
 	return {
 		key: key,
 		label: label,
+		description: null,
 		dataset: dataset,
 		baseline: null,
 		filtered: null,
@@ -362,19 +365,38 @@ function isPredictedCol(arg: string): boolean {
 	return arg.endsWith(':predicted');
 }
 
-export function getTableDataFields(data: TableData) {
+function isErrorCol(arg: string): boolean {
+	return arg.endsWith(':error');
+}
+
+export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
 	if (validateData(data)) {
-		const result = {};
-		const variables = datasetGetters.getVariables(store);
+		const result: Dictionary<TableColumn> = {};
+		const variables = datasetGetters.getVariablesMap(store);
 
 		for (const col of data.columns) {
 			if (col.key === D3M_INDEX_FIELD) {
 				continue;
 			}
-			const variable = variables.find(v => v.colName === col.key);
 
-			let label = col.label;
-			const description = variable.colDescription;
+			// Error and predicted columns require unique handling.  They use a special key of the format
+			// <solution_id>:<predicted|error> and are not available in the variables list.
+			let variable: Variable = null;
+			let description: string = null;
+			let label: string = null;
+			if (isPredictedCol(col.key)) {
+				variable = solutionGetters.getActiveSolutionTargetVariable(store)[0]; // always a single value
+				label = variable.colDisplayName;
+				description = `Model predicted value for ${variable.colName}`;
+			} else if (isErrorCol(col.key)) {
+				variable = solutionGetters.getActiveSolutionTargetVariable(store)[0];
+				label = variable.colDisplayName;
+				description = `Difference between actual and predicted value for ${variable.colName}`;
+			} else {
+				variable = variables[col.key];
+				label = col.label;
+				description = variable.colDescription;
+			}
 
 			if (col.type === TIMESERIES_TYPE) {
 
@@ -387,7 +409,6 @@ export function getTableDataFields(data: TableData) {
 					label = variable.grouping.properties.yCol;
 				}
 			}
-
 
 			result[col.key] = {
 				label: label,

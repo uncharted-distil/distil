@@ -233,13 +233,6 @@ export default Vue.extend({
 
 			return group;
 		},
-		currentVariable(): Variable {
-			const variables = datasetGetters.getVariables(this.$store);
-			const currentVariable = variables.filter(v => {
-				return v.colName === this.groupSpec.colName;
-			})[0];
-			return currentVariable;
-		}
 	},
 
 	watch: {
@@ -865,8 +858,8 @@ export default Vue.extend({
 		wrapGroupHeaderText(group: Group, $elem: JQuery) {
 			const $headerElement = $elem.find('.group-header');
 			const headerText = $headerElement.text();
-			const tooltipText = (this.currentVariable.colDescription ?
-				headerText.concat(': ', this.currentVariable.colDescription) :
+			const tooltipText = (this.summary.description ?
+				headerText.concat(': ', this.summary.description) :
 				headerText).replace(/(\r\n|\n|\r|\t)/gm, '');
 			$headerElement.empty();
 			const $headerTextWrapped = $(`<div class="header-text" v-b-tooltip.hover title="${tooltipText}">${headerText}</div>`);

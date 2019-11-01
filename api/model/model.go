@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	suffixReg = regexp.MustCompile(`:\S+:error|:\S+:predicted$`)
+	suffixReg = regexp.MustCompile(`:error|:predicted$`)
 )
 
 // Request represents the request metadata.

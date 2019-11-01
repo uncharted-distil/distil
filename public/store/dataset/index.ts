@@ -125,6 +125,7 @@ export interface Histogram {
 
 export interface VariableSummary {
 	label: string;
+	description: string;
 	key: string;
 	dataset: string;
 	type?: string;
@@ -162,6 +163,7 @@ export interface TableColumn {
 	label: string;
 	key: string;
 	type: string;
+	headerTitle: string;
 	sortable?: boolean;
 	variant?: string;
 }
