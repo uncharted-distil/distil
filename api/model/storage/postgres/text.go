@@ -278,10 +278,10 @@ func (f *TextField) getTopCategories(filterParams *api.FilterParams, invert bool
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT w.word as %s, COUNT(*) as count "+
+	query := fmt.Sprintf("SELECT COALESCE(w.word, r.stem) as %s, COUNT(*) as count "+
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s %s) as r "+
-		"INNER JOIN %s as w on r.stem = w.stem "+
-		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
+		"LEFT OUTER JOIN %s as w on r.stem = w.stem "+
+		"GROUP BY COALESCE(w.word, r.stem) ORDER BY count desc, COALESCE(w.word, r.stem) LIMIT %d;",
 		f.Key, f.Key, f.StorageName, where, wordStemTableName, 5)
 
 	// execute the postgres query
@@ -320,10 +320,10 @@ func (f *TextField) fetchHistogram(filterParams *api.FilterParams, invert bool) 
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT w.word as %s, COUNT(*) as count "+
+	query := fmt.Sprintf("SELECT COALESCE(w.word, r.stem) as %s, COUNT(*) as count "+
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s %s) as r "+
-		"INNER JOIN %s as w on r.stem = w.stem "+
-		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
+		"LEFT OUTER JOIN %s as w on r.stem = w.stem "+
+		"GROUP BY COALESCE(w.word, r.stem) ORDER BY count desc, COALESCE(w.word, r.stem) LIMIT %d;",
 		f.Key, f.Key, f.StorageName, where, wordStemTableName, catResultLimit)
 
 	// execute the postgres query
@@ -354,11 +354,11 @@ func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *api.F
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT w.word as \"%s\", COUNT(*) as count "+
+	query := fmt.Sprintf("SELECT COALESCE(w.word, r.stem) as \"%s\", COUNT(*) as count "+
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem "+
 		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s) as r "+
-		"INNER JOIN %s as w on r.stem = w.stem "+
-		"GROUP BY w.word ORDER BY count desc, w.word LIMIT %d;",
+		"LEFT OUTER JOIN %s as w on r.stem = w.stem "+
+		"GROUP BY COALESCE(w.word, r.stem) ORDER BY count desc, COALESCE(w.word, r.stem) LIMIT %d;",
 		f.Key, f.Key, f.StorageName, f.Storage.getResultTable(f.StorageName),
 		model.D3MIndexFieldName, len(params), where, wordStemTableName, catResultLimit)
 
@@ -452,12 +452,12 @@ func (f *TextField) fetchPredictedSummaryData(resultURI string, datasetResult st
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, targetName)
 
-	query := fmt.Sprintf("SELECT word_b.word as \"%s\", word_v.word as value, COUNT(*) as count "+
+	query := fmt.Sprintf("SELECT COALESCE(word_b.word, r.stem_b) as \"%s\", COALESCE(word_v.word, r.stem_v) as value, COUNT(*) as count "+
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(base.\"%s\"))) as stem_b, "+
 		"unnest(tsvector_to_array(to_tsvector(result.value))) as stem_v "+
 		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
-		"WHERE %s) r INNER JOIN %s word_b ON r.stem_b = word_b.stem INNER JOIN %s word_v ON r.stem_v = word_v.stem "+
-		"GROUP BY word_v.word, word_b.word "+
+		"WHERE %s) r LEFT OUTER JOIN %s word_b ON r.stem_b = word_b.stem LEFT OUTER JOIN %s word_v ON r.stem_v = word_v.stem "+
+		"GROUP BY COALESCE(word_v.word, r.stem_v), COALESCE(word_b.word, r.stem_b) "+
 		"ORDER BY count desc;", targetName, targetName, datasetResult, f.StorageName, strings.Join(wheres, " AND "), wordStemTableName, wordStemTableName)
 
 	// execute the postgres query
