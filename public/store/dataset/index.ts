@@ -163,6 +163,7 @@ export interface TableColumn {
 	label: string;
 	key: string;
 	type: string;
+	headerTitle: string;
 	sortable?: boolean;
 	variant?: string;
 }

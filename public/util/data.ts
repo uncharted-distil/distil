@@ -365,26 +365,38 @@ function isPredictedCol(arg: string): boolean {
 	return arg.endsWith(':predicted');
 }
 
-export function getTableDataFields(data: TableData) {
+function isErrorCol(arg: string): boolean {
+	return arg.endsWith(':error');
+}
+
+export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
 	if (validateData(data)) {
-		const result = {};
-		const variables = datasetGetters.getVariables(store);
+		const result: Dictionary<TableColumn> = {};
+		const variables = datasetGetters.getVariablesMap(store);
 
 		for (const col of data.columns) {
 			if (col.key === D3M_INDEX_FIELD) {
 				continue;
 			}
 
-			// predicted column key is not in the list of variables - we'll just explicitly grab the target
-			// and use its description
-			let variable = null;
+			// Error and predicted columns require unique handling.  They use a special key of the format
+			// <solution_id>:<predicted|error> and are not available in the variables list.
+			let variable: Variable = null;
+			let description: string = null;
+			let label: string = null;
 			if (isPredictedCol(col.key)) {
-				variable = solutionGetters.getActiveSolutionTargetVariable(store);
+				variable = solutionGetters.getActiveSolutionTargetVariable(store)[0]; // always a single value
+				label = variable.colDisplayName;
+				description = `Model predicted value for ${variable.colName}`;
+			} else if (isErrorCol(col.key)) {
+				variable = solutionGetters.getActiveSolutionTargetVariable(store)[0];
+				label = variable.colDisplayName;
+				description = `Difference between actual and predicted value for ${variable.colName}`;
 			} else {
-				variable = variables.find(v => v.colName === col.key);
+				variable = variables[col.key];
+				label = col.label;
+				description = variable.colDescription;
 			}
-			let label = col.label;
-			const description = variable.colDescription;
 
 			if (col.type === TIMESERIES_TYPE) {
 
