@@ -629,33 +629,7 @@ export const actions = {
 		}
 
 		const filterParams = addHighlightToFilterParams(args.filterParams, args.highlight);
-
 		const mutator = args.include ? mutations.updateIncludedVariableSummaries : mutations.updateExcludedVariableSummaries;
-
-		const timeseries = context.getters.getRouteTimeseriesAnalysis;
-		if (timeseries) {
-
-			let interval = context.getters.getRouteTimeseriesBinningInterval;
-			if (!interval) {
-				const timeVar = context.getters.getTimeseriesAnalysisVariable;
-				const range = context.getters.getTimeseriesAnalysisRange;
-				const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
-				interval = intervals[0].value;
-			}
-
-			return axios.post(`distil/timeseries-summary/${args.dataset}/${timeseries}/${args.variable}/${interval}/${!args.include}`, filterParams)
-				.then(response => {
-					const summary = response.data.summary;
-					mutator(context, summary);
-				})
-				.catch(error => {
-					console.error(error);
-					const key = args.variable;
-					const label = args.variable;
-					const dataset = args.dataset;
-					mutator(context, createErrorSummary(key, label, dataset, error));
-				});
-		}
 
 		return axios.post(`/distil/variable-summary/${args.dataset}/${args.variable}/${!args.include}`, filterParams)
 			.then(response => {
