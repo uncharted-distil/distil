@@ -111,7 +111,7 @@ func ComposeHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorage
 		for _, r := range rawData.Values {
 			// create the hash from the specified columns
 			composed := createComposedFields(r, variables, mappedFields)
-			composedData[fmt.Sprintf("%v", r[d3mIndexFieldindex])] = composed
+			composedData[fmt.Sprintf("%v", r[d3mIndexFieldindex].Value)] = composed
 		}
 
 		// save the new column
