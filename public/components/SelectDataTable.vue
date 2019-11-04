@@ -57,6 +57,8 @@ import { getters as routeGetters } from '../store/route/module';
 import { IMAGE_TYPE, TIMESERIES_TYPE, hasComputedVarPrefix } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 import { getTimeseriesGroupingsFromFields } from '../util/data';
+import { actions as appActions } from '../store/app/module';
+import { Feature, Activity } from '../util/userEvents';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -136,6 +138,9 @@ export default Vue.extend({
 			});
 		},
 		onRowClick(row: TableRow) {
+
+			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_SELECTION, activity: Activity.DATA_PREPARATION});
+
 			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
 				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			} else {

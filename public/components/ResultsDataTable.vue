@@ -72,6 +72,8 @@ import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
+import { actions as appActions } from '../store/app/module';
+import { Feature, Activity } from '../util/userEvents';
 import { Solution } from '../store/solutions/index';
 import { Dictionary } from '../util/dict';
 import { getVarType, isTextType, IMAGE_TYPE, hasComputedVarPrefix } from '../util/types';
@@ -227,6 +229,7 @@ export default Vue.extend({
 			} else {
 				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			}
+			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_HIGHLIGHT, activity: Activity.MODEL_SELECTION});
 		},
 
 		normalizeError(error: number): number {

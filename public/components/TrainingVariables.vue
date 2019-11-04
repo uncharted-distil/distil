@@ -41,6 +41,8 @@ import { Group } from '../util/facets';
 import { NUM_PER_PAGE } from '../util/data';
 import { overlayRouteEntry } from '../util/routes';
 import { removeFiltersByName } from '../util/filters';
+import { actions as appActions } from '../store/app/module';
+import { Feature, Activity } from '../util/userEvents';
 
 export default Vue.extend({
 	name: 'training-variables',
@@ -107,6 +109,8 @@ export default Vue.extend({
 				remove.innerHTML = 'Remove';
 
 				remove.addEventListener('click', () => {
+					appActions.logUserEvent(this.$store, { feature: Feature.REMOVE_FEATURE, activity: Activity.DATA_PREPARATION});
+
 					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 					training.splice(training.indexOf(group.colName), 1);
 					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
@@ -123,6 +127,8 @@ export default Vue.extend({
 
 	methods: {
 		removeAll() {
+			appActions.logUserEvent(this.$store, { feature: Feature.REMOVE_ALL_FEATURES, activity: Activity.DATA_PREPARATION});
+
 			const facets = this.$refs.facets as any;
 			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 			facets.availableVariables().forEach(variable => {
