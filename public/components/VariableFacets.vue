@@ -88,6 +88,8 @@ import { getters as routeGetters } from '../store/route/module';
 import { ROUTE_PAGE_SUFFIX } from '../store/route/index';
 import { Group } from '../util/facets';
 import { LATITUDE_TYPE, LONGITUDE_TYPE } from '../util/types';
+import { actions as appActions } from '../store/app/module';
+import { Feature, Activity } from '../util/userEvents';
 
 import { updateHighlight, clearHighlight } from '../util/highlights';
 import Vue from 'vue';
@@ -115,6 +117,7 @@ export default Vue.extend({
 		html: [ String as () => string, Object as () => any, Function as () => Function ],
 		instanceName: { type: String as () => string, default: 'variableFacets' },
 		rowsPerPage: { type: Number as () => number, default: 10 },
+		logActivity: { type: String as () => Activity, default: Activity.DATA_PREPARATION }
 	},
 
 	data() {
@@ -217,6 +220,7 @@ export default Vue.extend({
 				value: value
 			});
 			this.$emit('range-change', key, value);
+			appActions.logUserEvent(this.$store, { feature: Feature.CHANGE_HIGHLIGHT, activity: this.logActivity });
 		},
 
 		onFacetClick(context: string, key: string, value: string, dataset: string) {
@@ -231,6 +235,7 @@ export default Vue.extend({
 				} else {
 					clearHighlight(this.$router);
 				}
+				appActions.logUserEvent(this.$store, { feature: Feature.CHANGE_HIGHLIGHT, activity: this.logActivity });
 			}
 			this.$emit('facet-click', context, key, value);
 		},

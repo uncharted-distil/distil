@@ -20,7 +20,7 @@
         </div>
     </div>
 </div>
-    
+
 </template>
 
 <script lang="ts">
@@ -38,12 +38,20 @@ import {
 	JoinSuggestionPendingRequest,
 	JoinDatasetImportPendingRequest,
 } from '../store/dataset/index';
+import { Feature, Activity } from '../util/userEvents';
+import { Dictionary } from 'vue-router/types/router';
 
 const STATUS_TYPES = [
 	DatasetPendingRequestType.VARIABLE_RANKING,
 	DatasetPendingRequestType.GEOCODING,
 	DatasetPendingRequestType.JOIN_SUGGESTION,
 ];
+
+const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
+	[DatasetPendingRequestType.VARIABLE_RANKING, Feature.RANK_FEATURES],
+	[DatasetPendingRequestType.GEOCODING, Feature.GEOCODE_FEATURES],
+	[DatasetPendingRequestType.JOIN_SUGGESTION, Feature.JOIN_DATASETS]
+]);
 
 export default Vue.extend({
 	name: 'status-sidebar',
@@ -97,6 +105,7 @@ export default Vue.extend({
 		},
 		onStatusIconClick(iconIndex) {
 			const statusType = STATUS_TYPES[iconIndex];
+			appActions.logUserEvent(this.$store, {feature: STATUS_USER_EVENT[statusType], activity: Activity.DATA_PREPARATION});
 			appActions.openStatusPanelWithContentType(this.$store, statusType);
 		},
 	},

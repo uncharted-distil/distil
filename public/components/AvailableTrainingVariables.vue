@@ -37,6 +37,8 @@ import { AVAILABLE_TRAINING_VARS_INSTANCE } from '../store/route/index';
 import { Group } from '../util/facets';
 import VariableFacets from '../components/VariableFacets';
 import { Dictionary } from 'vue-router/types/router';
+import { actions as appActions } from '../store/app/module';
+import { Feature, Activity } from '../util/userEvents';
 
 export default Vue.extend({
 	name: 'available-training-variables',
@@ -75,6 +77,11 @@ export default Vue.extend({
 				trainingElem.className += 'btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2';
 				trainingElem.innerHTML = 'Add';
 				trainingElem.addEventListener('click', () => {
+
+					// log UI event on server
+					appActions.logUserEvent(this.$store, { feature: Feature.ADD_FEATURE, activity: Activity.DATA_PREPARATION});
+
+					// update route with training data
 					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 					const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
 						training: training.concat([ group.colName ]).join(',')
@@ -89,6 +96,10 @@ export default Vue.extend({
 
 	methods: {
 		addAll() {
+
+			// log UI event on server
+			appActions.logUserEvent(this.$store, { feature: Feature.ADD_ALL_FEATURES, activity: Activity.DATA_PREPARATION});
+
 			const facets = this.$refs.facets as any;
 			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
 			facets.availableVariables().forEach(variable => {
