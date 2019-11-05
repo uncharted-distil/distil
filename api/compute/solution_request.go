@@ -84,7 +84,7 @@ func newStatusChannel() chan SolutionStatus {
 type SolutionRequest struct {
 	Dataset              string
 	DatasetInput         string
-	TargetFeature        string
+	TargetFeature        *model.Variable
 	Task                 string
 	SubTask              string
 	TimestampField       string
@@ -107,7 +107,7 @@ type SolutionRequest struct {
 type SolutionRequestDiscovery struct {
 	Dataset              string
 	DatasetInput         string
-	TargetFeature        string
+	TargetFeature        *model.Variable
 	AllFeatures          []*model.Variable
 	SelectedFeatures     []string
 	SourceURI            string
@@ -116,7 +116,7 @@ type SolutionRequestDiscovery struct {
 }
 
 // NewSolutionRequest instantiates a new SolutionRequest.
-func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
+func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequest, error) {
 	req := &SolutionRequest{
 		mu:             &sync.Mutex{},
 		wg:             &sync.WaitGroup{},
@@ -137,9 +137,14 @@ func NewSolutionRequest(data []byte) (*SolutionRequest, error) {
 	}
 	req.DatasetInput = req.Dataset
 
-	req.TargetFeature, ok = json.String(j, "target")
+	targetName, ok := json.String(j, "target")
 	if !ok {
 		return nil, fmt.Errorf("no `target` in solution request")
+	}
+	for _, v := range variables {
+		if v.Name == targetName {
+			req.TargetFeature = v
+		}
 	}
 
 	req.Task = json.StringDefault(j, "", "task")
@@ -220,7 +225,7 @@ func (s *SolutionRequest) createSearchSolutionsRequest(columnIndex int, preproce
 }
 
 func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
-	datasetURI string, userAgent string, targetFeature string, dataset string, metrics []string, task string, subTask string, maxTime int64) (*pipeline.SearchSolutionsRequest, error) {
+	datasetURI string, userAgent string, targetFeature *model.Variable, dataset string, metrics []string, task string, subTask string, maxTime int64) (*pipeline.SearchSolutionsRequest, error) {
 
 	return &pipeline.SearchSolutionsRequest{
 		Problem: &pipeline.ProblemDescription{
@@ -232,7 +237,7 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 			Inputs: []*pipeline.ProblemInput{
 				{
 					DatasetId: compute.ConvertDatasetTA3ToTA2(dataset),
-					Targets:   compute.ConvertTargetFeaturesTA3ToTA2(targetFeature, columnIndex),
+					Targets:   compute.ConvertTargetFeaturesTA3ToTA2(targetFeature.Name, columnIndex),
 				},
 			},
 		},
@@ -401,7 +406,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist results
-	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURI, s.TargetFeature)
+	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURI, s.TargetFeature.Name)
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
@@ -589,19 +594,16 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// TODO: imported datasets have d3m index as distil role = "index".
 	//       need to figure out if that causes issues!!!
 	dataVariables := []*model.Variable{}
-	var targetVariable *model.Variable
 	for _, variable := range variables {
 		if isTA2Field(variable.DistilRole) {
 			dataVariables = append(dataVariables, variable)
 		}
-		if variable.Name == s.TargetFeature {
-			targetVariable = variable
-		}
 	}
+	targetVariable := s.TargetFeature
 
 	// Timeseries are grouped entries and we want to use the Y Col from the group as the target
 	// rather than the group itself, and the X col as the timestamp variable
-	targetVarName := s.TargetFeature
+	targetVarName := targetVariable.Name
 	var groupingTargetVariable = targetVariable
 	if targetVariable.Grouping != nil && model.IsTimeSeries(targetVariable.Grouping.Type) {
 		// filter list needs to include all the individual grouping components
@@ -617,6 +619,8 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		if err != nil {
 			return err
 		}
+
+		dataVariables = append(dataVariables, targetVariable)
 
 	}
 
@@ -716,7 +720,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVarName, s.DatasetInput, s.Metrics, s.Task, s.SubTask, int64(s.MaxTime))
+	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVariable, s.DatasetInput, s.Metrics, s.Task, s.SubTask, int64(s.MaxTime))
 
 	if err != nil {
 		return err
@@ -742,7 +746,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			continue
 		}
 
-		if v == s.TargetFeature {
+		if v == s.TargetFeature.Name {
 			// store target feature
 			typ = model.FeatureTypeTarget
 		} else {
@@ -804,16 +808,7 @@ func CreateSearchSolutionRequest(request *SolutionRequestDiscovery, skipPreproce
 		}
 	}
 
-	var targetVariable *model.Variable
-	for _, v := range request.AllFeatures {
-		if v.Name == request.TargetFeature {
-			targetVariable = v
-			break
-		}
-	}
-	if targetVariable == nil {
-		return nil, errors.Errorf("unable to find target variable '%s'", request.TargetFeature)
-	}
+	targetVariable := request.TargetFeature
 	columnIndex := getColumnIndex(targetVariable, request.SelectedFeatures)
 	task := DefaultTaskType(targetVariable.Type, "")
 	taskSubType := DefaultTaskSubType(task)
