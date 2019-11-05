@@ -165,6 +165,23 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 	return req, nil
 }
 
+// ExtractDatasetFromRawRequest extracts the dataset name from the raw message.
+func ExtractDatasetFromRawRequest(data []byte) (string, error) {
+	j, err := json.Unmarshal(data)
+	if err != nil {
+		return "", err
+	}
+
+	var ok bool
+
+	dataset, ok := json.String(j, "dataset")
+	if !ok {
+		return "", fmt.Errorf("no `dataset` in solution request")
+	}
+
+	return dataset, nil
+}
+
 // SolutionStatus represents a solution status.
 type SolutionStatus struct {
 	Progress   string    `json:"progress"`

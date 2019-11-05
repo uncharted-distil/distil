@@ -112,10 +112,9 @@ func handleMessage(conn *Connection, client *compute.Client, metadataCtor apiMod
 
 func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
 	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor, msg *Message) {
-	// unmarshal request
-	request, err := api.NewSolutionRequest(msg.Raw)
+	dataset, err := api.ExtractDatasetFromRawRequest(msg.Raw)
 	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "unable to unmarshal create solutions request"))
+		handleErr(conn, msg, errors.Wrap(err, "unable to pull dataset from request"))
 		return
 	}
 
@@ -140,16 +139,23 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		return
 	}
 
-	targetVar, err := metaStorage.FetchVariable(request.Dataset, request.TargetFeature)
+	vars, err := metaStorage.FetchVariables(dataset, false, true, true)
 	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "unable to fetch target variable definition"))
+		handleErr(conn, msg, errors.Wrap(err, "unable to pull variables from storage"))
+		return
+	}
+
+	// unmarshal request
+	request, err := api.NewSolutionRequest(vars, msg.Raw)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to unmarshal create solutions request"))
 		return
 	}
 
 	// load defaults
 	config, _ := env.LoadConfig()
 	if request.Task == "" {
-		request.Task = api.DefaultTaskType(targetVar.Type, request.ProblemType)
+		request.Task = api.DefaultTaskType(request.TargetFeature.Type, request.ProblemType)
 		log.Infof("Defaulting task type to `%s`", request.Task)
 	}
 	if request.SubTask == "" {
