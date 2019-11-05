@@ -174,7 +174,7 @@ export default Vue.extend({
 			this.min = min;
 			this.max = max;
 
-			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_HIGHLIGHT, activity: Activity.MODEL_SELECTION});
+			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_ERROR_THRESHOLD, activity: Activity.MODEL_SELECTION});
 
 			const entry = overlayRouteEntry(this.$route, {
 				residualThresholdMin: `${this.denormalize(min)}`,
