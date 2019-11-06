@@ -5,26 +5,25 @@
 			hover
 			small
 			:items="items"
-			:fields="fields"
+			:fields="tableFields"
 			:sort-by="errorCol"
 			:sort-compare="sortingByResidualError ? sortingByErrorFunction : undefined"
 			@row-clicked="onRowClick"
 			@sort-changed="onSortChanged">
 
-			<template v-for="computedField in computedFields" :slot="'HEAD_' + computedField" slot-scope="data">
-				{{ data.label }} <icon-base :key="computedField" icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base>
+			<template v-for="computedField in computedFields" v-slot:[cellSlot(computedField)]="data">
+				<span :key="computedField" :title="data.value">{{ data.value }} <icon-base icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base></span>
 			</template>
 
-			<template :slot="predictedCol" slot-scope="data">
+			<template v-slot:cell(predictedCol)="data">
 				{{target}}<sup>{{solutionIndex}}</sup>
 			</template>
 
-			<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
+			<template v-for="imageField in imageFields" v-slot:[cellSlot(imageField)]="data">
 				<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
 			</template>
 
-			<template v-for="timeseriesGrouping in timeseriesGroupings" :slot="timeseriesGrouping.idCol" slot-scope="data" >
-
+			<template v-for="timeseriesGrouping in timeseriesGroupings" v-slot:[cellSlot(timeseriesGrouping.idCol)]="data">
 				<sparkline-preview :key="data.item[timeseriesGrouping.idCol]"
 					:dataset="dataset"
 					:x-col="timeseriesGrouping.properties.xCol"
@@ -34,10 +33,9 @@
 					:solution-id="solutionId"
 					:include-forecast="isTargetTimeseries">
 				</sparkline-preview>
-
 			</template>
 
-			<template :slot="errorCol" slot-scope="data">
+			<template v-slot:cell(errorCol)="data">
 				<!-- residual error -->
 				<div class="error-bar-container" v-if="isTargetNumerical">
 					<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.item[errorCol]), width: errorBarWidth(data.item[errorCol]), left: errorBarLeft(data.item[errorCol]) }"></div>
@@ -53,6 +51,10 @@
 						Incorrect
 					</div>
 				</div>
+			</template>
+
+			<template v-slot:cell()="data">
+				<span :title="data.value">{{ data.value }}</span>
 			</template>
 		</b-table>
 	</fixed-header-table>
@@ -78,7 +80,7 @@ import { Solution } from '../store/solutions/index';
 import { Dictionary } from '../util/dict';
 import { getVarType, isTextType, IMAGE_TYPE, hasComputedVarPrefix } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
-import { getTimeseriesGroupingsFromFields } from '../util/data';
+import { getTimeseriesGroupingsFromFields, formatCellSlot, formatFieldsAsArray } from '../util/data';
 
 export default Vue.extend({
 	name: 'results-data-table',
@@ -181,6 +183,10 @@ export default Vue.extend({
 			return _.toNumber(routeGetters.getRouteResidualThresholdMax(this.$store));
 		},
 
+		tableFields(): TableColumn[] {
+			return formatFieldsAsArray(this.fields);
+		},
+
 		computedFields(): string[] {
 			return Object.keys(this.fields).filter(key => {
 				return hasComputedVarPrefix(key);
@@ -271,6 +277,9 @@ export default Vue.extend({
 				fixedHeaderTable.resizeTableCells();
 				fixedHeaderTable.setScrollLeft(currentScrollLeft);
 			});
+		},
+		cellSlot(key: string): string {
+			return formatCellSlot(key);
 		}
 	}
 

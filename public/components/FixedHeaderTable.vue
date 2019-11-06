@@ -26,7 +26,9 @@ export default Vue.extend({
 		},
 
 		resizeTableCells() {
-			const theadCells = this.thead && this.thead.querySelectorAll('th');
+			this.thead = this.$el.querySelector('thead');
+			const header = this.thead && this.thead.querySelector('tr');
+			const theadCells = header && header.querySelectorAll('th');
 			const firstRow = this.tbody && this.tbody.querySelector('tr');
 			const tbodyCells = firstRow && firstRow.querySelectorAll('td');
 
@@ -35,7 +37,7 @@ export default Vue.extend({
 			}
 
 			const headTargetCells = [];
-			const minCellWidth = 100;
+			const minCellWidth = 150;
 			const evenCellWidth = Math.ceil(this.tbody.clientWidth / theadCells.length);
 			const maxCellWidth = minCellWidth > evenCellWidth ? minCellWidth : evenCellWidth;
 
@@ -117,6 +119,7 @@ export default Vue.extend({
 
 	data() {
 		return {
+			table: {} as HTMLTableElement,
 			tbody: {} as HTMLTableSectionElement,
 			thead: {} as HTMLTableSectionElement,
 			tableHeaderRow: {} as HTMLTableRowElement,
@@ -124,12 +127,11 @@ export default Vue.extend({
 	},
 
 	mounted: function () {
-		this.thead = this.$el.querySelector('thead');
+		this.table = this.$el.querySelector('table');
 		this.tbody = this.$el.querySelector('tbody');
+		this.thead = this.$el.querySelector('thead');
 
 		this.tbody.addEventListener('scroll', this.onScroll);
-		this.tbody.addEventListener('mouseover', this.onMouseOverTableCell);
-		this.thead.addEventListener('mouseover', this.onMouseOverTableCell);
 
 		window.addEventListener('resize', this.resizeTableCells);
 
