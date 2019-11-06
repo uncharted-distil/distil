@@ -9,8 +9,8 @@
   },
   "dependencies": {
     "@turf/bbox": "^6.0.1",
+    "@turf/boolean-contains": "^6.0.1",
     "@turf/helpers": "^6.1.4",
-    "@turf/boolean-contains" : "^6.0.1",
     "@types/d3": "^5.7.0",
     "@types/jquery": "^3.3.2",
     "@types/lodash": "^4.14.120",

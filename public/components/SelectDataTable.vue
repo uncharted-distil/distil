@@ -5,19 +5,19 @@
 			hover
 			small
 			:items="items"
-			:fields="fields"
+			:fields="tableFields"
 			@sort-changed="onSortChanged"
 			@row-clicked="onRowClick">
 
-			<template v-for="computedField in computedFields" :slot="'HEAD_' + computedField" slot-scope="data">
-				{{ data.label }} <icon-base :key="computedField" icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base>
+			<template v-for="computedField in computedFields" v-slot:[cellSlot(computedField)]="data">
+				<span :key="computedField" :title="data.value">{{ data.value }} <icon-base icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base></span>
 			</template>
-
-			<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
+ 
+			<template v-for="imageField in imageFields" v-slot:[cellSlot(imageField)]="data">
 				<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
 			</template>
 
-			<template v-for="timeseriesGrouping in timeseriesGroupings" :slot="timeseriesGrouping.idCol" slot-scope="data">
+			<template v-for="timeseriesGrouping in timeseriesGroupings" v-slot:[cellSlot(timeseriesGrouping.idCol)]="data">
 				<div class="container" :key="data.item[timeseriesGrouping.idCol]">
 					<div class="row">
 						<!-- <div class="col-2">
@@ -34,6 +34,10 @@
 						<!-- </div> -->
 					</div>
 				</div>
+			</template>
+
+			<template v-slot:cell()="data">
+				<span :title="data.value">{{ data.value }}</span>
 			</template>
 
 		</b-table>
@@ -56,7 +60,7 @@ import { TableColumn, TableRow, Grouping, Variable, D3M_INDEX_FIELD, RowSelectio
 import { getters as routeGetters } from '../store/route/module';
 import { IMAGE_TYPE, TIMESERIES_TYPE, hasComputedVarPrefix } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
-import { getTimeseriesGroupingsFromFields } from '../util/data';
+import { getTimeseriesGroupingsFromFields, formatCellSlot, formatFieldsAsArray } from '../util/data';
 import { actions as appActions } from '../store/app/module';
 import { Feature, Activity } from '../util/userEvents';
 
@@ -94,8 +98,12 @@ export default Vue.extend({
 			return this.includedActive ? datasetGetters.getIncludedTableDataFields(this.$store) : datasetGetters.getExcludedTableDataFields(this.$store);
 		},
 
+		tableFields(): TableColumn[] {
+			return formatFieldsAsArray(this.fields);
+		},
+
 		imageFields(): string[] {
-			return _.map(this.fields, (field, key) => {
+			const imageColumns = _.map(this.fields, (field, key) => {
 				return {
 					key: key,
 					type: field.type
@@ -103,6 +111,7 @@ export default Vue.extend({
 			})
 			.filter(field => field.type === IMAGE_TYPE)
 			.map(field => field.key);
+			return imageColumns;
 		},
 
 		timeseriesGroupings(): Grouping[] {
@@ -110,9 +119,10 @@ export default Vue.extend({
 		},
 
 		computedFields(): string[] {
-			return Object.keys(this.fields).filter(key => {
+			const computedColumns = Object.keys(this.fields).filter(key => {
 				return hasComputedVarPrefix(key);
 			});
+			return computedColumns;
 		},
 
 		filters(): Filter[] {
@@ -146,6 +156,9 @@ export default Vue.extend({
 			} else {
 				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			}
+		},
+		cellSlot(key: string): string {
+			return formatCellSlot(key);
 		}
 	}
 });
