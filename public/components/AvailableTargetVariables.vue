@@ -9,7 +9,8 @@
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
 			:summaries="summaries"
-			:html="html">
+			:html="html"
+			:logActivity="PROBLEM_DEFINITION">
 		</variable-facets>
 	</div>
 </template>

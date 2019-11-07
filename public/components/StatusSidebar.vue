@@ -47,12 +47,6 @@ const STATUS_TYPES = [
 	DatasetPendingRequestType.JOIN_SUGGESTION,
 ];
 
-const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
-	[DatasetPendingRequestType.VARIABLE_RANKING, Feature.RANK_FEATURES],
-	[DatasetPendingRequestType.GEOCODING, Feature.GEOCODE_FEATURES],
-	[DatasetPendingRequestType.JOIN_SUGGESTION, Feature.JOIN_DATASETS]
-]);
-
 export default Vue.extend({
 	name: 'status-sidebar',
 	computed: {
@@ -105,7 +99,6 @@ export default Vue.extend({
 		},
 		onStatusIconClick(iconIndex) {
 			const statusType = STATUS_TYPES[iconIndex];
-			appActions.logUserEvent(this.$store, {feature: STATUS_USER_EVENT[statusType], activity: Activity.DATA_PREPARATION});
 			appActions.openStatusPanelWithContentType(this.$store, statusType);
 		},
 	},

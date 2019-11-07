@@ -49,6 +49,13 @@ import { actions as datasetActions, getters as datasetGetters } from '../store/d
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
 import { StatusPanelState, StatusPanelContentType } from '../store/app';
+import { Feature, Activity } from '../util/userEvents';
+
+const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
+	[DatasetPendingRequestType.VARIABLE_RANKING, Feature.RANK_FEATURES],
+	[DatasetPendingRequestType.GEOCODING, Feature.GEOCODE_FEATURES],
+	[DatasetPendingRequestType.JOIN_SUGGESTION, Feature.JOIN_DATASETS]
+]);
 
 export default Vue.extend({
 	name: 'status-panel',
@@ -152,6 +159,8 @@ export default Vue.extend({
 					break;
 				default:
 			}
+			const status = STATUS_USER_EVENT.get(this.statusType);
+			appActions.logUserEvent(this.$store, {feature: status, activity: Activity.DATA_PREPARATION});
 		},
 		clearData() {
 			if (this.requestData) {

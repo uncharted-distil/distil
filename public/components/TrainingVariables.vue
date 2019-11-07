@@ -8,6 +8,7 @@
 			enable-search
 			enable-highlighting
 			enable-type-change
+			:log-activity="logActivity"
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
 			:summaries="trainingVariableSummaries"
@@ -49,6 +50,12 @@ export default Vue.extend({
 
 	components: {
 		VariableFacets
+	},
+
+	data() {
+		return {
+			logActivity: Activity.DATA_PREPARATION
+		};
 	},
 
 	computed: {

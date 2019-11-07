@@ -3,7 +3,9 @@
 		<variable-facets class="result-target-summary"
 			enable-highlighting
 			:summaries="summaries"
-			:instance-name="instanceName"></variable-facets>
+			:instance-name="instanceName"
+			:log-activity="logActivity">
+		</variable-facets>
 	</div>
 </template>
 
@@ -18,6 +20,7 @@ import { updateHighlight, clearHighlight } from '../util/highlights';
 import { RESULT_TARGET_VAR_INSTANCE } from '../store/route/index';
 import { Variable, VariableSummary, Highlight, RowSelection } from '../store/dataset/index';
 import { isNumericType, TIMESERIES_TYPE } from '../util/types';
+import { Activity } from '../util/userEvents';
 
 export default Vue.extend({
 	name: 'result-target-variable',
@@ -67,7 +70,8 @@ export default Vue.extend({
 
 	data() {
 		return {
-			hasDefaultedAlready: false
+			hasDefaultedAlready: false,
+			logActivity: Activity.MODEL_SELECTION
 		};
 	},
 
