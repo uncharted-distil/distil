@@ -146,7 +146,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 
 	err = Rank(latestSchemaOutput, index, dataset, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to rank field importance")
+		log.Errorf("unable to rank field importance: %v", err)
 	}
 	log.Infof("finished ranking the dataset")
 
