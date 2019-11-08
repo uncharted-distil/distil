@@ -517,9 +517,6 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		bs := hasher.Sum(nil)
 		resultID := fmt.Sprintf("%x", bs)
 
-		// persist results
-		s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID, dataset, solutionID, fittedSolutionID, resultID, resultURI)
-
 		// explain the pipeline
 		featureWeights, err := s.explainOutput(client, solutionID, resultURI, searchRequest, datasetURITrain, datasetURITest, variables)
 		if err != nil {
@@ -532,6 +529,9 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 				return
 			}
 		}
+
+		// persist results
+		s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID, dataset, solutionID, fittedSolutionID, resultID, resultURI)
 	}
 }
 
