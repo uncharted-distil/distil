@@ -91,11 +91,11 @@
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-compute"
-  branch = "master"
+  branch = "log-solution-api"
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-ingest"
-  branch = "master"
+  branch = "log-solution-api"
 
 [[constraint]]
   name = "github.com/unchartedsoftware/plog"
