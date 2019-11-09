@@ -124,7 +124,7 @@ func ProblemDiscoveryHandler(ctorData api.DataStorageCtor, ctorMeta api.Metadata
 		req := &compute.SolutionRequestDiscovery{
 			Dataset:          dataset,
 			DatasetInput:     dataset,
-			TargetFeature:    target,
+			TargetFeature:    targetVar,
 			AllFeatures:      ds.Metadata.Variables,
 			SelectedFeatures: filterParams.Variables,
 			SourceURI:        problemDir,
