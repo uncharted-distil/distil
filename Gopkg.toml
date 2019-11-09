@@ -91,11 +91,11 @@
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-compute"
-  branch = "add-grouping-compose"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/uncharted-distil/distil-ingest"
-  branch = "add-grouping-compose"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/unchartedsoftware/plog"
