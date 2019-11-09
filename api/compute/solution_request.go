@@ -289,10 +289,16 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 		}
 	}
 
+	// find the target variable instance by name
+	targetVariable, err := findVariable(s.TargetFeature, featureVariables)
+	if err != nil {
+		return nil, err
+	}
+
 	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc,
 		&description.UserDatasetDescription{
 			AllFeatures:      featureVariables,
-			TargetFeature:    s.TargetFeature,
+			TargetFeature:    targetVariable,
 			SelectedFeatures: s.Filters.Variables,
 			Filters:          s.Filters.Filters,
 		}, augments)
@@ -792,10 +798,16 @@ func CreateSearchSolutionRequest(request *SolutionRequestDiscovery, skipPreproce
 			}
 		}
 
+		// find the variable instance by name
+		targetVariable, err := findVariable(request.TargetFeature, request.AllFeatures)
+		if err != nil {
+			return nil, err
+		}
+
 		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc,
 			&description.UserDatasetDescription{
 				AllFeatures:      request.AllFeatures,
-				TargetFeature:    request.TargetFeature,
+				TargetFeature:    targetVariable,
 				SelectedFeatures: request.SelectedFeatures,
 				Filters:          nil,
 			}, augments)
@@ -843,4 +855,18 @@ func getColumnIndex(variable *model.Variable, selectedVariables []string) int {
 
 func isTA2Field(distilRole string) bool {
 	return ta2RoleMap[distilRole]
+}
+
+func findVariable(variableName string, variables []*model.Variable) (*model.Variable, error) {
+	// extract the variable instance from its name
+	var variable *model.Variable
+	for _, v := range variables {
+		if v.Name == variableName {
+			variable = v
+		}
+	}
+	if variable == nil {
+		return nil, errors.Errorf("can't find target variable instance %s", variableName)
+	}
+	return variable, nil
 }
