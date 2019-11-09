@@ -311,16 +311,10 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 		}
 	}
 
-	// find the target variable instance by name
-	targetVariable, err := findVariable(s.TargetFeature, featureVariables)
-	if err != nil {
-		return nil, err
-	}
-
 	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc,
 		&description.UserDatasetDescription{
 			AllFeatures:      featureVariables,
-			TargetFeature:    targetVariable,
+			TargetFeature:    s.TargetFeature,
 			SelectedFeatures: s.Filters.Variables,
 			Filters:          s.Filters.Filters,
 		}, augments)
@@ -819,16 +813,10 @@ func CreateSearchSolutionRequest(request *SolutionRequestDiscovery, skipPreproce
 			}
 		}
 
-		// find the variable instance by name
-		targetVariable, err := findVariable(request.TargetFeature, request.AllFeatures)
-		if err != nil {
-			return nil, err
-		}
-
 		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc,
 			&description.UserDatasetDescription{
 				AllFeatures:      request.AllFeatures,
-				TargetFeature:    targetVariable,
+				TargetFeature:    request.TargetFeature,
 				SelectedFeatures: request.SelectedFeatures,
 				Filters:          nil,
 			}, augments)
