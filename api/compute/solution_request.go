@@ -620,7 +620,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	// Timeseries are grouped entries and we want to use the Y Col from the group as the target
 	// rather than the group itself, and the X col as the timestamp variable
-	targetVarName := targetVariable.Name
 	var groupingTargetVariable = targetVariable
 	if targetVariable.Grouping != nil && model.IsTimeSeries(targetVariable.Grouping.Type) {
 		// filter list needs to include all the individual grouping components
@@ -631,7 +630,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		s.Filters.AddVariable(targetVariable.Grouping.Properties.YCol)
 
 		// extract the time series value column
-		targetVarName = targetVariable.Grouping.Properties.YCol
+		targetVarName := targetVariable.Grouping.Properties.YCol
 		targetVariable, err = metaStorage.FetchVariable(s.Dataset, targetVarName)
 		if err != nil {
 			return err
