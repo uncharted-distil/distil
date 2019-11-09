@@ -88,7 +88,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	discoveryLogger, err := env.InitializeLog("systemLog.csv", &config)
+	// initialize the user event logger - records user interactions with the system in a CSV file for post-run
+	// analysis
+	discoveryLogger, err := env.InitializeLog("event-"+util.GenerateTimeFileNameStr()+".csv", &config)
 	if err != nil {
 		log.Errorf("%+v", err)
 		os.Exit(1)
@@ -327,6 +329,7 @@ func main() {
 	registerRoutePost(mux, "/distil/join", routes.JoinHandler(esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:invert", routes.TimeseriesHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries-forecast/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:result-uuid", routes.TimeseriesForecastHandler(pgDataStorageCtor, pgSolutionStorageCtor))
+	registerRoutePost(mux, "/distil/event", routes.UserEventHandler(discoveryLogger))
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:source/:file", routes.ImageHandler(esMetadataStorageCtor, &config))

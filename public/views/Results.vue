@@ -31,8 +31,10 @@
 					class="h-100"
 					enable-search
 					enable-highlighting
+					model-selection
 					instance-name="resultTrainingVars"
-					:summaries="trainingSummaries">
+					:summaries="trainingSummaries"
+					:log-activity="logActivity">
 				</variable-facets>
 			</div>
 
@@ -56,6 +58,7 @@ import { actions as viewActions } from '../store/view/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { getters as resultGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
+import { Feature, Activity } from '../util/userEvents';
 
 export default Vue.extend({
 	name: 'results-view',
@@ -65,6 +68,12 @@ export default Vue.extend({
 		ResultTargetVariable,
 		ResultsComparison,
 		ResultSummaries
+	},
+
+	data() {
+		return {
+			logActivity: Activity.MODEL_SELECTION
+		};
 	},
 
 	computed: {

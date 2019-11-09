@@ -23,6 +23,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
@@ -201,4 +203,13 @@ func ReadCSVFile(filename string, hasHeader bool) ([][]string, error) {
 	}
 
 	return lines, nil
+}
+
+// GenerateTimeFileNameStr generates an ISO 8601 representation of current time, with
+// any colons and dashes removed to that it can be used as part of a filename.
+func GenerateTimeFileNameStr() string {
+	timeStr := time.Now().Format(time.RFC3339)
+	timeStr = strings.ReplaceAll(timeStr, ":", "")
+	timeStr = strings.ReplaceAll(timeStr, "-", "")
+	return timeStr
 }

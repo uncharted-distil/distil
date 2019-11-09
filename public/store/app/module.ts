@@ -34,6 +34,7 @@ export const actions = {
 	fetchConfig: dispatch(moduleActions.fetchConfig),
 	openStatusPanelWithContentType: dispatch(moduleActions.openStatusPanelWithContentType),
 	closeStatusPanel: dispatch(moduleActions.closeStatusPanel),
+	logUserEvent: dispatch(moduleActions.logUserEvent)
 };
 
 // type mutators

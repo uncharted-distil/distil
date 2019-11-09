@@ -116,6 +116,8 @@ import { getters as solutionGetters } from '../store/solutions/module';
 import { getSolutionIndex, getSolutionById, isTopSolutionByScore } from '../util/solutions';
 import { overlayRouteEntry } from '../util/routes';
 import { updateHighlight, clearHighlight } from '../util/highlights';
+import { actions as appActions } from '../store/app/module';
+import { Feature, Activity } from '../util/userEvents';
 import _ from 'lodash';
 
 export default Vue.extend({
@@ -271,6 +273,7 @@ export default Vue.extend({
 			} else {
 				clearHighlight(this.$router);
 			}
+			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_HIGHLIGHT, activity: Activity.MODEL_SELECTION});
 		},
 
 		onCorrectnessCategoricalClick(context: string, key: string, value: string, dataset: string) {
@@ -285,6 +288,7 @@ export default Vue.extend({
 			} else {
 				clearHighlight(this.$router);
 			}
+			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_HIGHLIGHT, activity: Activity.MODEL_SELECTION});
 		},
 
 		onResultNumericalClick(context: string, key: string, value: { from: number, to: number }, dataset: string) {
@@ -305,6 +309,7 @@ export default Vue.extend({
 				key: key,
 				value: value
 			});
+			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_HIGHLIGHT, activity: Activity.MODEL_SELECTION});
 			this.$emit('range-change', key, value);
 		},
 
@@ -326,11 +331,13 @@ export default Vue.extend({
 				key: key,
 				value: value
 			});
+			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_HIGHLIGHT, activity: Activity.MODEL_SELECTION});
 			this.$emit('range-change', key, value);
 		},
 
 		onClick() {
 			if (this.predictedSummary && this.routeSolutionId !== this.solutionId) {
+				appActions.logUserEvent(this.$store, {feature: Feature.SELECT_MODEL, activity: Activity.MODEL_SELECTION});
 				const routeEntry = overlayRouteEntry(this.$route, {
 					solutionId: this.solutionId,
 					highlights: null

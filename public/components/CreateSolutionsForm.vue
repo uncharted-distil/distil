@@ -86,6 +86,7 @@ import { Solution, NUM_SOLUTIONS } from '../store/solutions/index';
 import { Variable, TaskTypes, TaskSubTypes } from '../store/dataset/index';
 import { TIMESERIES_TYPE } from '../util/types';
 import { FilterParams } from '../util/filters';
+import { Feature, Activity } from '../util/userEvents';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -168,6 +169,9 @@ export default Vue.extend({
 	methods: {
 		// create button handler
 		create() {
+
+			appActions.logUserEvent(this.$store, {feature: Feature.CREATE_MODEL, activity: Activity.DATA_PREPARATION});
+
 			// flag as pending
 			this.pending = true;
 			// dispatch action that triggers request send to server

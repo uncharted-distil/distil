@@ -4,6 +4,7 @@ import { DistilState } from '../store';
 import { ActionContext } from 'vuex';
 import { mutations } from './module';
 import { FilterParams } from '../../util/filters';
+import { Feature, Activity } from '../../util/userEvents';
 
 export type AppContext = ActionContext<AppState, DistilState>;
 
@@ -72,4 +73,8 @@ export const actions = {
 		mutations.setStatusPanelContentType(context, undefined);
 		mutations.closeStatusPanel(context);
 	},
+
+	logUserEvent(context: AppContext, args: { feature: Feature, activity: Activity }) {
+		return axios.post(`distil/event`, args);
+	}
 };

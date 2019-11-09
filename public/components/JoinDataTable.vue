@@ -9,11 +9,11 @@
 			@sort-changed="onSortChanged"
 			@head-clicked="onColumnClicked">
 
-			<template v-for="imageField in imageFields" :slot="imageField" slot-scope="data">
+			<template v-for="imageField in imageFields" v-slot:[cellSlot(imageField)]="data">
 				<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
 			</template>
 
-			<template v-for="timeseriesGrouping in timeseriesGroupings" :slot="timeseriesGrouping.idCol" slot-scope="data">
+			<template v-for="timeseriesGrouping in timeseriesGroupings" v-slot:[cellSlot(timeseriesGrouping.idCol)]="data">
 
 				<sparkline-preview :key="timeseriesGrouping.idCol"
 					:dataset="dataset"
@@ -41,7 +41,7 @@ import { TableColumn, TableRow, D3M_INDEX_FIELD, Grouping, Variable } from '../s
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { IMAGE_TYPE, TIMESERIES_TYPE, isJoinable } from '../util/types';
-import { getTimeseriesGroupingsFromFields } from '../util/data';
+import { getTimeseriesGroupingsFromFields, formatFieldsAsArray, formatCellSlot } from '../util/data';
 
 function findSuggestionIndex(columnSuggestions: string[], colName: string): number {
 	return columnSuggestions.findIndex(col => {
@@ -153,8 +153,8 @@ export default Vue.extend({
 			return emphasized;
 		},
 
-		emphasizedFields(): Dictionary<TableColumn> {
-			return this.isBaseJoinTable ? this.emphasizedBaseTableFields : this.emphasizedJoinTableFields;
+		emphasizedFields(): TableColumn[] {
+			return formatFieldsAsArray(this.isBaseJoinTable ? this.emphasizedBaseTableFields : this.emphasizedJoinTableFields);
 		},
 
 		imageFields(): string[] {
@@ -190,6 +190,9 @@ export default Vue.extend({
 				this.$emit('col-clicked', field);
 			}
 		},
+		cellSlot(key: string): string {
+			return formatCellSlot(key);
+		}
 	},
 });
 </script>

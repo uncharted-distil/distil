@@ -42,6 +42,8 @@ import { overlayRouteEntry } from '../util/routes';
 import { Extrema } from '../store/dataset/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
+import { actions as appActions } from '../store/app/module';
+import { Feature, Activity } from '../util/userEvents';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 
@@ -171,6 +173,9 @@ export default Vue.extend({
 		updateThreshold(min: number, max: number) {
 			this.min = min;
 			this.max = max;
+
+			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_ERROR_THRESHOLD, activity: Activity.MODEL_SELECTION});
+
 			const entry = overlayRouteEntry(this.$route, {
 				residualThresholdMin: `${this.denormalize(min)}`,
 				residualThresholdMax: `${this.denormalize(max)}`

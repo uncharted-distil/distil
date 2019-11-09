@@ -226,6 +226,14 @@ export function createEmptyTableData(): TableData {
 	};
 }
 
+export function formatCellSlot(key: string): string {
+	return `cell(${key})`;
+}
+
+export function formatFieldsAsArray(fields: Dictionary<TableColumn>): TableColumn[] {
+	return _.map(fields, field => field);
+}
+
 export function createPendingSummary(key: string, label: string, description: string, dataset: string, solutionId?: string): VariableSummary {
 	return {
 		key: key,

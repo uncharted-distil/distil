@@ -20,7 +20,7 @@
         </div>
     </div>
 </div>
-    
+
 </template>
 
 <script lang="ts">
@@ -38,6 +38,8 @@ import {
 	JoinSuggestionPendingRequest,
 	JoinDatasetImportPendingRequest,
 } from '../store/dataset/index';
+import { Feature, Activity } from '../util/userEvents';
+import { Dictionary } from 'vue-router/types/router';
 
 const STATUS_TYPES = [
 	DatasetPendingRequestType.VARIABLE_RANKING,

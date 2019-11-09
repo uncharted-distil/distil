@@ -9,7 +9,8 @@
 			:instance-name="instanceName"
 			:rows-per-page="numRowsPerPage"
 			:summaries="summaries"
-			:html="html">
+			:html="html"
+			:logActivity="PROBLEM_DEFINITION">
 		</variable-facets>
 	</div>
 </template>
@@ -25,6 +26,8 @@ import VariableFacets from '../components/VariableFacets.vue';
 import { Grouping, Variable, VariableSummary } from '../store/dataset/index';
 import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
 import { Group } from '../util/facets';
+import { actions as appActions } from '../store/app/module';
+import { Feature, Activity } from '../util/userEvents';
 import Vue from 'vue';
 
 // 9 so it makes a nice clean grid
@@ -103,6 +106,9 @@ export default Vue.extend({
 								training: training.join(','),
 								task: response.data.task
 							};
+
+							appActions.logUserEvent(this.$store, {feature: Feature.SELECT_TARGET, activity: Activity.PROBLEM_DEFINITIION});
+
 							const entry = createRouteEntry(SELECT_TRAINING_ROUTE, routeArgs);
 							this.$router.push(entry);
 						})
