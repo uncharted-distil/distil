@@ -92,7 +92,7 @@ func (l *DiscoveryLogger) InitializeLog(filename string) (*DiscoveryLogger, erro
 		return nil, errors.Wrap(err, "unable to initialize the activity log")
 	}
 
-	l.csvFilename = filename
+	l.csvFilename = csvFilename
 
 	return l, nil
 }
