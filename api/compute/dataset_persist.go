@@ -377,7 +377,7 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	testSchemaFile := path.Join(testFolder, params.SchemaFile)
 
 	log.Infof("checking folders `%s` & `%s` to see if the dataset has been previously split", trainFolder, testFolder)
-	if fileExists(trainSchemaFile) && fileExists(testSchemaFile) {
+	if util.FileExists(trainSchemaFile) && util.FileExists(testSchemaFile) {
 		log.Infof("dataset '%s' already split", params.DatasetName)
 		return trainSchemaFile, testSchemaFile, nil
 	}

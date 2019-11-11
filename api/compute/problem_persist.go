@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -28,6 +27,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -107,17 +107,6 @@ type ProblemPersistExpectedOutput struct {
 	PredictionsFile string `json:"predictionsFile"`
 }
 
-func fileExists(filename string) bool {
-	_, err := os.Stat(filename)
-	if err == nil {
-		return true
-	}
-	if os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
 // DefaultMetrics returns default metric for a given task.
 func DefaultMetrics(taskType string) []string {
 	return []string{compute.GetDefaultTaskMetricTA3(taskType)}
@@ -152,7 +141,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 	// if so
 	pPath := path.Join(datasetDir, problemIDHash)
 	pFilePath := path.Join(pPath, D3MProblem)
-	if pathExists(pPath) && fileExists(pFilePath) {
+	if pathExists(pPath) && util.FileExists(pFilePath) {
 		log.Infof("Found stored problem for %s with hash %s", dataset, problemIDHash)
 		return nil, pPath, nil
 	}
