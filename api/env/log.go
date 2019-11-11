@@ -68,17 +68,27 @@ var (
 // DiscoveryLogger logs problem discovery information.
 type DiscoveryLogger struct {
 	csvFilename string
+	config      *Config
+}
+
+// NewDiscoveryLogger creates and initializes a discovery logger.
+func NewDiscoveryLogger(filename string, config *Config) (*DiscoveryLogger, error) {
+	logger = &DiscoveryLogger{
+		config: config,
+	}
+
+	return logger.InitializeLog(filename)
 }
 
 // InitializeLog initializes the discovery log.
-func InitializeLog(filename string, config *Config) (*DiscoveryLogger, error) {
+func (l *DiscoveryLogger) InitializeLog(filename string) (*DiscoveryLogger, error) {
 
 	if logger != nil {
 		return nil, errors.Errorf("d3m system log already initialized")
 	}
 
 	// write the logs to the output log directory
-	csvFilename := path.Join(config.D3MOutputDir, "logs", filename)
+	csvFilename := path.Join(l.config.D3MOutputDir, "logs", filename)
 
 	// initialize the log with the header
 	err := util.WriteFileWithDirs(csvFilename, []byte("timestamp,feature_id,type,activity_l1,activity_l2,other\n"), os.ModePerm)
@@ -86,11 +96,9 @@ func InitializeLog(filename string, config *Config) (*DiscoveryLogger, error) {
 		return nil, errors.Wrap(err, "unable to initialize the activity log")
 	}
 
-	logger = &DiscoveryLogger{
-		csvFilename: csvFilename,
-	}
+	l.csvFilename = filename
 
-	return logger, nil
+	return l, nil
 }
 
 // LogDatamartActionGlobal logs a datamart fuction call to the discovery log.

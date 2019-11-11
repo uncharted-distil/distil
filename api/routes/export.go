@@ -22,12 +22,14 @@ import (
 	"goji.io/pat"
 
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil/api/env"
+	"github.com/uncharted-distil/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
 )
 
 // ExportHandler exports the caller supplied solution by calling through to the compute
 // server export functionality.
-func ExportHandler(client *compute.Client, exportPath string) func(http.ResponseWriter, *http.Request) {
+func ExportHandler(client *compute.Client, exportPath string, logger *env.DiscoveryLogger) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		solutionID := pat.Param(r, "solution-id")
@@ -38,5 +40,7 @@ func ExportHandler(client *compute.Client, exportPath string) func(http.Response
 		} else {
 			log.Infof("Completed export request for %s", solutionID)
 		}
+
+		logger.InitializeLog("event-" + util.GenerateTimeFileNameStr() + ".csv")
 	}
 }
