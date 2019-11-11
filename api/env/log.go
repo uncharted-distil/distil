@@ -83,10 +83,6 @@ func NewDiscoveryLogger(filename string, config *Config) (*DiscoveryLogger, erro
 // InitializeLog initializes the discovery log.
 func (l *DiscoveryLogger) InitializeLog(filename string) (*DiscoveryLogger, error) {
 
-	if logger != nil {
-		return nil, errors.Errorf("d3m system log already initialized")
-	}
-
 	// write the logs to the output log directory
 	csvFilename := path.Join(l.config.D3MOutputDir, "logs", filename)
 
