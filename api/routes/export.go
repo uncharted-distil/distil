@@ -41,7 +41,7 @@ func ExportHandler(client *compute.Client, exportPath string, logger *env.Discov
 			log.Infof("Completed export request for %s", solutionID)
 		}
 
-		err = logger.InitializeLog("event-" + util.GenerateTimeFileNameStr() + ".csv")
+		_, err = logger.InitializeLog("event-" + util.GenerateTimeFileNameStr() + ".csv")
 		if err != nil {
 			log.Infof("error initializing log after export: %v", err)
 		}
