@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/util"
 )
@@ -128,8 +129,16 @@ func (l *DiscoveryLogger) logAction(feature string, typ string, activity string,
 
 	mu.Lock()
 	defer mu.Unlock()
-	f, _ := os.OpenFile(l.csvFilename, os.O_WRONLY|os.O_APPEND, os.ModePerm)
+	f, err := os.OpenFile(l.csvFilename, os.O_WRONLY|os.O_APPEND, os.ModePerm)
+	if err != nil {
+		log.Errorf("unable to open discovery log: %v", err)
+	}
 	w := csv.NewWriter(f)
-	w.Write([]string{timestamp, feature, typ, activity, subActivity, string(paramsString)})
+
+	err = w.Write([]string{timestamp, feature, typ, activity, subActivity, string(paramsString)})
+	if err != nil {
+		log.Errorf("unable to log to discovery log: %v", err)
+	}
+
 	w.Flush()
 }
