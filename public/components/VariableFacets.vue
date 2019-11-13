@@ -220,7 +220,11 @@ export default Vue.extend({
 				value: value
 			});
 			this.$emit('range-change', key, value);
-			appActions.logUserEvent(this.$store, { feature: Feature.CHANGE_HIGHLIGHT, activity: this.logActivity });
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.CHANGE_HIGHLIGHT,
+				activity: this.logActivity,
+				details: { key: key, value: value }
+			});
 		},
 
 		onFacetClick(context: string, key: string, value: string, dataset: string) {
@@ -235,7 +239,11 @@ export default Vue.extend({
 				} else {
 					clearHighlight(this.$router);
 				}
-				appActions.logUserEvent(this.$store, { feature: Feature.CHANGE_HIGHLIGHT, activity: this.logActivity });
+				appActions.logUserEvent(this.$store, {
+					feature: Feature.CHANGE_HIGHLIGHT,
+					activity: this.logActivity,
+					details: { key: key, value: value }
+				});
 			}
 			this.$emit('facet-click', context, key, value);
 		},

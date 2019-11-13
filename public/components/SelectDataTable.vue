@@ -12,7 +12,7 @@
 			<template v-for="computedField in computedFields" v-slot:[cellSlot(computedField)]="data">
 				<span :key="computedField" :title="data.value.value">{{ data.value.value }} <icon-base icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base></span>
 			</template>
- 
+
 			<template v-for="imageField in imageFields" v-slot:[cellSlot(imageField)]="data">
 				<image-preview :key="imageField" :image-url="data.item[imageField]"></image-preview>
 			</template>
@@ -148,12 +148,20 @@ export default Vue.extend({
 			});
 		},
 		onRowClick(row: TableRow) {
-
-			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_SELECTION, activity: Activity.DATA_PREPARATION});
-
 			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
+
+				appActions.logUserEvent(this.$store, {
+					feature: Feature.CHANGE_SELECTION,
+					activity: Activity.DATA_PREPARATION,
+					details: { select: row[D3M_INDEX_FIELD]}
+				});
 				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			} else {
+				appActions.logUserEvent(this.$store, {
+					feature: Feature.CHANGE_SELECTION,
+					activity: Activity.DATA_PREPARATION,
+					details: { deselect: row[D3M_INDEX_FIELD]}
+				});
 				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 			}
 		},

@@ -170,7 +170,11 @@ export default Vue.extend({
 		// create button handler
 		create() {
 
-			appActions.logUserEvent(this.$store, {feature: Feature.CREATE_MODEL, activity: Activity.DATA_PREPARATION});
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.CREATE_MODEL,
+				activity: Activity.DATA_PREPARATION,
+				details: {}
+			});
 
 			// flag as pending
 			this.pending = true;

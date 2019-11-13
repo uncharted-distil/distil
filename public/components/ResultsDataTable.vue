@@ -234,10 +234,21 @@ export default Vue.extend({
 		onRowClick(row: TableRow) {
 			if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
 				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+
+				appActions.logUserEvent(this.$store, {
+					feature: Feature.CHANGE_HIGHLIGHT,
+					activity: Activity.MODEL_SELECTION,
+					details: { selected: row[D3M_INDEX_FIELD]}
+				});
 			} else {
 				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
+
+				appActions.logUserEvent(this.$store, {
+					feature: Feature.CHANGE_HIGHLIGHT,
+					activity: Activity.MODEL_SELECTION,
+					details: { deselected: row[D3M_INDEX_FIELD]}
+				});
 			}
-			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_HIGHLIGHT, activity: Activity.MODEL_SELECTION});
 		},
 
 		normalizeError(error: number): number {

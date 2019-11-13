@@ -113,7 +113,11 @@ export default Vue.extend({
 	methods: {
 
 		onExport() {
-			appActions.logUserEvent(this.$store, {feature: Feature.EXPORT_MODEL, activity: Activity.MODEL_SELECTION});
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.EXPORT_MODEL,
+				activity: Activity.MODEL_SELECTION,
+				details: { solution: this.activeSolution.solutionId }
+			});
 			appActions.exportSolution(this.$store, {
 				solutionId: this.activeSolution.solutionId
 			}).then(err => {

@@ -74,7 +74,7 @@ export const actions = {
 		mutations.closeStatusPanel(context);
 	},
 
-	logUserEvent(context: AppContext, args: { feature: Feature, activity: Activity }) {
+	logUserEvent(context: AppContext, args: { feature: Feature, activity: Activity, details: any }) {
 		return axios.post(`distil/event`, args);
 	}
 };

@@ -107,7 +107,11 @@ export default Vue.extend({
 								task: response.data.task
 							};
 
-							appActions.logUserEvent(this.$store, {feature: Feature.SELECT_TARGET, activity: Activity.PROBLEM_DEFINITIION});
+							appActions.logUserEvent(this.$store, {
+								feature: Feature.SELECT_TARGET,
+								activity: Activity.PROBLEM_DEFINITIION,
+								details: { target: group.colName }
+							});
 
 							const entry = createRouteEntry(SELECT_TRAINING_ROUTE, routeArgs);
 							this.$router.push(entry);

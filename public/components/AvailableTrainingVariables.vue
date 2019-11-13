@@ -79,7 +79,11 @@ export default Vue.extend({
 				trainingElem.addEventListener('click', () => {
 
 					// log UI event on server
-					appActions.logUserEvent(this.$store, { feature: Feature.ADD_FEATURE, activity: Activity.DATA_PREPARATION});
+					appActions.logUserEvent(this.$store, {
+						feature: Feature.ADD_FEATURE,
+						activity: Activity.DATA_PREPARATION,
+						details: { feature: group.colName }
+					});
 
 					// update route with training data
 					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
@@ -98,7 +102,11 @@ export default Vue.extend({
 		addAll() {
 
 			// log UI event on server
-			appActions.logUserEvent(this.$store, { feature: Feature.ADD_ALL_FEATURES, activity: Activity.DATA_PREPARATION});
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.ADD_ALL_FEATURES,
+				activity: Activity.DATA_PREPARATION,
+				details: {}
+			});
 
 			const facets = this.$refs.facets as any;
 			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);

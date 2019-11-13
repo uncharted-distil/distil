@@ -134,7 +134,11 @@ export default Vue.extend({
 			});
 			this.$router.push(entry);
 			this.addRecentDataset(this.dataset.id);
-			appActions.logUserEvent(this.$store, { feature: Feature.SELECT_DATASET, activity: Activity.PROBLEM_DEFINITIION });
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.SELECT_DATASET,
+				activity: Activity.PROBLEM_DEFINITIION,
+				details: { dataset: this.dataset.id }
+			});
 		},
 		toggleExpansion() {
 			this.expanded = !this.expanded;

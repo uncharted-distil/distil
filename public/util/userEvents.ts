@@ -1,3 +1,4 @@
+// Feature and Activity types used in the user event reporting logs
 export enum Feature {
 	SEARCH_DATASETS = 'SEARCH_DATASETS',
 	SELECT_DATASET = 'SELECT_DATASET',

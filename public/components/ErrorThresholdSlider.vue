@@ -174,8 +174,6 @@ export default Vue.extend({
 			this.min = min;
 			this.max = max;
 
-			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_ERROR_THRESHOLD, activity: Activity.MODEL_SELECTION});
-
 			const entry = overlayRouteEntry(this.$route, {
 				residualThresholdMin: `${this.denormalize(min)}`,
 				residualThresholdMax: `${this.denormalize(max)}`
@@ -186,6 +184,13 @@ export default Vue.extend({
 		onSlide(value: number[]) {
 			this.hasModified = true;
 			const newValues = this.forceSymmetric(value);
+
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.CHANGE_ERROR_THRESHOLD,
+				activity: Activity.MODEL_SELECTION,
+				details: { min: this.min, max: this.max }
+			});
+
 			this.updateThreshold(newValues[0], newValues[1]);
 		}
 	},

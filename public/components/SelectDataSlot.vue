@@ -214,7 +214,11 @@ export default Vue.extend({
 				clearRowSelection(this.$router);
 			}
 
-			appActions.logUserEvent(this.$store, {feature: Feature.FILTER_DATA, activity: Activity.DATA_PREPARATION});
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.FILTER_DATA,
+				activity: Activity.DATA_PREPARATION,
+				details: {}
+			});
 		},
 		onReincludeClick() {
 			let filter = null;
@@ -232,7 +236,11 @@ export default Vue.extend({
 				clearRowSelection(this.$router);
 			}
 
-			appActions.logUserEvent(this.$store, {feature: Feature.FILTER_DATA, activity: Activity.DATA_PREPARATION});
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.FILTER_DATA,
+				activity: Activity.DATA_PREPARATION,
+				details: {}
+			});
 		},
 		setIncludedActive() {
 			const entry = overlayRouteEntry(this.$route, {

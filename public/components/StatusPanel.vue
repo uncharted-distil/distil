@@ -160,7 +160,11 @@ export default Vue.extend({
 				default:
 			}
 			const status = STATUS_USER_EVENT.get(this.statusType);
-			appActions.logUserEvent(this.$store, {feature: status, activity: Activity.DATA_PREPARATION});
+			appActions.logUserEvent(this.$store, {
+				feature: status,
+				activity: Activity.DATA_PREPARATION,
+				details: {}
+			});
 		},
 		clearData() {
 			if (this.requestData) {

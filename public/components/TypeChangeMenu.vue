@@ -54,6 +54,8 @@ import { hasFilterInRoute } from '../util/filters';
 import { createRouteEntry } from '../util/routes';
 import { GROUPING_ROUTE } from '../store/route';
 import { getComposedVariableKey } from '../util/data';
+import { actions as appActions } from '../store/app/module';
+import { Feature, Activity } from '../util/userEvents';
 
 const PROBABILITY_THRESHOLD = 0.8;
 
@@ -265,6 +267,12 @@ export default Vue.extend({
 			const type = suggestedType;
 			const field = this.field;
 			const dataset = this.dataset;
+
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.RETYPE_FEATURE,
+				activity: Activity.DATA_PREPARATION,
+				details: { from: this.type, to: type }
+			});
 
 			datasetActions.setVariableType(this.$store, {
 				dataset: dataset,

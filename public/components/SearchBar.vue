@@ -72,7 +72,11 @@ export default Vue.extend({
 				event.charCode === ENTER_KEYCODE ||
 				event.which === ENTER_KEYCODE) {
 				this.submitSearch();
-				appActions.logUserEvent(this.$store, {feature: Feature.SEARCH_DATASETS, activity: Activity.DATA_PREPARATION});
+				appActions.logUserEvent(this.$store, {
+					feature: Feature.SEARCH_DATASETS,
+					activity: Activity.DATA_PREPARATION,
+					details: { terms: this.terms }
+				});
 			}
 		},
 		submitSearch() {
