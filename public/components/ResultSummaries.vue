@@ -116,7 +116,10 @@ export default Vue.extend({
 			appActions.logUserEvent(this.$store, {
 				feature: Feature.EXPORT_MODEL,
 				activity: Activity.MODEL_SELECTION,
-				details: { solution: this.activeSolution.solutionId }
+				details: {
+					solution: this.activeSolution.solutionId,
+					score: this.activeSolution.scores.map( s => ({ metric: s.metric, value: s.value }))
+				}
 			});
 			appActions.exportSolution(this.$store, {
 				solutionId: this.activeSolution.solutionId
