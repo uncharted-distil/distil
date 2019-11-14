@@ -41,7 +41,7 @@ import { TableColumn, TableRow, D3M_INDEX_FIELD, Grouping, Variable } from '../s
 import { getters as routeGetters } from '../store/route/module';
 import { getters as datasetGetters } from '../store/dataset/module';
 import { IMAGE_TYPE, TIMESERIES_TYPE, isJoinable } from '../util/types';
-import { getTimeseriesGroupingsFromFields, formatFieldsAsArray, formatCellSlot } from '../util/data';
+import { getTimeseriesGroupingsFromFields, formatFieldsAsArray, formatSlot } from '../util/data';
 
 function findSuggestionIndex(columnSuggestions: string[], colName: string): number {
 	return columnSuggestions.findIndex(col => {
@@ -191,7 +191,7 @@ export default Vue.extend({
 			}
 		},
 		cellSlot(key: string): string {
-			return formatCellSlot(key);
+			return formatSlot(key, 'cell');
 		}
 	},
 });

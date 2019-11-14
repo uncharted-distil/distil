@@ -226,8 +226,22 @@ export function createEmptyTableData(): TableData {
 	};
 }
 
-export function formatCellSlot(key: string): string {
-	return `cell(${key})`;
+export function formatSlot(key: string, slotType: string): string {
+	return `${slotType}(${key})`;
+}
+
+export function getCellColorByWeight(weight: number, min: number, max: number): string {
+	if (!weight) {
+		return '';
+	}
+	const absMin = Math.abs(min);
+	const absMax = Math.abs(max);
+	const trueMax = Math.max(absMin, absMax);
+	const absoluteWeight = Math.abs(weight / trueMax);
+	const red = 255 - 128 * absoluteWeight;
+	const green = 255 - 64 * absoluteWeight;
+	const blue = 255;
+	return `background: rgb(${red}, ${green}, ${blue})`;
 }
 
 export function formatFieldsAsArray(fields: Dictionary<TableColumn>): TableColumn[] {
@@ -360,7 +374,11 @@ export function getTableDataItems(data: TableData): TableRow[] {
 			resultRow.forEach((colValue, colIndex) => {
 				const colName = data.columns[colIndex].key;
 				const colType = data.columns[colIndex].type;
-				row[colName] = formatValue(colValue.value, colType);
+				row[colName] = {};
+				row[colName].value = formatValue(colValue.value, colType);
+				if (colValue.weight !== null && colValue.weight !== undefined) {
+					row[colName].weight = colValue.weight;
+				}
 			});
 			row._key = rowIndex;
 			return row;
