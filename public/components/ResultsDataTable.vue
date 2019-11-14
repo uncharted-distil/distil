@@ -12,11 +12,11 @@
 			@sort-changed="onSortChanged">
 
 			<template v-for="computedField in computedFields" v-slot:[cellSlot(computedField)]="data">
-				<span :key="computedField" :title="data.value">{{ data.value }} <icon-base icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base></span>
+				<div :key="computedField" :title="data.value.value">{{ data.value.value }} <icon-base icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base></div>
 			</template>
 
-			<template v-slot:cell(predictedCol)="data">
-				{{target}}<sup>{{solutionIndex}}</sup>
+			<template v-slot:[headSlot(predictedCol)]="data">
+				<span>{{ data.label }}<sup>{{solutionIndex}}</sup></span>
 			</template>
 
 			<template v-for="imageField in imageFields" v-slot:[cellSlot(imageField)]="data">
@@ -35,26 +35,26 @@
 				</sparkline-preview>
 			</template>
 
-			<template v-slot:cell(errorCol)="data">
+			<template v-slot:[cellSlot(errorCol)]="data">
 				<!-- residual error -->
 				<div class="error-bar-container" v-if="isTargetNumerical">
-					<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.item[errorCol]), width: errorBarWidth(data.item[errorCol]), left: errorBarLeft(data.item[errorCol]) }"></div>
+					<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.value.value), width: errorBarWidth(data.value.value), left: errorBarLeft(data.value.value) }"></div>
 					<div class="error-bar-center"></div>
 				</div>
 
 				<!-- correctness error -->
 				<div v-if="isTargetCategorical">
-					<div v-if="data.item[predictedCol]==data.item[this.target]">
+					<div v-if="data.item[predictedCol].value==data.value.value">
 						Correct
 					</div>
-					<div v-if="data.item[predictedCol]!=data.item[this.target]">
+					<div v-if="data.item[predictedCol].value!=data.value.value">
 						Incorrect
 					</div>
 				</div>
 			</template>
 
 			<template v-slot:cell()="data">
-				<span :title="data.value">{{ data.value }}</span>
+				<div v-if="data.value.value.length > 0" :title="data.value.value" :style="cellColor(data.value.weight, data)">{{ data.value.value }}</div>
 			</template>
 		</b-table>
 	</fixed-header-table>
@@ -80,7 +80,7 @@ import { Solution } from '../store/solutions/index';
 import { Dictionary } from '../util/dict';
 import { getVarType, isTextType, IMAGE_TYPE, hasComputedVarPrefix } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
-import { getTimeseriesGroupingsFromFields, formatCellSlot, formatFieldsAsArray } from '../util/data';
+import { getTimeseriesGroupingsFromFields, formatSlot, formatFieldsAsArray, getCellColorByWeight } from '../util/data';
 
 export default Vue.extend({
 	name: 'results-data-table',
@@ -148,7 +148,7 @@ export default Vue.extend({
 		},
 
 		predictedCol(): string {
-			return this.solution ? `HEAD_${this.solution.predictedKey}` : '';
+			return this.solution ? `${this.solution.predictedKey}` : '';
 		},
 
 		errorCol(): string {
@@ -164,7 +164,9 @@ export default Vue.extend({
 		},
 
 		items(): TableRow[] {
-			return updateTableRowSelection(this.dataItems, this.rowSelection, this.instanceName);
+			const items = updateTableRowSelection(this.dataItems, this.rowSelection, this.instanceName);
+			console.log(items);
+			return items;
 		},
 
 		fields(): Dictionary<TableColumn> {
@@ -278,8 +280,18 @@ export default Vue.extend({
 				fixedHeaderTable.setScrollLeft(currentScrollLeft);
 			});
 		},
+
 		cellSlot(key: string): string {
-			return formatCellSlot(key);
+			return formatSlot(key, 'cell');
+		},
+
+		headSlot(key: string): string {
+			const hs = formatSlot(key, 'head');
+			return hs;
+		},
+
+		cellColor(weight: number): string {
+			return getCellColorByWeight(weight, 0, 1);
 		}
 	}
 
