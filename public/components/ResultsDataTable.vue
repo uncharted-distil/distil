@@ -164,9 +164,7 @@ export default Vue.extend({
 		},
 
 		items(): TableRow[] {
-			const items = updateTableRowSelection(this.dataItems, this.rowSelection, this.instanceName);
-			console.log(items);
-			return items;
+			return updateTableRowSelection(this.dataItems, this.rowSelection, this.instanceName);
 		},
 
 		fields(): Dictionary<TableColumn> {
@@ -219,7 +217,8 @@ export default Vue.extend({
 				return true;
 			}
 			return false;
-		}
+		},
+		
 	},
 
 	updated() {
