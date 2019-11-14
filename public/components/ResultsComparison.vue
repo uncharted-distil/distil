@@ -145,7 +145,6 @@ export default Vue.extend({
 			return resultsGetters.getResultDataNumRows(this.$store);
 		},
 
-
 		isForecasting(): boolean {
 			return routeGetters.getRouteTask(this.$store) === TaskTypes.TIME_SERIES_FORECASTING;
 		},
@@ -171,10 +170,13 @@ export default Vue.extend({
 		errorCount(dataColumn: TableRow[]): number {
 			return dataColumn.filter(item => {
 				if (this.regressionEnabled) {
+					if (!item[this.solution.errorKey]) {
+						return false;
+					}
 					const err = _.toNumber(item[this.solution.errorKey].value);
-					return err < this.residualThresholdMin || err > this.residualThresholdMax;
+					return item[this.solution.errorKey] && err < this.residualThresholdMin || err > this.residualThresholdMax;
 				} else {
-					return item[this.target].value !== item[this.solution.predictedKey].value;
+					return item[this.solution.predictedKey] && item[this.solution.predictedKey] && item[this.target].value !== item[this.solution.predictedKey].value;
 				}
 			}).length;
 		},
