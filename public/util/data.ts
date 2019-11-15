@@ -374,10 +374,14 @@ export function getTableDataItems(data: TableData): TableRow[] {
 			resultRow.forEach((colValue, colIndex) => {
 				const colName = data.columns[colIndex].key;
 				const colType = data.columns[colIndex].type;
-				row[colName] = {};
-				row[colName].value = formatValue(colValue.value, colType);
-				if (colValue.weight !== null && colValue.weight !== undefined) {
-					row[colName].weight = colValue.weight;
+				if (colName !== 'd3mIndex') {
+					row[colName] = {};
+					row[colName].value = formatValue(colValue.value, colType);
+					if (colValue.weight !== null && colValue.weight !== undefined) {
+						row[colName].weight = colValue.weight;
+					}
+				} else {
+					row[colName] = formatValue(colValue.value, colType);
 				}
 			});
 			row._key = rowIndex;
