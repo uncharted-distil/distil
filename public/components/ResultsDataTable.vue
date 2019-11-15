@@ -77,7 +77,7 @@ import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { getters as solutionGetters } from '../store/solutions/module';
 import { actions as appActions } from '../store/app/module';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 import { Solution } from '../store/solutions/index';
 import { Dictionary } from '../util/dict';
 import { getVarType, isTextType, IMAGE_TYPE, hasComputedVarPrefix } from '../util/types';
@@ -236,16 +236,18 @@ export default Vue.extend({
 				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 
 				appActions.logUserEvent(this.$store, {
-					feature: Feature.CHANGE_HIGHLIGHT,
+					feature: Feature.CHANGE_SELECTION,
 					activity: Activity.MODEL_SELECTION,
+					subActivity: SubActivity.MODEL_EXPLANATION,
 					details: { selected: row[D3M_INDEX_FIELD]}
 				});
 			} else {
 				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
 
 				appActions.logUserEvent(this.$store, {
-					feature: Feature.CHANGE_HIGHLIGHT,
+					feature: Feature.CHANGE_SELECTION,
 					activity: Activity.MODEL_SELECTION,
+					subActivity: SubActivity.MODEL_EXPLANATION,
 					details: { deselected: row[D3M_INDEX_FIELD]}
 				});
 			}

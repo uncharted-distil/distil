@@ -62,7 +62,7 @@ import { IMAGE_TYPE, TIMESERIES_TYPE, hasComputedVarPrefix } from '../util/types
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 import { getTimeseriesGroupingsFromFields, formatSlot, formatFieldsAsArray } from '../util/data';
 import { actions as appActions } from '../store/app/module';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 
 export default Vue.extend({
 	name: 'selected-data-table',
@@ -153,6 +153,7 @@ export default Vue.extend({
 				appActions.logUserEvent(this.$store, {
 					feature: Feature.CHANGE_SELECTION,
 					activity: Activity.DATA_PREPARATION,
+					subActivity:  SubActivity.DATA_TRANSFORMATION,
 					details: { select: row[D3M_INDEX_FIELD]}
 				});
 				addRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);
@@ -160,6 +161,7 @@ export default Vue.extend({
 				appActions.logUserEvent(this.$store, {
 					feature: Feature.CHANGE_SELECTION,
 					activity: Activity.DATA_PREPARATION,
+					subActivity:  SubActivity.DATA_TRANSFORMATION,
 					details: { deselect: row[D3M_INDEX_FIELD]}
 				});
 				removeRowSelection(this.$router, this.instanceName, this.rowSelection, row[D3M_INDEX_FIELD]);

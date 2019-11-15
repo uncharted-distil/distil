@@ -104,8 +104,8 @@ func LogDatamartActionGlobal(feature string, activity string, subActivity string
 }
 
 // LogSystemAction logs a system action to the discovery log.
-func (l *DiscoveryLogger) LogSystemAction(feature string, activity string, subActivity string) {
-	l.logAction(feature, "SYSTEM", activity, subActivity, nil)
+func (l *DiscoveryLogger) LogSystemAction(feature string, activity string, subActivity string, details string) {
+	l.logAction(feature, "SYSTEM", activity, subActivity, details)
 }
 
 // LogAPIAction logs a TA2TA3 API call to the discovery log.
@@ -115,17 +115,21 @@ func (l *DiscoveryLogger) LogAPIAction(method string, params map[string]string) 
 	if feature == "" {
 		feature = method
 	}
-	l.logAction(feature, "TA2TA3", activityMap[method], subActivityMap[method], params)
+	l.logActionWithParams(feature, "TA23API", activityMap[method], subActivityMap[method], params)
 }
 
 // LogDatamartAction logs a datamart fuction call to the discovery log.
 func (l *DiscoveryLogger) LogDatamartAction(feature string, activity string, subActivity string) {
-	l.logAction(feature, "DATAMART", activity, subActivity, nil)
+	l.logAction(feature, "DATAMART", activity, subActivity, "")
 }
 
-func (l *DiscoveryLogger) logAction(feature string, typ string, activity string, subActivity string, params map[string]string) {
-	timestamp := fmt.Sprintf(time.Now().Format(time.RFC3339))
+func (l *DiscoveryLogger) logActionWithParams(feature string, typ string, activity string, subActivity string, params map[string]string) {
 	paramsString, _ := json.Marshal(params)
+	l.logAction(feature, typ, activity, subActivity, string(paramsString))
+}
+
+func (l *DiscoveryLogger) logAction(feature string, typ string, activity string, subActivity string, other string) {
+	timestamp := fmt.Sprintf(time.Now().Format(time.RFC3339))
 
 	mu.Lock()
 	defer mu.Unlock()
@@ -135,7 +139,7 @@ func (l *DiscoveryLogger) logAction(feature string, typ string, activity string,
 	}
 	w := csv.NewWriter(f)
 
-	err = w.Write([]string{timestamp, feature, typ, activity, subActivity, string(paramsString)})
+	err = w.Write([]string{timestamp, feature, typ, activity, subActivity, other})
 	if err != nil {
 		log.Errorf("unable to log to discovery log: %v", err)
 	}

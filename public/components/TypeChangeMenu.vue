@@ -55,7 +55,7 @@ import { createRouteEntry } from '../util/routes';
 import { GROUPING_ROUTE } from '../store/route';
 import { getComposedVariableKey } from '../util/data';
 import { actions as appActions } from '../store/app/module';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 
 const PROBABILITY_THRESHOLD = 0.8;
 
@@ -270,7 +270,8 @@ export default Vue.extend({
 
 			appActions.logUserEvent(this.$store, {
 				feature: Feature.RETYPE_FEATURE,
-				activity: Activity.DATA_PREPARATION,
+				activity: Activity.PROBLEM_DEFINITIION,
+				subActivity: SubActivity.PROBLEM_SPECIFICATION,
 				details: { from: this.type, to: type }
 			});
 

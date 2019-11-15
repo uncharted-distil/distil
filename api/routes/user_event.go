@@ -25,9 +25,10 @@ import (
 )
 
 type event struct {
-	Feature  string           `json:"feature"`
-	Activity string           `json:"activity"`
-	Details  *json.RawMessage `json:"details"`
+	Feature     string           `json:"feature"`
+	Activity    string           `json:"activity"`
+	SubActivity string           `json:"subActivity"`
+	Details     *json.RawMessage `json:"details"`
 }
 
 // UserEventHandler logs UI events to the discovery logger
@@ -47,6 +48,6 @@ func UserEventHandler(logger *env.DiscoveryLogger) func(w http.ResponseWriter, r
 			return
 		}
 
-		logger.LogSystemAction(evt.Feature, evt.Activity, string(*evt.Details))
+		logger.LogSystemAction(evt.Feature, evt.Activity, evt.SubActivity, string(*evt.Details))
 	}
 }

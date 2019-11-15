@@ -86,7 +86,7 @@ import { Solution, NUM_SOLUTIONS } from '../store/solutions/index';
 import { Variable, TaskTypes, TaskSubTypes } from '../store/dataset/index';
 import { TIMESERIES_TYPE } from '../util/types';
 import { FilterParams } from '../util/filters';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -173,6 +173,7 @@ export default Vue.extend({
 			appActions.logUserEvent(this.$store, {
 				feature: Feature.CREATE_MODEL,
 				activity: Activity.DATA_PREPARATION,
+				subActivity: SubActivity.DATA_TRANSFORMATION,
 				details: {}
 			});
 

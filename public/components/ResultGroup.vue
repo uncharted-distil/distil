@@ -117,7 +117,7 @@ import { getSolutionIndex, getSolutionById, isTopSolutionByScore } from '../util
 import { overlayRouteEntry } from '../util/routes';
 import { updateHighlight, clearHighlight } from '../util/highlights';
 import { actions as appActions } from '../store/app/module';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 import _ from 'lodash';
 import { descending } from 'd3';
 
@@ -277,6 +277,7 @@ export default Vue.extend({
 			appActions.logUserEvent(this.$store, {
 				feature: Feature.CHANGE_HIGHLIGHT,
 				activity: Activity.MODEL_SELECTION,
+				subActivity: SubActivity.MODEL_EXPLANATION,
 				details: { key: key, value: value }
 			});
 		},
@@ -296,6 +297,7 @@ export default Vue.extend({
 			appActions.logUserEvent(this.$store, {
 				feature: Feature.CHANGE_HIGHLIGHT,
 				activity: Activity.MODEL_SELECTION,
+				subActivity: SubActivity.MODEL_EXPLANATION,
 				details: { key: key, value: value }
 			});
 		},
@@ -321,6 +323,7 @@ export default Vue.extend({
 			appActions.logUserEvent(this.$store, {
 				feature: Feature.CHANGE_HIGHLIGHT,
 				activity: Activity.MODEL_SELECTION,
+				subActivity: SubActivity.MODEL_EXPLANATION,
 				details: { key: key, value: value }
 			});
 			this.$emit('range-change', key, value);
@@ -347,6 +350,7 @@ export default Vue.extend({
 			appActions.logUserEvent(this.$store, {
 				feature: Feature.CHANGE_HIGHLIGHT,
 				activity: Activity.MODEL_SELECTION,
+				subActivity: SubActivity.MODEL_EXPLANATION,
 				details: { key: key, value: value }
 			});
 			this.$emit('range-change', key, value);
@@ -357,6 +361,7 @@ export default Vue.extend({
 				appActions.logUserEvent(this.$store, {
 					feature: Feature.SELECT_MODEL,
 					activity: Activity.MODEL_SELECTION,
+					subActivity: SubActivity.MODEL_EXPLANATION,
 					details: { solutionId: this.solutionId }
 				});
 				const routeEntry = overlayRouteEntry(this.$route, {

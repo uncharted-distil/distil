@@ -43,7 +43,7 @@ import { NUM_PER_PAGE } from '../util/data';
 import { overlayRouteEntry } from '../util/routes';
 import { removeFiltersByName } from '../util/filters';
 import { actions as appActions } from '../store/app/module';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 
 export default Vue.extend({
 	name: 'training-variables',
@@ -119,6 +119,7 @@ export default Vue.extend({
 					appActions.logUserEvent(this.$store, {
 						feature: Feature.REMOVE_FEATURE,
 						activity: Activity.DATA_PREPARATION,
+						subActivity: SubActivity.DATA_TRANSFORMATION,
 						details: { feature: group.colName}
 					});
 
@@ -141,6 +142,7 @@ export default Vue.extend({
 			appActions.logUserEvent(this.$store, {
 				feature: Feature.REMOVE_ALL_FEATURES,
 				activity: Activity.DATA_PREPARATION,
+				subActivity: SubActivity.DATA_TRANSFORMATION,
 				details: {}
 			});
 

@@ -27,7 +27,7 @@ import { Grouping, Variable, VariableSummary } from '../store/dataset/index';
 import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
 import { Group } from '../util/facets';
 import { actions as appActions } from '../store/app/module';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 import Vue from 'vue';
 
 // 9 so it makes a nice clean grid
@@ -110,6 +110,7 @@ export default Vue.extend({
 							appActions.logUserEvent(this.$store, {
 								feature: Feature.SELECT_TARGET,
 								activity: Activity.PROBLEM_DEFINITIION,
+								subActivity: SubActivity.PROBLEM_SPECIFICATION,
 								details: { target: group.colName }
 							});
 

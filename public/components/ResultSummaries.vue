@@ -55,7 +55,7 @@ import { Variable, TaskTypes } from '../store/dataset/index';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 import { Solution } from '../store/solutions/index';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 
 export default Vue.extend({
 	name: 'result-summaries',
@@ -116,9 +116,10 @@ export default Vue.extend({
 			appActions.logUserEvent(this.$store, {
 				feature: Feature.EXPORT_MODEL,
 				activity: Activity.MODEL_SELECTION,
+				subActivity: SubActivity.MODEL_EXPORT,
 				details: {
 					solution: this.activeSolution.solutionId,
-					score: this.activeSolution.scores.map( s => ({ metric: s.metric, value: s.value }))
+					score: this.activeSolution.scores.map(s => ({ metric: s.metric, value: s.value }))
 				}
 			});
 			appActions.exportSolution(this.$store, {
