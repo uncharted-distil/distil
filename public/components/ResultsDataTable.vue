@@ -37,18 +37,20 @@
 
 			<template v-slot:[cellSlot(errorCol)]="data">
 				<!-- residual error -->
-				<div class="error-bar-container" v-if="isTargetNumerical">
-					<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.value.value), width: errorBarWidth(data.value.value), left: errorBarLeft(data.value.value) }"></div>
-					<div class="error-bar-center"></div>
-				</div>
-
-				<!-- correctness error -->
-				<div v-if="isTargetCategorical">
-					<div v-if="data.item[predictedCol].value==data.value.value">
-						Correct
+				<div>
+					<div class="error-bar-container" v-if="isTargetNumerical">
+						<div class="error-bar" v-bind:style="{ 'background-color': errorBarColor(data.value.value), width: errorBarWidth(data.value.value), left: errorBarLeft(data.value.value) }"></div>
+						<div class="error-bar-center"></div>
 					</div>
-					<div v-if="data.item[predictedCol].value!=data.value.value">
-						Incorrect
+
+					<!-- correctness error -->
+					<div v-if="isTargetCategorical">
+						<div v-if="data.item[predictedCol].value==data.value.value">
+							Correct
+						</div>
+						<div v-if="data.item[predictedCol].value!=data.value.value">
+							Incorrect
+						</div>
 					</div>
 				</div>
 			</template>
@@ -218,7 +220,6 @@ export default Vue.extend({
 			}
 			return false;
 		},
-		
 	},
 
 	updated() {
