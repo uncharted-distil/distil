@@ -66,23 +66,41 @@ export default Vue.extend({
 	},
 	props: {
 		dataset: String as () => string,
-		field: String as () => string
+		field: String as () => string,
+		geocoordinate: Boolean
 	},
-
 	computed: {
+		isGeocoordinate(): boolean {
+			return this.geocoordinate || this.hasLon !== this.hasLat;
+		},
+		variables(): Variable[] {
+			return datasetGetters.getVariables(this.$store);
+		},
 		variable(): Variable {
-			const vars = datasetGetters.getVariables(this.$store);
-			const hasLat = vars.filter(variable => variable.colName === LATITUDE_TYPE).length;
-			const hasLon = vars.filter(variable => variable.colName === LONGITUDE_TYPE).length;
-
-			if (!vars) {
+			if (!this.variables) {
 				return null;
 			}
-			return vars.find(v => {
+
+			const selectedVariable = this.variables.find(v => {
+				if (this.field === null) {
+					return;
+				}
 				return v.colName.toLowerCase() === this.field.toLowerCase() &&
 					v.datasetName === this.dataset;
 			});
 
+			const geocoordVariable = this.variables.find(v => {
+				return v.colOriginalType === 'real' &&
+					v.datasetName === this.dataset;
+			});
+			return selectedVariable ? selectedVariable : geocoordVariable;
+
+		},
+		hasLon(): boolean {
+			return !!this.variables.filter(variable => variable.colName === LONGITUDE_TYPE).length;
+		},
+		hasLat(): boolean {
+			return !!this.variables.filter(variable => variable.colName === LATITUDE_TYPE).length;
 		},
 		isGrouping(): boolean {
 			if (!this.variable) {
@@ -93,23 +111,22 @@ export default Vue.extend({
 		availableTargetVarsPage(): number {
 			return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
 		},
-		isGeocoordinate(): boolean {
-			return this.field ? false : true;
-		},
 		type(): string {
 			return this.variable ? this.variable.colType : '';
 		},
 		isColTypeReviewed(): boolean {
 			return this.variable ? this.variable.isColTypeReviewed : false;
 		},
-		label(): string {
-			if (this.isGeocoordinate) {
-				return getLabelFromType(GEOCOORDINATE_TYPE);
-			}
-			return this.type !== '' ? getLabelFromType(this.type) : '';
-		},
 		originalType(): string {
 			return this.variable ? this.variable.colOriginalType : '';
+		},
+		label(): string {
+				if (this.geocoordinate) {
+					return getLabelFromType(GEOCOORDINATE_TYPE);
+				} else {
+					return this.type !== '' ? getLabelFromType(this.type) : '';
+				}
+			this.$forceUpdate();
 		},
 		suggestedTypes(): SuggestedType[] {
 			const suggestedType = this.variable ? this.variable.suggestedTypes : [];
