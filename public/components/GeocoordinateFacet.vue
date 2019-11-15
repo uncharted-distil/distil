@@ -6,6 +6,7 @@
 			</span>
 			<i class="fa fa-globe"></i>
 		<type-change-menu
+			:geocoordinate=true
 			:dataset="dataset"
 			:field="target">
 		</type-change-menu>

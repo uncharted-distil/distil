@@ -64,8 +64,7 @@ export default Vue.extend({
 
 		// Call customization hook
 
-		if (!this.isFacetTypeGeocoord) {
-			this.injectHTML(this.groupSpec, this.facets.getGroup(this.groupSpec.key)._element);
+		this.injectHTML(this.groupSpec, this.facets.getGroup(this.groupSpec.key)._element);
 		this.augmentGroup(this.groupSpec, this.facets.getGroup(this.groupSpec.key));
 		this.updateImportantBadge(this.groupSpec);
 
@@ -179,13 +178,9 @@ export default Vue.extend({
 		this.facets.on('facet-histogram:mouseleave', (event: Event, key: string, value: string) => {
 			$(this.$el).find('.facet-tooltip').hide();
 		});
-		}
 	},
 
 	computed: {
-		isFacetTypeGeocoord(): boolean {
-			return this.summary.type === GEOCOORDINATE_TYPE;
-		},
 		groupSpec(): Group {
 
 			const group = createGroup(this.summary);
