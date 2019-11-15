@@ -153,7 +153,7 @@ export default Vue.extend({
 	text-align: left;
 	padding: 0px;
 }
-.results-view .table td div {
+.results-view .table td > div {
 	text-align: left;
 	padding: .3rem;
 	overflow: hidden;
