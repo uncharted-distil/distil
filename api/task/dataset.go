@@ -108,8 +108,9 @@ func CreateImageDataset(dataset string, imageFolders []string, imageType string,
 			if path.Ext(imageFilename) != imageType {
 				imageFilename = fmt.Sprintf("%s.%s", imageFilename, imageType)
 			}
+			imageFilename = getUniqueName(path.Join(datasetFolder, mediaFolder, imageFilename))
 
-			err = util.Copy(path.Join(imageFolder, imageFile.Name()), getUniqueName(path.Join(datasetFolder, mediaFolder, imageFilename)))
+			err = util.Copy(path.Join(imageFolder, imageFile.Name()), imageFilename)
 			if err != nil {
 				return "", err
 			}
@@ -213,9 +214,11 @@ func getMediaFolder(refFolders []string) string {
 }
 
 func getUniqueName(filename string) string {
+	extension := path.Ext(filename)
+	baseFilename := strings.TrimSuffix(filename, extension)
 	currentFilename := filename
 	for i := 1; util.FileExists(currentFilename); {
-		currentFilename = fmt.Sprintf("%s_%d", filename, i)
+		currentFilename = fmt.Sprintf("%s_%d.%s", baseFilename, i, extension)
 	}
 
 	return currentFilename

@@ -31,7 +31,10 @@ import (
 func UploadHandler(outputPath string, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
-		typ := pat.Param(r, "type")
+
+		// type cant be a post param since the upload is the actual data
+		queryValues := r.URL.Query()
+		typ := queryValues.Get("type")
 
 		var err error
 		formattedPath := ""
