@@ -10,7 +10,7 @@
 			@row-clicked="onRowClick">
 
 			<template v-for="computedField in computedFields" v-slot:[cellSlot(computedField)]="data">
-				<span :key="computedField" :title="data.value">{{ data.value }} <icon-base icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base></span>
+				<span :key="computedField" :title="data.value.value">{{ data.value.value }} <icon-base icon-name="fork" class="icon-fork" width=14 height=14> <icon-fork /></icon-base></span>
 			</template>
  
 			<template v-for="imageField in imageFields" v-slot:[cellSlot(imageField)]="data">
@@ -37,7 +37,7 @@
 			</template>
 
 			<template v-slot:cell()="data">
-				<span :title="data.value">{{ data.value }}</span>
+				<span :title="data.value.value">{{ data.value.value }}</span>
 			</template>
 
 		</b-table>
@@ -60,7 +60,7 @@ import { TableColumn, TableRow, Grouping, Variable, D3M_INDEX_FIELD, RowSelectio
 import { getters as routeGetters } from '../store/route/module';
 import { IMAGE_TYPE, TIMESERIES_TYPE, hasComputedVarPrefix } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
-import { getTimeseriesGroupingsFromFields, formatCellSlot, formatFieldsAsArray } from '../util/data';
+import { getTimeseriesGroupingsFromFields, formatSlot, formatFieldsAsArray } from '../util/data';
 import { actions as appActions } from '../store/app/module';
 import { Feature, Activity } from '../util/userEvents';
 
@@ -158,7 +158,7 @@ export default Vue.extend({
 			}
 		},
 		cellSlot(key: string): string {
-			return formatCellSlot(key);
+			return formatSlot(key, 'cell');
 		}
 	}
 });

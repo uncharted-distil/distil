@@ -40,6 +40,7 @@ export const actions = {
 		const solutionId = args.solutionId;
 
 		const promises = [];
+		mutations.clearTrainingSummaries(context);
 		args.training.forEach(variable => {
 			const key = variable.colName;
 			const label = variable.colDisplayName;

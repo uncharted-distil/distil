@@ -2,6 +2,7 @@ package env
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/util"
 )
@@ -67,17 +69,23 @@ var (
 // DiscoveryLogger logs problem discovery information.
 type DiscoveryLogger struct {
 	csvFilename string
+	config      *Config
+}
+
+// NewDiscoveryLogger creates and initializes a discovery logger.
+func NewDiscoveryLogger(filename string, config *Config) (*DiscoveryLogger, error) {
+	logger = &DiscoveryLogger{
+		config: config,
+	}
+
+	return logger.InitializeLog(filename)
 }
 
 // InitializeLog initializes the discovery log.
-func InitializeLog(filename string, config *Config) (*DiscoveryLogger, error) {
-
-	if logger != nil {
-		return nil, errors.Errorf("d3m system log already initialized")
-	}
+func (l *DiscoveryLogger) InitializeLog(filename string) (*DiscoveryLogger, error) {
 
 	// write the logs to the output log directory
-	csvFilename := path.Join(config.D3MOutputDir, "logs", filename)
+	csvFilename := path.Join(l.config.D3MOutputDir, "logs", filename)
 
 	// initialize the log with the header
 	err := util.WriteFileWithDirs(csvFilename, []byte("timestamp,feature_id,type,activity_l1,activity_l2,other\n"), os.ModePerm)
@@ -85,11 +93,9 @@ func InitializeLog(filename string, config *Config) (*DiscoveryLogger, error) {
 		return nil, errors.Wrap(err, "unable to initialize the activity log")
 	}
 
-	logger = &DiscoveryLogger{
-		csvFilename: csvFilename,
-	}
+	l.csvFilename = csvFilename
 
-	return logger, nil
+	return l, nil
 }
 
 // LogDatamartActionGlobal logs a datamart fuction call to the discovery log.
@@ -99,31 +105,40 @@ func LogDatamartActionGlobal(feature string, activity string, subActivity string
 
 // LogSystemAction logs a system action to the discovery log.
 func (l *DiscoveryLogger) LogSystemAction(feature string, activity string, subActivity string) {
-	l.logAction(feature, "SYSTEM", activity, subActivity)
+	l.logAction(feature, "SYSTEM", activity, subActivity, nil)
 }
 
 // LogAPIAction logs a TA2TA3 API call to the discovery log.
-func (l *DiscoveryLogger) LogAPIAction(method string) {
+func (l *DiscoveryLogger) LogAPIAction(method string, params map[string]string) {
 	// look up the feature, the activity and sub activity based on the grpc method
 	feature := featureMap[method]
 	if feature == "" {
 		feature = method
 	}
-	l.logAction(feature, "TA2TA3", activityMap[method], subActivityMap[method])
+	l.logAction(feature, "TA2TA3", activityMap[method], subActivityMap[method], params)
 }
 
 // LogDatamartAction logs a datamart fuction call to the discovery log.
 func (l *DiscoveryLogger) LogDatamartAction(feature string, activity string, subActivity string) {
-	l.logAction(feature, "DATAMART", activity, subActivity)
+	l.logAction(feature, "DATAMART", activity, subActivity, nil)
 }
 
-func (l *DiscoveryLogger) logAction(feature string, typ string, activity string, subActivity string) {
+func (l *DiscoveryLogger) logAction(feature string, typ string, activity string, subActivity string, params map[string]string) {
 	timestamp := fmt.Sprintf(time.Now().Format(time.RFC3339))
+	paramsString, _ := json.Marshal(params)
 
 	mu.Lock()
 	defer mu.Unlock()
-	f, _ := os.OpenFile(l.csvFilename, os.O_WRONLY|os.O_APPEND, os.ModePerm)
+	f, err := os.OpenFile(l.csvFilename, os.O_WRONLY|os.O_APPEND, os.ModePerm)
+	if err != nil {
+		log.Errorf("unable to open discovery log: %v", err)
+	}
 	w := csv.NewWriter(f)
-	w.Write([]string{timestamp, feature, typ, activity, subActivity, "{}"})
+
+	err = w.Write([]string{timestamp, feature, typ, activity, subActivity, string(paramsString)})
+	if err != nil {
+		log.Errorf("unable to log to discovery log: %v", err)
+	}
+
 	w.Flush()
 }

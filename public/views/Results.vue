@@ -150,7 +150,14 @@ export default Vue.extend({
 	font-weight: bold;
 }
 .results-view .table td {
-	text-align: right;
+	text-align: left;
+	padding: 0px;
+}
+.results-view .table td > div {
+	text-align: left;
+	padding: .3rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 .result-facets {
 	margin-bottom: 12px;

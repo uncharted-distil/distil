@@ -92,12 +92,10 @@ export default Vue.extend({
 		},
 
 		includedResultTableDataItems(): TableRow[] {
-			const items = resultsGetters.getIncludedResultTableDataItems(this.$store);
 			return resultsGetters.getIncludedResultTableDataItems(this.$store);
 		},
 
 		includedResultTableDataFields(): Dictionary<TableColumn> {
-			const fields = resultsGetters.getIncludedResultTableDataFields(this.$store);
 			return resultsGetters.getIncludedResultTableDataFields(this.$store);
 		},
 
@@ -109,14 +107,7 @@ export default Vue.extend({
 			if (!this.includedResultTableDataItems) {
 				return 0;
 			}
-			return this.includedResultTableDataItems.filter(item => {
-				if (this.regressionEnabled) {
-					const err = _.toNumber(item[this.solution.errorKey]);
-					return err < this.residualThresholdMin || err > this.residualThresholdMax;
-				} else {
-					return item[this.target] !== item[this.solution.predictedKey];
-				}
-			}).length;
+			return this.errorCount(this.includedResultTableDataItems);
 		},
 
 		excludedResultTableDataItems(): TableRow[] {
@@ -135,14 +126,7 @@ export default Vue.extend({
 			if (!this.excludedResultTableDataItems) {
 				return 0;
 			}
-			return this.excludedResultTableDataItems.filter(item => {
-				if (this.regressionEnabled) {
-					const err = _.toNumber(item[this.solution.errorKey]);
-					return err < this.residualThresholdMin || err > this.residualThresholdMax;
-				} else {
-					return item[this.target] !== item[this.solution.predictedKey];
-				}
-			}).length;
+			return this.errorCount(this.excludedResultTableDataItems);
 		},
 
 		residualThresholdMin(): number {
@@ -161,28 +145,41 @@ export default Vue.extend({
 			return resultsGetters.getResultDataNumRows(this.$store);
 		},
 
-
 		isForecasting(): boolean {
 			return routeGetters.getRouteTask(this.$store) === TaskTypes.TIME_SERIES_FORECASTING;
 		},
 
 		topSlotTitle(): string {
-			const matchesLabel = `${this.numIncludedResultItems} <b class="matching-color">matching</b> samples of ${this.numRows}`;
-			const erroneousLabel = `, including ${this.numIncludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
-			return this.isForecasting ? matchesLabel : matchesLabel + erroneousLabel;
+			return this.errorTitle(this.numIncludedResultItems, this.numIncludedResultErrors);
 		},
 
 		bottomSlotTitle(): string {
-			const matchesLabel = `${this.numExcludedResultItems} <b class="other-color">other</b> samples of ${this.numRows}`;
-			const erroneousLabel = `, including ${this.numExcludedResultErrors} <b class="erroneous-color">erroneous</b> predictions`;
-			return this.isForecasting ? matchesLabel : matchesLabel + erroneousLabel;
+			return this.errorTitle(this.numExcludedResultItems, this.numExcludedResultErrors);
 		},
 
 		singleSlotTitle(): string {
-			const matchesLabel = `Displaying ${this.numExcludedResultItems} of ${this.numRows}`;
-			const erroneousLabel = `, including ${this.numExcludedResultErrors} <b>erroneous</b> predictions`;
-			return this.isForecasting ? matchesLabel : matchesLabel + erroneousLabel;
+			return this.errorTitle(this.numExcludedResultItems, this.numExcludedResultErrors);
 		}
+	},
+	methods: {
+		errorTitle(itemCount: number, errorCount: number): string {
+			const matchesLabel = `Displaying ${itemCount} of ${this.numRows}`;
+			const erroneousLabel = `, including ${errorCount} <b class="erroneous-color">erroneous</b> predictions`;
+			return this.isForecasting ? matchesLabel : matchesLabel + erroneousLabel;
+		},
+		errorCount(dataColumn: TableRow[]): number {
+			return dataColumn.filter(item => {
+				if (this.regressionEnabled) {
+					if (!item[this.solution.errorKey]) {
+						return false;
+					}
+					const err = _.toNumber(item[this.solution.errorKey].value);
+					return item[this.solution.errorKey] && err < this.residualThresholdMin || err > this.residualThresholdMax;
+				} else {
+					return item[this.solution.predictedKey] && item[this.solution.predictedKey] && item[this.target].value !== item[this.solution.predictedKey].value;
+				}
+			}).length;
+		},
 	}
 });
 </script>
