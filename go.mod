@@ -25,8 +25,8 @@ require (
 	github.com/shopspring/decimal v0.0.0-20191009025716-f1972eb1d1f5 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/uncharted-distil/distil-compute v0.0.0
-	github.com/uncharted-distil/distil-ingest v0.0.0
+	github.com/uncharted-distil/distil-compute v0.0.0-20191117195530-94b082255c3d
+	github.com/uncharted-distil/distil-ingest v0.0.0-20191117211241-2f503fbf2216
 	github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48
 	github.com/zenazn/goji v0.9.0
@@ -35,9 +35,4 @@ require (
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	google.golang.org/grpc v1.20.1
 	gopkg.in/olivere/elastic.v5 v5.0.76
-)
-
-replace (
-	github.com/uncharted-distil/distil-compute v0.0.0 => ../distil-compute
-	github.com/uncharted-distil/distil-ingest v0.0.0 => ../distil-ingest
 )
