@@ -19,7 +19,7 @@ import (
 	"context"
 	"net/http"
 
-	"goji.io/pat"
+	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"

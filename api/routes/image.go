@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"path"
 
-	"goji.io/pat"
+	"goji.io/v3/pat"
 
 	api "github.com/uncharted-distil/distil-ingest/metadata"
 	"github.com/uncharted-distil/distil/api/env"

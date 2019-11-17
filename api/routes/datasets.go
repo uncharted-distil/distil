@@ -24,7 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/russross/blackfriday"
 	log "github.com/unchartedsoftware/plog"
-	"goji.io/pat"
+	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/model/storage/datamart"

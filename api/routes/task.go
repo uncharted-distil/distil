@@ -18,7 +18,7 @@ package routes
 import (
 	"net/http"
 
-	"goji.io/pat"
+	"goji.io/v3/pat"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"

@@ -24,7 +24,7 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
-	"goji.io/pat"
+	"goji.io/v3/pat"
 
 	compute "github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil/api/model"

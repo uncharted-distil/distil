@@ -6,10 +6,10 @@
 
 ## Dependencies
 
-- [Go](https://golang.org/) programming language binaries with the `GOPATH` environment variable specified and `$GOPATH/bin` in your `PATH`.
-- [NodeJS](http://nodejs.org/) JavaScript runtime.
-- [Docker](https://www.docker.com/) platform.
-- [Docker Compose](https://docs.docker.com/compose/) (optional) for managing multi-container dev environments.
+-   [Go](https://golang.org/) programming language binaries with the `GOPATH` environment variable specified and `$GOPATH/bin` in your `PATH`.
+-   [NodeJS](http://nodejs.org/) JavaScript runtime.
+-   [Docker](https://www.docker.com/) platform.
+-   [Docker Compose](https://docs.docker.com/compose/) (optional) for managing multi-container dev environments.
 
 ## Development
 
@@ -53,9 +53,10 @@ make peg
 #### Docker images:
 
 The application requires:
-- ElasticSearch
-- PostgreSQL
-- TA2 Pipeline Server Stub
+
+-   ElasticSearch
+-   PostgreSQL
+-   TA2 Pipeline Server Stub
 
 Docker images for each are available at the following registry:
 
@@ -94,21 +95,23 @@ yarn watch
 ```
 
 ##### Terminal 3 - Build, watch, and run server:
+
 ```bash
 make watch
 ```
 
 #### Advanced Configuration
-The location of the dataset directory can be changed by setting the `D3MINPUTDIR` environment variable, and the location of the temporary data written out during model building can be set using the `D3MOUTPUTDIR` environment variable.  These are used by the other Distil services that are launched via the `run_services.sh` script, and are typically set as global environment variables in `.bashrc` or similar.
+
+The location of the dataset directory can be changed by setting the `D3MINPUTDIR` environment variable, and the location of the temporary data written out during model building can be set using the `D3MOUTPUTDIR` environment variable. These are used by the other Distil services that are launched via the `run_services.sh` script, and are typically set as global environment variables in `.bashrc` or similar.
 
 ## Common Issues:
 
 #### "dep: command not found":
 
-- **Cause**: `$GOPATH/bin` has not been added to your `$PATH`.
-- **Solution**: Add `export PATH=$PATH:$GOPATH/bin` to your `.bash_profile` or `.bashrc`.
+-   **Cause**: `$GOPATH/bin` has not been added to your `$PATH`.
+-   **Solution**: Add `export PATH=$PATH:$GOPATH/bin` to your `.bash_profile` or `.bashrc`.
 
 #### "../repo/subpackage/file.go:10:2: cannot find package "github.com/company/package/subpackage" in any of":
 
-- **Cause**: Dependencies are out of date or have not been installed
-- **Solution**: Run `make install` to install latest dependencies.
+-   **Cause**: Dependencies are out of date or have not been installed
+-   **Solution**: Run `make install` to install latest dependencies.

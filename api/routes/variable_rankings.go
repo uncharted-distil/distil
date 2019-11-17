@@ -20,7 +20,7 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"goji.io/pat"
+	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-ingest/metadata"
