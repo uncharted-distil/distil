@@ -26,6 +26,7 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-ingest/metadata"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -87,14 +88,25 @@ func CreateDataset(dataset string, csvData []byte, outputPath string, config *In
 // for the images within.
 func CreateImageDataset(dataset string, imageFolders []string, imageType string, outputPath string, config *IngestTaskConfig) (string, error) {
 	// generate all the image data for the csv table
+	log.Infof("creating image dataset '%s' of type '%s'", dataset, imageType)
+	outputDatasetPath := path.Join(outputPath, dataset)
+	schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
+	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
+	dataPath := path.Join(outputDatasetPath, dataFilePath)
+
 	csvData := make([][]string, 0)
 	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "label"})
-	mediaFolder := getMediaFolder(imageFolders)
+	mediaFolder := getUniqueFolder(path.Join(outputDatasetPath, "media"))
+
+	err := os.MkdirAll(outputDatasetPath, os.ModePerm)
+	if err != nil {
+		return "", err
+	}
 
 	// the folder name represents the label to apply for all containing images
 	for _, imageFolder := range imageFolders {
+		log.Infof("processing image folder '%s'", imageFolder)
 		label := path.Base(imageFolder)
-		datasetFolder := path.Dir(imageFolder)
 
 		imageFiles, err := ioutil.ReadDir(imageFolder)
 		if err != nil {
@@ -102,48 +114,70 @@ func CreateImageDataset(dataset string, imageFolders []string, imageType string,
 		}
 
 		// copy images while building the csv data
-		d3mIndex := 0
+		log.Infof("building csv data")
 		for _, imageFile := range imageFiles {
-			imageFilename := imageFile.Name()
-			if path.Ext(imageFilename) != imageType {
+			imageFilename := path.Base(imageFile.Name())
+			if path.Ext(imageFilename) != fmt.Sprintf(".%s", imageType) {
 				imageFilename = fmt.Sprintf("%s.%s", imageFilename, imageType)
 			}
-			imageFilename = getUniqueName(path.Join(datasetFolder, mediaFolder, imageFilename))
+			imageFilename = getUniqueName(path.Join(mediaFolder, imageFilename))
 
 			err = util.Copy(path.Join(imageFolder, imageFile.Name()), imageFilename)
 			if err != nil {
 				return "", err
 			}
 
-			csvData = append(csvData, []string{fmt.Sprintf("%d", d3mIndex), imageFilename, label})
+			csvData = append(csvData, []string{fmt.Sprintf("%d", len(csvData)-1), imageFilename, label})
 		}
 	}
 
+	log.Infof("creating metadata")
+
+	// create the dataset schema doc
+	datasetID := model.NormalizeDatasetID(dataset)
+	meta := model.NewMetadata(dataset, dataset, "", datasetID)
+	dr := model.NewDataResource("learningData", model.ResTypeTable, []string{compute.D3MResourceFormat})
+	dr.ResPath = dataFilePath
+	dr.Variables = append(dr.Variables,
+		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName,
+			model.D3MIndexFieldName, model.IndexType, model.IndexType, "D3M index",
+			[]string{model.RoleIndex}, model.VarRoleIndex, nil, dr.Variables, false),
+	)
+	dr.Variables = append(dr.Variables,
+		model.NewVariable(1, "image_file", "image_file", "image_file", model.StringType,
+			model.StringType, "Reference to image file", []string{"attribute"},
+			model.VarRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
+	dr.Variables = append(dr.Variables,
+		model.NewVariable(2, "label", "label", "label", model.StringType,
+			model.StringType, "Label of the image", []string{"suggestedTarget"},
+			model.VarRoleData, nil, dr.Variables, false))
+
 	// create the data resource for the referenced images
-	refDR := model.NewDataResource("0", "image", []string{fmt.Sprintf("image/%s", imageType)})
+	refDR := model.NewDataResource("0", model.ResTypeImage, []string{fmt.Sprintf("image/%s", imageType)})
+	refDR.ResPath = path.Base(mediaFolder)
 
-	// create the D3M dataset from the csv data
-	meta := createMetadata(dataset, config)
+	meta.DataResources = []*model.DataResource{refDR, dr}
 
-	// add the image information
-	meta.DataResources = append(meta.DataResources, refDR)
-	meta.DataResources[0].Variables[1].RefersTo["resID"] = "0"
-	meta.DataResources[0].Variables[1].RefersTo["resObject"] = "item"
+	log.Infof("writing schema to '%s'", schemaPath)
+	err = metadata.WriteSchema(meta, schemaPath)
+	if err != nil {
+		return "", err
+	}
 
 	// write out the dataset
 	buf := bytes.NewBuffer(nil)
 	csvOutput := csv.NewWriter(buf)
-	err := csvOutput.WriteAll(csvData)
+	err = csvOutput.WriteAll(csvData)
 	if err != nil {
 		return "", err
 	}
 
-	outputPathWritten, err := writeDataset(meta, buf.Bytes(), outputPath, config)
+	err = util.WriteFileWithDirs(dataPath, buf.Bytes(), os.ModePerm)
 	if err != nil {
 		return "", err
 	}
 
-	return outputPathWritten, nil
+	return outputDatasetPath, nil
 }
 
 func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, config *IngestTaskConfig) (string, error) {
@@ -197,28 +231,21 @@ func createMetadata(dataset string, config *IngestTaskConfig) *model.Metadata {
 	return meta
 }
 
-func getMediaFolder(refFolders []string) string {
-	duplicateCount := 0
-	for _, folder := range refFolders {
-		if strings.HasPrefix(folder, baseMediaFolder) {
-			duplicateCount = duplicateCount + 1
-		}
-	}
-
-	mediaFolder := baseMediaFolder
-	if duplicateCount > 0 {
-		mediaFolder = fmt.Sprintf("%s_%d", mediaFolder, duplicateCount)
-	}
-
-	return mediaFolder
-}
-
 func getUniqueName(filename string) string {
 	extension := path.Ext(filename)
 	baseFilename := strings.TrimSuffix(filename, extension)
 	currentFilename := filename
-	for i := 1; util.FileExists(currentFilename); {
+	for i := 1; util.FileExists(currentFilename); i++ {
 		currentFilename = fmt.Sprintf("%s_%d.%s", baseFilename, i, extension)
+	}
+
+	return currentFilename
+}
+
+func getUniqueFolder(folder string) string {
+	currentFilename := folder
+	for i := 1; util.FileExists(currentFilename); i++ {
+		currentFilename = fmt.Sprintf("%s_%d", folder, i)
 	}
 
 	return currentFilename
