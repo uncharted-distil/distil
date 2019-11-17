@@ -22,7 +22,7 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
-	"goji.io/pat"
+	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil/api/task"
 )

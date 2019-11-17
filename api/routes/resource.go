@@ -18,7 +18,7 @@ package routes
 import (
 	"io/ioutil"
 	"path"
-	//"goji.io/pat"
+	//"goji.io/v3/pat"
 )
 
 func fetchResourceBytes(resourceDir string, dataset string, file string) ([]byte, error) {

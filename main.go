@@ -28,7 +28,7 @@ import (
 	log "github.com/unchartedsoftware/plog"
 	"github.com/zenazn/goji/graceful"
 	goji "goji.io"
-	"goji.io/pat"
+	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/compute"

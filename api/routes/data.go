@@ -22,7 +22,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util/json"
-	"goji.io/pat"
+	"goji.io/v3/pat"
 )
 
 // DataHandler creates a route that fetches filtered data from backing storage instance.
