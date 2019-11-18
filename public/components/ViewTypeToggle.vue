@@ -65,10 +65,10 @@ export default Vue.extend({
 
 	computed: {
 		content: {
-			get: function(): string {
+			get(): string {
 				return this.internalVal;
 			},
-			set: function(value) {
+			set(value: string) {
 				this.internalVal = value;
 				this.$emit('input', this.internalVal);
 			}
