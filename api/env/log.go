@@ -129,7 +129,7 @@ func (l *DiscoveryLogger) logActionWithParams(feature string, typ string, activi
 }
 
 func (l *DiscoveryLogger) logAction(feature string, typ string, activity string, subActivity string, other string) {
-	timestamp := fmt.Sprintf(time.Now().Format(time.RFC3339))
+	timestamp := fmt.Sprint(time.Now().Format(time.RFC3339))
 
 	mu.Lock()
 	defer mu.Unlock()
