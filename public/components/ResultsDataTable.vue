@@ -82,7 +82,7 @@ import { Solution } from '../store/solutions/index';
 import { Dictionary } from '../util/dict';
 import { getVarType, isTextType, IMAGE_TYPE, hasComputedVarPrefix } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
-import { getTimeseriesGroupingsFromFields, formatSlot, formatFieldsAsArray, getCellColorByWeight } from '../util/data';
+import { getTimeseriesGroupingsFromFields, formatSlot, formatFieldsAsArray } from '../util/data';
 
 export default Vue.extend({
 	name: 'results-data-table',
@@ -220,6 +220,15 @@ export default Vue.extend({
 			}
 			return false;
 		},
+		columnWeightExtrema(): Object {
+			return this.tableFields.reduce((weightExtrema, tableCol) => {
+				weightExtrema[tableCol.key] = this.dataItems.reduce((maxWeight, item) => {
+					const currentWeight = Math.abs(item[tableCol.key].weight);
+					return maxWeight > currentWeight ? currentWeight : maxWeight;
+				}, 0);
+				return weightExtrema;
+			}, {});
+		}
 	},
 
 	updated() {
@@ -303,8 +312,15 @@ export default Vue.extend({
 			return hs;
 		},
 
-		cellColor(weight: number): string {
-			return getCellColorByWeight(weight, 0, 1);
+		cellColor(weight: number, data: any): string {
+			if (!weight) {
+				return '';
+			}
+			const absoluteWeight = Math.abs(weight / (this.columnWeightExtrema[data.field.key]));
+			const red = 255 - 128 * absoluteWeight;
+			const green = 255 - 64 * absoluteWeight;
+			const blue = 255;
+			return `background: rgba(${red}, ${green}, ${blue}, .75)`;
 		}
 	}
 

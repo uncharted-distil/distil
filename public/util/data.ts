@@ -230,20 +230,6 @@ export function formatSlot(key: string, slotType: string): string {
 	return `${slotType}(${key})`;
 }
 
-export function getCellColorByWeight(weight: number, min: number, max: number): string {
-	if (!weight) {
-		return '';
-	}
-	const absMin = Math.abs(min);
-	const absMax = Math.abs(max);
-	const trueMax = Math.max(absMin, absMax);
-	const absoluteWeight = Math.abs(weight / trueMax);
-	const red = 255 - 128 * absoluteWeight;
-	const green = 255 - 64 * absoluteWeight;
-	const blue = 255;
-	return `background: rgb(${red}, ${green}, ${blue})`;
-}
-
 export function formatFieldsAsArray(fields: Dictionary<TableColumn>): TableColumn[] {
 	return _.map(fields, field => field);
 }
