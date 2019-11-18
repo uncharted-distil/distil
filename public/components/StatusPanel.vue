@@ -75,20 +75,20 @@ export default Vue.extend({
 		statusType(): StatusPanelContentType {
 			return this.statusPanelState.contentType;
 		},
-		requestData: function () {
+		requestData(): DatasetPendingRequest {
 			const request = datasetGetters
 				.getPendingRequests(this.$store)
 				.find(request => request.dataset === this.dataset && request.type === this.statusType);
 			return request;
 		},
-		isPending: function () {
+		isPending(): boolean {
 			return this.requestData.status === DatasetPendingRequestStatus.PENDING;
 		},
-		isResolved: function () {
+		isResolved(): boolean {
 			return this.requestData.status === DatasetPendingRequestStatus.RESOLVED
 				|| this.requestData.status === DatasetPendingRequestStatus.REVIEWED;
 		},
-		isError: function () {
+		isError(): boolean {
 			return this.requestData.status === DatasetPendingRequestStatus.ERROR
 				|| this.requestData.status === DatasetPendingRequestStatus.ERROR_REVIEWED;
 		},
