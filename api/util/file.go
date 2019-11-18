@@ -213,3 +213,15 @@ func GenerateTimeFileNameStr() string {
 	timeStr = strings.ReplaceAll(timeStr, "-", "")
 	return timeStr
 }
+
+// FileExists checks if a file already exists on disk.
+func FileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
