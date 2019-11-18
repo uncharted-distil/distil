@@ -19,7 +19,7 @@ import { createRouteEntry, overlayRouteEntry } from '../util/routes';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as appActions } from '../store/app/module';
 import { SEARCH_ROUTE } from '../store/route/index';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 import Vue from 'vue';
 
 const ENTER_KEYCODE = 13;
@@ -72,7 +72,12 @@ export default Vue.extend({
 				event.charCode === ENTER_KEYCODE ||
 				event.which === ENTER_KEYCODE) {
 				this.submitSearch();
-				appActions.logUserEvent(this.$store, {feature: Feature.SEARCH_DATASETS, activity: Activity.DATA_PREPARATION});
+				appActions.logUserEvent(this.$store, {
+					feature: Feature.SEARCH_DATASETS,
+					activity: Activity.DATA_PREPARATION,
+					subActivity: SubActivity.DATA_TRANSFORMATION,
+					details: { terms: this.terms }
+				});
 			}
 		},
 		submitSearch() {

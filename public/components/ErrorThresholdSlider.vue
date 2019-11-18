@@ -43,7 +43,7 @@ import { Extrema } from '../store/dataset/index';
 import { getters as resultsGetters } from '../store/results/module';
 import { getters as routeGetters } from '../store/route/module';
 import { actions as appActions } from '../store/app/module';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 import vueSlider from 'vue-slider-component';
 import Vue from 'vue';
 
@@ -174,8 +174,6 @@ export default Vue.extend({
 			this.min = min;
 			this.max = max;
 
-			appActions.logUserEvent(this.$store, {feature: Feature.CHANGE_ERROR_THRESHOLD, activity: Activity.MODEL_SELECTION});
-
 			const entry = overlayRouteEntry(this.$route, {
 				residualThresholdMin: `${this.denormalize(min)}`,
 				residualThresholdMax: `${this.denormalize(max)}`
@@ -186,6 +184,14 @@ export default Vue.extend({
 		onSlide(value: number[]) {
 			this.hasModified = true;
 			const newValues = this.forceSymmetric(value);
+
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.CHANGE_ERROR_THRESHOLD,
+				activity: Activity.MODEL_SELECTION,
+				subActivity: SubActivity.MODEL_EXPLANATION,
+				details: { min: this.min, max: this.max }
+			});
+
 			this.updateThreshold(newValues[0], newValues[1]);
 		}
 	},

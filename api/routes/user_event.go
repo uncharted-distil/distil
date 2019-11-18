@@ -16,33 +16,38 @@
 package routes
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil/api/env"
-	"github.com/uncharted-distil/distil/api/util/json"
 )
+
+type event struct {
+	Feature     string           `json:"feature"`
+	Activity    string           `json:"activity"`
+	SubActivity string           `json:"subActivity"`
+	Details     *json.RawMessage `json:"details"`
+}
 
 // UserEventHandler logs UI events to the discovery logger
 func UserEventHandler(logger *env.DiscoveryLogger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// parse the request
-		params, err := getPostParameters(r)
+		params, err := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
 		if err != nil {
-			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
-			return
-		}
-		feature, ok := json.String(params, "feature")
-		if !ok {
-			handleError(w, errors.Wrap(err, "Unable to parse `feature` parameter"))
-			return
-		}
-		activity, ok := json.String(params, "activity")
-		if !ok {
-			handleError(w, errors.Wrap(err, "Unable to parse `activity` parameter"))
+			handleError(w, errors.Wrap(err, "Unable to parse POST request"))
 			return
 		}
 
-		logger.LogSystemAction(feature, activity, "")
+		var evt event
+		if err = json.Unmarshal([]byte(params), &evt); err != nil {
+			handleError(w, errors.Wrap(err, "Unable to unmarshal post parameters"))
+			return
+		}
+
+		logger.LogSystemAction(evt.Feature, evt.Activity, evt.SubActivity, string(*evt.Details))
 	}
 }

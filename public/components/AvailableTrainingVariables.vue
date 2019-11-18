@@ -38,7 +38,7 @@ import { Group } from '../util/facets';
 import VariableFacets from '../components/VariableFacets';
 import { Dictionary } from 'vue-router/types/router';
 import { actions as appActions } from '../store/app/module';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 
 export default Vue.extend({
 	name: 'available-training-variables',
@@ -79,7 +79,12 @@ export default Vue.extend({
 				trainingElem.addEventListener('click', () => {
 
 					// log UI event on server
-					appActions.logUserEvent(this.$store, { feature: Feature.ADD_FEATURE, activity: Activity.DATA_PREPARATION});
+					appActions.logUserEvent(this.$store, {
+						feature: Feature.ADD_FEATURE,
+						activity: Activity.DATA_PREPARATION,
+						subActivity: SubActivity.DATA_TRANSFORMATION,
+						details: { feature: group.colName }
+					});
 
 					// update route with training data
 					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
@@ -98,7 +103,12 @@ export default Vue.extend({
 		addAll() {
 
 			// log UI event on server
-			appActions.logUserEvent(this.$store, { feature: Feature.ADD_ALL_FEATURES, activity: Activity.DATA_PREPARATION});
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.ADD_ALL_FEATURES,
+				activity: Activity.DATA_PREPARATION,
+				subActivity: SubActivity.DATA_TRANSFORMATION,
+				details: {}
+			});
 
 			const facets = this.$refs.facets as any;
 			const training = routeGetters.getDecodedTrainingVariableNames(this.$store);

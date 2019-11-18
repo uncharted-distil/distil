@@ -82,7 +82,7 @@ import { actions as datasetActions } from '../store/dataset/module';
 import { SELECT_TARGET_ROUTE } from '../store/route/index';
 import localStorage from 'store';
 import { actions as appActions } from '../store/app/module';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 
 const NUM_TOP_FEATURES = 5;
 
@@ -134,7 +134,12 @@ export default Vue.extend({
 			});
 			this.$router.push(entry);
 			this.addRecentDataset(this.dataset.id);
-			appActions.logUserEvent(this.$store, { feature: Feature.SELECT_DATASET, activity: Activity.PROBLEM_DEFINITIION });
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.SELECT_DATASET,
+				activity: Activity.DATA_PREPARATION,
+				subActivity: SubActivity.DATA_OPEN,
+				details: { dataset: this.dataset.id }
+			});
 		},
 		toggleExpansion() {
 			this.expanded = !this.expanded;

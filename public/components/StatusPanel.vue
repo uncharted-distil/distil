@@ -49,7 +49,7 @@ import { actions as datasetActions, getters as datasetGetters } from '../store/d
 import { actions as appActions, getters as appGetters } from '../store/app/module';
 import { getters as routeGetters } from '../store/route/module';
 import { StatusPanelState, StatusPanelContentType } from '../store/app';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 
 const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
 	[DatasetPendingRequestType.VARIABLE_RANKING, Feature.RANK_FEATURES],
@@ -160,7 +160,12 @@ export default Vue.extend({
 				default:
 			}
 			const status = STATUS_USER_EVENT.get(this.statusType);
-			appActions.logUserEvent(this.$store, {feature: status, activity: Activity.DATA_PREPARATION});
+			appActions.logUserEvent(this.$store, {
+				feature: status,
+				activity: Activity.DATA_PREPARATION,
+				subActivity:  SubActivity.DATA_TRANSFORMATION,
+				details: {}
+			});
 		},
 		clearData() {
 			if (this.requestData) {

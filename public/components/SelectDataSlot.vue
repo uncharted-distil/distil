@@ -68,7 +68,7 @@ import { Filter, addFilterToRoute, EXCLUDE_FILTER, INCLUDE_FILTER } from '../uti
 import { clearHighlight, createFilterFromHighlight } from '../util/highlights';
 import { addRowSelection, removeRowSelection, clearRowSelection, isRowSelected, getNumIncludedRows, getNumExcludedRows, createFilterFromRowSelection } from '../util/row';
 import { actions as appActions } from '../store/app/module';
-import { Feature, Activity } from '../util/userEvents';
+import { Feature, Activity, SubActivity } from '../util/userEvents';
 
 const TABLE_VIEW = 'table';
 const IMAGE_VIEW = 'image';
@@ -214,7 +214,12 @@ export default Vue.extend({
 				clearRowSelection(this.$router);
 			}
 
-			appActions.logUserEvent(this.$store, {feature: Feature.FILTER_DATA, activity: Activity.DATA_PREPARATION});
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.FILTER_DATA,
+				activity: Activity.DATA_PREPARATION,
+				subActivity: SubActivity.DATA_TRANSFORMATION,
+				details: { filter: filter }
+			});
 		},
 		onReincludeClick() {
 			let filter = null;
@@ -232,7 +237,12 @@ export default Vue.extend({
 				clearRowSelection(this.$router);
 			}
 
-			appActions.logUserEvent(this.$store, {feature: Feature.FILTER_DATA, activity: Activity.DATA_PREPARATION});
+			appActions.logUserEvent(this.$store, {
+				feature: Feature.UNFILTER_DATA,
+				activity: Activity.DATA_PREPARATION,
+				subActivity: SubActivity.DATA_TRANSFORMATION,
+				details: { filter: filter }
+			});
 		},
 		setIncludedActive() {
 			const entry = overlayRouteEntry(this.$route, {
