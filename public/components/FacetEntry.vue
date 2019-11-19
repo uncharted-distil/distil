@@ -495,8 +495,8 @@ export default Vue.extend({
 				facet._histogram.bars.forEach(bar => {
 					const entry: any = _.last(bar.metadata);
 					if (!_.isNaN(_.toNumber(entry.label))) {
-						if (col.value >= _.toNumber(entry.label) &&
-							col.value < _.toNumber(entry.toLabel)) {
+						if (col.value.value >= _.toNumber(entry.label) &&
+							col.value.value < _.toNumber(entry.toLabel)) {
 							bar._element.css('fill', '#ff0067');
 							bar._element.addClass('row-selected');
 						}
@@ -599,7 +599,7 @@ export default Vue.extend({
 							continue;
 						}
 
-						if (facet.value === col.value) {
+						if (facet.value === col.value.value) {
 							this.addRowSelectionToFacet(facet, col);
 						}
 
