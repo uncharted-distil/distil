@@ -345,7 +345,7 @@ func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, fitted
 func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, err error) {
 	// persist the updated state
 	// NOTE: ignoring error
-	solutionStorage.PersistSolution(searchID, solutionID, SolutionErroredStatus, time.Now())
+	solutionStorage.PersistSolutionState(solutionID, SolutionErroredStatus, time.Now())
 
 	// notify of error
 	statusChan <- SolutionStatus{
@@ -355,11 +355,22 @@ func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, s
 		Error:      err,
 		Timestamp:  time.Now(),
 	}
+
+	log.Errorf("solution '%s' errored: %v", solutionID, err)
+}
+
+func (s *SolutionRequest) persistSolution(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, initialSearchSolutionID string) {
+	err := solutionStorage.PersistSolution(searchID, solutionID, initialSearchSolutionID, time.Now())
+	if err != nil {
+		// notify of error
+		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+		return
+	}
 }
 
 func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, status string) {
 	// persist the updated state
-	err := solutionStorage.PersistSolution(searchID, solutionID, status, time.Now())
+	err := solutionStorage.PersistSolutionState(solutionID, status, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
@@ -407,9 +418,11 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 	return nil
 }
 
-func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, dataset string, solutionID string, fittedSolutionID string, resultID string, resultURI string) {
+func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client,
+	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, dataset string,
+	solutionID string, fittedSolutionID string, resultID string, resultURI string) {
 	// persist the completed state
-	err := solutionStorage.PersistSolution(searchID, solutionID, SolutionCompletedStatus, time.Now())
+	err := solutionStorage.PersistSolutionState(solutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
@@ -441,120 +454,147 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 }
 
 func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, searchID string, solutionID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
+	dataStorage api.DataStorage, initialSearchID string, initialSearchSolutionID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
 	datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
-	// score solution
-	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID, datasetURITest, s.Metrics)
+	// Need to create a new solution that has the explain output. This is the solution
+	// that will be used throughout distil except for the export (which will use the original solution).
+	// start a solution searchID
+	searchID, err := client.StartSearch(context.Background(), searchRequest)
 	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
 	}
+	wg := &sync.WaitGroup{}
 
-	// persist the scores
-	for _, response := range solutionScoreResponses {
-		// only persist scores from COMPLETED responses
-		if response.Progress.State == pipeline.ProgressState_COMPLETED {
-			for _, score := range response.Scores {
-				metric := ""
-				if score.GetMetric() == nil {
-					metric = compute.ConvertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric().String()
-				} else {
-					metric = score.Metric.Metric.String()
+	err = client.SearchSolutions(context.Background(), searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
+		wg.Add(1)
+		solutionID := solution.SolutionId
+
+		// persist the solution info
+		s.persistSolution(statusChan, solutionStorage, searchID, solutionID, initialSearchSolutionID)
+		s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionPendingStatus)
+
+		// fit solution
+		fitResults, err := client.GenerateSolutionFit(context.Background(), solutionID, []string{datasetURITrain})
+		if err != nil {
+			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+			return
+		}
+
+		// find the completed result and get the fitted solution ID out
+		var fittedSolutionID string
+		for _, result := range fitResults {
+			if result.GetFittedSolutionId() != "" {
+				fittedSolutionID = result.GetFittedSolutionId()
+				break
+			}
+		}
+		if fittedSolutionID == "" {
+			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID,
+				errors.Errorf("no fitted solution ID for solution `%s` ('%s')", solutionID, initialSearchSolutionID))
+		}
+
+		// score solution
+		solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID, datasetURITest, s.Metrics)
+		if err != nil {
+			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+			return
+		}
+
+		// persist the scores
+		for _, response := range solutionScoreResponses {
+			// only persist scores from COMPLETED responses
+			if response.Progress.State == pipeline.ProgressState_COMPLETED {
+				for _, score := range response.Scores {
+					metric := ""
+					if score.GetMetric() == nil {
+						metric = compute.ConvertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric().String()
+					} else {
+						metric = score.Metric.Metric.String()
+					}
+					err := solutionStorage.PersistSolutionScore(solutionID, metric, score.Value.GetRaw().GetDouble())
+					if err != nil {
+						s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+						return
+					}
 				}
-				err := solutionStorage.PersistSolutionScore(solutionID, metric, score.Value.GetRaw().GetDouble())
+			}
+		}
+
+		// persist solution running status
+		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionRunningStatus)
+		s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
+
+		// generate predictions
+		produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID)
+
+		// generate predictions
+		predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
+		if err != nil {
+			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+			return
+		}
+
+		for _, response := range predictionResponses {
+
+			if response.Progress.State != pipeline.ProgressState_COMPLETED {
+				// only persist completed responses
+				continue
+			}
+
+			output, ok := response.ExposedOutputs[defaultExposedOutputKey]
+			if !ok {
+				err := errors.Errorf("output is missing from response")
+				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+				return
+			}
+
+			csvURI, ok := output.Value.(*pipeline.Value_CsvUri)
+			if !ok {
+				err := errors.Errorf("output is not of correct format")
+				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+				return
+			}
+
+			// remove the protocol portion if it exists. The returned value is either a
+			// csv file or a directory.
+			resultURI := csvURI.CsvUri
+			resultURI = strings.Replace(resultURI, "file://", "", 1)
+
+			// get the result UUID. NOTE: Doing sha1 for now.
+			hasher := sha1.New()
+			_, err = hasher.Write([]byte(resultURI))
+			if err != nil {
+				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+			}
+			bs := hasher.Sum(nil)
+			resultID := fmt.Sprintf("%x", bs)
+
+			// explain the pipeline
+			featureWeights, err := s.explainOutput(client, solutionID, resultURI, searchRequest, datasetURITrain, datasetURITest, variables)
+			if err != nil {
+				log.Warnf("failed to fetch output explanantion - %s", err)
+			}
+			if featureWeights != nil {
+				err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
 				if err != nil {
-					s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+					s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 					return
 				}
 			}
-		}
-	}
 
-	// fit solution
-	var fitResults []*pipeline.GetFitSolutionResultsResponse
-	fitResults, err = client.GenerateSolutionFit(context.Background(), solutionID, []string{datasetURITrain})
+			// persist results
+			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID, dataset, solutionID, fittedSolutionID, resultID, resultURI)
+		}
+		wg.Done()
+	})
 	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
 	}
 
-	// find the completed result and get the fitted solution ID out
-	var fittedSolutionID string
-	for _, result := range fitResults {
-		if result.GetFittedSolutionId() != "" {
-			fittedSolutionID = result.GetFittedSolutionId()
-			break
-		}
-	}
-	if fittedSolutionID == "" {
-		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, errors.Errorf("no fitted solution ID for solution `%s`", solutionID))
-	}
-
-	// persist solution running status
-	s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
-
-	// generate predictions
-	produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID)
-
-	// generate predictions
-	predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
-	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
-		return
-	}
-
-	for _, response := range predictionResponses {
-
-		if response.Progress.State != pipeline.ProgressState_COMPLETED {
-			// only persist completed responses
-			continue
-		}
-
-		output, ok := response.ExposedOutputs[defaultExposedOutputKey]
-		if !ok {
-			err := errors.Errorf("output is missing from response")
-			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
-			return
-		}
-
-		csvURI, ok := output.Value.(*pipeline.Value_CsvUri)
-		if !ok {
-			err := errors.Errorf("output is not of correct format")
-			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
-			return
-		}
-
-		// remove the protocol portion if it exists. The returned value is either a
-		// csv file or a directory.
-		resultURI := csvURI.CsvUri
-		resultURI = strings.Replace(resultURI, "file://", "", 1)
-
-		// get the result UUID. NOTE: Doing sha1 for now.
-		hasher := sha1.New()
-		_, err = hasher.Write([]byte(resultURI))
-		if err != nil {
-			s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
-		}
-		bs := hasher.Sum(nil)
-		resultID := fmt.Sprintf("%x", bs)
-
-		// explain the pipeline
-		featureWeights, err := s.explainOutput(client, solutionID, resultURI, searchRequest, datasetURITrain, datasetURITest, variables)
-		if err != nil {
-			log.Warnf("failed to fetch output explanantion - %s", err)
-		}
-		if featureWeights != nil {
-			err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
-			if err != nil {
-				s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
-				return
-			}
-		}
-
-		// persist results
-		s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID, dataset, solutionID, fittedSolutionID, resultID, resultURI)
-	}
+	wg.Wait()
 }
 
 func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage,
@@ -574,6 +614,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		// add the solution to the request
 		s.addSolution(c)
 		// persist the solution
+		s.persistSolution(c, solutionStorage, searchID, solution.SolutionId, "")
 		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
 		// dispatch it
 		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, searchRequest, datasetURITrain, datasetURITest, variables)

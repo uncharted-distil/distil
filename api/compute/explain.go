@@ -36,6 +36,19 @@ var (
 	explainablePrimitives = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
 )
 
+func (s *SolutionRequest) createExplainPipeline(client *compute.Client, solutionID string) (*pipeline.PipelineDescription, error) {
+	// get the pipeline description
+	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get solution description")
+	}
+
+	// cycle through the description to determine if any primitive can be explained
+	_, pipExplain := s.explainablePipeline(desc)
+
+	return pipExplain, nil
+}
+
 func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string, resultURI string,
 	searchRequest *pipeline.SearchSolutionsRequest, datasetURITrain string, datasetURITest string,
 	variables []*model.Variable) (*api.SolutionFeatureWeights, error) {
