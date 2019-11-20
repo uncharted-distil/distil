@@ -83,6 +83,7 @@ import { Dictionary } from '../util/dict';
 import { getVarType, isTextType, IMAGE_TYPE, hasComputedVarPrefix } from '../util/types';
 import { addRowSelection, removeRowSelection, isRowSelected, updateTableRowSelection } from '../util/row';
 import { getTimeseriesGroupingsFromFields, formatSlot, formatFieldsAsArray } from '../util/data';
+import { getSolutionIndex } from '../util/solutions';
 
 export default Vue.extend({
 	name: 'results-data-table',
@@ -126,7 +127,7 @@ export default Vue.extend({
 		},
 
 		solutionIndex(): number {
-			return routeGetters.getActiveSolutionIndex(this.$store);
+			return getSolutionIndex(this.solutionId);
 		},
 
 		hasResults(): boolean {
