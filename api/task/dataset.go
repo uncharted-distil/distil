@@ -96,12 +96,12 @@ func CreateImageDataset(dataset string, data []byte, imageType string, outputPat
 	dataPath := path.Join(outputDatasetPath, dataFilePath)
 
 	// store and expand raw data
-	zipFilename := path.Join(outputDatasetPath, dataset, "raw.zip")
+	zipFilename := path.Join(outputDatasetPath, "raw.zip")
 	err := util.WriteFileWithDirs(zipFilename, data, os.ModePerm)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to write raw image data archive")
 	}
-	extractedArchivePath := path.Join(outputDatasetPath, dataset)
+	extractedArchivePath := outputDatasetPath
 	err = util.Unzip(zipFilename, extractedArchivePath)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to extract raw image data archive")
@@ -115,7 +115,7 @@ func CreateImageDataset(dataset string, data []byte, imageType string, outputPat
 	}
 	for _, f := range extractedFiles {
 		if f.IsDir() {
-			imageFolders = append(imageFolders, f.Name())
+			imageFolders = append(imageFolders, path.Join(extractedArchivePath, f.Name()))
 		}
 	}
 
