@@ -50,7 +50,7 @@ func (s *SolutionRequest) createExplainPipeline(client *compute.Client, solution
 }
 
 func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string, resultURI string,
-	searchRequest *pipeline.SearchSolutionsRequest, datasetURITrain string, datasetURITest string,
+	searchRequest *pipeline.SearchSolutionsRequest, datasetURITest string, outputURI string,
 	variables []*model.Variable) (*api.SolutionFeatureWeights, error) {
 	// get the d3m index lookup
 	rawData, err := readDatasetData(datasetURITest)
@@ -59,24 +59,6 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	}
 	d3mIndexField := getD3MFieldIndex(rawData[0])
 	d3mIndexLookup := mapRowIndex(d3mIndexField, rawData[1:])
-
-	// get the pipeline description
-	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to get solution description")
-	}
-
-	// cycle through the description to determine if any primitive can be explained
-	canExplain, pipExplain := s.explainablePipeline(desc)
-	if !canExplain {
-		return nil, nil
-	}
-
-	// send the fully specified pipeline to TA2 (updated produce function call)
-	outputURI, err := SubmitPipeline(client, []string{datasetURITrain}, []string{datasetURITest}, searchRequest, pipExplain)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to run the fully specified pipeline")
-	}
 
 	// parse the output for the explanations
 	parsed, err := s.parseSolutionFeatureWeight(resultURI, outputURI, d3mIndexLookup)

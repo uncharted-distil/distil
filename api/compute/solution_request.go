@@ -460,6 +460,14 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	// Need to create a new solution that has the explain output. This is the solution
 	// that will be used throughout distil except for the export (which will use the original solution).
 	// start a solution searchID
+	explainDesc, err := s.createExplainPipeline(client, initialSearchSolutionID)
+	if err != nil {
+		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+		return
+	}
+
+	searchRequest.Template = explainDesc
+
 	searchID, err := client.StartSearch(context.Background(), searchRequest)
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -572,7 +580,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			resultID := fmt.Sprintf("%x", bs)
 
 			// explain the pipeline
-			featureWeights, err := s.explainOutput(client, solutionID, resultURI, searchRequest, datasetURITrain, datasetURITest, variables)
+			featureWeights, err := s.explainOutput(client, solutionID, resultURI, searchRequest, datasetURITest, resultURI, variables)
 			if err != nil {
 				log.Warnf("failed to fetch output explanantion - %s", err)
 			}
