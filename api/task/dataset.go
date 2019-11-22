@@ -24,6 +24,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	log "github.com/unchartedsoftware/plog"
@@ -86,7 +87,7 @@ func CreateDataset(dataset string, csvData []byte, outputPath string, config *In
 // CreateImageDataset creates a D3M dataset from a collection of folders that
 // each contain images. The name of the folder represents the label to give
 // for the images within.
-func CreateImageDataset(dataset string, imageFolders []string, imageType string, outputPath string, config *IngestTaskConfig) (string, error) {
+func CreateImageDataset(dataset string, data []byte, imageType string, outputPath string, config *IngestTaskConfig) (string, error) {
 	// generate all the image data for the csv table
 	log.Infof("creating image dataset '%s' of type '%s'", dataset, imageType)
 	outputDatasetPath := path.Join(outputPath, dataset)
@@ -94,14 +95,33 @@ func CreateImageDataset(dataset string, imageFolders []string, imageType string,
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 	dataPath := path.Join(outputDatasetPath, dataFilePath)
 
+	// store and expand raw data
+	zipFilename := path.Join(outputDatasetPath, dataset, "raw.zip")
+	err := util.WriteFileWithDirs(zipFilename, data, os.ModePerm)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to write raw image data archive")
+	}
+	extractedArchivePath := path.Join(outputDatasetPath, dataset)
+	err = util.Unzip(zipFilename, extractedArchivePath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to extract raw image data archive")
+	}
+
+	// get image folders
+	imageFolders := make([]string, 0)
+	extractedFiles, err := ioutil.ReadDir(extractedArchivePath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to read extracted data")
+	}
+	for _, f := range extractedFiles {
+		if f.IsDir() {
+			imageFolders = append(imageFolders, f.Name())
+		}
+	}
+
 	csvData := make([][]string, 0)
 	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "label"})
 	mediaFolder := getUniqueFolder(path.Join(outputDatasetPath, "media"))
-
-	err := os.MkdirAll(outputDatasetPath, os.ModePerm)
-	if err != nil {
-		return "", err
-	}
 
 	// the folder name represents the label to apply for all containing images
 	for _, imageFolder := range imageFolders {

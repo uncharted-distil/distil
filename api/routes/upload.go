@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -36,12 +37,18 @@ func UploadHandler(outputPath string, config *task.IngestTaskConfig) func(http.R
 		queryValues := r.URL.Query()
 		typ := queryValues.Get("type")
 
-		var err error
+		// read the file from the request
+		data, err := receiveFile(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to receive file from request"))
+			return
+		}
+
 		formattedPath := ""
 		if typ == "table" {
-			formattedPath, err = uploadTableDataset(dataset, outputPath, config, r)
+			formattedPath, err = uploadTableDataset(dataset, outputPath, config, data)
 		} else if typ == "image" {
-			formattedPath, err = uploadImageDataset(dataset, outputPath, config, r)
+			formattedPath, err = uploadImageDataset(dataset, outputPath, config, data, queryValues)
 		}
 
 		if err != nil {
@@ -59,15 +66,10 @@ func UploadHandler(outputPath string, config *task.IngestTaskConfig) func(http.R
 	}
 }
 
-func uploadTableDataset(dataset string, outputPath string, config *task.IngestTaskConfig, r *http.Request) (string, error) {
-	// read the file from the request
-	bytes, err := receiveFile(r)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to receive file from request")
-	}
+func uploadTableDataset(dataset string, outputPath string, config *task.IngestTaskConfig, data []byte) (string, error) {
 
 	// create the raw dataset schema doc
-	formattedPath, err := task.CreateDataset(dataset, bytes, outputPath, config)
+	formattedPath, err := task.CreateDataset(dataset, data, outputPath, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create dataset")
 	}
@@ -75,29 +77,15 @@ func uploadTableDataset(dataset string, outputPath string, config *task.IngestTa
 	return formattedPath, nil
 }
 
-func uploadImageDataset(dataset string, outputPath string, config *task.IngestTaskConfig, r *http.Request) (string, error) {
-	// parse POST params
-	params, err := getPostParameters(r)
-	if err != nil {
-		return "", errors.Wrap(err, "Unable to parse post parameters")
-	}
+func uploadImageDataset(dataset string, outputPath string, config *task.IngestTaskConfig, data []byte, params url.Values) (string, error) {
 
-	foldersRaw, ok := params["folders"].([]interface{})
-	if !ok {
-		return "", errors.Errorf("unable to parse 'folders' parameter")
-	}
-
-	typ, ok := params["type"].(string)
+	typ, ok := params["image"]
 	if !ok {
 		return "", errors.Errorf("unable to parse 'type' parameter")
 	}
-	folders := make([]string, 0)
-	for _, f := range foldersRaw {
-		folders = append(folders, f.(string))
-	}
 
 	// create the raw dataset schema doc
-	formattedPath, err := task.CreateImageDataset(dataset, folders, typ, outputPath, config)
+	formattedPath, err := task.CreateImageDataset(dataset, data, typ[0], outputPath, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create dataset")
 	}
