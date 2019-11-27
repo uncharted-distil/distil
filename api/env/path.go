@@ -19,7 +19,7 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil-ingest/metadata"
+	"github.com/uncharted-distil/distil-ingest/pkg/metadata"
 	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/util"
