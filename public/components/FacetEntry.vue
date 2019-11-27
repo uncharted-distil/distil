@@ -178,6 +178,8 @@ export default Vue.extend({
 		this.facets.on('facet-histogram:mouseleave', (event: Event, key: string, value: string) => {
 			$(this.$el).find('.facet-tooltip').hide();
 		});
+
+		this.injectHighlights(this.highlight, this.rowSelection, this.deemphasis);
 	},
 
 	computed: {
