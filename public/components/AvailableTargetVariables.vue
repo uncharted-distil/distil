@@ -1,160 +1,173 @@
 <template>
-	<div class="available-target-variables">
-		<variable-facets
-			enable-search
-			enable-type-change
-			enable-title
-			ignore-highlights
-			enable-typefiltering
-			:instance-name="instanceName"
-			:rows-per-page="numRowsPerPage"
-			:summaries="summaries"
-			:html="html"
-			:logActivity="PROBLEM_DEFINITION">
-		</variable-facets>
-	</div>
+  <div class="available-target-variables">
+    <variable-facets
+      enable-search
+      enable-type-change
+      enable-title
+      ignore-highlights
+      enable-typefiltering
+      :instance-name="instanceName"
+      :rows-per-page="numRowsPerPage"
+      :summaries="summaries"
+      :html="html"
+      :logActivity="PROBLEM_DEFINITION"
+    >
+    </variable-facets>
+  </div>
 </template>
 
 <script lang="ts">
-
-import 'jquery';
-import { getters as datasetGetters, actions as datasetActions } from '../store/dataset/module';
-import { getters as routeGetters } from '../store/route/module';
-import { createRouteEntry } from '../util/routes';
-import { filterSummariesByDataset, getComposedVariableKey } from '../util/data';
-import VariableFacets from '../components/VariableFacets.vue';
-import { Grouping, Variable, VariableSummary } from '../store/dataset/index';
-import { AVAILABLE_TARGET_VARS_INSTANCE, SELECT_TRAINING_ROUTE } from '../store/route/index';
-import { Group } from '../util/facets';
-import { actions as appActions } from '../store/app/module';
-import { Feature, Activity, SubActivity } from '../util/userEvents';
-import Vue from 'vue';
+import "jquery";
+import {
+  getters as datasetGetters,
+  actions as datasetActions
+} from "../store/dataset/module";
+import { getters as routeGetters } from "../store/route/module";
+import { createRouteEntry } from "../util/routes";
+import { filterSummariesByDataset, getComposedVariableKey } from "../util/data";
+import VariableFacets from "../components/VariableFacets.vue";
+import { Grouping, Variable, VariableSummary } from "../store/dataset/index";
+import {
+  AVAILABLE_TARGET_VARS_INSTANCE,
+  SELECT_TRAINING_ROUTE
+} from "../store/route/index";
+import { Group } from "../util/facets";
+import { actions as appActions } from "../store/app/module";
+import { Feature, Activity, SubActivity } from "../util/userEvents";
+import Vue from "vue";
 
 // 9 so it makes a nice clean grid
 const NUM_TARGET_PER_PAGE = 9;
 
 export default Vue.extend({
-	name: 'available-target-variables',
+  name: "available-target-variables",
 
-	components: {
-		VariableFacets
-	},
+  components: {
+    VariableFacets
+  },
 
-	computed: {
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
-		},
-		summaries(): VariableSummary[] {
-			const summaries = datasetGetters.getVariableSummaries(this.$store);
-			return filterSummariesByDataset(summaries, this.dataset);
-		},
-		numRowsPerPage(): number {
-			return NUM_TARGET_PER_PAGE;
-		},
-		instanceName(): string {
-			return AVAILABLE_TARGET_VARS_INSTANCE;
-		},
-		variables(): Variable[] {
-			return datasetGetters.getVariables(this.$store);
-		},
-		html(): (group: Group) => HTMLDivElement {
-			return (group: Group) => {
-				const container = document.createElement('div');
-				const targetElem = document.createElement('button');
-				targetElem.className += 'btn btn-sm btn-success ml-2 mr-2 mb-2';
-				targetElem.innerHTML = 'Select Target';
-				targetElem.addEventListener('click', () => {
-					const target = group.colName;
-					// remove from training
-					const training = routeGetters.getDecodedTrainingVariableNames(this.$store);
-					const index = training.indexOf(target);
-					if (index !== -1) {
-						training.splice(index, 1);
-					}
+  computed: {
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
+    summaries(): VariableSummary[] {
+      const summaries = datasetGetters.getVariableSummaries(this.$store);
+      return filterSummariesByDataset(summaries, this.dataset);
+    },
+    numRowsPerPage(): number {
+      return NUM_TARGET_PER_PAGE;
+    },
+    instanceName(): string {
+      return AVAILABLE_TARGET_VARS_INSTANCE;
+    },
+    variables(): Variable[] {
+      return datasetGetters.getVariables(this.$store);
+    },
+    html(): (group: Group) => HTMLDivElement {
+      return (group: Group) => {
+        const container = document.createElement("div");
+        const targetElem = document.createElement("button");
+        targetElem.className += "btn btn-sm btn-success ml-2 mr-2 mb-2";
+        targetElem.innerHTML = "Select Target";
+        targetElem.addEventListener("click", () => {
+          const target = group.colName;
+          // remove from training
+          const training = routeGetters.getDecodedTrainingVariableNames(
+            this.$store
+          );
+          const index = training.indexOf(target);
+          if (index !== -1) {
+            training.splice(index, 1);
+          }
 
-					const v = this.variables.find(v => {
-						return v.colName === group.colName;
-					});
-					if (v && v.grouping) {
-						if (v.grouping.subIds.length > 0) {
-							v.grouping.subIds.forEach(subId => {
-								const exists = training.find(t => {
-									return t === subId;
-								});
-								if (!exists) {
-									training.push(subId);
-								}
-							});
-						} else {
-							const exists = training.find(t => {
-								return t === v.grouping.idCol;
-							});
-							if (!exists) {
-								training.push(v.grouping.idCol);
-							}
-						}
-					}
+          const v = this.variables.find(v => {
+            return v.colName === group.colName;
+          });
+          if (v && v.grouping) {
+            if (v.grouping.subIds.length > 0) {
+              v.grouping.subIds.forEach(subId => {
+                const exists = training.find(t => {
+                  return t === subId;
+                });
+                if (!exists) {
+                  training.push(subId);
+                }
+              });
+            } else {
+              const exists = training.find(t => {
+                return t === v.grouping.idCol;
+              });
+              if (!exists) {
+                training.push(v.grouping.idCol);
+              }
+            }
+          }
 
-					// kick off the fetch task and wait for the result - when we've got it, update the route with info
-					const dataset = routeGetters.getRouteDataset(this.$store);
-					datasetActions.fetchTask(this.$store, {dataset: dataset, targetName: group.colName})
-						.then(response => {
-							const routeArgs = {
-								target: group.colName,
-								dataset: dataset,
-								filters: routeGetters.getRouteFilters(this.$store),
-								training: training.join(','),
-								task: response.data.task
-							};
+          // kick off the fetch task and wait for the result - when we've got it, update the route with info
+          const dataset = routeGetters.getRouteDataset(this.$store);
+          datasetActions
+            .fetchTask(this.$store, {
+              dataset: dataset,
+              targetName: group.colName
+            })
+            .then(response => {
+              const routeArgs = {
+                target: group.colName,
+                dataset: dataset,
+                filters: routeGetters.getRouteFilters(this.$store),
+                training: training.join(","),
+                task: response.data.task
+              };
 
-							appActions.logUserEvent(this.$store, {
-								feature: Feature.SELECT_TARGET,
-								activity: Activity.PROBLEM_DEFINITIION,
-								subActivity: SubActivity.PROBLEM_SPECIFICATION,
-								details: { target: group.colName }
-							});
+              appActions.logUserEvent(this.$store, {
+                feature: Feature.SELECT_TARGET,
+                activity: Activity.PROBLEM_DEFINITIION,
+                subActivity: SubActivity.PROBLEM_SPECIFICATION,
+                details: { target: group.colName }
+              });
 
-							const entry = createRouteEntry(SELECT_TRAINING_ROUTE, routeArgs);
-							this.$router.push(entry);
-						})
-						.catch(error => {
-							console.error(error);
-						});
-				});
-				container.appendChild(targetElem);
-				return container;
-			};
-		}
-	}
-
+              const entry = createRouteEntry(SELECT_TRAINING_ROUTE, routeArgs);
+              this.$router.push(entry);
+            })
+            .catch(error => {
+              console.error(error);
+            });
+        });
+        container.appendChild(targetElem);
+        return container;
+      };
+    }
+  }
 });
 </script>
 
 <style>
-
 .available-target-variables {
-	height: 100%;
+  height: 100%;
 }
 
 .available-target-variables .variable-facets-container {
-	justify-content: center;
-	flex-wrap: wrap;
-	flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  flex-direction: row;
 }
 
-.available-target-variables .facets-group .facets-facet-horizontal .facet-range {
-	cursor: pointer !important;
+.available-target-variables
+  .facets-group
+  .facets-facet-horizontal
+  .facet-range {
+  cursor: pointer !important;
 }
 
 .available-target-variables .facet-filters {
-	padding: 2rem;
+  padding: 2rem;
 }
 
 .available-target-variables .variable-facets-item {
-	flex-grow: 1;
-	display: inline-block;
-	width: 30%;
-	max-width: 30%;
-	margin: 5px;
+  flex-grow: 1;
+  display: inline-block;
+  width: 30%;
+  max-width: 30%;
+  margin: 5px;
 }
 </style>

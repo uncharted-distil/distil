@@ -1,81 +1,86 @@
-import Vue from 'vue';
-import _ from 'lodash';
-import { ResultsState } from './index';
-import { VariableSummary, Extrema, TableData } from '../dataset/index';
-import { updateSummaries } from '../../util/data';
+import Vue from "vue";
+import _ from "lodash";
+import { ResultsState } from "./index";
+import { VariableSummary, Extrema, TableData } from "../dataset/index";
+import { updateSummaries } from "../../util/data";
 
 export const mutations = {
+  // training / target
 
-	// training / target
+  clearTrainingSummaries(state: ResultsState) {
+    state.trainingSummaries = [];
+  },
 
-	clearTrainingSummaries(state: ResultsState) {
-		state.trainingSummaries = [];
-	},
+  clearTargetSummary(state: ResultsState) {
+    state.targetSummary = null;
+  },
 
-	clearTargetSummary(state: ResultsState) {
-		state.targetSummary = null;
-	},
+  updateTrainingSummary(state: ResultsState, summary: VariableSummary) {
+    updateSummaries(summary, state.trainingSummaries);
+  },
 
-	updateTrainingSummary(state: ResultsState, summary: VariableSummary) {
-		updateSummaries(summary, state.trainingSummaries);
-	},
+  updateTargetSummary(state: ResultsState, summary: VariableSummary) {
+    state.targetSummary = summary;
+  },
 
-	updateTargetSummary(state: ResultsState, summary: VariableSummary) {
-		state.targetSummary = summary;
-	},
+  // sets the current result data into the store
+  setIncludedResultTableData(state: ResultsState, resultData: TableData) {
+    state.includedResultTableData = resultData;
+  },
 
-	// sets the current result data into the store
-	setIncludedResultTableData(state: ResultsState, resultData: TableData) {
-		state.includedResultTableData = resultData;
-	},
+  // sets the current result data into the store
+  setExcludedResultTableData(state: ResultsState, resultData: TableData) {
+    state.excludedResultTableData = resultData;
+  },
 
-	// sets the current result data into the store
-	setExcludedResultTableData(state: ResultsState, resultData: TableData) {
-		state.excludedResultTableData = resultData;
-	},
+  // predicted
 
-	// predicted
+  updatePredictedSummaries(state: ResultsState, summary: VariableSummary) {
+    updateSummaries(summary, state.predictedSummaries);
+  },
 
-	updatePredictedSummaries(state: ResultsState, summary: VariableSummary) {
-		updateSummaries(summary, state.predictedSummaries);
-	},
+  // residuals
 
-	// residuals
+  updateResidualsSummaries(state: ResultsState, summary: VariableSummary) {
+    updateSummaries(summary, state.residualSummaries);
+  },
 
-	updateResidualsSummaries(state: ResultsState, summary: VariableSummary) {
-		updateSummaries(summary, state.residualSummaries);
-	},
+  updateResidualsExtrema(state: ResultsState, extrema: Extrema) {
+    state.residualsExtrema = extrema;
+  },
 
-	updateResidualsExtrema(state: ResultsState, extrema: Extrema) {
-		state.residualsExtrema = extrema;
-	},
+  clearResidualsExtrema(state: ResultsState) {
+    state.residualsExtrema = {
+      min: null,
+      max: null
+    };
+  },
 
-	clearResidualsExtrema(state: ResultsState) {
-		state.residualsExtrema = {
-			min: null,
-			max: null
-		};
-	},
+  // correctness
 
-	// correctness
+  updateCorrectnessSummaries(state: ResultsState, summary: VariableSummary) {
+    updateSummaries(summary, state.correctnessSummaries);
+  },
 
-	updateCorrectnessSummaries(state: ResultsState, summary: VariableSummary) {
-		updateSummaries(summary, state.correctnessSummaries);
-	},
+  // forecast
 
-	// forecast
+  updatePredictedTimeseries(
+    state: ResultsState,
+    args: { solutionId: string; id: string; timeseries: number[][] }
+  ) {
+    if (!state.timeseries[args.solutionId]) {
+      Vue.set(state.timeseries, args.solutionId, {});
+    }
+    Vue.set(state.timeseries[args.solutionId], args.id, args.timeseries);
+  },
 
-	updatePredictedTimeseries(state: ResultsState, args: { solutionId: string, id: string, timeseries: number[][] }) {
-		if (!state.timeseries[args.solutionId]) {
-			Vue.set(state.timeseries, args.solutionId, {});
-		}
-		Vue.set(state.timeseries[args.solutionId], args.id, args.timeseries);
-	},
-
-	updatePredictedForecast(state: ResultsState, args: { solutionId: string, id: string, forecast: number[][] }) {
-		if (!state.forecasts[args.solutionId]) {
-			Vue.set(state.forecasts, args.solutionId, {});
-		}
-		Vue.set(state.forecasts[args.solutionId], args.id, args.forecast);
-	},
+  updatePredictedForecast(
+    state: ResultsState,
+    args: { solutionId: string; id: string; forecast: number[][] }
+  ) {
+    if (!state.forecasts[args.solutionId]) {
+      Vue.set(state.forecasts, args.solutionId, {});
+    }
+    Vue.set(state.forecasts[args.solutionId], args.id, args.forecast);
+  }
 };
