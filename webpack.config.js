@@ -3,7 +3,6 @@ const webpack = require("webpack");
 const HtmlPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const { VueLoaderPlugin } = require("vue-loader");
-const PrettierPlugin = require("prettier-webpack-plugin");
 
 module.exports = {
   entry: "./public/main.ts",
