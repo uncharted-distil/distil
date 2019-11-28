@@ -70,9 +70,6 @@ module.exports = {
     ]
   },
   plugins: [
-    new PrettierPlugin({
-      extensions: [".js", ".ts", ".vue"] // Which file extensions to process
-    }),
     new VueLoaderPlugin(),
     new HtmlPlugin({
       template: "./public/templates/index.template.ejs",
