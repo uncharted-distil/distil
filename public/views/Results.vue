@@ -1,179 +1,186 @@
 <template>
-	<div class="container-fluid d-flex flex-column h-100 results-view">
-		<div class="row flex-0-nav"></div>
+  <div class="container-fluid d-flex flex-column h-100 results-view">
+    <div class="row flex-0-nav"></div>
 
-		<div class="row align-items-center justify-content-center bg-white">
+    <div class="row align-items-center justify-content-center bg-white">
+      <div class="col-12 col-md-6 d-flex flex-column">
+        <h5 class="header-label">
+          Select Model That Best Predicts {{ targetLabel.toUpperCase() }}
+        </h5>
 
-			<div class="col-12 col-md-6 d-flex flex-column">
-				<h5 class="header-label">Select Model That Best Predicts {{targetLabel.toUpperCase()}}</h5>
+        <div class="row col-12 pl-4">
+          <div>
+            {{ targetLabel.toUpperCase() }} is being modeled as a
+            {{ targetType }}
+          </div>
+        </div>
+        <div class="row col-12 pl-4">
+          <p>
+            Use interactive feature highlighting to analyze models. Go back to
+            revise features, if needed.
+          </p>
+        </div>
+      </div>
 
-				<div class="row col-12 pl-4">
-					<div>
-						{{targetLabel.toUpperCase()}} is being modeled as a {{targetType}}
-					</div>
-				</div>
-				<div class="row col-12 pl-4">
-					<p>
-						Use interactive feature highlighting to analyze models. Go back to revise features, if needed.
-					</p>
-				</div>
-			</div>
+      <div class="col-12 col-md-6 d-flex flex-column">
+        <result-target-variable
+          class="col-12 d-flex flex-column select-target-variables"
+        ></result-target-variable>
+      </div>
+    </div>
 
-			<div class="col-12 col-md-6 d-flex flex-column">
-				<result-target-variable class="col-12 d-flex flex-column select-target-variables"></result-target-variable>
-			</div>
-		</div>
+    <div class="row flex-1 pb-3">
+      <div
+        class="variable-summaries col-12 col-md-3 border-gray-right results-variable-summaries"
+      >
+        <p class="nav-link font-weight-bold">Feature Summaries</p>
+        <variable-facets
+          class="h-100"
+          enable-search
+          enable-highlighting
+          model-selection
+          instance-name="resultTrainingVars"
+          :summaries="trainingSummaries"
+          :log-activity="logActivity"
+        >
+        </variable-facets>
+      </div>
 
-		<div class="row flex-1 pb-3">
-			<div class='variable-summaries col-12 col-md-3 border-gray-right results-variable-summaries'>
-				<p class="nav-link font-weight-bold">Feature Summaries</p>
-				<variable-facets
-					class="h-100"
-					enable-search
-					enable-highlighting
-					model-selection
-					instance-name="resultTrainingVars"
-					:summaries="trainingSummaries"
-					:log-activity="logActivity">
-				</variable-facets>
-			</div>
-
-			<results-comparison
-				class="col-12 col-md-6 results-result-comparison"></results-comparison>
-			<result-summaries
-				class="col-12 col-md-3 border-gray-left results-result-summaries"></result-summaries>
-		</div>
-	</div>
+      <results-comparison
+        class="col-12 col-md-6 results-result-comparison"
+      ></results-comparison>
+      <result-summaries
+        class="col-12 col-md-3 border-gray-left results-result-summaries"
+      ></result-summaries>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
-
-import Vue from 'vue';
-import VariableFacets from '../components/VariableFacets';
-import ResultsComparison from '../components/ResultsComparison';
-import ResultSummaries from '../components/ResultSummaries';
-import ResultTargetVariable from '../components/ResultTargetVariable';
-import { VariableSummary } from '../store/dataset/index';
-import { actions as viewActions } from '../store/view/module';
-import { getters as datasetGetters } from '../store/dataset/module';
-import { getters as resultGetters } from '../store/results/module';
-import { getters as routeGetters } from '../store/route/module';
-import { Feature, Activity } from '../util/userEvents';
+import Vue from "vue";
+import VariableFacets from "../components/VariableFacets";
+import ResultsComparison from "../components/ResultsComparison";
+import ResultSummaries from "../components/ResultSummaries";
+import ResultTargetVariable from "../components/ResultTargetVariable";
+import { VariableSummary } from "../store/dataset/index";
+import { actions as viewActions } from "../store/view/module";
+import { getters as datasetGetters } from "../store/dataset/module";
+import { getters as resultGetters } from "../store/results/module";
+import { getters as routeGetters } from "../store/route/module";
+import { Feature, Activity } from "../util/userEvents";
 
 export default Vue.extend({
-	name: 'results-view',
+  name: "results-view",
 
-	components: {
-		VariableFacets,
-		ResultTargetVariable,
-		ResultsComparison,
-		ResultSummaries
-	},
+  components: {
+    VariableFacets,
+    ResultTargetVariable,
+    ResultsComparison,
+    ResultSummaries
+  },
 
-	data() {
-		return {
-			logActivity: Activity.MODEL_SELECTION
-		};
-	},
+  data() {
+    return {
+      logActivity: Activity.MODEL_SELECTION
+    };
+  },
 
-	computed: {
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
-		},
-		target(): string {
-			return routeGetters.getRouteTargetVariable(this.$store);
-		},
-		// Always use the label from the target summary facet as the displayed target name to ensure compund
-		// variables like a time series display the same name for the target as the value being predicted.
-		targetLabel(): string {
-			const summary = resultGetters.getTargetSummary(this.$store);
-			if (summary !== null) {
-				return summary.label;
-			}
-			return this.target;
-		},
-		targetType(): string {
-			const variables = datasetGetters.getVariablesMap(this.$store);
-			if (variables && variables[this.target]) {
-				return variables[this.target].colType;
-			}
-			return '';
-		},
-		trainingSummaries(): VariableSummary[] {
-			return resultGetters.getTrainingSummaries(this.$store);
-		},
-		solutionId(): string {
-			return routeGetters.getRouteSolutionId(this.$store);
-		},
-		highlightString(): string {
-			return routeGetters.getRouteHighlight(this.$store);
-		},
-		resultTrainingVarsPage(): number {
-			return routeGetters.getRouteResultTrainingVarsPage(this.$store);
-		}
-	},
+  computed: {
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
+    target(): string {
+      return routeGetters.getRouteTargetVariable(this.$store);
+    },
+    // Always use the label from the target summary facet as the displayed target name to ensure compund
+    // variables like a time series display the same name for the target as the value being predicted.
+    targetLabel(): string {
+      const summary = resultGetters.getTargetSummary(this.$store);
+      if (summary !== null) {
+        return summary.label;
+      }
+      return this.target;
+    },
+    targetType(): string {
+      const variables = datasetGetters.getVariablesMap(this.$store);
+      if (variables && variables[this.target]) {
+        return variables[this.target].colType;
+      }
+      return "";
+    },
+    trainingSummaries(): VariableSummary[] {
+      return resultGetters.getTrainingSummaries(this.$store);
+    },
+    solutionId(): string {
+      return routeGetters.getRouteSolutionId(this.$store);
+    },
+    highlightString(): string {
+      return routeGetters.getRouteHighlight(this.$store);
+    },
+    resultTrainingVarsPage(): number {
+      return routeGetters.getRouteResultTrainingVarsPage(this.$store);
+    }
+  },
 
-	beforeMount() {
-		viewActions.fetchResultsData(this.$store);
-	},
+  beforeMount() {
+    viewActions.fetchResultsData(this.$store);
+  },
 
-	watch: {
-		highlightString() {
-			viewActions.updateResultsSolution(this.$store);
-		},
-		solutionId() {
-			viewActions.updateResultsSolution(this.$store);
-		},
-		resultTrainingVarsPage() {
-			viewActions.updateResultsSolution(this.$store);
-		}
-	}
+  watch: {
+    highlightString() {
+      viewActions.updateResultsSolution(this.$store);
+    },
+    solutionId() {
+      viewActions.updateResultsSolution(this.$store);
+    },
+    resultTrainingVarsPage() {
+      viewActions.updateResultsSolution(this.$store);
+    }
+  }
 });
 </script>
 
 <style>
 .variable-summaries {
-	display: flex;
-	flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 .variable-summaries .facets-group {
-	/* for the spinners, this isn't needed on other views because of the buttoms that create the space */
-	padding-bottom: 20px;
+  /* for the spinners, this isn't needed on other views because of the buttoms that create the space */
+  padding-bottom: 20px;
 }
 .results-view .nav-link {
-	padding: 1rem 0 0.25rem 0;
-	border-bottom: 1px solid #E0E0E0;
-	color: rgba(0,0,0,.87);
+  padding: 1rem 0 0.25rem 0;
+  border-bottom: 1px solid #e0e0e0;
+  color: rgba(0, 0, 0, 0.87);
 }
 .header-label {
-	padding: 1rem 0 0.5rem 0;
-	font-weight: bold;
+  padding: 1rem 0 0.5rem 0;
+  font-weight: bold;
 }
 .results-view .table td {
-	text-align: left;
-	padding: 0px;
+  text-align: left;
+  padding: 0px;
 }
 .results-view .table td > div {
-	text-align: left;
-	padding: .3rem;
-	overflow: hidden;
-	text-overflow: ellipsis;
+  text-align: left;
+  padding: 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .result-facets {
-	margin-bottom: 12px;
+  margin-bottom: 12px;
 }
 .results-variable-summaries,
 .results-result-comparison,
-.results-result-summaries
-{
-	height: 100%;
+.results-result-summaries {
+  height: 100%;
 }
 @media (max-width: 767px) {
-	.results-variable-summaries,
-	.results-result-comparison,
-	.results-result-summaries
-	{
-		height: unset;
-	}
+  .results-variable-summaries,
+  .results-result-comparison,
+  .results-result-summaries {
+    height: unset;
+  }
 }
 </style>
