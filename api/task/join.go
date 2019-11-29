@@ -172,7 +172,7 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 	}
 
 	metadata := model.NewMetadata(datasetName, datasetName, datasetName, model.NormalizeDatasetID(datasetName))
-	dataResource := model.NewDataResource("learningData", compute.D3MResourceType, []string{compute.D3MResourceFormat})
+	dataResource := model.NewDataResource("learningData", compute.D3MResourceType, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 
 	mergedVariables, err := createMergedVariables(fields, leftVarsMap, rightVarsMap)
 	if err != nil {
