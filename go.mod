@@ -27,8 +27,9 @@ require (
 	github.com/shopspring/decimal v0.0.0-20191009025716-f1972eb1d1f5 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/uncharted-distil/distil-compute v0.0.0-20191117195530-94b082255c3d
-	github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191126210429-c33b22007657
+	github.com/uncharted-distil/distil-compute v0.0.0-20191129202341-b4581e1ee4f9
+	github.com/uncharted-distil/distil-ingest v0.1.0 // indirect
+	github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191129203607-2718e91e6e9d
 	github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48
 	github.com/zenazn/goji v0.9.0
