@@ -108,7 +108,10 @@ import SelectGraphView from "./SelectGraphView";
 import FilterBadge from "./FilterBadge";
 import ViewTypeToggle from "./ViewTypeToggle";
 import { overlayRouteEntry } from "../util/routes";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {   
+  actions as datasetActions,
+  getters as datasetGetters
+} from "../store/dataset/module";
 import {
   TableRow,
   D3M_INDEX_FIELD,
@@ -190,6 +193,10 @@ export default Vue.extend({
 
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
+    },
+
+    target(): string {
+      return routeGetters.getRouteTargetVariable(this.$store);
     },
 
     numRows(): number {
@@ -287,6 +294,11 @@ export default Vue.extend({
         clearRowSelection(this.$router);
       }
 
+      datasetActions.fetchVariableRankings(this.$store, {
+        dataset: this.dataset,
+        target: this.target
+      });
+
       appActions.logUserEvent(this.$store, {
         feature: Feature.FILTER_DATA,
         activity: Activity.DATA_PREPARATION,
@@ -312,6 +324,11 @@ export default Vue.extend({
       } else {
         clearRowSelection(this.$router);
       }
+
+      datasetActions.fetchVariableRankings(this.$store, {
+        dataset: this.dataset,
+        target: this.target
+      });
 
       appActions.logUserEvent(this.$store, {
         feature: Feature.UNFILTER_DATA,
