@@ -39,6 +39,7 @@
                 :instanceName="instanceName"
                 @numerical-click="onNumericalClick"
                 @categorical-click="onCategoricalClick"
+                @facet-click="onFacetClick"
                 @range-change="onRangeChange"
                 @histogram-numerical-click="onNumericalClick"
                 @histogram-categorical-click="onCategoricalClick"
@@ -330,7 +331,6 @@ export default Vue.extend({
 
     availableVariables(): string[] {
       // NOTE: used externally, not internally by the component
-
       // filter by search
       const searchFiltered = this.summaries.filter(summary => {
         return (

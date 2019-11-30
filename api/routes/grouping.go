@@ -76,13 +76,13 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 				return
 			}
 
-			if grouping.Properties.ClusterCol != "" {
-				// ensure cluster is categorical
-				err = setDataType(meta, data, dataset, storageName, grouping.Properties.ClusterCol, model.CategoricalType)
-				if err != nil {
-					handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-					return
-				}
+			// Using the grouping ID column as the cluster column by default
+			// ensure cluster exists and is categorical
+			grouping.Properties.ClusterCol = grouping.IDCol
+			err = setDataType(meta, data, dataset, storageName, grouping.Properties.ClusterCol, model.CategoricalType)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
+				return
 			}
 
 		} else if model.IsGeoCoordinate(grouping.Type) {

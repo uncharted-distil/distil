@@ -29,12 +29,8 @@ import (
 
 // NumericalField defines behaviour for the numerical field type.
 type NumericalField struct {
-	Storage     *Storage
-	StorageName string
-	Key         string
-	Label       string
-	Type        string
-	subSelect   func() string
+	BasicField
+	subSelect func() string
 }
 
 // NumericalStats contains summary information on a numerical fields.
@@ -47,11 +43,13 @@ type NumericalStats struct {
 // NewNumericalField creates a new field for numerical types.
 func NewNumericalField(storage *Storage, storageName string, key string, label string, typ string) *NumericalField {
 	field := &NumericalField{
-		Storage:     storage,
-		StorageName: storageName,
-		Key:         key,
-		Label:       label,
-		Type:        typ,
+		BasicField: BasicField{
+			Storage:     storage,
+			StorageName: storageName,
+			Key:         key,
+			Label:       label,
+			Type:        typ,
+		},
 	}
 
 	return field
@@ -61,12 +59,14 @@ func NewNumericalField(storage *Storage, storageName string, key string, label s
 // and specifies a sub select query to pull the raw data.
 func NewNumericalFieldSubSelect(storage *Storage, storageName string, key string, label string, typ string, fieldSubSelect func() string) *NumericalField {
 	field := &NumericalField{
-		Storage:     storage,
-		StorageName: storageName,
-		Key:         key,
-		Label:       label,
-		Type:        typ,
-		subSelect:   fieldSubSelect,
+		BasicField: BasicField{
+			Storage:     storage,
+			StorageName: storageName,
+			Key:         key,
+			Label:       label,
+			Type:        typ,
+		},
+		subSelect: fieldSubSelect,
 	}
 
 	return field
@@ -78,6 +78,12 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
+
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
+
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, invert, api.MaxNumBuckets)
 		if err != nil {
@@ -585,6 +591,11 @@ func (f *NumericalField) FetchPredictedSummaryData(resultURI string, datasetResu
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
+
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
 
 	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema, api.MaxNumBuckets)
 	if err != nil {

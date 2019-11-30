@@ -29,22 +29,20 @@ import (
 
 // DateTimeField defines behaviour for the numerical field type.
 type DateTimeField struct {
-	Storage     *Storage
-	StorageName string
-	Key         string
-	Label       string
-	Type        string
-	subSelect   func() string
+	BasicField
+	subSelect func() string
 }
 
 // NewDateTimeField creates a new field for numerical types.
 func NewDateTimeField(storage *Storage, storageName string, key string, label string, typ string) *DateTimeField {
 	field := &DateTimeField{
-		Storage:     storage,
-		StorageName: storageName,
-		Key:         key,
-		Label:       label,
-		Type:        typ,
+		BasicField: BasicField{
+			Storage:     storage,
+			StorageName: storageName,
+			Key:         key,
+			Label:       label,
+			Type:        typ,
+		},
 	}
 
 	return field
@@ -54,12 +52,14 @@ func NewDateTimeField(storage *Storage, storageName string, key string, label st
 // and specifies a sub select query to pull the raw data.
 func NewDateTimeFieldSubSelect(storage *Storage, storageName string, key string, label string, typ string, fieldSubSelect func() string) *DateTimeField {
 	field := &DateTimeField{
-		Storage:     storage,
-		StorageName: storageName,
-		Key:         key,
-		Label:       label,
-		Type:        typ,
-		subSelect:   fieldSubSelect,
+		BasicField: BasicField{
+			Storage:     storage,
+			StorageName: storageName,
+			Key:         key,
+			Label:       label,
+			Type:        typ,
+		},
+		subSelect: fieldSubSelect,
 	}
 
 	return field
@@ -71,6 +71,12 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
+
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
+
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, invert, api.MaxNumBuckets)
 		if err != nil {
@@ -371,6 +377,11 @@ func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResul
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
+
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
 
 	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema, api.MaxNumBuckets)
 	if err != nil {

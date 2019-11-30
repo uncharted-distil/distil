@@ -30,25 +30,23 @@ const coordinateBuckets = 20
 
 // CoordinateField defines behaviour for the coordinate field type.
 type CoordinateField struct {
-	Key         string
-	Storage     *Storage
-	StorageName string
-	XCol        string
-	YCol        string
-	Label       string
-	Type        string
+	BasicField
+	XCol string
+	YCol string
 }
 
 // NewCoordinateField creates a new field for coordinate types.
 func NewCoordinateField(key string, storage *Storage, storageName string, xCol string, yCol string, label string, typ string) *CoordinateField {
 	field := &CoordinateField{
-		Key:         key,
-		Storage:     storage,
-		StorageName: storageName,
-		XCol:        xCol,
-		YCol:        yCol,
-		Label:       label,
-		Type:        typ,
+		BasicField: BasicField{
+			Key:         key,
+			Storage:     storage,
+			StorageName: storageName,
+			Label:       label,
+			Type:        typ,
+		},
+		XCol: xCol,
+		YCol: yCol,
 	}
 
 	return field
@@ -59,6 +57,11 @@ func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.F
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
+
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
 
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, invert, coordinateBuckets)

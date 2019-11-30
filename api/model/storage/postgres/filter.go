@@ -547,6 +547,17 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
+	// Check if the highlight variable is a group variable, and if it has associated cluster data.
+	// If it does, update the filter key to use the highlight column.
+	if filterParams != nil && filterParams.Highlight != nil {
+		for _, variable := range variables {
+			if variable.Name == filterParams.Highlight.Key && variable.Grouping != nil && s.hasClusterData(storageName, variable.Name) {
+				filterParams.Highlight.Key = getClusterColName(variable.Name)
+				break
+			}
+		}
+	}
+
 	numRows, err := s.FetchNumRows(storageName, variables, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
@@ -614,4 +625,22 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	// parse the result
 	return s.parseFilteredData(dataset, variables, numRows, res)
+}
+
+func (s *Storage) hasClusterData(storageName string, colName string) bool {
+	clusterColName := getClusterColName(colName)
+	query := fmt.Sprintf("SELECT table_name FROM information_schema.columns WHERE table_name = %s AND column_name = %s;",
+		storageName, clusterColName)
+	res, err := s.client.Query(query)
+	if err != nil {
+		errors.Wrap(err, "failed to query cluster column status")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+	return res != nil
+}
+
+func getClusterColName(colName string) string {
+	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, colName)
 }

@@ -30,32 +30,30 @@ import (
 
 // TimeSeriesField defines behaviour for the timeseries field type.
 type TimeSeriesField struct {
-	Storage     *Storage
-	StorageName string
-	ClusterCol  string
-	IDCol       string
-	XCol        string
-	XColType    string
-	YCol        string
-	YColType    string
-	Label       string
-	Type        string
+	BasicField
+	ClusterCol string
+	XCol       string
+	XColType   string
+	YCol       string
+	YColType   string
 }
 
 // NewTimeSeriesField creates a new field for timeseries types.
-func NewTimeSeriesField(storage *Storage, storageName string, clusterCol string, idCol string, label string, typ string,
+func NewTimeSeriesField(storage *Storage, storageName string, clusterCol string, key string, label string, typ string,
 	xCol string, xColType string, yCol string, yColType string) *TimeSeriesField {
 	field := &TimeSeriesField{
-		Storage:     storage,
-		StorageName: storageName,
-		IDCol:       idCol,
-		XCol:        xCol,
-		XColType:    xColType,
-		YCol:        yCol,
-		YColType:    yColType,
-		ClusterCol:  clusterCol,
-		Label:       label,
-		Type:        typ,
+		BasicField: BasicField{
+			Storage:     storage,
+			StorageName: storageName,
+			Label:       label,
+			Type:        typ,
+			Key:         key,
+		},
+		XCol:       xCol,
+		XColType:   xColType,
+		YCol:       yCol,
+		YColType:   yColType,
+		ClusterCol: clusterCol,
 	}
 
 	return field
@@ -92,7 +90,7 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
-			f.IDCol, f.StorageName, clusteringColName)
+			f.Key, f.StorageName, clusteringColName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -208,6 +206,11 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	var timeline *api.Histogram
 	var err error
 
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
+
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, invert)
 		if err != nil {
@@ -240,7 +243,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	}
 
 	return &api.VariableSummary{
-		Key:      f.IDCol,
+		Key:      f.Key,
 		Label:    f.Label,
 		Type:     model.CategoricalType,
 		VarType:  f.Type,
@@ -254,16 +257,28 @@ func (f *TimeSeriesField) clusteringColName() string {
 	if f.ClusterCol != "" {
 		return fmt.Sprintf("%s%s", model.ClusterVarPrefix, f.ClusterCol)
 	}
-	return f.IDCol
+	return f.Key
+}
+
+func (f *TimeSeriesField) hasClusterData() bool {
+	query := fmt.Sprintf("SELECT table_name FROM information_schema.columns WHERE table_name = %s AND column_name = %s;",
+		f.StorageName, f.clusteringColName())
+	res, err := f.Storage.client.Query(query)
+	if err != nil {
+		errors.Wrap(err, "failed to query cluster column status")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+	return res != nil
 }
 
 func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
+
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, false)
-
-	clusteringColName := f.clusteringColName()
 
 	where := ""
 	if len(wheres) > 0 {
@@ -271,6 +286,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 	}
 
 	// Get count by category.
+	clusteringColName := f.clusteringColName()
 	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS __count__ FROM %s %s GROUP BY \"%s\" ORDER BY __count__ desc, \"%s\" LIMIT %d;",
 		clusteringColName, f.StorageName, where, clusteringColName, clusteringColName, timeSeriesCatResultLimit)
 
@@ -400,6 +416,11 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 	var filtered *api.Histogram
 	var err error
 
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
+
 	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
 	if err != nil {
 		return nil, err
@@ -411,7 +432,7 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 		}
 	}
 	return &api.VariableSummary{
-		Key:      f.IDCol,
+		Key:      f.Key,
 		Label:    f.Label,
 		Type:     model.CategoricalType,
 		VarType:  f.Type,
