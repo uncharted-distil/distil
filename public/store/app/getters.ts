@@ -1,36 +1,35 @@
-import { AppState, StatusPanelState } from './index';
+import { AppState, StatusPanelState } from "./index";
 
 export const getters = {
+  getVersionNumber(state: AppState): string {
+    return state.versionNumber;
+  },
 
-	getVersionNumber(state: AppState): string {
-		return state.versionNumber;
-	},
+  getVersionTimestamp(state: AppState): string {
+    return state.versionTimestamp;
+  },
 
-	getVersionTimestamp(state: AppState): string {
-		return state.versionTimestamp;
-	},
+  getProblemDataset(state: AppState): string {
+    return state.problemDataset;
+  },
 
-	getProblemDataset(state: AppState): string {
-		return state.problemDataset;
-	},
+  getProblemTarget(state: AppState): string {
+    return state.problemTarget;
+  },
 
-	getProblemTarget(state: AppState): string {
-		return state.problemTarget;
-	},
+  isTask1(state: AppState): boolean {
+    return state.isTask1;
+  },
 
-	isTask1(state: AppState): boolean {
-		return state.isTask1;
-	},
+  isTask2(state: AppState): boolean {
+    return state.isTask2;
+  },
 
-	isTask2(state: AppState): boolean {
-		return state.isTask2;
-	},
+  getProblemMetrics(state: AppState): string[] {
+    return state.problemMetrics;
+  },
 
-	getProblemMetrics(state: AppState): string[] {
-		return state.problemMetrics;
-	},
-
-	getStatusPanelState(state: AppState): StatusPanelState {
-		return state.statusPanelState;
-	}
+  getStatusPanelState(state: AppState): StatusPanelState {
+    return state.statusPanelState;
+  }
 };

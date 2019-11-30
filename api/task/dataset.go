@@ -24,11 +24,12 @@ import (
 	"path"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	log "github.com/unchartedsoftware/plog"
 
-	"github.com/uncharted-distil/distil-ingest/metadata"
+	"github.com/uncharted-distil/distil-ingest/pkg/metadata"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
 )
@@ -51,7 +52,7 @@ func CreateDataset(dataset string, csvData []byte, outputPath string, config *In
 	// create the raw dataset schema doc
 	datasetID := model.NormalizeDatasetID(dataset)
 	meta := model.NewMetadata(dataset, dataset, "", datasetID)
-	dr := model.NewDataResource("learningData", model.ResTypeRaw, []string{compute.D3MResourceFormat})
+	dr := model.NewDataResource("learningData", model.ResTypeRaw, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	meta.DataResources = []*model.DataResource{dr}
 
@@ -86,7 +87,7 @@ func CreateDataset(dataset string, csvData []byte, outputPath string, config *In
 // CreateImageDataset creates a D3M dataset from a collection of folders that
 // each contain images. The name of the folder represents the label to give
 // for the images within.
-func CreateImageDataset(dataset string, imageFolders []string, imageType string, outputPath string, config *IngestTaskConfig) (string, error) {
+func CreateImageDataset(dataset string, data []byte, imageType string, outputPath string, config *IngestTaskConfig) (string, error) {
 	// generate all the image data for the csv table
 	log.Infof("creating image dataset '%s' of type '%s'", dataset, imageType)
 	outputDatasetPath := path.Join(outputPath, dataset)
@@ -94,14 +95,33 @@ func CreateImageDataset(dataset string, imageFolders []string, imageType string,
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 	dataPath := path.Join(outputDatasetPath, dataFilePath)
 
+	// store and expand raw data
+	zipFilename := path.Join(outputDatasetPath, "raw.zip")
+	err := util.WriteFileWithDirs(zipFilename, data, os.ModePerm)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to write raw image data archive")
+	}
+	extractedArchivePath := outputDatasetPath
+	err = util.Unzip(zipFilename, extractedArchivePath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to extract raw image data archive")
+	}
+
+	// get image folders
+	imageFolders := make([]string, 0)
+	extractedFiles, err := ioutil.ReadDir(extractedArchivePath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to read extracted data")
+	}
+	for _, f := range extractedFiles {
+		if f.IsDir() {
+			imageFolders = append(imageFolders, path.Join(extractedArchivePath, f.Name()))
+		}
+	}
+
 	csvData := make([][]string, 0)
 	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "label"})
 	mediaFolder := getUniqueFolder(path.Join(outputDatasetPath, "media"))
-
-	err := os.MkdirAll(outputDatasetPath, os.ModePerm)
-	if err != nil {
-		return "", err
-	}
 
 	// the folder name represents the label to apply for all containing images
 	for _, imageFolder := range imageFolders {
@@ -136,7 +156,7 @@ func CreateImageDataset(dataset string, imageFolders []string, imageType string,
 	// create the dataset schema doc
 	datasetID := model.NormalizeDatasetID(dataset)
 	meta := model.NewMetadata(dataset, dataset, "", datasetID)
-	dr := model.NewDataResource("learningData", model.ResTypeTable, []string{compute.D3MResourceFormat})
+	dr := model.NewDataResource("learningData", model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName,
@@ -153,7 +173,7 @@ func CreateImageDataset(dataset string, imageFolders []string, imageType string,
 			model.VarRoleData, nil, dr.Variables, false))
 
 	// create the data resource for the referenced images
-	refDR := model.NewDataResource("0", model.ResTypeImage, []string{fmt.Sprintf("image/%s", imageType)})
+	refDR := model.NewDataResource("0", model.ResTypeImage, map[string][]string{fmt.Sprintf("image/%s", imageType): {"jpeg", "jpg"}})
 	refDR.ResPath = path.Base(mediaFolder)
 
 	meta.DataResources = []*model.DataResource{refDR, dr}
@@ -224,7 +244,7 @@ func createMetadata(dataset string, config *IngestTaskConfig) *model.Metadata {
 	// create the raw dataset schema doc
 	datasetID := model.NormalizeDatasetID(dataset)
 	meta := model.NewMetadata(dataset, dataset, "", datasetID)
-	dr := model.NewDataResource("learningData", model.ResTypeRaw, []string{compute.D3MResourceFormat})
+	dr := model.NewDataResource("learningData", model.ResTypeRaw, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	meta.DataResources = []*model.DataResource{dr}
 

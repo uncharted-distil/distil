@@ -1,4 +1,4 @@
-import Vue from 'vue';
-import App from './App';
+import Vue from "vue";
+import App from "./App";
 
-new Vue(App).$mount('#app');
+new Vue(App).$mount("#app");
