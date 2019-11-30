@@ -96,6 +96,8 @@ github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191126210429-c33b22007657
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191126210429-c33b22007657/go.mod h1:JH/BMJRev35h1jQFR4pK3zQ9WYXYgUMgGBP3rF5I5aw=
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191129203607-2718e91e6e9d h1:5drR+FabuPmzaX47TaK3+HdGSBXyfQ6iFeGm9s3NQxU=
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191129203607-2718e91e6e9d/go.mod h1:XM+QHXV9c9jSTfgqElFdikunokU+lUn4tpbfuZFrX6E=
+github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191130140220-aeea448e00a2 h1:bCz3AqyLi8GxEZA08a5nEEDVpMQ9tw9HcANlQqQosOw=
+github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191130140220-aeea448e00a2/go.mod h1:XM+QHXV9c9jSTfgqElFdikunokU+lUn4tpbfuZFrX6E=
 github.com/uncharted-distil/distil-ingest/pkg v1.10.10 h1:kG4+xIGXqkTnnKOYKlfmAOkZP4f0DZRheIhLvFnk3Js=
 github.com/uncharted-distil/distil-ingest/pkg v1.10.10/go.mod h1:JH/BMJRev35h1jQFR4pK3zQ9WYXYgUMgGBP3rF5I5aw=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9 h1:P1B7OAnmyIdSN9UGhDvIU3s8K3/2rQcvntYV5WPi+qY=

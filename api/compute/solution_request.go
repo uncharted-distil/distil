@@ -419,27 +419,35 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 }
 
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client,
-	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, dataset string,
-	solutionID string, fittedSolutionID string, resultID string, resultURI string) {
+	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string,
+	solutionID string, initialSearchSolutionID string, fittedSolutionID string, resultID string, resultURI string) {
 	// persist the completed state
-	err := solutionStorage.PersistSolutionState(solutionID, SolutionCompletedStatus, time.Now())
+	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
-		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+		return
+	}
+
+	// persist the completed state
+	err = solutionStorage.PersistSolutionState(solutionID, SolutionCompletedStatus, time.Now())
+	if err != nil {
+		// notify of error
+		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
 	}
 	// persist result metadata
-	err = solutionStorage.PersistSolutionResult(solutionID, fittedSolutionID, resultID, resultURI, SolutionCompletedStatus, time.Now())
+	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, resultID, resultURI, SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
-		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
 	}
 	// persist results
 	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURI, s.TargetFeature.Name)
 	if err != nil {
 		// notify of error
-		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
+		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
 	}
 
@@ -447,6 +455,15 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 	statusChan <- SolutionStatus{
 		RequestID:  searchID,
 		SolutionID: solutionID,
+		ResultID:   resultID,
+		Progress:   SolutionCompletedStatus,
+		Timestamp:  time.Now(),
+	}
+
+	// notify client of update
+	statusChan <- SolutionStatus{
+		RequestID:  initialSearchID,
+		SolutionID: initialSearchSolutionID,
 		ResultID:   resultID,
 		Progress:   SolutionCompletedStatus,
 		Timestamp:  time.Now(),
@@ -593,7 +610,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			}
 
 			// persist results
-			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID, dataset, solutionID, fittedSolutionID, resultID, resultURI)
+			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
+				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID, resultID, resultURI)
 		}
 		wg.Done()
 	})

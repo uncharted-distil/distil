@@ -111,7 +111,7 @@ func (s *Storage) isBadSolution(solution *api.Solution) (bool, error) {
 
 // FetchSolution pulls solution information from Postgres.
 func (s *Storage) FetchSolution(solutionID string) (*api.Solution, error) {
-	sql := fmt.Sprintf("SELECT request_id, solution_id, created_time FROM %s WHERE solution_id = $1 ORDER BY created_time desc LIMIT 1;", solutionTableName)
+	sql := fmt.Sprintf("SELECT request_id, solution_id, initial_search_solution_id, created_time FROM %s WHERE solution_id = $1 ORDER BY created_time desc LIMIT 1;", solutionTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
@@ -139,10 +139,10 @@ func (s *Storage) FetchSolution(solutionID string) (*api.Solution, error) {
 func (s *Storage) parseSolution(rows *pgx.Rows) (*api.Solution, error) {
 	var requestID string
 	var solutionID string
-	var progress string
+	var initialSearchSolutionID string
 	var createdTime time.Time
 
-	err := rows.Scan(&requestID, &solutionID, &progress, &createdTime)
+	err := rows.Scan(&requestID, &solutionID, &initialSearchSolutionID, &createdTime)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
 	}
