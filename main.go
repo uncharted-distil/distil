@@ -326,6 +326,7 @@ func main() {
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/cluster/:dataset/:variable", routes.ClusteringHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), ingestConfig))
+	registerRoutePost(mux, "/distil/predict/:dataset/:fitted-solution-id", routes.UploadHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), ingestConfig))
 	registerRoutePost(mux, "/distil/join", routes.JoinHandler(esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:invert", routes.TimeseriesHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries-forecast/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:result-uuid", routes.TimeseriesForecastHandler(pgDataStorageCtor, pgSolutionStorageCtor))

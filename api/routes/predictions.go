@@ -40,7 +40,7 @@ func PredictionsHandler(outputPath string, config *task.IngestTaskConfig) func(h
 		}
 		log.Infof("received data to use for predictions for dataset %s solution %s", dataset, fittedSolutionID)
 
-		_, err = task.Predict(dataset, fittedSolutionID, data)
+		_, err = task.Predict(dataset, fittedSolutionID, data, outputPath, config)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to generate predictions"))
 			return
