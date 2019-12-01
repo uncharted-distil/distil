@@ -1,17 +1,17 @@
 <template>
-		<nav-bar></nav-bar>
+  <nav-bar></nav-bar>
 </template>
 
 <script lang="ts">
-import NavBar from '../components/NavBar';
-import Vue from 'vue';
+import NavBar from "../components/NavBar";
+import Vue from "vue";
 
 export default Vue.extend({
-	name: 'navigation-view',
+  name: "navigation-view",
 
-	components: {
-		NavBar
-	}
+  components: {
+    NavBar
+  }
 });
 </script>
 

@@ -1,21 +1,17 @@
 {
-    "compilerOptions": {
-        "outDir": "./dist",
-        "sourceMap": true,
-        "module": "es2015",
-        "moduleResolution": "node",
-        "allowSyntheticDefaultImports": true,
-        "target": "es6",
-        "noImplicitThis": true,
-        "noImplicitAny": false,
-        "noUnusedParameters": false,
-        "noUnusedLocals": false,
-        "strictNullChecks": false
-    },
-    "include": [
-        "./public/**/*"
-    ],
-    "exclude": [
-        "./public/static/**/*"
-    ]
+  "compilerOptions": {
+    "outDir": "./dist",
+    "sourceMap": true,
+    "module": "es2015",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "target": "es6",
+    "noImplicitThis": true,
+    "noImplicitAny": false,
+    "noUnusedParameters": false,
+    "noUnusedLocals": false,
+    "strictNullChecks": false
+  },
+  "include": ["./public/**/*"],
+  "exclude": ["./public/static/**/*"]
 }

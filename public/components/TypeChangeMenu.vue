@@ -1,364 +1,420 @@
 <template>
-	<div class="type-change-menu">
-		<div class="type-change-dropdown-wrapper">
-			<b-dropdown variant="secondary" class="var-type-button"
-				id="type-change-dropdown"
-				:text="label"
-				:disabled="isDisabled">
-				<template v-if="!isComputedFeature">
-					<template v-if="!isGeocoordinate && !isCluster">
-					<b-dropdown-item
-						v-for="suggested in getSuggestedList()"
-						v-bind:class="{ selected: suggested.isSelected, recommended: suggested.isRecommended }"
-						@click.stop="onTypeChange(suggested.type)"
-						:key="suggested.type">
-						<i v-if="suggested.isSelected" class="fa fa-check" aria-hidden="true"></i>
-						{{suggested.label}}
-						<icon-base v-if="suggested.isRecommended" icon-name="bookmark" class="recommended-icon"><icon-bookmark /></icon-base>
-					</b-dropdown-item>
-					</template>
-					<template  v-if="!isGeocoordinate && !isCluster">
-						<b-dropdown-divider></b-dropdown-divider>
-					</template>
-					<template>
-						<b-dropdown-item
-							v-for="grouping in groupingOptions()"
-							@click.stop="onGroupingSelect(grouping.type)"
-							:key="grouping.type">
-							{{grouping.label}}
-						</b-dropdown-item>
-					</template>
-				</template>
-
-
-			</b-dropdown>
-			<i v-if="isUnsure" class="unsure-type-icon fa fa-circle"></i>
-		</div>
-		<b-tooltip :delay="delay" :disabled="!isDisabled" target="type-change-dropdown">
-			Cannot change type when actively filtering
-		</b-tooltip>
-	</div>
+  <div class="type-change-menu">
+    <div class="type-change-dropdown-wrapper">
+      <b-dropdown
+        variant="secondary"
+        class="var-type-button"
+        id="type-change-dropdown"
+        :text="label"
+        :disabled="isDisabled"
+      >
+        <template v-if="!isComputedFeature">
+          <template v-if="!isGeocoordinate && !isCluster">
+            <b-dropdown-item
+              v-for="suggested in getSuggestedList()"
+              v-bind:class="{
+                selected: suggested.isSelected,
+                recommended: suggested.isRecommended
+              }"
+              @click.stop="onTypeChange(suggested.type)"
+              :key="suggested.type"
+            >
+              <i
+                v-if="suggested.isSelected"
+                class="fa fa-check"
+                aria-hidden="true"
+              ></i>
+              {{ suggested.label }}
+              <icon-base
+                v-if="suggested.isRecommended"
+                icon-name="bookmark"
+                class="recommended-icon"
+                ><icon-bookmark
+              /></icon-base>
+            </b-dropdown-item>
+          </template>
+          <template v-if="!isGeocoordinate && !isCluster">
+            <b-dropdown-divider></b-dropdown-divider>
+          </template>
+          <template>
+            <b-dropdown-item
+              v-for="grouping in groupingOptions()"
+              @click.stop="onGroupingSelect(grouping.type)"
+              :key="grouping.type"
+            >
+              {{ grouping.label }}
+            </b-dropdown-item>
+          </template>
+        </template>
+      </b-dropdown>
+      <i v-if="isUnsure" class="unsure-type-icon fa fa-circle"></i>
+    </div>
+    <b-tooltip
+      :delay="delay"
+      :disabled="!isDisabled"
+      target="type-change-dropdown"
+    >
+      Cannot change type when actively filtering
+    </b-tooltip>
+  </div>
 </template>
 
 <script lang="ts">
-
-import _ from 'lodash';
-import Vue from 'vue';
-import IconBase from './icons/IconBase';
-import IconBookmark from './icons/IconBookmark';
-import { SuggestedType, Variable, Highlight } from '../store/dataset/index';
-import { actions as datasetActions, getters as datasetGetters } from '../store/dataset/module';
-import { getters as routeGetters } from '../store/route/module';
-import { addTypeSuggestions, getLabelFromType, TIMESERIES_TYPE, isClusterType, getTypeFromLabel, isEquivalentType, isLocationType, normalizedEquivalentType, BASIC_SUGGESTIONS, GEOCOORDINATE_TYPE, LATITUDE_TYPE, LONGITUDE_TYPE, hasComputedVarPrefix } from '../util/types';
-import { hasFilterInRoute } from '../util/filters';
-import { createRouteEntry } from '../util/routes';
-import { GROUPING_ROUTE } from '../store/route';
-import { getComposedVariableKey } from '../util/data';
-import { actions as appActions } from '../store/app/module';
-import { Feature, Activity, SubActivity } from '../util/userEvents';
+import _ from "lodash";
+import Vue from "vue";
+import IconBase from "./icons/IconBase";
+import IconBookmark from "./icons/IconBookmark";
+import { SuggestedType, Variable, Highlight } from "../store/dataset/index";
+import {
+  actions as datasetActions,
+  getters as datasetGetters
+} from "../store/dataset/module";
+import { getters as routeGetters } from "../store/route/module";
+import {
+  addTypeSuggestions,
+  getLabelFromType,
+  TIMESERIES_TYPE,
+  isClusterType,
+  getTypeFromLabel,
+  isEquivalentType,
+  isLocationType,
+  normalizedEquivalentType,
+  BASIC_SUGGESTIONS,
+  GEOCOORDINATE_TYPE,
+  LATITUDE_TYPE,
+  LONGITUDE_TYPE,
+  hasComputedVarPrefix
+} from "../util/types";
+import { hasFilterInRoute } from "../util/filters";
+import { createRouteEntry } from "../util/routes";
+import { GROUPING_ROUTE } from "../store/route";
+import { getComposedVariableKey } from "../util/data";
+import { actions as appActions } from "../store/app/module";
+import { Feature, Activity, SubActivity } from "../util/userEvents";
 
 const PROBABILITY_THRESHOLD = 0.8;
 
 export default Vue.extend({
-	name: 'type-change-menu',
+  name: "type-change-menu",
 
-	components: {
-		IconBase,
-		IconBookmark,
-	},
-	props: {
-		dataset: String as () => string,
-		field: String as () => string,
-		geocoordinate: Boolean
-	},
-	computed: {
-		isGeocoordinate(): boolean {
-			return this.geocoordinate || this.hasLon !== this.hasLat;
-		},
-		variables(): Variable[] {
-			return datasetGetters.getVariables(this.$store);
-		},
-		variable(): Variable {
-			if (!this.variables) {
-				return null;
-			}
+  components: {
+    IconBase,
+    IconBookmark
+  },
+  props: {
+    dataset: String as () => string,
+    field: String as () => string,
+    geocoordinate: Boolean
+  },
+  computed: {
+    isGeocoordinate(): boolean {
+      return this.geocoordinate || this.hasLon !== this.hasLat;
+    },
+    variables(): Variable[] {
+      return datasetGetters.getVariables(this.$store);
+    },
+    variable(): Variable {
+      if (!this.variables) {
+        return null;
+      }
 
-			const selectedVariable = this.variables.find(v => {
-				if (this.field === null) {
-					return;
-				}
-				return v.colName.toLowerCase() === this.field.toLowerCase() &&
-					v.datasetName === this.dataset;
-			});
+      const selectedVariable = this.variables.find(v => {
+        if (this.field === null) {
+          return;
+        }
+        return (
+          v.colName.toLowerCase() === this.field.toLowerCase() &&
+          v.datasetName === this.dataset
+        );
+      });
 
-			const geocoordVariable = this.variables.find(v => {
-				return v.colOriginalType === 'real' &&
-					v.datasetName === this.dataset;
-			});
-			return selectedVariable ? selectedVariable : geocoordVariable;
+      const geocoordVariable = this.variables.find(v => {
+        return v.colOriginalType === "real" && v.datasetName === this.dataset;
+      });
+      return selectedVariable ? selectedVariable : geocoordVariable;
+    },
+    hasLon(): boolean {
+      return !!this.variables.filter(
+        variable => variable.colName === LONGITUDE_TYPE
+      ).length;
+    },
+    hasLat(): boolean {
+      return !!this.variables.filter(
+        variable => variable.colName === LATITUDE_TYPE
+      ).length;
+    },
+    isGrouping(): boolean {
+      if (!this.variable) {
+        return false;
+      }
+      return !!this.variable.grouping;
+    },
+    availableTargetVarsPage(): number {
+      return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
+    },
+    type(): string {
+      return this.variable ? this.variable.colType : "";
+    },
+    isColTypeReviewed(): boolean {
+      return this.variable ? this.variable.isColTypeReviewed : false;
+    },
+    originalType(): string {
+      return this.variable ? this.variable.colOriginalType : "";
+    },
+    label(): string {
+      if (this.geocoordinate) {
+        return getLabelFromType(GEOCOORDINATE_TYPE);
+      } else {
+        return this.type !== "" ? getLabelFromType(this.type) : "";
+      }
+      this.$forceUpdate();
+    },
+    suggestedTypes(): SuggestedType[] {
+      const suggestedType = this.variable ? this.variable.suggestedTypes : [];
+      return _.orderBy(suggestedType, "probability", "desc");
+    },
+    suggestedNonSchemaTypes(): SuggestedType[] {
+      const nonSchemaTypes = _.filter(this.suggestedTypes, t => {
+        return t.provenance !== "schema";
+      });
+      return nonSchemaTypes;
+    },
+    topNonSchemaType(): SuggestedType {
+      return this.suggestedNonSchemaTypes.length > 0
+        ? this.suggestedNonSchemaTypes[0]
+        : undefined;
+    },
+    target(): string {
+      return routeGetters.getRouteTargetVariable(this.$store);
+    },
+    highlight(): Highlight {
+      return routeGetters.getDecodedHighlight(this.$store);
+    },
+    isCluster(): boolean {
+      return isClusterType(normalizedEquivalentType(this.type));
+    },
+    isDisabled(): boolean {
+      return (
+        hasFilterInRoute(this.field) ||
+        (this.highlight && this.highlight.key === this.field) ||
+        this.isComputedFeature
+      );
+    },
+    isComputedFeature(): boolean {
+      return this.variable && hasComputedVarPrefix(this.variable.colName);
+    },
+    hasSchemaType(): boolean {
+      return !!this.schemaType;
+    },
+    hasNonSchemaTypes(): boolean {
+      return (
+        _.find(this.suggestedTypes, t => {
+          return t.provenance !== "schema";
+        }) !== undefined
+      );
+    },
+    schemaType(): SuggestedType {
+      return _.find(this.suggestedTypes, t => {
+        return t.provenance === "schema";
+      });
+    },
+    isUnsure(): boolean {
+      return (
+        this.type === this.originalType && // we haven't changed the type (check from server)
+        !this.isColTypeReviewed && // check if user ever reviewed the col type (client)
+        this.hasSchemaType &&
+        this.hasNonSchemaTypes &&
+        this.topNonSchemaType.probability >= PROBABILITY_THRESHOLD && // it has both schema and ML types
+        !isEquivalentType(this.schemaType.type, this.topNonSchemaType.type)
+      ); // they don't agree
+    },
+    delay(): any {
+      return {
+        show: 10,
+        hide: 10
+      };
+    }
+  },
 
-		},
-		hasLon(): boolean {
-			return !!this.variables.filter(variable => variable.colName === LONGITUDE_TYPE).length;
-		},
-		hasLat(): boolean {
-			return !!this.variables.filter(variable => variable.colName === LATITUDE_TYPE).length;
-		},
-		isGrouping(): boolean {
-			if (!this.variable) {
-				return false;
-			}
-			return !!this.variable.grouping;
-		},
-		availableTargetVarsPage(): number {
-			return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
-		},
-		type(): string {
-			return this.variable ? this.variable.colType : '';
-		},
-		isColTypeReviewed(): boolean {
-			return this.variable ? this.variable.isColTypeReviewed : false;
-		},
-		originalType(): string {
-			return this.variable ? this.variable.colOriginalType : '';
-		},
-		label(): string {
-				if (this.geocoordinate) {
-					return getLabelFromType(GEOCOORDINATE_TYPE);
-				} else {
-					return this.type !== '' ? getLabelFromType(this.type) : '';
-				}
-			this.$forceUpdate();
-		},
-		suggestedTypes(): SuggestedType[] {
-			const suggestedType = this.variable ? this.variable.suggestedTypes : [];
-			return _.orderBy(suggestedType, 'probability' , 'desc');
-		},
-		suggestedNonSchemaTypes(): SuggestedType[] {
-			const nonSchemaTypes = _.filter(this.suggestedTypes, t => {
-				return t.provenance !== 'schema';
-			});
-			return nonSchemaTypes;
-		},
-		topNonSchemaType(): SuggestedType {
-			return this.suggestedNonSchemaTypes.length > 0 ? this.suggestedNonSchemaTypes[0] : undefined;
-		},
-		target(): string {
-			return routeGetters.getRouteTargetVariable(this.$store);
-		},
-		highlight(): Highlight {
-			return routeGetters.getDecodedHighlight(this.$store);
-		},
-		isCluster(): boolean {
-			return isClusterType(normalizedEquivalentType(this.type));
-		},
-		isDisabled(): boolean {
-			return hasFilterInRoute(this.field) || (this.highlight && this.highlight.key === this.field) || this.isComputedFeature;
-		},
-		isComputedFeature(): boolean {
-			return this.variable && hasComputedVarPrefix(this.variable.colName);
-		},
-		hasSchemaType(): boolean {
-			return !!this.schemaType;
-		},
-		hasNonSchemaTypes(): boolean {
-			return _.find(this.suggestedTypes, t => {
-				return t.provenance !== 'schema';
-			}) !== undefined;
-		},
-		schemaType(): SuggestedType {
-			return _.find(this.suggestedTypes, t => {
-				return t.provenance === 'schema';
-			});
-		},
-		isUnsure(): boolean {
-			return (this.type === this.originalType && // we haven't changed the type (check from server)
-				!this.isColTypeReviewed && // check if user ever reviewed the col type (client)
-				this.hasSchemaType && this.hasNonSchemaTypes &&
-				this.topNonSchemaType.probability >= PROBABILITY_THRESHOLD && // it has both schema and ML types
-				!isEquivalentType(this.schemaType.type, this.topNonSchemaType.type)); // they don't agree
-		},
-		delay(): any {
-			return {
-				show: 10,
-				hide: 10
-			};
-		}
-	},
+  methods: {
+    groupingOptions() {
+      if (this.isGrouping) {
+        return [
+          {
+            type: "Explode",
+            label: "Explode"
+          }
+        ];
+      }
+      return [
+        {
+          type: TIMESERIES_TYPE,
+          label: "Timeseries..."
+        },
+        {
+          type: GEOCOORDINATE_TYPE,
+          label: "Geocoordinate..."
+        }
+      ];
+    },
 
-	methods: {
+    onGroupingSelect(type) {
+      if (type === TIMESERIES_TYPE || type === GEOCOORDINATE_TYPE) {
+        const entry = createRouteEntry(GROUPING_ROUTE, {
+          dataset: routeGetters.getRouteDataset(this.$store),
+          groupingType: type,
+          availableTargetVarsPage: this.availableTargetVarsPage
+        });
+        this.$router.push(entry);
+      } else {
+        const grouping = this.variable.grouping;
+        datasetActions
+          .removeGrouping(this.$store, {
+            dataset: this.dataset,
+            grouping: grouping
+          })
+          .then(() => {
+            if (grouping.subIds.length > 0) {
+              const composedKey = getComposedVariableKey(grouping.subIds);
+              // if there was more than one sub ID, the IDs would have been composed into a single
+              // grouping ID that we need to delete when we revert back to the exploded version of the
+              // compound facet.
+              if (grouping.subIds.length > 1) {
+                datasetActions.deleteVariable(this.$store, {
+                  dataset: this.dataset,
+                  key: getComposedVariableKey(grouping.subIds)
+                });
+              }
+            }
+          });
+      }
+    },
 
-		groupingOptions() {
-			if (this.isGrouping) {
-				return [
-					{
-						type: 'Explode',
-						label: 'Explode'
-					}
-				];
-			}
-			return [
-				{
-					type: TIMESERIES_TYPE,
-					label: 'Timeseries...'
-				},
-				{
-					type: GEOCOORDINATE_TYPE,
-					label: 'Geocoordinate...'
-				}
-			];
-		},
+    addMissingSuggestions() {
+      const flatSuggestedTypes = this.suggestedTypes.map(st => st.type);
+      const missingSuggestions = addTypeSuggestions(flatSuggestedTypes);
+      const nonSchemaSuggestions = this.suggestedNonSchemaTypes.map(suggested =>
+        normalizedEquivalentType(suggested.type)
+      );
+      const menuSuggestions = _.uniq([
+        ...nonSchemaSuggestions,
+        ...missingSuggestions
+      ]);
+      return menuSuggestions;
+    },
+    getSuggestedList() {
+      const currentNormalizedType = normalizedEquivalentType(this.type);
+      const combinedSuggestions = this.addMissingSuggestions().map(type => {
+        const normalizedType = normalizedEquivalentType(type);
+        return {
+          type: normalizedType,
+          label: getLabelFromType(normalizedType),
+          isRecommended:
+            this.topNonSchemaType &&
+            this.topNonSchemaType.type.toLowerCase() === type.toLowerCase(),
+          isSelected: currentNormalizedType === normalizedType
+        };
+      });
+      return combinedSuggestions;
+    },
+    onTypeChange(suggestedType) {
+      const type = suggestedType;
+      const field = this.field;
+      const dataset = this.dataset;
 
-		onGroupingSelect(type) {
-			if (type === TIMESERIES_TYPE || type === GEOCOORDINATE_TYPE) {
-				const entry = createRouteEntry(GROUPING_ROUTE, {
-					dataset: routeGetters.getRouteDataset(this.$store),
-					groupingType: type,
-					availableTargetVarsPage: this.availableTargetVarsPage
-				});
-				this.$router.push(entry);
-			} else {
-				const grouping = this.variable.grouping;
-				datasetActions.removeGrouping(this.$store, {
-					dataset: this.dataset,
-					grouping: grouping
-				}).then(() => {
-					if (grouping.subIds.length > 0) {
-						const composedKey = getComposedVariableKey(grouping.subIds);
-						// if there was more than one sub ID, the IDs would have been composed into a single
-						// grouping ID that we need to delete when we revert back to the exploded version of the
-						// compound facet.
-						if (grouping.subIds.length > 1) {
-							datasetActions.deleteVariable(this.$store, {
-								dataset: this.dataset,
-								key: getComposedVariableKey(grouping.subIds)
-							});
-						}
-					}
-				});
-			}
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.RETYPE_FEATURE,
+        activity: Activity.PROBLEM_DEFINITIION,
+        subActivity: SubActivity.PROBLEM_SPECIFICATION,
+        details: { from: this.type, to: type }
+      });
 
-		},
+      datasetActions
+        .setVariableType(this.$store, {
+          dataset: dataset,
+          field: field,
+          type: type
+        })
+        .then(() => {
+          if (this.target) {
+            datasetActions.fetchVariableRankings(this.$store, {
+              dataset: dataset,
+              target: this.target
+            });
+          }
 
-		addMissingSuggestions() {
-			const flatSuggestedTypes = this.suggestedTypes.map(st => st.type);
-			const missingSuggestions = addTypeSuggestions(flatSuggestedTypes);
-			const nonSchemaSuggestions = this.suggestedNonSchemaTypes.map(suggested => normalizedEquivalentType(suggested.type));
-			const menuSuggestions = _.uniq([
-				...nonSchemaSuggestions,
-				...missingSuggestions
-			]);
-			return menuSuggestions;
-		},
-		getSuggestedList() {
-			const currentNormalizedType = normalizedEquivalentType(this.type);
-			const combinedSuggestions = this.addMissingSuggestions().map(type => {
-				const normalizedType = normalizedEquivalentType(type);
-				return {
-					type: normalizedType,
-					label: getLabelFromType(normalizedType),
-					isRecommended: this.topNonSchemaType && this.topNonSchemaType.type.toLowerCase() === type.toLowerCase(),
-					isSelected: currentNormalizedType === normalizedType,
-				};
-			});
-			return combinedSuggestions;
-		},
-		onTypeChange(suggestedType) {
-			const type = suggestedType;
-			const field = this.field;
-			const dataset = this.dataset;
+          if (isLocationType(type)) {
+            datasetActions.geocodeVariable(this.$store, {
+              dataset: dataset,
+              field: field
+            });
+          }
+        });
+    }
+  },
 
-			appActions.logUserEvent(this.$store, {
-				feature: Feature.RETYPE_FEATURE,
-				activity: Activity.PROBLEM_DEFINITIION,
-				subActivity: SubActivity.PROBLEM_SPECIFICATION,
-				details: { from: this.type, to: type }
-			});
-
-			datasetActions.setVariableType(this.$store, {
-				dataset: dataset,
-				field: field,
-				type: type
-			}).then(() => {
-				if (this.target) {
-					datasetActions.fetchVariableRankings(this.$store, {
-						dataset: dataset,
-						target: this.target
-					});
-				}
-
-				if (isLocationType(type)) {
-					datasetActions.geocodeVariable(this.$store, {
-						dataset: dataset,
-						field: field
-					});
-				}
-			});
-		}
-	},
-
-	mounted() {
-		this.$root.$on('bv::dropdown::show', () => {
-			const dataset = this.dataset;
-			const field = this.field;
-			if (!this.isGeocoordinate) {
-				datasetActions.reviewVariableType(this.$store, {
-					dataset: dataset,
-					field: field,
-					isColTypeReviewed: true,
-				});
-			}
-		});
-	},
+  mounted() {
+    this.$root.$on("bv::dropdown::show", () => {
+      const dataset = this.dataset;
+      const field = this.field;
+      if (!this.isGeocoordinate) {
+        datasetActions.reviewVariableType(this.$store, {
+          dataset: dataset,
+          field: field,
+          isColTypeReviewed: true
+        });
+      }
+    });
+  }
 });
 </script>
 
 <style>
 .var-type-button button {
-	border: none;
-	border-radius: 0;
-	padding: 2px 4px;
-	width: 100%;
-	text-align: left;
-	outline: none;
-	font-size: 0.750rem;
-	color: white;
+  border: none;
+  border-radius: 0;
+  padding: 2px 4px;
+  width: 100%;
+  text-align: left;
+  outline: none;
+  font-size: 0.75rem;
+  color: white;
 }
 .var-type-button button:hover,
 .var-type-button button:active,
 .var-type-button button:focus,
-.var-type-button.show > .dropdown-toggle  {
-	border: none;
-	border-radius: 0;
-	padding: 2px 4px;
-	color: white;
-	background-color: #424242;
-	border-color: #424242;
-	box-shadow: none;
+.var-type-button.show > .dropdown-toggle {
+  border: none;
+  border-radius: 0;
+  padding: 2px 4px;
+  color: white;
+  background-color: #424242;
+  border-color: #424242;
+  box-shadow: none;
 }
 .type-change-menu .dropdown-item {
-	font-size: 0.867rem;
-	text-transform: none;
-	position: relative;
+  font-size: 0.867rem;
+  text-transform: none;
+  position: relative;
 }
 .type-change-menu .dropdown-item.selected {
-	font-size: 0.867rem;
-	text-transform: none;
-	padding-left: 0;
+  font-size: 0.867rem;
+  text-transform: none;
+  padding-left: 0;
 }
 .recommended-icon {
-	position: absolute;
-    right: 10px;
-    bottom: 5px;
+  position: absolute;
+  right: 10px;
+  bottom: 5px;
 }
 .unsure-type-icon {
-	position: absolute;
-    color: #dc3545;
-    top: -5px;
-    right: -5px;
-    z-index: 2;
+  position: absolute;
+  color: #dc3545;
+  top: -5px;
+  right: -5px;
+  z-index: 2;
 }
 .type-change-dropdown-wrapper {
-	position: relative;
+  position: relative;
 }
 </style>

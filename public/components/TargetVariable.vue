@@ -1,147 +1,161 @@
 <template>
-	<div v-bind:class='{"included": includedActive, "excluded": !includedActive }'>
-		<variable-facets class="target-summary"
-			enable-highlighting
-			:summaries="targetSummaries"
-			:instance-name="instanceName"
-			:log-activity="logActivity">
-		</variable-facets>
-	</div>
+  <div v-bind:class="{ included: includedActive, excluded: !includedActive }">
+    <variable-facets
+      class="target-summary"
+      enable-highlighting
+      :summaries="targetSummaries"
+      :instance-name="instanceName"
+      :log-activity="logActivity"
+    >
+    </variable-facets>
+  </div>
 </template>
 
 <script lang="ts">
-
-import _ from 'lodash';
-import Vue from 'vue';
-import VariableFacets from '../components/VariableFacets';
-import { getters as routeGetters } from '../store/route/module';
-import { getNumericalFacetValue, getCategoricalFacetValue, getTimeseriesFacetValue, TOP_RANGE_HIGHLIGHT } from '../util/facets';
-import { TARGET_VAR_INSTANCE } from '../store/route/index';
-import { Variable, VariableSummary, Highlight } from '../store/dataset/index';
-import { updateHighlight } from '../util/highlights';
-import { isNumericType, TIMESERIES_TYPE, DATE_TIME_TYPE } from '../util/types';
-import { Activity } from '../util/userEvents';
+import _ from "lodash";
+import Vue from "vue";
+import VariableFacets from "../components/VariableFacets";
+import { getters as routeGetters } from "../store/route/module";
+import {
+  getNumericalFacetValue,
+  getCategoricalFacetValue,
+  getTimeseriesFacetValue,
+  TOP_RANGE_HIGHLIGHT
+} from "../util/facets";
+import { TARGET_VAR_INSTANCE } from "../store/route/index";
+import { Variable, VariableSummary, Highlight } from "../store/dataset/index";
+import { updateHighlight } from "../util/highlights";
+import { isNumericType, TIMESERIES_TYPE, DATE_TIME_TYPE } from "../util/types";
+import { Activity } from "../util/userEvents";
 
 export default Vue.extend({
-	name: 'target-variable',
+  name: "target-variable",
 
-	components: {
-		VariableFacets
-	},
+  components: {
+    VariableFacets
+  },
 
-	computed: {
+  computed: {
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
 
-		dataset(): string {
-			return routeGetters.getRouteDataset(this.$store);
-		},
+    target(): string {
+      return routeGetters.getRouteTargetVariable(this.$store);
+    },
 
-		target(): string {
-			return routeGetters.getRouteTargetVariable(this.$store);
-		},
+    includedActive(): boolean {
+      return routeGetters.getRouteInclude(this.$store);
+    },
 
-		includedActive(): boolean {
-			return routeGetters.getRouteInclude(this.$store);
-		},
+    targetVariable(): Variable {
+      return routeGetters.getTargetVariable(this.$store);
+    },
 
-		targetVariable(): Variable {
-			return routeGetters.getTargetVariable(this.$store);
-		},
+    targetSummaries(): VariableSummary[] {
+      return routeGetters.getTargetVariableSummaries(this.$store);
+    },
 
-		targetSummaries(): VariableSummary[] {
-			return routeGetters.getTargetVariableSummaries(this.$store);
-		},
+    highlight(): Highlight {
+      return routeGetters.getDecodedHighlight(this.$store);
+    },
 
-		highlight(): Highlight {
-			return routeGetters.getDecodedHighlight(this.$store);
-		},
+    hasFilters(): boolean {
+      return routeGetters.getDecodedFilters(this.$store).length > 0;
+    },
 
-		hasFilters(): boolean {
-			return routeGetters.getDecodedFilters(this.$store).length > 0;
-		},
+    instanceName(): string {
+      return TARGET_VAR_INSTANCE;
+    },
 
-		instanceName(): string {
-			return TARGET_VAR_INSTANCE;
-		},
+    defaultHighlightType(): string {
+      return TOP_RANGE_HIGHLIGHT;
+    }
+  },
 
-		defaultHighlightType(): string {
-			return TOP_RANGE_HIGHLIGHT;
-		},
-	},
+  data() {
+    return {
+      hasDefaultedAlready: false,
+      logActivity: Activity.DATA_PREPARATION
+    };
+  },
 
-	data() {
-		return {
-			hasDefaultedAlready: false,
-			logActivity: Activity.DATA_PREPARATION
-		};
-	},
+  watch: {
+    targetSummaries() {
+      this.defaultTargetHighlight();
+    },
+    targetVariable() {
+      this.defaultTargetHighlight();
+    }
+  },
 
-	watch: {
-		targetSummaries() {
-			this.defaultTargetHighlight();
-		},
-		targetVariable() {
-			this.defaultTargetHighlight();
-		}
-	},
+  mounted() {
+    this.defaultTargetHighlight();
+  },
 
-	mounted() {
-		this.defaultTargetHighlight();
-	},
+  methods: {
+    defaultTargetHighlight() {
+      // only default higlight numeric types
+      if (!this.targetVariable) {
+        return;
+      }
 
-	methods: {
+      if (
+        this.targetVariable.grouping &&
+        this.targetVariable.grouping.type === TIMESERIES_TYPE
+      ) {
+        // dont default timeseries groupings
+        return;
+      }
 
-		defaultTargetHighlight() {
-			// only default higlight numeric types
-			if (!this.targetVariable) {
-				return;
-			}
+      // if we have no current highlight, and no filters, highlight default range
+      if (this.highlight || this.hasFilters || this.hasDefaultedAlready) {
+        return;
+      }
 
-			if (this.targetVariable.grouping && this.targetVariable.grouping.type === TIMESERIES_TYPE) {
-				// dont default timeseries groupings
-				return;
-			}
+      if (this.targetSummaries.length > 0 && !this.targetSummaries[0].pending) {
+        if (
+          isNumericType(this.targetVariable.colType) ||
+          this.targetVariable.colType === DATE_TIME_TYPE
+        ) {
+          this.selectDefaultNumerical();
+        } else {
+          this.selectDefaultCategorical();
+        }
+        this.hasDefaultedAlready = true;
+      }
+    },
 
-			// if we have no current highlight, and no filters, highlight default range
-			if (this.highlight || this.hasFilters || this.hasDefaultedAlready) {
-				return;
-			}
+    selectDefaultNumerical() {
+      updateHighlight(this.$router, {
+        context: this.instanceName,
+        dataset: this.dataset,
+        key: this.target,
+        value: getNumericalFacetValue(
+          this.targetSummaries[0],
+          this.defaultHighlightType
+        )
+      });
+    },
 
-			if (this.targetSummaries.length > 0 && !this.targetSummaries[0].pending) {
-				if (isNumericType(this.targetVariable.colType) || this.targetVariable.colType === DATE_TIME_TYPE) {
-					this.selectDefaultNumerical();
-				} else {
-					this.selectDefaultCategorical();
-				}
-				this.hasDefaultedAlready = true;
-			}
-		},
-
-		selectDefaultNumerical() {
-			updateHighlight(this.$router, {
-				context: this.instanceName,
-				dataset: this.dataset,
-				key: this.target,
-				value: getNumericalFacetValue(this.targetSummaries[0], this.defaultHighlightType)
-			});
-		},
-
-		selectDefaultCategorical() {
-			updateHighlight(this.$router, {
-				context: this.instanceName,
-				dataset: this.dataset,
-				key: this.target,
-				value: getCategoricalFacetValue(this.targetSummaries[0])
-			});
-		}
-	}
-
-
+    selectDefaultCategorical() {
+      updateHighlight(this.$router, {
+        context: this.instanceName,
+        dataset: this.dataset,
+        key: this.target,
+        value: getCategoricalFacetValue(this.targetSummaries[0])
+      });
+    }
+  }
 });
 </script>
 
 <style>
-.target-summary .variable-facets-container .facets-root-container .facets-group-container .facets-group {
-	box-shadow: none;
+.target-summary
+  .variable-facets-container
+  .facets-root-container
+  .facets-group-container
+  .facets-group {
+  box-shadow: none;
 }
-
 </style>

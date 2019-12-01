@@ -1,8 +1,7 @@
-import { ViewState } from './index';
+import { ViewState } from "./index";
 
 export const getters = {
-
-	getFetchParamsCache(state: ViewState) {
-		return state.fetchParamsCache;
-	}
+  getFetchParamsCache(state: ViewState) {
+    return state.fetchParamsCache;
+  }
 };

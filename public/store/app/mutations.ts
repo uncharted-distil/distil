@@ -1,45 +1,47 @@
-import { AppState, StatusPanelContentType } from './index';
-import Vue from 'vue';
+import { AppState, StatusPanelContentType } from "./index";
+import Vue from "vue";
 
 export const mutations = {
+  setVersionNumber(state: AppState, versionNumber: string) {
+    state.versionNumber = versionNumber;
+  },
 
-	setVersionNumber(state: AppState, versionNumber: string) {
-		state.versionNumber = versionNumber;
-	},
+  setVersionTimestamp(state: AppState, versionTimestamp: string) {
+    state.versionTimestamp = versionTimestamp;
+  },
 
-	setVersionTimestamp(state: AppState, versionTimestamp: string) {
-		state.versionTimestamp = versionTimestamp;
-	},
+  setIsTask1(state: AppState, isTask1: boolean) {
+    state.isTask1 = isTask1;
+  },
 
-	setIsTask1(state: AppState, isTask1: boolean) {
-		state.isTask1 = isTask1;
-	},
+  setIsTask2(state: AppState, isTask2: boolean) {
+    state.isTask2 = isTask2;
+  },
 
-	setIsTask2(state: AppState, isTask2: boolean) {
-		state.isTask2 = isTask2;
-	},
+  setProblemDataset(state: AppState, dataset: string) {
+    state.problemDataset = dataset;
+  },
 
-	setProblemDataset(state: AppState, dataset: string) {
-		state.problemDataset = dataset;
-	},
+  setProblemTarget(state: AppState, target: string) {
+    state.problemTarget = target;
+  },
 
-	setProblemTarget(state: AppState, target: string) {
-		state.problemTarget = target;
-	},
+  setProblemMetrics(state: AppState, metrics: string[]) {
+    state.problemMetrics = metrics;
+  },
 
-	setProblemMetrics(state: AppState, metrics: string[]) {
-		state.problemMetrics = metrics;
-	},
+  setStatusPanelContentType(
+    state: AppState,
+    contentType: StatusPanelContentType
+  ) {
+    Vue.set(state.statusPanelState, "contentType", contentType);
+  },
 
-	setStatusPanelContentType(state: AppState, contentType: StatusPanelContentType) {
-		Vue.set(state.statusPanelState, 'contentType', contentType);
-	},
+  openStatusPanel(state: AppState) {
+    Vue.set(state.statusPanelState, "isOpen", true);
+  },
 
-	openStatusPanel(state: AppState) {
-		Vue.set(state.statusPanelState, 'isOpen', true);
-	},
-
-	closeStatusPanel(state: AppState) {
-		Vue.set(state.statusPanelState, 'isOpen', false);
-	}
+  closeStatusPanel(state: AppState) {
+    Vue.set(state.statusPanelState, "isOpen", false);
+  }
 };

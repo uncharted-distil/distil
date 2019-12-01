@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil-ingest/rest"
+	"github.com/uncharted-distil/distil-ingest/pkg/rest"
 	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
