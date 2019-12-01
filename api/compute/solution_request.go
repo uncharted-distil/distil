@@ -325,7 +325,42 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 	return preprocessingPipeline, nil
 }
 
-func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, fittedSolutionID string) *pipeline.ProduceSolutionRequest {
+func GeneratePredictions(datasetURI string, fittedSolutionID string, client *compute.Client) (string, error) {
+	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID)
+	predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
+	if err != nil {
+		return "", err
+	}
+
+	for _, response := range predictionResponses {
+
+		if response.Progress.State != pipeline.ProgressState_COMPLETED {
+			// only persist completed responses
+			continue
+		}
+
+		output, ok := response.ExposedOutputs[defaultExposedOutputKey]
+		if !ok {
+			return "", errors.Errorf("output is missing from response")
+		}
+
+		csvURI, ok := output.Value.(*pipeline.Value_CsvUri)
+		if !ok {
+			return "", errors.Errorf("output is not of correct format")
+		}
+
+		// remove the protocol portion if it exists. The returned value is either a
+		// csv file or a directory.
+		resultURI := csvURI.CsvUri
+		resultURI = strings.Replace(resultURI, "file://", "", 1)
+
+		return resultURI, nil
+	}
+
+	return "", errors.Errorf("no results retrieved")
+}
+
+func createProduceSolutionRequest(datasetURI string, fittedSolutionID string) *pipeline.ProduceSolutionRequest {
 	return &pipeline.ProduceSolutionRequest{
 		FittedSolutionId: fittedSolutionID,
 		Inputs: []*pipeline.Value{
@@ -495,7 +530,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
 
 	// generate predictions
-	produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID)
+	produceSolutionRequest := createProduceSolutionRequest(datasetURITest, fittedSolutionID)
 
 	// generate predictions
 	predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)

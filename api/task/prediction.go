@@ -15,6 +15,8 @@
 
 package task
 
+import "github.com/uncharted-distil/distil/api/compute"
+
 // Predict processes input data to generate predictions.
 func Predict(dataset string, fittedSolutionID string, csvData []byte, outputPath string, config *IngestTaskConfig) (string, error) {
 	// create the dataset to be used for predictions
@@ -23,4 +25,11 @@ func Predict(dataset string, fittedSolutionID string, csvData []byte, outputPath
 		return "", nil
 	}
 
+	// submit the new dataset for predictions
+	resultURI, err := compute.GeneratePredictions(path, fittedSolutionID, client)
+	if err != nil {
+		return "", err
+	}
+
+	return resultURI, nil
 }
