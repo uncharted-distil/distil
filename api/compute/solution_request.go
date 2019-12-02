@@ -627,7 +627,11 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 	s.waitOnSolutions()
 
 	// end search
-	s.finished <- client.EndSearch(context.Background(), searchID)
+	// since predictions can be requested for different datasets on the same
+	// fitted solution, can't tell TA2 to end but the channel still needs
+	// to be notified that the current process is complete
+	//s.finished <- client.EndSearch(context.Background(), searchID)
+	s.finished <- nil
 }
 
 // PersistAndDispatch persists the solution request and dispatches it.
