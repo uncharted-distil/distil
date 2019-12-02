@@ -86,11 +86,11 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 
 	for _, bucket := range categoryBuckets {
 
-		clusteringColName := f.clusteringColName()
+		keyColName := f.keyColName()
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
-			f.Key, f.StorageName, clusteringColName)
+			f.Key, f.StorageName, keyColName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -253,24 +253,14 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	}, nil
 }
 
-func (f *TimeSeriesField) clusteringColName() string {
-	if f.ClusterCol != "" {
-		return fmt.Sprintf("%s%s", model.ClusterVarPrefix, f.ClusterCol)
+func (f *TimeSeriesField) keyColName() string {
+	if f.hasClusterData(f.GetKey()) {
+		if f.ClusterCol != "" {
+			return fmt.Sprintf("%s%s", model.ClusterVarPrefix, f.ClusterCol)
+		}
+		return f.Key
 	}
 	return f.Key
-}
-
-func (f *TimeSeriesField) hasClusterData() bool {
-	query := fmt.Sprintf("SELECT table_name FROM information_schema.columns WHERE table_name = %s AND column_name = %s;",
-		f.StorageName, f.clusteringColName())
-	res, err := f.Storage.client.Query(query)
-	if err != nil {
-		errors.Wrap(err, "failed to query cluster column status")
-	}
-	if res != nil {
-		defer res.Close()
-	}
-	return res != nil
 }
 
 func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
@@ -286,9 +276,12 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 	}
 
 	// Get count by category.
-	clusteringColName := f.clusteringColName()
+	colName := f.GetKey()
+	if f.hasClusterData(colName) {
+		colName = f.keyColName()
+	}
 	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS __count__ FROM %s %s GROUP BY \"%s\" ORDER BY __count__ desc, \"%s\" LIMIT %d;",
-		clusteringColName, f.StorageName, where, clusteringColName, clusteringColName, timeSeriesCatResultLimit)
+		colName, f.StorageName, where, colName, colName, timeSeriesCatResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -332,7 +325,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	clusteringColName := f.clusteringColName()
+	keyColName := f.keyColName()
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -341,9 +334,9 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY __count__ desc, "%s" LIMIT %d;`,
-		clusteringColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
-		model.D3MIndexFieldName, len(params), where, clusteringColName,
-		clusteringColName, timeSeriesCatResultLimit)
+		keyColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
+		model.D3MIndexFieldName, len(params), where, keyColName,
+		keyColName, timeSeriesCatResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -368,9 +361,9 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 }
 
 func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
-	clusteringColName := f.clusteringColName()
+	keyColName := f.keyColName()
 
-	termsAggName := api.TermsAggPrefix + clusteringColName
+	termsAggName := api.TermsAggPrefix + keyColName
 
 	// Parse bucket results.
 	buckets := make([]*api.Bucket, 0)
@@ -461,7 +454,7 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	clusteringColName := f.clusteringColName()
+	keyColName := f.keyColName()
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -470,9 +463,9 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY __count__ desc, "%s" LIMIT %d;`,
-		clusteringColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
-		model.D3MIndexFieldName, len(params), where, clusteringColName,
-		clusteringColName, timeSeriesCatResultLimit)
+		keyColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
+		model.D3MIndexFieldName, len(params), where, keyColName,
+		keyColName, timeSeriesCatResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
