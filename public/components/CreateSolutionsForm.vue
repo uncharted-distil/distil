@@ -122,7 +122,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { RESULTS_ROUTE } from "../store/route/index";
 import { actions as solutionActions } from "../store/solutions/module";
 import { Solution, NUM_SOLUTIONS } from "../store/solutions/index";
-import { Variable, TaskTypes, TaskSubTypes } from "../store/dataset/index";
+import { Variable, TaskTypes } from "../store/dataset/index";
 import { TIMESERIES_TYPE } from "../util/types";
 import { FilterParams } from "../util/filters";
 import { Feature, Activity, SubActivity } from "../util/userEvents";

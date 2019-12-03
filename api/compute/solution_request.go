@@ -85,8 +85,7 @@ type SolutionRequest struct {
 	Dataset              string
 	DatasetInput         string
 	TargetFeature        *model.Variable
-	Task                 string
-	SubTask              string
+	Task                 []string
 	TimestampField       string
 	MaxSolutions         int
 	MaxTime              int
@@ -147,8 +146,7 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 		}
 	}
 
-	req.Task = json.StringDefault(j, "", "task")
-	req.SubTask = json.StringDefault(j, "", "subTask")
+	req.Task, _ = json.StringArray(j, "task")
 	req.MaxSolutions = json.IntDefault(j, 5, "maxSolutions")
 	req.MaxTime = json.IntDefault(j, 0, "maxTime")
 	req.ProblemType = json.StringDefault(j, "", "problemType")
@@ -238,17 +236,16 @@ func (s *SolutionRequest) Listen(listener SolutionStatusListener) error {
 
 func (s *SolutionRequest) createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
 	datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
-	return createSearchSolutionsRequest(columnIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset, s.Metrics, s.Task, s.SubTask, int64(s.MaxTime))
+	return createSearchSolutionsRequest(columnIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset, s.Metrics, s.Task, int64(s.MaxTime))
 }
 
 func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
-	datasetURI string, userAgent string, targetFeature *model.Variable, dataset string, metrics []string, task string, subTask string, maxTime int64) (*pipeline.SearchSolutionsRequest, error) {
+	datasetURI string, userAgent string, targetFeature *model.Variable, dataset string, metrics []string, task []string, maxTime int64) (*pipeline.SearchSolutionsRequest, error) {
 
 	return &pipeline.SearchSolutionsRequest{
 		Problem: &pipeline.ProblemDescription{
 			Problem: &pipeline.Problem{
-				TaskType:           compute.ConvertTaskTypeFromTA3ToTA2(task),
-				TaskSubtype:        compute.ConvertTaskSubTypeFromTA3ToTA2(subTask),
+				TaskKeywords:       compute.ConvertTaskKeywordsFromTA3ToTA2(task),
 				PerformanceMetrics: compute.ConvertMetricsFromTA3ToTA2(metrics),
 			},
 			Inputs: []*pipeline.ProblemInput{
@@ -757,7 +754,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		return err
 	}
 	s.Task = task.Task
-	s.SubTask = task.SubTask
 
 	// when dealing with categorical data we want to stratify
 	stratify := false
@@ -803,7 +799,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVariable, s.DatasetInput, s.Metrics, s.Task, s.SubTask, int64(s.MaxTime))
+	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVariable, s.DatasetInput, s.Metrics, s.Task, int64(s.MaxTime))
 
 	if err != nil {
 		return err
@@ -894,12 +890,11 @@ func CreateSearchSolutionRequest(request *SolutionRequestDiscovery, skipPreproce
 	targetVariable := request.TargetFeature
 	columnIndex := getColumnIndex(targetVariable, request.SelectedFeatures)
 	task := DefaultTaskType(targetVariable.Type, "")
-	taskSubType := DefaultTaskSubType(task)
 	metrics := DefaultMetrics(task)
 
 	// create search solutions request
 	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessingPipeline, request.SourceURI,
-		request.UserAgent, request.TargetFeature, request.DatasetInput, metrics, task, taskSubType, 600)
+		request.UserAgent, request.TargetFeature, request.DatasetInput, metrics, task, 600)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create search solution request")
 	}
