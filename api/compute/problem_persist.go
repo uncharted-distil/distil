@@ -37,10 +37,6 @@ const (
 
 	problemVersion       = "2.0"
 	problemSchemaVersion = "4.0.0"
-
-	defaultTaskTypeNumerical   = compute.RegressionTask
-	defaultTaskTypeCategorical = compute.ClassificationTask
-	defaultTaskTypeForecasting = compute.ForecastingTask
 )
 
 // VariableProvider defines a function that will get the provided variable.
