@@ -49,9 +49,7 @@ func (s *SolutionRequest) createExplainPipeline(client *compute.Client, solution
 	return pipExplain, nil
 }
 
-func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string, resultURI string,
-	searchRequest *pipeline.SearchSolutionsRequest, datasetURITest string, outputURI string,
-	variables []*model.Variable) (*api.SolutionFeatureWeights, error) {
+func (s *SolutionRequest) explainOutput(resultURI string, datasetURITest string, outputURI string) (*api.SolutionFeatureWeights, error) {
 	// get the d3m index lookup
 	rawData, err := readDatasetData(datasetURITest)
 	if err != nil {

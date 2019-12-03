@@ -40,6 +40,7 @@ import (
 const (
 	defaultResourceID       = "learningData"
 	defaultExposedOutputKey = "outputs.0"
+	explainOutputkey        = "outputs.1"
 	trainTestSplitThreshold = 0.9
 	// SolutionPendingStatus represents that the solution request has been acknoledged by not yet sent to the API
 	SolutionPendingStatus = "SOLUTION_PENDING"
@@ -549,7 +550,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
 
 		// generate predictions
-		produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID, []string{defaultExposedOutputKey, "outputs.1"})
+		produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID, []string{defaultExposedOutputKey, explainOutputkey})
 
 		// generate predictions
 		predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
@@ -565,24 +566,15 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 				continue
 			}
 
-			output, ok := response.ExposedOutputs[defaultExposedOutputKey]
-			if !ok {
-				err := errors.Errorf("output is missing from response")
+			// pull the path from the output
+			resultURI, err := getFileFromOutput(response, defaultExposedOutputKey)
+			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-				return
 			}
-
-			csvURI, ok := output.Value.(*pipeline.Value_CsvUri)
-			if !ok {
-				err := errors.Errorf("output is not of correct format")
+			explainURI, err := getFileFromOutput(response, explainOutputkey)
+			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-				return
 			}
-
-			// remove the protocol portion if it exists. The returned value is either a
-			// csv file or a directory.
-			resultURI := csvURI.CsvUri
-			resultURI = strings.Replace(resultURI, "file://", "", 1)
 
 			// get the result UUID. NOTE: Doing sha1 for now.
 			hasher := sha1.New()
@@ -594,7 +586,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			resultID := fmt.Sprintf("%x", bs)
 
 			// explain the pipeline
-			featureWeights, err := s.explainOutput(client, solutionID, resultURI, searchRequest, datasetURITest, resultURI, variables)
+			featureWeights, err := s.explainOutput(resultURI, datasetURITest, explainURI)
 			if err != nil {
 				log.Warnf("failed to fetch output explanantion - %s", err)
 			}
@@ -930,4 +922,18 @@ func findVariable(variableName string, variables []*model.Variable) (*model.Vari
 		return nil, errors.Errorf("can't find target variable instance %s", variableName)
 	}
 	return variable, nil
+}
+
+func getFileFromOutput(response *pipeline.GetProduceSolutionResultsResponse, outputKey string) (string, error) {
+	output, ok := response.ExposedOutputs[outputKey]
+	if !ok {
+		return "", errors.Errorf("output is missing from response")
+	}
+
+	csvURI, ok := output.Value.(*pipeline.Value_CsvUri)
+	if !ok {
+		return "", errors.Errorf("output is not of correct format")
+	}
+
+	return strings.Replace(csvURI.CsvUri, "file://", "", 1), nil
 }
