@@ -2,10 +2,7 @@ import {
   Variable,
   VariableSummary,
   Highlight,
-  RowSelection,
-  Task,
-  TaskTypes,
-  TaskSubTypes
+  RowSelection
 } from "../dataset/index";
 import {
   JOINED_VARS_INSTANCE_PAGE,

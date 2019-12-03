@@ -36,13 +36,11 @@ const (
 	D3MProblem = "problemDoc.json"
 
 	problemVersion       = "2.0"
-	problemSchemaVersion = "3.2.0"
+	problemSchemaVersion = "4.0.0"
 
-	problemTypeForecasting = "forecasting"
-
-	defaultTaskTypeNumerical   = "regression"
-	defaultTaskTypeCategorical = "classification"
-	defaultTaskTypeForecasting = "timeSeriesForecasting"
+	defaultTaskTypeNumerical   = compute.RegressionTask
+	defaultTaskTypeCategorical = compute.ClassificationTask
+	defaultTaskTypeForecasting = compute.ForecastingTask
 )
 
 // VariableProvider defines a function that will get the provided variable.
@@ -57,13 +55,12 @@ type ProblemPersist struct {
 
 // ProblemPersistAbout represents the basic information of a problem.
 type ProblemPersistAbout struct {
-	ProblemID            string `json:"problemID"`
-	ProblemName          string `json:"problemName"`
-	ProblemDescription   string `json:"problemDescription"`
-	TaskType             string `json:"taskType"`
-	TaskSubType          string `json:"taskSubType"`
-	ProblemVersion       string `json:"problemVersion"`
-	ProblemSchemaVersion string `json:"problemSchemaVersion"`
+	ProblemID            string   `json:"problemID"`
+	ProblemName          string   `json:"problemName"`
+	ProblemDescription   string   `json:"problemDescription"`
+	TaskKeywords         []string `json:"taskKeywords"`
+	ProblemVersion       string   `json:"problemVersion"`
+	ProblemSchemaVersion string   `json:"problemSchemaVersion"`
 }
 
 // ProblemPersistInput lists the information of a problem.
@@ -108,23 +105,18 @@ type ProblemPersistExpectedOutput struct {
 }
 
 // DefaultMetrics returns default metric for a given task.
-func DefaultMetrics(taskType string) []string {
-	return []string{compute.GetDefaultTaskMetricTA3(taskType)}
+func DefaultMetrics(taskKeywords []string) []string {
+	return compute.GetDefaultTaskMetricsTA3(taskKeywords)
 }
 
 // DefaultTaskType returns a default task.
-func DefaultTaskType(targetType string, problemType string) string {
-	if problemType == problemTypeForecasting {
-		return defaultTaskTypeForecasting
+func DefaultTaskType(targetType string, problemType string) []string {
+	if problemType == compute.ForecastingTask {
+		return []string{compute.ForecastingTask, compute.TimeSeriesTask}
 	} else if model.IsCategorical(targetType) {
-		return defaultTaskTypeCategorical
+		return []string{compute.ClassificationTask, compute.MultiClassTask}
 	}
-	return defaultTaskTypeNumerical
-}
-
-// DefaultTaskSubType returns a default sub task.
-func DefaultTaskSubType(taskType string) string {
-	return compute.GetDefaultTaskSubTypeTA3(taskType)
+	return []string{compute.RegressionTask, compute.UnivariateTask}
 }
 
 // CreateProblemSchema captures the problem information in the required D3M
@@ -146,9 +138,8 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 		return nil, pPath, nil
 	}
 
-	taskType := DefaultTaskType(targetVar.Type, "")
-	taskSubType := DefaultTaskSubType(taskType)
-	metrics := DefaultMetrics(taskType)
+	taskKeywords := DefaultTaskType(targetVar.Type, "")
+	metrics := DefaultMetrics(taskKeywords)
 
 	pTarget := &ProblemPersistTarget{
 		TargetIndex: 0,
@@ -177,8 +168,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 		ProblemID:            problemID,
 		ProblemVersion:       problemVersion,
 		ProblemSchemaVersion: problemSchemaVersion,
-		TaskType:             taskType,
-		TaskSubType:          taskSubType,
+		TaskKeywords:         taskKeywords,
 	}
 
 	problem := &ProblemPersist{

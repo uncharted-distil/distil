@@ -90,8 +90,9 @@ export default Vue.extend({
 
             // TASK 2 hack
             if (
-              routeGetters.getRouteTask(this.$store) ===
-              TaskTypes.TIME_SERIES_FORECASTING
+              routeGetters
+                .getRouteTask(this.$store)
+                .includes(TaskTypes.FORECASTING)
             ) {
               promise = datasetActions
                 .fetchVariables(this.$store, {
@@ -178,7 +179,7 @@ export default Vue.extend({
                 dataset: dataset,
                 target: target,
                 training: training.join(","),
-                task: task.task
+                task: task.task.join(",")
               });
               this.$router.push(entry);
             });

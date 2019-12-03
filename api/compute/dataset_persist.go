@@ -354,7 +354,7 @@ type persistedDataParams struct {
 	SchemaFile           string
 	SourceDataFolder     string
 	TmpDataFolder        string
-	TaskType             string
+	TaskType             []string
 	TimeseriesFieldIndex int
 	TargetFieldIndex     int
 	Stratify             bool
@@ -423,7 +423,17 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	dataPath := path.Join(params.SourceDataFolder, mainDR.ResPath)
 	trainDataFile := path.Join(trainFolder, mainDR.ResPath)
 	testDataFile := path.Join(testFolder, mainDR.ResPath)
-	if params.TaskType == compute.TimeseriesForecastingTask {
+
+	// Check to see if the task keyword list contains forecasting
+	hasForecasting := false
+	for _, task := range params.TaskType {
+		if task == compute.ForecastingTask {
+			hasForecasting = true
+			break
+		}
+	}
+
+	if hasForecasting {
 		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, params.TimeseriesFieldIndex)
 	} else {
 		config, err = env.LoadConfig()
