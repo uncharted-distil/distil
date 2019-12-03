@@ -116,7 +116,7 @@ export default Vue.extend({
                 dataset: dataset,
                 filters: routeGetters.getRouteFilters(this.$store),
                 training: training.join(","),
-                task: response.data.task
+                task: response.data.task.join(",")
               };
 
               appActions.logUserEvent(this.$store, {

@@ -369,8 +369,8 @@ export const actions = {
 
     const task = routeGetters.getRouteTask(store);
     if (
-      task === TaskTypes.REGRESSION ||
-      task === TaskTypes.TIME_SERIES_FORECASTING
+      task.includes(TaskTypes.REGRESSION) ||
+      task.includes(TaskTypes.FORECASTING)
     ) {
       resultActions.fetchResidualsExtrema(store, {
         dataset: dataset,
@@ -383,7 +383,7 @@ export const actions = {
         requestIds: requestIds,
         highlight: highlight
       });
-    } else if (task === TaskTypes.CLASSIFICATION) {
+    } else if (task.includes(TaskTypes.CLASSIFICATION)) {
       resultActions.fetchCorrectnessSummaries(store, {
         dataset: dataset,
         target: target,

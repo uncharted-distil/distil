@@ -104,7 +104,7 @@ export default Vue.extend({
             dataset: this.solution.dataset,
             targetName: this.solution.feature
           })
-          .then(result => this.pushRouteEntry(result.data.task))
+          .then(result => this.pushRouteEntry(result.data.task.join(",")))
           .catch(error => console.error(error));
       } else {
         this.pushRouteEntry(task);

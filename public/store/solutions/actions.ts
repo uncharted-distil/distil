@@ -47,12 +47,15 @@ function updateCurrentSolutionResults(
   req: CreateSolutionRequest,
   res: SolutionStatus
 ) {
-  const isRegression =
-    routeGetters.getRouteTask(store) === TaskTypes.REGRESSION;
-  const isClassification =
-    routeGetters.getRouteTask(store) === TaskTypes.CLASSIFICATION;
-  const isForecasting =
-    routeGetters.getRouteTask(store) === TaskTypes.TIME_SERIES_FORECASTING;
+  const isRegression = routeGetters
+    .getRouteTask(store)
+    .includes(TaskTypes.REGRESSION);
+  const isClassification = routeGetters
+    .getRouteTask(store)
+    .includes(TaskTypes.CLASSIFICATION);
+  const isForecasting = routeGetters
+    .getRouteTask(store)
+    .includes(TaskTypes.FORECASTING);
 
   resultsActions.fetchResultTableData(store, {
     dataset: req.dataset,
@@ -105,12 +108,15 @@ function updateSolutionResults(
   req: CreateSolutionRequest,
   res: SolutionStatus
 ) {
-  const isRegression =
-    routeGetters.getRouteTask(store) === TaskTypes.REGRESSION;
-  const isClassification =
-    routeGetters.getRouteTask(store) === TaskTypes.CLASSIFICATION;
-  const isForecasting =
-    routeGetters.getRouteTask(store) === TaskTypes.TIME_SERIES_FORECASTING;
+  const isRegression = routeGetters
+    .getRouteTask(store)
+    .includes(TaskTypes.REGRESSION);
+  const isClassification = routeGetters
+    .getRouteTask(store)
+    .includes(TaskTypes.CLASSIFICATION);
+  const isForecasting = routeGetters
+    .getRouteTask(store)
+    .includes(TaskTypes.FORECASTING);
 
   // if current solutionId, pull result summaries
   resultsActions.fetchPredictedSummary(store, {

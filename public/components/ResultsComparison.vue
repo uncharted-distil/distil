@@ -162,10 +162,9 @@ export default Vue.extend({
     },
 
     isForecasting(): boolean {
-      return (
-        routeGetters.getRouteTask(this.$store) ===
-        TaskTypes.TIME_SERIES_FORECASTING
-      );
+      return routeGetters
+        .getRouteTask(this.$store)
+        .includes(TaskTypes.FORECASTING);
     },
 
     topSlotTitle(): string {
