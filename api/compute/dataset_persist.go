@@ -311,6 +311,10 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 }
 
 func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, writerTrain *csv.Writer, writerTest *csv.Writer) error {
+	if maxTrainingCount <= 0 {
+		maxTrainingCount = math.MaxInt64
+	}
+
 	// shuffle array
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(rowData), func(i, j int) { rowData[i], rowData[j] = rowData[j], rowData[i] })
@@ -318,9 +322,6 @@ func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, wr
 	// Figure out the number of train and test rows to use capping on the limit supplied by the caller.
 	numTest := int(math.Ceil((float64(len(rowData)) * (1.0 - trainTestSplitThreshold))))
 	numTrain := min(maxTrainingCount, int(math.Floor(float64(len(rowData))*trainTestSplitThreshold)))
-	if maxTrainingCount <= 0 {
-		maxTrainingCount = math.MaxInt64
-	}
 
 	// Write out to train test
 	testCount := 0

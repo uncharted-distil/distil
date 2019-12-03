@@ -450,13 +450,13 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 	}
 
 	// notify client of update
-	statusChan <- SolutionStatus{
-		RequestID:  searchID,
-		SolutionID: solutionID,
-		ResultID:   resultID,
-		Progress:   SolutionCompletedStatus,
-		Timestamp:  time.Now(),
-	}
+	//statusChan <- SolutionStatus{
+	//	RequestID:  searchID,
+	//	SolutionID: solutionID,
+	//	ResultID:   resultID,
+	//	Progress:   SolutionCompletedStatus,
+	//	Timestamp:  time.Now(),
+	//}
 
 	// notify client of update
 	statusChan <- SolutionStatus{
@@ -495,8 +495,9 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		solutionID := solution.SolutionId
 
 		// persist the solution info
-		s.persistSolution(statusChan, solutionStorage, searchID, solutionID, initialSearchSolutionID)
-		s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionPendingStatus)
+		// for now ignore the new search and solution info
+		//s.persistSolution(statusChan, solutionStorage, searchID, solutionID, initialSearchSolutionID)
+		//s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionPendingStatus)
 
 		// fit solution
 		fitResults, err := client.GenerateSolutionFit(context.Background(), solutionID, []string{datasetURITrain})
@@ -547,7 +548,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 		// persist solution running status
 		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionRunningStatus)
-		s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
+		//s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
 
 		// generate predictions
 		produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID, []string{defaultExposedOutputKey, explainOutputkey})
