@@ -325,7 +325,7 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 	return preprocessingPipeline, nil
 }
 
-func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, fittedSolutionID string) *pipeline.ProduceSolutionRequest {
+func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, fittedSolutionID string, outputs []string) *pipeline.ProduceSolutionRequest {
 	return &pipeline.ProduceSolutionRequest{
 		FittedSolutionId: fittedSolutionID,
 		Inputs: []*pipeline.Value{
@@ -335,7 +335,7 @@ func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, fitted
 				},
 			},
 		},
-		ExposeOutputs: []string{defaultExposedOutputKey},
+		ExposeOutputs: outputs,
 		ExposeValueTypes: []pipeline.ValueType{
 			pipeline.ValueType_CSV_URI,
 		},
@@ -552,7 +552,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
 
 		// generate predictions
-		produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID)
+		produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID, []string{defaultExposedOutputKey, "outputs.1"})
 
 		// generate predictions
 		predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
