@@ -426,14 +426,6 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
 	}
-
-	// persist the completed state
-	err = solutionStorage.PersistSolutionState(solutionID, SolutionCompletedStatus, time.Now())
-	if err != nil {
-		// notify of error
-		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-		return
-	}
 	// persist result metadata
 	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, resultID, resultURI, SolutionCompletedStatus, time.Now())
 	if err != nil {
