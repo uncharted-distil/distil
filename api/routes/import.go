@@ -90,7 +90,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		uri := env.ResolvePath(source, datasetID)
 
 		ingestConfig := *config
-		ingestConfig.SummaryEnabled = false
 
 		_, err = meta.ImportDataset(datasetID, uri)
 		if err != nil {
