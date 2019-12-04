@@ -293,7 +293,6 @@ func main() {
 	mux.Use(middleware.Gzip)
 
 	routes.SetVerboseError(config.VerboseError)
-
 	// GET
 	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler(datamartCtors))
 	registerRoute(mux, "/distil/datasets/:dataset", routes.DatasetHandler(esMetadataStorageCtor))

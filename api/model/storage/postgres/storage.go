@@ -23,6 +23,7 @@ import (
 const (
 	requestTableName               = "request"
 	solutionTableName              = "solution"
+	solutionStateTableName         = "solution_state"
 	solutionFeatureWeightTableName = "solution_feature"
 	solutionResultTableName        = "solution_result"
 	solutionScoreTableName         = "solution_score"

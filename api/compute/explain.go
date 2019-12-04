@@ -36,17 +36,7 @@ var (
 	explainablePrimitives = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
 )
 
-func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string, resultURI string,
-	searchRequest *pipeline.SearchSolutionsRequest, datasetURITrain string, datasetURITest string,
-	variables []*model.Variable) (*api.SolutionFeatureWeights, error) {
-	// get the d3m index lookup
-	rawData, err := readDatasetData(datasetURITest)
-	if err != nil {
-		return nil, err
-	}
-	d3mIndexField := getD3MFieldIndex(rawData[0])
-	d3mIndexLookup := mapRowIndex(d3mIndexField, rawData[1:])
-
+func (s *SolutionRequest) createExplainPipeline(client *compute.Client, solutionID string) (*pipeline.PipelineDescription, error) {
 	// get the pipeline description
 	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
 	if err != nil {
@@ -54,16 +44,19 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	}
 
 	// cycle through the description to determine if any primitive can be explained
-	canExplain, pipExplain := s.explainablePipeline(desc)
-	if !canExplain {
-		return nil, nil
-	}
+	_, pipExplain := s.explainablePipeline(desc)
 
-	// send the fully specified pipeline to TA2 (updated produce function call)
-	outputURI, err := SubmitPipeline(client, []string{datasetURITrain}, []string{datasetURITest}, searchRequest, pipExplain)
+	return pipExplain, nil
+}
+
+func (s *SolutionRequest) explainOutput(resultURI string, datasetURITest string, outputURI string) (*api.SolutionFeatureWeights, error) {
+	// get the d3m index lookup
+	rawData, err := readDatasetData(datasetURITest)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to run the fully specified pipeline")
+		return nil, err
 	}
+	d3mIndexField := getD3MFieldIndex(rawData[0])
+	d3mIndexLookup := mapRowIndex(d3mIndexField, rawData[1:])
 
 	// parse the output for the explanations
 	parsed, err := s.parseSolutionFeatureWeight(resultURI, outputURI, d3mIndexLookup)
@@ -101,7 +94,9 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
 			if s.isExplainablePrimitive(primitive.Primitive.Id) {
-				primitive.Outputs[0].Id = "produce_shap_values"
+				primitive.Outputs = append(primitive.Outputs, &pipeline.StepOutput{
+					Id: "produce_shap_values",
+				})
 				explainStep = si
 				break
 			}
@@ -111,8 +106,11 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 	if explainStep < 0 {
 		return false, nil
 	}
-	pipelineDesc.Steps = pipelineDesc.Steps[0 : explainStep+1]
-	pipelineDesc.Outputs[0].Data = fmt.Sprintf("steps.%d.produce_shap_values", len(pipelineDesc.Steps)-1)
+	//pipelineDesc.Steps = pipelineDesc.Steps[0 : explainStep+1]
+	pipelineDesc.Outputs = append(pipelineDesc.Outputs, &pipeline.PipelineDescriptionOutput{
+		Name: "explain",
+		Data: fmt.Sprintf("steps.%d.produce_shap_values", explainStep),
+	})
 
 	return true, pipelineDesc
 }

@@ -58,13 +58,21 @@ type Feature struct {
 
 // Solution is a container for a TA2 solution.
 type Solution struct {
-	SolutionID  string           `json:"solutionId"`
-	RequestID   string           `json:"requestId"`
-	Progress    string           `json:"progress"`
-	CreatedTime time.Time        `json:"timestamp"`
-	Result      *SolutionResult  `json:"result"`
-	Scores      []*SolutionScore `json:"scores"`
-	IsBad       bool             `json:"isBad"`
+	SolutionID              string           `json:"solutionId"`
+	InitialSearchSolutionID string           `json:"initialSolutionId"`
+	RequestID               string           `json:"requestId"`
+	CreatedTime             time.Time        `json:"timestamp"`
+	State                   *SolutionState   `json:"state"`
+	Result                  *SolutionResult  `json:"result"`
+	Scores                  []*SolutionScore `json:"scores"`
+	IsBad                   bool             `json:"isBad"`
+}
+
+// SolutionState represents the state updates for a solution.
+type SolutionState struct {
+	SolutionID  string    `json:"solutionId"`
+	Progress    string    `json:"progress"`
+	CreatedTime time.Time `json:"timestamp"`
 }
 
 // SolutionFeatureWeights captures the weights given to all features of a result.

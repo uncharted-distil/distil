@@ -29,10 +29,19 @@ import (
 )
 
 // PersistSolution persists the solution to Postgres.
-func (s *Storage) PersistSolution(requestID string, solutionID string, progress string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, solution_id, progress, created_time) VALUES ($1, $2, $3, $4);", solutionTableName)
+func (s *Storage) PersistSolution(requestID string, solutionID string, initialSearchSolutionID string, createdTime time.Time) error {
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, solution_id, initial_search_solution_id, created_time) VALUES ($1, $2, $3, $4);", solutionTableName)
 
-	_, err := s.client.Exec(sql, requestID, solutionID, progress, createdTime)
+	_, err := s.client.Exec(sql, requestID, solutionID, initialSearchSolutionID, createdTime)
+
+	return err
+}
+
+// PersistSolution persists the solution to Postgres.
+func (s *Storage) PersistSolutionState(solutionID string, progress string, createdTime time.Time) error {
+	sql := fmt.Sprintf("INSERT INTO %s (solution_id, progress, created_time) VALUES ($1, $2, $3);", solutionStateTableName)
+
+	_, err := s.client.Exec(sql, solutionID, progress, createdTime)
 
 	return err
 }
@@ -102,7 +111,7 @@ func (s *Storage) isBadSolution(solution *api.Solution) (bool, error) {
 
 // FetchSolution pulls solution information from Postgres.
 func (s *Storage) FetchSolution(solutionID string) (*api.Solution, error) {
-	sql := fmt.Sprintf("SELECT request_id, solution_id, progress, created_time FROM %s WHERE solution_id = $1 ORDER BY created_time desc LIMIT 1;", solutionTableName)
+	sql := fmt.Sprintf("SELECT request_id, solution_id, initial_search_solution_id, created_time FROM %s WHERE solution_id = $1 ORDER BY created_time desc LIMIT 1;", solutionTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
@@ -130,12 +139,17 @@ func (s *Storage) FetchSolution(solutionID string) (*api.Solution, error) {
 func (s *Storage) parseSolution(rows *pgx.Rows) (*api.Solution, error) {
 	var requestID string
 	var solutionID string
-	var progress string
+	var initialSearchSolutionID string
 	var createdTime time.Time
 
-	err := rows.Scan(&requestID, &solutionID, &progress, &createdTime)
+	err := rows.Scan(&requestID, &solutionID, &initialSearchSolutionID, &createdTime)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
+	}
+
+	state, err := s.FetchSolutionState(solutionID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse solution result from Postgres")
 	}
 
 	result, err := s.FetchSolutionResult(solutionID)
@@ -151,11 +165,33 @@ func (s *Storage) parseSolution(rows *pgx.Rows) (*api.Solution, error) {
 	return &api.Solution{
 		RequestID:   requestID,
 		SolutionID:  solutionID,
-		Progress:    progress,
+		State:       state,
 		CreatedTime: createdTime,
 		Result:      result,
 		Scores:      scores,
 	}, nil
+}
+
+func (s *Storage) parseSolutionState(rows *pgx.Rows) ([]*api.SolutionState, error) {
+	results := make([]*api.SolutionState, 0)
+	for rows.Next() {
+		var solutionID string
+		var progress string
+		var createdTime time.Time
+
+		err := rows.Scan(&solutionID, &progress, &createdTime)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse solution states from Postgres")
+		}
+
+		results = append(results, &api.SolutionState{
+			SolutionID:  solutionID,
+			Progress:    progress,
+			CreatedTime: createdTime,
+		})
+	}
+
+	return results, nil
 }
 
 func (s *Storage) parseSolutionResult(rows *pgx.Rows) ([]*api.SolutionResult, error) {
@@ -243,6 +279,34 @@ func (s *Storage) FetchSolutionFeatureWeights(dataset string, resultURI string, 
 	}
 
 	return result, nil
+}
+
+// FetchSolutionState pulls solution state information from Postgres.
+func (s *Storage) FetchSolutionState(solutionID string) (*api.SolutionState, error) {
+	sql := fmt.Sprintf("SELECT solution_id, progress, created_time "+
+		"FROM %s AS state "+
+		"WHERE state.solution_id = $1 "+
+		"ORDER BY state.created_time desc LIMIT 1;", solutionStateTableName)
+
+	rows, err := s.client.Query(sql, solutionID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull solution state from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	results, err := s.parseSolutionState(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse solution state from Postgres")
+	}
+
+	var res *api.SolutionState
+	if len(results) > 0 {
+		res = results[0]
+	}
+
+	return res, nil
 }
 
 // FetchSolutionResult pulls solution result information from Postgres.
