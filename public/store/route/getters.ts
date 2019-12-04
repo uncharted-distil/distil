@@ -218,12 +218,10 @@ export const getters = {
   },
 
   getRouteResidualThresholdMin(state: Route): string {
-    console.log(state.query.residualThresholdMin as string);
     return state.query.residualThresholdMin as string;
   },
 
   getRouteResidualThresholdMax(state: Route): string {
-    console.log(state.query.residualThresholdMax as string);
     return state.query.residualThresholdMax as string;
   },
 
