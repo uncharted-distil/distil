@@ -95,6 +95,8 @@ github.com/uncharted-distil/distil-compute v0.0.0-20191129202341-b4581e1ee4f9 h1
 github.com/uncharted-distil/distil-compute v0.0.0-20191129202341-b4581e1ee4f9/go.mod h1:BUuePSuFH+bCaZnMQz8n86y8f8nYtXxT6LEli8Hq4Zw=
 github.com/uncharted-distil/distil-compute v0.0.0-20191203135301-7d8983b97cbe h1:QKw8Z7L+E9DxU+UhP4UXBIpdPXdoWylc8NykkOuip+g=
 github.com/uncharted-distil/distil-compute v0.0.0-20191203135301-7d8983b97cbe/go.mod h1:lCed3xOxkH+WkNFw6ex4s92J3b3MGczFggACT5b2Eys=
+github.com/uncharted-distil/distil-compute v0.0.0-20191204204644-afc74331ec80 h1:ZG8xXm2FUDHNg2QCFtMRigPVBbIRt0TZkggsobEIL2k=
+github.com/uncharted-distil/distil-compute v0.0.0-20191204204644-afc74331ec80/go.mod h1:lCed3xOxkH+WkNFw6ex4s92J3b3MGczFggACT5b2Eys=
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191129203607-2718e91e6e9d h1:5drR+FabuPmzaX47TaK3+HdGSBXyfQ6iFeGm9s3NQxU=
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191129203607-2718e91e6e9d/go.mod h1:XM+QHXV9c9jSTfgqElFdikunokU+lUn4tpbfuZFrX6E=
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191130140220-aeea448e00a2 h1:bCz3AqyLi8GxEZA08a5nEEDVpMQ9tw9HcANlQqQosOw=
@@ -103,6 +105,8 @@ github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191203143722-dffca8802cc4
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191203143722-dffca8802cc4/go.mod h1:+uGIae/51nm7NauvMzV6ehLPVehicj8cuG+ausrsRvc=
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191203214300-8c07f77ac5d1 h1:e96jSqjNvd14KWncjsVGEjh7xUBnorIw8qUeuzoKdlY=
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191203214300-8c07f77ac5d1/go.mod h1:+uGIae/51nm7NauvMzV6ehLPVehicj8cuG+ausrsRvc=
+github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191204205000-0faf4023137c h1:HP1+wiwpAX7dl9a6KcieUPY6VCdL1OHGnliHxH7twIM=
+github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191204205000-0faf4023137c/go.mod h1:CJwk9IBthJgtSkcukJt88zT8OClGCTklIkke/wSxrqQ=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9 h1:P1B7OAnmyIdSN9UGhDvIU3s8K3/2rQcvntYV5WPi+qY=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9/go.mod h1:PrytgQ5GjTc6Z5/pbL5vj1UhD716wDobDeimrd7lRKY=
 github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48 h1:XYef2jcFEKziHl4rv/21jrNeQg6Z3gL345u16fHWVDo=

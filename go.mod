@@ -18,8 +18,6 @@ require (
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/microcosm-cc/bluemonday v1.0.1
 	github.com/mitchellh/hashstructure v1.0.0
-	github.com/onsi/ginkgo v1.10.3 // indirect
-	github.com/onsi/gomega v1.7.1 // indirect
 	github.com/otiai10/copy v1.0.2
 	github.com/pkg/errors v0.8.1
 	github.com/russross/blackfriday v2.0.0+incompatible
@@ -27,8 +25,8 @@ require (
 	github.com/shopspring/decimal v0.0.0-20191009025716-f1972eb1d1f5 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/uncharted-distil/distil-compute v0.0.0-20191203135301-7d8983b97cbe
-	github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191203214300-8c07f77ac5d1
+	github.com/uncharted-distil/distil-compute v0.0.0-20191204204644-afc74331ec80
+	github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191204205000-0faf4023137c
 	github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48
 	github.com/zenazn/goji v0.9.0
