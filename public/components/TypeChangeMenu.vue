@@ -149,9 +149,6 @@ export default Vue.extend({
       }
       return !!this.variable.grouping;
     },
-    availableTargetVarsPage(): number {
-      return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
-    },
     type(): string {
       return this.variable ? this.variable.colType : "";
     },
@@ -260,10 +257,9 @@ export default Vue.extend({
 
     onGroupingSelect(type) {
       if (type === TIMESERIES_TYPE || type === GEOCOORDINATE_TYPE) {
-        const entry = createRouteEntry(GROUPING_ROUTE, {
+       const entry = createRouteEntry(GROUPING_ROUTE, {
           dataset: routeGetters.getRouteDataset(this.$store),
-          groupingType: type,
-          availableTargetVarsPage: this.availableTargetVarsPage
+          groupingType: type
         });
         this.$router.push(entry);
       } else {
@@ -324,7 +320,7 @@ export default Vue.extend({
 
       appActions.logUserEvent(this.$store, {
         feature: Feature.RETYPE_FEATURE,
-        activity: Activity.PROBLEM_DEFINITIION,
+        activity: Activity.PROBLEM_DEFINITION,
         subActivity: SubActivity.PROBLEM_SPECIFICATION,
         details: { from: this.type, to: type }
       });
