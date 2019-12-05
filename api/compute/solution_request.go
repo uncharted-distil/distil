@@ -465,16 +465,28 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	dataStorage api.DataStorage, initialSearchID string, initialSearchSolutionID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
 	datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
-	// Need to create a new solution that has the explain output. This is the solution
-	// that will be used throughout distil except for the export (which will use the original solution).
-	// start a solution searchID
-	explainDesc, err := s.createExplainPipeline(client, initialSearchSolutionID)
+	desc, err := client.GetSolutionDescription(context.Background(), initialSearchSolutionID)
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
 	}
 
-	searchRequest.Template = explainDesc
+	// Need to create a new solution that has the explain output. This is the solution
+	// that will be used throughout distil except for the export (which will use the original solution).
+	// start a solution searchID
+	// get the pipeline description
+	explainDesc, err := s.createExplainPipeline(client, desc)
+	if err != nil {
+		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+		return
+	}
+
+	// Use the updated explain pipeline if it exists, otherwise use the baseline pipeline
+	if explainDesc != nil {
+		searchRequest.Template = explainDesc
+	} else {
+		searchRequest.Template = desc.GetPipeline()
+	}
 
 	searchID, err := client.StartSearch(context.Background(), searchRequest)
 	if err != nil {
@@ -543,8 +555,14 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionRunningStatus)
 		//s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
 
+		// generate output keys, adding one extra for explanation output if we expect it to exist
+		outputKeys := []string{defaultExposedOutputKey}
+		if explainDesc != nil {
+			outputKeys = append(outputKeys, explainFeatureOutputkey)
+			outputKeys = append(outputKeys, explainSolutionOutputkey)
+		}
 		// generate predictions
-		produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID, []string{defaultExposedOutputKey, explainFeatureOutputkey, explainSolutionOutputkey})
+		produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID, outputKeys)
 
 		// generate predictions
 		predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
