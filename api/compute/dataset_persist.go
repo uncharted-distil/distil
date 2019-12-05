@@ -311,6 +311,10 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 }
 
 func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, writerTrain *csv.Writer, writerTest *csv.Writer) error {
+	if maxTrainingCount <= 0 {
+		maxTrainingCount = math.MaxInt64
+	}
+
 	// shuffle array
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(rowData), func(i, j int) { rowData[i], rowData[j] = rowData[j], rowData[i] })
@@ -318,9 +322,6 @@ func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, wr
 	// Figure out the number of train and test rows to use capping on the limit supplied by the caller.
 	numTest := int(math.Ceil((float64(len(rowData)) * (1.0 - trainTestSplitThreshold))))
 	numTrain := min(maxTrainingCount, int(math.Floor(float64(len(rowData))*trainTestSplitThreshold)))
-	if maxTrainingCount <= 0 {
-		maxTrainingCount = math.MaxInt64
-	}
 
 	// Write out to train test
 	testCount := 0
@@ -354,7 +355,7 @@ type persistedDataParams struct {
 	SchemaFile           string
 	SourceDataFolder     string
 	TmpDataFolder        string
-	TaskType             string
+	TaskType             []string
 	TimeseriesFieldIndex int
 	TargetFieldIndex     int
 	Stratify             bool
@@ -423,7 +424,17 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	dataPath := path.Join(params.SourceDataFolder, mainDR.ResPath)
 	trainDataFile := path.Join(trainFolder, mainDR.ResPath)
 	testDataFile := path.Join(testFolder, mainDR.ResPath)
-	if params.TaskType == compute.TimeseriesForecastingTask {
+
+	// Check to see if the task keyword list contains forecasting
+	hasForecasting := false
+	for _, task := range params.TaskType {
+		if task == compute.ForecastingTask {
+			hasForecasting = true
+			break
+		}
+	}
+
+	if hasForecasting {
 		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, params.TimeseriesFieldIndex)
 	} else {
 		config, err = env.LoadConfig()

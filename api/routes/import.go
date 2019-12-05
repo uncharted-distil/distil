@@ -36,38 +36,41 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		datasetID := pat.Param(r, "datasetID")
 		source := metadata.DatasetSource(pat.Param(r, "source"))
 		provenance := pat.Param(r, "provenance")
-		// parse POST params
-		params, err := getPostParameters(r)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
-			return
-		}
 
-		if params == nil {
-			missingParamErr(w, "parameters")
-			return
-		}
-
-		if params["originalDataset"] == nil {
-			missingParamErr(w, "originalDataset")
-			return
-		}
-
-		if params["joinedDataset"] == nil {
-			missingParamErr(w, "joinedDataset")
-			return
-		}
-
-		// set the origin information
 		var origins []*model.DatasetOrigin
-		originalDataset, okOriginal := params["originalDataset"].(map[string]interface{})
-		joinedDataset, okJoined := params["joinedDataset"].(map[string]interface{})
-		if okOriginal && okJoined {
-			// combine the origin and joined dateset into an array of structs
-			origins, err = getOriginsFromMaps(originalDataset, joinedDataset)
+		if source == metadata.Augmented && provenance != "local" {
+			// parse POST params
+			params, err := getPostParameters(r)
 			if err != nil {
-				handleError(w, errors.Wrap(err, "unable marshal dataset origins from JSON to struct"))
+				handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
 				return
+			}
+
+			if params == nil {
+				missingParamErr(w, "parameters")
+				return
+			}
+
+			if params["originalDataset"] == nil {
+				missingParamErr(w, "originalDataset")
+				return
+			}
+
+			if params["joinedDataset"] == nil {
+				missingParamErr(w, "joinedDataset")
+				return
+			}
+
+			// set the origin information
+			originalDataset, okOriginal := params["originalDataset"].(map[string]interface{})
+			joinedDataset, okJoined := params["joinedDataset"].(map[string]interface{})
+			if okOriginal && okJoined {
+				// combine the origin and joined dateset into an array of structs
+				origins, err = getOriginsFromMaps(originalDataset, joinedDataset)
+				if err != nil {
+					handleError(w, errors.Wrap(err, "unable marshal dataset origins from JSON to struct"))
+					return
+				}
 			}
 		}
 		// update ingest config to use ingest URI.
@@ -87,7 +90,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		uri := env.ResolvePath(source, datasetID)
 
 		ingestConfig := *config
-		ingestConfig.SummaryEnabled = false
 
 		_, err = meta.ImportDataset(datasetID, uri)
 		if err != nil {

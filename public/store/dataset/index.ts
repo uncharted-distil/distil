@@ -191,28 +191,35 @@ export enum TaskTypes {
   VERTEX_CLASSIFICATION = "vertexClassification",
   COMMUNITY_DETECTION = "communityDetection",
   GRAPH_MATCHING = "graphMatching",
-  TIME_SERIES_FORECASTING = "timeSeriesForecasting",
+  FORECASTING = "forecasting",
   COLLABORATIVE_FILTERING = "collaborativeFiltering",
   OBJECT_DETECTION = "objectDetection",
-  SEMISUPERVISED_CLASSIFICATION = "semiSupervisedClassification",
-  SEMISUPERVISED_REGRESSION = "semiSupervisedRegression"
-}
-
-// sub-task string definitions - should mirror those defined in the MIT/LL d3m problem schema
-export enum TaskSubTypes {
-  NONE = "none",
+  SEMISUPERVISED = "semiSupervised",
   BINARY = "binary",
   MULTICLASS = "multiclass",
   MULTILABEL = "multilabel",
   UNIVARIATE = "univariate",
   MULTIVARIATE = "multivariate",
   OVERLAPPING = "overlapping",
-  NONOVERLAPPING = "nonOverlapping"
+  NONOVERLAPPING = "nonOverlapping",
+  TABULAR = "tabular",
+  RELATIONAL = "relational",
+  IMAGE = "image",
+  AUDIO = "audio",
+  VIDEO = "video",
+  SPEECH = "speech",
+  TEXT = "text",
+  GRAPH = "graph",
+  MULTIGRAPH = "multigraph",
+  TIME_SERIES = "timeseries",
+  GROUPED = "grouped",
+  GEOSPATIAL = "geospatial",
+  REMOTE_SENSING = "remoteSensing",
+  LUPI = "lupi"
 }
 
 export interface Task {
-  task: TaskTypes;
-  subTask: TaskSubTypes;
+  task: TaskTypes[];
 }
 
 export enum DatasetPendingRequestType {
@@ -323,7 +330,6 @@ export const state: DatasetState = {
 
   // task information
   task: {
-    task: TaskTypes.CLASSIFICATION,
-    subTask: TaskSubTypes.NONE
+    task: [TaskTypes.CLASSIFICATION, TaskTypes.MULTICLASS]
   }
 };

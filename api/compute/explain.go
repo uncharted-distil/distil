@@ -16,7 +16,6 @@
 package compute
 
 import (
-	"context"
 	"fmt"
 	"path"
 	"strconv"
@@ -26,6 +25,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 	"github.com/uncharted-distil/distil-ingest/pkg/metadata"
 
 	api "github.com/uncharted-distil/distil/api/model"
@@ -33,12 +33,19 @@ import (
 )
 
 var (
-	explainablePrimitives = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
+	explainablePrimitivesSolution = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
+	explainablePrimitivesStep     = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
 )
 
-func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID string, resultURI string,
-	searchRequest *pipeline.SearchSolutionsRequest, datasetURITrain string, datasetURITest string,
-	variables []*model.Variable) (*api.SolutionFeatureWeights, error) {
+func (s *SolutionRequest) createExplainPipeline(client *compute.Client, desc *pipeline.DescribeSolutionResponse) (*pipeline.PipelineDescription, error) {
+	// cycle through the description to determine if any primitive can be explained
+	if ok, pipExplain := s.explainablePipeline(desc); ok {
+		return pipExplain, nil
+	}
+	return nil, nil
+}
+
+func (s *SolutionRequest) explainFeatureOutput(resultURI string, datasetURITest string, outputURI string) (*api.SolutionFeatureWeights, error) {
 	// get the d3m index lookup
 	rawData, err := readDatasetData(datasetURITest)
 	if err != nil {
@@ -47,26 +54,8 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	d3mIndexField := getD3MFieldIndex(rawData[0])
 	d3mIndexLookup := mapRowIndex(d3mIndexField, rawData[1:])
 
-	// get the pipeline description
-	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to get solution description")
-	}
-
-	// cycle through the description to determine if any primitive can be explained
-	canExplain, pipExplain := s.explainablePipeline(desc)
-	if !canExplain {
-		return nil, nil
-	}
-
-	// send the fully specified pipeline to TA2 (updated produce function call)
-	outputURI, err := SubmitPipeline(client, []string{datasetURITrain}, []string{datasetURITest}, searchRequest, pipExplain)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to run the fully specified pipeline")
-	}
-
 	// parse the output for the explanations
-	parsed, err := s.parseSolutionFeatureWeight(resultURI, outputURI, d3mIndexLookup)
+	parsed, err := s.parseFeatureWeight(resultURI, outputURI, d3mIndexLookup)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse feature weight output")
 	}
@@ -74,7 +63,33 @@ func (s *SolutionRequest) explainOutput(client *compute.Client, solutionID strin
 	return parsed, nil
 }
 
-func (s *SolutionRequest) parseSolutionFeatureWeight(resultURI string, outputURI string, d3mIndexLookup map[int]string) (*api.SolutionFeatureWeights, error) {
+func (s *SolutionRequest) explainSolutionOutput(resultURI string, outputURI string,
+	solutionID string, variables []*model.Variable) ([]*api.SolutionWeight, error) {
+
+	// parse the output for the explanations
+	parsed, err := s.parseSolutionWeight(solutionID, outputURI)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to parse feature weight output")
+	}
+
+	// map column name to get the feature index
+	varsMapped := make(map[string]*model.Variable)
+	for _, v := range variables {
+		varsMapped[v.Name] = v
+	}
+
+	output := make([]*api.SolutionWeight, 0)
+	for _, fw := range parsed {
+		if varsMapped[fw.FeatureName] != nil {
+			fw.FeatureIndex = int64(varsMapped[fw.FeatureName].Index)
+			output = append(output, fw)
+		}
+	}
+
+	return output, nil
+}
+
+func (s *SolutionRequest) parseFeatureWeight(resultURI string, outputURI string, d3mIndexLookup map[int]string) (*api.SolutionFeatureWeights, error) {
 	// all results on one row, with header row having feature names
 	res, err := util.ReadCSVFile(outputURI, false)
 	if err != nil {
@@ -93,32 +108,75 @@ func (s *SolutionRequest) parseSolutionFeatureWeight(resultURI string, outputURI
 	}, nil
 }
 
+func (s *SolutionRequest) parseSolutionWeight(solutionID string, outputURI string) ([]*api.SolutionWeight, error) {
+	// all results on one row, with header row having feature names
+	res, err := result.ParseResultCSV(outputURI)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read solution weight output")
+	}
+
+	weights := make([]*api.SolutionWeight, len(res[0]))
+	for i := 0; i < len(res[0]); i++ {
+		weight, err := strconv.ParseFloat(res[1][i].(string), 64)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to parse feature weight")
+		}
+		featureName := res[0][i].(string)
+		weights[i] = &api.SolutionWeight{
+			SolutionID:  solutionID,
+			FeatureName: featureName,
+			Weight:      weight,
+		}
+	}
+
+	return weights, nil
+}
+
 func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) (bool, *pipeline.PipelineDescription) {
 	pipelineDesc := solutionDesc.Pipeline
 	explainStep := -1
+	explainSolution := -1
 	for si, ps := range pipelineDesc.Steps {
 		// get the step outputs
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
-			if s.isExplainablePrimitive(primitive.Primitive.Id) {
-				primitive.Outputs[0].Id = "produce_shap_values"
+			if s.isExplainablePrimitiveStep(primitive.Primitive.Id) {
+				primitive.Outputs = append(primitive.Outputs, &pipeline.StepOutput{
+					Id: "produce_shap_values",
+				})
 				explainStep = si
-				break
+			}
+			if s.isExplainablePrimitiveSolution(primitive.Primitive.Id) {
+				primitive.Outputs = append(primitive.Outputs, &pipeline.StepOutput{
+					Id: "produce_feature_importances",
+				})
+				explainSolution = si
 			}
 		}
 	}
 
-	if explainStep < 0 {
-		return false, nil
+	if explainStep >= 0 {
+		pipelineDesc.Outputs = append(pipelineDesc.Outputs, &pipeline.PipelineDescriptionOutput{
+			Name: "explain_step",
+			Data: fmt.Sprintf("steps.%d.produce_shap_values", explainStep),
+		})
 	}
-	pipelineDesc.Steps = pipelineDesc.Steps[0 : explainStep+1]
-	pipelineDesc.Outputs[0].Data = fmt.Sprintf("steps.%d.produce_shap_values", len(pipelineDesc.Steps)-1)
+	if explainSolution >= 0 {
+		pipelineDesc.Outputs = append(pipelineDesc.Outputs, &pipeline.PipelineDescriptionOutput{
+			Name: "explain_solution",
+			Data: fmt.Sprintf("steps.%d.produce_feature_importances", explainStep),
+		})
+	}
 
-	return true, pipelineDesc
+	return explainSolution >= 0 || explainStep >= 0, pipelineDesc
 }
 
-func (s *SolutionRequest) isExplainablePrimitive(primitive string) bool {
-	return explainablePrimitives[primitive]
+func (s *SolutionRequest) isExplainablePrimitiveStep(primitive string) bool {
+	return explainablePrimitivesStep[primitive]
+}
+
+func (s *SolutionRequest) isExplainablePrimitiveSolution(primitive string) bool {
+	return explainablePrimitivesSolution[primitive]
 }
 
 func mapRowIndex(d3mIndexCol int, data [][]string) map[int]string {

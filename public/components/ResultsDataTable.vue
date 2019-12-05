@@ -290,7 +290,7 @@ export default Vue.extend({
         weightExtrema[tableCol.key] = this.dataItems.reduce(
           (maxWeight, item) => {
             const currentWeight = Math.abs(item[tableCol.key].weight);
-            return maxWeight > currentWeight ? currentWeight : maxWeight;
+            return maxWeight < currentWeight ? currentWeight : maxWeight;
           },
           0
         );

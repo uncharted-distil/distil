@@ -119,7 +119,7 @@ func createTestParams(stratify bool) *persistedDataParams {
 		SchemaFile:           compute.D3MDataSchema,
 		SourceDataFolder:     "./test/test_dataset",
 		TmpDataFolder:        "./test/tmp_data",
-		TaskType:             "classification",
+		TaskType:             []string{"classification"},
 		TimeseriesFieldIndex: -1,
 		TargetFieldIndex:     2,
 		Stratify:             stratify,

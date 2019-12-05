@@ -293,7 +293,7 @@ export const actions = {
     const data = new FormData();
     data.append("file", args.file);
     return axios
-      .post(`/distil/upload/${args.datasetID}`, data, {
+      .post(`/distil/upload/${args.datasetID}?type=table`, data, {
         headers: { "Content-Type": "multipart/form-data" }
       })
       .then(response => {

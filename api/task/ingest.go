@@ -201,7 +201,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 
 	err = metadata.LoadImportance(meta, path.Join(datasetDir, config.RankingOutputPathRelative))
 	if err != nil {
-		return "", errors.Wrap(err, "unable to load importance from file")
+		log.Warnf("unable to load importance from file: %v", err)
 	}
 
 	// load stats

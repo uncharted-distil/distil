@@ -495,8 +495,10 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
         description = `Difference between actual and predicted value for ${variable.colName}`;
       } else {
         variable = variables[col.key];
-        label = col.label;
-        description = variable.colDescription;
+        if (variable) {
+          label = col.label;
+          description = variable.colDescription;
+        }
       }
 
       if (col.type === TIMESERIES_TYPE) {
