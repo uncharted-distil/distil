@@ -285,17 +285,25 @@ export default Vue.extend({
       }
       return false;
     },
-    columnWeightExtrema(): Object {
-      return this.tableFields.reduce((weightExtrema, tableCol) => {
-        weightExtrema[tableCol.key] = this.dataItems.reduce(
-          (maxWeight, item) => {
+    d3mRowWeightExtrema(): Object {
+      return this.dataItems.reduce((extremas, item) => {
+        extremas[item[D3M_INDEX_FIELD]] = this.tableFields.reduce((rowMax, tableCol) => {
+          if (item[tableCol.key].weight) {
             const currentWeight = Math.abs(item[tableCol.key].weight);
-            return maxWeight < currentWeight ? currentWeight : maxWeight;
-          },
-          0
-        );
-        return weightExtrema;
+            return currentWeight > rowMax ? currentWeight : rowMax;
+          } else {
+            return rowMax;
+          }
+        }, 0);
+        return extremas;
       }, {});
+    },
+    hasMultipleFeatures(): boolean {
+      const featureNames = this.tableFields.reduce((uniqueNames, field) => {
+        uniqueNames[field.label] = true;
+        return uniqueNames;
+      }, {});
+      return Object.keys(featureNames).length > 2;
     }
   },
 
@@ -393,11 +401,11 @@ export default Vue.extend({
     },
 
     cellColor(weight: number, data: any): string {
-      if (!weight) {
+      if (!weight || !this.hasMultipleFeatures) {
         return "";
       }
       const absoluteWeight = Math.abs(
-        weight / this.columnWeightExtrema[data.field.key]
+        weight / this.d3mRowWeightExtrema[data.item[D3M_INDEX_FIELD]]
       );
       const red = 255 - 128 * absoluteWeight;
       const green = 255 - 64 * absoluteWeight;
