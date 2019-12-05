@@ -114,7 +114,8 @@ export default Vue.extend({
     },
 
     regressionEnabled(): boolean {
-      return routeGetters.getRouteTask(this.$store) === TaskTypes.REGRESSION;
+      const tasks = routeGetters.getRouteTask(this.$store).split(',');
+      return tasks.indexOf(TaskTypes.REGRESSION) > -1;
     },
 
     solutionId(): string {
