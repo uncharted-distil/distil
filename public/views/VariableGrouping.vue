@@ -162,9 +162,6 @@ export default Vue.extend({
     };
   },
   computed: {
-    availableTargetVarsPage(): number {
-      return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
-    },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
@@ -394,11 +391,7 @@ export default Vue.extend({
       this.gotoTargetSelection();
     },
     gotoTargetSelection() {
-      const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
-        dataset: this.dataset,
-        availableTargetVarsPage: this.availableTargetVarsPage
-      });
-      this.$router.push(entry);
+      this.$router.go(-1);
     }
   }
 });

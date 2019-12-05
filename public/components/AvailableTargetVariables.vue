@@ -10,7 +10,7 @@
       :rows-per-page="numRowsPerPage"
       :summaries="summaries"
       :html="html"
-      :logActivity="PROBLEM_DEFINITION"
+      :logActivity="problemDefinition"
     >
     </variable-facets>
   </div>
@@ -47,6 +47,9 @@ export default Vue.extend({
   },
 
   computed: {
+    problemDefinition(): string {
+      return Activity.PROBLEM_DEFINITION;
+    },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
@@ -121,7 +124,7 @@ export default Vue.extend({
 
               appActions.logUserEvent(this.$store, {
                 feature: Feature.SELECT_TARGET,
-                activity: Activity.PROBLEM_DEFINITIION,
+                activity: Activity.PROBLEM_DEFINITION,
                 subActivity: SubActivity.PROBLEM_SPECIFICATION,
                 details: { target: group.colName }
               });
