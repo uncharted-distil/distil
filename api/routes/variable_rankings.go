@@ -36,16 +36,17 @@ type RankingResult struct {
 
 // VariableRankingHandler generates a route handler that allows to ranking
 // variables of a dataset relative to the importance of a selected variable.
-func VariableRankingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
 		// get variable name
 		target := pat.Param(r, "target")
-		// get solution id (optional param)
+		// get feature or solution id (optional param)
 		queryValues := r.URL.Query()
 		resultURI := queryValues.Get("result")
 		d3mIndexString := queryValues.Get("d3mindex")
+		solutionID := queryValues.Get("solutionId")
 
 		// get storage client
 		storage, err := metaCtor()
@@ -61,16 +62,18 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataS
 		}
 
 		var rankings map[string]float64
-		if resultURI == "" {
-			rankings, err = targetRank(dataset, target, d.Folder, d.Variables, d.Source)
-		} else {
+		if solutionID != "" {
+			rankings, err = solutionRank(solutionID, solutionCtor)
+		} else if resultURI != "" {
 			var d3mIndex int64
 			d3mIndex, err = strconv.ParseInt(d3mIndexString, 10, 64)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable to parse d3m index"))
 				return
 			}
-			rankings, err = solutionRank(dataset, resultURI, d3mIndex, dataCtor)
+			rankings, err = featureRank(dataset, resultURI, d3mIndex, dataCtor)
+		} else {
+			rankings, err = targetRank(dataset, target, d.Folder, d.Variables, d.Source)
 		}
 
 		if err != nil {
@@ -99,7 +102,7 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataS
 	}
 }
 
-func solutionRank(dataset string, resultURI string, d3mIndex int64, dataCtor api.DataStorageCtor) (map[string]float64, error) {
+func featureRank(dataset string, resultURI string, d3mIndex int64, dataCtor api.DataStorageCtor) (map[string]float64, error) {
 	// get storage client
 	storage, err := dataCtor()
 	if err != nil {
@@ -112,6 +115,26 @@ func solutionRank(dataset string, resultURI string, d3mIndex int64, dataCtor api
 	}
 
 	return result.Weights, nil
+}
+
+func solutionRank(solutionID string, solutionCtor api.SolutionStorageCtor) (map[string]float64, error) {
+	// get storage client
+	storage, err := solutionCtor()
+	if err != nil {
+		return nil, err
+	}
+
+	weights, err := storage.FetchSolutionWeights(solutionID)
+	if err != nil {
+		return nil, err
+	}
+
+	ranks := make(map[string]float64)
+	for _, fw := range weights {
+		ranks[fw.FeatureName] = fw.Weight
+	}
+
+	return ranks, nil
 }
 
 func targetRank(dataset string, target string, folder string, variables []*model.Variable, source metadata.DatasetSource) (map[string]float64, error) {

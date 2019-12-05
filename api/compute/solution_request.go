@@ -38,10 +38,11 @@ import (
 )
 
 const (
-	defaultResourceID       = "learningData"
-	defaultExposedOutputKey = "outputs.0"
-	explainOutputkey        = "outputs.1"
-	trainTestSplitThreshold = 0.9
+	defaultResourceID        = "learningData"
+	defaultExposedOutputKey  = "outputs.0"
+	explainFeatureOutputkey  = "outputs.1"
+	explainSolutionOutputkey = "outputs.2"
+	trainTestSplitThreshold  = 0.9
 	// SolutionPendingStatus represents that the solution request has been acknoledged by not yet sent to the API
 	SolutionPendingStatus = "SOLUTION_PENDING"
 	// SolutionRunningStatus represents that the solution request has been sent to the API.
@@ -543,7 +544,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		//s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
 
 		// generate predictions
-		produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID, []string{defaultExposedOutputKey, explainOutputkey})
+		produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID, []string{defaultExposedOutputKey, explainFeatureOutputkey, explainSolutionOutputkey})
 
 		// generate predictions
 		predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
@@ -564,7 +565,11 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 			}
-			explainURI, err := getFileFromOutput(response, explainOutputkey)
+			explainFeatureURI, err := getFileFromOutput(response, explainFeatureOutputkey)
+			if err != nil {
+				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+			}
+			explainSolutionURI, err := getFileFromOutput(response, explainSolutionOutputkey)
 			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 			}
@@ -579,14 +584,26 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			resultID := fmt.Sprintf("%x", bs)
 
 			// explain the pipeline
-			featureWeights, err := s.explainOutput(resultURI, datasetURITest, explainURI)
+			featureWeights, err := s.explainFeatureOutput(resultURI, datasetURITest, explainFeatureURI)
 			if err != nil {
-				log.Warnf("failed to fetch output explanantion - %s", err)
+				log.Warnf("failed to fetch output explanantion - %v", err)
 			}
 			if featureWeights != nil {
 				err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
 				if err != nil {
 					s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+					return
+				}
+			}
+
+			solutionWeights, err := s.explainSolutionOutput(resultURI, explainSolutionURI, initialSearchSolutionID, variables)
+			if err != nil {
+				log.Warnf("failed to fetch output explanantion - %v", err)
+			}
+			for _, fw := range solutionWeights {
+				err = solutionStorage.PersistSolutionWeight(fw.SolutionID, fw.FeatureName, fw.FeatureIndex, fw.Weight)
+				if err != nil {
+					s.persistSolutionError(statusChan, solutionStorage, searchID, initialSearchSolutionID, err)
 					return
 				}
 			}
