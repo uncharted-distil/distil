@@ -88,6 +88,14 @@ type SolutionFeatureWeight struct {
 	Weights   map[string]float64
 }
 
+// SolutionWeight captures the weights for a given d3m index and result.
+type SolutionWeight struct {
+	SolutionID   string
+	FeatureIndex int64
+	FeatureName  string
+	Weight       float64
+}
+
 // SolutionResult represents the solution result metadata.
 type SolutionResult struct {
 	FittedSolutionID string    `json:"fittedSolutionId"`

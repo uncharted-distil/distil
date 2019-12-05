@@ -24,7 +24,7 @@ const (
 	requestTableName               = "request"
 	solutionTableName              = "solution"
 	solutionStateTableName         = "solution_state"
-	solutionFeatureWeightTableName = "solution_feature"
+	solutionFeatureWeightTableName = "solution_weight"
 	solutionResultTableName        = "solution_result"
 	solutionScoreTableName         = "solution_score"
 	featureTableName               = "request_feature"

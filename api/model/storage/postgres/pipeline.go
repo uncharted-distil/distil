@@ -37,6 +37,15 @@ func (s *Storage) PersistSolution(requestID string, solutionID string, initialSe
 	return err
 }
 
+// PersistSolutionWeight persists the solution feature weight to Postgres.
+func (s *Storage) PersistSolutionWeight(solutionID string, featureName string, featureIndex int64, weight float64) error {
+	sql := fmt.Sprintf("INSERT INTO %s (solution_id, feature_name, feature_index, weight) VALUES ($1, $2, $3, $4);", solutionFeatureWeightTableName)
+
+	_, err := s.client.Exec(sql, solutionID, featureName, featureIndex, weight)
+
+	return err
+}
+
 // PersistSolution persists the solution to Postgres.
 func (s *Storage) PersistSolutionState(solutionID string, progress string, createdTime time.Time) error {
 	sql := fmt.Sprintf("INSERT INTO %s (solution_id, progress, created_time) VALUES ($1, $2, $3);", solutionStateTableName)
@@ -170,6 +179,50 @@ func (s *Storage) parseSolution(rows *pgx.Rows) (*api.Solution, error) {
 		Result:      result,
 		Scores:      scores,
 	}, nil
+}
+
+func (s *Storage) parseSolutionWeight(rows *pgx.Rows) ([]*api.SolutionWeight, error) {
+	results := make([]*api.SolutionWeight, 0)
+	for rows.Next() {
+		var solutionID string
+		var featureName string
+		var featureIndex int64
+		var weight float64
+
+		err := rows.Scan(&solutionID, &featureName, &featureIndex, &weight)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse solution feature weight from Postgres")
+		}
+
+		results = append(results, &api.SolutionWeight{
+			SolutionID:   solutionID,
+			FeatureName:  featureName,
+			FeatureIndex: featureIndex,
+			Weight:       weight,
+		})
+	}
+
+	return results, nil
+}
+
+// FetchSolutionWeights fetches solution feature weights from Postgres.
+func (s *Storage) FetchSolutionWeights(solutionID string) ([]*api.SolutionWeight, error) {
+	sql := fmt.Sprintf("SELECT solution_id, feature_name, feature_index, weight FROM %s WHERE solution_id = $1;", solutionFeatureWeightTableName)
+
+	rows, err := s.client.Query(sql, solutionID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull solution feature weights from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	results, err := s.parseSolutionWeight(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse solution feature weights from Postgres")
+	}
+
+	return results, nil
 }
 
 func (s *Storage) parseSolutionState(rows *pgx.Rows) ([]*api.SolutionState, error) {
