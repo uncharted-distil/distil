@@ -49,6 +49,12 @@ func UploadHandler(outputPath string, config *task.IngestTaskConfig) func(http.R
 			formattedPath, err = uploadTableDataset(dataset, outputPath, config, data)
 		} else if typ == "image" {
 			formattedPath, err = uploadImageDataset(dataset, outputPath, config, data, queryValues)
+		} else if typ == "" {
+			handleError(w, errors.Errorf("upload type parameter not specified"))
+			return
+		} else {
+			handleError(w, errors.Errorf("unrecognized upload type"))
+			return
 		}
 
 		if err != nil {
