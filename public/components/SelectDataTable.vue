@@ -34,7 +34,7 @@
         v-for="timeseriesGrouping in timeseriesGroupings"
         v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
       >
-        <div class="container" :key="data.item[timeseriesGrouping.idCol]">
+        <div class="container" :key="data.item[timeseriesGrouping.idCol].value">
           <div class="row">
             <!-- <div class="col-2">
 							<b>{{data.item[timeseriesGrouping.idCol]}}</b>
@@ -45,7 +45,7 @@
               :x-col="timeseriesGrouping.properties.xCol"
               :y-col="timeseriesGrouping.properties.yCol"
               :timeseries-col="timeseriesGrouping.idCol"
-              :timeseries-id="data.item[timeseriesGrouping.idCol]"
+              :timeseries-id="data.item[timeseriesGrouping.idCol].value"
             >
             </sparkline-preview>
             <!-- </div> -->

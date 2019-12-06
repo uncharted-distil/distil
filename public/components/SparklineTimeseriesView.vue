@@ -26,15 +26,15 @@
       <div
         class="sparkline-row-container"
         v-for="item in items"
-        :key="item[timeseriesGrouping.idCol]"
+        :key="item[timeseriesGrouping.idCol].value"
       >
         <sparkline-row
           :x-col="timeseriesGrouping.properties.xCol"
           :y-col="timeseriesGrouping.properties.yCol"
           :timeseries-col="timeseriesGrouping.idCol"
-          :timeseries-id="item[timeseriesGrouping.idCol]"
+          :timeseries-id="item[timeseriesGrouping.idCol].value"
           :timeseries-extrema="
-            timeseriesRowLocalExtrema(item[timeseriesGrouping.idCol])
+            timeseriesRowLocalExtrema(item[timeseriesGrouping.idCol].value)
           "
           :highlight-pixel-x="highlightPixelX"
           :prediction="getPrediction(item)"

@@ -51,7 +51,7 @@
           :x-col="timeseriesGrouping.properties.xCol"
           :y-col="timeseriesGrouping.properties.yCol"
           :timeseries-col="timeseriesGrouping.idCol"
-          :timeseries-id="data.item[timeseriesGrouping.idCol]"
+          :timeseries-id="data.item[timeseriesGrouping.idCol].value"
           :solution-id="solutionId"
           :include-forecast="isTargetTimeseries"
         >
@@ -287,14 +287,17 @@ export default Vue.extend({
     },
     d3mRowWeightExtrema(): Object {
       return this.dataItems.reduce((extremas, item) => {
-        extremas[item[D3M_INDEX_FIELD]] = this.tableFields.reduce((rowMax, tableCol) => {
-          if (item[tableCol.key].weight) {
-            const currentWeight = Math.abs(item[tableCol.key].weight);
-            return currentWeight > rowMax ? currentWeight : rowMax;
-          } else {
-            return rowMax;
-          }
-        }, 0);
+        extremas[item[D3M_INDEX_FIELD]] = this.tableFields.reduce(
+          (rowMax, tableCol) => {
+            if (item[tableCol.key].weight) {
+              const currentWeight = Math.abs(item[tableCol.key].weight);
+              return currentWeight > rowMax ? currentWeight : rowMax;
+            } else {
+              return rowMax;
+            }
+          },
+          0
+        );
         return extremas;
       }, {});
     },
