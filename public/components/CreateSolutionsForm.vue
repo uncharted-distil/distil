@@ -226,7 +226,8 @@ export default Vue.extend({
           metrics: this.metrics,
           maxSolutions: NUM_SOLUTIONS,
           // intentionally nulled for now - should be made user settable in the future
-          maxTime: null
+          maxTime: null,
+          onClose: ()=> { this.$router.go(0) }
         })
         .then((res: Solution) => {
           this.pending = false;

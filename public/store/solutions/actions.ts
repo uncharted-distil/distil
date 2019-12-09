@@ -29,6 +29,7 @@ interface CreateSolutionRequest {
   maxSolutions: number;
   maxTime: number;
   filters: FilterParams;
+  onClose: Function;
 }
 
 interface SolutionStatus {
@@ -313,6 +314,7 @@ export const actions = {
           }
           // close stream
           stream.close();
+          request.onClose();
         }
       });
 
