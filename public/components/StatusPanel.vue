@@ -65,6 +65,7 @@ import { Feature, Activity, SubActivity } from "../util/userEvents";
 const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
   [DatasetPendingRequestType.VARIABLE_RANKING, Feature.RANK_FEATURES],
   [DatasetPendingRequestType.GEOCODING, Feature.GEOCODE_FEATURES],
+  [DatasetPendingRequestType.CLUSTERING, Feature.CLUSTER_DATA],
   [DatasetPendingRequestType.JOIN_SUGGESTION, Feature.JOIN_DATASETS]
 ]);
 
@@ -134,6 +135,14 @@ export default Vue.extend({
             resolvedMsg:
               "Geocoding has been processed. Would you like to apply the change to the feature list?",
             errorMsg: "Unexpected error has happened while geocoding"
+          };
+        case DatasetPendingRequestType.CLUSTERING:
+          return {
+            title: "Data Clustering",
+            pendingMsg: "",
+            resolvedMsg:
+              "Data clusters have been generated. Would you like to apply the change to the dataset?",
+            errorMsg: "Unexpected error has happened while clustering"
           };
         case DatasetPendingRequestType.JOIN_SUGGESTION:
           return {

@@ -27,6 +27,17 @@
         ></i>
       </div>
       <div class="status-icon-wrapper" @click="onStatusIconClick(2)">
+        <i class="status-icon fa fa-2x fa-share-alt" aria-hidden="true"></i>
+        <i
+          v-if="isNew(clusterStatus)"
+          class="new-update-notification fa fa-circle"
+        ></i>
+        <i
+          v-if="isPending(clusterStatus)"
+          class="new-update-notification fa fa-refresh fa-spin"
+        ></i>
+      </div>
+      <div class="status-icon-wrapper" @click="onStatusIconClick(3)">
         <i class="status-icon fa fa-2x fa-table" aria-hidden="true"></i>
         <i
           v-if="isNew(joinSuggestionStatus)"
@@ -66,7 +77,8 @@ import {
   DatasetPendingRequestStatus,
   GeocodingPendingRequest,
   JoinSuggestionPendingRequest,
-  JoinDatasetImportPendingRequest
+  JoinDatasetImportPendingRequest,
+  ClusteringPendingRequest
 } from "../store/dataset/index";
 import { Feature, Activity } from "../util/userEvents";
 import { Dictionary } from "vue-router/types/router";
@@ -74,6 +86,7 @@ import { Dictionary } from "vue-router/types/router";
 const STATUS_TYPES = [
   DatasetPendingRequestType.VARIABLE_RANKING,
   DatasetPendingRequestType.GEOCODING,
+  DatasetPendingRequestType.CLUSTERING,
   DatasetPendingRequestType.JOIN_SUGGESTION
 ];
 
@@ -101,6 +114,13 @@ export default Vue.extend({
       return <GeocodingPendingRequest>(
         this.pendingRequests.find(
           item => item.type === DatasetPendingRequestType.GEOCODING
+        )
+      );
+    },
+    clusterRequestData(): ClusteringPendingRequest {
+      return <ClusteringPendingRequest>(
+        this.pendingRequests.find(
+          item => item.type === DatasetPendingRequestType.CLUSTERING
         )
       );
     },
@@ -132,6 +152,9 @@ export default Vue.extend({
     },
     geocodingStatus(): DatasetPendingRequestStatus {
       return this.geocodingRequestData && this.geocodingRequestData.status;
+    },
+    clusterStatus(): DatasetPendingRequestStatus {
+      return this.clusterRequestData && this.clusterRequestData.status;
     },
     joinSuggestionStatus(): DatasetPendingRequestStatus {
       return (
