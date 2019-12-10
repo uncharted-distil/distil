@@ -14,7 +14,8 @@ import {
   GeocodingPendingRequest,
   JoinSuggestionPendingRequest,
   JoinDatasetImportPendingRequest,
-  Task
+  Task,
+  ClusteringPendingRequest
 } from "./index";
 import { mutations } from "./module";
 import { DistilState } from "../store";
@@ -272,6 +273,43 @@ export const actions = {
       .catch(error => {
         mutations.updatePendingRequests(context, {
           ...request,
+          status: DatasetPendingRequestStatus.ERROR
+        });
+        console.error(error);
+      });
+  },
+
+  clusterData(
+    context: DatasetContext,
+    args: { dataset: string; variable: string }
+  ): Promise<any> {
+    if (!args.dataset) {
+      console.warn("`dataset` argument is missing");
+      return null;
+    }
+    if (!args.variable) {
+      console.warn("`field` argument is missing");
+      return null;
+    }
+    const update: ClusteringPendingRequest = {
+      id: _.uniqueId(),
+      dataset: args.dataset,
+      type: DatasetPendingRequestType.CLUSTERING,
+      field: args.variable,
+      status: DatasetPendingRequestStatus.PENDING
+    };
+    mutations.updatePendingRequests(context, update);
+    return axios
+      .post(`/distil/cluster/${args.dataset}/${args.variable}`, {})
+      .then(() => {
+        mutations.updatePendingRequests(context, {
+          ...update,
+          status: DatasetPendingRequestStatus.RESOLVED
+        });
+      })
+      .catch(error => {
+        mutations.updatePendingRequests(context, {
+          ...update,
           status: DatasetPendingRequestStatus.ERROR
         });
         console.error(error);
