@@ -257,6 +257,18 @@ export function updateSummaries(
   }
 }
 
+export function removeSummary(
+  summary: VariableSummary,
+  summaries: VariableSummary[]
+) {
+  const index = _.findIndex(summaries, s => {
+    return s.dataset === summary.dataset && s.key === summary.key;
+  });
+  if (index >= 0) {
+    Vue.delete(summaries, index);
+  }
+}
+
 export function filterSummariesByDataset(
   summaries: VariableSummary[],
   dataset: string
