@@ -17,17 +17,23 @@ package routes
 
 import (
 	"net/http"
+	"path"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-ingest/pkg/metadata"
+	"github.com/uncharted-distil/distil/api/env"
+	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
 )
 
 // PredictionsHandler receives a file and produces results using the specified
 // fitted solution id
-func PredictionsHandler(outputPath string, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
+func PredictionsHandler(outputPath string, solutionStorageCtor api.SolutionStorageCtor,
+	metaStorageCtor api.MetadataStorageCtor, config *env.Config, ingestConfig *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		fittedSolutionID := pat.Param(r, "fitted-solution-id")
@@ -40,14 +46,45 @@ func PredictionsHandler(outputPath string, config *task.IngestTaskConfig) func(h
 		}
 		log.Infof("received data to use for predictions for dataset %s solution %s", dataset, fittedSolutionID)
 
-		_, err = task.Predict(dataset, fittedSolutionID, data, outputPath, config)
+		solutionStorage, err := solutionStorageCtor()
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to initialize solution storage"))
+			return
+		}
+		metaStorage, err := metaStorageCtor()
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to initialize metadata storage"))
+			return
+		}
+
+		// get the source dataset from the fitted solution ID
+		req, err := solutionStorage.FetchRequestByFittedSolutionID(fittedSolutionID)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to fetch request using fitted solution id"))
+			return
+		}
+
+		// read the metadata of the original dataset
+		datasetES, err := metaStorage.FetchDataset(req.Dataset, false, false)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to fetch dataset from es"))
+			return
+		}
+		schemaPath := path.Join(env.ResolvePath(datasetES.Source, datasetES.Folder), compute.D3MDataSchema)
+		meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to load metadata from source dataset schema doc"))
+			return
+		}
+
+		resultURI, err := task.Predict(meta, dataset, fittedSolutionID, data, outputPath, config.ESDatasetsIndex, metaStorage, ingestConfig)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to generate predictions"))
 			return
 		}
 
 		// marshal data and sent the response back
-		err = handleJSON(w, map[string]interface{}{"result": "uploaded"})
+		err = handleJSON(w, map[string]interface{}{"result": resultURI})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
 			return

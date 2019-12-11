@@ -72,7 +72,8 @@ type SolutionStorage interface {
 	PersistSolutionScore(solutionID string, metric string, score float64) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
 	FetchRequest(requestID string) (*Request, error)
-	FetchRequestBySolutionID(requestID string) (*Request, error)
+	FetchRequestBySolutionID(solutionID string) (*Request, error)
+	FetchRequestByFittedSolutionID(fittedSolutionID string) (*Request, error)
 	FetchRequestByDatasetTarget(dataset string, target string, solutionID string) ([]*Request, error)
 	FetchRequestFeatures(requestID string) ([]*Feature, error)
 	FetchRequestFilters(requestID string, features []*Feature) (*FilterParams, error)

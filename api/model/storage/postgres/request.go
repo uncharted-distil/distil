@@ -126,6 +126,25 @@ func (s *Storage) FetchRequestBySolutionID(solutionID string) (*api.Request, err
 	return s.loadRequest(rows)
 }
 
+// FetchRequestByFittedSolutionID pulls request information from Postgres using
+// a fitted solution ID.
+func (s *Storage) FetchRequestByFittedSolutionID(fittedSolutionID string) (*api.Request, error) {
+	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.progress, req.created_time, req.last_updated_time "+
+		"FROM %s as req INNER JOIN %s as sol ON req.request_id = sol.request_id INNER JOIN %s sr on sr.solution_id = sol.solution_id"+
+		"WHERE sr.fitted_solution_id = $1;", requestTableName, solutionTableName, solutionResultTableName)
+
+	rows, err := s.client.Query(sql, fittedSolutionID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull request from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+	rows.Next()
+
+	return s.loadRequest(rows)
+}
+
 func (s *Storage) loadRequest(rows *pgx.Rows) (*api.Request, error) {
 	var requestID string
 	var dataset string
