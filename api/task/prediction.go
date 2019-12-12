@@ -68,7 +68,7 @@ func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
 	log.Infof("wrote out schema doc for new dataset")
 
 	// ingest the dataset but without running simon, duke, etc.
-	_, err = Ingest(schemaPath, schemaPath, metaStorage, index, dataset, metadata.Contrib, nil, config)
+	_, err = Ingest(schemaPath, schemaPath, metaStorage, index, dataset, metadata.Contrib, nil, config, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to ingest ranked data")
 	}

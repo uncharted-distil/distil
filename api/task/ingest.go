@@ -172,7 +172,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished geocoding the dataset")
 	}
 
-	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, origins, config)
+	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, origins, config, true)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -190,7 +190,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string,
-	dataset string, source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig) (string, error) {
+	dataset string, source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig, checkMatch bool) (string, error) {
 	datasetDir := path.Dir(schemaFile)
 	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative), true)
 	if err != nil {
@@ -261,18 +261,20 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// Check for existing dataset
-	match, err := matchDataset(storage, meta, index)
-	// Ignore the error for now as if this fails we still want ingest to succeed.
-	if err != nil {
-		log.Error(err)
-	}
-	if match != "" {
-		log.Infof("Matched %s to dataset %s", meta.Name, match)
-		err = deleteDataset(match, index, pg, elasticClient)
+	if checkMatch {
+		match, err := matchDataset(storage, meta, index)
+		// Ignore the error for now as if this fails we still want ingest to succeed.
 		if err != nil {
-			log.Errorf("error deleting dataset: %v", err)
+			log.Error(err)
 		}
-		log.Infof("Deleted dataset %s", match)
+		if match != "" {
+			log.Infof("Matched %s to dataset %s", meta.Name, match)
+			err = deleteDataset(match, index, pg, elasticClient)
+			if err != nil {
+				log.Errorf("error deleting dataset: %v", err)
+			}
+			log.Infof("Deleted dataset %s", match)
+		}
 	}
 
 	// ingest the metadata
@@ -316,10 +318,10 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 		return "", errors.Wrap(err, "unable to create the result table")
 	}
 
-	err = pg.CreateSolutionMetadataTables()
-	if err != nil {
-		return "", errors.Wrap(err, "unable to create solution metadata tables")
-	}
+	//err = pg.CreateSolutionMetadataTables()
+	//if err != nil {
+	//	return "", errors.Wrap(err, "unable to create solution metadata tables")
+	//}
 
 	// Load the data.
 	log.Infof("inserting rows into database based on data found in %s", dataDir)

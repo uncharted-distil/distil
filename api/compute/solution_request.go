@@ -324,8 +324,9 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 	return preprocessingPipeline, nil
 }
 
+// GeneratePredictions produces predictions using the specified.
 func GeneratePredictions(datasetURI string, fittedSolutionID string, client *compute.Client) (string, error) {
-	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, []string{defaultExposedOutputKey})
+	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, []string{defaultExposedOutputKey, explainFeatureOutputkey, explainSolutionOutputkey})
 	predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
 	if err != nil {
 		return "", err
