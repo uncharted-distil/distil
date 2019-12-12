@@ -365,7 +365,7 @@ func createProduceSolutionRequest(datasetURI string, fittedSolutionID string, ou
 		Inputs: []*pipeline.Value{
 			{
 				Value: &pipeline.Value_DatasetUri{
-					DatasetUri: datasetURI,
+					DatasetUri: compute.BuildSchemaFileURI(datasetURI),
 				},
 			},
 		},

@@ -57,6 +57,9 @@ func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
 	log.Infof("dataset fields match original dataset fields")
 
 	// update the dataset doc to reflect original types
+	meta.ID = dataset
+	meta.StorageName = model.NormalizeDatasetID(dataset)
+	meta.DatasetFolder = path.Base(datasetPath)
 	schemaPath := path.Join(datasetPath, compute.D3MDataSchema)
 	err = metadata.WriteSchema(meta, schemaPath)
 	if err != nil {

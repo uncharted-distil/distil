@@ -198,6 +198,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 	meta.DatasetFolder = path.Base(path.Dir(originalSchemaFile))
 	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
+	log.Infof("using %s as data directory (built from %s and %s)", dataDir, datasetDir, meta.DataResources[0].ResPath)
 
 	err = metadata.LoadImportance(meta, path.Join(datasetDir, config.RankingOutputPathRelative))
 	if err != nil {
@@ -207,20 +208,20 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	// load stats
 	err = metadata.LoadDatasetStats(meta, dataDir)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to load stats")
+		log.Warnf("unable to load stats: %v", err)
 	}
 
 	// load summary
 	err = metadata.LoadSummaryFromDescription(meta, path.Join(datasetDir, config.SummaryOutputPathRelative))
 	if err != nil {
-		return "", errors.Wrap(err, "unable to load summary")
+		log.Warnf("unable to load summary: %v", err)
 	}
 
 	// load machine summary
 	err = metadata.LoadSummaryMachine(meta, path.Join(datasetDir, config.SummaryMachineOutputPathRelative))
 	// NOTE: For now ignore summary errors!
 	if err != nil {
-		log.Errorf("unable to load machine summary: %v", err)
+		log.Warnf("unable to load machine summary: %v", err)
 	}
 
 	// set the origin
@@ -268,6 +269,9 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	if match != "" {
 		log.Infof("Matched %s to dataset %s", meta.Name, match)
 		err = deleteDataset(match, index, pg, elasticClient)
+		if err != nil {
+			log.Errorf("error deleting dataset: %v", err)
+		}
 		log.Infof("Deleted dataset %s", match)
 	}
 

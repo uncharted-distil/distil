@@ -99,6 +99,8 @@ github.com/uncharted-distil/distil-compute v0.0.0-20191204204644-afc74331ec80 h1
 github.com/uncharted-distil/distil-compute v0.0.0-20191204204644-afc74331ec80/go.mod h1:lCed3xOxkH+WkNFw6ex4s92J3b3MGczFggACT5b2Eys=
 github.com/uncharted-distil/distil-compute v0.0.0-20191205055858-6ec2122c50c3 h1:3jNImuuvXftWVTLmgvxZyAi35vQaL1eMVHr4UAIXSz8=
 github.com/uncharted-distil/distil-compute v0.0.0-20191205055858-6ec2122c50c3/go.mod h1:lCed3xOxkH+WkNFw6ex4s92J3b3MGczFggACT5b2Eys=
+github.com/uncharted-distil/distil-compute v0.0.0-20191212143954-d7ff7535a872 h1:XaFvozMZrTy9a+sMYc+D0F9p7h+gzkemU0DhDKSRHDE=
+github.com/uncharted-distil/distil-compute v0.0.0-20191212143954-d7ff7535a872/go.mod h1:lCed3xOxkH+WkNFw6ex4s92J3b3MGczFggACT5b2Eys=
 github.com/uncharted-distil/distil-ingest v0.1.0 h1:LTmn7ov4q8u7P91MrWKL4HtcAiyeoo8vYQXh/8/82dk=
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191129203607-2718e91e6e9d h1:5drR+FabuPmzaX47TaK3+HdGSBXyfQ6iFeGm9s3NQxU=
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191129203607-2718e91e6e9d/go.mod h1:XM+QHXV9c9jSTfgqElFdikunokU+lUn4tpbfuZFrX6E=
@@ -114,6 +116,8 @@ github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191205150232-3bc3ed209a09
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191205150232-3bc3ed209a09/go.mod h1:7b5+nzqxUcp9U9nXAsrcY0B76wq32jbkZANdOCCuV3g=
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191205173026-dac646b805ff h1:tcp9ITQHm3Faod+3DtgoFMdVXIR/f4MheA4UYXXvpEQ=
 github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191205173026-dac646b805ff/go.mod h1:7b5+nzqxUcp9U9nXAsrcY0B76wq32jbkZANdOCCuV3g=
+github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191212144141-b57567bfb50d h1:XbUV7FmUmAv9O6PZjH9dk5MW27Ia2tdSxIjq/QGHG2g=
+github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191212144141-b57567bfb50d/go.mod h1:n7Wo8VsZIzbxQkWgKqsB/Epes6KNFAmfVxeU4pUMfws=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9 h1:P1B7OAnmyIdSN9UGhDvIU3s8K3/2rQcvntYV5WPi+qY=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9/go.mod h1:PrytgQ5GjTc6Z5/pbL5vj1UhD716wDobDeimrd7lRKY=
 github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48 h1:XYef2jcFEKziHl4rv/21jrNeQg6Z3gL345u16fHWVDo=
