@@ -30,12 +30,13 @@ import (
 
 // Predict processes input data to generate predictions.
 func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
-	csvData []byte, outputPath string, index string, metaStorage api.MetadataStorage, config *IngestTaskConfig) (string, error) {
+	csvData []byte, outputPath string, index string, target string, metaStorage api.MetadataStorage,
+	dataStorage api.DataStorage, config *IngestTaskConfig) error {
 	log.Infof("generating predictions for fitted solution ID %s", fittedSolutionID)
 	// create the dataset to be used for predictions
 	datasetPath, err := CreateDataset(dataset, csvData, outputPath, config)
 	if err != nil {
-		return "", err
+		return err
 	}
 	log.Infof("created dataset for new data")
 
@@ -44,14 +45,14 @@ func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
 	rawDataPath := path.Join(datasetPath, compute.D3MDataFolder, compute.D3MLearningData)
 	rawCSVData, err := util.ReadCSVFile(rawDataPath, false)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to parse header result")
+		return errors.Wrap(err, "unable to parse header result")
 	}
 	rawHeader := rawCSVData[0]
 	for i, f := range rawHeader {
 		// TODO: may have to check the name rather than display name
 		// TODO: col index not necessarily the same as index and thats what needs checking
 		if meta.DataResources[0].Variables[i].DisplayName != f {
-			return "", errors.Errorf("variables in new prediction file do not match variables in original dataset")
+			return errors.Errorf("variables in new prediction file do not match variables in original dataset")
 		}
 	}
 	log.Infof("dataset fields match original dataset fields")
@@ -64,14 +65,14 @@ func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
 	schemaPath := path.Join(datasetPath, compute.D3MDataSchema)
 	err = metadata.WriteSchema(meta, schemaPath)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to update dataset doc")
+		return errors.Wrap(err, "unable to update dataset doc")
 	}
 	log.Infof("wrote out schema doc for new dataset")
 
 	// ingest the dataset but without running simon, duke, etc.
 	_, err = Ingest(schemaPath, schemaPath, metaStorage, index, dataset, metadata.Contrib, nil, config, false)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to ingest ranked data")
+		return errors.Wrap(err, "unable to ingest ranked data")
 	}
 	log.Infof("finished ingesting the dataset")
 
@@ -79,15 +80,34 @@ func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
 	meta.ID = sourceDatasetID
 	err = metadata.WriteSchema(meta, schemaPath)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to update dataset doc")
+		return errors.Wrap(err, "unable to update dataset doc")
 	}
 
 	// submit the new dataset for predictions
-	resultURI, err := comp.GeneratePredictions(datasetPath, fittedSolutionID, client)
+	resultURIs, err := comp.GeneratePredictions(datasetPath, fittedSolutionID, client)
 	if err != nil {
-		return "", err
+		return err
 	}
-	log.Infof("generated predictions stored at %s", resultURI)
+	log.Infof("generated predictions stored at %v", resultURIs)
 
-	return resultURI, nil
+	// store the predictions and the weights
+	featureWeights, err := comp.ExplainFeatureOutput(resultURIs[0], datasetPath, resultURIs[1])
+	if err != nil {
+		return err
+	}
+	if featureWeights != nil {
+		err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
+		if err != nil {
+			return err
+		}
+	}
+	log.Infof("stored feature weights to the database")
+
+	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURIs[0], target)
+	if err != nil {
+		return nil
+	}
+	log.Infof("stored prediction results to the database")
+
+	return nil
 }

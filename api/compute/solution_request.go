@@ -325,11 +325,11 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 }
 
 // GeneratePredictions produces predictions using the specified.
-func GeneratePredictions(datasetURI string, fittedSolutionID string, client *compute.Client) (string, error) {
+func GeneratePredictions(datasetURI string, fittedSolutionID string, client *compute.Client) ([]string, error) {
 	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, []string{defaultExposedOutputKey, explainFeatureOutputkey, explainSolutionOutputkey})
 	predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	for _, response := range predictionResponses {
@@ -339,25 +339,23 @@ func GeneratePredictions(datasetURI string, fittedSolutionID string, client *com
 			continue
 		}
 
-		output, ok := response.ExposedOutputs[defaultExposedOutputKey]
-		if !ok {
-			return "", errors.Errorf("output is missing from response")
+		resultURI, err := getFileFromOutput(response, defaultExposedOutputKey)
+		if err != nil {
+			return nil, err
+		}
+		explainFeatureURI, err := getFileFromOutput(response, explainFeatureOutputkey)
+		if err != nil {
+			return nil, err
+		}
+		explainSolutionURI, err := getFileFromOutput(response, explainSolutionOutputkey)
+		if err != nil {
+			return nil, err
 		}
 
-		csvURI, ok := output.Value.(*pipeline.Value_CsvUri)
-		if !ok {
-			return "", errors.Errorf("output is not of correct format")
-		}
-
-		// remove the protocol portion if it exists. The returned value is either a
-		// csv file or a directory.
-		resultURI := csvURI.CsvUri
-		resultURI = strings.Replace(resultURI, "file://", "", 1)
-
-		return resultURI, nil
+		return []string{resultURI, explainFeatureURI, explainSolutionURI}, nil
 	}
 
-	return "", errors.Errorf("no results retrieved")
+	return nil, errors.Errorf("no results retrieved")
 }
 
 func createProduceSolutionRequest(datasetURI string, fittedSolutionID string, outputs []string) *pipeline.ProduceSolutionRequest {
@@ -618,14 +616,17 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			resultURI, err := getFileFromOutput(response, defaultExposedOutputKey)
 			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+				return
 			}
 			explainFeatureURI, err := getFileFromOutput(response, explainFeatureOutputkey)
 			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+				return
 			}
 			explainSolutionURI, err := getFileFromOutput(response, explainSolutionOutputkey)
 			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+				return
 			}
 
 			// get the result UUID. NOTE: Doing sha1 for now.
@@ -638,7 +639,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			resultID := fmt.Sprintf("%x", bs)
 
 			// explain the pipeline
-			featureWeights, err := s.explainFeatureOutput(resultURI, datasetURITest, explainFeatureURI)
+			featureWeights, err := ExplainFeatureOutput(resultURI, datasetURITest, explainFeatureURI)
 			if err != nil {
 				log.Warnf("failed to fetch output explanantion - %v", err)
 			}

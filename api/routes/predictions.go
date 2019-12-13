@@ -32,7 +32,7 @@ import (
 
 // PredictionsHandler receives a file and produces results using the specified
 // fitted solution id
-func PredictionsHandler(outputPath string, solutionStorageCtor api.SolutionStorageCtor,
+func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, solutionStorageCtor api.SolutionStorageCtor,
 	metaStorageCtor api.MetadataStorageCtor, config *env.Config, ingestConfig *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
@@ -56,6 +56,11 @@ func PredictionsHandler(outputPath string, solutionStorageCtor api.SolutionStora
 			handleError(w, errors.Wrap(err, "unable to initialize metadata storage"))
 			return
 		}
+		dataStorage, err := dataStorageCtor()
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to initialize data storage"))
+			return
+		}
 
 		// get the source dataset from the fitted solution ID
 		req, err := solutionStorage.FetchRequestByFittedSolutionID(fittedSolutionID)
@@ -77,17 +82,27 @@ func PredictionsHandler(outputPath string, solutionStorageCtor api.SolutionStora
 			return
 		}
 
-		resultURI, err := task.Predict(meta, dataset, fittedSolutionID, data, outputPath, config.ESDatasetsIndex, metaStorage, ingestConfig)
+		err = task.Predict(meta, dataset, fittedSolutionID, data, outputPath, config.ESDatasetsIndex, getTarget(req), metaStorage, dataStorage, ingestConfig)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to generate predictions"))
 			return
 		}
 
 		// marshal data and sent the response back
-		err = handleJSON(w, map[string]interface{}{"result": resultURI})
+		err = handleJSON(w, map[string]interface{}{"result": "done"})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
 			return
 		}
 	}
+}
+
+func getTarget(request *api.Request) string {
+	for _, f := range request.Features {
+		if f.FeatureType == "target" {
+			return f.FeatureName
+		}
+	}
+
+	return ""
 }

@@ -45,7 +45,8 @@ func (s *SolutionRequest) createExplainPipeline(client *compute.Client, desc *pi
 	return nil, nil
 }
 
-func (s *SolutionRequest) explainFeatureOutput(resultURI string, datasetURITest string, outputURI string) (*api.SolutionFeatureWeights, error) {
+// ExplainFeatureOutput parses the explain feature output.
+func ExplainFeatureOutput(resultURI string, datasetURITest string, outputURI string) (*api.SolutionFeatureWeights, error) {
 	// get the d3m index lookup
 	rawData, err := readDatasetData(datasetURITest)
 	if err != nil {
@@ -55,7 +56,7 @@ func (s *SolutionRequest) explainFeatureOutput(resultURI string, datasetURITest 
 	d3mIndexLookup := mapRowIndex(d3mIndexField, rawData[1:])
 
 	// parse the output for the explanations
-	parsed, err := s.parseFeatureWeight(resultURI, outputURI, d3mIndexLookup)
+	parsed, err := parseFeatureWeight(resultURI, outputURI, d3mIndexLookup)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse feature weight output")
 	}
@@ -89,7 +90,7 @@ func (s *SolutionRequest) explainSolutionOutput(resultURI string, outputURI stri
 	return output, nil
 }
 
-func (s *SolutionRequest) parseFeatureWeight(resultURI string, outputURI string, d3mIndexLookup map[int]string) (*api.SolutionFeatureWeights, error) {
+func parseFeatureWeight(resultURI string, outputURI string, d3mIndexLookup map[int]string) (*api.SolutionFeatureWeights, error) {
 	// all results on one row, with header row having feature names
 	res, err := util.ReadCSVFile(outputURI, false)
 	if err != nil {
