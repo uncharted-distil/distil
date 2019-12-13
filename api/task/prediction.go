@@ -57,6 +57,7 @@ func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
 	log.Infof("dataset fields match original dataset fields")
 
 	// update the dataset doc to reflect original types
+	sourceDatasetID := meta.ID
 	meta.ID = dataset
 	meta.StorageName = model.NormalizeDatasetID(dataset)
 	meta.DatasetFolder = path.Base(datasetPath)
@@ -73,6 +74,13 @@ func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
 		return "", errors.Wrap(err, "unable to ingest ranked data")
 	}
 	log.Infof("finished ingesting the dataset")
+
+	// the dataset id needs to matched the original dataset id for TA2 to be able to use the model
+	meta.ID = sourceDatasetID
+	err = metadata.WriteSchema(meta, schemaPath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to update dataset doc")
+	}
 
 	// submit the new dataset for predictions
 	resultURI, err := comp.GeneratePredictions(datasetPath, fittedSolutionID, client)

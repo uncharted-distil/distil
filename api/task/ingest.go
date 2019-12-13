@@ -38,7 +38,8 @@ import (
 )
 
 const (
-	baseTableSuffix = "_base"
+	baseTableSuffix    = "_base"
+	explainTableSuffix = "_explain"
 )
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
@@ -296,6 +297,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	// Hardcoded the base table name for now.
 	pg.DropView(dbTable)
 	pg.DropTable(fmt.Sprintf("%s%s", dbTable, baseTableSuffix))
+	pg.DropTable(fmt.Sprintf("%s%s", dbTable, explainTableSuffix))
 
 	// Create the database table.
 	ds, err := pg.InitializeDataset(meta)
@@ -317,11 +319,6 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create the result table")
 	}
-
-	//err = pg.CreateSolutionMetadataTables()
-	//if err != nil {
-	//	return "", errors.Wrap(err, "unable to create solution metadata tables")
-	//}
 
 	// Load the data.
 	log.Infof("inserting rows into database based on data found in %s", dataDir)
