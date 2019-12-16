@@ -72,7 +72,7 @@ func (s *Storage) getDatabaseFields(tableName string) ([]string, error) {
 
 func (s *Storage) getExistingFields(dataset string) (map[string]*model.Variable, error) {
 	// Read the existing fields from the database.
-	vars, err := s.metadata.FetchVariablesDisplay(dataset)
+	vars, err := s.metadata.FetchVariables(dataset, false, false, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to get existing fields")
 	}

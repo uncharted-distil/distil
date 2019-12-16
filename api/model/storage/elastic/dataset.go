@@ -307,7 +307,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string, va
 	}
 
 	// query for existing variables
-	vars, err := s.FetchVariables(dataset, true, true, false)
+	vars, err := s.FetchVariables(dataset, true, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
