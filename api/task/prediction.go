@@ -17,6 +17,7 @@ package task
 
 import (
 	"path"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -31,7 +32,7 @@ import (
 // Predict processes input data to generate predictions.
 func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
 	csvData []byte, outputPath string, index string, target string, metaStorage api.MetadataStorage,
-	dataStorage api.DataStorage, config *IngestTaskConfig) error {
+	dataStorage api.DataStorage, solutionStorage api.SolutionStorage, config *IngestTaskConfig) error {
 	log.Infof("generating predictions for fitted solution ID %s", fittedSolutionID)
 	// create the dataset to be used for predictions
 	datasetPath, err := CreateDataset(dataset, csvData, outputPath, config)
@@ -84,14 +85,14 @@ func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
 	}
 
 	// submit the new dataset for predictions
-	resultURIs, err := comp.GeneratePredictions(datasetPath, fittedSolutionID, client)
+	produceRequestID, resultURIs, err := comp.GeneratePredictions(datasetPath, fittedSolutionID, client)
 	if err != nil {
 		return err
 	}
 	log.Infof("generated predictions stored at %v", resultURIs)
 
 	// store the predictions and the weights
-	featureWeights, err := comp.ExplainFeatureOutput(resultURIs[0], datasetPath, resultURIs[1])
+	featureWeights, err := comp.ExplainFeatureOutput(resultURIs[0], schemaPath, resultURIs[1])
 	if err != nil {
 		return err
 	}
@@ -102,6 +103,12 @@ func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
 		}
 	}
 	log.Infof("stored feature weights to the database")
+
+	err = solutionStorage.PersistSolutionResult("", fittedSolutionID, produceRequestID, "inference", resultURIs[0], resultURIs[0], comp.SolutionCompletedStatus, time.Now())
+	if err != nil {
+		// notify of error
+		return err
+	}
 
 	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURIs[0], target)
 	if err != nil {

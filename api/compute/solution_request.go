@@ -325,11 +325,11 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 }
 
 // GeneratePredictions produces predictions using the specified.
-func GeneratePredictions(datasetURI string, fittedSolutionID string, client *compute.Client) ([]string, error) {
+func GeneratePredictions(datasetURI string, fittedSolutionID string, client *compute.Client) (string, []string, error) {
 	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, []string{defaultExposedOutputKey, explainFeatureOutputkey, explainSolutionOutputkey})
-	predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
+	produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	for _, response := range predictionResponses {
@@ -341,21 +341,21 @@ func GeneratePredictions(datasetURI string, fittedSolutionID string, client *com
 
 		resultURI, err := getFileFromOutput(response, defaultExposedOutputKey)
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
 		explainFeatureURI, err := getFileFromOutput(response, explainFeatureOutputkey)
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
 		explainSolutionURI, err := getFileFromOutput(response, explainSolutionOutputkey)
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
 
-		return []string{resultURI, explainFeatureURI, explainSolutionURI}, nil
+		return produceRequestID, []string{resultURI, explainFeatureURI, explainSolutionURI}, nil
 	}
 
-	return nil, errors.Errorf("no results retrieved")
+	return "", nil, errors.Errorf("no results retrieved")
 }
 
 func createProduceSolutionRequest(datasetURI string, fittedSolutionID string, outputs []string) *pipeline.ProduceSolutionRequest {
@@ -453,7 +453,7 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client,
 	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string,
-	solutionID string, initialSearchSolutionID string, fittedSolutionID string, resultID string, resultURI string) {
+	solutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string, resultURI string) {
 	// persist the completed state
 	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -462,7 +462,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist result metadata
-	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, resultID, resultURI, SolutionCompletedStatus, time.Now())
+	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, produceRequestID, "test", resultID, resultURI, SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -599,7 +599,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		produceSolutionRequest := createProduceSolutionRequest(datasetURITest, fittedSolutionID, outputKeys)
 
 		// generate predictions
-		predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
+		produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
 		if err != nil {
 			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 			return
@@ -665,7 +665,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 			// persist results
 			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
-				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID, resultID, resultURI)
+				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID, produceRequestID, resultID, resultURI)
 		}
 		wg.Done()
 	})

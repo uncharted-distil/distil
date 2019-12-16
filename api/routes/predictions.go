@@ -82,7 +82,7 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 			return
 		}
 
-		err = task.Predict(meta, dataset, fittedSolutionID, data, outputPath, config.ESDatasetsIndex, getTarget(req), metaStorage, dataStorage, ingestConfig)
+		err = task.Predict(meta, dataset, fittedSolutionID, data, outputPath, config.ESDatasetsIndex, getTarget(req), metaStorage, dataStorage, solutionStorage, ingestConfig)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to generate predictions"))
 			return

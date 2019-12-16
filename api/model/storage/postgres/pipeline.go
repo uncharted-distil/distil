@@ -46,7 +46,7 @@ func (s *Storage) PersistSolutionWeight(solutionID string, featureName string, f
 	return err
 }
 
-// PersistSolution persists the solution to Postgres.
+// PersistSolutionState persists the solution state to Postgres.
 func (s *Storage) PersistSolutionState(solutionID string, progress string, createdTime time.Time) error {
 	sql := fmt.Sprintf("INSERT INTO %s (solution_id, progress, created_time) VALUES ($1, $2, $3);", solutionStateTableName)
 
@@ -56,10 +56,11 @@ func (s *Storage) PersistSolutionState(solutionID string, progress string, creat
 }
 
 // PersistSolutionResult persists the solution result metadata to Postgres.
-func (s *Storage) PersistSolutionResult(solutionID string, fittedSolutionID string, resultUUID string, resultURI string, progress string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (solution_id, fitted_solution_id, result_uuid, result_uri, progress, created_time) VALUES ($1, $2, $3, $4, $5, $6);", solutionResultTableName)
+func (s *Storage) PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string,
+	resultType string, resultUUID string, resultURI string, progress string, createdTime time.Time) error {
+	sql := fmt.Sprintf("INSERT INTO %s (solution_id, fitted_solution_id, produce_request_id, result_type, result_uuid, result_uri, progress, created_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);", solutionResultTableName)
 
-	_, err := s.client.Exec(sql, solutionID, fittedSolutionID, resultUUID, resultURI, progress, createdTime)
+	_, err := s.client.Exec(sql, solutionID, fittedSolutionID, produceRequestID, resultType, resultUUID, resultURI, progress, createdTime)
 
 	return err
 }
@@ -252,13 +253,15 @@ func (s *Storage) parseSolutionResult(rows *pgx.Rows) ([]*api.SolutionResult, er
 	for rows.Next() {
 		var solutionID string
 		var fittedSolutionID string
+		var produceRequestID string
+		var resultType string
 		var resultUUID string
 		var resultURI string
 		var progress string
 		var createdTime time.Time
 		var dataset string
 
-		err := rows.Scan(&solutionID, &fittedSolutionID, &resultUUID, &resultURI, &progress, &createdTime, &dataset)
+		err := rows.Scan(&solutionID, &fittedSolutionID, &produceRequestID, &resultType, &resultUUID, &resultURI, &progress, &createdTime, &dataset)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse solution results from Postgres")
 		}
@@ -266,6 +269,8 @@ func (s *Storage) parseSolutionResult(rows *pgx.Rows) ([]*api.SolutionResult, er
 		results = append(results, &api.SolutionResult{
 			SolutionID:       solutionID,
 			FittedSolutionID: fittedSolutionID,
+			ProduceRequestID: produceRequestID,
+			ResultType:       resultType,
 			ResultURI:        resultURI,
 			ResultUUID:       resultUUID,
 			Progress:         progress,
@@ -364,7 +369,7 @@ func (s *Storage) FetchSolutionState(solutionID string) (*api.SolutionState, err
 
 // FetchSolutionResult pulls solution result information from Postgres.
 func (s *Storage) FetchSolutionResult(solutionID string) (*api.SolutionResult, error) {
-	sql := fmt.Sprintf("SELECT result.solution_id, result.fitted_solution_id, result.result_uuid, "+
+	sql := fmt.Sprintf("SELECT result.solution_id, result.fitted_solution_id, result.produce_request_id, result.result_type, result.result_uuid, "+
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
 		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
@@ -394,7 +399,7 @@ func (s *Storage) FetchSolutionResult(solutionID string) (*api.SolutionResult, e
 
 // FetchSolutionResultByUUID pulls solution result information from Postgres.
 func (s *Storage) FetchSolutionResultByUUID(resultUUID string) (*api.SolutionResult, error) {
-	sql := fmt.Sprintf("SELECT result.solution_id, result.fitted_solution_id, result.result_uuid, "+
+	sql := fmt.Sprintf("SELECT result.solution_id, result.fitted_solution_id, result.produce_request_id, result.result_type, result.result_uuid, "+
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
 		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+

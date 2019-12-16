@@ -99,8 +99,10 @@ type SolutionWeight struct {
 // SolutionResult represents the solution result metadata.
 type SolutionResult struct {
 	FittedSolutionID string    `json:"fittedSolutionId"`
+	ProduceRequestID string    `json:"produceRequestId"`
 	SolutionID       string    `json:"solutionId"`
 	Dataset          string    `json:"dataset"`
+	ResultType       string    `json:"result_type"`
 	ResultURI        string    `json:"requestUri"`
 	ResultUUID       string    `json:"resultId"`
 	Progress         string    `json:"progress"`
