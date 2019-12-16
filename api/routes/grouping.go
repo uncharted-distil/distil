@@ -16,6 +16,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -76,15 +77,8 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 				return
 			}
 
-			// Using the grouping ID column as the cluster column by default
-			// ensure cluster exists and is categorical
-			grouping.Properties.ClusterCol = grouping.IDCol
-			err = setDataType(meta, data, dataset, storageName, grouping.Properties.ClusterCol, model.CategoricalType)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-				return
-			}
-
+			// For set the name of the expected cluster column - it doesn't necessarily exist.
+			grouping.Properties.ClusterCol = fmt.Sprintf("_cluster_%s", grouping.IDCol)
 		} else if model.IsGeoCoordinate(grouping.Type) {
 			// make the lat column the id col for now since id col is what holds the info.
 			grouping.IDCol = grouping.Properties.XCol

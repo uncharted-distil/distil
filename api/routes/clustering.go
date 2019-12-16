@@ -63,20 +63,6 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 			return
 		}
 
-		// create the new metadata and database variables
-		if !clusterVarExist {
-			err = metaStorage.AddVariable(dataset, clusterVarName, model.StringType, "metadata")
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			err = dataStorage.AddVariable(dataset, storageName, clusterVarName, model.StringType)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-		}
-
 		// get the source dataset folder
 		datasetMeta, err := metaStorage.FetchDataset(dataset, false, false)
 		if err != nil {
@@ -90,6 +76,20 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 		if err != nil {
 			handleError(w, err)
 			return
+		}
+
+		// create the new metadata and database variables
+		if !clusterVarExist {
+			err = metaStorage.AddVariable(dataset, clusterVarName, model.CategoricalType, "metadata")
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			err = dataStorage.AddVariable(dataset, storageName, clusterVarName, model.CategoricalType)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 		}
 
 		// build the data for batching
