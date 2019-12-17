@@ -68,20 +68,9 @@ func (b *BasicField) GetType() string {
 	return b.Type
 }
 
-// Checks to see if the highlighted variable has cluster data.  If so, the highlight key will be switched to the
-// cluster column ID to ensure that it is used in downstream queries.
-func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams) error {
-	if !filterParams.Empty() && filterParams.Highlight != nil {
-		if b.hasClusterData(filterParams.Highlight.Key) {
-			filterParams.Highlight.Key = clusteringColName(filterParams.Highlight.Key)
-		}
-	}
-	return nil
-}
-
 func (b *BasicField) hasClusterData(variableName string) bool {
-	query := fmt.Sprintf("SELECT table_name FROM information_schema.columns WHERE table_name = %s AND column_name = %s;",
-		b.StorageName, clusteringColName(variableName))
+	query := fmt.Sprintf("SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = '%s' AND column_name = '%s');",
+		b.StorageName, variableName)
 	res, err := b.Storage.client.Query(query)
 	if err != nil {
 		errors.Wrap(err, "failed to query cluster column status")
@@ -90,7 +79,12 @@ func (b *BasicField) hasClusterData(variableName string) bool {
 	if res != nil {
 		defer res.Close()
 	}
-	return res != nil
+	for res.Next() {
+		var foundCol bool
+		err = res.Scan(&foundCol)
+		return err == nil && foundCol
+	}
+	return false
 }
 
 func clusteringColName(variableName string) string {

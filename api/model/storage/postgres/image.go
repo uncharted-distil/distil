@@ -52,11 +52,6 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.Filter
 	var filtered *api.Histogram
 	var err error
 
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams); err != nil {
-		return nil, err
-	}
-
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, invert)
 		if err != nil {
@@ -263,11 +258,6 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult s
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
-
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams); err != nil {
-		return nil, err
-	}
 
 	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
 	if err != nil {

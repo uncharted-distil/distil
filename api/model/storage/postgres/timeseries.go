@@ -206,11 +206,6 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	var timeline *api.Histogram
 	var err error
 
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams); err != nil {
-		return nil, err
-	}
-
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, invert)
 		if err != nil {
@@ -254,11 +249,8 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 }
 
 func (f *TimeSeriesField) keyColName() string {
-	if f.hasClusterData(f.GetKey()) {
-		if f.ClusterCol != "" {
-			return fmt.Sprintf("%s%s", model.ClusterVarPrefix, f.ClusterCol)
-		}
-		return f.Key
+	if f.hasClusterData(f.ClusterCol) {
+		return f.ClusterCol
 	}
 	return f.Key
 }
@@ -276,10 +268,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 	}
 
 	// Get count by category.
-	colName := f.GetKey()
-	if f.hasClusterData(colName) {
-		colName = f.keyColName()
-	}
+	colName := f.keyColName()
 	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS __count__ FROM %s %s GROUP BY \"%s\" ORDER BY __count__ desc, \"%s\" LIMIT %d;",
 		colName, f.StorageName, where, colName, colName, timeSeriesCatResultLimit)
 
@@ -408,11 +397,6 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
-
-	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams); err != nil {
-		return nil, err
-	}
 
 	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
 	if err != nil {

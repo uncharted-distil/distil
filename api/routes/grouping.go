@@ -78,7 +78,7 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 			}
 
 			// For set the name of the expected cluster column - it doesn't necessarily exist.
-			grouping.Properties.ClusterCol = fmt.Sprintf("_cluster_%s", grouping.IDCol)
+			grouping.Properties.ClusterCol = fmt.Sprintf("%s%s", model.ClusterVarPrefix, grouping.IDCol)
 		} else if model.IsGeoCoordinate(grouping.Type) {
 			// make the lat column the id col for now since id col is what holds the info.
 			grouping.IDCol = grouping.Properties.XCol

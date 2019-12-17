@@ -54,7 +54,7 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 			handleError(w, err)
 			return
 		}
-		clusterVarName := fmt.Sprintf("_cluster_%s", variable)
+		clusterVarName := fmt.Sprintf("%s%s", model.ClusterVarPrefix, variable)
 
 		// check if the cluster variables exist
 		clusterVarExist, err := metaStorage.DoesVariableExist(dataset, clusterVarName)
