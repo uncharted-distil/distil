@@ -53,9 +53,9 @@ func fetchSolutionResidualExtrema(meta api.MetadataStorage, data api.DataStorage
 	max := -math.MaxFloat64
 	for _, req := range requests {
 		for _, sol := range req.Solutions {
-			if sol.Result != nil && !sol.IsBad {
+			if len(sol.Results) > 0 && !sol.IsBad {
 				// result uri
-				resultURI := sol.Result.ResultURI
+				resultURI := sol.Results[0].ResultURI
 				// predicted extrema
 				residualExtrema, err := data.FetchResidualsExtremaByURI(dataset, storageName, resultURI)
 				if err != nil {

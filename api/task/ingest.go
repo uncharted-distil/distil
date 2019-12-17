@@ -38,7 +38,8 @@ import (
 )
 
 const (
-	baseTableSuffix = "_base"
+	baseTableSuffix    = "_base"
+	explainTableSuffix = "_explain"
 )
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
@@ -172,7 +173,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished geocoding the dataset")
 	}
 
-	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, origins, config)
+	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, origins, config, true)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -190,7 +191,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string,
-	dataset string, source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig) (string, error) {
+	dataset string, source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig, checkMatch bool) (string, error) {
 	datasetDir := path.Dir(schemaFile)
 	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative), true)
 	if err != nil {
@@ -198,6 +199,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 	meta.DatasetFolder = path.Base(path.Dir(originalSchemaFile))
 	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
+	log.Infof("using %s as data directory (built from %s and %s)", dataDir, datasetDir, meta.DataResources[0].ResPath)
 
 	err = metadata.LoadImportance(meta, path.Join(datasetDir, config.RankingOutputPathRelative))
 	if err != nil {
@@ -207,20 +209,20 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	// load stats
 	err = metadata.LoadDatasetStats(meta, dataDir)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to load stats")
+		log.Warnf("unable to load stats: %v", err)
 	}
 
 	// load summary
 	err = metadata.LoadSummaryFromDescription(meta, path.Join(datasetDir, config.SummaryOutputPathRelative))
 	if err != nil {
-		return "", errors.Wrap(err, "unable to load summary")
+		log.Warnf("unable to load summary: %v", err)
 	}
 
 	// load machine summary
 	err = metadata.LoadSummaryMachine(meta, path.Join(datasetDir, config.SummaryMachineOutputPathRelative))
 	// NOTE: For now ignore summary errors!
 	if err != nil {
-		log.Errorf("unable to load machine summary: %v", err)
+		log.Warnf("unable to load machine summary: %v", err)
 	}
 
 	// set the origin
@@ -260,15 +262,20 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// Check for existing dataset
-	match, err := matchDataset(storage, meta, index)
-	// Ignore the error for now as if this fails we still want ingest to succeed.
-	if err != nil {
-		log.Error(err)
-	}
-	if match != "" {
-		log.Infof("Matched %s to dataset %s", meta.Name, match)
-		err = deleteDataset(match, index, pg, elasticClient)
-		log.Infof("Deleted dataset %s", match)
+	if checkMatch {
+		match, err := matchDataset(storage, meta, index)
+		// Ignore the error for now as if this fails we still want ingest to succeed.
+		if err != nil {
+			log.Error(err)
+		}
+		if match != "" {
+			log.Infof("Matched %s to dataset %s", meta.Name, match)
+			err = deleteDataset(match, index, pg, elasticClient)
+			if err != nil {
+				log.Errorf("error deleting dataset: %v", err)
+			}
+			log.Infof("Deleted dataset %s", match)
+		}
 	}
 
 	// ingest the metadata
@@ -290,6 +297,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	// Hardcoded the base table name for now.
 	pg.DropView(dbTable)
 	pg.DropTable(fmt.Sprintf("%s%s", dbTable, baseTableSuffix))
+	pg.DropTable(fmt.Sprintf("%s%s", dbTable, explainTableSuffix))
 
 	// Create the database table.
 	ds, err := pg.InitializeDataset(meta)
@@ -310,11 +318,6 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	err = pg.CreateResultTable(dbTable)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create the result table")
-	}
-
-	err = pg.CreateSolutionMetadataTables()
-	if err != nil {
-		return "", errors.Wrap(err, "unable to create solution metadata tables")
 	}
 
 	// Load the data.

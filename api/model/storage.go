@@ -68,18 +68,21 @@ type SolutionStorage interface {
 	PersistSolution(requestID string, solutionID string, initialSearchSolutionID string, createdTime time.Time) error
 	PersistSolutionWeight(solutionID string, featureName string, featureIndex int64, weight float64) error
 	PersistSolutionState(solutionID string, progress string, createdTime time.Time) error
-	PersistSolutionResult(solutionID string, fittedSolutionID, resultUUID string, resultURI string, progress string, createdTime time.Time) error
+	PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string, resultType string, resultUUID string, resultURI string, progress string, createdTime time.Time) error
 	PersistSolutionScore(solutionID string, metric string, score float64) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
 	FetchRequest(requestID string) (*Request, error)
-	FetchRequestBySolutionID(requestID string) (*Request, error)
+	FetchRequestBySolutionID(solutionID string) (*Request, error)
+	FetchRequestByFittedSolutionID(fittedSolutionID string) (*Request, error)
 	FetchRequestByDatasetTarget(dataset string, target string, solutionID string) ([]*Request, error)
 	FetchRequestFeatures(requestID string) ([]*Feature, error)
 	FetchRequestFilters(requestID string, features []*Feature) (*FilterParams, error)
 	FetchSolution(solutionID string) (*Solution, error)
 	FetchSolutionWeights(solutionID string) ([]*SolutionWeight, error)
 	FetchSolutionResultByUUID(resultUUID string) (*SolutionResult, error)
-	FetchSolutionResult(solutionID string) (*SolutionResult, error)
+	FetchSolutionResults(solutionID string) ([]*SolutionResult, error)
+	FetchSolutionResultsByFittedSolutionID(fittedSolutionID string) ([]*SolutionResult, error)
+	FetchSolutionResultByProduceRequestID(produceRequestID string) (*SolutionResult, error)
 	FetchSolutionScores(solutionID string) ([]*SolutionScore, error)
 }
 

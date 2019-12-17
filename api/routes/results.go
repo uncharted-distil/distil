@@ -85,7 +85,7 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 		filterParams.Merge(req.Filters)
 
 		// get the result URI
-		res, err := solution.FetchSolutionResult(solutionID)
+		res, err := solution.FetchSolutionResults(solutionID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -100,7 +100,7 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 			return
 		}
 
-		results, err := data.FetchResults(dataset, storageName, res.ResultURI, solutionID, filterParams)
+		results, err := data.FetchResults(dataset, storageName, res[0].ResultURI, solutionID, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return

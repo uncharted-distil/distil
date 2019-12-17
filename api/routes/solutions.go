@@ -105,9 +105,9 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 					PredictedKey: model.GetPredictedKey(sol.SolutionID),
 					ErrorKey:     model.GetErrorKey(sol.SolutionID),
 				}
-				if sol.Result != nil {
+				if len(sol.Results) > 0 {
 					// result
-					solution.ResultUUID = sol.Result.ResultUUID
+					solution.ResultUUID = sol.Results[0].ResultUUID
 				}
 				solutions = append(solutions, solution)
 			}

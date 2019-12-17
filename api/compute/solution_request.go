@@ -17,7 +17,6 @@ package compute
 
 import (
 	"context"
-	"crypto/sha1"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -30,6 +29,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil/api/util"
 	"github.com/uncharted-distil/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
 
@@ -324,13 +324,47 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 	return preprocessingPipeline, nil
 }
 
-func (s *SolutionRequest) createProduceSolutionRequest(datasetURI string, fittedSolutionID string, outputs []string) *pipeline.ProduceSolutionRequest {
+// GeneratePredictions produces predictions using the specified.
+func GeneratePredictions(datasetURI string, fittedSolutionID string, client *compute.Client) (string, []string, error) {
+	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, []string{defaultExposedOutputKey, explainFeatureOutputkey, explainSolutionOutputkey})
+	produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
+	if err != nil {
+		return "", nil, err
+	}
+
+	for _, response := range predictionResponses {
+
+		if response.Progress.State != pipeline.ProgressState_COMPLETED {
+			// only persist completed responses
+			continue
+		}
+
+		resultURI, err := getFileFromOutput(response, defaultExposedOutputKey)
+		if err != nil {
+			return "", nil, err
+		}
+		explainFeatureURI, err := getFileFromOutput(response, explainFeatureOutputkey)
+		if err != nil {
+			return "", nil, err
+		}
+		explainSolutionURI, err := getFileFromOutput(response, explainSolutionOutputkey)
+		if err != nil {
+			return "", nil, err
+		}
+
+		return produceRequestID, []string{resultURI, explainFeatureURI, explainSolutionURI}, nil
+	}
+
+	return "", nil, errors.Errorf("no results retrieved")
+}
+
+func createProduceSolutionRequest(datasetURI string, fittedSolutionID string, outputs []string) *pipeline.ProduceSolutionRequest {
 	return &pipeline.ProduceSolutionRequest{
 		FittedSolutionId: fittedSolutionID,
 		Inputs: []*pipeline.Value{
 			{
 				Value: &pipeline.Value_DatasetUri{
-					DatasetUri: datasetURI,
+					DatasetUri: compute.BuildSchemaFileURI(datasetURI),
 				},
 			},
 		},
@@ -419,7 +453,7 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client,
 	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string,
-	solutionID string, initialSearchSolutionID string, fittedSolutionID string, resultID string, resultURI string) {
+	solutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string, resultURI string) {
 	// persist the completed state
 	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -428,7 +462,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist result metadata
-	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, resultID, resultURI, SolutionCompletedStatus, time.Now())
+	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, produceRequestID, "test", resultID, resultURI, SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -562,10 +596,10 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			outputKeys = append(outputKeys, explainSolutionOutputkey)
 		}
 		// generate predictions
-		produceSolutionRequest := s.createProduceSolutionRequest(datasetURITest, fittedSolutionID, outputKeys)
+		produceSolutionRequest := createProduceSolutionRequest(datasetURITest, fittedSolutionID, outputKeys)
 
 		// generate predictions
-		predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
+		produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
 		if err != nil {
 			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 			return
@@ -582,27 +616,28 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			resultURI, err := getFileFromOutput(response, defaultExposedOutputKey)
 			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+				return
 			}
 			explainFeatureURI, err := getFileFromOutput(response, explainFeatureOutputkey)
 			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+				return
 			}
 			explainSolutionURI, err := getFileFromOutput(response, explainSolutionOutputkey)
 			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+				return
 			}
 
 			// get the result UUID. NOTE: Doing sha1 for now.
-			hasher := sha1.New()
-			_, err = hasher.Write([]byte(resultURI))
+			resultID, err := util.Hash(resultURI)
 			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+				return
 			}
-			bs := hasher.Sum(nil)
-			resultID := fmt.Sprintf("%x", bs)
 
 			// explain the pipeline
-			featureWeights, err := s.explainFeatureOutput(resultURI, datasetURITest, explainFeatureURI)
+			featureWeights, err := ExplainFeatureOutput(resultURI, datasetURITest, explainFeatureURI)
 			if err != nil {
 				log.Warnf("failed to fetch output explanantion - %v", err)
 			}
@@ -628,7 +663,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 			// persist results
 			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
-				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID, resultID, resultURI)
+				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID, produceRequestID, resultID, resultURI)
 		}
 		wg.Done()
 	})
@@ -676,7 +711,11 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 	s.waitOnSolutions()
 
 	// end search
-	s.finished <- client.EndSearch(context.Background(), searchID)
+	// since predictions can be requested for different datasets on the same
+	// fitted solution, can't tell TA2 to end but the channel still needs
+	// to be notified that the current process is complete
+	//s.finished <- client.EndSearch(context.Background(), searchID)
+	s.finished <- nil
 }
 
 // PersistAndDispatch persists the solution request and dispatches it.
