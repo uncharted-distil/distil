@@ -80,7 +80,7 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 
 		// create the new metadata and database variables
 		if !clusterVarExist {
-			err = metaStorage.AddVariable(dataset, clusterVarName, model.CategoricalType, "metadata")
+			err = metaStorage.AddVariable(dataset, clusterVarName, "Pattern", model.CategoricalType, "metadata")
 			if err != nil {
 				handleError(w, err)
 				return
