@@ -72,7 +72,7 @@ func (s *Storage) SetExtrema(dataset string, varName string, extrema *api.Extrem
 }
 
 // AddVariable is not supported by the datamart.
-func (s *Storage) AddVariable(dataset string, varName string, varType string, varRole string) error {
+func (s *Storage) AddVariable(dataset string, varName string, varDisplayName string, varType string, varRole string) error {
 	return errors.Errorf("Not supported")
 }
 
