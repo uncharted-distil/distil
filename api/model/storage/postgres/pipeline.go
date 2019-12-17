@@ -76,7 +76,7 @@ func (s *Storage) PersistSolutionScore(solutionID string, metric string, score f
 
 func (s *Storage) isBadSolution(solution *api.Solution) (bool, error) {
 
-	if solution.Results == nil {
+	if len(solution.Results) == 0 {
 		return false, nil
 	}
 

@@ -105,7 +105,7 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 					PredictedKey: model.GetPredictedKey(sol.SolutionID),
 					ErrorKey:     model.GetErrorKey(sol.SolutionID),
 				}
-				if sol.Results != nil {
+				if len(sol.Results) > 0 {
 					// result
 					solution.ResultUUID = sol.Results[0].ResultUUID
 				}
