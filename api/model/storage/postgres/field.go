@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // Field defines behaviour for a database field type.
@@ -91,23 +91,13 @@ func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams) erro
 	}
 	return nil
 }
+
 func (b *BasicField) hasClusterData(variableName string) bool {
-	query := fmt.Sprintf("SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = '%s' AND column_name = '%s');",
-		b.DatasetStorageName, variableName)
-	res, err := b.Storage.client.Query(query)
+	result, err := b.GetStorage().metadata.DoesVariableExist(b.GetDatasetName(), variableName)
 	if err != nil {
-		errors.Wrap(err, "failed to query cluster column status")
-		return false
+		log.Warn(err)
 	}
-	if res != nil {
-		defer res.Close()
-	}
-	for res.Next() {
-		var foundCol bool
-		err = res.Scan(&foundCol)
-		return err == nil && foundCol
-	}
-	return false
+	return result
 }
 
 func clusteringColName(variableName string) string {
