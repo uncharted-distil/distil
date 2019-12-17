@@ -71,15 +71,14 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 		}
 		sourceFolder := env.ResolvePath(datasetMeta.Source, datasetMeta.Folder)
 
-		// cluster data
-		clustered, err := task.Cluster(sourceFolder, dataset, variable)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
 		// create the new metadata and database variables
 		if !clusterVarExist {
+			// cluster data
+			clustered, err := task.Cluster(sourceFolder, dataset, variable)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 			err = metaStorage.AddVariable(dataset, clusterVarName, "Pattern", model.CategoricalType, "metadata")
 			if err != nil {
 				handleError(w, err)
@@ -90,19 +89,19 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 				handleError(w, err)
 				return
 			}
-		}
 
-		// build the data for batching
-		clusteredData := make(map[string]string)
-		for _, cluster := range clustered {
-			clusteredData[cluster.D3MIndex] = cluster.Label
-		}
+			// build the data for batching
+			clusteredData := make(map[string]string)
+			for _, cluster := range clustered {
+				clusteredData[cluster.D3MIndex] = cluster.Label
+			}
 
-		// update the batches
-		err = dataStorage.UpdateVariableBatch(storageName, clusterVarName, clusteredData)
-		if err != nil {
-			handleError(w, err)
-			return
+			// update the batches
+			err = dataStorage.UpdateVariableBatch(storageName, clusterVarName, clusteredData)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 		}
 
 		// marshal output into JSON

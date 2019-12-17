@@ -140,6 +140,24 @@ func RemoveGroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataSt
 			return
 		}
 
+		// if there was a cluster var associated with this group and it has been created, remove it now
+		// TODO: Should this be done explicitly through the client through some type of a
+		// delete route?
+		if grouping.Properties.ClusterCol != "" {
+			clusterVarExist, err := meta.DoesVariableExist(dataset, grouping.Properties.ClusterCol)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			if clusterVarExist {
+				err = meta.DeleteVariable(dataset, grouping.Properties.ClusterCol)
+				if err != nil {
+					handleError(w, err)
+					return
+				}
+			}
+		}
+
 		// marshal data
 		err = handleJSON(w, map[string]interface{}{
 			"success": true,
