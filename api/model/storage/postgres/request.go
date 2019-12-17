@@ -363,13 +363,13 @@ func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string, sol
 			return nil, errors.Wrap(err, "Unable to load request from Postgres")
 		}
 
-		result, err := s.FetchSolutionResult(solutionID)
+		results, err := s.FetchSolutionResults(solutionID)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse solution result from Postgres")
+			return nil, errors.Wrap(err, "Unable to parse solution results from Postgres")
 		}
 
-		if result != nil {
-			request.Solutions[0].Result = result
+		if results != nil {
+			request.Solutions[0].Results = results
 		}
 
 		scores, err := s.FetchSolutionScores(solutionID)

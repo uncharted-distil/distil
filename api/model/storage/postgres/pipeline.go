@@ -76,7 +76,7 @@ func (s *Storage) PersistSolutionScore(solutionID string, metric string, score f
 
 func (s *Storage) isBadSolution(solution *api.Solution) (bool, error) {
 
-	if solution.Result == nil {
+	if solution.Results == nil {
 		return false, nil
 	}
 
@@ -101,7 +101,7 @@ func (s *Storage) isBadSolution(solution *api.Solution) (bool, error) {
 	f := NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
 
 	// predicted extrema
-	predictedExtrema, err := s.FetchResultsExtremaByURI(dataset, storageName, solution.Result.ResultURI)
+	predictedExtrema, err := s.FetchResultsExtremaByURI(dataset, storageName, solution.Results[0].ResultURI)
 	if err != nil {
 		return false, err
 	}
@@ -162,7 +162,7 @@ func (s *Storage) parseSolution(rows *pgx.Rows) (*api.Solution, error) {
 		return nil, errors.Wrap(err, "Unable to parse solution result from Postgres")
 	}
 
-	result, err := s.FetchSolutionResult(solutionID)
+	results, err := s.FetchSolutionResults(solutionID)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to parse solution result from Postgres")
 	}
@@ -177,7 +177,7 @@ func (s *Storage) parseSolution(rows *pgx.Rows) (*api.Solution, error) {
 		SolutionID:  solutionID,
 		State:       state,
 		CreatedTime: createdTime,
-		Result:      result,
+		Results:     results,
 		Scores:      scores,
 	}, nil
 }
@@ -367,8 +367,8 @@ func (s *Storage) FetchSolutionState(solutionID string) (*api.SolutionState, err
 	return res, nil
 }
 
-// FetchSolutionResult pulls solution result information from Postgres.
-func (s *Storage) FetchSolutionResult(solutionID string) (*api.SolutionResult, error) {
+// FetchSolutionResults pulls solution result information from Postgres.
+func (s *Storage) FetchSolutionResults(solutionID string) ([]*api.SolutionResult, error) {
 	sql := fmt.Sprintf("SELECT result.solution_id, result.fitted_solution_id, result.produce_request_id, result.result_type, result.result_uuid, "+
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
@@ -389,12 +389,7 @@ func (s *Storage) FetchSolutionResult(solutionID string) (*api.SolutionResult, e
 		return nil, errors.Wrap(err, "Unable to parse solution results from Postgres")
 	}
 
-	var res *api.SolutionResult
-	if len(results) > 0 {
-		res = results[0]
-	}
-
-	return res, nil
+	return results, nil
 }
 
 // FetchSolutionResultByUUID pulls solution result information from Postgres.
@@ -406,6 +401,35 @@ func (s *Storage) FetchSolutionResultByUUID(resultUUID string) (*api.SolutionRes
 		"WHERE result.result_uuid = $1;", solutionResultTableName, solutionTableName, requestTableName)
 
 	rows, err := s.client.Query(sql, resultUUID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull solution results from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	results, err := s.parseSolutionResult(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse solution results from Postgres")
+	}
+
+	var res *api.SolutionResult
+	if len(results) > 0 {
+		res = results[0]
+	}
+
+	return res, nil
+}
+
+// FetchSolutionResultByProduceRequestID pulls solution result information from Postgres.
+func (s *Storage) FetchSolutionResultByProduceRequestID(produceRequestID string) (*api.SolutionResult, error) {
+	sql := fmt.Sprintf("SELECT result.solution_id, result.fitted_solution_id, result.produce_request_id, result.result_type, result.result_uuid, "+
+		"result.result_uri, result.progress, result.created_time, request.dataset "+
+		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
+		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
+		"WHERE result.produce_request_id = $1;", solutionResultTableName, solutionTableName, requestTableName)
+
+	rows, err := s.client.Query(sql, produceRequestID)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to pull solution results from Postgres")
 	}

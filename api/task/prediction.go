@@ -30,14 +30,14 @@ import (
 )
 
 // Predict processes input data to generate predictions.
-func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
+func Predict(meta *model.Metadata, dataset string, solutionID string, fittedSolutionID string,
 	csvData []byte, outputPath string, index string, target string, metaStorage api.MetadataStorage,
-	dataStorage api.DataStorage, solutionStorage api.SolutionStorage, config *IngestTaskConfig) error {
+	dataStorage api.DataStorage, solutionStorage api.SolutionStorage, config *IngestTaskConfig) (*api.SolutionResult, error) {
 	log.Infof("generating predictions for fitted solution ID %s", fittedSolutionID)
 	// create the dataset to be used for predictions
 	datasetPath, err := CreateDataset(dataset, csvData, outputPath, config)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Infof("created dataset for new data")
 
@@ -46,14 +46,14 @@ func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
 	rawDataPath := path.Join(datasetPath, compute.D3MDataFolder, compute.D3MLearningData)
 	rawCSVData, err := util.ReadCSVFile(rawDataPath, false)
 	if err != nil {
-		return errors.Wrap(err, "unable to parse header result")
+		return nil, errors.Wrap(err, "unable to parse header result")
 	}
 	rawHeader := rawCSVData[0]
 	for i, f := range rawHeader {
 		// TODO: may have to check the name rather than display name
 		// TODO: col index not necessarily the same as index and thats what needs checking
 		if meta.DataResources[0].Variables[i].DisplayName != f {
-			return errors.Errorf("variables in new prediction file do not match variables in original dataset")
+			return nil, errors.Errorf("variables in new prediction file do not match variables in original dataset")
 		}
 	}
 	log.Infof("dataset fields match original dataset fields")
@@ -66,55 +66,60 @@ func Predict(meta *model.Metadata, dataset string, fittedSolutionID string,
 	schemaPath := path.Join(datasetPath, compute.D3MDataSchema)
 	err = metadata.WriteSchema(meta, schemaPath)
 	if err != nil {
-		return errors.Wrap(err, "unable to update dataset doc")
+		return nil, errors.Wrap(err, "unable to update dataset doc")
 	}
 	log.Infof("wrote out schema doc for new dataset")
 
 	// ingest the dataset but without running simon, duke, etc.
 	_, err = Ingest(schemaPath, schemaPath, metaStorage, index, dataset, metadata.Contrib, nil, config, false)
 	if err != nil {
-		return errors.Wrap(err, "unable to ingest ranked data")
+		return nil, errors.Wrap(err, "unable to ingest ranked data")
 	}
 	log.Infof("finished ingesting the dataset")
 
-	// the dataset id needs to matched the original dataset id for TA2 to be able to use the model
+	// the dataset id needs to match the original dataset id for TA2 to be able to use the model
 	meta.ID = sourceDatasetID
 	err = metadata.WriteSchema(meta, schemaPath)
 	if err != nil {
-		return errors.Wrap(err, "unable to update dataset doc")
+		return nil, errors.Wrap(err, "unable to update dataset doc")
 	}
 
 	// submit the new dataset for predictions
 	produceRequestID, resultURIs, err := comp.GeneratePredictions(datasetPath, fittedSolutionID, client)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Infof("generated predictions stored at %v", resultURIs)
 
 	// store the predictions and the weights
 	featureWeights, err := comp.ExplainFeatureOutput(resultURIs[0], schemaPath, resultURIs[1])
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if featureWeights != nil {
 		err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	log.Infof("stored feature weights to the database")
 
-	err = solutionStorage.PersistSolutionResult("", fittedSolutionID, produceRequestID, "inference", resultURIs[0], resultURIs[0], comp.SolutionCompletedStatus, time.Now())
+	// get the result UUID. NOTE: Doing sha1 for now.
+	resultID, err := util.Hash(resultURIs[0])
 	if err != nil {
-		// notify of error
-		return err
+		return nil, err
+	}
+
+	err = solutionStorage.PersistSolutionResult(solutionID, fittedSolutionID, produceRequestID, "inference", resultID, resultURIs[0], comp.SolutionCompletedStatus, time.Now())
+	if err != nil {
+		return nil, err
 	}
 
 	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURIs[0], target)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	log.Infof("stored prediction results to the database")
 
-	return nil
+	return solutionStorage.FetchSolutionResultByProduceRequestID(produceRequestID)
 }

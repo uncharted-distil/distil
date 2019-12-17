@@ -17,7 +17,6 @@ package compute
 
 import (
 	"context"
-	"crypto/sha1"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -30,6 +29,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil/api/util"
 	"github.com/uncharted-distil/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
 
@@ -630,13 +630,11 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			}
 
 			// get the result UUID. NOTE: Doing sha1 for now.
-			hasher := sha1.New()
-			_, err = hasher.Write([]byte(resultURI))
+			resultID, err := util.Hash(resultURI)
 			if err != nil {
 				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+				return
 			}
-			bs := hasher.Sum(nil)
-			resultID := fmt.Sprintf("%x", bs)
 
 			// explain the pipeline
 			featureWeights, err := ExplainFeatureOutput(resultURI, datasetURITest, explainFeatureURI)

@@ -82,14 +82,14 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 			return
 		}
 
-		err = task.Predict(meta, dataset, fittedSolutionID, data, outputPath, config.ESDatasetsIndex, getTarget(req), metaStorage, dataStorage, solutionStorage, ingestConfig)
+		res, err := task.Predict(meta, dataset, getSolutionID(req, fittedSolutionID), fittedSolutionID, data, outputPath, config.ESDatasetsIndex, getTarget(req), metaStorage, dataStorage, solutionStorage, ingestConfig)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to generate predictions"))
 			return
 		}
 
 		// marshal data and sent the response back
-		err = handleJSON(w, map[string]interface{}{"result": "done"})
+		err = handleJSON(w, res)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
 			return
@@ -101,6 +101,18 @@ func getTarget(request *api.Request) string {
 	for _, f := range request.Features {
 		if f.FeatureType == "target" {
 			return f.FeatureName
+		}
+	}
+
+	return ""
+}
+
+func getSolutionID(request *api.Request, fittedSolutionID string) string {
+	for _, s := range request.Solutions {
+		for _, sr := range s.Results {
+			if sr.FittedSolutionID == fittedSolutionID {
+				return s.SolutionID
+			}
 		}
 	}
 
