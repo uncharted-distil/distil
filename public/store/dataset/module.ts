@@ -96,6 +96,8 @@ export const actions = {
   // join suggestions
   fetchJoinSuggestions: dispatch(moduleActions.fetchJoinSuggestions),
   importJoinDataset: dispatch(moduleActions.importJoinDataset),
+  // timeseries clusters
+  clusterData: dispatch(moduleActions.clusterData),
   // files
   fetchFiles: dispatch(moduleActions.fetchFiles),
   fetchImage: dispatch(moduleActions.fetchImage),

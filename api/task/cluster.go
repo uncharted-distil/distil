@@ -143,11 +143,11 @@ func Cluster(datasetInputDir string, dataset string, variable string) ([]*Cluste
 	}
 	header, err := castTypeArray(res[0])
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse Goat pipeline header")
+		return nil, errors.Wrap(err, "unable to parse Sloth pipeline header")
 	}
 
 	// find the field with the feature output
-	clusterIndex := getFieldIndex(header, "cluster_labels")
+	clusterIndex := getFieldIndex(header, "__cluster")
 	d3mIndexIndex := getFieldIndex(header, model.D3MIndexName)
 
 	// build the output (skipping the header)

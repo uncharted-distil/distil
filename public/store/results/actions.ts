@@ -60,7 +60,20 @@ export const actions = {
     const solutionId = args.solutionId;
 
     const promises = [];
-    mutations.clearTrainingSummaries(context);
+
+    // remove summaries not used to predict the newly selected model
+    context.state.trainingSummaries.forEach(v => {
+      const isTrainingArg = args.training.reduce((isTrain, variable) => {
+        if (!isTrain) {
+          isTrain = variable.colName === v.key;
+        }
+        return isTrain;
+      }, false);
+      if(v.dataset !== args.dataset || !isTrainingArg) {
+        mutations.removeTrainingSummary(context, v);
+      };
+    });
+
     args.training.forEach(variable => {
       const key = variable.colName;
       const label = variable.colDisplayName;

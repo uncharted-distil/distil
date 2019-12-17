@@ -2,7 +2,7 @@ import Vue from "vue";
 import _ from "lodash";
 import { ResultsState } from "./index";
 import { VariableSummary, Extrema, TableData } from "../dataset/index";
-import { updateSummaries } from "../../util/data";
+import { updateSummaries, removeSummary } from "../../util/data";
 
 export const mutations = {
   // training / target
@@ -17,6 +17,10 @@ export const mutations = {
 
   updateTrainingSummary(state: ResultsState, summary: VariableSummary) {
     updateSummaries(summary, state.trainingSummaries);
+  },
+
+  removeTrainingSummary(state: ResultsState, summary: VariableSummary) {
+    removeSummary(summary, state.trainingSummaries);
   },
 
   updateTargetSummary(state: ResultsState, summary: VariableSummary) {

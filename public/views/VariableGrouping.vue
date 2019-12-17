@@ -383,6 +383,13 @@ export default Vue.extend({
             grouping: grouping
           })
           .then(() => {
+            // If this is a timeseries, then we need to request clustering be run on it
+            if (this.isTimeseries) {
+              datasetActions.clusterData(this.$store, {
+                dataset: this.dataset,
+                variable: idKey
+              });
+            }
             this.gotoTargetSelection();
           });
       });
