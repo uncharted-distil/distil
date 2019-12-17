@@ -392,6 +392,31 @@ func (s *Storage) FetchSolutionResults(solutionID string) ([]*api.SolutionResult
 	return results, nil
 }
 
+// FetchSolutionResultsByFittedSolutionID pulls solution result information from Postgres.
+func (s *Storage) FetchSolutionResultsByFittedSolutionID(fittedSolutionID string) ([]*api.SolutionResult, error) {
+	sql := fmt.Sprintf("SELECT result.solution_id, result.fitted_solution_id, result.produce_request_id, result.result_type, result.result_uuid, "+
+		"result.result_uri, result.progress, result.created_time, request.dataset "+
+		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
+		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
+		"WHERE result.fitted_solution_id = $1 "+
+		"ORDER BY result.created_time desc LIMIT 1;", solutionResultTableName, solutionTableName, requestTableName)
+
+	rows, err := s.client.Query(sql, fittedSolutionID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull solution results from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	results, err := s.parseSolutionResult(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse solution results from Postgres")
+	}
+
+	return results, nil
+}
+
 // FetchSolutionResultByUUID pulls solution result information from Postgres.
 func (s *Storage) FetchSolutionResultByUUID(resultUUID string) (*api.SolutionResult, error) {
 	sql := fmt.Sprintf("SELECT result.solution_id, result.fitted_solution_id, result.produce_request_id, result.result_type, result.result_uuid, "+

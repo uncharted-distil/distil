@@ -69,8 +69,20 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 			return
 		}
 
+		// get the solution id from the fitted solution ID
+		solutionResults, err := solutionStorage.FetchSolutionResultsByFittedSolutionID(fittedSolutionID)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to fetch solution results fitted solution id"))
+			return
+		}
+		if len(solutionResults) == 0 {
+			handleError(w, errors.Errorf("unable to map fitted solution id to dataset or solution id"))
+			return
+		}
+		sr := solutionResults[0]
+
 		// read the metadata of the original dataset
-		datasetES, err := metaStorage.FetchDataset(req.Dataset, false, false)
+		datasetES, err := metaStorage.FetchDataset(sr.Dataset, false, false)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to fetch dataset from es"))
 			return
@@ -82,7 +94,7 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 			return
 		}
 
-		res, err := task.Predict(meta, dataset, getSolutionID(req, fittedSolutionID), fittedSolutionID, data, outputPath, config.ESDatasetsIndex, getTarget(req), metaStorage, dataStorage, solutionStorage, ingestConfig)
+		res, err := task.Predict(meta, dataset, sr.SolutionID, fittedSolutionID, data, outputPath, config.ESDatasetsIndex, getTarget(req), metaStorage, dataStorage, solutionStorage, ingestConfig)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to generate predictions"))
 			return
@@ -101,18 +113,6 @@ func getTarget(request *api.Request) string {
 	for _, f := range request.Features {
 		if f.FeatureType == "target" {
 			return f.FeatureName
-		}
-	}
-
-	return ""
-}
-
-func getSolutionID(request *api.Request, fittedSolutionID string) string {
-	for _, s := range request.Solutions {
-		for _, sr := range s.Results {
-			if sr.FittedSolutionID == fittedSolutionID {
-				return s.SolutionID
-			}
 		}
 	}
 

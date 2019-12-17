@@ -81,6 +81,7 @@ type SolutionStorage interface {
 	FetchSolutionWeights(solutionID string) ([]*SolutionWeight, error)
 	FetchSolutionResultByUUID(resultUUID string) (*SolutionResult, error)
 	FetchSolutionResults(solutionID string) ([]*SolutionResult, error)
+	FetchSolutionResultsByFittedSolutionID(fittedSolutionID string) ([]*SolutionResult, error)
 	FetchSolutionResultByProduceRequestID(produceRequestID string) (*SolutionResult, error)
 	FetchSolutionScores(solutionID string) ([]*SolutionScore, error)
 }
