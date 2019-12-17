@@ -716,7 +716,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, storageName string, r
 		Type: model.StringType,
 	}
 
-	field := NewNumericalField(s, storageName, targetVariable.Name, targetVariable.DisplayName, targetVariable.Type)
+	field := NewNumericalField(s, dataset, storageName, targetVariable.Name, targetVariable.DisplayName, targetVariable.Type)
 	return field.fetchResultsExtrema(resultURI, storageNameResult, resultVariable)
 }
 
@@ -749,7 +749,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 			}
 
-			field = NewTimeSeriesField(s, storageName, variable.Grouping.Properties.ClusterCol, variable.Grouping.IDCol, variable.Grouping.IDCol, variable.Grouping.Type,
+			field = NewTimeSeriesField(s, dataset, storageName, variable.Grouping.Properties.ClusterCol, variable.Grouping.IDCol, variable.Grouping.IDCol, variable.Grouping.Type,
 				timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
 
 		} else {
@@ -761,11 +761,11 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 		// use the variable type to guide the summary creation
 
 		if model.IsNumerical(variable.Type) {
-			field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else if model.IsCategorical(variable.Type) {
-			field = NewCategoricalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else if model.IsVector(variable.Type) {
-			field = NewVectorField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else {
 			return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 		}

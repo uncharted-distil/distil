@@ -33,14 +33,15 @@ type CategoricalField struct {
 }
 
 // NewCategoricalField creates a new field for categorical types.
-func NewCategoricalField(storage *Storage, storageName string, key string, label string, typ string) *CategoricalField {
+func NewCategoricalField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *CategoricalField {
 	field := &CategoricalField{
 		BasicField: BasicField{
-			Storage:     storage,
-			StorageName: storageName,
-			Key:         key,
-			Label:       label,
-			Type:        typ,
+			Storage:            storage,
+			DatasetName:        datasetName,
+			DatasetStorageName: datasetStorageName,
+			Key:                key,
+			Label:              label,
+			Type:               typ,
 		},
 	}
 
@@ -49,14 +50,15 @@ func NewCategoricalField(storage *Storage, storageName string, key string, label
 
 // NewCategoricalFieldSubSelect creates a new field for categorical types
 // and specifies a sub select query to pull the raw data.
-func NewCategoricalFieldSubSelect(storage *Storage, storageName string, key string, label string, typ string, fieldSubSelect func() string) *CategoricalField {
+func NewCategoricalFieldSubSelect(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, fieldSubSelect func() string) *CategoricalField {
 	field := &CategoricalField{
 		BasicField: BasicField{
-			Storage:     storage,
-			StorageName: storageName,
-			Key:         key,
-			Label:       label,
-			Type:        typ,
+			Storage:            storage,
+			DatasetName:        datasetName,
+			DatasetStorageName: datasetStorageName,
+			Key:                key,
+			Label:              label,
+			Type:               typ,
 		},
 		subSelect: fieldSubSelect,
 	}
@@ -183,7 +185,7 @@ func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +204,7 @@ func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
-		f.Key, fromClause, f.Storage.getResultTable(f.StorageName),
+		f.Key, fromClause, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, f.Key,
 		f.Key, catResultLimit)
 
@@ -297,7 +299,7 @@ func (f *CategoricalField) fetchPredictedSummaryData(resultURI string, datasetRe
 	targetName := f.Key
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +313,7 @@ func (f *CategoricalField) fetchPredictedSummaryData(resultURI string, datasetRe
 		 WHERE %s
 		 GROUP BY result.value
 		 ORDER BY count desc;`,
-		datasetResult, f.StorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "))
+		datasetResult, f.DatasetStorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "))
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -324,11 +326,11 @@ func (f *CategoricalField) fetchPredictedSummaryData(resultURI string, datasetRe
 }
 
 func (f *CategoricalField) getFromClause(alias bool) string {
-	fromClause := f.StorageName
+	fromClause := f.DatasetStorageName
 	if f.subSelect != nil {
 		fromClause = f.subSelect()
 		if alias {
-			fromClause = fmt.Sprintf("%s as %s", fromClause, f.StorageName)
+			fromClause = fmt.Sprintf("%s as %s", fromClause, f.DatasetStorageName)
 		}
 	}
 

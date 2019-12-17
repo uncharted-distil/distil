@@ -17,6 +17,7 @@ package postgres
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -28,7 +29,8 @@ type Field interface {
 	FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error)
 	FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error)
 	GetStorage() *Storage
-	GetStorageName() string
+	GetDatasetStorageName() string
+	GetDatasetName() string
 	GetKey() string
 	GetLabel() string
 	GetType() string
@@ -36,11 +38,12 @@ type Field interface {
 
 // BasicField provides access to baseline field data
 type BasicField struct {
-	Storage     *Storage
-	StorageName string
-	Key         string
-	Label       string
-	Type        string
+	Storage            *Storage
+	DatasetStorageName string
+	DatasetName        string
+	Key                string
+	Label              string
+	Type               string
 }
 
 // GetStorage returns the storage associated with the field
@@ -48,9 +51,14 @@ func (b *BasicField) GetStorage() *Storage {
 	return b.Storage
 }
 
-// GetStorageName returns the storage name of the table
-func (b *BasicField) GetStorageName() string {
-	return b.StorageName
+// GetDatasetStorageName returns the name used for the dataset table (PG imposes a number of limits on table names)
+func (b *BasicField) GetDatasetStorageName() string {
+	return b.DatasetStorageName
+}
+
+// GetDatasetName returns the name of the dataset
+func (b *BasicField) GetDatasetName() string {
+	return b.DatasetName
 }
 
 // GetKey returns the unique field key (name)
@@ -69,18 +77,23 @@ func (b *BasicField) GetType() string {
 }
 
 // Checks to see if the highlighted variable has cluster data.  If so, the highlight key will be switched to the
-// cluster column ID to ensure that it is used in downstream queries.
+// cluster column ID to ensure that it is used in downstream queries.  This necessary when dealing with the timerseries
+// compound facet, which will display cluster info when available.
 func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams) error {
 	if !filterParams.Empty() && filterParams.Highlight != nil {
-		if b.hasClusterData(filterParams.Highlight.Key) {
-			filterParams.Highlight.Key = clusteringColName(filterParams.Highlight.Key)
+		clusterHighlightCol := filterParams.Highlight.Key
+		if !isClusteringColName(filterParams.Highlight.Key) {
+			clusterHighlightCol = clusteringColName(filterParams.Highlight.Key)
+		}
+		if b.hasClusterData(clusterHighlightCol) {
+			filterParams.Highlight.Key = clusterHighlightCol
 		}
 	}
 	return nil
 }
 func (b *BasicField) hasClusterData(variableName string) bool {
 	query := fmt.Sprintf("SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = '%s' AND column_name = '%s');",
-		b.StorageName, variableName)
+		b.DatasetStorageName, variableName)
 	res, err := b.Storage.client.Query(query)
 	if err != nil {
 		errors.Wrap(err, "failed to query cluster column status")
@@ -99,4 +112,8 @@ func (b *BasicField) hasClusterData(variableName string) bool {
 
 func clusteringColName(variableName string) string {
 	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, variableName)
+}
+
+func isClusteringColName(variableName string) bool {
+	return strings.HasPrefix(variableName, model.ClusterVarPrefix)
 }

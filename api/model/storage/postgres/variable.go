@@ -191,11 +191,11 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 			}
 
-			field = NewTimeSeriesField(s, storageName, variable.Grouping.Properties.ClusterCol, variable.Grouping.IDCol, variable.Grouping.IDCol, variable.Grouping.Type,
+			field = NewTimeSeriesField(s, dataset, storageName, variable.Grouping.Properties.ClusterCol, variable.Grouping.IDCol, variable.Grouping.IDCol, variable.Grouping.Type,
 				timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
 
 		} else if model.IsGeoCoordinate(variable.Grouping.Type) {
-			field = NewCoordinateField(variable.Grouping.IDCol, s, storageName, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol, variable.Grouping.IDCol, variable.Grouping.Type)
+			field = NewCoordinateField(variable.Grouping.IDCol, s, dataset, storageName, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol, variable.Grouping.IDCol, variable.Grouping.Type)
 		} else {
 			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.IDCol, variable.Grouping.Type)
 		}
@@ -203,17 +203,17 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 	} else {
 
 		if model.IsNumerical(variable.Type) || model.IsTimestamp(variable.Type) {
-			field = NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else if model.IsCategorical(variable.Type) {
-			field = NewCategoricalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else if model.IsVector(variable.Type) {
-			field = NewVectorField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else if model.IsText(variable.Type) {
-			field = NewTextField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewTextField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else if model.IsImage(variable.Type) {
-			field = NewImageField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewImageField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else if model.IsDateTime(variable.Type) {
-			field = NewDateTimeField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewDateTimeField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else {
 			return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
 		}

@@ -39,15 +39,16 @@ type TimeSeriesField struct {
 }
 
 // NewTimeSeriesField creates a new field for timeseries types.
-func NewTimeSeriesField(storage *Storage, storageName string, clusterCol string, key string, label string, typ string,
+func NewTimeSeriesField(storage *Storage, datasetName string, datasetStorageName string, clusterCol string, key string, label string, typ string,
 	xCol string, xColType string, yCol string, yColType string) *TimeSeriesField {
 	field := &TimeSeriesField{
 		BasicField: BasicField{
-			Storage:     storage,
-			StorageName: storageName,
-			Label:       label,
-			Type:        typ,
-			Key:         key,
+			Storage:            storage,
+			DatasetName:        datasetName,
+			DatasetStorageName: datasetStorageName,
+			Label:              label,
+			Type:               typ,
+			Key:                key,
 		},
 		XCol:       xCol,
 		XColType:   xColType,
@@ -90,7 +91,7 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
-			f.Key, f.StorageName, keyColName)
+			f.Key, f.DatasetStorageName, keyColName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -235,7 +236,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		}
 	}
 
-	timelineField := NewNumericalField(f.Storage, f.StorageName, f.XCol, f.XCol, f.XColType)
+	timelineField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType)
 
 	timeline, err = timelineField.fetchHistogram(nil, invert, api.MaxNumBuckets)
 	if err != nil {
@@ -275,7 +276,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 	// Get count by category.
 	colName := f.keyColName()
 	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS __count__ FROM %s %s GROUP BY \"%s\" ORDER BY __count__ desc, \"%s\" LIMIT %d;",
-		colName, f.StorageName, where, colName, colName, timeSeriesCatResultLimit)
+		colName, f.DatasetStorageName, where, colName, colName, timeSeriesCatResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -306,7 +307,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 	var err error
 	if f.Type != "timeseries" {
 		// get filter where / params
-		wheres, params, err = f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+		wheres, params, err = f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
 		if err != nil {
 			return nil, err
 		}
@@ -328,7 +329,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY __count__ desc, "%s" LIMIT %d;`,
-		keyColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
+		keyColName, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, keyColName,
 		keyColName, timeSeriesCatResultLimit)
 
@@ -435,7 +436,7 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 	var err error
 	if f.Type != "timeseries" {
 		// get filter where / params
-		wheres, params, err = f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+		wheres, params, err = f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
 		if err != nil {
 			return nil, err
 		}
@@ -457,7 +458,7 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY __count__ desc, "%s" LIMIT %d;`,
-		keyColName, f.StorageName, f.Storage.getResultTable(f.StorageName),
+		keyColName, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, keyColName,
 		keyColName, timeSeriesCatResultLimit)
 
