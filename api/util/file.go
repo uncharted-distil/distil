@@ -28,6 +28,7 @@ import (
 
 	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // WriteFileWithDirs writes the file and creates any missing directories along
@@ -179,6 +180,7 @@ func ReadCSVFile(filename string, hasHeader bool) ([][]string, error) {
 	}
 	defer csvFile.Close()
 	reader := csv.NewReader(csvFile)
+	reader.FieldsPerRecord = 0
 
 	lines := make([][]string, 0)
 
@@ -196,7 +198,8 @@ func ReadCSVFile(filename string, hasHeader bool) ([][]string, error) {
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return nil, errors.Wrap(err, "failed to read line from file")
+			log.Warnf("failed to read line - %v", err)
+			continue
 		}
 
 		lines = append(lines, line)
