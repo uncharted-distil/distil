@@ -17,5 +17,7 @@ export SOLUTION_SEARCH_MAX_TIME=3
 export SOLUTION_COMPUTE_PULL_MAX=900
 export SOLUTION_COMPUTE_TIMEOUT=600
 export DATAMART_URL_NYU=https://auctus.vida-nyu.org
+export MAX_TRAINING_ROWS=1000
+export MAX_TEST_ROWS=500
 
 witch --cmd="make compile && make fmt && go run main.go" --watch="main.go,api/**/*.go" --ignore=""
