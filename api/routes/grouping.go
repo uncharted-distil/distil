@@ -16,6 +16,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -76,15 +77,8 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 				return
 			}
 
-			if grouping.Properties.ClusterCol != "" {
-				// ensure cluster is categorical
-				err = setDataType(meta, data, dataset, storageName, grouping.Properties.ClusterCol, model.CategoricalType)
-				if err != nil {
-					handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
-					return
-				}
-			}
-
+			// For set the name of the expected cluster column - it doesn't necessarily exist.
+			grouping.Properties.ClusterCol = fmt.Sprintf("%s%s", model.ClusterVarPrefix, grouping.IDCol)
 		} else if model.IsGeoCoordinate(grouping.Type) {
 			// make the lat column the id col for now since id col is what holds the info.
 			grouping.IDCol = grouping.Properties.XCol
@@ -144,6 +138,24 @@ func RemoveGroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataSt
 		if err != nil {
 			handleError(w, err)
 			return
+		}
+
+		// if there was a cluster var associated with this group and it has been created, remove it now
+		// TODO: Should this be done explicitly through the client through some type of a
+		// delete route?
+		if grouping.Properties.ClusterCol != "" {
+			clusterVarExist, err := meta.DoesVariableExist(dataset, grouping.Properties.ClusterCol)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			if clusterVarExist {
+				err = meta.DeleteVariable(dataset, grouping.Properties.ClusterCol)
+				if err != nil {
+					handleError(w, err)
+					return
+				}
+			}
 		}
 
 		// marshal data

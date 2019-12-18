@@ -29,12 +29,8 @@ import (
 
 // NumericalField defines behaviour for the numerical field type.
 type NumericalField struct {
-	Storage     *Storage
-	StorageName string
-	Key         string
-	Label       string
-	Type        string
-	subSelect   func() string
+	BasicField
+	subSelect func() string
 }
 
 // NumericalStats contains summary information on a numerical fields.
@@ -45,13 +41,16 @@ type NumericalStats struct {
 }
 
 // NewNumericalField creates a new field for numerical types.
-func NewNumericalField(storage *Storage, storageName string, key string, label string, typ string) *NumericalField {
+func NewNumericalField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *NumericalField {
 	field := &NumericalField{
-		Storage:     storage,
-		StorageName: storageName,
-		Key:         key,
-		Label:       label,
-		Type:        typ,
+		BasicField: BasicField{
+			Storage:            storage,
+			DatasetName:        datasetName,
+			DatasetStorageName: datasetStorageName,
+			Key:                key,
+			Label:              label,
+			Type:               typ,
+		},
 	}
 
 	return field
@@ -59,14 +58,17 @@ func NewNumericalField(storage *Storage, storageName string, key string, label s
 
 // NewNumericalFieldSubSelect creates a new field for numerical types
 // and specifies a sub select query to pull the raw data.
-func NewNumericalFieldSubSelect(storage *Storage, storageName string, key string, label string, typ string, fieldSubSelect func() string) *NumericalField {
+func NewNumericalFieldSubSelect(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, fieldSubSelect func() string) *NumericalField {
 	field := &NumericalField{
-		Storage:     storage,
-		StorageName: storageName,
-		Key:         key,
-		Label:       label,
-		Type:        typ,
-		subSelect:   fieldSubSelect,
+		BasicField: BasicField{
+			Storage:            storage,
+			DatasetName:        datasetName,
+			DatasetStorageName: datasetStorageName,
+			Key:                key,
+			Label:              label,
+			Type:               typ,
+		},
+		subSelect: fieldSubSelect,
 	}
 
 	return field
@@ -78,6 +80,12 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
+
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
+
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, invert, api.MaxNumBuckets)
 		if err != nil {
@@ -178,7 +186,7 @@ func (f *NumericalField) fetchTimeExtremaByResultURI(timeVar *model.Variable, re
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
-		aggQuery, fromClause, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName)
+		aggQuery, fromClause, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(queryString, resultURI)
@@ -356,7 +364,7 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -391,7 +399,7 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 		GROUP BY %s
 		ORDER BY %s;`,
 		bucketQuery, histogramQuery, histogramName, fromClause,
-		f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
+		f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -563,7 +571,7 @@ func (f *NumericalField) fetchExtremaByURI(resultURI string) (*api.Extrema, erro
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1 AND %s;",
-		aggQuery, fromClause, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName, f.getNaNFilter())
+		aggQuery, fromClause, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, f.getNaNFilter())
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -585,6 +593,11 @@ func (f *NumericalField) FetchPredictedSummaryData(resultURI string, datasetResu
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
+
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
 
 	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema, api.MaxNumBuckets)
 	if err != nil {
@@ -628,7 +641,7 @@ func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResu
 	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, resultVariable, numBuckets)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -643,7 +656,7 @@ func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResu
 		WHERE %s
 		GROUP BY %s
 		ORDER BY %s;`,
-		bucketQuery, histogramQuery, histogramName, f.StorageName, datasetResult,
+		bucketQuery, histogramQuery, histogramName, f.DatasetStorageName, datasetResult,
 		model.D3MIndexFieldName, strings.Join(wheres, " AND "), bucketQuery, histogramName)
 
 	// execute the postgres query
@@ -747,7 +760,7 @@ func (f *NumericalField) FetchNumericalStatsByResult(resultURI string, filterPar
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -762,7 +775,7 @@ func (f *NumericalField) FetchNumericalStatsByResult(resultURI string, filterPar
 
 	// Create the complete query string.
 	query := fmt.Sprintf("SELECT coalesce(stddev(\"%s\"), 0) as stddev, avg(\"%s\") as avg FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s;",
-		f.Key, f.Key, fromClause, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName, len(params), where)
+		f.Key, f.Key, fromClause, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -813,11 +826,11 @@ func (f *NumericalField) parseStats(row *pgx.Rows) (*NumericalStats, error) {
 }
 
 func (f *NumericalField) getFromClause(alias bool) string {
-	fromClause := f.StorageName
+	fromClause := f.DatasetStorageName
 	if f.subSelect != nil {
 		fromClause = f.subSelect()
 		if alias {
-			fromClause = fmt.Sprintf("%s as nested INNER JOIN %s as data on nested.\"%s\" = data.\"%s\"", fromClause, f.StorageName, model.D3MIndexFieldName, model.D3MIndexFieldName)
+			fromClause = fmt.Sprintf("%s as nested INNER JOIN %s as data on nested.\"%s\" = data.\"%s\"", fromClause, f.DatasetStorageName, model.D3MIndexFieldName, model.D3MIndexFieldName)
 		}
 	}
 

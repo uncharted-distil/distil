@@ -28,21 +28,20 @@ import (
 
 // ImageField defines behaviour for the image field type.
 type ImageField struct {
-	Storage     *Storage
-	StorageName string
-	Key         string
-	Label       string
-	Type        string
+	BasicField
 }
 
 // NewImageField creates a new field for image types.
-func NewImageField(storage *Storage, storageName string, key string, label string, typ string) *ImageField {
+func NewImageField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *ImageField {
 	field := &ImageField{
-		Storage:     storage,
-		StorageName: storageName,
-		Key:         key,
-		Label:       label,
-		Type:        typ,
+		BasicField: BasicField{
+			Storage:            storage,
+			DatasetName:        datasetName,
+			DatasetStorageName: datasetStorageName,
+			Key:                key,
+			Label:              label,
+			Type:               typ,
+		},
 	}
 
 	return field
@@ -53,6 +52,12 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.Filter
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
+
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
+
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, invert)
 		if err != nil {
@@ -101,7 +106,7 @@ func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket) ([
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" ~ $1 LIMIT 1;",
-			f.Key, f.StorageName, prefixedVarName)
+			f.Key, f.DatasetStorageName, prefixedVarName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -138,7 +143,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 
 	// Get count by category.
 	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(*) AS count FROM %s %s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
-		fieldSelect, prefixedVarName, f.StorageName, where, fieldSelect, fieldSelect, catResultLimit)
+		fieldSelect, prefixedVarName, f.DatasetStorageName, where, fieldSelect, fieldSelect, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -165,7 +170,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +191,7 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
-		prefixedVarName, f.StorageName, f.Storage.getResultTable(f.StorageName),
+		prefixedVarName, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, prefixedVarName,
 		prefixedVarName, catResultLimit)
 
@@ -260,6 +265,11 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult s
 	var filtered *api.Histogram
 	var err error
 
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
+
 	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
 	if err != nil {
 		return nil, err
@@ -284,7 +294,7 @@ func (f *ImageField) fetchPredictedSummaryData(resultURI string, datasetResult s
 	targetName := f.featureVarName(f.Key)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +308,7 @@ func (f *ImageField) fetchPredictedSummaryData(resultURI string, datasetResult s
 		 WHERE %s
 		 GROUP BY result.value, data."%s"
 		 ORDER BY count desc;`,
-		targetName, datasetResult, f.StorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
+		targetName, datasetResult, f.DatasetStorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

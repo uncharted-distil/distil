@@ -29,21 +29,20 @@ import (
 
 // TextField defines behaviour for the text field type.
 type TextField struct {
-	Storage     *Storage
-	StorageName string
-	Key         string
-	Label       string
-	Type        string
+	BasicField
 }
 
 // NewTextField creates a new field for text types.
-func NewTextField(storage *Storage, storageName string, key string, label string, typ string) *TextField {
+func NewTextField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *TextField {
 	field := &TextField{
-		Storage:     storage,
-		StorageName: storageName,
-		Key:         key,
-		Label:       label,
-		Type:        typ,
+		BasicField: BasicField{
+			Storage:            storage,
+			DatasetName:        datasetName,
+			DatasetStorageName: datasetStorageName,
+			Key:                key,
+			Label:              label,
+			Type:               typ,
+		},
 	}
 
 	return field
@@ -54,6 +53,12 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterP
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
+
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
+
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, invert)
 		if err != nil {
@@ -111,7 +116,7 @@ func (f *TextField) fetchTimeExtrema(timeVar *model.Variable) (*api.Extrema, err
 	aggQuery := f.getTimeMinMaxAggsQuery(timeVar)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, f.StorageName)
+	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, f.DatasetStorageName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(queryString)
@@ -132,7 +137,7 @@ func (f *TextField) fetchTimeExtremaByResultURI(timeVar *model.Variable, resultU
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
-		aggQuery, f.StorageName, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName)
+		aggQuery, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(queryString, resultURI)
@@ -282,7 +287,7 @@ func (f *TextField) getTopCategories(filterParams *api.FilterParams, invert bool
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s %s) as r "+
 		"LEFT OUTER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY COALESCE(w.word, r.stem) ORDER BY count desc, COALESCE(w.word, r.stem) LIMIT %d;",
-		f.Key, f.Key, f.StorageName, where, wordStemTableName, 5)
+		f.Key, f.Key, f.DatasetStorageName, where, wordStemTableName, 5)
 
 	// execute the postgres query
 	rows, err := f.Storage.client.Query(query, params...)
@@ -324,7 +329,7 @@ func (f *TextField) fetchHistogram(filterParams *api.FilterParams, invert bool) 
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s %s) as r "+
 		"LEFT OUTER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY COALESCE(w.word, r.stem) ORDER BY count desc, COALESCE(w.word, r.stem) LIMIT %d;",
-		f.Key, f.Key, f.StorageName, where, wordStemTableName, catResultLimit)
+		f.Key, f.Key, f.DatasetStorageName, where, wordStemTableName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -341,7 +346,7 @@ func (f *TextField) fetchHistogram(filterParams *api.FilterParams, invert bool) 
 func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +364,7 @@ func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *api.F
 		"FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s) as r "+
 		"LEFT OUTER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY COALESCE(w.word, r.stem) ORDER BY count desc, COALESCE(w.word, r.stem) LIMIT %d;",
-		f.Key, f.Key, f.StorageName, f.Storage.getResultTable(f.StorageName),
+		f.Key, f.Key, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, wordStemTableName, catResultLimit)
 
 	// execute the postgres query
@@ -420,6 +425,11 @@ func (f *TextField) FetchPredictedSummaryData(resultURI string, datasetResult st
 	var filtered *api.Histogram
 	var err error
 
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
+
 	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
 	if err != nil {
 		return nil, err
@@ -444,7 +454,7 @@ func (f *TextField) fetchPredictedSummaryData(resultURI string, datasetResult st
 	targetName := f.Key
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -458,7 +468,7 @@ func (f *TextField) fetchPredictedSummaryData(resultURI string, datasetResult st
 		"FROM %s AS result INNER JOIN %s AS base ON result.index = base.\"d3mIndex\" "+
 		"WHERE %s) r LEFT OUTER JOIN %s word_b ON r.stem_b = word_b.stem LEFT OUTER JOIN %s word_v ON r.stem_v = word_v.stem "+
 		"GROUP BY COALESCE(word_v.word, r.stem_v), COALESCE(word_b.word, r.stem_b) "+
-		"ORDER BY count desc;", targetName, targetName, datasetResult, f.StorageName, strings.Join(wheres, " AND "), wordStemTableName, wordStemTableName)
+		"ORDER BY count desc;", targetName, targetName, datasetResult, f.DatasetStorageName, strings.Join(wheres, " AND "), wordStemTableName, wordStemTableName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

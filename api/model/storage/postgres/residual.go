@@ -82,7 +82,7 @@ func (s *Storage) fetchResidualsSummary(dataset string, storageName string, vari
 	// Just return a nil in the case where we were asked to return residuals for a non-numeric variable.
 	if model.IsNumerical(variable.Type) || variable.Type == model.TimeSeriesType {
 		// fetch numeric histograms
-		residuals, err := s.fetchResidualsHistogram(resultURI, storageName, variable, filterParams, extrema, numBuckets)
+		residuals, err := s.fetchResidualsHistogram(resultURI, dataset, storageName, variable, filterParams, extrema, numBuckets)
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +163,8 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, storageName string, va
 	return s.parseExtrema(res, variable)
 }
 
-func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, variable *model.Variable, filterParams *api.FilterParams, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
+func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storageName string, variable *model.Variable, filterParams *api.FilterParams,
+	extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
 		Name: "value",
 		Type: model.StringType,
@@ -218,7 +219,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, storageName string, 
 	}
 	defer res.Close()
 
-	field := NewNumericalField(s, storageName, variable.Name, variable.DisplayName, variable.Type)
+	field := NewNumericalField(s, datasetName, storageName, variable.Name, variable.DisplayName, variable.Type)
 
 	return field.parseHistogram(res, extrema, numBuckets)
 }

@@ -291,8 +291,12 @@ func (s *Storage) SetExtrema(dataset string, varName string, extrema *api.Extrem
 	return s.updateVariables(dataset, vars)
 }
 
-// AddVariable adds a new variable to the dataset.
-func (s *Storage) AddVariable(dataset string, varName string, varType string, varRole string) error {
+// AddVariable adds a new variable to the dataset.  If the varDisplayName is left blank it will be set to the varName value.
+func (s *Storage) AddVariable(dataset string, varName string, varDisplayName string, varType string, varRole string) error {
+
+	if varDisplayName == "" {
+		varDisplayName = varName
+	}
 
 	// new variable definition
 	variable := &model.Variable{
@@ -300,14 +304,14 @@ func (s *Storage) AddVariable(dataset string, varName string, varType string, va
 		Type:             varType,
 		OriginalType:     varType,
 		OriginalVariable: varName,
-		DisplayName:      varName,
+		DisplayName:      varDisplayName,
 		DistilRole:       varRole,
 		Deleted:          false,
 		SuggestedTypes:   make([]*model.SuggestedType, 0),
 	}
 
 	// query for existing variables
-	vars, err := s.FetchVariables(dataset, true, true, false)
+	vars, err := s.FetchVariables(dataset, true, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}

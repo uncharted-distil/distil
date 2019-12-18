@@ -30,36 +30,41 @@ const (
 
 // VectorField defines behaviour for any Vector type.
 type VectorField struct {
-	Storage     *Storage
-	StorageName string
-	Key         string
-	Label       string
-	Type        string
-	Unnested    string
+	BasicField
+	Unnested string
 }
 
 // NewVectorField creates a new field of the vector type. A vector field
 // uses unnest to flatten the database array and then uses the underlying
 // data type to get summaries.
-func NewVectorField(storage *Storage, storageName string, key string, label string, typ string) *VectorField {
+func NewVectorField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *VectorField {
 	field := &VectorField{
-		Storage:     storage,
-		StorageName: storageName,
-		Key:         key + unnestedSuffix,
-		Label:       label,
-		Type:        typ,
-		Unnested:    key,
+		BasicField: BasicField{
+			Storage:            storage,
+			DatasetName:        datasetName,
+			DatasetStorageName: datasetStorageName,
+			Key:                key + unnestedSuffix,
+			Label:              label,
+			Type:               typ,
+		},
+		Unnested: key,
 	}
 	return field
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
 func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
+
+	// update the highlight key to use the cluster if necessary
+	if err := f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
+
 	var underlyingField Field
 	if f.isNumerical() {
-		underlyingField = NewNumericalFieldSubSelect(f.Storage, f.StorageName, f.Key, f.Label, f.Type, f.subSelect)
+		underlyingField = NewNumericalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.subSelect)
 	} else {
-		underlyingField = NewCategoricalFieldSubSelect(f.Storage, f.StorageName, f.Key, f.Label, f.Type, f.subSelect)
+		underlyingField = NewCategoricalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.subSelect)
 	}
 
 	histo, err := underlyingField.FetchSummaryData(resultURI, filterParams, extrema, invert)
@@ -78,7 +83,7 @@ func (f *VectorField) FetchNumericalStats(filterParams *api.FilterParams, invert
 	}
 
 	// use the underlying numerical field implementation
-	field := NewNumericalFieldSubSelect(f.Storage, f.StorageName, f.Key, f.Label, f.Type, f.subSelect)
+	field := NewNumericalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.subSelect)
 
 	return field.FetchNumericalStats(filterParams, invert)
 }
@@ -91,7 +96,7 @@ func (f *VectorField) FetchNumericalStatsByResult(resultURI string, filterParams
 	}
 
 	// use the underlying numerical field implementation
-	field := NewNumericalFieldSubSelect(f.Storage, f.StorageName, f.Key, f.Label, f.Type, f.subSelect)
+	field := NewNumericalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.subSelect)
 
 	return field.FetchNumericalStatsByResult(resultURI, filterParams)
 }
@@ -108,5 +113,5 @@ func (f *VectorField) isNumerical() bool {
 
 func (f *VectorField) subSelect() string {
 	return fmt.Sprintf("(SELECT \"%s\", unnest(\"%s\") as %s FROM %s)",
-		model.D3MIndexFieldName, f.Unnested, f.Key, f.StorageName)
+		model.D3MIndexFieldName, f.Unnested, f.Key, f.DatasetStorageName)
 }

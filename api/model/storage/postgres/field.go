@@ -16,11 +16,73 @@
 package postgres
 
 import (
-	"github.com/uncharted-distil/distil/api/model"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 // Field defines behaviour for a database field type.
 type Field interface {
-	FetchSummaryData(resultURI string, filterParams *model.FilterParams, extrema *model.Extrema, invert bool) (*model.VariableSummary, error)
-	FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *model.FilterParams, extrema *model.Extrema) (*model.VariableSummary, error)
+	FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error)
+	FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error)
+	GetStorage() *Storage
+	GetDatasetStorageName() string
+	GetDatasetName() string
+	GetKey() string
+	GetLabel() string
+	GetType() string
+}
+
+// BasicField provides access to baseline field data
+type BasicField struct {
+	Storage            *Storage
+	DatasetStorageName string
+	DatasetName        string
+	Key                string
+	Label              string
+	Type               string
+}
+
+// GetStorage returns the storage associated with the field
+func (b *BasicField) GetStorage() *Storage {
+	return b.Storage
+}
+
+// GetDatasetStorageName returns the name used for the dataset table (PG imposes a number of limits on table names)
+func (b *BasicField) GetDatasetStorageName() string {
+	return b.DatasetStorageName
+}
+
+// GetDatasetName returns the name of the dataset
+func (b *BasicField) GetDatasetName() string {
+	return b.DatasetName
+}
+
+// GetKey returns the unique field key (name)
+func (b *BasicField) GetKey() string {
+	return b.Key
+}
+
+// GetLabel returns the field's label.  May not be unique, shouldn't be used to identify the field (use Key)
+func (b *BasicField) GetLabel() string {
+	return b.Label
+}
+
+// GetType returns the internal Distil type of the field.
+func (b *BasicField) GetType() string {
+	return b.Type
+}
+
+// Checks to see if the highlighted variable has cluster data.  If so, the highlight key will be switched to the
+// cluster column ID to ensure that it is used in downstream queries.  This necessary when dealing with the timerseries
+// compound facet, which will display cluster info when available.
+func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams) error {
+	if !filterParams.Empty() && filterParams.Highlight != nil {
+		clusterHighlightCol := filterParams.Highlight.Key
+		if !isClusteringColName(filterParams.Highlight.Key) {
+			clusterHighlightCol = clusteringColName(filterParams.Highlight.Key)
+		}
+		if b.Storage.hasClusterData(b.GetDatasetName(), clusterHighlightCol) {
+			filterParams.Highlight.Key = clusterHighlightCol
+		}
+	}
+	return nil
 }

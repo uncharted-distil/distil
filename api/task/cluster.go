@@ -153,7 +153,7 @@ func Cluster(datasetInputDir string, dataset string, variable string) ([]*Cluste
 	// build the output (skipping the header)
 	clusteredData := make([]*ClusterPoint, len(res)-1)
 	for i, v := range res[1:] {
-		label := v[clusterIndex].(string)
+		label := createFriendlyLabel(v[clusterIndex].(string))
 		d3mIndex := v[d3mIndexIndex].(string)
 
 		clusteredData[i] = &ClusterPoint{

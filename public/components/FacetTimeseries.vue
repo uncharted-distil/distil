@@ -15,6 +15,7 @@
       @html-appended="onHtmlAppend"
       @numerical-click="onNumericalClick"
       @categorical-click="onCategoricalClick"
+      @facet-click="onFacetClick"
       @range-change="onRangeChange"
     >
     </facet-entry>
@@ -87,9 +88,11 @@ export default Vue.extend({
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
+
     variable(): Variable {
       return this.variables.find(v => v.colName === this.summary.key);
     },
+
     timelineSummary(): VariableSummary {
       if (this.summary.pending) {
         return null;
@@ -132,6 +135,9 @@ export default Vue.extend({
   methods: {
     onCategoricalClick(...args) {
       this.$emit("categorical-click", ...args);
+    },
+    onFacetClick(...args) {
+      this.$emit("facet-click", ...args);
     },
     onNumericalClick(...args) {
       this.$emit("numerical-click", ...args);

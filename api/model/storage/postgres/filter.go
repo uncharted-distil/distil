@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -547,6 +548,18 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
+	// Check if the highlight variable is a group variable, and if it has associated cluster data.
+	// If it does, update the filter key to use the highlight column.
+	if filterParams != nil && filterParams.Highlight != nil {
+		for _, variable := range variables {
+			if variable.Name == filterParams.Highlight.Key &&
+				variable.Grouping != nil && s.hasClusterData(dataset, variable.Grouping.Properties.ClusterCol) {
+				filterParams.Highlight.Key = variable.Grouping.Properties.ClusterCol
+				break
+			}
+		}
+	}
+
 	numRows, err := s.FetchNumRows(storageName, variables, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
@@ -614,4 +627,20 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	// parse the result
 	return s.parseFilteredData(dataset, variables, numRows, res)
+}
+
+func (s *Storage) hasClusterData(datasetName string, variableName string) bool {
+	result, err := s.metadata.DoesVariableExist(datasetName, variableName)
+	if err != nil {
+		log.Warn(err)
+	}
+	return result
+}
+
+func clusteringColName(variableName string) string {
+	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, variableName)
+}
+
+func isClusteringColName(variableName string) bool {
+	return strings.HasPrefix(variableName, model.ClusterVarPrefix)
 }

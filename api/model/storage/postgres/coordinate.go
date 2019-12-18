@@ -30,25 +30,24 @@ const coordinateBuckets = 20
 
 // CoordinateField defines behaviour for the coordinate field type.
 type CoordinateField struct {
-	Key         string
-	Storage     *Storage
-	StorageName string
-	XCol        string
-	YCol        string
-	Label       string
-	Type        string
+	BasicField
+	XCol string
+	YCol string
 }
 
 // NewCoordinateField creates a new field for coordinate types.
-func NewCoordinateField(key string, storage *Storage, storageName string, xCol string, yCol string, label string, typ string) *CoordinateField {
+func NewCoordinateField(key string, storage *Storage, datasetName string, datasetStorageName string, xCol string, yCol string, label string, typ string) *CoordinateField {
 	field := &CoordinateField{
-		Key:         key,
-		Storage:     storage,
-		StorageName: storageName,
-		XCol:        xCol,
-		YCol:        yCol,
-		Label:       label,
-		Type:        typ,
+		BasicField: BasicField{
+			Key:                key,
+			Storage:            storage,
+			DatasetName:        datasetName,
+			DatasetStorageName: datasetStorageName,
+			Label:              label,
+			Type:               typ,
+		},
+		XCol: xCol,
+		YCol: yCol,
 	}
 
 	return field
@@ -59,6 +58,11 @@ func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.F
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
+
+	// update the highlight key to use the cluster if necessary
+	if err = f.updateClusterHighlight(filterParams); err != nil {
+		return nil, err
+	}
 
 	if resultURI == "" {
 		baseline, err = f.fetchHistogram(nil, invert, coordinateBuckets)
@@ -125,8 +129,8 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 	}
 
 	// treat each axis as a separte field for the purposes of query generation
-	xField := NewNumericalField(f.Storage, f.StorageName, f.XCol, f.XCol, model.RealType)
-	yField := NewNumericalField(f.Storage, f.StorageName, f.YCol, f.YCol, model.RealType)
+	xField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, model.RealType)
+	yField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.YCol, f.YCol, model.RealType)
 
 	// get the extrema for each axis
 	xExtrema, err := xField.fetchExtrema()
@@ -150,7 +154,7 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
         GROUP BY %s, %s
         ORDER BY %s, %s;`,
 		xBucketQuery, xHistogramQuery, xHistogramName, yBucketQuery, yHistogramQuery, yHistogramName,
-		f.StorageName, where, xBucketQuery, yBucketQuery, xHistogramName, yHistogramName)
+		f.DatasetStorageName, where, xBucketQuery, yBucketQuery, xHistogramName, yHistogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -172,7 +176,7 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.StorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -185,8 +189,8 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 	}
 
 	// create a numerical field for each of X and Y
-	xField := NewNumericalField(f.Storage, f.StorageName, f.XCol, f.XCol, model.RealType)
-	yField := NewNumericalField(f.Storage, f.StorageName, f.YCol, f.YCol, model.RealType)
+	xField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, model.RealType)
+	yField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.YCol, f.YCol, model.RealType)
 
 	// get the extrema for each
 	xExtrema, err := xField.fetchExtrema()
@@ -212,7 +216,7 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 		GROUP BY %s, %s
 		ORDER BY %s, %s;`,
 		xBucketQuery, xHistogramQuery, xHistogramName, yBucketQuery, yHistogramQuery, yHistogramName,
-		f.StorageName, f.Storage.getResultTable(f.StorageName), model.D3MIndexFieldName,
+		f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName,
 		len(params), where, xBucketQuery, yBucketQuery, xHistogramName, yHistogramName)
 
 	// execute the postgres query
