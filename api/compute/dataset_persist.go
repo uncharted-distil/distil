@@ -321,7 +321,7 @@ func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, ma
 
 	// Figure out the number of train and test rows to use capping on the limit supplied by the caller.
 	numTrain := min(maxTrainingCount, int(math.Floor(float64(len(rowData))*trainTestSplitThreshold)))
-	numTest := min(maxTestCount, int(math.Floor(float64(len(rowData))*1.0-trainTestSplitThreshold)))
+	numTest := min(maxTestCount, int(math.Ceil(float64(len(rowData))*(1.0-trainTestSplitThreshold))))
 
 	// Write out to train test
 	testCount := 0
