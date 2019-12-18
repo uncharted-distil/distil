@@ -612,52 +612,57 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 				continue
 			}
 
-			// pull the path from the output
-			resultURI, err := getFileFromOutput(response, defaultExposedOutputKey)
-			if err != nil {
-				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-				return
-			}
-			explainFeatureURI, err := getFileFromOutput(response, explainFeatureOutputkey)
-			if err != nil {
-				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-				return
-			}
-			explainSolutionURI, err := getFileFromOutput(response, explainSolutionOutputkey)
-			if err != nil {
-				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-				return
+			// Generate a path for each output key that has been exposed
+			outputKeyURIs := map[string]string{}
+			for _, exposedOutputKey := range outputKeys {
+				outputURI, err := getFileFromOutput(response, exposedOutputKey)
+				if err != nil {
+					s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+					return
+				}
+				outputKeyURIs[exposedOutputKey] = outputURI
 			}
 
 			// get the result UUID. NOTE: Doing sha1 for now.
-			resultID, err := util.Hash(resultURI)
-			if err != nil {
-				s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-				return
-			}
-
-			// explain the pipeline
-			featureWeights, err := ExplainFeatureOutput(resultURI, datasetURITest, explainFeatureURI)
-			if err != nil {
-				log.Warnf("failed to fetch output explanantion - %v", err)
-			}
-			if featureWeights != nil {
-				err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
+			resultID := ""
+			resultURI, ok := outputKeyURIs[defaultExposedOutputKey]
+			if ok {
+				resultID, err = util.Hash(resultURI)
 				if err != nil {
 					s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 					return
 				}
 			}
 
-			solutionWeights, err := s.explainSolutionOutput(resultURI, explainSolutionURI, initialSearchSolutionID, variables)
-			if err != nil {
-				log.Warnf("failed to fetch output explanantion - %v", err)
-			}
-			for _, fw := range solutionWeights {
-				err = solutionStorage.PersistSolutionWeight(fw.SolutionID, fw.FeatureName, fw.FeatureIndex, fw.Weight)
+			// explain features per-record if the explanation is available
+			explainFeatureURI, ok := outputKeyURIs[explainFeatureOutputkey]
+			if ok {
+				featureWeights, err := ExplainFeatureOutput(resultURI, datasetURITest, explainFeatureURI)
 				if err != nil {
-					s.persistSolutionError(statusChan, solutionStorage, searchID, initialSearchSolutionID, err)
-					return
+					log.Warnf("failed to fetch output explanantion - %v", err)
+				}
+				if featureWeights != nil {
+					err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
+					if err != nil {
+						s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+						return
+					}
+				}
+			}
+
+			// explain the features at the model level if the explanation is available
+			explainSolutionURI, ok := outputKeyURIs[explainSolutionOutputkey]
+			if ok {
+				solutionWeights, err := s.explainSolutionOutput(resultURI, explainSolutionURI, initialSearchSolutionID, variables)
+				if err != nil {
+					log.Warnf("failed to fetch output explanantion - %v", err)
+				}
+				for _, fw := range solutionWeights {
+					err = solutionStorage.PersistSolutionWeight(fw.SolutionID, fw.FeatureName, fw.FeatureIndex, fw.Weight)
+					if err != nil {
+						s.persistSolutionError(statusChan, solutionStorage, searchID, initialSearchSolutionID, err)
+						return
+					}
 				}
 			}
 
