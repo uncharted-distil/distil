@@ -232,7 +232,7 @@ func parseTimeColValue(timeColValue string) (float64, error) {
 	return f, nil
 }
 
-func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool, targetCol int, maxTrainingCount int, stratify bool) error {
+func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool, targetCol int, maxTrainingCount int, maxTestCount int, stratify bool) error {
 	// create the writers
 	outputTrain := &bytes.Buffer{}
 	writerTrain := csv.NewWriter(outputTrain)
@@ -281,14 +281,14 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 		// second pass - randomly sample each category to generate train/test split
 		for _, data := range categoryRowData {
 			maxCategoryRows := int(float64(len(data)) / float64(len(rowData)) * float64(maxTrainingCount))
-			err := shuffleAndWrite(data, targetCol, maxCategoryRows, writerTrain, writerTest)
+			err := shuffleAndWrite(data, targetCol, maxCategoryRows, maxTestCount, writerTrain, writerTest)
 			if err != nil {
 				return err
 			}
 		}
 	} else {
 		// randomly select from entire dataset
-		err := shuffleAndWrite(rowData, targetCol, maxTrainingCount, writerTrain, writerTest)
+		err := shuffleAndWrite(rowData, targetCol, maxTrainingCount, maxTestCount, writerTrain, writerTest)
 		if err != nil {
 			return err
 		}
@@ -310,7 +310,7 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 	return nil
 }
 
-func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, writerTrain *csv.Writer, writerTest *csv.Writer) error {
+func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, maxTestCount int, writerTrain *csv.Writer, writerTest *csv.Writer) error {
 	if maxTrainingCount <= 0 {
 		maxTrainingCount = math.MaxInt64
 	}
@@ -320,8 +320,8 @@ func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, wr
 	rand.Shuffle(len(rowData), func(i, j int) { rowData[i], rowData[j] = rowData[j], rowData[i] })
 
 	// Figure out the number of train and test rows to use capping on the limit supplied by the caller.
-	numTest := int(math.Ceil((float64(len(rowData)) * (1.0 - trainTestSplitThreshold))))
 	numTrain := min(maxTrainingCount, int(math.Floor(float64(len(rowData))*trainTestSplitThreshold)))
+	numTest := min(maxTestCount, int(math.Ceil(float64(len(rowData))*(1.0-trainTestSplitThreshold))))
 
 	// Write out to train test
 	testCount := 0
@@ -441,7 +441,7 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 		if err != nil {
 			return "", "", errors.Wrap(err, "unable to load config")
 		}
-		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex, config.MaxTrainingRows, params.Stratify)
+		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex, config.MaxTrainingRows, config.MaxTestRows, params.Stratify)
 	}
 	if err != nil {
 		return "", "", err

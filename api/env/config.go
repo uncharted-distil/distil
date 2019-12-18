@@ -61,6 +61,7 @@ type Config struct {
 	IsTask1                            bool    `env:"TASK1" envDefault:"false"`
 	IsTask2                            bool    `env:"TASK2" envDefault:"false"`
 	MaxTrainingRows                    int     `env:"MAX_TRAINING_ROWS" envDefault:"10000"`
+	MaxTestRows                        int     `env:"MAX_TEST_ROWS" envDefault:"10000"`
 	MergedOutputDataPath               string  `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"merged/tables/learningData.csv"`
 	MergedOutputSchemaPath             string  `env:"MERGED_OUTPUT_SCHEMA_PATH" envDefault:"merged/datasetDoc.json"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
