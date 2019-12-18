@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -551,8 +552,9 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	// If it does, update the filter key to use the highlight column.
 	if filterParams != nil && filterParams.Highlight != nil {
 		for _, variable := range variables {
-			if variable.Name == filterParams.Highlight.Key && variable.Grouping != nil && s.hasClusterData(storageName, variable.Name) {
-				filterParams.Highlight.Key = getClusterColName(variable.Name)
+			if variable.Name == filterParams.Highlight.Key &&
+				variable.Grouping != nil && s.hasClusterData(dataset, variable.Grouping.Properties.ClusterCol) {
+				filterParams.Highlight.Key = variable.Grouping.Properties.ClusterCol
 				break
 			}
 		}
@@ -627,20 +629,18 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	return s.parseFilteredData(dataset, variables, numRows, res)
 }
 
-func (s *Storage) hasClusterData(storageName string, colName string) bool {
-	clusterColName := getClusterColName(colName)
-	query := fmt.Sprintf("SELECT table_name FROM information_schema.columns WHERE table_name = %s AND column_name = %s;",
-		storageName, clusterColName)
-	res, err := s.client.Query(query)
+func (s *Storage) hasClusterData(datasetName string, variableName string) bool {
+	result, err := s.metadata.DoesVariableExist(datasetName, variableName)
 	if err != nil {
-		errors.Wrap(err, "failed to query cluster column status")
+		log.Warn(err)
 	}
-	if res != nil {
-		defer res.Close()
-	}
-	return res != nil
+	return result
 }
 
-func getClusterColName(colName string) string {
-	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, colName)
+func clusteringColName(variableName string) string {
+	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, variableName)
+}
+
+func isClusteringColName(variableName string) bool {
+	return strings.HasPrefix(variableName, model.ClusterVarPrefix)
 }

@@ -16,12 +16,7 @@
 package postgres
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
-	log "github.com/unchartedsoftware/plog"
 )
 
 // Field defines behaviour for a database field type.
@@ -85,25 +80,9 @@ func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams) erro
 		if !isClusteringColName(filterParams.Highlight.Key) {
 			clusterHighlightCol = clusteringColName(filterParams.Highlight.Key)
 		}
-		if b.hasClusterData(clusterHighlightCol) {
+		if b.Storage.hasClusterData(b.GetDatasetName(), clusterHighlightCol) {
 			filterParams.Highlight.Key = clusterHighlightCol
 		}
 	}
 	return nil
-}
-
-func (b *BasicField) hasClusterData(variableName string) bool {
-	result, err := b.GetStorage().metadata.DoesVariableExist(b.GetDatasetName(), variableName)
-	if err != nil {
-		log.Warn(err)
-	}
-	return result
-}
-
-func clusteringColName(variableName string) string {
-	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, variableName)
-}
-
-func isClusteringColName(variableName string) bool {
-	return strings.HasPrefix(variableName, model.ClusterVarPrefix)
 }

@@ -255,7 +255,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 }
 
 func (f *TimeSeriesField) keyColName() string {
-	if f.hasClusterData(f.ClusterCol) {
+	if f.GetStorage().hasClusterData(f.GetDatasetName(), f.ClusterCol) {
 		return f.ClusterCol
 	}
 	return f.Key
