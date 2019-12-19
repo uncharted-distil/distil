@@ -23,6 +23,7 @@
             class="file-uploader"
             @uploadstart="onUploadStart"
             @uploadfinish="onUploadFinish"
+            :upload-type="uploadType"
           ></file-uploader>
         </div>
       </div>
@@ -53,6 +54,7 @@ import {
   actions as datasetActions
 } from "../store/dataset/module";
 import { SEARCH_ROUTE, JOIN_DATASETS_ROUTE } from "../store/route/index";
+import { DATASET_UPLOAD } from "../util/uploads";
 
 export default Vue.extend({
   name: "search-view",
@@ -69,7 +71,8 @@ export default Vue.extend({
     return {
       isPending: false,
       uploadData: {},
-      uploadStatus: ""
+      uploadStatus: "",
+      uploadType: DATASET_UPLOAD
     };
   },
 
