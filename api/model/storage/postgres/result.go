@@ -107,12 +107,14 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 		return err
 	}
 	fieldsWeight := weights[0]
-	fieldsMap := make(map[int]string)
+
+	// field map will use index + 1 since not in map will default to 0
+	fieldsMap := make(map[int]int)
 	fields := []string{"result_id"}
-	for _, dbField := range fieldsDatabase {
+	for dbFieldIndex, dbField := range fieldsDatabase {
 		for i := 0; i < len(fieldsWeight); i++ {
 			if dbField == fieldsWeight[i] {
-				fieldsMap[i] = fieldsWeight[i]
+				fieldsMap[dbFieldIndex] = i + 1
 				fields = append(fields, fieldsWeight[i])
 			}
 		}
@@ -125,8 +127,8 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 		parsedWeights[0] = resultURI
 		count := 1
 		for i := 0; i < len(row); i++ {
-			if fieldsMap[i] != "" {
-				w, err := strconv.ParseFloat(row[i], 64)
+			if fieldsMap[i] > 0 {
+				w, err := strconv.ParseFloat(row[fieldsMap[i]-1], 64)
 				if err != nil {
 					return nil
 				}
