@@ -327,7 +327,6 @@ export const actions = {
         filterParams
       )
       .then(response => {
-        console.log(response.data);
         mutations.setIncludedResultTableData(context, response.data);
       })
       .catch(error => {

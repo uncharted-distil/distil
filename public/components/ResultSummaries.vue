@@ -157,7 +157,6 @@ export default Vue.extend({
     onUploadStart(uploadData) {
       this.uploadData = uploadData;
       this.uploadStatus = "started";
-      console.log('importing inference data', this.file, this.fittedSolutionId);
       appActions.logUserEvent(this.$store, {
         feature: Feature.EXPORT_MODEL,
         activity: Activity.MODEL_SELECTION,

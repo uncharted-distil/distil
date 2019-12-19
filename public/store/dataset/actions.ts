@@ -346,8 +346,6 @@ export const actions = {
           console.warn("`solutionId` argument is missing");
           return null;
         }
-
-        console.log(args);
         return axios
         .post(`/distil/predict/${args.datasetID}/${args.solutionId}`, data, {
           headers: { "Content-Type": "multipart/form-data" }
@@ -362,7 +360,6 @@ export const actions = {
             joinedDataset: null
           });
         });
-        break;
       case DATASET_UPLOAD:
         return axios
         .post(`/distil/upload/${args.datasetID}?type=table`, data, {
