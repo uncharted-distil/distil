@@ -26,7 +26,7 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/uncharted-distil/distil-compute v0.0.0-20191217153857-91464a5618c3
-	github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191217155103-64225320ba4f
+	github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191219041132-70908c83a08d
 	github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48
 	github.com/zenazn/goji v0.9.0

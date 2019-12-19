@@ -108,8 +108,14 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 
 		// replace any NaN values with an empty string
 		results = api.ReplaceNaNs(results, api.EmptyString)
+
+		outputs := &api.PredictionResult{
+			FilteredData:     results,
+			FittedSolutionID: res[0].FittedSolutionID,
+			ProduceRequestID: res[0].ProduceRequestID,
+		}
 		// marshal data and sent the response back
-		err = handleJSON(w, results)
+		err = handleJSON(w, outputs)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal solution result into JSON"))
 			return

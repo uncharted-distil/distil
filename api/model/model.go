@@ -119,6 +119,13 @@ type SolutionScore struct {
 	SortMultiplier float64 `json:"sortMultiplier"`
 }
 
+// PredictionResult represents the output from a model prediction.
+type PredictionResult struct {
+	*FilteredData
+	FittedSolutionID string `json:"fittedSolutionId"`
+	ProduceRequestID string `json:"produceRequestId"`
+}
+
 // GetPredictedKey returns a solutions predicted col key.
 func GetPredictedKey(solutionID string) string {
 	return solutionID + ":predicted"
