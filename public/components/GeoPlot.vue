@@ -516,12 +516,12 @@ export default Vue.extend({
           const marker = leaflet.marker(p, { row: p.row });
           bounds.extend([p.lat, p.lng]);
           marker.bindTooltip(() => {
-            const target = p.row[this.target];
+            const target = p.row[this.target].value;
             const values = [];
             const MAX_VALUES = 5;
             this.getTopVariables.forEach(v => {
               if (p.row[v] && values.length <= MAX_VALUES) {
-                values.push(`<b>${_.capitalize(v)}:</b> ${p.row[v]}`);
+                values.push(`<b>${_.capitalize(v)}:</b> ${p.row[v].value}`);
               }
             });
             return [`<b>${_.capitalize(target)}</b>`]
