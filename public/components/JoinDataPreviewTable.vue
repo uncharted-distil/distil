@@ -8,6 +8,10 @@
       :fields="fields"
       @sort-changed="onSortChanged"
     >
+      <template v-slot:cell()="data">
+        {{ data.value.value }}
+      </template>
+
       <template
         v-for="imageField in imageFields"
         :slot="imageField"

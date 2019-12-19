@@ -9,6 +9,9 @@
       @sort-changed="onSortChanged"
       @head-clicked="onColumnClicked"
     >
+      <template v-slot:cell()="data">
+        {{ data.value.value }}
+      </template>
       <template
         v-for="imageField in imageFields"
         v-slot:[cellSlot(imageField)]="data"
