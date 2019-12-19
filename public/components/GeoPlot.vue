@@ -411,14 +411,14 @@ export default Vue.extend({
       if (fieldSpec.type === SINGLE_FIELD) {
         return row[fieldSpec.field].Elements[0].Float;
       }
-      return row[fieldSpec.lngField];
+      return row[fieldSpec.lngField].value;
     },
 
     latValue(fieldSpec: GeoField, row: TableRow): number {
       if (fieldSpec.type === SINGLE_FIELD) {
         return row[fieldSpec.field].Elements[1].Float;
       }
-      return row[fieldSpec.latField];
+      return row[fieldSpec.latField].value;
     },
 
     fieldHash(fieldSpec: GeoField): string {
@@ -571,6 +571,8 @@ export default Vue.extend({
   position: relative;
   z-index: 0;
   width: 100%;
+  height: 100%;
+  bottom: 0;
 }
 .geo-plot-container .selection-toggle {
   position: absolute;
