@@ -325,8 +325,24 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 }
 
 // GeneratePredictions produces predictions using the specified.
-func GeneratePredictions(datasetURI string, fittedSolutionID string, client *compute.Client) (string, []string, error) {
-	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, []string{defaultExposedOutputKey, explainFeatureOutputkey, explainSolutionOutputkey})
+func GeneratePredictions(datasetURI string, initialSearchSolutionID string,
+	fittedSolutionID string, client *compute.Client) (string, []string, error) {
+	// check if the solution can be explained
+	desc, err := client.GetSolutionDescription(context.Background(), initialSearchSolutionID)
+	if err != nil {
+		return "", nil, err
+	}
+
+	featureExplainable, solutionExplainable := isExplainablePipeline(desc)
+	outputs := []string{defaultExposedOutputKey}
+	if featureExplainable {
+		outputs = append(outputs, explainFeatureOutputkey)
+	}
+	if solutionExplainable {
+		outputs = append(outputs, explainSolutionOutputkey)
+	}
+
+	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, outputs)
 	produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
 	if err != nil {
 		return "", nil, err

@@ -85,7 +85,7 @@ func Predict(meta *model.Metadata, dataset string, solutionID string, fittedSolu
 	}
 
 	// submit the new dataset for predictions
-	produceRequestID, resultURIs, err := comp.GeneratePredictions(datasetPath, fittedSolutionID, client)
+	produceRequestID, resultURIs, err := comp.GeneratePredictions(datasetPath, solutionID, fittedSolutionID, client)
 	if err != nil {
 		return nil, err
 	}
