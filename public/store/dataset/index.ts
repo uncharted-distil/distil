@@ -157,6 +157,8 @@ export interface TableData {
   numRows: number;
   columns: TableColumn[];
   values: TableValue[][];
+  fittedSolutionId: string;
+  produceRequestId: string;
 }
 
 export interface TableColumn {

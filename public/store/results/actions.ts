@@ -21,6 +21,7 @@ import {
 } from "../../util/data";
 import { getters as resultGetters } from "../results/module";
 import { getters as dataGetters } from "../dataset/module";
+import { curveCatmullRomClosed } from "d3";
 
 export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
@@ -326,6 +327,7 @@ export const actions = {
         filterParams
       )
       .then(response => {
+        console.log(response.data);
         mutations.setIncludedResultTableData(context, response.data);
       })
       .catch(error => {

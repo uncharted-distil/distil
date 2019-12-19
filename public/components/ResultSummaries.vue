@@ -13,7 +13,7 @@
       @uploadstart="onUploadStart"
       @uploadfinish="onUploadFinish"
       :upload-type="uploadType"
-      :solution-id="solutionId"
+      :solution-id="fittedSolutionId"
     ></file-uploader>
 
     <b-modal id="export" title="Export" @ok="onExport">
@@ -76,6 +76,7 @@ import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as solutionGetters } from "../store/solutions/module";
+import { getters as resultGetters } from "../store/results/module";
 import {
   actions as appActions,
   getters as appGetters
@@ -135,6 +136,10 @@ export default Vue.extend({
       return routeGetters.getRouteSolutionId(this.$store);
     },
 
+    fittedSolutionId(): string {
+      return resultGetters.hasIncludedResultTableData(this.$store) ? resultGetters.getFittedSolutionId(this.$store) : null;
+    },
+
     activeSolution(): Solution {
       return getSolutionById(this.$store.state.solutionModule, this.solutionId);
     },
@@ -152,7 +157,7 @@ export default Vue.extend({
     onUploadStart(uploadData) {
       this.uploadData = uploadData;
       this.uploadStatus = "started";
-      console.log('importing inference data', this.file);
+      console.log('importing inference data', this.file, this.fittedSolutionId);
       appActions.logUserEvent(this.$store, {
         feature: Feature.EXPORT_MODEL,
         activity: Activity.MODEL_SELECTION,

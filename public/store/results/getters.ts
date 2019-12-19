@@ -26,6 +26,14 @@ export const getters = {
       : 0;
   },
 
+  getFittedSolutionId (state: ResultsState): string {
+    return state.includedResultTableData.fittedSolutionId;
+  },
+
+  getProduceRequestId (state: ResultsState): string {
+    return state.includedResultTableData.produceRequestId;
+  },
+
   hasIncludedResultTableData(state: ResultsState): boolean {
     return !!state.includedResultTableData;
   },
