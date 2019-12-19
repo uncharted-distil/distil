@@ -106,14 +106,21 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 	if err != nil {
 		return err
 	}
+	fieldsMetadata, err := s.metadata.FetchVariables(dataset, true, true, true)
+	if err != nil {
+		return err
+	}
+	fieldsMetadataMap := mapFields(fieldsMetadata)
+
+	// field map will use index + 1 since not in map will default to 0
 	fieldsWeight := weights[0]
-	fieldsMap := make(map[int]string)
+	fieldsMap := make(map[int]int)
 	fields := []string{"result_id"}
-	for _, dbField := range fieldsDatabase {
+	for dbFieldIndex, dbField := range fieldsDatabase {
 		for i := 0; i < len(fieldsWeight); i++ {
-			if dbField == fieldsWeight[i] {
-				fieldsMap[i] = fieldsWeight[i]
-				fields = append(fields, fieldsWeight[i])
+			if fieldsMetadataMap[dbField] != nil && fieldsMetadataMap[dbField].DisplayName == fieldsWeight[i] {
+				fieldsMap[dbFieldIndex] = i + 1
+				fields = append(fields, dbField)
 			}
 		}
 	}
@@ -125,8 +132,8 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 		parsedWeights[0] = resultURI
 		count := 1
 		for i := 0; i < len(row); i++ {
-			if fieldsMap[i] != "" {
-				w, err := strconv.ParseFloat(row[i], 64)
+			if fieldsMap[i] > 0 {
+				w, err := strconv.ParseFloat(row[fieldsMap[i]-1], 64)
 				if err != nil {
 					return nil
 				}
@@ -796,4 +803,13 @@ func (s *Storage) getDisplayName(dataset string, columnName string) (string, err
 	}
 
 	return displayName, nil
+}
+
+func mapFields(fields []*model.Variable) map[string]*model.Variable {
+	mapped := make(map[string]*model.Variable)
+	for _, f := range fields {
+		mapped[f.Name] = f
+	}
+
+	return mapped
 }
