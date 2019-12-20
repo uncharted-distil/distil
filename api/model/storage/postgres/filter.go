@@ -126,12 +126,12 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, alia
 		split := strings.Split(filter.Key, ":")
 		where := ""
 		if len(split) > 1 {
-			xKey := split[0]
-			yKey := split[1]
+			xKey := s.formatFilterKey(alias, split[0])
+			yKey := s.formatFilterKey(alias, split[1])
 			where = fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d AND cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d", xKey, len(params)+1, xKey, len(params)+2, yKey, len(params)+3, yKey, len(params)+4)
 		} else {
 			// hardcode [lat, lon] format for now
-			where = fmt.Sprintf("%s[2] >= $%d AND %s[2] <= $%d AND %s[1] >= $%d AND %s[1] <= $%d", filter.Key, len(params)+1, filter.Key, len(params)+2, filter.Key, len(params)+3, filter.Key, len(params)+4)
+			where = fmt.Sprintf("%s[2] >= $%d AND %s[2] <= $%d AND %s[1] >= $%d AND %s[1] <= $%d", name, len(params)+1, name, len(params)+2, name, len(params)+3, name, len(params)+4)
 		}
 		wheres = append(wheres, where)
 		params = append(params, filter.Bounds.MinX)
@@ -198,12 +198,12 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, alia
 		split := strings.Split(filter.Key, ":")
 		where := ""
 		if len(split) > 1 {
-			xKey := split[0]
-			yKey := split[1]
-			where = fmt.Sprintf("(%s < $%d OR %s > $%d) OR (%s < $%d OR %s > $%d)", xKey, len(params)+1, xKey, len(params)+2, yKey, len(params)+3, yKey, len(params)+4)
+			xKey := s.formatFilterKey(alias, split[0])
+			yKey := s.formatFilterKey(alias, split[1])
+			where = fmt.Sprintf("((%s < $%d OR %s > $%d) OR (%s < $%d OR %s > $%d))", xKey, len(params)+1, xKey, len(params)+2, yKey, len(params)+3, yKey, len(params)+4)
 		} else {
 			// hardcode [lat, lon] format for now
-			where = fmt.Sprintf("(%s[2] < $%d OR %s[2] > $%d) OR (%s[1] < $%d OR %s[1] > $%d)", filter.Key, len(params)+1, filter.Key, len(params)+2, filter.Key, len(params)+3, filter.Key, len(params)+4)
+			where = fmt.Sprintf("((%s[2] < $%d OR %s[2] > $%d) OR (%s[1] < $%d OR %s[1] > $%d))", name, len(params)+1, name, len(params)+2, name, len(params)+3, name, len(params)+4)
 		}
 		wheres = append(wheres, where)
 		params = append(params, filter.Bounds.MinX)
