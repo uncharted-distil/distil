@@ -108,7 +108,7 @@ export default Vue.extend({
   },
   computed: {
     isGeocoordinate(): boolean {
-      return this.geocoordinate || this.hasLon !== this.hasLat;
+      return this.geocoordinate;
     },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
@@ -257,7 +257,7 @@ export default Vue.extend({
 
     onGroupingSelect(type) {
       if (type === TIMESERIES_TYPE || type === GEOCOORDINATE_TYPE) {
-       const entry = createRouteEntry(GROUPING_ROUTE, {
+        const entry = createRouteEntry(GROUPING_ROUTE, {
           dataset: routeGetters.getRouteDataset(this.$store),
           groupingType: type
         });
