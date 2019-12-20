@@ -51,7 +51,12 @@ import {
   removeRowSelection,
   isRowSelected
 } from "../util/row";
-import { LATITUDE_TYPE, LONGITUDE_TYPE, REAL_VECTOR_TYPE } from "../util/types";
+import {
+  LATITUDE_TYPE,
+  LONGITUDE_TYPE,
+  REAL_VECTOR_TYPE,
+  GEOCOORDINATE_TYPE
+} from "../util/types";
 
 import "leaflet/dist/leaflet.css";
 import "leaflet/dist/images/marker-icon.png";
@@ -150,17 +155,21 @@ export default Vue.extend({
       let lat = null;
       const fields = [];
       matches.forEach(match => {
-        if (match.colType === LONGITUDE_TYPE) {
-          lng = match.colName;
-        }
-        if (match.colType === LATITUDE_TYPE) {
-          lat = match.colName;
-        }
-        if (match.colType === REAL_VECTOR_TYPE) {
+        if (match.grouping && match.grouping.type === GEOCOORDINATE_TYPE) {
+          lng = match.grouping.properties.xCol;
+          lat = match.grouping.properties.yCol;
+        } else if (match.colType === REAL_VECTOR_TYPE) {
           fields.push({
             type: SINGLE_FIELD,
             field: match.colName
           });
+        } else {
+          if (match.colType === LONGITUDE_TYPE) {
+            lng = match.colName;
+          }
+          if (match.colType === LATITUDE_TYPE) {
+            lat = match.colName;
+          }
         }
         // TODO: currently we pair any two random lat / lngs, we should
         // eventually use the groupings functionality to let the user
