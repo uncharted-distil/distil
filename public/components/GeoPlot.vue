@@ -145,6 +145,7 @@ export default Vue.extend({
 
       const matches = variables.filter(v => {
         return (
+          (v.grouping && v.grouping.type === GEOCOORDINATE_TYPE) ||
           v.colType === LONGITUDE_TYPE ||
           v.colType === LATITUDE_TYPE ||
           v.colType === REAL_VECTOR_TYPE
