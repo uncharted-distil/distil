@@ -276,8 +276,9 @@ func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, 
 		var yBucketValue float64
 		var xBucket int64
 		var yBucket int64
-		var bucketCount int64
-		err := rows.Scan(&xBucket, &xBucketValue, &yBucket, &yBucketValue, &bucketCount)
+		var xRowBucketCount int64
+		var yRowBucketCount int64
+		err := rows.Scan(&xBucket, &xBucketValue, &xRowBucketCount, &yBucket, &yBucketValue, &yRowBucketCount)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", histogramAggName))
 		}
@@ -296,7 +297,7 @@ func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, 
 		} else if yBucket >= yBucketCount {
 			yBucket = yBucketCount - 1
 		}
-		xBuckets[xBucket].Buckets[yBucket].Count += bucketCount
+		xBuckets[xBucket].Buckets[yBucket].Count += yRowBucketCount
 	}
 
 	// assign histogram attributes
