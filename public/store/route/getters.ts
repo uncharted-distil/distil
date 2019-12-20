@@ -217,6 +217,10 @@ export const getters = {
     return state.query.results ? (state.query.results as string) : null;
   },
 
+  getRouteProduceRequestId(state: Route): string {
+    return state.query.produceRequestId ? (state.query.produceRequestId as string) : null;
+  },
+
   getRouteResidualThresholdMin(state: Route): string {
     return state.query.residualThresholdMin as string;
   },

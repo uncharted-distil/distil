@@ -154,17 +154,17 @@ export default Vue.extend({
     },
 
     regressionEnabled(): boolean {
-      return routeGetters.getRouteTask(this.$store) === TaskTypes.REGRESSION;
+      const routeArgs = routeGetters.getRouteTask(this.$store);
+      return routeArgs && routeArgs.includes(TaskTypes.REGRESSION);
     },
 
     numRows(): number {
       return resultsGetters.getResultDataNumRows(this.$store);
     },
-
+    
     isForecasting(): boolean {
-      return routeGetters
-        .getRouteTask(this.$store)
-        .includes(TaskTypes.FORECASTING);
+      const routeArgs = routeGetters.getRouteTask(this.$store);
+      return routeArgs && routeArgs.includes(TaskTypes.FORECASTING);
     },
 
     topSlotTitle(): string {

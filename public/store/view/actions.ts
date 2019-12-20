@@ -368,7 +368,109 @@ export const actions = {
     });
 
     const task = routeGetters.getRouteTask(store);
-    if (
+
+    if (!task) {
+      console.error(`task is ${task}`);
+    } else if (
+      task.includes(TaskTypes.REGRESSION) ||
+      task.includes(TaskTypes.FORECASTING)
+    ) {
+      resultActions.fetchResidualsExtrema(store, {
+        dataset: dataset,
+        target: target,
+        solutionId: solutionId
+      });
+      resultActions.fetchResidualsSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlight: highlight
+      });
+    } else if (task.includes(TaskTypes.CLASSIFICATION)) {
+      resultActions.fetchCorrectnessSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlight: highlight
+      });
+    } else {
+      console.error(`unhandled task type ${task}`);
+    }
+  },
+
+  fetchPredictionsData(context: ViewContext) {
+    // clear previous state
+    resultMutations.clearTargetSummary(store);
+    resultMutations.clearTrainingSummaries(store);
+    resultMutations.clearResidualsExtrema(store);
+    resultMutations.setIncludedResultTableData(store, null);
+    resultMutations.setExcludedResultTableData(store, null);
+
+    const dataset = context.getters.getRouteDataset;
+    const target = context.getters.getRouteTargetVariable;
+    // fetch new state
+    return fetchVariables(context, {
+      dataset: dataset
+    })
+      .then(() => {
+        fetchVariableRankings(context, {
+          dataset: dataset,
+          target: target
+        });
+        return fetchSolutionRequests(context, {
+          dataset: dataset,
+          target: target
+        });
+      })
+      .then(() => {
+        return actions.updatePredictionsSolution(context);
+      });
+  },
+
+  updatePredictionsSolution(context: ViewContext) {
+    // clear previous state
+    resultMutations.clearResidualsExtrema(store);
+    resultMutations.setIncludedResultTableData(store, null);
+    resultMutations.setExcludedResultTableData(store, null);
+
+    // fetch new state
+    const dataset = context.getters.getRouteDataset;
+    const target = context.getters.getRouteTargetVariable;
+    const requestIds = context.getters.getRelevantSolutionRequestIds;
+    const solutionId = context.getters.getRouteSolutionId;
+    const trainingVariables =
+      context.getters.getActiveSolutionTrainingVariables;
+    const highlight = context.getters.getDecodedHighlight;
+
+    resultActions.fetchResultTableData(store, {
+      dataset: dataset,
+      solutionId: solutionId,
+      highlight: highlight
+    });
+    resultActions.fetchTargetSummary(store, {
+      dataset: dataset,
+      target: target,
+      solutionId: solutionId,
+      highlight: highlight
+    });
+    resultActions.fetchTrainingSummaries(store, {
+      dataset: dataset,
+      training: trainingVariables,
+      solutionId: solutionId,
+      highlight: highlight
+    });
+    resultActions.fetchPredictedSummaries(store, {
+      dataset: dataset,
+      target: target,
+      requestIds: requestIds,
+      highlight: highlight
+    });
+
+    const task = routeGetters.getRouteTask(store);
+
+    if (!task) {
+      console.error(`task is ${task}`);
+    } else if (
       task.includes(TaskTypes.REGRESSION) ||
       task.includes(TaskTypes.FORECASTING)
     ) {
