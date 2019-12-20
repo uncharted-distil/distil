@@ -16,6 +16,10 @@ import {
   actions as resultActions,
   mutations as resultMutations
 } from "../results/module";
+import {
+  actions as predictionActions,
+  mutations as predictionMutations
+} from "../predictions/module";
 import { getters as routeGetters } from "../route/module";
 import { TaskTypes } from "../dataset";
 
@@ -423,11 +427,11 @@ export const actions = {
         });
       })
       .then(() => {
-        return actions.updatePredictionsSolution(context);
+        return actions.updatePrediction(context);
       });
   },
 
-  updatePredictionsSolution(context: ViewContext) {
+  updatePrediction(context: ViewContext) {
     // clear previous state
     resultMutations.clearResidualsExtrema(store);
     resultMutations.setIncludedResultTableData(store, null);
@@ -465,35 +469,5 @@ export const actions = {
       requestIds: requestIds,
       highlight: highlight
     });
-
-    const task = routeGetters.getRouteTask(store);
-
-    if (!task) {
-      console.error(`task is ${task}`);
-    } else if (
-      task.includes(TaskTypes.REGRESSION) ||
-      task.includes(TaskTypes.FORECASTING)
-    ) {
-      resultActions.fetchResidualsExtrema(store, {
-        dataset: dataset,
-        target: target,
-        solutionId: solutionId
-      });
-      resultActions.fetchResidualsSummaries(store, {
-        dataset: dataset,
-        target: target,
-        requestIds: requestIds,
-        highlight: highlight
-      });
-    } else if (task.includes(TaskTypes.CLASSIFICATION)) {
-      resultActions.fetchCorrectnessSummaries(store, {
-        dataset: dataset,
-        target: target,
-        requestIds: requestIds,
-        highlight: highlight
-      });
-    } else {
-      console.error(`unhandled task type ${task}`);
-    }
   }
 };

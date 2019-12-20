@@ -179,7 +179,6 @@ export default Vue.extend({
         solutionId: this.solutionId,
         dataset: this.dataset,
         produceRequestId: this.produceRequestId,
-        task: this.taskArgs,
         target: this.target
       };
       // fill out with call to app actions to new appAction.importInferenceData probably

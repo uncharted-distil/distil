@@ -37,6 +37,6 @@ export const actions = {
   fetchResultsData: dispatch(moduleActions.fetchResultsData),
   updateResultsSolution: dispatch(moduleActions.updateResultsSolution),
   fetchPredictionsData: dispatch(moduleActions.fetchPredictionsData),
-  updatePredictionsSolution: dispatch(moduleActions.updatePredictionsSolution)
+  updatePrediction: dispatch(moduleActions.updatePrediction)
   
 };

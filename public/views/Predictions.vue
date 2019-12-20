@@ -82,16 +82,16 @@ export default Vue.extend({
 
   watch: {
     highlightString() {
-      viewActions.updatePredictionsSolution(this.$store);
+      viewActions.updatePrediction(this.$store);
     },
     solutionId() {
-      viewActions.updatePredictionsSolution(this.$store);
+      viewActions.updatePrediction(this.$store);
     },
     produceRequestId() {
-      viewActions.updatePredictionsSolution(this.$store);
+      viewActions.updatePrediction(this.$store);
     },
     resultTrainingVarsPage() {
-      viewActions.updatePredictionsSolution(this.$store);
+      viewActions.updatePrediction(this.$store);
     }
   }
 });
