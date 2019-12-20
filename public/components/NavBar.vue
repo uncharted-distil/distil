@@ -69,6 +69,16 @@
         <i class="fa fa-line-chart nav-icon"></i>
         <b-nav-text>View Models</b-nav-text>
       </b-nav-item>
+      <b-nav-item
+        @click="onResults"
+        :active="isActive(PREDICTION_ROUTE)"
+        :disabled="!hasPredictionView()"
+        v-bind:class="{ active: isActive(PREDICTION_ROUTE) }"
+      >
+        <i class="fa fa-angle-right nav-arrow"></i>
+        <i class="fa fa-eye nav-icon"></i>
+        <b-nav-text>View Predictions</b-nav-text>
+      </b-nav-item>
     </b-navbar-nav>
     <b-navbar-nav class="ml-auto">
       <b-nav-item href="/help">
@@ -101,7 +111,8 @@ import {
   JOIN_DATASETS_ROUTE,
   SELECT_TARGET_ROUTE,
   SELECT_TRAINING_ROUTE,
-  RESULTS_ROUTE
+  RESULTS_ROUTE,
+  PREDICTION_ROUTE
 } from "../store/route/index";
 import { restoreView } from "../util/view";
 import Vue from "vue";
@@ -116,7 +127,8 @@ export default Vue.extend({
       JOIN_DATASETS_ROUTE: JOIN_DATASETS_ROUTE,
       SELECT_TARGET_ROUTE: SELECT_TARGET_ROUTE,
       SELECT_TRAINING_ROUTE: SELECT_TRAINING_ROUTE,
-      RESULTS_ROUTE: RESULTS_ROUTE
+      RESULTS_ROUTE: RESULTS_ROUTE,
+      PREDICTION_ROUTE: PREDICTION_ROUTE
     };
   },
 
@@ -177,6 +189,9 @@ export default Vue.extend({
     },
     hasResultView(): boolean {
       return !!restoreView(RESULTS_ROUTE, this.dataset);
+    },
+    hasPredictionView(): boolean {
+      return !!restoreView(PREDICTION_ROUTE, this.dataset);
     }
   }
 });

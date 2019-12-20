@@ -282,7 +282,9 @@ export function createEmptyTableData(): TableData {
   return {
     numRows: 0,
     columns: [],
-    values: []
+    values: [],
+    fittedSolutionId: null,
+    produceRequestId: null
   };
 }
 

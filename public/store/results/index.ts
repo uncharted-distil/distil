@@ -18,6 +18,8 @@ export interface ResultsState {
   // forecasts
   timeseries: Dictionary<Dictionary<number[][]>>;
   forecasts: Dictionary<Dictionary<number[][]>>;
+  fittedSolutionId: string;
+  produceRequestId: string;
 }
 
 export const state: ResultsState = {
@@ -36,5 +38,7 @@ export const state: ResultsState = {
   correctnessSummaries: [],
   // forecasts
   timeseries: {},
-  forecasts: {}
+  forecasts: {},
+  fittedSolutionId: null,
+  produceRequestId: null
 };

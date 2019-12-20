@@ -7,9 +7,14 @@
     </div>
     <p class="nav-link font-weight-bold">Predictions by Model</p>
     <result-facets :regression="regressionEnabled"> </result-facets>
-    <b-btn v-b-modal.export variant="primary" class="check-button"
-      >Export Model</b-btn
-    >
+
+    <file-uploader
+      class="file-uploader"
+      @uploadstart="onUploadStart"
+      @uploadfinish="onUploadFinish"
+      :upload-type="uploadType"
+      :solution-id="fittedSolutionId"
+    ></file-uploader>
 
     <b-modal id="export" title="Export" @ok="onExport">
       <div class="check-message-container">
@@ -65,27 +70,32 @@
 
 <script lang="ts">
 import ResultFacets from "../components/ResultFacets";
+import FileUploader from "../components/FileUploader";
 import ErrorThresholdSlider from "../components/ErrorThresholdSlider";
 import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as solutionGetters } from "../store/solutions/module";
+import { getters as resultGetters } from "../store/results/module";
 import {
   actions as appActions,
   getters as appGetters
 } from "../store/app/module";
-import { EXPORT_SUCCESS_ROUTE, ROOT_ROUTE } from "../store/route/index";
+import { EXPORT_SUCCESS_ROUTE, ROOT_ROUTE, PREDICTION_ROUTE } from "../store/route/index";
 import { Variable, TaskTypes } from "../store/dataset/index";
 import vueSlider from "vue-slider-component";
 import Vue from "vue";
 import { Solution } from "../store/solutions/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { createRouteEntry } from "../util/routes";
+import { PREDICTION_UPLOAD } from "../util/uploads";
 
 export default Vue.extend({
   name: "result-summaries",
 
   components: {
     ResultFacets,
+    FileUploader,
     ErrorThresholdSlider,
     vueSlider
   },
@@ -96,7 +106,11 @@ export default Vue.extend({
         return arg ? arg.toFixed(2) : "";
       },
       exportFailureMsg: "",
-      symmetricSlider: true
+      symmetricSlider: true,
+      file: null,
+      uploadData: {},
+      uploadStatus: "",
+      uploadType: PREDICTION_UPLOAD
     };
   },
 
@@ -122,6 +136,10 @@ export default Vue.extend({
       return routeGetters.getRouteSolutionId(this.$store);
     },
 
+    fittedSolutionId(): string {
+      return resultGetters.hasIncludedResultTableData(this.$store) ? resultGetters.getFittedSolutionId(this.$store) : null;
+    },
+
     activeSolution(): Solution {
       return getSolutionById(this.$store.state.solutionModule, this.solutionId);
     },
@@ -136,6 +154,31 @@ export default Vue.extend({
   },
 
   methods: {
+    onUploadStart(uploadData) {
+      this.uploadData = uploadData;
+      this.uploadStatus = "started";
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.EXPORT_MODEL,
+        activity: Activity.MODEL_SELECTION,
+        subActivity: SubActivity.IMPORT_INFERENCE,
+        details: {
+          activeSolution: this.activeSolution.solutionId,
+        }
+      });
+    },
+    
+    onUploadFinish(err) {
+      this.uploadStatus = err ? "error" : "success";
+      const routeArgs = {
+        solution: this.solutionId,
+        activeSolution: this.activeSolution.solutionId
+      };
+      // fill out with call to app actions to new appAction.importInferenceData probably
+      // that for now will just be loading basically the model page again with stuff blanked out.
+      const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
+      this.$router.push(entry);
+    },
+
     onExport() {
       appActions.logUserEvent(this.$store, {
         feature: Feature.EXPORT_MODEL,

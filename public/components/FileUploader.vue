@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-button block variant="primary" v-b-modal.upload-modal
-      >Import File</b-button
+      >{{buttonText}}</b-button
     >
 
     <!-- Modal Component -->
@@ -29,6 +29,7 @@
 import Vue from "vue";
 import { actions as datasetActions } from "../store/dataset/module";
 import { filterSummariesByDataset } from "../util/data";
+import { PREDICTION_UPLOAD, DATASET_UPLOAD } from "../util/uploads";
 
 export default Vue.extend({
   name: "file-uploader",
@@ -39,7 +40,21 @@ export default Vue.extend({
     };
   },
 
+  props: {
+    uploadType: String as ()=> string,
+    solutionId: String as ()=> string
+  },
+
   computed: {
+    buttonText(): string {
+      switch (this.uploadType) {
+        case PREDICTION_UPLOAD:
+          return "Import Inference Data";
+        case DATASET_UPLOAD:
+        default:
+          return "Import File";
+      }
+    },
     filename(): string {
       return this.file ? this.file.name : "";
     },
@@ -76,7 +91,9 @@ export default Vue.extend({
       datasetActions
         .uploadDataFile(this.$store, {
           datasetID: this.datasetID,
-          file: this.file
+          file: this.file,
+          type: this.uploadType,
+          solutionId: this.solutionId,
         })
         .catch(err => {
           uploadError = err;

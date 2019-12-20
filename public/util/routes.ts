@@ -30,6 +30,7 @@ export interface RouteArgs {
   groupingType?: string;
   availableTargetVarsPage?: number;
   task?: string;
+  activeSolution?: string;
 
   // we currently don't have a way to add these to the interface
   //

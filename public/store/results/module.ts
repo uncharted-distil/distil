@@ -23,6 +23,8 @@ export const getters = {
   getTrainingSummaries: read(moduleGetters.getTrainingSummaries),
   getTargetSummary: read(moduleGetters.getTargetSummary),
   // result
+  getFittedSolutionId: read(moduleGetters.getFittedSolutionId),
+  getProduceRequestId: read(moduleGetters.getProduceRequestId),
   hasIncludedResultTableData: read(moduleGetters.hasIncludedResultTableData),
   getIncludedResultTableData: read(moduleGetters.getIncludedResultTableData),
   getIncludedResultTableDataItems: read(

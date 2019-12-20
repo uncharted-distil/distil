@@ -44,6 +44,11 @@ import {
   LATITUDE_TYPE
 } from "../../util/types";
 
+import {
+  DATASET_UPLOAD,
+  PREDICTION_UPLOAD
+} from "../../util/uploads";
+
 // fetches variables and add dataset name to each variable
 function getVariables(dataset: string): Promise<Variable[]> {
   return axios.get(`/distil/variables/${dataset}`).then(response => {
@@ -318,7 +323,7 @@ export const actions = {
 
   uploadDataFile(
     context: DatasetContext,
-    args: { datasetID: string; file: File }
+    args: { datasetID: string; file: File, type: string, solutionId?: string }
   ) {
     if (!args.datasetID) {
       console.warn("`datasetID` argument is missing");
@@ -328,22 +333,51 @@ export const actions = {
       console.warn("`file` argument is missing");
       return null;
     }
+    if (!args.type) {
+      console.warn("`type` argument is missing");
+      return null;
+    }
     const data = new FormData();
     data.append("file", args.file);
-    return axios
-      .post(`/distil/upload/${args.datasetID}?type=table`, data, {
-        headers: { "Content-Type": "multipart/form-data" }
-      })
-      .then(response => {
-        return actions.importDataset(context, {
-          datasetID: args.datasetID,
-          source: "augmented",
-          provenance: "local",
-          terms: args.datasetID,
-          originalDataset: null,
-          joinedDataset: null
+
+    switch(args.type) {
+      case PREDICTION_UPLOAD:
+        if (!args.solutionId) {
+          console.warn("`solutionId` argument is missing");
+          return null;
+        }
+        return axios
+        .post(`/distil/predict/${args.datasetID}/${args.solutionId}`, data, {
+          headers: { "Content-Type": "multipart/form-data" }
+        })
+        .then(response => {
+          return actions.importDataset(context, {
+            datasetID: args.datasetID,
+            source: "augmented",
+            provenance: "local",
+            terms: args.datasetID,
+            originalDataset: null,
+            joinedDataset: null
+          });
         });
-      });
+      case DATASET_UPLOAD:
+        return axios
+        .post(`/distil/upload/${args.datasetID}?type=table`, data, {
+          headers: { "Content-Type": "multipart/form-data" }
+        })
+        .then(response => {
+          return actions.importDataset(context, {
+            datasetID: args.datasetID,
+            source: "augmented",
+            provenance: "local",
+            terms: args.datasetID,
+            originalDataset: null,
+            joinedDataset: null
+          });
+        });
+      default:
+        console.log('unknown upload type');
+    };
   },
 
   importDataset(
