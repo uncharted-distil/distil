@@ -12,9 +12,9 @@
       >
       </type-change-menu>
     </div>
-    <div class="geo-plot-container">
+    <div class="geofacet-container">
       <div
-        class="geo-plot"
+        class="geofacet"
         v-bind:id="mapID"
         v-on:mousedown="onMouseDown"
         v-on:mouseup="onMouseUp"
@@ -712,17 +712,17 @@ export default Vue.extend({
   z-index: 1;
 }
 
-.facet-card .geo-plot-container .selection-toggle {
+.facet-card .geofacet-container .selection-toggle {
   top: 55px;
 }
 
-.facet-card .geo-plot-container .action-btn {
+.facet-card .geofacet-container .action-btn {
   position: relative;
   bottom: 37px;
   background: white;
 }
 
-.facet-card .geo-plot-container .action-btn:hover {
+.facet-card .geofacet-container .action-btn:hover {
   color: #fff;
   background-color: #9e9e9e;
   border-color: #9e9e9e;
@@ -734,13 +734,16 @@ export default Vue.extend({
   text-overflow: ellipsis;
 }
 
-.geo-plot-container {
+.geofacet-container {
   bottom: 16px;
 }
 
-.geo-plot-container,
-.geo-plot {
+.geofacet,
+.geofacet-container {
+  position: relative;
+  z-index: 0;
   height: 214px;
+  width: 100%;
 }
 
 .facet-card .group-header .type-change-dropdown-wrapper {
@@ -748,11 +751,7 @@ export default Vue.extend({
   bottom: 20px;
 }
 
-.geo-plot-container .type-change-dropdown-wrapper .dropdown-menu {
-  z-index: 3;
-}
-
-.geo-close-button {
+.geofacet-container .type-change-dropdown-wrapper .dropdown-menu {
   z-index: 3;
 }
 </style>

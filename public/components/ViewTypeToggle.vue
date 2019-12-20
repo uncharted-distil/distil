@@ -55,7 +55,8 @@ import {
   TIMESERIES_TYPE,
   IMAGE_TYPE,
   LONGITUDE_TYPE,
-  LATITUDE_TYPE
+  LATITUDE_TYPE,
+  GEOCOORDINATE_TYPE
 } from "../util/types";
 
 const TABLE_VIEW = "table";
@@ -105,14 +106,16 @@ export default Vue.extend({
       return false;
     },
     hasGeoVariables(): boolean {
-      // TODO: impl groupings for lon / lat
-      // const hasLat = this.variables.filter(v => v.grouping && v.grouping.type === LONGITUDE_TYPE).length  > 0;
-      // const hasLon = this.variables.filter(v => v.grouping && v.grouping.type === LATITUDE_TYPE).length  > 0;
+      const hasGeocoord =
+        this.variables.filter(
+          v => v.grouping && v.grouping.type === GEOCOORDINATE_TYPE
+        ).length > 0;
       const hasLat =
         this.variables.filter(v => v.colType === LONGITUDE_TYPE).length > 0;
       const hasLon =
         this.variables.filter(v => v.colType === LATITUDE_TYPE).length > 0;
-      return hasLat && hasLon;
+
+      return (hasLat && hasLon) || hasGeocoord;
     },
     hasTimeseriesVariables(): boolean {
       return (
