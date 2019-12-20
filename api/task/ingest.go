@@ -201,6 +201,22 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
 	log.Infof("using %s as data directory (built from %s and %s)", dataDir, datasetDir, meta.DataResources[0].ResPath)
 
+	// check and fix metadata issues
+	updated, err := metadata.VerifyAndUpdate(meta, dataDir)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to fix metadata")
+	}
+
+	// store the updated metadata
+	if updated {
+		log.Infof("storing updated metadata")
+		err = metadata.WriteSchema(meta, schemaFile)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to store updated metadata")
+		}
+		log.Infof("updated metadata written")
+	}
+
 	err = metadata.LoadImportance(meta, path.Join(datasetDir, config.RankingOutputPathRelative))
 	if err != nil {
 		log.Warnf("unable to load importance from file: %v", err)
@@ -228,12 +244,6 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	// set the origin
 	if origins != nil {
 		meta.DatasetOrigins = origins
-	}
-
-	// check and fix metadata issues
-	err = metadata.VerifyAndUpdate(meta, dataDir)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to fix metadata")
 	}
 
 	// create elasticsearch client
