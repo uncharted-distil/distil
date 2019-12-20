@@ -141,13 +141,13 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 		// get the step outputs
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
-			if s.isExplainablePrimitiveStep(primitive.Primitive.Id) {
+			if isExplainablePrimitiveStep(primitive.Primitive.Id) {
 				primitive.Outputs = append(primitive.Outputs, &pipeline.StepOutput{
 					Id: "produce_shap_values",
 				})
 				explainStep = si
 			}
-			if s.isExplainablePrimitiveSolution(primitive.Primitive.Id) {
+			if isExplainablePrimitiveSolution(primitive.Primitive.Id) {
 				primitive.Outputs = append(primitive.Outputs, &pipeline.StepOutput{
 					Id: "produce_feature_importances",
 				})
@@ -172,11 +172,31 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 	return explainSolution >= 0 || explainStep >= 0, pipelineDesc
 }
 
-func (s *SolutionRequest) isExplainablePrimitiveStep(primitive string) bool {
+func isExplainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) (bool, bool) {
+	pipelineDesc := solutionDesc.Pipeline
+	featureExplainable := false
+	solutionExplainable := false
+	for _, ps := range pipelineDesc.Steps {
+		// get the step outputs
+		primitive := ps.GetPrimitive()
+		if primitive != nil {
+			if isExplainablePrimitiveStep(primitive.Primitive.Id) {
+				featureExplainable = true
+			}
+			if isExplainablePrimitiveSolution(primitive.Primitive.Id) {
+				solutionExplainable = true
+			}
+		}
+	}
+
+	return featureExplainable, solutionExplainable
+}
+
+func isExplainablePrimitiveStep(primitive string) bool {
 	return explainablePrimitivesStep[primitive]
 }
 
-func (s *SolutionRequest) isExplainablePrimitiveSolution(primitive string) bool {
+func isExplainablePrimitiveSolution(primitive string) bool {
 	return explainablePrimitivesSolution[primitive]
 }
 
