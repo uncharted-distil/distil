@@ -404,11 +404,10 @@ export const actions = {
 
   fetchPredictionsData(context: ViewContext) {
     // clear previous state
-    resultMutations.clearTargetSummary(store);
-    resultMutations.clearTrainingSummaries(store);
-    resultMutations.clearResidualsExtrema(store);
-    resultMutations.setIncludedResultTableData(store, null);
-    resultMutations.setExcludedResultTableData(store, null);
+    predictionMutations.clearTargetSummary(store);
+    predictionMutations.clearTrainingSummaries(store);
+    predictionMutations.setIncludedResultTableData(store, null);
+    predictionMutations.setExcludedResultTableData(store, null);
 
     const dataset = context.getters.getRouteDataset;
     const target = context.getters.getRouteTargetVariable;
@@ -433,9 +432,9 @@ export const actions = {
 
   updatePrediction(context: ViewContext) {
     // clear previous state
-    resultMutations.clearResidualsExtrema(store);
-    resultMutations.setIncludedResultTableData(store, null);
-    resultMutations.setExcludedResultTableData(store, null);
+    predictionMutations.clearResidualsExtrema(store);
+    predictionMutations.setIncludedResultTableData(store, null);
+    predictionMutations.setExcludedResultTableData(store, null);
 
     // fetch new state
     const dataset = context.getters.getRouteDataset;
@@ -446,24 +445,24 @@ export const actions = {
       context.getters.getActiveSolutionTrainingVariables;
     const highlight = context.getters.getDecodedHighlight;
 
-    resultActions.fetchResultTableData(store, {
+    predictionActions.fetchResultTableData(store, {
       dataset: dataset,
       solutionId: solutionId,
       highlight: highlight
     });
-    resultActions.fetchTargetSummary(store, {
+    predictionActions.fetchTargetSummary(store, {
       dataset: dataset,
       target: target,
       solutionId: solutionId,
       highlight: highlight
     });
-    resultActions.fetchTrainingSummaries(store, {
+    predictionActions.fetchTrainingSummaries(store, {
       dataset: dataset,
       training: trainingVariables,
       solutionId: solutionId,
       highlight: highlight
     });
-    resultActions.fetchPredictedSummaries(store, {
+    predictionActions.fetchPredictedSummaries(store, {
       dataset: dataset,
       target: target,
       requestIds: requestIds,

@@ -1,344 +1,774 @@
 import axios from "axios";
-import {
-  SolutionState,
-  SOLUTION_PENDING,
-  SOLUTION_RUNNING,
-  SOLUTION_COMPLETED,
-  SOLUTION_ERRORED,
-  REQUEST_PENDING,
-  REQUEST_RUNNING,
-  REQUEST_COMPLETED,
-  REQUEST_ERRORED
-} from "./index";
+import _ from "lodash";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
+import { EXCLUDE_FILTER } from "../../util/filters";
+import {
+  getSolutionsByRequestIds,
+  getSolutionById
+} from "../../util/solutions";
+import { Variable, Highlight } from "../dataset/index";
 import { mutations } from "./module";
-import { getWebSocketConnection } from "../../util/ws";
-import { FilterParams } from "../../util/filters";
-import { actions as resultsActions } from "../results/module";
-import { getters as routeGetters } from "../route/module";
-import { TaskTypes } from "../dataset";
+import { ResultsState } from "./index";
+import { addHighlightToFilterParams } from "../../util/highlights";
+import {
+  fetchSolutionResultSummary,
+  createPendingSummary,
+  createErrorSummary,
+  createEmptyTableData,
+  fetchSummaryExemplars,
+  getTimeseriesAnalysisIntervals
+} from "../../util/data";
+import { getters as resultGetters } from "../results/module";
+import { getters as dataGetters } from "../dataset/module";
 
-const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
-const STOP_SOLUTIONS = "STOP_SOLUTIONS";
-
-interface CreateSolutionRequest {
-  dataset: string;
-  target: string;
-  metrics: string[];
-  maxSolutions: number;
-  maxTime: number;
-  filters: FilterParams;
-  onClose: Function;
-}
-
-interface SolutionStatus {
-  requestId: string;
-  solutionId?: string;
-  resultId?: string;
-  progress: string;
-  error: string;
-  timestamp: number;
-}
-
-export type SolutionContext = ActionContext<SolutionState, DistilState>;
-
-function updateCurrentSolutionResults(
-  context: SolutionContext,
-  req: CreateSolutionRequest,
-  res: SolutionStatus
-) {
-  const isRegression = routeGetters
-    .getRouteTask(store)
-    .includes(TaskTypes.REGRESSION);
-  const isClassification = routeGetters
-    .getRouteTask(store)
-    .includes(TaskTypes.CLASSIFICATION);
-  const isForecasting = routeGetters
-    .getRouteTask(store)
-    .includes(TaskTypes.FORECASTING);
-
-  resultsActions.fetchResultTableData(store, {
-    dataset: req.dataset,
-    solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight
-  });
-  resultsActions.fetchPredictedSummary(store, {
-    dataset: req.dataset,
-    target: req.target,
-    solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight
-  });
-  resultsActions.fetchTrainingSummaries(store, {
-    dataset: req.dataset,
-    training: context.getters.getActiveSolutionTrainingVariables,
-    solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight
-  });
-  resultsActions.fetchTargetSummary(store, {
-    dataset: req.dataset,
-    target: req.target,
-    solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight
-  });
-
-  if (isRegression || isForecasting) {
-    resultsActions.fetchResidualsExtrema(store, {
-      dataset: req.dataset,
-      target: req.target,
-      solutionId: res.solutionId
-    });
-    resultsActions.fetchResidualsSummary(store, {
-      dataset: req.dataset,
-      target: req.target,
-      solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight
-    });
-  } else if (isClassification) {
-    resultsActions.fetchCorrectnessSummary(store, {
-      dataset: req.dataset,
-      target: req.target,
-      solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight
-    });
-  }
-}
-
-function updateSolutionResults(
-  context: SolutionContext,
-  req: CreateSolutionRequest,
-  res: SolutionStatus
-) {
-
-  const taskArgs = routeGetters.getRouteTask(store);
-  const isRegression = taskArgs && taskArgs.includes(TaskTypes.REGRESSION);
-  const isClassification = taskArgs && taskArgs.includes(TaskTypes.CLASSIFICATION);
-  const isForecasting = taskArgs && taskArgs.includes(TaskTypes.FORECASTING);
-
-  // if current solutionId, pull result summaries
-  resultsActions.fetchPredictedSummary(store, {
-    dataset: req.dataset,
-    target: req.target,
-    solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight
-  });
-
-  if (isRegression || isForecasting) {
-    resultsActions.fetchResidualsExtrema(store, {
-      dataset: req.dataset,
-      target: req.target,
-      solutionId: res.solutionId
-    });
-    resultsActions.fetchResidualsSummary(store, {
-      dataset: req.dataset,
-      target: req.target,
-      solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight
-    });
-  } else if (isClassification) {
-    resultsActions.fetchCorrectnessSummary(store, {
-      dataset: req.dataset,
-      target: req.target,
-      solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight
-    });
-  }
-}
-
-function handleRequestProgress(
-  context: SolutionContext,
-  request: CreateSolutionRequest,
-  response: SolutionStatus
-) {
-  // no-op
-}
-
-function handleSolutionProgress(
-  context: SolutionContext,
-  request: CreateSolutionRequest,
-  response: SolutionStatus
-) {
-  switch (response.progress) {
-    case SOLUTION_COMPLETED:
-    case SOLUTION_ERRORED:
-      // if current solutionId, pull results
-      if (response.solutionId === context.getters.getRouteSolutionId) {
-        // current solutionId is selected
-        updateCurrentSolutionResults(context, request, response);
-      } else {
-        // current solutionId is NOT selected
-        updateSolutionResults(context, request, response);
-      }
-      break;
-  }
-}
-
-function isRequestResponse(response: SolutionStatus) {
-  const progress = response.progress;
-  return (
-    progress === REQUEST_PENDING ||
-    progress === REQUEST_RUNNING ||
-    progress === REQUEST_COMPLETED ||
-    progress === REQUEST_ERRORED
-  );
-}
-
-function isSolutionResponse(response: SolutionStatus) {
-  const progress = response.progress;
-  return (
-    progress === SOLUTION_PENDING ||
-    progress === SOLUTION_RUNNING ||
-    progress === SOLUTION_COMPLETED ||
-    progress === SOLUTION_ERRORED
-  );
-}
-
-function handleProgress(
-  context: SolutionContext,
-  request: CreateSolutionRequest,
-  response: SolutionStatus
-) {
-  if (isRequestResponse(response)) {
-    // request
-    console.log(
-      `Progress for request ${response.requestId} updated to ${response.progress}`
-    );
-  } else if (isSolutionResponse(response)) {
-    // solution
-    console.log(
-      `Progress for solution ${response.solutionId} updated to ${response.progress}`
-    );
-  }
-
-  actions
-    .fetchSolutionRequests(context, {
-      dataset: request.dataset,
-      target: request.target,
-      solutionId: response.solutionId
-    })
-    .then(() => {
-      // handle response
-      if (isRequestResponse(response)) {
-        // request
-        handleRequestProgress(context, request, response);
-      } else if (isSolutionResponse(response)) {
-        // solution
-        handleSolutionProgress(context, request, response);
-      }
-    });
-}
+export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
 export const actions = {
-  fetchSolutionRequests(
-    context: SolutionContext,
-    args: { dataset?: string; target?: string; solutionId?: string }
+  // fetches variable summary data for the given dataset and variables
+  fetchTrainingSummaries(
+    context: ResultsContext,
+    args: {
+      dataset: string;
+      training: Variable[];
+      solutionId: string;
+      highlight: Highlight;
+    }
   ) {
     if (!args.dataset) {
-      args.dataset = null;
+      console.warn("`dataset` argument is missing");
+      return null;
     }
-    if (!args.target) {
-      args.target = null;
+    if (!args.training) {
+      console.warn("`training` argument is missing");
+      return null;
     }
     if (!args.solutionId) {
-      args.solutionId = null;
+      console.warn("`solutionId` argument is missing");
+      return null;
+    }
+    const solution = getSolutionById(
+      context.rootState.solutionModule,
+      args.solutionId
+    );
+    if (!solution.resultId) {
+      // no results ready to pull
+      return;
+    }
+
+    const dataset = args.dataset;
+    const solutionId = args.solutionId;
+
+    const promises = [];
+
+    // remove summaries not used to predict the newly selected model
+    context.state.trainingSummaries.forEach(v => {
+      const isTrainingArg = args.training.reduce((isTrain, variable) => {
+        if (!isTrain) {
+          isTrain = variable.colName === v.key;
+        }
+        return isTrain;
+      }, false);
+      if(v.dataset !== args.dataset || !isTrainingArg) {
+        mutations.removeTrainingSummary(context, v);
+      };
+    });
+
+    args.training.forEach(variable => {
+      const key = variable.colName;
+      const label = variable.colDisplayName;
+      const description = variable.colDescription;
+      const exists = _.find(context.state.trainingSummaries, v => {
+        return v.dataset === args.dataset && v.key === variable.colName;
+      });
+      if (!exists) {
+        // add placeholder
+        mutations.updateTrainingSummary(
+          context,
+          createPendingSummary(key, label, description, dataset, solutionId)
+        );
+      }
+      // fetch summary
+      promises.push(
+        actions.fetchTrainingSummary(context, {
+          dataset: dataset,
+          variable: variable,
+          resultID: solution.resultId,
+          highlight: args.highlight
+        })
+      );
+    });
+    return Promise.all(promises);
+  },
+
+  fetchTrainingSummary(
+    context: ResultsContext,
+    args: {
+      dataset: string;
+      variable: Variable;
+      resultID: string;
+      highlight: Highlight;
+    }
+  ): Promise<void> {
+    if (!args.dataset) {
+      console.warn("`dataset` argument is missing");
+      return null;
+    }
+    if (!args.variable) {
+      console.warn("`variable` argument is missing");
+      return null;
+    }
+    if (!args.resultID) {
+      console.warn("`resultID` argument is missing");
+      return null;
+    }
+
+    let filterParams = {
+      highlight: null,
+      variables: [],
+      filters: []
+    };
+    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+
+    const timeseries = context.getters.getRouteTimeseriesAnalysis;
+    if (timeseries) {
+      let interval = context.getters.getRouteTimeseriesBinningInterval;
+      if (!interval) {
+        const timeVar = context.getters.getTimeseriesAnalysisVariable;
+        const range = context.getters.getTimeseriesAnalysisRange;
+        const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
+        interval = intervals[0].value;
+      }
+
+      return axios
+        .post(
+          `distil/training-timeseries-summary/${args.dataset}/${timeseries}/${args.variable.colName}/${interval}/${args.resultID}`,
+          filterParams
+        )
+        .then(response => {
+          const summary = response.data.summary;
+          mutations.updateTrainingSummary(context, summary);
+        })
+        .catch(error => {
+          console.error(error);
+          mutations.updateTrainingSummary(
+            context,
+            createErrorSummary(
+              args.variable.colName,
+              args.variable.colDisplayName,
+              args.dataset,
+              error
+            )
+          );
+        });
     }
 
     return axios
-      .get(
-        `/distil/solutions/${args.dataset}/${args.target}/${args.solutionId}`
+      .post(
+        `/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}`,
+        filterParams
       )
       .then(response => {
-        if (!response.data) {
-          return;
-        }
-        const requests = response.data;
-        requests.forEach(request => {
-          // update solution
-          mutations.updateSolutionRequests(context, request);
+        const summary = response.data.summary;
+        return fetchSummaryExemplars(
+          args.dataset,
+          args.variable.colName,
+          summary
+        ).then(() => {
+          mutations.updateTrainingSummary(context, summary);
         });
+      })
+      .catch(error => {
+        console.error(error);
+        mutations.updateTrainingSummary(
+          context,
+          createErrorSummary(
+            args.variable.colName,
+            args.variable.colDisplayName,
+            args.dataset,
+            error
+          )
+        );
+      });
+  },
+
+  fetchTargetSummary(
+    context: ResultsContext,
+    args: {
+      dataset: string;
+      target: string;
+      solutionId: string;
+      highlight: Highlight;
+    }
+  ) {
+    if (!args.dataset) {
+      console.warn("`dataset` argument is missing");
+      return null;
+    }
+    if (!args.target) {
+      console.warn("`variable` argument is missing");
+      return null;
+    }
+    if (!args.solutionId) {
+      console.warn("`solutionId` argument is missing");
+      return null;
+    }
+    const solution = getSolutionById(
+      context.rootState.solutionModule,
+      args.solutionId
+    );
+    if (!solution.resultId) {
+      // no results ready to pull
+      return null;
+    }
+
+    const key = args.target;
+    const label = args.target;
+    const dataset = args.dataset;
+
+    if (!context.state.targetSummary) {
+      // fetch the target var so we can pull the description out
+      const targetVar = dataGetters.getVariablesMap(store)[args.target];
+      mutations.updateTargetSummary(
+        context,
+        createPendingSummary(
+          key,
+          label,
+          targetVar.colDescription,
+          dataset,
+          args.solutionId
+        )
+      );
+    }
+
+    let filterParams = {
+      highlight: null,
+      variables: [],
+      filters: []
+    };
+    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+
+    const timeseries = context.getters.getRouteTimeseriesAnalysis;
+    if (timeseries) {
+      let interval = context.getters.getRouteTimeseriesBinningInterval;
+      if (!interval) {
+        const timeVar = context.getters.getTimeseriesAnalysisVariable;
+        const range = context.getters.getTimeseriesAnalysisRange;
+        const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
+        interval = intervals[0].value;
+      }
+
+      return axios
+        .post(
+          `distil/target-timeseries-summary/${args.dataset}/${timeseries}/${args.target}/${interval}/${solution.resultId}`,
+          filterParams
+        )
+        .then(response => {
+          const summary = response.data.summary;
+          mutations.updateTargetSummary(context, summary);
+        })
+        .catch(error => {
+          console.error(error);
+          mutations.updateTargetSummary(
+            context,
+            createErrorSummary(key, label, dataset, error)
+          );
+        });
+    }
+
+    return axios
+      .post(
+        `/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}`,
+        filterParams
+      )
+      .then(response => {
+        const summary = response.data.summary;
+        return fetchSummaryExemplars(args.dataset, args.target, summary).then(
+          () => {
+            mutations.updateTargetSummary(context, summary);
+          }
+        );
+      })
+      .catch(error => {
+        console.error(error);
+        mutations.updateTargetSummary(
+          context,
+          createErrorSummary(key, label, dataset, error)
+        );
+      });
+  },
+
+  fetchIncludedResultTableData(
+    context: ResultsContext,
+    args: { solutionId: string; dataset: string; highlight: Highlight }
+  ) {
+    const solution = getSolutionById(
+      context.rootState.solutionModule,
+      args.solutionId
+    );
+    if (!solution.resultId) {
+      // no results ready to pull
+      return null;
+    }
+
+    let filterParams = {
+      highlight: null,
+      variables: [],
+      filters: []
+    };
+    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+
+    return axios
+      .post(
+        `/distil/results/${args.dataset}/${encodeURIComponent(
+          args.solutionId
+        )}`,
+        filterParams
+      )
+      .then(response => {
+        mutations.setIncludedResultTableData(context, response.data);
+      })
+      .catch(error => {
+        console.error(
+          `Failed to fetch results from ${args.solutionId} with error ${error}`
+        );
+        mutations.setIncludedResultTableData(context, createEmptyTableData());
+      });
+  },
+
+  fetchExcludedResultTableData(
+    context: ResultsContext,
+    args: { solutionId: string; dataset: string; highlight: Highlight }
+  ) {
+    const solution = getSolutionById(
+      context.rootState.solutionModule,
+      args.solutionId
+    );
+    if (!solution.resultId) {
+      // no results ready to pull
+      return null;
+    }
+
+    let filterParams = {
+      highlight: null,
+      variables: [],
+      filters: []
+    };
+    filterParams = addHighlightToFilterParams(
+      filterParams,
+      args.highlight,
+      EXCLUDE_FILTER
+    );
+
+    return axios
+      .post(
+        `/distil/results/${args.dataset}/${encodeURIComponent(
+          args.solutionId
+        )}`,
+        filterParams
+      )
+      .then(response => {
+        mutations.setExcludedResultTableData(context, response.data);
+      })
+      .catch(error => {
+        console.error(
+          `Failed to fetch results from ${args.solutionId} with error ${error}`
+        );
+        mutations.setExcludedResultTableData(context, createEmptyTableData());
+      });
+  },
+
+  fetchResultTableData(
+    context: ResultsContext,
+    args: { solutionId: string; dataset: string; highlight: Highlight }
+  ) {
+    return Promise.all([
+      actions.fetchIncludedResultTableData(context, {
+        dataset: args.dataset,
+        solutionId: args.solutionId,
+        highlight: args.highlight
+      }),
+      actions.fetchExcludedResultTableData(context, {
+        dataset: args.dataset,
+        solutionId: args.solutionId,
+        highlight: args.highlight
+      })
+    ]);
+  },
+
+  fetchResidualsExtrema(
+    context: ResultsContext,
+    args: { dataset: string; target: string; solutionId: string }
+  ) {
+    if (!args.dataset) {
+      console.warn("`dataset` argument is missing");
+      return null;
+    }
+    if (!args.target) {
+      console.warn("`target` argument is missing");
+      return null;
+    }
+
+    const solution = getSolutionById(
+      context.rootState.solutionModule,
+      args.solutionId
+    );
+    if (!solution.resultId) {
+      // no results ready to pull
+      return null;
+    }
+
+    return axios
+      .get(`/distil/residuals-extrema/${args.dataset}/${args.target}`)
+      .then(response => {
+        mutations.updateResidualsExtrema(context, response.data.extrema);
       })
       .catch(error => {
         console.error(error);
       });
   },
 
-  createSolutionRequest(context: any, request: CreateSolutionRequest) {
-    return new Promise((resolve, reject) => {
-      const conn = getWebSocketConnection();
+  // fetches result summary for a given solution id.
+  fetchPredictedSummary(
+    context: ResultsContext,
+    args: {
+      dataset: string;
+      target: string;
+      solutionId: string;
+      highlight: Highlight;
+    }
+  ) {
+    if (!args.dataset) {
+      console.warn("`dataset` argument is missing");
+      return null;
+    }
+    if (!args.target) {
+      console.warn("`target` argument is missing");
+      return null;
+    }
+    if (!args.solutionId) {
+      console.warn("`solutionId` argument is missing");
+      return null;
+    }
 
-      let receivedFirstSolution = false;
-      let receivedFirstResponse = false;
+    const solution = getSolutionById(
+      context.rootState.solutionModule,
+      args.solutionId
+    );
+    if (!solution.resultId) {
+      // no results ready to pull
+      return null;
+    }
 
-      const stream = conn.stream(response => {
-        // log any error
-        if (response.error) {
-          console.error(response.error);
-        }
+    let filterParams = {
+      highlight: null,
+      variables: [],
+      filters: []
+    };
+    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
-        // handle request / solution progress
-        if (response.progress) {
-          handleProgress(context, request, response);
-        }
+    const timeseries = context.getters.getRouteTimeseriesAnalysis;
+    if (timeseries) {
+      let interval = context.getters.getRouteTimeseriesBinningInterval;
+      if (!interval) {
+        const timeVar = context.getters.getTimeseriesAnalysisVariable;
+        const range = context.getters.getTimeseriesAnalysisRange;
+        const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
+        interval = intervals[0].value;
+      }
 
-        if (response.requestId && !receivedFirstResponse) {
-          receivedFirstResponse = true;
-          // add the request stream
-          mutations.addRequestStream(context, {
-            requestId: response.requestId,
-            stream: stream
-          });
-        }
+      const endPoint = `distil/forecasting-summary/${args.dataset}/${timeseries}/${args.target}/${interval}`;
+      const key = solution.predictedKey;
+      const label = "Forecasted";
+      return fetchSolutionResultSummary(
+        context,
+        endPoint,
+        solution,
+        args.target,
+        key,
+        label,
+        resultGetters.getPredictedSummaries(context),
+        mutations.updatePredictedSummaries,
+        filterParams
+      );
+    }
 
-        if (response.solutionId && !receivedFirstSolution) {
-          receivedFirstSolution = true;
-          // resolve
-          resolve(response);
-        }
-
-        // close stream on complete
-        if (response.complete) {
-          console.log("Solution request has completed, closing stream");
-          // remove request stream
-          if (receivedFirstResponse) {
-            mutations.removeRequestStream(context, {
-              requestId: response.requestId
-            });
-          }
-          // check for failure to generate solutions
-          if (!receivedFirstSolution) {
-            reject(new Error("No valid solutions found"));
-          }
-          // close stream
-          stream.close();
-          request.onClose();
-        }
-      });
-
-      console.log("Sending create solutions request:", request);
-
-      // send create solutions request
-      stream.send({
-        type: CREATE_SOLUTIONS,
-        dataset: request.dataset,
-        target: request.target,
-        metrics: request.metrics,
-        maxSolutions: request.maxSolutions,
-        maxTime: request.maxTime,
-        filters: request.filters
-      });
-    });
+    const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
+    const key = solution.predictedKey;
+    const label = "Predicted";
+    return fetchSolutionResultSummary(
+      context,
+      endpoint,
+      solution,
+      args.target,
+      key,
+      label,
+      resultGetters.getPredictedSummaries(context),
+      mutations.updatePredictedSummaries,
+      filterParams
+    );
   },
 
-  stopSolutionRequest(context: any, args: { requestId: string }) {
-    const streams = context.getters.getRequestStreams;
-    const stream = streams[args.requestId];
-    if (!stream) {
-      console.warn(`No request stream found for requestId: ${args.requestId}`);
-      return;
+  // fetches result summaries for a given solution create request
+  fetchPredictedSummaries(
+    context: ResultsContext,
+    args: {
+      dataset: string;
+      target: string;
+      requestIds: string[];
+      highlight: Highlight;
     }
-    stream.send({
-      type: STOP_SOLUTIONS,
-      requestId: args.requestId
-    });
+  ) {
+    if (!args.requestIds) {
+      console.warn("`requestIds` argument is missing");
+      return null;
+    }
+    const solutions = getSolutionsByRequestIds(
+      context.rootState.solutionModule,
+      args.requestIds
+    );
+    return Promise.all(
+      solutions.map(solution => {
+        return actions.fetchPredictedSummary(context, {
+          dataset: args.dataset,
+          target: args.target,
+          solutionId: solution.solutionId,
+          highlight: args.highlight
+        });
+      })
+    );
+  },
+
+  // fetches result summary for a given solution id.
+  fetchResidualsSummary(
+    context: ResultsContext,
+    args: {
+      dataset: string;
+      target: string;
+      solutionId: string;
+      highlight: Highlight;
+    }
+  ) {
+    if (!args.dataset) {
+      console.warn("`dataset` argument is missing");
+      return null;
+    }
+    if (!args.target) {
+      console.warn("`target` argument is missing");
+      return null;
+    }
+    if (!args.solutionId) {
+      console.warn("`solutionId` argument is missing");
+      return null;
+    }
+
+    const solution = getSolutionById(
+      context.rootState.solutionModule,
+      args.solutionId
+    );
+    if (!solution.resultId) {
+      // no results ready to pull
+      return null;
+    }
+
+    let filterParams = {
+      highlight: null,
+      variables: [],
+      filters: []
+    };
+    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+
+    const endPoint = `/distil/residuals-summary/${args.dataset}/${args.target}`;
+    const key = solution.errorKey;
+    const label = "Error";
+    return fetchSolutionResultSummary(
+      context,
+      endPoint,
+      solution,
+      args.target,
+      key,
+      label,
+      resultGetters.getResidualsSummaries(context),
+      mutations.updateResidualsSummaries,
+      filterParams
+    );
+  },
+
+  // fetches result summaries for a given solution create request
+  fetchResidualsSummaries(
+    context: ResultsContext,
+    args: {
+      dataset: string;
+      target: string;
+      requestIds: string[];
+      highlight: Highlight;
+    }
+  ) {
+    if (!args.requestIds) {
+      console.warn("`requestIds` argument is missing");
+      return null;
+    }
+    const solutions = getSolutionsByRequestIds(
+      context.rootState.solutionModule,
+      args.requestIds
+    );
+    return Promise.all(
+      solutions.map(solution => {
+        return actions.fetchResidualsSummary(context, {
+          dataset: args.dataset,
+          target: args.target,
+          solutionId: solution.solutionId,
+          highlight: args.highlight
+        });
+      })
+    );
+  },
+
+  // fetches result summary for a given pipeline id.
+  fetchCorrectnessSummary(
+    context: ResultsContext,
+    args: {
+      dataset: string;
+      target: string;
+      solutionId: string;
+      highlight: Highlight;
+    }
+  ) {
+    if (!args.dataset) {
+      console.warn("`dataset` argument is missing");
+      return null;
+    }
+    if (!args.solutionId) {
+      console.warn("`pipelineId` argument is missing");
+      return null;
+    }
+
+    const solution = getSolutionById(
+      context.rootState.solutionModule,
+      args.solutionId
+    );
+    if (!solution.resultId) {
+      // no results ready to pull
+      return null;
+    }
+
+    let filterParams = {
+      highlight: null,
+      variables: [],
+      filters: []
+    };
+    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+
+    const endPoint = `/distil/correctness-summary/${args.dataset}`;
+    const key = solution.errorKey;
+    const label = "Error";
+    return fetchSolutionResultSummary(
+      context,
+      endPoint,
+      solution,
+      args.target,
+      key,
+      label,
+      resultGetters.getCorrectnessSummaries(context),
+      mutations.updateCorrectnessSummaries,
+      filterParams
+    );
+  },
+
+  // fetches result summaries for a given pipeline create request
+  fetchCorrectnessSummaries(
+    context: ResultsContext,
+    args: {
+      dataset: string;
+      target: string;
+      requestIds: string[];
+      highlight: Highlight;
+    }
+  ) {
+    if (!args.requestIds) {
+      console.warn("`requestIds` argument is missing");
+      return null;
+    }
+    const solutions = getSolutionsByRequestIds(
+      context.rootState.solutionModule,
+      args.requestIds
+    );
+    return Promise.all(
+      solutions.map(solution => {
+        return actions.fetchCorrectnessSummary(context, {
+          dataset: args.dataset,
+          target: args.target,
+          solutionId: solution.solutionId,
+          highlight: args.highlight
+        });
+      })
+    );
+  },
+
+  fetchForecastedTimeseries(
+    context: ResultsContext,
+    args: {
+      dataset: string;
+      xColName: string;
+      yColName: string;
+      timeseriesColName: string;
+      timeseriesID: any;
+      solutionId: string;
+    }
+  ) {
+    if (!args.dataset) {
+      console.warn("`dataset` argument is missing");
+      return null;
+    }
+    if (!args.xColName) {
+      console.warn("`xColName` argument is missing");
+      return null;
+    }
+    if (!args.yColName) {
+      console.warn("`yColName` argument is missing");
+      return null;
+    }
+    if (!args.timeseriesColName) {
+      console.warn("`timeseriesColName` argument is missing");
+      return null;
+    }
+    if (!args.timeseriesID) {
+      console.warn("`timeseriesID` argument is missing");
+      return null;
+    }
+    if (!args.solutionId) {
+      console.warn("`solutionId` argument is missing");
+      return null;
+    }
+
+    const solution = getSolutionById(
+      context.rootState.solutionModule,
+      args.solutionId
+    );
+    if (!solution.resultId) {
+      // no results ready to pull
+      return null;
+    }
+
+    return axios
+      .post(
+        `distil/timeseries-forecast/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}/${solution.resultId}`,
+        {}
+      )
+      .then(response => {
+        mutations.updatePredictedTimeseries(context, {
+          solutionId: args.solutionId,
+          id: args.timeseriesID,
+          timeseries: response.data.timeseries
+        });
+        mutations.updatePredictedForecast(context, {
+          solutionId: args.solutionId,
+          id: args.timeseriesID,
+          forecast: response.data.forecast
+        });
+      })
+      .catch(error => {
+        console.error(error);
+      });
   }
 };

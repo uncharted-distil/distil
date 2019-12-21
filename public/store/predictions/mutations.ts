@@ -1,59 +1,90 @@
-import _ from "lodash";
-import moment from "moment";
 import Vue from "vue";
-import { SolutionState, SolutionRequest } from "./index";
-import { Stream } from "../../util/ws";
-import { sortSolutionsByScore } from "./getters";
+import _ from "lodash";
+import { ResultsState } from "./index";
+import { VariableSummary, Extrema, TableData } from "../dataset/index";
+import { updateSummaries, removeSummary } from "../../util/data";
 
 export const mutations = {
-  updateSolutionRequests(state: SolutionState, request: SolutionRequest) {
-    const index = _.findIndex(state.requests, r => {
-      return r.requestId === request.requestId;
-    });
-    if (index === -1) {
-      // add if it does not exist already
-      state.requests.push(request);
-      // sort solutions
-      request.solutions.sort(sortSolutionsByScore);
-    } else {
-      const existing = state.requests[index];
-      // update progress
-      existing.progress = request.progress;
-      // update solutions
-      request.solutions.forEach(solution => {
-        const solutionIndex = _.findIndex(existing.solutions, s => {
-          return s.solutionId === solution.solutionId;
-        });
-        if (solutionIndex === -1) {
-          // add if it does not exist already
-          existing.solutions.push(solution);
-        } else {
-          // otherwise replace
-          if (
-            moment(solution.timestamp) >
-            moment(existing.solutions[solutionIndex].timestamp)
-          ) {
-            Vue.set(existing.solutions, solutionIndex, solution);
-          }
-        }
-      });
-      // sort solutions
-      existing.solutions.sort(sortSolutionsByScore);
-    }
+  // training / target
+
+  clearTrainingSummaries(state: ResultsState) {
+    state.trainingSummaries = [];
   },
 
-  clearSolutionRequests(state: SolutionState) {
-    state.requests = [];
+  clearTargetSummary(state: ResultsState) {
+    state.targetSummary = null;
   },
 
-  addRequestStream(
-    state: SolutionState,
-    args: { requestId: string; stream: Stream }
+  updateTrainingSummary(state: ResultsState, summary: VariableSummary) {
+    updateSummaries(summary, state.trainingSummaries);
+  },
+
+  removeTrainingSummary(state: ResultsState, summary: VariableSummary) {
+    removeSummary(summary, state.trainingSummaries);
+  },
+
+  updateTargetSummary(state: ResultsState, summary: VariableSummary) {
+    state.targetSummary = summary;
+  },
+
+  // sets the current result data into the store
+  setIncludedResultTableData(state: ResultsState, resultData: TableData) {
+    state.includedResultTableData = resultData;
+  },
+
+  // sets the current result data into the store
+  setExcludedResultTableData(state: ResultsState, resultData: TableData) {
+    state.excludedResultTableData = resultData;
+  },
+
+  // predicted
+
+  updatePredictedSummaries(state: ResultsState, summary: VariableSummary) {
+    updateSummaries(summary, state.predictedSummaries);
+  },
+
+  // residuals
+
+  updateResidualsSummaries(state: ResultsState, summary: VariableSummary) {
+    updateSummaries(summary, state.residualSummaries);
+  },
+
+  updateResidualsExtrema(state: ResultsState, extrema: Extrema) {
+    state.residualsExtrema = extrema;
+  },
+
+  clearResidualsExtrema(state: ResultsState) {
+    state.residualsExtrema = {
+      min: null,
+      max: null
+    };
+  },
+
+  // correctness
+
+  updateCorrectnessSummaries(state: ResultsState, summary: VariableSummary) {
+    updateSummaries(summary, state.correctnessSummaries);
+  },
+
+  // forecast
+
+  updatePredictedTimeseries(
+    state: ResultsState,
+    args: { solutionId: string; id: string; timeseries: number[][] }
   ) {
-    Vue.set(state.streams, args.requestId, args.stream);
+    if (!state.timeseries[args.solutionId]) {
+      Vue.set(state.timeseries, args.solutionId, {});
+    }
+    Vue.set(state.timeseries[args.solutionId], args.id, args.timeseries);
   },
 
-  removeRequestStream(state: SolutionState, args: { requestId: string }) {
-    Vue.delete(state.streams, args.requestId);
+  updatePredictedForecast(
+    state: ResultsState,
+    args: { solutionId: string; id: string; forecast: number[][] }
+  ) {
+    if (!state.forecasts[args.solutionId]) {
+      Vue.set(state.forecasts, args.solutionId, {});
+    }
+    Vue.set(state.forecasts[args.solutionId], args.id, args.forecast);
   }
 };
