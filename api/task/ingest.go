@@ -209,12 +209,12 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 
 	// store the updated metadata
 	if updated {
-		log.Infof("storing updated metadata")
-		err = metadata.WriteSchema(meta, schemaFile)
+		log.Infof("storing updated metadata to %s", originalSchemaFile)
+		err = metadata.WriteSchema(meta, originalSchemaFile, false)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to store updated metadata")
 		}
-		log.Infof("updated metadata written")
+		log.Infof("updated metadata written to %s", originalSchemaFile)
 	}
 
 	err = metadata.LoadImportance(meta, path.Join(datasetDir, config.RankingOutputPathRelative))
