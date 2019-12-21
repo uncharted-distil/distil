@@ -21,6 +21,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx"
 	"github.com/pkg/errors"
@@ -70,9 +71,30 @@ func (s *Storage) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
 			var y float64
 			err := rows.Scan(&x, &y)
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "failed to parse row result")
 			}
 			points = append(points, []float64{x, y})
+		}
+	}
+
+	sort.Slice(points, func(i, j int) bool {
+		return points[i][0] < points[j][0]
+	})
+
+	return points, nil
+}
+
+func (s *Storage) parseDateTimeTimeseries(rows *pgx.Rows) ([][]float64, error) {
+	var points [][]float64
+	if rows != nil {
+		for rows.Next() {
+			var time time.Time
+			var value float64
+			err := rows.Scan(&time, &value)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to parse row result")
+			}
+			points = append(points, []float64{float64(time.Unix()), value})
 		}
 	}
 
@@ -164,6 +186,13 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 		defer res.Close()
 	}
 
+	xColVariable, err := s.metadata.FetchVariable(dataset, xColName)
+	if err != nil {
+		return nil, err
+	}
+	if xColVariable.Type == model.DateTimeType {
+		return s.parseDateTimeTimeseries(res)
+	}
 	return s.parseTimeseries(res)
 }
 
@@ -199,6 +228,15 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 		defer res.Close()
 	}
 
+	// Fetch the timeseries data point.  They are stored either as an int value
+	// or as postgres Timestamp vlue.
+	xColVariable, err := s.metadata.FetchVariable(dataset, xColName)
+	if err != nil {
+		return nil, err
+	}
+	if xColVariable.Type == model.DateTimeType {
+		return s.parseDateTimeTimeseries(res)
+	}
 	return s.parseTimeseries(res)
 }
 
@@ -238,11 +276,21 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		}
 	}
 
-	timelineField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType)
-
-	timeline, err = timelineField.fetchHistogram(nil, invert, api.MaxNumBuckets)
-	if err != nil {
-		return nil, err
+	// Handle timeseries that use a timestamp/int as their time value, or those that use a date time.
+	if f.XColType == model.DateTimeType {
+		dateTimeField := NewDateTimeField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType)
+		timeline, err = dateTimeField.fetchHistogram(nil, invert, api.MaxNumBuckets)
+		if err != nil {
+			return nil, err
+		}
+	} else if f.XColType == model.TimestampType || f.XColType == model.IntegerType {
+		timestampField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType)
+		timeline, err = timestampField.fetchHistogram(nil, invert, api.MaxNumBuckets)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, errors.Errorf("unsupported timeseries field variable type %s:%s", f.XCol, f.XColType)
 	}
 
 	return &api.VariableSummary{
