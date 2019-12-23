@@ -18,6 +18,7 @@ package routes
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
@@ -27,10 +28,13 @@ import (
 	"github.com/uncharted-distil/distil/api/util/json"
 )
 
+const (
+	defaultSeparator = "_"
+)
+
 // GroupingHandler generates a route handler that adds a grouping.
 func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")
 
@@ -47,6 +51,7 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 			return
 		}
 
+		// extract the grouping info
 		grouping := model.Grouping{}
 		err = json.MapToStruct(&grouping, g)
 		if err != nil {
@@ -66,8 +71,12 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 		}
 
 		if model.IsTimeSeries(grouping.Type) {
-			// ensure properties are typed correctly
+			if err := composeVariable(meta, data, dataset, grouping.IDCol, grouping.SubIDs); err != nil {
+				handleError(w, errors.Wrapf(err, "unable to create new variable %s", grouping.IDCol))
+				return
+			}
 
+			// ensure properties are typed correctly
 			storageName := model.NormalizeDatasetID(dataset)
 
 			// ensure id is timeseries
@@ -167,6 +176,73 @@ func RemoveGroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataSt
 			return
 		}
 	}
+}
+
+func composeVariable(metaStorage api.MetadataStorage, dataStorage api.DataStorage, dataset string, composedVarName string, sourceVarNames []string) error {
+	composeExists, err := metaStorage.DoesVariableExist(dataset, composedVarName)
+	if err != nil {
+		return err
+	}
+
+	storageName := model.NormalizeDatasetID(dataset)
+	if !composeExists {
+		// create the new field
+		err = metaStorage.AddVariable(dataset, composedVarName, "key", model.StringType, "grouping")
+		if err != nil {
+			return err
+		}
+		err = dataStorage.AddVariable(dataset, storageName, composedVarName, model.StringType)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Fetch data using the source names as the filter
+	filter := &api.FilterParams{
+		Variables: sourceVarNames,
+	}
+	rawData, err := dataStorage.FetchData(dataset, storageName, filter, false)
+	if err != nil {
+		return err
+	}
+
+	// Create a map of the retreived fields to column number.  Store d3mIndex since it needs to be directly referenced
+	// further along.
+	d3mIndexFieldindex := -1
+	colNameToIdx := make(map[string]int)
+	for i, c := range rawData.Columns {
+		if c.Label == model.D3MIndexName {
+			d3mIndexFieldindex = i
+		} else {
+			colNameToIdx[c.Label] = i
+		}
+	}
+
+	// Loop over the fetched data, composing each column value into a single new column value using the
+	// separator.
+	composedData := make(map[string]string)
+	for _, r := range rawData.Values {
+		// create the hash from the specified columns
+		composed := createComposedFields(r, sourceVarNames, colNameToIdx, defaultSeparator)
+		composedData[fmt.Sprintf("%v", r[d3mIndexFieldindex].Value)] = composed
+	}
+
+	// Save the new column
+	err = dataStorage.UpdateVariableBatch(storageName, composedVarName, composedData)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+//
+func createComposedFields(data []*api.FilteredDataValue, fields []string, mappedFields map[string]int, separator string) string {
+	dataToJoin := make([]string, len(fields))
+	for i, field := range fields {
+		dataToJoin[i] = fmt.Sprintf("%v", data[mappedFields[field]].Value)
+	}
+	return strings.Join(dataToJoin, separator)
 }
 
 func setDataType(esStorage api.MetadataStorage, pgStorage api.DataStorage,
