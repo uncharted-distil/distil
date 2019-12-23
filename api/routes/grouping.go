@@ -71,32 +71,30 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 		}
 
 		if model.IsTimeSeries(grouping.Type) {
+			// Create a new column for the time series key.
 			if err := composeVariable(meta, data, dataset, grouping.IDCol, grouping.SubIDs); err != nil {
 				handleError(w, errors.Wrapf(err, "unable to create new variable %s", grouping.IDCol))
 				return
 			}
 
-			// ensure properties are typed correctly
-			storageName := model.NormalizeDatasetID(dataset)
+			// Set the name of the expected cluster column - it doesn't necessarily exist.
+			grouping.Properties.ClusterCol = model.ClusterVarPrefix + grouping.IDCol
 
-			// ensure id is timeseries
-			err = setDataType(meta, data, dataset, storageName, grouping.IDCol, model.TimeSeriesType)
+			// Create a new grouped variable for the time series.
+			err = meta.AddGroupedVariable(dataset, grouping.IDCol, "Count", model.TimeSeriesType, "timeseries", grouping)
 			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to update the data type in storage"))
+				handleError(w, err)
 				return
 			}
 
-			// For set the name of the expected cluster column - it doesn't necessarily exist.
-			grouping.Properties.ClusterCol = fmt.Sprintf("%s%s", model.ClusterVarPrefix, grouping.IDCol)
 		} else if model.IsGeoCoordinate(grouping.Type) {
-			// make the lat column the id col for now since id col is what holds the info.
-			grouping.IDCol = grouping.Properties.XCol
-		}
-
-		err = meta.AddGrouping(dataset, grouping)
-		if err != nil {
-			handleError(w, err)
-			return
+			// No key required in this case.
+			groupingVarName := strings.Join([]string{grouping.Properties.XCol, grouping.Properties.YCol}, defaultSeparator)
+			err = meta.AddGroupedVariable(dataset, groupingVarName, "Geocoordinate", model.GeoCoordinateType, "geocoordinate", grouping)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 		}
 
 		// marshal data
@@ -179,22 +177,10 @@ func RemoveGroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataSt
 }
 
 func composeVariable(metaStorage api.MetadataStorage, dataStorage api.DataStorage, dataset string, composedVarName string, sourceVarNames []string) error {
-	composeExists, err := metaStorage.DoesVariableExist(dataset, composedVarName)
+	storageName := model.NormalizeDatasetID(dataset)
+	err := dataStorage.AddVariable(dataset, storageName, composedVarName, model.StringType)
 	if err != nil {
 		return err
-	}
-
-	storageName := model.NormalizeDatasetID(dataset)
-	if !composeExists {
-		// create the new field
-		err = metaStorage.AddVariable(dataset, composedVarName, "key", model.StringType, "grouping")
-		if err != nil {
-			return err
-		}
-		err = dataStorage.AddVariable(dataset, storageName, composedVarName, model.StringType)
-		if err != nil {
-			return err
-		}
 	}
 
 	// Fetch data using the source names as the filter

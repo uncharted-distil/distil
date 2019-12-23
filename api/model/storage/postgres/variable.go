@@ -195,7 +195,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 				timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
 
 		} else if model.IsGeoCoordinate(variable.Grouping.Type) {
-			field = NewCoordinateField(variable.Grouping.IDCol, s, dataset, storageName, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol, variable.Grouping.IDCol, variable.Grouping.Type)
+			field = NewCoordinateField(variable.Name, s, dataset, storageName, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol, variable.DisplayName, variable.Grouping.Type)
 		} else {
 			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.IDCol, variable.Grouping.Type)
 		}

@@ -337,15 +337,7 @@ export default Vue.extend({
     },
     submitGrouping() {
       // create the list of IDs that we're going to be grouping
-      const hidden = {
-        [this.xCol]: true,
-        [this.yCol]: true
-      };
-
       const ids = this.idCols.map(c => c.value).filter(v => v);
-      ids.forEach((id, index) => {
-        hidden[id] = this.hideIdCol[index];
-      });
 
       // generate the grouping structure that describes how the vars will be grouped
       const grouping = {
@@ -353,7 +345,7 @@ export default Vue.extend({
         dataset: this.dataset,
         idCol: getComposedVariableKey(ids),
         subIds: ids,
-        hidden: Object.keys(hidden).filter(v => hidden[v]),
+        hidden: [],
         properties: {
           xCol: this.xCol,
           yCol: this.yCol

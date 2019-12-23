@@ -359,10 +359,17 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	return s.updateVariables(dataset, vars)
 }
 
-// AddGrouping adds a grouping to the metadata.
-func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error {
+// AddGroupedVariable adds a grouping to the metadata.
+func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.Grouping) error {
 
-	query := elastic.NewMatchQuery("_id", datasetName)
+	// Create a new grouping variable
+	err := s.AddVariable(dataset, varName, varDisplayName, varType, varRole)
+	if err != nil {
+		return err
+	}
+
+	// Add the grouping related info to it.
+	query := elastic.NewMatchQuery("_id", dataset)
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
@@ -393,7 +400,7 @@ func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error
 	found := false
 	for _, variable := range variables {
 		name, ok := json.String(variable, "colName")
-		if ok && name == grouping.IDCol {
+		if ok && name == varName {
 			variable[model.VarGroupingField] = json.StructToMap(grouping)
 			found = true
 		}
@@ -406,7 +413,7 @@ func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error
 	_, err = s.client.Index().
 		Index(s.index).
 		Type(metadataType).
-		Id(datasetName).
+		Id(dataset).
 		BodyJson(source).
 		Refresh("true").
 		Do(context.Background())
