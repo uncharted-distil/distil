@@ -64,7 +64,7 @@ func Predict(meta *model.Metadata, dataset string, solutionID string, fittedSolu
 	meta.StorageName = model.NormalizeDatasetID(dataset)
 	meta.DatasetFolder = path.Base(datasetPath)
 	schemaPath := path.Join(datasetPath, compute.D3MDataSchema)
-	err = metadata.WriteSchema(meta, schemaPath)
+	err = metadata.WriteSchema(meta, schemaPath, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to update dataset doc")
 	}
@@ -79,7 +79,7 @@ func Predict(meta *model.Metadata, dataset string, solutionID string, fittedSolu
 
 	// the dataset id needs to match the original dataset id for TA2 to be able to use the model
 	meta.ID = sourceDatasetID
-	err = metadata.WriteSchema(meta, schemaPath)
+	err = metadata.WriteSchema(meta, schemaPath, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to update dataset doc")
 	}

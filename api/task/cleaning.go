@@ -97,7 +97,7 @@ func Clean(datasetSource metadata.DatasetSource, schemaFile string, index string
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = metadata.WriteSchema(meta, outputPath.outputSchema)
+	err = metadata.WriteSchema(meta, outputPath.outputSchema, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to store cluster schema")
 	}
