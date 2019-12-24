@@ -1,19 +1,19 @@
 import { Module } from "vuex";
-import { state, ResultsState } from "./index";
+import { state, PredictionState } from "./index";
 import { getters as moduleGetters } from "./getters";
 import { actions as moduleActions } from "./actions";
 import { mutations as moduleMutations } from "./mutations";
 import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
 
-export const resultsModule: Module<ResultsState, DistilState> = {
+export const predictionsModule: Module<PredictionState, DistilState> = {
   getters: moduleGetters,
   actions: moduleActions,
   mutations: moduleMutations,
   state: state
 };
 
-const { commit, read, dispatch } = getStoreAccessors<ResultsState, DistilState>(
+const { commit, read, dispatch } = getStoreAccessors<PredictionState, DistilState>(
   null
 );
 
@@ -61,13 +61,13 @@ export const actions = {
   fetchTrainingSummaries: dispatch(moduleActions.fetchTrainingSummaries),
   fetchTargetSummary: dispatch(moduleActions.fetchTargetSummary),
   // result
-  fetchIncludedResultTableData: dispatch(
-    moduleActions.fetchIncludedResultTableData
+  fetchIncludedPredictionTableData: dispatch(
+    moduleActions.fetchIncludedPredictionTableData
   ),
-  fetchExcludedResultTableData: dispatch(
-    moduleActions.fetchExcludedResultTableData
+  fetchExcludedPredictionTableData: dispatch(
+    moduleActions.fetchExcludedPredictionTableData
   ),
-  fetchResultTableData: dispatch(moduleActions.fetchResultTableData),
+  fetchPredictionTableData: dispatch(moduleActions.fetchPredictionTableData),
   // predicted
   fetchPredictedSummary: dispatch(moduleActions.fetchPredictedSummary),
   fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),

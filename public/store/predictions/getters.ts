@@ -5,109 +5,109 @@ import {
   TableRow,
   TableColumn
 } from "../dataset/index";
-import { ResultsState } from "./index";
+import { PredictionState } from "./index";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
 import { Dictionary } from "../../util/dict";
 
 export const getters = {
   // results
 
-  getTrainingSummaries(state: ResultsState): VariableSummary[] {
+  getTrainingSummaries(state: PredictionState): VariableSummary[] {
     return state.trainingSummaries;
   },
 
-  getTargetSummary(state: ResultsState): VariableSummary {
+  getTargetSummary(state: PredictionState): VariableSummary {
     return state.targetSummary;
   },
 
-  getResultDataNumRows(state: ResultsState): number {
+  getResultDataNumRows(state: PredictionState): number {
     return state.includedResultTableData
       ? state.includedResultTableData.numRows
       : 0;
   },
 
-  getFittedSolutionId (state: ResultsState): string {
+  getFittedSolutionId (state: PredictionState): string {
     return state.includedResultTableData.fittedSolutionId;
   },
 
-  getProduceRequestId (state: ResultsState): string {
+  getProduceRequestId (state: PredictionState): string {
     return state.includedResultTableData.produceRequestId;
   },
 
-  hasIncludedResultTableData(state: ResultsState): boolean {
+  hasIncludedResultTableData(state: PredictionState): boolean {
     return !!state.includedResultTableData;
   },
 
-  getIncludedResultTableData(state: ResultsState): TableData {
+  getIncludedResultTableData(state: PredictionState): TableData {
     return state.includedResultTableData;
   },
 
   getIncludedResultTableDataItems(
-    state: ResultsState,
+    state: PredictionState,
     getters: any
   ): TableRow[] {
     return getTableDataItems(state.includedResultTableData);
   },
 
   getIncludedResultTableDataFields(
-    state: ResultsState
+    state: PredictionState
   ): Dictionary<TableColumn> {
     return getTableDataFields(state.includedResultTableData);
   },
 
-  hasExcludedResultTableData(state: ResultsState): boolean {
+  hasExcludedResultTableData(state: PredictionState): boolean {
     return !!state.excludedResultTableData;
   },
 
-  getExcludedResultTableData(state: ResultsState): TableData {
+  getExcludedResultTableData(state: PredictionState): TableData {
     return state.excludedResultTableData;
   },
 
   getExcludedResultTableDataItems(
-    state: ResultsState,
+    state: PredictionState,
     getters: any
   ): TableRow[] {
     return getTableDataItems(state.excludedResultTableData);
   },
 
   getExcludedResultTableDataFields(
-    state: ResultsState
+    state: PredictionState
   ): Dictionary<TableColumn> {
     return getTableDataFields(state.excludedResultTableData);
   },
 
   // predicted
 
-  getPredictedSummaries(state: ResultsState): VariableSummary[] {
+  getPredictedSummaries(state: PredictionState): VariableSummary[] {
     return state.predictedSummaries;
   },
 
   // residual
 
-  getResidualsSummaries(state: ResultsState): VariableSummary[] {
+  getResidualsSummaries(state: PredictionState): VariableSummary[] {
     return state.residualSummaries;
   },
 
-  getResidualsExtrema(state: ResultsState): Extrema {
+  getResidualsExtrema(state: PredictionState): Extrema {
     return state.residualsExtrema;
   },
 
   // correctness
 
-  getCorrectnessSummaries(state: ResultsState): VariableSummary[] {
+  getCorrectnessSummaries(state: PredictionState): VariableSummary[] {
     return state.correctnessSummaries;
   },
 
   // forecasts
 
   getPredictedTimeseries(
-    state: ResultsState
+    state: PredictionState
   ): Dictionary<Dictionary<number[][]>> {
     return state.timeseries;
   },
 
   getPredictedForecasts(
-    state: ResultsState
+    state: PredictionState
   ): Dictionary<Dictionary<number[][]>> {
     return state.forecasts;
   }

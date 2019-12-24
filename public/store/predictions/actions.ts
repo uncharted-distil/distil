@@ -9,7 +9,7 @@ import {
 } from "../../util/solutions";
 import { Variable, Highlight } from "../dataset/index";
 import { mutations } from "./module";
-import { ResultsState } from "./index";
+import { PredictionState } from "./index";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import {
   fetchSolutionResultSummary,
@@ -22,12 +22,12 @@ import {
 import { getters as resultGetters } from "../results/module";
 import { getters as dataGetters } from "../dataset/module";
 
-export type ResultsContext = ActionContext<ResultsState, DistilState>;
+export type PredictionContext = ActionContext<PredictionState, DistilState>;
 
 export const actions = {
   // fetches variable summary data for the given dataset and variables
   fetchTrainingSummaries(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       training: Variable[];
@@ -102,7 +102,7 @@ export const actions = {
   },
 
   fetchTrainingSummary(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       variable: Variable;
@@ -193,7 +193,7 @@ export const actions = {
   },
 
   fetchTargetSummary(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       target: string;
@@ -298,9 +298,9 @@ export const actions = {
       });
   },
 
-  fetchIncludedResultTableData(
-    context: ResultsContext,
-    args: { solutionId: string; dataset: string; highlight: Highlight }
+  fetchIncludedPredictionTableData(
+    context: PredictionContext,
+    args: { solutionId: string; dataset: string; highlight: Highlight; produceRequestId: string  }
   ) {
     const solution = getSolutionById(
       context.rootState.solutionModule,
@@ -320,9 +320,7 @@ export const actions = {
 
     return axios
       .post(
-        `/distil/results/${args.dataset}/${encodeURIComponent(
-          args.solutionId
-        )}`,
+        `distil/prediction-results/${args.dataset}/${encodeURIComponent(args.solutionId)}/${encodeURIComponent(args.produceRequestId)}`,
         filterParams
       )
       .then(response => {
@@ -336,9 +334,9 @@ export const actions = {
       });
   },
 
-  fetchExcludedResultTableData(
-    context: ResultsContext,
-    args: { solutionId: string; dataset: string; highlight: Highlight }
+  fetchExcludedPredictionTableData(
+    context: PredictionContext,
+    args: { solutionId: string; dataset: string; highlight: Highlight; produceRequestId: string  }
   ) {
     const solution = getSolutionById(
       context.rootState.solutionModule,
@@ -361,12 +359,10 @@ export const actions = {
     );
 
     return axios
-      .post(
-        `/distil/results/${args.dataset}/${encodeURIComponent(
-          args.solutionId
-        )}`,
-        filterParams
-      )
+    .post(
+      `distil/prediction-results/${args.dataset}/${encodeURIComponent(args.solutionId)}/${encodeURIComponent(args.produceRequestId)}`,
+      filterParams
+    )
       .then(response => {
         mutations.setExcludedResultTableData(context, response.data);
       })
@@ -378,26 +374,28 @@ export const actions = {
       });
   },
 
-  fetchResultTableData(
-    context: ResultsContext,
-    args: { solutionId: string; dataset: string; highlight: Highlight }
+  fetchPredictionTableData(
+    context: PredictionContext,
+    args: { solutionId: string; dataset: string; highlight: Highlight; produceRequestId: string }
   ) {
     return Promise.all([
-      actions.fetchIncludedResultTableData(context, {
+      actions.fetchIncludedPredictionTableData(context, {
         dataset: args.dataset,
         solutionId: args.solutionId,
-        highlight: args.highlight
+        highlight: args.highlight,
+        produceRequestId: args.produceRequestId
       }),
-      actions.fetchExcludedResultTableData(context, {
+      actions.fetchExcludedPredictionTableData(context, {
         dataset: args.dataset,
         solutionId: args.solutionId,
-        highlight: args.highlight
+        highlight: args.highlight,
+        produceRequestId: args.produceRequestId
       })
     ]);
   },
 
   fetchResidualsExtrema(
-    context: ResultsContext,
+    context: PredictionContext,
     args: { dataset: string; target: string; solutionId: string }
   ) {
     if (!args.dataset) {
@@ -430,7 +428,7 @@ export const actions = {
 
   // fetches result summary for a given solution id.
   fetchPredictedSummary(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       target: string;
@@ -511,7 +509,7 @@ export const actions = {
 
   // fetches result summaries for a given solution create request
   fetchPredictedSummaries(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       target: string;
@@ -541,7 +539,7 @@ export const actions = {
 
   // fetches result summary for a given solution id.
   fetchResidualsSummary(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       target: string;
@@ -596,7 +594,7 @@ export const actions = {
 
   // fetches result summaries for a given solution create request
   fetchResidualsSummaries(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       target: string;
@@ -626,7 +624,7 @@ export const actions = {
 
   // fetches result summary for a given pipeline id.
   fetchCorrectnessSummary(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       target: string;
@@ -677,7 +675,7 @@ export const actions = {
 
   // fetches result summaries for a given pipeline create request
   fetchCorrectnessSummaries(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       target: string;
@@ -706,7 +704,7 @@ export const actions = {
   },
 
   fetchForecastedTimeseries(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       xColName: string;

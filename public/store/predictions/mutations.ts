@@ -1,59 +1,59 @@
 import Vue from "vue";
 import _ from "lodash";
-import { ResultsState } from "./index";
+import { PredictionState } from "./index";
 import { VariableSummary, Extrema, TableData } from "../dataset/index";
 import { updateSummaries, removeSummary } from "../../util/data";
 
 export const mutations = {
   // training / target
 
-  clearTrainingSummaries(state: ResultsState) {
+  clearTrainingSummaries(state: PredictionState) {
     state.trainingSummaries = [];
   },
 
-  clearTargetSummary(state: ResultsState) {
+  clearTargetSummary(state: PredictionState) {
     state.targetSummary = null;
   },
 
-  updateTrainingSummary(state: ResultsState, summary: VariableSummary) {
+  updateTrainingSummary(state: PredictionState, summary: VariableSummary) {
     updateSummaries(summary, state.trainingSummaries);
   },
 
-  removeTrainingSummary(state: ResultsState, summary: VariableSummary) {
+  removeTrainingSummary(state: PredictionState, summary: VariableSummary) {
     removeSummary(summary, state.trainingSummaries);
   },
 
-  updateTargetSummary(state: ResultsState, summary: VariableSummary) {
+  updateTargetSummary(state: PredictionState, summary: VariableSummary) {
     state.targetSummary = summary;
   },
 
   // sets the current result data into the store
-  setIncludedResultTableData(state: ResultsState, resultData: TableData) {
+  setIncludedResultTableData(state: PredictionState, resultData: TableData) {
     state.includedResultTableData = resultData;
   },
 
   // sets the current result data into the store
-  setExcludedResultTableData(state: ResultsState, resultData: TableData) {
+  setExcludedResultTableData(state: PredictionState, resultData: TableData) {
     state.excludedResultTableData = resultData;
   },
 
   // predicted
 
-  updatePredictedSummaries(state: ResultsState, summary: VariableSummary) {
+  updatePredictedSummaries(state: PredictionState, summary: VariableSummary) {
     updateSummaries(summary, state.predictedSummaries);
   },
 
   // residuals
 
-  updateResidualsSummaries(state: ResultsState, summary: VariableSummary) {
+  updateResidualsSummaries(state: PredictionState, summary: VariableSummary) {
     updateSummaries(summary, state.residualSummaries);
   },
 
-  updateResidualsExtrema(state: ResultsState, extrema: Extrema) {
+  updateResidualsExtrema(state: PredictionState, extrema: Extrema) {
     state.residualsExtrema = extrema;
   },
 
-  clearResidualsExtrema(state: ResultsState) {
+  clearResidualsExtrema(state: PredictionState) {
     state.residualsExtrema = {
       min: null,
       max: null
@@ -62,14 +62,14 @@ export const mutations = {
 
   // correctness
 
-  updateCorrectnessSummaries(state: ResultsState, summary: VariableSummary) {
+  updateCorrectnessSummaries(state: PredictionState, summary: VariableSummary) {
     updateSummaries(summary, state.correctnessSummaries);
   },
 
   // forecast
 
   updatePredictedTimeseries(
-    state: ResultsState,
+    state: PredictionState,
     args: { solutionId: string; id: string; timeseries: number[][] }
   ) {
     if (!state.timeseries[args.solutionId]) {
@@ -79,7 +79,7 @@ export const mutations = {
   },
 
   updatePredictedForecast(
-    state: ResultsState,
+    state: PredictionState,
     args: { solutionId: string; id: string; forecast: number[][] }
   ) {
     if (!state.forecasts[args.solutionId]) {

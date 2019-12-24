@@ -444,11 +444,12 @@ export const actions = {
     const trainingVariables =
       context.getters.getActiveSolutionTrainingVariables;
     const highlight = context.getters.getDecodedHighlight;
-
-    predictionActions.fetchResultTableData(store, {
+    const produceRequestId = context.getters.getRouteProduceRequestId;
+    predictionActions.fetchPredictionTableData(store, {
       dataset: dataset,
       solutionId: solutionId,
-      highlight: highlight
+      highlight: highlight,
+      produceRequestId: produceRequestId
     });
     predictionActions.fetchTargetSummary(store, {
       dataset: dataset,

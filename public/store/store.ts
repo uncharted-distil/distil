@@ -8,6 +8,8 @@ import { resultsModule } from "./results/module";
 import { ResultsState } from "./results/index";
 import { solutionModule } from "./solutions/module";
 import { SolutionState } from "./solutions/index";
+import { predictionsModule } from "./predictions/module";
+import { PredictionState } from "./predictions/index";
 import { viewModule } from "./view/module";
 import { ViewState } from "./view/index";
 import { appModule } from "./app/module";
@@ -20,6 +22,7 @@ export interface DistilState {
   datasetModule: DatasetState;
   solutionModule: SolutionState;
   resultsModule: ResultsState;
+  predictionsModule: PredictionState;
   viewModule: ViewState;
   appModule: AppState;
 }
@@ -30,6 +33,7 @@ const store = new Store<DistilState>({
     datasetModule,
     solutionModule,
     resultsModule,
+    predictionsModule,
     viewModule,
     appModule
   },

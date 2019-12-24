@@ -1,7 +1,7 @@
 import { Dictionary } from "../../util/dict";
 import { VariableSummary, Extrema, TableData } from "../dataset/index";
 
-export interface ResultsState {
+export interface PredictionState {
   // table data
   includedResultTableData: TableData;
   excludedResultTableData: TableData;
@@ -22,7 +22,7 @@ export interface ResultsState {
   produceRequestId: string;
 }
 
-export const state: ResultsState = {
+export const state: PredictionState = {
   // table data
   includedResultTableData: null,
   excludedResultTableData: null,
