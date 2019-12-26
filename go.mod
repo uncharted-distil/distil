@@ -25,13 +25,13 @@ require (
 	github.com/shopspring/decimal v0.0.0-20191009025716-f1972eb1d1f5 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/uncharted-distil/distil-compute v0.0.0-20191219155854-7e71c22c816d
-	github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191223172758-2d0b32f14622
+	github.com/uncharted-distil/distil-compute v0.0.0-20191224135746-c586c6cec9ee
+	github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191224163118-ab662099e655
 	github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48
 	github.com/zenazn/goji v0.9.0
 	goji.io/v3 v3.0.0
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
 	google.golang.org/grpc v1.25.1
-	gopkg.in/olivere/elastic.v5 v5.0.82
+	gopkg.in/olivere/elastic.v5 v5.0.83
 )

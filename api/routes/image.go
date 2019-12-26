@@ -21,7 +21,7 @@ import (
 
 	"goji.io/v3/pat"
 
-	api "github.com/uncharted-distil/distil-ingest/pkg/metadata"
+	api "github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/distil/api/model"
 )

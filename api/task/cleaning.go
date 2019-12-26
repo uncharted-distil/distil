@@ -22,8 +22,8 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
-	"github.com/uncharted-distil/distil-ingest/pkg/metadata"
 
 	"github.com/uncharted-distil/distil/api/util"
 )
