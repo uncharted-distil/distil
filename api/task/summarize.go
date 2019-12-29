@@ -22,13 +22,17 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil-ingest/pkg/rest"
 	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 	"github.com/uncharted-distil/distil/api/util"
 )
+
+// SummaryResult represents a summary result.
+type SummaryResult struct {
+	Summary string `json:"summary"`
+}
 
 // Summarize will summarize the dataset using a primitive.
 func Summarize(schemaPath string, index string, dataset string, config *IngestTaskConfig) error {
@@ -63,7 +67,7 @@ func Summarize(schemaPath string, index string, dataset string, config *IngestTa
 		}
 	}
 
-	sum := &rest.SummaryResult{
+	sum := &SummaryResult{
 		Summary: strings.Join(tokens, ", "),
 	}
 

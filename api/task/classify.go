@@ -23,7 +23,6 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil-ingest/pkg/rest"
 	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/model"
@@ -36,6 +35,13 @@ const (
 	defaultEmptyType = model.StringType
 	defaultEmptyProb = "1.0"
 )
+
+// ClassificationResult represents a classification result.
+type ClassificationResult struct {
+	Labels        [][]string  `json:"labels"`
+	Probabilities [][]float64 `json:"label_probabilities"`
+	Path          string      `json:"path"`
+}
 
 func castTypeArray(in []interface{}) ([]string, error) {
 	strArr := make([]string, 0)
@@ -131,7 +137,7 @@ func Classify(schemaPath string, index string, dataset string, config *IngestTas
 			probabilities[colIndex] = probs
 		}
 	}
-	classification := &rest.ClassificationResult{
+	classification := &ClassificationResult{
 		Path:          datasetURI,
 		Labels:        labels,
 		Probabilities: probabilities,

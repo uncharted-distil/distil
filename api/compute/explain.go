@@ -22,11 +22,11 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
-	"github.com/uncharted-distil/distil-ingest/pkg/metadata"
 
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
