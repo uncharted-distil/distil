@@ -79,6 +79,45 @@ type IngestTaskConfig struct {
 	HardFail                           bool
 }
 
+// NewConfig creates an ingest config based on a distil config.
+func NewConfig(config env.Config) *IngestTaskConfig {
+	return &IngestTaskConfig{
+		HasHeader:                          true,
+		ClusteringOutputDataRelative:       config.ClusteringOutputDataRelative,
+		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,
+		ClusteringEnabled:                  config.ClusteringEnabled,
+		FeaturizationOutputDataRelative:    config.FeaturizationOutputDataRelative,
+		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
+		FormatOutputDataRelative:           config.FormatOutputDataRelative,
+		FormatOutputSchemaRelative:         config.FormatOutputSchemaRelative,
+		CleanOutputDataRelative:            config.CleanOutputDataRelative,
+		CleanOutputSchemaRelative:          config.CleanOutputSchemaRelative,
+		GeocodingOutputDataRelative:        config.GeocodingOutputDataRelative,
+		GeocodingOutputSchemaRelative:      config.GeocodingOutputSchemaRelative,
+		GeocodingEnabled:                   config.GeocodingEnabled,
+		MergedOutputPathRelative:           config.MergedOutputDataPath,
+		MergedOutputSchemaPathRelative:     config.MergedOutputSchemaPath,
+		SchemaPathRelative:                 config.SchemaPath,
+		ClassificationOutputPathRelative:   config.ClassificationOutputPath,
+		ClassificationProbabilityThreshold: config.ClassificationProbabilityThreshold,
+		ClassificationEnabled:              config.ClassificationEnabled,
+		RankingOutputPathRelative:          config.RankingOutputPath,
+		RankingRowLimit:                    config.RankingRowLimit,
+		DatabasePassword:                   config.PostgresPassword,
+		DatabaseUser:                       config.PostgresUser,
+		Database:                           config.PostgresDatabase,
+		DatabaseHost:                       config.PostgresHost,
+		DatabasePort:                       config.PostgresPort,
+		SummaryOutputPathRelative:          config.SummaryPath,
+		SummaryMachineOutputPathRelative:   config.SummaryMachinePath,
+		SummaryEnabled:                     config.SummaryEnabled,
+		ESEndpoint:                         config.ElasticEndpoint,
+		ESTimeout:                          config.ElasticTimeout,
+		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
+		HardFail:                           config.IngestHardFail,
+	}
+}
+
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor,
 	index string, dataset string, origins []*model.DatasetOrigin, config *IngestTaskConfig) error {
