@@ -63,7 +63,7 @@ func CreateDataset(dataset string, csvData []byte, outputPath string, config *In
 	}
 
 	// format the dataset into a D3M format
-	formattedPath, err := Format(metadata.Contrib, schemaPath, config)
+	formattedPath, err := Format(metadata.Contrib, schemaPath, dataset, config)
 	if err != nil {
 		return "", err
 	}
@@ -217,7 +217,7 @@ func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, confi
 	}
 
 	// format the dataset into a D3M format
-	formattedPath, err := Format(metadata.Contrib, schemaPath, config)
+	formattedPath, err := Format(metadata.Contrib, schemaPath, meta.Name, config)
 	if err != nil {
 		return "", err
 	}
