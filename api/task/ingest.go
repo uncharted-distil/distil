@@ -246,55 +246,9 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string,
 	dataset string, source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig, checkMatch bool) (string, error) {
-	datasetDir := path.Dir(schemaFile)
-	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative), true)
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, nil, config, true)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to load original schema file")
-	}
-	meta.DatasetFolder = path.Base(path.Dir(originalSchemaFile))
-	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
-	log.Infof("using %s as data directory (built from %s and %s)", dataDir, datasetDir, meta.DataResources[0].ResPath)
-
-	// check and fix metadata issues
-	updated, err := metadata.VerifyAndUpdate(meta, dataDir)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to fix metadata")
-	}
-
-	// store the updated metadata
-	if updated {
-		log.Infof("storing updated metadata to %s", originalSchemaFile)
-		err = metadata.WriteSchema(meta, originalSchemaFile, false)
-		if err != nil {
-			return "", errors.Wrap(err, "unable to store updated metadata")
-		}
-		log.Infof("updated metadata written to %s", originalSchemaFile)
-	}
-
-	err = metadata.LoadImportance(meta, path.Join(datasetDir, config.RankingOutputPathRelative))
-	if err != nil {
-		log.Warnf("unable to load importance from file: %v", err)
-	}
-
-	// load stats
-	err = metadata.LoadDatasetStats(meta, dataDir)
-	if err != nil {
-		log.Warnf("unable to load stats: %v", err)
-	}
-
-	// load summary
-	metadata.LoadSummaryFromDescription(meta, path.Join(datasetDir, config.SummaryOutputPathRelative))
-
-	// load machine summary
-	err = metadata.LoadSummaryMachine(meta, path.Join(datasetDir, config.SummaryMachineOutputPathRelative))
-	// NOTE: For now ignore summary errors!
-	if err != nil {
-		log.Warnf("unable to load machine summary: %v", err)
-	}
-
-	// set the origin
-	if origins != nil {
-		meta.DatasetOrigins = origins
+		return "", err
 	}
 
 	// create elasticsearch client
@@ -340,6 +294,40 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// ingest the metadata
+	_, err = IngestMetadata(originalSchemaFile, schemaFile, index, dataset, source, origins, config, false)
+	if err != nil {
+		return "", err
+	}
+
+	// ingest the data
+	err = IngestPostgres(originalSchemaFile, schemaFile, index, dataset, config, false)
+	if err != nil {
+		return "", err
+	}
+
+	return meta.ID, nil
+}
+
+// IngestMetadata ingests the data to ES.
+func IngestMetadata(originalSchemaFile string, schemaFile string, index string, dataset string,
+	source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig, verifyMetadata bool) (string, error) {
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, origins, config, verifyMetadata)
+	if err != nil {
+		return "", err
+	}
+
+	// create elasticsearch client
+	elasticClient, err := elastic.NewClient(
+		elastic.SetURL(config.ESEndpoint),
+		elastic.SetHttpClient(&http.Client{Timeout: time.Second * time.Duration(config.ESTimeout)}),
+		elastic.SetMaxRetries(10),
+		elastic.SetSniff(false),
+		elastic.SetGzip(true))
+	if err != nil {
+		return "", errors.Wrap(err, "unable to initialize elastic client")
+	}
+
+	// ingest the metadata
 	// Create the metadata index if it doesn't exist
 	err = metadata.CreateMetadataIndex(elasticClient, index, false)
 	if err != nil {
@@ -350,6 +338,34 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	err = metadata.IngestMetadata(elasticClient, index, config.ESDatasetPrefix, source, meta)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to ingest metadata")
+	}
+
+	log.Infof("ingested metadata for dataset")
+
+	return meta.ID, nil
+}
+
+// IngestPostgres ingests a dataset to PG storage.
+func IngestPostgres(originalSchemaFile string, schemaFile string, index string,
+	dataset string, config *IngestTaskConfig, verifyMetadata bool) error {
+	datasetDir, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, nil, config, verifyMetadata)
+	if err != nil {
+		return err
+	}
+	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
+
+	// Connect to the database.
+	postgresConfig := &conf.Conf{
+		DBPassword:  config.DatabasePassword,
+		DBUser:      config.DatabaseUser,
+		Database:    config.Database,
+		DBHost:      config.DatabaseHost,
+		DBPort:      config.DatabasePort,
+		DBBatchSize: 1000,
+	}
+	pg, err := postgres.NewDatabase(postgresConfig)
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize a new database")
 	}
 
 	dbTable := meta.StorageName
@@ -363,29 +379,29 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	// Create the database table.
 	ds, err := pg.InitializeDataset(meta)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to initialize a new dataset")
+		return errors.Wrap(err, "unable to initialize a new dataset")
 	}
 
 	err = pg.InitializeTable(dbTable, ds)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to initialize a table")
+		return errors.Wrap(err, "unable to initialize a table")
 	}
 
 	err = pg.StoreMetadata(dbTable)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to store the metadata")
+		return errors.Wrap(err, "unable to store the metadata")
 	}
 
 	err = pg.CreateResultTable(dbTable)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to create the result table")
+		return errors.Wrap(err, "unable to create the result table")
 	}
 
 	// Load the data.
 	log.Infof("inserting rows into database based on data found in %s", dataDir)
 	csvFile, err := os.Open(dataDir)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to open input data")
+		return errors.Wrap(err, "unable to open input data")
 	}
 	defer csvFile.Close()
 	reader := csv.NewReader(csvFile)
@@ -398,7 +414,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return "", errors.Wrap(err, "unable to read input line")
+			return errors.Wrap(err, "unable to read input line")
 		}
 
 		err = pg.AddWordStems(line)
@@ -408,7 +424,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 
 		err = pg.IngestRow(dbTable, line)
 		if err != nil {
-			return "", errors.Wrap(err, "unable to ingest row")
+			return errors.Wrap(err, "unable to ingest row")
 		}
 
 		count = count + 1
@@ -420,12 +436,70 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	log.Infof("ingesting final rows")
 	err = pg.InsertRemainingRows()
 	if err != nil {
-		return "", errors.Wrap(err, "unable to ingest last rows")
+		return errors.Wrap(err, "unable to ingest last rows")
 	}
 
 	log.Infof("all data ingested")
 
-	return meta.ID, nil
+	return nil
+}
+
+func loadMetadataForIngest(originalSchemaFile string, schemaFile string, dataset string,
+	origins []*model.DatasetOrigin, config *IngestTaskConfig, verifyMetadata bool) (string, *model.Metadata, error) {
+	datasetDir := path.Dir(schemaFile)
+	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative), true)
+	if err != nil {
+		return "", nil, errors.Wrap(err, "unable to load original schema file")
+	}
+	meta.DatasetFolder = path.Base(path.Dir(originalSchemaFile))
+	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
+	log.Infof("using %s as data directory (built from %s and %s)", dataDir, datasetDir, meta.DataResources[0].ResPath)
+
+	// check and fix metadata issues
+	if verifyMetadata {
+		updated, err := metadata.VerifyAndUpdate(meta, dataDir)
+		if err != nil {
+			return "", nil, errors.Wrap(err, "unable to fix metadata")
+		}
+
+		// store the updated metadata
+		if updated {
+			log.Infof("storing updated metadata to %s", originalSchemaFile)
+			err = metadata.WriteSchema(meta, originalSchemaFile, false)
+			if err != nil {
+				return "", nil, errors.Wrap(err, "unable to store updated metadata")
+			}
+			log.Infof("updated metadata written to %s", originalSchemaFile)
+		}
+	}
+
+	err = metadata.LoadImportance(meta, path.Join(datasetDir, config.RankingOutputPathRelative))
+	if err != nil {
+		log.Warnf("unable to load importance from file: %v", err)
+	}
+
+	// load stats
+	err = metadata.LoadDatasetStats(meta, dataDir)
+	if err != nil {
+		log.Warnf("unable to load stats: %v", err)
+	}
+
+	// load summary
+	metadata.LoadSummaryFromDescription(meta, path.Join(datasetDir, config.SummaryOutputPathRelative))
+
+	// load machine summary
+	err = metadata.LoadSummaryMachine(meta, path.Join(datasetDir, config.SummaryMachineOutputPathRelative))
+	// NOTE: For now ignore summary errors!
+	if err != nil {
+		log.Warnf("unable to load machine summary: %v", err)
+	}
+
+	// set the origin
+	if origins != nil {
+		meta.DatasetOrigins = origins
+	}
+
+	return datasetDir, meta, nil
 }
 
 func matchDataset(storage api.MetadataStorage, meta *model.Metadata, index string) (string, error) {
