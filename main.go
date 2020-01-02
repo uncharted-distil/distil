@@ -136,15 +136,7 @@ func main() {
 		}
 	} else {
 		// Instantiate the solution compute client
-		solutionClient, err = compute.NewClient(
-			config.SolutionComputeEndpoint,
-			config.SolutionComputeTrace,
-			userAgent,
-			"TA2",
-			time.Duration(config.SolutionComputePullTimeout)*time.Second,
-			config.SolutionComputePullMax,
-			config.SkipPreprocessing,
-			discoveryLogger)
+		solutionClient, err = task.NewDefaultClient(config, userAgent, discoveryLogger)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)

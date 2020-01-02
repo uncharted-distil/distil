@@ -27,7 +27,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
+	"github.com/uncharted-distil/distil-compute/middleware"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-ingest/pkg/conf"
 	"github.com/uncharted-distil/distil-ingest/pkg/postgres"
 	log "github.com/unchartedsoftware/plog"
@@ -77,6 +79,19 @@ type IngestTaskConfig struct {
 	ESTimeout                          int
 	ESDatasetPrefix                    string
 	HardFail                           bool
+}
+
+// NewDefaultClient creates a new client to use when submitting pipelines.
+func NewDefaultClient(config env.Config, userAgent string, discoveryLogger middleware.MethodLogger) (*compute.Client, error) {
+	return compute.NewClient(
+		config.SolutionComputeEndpoint,
+		config.SolutionComputeTrace,
+		userAgent,
+		"TA2",
+		time.Duration(config.SolutionComputePullTimeout)*time.Second,
+		config.SolutionComputePullMax,
+		config.SkipPreprocessing,
+		discoveryLogger)
 }
 
 // NewConfig creates an ingest config based on a distil config.
