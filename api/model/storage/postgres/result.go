@@ -525,7 +525,7 @@ func addTableAlias(prefix string, fields []string, addToColumn bool) []string {
 }
 
 // FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *api.FilterParams, removeTargetColumn bool) (*api.FilteredData, error) {
+func (s *Storage) FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *api.FilterParams, predictionResultMode bool) (*api.FilteredData, error) {
 	storageNameResult := s.getResultTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
@@ -624,15 +624,13 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	targetCol := targetName
 
 	errorExpr := ""
-	if model.IsNumerical(variable.Type) {
+	if model.IsNumerical(variable.Type) && !predictionResultMode {
 		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(dataTableAlias, variable.Name), errorCol)
 	}
 
-	var targetColumnQuery string
+	targetColumnQuery := ""
 
-	if removeTargetColumn {
-		targetColumnQuery = ""
-	} else {
+	if !predictionResultMode {
 		targetColumnQuery = fmt.Sprintf("data.\"%s\" as \"%s\", ", targetName, targetCol)
 	}
 
