@@ -14,6 +14,7 @@
       @uploadfinish="onUploadFinish"
       :upload-type="uploadType"
       :solution-id="fittedSolutionId"
+      v-if="!isPrediction"
     ></file-uploader>
 
     <b-modal id="export" title="Export" @ok="onExport">
@@ -156,7 +157,12 @@ export default Vue.extend({
 
     instanceName(): string {
       return "groundTruth";
-    }
+    },
+
+    isPrediction(): boolean {
+      const routePath = routeGetters.getRoutePath(this.$store);
+      return routePath && routePath === PREDICTION_ROUTE;
+    },
   },
 
   methods: {
