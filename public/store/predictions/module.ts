@@ -86,14 +86,6 @@ export const mutations = {
   ),
   // predicted
   updatePredictedSummaries: commit(moduleMutations.updatePredictedSummaries),
-  // residuals
-  updateResidualsSummaries: commit(moduleMutations.updateResidualsSummaries),
-  updateResidualsExtrema: commit(moduleMutations.updateResidualsExtrema),
-  clearResidualsExtrema: commit(moduleMutations.clearResidualsExtrema),
-  // correctness
-  updateCorrectnessSummaries: commit(
-    moduleMutations.updateCorrectnessSummaries
-  ),
   // forecasts
   updatePredictedTimeseries: commit(moduleMutations.updatePredictedTimeseries),
   updatePredictedForecast: commit(moduleMutations.updatePredictedForecast)

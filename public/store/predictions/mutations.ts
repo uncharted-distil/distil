@@ -43,29 +43,6 @@ export const mutations = {
     updateSummaries(summary, state.predictedSummaries);
   },
 
-  // residuals
-
-  updateResidualsSummaries(state: PredictionState, summary: VariableSummary) {
-    updateSummaries(summary, state.residualSummaries);
-  },
-
-  updateResidualsExtrema(state: PredictionState, extrema: Extrema) {
-    state.residualsExtrema = extrema;
-  },
-
-  clearResidualsExtrema(state: PredictionState) {
-    state.residualsExtrema = {
-      min: null,
-      max: null
-    };
-  },
-
-  // correctness
-
-  updateCorrectnessSummaries(state: PredictionState, summary: VariableSummary) {
-    updateSummaries(summary, state.correctnessSummaries);
-  },
-
   // forecast
 
   updatePredictedTimeseries(

@@ -432,7 +432,7 @@ export const actions = {
 
   updatePrediction(context: ViewContext) {
     // clear previous state
-    predictionMutations.clearResidualsExtrema(store);
+    resultMutations.clearCorrectnessSummaries(store);
     predictionMutations.setIncludedPredictionTableData(store, null);
     predictionMutations.setExcludedPredictionTableData(store, null);
 

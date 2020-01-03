@@ -10,11 +10,6 @@ export interface PredictionState {
   targetSummary: VariableSummary;
   // predicted
   predictedSummaries: VariableSummary[];
-  // residuals
-  residualSummaries: VariableSummary[];
-  residualsExtrema: Extrema;
-  // correctness summary (correct vs. incorrect) for predicted categorical data
-  correctnessSummaries: VariableSummary[];
   // forecasts
   timeseries: Dictionary<Dictionary<number[][]>>;
   forecasts: Dictionary<Dictionary<number[][]>>;
@@ -31,11 +26,6 @@ export const state: PredictionState = {
   targetSummary: null,
   // predicted
   predictedSummaries: [],
-  // residuals
-  residualSummaries: [],
-  residualsExtrema: { min: null, max: null },
-  // correctness summary (correct vs. incorrect) for predicted categorical data
-  correctnessSummaries: [],
   // forecasts
   timeseries: {},
   forecasts: {},
