@@ -6,6 +6,7 @@ import JoinDatasets from "../views/JoinDatasets";
 import SelectTarget from "../views/SelectTarget";
 import SelectTraining from "../views/SelectTraining";
 import Results from "../views/Results";
+import Predictions from "../views/Predictions";
 import ExportSuccess from "../views/ExportSuccess";
 import VariableGrouping from "../views/VariableGrouping";
 import store from "../store/store";
@@ -21,7 +22,8 @@ import {
   SELECT_TARGET_ROUTE,
   SELECT_TRAINING_ROUTE,
   RESULTS_ROUTE,
-  EXPORT_SUCCESS_ROUTE
+  EXPORT_SUCCESS_ROUTE,
+  PREDICTION_ROUTE
 } from "../store/route";
 
 Vue.use(VueRouter);
@@ -36,7 +38,8 @@ const router = new VueRouter({
     { path: SELECT_TARGET_ROUTE, component: SelectTarget },
     { path: SELECT_TRAINING_ROUTE, component: SelectTraining },
     { path: RESULTS_ROUTE, component: Results },
-    { path: EXPORT_SUCCESS_ROUTE, component: ExportSuccess }
+    { path: EXPORT_SUCCESS_ROUTE, component: ExportSuccess },
+    { path: PREDICTION_ROUTE, component: Predictions }
   ]
 });
 

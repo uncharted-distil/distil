@@ -26,7 +26,7 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
-// ResultsHandler fetches predicted solution values and returns them to the client
+// PredictionResultsHandler fetches predicted solution values and returns them to the client
 // in a JSON structure
 func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +101,7 @@ func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 			return
 		}
 
-		results, err := data.FetchResults(dataset, storageName, res.ResultURI, solutionID, filterParams)
+		results, err := data.FetchResults(dataset, storageName, res.ResultURI, solutionID, filterParams, true)
 		if err != nil {
 			handleError(w, err)
 			return

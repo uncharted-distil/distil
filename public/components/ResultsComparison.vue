@@ -15,15 +15,15 @@
       <results-data-slot
         instance-name="results-slot-top"
         :title="topSlotTitle"
-        :data-fields="includedResultTableDataFields"
-        :data-items="includedResultTableDataItems"
+        :data-fields="includedDataTableFields"
+        :data-items="includedTableDataItems"
         :view-type="viewType"
       ></results-data-slot>
       <results-data-slot
         instance-name="results-slot-bottom"
         :title="bottomSlotTitle"
         :data-fields="excludedResultTableDataFields"
-        :data-items="excludedResultTableDataItems"
+        :data-items="excludedTableDataItems"
         :view-type="viewType"
       ></results-data-slot>
     </div>
@@ -31,8 +31,8 @@
       <results-data-slot
         :title="singleSlotTitle"
         instance-name="results-slot"
-        :data-fields="includedResultTableDataFields"
-        :data-items="includedResultTableDataItems"
+        :data-fields="includedDataTableFields"
+        :data-items="includedTableDataItems"
         :view-type="viewType"
       ></results-data-slot>
     </template>
@@ -49,6 +49,7 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as solutionGetters } from "../store/solutions/module";
+import { getters as predictionGetters } from "../store/predictions/module";
 import { Solution } from "../store/solutions/index";
 import {
   Variable,
@@ -56,6 +57,9 @@ import {
   TableColumn,
   TaskTypes
 } from "../store/dataset/index";
+import {
+  PREDICTION_ROUTE
+} from "../store/route/index"
 
 const TABLE_VIEW = "table";
 const TIMESERIES_VIEW = "timeseries";
@@ -103,46 +107,54 @@ export default Vue.extend({
       return highlight && highlight.value;
     },
 
-    includedResultTableDataItems(): TableRow[] {
-      return resultsGetters.getIncludedResultTableDataItems(this.$store);
+    includedTableDataItems(): TableRow[] {
+      return this.isPrediction ?
+        predictionGetters.getIncludedPredictionTableDataItems(this.$store) :
+        resultsGetters.getIncludedResultTableDataItems(this.$store);
     },
 
-    includedResultTableDataFields(): Dictionary<TableColumn> {
-      return resultsGetters.getIncludedResultTableDataFields(this.$store);
+    includedDataTableFields(): Dictionary<TableColumn> {
+      return this.isPrediction ?
+        predictionGetters.getIncludedPredictionTableDataFields(this.$store) :
+        resultsGetters.getIncludedResultTableDataFields(this.$store);
     },
 
     numIncludedResultItems(): number {
-      return this.includedResultTableDataItems
-        ? this.includedResultTableDataItems.length
+      return this.includedTableDataItems
+        ? this.includedTableDataItems.length
         : 0;
     },
 
     numIncludedResultErrors(): number {
-      if (!this.includedResultTableDataItems) {
+      if (!this.includedTableDataItems) {
         return 0;
       }
-      return this.errorCount(this.includedResultTableDataItems);
+      return this.errorCount(this.includedTableDataItems);
     },
 
-    excludedResultTableDataItems(): TableRow[] {
-      return resultsGetters.getExcludedResultTableDataItems(this.$store);
+    excludedTableDataItems(): TableRow[] {
+     return this.isPrediction ?
+        predictionGetters.getExcludedPredictionTableDataItems(this.$store) :
+        resultsGetters.getExcludedResultTableDataItems(this.$store);
     },
 
     excludedResultTableDataFields(): Dictionary<TableColumn> {
-      return resultsGetters.getExcludedResultTableDataFields(this.$store);
+      return this.isPrediction ?
+        predictionGetters.getExcludedPredictionTableDataFields(this.$store) :
+        resultsGetters.getExcludedResultTableDataFields(this.$store);
     },
 
     numExcludedResultItems(): number {
-      return this.excludedResultTableDataItems
-        ? this.excludedResultTableDataItems.length
+      return this.excludedTableDataItems
+        ? this.excludedTableDataItems.length
         : 0;
     },
 
     numExcludedResultErrors(): number {
-      if (!this.excludedResultTableDataItems) {
+      if (!this.excludedTableDataItems) {
         return 0;
       }
-      return this.errorCount(this.excludedResultTableDataItems);
+      return this.errorCount(this.excludedTableDataItems);
     },
 
     residualThresholdMin(): number {
@@ -154,17 +166,24 @@ export default Vue.extend({
     },
 
     regressionEnabled(): boolean {
-      return routeGetters.getRouteTask(this.$store) === TaskTypes.REGRESSION;
+      const routeArgs = routeGetters.getRouteTask(this.$store);
+      return routeArgs && routeArgs.includes(TaskTypes.REGRESSION);
     },
 
     numRows(): number {
-      return resultsGetters.getResultDataNumRows(this.$store);
+      return this.isPrediction ?
+        predictionGetters.getPredictionDataNumRows(this.$store) :
+        resultsGetters.getResultDataNumRows(this.$store);
+    },
+    
+    isForecasting(): boolean {
+      const routeArgs = routeGetters.getRouteTask(this.$store);
+      return routeArgs && routeArgs.includes(TaskTypes.FORECASTING);
     },
 
-    isForecasting(): boolean {
-      return routeGetters
-        .getRouteTask(this.$store)
-        .includes(TaskTypes.FORECASTING);
+    isPrediction(): boolean {
+      const routePath = routeGetters.getRoutePath(this.$store);
+      return routePath && routePath === PREDICTION_ROUTE;
     },
 
     topSlotTitle(): string {
@@ -192,7 +211,7 @@ export default Vue.extend({
     errorTitle(itemCount: number, errorCount: number): string {
       const matchesLabel = `Displaying ${itemCount} of ${this.numRows}`;
       const erroneousLabel = `, including ${errorCount} <b class="erroneous-color">erroneous</b> predictions`;
-      return this.isForecasting ? matchesLabel : matchesLabel + erroneousLabel;
+      return this.isForecasting || this.isPrediction ? matchesLabel : matchesLabel + erroneousLabel;
     },
     errorCount(dataColumn: TableRow[]): number {
       return dataColumn.filter(item => {
@@ -208,7 +227,7 @@ export default Vue.extend({
         } else {
           return (
             item[this.solution.predictedKey] &&
-            item[this.solution.predictedKey] &&
+            item[this.target] &&
             item[this.target].value !== item[this.solution.predictedKey].value
           );
         }

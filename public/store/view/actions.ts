@@ -16,6 +16,10 @@ import {
   actions as resultActions,
   mutations as resultMutations
 } from "../results/module";
+import {
+  actions as predictionActions,
+  mutations as predictionMutations
+} from "../predictions/module";
 import { getters as routeGetters } from "../route/module";
 import { TaskTypes } from "../dataset";
 
@@ -368,7 +372,10 @@ export const actions = {
     });
 
     const task = routeGetters.getRouteTask(store);
-    if (
+
+    if (!task) {
+      console.error(`task is ${task}`);
+    } else if (
       task.includes(TaskTypes.REGRESSION) ||
       task.includes(TaskTypes.FORECASTING)
     ) {
@@ -393,5 +400,74 @@ export const actions = {
     } else {
       console.error(`unhandled task type ${task}`);
     }
+  },
+
+  fetchPredictionsData(context: ViewContext) {
+    // clear previous state
+    predictionMutations.clearTargetSummary(store);
+    predictionMutations.clearTrainingSummaries(store);
+    predictionMutations.setIncludedPredictionTableData(store, null);
+    predictionMutations.setExcludedPredictionTableData(store, null);
+
+    const dataset = context.getters.getRouteDataset;
+    const target = context.getters.getRouteTargetVariable;
+    // fetch new state
+    return fetchVariables(context, {
+      dataset: dataset
+    })
+      .then(() => {
+        fetchVariableRankings(context, {
+          dataset: dataset,
+          target: target
+        });
+        return fetchSolutionRequests(context, {
+          dataset: dataset,
+          target: target
+        });
+      })
+      .then(() => {
+        return actions.updatePrediction(context);
+      });
+  },
+
+  updatePrediction(context: ViewContext) {
+    // clear previous state
+    resultMutations.clearCorrectnessSummaries(store);
+    predictionMutations.setIncludedPredictionTableData(store, null);
+    predictionMutations.setExcludedPredictionTableData(store, null);
+
+    // fetch new state
+    const dataset = context.getters.getRouteDataset;
+    const target = context.getters.getRouteTargetVariable;
+    const requestIds = context.getters.getRelevantSolutionRequestIds;
+    const solutionId = context.getters.getRouteSolutionId;
+    const trainingVariables =
+      context.getters.getActiveSolutionTrainingVariables;
+    const highlight = context.getters.getDecodedHighlight;
+    const produceRequestId = context.getters.getRouteProduceRequestId;
+    predictionActions.fetchPredictionTableData(store, {
+      dataset: dataset,
+      solutionId: solutionId,
+      highlight: highlight,
+      produceRequestId: produceRequestId
+    });
+    predictionActions.fetchTargetSummary(store, {
+      dataset: dataset,
+      target: target,
+      solutionId: solutionId,
+      highlight: highlight
+    });
+    predictionActions.fetchTrainingSummaries(store, {
+      dataset: dataset,
+      training: trainingVariables,
+      solutionId: solutionId,
+      highlight: highlight
+    });
+    predictionActions.fetchPredictedSummaries(store, {
+      dataset: dataset,
+      target: target,
+      requestIds: requestIds,
+      highlight: highlight
+    });
   }
 };

@@ -17,6 +17,7 @@ import { FilterParams } from "./filters";
 import store from "../store/store";
 import { actions as resultsActions } from "../store/results/module";
 import { ResultsContext } from "../store/results/actions";
+import { PredictionContext } from "../store/predictions/actions";
 import {
   getters as datasetGetters,
   actions as datasetActions
@@ -343,6 +344,63 @@ export function fetchSolutionResultSummary(
   label: string,
   resultSummaries: VariableSummary[],
   updateFunction: (arg: ResultsContext, summary: VariableSummary) => void,
+  filterParams: FilterParams
+): Promise<any> {
+  const dataset = solution.dataset;
+  const solutionId = solution.solutionId;
+  const resultId = solution.resultId;
+
+  const exists = _.find(
+    resultSummaries,
+    v => v.dataset === dataset && v.key === key
+  );
+  if (!exists) {
+    // add placeholder
+    updateFunction(
+      context,
+      createPendingSummary(key, label, dataset, solutionId)
+    );
+  }
+
+  // fetch the results for each solution
+  if (solution.progress !== SOLUTION_COMPLETED) {
+    // skip
+    return;
+  }
+
+  // return promise
+  return axios
+    .post(`${endpoint}/${resultId}`, filterParams ? filterParams : {})
+    .then(response => {
+      // save the histogram data
+      const summary = response.data.summary;
+      return fetchResultExemplars(
+        dataset,
+        target,
+        key,
+        solutionId,
+        summary
+      ).then(() => {
+        summary.solutionId = solutionId;
+        summary.dataset = dataset;
+        updateFunction(context, summary);
+      });
+    })
+    .catch(error => {
+      console.error(error);
+      updateFunction(context, createErrorSummary(key, label, dataset, error));
+    });
+}
+
+export function fetchPredictionResultSummary(
+  context: PredictionContext,
+  endpoint: string,
+  solution: Solution,
+  target: string,
+  key: string,
+  label: string,
+  resultSummaries: VariableSummary[],
+  updateFunction: (arg: PredictionContext, summary: VariableSummary) => void,
   filterParams: FilterParams
 ): Promise<any> {
   const dataset = solution.dataset;
