@@ -193,20 +193,20 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	latestSchemaOutput = output
 	log.Infof("finished cleaning the dataset")
 
-	err = Classify(latestSchemaOutput, index, dataset, config)
+	_, err = Classify(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to classify fields")
 	}
 	log.Infof("finished classifying the dataset")
 
-	err = Rank(latestSchemaOutput, index, dataset, config)
+	_, err = Rank(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		log.Errorf("unable to rank field importance: %v", err)
 	}
 	log.Infof("finished ranking the dataset")
 
 	if config.SummaryEnabled {
-		err = Summarize(latestSchemaOutput, index, dataset, config)
+		_, err = Summarize(latestSchemaOutput, index, dataset, config)
 		log.Infof("finished summarizing the dataset")
 		if err != nil {
 			if config.HardFail {

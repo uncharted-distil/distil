@@ -35,24 +35,24 @@ type SummaryResult struct {
 }
 
 // Summarize will summarize the dataset using a primitive.
-func Summarize(schemaPath string, index string, dataset string, config *IngestTaskConfig) error {
+func Summarize(schemaPath string, index string, dataset string, config *IngestTaskConfig) (string, error) {
 	schemaDoc := path.Dir(schemaPath)
 
 	// create & submit the solution request
 	pip, err := description.CreateDukePipeline("wellington", "")
 	if err != nil {
-		return errors.Wrap(err, "unable to create Duke pipeline")
+		return "", errors.Wrap(err, "unable to create Duke pipeline")
 	}
 
 	datasetURI, err := submitPipeline([]string{schemaDoc}, pip)
 	if err != nil {
-		return errors.Wrap(err, "unable to run Duke pipeline")
+		return "", errors.Wrap(err, "unable to run Duke pipeline")
 	}
 
 	// parse primitive response (token,probability)
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
-		return errors.Wrap(err, "unable to parse Duke pipeline result")
+		return "", errors.Wrap(err, "unable to parse Duke pipeline result")
 	}
 
 	tokens := make([]string, len(res)-1)
@@ -61,7 +61,7 @@ func Summarize(schemaPath string, index string, dataset string, config *IngestTa
 		if i > 0 {
 			token, ok := v[0].(string)
 			if !ok {
-				return errors.Wrap(err, "unable to parse Duke token")
+				return "", errors.Wrap(err, "unable to parse Duke token")
 			}
 			tokens[i-1] = token
 		}
@@ -74,15 +74,15 @@ func Summarize(schemaPath string, index string, dataset string, config *IngestTa
 	// output the classification in the expected JSON format
 	bytes, err := json.MarshalIndent(sum, "", "    ")
 	if err != nil {
-		return errors.Wrap(err, "unable to serialize summary result")
+		return "", errors.Wrap(err, "unable to serialize summary result")
 	}
 	// write to file
 	outputPath := path.Join(schemaDoc, config.SummaryMachineOutputPathRelative)
-	log.Debugf("writing ranking output to %s", outputPath)
+	log.Debugf("writing summary output to %s", outputPath)
 	err = util.WriteFileWithDirs(outputPath, bytes, os.ModePerm)
 	if err != nil {
-		return errors.Wrap(err, "unable to store summary result")
+		return "", errors.Wrap(err, "unable to store summary result")
 	}
 
-	return nil
+	return outputPath, nil
 }
