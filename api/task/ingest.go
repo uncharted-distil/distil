@@ -30,13 +30,12 @@ import (
 	"github.com/uncharted-distil/distil-compute/middleware"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
-	"github.com/uncharted-distil/distil-ingest/pkg/conf"
-	"github.com/uncharted-distil/distil-ingest/pkg/postgres"
 	log "github.com/unchartedsoftware/plog"
 	elastic "gopkg.in/olivere/elastic.v5"
 
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/postgres"
 )
 
 const (
@@ -72,6 +71,7 @@ type IngestTaskConfig struct {
 	Database                           string
 	DatabaseHost                       string
 	DatabasePort                       int
+	DatabaseBatchSize                  int
 	SummaryOutputPathRelative          string
 	SummaryMachineOutputPathRelative   string
 	SummaryEnabled                     bool
@@ -123,6 +123,7 @@ func NewConfig(config env.Config) *IngestTaskConfig {
 		Database:                           config.PostgresDatabase,
 		DatabaseHost:                       config.PostgresHost,
 		DatabasePort:                       config.PostgresPort,
+		DatabaseBatchSize:                  config.PostgresBatchSize,
 		SummaryOutputPathRelative:          config.SummaryPath,
 		SummaryMachineOutputPathRelative:   config.SummaryMachinePath,
 		SummaryEnabled:                     config.SummaryEnabled,
@@ -263,13 +264,13 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// Connect to the database.
-	postgresConfig := &conf.Conf{
-		DBPassword:  config.DatabasePassword,
-		DBUser:      config.DatabaseUser,
-		Database:    config.Database,
-		DBHost:      config.DatabaseHost,
-		DBPort:      config.DatabasePort,
-		DBBatchSize: 1000,
+	postgresConfig := &postgres.Config{
+		Password:  config.DatabasePassword,
+		User:      config.DatabaseUser,
+		Database:  config.Database,
+		Host:      config.DatabaseHost,
+		Port:      config.DatabasePort,
+		BatchSize: config.DatabaseBatchSize,
 	}
 	pg, err := postgres.NewDatabase(postgresConfig)
 	if err != nil {
@@ -355,13 +356,13 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, index string,
 	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
 
 	// Connect to the database.
-	postgresConfig := &conf.Conf{
-		DBPassword:  config.DatabasePassword,
-		DBUser:      config.DatabaseUser,
-		Database:    config.Database,
-		DBHost:      config.DatabaseHost,
-		DBPort:      config.DatabasePort,
-		DBBatchSize: 1000,
+	postgresConfig := &postgres.Config{
+		Password:  config.DatabasePassword,
+		User:      config.DatabaseUser,
+		Database:  config.Database,
+		Host:      config.DatabaseHost,
+		Port:      config.DatabasePort,
+		BatchSize: config.DatabaseBatchSize,
 	}
 	pg, err := postgres.NewDatabase(postgresConfig)
 	if err != nil {

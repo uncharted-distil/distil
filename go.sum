@@ -4,7 +4,6 @@ github.com/Jeffail/gabs/v2 v2.2.0 h1:7touC+WzbQ7LO5+mwgxT44miyTqAVCOlIWLA6PiIB5w
 github.com/Jeffail/gabs/v2 v2.2.0/go.mod h1:xCn81vdHKxFUuWWAaD5jCTQDNPBMh5pPs9IJ+NcziBI=
 github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195 h1:c4mLfegoDw6OhSJXTd2jUEQgZUQuJWtocudb97Qn9EM=
 github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195/go.mod h1:SLqhdZcd+dF3TEVL2RMoob5bBP5R1P1qkox+HtCBgGI=
-github.com/aws/aws-sdk-go v1.25.41/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/caarlos0/env v3.5.0+incompatible h1:Yy0UN8o9Wtr/jGHZDpCBLpNrzcFLLM2yixi/rBrKyJs=
 github.com/caarlos0/env v3.5.0+incompatible/go.mod h1:tdCsowwCzMLdkqRYDlHpZCp2UooDD3MspDBjZ2AD02Y=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
@@ -43,7 +42,6 @@ github.com/jackc/pgx v3.2.0+incompatible h1:0Vihzu20St42/UDsvZGdNE6jak7oi/UOeMzw
 github.com/jackc/pgx v3.2.0+incompatible/go.mod h1:0ZGrqGqkRlliWnWB4zKnWtjbSWbGkVEFm4TeybAXq+I=
 github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=
 github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
-github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/lib/pq v1.2.0 h1:LXpIM/LZ5xGFhOpXAQUIMM1HdyqzVYM13zNdjCEEcA0=
@@ -88,16 +86,8 @@ github.com/smartystreets/go-aws-auth v0.0.0-20180515143844-0c1422d1fdb9/go.mod h
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
-github.com/uncharted-distil/distil-compute v0.0.0-20191224135746-c586c6cec9ee h1:OWgCzhVmIhwmwC+hcxnqxtPlNh/BLWF4R8nZmafO/k0=
-github.com/uncharted-distil/distil-compute v0.0.0-20191224135746-c586c6cec9ee/go.mod h1:e3FalryNgmil2M4A4q6WRJickMuGLCbGytFTnQDQOi4=
 github.com/uncharted-distil/distil-compute v0.0.0-20191226232057-7ed4ab54ee14 h1:AGhiSFqH51HScGYaLyRTiPyqmxBDumR5AZH2MU4YGzQ=
 github.com/uncharted-distil/distil-compute v0.0.0-20191226232057-7ed4ab54ee14/go.mod h1:0OFz5vP7mV1nuvKvINOG7hdz8YU0+rWhjppdYBzOSew=
-github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191224163118-ab662099e655 h1:OyhGhBR/rWM5B1KzQ7wZ/1nFpkcNIY2XH29eMT3QNEw=
-github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191224163118-ab662099e655/go.mod h1:YF+/2ymKzdP2lJuOGmRtQd5Orvxjj5mHg7RbrmUgNOc=
-github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191227122931-3c3a3836de42 h1:Di1mv0h1Fh9C/XJNBZdKieOBKSPhJv0l7xrmEro2Nqg=
-github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191227122931-3c3a3836de42/go.mod h1:ZEn4yIXOfrFiA23/JllXrlu2sdC2CtjPV56l/EaSKpc=
-github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191228160457-bdffb8bea9f4 h1:nCX05XLf/ur2PJfmsVQZ88DAEpc/9ivd6YnEFHZZiQg=
-github.com/uncharted-distil/distil-ingest/pkg v0.0.0-20191228160457-bdffb8bea9f4/go.mod h1:ZEn4yIXOfrFiA23/JllXrlu2sdC2CtjPV56l/EaSKpc=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9 h1:P1B7OAnmyIdSN9UGhDvIU3s8K3/2rQcvntYV5WPi+qY=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9/go.mod h1:PrytgQ5GjTc6Z5/pbL5vj1UhD716wDobDeimrd7lRKY=
 github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48 h1:XYef2jcFEKziHl4rv/21jrNeQg6Z3gL345u16fHWVDo=
