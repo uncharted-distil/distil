@@ -210,7 +210,7 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 
 	// Get count by x & y
 	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count, %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY %s, %s
@@ -276,9 +276,8 @@ func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, 
 		var yBucketValue float64
 		var xBucket int64
 		var yBucket int64
-		var xRowBucketCount int64
 		var yRowBucketCount int64
-		err := rows.Scan(&xBucket, &xBucketValue, &xRowBucketCount, &yBucket, &yBucketValue, &yRowBucketCount)
+		err := rows.Scan(&xBucket, &xBucketValue, &yBucket, &yBucketValue, &yRowBucketCount)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("no %s histogram aggregation found", histogramAggName))
 		}

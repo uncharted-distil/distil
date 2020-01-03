@@ -522,7 +522,8 @@ export default Vue.extend({
     onJoinCommitSuccess(datasetID: string) {
       const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
         dataset: datasetID,
-        target: this.target
+        target: this.target,
+        task: routeGetters.getRouteTask(this.$store)
       });
       this.$router.push(entry);
       this.addRecentDataset(datasetID);

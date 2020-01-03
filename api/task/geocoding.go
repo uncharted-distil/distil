@@ -28,7 +28,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 
-	"github.com/uncharted-distil/distil-ingest/pkg/metadata"
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-ingest/pkg/util"
 
 	du "github.com/uncharted-distil/distil/api/util"
@@ -146,7 +146,7 @@ func GeocodeForwardDataset(datasetSource metadata.DatasetSource, schemaFile stri
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = metadata.WriteSchema(meta, outputPath.outputSchema)
+	err = metadata.WriteSchema(meta, outputPath.outputSchema, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to store feature schema")
 	}

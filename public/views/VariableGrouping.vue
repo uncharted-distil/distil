@@ -336,63 +336,45 @@ export default Vue.extend({
       this.submitGrouping();
     },
     submitGrouping() {
+      // create the list of IDs that we're going to be grouping
       const hidden = {
         [this.xCol]: true,
         [this.yCol]: true
       };
-      const ids = this.idCols.map(c => c.value).filter(v => v);
 
+      const ids = this.idCols.map(c => c.value).filter(v => v);
       ids.forEach((id, index) => {
         hidden[id] = this.hideIdCol[index];
       });
 
-      let idKey = "";
-      let p = null;
-      if (ids.length > 1) {
-        idKey = getComposedVariableKey(ids);
-        hidden[idKey] = false;
-        p = datasetActions.composeVariables(this.$store, {
-          dataset: this.dataset,
-          key: idKey,
-          vars: ids
-        });
-      } else {
-        idKey = ids[0];
-        p = new Promise(resolve => {
-          resolve();
-        });
-      }
+      // generate the grouping structure that describes how the vars will be grouped
+      const grouping = {
+        type: this.groupingType,
+        dataset: this.dataset,
+        idCol: getComposedVariableKey(ids),
+        subIds: ids,
+        hidden: Object.keys(hidden).filter(v => hidden[v]),
+        properties: {
+          xCol: this.xCol,
+          yCol: this.yCol
+        }
+      };
 
-      this.isPending = true;
-
-      return p.then(() => {
-        const grouping = {
-          type: this.groupingType,
+      datasetActions
+        .setGrouping(this.$store, {
           dataset: this.dataset,
-          idCol: idKey,
-          subIds: ids,
-          hidden: Object.keys(hidden).filter(v => hidden[v]),
-          properties: {
-            xCol: this.xCol,
-            yCol: this.yCol
+          grouping: grouping
+        })
+        .then(() => {
+          // If this is a timeseries, then we need to request clustering be run on it
+          if (this.isTimeseries) {
+            datasetActions.clusterData(this.$store, {
+              dataset: this.dataset,
+              variable: getComposedVariableKey(ids)
+            });
           }
-        };
-        datasetActions
-          .setGrouping(this.$store, {
-            dataset: this.dataset,
-            grouping: grouping
-          })
-          .then(() => {
-            // If this is a timeseries, then we need to request clustering be run on it
-            if (this.isTimeseries) {
-              datasetActions.clusterData(this.$store, {
-                dataset: this.dataset,
-                variable: idKey
-              });
-            }
-            this.gotoTargetSelection();
-          });
-      });
+          this.gotoTargetSelection();
+        });
     },
     onClose() {
       this.gotoTargetSelection();

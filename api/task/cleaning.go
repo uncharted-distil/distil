@@ -22,8 +22,8 @@ import (
 	"path"
 
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
-	"github.com/uncharted-distil/distil-ingest/pkg/metadata"
 
 	"github.com/uncharted-distil/distil/api/util"
 )
@@ -97,7 +97,7 @@ func Clean(datasetSource metadata.DatasetSource, schemaFile string, index string
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = metadata.WriteSchema(meta, outputPath.outputSchema)
+	err = metadata.WriteSchema(meta, outputPath.outputSchema, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to store cluster schema")
 	}

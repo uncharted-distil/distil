@@ -26,9 +26,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-ingest/pkg/conf"
-	"github.com/uncharted-distil/distil-ingest/pkg/metadata"
 	"github.com/uncharted-distil/distil-ingest/pkg/postgres"
 	log "github.com/unchartedsoftware/plog"
 	elastic "gopkg.in/olivere/elastic.v5"
@@ -201,6 +201,22 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
 	log.Infof("using %s as data directory (built from %s and %s)", dataDir, datasetDir, meta.DataResources[0].ResPath)
 
+	// check and fix metadata issues
+	updated, err := metadata.VerifyAndUpdate(meta, dataDir)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to fix metadata")
+	}
+
+	// store the updated metadata
+	if updated {
+		log.Infof("storing updated metadata to %s", originalSchemaFile)
+		err = metadata.WriteSchema(meta, originalSchemaFile, false)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to store updated metadata")
+		}
+		log.Infof("updated metadata written to %s", originalSchemaFile)
+	}
+
 	err = metadata.LoadImportance(meta, path.Join(datasetDir, config.RankingOutputPathRelative))
 	if err != nil {
 		log.Warnf("unable to load importance from file: %v", err)
@@ -213,10 +229,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// load summary
-	err = metadata.LoadSummaryFromDescription(meta, path.Join(datasetDir, config.SummaryOutputPathRelative))
-	if err != nil {
-		log.Warnf("unable to load summary: %v", err)
-	}
+	metadata.LoadSummaryFromDescription(meta, path.Join(datasetDir, config.SummaryOutputPathRelative))
 
 	// load machine summary
 	err = metadata.LoadSummaryMachine(meta, path.Join(datasetDir, config.SummaryMachineOutputPathRelative))
@@ -228,12 +241,6 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	// set the origin
 	if origins != nil {
 		meta.DatasetOrigins = origins
-	}
-
-	// check and fix metadata issues
-	err = metadata.VerifyAndUpdate(meta, dataDir)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to fix metadata")
 	}
 
 	// create elasticsearch client

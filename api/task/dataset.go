@@ -29,7 +29,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	log "github.com/unchartedsoftware/plog"
 
-	"github.com/uncharted-distil/distil-ingest/pkg/metadata"
+	"github.com/uncharted-distil/distil-compute/metadata"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
 )
@@ -57,7 +57,7 @@ func CreateDataset(dataset string, csvData []byte, outputPath string, config *In
 	meta.DataResources = []*model.DataResource{dr}
 
 	schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
-	err = metadata.WriteSchema(meta, schemaPath)
+	err = metadata.WriteSchema(meta, schemaPath, true)
 	if err != nil {
 		return "", err
 	}
@@ -179,7 +179,7 @@ func CreateImageDataset(dataset string, data []byte, imageType string, outputPat
 	meta.DataResources = []*model.DataResource{refDR, dr}
 
 	log.Infof("writing schema to '%s'", schemaPath)
-	err = metadata.WriteSchema(meta, schemaPath)
+	err = metadata.WriteSchema(meta, schemaPath, true)
 	if err != nil {
 		return "", err
 	}
@@ -211,7 +211,7 @@ func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, confi
 	}
 
 	schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
-	err = metadata.WriteSchema(meta, schemaPath)
+	err = metadata.WriteSchema(meta, schemaPath, true)
 	if err != nil {
 		return "", err
 	}

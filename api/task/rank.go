@@ -22,13 +22,18 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil-ingest/pkg/rest"
 	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 	"github.com/uncharted-distil/distil/api/util"
 )
+
+// ImportanceResult is the result from a ranking operation.
+type ImportanceResult struct {
+	Path     string    `json:"path"`
+	Features []float64 `json:"features"`
+}
 
 // Rank will rank the dataset using a primitive.
 func Rank(schemaPath string, index string, dataset string, config *IngestTaskConfig) error {
@@ -66,7 +71,7 @@ func Rank(schemaPath string, index string, dataset string, config *IngestTaskCon
 		}
 	}
 
-	importance := &rest.ImportanceResult{
+	importance := &ImportanceResult{
 		Path:     datasetURI,
 		Features: ranks,
 	}
