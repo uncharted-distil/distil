@@ -12,101 +12,78 @@ import { Dictionary } from "../../util/dict";
 export const getters = {
   // results
 
-  getTrainingSummaries(state: PredictionState): VariableSummary[] {
-    return state.trainingSummaries;
-  },
-
-  getTargetSummary(state: PredictionState): VariableSummary {
-    return state.targetSummary;
-  },
-
-  getResultDataNumRows(state: PredictionState): number {
-    return state.includedResultTableData
-      ? state.includedResultTableData.numRows
+  getPredictionDataNumRows(state: PredictionState): number {
+    return state.includedPredictionTableData
+      ? state.includedPredictionTableData.numRows
       : 0;
   },
 
-  getFittedSolutionId (state: PredictionState): string {
-    return state.includedResultTableData.fittedSolutionId;
+  getFittedSolutionIdFromPrediction (state: PredictionState): string {
+    return state.includedPredictionTableData.fittedSolutionId;
   },
 
-  getProduceRequestId (state: PredictionState): string {
-    return state.includedResultTableData.produceRequestId;
+  getProduceRequestIdFromPrediction (state: PredictionState): string {
+    return state.includedPredictionTableData.produceRequestId;
   },
 
-  hasIncludedResultTableData(state: PredictionState): boolean {
-    return !!state.includedResultTableData;
+  hasIncludedPredictionTableData(state: PredictionState): boolean {
+    return !!state.includedPredictionTableData;
   },
 
-  getIncludedResultTableData(state: PredictionState): TableData {
-    return state.includedResultTableData;
+  getIncludedPredictionTableData(state: PredictionState): TableData {
+    return state.includedPredictionTableData;
   },
 
-  getIncludedResultTableDataItems(
+  getIncludedPredictionTableDataItems(
     state: PredictionState,
     getters: any
   ): TableRow[] {
-    return getTableDataItems(state.includedResultTableData);
+    return getTableDataItems(state.includedPredictionTableData);
   },
 
-  getIncludedResultTableDataFields(
+  getIncludedPredictionTableDataFields(
     state: PredictionState
   ): Dictionary<TableColumn> {
-    return getTableDataFields(state.includedResultTableData);
+    return getTableDataFields(state.includedPredictionTableData);
   },
 
-  hasExcludedResultTableData(state: PredictionState): boolean {
-    return !!state.excludedResultTableData;
+  hasExcludedPredictionTableData(state: PredictionState): boolean {
+    return !!state.excludedPredictionTableData;
   },
 
-  getExcludedResultTableData(state: PredictionState): TableData {
-    return state.excludedResultTableData;
+  getExcludedPredictionTableData(state: PredictionState): TableData {
+    return state.excludedPredictionTableData;
   },
 
-  getExcludedResultTableDataItems(
+  getExcludedPredictionTableDataItems(
     state: PredictionState,
     getters: any
   ): TableRow[] {
-    return getTableDataItems(state.excludedResultTableData);
+    return getTableDataItems(state.excludedPredictionTableData);
   },
 
-  getExcludedResultTableDataFields(
+  getExcludedPredictionTableDataFields(
     state: PredictionState
   ): Dictionary<TableColumn> {
-    return getTableDataFields(state.excludedResultTableData);
+    return getTableDataFields(state.excludedPredictionTableData);
   },
-
+    
   // predicted
 
-  getPredictedSummaries(state: PredictionState): VariableSummary[] {
+  getPredictionSummaries(state: PredictionState): VariableSummary[] {
     return state.predictedSummaries;
   },
 
-  // residual
-
-  getResidualsSummaries(state: PredictionState): VariableSummary[] {
-    return state.residualSummaries;
-  },
-
-  getResidualsExtrema(state: PredictionState): Extrema {
-    return state.residualsExtrema;
-  },
-
-  // correctness
-
-  getCorrectnessSummaries(state: PredictionState): VariableSummary[] {
-    return state.correctnessSummaries;
-  },
 
   // forecasts
 
-  getPredictedTimeseries(
+  getPredictionTimeseries(
     state: PredictionState
   ): Dictionary<Dictionary<number[][]>> {
     return state.timeseries;
   },
 
-  getPredictedForecasts(
+  getPredictionForecasts(
     state: PredictionState
   ): Dictionary<Dictionary<number[][]>> {
     return state.forecasts;

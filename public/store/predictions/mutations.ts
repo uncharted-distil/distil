@@ -27,14 +27,14 @@ export const mutations = {
     state.targetSummary = summary;
   },
 
-  // sets the current result data into the store
-  setIncludedResultTableData(state: PredictionState, resultData: TableData) {
-    state.includedResultTableData = resultData;
+  // sets the current Prediction data into the store
+  setIncludedPredictionTableData(state: PredictionState, predictionData: TableData) {
+    state.includedPredictionTableData = predictionData;
   },
 
-  // sets the current result data into the store
-  setExcludedResultTableData(state: PredictionState, resultData: TableData) {
-    state.excludedResultTableData = resultData;
+  // sets the current Prediction data into the store
+  setExcludedPredictionTableData(state: PredictionState, predictionData: TableData) {
+    state.excludedPredictionTableData = predictionData;
   },
 
   // predicted

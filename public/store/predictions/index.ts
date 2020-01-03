@@ -3,8 +3,8 @@ import { VariableSummary, Extrema, TableData } from "../dataset/index";
 
 export interface PredictionState {
   // table data
-  includedResultTableData: TableData;
-  excludedResultTableData: TableData;
+  includedPredictionTableData: TableData;
+  excludedPredictionTableData: TableData;
   // training / target
   trainingSummaries: VariableSummary[];
   targetSummary: VariableSummary;
@@ -24,8 +24,8 @@ export interface PredictionState {
 
 export const state: PredictionState = {
   // table data
-  includedResultTableData: null,
-  excludedResultTableData: null,
+  includedPredictionTableData: null,
+  excludedPredictionTableData: null,
   // training / target
   trainingSummaries: [],
   targetSummary: null,

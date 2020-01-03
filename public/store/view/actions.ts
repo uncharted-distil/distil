@@ -406,8 +406,8 @@ export const actions = {
     // clear previous state
     predictionMutations.clearTargetSummary(store);
     predictionMutations.clearTrainingSummaries(store);
-    predictionMutations.setIncludedResultTableData(store, null);
-    predictionMutations.setExcludedResultTableData(store, null);
+    predictionMutations.setIncludedPredictionTableData(store, null);
+    predictionMutations.setExcludedPredictionTableData(store, null);
 
     const dataset = context.getters.getRouteDataset;
     const target = context.getters.getRouteTargetVariable;
@@ -433,8 +433,8 @@ export const actions = {
   updatePrediction(context: ViewContext) {
     // clear previous state
     predictionMutations.clearResidualsExtrema(store);
-    predictionMutations.setIncludedResultTableData(store, null);
-    predictionMutations.setExcludedResultTableData(store, null);
+    predictionMutations.setIncludedPredictionTableData(store, null);
+    predictionMutations.setExcludedPredictionTableData(store, null);
 
     // fetch new state
     const dataset = context.getters.getRouteDataset;

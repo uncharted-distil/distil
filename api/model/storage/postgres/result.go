@@ -525,7 +525,7 @@ func addTableAlias(prefix string, fields []string, addToColumn bool) []string {
 }
 
 // FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *api.FilterParams) (*api.FilteredData, error) {
+func (s *Storage) FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *api.FilterParams, removeTargetColumn bool) (*api.FilteredData, error) {
 	storageNameResult := s.getResultTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
@@ -628,17 +628,25 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(dataTableAlias, variable.Name), errorCol)
 	}
 
+	var targetColumnQuery string
+
+	if removeTargetColumn {
+		targetColumnQuery = ""
+	} else {
+		targetColumnQuery = fmt.Sprintf("data.\"%s\" as \"%s\", ", targetName, targetCol)
+	}
+
 	// errorExpr will have the necessary comma if relevant
 	query := fmt.Sprintf(
 		"SELECT %s predicted.value as \"%s\", "+
-			"data.\"%s\" as \"%s\", "+
+			"%s"+
 			"%s"+
 			"%s, "+
 			"%s "+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"LEFT OUTER JOIN %s as weights on weights.\"%s\" = predicted.index AND weights.result_id = predicted.result_id "+
 			"WHERE predicted.result_id = $%d AND target = $%d",
-		distincts, predictedCol, targetName, targetCol, errorExpr, strings.Join(fieldsData, ", "),
+		distincts, predictedCol, targetColumnQuery, errorExpr, strings.Join(fieldsData, ", "),
 		strings.Join(fieldsExplain, ", "), storageNameResult, storageName, model.D3MIndexFieldName,
 		s.getSolutionFeatureWeightTable(storageName), model.D3MIndexFieldName,
 		len(params)+1, len(params)+2)

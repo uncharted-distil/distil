@@ -19,40 +19,33 @@ const { commit, read, dispatch } = getStoreAccessors<PredictionState, DistilStat
 
 // Typed getters
 export const getters = {
-  // training / target
-  getTrainingSummaries: read(moduleGetters.getTrainingSummaries),
-  getTargetSummary: read(moduleGetters.getTargetSummary),
   // result
-  getFittedSolutionId: read(moduleGetters.getFittedSolutionId),
-  getProduceRequestId: read(moduleGetters.getProduceRequestId),
-  hasIncludedResultTableData: read(moduleGetters.hasIncludedResultTableData),
-  getIncludedResultTableData: read(moduleGetters.getIncludedResultTableData),
-  getIncludedResultTableDataItems: read(
-    moduleGetters.getIncludedResultTableDataItems
+  getFittedSolutionIdFromPrediction: read(moduleGetters.getFittedSolutionIdFromPrediction),
+  getProduceRequestIdFromPrediction: read(moduleGetters.getProduceRequestIdFromPrediction),
+  hasIncludedPredictionTableData: read(moduleGetters.hasIncludedPredictionTableData),
+  getIncludedPredictionTableData: read(moduleGetters.getIncludedPredictionTableData),
+  getIncludedPredictionTableDataItems: read(
+    moduleGetters.getIncludedPredictionTableDataItems
   ),
-  getIncludedResultTableDataFields: read(
-    moduleGetters.getIncludedResultTableDataFields
+  getIncludedPredictionTableDataFields: read(
+    moduleGetters.getIncludedPredictionTableDataFields
   ),
-  hasExcludedResultTableData: read(moduleGetters.hasExcludedResultTableData),
-  getExcludedResultTableData: read(moduleGetters.getExcludedResultTableData),
-  getExcludedResultTableDataItems: read(
-    moduleGetters.getExcludedResultTableDataItems
+  hasExcludedPredictionTableData: read(moduleGetters.hasExcludedPredictionTableData),
+  getExcludedPredictionTableData: read(moduleGetters.getExcludedPredictionTableData),
+  getExcludedPredictionTableDataItems: read(
+    moduleGetters.getExcludedPredictionTableDataItems
   ),
-  getExcludedResultTableDataFields: read(
-    moduleGetters.getExcludedResultTableDataFields
+  getExcludedPredictionTableDataFields: read(
+    moduleGetters.getExcludedPredictionTableDataFields
   ),
   // predicted
-  getPredictedSummaries: read(moduleGetters.getPredictedSummaries),
-  // residual
-  getResidualsSummaries: read(moduleGetters.getResidualsSummaries),
-  getResidualsExtrema: read(moduleGetters.getResidualsExtrema),
-  // correctness
-  getCorrectnessSummaries: read(moduleGetters.getCorrectnessSummaries),
+  getPredictionSummaries: read(moduleGetters.getPredictionSummaries),
+
   // result table data
-  getResultDataNumRows: read(moduleGetters.getResultDataNumRows),
+  getPredictionDataNumRows: read(moduleGetters.getPredictionDataNumRows),
   // forecasts
-  getPredictedTimeseries: read(moduleGetters.getPredictedTimeseries),
-  getPredictedForecasts: read(moduleGetters.getPredictedForecasts)
+  getPredictedTimeseries: read(moduleGetters.getPredictionTimeseries),
+  getPredictedForecasts: read(moduleGetters.getPredictionForecasts)
 };
 
 // Typed actions
@@ -69,15 +62,9 @@ export const actions = {
   ),
   fetchPredictionTableData: dispatch(moduleActions.fetchPredictionTableData),
   // predicted
-  fetchPredictedSummary: dispatch(moduleActions.fetchPredictedSummary),
-  fetchPredictedSummaries: dispatch(moduleActions.fetchPredictedSummaries),
-  // residuals
-  fetchResidualsSummary: dispatch(moduleActions.fetchResidualsSummary),
-  fetchResidualsSummaries: dispatch(moduleActions.fetchResidualsSummaries),
-  fetchResidualsExtrema: dispatch(moduleActions.fetchResidualsExtrema),
-  // correctness
-  fetchCorrectnessSummary: dispatch(moduleActions.fetchCorrectnessSummary),
-  fetchCorrectnessSummaries: dispatch(moduleActions.fetchCorrectnessSummaries),
+  fetchPredictedSummary: dispatch(moduleActions.fetchPredictionSummary),
+  fetchPredictedSummaries: dispatch(moduleActions.fetchPredictionSummaries),
+   
   // forecast
   fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries)
 };
@@ -91,11 +78,11 @@ export const mutations = {
   updateTargetSummary: commit(moduleMutations.updateTargetSummary),
   removeTrainingSummary: commit(moduleMutations.removeTrainingSummary),
   // result
-  setIncludedResultTableData: commit(
-    moduleMutations.setIncludedResultTableData
+  setIncludedPredictionTableData: commit(
+    moduleMutations.setIncludedPredictionTableData
   ),
-  setExcludedResultTableData: commit(
-    moduleMutations.setExcludedResultTableData
+  setExcludedPredictionTableData: commit(
+    moduleMutations.setExcludedPredictionTableData
   ),
   // predicted
   updatePredictedSummaries: commit(moduleMutations.updatePredictedSummaries),
