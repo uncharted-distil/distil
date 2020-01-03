@@ -77,10 +77,10 @@ func (b *BasicField) GetType() string {
 func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams) error {
 	if !filterParams.Empty() && filterParams.Highlight != nil {
 		clusterHighlightCol := filterParams.Highlight.Key
-		if !isClusteringColName(filterParams.Highlight.Key) {
-			clusterHighlightCol = clusteringColName(filterParams.Highlight.Key)
+		if !api.IsClusteringColName(filterParams.Highlight.Key) {
+			clusterHighlightCol = api.ClusteringColName(filterParams.Highlight.Key)
 		}
-		if b.Storage.hasClusterData(b.GetDatasetName(), clusterHighlightCol) {
+		if api.HasClusterData(b.GetDatasetName(), clusterHighlightCol, b.GetStorage().metadata) {
 			filterParams.Highlight.Key = clusterHighlightCol
 		}
 	}

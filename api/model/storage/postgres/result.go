@@ -106,7 +106,7 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 	if err != nil {
 		return err
 	}
-	fieldsMetadata, err := s.metadata.FetchVariables(dataset, true, true, true)
+	fieldsMetadata, err := s.metadata.FetchVariables(dataset, true, true)
 	if err != nil {
 		return err
 	}
@@ -539,7 +539,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// fetch variable metadata
-	variables, err := s.metadata.FetchVariables(dataset, false, false, true)
+	variables, err := s.metadata.FetchVariables(dataset, false, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
@@ -762,11 +762,11 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 			}
 
-			field = NewTimeSeriesField(s, dataset, storageName, variable.Grouping.Properties.ClusterCol, variable.Grouping.IDCol, variable.Grouping.IDCol, variable.Grouping.Type,
-				timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
+			field = NewTimeSeriesField(s, dataset, storageName, variable.Grouping.Properties.ClusterCol, variable.Name, variable.DisplayName, variable.Type,
+				variable.Grouping.IDCol, timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
 
 		} else {
-			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.IDCol, variable.Grouping.Type)
+			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Name, variable.Type)
 		}
 
 	} else {
@@ -797,7 +797,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 
 func (s *Storage) getDisplayName(dataset string, columnName string) (string, error) {
 	displayName := ""
-	variables, err := s.metadata.FetchVariables(dataset, false, false, false)
+	variables, err := s.metadata.FetchVariables(dataset, false, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable fetch variables for name mapping")
 	}

@@ -95,7 +95,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			summary = ""
 		}
 		// extract the variables list
-		variables, err := s.parseVariables(hit, includeIndex, includeMeta, false)
+		variables, err := s.parseVariables(hit, includeIndex, includeMeta)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
@@ -257,7 +257,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 // SetDataType updates the data type of the field in ES.
 func (s *Storage) SetDataType(dataset string, varName string, varType string) error {
 	// Fetch all existing variables
-	vars, err := s.FetchVariables(dataset, true, true, false)
+	vars, err := s.FetchVariables(dataset, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -275,7 +275,7 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 // SetExtrema updates the min & max values of a field in ES.
 func (s *Storage) SetExtrema(dataset string, varName string, extrema *api.Extrema) error {
 	// Fetch all existing variables
-	vars, err := s.FetchVariables(dataset, true, true, false)
+	vars, err := s.FetchVariables(dataset, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -311,7 +311,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varDisplayName str
 	}
 
 	// query for existing variables
-	vars, err := s.FetchVariables(dataset, true, true, true)
+	vars, err := s.FetchVariables(dataset, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -344,7 +344,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varDisplayName str
 // DeleteVariable flags a variable as deleted.
 func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	// query for existing variables
-	vars, err := s.FetchVariables(dataset, true, true, false)
+	vars, err := s.FetchVariables(dataset, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -424,8 +424,8 @@ func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayN
 	return nil
 }
 
-// RemoveGrouping removes a grouping to the metadata.
-func (s *Storage) RemoveGrouping(datasetName string, grouping model.Grouping) error {
+// RemoveGroupedVariable removes a grouping to the metadata.
+func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.Grouping) error {
 
 	query := elastic.NewMatchQuery("_id", datasetName)
 	// execute the ES query

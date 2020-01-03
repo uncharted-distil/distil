@@ -336,20 +336,18 @@ export default Vue.extend({
       this.submitGrouping();
     },
     submitGrouping() {
-      // create the list of IDs that we're going to be grouping
+      // Create a list of id values, filtering out the empty entry
       const ids = this.idCols.map(c => c.value).filter(v => v);
 
       // generate the grouping structure that describes how the vars will be grouped
+      const idCol = getComposedVariableKey(ids);
       const grouping = {
         type: this.groupingType,
         dataset: this.dataset,
         idCol: getComposedVariableKey(ids),
         subIds: ids,
-        hidden: [],
-        properties: {
-          xCol: this.xCol,
-          yCol: this.yCol
-        }
+        hidden: [idCol, this.xCol, this.yCol],
+        properties: { xCol: this.xCol, yCol: this.yCol }
       };
 
       datasetActions

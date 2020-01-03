@@ -64,11 +64,6 @@ const (
 var (
 	// folder for dataset data exchanged with TA2
 	datasetDir string
-
-	ta2RoleMap = map[string]bool{
-		"data":  true,
-		"index": true,
-	}
 )
 
 // SetDatasetDir sets the output data dir
@@ -745,63 +740,26 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// NOTE: D3M index field is needed in the persisted data.
 	s.Filters.AddVariable(model.D3MIndexFieldName)
 
-	// fetch the full set of variables associated with the dataset
-	variables, err := metaStorage.FetchVariables(s.Dataset, true, true, true)
+	// fetch the dataset variables
+	variables, err := metaStorage.FetchVariables(s.Dataset, true, true)
 	if err != nil {
 		return err
 	}
 
-	// remove generated features from our var list
+	// remove any generated / grouped features from our var list
 	// TODO: imported datasets have d3m index as distil role = "index".
 	//       need to figure out if that causes issues!!!
 	dataVariables := []*model.Variable{}
 	for _, variable := range variables {
-		if isTA2Field(variable.DistilRole) {
+		if model.IsTA2Field(variable.DistilRole) {
 			dataVariables = append(dataVariables, variable)
 		}
 	}
-	targetVariable := s.TargetFeature
 
-	// Timeseries are grouped entries and we want to use the Y Col from the group as the target
-	// rather than the group itself, and the X col as the timestamp variable
-	var groupingTargetVariable = targetVariable
-	if targetVariable.Grouping != nil && model.IsTimeSeries(targetVariable.Grouping.Type) {
-		// filter list needs to include all the individual grouping components
-		for _, subID := range targetVariable.Grouping.SubIDs {
-			s.Filters.AddVariable(subID)
-		}
-		s.Filters.AddVariable(targetVariable.Grouping.Properties.XCol)
-		s.Filters.AddVariable(targetVariable.Grouping.Properties.YCol)
-
-		// extract the time series value column
-		targetVarName := targetVariable.Grouping.Properties.YCol
-		targetVariable, err = metaStorage.FetchVariable(s.Dataset, targetVarName)
-		if err != nil {
-			return err
-		}
-
-		dataVariables = append(dataVariables, targetVariable)
-
-	}
-
-	// make sure that we include all non-generated variables in our persisted
-	// dataset - the column removal preprocessing step will mark them for
-	// removal by ta2
-	allVarFilters := s.Filters.Clone()
-	allVarFilters.Variables = []string{}
-	var timeseriesField *model.Variable
-	for _, variable := range dataVariables {
-		// exclude cluster/feature generated columns
-		allVarFilters.AddVariable(variable.Name)
-		if variable.Name == s.TimestampField {
-			timeseriesField = variable
-		}
-	}
-
-	// fetch the queried dataset
-	dataset, err := api.FetchDataset(s.Dataset, true, true, allVarFilters, metaStorage, dataStorage)
+	// fetch the source dataset
+	dataset, err := metaStorage.FetchDataset(s.Dataset, true, true)
 	if err != nil {
-		return err
+		return nil
 	}
 
 	// fetch the input dataset (should only differ on augmented)
@@ -810,36 +768,37 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		return err
 	}
 
-	columnIndex := getColumnIndex(targetVariable, dataset.Filters.Variables)
-	timeseriesColumnIndex := -1
-	if timeseriesField != nil {
-		// extract timeseries timestamp column from solution request
-		timeseriesColumnIndex = getColumnIndex(timeseriesField, dataset.Filters.Variables)
-	} else if groupingTargetVariable.Grouping != nil {
-		// extract the timeseries timestamp column from a grouping
-		timeseriesVarName := groupingTargetVariable.Grouping.Properties.XCol
-		timeseriesVariable, err := metaStorage.FetchVariable(s.Dataset, timeseriesVarName)
+	// timeseries specific handling - the target needs to be set to the timeseries Y field, and we need to
+	// save timestamp variable index for data splitting
+	timestampVariableIndex := -1
+	targetVariable := s.TargetFeature
+	if model.IsTimeSeries(targetVariable.Type) {
+		// find the index of the timestamp variable of the timeseries
+		timestampVariable, err := findVariable(targetVariable.Grouping.Properties.XCol, dataVariables)
 		if err != nil {
 			return err
 		}
-		timeseriesColumnIndex = getColumnIndex(timeseriesVariable, dataset.Filters.Variables)
+		timestampVariableIndex = timestampVariable.Index
+
+		// update the target variable to be the Y col of the timeseries group
+		targetVariable, err = findVariable(targetVariable.Grouping.Properties.YCol, dataVariables)
+		if err != nil {
+			return err
+		}
 	}
 
 	// add dataset name to path
 	datasetInputDir := env.ResolvePath(datasetInput.Source, datasetInput.Folder)
 
 	// compute the task and subtask from the target and dataset
-	task, err := ResolveTask(dataStorage, dataset.Metadata.StorageName, groupingTargetVariable)
+	task, err := ResolveTask(dataStorage, dataset.StorageName, s.TargetFeature)
 	if err != nil {
 		return err
 	}
 	s.Task = task.Task
 
 	// when dealing with categorical data we want to stratify
-	stratify := false
-	if targetVariable.Type == model.CategoricalType {
-		stratify = true
-	}
+	stratify := model.IsCategorical(s.TargetFeature.Type)
 
 	// perist the datasets and get URI
 	params := &persistedDataParams{
@@ -848,8 +807,8 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		SourceDataFolder:     datasetInputDir,
 		TmpDataFolder:        datasetDir,
 		TaskType:             s.Task,
-		TimeseriesFieldIndex: timeseriesColumnIndex,
-		TargetFieldIndex:     columnIndex,
+		TimeseriesFieldIndex: timestampVariableIndex,
+		TargetFieldIndex:     targetVariable.Index,
 		Stratify:             stratify,
 	}
 	datasetPathTrain, datasetPathTest, err := persistOriginalData(params)
@@ -879,8 +838,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVariable, s.DatasetInput, s.Metrics, s.Task, int64(s.MaxTime))
-
+	searchRequest, err := createSearchSolutionsRequest(targetVariable.Index, preprocessing, datasetPathTrain, client.UserAgent, targetVariable, s.DatasetInput, s.Metrics, s.Task, int64(s.MaxTime))
 	if err != nil {
 		return err
 	}
@@ -892,12 +850,13 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// persist the request
-	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.Metadata.ID, RequestPendingStatus)
+	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.ID, RequestPendingStatus)
 	if err != nil {
 		return err
 	}
 
-	// store the request features
+	// store the request features - note that we are storing the original request filters, not the expanded
+	// list that was generated
 	for _, v := range s.Filters.Variables {
 		var typ string
 		// ignore the index field
@@ -925,7 +884,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// dispatch search request
-	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.Metadata.ID, searchRequest, datasetPathTrain, datasetPathTest, dataVariables)
+	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.ID, searchRequest, datasetPathTrain, datasetPathTest, dataVariables)
 
 	return nil
 }
@@ -968,34 +927,17 @@ func CreateSearchSolutionRequest(request *SolutionRequestDiscovery, skipPreproce
 	}
 
 	targetVariable := request.TargetFeature
-	columnIndex := getColumnIndex(targetVariable, request.SelectedFeatures)
 	task := DefaultTaskType(targetVariable.Type, "")
 	metrics := DefaultMetrics(task)
 
 	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(columnIndex, preprocessingPipeline, request.SourceURI,
+	searchRequest, err := createSearchSolutionsRequest(targetVariable.Index, preprocessingPipeline, request.SourceURI,
 		request.UserAgent, request.TargetFeature, request.DatasetInput, metrics, task, 600)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create search solution request")
 	}
 
 	return searchRequest, nil
-}
-
-func getColumnIndex(variable *model.Variable, selectedVariables []string) int {
-	colIndex := 0
-	for i := 0; i < len(selectedVariables); i++ {
-		if selectedVariables[i] == variable.Name {
-			break
-		}
-		colIndex = colIndex + 1
-	}
-
-	return colIndex
-}
-
-func isTA2Field(distilRole string) bool {
-	return ta2RoleMap[distilRole]
 }
 
 func findVariable(variableName string, variables []*model.Variable) (*model.Variable, error) {

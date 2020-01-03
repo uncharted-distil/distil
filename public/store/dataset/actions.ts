@@ -44,10 +44,7 @@ import {
   LATITUDE_TYPE
 } from "../../util/types";
 
-import {
-  DATASET_UPLOAD,
-  PREDICTION_UPLOAD
-} from "../../util/uploads";
+import { DATASET_UPLOAD, PREDICTION_UPLOAD } from "../../util/uploads";
 
 // fetches variables and add dataset name to each variable
 function getVariables(dataset: string): Promise<Variable[]> {
@@ -323,7 +320,7 @@ export const actions = {
 
   uploadDataFile(
     context: DatasetContext,
-    args: { datasetID: string; file: File, type: string, solutionId?: string }
+    args: { datasetID: string; file: File; type: string; solutionId?: string }
   ) {
     if (!args.datasetID) {
       console.warn("`datasetID` argument is missing");
@@ -340,44 +337,44 @@ export const actions = {
     const data = new FormData();
     data.append("file", args.file);
 
-    switch(args.type) {
+    switch (args.type) {
       case PREDICTION_UPLOAD:
         if (!args.solutionId) {
           console.warn("`solutionId` argument is missing");
           return null;
         }
         return axios
-        .post(`/distil/predict/${args.datasetID}/${args.solutionId}`, data, {
-          headers: { "Content-Type": "multipart/form-data" }
-        })
-        .then(response => {
-          return actions.importDataset(context, {
-            datasetID: args.datasetID,
-            source: "augmented",
-            provenance: "local",
-            terms: args.datasetID,
-            originalDataset: null,
-            joinedDataset: null
+          .post(`/distil/predict/${args.datasetID}/${args.solutionId}`, data, {
+            headers: { "Content-Type": "multipart/form-data" }
+          })
+          .then(response => {
+            return actions.importDataset(context, {
+              datasetID: args.datasetID,
+              source: "augmented",
+              provenance: "local",
+              terms: args.datasetID,
+              originalDataset: null,
+              joinedDataset: null
+            });
           });
-        });
       case DATASET_UPLOAD:
         return axios
-        .post(`/distil/upload/${args.datasetID}?type=table`, data, {
-          headers: { "Content-Type": "multipart/form-data" }
-        })
-        .then(response => {
-          return actions.importDataset(context, {
-            datasetID: args.datasetID,
-            source: "augmented",
-            provenance: "local",
-            terms: args.datasetID,
-            originalDataset: null,
-            joinedDataset: null
+          .post(`/distil/upload/${args.datasetID}?type=table`, data, {
+            headers: { "Content-Type": "multipart/form-data" }
+          })
+          .then(response => {
+            return actions.importDataset(context, {
+              datasetID: args.datasetID,
+              source: "augmented",
+              provenance: "local",
+              terms: args.datasetID,
+              originalDataset: null,
+              joinedDataset: null
+            });
           });
-        });
       default:
-        console.log('unknown upload type');
-    };
+        console.log("unknown upload type");
+    }
   },
 
   importDataset(
@@ -632,20 +629,18 @@ export const actions = {
 
   removeGrouping(
     context: DatasetContext,
-    args: { dataset: string; grouping: Grouping }
+    args: { dataset: string; variable: string }
   ): Promise<any> {
     if (!args.dataset) {
       console.warn("`dataset` argument is missing");
       return null;
     }
-    if (!args.grouping) {
+    if (!args.variable) {
       console.warn("`grouping` argument is missing");
       return null;
     }
     return axios
-      .post(`/distil/remove-grouping/${args.dataset}`, {
-        grouping: args.grouping
-      })
+      .post(`/distil/remove-grouping/${args.dataset}/${args.variable}`, {})
       .then(() => {
         // update dataset
         return Promise.all([
