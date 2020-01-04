@@ -37,11 +37,9 @@ import { loadImage } from "../../util/image";
 import {
   getVarType,
   IMAGE_TYPE,
-  TIMESERIES_TYPE,
   GEOCODED_LON_PREFIX,
   GEOCODED_LAT_PREFIX,
-  GEOCOORDINATE_TYPE,
-  LATITUDE_TYPE
+  GEOCOORDINATE_TYPE
 } from "../../util/types";
 
 import { DATASET_UPLOAD, PREDICTION_UPLOAD } from "../../util/uploads";
