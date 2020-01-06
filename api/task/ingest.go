@@ -301,7 +301,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// ingest the data
-	err = IngestPostgres(originalSchemaFile, schemaFile, index, dataset, config, false)
+	err = IngestPostgres(originalSchemaFile, schemaFile, index, dataset, config, false, false)
 	if err != nil {
 		return "", err
 	}
@@ -348,7 +348,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, index string, 
 
 // IngestPostgres ingests a dataset to PG storage.
 func IngestPostgres(originalSchemaFile string, schemaFile string, index string,
-	dataset string, config *IngestTaskConfig, verifyMetadata bool) error {
+	dataset string, config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool) error {
 	datasetDir, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, nil, config, verifyMetadata)
 	if err != nil {
 		return err
@@ -370,6 +370,12 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, index string,
 	}
 
 	dbTable := meta.StorageName
+	if createMetadataTables {
+		err = pg.CreateSolutionMetadataTables()
+		if err != nil {
+			return err
+		}
+	}
 
 	// Drop the current table if requested.
 	// Hardcoded the base table name for now.
