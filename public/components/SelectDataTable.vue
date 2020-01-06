@@ -36,10 +36,6 @@
       >
         <div class="container" :key="data.item[timeseriesGrouping.idCol].value">
           <div class="row">
-            <!-- <div class="col-2">
-							<b>{{data.item[timeseriesGrouping.idCol]}}</b>
-						</div>
-						<div class="col-10"> -->
             <sparkline-preview
               :dataset="dataset"
               :x-col="timeseriesGrouping.properties.xCol"
@@ -48,7 +44,6 @@
               :timeseries-id="data.item[timeseriesGrouping.idCol].value"
             >
             </sparkline-preview>
-            <!-- </div> -->
           </div>
         </div>
       </template>

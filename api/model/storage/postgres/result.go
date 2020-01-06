@@ -73,7 +73,10 @@ func (s *Storage) getResultTargetVariable(dataset string, targetName string) (*m
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to get target variable information")
 	}
-
+	if variable.Grouping != nil && model.IsTimeSeries(variable.Type) {
+		// extract the time series value column
+		return s.metadata.FetchVariable(dataset, variable.Grouping.Properties.YCol)
+	}
 	return variable, nil
 }
 
@@ -167,28 +170,17 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		log.Warnf("Result contains %d columns, expected 2.  Additional columns will be ignored.", len(records[0]))
 	}
 
-	targetName := target
+	// Fetch the actual target variable (this can be different than the requested target for grouped variables)
+	targetVariable, err := s.getResultTargetVariable(dataset, target)
 
 	// Translate from display name to storage name.
-	targetDisplayName, err := s.getDisplayName(dataset, targetName)
+	targetDisplayName, err := s.getDisplayName(dataset, targetVariable.Name)
 	if err != nil {
 		return errors.Wrap(err, "unable to map target name")
 	}
 
-	// A target that is a grouping won't have the correct name for now.  We need to check to see
-	// if the target is a grouping, and use the Y Col as the target for purposes of dealing with the TA2.
-	targetVariable, err := s.getResultTargetVariable(dataset, target)
-	if targetVariable.Grouping != nil && model.IsTimeSeries(targetVariable.Grouping.Type) {
-		// extract the time series value column
-		targetName = targetVariable.Grouping.Properties.YCol
-		targetVariable, err = s.metadata.FetchVariable(dataset, targetName)
-		if err != nil {
-			return err
-		}
-		targetDisplayName = targetVariable.DisplayName
-	}
-
-	// Header row will have the target. Find the index.
+	// We can't guarantee that the order of the variables in the returned result matches our
+	// locally stored indices, so we fetch by name from the source to be safe.
 	targetIndex := -1
 	d3mIndexIndex := -1
 	for i, v := range records[0] {
@@ -220,7 +212,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			parsedVal = int64(parsedValFloat)
 		}
 
-		insertData = append(insertData, []interface{}{resultURI, parsedVal, target, records[i][targetIndex]})
+		insertData = append(insertData, []interface{}{resultURI, parsedVal, targetVariable.Name, records[i][targetIndex]})
 	}
 
 	// store all results to the storage
@@ -265,9 +257,13 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 				weightCount = weightCount + 1
 				continue
 			} else {
-				v := getVariableByKey(key, variables)
-				if v != nil {
-					typ = v.Type
+				if key == target.Name {
+					typ = target.Type
+				} else {
+					v := getVariableByKey(key, variables)
+					if v != nil {
+						typ = v.Type
+					}
 				}
 			}
 
@@ -277,9 +273,6 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 				Type:  typ,
 			})
 		}
-
-		// Result type provided by DB needs to be overridden with defined target type.
-		columns[0].Type = target.Type
 
 		// Parse the row data.
 		for rows.Next() {
@@ -559,10 +552,6 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 		Filters: filters.genericFilters,
 	}
 
-	// if filterParams != nil {
-	// 	genericFilterParams.Highlight = filterParams.Highlight
-	// }
-
 	// Create the filter portion of the where clause.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -600,52 +589,50 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 
 	// Add the error filter into the where clause if it was included in the filter set
 	if filters.residualFilter != nil {
-		filterTargetName := targetName
-		if variable.Grouping != nil {
-			filterTargetName = variable.Grouping.Properties.YCol
-		}
-
 		if filters.residualFilter.Mode == model.IncludeFilter {
-			wheres, params, err = addIncludeErrorFilterToWhere(wheres, params, dataTableAlias, filterTargetName, filters.residualFilter)
+			wheres, params, err = addIncludeErrorFilterToWhere(wheres, params, dataTableAlias, targetName, filters.residualFilter)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add error to where clause")
 			}
 		} else {
-			wheres, params, err = addExcludeErrorFilterToWhere(wheres, params, dataTableAlias, filterTargetName, filters.residualFilter)
+			wheres, params, err = addExcludeErrorFilterToWhere(wheres, params, dataTableAlias, targetName, filters.residualFilter)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add error to where clause")
 			}
 		}
 	}
 
-	// If our results are numerical we need to compute residuals and store them in a column called 'error'
-	predictedCol := api.GetPredictedKey(solutionID)
-	errorCol := api.GetErrorKey(solutionID)
-	targetCol := targetName
+	// If this is a timeseries forecast we don't want to include the target, predicted target or error
+	// info in the returned data.  That information is fetched on a per-timeseries basis using the info
+	// provided by this call.
+	selectedVars := ""
+	if isTimeSeriesValue(variables, variable) {
+		selectedVars = fmt.Sprintf("%s %s ", distincts, strings.Join(fieldsData, ", "))
+	} else {
+		predictedCol := api.GetPredictedKey(solutionID)
 
-	errorExpr := ""
-	if model.IsNumerical(variable.Type) && !predictionResultMode {
-		errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(dataTableAlias, variable.Name), errorCol)
+		// If our results are numerical we need to compute residuals and store them in a column called 'error'
+		errorCol := api.GetErrorKey(solutionID)
+		errorExpr := ""
+		if model.IsNumerical(variable.Type) && !predictionResultMode {
+			errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(dataTableAlias, variable.Name), errorCol)
+		}
+
+        targetColumnQuery := ""
+	    if !predictionResultMode {
+		    targetColumnQuery = fmt.Sprintf("data.\"%s\" as \"%s\", ", targetName, targetCol)
+	    }
+				
+		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", %s %s %s, %s ",
+			distincts, predictedCol, targetColumnQuery, errorExpr, strings.Join(fieldsData, ", "), strings.Join(fieldsExplain, ", "))
 	}
 
-	targetColumnQuery := ""
-
-	if !predictionResultMode {
-		targetColumnQuery = fmt.Sprintf("data.\"%s\" as \"%s\", ", targetName, targetCol)
-	}
-
-	// errorExpr will have the necessary comma if relevant
 	query := fmt.Sprintf(
-		"SELECT %s predicted.value as \"%s\", "+
-			"%s"+
-			"%s"+
-			"%s, "+
-			"%s "+
+		"SELECT %s"+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"LEFT OUTER JOIN %s as weights on weights.\"%s\" = predicted.index AND weights.result_id = predicted.result_id "+
 			"WHERE predicted.result_id = $%d AND target = $%d",
-		distincts, predictedCol, targetColumnQuery, errorExpr, strings.Join(fieldsData, ", "),
-		strings.Join(fieldsExplain, ", "), storageNameResult, storageName, model.D3MIndexFieldName,
+		selectedVars, storageNameResult, storageName, model.D3MIndexFieldName,
 		s.getSolutionFeatureWeightTable(storageName), model.D3MIndexFieldName,
 		len(params)+1, len(params)+2)
 
@@ -818,4 +805,13 @@ func mapFields(fields []*model.Variable) map[string]*model.Variable {
 	}
 
 	return mapped
+}
+
+func isTimeSeriesValue(variables []*model.Variable, targetVariable *model.Variable) bool {
+	for _, v := range variables {
+		if v.Grouping != nil && v.Grouping.Properties.YCol == targetVariable.Name {
+			return true
+		}
+	}
+	return false
 }

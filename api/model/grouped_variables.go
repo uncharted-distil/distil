@@ -1,9 +1,6 @@
 package model
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/uncharted-distil/distil-compute/model"
 	log "github.com/unchartedsoftware/plog"
 )
@@ -126,18 +123,12 @@ func isHidden(variableName string, hidden []string) bool {
 	return false
 }
 
+// HasClusterData checks to see if a grouped variable has associated cluster data available.  If the cluster
+// info has not yet been computed (it can be a long running task) then this willl return false.
 func HasClusterData(datasetName string, variableName string, metaStore MetadataStorage) bool {
 	result, err := metaStore.DoesVariableExist(datasetName, variableName)
 	if err != nil {
 		log.Warn(err)
 	}
 	return result
-}
-
-func ClusteringColName(variableName string) string {
-	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, variableName)
-}
-
-func IsClusteringColName(variableName string) bool {
-	return strings.HasPrefix(variableName, model.ClusterVarPrefix)
 }

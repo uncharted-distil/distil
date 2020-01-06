@@ -69,9 +69,9 @@ export const actions = {
         }
         return isTrain;
       }, false);
-      if(v.dataset !== args.dataset || !isTrainingArg) {
+      if (v.dataset !== args.dataset || !isTrainingArg) {
         mutations.removeTrainingSummary(context, v);
-      };
+      }
     });
 
     args.training.forEach(variable => {

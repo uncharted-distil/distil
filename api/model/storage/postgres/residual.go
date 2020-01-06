@@ -140,9 +140,6 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, storageName string, va
 	resultVariable *model.Variable) (*api.Extrema, error) {
 
 	targetName := variable.Name
-	if variable.Grouping != nil {
-		targetName = variable.Grouping.Properties.YCol
-	}
 
 	// add min / max aggregation
 	aggQuery := getResidualsMinMaxAggsQuery(targetName, resultVariable)
@@ -154,7 +151,7 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, storageName string, va
 	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, fromClause)
 
 	// execute the postgres query
-	res, err := s.client.Query(queryString, resultURI, variable.Name)
+	res, err := s.client.Query(queryString, resultURI, targetName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema for result from postgres")
 	}
@@ -170,11 +167,6 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storage
 		Type: model.StringType,
 	}
 
-	targetName := variable.Name
-	if variable.Grouping != nil {
-		targetName = variable.Grouping.Properties.YCol
-	}
-
 	// need the extrema to calculate the histogram interval
 	var err error
 	if extrema == nil {
@@ -188,7 +180,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storage
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, targetName, resultVariable, numBuckets)
+	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, variable.Name, resultVariable, numBuckets)
 
 	fromClause := getResultJoin("result", storageName)
 

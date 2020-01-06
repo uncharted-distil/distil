@@ -179,7 +179,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 	if variable.Grouping != nil {
 
-		if model.IsTimeSeries(variable.Grouping.Type) {
+		if model.IsTimeSeries(variable.Type) {
 
 			timeColVar, err := s.metadata.FetchVariable(dataset, variable.Grouping.Properties.XCol)
 			if err != nil {
