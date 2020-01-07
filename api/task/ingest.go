@@ -295,7 +295,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// ingest the metadata
-	_, err = IngestMetadata(originalSchemaFile, schemaFile, index, dataset, source, origins, config, false)
+	_, err = IngestMetadata(originalSchemaFile, schemaFile, index, dataset, source, origins, config, true)
 	if err != nil {
 		return "", err
 	}
