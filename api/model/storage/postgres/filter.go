@@ -587,10 +587,11 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 			groupings = append(groupings, "\""+v.Grouping.IDCol+"\"")
 		}
 	}
+	groupings = append(groupings, "\""+model.D3MIndexFieldName+"\"")
 	orderBy := strings.Join(groupings, ",")
 
 	// order & limit the filtered data.
-	query = fmt.Sprintf("%s ORDER BY %s\"%s\"", query, orderBy, model.D3MIndexFieldName)
+	query = fmt.Sprintf("%s ORDER BY %s", query, orderBy)
 	if filterParams.Size > 0 {
 		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
 	}

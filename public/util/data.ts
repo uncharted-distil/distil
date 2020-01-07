@@ -75,7 +75,7 @@ export function getTimeseriesGroupingsFromFields(
 }
 
 export function getComposedVariableKey(keys: string[]): string {
-  return keys.join("_");
+  return "__grouping_" + keys.join("_");
 }
 
 export function getTimeseriesAnalysisIntervals(
