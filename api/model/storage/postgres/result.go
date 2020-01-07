@@ -618,11 +618,11 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(dataTableAlias, variable.Name), errorCol)
 		}
 
-        targetColumnQuery := ""
-	    if !predictionResultMode {
-		    targetColumnQuery = fmt.Sprintf("data.\"%s\" as \"%s\", ", targetName, targetCol)
-	    }
-				
+		targetColumnQuery := ""
+		if !predictionResultMode {
+			targetColumnQuery = fmt.Sprintf("data.\"%s\" as \"%s\", ", targetName, targetName)
+		}
+
 		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", %s %s %s, %s ",
 			distincts, predictedCol, targetColumnQuery, errorExpr, strings.Join(fieldsData, ", "), strings.Join(fieldsExplain, ", "))
 	}

@@ -113,7 +113,7 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 			return
 		}
 
-		results, err := data.FetchResults(dataset, storageName, res[0].ResultURI, solutionID, updatedFilterParams)
+		results, err := data.FetchResults(dataset, storageName, res[0].ResultURI, solutionID, updatedFilterParams, false)
 		if err != nil {
 			handleError(w, err)
 			return
