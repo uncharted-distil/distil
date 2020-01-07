@@ -83,11 +83,10 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 				return
 			}
 			rankings, err = targetRank(dataset, target, d.Folder, summaryVariables, d.Source)
-		}
-
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable get variable ranking"))
-			return
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable get variable ranking"))
+				return
+			}
 		}
 
 		res := make(map[string]interface{})
