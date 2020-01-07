@@ -72,6 +72,10 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 				return
 			}
 			rankings, err = featureRank(dataset, resultURI, d3mIndex, dataCtor)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to rank features"))
+				return
+			}
 		} else {
 			summaryVariables, err := api.FetchSummaryVariables(dataset, storage)
 			if err != nil {

@@ -172,6 +172,9 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 
 	// Fetch the actual target variable (this can be different than the requested target for grouped variables)
 	targetVariable, err := s.getResultTargetVariable(dataset, target)
+	if err != nil {
+		return err
+	}
 
 	// Translate from display name to storage name.
 	targetDisplayName, err := s.getDisplayName(dataset, targetVariable.Name)
