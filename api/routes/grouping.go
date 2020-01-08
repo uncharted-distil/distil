@@ -72,7 +72,7 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 
 		if model.IsTimeSeries(grouping.Type) {
 			// Create a new variable and column for the time series key.
-			if err := createComposedVariable(meta, data, dataset, grouping.IDCol, grouping.SubIDs); err != nil {
+			if err := createComposedVariable(meta, data, dataset, grouping.IDCol, grouping.Properties.YCol, grouping.SubIDs); err != nil {
 				handleError(w, errors.Wrapf(err, "unable to create new variable %s", grouping.IDCol))
 				return
 			}
@@ -82,7 +82,7 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 
 			// Create a new grouped variable for the time series.
 			groupingVarName := strings.Join([]string{grouping.Properties.XCol, grouping.Properties.YCol}, defaultSeparator)
-			err = meta.AddGroupedVariable(dataset, groupingVarName, "Count", model.TimeSeriesType, model.VarDistilRoleGrouping, grouping)
+			err = meta.AddGroupedVariable(dataset, groupingVarName, grouping.Properties.YCol, model.TimeSeriesType, model.VarDistilRoleGrouping, grouping)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -176,19 +176,28 @@ func RemoveGroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataSt
 	}
 }
 
-func createComposedVariable(metaStorage api.MetadataStorage, dataStorage api.DataStorage, dataset string, composedVarName string, sourceVarNames []string) error {
+func createComposedVariable(metaStorage api.MetadataStorage, dataStorage api.DataStorage,
+	dataset string, composedVarName string, composedVarDisplayName string, sourceVarNames []string) error {
 
-	// create the variable metadata entry
-	err := metaStorage.AddVariable(dataset, composedVarName, composedVarName, model.StringType, model.VarDistilRoleGrouping)
+	// create the variable data store entry
+	datasetStorageName := model.NormalizeDatasetID(dataset)
+
+	varExists, err := metaStorage.DoesVariableExist(dataset, composedVarName)
 	if err != nil {
 		return err
 	}
 
-	// create the variable data store entry
-	datasetStorageName := model.NormalizeDatasetID(dataset)
-	err = dataStorage.AddVariable(dataset, datasetStorageName, composedVarName, model.StringType)
-	if err != nil {
-		return err
+	if !varExists {
+		// create the variable metadata entry
+		err := metaStorage.AddVariable(dataset, composedVarName, composedVarDisplayName, model.StringType, model.VarDistilRoleGrouping)
+		if err != nil {
+			return err
+		}
+
+		err = dataStorage.AddVariable(dataset, datasetStorageName, composedVarName, model.StringType)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Fetch data using the source names as the filter

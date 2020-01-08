@@ -266,6 +266,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 					v := getVariableByKey(key, variables)
 					if v != nil {
 						typ = v.Type
+						label = v.DisplayName
 					}
 				}
 			}
