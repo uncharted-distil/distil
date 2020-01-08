@@ -316,19 +316,24 @@ export default Vue.extend({
           type: type
         })
         .then(() => {
-          if (this.target) {
-            datasetActions.fetchVariableRankings(this.$store, {
-              dataset: dataset,
-              target: this.target
-            });
-          }
-
           if (isLocationType(type)) {
-            datasetActions.geocodeVariable(this.$store, {
+            return datasetActions.geocodeVariable(this.$store, {
               dataset: dataset,
               field: field
             });
           }
+
+          return null
+        })
+        .then(() => {
+          if (this.target) {
+            return datasetActions.fetchVariableRankings(this.$store, {
+              dataset: dataset,
+              target: this.target
+            });
+          }
+          
+          return null
         });
     }
   },
