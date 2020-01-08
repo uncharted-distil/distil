@@ -294,13 +294,14 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	}
 
 	return &api.VariableSummary{
-		Key:      f.Key,
-		Label:    f.Label,
-		Type:     model.CategoricalType,
-		VarType:  f.Type,
-		Baseline: baseline,
-		Filtered: filtered,
-		Timeline: timeline,
+		Key:          f.Key,
+		Label:        f.Label,
+		Type:         model.CategoricalType,
+		VarType:      f.Type,
+		Baseline:     baseline,
+		Filtered:     filtered,
+		Timeline:     timeline,
+		TimelineType: f.XColType,
 	}, nil
 }
 

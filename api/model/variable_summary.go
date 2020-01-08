@@ -49,16 +49,17 @@ type Histogram struct {
 
 // VariableSummary represents a summary of the variable values.
 type VariableSummary struct {
-	Label       string     `json:"label"`
-	Key         string     `json:"key"`
-	Description string     `json:"description"`
-	Type        string     `json:"type"`
-	VarType     string     `json:"varType"`
-	Dataset     string     `json:"dataset"`
-	SolutionID  string     `json:"solutionId,omitempty"`
-	Baseline    *Histogram `json:"baseline"`
-	Filtered    *Histogram `json:"filtered"`
-	Timeline    *Histogram `json:"timeline"`
+	Label        string     `json:"label"`
+	Key          string     `json:"key"`
+	Description  string     `json:"description"`
+	Type         string     `json:"type"`
+	VarType      string     `json:"varType"`
+	Dataset      string     `json:"dataset"`
+	SolutionID   string     `json:"solutionId,omitempty"`
+	Baseline     *Histogram `json:"baseline"`
+	Filtered     *Histogram `json:"filtered"`
+	Timeline     *Histogram `json:"timeline"`
+	TimelineType string     `json:"timelineType"`
 }
 
 // EmptyFilteredHistogram fills the filtered portion of the summary with empty
