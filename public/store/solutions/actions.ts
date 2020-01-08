@@ -109,15 +109,11 @@ function updateSolutionResults(
   req: CreateSolutionRequest,
   res: SolutionStatus
 ) {
-  const isRegression = routeGetters
-    .getRouteTask(store)
-    .includes(TaskTypes.REGRESSION);
-  const isClassification = routeGetters
-    .getRouteTask(store)
-    .includes(TaskTypes.CLASSIFICATION);
-  const isForecasting = routeGetters
-    .getRouteTask(store)
-    .includes(TaskTypes.FORECASTING);
+
+  const taskArgs = routeGetters.getRouteTask(store);
+  const isRegression = taskArgs && taskArgs.includes(TaskTypes.REGRESSION);
+  const isClassification = taskArgs && taskArgs.includes(TaskTypes.CLASSIFICATION);
+  const isForecasting = taskArgs && taskArgs.includes(TaskTypes.FORECASTING);
 
   // if current solutionId, pull result summaries
   resultsActions.fetchPredictedSummary(store, {

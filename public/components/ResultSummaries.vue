@@ -14,6 +14,7 @@
       @uploadfinish="onUploadFinish"
       :upload-type="uploadType"
       :solution-id="fittedSolutionId"
+      v-if="!isPrediction"
     ></file-uploader>
 
     <b-modal id="export" title="Export" @ok="onExport">
@@ -126,10 +127,12 @@ export default Vue.extend({
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
+    taskArgs(): string {
+      return routeGetters.getRouteTask(this.$store);
+    },
 
     regressionEnabled(): boolean {
-      const tasks = routeGetters.getRouteTask(this.$store).split(',');
-      return tasks.indexOf(TaskTypes.REGRESSION) > -1;
+      return this.taskArgs && this.taskArgs.includes(TaskTypes.REGRESSION);
     },
 
     solutionId(): string {
@@ -138,6 +141,10 @@ export default Vue.extend({
 
     fittedSolutionId(): string {
       return resultGetters.hasIncludedResultTableData(this.$store) ? resultGetters.getFittedSolutionId(this.$store) : null;
+    },
+
+    produceRequestId(): string {
+      return resultGetters.hasIncludedResultTableData(this.$store) ? resultGetters.getProduceRequestId(this.$store) : null;
     },
 
     activeSolution(): Solution {
@@ -150,7 +157,12 @@ export default Vue.extend({
 
     instanceName(): string {
       return "groundTruth";
-    }
+    },
+
+    isPrediction(): boolean {
+      const routePath = routeGetters.getRoutePath(this.$store);
+      return routePath && routePath === PREDICTION_ROUTE;
+    },
   },
 
   methods: {
@@ -170,8 +182,10 @@ export default Vue.extend({
     onUploadFinish(err) {
       this.uploadStatus = err ? "error" : "success";
       const routeArgs = {
-        solution: this.solutionId,
-        activeSolution: this.activeSolution.solutionId
+        solutionId: this.solutionId,
+        dataset: this.dataset,
+        produceRequestId: this.produceRequestId,
+        target: this.target
       };
       // fill out with call to app actions to new appAction.importInferenceData probably
       // that for now will just be loading basically the model page again with stuff blanked out.

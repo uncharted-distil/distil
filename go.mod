@@ -14,6 +14,7 @@ require (
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgx v3.2.0+incompatible
 	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.8
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
@@ -33,9 +34,11 @@ require (
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48
 	github.com/zenazn/goji v0.9.0
 	goji.io/v3 v3.0.0
+	golang.org/x/crypto v0.0.0-20190510104115-cbcb75029529 // indirect
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
 	golang.org/x/text v0.3.2 // indirect
 	google.golang.org/grpc v1.25.1
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/olivere/elastic.v5 v5.0.83
 	mellium.im/sasl v0.2.1 // indirect
 )

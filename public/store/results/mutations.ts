@@ -11,6 +11,10 @@ export const mutations = {
     state.trainingSummaries = [];
   },
 
+  clearCorrectnessSummaries(state: ResultsState) {
+    state.correctnessSummaries = [];
+  },
+
   clearTargetSummary(state: ResultsState) {
     state.targetSummary = null;
   },

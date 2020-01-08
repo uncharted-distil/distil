@@ -33,7 +33,7 @@ type Results struct {
 
 // ResultsHandler fetches predicted solution values and returns them to the client
 // in a JSON structure
-func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// parse POST params
 		params, err := getPostParameters(r)
@@ -70,6 +70,12 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 			return
 		}
 
+		meta, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// get the filters
 		req, err := solution.FetchRequestBySolutionID(solutionID)
 		if err != nil {
@@ -83,6 +89,13 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 
 		// merge provided filterParams with those of the request
 		filterParams.Merge(req.Filters)
+
+		// Expand any grouped variables defined in filters into their subcomponents
+		updatedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, meta)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 
 		// get the result URI
 		res, err := solution.FetchSolutionResults(solutionID)
@@ -100,7 +113,7 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 			return
 		}
 
-		results, err := data.FetchResults(dataset, storageName, res[0].ResultURI, solutionID, filterParams)
+		results, err := data.FetchResults(dataset, storageName, res[0].ResultURI, solutionID, updatedFilterParams, false)
 		if err != nil {
 			handleError(w, err)
 			return

@@ -54,9 +54,6 @@ export function createFilterFromHighlight(
   const variable = variables.find(v => v.colName === key);
   let grouping = null;
   if (variable && variable.grouping) {
-    if (variable.grouping.type === "timeseries") {
-      key = variable.grouping.idCol;
-    }
     grouping = variable.grouping;
   }
 

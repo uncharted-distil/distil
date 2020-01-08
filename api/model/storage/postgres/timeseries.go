@@ -31,6 +31,7 @@ import (
 // TimeSeriesField defines behaviour for the timeseries field type.
 type TimeSeriesField struct {
 	BasicField
+	IDCol      string
 	ClusterCol string
 	XCol       string
 	XColType   string
@@ -40,7 +41,7 @@ type TimeSeriesField struct {
 
 // NewTimeSeriesField creates a new field for timeseries types.
 func NewTimeSeriesField(storage *Storage, datasetName string, datasetStorageName string, clusterCol string, key string, label string, typ string,
-	xCol string, xColType string, yCol string, yColType string) *TimeSeriesField {
+	idCol string, xCol string, xColType string, yCol string, yColType string) *TimeSeriesField {
 	field := &TimeSeriesField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -50,6 +51,7 @@ func NewTimeSeriesField(storage *Storage, datasetName string, datasetStorageName
 			Type:               typ,
 			Key:                key,
 		},
+		IDCol:      idCol,
 		XCol:       xCol,
 		XColType:   xColType,
 		YCol:       yCol,
@@ -91,7 +93,7 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
-			f.Key, f.DatasetStorageName, keyColName)
+			f.IDCol, f.DatasetStorageName, keyColName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -255,10 +257,10 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 }
 
 func (f *TimeSeriesField) keyColName() string {
-	if f.GetStorage().hasClusterData(f.GetDatasetName(), f.ClusterCol) {
+	if api.HasClusterData(f.GetDatasetName(), f.ClusterCol, f.GetStorage().metadata) {
 		return f.ClusterCol
 	}
-	return f.Key
+	return f.IDCol
 }
 
 func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {

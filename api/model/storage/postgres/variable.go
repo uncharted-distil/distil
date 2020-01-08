@@ -179,7 +179,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 	if variable.Grouping != nil {
 
-		if model.IsTimeSeries(variable.Grouping.Type) {
+		if model.IsTimeSeries(variable.Type) {
 
 			timeColVar, err := s.metadata.FetchVariable(dataset, variable.Grouping.Properties.XCol)
 			if err != nil {
@@ -191,11 +191,11 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 			}
 
-			field = NewTimeSeriesField(s, dataset, storageName, variable.Grouping.Properties.ClusterCol, variable.Grouping.IDCol, variable.Grouping.IDCol, variable.Grouping.Type,
-				timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
+			field = NewTimeSeriesField(s, dataset, storageName, variable.Grouping.Properties.ClusterCol, variable.Name, variable.DisplayName, variable.Type,
+				variable.Grouping.IDCol, timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
 
 		} else if model.IsGeoCoordinate(variable.Grouping.Type) {
-			field = NewCoordinateField(variable.Grouping.IDCol, s, dataset, storageName, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol, variable.Grouping.IDCol, variable.Grouping.Type)
+			field = NewCoordinateField(variable.Name, s, dataset, storageName, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol, variable.DisplayName, variable.Grouping.Type)
 		} else {
 			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.IDCol, variable.Grouping.Type)
 		}
@@ -230,12 +230,6 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 	// add description
 	summary.Description = variable.Description
-
-	if variable.Grouping != nil {
-		if model.IsTimeSeries(variable.Grouping.Type) {
-			summary.Label = variable.Grouping.Properties.YCol
-		}
-	}
 
 	// if there are no filters, and we are returning the exclude set, we expect
 	// no results in the filtered set

@@ -23,7 +23,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
-	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -287,7 +286,7 @@ func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVar
 	indexIncluded := false
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
 
-		if variable.Grouping != nil {
+		if variable.DistilRole == model.VarDistilRoleGrouping {
 			distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Name))
 		}
 
@@ -312,7 +311,7 @@ func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, tar
 
 		if strings.Compare(targetVariable.Name, variable.Name) != 0 {
 
-			if variable.Grouping != nil {
+			if variable.DistilRole == model.VarDistilRoleGrouping {
 				distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Name))
 			}
 
@@ -356,11 +355,18 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 
 	// Error keys are a string of the form <solutionID>:error.  We need to pull the solution ID out so we can find the name of the target var.
 	solutionID := api.StripKeySuffix(residualFilter.Key)
+
 	request, err := s.FetchRequestBySolutionID(solutionID)
 	if err != nil {
 		return nil, nil, err
 	}
-	typedError := getErrorTyped("", request.TargetFeature())
+
+	targetVariable, err := s.getResultTargetVariable(request.Dataset, request.TargetFeature())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	typedError := getErrorTyped("", targetVariable.Name)
 
 	where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
 	params = append(params, *residualFilter.Min)
@@ -389,10 +395,6 @@ func (s *Storage) buildResultQueryFilters(storageName string, resultURI string, 
 	genericFilterParams := &api.FilterParams{
 		Filters: filters.genericFilters,
 	}
-
-	// if filterParams != nil {
-	// 	genericFilterParams.Highlight = filterParams.Highlight
-	// }
 
 	// create the filter for the query
 	wheres := make([]string, 0)
@@ -489,7 +491,7 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 	// match order by for distinct
 	var groupings []string
 	for _, v := range variables {
-		if v.Grouping != nil {
+		if v.Grouping != nil && v.Grouping.IDCol != "" {
 			groupings = append(groupings, v.Grouping.IDCol)
 		}
 	}
@@ -542,22 +544,9 @@ func (s *Storage) filterIncludesIndex(filterParams *api.FilterParams) bool {
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
 func (s *Storage) FetchData(dataset string, storageName string, filterParams *api.FilterParams, invert bool) (*api.FilteredData, error) {
-
-	variables, err := s.metadata.FetchVariables(dataset, true, true, true)
+	variables, err := s.metadata.FetchVariables(dataset, true, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
-	}
-
-	// Check if the highlight variable is a group variable, and if it has associated cluster data.
-	// If it does, update the filter key to use the highlight column.
-	if filterParams != nil && filterParams.Highlight != nil {
-		for _, variable := range variables {
-			if variable.Name == filterParams.Highlight.Key &&
-				variable.Grouping != nil && s.hasClusterData(dataset, variable.Grouping.Properties.ClusterCol) {
-				filterParams.Highlight.Key = variable.Grouping.Properties.ClusterCol
-				break
-			}
-		}
 	}
 
 	numRows, err := s.FetchNumRows(storageName, variables, nil)
@@ -594,7 +583,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	// match order by for distinct
 	var groupings []string
 	for _, v := range variables {
-		if v.Grouping != nil {
+		if v.Grouping != nil && v.Grouping.IDCol != "" {
 			groupings = append(groupings, v.Grouping.IDCol)
 		}
 	}
@@ -627,20 +616,4 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	// parse the result
 	return s.parseFilteredData(dataset, variables, numRows, res)
-}
-
-func (s *Storage) hasClusterData(datasetName string, variableName string) bool {
-	result, err := s.metadata.DoesVariableExist(datasetName, variableName)
-	if err != nil {
-		log.Warn(err)
-	}
-	return result
-}
-
-func clusteringColName(variableName string) string {
-	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, variableName)
-}
-
-func isClusteringColName(variableName string) bool {
-	return strings.HasPrefix(variableName, model.ClusterVarPrefix)
 }

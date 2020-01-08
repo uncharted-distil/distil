@@ -55,6 +55,7 @@ export const getters = {
   getRouteFilters: read(moduleGetters.getRouteFilters),
   getRouteHighlight: read(moduleGetters.getRouteHighlight),
   getRouteRowSelection: read(moduleGetters.getRouteRowSelection),
+  getRouteProduceRequestId: read(moduleGetters.getRouteProduceRequestId),
   getRouteResidualThresholdMin: read(
     moduleGetters.getRouteResidualThresholdMin
   ),

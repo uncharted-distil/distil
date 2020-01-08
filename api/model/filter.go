@@ -146,17 +146,7 @@ func GetFilterVariables(filterVariables []string, variables []*model.Variable) [
 		if v == nil {
 			continue
 		}
-
-		// if this is a geo coordinate then we want to use the X,Y values of the grouped variable
-		// rather than the
-		if v.Grouping != nil && model.IsGeoCoordinate(v.Grouping.Type) {
-			lonVar := variableLookup[v.Grouping.Properties.XCol]
-			latVar := variableLookup[v.Grouping.Properties.YCol]
-			filtered = append(filtered, lonVar)
-			filtered = append(filtered, latVar)
-		} else {
-			filtered = append(filtered, v)
-		}
+		filtered = append(filtered, v)
 	}
 
 	return filtered

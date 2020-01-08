@@ -56,9 +56,22 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 			return
 		}
 
+		metaStore, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// replace any grouped variables in filter params with the group's
+		expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, metaStore)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to expand filter params"))
+			return
+		}
+
 		// fetch filtered data based on the supplied search parameters
 		storageName := model.NormalizeDatasetID(dataset)
-		data, err := storage.FetchData(dataset, storageName, filterParams, invertBool)
+		data, err := storage.FetchData(dataset, storageName, expandedFilterParams, invertBool)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable fetch filtered data"))
 			return

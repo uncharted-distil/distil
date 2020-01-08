@@ -9,25 +9,25 @@ import {
 } from "../../util/solutions";
 import { Variable, Highlight } from "../dataset/index";
 import { mutations } from "./module";
-import { ResultsState } from "./index";
+import { PredictionState } from "./index";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import {
-  fetchSolutionResultSummary,
+  fetchPredictionResultSummary,
   createPendingSummary,
   createErrorSummary,
   createEmptyTableData,
   fetchSummaryExemplars,
   getTimeseriesAnalysisIntervals
 } from "../../util/data";
-import { getters as resultGetters } from "../results/module";
+import { getters as predictionGetters } from "../predictions/module";
 import { getters as dataGetters } from "../dataset/module";
 
-export type ResultsContext = ActionContext<ResultsState, DistilState>;
+export type PredictionContext = ActionContext<PredictionState, DistilState>;
 
 export const actions = {
   // fetches variable summary data for the given dataset and variables
   fetchTrainingSummaries(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       training: Variable[];
@@ -69,9 +69,9 @@ export const actions = {
         }
         return isTrain;
       }, false);
-      if (v.dataset !== args.dataset || !isTrainingArg) {
+      if(v.dataset !== args.dataset || !isTrainingArg) {
         mutations.removeTrainingSummary(context, v);
-      }
+      };
     });
 
     args.training.forEach(variable => {
@@ -102,7 +102,7 @@ export const actions = {
   },
 
   fetchTrainingSummary(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       variable: Variable;
@@ -193,7 +193,7 @@ export const actions = {
   },
 
   fetchTargetSummary(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       target: string;
@@ -298,9 +298,9 @@ export const actions = {
       });
   },
 
-  fetchIncludedResultTableData(
-    context: ResultsContext,
-    args: { solutionId: string; dataset: string; highlight: Highlight }
+  fetchIncludedPredictionTableData(
+    context: PredictionContext,
+    args: { solutionId: string; dataset: string; highlight: Highlight; produceRequestId: string  }
   ) {
     const solution = getSolutionById(
       context.rootState.solutionModule,
@@ -320,25 +320,23 @@ export const actions = {
 
     return axios
       .post(
-        `/distil/results/${args.dataset}/${encodeURIComponent(
-          args.solutionId
-        )}`,
+        `distil/prediction-results/${args.dataset}/${encodeURIComponent(args.solutionId)}/${encodeURIComponent(args.produceRequestId)}`,
         filterParams
       )
       .then(response => {
-        mutations.setIncludedResultTableData(context, response.data);
+        mutations.setIncludedPredictionTableData(context, response.data);
       })
       .catch(error => {
         console.error(
           `Failed to fetch results from ${args.solutionId} with error ${error}`
         );
-        mutations.setIncludedResultTableData(context, createEmptyTableData());
+        mutations.setIncludedPredictionTableData(context, createEmptyTableData());
       });
   },
 
-  fetchExcludedResultTableData(
-    context: ResultsContext,
-    args: { solutionId: string; dataset: string; highlight: Highlight }
+  fetchExcludedPredictionTableData(
+    context: PredictionContext,
+    args: { solutionId: string; dataset: string; highlight: Highlight; produceRequestId: string  }
   ) {
     const solution = getSolutionById(
       context.rootState.solutionModule,
@@ -361,157 +359,124 @@ export const actions = {
     );
 
     return axios
-      .post(
-        `/distil/results/${args.dataset}/${encodeURIComponent(
-          args.solutionId
-        )}`,
-        filterParams
-      )
+    .post(
+      `distil/prediction-results/${args.dataset}/${encodeURIComponent(args.solutionId)}/${encodeURIComponent(args.produceRequestId)}`,
+      filterParams
+    )
       .then(response => {
-        mutations.setExcludedResultTableData(context, response.data);
+        mutations.setExcludedPredictionTableData(context, response.data);
       })
       .catch(error => {
         console.error(
           `Failed to fetch results from ${args.solutionId} with error ${error}`
         );
-        mutations.setExcludedResultTableData(context, createEmptyTableData());
+        mutations.setExcludedPredictionTableData(context, createEmptyTableData());
       });
   },
 
-  fetchResultTableData(
-    context: ResultsContext,
-    args: { solutionId: string; dataset: string; highlight: Highlight }
+  fetchPredictionTableData(
+    context: PredictionContext,
+    args: { solutionId: string; dataset: string; highlight: Highlight; produceRequestId: string }
   ) {
     return Promise.all([
-      actions.fetchIncludedResultTableData(context, {
+      actions.fetchIncludedPredictionTableData(context, {
         dataset: args.dataset,
         solutionId: args.solutionId,
-        highlight: args.highlight
+        highlight: args.highlight,
+        produceRequestId: args.produceRequestId
       }),
-      actions.fetchExcludedResultTableData(context, {
+      actions.fetchExcludedPredictionTableData(context, {
         dataset: args.dataset,
         solutionId: args.solutionId,
-        highlight: args.highlight
+        highlight: args.highlight,
+        produceRequestId: args.produceRequestId
       })
     ]);
   },
+// fetches result summary for a given solution id.
+fetchPredictionSummary(
+  context: PredictionContext,
+  args: {
+    dataset: string;
+    target: string;
+    solutionId: string;
+    highlight: Highlight;
+  }
+) {
+  if (!args.dataset) {
+    console.warn("`dataset` argument is missing");
+    return null;
+  }
+  if (!args.target) {
+    console.warn("`target` argument is missing");
+    return null;
+  }
+  if (!args.solutionId) {
+    console.warn("`solutionId` argument is missing");
+    return null;
+  }
 
-  fetchResidualsExtrema(
-    context: ResultsContext,
-    args: { dataset: string; target: string; solutionId: string }
-  ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.target) {
-      console.warn("`target` argument is missing");
-      return null;
-    }
+  const solution = getSolutionById(
+    context.rootState.solutionModule,
+    args.solutionId
+  );
+  if (!solution.resultId) {
+    // no results ready to pull
+    return null;
+  }
 
-    const solution = getSolutionById(
-      context.rootState.solutionModule,
-      args.solutionId
-    );
-    if (!solution.resultId) {
-      // no results ready to pull
-      return null;
-    }
+  let filterParams = {
+    highlight: null,
+    variables: [],
+    filters: []
+  };
+  filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
-    return axios
-      .get(`/distil/residuals-extrema/${args.dataset}/${args.target}`)
-      .then(response => {
-        mutations.updateResidualsExtrema(context, response.data.extrema);
-      })
-      .catch(error => {
-        console.error(error);
-      });
-  },
-
-  // fetches result summary for a given solution id.
-  fetchPredictedSummary(
-    context: ResultsContext,
-    args: {
-      dataset: string;
-      target: string;
-      solutionId: string;
-      highlight: Highlight;
-    }
-  ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.target) {
-      console.warn("`target` argument is missing");
-      return null;
-    }
-    if (!args.solutionId) {
-      console.warn("`solutionId` argument is missing");
-      return null;
+  const timeseries = context.getters.getRouteTimeseriesAnalysis;
+  if (timeseries) {
+    let interval = context.getters.getRouteTimeseriesBinningInterval;
+    if (!interval) {
+      const timeVar = context.getters.getTimeseriesAnalysisVariable;
+      const range = context.getters.getTimeseriesAnalysisRange;
+      const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
+      interval = intervals[0].value;
     }
 
-    const solution = getSolutionById(
-      context.rootState.solutionModule,
-      args.solutionId
-    );
-    if (!solution.resultId) {
-      // no results ready to pull
-      return null;
-    }
-
-    let filterParams = {
-      highlight: null,
-      variables: [],
-      filters: []
-    };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-
-    const timeseries = context.getters.getRouteTimeseriesAnalysis;
-    if (timeseries) {
-      let interval = context.getters.getRouteTimeseriesBinningInterval;
-      if (!interval) {
-        const timeVar = context.getters.getTimeseriesAnalysisVariable;
-        const range = context.getters.getTimeseriesAnalysisRange;
-        const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
-        interval = intervals[0].value;
-      }
-
-      const endPoint = `distil/forecasting-summary/${args.dataset}/${timeseries}/${args.target}/${interval}`;
-      const key = solution.predictedKey;
-      const label = "Forecasted";
-      return fetchSolutionResultSummary(
-        context,
-        endPoint,
-        solution,
-        args.target,
-        key,
-        label,
-        resultGetters.getPredictedSummaries(context),
-        mutations.updatePredictedSummaries,
-        filterParams
-      );
-    }
-
-    const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
+    const endPoint = `distil/forecasting-summary/${args.dataset}/${timeseries}/${args.target}/${interval}`;
     const key = solution.predictedKey;
-    const label = "Predicted";
-    return fetchSolutionResultSummary(
+    const label = "Forecasted";
+    return fetchPredictionResultSummary(
       context,
-      endpoint,
+      endPoint,
       solution,
       args.target,
       key,
       label,
-      resultGetters.getPredictedSummaries(context),
+      predictionGetters.getPredictionSummaries(context),
       mutations.updatePredictedSummaries,
       filterParams
     );
-  },
+  }
+
+  const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
+  const key = solution.predictedKey;
+  const label = "Predicted";
+  return fetchPredictionResultSummary(
+    context,
+    endpoint,
+    solution,
+    args.target,
+    key,
+    label,
+    predictionGetters.getPredictionSummaries(context),
+    mutations.updatePredictedSummaries,
+    filterParams
+  );
+},
 
   // fetches result summaries for a given solution create request
-  fetchPredictedSummaries(
-    context: ResultsContext,
+  fetchPredictionSummaries(
+    context: PredictionContext,
     args: {
       dataset: string;
       target: string;
@@ -529,173 +494,7 @@ export const actions = {
     );
     return Promise.all(
       solutions.map(solution => {
-        return actions.fetchPredictedSummary(context, {
-          dataset: args.dataset,
-          target: args.target,
-          solutionId: solution.solutionId,
-          highlight: args.highlight
-        });
-      })
-    );
-  },
-
-  // fetches result summary for a given solution id.
-  fetchResidualsSummary(
-    context: ResultsContext,
-    args: {
-      dataset: string;
-      target: string;
-      solutionId: string;
-      highlight: Highlight;
-    }
-  ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.target) {
-      console.warn("`target` argument is missing");
-      return null;
-    }
-    if (!args.solutionId) {
-      console.warn("`solutionId` argument is missing");
-      return null;
-    }
-
-    const solution = getSolutionById(
-      context.rootState.solutionModule,
-      args.solutionId
-    );
-    if (!solution.resultId) {
-      // no results ready to pull
-      return null;
-    }
-
-    let filterParams = {
-      highlight: null,
-      variables: [],
-      filters: []
-    };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-
-    const endPoint = `/distil/residuals-summary/${args.dataset}/${args.target}`;
-    const key = solution.errorKey;
-    const label = "Error";
-    return fetchSolutionResultSummary(
-      context,
-      endPoint,
-      solution,
-      args.target,
-      key,
-      label,
-      resultGetters.getResidualsSummaries(context),
-      mutations.updateResidualsSummaries,
-      filterParams
-    );
-  },
-
-  // fetches result summaries for a given solution create request
-  fetchResidualsSummaries(
-    context: ResultsContext,
-    args: {
-      dataset: string;
-      target: string;
-      requestIds: string[];
-      highlight: Highlight;
-    }
-  ) {
-    if (!args.requestIds) {
-      console.warn("`requestIds` argument is missing");
-      return null;
-    }
-    const solutions = getSolutionsByRequestIds(
-      context.rootState.solutionModule,
-      args.requestIds
-    );
-    return Promise.all(
-      solutions.map(solution => {
-        return actions.fetchResidualsSummary(context, {
-          dataset: args.dataset,
-          target: args.target,
-          solutionId: solution.solutionId,
-          highlight: args.highlight
-        });
-      })
-    );
-  },
-
-  // fetches result summary for a given pipeline id.
-  fetchCorrectnessSummary(
-    context: ResultsContext,
-    args: {
-      dataset: string;
-      target: string;
-      solutionId: string;
-      highlight: Highlight;
-    }
-  ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.solutionId) {
-      console.warn("`pipelineId` argument is missing");
-      return null;
-    }
-
-    const solution = getSolutionById(
-      context.rootState.solutionModule,
-      args.solutionId
-    );
-    if (!solution.resultId) {
-      // no results ready to pull
-      return null;
-    }
-
-    let filterParams = {
-      highlight: null,
-      variables: [],
-      filters: []
-    };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-
-    const endPoint = `/distil/correctness-summary/${args.dataset}`;
-    const key = solution.errorKey;
-    const label = "Error";
-    return fetchSolutionResultSummary(
-      context,
-      endPoint,
-      solution,
-      args.target,
-      key,
-      label,
-      resultGetters.getCorrectnessSummaries(context),
-      mutations.updateCorrectnessSummaries,
-      filterParams
-    );
-  },
-
-  // fetches result summaries for a given pipeline create request
-  fetchCorrectnessSummaries(
-    context: ResultsContext,
-    args: {
-      dataset: string;
-      target: string;
-      requestIds: string[];
-      highlight: Highlight;
-    }
-  ) {
-    if (!args.requestIds) {
-      console.warn("`requestIds` argument is missing");
-      return null;
-    }
-    const solutions = getSolutionsByRequestIds(
-      context.rootState.solutionModule,
-      args.requestIds
-    );
-    return Promise.all(
-      solutions.map(solution => {
-        return actions.fetchCorrectnessSummary(context, {
+        return actions.fetchPredictionSummary(context, {
           dataset: args.dataset,
           target: args.target,
           solutionId: solution.solutionId,
@@ -706,7 +505,7 @@ export const actions = {
   },
 
   fetchForecastedTimeseries(
-    context: ResultsContext,
+    context: PredictionContext,
     args: {
       dataset: string;
       xColName: string;
