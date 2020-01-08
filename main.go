@@ -136,15 +136,7 @@ func main() {
 		}
 	} else {
 		// Instantiate the solution compute client
-		solutionClient, err = compute.NewClient(
-			config.SolutionComputeEndpoint,
-			config.SolutionComputeTrace,
-			userAgent,
-			"TA2",
-			time.Duration(config.SolutionComputePullTimeout)*time.Second,
-			config.SolutionComputePullMax,
-			config.SkipPreprocessing,
-			discoveryLogger)
+		solutionClient, err = task.NewDefaultClient(config, userAgent, discoveryLogger)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -205,41 +197,7 @@ func main() {
 	task.SetClient(solutionClient)
 
 	// build the ingest configuration.
-	ingestConfig := &task.IngestTaskConfig{
-		HasHeader:                          true,
-		ClusteringOutputDataRelative:       config.ClusteringOutputDataRelative,
-		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,
-		ClusteringEnabled:                  config.ClusteringEnabled,
-		FeaturizationOutputDataRelative:    config.FeaturizationOutputDataRelative,
-		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
-		FormatOutputDataRelative:           config.FormatOutputDataRelative,
-		FormatOutputSchemaRelative:         config.FormatOutputSchemaRelative,
-		CleanOutputDataRelative:            config.CleanOutputDataRelative,
-		CleanOutputSchemaRelative:          config.CleanOutputSchemaRelative,
-		GeocodingOutputDataRelative:        config.GeocodingOutputDataRelative,
-		GeocodingOutputSchemaRelative:      config.GeocodingOutputSchemaRelative,
-		GeocodingEnabled:                   config.GeocodingEnabled,
-		MergedOutputPathRelative:           config.MergedOutputDataPath,
-		MergedOutputSchemaPathRelative:     config.MergedOutputSchemaPath,
-		SchemaPathRelative:                 config.SchemaPath,
-		ClassificationOutputPathRelative:   config.ClassificationOutputPath,
-		ClassificationProbabilityThreshold: config.ClassificationProbabilityThreshold,
-		ClassificationEnabled:              config.ClassificationEnabled,
-		RankingOutputPathRelative:          config.RankingOutputPath,
-		RankingRowLimit:                    config.RankingRowLimit,
-		DatabasePassword:                   config.PostgresPassword,
-		DatabaseUser:                       config.PostgresUser,
-		Database:                           config.PostgresDatabase,
-		DatabaseHost:                       config.PostgresHost,
-		DatabasePort:                       config.PostgresPort,
-		SummaryOutputPathRelative:          config.SummaryPath,
-		SummaryMachineOutputPathRelative:   config.SummaryMachinePath,
-		SummaryEnabled:                     config.SummaryEnabled,
-		ESEndpoint:                         config.ElasticEndpoint,
-		ESTimeout:                          config.ElasticTimeout,
-		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
-		HardFail:                           config.IngestHardFail,
-	}
+	ingestConfig := task.NewConfig(config)
 
 	// instantiate the metadata storage (using datamart).
 	datamartCtors := make(map[string]model.MetadataStorageCtor)

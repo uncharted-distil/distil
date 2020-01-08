@@ -27,14 +27,15 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
+	"github.com/uncharted-distil/distil-compute/middleware"
 	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/uncharted-distil/distil-ingest/pkg/conf"
-	"github.com/uncharted-distil/distil-ingest/pkg/postgres"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	log "github.com/unchartedsoftware/plog"
 	elastic "gopkg.in/olivere/elastic.v5"
 
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/postgres"
 )
 
 const (
@@ -70,6 +71,7 @@ type IngestTaskConfig struct {
 	Database                           string
 	DatabaseHost                       string
 	DatabasePort                       int
+	DatabaseBatchSize                  int
 	SummaryOutputPathRelative          string
 	SummaryMachineOutputPathRelative   string
 	SummaryEnabled                     bool
@@ -77,6 +79,59 @@ type IngestTaskConfig struct {
 	ESTimeout                          int
 	ESDatasetPrefix                    string
 	HardFail                           bool
+}
+
+// NewDefaultClient creates a new client to use when submitting pipelines.
+func NewDefaultClient(config env.Config, userAgent string, discoveryLogger middleware.MethodLogger) (*compute.Client, error) {
+	return compute.NewClient(
+		config.SolutionComputeEndpoint,
+		config.SolutionComputeTrace,
+		userAgent,
+		"TA2",
+		time.Duration(config.SolutionComputePullTimeout)*time.Second,
+		config.SolutionComputePullMax,
+		config.SkipPreprocessing,
+		discoveryLogger)
+}
+
+// NewConfig creates an ingest config based on a distil config.
+func NewConfig(config env.Config) *IngestTaskConfig {
+	return &IngestTaskConfig{
+		HasHeader:                          true,
+		ClusteringOutputDataRelative:       config.ClusteringOutputDataRelative,
+		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,
+		ClusteringEnabled:                  config.ClusteringEnabled,
+		FeaturizationOutputDataRelative:    config.FeaturizationOutputDataRelative,
+		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
+		FormatOutputDataRelative:           config.FormatOutputDataRelative,
+		FormatOutputSchemaRelative:         config.FormatOutputSchemaRelative,
+		CleanOutputDataRelative:            config.CleanOutputDataRelative,
+		CleanOutputSchemaRelative:          config.CleanOutputSchemaRelative,
+		GeocodingOutputDataRelative:        config.GeocodingOutputDataRelative,
+		GeocodingOutputSchemaRelative:      config.GeocodingOutputSchemaRelative,
+		GeocodingEnabled:                   config.GeocodingEnabled,
+		MergedOutputPathRelative:           config.MergedOutputDataPath,
+		MergedOutputSchemaPathRelative:     config.MergedOutputSchemaPath,
+		SchemaPathRelative:                 config.SchemaPath,
+		ClassificationOutputPathRelative:   config.ClassificationOutputPath,
+		ClassificationProbabilityThreshold: config.ClassificationProbabilityThreshold,
+		ClassificationEnabled:              config.ClassificationEnabled,
+		RankingOutputPathRelative:          config.RankingOutputPath,
+		RankingRowLimit:                    config.RankingRowLimit,
+		DatabasePassword:                   config.PostgresPassword,
+		DatabaseUser:                       config.PostgresUser,
+		Database:                           config.PostgresDatabase,
+		DatabaseHost:                       config.PostgresHost,
+		DatabasePort:                       config.PostgresPort,
+		DatabaseBatchSize:                  config.PostgresBatchSize,
+		SummaryOutputPathRelative:          config.SummaryPath,
+		SummaryMachineOutputPathRelative:   config.SummaryMachinePath,
+		SummaryEnabled:                     config.SummaryEnabled,
+		ESEndpoint:                         config.ElasticEndpoint,
+		ESTimeout:                          config.ElasticTimeout,
+		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
+		HardFail:                           config.IngestHardFail,
+	}
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
@@ -139,20 +194,20 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	latestSchemaOutput = output
 	log.Infof("finished cleaning the dataset")
 
-	err = Classify(latestSchemaOutput, index, dataset, config)
+	_, err = Classify(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to classify fields")
 	}
 	log.Infof("finished classifying the dataset")
 
-	err = Rank(latestSchemaOutput, index, dataset, config)
+	_, err = Rank(latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		log.Errorf("unable to rank field importance: %v", err)
 	}
 	log.Infof("finished ranking the dataset")
 
 	if config.SummaryEnabled {
-		err = Summarize(latestSchemaOutput, index, dataset, config)
+		_, err = Summarize(latestSchemaOutput, index, dataset, config)
 		log.Infof("finished summarizing the dataset")
 		if err != nil {
 			if config.HardFail {
@@ -192,29 +247,243 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string,
 	dataset string, source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig, checkMatch bool) (string, error) {
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, nil, config, true)
+	if err != nil {
+		return "", err
+	}
+
+	// create elasticsearch client
+	elasticClient, err := elastic.NewClient(
+		elastic.SetURL(config.ESEndpoint),
+		elastic.SetHttpClient(&http.Client{Timeout: time.Second * time.Duration(config.ESTimeout)}),
+		elastic.SetMaxRetries(10),
+		elastic.SetSniff(false),
+		elastic.SetGzip(true))
+	if err != nil {
+		return "", errors.Wrap(err, "unable to initialize elastic client")
+	}
+
+	// Connect to the database.
+	postgresConfig := &postgres.Config{
+		Password:  config.DatabasePassword,
+		User:      config.DatabaseUser,
+		Database:  config.Database,
+		Host:      config.DatabaseHost,
+		Port:      config.DatabasePort,
+		BatchSize: config.DatabaseBatchSize,
+	}
+	pg, err := postgres.NewDatabase(postgresConfig)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to initialize a new database")
+	}
+
+	// Check for existing dataset
+	if checkMatch {
+		match, err := matchDataset(storage, meta, index)
+		// Ignore the error for now as if this fails we still want ingest to succeed.
+		if err != nil {
+			log.Error(err)
+		}
+		if match != "" {
+			log.Infof("Matched %s to dataset %s", meta.Name, match)
+			err = deleteDataset(match, index, pg, elasticClient)
+			if err != nil {
+				log.Errorf("error deleting dataset: %v", err)
+			}
+			log.Infof("Deleted dataset %s", match)
+		}
+	}
+
+	// ingest the metadata
+	_, err = IngestMetadata(originalSchemaFile, schemaFile, index, dataset, source, origins, config, true)
+	if err != nil {
+		return "", err
+	}
+
+	// ingest the data
+	err = IngestPostgres(originalSchemaFile, schemaFile, index, dataset, source, config, false, false)
+	if err != nil {
+		return "", err
+	}
+
+	return meta.ID, nil
+}
+
+// IngestMetadata ingests the data to ES.
+func IngestMetadata(originalSchemaFile string, schemaFile string, index string, dataset string,
+	source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig, verifyMetadata bool) (string, error) {
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, origins, config, verifyMetadata)
+	if err != nil {
+		return "", err
+	}
+
+	// create elasticsearch client
+	elasticClient, err := elastic.NewClient(
+		elastic.SetURL(config.ESEndpoint),
+		elastic.SetHttpClient(&http.Client{Timeout: time.Second * time.Duration(config.ESTimeout)}),
+		elastic.SetMaxRetries(10),
+		elastic.SetSniff(false),
+		elastic.SetGzip(true))
+	if err != nil {
+		return "", errors.Wrap(err, "unable to initialize elastic client")
+	}
+
+	// ingest the metadata
+	// Create the metadata index if it doesn't exist
+	err = metadata.CreateMetadataIndex(elasticClient, index, false)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to create metadata index")
+	}
+
+	// Ingest the dataset info into the metadata index
+	err = metadata.IngestMetadata(elasticClient, index, config.ESDatasetPrefix, source, meta)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to ingest metadata")
+	}
+
+	log.Infof("ingested metadata for dataset")
+
+	return meta.ID, nil
+}
+
+// IngestPostgres ingests a dataset to PG storage.
+func IngestPostgres(originalSchemaFile string, schemaFile string, index string, dataset string,
+	source metadata.DatasetSource, config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool) error {
+	datasetDir, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, nil, config, verifyMetadata)
+	if err != nil {
+		return err
+	}
+	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
+
+	// Connect to the database.
+	postgresConfig := &postgres.Config{
+		Password:  config.DatabasePassword,
+		User:      config.DatabaseUser,
+		Database:  config.Database,
+		Host:      config.DatabaseHost,
+		Port:      config.DatabasePort,
+		BatchSize: config.DatabaseBatchSize,
+	}
+	pg, err := postgres.NewDatabase(postgresConfig)
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize a new database")
+	}
+
+	dbTable := meta.StorageName
+	if createMetadataTables {
+		err = pg.CreateSolutionMetadataTables()
+		if err != nil {
+			return err
+		}
+	}
+
+	// Drop the current table if requested.
+	// Hardcoded the base table name for now.
+	pg.DropView(dbTable)
+	pg.DropTable(fmt.Sprintf("%s%s", dbTable, baseTableSuffix))
+	pg.DropTable(fmt.Sprintf("%s%s", dbTable, explainTableSuffix))
+
+	// Create the database table.
+	ds, err := pg.InitializeDataset(meta)
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize a new dataset")
+	}
+
+	err = pg.InitializeTable(dbTable, ds)
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize a table")
+	}
+
+	err = pg.StoreMetadata(dbTable)
+	if err != nil {
+		return errors.Wrap(err, "unable to store the metadata")
+	}
+
+	err = pg.CreateResultTable(dbTable)
+	if err != nil {
+		return errors.Wrap(err, "unable to create the result table")
+	}
+
+	// Load the data.
+	log.Infof("inserting rows into database based on data found in %s", dataDir)
+	csvFile, err := os.Open(dataDir)
+	if err != nil {
+		return errors.Wrap(err, "unable to open input data")
+	}
+	defer csvFile.Close()
+	reader := csv.NewReader(csvFile)
+
+	// skip header
+	reader.Read()
+	count := 0
+	for {
+		line, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return errors.Wrap(err, "unable to read input line")
+		}
+
+		err = pg.AddWordStems(line)
+		if err != nil {
+			log.Warn(fmt.Sprintf("%v", err))
+		}
+
+		err = pg.IngestRow(dbTable, line)
+		if err != nil {
+			return errors.Wrap(err, "unable to ingest row")
+		}
+
+		count = count + 1
+		if count%10000 == 0 {
+			log.Infof("inserted %d rows so far", count)
+		}
+	}
+
+	log.Infof("ingesting final rows")
+	err = pg.InsertRemainingRows()
+	if err != nil {
+		return errors.Wrap(err, "unable to ingest last rows")
+	}
+
+	log.Infof("all data ingested")
+
+	return nil
+}
+
+func loadMetadataForIngest(originalSchemaFile string, schemaFile string, dataset string, source metadata.DatasetSource,
+	origins []*model.DatasetOrigin, config *IngestTaskConfig, verifyMetadata bool) (string, *model.Metadata, error) {
 	datasetDir := path.Dir(schemaFile)
 	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(datasetDir, config.ClassificationOutputPathRelative), true)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to load original schema file")
+		return "", nil, errors.Wrap(err, "unable to load original schema file")
 	}
-	meta.DatasetFolder = path.Base(path.Dir(originalSchemaFile))
+
+	if source == metadata.Seed {
+		meta.DatasetFolder = path.Base(path.Dir(path.Dir(originalSchemaFile)))
+	} else {
+		meta.DatasetFolder = path.Base(path.Dir(originalSchemaFile))
+	}
+
 	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
 	log.Infof("using %s as data directory (built from %s and %s)", dataDir, datasetDir, meta.DataResources[0].ResPath)
 
 	// check and fix metadata issues
-	updated, err := metadata.VerifyAndUpdate(meta, dataDir)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to fix metadata")
-	}
-
-	// store the updated metadata
-	if updated {
-		log.Infof("storing updated metadata to %s", originalSchemaFile)
-		err = metadata.WriteSchema(meta, originalSchemaFile, false)
+	if verifyMetadata {
+		updated, err := metadata.VerifyAndUpdate(meta, dataDir)
 		if err != nil {
-			return "", errors.Wrap(err, "unable to store updated metadata")
+			return "", nil, errors.Wrap(err, "unable to fix metadata")
 		}
-		log.Infof("updated metadata written to %s", originalSchemaFile)
+
+		// store the updated metadata
+		if updated {
+			log.Infof("storing updated metadata to %s", originalSchemaFile)
+			err = metadata.WriteSchema(meta, originalSchemaFile, false)
+			if err != nil {
+				return "", nil, errors.Wrap(err, "unable to store updated metadata")
+			}
+			log.Infof("updated metadata written to %s", originalSchemaFile)
+		}
 	}
 
 	err = metadata.LoadImportance(meta, path.Join(datasetDir, config.RankingOutputPathRelative))
@@ -243,135 +512,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 		meta.DatasetOrigins = origins
 	}
 
-	// create elasticsearch client
-	elasticClient, err := elastic.NewClient(
-		elastic.SetURL(config.ESEndpoint),
-		elastic.SetHttpClient(&http.Client{Timeout: time.Second * time.Duration(config.ESTimeout)}),
-		elastic.SetMaxRetries(10),
-		elastic.SetSniff(false),
-		elastic.SetGzip(true))
-	if err != nil {
-		return "", errors.Wrap(err, "unable to initialize elastic client")
-	}
-
-	// Connect to the database.
-	postgresConfig := &conf.Conf{
-		DBPassword:  config.DatabasePassword,
-		DBUser:      config.DatabaseUser,
-		Database:    config.Database,
-		DBHost:      config.DatabaseHost,
-		DBPort:      config.DatabasePort,
-		DBBatchSize: 1000,
-	}
-	pg, err := postgres.NewDatabase(postgresConfig)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to initialize a new database")
-	}
-
-	// Check for existing dataset
-	if checkMatch {
-		match, err := matchDataset(storage, meta, index)
-		// Ignore the error for now as if this fails we still want ingest to succeed.
-		if err != nil {
-			log.Error(err)
-		}
-		if match != "" {
-			log.Infof("Matched %s to dataset %s", meta.Name, match)
-			err = deleteDataset(match, index, pg, elasticClient)
-			if err != nil {
-				log.Errorf("error deleting dataset: %v", err)
-			}
-			log.Infof("Deleted dataset %s", match)
-		}
-	}
-
-	// ingest the metadata
-	// Create the metadata index if it doesn't exist
-	err = metadata.CreateMetadataIndex(elasticClient, index, false)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to create metadata index")
-	}
-
-	// Ingest the dataset info into the metadata index
-	err = metadata.IngestMetadata(elasticClient, index, config.ESDatasetPrefix, source, meta)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to ingest metadata")
-	}
-
-	dbTable := meta.StorageName
-
-	// Drop the current table if requested.
-	// Hardcoded the base table name for now.
-	pg.DropView(dbTable)
-	pg.DropTable(fmt.Sprintf("%s%s", dbTable, baseTableSuffix))
-	pg.DropTable(fmt.Sprintf("%s%s", dbTable, explainTableSuffix))
-
-	// Create the database table.
-	ds, err := pg.InitializeDataset(meta)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to initialize a new dataset")
-	}
-
-	err = pg.InitializeTable(dbTable, ds)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to initialize a table")
-	}
-
-	err = pg.StoreMetadata(dbTable)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to store the metadata")
-	}
-
-	err = pg.CreateResultTable(dbTable)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to create the result table")
-	}
-
-	// Load the data.
-	log.Infof("inserting rows into database based on data found in %s", dataDir)
-	csvFile, err := os.Open(dataDir)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to open input data")
-	}
-	defer csvFile.Close()
-	reader := csv.NewReader(csvFile)
-
-	// skip header
-	reader.Read()
-	count := 0
-	for {
-		line, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return "", errors.Wrap(err, "unable to read input line")
-		}
-
-		err = pg.AddWordStems(line)
-		if err != nil {
-			log.Warn(fmt.Sprintf("%v", err))
-		}
-
-		err = pg.IngestRow(dbTable, line)
-		if err != nil {
-			return "", errors.Wrap(err, "unable to ingest row")
-		}
-
-		count = count + 1
-		if count%10000 == 0 {
-			log.Infof("inserted %d rows so far", count)
-		}
-	}
-
-	log.Infof("ingesting final rows")
-	err = pg.InsertRemainingRows()
-	if err != nil {
-		return "", errors.Wrap(err, "unable to ingest last rows")
-	}
-
-	log.Infof("all data ingested")
-
-	return meta.ID, nil
+	return datasetDir, meta, nil
 }
 
 func matchDataset(storage api.MetadataStorage, meta *model.Metadata, index string) (string, error) {

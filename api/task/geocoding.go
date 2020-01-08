@@ -29,9 +29,8 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
-	"github.com/uncharted-distil/distil-ingest/pkg/util"
 
-	du "github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 // GeocodedPoint contains data that has been geocoded.
@@ -60,7 +59,7 @@ func GeocodeForwardDataset(datasetSource metadata.DatasetSource, schemaFile stri
 
 	// read raw data
 	dataPath := path.Join(outputPath.sourceFolder, mainDR.ResPath)
-	lines, err := du.ReadCSVFile(dataPath, config.HasHeader)
+	lines, err := util.ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return "", errors.Wrap(err, "error reading raw data")
 	}

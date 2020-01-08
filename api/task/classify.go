@@ -79,24 +79,24 @@ func castProbabilityArray(in []interface{}) ([]float64, error) {
 }
 
 // Classify will classify the dataset using a primitive.
-func Classify(schemaPath string, index string, dataset string, config *IngestTaskConfig) error {
+func Classify(schemaPath string, index string, dataset string, config *IngestTaskConfig) (string, error) {
 	schemaDoc := path.Dir(schemaPath)
 
 	// create & submit the solution request
 	pip, err := description.CreateSimonPipeline("says", "")
 	if err != nil {
-		return errors.Wrap(err, "unable to create Simon pipeline")
+		return "", errors.Wrap(err, "unable to create Simon pipeline")
 	}
 
 	datasetURI, err := submitPipeline([]string{schemaDoc}, pip)
 	if err != nil {
-		return errors.Wrap(err, "unable to run Simon pipeline")
+		return "", errors.Wrap(err, "unable to run Simon pipeline")
 	}
 
 	// parse primitive response
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
-		return errors.Wrap(err, "unable to parse Simon pipeline result")
+		return "", errors.Wrap(err, "unable to parse Simon pipeline result")
 	}
 
 	// First row is header, then all other rows are types, probabilities.
@@ -109,7 +109,7 @@ func Classify(schemaPath string, index string, dataset string, config *IngestTas
 			if !ok {
 				vs, ok := v[0].(interface{})
 				if !ok {
-					return fmt.Errorf("second column returned is not of type `[]interface{}` %v", v[0])
+					return "", fmt.Errorf("second column returned is not of type `[]interface{}` %v", v[0])
 				}
 				typesArray = []interface{}{vs}
 			}
@@ -118,7 +118,7 @@ func Classify(schemaPath string, index string, dataset string, config *IngestTas
 			if !ok {
 				vs, ok := v[1].(interface{})
 				if !ok {
-					return fmt.Errorf("third column returned is not of type `[]interface{}` %v", v[1])
+					return "", fmt.Errorf("third column returned is not of type `[]interface{}` %v", v[1])
 				}
 				probabilitiesArray = []interface{}{vs}
 			}
@@ -127,11 +127,11 @@ func Classify(schemaPath string, index string, dataset string, config *IngestTas
 
 			fieldLabels, err := castTypeArray(typesArray)
 			if err != nil {
-				return err
+				return "", err
 			}
 			probs, err := castProbabilityArray(probabilitiesArray)
 			if err != nil {
-				return err
+				return "", err
 			}
 			labels[colIndex] = mapClassifiedTypes(fieldLabels)
 			probabilities[colIndex] = probs
@@ -146,17 +146,17 @@ func Classify(schemaPath string, index string, dataset string, config *IngestTas
 	// output the classification in the expected JSON format
 	bytes, err := json.MarshalIndent(classification, "", "    ")
 	if err != nil {
-		return errors.Wrap(err, "unable to serialize classification result")
+		return "", errors.Wrap(err, "unable to serialize classification result")
 	}
 	// write to file
 	outputPath := path.Join(schemaDoc, config.ClassificationOutputPathRelative)
 	log.Debugf("writing classification output to %s", outputPath)
 	err = util.WriteFileWithDirs(outputPath, bytes, os.ModePerm)
 	if err != nil {
-		return errors.Wrap(err, "unable to store classification result")
+		return "", errors.Wrap(err, "unable to store classification result")
 	}
 
-	return nil
+	return outputPath, nil
 }
 
 func mapClassifiedTypes(types []string) []string {

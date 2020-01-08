@@ -36,24 +36,24 @@ type ImportanceResult struct {
 }
 
 // Rank will rank the dataset using a primitive.
-func Rank(schemaPath string, index string, dataset string, config *IngestTaskConfig) error {
+func Rank(schemaPath string, index string, dataset string, config *IngestTaskConfig) (string, error) {
 	schemaDoc := path.Dir(schemaPath)
 
 	// create & submit the solution request
 	pip, err := description.CreatePCAFeaturesPipeline("harry", "")
 	if err != nil {
-		return errors.Wrap(err, "unable to create PCA pipeline")
+		return "", errors.Wrap(err, "unable to create PCA pipeline")
 	}
 
 	datasetURI, err := submitPipeline([]string{schemaDoc}, pip)
 	if err != nil {
-		return errors.Wrap(err, "unable to run PCA pipeline")
+		return "", errors.Wrap(err, "unable to run PCA pipeline")
 	}
 
 	// parse primitive response (col index,importance)
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
-		return errors.Wrap(err, "unable to parse PCA pipeline result")
+		return "", errors.Wrap(err, "unable to parse PCA pipeline result")
 	}
 
 	ranks := make([]float64, len(res)-1)
@@ -61,11 +61,11 @@ func Rank(schemaPath string, index string, dataset string, config *IngestTaskCon
 		if i > 0 {
 			colIndex, err := strconv.ParseInt(v[0].(string), 10, 64)
 			if err != nil {
-				return errors.Wrap(err, "unable to parse PCA col index")
+				return "", errors.Wrap(err, "unable to parse PCA col index")
 			}
 			vInt, err := strconv.ParseFloat(v[1].(string), 64)
 			if err != nil {
-				return errors.Wrap(err, "unable to parse PCA rank value")
+				return "", errors.Wrap(err, "unable to parse PCA rank value")
 			}
 			ranks[colIndex] = vInt
 		}
@@ -79,7 +79,7 @@ func Rank(schemaPath string, index string, dataset string, config *IngestTaskCon
 	// output the classification in the expected JSON format
 	bytes, err := json.MarshalIndent(importance, "", "    ")
 	if err != nil {
-		return errors.Wrap(err, "unable to serialize ranking result")
+		return "", errors.Wrap(err, "unable to serialize ranking result")
 	}
 
 	// write to file
@@ -87,8 +87,8 @@ func Rank(schemaPath string, index string, dataset string, config *IngestTaskCon
 	log.Debugf("writing ranking output to %s", outputPath)
 	err = util.WriteFileWithDirs(outputPath, bytes, os.ModePerm)
 	if err != nil {
-		return errors.Wrap(err, "unable to store ranking result")
+		return "", errors.Wrap(err, "unable to store ranking result")
 	}
 
-	return nil
+	return outputPath, nil
 }
