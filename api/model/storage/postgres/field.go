@@ -76,12 +76,26 @@ func (b *BasicField) GetType() string {
 // compound facet, which will display cluster info when available.
 func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams) error {
 	if !filterParams.Empty() && filterParams.Highlight != nil {
-		clusterHighlightCol := filterParams.Highlight.Key
-		if !isClusteringColName(filterParams.Highlight.Key) {
-			clusterHighlightCol = clusteringColName(filterParams.Highlight.Key)
+		varExists, err := b.GetStorage().metadata.DoesVariableExist(b.GetDatasetName(), filterParams.Highlight.Key)
+		if err != nil {
+			return err
 		}
-		if b.Storage.hasClusterData(b.GetDatasetName(), clusterHighlightCol) {
-			filterParams.Highlight.Key = clusterHighlightCol
+		if !varExists {
+			return nil
+		}
+
+		variable, err := b.GetStorage().metadata.FetchVariable(b.GetDatasetName(), filterParams.Highlight.Key)
+		if err != nil {
+			return err
+		}
+
+		if variable.Grouping != nil {
+			if variable.Grouping.Properties.ClusterCol != "" &&
+				api.HasClusterData(b.GetDatasetName(), variable.Grouping.Properties.ClusterCol, b.GetStorage().metadata) {
+				filterParams.Highlight.Key = variable.Grouping.Properties.ClusterCol
+				return nil
+			}
+			filterParams.Highlight.Key = variable.Grouping.IDCol
 		}
 	}
 	return nil

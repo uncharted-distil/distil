@@ -49,12 +49,13 @@ func VariablesHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			handleError(w, err)
 			return
 		}
-		// fetch variables
-		variables, err := meta.FetchVariables(dataset, false, true, false)
+
+		variables, err := api.FetchSummaryVariables(dataset, meta)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
+
 		for _, v := range variables {
 			if model.IsNumerical(v.Type) || model.IsDateTime(v.Type) {
 				extrema, err := data.FetchExtrema(storageName, v)

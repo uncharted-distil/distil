@@ -1,6 +1,5 @@
 <template>
   <div class="facet-timeseries">
-    timeseries
     <facet-entry
       :summary="summary"
       :highlight="highlight"

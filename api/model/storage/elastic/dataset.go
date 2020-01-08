@@ -95,7 +95,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			summary = ""
 		}
 		// extract the variables list
-		variables, err := s.parseVariables(hit, includeIndex, includeMeta, false)
+		variables, err := s.parseVariables(hit, includeIndex, includeMeta)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
@@ -257,7 +257,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 // SetDataType updates the data type of the field in ES.
 func (s *Storage) SetDataType(dataset string, varName string, varType string) error {
 	// Fetch all existing variables
-	vars, err := s.FetchVariables(dataset, true, true, false)
+	vars, err := s.FetchVariables(dataset, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -275,7 +275,7 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 // SetExtrema updates the min & max values of a field in ES.
 func (s *Storage) SetExtrema(dataset string, varName string, extrema *api.Extrema) error {
 	// Fetch all existing variables
-	vars, err := s.FetchVariables(dataset, true, true, false)
+	vars, err := s.FetchVariables(dataset, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -311,7 +311,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varDisplayName str
 	}
 
 	// query for existing variables
-	vars, err := s.FetchVariables(dataset, true, true, true)
+	vars, err := s.FetchVariables(dataset, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -344,7 +344,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varDisplayName str
 // DeleteVariable flags a variable as deleted.
 func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	// query for existing variables
-	vars, err := s.FetchVariables(dataset, true, true, false)
+	vars, err := s.FetchVariables(dataset, true, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to fetch existing variable")
 	}
@@ -359,10 +359,17 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 	return s.updateVariables(dataset, vars)
 }
 
-// AddGrouping adds a grouping to the metadata.
-func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error {
+// AddGroupedVariable adds a grouping to the metadata.
+func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.Grouping) error {
 
-	query := elastic.NewMatchQuery("_id", datasetName)
+	// Create a new grouping variable
+	err := s.AddVariable(dataset, varName, varDisplayName, varType, varRole)
+	if err != nil {
+		return err
+	}
+
+	// Add the grouping related info to it.
+	query := elastic.NewMatchQuery("_id", dataset)
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
@@ -393,7 +400,7 @@ func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error
 	found := false
 	for _, variable := range variables {
 		name, ok := json.String(variable, "colName")
-		if ok && name == grouping.IDCol {
+		if ok && name == varName {
 			variable[model.VarGroupingField] = json.StructToMap(grouping)
 			found = true
 		}
@@ -406,7 +413,7 @@ func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error
 	_, err = s.client.Index().
 		Index(s.index).
 		Type(metadataType).
-		Id(datasetName).
+		Id(dataset).
 		BodyJson(source).
 		Refresh("true").
 		Do(context.Background())
@@ -417,8 +424,8 @@ func (s *Storage) AddGrouping(datasetName string, grouping model.Grouping) error
 	return nil
 }
 
-// RemoveGrouping removes a grouping to the metadata.
-func (s *Storage) RemoveGrouping(datasetName string, grouping model.Grouping) error {
+// RemoveGroupedVariable removes a grouping to the metadata.
+func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.Grouping) error {
 
 	query := elastic.NewMatchQuery("_id", datasetName)
 	// execute the ES query

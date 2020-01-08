@@ -22,6 +22,7 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 const (
@@ -71,18 +72,10 @@ func (s *Storage) getDatabaseFields(tableName string) ([]string, error) {
 }
 
 func (s *Storage) getExistingFields(dataset string) (map[string]*model.Variable, error) {
-	// Read the existing fields from the database.
-	vars, err := s.metadata.FetchVariables(dataset, false, false, true)
+	vars, err := api.FetchDatasetVariables(dataset, s.metadata)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to get existing fields")
+		return nil, err
 	}
-
-	// Add the d3m index variable.
-	varIndex, err := s.metadata.FetchVariable(dataset, model.D3MIndexFieldName)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to get d3m index variable")
-	}
-	vars = append(vars, varIndex)
 
 	fields := make(map[string]*model.Variable)
 	for _, v := range vars {

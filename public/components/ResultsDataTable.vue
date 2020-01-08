@@ -46,7 +46,7 @@
         v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
       >
         <sparkline-preview
-          :key="data.item[timeseriesGrouping.idCol]"
+          :key="data.item[timeseriesGrouping.idCol].value"
           :dataset="dataset"
           :x-col="timeseriesGrouping.properties.xCol"
           :y-col="timeseriesGrouping.properties.yCol"

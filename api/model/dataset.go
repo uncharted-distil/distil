@@ -62,20 +62,9 @@ type JoinSuggestion struct {
 
 // FetchDataset builds a QueriedDataset from the needed parameters.
 func FetchDataset(dataset string, includeIndex bool, includeMeta bool, filterParams *FilterParams, storageMeta MetadataStorage, storageData DataStorage) (*QueriedDataset, error) {
-	datasets, err := storageMeta.FetchDatasets(includeIndex, includeMeta)
+	metadata, err := storageMeta.FetchDataset(dataset, false, true)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to fetch variables")
-	}
-
-	// TODO: Add FetchDataset function to metadata storage.
-	var metadata *Dataset
-	for _, ds := range datasets {
-		if ds.ID == dataset {
-			metadata = ds
-		}
-	}
-	if metadata == nil {
-		return nil, errors.Wrap(err, "unable to fetch metadata")
+		return nil, err
 	}
 
 	data, err := storageData.FetchData(dataset, metadata.StorageName, filterParams, false)

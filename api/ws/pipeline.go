@@ -139,7 +139,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		return
 	}
 
-	vars, err := metaStorage.FetchVariables(dataset, false, true, true)
+	vars, err := metaStorage.FetchVariables(dataset, false, true)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to pull variables from storage"))
 		return

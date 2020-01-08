@@ -263,26 +263,10 @@ export default Vue.extend({
         });
         this.$router.push(entry);
       } else {
-        const grouping = this.variable.grouping;
-        datasetActions
-          .removeGrouping(this.$store, {
-            dataset: this.dataset,
-            grouping: grouping
-          })
-          .then(() => {
-            if (grouping.subIds.length > 0) {
-              const composedKey = getComposedVariableKey(grouping.subIds);
-              // if there was more than one sub ID, the IDs would have been composed into a single
-              // grouping ID that we need to delete when we revert back to the exploded version of the
-              // compound facet.
-              if (grouping.subIds.length > 1) {
-                datasetActions.deleteVariable(this.$store, {
-                  dataset: this.dataset,
-                  key: getComposedVariableKey(grouping.subIds)
-                });
-              }
-            }
-          });
+        datasetActions.removeGrouping(this.$store, {
+          dataset: this.dataset,
+          variable: this.variable.colName
+        });
       }
     },
 
