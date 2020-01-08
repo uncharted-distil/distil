@@ -97,9 +97,6 @@ export default Vue.extend({
         return null;
       }
 
-      let timeVarName = "";
-      let timeVarType = "";
-      let timeVar = null;
       const summaryVar = this.variables.find(
         v => v.colName === this.summary.key
       );
@@ -111,9 +108,7 @@ export default Vue.extend({
       if (!grouping) {
         return null;
       }
-      timeVarName = grouping.properties.xCol;
-      timeVar = this.variables.find(v => v.colName === timeVarName);
-      timeVarType = timeVar ? timeVar.colType : INTEGER_TYPE;
+      const timeVarName = grouping.properties.xCol;
 
       if (this.summary.pending || !this.variable) {
         return null;
@@ -125,7 +120,7 @@ export default Vue.extend({
         dataset: this.summary.dataset,
         description: this.summary.description,
         type: NUMERICAL_SUMMARY,
-        varType: timeVarType,
+        varType: this.summary.timelineType,
         baseline: this.summary.timeline
       };
     }

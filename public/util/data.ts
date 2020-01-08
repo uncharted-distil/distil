@@ -75,7 +75,7 @@ export function getTimeseriesGroupingsFromFields(
 }
 
 export function getComposedVariableKey(keys: string[]): string {
-  return keys.join("_");
+  return "__grouping_" + keys.join("_");
 }
 
 export function getTimeseriesAnalysisIntervals(
@@ -568,8 +568,8 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
         description = `Difference between actual and predicted value for ${variable.colName}`;
       } else {
         variable = variables[col.key];
+        label = col.label;
         if (variable) {
-          label = col.label;
           description = variable.colDescription;
         }
       }

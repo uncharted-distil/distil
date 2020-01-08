@@ -584,22 +584,14 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	var groupings []string
 	for _, v := range variables {
 		if v.Grouping != nil && v.Grouping.IDCol != "" {
-			groupings = append(groupings, v.Grouping.IDCol)
+			groupings = append(groupings, "\""+v.Grouping.IDCol+"\"")
 		}
 	}
-	orderBy := ""
-	if len(groupings) > 0 {
-		for i, g := range groupings {
-			orderBy += g
-			if len(groupings)-1 > i {
-				orderBy += ", "
-			}
-		}
-		orderBy += ", "
-	}
+	groupings = append(groupings, "\""+model.D3MIndexFieldName+"\"")
+	orderBy := strings.Join(groupings, ",")
 
 	// order & limit the filtered data.
-	query = fmt.Sprintf("%s ORDER BY %s\"%s\"", query, orderBy, model.D3MIndexFieldName)
+	query = fmt.Sprintf("%s ORDER BY %s", query, orderBy)
 	if filterParams.Size > 0 {
 		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
 	}
