@@ -340,13 +340,19 @@ export default Vue.extend({
       const ids = this.idCols.map(c => c.value).filter(v => v);
 
       // generate the grouping structure that describes how the vars will be grouped
-      const idCol = getComposedVariableKey(ids);
+      const idCol = this.isTimeseries ? getComposedVariableKey(ids) : null;
+
+      const hiddenCols = [this.xCol, this.yCol];
+      if (idCol !== null) {
+        hiddenCols.push(idCol);
+      }
+
       const grouping = {
         type: this.groupingType,
         dataset: this.dataset,
-        idCol: getComposedVariableKey(ids),
+        idCol: idCol,
         subIds: ids,
-        hidden: [idCol, this.xCol, this.yCol],
+        hidden: hiddenCols,
         properties: { xCol: this.xCol, yCol: this.yCol }
       };
 
