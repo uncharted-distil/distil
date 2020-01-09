@@ -17,18 +17,12 @@ package datamart
 
 import (
 	"encoding/json"
-	"fmt"
-	"os"
-	"path"
 	"strings"
 
-	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
-	"github.com/uncharted-distil/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -108,27 +102,23 @@ type ISIMaterializedDataset struct {
 
 func isiSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]byte, error) {
 	log.Infof("querying ISI datamart")
-	queryJSON, err := json.Marshal(query)
+	queryISI := map[string]interface{}{
+		"keywords": query.Dataset.Keywords,
+	}
+	queryJSON, err := json.Marshal(queryISI)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to marshal datamart query")
 	}
+	params := map[string]string{"query_json": string(queryJSON)}
 
-	// need to store the query to file and send the file
-	hash, err := hashstructure.Hash(query, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to hash datamart query")
+	var responseRaw []byte
+	if baseDataPath != "" {
+		responseRaw, err = datamart.client.PostFile(isiSearchFunction, "data", baseDataPath, params)
+	} else {
+		responseRaw, err = datamart.client.PostRequest(isiSearchFunctionNoData, params)
 	}
-	filepath := path.Join(env.GetTmpPath(), fmt.Sprintf("%v.json", hash))
-
-	err = util.WriteFileWithDirs(filepath, queryJSON, os.ModePerm)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to store datamart query")
-	}
-	log.Infof("stored ISI query to filepath %s", filepath)
-
-	responseRaw, err := datamart.client.PostFile(isiSearchFunction, "query", filepath, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to post to ISI datamart search request")
+		return nil, errors.Wrap(err, "unable to post to NYU datamart search request")
 	}
 
 	return responseRaw, nil
