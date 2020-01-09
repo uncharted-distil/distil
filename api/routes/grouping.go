@@ -71,14 +71,17 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 		}
 
 		if model.IsTimeSeries(grouping.Type) {
-			// Create a new variable and column for the time series key.
-			if err := createComposedVariable(meta, data, dataset, grouping.IDCol, grouping.Properties.YCol, grouping.SubIDs); err != nil {
-				handleError(w, errors.Wrapf(err, "unable to create new variable %s", grouping.IDCol))
-				return
-			}
 
-			// Set the name of the expected cluster column - it doesn't necessarily exist.
-			grouping.Properties.ClusterCol = model.ClusterVarPrefix + grouping.IDCol
+			if grouping.IDCol != "" {
+				// Create a new variable and column for the time series key.
+				if err := createComposedVariable(meta, data, dataset, grouping.IDCol, grouping.Properties.YCol, grouping.SubIDs); err != nil {
+					handleError(w, errors.Wrapf(err, "unable to create new variable %s", grouping.IDCol))
+					return
+				}
+
+				// Set the name of the expected cluster column - it doesn't necessarily exist.
+				grouping.Properties.ClusterCol = model.ClusterVarPrefix + grouping.IDCol
+			}
 
 			// Create a new grouped variable for the time series.
 			groupingVarName := strings.Join([]string{grouping.Properties.XCol, grouping.Properties.YCol}, defaultSeparator)
@@ -200,9 +203,19 @@ func createComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 		}
 	}
 
-	// Fetch data using the source names as the filter
-	filter := &api.FilterParams{
-		Variables: sourceVarNames,
+	composedData := map[string]string{}
+	var filter *api.FilterParams = nil
+	if len(sourceVarNames) > 0 {
+		// Fetch data using the source names as the filter
+		filter = &api.FilterParams{
+			Variables: sourceVarNames,
+		}
+	} else {
+		// No grouping column - just use the d3mIndex as we'll just stick some placeholder
+		// data in.
+		filter = &api.FilterParams{
+			Variables: []string{model.D3MIndexName},
+		}
 	}
 	rawData, err := dataStorage.FetchData(dataset, datasetStorageName, filter, false)
 	if err != nil {
@@ -221,13 +234,19 @@ func createComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 		}
 	}
 
-	// Loop over the fetched data, composing each column value into a single new column value using the
-	// separator.
-	composedData := make(map[string]string)
-	for _, r := range rawData.Values {
-		// create the hash from the specified columns
-		composed := createComposedFields(r, sourceVarNames, colNameToIdx, defaultSeparator)
-		composedData[fmt.Sprintf("%v", r[d3mIndexFieldindex].Value)] = composed
+	if len(sourceVarNames) > 0 {
+		// Loop over the fetched data, composing each column value into a single new column value using the
+		// separator.
+		for _, r := range rawData.Values {
+			// create the hash from the specified columns
+			composed := createComposedFields(r, sourceVarNames, colNameToIdx, defaultSeparator)
+			composedData[fmt.Sprintf("%v", r[d3mIndexFieldindex].Value)] = composed
+		}
+	} else {
+		// Loop over the fetched d3mIndex values and set a placeholder value.
+		for _, r := range rawData.Values {
+			composedData[fmt.Sprintf("%v", r[d3mIndexFieldindex].Value)] = "__timeseries"
+		}
 	}
 
 	// Save the new column

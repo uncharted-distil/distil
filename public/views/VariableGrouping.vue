@@ -362,8 +362,8 @@ export default Vue.extend({
           grouping: grouping
         })
         .then(() => {
-          // If this is a timeseries, then we need to request clustering be run on it
-          if (this.isTimeseries) {
+          // If this dataset contains multiple timeseries, then we need to request clustering be run on it
+          if (this.isTimeseries && ids.length > 0) {
             datasetActions.clusterData(this.$store, {
               dataset: this.dataset,
               variable: getComposedVariableKey(ids)
