@@ -26,13 +26,30 @@ import (
 	log "github.com/unchartedsoftware/plog"
 )
 
+// ISISearchResults is the basic search result container for ISI searches.
+type ISISearchResults struct {
+	Results []*ISISearchResult `json:"results"`
+}
+
 // ISISearchResult contains a single result from a query to the ISI datamart.
 type ISISearchResult struct {
-	Summary         string                     `json:"summary"`
+	Summary         *ISISearchResultSummary    `json:"summary"`
 	Score           float64                    `json:"score"`
-	DatamartID      string                     `json:"datamart_id"`
 	Metadata        []*ISISearchResultMetadata `json:"metadata"`
 	MaterializeInfo string                     `json:"materialize_info"`
+	ID              string                     `json:"id"`
+	Augmentation    *SearchResultAugmentation  `json:"augmentation,omitempty"`
+	Sample          string                     `json:"sample"`
+}
+
+// ISISearchResultSummary has a summary of the search result.
+type ISISearchResultSummary struct {
+	Title                string   `json:"title"`
+	DatamartID           string   `json:"Datamart ID"`
+	Score                string   `json:"Score"`
+	URL                  string   `json:"URL"`
+	Columns              []string `json:"Columns"`
+	RecommendJoinColumns string   `json:"Recommend Join Columns"`
 }
 
 // ISISearchResultMetadata specifies the metadata of the datamart dataset.
@@ -44,9 +61,10 @@ type ISISearchResultMetadata struct {
 // ISISearchResultMetadataMetadata specifies the structure of the datamart dataset.
 type ISISearchResultMetadataMetadata struct {
 	StructuralType string                                    `json:"structural_type"`
-	SemanticTypes  []string                                  `json:"semantic_types"`
+	SemanticTypes  []interface{}                             `json:"semantic_types"`
 	Dimension      *ISISearchResultMetadataMetadataDimension `json:"dimension"`
 	Schema         string                                    `json:"schema"`
+	Name           string                                    `json:"name"`
 }
 
 // ISISearchResultProvenance defines the source of the data.
@@ -76,13 +94,15 @@ type ISISearchResultMaterializationMetadata struct {
 type ISISearchResultMaterializationMetadataSearchResult struct {
 	PNodesNeeded          []string `json:"p_nodes_needed"`
 	TargetQNodeColumnName string   `json:"target_q_node_column_name"`
+	NumberOfVectors       string   `json:"number_of_vectors"`
+	QNodesList            []string `json:"q_nodes_list"`
 }
 
 // ISISearchResultMaterializationAugmentation specifies the materialization augmentation.
 type ISISearchResultMaterializationAugmentation struct {
-	Properties   string    `json:"properties"`
-	LeftColumns  []float64 `json:"left_columns"`
-	RightColumns []float64 `json:"right_columns"`
+	Properties   string      `json:"properties"`
+	LeftColumns  [][]float64 `json:"left_columns"`
+	RightColumns [][]float64 `json:"right_columns"`
 }
 
 // ISISearchResultMetadataMetadataDimension has the specification for a dimension in a dataset.
@@ -118,14 +138,14 @@ func isiSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]by
 		responseRaw, err = datamart.client.PostRequest(isiSearchFunctionNoData, params)
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to post to NYU datamart search request")
+		return nil, errors.Wrap(err, "unable to post to ISI datamart search request")
 	}
 
 	return responseRaw, nil
 }
 
 func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.Dataset, error) {
-	var dmResults []*ISISearchResult
+	var dmResults *ISISearchResults
 	err := json.Unmarshal(responseRaw, &dmResults)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse ISI datamart search request")
@@ -133,26 +153,27 @@ func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 
 	datasets := make([]*api.Dataset, 0)
 
-	for _, res := range dmResults {
+	for _, res := range dmResults.Results {
 		vars := make([]*model.Variable, 0)
-		for _, c := range res.Metadata {
+		// for now, assume that a var has a selector with at least 2 elements.
+		for _, c := range res.Summary.Columns {
 			vars = append(vars, &model.Variable{
-				Name:        c.Metadata.Dimension.Name,
-				DisplayName: c.Metadata.Dimension.Name,
+				Name:        c,
+				DisplayName: c,
 			})
 		}
-		joinSuggestions, joinScore, err := parseISIJoinSuggestion(res, baseDataset)
+		joinSuggestions, joinScore, err := parseISIJoinSuggestion(res, baseDataset, vars)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to parse ISI datamart join suggestions")
 		}
 
 		datasets = append(datasets, &api.Dataset{
-			ID:              res.DatamartID,
-			Name:            res.DatamartID,
-			Description:     res.Summary,
+			ID:              res.ID,
+			Name:            res.ID,
+			Description:     res.Summary.Title,
 			Variables:       vars,
 			Provenance:      ProvenanceISI,
-			Summary:         res.Summary,
+			Summary:         res.Summary.Title,
 			JoinSuggestions: joinSuggestions,
 			JoinScore:       joinScore,
 		})
@@ -161,7 +182,7 @@ func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 	return datasets, nil
 }
 
-func parseISIJoinSuggestion(result *ISISearchResult, baseDataset *api.Dataset) ([]*api.JoinSuggestion, float64, error) {
+func parseISIJoinSuggestion(result *ISISearchResult, baseDataset *api.Dataset, vars []*model.Variable) ([]*api.JoinSuggestion, float64, error) {
 	// need to get the specific search result string
 	searchResultRaw, err := json.Marshal(result)
 	if err != nil {
@@ -184,22 +205,28 @@ func parseISIJoinSuggestion(result *ISISearchResult, baseDataset *api.Dataset) (
 	if materialization.Augmentation != nil && materialization.Augmentation.Properties == "join" {
 		rightColumnNames := []string{}
 		colNames := []string{}
-		for _, colIndex := range materialization.Augmentation.RightColumns {
-			colNames = append(colNames, result.Metadata[int(colIndex)].Metadata.Dimension.Name)
+		for _, colIndex := range materialization.Augmentation.RightColumns[0] {
+			colIndexI := int(colIndex)
+			if colIndexI < len(vars) {
+				colNames = append(colNames, vars[int(colIndexI)].DisplayName)
+			}
 		}
 		rightColumnNames = append(rightColumnNames, strings.Join(colNames[:], ", "))
 
 		leftColumnNames := []string{}
 		colNames = []string{}
-		for _, colIndex := range materialization.Augmentation.LeftColumns {
-			colNames = append(colNames, baseDataset.Variables[int(colIndex)].Name)
+		for _, colIndex := range materialization.Augmentation.LeftColumns[0] {
+			colIndexI := int(colIndex)
+			if colIndexI < len(vars) {
+				colNames = append(colNames, baseDataset.Variables[int(colIndexI)].Name)
+			}
 		}
-		rightColumnNames = append(rightColumnNames, strings.Join(colNames[:], ", "))
+		leftColumnNames = append(leftColumnNames, strings.Join(colNames[:], ", "))
 
 		joins = append(joins, &api.JoinSuggestion{
 			BaseDataset:   baseDataset.ID,
 			BaseColumns:   leftColumnNames,
-			JoinDataset:   result.DatamartID,
+			JoinDataset:   result.ID,
 			JoinColumns:   rightColumnNames,
 			JoinScore:     result.Score,
 			DatasetOrigin: origin,
