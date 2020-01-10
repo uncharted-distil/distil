@@ -284,7 +284,7 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 }
 
 // createPreprocessingPipeline creates pipeline to enfore user feature selection and typing
-func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable) (*pipeline.PipelineDescription, error) {
+func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable, metaStorage api.MetadataStorage) (*pipeline.PipelineDescription, error) {
 	uuid, err := uuid.NewV4()
 	if err != nil {
 		return nil, err
@@ -305,11 +305,17 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 		}
 	}
 
+	// replace any grouped variables in filter params with the group's
+	expandedFilters, err := api.ExpandFilterParams(s.Dataset, s.Filters, metaStorage)
+	if err != nil {
+		return nil, err
+	}
+
 	preprocessingPipeline, err := description.CreateUserDatasetPipeline(name, desc,
 		&description.UserDatasetDescription{
 			AllFeatures:      featureVariables,
 			TargetFeature:    s.TargetFeature,
-			SelectedFeatures: s.Filters.Variables,
+			SelectedFeatures: expandedFilters.Variables,
 			Filters:          s.Filters.Filters,
 		}, augments)
 	if err != nil {
@@ -831,7 +837,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
-		preprocessing, err = s.createPreprocessingPipeline(dataVariables)
+		preprocessing, err = s.createPreprocessingPipeline(dataVariables, metaStorage)
 		if err != nil {
 			return err
 		}
