@@ -204,7 +204,7 @@ func createComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 	}
 
 	composedData := map[string]string{}
-	var filter *api.FilterParams = nil
+	var filter *api.FilterParams
 	if len(sourceVarNames) > 0 {
 		// Fetch data using the source names as the filter
 		filter = &api.FilterParams{
