@@ -168,7 +168,7 @@ export default Vue.extend({
     },
 
     target(): string {
-      return routeGetters.getRouteTargetVariable(this.$store);
+      return this.summary.key;
     },
 
     instanceName(): string {
