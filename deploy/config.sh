@@ -4,4 +4,4 @@
 DOCKER_IMAGE_NAME=distil
 
 # address of the docker repo
-DOCKER_REPO=docker.uncharted.software
+DOCKER_REPO=registry.datadrivendiscovery.org/uncharted/distil-integration

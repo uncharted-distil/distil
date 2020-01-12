@@ -11,13 +11,13 @@ fi
 export SOLUTION_COMPUTE_ENDPOINT=localhost:45042
 export ES_ENDPOINT=http://localhost:9200
 export SOLUTION_COMPUTE_TRACE=true
-export PG_LOG_LEVEL=none # debug, error, warn, info, none
+export PG_LOG_LEVEL=debug # debug, error, warn, info, none
 export SKIP_INGEST=true
-export SOLUTION_SEARCH_MAX_TIME=3
-export SOLUTION_COMPUTE_PULL_MAX=900
-export SOLUTION_COMPUTE_TIMEOUT=600
+export SOLUTION_SEARCH_MAX_TIME=30000
+export SOLUTION_COMPUTE_PULL_MAX=900000
+export SOLUTION_COMPUTE_PULL_TIMEOUT=60000
 export DATAMART_URL_NYU=https://auctus.vida-nyu.org
-export MAX_TRAINING_ROWS=1000
-export MAX_TEST_ROWS=500
+# export MAX_TRAINING_ROWS=500
+# export MAX_TEST_ROWS=500
 
 witch --cmd="make compile && make fmt && go run main.go" --watch="main.go,api/**/*.go" --ignore=""

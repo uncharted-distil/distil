@@ -137,8 +137,12 @@ func splitTrainTestHeader(reader *csv.Reader, writerTrain *csv.Writer, writerTes
 
 func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile string, hasHeader bool, timeseriesCol int) error {
 	// create the writers
+
+	// training data
 	outputTrain := &bytes.Buffer{}
 	writerTrain := csv.NewWriter(outputTrain)
+
+	// test data
 	outputTest := &bytes.Buffer{}
 	writerTest := csv.NewWriter(outputTest)
 
