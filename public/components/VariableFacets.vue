@@ -186,7 +186,6 @@ export default Vue.extend({
     },
 
     isGeocoordinateFacetAvailable(): boolean {
-      const foo = datasetGetters.getGeocoordinateTypes(this.$store).length > 0;
       return datasetGetters.getGeocoordinateTypes(this.$store).length > 0;
     },
 
