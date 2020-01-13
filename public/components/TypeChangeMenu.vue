@@ -54,7 +54,7 @@
       :disabled="!isDisabled"
       target="type-change-dropdown"
     >
-      Cannot change type when actively filtering
+      Cannot change type when actively filtering or viewing models or predictions
     </b-tooltip>
   </div>
 </template>
