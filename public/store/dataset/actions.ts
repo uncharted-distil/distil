@@ -319,7 +319,7 @@ export const actions = {
   uploadDataFile(
     context: DatasetContext,
     args: { datasetID: string; file: File; type: string; solutionId?: string }
-  ) {
+  ) : any {
     if (!args.datasetID) {
       console.warn("`datasetID` argument is missing");
       return null;
@@ -346,14 +346,7 @@ export const actions = {
             headers: { "Content-Type": "multipart/form-data" }
           })
           .then(response => {
-            return actions.importDataset(context, {
-              datasetID: args.datasetID,
-              source: "augmented",
-              provenance: "local",
-              terms: args.datasetID,
-              originalDataset: null,
-              joinedDataset: null
-            });
+            return response;
           });
       case DATASET_UPLOAD:
         return axios
