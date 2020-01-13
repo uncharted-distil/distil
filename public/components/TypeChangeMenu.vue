@@ -113,7 +113,7 @@ export default Vue.extend({
     isPredictionOrResultsView(): boolean {
       const routePath = routeGetters.getRoutePath(this.$store);
       return routePath &&
-        (routePath === PREDICTION_ROUTE || routePath == RESULTS_ROUTE);
+        (routePath === PREDICTION_ROUTE || routePath === RESULTS_ROUTE);
     },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
