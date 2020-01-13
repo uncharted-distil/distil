@@ -87,7 +87,7 @@ import {
 } from "../util/types";
 import { hasFilterInRoute } from "../util/filters";
 import { createRouteEntry } from "../util/routes";
-import { GROUPING_ROUTE } from "../store/route";
+import { GROUPING_ROUTE, PREDICTION_ROUTE, RESULTS_ROUTE } from "../store/route";
 import { getComposedVariableKey } from "../util/data";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
@@ -109,6 +109,11 @@ export default Vue.extend({
   computed: {
     isGeocoordinate(): boolean {
       return this.geocoordinate;
+    },
+    isPredictionOrResultsView(): boolean {
+      const routePath = routeGetters.getRoutePath(this.$store);
+      return routePath &&
+        (routePath === PREDICTION_ROUTE || routePath == RESULTS_ROUTE);
     },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
@@ -194,7 +199,8 @@ export default Vue.extend({
       return (
         hasFilterInRoute(this.field) ||
         (this.highlight && this.highlight.key === this.field) ||
-        this.isComputedFeature
+        this.isComputedFeature ||
+        (this.isGeocoordinate && this.isPredictionOrResultsView)
       );
     },
     isComputedFeature(): boolean {
