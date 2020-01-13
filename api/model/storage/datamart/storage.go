@@ -22,10 +22,11 @@ import (
 )
 
 const (
-	nyuSearchFunction = "search"
-	nyuGetFunction    = "download"
-	isiSearchFunction = "search"
-	isiGetFunction    = "new/materialize_data"
+	nyuSearchFunction       = "search"
+	nyuGetFunction          = "download"
+	isiSearchFunction       = "search"
+	isiSearchFunctionNoData = "search_without_data"
+	isiGetFunction          = "new/materialize_data"
 )
 
 type searchQuery func(datamart *Storage, query *SearchQuery, baseDataPath string) ([]byte, error)
