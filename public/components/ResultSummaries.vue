@@ -179,18 +179,20 @@ export default Vue.extend({
       });
     },
     
-    onUploadFinish(err) {
+    onUploadFinish(err, response) {
       this.uploadStatus = err ? "error" : "success";
-      const routeArgs = {
-        solutionId: this.solutionId,
-        dataset: this.dataset,
-        produceRequestId: this.produceRequestId,
-        target: this.target
-      };
-      // fill out with call to app actions to new appAction.importInferenceData probably
-      // that for now will just be loading basically the model page again with stuff blanked out.
-      const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
-      this.$router.push(entry);
+
+      if (this.uploadStatus !== "error") {
+        const inferenceDataset = response && response.data && response.data.dataset;
+        const routeArgs = {
+          solutionId: this.solutionId,
+          dataset: inferenceDataset,
+          produceRequestId: this.produceRequestId,
+          target: this.target
+        };
+        const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
+        this.$router.push(entry);
+      }
     },
 
     onExport() {
