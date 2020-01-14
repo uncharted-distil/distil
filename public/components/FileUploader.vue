@@ -98,8 +98,8 @@ export default Vue.extend({
         .catch(err => {
           uploadError = err;
         })
-        .then(() => {
-          this.$emit("uploadfinish", uploadError);
+        .then(response => {
+          this.$emit("uploadfinish", uploadError, response);
         });
     }
   }
