@@ -121,5 +121,12 @@ func Predict(meta *model.Metadata, dataset string, solutionID string, fittedSolu
 	}
 	log.Infof("stored prediction results to the database")
 
-	return solutionStorage.FetchSolutionResultByProduceRequestID(produceRequestID)
+	// set the dataset to the inference dataset
+	res, err := solutionStorage.FetchSolutionResultByProduceRequestID(produceRequestID)
+	if err != nil {
+		return nil, err
+	}
+	res.Dataset = dataset
+
+	return res, nil
 }
