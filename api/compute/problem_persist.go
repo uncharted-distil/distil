@@ -139,7 +139,7 @@ func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Var
 
 	pTarget := &ProblemPersistTarget{
 		TargetIndex: 0,
-		ResID:       defaultResourceID,
+		ResID:       compute.DefaultResourceID,
 		ColIndex:    targetVar.Index,
 		ColName:     targetVar.DisplayName,
 	}
