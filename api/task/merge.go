@@ -26,6 +26,7 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil/api/util"
 )
@@ -45,9 +46,9 @@ func Merge(datasetSource metadata.DatasetSource, schemaFile string, index string
 
 	// create & submit the solution request
 	var pip *pipeline.PipelineDescription
-	timeseries, linkResID, _ := isTimeseriesDataset(meta)
+	timeseries, _, _ := isTimeseriesDataset(meta)
 	if timeseries {
-		pip, err = description.CreateTimeseriesFormatterPipeline("Time Cop", "", linkResID)
+		pip, err = description.CreateTimeseriesFormatterPipeline("Time Cop", "", compute.DefaultResourceID)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to create denormalize pipeline")
 		}

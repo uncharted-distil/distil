@@ -38,7 +38,6 @@ import (
 )
 
 const (
-	defaultResourceID        = "learningData"
 	defaultExposedOutputKey  = "outputs.0"
 	explainFeatureOutputkey  = "outputs.1"
 	explainSolutionOutputkey = "outputs.2"

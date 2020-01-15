@@ -52,7 +52,7 @@ func CreateDataset(dataset string, csvData []byte, outputPath string, config *In
 	// create the raw dataset schema doc
 	datasetID := model.NormalizeDatasetID(dataset)
 	meta := model.NewMetadata(dataset, dataset, "", datasetID)
-	dr := model.NewDataResource("learningData", model.ResTypeRaw, map[string][]string{compute.D3MResourceFormat: {"csv"}})
+	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeRaw, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	meta.DataResources = []*model.DataResource{dr}
 
@@ -156,7 +156,7 @@ func CreateImageDataset(dataset string, data []byte, imageType string, outputPat
 	// create the dataset schema doc
 	datasetID := model.NormalizeDatasetID(dataset)
 	meta := model.NewMetadata(dataset, dataset, "", datasetID)
-	dr := model.NewDataResource("learningData", model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
+	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName,
@@ -244,7 +244,7 @@ func createMetadata(dataset string, config *IngestTaskConfig) *model.Metadata {
 	// create the raw dataset schema doc
 	datasetID := model.NormalizeDatasetID(dataset)
 	meta := model.NewMetadata(dataset, dataset, "", datasetID)
-	dr := model.NewDataResource("learningData", model.ResTypeRaw, map[string][]string{compute.D3MResourceFormat: {"csv"}})
+	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeRaw, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	meta.DataResources = []*model.DataResource{dr}
 
