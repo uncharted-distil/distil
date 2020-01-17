@@ -191,7 +191,8 @@ export default Vue.extend({
         type: LATITUDE_TYPE + GEOCOORDINATE_TYPE,
         key: this.summary.key,
         dataset: this.summary.dataset,
-        baseline: this.summary.baseline
+        baseline: this.summary.baseline,
+        filtered: this.summary.filtered
       };
       return latSummary;
     },
@@ -203,7 +204,8 @@ export default Vue.extend({
         type: LONGITUDE_TYPE + GEOCOORDINATE_TYPE,
         key: this.summary.key,
         dataset: this.summary.dataset,
-        baseline: this.summary.baseline
+        baseline: this.summary.baseline,
+        filtered: this.summary.filtered
       };
       return latSummary;
     },

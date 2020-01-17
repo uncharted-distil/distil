@@ -464,7 +464,7 @@ function createNumericalSummaryFacet(summary: VariableSummary): Group {
 
 // to do update loops to reduce to the opposite axis to build latitude slices
 function createLatitudeFacet (summary: VariableSummary): Group {
-  const buckets = summary.baseline.buckets;
+  const buckets = summary.filtered ? summary.filtered.buckets : summary.baseline.buckets;
   const slices = new Array(buckets[0].buckets.length);
 
   for (let i = 0; i < slices.length; i++) {
@@ -507,7 +507,7 @@ function createLatitudeFacet (summary: VariableSummary): Group {
 }
 
 function createLongitudeFacet(summary: VariableSummary): Group {
-  const buckets = summary.baseline.buckets;
+  const buckets = summary.filtered ? summary.filtered.buckets : summary.baseline.buckets;
   const slices = new Array(buckets.length);
   buckets.forEach((lonBucket, i) => {
     const from = _.toNumber(lonBucket.key);
