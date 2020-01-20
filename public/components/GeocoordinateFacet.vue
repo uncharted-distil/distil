@@ -9,6 +9,7 @@
         :geocoordinate="true"
         :dataset="dataset"
         :field="target"
+        :expandCollapse="expandCollapse"
       >
       </type-change-menu>
     </div>
@@ -37,6 +38,16 @@
         </button>
       </div>
     </div>
+    <div v-if="expand">
+      <facet-entry
+        :summary="latSummary"
+        :enabledTypeChanges="enabledTypeChanges"
+      ></facet-entry>
+      <facet-entry
+        :summary="lonSummary"
+        :enabledTypeChanges="enabledTypeChanges"
+      ></facet-entry>
+    </div>
   </div>
 </template>
 
@@ -61,12 +72,15 @@ import {
   Highlight
 } from "../store/dataset/index";
 import TypeChangeMenu from "../components/TypeChangeMenu";
+import FacetEntry from "../components/FacetEntry";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import {
   GEOCOORDINATE_TYPE,
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
-  REAL_VECTOR_TYPE
+  REAL_VECTOR_TYPE,
+  EXPAND_ACTION_TYPE,
+  COLLAPSE_ACTION_TYPE
 } from "../util/types";
 import { overlayRouteEntry } from "../util/routes";
 import { Filter, removeFiltersByName } from "../util/filters";
@@ -140,7 +154,8 @@ export default Vue.extend({
   components: {
     TypeChangeMenu,
     IconBase,
-    IconCropFree
+    IconCropFree,
+    FacetEntry
   },
 
   props: {
@@ -159,12 +174,40 @@ export default Vue.extend({
       currentRect: null,
       selectedRect: null,
       baseLineLayer: null,
-      filteredLayer: null
+      filteredLayer: null,
+      expand: true,
+      enabledTypeChanges: new Array(0)
     };
   },
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
+    },
+
+    latSummary(): VariableSummary {
+      const latSummary: VariableSummary = {
+        label: 'Latitude',
+        description: this.summary.description,
+        type: LATITUDE_TYPE + GEOCOORDINATE_TYPE,
+        key: this.summary.key,
+        dataset: this.summary.dataset,
+        baseline: this.summary.baseline,
+        filtered: this.summary.filtered
+      };
+      return latSummary;
+    },
+
+    lonSummary(): VariableSummary {
+      const latSummary: VariableSummary = {
+        label: 'Longitude',
+        description: this.summary.description,
+        type: LONGITUDE_TYPE + GEOCOORDINATE_TYPE,
+        key: this.summary.key,
+        dataset: this.summary.dataset,
+        baseline: this.summary.baseline,
+        filtered: this.summary.filtered
+      };
+      return latSummary;
     },
 
     target(): string {
@@ -324,6 +367,13 @@ export default Vue.extend({
     }
   },
   methods: {
+    expandCollapse(action) {
+      if (action === EXPAND_ACTION_TYPE) {
+        this.expand = true;
+      } else if (action === COLLAPSE_ACTION_TYPE) {
+        this.expand = false;
+      }
+    },
     selectFeature() {
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store

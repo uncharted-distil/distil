@@ -11,6 +11,15 @@ export const GEOCODED_LAT_PREFIX = "_lat_";
 export const GEOCODED_LON_PREFIX = "_lon_";
 export const DATETIME_UNIX_ADJUSTMENT = 1000;
 
+// Action Types Reuse In Similar Places to Data Types
+// These are listed in the facet menu too, but Aren't Posted Back to 
+// as type change, but can take actions to change a compound facet
+// back to its components, or change aspects of the facet's display
+
+export const EXPLODE_ACTION_TYPE = "explode";
+export const EXPAND_ACTION_TYPE = "expand";
+export const COLLAPSE_ACTION_TYPE = "collapse";
+
 // NOTE: these are copied from `distil-compute/model/schema_types.go` and
 // should be kept up to date in case of changes.
 // TODO: Convert these to enums.

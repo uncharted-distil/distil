@@ -83,7 +83,10 @@ import {
   GEOCOORDINATE_TYPE,
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
-  hasComputedVarPrefix
+  hasComputedVarPrefix,
+  COLLAPSE_ACTION_TYPE,
+  EXPAND_ACTION_TYPE,
+  EXPLODE_ACTION_TYPE
 } from "../util/types";
 import { hasFilterInRoute } from "../util/filters";
 import { createRouteEntry } from "../util/routes";
@@ -104,7 +107,8 @@ export default Vue.extend({
   props: {
     dataset: String as () => string,
     field: String as () => string,
-    geocoordinate: Boolean
+    geocoordinate: Boolean,
+    expandCollapse: Function
   },
   computed: {
     isGeocoordinate(): boolean {
@@ -199,8 +203,7 @@ export default Vue.extend({
       return (
         hasFilterInRoute(this.field) ||
         (this.highlight && this.highlight.key === this.field) ||
-        this.isComputedFeature ||
-        (this.isGeocoordinate && this.isPredictionOrResultsView)
+        this.isComputedFeature
       );
     },
     isComputedFeature(): boolean {
@@ -241,24 +244,38 @@ export default Vue.extend({
 
   methods: {
     groupingOptions() {
+      const options = [];
       if (this.isGrouping) {
-        return [
+        options.push(
           {
-            type: "Explode",
-            label: "Explode"
+            type: COLLAPSE_ACTION_TYPE,
+            label: "Collapse"
+          }, {
+            type: EXPAND_ACTION_TYPE,
+            label: "Expand"
           }
-        ];
-      }
-      return [
-        {
-          type: TIMESERIES_TYPE,
-          label: "Timeseries..."
-        },
-        {
-          type: GEOCOORDINATE_TYPE,
-          label: "Geocoordinate..."
+        );
+        if (!this.isPredictionOrResultsView) {
+          options.push(
+            {
+              type: EXPLODE_ACTION_TYPE,
+              label: "Explode"
+            }
+          );
         }
-      ];
+      } else {
+        options.push(
+          {
+            type: TIMESERIES_TYPE,
+            label: "Timeseries..."
+          },
+          {
+            type: GEOCOORDINATE_TYPE,
+            label: "Geocoordinate..."
+          }
+        );
+      }
+      return options;
     },
 
     onGroupingSelect(type) {
@@ -268,6 +285,8 @@ export default Vue.extend({
           groupingType: type
         });
         this.$router.push(entry);
+      } else if (this.expandCollapse && (type === COLLAPSE_ACTION_TYPE || type === EXPAND_ACTION_TYPE)) {
+        this.expandCollapse(type);
       } else {
         datasetActions.removeGrouping(this.$store, {
           dataset: this.dataset,
@@ -314,7 +333,6 @@ export default Vue.extend({
         subActivity: SubActivity.PROBLEM_SPECIFICATION,
         details: { from: this.type, to: type }
       });
-
       datasetActions
         .setVariableType(this.$store, {
           dataset: dataset,
@@ -328,11 +346,10 @@ export default Vue.extend({
               field: field
             });
           }
-
           return null
         })
         .then(() => {
-          if (this.target) {
+          if (this.target && !this.isPredictionOrResultsView) {
             return datasetActions.fetchVariableRankings(this.$store, {
               dataset: dataset,
               target: this.target
