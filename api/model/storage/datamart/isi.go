@@ -208,24 +208,29 @@ func parseISIJoinSuggestion(result *ISISearchResult, baseDataset *api.Dataset, v
 	joins := make([]*api.JoinSuggestion, 0)
 	if materialization.Augmentation != nil && materialization.Augmentation.Properties == "join" {
 		rightColumnNames := []string{}
-		colNames := []string{}
+		rightColNames := []string{}
 		for _, colIndex := range materialization.Augmentation.RightColumns[0] {
 			colIndexI := int(colIndex)
 			if colIndexI < len(vars) {
-				colNames = append(colNames, vars[int(colIndexI)].DisplayName)
+				rightColNames = append(rightColNames, vars[int(colIndexI)].DisplayName)
 			}
 		}
-		rightColumnNames = append(rightColumnNames, strings.Join(colNames[:], ", "))
 
 		leftColumnNames := []string{}
-		colNames = []string{}
+		leftColNames := []string{}
 		for _, colIndex := range materialization.Augmentation.LeftColumns[0] {
 			colIndexI := int(colIndex)
-			if colIndexI < len(vars) {
-				colNames = append(colNames, baseDataset.Variables[int(colIndexI)].Name)
+			if colIndexI < len(baseDataset.Variables) {
+				leftColNames = append(leftColNames, baseDataset.Variables[int(colIndexI)].Name)
 			}
 		}
-		leftColumnNames = append(leftColumnNames, strings.Join(colNames[:], ", "))
+
+		if len(rightColNames) == len(leftColNames) {
+			rightColumnNames = append(rightColumnNames, strings.Join(rightColNames[:], ", "))
+			leftColumnNames = append(leftColumnNames, strings.Join(leftColNames[:], ", "))
+		} else {
+			log.Warnf("right dataset join columns (%v) do not match left dataset join columns (%v)", rightColNames, leftColNames)
+		}
 
 		joins = append(joins, &api.JoinSuggestion{
 			BaseDataset:   baseDataset.ID,
