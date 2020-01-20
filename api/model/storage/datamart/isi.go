@@ -229,7 +229,7 @@ func parseISIJoinSuggestion(result *ISISearchResult, baseDataset *api.Dataset, v
 			rightColumnNames = append(rightColumnNames, strings.Join(rightColNames[:], ", "))
 			leftColumnNames = append(leftColumnNames, strings.Join(leftColNames[:], ", "))
 		} else {
-			log.Warnf("right dataset join columns (%v) do not match left dataset join columns (%v)", rightColNames, leftColNames)
+			log.Warnf("right dataset (%s) join columns (%v) do not match left dataset (%s) join columns (%v)", result.ID, rightColNames, baseDataset.ID, leftColNames)
 		}
 
 		joins = append(joins, &api.JoinSuggestion{
