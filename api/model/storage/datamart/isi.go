@@ -122,16 +122,20 @@ type ISIMaterializedDataset struct {
 
 func isiSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]byte, error) {
 	log.Infof("querying ISI datamart")
-	queryISI := map[string]interface{}{
-		"keywords": query.Dataset.Keywords,
+	params := make(map[string]string)
+	if len(query.Dataset.Keywords) > 0 {
+		queryISI := map[string]interface{}{
+			"keywords": query.Dataset.Keywords,
+		}
+		queryJSON, err := json.Marshal(queryISI)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to marshal datamart query")
+		}
+		params["query_json"] = string(queryJSON)
 	}
-	queryJSON, err := json.Marshal(queryISI)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to marshal datamart query")
-	}
-	params := map[string]string{"query_json": string(queryJSON)}
 
 	var responseRaw []byte
+	var err error
 	if baseDataPath != "" {
 		responseRaw, err = datamart.client.PostFile(isiSearchFunction, "data", baseDataPath, params)
 	} else {
