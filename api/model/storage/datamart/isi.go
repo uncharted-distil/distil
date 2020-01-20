@@ -85,7 +85,7 @@ type ISISearchResultMaterialization struct {
 type ISISearchResultMaterializationMetadata struct {
 	ConnectionURL string                                              `json:"connection_url"`
 	SearchResult  *ISISearchResultMaterializationMetadataSearchResult `json:"search_result"`
-	QueryJSON     string                                              `json:"query_json"`
+	QueryJSON     interface{}                                         `json:"query_json"`
 	SearchType    string                                              `json:"search_type"`
 }
 
