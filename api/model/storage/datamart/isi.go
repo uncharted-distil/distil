@@ -85,7 +85,7 @@ type ISISearchResultMaterialization struct {
 type ISISearchResultMaterializationMetadata struct {
 	ConnectionURL string                                              `json:"connection_url"`
 	SearchResult  *ISISearchResultMaterializationMetadataSearchResult `json:"search_result"`
-	QueryJSON     string                                              `json:"query_json"`
+	QueryJSON     interface{}                                         `json:"query_json"`
 	SearchType    string                                              `json:"search_type"`
 }
 
@@ -122,16 +122,20 @@ type ISIMaterializedDataset struct {
 
 func isiSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]byte, error) {
 	log.Infof("querying ISI datamart")
-	queryISI := map[string]interface{}{
-		"keywords": query.Dataset.Keywords,
+	params := make(map[string]string)
+	if len(query.Dataset.Keywords) > 0 {
+		queryISI := map[string]interface{}{
+			"keywords": query.Dataset.Keywords,
+		}
+		queryJSON, err := json.Marshal(queryISI)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to marshal datamart query")
+		}
+		params["query_json"] = string(queryJSON)
 	}
-	queryJSON, err := json.Marshal(queryISI)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to marshal datamart query")
-	}
-	params := map[string]string{"query_json": string(queryJSON)}
 
 	var responseRaw []byte
+	var err error
 	if baseDataPath != "" {
 		responseRaw, err = datamart.client.PostFile(isiSearchFunction, "data", baseDataPath, params)
 	} else {
@@ -204,24 +208,29 @@ func parseISIJoinSuggestion(result *ISISearchResult, baseDataset *api.Dataset, v
 	joins := make([]*api.JoinSuggestion, 0)
 	if materialization.Augmentation != nil && materialization.Augmentation.Properties == "join" {
 		rightColumnNames := []string{}
-		colNames := []string{}
+		rightColNames := []string{}
 		for _, colIndex := range materialization.Augmentation.RightColumns[0] {
 			colIndexI := int(colIndex)
 			if colIndexI < len(vars) {
-				colNames = append(colNames, vars[int(colIndexI)].DisplayName)
+				rightColNames = append(rightColNames, vars[int(colIndexI)].DisplayName)
 			}
 		}
-		rightColumnNames = append(rightColumnNames, strings.Join(colNames[:], ", "))
 
 		leftColumnNames := []string{}
-		colNames = []string{}
+		leftColNames := []string{}
 		for _, colIndex := range materialization.Augmentation.LeftColumns[0] {
 			colIndexI := int(colIndex)
-			if colIndexI < len(vars) {
-				colNames = append(colNames, baseDataset.Variables[int(colIndexI)].Name)
+			if colIndexI < len(baseDataset.Variables) {
+				leftColNames = append(leftColNames, baseDataset.Variables[int(colIndexI)].Name)
 			}
 		}
-		leftColumnNames = append(leftColumnNames, strings.Join(colNames[:], ", "))
+
+		if len(rightColNames) == len(leftColNames) {
+			rightColumnNames = append(rightColumnNames, strings.Join(rightColNames[:], ", "))
+			leftColumnNames = append(leftColumnNames, strings.Join(leftColNames[:], ", "))
+		} else {
+			log.Warnf("right dataset (%s) join columns (%v) do not match left dataset (%s) join columns (%v)", result.ID, rightColNames, baseDataset.ID, leftColNames)
+		}
 
 		joins = append(joins, &api.JoinSuggestion{
 			BaseDataset:   baseDataset.ID,
