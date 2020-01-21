@@ -11,6 +11,7 @@
       :ignore-highlights="Boolean(ignoreHighlights) && ignoreHighlights[0]"
       :instanceName="instanceName"
       :html="customHtml"
+      :expandCollapse="expandCollapse"
       @html-appended="onHtmlAppend"
       @numerical-click="onNumericalClick"
       @categorical-click="onCategoricalClick"
@@ -19,7 +20,7 @@
     >
     </facet-entry>
     <facet-entry
-      v-if="!!timelineSummary"
+      v-if="!!timelineSummary && expand"
       :summary="timelineSummary"
       :highlight="highlight"
       :row-selection="rowSelection"
@@ -52,7 +53,7 @@ import {
   Row,
   NUMERICAL_SUMMARY
 } from "../store/dataset/index";
-import { INTEGER_TYPE } from "../util/types";
+import { INTEGER_TYPE, EXPAND_ACTION_TYPE, COLLAPSE_ACTION_TYPE } from "../util/types";
 
 export default Vue.extend({
   name: "facet-timeseries",
@@ -79,7 +80,8 @@ export default Vue.extend({
   data() {
     return {
       customHtml: this.html,
-      footerHtml: undefined
+      footerHtml: undefined,
+      expand: true
     };
   },
 
@@ -127,6 +129,13 @@ export default Vue.extend({
   },
 
   methods: {
+    expandCollapse(action) {
+      if (action === EXPAND_ACTION_TYPE) {
+        this.expand = true;
+      } else if (action === COLLAPSE_ACTION_TYPE) {
+        this.expand = false;
+      }
+    },
     onCategoricalClick(...args) {
       this.$emit("categorical-click", ...args);
     },
@@ -152,6 +161,13 @@ export default Vue.extend({
       // Once html is rendered in top facets, move the element to the bottom facets
       // So that custom html are rendered at the bottom of the coumpound facets
       this.footerHtml = () => html;
+    }
+  },
+  watch: {
+    expand() {
+      if (!this.expand) {
+        this.customHtml = () => this.footerHtml;
+      }
     }
   }
 });
