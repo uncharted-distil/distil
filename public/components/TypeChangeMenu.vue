@@ -108,7 +108,7 @@ export default Vue.extend({
     dataset: String as () => string,
     field: String as () => string,
     geocoordinate: Boolean,
-    expandCollapse: Function
+    expandCollapse: Function as ()=> Function
   },
   computed: {
     isGeocoordinate(): boolean {

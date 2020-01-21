@@ -79,7 +79,8 @@ export default Vue.extend({
       String as () => string,
       Object as () => any,
       Function as () => Function
-    ]
+    ],
+    expandCollapse: Function as ()=> Function
   },
 
   data() {
@@ -1099,7 +1100,8 @@ export default Vue.extend({
           router: this.$router,
           propsData: {
             dataset: group.dataset,
-            field: group.colName
+            field: group.colName,
+            expandCollapse: this.expandCollapse
           }
         });
         menu.$mount($slot[0]);
