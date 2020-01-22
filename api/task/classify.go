@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	defaultEmptyType = model.StringType
+	defaultEmptyType = model.UnknownType
 	defaultEmptyProb = "1.0"
 )
 
