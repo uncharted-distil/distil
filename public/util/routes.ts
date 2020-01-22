@@ -41,8 +41,6 @@ export interface RouteArgs {
   // RESULT_TRAINING_VARS_INSTANCE_PAGE?: string;
 }
 
-export interface Something {}
-
 /**
  * Builds a route entry object that can be directly pushed onto the stack
  * via  call to route.push(). This holds all the app view state to support

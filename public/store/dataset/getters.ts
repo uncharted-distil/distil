@@ -1,15 +1,12 @@
 import {
   Variable,
-  Extrema,
   TimeseriesExtrema,
   DatasetState,
   Dataset,
   VariableSummary,
-  TimeseriesSummary,
   TableData,
   TableRow,
-  TableColumn,
-  Task
+  TableColumn
 } from "./index";
 import { Dictionary } from "../../util/dict";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
@@ -129,9 +126,5 @@ export const getters = {
     getters: any
   ): Dictionary<TableColumn> {
     return getTableDataFields(state.excludedSet.tableData);
-  },
-
-  getGeocoordinateTypes(state: DatasetState): string[] {
-    return state.isGeocoordinateFacet;
   }
 };

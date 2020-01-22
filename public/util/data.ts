@@ -4,7 +4,6 @@ import Vue from "vue";
 import {
   Variable,
   VariableSummary,
-  TimeseriesSummary,
   TableData,
   TableRow,
   TableColumn,

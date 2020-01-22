@@ -129,40 +129,6 @@ export const actions = {
       filters: []
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-
-    const timeseries = context.getters.getRouteTimeseriesAnalysis;
-    if (timeseries) {
-      let interval = context.getters.getRouteTimeseriesBinningInterval;
-      if (!interval) {
-        const timeVar = context.getters.getTimeseriesAnalysisVariable;
-        const range = context.getters.getTimeseriesAnalysisRange;
-        const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
-        interval = intervals[0].value;
-      }
-
-      return axios
-        .post(
-          `distil/training-timeseries-summary/${args.dataset}/${timeseries}/${args.variable.colName}/${interval}/${args.resultID}`,
-          filterParams
-        )
-        .then(response => {
-          const summary = response.data.summary;
-          mutations.updateTrainingSummary(context, summary);
-        })
-        .catch(error => {
-          console.error(error);
-          mutations.updateTrainingSummary(
-            context,
-            createErrorSummary(
-              args.variable.colName,
-              args.variable.colDisplayName,
-              args.dataset,
-              error
-            )
-          );
-        });
-    }
-
     return axios
       .post(
         `/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}`,
@@ -247,35 +213,6 @@ export const actions = {
       filters: []
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-
-    const timeseries = context.getters.getRouteTimeseriesAnalysis;
-    if (timeseries) {
-      let interval = context.getters.getRouteTimeseriesBinningInterval;
-      if (!interval) {
-        const timeVar = context.getters.getTimeseriesAnalysisVariable;
-        const range = context.getters.getTimeseriesAnalysisRange;
-        const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
-        interval = intervals[0].value;
-      }
-
-      return axios
-        .post(
-          `distil/target-timeseries-summary/${args.dataset}/${timeseries}/${args.target}/${interval}/${solution.resultId}`,
-          filterParams
-        )
-        .then(response => {
-          const summary = response.data.summary;
-          mutations.updateTargetSummary(context, summary);
-        })
-        .catch(error => {
-          console.error(error);
-          mutations.updateTargetSummary(
-            context,
-            createErrorSummary(key, label, dataset, error)
-          );
-        });
-    }
-
     return axios
       .post(
         `/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}`,
@@ -466,33 +403,6 @@ export const actions = {
       filters: []
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-
-    const timeseries = context.getters.getRouteTimeseriesAnalysis;
-    if (timeseries) {
-      let interval = context.getters.getRouteTimeseriesBinningInterval;
-      if (!interval) {
-        const timeVar = context.getters.getTimeseriesAnalysisVariable;
-        const range = context.getters.getTimeseriesAnalysisRange;
-        const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
-        interval = intervals[0].value;
-      }
-
-      const endPoint = `distil/forecasting-summary/${args.dataset}/${timeseries}/${args.target}/${interval}`;
-      const key = solution.predictedKey;
-      const label = "Forecasted";
-      return fetchSolutionResultSummary(
-        context,
-        endPoint,
-        solution,
-        args.target,
-        key,
-        label,
-        resultGetters.getPredictedSummaries(context),
-        mutations.updatePredictedSummaries,
-        filterParams
-      );
-    }
-
     const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
     const key = solution.predictedKey;
     const label = "Predicted";

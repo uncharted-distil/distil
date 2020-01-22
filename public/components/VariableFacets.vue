@@ -185,10 +185,6 @@ export default Vue.extend({
       return datasetGetters.getVariables(this.$store);
     },
 
-    isGeocoordinateFacetAvailable(): boolean {
-      return datasetGetters.getGeocoordinateTypes(this.$store).length > 0;
-    },
-
     filteredSummaries(): VariableSummary[] {
       return this.summaries.filter(summary => {
         return (
@@ -213,13 +209,6 @@ export default Vue.extend({
         this.rowsPerPage,
         this.sortedFilteredSummaries
       );
-      if (this.isGeocoordinateFacetAvailable) {
-        filteredVariables = filteredVariables.filter(variable => {
-          return (
-            variable.key !== LATITUDE_TYPE && variable.key !== LONGITUDE_TYPE
-          );
-        });
-      }
       return filteredVariables;
     },
 

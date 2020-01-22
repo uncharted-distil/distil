@@ -241,13 +241,13 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 }
 
 // FetchSummary returns the summary for the provided dataset and variable.
-func (s *Storage) FetchSummary(dataset string, storageName string, varName string, filterParams *api.FilterParams, invert bool) (*api.VariableSummary, error) {
+func (s *Storage) FetchSummary(dataset string, storageName string, varName string, filterParams *api.FilterParams, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
 	return s.fetchSummaryData(dataset, storageName, varName, "", filterParams, nil, invert)
 }
 
 // FetchSummaryByResult returns the summary for the provided dataset
 // and variable for data that is part of the result set.
-func (s *Storage) FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
+func (s *Storage) FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	return s.fetchSummaryData(dataset, storageName, varName, resultURI, filterParams, extrema, false)
 }
 

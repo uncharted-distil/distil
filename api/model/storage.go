@@ -29,8 +29,8 @@ type DataStorageCtor func() (DataStorage, error)
 type DataStorage interface {
 	FetchNumRows(storageName string, variables []*model.Variable, filters map[string]interface{}) (int, error)
 	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool) (*FilteredData, error)
-	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams, invert bool) (*VariableSummary, error)
-	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*VariableSummary, error)
+	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams, invert bool, mode SummaryMode) (*VariableSummary, error)
+	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
 	PersistResult(dataset string, storageName string, resultURI string, target string) error
 	PersistSolutionFeatureWeight(dataset string, storageName string, solutionID string, weights [][]string) error
 	FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *FilterParams, removeTargetColumn bool) (*FilteredData, error)

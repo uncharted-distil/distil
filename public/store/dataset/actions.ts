@@ -15,22 +15,18 @@ import {
   JoinSuggestionPendingRequest,
   JoinDatasetImportPendingRequest,
   Task,
-  ClusteringPendingRequest
+  ClusteringPendingRequest,
+  SummaryMode
 } from "./index";
 import { mutations } from "./module";
 import { DistilState } from "../store";
 import { Highlight } from "../dataset/index";
-import {
-  FilterParams,
-  INCLUDE_FILTER,
-  EXCLUDE_FILTER
-} from "../../util/filters";
+import { FilterParams } from "../../util/filters";
 import {
   createPendingSummary,
   createErrorSummary,
   createEmptyTableData,
-  fetchSummaryExemplars,
-  getTimeseriesAnalysisIntervals
+  fetchSummaryExemplars
 } from "../../util/data";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import { loadImage } from "../../util/image";
@@ -180,6 +176,7 @@ export const actions = {
     // pull the updated dataset, vars, and summaries
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
     const highlight = context.getters.getDecodedHighlight;
+
     return Promise.all([
       actions.fetchDataset(context, {
         dataset: args.dataset
@@ -192,28 +189,32 @@ export const actions = {
         variable: GEOCODED_LON_PREFIX + args.field,
         highlight: highlight,
         filterParams: filterParams,
-        include: true
+        include: true,
+        mode: SummaryMode.Default
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
         variable: GEOCODED_LON_PREFIX + args.field,
         highlight: highlight,
         filterParams: filterParams,
-        include: false
+        include: false,
+        mode: SummaryMode.Default
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
         variable: GEOCODED_LAT_PREFIX + args.field,
         highlight: highlight,
         filterParams: filterParams,
-        include: true
+        include: true,
+        mode: SummaryMode.Default
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
         variable: GEOCODED_LAT_PREFIX + args.field,
         highlight: highlight,
         filterParams: filterParams,
-        include: false
+        include: false,
+        mode: SummaryMode.Default
       })
     ]);
   },
@@ -319,7 +320,7 @@ export const actions = {
   uploadDataFile(
     context: DatasetContext,
     args: { datasetID: string; file: File; type: string; solutionId?: string }
-  ) : any {
+  ): any {
     if (!args.datasetID) {
       console.warn("`datasetID` argument is missing");
       return null;
@@ -706,14 +707,16 @@ export const actions = {
             variable: args.field,
             filterParams: filterParams,
             highlight: highlight,
-            include: true
+            include: true,
+            mode: SummaryMode.Default
           }),
           actions.fetchVariableSummary(context, {
             dataset: args.dataset,
             variable: args.field,
             filterParams: filterParams,
             highlight: highlight,
-            include: false
+            include: false,
+            mode: SummaryMode.Default
           })
         ]);
       })
@@ -824,7 +827,8 @@ export const actions = {
           variable: variable.colName,
           filterParams: args.filterParams,
           highlight: args.highlight,
-          include: args.include
+          include: args.include,
+          mode: SummaryMode.Default
         })
       );
     });
@@ -840,6 +844,7 @@ export const actions = {
       highlight?: Highlight;
       filterParams: FilterParams;
       include: boolean;
+      mode: SummaryMode;
     }
   ): Promise<void> {
     if (!args.dataset) {
@@ -863,7 +868,7 @@ export const actions = {
       .post(
         `/distil/variable-summary/${args.dataset}/${
           args.variable
-        }/${!args.include}`,
+        }/${!args.include}/${args.mode}`,
         filterParams
       )
       .then(response => {

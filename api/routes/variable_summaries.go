@@ -44,6 +44,12 @@ func VariableSummaryHandler(ctorStorage api.DataStorageCtor) func(http.ResponseW
 		if invert == "true" {
 			invertBool = true
 		}
+		// get the facet mode
+		modeParam := pat.Param(r, "mode")
+		mode := api.DefaultMode
+		if modeParam == "cluster" {
+			mode = api.ClusterMode
+		}
 
 		// parse POST params
 		params, err := getPostParameters(r)
@@ -67,7 +73,7 @@ func VariableSummaryHandler(ctorStorage api.DataStorageCtor) func(http.ResponseW
 		}
 
 		// fetch summary histogram
-		summary, err := storage.FetchSummary(dataset, storageName, variable, filterParams, invertBool)
+		summary, err := storage.FetchSummary(dataset, storageName, variable, filterParams, invertBool, api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return

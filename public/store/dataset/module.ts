@@ -36,7 +36,6 @@ export const getters = {
     moduleGetters.getExcludedVariableSummaries
   ),
   getVariableRankings: read(moduleGetters.getVariableRankings),
-  getGeocoordinateTypes: read(moduleGetters.getGeocoordinateTypes),
   // files
   getFiles: read(moduleGetters.getFiles),
   getTimeseries: read(moduleGetters.getTimeseries),

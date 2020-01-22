@@ -54,10 +54,6 @@ export const getters = {
     return state.query.joinDatasets as string;
   },
 
-  getRouteTimeseriesBinningInterval(state: Route): string {
-    return state.query.timeseriesBinningInterval as string;
-  },
-
   getJoinDatasetsVariables(state: Route, getters: any): Variable[] {
     const datasetIDs = getters.getRouteJoinDatasets;
     if (datasetIDs.length !== 2) {
@@ -218,7 +214,9 @@ export const getters = {
   },
 
   getRouteProduceRequestId(state: Route): string {
-    return state.query.produceRequestId ? (state.query.produceRequestId as string) : null;
+    return state.query.produceRequestId
+      ? (state.query.produceRequestId as string)
+      : null;
   },
 
   getRouteResidualThresholdMin(state: Route): string {

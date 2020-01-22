@@ -6,11 +6,8 @@ import {
   Variable,
   Dataset,
   VariableSummary,
-  TimeseriesSummary,
   TableData,
   DatasetPendingRequest,
-  VariableRankingPendingRequest,
-  GeocodingPendingRequest,
   Task
 } from "./index";
 import { updateSummaries, isDatamartProvenance } from "../../util/data";

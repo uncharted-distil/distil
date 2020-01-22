@@ -141,14 +141,12 @@ export interface VariableSummary {
   pending?: boolean;
 }
 
-export interface TimeseriesSummary {
-  label: string;
-  key: string;
-  dataset: string;
-  type?: string;
-  varType?: string;
-  err?: string;
-  pending?: boolean;
+// Flags the display mode for a variable summary.  Generally Default is correct,
+// but in the case of something like a timeseries summary, we can display a sample
+// of the series set, or use cluster info to sample.
+export enum SummaryMode {
+  Default = "default",
+  Cluster = "cluster"
 }
 
 export interface TableValue {
@@ -301,7 +299,6 @@ export interface DatasetState {
   includedSet: WorkingSet;
   excludedSet: WorkingSet;
   pendingRequests: DatasetPendingRequest[];
-  isGeocoordinateFacet: string[];
   task: Task;
 }
 
@@ -339,8 +336,6 @@ export const state: DatasetState = {
 
   // pending requests for the active dataset
   pendingRequests: [],
-
-  isGeocoordinateFacet: [],
 
   // task information
   task: {
