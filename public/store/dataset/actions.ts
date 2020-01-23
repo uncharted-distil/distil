@@ -37,6 +37,7 @@ import {
   GEOCODED_LAT_PREFIX,
   GEOCOORDINATE_TYPE
 } from "../../util/types";
+import { actions as datasetActions } from "../dataset/module";
 
 import { DATASET_UPLOAD, PREDICTION_UPLOAD } from "../../util/uploads";
 
@@ -184,7 +185,7 @@ export const actions = {
       actions.fetchVariables(context, {
         dataset: args.dataset
       }),
-      actions.fetchVariableSummary(context, {
+      datasetActions.fetchVariableSummary(context, {
         dataset: args.dataset,
         variable: GEOCODED_LON_PREFIX + args.field,
         highlight: highlight,
@@ -508,13 +509,15 @@ export const actions = {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
-              highlight: highlight
+              highlight: highlight,
+              mode: SummaryMode.Default
             }),
             actions.fetchExcludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
-              highlight: highlight
+              highlight: highlight,
+              mode: SummaryMode.Default
             })
           ]);
         });
@@ -603,13 +606,15 @@ export const actions = {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
-              highlight: highlight
+              highlight: highlight,
+              mode: SummaryMode.Default
             }),
             actions.fetchExcludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
-              highlight: highlight
+              highlight: highlight,
+              mode: SummaryMode.Default
             })
           ]);
         });
@@ -653,13 +658,15 @@ export const actions = {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
-              highlight: highlight
+              highlight: highlight,
+              mode: SummaryMode.Default
             }),
             actions.fetchExcludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
-              highlight: highlight
+              highlight: highlight,
+              mode: SummaryMode.Default
             })
           ]);
         });
@@ -749,6 +756,7 @@ export const actions = {
       variables: Variable[];
       highlight: Highlight;
       filterParams: FilterParams;
+      mode: SummaryMode;
     }
   ): Promise<void[]> {
     return actions.fetchVariableSummaries(context, {
@@ -756,7 +764,8 @@ export const actions = {
       variables: args.variables,
       filterParams: args.filterParams,
       highlight: args.highlight,
-      include: true
+      include: true,
+      mode: args.mode
     });
   },
 
@@ -767,6 +776,7 @@ export const actions = {
       variables: Variable[];
       highlight: Highlight;
       filterParams: FilterParams;
+      mode: SummaryMode;
     }
   ): Promise<void[]> {
     return actions.fetchVariableSummaries(context, {
@@ -774,7 +784,8 @@ export const actions = {
       variables: args.variables,
       filterParams: args.filterParams,
       highlight: args.highlight,
-      include: false
+      include: false,
+      mode: args.mode
     });
   },
 
@@ -786,6 +797,7 @@ export const actions = {
       highlight: Highlight;
       filterParams: FilterParams;
       include: boolean;
+      mode: SummaryMode;
     }
   ): Promise<void[]> {
     if (!args.dataset) {
@@ -828,7 +840,7 @@ export const actions = {
           filterParams: args.filterParams,
           highlight: args.highlight,
           include: args.include,
-          mode: SummaryMode.Default
+          mode: args.mode
         })
       );
     });

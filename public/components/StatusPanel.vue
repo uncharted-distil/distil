@@ -48,7 +48,8 @@ import {
   DatasetPendingRequestType,
   VariableRankingPendingRequest,
   DatasetPendingRequestStatus,
-  GeocodingPendingRequest
+  GeocodingPendingRequest,
+  ClusteringPendingRequest
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
@@ -122,7 +123,7 @@ export default Vue.extend({
         case DatasetPendingRequestType.VARIABLE_RANKING:
           return {
             title: "Variable Ranking",
-            pendingMsg: "",
+            pendingMsg: "Computing variable rankings...",
             resolvedMsg:
               "Variable ranking has been updated. Would you like to apply the changes to the feature list?",
             errorMsg:
@@ -131,7 +132,7 @@ export default Vue.extend({
         case DatasetPendingRequestType.GEOCODING:
           return {
             title: "Geo Coding",
-            pendingMsg: "",
+            pendingMsg: "Geocoding place names...",
             resolvedMsg:
               "Geocoding has been processed. Would you like to apply the change to the feature list?",
             errorMsg: "Unexpected error has happened while geocoding"
@@ -139,7 +140,7 @@ export default Vue.extend({
         case DatasetPendingRequestType.CLUSTERING:
           return {
             title: "Data Clustering",
-            pendingMsg: "",
+            pendingMsg: "Computing data clusters...",
             resolvedMsg:
               "Data clusters have been generated. Would you like to apply the change to the dataset?",
             errorMsg: "Unexpected error has happened while clustering"
@@ -147,7 +148,7 @@ export default Vue.extend({
         case DatasetPendingRequestType.JOIN_SUGGESTION:
           return {
             title: "Join Suggestion",
-            pendingMsg: "",
+            pendingMsg: "Compuing join suggestions...",
             errorMsg:
               "Unexpected error has happened while retreving join suggestions"
           };
@@ -196,6 +197,11 @@ export default Vue.extend({
             .then(() => {
               this.clearData();
             });
+          break;
+        case DatasetPendingRequestType.CLUSTERING:
+          // Update the mode for the given variable.
+          const clusterRequest = <ClusteringPendingRequest>this.requestData;
+          this.clearData();
           break;
         case DatasetPendingRequestType.JOIN_SUGGESTION:
           break;

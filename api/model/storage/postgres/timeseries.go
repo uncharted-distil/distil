@@ -105,13 +105,13 @@ func (s *Storage) parseDateTimeTimeseries(rows *pgx.Rows) ([][]float64, error) {
 	return points, nil
 }
 
-func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.Bucket) ([]string, error) {
+func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.Bucket, mode api.SummaryMode) ([]string, error) {
 
 	var timeseriesExemplars []string
 
 	for _, bucket := range categoryBuckets {
 
-		keyColName := f.keyColName()
+		keyColName := f.keyColName(mode)
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
@@ -241,34 +241,34 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
+func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
 
 	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams); err != nil {
+	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
 		return nil, err
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert)
+		baseline, err = f.fetchHistogram(nil, invert, mode)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty() {
-			filtered, err = f.fetchHistogram(filterParams, invert)
+			filtered, err = f.fetchHistogram(filterParams, invert, mode)
 			if err != nil {
 				return nil, err
 			}
 		}
 	} else {
-		baseline, err = f.fetchHistogramByResult(resultURI, nil)
+		baseline, err = f.fetchHistogramByResult(resultURI, nil, mode)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty() {
-			filtered, err = f.fetchHistogramByResult(resultURI, filterParams)
+			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, mode)
 			if err != nil {
 				return nil, err
 			}
@@ -307,14 +307,14 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	}, nil
 }
 
-func (f *TimeSeriesField) keyColName() string {
-	if api.HasClusterData(f.GetDatasetName(), f.ClusterCol, f.GetStorage().metadata) {
+func (f *TimeSeriesField) keyColName(mode api.SummaryMode) string {
+	if mode == api.ClusterMode && api.HasClusterData(f.GetDatasetName(), f.ClusterCol, f.GetStorage().metadata) {
 		return f.ClusterCol
 	}
 	return f.IDCol
 }
 
-func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
+func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert bool, mode api.SummaryMode) (*api.Histogram, error) {
 
 	// create the filter for the query.
 	wheres := make([]string, 0)
@@ -327,7 +327,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 	}
 
 	// Get count by category.
-	colName := f.keyColName()
+	colName := f.keyColName(mode)
 	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS __count__ FROM %s %s GROUP BY \"%s\" ORDER BY __count__ desc, \"%s\" LIMIT %d;",
 		colName, f.DatasetStorageName, where, colName, colName, timeSeriesCatResultLimit)
 
@@ -340,12 +340,12 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res)
+	histogram, err := f.parseHistogram(res, mode)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
+	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -353,7 +353,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 	return histogram, nil
 }
 
-func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 
 	wheres := []string{}
 	params := []interface{}{}
@@ -373,7 +373,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	keyColName := f.keyColName()
+	keyColName := f.keyColName(mode)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -395,12 +395,12 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res)
+	histogram, err := f.parseHistogram(res, mode)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
+	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -408,8 +408,8 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 	return histogram, nil
 }
 
-func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
-	keyColName := f.keyColName()
+func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows, mode api.SummaryMode) (*api.Histogram, error) {
+	keyColName := f.keyColName(mode)
 
 	termsAggName := api.TermsAggPrefix + keyColName
 
@@ -452,22 +452,22 @@ func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error)
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the timeseries histogram for the field.
-func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
+func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
 
 	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams); err != nil {
+	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
 		return nil, err
 	}
 
-	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
+	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema, mode)
 	if err != nil {
 		return nil, err
 	}
 	if !filterParams.Empty() {
-		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
+		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema, mode)
 		if err != nil {
 			return nil, err
 		}
@@ -482,7 +482,7 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 	}, nil
 }
 
-func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
+func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.Histogram, error) {
 
 	wheres := []string{}
 	params := []interface{}{}
@@ -502,7 +502,7 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	keyColName := f.keyColName()
+	keyColName := f.keyColName(mode)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -524,12 +524,12 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res)
+	histogram, err := f.parseHistogram(res, mode)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets)
+	files, err := f.fetchRepresentationTimeSeries(histogram.Buckets, mode)
 	if err != nil {
 		return nil, err
 	}

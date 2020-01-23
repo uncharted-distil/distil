@@ -74,14 +74,14 @@ func NewNumericalFieldSubSelect(storage *Storage, datasetName string, datasetSto
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
+func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
 
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
 
 	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams); err != nil {
+	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
 		return nil, err
 	}
 
@@ -399,13 +399,13 @@ func (f *NumericalField) fetchExtremaByURI(resultURI string) (*api.Extrema, erro
 
 // FetchPredictedSummaryData pulls data from the result table and builds
 // the numerical histogram for the field.
-func (f *NumericalField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
+func (f *NumericalField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
 
 	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams); err != nil {
+	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
 		return nil, err
 	}
 

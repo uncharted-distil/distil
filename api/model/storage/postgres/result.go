@@ -726,7 +726,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, storageName string, r
 
 // FetchPredictedSummary gets the summary data about a target variable from the
 // results table.
-func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
+func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	storageNameResult := s.getResultTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
@@ -775,7 +775,7 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 		}
 	}
 
-	summary, err := field.FetchPredictedSummaryData(resultURI, storageNameResult, filterParams, extrema)
+	summary, err := field.FetchPredictedSummaryData(resultURI, storageNameResult, filterParams, extrema, mode)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch result summary")
 	}

@@ -53,10 +53,10 @@ func NewVectorField(storage *Storage, datasetName string, datasetStorageName str
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
+func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
 
 	// update the highlight key to use the cluster if necessary
-	if err := f.updateClusterHighlight(filterParams); err != nil {
+	if err := f.updateClusterHighlight(filterParams, mode); err != nil {
 		return nil, err
 	}
 
@@ -67,7 +67,7 @@ func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.Filte
 		underlyingField = NewCategoricalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.subSelect)
 	}
 
-	histo, err := underlyingField.FetchSummaryData(resultURI, filterParams, extrema, invert)
+	histo, err := underlyingField.FetchSummaryData(resultURI, filterParams, extrema, invert, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (f *VectorField) FetchNumericalStatsByResult(resultURI string, filterParams
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the categorical histogram for the field.
-func (f *VectorField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
+func (f *VectorField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	return nil, errors.Errorf("vector field cannot be a target so no result will be pulled")
 }
 

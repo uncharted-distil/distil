@@ -68,14 +68,14 @@ func NewDateTimeFieldSubSelect(storage *Storage, datasetName string, datasetStor
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
+func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
 
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
 
 	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams); err != nil {
+	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
 		return nil, err
 	}
 
@@ -375,13 +375,13 @@ func (f *DateTimeField) fetchExtremaByURI(resultURI string) (*api.Extrema, error
 
 // FetchPredictedSummaryData pulls data from the result table and builds
 // the numerical histogram for the field.
-func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
+func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
 
 	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams); err != nil {
+	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
 		return nil, err
 	}
 
