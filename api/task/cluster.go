@@ -124,9 +124,9 @@ func ClusterDataset(datasetSource metadata.DatasetSource, schemaFile string, ind
 }
 
 // Cluster will cluster the dataset fields using a primitive.
-func Cluster(datasetInputDir string, dataset string, variable string) ([]*ClusterPoint, error) {
+func Cluster(datasetInputDir string, dataset string, variable string, features []*model.Variable) ([]*ClusterPoint, error) {
 	step, err := description.CreateSlothPipeline("time series clustering",
-		"k-means time series clustering", "", "", nil)
+		"k-means time series clustering", "", "", features)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create sloth pipeline")
 	}

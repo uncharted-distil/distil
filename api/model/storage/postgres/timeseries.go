@@ -244,7 +244,6 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
-	var timeline *api.Histogram
 	var err error
 
 	// update the highlight key to use the cluster if necessary
@@ -277,31 +276,34 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	}
 
 	// Handle timeseries that use a timestamp/int as their time value, or those that use a date time.
+	var timelineField TimelineField
 	if f.XColType == model.DateTimeType {
-		dateTimeField := NewDateTimeField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType)
-		timeline, err = dateTimeField.fetchHistogram(nil, invert, api.MaxNumBuckets)
-		if err != nil {
-			return nil, err
-		}
+		timelineField = NewDateTimeField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType)
 	} else if f.XColType == model.TimestampType || f.XColType == model.IntegerType {
-		timestampField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType)
-		timeline, err = timestampField.fetchHistogram(nil, invert, api.MaxNumBuckets)
-		if err != nil {
-			return nil, err
-		}
+		timelineField = NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType)
 	} else {
 		return nil, errors.Errorf("unsupported timeseries field variable type %s:%s", f.XCol, f.XColType)
 	}
 
+	timelineBaseline, err := timelineField.fetchHistogram(nil, invert, api.MaxNumBuckets)
+	if err != nil {
+		return nil, err
+	}
+	timeline, err := timelineField.fetchHistogram(filterParams, invert, api.MaxNumBuckets)
+	if err != nil {
+		return nil, err
+	}
+
 	return &api.VariableSummary{
-		Key:          f.Key,
-		Label:        f.Label,
-		Type:         model.CategoricalType,
-		VarType:      f.Type,
-		Baseline:     baseline,
-		Filtered:     filtered,
-		Timeline:     timeline,
-		TimelineType: f.XColType,
+		Key:              f.Key,
+		Label:            f.Label,
+		Type:             model.CategoricalType,
+		VarType:          f.Type,
+		Baseline:         baseline,
+		Filtered:         filtered,
+		Timeline:         timeline,
+		TimelineBaseline: timelineBaseline,
+		TimelineType:     f.XColType,
 	}, nil
 }
 

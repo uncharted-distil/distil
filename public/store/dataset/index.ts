@@ -134,6 +134,7 @@ export interface VariableSummary {
   baseline: Histogram;
   filtered?: Histogram;
   timeline?: Histogram;
+  timelineBaseline?: Histogram;
   timelineType?: string;
   selected?: Histogram;
   err?: string;
