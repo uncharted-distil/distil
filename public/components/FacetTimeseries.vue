@@ -123,7 +123,8 @@ export default Vue.extend({
         description: this.summary.description,
         type: NUMERICAL_SUMMARY,
         varType: this.summary.timelineType,
-        baseline: this.summary.timeline
+        baseline: this.summary.timelineBaseline,
+        filtered: this.summary.timeline
       };
     }
   },

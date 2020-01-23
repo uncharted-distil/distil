@@ -31,6 +31,12 @@ type Field interface {
 	GetType() string
 }
 
+// TimelineField defines the behaviour of a field which can be used as a timeline.
+type TimelineField interface {
+	Field
+	fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error)
+}
+
 // BasicField provides access to baseline field data
 type BasicField struct {
 	Storage            *Storage
