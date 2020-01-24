@@ -2,7 +2,8 @@ import {
   Variable,
   VariableSummary,
   Highlight,
-  RowSelection
+  RowSelection,
+  SummaryMode
 } from "../dataset/index";
 import {
   JOINED_VARS_INSTANCE_PAGE,
@@ -18,7 +19,7 @@ import { Dictionary } from "../../util/dict";
 import { buildLookup } from "../../util/lookup";
 import { Route } from "vue-router";
 import _ from "lodash";
-import { getCategoricalChunkSize } from "../../util/facets";
+import { $enum } from "ts-enum-util";
 
 export const getters = {
   getRoute(state: Route): Route {
@@ -356,14 +357,35 @@ export const getters = {
     const split = geo.split(",");
     return _.toNumber(split[2]);
   },
+
   getGroupingType(state: Route): string {
     return state.query.groupingType as string;
   },
+
   getRouteTask(state: Route, getters: any): string {
     const task = state.query.task as string;
     if (!task) {
       return null;
     }
     return task;
+  },
+
+  // Returns a map of (variable ID, summary mode) tuples that indicated the mode args that should be
+  // applied to a given variable when fetched from the server.
+  getDecodedVarModes(state: Route, getters: any): Map<string, SummaryMode> {
+    const varModes = state.query.varModes as string;
+    if (!varModes) {
+      return new Map<string, SummaryMode>();
+    }
+    const modeTuples = varModes.split(",");
+    const modeMap: Map<string, SummaryMode> = new Map();
+    modeTuples.forEach(m => {
+      const [k, v] = m.split(":");
+      modeMap.set(
+        k,
+        $enum(SummaryMode).asValueOrDefault(v, SummaryMode.Default)
+      );
+    });
+    return modeMap;
   }
 };

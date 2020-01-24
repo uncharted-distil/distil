@@ -24,6 +24,10 @@ export const getters = {
     return state.variables;
   },
 
+  getGroupings(state: DatasetState, getters: any): Variable[] {
+    return state.variables.filter(v => v.grouping);
+  },
+
   getPendingRequests(state: DatasetState) {
     return state.pendingRequests;
   },

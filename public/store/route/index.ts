@@ -16,6 +16,7 @@ export const TRAINING_VARS_INSTANCE = "trainingVars";
 export const TARGET_VAR_INSTANCE = "targetVar";
 export const RESULT_TRAINING_VARS_INSTANCE = "resultTrainingVars";
 export const RESULT_TARGET_VAR_INSTANCE = "resultTargetVar";
+export const VAR_MODES_INSTANCE = "varModes";
 export const ROUTE_PAGE_SUFFIX = "Page";
 
 export const JOINED_VARS_INSTANCE_PAGE = `${JOINED_VARS_INSTANCE}${ROUTE_PAGE_SUFFIX}`;

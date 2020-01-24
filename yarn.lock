@@ -4973,6 +4973,11 @@ toposort@^1.0.0:
   version "1.0.7"
   resolved "https://registry.yarnpkg.com/toposort/-/toposort-1.0.7.tgz#2e68442d9f64ec720b8cc89e6443ac6caa950029"
 
+ts-enum-util@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/ts-enum-util/-/ts-enum-util-4.0.1.tgz#22762b841ccac8c07ca1c0ebd5e53b28418727ae"
+  integrity sha512-ipCgRzaCp8jK8Ug/ePNvf2+YkW2qBNEKCeJu4sTsNL2/Vgzf6EqOIe8xNhUqK50e16ID9ShHYnAZo//jaKdZxA==
+
 ts-loader@^5.3.3:
   version "5.3.3"
   resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-5.3.3.tgz#8b4af042e773132d86b3c99ef0acf3b4d325f473"

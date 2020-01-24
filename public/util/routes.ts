@@ -31,6 +31,7 @@ export interface RouteArgs {
   availableTargetVarsPage?: number;
   task?: string;
   produceRequestId?: string;
+  varModes?: string;
 
   // we currently don't have a way to add these to the interface
   //
@@ -137,6 +138,9 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
   }
   if (!_.isUndefined(args.produceRequestId)) {
     query.produceRequestId = args.produceRequestId;
+  }
+  if (!_.isUndefined(args.varModes)) {
+    query.varModes = args.varModes;
   }
 
   if (args[JOINED_VARS_INSTANCE_PAGE]) {

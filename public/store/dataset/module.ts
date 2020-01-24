@@ -25,7 +25,7 @@ export const getters = {
   getPendingRequests: read(moduleGetters.getPendingRequests),
   // variables
   getVariables: read(moduleGetters.getVariables),
-  getGroupings: read(moduleGetters.getVariables),
+  getGroupings: read(moduleGetters.getGroupings),
   getVariablesMap: read(moduleGetters.getVariablesMap),
   getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
   getVariableSummaries: read(moduleGetters.getVariableSummaries),

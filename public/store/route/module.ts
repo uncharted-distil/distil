@@ -75,6 +75,7 @@ export const getters = {
   ),
   getDecodedHighlight: read(moduleGetters.getDecodedHighlight),
   getDecodedRowSelection: read(moduleGetters.getDecodedRowSelection),
+  getDecodedVarModes: read(moduleGetters.getDecodedVarModes),
   getActiveSolutionIndex: read(moduleGetters.getActiveSolutionIndex),
   getGeoCenter: read(moduleGetters.getGeoCenter),
   getGeoZoom: read(moduleGetters.getGeoZoom),

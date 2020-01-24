@@ -45,10 +45,10 @@ func VariableSummaryHandler(ctorStorage api.DataStorageCtor) func(http.ResponseW
 			invertBool = true
 		}
 		// get the facet mode
-		modeParam := pat.Param(r, "mode")
-		mode := api.DefaultMode
-		if modeParam == "cluster" {
-			mode = api.ClusterMode
+		mode, err := api.SummaryModeFromString(pat.Param(r, "mode"))
+		if err != nil {
+			handleError(w, err)
+			return
 		}
 
 		// parse POST params

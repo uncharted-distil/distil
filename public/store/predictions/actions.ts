@@ -7,7 +7,7 @@ import {
   getSolutionsByRequestIds,
   getSolutionById
 } from "../../util/solutions";
-import { Variable, Highlight } from "../dataset/index";
+import { Variable, Highlight, SummaryMode } from "../dataset/index";
 import { mutations } from "./module";
 import { PredictionState } from "./index";
 import { addHighlightToFilterParams } from "../../util/highlights";
@@ -21,6 +21,7 @@ import {
 } from "../../util/data";
 import { getters as predictionGetters } from "../predictions/module";
 import { getters as dataGetters } from "../dataset/module";
+import { VAR_MODES_INSTANCE } from "../route";
 
 export type PredictionContext = ActionContext<PredictionState, DistilState>;
 
@@ -33,6 +34,7 @@ export const actions = {
       training: Variable[];
       solutionId: string;
       highlight: Highlight;
+      varModes: Map<string, SummaryMode>;
     }
   ) {
     if (!args.dataset) {
@@ -41,6 +43,10 @@ export const actions = {
     }
     if (!args.training) {
       console.warn("`training` argument is missing");
+      return null;
+    }
+    if (!args.varModes) {
+      console.warn("`varModes` argument is missing");
       return null;
     }
     if (!args.solutionId) {
@@ -94,7 +100,10 @@ export const actions = {
           dataset: dataset,
           variable: variable,
           resultID: solution.resultId,
-          highlight: args.highlight
+          highlight: args.highlight,
+          varMode: args.varModes.has(variable.colName)
+            ? args.varModes.get(variable.colName)
+            : SummaryMode.Default
         })
       );
     });
@@ -108,6 +117,7 @@ export const actions = {
       variable: Variable;
       resultID: string;
       highlight: Highlight;
+      varMode: SummaryMode;
     }
   ): Promise<void> {
     if (!args.dataset) {
@@ -122,6 +132,10 @@ export const actions = {
       console.warn("`resultID` argument is missing");
       return null;
     }
+    if (!args.varMode) {
+      console.warn("`varMode` argument is missing");
+      return null;
+    }
 
     let filterParams = {
       highlight: null,
@@ -131,7 +145,9 @@ export const actions = {
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
     return axios
       .post(
-        `/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}`,
+        `/distil/training-summary/${args.dataset}/${args.variable.colName}/${
+          args.resultID
+        }/${SummaryMode[args.varMode]}`,
         filterParams
       )
       .then(response => {
@@ -165,6 +181,7 @@ export const actions = {
       target: string;
       solutionId: string;
       highlight: Highlight;
+      varMode: SummaryMode;
     }
   ) {
     if (!args.dataset) {
@@ -215,7 +232,9 @@ export const actions = {
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
     return axios
       .post(
-        `/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}`,
+        `/distil/target-summary/${args.dataset}/${args.target}/${
+          solution.resultId
+        }/${SummaryMode[args.varMode]}`,
         filterParams
       )
       .then(response => {
@@ -363,6 +382,7 @@ export const actions = {
       target: string;
       solutionId: string;
       highlight: Highlight;
+      varMode: SummaryMode;
     }
   ) {
     if (!args.dataset) {
@@ -375,6 +395,10 @@ export const actions = {
     }
     if (!args.solutionId) {
       console.warn("`solutionId` argument is missing");
+      return null;
+    }
+    if (!args.varMode) {
+      console.warn("`varMode` argument is missing");
       return null;
     }
 
@@ -418,6 +442,7 @@ export const actions = {
       target: string;
       requestIds: string[];
       highlight: Highlight;
+      varModes: Map<string, SummaryMode>;
     }
   ) {
     if (!args.requestIds) {
@@ -434,7 +459,10 @@ export const actions = {
           dataset: args.dataset,
           target: args.target,
           solutionId: solution.solutionId,
-          highlight: args.highlight
+          highlight: args.highlight,
+          varMode: args.varModes.has(args.target)
+            ? args.varModes.get(args.target)
+            : SummaryMode.Default
         });
       })
     );

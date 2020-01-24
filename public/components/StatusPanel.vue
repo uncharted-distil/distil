@@ -49,7 +49,8 @@ import {
   VariableRankingPendingRequest,
   DatasetPendingRequestStatus,
   GeocodingPendingRequest,
-  ClusteringPendingRequest
+  ClusteringPendingRequest,
+  SummaryMode
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
@@ -62,6 +63,7 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { StatusPanelState, StatusPanelContentType } from "../store/app";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { overlayRouteEntry } from "../util/routes";
 
 const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
   [DatasetPendingRequestType.VARIABLE_RANKING, Feature.RANK_FEATURES],
@@ -198,13 +200,37 @@ export default Vue.extend({
               this.clearData();
             });
           break;
-        case DatasetPendingRequestType.CLUSTERING:
-          // Update the mode for the given variable.
-          const clusterRequest = <ClusteringPendingRequest>this.requestData;
-          this.clearData();
-          break;
         case DatasetPendingRequestType.JOIN_SUGGESTION:
           break;
+        case DatasetPendingRequestType.CLUSTERING:
+          const clusterRequest = <ClusteringPendingRequest>this.requestData;
+          this.clearData();
+
+          // fetch the var modes map
+          const varModesMap = routeGetters.getDecodedVarModes(this.$store);
+          // find any grouped vars that are using this cluster data and update their
+          // mode to cluster now that data is available
+          datasetGetters
+            .getGroupings(this.$store)
+            .filter(v => v.grouping.idCol === clusterRequest.field)
+            .forEach(v => {
+              varModesMap.set(v.colName, SummaryMode.Cluster);
+            });
+
+          // serialize the modes map into a string and add to the route
+          const varModesStr = Array.from(varModesMap)
+            .reduce(
+              (acc, curr) => {
+                acc.push(`${curr[0]}:${curr[1]}`);
+                return acc;
+              },
+              [] as Array<String>
+            )
+            .join(",");
+          const entry = overlayRouteEntry(this.$route, {
+            varModes: varModesStr
+          });
+          this.$router.push(entry);
         default:
       }
       const status = STATUS_USER_EVENT.get(this.statusType);

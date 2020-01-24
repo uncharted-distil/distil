@@ -16,7 +16,8 @@ import {
   JoinDatasetImportPendingRequest,
   Task,
   ClusteringPendingRequest,
-  SummaryMode
+  SummaryMode,
+  VariableSummary
 } from "./index";
 import { mutations } from "./module";
 import { DistilState } from "../store";
@@ -500,24 +501,28 @@ export const actions = {
           })
         ]).then(() => {
           mutations.clearVariableSummaries(context);
-          const variables = context.getters.getVariables;
-          const filterParams =
-            context.getters.getDecodedSolutionRequestFilterParams;
-          const highlight = context.getters.getDecodedHighlight;
+          const variables = context.getters.getVariables as Variable[];
+          const filterParams = context.getters
+            .getDecodedSolutionRequestFilterParams as FilterParams;
+          const highlight = context.getters.getDecodedHighlight as Highlight;
+          const varModes = context.getters.getDecodedVarModes as Map<
+            string,
+            SummaryMode
+          >;
           return Promise.all([
             actions.fetchIncludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
               highlight: highlight,
-              mode: SummaryMode.Default
+              varModes: varModes
             }),
             actions.fetchExcludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
               highlight: highlight,
-              mode: SummaryMode.Default
+              varModes: varModes
             })
           ]);
         });
@@ -597,24 +602,28 @@ export const actions = {
           })
         ]).then(() => {
           mutations.clearVariableSummaries(context);
-          const variables = context.getters.getVariables;
-          const filterParams =
-            context.getters.getDecodedSolutionRequestFilterParams;
-          const highlight = context.getters.getDecodedHighlight;
+          const variables = context.getters.getVariables as Variable[];
+          const filterParams = context.getters
+            .getDecodedSolutionRequestFilterParams as FilterParams;
+          const highlight = context.getters.getDecodedHighlight as Highlight;
+          const varModes = context.getters.getDecodedVarModes as Map<
+            string,
+            SummaryMode
+          >;
           return Promise.all([
             actions.fetchIncludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
               highlight: highlight,
-              mode: SummaryMode.Default
+              varModes: varModes
             }),
             actions.fetchExcludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
               highlight: highlight,
-              mode: SummaryMode.Default
+              varModes: varModes
             })
           ]);
         });
@@ -649,24 +658,29 @@ export const actions = {
           })
         ]).then(() => {
           mutations.clearVariableSummaries(context);
-          const variables = context.getters.getVariables;
-          const filterParams =
-            context.getters.getDecodedSolutionRequestFilterParams;
-          const highlight = context.getters.getDecodedHighlight;
+          const variables = context.getters.getVariables as Variable[];
+          const filterParams = context.getters
+            .getDecodedSolutionRequestFilterParams as FilterParams;
+          const highlight = context.getters.getDecodedHighlight as Highlight;
+          const varModes = context.getters.getDecodedVarModes as Map<
+            string,
+            SummaryMode
+          >;
+
           return Promise.all([
             actions.fetchIncludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
               highlight: highlight,
-              mode: SummaryMode.Default
+              varModes: varModes
             }),
             actions.fetchExcludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
               highlight: highlight,
-              mode: SummaryMode.Default
+              varModes: varModes
             })
           ]);
         });
@@ -756,7 +770,7 @@ export const actions = {
       variables: Variable[];
       highlight: Highlight;
       filterParams: FilterParams;
-      mode: SummaryMode;
+      varModes: Map<string, SummaryMode>;
     }
   ): Promise<void[]> {
     return actions.fetchVariableSummaries(context, {
@@ -765,7 +779,7 @@ export const actions = {
       filterParams: args.filterParams,
       highlight: args.highlight,
       include: true,
-      mode: args.mode
+      varModes: args.varModes
     });
   },
 
@@ -776,7 +790,7 @@ export const actions = {
       variables: Variable[];
       highlight: Highlight;
       filterParams: FilterParams;
-      mode: SummaryMode;
+      varModes: Map<string, SummaryMode>;
     }
   ): Promise<void[]> {
     return actions.fetchVariableSummaries(context, {
@@ -785,7 +799,7 @@ export const actions = {
       filterParams: args.filterParams,
       highlight: args.highlight,
       include: false,
-      mode: args.mode
+      varModes: args.varModes
     });
   },
 
@@ -797,7 +811,7 @@ export const actions = {
       highlight: Highlight;
       filterParams: FilterParams;
       include: boolean;
-      mode: SummaryMode;
+      varModes: Map<string, SummaryMode>;
     }
   ): Promise<void[]> {
     if (!args.dataset) {
@@ -832,6 +846,11 @@ export const actions = {
         mutator(context, createPendingSummary(key, label, desciption, dataset));
       }
 
+      // Get the mode or default
+      const mode = args.varModes.has(variable.colName)
+        ? args.varModes.get(variable.colName)
+        : SummaryMode.Default;
+
       // fetch summary
       promises.push(
         actions.fetchVariableSummary(context, {
@@ -840,7 +859,7 @@ export const actions = {
           filterParams: args.filterParams,
           highlight: args.highlight,
           include: args.include,
-          mode: args.mode
+          mode: mode
         })
       );
     });
