@@ -204,7 +204,7 @@ export default Vue.extend({
     },
 
     paginatedSummaries(): VariableSummary[] {
-      let filteredVariables = filterVariablesByPage(
+      const filteredVariables = filterVariablesByPage(
         this.currentPage,
         this.rowsPerPage,
         this.sortedFilteredSummaries

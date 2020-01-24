@@ -224,13 +224,14 @@ export default Vue.extend({
                 acc.push(`${curr[0]}:${curr[1]}`);
                 return acc;
               },
-              [] as Array<String>
+              [] as String[]
             )
             .join(",");
           const entry = overlayRouteEntry(this.$route, {
             varModes: varModesStr
           });
           this.$router.push(entry);
+          break;
         default:
       }
       const status = STATUS_USER_EVENT.get(this.statusType);
