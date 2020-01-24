@@ -16,6 +16,10 @@
 package task
 
 import (
+	"bytes"
+	"encoding/csv"
+	"fmt"
+	"io"
 	"path"
 	"time"
 
@@ -34,8 +38,14 @@ func Predict(meta *model.Metadata, dataset string, solutionID string, fittedSolu
 	csvData []byte, outputPath string, index string, target string, metaStorage api.MetadataStorage,
 	dataStorage api.DataStorage, solutionStorage api.SolutionStorage, config *IngestTaskConfig) (*api.SolutionResult, error) {
 	log.Infof("generating predictions for fitted solution ID %s", fittedSolutionID)
+	// match the source dataset
+	csvDataAugmented, err := augmentPredictionDataset(csvData, meta.DataResources[0].Variables)
+	if err != nil {
+		return nil, err
+	}
+
 	// create the dataset to be used for predictions
-	datasetPath, err := CreateDataset(dataset, csvData, outputPath, config)
+	datasetPath, err := CreateDataset(dataset, csvDataAugmented, outputPath, config)
 	if err != nil {
 		return nil, err
 	}
@@ -129,4 +139,87 @@ func Predict(meta *model.Metadata, dataset string, solutionID string, fittedSolu
 	res.Dataset = dataset
 
 	return res, nil
+}
+
+func augmentPredictionDataset(csvData []byte, sourceVariables []*model.Variable) ([]byte, error) {
+	log.Infof("augment inference dataset fields")
+
+	// read the header in the prediction dataset
+	data := bytes.NewReader(csvData)
+	reader := csv.NewReader(data)
+
+	header, err := reader.Read()
+	if err != nil {
+		return nil, err
+	}
+
+	// map fields to indices
+	headerSource := make([]string, len(sourceVariables))
+	sourceVariableMap := make(map[string]*model.Variable)
+	for _, v := range sourceVariables {
+		sourceVariableMap[v.DisplayName] = v
+		headerSource[v.Index] = v.DisplayName
+	}
+
+	addIndex := true
+	predictVariablesMap := make(map[int]int)
+	for i, pv := range header {
+		if sourceVariableMap[pv] != nil {
+			predictVariablesMap[i] = sourceVariableMap[pv].Index
+			log.Infof("mapped '%s' to index %d", pv, predictVariablesMap[i])
+		} else {
+			predictVariablesMap[i] = -1
+			log.Warnf("field '%s' not found in source dataset", pv)
+		}
+
+		if pv == model.D3MIndexName {
+			addIndex = false
+		}
+	}
+
+	// write the header
+	outputBytes := &bytes.Buffer{}
+	writerOutput := csv.NewWriter(outputBytes)
+	err = writerOutput.Write(headerSource)
+	if err != nil {
+		return nil, err
+	}
+
+	// read the rest of the data
+	log.Infof("rewriting inference dataset to match source dataset structure")
+	count := 0
+	d3mFieldIndex := sourceVariableMap[model.D3MIndexName].Index
+	for {
+		line, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return nil, errors.Wrap(err, "failed to read line from file")
+		}
+
+		// write the columns in the same order as the source dataset
+		output := make([]string, len(sourceVariableMap))
+		for i, f := range line {
+			sourceIndex := predictVariablesMap[i]
+			if sourceIndex >= 0 {
+				output[sourceIndex] = f
+			}
+		}
+
+		if addIndex {
+			output[d3mFieldIndex] = fmt.Sprintf("%d", count)
+		}
+		count = count + 1
+
+		err = writerOutput.Write(output)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	writerOutput.Flush()
+
+	log.Infof("done augmenting inference dataset")
+
+	return outputBytes.Bytes(), nil
 }
