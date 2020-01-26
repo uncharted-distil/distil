@@ -353,7 +353,7 @@ export default Vue.extend({
         idCol: idCol,
         subIds: ids,
         hidden: hiddenCols,
-        properties: { xCol: this.xCol, yCol: this.yCol }
+        properties: { xCol: this.xCol, yCol: this.yCol, clusterCol: null }
       };
 
       datasetActions

@@ -63,7 +63,8 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { StatusPanelState, StatusPanelContentType } from "../store/app";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
-import { overlayRouteEntry } from "../util/routes";
+import { overlayRouteEntry, varModesToString } from "../util/routes";
+import { $enum } from "ts-enum-util";
 
 const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
   [DatasetPendingRequestType.VARIABLE_RANKING, Feature.RANK_FEATURES],
@@ -203,34 +204,10 @@ export default Vue.extend({
         case DatasetPendingRequestType.JOIN_SUGGESTION:
           break;
         case DatasetPendingRequestType.CLUSTERING:
-          const clusterRequest = <ClusteringPendingRequest>this.requestData;
+          this.applyClusteringChange(<ClusteringPendingRequest>(
+            this.requestData
+          ));
           this.clearData();
-
-          // fetch the var modes map
-          const varModesMap = routeGetters.getDecodedVarModes(this.$store);
-          // find any grouped vars that are using this cluster data and update their
-          // mode to cluster now that data is available
-          datasetGetters
-            .getGroupings(this.$store)
-            .filter(v => v.grouping.idCol === clusterRequest.field)
-            .forEach(v => {
-              varModesMap.set(v.colName, SummaryMode.Cluster);
-            });
-
-          // serialize the modes map into a string and add to the route
-          const varModesStr = Array.from(varModesMap)
-            .reduce(
-              (acc, curr) => {
-                acc.push(`${curr[0]}:${curr[1]}`);
-                return acc;
-              },
-              [] as String[]
-            )
-            .join(",");
-          const entry = overlayRouteEntry(this.$route, {
-            varModes: varModesStr
-          });
-          this.$router.push(entry);
           break;
         default:
       }
@@ -245,6 +222,43 @@ export default Vue.extend({
     clearData() {
       if (this.requestData) {
         datasetActions.removePendingRequest(this.$store, this.requestData.id);
+      }
+    },
+    // Applies clustering changes and refetches update variable summaries
+    applyClusteringChange(clusterRequest: ClusteringPendingRequest) {
+      // fetch the var modes map
+      const varModesMap = routeGetters.getDecodedVarModes(this.$store);
+      // find any grouped vars that are using this cluster data and update their
+      // mode to cluster now that data is available
+      datasetGetters
+        .getGroupings(this.$store)
+        .filter(v => v.grouping.idCol === clusterRequest.field)
+        .forEach(v => {
+          varModesMap.set(v.colName, SummaryMode.Cluster);
+        });
+
+      // serialize the modes map into a string and add to the route
+      const varModesStr = varModesToString(varModesMap);
+      const entry = overlayRouteEntry(this.$route, {
+        varModes: varModesStr
+      });
+      this.$router.push(entry);
+
+      // upate variables
+      // pull the updated dataset, vars, and summaries
+      const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+        this.$store
+      );
+      const highlight = routeGetters.getDecodedHighlight(this.$store);
+      for (const [k, v] of varModesMap) {
+        datasetActions.fetchVariableSummary(this.$store, {
+          dataset: this.dataset,
+          variable: k,
+          highlight: highlight,
+          filterParams: filterParams,
+          include: true,
+          mode: $enum(SummaryMode).asValueOrDefault(v, SummaryMode.Default)
+        });
       }
     }
   }

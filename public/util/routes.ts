@@ -8,6 +8,7 @@ import {
   TRAINING_VARS_INSTANCE_PAGE,
   RESULT_TRAINING_VARS_INSTANCE_PAGE
 } from "../store/route/index";
+import { SummaryMode } from "../store/dataset";
 
 export interface RouteArgs {
   dataset?: string;
@@ -163,4 +164,17 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
   }
 
   return query;
+}
+
+export function varModesToString(varModes: Map<string, SummaryMode>): string {
+  // serialize the modes map into a string and add to the route
+  return Array.from(varModes)
+    .reduce(
+      (acc, curr) => {
+        acc.push(`${curr[0]}:${curr[1]}`);
+        return acc;
+      },
+      [] as String[]
+    )
+    .join(",");
 }

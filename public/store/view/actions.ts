@@ -204,6 +204,7 @@ export const actions = {
     const highlight = context.getters.getDecodedHighlight;
     const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
     const datasets = context.getters.getDatasets;
+    const varModes = context.getters.getDecodedVarModes;
     const datasetIDA = datasetIDs[0];
     const datasetIDB = datasetIDs[1];
 
@@ -220,13 +221,15 @@ export const actions = {
         dataset: datasetA.id,
         variables: datasetA.variables,
         filterParams: filterParams,
-        highlight: highlight
+        highlight: highlight,
+        varModes: varModes
       }),
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: datasetB.id,
         variables: datasetB.variables,
         filterParams: filterParams,
-        highlight: highlight
+        highlight: highlight,
+        varModes: varModes
       }),
       datasetActions.fetchJoinDatasetsTableData(store, {
         datasets: datasetIDs,
@@ -305,14 +308,12 @@ export const actions = {
       datasetActions.fetchIncludedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,
-        highlight: highlight,
-        varModes: varModes
+        highlight: highlight
       }),
       datasetActions.fetchExcludedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,
-        highlight: highlight,
-        varModes: varModes
+        highlight: highlight
       })
     ]);
   },

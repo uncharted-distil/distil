@@ -16,8 +16,7 @@ import {
   JoinDatasetImportPendingRequest,
   Task,
   ClusteringPendingRequest,
-  SummaryMode,
-  VariableSummary
+  SummaryMode
 } from "./index";
 import { mutations } from "./module";
 import { DistilState } from "../store";
@@ -38,7 +37,6 @@ import {
   GEOCODED_LAT_PREFIX,
   GEOCOORDINATE_TYPE
 } from "../../util/types";
-import { actions as datasetActions } from "../dataset/module";
 
 import { DATASET_UPLOAD, PREDICTION_UPLOAD } from "../../util/uploads";
 
@@ -186,7 +184,7 @@ export const actions = {
       actions.fetchVariables(context, {
         dataset: args.dataset
       }),
-      datasetActions.fetchVariableSummary(context, {
+      actions.fetchVariableSummary(context, {
         dataset: args.dataset,
         variable: GEOCODED_LON_PREFIX + args.field,
         highlight: highlight,

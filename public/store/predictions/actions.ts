@@ -145,9 +145,7 @@ export const actions = {
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
     return axios
       .post(
-        `/distil/training-summary/${args.dataset}/${args.variable.colName}/${
-          args.resultID
-        }/${SummaryMode[args.varMode]}`,
+        `/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}/${args.varMode}`,
         filterParams
       )
       .then(response => {
@@ -232,9 +230,7 @@ export const actions = {
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
     return axios
       .post(
-        `/distil/target-summary/${args.dataset}/${args.target}/${
-          solution.resultId
-        }/${SummaryMode[args.varMode]}`,
+        `/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}/${args.varMode}`,
         filterParams
       )
       .then(response => {
@@ -430,7 +426,8 @@ export const actions = {
       label,
       predictionGetters.getPredictionSummaries(context),
       mutations.updatePredictedSummaries,
-      filterParams
+      filterParams,
+      args.varMode
     );
   },
 
