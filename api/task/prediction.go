@@ -45,7 +45,7 @@ func Predict(meta *model.Metadata, dataset string, solutionID string, fittedSolu
 	}
 
 	// create the dataset to be used for predictions
-	datasetPath, err := CreateDataset(dataset, csvDataAugmented, outputPath, config)
+	datasetPath, err := CreateDataset(dataset, csvDataAugmented, outputPath, api.DatasetTypeInference, config)
 	if err != nil {
 		return nil, err
 	}

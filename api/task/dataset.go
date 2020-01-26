@@ -39,7 +39,7 @@ const (
 )
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.
-func CreateDataset(dataset string, csvData []byte, outputPath string, config *IngestTaskConfig) (string, error) {
+func CreateDataset(dataset string, csvData []byte, outputPath string, typ api.DatasetType, config *IngestTaskConfig) (string, error) {
 	// save the csv file in the file system datasets folder
 	outputDatasetPath := path.Join(outputPath, dataset)
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
@@ -52,6 +52,7 @@ func CreateDataset(dataset string, csvData []byte, outputPath string, config *In
 	// create the raw dataset schema doc
 	datasetID := model.NormalizeDatasetID(dataset)
 	meta := model.NewMetadata(dataset, dataset, "", datasetID)
+	meta.Type = string(typ)
 	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeRaw, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	meta.DataResources = []*model.DataResource{dr}
