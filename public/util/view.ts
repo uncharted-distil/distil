@@ -1,7 +1,5 @@
 import { Location } from "vue-router";
-import { Store } from "vuex";
 import { LAST_STATE } from "../store/view/index";
-import { getters as viewGetters } from "../store/view/module";
 import localStorage from "store";
 
 export function saveView(args: { view: string; key: string; route: Location }) {

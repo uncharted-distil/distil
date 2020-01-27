@@ -285,7 +285,7 @@ export const actions = {
       })
     ]).then(() => {
       fetchVariableRankings(context, { dataset, target });
-
+      datasetActions.fetchClusters(store, { dataset });
       return actions.updateSelectTrainingData(context);
     });
   },
@@ -337,6 +337,7 @@ export const actions = {
           dataset: dataset,
           target: target
         });
+        datasetActions.fetchClusters(store, { dataset });
         return fetchSolutionRequests(context, {
           dataset: dataset,
           target: target
@@ -439,6 +440,7 @@ export const actions = {
           dataset: dataset,
           target: target
         });
+        datasetActions.fetchClusters(store, { dataset });
         return fetchSolutionRequests(context, {
           dataset: dataset,
           target: target

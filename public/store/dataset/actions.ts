@@ -18,7 +18,7 @@ import {
   ClusteringPendingRequest,
   SummaryMode
 } from "./index";
-import { mutations } from "./module";
+import { mutations, getters } from "./module";
 import { DistilState } from "../store";
 import { Highlight } from "../dataset/index";
 import { FilterParams } from "../../util/filters";
@@ -280,28 +280,32 @@ export const actions = {
       });
   },
 
-  clusterData(
+  // Sends a request to the server to generate cluaster for all data that is a valid target for clustering.
+  fetchClusters(
     context: DatasetContext,
-    args: { dataset: string; variable: string }
+    args: { dataset: string }
   ): Promise<any> {
     if (!args.dataset) {
       console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.variable) {
-      console.warn("`field` argument is missing");
       return null;
     }
     const update: ClusteringPendingRequest = {
       id: _.uniqueId(),
       dataset: args.dataset,
       type: DatasetPendingRequestType.CLUSTERING,
-      field: args.variable,
       status: DatasetPendingRequestStatus.PENDING
     };
     mutations.updatePendingRequests(context, update);
-    return axios
-      .post(`/distil/cluster/${args.dataset}/${args.variable}`, {})
+
+    // Find grouped fields that have clusters defined against them and request that they
+    // cluster.
+    const promises = getters
+      .getVariables(context)
+      .filter(v => v.grouping && v.grouping.properties.clusterCol)
+      .map(v => {
+        axios.post(`/distil/cluster/${args.dataset}/${v.grouping.idCol}`, {});
+      });
+    Promise.all(promises)
       .then(() => {
         mutations.updatePendingRequests(context, {
           ...update,

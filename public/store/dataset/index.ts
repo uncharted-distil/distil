@@ -277,7 +277,6 @@ export interface ClusteringPendingRequest {
   status: DatasetPendingRequestStatus;
   type: DatasetPendingRequestType.CLUSTERING;
   dataset: string;
-  field: string;
 }
 
 export type DatasetPendingRequest =

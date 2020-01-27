@@ -232,7 +232,7 @@ export default Vue.extend({
       // mode to cluster now that data is available
       datasetGetters
         .getGroupings(this.$store)
-        .filter(v => v.grouping.idCol === clusterRequest.field)
+        .filter(v => v.grouping.properties.clusterCol)
         .forEach(v => {
           varModesMap.set(v.colName, SummaryMode.Cluster);
         });
