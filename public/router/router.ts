@@ -11,7 +11,6 @@ import ExportSuccess from "../views/ExportSuccess";
 import VariableGrouping from "../views/VariableGrouping";
 import store from "../store/store";
 import { getters as routeGetters } from "../store/route/module";
-import { mutations as viewMutations } from "../store/view/module";
 import { saveView } from "../util/view";
 import {
   ROOT_ROUTE,

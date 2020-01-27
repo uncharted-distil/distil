@@ -17,9 +17,6 @@ export const getters = {
   getRouteDataset: read(moduleGetters.getRouteDataset),
   getRouteInclude: read(moduleGetters.getRouteInclude),
   getRouteJoinDatasets: read(moduleGetters.getRouteJoinDatasets),
-  getRouteTimeseriesBinningInterval: read(
-    moduleGetters.getRouteTimeseriesBinningInterval
-  ),
   getJoinDatasetColumnA: read(moduleGetters.getJoinDatasetColumnA),
   getJoinDatasetColumnB: read(moduleGetters.getJoinDatasetColumnB),
   getBaseColumnSuggestions: read(moduleGetters.getBaseColumnSuggestions),
@@ -78,6 +75,7 @@ export const getters = {
   ),
   getDecodedHighlight: read(moduleGetters.getDecodedHighlight),
   getDecodedRowSelection: read(moduleGetters.getDecodedRowSelection),
+  getDecodedVarModes: read(moduleGetters.getDecodedVarModes),
   getActiveSolutionIndex: read(moduleGetters.getActiveSolutionIndex),
   getGeoCenter: read(moduleGetters.getGeoCenter),
   getGeoZoom: read(moduleGetters.getGeoZoom),

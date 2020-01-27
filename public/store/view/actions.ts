@@ -21,7 +21,14 @@ import {
   mutations as predictionMutations
 } from "../predictions/module";
 import { getters as routeGetters } from "../route/module";
-import { TaskTypes } from "../dataset";
+import {
+  TaskTypes,
+  SummaryMode,
+  Highlight,
+  Variable,
+  VariableSummary
+} from "../dataset";
+import { FilterParams } from "../../util/filters";
 
 enum ParamCacheKey {
   VARIABLES = "VARIABLES",
@@ -73,24 +80,27 @@ const fetchVariableSummaries = createCacheable(
   ParamCacheKey.VARIABLE_SUMMARIES,
   (context, args) => {
     return fetchVariables(context, args).then(() => {
-      const dataset = args.dataset;
+      const dataset = args.dataset as string;
       const variables = context.getters.getVariables;
       const filterParams =
         context.getters.getDecodedSolutionRequestFilterParams;
       const highlight = context.getters.getDecodedHighlight;
+      const varModes = context.getters.getDecodedVarModes;
 
       return Promise.all([
         datasetActions.fetchIncludedVariableSummaries(store, {
           dataset: dataset,
           variables: variables,
           filterParams: filterParams,
-          highlight: highlight
+          highlight: highlight,
+          varModes: varModes
         }),
         datasetActions.fetchExcludedVariableSummaries(store, {
           dataset: dataset,
           variables: variables,
           filterParams: filterParams,
-          highlight: highlight
+          highlight: highlight,
+          varModes: varModes
         })
       ]);
     });
@@ -194,6 +204,7 @@ export const actions = {
     const highlight = context.getters.getDecodedHighlight;
     const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
     const datasets = context.getters.getDatasets;
+    const varModes = context.getters.getDecodedVarModes;
     const datasetIDA = datasetIDs[0];
     const datasetIDB = datasetIDs[1];
 
@@ -210,13 +221,15 @@ export const actions = {
         dataset: datasetA.id,
         variables: datasetA.variables,
         filterParams: filterParams,
-        highlight: highlight
+        highlight: highlight,
+        varModes: varModes
       }),
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: datasetB.id,
         variables: datasetB.variables,
         filterParams: filterParams,
-        highlight: highlight
+        highlight: highlight,
+        varModes: varModes
       }),
       datasetActions.fetchJoinDatasetsTableData(store, {
         datasets: datasetIDs,
@@ -272,7 +285,7 @@ export const actions = {
       })
     ]).then(() => {
       fetchVariableRankings(context, { dataset, target });
-
+      datasetActions.fetchClusters(store, { dataset });
       return actions.updateSelectTrainingData(context);
     });
   },
@@ -283,12 +296,14 @@ export const actions = {
     const dataset = context.getters.getRouteDataset;
     const highlight = context.getters.getDecodedHighlight;
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+    const varModes = context.getters.getDecodedVarModes;
 
     return Promise.all([
       fetchVariableSummaries(context, {
         dataset: dataset,
         filterParams: filterParams,
-        highlight: highlight
+        highlight: highlight,
+        varModes: varModes
       }),
       datasetActions.fetchIncludedTableData(store, {
         dataset: dataset,
@@ -322,6 +337,7 @@ export const actions = {
           dataset: dataset,
           target: target
         });
+        datasetActions.fetchClusters(store, { dataset });
         return fetchSolutionRequests(context, {
           dataset: dataset,
           target: target
@@ -346,6 +362,7 @@ export const actions = {
     const trainingVariables =
       context.getters.getActiveSolutionTrainingVariables;
     const highlight = context.getters.getDecodedHighlight;
+    const varModes = context.getters.getDecodedVarModes;
 
     resultActions.fetchResultTableData(store, {
       dataset: dataset,
@@ -356,19 +373,22 @@ export const actions = {
       dataset: dataset,
       target: target,
       solutionId: solutionId,
-      highlight: highlight
+      highlight: highlight,
+      varMode: varModes.has(target) ? varModes.get(target) : SummaryMode.Default
     });
     resultActions.fetchTrainingSummaries(store, {
       dataset: dataset,
       training: trainingVariables,
       solutionId: solutionId,
-      highlight: highlight
+      highlight: highlight,
+      varModes: varModes
     });
     resultActions.fetchPredictedSummaries(store, {
       dataset: dataset,
       target: target,
       requestIds: requestIds,
-      highlight: highlight
+      highlight: highlight,
+      varModes: varModes
     });
 
     const task = routeGetters.getRouteTask(store);
@@ -420,6 +440,7 @@ export const actions = {
           dataset: dataset,
           target: target
         });
+        datasetActions.fetchClusters(store, { dataset });
         return fetchSolutionRequests(context, {
           dataset: dataset,
           target: target
@@ -445,6 +466,7 @@ export const actions = {
       context.getters.getActiveSolutionTrainingVariables;
     const highlight = context.getters.getDecodedHighlight;
     const produceRequestId = context.getters.getRouteProduceRequestId;
+    const varModes = context.getters.getDecodedVarModes;
     predictionActions.fetchPredictionTableData(store, {
       dataset: dataset,
       solutionId: solutionId,
@@ -455,19 +477,22 @@ export const actions = {
       dataset: dataset,
       target: target,
       solutionId: solutionId,
-      highlight: highlight
+      highlight: highlight,
+      varMode: varModes.has(target) ? varModes.get(target) : SummaryMode.Default
     });
     predictionActions.fetchTrainingSummaries(store, {
       dataset: dataset,
       training: trainingVariables,
       solutionId: solutionId,
-      highlight: highlight
+      highlight: highlight,
+      varModes: varModes
     });
     predictionActions.fetchPredictedSummaries(store, {
       dataset: dataset,
       target: target,
       requestIds: requestIds,
-      highlight: highlight
+      highlight: highlight,
+      varModes: varModes
     });
   }
 };

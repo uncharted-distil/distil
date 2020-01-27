@@ -15,6 +15,8 @@
 
 package model
 
+import "github.com/pkg/errors"
+
 const (
 	// MinAggPrefix is the prefix used for min aggregations.
 	MinAggPrefix = "min_"
@@ -61,6 +63,28 @@ type VariableSummary struct {
 	Timeline         *Histogram `json:"timeline"`
 	TimelineBaseline *Histogram `json:"timelineBaseline"`
 	TimelineType     string     `json:"timelineType"`
+}
+
+// SummaryMode defines the summary display modes.
+type SummaryMode int
+
+const (
+	// DefaultMode use the default facet for a variable summary given its type, ex. a horizontal histogram for numeric values.
+	DefaultMode = iota + 1
+	// ClusterMode use computed cluster information for a variable summary if availble, ex. timeseries clusters
+	ClusterMode
+)
+
+// SummaryModeFromString creates a SummaryMode from the supplied string
+func SummaryModeFromString(s string) (SummaryMode, error) {
+	switch s {
+	case "cluster":
+		return ClusterMode, nil
+	case "default":
+		return DefaultMode, nil
+	default:
+		return 0, errors.Errorf("%s is not a valid SummaryMode", s)
+	}
 }
 
 // EmptyFilteredHistogram fills the filtered portion of the summary with empty

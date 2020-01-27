@@ -36,6 +36,12 @@ func TrainingSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.D
 		storageName := model.NormalizeDatasetID(dataset)
 		// get variable name
 		variable := pat.Param(r, "variable")
+		// get variable summary mode
+		mode, err := api.SummaryModeFromString(pat.Param(r, "mode"))
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 
 		// get result id
 		resultID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
@@ -79,7 +85,7 @@ func TrainingSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.D
 			return
 		}
 		// fetch summary histogram
-		summary, err := data.FetchSummaryByResult(dataset, storageName, variable, result.ResultURI, filterParams, nil)
+		summary, err := data.FetchSummaryByResult(dataset, storageName, variable, result.ResultURI, filterParams, nil, api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return

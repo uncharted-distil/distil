@@ -54,13 +54,13 @@ func NewCoordinateField(key string, storage *Storage, datasetName string, datase
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error) {
+func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
 
 	// update the highlight key to use the cluster if necessary
-	if err = f.updateClusterHighlight(filterParams); err != nil {
+	if err = f.updateClusterHighlight(filterParams, mode); err != nil {
 		return nil, err
 	}
 
@@ -307,7 +307,7 @@ func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, 
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the coordinate histogram for the field.
-func (f *CoordinateField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
+func (f *CoordinateField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

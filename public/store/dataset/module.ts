@@ -25,7 +25,7 @@ export const getters = {
   getPendingRequests: read(moduleGetters.getPendingRequests),
   // variables
   getVariables: read(moduleGetters.getVariables),
-  getGroupings: read(moduleGetters.getVariables),
+  getGroupings: read(moduleGetters.getGroupings),
   getVariablesMap: read(moduleGetters.getVariablesMap),
   getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
   getVariableSummaries: read(moduleGetters.getVariableSummaries),
@@ -36,7 +36,6 @@ export const getters = {
     moduleGetters.getExcludedVariableSummaries
   ),
   getVariableRankings: read(moduleGetters.getVariableRankings),
-  getGeocoordinateTypes: read(moduleGetters.getGeocoordinateTypes),
   // files
   getFiles: read(moduleGetters.getFiles),
   getTimeseries: read(moduleGetters.getTimeseries),
@@ -96,8 +95,9 @@ export const actions = {
   // join suggestions
   fetchJoinSuggestions: dispatch(moduleActions.fetchJoinSuggestions),
   importJoinDataset: dispatch(moduleActions.importJoinDataset),
-  // timeseries clusters
-  clusterData: dispatch(moduleActions.clusterData),
+  // clusters variables in a dataset for which the operation is meaningful (ie. timeseries)
+  fetchClusters: dispatch(moduleActions.fetchClusters),
+
   // files
   fetchFiles: dispatch(moduleActions.fetchFiles),
   fetchImage: dispatch(moduleActions.fetchImage),

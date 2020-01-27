@@ -4,12 +4,12 @@ import Vue from "vue";
 import {
   Variable,
   VariableSummary,
-  TimeseriesSummary,
   TableData,
   TableRow,
   TableColumn,
   Grouping,
-  D3M_INDEX_FIELD
+  D3M_INDEX_FIELD,
+  SummaryMode
 } from "../store/dataset/index";
 import { Solution, SOLUTION_COMPLETED } from "../store/solutions/index";
 import { Dictionary } from "./dict";
@@ -345,7 +345,8 @@ export function fetchSolutionResultSummary(
   label: string,
   resultSummaries: VariableSummary[],
   updateFunction: (arg: ResultsContext, summary: VariableSummary) => void,
-  filterParams: FilterParams
+  filterParams: FilterParams,
+  varMode: SummaryMode
 ): Promise<any> {
   const dataset = solution.dataset;
   const solutionId = solution.solutionId;
@@ -368,10 +369,14 @@ export function fetchSolutionResultSummary(
     // skip
     return;
   }
+  // finish building endpoint
+  const completeEndpoint = varMode
+    ? `${endpoint}/${resultId}/${varMode}`
+    : `${endpoint}/${resultId}`;
 
   // return promise
   return axios
-    .post(`${endpoint}/${resultId}`, filterParams ? filterParams : {})
+    .post(completeEndpoint, filterParams ? filterParams : {})
     .then(response => {
       // save the histogram data
       const summary = response.data.summary;
@@ -402,7 +407,8 @@ export function fetchPredictionResultSummary(
   label: string,
   resultSummaries: VariableSummary[],
   updateFunction: (arg: PredictionContext, summary: VariableSummary) => void,
-  filterParams: FilterParams
+  filterParams: FilterParams,
+  varMode: SummaryMode
 ): Promise<any> {
   const dataset = solution.dataset;
   const solutionId = solution.solutionId;
@@ -428,7 +434,10 @@ export function fetchPredictionResultSummary(
 
   // return promise
   return axios
-    .post(`${endpoint}/${resultId}`, filterParams ? filterParams : {})
+    .post(
+      `${endpoint}/${resultId}/${varMode}`,
+      filterParams ? filterParams : {}
+    )
     .then(response => {
       // save the histogram data
       const summary = response.data.summary;

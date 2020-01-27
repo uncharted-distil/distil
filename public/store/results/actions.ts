@@ -7,7 +7,12 @@ import {
   getSolutionsByRequestIds,
   getSolutionById
 } from "../../util/solutions";
-import { Variable, Highlight } from "../dataset/index";
+import {
+  Variable,
+  Highlight,
+  VariableSummary,
+  SummaryMode
+} from "../dataset/index";
 import { mutations } from "./module";
 import { ResultsState } from "./index";
 import { addHighlightToFilterParams } from "../../util/highlights";
@@ -16,8 +21,7 @@ import {
   createPendingSummary,
   createErrorSummary,
   createEmptyTableData,
-  fetchSummaryExemplars,
-  getTimeseriesAnalysisIntervals
+  fetchSummaryExemplars
 } from "../../util/data";
 import { getters as resultGetters } from "../results/module";
 import { getters as dataGetters } from "../dataset/module";
@@ -33,6 +37,7 @@ export const actions = {
       training: Variable[];
       solutionId: string;
       highlight: Highlight;
+      varModes: Map<string, SummaryMode>;
     }
   ) {
     if (!args.dataset) {
@@ -47,6 +52,10 @@ export const actions = {
       console.warn("`solutionId` argument is missing");
       return null;
     }
+    if (!args.varModes) {
+      console.warn("`varModes` argument is missing");
+      return null;
+    }
     const solution = getSolutionById(
       context.rootState.solutionModule,
       args.solutionId
@@ -58,6 +67,7 @@ export const actions = {
 
     const dataset = args.dataset;
     const solutionId = args.solutionId;
+    const varModes = args.varModes;
 
     const promises = [];
 
@@ -94,7 +104,10 @@ export const actions = {
           dataset: dataset,
           variable: variable,
           resultID: solution.resultId,
-          highlight: args.highlight
+          highlight: args.highlight,
+          varMode: varModes.has(variable.colName)
+            ? varModes.get(variable.colName)
+            : SummaryMode.Default
         })
       );
     });
@@ -108,6 +121,7 @@ export const actions = {
       variable: Variable;
       resultID: string;
       highlight: Highlight;
+      varMode: SummaryMode;
     }
   ): Promise<void> {
     if (!args.dataset) {
@@ -129,43 +143,9 @@ export const actions = {
       filters: []
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-
-    const timeseries = context.getters.getRouteTimeseriesAnalysis;
-    if (timeseries) {
-      let interval = context.getters.getRouteTimeseriesBinningInterval;
-      if (!interval) {
-        const timeVar = context.getters.getTimeseriesAnalysisVariable;
-        const range = context.getters.getTimeseriesAnalysisRange;
-        const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
-        interval = intervals[0].value;
-      }
-
-      return axios
-        .post(
-          `distil/training-timeseries-summary/${args.dataset}/${timeseries}/${args.variable.colName}/${interval}/${args.resultID}`,
-          filterParams
-        )
-        .then(response => {
-          const summary = response.data.summary;
-          mutations.updateTrainingSummary(context, summary);
-        })
-        .catch(error => {
-          console.error(error);
-          mutations.updateTrainingSummary(
-            context,
-            createErrorSummary(
-              args.variable.colName,
-              args.variable.colDisplayName,
-              args.dataset,
-              error
-            )
-          );
-        });
-    }
-
     return axios
       .post(
-        `/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}`,
+        `/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}/${args.varMode}`,
         filterParams
       )
       .then(response => {
@@ -199,6 +179,7 @@ export const actions = {
       target: string;
       solutionId: string;
       highlight: Highlight;
+      varMode: SummaryMode;
     }
   ) {
     if (!args.dataset) {
@@ -211,6 +192,10 @@ export const actions = {
     }
     if (!args.solutionId) {
       console.warn("`solutionId` argument is missing");
+      return null;
+    }
+    if (!args.varMode) {
+      console.warn("`varMode` argument is missing");
       return null;
     }
     const solution = getSolutionById(
@@ -247,38 +232,9 @@ export const actions = {
       filters: []
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-
-    const timeseries = context.getters.getRouteTimeseriesAnalysis;
-    if (timeseries) {
-      let interval = context.getters.getRouteTimeseriesBinningInterval;
-      if (!interval) {
-        const timeVar = context.getters.getTimeseriesAnalysisVariable;
-        const range = context.getters.getTimeseriesAnalysisRange;
-        const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
-        interval = intervals[0].value;
-      }
-
-      return axios
-        .post(
-          `distil/target-timeseries-summary/${args.dataset}/${timeseries}/${args.target}/${interval}/${solution.resultId}`,
-          filterParams
-        )
-        .then(response => {
-          const summary = response.data.summary;
-          mutations.updateTargetSummary(context, summary);
-        })
-        .catch(error => {
-          console.error(error);
-          mutations.updateTargetSummary(
-            context,
-            createErrorSummary(key, label, dataset, error)
-          );
-        });
-    }
-
     return axios
       .post(
-        `/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}`,
+        `/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}/${args.varMode}`,
         filterParams
       )
       .then(response => {
@@ -436,6 +392,7 @@ export const actions = {
       target: string;
       solutionId: string;
       highlight: Highlight;
+      varMode: SummaryMode;
     }
   ) {
     if (!args.dataset) {
@@ -448,6 +405,10 @@ export const actions = {
     }
     if (!args.solutionId) {
       console.warn("`solutionId` argument is missing");
+      return null;
+    }
+    if (!args.varMode) {
+      console.warn("`varMode` argument is missing");
       return null;
     }
 
@@ -466,33 +427,6 @@ export const actions = {
       filters: []
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-
-    const timeseries = context.getters.getRouteTimeseriesAnalysis;
-    if (timeseries) {
-      let interval = context.getters.getRouteTimeseriesBinningInterval;
-      if (!interval) {
-        const timeVar = context.getters.getTimeseriesAnalysisVariable;
-        const range = context.getters.getTimeseriesAnalysisRange;
-        const intervals = getTimeseriesAnalysisIntervals(timeVar, range);
-        interval = intervals[0].value;
-      }
-
-      const endPoint = `distil/forecasting-summary/${args.dataset}/${timeseries}/${args.target}/${interval}`;
-      const key = solution.predictedKey;
-      const label = "Forecasted";
-      return fetchSolutionResultSummary(
-        context,
-        endPoint,
-        solution,
-        args.target,
-        key,
-        label,
-        resultGetters.getPredictedSummaries(context),
-        mutations.updatePredictedSummaries,
-        filterParams
-      );
-    }
-
     const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
     const key = solution.predictedKey;
     const label = "Predicted";
@@ -505,7 +439,8 @@ export const actions = {
       label,
       resultGetters.getPredictedSummaries(context),
       mutations.updatePredictedSummaries,
-      filterParams
+      filterParams,
+      args.varMode
     );
   },
 
@@ -517,6 +452,7 @@ export const actions = {
       target: string;
       requestIds: string[];
       highlight: Highlight;
+      varModes: Map<string, SummaryMode>;
     }
   ) {
     if (!args.requestIds) {
@@ -533,7 +469,10 @@ export const actions = {
           dataset: args.dataset,
           target: args.target,
           solutionId: solution.solutionId,
-          highlight: args.highlight
+          highlight: args.highlight,
+          varMode: args.varModes.has(args.target)
+            ? args.varModes.get(args.target)
+            : SummaryMode.Default
         });
       })
     );
@@ -590,7 +529,8 @@ export const actions = {
       label,
       resultGetters.getResidualsSummaries(context),
       mutations.updateResidualsSummaries,
-      filterParams
+      filterParams,
+      null
     );
   },
 
@@ -671,7 +611,8 @@ export const actions = {
       label,
       resultGetters.getCorrectnessSummaries(context),
       mutations.updateCorrectnessSummaries,
-      filterParams
+      filterParams,
+      SummaryMode.Default
     );
   },
 

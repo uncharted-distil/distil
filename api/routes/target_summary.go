@@ -44,6 +44,13 @@ func TargetSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.Sol
 			return
 		}
 
+		// get variable summary mode
+		mode, err := api.SummaryModeFromString(pat.Param(r, "mode"))
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// parse POST params
 		params, err := getPostParameters(r)
 		if err != nil {
@@ -91,7 +98,7 @@ func TargetSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.Sol
 		}
 
 		// fetch summary histogram
-		summary, err := data.FetchSummaryByResult(dataset, storageName, target, result.ResultURI, filterParams, extrema)
+		summary, err := data.FetchSummaryByResult(dataset, storageName, target, result.ResultURI, filterParams, extrema, api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return

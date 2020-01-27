@@ -15,22 +15,18 @@ import {
   JoinSuggestionPendingRequest,
   JoinDatasetImportPendingRequest,
   Task,
-  ClusteringPendingRequest
+  ClusteringPendingRequest,
+  SummaryMode
 } from "./index";
-import { mutations } from "./module";
+import { mutations, getters } from "./module";
 import { DistilState } from "../store";
 import { Highlight } from "../dataset/index";
-import {
-  FilterParams,
-  INCLUDE_FILTER,
-  EXCLUDE_FILTER
-} from "../../util/filters";
+import { FilterParams } from "../../util/filters";
 import {
   createPendingSummary,
   createErrorSummary,
   createEmptyTableData,
-  fetchSummaryExemplars,
-  getTimeseriesAnalysisIntervals
+  fetchSummaryExemplars
 } from "../../util/data";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import { loadImage } from "../../util/image";
@@ -180,6 +176,7 @@ export const actions = {
     // pull the updated dataset, vars, and summaries
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
     const highlight = context.getters.getDecodedHighlight;
+
     return Promise.all([
       actions.fetchDataset(context, {
         dataset: args.dataset
@@ -192,28 +189,32 @@ export const actions = {
         variable: GEOCODED_LON_PREFIX + args.field,
         highlight: highlight,
         filterParams: filterParams,
-        include: true
+        include: true,
+        mode: SummaryMode.Default
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
         variable: GEOCODED_LON_PREFIX + args.field,
         highlight: highlight,
         filterParams: filterParams,
-        include: false
+        include: false,
+        mode: SummaryMode.Default
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
         variable: GEOCODED_LAT_PREFIX + args.field,
         highlight: highlight,
         filterParams: filterParams,
-        include: true
+        include: true,
+        mode: SummaryMode.Default
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
         variable: GEOCODED_LAT_PREFIX + args.field,
         highlight: highlight,
         filterParams: filterParams,
-        include: false
+        include: false,
+        mode: SummaryMode.Default
       })
     ]);
   },
@@ -279,28 +280,32 @@ export const actions = {
       });
   },
 
-  clusterData(
+  // Sends a request to the server to generate cluaster for all data that is a valid target for clustering.
+  fetchClusters(
     context: DatasetContext,
-    args: { dataset: string; variable: string }
+    args: { dataset: string }
   ): Promise<any> {
     if (!args.dataset) {
       console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.variable) {
-      console.warn("`field` argument is missing");
       return null;
     }
     const update: ClusteringPendingRequest = {
       id: _.uniqueId(),
       dataset: args.dataset,
       type: DatasetPendingRequestType.CLUSTERING,
-      field: args.variable,
       status: DatasetPendingRequestStatus.PENDING
     };
     mutations.updatePendingRequests(context, update);
-    return axios
-      .post(`/distil/cluster/${args.dataset}/${args.variable}`, {})
+
+    // Find grouped fields that have clusters defined against them and request that they
+    // cluster.
+    const promises = getters
+      .getVariables(context)
+      .filter(v => v.grouping && v.grouping.properties.clusterCol)
+      .map(v => {
+        axios.post(`/distil/cluster/${args.dataset}/${v.grouping.idCol}`, {});
+      });
+    Promise.all(promises)
       .then(() => {
         mutations.updatePendingRequests(context, {
           ...update,
@@ -319,7 +324,7 @@ export const actions = {
   uploadDataFile(
     context: DatasetContext,
     args: { datasetID: string; file: File; type: string; solutionId?: string }
-  ) : any {
+  ): any {
     if (!args.datasetID) {
       console.warn("`datasetID` argument is missing");
       return null;
@@ -498,22 +503,28 @@ export const actions = {
           })
         ]).then(() => {
           mutations.clearVariableSummaries(context);
-          const variables = context.getters.getVariables;
-          const filterParams =
-            context.getters.getDecodedSolutionRequestFilterParams;
-          const highlight = context.getters.getDecodedHighlight;
+          const variables = context.getters.getVariables as Variable[];
+          const filterParams = context.getters
+            .getDecodedSolutionRequestFilterParams as FilterParams;
+          const highlight = context.getters.getDecodedHighlight as Highlight;
+          const varModes = context.getters.getDecodedVarModes as Map<
+            string,
+            SummaryMode
+          >;
           return Promise.all([
             actions.fetchIncludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
-              highlight: highlight
+              highlight: highlight,
+              varModes: varModes
             }),
             actions.fetchExcludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
-              highlight: highlight
+              highlight: highlight,
+              varModes: varModes
             })
           ]);
         });
@@ -593,22 +604,28 @@ export const actions = {
           })
         ]).then(() => {
           mutations.clearVariableSummaries(context);
-          const variables = context.getters.getVariables;
-          const filterParams =
-            context.getters.getDecodedSolutionRequestFilterParams;
-          const highlight = context.getters.getDecodedHighlight;
+          const variables = context.getters.getVariables as Variable[];
+          const filterParams = context.getters
+            .getDecodedSolutionRequestFilterParams as FilterParams;
+          const highlight = context.getters.getDecodedHighlight as Highlight;
+          const varModes = context.getters.getDecodedVarModes as Map<
+            string,
+            SummaryMode
+          >;
           return Promise.all([
             actions.fetchIncludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
-              highlight: highlight
+              highlight: highlight,
+              varModes: varModes
             }),
             actions.fetchExcludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
-              highlight: highlight
+              highlight: highlight,
+              varModes: varModes
             })
           ]);
         });
@@ -643,22 +660,29 @@ export const actions = {
           })
         ]).then(() => {
           mutations.clearVariableSummaries(context);
-          const variables = context.getters.getVariables;
-          const filterParams =
-            context.getters.getDecodedSolutionRequestFilterParams;
-          const highlight = context.getters.getDecodedHighlight;
+          const variables = context.getters.getVariables as Variable[];
+          const filterParams = context.getters
+            .getDecodedSolutionRequestFilterParams as FilterParams;
+          const highlight = context.getters.getDecodedHighlight as Highlight;
+          const varModes = context.getters.getDecodedVarModes as Map<
+            string,
+            SummaryMode
+          >;
+
           return Promise.all([
             actions.fetchIncludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
-              highlight: highlight
+              highlight: highlight,
+              varModes: varModes
             }),
             actions.fetchExcludedVariableSummaries(context, {
               dataset: args.dataset,
               variables: variables,
               filterParams: filterParams,
-              highlight: highlight
+              highlight: highlight,
+              varModes: varModes
             })
           ]);
         });
@@ -706,14 +730,16 @@ export const actions = {
             variable: args.field,
             filterParams: filterParams,
             highlight: highlight,
-            include: true
+            include: true,
+            mode: SummaryMode.Default
           }),
           actions.fetchVariableSummary(context, {
             dataset: args.dataset,
             variable: args.field,
             filterParams: filterParams,
             highlight: highlight,
-            include: false
+            include: false,
+            mode: SummaryMode.Default
           })
         ]);
       })
@@ -746,6 +772,7 @@ export const actions = {
       variables: Variable[];
       highlight: Highlight;
       filterParams: FilterParams;
+      varModes: Map<string, SummaryMode>;
     }
   ): Promise<void[]> {
     return actions.fetchVariableSummaries(context, {
@@ -753,7 +780,8 @@ export const actions = {
       variables: args.variables,
       filterParams: args.filterParams,
       highlight: args.highlight,
-      include: true
+      include: true,
+      varModes: args.varModes
     });
   },
 
@@ -764,6 +792,7 @@ export const actions = {
       variables: Variable[];
       highlight: Highlight;
       filterParams: FilterParams;
+      varModes: Map<string, SummaryMode>;
     }
   ): Promise<void[]> {
     return actions.fetchVariableSummaries(context, {
@@ -771,7 +800,8 @@ export const actions = {
       variables: args.variables,
       filterParams: args.filterParams,
       highlight: args.highlight,
-      include: false
+      include: false,
+      varModes: args.varModes
     });
   },
 
@@ -783,6 +813,7 @@ export const actions = {
       highlight: Highlight;
       filterParams: FilterParams;
       include: boolean;
+      varModes: Map<string, SummaryMode>;
     }
   ): Promise<void[]> {
     if (!args.dataset) {
@@ -817,6 +848,11 @@ export const actions = {
         mutator(context, createPendingSummary(key, label, desciption, dataset));
       }
 
+      // Get the mode or default
+      const mode = args.varModes.has(variable.colName)
+        ? args.varModes.get(variable.colName)
+        : SummaryMode.Default;
+
       // fetch summary
       promises.push(
         actions.fetchVariableSummary(context, {
@@ -824,7 +860,8 @@ export const actions = {
           variable: variable.colName,
           filterParams: args.filterParams,
           highlight: args.highlight,
-          include: args.include
+          include: args.include,
+          mode: mode
         })
       );
     });
@@ -840,6 +877,7 @@ export const actions = {
       highlight?: Highlight;
       filterParams: FilterParams;
       include: boolean;
+      mode: SummaryMode;
     }
   ): Promise<void> {
     if (!args.dataset) {
@@ -863,7 +901,7 @@ export const actions = {
       .post(
         `/distil/variable-summary/${args.dataset}/${
           args.variable
-        }/${!args.include}`,
+        }/${!args.include}/${args.mode}`,
         filterParams
       )
       .then(response => {

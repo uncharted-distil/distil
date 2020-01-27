@@ -8,6 +8,7 @@ import {
   TRAINING_VARS_INSTANCE_PAGE,
   RESULT_TRAINING_VARS_INSTANCE_PAGE
 } from "../store/route/index";
+import { SummaryMode } from "../store/dataset";
 
 export interface RouteArgs {
   dataset?: string;
@@ -31,6 +32,7 @@ export interface RouteArgs {
   availableTargetVarsPage?: number;
   task?: string;
   produceRequestId?: string;
+  varModes?: string;
 
   // we currently don't have a way to add these to the interface
   //
@@ -40,8 +42,6 @@ export interface RouteArgs {
   // TRAINING_VARS_INSTANCE_PAGE?: string;
   // RESULT_TRAINING_VARS_INSTANCE_PAGE?: string;
 }
-
-export interface Something {}
 
 /**
  * Builds a route entry object that can be directly pushed onto the stack
@@ -140,6 +140,9 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
   if (!_.isUndefined(args.produceRequestId)) {
     query.produceRequestId = args.produceRequestId;
   }
+  if (!_.isUndefined(args.varModes)) {
+    query.varModes = args.varModes;
+  }
 
   if (args[JOINED_VARS_INSTANCE_PAGE]) {
     query[JOINED_VARS_INSTANCE_PAGE] = args[JOINED_VARS_INSTANCE_PAGE];
@@ -161,4 +164,17 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
   }
 
   return query;
+}
+
+export function varModesToString(varModes: Map<string, SummaryMode>): string {
+  // serialize the modes map into a string and add to the route
+  return Array.from(varModes)
+    .reduce(
+      (acc, curr) => {
+        acc.push(`${curr[0]}:${curr[1]}`);
+        return acc;
+      },
+      [] as String[]
+    )
+    .join(",");
 }

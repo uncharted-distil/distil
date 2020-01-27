@@ -1,15 +1,12 @@
 import {
   Variable,
-  Extrema,
   TimeseriesExtrema,
   DatasetState,
   Dataset,
   VariableSummary,
-  TimeseriesSummary,
   TableData,
   TableRow,
-  TableColumn,
-  Task
+  TableColumn
 } from "./index";
 import { Dictionary } from "../../util/dict";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
@@ -25,6 +22,10 @@ export const getters = {
 
   getVariables(state: DatasetState, getters: any): Variable[] {
     return state.variables;
+  },
+
+  getGroupings(state: DatasetState, getters: any): Variable[] {
+    return state.variables.filter(v => v.grouping);
   },
 
   getPendingRequests(state: DatasetState) {
@@ -129,9 +130,5 @@ export const getters = {
     getters: any
   ): Dictionary<TableColumn> {
     return getTableDataFields(state.excludedSet.tableData);
-  },
-
-  getGeocoordinateTypes(state: DatasetState): string[] {
-    return state.isGeocoordinateFacet;
   }
 };

@@ -155,7 +155,8 @@ export default Vue.extend({
                       hidden: [xCol, yCol],
                       properties: {
                         xCol: xCol,
-                        yCol: yCol
+                        yCol: yCol,
+                        clusterCol: null
                       }
                     };
 

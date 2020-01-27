@@ -48,7 +48,9 @@ import {
   DatasetPendingRequestType,
   VariableRankingPendingRequest,
   DatasetPendingRequestStatus,
-  GeocodingPendingRequest
+  GeocodingPendingRequest,
+  ClusteringPendingRequest,
+  SummaryMode
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
@@ -61,6 +63,8 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { StatusPanelState, StatusPanelContentType } from "../store/app";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { overlayRouteEntry, varModesToString } from "../util/routes";
+import { $enum } from "ts-enum-util";
 
 const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
   [DatasetPendingRequestType.VARIABLE_RANKING, Feature.RANK_FEATURES],
@@ -122,7 +126,7 @@ export default Vue.extend({
         case DatasetPendingRequestType.VARIABLE_RANKING:
           return {
             title: "Variable Ranking",
-            pendingMsg: "",
+            pendingMsg: "Computing variable rankings...",
             resolvedMsg:
               "Variable ranking has been updated. Would you like to apply the changes to the feature list?",
             errorMsg:
@@ -131,7 +135,7 @@ export default Vue.extend({
         case DatasetPendingRequestType.GEOCODING:
           return {
             title: "Geo Coding",
-            pendingMsg: "",
+            pendingMsg: "Geocoding place names...",
             resolvedMsg:
               "Geocoding has been processed. Would you like to apply the change to the feature list?",
             errorMsg: "Unexpected error has happened while geocoding"
@@ -139,7 +143,7 @@ export default Vue.extend({
         case DatasetPendingRequestType.CLUSTERING:
           return {
             title: "Data Clustering",
-            pendingMsg: "",
+            pendingMsg: "Computing data clusters...",
             resolvedMsg:
               "Data clusters have been generated. Would you like to apply the change to the dataset?",
             errorMsg: "Unexpected error has happened while clustering"
@@ -147,7 +151,7 @@ export default Vue.extend({
         case DatasetPendingRequestType.JOIN_SUGGESTION:
           return {
             title: "Join Suggestion",
-            pendingMsg: "",
+            pendingMsg: "Compuing join suggestions...",
             errorMsg:
               "Unexpected error has happened while retreving join suggestions"
           };
@@ -199,6 +203,12 @@ export default Vue.extend({
           break;
         case DatasetPendingRequestType.JOIN_SUGGESTION:
           break;
+        case DatasetPendingRequestType.CLUSTERING:
+          this.applyClusteringChange(<ClusteringPendingRequest>(
+            this.requestData
+          ));
+          this.clearData();
+          break;
         default:
       }
       const status = STATUS_USER_EVENT.get(this.statusType);
@@ -212,6 +222,43 @@ export default Vue.extend({
     clearData() {
       if (this.requestData) {
         datasetActions.removePendingRequest(this.$store, this.requestData.id);
+      }
+    },
+    // Applies clustering changes and refetches update variable summaries
+    applyClusteringChange(clusterRequest: ClusteringPendingRequest) {
+      // fetch the var modes map
+      const varModesMap = routeGetters.getDecodedVarModes(this.$store);
+      // find any grouped vars that are using this cluster data and update their
+      // mode to cluster now that data is available
+      datasetGetters
+        .getGroupings(this.$store)
+        .filter(v => v.grouping.properties.clusterCol)
+        .forEach(v => {
+          varModesMap.set(v.colName, SummaryMode.Cluster);
+        });
+
+      // serialize the modes map into a string and add to the route
+      const varModesStr = varModesToString(varModesMap);
+      const entry = overlayRouteEntry(this.$route, {
+        varModes: varModesStr
+      });
+      this.$router.push(entry);
+
+      // upate variables
+      // pull the updated dataset, vars, and summaries
+      const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+        this.$store
+      );
+      const highlight = routeGetters.getDecodedHighlight(this.$store);
+      for (const [k, v] of varModesMap) {
+        datasetActions.fetchVariableSummary(this.$store, {
+          dataset: this.dataset,
+          variable: k,
+          highlight: highlight,
+          filterParams: filterParams,
+          include: true,
+          mode: $enum(SummaryMode).asValueOrDefault(v, SummaryMode.Default)
+        });
       }
     }
   }

@@ -21,8 +21,8 @@ import (
 
 // Field defines behaviour for a database field type.
 type Field interface {
-	FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool) (*api.VariableSummary, error)
-	FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error)
+	FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error)
+	FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error)
 	GetStorage() *Storage
 	GetDatasetStorageName() string
 	GetDatasetName() string
@@ -80,7 +80,7 @@ func (b *BasicField) GetType() string {
 // Checks to see if the highlighted variable has cluster data.  If so, the highlight key will be switched to the
 // cluster column ID to ensure that it is used in downstream queries.  This necessary when dealing with the timerseries
 // compound facet, which will display cluster info when available.
-func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams) error {
+func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams, mode api.SummaryMode) error {
 	if !filterParams.Empty() && filterParams.Highlight != nil {
 		varExists, err := b.GetStorage().metadata.DoesVariableExist(b.GetDatasetName(), filterParams.Highlight.Key)
 		if err != nil {

@@ -353,7 +353,7 @@ export default Vue.extend({
         idCol: idCol,
         subIds: ids,
         hidden: hiddenCols,
-        properties: { xCol: this.xCol, yCol: this.yCol }
+        properties: { xCol: this.xCol, yCol: this.yCol, clusterCol: null }
       };
 
       datasetActions
@@ -364,9 +364,8 @@ export default Vue.extend({
         .then(() => {
           // If this dataset contains multiple timeseries, then we need to request clustering be run on it
           if (this.isTimeseries && ids.length > 0) {
-            datasetActions.clusterData(this.$store, {
-              dataset: this.dataset,
-              variable: getComposedVariableKey(ids)
+            datasetActions.fetchClusters(this.$store, {
+              dataset: this.dataset
             });
           }
           this.gotoTargetSelection();

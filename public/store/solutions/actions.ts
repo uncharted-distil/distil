@@ -17,7 +17,7 @@ import { getWebSocketConnection } from "../../util/ws";
 import { FilterParams } from "../../util/filters";
 import { actions as resultsActions } from "../results/module";
 import { getters as routeGetters } from "../route/module";
-import { TaskTypes } from "../dataset";
+import { TaskTypes, SummaryMode } from "../dataset";
 
 const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
@@ -58,6 +58,8 @@ function updateCurrentSolutionResults(
     .getRouteTask(store)
     .includes(TaskTypes.FORECASTING);
 
+  const varModes = context.getters.getDecodedVarModes;
+
   resultsActions.fetchResultTableData(store, {
     dataset: req.dataset,
     solutionId: res.solutionId,
@@ -67,19 +69,26 @@ function updateCurrentSolutionResults(
     dataset: req.dataset,
     target: req.target,
     solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight
+    highlight: context.getters.getDecodedHighlight,
+    varMode: varModes.has(req.target)
+      ? varModes.get(req.target)
+      : SummaryMode.Default
   });
   resultsActions.fetchTrainingSummaries(store, {
     dataset: req.dataset,
     training: context.getters.getActiveSolutionTrainingVariables,
     solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight
+    highlight: context.getters.getDecodedHighlight,
+    varModes: varModes
   });
   resultsActions.fetchTargetSummary(store, {
     dataset: req.dataset,
     target: req.target,
     solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight
+    highlight: context.getters.getDecodedHighlight,
+    varMode: varModes.has(req.target)
+      ? varModes.get(req.target)
+      : SummaryMode.Default
   });
 
   if (isRegression || isForecasting) {
@@ -109,18 +118,23 @@ function updateSolutionResults(
   req: CreateSolutionRequest,
   res: SolutionStatus
 ) {
-
   const taskArgs = routeGetters.getRouteTask(store);
   const isRegression = taskArgs && taskArgs.includes(TaskTypes.REGRESSION);
-  const isClassification = taskArgs && taskArgs.includes(TaskTypes.CLASSIFICATION);
+  const isClassification =
+    taskArgs && taskArgs.includes(TaskTypes.CLASSIFICATION);
   const isForecasting = taskArgs && taskArgs.includes(TaskTypes.FORECASTING);
+
+  const varModes = context.getters.getDecodedVarModes;
 
   // if current solutionId, pull result summaries
   resultsActions.fetchPredictedSummary(store, {
     dataset: req.dataset,
     target: req.target,
     solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight
+    highlight: context.getters.getDecodedHighlight,
+    varMode: varModes.has(req.target)
+      ? varModes.get(req.target)
+      : SummaryMode.Default
   });
 
   if (isRegression || isForecasting) {

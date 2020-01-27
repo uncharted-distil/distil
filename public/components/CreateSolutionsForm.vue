@@ -111,7 +111,7 @@
 
 <script lang="ts">
 import _ from "lodash";
-import { createRouteEntry } from "../util/routes";
+import { createRouteEntry, varModesToString } from "../util/routes";
 import ErrorModal from "../components/ErrorModal";
 import {
   actions as appActions,
@@ -227,7 +227,9 @@ export default Vue.extend({
           maxSolutions: NUM_SOLUTIONS,
           // intentionally nulled for now - should be made user settable in the future
           maxTime: null,
-          onClose: ()=> { this.$router.go(0) }
+          onClose: () => {
+            this.$router.go(0);
+          }
         })
         .then((res: Solution) => {
           this.pending = false;
@@ -236,7 +238,10 @@ export default Vue.extend({
             dataset: routeGetters.getRouteDataset(this.$store),
             target: routeGetters.getRouteTargetVariable(this.$store),
             solutionId: res.solutionId,
-            task: routeGetters.getRouteTask(this.$store)
+            task: routeGetters.getRouteTask(this.$store),
+            varModes: varModesToString(
+              routeGetters.getDecodedVarModes(this.$store)
+            )
           });
           this.$router.push(entry);
         })
