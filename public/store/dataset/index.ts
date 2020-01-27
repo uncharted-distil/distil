@@ -86,6 +86,7 @@ export interface Dataset {
   source: string;
   joinSuggestion?: JoinSuggestion[];
   joinScore?: number;
+  type: string;
 }
 
 export interface JoinSuggestion {
