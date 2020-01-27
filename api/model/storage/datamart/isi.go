@@ -264,7 +264,7 @@ func materializeISIDataset(datamart *Storage, id string, uri string) (string, er
 	}
 
 	// create the dataset meeting the d3m spec
-	datasetPath, err := task.CreateDataset(id, []byte(dataset.Data), datamart.outputPath, datamart.config)
+	datasetPath, err := task.CreateDataset(id, []byte(dataset.Data), datamart.outputPath, api.DatasetTypeModelling, datamart.config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to store dataset from ISI datamart")
 	}

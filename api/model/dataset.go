@@ -23,6 +23,16 @@ import (
 	"github.com/uncharted-distil/distil/api/util/json"
 )
 
+// DatasetType is used to identify the type of dataset ingested.
+type DatasetType string
+
+const (
+	// DatasetTypeModelling is a dataset used to build models.
+	DatasetTypeModelling DatasetType = "modelling"
+	// DatasetTypeInference is a dataset consumed by a model to infer predictions.
+	DatasetTypeInference DatasetType = "inference"
+)
+
 // Dataset represents a decsription of a dataset.
 type Dataset struct {
 	ID              string                 `json:"id"`
@@ -39,6 +49,7 @@ type Dataset struct {
 	Source          metadata.DatasetSource `json:"source"`
 	JoinSuggestions []*JoinSuggestion      `json:"joinSuggestion"`
 	JoinScore       float64                `json:"joinScore"`
+	Type            DatasetType            `json:"type"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.

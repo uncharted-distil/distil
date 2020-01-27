@@ -77,22 +77,28 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		// extract the folder
 		folder, ok := json.String(src, "datasetFolder")
 		if !ok {
-			summary = ""
+			folder = ""
 		}
-		// extract the summary
+		// extract the machine learned summary
 		summaryMachine, ok := json.String(src, "summaryMachine")
 		if !ok {
-			summary = ""
+			summaryMachine = ""
+		}
+		// extract the type (default to modelling)
+		typStr, ok := json.String(src, "type")
+		typ := api.DatasetTypeModelling
+		if ok && typStr != "" {
+			typ = api.DatasetType(typStr)
 		}
 		// extract the number of rows
 		numRows, ok := json.Int(src, "numRows")
 		if !ok {
-			summary = ""
+			numRows = 0
 		}
 		// extract the number of bytes
 		numBytes, ok := json.Int(src, "numBytes")
 		if !ok {
-			summary = ""
+			numBytes = 0
 		}
 		// extract the variables list
 		variables, err := s.parseVariables(hit, includeIndex, includeMeta)
@@ -151,6 +157,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			Provenance:      Provenance,
 			Source:          metadata.DatasetSource(source),
 			JoinSuggestions: datasetOrigins,
+			Type:            typ,
 		})
 	}
 	return datasets, nil

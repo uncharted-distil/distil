@@ -25,6 +25,7 @@ import (
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 
+	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
 )
 
@@ -75,7 +76,7 @@ func UploadHandler(outputPath string, config *task.IngestTaskConfig) func(http.R
 func uploadTableDataset(dataset string, outputPath string, config *task.IngestTaskConfig, data []byte) (string, error) {
 
 	// create the raw dataset schema doc
-	formattedPath, err := task.CreateDataset(dataset, data, outputPath, config)
+	formattedPath, err := task.CreateDataset(dataset, data, outputPath, api.DatasetTypeModelling, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create dataset")
 	}
