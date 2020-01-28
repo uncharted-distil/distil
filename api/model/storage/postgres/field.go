@@ -45,6 +45,7 @@ type BasicField struct {
 	Key                string
 	Label              string
 	Type               string
+	Count              string
 }
 
 // GetStorage returns the storage associated with the field

@@ -202,10 +202,24 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 	} else {
 
+		// if timeseries mode, get the grouping field and use that for counts
+		countCol := ""
+		if mode == api.TimeseriesMode {
+			vars, err := s.metadata.FetchVariables(dataset, false, true)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range vars {
+				if v.Grouping != nil {
+					countCol = v.Grouping.IDCol
+				}
+			}
+		}
+
 		if model.IsNumerical(variable.Type) || model.IsTimestamp(variable.Type) {
-			field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsCategorical(variable.Type) {
-			field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsVector(variable.Type) {
 			field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else if model.IsText(variable.Type) {

@@ -129,8 +129,8 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 	}
 
 	// treat each axis as a separte field for the purposes of query generation
-	xField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, model.RealType)
-	yField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.YCol, f.YCol, model.RealType)
+	xField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, model.RealType, "")
+	yField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.YCol, f.YCol, model.RealType, "")
 
 	// get the extrema for each axis
 	xExtrema, err := xField.fetchExtrema()
@@ -189,8 +189,8 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 	}
 
 	// create a numerical field for each of X and Y
-	xField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, model.RealType)
-	yField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.YCol, f.YCol, model.RealType)
+	xField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, model.RealType, "")
+	yField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.YCol, f.YCol, model.RealType, "")
 
 	// get the extrema for each
 	xExtrema, err := xField.fetchExtrema()

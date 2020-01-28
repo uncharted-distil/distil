@@ -280,7 +280,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	if f.XColType == model.DateTimeType {
 		timelineField = NewDateTimeField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType)
 	} else if f.XColType == model.TimestampType || f.XColType == model.IntegerType {
-		timelineField = NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType)
+		timelineField = NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType, "")
 	} else {
 		return nil, errors.Errorf("unsupported timeseries field variable type %s:%s", f.XCol, f.XColType)
 	}

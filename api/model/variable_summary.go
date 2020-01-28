@@ -73,6 +73,8 @@ const (
 	DefaultMode = iota + 1
 	// ClusterMode use computed cluster information for a variable summary if availble, ex. timeseries clusters
 	ClusterMode
+	// TimeseriesMode use the timeseries grouping to return timeseries counts rather than observation counts.
+	TimeseriesMode
 )
 
 // SummaryModeFromString creates a SummaryMode from the supplied string
@@ -80,6 +82,8 @@ func SummaryModeFromString(s string) (SummaryMode, error) {
 	switch s {
 	case "cluster":
 		return ClusterMode, nil
+	case "timeseries":
+		return TimeseriesMode, nil
 	case "default":
 		return DefaultMode, nil
 	default:

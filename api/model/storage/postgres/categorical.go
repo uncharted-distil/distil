@@ -33,7 +33,11 @@ type CategoricalField struct {
 }
 
 // NewCategoricalField creates a new field for categorical types.
-func NewCategoricalField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *CategoricalField {
+func NewCategoricalField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *CategoricalField {
+	if count == "" {
+		count = "*"
+	}
+
 	field := &CategoricalField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -42,6 +46,7 @@ func NewCategoricalField(storage *Storage, datasetName string, datasetStorageNam
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 	}
 
@@ -166,8 +171,8 @@ func (f *CategoricalField) fetchHistogram(filterParams *api.FilterParams, invert
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
-		f.Key, fromClause, where, f.Key, f.Key, catResultLimit)
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(%s) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
+		f.Key, f.Count, fromClause, where, f.Key, f.Key, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

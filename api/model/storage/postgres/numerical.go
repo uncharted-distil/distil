@@ -40,7 +40,11 @@ type NumericalStats struct {
 }
 
 // NewNumericalField creates a new field for numerical types.
-func NewNumericalField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *NumericalField {
+func NewNumericalField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *NumericalField {
+	if count == "" {
+		count = "*"
+	}
+
 	field := &NumericalField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -49,6 +53,7 @@ func NewNumericalField(storage *Storage, datasetName string, datasetStorageName 
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 	}
 
@@ -143,8 +148,8 @@ func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, invert b
 	}
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s %s GROUP BY %s ORDER BY %s;",
-		bucketQuery, histogramQuery, histogramName, fromClause, where, bucketQuery, histogramName)
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s %s GROUP BY %s ORDER BY %s;",
+		bucketQuery, histogramQuery, histogramName, f.Count, fromClause, where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
