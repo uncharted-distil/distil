@@ -653,11 +653,13 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			// explain features per-record if the explanation is available
 			explainFeatureURI, ok := outputKeyURIs[explainFeatureOutputkey]
 			if ok {
+				log.Infof("explaining feature output from URI '%s'", explainFeatureURI)
 				featureWeights, err := ExplainFeatureOutput(resultURI, datasetURITest, explainFeatureURI)
 				if err != nil {
 					log.Warnf("failed to fetch output explanantion - %v", err)
 				}
 				if featureWeights != nil {
+					log.Infof("persisting feature weights")
 					err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
 					if err != nil {
 						s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -669,6 +671,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			// explain the features at the model level if the explanation is available
 			explainSolutionURI, ok := outputKeyURIs[explainSolutionOutputkey]
 			if ok {
+				log.Infof("explaining solution output from URI '%s'", explainSolutionURI)
 				solutionWeights, err := s.explainSolutionOutput(resultURI, explainSolutionURI, initialSearchSolutionID, variables)
 				if err != nil {
 					log.Warnf("failed to fetch output explanantion - %v", err)
@@ -683,6 +686,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			}
 
 			// persist results
+			log.Infof("persisting results in URI '%s'", resultURI)
 			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
 				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID, produceRequestID, resultID, resultURI)
 		}

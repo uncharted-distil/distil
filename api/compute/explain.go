@@ -27,6 +27,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
+	log "github.com/unchartedsoftware/plog"
 
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
@@ -48,6 +49,8 @@ func (s *SolutionRequest) createExplainPipeline(client *compute.Client, desc *pi
 // ExplainFeatureOutput parses the explain feature output.
 func ExplainFeatureOutput(resultURI string, datasetURITest string, outputURI string) (*api.SolutionFeatureWeights, error) {
 	// get the d3m index lookup
+	log.Infof("explaining feature output")
+	log.Infof("reading raw dataset found in '%s'", datasetURITest)
 	rawData, err := readDatasetData(datasetURITest)
 	if err != nil {
 		return nil, err
@@ -56,10 +59,13 @@ func ExplainFeatureOutput(resultURI string, datasetURITest string, outputURI str
 	d3mIndexLookup := mapRowIndex(d3mIndexField, rawData[1:])
 
 	// parse the output for the explanations
+	log.Infof("parsing feature weight found in '%s' using results found in '%s'", outputURI, resultURI)
 	parsed, err := parseFeatureWeight(resultURI, outputURI, d3mIndexLookup)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse feature weight output")
 	}
+
+	log.Infof("done explaining feature output")
 
 	return parsed, nil
 }
@@ -237,8 +243,9 @@ func readDatasetData(uri string) ([][]string, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to load original schema file")
 	}
+	mainDR := meta.GetMainDataResource()
 
-	dataPath := path.Join(path.Dir(uriRaw), meta.DataResources[0].ResPath)
+	dataPath := path.Join(path.Dir(uriRaw), mainDR.ResPath)
 	res, err := util.ReadCSVFile(dataPath, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read raw input data")
