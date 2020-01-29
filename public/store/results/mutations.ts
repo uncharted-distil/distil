@@ -84,11 +84,19 @@ export const mutations = {
 
   updatePredictedForecast(
     state: ResultsState,
-    args: { solutionId: string; id: string; forecast: number[][] }
+    args: {
+      solutionId: string;
+      id: string;
+      forecast: number[][];
+      forecastTestRange: number[];
+    }
   ) {
     if (!state.forecasts[args.solutionId]) {
       Vue.set(state.forecasts, args.solutionId, {});
     }
-    Vue.set(state.forecasts[args.solutionId], args.id, args.forecast);
+    Vue.set(state.forecasts[args.solutionId], args.id, {
+      forecast: args.forecast,
+      forecastTestRange: args.forecastTestRange
+    });
   }
 };

@@ -16,6 +16,7 @@
 package routes
 
 import (
+	"math"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -27,8 +28,9 @@ import (
 
 // TimeseriesForecastResult represents the result of a timeseries request.
 type TimeseriesForecastResult struct {
-	Timeseries [][]float64 `json:"timeseries"`
-	Forecast   [][]float64 `json:"forecast"`
+	Timeseries        [][]float64 `json:"timeseries"`
+	Forecast          [][]float64 `json:"forecast"`
+	ForecastTestRange []float64   `json:"forecastTestRange"`
 }
 
 // TimeseriesForecastHandler returns timeseries data.
@@ -90,9 +92,15 @@ func TimeseriesForecastHandler(dataCtor api.DataStorageCtor, solutionCtor api.So
 			return
 		}
 
+		timeseriesLength := len(timeseries)
+		minTime := timeseries[0][0]
+		maxTime := timeseries[timeseriesLength-1][0]
+		start := math.Round(minTime) + math.Round((maxTime-minTime)*0.9)
+
 		err = handleJSON(w, TimeseriesForecastResult{
-			Timeseries: timeseries,
-			Forecast:   forecast,
+			Timeseries:        timeseries,
+			Forecast:          forecast,
+			ForecastTestRange: []float64{start, maxTime},
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))

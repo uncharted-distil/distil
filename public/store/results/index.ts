@@ -1,6 +1,11 @@
 import { Dictionary } from "../../util/dict";
 import { VariableSummary, Extrema, TableData } from "../dataset/index";
 
+export interface Forecast {
+  forecastData: Dictionary<number[][]>;
+  forecastRange: number[];
+}
+
 export interface ResultsState {
   // table data
   includedResultTableData: TableData;
@@ -17,7 +22,8 @@ export interface ResultsState {
   correctnessSummaries: VariableSummary[];
   // forecasts
   timeseries: Dictionary<Dictionary<number[][]>>;
-  forecasts: Dictionary<Dictionary<number[][]>>;
+  forecasts: Dictionary<Forecast>;
+  // result IDs
   fittedSolutionId: string;
   produceRequestId: string;
 }
@@ -39,6 +45,7 @@ export const state: ResultsState = {
   // forecasts
   timeseries: {},
   forecasts: {},
+  // result IDs
   fittedSolutionId: null,
   produceRequestId: null
 };

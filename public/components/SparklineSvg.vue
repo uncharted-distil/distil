@@ -37,6 +37,7 @@ export default Vue.extend({
     },
     timeseries: Array as () => number[][],
     forecast: Array as () => number[][],
+    highlightRange: Array as () => number[],
     timeseriesExtrema: {
       type: Object as () => TimeseriesExtrema
     }
@@ -215,6 +216,30 @@ export default Vue.extend({
         .attr("class", "line")
         .attr("d", line);
     },
+    // draws a shaded rectangle
+    injectHighlightRegion() {
+      if (
+        !this.$svg ||
+        !this.highlightRange ||
+        this.highlightRange.length !== 2
+      ) {
+        return;
+      }
+
+      this.svg
+        .append("rect")
+        .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`)
+        .attr("fill", "#00ffff44")
+        .attr("stroke", "none")
+        .attr("x", this.xScale(this.highlightRange[0]))
+        .attr("y", 0)
+        .attr(
+          "width",
+          this.xScale(this.highlightRange[1]) -
+            this.xScale(this.highlightRange[0])
+        )
+        .attr("height", this.height);
+    },
     injectPrediction() {
       if (!this.$svg || !this.forecast || this.forecast.length === 0) {
         return;
@@ -238,7 +263,7 @@ export default Vue.extend({
       g.append("path")
         .attr("fill", "none")
         .attr("class", "line")
-        .attr("stroke", "#00c6e1")
+        .attr("stroke", "#00c6e188")
         .attr("d", line);
     },
     injectTimeseries() {
@@ -259,6 +284,7 @@ export default Vue.extend({
       this.clearSVG();
       this.injectSparkline();
       this.injectPrediction();
+      this.injectHighlightRegion();
 
       this.hasRendered = true;
     }

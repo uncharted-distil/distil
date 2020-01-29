@@ -104,9 +104,7 @@ export const mutations = {
   updateResidualsExtrema: commit(moduleMutations.updateResidualsExtrema),
   clearResidualsExtrema: commit(moduleMutations.clearResidualsExtrema),
   // correctness
-  clearCorrectnessSummaries: commit(
-    moduleMutations.clearCorrectnessSummaries
-  ),
+  clearCorrectnessSummaries: commit(moduleMutations.clearCorrectnessSummaries),
   updateCorrectnessSummaries: commit(
     moduleMutations.updateCorrectnessSummaries
   ),

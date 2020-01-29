@@ -4,6 +4,7 @@
       :timeseries-extrema="timeseriesExtrema"
       :timeseries="timeseries"
       :forecast="forecast"
+      :highlightRange="highlightRange"
     >
     </sparkline-svg>
     <i class="fa fa-plus zoom-sparkline-icon" @click.stop="onClick"></i>
@@ -85,10 +86,22 @@ export default Vue.extend({
       if (this.solutionId && this.includeForecast) {
         const forecasts = resultsGetters.getPredictedForecasts(this.$store);
         const solutions = forecasts[this.solutionId];
-        if (!solutions) {
+        if (!solutions || !solutions[this.timeseriesId]) {
           return null;
         }
-        return solutions[this.timeseriesId];
+        return solutions[this.timeseriesId].forecast;
+      } else {
+        return null;
+      }
+    },
+    highlightRange(): number[] {
+      if (this.solutionId && this.includeForecast) {
+        const forecasts = resultsGetters.getPredictedForecasts(this.$store);
+        const solutions = forecasts[this.solutionId];
+        if (!solutions || !solutions[this.timeseriesId]) {
+          return null;
+        }
+        return solutions[this.timeseriesId].forecastTestRange;
       } else {
         return null;
       }

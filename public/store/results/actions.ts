@@ -705,7 +705,8 @@ export const actions = {
         mutations.updatePredictedForecast(context, {
           solutionId: args.solutionId,
           id: args.timeseriesID,
-          forecast: response.data.forecast
+          forecast: response.data.forecast,
+          forecastTestRange: response.data.forecastTestRange
         });
       })
       .catch(error => {
