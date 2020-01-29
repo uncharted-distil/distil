@@ -32,7 +32,9 @@ type ImageField struct {
 }
 
 // NewImageField creates a new field for image types.
-func NewImageField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *ImageField {
+func NewImageField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *ImageField {
+	count = getCountSQL(count)
+
 	field := &ImageField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -41,6 +43,7 @@ func NewImageField(storage *Storage, datasetName string, datasetStorageName stri
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 	}
 
@@ -142,8 +145,8 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(*) AS count FROM %s %s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
-		fieldSelect, prefixedVarName, f.DatasetStorageName, where, fieldSelect, fieldSelect, catResultLimit)
+	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(%s) AS count FROM %s %s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
+		fieldSelect, prefixedVarName, f.Count, f.DatasetStorageName, where, fieldSelect, fieldSelect, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

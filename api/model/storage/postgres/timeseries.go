@@ -278,9 +278,9 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	// Handle timeseries that use a timestamp/int as their time value, or those that use a date time.
 	var timelineField TimelineField
 	if f.XColType == model.DateTimeType {
-		timelineField = NewDateTimeField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType)
+		timelineField = NewDateTimeField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType, f.Count)
 	} else if f.XColType == model.TimestampType || f.XColType == model.IntegerType {
-		timelineField = NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType, "")
+		timelineField = NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, f.XColType, f.Count)
 	} else {
 		return nil, errors.Errorf("unsupported timeseries field variable type %s:%s", f.XCol, f.XColType)
 	}

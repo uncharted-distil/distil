@@ -62,9 +62,9 @@ func (f *VectorField) FetchSummaryData(resultURI string, filterParams *api.Filte
 
 	var underlyingField Field
 	if f.isNumerical() {
-		underlyingField = NewNumericalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.subSelect)
+		underlyingField = NewNumericalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.Count, f.subSelect)
 	} else {
-		underlyingField = NewCategoricalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.subSelect)
+		underlyingField = NewCategoricalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.Count, f.subSelect)
 	}
 
 	histo, err := underlyingField.FetchSummaryData(resultURI, filterParams, extrema, invert, mode)
@@ -83,7 +83,7 @@ func (f *VectorField) FetchNumericalStats(filterParams *api.FilterParams, invert
 	}
 
 	// use the underlying numerical field implementation
-	field := NewNumericalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.subSelect)
+	field := NewNumericalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.Count, f.subSelect)
 
 	return field.FetchNumericalStats(filterParams, invert)
 }
@@ -96,7 +96,7 @@ func (f *VectorField) FetchNumericalStatsByResult(resultURI string, filterParams
 	}
 
 	// use the underlying numerical field implementation
-	field := NewNumericalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.subSelect)
+	field := NewNumericalFieldSubSelect(f.Storage, f.DatasetName, f.DatasetStorageName, f.Key, f.Label, f.Type, f.Count, f.subSelect)
 
 	return field.FetchNumericalStatsByResult(resultURI, filterParams)
 }

@@ -33,7 +33,9 @@ type TextField struct {
 }
 
 // NewTextField creates a new field for text types.
-func NewTextField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *TextField {
+func NewTextField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *TextField {
+	count = getCountSQL(count)
+
 	field := &TextField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -42,6 +44,7 @@ func NewTextField(storage *Storage, datasetName string, datasetStorageName strin
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 	}
 
@@ -325,11 +328,11 @@ func (f *TextField) fetchHistogram(filterParams *api.FilterParams, invert bool) 
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT COALESCE(w.word, r.stem) as %s, COUNT(*) as count "+
+	query := fmt.Sprintf("SELECT COALESCE(w.word, r.stem) as %s, COUNT(%s) as count "+
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem FROM %s %s) as r "+
 		"LEFT OUTER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY COALESCE(w.word, r.stem) ORDER BY count desc, COALESCE(w.word, r.stem) LIMIT %d;",
-		f.Key, f.Key, f.DatasetStorageName, where, wordStemTableName, catResultLimit)
+		f.Key, f.Count, f.Key, f.DatasetStorageName, where, wordStemTableName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

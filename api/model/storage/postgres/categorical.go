@@ -34,9 +34,7 @@ type CategoricalField struct {
 
 // NewCategoricalField creates a new field for categorical types.
 func NewCategoricalField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *CategoricalField {
-	if count == "" {
-		count = "*"
-	}
+	count = getCountSQL(count)
 
 	field := &CategoricalField{
 		BasicField: BasicField{
@@ -55,7 +53,10 @@ func NewCategoricalField(storage *Storage, datasetName string, datasetStorageNam
 
 // NewCategoricalFieldSubSelect creates a new field for categorical types
 // and specifies a sub select query to pull the raw data.
-func NewCategoricalFieldSubSelect(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, fieldSubSelect func() string) *CategoricalField {
+func NewCategoricalFieldSubSelect(storage *Storage, datasetName string,
+	datasetStorageName string, key string, label string, typ string, count string, fieldSubSelect func() string) *CategoricalField {
+	count = getCountSQL(count)
+
 	field := &CategoricalField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -64,6 +65,7 @@ func NewCategoricalFieldSubSelect(storage *Storage, datasetName string, datasetS
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 		subSelect: fieldSubSelect,
 	}

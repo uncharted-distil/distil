@@ -16,6 +16,8 @@
 package postgres
 
 import (
+	"fmt"
+
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -106,4 +108,14 @@ func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams, mode
 		}
 	}
 	return nil
+}
+
+func getCountSQL(count string) string {
+	if count == "" {
+		count = "*"
+	} else {
+		count = fmt.Sprintf("DISTINCT %s", count)
+	}
+
+	return count
 }

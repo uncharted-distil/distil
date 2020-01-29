@@ -195,7 +195,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 				variable.Grouping.IDCol, timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
 
 		} else if model.IsGeoCoordinate(variable.Grouping.Type) {
-			field = NewCoordinateField(variable.Name, s, dataset, storageName, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol, variable.DisplayName, variable.Grouping.Type)
+			field = NewCoordinateField(variable.Name, s, dataset, storageName, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol, variable.DisplayName, variable.Grouping.Type, "")
 		} else {
 			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.IDCol, variable.Grouping.Type)
 		}
@@ -223,11 +223,11 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 		} else if model.IsVector(variable.Type) {
 			field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else if model.IsText(variable.Type) {
-			field = NewTextField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewTextField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsImage(variable.Type) {
-			field = NewImageField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewImageField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsDateTime(variable.Type) {
-			field = NewDateTimeField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewDateTimeField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else {
 			return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
 		}

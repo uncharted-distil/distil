@@ -41,9 +41,7 @@ type NumericalStats struct {
 
 // NewNumericalField creates a new field for numerical types.
 func NewNumericalField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *NumericalField {
-	if count == "" {
-		count = "*"
-	}
+	count = getCountSQL(count)
 
 	field := &NumericalField{
 		BasicField: BasicField{
@@ -62,7 +60,9 @@ func NewNumericalField(storage *Storage, datasetName string, datasetStorageName 
 
 // NewNumericalFieldSubSelect creates a new field for numerical types
 // and specifies a sub select query to pull the raw data.
-func NewNumericalFieldSubSelect(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, fieldSubSelect func() string) *NumericalField {
+func NewNumericalFieldSubSelect(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string, fieldSubSelect func() string) *NumericalField {
+	count = getCountSQL(count)
+
 	field := &NumericalField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -71,6 +71,7 @@ func NewNumericalFieldSubSelect(storage *Storage, datasetName string, datasetSto
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 		subSelect: fieldSubSelect,
 	}
