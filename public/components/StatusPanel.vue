@@ -244,7 +244,7 @@ export default Vue.extend({
       });
       this.$router.push(entry);
 
-      // upate variables
+      // update variables
       // pull the updated dataset, vars, and summaries
       const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
         this.$store
