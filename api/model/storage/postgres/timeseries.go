@@ -328,8 +328,8 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 
 	// Get count by category.
 	colName := f.keyColName(mode)
-	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS __count__ FROM %s %s GROUP BY \"%s\" ORDER BY __count__ desc, \"%s\" LIMIT %d;",
-		colName, f.DatasetStorageName, where, colName, colName, timeSeriesCatResultLimit)
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(DISTINCT \"%s\") AS __count__ FROM %s %s GROUP BY \"%s\" ORDER BY __count__ desc, \"%s\" LIMIT %d;",
+		colName, f.IDCol, f.DatasetStorageName, where, colName, colName, timeSeriesCatResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -377,12 +377,12 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 
 	// Get count by category.
 	query := fmt.Sprintf(
-		`SELECT data."%s", COUNT(*) AS __count__
+		`SELECT data."%s", COUNT(DISTINCT "%s") AS __count__
 		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY __count__ desc, "%s" LIMIT %d;`,
-		keyColName, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
+		keyColName, f.IDCol, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, keyColName,
 		keyColName, timeSeriesCatResultLimit)
 
@@ -506,12 +506,12 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 
 	// Get count by category.
 	query := fmt.Sprintf(
-		`SELECT data."%s", COUNT(*) AS __count__
+		`SELECT data."%s", COUNT(DISTINCT "%s") AS __count__
 		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY __count__ desc, "%s" LIMIT %d;`,
-		keyColName, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
+		keyColName, f.IDCol, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, keyColName,
 		keyColName, timeSeriesCatResultLimit)
 

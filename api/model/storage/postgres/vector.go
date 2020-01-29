@@ -112,6 +112,10 @@ func (f *VectorField) isNumerical() bool {
 }
 
 func (f *VectorField) subSelect() string {
-	return fmt.Sprintf("(SELECT \"%s\", unnest(\"%s\") as %s FROM %s)",
-		model.D3MIndexFieldName, f.Unnested, f.Key, f.DatasetStorageName)
+	countSQL := ""
+	if f.Count != "" {
+		countSQL = fmt.Sprintf(", \"%s\"", f.Count)
+	}
+	return fmt.Sprintf("(SELECT \"%s\"%s, unnest(\"%s\") as %s FROM %s)",
+		model.D3MIndexFieldName, countSQL, f.Unnested, f.Key, f.DatasetStorageName)
 }

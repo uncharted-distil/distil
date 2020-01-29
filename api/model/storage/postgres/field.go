@@ -114,7 +114,7 @@ func getCountSQL(count string) string {
 	if count == "" {
 		count = "*"
 	} else {
-		count = fmt.Sprintf("DISTINCT %s", count)
+		count = fmt.Sprintf("DISTINCT \"%s\"", count)
 	}
 
 	return count

@@ -213,12 +213,12 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 
 	// Get count by x & y
 	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY %s, %s
 		ORDER BY %s, %s;`,
-		xBucketQuery, xHistogramQuery, xHistogramName, yBucketQuery, yHistogramQuery, yHistogramName,
+		xBucketQuery, xHistogramQuery, xHistogramName, yBucketQuery, yHistogramQuery, yHistogramName, f.Count,
 		f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName,
 		len(params), where, xBucketQuery, yBucketQuery, xHistogramName, yHistogramName)
 

@@ -209,12 +209,12 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY %s
 		ORDER BY %s;`,
-		bucketQuery, histogramQuery, histogramName, fromClause,
+		bucketQuery, histogramQuery, histogramName, f.Count, fromClause,
 		f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
 
 	// execute the postgres query
@@ -467,12 +467,12 @@ func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResu
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		WHERE %s
 		GROUP BY %s
 		ORDER BY %s;`,
-		bucketQuery, histogramQuery, histogramName, f.DatasetStorageName, datasetResult,
+		bucketQuery, histogramQuery, histogramName, f.Count, f.DatasetStorageName, datasetResult,
 		model.D3MIndexFieldName, strings.Join(wheres, " AND "), bucketQuery, histogramName)
 
 	// execute the postgres query
