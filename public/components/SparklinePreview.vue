@@ -1,5 +1,5 @@
 <template>
-  <div class="sparkline-container" v-observe-visibility="visibilityChanged">
+  <div class="sparkline-preview-container" v-observe-visibility="visibilityChanged">
     <sparkline-svg
       :timeseries-extrema="timeseriesExtrema"
       :timeseries="timeseries"
@@ -158,12 +158,14 @@ export default Vue.extend({
   visibility: hidden;
 }
 
-.sparkline-container {
+.sparkline-preview-container {
   position: relative;
-  width: 100%;
+  min-width: 400px;
+  max-width: 500px !important;
+  min-height: 50px;
 }
 
-.sparkline-container:hover .zoom-sparkline-icon {
+.sparkline-preview-container:hover .zoom-sparkline-icon {
   visibility: visible;
 }
 

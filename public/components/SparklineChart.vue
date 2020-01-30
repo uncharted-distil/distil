@@ -211,9 +211,6 @@ export default Vue.extend({
 <style>
 .sparkline-container {
   position: relative;
-  min-width: 400px;
-  max-width: 500px !important;
-  min-height: 50px;
 }
 
 .line-chart-big {
