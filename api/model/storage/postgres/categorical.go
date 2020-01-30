@@ -320,7 +320,7 @@ func (f *CategoricalField) fetchPredictedSummaryData(resultURI string, datasetRe
 		 WHERE %s
 		 GROUP BY result.value
 		 ORDER BY count desc;`,
-		datasetResult, f.Count, f.DatasetStorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "))
+		f.Count, datasetResult, f.DatasetStorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "))
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
