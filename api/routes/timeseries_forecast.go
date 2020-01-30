@@ -22,6 +22,7 @@ import (
 	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil/api/compute"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -91,17 +92,13 @@ func TimeseriesForecastHandler(dataCtor api.DataStorageCtor, solutionCtor api.So
 			return
 		}
 
-		// Re-constitute the split that was applied when the dataset was persisted.
-		// TODO:  this should be stored in DB at split time and queried here, or at least
-		// shold be moved to shared splitting function
-		splitIndex := int(0.9 * float64(len(timeseries)-1))
-		splitValue := timeseries[splitIndex][0]
-		endValue := timeseries[len(timeseries)-1][0]
+		// Recompute train/test split info for visualization purposes
+		split := compute.SplitTimeSeries(timeseries, compute.TimeSeriesTrainTestSplitThreshold)
 
 		err = handleJSON(w, TimeseriesForecastResult{
 			Timeseries:        timeseries,
 			Forecast:          forecast,
-			ForecastTestRange: []float64{splitValue, endValue},
+			ForecastTestRange: []float64{split.SplitValue, split.EndValue},
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
