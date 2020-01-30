@@ -36,7 +36,9 @@ type CoordinateField struct {
 }
 
 // NewCoordinateField creates a new field for coordinate types.
-func NewCoordinateField(key string, storage *Storage, datasetName string, datasetStorageName string, xCol string, yCol string, label string, typ string) *CoordinateField {
+func NewCoordinateField(key string, storage *Storage, datasetName string, datasetStorageName string, xCol string, yCol string, label string, typ string, count string) *CoordinateField {
+	count = getCountSQL(count)
+
 	field := &CoordinateField{
 		BasicField: BasicField{
 			Key:                key,
@@ -45,6 +47,7 @@ func NewCoordinateField(key string, storage *Storage, datasetName string, datase
 			DatasetStorageName: datasetStorageName,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 		XCol: xCol,
 		YCol: yCol,
@@ -129,8 +132,8 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 	}
 
 	// treat each axis as a separte field for the purposes of query generation
-	xField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, model.RealType)
-	yField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.YCol, f.YCol, model.RealType)
+	xField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, model.RealType, "")
+	yField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.YCol, f.YCol, model.RealType, "")
 
 	// get the extrema for each axis
 	xExtrema, err := xField.fetchExtrema()
@@ -149,11 +152,11 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema, yNumBuckets)
 
 	// Get count by x & y
-	query := fmt.Sprintf(`SELECT %s as bucket, CAST(%s as double precision) AS %s, %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+	query := fmt.Sprintf(`SELECT %s as bucket, CAST(%s as double precision) AS %s, %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
         FROM %s %s
         GROUP BY %s, %s
         ORDER BY %s, %s;`,
-		xBucketQuery, xHistogramQuery, xHistogramName, yBucketQuery, yHistogramQuery, yHistogramName,
+		xBucketQuery, xHistogramQuery, xHistogramName, yBucketQuery, yHistogramQuery, yHistogramName, f.Count,
 		f.DatasetStorageName, where, xBucketQuery, yBucketQuery, xHistogramName, yHistogramName)
 
 	// execute the postgres query
@@ -189,8 +192,8 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 	}
 
 	// create a numerical field for each of X and Y
-	xField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, model.RealType)
-	yField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.YCol, f.YCol, model.RealType)
+	xField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, model.RealType, "")
+	yField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.YCol, f.YCol, model.RealType, "")
 
 	// get the extrema for each
 	xExtrema, err := xField.fetchExtrema()
@@ -210,12 +213,12 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 
 	// Get count by x & y
 	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY %s, %s
 		ORDER BY %s, %s;`,
-		xBucketQuery, xHistogramQuery, xHistogramName, yBucketQuery, yHistogramQuery, yHistogramName,
+		xBucketQuery, xHistogramQuery, xHistogramName, yBucketQuery, yHistogramQuery, yHistogramName, f.Count,
 		f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName,
 		len(params), where, xBucketQuery, yBucketQuery, xHistogramName, yHistogramName)
 

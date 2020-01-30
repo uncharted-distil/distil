@@ -211,7 +211,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storage
 	}
 	defer res.Close()
 
-	field := NewNumericalField(s, datasetName, storageName, variable.Name, variable.DisplayName, variable.Type)
+	field := NewNumericalField(s, datasetName, storageName, variable.Name, variable.DisplayName, variable.Type, "")
 
 	return field.parseHistogram(res, extrema, numBuckets)
 }

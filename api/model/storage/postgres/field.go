@@ -16,6 +16,8 @@
 package postgres
 
 import (
+	"fmt"
+
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -45,6 +47,7 @@ type BasicField struct {
 	Key                string
 	Label              string
 	Type               string
+	Count              string
 }
 
 // GetStorage returns the storage associated with the field
@@ -105,4 +108,14 @@ func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams, mode
 		}
 	}
 	return nil
+}
+
+func getCountSQL(count string) string {
+	if count == "" {
+		count = "*"
+	} else {
+		count = fmt.Sprintf("DISTINCT \"%s\"", count)
+	}
+
+	return count
 }

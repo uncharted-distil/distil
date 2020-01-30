@@ -32,7 +32,9 @@ type ImageField struct {
 }
 
 // NewImageField creates a new field for image types.
-func NewImageField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *ImageField {
+func NewImageField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *ImageField {
+	count = getCountSQL(count)
+
 	field := &ImageField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -41,6 +43,7 @@ func NewImageField(storage *Storage, datasetName string, datasetStorageName stri
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 	}
 
@@ -142,8 +145,8 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(*) AS count FROM %s %s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
-		fieldSelect, prefixedVarName, f.DatasetStorageName, where, fieldSelect, fieldSelect, catResultLimit)
+	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(%s) AS count FROM %s %s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
+		fieldSelect, prefixedVarName, f.Count, f.DatasetStorageName, where, fieldSelect, fieldSelect, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -186,12 +189,12 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 
 	// Get count by category.
 	query := fmt.Sprintf(
-		`SELECT data."%s", COUNT(*) AS count
+		`SELECT data."%s", COUNT(%s) AS count
 		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
-		prefixedVarName, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
+		prefixedVarName, f.Count, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, prefixedVarName,
 		prefixedVarName, catResultLimit)
 
@@ -303,12 +306,12 @@ func (f *ImageField) fetchPredictedSummaryData(resultURI string, datasetResult s
 	params = append(params, resultURI, targetName)
 
 	query := fmt.Sprintf(
-		`SELECT data."%s", result.value, COUNT(*) AS count
+		`SELECT data."%s", result.value, COUNT(%s) AS count
 		 FROM %s AS result INNER JOIN %s AS data ON result.index = data."%s"
 		 WHERE %s
 		 GROUP BY result.value, data."%s"
 		 ORDER BY count desc;`,
-		targetName, datasetResult, f.DatasetStorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
+		targetName, f.Count, datasetResult, f.DatasetStorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

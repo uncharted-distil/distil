@@ -720,7 +720,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, storageName string, r
 		Type: model.StringType,
 	}
 
-	field := NewNumericalField(s, dataset, storageName, targetVariable.Name, targetVariable.DisplayName, targetVariable.Type)
+	field := NewNumericalField(s, dataset, storageName, targetVariable.Name, targetVariable.DisplayName, targetVariable.Type, "")
 	return field.fetchResultsExtrema(resultURI, storageNameResult, resultVariable)
 }
 
@@ -765,9 +765,9 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 		// use the variable type to guide the summary creation
 
 		if model.IsNumerical(variable.Type) {
-			field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
 		} else if model.IsCategorical(variable.Type) {
-			field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
 		} else if model.IsVector(variable.Type) {
 			field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else {

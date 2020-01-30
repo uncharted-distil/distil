@@ -33,7 +33,9 @@ type CategoricalField struct {
 }
 
 // NewCategoricalField creates a new field for categorical types.
-func NewCategoricalField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *CategoricalField {
+func NewCategoricalField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *CategoricalField {
+	count = getCountSQL(count)
+
 	field := &CategoricalField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -42,6 +44,7 @@ func NewCategoricalField(storage *Storage, datasetName string, datasetStorageNam
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 	}
 
@@ -50,7 +53,10 @@ func NewCategoricalField(storage *Storage, datasetName string, datasetStorageNam
 
 // NewCategoricalFieldSubSelect creates a new field for categorical types
 // and specifies a sub select query to pull the raw data.
-func NewCategoricalFieldSubSelect(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, fieldSubSelect func() string) *CategoricalField {
+func NewCategoricalFieldSubSelect(storage *Storage, datasetName string,
+	datasetStorageName string, key string, label string, typ string, count string, fieldSubSelect func() string) *CategoricalField {
+	count = getCountSQL(count)
+
 	field := &CategoricalField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -59,6 +65,7 @@ func NewCategoricalFieldSubSelect(storage *Storage, datasetName string, datasetS
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 		subSelect: fieldSubSelect,
 	}
@@ -126,8 +133,8 @@ func (f *CategoricalField) getTopCategories(filterParams *api.FilterParams, inve
 	}
 
 	// get top N categories
-	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
-		f.Key, fromClause, where, f.Key, f.Key, 5)
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(%s) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
+		f.Key, f.Count, fromClause, where, f.Key, f.Key, 5)
 
 	rows, err := f.Storage.client.Query(query, params...)
 	if err != nil {
@@ -166,8 +173,8 @@ func (f *CategoricalField) fetchHistogram(filterParams *api.FilterParams, invert
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT \"%s\", COUNT(*) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
-		f.Key, fromClause, where, f.Key, f.Key, catResultLimit)
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(%s) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
+		f.Key, f.Count, fromClause, where, f.Key, f.Key, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -199,12 +206,12 @@ func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams
 
 	// Get count by category.
 	query := fmt.Sprintf(
-		`SELECT data."%s", COUNT(*) AS count
+		`SELECT data."%s", COUNT(%s) AS count
 		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		 WHERE result.result_id = $%d %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
-		f.Key, fromClause, f.Storage.getResultTable(f.DatasetStorageName),
+		f.Key, f.Count, fromClause, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, f.Key,
 		f.Key, catResultLimit)
 
@@ -308,12 +315,12 @@ func (f *CategoricalField) fetchPredictedSummaryData(resultURI string, datasetRe
 	params = append(params, resultURI, targetName)
 
 	query := fmt.Sprintf(
-		`SELECT result.value, COUNT(*) AS count
+		`SELECT result.value, COUNT(%s) AS count
 		 FROM %s AS result INNER JOIN %s AS data ON result.index = data."%s"
 		 WHERE %s
 		 GROUP BY result.value
 		 ORDER BY count desc;`,
-		datasetResult, f.DatasetStorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "))
+		datasetResult, f.Count, f.DatasetStorageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "))
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

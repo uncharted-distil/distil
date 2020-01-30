@@ -34,7 +34,9 @@ type DateTimeField struct {
 }
 
 // NewDateTimeField creates a new field for numerical types.
-func NewDateTimeField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *DateTimeField {
+func NewDateTimeField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *DateTimeField {
+	count = getCountSQL(count)
+
 	field := &DateTimeField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -43,6 +45,7 @@ func NewDateTimeField(storage *Storage, datasetName string, datasetStorageName s
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 	}
 
@@ -51,7 +54,9 @@ func NewDateTimeField(storage *Storage, datasetName string, datasetStorageName s
 
 // NewDateTimeFieldSubSelect creates a new field for numerical types
 // and specifies a sub select query to pull the raw data.
-func NewDateTimeFieldSubSelect(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, fieldSubSelect func() string) *DateTimeField {
+func NewDateTimeFieldSubSelect(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string, fieldSubSelect func() string) *DateTimeField {
+	count = getCountSQL(count)
+
 	field := &DateTimeField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -60,6 +65,7 @@ func NewDateTimeFieldSubSelect(storage *Storage, datasetName string, datasetStor
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 		subSelect: fieldSubSelect,
 	}
@@ -137,8 +143,8 @@ func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, invert bo
 	}
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s %s GROUP BY %s ORDER BY %s;",
-		bucketQuery, histogramQuery, histogramName, fromClause, where, bucketQuery, histogramName)
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s %s GROUP BY %s ORDER BY %s;",
+		bucketQuery, histogramQuery, histogramName, f.Count, fromClause, where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -184,12 +190,12 @@ func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *a
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY %s
 		ORDER BY %s;`,
-		bucketQuery, histogramQuery, histogramName, fromClause,
+		bucketQuery, histogramQuery, histogramName, f.Count, fromClause,
 		f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
 
 	// execute the postgres query
@@ -437,12 +443,12 @@ func (f *DateTimeField) fetchPredictedSummaryData(resultURI string, datasetResul
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		WHERE %s
 		GROUP BY %s
 		ORDER BY %s;`,
-		bucketQuery, histogramQuery, histogramName, f.DatasetStorageName, datasetResult,
+		bucketQuery, histogramQuery, histogramName, f.Count, f.DatasetStorageName, datasetResult,
 		model.D3MIndexFieldName, strings.Join(wheres, " AND "), bucketQuery, histogramName)
 
 	// execute the postgres query

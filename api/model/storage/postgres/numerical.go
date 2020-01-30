@@ -40,7 +40,9 @@ type NumericalStats struct {
 }
 
 // NewNumericalField creates a new field for numerical types.
-func NewNumericalField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string) *NumericalField {
+func NewNumericalField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *NumericalField {
+	count = getCountSQL(count)
+
 	field := &NumericalField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -49,6 +51,7 @@ func NewNumericalField(storage *Storage, datasetName string, datasetStorageName 
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 	}
 
@@ -57,7 +60,9 @@ func NewNumericalField(storage *Storage, datasetName string, datasetStorageName 
 
 // NewNumericalFieldSubSelect creates a new field for numerical types
 // and specifies a sub select query to pull the raw data.
-func NewNumericalFieldSubSelect(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, fieldSubSelect func() string) *NumericalField {
+func NewNumericalFieldSubSelect(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string, fieldSubSelect func() string) *NumericalField {
+	count = getCountSQL(count)
+
 	field := &NumericalField{
 		BasicField: BasicField{
 			Storage:            storage,
@@ -66,6 +71,7 @@ func NewNumericalFieldSubSelect(storage *Storage, datasetName string, datasetSto
 			Key:                key,
 			Label:              label,
 			Type:               typ,
+			Count:              count,
 		},
 		subSelect: fieldSubSelect,
 	}
@@ -143,8 +149,8 @@ func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, invert b
 	}
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count FROM %s %s GROUP BY %s ORDER BY %s;",
-		bucketQuery, histogramQuery, histogramName, fromClause, where, bucketQuery, histogramName)
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s %s GROUP BY %s ORDER BY %s;",
+		bucketQuery, histogramQuery, histogramName, f.Count, fromClause, where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -203,12 +209,12 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY %s
 		ORDER BY %s;`,
-		bucketQuery, histogramQuery, histogramName, fromClause,
+		bucketQuery, histogramQuery, histogramName, f.Count, fromClause,
 		f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
 
 	// execute the postgres query
@@ -461,12 +467,12 @@ func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResu
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
-		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
+		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		WHERE %s
 		GROUP BY %s
 		ORDER BY %s;`,
-		bucketQuery, histogramQuery, histogramName, f.DatasetStorageName, datasetResult,
+		bucketQuery, histogramQuery, histogramName, f.Count, f.DatasetStorageName, datasetResult,
 		model.D3MIndexFieldName, strings.Join(wheres, " AND "), bucketQuery, histogramName)
 
 	// execute the postgres query

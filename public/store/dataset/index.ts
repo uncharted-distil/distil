@@ -147,7 +147,8 @@ export interface VariableSummary {
 // of the series set, or use cluster info to sample.
 export enum SummaryMode {
   Default = "default",
-  Cluster = "cluster"
+  Cluster = "cluster",
+  Timeseries = "timeseries"
 }
 
 export interface TableValue {
