@@ -10,11 +10,12 @@ export const resultsModule: Module<ResultsState, DistilState> = {
   getters: moduleGetters,
   actions: moduleActions,
   mutations: moduleMutations,
-  state: state
+  state: state,
+  namespaced: true
 };
 
 const { commit, read, dispatch } = getStoreAccessors<ResultsState, DistilState>(
-  null
+  "resultsModule"
 );
 
 // Typed getters
