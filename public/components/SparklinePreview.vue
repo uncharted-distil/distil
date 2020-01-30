@@ -162,7 +162,7 @@ export default Vue.extend({
   position: relative;
   min-width: 400px;
   max-width: 500px !important;
-  min-height: 50px;
+  min-height: 45px;
 }
 
 .sparkline-preview-container:hover .zoom-sparkline-icon {
