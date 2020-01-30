@@ -26,12 +26,19 @@ export default Vue.extend({
     },
     forecast: {
       type: Array as () => number[][]
+    },
+    highlightRange: {
+      type: Array as () => number[]
+    },
+    xAxisTitle: {
+      type: String as () => string
+    },
+    yAxisTitle: {
+      type: String as () => string
     }
   },
   data() {
     return {
-      xAxisTitle: "X-Axis",
-      yAxisTitle: "Y-Axis",
       xScale: null,
       yScale: null
     };
@@ -86,15 +93,10 @@ export default Vue.extend({
       this.svg.selectAll("*").remove();
     },
     injectAxes() {
-      this.xScale = d3.scalePoint().rangeRound([0, this.width]);
-
-      const xDomain = _.uniq(
-        this.timeseries
-          .map(d => d[0])
-          .concat(this.forecast ? this.forecast.map(d => d[0]) : [])
-      );
-
-      this.xScale.domain(xDomain);
+      this.xScale = d3
+        .scaleLinear()
+        .domain([this.minX, this.maxX])
+        .range([0, this.width]);
 
       this.yScale = d3
         .scaleLinear()
@@ -102,13 +104,7 @@ export default Vue.extend({
         .range([this.height, 0]);
 
       // Create axes
-      const xAxis = d3.axisBottom(this.xScale).tickValues(
-        this.timeseries
-          .filter((d, i) => {
-            return i % 10 === 0;
-          })
-          .map(d => d[0])
-      );
+      const xAxis = d3.axisBottom(this.xScale).ticks(10);
       const yAxis = d3.axisLeft(this.yScale).ticks(5);
 
       // Create x-axis
@@ -182,6 +178,25 @@ export default Vue.extend({
         .attr("stroke", "#00c6e1")
         .attr("d", line);
     },
+    injectTimeRangeHighligh() {
+      if (!this.highlightRange || this.highlightRange.length !== 2) {
+        return;
+      }
+
+      this.svg
+        .append("rect")
+        .attr("transform", `translate(${this.margin.left}, 0)`)
+        .attr("fill", "#00ffff44")
+        .attr("stroke", "none")
+        .attr("x", this.xScale(this.highlightRange[0]))
+        .attr("y", 0)
+        .attr(
+          "width",
+          this.xScale(this.highlightRange[1]) -
+            this.xScale(this.highlightRange[0])
+        )
+        .attr("height", this.height);
+    },
     draw() {
       if (_.isEmpty(this.timeseries)) {
         return;
@@ -202,6 +217,7 @@ export default Vue.extend({
       this.injectTimeseries();
       if (this.forecast) {
         this.injectForecast();
+        this.injectTimeRangeHighligh();
       }
     }
   }

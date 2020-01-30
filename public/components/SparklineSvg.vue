@@ -176,9 +176,9 @@ export default Vue.extend({
     clearSVG() {
       this.svg.selectAll("*").remove();
     },
-    injectSparkline() {
+    injectSparkline(): boolean {
       if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
-        return;
+        return false;
       }
 
       const minX = this.timeseriesExtrema.x.min;
@@ -215,15 +215,17 @@ export default Vue.extend({
         .attr("fill", "none")
         .attr("class", "line")
         .attr("d", line);
+
+      return true;
     },
     // draws a shaded rectangle
-    injectHighlightRegion() {
+    injectHighlightRegion(): boolean {
       if (
         !this.$svg ||
         !this.highlightRange ||
         this.highlightRange.length !== 2
       ) {
-        return;
+        return false;
       }
 
       this.svg
@@ -239,10 +241,12 @@ export default Vue.extend({
             this.xScale(this.highlightRange[0])
         )
         .attr("height", this.height);
+
+      return true;
     },
-    injectPrediction() {
+    injectPrediction(): boolean {
       if (!this.$svg || !this.forecast || this.forecast.length === 0) {
-        return;
+        return false;
       }
 
       const line = d3
@@ -265,6 +269,8 @@ export default Vue.extend({
         .attr("class", "line")
         .attr("stroke", "#00c6e188")
         .attr("d", line);
+
+      return true;
     },
     injectTimeseries() {
       if (_.isEmpty(this.timeseries) || !this.$refs.svg) {
@@ -283,8 +289,8 @@ export default Vue.extend({
 
       this.clearSVG();
       this.injectSparkline();
-      this.injectPrediction();
       this.injectHighlightRegion();
+      this.injectPrediction();
 
       this.hasRendered = true;
     }

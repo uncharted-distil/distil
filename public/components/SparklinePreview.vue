@@ -18,6 +18,9 @@
       <sparkline-chart
         :timeseries="timeseries"
         :forecast="forecast"
+        :highlightRange="highlightRange"
+        :xAxisTitle="xCol"
+        :yAxisTitle="yCol"
         v-if="zoomSparkline"
       ></sparkline-chart>
     </b-modal>
@@ -66,6 +69,7 @@ export default Vue.extend({
   },
   computed: {
     timeseries(): number[][] {
+      //
       if (this.solutionId) {
         const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
         const solutions = timeseries[this.solutionId];
@@ -86,10 +90,10 @@ export default Vue.extend({
       if (this.solutionId && this.includeForecast) {
         const forecasts = resultsGetters.getPredictedForecasts(this.$store);
         const solutions = forecasts[this.solutionId];
-        if (!solutions || !solutions[this.timeseriesId]) {
+        if (!solutions || !solutions.forecastData[this.timeseriesId]) {
           return null;
         }
-        return solutions[this.timeseriesId].forecast;
+        return solutions.forecastData[this.timeseriesId];
       } else {
         return null;
       }
@@ -98,10 +102,10 @@ export default Vue.extend({
       if (this.solutionId && this.includeForecast) {
         const forecasts = resultsGetters.getPredictedForecasts(this.$store);
         const solutions = forecasts[this.solutionId];
-        if (!solutions || !solutions[this.timeseriesId]) {
+        if (!solutions || !solutions.forecastRange[this.timeseriesId]) {
           return null;
         }
-        return solutions[this.timeseriesId].forecastTestRange;
+        return solutions.forecastRange[this.timeseriesId];
       } else {
         return null;
       }

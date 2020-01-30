@@ -16,7 +16,6 @@
 package routes
 
 import (
-	"math"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -92,15 +91,17 @@ func TimeseriesForecastHandler(dataCtor api.DataStorageCtor, solutionCtor api.So
 			return
 		}
 
-		timeseriesLength := len(timeseries)
-		minTime := timeseries[0][0]
-		maxTime := timeseries[timeseriesLength-1][0]
-		start := math.Round(minTime) + math.Round((maxTime-minTime)*0.9)
+		// Re-constitute the split that was applied when the dataset was persisted.
+		// TODO:  this should be stored in DB at split time and queried here, or at least
+		// shold be moved to shared splitting function
+		splitIndex := int(0.9 * float64(len(timeseries)-1))
+		splitValue := timeseries[splitIndex][0]
+		endValue := timeseries[len(timeseries)-1][0]
 
 		err = handleJSON(w, TimeseriesForecastResult{
 			Timeseries:        timeseries,
 			Forecast:          forecast,
-			ForecastTestRange: []float64{start, maxTime},
+			ForecastTestRange: []float64{splitValue, endValue},
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
