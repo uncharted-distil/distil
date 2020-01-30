@@ -37,9 +37,11 @@
         </div>
 
         <div class="col-12 col-md-6 d-flex flex-column">
-          <target-variable
-            class="col-12 d-flex flex-column select-target-variables"
-          ></target-variable>
+          <div class="select-target-variables">
+            <target-variable
+              class="col-12 d-flex flex-column"
+            ></target-variable>
+          </div>
         </div>
       </div>
 
@@ -186,5 +188,13 @@ export default Vue.extend({
 .select-data-container {
   flex: 1;
   z-index: 1; /* to show the scroll bar */
+}
+.select-target-variables {
+  min-width: 500px;
+  max-width: 600px !important;
+  align-self: flex-end;
+}
+.select-target-variables .facet-sparkline-container {
+  height: 30px !important;
 }
 </style>

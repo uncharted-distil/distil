@@ -269,7 +269,7 @@ export default Vue.extend({
 <style>
 svg.line-chart-row {
   position: relative;
-  max-height: 32px;
+  max-height: 40px;
   width: 100%;
 }
 

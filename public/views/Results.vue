@@ -24,7 +24,7 @@
 
       <div class="col-12 col-md-6 d-flex flex-column">
         <result-target-variable
-          class="col-12 d-flex flex-column select-target-variables"
+          class="col-12 d-flex flex-column result-target-variables"
         ></result-target-variable>
       </div>
     </div>
@@ -182,5 +182,13 @@ export default Vue.extend({
   .results-result-summaries {
     height: unset;
   }
+}
+.result-target-variables {
+  min-width: 500px;
+  max-width: 600px !important;
+  align-self: flex-end;
+}
+.result-target-variables .facet-sparkline-container {
+  height: 30px !important;
 }
 </style>
