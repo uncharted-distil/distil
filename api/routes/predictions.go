@@ -211,21 +211,59 @@ func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dat
 }
 
 func createTimeseriesData(seriesFields map[string][]string, timestampFieldName string, start time.Time, stepDuration time.Duration, stepCount int) ([]byte, error) {
-	// write out the header
+	// create the header and the ids to use to generate the timeseries
+	header := make([]string, 0)
+	ids := make([][]string, 0)
+	for name, field := range seriesFields {
+		ids = append(ids, field)
+		header = append(header, name)
+	}
+	header = append(header, timestampFieldName)
+
+	// write the header
 	outputBytes := &bytes.Buffer{}
 	writerOutput := csv.NewWriter(outputBytes)
-	err := writerOutput.Write([]string{timestampFieldName})
+	err := writerOutput.Write(header)
 	if err != nil {
 		return nil, err
 	}
 
+	// create the time values
 	currentTime := start
+	timeData := make([]string, 0)
 	for i := 0; i < stepCount; i++ {
-		writerOutput.Write([]string{currentTime.String()})
+		timeData = append(timeData, currentTime.String())
 		currentTime = currentTime.Add(stepDuration)
+	}
+	ids = append(ids, timeData)
+
+	// the cartesian product will generate all the values needed for the timeseries
+	cartesianData := createGroupings(ids)
+	err = writerOutput.WriteAll(cartesianData)
+	if err != nil {
+		return nil, err
 	}
 
 	writerOutput.Flush()
 
 	return outputBytes.Bytes(), nil
+}
+
+func createGroupings(ids [][]string) [][]string {
+	// end condition when empty list passed in
+	if len(ids) == 0 {
+		return [][]string{nil}
+	}
+
+	// use recursion to get cartesian product
+	nested := createGroupings(ids[1:])
+
+	// create the combined output
+	output := make([][]string, 0)
+	for _, id := range ids[0] {
+		for _, product := range nested {
+			output = append(output, append([]string{id}, product...))
+		}
+	}
+	return output
 }
