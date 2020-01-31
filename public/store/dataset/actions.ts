@@ -347,7 +347,7 @@ export const actions = {
           return null;
         }
         return axios
-          .post(`/distil/predict/${args.datasetID}/${args.solutionId}`, data, {
+          .post(`/distil/predict/${args.datasetID}/tabular/${args.solutionId}`, data, {
             headers: { "Content-Type": "multipart/form-data" }
           })
           .then(response => {

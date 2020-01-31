@@ -16,18 +16,25 @@
 package routes
 
 import (
+	"bytes"
+	"encoding/csv"
 	"net/http"
 	"path"
+	"sort"
+	"time"
 
+	"github.com/araddon/dateparse"
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
+	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
+	"github.com/uncharted-distil/distil/api/util/json"
 )
 
 // PredictionsHandler receives a file and produces results using the specified
@@ -37,14 +44,7 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		fittedSolutionID := pat.Param(r, "fitted-solution-id")
-
-		// read the file from the request
-		data, err := receiveFile(r)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to receive file from request"))
-			return
-		}
-		log.Infof("received data to use for predictions for dataset %s solution %s", dataset, fittedSolutionID)
+		targetType := pat.Param(r, "target-type")
 
 		solutionStorage, err := solutionStorageCtor()
 		if err != nil {
@@ -59,13 +59,6 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 		dataStorage, err := dataStorageCtor()
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to initialize data storage"))
-			return
-		}
-
-		// get the source dataset from the fitted solution ID
-		req, err := solutionStorage.FetchRequestByFittedSolutionID(fittedSolutionID)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to fetch request using fitted solution id"))
 			return
 		}
 
@@ -87,6 +80,55 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 			handleError(w, errors.Wrap(err, "unable to fetch dataset from es"))
 			return
 		}
+
+		var data []byte
+		if targetType == "timeseries" {
+			// passed in params will be start and step count
+			params, err := getPostParameters(r)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+				return
+			}
+			stepCount, ok := json.Int(params, "count")
+			if !ok {
+				handleError(w, errors.Errorf("Unable to parse count parameter"))
+				return
+			}
+			startStr, ok := json.String(params, "start")
+			if !ok {
+				handleError(w, errors.Errorf("Unable to parse start parameter"))
+				return
+			}
+
+			start, err := dateparse.ParseAny(startStr)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "Unable to parse start into time"))
+				return
+			}
+
+			data, err = createTimeseriesFromRequest(dataStorage, datasetES, start, stepCount)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to create timeseries datat"))
+				return
+			}
+			log.Infof("created timeseries data to use for predictions for dataset %s solution %s", dataset, fittedSolutionID)
+		} else {
+			// read the file from the request
+			data, err = receiveFile(r)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to receive file from request"))
+				return
+			}
+			log.Infof("received data to use for predictions for dataset %s solution %s", dataset, fittedSolutionID)
+		}
+
+		// get the source dataset from the fitted solution ID
+		req, err := solutionStorage.FetchRequestByFittedSolutionID(fittedSolutionID)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to fetch request using fitted solution id"))
+			return
+		}
+
 		schemaPath := path.Join(env.ResolvePath(datasetES.Source, datasetES.Folder), compute.D3MDataSchema)
 		meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath)
 		if err != nil {
@@ -117,4 +159,73 @@ func getTarget(request *api.Request) string {
 	}
 
 	return ""
+}
+
+func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dataset, start time.Time, stepCount int) ([]byte, error) {
+	// need to create timeseries based on start time and step count
+	var groupingVar *model.Variable
+	for _, v := range datasetES.Variables {
+		if v.Grouping != nil {
+			groupingVar = v
+			break
+		}
+	}
+
+	// find the timsetamp column and id columns
+	timestampCol := groupingVar.Grouping.Properties.XCol
+
+	// get the distinct values for the id columns
+	idValues := make(map[string][]string)
+	for _, vID := range groupingVar.Grouping.SubIDs {
+		vals, err := dataStorage.FetchRawDistinctValues(datasetES.ID, datasetES.StorageName, vID)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to fetch distinct values for '%s' from data storage", vID)
+		}
+		idValues[vID] = vals
+	}
+
+	// get the step duration
+	timestampValues, err := dataStorage.FetchRawDistinctValues(datasetES.ID, datasetES.StorageName, timestampCol)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to fetch distinct timestamp values from data storage")
+	}
+
+	// order the timestamp values and derive the duration between steps (assumes a format that can be parsed)
+	timestampsParsed := make([]time.Time, 0)
+	for _, ts := range timestampValues {
+		t, err := dateparse.ParseAny(ts)
+		if err != nil {
+			continue
+		}
+		timestampsParsed = append(timestampsParsed, t)
+	}
+	sort.Slice(timestampsParsed, func(i int, j int) bool {
+		return timestampsParsed[i].Before(timestampsParsed[j])
+	})
+	stepDuration := time.Duration(0)
+	if len(timestampsParsed) > 1 {
+		stepDuration = timestampsParsed[1].Sub(timestampsParsed[0])
+	}
+
+	return createTimeseriesData(idValues, timestampCol, start, stepDuration, stepCount)
+}
+
+func createTimeseriesData(seriesFields map[string][]string, timestampFieldName string, start time.Time, stepDuration time.Duration, stepCount int) ([]byte, error) {
+	// write out the header
+	outputBytes := &bytes.Buffer{}
+	writerOutput := csv.NewWriter(outputBytes)
+	err := writerOutput.Write([]string{timestampFieldName})
+	if err != nil {
+		return nil, err
+	}
+
+	currentTime := start
+	for i := 0; i < stepCount; i++ {
+		writerOutput.Write([]string{currentTime.String()})
+		currentTime = currentTime.Add(stepDuration)
+	}
+
+	writerOutput.Flush()
+
+	return outputBytes.Bytes(), nil
 }
