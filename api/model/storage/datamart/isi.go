@@ -213,7 +213,7 @@ func parseISIJoinSuggestion(result *ISISearchResult, baseDataset *api.Dataset, v
 
 	// column names and indices stored separately in the search result
 	joins := make([]*api.JoinSuggestion, 0)
-	if result.Augmentation != nil && result.Augmentation.Type == "join" {
+	if result.Augmentation != nil && result.Augmentation.Type == "join" && result.ColumnNames != nil {
 		leftColNames := make([]string, 0)
 		for _, lc := range result.Augmentation.LeftColumns[0] {
 			if lc < len(result.ColumnNames.LeftNames) {
