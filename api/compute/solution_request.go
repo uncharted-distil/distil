@@ -41,7 +41,6 @@ const (
 	defaultExposedOutputKey  = "outputs.0"
 	explainFeatureOutputkey  = "outputs.1"
 	explainSolutionOutputkey = "outputs.2"
-	trainTestSplitThreshold  = 0.9
 	// SolutionPendingStatus represents that the solution request has been acknoledged by not yet sent to the API
 	SolutionPendingStatus = "SOLUTION_PENDING"
 	// SolutionRunningStatus represents that the solution request has been sent to the API.
@@ -513,7 +512,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 
 func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
 	dataStorage api.DataStorage, initialSearchID string, initialSearchSolutionID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
-	datasetURITrain string, datasetURITest string, variables []*model.Variable) {
+	datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
 	desc, err := client.GetSolutionDescription(context.Background(), initialSearchSolutionID)
 	if err != nil {
@@ -611,8 +610,16 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			outputKeys = append(outputKeys, explainFeatureOutputkey)
 			outputKeys = append(outputKeys, explainSolutionOutputkey)
 		}
-		// generate predictions
-		produceSolutionRequest := createProduceSolutionRequest(datasetURITest, fittedSolutionID, outputKeys)
+		// generate predictions -  for timeseries we want to use the entire source dataset, for anything else
+		// we only want the test data predictions.
+		produceDatasetURI := datasetURITest
+		for _, task := range s.Task {
+			if task == compute.ForecastingTask {
+				produceDatasetURI = datasetURI
+				break
+			}
+		}
+		produceSolutionRequest := createProduceSolutionRequest(produceDatasetURI, fittedSolutionID, outputKeys)
 
 		// generate predictions
 		produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
@@ -701,7 +708,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 }
 
 func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage,
-	searchID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
+	searchID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
+	datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
 	// update request status
 	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestRunningStatus)
@@ -720,7 +728,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		s.persistSolution(c, solutionStorage, searchID, solution.SolutionId, "")
 		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
 		// dispatch it
-		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, searchRequest, datasetURITrain, datasetURITest, variables)
+		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, searchRequest, datasetURI, datasetURITrain, datasetURITest, variables)
 		// once done, mark as complete
 		s.completeSolution()
 	})
@@ -893,7 +901,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// dispatch search request
-	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.ID, searchRequest, datasetPathTrain, datasetPathTest, dataVariables)
+	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.ID, searchRequest, datasetInputDir, datasetPathTrain, datasetPathTest, dataVariables)
 
 	return nil
 }

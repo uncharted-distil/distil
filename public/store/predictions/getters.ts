@@ -8,6 +8,7 @@ import {
 import { PredictionState } from "./index";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
 import { Dictionary } from "../../util/dict";
+import { Forecast } from "../results";
 
 export const getters = {
   // results
@@ -18,11 +19,11 @@ export const getters = {
       : 0;
   },
 
-  getFittedSolutionIdFromPrediction (state: PredictionState): string {
+  getFittedSolutionIdFromPrediction(state: PredictionState): string {
     return state.includedPredictionTableData.fittedSolutionId;
   },
 
-  getProduceRequestIdFromPrediction (state: PredictionState): string {
+  getProduceRequestIdFromPrediction(state: PredictionState): string {
     return state.includedPredictionTableData.produceRequestId;
   },
 
@@ -67,13 +68,12 @@ export const getters = {
   ): Dictionary<TableColumn> {
     return getTableDataFields(state.excludedPredictionTableData);
   },
-    
+
   // predicted
 
   getPredictionSummaries(state: PredictionState): VariableSummary[] {
     return state.predictedSummaries;
   },
-
 
   // forecasts
 
@@ -83,9 +83,7 @@ export const getters = {
     return state.timeseries;
   },
 
-  getPredictionForecasts(
-    state: PredictionState
-  ): Dictionary<Dictionary<number[][]>> {
+  getPredictionForecasts(state: PredictionState): Dictionary<Forecast> {
     return state.forecasts;
   }
 };

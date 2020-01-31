@@ -37,6 +37,7 @@ export default Vue.extend({
     },
     timeseries: Array as () => number[][],
     forecast: Array as () => number[][],
+    highlightRange: Array as () => number[],
     timeseriesExtrema: {
       type: Object as () => TimeseriesExtrema
     }
@@ -175,9 +176,9 @@ export default Vue.extend({
     clearSVG() {
       this.svg.selectAll("*").remove();
     },
-    injectSparkline() {
+    injectSparkline(): boolean {
       if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
-        return;
+        return false;
       }
 
       const minX = this.timeseriesExtrema.x.min;
@@ -214,10 +215,38 @@ export default Vue.extend({
         .attr("fill", "none")
         .attr("class", "line")
         .attr("d", line);
+
+      return true;
     },
-    injectPrediction() {
+    // draws a shaded rectangle
+    injectHighlightRegion(): boolean {
+      if (
+        !this.$svg ||
+        !this.highlightRange ||
+        this.highlightRange.length !== 2
+      ) {
+        return false;
+      }
+
+      this.svg
+        .append("rect")
+        .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`)
+        .attr("fill", "#00ffff44")
+        .attr("stroke", "none")
+        .attr("x", this.xScale(this.highlightRange[0]))
+        .attr("y", 0)
+        .attr(
+          "width",
+          this.xScale(this.highlightRange[1]) -
+            this.xScale(this.highlightRange[0])
+        )
+        .attr("height", this.height);
+
+      return true;
+    },
+    injectPrediction(): boolean {
       if (!this.$svg || !this.forecast || this.forecast.length === 0) {
-        return;
+        return false;
       }
 
       const line = d3
@@ -238,8 +267,10 @@ export default Vue.extend({
       g.append("path")
         .attr("fill", "none")
         .attr("class", "line")
-        .attr("stroke", "#00c6e1")
+        .attr("stroke", "#00c6e188")
         .attr("d", line);
+
+      return true;
     },
     injectTimeseries() {
       if (_.isEmpty(this.timeseries) || !this.$refs.svg) {
@@ -258,6 +289,7 @@ export default Vue.extend({
 
       this.clearSVG();
       this.injectSparkline();
+      this.injectHighlightRegion();
       this.injectPrediction();
 
       this.hasRendered = true;
