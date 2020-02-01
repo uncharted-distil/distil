@@ -436,11 +436,6 @@ export const actions = {
       dataset: dataset
     })
       .then(() => {
-        fetchVariableRankings(context, {
-          dataset: dataset,
-          target: target
-        });
-        datasetActions.fetchClusters(store, { dataset });
         return fetchSolutionRequests(context, {
           dataset: dataset,
           target: target
