@@ -178,7 +178,7 @@ export default Vue.extend({
         }
       });
     },
-    
+
     onUploadFinish(err, response) {
       this.uploadStatus = err ? "error" : "success";
 
@@ -187,7 +187,7 @@ export default Vue.extend({
         const routeArgs = {
           solutionId: this.solutionId,
           dataset: inferenceDataset,
-          produceRequestId: this.produceRequestId,
+          produceRequestId: response.data.produceRequestId,
           target: this.target
         };
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
