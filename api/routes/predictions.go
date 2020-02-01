@@ -18,9 +18,11 @@ package routes
 import (
 	"bytes"
 	"encoding/csv"
+	"fmt"
 	"net/http"
 	"path"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/araddon/dateparse"
@@ -100,13 +102,7 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 				return
 			}
 
-			start, err := dateparse.ParseAny(startStr)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse start into time"))
-				return
-			}
-
-			data, err = createTimeseriesFromRequest(dataStorage, datasetES, start, stepCount)
+			data, err = createTimeseriesFromRequest(dataStorage, datasetES, startStr, stepCount)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable to create timeseries datat"))
 				return
@@ -161,7 +157,7 @@ func getTarget(request *api.Request) string {
 	return ""
 }
 
-func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dataset, start time.Time, stepCount int) ([]byte, error) {
+func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dataset, startStr string, stepCount int) ([]byte, error) {
 	// need to create timeseries based on start time and step count
 	var groupingVar *model.Variable
 	for _, v := range datasetES.Variables {
@@ -173,6 +169,13 @@ func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dat
 
 	// find the timsetamp column and id columns
 	timestampCol := groupingVar.Grouping.Properties.XCol
+	var timestampVar *model.Variable
+	for _, v := range datasetES.Variables {
+		if v.Name == timestampCol {
+			timestampVar = v
+			break
+		}
+	}
 
 	// get the distinct values for the id columns
 	idValues := make(map[string][]string)
@@ -190,27 +193,23 @@ func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dat
 		return nil, errors.Wrapf(err, "unable to fetch distinct timestamp values from data storage")
 	}
 
-	// order the timestamp values and derive the duration between steps (assumes a format that can be parsed)
-	timestampsParsed := make([]time.Time, 0)
-	for _, ts := range timestampValues {
-		t, err := dateparse.ParseAny(ts)
-		if err != nil {
-			continue
-		}
-		timestampsParsed = append(timestampsParsed, t)
+	// generate timestamps to use for prediction based on type of timestamp
+	var timestampPredictionValues []string
+	if model.IsTimestamp(timestampVar.Type) {
+		timestampPredictionValues, err = generateTimestampValues(timestampValues, startStr, stepCount)
+	} else if model.IsNumerical(timestampVar.Type) {
+		timestampPredictionValues, err = generateIntValues(timestampValues, startStr, stepCount)
+	} else {
+		return nil, errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", timestampVar.Name, timestampVar.Type)
 	}
-	sort.Slice(timestampsParsed, func(i int, j int) bool {
-		return timestampsParsed[i].Before(timestampsParsed[j])
-	})
-	stepDuration := time.Duration(0)
-	if len(timestampsParsed) > 1 {
-		stepDuration = timestampsParsed[1].Sub(timestampsParsed[0])
+	if err != nil {
+		return nil, err
 	}
 
-	return createTimeseriesData(idValues, timestampCol, start, stepDuration, stepCount)
+	return createTimeseriesData(idValues, timestampCol, timestampPredictionValues)
 }
 
-func createTimeseriesData(seriesFields map[string][]string, timestampFieldName string, start time.Time, stepDuration time.Duration, stepCount int) ([]byte, error) {
+func createTimeseriesData(seriesFields map[string][]string, timestampFieldName string, timestampPredictionValues []string) ([]byte, error) {
 	// create the header and the ids to use to generate the timeseries
 	header := make([]string, 0)
 	ids := make([][]string, 0)
@@ -228,14 +227,8 @@ func createTimeseriesData(seriesFields map[string][]string, timestampFieldName s
 		return nil, err
 	}
 
-	// create the time values
-	currentTime := start
-	timeData := make([]string, 0)
-	for i := 0; i < stepCount; i++ {
-		timeData = append(timeData, currentTime.String())
-		currentTime = currentTime.Add(stepDuration)
-	}
-	ids = append(ids, timeData)
+	// treat the timestamp values as just another set of values to generate on
+	ids = append(ids, timestampPredictionValues)
 
 	// the cartesian product will generate all the values needed for the timeseries
 	cartesianData := createGroupings(ids)
@@ -266,4 +259,73 @@ func createGroupings(ids [][]string) [][]string {
 		}
 	}
 	return output
+}
+
+func generateIntValues(existingValues []string, startStr string, stepCount int) ([]string, error) {
+	start, err := strconv.Atoi(startStr)
+	if err != nil {
+		return nil, errors.Errorf("Unable to parse start into int")
+	}
+
+	// order the existing values and derive the duration between steps
+	existingValuesParsed := make([]int, 0)
+	for _, vs := range existingValues {
+		v, err := strconv.Atoi(vs)
+		if err != nil {
+			continue
+		}
+		existingValuesParsed = append(existingValuesParsed, v)
+	}
+	sort.Slice(existingValuesParsed, func(i int, j int) bool {
+		return existingValuesParsed[i] < existingValuesParsed[j]
+	})
+	stepDuration := 0
+	if len(existingValuesParsed) > 1 {
+		stepDuration = existingValuesParsed[1] - existingValuesParsed[0]
+	}
+
+	// iterate until all required steps are created
+	currentValue := start
+	timeData := make([]string, 0)
+	for i := 0; i < stepCount; i++ {
+		timeData = append(timeData, fmt.Sprintf("%d", currentValue))
+		currentValue = currentValue + stepDuration
+	}
+
+	return timeData, nil
+}
+
+func generateTimestampValues(existingValues []string, startStr string, stepCount int) ([]string, error) {
+	// parse the start time
+	start, err := dateparse.ParseAny(startStr)
+	if err != nil {
+		return nil, errors.Errorf("Unable to parse start into time")
+	}
+
+	// order the timestamp values and derive the duration between steps (assumes a format that can be parsed)
+	timestampsParsed := make([]time.Time, 0)
+	for _, ts := range existingValues {
+		t, err := dateparse.ParseAny(ts)
+		if err != nil {
+			continue
+		}
+		timestampsParsed = append(timestampsParsed, t)
+	}
+	sort.Slice(timestampsParsed, func(i int, j int) bool {
+		return timestampsParsed[i].Before(timestampsParsed[j])
+	})
+	stepDuration := time.Duration(0)
+	if len(timestampsParsed) > 1 {
+		stepDuration = timestampsParsed[1].Sub(timestampsParsed[0])
+	}
+
+	// iterate until all required steps are created
+	currentTime := start
+	timeData := make([]string, 0)
+	for i := 0; i < stepCount; i++ {
+		timeData = append(timeData, currentTime.String())
+		currentTime = currentTime.Add(stepDuration)
+	}
+
+	return timeData, nil
 }
