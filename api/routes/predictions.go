@@ -195,7 +195,7 @@ func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dat
 
 	// generate timestamps to use for prediction based on type of timestamp
 	var timestampPredictionValues []string
-	if model.IsTimestamp(timestampVar.Type) {
+	if model.IsDateTime(timestampVar.Type) {
 		timestampPredictionValues, err = generateTimestampValues(timestampValues, startStr, stepCount)
 	} else if model.IsNumerical(timestampVar.Type) {
 		timestampPredictionValues, err = generateIntValues(timestampValues, startStr, stepCount)

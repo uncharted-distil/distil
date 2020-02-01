@@ -298,7 +298,7 @@ func (s *Storage) FetchCategoryCounts(storageName string, variable *model.Variab
 
 // FetchRawDistinctValues fetches the distinct values for a variable from the base table.
 func (s *Storage) FetchRawDistinctValues(dataset string, storageName string, varName string) ([]string, error) {
-	sql := fmt.Sprintf("SELECT DISTINCT \"%s\" FROM %s;", varName, storageName)
+	sql := fmt.Sprintf("SELECT DISTINCT \"%s\" FROM %s_base;", varName, storageName)
 	rows, err := s.client.Query(sql)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to count categories for %s", varName)
