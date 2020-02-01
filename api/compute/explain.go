@@ -48,6 +48,12 @@ func (s *SolutionRequest) createExplainPipeline(client *compute.Client, desc *pi
 
 // ExplainFeatureOutput parses the explain feature output.
 func ExplainFeatureOutput(resultURI string, datasetURITest string, outputURI string) (*api.SolutionFeatureWeights, error) {
+	// An unset outputURI means that there is no explanation output, which is a valid case,
+	// so we return nil rather than an error so it can be handled downstream.
+	if outputURI == "" {
+		return nil, nil
+	}
+
 	// get the d3m index lookup
 	log.Infof("explaining feature output")
 	log.Infof("reading raw dataset found in '%s'", datasetURITest)
