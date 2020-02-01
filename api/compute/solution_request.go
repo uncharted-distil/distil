@@ -358,15 +358,20 @@ func GeneratePredictions(datasetURI string, initialSearchSolutionID string,
 		if err != nil {
 			return "", nil, err
 		}
-		explainFeatureURI, err := getFileFromOutput(response, explainFeatureOutputkey)
-		if err != nil {
-			return "", nil, err
+		var explainFeatureURI string
+		if featureExplainable {
+			explainFeatureURI, err = getFileFromOutput(response, explainFeatureOutputkey)
+			if err != nil {
+				return "", nil, err
+			}
 		}
-		explainSolutionURI, err := getFileFromOutput(response, explainSolutionOutputkey)
-		if err != nil {
-			return "", nil, err
+		var explainSolutionURI string
+		if solutionExplainable {
+			explainSolutionURI, err = getFileFromOutput(response, explainSolutionOutputkey)
+			if err != nil {
+				return "", nil, err
+			}
 		}
-
 		return produceRequestID, []string{resultURI, explainFeatureURI, explainSolutionURI}, nil
 	}
 

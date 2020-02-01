@@ -82,7 +82,11 @@ import {
   actions as appActions,
   getters as appGetters
 } from "../store/app/module";
-import { EXPORT_SUCCESS_ROUTE, ROOT_ROUTE, PREDICTION_ROUTE } from "../store/route/index";
+import {
+  EXPORT_SUCCESS_ROUTE,
+  ROOT_ROUTE,
+  PREDICTION_ROUTE
+} from "../store/route/index";
 import { Variable, TaskTypes } from "../store/dataset/index";
 import vueSlider from "vue-slider-component";
 import Vue from "vue";
@@ -140,11 +144,15 @@ export default Vue.extend({
     },
 
     fittedSolutionId(): string {
-      return resultGetters.hasIncludedResultTableData(this.$store) ? resultGetters.getFittedSolutionId(this.$store) : null;
+      return resultGetters.hasIncludedResultTableData(this.$store)
+        ? resultGetters.getFittedSolutionId(this.$store)
+        : null;
     },
 
     produceRequestId(): string {
-      return resultGetters.hasIncludedResultTableData(this.$store) ? resultGetters.getProduceRequestId(this.$store) : null;
+      return resultGetters.hasIncludedResultTableData(this.$store)
+        ? resultGetters.getProduceRequestId(this.$store)
+        : null;
     },
 
     activeSolution(): Solution {
@@ -162,7 +170,7 @@ export default Vue.extend({
     isPrediction(): boolean {
       const routePath = routeGetters.getRoutePath(this.$store);
       return routePath && routePath === PREDICTION_ROUTE;
-    },
+    }
   },
 
   methods: {
@@ -174,7 +182,7 @@ export default Vue.extend({
         activity: Activity.MODEL_SELECTION,
         subActivity: SubActivity.IMPORT_INFERENCE,
         details: {
-          activeSolution: this.activeSolution.solutionId,
+          activeSolution: this.activeSolution.solutionId
         }
       });
     },
@@ -183,7 +191,8 @@ export default Vue.extend({
       this.uploadStatus = err ? "error" : "success";
 
       if (this.uploadStatus !== "error") {
-        const inferenceDataset = response && response.data && response.data.dataset;
+        const inferenceDataset =
+          response && response.data && response.data.dataset;
         const routeArgs = {
           solutionId: this.solutionId,
           dataset: inferenceDataset,
