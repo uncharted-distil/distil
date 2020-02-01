@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"path"
 	"sort"
@@ -108,6 +109,22 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 				return
 			}
 			log.Infof("created timeseries data to use for predictions for dataset %s solution %s", dataset, fittedSolutionID)
+		} else if targetType == "image" {
+			params, err := getPostParameters(r)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+				return
+			}
+			imageType, ok := json.String(params, "image-type")
+			if !ok {
+				handleError(w, errors.Errorf("Unable to parse image type parameter"))
+				return
+			}
+			data, err = createImageFromRequest(data, dataset, outputPath, imageType, ingestConfig)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to create image dataset from request"))
+				return
+			}
 		} else {
 			// read the file from the request
 			data, err = receiveFile(r)
@@ -155,6 +172,18 @@ func getTarget(request *api.Request) string {
 	}
 
 	return ""
+}
+
+func createImageFromRequest(data []byte, dataset string, outputPath string, imageType string, ingestConfig *task.IngestTaskConfig) ([]byte, error) {
+	// raw request is zip file of image dataset that needs to be imported
+	formattedPath, err := uploadImageDataset(dataset, outputPath, ingestConfig, data, imageType)
+	if err != nil {
+		return nil, err
+	}
+	formattedPath = path.Join(formattedPath, "tables", "learningData.csv")
+
+	// once imported, read the csv file as the data to use for the inference
+	return ioutil.ReadFile(formattedPath)
 }
 
 func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dataset, startStr string, stepCount int) ([]byte, error) {
