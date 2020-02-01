@@ -5,33 +5,48 @@ import { actions as moduleActions } from "./actions";
 import { mutations as moduleMutations } from "./mutations";
 import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
+import { namespace } from "d3";
 
 export const predictionsModule: Module<PredictionState, DistilState> = {
   getters: moduleGetters,
   actions: moduleActions,
   mutations: moduleMutations,
-  state: state
+  state: state,
+  namespaced: true
 };
 
-const { commit, read, dispatch } = getStoreAccessors<PredictionState, DistilState>(
-  null
-);
+const { commit, read, dispatch } = getStoreAccessors<
+  PredictionState,
+  DistilState
+>("predictionsModule");
 
 // Typed getters
 export const getters = {
   // result
-  getFittedSolutionIdFromPrediction: read(moduleGetters.getFittedSolutionIdFromPrediction),
-  getProduceRequestIdFromPrediction: read(moduleGetters.getProduceRequestIdFromPrediction),
-  hasIncludedPredictionTableData: read(moduleGetters.hasIncludedPredictionTableData),
-  getIncludedPredictionTableData: read(moduleGetters.getIncludedPredictionTableData),
+  getFittedSolutionIdFromPrediction: read(
+    moduleGetters.getFittedSolutionIdFromPrediction
+  ),
+  getProduceRequestIdFromPrediction: read(
+    moduleGetters.getProduceRequestIdFromPrediction
+  ),
+  hasIncludedPredictionTableData: read(
+    moduleGetters.hasIncludedPredictionTableData
+  ),
+  getIncludedPredictionTableData: read(
+    moduleGetters.getIncludedPredictionTableData
+  ),
   getIncludedPredictionTableDataItems: read(
     moduleGetters.getIncludedPredictionTableDataItems
   ),
   getIncludedPredictionTableDataFields: read(
     moduleGetters.getIncludedPredictionTableDataFields
   ),
-  hasExcludedPredictionTableData: read(moduleGetters.hasExcludedPredictionTableData),
-  getExcludedPredictionTableData: read(moduleGetters.getExcludedPredictionTableData),
+  hasExcludedPredictionTableData: read(
+    moduleGetters.hasExcludedPredictionTableData
+  ),
+  getExcludedPredictionTableData: read(
+    moduleGetters.getExcludedPredictionTableData
+  ),
   getExcludedPredictionTableDataItems: read(
     moduleGetters.getExcludedPredictionTableDataItems
   ),
@@ -64,7 +79,7 @@ export const actions = {
   // predicted
   fetchPredictedSummary: dispatch(moduleActions.fetchPredictionSummary),
   fetchPredictedSummaries: dispatch(moduleActions.fetchPredictionSummaries),
-   
+
   // forecast
   fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries)
 };

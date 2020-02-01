@@ -10,11 +10,12 @@ export const resultsModule: Module<ResultsState, DistilState> = {
   getters: moduleGetters,
   actions: moduleActions,
   mutations: moduleMutations,
-  state: state
+  state: state,
+  namespaced: true
 };
 
 const { commit, read, dispatch } = getStoreAccessors<ResultsState, DistilState>(
-  null
+  "resultsModule"
 );
 
 // Typed getters
@@ -104,9 +105,7 @@ export const mutations = {
   updateResidualsExtrema: commit(moduleMutations.updateResidualsExtrema),
   clearResidualsExtrema: commit(moduleMutations.clearResidualsExtrema),
   // correctness
-  clearCorrectnessSummaries: commit(
-    moduleMutations.clearCorrectnessSummaries
-  ),
+  clearCorrectnessSummaries: commit(moduleMutations.clearCorrectnessSummaries),
   updateCorrectnessSummaries: commit(
     moduleMutations.updateCorrectnessSummaries
   ),

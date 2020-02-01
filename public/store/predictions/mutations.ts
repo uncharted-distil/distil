@@ -28,12 +28,18 @@ export const mutations = {
   },
 
   // sets the current Prediction data into the store
-  setIncludedPredictionTableData(state: PredictionState, predictionData: TableData) {
+  setIncludedPredictionTableData(
+    state: PredictionState,
+    predictionData: TableData
+  ) {
     state.includedPredictionTableData = predictionData;
   },
 
   // sets the current Prediction data into the store
-  setExcludedPredictionTableData(state: PredictionState, predictionData: TableData) {
+  setExcludedPredictionTableData(
+    state: PredictionState,
+    predictionData: TableData
+  ) {
     state.excludedPredictionTableData = predictionData;
   },
 
@@ -57,11 +63,31 @@ export const mutations = {
 
   updatePredictedForecast(
     state: PredictionState,
-    args: { solutionId: string; id: string; forecast: number[][] }
+    args: {
+      solutionId: string;
+      id: string;
+      forecast: number[][];
+      forecastTestRange: number[];
+    }
   ) {
     if (!state.forecasts[args.solutionId]) {
       Vue.set(state.forecasts, args.solutionId, {});
     }
-    Vue.set(state.forecasts[args.solutionId], args.id, args.forecast);
+    if (!state.forecasts[args.solutionId].forecastData) {
+      Vue.set(state.forecasts[args.solutionId], "forecastData", {});
+    }
+    if (!state.forecasts[args.solutionId].forecastRange) {
+      Vue.set(state.forecasts[args.solutionId], "forecastRange", {});
+    }
+    Vue.set(
+      state.forecasts[args.solutionId].forecastData,
+      args.id,
+      args.forecast
+    );
+    Vue.set(
+      state.forecasts[args.solutionId].forecastRange,
+      args.id,
+      args.forecastTestRange
+    );
   }
 };

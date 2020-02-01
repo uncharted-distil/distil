@@ -5,7 +5,7 @@ import {
   TableRow,
   TableColumn
 } from "../dataset/index";
-import { ResultsState } from "./index";
+import { ResultsState, Forecast } from "./index";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
 import { Dictionary } from "../../util/dict";
 
@@ -26,11 +26,11 @@ export const getters = {
       : 0;
   },
 
-  getFittedSolutionId (state: ResultsState): string {
+  getFittedSolutionId(state: ResultsState): string {
     return state.includedResultTableData.fittedSolutionId;
   },
 
-  getProduceRequestId (state: ResultsState): string {
+  getProduceRequestId(state: ResultsState): string {
     return state.includedResultTableData.produceRequestId;
   },
 
@@ -106,9 +106,7 @@ export const getters = {
     return state.timeseries;
   },
 
-  getPredictedForecasts(
-    state: ResultsState
-  ): Dictionary<Dictionary<number[][]>> {
+  getPredictedForecasts(state: ResultsState): Dictionary<Forecast> {
     return state.forecasts;
   }
 };

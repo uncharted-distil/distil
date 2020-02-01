@@ -16,12 +16,10 @@ import {
   createPendingSummary,
   createErrorSummary,
   createEmptyTableData,
-  fetchSummaryExemplars,
-  getTimeseriesAnalysisIntervals
+  fetchSummaryExemplars
 } from "../../util/data";
 import { getters as predictionGetters } from "../predictions/module";
 import { getters as dataGetters } from "../dataset/module";
-import { VAR_MODES_INSTANCE } from "../route";
 
 export type PredictionContext = ActionContext<PredictionState, DistilState>;
 
@@ -524,7 +522,8 @@ export const actions = {
         mutations.updatePredictedForecast(context, {
           solutionId: args.solutionId,
           id: args.timeseriesID,
-          forecast: response.data.forecast
+          forecast: response.data.forecast,
+          forecastTestRange: response.data.forecastRange
         });
       })
       .catch(error => {

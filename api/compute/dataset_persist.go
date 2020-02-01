@@ -48,6 +48,12 @@ import (
 const (
 	trainFilenamePrefix = "train"
 	testFilenamePrefix  = "test"
+	// TrainTestSplitThreshold is the default train / test split percentage, with the value representating the desired
+	// amount of training data.
+	TrainTestSplitThreshold = 0.9
+	// TimeSeriesTrainTestSplitThreshold is the default train / test split percentage for timeseries data, with the value
+	// representating the desired amount of training data.
+	TimeSeriesTrainTestSplitThreshold = 0.9
 )
 
 // FilteredDataProvider defines a function that will fetch data from a back end source given
@@ -137,8 +143,12 @@ func splitTrainTestHeader(reader *csv.Reader, writerTrain *csv.Writer, writerTes
 
 func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile string, hasHeader bool, timeseriesCol int) error {
 	// create the writers
+
+	// training data
 	outputTrain := &bytes.Buffer{}
 	writerTrain := csv.NewWriter(outputTrain)
+
+	// test data
 	outputTest := &bytes.Buffer{}
 	writerTest := csv.NewWriter(outputTest)
 
@@ -181,8 +191,7 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 	sort.Slice(timestamps, func(i int, j int) bool {
 		return timestamps[i] <= timestamps[j]
 	})
-	thresholdIndex := int(trainTestSplitThreshold * float64(len(timestamps)-1))
-	threshold := timestamps[thresholdIndex]
+	timestampSplit := SplitTimeStamps(timestamps, TimeSeriesTrainTestSplitThreshold)
 
 	// output the values based on if before threshold or after threshold
 	for _, line := range data {
@@ -192,7 +201,7 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 		t, _ := parseTimeColValue(line[timeseriesCol])
 
 		// !After == Before || Equal
-		if t <= threshold {
+		if t <= timestampSplit.SplitValue {
 			err = writerTrain.Write(line)
 			if err != nil {
 				return errors.Wrap(err, "unable to write data to train output")
@@ -320,8 +329,8 @@ func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, ma
 	rand.Shuffle(len(rowData), func(i, j int) { rowData[i], rowData[j] = rowData[j], rowData[i] })
 
 	// Figure out the number of train and test rows to use capping on the limit supplied by the caller.
-	numTrain := min(maxTrainingCount, int(math.Floor(float64(len(rowData))*trainTestSplitThreshold)))
-	numTest := min(maxTestCount, int(math.Ceil(float64(len(rowData))*(1.0-trainTestSplitThreshold))))
+	numTrain := min(maxTrainingCount, int(math.Floor(float64(len(rowData))*TrainTestSplitThreshold)))
+	numTest := min(maxTestCount, int(math.Ceil(float64(len(rowData))*(1.0-TrainTestSplitThreshold))))
 
 	// Write out to train test
 	testCount := 0
@@ -491,4 +500,34 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// TimeStampSplit defines a train/test split in a timeseries based on time values.
+type TimeStampSplit struct {
+	StartValue float64
+	SplitValue float64
+	EndValue   float64
+}
+
+// SplitTimeStamps splits a set of time stamps such that `trainPercentage` *data points* are less than or equal
+// to the split value, and the remaining data points are greater than the split value.  The timestamps are assumed
+// to be ordered.
+func SplitTimeStamps(timestamps []float64, trainPercentage float64) TimeStampSplit {
+	splitIndex := int(trainPercentage * float64(len(timestamps)-1))
+	return TimeStampSplit{
+		StartValue: timestamps[0],
+		SplitValue: timestamps[splitIndex],
+		EndValue:   timestamps[len(timestamps)-1],
+	}
+}
+
+// SplitTimeSeries splits a set of (timestamps, value) tuples such that `trainPercentage` *data points* are less than or equal
+// to the split value, and the remaining data points are greater than the split value.  The timestamps are assumed
+// to be ordered.
+func SplitTimeSeries(timeseries [][]float64, trainPercentage float64) TimeStampSplit {
+	timestamps := make([]float64, len(timeseries))
+	for i, v := range timeseries {
+		timestamps[i] = v[0]
+	}
+	return SplitTimeStamps(timestamps, trainPercentage)
 }

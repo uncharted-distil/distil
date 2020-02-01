@@ -101,7 +101,6 @@ func Predict(meta *model.Metadata, dataset string, solutionID string, fittedSolu
 	}
 	log.Infof("generated predictions stored at %v", resultURIs)
 
-	// store the predictions and the weights
 	featureWeights, err := comp.ExplainFeatureOutput(resultURIs[0], schemaPath, resultURIs[1])
 	if err != nil {
 		return nil, err
@@ -123,6 +122,17 @@ func Predict(meta *model.Metadata, dataset string, solutionID string, fittedSolu
 	err = solutionStorage.PersistSolutionResult(solutionID, fittedSolutionID, produceRequestID, "inference", resultID, resultURIs[0], comp.SolutionCompletedStatus, time.Now())
 	if err != nil {
 		return nil, err
+	}
+
+	// In the case of grouped variables, the target will not be variable itself, but one of its property
+	// values.  We need to fetch using the original dataset, since it will have grouped variable info,
+	// and then resolve the actual target.
+	targetVar, err := metaStorage.FetchVariable(meta.ID, target)
+	if err != nil {
+		return nil, err
+	}
+	if targetVar.Grouping != nil && model.IsTimeSeries(targetVar.Type) {
+		target = targetVar.Grouping.Properties.YCol
 	}
 
 	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURIs[0], target)

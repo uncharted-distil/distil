@@ -33,13 +33,14 @@ type ISISearchResults struct {
 
 // ISISearchResult contains a single result from a query to the ISI datamart.
 type ISISearchResult struct {
-	Summary         *ISISearchResultSummary    `json:"summary"`
-	Score           float64                    `json:"score"`
-	Metadata        []*ISISearchResultMetadata `json:"metadata"`
-	MaterializeInfo string                     `json:"materialize_info"`
-	ID              string                     `json:"id"`
-	Augmentation    *SearchResultAugmentation  `json:"augmentation,omitempty"`
-	Sample          string                     `json:"sample"`
+	Summary         *ISISearchResultSummary     `json:"summary"`
+	Score           float64                     `json:"score"`
+	Metadata        []*ISISearchResultMetadata  `json:"metadata"`
+	MaterializeInfo string                      `json:"materialize_info"`
+	ID              string                      `json:"id"`
+	Augmentation    *SearchResultAugmentation   `json:"augmentation,omitempty"`
+	ColumnNames     *ISISearchResultColumnNames `json:"all_column_names,omitempty"`
+	Sample          string                      `json:"sample"`
 }
 
 // ISISearchResultSummary has a summary of the search result.
@@ -120,6 +121,11 @@ type ISIMaterializedDataset struct {
 	Data    string `json:"data"`
 }
 
+type ISISearchResultColumnNames struct {
+	LeftNames  []string `json:"left_names"`
+	RightNames []string `json:"right_names"`
+}
+
 func isiSearch(datamart *Storage, query *SearchQuery, baseDataPath string) ([]byte, error) {
 	log.Infof("querying ISI datamart")
 	params := make(map[string]string)
@@ -198,33 +204,32 @@ func parseISIJoinSuggestion(result *ISISearchResult, baseDataset *api.Dataset, v
 		Provenance:   ProvenanceISI,
 	}
 
-	// materialize_info has the join data in json structure
+	// materialize_info has the join score
 	var materialization ISISearchResultMaterialization
 	err = json.Unmarshal([]byte(result.MaterializeInfo), &materialization)
 	if err != nil {
 		return nil, 0, errors.Wrap(err, "unable to unmarshal ISI datamart join suggestions")
 	}
 
+	// column names and indices stored separately in the search result
 	joins := make([]*api.JoinSuggestion, 0)
-	if materialization.Augmentation != nil && materialization.Augmentation.Properties == "join" {
-		rightColumnNames := []string{}
-		rightColNames := []string{}
-		for _, colIndex := range materialization.Augmentation.RightColumns[0] {
-			colIndexI := int(colIndex)
-			if colIndexI < len(vars) {
-				rightColNames = append(rightColNames, vars[int(colIndexI)].DisplayName)
+	if result.Augmentation != nil && result.Augmentation.Type == "join" && result.ColumnNames != nil {
+		leftColNames := make([]string, 0)
+		for _, lc := range result.Augmentation.LeftColumns[0] {
+			if lc < len(result.ColumnNames.LeftNames) {
+				leftColNames = append(leftColNames, result.ColumnNames.LeftNames[lc])
 			}
 		}
 
-		leftColumnNames := []string{}
-		leftColNames := []string{}
-		for _, colIndex := range materialization.Augmentation.LeftColumns[0] {
-			colIndexI := int(colIndex)
-			if colIndexI < len(baseDataset.Variables) {
-				leftColNames = append(leftColNames, baseDataset.Variables[int(colIndexI)].Name)
+		rightColNames := make([]string, 0)
+		for _, rc := range result.Augmentation.RightColumns[0] {
+			if rc < len(result.ColumnNames.RightNames) {
+				rightColNames = append(rightColNames, result.ColumnNames.RightNames[rc])
 			}
 		}
 
+		rightColumnNames := make([]string, 0)
+		leftColumnNames := make([]string, 0)
 		if len(rightColNames) == len(leftColNames) {
 			rightColumnNames = append(rightColumnNames, strings.Join(rightColNames[:], ", "))
 			leftColumnNames = append(leftColumnNames, strings.Join(leftColNames[:], ", "))
