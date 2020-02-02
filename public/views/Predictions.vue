@@ -23,6 +23,7 @@
       ></results-comparison>
       <result-summaries
         class="col-12 col-md-3 border-gray-left results-result-summaries"
+        :isPrediction="true"
       ></result-summaries>
     </div>
   </div>

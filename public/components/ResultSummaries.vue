@@ -2,11 +2,22 @@
   <div class="result-summaries">
     <p class="nav-link font-weight-bold">Results</p>
     <p></p>
-    <div v-if="regressionEnabled" class="result-summaries-error">
+    <div
+      v-if="regressionEnabled && !isPrediction"
+      class="result-summaries-error"
+    >
       <error-threshold-slider></error-threshold-slider>
     </div>
-    <p class="nav-link font-weight-bold">Predictions by Model</p>
-    <result-facets :regression="regressionEnabled"> </result-facets>
+    <p class="nav-link font-weight-bold">
+      Predictions by Model
+    </p>
+    <result-facets :isRegression="regressionEnabled" :showError="!isPrediction">
+    </result-facets>
+
+    <!-- TODO: For show right now.-->
+    <b-button v-if="isPrediction" block variant="primary">
+      Export Predictions
+    </b-button>
 
     <file-uploader
       class="file-uploader"
@@ -98,6 +109,13 @@ import { PREDICTION_UPLOAD } from "../util/uploads";
 export default Vue.extend({
   name: "result-summaries",
 
+  props: {
+    isPrediction: {
+      type: Boolean as () => boolean,
+      default: () => false
+    }
+  },
+
   components: {
     ResultFacets,
     FileUploader,
@@ -165,11 +183,6 @@ export default Vue.extend({
 
     instanceName(): string {
       return "groundTruth";
-    },
-
-    isPrediction(): boolean {
-      const routePath = routeGetters.getRoutePath(this.$store);
-      return routePath && routePath === PREDICTION_ROUTE;
     }
   },
 

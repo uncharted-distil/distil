@@ -1,12 +1,9 @@
 import axios from "axios";
 import _ from "lodash";
 import { ActionContext } from "vuex";
-import store, { DistilState } from "../store";
+import { DistilState } from "../store";
 import { EXCLUDE_FILTER } from "../../util/filters";
-import {
-  getSolutionsByRequestIds,
-  getSolutionById
-} from "../../util/solutions";
+import { getSolutionById } from "../../util/solutions";
 import { Variable, Highlight, SummaryMode } from "../dataset/index";
 import { mutations } from "./module";
 import { PredictionState } from "./index";
@@ -19,7 +16,6 @@ import {
   fetchSummaryExemplars
 } from "../../util/data";
 import { getters as predictionGetters } from "../predictions/module";
-import { getters as dataGetters } from "../dataset/module";
 
 export type PredictionContext = ActionContext<PredictionState, DistilState>;
 
