@@ -195,7 +195,8 @@ export default Vue.extend({
           response && response.data && response.data.dataset;
         const routeArgs = {
           solutionId: this.solutionId,
-          dataset: inferenceDataset,
+          dataset: this.dataset,
+          inferenceDataset: inferenceDataset,
           produceRequestId: response.data.produceRequestId,
           target: this.target
         };

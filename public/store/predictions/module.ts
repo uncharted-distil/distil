@@ -65,9 +65,9 @@ export const getters = {
 
 // Typed actions
 export const actions = {
-  // training / target
+  // input inference data
   fetchTrainingSummaries: dispatch(moduleActions.fetchTrainingSummaries),
-  fetchTargetSummary: dispatch(moduleActions.fetchTargetSummary),
+
   // result
   fetchIncludedPredictionTableData: dispatch(
     moduleActions.fetchIncludedPredictionTableData
@@ -78,7 +78,6 @@ export const actions = {
   fetchPredictionTableData: dispatch(moduleActions.fetchPredictionTableData),
   // predicted
   fetchPredictedSummary: dispatch(moduleActions.fetchPredictionSummary),
-  fetchPredictedSummaries: dispatch(moduleActions.fetchPredictionSummaries),
 
   // forecast
   fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries)
@@ -86,11 +85,9 @@ export const actions = {
 
 // Typed mutations
 export const mutations = {
-  // training / target
+  // training
   clearTrainingSummaries: commit(moduleMutations.clearTrainingSummaries),
-  clearTargetSummary: commit(moduleMutations.clearTargetSummary),
   updateTrainingSummary: commit(moduleMutations.updateTrainingSummary),
-  updateTargetSummary: commit(moduleMutations.updateTargetSummary),
   removeTrainingSummary: commit(moduleMutations.removeTrainingSummary),
   // result
   setIncludedPredictionTableData: commit(
@@ -100,7 +97,8 @@ export const mutations = {
     moduleMutations.setExcludedPredictionTableData
   ),
   // predicted
-  updatePredictedSummaries: commit(moduleMutations.updatePredictedSummaries),
+  clearPredictedSummary: commit(moduleMutations.clearPredictedSummary),
+  updatePredictedSummary: commit(moduleMutations.updatePredictedSummary),
   // forecasts
   updatePredictedTimeseries: commit(moduleMutations.updatePredictedTimeseries),
   updatePredictedForecast: commit(moduleMutations.updatePredictedForecast)

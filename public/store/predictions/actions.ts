@@ -170,91 +170,13 @@ export const actions = {
       });
   },
 
-  fetchTargetSummary(
-    context: PredictionContext,
-    args: {
-      dataset: string;
-      target: string;
-      solutionId: string;
-      highlight: Highlight;
-      varMode: SummaryMode;
-    }
-  ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.target) {
-      console.warn("`variable` argument is missing");
-      return null;
-    }
-    if (!args.solutionId) {
-      console.warn("`solutionId` argument is missing");
-      return null;
-    }
-    const solution = getSolutionById(
-      context.rootState.solutionModule,
-      args.solutionId
-    );
-    if (!solution.resultId) {
-      // no results ready to pull
-      return null;
-    }
-
-    const key = args.target;
-    const label = args.target;
-    const dataset = args.dataset;
-
-    if (!context.state.targetSummary) {
-      // fetch the target var so we can pull the description out
-      const targetVar = dataGetters.getVariablesMap(store)[args.target];
-      mutations.updateTargetSummary(
-        context,
-        createPendingSummary(
-          key,
-          label,
-          targetVar.colDescription,
-          dataset,
-          args.solutionId
-        )
-      );
-    }
-
-    let filterParams = {
-      highlight: null,
-      variables: [],
-      filters: []
-    };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-    return axios
-      .post(
-        `/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}/${args.varMode}`,
-        filterParams
-      )
-      .then(response => {
-        const summary = response.data.summary;
-        return fetchSummaryExemplars(args.dataset, args.target, summary).then(
-          () => {
-            mutations.updateTargetSummary(context, summary);
-          }
-        );
-      })
-      .catch(error => {
-        console.error(error);
-        mutations.updateTargetSummary(
-          context,
-          createErrorSummary(key, label, dataset, error)
-        );
-      });
-  },
-
   fetchIncludedPredictionTableData(
     context: PredictionContext,
     args: {
       solutionId: string;
       dataset: string;
       highlight: Highlight;
-      produceRequestId: string;
+      resultId: string;
     }
   ) {
     const solution = getSolutionById(
@@ -277,7 +199,7 @@ export const actions = {
       .post(
         `distil/prediction-results/${args.dataset}/${encodeURIComponent(
           args.solutionId
-        )}/${encodeURIComponent(args.produceRequestId)}`,
+        )}/${encodeURIComponent(args.resultId)}`,
         filterParams
       )
       .then(response => {
@@ -358,7 +280,7 @@ export const actions = {
         dataset: args.dataset,
         solutionId: args.solutionId,
         highlight: args.highlight,
-        produceRequestId: args.produceRequestId
+        resultId: args.produceRequestId
       }),
       actions.fetchExcludedPredictionTableData(context, {
         dataset: args.dataset,
@@ -423,43 +345,9 @@ export const actions = {
       key,
       label,
       predictionGetters.getPredictionSummaries(context),
-      mutations.updatePredictedSummaries,
+      mutations.updatePredictedSummary,
       filterParams,
       args.varMode
-    );
-  },
-
-  // fetches result summaries for a given solution create request
-  fetchPredictionSummaries(
-    context: PredictionContext,
-    args: {
-      dataset: string;
-      target: string;
-      requestIds: string[];
-      highlight: Highlight;
-      varModes: Map<string, SummaryMode>;
-    }
-  ) {
-    if (!args.requestIds) {
-      console.warn("`requestIds` argument is missing");
-      return null;
-    }
-    const solutions = getSolutionsByRequestIds(
-      context.rootState.solutionModule,
-      args.requestIds
-    );
-    return Promise.all(
-      solutions.map(solution => {
-        return actions.fetchPredictionSummary(context, {
-          dataset: args.dataset,
-          target: args.target,
-          solutionId: solution.solutionId,
-          highlight: args.highlight,
-          varMode: args.varModes.has(args.target)
-            ? args.varModes.get(args.target)
-            : SummaryMode.Default
-        });
-      })
     );
   },
 

@@ -424,7 +424,6 @@ export const actions = {
 
   fetchPredictionsData(context: ViewContext) {
     // clear previous state
-    predictionMutations.clearTargetSummary(store);
     predictionMutations.clearTrainingSummaries(store);
     predictionMutations.setIncludedPredictionTableData(store, null);
     predictionMutations.setExcludedPredictionTableData(store, null);
@@ -448,14 +447,12 @@ export const actions = {
 
   updatePrediction(context: ViewContext) {
     // clear previous state
-    resultMutations.clearCorrectnessSummaries(store);
     predictionMutations.setIncludedPredictionTableData(store, null);
     predictionMutations.setExcludedPredictionTableData(store, null);
 
     // fetch new state
-    const dataset = context.getters.getRouteDataset;
+    const inferenceDataset = context.getters.getRouteInferenceDataset;
     const target = context.getters.getRouteTargetVariable;
-    const requestIds = context.getters.getRelevantSolutionRequestIds;
     const solutionId = context.getters.getRouteSolutionId;
     const trainingVariables =
       context.getters.getActiveSolutionTrainingVariables;
@@ -463,31 +460,24 @@ export const actions = {
     const produceRequestId = context.getters.getRouteProduceRequestId;
     const varModes = context.getters.getDecodedVarModes;
     predictionActions.fetchPredictionTableData(store, {
-      dataset: dataset,
+      dataset: inferenceDataset,
       solutionId: solutionId,
       highlight: highlight,
       produceRequestId: produceRequestId
     });
-    predictionActions.fetchTargetSummary(store, {
-      dataset: dataset,
-      target: target,
-      solutionId: solutionId,
-      highlight: highlight,
-      varMode: varModes.has(target) ? varModes.get(target) : SummaryMode.Default
-    });
     predictionActions.fetchTrainingSummaries(store, {
-      dataset: dataset,
+      dataset: inferenceDataset,
       training: trainingVariables,
       solutionId: solutionId,
       highlight: highlight,
       varModes: varModes
     });
-    predictionActions.fetchPredictedSummaries(store, {
-      dataset: dataset,
+    predictionActions.fetchPredictedSummary(store, {
+      dataset: inferenceDataset,
       target: target,
-      requestIds: requestIds,
+      solutionId: solutionId,
       highlight: highlight,
-      varModes: varModes
+      varMode: SummaryMode.Default
     });
   }
 };
