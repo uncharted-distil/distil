@@ -85,6 +85,7 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 		}
 
 		var data []byte
+		datasetImported := false
 		if targetType == "timeseries" {
 			// passed in params will be start and step count
 			params, err := getPostParameters(r)
@@ -103,24 +104,22 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 				return
 			}
 
-			data, err = createTimeseriesFromRequest(dataStorage, datasetES, startStr, stepCount)
+			datasetImported, data, err = createTimeseriesFromRequest(dataStorage, datasetES, startStr, stepCount)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable to create timeseries datat"))
 				return
 			}
 			log.Infof("created timeseries data to use for predictions for dataset %s solution %s", dataset, fittedSolutionID)
 		} else if targetType == "image" {
-			params, err := getPostParameters(r)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			// type cant be a post param since the upload is the actual data
+			queryValues := r.URL.Query()
+			imageType := queryValues["image"]
+			if len(imageType) == 0 {
+				handleError(w, errors.Errorf("no image type specified"))
 				return
 			}
-			imageType, ok := json.String(params, "image-type")
-			if !ok {
-				handleError(w, errors.Errorf("Unable to parse image type parameter"))
-				return
-			}
-			data, err = createImageFromRequest(data, dataset, outputPath, imageType, ingestConfig)
+
+			datasetImported, data, err = createImageFromRequest(data, dataset, outputPath, imageType[0], ingestConfig)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable to create image dataset from request"))
 				return
@@ -149,7 +148,14 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 			return
 		}
 
-		res, err := task.Predict(meta, dataset, sr.SolutionID, fittedSolutionID, data, outputPath, config.ESDatasetsIndex, getTarget(req), metaStorage, dataStorage, solutionStorage, ingestConfig)
+		predictParams := &task.PredictParams{
+			Meta:            meta,
+			DatasetImported: datasetImported,
+			Target:          getTarget(req),
+		}
+
+		//res, err := task.Predict(meta, dataset, sr.SolutionID, fittedSolutionID, data, outputPath, config.ESDatasetsIndex, getTarget(req), metaStorage, dataStorage, solutionStorage, datasetImported, ingestConfig)
+		res, err := task.Predict(predictParams)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to generate predictions"))
 			return
@@ -174,19 +180,23 @@ func getTarget(request *api.Request) string {
 	return ""
 }
 
-func createImageFromRequest(data []byte, dataset string, outputPath string, imageType string, ingestConfig *task.IngestTaskConfig) ([]byte, error) {
+func createImageFromRequest(data []byte, dataset string, outputPath string, imageType string, ingestConfig *task.IngestTaskConfig) (bool, []byte, error) {
 	// raw request is zip file of image dataset that needs to be imported
 	formattedPath, err := uploadImageDataset(dataset, outputPath, ingestConfig, data, imageType)
 	if err != nil {
-		return nil, err
+		return false, nil, err
 	}
 	formattedPath = path.Join(formattedPath, "tables", "learningData.csv")
 
 	// once imported, read the csv file as the data to use for the inference
-	return ioutil.ReadFile(formattedPath)
+	datasetData, err := ioutil.ReadFile(formattedPath)
+	if err != nil {
+		return false, nil, err
+	}
+	return true, datasetData, nil
 }
 
-func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dataset, startStr string, stepCount int) ([]byte, error) {
+func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dataset, startStr string, stepCount int) (bool, []byte, error) {
 	// need to create timeseries based on start time and step count
 	var groupingVar *model.Variable
 	for _, v := range datasetES.Variables {
@@ -211,7 +221,7 @@ func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dat
 	for _, vID := range groupingVar.Grouping.SubIDs {
 		vals, err := dataStorage.FetchRawDistinctValues(datasetES.ID, datasetES.StorageName, vID)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to fetch distinct values for '%s' from data storage", vID)
+			return false, nil, errors.Wrapf(err, "unable to fetch distinct values for '%s' from data storage", vID)
 		}
 		idValues[vID] = vals
 	}
@@ -219,7 +229,7 @@ func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dat
 	// get the step duration
 	timestampValues, err := dataStorage.FetchRawDistinctValues(datasetES.ID, datasetES.StorageName, timestampCol)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to fetch distinct timestamp values from data storage")
+		return false, nil, errors.Wrapf(err, "unable to fetch distinct timestamp values from data storage")
 	}
 
 	// generate timestamps to use for prediction based on type of timestamp
@@ -229,13 +239,18 @@ func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dat
 	} else if model.IsNumerical(timestampVar.Type) {
 		timestampPredictionValues, err = generateIntValues(timestampValues, startStr, stepCount)
 	} else {
-		return nil, errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", timestampVar.Name, timestampVar.Type)
+		return false, nil, errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", timestampVar.Name, timestampVar.Type)
 	}
 	if err != nil {
-		return nil, err
+		return false, nil, err
 	}
 
-	return createTimeseriesData(idValues, timestampCol, timestampPredictionValues)
+	timeseriesData, err := createTimeseriesData(idValues, timestampCol, timestampPredictionValues)
+	if err != nil {
+		return false, nil, err
+	}
+
+	return false, timeseriesData, nil
 }
 
 func createTimeseriesData(seriesFields map[string][]string, timestampFieldName string, timestampPredictionValues []string) ([]byte, error) {
