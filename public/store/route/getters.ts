@@ -387,5 +387,14 @@ export const getters = {
       );
     });
     return modeMap;
+  },
+
+  // Fetches the dataset used for inference from the route
+  getRouteInferenceDataset(state: Route, getters: any): string {
+    const dataset = state.query.inferenceDataset as string;
+    if (!dataset) {
+      return null;
+    }
+    return dataset;
   }
 };

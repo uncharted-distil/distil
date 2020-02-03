@@ -11,20 +11,12 @@ export const mutations = {
     state.trainingSummaries = [];
   },
 
-  clearTargetSummary(state: PredictionState) {
-    state.targetSummary = null;
-  },
-
   updateTrainingSummary(state: PredictionState, summary: VariableSummary) {
     updateSummaries(summary, state.trainingSummaries);
   },
 
   removeTrainingSummary(state: PredictionState, summary: VariableSummary) {
     removeSummary(summary, state.trainingSummaries);
-  },
-
-  updateTargetSummary(state: PredictionState, summary: VariableSummary) {
-    state.targetSummary = summary;
   },
 
   // sets the current Prediction data into the store
@@ -44,9 +36,12 @@ export const mutations = {
   },
 
   // predicted
-
-  updatePredictedSummaries(state: PredictionState, summary: VariableSummary) {
+  updatePredictedSummary(state: PredictionState, summary: VariableSummary) {
     updateSummaries(summary, state.predictedSummaries);
+  },
+
+  clearPredictedSummary(state: PredictionState) {
+    state.predictedSummaries = [];
   },
 
   // forecast

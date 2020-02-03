@@ -33,6 +33,7 @@ export interface RouteArgs {
   task?: string;
   produceRequestId?: string;
   varModes?: string;
+  inferenceDataset?: string;
 
   // we currently don't have a way to add these to the interface
   //
@@ -143,7 +144,9 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
   if (!_.isUndefined(args.varModes)) {
     query.varModes = args.varModes;
   }
-
+  if (!_.isUndefined(args.inferenceDataset)) {
+    query.inferenceDataset = args.inferenceDataset;
+  }
   if (args[JOINED_VARS_INSTANCE_PAGE]) {
     query[JOINED_VARS_INSTANCE_PAGE] = args[JOINED_VARS_INSTANCE_PAGE];
   }

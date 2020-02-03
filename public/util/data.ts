@@ -412,7 +412,6 @@ export function fetchPredictionResultSummary(
 ): Promise<any> {
   const dataset = solution.dataset;
   const solutionId = solution.solutionId;
-  const resultId = solution.resultId;
 
   const exists = _.find(
     resultSummaries,
@@ -435,7 +434,7 @@ export function fetchPredictionResultSummary(
   // return promise
   return axios
     .post(
-      `${endpoint}/${resultId}/${varMode}`,
+      `${endpoint}/${solution.resultId}/${varMode}`,
       filterParams ? filterParams : {}
     )
     .then(response => {

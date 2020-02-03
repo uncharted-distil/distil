@@ -3,7 +3,7 @@
     <div
       class="request-group-container"
       :key="request.requestId"
-      v-for="(request, index) in requestGroups"
+      v-for="request in requestGroups"
     >
       <p class="nav-link font-weight-bold">
         Search <sup>{{ getRequestIndex(request.requestId) }}</sup>
@@ -83,7 +83,16 @@ export default Vue.extend({
   },
 
   props: {
-    regression: Boolean as () => boolean
+    // display results in regression vs. classification mode
+    isRegression: {
+      type: Boolean as () => boolean,
+      default: () => false
+    },
+    // display correctness information / scores
+    showError: {
+      type: Boolean as () => boolean,
+      default: () => true
+    }
   },
 
   computed: {
@@ -100,13 +109,14 @@ export default Vue.extend({
     },
 
     residualSummaries(): VariableSummary[] {
-      return this.regression || routeGetters.getRouteTask(this.$store)
+      return this.showError &&
+        (this.isRegression || routeGetters.getRouteTask(this.$store))
         ? resultsGetters.getResidualsSummaries(this.$store)
         : [];
     },
 
     correctnessSummaries(): VariableSummary[] {
-      return !this.regression
+      return this.showError && !this.isRegression
         ? resultsGetters.getCorrectnessSummaries(this.$store)
         : [];
     },
@@ -139,12 +149,13 @@ export default Vue.extend({
               correctnessSummaries,
               summary => summary.solutionId === solutionId
             );
+            const scores = this.showError ? solution.scores : [];
             return {
               requestId: requestId,
               solutionId: solutionId,
               groupName: solution.feature,
               timestamp: moment(solution.timestamp).format("YYYY/MM/DD"),
-              scores: solution.scores,
+              scores: scores,
               targetSummary: this.resultTargetSummary,
               predictedSummary: predictedSummary,
               residualsSummary: residualSummary,

@@ -1,8 +1,8 @@
 <template>
   <div>
-    <b-button block variant="primary" v-b-modal.upload-modal
-      >{{buttonText}}</b-button
-    >
+    <b-button block variant="primary" v-b-modal.upload-modal>{{
+      buttonText
+    }}</b-button>
 
     <!-- Modal Component -->
     <b-modal
@@ -41,15 +41,15 @@ export default Vue.extend({
   },
 
   props: {
-    uploadType: String as ()=> string,
-    solutionId: String as ()=> string
+    uploadType: String as () => string,
+    solutionId: String as () => string
   },
 
   computed: {
     buttonText(): string {
       switch (this.uploadType) {
         case PREDICTION_UPLOAD:
-          return "Import Inference Data";
+          return "Apply Model";
         case DATASET_UPLOAD:
         default:
           return "Import File";
@@ -93,7 +93,7 @@ export default Vue.extend({
           datasetID: this.datasetID,
           file: this.file,
           type: this.uploadType,
-          solutionId: this.solutionId,
+          solutionId: this.solutionId
         })
         .catch(err => {
           uploadError = err;
