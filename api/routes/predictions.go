@@ -149,12 +149,21 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 		}
 
 		predictParams := &task.PredictParams{
-			Meta:            meta,
-			DatasetImported: datasetImported,
-			Target:          getTarget(req),
+			Meta:             meta,
+			Dataset:          dataset,
+			SolutionID:       sr.SolutionID,
+			FittedSolutionID: fittedSolutionID,
+			CSVData:          data,
+			OutputPath:       outputPath,
+			Index:            config.ESDatasetsIndex,
+			Target:           getTarget(req),
+			MetaStorage:      metaStorage,
+			DataStorage:      dataStorage,
+			SolutionStorage:  solutionStorage,
+			DatasetImported:  datasetImported,
+			Config:           ingestConfig,
 		}
 
-		//res, err := task.Predict(meta, dataset, sr.SolutionID, fittedSolutionID, data, outputPath, config.ESDatasetsIndex, getTarget(req), metaStorage, dataStorage, solutionStorage, datasetImported, ingestConfig)
 		res, err := task.Predict(predictParams)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to generate predictions"))

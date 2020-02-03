@@ -53,54 +53,64 @@ type PredictParams struct {
 // Predict processes input data to generate predictions.
 func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	log.Infof("generating predictions for fitted solution ID %s", params.FittedSolutionID)
-	// match the source dataset
-	csvDataAugmented, err := augmentPredictionDataset(params.CSVData, params.Meta.DataResources[0].Variables)
-	if err != nil {
-		return nil, err
-	}
-
-	// create the dataset to be used for predictions
-	datasetPath, err := CreateDataset(params.Dataset, csvDataAugmented, params.OutputPath, api.DatasetTypeInference, params.Config)
-	if err != nil {
-		return nil, err
-	}
-	log.Infof("created dataset for new data")
-
-	// read the header of the new dataset to get the field names
-	// if they dont match the original, then cant use the same pipeline
-	rawDataPath := path.Join(datasetPath, compute.D3MDataFolder, compute.D3MLearningData)
-	rawCSVData, err := util.ReadCSVFile(rawDataPath, false)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse header result")
-	}
-	rawHeader := rawCSVData[0]
-	for i, f := range rawHeader {
-		// TODO: may have to check the name rather than display name
-		// TODO: col index not necessarily the same as index and thats what needs checking
-		if params.Meta.DataResources[0].Variables[i].DisplayName != f {
-			return nil, errors.Errorf("variables in new prediction file do not match variables in original dataset")
-		}
-	}
-	log.Infof("dataset fields match original dataset fields")
-
-	// update the dataset doc to reflect original types
 	sourceDatasetID := params.Meta.ID
-	params.Meta.ID = params.Dataset
-	params.Meta.StorageName = model.NormalizeDatasetID(params.Dataset)
-	params.Meta.DatasetFolder = path.Base(datasetPath)
-	schemaPath := path.Join(datasetPath, compute.D3MDataSchema)
-	err = metadata.WriteSchema(params.Meta, schemaPath, true)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to update dataset doc")
-	}
-	log.Infof("wrote out schema doc for new dataset")
+	datasetPath := ""
+	schemaPath := ""
+	var err error
 
-	// ingest the dataset but without running simon, duke, etc.
-	_, err = Ingest(schemaPath, schemaPath, params.MetaStorage, params.Index, params.Dataset, metadata.Contrib, nil, params.Config, false)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to ingest ranked data")
+	// if the dataset was already imported, then just produce on it
+	if params.DatasetImported {
+		datasetPath = params.OutputPath
+		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
+	} else {
+		// match the source dataset
+		csvDataAugmented, err := augmentPredictionDataset(params.CSVData, params.Meta.DataResources[0].Variables)
+		if err != nil {
+			return nil, err
+		}
+
+		// create the dataset to be used for predictions
+		datasetPath, err := CreateDataset(params.Dataset, csvDataAugmented, params.OutputPath, api.DatasetTypeInference, params.Config)
+		if err != nil {
+			return nil, err
+		}
+		log.Infof("created dataset for new data")
+
+		// read the header of the new dataset to get the field names
+		// if they dont match the original, then cant use the same pipeline
+		rawDataPath := path.Join(datasetPath, compute.D3MDataFolder, compute.D3MLearningData)
+		rawCSVData, err := util.ReadCSVFile(rawDataPath, false)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to parse header result")
+		}
+		rawHeader := rawCSVData[0]
+		for i, f := range rawHeader {
+			// TODO: may have to check the name rather than display name
+			// TODO: col index not necessarily the same as index and thats what needs checking
+			if params.Meta.DataResources[0].Variables[i].DisplayName != f {
+				return nil, errors.Errorf("variables in new prediction file do not match variables in original dataset")
+			}
+		}
+		log.Infof("dataset fields match original dataset fields")
+
+		// update the dataset doc to reflect original types
+		params.Meta.ID = params.Dataset
+		params.Meta.StorageName = model.NormalizeDatasetID(params.Dataset)
+		params.Meta.DatasetFolder = path.Base(datasetPath)
+		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
+		err = metadata.WriteSchema(params.Meta, schemaPath, true)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to update dataset doc")
+		}
+		log.Infof("wrote out schema doc for new dataset")
+
+		// ingest the dataset but without running simon, duke, etc.
+		_, err = Ingest(schemaPath, schemaPath, params.MetaStorage, params.Index, params.Dataset, metadata.Contrib, nil, params.Config, false)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to ingest ranked data")
+		}
+		log.Infof("finished ingesting the dataset")
 	}
-	log.Infof("finished ingesting the dataset")
 
 	// the dataset id needs to match the original dataset id for TA2 to be able to use the model
 	params.Meta.ID = sourceDatasetID
