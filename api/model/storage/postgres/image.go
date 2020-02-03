@@ -101,18 +101,21 @@ func (f *ImageField) featureVarName(varName string) string {
 
 func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket) ([]string, error) {
 
+	//TODO: SINCE WE DISABLED IMAGE FEATURE PRIMITIVES, USE A CONSTANT!!!!
 	var imageFiles []string
 
-	for _, bucket := range categoryBuckets {
+	for range categoryBuckets {
 
-		prefixedVarName := f.featureVarName(f.Key)
+		//prefixedVarName := f.featureVarName(f.Key)
 
 		// pull sample row containing bucket
-		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" ~ $1 LIMIT 1;",
-			f.Key, f.DatasetStorageName, prefixedVarName)
+		//query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" ~ $1 LIMIT 1;",
+		//	f.Key, f.DatasetStorageName, prefixedVarName)
+		query := fmt.Sprintf("SELECT \"%s\" FROM %s LIMIT 1;",
+			f.Key, f.DatasetStorageName)
 
 		// execute the postgres query
-		rows, err := f.Storage.client.Query(query, bucket.Key)
+		rows, err := f.Storage.client.Query(query)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
 		}
@@ -137,7 +140,10 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
 
 	prefixedVarName := f.featureVarName(f.Key)
-	fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ','))", prefixedVarName)
+
+	//TODO: SINCE WE DISABLED IMAGE FEATURE PRIMITIVES, USE A CONSTANT!!!!
+	//fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ','))", prefixedVarName)
+	fieldSelect := "'IMAGE'"
 
 	where := ""
 	if len(wheres) > 0 {
@@ -145,8 +151,10 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 	}
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(%s) AS count FROM %s %s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
-		fieldSelect, prefixedVarName, f.Count, f.DatasetStorageName, where, fieldSelect, fieldSelect, catResultLimit)
+	//query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(%s) AS count FROM %s %s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
+	//	fieldSelect, prefixedVarName, f.Count, f.DatasetStorageName, where, fieldSelect, fieldSelect, catResultLimit)
+	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(%s) AS count FROM %s %s ORDER BY count desc LIMIT %d;",
+		fieldSelect, prefixedVarName, f.Count, f.DatasetStorageName, where, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
