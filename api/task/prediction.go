@@ -53,7 +53,8 @@ type PredictParams struct {
 // Predict processes input data to generate predictions.
 func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	log.Infof("generating predictions for fitted solution ID %s", params.FittedSolutionID)
-	sourceDatasetID := params.Meta.ID
+	meta := params.Meta
+	sourceDatasetID := meta.ID
 	datasetPath := ""
 	schemaPath := ""
 	var err error
@@ -64,7 +65,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
 	} else {
 		// match the source dataset
-		csvDataAugmented, err := augmentPredictionDataset(params.CSVData, params.Meta.DataResources[0].Variables)
+		csvDataAugmented, err := augmentPredictionDataset(params.CSVData, meta.DataResources[0].Variables)
 		if err != nil {
 			return nil, err
 		}
@@ -87,18 +88,18 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		for i, f := range rawHeader {
 			// TODO: may have to check the name rather than display name
 			// TODO: col index not necessarily the same as index and thats what needs checking
-			if params.Meta.DataResources[0].Variables[i].DisplayName != f {
+			if meta.DataResources[0].Variables[i].DisplayName != f {
 				return nil, errors.Errorf("variables in new prediction file do not match variables in original dataset")
 			}
 		}
 		log.Infof("dataset fields match original dataset fields")
 
 		// update the dataset doc to reflect original types
-		params.Meta.ID = params.Dataset
-		params.Meta.StorageName = model.NormalizeDatasetID(params.Dataset)
-		params.Meta.DatasetFolder = path.Base(datasetPath)
+		meta.ID = params.Dataset
+		meta.StorageName = model.NormalizeDatasetID(params.Dataset)
+		meta.DatasetFolder = path.Base(datasetPath)
 		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
-		err = metadata.WriteSchema(params.Meta, schemaPath, true)
+		err = metadata.WriteSchema(meta, schemaPath, true)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update dataset doc")
 		}
@@ -113,8 +114,8 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	}
 
 	// the dataset id needs to match the original dataset id for TA2 to be able to use the model
-	params.Meta.ID = sourceDatasetID
-	err = metadata.WriteSchema(params.Meta, schemaPath, true)
+	meta.ID = sourceDatasetID
+	err = metadata.WriteSchema(meta, schemaPath, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to update dataset doc")
 	}
@@ -152,7 +153,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	// In the case of grouped variables, the target will not be variable itself, but one of its property
 	// values.  We need to fetch using the original dataset, since it will have grouped variable info,
 	// and then resolve the actual target.
-	targetVar, err := params.MetaStorage.FetchVariable(params.Meta.ID, params.Target)
+	targetVar, err := params.MetaStorage.FetchVariable(meta.ID, params.Target)
 	if err != nil {
 		return nil, err
 	}
