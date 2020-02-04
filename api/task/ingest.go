@@ -245,8 +245,8 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 }
 
 // Ingest the metadata to ES and the data to Postgres.
-func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string,
-	dataset string, source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig, checkMatch bool, fallbackMerged bool) (string, error) {
+func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string, dataset string,
+	source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig, checkMatch bool, fallbackMerged bool) (string, error) {
 	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, nil, config, true, fallbackMerged)
 	if err != nil {
 		return "", err
@@ -295,13 +295,13 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// ingest the metadata
-	_, err = IngestMetadata(originalSchemaFile, schemaFile, index, dataset, source, origins, config, true)
+	_, err = IngestMetadata(originalSchemaFile, schemaFile, index, dataset, source, origins, config, true, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
 
 	// ingest the data
-	err = IngestPostgres(originalSchemaFile, schemaFile, index, dataset, source, config, false, false)
+	err = IngestPostgres(originalSchemaFile, schemaFile, index, dataset, source, config, false, false, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
@@ -310,9 +310,9 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 }
 
 // IngestMetadata ingests the data to ES.
-func IngestMetadata(originalSchemaFile string, schemaFile string, index string, dataset string,
-	source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig, verifyMetadata bool) (string, error) {
-	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, origins, config, verifyMetadata, true)
+func IngestMetadata(originalSchemaFile string, schemaFile string, index string, dataset string, source metadata.DatasetSource,
+	origins []*model.DatasetOrigin, config *IngestTaskConfig, verifyMetadata bool, fallbackMerged bool) (string, error) {
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, origins, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
@@ -347,9 +347,9 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, index string, 
 }
 
 // IngestPostgres ingests a dataset to PG storage.
-func IngestPostgres(originalSchemaFile string, schemaFile string, index string, dataset string,
-	source metadata.DatasetSource, config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool) error {
-	datasetDir, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, nil, config, verifyMetadata, true)
+func IngestPostgres(originalSchemaFile string, schemaFile string, index string, dataset string, source metadata.DatasetSource,
+	config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool, fallbackMerged bool) error {
+	datasetDir, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, nil, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return err
 	}
