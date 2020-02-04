@@ -96,9 +96,15 @@ func CreateImageDataset(dataset string, data []byte, imageType string, outputPat
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 	dataPath := path.Join(outputDatasetPath, dataFilePath)
 
+	// clear the output dataset path location
+	err := util.RemoveContents(outputDatasetPath)
+	if err != nil {
+		log.Warnf("unable to remove contents: %v", err)
+	}
+
 	// store and expand raw data
 	zipFilename := path.Join(outputDatasetPath, "raw.zip")
-	err := util.WriteFileWithDirs(zipFilename, data, os.ModePerm)
+	err = util.WriteFileWithDirs(zipFilename, data, os.ModePerm)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to write raw image data archive")
 	}
@@ -137,7 +143,7 @@ func CreateImageDataset(dataset string, data []byte, imageType string, outputPat
 		// copy images while building the csv data
 		log.Infof("building csv data")
 		for _, imageFile := range imageFiles {
-			imageFilename := path.Base(imageFile.Name())
+			imageFilename := imageFile.Name()
 			if path.Ext(imageFilename) != fmt.Sprintf(".%s", imageType) {
 				imageFilename = fmt.Sprintf("%s.%s", imageFilename, imageType)
 			}
@@ -148,7 +154,7 @@ func CreateImageDataset(dataset string, data []byte, imageType string, outputPat
 				return "", err
 			}
 
-			csvData = append(csvData, []string{fmt.Sprintf("%d", len(csvData)-1), imageFilename, label})
+			csvData = append(csvData, []string{fmt.Sprintf("%d", len(csvData)-1), path.Base(imageFilename), label})
 		}
 	}
 
@@ -161,7 +167,7 @@ func CreateImageDataset(dataset string, data []byte, imageType string, outputPat
 	dr.ResPath = dataFilePath
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName,
-			model.D3MIndexFieldName, model.IndexType, model.IndexType, "D3M index",
+			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
 			[]string{model.RoleIndex}, model.VarRoleIndex, nil, dr.Variables, false),
 	)
 	dr.Variables = append(dr.Variables,

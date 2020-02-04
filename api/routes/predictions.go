@@ -86,6 +86,7 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 
 		var data []byte
 		datasetImported := false
+		datasetIngested := false
 		if targetType == "timeseries" {
 			// passed in params will be start and step count
 			params, err := getPostParameters(r)
@@ -116,6 +117,13 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 			imageType := queryValues["image"]
 			if len(imageType) == 0 {
 				handleError(w, errors.Errorf("no image type specified"))
+				return
+			}
+
+			// read the file from the request
+			data, err = receiveFile(r)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to receive file from request"))
 				return
 			}
 
@@ -160,6 +168,7 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 			MetaStorage:      metaStorage,
 			DataStorage:      dataStorage,
 			SolutionStorage:  solutionStorage,
+			DatasetIngested:  datasetIngested,
 			DatasetImported:  datasetImported,
 			Config:           ingestConfig,
 		}

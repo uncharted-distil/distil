@@ -315,7 +315,7 @@ func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta 
 	}
 	// check that we have only one hit (should only ever be one matching dataset)
 	if len(res.Hits.Hits) != 1 {
-		return nil, errors.New("elasticSearch variable fetch query len(hits) != 1")
+		return nil, errors.Errorf("elasticSearch variable fetch query len(hits) != 1 (len == %d) for dataset '%s'", len(res.Hits.Hits), datasetID)
 	}
 	// extract output into JSON ready structs
 	return s.parseVariables(res.Hits.Hits[0], includeIndex, includeMeta)

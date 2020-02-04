@@ -46,6 +46,7 @@ type PredictParams struct {
 	MetaStorage      api.MetadataStorage
 	DataStorage      api.DataStorage
 	SolutionStorage  api.SolutionStorage
+	DatasetIngested  bool
 	DatasetImported  bool
 	Config           *IngestTaskConfig
 }
@@ -61,8 +62,9 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	// if the dataset was already imported, then just produce on it
 	if params.DatasetImported {
-		datasetPath = params.OutputPath
+		datasetPath = path.Join(params.OutputPath, params.Dataset)
 		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
+		log.Infof("dataset already imported at %s", datasetPath)
 	} else {
 		// match the source dataset
 		csvDataAugmented, err := augmentPredictionDataset(params.CSVData, meta.DataResources[0].Variables)
@@ -71,7 +73,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		}
 
 		// create the dataset to be used for predictions
-		datasetPath, err := CreateDataset(params.Dataset, csvDataAugmented, params.OutputPath, api.DatasetTypeInference, params.Config)
+		datasetPath, err = CreateDataset(params.Dataset, csvDataAugmented, params.OutputPath, api.DatasetTypeInference, params.Config)
 		if err != nil {
 			return nil, err
 		}
@@ -104,9 +106,11 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 			return nil, errors.Wrap(err, "unable to update dataset doc")
 		}
 		log.Infof("wrote out schema doc for new dataset")
+	}
 
+	if !params.DatasetIngested {
 		// ingest the dataset but without running simon, duke, etc.
-		_, err = Ingest(schemaPath, schemaPath, params.MetaStorage, params.Index, params.Dataset, metadata.Contrib, nil, params.Config, false)
+		_, err = Ingest(schemaPath, schemaPath, params.MetaStorage, params.Index, params.Dataset, metadata.Contrib, nil, params.Config, false, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to ingest ranked data")
 		}
