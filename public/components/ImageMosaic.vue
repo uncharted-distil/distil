@@ -8,7 +8,7 @@
               v-if="fieldKey === imageField"
               class="image-preview"
               :row="item"
-              :image-url="item[fieldKey]"
+              :image-url="item[fieldKey].value"
               :width="imageWidth"
               :height="imageHeight"
               :on-click="onImageClick"
@@ -17,7 +17,7 @@
               v-if="fieldKey !== imageField && fieldKey[0] !== '_'"
               class="image-label"
             >
-              {{ item[fieldKey] }}
+              {{ item[fieldKey].value }}
             </div>
           </template>
         </div>

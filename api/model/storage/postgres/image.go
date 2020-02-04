@@ -193,18 +193,26 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
+	//TODO: SINCE WE DISABLED IMAGE FEATURE PRIMITIVES, USE A CONSTANT!!!!
 	prefixedVarName := f.featureVarName(f.Key)
 
 	// Get count by category.
+	//query := fmt.Sprintf(
+	//`SELECT data."%s", COUNT(%s) AS count
+	// FROM %s data INNER JOIN %s result ON data."%s" = result.index
+	// WHERE result.result_id = $%d %s
+	// GROUP BY "%s"
+	// ORDER BY count desc, "%s" LIMIT %d;`,
+	//prefixedVarName, f.Count, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
+	//model.D3MIndexFieldName, len(params), where, prefixedVarName,
+	//prefixedVarName, catResultLimit)
 	query := fmt.Sprintf(
-		`SELECT data."%s", COUNT(%s) AS count
-		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
-		 WHERE result.result_id = $%d %s
-		 GROUP BY "%s"
-		 ORDER BY count desc, "%s" LIMIT %d;`,
+		`SELECT 'IMAGE' as "%s", COUNT(%s) AS count
+			 FROM %s data INNER JOIN %s result ON data."%s" = result.index
+			 WHERE result.result_id = $%d %s
+			 ORDER BY count desc LIMIT %d;`,
 		prefixedVarName, f.Count, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
-		model.D3MIndexFieldName, len(params), where, prefixedVarName,
-		prefixedVarName, catResultLimit)
+		model.D3MIndexFieldName, len(params), where, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
