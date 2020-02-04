@@ -19,7 +19,6 @@ import (
 	"bytes"
 	"io"
 	"net/http"
-	"net/url"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -49,7 +48,13 @@ func UploadHandler(outputPath string, config *task.IngestTaskConfig) func(http.R
 		if typ == "table" {
 			formattedPath, err = uploadTableDataset(dataset, outputPath, config, data)
 		} else if typ == "image" {
-			formattedPath, err = uploadImageDataset(dataset, outputPath, config, data, queryValues)
+			imageType, ok := queryValues["image"]
+			if !ok {
+				handleError(w, errors.Errorf("unable to parse 'type' parameter"))
+				return
+			}
+
+			formattedPath, err = uploadImageDataset(dataset, outputPath, config, data, imageType[0])
 		} else if typ == "" {
 			handleError(w, errors.Errorf("upload type parameter not specified"))
 			return
@@ -84,15 +89,10 @@ func uploadTableDataset(dataset string, outputPath string, config *task.IngestTa
 	return formattedPath, nil
 }
 
-func uploadImageDataset(dataset string, outputPath string, config *task.IngestTaskConfig, data []byte, params url.Values) (string, error) {
-
-	typ, ok := params["image"]
-	if !ok {
-		return "", errors.Errorf("unable to parse 'type' parameter")
-	}
+func uploadImageDataset(dataset string, outputPath string, config *task.IngestTaskConfig, data []byte, imageType string) (string, error) {
 
 	// create the raw dataset schema doc
-	formattedPath, err := task.CreateImageDataset(dataset, data, typ[0], outputPath, config)
+	formattedPath, err := task.CreateImageDataset(dataset, data, imageType, outputPath, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create dataset")
 	}
