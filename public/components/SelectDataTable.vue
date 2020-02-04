@@ -26,7 +26,7 @@
       >
         <image-preview
           :key="imageField"
-          :image-url="data.item[imageField]"
+          :image-url="data.item[imageField].value"
         ></image-preview>
       </template>
 
