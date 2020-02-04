@@ -175,6 +175,9 @@ export default Vue.extend({
 </script>
 
 <style>
+.facet-timeseries .facets-group .group-facet-container {
+  max-height: 150px !important;
+}
 .facet-timeseries .facets-root:first-child {
   margin-bottom: 1px;
 }
