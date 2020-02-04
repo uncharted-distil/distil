@@ -32,7 +32,7 @@
         @click="onSelectTarget"
         v-if="!isTask2"
         :active="isActive(SELECT_TARGET_ROUTE)"
-        :disabled="!hasSelectTargetView()"
+        :disabled="!hasView(SELECT_TARGET_ROUTE)"
         v-bind:class="{ active: isActive(SELECT_TARGET_ROUTE) }"
       >
         <i class="fa fa-angle-right nav-arrow"></i>
@@ -42,7 +42,7 @@
       <b-nav-item
         @click="onSelectData"
         :active="isActive(SELECT_TRAINING_ROUTE)"
-        :disabled="!hasSelectTrainingView()"
+        :disabled="!hasView(SELECT_TRAINING_ROUTE)"
         v-bind:class="{ active: isActive(SELECT_TRAINING_ROUTE) }"
       >
         <i class="fa fa-angle-right nav-arrow"></i>
@@ -62,7 +62,7 @@
       <b-nav-item
         @click="onResults"
         :active="isActive(RESULTS_ROUTE)"
-        :disabled="!hasResultView()"
+        :disabled="!hasView(RESULTS_ROUTE)"
         v-bind:class="{ active: isActive(RESULTS_ROUTE) }"
       >
         <i class="fa fa-angle-right nav-arrow"></i>
@@ -72,7 +72,7 @@
       <b-nav-item
         @click="onResults"
         :active="isActive(PREDICTION_ROUTE)"
-        :disabled="!hasPredictionView()"
+        :disabled="!hasView(PREDICTION_ROUTE)"
         v-bind:class="{ active: isActive(PREDICTION_ROUTE) }"
       >
         <i class="fa fa-angle-right nav-arrow"></i>
@@ -153,6 +153,16 @@ export default Vue.extend({
     },
     isJoinDatasets(): boolean {
       return this.joinDatasets.length === 2 || this.hasJoinDatasetView();
+    },
+    activeSteps(): string[] {
+      const steps = [
+        SELECT_TARGET_ROUTE,
+        SELECT_TRAINING_ROUTE,
+        RESULTS_ROUTE,
+        PREDICTION_ROUTE,
+      ]
+      const currentStep = steps.indexOf(this.$route.path)+1;
+      return steps.slice(0, currentStep);
     }
   },
 
@@ -178,21 +188,12 @@ export default Vue.extend({
     onResults() {
       gotoResults(this.$router);
     },
+    hasView (view: string): boolean {
+      return !!restoreView(view, this.dataset) && this.activeSteps.indexOf(view) > -1
+    },
     hasJoinDatasetView(): boolean {
       return !!restoreView(JOIN_DATASETS_ROUTE, this.joinDatasetsHash);
     },
-    hasSelectTargetView(): boolean {
-      return !!restoreView(SELECT_TARGET_ROUTE, this.dataset);
-    },
-    hasSelectTrainingView(): boolean {
-      return !!restoreView(SELECT_TRAINING_ROUTE, this.dataset);
-    },
-    hasResultView(): boolean {
-      return !!restoreView(RESULTS_ROUTE, this.dataset);
-    },
-    hasPredictionView(): boolean {
-      return !!restoreView(PREDICTION_ROUTE, this.dataset);
-    }
   }
 });
 </script>
