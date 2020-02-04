@@ -40,7 +40,7 @@ func NewDataset(id, name, description string, meta *model.Metadata) *Dataset {
 	}
 	// NOTE: Can only support data in a single data resource for now.
 	if meta != nil {
-		ds.Variables = meta.DataResources[0].Variables
+		ds.Variables = meta.GetMainDataResource().Variables
 	}
 
 	ds.ResetBatch()

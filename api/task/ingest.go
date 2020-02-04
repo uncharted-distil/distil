@@ -353,7 +353,8 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, index string, 
 	if err != nil {
 		return err
 	}
-	dataDir := path.Join(datasetDir, meta.DataResources[0].ResPath)
+	mainDR := meta.GetMainDataResource()
+	dataDir := path.Join(datasetDir, mainDR.ResPath)
 
 	// Connect to the database.
 	postgresConfig := &postgres.Config{
