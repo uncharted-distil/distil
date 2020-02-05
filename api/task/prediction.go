@@ -126,17 +126,26 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	target := params.Target
 	if params.Target.Grouping != nil && model.IsTimeSeries(params.Target.Type) {
+		log.Infof("target is a timeseries so need to extract the prediction target from the grouping")
 		target, err = params.MetaStorage.FetchVariable(meta.ID, params.Target.Grouping.Properties.YCol)
 		if err != nil {
 			return nil, err
 		}
 
 		// need to run the grouping compose to create the needed ID column
+		log.Infof("creating composed variables on inferrence dataset '%s'", params.Dataset)
 		err = CreateComposedVariable(params.MetaStorage, params.DataStorage, params.Dataset,
 			params.Target.Grouping.IDCol, params.Target.Grouping.IDCol, params.Target.Grouping.SubIDs)
 		if err != nil {
 			return nil, err
 		}
+
+		err = params.MetaStorage.AddGroupedVariable(params.Dataset, params.Target.Name, params.Target.DisplayName,
+			params.Target.Type, params.Target.DistilRole, *params.Target.Grouping)
+		if err != nil {
+			return nil, err
+		}
+		log.Infof("done creating compose variables")
 	}
 
 	// the dataset id needs to match the original dataset id for TA2 to be able to use the model

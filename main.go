@@ -273,7 +273,7 @@ func main() {
 	registerRoutePost(mux, "/distil/import/:datasetID/:source/:provenance", routes.ImportHandler(pgDataStorageCtor, datamartCtors, fileMetadataStorageCtor, esMetadataStorageCtor, ingestConfig))
 	registerRoutePost(mux, "/distil/delete/:dataset/:variable", routes.DeleteHandler(pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/results/:dataset/:solution-id", routes.ResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor, esMetadataStorageCtor))
-	registerRoutePost(mux, "/distil/prediction-results/:dataset/:solution-id/:produce-request-id", routes.PredictionResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/prediction-results/:dataset/:solution-id/:produce-request-id", routes.PredictionResultsHandler(pgSolutionStorageCtor, pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable/:invert/:mode", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid/:mode", routes.TrainingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/target-summary/:dataset/:target/:results-uuid/:mode", routes.TargetSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
