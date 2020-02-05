@@ -191,9 +191,19 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 		return nil, err
 	}
 	if xColVariable.Type == model.DateTimeType {
-		return s.parseDateTimeTimeseries(res)
+		response, err := s.parseDateTimeTimeseries(res)
+		if err != nil {
+			return nil, err
+		}
+		return removeDuplicates(response), nil
 	}
-	return s.parseTimeseries(res)
+
+	// sum duplicate timestamps
+	response, err := s.parseTimeseries(res)
+	if err != nil {
+		return nil, err
+	}
+	return removeDuplicates(response), nil
 }
 
 // FetchTimeseriesForecast fetches a timeseries.
@@ -235,9 +245,19 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 		return nil, err
 	}
 	if xColVariable.Type == model.DateTimeType {
-		return s.parseDateTimeTimeseries(res)
+		response, err := s.parseDateTimeTimeseries(res)
+		if err != nil {
+			return nil, err
+		}
+		return removeDuplicates(response), nil
 	}
-	return s.parseTimeseries(res)
+
+	// Sum duplicate timestamps
+	response, err := s.parseTimeseries(res)
+	if err != nil {
+		return nil, err
+	}
+	return removeDuplicates(response), nil
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
@@ -535,4 +555,47 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 	}
 	histogram.Exemplars = files
 	return histogram, nil
+}
+
+// Sums any duplicate timestamps encountered.  Assumes data is sorted.
+func removeDuplicates(timeseriesData [][]float64) [][]float64 {
+	cleanedData := [][]float64{}
+	currIdx := 0
+	for currIdx < len(timeseriesData)-1 {
+		timestamp := timeseriesData[currIdx][0]
+		nextTimestamp := timeseriesData[currIdx+1][0]
+
+		if timestamp != nextTimestamp {
+			count := timeseriesData[currIdx][1]
+			cleanedData = append(cleanedData, []float64{timestamp, count})
+			currIdx++
+		} else {
+			first := true
+			for timestamp == nextTimestamp {
+				count := timeseriesData[currIdx][1]
+				if first {
+					// add current until next doesn't match or next is out of bounds
+					cleanedData = append(cleanedData, []float64{timestamp, count})
+					first = false
+				} else {
+					cleanedData[len(cleanedData)-1][1] += count
+				}
+				currIdx++
+				if currIdx == len(timeseriesData)-1 {
+					break
+				}
+				timestamp = timeseriesData[currIdx][0]
+				nextTimestamp = timeseriesData[currIdx+1][0]
+			}
+			count := timeseriesData[currIdx][1]
+			cleanedData[len(cleanedData)-1][1] += count
+			currIdx++
+		}
+	}
+
+	// last element is different than second last
+	if currIdx == len(timeseriesData)-1 {
+		cleanedData = append(cleanedData, timeseriesData[currIdx])
+	}
+	return cleanedData
 }
