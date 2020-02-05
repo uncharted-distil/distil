@@ -519,10 +519,17 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	dataStorage api.DataStorage, initialSearchID string, initialSearchSolutionID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
 	datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
-	desc, err := client.GetSolutionDescription(context.Background(), initialSearchSolutionID)
-	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-		return
+	// need to wait until a valid description is returned before proceeding
+	var desc *pipeline.DescribeSolutionResponse
+	var err error
+	for wait := true; wait; {
+
+		desc, err = client.GetSolutionDescription(context.Background(), initialSearchSolutionID)
+		if err != nil {
+			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+			return
+		}
+		wait = desc == nil || desc.Pipeline == nil
 	}
 
 	// Need to create a new solution that has the explain output. This is the solution
