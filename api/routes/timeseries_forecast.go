@@ -31,6 +31,7 @@ type TimeseriesForecastResult struct {
 	Timeseries        [][]float64 `json:"timeseries"`
 	Forecast          [][]float64 `json:"forecast"`
 	ForecastTestRange []float64   `json:"forecastTestRange"`
+	IsDateTime        bool        `json:"isDateTime"`
 }
 
 // TimeseriesForecastHandler returns timeseries data.
@@ -93,12 +94,13 @@ func TimeseriesForecastHandler(dataCtor api.DataStorageCtor, solutionCtor api.So
 		}
 
 		// Recompute train/test split info for visualization purposes
-		split := compute.SplitTimeSeries(timeseries, compute.TimeSeriesTrainTestSplitThreshold)
+		split := compute.SplitTimeSeries(timeseries.Timeseries, compute.TimeSeriesTrainTestSplitThreshold)
 
 		err = handleJSON(w, TimeseriesForecastResult{
-			Timeseries:        timeseries,
-			Forecast:          forecast,
+			Timeseries:        timeseries.Timeseries,
+			Forecast:          forecast.Timeseries,
 			ForecastTestRange: []float64{split.SplitValue, split.EndValue},
+			IsDateTime:        timeseries.IsDateTime,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))

@@ -347,9 +347,13 @@ export const actions = {
           return null;
         }
         return axios
-          .post(`/distil/predict/${args.datasetID}/tabular/${args.solutionId}`, data, {
-            headers: { "Content-Type": "multipart/form-data" }
-          })
+          .post(
+            `/distil/predict/${args.datasetID}/tabular/${args.solutionId}`,
+            data,
+            {
+              headers: { "Content-Type": "multipart/form-data" }
+            }
+          )
           .then(response => {
             return response;
           });
@@ -1078,7 +1082,8 @@ export const actions = {
         mutations.updateTimeseries(context, {
           dataset: args.dataset,
           id: args.timeseriesID,
-          timeseries: response.data.timeseries
+          timeseries: response.data.timeseries,
+          isDateTime: response.data.isDateTime
         });
       })
       .catch(error => {

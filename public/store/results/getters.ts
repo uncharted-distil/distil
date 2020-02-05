@@ -5,7 +5,7 @@ import {
   TableRow,
   TableColumn
 } from "../dataset/index";
-import { ResultsState, Forecast } from "./index";
+import { ResultsState, Forecast, TimeSeries } from "./index";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
 import { Dictionary } from "../../util/dict";
 
@@ -100,9 +100,7 @@ export const getters = {
 
   // forecasts
 
-  getPredictedTimeseries(
-    state: ResultsState
-  ): Dictionary<Dictionary<number[][]>> {
+  getPredictedTimeseries(state: ResultsState): Dictionary<TimeSeries> {
     return state.timeseries;
   },
 

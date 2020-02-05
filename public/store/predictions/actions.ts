@@ -401,13 +401,15 @@ export const actions = {
         mutations.updatePredictedTimeseries(context, {
           solutionId: args.solutionId,
           id: args.timeseriesID,
-          timeseries: response.data.timeseries
+          timeseries: response.data.timeseries,
+          isDateTime: response.data.isDateTime
         });
         mutations.updatePredictedForecast(context, {
           solutionId: args.solutionId,
           id: args.timeseriesID,
           forecast: response.data.forecast,
-          forecastTestRange: response.data.forecastRange
+          forecastTestRange: response.data.forecastRange,
+          isDateTime: response.data.isDateTime
         });
       })
       .catch(error => {

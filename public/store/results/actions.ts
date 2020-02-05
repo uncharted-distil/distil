@@ -7,12 +7,7 @@ import {
   getSolutionsByRequestIds,
   getSolutionById
 } from "../../util/solutions";
-import {
-  Variable,
-  Highlight,
-  VariableSummary,
-  SummaryMode
-} from "../dataset/index";
+import { Variable, Highlight, SummaryMode } from "../dataset/index";
 import { mutations } from "./module";
 import { ResultsState } from "./index";
 import { addHighlightToFilterParams } from "../../util/highlights";
@@ -700,13 +695,15 @@ export const actions = {
         mutations.updatePredictedTimeseries(context, {
           solutionId: args.solutionId,
           id: args.timeseriesID,
-          timeseries: response.data.timeseries
+          timeseries: response.data.timeseries,
+          isDateTime: response.data.isDateTime
         });
         mutations.updatePredictedForecast(context, {
           solutionId: args.solutionId,
           id: args.timeseriesID,
           forecast: response.data.forecast,
-          forecastTestRange: response.data.forecastTestRange
+          forecastTestRange: response.data.forecastTestRange,
+          isDateTime: response.data.isDateTime
         });
       })
       .catch(error => {
