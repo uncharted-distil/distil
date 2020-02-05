@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -33,16 +34,22 @@ import (
 	log "github.com/unchartedsoftware/plog"
 )
 
+const (
+	// DefaultSeparator is the default separator to use when dealing with groupings.
+	DefaultSeparator = "_"
+)
+
 // PredictParams contains all parameters passed to the predict function.
 type PredictParams struct {
 	Meta             *model.Metadata
+	SourceDataset    *api.Dataset
 	Dataset          string
 	SolutionID       string
 	FittedSolutionID string
 	CSVData          []byte
 	OutputPath       string
 	Index            string
-	Target           string
+	Target           *model.Variable
 	MetaStorage      api.MetadataStorage
 	DataStorage      api.DataStorage
 	SolutionStorage  api.SolutionStorage
@@ -117,6 +124,30 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		log.Infof("finished ingesting the dataset")
 	}
 
+	target := params.Target
+	if params.Target.Grouping != nil && model.IsTimeSeries(params.Target.Type) {
+		log.Infof("target is a timeseries so need to extract the prediction target from the grouping")
+		target, err = params.MetaStorage.FetchVariable(meta.ID, params.Target.Grouping.Properties.YCol)
+		if err != nil {
+			return nil, err
+		}
+
+		// need to run the grouping compose to create the needed ID column
+		log.Infof("creating composed variables on inferrence dataset '%s'", params.Dataset)
+		err = CreateComposedVariable(params.MetaStorage, params.DataStorage, params.Dataset,
+			params.Target.Grouping.IDCol, params.Target.Grouping.IDCol, params.Target.Grouping.SubIDs)
+		if err != nil {
+			return nil, err
+		}
+
+		err = params.MetaStorage.AddGroupedVariable(params.Dataset, params.Target.Name, params.Target.DisplayName,
+			params.Target.Type, params.Target.DistilRole, *params.Target.Grouping)
+		if err != nil {
+			return nil, err
+		}
+		log.Infof("done creating compose variables")
+	}
+
 	// the dataset id needs to match the original dataset id for TA2 to be able to use the model
 	meta.ID = sourceDatasetID
 	err = metadata.WriteSchema(meta, schemaPath, true)
@@ -154,18 +185,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, err
 	}
 
-	// In the case of grouped variables, the target will not be variable itself, but one of its property
-	// values.  We need to fetch using the original dataset, since it will have grouped variable info,
-	// and then resolve the actual target.
-	targetVar, err := params.MetaStorage.FetchVariable(meta.ID, params.Target)
-	if err != nil {
-		return nil, err
-	}
-	if targetVar.Grouping != nil && model.IsTimeSeries(targetVar.Type) {
-		params.Target = targetVar.Grouping.Properties.YCol
-	}
-
-	err = params.DataStorage.PersistResult(params.Dataset, model.NormalizeDatasetID(params.Dataset), resultURIs[0], params.Target)
+	err = params.DataStorage.PersistResult(params.Dataset, model.NormalizeDatasetID(params.Dataset), resultURIs[0], target.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -262,4 +282,92 @@ func augmentPredictionDataset(csvData []byte, sourceVariables []*model.Variable)
 	log.Infof("done augmenting inference dataset")
 
 	return outputBytes.Bytes(), nil
+}
+
+// CreateComposedVariable creates a new variable to use as group id.
+func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.DataStorage,
+	dataset string, composedVarName string, composedVarDisplayName string, sourceVarNames []string) error {
+
+	// create the variable data store entry
+	datasetStorageName := model.NormalizeDatasetID(dataset)
+
+	varExists, err := metaStorage.DoesVariableExist(dataset, composedVarName)
+	if err != nil {
+		return err
+	}
+
+	if !varExists {
+		// create the variable metadata entry
+		err := metaStorage.AddVariable(dataset, composedVarName, composedVarDisplayName, model.StringType, model.VarDistilRoleGrouping)
+		if err != nil {
+			return err
+		}
+
+		err = dataStorage.AddVariable(dataset, datasetStorageName, composedVarName, model.StringType)
+		if err != nil {
+			return err
+		}
+	}
+
+	composedData := map[string]string{}
+	var filter *api.FilterParams
+	if len(sourceVarNames) > 0 {
+		// Fetch data using the source names as the filter
+		filter = &api.FilterParams{
+			Variables: sourceVarNames,
+		}
+	} else {
+		// No grouping column - just use the d3mIndex as we'll just stick some placeholder
+		// data in.
+		filter = &api.FilterParams{
+			Variables: []string{model.D3MIndexName},
+		}
+	}
+	rawData, err := dataStorage.FetchData(dataset, datasetStorageName, filter, false)
+	if err != nil {
+		return err
+	}
+
+	// Create a map of the retreived fields to column number.  Store d3mIndex since it needs to be directly referenced
+	// further along.
+	d3mIndexFieldindex := -1
+	colNameToIdx := make(map[string]int)
+	for i, c := range rawData.Columns {
+		if c.Label == model.D3MIndexName {
+			d3mIndexFieldindex = i
+		} else {
+			colNameToIdx[c.Label] = i
+		}
+	}
+
+	if len(sourceVarNames) > 0 {
+		// Loop over the fetched data, composing each column value into a single new column value using the
+		// separator.
+		for _, r := range rawData.Values {
+			// create the hash from the specified columns
+			composed := createComposedFields(r, sourceVarNames, colNameToIdx, DefaultSeparator)
+			composedData[fmt.Sprintf("%v", r[d3mIndexFieldindex].Value)] = composed
+		}
+	} else {
+		// Loop over the fetched d3mIndex values and set a placeholder value.
+		for _, r := range rawData.Values {
+			composedData[fmt.Sprintf("%v", r[d3mIndexFieldindex].Value)] = "__timeseries"
+		}
+	}
+
+	// Save the new column
+	err = dataStorage.UpdateVariableBatch(datasetStorageName, composedVarName, composedData)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createComposedFields(data []*api.FilteredDataValue, fields []string, mappedFields map[string]int, separator string) string {
+	dataToJoin := make([]string, len(fields))
+	for i, field := range fields {
+		dataToJoin[i] = fmt.Sprintf("%v", data[mappedFields[field]].Value)
+	}
+	return strings.Join(dataToJoin, separator)
 }
