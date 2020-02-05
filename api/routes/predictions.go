@@ -156,6 +156,17 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 			return
 		}
 
+		target := getTarget(req)
+
+		// In the case of grouped variables, the target will not be variable itself, but one of its property
+		// values.  We need to fetch using the original dataset, since it will have grouped variable info,
+		// and then resolve the actual target.
+		targetVar, err := metaStorage.FetchVariable(meta.ID, target)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to get target var from metadata storage"))
+			return
+		}
+
 		predictParams := &task.PredictParams{
 			Meta:             meta,
 			Dataset:          dataset,
@@ -164,7 +175,7 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 			CSVData:          data,
 			OutputPath:       outputPath,
 			Index:            config.ESDatasetsIndex,
-			Target:           getTarget(req),
+			Target:           targetVar,
 			MetaStorage:      metaStorage,
 			DataStorage:      dataStorage,
 			SolutionStorage:  solutionStorage,
