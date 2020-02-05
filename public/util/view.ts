@@ -16,9 +16,6 @@ export function saveView(args: { view: string; key: string; route: Location }) {
 }
 
 export function restoreView(view: string, key: string): Location {
-  let res = localStorage.get(`${view}:${key}`);
-  if (!res) {
-    res = localStorage.get(`${view}:${LAST_STATE}`);
-  }
+  const res = localStorage.get(`${view}:${key}`);
   return res || null;
 }
