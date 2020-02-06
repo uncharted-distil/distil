@@ -1,5 +1,8 @@
 <template>
-  <div class="sparkline-preview-container" v-observe-visibility="visibilityChanged">
+  <div
+    class="sparkline-preview-container"
+    v-observe-visibility="visibilityChanged"
+  >
     <sparkline-svg
       :timeseries-extrema="timeseriesExtrema"
       :timeseries="timeseries"
@@ -21,6 +24,7 @@
         :highlightRange="highlightRange"
         :xAxisTitle="xCol"
         :yAxisTitle="yCol"
+        :xAxisDateTime="isDateTime"
         v-if="zoomSparkline"
       ></sparkline-chart>
     </b-modal>
@@ -42,6 +46,7 @@ import {
   getters as resultsGetters,
   actions as resultsActions
 } from "../store/results/module";
+import * as types from "../util/types";
 
 export default Vue.extend({
   name: "sparkline-preview",
@@ -69,21 +74,20 @@ export default Vue.extend({
   },
   computed: {
     timeseries(): number[][] {
-      //
       if (this.solutionId) {
         const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
         const solutions = timeseries[this.solutionId];
         if (!solutions) {
           return null;
         }
-        return solutions[this.timeseriesId];
+        return solutions.timeseriesData[this.timeseriesId];
       } else {
         const timeseries = datasetGetters.getTimeseries(this.$store);
         const datasets = timeseries[this.dataset];
         if (!datasets) {
           return null;
         }
-        return datasets[this.timeseriesId];
+        return datasets.timeseriesData[this.timeseriesId];
       }
     },
     forecast(): number[][] {
@@ -124,6 +128,23 @@ export default Vue.extend({
           max: d3.max(this.timeseries, d => d[1])
         }
       };
+    },
+    isDateTime(): boolean {
+      if (this.solutionId) {
+        const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
+        const solutions = timeseries[this.solutionId];
+        if (!solutions) {
+          return null;
+        }
+        return solutions.isDateTime[this.timeseriesId];
+      } else {
+        const timeseries = datasetGetters.getTimeseries(this.$store);
+        const datasets = timeseries[this.dataset];
+        if (!datasets) {
+          return null;
+        }
+        return datasets.isDateTime[this.timeseriesId];
+      }
     }
   },
   methods: {

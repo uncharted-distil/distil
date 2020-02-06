@@ -6,7 +6,8 @@ import {
   VariableSummary,
   TableData,
   TableRow,
-  TableColumn
+  TableColumn,
+  TimeSeries
 } from "./index";
 import { Dictionary } from "../../util/dict";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
@@ -74,7 +75,7 @@ export const getters = {
     return state.timeseriesExtrema;
   },
 
-  getTimeseries(state: DatasetState): Dictionary<Dictionary<number[][]>> {
+  getTimeseries(state: DatasetState): Dictionary<TimeSeries> {
     return state.timeseries;
   },
 

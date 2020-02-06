@@ -48,12 +48,29 @@ export const mutations = {
 
   updatePredictedTimeseries(
     state: PredictionState,
-    args: { solutionId: string; id: string; timeseries: number[][] }
+    args: {
+      solutionId: string;
+      id: string;
+      timeseries: number[][];
+      isDateTime: boolean;
+    }
   ) {
     if (!state.timeseries[args.solutionId]) {
       Vue.set(state.timeseries, args.solutionId, {});
     }
-    Vue.set(state.timeseries[args.solutionId], args.id, args.timeseries);
+    if (!state.timeseries[args.solutionId].timeseriesData) {
+      Vue.set(state.timeseries[args.solutionId], "timeseriesData", {});
+    }
+    Vue.set(
+      state.timeseries[args.solutionId].timeseriesData,
+      args.id,
+      args.timeseries
+    );
+    Vue.set(
+      state.timeseries[args.solutionId].isDateTime,
+      args.id,
+      args.isDateTime
+    );
   },
 
   updatePredictedForecast(
@@ -63,6 +80,7 @@ export const mutations = {
       id: string;
       forecast: number[][];
       forecastTestRange: number[];
+      isDateTime: boolean;
     }
   ) {
     if (!state.forecasts[args.solutionId]) {
@@ -74,6 +92,9 @@ export const mutations = {
     if (!state.forecasts[args.solutionId].forecastRange) {
       Vue.set(state.forecasts[args.solutionId], "forecastRange", {});
     }
+    if (!state.forecasts[args.solutionId].isDateTime) {
+      Vue.set(state.forecasts[args.solutionId], "isDateTime", {});
+    }
     Vue.set(
       state.forecasts[args.solutionId].forecastData,
       args.id,
@@ -83,6 +104,11 @@ export const mutations = {
       state.forecasts[args.solutionId].forecastRange,
       args.id,
       args.forecastTestRange
+    );
+    Vue.set(
+      state.forecasts[args.solutionId].isDateTime,
+      args.id,
+      args.isDateTime
     );
   }
 };

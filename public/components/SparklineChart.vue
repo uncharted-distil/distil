@@ -35,6 +35,9 @@ export default Vue.extend({
     },
     yAxisTitle: {
       type: String as () => string
+    },
+    xAxisDateTime: {
+      type: Boolean as () => boolean
     }
   },
   data() {
@@ -93,10 +96,20 @@ export default Vue.extend({
       this.svg.selectAll("*").remove();
     },
     injectAxes() {
-      this.xScale = d3
-        .scaleLinear()
-        .domain([this.minX, this.maxX])
-        .range([0, this.width]);
+      const minX = this.xAxisDateTime ? new Date(this.minX) : this.minX;
+      const maxX = this.xAxisDateTime ? new Date(this.maxX) : this.maxX;
+
+      if (this.xAxisDateTime) {
+        this.xScale = d3
+          .scaleTime()
+          .domain([minX, maxX])
+          .range([0, this.width]);
+      } else {
+        this.xScale = d3
+          .scaleLinear()
+          .domain([minX, maxX])
+          .range([0, this.width]);
+      }
 
       this.yScale = d3
         .scaleLinear()

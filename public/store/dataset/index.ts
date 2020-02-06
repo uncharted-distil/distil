@@ -288,13 +288,18 @@ export type DatasetPendingRequest =
   | JoinDatasetImportPendingRequest
   | ClusteringPendingRequest;
 
+export interface TimeSeries {
+  timeseriesData: Dictionary<number[][]>;
+  isDateTime: Dictionary<boolean>;
+}
+
 export interface DatasetState {
   datasets: Dataset[];
   filteredDatasets: Dataset[];
   variables: Variable[];
   variableRankings: Dictionary<Dictionary<number>>;
   files: Dictionary<any>;
-  timeseries: Dictionary<Dictionary<number[][]>>;
+  timeseries: Dictionary<TimeSeries>;
   timeseriesExtrema: Dictionary<TimeseriesExtrema>;
   joinTableData: Dictionary<TableData>;
   includedSet: WorkingSet;

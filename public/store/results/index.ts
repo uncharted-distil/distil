@@ -1,9 +1,15 @@
 import { Dictionary } from "../../util/dict";
 import { VariableSummary, Extrema, TableData } from "../dataset/index";
 
+export interface TimeSeries {
+  timeseriesData: Dictionary<number[][]>;
+  isDateTime: Dictionary<boolean>;
+}
+
 export interface Forecast {
   forecastData: Dictionary<number[][]>;
   forecastRange: Dictionary<number[]>;
+  isDateTime: Dictionary<boolean>;
 }
 
 export interface ResultsState {
@@ -21,7 +27,7 @@ export interface ResultsState {
   // correctness summary (correct vs. incorrect) for predicted categorical data
   correctnessSummaries: VariableSummary[];
   // timeseries by solutionID, timeseriesID
-  timeseries: Dictionary<Dictionary<number[][]>>;
+  timeseries: Dictionary<TimeSeries>;
   // forecasts by solution ID
   forecasts: Dictionary<Forecast>;
   // result IDs

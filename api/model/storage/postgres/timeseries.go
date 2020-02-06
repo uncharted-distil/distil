@@ -94,7 +94,7 @@ func (s *Storage) parseDateTimeTimeseries(rows *pgx.Rows) ([][]float64, error) {
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
-			points = append(points, []float64{float64(time.Unix()), value})
+			points = append(points, []float64{float64(time.Unix() * 1000), value})
 		}
 	}
 
@@ -162,7 +162,7 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 }
 
 // FetchTimeseries fetches a timeseries.
-func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *api.FilterParams, invert bool) ([][]float64, error) {
+func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *api.FilterParams, invert bool) (*api.TimeseriesData, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -190,24 +190,33 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	if err != nil {
 		return nil, err
 	}
+	var response [][]float64
+	var dateTime bool
 	if xColVariable.Type == model.DateTimeType {
-		response, err := s.parseDateTimeTimeseries(res)
+		response, err = s.parseDateTimeTimeseries(res)
+		dateTime = true
 		if err != nil {
 			return nil, err
 		}
-		return removeDuplicates(response), nil
+	} else {
+		// sum duplicate timestamps
+		response, err = s.parseTimeseries(res)
+		if err != nil {
+			return nil, err
+		}
 	}
-
-	// sum duplicate timestamps
-	response, err := s.parseTimeseries(res)
+	response, err = removeDuplicates(response), nil
 	if err != nil {
 		return nil, err
 	}
-	return removeDuplicates(response), nil
+	return &api.TimeseriesData{
+		Timeseries: response,
+		IsDateTime: dateTime,
+	}, nil
 }
 
 // FetchTimeseriesForecast fetches a timeseries.
-func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultURI string, filterParams *api.FilterParams) ([][]float64, error) {
+func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultURI string, filterParams *api.FilterParams) (*api.TimeseriesData, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -244,20 +253,26 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 	if err != nil {
 		return nil, err
 	}
+	var response [][]float64
+	var dateTime bool
 	if xColVariable.Type == model.DateTimeType {
-		response, err := s.parseDateTimeTimeseries(res)
+		response, err = s.parseDateTimeTimeseries(res)
+		dateTime = true
 		if err != nil {
 			return nil, err
 		}
-		return removeDuplicates(response), nil
+	} else {
+		response, err = s.parseTimeseries(res)
+		if err != nil {
+			return nil, err
+		}
 	}
-
 	// Sum duplicate timestamps
-	response, err := s.parseTimeseries(res)
-	if err != nil {
-		return nil, err
-	}
-	return removeDuplicates(response), nil
+	response = removeDuplicates(response)
+	return &api.TimeseriesData{
+		Timeseries: response,
+		IsDateTime: dateTime,
+	}, nil
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.

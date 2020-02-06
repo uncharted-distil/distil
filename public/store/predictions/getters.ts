@@ -1,6 +1,5 @@
 import {
   VariableSummary,
-  Extrema,
   TableData,
   TableRow,
   TableColumn
@@ -8,7 +7,7 @@ import {
 import { PredictionState } from "./index";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import { Forecast } from "../results";
+import { Forecast, TimeSeries } from "../results";
 
 export const getters = {
   // results
@@ -77,9 +76,7 @@ export const getters = {
 
   // forecasts
 
-  getPredictionTimeseries(
-    state: PredictionState
-  ): Dictionary<Dictionary<number[][]>> {
+  getPredictionTimeseries(state: PredictionState): Dictionary<TimeSeries> {
     return state.timeseries;
   },
 

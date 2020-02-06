@@ -21,6 +21,12 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 )
 
+// TimeseriesData represents the result of a timeseries request.
+type TimeseriesData struct {
+	Timeseries [][]float64
+	IsDateTime bool
+}
+
 // DataStorageCtor represents a client constructor to instantiate a data
 // storage client.
 type DataStorageCtor func() (DataStorage, error)
@@ -41,8 +47,8 @@ type DataStorage interface {
 	FetchResidualsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
 	FetchExtrema(storageName string, variable *model.Variable) (*Extrema, error)
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
-	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams, invert bool) ([][]float64, error)
-	FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultUUID string, filterParams *FilterParams) ([][]float64, error)
+	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams, invert bool) (*TimeseriesData, error)
+	FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultUUID string, filterParams *FilterParams) (*TimeseriesData, error)
 	FetchCategoryCounts(storageName string, variable *model.Variable) (map[string]int, error)
 	FetchSolutionFeatureWeights(dataset string, resultURI string, d3mIndex int64) (*SolutionFeatureWeight, error)
 

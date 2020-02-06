@@ -241,12 +241,32 @@ export const mutations = {
 
   updateTimeseries(
     state: DatasetState,
-    args: { dataset: string; id: string; timeseries: number[][] }
+    args: {
+      dataset: string;
+      id: string;
+      timeseries: number[][];
+      isDateTime: boolean;
+    }
   ) {
     if (!state.timeseries[args.dataset]) {
       Vue.set(state.timeseries, args.dataset, {});
     }
-    Vue.set(state.timeseries[args.dataset], args.id, args.timeseries);
+    if (!state.timeseries[args.dataset].timeseriesData) {
+      Vue.set(state.timeseries[args.dataset], "timeseriesData", {});
+    }
+    if (!state.timeseries[args.dataset].isDateTime) {
+      Vue.set(state.timeseries[args.dataset], "isDateTime", {});
+    }
+    Vue.set(
+      state.timeseries[args.dataset].timeseriesData,
+      args.id,
+      args.timeseries
+    );
+    Vue.set(
+      state.timeseries[args.dataset].isDateTime,
+      args.id,
+      args.isDateTime
+    );
 
     const minX = _.minBy(args.timeseries, d => d[0])[0];
     const maxX = _.maxBy(args.timeseries, d => d[0])[0];

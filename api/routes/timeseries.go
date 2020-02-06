@@ -28,6 +28,7 @@ import (
 // TimeseriesResult represents the result of a timeseries request.
 type TimeseriesResult struct {
 	Timeseries [][]float64 `json:"timeseries"`
+	IsDateTime bool        `json:"isDateTime"`
 }
 
 // TimeseriesHandler returns timeseries data.
@@ -75,7 +76,8 @@ func TimeseriesHandler(ctorStorage api.DataStorageCtor) func(http.ResponseWriter
 		}
 
 		err = handleJSON(w, TimeseriesResult{
-			Timeseries: timeseries,
+			Timeseries: timeseries.Timeseries,
+			IsDateTime: timeseries.IsDateTime,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))

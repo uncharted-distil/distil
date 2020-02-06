@@ -121,6 +121,8 @@ type ISIMaterializedDataset struct {
 	Data    string `json:"data"`
 }
 
+// ISISearchResultColumnNames is the name of struct that Phil did not comment
+// and it caused linting warnings that were bothering me so now I've fixed it.
 type ISISearchResultColumnNames struct {
 	LeftNames  []string `json:"left_names"`
 	RightNames []string `json:"right_names"`
