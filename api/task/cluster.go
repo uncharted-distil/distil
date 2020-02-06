@@ -125,7 +125,7 @@ func ClusterDataset(datasetSource metadata.DatasetSource, schemaFile string, ind
 }
 
 // Cluster will cluster the dataset fields using a primitive.
-func Cluster(datasetInputDir string, dataset string, variable string, features []*model.Variable) ([]*ClusterPoint, error) {
+func Cluster(datasetInputDir string, dataset string, variable string, features []*model.Variable) (bool, []*ClusterPoint, error) {
 	var clusteringVar *model.Variable
 	for _, v := range features {
 		if v.Name == variable {
@@ -135,32 +135,34 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 
 	var step *pipeline.PipelineDescription
 	var err error
+	addMeta := false
 	if model.IsImage(clusteringVar.Type) {
 		step, err = description.CreateImageClusteringPipeline("business", "basic image clustering", []*model.Variable{clusteringVar})
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to create image clustering pipeline")
+			return false, nil, errors.Wrap(err, "unable to create image clustering pipeline")
 		}
 	} else {
 		step, err = description.CreateSlothPipeline("time series clustering",
 			"k-means time series clustering", "", "", features)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to create sloth pipeline")
+			return false, nil, errors.Wrap(err, "unable to create sloth pipeline")
 		}
+		addMeta = true
 	}
 
 	datasetURI, err := submitPipeline([]string{datasetInputDir}, step)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to run pipeline primitive")
+		return false, nil, errors.Wrap(err, "unable to run pipeline primitive")
 	}
 
 	// parse primitive response (new field contains output)
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse pipeline primitive result")
+		return false, nil, errors.Wrap(err, "unable to parse pipeline primitive result")
 	}
 	header, err := castTypeArray(res[0])
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to parse Sloth pipeline header")
+		return false, nil, errors.Wrap(err, "unable to parse Sloth pipeline header")
 	}
 
 	// find the field with the feature output
@@ -180,5 +182,5 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 		}
 	}
 
-	return clusteredData, nil
+	return addMeta, clusteredData, nil
 }
