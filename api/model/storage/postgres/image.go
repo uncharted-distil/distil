@@ -152,6 +152,10 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
 	if err != nil {
+		// if the clustering column doesnt exist, return an empty response
+		if strings.Contains(err.Error(), "column \"_cluster_") {
+			return f.parseHistogram(nil)
+		}
 		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
 	}
 	if res != nil {
