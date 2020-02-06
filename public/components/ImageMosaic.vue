@@ -13,13 +13,33 @@
               :height="imageHeight"
               :on-click="onImageClick"
             ></image-preview>
-            <div
-              v-if="fieldKey !== imageField && fieldKey[0] !== '_'"
-              class="image-label"
-            >
-              {{ item[fieldKey].value }}
-            </div>
           </template>
+          <div v-if="showError" class="image-label-container">
+            <template v-for="(fieldInfo, fieldKey) in fields">
+              <div v-if="fieldKey == targetField" class="image-label">
+                {{ item[fieldKey].value }}
+              </div>
+              <div
+                v-if="fieldKey == predictedField && correct(item)"
+                class="image-label-correct"
+              >
+                {{ item[fieldKey].value }}
+              </div>
+              <div
+                v-if="fieldKey == predictedField && !correct(item)"
+                class="image-label-incorrect"
+              >
+                {{ item[fieldKey].value }}
+              </div>
+            </template>
+          </div>
+          <div v-if="!showError" class="image-label-container">
+            <template v-for="(fieldInfo, fieldKey) in fields">
+              <div v-if="fieldKey == targetField" class="image-label">
+                {{ item[fieldKey].value }}
+              </div>
+            </template>
+          </div>
         </div>
       </template>
     </template>
@@ -31,11 +51,13 @@ import _ from "lodash";
 import Vue from "vue";
 import ImagePreview from "./ImagePreview";
 import { getters as datasetGetters } from "../store/dataset/module";
+import { getters as solutionGetters } from "../store/solutions/module";
 import {
   RowSelection,
   TableColumn,
   TableRow,
-  D3M_INDEX_FIELD
+  D3M_INDEX_FIELD,
+  Row
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
@@ -46,6 +68,7 @@ import {
   updateTableRowSelection
 } from "../util/row";
 import { IMAGE_TYPE } from "../util/types";
+import { Solution } from "../store/solutions";
 
 export default Vue.extend({
   name: "image-mosaic",
@@ -105,6 +128,22 @@ export default Vue.extend({
       })
         .filter(field => field.type === IMAGE_TYPE)
         .map(field => field.key);
+    },
+
+    solution(): Solution {
+      return solutionGetters.getActiveSolution(this.$store);
+    },
+
+    targetField(): string {
+      return routeGetters.getRouteTargetVariable(this.$store);
+    },
+
+    predictedField(): string {
+      return this.solution ? `${this.solution.predictedKey}` : "";
+    },
+
+    showError(): boolean {
+      return this.predictedField !== "";
     }
   },
 
@@ -125,6 +164,10 @@ export default Vue.extend({
           event.row[D3M_INDEX_FIELD]
         );
       }
+    },
+
+    correct(item: any): boolean {
+      return item[this.targetField].value === item[this.predictedField].value;
     }
   }
 });
@@ -148,13 +191,34 @@ export default Vue.extend({
   position: relative;
 }
 
-.image-label {
+.image-label-container {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 1;
+}
+
+.image-label {
+  float: right;
   background-color: #424242;
   color: #fff;
   padding: 0 4px;
-  z-index: 1;
+  margin: 0, 2px;
+}
+
+.image-label-correct {
+  float: right;
+  background-color: #03c003;
+  color: #fff;
+  padding: 0 4px;
+  margin: 0, 2px;
+}
+
+.image-label-incorrect {
+  float: right;
+  background-color: #be0000;
+  color: #fff;
+  padding: 0 4px;
+  margin: 0, 2px;
 }
 </style>
