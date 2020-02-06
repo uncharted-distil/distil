@@ -530,6 +530,9 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			return
 		}
 		wait = desc == nil || desc.Pipeline == nil
+		if wait {
+			time.Sleep(10 * time.Second)
+		}
 	}
 
 	// Need to create a new solution that has the explain output. This is the solution
