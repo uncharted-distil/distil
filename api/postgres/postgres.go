@@ -448,8 +448,9 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 	for _, variable := range ds.Variables {
 		varsTable = fmt.Sprintf("%s\n\"%s\" TEXT,", varsTable, variable.Name)
 		varsExplain = fmt.Sprintf("%s\n\"%s\" DOUBLE PRECISION,", varsExplain, variable.Name)
-		varsView = fmt.Sprintf("%s\nCOALESCE(CAST(\"%s\" AS %s), %v) AS \"%s\",",
-			varsView, variable.Name, model.MapD3MTypeToPostgresType(variable.Type), model.DefaultPostgresValueFromD3MType(variable.Type), variable.Name)
+		varsView = fmt.Sprintf("%s\nCOALESCE(CAST(%s AS %s), %v) AS \"%s\",",
+			varsView, model.PostgresValueForFieldType(variable.Type, variable.Name),
+			model.MapD3MTypeToPostgresType(variable.Type), model.DefaultPostgresValueFromD3MType(variable.Type), variable.Name)
 	}
 	if len(varsTable) > 0 {
 		varsTable = varsTable[:len(varsTable)-1]

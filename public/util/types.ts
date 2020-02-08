@@ -12,7 +12,7 @@ export const GEOCODED_LON_PREFIX = "_lon_";
 export const DATETIME_UNIX_ADJUSTMENT = 1000;
 
 // Action Types Reuse In Similar Places to Data Types
-// These are listed in the facet menu too, but Aren't Posted Back to 
+// These are listed in the facet menu too, but Aren't Posted Back to
 // as type change, but can take actions to change a compound facet
 // back to its components, or change aspects of the facet's display
 
@@ -27,6 +27,7 @@ export const ADDRESS_TYPE = "address";
 export const INDEX_TYPE = "index";
 export const INTEGER_TYPE = "integer";
 export const REAL_TYPE = "real";
+export const REAL_LIST_TYPE = "realList";
 export const REAL_VECTOR_TYPE = "realVector";
 export const BOOL_TYPE = "boolean";
 export const DATE_TIME_TYPE = "dateTime";
@@ -53,6 +54,7 @@ export const GEOCOORDINATE_TYPE = "geocoordinate";
 const TYPES_TO_LABELS: Dictionary<string> = {
   [INTEGER_TYPE]: "Integer",
   [REAL_TYPE]: "Decimal",
+  [REAL_LIST_TYPE]: "List",
   [REAL_VECTOR_TYPE]: "Vector",
   [LATITUDE_TYPE]: "Latitude",
   [LONGITUDE_TYPE]: "Longitude",
@@ -90,6 +92,7 @@ const COMPUTED_VAR_PREFIXES = [
 
 const FLOATING_POINT_TYPES = [
   REAL_TYPE,
+  REAL_LIST_TYPE,
   REAL_VECTOR_TYPE,
   LATITUDE_TYPE,
   LONGITUDE_TYPE
@@ -181,6 +184,7 @@ const INTEGER_SUGGESTIONS = [
 const DECIMAL_SUGGESTIONS = [
   INTEGER_TYPE,
   REAL_TYPE,
+  REAL_LIST_TYPE,
   REAL_VECTOR_TYPE,
   LATITUDE_TYPE,
   LONGITUDE_TYPE
@@ -189,6 +193,7 @@ const DECIMAL_SUGGESTIONS = [
 const COORDINATE_SUGGESTIONS = [
   INTEGER_TYPE,
   REAL_TYPE,
+  REAL_LIST_TYPE,
   REAL_VECTOR_TYPE,
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
@@ -215,6 +220,7 @@ const EQUIV_TYPES = {
   [INTEGER_TYPE]: [INTEGER_TYPE],
   [REAL_TYPE]: [REAL_TYPE],
   [REAL_VECTOR_TYPE]: [REAL_VECTOR_TYPE],
+  [REAL_LIST_TYPE]: [REAL_LIST_TYPE],
   [LATITUDE_TYPE]: [LATITUDE_TYPE],
   [LONGITUDE_TYPE]: [LONGITUDE_TYPE],
   [TEXT_TYPE]: [TEXT_TYPE],
@@ -241,6 +247,7 @@ const TYPE_TO_SUGGESTIONS = {
   [INDEX_TYPE]: TEXT_SUGGESTIONS,
   [INTEGER_TYPE]: INTEGER_SUGGESTIONS,
   [REAL_TYPE]: DECIMAL_SUGGESTIONS,
+  [REAL_LIST_TYPE]: DECIMAL_SUGGESTIONS,
   [REAL_VECTOR_TYPE]: DECIMAL_SUGGESTIONS,
   [BOOL_TYPE]: BOOL_SUGGESTIONS,
   [DATE_TIME_TYPE]: TIME_SUGGESTIONS,
@@ -328,6 +335,7 @@ export function formatValue(colValue: any, colType: string): any {
     case LONGITUDE_TYPE:
     case LATITUDE_TYPE:
       return colValue.toFixed(6);
+    case REAL_LIST_TYPE:
     case REAL_VECTOR_TYPE:
       return colValue;
   }
