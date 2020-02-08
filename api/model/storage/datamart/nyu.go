@@ -210,7 +210,8 @@ func materializeNYUDataset(datamart *Storage, id string, uri string) (string, er
 	// get the compressed dataset
 	requestURI := fmt.Sprintf("%s/%s", getRESTFunction, id)
 	params := map[string]string{
-		"format": "d3m",
+		"format":         "d3m",
+		"format_version": "4.0.0",
 	}
 	data, err := datamart.client.Get(requestURI, params)
 	if err != nil {
