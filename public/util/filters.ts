@@ -58,6 +58,12 @@ export const FEATURE_FILTER = "feature";
 export const CLUSTER_FILTER = "cluster";
 
 /**
+ * Vector filter, omitting documents that have the specified vector value;
+ * @constant {string}
+ */
+export const VECTOR_FILTER = "vector";
+
+/**
  * Text filter, omitting documents that have the specified text value;
  * @constant {string}
  */

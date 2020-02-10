@@ -6,6 +6,7 @@ import {
   NUMERICAL_FILTER,
   BIVARIATE_FILTER,
   FEATURE_FILTER,
+  VECTOR_FILTER,
   TIMESERIES_FILTER,
   INCLUDE_FILTER
 } from "../util/filters";
@@ -18,7 +19,8 @@ import {
   addFeaturePrefix,
   isClusterType,
   addClusterPrefix,
-  isTimeType
+  isTimeType,
+  isCollectionType
 } from "../util/types";
 import _ from "lodash";
 import store from "../store/store";
@@ -83,6 +85,16 @@ export function createFilterFromHighlight(
     // ranges and handle it in the client.
     if (grouping && grouping.type === TIMESERIES_FILTER) {
       return null;
+    }
+
+    if (isCollectionType(type)) {
+      return {
+        key: key,
+        type: VECTOR_FILTER,
+        mode: mode,
+        min: highlight.value.from,
+        max: highlight.value.to
+      };
     }
 
     return {

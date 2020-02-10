@@ -132,6 +132,11 @@ const LOCATION_TYPES = [
   POSTAL_CODE_TYPE
 ];
 
+const COLLECTION_TYPES = [
+  REAL_VECTOR_TYPE,
+  REAL_LIST_TYPE
+];
+
 const TIME_TYPES = [DATE_TIME_TYPE, DATE_TIME_LOWER_TYPE, TIMESTAMP_TYPE];
 
 const TEXT_SIMPLE_TYPES = [
@@ -360,6 +365,10 @@ export function isTextType(type: string): boolean {
 
 export function isTimeType(type: string): boolean {
   return TIME_TYPES.indexOf(type) !== -1;
+}
+
+export function isCollectionType(type: string): boolean {
+  return COLLECTION_TYPES.indexOf(type) !== -1;
 }
 
 export function isLocationType(type: string): boolean {
