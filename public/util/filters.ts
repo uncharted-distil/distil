@@ -97,6 +97,7 @@ export interface Filter {
   maxX?: number;
   minY?: number;
   maxY?: number;
+  nestedType?: string;
   categories?: string[];
   d3mIndices?: string[];
 }

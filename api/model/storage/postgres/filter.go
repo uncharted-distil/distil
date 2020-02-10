@@ -126,7 +126,7 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, alia
 		if filter.NestedType == model.NumericalFilter {
 			nestedCast = "double precision"
 		}
-		where := fmt.Sprintf("cast(%s as []%s) >= $%d AND cast(%s as []%s) <= $%d", name, nestedCast, len(params)+1, name, nestedCast, len(params)+2)
+		where := fmt.Sprintf("cast(%s as %s[]) >= $%d AND cast(%s as %s[]) <= $%d", name, nestedCast, len(params)+1, name, nestedCast, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -210,7 +210,7 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, alia
 		if filter.NestedType == model.NumericalFilter {
 			nestedCast = "double precision"
 		}
-		where := fmt.Sprintf("cast(%s as []%s) >= $%d AND cast(%s as []%s) <= $%d", name, nestedCast, len(params)+1, name, nestedCast, len(params)+2)
+		where := fmt.Sprintf("cast(%s as %s[]) >= $%d AND cast(%s as %s[]) <= $%d", name, nestedCast, len(params)+1, name, nestedCast, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
