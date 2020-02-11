@@ -12,7 +12,7 @@ export const GEOCODED_LON_PREFIX = "_lon_";
 export const DATETIME_UNIX_ADJUSTMENT = 1000;
 
 // Action Types Reuse In Similar Places to Data Types
-// These are listed in the facet menu too, but Aren't Posted Back to 
+// These are listed in the facet menu too, but Aren't Posted Back to
 // as type change, but can take actions to change a compound facet
 // back to its components, or change aspects of the facet's display
 
@@ -95,9 +95,9 @@ const FLOATING_POINT_TYPES = [
   LONGITUDE_TYPE
 ];
 
-const FEATURE_TYPES = [IMAGE_TYPE];
+const FEATURE_TYPES = [];
 
-const CLUSTER_TYPES = [GEOCOORDINATE_TYPE, TIMESERIES_TYPE];
+const CLUSTER_TYPES = [IMAGE_TYPE, GEOCOORDINATE_TYPE, TIMESERIES_TYPE];
 
 const NUMERIC_TYPES = INTEGER_TYPES.concat(FLOATING_POINT_TYPES);
 

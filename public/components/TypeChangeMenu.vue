@@ -345,6 +345,10 @@ export default Vue.extend({
               dataset: dataset,
               field: field
             });
+          } else if (type === "image") {
+            return datasetActions.fetchClusters(this.$store, {
+              dataset: this.dataset
+            });
           }
           return null
         })
@@ -355,7 +359,7 @@ export default Vue.extend({
               target: this.target
             });
           }
-          
+
           return null
         });
     }

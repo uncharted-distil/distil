@@ -95,27 +95,24 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.Filter
 	}, nil
 }
 
-func (f *ImageField) featureVarName(varName string) string {
-	return fmt.Sprintf("%s%s", model.FeatureVarPrefix, varName)
+func featureVarName(varName string) string {
+	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, varName)
 }
 
 func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket) ([]string, error) {
 
-	//TODO: SINCE WE DISABLED IMAGE FEATURE PRIMITIVES, USE A CONSTANT!!!!
 	var imageFiles []string
 
-	for range categoryBuckets {
+	for _, bucket := range categoryBuckets {
 
-		//prefixedVarName := f.featureVarName(f.Key)
+		prefixedVarName := featureVarName(f.Key)
 
 		// pull sample row containing bucket
-		//query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" ~ $1 LIMIT 1;",
-		//	f.Key, f.DatasetStorageName, prefixedVarName)
-		query := fmt.Sprintf("SELECT \"%s\" FROM %s LIMIT 1;",
-			f.Key, f.DatasetStorageName)
+		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
+			f.Key, f.DatasetStorageName, prefixedVarName)
 
 		// execute the postgres query
-		rows, err := f.Storage.client.Query(query)
+		rows, err := f.Storage.client.Query(query, bucket.Key)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
 		}
@@ -139,11 +136,9 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
 
-	prefixedVarName := f.featureVarName(f.Key)
+	prefixedVarName := featureVarName(f.Key)
 
-	//TODO: SINCE WE DISABLED IMAGE FEATURE PRIMITIVES, USE A CONSTANT!!!!
-	//fieldSelect := fmt.Sprintf("unnest(string_to_array(\"%s\", ','))", prefixedVarName)
-	fieldSelect := "'IMAGE'"
+	fieldSelect := fmt.Sprintf("\"%s\"", prefixedVarName)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -151,14 +146,16 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 	}
 
 	// Get count by category.
-	//query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(%s) AS count FROM %s %s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
-	//	fieldSelect, prefixedVarName, f.Count, f.DatasetStorageName, where, fieldSelect, fieldSelect, catResultLimit)
-	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(%s) AS count FROM %s %s ORDER BY count desc LIMIT %d;",
-		fieldSelect, prefixedVarName, f.Count, f.DatasetStorageName, where, catResultLimit)
+	query := fmt.Sprintf("SELECT %s AS \"%s\", COUNT(%s) AS count FROM %s %s GROUP BY %s ORDER BY count desc, %s LIMIT %d;",
+		fieldSelect, prefixedVarName, f.Count, f.DatasetStorageName, where, fieldSelect, fieldSelect, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
 	if err != nil {
+		// if the clustering column doesnt exist, return an empty response
+		if strings.Contains(err.Error(), "column \"_cluster_") {
+			return f.parseHistogram(nil)
+		}
 		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
 	}
 	if res != nil {
@@ -193,26 +190,18 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	//TODO: SINCE WE DISABLED IMAGE FEATURE PRIMITIVES, USE A CONSTANT!!!!
-	prefixedVarName := f.featureVarName(f.Key)
+	prefixedVarName := featureVarName(f.Key)
 
 	// Get count by category.
-	//query := fmt.Sprintf(
-	//`SELECT data."%s", COUNT(%s) AS count
-	// FROM %s data INNER JOIN %s result ON data."%s" = result.index
-	// WHERE result.result_id = $%d %s
-	// GROUP BY "%s"
-	// ORDER BY count desc, "%s" LIMIT %d;`,
-	//prefixedVarName, f.Count, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
-	//model.D3MIndexFieldName, len(params), where, prefixedVarName,
-	//prefixedVarName, catResultLimit)
 	query := fmt.Sprintf(
-		`SELECT 'IMAGE' as "%s", COUNT(%s) AS count
-			 FROM %s data INNER JOIN %s result ON data."%s" = result.index
-			 WHERE result.result_id = $%d %s
-			 ORDER BY count desc LIMIT %d;`,
+		`SELECT data."%s", COUNT(%s) AS count
+	 FROM %s data INNER JOIN %s result ON data."%s" = result.index
+	 WHERE result.result_id = $%d %s
+	 GROUP BY "%s"
+	 ORDER BY count desc, "%s" LIMIT %d;`,
 		prefixedVarName, f.Count, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
-		model.D3MIndexFieldName, len(params), where, catResultLimit)
+		model.D3MIndexFieldName, len(params), where, prefixedVarName,
+		prefixedVarName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -237,7 +226,7 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 }
 
 func (f *ImageField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
-	prefixedVarName := f.featureVarName(f.Key)
+	prefixedVarName := featureVarName(f.Key)
 
 	termsAggName := api.TermsAggPrefix + prefixedVarName
 
@@ -310,7 +299,7 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult s
 }
 
 func (f *ImageField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	targetName := f.featureVarName(f.Key)
+	targetName := featureVarName(f.Key)
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)

@@ -64,6 +64,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { StatusPanelState, StatusPanelContentType } from "../store/app";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry, varModesToString } from "../util/routes";
+import { IMAGE_TYPE } from "../util/types";
 import { $enum } from "ts-enum-util";
 
 const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
@@ -233,6 +234,13 @@ export default Vue.extend({
       datasetGetters
         .getGroupings(this.$store)
         .filter(v => v.grouping.properties.clusterCol)
+        .forEach(v => {
+          varModesMap.set(v.colName, SummaryMode.Cluster);
+        });
+      // find any image variables using this cluster data and update their mode
+      datasetGetters
+        .getVariables(this.$store)
+        .filter(v => v.colType === IMAGE_TYPE)
         .forEach(v => {
           varModesMap.set(v.colName, SummaryMode.Cluster);
         });
