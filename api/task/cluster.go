@@ -139,30 +139,30 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 	if model.IsImage(clusteringVar.Type) {
 		step, err = description.CreateImageClusteringPipeline("business", "basic image clustering", []*model.Variable{clusteringVar})
 		if err != nil {
-			return false, nil, errors.Wrap(err, "unable to create image clustering pipeline")
+			return false, nil, err
 		}
 	} else {
 		step, err = description.CreateSlothPipeline("time series clustering",
 			"k-means time series clustering", "", "", features)
 		if err != nil {
-			return false, nil, errors.Wrap(err, "unable to create sloth pipeline")
+			return false, nil, err
 		}
 		addMeta = true
 	}
 
 	datasetURI, err := submitPipeline([]string{datasetInputDir}, step)
 	if err != nil {
-		return false, nil, errors.Wrap(err, "unable to run pipeline primitive")
+		return false, nil, err
 	}
 
 	// parse primitive response (new field contains output)
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
-		return false, nil, errors.Wrap(err, "unable to parse pipeline primitive result")
+		return false, nil, err
 	}
 	header, err := castTypeArray(res[0])
 	if err != nil {
-		return false, nil, errors.Wrap(err, "unable to parse Sloth pipeline header")
+		return false, nil, err
 	}
 
 	// find the field with the feature output
