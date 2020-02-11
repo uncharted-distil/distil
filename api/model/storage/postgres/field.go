@@ -83,9 +83,9 @@ func (b *BasicField) GetType() string {
 // Checks to see if the highlighted variable has cluster data.  If so, the highlight key will be switched to the
 // cluster column ID to ensure that it is used in downstream queries.  This necessary when dealing with the timerseries
 // compound facet, which will display cluster info when available.
-func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams, mode api.SummaryMode) error {
+func updateClusterHighlight(metadataStorage api.MetadataStorage, dataset string, filterParams *api.FilterParams, mode api.SummaryMode) error {
 	if !filterParams.Empty() && filterParams.Highlight != nil {
-		varExists, err := b.GetStorage().metadata.DoesVariableExist(b.GetDatasetName(), filterParams.Highlight.Key)
+		varExists, err := metadataStorage.DoesVariableExist(dataset, filterParams.Highlight.Key)
 		if err != nil {
 			return err
 		}
@@ -93,14 +93,14 @@ func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams, mode
 			return nil
 		}
 
-		variable, err := b.GetStorage().metadata.FetchVariable(b.GetDatasetName(), filterParams.Highlight.Key)
+		variable, err := metadataStorage.FetchVariable(dataset, filterParams.Highlight.Key)
 		if err != nil {
 			return err
 		}
 
 		if variable.Grouping != nil {
 			if variable.Grouping.Properties.ClusterCol != "" &&
-				api.HasClusterData(b.GetDatasetName(), variable.Grouping.Properties.ClusterCol, b.GetStorage().metadata) {
+				api.HasClusterData(dataset, variable.Grouping.Properties.ClusterCol, metadataStorage) {
 				filterParams.Highlight.Key = variable.Grouping.Properties.ClusterCol
 				return nil
 			}
@@ -108,6 +108,10 @@ func (b *BasicField) updateClusterHighlight(filterParams *api.FilterParams, mode
 		}
 	}
 	return nil
+}
+
+func (b BasicField) updateClusterHighlight(filterParams *api.FilterParams, mode api.SummaryMode) error {
+	return updateClusterHighlight(b.GetStorage().metadata, b.GetDatasetName(), filterParams, mode)
 }
 
 func getCountSQL(count string) string {

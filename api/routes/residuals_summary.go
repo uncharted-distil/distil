@@ -39,6 +39,13 @@ func ResidualsSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 		target := pat.Param(r, "target")
 		storageName := model.NormalizeDatasetID(dataset)
 
+		// get variable summary mode
+		mode, err := api.SummaryModeFromString(pat.Param(r, "mode"))
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape results uuid"))
@@ -92,7 +99,7 @@ func ResidualsSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 		}
 
 		// fetch summary histogram
-		summary, err := data.FetchResidualsSummary(dataset, storageName, res.ResultURI, filterParams, extrema)
+		summary, err := data.FetchResidualsSummary(dataset, storageName, res.ResultURI, filterParams, extrema, api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return
