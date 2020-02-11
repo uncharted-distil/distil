@@ -277,7 +277,7 @@ func main() {
 	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable/:invert/:mode", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid/:mode", routes.TrainingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/target-summary/:dataset/:target/:results-uuid/:mode", routes.TargetSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/residuals-summary/:dataset/:target/:results-uuid", routes.ResidualsSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/residuals-summary/:dataset/:target/:results-uuid/:mode", routes.ResidualsSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid/:mode", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid/:mode", routes.PredictedSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor))
