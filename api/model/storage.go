@@ -43,7 +43,7 @@ type DataStorage interface {
 	FetchPredictedSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
 	FetchResultsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
 	FetchCorrectnessSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams) (*VariableSummary, error)
-	FetchResidualsSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema) (*VariableSummary, error)
+	FetchResidualsSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
 	FetchResidualsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
 	FetchExtrema(storageName string, variable *model.Variable) (*Extrema, error)
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)

@@ -43,7 +43,7 @@ func (s *Storage) FetchResidualsExtremaByURI(dataset string, storageName string,
 }
 
 // FetchResidualsSummary fetches a histogram of the residuals associated with a set of numerical predictions.
-func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.VariableSummary, error) {
+func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	storageNameResult := s.getResultTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
@@ -57,12 +57,12 @@ func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resu
 
 	var baseline *api.Histogram
 	var filtered *api.Histogram
-	baseline, err = s.fetchResidualsSummary(dataset, storageName, variable, resultURI, nil, extrema, api.MaxNumBuckets)
+	baseline, err = s.fetchResidualsSummary(dataset, storageName, variable, resultURI, nil, extrema, api.MaxNumBuckets, mode)
 	if err != nil {
 		return nil, err
 	}
 	if !filterParams.Empty() {
-		filtered, err = s.fetchResidualsSummary(dataset, storageName, variable, resultURI, filterParams, extrema, api.MaxNumBuckets)
+		filtered, err = s.fetchResidualsSummary(dataset, storageName, variable, resultURI, filterParams, extrema, api.MaxNumBuckets, mode)
 		if err != nil {
 			return nil, err
 		}
@@ -78,9 +78,14 @@ func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resu
 	}, nil
 }
 
-func (s *Storage) fetchResidualsSummary(dataset string, storageName string, variable *model.Variable, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
+func (s *Storage) fetchResidualsSummary(dataset string, storageName string, variable *model.Variable, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, numBuckets int, mode api.SummaryMode) (*api.Histogram, error) {
 	// Just return a nil in the case where we were asked to return residuals for a non-numeric variable.
 	if model.IsNumerical(variable.Type) || variable.Type == model.TimeSeriesType {
+		// update the highlight key to use the cluster if necessary
+		if err := updateClusterHighlight(s.metadata, dataset, filterParams, mode); err != nil {
+			return nil, err
+		}
+
 		// fetch numeric histograms
 		residuals, err := s.fetchResidualsHistogram(resultURI, dataset, storageName, variable, filterParams, extrema, numBuckets)
 		if err != nil {

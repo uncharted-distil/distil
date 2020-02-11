@@ -408,7 +408,8 @@ export const actions = {
         dataset: dataset,
         target: target,
         requestIds: requestIds,
-        highlight: highlight
+        highlight: highlight,
+        varModes: varModes
       });
     } else if (task.includes(TaskTypes.CLASSIFICATION)) {
       resultActions.fetchCorrectnessSummaries(store, {

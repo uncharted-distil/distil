@@ -101,7 +101,10 @@ function updateCurrentSolutionResults(
       dataset: req.dataset,
       target: req.target,
       solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight
+      highlight: context.getters.getDecodedHighlight,
+      varMode: varModes.has(req.target)
+        ? varModes.get(req.target)
+        : SummaryMode.Default
     });
   } else if (isClassification) {
     resultsActions.fetchCorrectnessSummary(store, {
@@ -147,7 +150,10 @@ function updateSolutionResults(
       dataset: req.dataset,
       target: req.target,
       solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight
+      highlight: context.getters.getDecodedHighlight,
+      varMode: varModes.has(req.target)
+        ? varModes.get(req.target)
+        : SummaryMode.Default
     });
   } else if (isClassification) {
     resultsActions.fetchCorrectnessSummary(store, {
