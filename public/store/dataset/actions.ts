@@ -303,8 +303,9 @@ export const actions = {
       .getVariables(context)
       .filter(v => (v.grouping && v.grouping.properties.clusterCol) || (v.colType === "image"))
       .map(v => {
-        if (v.grouping && v.grouping.properties.clusterCol) { axios.post(`/distil/cluster/${args.dataset}/${v.grouping.idCol}`, {}); }
-        else if (v.colType === "image") {axios.post(`/distil/cluster/${args.dataset}/${v.colName}`, {});}
+        if (v.grouping && v.grouping.properties.clusterCol) { return axios.post(`/distil/cluster/${args.dataset}/${v.grouping.idCol}`, {}); }
+        else if (v.colType === "image") { return axios.post(`/distil/cluster/${args.dataset}/${v.colName}`, {}); }
+        return null;
       });
     Promise.all(promises)
       .then(() => {
