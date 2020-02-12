@@ -35,8 +35,6 @@ export default Vue.extend({
   router: router,
   components: {
     Navigation
-  },
-  beforeMount() {
   }
 });
 </script>
