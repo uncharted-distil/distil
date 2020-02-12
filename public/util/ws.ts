@@ -5,7 +5,14 @@ import _ from "lodash";
 const RETRY_INTERVAL_MS = 5000;
 
 let _trackedID = 1;
+const _streamsById = new Map<String, Stream>();
 
+// Fetches a stream given an ID.
+export function getStreamById(id: string): Stream {
+  return _streamsById.get(id);
+}
+
+// Creates a new web socket Connection object
 export function getWebSocketConnection() {
   const conn = new Connection("/ws", (err: string) => {
     if (err) {
@@ -110,6 +117,9 @@ function stripURL(url: string) {
   return url;
 }
 
+// Works with an established Connection object to send/receive messages
+// over a websocket.  Received messages are handled by using a callback
+// function passed into the Stream at the time of construction.
 export class Stream {
   id: string;
   conn: Connection;
@@ -135,6 +145,7 @@ export class Stream {
   close() {
     this.conn.streams.delete(this.id);
     this.conn.tracking.delete(this.id);
+    _streamsById.delete(this.id);
   }
 }
 
@@ -165,6 +176,9 @@ class Message {
 const MESSAGE = Symbol();
 const STREAM = Symbol();
 
+// Abstracts a web socket connection.  Once the connection object has been
+// created, Stream objects can be created to implement messaging over the
+// socket.
 export default class Connection {
   url: string;
   streams: Map<string, Stream>;
@@ -183,12 +197,15 @@ export default class Connection {
     this.isOpen = false;
     establishConnection(this, callback);
   }
+
   stream(fn: (x: any) => void) {
     const stream = new Stream(this, fn);
     this.streams.set(stream.id, stream);
     this.tracking.set(stream.id, STREAM);
+    _streamsById.set(stream.id, stream);
     return stream;
   }
+
   send(payload: any) {
     const message = new Message(payload);
     this.messages.set(message.id, message);
@@ -200,10 +217,18 @@ export default class Connection {
     }
     return message.promise;
   }
+
   close() {
     this.socket.onclose = null;
     this.socket.close();
     this.socket = null;
-    console.warn(`WebSocket conn on /${this.url} closed`);
+
+    // remove the streams associated with this connection from the global list
+    // if they are open
+    for (const [id] of this.streams) {
+      _streamsById.delete(id);
+    }
+
+    console.info(`WebSocket conn on /${this.url} closed`);
   }
 }

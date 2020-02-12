@@ -13,7 +13,7 @@ import {
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
 import { mutations } from "./module";
-import { getWebSocketConnection } from "../../util/ws";
+import { getWebSocketConnection, getStreamById } from "../../util/ws";
 import { FilterParams } from "../../util/filters";
 import { actions as resultsActions } from "../results/module";
 import { getters as routeGetters } from "../route/module";
@@ -29,7 +29,6 @@ interface CreateSolutionRequest {
   maxSolutions: number;
   maxTime: number;
   filters: FilterParams;
-  onClose: Function;
 }
 
 interface SolutionStatus {
@@ -287,7 +286,6 @@ export const actions = {
       const conn = getWebSocketConnection();
 
       let receivedFirstSolution = false;
-      let receivedFirstResponse = false;
 
       const stream = conn.stream(response => {
         // log any error
@@ -300,15 +298,6 @@ export const actions = {
           handleProgress(context, request, response);
         }
 
-        if (response.requestId && !receivedFirstResponse) {
-          receivedFirstResponse = true;
-          // add the request stream
-          mutations.addRequestStream(context, {
-            requestId: response.requestId,
-            stream: stream
-          });
-        }
-
         if (response.solutionId && !receivedFirstSolution) {
           receivedFirstSolution = true;
           // resolve
@@ -318,19 +307,14 @@ export const actions = {
         // close stream on complete
         if (response.complete) {
           console.log("Solution request has completed, closing stream");
-          // remove request stream
-          if (receivedFirstResponse) {
-            mutations.removeRequestStream(context, {
-              requestId: response.requestId
-            });
-          }
           // check for failure to generate solutions
           if (!receivedFirstSolution) {
             reject(new Error("No valid solutions found"));
           }
           // close stream
           stream.close();
-          request.onClose();
+          // close the socket
+          conn.close();
         }
       });
 
@@ -350,8 +334,7 @@ export const actions = {
   },
 
   stopSolutionRequest(context: any, args: { requestId: string }) {
-    const streams = context.getters.getRequestStreams;
-    const stream = streams[args.requestId];
+    const stream = getStreamById(args.requestId);
     if (!stream) {
       console.warn(`No request stream found for requestId: ${args.requestId}`);
       return;

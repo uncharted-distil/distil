@@ -2,7 +2,7 @@ import _ from "lodash";
 import { ViewState } from "./index";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
-import { mutations as viewMutations } from "./module";
+import { mutations as viewMutations, getters as viewGetters } from "./module";
 import { Dictionary } from "../../util/dict";
 import {
   actions as datasetActions,
@@ -21,21 +21,15 @@ import {
   mutations as predictionMutations
 } from "../predictions/module";
 import { getters as routeGetters } from "../route/module";
-import {
-  TaskTypes,
-  SummaryMode,
-  Highlight,
-  Variable,
-  VariableSummary
-} from "../dataset";
-import { FilterParams } from "../../util/filters";
+import { TaskTypes, SummaryMode } from "../dataset";
 
 enum ParamCacheKey {
   VARIABLES = "VARIABLES",
   VARIABLE_SUMMARIES = "VARIABLE_SUMMARIES",
   VARIABLE_RANKINGS = "VARIABLE_RANKINGS",
   SOLUTION_REQUESTS = "SOLUTION_REQUESTS",
-  JOIN_SUGGESTIONS = "JOIN_SUGGESTIONS"
+  JOIN_SUGGESTIONS = "JOIN_SUGGESTIONS",
+  CLUSTERS = "CLUSTERS"
 }
 
 function createCacheable(
@@ -45,7 +39,7 @@ function createCacheable(
   return (context: ViewContext, args: Dictionary<string>) => {
     // execute provided function if params are not cached already or changed
     const params = JSON.stringify(args);
-    const cachedParams = context.getters.getFetchParamsCache[key];
+    const cachedParams = viewGetters.getFetchParamsCache(store)[key];
     if (cachedParams !== params) {
       viewMutations.setFetchParamsCache(context, {
         key: key,
@@ -119,6 +113,15 @@ const fetchVariableRankings = createCacheable(
     datasetActions.fetchVariableRankings(store, {
       dataset: args.dataset,
       target: args.target
+    });
+  }
+);
+
+const fetchClusters = createCacheable(
+  ParamCacheKey.CLUSTERS,
+  (context, args) => {
+    datasetActions.fetchClusters(store, {
+      dataset: args.dataset
     });
   }
 );
@@ -285,7 +288,7 @@ export const actions = {
       })
     ]).then(() => {
       fetchVariableRankings(context, { dataset, target });
-      datasetActions.fetchClusters(store, { dataset });
+      fetchClusters(context, { dataset });
       return actions.updateSelectTrainingData(context);
     });
   },
@@ -337,7 +340,7 @@ export const actions = {
           dataset: dataset,
           target: target
         });
-        datasetActions.fetchClusters(store, { dataset });
+        fetchClusters(context, { dataset: dataset });
         return fetchSolutionRequests(context, {
           dataset: dataset,
           target: target
