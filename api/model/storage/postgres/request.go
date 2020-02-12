@@ -76,7 +76,7 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *api.FilterPar
 			if err != nil {
 				return errors.Wrap(err, "failed to persist bivariate filter")
 			}
-		case model.CategoricalFilter, model.FeatureFilter, model.TextFilter:
+		case model.CategoricalFilter, model.TextFilter:
 			_, err := s.client.Exec(sql, requestID, filter.Key, filter.Type, filter.Mode, 0, 0, 0, 0, 0, 0, strings.Join(filter.Categories, ","), "")
 			if err != nil {
 				return errors.Wrap(err, "failed to persist categorical filter")
@@ -249,12 +249,6 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 		switch filterType {
 		case model.CategoricalFilter:
 			filters.Filters = append(filters.Filters, model.NewCategoricalFilter(
-				featureName,
-				filterMode,
-				strings.Split(filterCategories, ","),
-			))
-		case model.FeatureFilter:
-			filters.Filters = append(filters.Filters, model.NewFeatureFilter(
 				featureName,
 				filterMode,
 				strings.Split(filterCategories, ","),
