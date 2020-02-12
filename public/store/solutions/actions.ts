@@ -29,7 +29,6 @@ interface CreateSolutionRequest {
   maxSolutions: number;
   maxTime: number;
   filters: FilterParams;
-  onClose: Function;
 }
 
 interface SolutionStatus {

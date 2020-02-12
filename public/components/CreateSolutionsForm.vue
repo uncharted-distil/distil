@@ -110,6 +110,7 @@ import {
 } from "../store/app/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
+import { actions as viewActions } from "../store/view/module";
 import { RESULTS_ROUTE } from "../store/route/index";
 import { actions as solutionActions } from "../store/solutions/module";
 import { Solution, NUM_SOLUTIONS } from "../store/solutions/index";
@@ -208,10 +209,7 @@ export default Vue.extend({
           metrics: this.metrics,
           maxSolutions: NUM_SOLUTIONS,
           // intentionally nulled for now - should be made user settable in the future
-          maxTime: null,
-          onClose: () => {
-            this.$router.go(0);
-          }
+          maxTime: null
         })
         .then((res: Solution) => {
           this.pending = false;
