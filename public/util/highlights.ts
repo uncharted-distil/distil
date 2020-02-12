@@ -13,15 +13,7 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { overlayRouteEntry } from "../util/routes";
-import {
-  IMAGE_TYPE,
-  getVarType,
-  isFeatureType,
-  addFeaturePrefix,
-  isClusterType,
-  addClusterPrefix,
-  isTimeType
-} from "../util/types";
+import { IMAGE_TYPE, getVarType } from "../util/types";
 import _ from "lodash";
 import store from "../store/store";
 import VueRouter from "vue-router";
@@ -49,7 +41,7 @@ export function createFilterFromHighlight(
   }
 
   // inject metadata prefix for metadata vars
-  let key = highlight.key;
+  const key = highlight.key;
 
   const variables = datasetGetters.getVariables(store);
 
@@ -60,16 +52,6 @@ export function createFilterFromHighlight(
   }
 
   const type = getVarType(key);
-
-  if (isFeatureType(type)) {
-    key = addFeaturePrefix(key);
-    return {
-      key: key,
-      type: FEATURE_FILTER,
-      mode: mode,
-      categories: [highlight.value]
-    };
-  }
 
   if (type === IMAGE_TYPE) {
     return {

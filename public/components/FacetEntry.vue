@@ -49,9 +49,7 @@ import TypeChangeMenu from "../components/TypeChangeMenu";
 import {
   getVarType,
   isClusterType,
-  isFeatureType,
   addClusterPrefix,
-  addFeaturePrefix,
   hasComputedVarPrefix,
   GEOCOORDINATE_TYPE,
   DATETIME_UNIX_ADJUSTMENT
@@ -80,7 +78,7 @@ export default Vue.extend({
       Object as () => any,
       Function as () => Function
     ],
-    expandCollapse: Function as ()=> Function
+    expandCollapse: Function as () => Function
   },
 
   data() {
@@ -655,13 +653,6 @@ export default Vue.extend({
       });
     },
 
-    findFeatureCol(key: string, row: Row) {
-      const feature = addFeaturePrefix(key);
-      return _.find(row.cols, c => {
-        return c.key === feature;
-      });
-    },
-
     addRowSelectionToFacet(facet: any, col: any) {
       if (facet._histogram) {
         facet._histogram.bars.forEach(bar => {
@@ -751,15 +742,6 @@ export default Vue.extend({
             if (isClusterType(type)) {
               const clusterCol = this.findClusterCol(facet.key, row);
               if (facet.value === clusterCol.value) {
-                this.addRowSelectionToFacet(facet, col);
-              }
-              continue;
-            }
-
-            if (isFeatureType(type)) {
-              const featureCol = this.findFeatureCol(facet.key, row);
-              const features = featureCol.value.split(",");
-              if (_.includes(features, facet.value)) {
                 this.addRowSelectionToFacet(facet, col);
               }
               continue;

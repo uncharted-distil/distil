@@ -5,7 +5,6 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { D3M_INDEX_FIELD } from "../store/dataset/index";
 
 // TODO: Convert these to enums.
-export const FEATURE_PREFIX = "_feature_";
 export const CLUSTER_PREFIX = "_cluster_";
 export const GEOCODED_LAT_PREFIX = "_lat_";
 export const GEOCODED_LON_PREFIX = "_lon_";
@@ -82,7 +81,6 @@ const LABELS_TO_TYPES = _.invert(TYPES_TO_LABELS);
 const INTEGER_TYPES = [INTEGER_TYPE];
 
 const COMPUTED_VAR_PREFIXES = [
-  FEATURE_PREFIX,
   CLUSTER_PREFIX,
   GEOCODED_LAT_PREFIX,
   GEOCODED_LON_PREFIX
@@ -94,8 +92,6 @@ const FLOATING_POINT_TYPES = [
   LATITUDE_TYPE,
   LONGITUDE_TYPE
 ];
-
-const FEATURE_TYPES = [];
 
 const CLUSTER_TYPES = [IMAGE_TYPE, GEOCOORDINATE_TYPE, TIMESERIES_TYPE];
 
@@ -362,22 +358,10 @@ export function isTextSimpleType(type: string): boolean {
   return TEXT_SIMPLE_TYPES.indexOf(type) !== -1;
 }
 
-export function isFeatureType(type: string): boolean {
-  return FEATURE_TYPES.indexOf(type) !== -1;
-}
-
-export function addFeaturePrefix(varName: string): string {
-  return `${FEATURE_PREFIX}${varName}`;
-}
-
 export function hasComputedVarPrefix(varName: string): boolean {
   return Boolean(
     COMPUTED_VAR_PREFIXES.find(prefix => varName.indexOf(prefix) === 0)
   );
-}
-
-export function removeFeaturePrefix(varName: string): string {
-  return varName.replace(FEATURE_PREFIX, "");
 }
 
 export function isClusterType(type: string): boolean {
