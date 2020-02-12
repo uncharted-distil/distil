@@ -10,14 +10,6 @@ export const mutations = {
     state.versionTimestamp = versionTimestamp;
   },
 
-  setIsTask1(state: AppState, isTask1: boolean) {
-    state.isTask1 = isTask1;
-  },
-
-  setIsTask2(state: AppState, isTask2: boolean) {
-    state.isTask2 = isTask2;
-  },
-
   setProblemDataset(state: AppState, dataset: string) {
     state.problemDataset = dataset;
   },

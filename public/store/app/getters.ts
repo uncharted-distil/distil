@@ -17,14 +17,6 @@ export const getters = {
     return state.problemTarget;
   },
 
-  isTask1(state: AppState): boolean {
-    return state.isTask1;
-  },
-
-  isTask2(state: AppState): boolean {
-    return state.isTask2;
-  },
-
   getProblemMetrics(state: AppState): string[] {
     return state.problemMetrics;
   },

@@ -11,7 +11,6 @@
     <b-navbar-nav>
       <b-nav-item
         @click="onHome"
-        v-if="!isTask1 && !isTask2"
         :active="isActive(HOME_ROUTE)"
         v-bind:class="{ active: isActive(HOME_ROUTE) }"
       >
@@ -20,7 +19,6 @@
       </b-nav-item>
       <b-nav-item
         @click="onSearch"
-        v-if="!isTask1 && !isTask2"
         :active="isActive(SEARCH_ROUTE)"
         v-bind:class="{ active: isActive(SEARCH_ROUTE) }"
       >
@@ -30,7 +28,6 @@
       </b-nav-item>
       <b-nav-item
         @click="onSelectTarget"
-        v-if="!isTask2"
         :active="isActive(SELECT_TARGET_ROUTE)"
         :disabled="!hasView(SELECT_TARGET_ROUTE)"
         v-bind:class="{ active: isActive(SELECT_TARGET_ROUTE) }"
@@ -144,12 +141,6 @@ export default Vue.extend({
     },
     joinDatasetsHash(): string {
       return routeGetters.getRouteJoinDatasetsHash(this.$store);
-    },
-    isTask1(): boolean {
-      return appGetters.isTask1(this.$store);
-    },
-    isTask2(): boolean {
-      return appGetters.isTask2(this.$store);
     },
     isJoinDatasets(): boolean {
       return this.joinDatasets.length === 2 || this.hasJoinDatasetView();

@@ -80,15 +80,6 @@
 
     <div class="row justify-content-center">
       <b-button
-        class="export-button"
-        :variant="exportVariant"
-        @click="showExport = !showExport"
-        :disabled="disableExport"
-        v-if="isTask1"
-      >
-        Task 1: Export Problem
-      </b-button>
-      <b-button
         class="create-button"
         :variant="createVariant"
         @click="create"
@@ -158,9 +149,6 @@ export default Vue.extend({
       return routeGetters.getDecodedSolutionRequestFilterParams(this.$store);
     },
     metrics(): string[] {
-      if (this.isTask2) {
-        return appGetters.getProblemMetrics(this.$store);
-      }
       return null;
     },
     trainingSelected(): boolean {
@@ -182,12 +170,6 @@ export default Vue.extend({
     },
     isPending(): boolean {
       return this.pending;
-    },
-    isTask1(): boolean {
-      return appGetters.isTask1(this.$store);
-    },
-    isTask2(): boolean {
-      return appGetters.isTask2(this.$store);
     },
     disableCreate(): boolean {
       return this.isPending || !this.targetSelected || !this.trainingSelected;

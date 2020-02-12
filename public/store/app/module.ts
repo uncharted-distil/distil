@@ -21,8 +21,6 @@ const { commit, read, dispatch } = getStoreAccessors<AppState, DistilState>(
 export const getters = {
   getVersionNumber: read(moduleGetters.getVersionNumber),
   getVersionTimestamp: read(moduleGetters.getVersionTimestamp),
-  isTask1: read(moduleGetters.isTask1),
-  isTask2: read(moduleGetters.isTask2),
   getProblemDataset: read(moduleGetters.getProblemDataset),
   getProblemTarget: read(moduleGetters.getProblemTarget),
   getProblemMetrics: read(moduleGetters.getProblemMetrics),
@@ -45,8 +43,6 @@ export const actions = {
 export const mutations = {
   setVersionNumber: commit(moduleMutations.setVersionNumber),
   setVersionTimestamp: commit(moduleMutations.setVersionTimestamp),
-  setIsTask1: commit(moduleMutations.setIsTask1),
-  setIsTask2: commit(moduleMutations.setIsTask2),
   setProblemDataset: commit(moduleMutations.setProblemDataset),
   setProblemTarget: commit(moduleMutations.setProblemTarget),
   setProblemMetrics: commit(moduleMutations.setProblemMetrics),

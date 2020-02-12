@@ -58,8 +58,6 @@ type Config struct {
 	GeocodingEnabled                   bool    `env:"GEOCODING_ENABLED" envDefault:"false"`
 	IngestHardFail                     bool    `env:"INGEST_HARD_FAIL" envDefault:"false"`
 	InitialDataset                     string  `env:"INITIAL_DATASET" envDefault:""`
-	IsTask1                            bool    `env:"TASK1" envDefault:"false"`
-	IsTask2                            bool    `env:"TASK2" envDefault:"false"`
 	MaxTrainingRows                    int     `env:"MAX_TRAINING_ROWS" envDefault:"10000"`
 	MaxTestRows                        int     `env:"MAX_TEST_ROWS" envDefault:"10000"`
 	MergedOutputDataPath               string  `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"merged/tables/learningData.csv"`
