@@ -44,16 +44,5 @@ export const mutations = {
 
   clearSolutionRequests(state: SolutionState) {
     state.requests = [];
-  },
-
-  addRequestStream(
-    state: SolutionState,
-    args: { requestId: string; stream: Stream }
-  ) {
-    Vue.set(state.streams, args.requestId, args.stream);
-  },
-
-  removeRequestStream(state: SolutionState, args: { requestId: string }) {
-    Vue.delete(state.streams, args.requestId);
   }
 };

@@ -53,10 +53,8 @@ export interface SolutionRequest {
 
 export interface SolutionState {
   requests: SolutionRequest[];
-  streams: Dictionary<Stream>;
 }
 
 export const state: SolutionState = {
-  requests: [],
-  streams: {}
+  requests: []
 };

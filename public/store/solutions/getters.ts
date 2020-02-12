@@ -139,9 +139,5 @@ export const getters = {
     const target = getters.getRouteTargetVariable;
     const variables = getters.getVariables;
     return variables.filter(variable => variable.colName === target);
-  },
-
-  getRequestStreams(state: SolutionState, getters: any): Dictionary<Stream> {
-    return state.streams;
   }
 };
