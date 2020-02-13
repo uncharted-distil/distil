@@ -7,13 +7,22 @@ import {
   BIVARIATE_FILTER,
   FEATURE_FILTER,
   CLUSTER_FILTER,
+  VECTOR_FILTER,
   TIMESERIES_FILTER,
   INCLUDE_FILTER
 } from "../util/filters";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { overlayRouteEntry } from "../util/routes";
-import { IMAGE_TYPE, getVarType } from "../util/types";
+import {
+  TIMESERIES_TYPE,
+  IMAGE_TYPE,
+  getVarType,
+  isClusterType,
+  addClusterPrefix,
+  isTimeType,
+  isCollectionType
+} from "../util/types";
 import _ from "lodash";
 import store from "../store/store";
 import VueRouter from "vue-router";
@@ -74,8 +83,19 @@ export function createFilterFromHighlight(
   if (highlight.value.from !== undefined && highlight.value.to !== undefined) {
     // TODO: we currently have no support for filter timeseries data by
     // ranges and handle it in the client.
-    if (grouping && grouping.type === TIMESERIES_FILTER) {
+    if (grouping && grouping.type === TIMESERIES_TYPE) {
       return null;
+    }
+
+    if (isCollectionType(type)) {
+      return {
+        key: key,
+        type: VECTOR_FILTER,
+        nestedType: highlight.value.type,
+        mode: mode,
+        min: highlight.value.from,
+        max: highlight.value.to
+      };
     }
 
     return {

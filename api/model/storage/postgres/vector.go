@@ -108,7 +108,8 @@ func (f *VectorField) FetchPredictedSummaryData(resultURI string, datasetResult 
 }
 
 func (f *VectorField) isNumerical() bool {
-	return model.IsNumerical(strings.Replace(f.Type, "Vector", "", -1))
+	replacer := strings.NewReplacer("Vector", "", "List", "")
+	return model.IsNumerical(replacer.Replace(f.Type))
 }
 
 func (f *VectorField) subSelect() string {

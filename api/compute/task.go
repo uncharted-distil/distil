@@ -73,5 +73,11 @@ func ResolveTask(storage api.DataStorage, datasetStorageName string, targetVaria
 		}
 		return &Task{task}, nil
 	}
+
+	// if vector type, assume object detection
+	if model.IsList(targetVariable.Type) {
+		return &Task{[]string{compute.ObjectDetectionTask, compute.ImageTask}}, nil
+	}
+
 	return nil, errors.New("failed to determine task from dataset and target")
 }

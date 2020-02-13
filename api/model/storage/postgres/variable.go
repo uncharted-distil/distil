@@ -220,7 +220,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 			field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsCategorical(variable.Type) {
 			field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
-		} else if model.IsVector(variable.Type) {
+		} else if model.IsVector(variable.Type) || model.IsList(variable.Type) {
 			field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 		} else if model.IsText(variable.Type) {
 			field = NewTextField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)

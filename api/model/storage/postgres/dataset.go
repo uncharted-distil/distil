@@ -37,11 +37,11 @@ type joinDefinition struct {
 	joinColumn    string
 }
 
-func (s *Storage) getViewField(name string, displayName string, typ string, defaultValue interface{}) string {
-	viewField := fmt.Sprintf("COALESCE(CAST(\"%s\" AS %s), %v)", name, typ, defaultValue)
+func (s *Storage) getViewField(fieldSelect string, displayName string, typ string, defaultValue interface{}) string {
+	viewField := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v)", fieldSelect, typ, defaultValue)
 	if model.IsDatabaseFloatingPoint(typ) {
 		// handle missing values
-		viewField = fmt.Sprintf("CASE WHEN \"%s\" = '' THEN %v ELSE %s END", name, defaultValue, viewField)
+		viewField = fmt.Sprintf("CASE WHEN %s = '' THEN %v ELSE %s END", fieldSelect, defaultValue, viewField)
 	}
 	viewField = fmt.Sprintf("%s AS \"%s\"", viewField, displayName)
 	return viewField
@@ -92,7 +92,8 @@ func (s *Storage) createView(storageName string, fields map[string]*model.Variab
 	// Build the select statement of the query.
 	fieldList := make([]string, 0)
 	for _, v := range fields {
-		fieldList = append(fieldList, s.getViewField(v.Name, v.OriginalVariable, model.MapD3MTypeToPostgresType(v.Type), model.DefaultPostgresValueFromD3MType(v.Type)))
+		fieldList = append(fieldList, s.getViewField(model.PostgresValueForFieldType(v.Type, v.Name),
+			v.OriginalVariable, model.MapD3MTypeToPostgresType(v.Type), model.DefaultPostgresValueFromD3MType(v.Type)))
 	}
 	sql = fmt.Sprintf(sql, storageName, strings.Join(fieldList, ","), storageName)
 

@@ -119,6 +119,18 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, alia
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
 
+	case model.VectorFilter:
+		// vector
+		// cast to double precision array in case of string based representation
+		nestedCast := ""
+		if filter.NestedType == model.NumericalFilter {
+			nestedCast = "double precision"
+		}
+		where := fmt.Sprintf("%s @> CAST(ARRAY[$%d, $%d] AS %s[])", name, len(params)+1, len(params)+2, nestedCast)
+		wheres = append(wheres, where)
+		params = append(params, *filter.Min)
+		params = append(params, *filter.Max)
+
 	case model.BivariateFilter:
 		// bivariate
 		// cast to double precision in case of string based representation
@@ -199,6 +211,18 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, alia
 		// numerical
 		//TODO: WHY DOES THIS QUERY NOT CAST TO DOUBLE LIKE THE INCLUDE???
 		where := fmt.Sprintf("(%s < $%d OR %s > $%d)", name, len(params)+1, name, len(params)+2)
+		wheres = append(wheres, where)
+		params = append(params, *filter.Min)
+		params = append(params, *filter.Max)
+
+	case model.VectorFilter:
+		// vector
+		// cast to double precision array in case of string based representation
+		nestedCast := ""
+		if filter.NestedType == model.NumericalFilter {
+			nestedCast = "double precision"
+		}
+		where := fmt.Sprintf("NOT(%s @> CAST(ARRAY[$%d, $%d] AS %s[]))", name, len(params)+1, len(params)+2, nestedCast)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)

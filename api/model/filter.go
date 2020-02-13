@@ -203,6 +203,27 @@ func parseFilter(filter map[string]interface{}) (*model.Filter, error) {
 		return model.NewNumericalFilter(key, mode, min, max), nil
 	}
 
+	// vector
+	if typ == model.VectorFilter {
+		key, ok := json.String(filter, "key")
+		if !ok {
+			return nil, errors.Errorf("no `key` provided for filter")
+		}
+		min, ok := json.Float(filter, "min")
+		if !ok {
+			return nil, errors.Errorf("no `min` provided for filter")
+		}
+		max, ok := json.Float(filter, "max")
+		if !ok {
+			return nil, errors.Errorf("no `max` provided for filter")
+		}
+		nestedType, ok := json.String(filter, "nestedType")
+		if !ok {
+			return nil, errors.Errorf("no `nestedType` provided for filter")
+		}
+		return model.NewVectorFilter(key, nestedType, mode, min, max), nil
+	}
+
 	// bivariate
 	if typ == model.BivariateFilter {
 		key, ok := json.String(filter, "key")
