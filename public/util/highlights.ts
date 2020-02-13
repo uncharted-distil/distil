@@ -18,8 +18,6 @@ import {
   TIMESERIES_TYPE,
   IMAGE_TYPE,
   getVarType,
-  isFeatureType,
-  addFeaturePrefix,
   isClusterType,
   addClusterPrefix,
   isTimeType,
