@@ -205,10 +205,8 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 			return nil, err
 		}
 	}
-	response, err = removeDuplicates(response), nil
-	if err != nil {
-		return nil, err
-	}
+	response = removeDuplicates(response)
+
 	return &api.TimeseriesData{
 		Timeseries: response,
 		IsDateTime: dateTime,

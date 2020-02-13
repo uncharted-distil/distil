@@ -115,45 +115,6 @@ func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *F
 	return lines, nil
 }
 
-func getFeatureVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest, error) {
-	mainDR := meta.GetMainDataResource()
-	features := make([]*FeatureRequest, 0)
-	for _, v := range mainDR.Variables {
-		if v.RefersTo != nil && v.RefersTo["resID"] != nil {
-			// get the refered DR
-			resID := v.RefersTo["resID"].(string)
-
-			res := getDataResource(meta, resID)
-
-			// check if needs to be featurized
-			if res.CanBeFeaturized() {
-				// create the new resource to hold the featured output
-				indexName := fmt.Sprintf("%s%s", prefix, v.Name)
-
-				// add the feature variable
-				v := model.NewVariable(len(mainDR.Variables), indexName, "label", v.Name, model.StringType, model.StringType, "", []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false)
-
-				// create the required pipeline
-				step, err := description.CreateCrocPipeline("leather", "", []string{denormFieldName}, []string{indexName})
-				if err != nil {
-					return nil, errors.Wrap(err, "unable to create step pipeline")
-				}
-
-				features = append(features, &FeatureRequest{
-					SourceVariableName:  denormFieldName,
-					FeatureVariableName: indexName,
-					OutputVariableName:  fmt.Sprintf("%s_object_label", indexName),
-					Variable:            v,
-					Step:                step,
-					Clustering:          false,
-				})
-			}
-		}
-	}
-
-	return features, nil
-}
-
 func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest, error) {
 	mainDR := meta.GetMainDataResource()
 	features := make([]*FeatureRequest, 0)
@@ -165,7 +126,7 @@ func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest
 			res := getDataResource(meta, resID)
 
 			// check if needs to be featurized
-			if res.CanBeFeaturized() || res.ResType == "timeseries" {
+			if res.ResType == "timeseries" {
 				// create the new resource to hold the featured output
 				indexName := fmt.Sprintf("%s%s", prefix, v.Name)
 
@@ -177,17 +138,12 @@ func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest
 				var step *pipeline.PipelineDescription
 				var err error
 				outputName := ""
-				if res.CanBeFeaturized() {
-					step, err = description.CreateUnicornPipeline("horned",
-						"clustering based on resnet-50 detected objects", []string{denormFieldName}, []string{indexName})
-					outputName = unicornResultFieldName
-				} else {
-					if colNames, ok := getTimeValueCols(res); ok {
-						step, err = description.CreateSlothPipeline("time series clustering",
-							"k-means time series clustering", colNames.timeCol, colNames.valueCol, res.Variables)
-						outputName = slothResultFieldName
-					}
+				if colNames, ok := getTimeValueCols(res); ok {
+					step, err = description.CreateSlothPipeline("time series clustering",
+						"k-means time series clustering", colNames.timeCol, colNames.valueCol, res.Variables)
+					outputName = slothResultFieldName
 				}
+
 				if err != nil {
 					return nil, errors.Wrap(err, "unable to create step pipeline")
 				}

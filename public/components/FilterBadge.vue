@@ -42,13 +42,7 @@ import {
   CLUSTER_FILTER
 } from "../util/filters";
 import { clearHighlight } from "../util/highlights";
-import {
-  getVarType,
-  isFeatureType,
-  removeFeaturePrefix,
-  isClusterType,
-  removeClusterPrefix
-} from "../util/types";
+import { getVarType, isClusterType, removeClusterPrefix } from "../util/types";
 
 export default Vue.extend({
   name: "filter-badge",
@@ -61,9 +55,6 @@ export default Vue.extend({
   computed: {
     filterName(): string {
       const type = getVarType(this.filter.key);
-      if (isFeatureType(type)) {
-        return removeFeaturePrefix(this.filter.key);
-      }
       if (isClusterType(type)) {
         return removeClusterPrefix(this.filter.key);
       }
@@ -77,9 +68,6 @@ export default Vue.extend({
     },
     CATEGORICAL_FILTER(): string {
       return CATEGORICAL_FILTER;
-    },
-    FEATURE_FILTER(): string {
-      return FEATURE_FILTER;
     },
     CLUSTER_FILTER(): string {
       return CLUSTER_FILTER;
