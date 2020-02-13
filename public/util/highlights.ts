@@ -52,7 +52,7 @@ export function createFilterFromHighlight(
   }
 
   // inject metadata prefix for metadata vars
-  let key = highlight.key;
+  const key = highlight.key;
 
   const variables = datasetGetters.getVariables(store);
 
@@ -63,16 +63,6 @@ export function createFilterFromHighlight(
   }
 
   const type = getVarType(key);
-
-  if (isFeatureType(type)) {
-    key = addFeaturePrefix(key);
-    return {
-      key: key,
-      type: FEATURE_FILTER,
-      mode: mode,
-      categories: [highlight.value]
-    };
-  }
 
   if (type === IMAGE_TYPE) {
     return {

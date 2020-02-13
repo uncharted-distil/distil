@@ -169,17 +169,6 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished clustering the dataset")
 	}
 
-	output, err = Featurize(datasetSource, latestSchemaOutput, index, dataset, config)
-	if err != nil {
-		if config.HardFail {
-			return errors.Wrap(err, "unable to featurize all data")
-		}
-		log.Errorf("unable to featurize all data: %v", err)
-	} else {
-		latestSchemaOutput = output
-	}
-	log.Infof("finished featurizing the dataset")
-
 	output, err = Merge(datasetSource, latestSchemaOutput, index, dataset, config)
 	if err != nil {
 		return errors.Wrap(err, "unable to merge all data into a single file")

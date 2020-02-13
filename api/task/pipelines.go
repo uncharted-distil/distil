@@ -115,12 +115,6 @@ func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *F
 	return lines, nil
 }
 
-func getFeatureVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest, error) {
-	features := make([]*FeatureRequest, 0)
-
-	return features, nil
-}
-
 func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest, error) {
 	mainDR := meta.GetMainDataResource()
 	features := make([]*FeatureRequest, 0)
@@ -149,6 +143,7 @@ func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest
 						"k-means time series clustering", colNames.timeCol, colNames.valueCol, res.Variables)
 					outputName = slothResultFieldName
 				}
+
 				if err != nil {
 					return nil, errors.Wrap(err, "unable to create step pipeline")
 				}
