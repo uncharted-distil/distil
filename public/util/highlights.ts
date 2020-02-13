@@ -7,7 +7,7 @@ import {
   BIVARIATE_FILTER,
   FEATURE_FILTER,
   CLUSTER_FILTER,
-  Vector_FILTER,
+  VECTOR_FILTER,
   TIMESERIES_FILTER,
   INCLUDE_FILTER
 } from "../util/filters";
