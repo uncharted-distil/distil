@@ -79,9 +79,9 @@ export default Vue.extend({
             ? cellOffsetWidth > remainingCellWidth
               ? cellOffsetWidth
               : remainingCellWidth
-            : cellOffsetWidth < maxCellWidth
-            ? cellOffsetWidth
-            : maxCellWidth;
+            : cellOffsetWidth < maxCellWidth || !!tbodyCells[i].querySelector("div")
+              ? cellOffsetWidth
+              : maxCellWidth;
         remainingCellWidth = remainingCellWidth - headCellWidth;
         headCells.push({ elem: theadCells[i], width: headCellWidth });
         allBodyCellsAsRows.forEach(row => {
