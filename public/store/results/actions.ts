@@ -481,6 +481,7 @@ export const actions = {
       target: string;
       solutionId: string;
       highlight: Highlight;
+      varMode: SummaryMode;
     }
   ) {
     if (!args.dataset) {
@@ -493,6 +494,10 @@ export const actions = {
     }
     if (!args.solutionId) {
       console.warn("`solutionId` argument is missing");
+      return null;
+    }
+    if (!args.varMode) {
+      console.warn("`varMode` argument is missing");
       return null;
     }
 
@@ -525,7 +530,7 @@ export const actions = {
       resultGetters.getResidualsSummaries(context),
       mutations.updateResidualsSummaries,
       filterParams,
-      null
+      args.varMode
     );
   },
 
@@ -537,6 +542,7 @@ export const actions = {
       target: string;
       requestIds: string[];
       highlight: Highlight;
+      varModes: Map<string, SummaryMode>;
     }
   ) {
     if (!args.requestIds) {
@@ -553,7 +559,10 @@ export const actions = {
           dataset: args.dataset,
           target: args.target,
           solutionId: solution.solutionId,
-          highlight: args.highlight
+          highlight: args.highlight,
+          varMode: args.varModes.has(args.target)
+            ? args.varModes.get(args.target)
+            : SummaryMode.Default
         });
       })
     );

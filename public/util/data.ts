@@ -572,7 +572,7 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
         description = `Model predicted value for ${variable.colName}`;
       } else if (isErrorCol(col.key)) {
         variable = solutionGetters.getActiveSolutionTargetVariable(store)[0];
-        label = variable.colDisplayName;
+        label = "Error";
         description = `Difference between actual and predicted value for ${variable.colName}`;
       } else {
         variable = variables[col.key];

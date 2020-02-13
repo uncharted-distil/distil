@@ -172,26 +172,9 @@ func main() {
 		}
 	}
 
-	// reset the exported problem list
-	if config.IsTask1 {
-		problemListingFile := path.Join(config.UserProblemPath, routes.ProblemLabelFile)
-		err = os.MkdirAll(config.UserProblemPath, os.ModePerm)
-		if err != nil {
-			log.Errorf("%+v", err)
-			os.Exit(1)
-		}
-
-		err = util.WriteFileWithDirs(problemListingFile, []byte("problem_id,system,meaningful\n"), 0777)
-		if err != nil {
-			log.Errorf("%+v", err)
-			os.Exit(1)
-		}
-		datasetDocPath = path.Join(config.D3MInputDir, "TRAIN", "dataset_TRAIN", compute.D3MDataSchema)
-	} else {
-		// NOTE: EVAL ONLY OVERRIDE SETUP FOR METRICS!
-		problemPath = path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", api.D3MProblem)
-		ws.SetProblemFile(problemPath)
-	}
+	// NOTE: EVAL ONLY OVERRIDE SETUP FOR METRICS!
+	problemPath = path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", api.D3MProblem)
+	ws.SetProblemFile(problemPath)
 
 	// set the ingest client to use
 	task.SetClient(solutionClient)
@@ -277,7 +260,7 @@ func main() {
 	registerRoutePost(mux, "/distil/variable-summary/:dataset/:variable/:invert/:mode", routes.VariableSummaryHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/training-summary/:dataset/:variable/:results-uuid/:mode", routes.TrainingSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/target-summary/:dataset/:target/:results-uuid/:mode", routes.TargetSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/residuals-summary/:dataset/:target/:results-uuid", routes.ResidualsSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/residuals-summary/:dataset/:target/:results-uuid/:mode", routes.ResidualsSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid/:mode", routes.CorrectnessSummaryHandler(pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/predicted-summary/:dataset/:target/:results-uuid/:mode", routes.PredictedSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor))

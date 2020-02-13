@@ -6,7 +6,8 @@ import {
   NUMERICAL_FILTER,
   BIVARIATE_FILTER,
   FEATURE_FILTER,
-  VECTOR_FILTER,
+  CLUSTER_FILTER,
+  Vector_FILTER,
   TIMESERIES_FILTER,
   INCLUDE_FILTER
 } from "../util/filters";
@@ -15,6 +16,7 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { overlayRouteEntry } from "../util/routes";
 import {
   TIMESERIES_TYPE,
+  IMAGE_TYPE,
   getVarType,
   isFeatureType,
   addFeaturePrefix,
@@ -67,6 +69,15 @@ export function createFilterFromHighlight(
     return {
       key: key,
       type: FEATURE_FILTER,
+      mode: mode,
+      categories: [highlight.value]
+    };
+  }
+
+  if (type === IMAGE_TYPE) {
+    return {
+      key: key,
+      type: CLUSTER_FILTER,
       mode: mode,
       categories: [highlight.value]
     };

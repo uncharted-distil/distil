@@ -33,8 +33,7 @@ export const getters = {
   ),
   getActiveSolutionTargetVariable: read(
     moduleGetters.getActiveSolutionTargetVariable
-  ),
-  getRequestStreams: read(moduleGetters.getRequestStreams)
+  )
 };
 
 export const actions = {
@@ -45,7 +44,5 @@ export const actions = {
 
 export const mutations = {
   updateSolutionRequests: commit(moduleMutations.updateSolutionRequests),
-  clearSolutionRequests: commit(moduleMutations.clearSolutionRequests),
-  addRequestStream: commit(moduleMutations.addRequestStream),
-  removeRequestStream: commit(moduleMutations.removeRequestStream)
+  clearSolutionRequests: commit(moduleMutations.clearSolutionRequests)
 };

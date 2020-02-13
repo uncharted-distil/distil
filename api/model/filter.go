@@ -262,6 +262,19 @@ func parseFilter(filter map[string]interface{}) (*model.Filter, error) {
 		return model.NewCategoricalFilter(key, mode, categories), nil
 	}
 
+	// cluster
+	if typ == model.ClusterFilter {
+		key, ok := json.String(filter, "key")
+		if !ok {
+			return nil, errors.Errorf("no `key` provided for filter")
+		}
+		categories, ok := json.StringArray(filter, "categories")
+		if !ok {
+			return nil, errors.Errorf("no `categories` provided for filter")
+		}
+		return model.NewClusterFilter(key, mode, categories), nil
+	}
+
 	// feature
 	if typ == model.FeatureFilter {
 		key, ok := json.String(filter, "key")

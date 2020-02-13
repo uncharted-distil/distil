@@ -80,15 +80,6 @@
 
     <div class="row justify-content-center">
       <b-button
-        class="export-button"
-        :variant="exportVariant"
-        @click="showExport = !showExport"
-        :disabled="disableExport"
-        v-if="isTask1"
-      >
-        Task 1: Export Problem
-      </b-button>
-      <b-button
         class="create-button"
         :variant="createVariant"
         @click="create"
@@ -119,6 +110,7 @@ import {
 } from "../store/app/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
+import { actions as viewActions } from "../store/view/module";
 import { RESULTS_ROUTE } from "../store/route/index";
 import { actions as solutionActions } from "../store/solutions/module";
 import { Solution, NUM_SOLUTIONS } from "../store/solutions/index";
@@ -158,9 +150,6 @@ export default Vue.extend({
       return routeGetters.getDecodedSolutionRequestFilterParams(this.$store);
     },
     metrics(): string[] {
-      if (this.isTask2) {
-        return appGetters.getProblemMetrics(this.$store);
-      }
       return null;
     },
     trainingSelected(): boolean {
@@ -182,12 +171,6 @@ export default Vue.extend({
     },
     isPending(): boolean {
       return this.pending;
-    },
-    isTask1(): boolean {
-      return appGetters.isTask1(this.$store);
-    },
-    isTask2(): boolean {
-      return appGetters.isTask2(this.$store);
     },
     disableCreate(): boolean {
       return this.isPending || !this.targetSelected || !this.trainingSelected;
@@ -226,10 +209,7 @@ export default Vue.extend({
           metrics: this.metrics,
           maxSolutions: NUM_SOLUTIONS,
           // intentionally nulled for now - should be made user settable in the future
-          maxTime: null,
-          onClose: () => {
-            this.$router.go(0);
-          }
+          maxTime: null
         })
         .then((res: Solution) => {
           this.pending = false;

@@ -320,3 +320,15 @@ func (s *Storage) FetchRawDistinctValues(dataset string, storageName string, var
 	}
 	return values, nil
 }
+
+// DoesVariableExist returns whether or not a variable exists.
+func (s *Storage) DoesVariableExist(dataset string, storageName string, varName string) (bool, error) {
+	sql := "SELECT column_name FROM information_schema.columns WHERE table_name = $1 and column_name = $2;"
+	rows, err := s.client.Query(sql, storageName, varName)
+	if err != nil {
+		return false, errors.Wrapf(err, "failed to check if a variable exists in postgres")
+	}
+	defer rows.Close()
+
+	return rows.Next(), nil
+}

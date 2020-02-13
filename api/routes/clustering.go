@@ -26,6 +26,7 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // ClusteringResult represents a clustering response for a variable.
@@ -73,21 +74,32 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 
 		// create the new metadata and database variables
 		if !clusterVarExist {
+			// add data variable if needed
+			clusterVarInStorage, err := dataStorage.DoesVariableExist(dataset, storageName, clusterVarName)
+			if err != nil {
+				log.Warnf("unable to check if cluster variable already exists: %v", err)
+			}
+			if !clusterVarInStorage {
+				err = dataStorage.AddVariable(dataset, storageName, clusterVarName, model.CategoricalType)
+				if err != nil {
+					handleError(w, err)
+					return
+				}
+			}
+
 			// cluster data
-			clustered, err := task.Cluster(sourceFolder, dataset, variable, datasetMeta.Variables)
+			addMeta, clustered, err := task.Cluster(sourceFolder, dataset, variable, datasetMeta.Variables)
 			if err != nil {
 				handleError(w, err)
 				return
 			}
-			err = metaStorage.AddVariable(dataset, clusterVarName, "Pattern", model.CategoricalType, "metadata")
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			err = dataStorage.AddVariable(dataset, storageName, clusterVarName, model.CategoricalType)
-			if err != nil {
-				handleError(w, err)
-				return
+
+			if addMeta {
+				err = metaStorage.AddVariable(dataset, clusterVarName, "Pattern", model.CategoricalType, "metadata")
+				if err != nil {
+					handleError(w, err)
+					return
+				}
 			}
 
 			// build the data for batching

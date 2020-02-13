@@ -60,14 +60,11 @@ func Initialize(config *Config) error {
 	contribPath = config.DatamartImportFolder
 	augmentedPath = path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
 
-	isTask = config.IsTask1 || config.IsTask2
-
 	log.Infof("using '%s' as seed path", seedPath)
 	log.Infof("using '%s' as seed sub path", seedSubPath)
 	log.Infof("using '%s' as tmp path", outputPath)
 	log.Infof("using '%s' as contrib path", contribPath)
 	log.Infof("using '%s' as augmented path", augmentedPath)
-	log.Infof("isTask set to '%v'", isTask)
 
 	initialized = true
 

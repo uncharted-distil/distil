@@ -301,9 +301,21 @@ export const actions = {
     // cluster.
     const promises = getters
       .getVariables(context)
-      .filter(v => v.grouping && v.grouping.properties.clusterCol)
+      .filter(
+        v =>
+          (v.grouping && v.grouping.properties.clusterCol) ||
+          v.colType === "image"
+      )
       .map(v => {
-        axios.post(`/distil/cluster/${args.dataset}/${v.grouping.idCol}`, {});
+        if (v.grouping && v.grouping.properties.clusterCol) {
+          return axios.post(
+            `/distil/cluster/${args.dataset}/${v.grouping.idCol}`,
+            {}
+          );
+        } else if (v.colType === "image") {
+          return axios.post(`/distil/cluster/${args.dataset}/${v.colName}`, {});
+        }
+        return null;
       });
     Promise.all(promises)
       .then(() => {

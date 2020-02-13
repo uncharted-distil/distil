@@ -19,9 +19,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	log "github.com/unchartedsoftware/plog"
 
-	"github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/env"
 )
 
@@ -33,50 +31,10 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 		dataset := "unknown"
 		var metrics []string
 
-		if config.IsTask1 {
-			// load dataset file
-			dataDoc, err := compute.LoadDatasetSchemaFromFile(datasetDocPath)
-			if err != nil {
-				log.Warnf("unable to load %s: %s", datasetDocPath, err)
-			}
-			if err == nil {
-				dataset = dataDoc.About.DatasetID
-			}
-		}
-
-		if config.IsTask2 {
-			// load problem file
-			problem, err := compute.LoadProblemSchemaFromFile(problemPath)
-			if err != nil {
-				log.Warnf("unable to load %s: %s", problemPath, err)
-			}
-			if err == nil {
-				// get inputs
-				if problem.Inputs != nil {
-					if len(problem.Inputs.Data) > 0 {
-						// get dataset
-						dataset = problem.Inputs.Data[0].DatasetID
-						// get targets
-						if len(problem.Inputs.Data[0].Targets) > 0 {
-							target = problem.Inputs.Data[0].Targets[0].ColName
-						}
-					}
-					// get metrics
-					if problem.Inputs.PerformanceMetrics != nil {
-						for _, metric := range problem.Inputs.PerformanceMetrics {
-							metrics = append(metrics, metric.Metric)
-						}
-					}
-				}
-			}
-		}
-
 		// marshal version
 		err := handleJSON(w, map[string]interface{}{
 			"version":   version,
 			"timestamp": timestamp,
-			"isTask1":   config.IsTask1,
-			"isTask2":   config.IsTask2,
 			"dataset":   dataset,
 			"target":    target,
 			"metrics":   metrics,
