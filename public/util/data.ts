@@ -23,14 +23,7 @@ import {
   actions as datasetActions
 } from "../store/dataset/module";
 import { getters as solutionGetters } from "../store/solutions/module";
-import {
-  formatValue,
-  hasComputedVarPrefix,
-  isIntegerType,
-  isTimeType,
-  IMAGE_TYPE,
-  TIMESERIES_TYPE
-} from "../util/types";
+import { formatValue, isIntegerType, isTimeType } from "../util/types";
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
@@ -458,17 +451,6 @@ export function fetchPredictionResultSummary(
     });
 }
 
-export function filterUnsupportedTargets(
-  variables: VariableSummary[]
-): VariableSummary[] {
-  return variables.filter(variableSummary => {
-    return (
-      !(variableSummary.varType && variableSummary.varType === IMAGE_TYPE) &&
-      !hasComputedVarPrefix(variableSummary.key)
-    );
-  });
-}
-
 export function filterVariablesByPage(
   pageIndex: number,
   numPerPage: number,
@@ -485,6 +467,7 @@ export function filterVariablesByPage(
 export function getVariableImportance(v: Variable): number {
   return v.ranking !== undefined ? v.ranking : v.importance;
 }
+
 export function getVariableRanking(v: Variable): number {
   return v.ranking !== undefined ? v.ranking : 0;
 }
