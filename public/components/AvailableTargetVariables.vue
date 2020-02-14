@@ -18,7 +18,6 @@
 
 <script lang="ts">
 import "jquery";
-import _ from "lodash";
 import {
   getters as datasetGetters,
   actions as datasetActions
