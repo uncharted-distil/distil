@@ -57,9 +57,7 @@ import {
   TableColumn,
   TaskTypes
 } from "../store/dataset/index";
-import {
-  PREDICTION_ROUTE
-} from "../store/route/index"
+import { PREDICTION_ROUTE } from "../store/route/index";
 
 const TABLE_VIEW = "table";
 const TIMESERIES_VIEW = "timeseries";
@@ -108,15 +106,15 @@ export default Vue.extend({
     },
 
     includedTableDataItems(): TableRow[] {
-      return this.isPrediction ?
-        predictionGetters.getIncludedPredictionTableDataItems(this.$store) :
-        resultsGetters.getIncludedResultTableDataItems(this.$store);
+      return this.isPrediction
+        ? predictionGetters.getIncludedPredictionTableDataItems(this.$store)
+        : resultsGetters.getIncludedResultTableDataItems(this.$store);
     },
 
     includedDataTableFields(): Dictionary<TableColumn> {
-      return this.isPrediction ?
-        predictionGetters.getIncludedPredictionTableDataFields(this.$store) :
-        resultsGetters.getIncludedResultTableDataFields(this.$store);
+      return this.isPrediction
+        ? predictionGetters.getIncludedPredictionTableDataFields(this.$store)
+        : resultsGetters.getIncludedResultTableDataFields(this.$store);
     },
 
     numIncludedResultItems(): number {
@@ -133,15 +131,15 @@ export default Vue.extend({
     },
 
     excludedTableDataItems(): TableRow[] {
-     return this.isPrediction ?
-        predictionGetters.getExcludedPredictionTableDataItems(this.$store) :
-        resultsGetters.getExcludedResultTableDataItems(this.$store);
+      return this.isPrediction
+        ? predictionGetters.getExcludedPredictionTableDataItems(this.$store)
+        : resultsGetters.getExcludedResultTableDataItems(this.$store);
     },
 
     excludedResultTableDataFields(): Dictionary<TableColumn> {
-      return this.isPrediction ?
-        predictionGetters.getExcludedPredictionTableDataFields(this.$store) :
-        resultsGetters.getExcludedResultTableDataFields(this.$store);
+      return this.isPrediction
+        ? predictionGetters.getExcludedPredictionTableDataFields(this.$store)
+        : resultsGetters.getExcludedResultTableDataFields(this.$store);
     },
 
     numExcludedResultItems(): number {
@@ -171,11 +169,11 @@ export default Vue.extend({
     },
 
     numRows(): number {
-      return this.isPrediction ?
-        predictionGetters.getPredictionDataNumRows(this.$store) :
-        resultsGetters.getResultDataNumRows(this.$store);
+      return this.isPrediction
+        ? predictionGetters.getPredictionDataNumRows(this.$store)
+        : resultsGetters.getResultDataNumRows(this.$store);
     },
-    
+
     isForecasting(): boolean {
       const routeArgs = routeGetters.getRouteTask(this.$store);
       return routeArgs && routeArgs.includes(TaskTypes.FORECASTING);
@@ -211,7 +209,9 @@ export default Vue.extend({
     errorTitle(itemCount: number, errorCount: number): string {
       const matchesLabel = `Displaying ${itemCount} of ${this.numRows}`;
       const erroneousLabel = `, including ${errorCount} <b class="erroneous-color">erroneous</b> predictions`;
-      return this.isForecasting || this.isPrediction ? matchesLabel : matchesLabel + erroneousLabel;
+      return this.isForecasting || this.isPrediction
+        ? matchesLabel
+        : matchesLabel + erroneousLabel;
     },
     errorCount(dataColumn: TableRow[]): number {
       return dataColumn.filter(item => {

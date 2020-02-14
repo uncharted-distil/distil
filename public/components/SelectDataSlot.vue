@@ -108,7 +108,7 @@ import SelectGraphView from "./SelectGraphView";
 import FilterBadge from "./FilterBadge";
 import ViewTypeToggle from "./ViewTypeToggle";
 import { overlayRouteEntry } from "../util/routes";
-import {   
+import {
   actions as datasetActions,
   getters as datasetGetters
 } from "../store/dataset/module";

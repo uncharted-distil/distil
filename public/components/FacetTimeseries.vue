@@ -53,7 +53,11 @@ import {
   Row,
   NUMERICAL_SUMMARY
 } from "../store/dataset/index";
-import { INTEGER_TYPE, EXPAND_ACTION_TYPE, COLLAPSE_ACTION_TYPE } from "../util/types";
+import {
+  INTEGER_TYPE,
+  EXPAND_ACTION_TYPE,
+  COLLAPSE_ACTION_TYPE
+} from "../util/types";
 
 export default Vue.extend({
   name: "facet-timeseries",

@@ -150,9 +150,9 @@ export default Vue.extend({
         SELECT_TARGET_ROUTE,
         SELECT_TRAINING_ROUTE,
         RESULTS_ROUTE,
-        PREDICTION_ROUTE,
-      ]
-      const currentStep = steps.indexOf(this.$route.path)+1;
+        PREDICTION_ROUTE
+      ];
+      const currentStep = steps.indexOf(this.$route.path) + 1;
       return steps.slice(0, currentStep);
     }
   },
@@ -179,12 +179,14 @@ export default Vue.extend({
     onResults() {
       gotoResults(this.$router);
     },
-    hasView (view: string): boolean {
-      return !!restoreView(view, this.dataset) && this.activeSteps.indexOf(view) > -1
+    hasView(view: string): boolean {
+      return (
+        !!restoreView(view, this.dataset) && this.activeSteps.indexOf(view) > -1
+      );
     },
     hasJoinDatasetView(): boolean {
       return !!restoreView(JOIN_DATASETS_ROUTE, this.joinDatasetsHash);
-    },
+    }
   }
 });
 </script>

@@ -4,9 +4,11 @@
   "private": true,
   "author": "Uncharted Software <info@uncharted.software>",
   "scripts": {
-    "build": "webpack",
+    "build": "prettier --check public/**/*.{vue,ts} && webpack",
     "watch": "webpack --watch",
-    "tslint-check": "tslint-config-prettier-check ./tslint.json"
+    "tslint-check": "tslint-config-prettier-check ./tslint.json",
+    "prettier-check": "prettier --check public/**/*.{vue,ts}",
+    "prettier-fix": "prettier --write public/**/*.{vue,ts}"
   },
   "dependencies": {
     "@turf/bbox": "^6.0.1",

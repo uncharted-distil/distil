@@ -186,7 +186,7 @@ export default Vue.extend({
 
     latSummary(): VariableSummary {
       const latSummary: VariableSummary = {
-        label: 'Latitude',
+        label: "Latitude",
         description: this.summary.description,
         type: LATITUDE_TYPE + GEOCOORDINATE_TYPE,
         key: this.summary.key,
@@ -199,7 +199,7 @@ export default Vue.extend({
 
     lonSummary(): VariableSummary {
       const latSummary: VariableSummary = {
-        label: 'Longitude',
+        label: "Longitude",
         description: this.summary.description,
         type: LONGITUDE_TYPE + GEOCOORDINATE_TYPE,
         key: this.summary.key,

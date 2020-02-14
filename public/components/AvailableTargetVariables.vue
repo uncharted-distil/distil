@@ -26,7 +26,12 @@ import { getters as routeGetters } from "../store/route/module";
 import { createRouteEntry, varModesToString } from "../util/routes";
 import { filterSummariesByDataset, getComposedVariableKey } from "../util/data";
 import VariableFacets from "../components/VariableFacets.vue";
-import { Grouping, Variable, VariableSummary, SummaryMode } from "../store/dataset/index";
+import {
+  Grouping,
+  Variable,
+  VariableSummary,
+  SummaryMode
+} from "../store/dataset/index";
 import {
   AVAILABLE_TARGET_VARS_INSTANCE,
   SELECT_TRAINING_ROUTE
@@ -114,7 +119,7 @@ export default Vue.extend({
               targetName: group.colName
             })
             .then(response => {
-              const task = response.data.task.join(",")
+              const task = response.data.task.join(",");
 
               const varModesMap = routeGetters.getDecodedVarModes(this.$store);
               if (task.includes("timeseries")) {

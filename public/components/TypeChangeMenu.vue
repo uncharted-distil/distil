@@ -54,7 +54,8 @@
       :disabled="!isDisabled"
       target="type-change-dropdown"
     >
-      Cannot change type when actively filtering or viewing models or predictions
+      Cannot change type when actively filtering or viewing models or
+      predictions
     </b-tooltip>
   </div>
 </template>
@@ -90,7 +91,11 @@ import {
 } from "../util/types";
 import { hasFilterInRoute } from "../util/filters";
 import { createRouteEntry } from "../util/routes";
-import { GROUPING_ROUTE, PREDICTION_ROUTE, RESULTS_ROUTE } from "../store/route";
+import {
+  GROUPING_ROUTE,
+  PREDICTION_ROUTE,
+  RESULTS_ROUTE
+} from "../store/route";
 import { getComposedVariableKey } from "../util/data";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
@@ -108,7 +113,7 @@ export default Vue.extend({
     dataset: String as () => string,
     field: String as () => string,
     geocoordinate: Boolean,
-    expandCollapse: Function as ()=> Function
+    expandCollapse: Function as () => Function
   },
   computed: {
     isGeocoordinate(): boolean {
@@ -116,8 +121,10 @@ export default Vue.extend({
     },
     isPredictionOrResultsView(): boolean {
       const routePath = routeGetters.getRoutePath(this.$store);
-      return routePath &&
-        (routePath === PREDICTION_ROUTE || routePath === RESULTS_ROUTE);
+      return (
+        routePath &&
+        (routePath === PREDICTION_ROUTE || routePath === RESULTS_ROUTE)
+      );
     },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
@@ -250,18 +257,17 @@ export default Vue.extend({
           {
             type: COLLAPSE_ACTION_TYPE,
             label: "Collapse"
-          }, {
+          },
+          {
             type: EXPAND_ACTION_TYPE,
             label: "Expand"
           }
         );
         if (!this.isPredictionOrResultsView) {
-          options.push(
-            {
-              type: EXPLODE_ACTION_TYPE,
-              label: "Explode"
-            }
-          );
+          options.push({
+            type: EXPLODE_ACTION_TYPE,
+            label: "Explode"
+          });
         }
       } else {
         options.push(
@@ -285,7 +291,10 @@ export default Vue.extend({
           groupingType: type
         });
         this.$router.push(entry);
-      } else if (this.expandCollapse && (type === COLLAPSE_ACTION_TYPE || type === EXPAND_ACTION_TYPE)) {
+      } else if (
+        this.expandCollapse &&
+        (type === COLLAPSE_ACTION_TYPE || type === EXPAND_ACTION_TYPE)
+      ) {
         this.expandCollapse(type);
       } else {
         datasetActions.removeGrouping(this.$store, {
@@ -350,7 +359,7 @@ export default Vue.extend({
               dataset: this.dataset
             });
           }
-          return null
+          return null;
         })
         .then(() => {
           if (this.target && !this.isPredictionOrResultsView) {
@@ -360,7 +369,7 @@ export default Vue.extend({
             });
           }
 
-          return null
+          return null;
         });
     }
   },
