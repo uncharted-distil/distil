@@ -106,8 +106,7 @@ import {
   sortSummariesByImportance,
   filterVariablesByPage,
   getVariableRanking,
-  getVariableImportance,
-  filterUnsupportedTargets
+  getVariableImportance
 } from "../util/data";
 import {
   Highlight,
@@ -125,7 +124,6 @@ import { Group } from "../util/facets";
 import { LATITUDE_TYPE, LONGITUDE_TYPE } from "../util/types";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
-
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import Vue from "vue";
 
@@ -195,11 +193,6 @@ export default Vue.extend({
     },
 
     sortedFilteredSummaries(): VariableSummary[] {
-      if (this.enableTypefiltering) {
-        return filterUnsupportedTargets(
-          sortSummariesByImportance(this.filteredSummaries, this.variables)
-        );
-      }
       return sortSummariesByImportance(this.filteredSummaries, this.variables);
     },
 

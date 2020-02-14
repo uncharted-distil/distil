@@ -18,6 +18,7 @@
 
 <script lang="ts">
 import "jquery";
+import _ from "lodash";
 import {
   getters as datasetGetters,
   actions as datasetActions
@@ -32,6 +33,7 @@ import {
   VariableSummary,
   SummaryMode
 } from "../store/dataset/index";
+import { hasComputedVarPrefix, UNSUPPORTED_TARGET_TYPES } from "../util/types";
 import {
   AVAILABLE_TARGET_VARS_INSTANCE,
   SELECT_TRAINING_ROUTE
@@ -71,89 +73,114 @@ export default Vue.extend({
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
+    unsupportedTargets(): Set<string> {
+      return new Set(
+        this.variables
+          .filter(
+            v =>
+              UNSUPPORTED_TARGET_TYPES.has(v.colType) ||
+              hasComputedVarPrefix(v.colName)
+          )
+          .map(v => v.colName)
+      );
+    },
     html(): (group: Group) => HTMLDivElement {
       return (group: Group) => {
         const container = document.createElement("div");
         const targetElem = document.createElement("button");
+
+        const unsupported = this.unsupportedTargets.has(group.colName);
         targetElem.className += "btn btn-sm btn-success ml-2 mr-2 mb-2";
+        if (unsupported) {
+          targetElem.className += " disabled";
+        }
+
         targetElem.innerHTML = "Select Target";
-        targetElem.addEventListener("click", () => {
-          const target = group.colName;
-          // remove from training
-          const training = routeGetters.getDecodedTrainingVariableNames(
-            this.$store
-          );
-          const index = training.indexOf(target);
-          if (index !== -1) {
-            training.splice(index, 1);
-          }
-
-          const v = this.variables.find(v => {
-            return v.colName === group.colName;
-          });
-          if (v && v.grouping) {
-            if (v.grouping.subIds.length > 0) {
-              v.grouping.subIds.forEach(subId => {
-                const exists = training.find(t => {
-                  return t === subId;
-                });
-                if (!exists) {
-                  training.push(subId);
-                }
-              });
-            } else {
-              const exists = training.find(t => {
-                return t === v.grouping.idCol;
-              });
-              if (!exists) {
-                training.push(v.grouping.idCol);
-              }
+        if (!unsupported) {
+          // only add listener on supported target types
+          targetElem.addEventListener("click", () => {
+            const target = group.colName;
+            // remove from training
+            const training = routeGetters.getDecodedTrainingVariableNames(
+              this.$store
+            );
+            const index = training.indexOf(target);
+            if (index !== -1) {
+              training.splice(index, 1);
             }
-          }
 
-          // kick off the fetch task and wait for the result - when we've got it, update the route with info
-          const dataset = routeGetters.getRouteDataset(this.$store);
-          datasetActions
-            .fetchTask(this.$store, {
-              dataset: dataset,
-              targetName: group.colName
-            })
-            .then(response => {
-              const task = response.data.task.join(",");
-
-              const varModesMap = routeGetters.getDecodedVarModes(this.$store);
-              if (task.includes("timeseries")) {
-                training.forEach(v => {
-                  if (v !== group.colName) {
-                    varModesMap.set(v, SummaryMode.Timeseries);
+            const v = this.variables.find(v => {
+              return v.colName === group.colName;
+            });
+            if (v && v.grouping) {
+              if (v.grouping.subIds.length > 0) {
+                v.grouping.subIds.forEach(subId => {
+                  const exists = training.find(t => {
+                    return t === subId;
+                  });
+                  if (!exists) {
+                    training.push(subId);
                   }
                 });
+              } else {
+                const exists = training.find(t => {
+                  return t === v.grouping.idCol;
+                });
+                if (!exists) {
+                  training.push(v.grouping.idCol);
+                }
               }
-              const varModesStr = varModesToString(varModesMap);
+            }
 
-              const routeArgs = {
-                target: group.colName,
+            // kick off the fetch task and wait for the result - when we've got it, update the route with info
+            const dataset = routeGetters.getRouteDataset(this.$store);
+            datasetActions
+              .fetchTask(this.$store, {
                 dataset: dataset,
-                filters: routeGetters.getRouteFilters(this.$store),
-                training: training.join(","),
-                task: task,
-                varModes: varModesStr
-              };
+                targetName: group.colName
+              })
+              .then(response => {
+                const task = response.data.task.join(",");
 
-              appActions.logUserEvent(this.$store, {
-                feature: Feature.SELECT_TARGET,
-                activity: Activity.PROBLEM_DEFINITION,
-                subActivity: SubActivity.PROBLEM_SPECIFICATION,
-                details: { target: group.colName }
+                const varModesMap = routeGetters.getDecodedVarModes(
+                  this.$store
+                );
+                if (task.includes("timeseries")) {
+                  training.forEach(v => {
+                    if (v !== group.colName) {
+                      varModesMap.set(v, SummaryMode.Timeseries);
+                    }
+                  });
+                }
+                const varModesStr = varModesToString(varModesMap);
+
+                const routeArgs = {
+                  target: group.colName,
+                  dataset: dataset,
+                  filters: routeGetters.getRouteFilters(this.$store),
+                  training: training.join(","),
+                  task: task,
+                  varModes: varModesStr
+                };
+
+                appActions.logUserEvent(this.$store, {
+                  feature: Feature.SELECT_TARGET,
+                  activity: Activity.PROBLEM_DEFINITION,
+                  subActivity: SubActivity.PROBLEM_SPECIFICATION,
+                  details: { target: group.colName }
+                });
+
+                const entry = createRouteEntry(
+                  SELECT_TRAINING_ROUTE,
+                  routeArgs
+                );
+                this.$router.push(entry);
+              })
+              .catch(error => {
+                console.error(error);
               });
-
-              const entry = createRouteEntry(SELECT_TRAINING_ROUTE, routeArgs);
-              this.$router.push(entry);
-            })
-            .catch(error => {
-              console.error(error);
-            });
-        });
+          });
+        }
         container.appendChild(targetElem);
         return container;
       };

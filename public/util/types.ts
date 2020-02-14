@@ -268,6 +268,12 @@ const TYPE_TO_SUGGESTIONS = {
   [UNKNOWN_TYPE]: TEXT_SUGGESTIONS
 };
 
+export const UNSUPPORTED_TARGET_TYPES = new Set([
+  IMAGE_TYPE,
+  GEOCOORDINATE_TYPE,
+  TEXT_TYPE
+]);
+
 export function isEquivalentType(a: string, b: string): boolean {
   const equiv = EQUIV_TYPES[a];
   if (!equiv) {
