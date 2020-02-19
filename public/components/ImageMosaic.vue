@@ -183,8 +183,7 @@ export default Vue.extend({
 .image-tile {
   display: flex;
   position: relative;
-  flex-grow: 1;
-  margin: 4px;
+  margin: 2px;
 }
 
 .image-preview {
@@ -193,8 +192,8 @@ export default Vue.extend({
 
 .image-label-container {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 2px;
+  left: 2px;
   z-index: 1;
 }
 
