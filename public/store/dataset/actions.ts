@@ -296,28 +296,35 @@ export const actions = {
       type: DatasetPendingRequestType.CLUSTERING,
       status: DatasetPendingRequestStatus.PENDING
     };
-    mutations.updatePendingRequests(context, update);
 
-    // Find grouped fields that have clusters defined against them and request that they
-    // cluster.
-    const promises = getters
+    // Find variables that require cluster requests.  If there are none, then
+    // quick exit.
+    const clusterVariables = getters
       .getVariables(context)
       .filter(
         v =>
           (v.grouping && v.grouping.properties.clusterCol) ||
           v.colType === "image"
-      )
-      .map(v => {
-        if (v.grouping && v.grouping.properties.clusterCol) {
-          return axios.post(
-            `/distil/cluster/${args.dataset}/${v.grouping.idCol}`,
-            {}
-          );
-        } else if (v.colType === "image") {
-          return axios.post(`/distil/cluster/${args.dataset}/${v.colName}`, {});
-        }
-        return null;
-      });
+      );
+    if (clusterVariables.length === 0) {
+      return Promise.resolve();
+    }
+
+    mutations.updatePendingRequests(context, update);
+
+    // Find grouped fields that have clusters defined against them and request that they
+    // cluster.
+    const promises = clusterVariables.map(v => {
+      if (v.grouping && v.grouping.properties.clusterCol) {
+        return axios.post(
+          `/distil/cluster/${args.dataset}/${v.grouping.idCol}`,
+          {}
+        );
+      } else if (v.colType === "image") {
+        return axios.post(`/distil/cluster/${args.dataset}/${v.colName}`, {});
+      }
+      return null;
+    });
     Promise.all(promises)
       .then(() => {
         mutations.updatePendingRequests(context, {
