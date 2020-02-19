@@ -39,7 +39,7 @@ func Merge(datasetSource metadata.DatasetSource, schemaFile string, index string
 	}
 
 	// need to manually build the metadata and output it.
-	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to load original metadata")
 	}

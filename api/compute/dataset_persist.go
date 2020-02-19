@@ -420,7 +420,7 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 
 	// read the dataset document
 	schemaFilename := path.Join(params.SourceDataFolder, params.SchemaFile)
-	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFilename)
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFilename, true)
 	if err != nil {
 		return "", "", err
 	}

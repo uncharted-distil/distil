@@ -51,7 +51,7 @@ func ClusterDataset(datasetSource metadata.DatasetSource, schemaFile string, ind
 	}
 
 	// load metadata from original schema
-	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile)
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to load original schema file")
 	}

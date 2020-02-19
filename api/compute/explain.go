@@ -245,7 +245,7 @@ func getD3MFieldIndex(header []string) int {
 
 func readDatasetData(uri string) ([][]string, error) {
 	uriRaw := strings.TrimPrefix(uri, "file://")
-	meta, err := metadata.LoadMetadataFromOriginalSchema(uriRaw)
+	meta, err := metadata.LoadMetadataFromOriginalSchema(uriRaw, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to load original schema file")
 	}

@@ -150,7 +150,7 @@ func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, 
 		}
 
 		schemaPath := path.Join(env.ResolvePath(datasetES.Source, datasetES.Folder), compute.D3MDataSchema)
-		meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath)
+		meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath, true)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to load metadata from source dataset schema doc"))
 			return

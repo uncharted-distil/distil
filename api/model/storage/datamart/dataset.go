@@ -124,7 +124,7 @@ func (s *Storage) searchREST(searchText string, baseDataset *api.Dataset) ([]*ap
 	dataPath := ""
 	if baseDataset != nil {
 		datasetPath := env.ResolvePath(baseDataset.Source, baseDataset.Folder)
-		meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(datasetPath, "datasetDoc.json"))
+		meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(datasetPath, "datasetDoc.json"), true)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to load metadatat")
 		}

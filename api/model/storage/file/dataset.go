@@ -137,7 +137,7 @@ func (s *Storage) searchFolders(terms []string) ([]*model.Metadata, error) {
 
 		// load the metadata
 		schemaFilename := path.Join(s.folder, info.Name(), compute.D3MDataSchema)
-		meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFilename)
+		meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFilename, true)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to read metadata")
 		}
