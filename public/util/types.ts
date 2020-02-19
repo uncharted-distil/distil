@@ -274,6 +274,20 @@ export const UNSUPPORTED_TARGET_TYPES = new Set([
   TEXT_TYPE
 ]);
 
+export const RANKABLE_VARIABLE_TYPES = new Set([
+  ...INTEGER_TYPES,
+  ...FLOATING_POINT_TYPES,
+  BOOL_TYPE,
+  DATE_TIME_TYPE,
+  TIMESTAMP_TYPE,
+  CATEGORICAL_TYPE,
+  ORDINAL_TYPE,
+  CITY_TYPE,
+  STATE_TYPE,
+  COUNTRY_TYPE,
+  COUNTRY_CODE_TYPE
+]);
+
 export function isEquivalentType(a: string, b: string): boolean {
   const equiv = EQUIV_TYPES[a];
   if (!equiv) {
@@ -400,6 +414,24 @@ export function isJoinable(type: string, otherType: string): boolean {
   const isSameType = type === otherType;
   const isBothNumericType = isNumericType(type) && isNumericType(otherType);
   return isSameType || isBothNumericType;
+}
+
+/**
+ * Returns true if a given variable can act as a target, false otherwise.
+ */
+export function isUnsupportedTargetVar(
+  varName: string,
+  varType: string
+): boolean {
+  return UNSUPPORTED_TARGET_TYPES.has(varType) || hasComputedVarPrefix(varName);
+}
+
+/**
+ * Returns ture if a given variable type can be processed as part of the feature ranking
+ * pipeline, false otherwise.
+ */
+export function isRankableVariableType(varType: string): boolean {
+  return RANKABLE_VARIABLE_TYPES.has(varType);
 }
 
 export function addTypeSuggestions(types: any[]): string[] {
