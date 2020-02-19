@@ -104,7 +104,7 @@ export const actions = {
     return Promise.all(promises);
   },
 
-  fetchTrainingSummary(
+  async fetchTrainingSummary(
     context: PredictionContext,
     args: {
       dataset: string;
@@ -137,36 +137,29 @@ export const actions = {
       filters: []
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-    return axios
-      .post(
+    try {
+      const response = await axios.post(
         `/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}/${args.varMode}`,
         filterParams
-      )
-      .then(response => {
-        const summary = response.data.summary;
-        return fetchSummaryExemplars(
-          args.dataset,
+      );
+      const summary = response.data.summary;
+      await fetchSummaryExemplars(args.dataset, args.variable.colName, summary);
+      mutations.updateTrainingSummary(context, summary);
+    } catch (error) {
+      console.error(error);
+      mutations.updateTrainingSummary(
+        context,
+        createErrorSummary(
           args.variable.colName,
-          summary
-        ).then(() => {
-          mutations.updateTrainingSummary(context, summary);
-        });
-      })
-      .catch(error => {
-        console.error(error);
-        mutations.updateTrainingSummary(
-          context,
-          createErrorSummary(
-            args.variable.colName,
-            args.variable.colDisplayName,
-            args.dataset,
-            error
-          )
-        );
-      });
+          args.variable.colDisplayName,
+          args.dataset,
+          error
+        )
+      );
+    }
   },
 
-  fetchIncludedPredictionTableData(
+  async fetchIncludedPredictionTableData(
     context: PredictionContext,
     args: {
       solutionId: string;
@@ -191,28 +184,23 @@ export const actions = {
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
-    return axios
-      .post(
+    try {
+      const response = await axios.post(
         `distil/prediction-results/${args.dataset}/${encodeURIComponent(
           args.solutionId
         )}/${encodeURIComponent(args.resultId)}`,
         filterParams
-      )
-      .then(response => {
-        mutations.setIncludedPredictionTableData(context, response.data);
-      })
-      .catch(error => {
-        console.error(
-          `Failed to fetch results from ${args.solutionId} with error ${error}`
-        );
-        mutations.setIncludedPredictionTableData(
-          context,
-          createEmptyTableData()
-        );
-      });
+      );
+      mutations.setIncludedPredictionTableData(context, response.data);
+    } catch (error) {
+      console.error(
+        `Failed to fetch results from ${args.solutionId} with error ${error}`
+      );
+      mutations.setIncludedPredictionTableData(context, createEmptyTableData());
+    }
   },
 
-  fetchExcludedPredictionTableData(
+  async fetchExcludedPredictionTableData(
     context: PredictionContext,
     args: {
       solutionId: string;
@@ -241,25 +229,20 @@ export const actions = {
       EXCLUDE_FILTER
     );
 
-    return axios
-      .post(
+    try {
+      const response = await axios.post(
         `distil/prediction-results/${args.dataset}/${encodeURIComponent(
           args.solutionId
         )}/${encodeURIComponent(args.produceRequestId)}`,
         filterParams
-      )
-      .then(response => {
-        mutations.setExcludedPredictionTableData(context, response.data);
-      })
-      .catch(error => {
-        console.error(
-          `Failed to fetch results from ${args.solutionId} with error ${error}`
-        );
-        mutations.setExcludedPredictionTableData(
-          context,
-          createEmptyTableData()
-        );
-      });
+      );
+      mutations.setExcludedPredictionTableData(context, response.data);
+    } catch (error) {
+      console.error(
+        `Failed to fetch results from ${args.solutionId} with error ${error}`
+      );
+      mutations.setExcludedPredictionTableData(context, createEmptyTableData());
+    }
   },
 
   fetchPredictionTableData(
@@ -347,7 +330,7 @@ export const actions = {
     );
   },
 
-  fetchForecastedTimeseries(
+  async fetchForecastedTimeseries(
     context: PredictionContext,
     args: {
       dataset: string;
@@ -392,28 +375,26 @@ export const actions = {
       return null;
     }
 
-    return axios
-      .post(
+    try {
+      const response = await axios.post(
         `distil/timeseries-forecast/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}/${solution.resultId}`,
         {}
-      )
-      .then(response => {
-        mutations.updatePredictedTimeseries(context, {
-          solutionId: args.solutionId,
-          id: args.timeseriesID,
-          timeseries: response.data.timeseries,
-          isDateTime: response.data.isDateTime
-        });
-        mutations.updatePredictedForecast(context, {
-          solutionId: args.solutionId,
-          id: args.timeseriesID,
-          forecast: response.data.forecast,
-          forecastTestRange: response.data.forecastRange,
-          isDateTime: response.data.isDateTime
-        });
-      })
-      .catch(error => {
-        console.error(error);
+      );
+      mutations.updatePredictedTimeseries(context, {
+        solutionId: args.solutionId,
+        id: args.timeseriesID,
+        timeseries: response.data.timeseries,
+        isDateTime: response.data.isDateTime
       });
+      mutations.updatePredictedForecast(context, {
+        solutionId: args.solutionId,
+        id: args.timeseriesID,
+        forecast: response.data.forecast,
+        forecastTestRange: response.data.forecastRange,
+        isDateTime: response.data.isDateTime
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 };

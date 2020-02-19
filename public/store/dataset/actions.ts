@@ -42,22 +42,21 @@ import {
 import { DATASET_UPLOAD, PREDICTION_UPLOAD } from "../../util/uploads";
 
 // fetches variables and add dataset name to each variable
-function getVariables(dataset: string): Promise<Variable[]> {
-  return axios.get(`/distil/variables/${dataset}`).then(response => {
-    // extend variable with datasetName and isColTypeReviewed property to track type reviewed state in the client state
-    return response.data.variables.map(variable => ({
-      ...variable,
-      datasetName: dataset,
-      isColTypeReviewed: false
-    }));
-  });
+async function getVariables(dataset: string): Promise<Variable[]> {
+  const response = await axios.get(`/distil/variables/${dataset}`);
+  // extend variable with datasetName and isColTypeReviewed property to track type reviewed state in the client state
+  return response.data.variables.map(variable => ({
+    ...variable,
+    datasetName: dataset,
+    isColTypeReviewed: false
+  }));
 }
 
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
 
 export const actions = {
   // fetches a dataset description.
-  fetchDataset(
+  async fetchDataset(
     context: DatasetContext,
     args: { dataset: string }
   ): Promise<void> {
@@ -65,33 +64,29 @@ export const actions = {
       console.warn("`dataset` argument is missing");
       return null;
     }
-    return axios
-      .get(`/distil/datasets/${args.dataset}`)
-      .then(response => {
-        mutations.setDataset(context, response.data.dataset);
-      })
-      .catch(error => {
-        console.error(error);
-        mutations.setDatasets(context, []);
-      });
+    try {
+      const response = await axios.get(`/distil/datasets/${args.dataset}`);
+      mutations.setDataset(context, response.data.dataset);
+    } catch (error) {
+      console.error(error);
+      mutations.setDatasets(context, []);
+    }
   },
 
   // searches dataset descriptions and column names for supplied terms
-  searchDatasets(context: DatasetContext, terms: string): Promise<void> {
+  async searchDatasets(context: DatasetContext, terms: string): Promise<void> {
     const params = !_.isEmpty(terms) ? `?search=${terms}` : "";
-    return axios
-      .get(`/distil/datasets${params}`)
-      .then(response => {
-        mutations.setDatasets(context, response.data.datasets);
-      })
-      .catch(error => {
-        console.error(error);
-        mutations.setDatasets(context, []);
-      });
+    try {
+      const response = await axios.get(`/distil/datasets${params}`);
+      mutations.setDatasets(context, response.data.datasets);
+    } catch (error) {
+      console.error(error);
+      mutations.setDatasets(context, []);
+    }
   },
 
   // fetches all variables for a single dataset.
-  fetchVariables(
+  async fetchVariables(
     context: DatasetContext,
     args: { dataset: string }
   ): Promise<void> {
@@ -99,18 +94,17 @@ export const actions = {
       console.warn("`dataset` argument is missing");
       return null;
     }
-    return getVariables(args.dataset)
-      .then(variables => {
-        mutations.setVariables(context, variables);
-      })
-      .catch(error => {
-        console.error(error);
-        mutations.setVariables(context, []);
-      });
+    try {
+      const variables = await getVariables(args.dataset);
+      mutations.setVariables(context, variables);
+    } catch (error) {
+      console.error(error);
+      mutations.setVariables(context, []);
+    }
   },
 
   // fetches all variables for a two datasets.
-  fetchJoinDatasetsVariables(
+  async fetchJoinDatasetsVariables(
     context: DatasetContext,
     args: { datasets: string[] }
   ): Promise<void> {
@@ -118,22 +112,21 @@ export const actions = {
       console.warn("`datasets` argument is missing");
       return null;
     }
-    return Promise.all([
-      getVariables(args.datasets[0]),
-      getVariables(args.datasets[1])
-    ])
-      .then(res => {
-        const varsA = res[0];
-        const varsB = res[1];
-        mutations.setVariables(context, varsA.concat(varsB));
-      })
-      .catch(error => {
-        console.error(error);
-        mutations.setVariables(context, []);
-      });
+    try {
+      const res = await Promise.all([
+        getVariables(args.datasets[0]),
+        getVariables(args.datasets[1])
+      ]);
+      const varsA = res[0];
+      const varsB = res[1];
+      mutations.setVariables(context, varsA.concat(varsB));
+    } catch (error) {
+      console.error(error);
+      mutations.setVariables(context, []);
+    }
   },
 
-  geocodeVariable(
+  async geocodeVariable(
     context: DatasetContext,
     args: { dataset: string; field: string }
   ): Promise<any> {
@@ -153,21 +146,19 @@ export const actions = {
       status: DatasetPendingRequestStatus.PENDING
     };
     mutations.updatePendingRequests(context, update);
-    return axios
-      .post(`/distil/geocode/${args.dataset}/${args.field}`, {})
-      .then(() => {
-        mutations.updatePendingRequests(context, {
-          ...update,
-          status: DatasetPendingRequestStatus.RESOLVED
-        });
-      })
-      .catch(error => {
-        mutations.updatePendingRequests(context, {
-          ...update,
-          status: DatasetPendingRequestStatus.ERROR
-        });
-        console.error(error);
+    try {
+      await axios.post(`/distil/geocode/${args.dataset}/${args.field}`, {});
+      mutations.updatePendingRequests(context, {
+        ...update,
+        status: DatasetPendingRequestStatus.RESOLVED
       });
+    } catch (error) {
+      mutations.updatePendingRequests(context, {
+        ...update,
+        status: DatasetPendingRequestStatus.ERROR
+      });
+      console.error(error);
+    }
   },
 
   fetchGeocodingResults(
@@ -220,7 +211,7 @@ export const actions = {
     ]);
   },
 
-  fetchJoinSuggestions(
+  async fetchJoinSuggestions(
     context: DatasetContext,
     args: { dataset: string; searchQuery: string }
   ) {
@@ -262,23 +253,23 @@ export const actions = {
     const query = args.searchQuery
       ? `?search=${args.searchQuery.split(" ").join(",")}`
       : "";
-    return axios
-      .get(`/distil/join-suggestions/${args.dataset + query}`)
-      .then(response => {
-        const suggestions = (response.data && response.data.datasets) || [];
-        mutations.updatePendingRequests(context, {
-          ...request,
-          status: DatasetPendingRequestStatus.RESOLVED,
-          suggestions
-        });
-      })
-      .catch(error => {
-        mutations.updatePendingRequests(context, {
-          ...request,
-          status: DatasetPendingRequestStatus.ERROR
-        });
-        console.error(error);
+    try {
+      const response = await axios.get(
+        `/distil/join-suggestions/${args.dataset + query}`
+      );
+      const suggestions = (response.data && response.data.datasets) || [];
+      mutations.updatePendingRequests(context, {
+        ...request,
+        status: DatasetPendingRequestStatus.RESOLVED,
+        suggestions
       });
+    } catch (error) {
+      mutations.updatePendingRequests(context, {
+        ...request,
+        status: DatasetPendingRequestStatus.ERROR
+      });
+      console.error(error);
+    }
   },
 
   // Sends a request to the server to generate cluaster for all data that is a valid target for clustering.
@@ -397,7 +388,7 @@ export const actions = {
     }
   },
 
-  importDataset(
+  async importDataset(
     context: DatasetContext,
     args: {
       datasetID: string;
@@ -425,17 +416,14 @@ export const actions = {
       };
     }
 
-    return axios
-      .post(
-        `/distil/import/${args.datasetID}/${args.source}/${args.provenance}`,
-        postParams
-      )
-      .then(response => {
-        return actions.searchDatasets(context, args.terms);
-      });
+    const response = await axios.post(
+      `/distil/import/${args.datasetID}/${args.source}/${args.provenance}`,
+      postParams
+    );
+    return actions.searchDatasets(context, args.terms);
   },
 
-  importJoinDataset(
+  async importJoinDataset(
     context: DatasetContext,
     args: {
       datasetID: string;
@@ -457,27 +445,25 @@ export const actions = {
       status: DatasetPendingRequestStatus.PENDING
     };
     mutations.updatePendingRequests(context, update);
-    return axios
-      .post(
+    try {
+      const response = await axios.post(
         `/distil/import/${args.datasetID}/${args.source}/${args.provenance}`,
         {
           searchResults: args.searchResults
         }
-      )
-      .then(response => {
-        mutations.updatePendingRequests(context, {
-          ...update,
-          status: DatasetPendingRequestStatus.RESOLVED
-        });
-        return response && response.data;
-      })
-      .catch(error => {
-        mutations.updatePendingRequests(context, {
-          ...update,
-          status: DatasetPendingRequestStatus.ERROR
-        });
-        console.error(error);
+      );
+      mutations.updatePendingRequests(context, {
+        ...update,
+        status: DatasetPendingRequestStatus.RESOLVED
       });
+      return response && response.data;
+    } catch (error) {
+      mutations.updatePendingRequests(context, {
+        ...update,
+        status: DatasetPendingRequestStatus.ERROR
+      });
+      console.error(error);
+    }
   },
 
   composeVariables(
@@ -502,7 +488,7 @@ export const actions = {
     });
   },
 
-  deleteVariable(
+  async deleteVariable(
     context: DatasetContext,
     args: { dataset: string; key: string }
   ): Promise<any> {
@@ -514,51 +500,47 @@ export const actions = {
       console.warn("`key` argument is missing");
       return null;
     }
-    return axios
-      .post(`/distil/delete/${args.dataset}/${args.key}`, {})
-      .then(() => {
-        // update dataset
-        return Promise.all([
-          actions.fetchDataset(context, {
-            dataset: args.dataset
-          }),
-          actions.fetchVariables(context, {
-            dataset: args.dataset
-          })
-        ]).then(() => {
-          mutations.clearVariableSummaries(context);
-          const variables = context.getters.getVariables as Variable[];
-          const filterParams = context.getters
-            .getDecodedSolutionRequestFilterParams as FilterParams;
-          const highlight = context.getters.getDecodedHighlight as Highlight;
-          const varModes = context.getters.getDecodedVarModes as Map<
-            string,
-            SummaryMode
-          >;
-          return Promise.all([
-            actions.fetchIncludedVariableSummaries(context, {
-              dataset: args.dataset,
-              variables: variables,
-              filterParams: filterParams,
-              highlight: highlight,
-              varModes: varModes
-            }),
-            actions.fetchExcludedVariableSummaries(context, {
-              dataset: args.dataset,
-              variables: variables,
-              filterParams: filterParams,
-              highlight: highlight,
-              varModes: varModes
-            })
-          ]);
-        });
-      })
-      .catch(error => {
-        console.error(error);
-      });
+    try {
+      await axios.post(`/distil/delete/${args.dataset}/${args.key}`, {});
+      await Promise.all([
+        actions.fetchDataset(context, {
+          dataset: args.dataset
+        }),
+        actions.fetchVariables(context, {
+          dataset: args.dataset
+        })
+      ]);
+      mutations.clearVariableSummaries(context);
+      const variables = context.getters.getVariables as Variable[];
+      const filterParams = context.getters
+        .getDecodedSolutionRequestFilterParams as FilterParams;
+      const highlight = context.getters.getDecodedHighlight as Highlight;
+      const varModes = context.getters.getDecodedVarModes as Map<
+        string,
+        SummaryMode
+      >;
+      return Promise.all([
+        actions.fetchIncludedVariableSummaries(context, {
+          dataset: args.dataset,
+          variables: variables,
+          filterParams: filterParams,
+          highlight: highlight,
+          varModes: varModes
+        }),
+        actions.fetchExcludedVariableSummaries(context, {
+          dataset: args.dataset,
+          variables: variables,
+          filterParams: filterParams,
+          highlight: highlight,
+          varModes: varModes
+        })
+      ]);
+    } catch (error) {
+      console.error(error);
+    }
   },
 
-  joinDatasetsPreview(
+  async joinDatasetsPreview(
     context: DatasetContext,
     args: {
       datasetA: Dataset;
@@ -589,19 +571,16 @@ export const actions = {
       return roledVar;
     });
 
-    return axios
-      .post(`/distil/join`, {
-        accuracy: args.joinAccuracy,
-        datasetLeft: args.datasetA,
-        datasetRight: datasetBrevised,
-        searchResultIndex: args.joinSuggestionIndex
-      })
-      .then(response => {
-        return response.data;
-      });
+    const response = await axios.post(`/distil/join`, {
+      accuracy: args.joinAccuracy,
+      datasetLeft: args.datasetA,
+      datasetRight: datasetBrevised,
+      searchResultIndex: args.joinSuggestionIndex
+    });
+    return response.data;
   },
 
-  setGrouping(
+  async setGrouping(
     context: DatasetContext,
     args: { dataset: string; grouping: Grouping }
   ): Promise<any> {
@@ -613,53 +592,49 @@ export const actions = {
       console.warn("`grouping` argument is missing");
       return null;
     }
-    return axios
-      .post(`/distil/grouping/${args.dataset}`, {
+    try {
+      await axios.post(`/distil/grouping/${args.dataset}`, {
         grouping: args.grouping
-      })
-      .then(() => {
-        // update dataset
-        return Promise.all([
-          actions.fetchDataset(context, {
-            dataset: args.dataset
-          }),
-          actions.fetchVariables(context, {
-            dataset: args.dataset
-          })
-        ]).then(() => {
-          mutations.clearVariableSummaries(context);
-          const variables = context.getters.getVariables as Variable[];
-          const filterParams = context.getters
-            .getDecodedSolutionRequestFilterParams as FilterParams;
-          const highlight = context.getters.getDecodedHighlight as Highlight;
-          const varModes = context.getters.getDecodedVarModes as Map<
-            string,
-            SummaryMode
-          >;
-          return Promise.all([
-            actions.fetchIncludedVariableSummaries(context, {
-              dataset: args.dataset,
-              variables: variables,
-              filterParams: filterParams,
-              highlight: highlight,
-              varModes: varModes
-            }),
-            actions.fetchExcludedVariableSummaries(context, {
-              dataset: args.dataset,
-              variables: variables,
-              filterParams: filterParams,
-              highlight: highlight,
-              varModes: varModes
-            })
-          ]);
-        });
-      })
-      .catch(error => {
-        console.error(error);
       });
+      await Promise.all([
+        actions.fetchDataset(context, {
+          dataset: args.dataset
+        }),
+        actions.fetchVariables(context, {
+          dataset: args.dataset
+        })
+      ]);
+      mutations.clearVariableSummaries(context);
+      const variables = context.getters.getVariables as Variable[];
+      const filterParams = context.getters
+        .getDecodedSolutionRequestFilterParams as FilterParams;
+      const highlight = context.getters.getDecodedHighlight as Highlight;
+      const varModes = context.getters.getDecodedVarModes as Map<
+        string,
+        SummaryMode
+      >;
+      return Promise.all([
+        actions.fetchIncludedVariableSummaries(context, {
+          dataset: args.dataset,
+          variables: variables,
+          filterParams: filterParams,
+          highlight: highlight,
+          varModes: varModes
+        }),
+        actions.fetchExcludedVariableSummaries(context, {
+          dataset: args.dataset,
+          variables: variables,
+          filterParams: filterParams,
+          highlight: highlight,
+          varModes: varModes
+        })
+      ]);
+    } catch (error) {
+      console.error(error);
+    }
   },
 
-  removeGrouping(
+  async removeGrouping(
     context: DatasetContext,
     args: { dataset: string; variable: string }
   ): Promise<any> {
@@ -671,52 +646,50 @@ export const actions = {
       console.warn("`grouping` argument is missing");
       return null;
     }
-    return axios
-      .post(`/distil/remove-grouping/${args.dataset}/${args.variable}`, {})
-      .then(() => {
-        // update dataset
-        return Promise.all([
-          actions.fetchDataset(context, {
-            dataset: args.dataset
-          }),
-          actions.fetchVariables(context, {
-            dataset: args.dataset
-          })
-        ]).then(() => {
-          mutations.clearVariableSummaries(context);
-          const variables = context.getters.getVariables as Variable[];
-          const filterParams = context.getters
-            .getDecodedSolutionRequestFilterParams as FilterParams;
-          const highlight = context.getters.getDecodedHighlight as Highlight;
-          const varModes = context.getters.getDecodedVarModes as Map<
-            string,
-            SummaryMode
-          >;
-
-          return Promise.all([
-            actions.fetchIncludedVariableSummaries(context, {
-              dataset: args.dataset,
-              variables: variables,
-              filterParams: filterParams,
-              highlight: highlight,
-              varModes: varModes
-            }),
-            actions.fetchExcludedVariableSummaries(context, {
-              dataset: args.dataset,
-              variables: variables,
-              filterParams: filterParams,
-              highlight: highlight,
-              varModes: varModes
-            })
-          ]);
-        });
-      })
-      .catch(error => {
-        console.error(error);
-      });
+    try {
+      await axios.post(
+        `/distil/remove-grouping/${args.dataset}/${args.variable}`,
+        {}
+      );
+      await Promise.all([
+        actions.fetchDataset(context, {
+          dataset: args.dataset
+        }),
+        actions.fetchVariables(context, {
+          dataset: args.dataset
+        })
+      ]);
+      mutations.clearVariableSummaries(context);
+      const variables = context.getters.getVariables as Variable[];
+      const filterParams = context.getters
+        .getDecodedSolutionRequestFilterParams as FilterParams;
+      const highlight = context.getters.getDecodedHighlight as Highlight;
+      const varModes = context.getters.getDecodedVarModes as Map<
+        string,
+        SummaryMode
+      >;
+      return Promise.all([
+        actions.fetchIncludedVariableSummaries(context, {
+          dataset: args.dataset,
+          variables: variables,
+          filterParams: filterParams,
+          highlight: highlight,
+          varModes: varModes
+        }),
+        actions.fetchExcludedVariableSummaries(context, {
+          dataset: args.dataset,
+          variables: variables,
+          filterParams: filterParams,
+          highlight: highlight,
+          varModes: varModes
+        })
+      ]);
+    } catch (error) {
+      console.error(error);
+    }
   },
 
-  setVariableType(
+  async setVariableType(
     context: DatasetContext,
     args: { dataset: string; field: string; type: string }
   ): Promise<any> {
@@ -737,49 +710,47 @@ export const actions = {
       return null;
     }
 
-    return axios
-      .post(`/distil/variables/${args.dataset}`, {
+    try {
+      await axios.post(`/distil/variables/${args.dataset}`, {
         field: args.field,
         type: args.type
-      })
-      .then(() => {
-        mutations.updateVariableType(context, args);
-        // update variable summary
-        const filterParams =
-          context.getters.getDecodedSolutionRequestFilterParams;
-        const highlight = context.getters.getDecodedHighlight;
-        return Promise.all([
-          actions.fetchVariableSummary(context, {
-            dataset: args.dataset,
-            variable: args.field,
-            filterParams: filterParams,
-            highlight: highlight,
-            include: true,
-            mode: SummaryMode.Default
-          }),
-          actions.fetchVariableSummary(context, {
-            dataset: args.dataset,
-            variable: args.field,
-            filterParams: filterParams,
-            highlight: highlight,
-            include: false,
-            mode: SummaryMode.Default
-          })
-        ]);
-      })
-      .catch(error => {
-        const key = args.field;
-        const label = args.field;
-        const dataset = args.dataset;
-        mutations.updateIncludedVariableSummaries(
-          context,
-          createErrorSummary(key, label, dataset, error)
-        );
-        mutations.updateExcludedVariableSummaries(
-          context,
-          createErrorSummary(key, label, dataset, error)
-        );
       });
+      mutations.updateVariableType(context, args);
+      // update variable summary
+      const filterParams =
+        context.getters.getDecodedSolutionRequestFilterParams;
+      const highlight = context.getters.getDecodedHighlight;
+      return Promise.all([
+        actions.fetchVariableSummary(context, {
+          dataset: args.dataset,
+          variable: args.field,
+          filterParams: filterParams,
+          highlight: highlight,
+          include: true,
+          mode: SummaryMode.Default
+        }),
+        actions.fetchVariableSummary(context, {
+          dataset: args.dataset,
+          variable: args.field,
+          filterParams: filterParams,
+          highlight: highlight,
+          include: false,
+          mode: SummaryMode.Default
+        })
+      ]);
+    } catch (error) {
+      const key = args.field;
+      const label = args.field;
+      const dataset = args.dataset;
+      mutations.updateIncludedVariableSummaries(
+        context,
+        createErrorSummary(key, label, dataset, error)
+      );
+      mutations.updateExcludedVariableSummaries(
+        context,
+        createErrorSummary(key, label, dataset, error)
+      );
+    }
   },
 
   reviewVariableType(
@@ -893,7 +864,7 @@ export const actions = {
     return Promise.all(promises);
   },
 
-  fetchVariableSummary(
+  async fetchVariableSummary(
     context: DatasetContext,
     args: {
       dataset: string;
@@ -921,31 +892,26 @@ export const actions = {
       ? mutations.updateIncludedVariableSummaries
       : mutations.updateExcludedVariableSummaries;
 
-    return axios
-      .post(
+    try {
+      const response = await axios.post(
         `/distil/variable-summary/${args.dataset}/${
           args.variable
         }/${!args.include}/${args.mode}`,
         filterParams
-      )
-      .then(response => {
-        const summary = response.data.summary;
-        return fetchSummaryExemplars(args.dataset, args.variable, summary).then(
-          () => {
-            mutator(context, summary);
-          }
-        );
-      })
-      .catch(error => {
-        console.error(error);
-        const key = args.variable;
-        const label = args.variable;
-        const dataset = args.dataset;
-        mutator(context, createErrorSummary(key, label, dataset, error));
-      });
+      );
+      const summary = response.data.summary;
+      await fetchSummaryExemplars(args.dataset, args.variable, summary);
+      mutator(context, summary);
+    } catch (error) {
+      console.error(error);
+      const key = args.variable;
+      const label = args.variable;
+      const dataset = args.dataset;
+      mutator(context, createErrorSummary(key, label, dataset, error));
+    }
   },
 
-  fetchVariableRankings(
+  async fetchVariableRankings(
     context: DatasetContext,
     args: { dataset: string; target: string }
   ) {
@@ -974,42 +940,38 @@ export const actions = {
     }
 
     mutations.updatePendingRequests(context, update);
-    return axios
-      .get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
-      .then(response => {
-        const rankings = <Dictionary<number>>response.data.rankings;
-
-        // check to see if we got any non-zero rank info back
-        const computedRankings =
-          _.filter(rankings, (r, v) => r !== 0).length > 0;
-
-        // check to see if the returned ranks are different than any that we may have previously computed
-        const oldRankings = getters.getVariableRankings(context)[args.dataset];
-
-        // If we have valid rankings and they are different than those previously computed we mark
-        // as resolved so the user can apply them.  Otherwise we mark as reviewed, so that there is
-        // no flag for the user to apply.
-        if (computedRankings && !_.isEqual(oldRankings, rankings)) {
-          mutations.updatePendingRequests(context, {
-            ...update,
-            status: DatasetPendingRequestStatus.RESOLVED,
-            rankings: response.data.rankings
-          });
-        } else {
-          mutations.updatePendingRequests(context, {
-            ...update,
-            status: DatasetPendingRequestStatus.REVIEWED,
-            rankings: response.data.rankings
-          });
-        }
-      })
-      .catch(error => {
+    try {
+      const response = await axios.get(
+        `/distil/variable-rankings/${args.dataset}/${args.target}`
+      );
+      const rankings = <Dictionary<number>>response.data.rankings;
+      // check to see if we got any non-zero rank info back
+      const computedRankings = _.filter(rankings, (r, v) => r !== 0).length > 0;
+      // check to see if the returned ranks are different than any that we may have previously computed
+      const oldRankings = getters.getVariableRankings(context)[args.dataset];
+      // If we have valid rankings and they are different than those previously computed we mark
+      // as resolved so the user can apply them.  Otherwise we mark as reviewed, so that there is
+      // no flag for the user to apply.
+      if (computedRankings && !_.isEqual(oldRankings, rankings)) {
         mutations.updatePendingRequests(context, {
           ...update,
-          status: DatasetPendingRequestStatus.ERROR
+          status: DatasetPendingRequestStatus.RESOLVED,
+          rankings: response.data.rankings
         });
-        console.error(error);
+      } else {
+        mutations.updatePendingRequests(context, {
+          ...update,
+          status: DatasetPendingRequestStatus.REVIEWED,
+          rankings: response.data.rankings
+        });
+      }
+    } catch (error) {
+      mutations.updatePendingRequests(context, {
+        ...update,
+        status: DatasetPendingRequestStatus.ERROR
       });
+      console.error(error);
+    }
   },
 
   updateVariableRankings(
@@ -1075,7 +1037,7 @@ export const actions = {
     );
   },
 
-  fetchImage(
+  async fetchImage(
     context: DatasetContext,
     args: { dataset: string; source: string; url: string }
   ) {
@@ -1087,16 +1049,17 @@ export const actions = {
       console.warn("`dataset` argument is missing");
       return null;
     }
-    return loadImage(`distil/image/${args.dataset}/${args.source}/${args.url}`)
-      .then(response => {
-        mutations.updateFile(context, { url: args.url, file: response });
-      })
-      .catch(error => {
-        console.error(error);
-      });
+    try {
+      const response = await loadImage(
+        `distil/image/${args.dataset}/${args.source}/${args.url}`
+      );
+      mutations.updateFile(context, { url: args.url, file: response });
+    } catch (error) {
+      console.error(error);
+    }
   },
 
-  fetchTimeseries(
+  async fetchTimeseries(
     context: DatasetContext,
     args: {
       dataset: string;
@@ -1127,25 +1090,26 @@ export const actions = {
       return null;
     }
 
-    return axios
-      .post(
+    try {
+      const response = await axios.post(
         `distil/timeseries/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}/false`,
         {}
-      )
-      .then(response => {
-        mutations.updateTimeseries(context, {
-          dataset: args.dataset,
-          id: args.timeseriesID,
-          timeseries: response.data.timeseries,
-          isDateTime: response.data.isDateTime
-        });
-      })
-      .catch(error => {
-        console.error(error);
+      );
+      mutations.updateTimeseries(context, {
+        dataset: args.dataset,
+        id: args.timeseriesID,
+        timeseries: response.data.timeseries,
+        isDateTime: response.data.isDateTime
       });
+    } catch (error) {
+      console.error(error);
+    }
   },
 
-  fetchGraph(context: DatasetContext, args: { dataset: string; url: string }) {
+  async fetchGraph(
+    context: DatasetContext,
+    args: { dataset: string; url: string }
+  ) {
     if (!args.url) {
       console.warn("`url` argument is missing");
       return null;
@@ -1154,40 +1118,43 @@ export const actions = {
       console.warn("`dataset` argument is missing");
       return null;
     }
-    return axios
-      .get(`distil/graphs/${args.dataset}/${args.url}`)
-      .then(response => {
-        if (response.data.graphs.length > 0) {
-          const graph = response.data.graphs[0];
-          const parsed = {
-            nodes: graph.nodes.map(n => {
-              return {
-                id: n.id,
-                label: n.label,
-                x: n.attributes.attr1,
-                y: n.attributes.attr2,
-                size: 1,
-                color: "#ec5148"
-              };
-            }),
-            edges: graph.edges.map((e, i) => {
-              return {
-                id: `e${i}`,
-                source: e.source,
-                target: e.target,
-                color: "#aaa"
-              };
-            })
-          };
-          mutations.updateFile(context, { url: args.url, file: parsed });
-        }
-      })
-      .catch(error => {
-        console.error(error);
-      });
+    try {
+      const response = await axios.get(
+        `distil/graphs/${args.dataset}/${args.url}`
+      );
+      if (response.data.graphs.length > 0) {
+        const graph = response.data.graphs[0];
+        const parsed = {
+          nodes: graph.nodes.map(n => {
+            return {
+              id: n.id,
+              label: n.label,
+              x: n.attributes.attr1,
+              y: n.attributes.attr2,
+              size: 1,
+              color: "#ec5148"
+            };
+          }),
+          edges: graph.edges.map((e, i) => {
+            return {
+              id: `e${i}`,
+              source: e.source,
+              target: e.target,
+              color: "#aaa"
+            };
+          })
+        };
+        mutations.updateFile(context, { url: args.url, file: parsed });
+      }
+    } catch (error) {
+      console.error(error);
+    }
   },
 
-  fetchFile(context: DatasetContext, args: { dataset: string; url: string }) {
+  async fetchFile(
+    context: DatasetContext,
+    args: { dataset: string; url: string }
+  ) {
     if (!args.url) {
       console.warn("`url` argument is missing");
       return null;
@@ -1196,14 +1163,14 @@ export const actions = {
       console.warn("`dataset` argument is missing");
       return null;
     }
-    return axios
-      .get(`distil/resource/${args.dataset}/${args.url}`)
-      .then(response => {
-        mutations.updateFile(context, { url: args.url, file: response.data });
-      })
-      .catch(error => {
-        console.error(error);
-      });
+    try {
+      const response = await axios.get(
+        `distil/resource/${args.dataset}/${args.url}`
+      );
+      mutations.updateFile(context, { url: args.url, file: response.data });
+    } catch (error) {
+      console.error(error);
+    }
   },
 
   // update filtered data based on the current filter state
@@ -1224,7 +1191,7 @@ export const actions = {
       return null;
     }
     return Promise.all(
-      args.datasets.map(dataset => {
+      args.datasets.map(async dataset => {
         const highlight =
           (args.highlight && args.highlight.dataset) === dataset
             ? args.highlight
@@ -1234,21 +1201,22 @@ export const actions = {
           highlight
         );
 
-        return axios
-          .post(`distil/data/${dataset}/false`, filterParams)
-          .then(response => {
-            mutations.setJoinDatasetsTableData(context, {
-              dataset: dataset,
-              data: response.data
-            });
-          })
-          .catch(error => {
-            console.error(error);
-            mutations.setJoinDatasetsTableData(context, {
-              dataset: dataset,
-              data: createEmptyTableData()
-            });
+        try {
+          const response = await axios.post(
+            `distil/data/${dataset}/false`,
+            filterParams
+          );
+          mutations.setJoinDatasetsTableData(context, {
+            dataset: dataset,
+            data: response.data
           });
+        } catch (error) {
+          console.error(error);
+          mutations.setJoinDatasetsTableData(context, {
+            dataset: dataset,
+            data: createEmptyTableData()
+          });
+        }
       })
     );
   },
@@ -1277,7 +1245,7 @@ export const actions = {
     });
   },
 
-  fetchTableData(
+  async fetchTableData(
     context: DatasetContext,
     args: {
       dataset: string;
@@ -1304,15 +1272,16 @@ export const actions = {
       args.highlight
     );
 
-    return axios
-      .post(`distil/data/${args.dataset}/${!args.include}`, filterParams)
-      .then(response => {
-        mutator(context, response.data);
-      })
-      .catch(error => {
-        console.error(error);
-        mutator(context, createEmptyTableData());
-      });
+    try {
+      const response = await axios.post(
+        `distil/data/${args.dataset}/${!args.include}`,
+        filterParams
+      );
+      mutator(context, response.data);
+    } catch (error) {
+      console.error(error);
+      mutator(context, createEmptyTableData());
+    }
   },
 
   fetchTask(
