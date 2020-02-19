@@ -248,7 +248,7 @@ function handleProgress(
 }
 
 export const actions = {
-  fetchSolutionRequests(
+  async fetchSolutionRequests(
     context: SolutionContext,
     args: { dataset?: string; target?: string; solutionId?: string }
   ) {
@@ -262,23 +262,21 @@ export const actions = {
       args.solutionId = null;
     }
 
-    return axios
-      .get(
+    try {
+      const response = await axios.get(
         `/distil/solutions/${args.dataset}/${args.target}/${args.solutionId}`
-      )
-      .then(response => {
-        if (!response.data) {
-          return;
-        }
-        const requests = response.data;
-        requests.forEach(request => {
-          // update solution
-          mutations.updateSolutionRequests(context, request);
-        });
-      })
-      .catch(error => {
-        console.error(error);
+      );
+      if (!response.data) {
+        return;
+      }
+      const requests = response.data;
+      requests.forEach(request => {
+        // update solution
+        mutations.updateSolutionRequests(context, request);
       });
+    } catch (error) {
+      console.error(error);
+    }
   },
 
   createSolutionRequest(context: any, request: CreateSolutionRequest) {

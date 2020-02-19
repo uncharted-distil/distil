@@ -109,7 +109,7 @@ export const actions = {
     return Promise.all(promises);
   },
 
-  fetchTrainingSummary(
+  async fetchTrainingSummary(
     context: ResultsContext,
     args: {
       dataset: string;
@@ -138,36 +138,29 @@ export const actions = {
       filters: []
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-    return axios
-      .post(
+    try {
+      const response = await axios.post(
         `/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}/${args.varMode}`,
         filterParams
-      )
-      .then(response => {
-        const summary = response.data.summary;
-        return fetchSummaryExemplars(
-          args.dataset,
+      );
+      const summary = response.data.summary;
+      await fetchSummaryExemplars(args.dataset, args.variable.colName, summary);
+      mutations.updateTrainingSummary(context, summary);
+    } catch (error) {
+      console.error(error);
+      mutations.updateTrainingSummary(
+        context,
+        createErrorSummary(
           args.variable.colName,
-          summary
-        ).then(() => {
-          mutations.updateTrainingSummary(context, summary);
-        });
-      })
-      .catch(error => {
-        console.error(error);
-        mutations.updateTrainingSummary(
-          context,
-          createErrorSummary(
-            args.variable.colName,
-            args.variable.colDisplayName,
-            args.dataset,
-            error
-          )
-        );
-      });
+          args.variable.colDisplayName,
+          args.dataset,
+          error
+        )
+      );
+    }
   },
 
-  fetchTargetSummary(
+  async fetchTargetSummary(
     context: ResultsContext,
     args: {
       dataset: string;
@@ -227,29 +220,24 @@ export const actions = {
       filters: []
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-    return axios
-      .post(
+    try {
+      const response = await axios.post(
         `/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}/${args.varMode}`,
         filterParams
-      )
-      .then(response => {
-        const summary = response.data.summary;
-        return fetchSummaryExemplars(args.dataset, args.target, summary).then(
-          () => {
-            mutations.updateTargetSummary(context, summary);
-          }
-        );
-      })
-      .catch(error => {
-        console.error(error);
-        mutations.updateTargetSummary(
-          context,
-          createErrorSummary(key, label, dataset, error)
-        );
-      });
+      );
+      const summary = response.data.summary;
+      await fetchSummaryExemplars(args.dataset, args.target, summary);
+      mutations.updateTargetSummary(context, summary);
+    } catch (error) {
+      console.error(error);
+      mutations.updateTargetSummary(
+        context,
+        createErrorSummary(key, label, dataset, error)
+      );
+    }
   },
 
-  fetchIncludedResultTableData(
+  async fetchIncludedResultTableData(
     context: ResultsContext,
     args: { solutionId: string; dataset: string; highlight: Highlight }
   ) {
@@ -269,25 +257,23 @@ export const actions = {
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
-    return axios
-      .post(
+    try {
+      const response = await axios.post(
         `/distil/results/${args.dataset}/${encodeURIComponent(
           args.solutionId
         )}`,
         filterParams
-      )
-      .then(response => {
-        mutations.setIncludedResultTableData(context, response.data);
-      })
-      .catch(error => {
-        console.error(
-          `Failed to fetch results from ${args.solutionId} with error ${error}`
-        );
-        mutations.setIncludedResultTableData(context, createEmptyTableData());
-      });
+      );
+      mutations.setIncludedResultTableData(context, response.data);
+    } catch (error) {
+      console.error(
+        `Failed to fetch results from ${args.solutionId} with error ${error}`
+      );
+      mutations.setIncludedResultTableData(context, createEmptyTableData());
+    }
   },
 
-  fetchExcludedResultTableData(
+  async fetchExcludedResultTableData(
     context: ResultsContext,
     args: { solutionId: string; dataset: string; highlight: Highlight }
   ) {
@@ -311,22 +297,20 @@ export const actions = {
       EXCLUDE_FILTER
     );
 
-    return axios
-      .post(
+    try {
+      const response = await axios.post(
         `/distil/results/${args.dataset}/${encodeURIComponent(
           args.solutionId
         )}`,
         filterParams
-      )
-      .then(response => {
-        mutations.setExcludedResultTableData(context, response.data);
-      })
-      .catch(error => {
-        console.error(
-          `Failed to fetch results from ${args.solutionId} with error ${error}`
-        );
-        mutations.setExcludedResultTableData(context, createEmptyTableData());
-      });
+      );
+      mutations.setExcludedResultTableData(context, response.data);
+    } catch (error) {
+      console.error(
+        `Failed to fetch results from ${args.solutionId} with error ${error}`
+      );
+      mutations.setExcludedResultTableData(context, createEmptyTableData());
+    }
   },
 
   fetchResultTableData(
@@ -347,7 +331,7 @@ export const actions = {
     ]);
   },
 
-  fetchResidualsExtrema(
+  async fetchResidualsExtrema(
     context: ResultsContext,
     args: { dataset: string; target: string; solutionId: string }
   ) {
@@ -369,14 +353,14 @@ export const actions = {
       return null;
     }
 
-    return axios
-      .get(`/distil/residuals-extrema/${args.dataset}/${args.target}`)
-      .then(response => {
-        mutations.updateResidualsExtrema(context, response.data.extrema);
-      })
-      .catch(error => {
-        console.error(error);
-      });
+    try {
+      const response = await axios.get(
+        `/distil/residuals-extrema/${args.dataset}/${args.target}`
+      );
+      mutations.updateResidualsExtrema(context, response.data.extrema);
+    } catch (error) {
+      console.error(error);
+    }
   },
 
   // fetches result summary for a given solution id.
@@ -650,7 +634,7 @@ export const actions = {
     );
   },
 
-  fetchForecastedTimeseries(
+  async fetchForecastedTimeseries(
     context: ResultsContext,
     args: {
       dataset: string;
@@ -695,28 +679,26 @@ export const actions = {
       return null;
     }
 
-    return axios
-      .post(
+    try {
+      const response = await axios.post(
         `distil/timeseries-forecast/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}/${solution.resultId}`,
         {}
-      )
-      .then(response => {
-        mutations.updatePredictedTimeseries(context, {
-          solutionId: args.solutionId,
-          id: args.timeseriesID,
-          timeseries: response.data.timeseries,
-          isDateTime: response.data.isDateTime
-        });
-        mutations.updatePredictedForecast(context, {
-          solutionId: args.solutionId,
-          id: args.timeseriesID,
-          forecast: response.data.forecast,
-          forecastTestRange: response.data.forecastTestRange,
-          isDateTime: response.data.isDateTime
-        });
-      })
-      .catch(error => {
-        console.error(error);
+      );
+      mutations.updatePredictedTimeseries(context, {
+        solutionId: args.solutionId,
+        id: args.timeseriesID,
+        timeseries: response.data.timeseries,
+        isDateTime: response.data.isDateTime
       });
+      mutations.updatePredictedForecast(context, {
+        solutionId: args.solutionId,
+        id: args.timeseriesID,
+        forecast: response.data.forecast,
+        forecastTestRange: response.data.forecastTestRange,
+        isDateTime: response.data.isDateTime
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 };
