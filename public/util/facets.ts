@@ -17,10 +17,7 @@ import {
   URI_TYPE,
   DATE_TIME_TYPE,
   IMAGE_TYPE,
-  DATE_TIME_LOWER_TYPE,
-  LATITUDE_TYPE,
-  GEOCOORDINATE_TYPE,
-  LONGITUDE_TYPE
+  DATE_TIME_LOWER_TYPE
 } from "../util/types";
 import { getTimeseriesSummaryTopCategories } from "../util/data";
 import {
@@ -191,10 +188,6 @@ export function createSummaryFacet(summary: VariableSummary): Group {
       } else {
         return createCategoricalSummaryFacet(summary);
       }
-    case LATITUDE_TYPE + GEOCOORDINATE_TYPE:
-      return createLatitudeFacet(summary);
-    case LONGITUDE_TYPE + GEOCOORDINATE_TYPE:
-      return createLongitudeFacet(summary);
     case NUMERICAL_SUMMARY:
       return createNumericalSummaryFacet(summary);
     case TIMESERIES_SUMMMARY:
@@ -437,97 +430,6 @@ function createNumericalSummaryFacet(summary: VariableSummary): Group {
     dataset: summary.dataset,
     colName: summary.key,
     label: summary.label,
-    description: summary.description,
-    key: `${summary.dataset}:${summary.key}`,
-    type: summary.varType,
-    collapsible: false,
-    collapsed: false,
-    facets: [
-      {
-        histogram: {
-          slices: slices
-        },
-        filterable: false,
-        selection: {} as any
-      }
-    ],
-    summary: summary
-  };
-}
-
-// to do update loops to reduce to the opposite axis to build latitude slices
-function createLatitudeFacet(summary: VariableSummary): Group {
-  const buckets = summary.filtered
-    ? summary.filtered.buckets
-    : summary.baseline.buckets;
-  const slices = new Array(buckets[0].buckets.length);
-
-  for (let i = 0; i < slices.length; i++) {
-    const from = _.toNumber(buckets[0].buckets[i].key);
-    const to =
-      i < slices.length - 1
-        ? _.toNumber(buckets[0].buckets[i + 1].key)
-        : from + from - _.toNumber(buckets[0].buckets[i - 1].key);
-    slices[i] = {
-      label: from,
-      toLabel: to,
-      count: buckets.reduce((c, lonBucket) => {
-        if (lonBucket.buckets[i].count > 0) {
-          c += lonBucket.buckets[i].count;
-        }
-        return c;
-      }, 0)
-    };
-  }
-
-  return {
-    dataset: summary.dataset,
-    colName: summary.key,
-    label: "Latitude",
-    description: summary.description,
-    key: `${summary.dataset}:${summary.key}`,
-    type: summary.varType,
-    collapsible: false,
-    collapsed: false,
-    facets: [
-      {
-        histogram: {
-          slices: slices
-        },
-        filterable: false,
-        selection: {} as any
-      }
-    ],
-    summary: summary
-  };
-}
-
-function createLongitudeFacet(summary: VariableSummary): Group {
-  const buckets = summary.filtered
-    ? summary.filtered.buckets
-    : summary.baseline.buckets;
-  const slices = new Array(buckets.length);
-  buckets.forEach((lonBucket, i) => {
-    const from = _.toNumber(lonBucket.key);
-    const to =
-      i < buckets.length - 1
-        ? _.toNumber(buckets[i + 1].key)
-        : from + from - _.toNumber(buckets[i - 1].key);
-    slices[i] = {
-      label: from,
-      toLabel: to,
-      count: lonBucket.buckets.reduce((c, latBucket) => {
-        if (latBucket.count > 0) {
-          c += latBucket.count;
-        }
-        return c;
-      }, 0)
-    };
-  });
-  return {
-    dataset: summary.dataset,
-    colName: summary.key,
-    label: "Longitude",
     description: summary.description,
     key: `${summary.dataset}:${summary.key}`,
     type: summary.varType,

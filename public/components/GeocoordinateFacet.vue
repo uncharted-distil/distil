@@ -40,12 +40,20 @@
     </div>
     <div v-if="expand">
       <facet-entry
+        :instanceName="latSummary.label"
         :summary="latSummary"
         :enabledTypeChanges="enabledTypeChanges"
+        :highlight="highlight"
+        @numerical-click="latHistogramNumericalClick"
+        @range-change="onHistogramRangeChange"
       ></facet-entry>
       <facet-entry
+        :instanceName="lonSummary.label"
         :summary="lonSummary"
         :enabledTypeChanges="enabledTypeChanges"
+        :highlight="highlight"
+        @numerical-click="lonHistogramNumericalClick"
+        @range-change="onHistogramRangeChange"
       ></facet-entry>
     </div>
   </div>
@@ -69,7 +77,8 @@ import {
   TableRow,
   VariableSummary,
   Bucket,
-  Highlight
+  Highlight,
+  NUMERICAL_SUMMARY
 } from "../store/dataset/index";
 import TypeChangeMenu from "../components/TypeChangeMenu";
 import FacetEntry from "../components/FacetEntry";
@@ -161,7 +170,9 @@ export default Vue.extend({
   props: {
     summary: Object as () => VariableSummary,
     isAvailableFeatures: Boolean as () => boolean,
-    isFeaturesToModel: Boolean as () => boolean
+    isFeaturesToModel: Boolean as () => boolean,
+    enableHighlighting: Array as () => boolean[],
+    ignoreHighlights: Array as () => boolean[]
   },
 
   data() {
@@ -188,26 +199,26 @@ export default Vue.extend({
       const latSummary: VariableSummary = {
         label: "Latitude",
         description: this.summary.description,
-        type: LATITUDE_TYPE + GEOCOORDINATE_TYPE,
+        type: NUMERICAL_SUMMARY,
         key: this.summary.key,
         dataset: this.summary.dataset,
-        baseline: this.summary.baseline,
-        filtered: this.summary.filtered
+        baseline: this.latitudeToNumeric("baseline"),
+        filtered: this.latitudeToNumeric("filtered")
       };
       return latSummary;
     },
 
     lonSummary(): VariableSummary {
-      const latSummary: VariableSummary = {
+      const lonSummary: VariableSummary = {
         label: "Longitude",
         description: this.summary.description,
-        type: LONGITUDE_TYPE + GEOCOORDINATE_TYPE,
+        type: NUMERICAL_SUMMARY,
         key: this.summary.key,
         dataset: this.summary.dataset,
-        baseline: this.summary.baseline,
-        filtered: this.summary.filtered
+        baseline: this.longitudeToNumeric("baseline"),
+        filtered: this.longitudeToNumeric("filtered")
       };
-      return latSummary;
+      return lonSummary;
     },
 
     target(): string {
@@ -367,6 +378,140 @@ export default Vue.extend({
     }
   },
   methods: {
+    numericWithMetadata(buckets: Bucket[]) {
+      const extrema = {
+        min: _.toNumber(buckets[0].key),
+        max:
+          _.toNumber(buckets[buckets.length - 1].key) +
+          _.toNumber(buckets[buckets.length - 1].key) -
+          _.toNumber(buckets[buckets.length - 2].key)
+      };
+      return {
+        extrema,
+        buckets
+      };
+    },
+
+    longitudeToNumeric(bucketType: string) {
+      if (this.summary[bucketType]) {
+        const lonBuckets = this.summary[bucketType].buckets.reduce(
+          (lbs, lonBucket) => {
+            lbs.push({
+              key: lonBucket.key,
+              count: lonBucket.buckets.reduce((total, latBucket) => {
+                return (total += latBucket.count);
+              }, 0)
+            });
+            return lbs;
+          },
+          []
+        );
+        return this.numericWithMetadata(lonBuckets);
+      } else {
+        return null;
+      }
+    },
+
+    latitudeToNumeric(bucketType: string) {
+      if (this.summary[bucketType]) {
+        const latBuckets = this.summary[bucketType].buckets.reduce(
+          (lbs, lonBucket) => {
+            if (lbs.length > 0) {
+              lonBucket.buckets.forEach((latBucket, ind) => {
+                lbs[ind].count += latBucket.count;
+              });
+            } else {
+              lbs = lonBucket.buckets.map(b => {
+                return {
+                  key: b.key,
+                  count: b.count
+                };
+              });
+            }
+            return lbs;
+          },
+          []
+        );
+        return this.numericWithMetadata(latBuckets);
+      } else {
+        return null;
+      }
+    },
+
+    latHistogramNumericalClick(
+      context: string,
+      key: string,
+      value: { from: number; to: number; type: string },
+      dataset: string
+    ) {
+      this.onHistogramNumericalClick(
+        context,
+        key,
+        value,
+        dataset,
+        LATITUDE_TYPE
+      );
+    },
+
+    lonHistogramNumericalClick(
+      context: string,
+      key: string,
+      value: { from: number; to: number; type: string },
+      dataset: string
+    ) {
+      this.onHistogramNumericalClick(
+        context,
+        key,
+        value,
+        dataset,
+        LONGITUDE_TYPE
+      );
+    },
+
+    onHistogramNumericalClick(
+      context: string,
+      key: string,
+      value: { from: number; to: number; type: string },
+      dataset: string,
+      type: string
+    ) {
+      if (
+        this.highlight &&
+        this.highlight.value &&
+        this.highlight.value.minX &&
+        this.highlight.value.minY &&
+        this.highlight.value.maxX &&
+        this.highlight.value.maxY
+      ) {
+        const currentValue = this.highlight.value;
+        const highlightValue = {
+          minX: currentValue.minX,
+          maxX: currentValue.maxX,
+          minY: currentValue.minY,
+          maxY: currentValue.maxY
+        };
+        if (type === LONGITUDE_TYPE) {
+          highlightValue.minX = value.from;
+          highlightValue.maxX = value.to;
+        } else {
+          highlightValue.minY = value.from;
+          highlightValue.maxY = value.to;
+        }
+        this.createHighlight(highlightValue);
+      } else {
+        this.createHighlight({
+          minX: this.lonSummary.baseline.extrema.min,
+          maxX: this.lonSummary.baseline.extrema.max,
+          minY: this.latSummary.baseline.extrema.min,
+          maxY: this.latSummary.baseline.extrema.max
+        });
+      }
+      this.clearSelectionRect();
+      this.$emit("numerical-click", key);
+    },
+    onHistogramRangeChange(...args) {
+      console.log("hrc", args);
+    },
     expandCollapse(action) {
       if (action === EXPAND_ACTION_TYPE) {
         this.expand = true;

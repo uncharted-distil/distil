@@ -50,8 +50,12 @@
             <template v-else-if="summary.varType === 'geocoordinate'">
               <geocoordinate-facet
                 :summary="summary"
+                :enable-highlighting="[enableHighlighting, enableHighlighting]"
+                :ignore-highlights="[ignoreHighlights, ignoreHighlights]"
                 :isAvailableFeatures="isAvailableFeatures"
                 :isFeaturesToModel="isFeaturesToModel"
+                @histogram-numerical-click="onNumericalClick"
+                @histogram-range-change="onRangeChange"
               >
               </geocoordinate-facet>
             </template>
