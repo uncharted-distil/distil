@@ -32,7 +32,7 @@ import {
   VariableSummary,
   SummaryMode
 } from "../store/dataset/index";
-import { hasComputedVarPrefix, UNSUPPORTED_TARGET_TYPES } from "../util/types";
+import { hasComputedVarPrefix, isUnsupportedTargetVar } from "../util/types";
 import {
   AVAILABLE_TARGET_VARS_INSTANCE,
   SELECT_TRAINING_ROUTE
@@ -75,11 +75,7 @@ export default Vue.extend({
     unsupportedTargets(): Set<string> {
       return new Set(
         this.variables
-          .filter(
-            v =>
-              UNSUPPORTED_TARGET_TYPES.has(v.colType) ||
-              hasComputedVarPrefix(v.colName)
-          )
+          .filter(v => isUnsupportedTargetVar(v.colName, v.colType))
           .map(v => v.colName)
       );
     },

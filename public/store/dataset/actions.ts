@@ -35,7 +35,8 @@ import {
   IMAGE_TYPE,
   GEOCODED_LON_PREFIX,
   GEOCODED_LAT_PREFIX,
-  GEOCOORDINATE_TYPE
+  GEOCOORDINATE_TYPE,
+  isRankableVariableType
 } from "../../util/types";
 
 import { DATASET_UPLOAD, PREDICTION_UPLOAD } from "../../util/uploads";
@@ -950,16 +951,50 @@ export const actions = {
       rankings: null,
       target: args.target
     };
+
+    // quick exit if we don't have variables/target that are going to yield ranking
+    const target = getters.getVariablesMap(context)[args.target];
+    const rankableVariables = getters
+      .getVariables(context)
+      .filter(
+        f => f.colName !== target.colName && isRankableVariableType(f.colType)
+      );
+    if (
+      !isRankableVariableType(target.colType) ||
+      rankableVariables.length === 0
+    ) {
+      return Promise.resolve();
+    }
+
     mutations.updatePendingRequests(context, update);
     return axios
       .get(`/distil/variable-rankings/${args.dataset}/${args.target}`)
       .then(response => {
-        // console.log({response, data: response.data, rankings: response.data.rankings});
-        mutations.updatePendingRequests(context, {
-          ...update,
-          status: DatasetPendingRequestStatus.RESOLVED,
-          rankings: response.data.rankings
-        });
+        const rankings = <Dictionary<number>>response.data.rankings;
+
+        // check to see if we got any non-zero rank info back
+        const computedRankings =
+          _.filter(rankings, (r, v) => r !== 0).length > 0;
+
+        // check to see if the returned ranks are different than any that we may have previously computed
+        const oldRankings = getters.getVariableRankings(context)[args.dataset];
+
+        // If we have valid rankings and they are different than those previously computed we mark
+        // as resolved so the user can apply them.  Otherwise we mark as reviewed, so that there is
+        // no flag for the user to apply.
+        if (computedRankings && !_.isEqual(oldRankings, rankings)) {
+          mutations.updatePendingRequests(context, {
+            ...update,
+            status: DatasetPendingRequestStatus.RESOLVED,
+            rankings: response.data.rankings
+          });
+        } else {
+          mutations.updatePendingRequests(context, {
+            ...update,
+            status: DatasetPendingRequestStatus.REVIEWED,
+            rankings: response.data.rankings
+          });
+        }
       })
       .catch(error => {
         mutations.updatePendingRequests(context, {
