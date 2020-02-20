@@ -213,22 +213,29 @@ export default Vue.extend({
         return false;
       }
 
-      const minX = Math.min(
-        this.timeseriesExtrema.x.min,
-        this.forecastExtrema.x.min
-      );
-      const maxX = Math.max(
-        this.timeseriesExtrema.x.max,
-        this.forecastExtrema.x.max
-      );
-      const minY = Math.min(
-        this.timeseriesExtrema.y.min,
-        this.forecastExtrema.y.min
-      );
-      const maxY = Math.max(
-        this.timeseriesExtrema.y.max,
-        this.forecastExtrema.y.max
-      );
+      let minX = this.timeseriesExtrema.x.min;
+      let maxX = this.timeseriesExtrema.x.max;
+      let minY = this.timeseriesExtrema.y.min;
+      let maxY = this.timeseriesExtrema.y.max;
+
+      if (this.forecastExtrema) {
+        minX = Math.min(
+          this.timeseriesExtrema.x.min,
+          this.forecastExtrema.x.min
+        );
+        maxX = Math.max(
+          this.timeseriesExtrema.x.max,
+          this.forecastExtrema.x.max
+        );
+        minY = Math.min(
+          this.timeseriesExtrema.y.min,
+          this.forecastExtrema.y.min
+        );
+        maxY = Math.max(
+          this.timeseriesExtrema.y.max,
+          this.forecastExtrema.y.max
+        );
+      }
 
       this.xScale = d3
         .scaleLinear()
