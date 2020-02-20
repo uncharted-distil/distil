@@ -7,6 +7,7 @@
       :timeseries-extrema="timeseriesExtrema"
       :timeseries="timeseries"
       :forecast="forecast"
+      :forecast-extrema="forecastExtrema"
       :highlightRange="highlightRange"
     >
     </sparkline-svg>
@@ -126,6 +127,21 @@ export default Vue.extend({
         y: {
           min: d3.min(this.timeseries, d => d[1]),
           max: d3.max(this.timeseries, d => d[1])
+        }
+      };
+    },
+    forecastExtrema(): TimeseriesExtrema {
+      if (!this.forecast) {
+        return null;
+      }
+      return {
+        x: {
+          min: d3.min(this.forecast, d => d[0]),
+          max: d3.max(this.forecast, d => d[0])
+        },
+        y: {
+          min: d3.min(this.forecast, d => d[1]),
+          max: d3.max(this.forecast, d => d[1])
         }
       };
     },

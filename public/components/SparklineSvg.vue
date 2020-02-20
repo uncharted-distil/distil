@@ -40,6 +40,9 @@ export default Vue.extend({
     highlightRange: Array as () => number[],
     timeseriesExtrema: {
       type: Object as () => TimeseriesExtrema
+    },
+    forecastExtrema: {
+      type: Object as () => TimeseriesExtrema
     }
   },
   data() {
@@ -135,6 +138,35 @@ export default Vue.extend({
       },
       deep: true
     },
+    forecastExtrema: {
+      handler(newExtrema, oldExtrema) {
+        if (this.isVisible && this.isLoaded) {
+          // only redraw if it is currently visible, the data has
+          // loaded
+          // NOTE: there is a race condition in which `isLoaded`
+          // returns true, but the svg element using `v-if="isLoaded"`
+          // has not yet rendered. Use this to ensure the DOM updates
+          // before attempting to inject
+
+          if (
+            oldExtrema &&
+            newExtrema.x.min === oldExtrema.x.min &&
+            newExtrema.x.max === oldExtrema.x.max &&
+            newExtrema.y.min === oldExtrema.y.min &&
+            newExtrema.y.max === oldExtrema.y.max
+          ) {
+            return;
+          }
+          Vue.nextTick(() => {
+            this.injectTimeseries();
+          });
+        } else {
+          // ensure it re-renders once it comes back into view
+          this.hasRendered = false;
+        }
+      },
+      deep: true
+    },
     highlightPixelX() {
       if (this.showTooltip) {
         const xVal = this.xScale.invert(this.highlightPixelX);
@@ -181,10 +213,22 @@ export default Vue.extend({
         return false;
       }
 
-      const minX = this.timeseriesExtrema.x.min;
-      const maxX = this.timeseriesExtrema.x.max;
-      const minY = this.timeseriesExtrema.y.min;
-      const maxY = this.timeseriesExtrema.y.max;
+      const minX = Math.min(
+        this.timeseriesExtrema.x.min,
+        this.forecastExtrema.x.min
+      );
+      const maxX = Math.max(
+        this.timeseriesExtrema.x.max,
+        this.forecastExtrema.x.max
+      );
+      const minY = Math.min(
+        this.timeseriesExtrema.y.min,
+        this.forecastExtrema.y.min
+      );
+      const maxY = Math.max(
+        this.timeseriesExtrema.y.max,
+        this.forecastExtrema.y.max
+      );
 
       this.xScale = d3
         .scaleLinear()
