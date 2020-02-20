@@ -17,6 +17,7 @@ package task
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -37,6 +38,10 @@ func TargetRank(dataset string, target string, features []*model.Variable, sourc
 	}
 
 	datasetInputDir := env.ResolvePath(source, dataset)
+	datasetInputDir, err = filepath.Abs(datasetInputDir)
+	if err != nil {
+		return nil, errors.Errorf("path \"%s\" cannot be made absolute", datasetInputDir)
+	}
 
 	datasetURI, err := submitPipeline([]string{datasetInputDir}, pip)
 	if err != nil {
