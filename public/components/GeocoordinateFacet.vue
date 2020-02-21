@@ -38,22 +38,24 @@
         </button>
       </div>
     </div>
-    <div v-if="expand">
+    <div v-if="expand" class="latlon">
       <facet-entry
         :instanceName="latSummary.label"
         :summary="latSummary"
         :enabledTypeChanges="enabledTypeChanges"
-        :highlight="highlight"
-        @numerical-click="latHistogramNumericalClick"
-        @range-change="onHistogramRangeChange"
+        :enable-highlighting="enableHighlighting"
+        :highlight="latHighlight"
+        @numerical-click="latHistogramClick"
+        @range-change="latRangeChange"
       ></facet-entry>
       <facet-entry
         :instanceName="lonSummary.label"
         :summary="lonSummary"
         :enabledTypeChanges="enabledTypeChanges"
-        :highlight="highlight"
-        @numerical-click="lonHistogramNumericalClick"
-        @range-change="onHistogramRangeChange"
+        :enable-highlighting="enableHighlighting"
+        :highlight="lonHighlight"
+        @numerical-click="lonHistogramClick"
+        @range-change="lonRangeChange"
       ></facet-entry>
     </div>
   </div>
@@ -72,6 +74,7 @@ import {
   getters as datasetGetters
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
+import { actions as appActions } from "../store/app/module";
 import { Dictionary } from "../util/dict";
 import {
   TableRow,
@@ -93,6 +96,7 @@ import {
 } from "../util/types";
 import { overlayRouteEntry } from "../util/routes";
 import { Filter, removeFiltersByName } from "../util/filters";
+import { Feature, Activity, SubActivity } from "../util/userEvents";
 
 import "leaflet/dist/leaflet.css";
 
@@ -171,8 +175,12 @@ export default Vue.extend({
     summary: Object as () => VariableSummary,
     isAvailableFeatures: Boolean as () => boolean,
     isFeaturesToModel: Boolean as () => boolean,
-    enableHighlighting: Array as () => boolean[],
-    ignoreHighlights: Array as () => boolean[]
+    enableHighlighting: Boolean as () => boolean,
+    ignoreHighlights: Boolean as () => boolean,
+    logActivity: {
+      type: String as () => Activity,
+      default: Activity.DATA_PREPARATION
+    }
   },
 
   data() {
@@ -187,17 +195,17 @@ export default Vue.extend({
       baseLineLayer: null,
       filteredLayer: null,
       expand: true,
-      enabledTypeChanges: new Array(0)
+      enabledTypeChanges: new Array(0),
+      blockNextEvent: false
     };
   },
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
-
     latSummary(): VariableSummary {
       const latSummary: VariableSummary = {
-        label: "Latitude",
+        label: LATITUDE_TYPE,
         description: this.summary.description,
         type: NUMERICAL_SUMMARY,
         key: this.summary.key,
@@ -207,10 +215,9 @@ export default Vue.extend({
       };
       return latSummary;
     },
-
     lonSummary(): VariableSummary {
       const lonSummary: VariableSummary = {
-        label: "Longitude",
+        label: LONGITUDE_TYPE,
         description: this.summary.description,
         type: NUMERICAL_SUMMARY,
         key: this.summary.key,
@@ -220,15 +227,42 @@ export default Vue.extend({
       };
       return lonSummary;
     },
-
+    latHighlight(): Object {
+      if (this.hasValidGeoHighlight) {
+        return {
+          value: {
+            from: this.calcBucketKey(this.highlight.value.minY, LATITUDE_TYPE),
+            to: this.calcBucketKey(this.highlight.value.maxY, LATITUDE_TYPE)
+          },
+          context: LATITUDE_TYPE,
+          key: this.summary.key,
+          dataset: this.dataset
+        };
+      } else {
+        return null;
+      }
+    },
+    lonHighlight(): Object {
+      if (this.hasValidGeoHighlight) {
+        return {
+          value: {
+            from: this.calcBucketKey(this.highlight.value.minX, LONGITUDE_TYPE),
+            to: this.calcBucketKey(this.highlight.value.maxX, LONGITUDE_TYPE)
+          },
+          context: LONGITUDE_TYPE,
+          key: this.summary.key,
+          dataset: this.dataset
+        };
+      } else {
+        return null;
+      }
+    },
     target(): string {
       return this.summary.key;
     },
-
     instanceName(): string {
       return "unique-map";
     },
-
     mapID(): string {
       return `map-${this.instanceName}`;
     },
@@ -357,6 +391,16 @@ export default Vue.extend({
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
     },
+    hasValidGeoHighlight(): Boolean {
+      return (
+        !!this.highlight &&
+        !!this.highlight.value &&
+        !!this.highlight.value.minX &&
+        !!this.highlight.value.minY &&
+        !!this.highlight.value.maxX &&
+        !!this.highlight.value.maxY
+      );
+    },
     selectedRows(): any {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
@@ -378,6 +422,15 @@ export default Vue.extend({
     }
   },
   methods: {
+    calcBucketKey(value: string, type: string) {
+      const numValue = _.toNumber(value);
+      const buckets =
+        type === LONGITUDE_TYPE
+          ? this.lonSummary.baseline.buckets
+          : this.latSummary.baseline.buckets;
+      const step = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
+      return _.toString(numValue - (numValue % step));
+    },
     numericWithMetadata(buckets: Bucket[]) {
       const extrema = {
         min: _.toNumber(buckets[0].key),
@@ -438,51 +491,85 @@ export default Vue.extend({
       }
     },
 
-    latHistogramNumericalClick(
+    latHistogramClick(
       context: string,
       key: string,
       value: { from: number; to: number; type: string },
       dataset: string
     ) {
-      this.onHistogramNumericalClick(
+      if (this.blockNextEvent) {
+        this.blockNextEvent = false;
+        return;
+      }
+      this.onHistogramAction(
         context,
         key,
         value,
         dataset,
-        LATITUDE_TYPE
+        LATITUDE_TYPE,
+        "numerical-click"
       );
     },
-
-    lonHistogramNumericalClick(
+    lonHistogramClick(
       context: string,
       key: string,
       value: { from: number; to: number; type: string },
       dataset: string
     ) {
-      this.onHistogramNumericalClick(
+      if (this.blockNextEvent) {
+        this.blockNextEvent = false;
+        return;
+      }
+      this.onHistogramAction(
         context,
         key,
         value,
         dataset,
-        LONGITUDE_TYPE
+        LONGITUDE_TYPE,
+        "numerical-click"
       );
     },
-
-    onHistogramNumericalClick(
+    latRangeChange(
+      context: string,
+      key: string,
+      value: { from: number; to: number; type: string },
+      dataset: string
+    ) {
+      this.blockNextEvent = true;
+      this.onHistogramAction(
+        context,
+        key,
+        value,
+        dataset,
+        LATITUDE_TYPE,
+        "range-change"
+      );
+    },
+    lonRangeChange(
+      context: string,
+      key: string,
+      value: { from: number; to: number; type: string },
+      dataset: string
+    ) {
+      this.blockNextEvent = true;
+      this.onHistogramAction(
+        context,
+        key,
+        value,
+        dataset,
+        LONGITUDE_TYPE,
+        "range-change"
+      );
+    },
+    onHistogramAction(
       context: string,
       key: string,
       value: { from: number; to: number; type: string },
       dataset: string,
-      type: string
+      geocoordinateComponent: string,
+      actionType
     ) {
-      if (
-        this.highlight &&
-        this.highlight.value &&
-        this.highlight.value.minX &&
-        this.highlight.value.minY &&
-        this.highlight.value.maxX &&
-        this.highlight.value.maxY
-      ) {
+      if (this.hasValidGeoHighlight) {
         const currentValue = this.highlight.value;
         const highlightValue = {
           minX: currentValue.minX,
@@ -490,7 +577,7 @@ export default Vue.extend({
           minY: currentValue.minY,
           maxY: currentValue.maxY
         };
-        if (type === LONGITUDE_TYPE) {
+        if (geocoordinateComponent === LONGITUDE_TYPE) {
           highlightValue.minX = value.from;
           highlightValue.maxX = value.to;
         } else {
@@ -507,10 +594,13 @@ export default Vue.extend({
         });
       }
       this.clearSelectionRect();
-      this.$emit("numerical-click", key);
-    },
-    onHistogramRangeChange(...args) {
-      console.log("hrc", args);
+      this.$emit(actionType, key, value);
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.CHANGE_HIGHLIGHT,
+        activity: this.logActivity,
+        subActivity: SubActivity.DATA_TRANSFORMATION,
+        details: { key: key, value: value }
+      });
     },
     expandCollapse(action) {
       if (action === EXPAND_ACTION_TYPE) {
@@ -948,5 +1038,9 @@ export default Vue.extend({
 
 .geofacet-container .type-change-dropdown-wrapper .dropdown-menu {
   z-index: 3;
+}
+
+.latlon .facets-root.highlighting-enabled {
+  padding-left: 0px;
 }
 </style>
