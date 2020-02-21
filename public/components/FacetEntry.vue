@@ -31,8 +31,7 @@ import {
   CategoricalFacet,
   isCategoricalFacet,
   getCategoricalChunkSize,
-  isNumericalFacet,
-  isSparklineFacet
+  isNumericalFacet
 } from "../util/facets";
 import {
   VariableSummary,
@@ -419,23 +418,6 @@ export default Vue.extend({
               range,
               group.dataset
             );
-          } else if (isSparklineFacet(facet)) {
-            const points = facet.sparklines
-              ? facet.sparklines[0]
-              : facet.sparkline;
-            const first = points[0][0];
-            const last = points[points.length - 1][0];
-            const range = {
-              from: _.toNumber(first),
-              to: _.toNumber(last)
-            };
-            this.$emit(
-              "numerical-click",
-              this.instanceName,
-              group.colName,
-              range,
-              group.dataset
-            );
           } else if (isCategoricalFacet(facet)) {
             this.$emit(
               "categorical-click",
@@ -457,23 +439,6 @@ export default Vue.extend({
             const first = slices[0];
             const last = slices[slices.length - 1];
             const range = this.buildNumericalRange(first.label, last.toLabel);
-            this.$emit(
-              "numerical-click",
-              this.instanceName,
-              group.colName,
-              range,
-              group.dataset
-            );
-          } else if (isSparklineFacet(facet)) {
-            const points = facet.sparklines
-              ? facet.sparklines[0]
-              : facet.sparkline;
-            const first = points[0][0];
-            const last = points[points.length - 1][0];
-            const range = {
-              from: _.toNumber(first),
-              to: _.toNumber(last)
-            };
             this.$emit(
               "numerical-click",
               this.instanceName,

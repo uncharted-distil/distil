@@ -24,11 +24,12 @@ import {
   VariableSummary,
   CATEGORICAL_SUMMARY,
   NUMERICAL_SUMMARY,
-  TIMESERIES_SUMMMARY
+  TimeSeries
 } from "../store/dataset/index";
 import store from "../store/store";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
+import { Forecast } from "../store/results";
 
 export const CATEGORICAL_CHUNK_SIZE = 5;
 export const IMAGE_CHUNK_SIZE = 5;
@@ -63,7 +64,7 @@ export interface CategoricalFacet {
   filterable: boolean;
   segments: Segment[];
   timeseries?: number[][];
-  multipleTimeseries?: number[][];
+  multipleTimeseries?: number[][][];
   colors?: string[];
   file: string;
 }
@@ -87,14 +88,6 @@ export interface NumericalFacet {
   selection: Selection;
 }
 
-export interface SparklineFacet {
-  sparkline?: number[][];
-  sparklines?: number[][][];
-  colors: string[];
-  filterable: boolean;
-  selection: Selection;
-}
-
 export interface Group {
   dataset: string;
   colName: string;
@@ -104,20 +97,12 @@ export interface Group {
   type: string;
   collapsible: boolean;
   collapsed: boolean;
-  facets: (
-    | PlaceHolderFacet
-    | CategoricalFacet
-    | NumericalFacet
-    | SparklineFacet)[];
+  facets: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
   more?: number;
   moreTotal?: number;
   total?: number;
   less?: number;
-  all?: (
-    | PlaceHolderFacet
-    | CategoricalFacet
-    | NumericalFacet
-    | SparklineFacet)[];
+  all?: (PlaceHolderFacet | CategoricalFacet | NumericalFacet)[];
   isImportant?: boolean;
   summary: VariableSummary;
 }
@@ -190,12 +175,6 @@ export function createSummaryFacet(summary: VariableSummary): Group {
       }
     case NUMERICAL_SUMMARY:
       return createNumericalSummaryFacet(summary);
-    case TIMESERIES_SUMMMARY:
-      if (summary.baseline.categoryBuckets) {
-        return createCategoricalTimeseriesSummaryFacet(summary);
-      } else {
-        return createNumericalTimeseriesFacet(summary);
-      }
   }
   console.warn("unrecognized summary type", summary.type);
   return null;
@@ -299,93 +278,29 @@ function createCategoricalSummaryFacet(summary: VariableSummary): Group {
   };
 }
 
-function createCategoricalTimeseriesSummaryFacet(
-  summary: VariableSummary
-): Group {
-  let total = 0;
-  const histogram = summary.filtered ? summary.filtered : summary.baseline;
-
-  const facets = _.map(histogram.categoryBuckets, (buckets, category) => {
-    const segments = [];
-    const count = _.sumBy(buckets, b => b.count);
-    const selected = {
-      count: count
-    };
-    const countLabel = count.toString();
-
-    const timeseries = buckets.map(b => [_.parseInt(b.key), b.count]);
-
-    const facet: CategoricalFacet = {
-      icon: {
-        class: getGroupIcon(summary)
-      },
-      value: category,
-      countLabel: countLabel,
-      count: count,
-      selected: selected,
-      segments: segments,
-      filterable: false,
-      timeseries: timeseries,
-      file: null
-    };
-    total += count;
-    return facet;
-  });
-
-  facets.sort((a, b) => {
-    return b.count - a.count;
-  });
-
-  const chunkSize = getCategoricalChunkSize(summary.varType);
-  const top = facets.slice(0, chunkSize);
-  const remaining = facets.length > chunkSize ? facets.slice(chunkSize) : [];
-  let remainingTotal = 0;
-  remaining.forEach(facet => {
-    remainingTotal += facet.count;
-  });
-
-  return {
-    dataset: summary.dataset,
-    colName: summary.key,
-    label: summary.label,
-    description: summary.description,
-    key: `${summary.dataset}:${summary.key}`,
-    type: summary.varType,
-    collapsible: false,
-    collapsed: false,
-    facets: top,
-    total: total,
-    more: remaining.length,
-    moreTotal: remainingTotal,
-    all: facets,
-    summary: summary
-  };
-}
-
 function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
   const group = createCategoricalSummaryFacet(summary);
 
-  let timeseries = null;
-  let forecasts = null;
+  let timeseries = null as TimeSeries;
+  let forecasts = null as Forecast;
   if (summary.solutionId) {
-    timeseries = resultGetters.getPredictedTimeseries(store);
-    timeseries = timeseries[summary.solutionId];
-    forecasts = resultGetters.getPredictedForecasts(store);
-    forecasts = forecasts[summary.solutionId];
+    timeseries = resultGetters.getPredictedTimeseries(store)[
+      summary.solutionId
+    ];
+    forecasts = resultGetters.getPredictedForecasts(store)[summary.solutionId];
   } else {
-    timeseries = datasetGetters.getTimeseries(store);
-    timeseries = timeseries[group.dataset];
+    timeseries = datasetGetters.getTimeseries(store)[group.dataset];
   }
 
   group.all.forEach((facet: CategoricalFacet) => {
     if (summary.solutionId) {
       facet.multipleTimeseries = [
-        timeseries[facet.file],
-        forecasts[facet.file]
+        timeseries.timeseriesData[facet.file],
+        forecasts.forecastData[facet.file]
       ];
       facet.colors = ["#000", "#00c6e1"];
     } else {
-      facet.timeseries = timeseries[facet.file];
+      facet.timeseries = timeseries.timeseriesData[facet.file];
     }
   });
 
@@ -448,54 +363,20 @@ function createNumericalSummaryFacet(summary: VariableSummary): Group {
   };
 }
 
-function createNumericalTimeseriesFacet(summary: VariableSummary): Group {
-  const slices = getHistogramSlices(summary);
-
-  const histogram = summary.filtered ? summary.filtered : summary.baseline;
-  const timeseries = histogram.buckets.map(b => [_.parseInt(b.key), b.count]);
-
-  return {
-    dataset: summary.dataset,
-    colName: summary.key,
-    label: summary.label,
-    description: summary.description,
-    key: `${summary.dataset}:${summary.key}`,
-    type: summary.varType,
-    collapsible: false,
-    collapsed: false,
-    facets: [
-      {
-        sparkline: timeseries,
-        // sparklines: timeseries.concat([ forecast ])
-        colors: ["#000", "#00c6e1"],
-        filterable: false,
-        selection: {} as any
-      }
-    ],
-    summary: summary
-  };
-}
-
 export function isCategoricalFacet(
-  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet | SparklineFacet
+  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet
 ): facet is CategoricalFacet {
   return (<CategoricalFacet>facet).value !== undefined;
 }
 
 export function isNumericalFacet(
-  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet | SparklineFacet
+  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet
 ): facet is NumericalFacet {
   return (<NumericalFacet>facet).histogram !== undefined;
 }
 
-export function isSparklineFacet(
-  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet | SparklineFacet
-): facet is SparklineFacet {
-  return (<SparklineFacet>facet).sparkline !== undefined;
-}
-
 export function isPlaceHolderFacet(
-  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet | SparklineFacet
+  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet
 ): facet is PlaceHolderFacet {
   return (<PlaceHolderFacet>facet).placeholder !== undefined;
 }
