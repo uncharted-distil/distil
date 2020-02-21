@@ -24,11 +24,14 @@ import {
   VariableSummary,
   CATEGORICAL_SUMMARY,
   NUMERICAL_SUMMARY,
-  TIMESERIES_SUMMMARY
+  TIMESERIES_SUMMARY,
+  TimeSeries
 } from "../store/dataset/index";
 import store from "../store/store";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
+import { Dictionary } from "vue-router/types/router";
+import { Forecast } from "../store/results";
 
 export const CATEGORICAL_CHUNK_SIZE = 5;
 export const IMAGE_CHUNK_SIZE = 5;
@@ -63,7 +66,7 @@ export interface CategoricalFacet {
   filterable: boolean;
   segments: Segment[];
   timeseries?: number[][];
-  multipleTimeseries?: number[][];
+  multipleTimeseries?: number[][][];
   colors?: string[];
   file: string;
 }
@@ -190,7 +193,7 @@ export function createSummaryFacet(summary: VariableSummary): Group {
       }
     case NUMERICAL_SUMMARY:
       return createNumericalSummaryFacet(summary);
-    case TIMESERIES_SUMMMARY:
+    case TIMESERIES_SUMMARY:
       if (summary.baseline.categoryBuckets) {
         return createCategoricalTimeseriesSummaryFacet(summary);
       } else {
@@ -365,27 +368,26 @@ function createCategoricalTimeseriesSummaryFacet(
 function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
   const group = createCategoricalSummaryFacet(summary);
 
-  let timeseries = null;
-  let forecasts = null;
+  let timeseries = null as TimeSeries;
+  let forecasts = null as Forecast;
   if (summary.solutionId) {
-    timeseries = resultGetters.getPredictedTimeseries(store);
-    timeseries = timeseries[summary.solutionId];
-    forecasts = resultGetters.getPredictedForecasts(store);
-    forecasts = forecasts[summary.solutionId];
+    timeseries = resultGetters.getPredictedTimeseries(store)[
+      summary.solutionId
+    ];
+    forecasts = resultGetters.getPredictedForecasts(store)[summary.solutionId];
   } else {
-    timeseries = datasetGetters.getTimeseries(store);
-    timeseries = timeseries[group.dataset];
+    timeseries = datasetGetters.getTimeseries(store)[group.dataset];
   }
 
   group.all.forEach((facet: CategoricalFacet) => {
     if (summary.solutionId) {
       facet.multipleTimeseries = [
-        timeseries[facet.file],
-        forecasts[facet.file]
+        timeseries.timeseriesData[facet.file],
+        forecasts.forecastData[facet.file]
       ];
       facet.colors = ["#000", "#00c6e1"];
     } else {
-      facet.timeseries = timeseries[facet.file];
+      facet.timeseries = timeseries.timeseriesData[facet.file];
     }
   });
 

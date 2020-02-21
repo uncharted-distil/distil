@@ -2,7 +2,7 @@ import { Dictionary } from "../../util/dict";
 
 export const CATEGORICAL_SUMMARY = "categorical";
 export const NUMERICAL_SUMMARY = "numerical";
-export const TIMESERIES_SUMMMARY = "timeseries";
+export const TIMESERIES_SUMMARY = "timeseries";
 
 export const D3M_INDEX_FIELD = "d3mIndex";
 
