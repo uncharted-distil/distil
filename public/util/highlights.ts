@@ -3,12 +3,9 @@ import {
   Filter,
   FilterParams,
   CATEGORICAL_FILTER,
-  NUMERICAL_FILTER,
   BIVARIATE_FILTER,
-  FEATURE_FILTER,
   CLUSTER_FILTER,
   VECTOR_FILTER,
-  TIMESERIES_FILTER,
   INCLUDE_FILTER
 } from "../util/filters";
 import { getters as routeGetters } from "../store/route/module";
@@ -18,9 +15,6 @@ import {
   TIMESERIES_TYPE,
   IMAGE_TYPE,
   getVarType,
-  isClusterType,
-  addClusterPrefix,
-  isTimeType,
   isCollectionType
 } from "../util/types";
 import _ from "lodash";

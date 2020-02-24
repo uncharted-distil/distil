@@ -46,12 +46,6 @@ export const TIMESERIES_FILTER = "timeseries";
 export const ROW_FILTER = "row";
 
 /**
- * Feature filter, omitting documents that have the specified feature value;
- * @constant {string}
- */
-export const FEATURE_FILTER = "feature";
-
-/**
  * Cluster filter, omitting documents that have the specified cluster value;
  * @constant {string}
  */

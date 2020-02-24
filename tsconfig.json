@@ -10,7 +10,8 @@
     "noImplicitAny": false,
     "noUnusedParameters": false,
     "noUnusedLocals": false,
-    "strictNullChecks": false
+    "strictNullChecks": false,
+    "lib": ["es2019", "dom"]
   },
   "include": ["./public/**/*"],
   "exclude": ["./public/static/**/*"]

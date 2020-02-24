@@ -31,7 +31,7 @@
 <script lang="ts">
 import _ from "lodash";
 import $ from "jquery";
-import leaflet from "leaflet";
+import leaflet, { MarkerOptions } from "leaflet";
 import Vue from "vue";
 import IconBase from "./icons/IconBase";
 import IconCropFree from "./icons/IconCropFree";
@@ -518,12 +518,14 @@ export default Vue.extend({
 
       this.clear();
 
-      const bounds = leaflet.latLngBounds();
+      const bounds = leaflet.latLngBounds(null);
       this.pointGroups.forEach(group => {
         const hash = this.fieldHash(group.field);
         const layer = leaflet.layerGroup([]);
         group.points.forEach(p => {
-          const marker = leaflet.marker(p, { row: p.row });
+          const marker = leaflet.marker(p, {
+            row: (<any>p).row
+          } as MarkerOptions);
           bounds.extend([p.lat, p.lng]);
           marker.bindTooltip(() => {
             const target = p.row[this.target].value;
