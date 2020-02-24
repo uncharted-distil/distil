@@ -518,7 +518,7 @@ export default Vue.extend({
 
       this.clear();
 
-      const bounds = null;
+      const bounds = leaflet.latLngBounds(null);
       this.pointGroups.forEach(group => {
         const hash = this.fieldHash(group.field);
         const layer = leaflet.layerGroup([]);

@@ -14,9 +14,7 @@
     </span>
     <span
       v-if="
-        filter.type === CATEGORICAL_FILTER ||
-          filter.type === FEATURE_FILTER ||
-          filter.type === CLUSTER_FILTER
+        filter.type === CATEGORICAL_FILTER || filter.type === CLUSTER_FILTER
       "
     >
       {{ filter.categories.join(",") }}
@@ -38,7 +36,6 @@ import {
   DATETIME_FILTER,
   BIVARIATE_FILTER,
   CATEGORICAL_FILTER,
-  FEATURE_FILTER,
   CLUSTER_FILTER
 } from "../util/filters";
 import { clearHighlight } from "../util/highlights";
