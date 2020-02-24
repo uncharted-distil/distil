@@ -16,6 +16,7 @@
     "@turf/helpers": "^6.1.4",
     "@types/d3": "^5.7.0",
     "@types/jquery": "^3.3.2",
+    "@types/leaflet": "^1.5.8",
     "@types/lodash": "^4.14.120",
     "@types/store": "^2.0.1",
     "@uncharted.software/stories-facets": "^2.12.17",

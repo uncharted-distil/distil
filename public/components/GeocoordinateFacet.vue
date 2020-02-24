@@ -80,8 +80,10 @@ import {
   TableRow,
   VariableSummary,
   Bucket,
+  Extrema,
   Highlight,
-  NUMERICAL_SUMMARY
+  NUMERICAL_SUMMARY,
+  RowSelection
 } from "../store/dataset/index";
 import TypeChangeMenu from "../components/TypeChangeMenu";
 import FacetEntry from "../components/FacetEntry";
@@ -115,6 +117,16 @@ interface GeoField {
   latField?: string;
   lngField?: string;
   field?: string;
+}
+
+interface GeoTableRow extends TableRow {
+  latitude: number;
+  longitude: number;
+}
+
+interface BucketData {
+  extrema: Extrema;
+  buckets: Bucket[];
 }
 
 const GEOCOORDINATE_LABEL = "longitude";
@@ -185,15 +197,15 @@ export default Vue.extend({
 
   data() {
     return {
-      map: null,
-      baseLayer: null,
-      bounds: null,
+      map: null as leaflet.Map,
+      baseLayer: null as leaflet.Layer,
+      bounds: null as leaflet.LatLngBounds,
       closeButton: null,
-      startingLatLng: null,
-      currentRect: null,
-      selectedRect: null,
-      baseLineLayer: null,
-      filteredLayer: null,
+      startingLatLng: null as leaflet.LatLng,
+      currentRect: null as leaflet.Rectangle,
+      selectedRect: null as leaflet.Rectangle,
+      baseLineLayer: null as leaflet.Layer,
+      filteredLayer: null as leaflet.Layer,
       expand: true,
       enabledTypeChanges: new Array(0),
       blockNextEvent: false
@@ -401,28 +413,29 @@ export default Vue.extend({
         !!this.highlight.value.maxY
       );
     },
-    selectedRows(): any {
+    selectedRows(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
-    selectedPoints(): any {
+    selectedPoints(): helpers.Point[] {
       if (this.selectedRows) {
         const tableItems = this.includedActive
           ? datasetGetters.getIncludedTableDataItems(this.$store)
           : datasetGetters.getExcludedTableDataItems(this.$store);
-        const selectedItems = this.selectedRows.d3mIndices.flatMap(index => {
-          return tableItems.filter(item => item.d3mIndex === index);
-        });
-        const selectedPoints = selectedItems.map(item =>
-          point([Number(item.longitude), Number(item.latitude)])
-        );
-        return selectedPoints;
-      } else {
-        return [];
+        if (this.isGeoTableRows(tableItems)) {
+          const selectedItems = this.selectedRows.d3mIndices.flatMap(index => {
+            return tableItems.filter(item => item.d3mIndex === index);
+          });
+          const selectedPoints = selectedItems.map(item =>
+            point([Number(item.longitude), Number(item.latitude)])
+          );
+          return selectedPoints.map(p => p.geometry);
+        }
       }
+      return [];
     }
   },
   methods: {
-    calcBucketKey(value: string, type: string) {
+    calcBucketKey(value: string, type: string): string {
       const numValue = _.toNumber(value);
       const buckets =
         type === LONGITUDE_TYPE
@@ -431,7 +444,7 @@ export default Vue.extend({
       const step = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
       return _.toString(numValue - (numValue % step));
     },
-    numericWithMetadata(buckets: Bucket[]) {
+    numericWithMetadata(buckets: Bucket[]): BucketData {
       const extrema = {
         min: _.toNumber(buckets[0].key),
         max:
@@ -445,7 +458,7 @@ export default Vue.extend({
       };
     },
 
-    longitudeToNumeric(bucketType: string) {
+    longitudeToNumeric(bucketType: string): BucketData {
       if (this.summary[bucketType]) {
         const lonBuckets = this.summary[bucketType].buckets.reduce(
           (lbs, lonBucket) => {
@@ -465,7 +478,7 @@ export default Vue.extend({
       }
     },
 
-    latitudeToNumeric(bucketType: string) {
+    latitudeToNumeric(bucketType: string): BucketData {
       if (this.summary[bucketType]) {
         const latBuckets = this.summary[bucketType].buckets.reduce(
           (lbs, lonBucket) => {
@@ -646,9 +659,8 @@ export default Vue.extend({
     onMouseUp(event: MouseEvent) {
       if (this.currentRect) {
         // prevent creation of a single point highlight via click
-        const rectangleSize = this.currentRect._pxBounds.max.subtract(
-          this.currentRect._pxBounds.min
-        );
+        const pxBounds = (<any>this.currentRect)._pxBounds as leaflet.Bounds;
+        const rectangleSize = pxBounds.max.subtract(pxBounds.min);
         const singlePoint = leaflet.point(1, 1);
 
         if (!rectangleSize.equals(singlePoint)) {
@@ -664,11 +676,10 @@ export default Vue.extend({
     onMouseMove(event: MouseEvent) {
       if (this.currentRect) {
         const offset = $(this.map.getContainer()).offset();
-        const latLng = this.map.containerPointToLatLng({
-          x: event.pageX - offset.left,
-          y: event.pageY - offset.top
-        });
-        const bounds = [this.startingLatLng, latLng];
+        const latLng = this.map.containerPointToLatLng(
+          leaflet.point(event.pageX - offset.left, event.pageY - offset.top)
+        );
+        const bounds = leaflet.latLngBounds(this.startingLatLng, latLng);
         this.currentRect.setBounds(bounds);
       }
     },
@@ -692,12 +703,14 @@ export default Vue.extend({
 
         const offset = $(this.map.getContainer()).offset();
 
-        this.startingLatLng = this.map.containerPointToLatLng({
-          x: event.pageX - offset.left,
-          y: event.pageY - offset.top
-        });
+        this.startingLatLng = this.map.containerPointToLatLng(
+          leaflet.point(event.pageX - offset.left, event.pageY - offset.top)
+        );
 
-        const bounds = [this.startingLatLng, this.startingLatLng];
+        const bounds = leaflet.latLngBounds(
+          this.startingLatLng,
+          this.startingLatLng
+        );
 
         this.currentRect = leaflet.rectangle(bounds, {
           color: this.includedActive ? "#00c6e1" : "black",
@@ -715,11 +728,12 @@ export default Vue.extend({
         this.map.dragging.disable();
       }
     },
-    setSelection(rect) {
+    setSelection(rect: leaflet.Rectangle) {
       this.clearSelection();
 
       this.selectedRect = rect;
-      const $selected = $(this.selectedRect._path);
+      const rectPath = (<any>this.selectedRect)._path;
+      const $selected = $(rectPath);
       $selected.addClass("selected");
 
       const ne = rect.getBounds().getNorthEast();
@@ -742,7 +756,8 @@ export default Vue.extend({
     },
     clearSelection() {
       if (this.selectedRect) {
-        $(this.selectedRect._path).removeClass("selected");
+        const rectPath = (<any>this.selectedRect)._path;
+        $(rectPath).removeClass("selected");
         clearHighlight(this.$router);
       }
       if (this.closeButton) {
@@ -871,7 +886,7 @@ export default Vue.extend({
 
                 const fill = containsSelected
                   ? "rgba(255,0,103,.2)"
-                  : scaleColors(feature.properties.count);
+                  : scaleColors(feature.properties.count).toString(16);
 
                 return {
                   fillColor: fill,
@@ -908,7 +923,7 @@ export default Vue.extend({
 
                 const fill = containsSelected
                   ? "rgba(255,0,103,.2)"
-                  : filteredScaleColors(feature.properties.count);
+                  : filteredScaleColors(feature.properties.count).toString(16);
 
                 return {
                   fillColor: fill,
@@ -938,7 +953,9 @@ export default Vue.extend({
           this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
             style: feature => {
               return {
-                fillColor: filteredScaleColors(feature.properties.count),
+                fillColor: filteredScaleColors(
+                  feature.properties.count
+                ).toString(16),
                 weight: 0,
                 opacity: 1,
                 color: "rgba(0,0,0,0)",
@@ -951,6 +968,11 @@ export default Vue.extend({
           this.clearSelectionRect();
         }
       }
+    },
+
+    // type guard for geo table data
+    isGeoTableRows(rows: TableRow[]): rows is GeoTableRow[] {
+      return (rows as GeoTableRow[])[0].latitude !== undefined;
     }
   },
 
