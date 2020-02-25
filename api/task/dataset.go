@@ -38,6 +38,14 @@ const (
 	baseMediaFolder = "media"
 )
 
+var (
+	imageTypeMap = map[string]string{
+		"png":  "png",
+		"jpeg": "jpeg",
+		"jpg":  "jpeg",
+	}
+)
+
 // CreateDataset structures a raw csv file into a valid D3M dataset.
 func CreateDataset(dataset string, csvData []byte, outputPath string, typ api.DatasetType, config *IngestTaskConfig) (string, error) {
 	// save the csv file in the file system datasets folder
@@ -180,7 +188,7 @@ func CreateImageDataset(dataset string, data []byte, imageType string, outputPat
 			model.VarRoleData, nil, dr.Variables, false))
 
 	// create the data resource for the referenced images
-	refDR := model.NewDataResource("0", model.ResTypeImage, map[string][]string{fmt.Sprintf("image/%s", imageType): {"jpeg", "jpg"}})
+	refDR := model.NewDataResource("0", model.ResTypeImage, map[string][]string{fmt.Sprintf("image/%s", imageTypeMap[imageType]): {"jpeg", "jpg"}})
 	refDR.ResPath = path.Base(mediaFolder)
 	refDR.IsCollection = true
 
