@@ -25,9 +25,9 @@
 			<div class="pull-right pr-2 solution-button" @click.stop="onDelete"><i class="fa fa-trash"></i></div>
 			-->
       <template v-if="isPending">
-        <b-badge variant="info">{{ solutionStatus }}</b-badge>
+        <b-badge variant="info">{{ progressLabel }}</b-badge>
         <b-progress
-          :value="100"
+          :value="percentComplete"
           variant="outline-secondary"
           striped
           :animated="true"
@@ -151,7 +151,9 @@ import { getters as solutionGetters } from "../store/solutions/module";
 import {
   getSolutionIndex,
   getSolutionById,
-  isTopSolutionByScore
+  isTopSolutionByScore,
+  SOLUTION_PROGRESS,
+  SOLUTION_LABELS
 } from "../util/solutions";
 import { overlayRouteEntry } from "../util/routes";
 import { updateHighlight, clearHighlight } from "../util/highlights";
@@ -212,7 +214,7 @@ export default Vue.extend({
       return routeGetters.getRouteSolutionId(this.$store);
     },
 
-    solutionStatus(): String {
+    solutionStatus(): string {
       const solution = getSolutionById(
         this.$store.state.solutionModule,
         this.solutionId
@@ -221,6 +223,14 @@ export default Vue.extend({
         return solution.progress;
       }
       return "unknown";
+    },
+
+    progressLabel(): string {
+      return SOLUTION_LABELS[this.solutionStatus];
+    },
+
+    percentComplete(): number {
+      return SOLUTION_PROGRESS[this.solutionStatus];
     },
 
     rowSelection(): RowSelection {

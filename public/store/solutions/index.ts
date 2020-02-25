@@ -1,9 +1,9 @@
 import { FilterParams } from "../../util/filters";
-import { Stream } from "../../util/ws";
-import { Dictionary } from "../../util/dict";
 
 export const SOLUTION_PENDING = "SOLUTION_PENDING";
-export const SOLUTION_RUNNING = "SOLUTION_RUNNING";
+export const SOLUTION_FITTING = "SOLUTION_FITTING";
+export const SOLUTION_SCORING = "SOLUTION_SCORING";
+export const SOLUTION_PRODUCING = "SOLUTION_PRODUCING";
 export const SOLUTION_COMPLETED = "SOLUTION_COMPLETED";
 export const SOLUTION_ERRORED = "SOLUTION_ERRORED";
 

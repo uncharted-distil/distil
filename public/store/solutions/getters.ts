@@ -5,9 +5,11 @@ import {
   SolutionState,
   Solution,
   SolutionRequest,
-  SOLUTION_RUNNING,
   SOLUTION_ERRORED,
-  SOLUTION_COMPLETED
+  SOLUTION_COMPLETED,
+  SOLUTION_FITTING,
+  SOLUTION_SCORING,
+  SOLUTION_PRODUCING
 } from "./index";
 import { Dictionary } from "../../util/dict";
 import { Stream } from "../../util/ws";
@@ -41,7 +43,11 @@ export const getters = {
     const running = [];
     state.requests.forEach(request => {
       request.solutions.forEach(solution => {
-        if (solution.progress === SOLUTION_RUNNING) {
+        if (
+          solution.progress === SOLUTION_FITTING ||
+          solution.progress === SOLUTION_SCORING ||
+          solution.progress === SOLUTION_PRODUCING
+        ) {
           running.push(solution);
         }
       });

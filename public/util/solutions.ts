@@ -1,9 +1,35 @@
-import _ from "lodash";
-import { Dictionary } from "./dict";
+import _, { Dictionary } from "lodash";
+
 import { sortSolutionsByScore } from "../store/solutions/getters";
 import { getters as solutionGetters } from "../store/solutions/module";
-import { SolutionState, Solution } from "../store/solutions/index";
+import {
+  SolutionState,
+  Solution,
+  SOLUTION_PENDING,
+  SOLUTION_FITTING,
+  SOLUTION_SCORING,
+  SOLUTION_PRODUCING,
+  SOLUTION_COMPLETED,
+  SOLUTION_ERRORED
+} from "../store/solutions/index";
 import store from "../store/store";
+
+export const SOLUTION_LABELS: Dictionary<string> = {
+  [SOLUTION_PENDING]: "PENDING",
+  [SOLUTION_FITTING]: "FITTING",
+  [SOLUTION_SCORING]: "SCORING",
+  [SOLUTION_PRODUCING]: "PREDICTING",
+  [SOLUTION_COMPLETED]: "COMPLETED",
+  [SOLUTION_ERRORED]: "ERRORED"
+};
+
+export const SOLUTION_PROGRESS: Dictionary<number> = {
+  [SOLUTION_PENDING]: 0,
+  [SOLUTION_FITTING]: 25,
+  [SOLUTION_SCORING]: 75,
+  [SOLUTION_PRODUCING]: 80,
+  [SOLUTION_COMPLETED]: 100
+};
 
 export interface NameInfo {
   displayName: string;
