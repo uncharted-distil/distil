@@ -2,13 +2,15 @@ import axios from "axios";
 import {
   SolutionState,
   SOLUTION_PENDING,
-  SOLUTION_RUNNING,
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED,
   REQUEST_PENDING,
   REQUEST_RUNNING,
   REQUEST_COMPLETED,
-  REQUEST_ERRORED
+  REQUEST_ERRORED,
+  SOLUTION_FITTING,
+  SOLUTION_PRODUCING,
+  SOLUTION_SCORING
 } from "./index";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
@@ -206,7 +208,9 @@ function isSolutionResponse(response: SolutionStatus) {
   const progress = response.progress;
   return (
     progress === SOLUTION_PENDING ||
-    progress === SOLUTION_RUNNING ||
+    progress === SOLUTION_FITTING ||
+    progress === SOLUTION_SCORING ||
+    progress === SOLUTION_PRODUCING ||
     progress === SOLUTION_COMPLETED ||
     progress === SOLUTION_ERRORED
   );

@@ -50,7 +50,9 @@ import { getters as routeGetters } from "../store/route/module";
 import { actions as dataActions } from "../store/dataset/module";
 import {
   SOLUTION_PENDING,
-  SOLUTION_RUNNING,
+  SOLUTION_FITTING,
+  SOLUTION_SCORING,
+  SOLUTION_PRODUCING,
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED,
   Solution
@@ -81,7 +83,11 @@ export default Vue.extend({
       return this.solution.progress === SOLUTION_PENDING;
     },
     isRunning(): boolean {
-      return this.solution.progress === SOLUTION_RUNNING;
+      return (
+        this.solution.progress === SOLUTION_FITTING ||
+        this.solution.progress === SOLUTION_SCORING ||
+        this.solution.progress === SOLUTION_PRODUCING
+      );
     },
     isCompleted(): boolean {
       return this.solution.progress === SOLUTION_COMPLETED;

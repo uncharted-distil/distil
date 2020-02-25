@@ -43,8 +43,12 @@ const (
 	explainSolutionOutputkey = "outputs.2"
 	// SolutionPendingStatus represents that the solution request has been acknoledged by not yet sent to the API
 	SolutionPendingStatus = "SOLUTION_PENDING"
-	// SolutionRunningStatus represents that the solution request has been sent to the API.
-	SolutionRunningStatus = "SOLUTION_RUNNING"
+	// SolutionFittingStatus represents that the solution request has been sent to the API.
+	SolutionFittingStatus = "SOLUTION_FITTING"
+	// SolutionScoringStatus represents that the solution request has been sent to the API.
+	SolutionScoringStatus = "SOLUTION_SCORING"
+	// SolutionProducingStatus represents that the solution request has been sent to the API.
+	SolutionProducingStatus = "SOLUTION_PRODUCING"
 	// SolutionErroredStatus represents that the solution request has terminated with an error.
 	SolutionErroredStatus = "SOLUTION_ERRORED"
 	// SolutionCompletedStatus represents that the solution request has completed successfully.
@@ -523,7 +527,6 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	var desc *pipeline.DescribeSolutionResponse
 	var err error
 	for wait := true; wait; {
-
 		desc, err = client.GetSolutionDescription(context.Background(), initialSearchSolutionID)
 		if err != nil {
 			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -537,7 +540,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 	// Need to create a new solution that has the explain output. This is the solution
 	// that will be used throughout distil except for the export (which will use the original solution).
-	// start a solution searchID
+	// The client API will also reference things by the initial IDs.
+
 	// get the pipeline description
 	explainDesc, err := s.createExplainPipeline(client, desc)
 	if err != nil {
@@ -564,9 +568,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		solutionID := solution.SolutionId
 
 		// persist the solution info
-		// for now ignore the new search and solution info
-		//s.persistSolution(statusChan, solutionStorage, searchID, solutionID, initialSearchSolutionID)
-		//s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionPendingStatus)
+		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionFittingStatus)
 
 		// fit solution
 		fitResults, err := client.GenerateSolutionFit(context.Background(), solutionID, []string{datasetURITrain})
@@ -587,6 +589,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID,
 				errors.Errorf("no fitted solution ID for solution `%s` ('%s')", solutionID, initialSearchSolutionID))
 		}
+
+		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionScoringStatus)
 
 		// score solution
 		solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID, datasetURITest, s.Metrics)
@@ -616,8 +620,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		}
 
 		// persist solution running status
-		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionRunningStatus)
-		//s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionRunningStatus)
+		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionProducingStatus)
 
 		// generate output keys, adding one extra for explanation output if we expect it to exist
 		outputKeys := []string{defaultExposedOutputKey}
