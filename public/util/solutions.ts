@@ -26,7 +26,7 @@ export const SOLUTION_LABELS: Dictionary<string> = {
 export const SOLUTION_PROGRESS: Dictionary<number> = {
   [SOLUTION_PENDING]: 0,
   [SOLUTION_FITTING]: 25,
-  [SOLUTION_SCORING]: 60,
+  [SOLUTION_SCORING]: 75,
   [SOLUTION_PRODUCING]: 80,
   [SOLUTION_COMPLETED]: 100
 };
