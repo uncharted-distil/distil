@@ -182,6 +182,7 @@ func CreateImageDataset(dataset string, data []byte, imageType string, outputPat
 	// create the data resource for the referenced images
 	refDR := model.NewDataResource("0", model.ResTypeImage, map[string][]string{fmt.Sprintf("image/%s", imageType): {"jpeg", "jpg"}})
 	refDR.ResPath = path.Base(mediaFolder)
+	refDR.IsCollection = true
 
 	meta.DataResources = []*model.DataResource{refDR, dr}
 
