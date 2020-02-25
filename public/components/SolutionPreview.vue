@@ -60,6 +60,8 @@ import {
 import { RESULTS_ROUTE } from "../store/route/index";
 import Vue from "vue";
 import { Location } from "vue-router";
+import { Dictionary } from "lodash";
+import { SOLUTION_PROGRESS, SOLUTION_LABELS } from "../util/solutions";
 
 export default Vue.extend({
   name: "solution-preview",
@@ -70,14 +72,14 @@ export default Vue.extend({
 
   computed: {
     percentComplete(): number {
-      return 100;
+      return SOLUTION_PROGRESS[this.solution.progress];
     },
     formattedTime(): string {
       const t = moment(this.solution.timestamp);
       return t.format("MMM Do YYYY, h:mm:ss a");
     },
     status(): string {
-      return this.solution.progress;
+      return SOLUTION_LABELS[this.solution.progress];
     },
     isPending(): boolean {
       return this.solution.progress === SOLUTION_PENDING;
