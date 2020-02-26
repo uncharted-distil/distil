@@ -82,13 +82,16 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 		}
 
 		response := make([]*RequestResponse, 0)
-
 		for _, req := range requests {
 
 			// gather solutions
 			solutions := make([]*Solution, 0)
-			for _, sol := range req.Solutions {
-
+			reqSolutions, err := solution.FetchSolutionsByRequestID(req.RequestID)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			for _, sol := range reqSolutions {
 				solution := &Solution{
 					// request
 					RequestID: req.RequestID,

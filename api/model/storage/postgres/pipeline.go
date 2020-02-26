@@ -509,3 +509,88 @@ func (s *Storage) FetchSolutionScores(solutionID string) ([]*api.SolutionScore, 
 
 	return results, nil
 }
+
+// FetchSolutionsByDatasetTarget fetches all solutions that apply to a particular dataset and target.
+func (s *Storage) FetchSolutionsByDatasetTarget(dataset string, target string) ([]*api.Solution, error) {
+	// get the solution ids
+	sql := fmt.Sprintf("SELECT DISTINCT solution.solution_id "+
+		"FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id "+
+		"INNER JOIN %s solution ON request.request_id = solution.request_id ",
+		requestTableName, featureTableName, solutionTableName)
+	params := make([]interface{}, 0)
+
+	if dataset != "" {
+		sql = fmt.Sprintf("%s AND request.dataset = $%d", sql, len(params)+1)
+		params = append(params, dataset)
+	}
+	if target != "" {
+		sql = fmt.Sprintf("%s AND rf.feature_name = $%d AND rf.feature_type = $%d", sql, len(params)+1, len(params)+2)
+		params = append(params, target)
+		params = append(params, model.FeatureTypeTarget)
+	}
+
+	sql = fmt.Sprintf("%s;", sql)
+	rows, err := s.client.Query(sql, params...)
+	if err != nil {
+		return nil, err
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	solutions := []*api.Solution{}
+	for rows.Next() {
+		var solutionID string
+
+		err = rows.Scan(&solutionID)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse solution id from Postgres")
+		}
+
+		solution, err := s.FetchSolution(solutionID)
+		if err != nil {
+			return nil, err
+		}
+		solutions = append(solutions, solution)
+	}
+
+	return solutions, nil
+}
+
+// FetchSolutionsByRequestID fetches solutions associated with a given request.
+func (s *Storage) FetchSolutionsByRequestID(requestID string) ([]*api.Solution, error) {
+	// get the solution ids
+	sql := fmt.Sprintf("SELECT DISTINCT solution.solution_id "+
+		"FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id "+
+		"INNER JOIN %s solution ON request.request_id = solution.request_id "+
+		"AND request.request_id = $1",
+		requestTableName, featureTableName, solutionTableName)
+
+	params := []interface{}{requestID}
+	sql = fmt.Sprintf("%s;", sql)
+	rows, err := s.client.Query(sql, params...)
+	if err != nil {
+		return nil, err
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	solutions := []*api.Solution{}
+	for rows.Next() {
+		var solutionID string
+
+		err = rows.Scan(&solutionID)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse solution id from Postgres")
+		}
+
+		solution, err := s.FetchSolution(solutionID)
+		if err != nil {
+			return nil, err
+		}
+		solutions = append(solutions, solution)
+	}
+
+	return solutions, nil
+}

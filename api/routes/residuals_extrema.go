@@ -43,7 +43,7 @@ func fetchSolutionResidualExtrema(meta api.MetadataStorage, data api.DataStorage
 	}
 
 	// we need to get extrema min and max for all solutions sharing dataset and target
-	requests, err := solution.FetchRequestByDatasetTarget(dataset, target, solutionID)
+	solutions, err := solution.FetchSolutionsByDatasetTarget(dataset, target)
 	if err != nil {
 		return nil, err
 	}
@@ -51,19 +51,17 @@ func fetchSolutionResidualExtrema(meta api.MetadataStorage, data api.DataStorage
 	// get extrema
 	min := math.MaxFloat64
 	max := -math.MaxFloat64
-	for _, req := range requests {
-		for _, sol := range req.Solutions {
-			if len(sol.Results) > 0 && !sol.IsBad {
-				// result uri
-				resultURI := sol.Results[0].ResultURI
-				// predicted extrema
-				residualExtrema, err := data.FetchResidualsExtremaByURI(dataset, storageName, resultURI)
-				if err != nil {
-					return nil, err
-				}
-				max = math.Max(max, residualExtrema.Max)
-				min = math.Min(min, residualExtrema.Min)
+	for _, sol := range solutions {
+		if len(sol.Results) > 0 && !sol.IsBad {
+			// result uri
+			resultURI := sol.Results[0].ResultURI
+			// predicted extrema
+			residualExtrema, err := data.FetchResidualsExtremaByURI(dataset, storageName, resultURI)
+			if err != nil {
+				return nil, err
 			}
+			max = math.Max(max, residualExtrema.Max)
+			min = math.Min(min, residualExtrema.Min)
 		}
 	}
 

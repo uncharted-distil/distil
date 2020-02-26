@@ -300,18 +300,15 @@ func (s *Storage) loadRequestFromSolutionID(solutionID string) (*api.Request, er
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to fetch request from Postgres")
 	}
-	request.Solutions = []*api.Solution{solution}
-
 	return request, nil
 }
 
-// FetchRequestByDatasetTarget pulls a request with solution
-// result information from Postgres. Only the latest result for each
-// solution is fetched.
+// FetchRequestByDatasetTarget pulls requests associated with a given dataset and target from postgres.  If the solutionID
+// is non-empty, only the request that has that solution will be returned.
 func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string, solutionID string) ([]*api.Request, error) {
 
 	// get the solution ids
-	sql := fmt.Sprintf("SELECT DISTINCT solution.solution_id "+
+	sql := fmt.Sprintf("SELECT DISTINCT ON(request.request_id) request.request_id, request.dataset, request.progress, request.created_time, request.last_updated_time "+
 		"FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id "+
 		"INNER JOIN %s solution ON request.request_id = solution.request_id ",
 		requestTableName, featureTableName, solutionTableName)
@@ -334,49 +331,19 @@ func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string, sol
 	sql = fmt.Sprintf("%s;", sql)
 	rows, err := s.client.Query(sql, params...)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to pull solution ids from Postgres")
+		return nil, err
 	}
 	if rows != nil {
 		defer rows.Close()
 	}
 
-	// TODO: code should be changed to not have a request / result built.
-	// Would need to lookup to see if the request was already loaded.
-	// Then would need to see if the solution was loaded.
-	requests := make([]*api.Request, 0)
+	requests := []*api.Request{}
 	for rows.Next() {
-		var solutionID string
-
-		err = rows.Scan(&solutionID)
+		request, err := s.loadRequest(rows)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse solution id from Postgres")
+			return nil, err
 		}
-
-		request, err := s.loadRequestFromSolutionID(solutionID)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to load request from Postgres")
-		}
-
-		results, err := s.FetchSolutionResults(solutionID)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse solution results from Postgres")
-		}
-
-		if results != nil {
-			request.Solutions[0].Results = results
-		}
-
-		scores, err := s.FetchSolutionScores(solutionID)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to parse solution result from Postgres")
-		}
-
-		if scores != nil {
-			request.Solutions[0].Scores = scores
-		}
-
 		requests = append(requests, request)
 	}
-
 	return requests, nil
 }
