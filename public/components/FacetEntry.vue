@@ -504,6 +504,16 @@ export default Vue.extend({
       return this.isHighlightedInstance(highlight) && highlight.key === colName;
     },
 
+    isHighlightedFacet(highlight: Highlight, facet: any): boolean {
+      const highlightValue = this.getHighlightValue(highlight);
+      return (
+        highlightValue &&
+        facet &&
+        facet.value &&
+        highlightValue.toLowerCase() === facet.value.toLowerCase()
+      );
+    },
+
     isHighlightedValue(
       highlight: Highlight,
       colName: string,
@@ -563,13 +573,13 @@ export default Vue.extend({
     },
 
     selectTimeseriesFacet(facet: any, count?: number) {
-      facet._sparklineContainer
-        .parent()
-        .css("background-color", "rgba(0, 198, 225, .2)");
+      facet._sparklineContainer.parent().addClass("facet-sparkline-selected");
     },
 
     deselectTimeseriesFacet(facet: any) {
-      facet._sparklineContainer.parent().css("background-color", "");
+      facet._sparklineContainer
+        .parent()
+        .removeClass("facet-sparkline-selected");
     },
 
     injectDeemphasis(group: any, deemphasis: any) {
@@ -745,7 +755,11 @@ export default Vue.extend({
         if (facet._histogram) {
           facet.deselect();
         } else if (facet._sparkline) {
-          // TODO: sparkline
+          if (this.isHighlightedFacet(highlight, facet)) {
+            this.selectTimeseriesFacet(facet);
+          } else {
+            this.deselectTimeseriesFacet(facet);
+          }
         } else {
           this.selectCategoricalFacet(facet);
         }
@@ -813,38 +827,16 @@ export default Vue.extend({
             selection: selection
           });
         } else if (facet._sparkline) {
-          const selection = {} as any;
-
-          // if this is the highlighted group, create filter selection
-          if (isHighlightedGroup) {
-            // NOTE: the `from` / `to` values MUST be strings.
-            selection.range = {
-              from: `${highlightRootValue.from}`,
-              to: `${highlightRootValue.to}`
-            };
+          if (this.isHighlightedFacet(highlight, facet)) {
+            this.selectCategoricalFacet(facet);
+            this.selectTimeseriesFacet(facet);
           } else {
-            // TODO: impl highlighting
-            // const points = facet._sparkline.points;
-            // if (highlightSummary && highlightSummary.buckets.length === points.length) {
-            //
-            // 	const slices = {};
-            //
-            // 	highlightSummary.buckets.forEach((bucket, index) => {
-            // 		const entry: any = _.last(points[index].metadata);
-            // 		slices[entry.label] = bucket.count;
-            // 	});
-            //
-            // 	selection.slices = slices;
-            // }
+            this.deselectCategoricalFacet(facet);
+            this.deselectTimeseriesFacet(facet);
           }
-
-          facet.select({
-            selection: selection
-          });
         } else {
           if (isHighlightedGroup) {
-            const highlightValue = this.getHighlightValue(highlight);
-            if (highlightValue.toLowerCase() === facet.value.toLowerCase()) {
+            if (this.isHighlightedFacet(highlight, facet)) {
               this.selectCategoricalFacet(facet);
               this.selectTimeseriesFacet(facet);
             } else {
@@ -878,6 +870,9 @@ export default Vue.extend({
       $(this.$el)
         .find(".select-highlight")
         .removeClass("select-highlight");
+      $(this.$el)
+        .find(".facet-sparkline-selected")
+        .removeClass("facet-sparkline-selected");
       // Update highlight
       const group = this.facets.getGroup(this.groupSpec.key);
       if (!group) {
@@ -1236,5 +1231,8 @@ export default Vue.extend({
 .facet-sparkline,
 .facet-sparkline-container {
   overflow: visible !important;
+}
+.facet-block.facet-sparkline-selected {
+  background-color: rgba(0, 198, 225, 0.2);
 }
 </style>
