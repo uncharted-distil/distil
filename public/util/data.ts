@@ -11,7 +11,7 @@ import {
   D3M_INDEX_FIELD,
   SummaryMode
 } from "../store/dataset/index";
-import { Solution, SOLUTION_COMPLETED } from "../store/solutions/index";
+import { Solution, SOLUTION_COMPLETED } from "../store/requests/index";
 import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
 import store from "../store/store";
@@ -22,7 +22,7 @@ import {
   getters as datasetGetters,
   actions as datasetActions
 } from "../store/dataset/module";
-import { getters as solutionGetters } from "../store/solutions/module";
+import { getters as solutionGetters } from "../store/requests/module";
 import { formatValue, isIntegerType, isTimeType } from "../util/types";
 
 // Postfixes for special variable names

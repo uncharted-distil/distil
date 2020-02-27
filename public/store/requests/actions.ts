@@ -1,6 +1,6 @@
 import axios from "axios";
 import {
-  SolutionState,
+  RequestState,
   SOLUTION_PENDING,
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED,
@@ -10,7 +10,9 @@ import {
   REQUEST_ERRORED,
   SOLUTION_FITTING,
   SOLUTION_PRODUCING,
-  SOLUTION_SCORING
+  SOLUTION_SCORING,
+  SearchRequest,
+  Solution
 } from "./index";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
@@ -24,7 +26,8 @@ import { TaskTypes, SummaryMode } from "../dataset";
 const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
 
-interface CreateSolutionRequest {
+// Search request message used in web socket context
+interface SearchRequestMsg {
   dataset: string;
   target: string;
   metrics: string[];
@@ -33,7 +36,8 @@ interface CreateSolutionRequest {
   filters: FilterParams;
 }
 
-interface SolutionStatus {
+// Solution status message used in web socket context
+interface SolutionStatusMsg {
   requestId: string;
   solutionId?: string;
   resultId?: string;
@@ -42,12 +46,12 @@ interface SolutionStatus {
   timestamp: number;
 }
 
-export type SolutionContext = ActionContext<SolutionState, DistilState>;
+export type SolutionContext = ActionContext<RequestState, DistilState>;
 
 function updateCurrentSolutionResults(
   context: SolutionContext,
-  req: CreateSolutionRequest,
-  res: SolutionStatus
+  req: SearchRequestMsg,
+  res: SolutionStatusMsg
 ) {
   const isRegression = routeGetters
     .getRouteTask(store)
@@ -119,8 +123,8 @@ function updateCurrentSolutionResults(
 
 function updateSolutionResults(
   context: SolutionContext,
-  req: CreateSolutionRequest,
-  res: SolutionStatus
+  req: SearchRequestMsg,
+  res: SolutionStatusMsg
 ) {
   const taskArgs = routeGetters.getRouteTask(store);
   const isRegression = taskArgs && taskArgs.includes(TaskTypes.REGRESSION);
@@ -168,16 +172,16 @@ function updateSolutionResults(
 
 function handleRequestProgress(
   context: SolutionContext,
-  request: CreateSolutionRequest,
-  response: SolutionStatus
+  request: SearchRequestMsg,
+  response: SolutionStatusMsg
 ) {
   // no-op
 }
 
 function handleSolutionProgress(
   context: SolutionContext,
-  request: CreateSolutionRequest,
-  response: SolutionStatus
+  request: SearchRequestMsg,
+  response: SolutionStatusMsg
 ) {
   switch (response.progress) {
     case SOLUTION_COMPLETED:
@@ -194,7 +198,7 @@ function handleSolutionProgress(
   }
 }
 
-function isRequestResponse(response: SolutionStatus) {
+function isRequestResponse(response: SolutionStatusMsg) {
   const progress = response.progress;
   return (
     progress === REQUEST_PENDING ||
@@ -204,7 +208,7 @@ function isRequestResponse(response: SolutionStatus) {
   );
 }
 
-function isSolutionResponse(response: SolutionStatus) {
+function isSolutionResponse(response: SolutionStatusMsg) {
   const progress = response.progress;
   return (
     progress === SOLUTION_PENDING ||
@@ -218,8 +222,8 @@ function isSolutionResponse(response: SolutionStatus) {
 
 function handleProgress(
   context: SolutionContext,
-  request: CreateSolutionRequest,
-  response: SolutionStatus
+  request: SearchRequestMsg,
+  response: SolutionStatusMsg
 ) {
   if (isRequestResponse(response)) {
     // request
@@ -234,7 +238,7 @@ function handleProgress(
   }
 
   actions
-    .fetchSolutionRequests(context, {
+    .fetchSearchRequests(context, {
       dataset: request.dataset,
       target: request.target,
       solutionId: response.solutionId
@@ -252,7 +256,7 @@ function handleProgress(
 }
 
 export const actions = {
-  async fetchSolutionRequests(
+  async fetchSearchRequests(
     context: SolutionContext,
     args: { dataset?: string; target?: string; solutionId?: string }
   ) {
@@ -274,16 +278,46 @@ export const actions = {
         return;
       }
       const requests = response.data;
-      requests.forEach(request => {
-        // update solution
-        mutations.updateSolutionRequests(context, request);
-      });
+      for (const request of requests) {
+        // update request data
+        const searchRequest: SearchRequest = {
+          requestId: request.requestId,
+          dataset: request.dataset,
+          feature: request.feature,
+          features: request.solutions[0].features,
+          filters: request.solutions[0].filters,
+          timestamp: request.timestamp,
+          progress: request.progress
+        };
+        mutations.updateSearchRequests(context, searchRequest);
+
+        // update solution data
+        for (const solution of request.solutions) {
+          const searchResult: Solution = {
+            requestId: solution.requestId,
+            solutionId: solution.solutionId,
+            fittedSolutionId: solution.fittedSolutionId,
+            resultId: solution.resultId,
+            dataset: solution.dataset,
+            feature: solution.feature,
+            scores: solution.scores,
+            timestamp: solution.timestamp,
+            progress: solution.progress,
+            features: solution.features,
+            filters: solution.filters,
+            predictedKey: solution.predictedKey,
+            errorKey: solution.errorKey,
+            isBad: false
+          };
+          mutations.updateSolutions(context, searchResult);
+        }
+      }
     } catch (error) {
       console.error(error);
     }
   },
 
-  createSolutionRequest(context: any, request: CreateSolutionRequest) {
+  createSearchRequest(context: any, request: SearchRequestMsg) {
     return new Promise((resolve, reject) => {
       const conn = getWebSocketConnection();
 
@@ -335,7 +369,7 @@ export const actions = {
     });
   },
 
-  stopSolutionRequest(context: any, args: { requestId: string }) {
+  stopSearchRequest(context: any, args: { requestId: string }) {
     const stream = getStreamById(args.requestId);
     if (!stream) {
       console.warn(`No request stream found for requestId: ${args.requestId}`);

@@ -1,32 +1,29 @@
 import { Module } from "vuex";
-import { state, SolutionState } from "./index";
+import { state, RequestState } from "./index";
 import { getters as moduleGetters } from "./getters";
 import { actions as moduleActions } from "./actions";
 import { mutations as moduleMutations } from "./mutations";
 import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
 
-export const solutionModule: Module<SolutionState, DistilState> = {
+export const requestsModule: Module<RequestState, DistilState> = {
   state: state,
   getters: moduleGetters,
   actions: moduleActions,
   mutations: moduleMutations
 };
 
-const { commit, read, dispatch } = getStoreAccessors<
-  SolutionState,
-  DistilState
->(null);
+const { commit, read, dispatch } = getStoreAccessors<RequestState, DistilState>(
+  null
+);
 
 export const getters = {
   getRunningSolutions: read(moduleGetters.getRunningSolutions),
   getCompletedSolutions: read(moduleGetters.getCompletedSolutions),
   getSolutions: read(moduleGetters.getSolutions),
   getRelevantSolutions: read(moduleGetters.getRelevantSolutions),
-  getRelevantSolutionRequests: read(moduleGetters.getRelevantSolutionRequests),
-  getRelevantSolutionRequestIds: read(
-    moduleGetters.getRelevantSolutionRequestIds
-  ),
+  getRelevantSearchRequests: read(moduleGetters.getRelevantSearchRequests),
+  getRelevantSearchRequestIds: read(moduleGetters.getRelevantSearchRequestIds),
   getActiveSolution: read(moduleGetters.getActiveSolution),
   getActiveSolutionTrainingVariables: read(
     moduleGetters.getActiveSolutionTrainingVariables
@@ -37,12 +34,14 @@ export const getters = {
 };
 
 export const actions = {
-  fetchSolutionRequests: dispatch(moduleActions.fetchSolutionRequests),
-  createSolutionRequest: dispatch(moduleActions.createSolutionRequest),
-  stopSolutionRequest: dispatch(moduleActions.stopSolutionRequest)
+  fetchSearchRequests: dispatch(moduleActions.fetchSearchRequests),
+  createSearchRequest: dispatch(moduleActions.createSearchRequest),
+  stopSearchRequest: dispatch(moduleActions.stopSearchRequest)
 };
 
 export const mutations = {
-  updateSolutionRequests: commit(moduleMutations.updateSolutionRequests),
-  clearSolutionRequests: commit(moduleMutations.clearSolutionRequests)
+  updateSearchRequests: commit(moduleMutations.updateSearchRequests),
+  updateSolutions: commit(moduleMutations.updateSolutions),
+  clearSearchRequests: commit(moduleMutations.clearSearchRequests),
+  clearSolutions: commit(moduleMutations.clearSolutions)
 };

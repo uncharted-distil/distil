@@ -73,7 +73,7 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
-import { getters as solutionGetters } from "../store/solutions/module";
+import { getters as solutionGetters } from "../store/requests/module";
 import { updateHighlight } from "../util/highlights";
 import { getTimeseriesGroupingsFromFields } from "../util/data";
 import { isTimeType } from "../util/types";

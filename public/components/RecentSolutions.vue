@@ -14,8 +14,8 @@
 
 <script lang="ts">
 import SolutionPreview from "../components/SolutionPreview";
-import { getters as solutionGetters } from "../store/solutions/module";
-import { Solution } from "../store/solutions/index";
+import { getters as solutionGetters } from "../store/requests/module";
+import { Solution } from "../store/requests/index";
 import Vue from "vue";
 
 export default Vue.extend({

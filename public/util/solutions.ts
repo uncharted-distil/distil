@@ -1,9 +1,9 @@
 import _, { Dictionary } from "lodash";
 
-import { sortSolutionsByScore } from "../store/solutions/getters";
-import { getters as solutionGetters } from "../store/solutions/module";
+import { sortSolutionsByScore } from "../store/requests/getters";
+import { getters as solutionGetters } from "../store/requests/module";
 import {
-  SolutionState,
+  RequestState,
   Solution,
   SOLUTION_PENDING,
   SOLUTION_FITTING,
@@ -11,7 +11,7 @@ import {
   SOLUTION_PRODUCING,
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED
-} from "../store/solutions/index";
+} from "../store/requests/index";
 import store from "../store/store";
 
 export const SOLUTION_LABELS: Dictionary<string> = {
@@ -45,7 +45,7 @@ export function getSolutionIndex(solutionId: string) {
 }
 
 export function getRequestIndex(requestId: string) {
-  const requests = solutionGetters.getRelevantSolutionRequests(store);
+  const requests = solutionGetters.getRelevantSearchRequests(store);
   const index = _.findIndex(requests, req => {
     return req.requestId === requestId;
   });
@@ -54,43 +54,26 @@ export function getRequestIndex(requestId: string) {
 
 // Utility function to return all solution results associated with a given request ID
 export function getSolutionsByRequestIds(
-  state: SolutionState,
+  state: RequestState,
   requestIds: string[]
 ): Solution[] {
-  const ids = {};
-  requestIds.forEach(id => {
-    ids[id] = true;
-  });
-
-  let solutions = [];
-  const filtered = state.requests.filter(request => ids[request.requestId]);
-  filtered.forEach(request => {
-    solutions = solutions.concat(request.solutions);
-  });
-  return solutions;
+  const ids = new Set(requestIds);
+  return state.solutions.filter(result => ids.has(result.requestId));
 }
 
 // Returns a specific solution result given a request and its solution id.
 export function getSolutionById(
-  state: SolutionState,
+  state: RequestState,
   solutionId: string
 ): Solution {
   if (!solutionId) {
     return null;
   }
-  let found = null;
-  state.requests.forEach(request => {
-    request.solutions.forEach(solution => {
-      if (solution.solutionId === solutionId) {
-        found = solution;
-      }
-    });
-  });
-  return found;
+  return state.solutions.find(result => result.solutionId === solutionId);
 }
 
 export function isTopSolutionByScore(
-  state: SolutionState,
+  state: RequestState,
   requestId: string,
   solutionId: string,
   n: number
@@ -98,16 +81,10 @@ export function isTopSolutionByScore(
   if (!solutionId) {
     return null;
   }
-  const request = _.find(state.requests, req => {
-    return req.requestId === requestId;
-  });
-
-  const sortedByScore = request.solutions
+  const topN = state.solutions
+    .filter(req => req.requestId === requestId)
     .slice()
     .sort(sortSolutionsByScore)
     .slice(0, n);
-
-  return !!_.find(sortedByScore, sol => {
-    return sol.solutionId === solutionId;
-  });
+  return !!topN.find(result => result.solutionId === solutionId);
 }

@@ -11,7 +11,7 @@ import {
 import {
   actions as solutionActions,
   mutations as solutionMutations
-} from "../solutions/module";
+} from "../requests/module";
 import {
   actions as resultActions,
   mutations as resultMutations
@@ -126,10 +126,10 @@ const fetchClusters = createCacheable(
   }
 );
 
-const fetchSolutionRequests = createCacheable(
+const fetchSearchRequests = createCacheable(
   ParamCacheKey.SOLUTION_REQUESTS,
   (context, args) => {
-    return solutionActions.fetchSolutionRequests(store, {
+    return solutionActions.fetchSearchRequests(store, {
       dataset: args.dataset,
       target: args.target
     });
@@ -158,10 +158,10 @@ export type ViewContext = ActionContext<ViewState, DistilState>;
 export const actions = {
   fetchHomeData(context: ViewContext) {
     // clear any previous state
-    solutionMutations.clearSolutionRequests(store);
+    solutionMutations.clearSearchRequests(store);
 
     // fetch new state
-    return solutionActions.fetchSolutionRequests(store, {});
+    return solutionActions.fetchSearchRequests(store, {});
   },
 
   fetchSearchData(context: ViewContext) {
@@ -341,7 +341,7 @@ export const actions = {
           target: target
         });
         fetchClusters(context, { dataset: dataset });
-        return fetchSolutionRequests(context, {
+        return fetchSearchRequests(context, {
           dataset: dataset,
           target: target
         });
@@ -360,7 +360,7 @@ export const actions = {
     // fetch new state
     const dataset = context.getters.getRouteDataset;
     const target = context.getters.getRouteTargetVariable;
-    const requestIds = context.getters.getRelevantSolutionRequestIds;
+    const requestIds = context.getters.getRelevantSearchRequestIds;
     const solutionId = context.getters.getRouteSolutionId;
     const trainingVariables =
       context.getters.getActiveSolutionTrainingVariables;
@@ -439,7 +439,7 @@ export const actions = {
       dataset: dataset
     })
       .then(() => {
-        return fetchSolutionRequests(context, {
+        return fetchSearchRequests(context, {
           dataset: dataset,
           target: target
         });

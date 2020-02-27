@@ -56,7 +56,7 @@ import {
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED,
   Solution
-} from "../store/solutions/index";
+} from "../store/requests/index";
 import { RESULTS_ROUTE } from "../store/route/index";
 import Vue from "vue";
 import { Location } from "vue-router";
