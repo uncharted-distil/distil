@@ -9,7 +9,7 @@
         :disabled="isDisabled"
       >
         <template v-if="!isComputedFeature">
-          <template v-if="!isGeocoordinate && !isCluster">
+          <template v-if="!isGroupedClusterOrGeo">
             <b-dropdown-item
               v-for="suggested in getSuggestedList()"
               v-bind:class="{
@@ -33,7 +33,7 @@
               /></icon-base>
             </b-dropdown-item>
           </template>
-          <template v-if="!isGeocoordinate && !isCluster">
+          <template v-if="!isGroupedClusterOrGeo">
             <b-dropdown-divider></b-dropdown-divider>
           </template>
           <template>
@@ -125,6 +125,9 @@ export default Vue.extend({
         routePath &&
         (routePath === PREDICTION_ROUTE || routePath === RESULTS_ROUTE)
       );
+    },
+    isGroupedClusterOrGeo(): boolean {
+      return (this.geocoordinate || this.isCluster) && this.isGrouping;
     },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
