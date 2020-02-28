@@ -93,6 +93,7 @@ import {
   actions as appActions,
   getters as appGetters
 } from "../store/app/module";
+import store from "../store/store";
 import {
   EXPORT_SUCCESS_ROUTE,
   ROOT_ROUTE,
@@ -174,7 +175,10 @@ export default Vue.extend({
     },
 
     activeSolution(): Solution {
-      return getSolutionById(this.$store.state.solutionModule, this.solutionId);
+      return getSolutionById(
+        store.state.requestsModule.solutions,
+        this.solutionId
+      );
     },
 
     activeSolutionName(): string {

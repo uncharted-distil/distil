@@ -63,7 +63,7 @@ import {
   actions as solutionActions
 } from "../store/requests/module";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getRequestIndex } from "../util/solutions";
+import { getSearchRequestIndex } from "../util/solutions";
 
 interface SummaryGroup {
   requestId: string;
@@ -188,7 +188,7 @@ export default Vue.extend({
     },
 
     getRequestIndex(requestId: string) {
-      return getRequestIndex(requestId);
+      return getSearchRequestIndex(requestId);
     }
   }
 });

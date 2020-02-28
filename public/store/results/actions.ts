@@ -4,8 +4,8 @@ import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
 import { EXCLUDE_FILTER } from "../../util/filters";
 import {
-  getSolutionsByRequestIds,
-  getSolutionById
+  getSolutionById,
+  getSolutionsBySearchRequestIds
 } from "../../util/solutions";
 import { Variable, Highlight, SummaryMode } from "../dataset/index";
 import { mutations } from "./module";
@@ -20,6 +20,7 @@ import {
 } from "../../util/data";
 import { getters as resultGetters } from "../results/module";
 import { getters as dataGetters } from "../dataset/module";
+import { getters as requestGetters } from "../requests/module";
 
 export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
@@ -52,7 +53,7 @@ export const actions = {
       return null;
     }
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
@@ -187,7 +188,7 @@ export const actions = {
       return null;
     }
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
@@ -242,7 +243,7 @@ export const actions = {
     args: { solutionId: string; dataset: string; highlight: Highlight }
   ) {
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
@@ -278,7 +279,7 @@ export const actions = {
     args: { solutionId: string; dataset: string; highlight: Highlight }
   ) {
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
@@ -345,7 +346,7 @@ export const actions = {
     }
 
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
@@ -392,7 +393,7 @@ export const actions = {
     }
 
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
@@ -438,8 +439,8 @@ export const actions = {
       console.warn("`requestIds` argument is missing");
       return null;
     }
-    const solutions = getSolutionsByRequestIds(
-      context.rootState.solutionModule,
+    const solutions = getSolutionsBySearchRequestIds(
+      context.rootState.requestsModule.solutions,
       args.requestIds
     );
     return Promise.all(
@@ -486,7 +487,7 @@ export const actions = {
     }
 
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
@@ -533,8 +534,8 @@ export const actions = {
       console.warn("`requestIds` argument is missing");
       return null;
     }
-    const solutions = getSolutionsByRequestIds(
-      context.rootState.solutionModule,
+    const solutions = getSolutionsBySearchRequestIds(
+      context.rootState.requestsModule.solutions,
       args.requestIds
     );
     return Promise.all(
@@ -572,7 +573,7 @@ export const actions = {
     }
 
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
@@ -618,8 +619,8 @@ export const actions = {
       console.warn("`requestIds` argument is missing");
       return null;
     }
-    const solutions = getSolutionsByRequestIds(
-      context.rootState.solutionModule,
+    const solutions = getSolutionsBySearchRequestIds(
+      context.rootState.requestsModule.solutions,
       args.requestIds
     );
     return Promise.all(
@@ -671,7 +672,7 @@ export const actions = {
     }
 
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {

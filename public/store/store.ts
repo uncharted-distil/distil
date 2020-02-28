@@ -20,7 +20,7 @@ Vue.use(Vuex);
 export interface DistilState {
   routeModule: Route;
   datasetModule: DatasetState;
-  solutionModule: RequestState;
+  requestsModule: RequestState;
   resultsModule: ResultsState;
   predictionsModule: PredictionState;
   viewModule: ViewState;

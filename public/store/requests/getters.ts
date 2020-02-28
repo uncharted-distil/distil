@@ -61,8 +61,8 @@ export const getters = {
 
   // Returns search results relevant to the current dataset and target.
   getRelevantSolutions(state: RequestState, getters: any): Solution[] {
-    const target = getters.getRouteTargetVariable;
-    const dataset = getters.getRouteDataset;
+    const target = <string>getters.getRouteTargetVariable;
+    const dataset = <string>getters.getRouteDataset;
     return state.solutions
       .filter(result => result.dataset === dataset && result.feature === target)
       .sort(sortSolutionsByScore);
@@ -73,8 +73,8 @@ export const getters = {
     state: RequestState,
     getters: any
   ): SearchRequest[] {
-    const target = getters.getRouteTargetVariable;
-    const dataset = getters.getRouteDataset;
+    const target = <string>getters.getRouteTargetVariable;
+    const dataset = <string>getters.getRouteDataset;
     // get only matching dataset / target
     return state.searchRequests
       .filter(
@@ -85,7 +85,9 @@ export const getters = {
 
   // Returns search requests IDs relevant to the current dataset and target.
   getRelevantSearchRequestIds(state: RequestState, getters: any): string[] {
-    return getters.getRelevantSearchRequests.map(request => request.requestId);
+    return (<SearchRequest[]>getters.getRelevantSearchRequests).map(
+      request => request.requestId
+    );
   },
 
   // Returns currently selected search result.
@@ -100,11 +102,11 @@ export const getters = {
     state: RequestState,
     getters: any
   ): Variable[] {
-    const activeSolution = getters.getActiveSolution;
+    const activeSolution = <Solution>getters.getActiveSolution;
     if (!activeSolution || !activeSolution.features) {
       return [];
     }
-    const variables = getters.getVariablesMap;
+    const variables = <Variable[]>getters.getVariablesMap;
     return activeSolution.features
       .filter(f => f.featureType === "train")
       .map(f => variables[f.featureName])
