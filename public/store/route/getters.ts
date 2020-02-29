@@ -315,7 +315,8 @@ export const getters = {
     const training = getters.getDecodedTrainingVariableNames;
     const target = getters.getRouteTargetVariable;
     const variables = getters.getVariables;
-    const lookup = buildLookup(training.concat([target]));
+    const lookup =
+      training && target ? buildLookup(training.concat([target])) : null;
     return variables.filter(
       variable => !lookup[variable.colName.toLowerCase()]
     );
@@ -325,7 +326,8 @@ export const getters = {
     const training = getters.getDecodedTrainingVariableNames;
     const target = getters.getRouteTargetVariable;
     const include = getters.getRouteInclude;
-    const lookup = buildLookup(training.concat([target]));
+    const lookup =
+      training && target ? buildLookup(training.concat([target])) : null;
     const summaries = include
       ? getters.getIncludedVariableSummaries
       : getters.getExcludedVariableSummaries;

@@ -35,8 +35,11 @@ export const getters = {
 
 export const actions = {
   fetchSearchRequests: dispatch(moduleActions.fetchSearchRequests),
+  fetchSearchRequest: dispatch(moduleActions.fetchSearchRequest),
   createSearchRequest: dispatch(moduleActions.createSearchRequest),
-  stopSearchRequest: dispatch(moduleActions.stopSearchRequest)
+  stopSearchRequest: dispatch(moduleActions.stopSearchRequest),
+  fetchSolutions: dispatch(moduleActions.fetchSolutions),
+  fetchSolution: dispatch(moduleActions.fetchSolution)
 };
 
 export const mutations = {

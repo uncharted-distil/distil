@@ -20,7 +20,6 @@ import {
 } from "../../util/data";
 import { getters as resultGetters } from "../results/module";
 import { getters as dataGetters } from "../dataset/module";
-import { getters as requestGetters } from "../requests/module";
 
 export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
@@ -56,7 +55,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.solutionId
     );
-    if (!solution.resultId) {
+    if (!solution || !solution.resultId) {
       // no results ready to pull
       return;
     }
@@ -191,7 +190,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.solutionId
     );
-    if (!solution.resultId) {
+    if (!solution || !solution.resultId) {
       // no results ready to pull
       return null;
     }
@@ -246,7 +245,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.solutionId
     );
-    if (!solution.resultId) {
+    if (!solution || !solution.resultId) {
       // no results ready to pull
       return null;
     }
@@ -282,7 +281,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.solutionId
     );
-    if (!solution.resultId) {
+    if (!solution || !solution.resultId) {
       // no results ready to pull
       return null;
     }
@@ -349,7 +348,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.solutionId
     );
-    if (!solution.resultId) {
+    if (!solution || !solution.resultId) {
       // no results ready to pull
       return null;
     }
@@ -396,7 +395,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.solutionId
     );
-    if (!solution.resultId) {
+    if (!solution || !solution.resultId) {
       // no results ready to pull
       return null;
     }
@@ -576,7 +575,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.solutionId
     );
-    if (!solution.resultId) {
+    if (!solution || !solution.resultId) {
       // no results ready to pull
       return null;
     }
@@ -675,7 +674,7 @@ export const actions = {
       context.rootState.requestsModule.solutions,
       args.solutionId
     );
-    if (!solution.resultId) {
+    if (!solution || !solution.resultId) {
       // no results ready to pull
       return null;
     }

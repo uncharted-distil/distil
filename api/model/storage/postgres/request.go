@@ -303,9 +303,8 @@ func (s *Storage) loadRequestFromSolutionID(solutionID string) (*api.Request, er
 	return request, nil
 }
 
-// FetchRequestByDatasetTarget pulls requests associated with a given dataset and target from postgres.  If the solutionID
-// is non-empty, only the request that has that solution will be returned.
-func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string, solutionID string) ([]*api.Request, error) {
+// FetchRequestByDatasetTarget pulls requests associated with a given dataset and target from postgres.
+func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string) ([]*api.Request, error) {
 
 	// get the solution ids
 	sql := fmt.Sprintf("SELECT DISTINCT ON(request.request_id) request.request_id, request.dataset, request.progress, request.created_time, request.last_updated_time "+
@@ -322,10 +321,6 @@ func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string, sol
 		sql = fmt.Sprintf("%s AND rf.feature_name = $%d AND rf.feature_type = $%d", sql, len(params)+1, len(params)+2)
 		params = append(params, target)
 		params = append(params, model.FeatureTypeTarget)
-	}
-	if solutionID != "" {
-		sql = fmt.Sprintf("%s AND solution.solution_id = $%d", sql, len(params)+1)
-		params = append(params, solutionID)
 	}
 
 	sql = fmt.Sprintf("%s;", sql)

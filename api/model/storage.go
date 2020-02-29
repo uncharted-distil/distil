@@ -84,7 +84,7 @@ type SolutionStorage interface {
 	FetchRequest(requestID string) (*Request, error)
 	FetchRequestBySolutionID(solutionID string) (*Request, error)
 	FetchRequestByFittedSolutionID(fittedSolutionID string) (*Request, error)
-	FetchRequestByDatasetTarget(dataset string, target string, solutionID string) ([]*Request, error)
+	FetchRequestByDatasetTarget(dataset string, target string) ([]*Request, error)
 	FetchRequestFeatures(requestID string) ([]*Feature, error)
 	FetchRequestFilters(requestID string, features []*Feature) (*FilterParams, error)
 	FetchSolution(solutionID string) (*Solution, error)

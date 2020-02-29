@@ -54,13 +54,14 @@ import { VariableSummary } from "../store/dataset/index";
 import {
   REQUEST_COMPLETED,
   REQUEST_ERRORED,
-  Solution
+  Solution,
+  Score
 } from "../store/requests/index";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
-  getters as solutionGetters,
-  actions as solutionActions
+  getters as requestGetters,
+  actions as requestActions
 } from "../store/requests/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getSearchRequestIndex } from "../util/solutions";
@@ -72,10 +73,13 @@ interface SummaryGroup {
   predictedSummary: VariableSummary;
   residualsSummary: VariableSummary;
   correctnessSummary: VariableSummary;
+  targetSummary: VariableSummary;
+  scores: Score[];
 }
 
 interface RequestGroup {
   requestId: string;
+  progress: string;
   groups: SummaryGroup[];
 }
 
@@ -130,12 +134,16 @@ export default Vue.extend({
     },
 
     requestGroups(): RequestGroup[] {
-      const searchResults = solutionGetters.getRelevantSolutions(this.$store);
+      const requestsMap = _.keyBy(
+        requestGetters.getRelevantSearchRequests(this.$store),
+        s => s.requestId
+      );
+      const solutions = requestGetters.getRelevantSolutions(this.$store);
 
       // create a summary group for each search result
-      const summaryGroups: SummaryGroup[] = searchResults.map(result => {
-        const solutionId = result.solutionId;
-        const requestId = result.requestId;
+      const summaryGroups: SummaryGroup[] = solutions.map(solution => {
+        const solutionId = solution.solutionId;
+        const requestId = solution.requestId;
         const predictedSummary = _.find(
           this.predictedSummaries,
           summary => summary.solutionId === solutionId
@@ -148,22 +156,26 @@ export default Vue.extend({
           this.correctnessSummaries,
           summary => summary.solutionId === solutionId
         );
+        const scores = this.showError ? solution.scores : [];
 
         return {
           requestId: requestId,
           solutionId: solutionId,
-          groupName: result.feature,
+          groupName: solution.feature,
           predictedSummary: predictedSummary,
           residualsSummary: residualSummary,
-          correctnessSummary: correctnessSummary
+          correctnessSummary: correctnessSummary,
+          targetSummary: this.resultTargetSummary,
+          scores: scores
         };
       });
 
       // group the requests by their request ID and return them as a RequestGroup array
       const summariesByRequestId = _.groupBy(summaryGroups, s => s.requestId);
-      return _.map(summariesByRequestId, (v, k) => ({
-        requestId: k,
-        groups: v
+      return _.map(summariesByRequestId, (groups, requestId) => ({
+        requestId: requestId,
+        progress: requestsMap[requestId].progress,
+        groups: groups
       }));
     }
   },
@@ -182,7 +194,7 @@ export default Vue.extend({
     },
 
     stopRequest(requestId: string) {
-      solutionActions.stopSearchRequest(this.$store, {
+      requestActions.stopSearchRequest(this.$store, {
         requestId: requestId
       });
     },
