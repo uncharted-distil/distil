@@ -104,7 +104,7 @@ export default Vue.extend({
       return datasetGetters.getFiles(this.$store);
     },
     isLoaded(): boolean {
-      return !!this.files[this.imageUrl] || !this.hasRendered;
+      return !!this.files[this.imageUrl];
     },
     image(): HTMLImageElement {
       return this.files[this.imageUrl];
