@@ -51,7 +51,7 @@ import _ from "lodash";
 import Vue from "vue";
 import ImagePreview from "./ImagePreview";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getters as solutionGetters } from "../store/requests/module";
+import { getters as requestGetters } from "../store/requests/module";
 import {
   RowSelection,
   TableColumn,
@@ -131,7 +131,7 @@ export default Vue.extend({
     },
 
     solution(): Solution {
-      return solutionGetters.getActiveSolution(this.$store);
+      return requestGetters.getActiveSolution(this.$store);
     },
 
     targetField(): string {

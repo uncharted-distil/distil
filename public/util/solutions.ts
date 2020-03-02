@@ -1,7 +1,7 @@
 import _, { Dictionary } from "lodash";
 
 import { sortSolutionsByScore } from "../store/requests/getters";
-import { getters as solutionGetters } from "../store/requests/module";
+import { getters as requestGetters } from "../store/requests/module";
 import {
   RequestState,
   Solution,
@@ -32,15 +32,15 @@ export const SOLUTION_PROGRESS: Dictionary<number> = {
 };
 
 export function getSolutionIndex(solutionId: string) {
-  const solutions = solutionGetters.getRelevantSolutions(store);
+  const solutions = requestGetters.getRelevantSolutions(store);
   const index = _.findIndex(solutions, solution => {
     return solution.solutionId === solutionId;
   });
   return solutions.length - index - 1;
 }
 
-export function getSearchRequestIndex(requestId: string) {
-  const requests = solutionGetters.getRelevantSearchRequests(store);
+export function getSolutionRequestIndex(requestId: string) {
+  const requests = requestGetters.getRelevantSolutionRequests(store);
   const index = _.findIndex(requests, req => {
     return req.requestId === requestId;
   });
@@ -48,7 +48,7 @@ export function getSearchRequestIndex(requestId: string) {
 }
 
 // Utility function to return all solution results associated with a given request ID
-export function getSolutionsBySearchRequestIds(
+export function getSolutionsBySolutionRequestIds(
   solutions: Solution[],
   requestIds: string[]
 ): Solution[] {

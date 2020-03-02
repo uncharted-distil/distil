@@ -87,7 +87,7 @@ import ErrorThresholdSlider from "../components/ErrorThresholdSlider";
 import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as solutionGetters } from "../store/requests/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { getters as resultGetters } from "../store/results/module";
 import {
   actions as appActions,

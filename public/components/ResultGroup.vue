@@ -147,7 +147,7 @@ import {
 } from "../store/dataset/index";
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from "../store/requests/index";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as solutionGetters } from "../store/requests/module";
+import { getters as requestGetters } from "../store/requests/module";
 import {
   getSolutionIndex,
   getSolutionById,

@@ -14,7 +14,7 @@
 
 <script lang="ts">
 import SolutionPreview from "../components/SolutionPreview";
-import { getters as solutionGetters } from "../store/requests/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { Solution } from "../store/requests/index";
 import Vue from "vue";
 
@@ -34,7 +34,7 @@ export default Vue.extend({
 
   computed: {
     recentSolutions(): Solution[] {
-      return solutionGetters
+      return requestGetters
         .getSolutions(this.$store)
         .slice(0, this.maxSolutions);
     }

@@ -22,8 +22,10 @@ export const getters = {
   getCompletedSolutions: read(moduleGetters.getCompletedSolutions),
   getSolutions: read(moduleGetters.getSolutions),
   getRelevantSolutions: read(moduleGetters.getRelevantSolutions),
-  getRelevantSearchRequests: read(moduleGetters.getRelevantSearchRequests),
-  getRelevantSearchRequestIds: read(moduleGetters.getRelevantSearchRequestIds),
+  getRelevantSolutionRequests: read(moduleGetters.getRelevantSolutionRequests),
+  getRelevantSolutionRequestIds: read(
+    moduleGetters.getRelevantSolutionRequestIds
+  ),
   getActiveSolution: read(moduleGetters.getActiveSolution),
   getActiveSolutionTrainingVariables: read(
     moduleGetters.getActiveSolutionTrainingVariables
@@ -34,17 +36,17 @@ export const getters = {
 };
 
 export const actions = {
-  fetchSearchRequests: dispatch(moduleActions.fetchSearchRequests),
-  fetchSearchRequest: dispatch(moduleActions.fetchSearchRequest),
-  createSearchRequest: dispatch(moduleActions.createSearchRequest),
-  stopSearchRequest: dispatch(moduleActions.stopSearchRequest),
+  fetchSolutionRequests: dispatch(moduleActions.fetchSolutionRequests),
+  fetchSolutionRequest: dispatch(moduleActions.fetchSolutionRequest),
+  createSolutionRequest: dispatch(moduleActions.createSolutionRequest),
+  stopSolutionRequest: dispatch(moduleActions.stopSolutionRequest),
   fetchSolutions: dispatch(moduleActions.fetchSolutions),
   fetchSolution: dispatch(moduleActions.fetchSolution)
 };
 
 export const mutations = {
-  updateSearchRequests: commit(moduleMutations.updateSearchRequests),
+  updateSolutionRequests: commit(moduleMutations.updateSolutionRequests),
   updateSolutions: commit(moduleMutations.updateSolutions),
-  clearSearchRequests: commit(moduleMutations.clearSearchRequests),
+  clearSolutionRequests: commit(moduleMutations.clearSolutionRequests),
   clearSolutions: commit(moduleMutations.clearSolutions)
 };

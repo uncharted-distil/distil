@@ -11,7 +11,7 @@ import {
   SOLUTION_FITTING,
   SOLUTION_PRODUCING,
   SOLUTION_SCORING,
-  SearchRequest,
+  SolutionRequest,
   Solution
 } from "./index";
 import { ActionContext } from "vuex";
@@ -27,7 +27,7 @@ const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
 
 // Search request message used in web socket context
-interface SearchRequestMsg {
+interface SolutionRequestMsg {
   dataset: string;
   target: string;
   metrics: string[];
@@ -50,7 +50,7 @@ export type SolutionContext = ActionContext<RequestState, DistilState>;
 
 function updateCurrentSolutionResults(
   context: SolutionContext,
-  req: SearchRequestMsg,
+  req: SolutionRequestMsg,
   res: SolutionStatusMsg
 ) {
   const isRegression = routeGetters
@@ -123,7 +123,7 @@ function updateCurrentSolutionResults(
 
 function updateSolutionResults(
   context: SolutionContext,
-  req: SearchRequestMsg,
+  req: SolutionRequestMsg,
   res: SolutionStatusMsg
 ) {
   const taskArgs = routeGetters.getRouteTask(store);
@@ -172,7 +172,7 @@ function updateSolutionResults(
 
 function handleRequestProgress(
   context: SolutionContext,
-  request: SearchRequestMsg,
+  request: SolutionRequestMsg,
   response: SolutionStatusMsg
 ) {
   // no-op
@@ -180,7 +180,7 @@ function handleRequestProgress(
 
 function handleSolutionProgress(
   context: SolutionContext,
-  request: SearchRequestMsg,
+  request: SolutionRequestMsg,
   response: SolutionStatusMsg
 ) {
   switch (response.progress) {
@@ -222,7 +222,7 @@ function isSolutionResponse(response: SolutionStatusMsg) {
 
 async function handleProgress(
   context: SolutionContext,
-  request: SearchRequestMsg,
+  request: SolutionRequestMsg,
   response: SolutionStatusMsg
 ) {
   if (isRequestResponse(response)) {
@@ -230,7 +230,7 @@ async function handleProgress(
     console.log(
       `Progress for request ${response.requestId} updated to ${response.progress}`
     );
-    await actions.fetchSearchRequest(context, {
+    await actions.fetchSolutionRequest(context, {
       requestId: response.requestId
     });
     handleRequestProgress(context, request, response);
@@ -267,7 +267,7 @@ function parseSolutionResponse(responseData: any): Solution {
 }
 
 // parse returned server data into a solution request that can be added to the index
-function parseRequestResponse(responseData: any): SearchRequest {
+function parseRequestResponse(responseData: any): SolutionRequest {
   return {
     requestId: responseData.requestId,
     dataset: responseData.dataset,
@@ -280,7 +280,7 @@ function parseRequestResponse(responseData: any): SearchRequest {
 }
 
 export const actions = {
-  async fetchSearchRequests(
+  async fetchSolutionRequests(
     context: SolutionContext,
     args: { dataset?: string; target?: string }
   ) {
@@ -300,14 +300,14 @@ export const actions = {
       for (const request of requests) {
         // update request data
         const searchRequest = parseRequestResponse(request);
-        mutations.updateSearchRequests(context, searchRequest);
+        mutations.updateSolutionRequests(context, searchRequest);
       }
     } catch (error) {
       console.error(error);
     }
   },
 
-  async fetchSearchRequest(
+  async fetchSolutionRequest(
     context: SolutionContext,
     args: { requestId: string }
   ) {
@@ -322,7 +322,7 @@ export const actions = {
       );
       // update request data
       const searchRequest = parseRequestResponse(requestResponse.data);
-      mutations.updateSearchRequests(context, searchRequest);
+      mutations.updateSolutionRequests(context, searchRequest);
     } catch (error) {
       console.error(error);
     }
@@ -372,7 +372,7 @@ export const actions = {
     }
   },
 
-  createSearchRequest(context: any, request: SearchRequestMsg) {
+  createSolutionRequest(context: any, request: SolutionRequestMsg) {
     return new Promise((resolve, reject) => {
       const conn = getWebSocketConnection();
 
@@ -424,7 +424,7 @@ export const actions = {
     });
   },
 
-  stopSearchRequest(context: any, args: { requestId: string }) {
+  stopSolutionRequest(context: any, args: { requestId: string }) {
     const stream = getStreamById(args.requestId);
     if (!stream) {
       console.warn(`No request stream found for requestId: ${args.requestId}`);

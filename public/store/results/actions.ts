@@ -5,7 +5,7 @@ import store, { DistilState } from "../store";
 import { EXCLUDE_FILTER } from "../../util/filters";
 import {
   getSolutionById,
-  getSolutionsBySearchRequestIds
+  getSolutionsBySolutionRequestIds
 } from "../../util/solutions";
 import { Variable, Highlight, SummaryMode } from "../dataset/index";
 import { mutations } from "./module";
@@ -438,7 +438,7 @@ export const actions = {
       console.warn("`requestIds` argument is missing");
       return null;
     }
-    const solutions = getSolutionsBySearchRequestIds(
+    const solutions = getSolutionsBySolutionRequestIds(
       context.rootState.requestsModule.solutions,
       args.requestIds
     );
@@ -533,7 +533,7 @@ export const actions = {
       console.warn("`requestIds` argument is missing");
       return null;
     }
-    const solutions = getSolutionsBySearchRequestIds(
+    const solutions = getSolutionsBySolutionRequestIds(
       context.rootState.requestsModule.solutions,
       args.requestIds
     );
@@ -618,7 +618,7 @@ export const actions = {
       console.warn("`requestIds` argument is missing");
       return null;
     }
-    const solutions = getSolutionsBySearchRequestIds(
+    const solutions = getSolutionsBySolutionRequestIds(
       context.rootState.requestsModule.solutions,
       args.requestIds
     );

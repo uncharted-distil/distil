@@ -25,7 +25,7 @@ export interface Request {
   timestamp: number;
 }
 
-export interface SearchRequest extends Request {
+export interface SolutionRequest extends Request {
   dataset: string;
   feature: string;
   filters: FilterParams;
@@ -36,7 +36,7 @@ export interface PredictRequest extends Request {
   fittedSolutionId: string;
 }
 
-export interface Solution extends SearchRequest {
+export interface Solution extends SolutionRequest {
   solutionId: string;
   fittedSolutionId: string;
   resultId: string;
@@ -65,7 +65,7 @@ export interface Feature {
 }
 
 export interface RequestState {
-  searchRequests: SearchRequest[];
+  searchRequests: SolutionRequest[];
   solutions: Solution[];
   predictRequests: PredictRequest[];
   predictions: Predictions[];

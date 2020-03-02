@@ -119,7 +119,7 @@ import {
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as solutionGetters } from "../store/requests/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Solution } from "../store/requests/index";
@@ -176,7 +176,7 @@ export default Vue.extend({
     },
 
     solution(): Solution {
-      return solutionGetters.getActiveSolution(this.$store);
+      return requestGetters.getActiveSolution(this.$store);
     },
 
     solutionId(): string {

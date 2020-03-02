@@ -4,7 +4,7 @@ import { Variable } from "../dataset/index";
 import {
   RequestState,
   Solution,
-  SearchRequest,
+  SolutionRequest,
   SOLUTION_ERRORED,
   SOLUTION_COMPLETED,
   SOLUTION_FITTING,
@@ -13,8 +13,8 @@ import {
 } from "./index";
 
 export function sortRequestsByTimestamp(
-  a: SearchRequest,
-  b: SearchRequest
+  a: SolutionRequest,
+  b: SolutionRequest
 ): number {
   // descending order
   return moment(b.timestamp).unix() - moment(a.timestamp).unix();
@@ -69,10 +69,10 @@ export const getters = {
   },
 
   // Returns search requests relevant to the current dataset and target.
-  getRelevantSearchRequests(
+  getRelevantSolutionRequests(
     state: RequestState,
     getters: any
-  ): SearchRequest[] {
+  ): SolutionRequest[] {
     const target = <string>getters.getRouteTargetVariable;
     const dataset = <string>getters.getRouteDataset;
     // get only matching dataset / target
@@ -84,8 +84,8 @@ export const getters = {
   },
 
   // Returns search requests IDs relevant to the current dataset and target.
-  getRelevantSearchRequestIds(state: RequestState, getters: any): string[] {
-    return (<SearchRequest[]>getters.getRelevantSearchRequests).map(
+  getRelevantSolutionRequestIds(state: RequestState, getters: any): string[] {
+    return (<SolutionRequest[]>getters.getRelevantSolutionRequests).map(
       request => request.requestId
     );
   },

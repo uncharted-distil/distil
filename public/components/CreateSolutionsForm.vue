@@ -112,7 +112,7 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
 import { RESULTS_ROUTE } from "../store/route/index";
-import { actions as solutionActions } from "../store/requests/module";
+import { actions as requestActions } from "../store/requests/module";
 import { Solution, NUM_SOLUTIONS } from "../store/requests/index";
 import { Variable, TaskTypes } from "../store/dataset/index";
 import { TIMESERIES_TYPE } from "../util/types";
@@ -201,8 +201,8 @@ export default Vue.extend({
       // flag as pending
       this.pending = true;
       // dispatch action that triggers request send to server
-      solutionActions
-        .createSearchRequest(this.$store, {
+      requestActions
+        .createSolutionRequest(this.$store, {
           dataset: this.dataset,
           filters: this.filterParams,
           target: routeGetters.getRouteTargetVariable(this.$store),

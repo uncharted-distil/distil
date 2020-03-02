@@ -64,7 +64,7 @@ import {
   actions as requestActions
 } from "../store/requests/module";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getSearchRequestIndex } from "../util/solutions";
+import { getSolutionRequestIndex } from "../util/solutions";
 
 interface SummaryGroup {
   requestId: string;
@@ -135,7 +135,7 @@ export default Vue.extend({
 
     requestGroups(): RequestGroup[] {
       const requestsMap = _.keyBy(
-        requestGetters.getRelevantSearchRequests(this.$store),
+        requestGetters.getRelevantSolutionRequests(this.$store),
         s => s.requestId
       );
       const solutions = requestGetters.getRelevantSolutions(this.$store);
@@ -194,13 +194,13 @@ export default Vue.extend({
     },
 
     stopRequest(requestId: string) {
-      requestActions.stopSearchRequest(this.$store, {
+      requestActions.stopSolutionRequest(this.$store, {
         requestId: requestId
       });
     },
 
     getRequestIndex(requestId: string) {
-      return getSearchRequestIndex(requestId);
+      return getSolutionRequestIndex(requestId);
     }
   }
 });

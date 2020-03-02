@@ -9,7 +9,7 @@ import {
   mutations as datasetMutations
 } from "../dataset/module";
 import {
-  actions as solutionActions,
+  actions as requestActions,
   mutations as solutionMutations
 } from "../requests/module";
 import {
@@ -124,10 +124,10 @@ const fetchClusters = createCacheable(
   }
 );
 
-const fetchSearchRequests = createCacheable(
+const fetchSolutionRequests = createCacheable(
   ParamCacheKey.SEARCH_REQUESTS,
   (context, args) => {
-    return solutionActions.fetchSearchRequests(store, {
+    return requestActions.fetchSolutionRequests(store, {
       dataset: args.dataset,
       target: args.target
     });
@@ -137,7 +137,7 @@ const fetchSearchRequests = createCacheable(
 const fetchSolutions = createCacheable(
   ParamCacheKey.SOLUTIONS,
   (context, args) => {
-    return solutionActions.fetchSolutions(store, {
+    return requestActions.fetchSolutions(store, {
       dataset: args.dataset,
       target: args.target
     });
@@ -166,12 +166,12 @@ export type ViewContext = ActionContext<ViewState, DistilState>;
 export const actions = {
   async fetchHomeData(context: ViewContext) {
     // clear any previous state
-    solutionMutations.clearSearchRequests(store);
+    solutionMutations.clearSolutionRequests(store);
     solutionMutations.clearSolutions(store);
 
     // fetch new state
-    await solutionActions.fetchSolutions(store, {});
-    solutionActions.fetchSearchRequests(store, {});
+    await requestActions.fetchSolutions(store, {});
+    requestActions.fetchSolutionRequests(store, {});
   },
 
   fetchSearchData(context: ViewContext) {
@@ -350,7 +350,7 @@ export const actions = {
     });
     fetchClusters(context, { dataset: dataset });
     await Promise.all([
-      fetchSearchRequests(context, {
+      fetchSolutionRequests(context, {
         dataset: dataset,
         target: target
       }),
@@ -371,7 +371,7 @@ export const actions = {
     // fetch new state
     const dataset = context.getters.getRouteDataset;
     const target = context.getters.getRouteTargetVariable;
-    const requestIds = context.getters.getRelevantSearchRequestIds;
+    const requestIds = context.getters.getRelevantSolutionRequestIds;
     const solutionId = context.getters.getRouteSolutionId;
     const trainingVariables =
       context.getters.getActiveSolutionTrainingVariables;
@@ -449,7 +449,7 @@ export const actions = {
     await fetchVariables(context, {
       dataset: dataset
     });
-    await fetchSearchRequests(context, {
+    await fetchSolutionRequests(context, {
       dataset: dataset,
       target: target
     });
