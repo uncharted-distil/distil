@@ -21,7 +21,6 @@ import (
 
 	"goji.io/v3/pat"
 
-	api "github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/distil/api/model"
 )
@@ -35,7 +34,6 @@ func ImageHandler(ctor model.MetadataStorageCtor, config *env.Config) func(http.
 	return func(w http.ResponseWriter, r *http.Request) {
 		// resources can either be local or remote
 		dataset := pat.Param(r, "dataset")
-		source := pat.Param(r, "source")
 		file := pat.Param(r, "file")
 		path := path.Join(imageFolder, file)
 
@@ -52,7 +50,7 @@ func ImageHandler(ctor model.MetadataStorageCtor, config *env.Config) func(http.
 			return
 		}
 
-		sourcePath := env.ResolvePath(api.DatasetSource(source), res.Folder)
+		sourcePath := env.ResolvePath(res.Source, res.Folder)
 
 		bytes, err := fetchResourceBytes(sourcePath, dataset, path)
 		if err != nil {
