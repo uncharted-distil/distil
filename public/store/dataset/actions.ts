@@ -1019,7 +1019,6 @@ export const actions = {
         if (type === IMAGE_TYPE) {
           return actions.fetchImage(context, {
             dataset: args.dataset,
-            source: "seed",
             url: url
           });
         }
@@ -1039,7 +1038,7 @@ export const actions = {
 
   async fetchImage(
     context: DatasetContext,
-    args: { dataset: string; source: string; url: string }
+    args: { dataset: string; url: string }
   ) {
     if (!args.url) {
       console.warn("`url` argument is missing");
@@ -1051,7 +1050,7 @@ export const actions = {
     }
     try {
       const response = await loadImage(
-        `distil/image/${args.dataset}/${args.source}/${args.url}`
+        `distil/image/${args.dataset}/${args.url}`
       );
       mutations.updateFile(context, { url: args.url, file: response });
     } catch (error) {
