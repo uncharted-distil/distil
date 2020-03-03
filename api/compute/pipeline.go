@@ -16,6 +16,7 @@
 package compute
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -24,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	log "github.com/unchartedsoftware/plog"
 )
 
 var (
@@ -48,7 +50,7 @@ func (c *Cache) Set(key string, value interface{}) {
 func (c *Cache) Get(key string) (interface{}, bool) {
 	c.mu.RLock()
 	value, found := c.cache[key]
-	c.mu.Unlock()
+	c.mu.RUnlock()
 
 	return value, found
 }
@@ -67,14 +69,21 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 	request := compute.NewExecPipelineRequest(datasets, datasetsProduce, step)
 
 	// check cache to see if results are already available
-	hashedPipeline, err := hashstructure.Hash(request, nil)
+	stepString, err := marshalSteps(step)
+	if err != nil {
+		return "", err
+	}
+
+	hashedPipeline, err := hashstructure.Hash([]interface{}{stepString, datasets, datasetsProduce, searchRequest}, nil)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to hash pipeline")
 	}
 	hashedPipelineKey := fmt.Sprintf("%d", hashedPipeline)
+	log.Infof("hash key: %s\traw: %v", hashedPipelineKey, hashedPipeline)
 
 	entry, found := pipelineCache.Get(hashedPipelineKey)
 	if found {
+		log.Infof("returning cached entry for pipeline")
 		return entry.(string), nil
 	}
 
@@ -109,4 +118,13 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 	pipelineCache.Set(hashedPipelineKey, datasetURI)
 
 	return datasetURI, nil
+}
+
+func marshalSteps(step *pipeline.PipelineDescription) (string, error) {
+	stepJSON, err := json.Marshal(step)
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to marshal steps")
+	}
+
+	return string(stepJSON), nil
 }
