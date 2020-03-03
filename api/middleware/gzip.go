@@ -36,6 +36,10 @@ func isGzipSupported(r *http.Request) bool {
 	return strings.Contains(r.Header.Get("Accept-Encoding"), "gzip")
 }
 
+func isImage(r *http.Request) bool {
+	return strings.Contains(r.Header.Get("Accept"), "image")
+}
+
 func isWebsocketUpgrade(r *http.Request) bool {
 	return r.Header.Get("Upgrade") == "websocket"
 }
@@ -43,7 +47,7 @@ func isWebsocketUpgrade(r *http.Request) bool {
 // Gzip represents a middleware handler to support gzip compression.
 func Gzip(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if !isGzipSupported(r) || isWebsocketUpgrade(r) {
+		if !isGzipSupported(r) || isWebsocketUpgrade(r) || isImage(r) {
 			// do not use gzip
 			h.ServeHTTP(w, r)
 			return
