@@ -87,6 +87,9 @@ func main() {
 		os.Exit(1)
 	}
 
+	// initialize the pipeline cache
+	api.InitializeCache()
+
 	// initialize the user event logger - records user interactions with the system in a CSV file for post-run
 	// analysis
 	discoveryLogger, err := env.NewDiscoveryLogger("event-"+util.GenerateTimeFileNameStr()+".csv", &config)
