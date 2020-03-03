@@ -85,7 +85,6 @@ type Config struct {
 	SummaryEnabled                     bool    `env:"SUMMARY_ENABLED" envDefault:"true"`
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
 	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"outputs/problems"`
-	UseTA2Runner                       bool    `env:"USE_TA2_RUNNER" envDefault:"false"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
 }
 

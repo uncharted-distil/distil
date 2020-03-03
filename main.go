@@ -21,7 +21,6 @@ import (
 	"os"
 	"path"
 	"syscall"
-	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	log "github.com/unchartedsoftware/plog"
@@ -118,29 +117,11 @@ func main() {
 	// instantiate the postgres solution storage constructor.
 	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, esMetadataStorageCtor)
 
-	var solutionClient *compute.Client
-	if config.UseTA2Runner {
-		// Instantiate the solution compute client mock
-		solutionClient, err = compute.NewClientWithRunner(
-			config.SolutionComputeEndpoint,
-			config.SolutionComputeMockEndpoint,
-			config.SolutionComputeTrace,
-			userAgent,
-			time.Duration(config.SolutionComputePullTimeout)*time.Second,
-			config.SolutionComputePullMax,
-			config.SkipPreprocessing,
-			discoveryLogger)
-		if err != nil {
-			log.Errorf("%+v", err)
-			os.Exit(1)
-		}
-	} else {
-		// Instantiate the solution compute client
-		solutionClient, err = task.NewDefaultClient(config, userAgent, discoveryLogger)
-		if err != nil {
-			log.Errorf("%+v", err)
-			os.Exit(1)
-		}
+	// Instantiate the solution compute client
+	solutionClient, err := task.NewDefaultClient(config, userAgent, discoveryLogger)
+	if err != nil {
+		log.Errorf("%+v", err)
+		os.Exit(1)
 	}
 	defer solutionClient.Close()
 
