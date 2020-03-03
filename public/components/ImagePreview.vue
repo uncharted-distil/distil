@@ -2,6 +2,7 @@
   <div
     v-observe-visibility="visibilityChanged"
     v-bind:class="{ 'is-hidden': !isVisible && !preventHiding }"
+    v-bind:style="{ width: `${width}px`, height: `${height}px` }"
   >
     <div
       class="image-container"
@@ -14,11 +15,7 @@
         @click.stop="handleClick"
         v-bind:style="{ 'max-width': `${width}px` }"
       >
-        <div
-          v-if="!isLoaded"
-          v-html="spinnerHTML"
-          v-bind:style="{ width: `${width}px`, height: `${height}px` }"
-        ></div>
+        <div v-if="!isLoaded" v-html="spinnerHTML"></div>
       </div>
     </div>
     <b-modal
@@ -74,6 +71,8 @@ export default Vue.extend({
   watch: {
     imageUrl(newUrl, oldUrl) {
       if (newUrl !== oldUrl) {
+        this.hasRendered = false;
+        this.hasRequested = false;
         if (!this.image) {
           this.clearImage();
           this.requestImage();

@@ -107,12 +107,12 @@ export default Vue.extend({
     },
 
     fields(): Dictionary<TableColumn> {
-      if (this.dataFields) {
-        return this.dataFields;
-      }
-      return this.includedActive
+      const currentFields = this.dataFields
+        ? this.dataFields
+        : this.includedActive
         ? datasetGetters.getIncludedTableDataFields(this.$store)
         : datasetGetters.getExcludedTableDataFields(this.$store);
+      return currentFields;
     },
 
     rowSelection(): RowSelection {
@@ -175,14 +175,14 @@ export default Vue.extend({
 
 <style>
 .image-mosaic {
-  display: flex;
-  overflow: auto;
-  flex-flow: wrap;
+  display: block;
+  overflow: visible;
 }
 
 .image-tile {
-  display: flex;
+  display: inline-block;
   position: relative;
+  vertical-align: bottom;
   margin: 2px;
 }
 
