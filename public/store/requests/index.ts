@@ -65,14 +65,14 @@ export interface Feature {
 }
 
 export interface RequestState {
-  searchRequests: SolutionRequest[];
+  solutionRequests: SolutionRequest[];
   solutions: Solution[];
   predictRequests: PredictRequest[];
   predictions: Predictions[];
 }
 
 export const state: RequestState = {
-  searchRequests: [],
+  solutionRequests: [],
   solutions: [],
   predictRequests: [],
   predictions: []

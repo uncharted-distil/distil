@@ -189,19 +189,31 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	}
 
 	// listen for solution updates
+	requestFinished := make(chan api.SolutionStatus, 1)
+	defer close(requestFinished)
 	err = request.Listen(func(status api.SolutionStatus) {
-		// check for error
-		if status.Error != nil {
+		// check for error from ta2
+		if status.Progress == api.SolutionErroredStatus {
 			handleErr(conn, msg, errors.Wrap(status.Error, "received error from TA2 system"))
 			return
 		}
 		// send status to client
 		handleSuccess(conn, msg, jutil.StructToMap(status))
+
+		// flag request as finished
+		if status.Progress == api.RequestCompletedStatus || status.Progress == api.RequestErroredStatus {
+			requestFinished <- status
+		}
 	})
+	// something went wrong internally when setting up the request handling (downstream errors should come
+	// through as status messages handled by the listener)
 	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "received error from TA2 system"))
+		handleErr(conn, msg, errors.Wrap(err, "received internal error"))
 		return
 	}
+
+	// wait on request completed / request errored status before we move on
+	<-requestFinished
 
 	// complete the request
 	handleComplete(conn, msg)

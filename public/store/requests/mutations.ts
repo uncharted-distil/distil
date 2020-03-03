@@ -15,13 +15,13 @@ export const mutations = {
   },
 
   updateSolutionRequests(state: RequestState, request: SolutionRequest) {
-    const index = state.searchRequests.findIndex(
+    const index = state.solutionRequests.findIndex(
       r => r.requestId === request.requestId
     );
     if (index === -1) {
-      state.searchRequests.push(request);
+      state.solutionRequests.push(request);
     } else {
-      Vue.set(state.searchRequests, index, request);
+      Vue.set(state.solutionRequests, index, request);
     }
   },
 
@@ -30,6 +30,6 @@ export const mutations = {
   },
 
   clearSolutionRequests(state: RequestState) {
-    state.searchRequests = [];
+    state.solutionRequests = [];
   }
 };

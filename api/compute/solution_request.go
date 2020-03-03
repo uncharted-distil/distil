@@ -210,11 +210,8 @@ func (s *SolutionRequest) waitOnSolutions() {
 	s.wg.Wait()
 }
 
-func (s *SolutionRequest) listenOnStatusChannel(statusChannel chan SolutionStatus) {
-	for {
-		// read status from, channel
-		status := <-statusChannel
-		// execute callback
+func (s *SolutionRequest) listenOnStatusChannel(statusChannel <-chan SolutionStatus) {
+	for status := range statusChannel {
 		s.listener(status)
 	}
 }
@@ -501,15 +498,6 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 	}
 
 	// notify client of update
-	//statusChan <- SolutionStatus{
-	//	RequestID:  searchID,
-	//	SolutionID: solutionID,
-	//	ResultID:   resultID,
-	//	Progress:   SolutionCompletedStatus,
-	//	Timestamp:  time.Now(),
-	//}
-
-	// notify client of update
 	statusChan <- SolutionStatus{
 		RequestID:  initialSearchID,
 		SolutionID: initialSearchSolutionID,
@@ -565,6 +553,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 	err = client.SearchSolutions(context.Background(), searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
 		wg.Add(1)
+		defer wg.Done() // make sure wg is flagged on any return
+
 		solutionID := solution.SolutionId
 
 		// persist the solution info
@@ -715,7 +705,6 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
 				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID, produceRequestID, resultID, resultURI)
 		}
-		wg.Done()
 	})
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -749,7 +738,11 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, searchRequest, datasetURI, datasetURITrain, datasetURITest, variables)
 		// once done, mark as complete
 		s.completeSolution()
+		close(c)
 	})
+
+	// wait until all are complete and the search has finished / timed out
+	s.waitOnSolutions()
 
 	// update request status
 	if err != nil {
@@ -757,9 +750,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 	} else {
 		s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestCompletedStatus)
 	}
-
-	// wait until all are complete and the search has finished / timed out
-	s.waitOnSolutions()
+	close(s.requestChannel)
 
 	// end search
 	// since predictions can be requested for different datasets on the same
