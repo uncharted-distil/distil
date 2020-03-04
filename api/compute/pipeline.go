@@ -16,35 +16,76 @@
 package compute
 
 import (
-	"context"
+	"encoding/json"
+	"fmt"
 	"strings"
+	"sync"
 
+	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
-
-	"github.com/uncharted-distil/distil/api/env"
+	log "github.com/unchartedsoftware/plog"
 )
+
+var (
+	pipelineCache *Cache
+)
+
+// Cache uses a simple map to lookup data stored in memory. Access to the cache
+// is threadsafe.
+type Cache struct {
+	cache map[string]interface{}
+	mu    sync.RWMutex
+}
+
+// Set sets the cached value for the specified key.
+func (c *Cache) Set(key string, value interface{}) {
+	c.mu.Lock()
+	c.cache[key] = value
+	c.mu.Unlock()
+}
+
+// Get reads cached value using the key.
+func (c *Cache) Get(key string) (interface{}, bool) {
+	c.mu.RLock()
+	value, found := c.cache[key]
+	c.mu.RUnlock()
+
+	return value, found
+}
+
+// InitializeCache sets up an empty cache
+func InitializeCache() {
+	pipelineCache = &Cache{
+		cache: make(map[string]interface{}),
+	}
+}
 
 // SubmitPipeline executes pipelines using the client and returns the result URI.
 func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce []string,
 	searchRequest *pipeline.SearchSolutionsRequest, step *pipeline.PipelineDescription) (string, error) {
 
-	config, err := env.LoadConfig()
-	if err != nil {
-		return "", errors.Wrap(err, "unable to load config")
-	}
-
-	if config.UseTA2Runner {
-		res, err := client.ExecutePipeline(context.Background(), datasets, step)
-		if err != nil {
-			return "", errors.Wrap(err, "unable to dispatch mocked pipeline")
-		}
-		resultURI := strings.Replace(res.ResultURI, "file://", "", -1)
-		return resultURI, nil
-	}
-
 	request := compute.NewExecPipelineRequest(datasets, datasetsProduce, step)
+
+	// check cache to see if results are already available
+	stepString, err := marshalSteps(step)
+	if err != nil {
+		return "", err
+	}
+
+	hashedPipeline, err := hashstructure.Hash([]interface{}{stepString, datasets, datasetsProduce, searchRequest}, nil)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to hash pipeline")
+	}
+	hashedPipelineKey := fmt.Sprintf("%d", hashedPipeline)
+	log.Infof("hash key: %s\traw: %v", hashedPipelineKey, hashedPipeline)
+
+	entry, found := pipelineCache.Get(hashedPipelineKey)
+	if found {
+		log.Infof("returning cached entry for pipeline")
+		return entry.(string), nil
+	}
 
 	err = request.Dispatch(client, searchRequest)
 	if err != nil {
@@ -74,5 +115,16 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 
 	datasetURI = strings.Replace(datasetURI, "file://", "", -1)
 
+	pipelineCache.Set(hashedPipelineKey, datasetURI)
+
 	return datasetURI, nil
+}
+
+func marshalSteps(step *pipeline.PipelineDescription) (string, error) {
+	stepJSON, err := json.Marshal(step)
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to marshal steps")
+	}
+
+	return string(stepJSON), nil
 }
