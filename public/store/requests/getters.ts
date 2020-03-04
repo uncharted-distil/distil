@@ -76,7 +76,7 @@ export const getters = {
     const target = <string>getters.getRouteTargetVariable;
     const dataset = <string>getters.getRouteDataset;
     // get only matching dataset / target
-    return state.searchRequests
+    return state.solutionRequests
       .filter(
         request => request.dataset === dataset && request.feature === target
       )
