@@ -17,9 +17,9 @@ import SparklineTimeseriesView from "./SparklineTimeseriesView";
 import { Dictionary } from "../util/dict";
 import { VariableSummary, TableColumn, TableRow } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as solutionGetters } from "../store/solutions/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { getters as resultsGetters } from "../store/results/module";
-import { Solution } from "../store/solutions/index";
+import { Solution } from "../store/requests/index";
 
 export default Vue.extend({
   name: "results-timeseries-view",
@@ -43,7 +43,7 @@ export default Vue.extend({
     },
 
     solution(): Solution {
-      return solutionGetters.getActiveSolution(this.$store);
+      return requestGetters.getActiveSolution(this.$store);
     },
 
     predictedCol(): string {

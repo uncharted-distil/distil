@@ -145,9 +145,9 @@ import {
   RowSelection,
   Highlight
 } from "../store/dataset/index";
-import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from "../store/solutions/index";
+import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from "../store/requests/index";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as solutionGetters } from "../store/solutions/module";
+import { getters as requestGetters } from "../store/requests/module";
 import {
   getSolutionIndex,
   getSolutionById,
@@ -161,6 +161,7 @@ import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import _ from "lodash";
 import { descending } from "d3";
+import store from "../store/store";
 
 export default Vue.extend({
   name: "result-group",
@@ -211,12 +212,12 @@ export default Vue.extend({
     },
 
     routeSolutionId(): string {
-      return routeGetters.getRouteSolutionId(this.$store);
+      return routeGetters.getRouteSolutionId(store);
     },
 
     solutionStatus(): string {
       const solution = getSolutionById(
-        this.$store.state.solutionModule,
+        store.state.requestsModule.solutions,
         this.solutionId
       );
       if (solution) {
@@ -295,7 +296,7 @@ export default Vue.extend({
 
     isBad(): boolean {
       const solution = getSolutionById(
-        this.$store.state.solutionModule,
+        store.state.requestsModule.solutions,
         this.solutionId
       );
       if (solution) {
@@ -317,7 +318,7 @@ export default Vue.extend({
 
     isTopN(): boolean {
       return isTopSolutionByScore(
-        this.$store.state.solutionModule,
+        store.state.requestsModule.solutions,
         this.requestId,
         this.solutionId,
         3

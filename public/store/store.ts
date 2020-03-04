@@ -6,8 +6,8 @@ import { datasetModule } from "./dataset/module";
 import { DatasetState } from "./dataset/index";
 import { resultsModule } from "./results/module";
 import { ResultsState } from "./results/index";
-import { solutionModule } from "./solutions/module";
-import { SolutionState } from "./solutions/index";
+import { requestsModule } from "./requests/module";
+import { RequestState } from "./requests/index";
 import { predictionsModule } from "./predictions/module";
 import { PredictionState } from "./predictions/index";
 import { viewModule } from "./view/module";
@@ -20,7 +20,7 @@ Vue.use(Vuex);
 export interface DistilState {
   routeModule: Route;
   datasetModule: DatasetState;
-  solutionModule: SolutionState;
+  requestsModule: RequestState;
   resultsModule: ResultsState;
   predictionsModule: PredictionState;
   viewModule: ViewState;
@@ -31,7 +31,7 @@ const store = new Store<DistilState>({
   modules: {
     routeModule,
     datasetModule,
-    solutionModule,
+    requestsModule,
     resultsModule,
     predictionsModule,
     viewModule,

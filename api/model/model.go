@@ -36,7 +36,6 @@ type Request struct {
 	LastUpdatedTime time.Time     `json:"lastUpdatedTime"`
 	Features        []*Feature    `json:"features"`
 	Filters         *FilterParams `json:"filters"`
-	Solutions       []*Solution   `json:"solutions"`
 }
 
 // TargetFeature returns the target feature out of the feature set.

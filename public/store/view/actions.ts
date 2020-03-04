@@ -9,9 +9,9 @@ import {
   mutations as datasetMutations
 } from "../dataset/module";
 import {
-  actions as solutionActions,
+  actions as requestActions,
   mutations as solutionMutations
-} from "../solutions/module";
+} from "../requests/module";
 import {
   actions as resultActions,
   mutations as resultMutations
@@ -27,7 +27,8 @@ enum ParamCacheKey {
   VARIABLES = "VARIABLES",
   VARIABLE_SUMMARIES = "VARIABLE_SUMMARIES",
   VARIABLE_RANKINGS = "VARIABLE_RANKINGS",
-  SOLUTION_REQUESTS = "SOLUTION_REQUESTS",
+  SEARCH_REQUESTS = "SEARCH_REQUESTS",
+  SOLUTIONS = "SOLUTIONS",
   JOIN_SUGGESTIONS = "JOIN_SUGGESTIONS",
   CLUSTERS = "CLUSTERS"
 }
@@ -72,32 +73,29 @@ const fetchVariables = createCacheable(
 
 const fetchVariableSummaries = createCacheable(
   ParamCacheKey.VARIABLE_SUMMARIES,
-  (context, args) => {
-    return fetchVariables(context, args).then(() => {
-      const dataset = args.dataset as string;
-      const variables = context.getters.getVariables;
-      const filterParams =
-        context.getters.getDecodedSolutionRequestFilterParams;
-      const highlight = context.getters.getDecodedHighlight;
-      const varModes = context.getters.getDecodedVarModes;
-
-      return Promise.all([
-        datasetActions.fetchIncludedVariableSummaries(store, {
-          dataset: dataset,
-          variables: variables,
-          filterParams: filterParams,
-          highlight: highlight,
-          varModes: varModes
-        }),
-        datasetActions.fetchExcludedVariableSummaries(store, {
-          dataset: dataset,
-          variables: variables,
-          filterParams: filterParams,
-          highlight: highlight,
-          varModes: varModes
-        })
-      ]);
-    });
+  async (context, args) => {
+    await fetchVariables(context, args);
+    const dataset = args.dataset as string;
+    const variables = context.getters.getVariables;
+    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+    const highlight = context.getters.getDecodedHighlight;
+    const varModes = context.getters.getDecodedVarModes;
+    return Promise.all([
+      datasetActions.fetchIncludedVariableSummaries(store, {
+        dataset: dataset,
+        variables: variables,
+        filterParams: filterParams,
+        highlight: highlight,
+        varModes: varModes
+      }),
+      datasetActions.fetchExcludedVariableSummaries(store, {
+        dataset: dataset,
+        variables: variables,
+        filterParams: filterParams,
+        highlight: highlight,
+        varModes: varModes
+      })
+    ]);
   }
 );
 
@@ -127,9 +125,19 @@ const fetchClusters = createCacheable(
 );
 
 const fetchSolutionRequests = createCacheable(
-  ParamCacheKey.SOLUTION_REQUESTS,
+  ParamCacheKey.SEARCH_REQUESTS,
   (context, args) => {
-    return solutionActions.fetchSolutionRequests(store, {
+    return requestActions.fetchSolutionRequests(store, {
+      dataset: args.dataset,
+      target: args.target
+    });
+  }
+);
+
+const fetchSolutions = createCacheable(
+  ParamCacheKey.SOLUTIONS,
+  (context, args) => {
+    return requestActions.fetchSolutions(store, {
       dataset: args.dataset,
       target: args.target
     });
@@ -156,12 +164,14 @@ function clearVariableSummaries(context: ViewContext) {
 export type ViewContext = ActionContext<ViewState, DistilState>;
 
 export const actions = {
-  fetchHomeData(context: ViewContext) {
+  async fetchHomeData(context: ViewContext) {
     // clear any previous state
     solutionMutations.clearSolutionRequests(store);
+    solutionMutations.clearSolutions(store);
 
     // fetch new state
-    return solutionActions.fetchSolutionRequests(store, {});
+    await requestActions.fetchSolutions(store, {});
+    requestActions.fetchSolutionRequests(store, {});
   },
 
   fetchSearchData(context: ViewContext) {
@@ -242,7 +252,7 @@ export const actions = {
     ]);
   },
 
-  fetchSelectTargetData(context: ViewContext, clearSummaries: boolean) {
+  async fetchSelectTargetData(context: ViewContext, clearSummaries: boolean) {
     // clear previous state
     if (clearSummaries) {
       clearVariableSummaries(context);
@@ -253,9 +263,8 @@ export const actions = {
     const args = {
       dataset: dataset
     };
-    return fetchVariables(context, args).then(() => {
-      return fetchVariableSummaries(context, args);
-    });
+    await fetchVariables(context, args);
+    return fetchVariableSummaries(context, args);
   },
 
   clearJoinDatasetsData(context) {
@@ -263,7 +272,7 @@ export const actions = {
     clearVariableSummaries(context);
   },
 
-  fetchSelectTrainingData(context: ViewContext, clearSummaries: boolean) {
+  async fetchSelectTrainingData(context: ViewContext, clearSummaries: boolean) {
     // clear any previous state
     datasetMutations.setIncludedTableData(store, null);
     datasetMutations.setExcludedTableData(store, null);
@@ -279,18 +288,17 @@ export const actions = {
       dataset: dataset
     });
 
-    return Promise.all([
+    await Promise.all([
       fetchVariables(context, {
         dataset: dataset
       }),
       datasetActions.fetchDataset(store, {
         dataset: dataset
       })
-    ]).then(() => {
-      fetchVariableRankings(context, { dataset, target });
-      fetchClusters(context, { dataset });
-      return actions.updateSelectTrainingData(context);
-    });
+    ]);
+    fetchVariableRankings(context, { dataset, target });
+    fetchClusters(context, { dataset });
+    return actions.updateSelectTrainingData(context);
   },
 
   updateSelectTrainingData(context: ViewContext) {
@@ -321,7 +329,7 @@ export const actions = {
     ]);
   },
 
-  fetchResultsData(context: ViewContext) {
+  async fetchResultsData(context: ViewContext) {
     // clear previous state
     resultMutations.clearTargetSummary(store);
     resultMutations.clearTrainingSummaries(store);
@@ -332,23 +340,26 @@ export const actions = {
     const dataset = context.getters.getRouteDataset;
     const target = context.getters.getRouteTargetVariable;
     // fetch new state
-    return fetchVariables(context, {
+    await fetchVariables(context, {
       dataset: dataset
-    })
-      .then(() => {
-        fetchVariableRankings(context, {
-          dataset: dataset,
-          target: target
-        });
-        fetchClusters(context, { dataset: dataset });
-        return fetchSolutionRequests(context, {
-          dataset: dataset,
-          target: target
-        });
+    });
+    // These are long running processces we won't wait on
+    fetchVariableRankings(context, {
+      dataset: dataset,
+      target: target
+    });
+    fetchClusters(context, { dataset: dataset });
+    await Promise.all([
+      fetchSolutionRequests(context, {
+        dataset: dataset,
+        target: target
+      }),
+      fetchSolutions(context, {
+        dataset: dataset,
+        target: target
       })
-      .then(() => {
-        return actions.updateResultsSolution(context);
-      });
+    ]);
+    return actions.updateResultsSolution(context);
   },
 
   updateResultsSolution(context: ViewContext) {
@@ -426,7 +437,7 @@ export const actions = {
     }
   },
 
-  fetchPredictionsData(context: ViewContext) {
+  async fetchPredictionsData(context: ViewContext) {
     // clear previous state
     predictionMutations.clearTrainingSummaries(store);
     predictionMutations.setIncludedPredictionTableData(store, null);
@@ -435,18 +446,18 @@ export const actions = {
     const dataset = context.getters.getRouteDataset;
     const target = context.getters.getRouteTargetVariable;
     // fetch new state
-    return fetchVariables(context, {
+    await fetchVariables(context, {
       dataset: dataset
-    })
-      .then(() => {
-        return fetchSolutionRequests(context, {
-          dataset: dataset,
-          target: target
-        });
-      })
-      .then(() => {
-        return actions.updatePrediction(context);
-      });
+    });
+    await fetchSolutionRequests(context, {
+      dataset: dataset,
+      target: target
+    });
+    await fetchSolutions(context, {
+      dataset: dataset,
+      target: target
+    });
+    return actions.updatePrediction(context);
   },
 
   updatePrediction(context: ViewContext) {

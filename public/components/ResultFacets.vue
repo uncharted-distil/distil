@@ -51,15 +51,20 @@ import _ from "lodash";
 import moment from "moment";
 import ResultGroup from "../components/ResultGroup";
 import { VariableSummary } from "../store/dataset/index";
-import { REQUEST_COMPLETED, REQUEST_ERRORED } from "../store/solutions/index";
+import {
+  REQUEST_COMPLETED,
+  REQUEST_ERRORED,
+  Solution,
+  Score
+} from "../store/requests/index";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
-  getters as solutionGetters,
-  actions as solutionActions
-} from "../store/solutions/module";
+  getters as requestGetters,
+  actions as requestActions
+} from "../store/requests/module";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getRequestIndex } from "../util/solutions";
+import { getSolutionRequestIndex } from "../util/solutions";
 
 interface SummaryGroup {
   requestId: string;
@@ -68,10 +73,13 @@ interface SummaryGroup {
   predictedSummary: VariableSummary;
   residualsSummary: VariableSummary;
   correctnessSummary: VariableSummary;
+  targetSummary: VariableSummary;
+  scores: Score[];
 }
 
 interface RequestGroup {
   requestId: string;
+  progress: string;
   groups: SummaryGroup[];
 }
 
@@ -126,44 +134,49 @@ export default Vue.extend({
     },
 
     requestGroups(): RequestGroup[] {
-      const requests = solutionGetters.getRelevantSolutionRequests(this.$store);
-      const predictedSummaries = this.predictedSummaries;
-      const residualsSummaries = this.residualSummaries;
-      const correctnessSummaries = this.correctnessSummaries;
-      return requests.map(request => {
+      const requestsMap = _.keyBy(
+        requestGetters.getRelevantSolutionRequests(this.$store),
+        s => s.requestId
+      );
+      const solutions = requestGetters.getRelevantSolutions(this.$store);
+
+      // create a summary group for each search result
+      const summaryGroups: SummaryGroup[] = solutions.map(solution => {
+        const solutionId = solution.solutionId;
+        const requestId = solution.requestId;
+        const predictedSummary = _.find(
+          this.predictedSummaries,
+          summary => summary.solutionId === solutionId
+        );
+        const residualSummary = _.find(
+          this.residualSummaries,
+          summary => summary.solutionId === solutionId
+        );
+        const correctnessSummary = _.find(
+          this.correctnessSummaries,
+          summary => summary.solutionId === solutionId
+        );
+        const scores = this.showError ? solution.scores : [];
+
         return {
-          requestId: request.requestId,
-          progress: request.progress,
-          groups: request.solutions.map(solution => {
-            const solutionId = solution.solutionId;
-            const requestId = solution.requestId;
-            const predictedSummary = _.find(
-              predictedSummaries,
-              summary => summary.solutionId === solutionId
-            );
-            const residualSummary = _.find(
-              residualsSummaries,
-              summary => summary.solutionId === solutionId
-            );
-            const correctnessSummary = _.find(
-              correctnessSummaries,
-              summary => summary.solutionId === solutionId
-            );
-            const scores = this.showError ? solution.scores : [];
-            return {
-              requestId: requestId,
-              solutionId: solutionId,
-              groupName: solution.feature,
-              timestamp: moment(solution.timestamp).format("YYYY/MM/DD"),
-              scores: scores,
-              targetSummary: this.resultTargetSummary,
-              predictedSummary: predictedSummary,
-              residualsSummary: residualSummary,
-              correctnessSummary: correctnessSummary
-            };
-          })
+          requestId: requestId,
+          solutionId: solutionId,
+          groupName: solution.feature,
+          predictedSummary: predictedSummary,
+          residualsSummary: residualSummary,
+          correctnessSummary: correctnessSummary,
+          targetSummary: this.resultTargetSummary,
+          scores: scores
         };
       });
+
+      // group the requests by their request ID and return them as a RequestGroup array
+      const summariesByRequestId = _.groupBy(summaryGroups, s => s.requestId);
+      return _.map(summariesByRequestId, (groups, requestId) => ({
+        requestId: requestId,
+        progress: requestsMap[requestId].progress,
+        groups: groups
+      }));
     }
   },
 
@@ -181,13 +194,13 @@ export default Vue.extend({
     },
 
     stopRequest(requestId: string) {
-      solutionActions.stopSolutionRequest(this.$store, {
+      requestActions.stopSolutionRequest(this.$store, {
         requestId: requestId
       });
     },
 
     getRequestIndex(requestId: string) {
-      return getRequestIndex(requestId);
+      return getSolutionRequestIndex(requestId);
     }
   }
 });

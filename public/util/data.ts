@@ -11,7 +11,7 @@ import {
   D3M_INDEX_FIELD,
   SummaryMode
 } from "../store/dataset/index";
-import { Solution, SOLUTION_COMPLETED } from "../store/solutions/index";
+import { Solution, SOLUTION_COMPLETED } from "../store/requests/index";
 import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
 import store from "../store/store";
@@ -22,7 +22,7 @@ import {
   getters as datasetGetters,
   actions as datasetActions
 } from "../store/dataset/module";
-import { getters as solutionGetters } from "../store/solutions/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { formatValue, isIntegerType, isTimeType } from "../util/types";
 
 // Postfixes for special variable names
@@ -550,11 +550,11 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
       let description: string = null;
       let label: string = null;
       if (isPredictedCol(col.key)) {
-        variable = solutionGetters.getActiveSolutionTargetVariable(store)[0]; // always a single value
+        variable = requestGetters.getActiveSolutionTargetVariable(store)[0]; // always a single value
         label = variable.colDisplayName;
         description = `Model predicted value for ${variable.colName}`;
       } else if (isErrorCol(col.key)) {
-        variable = solutionGetters.getActiveSolutionTargetVariable(store)[0];
+        variable = requestGetters.getActiveSolutionTargetVariable(store)[0];
         label = "Error";
         description = `Difference between actual and predicted value for ${variable.colName}`;
       } else {

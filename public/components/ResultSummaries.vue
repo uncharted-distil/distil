@@ -87,12 +87,13 @@ import ErrorThresholdSlider from "../components/ErrorThresholdSlider";
 import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as solutionGetters } from "../store/solutions/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { getters as resultGetters } from "../store/results/module";
 import {
   actions as appActions,
   getters as appGetters
 } from "../store/app/module";
+import store from "../store/store";
 import {
   EXPORT_SUCCESS_ROUTE,
   ROOT_ROUTE,
@@ -101,7 +102,7 @@ import {
 import { Variable, TaskTypes } from "../store/dataset/index";
 import vueSlider from "vue-slider-component";
 import Vue from "vue";
-import { Solution } from "../store/solutions/index";
+import { Solution } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { createRouteEntry } from "../util/routes";
 import { PREDICTION_UPLOAD } from "../util/uploads";
@@ -174,7 +175,10 @@ export default Vue.extend({
     },
 
     activeSolution(): Solution {
-      return getSolutionById(this.$store.state.solutionModule, this.solutionId);
+      return getSolutionById(
+        store.state.requestsModule.solutions,
+        this.solutionId
+      );
     },
 
     activeSolutionName(): string {

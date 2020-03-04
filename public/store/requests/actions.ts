@@ -1,6 +1,6 @@
 import axios from "axios";
 import {
-  SolutionState,
+  RequestState,
   SOLUTION_PENDING,
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED,
@@ -10,7 +10,9 @@ import {
   REQUEST_ERRORED,
   SOLUTION_FITTING,
   SOLUTION_PRODUCING,
-  SOLUTION_SCORING
+  SOLUTION_SCORING,
+  SolutionRequest,
+  Solution
 } from "./index";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
@@ -24,7 +26,8 @@ import { TaskTypes, SummaryMode } from "../dataset";
 const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
 
-interface CreateSolutionRequest {
+// Search request message used in web socket context
+interface SolutionRequestMsg {
   dataset: string;
   target: string;
   metrics: string[];
@@ -33,7 +36,8 @@ interface CreateSolutionRequest {
   filters: FilterParams;
 }
 
-interface SolutionStatus {
+// Solution status message used in web socket context
+interface SolutionStatusMsg {
   requestId: string;
   solutionId?: string;
   resultId?: string;
@@ -42,12 +46,12 @@ interface SolutionStatus {
   timestamp: number;
 }
 
-export type SolutionContext = ActionContext<SolutionState, DistilState>;
+export type SolutionContext = ActionContext<RequestState, DistilState>;
 
 function updateCurrentSolutionResults(
   context: SolutionContext,
-  req: CreateSolutionRequest,
-  res: SolutionStatus
+  req: SolutionRequestMsg,
+  res: SolutionStatusMsg
 ) {
   const isRegression = routeGetters
     .getRouteTask(store)
@@ -119,8 +123,8 @@ function updateCurrentSolutionResults(
 
 function updateSolutionResults(
   context: SolutionContext,
-  req: CreateSolutionRequest,
-  res: SolutionStatus
+  req: SolutionRequestMsg,
+  res: SolutionStatusMsg
 ) {
   const taskArgs = routeGetters.getRouteTask(store);
   const isRegression = taskArgs && taskArgs.includes(TaskTypes.REGRESSION);
@@ -168,16 +172,16 @@ function updateSolutionResults(
 
 function handleRequestProgress(
   context: SolutionContext,
-  request: CreateSolutionRequest,
-  response: SolutionStatus
+  request: SolutionRequestMsg,
+  response: SolutionStatusMsg
 ) {
   // no-op
 }
 
 function handleSolutionProgress(
   context: SolutionContext,
-  request: CreateSolutionRequest,
-  response: SolutionStatus
+  request: SolutionRequestMsg,
+  response: SolutionStatusMsg
 ) {
   switch (response.progress) {
     case SOLUTION_COMPLETED:
@@ -194,7 +198,7 @@ function handleSolutionProgress(
   }
 }
 
-function isRequestResponse(response: SolutionStatus) {
+function isRequestResponse(response: SolutionStatusMsg) {
   const progress = response.progress;
   return (
     progress === REQUEST_PENDING ||
@@ -204,7 +208,7 @@ function isRequestResponse(response: SolutionStatus) {
   );
 }
 
-function isSolutionResponse(response: SolutionStatus) {
+function isSolutionResponse(response: SolutionStatusMsg) {
   const progress = response.progress;
   return (
     progress === SOLUTION_PENDING ||
@@ -216,45 +220,69 @@ function isSolutionResponse(response: SolutionStatus) {
   );
 }
 
-function handleProgress(
+async function handleProgress(
   context: SolutionContext,
-  request: CreateSolutionRequest,
-  response: SolutionStatus
+  request: SolutionRequestMsg,
+  response: SolutionStatusMsg
 ) {
   if (isRequestResponse(response)) {
     // request
     console.log(
       `Progress for request ${response.requestId} updated to ${response.progress}`
     );
+    await actions.fetchSolutionRequest(context, {
+      requestId: response.requestId
+    });
+    handleRequestProgress(context, request, response);
   } else if (isSolutionResponse(response)) {
     // solution
     console.log(
       `Progress for solution ${response.solutionId} updated to ${response.progress}`
     );
-  }
-
-  actions
-    .fetchSolutionRequests(context, {
-      dataset: request.dataset,
-      target: request.target,
+    await actions.fetchSolution(context, {
       solutionId: response.solutionId
-    })
-    .then(() => {
-      // handle response
-      if (isRequestResponse(response)) {
-        // request
-        handleRequestProgress(context, request, response);
-      } else if (isSolutionResponse(response)) {
-        // solution
-        handleSolutionProgress(context, request, response);
-      }
     });
+    handleSolutionProgress(context, request, response);
+  }
+}
+
+// parse returned server data into a solution that can be added to the index
+function parseSolutionResponse(responseData: any): Solution {
+  return {
+    requestId: responseData.requestId,
+    solutionId: responseData.solutionId,
+    fittedSolutionId: responseData.fittedSolutionId,
+    resultId: responseData.resultId,
+    dataset: responseData.dataset,
+    feature: responseData.feature,
+    scores: responseData.scores,
+    timestamp: responseData.timestamp,
+    progress: responseData.progress,
+    features: responseData.features,
+    filters: responseData.filters,
+    predictedKey: responseData.predictedKey,
+    errorKey: responseData.errorKey,
+    isBad: false
+  };
+}
+
+// parse returned server data into a solution request that can be added to the index
+function parseRequestResponse(responseData: any): SolutionRequest {
+  return {
+    requestId: responseData.requestId,
+    dataset: responseData.dataset,
+    feature: responseData.feature,
+    features: responseData.features,
+    filters: responseData.filters,
+    timestamp: responseData.timestamp,
+    progress: responseData.progress
+  };
 }
 
 export const actions = {
   async fetchSolutionRequests(
     context: SolutionContext,
-    args: { dataset?: string; target?: string; solutionId?: string }
+    args: { dataset?: string; target?: string }
   ) {
     if (!args.dataset) {
       args.dataset = null;
@@ -262,28 +290,89 @@ export const actions = {
     if (!args.target) {
       args.target = null;
     }
-    if (!args.solutionId) {
-      args.solutionId = null;
-    }
 
     try {
-      const response = await axios.get(
-        `/distil/solutions/${args.dataset}/${args.target}/${args.solutionId}`
+      // fetch and uddate the search data
+      const requestResponse = await axios.get(
+        `/distil/solution-requests/${args.dataset}/${args.target}`
       );
-      if (!response.data) {
-        return;
+      const requests = requestResponse.data;
+      for (const request of requests) {
+        // update request data
+        const searchRequest = parseRequestResponse(request);
+        mutations.updateSolutionRequests(context, searchRequest);
       }
-      const requests = response.data;
-      requests.forEach(request => {
-        // update solution
-        mutations.updateSolutionRequests(context, request);
-      });
     } catch (error) {
       console.error(error);
     }
   },
 
-  createSolutionRequest(context: any, request: CreateSolutionRequest) {
+  async fetchSolutionRequest(
+    context: SolutionContext,
+    args: { requestId: string }
+  ) {
+    if (!args.requestId) {
+      args.requestId = null;
+    }
+
+    try {
+      // fetch and uddate the search data
+      const requestResponse = await axios.get(
+        `/distil/solution-request/${args.requestId}`
+      );
+      // update request data
+      const searchRequest = parseRequestResponse(requestResponse.data);
+      mutations.updateSolutionRequests(context, searchRequest);
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
+  async fetchSolutions(
+    context: SolutionContext,
+    args: { dataset?: string; target?: string }
+  ) {
+    if (!args.dataset) {
+      args.dataset = null;
+    }
+    if (!args.target) {
+      args.target = null;
+    }
+
+    try {
+      // fetch update the solution data
+      const solutionResponse = await axios.get(
+        `/distil/solutions/${args.dataset}/${args.target}`
+      );
+      if (!solutionResponse.data) {
+        return;
+      }
+      for (const solution of solutionResponse.data) {
+        const searchResult = parseSolutionResponse(solution);
+        mutations.updateSolutions(context, searchResult);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
+  async fetchSolution(context: SolutionContext, args: { solutionId: string }) {
+    try {
+      // fetch update the solution data
+      const solutionResponse = await axios.get(
+        `/distil/solution/${args.solutionId}`
+      );
+      if (!solutionResponse.data) {
+        return;
+      }
+      const searchResult = parseSolutionResponse(solutionResponse.data);
+      mutations.updateSolutions(context, searchResult);
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
+  createSolutionRequest(context: any, request: SolutionRequestMsg) {
     return new Promise((resolve, reject) => {
       const conn = getWebSocketConnection();
 

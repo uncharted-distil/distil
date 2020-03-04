@@ -1,22 +1,21 @@
 import { Module } from "vuex";
-import { state, SolutionState } from "./index";
+import { state, RequestState } from "./index";
 import { getters as moduleGetters } from "./getters";
 import { actions as moduleActions } from "./actions";
 import { mutations as moduleMutations } from "./mutations";
 import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
 
-export const solutionModule: Module<SolutionState, DistilState> = {
+export const requestsModule: Module<RequestState, DistilState> = {
   state: state,
   getters: moduleGetters,
   actions: moduleActions,
   mutations: moduleMutations
 };
 
-const { commit, read, dispatch } = getStoreAccessors<
-  SolutionState,
-  DistilState
->(null);
+const { commit, read, dispatch } = getStoreAccessors<RequestState, DistilState>(
+  null
+);
 
 export const getters = {
   getRunningSolutions: read(moduleGetters.getRunningSolutions),
@@ -38,11 +37,16 @@ export const getters = {
 
 export const actions = {
   fetchSolutionRequests: dispatch(moduleActions.fetchSolutionRequests),
+  fetchSolutionRequest: dispatch(moduleActions.fetchSolutionRequest),
   createSolutionRequest: dispatch(moduleActions.createSolutionRequest),
-  stopSolutionRequest: dispatch(moduleActions.stopSolutionRequest)
+  stopSolutionRequest: dispatch(moduleActions.stopSolutionRequest),
+  fetchSolutions: dispatch(moduleActions.fetchSolutions),
+  fetchSolution: dispatch(moduleActions.fetchSolution)
 };
 
 export const mutations = {
   updateSolutionRequests: commit(moduleMutations.updateSolutionRequests),
-  clearSolutionRequests: commit(moduleMutations.clearSolutionRequests)
+  updateSolutions: commit(moduleMutations.updateSolutions),
+  clearSolutionRequests: commit(moduleMutations.clearSolutionRequests),
+  clearSolutions: commit(moduleMutations.clearSolutions)
 };

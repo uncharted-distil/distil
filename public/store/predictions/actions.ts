@@ -48,7 +48,7 @@ export const actions = {
       return null;
     }
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
@@ -169,7 +169,7 @@ export const actions = {
     }
   ) {
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
@@ -210,7 +210,7 @@ export const actions = {
     }
   ) {
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
@@ -298,7 +298,7 @@ export const actions = {
     }
 
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
@@ -367,7 +367,7 @@ export const actions = {
     }
 
     const solution = getSolutionById(
-      context.rootState.solutionModule,
+      context.rootState.requestsModule.solutions,
       args.solutionId
     );
     if (!solution.resultId) {
