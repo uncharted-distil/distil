@@ -87,8 +87,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// initialize the pipeline cache
+	// initialize the pipeline cache and queue
 	api.InitializeCache()
+	api.InitializeQueue(&config)
 
 	// initialize the user event logger - records user interactions with the system in a CSV file for post-run
 	// analysis

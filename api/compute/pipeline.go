@@ -25,12 +25,58 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil/api/env"
 	log "github.com/unchartedsoftware/plog"
 )
 
 var (
 	pipelineCache *Cache
+	queue         *Queue
 )
+
+type pipelineQueueTask struct {
+	client        *compute.Client
+	request       *compute.ExecPipelineRequest
+	searchRequest *pipeline.SearchSolutionsRequest
+	step          *pipeline.PipelineDescription
+}
+
+// QueueItem is the wrapper for the data to process and the response channel.
+type QueueItem struct {
+	output chan *QueueResponse
+	data   interface{}
+}
+
+// QueueResponse represents the result from processing a queue item.
+type QueueResponse struct {
+	Output interface{}
+	Error  error
+}
+
+// Queue uses a buffered channel to queue tasks and provides the result via channels.
+type Queue struct {
+	tasks chan *QueueItem
+}
+
+// Enqueue adds one entry to the queue, providing the response channel as result.
+func (q *Queue) Enqueue(data interface{}) chan *QueueResponse {
+	log.Infof("enqueuing data on the queue")
+	output := make(chan *QueueResponse, 1)
+	item := &QueueItem{
+		data:   data,
+		output: output,
+	}
+
+	q.tasks <- item
+
+	return output
+}
+
+// Dequeue removes one item from the queue.
+func (q *Queue) Dequeue() *QueueItem {
+	log.Infof("dequeuing data from the queue")
+	return <-q.tasks
+}
 
 // Cache uses a simple map to lookup data stored in memory. Access to the cache
 // is threadsafe.
@@ -62,6 +108,12 @@ func InitializeCache() {
 	}
 }
 
+func InitializeQueue(config *env.Config) {
+	queue = &Queue{
+		tasks: make(chan *QueueItem, config.PipelineQueueSize),
+	}
+}
+
 // SubmitPipeline executes pipelines using the client and returns the result URI.
 func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce []string,
 	searchRequest *pipeline.SearchSolutionsRequest, step *pipeline.PipelineDescription) (string, error) {
@@ -87,34 +139,19 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 		return entry.(string), nil
 	}
 
-	err = request.Dispatch(client, searchRequest)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to dispatch pipeline")
-	}
-
-	// listen for completion
-	var errPipeline error
-	var datasetURI string
-	err = request.Listen(func(status compute.ExecPipelineStatus) {
-		// check for error
-		if status.Error != nil {
-			errPipeline = status.Error
-		}
-
-		if status.Progress == compute.RequestCompletedStatus {
-			datasetURI = status.ResultURI
-		}
+	resultChan := queue.Enqueue(&pipelineQueueTask{
+		request:       request,
+		searchRequest: searchRequest,
+		client:        client,
+		step:          step,
 	})
-	if err != nil {
-		return "", errors.Wrap(err, "unable to listen to pipeline")
+
+	result := <-resultChan
+	if result.Error != nil {
+		return "", result.Error
 	}
 
-	if errPipeline != nil {
-		return "", errors.Wrap(errPipeline, "error executing pipeline")
-	}
-
-	datasetURI = strings.Replace(datasetURI, "file://", "", -1)
-
+	datasetURI := result.Output.(string)
 	pipelineCache.Set(hashedPipelineKey, datasetURI)
 
 	return datasetURI, nil
@@ -127,4 +164,60 @@ func marshalSteps(step *pipeline.PipelineDescription) (string, error) {
 	}
 
 	return string(stepJSON), nil
+}
+
+func runPipelineQueue(queue *Queue) {
+	for {
+		queueTask := <-queue.tasks
+		log.Infof("processing data pulled from the queue")
+
+		pipelineTask, ok := queueTask.data.(*pipelineQueueTask)
+		if !ok {
+			queueTask.output <- &QueueResponse{
+				Error: errors.Errorf("data pulled from queue is not a pipeline"),
+			}
+			continue
+		}
+
+		err := pipelineTask.request.Dispatch(pipelineTask.client, pipelineTask.searchRequest)
+		if err != nil {
+			queueTask.output <- &QueueResponse{
+				Error: errors.Wrap(err, "unable to dispatch pipeline"),
+			}
+			continue
+		}
+
+		// listen for completion
+		var errPipeline error
+		var datasetURI string
+		err = pipelineTask.request.Listen(func(status compute.ExecPipelineStatus) {
+			// check for error
+			if status.Error != nil {
+				errPipeline = status.Error
+			}
+
+			if status.Progress == compute.RequestCompletedStatus {
+				datasetURI = status.ResultURI
+			}
+		})
+		if err != nil {
+			queueTask.output <- &QueueResponse{
+				Error: errors.Wrap(err, "unable to listen to pipeline"),
+			}
+			continue
+		}
+
+		if errPipeline != nil {
+			queueTask.output <- &QueueResponse{
+				Error: errors.Wrap(errPipeline, "error executing pipeline"),
+			}
+			continue
+		}
+
+		datasetURI = strings.Replace(datasetURI, "file://", "", -1)
+
+		queueTask.output <- &QueueResponse{
+			Output: datasetURI,
+		}
+	}
 }
