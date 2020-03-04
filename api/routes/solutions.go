@@ -41,7 +41,7 @@ type SolutionResponse struct {
 	ErrorKey     string                 `json:"errorKey"`
 }
 
-// SolutionHandler fetches solutions associated with a given dataset and target.
+// SolutionsHandler fetches solutions associated with a given dataset and target.
 func SolutionsHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
