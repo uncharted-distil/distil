@@ -97,6 +97,7 @@ func (q *Queue) Enqueue(key string, data interface{}) chan *QueueResponse {
 
 		return output
 	}
+
 	log.Infof("'%s' not in queue so creating new item", key)
 	item := &QueueItem{
 		key:    key,
@@ -156,7 +157,8 @@ func InitializeCache() {
 // InitializeQueue creates the pipeline queue and runs go routine to process pipeline requests
 func InitializeQueue(config *env.Config) {
 	queue = &Queue{
-		tasks: make(chan *QueueItem, config.PipelineQueueSize),
+		tasks:         make(chan *QueueItem, config.PipelineQueueSize),
+		alreadyQueued: make(map[string]*QueueItem),
 	}
 
 	go runPipelineQueue(queue)
@@ -212,7 +214,7 @@ func marshalSteps(step *pipeline.PipelineDescription) (string, error) {
 
 func runPipelineQueue(queue *Queue) {
 	for queueTask := range queue.tasks {
-		log.Infof("processing data pulled from the queue")
+		log.Infof("processing data pulled from the queue (key '%s')", queueTask.key)
 
 		pipelineTask, ok := queueTask.data.(*pipelineQueueTask)
 		if !ok {
