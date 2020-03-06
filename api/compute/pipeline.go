@@ -16,7 +16,6 @@
 package compute
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -25,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil/api/env"
 	log "github.com/unchartedsoftware/plog"
 )
@@ -38,22 +38,32 @@ type pipelineQueueTask struct {
 	client          *compute.Client
 	request         *compute.ExecPipelineRequest
 	searchRequest   *pipeline.SearchSolutionsRequest
-	step            *pipeline.PipelineDescription
+	step            *description.FullySpecifiedPipeline
 	datasets        []string
 	datasetsProduce []string
 }
 
-func (t *pipelineQueueTask) hash() (string, error) {
+func (t *pipelineQueueTask) hashUnique() (string, error) {
 	// use the json representation of the step since the nested structures
 	// require casting that the library can't handle
-	stepString, err := marshalSteps(t.step)
+	stepString, err := description.MarshalSteps(t.step.Pipeline)
 	if err != nil {
 		return "", err
 	}
 
 	hashedPipeline, err := hashstructure.Hash([]interface{}{stepString, t.datasets, t.datasetsProduce, t.searchRequest}, nil)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to hash pipeline")
+		return "", errors.Wrap(err, "unable to uniquely hash pipeline")
+	}
+	hashedPipelineKey := fmt.Sprintf("%d", hashedPipeline)
+
+	return hashedPipelineKey, nil
+}
+
+func (t *pipelineQueueTask) hashEquivalent() (string, error) {
+	hashedPipeline, err := hashstructure.Hash([]interface{}{t.step.EquivalentValues, t.datasets, t.datasetsProduce, t.searchRequest}, nil)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to equivalently hash pipeline")
 	}
 	hashedPipelineKey := fmt.Sprintf("%d", hashedPipeline)
 
@@ -166,31 +176,37 @@ func InitializeQueue(config *env.Config) {
 
 // SubmitPipeline executes pipelines using the client and returns the result URI.
 func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce []string,
-	searchRequest *pipeline.SearchSolutionsRequest, step *pipeline.PipelineDescription) (string, error) {
+	searchRequest *pipeline.SearchSolutionsRequest, fullySpecifiedStep *description.FullySpecifiedPipeline) (string, error) {
 
-	request := compute.NewExecPipelineRequest(datasets, datasetsProduce, step)
+	request := compute.NewExecPipelineRequest(datasets, datasetsProduce, fullySpecifiedStep.Pipeline)
 
 	queueTask := &pipelineQueueTask{
 		request:         request,
 		searchRequest:   searchRequest,
 		client:          client,
-		step:            step,
+		step:            fullySpecifiedStep,
 		datasets:        datasets,
 		datasetsProduce: datasetsProduce,
 	}
 
 	// check cache to see if results are already available
-	hashedPipelineKey, err := queueTask.hash()
+	hashedPipelineUniqueKey, err := queueTask.hashUnique()
 	if err != nil {
 		return "", err
 	}
-	entry, found := pipelineCache.Get(hashedPipelineKey)
+	entry, found := pipelineCache.Get(hashedPipelineUniqueKey)
 	if found {
 		log.Infof("returning cached entry for pipeline")
 		return entry.(string), nil
 	}
 
-	resultChan := queue.Enqueue(hashedPipelineKey, queueTask)
+	// get equivalency key for enqueuing
+	hashedPipelineEquivKey, err := queueTask.hashEquivalent()
+	if err != nil {
+		return "", err
+	}
+
+	resultChan := queue.Enqueue(hashedPipelineEquivKey, queueTask)
 
 	result := <-resultChan
 	if result.Error != nil {
@@ -198,18 +214,9 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 	}
 
 	datasetURI := result.Output.(string)
-	pipelineCache.Set(hashedPipelineKey, datasetURI)
+	pipelineCache.Set(hashedPipelineUniqueKey, datasetURI)
 
 	return datasetURI, nil
-}
-
-func marshalSteps(step *pipeline.PipelineDescription) (string, error) {
-	stepJSON, err := json.Marshal(step)
-	if err != nil {
-		return "", errors.Wrapf(err, "unable to marshal steps")
-	}
-
-	return string(stepJSON), nil
 }
 
 func runPipelineQueue(queue *Queue) {

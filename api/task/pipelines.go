@@ -22,7 +22,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
@@ -47,7 +46,7 @@ type FeatureRequest struct {
 	FeatureVariableName string
 	OutputVariableName  string
 	Variable            *model.Variable
-	Step                *pipeline.PipelineDescription
+	Step                *description.FullySpecifiedPipeline
 	Clustering          bool
 }
 
@@ -63,7 +62,7 @@ func SetClient(computeClient *compute.Client) {
 	client = computeClient
 }
 
-func submitPipeline(datasets []string, step *pipeline.PipelineDescription) (string, error) {
+func submitPipeline(datasets []string, step *description.FullySpecifiedPipeline) (string, error) {
 	return sr.SubmitPipeline(client, datasets, nil, nil, step)
 }
 
@@ -135,7 +134,7 @@ func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest
 					model.CategoricalType, "", []string{"attribute"}, model.VarRoleMetadata, nil, mainDR.Variables, false)
 
 				// create the required pipeline
-				var step *pipeline.PipelineDescription
+				var step *description.FullySpecifiedPipeline
 				var err error
 				outputName := ""
 				if colNames, ok := getTimeValueCols(res); ok {
