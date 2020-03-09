@@ -16,7 +16,6 @@
 package compute
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -25,12 +24,119 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil/api/env"
 	log "github.com/unchartedsoftware/plog"
 )
 
 var (
 	pipelineCache *Cache
+	queue         *Queue
 )
+
+type pipelineQueueTask struct {
+	client          *compute.Client
+	request         *compute.ExecPipelineRequest
+	searchRequest   *pipeline.SearchSolutionsRequest
+	step            *description.FullySpecifiedPipeline
+	datasets        []string
+	datasetsProduce []string
+}
+
+func (t *pipelineQueueTask) hashUnique() (string, error) {
+	// use the json representation of the step since the nested structures
+	// require casting that the library can't handle
+	stepString, err := description.MarshalSteps(t.step.Pipeline)
+	if err != nil {
+		return "", err
+	}
+
+	hashedPipeline, err := hashstructure.Hash([]interface{}{stepString, t.datasets, t.datasetsProduce, t.searchRequest}, nil)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to uniquely hash pipeline")
+	}
+	hashedPipelineKey := fmt.Sprintf("%d", hashedPipeline)
+
+	return hashedPipelineKey, nil
+}
+
+func (t *pipelineQueueTask) hashEquivalent() (string, error) {
+	hashedPipeline, err := hashstructure.Hash([]interface{}{t.step.EquivalentValues, t.datasets, t.datasetsProduce, t.searchRequest}, nil)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to equivalently hash pipeline")
+	}
+	hashedPipelineKey := fmt.Sprintf("%d", hashedPipeline)
+
+	return hashedPipelineKey, nil
+}
+
+// QueueItem is the wrapper for the data to process and the response channel.
+type QueueItem struct {
+	key    string
+	output []chan *QueueResponse
+	data   interface{}
+}
+
+// QueueResponse represents the result from processing a queue item.
+type QueueResponse struct {
+	Output interface{}
+	Error  error
+}
+
+// Queue uses a buffered channel to queue tasks and provides the result via channels.
+type Queue struct {
+	mu            sync.RWMutex
+	tasks         chan *QueueItem
+	alreadyQueued map[string]*QueueItem
+}
+
+// Enqueue adds one entry to the queue, providing the response channel as result.
+// If the key is already in the queue, then the data is not added a second time.
+// Rather, a new output channel is added
+func (q *Queue) Enqueue(key string, data interface{}) chan *QueueResponse {
+	log.Infof("enqueuing data in the queue")
+	output := make(chan *QueueResponse, 1)
+
+	// use key to check if it is already in the queue
+	q.mu.Lock()
+	queuedItem := q.alreadyQueued[key]
+	if queuedItem != nil {
+		log.Infof("'%s' already in queue so adding one more channel to output", key)
+		queuedItem.output = append(queuedItem.output, output)
+		queuedItem.data = data
+		q.mu.Unlock()
+
+		return output
+	}
+
+	log.Infof("'%s' not in queue so creating new item", key)
+	item := &QueueItem{
+		key:    key,
+		data:   data,
+		output: []chan *QueueResponse{output},
+	}
+	q.alreadyQueued[key] = item
+	q.mu.Unlock()
+
+	q.tasks <- item
+
+	return output
+}
+
+// Dequeue removes one item from the queue.
+func (q *Queue) Dequeue() (*QueueItem, bool) {
+	log.Infof("dequeuing data from the queue")
+	item, ok := <-q.tasks
+	if !ok {
+		return item, ok
+	}
+
+	q.mu.Lock()
+	q.alreadyQueued[item.key] = nil
+	q.mu.Unlock()
+
+	return item, true
+}
 
 // Cache uses a simple map to lookup data stored in memory. Access to the cache
 // is threadsafe.
@@ -62,69 +168,122 @@ func InitializeCache() {
 	}
 }
 
+// InitializeQueue creates the pipeline queue and runs go routine to process pipeline requests
+func InitializeQueue(config *env.Config) {
+	queue = &Queue{
+		tasks:         make(chan *QueueItem, config.PipelineQueueSize),
+		alreadyQueued: make(map[string]*QueueItem),
+	}
+
+	go runPipelineQueue(queue)
+}
+
 // SubmitPipeline executes pipelines using the client and returns the result URI.
 func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce []string,
-	searchRequest *pipeline.SearchSolutionsRequest, step *pipeline.PipelineDescription) (string, error) {
+	searchRequest *pipeline.SearchSolutionsRequest, fullySpecifiedStep *description.FullySpecifiedPipeline) (string, error) {
 
-	request := compute.NewExecPipelineRequest(datasets, datasetsProduce, step)
+	request := compute.NewExecPipelineRequest(datasets, datasetsProduce, fullySpecifiedStep.Pipeline)
+
+	queueTask := &pipelineQueueTask{
+		request:         request,
+		searchRequest:   searchRequest,
+		client:          client,
+		step:            fullySpecifiedStep,
+		datasets:        datasets,
+		datasetsProduce: datasetsProduce,
+	}
 
 	// check cache to see if results are already available
-	stepString, err := marshalSteps(step)
+	hashedPipelineUniqueKey, err := queueTask.hashUnique()
 	if err != nil {
 		return "", err
 	}
-
-	hashedPipeline, err := hashstructure.Hash([]interface{}{stepString, datasets, datasetsProduce, searchRequest}, nil)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to hash pipeline")
-	}
-	hashedPipelineKey := fmt.Sprintf("%d", hashedPipeline)
-	log.Infof("hash key: %s\traw: %v", hashedPipelineKey, hashedPipeline)
-
-	entry, found := pipelineCache.Get(hashedPipelineKey)
+	entry, found := pipelineCache.Get(hashedPipelineUniqueKey)
 	if found {
 		log.Infof("returning cached entry for pipeline")
 		return entry.(string), nil
 	}
 
-	err = request.Dispatch(client, searchRequest)
+	// get equivalency key for enqueuing
+	hashedPipelineEquivKey, err := queueTask.hashEquivalent()
 	if err != nil {
-		return "", errors.Wrap(err, "unable to dispatch pipeline")
+		return "", err
 	}
 
-	// listen for completion
-	var errPipeline error
-	var datasetURI string
-	err = request.Listen(func(status compute.ExecPipelineStatus) {
-		// check for error
-		if status.Error != nil {
-			errPipeline = status.Error
-		}
+	resultChan := queue.Enqueue(hashedPipelineEquivKey, queueTask)
 
-		if status.Progress == compute.RequestCompletedStatus {
-			datasetURI = status.ResultURI
-		}
-	})
-	if err != nil {
-		return "", errors.Wrap(err, "unable to listen to pipeline")
+	result := <-resultChan
+	if result.Error != nil {
+		return "", result.Error
 	}
 
-	if errPipeline != nil {
-		return "", errors.Wrap(errPipeline, "error executing pipeline")
-	}
-
-	datasetURI = strings.Replace(datasetURI, "file://", "", -1)
-
-	pipelineCache.Set(hashedPipelineKey, datasetURI)
+	datasetURI := result.Output.(string)
+	pipelineCache.Set(hashedPipelineUniqueKey, datasetURI)
 
 	return datasetURI, nil
 }
 
-func marshalSteps(step *pipeline.PipelineDescription) (string, error) {
-	stepJSON, err := json.Marshal(step)
-	if err != nil {
-		return "", errors.Wrapf(err, "unable to marshal steps")
+func runPipelineQueue(queue *Queue) {
+	for {
+		queueTask, ok := queue.Dequeue()
+		if !ok {
+			break
+		}
+		log.Infof("processing data pulled from the queue (key '%s')", queueTask.key)
+
+		pipelineTask, ok := queueTask.data.(*pipelineQueueTask)
+		if !ok {
+			queueTask.returnResult(&QueueResponse{
+				Error: errors.Errorf("data pulled from queue is not a pipeline"),
+			})
+			continue
+		}
+
+		err := pipelineTask.request.Dispatch(pipelineTask.client, pipelineTask.searchRequest)
+		if err != nil {
+			queueTask.returnResult(&QueueResponse{
+				Error: errors.Wrap(err, "unable to dispatch pipeline"),
+			})
+			continue
+		}
+
+		// listen for completion
+		var errPipeline error
+		var datasetURI string
+		err = pipelineTask.request.Listen(func(status compute.ExecPipelineStatus) {
+			// check for error
+			if status.Error != nil {
+				errPipeline = status.Error
+			}
+
+			if status.Progress == compute.RequestCompletedStatus {
+				datasetURI = status.ResultURI
+			}
+		})
+		if err != nil {
+			queueTask.returnResult(&QueueResponse{
+				Error: errors.Wrap(err, "unable to listen to pipeline"),
+			})
+			continue
+		}
+
+		if errPipeline != nil {
+			queueTask.returnResult(&QueueResponse{
+				Error: errors.Wrap(errPipeline, "error executing pipeline"),
+			})
+			continue
+		}
+
+		datasetURI = strings.Replace(datasetURI, "file://", "", -1)
+
+		queueTask.returnResult(&QueueResponse{Output: datasetURI})
 	}
 
-	return string(stepJSON), nil
+	log.Infof("ending queue processing")
+}
+
+func (qi *QueueItem) returnResult(response *QueueResponse) {
+	for _, oc := range qi.output {
+		oc <- response
+	}
 }

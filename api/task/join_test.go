@@ -23,14 +23,14 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/uncharted-distil/distil-compute/pipeline"
+	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil/api/env"
 	apiModel "github.com/uncharted-distil/distil/api/model"
 )
 
 type testSubmitter struct{}
 
-func (testSubmitter) submit(datasetURIs []string, pipelineDesc *pipeline.PipelineDescription) (string, error) {
+func (testSubmitter) submit(datasetURIs []string, pipelineDesc *description.FullySpecifiedPipeline) (string, error) {
 	return "file://test_data/result.csv", nil
 }
 

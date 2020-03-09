@@ -26,7 +26,6 @@ import (
 	"github.com/pkg/errors"
 	ingestMetadata "github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil/api/env"
@@ -40,7 +39,7 @@ const (
 )
 
 type primitiveSubmitter interface {
-	submit(datasetURIs []string, pipelineDesc *pipeline.PipelineDescription) (string, error)
+	submit(datasetURIs []string, pipelineDesc *description.FullySpecifiedPipeline) (string, error)
 }
 
 // JoinSpec stores information for one side of a join operation.
@@ -113,7 +112,7 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 
 type defaultSubmitter struct{}
 
-func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *pipeline.PipelineDescription) (string, error) {
+func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *description.FullySpecifiedPipeline) (string, error) {
 	return submitPipeline(datasetURIs, pipelineDesc)
 }
 

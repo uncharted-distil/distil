@@ -24,7 +24,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 
@@ -133,7 +132,7 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 		}
 	}
 
-	var step *pipeline.PipelineDescription
+	var step *description.FullySpecifiedPipeline
 	var err error
 	addMeta := false
 	if model.IsImage(clusteringVar.Type) {
