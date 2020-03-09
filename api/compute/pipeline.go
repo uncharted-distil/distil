@@ -123,15 +123,18 @@ func (q *Queue) Enqueue(key string, data interface{}) chan *QueueResponse {
 }
 
 // Dequeue removes one item from the queue.
-func (q *Queue) Dequeue() *QueueItem {
+func (q *Queue) Dequeue() (*QueueItem, bool) {
 	log.Infof("dequeuing data from the queue")
-	item := <-q.tasks
+	item, ok := <-q.tasks
+	if !ok {
+		return item, ok
+	}
 
 	q.mu.Lock()
 	q.alreadyQueued[item.key] = nil
 	q.mu.Unlock()
 
-	return item
+	return item, true
 }
 
 // Cache uses a simple map to lookup data stored in memory. Access to the cache
@@ -220,7 +223,11 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 }
 
 func runPipelineQueue(queue *Queue) {
-	for queueTask := range queue.tasks {
+	for {
+		queueTask, ok := queue.Dequeue()
+		if !ok {
+			break
+		}
 		log.Infof("processing data pulled from the queue (key '%s')", queueTask.key)
 
 		pipelineTask, ok := queueTask.data.(*pipelineQueueTask)
@@ -270,6 +277,8 @@ func runPipelineQueue(queue *Queue) {
 
 		queueTask.returnResult(&QueueResponse{Output: datasetURI})
 	}
+
+	log.Infof("ending queue processing")
 }
 
 func (qi *QueueItem) returnResult(response *QueueResponse) {
