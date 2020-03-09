@@ -103,6 +103,7 @@ func (q *Queue) Enqueue(key string, data interface{}) chan *QueueResponse {
 	if queuedItem != nil {
 		log.Infof("'%s' already in queue so adding one more channel to output", key)
 		queuedItem.output = append(queuedItem.output, output)
+		queuedItem.data = data
 		q.mu.Unlock()
 
 		return output
