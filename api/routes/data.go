@@ -44,10 +44,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 
 		dataset := pat.Param(r, "dataset")
 		invert := pat.Param(r, "invert")
-		invertBool := false
-		if invert == "true" {
-			invertBool = true
-		}
+		invertBool := parseBoolParam(invert)
 
 		// get filter client
 		storage, err := storageCtor()
