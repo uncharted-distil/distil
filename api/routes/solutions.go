@@ -133,6 +133,11 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			return
 		}
 
+		resultID := ""
+		if len(sol.Results) > 0 {
+			resultID = sol.Results[0].ResultUUID
+		}
+
 		solutionResponse := SolutionResponse{
 			// request
 			RequestID: req.RequestID,
@@ -145,7 +150,7 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			Scores:     sol.Scores,
 			Timestamp:  sol.CreatedTime,
 			Progress:   sol.State.Progress,
-			ResultID:   sol.Results[0].ResultUUID,
+			ResultID:   resultID,
 			// keys
 			PredictedKey: model.GetPredictedKey(sol.SolutionID),
 			ErrorKey:     model.GetErrorKey(sol.SolutionID),
