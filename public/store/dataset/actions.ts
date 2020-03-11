@@ -19,7 +19,8 @@ import {
   SummaryMode
 } from "./index";
 import { mutations, getters } from "./module";
-import { DistilState } from "../store";
+import { actions as resultActions } from "../requests/module";
+import store, { DistilState } from "../store";
 import { Highlight } from "../dataset/index";
 import { FilterParams } from "../../util/filters";
 import {
@@ -50,6 +51,22 @@ async function getVariables(dataset: string): Promise<Variable[]> {
     datasetName: dataset,
     isColTypeReviewed: false
   }));
+}
+
+// Converts a file into a Base64 string.
+function getBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      let encoded = reader.result.toString().replace(/^data:(.*,)?/, "");
+      if (encoded.length % 4 > 0) {
+        encoded += "=".repeat(4 - (encoded.length % 4));
+      }
+      resolve(encoded);
+    };
+    reader.onerror = error => reject(error);
+  });
 }
 
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
@@ -228,28 +245,6 @@ export const actions = {
     };
     mutations.updatePendingRequests(context, request);
 
-    // Hack: force to include datamart.upload.fc0ceee28cb74bad83e4f8872979b111 to the result since that data set does not appear on the suggestion list.
-    /*
-		return axios.get(`/distil/datasets/${args.dataset}`)
-			.then(res => {
-				const dataset = res.data.dataset;
-				const search = dataset.summaryML || dataset.summary || '';
-				return Promise.all([
-					// axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search } }).catch(e => ({data: undefined})),
-					axios.get(`/distil/datasets`, { params: { search: 'employment' } }),
-				]);
-			})
-			.then((response) => {
-				// const suggestions = (response[0].data && response[0].data.datasets) || [];
-				const employmentData = ((response[0].data && response[0].data.datasets) || []).filter(dataset =>
-					dataset.id === 'datamart.upload.fc0ceee28cb74bad83e4f8872979b111' ||
-					dataset.id === 'world_bank_2018');
-				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, suggestions: [...employmentData] });
-			}).catch(error => {
-				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.ERROR });
-				console.error(error);
-			});
-		*/
     const query = args.searchQuery
       ? `?search=${args.searchQuery.split(" ").join(",")}`
       : "";
@@ -332,10 +327,16 @@ export const actions = {
       });
   },
 
-  uploadDataFile(
+  async uploadDataFile(
     context: DatasetContext,
-    args: { datasetID: string; file: File; type: string; solutionId?: string }
-  ): any {
+    args: {
+      datasetID: string;
+      file: File;
+      type: string;
+      targetType: string;
+      fittedSolutionId: string;
+    }
+  ): Promise<any> {
     if (!args.datasetID) {
       console.warn("`datasetID` argument is missing");
       return null;
@@ -353,21 +354,21 @@ export const actions = {
 
     switch (args.type) {
       case PREDICTION_UPLOAD:
-        if (!args.solutionId) {
+        if (!args.fittedSolutionId) {
           console.warn("`solutionId` argument is missing");
           return null;
         }
-        return axios
-          .post(
-            `/distil/predict/${args.datasetID}/tabular/${args.solutionId}`,
-            data,
-            {
-              headers: { "Content-Type": "multipart/form-data" }
-            }
-          )
-          .then(response => {
-            return response;
-          });
+        // convert the input csv into base64 so it can be sent over the websocket
+        const dataset = await getBase64(args.file);
+
+        // find the selected fitted solution ID
+        const requestMsg = {
+          dataset: dataset,
+          fittedSolutionId: args.fittedSolutionId,
+          targetType: args.targetType
+        };
+        resultActions.createPredictRequest(store, requestMsg);
+        break;
       case DATASET_UPLOAD:
         return axios
           .post(`/distil/upload/${args.datasetID}?type=table`, data, {

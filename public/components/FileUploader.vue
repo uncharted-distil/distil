@@ -42,7 +42,8 @@ export default Vue.extend({
 
   props: {
     uploadType: String as () => string,
-    solutionId: String as () => string
+    fittedSolutionId: String as () => string,
+    targetType: String as () => string
   },
 
   computed: {
@@ -93,7 +94,8 @@ export default Vue.extend({
           datasetID: this.datasetID,
           file: this.file,
           type: this.uploadType,
-          solutionId: this.solutionId
+          fittedSolutionId: this.fittedSolutionId,
+          targetType: this.targetType
         })
         .catch(err => {
           uploadError = err;

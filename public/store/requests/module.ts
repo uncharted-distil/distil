@@ -41,7 +41,8 @@ export const actions = {
   createSolutionRequest: dispatch(moduleActions.createSolutionRequest),
   stopSolutionRequest: dispatch(moduleActions.stopSolutionRequest),
   fetchSolutions: dispatch(moduleActions.fetchSolutions),
-  fetchSolution: dispatch(moduleActions.fetchSolution)
+  fetchSolution: dispatch(moduleActions.fetchSolution),
+  createPredictRequest: dispatch(moduleActions.createPredictRequest)
 };
 
 export const mutations = {

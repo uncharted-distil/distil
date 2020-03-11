@@ -24,7 +24,8 @@
       @uploadstart="onUploadStart"
       @uploadfinish="onUploadFinish"
       :upload-type="uploadType"
-      :solution-id="fittedSolutionId"
+      :fitted-solution-id="fittedSolutionId"
+      :target-type="targetType"
       v-if="!isPrediction"
     ></file-uploader>
 
@@ -147,9 +148,16 @@ export default Vue.extend({
       return routeGetters.getRouteTargetVariable(this.$store);
     },
 
+    targetType(): string {
+      const targetName = this.target;
+      const variables = this.variables;
+      return variables.find(v => v.colName === targetName).colType;
+    },
+
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
+
     taskArgs(): string {
       return routeGetters.getRouteTask(this.$store);
     },

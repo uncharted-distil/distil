@@ -12,7 +12,8 @@ import {
   SOLUTION_PRODUCING,
   SOLUTION_SCORING,
   SolutionRequest,
-  Solution
+  Solution,
+  PredictRequest
 } from "./index";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
@@ -25,6 +26,7 @@ import { TaskTypes, SummaryMode } from "../dataset";
 
 const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
+const PREDICT = "PREDICT";
 
 // Search request message used in web socket context
 interface SolutionRequestMsg {
@@ -46,10 +48,23 @@ interface SolutionStatusMsg {
   timestamp: number;
 }
 
-export type SolutionContext = ActionContext<RequestState, DistilState>;
+interface PredictRequestMsg {
+  dataset: string; // base64 encoded version of dataset
+  fittedSolutionId: string;
+  targetType: string;
+}
+
+interface PredictStatusMsg {
+  resultId: string;
+  progress: string;
+  error: string;
+  timestamp: number;
+}
+
+export type RequestContext = ActionContext<RequestState, DistilState>;
 
 function updateCurrentSolutionResults(
-  context: SolutionContext,
+  context: RequestContext,
   req: SolutionRequestMsg,
   res: SolutionStatusMsg
 ) {
@@ -122,7 +137,7 @@ function updateCurrentSolutionResults(
 }
 
 function updateSolutionResults(
-  context: SolutionContext,
+  context: RequestContext,
   req: SolutionRequestMsg,
   res: SolutionStatusMsg
 ) {
@@ -171,7 +186,7 @@ function updateSolutionResults(
 }
 
 function handleRequestProgress(
-  context: SolutionContext,
+  context: RequestContext,
   request: SolutionRequestMsg,
   response: SolutionStatusMsg
 ) {
@@ -179,7 +194,7 @@ function handleRequestProgress(
 }
 
 function handleSolutionProgress(
-  context: SolutionContext,
+  context: RequestContext,
   request: SolutionRequestMsg,
   response: SolutionStatusMsg
 ) {
@@ -221,7 +236,7 @@ function isSolutionResponse(response: SolutionStatusMsg) {
 }
 
 async function handleProgress(
-  context: SolutionContext,
+  context: RequestContext,
   request: SolutionRequestMsg,
   response: SolutionStatusMsg
 ) {
@@ -244,6 +259,21 @@ async function handleProgress(
     });
     handleSolutionProgress(context, request, response);
   }
+}
+
+async function handlePredictProgress(
+  context: RequestContext,
+  request: PredictRequestMsg,
+  response: PredictStatusMsg
+) {
+  // request
+  console.log(
+    `Progress for request ${response.resultId} updated to ${response.progress}`
+  );
+  // await actions.fetchSolutionRequest(context, {
+  //   requestId: response.requestId
+  // });
+  // handleRequestProgress(context, request, response);
 }
 
 // parse returned server data into a solution that can be added to the index
@@ -281,7 +311,7 @@ function parseRequestResponse(responseData: any): SolutionRequest {
 
 export const actions = {
   async fetchSolutionRequests(
-    context: SolutionContext,
+    context: RequestContext,
     args: { dataset?: string; target?: string }
   ) {
     if (!args.dataset) {
@@ -308,7 +338,7 @@ export const actions = {
   },
 
   async fetchSolutionRequest(
-    context: SolutionContext,
+    context: RequestContext,
     args: { requestId: string }
   ) {
     if (!args.requestId) {
@@ -329,7 +359,7 @@ export const actions = {
   },
 
   async fetchSolutions(
-    context: SolutionContext,
+    context: RequestContext,
     args: { dataset?: string; target?: string }
   ) {
     if (!args.dataset) {
@@ -356,7 +386,7 @@ export const actions = {
     }
   },
 
-  async fetchSolution(context: SolutionContext, args: { solutionId: string }) {
+  async fetchSolution(context: RequestContext, args: { solutionId: string }) {
     try {
       // fetch update the solution data
       const solutionResponse = await axios.get(
@@ -433,6 +463,45 @@ export const actions = {
     stream.send({
       type: STOP_SOLUTIONS,
       requestId: args.requestId
+    });
+  },
+
+  // Run predictions against a previously fitted model.  The data input for the predictions
+  // is itself a dataset.
+  createPredictRequest(context: any, request: PredictRequestMsg) {
+    return new Promise((resolve, reject) => {
+      const conn = getWebSocketConnection();
+      const stream = conn.stream(response => {
+        // log any error
+        if (response.error) {
+          console.error(response.error);
+        }
+
+        // handle request / solution progress
+        if (response.progress) {
+          console.log("Prediction request has completed, closing stream");
+          handlePredictProgress(context, request, response);
+        }
+
+        // close stream on complete
+        if (response.complete) {
+          console.log("Prediction request has completed, closing stream");
+          // close stream
+          stream.close();
+          // close the socket
+          conn.close();
+        }
+      });
+
+      console.log("Sending predict request:", request);
+
+      // send create solutions request
+      stream.send({
+        type: PREDICT,
+        fittedSolutionId: request.fittedSolutionId,
+        dataset: request.dataset,
+        targetType: request.targetType
+      });
     });
   }
 };

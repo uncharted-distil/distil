@@ -19,23 +19,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	apiModel "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/task"
 	jutil "github.com/uncharted-distil/distil/api/util/json"
 )
 
 const (
 	createSolutions = "CREATE_SOLUTIONS"
 	stopSolutions   = "STOP_SOLUTIONS"
+	predict         = "PREDICT"
 )
 
 var (
@@ -103,6 +107,8 @@ func handleMessage(conn *Connection, client *compute.Client, metadataCtor apiMod
 	case stopSolutions:
 		handleStopSolutions(conn, client, msg)
 		return
+	case predict:
+		handlePredict(conn, client, metadataCtor, dataCtor, solutionCtor, msg)
 	default:
 		// unrecognized type
 		handleErr(conn, msg, errors.New("unrecognized message type"))
@@ -233,4 +239,127 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 		handleErr(conn, msg, errors.Wrap(err, "received error from TA2 system"))
 		return
 	}
+}
+
+func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
+	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor, msg *Message) {
+
+	// initialize the storage
+	dataStorage, err := dataCtor()
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to initialize data storage"))
+		return
+	}
+
+	// initialize metadata storage
+	metaStorage, err := metadataCtor()
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to initialize meta storage"))
+		return
+	}
+
+	// initialize solution storage
+	solutionStorage, err := solutionCtor()
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to initialize solution storage"))
+		return
+	}
+
+	// unmarshal request
+	request, err := api.NewPredictRequest(msg.Raw)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to unmarshal create solutions request"))
+		return
+	}
+
+	// get the solution id from the fitted solution ID
+	solutionResults, err := solutionStorage.FetchSolutionResultsByFittedSolutionID(request.FittedSolutionID)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to fetch solution results fitted solution id"))
+		return
+	}
+	if len(solutionResults) == 0 {
+		handleErr(conn, msg, errors.Errorf("unable to map fitted solution id to dataset or solution id"))
+		return
+	}
+	sr := solutionResults[0]
+
+	// read the metadata of the original dataset
+	datasetES, err := metaStorage.FetchDataset(sr.Dataset, false, false)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to fetch dataset from es"))
+		return
+	}
+
+	// read the raw data out of the request
+	data, err := api.ExtractDatasetEncodedFromRawRequest(msg.Raw)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to pull dataset from request"))
+		return
+	}
+
+	// get the source dataset from the fitted solution ID
+	req, err := solutionStorage.FetchRequestByFittedSolutionID(sr.FittedSolutionID)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to fetch request using fitted solution id"))
+		return
+	}
+
+	schemaPath := path.Join(env.ResolvePath(datasetES.Source, datasetES.Folder), compute.D3MDataSchema)
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath, true)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to load metadata from source dataset schema doc"))
+		return
+	}
+
+	target := getTarget(req)
+
+	// In the case of grouped variables, the target will not be variable itself, but one of its property
+	// values.  We need to fetch using the original dataset, since it will have grouped variable info,
+	// and then resolve the actual target.
+	targetVar, err := metaStorage.FetchVariable(meta.ID, target)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to get target var from metadata storage"))
+		return
+	}
+
+	// config objects required for ingest
+	config, _ := env.LoadConfig()
+	ingestConfig := task.NewConfig(config)
+
+	predictParams := &task.PredictParams{
+		Meta:             meta,
+		Dataset:          "prediction_data",
+		SolutionID:       sr.SolutionID,
+		FittedSolutionID: request.FittedSolutionID,
+		CSVData:          []byte(data),
+		OutputPath:       path.Join(config.D3MOutputDir, config.AugmentedSubFolder),
+		Index:            config.ESDatasetsIndex,
+		Target:           targetVar,
+		MetaStorage:      metaStorage,
+		DataStorage:      dataStorage,
+		SolutionStorage:  solutionStorage,
+		DatasetIngested:  false,
+		DatasetImported:  false,
+		Config:           ingestConfig,
+	}
+
+	// run predictions - synchronous call for now
+	_, err = task.Predict(predictParams)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to generate predictions"))
+		return
+	}
+
+	handleComplete(conn, msg)
+}
+
+func getTarget(request *apiModel.Request) string {
+	for _, f := range request.Features {
+		if f.FeatureType == "target" {
+			return f.FeatureName
+		}
+	}
+
+	return ""
 }
