@@ -88,7 +88,6 @@ func SolutionsHandler(solutionCtor model.SolutionStorageCtor) func(http.Response
 					Scores:     sol.Scores,
 					Timestamp:  sol.CreatedTime,
 					Progress:   sol.State.Progress,
-					ResultID:   sol.Results[0].ResultUUID,
 					// keys
 					PredictedKey: model.GetPredictedKey(sol.SolutionID),
 					ErrorKey:     model.GetErrorKey(sol.SolutionID),

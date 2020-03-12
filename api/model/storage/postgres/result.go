@@ -536,7 +536,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// fetch variable metadata
-	variables, err := s.metadata.FetchVariables(dataset, false, false)
+	variables, err := s.metadata.FetchVariables(dataset, false, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
