@@ -53,7 +53,8 @@ func SaveHandler(client *compute.Client) func(http.ResponseWriter, *http.Request
 		}
 
 		if err != nil {
-			log.Infof("Failed solution export request for %s", solutionID)
+			handleError(w, errors.Wrap(err, "failed solution export request"))
+			return
 		} else {
 			log.Infof("Completed export request for %s", solutionID)
 		}
