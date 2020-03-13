@@ -140,6 +140,7 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 		if err != nil {
 			return false, nil, err
 		}
+		addMeta = true
 	} else {
 		step, err = description.CreateSlothPipeline("time series clustering",
 			"k-means time series clustering", "", "", features)
