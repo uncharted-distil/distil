@@ -695,7 +695,7 @@ export default Vue.extend({
           return c.key === this.groupSpec.colName;
         });
 
-        // no matching col, exit early
+        // no matching col and not a cluster with effectively 2+ types, exit early
         if (!col) {
           return;
         }
@@ -711,11 +711,16 @@ export default Vue.extend({
           } else if (facet._sparkline) {
             // TODO: sparkline
           } else {
-            const type = getVarType(facet.key);
-
-            if (isClusterType(type)) {
-              const clusterCol = this.findClusterCol(facet.key, row);
-              if (facet.value === clusterCol.value) {
+            if (isClusterType(this.groupSpec.type)) {
+              const clusterCol = this.findClusterCol(
+                this.groupSpec.colName,
+                row
+              );
+              if (
+                facet.value === clusterCol.value ||
+                (clusterCol.value.value &&
+                  facet.value === clusterCol.value.value)
+              ) {
                 this.addRowSelectionToFacet(facet, col);
               }
               continue;
