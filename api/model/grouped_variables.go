@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+
 	"github.com/uncharted-distil/distil-compute/model"
 	log "github.com/unchartedsoftware/plog"
 )
@@ -78,35 +80,47 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, metaStore Me
 		}
 	}
 
-	updatedFilterParams.Variables = []string{}
+	// create variable lookup
+	varMap := make(map[string]*model.Variable)
 	for _, variable := range variables {
-		for _, filterVar := range filterParams.Variables {
-			if filterVar == variable.Name {
-				if variable.Grouping != nil {
-					componentVars := []string{}
+		varMap[variable.Name] = variable
+	}
 
-					// Include X and Y col when not dealing with time series - time series data is fetched subsequently
-					if !model.IsTimeSeries(variable.Type) {
-						componentVars = append(componentVars, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol)
-					}
+	updatedFilterParams.Variables = []string{}
+	for _, filterVar := range filterParams.Variables {
+		if varMap[filterVar] != nil {
+			variable := varMap[filterVar]
+			if variable.Grouping != nil {
+				componentVars := []string{}
 
-					// include the grouping ID if present
-					if variable.Grouping.IDCol != "" {
-						componentVars = append(componentVars, variable.Grouping.IDCol)
-					}
-
-					// include the grouping sub-ids if the ID is created from mutliple columns
-					if variable.Grouping.SubIDs != nil && len(variable.Grouping.SubIDs) > 0 {
-						componentVars = append(componentVars, variable.Grouping.SubIDs...)
-					}
-
-					// filter out any hidden variables for timeseries
-					for _, componentVarName := range componentVars {
-						updatedFilterParams.AddVariable(componentVarName)
-					}
-				} else {
-					updatedFilterParams.AddVariable(variable.Name)
+				// Include X and Y col when not dealing with time series - time series data is fetched subsequently
+				if !model.IsTimeSeries(variable.Type) {
+					componentVars = append(componentVars, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol)
 				}
+
+				// include the grouping ID if present
+				if variable.Grouping.IDCol != "" {
+					componentVars = append(componentVars, variable.Grouping.IDCol)
+				}
+
+				// include the grouping sub-ids if the ID is created from mutliple columns
+				if variable.Grouping.SubIDs != nil && len(variable.Grouping.SubIDs) > 0 {
+					componentVars = append(componentVars, variable.Grouping.SubIDs...)
+				}
+
+				// filter out any hidden variables for timeseries
+				for _, componentVarName := range componentVars {
+					updatedFilterParams.AddVariable(componentVarName)
+				}
+			} else if model.IsImage(variable.Type) {
+				// add the variable, and if it exists the cluster{
+				updatedFilterParams.AddVariable(variable.Name)
+				clusterField := fmt.Sprintf("_cluster_%s", variable.Name)
+				if varMap[clusterField] != nil {
+					updatedFilterParams.AddVariable(varMap[clusterField].Name)
+				}
+			} else {
+				updatedFilterParams.AddVariable(variable.Name)
 			}
 		}
 	}
