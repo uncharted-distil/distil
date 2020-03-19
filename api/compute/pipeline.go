@@ -16,23 +16,57 @@
 package compute
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/mitchellh/hashstructure"
+	gc "github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
+
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil/api/env"
+	"github.com/uncharted-distil/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
 )
 
 var (
-	pipelineCache *Cache
-	queue         *Queue
+	queue *Queue
+	cache *Cache
 )
+
+// Cache is used to cache data in memory. It can be persisted to disk as needed.
+type Cache struct {
+	cache      *gc.Cache
+	sourceFile string
+}
+
+// PersistCache stores the cache to disk.
+func (c *Cache) PersistCache() error {
+	items := cache.cache.Items()
+	b := new(bytes.Buffer)
+
+	encoder := gob.NewEncoder(b)
+
+	err := encoder.Encode(items)
+	if err != nil {
+		return errors.Wrap(err, "unable to encode cache")
+	}
+
+	err = util.WriteFileWithDirs(c.sourceFile, b.Bytes(), os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 type pipelineQueueTask struct {
 	client          *compute.Client
@@ -138,34 +172,34 @@ func (q *Queue) Dequeue() (*QueueItem, bool) {
 	return item, true
 }
 
-// Cache uses a simple map to lookup data stored in memory. Access to the cache
-// is threadsafe.
-type Cache struct {
-	cache map[string]interface{}
-	mu    sync.RWMutex
-}
+// InitializeCache sets up an empty cache or if a source file provided, reads
+// the cache from the source file.
+func InitializeCache(sourceFile string) error {
+	var c *gc.Cache
+	if util.FileExists(sourceFile) {
+		b, err := ioutil.ReadFile(sourceFile)
+		if err != nil {
+			return errors.Wrap(err, "unable to read cache file")
+		}
 
-// Set sets the cached value for the specified key.
-func (c *Cache) Set(key string, value interface{}) {
-	c.mu.Lock()
-	c.cache[key] = value
-	c.mu.Unlock()
-}
+		var decodedMap map[string]gc.Item
+		d := gob.NewDecoder(bytes.NewReader(b))
+		err = d.Decode(&decodedMap)
+		if err != nil {
+			return errors.Wrap(err, "unable to decode cache map")
+		}
 
-// Get reads cached value using the key.
-func (c *Cache) Get(key string) (interface{}, bool) {
-	c.mu.RLock()
-	value, found := c.cache[key]
-	c.mu.RUnlock()
-
-	return value, found
-}
-
-// InitializeCache sets up an empty cache
-func InitializeCache() {
-	pipelineCache = &Cache{
-		cache: make(map[string]interface{}),
+		c = gc.NewFrom(24*time.Hour, 48*time.Hour, decodedMap)
+	} else {
+		c = gc.New(24*time.Hour, 48*time.Hour)
 	}
+
+	cache = &Cache{
+		cache:      c,
+		sourceFile: sourceFile,
+	}
+
+	return nil
 }
 
 // InitializeQueue creates the pipeline queue and runs go routine to process pipeline requests
@@ -198,7 +232,7 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 	if err != nil {
 		return "", err
 	}
-	entry, found := pipelineCache.Get(hashedPipelineUniqueKey)
+	entry, found := cache.cache.Get(hashedPipelineUniqueKey)
 	if found {
 		log.Infof("returning cached entry for pipeline")
 		return entry.(string), nil
@@ -218,7 +252,8 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 	}
 
 	datasetURI := result.Output.(string)
-	pipelineCache.Set(hashedPipelineUniqueKey, datasetURI)
+	cache.cache.Set(hashedPipelineUniqueKey, datasetURI, gc.DefaultExpiration)
+	cache.PersistCache()
 
 	return datasetURI, nil
 }
