@@ -323,6 +323,94 @@ export default Vue.extend({
 
       return true;
     },
+    injectAxis(): boolean {
+      if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
+        return false;
+      }
+
+      let minX = this.timeseriesExtrema.x.min;
+      let maxX = this.timeseriesExtrema.x.max;
+      let minY = this.timeseriesExtrema.y.min;
+      let maxY = this.timeseriesExtrema.y.max;
+
+      if (this.forecastExtrema) {
+        minX = Math.min(
+          this.timeseriesExtrema.x.min,
+          this.forecastExtrema.x.min
+        );
+        maxX = Math.max(
+          this.timeseriesExtrema.x.max,
+          this.forecastExtrema.x.max
+        );
+        minY = Math.min(
+          this.timeseriesExtrema.y.min,
+          this.forecastExtrema.y.min
+        );
+        maxY = Math.max(
+          this.timeseriesExtrema.y.max,
+          this.forecastExtrema.y.max
+        );
+      }
+
+      const dateMinX = new Date(minX)
+        .toISOString()
+        .slice(0, 10)
+        .replace(/-/g, "/");
+      const dateMaxX = new Date(maxX)
+        .toISOString()
+        .slice(0, 10)
+        .replace(/-/g, "/");
+
+      this.xScale = d3
+        .scaleLinear()
+        .domain([minX, maxX])
+        .range([0, this.width]);
+
+      this.yScale = d3
+        .scaleLinear()
+        .domain([minY, maxY])
+        .range([this.height, 0]);
+
+      this.xScale = d3
+        .scaleLinear()
+        .domain([minX, maxX])
+        .range([0, this.width]);
+
+      this.yScale = d3
+        .scaleLinear()
+        .domain([minY, maxY])
+        .range([this.height, 0]);
+
+      // Create axes
+      const xAxis = d3.axisBottom(this.xScale).ticks(1);
+      const yAxis = d3.axisLeft(this.yScale).ticks(1);
+
+      // Create y-max
+      this.svg
+        .append("text")
+        .attr("class", "sparkline-axis-title")
+        .attr("x", 0)
+        .attr("y", 10)
+        .style("text-anchor", "left")
+        .text(maxY);
+      // Create y-min & x-min
+      this.svg
+        .append("text")
+        .attr("class", "sparkline-axis-title")
+        .attr("x", 0)
+        .attr("y", 40)
+        .style("text-anchor", "left")
+        .text(`${minY} ${dateMinX}`);
+      // Create x-max
+      this.svg
+        .append("text")
+        .attr("class", "sparkline-axis-title")
+        .attr("x", 330)
+        .attr("y", 40)
+        .style("text-anchor", "right")
+        .text(dateMaxX);
+      return true;
+    },
     injectTimeseries() {
       if (_.isEmpty(this.timeseries) || !this.$refs.svg) {
         return;
@@ -342,6 +430,7 @@ export default Vue.extend({
       this.injectSparkline();
       this.injectHighlightRegion();
       this.injectPrediction();
+      this.injectAxis();
 
       this.hasRendered = true;
     }
@@ -359,6 +448,13 @@ svg.line-chart-row {
 svg.line-chart-row g {
   stroke: #666;
   stroke-width: 2px;
+}
+svg .sparkline-axis-title {
+  font-size: 11px;
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+  fill: #000;
+  text-shadow: 0 0 3px #fff, 1px -1px 1px #fff, -1px -1px 1px #fff,
+    0 -1px 1px #fff;
 }
 
 .highlight-tooltip {
