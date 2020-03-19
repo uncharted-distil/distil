@@ -40,10 +40,7 @@ func VariableSummaryHandler(ctorStorage api.DataStorageCtor) func(http.ResponseW
 		// get variabloe name
 		variable := pat.Param(r, "variable")
 		invert := pat.Param(r, "invert")
-		invertBool := false
-		if invert == "true" {
-			invertBool = true
-		}
+		invertBool := parseBoolParam(invert)
 		// get the facet mode
 		mode, err := api.SummaryModeFromString(pat.Param(r, "mode"))
 		if err != nil {
