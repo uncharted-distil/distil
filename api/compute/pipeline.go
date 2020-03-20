@@ -253,7 +253,10 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 
 	datasetURI := result.Output.(string)
 	cache.cache.Set(hashedPipelineUniqueKey, datasetURI, gc.DefaultExpiration)
-	cache.PersistCache()
+	err = cache.PersistCache()
+	if err != nil {
+		log.Warnf("error persisting cache: %v", err)
+	}
 
 	return datasetURI, nil
 }

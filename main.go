@@ -89,7 +89,11 @@ func main() {
 
 	// initialize the pipeline cache and
 	pipelineCacheFilename := path.Join(env.GetTmpPath(), config.PipelineCacheFilename)
-	api.InitializeCache(pipelineCacheFilename)
+	err = api.InitializeCache(pipelineCacheFilename)
+	if err != nil {
+		log.Errorf("%+v", err)
+		os.Exit(1)
+	}
 	api.InitializeQueue(&config)
 
 	// initialize the user event logger - records user interactions with the system in a CSV file for post-run
