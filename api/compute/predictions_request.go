@@ -10,6 +10,7 @@ import (
 
 // PredictRequest defines a request to generate new predictions from a fitted model and input data.
 type PredictRequest struct {
+	DatasetID        string
 	Dataset          string
 	TargetType       string
 	FittedSolutionID string
@@ -51,6 +52,12 @@ func NewPredictRequest(data []byte) (*PredictRequest, error) {
 	}
 
 	// the name of the input prediction dataset
+	req.DatasetID, ok = json.String(jsonMap, "datasetId")
+	if !ok {
+		return nil, errors.Errorf("no `datasetId` in predict request")
+	}
+
+	// the dataset contents as a base 64 encded string
 	req.Dataset, ok = json.String(jsonMap, "dataset")
 	if !ok {
 		return nil, errors.Errorf("no `dataset` in predict request")

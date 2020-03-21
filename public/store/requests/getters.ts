@@ -9,7 +9,8 @@ import {
   SOLUTION_COMPLETED,
   SOLUTION_FITTING,
   SOLUTION_SCORING,
-  SOLUTION_PRODUCING
+  SOLUTION_PRODUCING,
+  Predictions
 } from "./index";
 
 export function sortRequestsByTimestamp(
@@ -121,5 +122,10 @@ export const getters = {
     const target = <string>getters.getRouteTargetVariable;
     const variables = <Variable[]>getters.getVariables;
     return variables.filter(variable => variable.colName === target);
+  },
+
+  // Returns all search results.
+  getPredictions(state: RequestState): Predictions[] {
+    return state.predictions;
   }
 };

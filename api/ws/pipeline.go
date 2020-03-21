@@ -329,7 +329,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 
 	predictParams := &task.PredictParams{
 		Meta:             meta,
-		Dataset:          "prediction_data",
+		Dataset:          request.DatasetID,
 		SolutionID:       sr.SolutionID,
 		FittedSolutionID: request.FittedSolutionID,
 		CSVData:          []byte(data),
@@ -345,12 +345,17 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	}
 
 	// run predictions - synchronous call for now
-	_, err = task.Predict(predictParams)
+	result, err := task.Predict(predictParams)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to generate predictions"))
 		return
 	}
 
+	// send the status update to the client
+	// TODO: we are only sending when complete - should send in progress similar to solution create
+	handleSuccess(conn, msg, jutil.StructToMap(result))
+
+	// notify the client that we're done
 	handleComplete(conn, msg)
 }
 

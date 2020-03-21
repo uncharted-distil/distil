@@ -34,6 +34,8 @@ export interface SolutionRequest extends Request {
 
 export interface PredictRequest extends Request {
   fittedSolutionId: string;
+  dataset: string;
+  feature: string;
 }
 
 export interface Solution extends SolutionRequest {

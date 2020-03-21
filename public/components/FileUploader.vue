@@ -9,8 +9,8 @@
       id="upload-modal"
       title="Import local file"
       :ok-disabled="!Boolean(file)"
-      @hide="clearFile()"
       @ok="handleOk()"
+      @show="clearFile()"
     >
       <p>Select a csv file to import</p>
       <b-form-file
@@ -28,8 +28,9 @@
 <script lang="ts">
 import Vue from "vue";
 import { actions as datasetActions } from "../store/dataset/module";
+import { actions as requestActions } from "../store/requests/module";
 import { filterSummariesByDataset } from "../util/data";
-import { PREDICTION_UPLOAD, DATASET_UPLOAD } from "../util/uploads";
+import { PREDICTION_UPLOAD, DATASET_UPLOAD, getBase64 } from "../util/uploads";
 
 export default Vue.extend({
   name: "file-uploader",
@@ -43,6 +44,7 @@ export default Vue.extend({
   props: {
     uploadType: String as () => string,
     fittedSolutionId: String as () => string,
+    target: String as () => string,
     targetType: String as () => string
   },
 
@@ -89,20 +91,45 @@ export default Vue.extend({
         datasetID: this.datasetID
       });
       let uploadError;
-      datasetActions
-        .uploadDataFile(this.$store, {
-          datasetID: this.datasetID,
-          file: this.file,
-          type: this.uploadType,
-          fittedSolutionId: this.fittedSolutionId,
-          targetType: this.targetType
-        })
-        .catch(err => {
-          uploadError = err;
-        })
-        .then(response => {
-          this.$emit("uploadfinish", uploadError, response);
-        });
+      switch (this.uploadType) {
+        case PREDICTION_UPLOAD:
+          // Apply model to a new prediction set.  The selected file's contents will be uploaded and
+          // fed into a fitted solution.  The prediction request goes through a websocket similar to
+          getBase64(this.file).then(dataset => {
+            const requestMsg = {
+              datasetId: this.datasetID,
+              dataset: dataset,
+              fittedSolutionId: this.fittedSolutionId,
+              target: this.target,
+              targetType: this.targetType
+            };
+            requestActions
+              .createPredictRequest(this.$store, requestMsg)
+              .catch(err => {
+                uploadError = err;
+              })
+              .then(response => {
+                this.$emit("uploadfinish", uploadError, response);
+              });
+          });
+          break;
+        case DATASET_UPLOAD:
+        default:
+          datasetActions
+            .uploadDataFile(this.$store, {
+              datasetID: this.datasetID,
+              file: this.file,
+              type: this.uploadType,
+              fittedSolutionId: this.fittedSolutionId,
+              targetType: this.targetType
+            })
+            .catch(err => {
+              uploadError = err;
+            })
+            .then(response => {
+              this.$emit("uploadfinish", uploadError, response);
+            });
+      }
     }
   }
 });

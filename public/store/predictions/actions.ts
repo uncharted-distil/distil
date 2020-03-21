@@ -16,6 +16,8 @@ import {
   fetchSummaryExemplars
 } from "../../util/data";
 import { getters as predictionGetters } from "../predictions/module";
+import { RouteArgs } from "../../util/routes";
+import { getPredictionsById } from "../../util/predictions";
 
 export type PredictionContext = ActionContext<PredictionState, DistilState>;
 
@@ -29,6 +31,7 @@ export const actions = {
       solutionId: string;
       highlight: Highlight;
       varModes: Map<string, SummaryMode>;
+      produceRequestId: string;
     }
   ) {
     if (!args.dataset) {
@@ -47,17 +50,17 @@ export const actions = {
       console.warn("`solutionId` argument is missing");
       return null;
     }
-    const solution = getSolutionById(
-      context.rootState.requestsModule.solutions,
-      args.solutionId
+    const predictions = getPredictionsById(
+      context.rootState.requestsModule.predictions,
+      args.produceRequestId
     );
-    if (!solution.resultId) {
+    if (!predictions) {
       // no results ready to pull
       return;
     }
 
     const dataset = args.dataset;
-    const solutionId = args.solutionId;
+    const resultId = predictions.resultId;
 
     const promises = [];
 
@@ -85,7 +88,7 @@ export const actions = {
         // add placeholder
         mutations.updateTrainingSummary(
           context,
-          createPendingSummary(key, label, description, dataset, solutionId)
+          createPendingSummary(key, label, description, dataset)
         );
       }
       // fetch summary
@@ -93,7 +96,7 @@ export const actions = {
         actions.fetchTrainingSummary(context, {
           dataset: dataset,
           variable: variable,
-          resultID: solution.resultId,
+          resultID: resultId,
           highlight: args.highlight,
           varMode: args.varModes.has(variable.colName)
             ? args.varModes.get(variable.colName)
@@ -165,7 +168,7 @@ export const actions = {
       solutionId: string;
       dataset: string;
       highlight: Highlight;
-      resultId: string;
+      produceRequestId: string;
     }
   ) {
     const solution = getSolutionById(
@@ -188,7 +191,7 @@ export const actions = {
       const response = await axios.post(
         `distil/prediction-results/${args.dataset}/${encodeURIComponent(
           args.solutionId
-        )}/${encodeURIComponent(args.resultId)}`,
+        )}/${encodeURIComponent(args.produceRequestId)}`,
         filterParams
       );
       mutations.setIncludedPredictionTableData(context, response.data);
@@ -259,7 +262,7 @@ export const actions = {
         dataset: args.dataset,
         solutionId: args.solutionId,
         highlight: args.highlight,
-        resultId: args.produceRequestId
+        produceRequestId: args.produceRequestId
       }),
       actions.fetchExcludedPredictionTableData(context, {
         dataset: args.dataset,
@@ -278,6 +281,7 @@ export const actions = {
       solutionId: string;
       highlight: Highlight;
       varMode: SummaryMode;
+      produceRequestId: string;
     }
   ) {
     if (!args.dataset) {
@@ -297,12 +301,11 @@ export const actions = {
       return null;
     }
 
-    const solution = getSolutionById(
-      context.rootState.requestsModule.solutions,
-      args.solutionId
+    const predictions = getPredictionsById(
+      context.rootState.requestsModule.predictions,
+      args.produceRequestId
     );
-    if (!solution.resultId) {
-      // no results ready to pull
+    if (!predictions.resultId) {
       return null;
     }
 
@@ -314,12 +317,12 @@ export const actions = {
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
     const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
-    const key = solution.predictedKey;
+    const key = predictions.predictedKey;
     const label = "Predicted";
     return fetchPredictionResultSummary(
       context,
       endpoint,
-      solution,
+      predictions,
       args.target,
       key,
       label,

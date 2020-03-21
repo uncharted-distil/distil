@@ -32,7 +32,8 @@ export const getters = {
   ),
   getActiveSolutionTargetVariable: read(
     moduleGetters.getActiveSolutionTargetVariable
-  )
+  ),
+  getPredictions: read(moduleGetters.getPredictions)
 };
 
 export const actions = {
@@ -49,5 +50,6 @@ export const mutations = {
   updateSolutionRequests: commit(moduleMutations.updateSolutionRequests),
   updateSolutions: commit(moduleMutations.updateSolutions),
   clearSolutionRequests: commit(moduleMutations.clearSolutionRequests),
-  clearSolutions: commit(moduleMutations.clearSolutions)
+  clearSolutions: commit(moduleMutations.clearSolutions),
+  updatePredicts: commit(moduleMutations.updatePredictions)
 };

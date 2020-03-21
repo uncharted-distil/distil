@@ -13,7 +13,10 @@ import {
   SOLUTION_SCORING,
   SolutionRequest,
   Solution,
-  PredictRequest
+  PREDICT_COMPLETED,
+  PREDICT_ERRORED,
+  PredictRequest,
+  Predictions
 } from "./index";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
@@ -21,12 +24,17 @@ import { mutations } from "./module";
 import { getWebSocketConnection, getStreamById } from "../../util/ws";
 import { FilterParams } from "../../util/filters";
 import { actions as resultsActions } from "../results/module";
+import { actions as predictActions } from "../predictions/module";
 import { getters as routeGetters } from "../route/module";
 import { TaskTypes, SummaryMode } from "../dataset";
 
 const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
 const PREDICT = "PREDICT";
+
+// TODO: Server side sends `SolutionResult` message across that is a grab bag of fields.
+// It should be trimmed down to contain only what is required per request, and these defs
+// should be updated to match.
 
 // Search request message used in web socket context
 interface SolutionRequestMsg {
@@ -49,13 +57,18 @@ interface SolutionStatusMsg {
 }
 
 interface PredictRequestMsg {
+  datasetId: string;
   dataset: string; // base64 encoded version of dataset
   fittedSolutionId: string;
+  target: string;
   targetType: string;
 }
 
+// Prediction status.
 interface PredictStatusMsg {
+  solutionId: string;
   resultId: string;
+  produceRequestId: string;
   progress: string;
   error: string;
   timestamp: number;
@@ -134,6 +147,41 @@ function updateCurrentSolutionResults(
       highlight: context.getters.getDecodedHighlight
     });
   }
+}
+
+function updateCurrentPredictResults(
+  context: RequestContext,
+  req: PredictRequestMsg,
+  res: PredictStatusMsg
+) {
+  const varModes = context.getters.getDecodedVarModes;
+
+  predictActions.fetchPredictionTableData(store, {
+    solutionId: res.solutionId,
+    dataset: req.datasetId,
+    highlight: context.getters.getDecodedHighlight,
+    produceRequestId: res.produceRequestId
+  });
+
+  predictActions.fetchPredictedSummary(store, {
+    dataset: req.datasetId,
+    target: req.target,
+    solutionId: res.solutionId,
+    highlight: context.getters.getDecodedHighlight,
+    varMode: varModes.has(req.target)
+      ? varModes.get(req.target)
+      : SummaryMode.Default,
+    produceRequestId: res.produceRequestId
+  });
+
+  predictActions.fetchTrainingSummaries(store, {
+    dataset: req.datasetId,
+    training: context.getters.getActiveSolutionTrainingVariables,
+    solutionId: res.solutionId,
+    highlight: context.getters.getDecodedHighlight,
+    varModes: varModes,
+    produceRequestId: res.produceRequestId
+  });
 }
 
 function updateSolutionResults(
@@ -261,7 +309,7 @@ async function handleProgress(
   }
 }
 
-async function handlePredictProgress(
+function handlePredictProgress(
   context: RequestContext,
   request: PredictRequestMsg,
   response: PredictStatusMsg
@@ -270,10 +318,15 @@ async function handlePredictProgress(
   console.log(
     `Progress for request ${response.resultId} updated to ${response.progress}`
   );
-  // await actions.fetchSolutionRequest(context, {
-  //   requestId: response.requestId
-  // });
-  // handleRequestProgress(context, request, response);
+  switch (response.progress) {
+    case PREDICT_COMPLETED:
+    case PREDICT_ERRORED:
+      // no waiting for data here - we get single response back when the prediction is complete
+      const predictions = parsePredictResponse(response);
+      mutations.updatePredicts(store, predictions);
+      updateCurrentPredictResults(context, request, response);
+      break;
+  }
 }
 
 // parse returned server data into a solution that can be added to the index
@@ -306,6 +359,20 @@ function parseRequestResponse(responseData: any): SolutionRequest {
     filters: responseData.filters,
     timestamp: responseData.timestamp,
     progress: responseData.progress
+  };
+}
+
+function parsePredictResponse(responseData: any): Predictions {
+  return {
+    requestId: responseData.produceRequestId,
+    progress: responseData.progress,
+    timestamp: responseData.timestamp,
+    fittedSolutionId: responseData.fittedSolutionId,
+    resultId: responseData.resultId,
+    dataset: responseData.dataset,
+    feature: responseData.feature,
+    predictedKey: responseData.predictedKey,
+    isBad: false
   };
 }
 
@@ -432,9 +499,7 @@ export const actions = {
           if (!receivedFirstSolution) {
             reject(new Error("No valid solutions found"));
           }
-          // close stream
-          stream.close();
-          // close the socket
+          // close streampredict
           conn.close();
         }
       });
@@ -468,7 +533,9 @@ export const actions = {
 
   // Run predictions against a previously fitted model.  The data input for the predictions
   // is itself a dataset.
-  createPredictRequest(context: any, request: PredictRequestMsg) {
+  createPredictRequest(context: any, request: PredictRequestMsg): Promise<any> {
+    let receivedUpdate = false;
+
     return new Promise((resolve, reject) => {
       const conn = getWebSocketConnection();
       const stream = conn.stream(response => {
@@ -477,10 +544,15 @@ export const actions = {
           console.error(response.error);
         }
 
-        // handle request / solution progress
+        // handle prediction request progress
         if (response.progress) {
-          console.log("Prediction request has completed, closing stream");
           handlePredictProgress(context, request, response);
+        }
+
+        // resolve the promise on the first update
+        if (!receivedUpdate) {
+          receivedUpdate = true;
+          resolve(response);
         }
 
         // close stream on complete
@@ -499,6 +571,7 @@ export const actions = {
       stream.send({
         type: PREDICT,
         fittedSolutionId: request.fittedSolutionId,
+        datasetId: request.datasetId,
         dataset: request.dataset,
         targetType: request.targetType
       });

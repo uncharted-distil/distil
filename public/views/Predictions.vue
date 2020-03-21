@@ -39,6 +39,7 @@ import { actions as viewActions } from "../store/view/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as predictionGetters } from "../store/predictions/module";
 import { Feature, Activity } from "../util/userEvents";
 
 export default Vue.extend({
@@ -61,7 +62,7 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
     trainingSummaries(): VariableSummary[] {
-      return resultGetters.getTrainingSummaries(this.$store);
+      return predictionGetters.getTrainingSummaries(this.$store);
     },
     solutionId(): string {
       return routeGetters.getRouteSolutionId(this.$store);

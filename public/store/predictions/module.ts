@@ -55,6 +55,7 @@ export const getters = {
   ),
   // predicted
   getPredictionSummaries: read(moduleGetters.getPredictionSummaries),
+  getTrainingSummaries: read(moduleGetters.getTrainingSummaries),
 
   // result table data
   getPredictionDataNumRows: read(moduleGetters.getPredictionDataNumRows),

@@ -53,22 +53,6 @@ async function getVariables(dataset: string): Promise<Variable[]> {
   }));
 }
 
-// Converts a file into a Base64 string.
-function getBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      let encoded = reader.result.toString().replace(/^data:(.*,)?/, "");
-      if (encoded.length % 4 > 0) {
-        encoded += "=".repeat(4 - (encoded.length % 4));
-      }
-      resolve(encoded);
-    };
-    reader.onerror = error => reject(error);
-  });
-}
-
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
 
 export const actions = {
@@ -336,57 +320,33 @@ export const actions = {
       targetType: string;
       fittedSolutionId: string;
     }
-  ): Promise<any> {
+  ): Promise<void> {
     if (!args.datasetID) {
       console.warn("`datasetID` argument is missing");
-      return null;
+      return;
     }
     if (!args.file) {
       console.warn("`file` argument is missing");
-      return null;
+      return;
     }
     if (!args.type) {
       console.warn("`type` argument is missing");
-      return null;
+      return;
     }
     const data = new FormData();
     data.append("file", args.file);
 
-    switch (args.type) {
-      case PREDICTION_UPLOAD:
-        if (!args.fittedSolutionId) {
-          console.warn("`solutionId` argument is missing");
-          return null;
-        }
-        // convert the input csv into base64 so it can be sent over the websocket
-        const dataset = await getBase64(args.file);
-
-        // find the selected fitted solution ID
-        const requestMsg = {
-          dataset: dataset,
-          fittedSolutionId: args.fittedSolutionId,
-          targetType: args.targetType
-        };
-        resultActions.createPredictRequest(store, requestMsg);
-        break;
-      case DATASET_UPLOAD:
-        return axios
-          .post(`/distil/upload/${args.datasetID}?type=table`, data, {
-            headers: { "Content-Type": "multipart/form-data" }
-          })
-          .then(response => {
-            return actions.importDataset(context, {
-              datasetID: args.datasetID,
-              source: "augmented",
-              provenance: "local",
-              terms: args.datasetID,
-              originalDataset: null,
-              joinedDataset: null
-            });
-          });
-      default:
-        console.log("unknown upload type");
-    }
+    await axios.post(`/distil/upload/${args.datasetID}?type=table`, data, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    return actions.importDataset(context, {
+      datasetID: args.datasetID,
+      source: "augmented",
+      provenance: "local",
+      terms: args.datasetID,
+      originalDataset: null,
+      joinedDataset: null
+    });
   },
 
   async importDataset(
@@ -416,8 +376,7 @@ export const actions = {
         joinedDataset: args.joinedDataset
       };
     }
-
-    const response = await axios.post(
+    await axios.post(
       `/distil/import/${args.datasetID}/${args.source}/${args.provenance}`,
       postParams
     );

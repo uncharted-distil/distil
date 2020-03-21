@@ -11,7 +11,12 @@ import {
   D3M_INDEX_FIELD,
   SummaryMode
 } from "../store/dataset/index";
-import { Solution, SOLUTION_COMPLETED } from "../store/requests/index";
+import {
+  Solution,
+  SOLUTION_COMPLETED,
+  Predictions,
+  PREDICT_COMPLETED
+} from "../store/requests/index";
 import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
 import store from "../store/store";
@@ -394,7 +399,7 @@ export function fetchSolutionResultSummary(
 export function fetchPredictionResultSummary(
   context: PredictionContext,
   endpoint: string,
-  solution: Solution,
+  predictions: Predictions,
   target: string,
   key: string,
   label: string,
@@ -403,8 +408,8 @@ export function fetchPredictionResultSummary(
   filterParams: FilterParams,
   varMode: SummaryMode
 ): Promise<any> {
-  const dataset = solution.dataset;
-  const solutionId = solution.solutionId;
+  const dataset = predictions.dataset;
+  const resultId = predictions.resultId;
 
   const exists = _.find(
     resultSummaries,
@@ -414,12 +419,12 @@ export function fetchPredictionResultSummary(
     // add placeholder
     updateFunction(
       context,
-      createPendingSummary(key, label, dataset, solutionId)
+      createPendingSummary(key, label, dataset, resultId)
     );
   }
 
   // fetch the results for each solution
-  if (solution.progress !== SOLUTION_COMPLETED) {
+  if (predictions.progress !== PREDICT_COMPLETED) {
     // skip
     return;
   }
@@ -427,24 +432,9 @@ export function fetchPredictionResultSummary(
   // return promise
   return axios
     .post(
-      `${endpoint}/${solution.resultId}/${varMode}`,
+      `${endpoint}/${resultId}/${varMode}`,
       filterParams ? filterParams : {}
     )
-    .then(response => {
-      // save the histogram data
-      const summary = response.data.summary;
-      return fetchResultExemplars(
-        dataset,
-        target,
-        key,
-        solutionId,
-        summary
-      ).then(() => {
-        summary.solutionId = solutionId;
-        summary.dataset = dataset;
-        updateFunction(context, summary);
-      });
-    })
     .catch(error => {
       console.error(error);
       updateFunction(context, createErrorSummary(key, label, dataset, error));

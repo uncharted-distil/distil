@@ -443,7 +443,7 @@ export const actions = {
     predictionMutations.setIncludedPredictionTableData(store, null);
     predictionMutations.setExcludedPredictionTableData(store, null);
 
-    const dataset = context.getters.getRouteDataset;
+    const dataset = context.getters.getRouteInferenceDataset;
     const target = context.getters.getRouteTargetVariable;
     // fetch new state
     await fetchVariables(context, {
@@ -485,14 +485,16 @@ export const actions = {
       training: trainingVariables,
       solutionId: solutionId,
       highlight: highlight,
-      varModes: varModes
+      varModes: varModes,
+      produceRequestId: produceRequestId
     });
     predictionActions.fetchPredictedSummary(store, {
       dataset: inferenceDataset,
       target: target,
       solutionId: solutionId,
       highlight: highlight,
-      varMode: SummaryMode.Default
+      varMode: SummaryMode.Default,
+      produceRequestId: produceRequestId
     });
   }
 };
