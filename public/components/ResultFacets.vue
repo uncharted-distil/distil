@@ -59,6 +59,7 @@ import {
 } from "../store/requests/index";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as predictionsGetters } from "../store/predictions/module";
 import {
   getters as requestGetters,
   actions as requestActions

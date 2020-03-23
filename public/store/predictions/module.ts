@@ -69,7 +69,7 @@ export const actions = {
   // input inference data
   fetchTrainingSummaries: dispatch(moduleActions.fetchTrainingSummaries),
 
-  // result
+  // result table data
   fetchIncludedPredictionTableData: dispatch(
     moduleActions.fetchIncludedPredictionTableData
   ),
@@ -77,11 +77,9 @@ export const actions = {
     moduleActions.fetchExcludedPredictionTableData
   ),
   fetchPredictionTableData: dispatch(moduleActions.fetchPredictionTableData),
-  // predicted
-  fetchPredictedSummary: dispatch(moduleActions.fetchPredictionSummary),
 
-  // forecast
-  fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries)
+  // predicted value summary
+  fetchPredictedSummary: dispatch(moduleActions.fetchPredictionSummary)
 };
 
 // Typed mutations

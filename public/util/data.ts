@@ -334,7 +334,7 @@ export function createErrorSummary(
   };
 }
 
-export function fetchSolutionResultSummary(
+export async function fetchSolutionResultSummary(
   context: ResultsContext,
   endpoint: string,
   solution: Solution,
@@ -358,7 +358,7 @@ export function fetchSolutionResultSummary(
     // add placeholder
     updateFunction(
       context,
-      createPendingSummary(key, label, dataset, solutionId)
+      createPendingSummary(key, label, "", dataset, solutionId)
     );
   }
 
@@ -373,34 +373,27 @@ export function fetchSolutionResultSummary(
     : `${endpoint}/${resultId}`;
 
   // return promise
-  return axios
-    .post(completeEndpoint, filterParams ? filterParams : {})
-    .then(response => {
-      // save the histogram data
-      const summary = response.data.summary;
-      return fetchResultExemplars(
-        dataset,
-        target,
-        key,
-        solutionId,
-        summary
-      ).then(() => {
-        summary.solutionId = solutionId;
-        summary.dataset = dataset;
-        updateFunction(context, summary);
-      });
-    })
-    .catch(error => {
-      console.error(error);
-      updateFunction(context, createErrorSummary(key, label, dataset, error));
-    });
+  try {
+    const response = await axios.post(
+      completeEndpoint,
+      filterParams ? filterParams : {}
+    );
+    // save the histogram data
+    const summary = response.data.summary;
+    await fetchResultExemplars(dataset, target, key, solutionId, summary);
+    summary.solutionId = solutionId;
+    summary.dataset = dataset;
+    updateFunction(context, summary);
+  } catch (error) {
+    console.error(error);
+    updateFunction(context, createErrorSummary(key, label, dataset, error));
+  }
 }
 
-export function fetchPredictionResultSummary(
+export async function fetchPredictionResultSummary(
   context: PredictionContext,
   endpoint: string,
   predictions: Predictions,
-  target: string,
   key: string,
   label: string,
   resultSummaries: VariableSummary[],
@@ -417,10 +410,7 @@ export function fetchPredictionResultSummary(
   );
   if (!exists) {
     // add placeholder
-    updateFunction(
-      context,
-      createPendingSummary(key, label, dataset, resultId)
-    );
+    updateFunction(context, createPendingSummary(key, label, "", dataset));
   }
 
   // fetch the results for each solution
@@ -430,15 +420,18 @@ export function fetchPredictionResultSummary(
   }
 
   // return promise
-  return axios
-    .post(
+  try {
+    const response = await axios.post(
       `${endpoint}/${resultId}/${varMode}`,
       filterParams ? filterParams : {}
-    )
-    .catch(error => {
-      console.error(error);
-      updateFunction(context, createErrorSummary(key, label, dataset, error));
-    });
+    );
+    const summary = <VariableSummary>response.data.summary;
+    summary.dataset = dataset;
+    updateFunction(context, summary);
+  } catch (error) {
+    console.error(error);
+    updateFunction(context, createErrorSummary(key, label, dataset, error));
+  }
 }
 
 export function filterVariablesByPage(

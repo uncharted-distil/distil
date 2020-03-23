@@ -23,7 +23,7 @@ export type PredictionContext = ActionContext<PredictionState, DistilState>;
 
 export const actions = {
   // fetches variable summary data for the given dataset and variables
-  fetchTrainingSummaries(
+  async fetchTrainingSummaries(
     context: PredictionContext,
     args: {
       dataset: string;
@@ -272,6 +272,7 @@ export const actions = {
       })
     ]);
   },
+
   // fetches result summary for a given solution id.
   fetchPredictionSummary(
     context: PredictionContext,
@@ -323,7 +324,6 @@ export const actions = {
       context,
       endpoint,
       predictions,
-      args.target,
       key,
       label,
       predictionGetters.getPredictionSummaries(context),
