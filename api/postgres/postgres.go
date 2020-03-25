@@ -40,7 +40,10 @@ const (
 			value		varchar(200)
 		);`
 
-	requestTableName               = "request"
+	// PredictionTableName is the name of the table for prediction requests.
+	PredictionTableName = "prediction"
+	requestTableName    = "request"
+
 	solutionTableName              = "solution"
 	solutionFeatureWeightTableName = "solution_weight"
 	solutionStateTableName         = "solution_state"
@@ -57,6 +60,15 @@ const (
 			created_time		timestamp,
 			last_updated_time	timestamp
 		);`
+	predictionTableCreationSQL = `CREATE TABLE %s (
+				request_id			varchar(200),
+				dataset				varchar(200),
+				target		varchar(100),
+				fitted_solution_id	varchar(200),
+				progress			varchar(40),
+				created_time		timestamp,
+				last_updated_time	timestamp
+			);`
 	solutionTableCreationSQL = `CREATE TABLE %s (
 			request_id		varchar(200),
 			solution_id		varchar(200),
@@ -182,8 +194,14 @@ func (d *Database) CreateSolutionMetadataTables() error {
 	// Create the solution tables.
 	log.Infof("Creating solution metadata tables.")
 
+	d.DropTable(PredictionTableName)
+	_, err := d.DB.Exec(fmt.Sprintf(predictionTableCreationSQL, PredictionTableName))
+	if err != nil {
+		return err
+	}
+
 	d.DropTable(requestTableName)
-	_, err := d.DB.Exec(fmt.Sprintf(requestTableCreationSQL, requestTableName))
+	_, err = d.DB.Exec(fmt.Sprintf(requestTableCreationSQL, requestTableName))
 	if err != nil {
 		return err
 	}

@@ -25,23 +25,21 @@ import (
 	"github.com/uncharted-distil/distil/api/model"
 )
 
-// SolutionRequest represents a information used to make a pipeline generation request.
-type SolutionRequest struct {
-	RequestID string              `json:"requestId"`
-	Feature   string              `json:"feature"`
-	Dataset   string              `json:"dataset"`
-	Features  []*model.Feature    `json:"features"`
-	Filters   *model.FilterParams `json:"filters"`
-	Progress  string              `json:"progress"`
-	Timestamp time.Time           `json:"timestamp"`
+// PredictionRequest represents a information used to make a prediction request.
+type PredictionRequest struct {
+	RequestID        string    `json:"requestId"`
+	FittedSolutionID string    `json:"fittedSolutionId"`
+	Feature          string    `json:"feature"`
+	Dataset          string    `json:"dataset"`
+	Progress         string    `json:"progress"`
+	Timestamp        time.Time `json:"timestamp"`
 }
 
-// SolutionRequestsHandler fetches search request for a given dataset and target.
-func SolutionRequestsHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+// PredictionRequestsHandler fetches prediction request for a given dataset and target.
+func PredictionRequestsHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
-		dataset := handleNullParameter(pat.Param(r, "dataset"))
-		target := handleNullParameter(pat.Param(r, "target"))
+		fittedSolutionID := pat.Param(r, "fitted-solution-id")
 
 		solution, err := solutionCtor()
 		if err != nil {
@@ -49,22 +47,20 @@ func SolutionRequestsHandler(solutionCtor model.SolutionStorageCtor) func(http.R
 			return
 		}
 
-		requests, err := solution.FetchRequestByDatasetTarget(dataset, target)
+		preds, err := solution.FetchPredictionsByFittedSolutionID(fittedSolutionID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		resp := make([]*SolutionRequest, len(requests))
-		for i, req := range requests {
-			resp[i] = &SolutionRequest{
-				// request
-				RequestID: req.RequestID,
-				Dataset:   req.Dataset,
-				Feature:   req.TargetFeature(),
-				Features:  req.Features,
-				Filters:   req.Filters,
-				Timestamp: req.CreatedTime,
-				Progress:  req.Progress,
+		resp := make([]*PredictionRequest, len(preds))
+		for i, p := range preds {
+			resp[i] = &PredictionRequest{
+				RequestID:        p.RequestID,
+				Dataset:          p.Dataset,
+				FittedSolutionID: p.FittedSolutionID,
+				Feature:          p.Target,
+				Timestamp:        p.CreatedTime,
+				Progress:         p.Progress,
 			}
 		}
 
@@ -77,8 +73,8 @@ func SolutionRequestsHandler(solutionCtor model.SolutionStorageCtor) func(http.R
 	}
 }
 
-// SolutionRequestHandler fetches a solution request by its ID.
-func SolutionRequestHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+// PredictionRequestHandler fetches a prediction request by its ID.
+func PredictionRequestHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		requestID := pat.Param(r, "request-id")
@@ -89,20 +85,19 @@ func SolutionRequestHandler(solutionCtor model.SolutionStorageCtor) func(http.Re
 			return
 		}
 
-		req, err := solution.FetchRequest(requestID)
+		pred, err := solution.FetchPrediction(requestID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		resp := SolutionRequest{
-			// request
-			RequestID: req.RequestID,
-			Dataset:   req.Dataset,
-			Feature:   req.TargetFeature(),
-			Features:  req.Features,
-			Filters:   req.Filters,
-			Timestamp: req.CreatedTime,
-			Progress:  req.Progress,
+
+		resp := &PredictionRequest{
+			RequestID:        pred.RequestID,
+			Dataset:          pred.Dataset,
+			FittedSolutionID: pred.FittedSolutionID,
+			Feature:          pred.Target,
+			Timestamp:        pred.CreatedTime,
+			Progress:         pred.Progress,
 		}
 
 		// marshal data and sent the response back
@@ -112,4 +107,12 @@ func SolutionRequestHandler(solutionCtor model.SolutionStorageCtor) func(http.Re
 			return
 		}
 	}
+}
+
+func handleNullParameter(value string) string {
+	if value == "null" {
+		return ""
+	}
+
+	return value
 }

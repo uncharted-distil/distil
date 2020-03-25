@@ -305,11 +305,10 @@ func (s *Storage) loadRequestFromSolutionID(solutionID string) (*api.Request, er
 
 // FetchRequestByDatasetTarget pulls requests associated with a given dataset and target from postgres.
 func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string) ([]*api.Request, error) {
-
 	// get the solution ids
 	sql := fmt.Sprintf("SELECT DISTINCT ON(request.request_id) request.request_id, request.dataset, request.progress, request.created_time, request.last_updated_time "+
 		"FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id "+
-		"INNER JOIN %s solution ON request.request_id = solution.request_id ",
+		"INNER JOIN %s solution ON request.request_id = solution.request_id",
 		requestTableName, featureTableName, solutionTableName)
 	params := make([]interface{}, 0)
 

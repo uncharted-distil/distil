@@ -180,7 +180,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, err
 	}
 
-	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, produceRequestID, "inference", resultID, resultURIs[0], "PREDICT_COMPLETED", time.Now())
+	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, produceRequestID, api.SolutionResultTypeInference, resultID, resultURIs[0], "PREDICT_COMPLETED", time.Now())
 	if err != nil {
 		return nil, err
 	}

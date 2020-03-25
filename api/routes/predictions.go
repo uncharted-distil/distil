@@ -16,389 +16,129 @@
 package routes
 
 import (
-	"bytes"
-	"encoding/csv"
-	"fmt"
-	"io/ioutil"
 	"net/http"
-	"path"
-	"sort"
-	"strconv"
 	"time"
 
-	"github.com/araddon/dateparse"
 	"github.com/pkg/errors"
-	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/metadata"
-	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/uncharted-distil/distil-compute/primitive/compute"
-	"github.com/uncharted-distil/distil/api/env"
-	api "github.com/uncharted-distil/distil/api/model"
-	"github.com/uncharted-distil/distil/api/task"
-	"github.com/uncharted-distil/distil/api/util/json"
+	"github.com/uncharted-distil/distil/api/model"
 )
 
-// PredictionsHandler receives a file and produces results using the specified
-// fitted solution id
-func PredictionsHandler(outputPath string, dataStorageCtor api.DataStorageCtor, solutionStorageCtor api.SolutionStorageCtor,
-	metaStorageCtor api.MetadataStorageCtor, config *env.Config, ingestConfig *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
+// PredictionResponse represents a result from a produce call on a prediction dataset.
+type PredictionResponse struct {
+	RequestID        string    `json:"requestId"`
+	FittedSolutionID string    `json:"fittedSolutionId"`
+	Feature          string    `json:"feature"`
+	Dataset          string    `json:"dataset"`
+	Progress         string    `json:"progress"`
+	Timestamp        time.Time `json:"timestamp"`
+	ResultID         string    `json:"resultId"`
+	PredictedKey     string    `json:"predictedKey"`
+}
+
+// PredictionsHandler fetches predictions associated with a given dataset and target.
+func PredictionsHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		dataset := pat.Param(r, "dataset")
+		// extract route parameters
 		fittedSolutionID := pat.Param(r, "fitted-solution-id")
-		targetType := pat.Param(r, "target-type")
 
-		solutionStorage, err := solutionStorageCtor()
+		solution, err := solutionCtor()
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to initialize solution storage"))
-			return
-		}
-		metaStorage, err := metaStorageCtor()
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to initialize metadata storage"))
-			return
-		}
-		dataStorage, err := dataStorageCtor()
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to initialize data storage"))
+			handleError(w, err)
 			return
 		}
 
-		// get the solution id from the fitted solution ID
-		solutionResults, err := solutionStorage.FetchSolutionResultsByFittedSolutionID(fittedSolutionID)
+		requests, err := solution.FetchPredictionsByFittedSolutionID(fittedSolutionID)
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to fetch solution results fitted solution id"))
-			return
-		}
-		if len(solutionResults) == 0 {
-			handleError(w, errors.Errorf("unable to map fitted solution id to dataset or solution id"))
-			return
-		}
-		sr := solutionResults[0]
-
-		// read the metadata of the original dataset
-		datasetES, err := metaStorage.FetchDataset(sr.Dataset, false, false)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to fetch dataset from es"))
+			handleError(w, err)
 			return
 		}
 
-		var data []byte
-		datasetImported := false
-		datasetIngested := false
-		if targetType == "timeseries" {
-			// passed in params will be start and step count
-			params, err := getPostParameters(r)
+		solutions := make([]*PredictionResponse, 0)
+		for _, req := range requests {
+			// gather solutions
+			solRes, err := solution.FetchSolutionResultsByFittedSolutionID(req.RequestID)
 			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+				handleError(w, err)
 				return
 			}
-			stepCount, ok := json.Int(params, "count")
-			if !ok {
-				handleError(w, errors.Errorf("Unable to parse count parameter"))
-				return
+			for _, sol := range solRes {
+				solution := &PredictionResponse{
+					// request
+					RequestID:        req.RequestID,
+					Dataset:          req.Dataset,
+					Feature:          req.Target,
+					FittedSolutionID: req.FittedSolutionID,
+					// solution
+					Timestamp: sol.CreatedTime,
+					Progress:  sol.Progress,
+					// keys
+					PredictedKey: model.GetPredictedKey(sol.SolutionID),
+					ResultID:     sol.ResultUUID,
+				}
+				solutions = append(solutions, solution)
 			}
-			startStr, ok := json.String(params, "start")
-			if !ok {
-				handleError(w, errors.Errorf("Unable to parse start parameter"))
-				return
-			}
-
-			datasetImported, data, err = createTimeseriesFromRequest(dataStorage, datasetES, startStr, stepCount)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to create timeseries datat"))
-				return
-			}
-			log.Infof("created timeseries data to use for predictions for dataset %s solution %s", dataset, fittedSolutionID)
-		} else if targetType == "image" {
-			// type cant be a post param since the upload is the actual data
-			queryValues := r.URL.Query()
-			imageType := queryValues["image"]
-			if len(imageType) == 0 {
-				handleError(w, errors.Errorf("no image type specified"))
-				return
-			}
-
-			// read the file from the request
-			data, err = receiveFile(r)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to receive file from request"))
-				return
-			}
-
-			datasetImported, data, err = createImageFromRequest(data, dataset, outputPath, imageType[0], ingestConfig)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to create image dataset from request"))
-				return
-			}
-		} else {
-			// read the file from the request
-			data, err = receiveFile(r)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to receive file from request"))
-				return
-			}
-			log.Infof("received data to use for predictions for dataset %s solution %s", dataset, fittedSolutionID)
-		}
-
-		// get the source dataset from the fitted solution ID
-		req, err := solutionStorage.FetchRequestByFittedSolutionID(fittedSolutionID)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to fetch request using fitted solution id"))
-			return
-		}
-
-		schemaPath := path.Join(env.ResolvePath(datasetES.Source, datasetES.Folder), compute.D3MDataSchema)
-		meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath, true)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to load metadata from source dataset schema doc"))
-			return
-		}
-
-		target := getTarget(req)
-
-		// In the case of grouped variables, the target will not be variable itself, but one of its property
-		// values.  We need to fetch using the original dataset, since it will have grouped variable info,
-		// and then resolve the actual target.
-		targetVar, err := metaStorage.FetchVariable(meta.ID, target)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to get target var from metadata storage"))
-			return
-		}
-
-		predictParams := &task.PredictParams{
-			Meta:             meta,
-			Dataset:          dataset,
-			SolutionID:       sr.SolutionID,
-			FittedSolutionID: fittedSolutionID,
-			CSVData:          data,
-			OutputPath:       outputPath,
-			Index:            config.ESDatasetsIndex,
-			Target:           targetVar,
-			MetaStorage:      metaStorage,
-			DataStorage:      dataStorage,
-			SolutionStorage:  solutionStorage,
-			DatasetIngested:  datasetIngested,
-			DatasetImported:  datasetImported,
-			Config:           ingestConfig,
-		}
-
-		res, err := task.Predict(predictParams)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to generate predictions"))
-			return
 		}
 
 		// marshal data and sent the response back
-		err = handleJSON(w, res)
+		err = handleJSON(w, solutions)
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
+			handleError(w, errors.Wrap(err, "unable marshal prediction results into JSON"))
 			return
 		}
 	}
 }
 
-func getTarget(request *api.Request) string {
-	for _, f := range request.Features {
-		if f.FeatureType == "target" {
-			return f.FeatureName
-		}
-	}
+// PredictionHandler fetches a prediction by its ID.
+func PredictionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// extract route parameters
+		predictionID := pat.Param(r, "prediction-id")
 
-	return ""
-}
-
-func createImageFromRequest(data []byte, dataset string, outputPath string, imageType string, ingestConfig *task.IngestTaskConfig) (bool, []byte, error) {
-	// raw request is zip file of image dataset that needs to be imported
-	formattedPath, err := uploadImageDataset(dataset, outputPath, ingestConfig, data, imageType)
-	if err != nil {
-		return false, nil, err
-	}
-	formattedPath = path.Join(formattedPath, "tables", "learningData.csv")
-
-	// once imported, read the csv file as the data to use for the inference
-	datasetData, err := ioutil.ReadFile(formattedPath)
-	if err != nil {
-		return false, nil, err
-	}
-	return true, datasetData, nil
-}
-
-func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dataset, startStr string, stepCount int) (bool, []byte, error) {
-	// need to create timeseries based on start time and step count
-	var groupingVar *model.Variable
-	for _, v := range datasetES.Variables {
-		if v.Grouping != nil {
-			groupingVar = v
-			break
-		}
-	}
-
-	// find the timsetamp column and id columns
-	timestampCol := groupingVar.Grouping.Properties.XCol
-	var timestampVar *model.Variable
-	for _, v := range datasetES.Variables {
-		if v.Name == timestampCol {
-			timestampVar = v
-			break
-		}
-	}
-
-	// get the distinct values for the id columns
-	idValues := make(map[string][]string)
-	for _, vID := range groupingVar.Grouping.SubIDs {
-		vals, err := dataStorage.FetchRawDistinctValues(datasetES.ID, datasetES.StorageName, vID)
+		solution, err := solutionCtor()
 		if err != nil {
-			return false, nil, errors.Wrapf(err, "unable to fetch distinct values for '%s' from data storage", vID)
+			handleError(w, err)
+			return
 		}
-		idValues[vID] = vals
-	}
 
-	// get the step duration
-	timestampValues, err := dataStorage.FetchRawDistinctValues(datasetES.ID, datasetES.StorageName, timestampCol)
-	if err != nil {
-		return false, nil, errors.Wrapf(err, "unable to fetch distinct timestamp values from data storage")
-	}
-
-	// generate timestamps to use for prediction based on type of timestamp
-	var timestampPredictionValues []string
-	if model.IsDateTime(timestampVar.Type) {
-		timestampPredictionValues, err = generateTimestampValues(timestampValues, startStr, stepCount)
-	} else if model.IsNumerical(timestampVar.Type) {
-		timestampPredictionValues, err = generateIntValues(timestampValues, startStr, stepCount)
-	} else {
-		return false, nil, errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", timestampVar.Name, timestampVar.Type)
-	}
-	if err != nil {
-		return false, nil, err
-	}
-
-	timeseriesData, err := createTimeseriesData(idValues, timestampCol, timestampPredictionValues)
-	if err != nil {
-		return false, nil, err
-	}
-
-	return false, timeseriesData, nil
-}
-
-func createTimeseriesData(seriesFields map[string][]string, timestampFieldName string, timestampPredictionValues []string) ([]byte, error) {
-	// create the header and the ids to use to generate the timeseries
-	header := make([]string, 0)
-	ids := make([][]string, 0)
-	for name, field := range seriesFields {
-		ids = append(ids, field)
-		header = append(header, name)
-	}
-	header = append(header, timestampFieldName)
-
-	// write the header
-	outputBytes := &bytes.Buffer{}
-	writerOutput := csv.NewWriter(outputBytes)
-	err := writerOutput.Write(header)
-	if err != nil {
-		return nil, err
-	}
-
-	// treat the timestamp values as just another set of values to generate on
-	ids = append(ids, timestampPredictionValues)
-
-	// the cartesian product will generate all the values needed for the timeseries
-	cartesianData := createGroupings(ids)
-	err = writerOutput.WriteAll(cartesianData)
-	if err != nil {
-		return nil, err
-	}
-
-	writerOutput.Flush()
-
-	return outputBytes.Bytes(), nil
-}
-
-func createGroupings(ids [][]string) [][]string {
-	// end condition when empty list passed in
-	if len(ids) == 0 {
-		return [][]string{nil}
-	}
-
-	// use recursion to get cartesian product
-	nested := createGroupings(ids[1:])
-
-	// create the combined output
-	output := make([][]string, 0)
-	for _, id := range ids[0] {
-		for _, product := range nested {
-			output = append(output, append([]string{id}, product...))
-		}
-	}
-	return output
-}
-
-func generateIntValues(existingValues []string, startStr string, stepCount int) ([]string, error) {
-	start, err := strconv.Atoi(startStr)
-	if err != nil {
-		return nil, errors.Errorf("Unable to parse start into int")
-	}
-
-	// order the existing values and derive the duration between steps
-	existingValuesParsed := make([]int, 0)
-	for _, vs := range existingValues {
-		v, err := strconv.Atoi(vs)
+		solRes, err := solution.FetchSolutionResultByProduceRequestID(predictionID)
 		if err != nil {
-			continue
+			handleError(w, err)
+			return
 		}
-		existingValuesParsed = append(existingValuesParsed, v)
-	}
-	sort.Slice(existingValuesParsed, func(i int, j int) bool {
-		return existingValuesParsed[i] < existingValuesParsed[j]
-	})
-	stepDuration := 0
-	if len(existingValuesParsed) > 1 {
-		stepDuration = existingValuesParsed[1] - existingValuesParsed[0]
-	}
 
-	// iterate until all required steps are created
-	currentValue := start
-	timeData := make([]string, 0)
-	for i := 0; i < stepCount; i++ {
-		timeData = append(timeData, fmt.Sprintf("%d", currentValue))
-		currentValue = currentValue + stepDuration
-	}
-
-	return timeData, nil
-}
-
-func generateTimestampValues(existingValues []string, startStr string, stepCount int) ([]string, error) {
-	// parse the start time
-	start, err := dateparse.ParseAny(startStr)
-	if err != nil {
-		return nil, errors.Errorf("Unable to parse start into time")
-	}
-
-	// order the timestamp values and derive the duration between steps (assumes a format that can be parsed)
-	timestampsParsed := make([]time.Time, 0)
-	for _, ts := range existingValues {
-		t, err := dateparse.ParseAny(ts)
+		sol, err := solution.FetchSolution(solRes.SolutionID)
 		if err != nil {
-			continue
+			handleError(w, err)
+			return
 		}
-		timestampsParsed = append(timestampsParsed, t)
-	}
-	sort.Slice(timestampsParsed, func(i int, j int) bool {
-		return timestampsParsed[i].Before(timestampsParsed[j])
-	})
-	stepDuration := time.Duration(0)
-	if len(timestampsParsed) > 1 {
-		stepDuration = timestampsParsed[1].Sub(timestampsParsed[0])
-	}
 
-	// iterate until all required steps are created
-	currentTime := start
-	timeData := make([]string, 0)
-	for i := 0; i < stepCount; i++ {
-		timeData = append(timeData, currentTime.String())
-		currentTime = currentTime.Add(stepDuration)
-	}
+		req, err := solution.FetchPrediction(sol.RequestID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 
-	return timeData, nil
+		solutionResponse := &PredictionResponse{
+			// request
+			RequestID:        req.RequestID,
+			Dataset:          req.Dataset,
+			Feature:          req.Target,
+			FittedSolutionID: req.FittedSolutionID,
+			// solution
+			Timestamp: sol.CreatedTime,
+			Progress:  solRes.Progress,
+			// keys
+			PredictedKey: model.GetPredictedKey(sol.SolutionID),
+			ResultID:     solRes.ResultUUID,
+		}
+
+		// marshal data and sent the response back
+		err = handleJSON(w, solutionResponse)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal session solutions into JSON"))
+			return
+		}
+	}
 }
