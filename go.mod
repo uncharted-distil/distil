@@ -23,6 +23,7 @@ require (
 	github.com/onsi/ginkgo v1.10.3 // indirect
 	github.com/onsi/gomega v1.7.1 // indirect
 	github.com/otiai10/copy v1.0.2
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.8.1
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/satori/go.uuid v1.2.0 // indirect
