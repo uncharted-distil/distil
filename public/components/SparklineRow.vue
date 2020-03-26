@@ -11,6 +11,7 @@
       :timeseries="timeseries"
       :forecast="forecast"
       :highlightRange="highlightRange"
+      :isDateTime="isDateTime"
     >
     </sparkline-svg>
     <div
@@ -114,6 +115,23 @@ export default Vue.extend({
     },
     max(): number {
       return this.timeseries ? d3.max(this.timeseries, d => d[1]) : 0;
+    },
+    isDateTime(): boolean {
+      if (this.solutionId) {
+        const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
+        const solutions = timeseries[this.solutionId];
+        if (!solutions) {
+          return null;
+        }
+        return solutions.isDateTime[this.timeseriesId];
+      } else {
+        const timeseries = datasetGetters.getTimeseries(this.$store);
+        const datasets = timeseries[this.dataset];
+        if (!datasets) {
+          return null;
+        }
+        return datasets.isDateTime[this.timeseriesId];
+      }
     }
   },
 

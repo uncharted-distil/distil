@@ -43,6 +43,9 @@ export default Vue.extend({
     },
     forecastExtrema: {
       type: Object as () => TimeseriesExtrema
+    },
+    isDateTime: {
+      type: Boolean as () => Boolean
     }
   },
   data() {
@@ -323,6 +326,15 @@ export default Vue.extend({
 
       return true;
     },
+    formatExtremaX(extrema): string {
+      return this.isDateTime
+        ? new Date(extrema)
+            .toISOString()
+            .slice(0, 10)
+            .replace(/-/g, "/")
+            .toString()
+        : extrema.toString();
+    },
     injectAxis(): boolean {
       if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
         return false;
@@ -352,14 +364,8 @@ export default Vue.extend({
         );
       }
 
-      const dateMinX = new Date(minX)
-        .toISOString()
-        .slice(0, 10)
-        .replace(/-/g, "/");
-      const dateMaxX = new Date(maxX)
-        .toISOString()
-        .slice(0, 10)
-        .replace(/-/g, "/");
+      const dateMinX = this.formatExtremaX(minX);
+      const dateMaxX = this.formatExtremaX(maxX);
 
       this.xScale = d3
         .scaleLinear()
@@ -391,7 +397,7 @@ export default Vue.extend({
         .attr("class", "sparkline-axis-title")
         .attr("x", 0)
         .attr("y", 10)
-        .style("text-anchor", "left")
+        .style("text-anchor", "start")
         .text(maxY);
       // Create y-min & x-min
       this.svg
@@ -399,15 +405,15 @@ export default Vue.extend({
         .attr("class", "sparkline-axis-title")
         .attr("x", 0)
         .attr("y", 40)
-        .style("text-anchor", "left")
+        .style("text-anchor", "start")
         .text(`${minY} ${dateMinX}`);
       // Create x-max
       this.svg
         .append("text")
         .attr("class", "sparkline-axis-title")
-        .attr("x", 330)
+        .attr("x", 400)
         .attr("y", 40)
-        .style("text-anchor", "right")
+        .style("text-anchor", "end")
         .text(dateMaxX);
       return true;
     },
