@@ -510,6 +510,8 @@ export default Vue.extend({
         highlightValue &&
         facet &&
         facet.value &&
+        typeof highlightValue === "string" &&
+        typeof facet.value === "string" &&
         highlightValue.toLowerCase() === facet.value.toLowerCase()
       );
     },
