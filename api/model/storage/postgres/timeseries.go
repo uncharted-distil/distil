@@ -174,8 +174,11 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT \"%s\", \"%s\" FROM %s %s",
-		xColName, yColName, storageName, where)
+	query := fmt.Sprintf("SELECT timeline.TimeStamps, COALESCE(filteredEvents.Counts, 0) FROM "+
+		"(SELECT DISTINCT \"%s\" as TimeStamps FROM %s) timeline LEFT JOIN "+
+		"(SELECT \"%s\" as TimeStamps, \"%s\" as Counts FROM %s %s ) filteredEvents "+
+		"ON timeline.TimeStamps = filteredEvents.TimeStamps ORDER BY timeline.TimeStamps",
+		xColName, storageName, xColName, yColName, storageName, where)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
