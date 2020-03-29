@@ -24,11 +24,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	postgres "github.com/uncharted-distil/distil/api/postgres"
 )
 
 // PersistRequest persists a request to Postgres.
 func (s *Storage) PersistRequest(requestID string, dataset string, progress string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, dataset, progress, created_time, last_updated_time) VALUES ($1, $2, $3, $4, $4);", requestTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, dataset, progress, created_time, last_updated_time) VALUES ($1, $2, $3, $4, $4);", postgres.RequestTableName)
 
 	_, err := s.client.Exec(sql, requestID, dataset, progress, createdTime)
 
@@ -37,7 +38,7 @@ func (s *Storage) PersistRequest(requestID string, dataset string, progress stri
 
 // UpdateRequest updates a request in Postgres.
 func (s *Storage) UpdateRequest(requestID string, progress string, updatedTime time.Time) error {
-	sql := fmt.Sprintf("UPDATE %s SET progress = $1, last_updated_time = $2 WHERE request_id = $3;", requestTableName)
+	sql := fmt.Sprintf("UPDATE %s SET progress = $1, last_updated_time = $2 WHERE request_id = $3;", postgres.RequestTableName)
 
 	_, err := s.client.Exec(sql, progress, updatedTime, requestID)
 
@@ -46,23 +47,18 @@ func (s *Storage) UpdateRequest(requestID string, progress string, updatedTime t
 
 // PersistRequestFeature persists request feature information to Postgres.
 func (s *Storage) PersistRequestFeature(requestID string, featureName string, featureType string) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, feature_type) VALUES ($1, $2, $3);", featureTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, feature_name, feature_type) VALUES ($1, $2, $3);", postgres.RequestFeatureTableName)
 
 	_, err := s.client.Exec(sql, requestID, featureName, featureType)
 
 	return errors.Wrapf(err, "failed to persist request freature in PostGres")
 }
 
-type filterError struct {
-	err    error
-	filter *model.Filter
-}
-
 // PersistRequestFilters persists request filters information to Postgres.
 func (s *Storage) PersistRequestFilters(requestID string, filters *api.FilterParams) error {
 	sql := fmt.Sprintf(
 		"INSERT INTO %s (request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_min_x, filter_max_x, filter_min_y, filter_max_y, filter_categories, filter_indices) "+
-			"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);", filterTableName)
+			"VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12);", postgres.RequestFilterTableName)
 
 	for _, filter := range filters.Filters {
 		switch filter.Type {
@@ -93,7 +89,7 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *api.FilterPar
 
 // FetchRequest pulls request information from Postgres.
 func (s *Storage) FetchRequest(requestID string) (*api.Request, error) {
-	sql := fmt.Sprintf("SELECT request_id, dataset, progress, created_time, last_updated_time FROM %s WHERE request_id = $1 ORDER BY created_time desc LIMIT 1;", requestTableName)
+	sql := fmt.Sprintf("SELECT request_id, dataset, progress, created_time, last_updated_time FROM %s WHERE request_id = $1 ORDER BY created_time desc LIMIT 1;", postgres.RequestTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
@@ -112,7 +108,7 @@ func (s *Storage) FetchRequest(requestID string) (*api.Request, error) {
 func (s *Storage) FetchRequestBySolutionID(solutionID string) (*api.Request, error) {
 	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.progress, req.created_time, req.last_updated_time "+
 		"FROM %s as req INNER JOIN %s as sol ON req.request_id = sol.request_id "+
-		"WHERE sol.solution_id = $1;", requestTableName, solutionTableName)
+		"WHERE sol.solution_id = $1;", postgres.RequestTableName, postgres.SolutionTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
@@ -131,7 +127,7 @@ func (s *Storage) FetchRequestBySolutionID(solutionID string) (*api.Request, err
 func (s *Storage) FetchRequestByFittedSolutionID(fittedSolutionID string) (*api.Request, error) {
 	sql := fmt.Sprintf("SELECT req.request_id, req.dataset, req.progress, req.created_time, req.last_updated_time "+
 		"FROM %s as req INNER JOIN %s as sol ON req.request_id = sol.request_id INNER JOIN %s sr on sr.solution_id = sol.solution_id "+
-		"WHERE sr.fitted_solution_id = $1;", requestTableName, solutionTableName, solutionResultTableName)
+		"WHERE sr.fitted_solution_id = $1;", postgres.RequestTableName, postgres.SolutionTableName, postgres.SolutionResultTableName)
 
 	rows, err := s.client.Query(sql, fittedSolutionID)
 	if err != nil {
@@ -180,7 +176,7 @@ func (s *Storage) loadRequest(rows *pgx.Rows) (*api.Request, error) {
 
 // FetchRequestFeatures pulls request feature information from Postgres.
 func (s *Storage) FetchRequestFeatures(requestID string) ([]*api.Feature, error) {
-	sql := fmt.Sprintf("SELECT request_id, feature_name, feature_type FROM %s WHERE request_id = $1;", featureTableName)
+	sql := fmt.Sprintf("SELECT request_id, feature_name, feature_type FROM %s WHERE request_id = $1;", postgres.RequestFeatureTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
@@ -213,7 +209,7 @@ func (s *Storage) FetchRequestFeatures(requestID string) ([]*api.Feature, error)
 
 // FetchRequestFilters pulls request filter information from Postgres.
 func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature) (*api.FilterParams, error) {
-	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_min_x, filter_max_x, filter_min_y, filter_max_y, filter_categories, filter_indices FROM %s WHERE request_id = $1;", filterTableName)
+	sql := fmt.Sprintf("SELECT request_id, feature_name, filter_type, filter_mode, filter_min, filter_max, filter_min_x, filter_max_x, filter_min_y, filter_max_y, filter_categories, filter_indices FROM %s WHERE request_id = $1;", postgres.RequestFilterTableName)
 
 	rows, err := s.client.Query(sql, requestID)
 	if err != nil {
@@ -309,7 +305,7 @@ func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string) ([]
 	sql := fmt.Sprintf("SELECT DISTINCT ON(request.request_id) request.request_id, request.dataset, request.progress, request.created_time, request.last_updated_time "+
 		"FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id "+
 		"INNER JOIN %s solution ON request.request_id = solution.request_id",
-		requestTableName, featureTableName, solutionTableName)
+		postgres.RequestTableName, postgres.RequestFeatureTableName, postgres.SolutionTableName)
 	params := make([]interface{}, 0)
 
 	if dataset != "" {

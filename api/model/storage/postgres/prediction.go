@@ -23,12 +23,12 @@ import (
 	"github.com/pkg/errors"
 
 	api "github.com/uncharted-distil/distil/api/model"
-	"github.com/uncharted-distil/distil/api/postgres"
+	postgres "github.com/uncharted-distil/distil/api/postgres"
 )
 
 // PersistPrediction persists a prediction request to Postgres.
 func (s *Storage) PersistPrediction(requestID string, dataset string, target string, fittedSolutionID string, progress string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, dataset, target, fitted_solution_id, progress, created_time, last_updated_time) VALUES ($1, $2, $3, $4, $5, $6, $6);", requestTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, dataset, target, fitted_solution_id, progress, created_time, last_updated_time) VALUES ($1, $2, $3, $4, $5, $6, $6);", postgres.RequestTableName)
 
 	_, err := s.client.Exec(sql, requestID, dataset, target, fittedSolutionID, progress, createdTime)
 

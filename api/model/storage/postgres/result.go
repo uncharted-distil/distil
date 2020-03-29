@@ -308,16 +308,6 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 	return result, nil
 }
 
-func appendAndClause(expression string, andClause string) string {
-	if expression == "" {
-		return andClause
-	}
-	if andClause == "" {
-		return andClause
-	}
-	return fmt.Sprintf("%s AND %s", expression, andClause)
-}
-
 func isCorrectnessCategory(categoryName string) bool {
 	return strings.EqualFold(CorrectCategory, categoryName) || strings.EqualFold(categoryName, IncorrectCategory)
 }

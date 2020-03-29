@@ -142,7 +142,7 @@ func (s *Storage) IsValidDataType(dataset string, storageName string, varName st
 	// a count on the field with the updated type should error if invalid
 	verificationSQL := fmt.Sprintf("SELECT COUNT(\"%s\") FROM %s_tmp;", varName, storageName)
 	_, err = s.client.Exec(verificationSQL)
-	s.client.Exec(fmt.Sprintf("DROP VIEW %s_tmp;", storageName))
+	_, _ = s.client.Exec(fmt.Sprintf("DROP VIEW %s_tmp;", storageName))
 	if err != nil {
 		return false, nil
 	}
