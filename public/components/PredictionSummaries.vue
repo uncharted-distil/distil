@@ -1,7 +1,5 @@
 <template>
   <div class="prediction-summaries">
-    <p class="nav-link font-weight-bold">Results</p>
-    <p></p>
     <p class="nav-link font-weight-bold">
       Predictions for Model
     </p>
@@ -136,8 +134,11 @@ export default Vue.extend({
 </script>
 
 <style>
-.prediction-summaries {
+.prediction-suammary-facets {
   margin-bottom: 12px;
+}
+
+.prediction-summaries {
   overflow-x: hidden;
   overflow-y: auto;
 }

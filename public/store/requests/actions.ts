@@ -4,10 +4,10 @@ import {
   SOLUTION_PENDING,
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED,
-  REQUEST_PENDING,
-  REQUEST_RUNNING,
-  REQUEST_COMPLETED,
-  REQUEST_ERRORED,
+  SOLUTION_REQUEST_PENDING,
+  SOLUTION_REQUEST_RUNNING,
+  SOLUTION_REQUEST_COMPLETED,
+  SOLUTION_REQUEST_ERRORED,
   SOLUTION_FITTING,
   SOLUTION_PRODUCING,
   SOLUTION_SCORING,
@@ -27,14 +27,15 @@ import { actions as resultsActions } from "../results/module";
 import { actions as predictActions } from "../predictions/module";
 import { getters as routeGetters } from "../route/module";
 import { TaskTypes, SummaryMode } from "../dataset";
+import { getters } from "../results/getters";
 
 const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
-const PREDICT = "PREDICT";
+const CREATE_PREDICTIONS = "PREDICT";
+const STOP_PREDICTIONS = "STOP_PREDICTIONS";
 
-// TODO: Server side sends `SolutionResult` message across that is a grab bag of fields.
-// It should be trimmed down to contain only what is required per request, and these defs
-// should be updated to match.
+// Message definitions for the websocket.  These are only for communication with the
+// server while the requests are running, and are not stored in the index.
 
 // Search request message used in web socket context
 interface SolutionRequestMsg {
@@ -149,6 +150,7 @@ function updateCurrentSolutionResults(
   }
 }
 
+// Updates an in-progress prediction request handled over the web socket.
 function updateCurrentPredictResults(
   context: RequestContext,
   req: PredictRequestMsg,
@@ -157,7 +159,6 @@ function updateCurrentPredictResults(
   const varModes = context.getters.getDecodedVarModes;
 
   predictActions.fetchPredictionTableData(store, {
-    solutionId: res.solutionId,
     dataset: req.datasetId,
     highlight: context.getters.getDecodedHighlight,
     produceRequestId: res.produceRequestId
@@ -166,7 +167,6 @@ function updateCurrentPredictResults(
   predictActions.fetchPredictedSummary(store, {
     dataset: req.datasetId,
     target: req.target,
-    solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
@@ -177,7 +177,6 @@ function updateCurrentPredictResults(
   predictActions.fetchTrainingSummaries(store, {
     dataset: req.datasetId,
     training: context.getters.getActiveSolutionTrainingVariables,
-    solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
     varModes: varModes,
     produceRequestId: res.produceRequestId
@@ -261,13 +260,13 @@ function handleSolutionProgress(
   }
 }
 
-function isRequestResponse(response: SolutionStatusMsg) {
+function isSolutionRequestResponse(response: SolutionStatusMsg) {
   const progress = response.progress;
   return (
-    progress === REQUEST_PENDING ||
-    progress === REQUEST_RUNNING ||
-    progress === REQUEST_COMPLETED ||
-    progress === REQUEST_ERRORED
+    progress === SOLUTION_REQUEST_PENDING ||
+    progress === SOLUTION_REQUEST_RUNNING ||
+    progress === SOLUTION_REQUEST_COMPLETED ||
+    progress === SOLUTION_REQUEST_ERRORED
   );
 }
 
@@ -288,7 +287,7 @@ async function handleProgress(
   request: SolutionRequestMsg,
   response: SolutionStatusMsg
 ) {
-  if (isRequestResponse(response)) {
+  if (isSolutionRequestResponse(response)) {
     // request
     console.log(
       `Progress for request ${response.requestId} updated to ${response.progress}`
@@ -323,7 +322,7 @@ function handlePredictProgress(
     case PREDICT_ERRORED:
       // no waiting for data here - we get single response back when the prediction is complete
       const predictions = parsePredictResponse(response);
-      mutations.updatePredicts(store, predictions);
+      mutations.updatePredictions(store, predictions);
       updateCurrentPredictResults(context, request, response);
       break;
   }
@@ -350,7 +349,7 @@ function parseSolutionResponse(responseData: any): Solution {
 }
 
 // parse returned server data into a solution request that can be added to the index
-function parseRequestResponse(responseData: any): SolutionRequest {
+function parseSolutionRequestResponse(responseData: any): SolutionRequest {
   return {
     requestId: responseData.requestId,
     dataset: responseData.dataset,
@@ -362,6 +361,19 @@ function parseRequestResponse(responseData: any): SolutionRequest {
   };
 }
 
+// parse returend server data into a predict request that can be added to the index
+function parsePredictRequestResponse(responseData: any): PredictRequest {
+  return {
+    requestId: responseData.produceRequestId,
+    progress: responseData.progress,
+    timestamp: responseData.timestamp,
+    fittedSolutionId: responseData.fittedSolutionId,
+    dataset: responseData.dataset,
+    feature: responseData.feature
+  };
+}
+
+// parse returned server data into predictions that can be added to the index
 function parsePredictResponse(responseData: any): Predictions {
   return {
     requestId: responseData.produceRequestId,
@@ -396,7 +408,7 @@ export const actions = {
       const requests = requestResponse.data;
       for (const request of requests) {
         // update request data
-        const searchRequest = parseRequestResponse(request);
+        const searchRequest = parseSolutionRequestResponse(request);
         mutations.updateSolutionRequests(context, searchRequest);
       }
     } catch (error) {
@@ -418,7 +430,7 @@ export const actions = {
         `/distil/solution-request/${args.requestId}`
       );
       // update request data
-      const searchRequest = parseRequestResponse(requestResponse.data);
+      const searchRequest = parseSolutionRequestResponse(requestResponse.data);
       mutations.updateSolutionRequests(context, searchRequest);
     } catch (error) {
       console.error(error);
@@ -469,7 +481,9 @@ export const actions = {
     }
   },
 
-  createSolutionRequest(context: any, request: SolutionRequestMsg) {
+  // Opens up a websocket and initiates the model search.  Updates are returned
+  // asynchronously by the server until the request completes.
+  createSolutionRequest(context: RequestContext, request: SolutionRequestMsg) {
     return new Promise((resolve, reject) => {
       const conn = getWebSocketConnection();
 
@@ -531,9 +545,53 @@ export const actions = {
     });
   },
 
-  // Run predictions against a previously fitted model.  The data input for the predictions
-  // is itself a dataset.
-  createPredictRequest(context: any, request: PredictRequestMsg): Promise<any> {
+  // fetches all predictions request associated with a fitted solution
+  async fetchPredictRequests(
+    context: RequestContext,
+    args: {
+      fittedSolutionId: string;
+    }
+  ) {
+    args.fittedSolutionId = args.fittedSolutionId || "";
+    try {
+      // fetch and uddate the search data
+      const requestResponse = await axios.get<PredictRequest[]>(
+        `/distil/prediction-requests/${args.fittedSolutionId}`
+      );
+      const requests = <PredictRequest[]>requestResponse.data;
+      for (const request of requests) {
+        // update request data
+        const predictionRequest = parsePredictRequestResponse(request);
+        mutations.updatePredictRequests(context, predictionRequest);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
+  // fetches a specific prediction request
+  async fetchPredictRequest(
+    context: RequestContext,
+    args: { requestId: string }
+  ) {
+    args.requestId = args.requestId || "";
+    try {
+      // fetch and uddate the search data
+      const requestResponse = await axios.get<PredictRequest>(
+        `/distil/prediction-request/${args.requestId}`
+      );
+      const request = requestResponse.data;
+      // update request data
+      const predictionRequest = parsePredictRequestResponse(request);
+      mutations.updatePredictRequests(context, predictionRequest);
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
+  // Opens up a websocket and initiates a prediction request.  Updates are returned until
+  // the predctions finish generating.
+  createPredictRequest(context: RequestContext, request: PredictRequestMsg) {
     let receivedUpdate = false;
 
     return new Promise((resolve, reject) => {
@@ -569,12 +627,62 @@ export const actions = {
 
       // send create solutions request
       stream.send({
-        type: PREDICT,
+        type: CREATE_PREDICTIONS,
         fittedSolutionId: request.fittedSolutionId,
         datasetId: request.datasetId,
         dataset: request.dataset,
         targetType: request.targetType
       });
     });
+  },
+
+  // notifies server that prediction request should be halted
+  stopPredictRequest(context: RequestContext, args: { requestId: string }) {
+    const stream = getStreamById(args.requestId);
+    if (!stream) {
+      console.warn(`No request stream found for requestId: ${args.requestId}`);
+      return;
+    }
+    stream.send({
+      type: STOP_PREDICTIONS,
+      requestId: args.requestId
+    });
+  },
+
+  // fetches all predictions for a given fitted solution
+  async fetchPredictions(
+    context: RequestContext,
+    args: { fittedSolutionId: string }
+  ) {
+    args.fittedSolutionId = args.fittedSolutionId || "";
+    try {
+      // fetch and uddate the search data
+      const predictionsResponse = await axios.get<Predictions[]>(
+        `/distil/predictions/${args.fittedSolutionId}`
+      );
+      const predictions = predictionsResponse.data;
+      // update request data
+      const predictionRequest = parsePredictRequestResponse(predictions);
+      mutations.updatePredictRequests(context, predictionRequest);
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
+  // fetches a specific prediction by request ID
+  async fetchPrediction(context: RequestContext, args: { requestId: string }) {
+    args.requestId = args.requestId || "";
+    try {
+      // fetch and uddate the search data
+      const requestResponse = await axios.get<Predictions>(
+        `/distil/prediction/${args.requestId}`
+      );
+      const request = requestResponse.data;
+      // update request data
+      const predictionRequest = parsePredictRequestResponse(request);
+      mutations.updatePredictRequests(context, predictionRequest);
+    } catch (error) {
+      console.error(error);
+    }
   }
 };

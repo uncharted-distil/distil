@@ -26,7 +26,7 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
-// PredictionResultsHandler fetches predicted solution values and returns them to the client
+// PredictionResultsHandler fetches solution test result values, or model predictions and returns them to the client
 // in a JSON structure
 func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {

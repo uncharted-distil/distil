@@ -230,7 +230,7 @@ func main() {
 	registerRoute(mux, "/distil/prediction/:prediction-id", routes.PredictionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/predictions/:fitted-solution-id", routes.PredictionsHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/prediction-requests/:fitted-solution-id", routes.PredictionRequestsHandler(pgSolutionStorageCtor))
-	registerRoute(mux, "/distil/prediction-requests/:request-id", routes.PredictionRequestHandler(pgSolutionStorageCtor))
+	registerRoute(mux, "/distil/prediction-request/:request-id", routes.PredictionRequestHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/variable-rankings/:dataset/:target", routes.VariableRankingHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/residuals-extrema/:dataset/:target", routes.ResidualsExtremaHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
@@ -284,6 +284,7 @@ func main() {
 	graceful.Wait()
 }
 
+//nolint
 func updateExtremas(metaStorage model.MetadataStorage, dataStorage model.DataStorage) error {
 	log.Infof("updating extremas on startup")
 	datasets, err := metaStorage.FetchDatasets(false, false)

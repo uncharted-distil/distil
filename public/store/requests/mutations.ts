@@ -4,7 +4,7 @@ import {
   RequestState,
   SolutionRequest,
   Solution,
-  Request,
+  PredictRequest,
   Predictions
 } from "./index";
 
@@ -48,5 +48,24 @@ export const mutations = {
     } else {
       Vue.set(state.predictions, index, predictions);
     }
+  },
+
+  updatePredictRequests(state: RequestState, predictRequest: PredictRequest) {
+    const index = state.predictRequests.findIndex(
+      r => r.requestId === predictRequest.requestId
+    );
+    if (index === -1) {
+      state.predictRequests.push(predictRequest);
+    } else {
+      Vue.set(state.predictions, index, predictRequest);
+    }
+  },
+
+  clearPredictions(state: RequestState) {
+    state.predictions = [];
+  },
+
+  clearPredictRequests(state: RequestState) {
+    state.predictRequests = [];
   }
 };

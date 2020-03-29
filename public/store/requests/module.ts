@@ -33,7 +33,18 @@ export const getters = {
   getActiveSolutionTargetVariable: read(
     moduleGetters.getActiveSolutionTargetVariable
   ),
-  getPredictions: read(moduleGetters.getPredictions)
+  getPredictions: read(moduleGetters.getPredictions),
+  getCompletedPredictions: read(moduleGetters.getCompletedPredictions),
+  getRunningPredictions: read(moduleGetters.getRunningPredictions),
+  getRelevantPredictions: read(moduleGetters.getRelevantPredictions),
+  getRelevantPredictRequests: read(moduleGetters.getRelevantPredictRequests),
+  getRelevantPredictRequestIds: read(
+    moduleGetters.getRelevantPredictRequestIds
+  ),
+  getActivePredictions: read(moduleGetters.getActivePredictions),
+  getActivePredictionTrainingVariables: read(
+    moduleGetters.getActivePredictionTrainingVariables
+  )
 };
 
 export const actions = {
@@ -43,7 +54,13 @@ export const actions = {
   stopSolutionRequest: dispatch(moduleActions.stopSolutionRequest),
   fetchSolutions: dispatch(moduleActions.fetchSolutions),
   fetchSolution: dispatch(moduleActions.fetchSolution),
-  createPredictRequest: dispatch(moduleActions.createPredictRequest)
+
+  fetchPredictRequests: dispatch(moduleActions.fetchPredictRequests),
+  fetchPredictRequest: dispatch(moduleActions.fetchPredictRequest),
+  createPredictRequest: dispatch(moduleActions.createPredictRequest),
+  stopPredictRequest: dispatch(moduleActions.stopPredictRequest),
+  fetchPredictions: dispatch(moduleActions.fetchPredictions),
+  fetchPrediction: dispatch(moduleActions.fetchPrediction)
 };
 
 export const mutations = {
@@ -51,5 +68,8 @@ export const mutations = {
   updateSolutions: commit(moduleMutations.updateSolutions),
   clearSolutionRequests: commit(moduleMutations.clearSolutionRequests),
   clearSolutions: commit(moduleMutations.clearSolutions),
-  updatePredicts: commit(moduleMutations.updatePredictions)
+  updatePredictRequests: commit(moduleMutations.updatePredictRequests),
+  updatePredictions: commit(moduleMutations.updatePredictions),
+  clearPredictRequests: commit(moduleMutations.clearPredictRequests),
+  clearPredictionRequests: commit(moduleMutations.clearPredictions)
 };

@@ -55,16 +55,16 @@ func PredictionsHandler(solutionCtor model.SolutionStorageCtor) func(http.Respon
 			return
 		}
 
-		solutions := make([]*PredictionResponse, 0)
+		predictions := make([]*PredictionResponse, 0)
 		for _, req := range requests {
-			// gather solutions
+			// gather predictions
 			solRes, err := solution.FetchSolutionResultsByFittedSolutionID(req.RequestID)
 			if err != nil {
 				handleError(w, err)
 				return
 			}
 			for _, sol := range solRes {
-				solution := &PredictionResponse{
+				predictionResponse := &PredictionResponse{
 					// request
 					RequestID:        req.RequestID,
 					Dataset:          req.Dataset,
@@ -77,12 +77,12 @@ func PredictionsHandler(solutionCtor model.SolutionStorageCtor) func(http.Respon
 					PredictedKey: model.GetPredictedKey(sol.SolutionID),
 					ResultID:     sol.ResultUUID,
 				}
-				solutions = append(solutions, solution)
+				predictions = append(predictions, predictionResponse)
 			}
 		}
 
 		// marshal data and sent the response back
-		err = handleJSON(w, solutions)
+		err = handleJSON(w, predictions)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal prediction results into JSON"))
 			return
@@ -94,7 +94,7 @@ func PredictionsHandler(solutionCtor model.SolutionStorageCtor) func(http.Respon
 func PredictionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
-		predictionID := pat.Param(r, "prediction-id")
+		requestID := pat.Param(r, "request-id")
 
 		solution, err := solutionCtor()
 		if err != nil {
@@ -102,7 +102,7 @@ func PredictionHandler(solutionCtor model.SolutionStorageCtor) func(http.Respons
 			return
 		}
 
-		solRes, err := solution.FetchSolutionResultByProduceRequestID(predictionID)
+		solRes, err := solution.FetchSolutionResultByProduceRequestID(requestID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -114,13 +114,13 @@ func PredictionHandler(solutionCtor model.SolutionStorageCtor) func(http.Respons
 			return
 		}
 
-		req, err := solution.FetchPrediction(sol.RequestID)
+		req, err := solution.FetchPrediction(requestID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		solutionResponse := &PredictionResponse{
+		predictionResponse := &PredictionResponse{
 			// request
 			RequestID:        req.RequestID,
 			Dataset:          req.Dataset,
@@ -135,9 +135,9 @@ func PredictionHandler(solutionCtor model.SolutionStorageCtor) func(http.Respons
 		}
 
 		// marshal data and sent the response back
-		err = handleJSON(w, solutionResponse)
+		err = handleJSON(w, predictionResponse)
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal session solutions into JSON"))
+			handleError(w, errors.Wrap(err, "unable marshal predictions into JSON"))
 			return
 		}
 	}

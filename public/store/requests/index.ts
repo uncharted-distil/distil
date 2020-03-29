@@ -12,10 +12,10 @@ export const PREDICT_RUNNING = "PREDICT_RUNNING";
 export const PREDICT_COMPLETED = "PREDICT_COMPLETED";
 export const PREDICT_ERRORED = "PREDICT_ERRORED";
 
-export const REQUEST_PENDING = "REQUEST_PENDING";
-export const REQUEST_RUNNING = "REQUEST_RUNNING";
-export const REQUEST_COMPLETED = "REQUEST_COMPLETED";
-export const REQUEST_ERRORED = "REQUEST_ERRORED";
+export const SOLUTION_REQUEST_PENDING = "REQUEST_PENDING";
+export const SOLUTION_REQUEST_RUNNING = "REQUEST_RUNNING";
+export const SOLUTION_REQUEST_COMPLETED = "REQUEST_COMPLETED";
+export const SOLUTION_REQUEST_ERRORED = "REQUEST_ERRORED";
 
 export const NUM_SOLUTIONS = 3;
 
@@ -25,6 +25,7 @@ export interface Request {
   timestamp: number;
 }
 
+// A request to start the process of training, fitting and scoring a model
 export interface SolutionRequest extends Request {
   dataset: string;
   feature: string;
@@ -32,12 +33,14 @@ export interface SolutionRequest extends Request {
   features: Feature[];
 }
 
+// A request to generate predictions from fitted a model
 export interface PredictRequest extends Request {
   fittedSolutionId: string;
   dataset: string;
   feature: string;
 }
 
+// A
 export interface Solution extends SolutionRequest {
   solutionId: string;
   fittedSolutionId: string;

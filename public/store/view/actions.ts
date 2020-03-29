@@ -29,6 +29,8 @@ enum ParamCacheKey {
   VARIABLE_RANKINGS = "VARIABLE_RANKINGS",
   SEARCH_REQUESTS = "SEARCH_REQUESTS",
   SOLUTIONS = "SOLUTIONS",
+  PREDICTIONS_REQUESTS = "PREDICTIONS_REQUESTS",
+  PREDICTIONS = "PREDICTIONS",
   JOIN_SUGGESTIONS = "JOIN_SUGGESTIONS",
   CLUSTERS = "CLUSTERS"
 }
@@ -140,6 +142,24 @@ const fetchSolutions = createCacheable(
     return requestActions.fetchSolutions(store, {
       dataset: args.dataset,
       target: args.target
+    });
+  }
+);
+
+const fetchPredictionRequests = createCacheable(
+  ParamCacheKey.PREDICTIONS_REQUESTS,
+  (context, args) => {
+    return requestActions.fetchPredictRequests(store, {
+      fittedSolutionId: args.fittedSolutionId
+    });
+  }
+);
+
+const fetchPredictions = createCacheable(
+  ParamCacheKey.PREDICTIONS,
+  (context, args) => {
+    return requestActions.fetchPredictions(store, {
+      fittedSolutionId: args.fittedSolutionId
     });
   }
 );
@@ -444,18 +464,17 @@ export const actions = {
     predictionMutations.setExcludedPredictionTableData(store, null);
 
     const dataset = context.getters.getRouteInferenceDataset;
-    const target = context.getters.getRouteTargetVariable;
+    const fittedSolutionId = context.getters.getRouteFittedSolutionId;
+
     // fetch new state
     await fetchVariables(context, {
       dataset: dataset
     });
-    await fetchSolutionRequests(context, {
-      dataset: dataset,
-      target: target
+    await fetchPredictionRequests(context, {
+      fittedSolutionId: fittedSolutionId
     });
-    await fetchSolutions(context, {
-      dataset: dataset,
-      target: target
+    await fetchPredictions(context, {
+      fittedSolutionId: fittedSolutionId
     });
     return actions.updatePrediction(context);
   },
@@ -468,7 +487,6 @@ export const actions = {
     // fetch new state
     const inferenceDataset = context.getters.getRouteInferenceDataset;
     const target = context.getters.getRouteTargetVariable;
-    const solutionId = context.getters.getRouteSolutionId;
     const trainingVariables =
       context.getters.getActiveSolutionTrainingVariables;
     const highlight = context.getters.getDecodedHighlight;
@@ -476,14 +494,12 @@ export const actions = {
     const varModes = context.getters.getDecodedVarModes;
     predictionActions.fetchPredictionTableData(store, {
       dataset: inferenceDataset,
-      solutionId: solutionId,
       highlight: highlight,
       produceRequestId: produceRequestId
     });
     predictionActions.fetchTrainingSummaries(store, {
       dataset: inferenceDataset,
       training: trainingVariables,
-      solutionId: solutionId,
       highlight: highlight,
       varModes: varModes,
       produceRequestId: produceRequestId
@@ -491,7 +507,6 @@ export const actions = {
     predictionActions.fetchPredictedSummary(store, {
       dataset: inferenceDataset,
       target: target,
-      solutionId: solutionId,
       highlight: highlight,
       varMode: SummaryMode.Default,
       produceRequestId: produceRequestId

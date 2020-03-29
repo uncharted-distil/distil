@@ -28,7 +28,6 @@ export const actions = {
     args: {
       dataset: string;
       training: Variable[];
-      solutionId: string;
       highlight: Highlight;
       varModes: Map<string, SummaryMode>;
       produceRequestId: string;
@@ -44,10 +43,6 @@ export const actions = {
     }
     if (!args.varModes) {
       console.warn("`varModes` argument is missing");
-      return null;
-    }
-    if (!args.solutionId) {
-      console.warn("`solutionId` argument is missing");
       return null;
     }
     const predictions = getPredictionsById(
@@ -162,24 +157,15 @@ export const actions = {
     }
   },
 
+  // TODO: shouldn't need solutionID as an arg
   async fetchIncludedPredictionTableData(
     context: PredictionContext,
     args: {
-      solutionId: string;
       dataset: string;
       highlight: Highlight;
       produceRequestId: string;
     }
   ) {
-    const solution = getSolutionById(
-      context.rootState.requestsModule.solutions,
-      args.solutionId
-    );
-    if (!solution.resultId) {
-      // no results ready to pull
-      return null;
-    }
-
     let filterParams = {
       highlight: null,
       variables: [],
@@ -189,15 +175,15 @@ export const actions = {
 
     try {
       const response = await axios.post(
-        `distil/prediction-results/${args.dataset}/${encodeURIComponent(
-          args.solutionId
-        )}/${encodeURIComponent(args.produceRequestId)}`,
+        `distil/prediction-results/${args.dataset}/null/${encodeURIComponent(
+          args.produceRequestId
+        )}`,
         filterParams
       );
       mutations.setIncludedPredictionTableData(context, response.data);
     } catch (error) {
       console.error(
-        `Failed to fetch results from ${args.solutionId} with error ${error}`
+        `Failed to fetch results from ${args.produceRequestId} with error ${error}`
       );
       mutations.setIncludedPredictionTableData(context, createEmptyTableData());
     }
@@ -206,21 +192,11 @@ export const actions = {
   async fetchExcludedPredictionTableData(
     context: PredictionContext,
     args: {
-      solutionId: string;
       dataset: string;
       highlight: Highlight;
       produceRequestId: string;
     }
   ) {
-    const solution = getSolutionById(
-      context.rootState.requestsModule.solutions,
-      args.solutionId
-    );
-    if (!solution.resultId) {
-      // no results ready to pull
-      return null;
-    }
-
     let filterParams = {
       highlight: null,
       variables: [],
@@ -234,15 +210,15 @@ export const actions = {
 
     try {
       const response = await axios.post(
-        `distil/prediction-results/${args.dataset}/${encodeURIComponent(
-          args.solutionId
-        )}/${encodeURIComponent(args.produceRequestId)}`,
+        `distil/prediction-results/${args.dataset}/null/${encodeURIComponent(
+          args.produceRequestId
+        )}`,
         filterParams
       );
       mutations.setExcludedPredictionTableData(context, response.data);
     } catch (error) {
       console.error(
-        `Failed to fetch results from ${args.solutionId} with error ${error}`
+        `Failed to fetch results from ${args.produceRequestId} with error ${error}`
       );
       mutations.setExcludedPredictionTableData(context, createEmptyTableData());
     }
@@ -251,7 +227,6 @@ export const actions = {
   fetchPredictionTableData(
     context: PredictionContext,
     args: {
-      solutionId: string;
       dataset: string;
       highlight: Highlight;
       produceRequestId: string;
@@ -260,13 +235,11 @@ export const actions = {
     return Promise.all([
       actions.fetchIncludedPredictionTableData(context, {
         dataset: args.dataset,
-        solutionId: args.solutionId,
         highlight: args.highlight,
         produceRequestId: args.produceRequestId
       }),
       actions.fetchExcludedPredictionTableData(context, {
         dataset: args.dataset,
-        solutionId: args.solutionId,
         highlight: args.highlight,
         produceRequestId: args.produceRequestId
       })
@@ -279,7 +252,6 @@ export const actions = {
     args: {
       dataset: string;
       target: string;
-      solutionId: string;
       highlight: Highlight;
       varMode: SummaryMode;
       produceRequestId: string;
@@ -293,15 +265,10 @@ export const actions = {
       console.warn("`target` argument is missing");
       return null;
     }
-    if (!args.solutionId) {
-      console.warn("`solutionId` argument is missing");
-      return null;
-    }
     if (!args.varMode) {
       console.warn("`varMode` argument is missing");
       return null;
     }
-
     const predictions = getPredictionsById(
       context.rootState.requestsModule.predictions,
       args.produceRequestId

@@ -152,7 +152,7 @@ export default Vue.extend({
     targetType(): string {
       const targetName = this.target;
       const variables = this.variables;
-      return variables.find(v => v.colName === targetName).colType;
+      return variables.find(v => v.colName === targetName)?.colType;
     },
 
     variables(): Variable[] {
@@ -219,7 +219,7 @@ export default Vue.extend({
 
       if (this.uploadStatus !== "error") {
         const routeArgs = {
-          solutionId: this.solutionId,
+          fittedSolutionId: this.fittedSolutionId,
           produceRequestId: response.produceRequestId,
           inferenceDataset: response.dataset,
           target: this.target

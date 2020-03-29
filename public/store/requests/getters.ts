@@ -10,7 +10,11 @@ import {
   SOLUTION_FITTING,
   SOLUTION_SCORING,
   SOLUTION_PRODUCING,
-  Predictions
+  Predictions,
+  PREDICT_RUNNING,
+  PREDICT_PENDING,
+  PREDICT_COMPLETED,
+  PredictRequest
 } from "./index";
 
 export function sortRequestsByTimestamp(
@@ -124,8 +128,77 @@ export const getters = {
     return variables.filter(variable => variable.colName === target);
   },
 
-  // Returns all search results.
+  // Returns in-progress predictions.
+  getRunningPredictions(state: RequestState): Predictions[] {
+    return state.predictions.filter(
+      result =>
+        result.progress === PREDICT_RUNNING ||
+        result.progress === PREDICT_PENDING
+    );
+  },
+
+  // Returns completed predictions.
+  getCompletedPredictions(state: RequestState): Predictions[] {
+    return state.predictions.filter(
+      result => result.progress !== PREDICT_COMPLETED
+    );
+  },
+
+  // Returns all predictions.
   getPredictions(state: RequestState): Predictions[] {
     return state.predictions;
+  },
+
+  // Returns predictions relevant to the currently selected fitted solution id.
+  getRelevantPredictions(state: RequestState, getters: any): Predictions[] {
+    return state.predictions.filter(
+      result =>
+        result.fittedSolutionId === <string>getters.getRouteFittedSolutionId
+    );
+  },
+
+  // Returns search requests relevant to the current dataset and target.
+  getRelevantPredictRequests(
+    state: RequestState,
+    getters: any
+  ): PredictRequest[] {
+    // get only matching dataset / target
+    return state.predictRequests.filter(
+      request =>
+        request.fittedSolutionId === <string>getters.getRouteFittedSolutionId
+    );
+  },
+
+  // Returns prediction request IDs relevant to the currently selected model
+  getRelevantPredictRequestIds(state: RequestState, getters: any): string[] {
+    return (<PredictRequest[]>getters.getRelevantPredictRequests).map(
+      request => request.requestId
+    );
+  },
+
+  // Returns currently selected predictions
+  getActivePredictions(state: RequestState, getters: any): Predictions {
+    const predictionsId = <string>getters.getRouteProduceRequestId;
+    const predictions = <Predictions[]>getters.getPredictions;
+    return predictions.find(p => p.resultId === predictionsId);
+  },
+
+  // Returns training variables associated with the currently selected fitted model
+  getActivePredictionTrainingVariables(
+    state: RequestState,
+    getters: any
+  ): Variable[] {
+    // find a solution with a matching fitted solution id and grab its training features
+    const currentFittedSolutionId = <string>getters.getRouteFittedSolutionId;
+    const trainingFeatures = state.solutions.find(
+      s => currentFittedSolutionId === s.fittedSolutionId
+    ).features;
+
+    // return matching variables
+    const variables = <Variable[]>getters.getVariablesMap;
+    return trainingFeatures
+      .filter(f => f.featureType === "train")
+      .map(f => variables[f.featureName])
+      .filter(v => !!v);
   }
 };
