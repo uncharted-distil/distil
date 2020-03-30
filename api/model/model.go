@@ -27,6 +27,15 @@ var (
 	suffixReg = regexp.MustCompile(`:error|:predicted$`)
 )
 
+// ExportedModel represents a description of an exported model.
+type ExportedModel struct {
+	FilePath    string   `json:"filepath"`
+	DatasetID   string   `json:"datasetId"`
+	DatasetName string   `json:"datasetName"`
+	Target      string   `json:"target"`
+	Variables   []string `json:"variables"`
+}
+
 // Request represents the request metadata.
 type Request struct {
 	RequestID       string        `json:"requestId"`

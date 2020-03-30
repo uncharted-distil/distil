@@ -225,7 +225,7 @@ func (s *Storage) DoesVariableExist(dataset string, varName string) (bool, error
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
-		Index(s.index).
+		Index(s.datasetIndex).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
 		Do(context.Background())
@@ -258,7 +258,7 @@ func (s *Storage) FetchVariable(dataset string, varName string) (*model.Variable
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
-		Index(s.index).
+		Index(s.datasetIndex).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
 		Do(context.Background())
@@ -306,7 +306,7 @@ func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta 
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
-		Index(s.index).
+		Index(s.datasetIndex).
 		FetchSource(true).
 		FetchSourceContext(fetchContext).
 		Do(context.Background())

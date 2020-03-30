@@ -123,3 +123,14 @@ type MetadataStorage interface {
 	AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.Grouping) error
 	RemoveGroupedVariable(datasetName string, grouping model.Grouping) error
 }
+
+// ExportedModelStorageCtor represents a client constructor to instantiate a
+// model storage client.
+type ExportedModelStorageCtor func() (ExportedModelStorage, error)
+
+// ExportedModelStorage defines the functions available to query the underlying
+// model storage.
+type ExportedModelStorage interface {
+	PersistExportedModel(exportedModel *ExportedModel) error
+	FetchModels() ([]*ExportedModel, error)
+}
