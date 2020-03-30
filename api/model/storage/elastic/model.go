@@ -42,7 +42,12 @@ func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, 
 			return nil, errors.Wrap(err, "failed to parse file path")
 		}
 		// get id
-		id, ok := json.String(src, "datasetID")
+		fittedSolutionID, ok := json.String(src, "fittedSolutionID")
+		if !ok {
+			return nil, errors.Wrap(err, "failed to parse the fitted solution id")
+		}
+		// get dataset id
+		datasetID, ok := json.String(src, "datasetID")
 		if !ok {
 			return nil, errors.Wrap(err, "failed to parse the dataset id")
 		}
@@ -54,18 +59,19 @@ func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, 
 		// extract the name
 		name, ok := json.String(src, "datasetName")
 		if !ok {
-			name = id
+			name = datasetID
 		}
 
 		variables, _ := json.StringArray(src, "variables")
 
 		// write everythign out to result struct
 		models = append(models, &api.ExportedModel{
-			FilePath:    filePath,
-			DatasetID:   id,
-			DatasetName: name,
-			Target:      target,
-			Variables:   variables,
+			FilePath:         filePath,
+			FittedSolutionID: fittedSolutionID,
+			DatasetID:        datasetID,
+			DatasetName:      name,
+			Target:           target,
+			Variables:        variables,
 		})
 	}
 	return models, nil
@@ -82,6 +88,7 @@ func (s *Storage) PersistExportedModel(model *api.ExportedModel) error {
 	_, err = s.client.Index().
 		Index(s.modelIndex).
 		Type("model").
+		Id(model.FittedSolutionID).
 		BodyString(string(bytes)).
 		Refresh("true").
 		Do(context.Background())

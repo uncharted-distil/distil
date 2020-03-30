@@ -52,11 +52,12 @@ func SaveFittedSolution(fittedSolutionID string, solutionStorage api.SolutionSto
 	}
 
 	return &api.ExportedModel{
-		FilePath:    uri,
-		DatasetID:   request.Dataset,
-		DatasetName: metadata.Name,
-		Variables:   vars,
-		Target:      target,
+		FilePath:         uri,
+		FittedSolutionID: fittedSolutionID,
+		DatasetID:        request.Dataset,
+		DatasetName:      metadata.Name,
+		Variables:        vars,
+		Target:           target,
 	}, nil
 }
 
