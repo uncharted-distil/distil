@@ -96,6 +96,7 @@ type SolutionStorage interface {
 	FetchSolutionResults(solutionID string) ([]*SolutionResult, error)
 	FetchSolutionResultsByFittedSolutionID(fittedSolutionID string) ([]*SolutionResult, error)
 	FetchSolutionResultByProduceRequestID(produceRequestID string) (*SolutionResult, error)
+	FetchPredictionResultByProduceRequestID(produceRequestID string) (*SolutionResult, error)
 	FetchSolutionScores(solutionID string) ([]*SolutionScore, error)
 	FetchPrediction(requestID string) (*Prediction, error)
 	FetchPredictionsByFittedSolutionID(fittedSolutionID string) ([]*Prediction, error)

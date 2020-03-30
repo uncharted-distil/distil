@@ -217,7 +217,7 @@ export default Vue.extend({
     onUploadFinish(err: Error, response: any) {
       this.uploadStatus = err ? "error" : "success";
 
-      if (this.uploadStatus !== "error") {
+      if (this.uploadStatus !== "error" && !response.complete) {
         const routeArgs = {
           fittedSolutionId: this.fittedSolutionId,
           produceRequestId: response.produceRequestId,

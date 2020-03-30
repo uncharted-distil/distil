@@ -85,9 +85,6 @@ export default Vue.extend({
     highlightString() {
       viewActions.updatePrediction(this.$store);
     },
-    solutionId() {
-      viewActions.updatePrediction(this.$store);
-    },
     produceRequestId() {
       viewActions.updatePrediction(this.$store);
     },

@@ -22,23 +22,25 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil-compute/model"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 // PredictionResponse represents a result from a produce call on a prediction dataset.
 type PredictionResponse struct {
-	RequestID        string    `json:"requestId"`
-	FittedSolutionID string    `json:"fittedSolutionId"`
-	Feature          string    `json:"feature"`
-	Dataset          string    `json:"dataset"`
-	Progress         string    `json:"progress"`
-	Timestamp        time.Time `json:"timestamp"`
-	ResultID         string    `json:"resultId"`
-	PredictedKey     string    `json:"predictedKey"`
+	RequestID        string         `json:"requestId"`
+	FittedSolutionID string         `json:"fittedSolutionId"`
+	Feature          string         `json:"feature"`
+	Features         []*api.Feature `json:"features"`
+	Dataset          string         `json:"dataset"`
+	Progress         string         `json:"progress"`
+	Timestamp        time.Time      `json:"timestamp"`
+	ResultID         string         `json:"resultId"`
+	PredictedKey     string         `json:"predictedKey"`
 }
 
 // PredictionsHandler fetches predictions associated with a given dataset and target.
-func PredictionsHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+func PredictionsHandler(solutionCtor api.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		fittedSolutionID := pat.Param(r, "fitted-solution-id")
@@ -55,26 +57,41 @@ func PredictionsHandler(solutionCtor model.SolutionStorageCtor) func(http.Respon
 			return
 		}
 
-		predictions := make([]*PredictionResponse, 0)
-		for _, req := range requests {
+		// recover the original feature set
+		solutionReq, err := solution.FetchRequestByFittedSolutionID(fittedSolutionID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		features := make([]*api.Feature, len(solutionReq.Features)-1)
+		for i, v := range solutionReq.Features {
+			if v.FeatureType != model.FeatureTypeTarget {
+				features[i] = v
+			}
+		}
+
+		predictions := []*PredictionResponse{}
+		for _, predictionReq := range requests {
 			// gather predictions
-			solRes, err := solution.FetchSolutionResultsByFittedSolutionID(req.RequestID)
+			solRes, err := solution.FetchSolutionResultsByFittedSolutionID(fittedSolutionID)
 			if err != nil {
 				handleError(w, err)
 				return
 			}
+
 			for _, sol := range solRes {
 				predictionResponse := &PredictionResponse{
 					// request
-					RequestID:        req.RequestID,
-					Dataset:          req.Dataset,
-					Feature:          req.Target,
-					FittedSolutionID: req.FittedSolutionID,
+					RequestID:        predictionReq.RequestID,
+					Dataset:          predictionReq.Dataset,
+					Feature:          predictionReq.Target,
+					Features:         features,
+					FittedSolutionID: predictionReq.FittedSolutionID,
 					// solution
 					Timestamp: sol.CreatedTime,
 					Progress:  sol.Progress,
 					// keys
-					PredictedKey: model.GetPredictedKey(sol.SolutionID),
+					PredictedKey: api.GetPredictedKey(sol.SolutionID),
 					ResultID:     sol.ResultUUID,
 				}
 				predictions = append(predictions, predictionResponse)
@@ -91,7 +108,7 @@ func PredictionsHandler(solutionCtor model.SolutionStorageCtor) func(http.Respon
 }
 
 // PredictionHandler fetches a prediction by its ID.
-func PredictionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+func PredictionHandler(solutionCtor api.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		requestID := pat.Param(r, "request-id")
@@ -114,23 +131,37 @@ func PredictionHandler(solutionCtor model.SolutionStorageCtor) func(http.Respons
 			return
 		}
 
-		req, err := solution.FetchPrediction(requestID)
+		predictionReq, err := solution.FetchPrediction(requestID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
+		// recover the original feature set
+		solutionReq, err := solution.FetchRequestByFittedSolutionID(predictionReq.FittedSolutionID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		features := make([]*api.Feature, len(solutionReq.Features)-1)
+		for i, v := range solutionReq.Features {
+			if v.FeatureType != model.FeatureTypeTarget {
+				features[i] = v
+			}
+		}
+
 		predictionResponse := &PredictionResponse{
 			// request
-			RequestID:        req.RequestID,
-			Dataset:          req.Dataset,
-			Feature:          req.Target,
-			FittedSolutionID: req.FittedSolutionID,
+			RequestID:        predictionReq.RequestID,
+			Dataset:          predictionReq.Dataset,
+			Feature:          predictionReq.Target, // target name
+			Features:         features,             // features used in making predictions
+			FittedSolutionID: predictionReq.FittedSolutionID,
 			// solution
 			Timestamp: sol.CreatedTime,
 			Progress:  solRes.Progress,
 			// keys
-			PredictedKey: model.GetPredictedKey(sol.SolutionID),
+			PredictedKey: api.GetPredictedKey(sol.SolutionID),
 			ResultID:     solRes.ResultUUID,
 		}
 

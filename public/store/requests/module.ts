@@ -37,10 +37,6 @@ export const getters = {
   getCompletedPredictions: read(moduleGetters.getCompletedPredictions),
   getRunningPredictions: read(moduleGetters.getRunningPredictions),
   getRelevantPredictions: read(moduleGetters.getRelevantPredictions),
-  getRelevantPredictRequests: read(moduleGetters.getRelevantPredictRequests),
-  getRelevantPredictRequestIds: read(
-    moduleGetters.getRelevantPredictRequestIds
-  ),
   getActivePredictions: read(moduleGetters.getActivePredictions),
   getActivePredictionTrainingVariables: read(
     moduleGetters.getActivePredictionTrainingVariables
@@ -55,8 +51,6 @@ export const actions = {
   fetchSolutions: dispatch(moduleActions.fetchSolutions),
   fetchSolution: dispatch(moduleActions.fetchSolution),
 
-  fetchPredictRequests: dispatch(moduleActions.fetchPredictRequests),
-  fetchPredictRequest: dispatch(moduleActions.fetchPredictRequest),
   createPredictRequest: dispatch(moduleActions.createPredictRequest),
   stopPredictRequest: dispatch(moduleActions.stopPredictRequest),
   fetchPredictions: dispatch(moduleActions.fetchPredictions),
@@ -68,8 +62,6 @@ export const mutations = {
   updateSolutions: commit(moduleMutations.updateSolutions),
   clearSolutionRequests: commit(moduleMutations.clearSolutionRequests),
   clearSolutions: commit(moduleMutations.clearSolutions),
-  updatePredictRequests: commit(moduleMutations.updatePredictRequests),
   updatePredictions: commit(moduleMutations.updatePredictions),
-  clearPredictRequests: commit(moduleMutations.clearPredictRequests),
-  clearPredictionRequests: commit(moduleMutations.clearPredictions)
+  clearPredictions: commit(moduleMutations.clearPredictions)
 };

@@ -22,25 +22,17 @@ export const NUM_SOLUTIONS = 3;
 export interface Request {
   requestId: string;
   progress: string;
+  dataset: string;
+  feature: string;
+  features: Feature[];
   timestamp: number;
 }
 
 // A request to start the process of training, fitting and scoring a model
 export interface SolutionRequest extends Request {
-  dataset: string;
-  feature: string;
   filters: FilterParams;
-  features: Feature[];
 }
 
-// A request to generate predictions from fitted a model
-export interface PredictRequest extends Request {
-  fittedSolutionId: string;
-  dataset: string;
-  feature: string;
-}
-
-// A
 export interface Solution extends SolutionRequest {
   solutionId: string;
   fittedSolutionId: string;
@@ -51,7 +43,8 @@ export interface Solution extends SolutionRequest {
   isBad: boolean;
 }
 
-export interface Predictions extends PredictRequest {
+export interface Predictions extends Request {
+  fittedSolutionId: string;
   resultId: string;
   predictedKey: string;
   isBad: boolean;
@@ -72,13 +65,11 @@ export interface Feature {
 export interface RequestState {
   solutionRequests: SolutionRequest[];
   solutions: Solution[];
-  predictRequests: PredictRequest[];
   predictions: Predictions[];
 }
 
 export const state: RequestState = {
   solutionRequests: [],
   solutions: [],
-  predictRequests: [],
   predictions: []
 };

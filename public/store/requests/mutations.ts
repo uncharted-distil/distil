@@ -1,12 +1,6 @@
 import _ from "lodash";
 import Vue from "vue";
-import {
-  RequestState,
-  SolutionRequest,
-  Solution,
-  PredictRequest,
-  Predictions
-} from "./index";
+import { RequestState, SolutionRequest, Solution, Predictions } from "./index";
 
 export const mutations = {
   updateSolutions(state: RequestState, solution: Solution) {
@@ -50,22 +44,7 @@ export const mutations = {
     }
   },
 
-  updatePredictRequests(state: RequestState, predictRequest: PredictRequest) {
-    const index = state.predictRequests.findIndex(
-      r => r.requestId === predictRequest.requestId
-    );
-    if (index === -1) {
-      state.predictRequests.push(predictRequest);
-    } else {
-      Vue.set(state.predictions, index, predictRequest);
-    }
-  },
-
   clearPredictions(state: RequestState) {
     state.predictions = [];
-  },
-
-  clearPredictRequests(state: RequestState) {
-    state.predictRequests = [];
   }
 };

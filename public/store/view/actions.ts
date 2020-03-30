@@ -146,15 +146,6 @@ const fetchSolutions = createCacheable(
   }
 );
 
-const fetchPredictionRequests = createCacheable(
-  ParamCacheKey.PREDICTIONS_REQUESTS,
-  (context, args) => {
-    return requestActions.fetchPredictRequests(store, {
-      fittedSolutionId: args.fittedSolutionId
-    });
-  }
-);
-
 const fetchPredictions = createCacheable(
   ParamCacheKey.PREDICTIONS,
   (context, args) => {
@@ -470,16 +461,13 @@ export const actions = {
     await fetchVariables(context, {
       dataset: dataset
     });
-    await fetchPredictionRequests(context, {
-      fittedSolutionId: fittedSolutionId
-    });
     await fetchPredictions(context, {
       fittedSolutionId: fittedSolutionId
     });
-    return actions.updatePrediction(context);
+    return actions.updatePredictions(context);
   },
 
-  updatePrediction(context: ViewContext) {
+  updatePredictions(context: ViewContext) {
     // clear previous state
     predictionMutations.setIncludedPredictionTableData(store, null);
     predictionMutations.setExcludedPredictionTableData(store, null);
@@ -488,7 +476,7 @@ export const actions = {
     const inferenceDataset = context.getters.getRouteInferenceDataset;
     const target = context.getters.getRouteTargetVariable;
     const trainingVariables =
-      context.getters.getActiveSolutionTrainingVariables;
+      context.getters.getActivePredictionTrainingVariables;
     const highlight = context.getters.getDecodedHighlight;
     const produceRequestId = context.getters.getRouteProduceRequestId;
     const varModes = context.getters.getDecodedVarModes;

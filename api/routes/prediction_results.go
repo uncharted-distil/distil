@@ -26,8 +26,7 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
-// PredictionResultsHandler fetches solution test result values, or model predictions and returns them to the client
-// in a JSON structure
+// PredictionResultsHandler fetches a solution's test prediction, or the output of a prediction run against a fitted model.
 func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// parse POST params
@@ -44,18 +43,9 @@ func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 			return
 		}
 
-		dataset := pat.Param(r, "dataset")
-		storageName := model.NormalizeDatasetID(dataset)
-
 		produceRequestID, err := url.PathUnescape(pat.Param(r, "produce-request-id"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape produce request id"))
-			return
-		}
-
-		solutionID, err := url.PathUnescape(pat.Param(r, "solution-id"))
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to unescape solution id"))
 			return
 		}
 
@@ -77,36 +67,26 @@ func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 			return
 		}
 
-		// get the filters
-		req, err := solution.FetchRequestBySolutionID(solutionID)
+		// get the solution result (which is actually the prediction result) using the predict request ID
+		predictResult, err := solution.FetchPredictionResultByProduceRequestID(produceRequestID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		if req == nil {
-			handleError(w, errors.Errorf("solution id `%s` cannot be mapped to result URI", solutionID))
-			return
-		}
 
-		// merge provided filterParams with those of the request
-		filterParams.Merge(req.Filters)
+		// get the original solution ID out of the result
+		solutionID := predictResult.SolutionID
 
 		// Expand any grouped variables defined in filters into their subcomponents
+		dataset := predictResult.Dataset
 		updatedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, meta)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		// get the result URI
-		res, err := solution.FetchSolutionResultByProduceRequestID(produceRequestID)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
 		// if no result, return an empty map
-		if res == nil {
+		if predictResult == nil {
 			err = handleJSON(w, make(map[string]interface{}))
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))
@@ -114,7 +94,7 @@ func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 			return
 		}
 
-		results, err := data.FetchResults(dataset, storageName, res.ResultURI, solutionID, updatedFilterParams, true)
+		results, err := data.FetchResults(dataset, model.NormalizeDatasetID(dataset), predictResult.ResultURI, solutionID, updatedFilterParams, true)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -125,8 +105,8 @@ func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 
 		outputs := &api.PredictionResult{
 			FilteredData:     results,
-			FittedSolutionID: res.FittedSolutionID,
-			ProduceRequestID: res.ProduceRequestID,
+			FittedSolutionID: predictResult.FittedSolutionID,
+			ProduceRequestID: predictResult.ProduceRequestID,
 		}
 		// marshal data and sent the response back
 		err = handleJSON(w, outputs)

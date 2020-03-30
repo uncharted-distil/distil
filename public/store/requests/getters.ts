@@ -13,9 +13,9 @@ import {
   Predictions,
   PREDICT_RUNNING,
   PREDICT_PENDING,
-  PREDICT_COMPLETED,
-  PredictRequest
+  PREDICT_COMPLETED
 } from "./index";
+import { getVarType } from "../../util/types";
 
 export function sortRequestsByTimestamp(
   a: SolutionRequest,
@@ -157,30 +157,11 @@ export const getters = {
     );
   },
 
-  // Returns search requests relevant to the current dataset and target.
-  getRelevantPredictRequests(
-    state: RequestState,
-    getters: any
-  ): PredictRequest[] {
-    // get only matching dataset / target
-    return state.predictRequests.filter(
-      request =>
-        request.fittedSolutionId === <string>getters.getRouteFittedSolutionId
-    );
-  },
-
-  // Returns prediction request IDs relevant to the currently selected model
-  getRelevantPredictRequestIds(state: RequestState, getters: any): string[] {
-    return (<PredictRequest[]>getters.getRelevantPredictRequests).map(
-      request => request.requestId
-    );
-  },
-
   // Returns currently selected predictions
   getActivePredictions(state: RequestState, getters: any): Predictions {
     const predictionsId = <string>getters.getRouteProduceRequestId;
     const predictions = <Predictions[]>getters.getPredictions;
-    return predictions.find(p => p.resultId === predictionsId);
+    return predictions.find(p => p.requestId === predictionsId);
   },
 
   // Returns training variables associated with the currently selected fitted model
@@ -188,17 +169,8 @@ export const getters = {
     state: RequestState,
     getters: any
   ): Variable[] {
-    // find a solution with a matching fitted solution id and grab its training features
-    const currentFittedSolutionId = <string>getters.getRouteFittedSolutionId;
-    const trainingFeatures = state.solutions.find(
-      s => currentFittedSolutionId === s.fittedSolutionId
-    ).features;
-
-    // return matching variables
+    const predictions = <Predictions>getters.getActivePredictions;
     const variables = <Variable[]>getters.getVariablesMap;
-    return trainingFeatures
-      .filter(f => f.featureType === "train")
-      .map(f => variables[f.featureName])
-      .filter(v => !!v);
+    return predictions.features.map(p => variables[p.featureName]);
   }
 };

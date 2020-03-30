@@ -15,7 +15,6 @@ import {
   Solution,
   PREDICT_COMPLETED,
   PREDICT_ERRORED,
-  PredictRequest,
   Predictions
 } from "./index";
 import { ActionContext } from "vuex";
@@ -328,51 +327,6 @@ function handlePredictProgress(
   }
 }
 
-// parse returned server data into a solution that can be added to the index
-function parseSolutionResponse(responseData: any): Solution {
-  return {
-    requestId: responseData.requestId,
-    solutionId: responseData.solutionId,
-    fittedSolutionId: responseData.fittedSolutionId,
-    resultId: responseData.resultId,
-    dataset: responseData.dataset,
-    feature: responseData.feature,
-    scores: responseData.scores,
-    timestamp: responseData.timestamp,
-    progress: responseData.progress,
-    features: responseData.features,
-    filters: responseData.filters,
-    predictedKey: responseData.predictedKey,
-    errorKey: responseData.errorKey,
-    isBad: false
-  };
-}
-
-// parse returned server data into a solution request that can be added to the index
-function parseSolutionRequestResponse(responseData: any): SolutionRequest {
-  return {
-    requestId: responseData.requestId,
-    dataset: responseData.dataset,
-    feature: responseData.feature,
-    features: responseData.features,
-    filters: responseData.filters,
-    timestamp: responseData.timestamp,
-    progress: responseData.progress
-  };
-}
-
-// parse returend server data into a predict request that can be added to the index
-function parsePredictRequestResponse(responseData: any): PredictRequest {
-  return {
-    requestId: responseData.produceRequestId,
-    progress: responseData.progress,
-    timestamp: responseData.timestamp,
-    fittedSolutionId: responseData.fittedSolutionId,
-    dataset: responseData.dataset,
-    feature: responseData.feature
-  };
-}
-
 // parse returned server data into predictions that can be added to the index
 function parsePredictResponse(responseData: any): Predictions {
   return {
@@ -383,6 +337,7 @@ function parsePredictResponse(responseData: any): Predictions {
     resultId: responseData.resultId,
     dataset: responseData.dataset,
     feature: responseData.feature,
+    features: responseData.features,
     predictedKey: responseData.predictedKey,
     isBad: false
   };
@@ -402,14 +357,13 @@ export const actions = {
 
     try {
       // fetch and uddate the search data
-      const requestResponse = await axios.get(
+      const requestResponse = await axios.get<SolutionRequest[]>(
         `/distil/solution-requests/${args.dataset}/${args.target}`
       );
       const requests = requestResponse.data;
       for (const request of requests) {
         // update request data
-        const searchRequest = parseSolutionRequestResponse(request);
-        mutations.updateSolutionRequests(context, searchRequest);
+        mutations.updateSolutionRequests(context, request);
       }
     } catch (error) {
       console.error(error);
@@ -426,12 +380,11 @@ export const actions = {
 
     try {
       // fetch and uddate the search data
-      const requestResponse = await axios.get(
+      const requestResponse = await axios.get<SolutionRequest>(
         `/distil/solution-request/${args.requestId}`
       );
       // update request data
-      const searchRequest = parseSolutionRequestResponse(requestResponse.data);
-      mutations.updateSolutionRequests(context, searchRequest);
+      mutations.updateSolutionRequests(context, requestResponse.data);
     } catch (error) {
       console.error(error);
     }
@@ -450,15 +403,14 @@ export const actions = {
 
     try {
       // fetch update the solution data
-      const solutionResponse = await axios.get(
+      const solutionResponse = await axios.get<Solution[]>(
         `/distil/solutions/${args.dataset}/${args.target}`
       );
       if (!solutionResponse.data) {
         return;
       }
       for (const solution of solutionResponse.data) {
-        const searchResult = parseSolutionResponse(solution);
-        mutations.updateSolutions(context, searchResult);
+        mutations.updateSolutions(context, solution);
       }
     } catch (error) {
       console.error(error);
@@ -468,14 +420,13 @@ export const actions = {
   async fetchSolution(context: RequestContext, args: { solutionId: string }) {
     try {
       // fetch update the solution data
-      const solutionResponse = await axios.get(
+      const solutionResponse = await axios.get<Solution>(
         `/distil/solution/${args.solutionId}`
       );
       if (!solutionResponse.data) {
         return;
       }
-      const searchResult = parseSolutionResponse(solutionResponse.data);
-      mutations.updateSolutions(context, searchResult);
+      mutations.updateSolutions(context, solutionResponse.data);
     } catch (error) {
       console.error(error);
     }
@@ -543,50 +494,6 @@ export const actions = {
       type: STOP_SOLUTIONS,
       requestId: args.requestId
     });
-  },
-
-  // fetches all predictions request associated with a fitted solution
-  async fetchPredictRequests(
-    context: RequestContext,
-    args: {
-      fittedSolutionId: string;
-    }
-  ) {
-    args.fittedSolutionId = args.fittedSolutionId || "";
-    try {
-      // fetch and uddate the search data
-      const requestResponse = await axios.get<PredictRequest[]>(
-        `/distil/prediction-requests/${args.fittedSolutionId}`
-      );
-      const requests = <PredictRequest[]>requestResponse.data;
-      for (const request of requests) {
-        // update request data
-        const predictionRequest = parsePredictRequestResponse(request);
-        mutations.updatePredictRequests(context, predictionRequest);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  },
-
-  // fetches a specific prediction request
-  async fetchPredictRequest(
-    context: RequestContext,
-    args: { requestId: string }
-  ) {
-    args.requestId = args.requestId || "";
-    try {
-      // fetch and uddate the search data
-      const requestResponse = await axios.get<PredictRequest>(
-        `/distil/prediction-request/${args.requestId}`
-      );
-      const request = requestResponse.data;
-      // update request data
-      const predictionRequest = parsePredictRequestResponse(request);
-      mutations.updatePredictRequests(context, predictionRequest);
-    } catch (error) {
-      console.error(error);
-    }
   },
 
   // Opens up a websocket and initiates a prediction request.  Updates are returned until
@@ -660,10 +567,9 @@ export const actions = {
       const predictionsResponse = await axios.get<Predictions[]>(
         `/distil/predictions/${args.fittedSolutionId}`
       );
-      const predictions = predictionsResponse.data;
-      // update request data
-      const predictionRequest = parsePredictRequestResponse(predictions);
-      mutations.updatePredictRequests(context, predictionRequest);
+      for (const predictions of predictionsResponse.data) {
+        mutations.updatePredictions(context, predictions);
+      }
     } catch (error) {
       console.error(error);
     }
@@ -677,10 +583,8 @@ export const actions = {
       const requestResponse = await axios.get<Predictions>(
         `/distil/prediction/${args.requestId}`
       );
-      const request = requestResponse.data;
       // update request data
-      const predictionRequest = parsePredictRequestResponse(request);
-      mutations.updatePredictRequests(context, predictionRequest);
+      mutations.updatePredictions(context, requestResponse.data);
     } catch (error) {
       console.error(error);
     }

@@ -175,7 +175,7 @@ export const actions = {
 
     try {
       const response = await axios.post(
-        `distil/prediction-results/${args.dataset}/null/${encodeURIComponent(
+        `distil/prediction-results/${encodeURIComponent(
           args.produceRequestId
         )}`,
         filterParams
@@ -210,7 +210,7 @@ export const actions = {
 
     try {
       const response = await axios.post(
-        `distil/prediction-results/${args.dataset}/null/${encodeURIComponent(
+        `distil/prediction-results/${encodeURIComponent(
           args.produceRequestId
         )}`,
         filterParams
