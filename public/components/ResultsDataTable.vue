@@ -416,13 +416,17 @@ export default Vue.extend({
       let green;
       let blue;
       if (weight > 0) {
-        red = 255 - 128 * absoluteWeight;
-        green = 255 - 64 * absoluteWeight;
+        red = 242 - 128 * absoluteWeight;
+        green = 242 - 64 * absoluteWeight;
+        blue = 255;
+      } else if (weight === 0) {
+        red = 255;
+        green = 255;
         blue = 255;
       } else {
         red = 255;
-        green = 255 - 255 * absoluteWeight;
-        blue = 255 - 128 * absoluteWeight;
+        green = 242 - 255 * absoluteWeight;
+        blue = 242 - 128 * absoluteWeight;
       }
 
       return `background: rgba(${red}, ${green}, ${blue}, .75)`;
