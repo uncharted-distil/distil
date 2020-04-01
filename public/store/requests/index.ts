@@ -7,33 +7,30 @@ export const SOLUTION_PRODUCING = "SOLUTION_PRODUCING";
 export const SOLUTION_COMPLETED = "SOLUTION_COMPLETED";
 export const SOLUTION_ERRORED = "SOLUTION_ERRORED";
 
-export const PREDICTION_PENDING = "PREDICTION_PENDING";
-export const PREDICTION_RUNNING = "PREDICTION_RUNNING";
-export const PREDICTION_COMPLETED = "PREDICTION_COMPLETED";
-export const PREDICTION_ERRORED = "PREDICTION_ERRORED";
+export const PREDICT_PENDING = "PREDICT_PENDING";
+export const PREDICT_RUNNING = "PREDICT_RUNNING";
+export const PREDICT_COMPLETED = "PREDICT_COMPLETED";
+export const PREDICT_ERRORED = "PREDICT_ERRORED";
 
-export const REQUEST_PENDING = "REQUEST_PENDING";
-export const REQUEST_RUNNING = "REQUEST_RUNNING";
-export const REQUEST_COMPLETED = "REQUEST_COMPLETED";
-export const REQUEST_ERRORED = "REQUEST_ERRORED";
+export const SOLUTION_REQUEST_PENDING = "REQUEST_PENDING";
+export const SOLUTION_REQUEST_RUNNING = "REQUEST_RUNNING";
+export const SOLUTION_REQUEST_COMPLETED = "REQUEST_COMPLETED";
+export const SOLUTION_REQUEST_ERRORED = "REQUEST_ERRORED";
 
 export const NUM_SOLUTIONS = 3;
 
 export interface Request {
   requestId: string;
   progress: string;
+  dataset: string;
+  feature: string;
+  features: Feature[];
   timestamp: number;
 }
 
+// A request to start the process of training, fitting and scoring a model
 export interface SolutionRequest extends Request {
-  dataset: string;
-  feature: string;
   filters: FilterParams;
-  features: Feature[];
-}
-
-export interface PredictRequest extends Request {
-  fittedSolutionId: string;
 }
 
 export interface Solution extends SolutionRequest {
@@ -46,7 +43,8 @@ export interface Solution extends SolutionRequest {
   isBad: boolean;
 }
 
-export interface Predictions extends PredictRequest {
+export interface Predictions extends Request {
+  fittedSolutionId: string;
   resultId: string;
   predictedKey: string;
   isBad: boolean;
@@ -67,13 +65,11 @@ export interface Feature {
 export interface RequestState {
   solutionRequests: SolutionRequest[];
   solutions: Solution[];
-  predictRequests: PredictRequest[];
   predictions: Predictions[];
 }
 
 export const state: RequestState = {
   solutionRequests: [],
   solutions: [],
-  predictRequests: [],
   predictions: []
 };

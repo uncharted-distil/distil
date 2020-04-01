@@ -24,7 +24,9 @@
       @uploadstart="onUploadStart"
       @uploadfinish="onUploadFinish"
       :upload-type="uploadType"
-      :solution-id="fittedSolutionId"
+      :fitted-solution-id="fittedSolutionId"
+      :target="target"
+      :target-type="targetType"
       v-if="!isPrediction"
     ></file-uploader>
 
@@ -147,9 +149,16 @@ export default Vue.extend({
       return routeGetters.getRouteTargetVariable(this.$store);
     },
 
+    targetType(): string {
+      const targetName = this.target;
+      const variables = this.variables;
+      return variables.find(v => v.colName === targetName)?.colType;
+    },
+
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
+
     taskArgs(): string {
       return routeGetters.getRouteTask(this.$store);
     },
@@ -204,17 +213,15 @@ export default Vue.extend({
       });
     },
 
-    onUploadFinish(err, response) {
+    // todo - fix the typing here
+    onUploadFinish(err: Error, response: any) {
       this.uploadStatus = err ? "error" : "success";
 
-      if (this.uploadStatus !== "error") {
-        const inferenceDataset =
-          response && response.data && response.data.dataset;
+      if (this.uploadStatus !== "error" && !response.complete) {
         const routeArgs = {
-          solutionId: this.solutionId,
-          dataset: this.dataset,
-          inferenceDataset: inferenceDataset,
-          produceRequestId: response.data.produceRequestId,
+          fittedSolutionId: this.fittedSolutionId,
+          produceRequestId: response.produceRequestId,
+          inferenceDataset: response.dataset,
           target: this.target
         };
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);

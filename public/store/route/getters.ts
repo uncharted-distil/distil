@@ -398,5 +398,13 @@ export const getters = {
       return null;
     }
     return dataset;
+  },
+
+  getRouteFittedSolutionId(state: Route, getters: any): string {
+    const id = <string>state.query.fittedSolutionId;
+    if (!id) {
+      return null;
+    }
+    return id;
   }
 };

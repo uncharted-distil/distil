@@ -9,8 +9,13 @@ import {
   SOLUTION_COMPLETED,
   SOLUTION_FITTING,
   SOLUTION_SCORING,
-  SOLUTION_PRODUCING
+  SOLUTION_PRODUCING,
+  Predictions,
+  PREDICT_RUNNING,
+  PREDICT_PENDING,
+  PREDICT_COMPLETED
 } from "./index";
+import { getVarType } from "../../util/types";
 
 export function sortRequestsByTimestamp(
   a: SolutionRequest,
@@ -121,5 +126,51 @@ export const getters = {
     const target = <string>getters.getRouteTargetVariable;
     const variables = <Variable[]>getters.getVariables;
     return variables.filter(variable => variable.colName === target);
+  },
+
+  // Returns in-progress predictions.
+  getRunningPredictions(state: RequestState): Predictions[] {
+    return state.predictions.filter(
+      result =>
+        result.progress === PREDICT_RUNNING ||
+        result.progress === PREDICT_PENDING
+    );
+  },
+
+  // Returns completed predictions.
+  getCompletedPredictions(state: RequestState): Predictions[] {
+    return state.predictions.filter(
+      result => result.progress !== PREDICT_COMPLETED
+    );
+  },
+
+  // Returns all predictions.
+  getPredictions(state: RequestState): Predictions[] {
+    return state.predictions;
+  },
+
+  // Returns predictions relevant to the currently selected fitted solution id.
+  getRelevantPredictions(state: RequestState, getters: any): Predictions[] {
+    return state.predictions.filter(
+      result =>
+        result.fittedSolutionId === <string>getters.getRouteFittedSolutionId
+    );
+  },
+
+  // Returns currently selected predictions
+  getActivePredictions(state: RequestState, getters: any): Predictions {
+    const predictionsId = <string>getters.getRouteProduceRequestId;
+    const predictions = <Predictions[]>getters.getPredictions;
+    return predictions.find(p => p.requestId === predictionsId);
+  },
+
+  // Returns training variables associated with the currently selected fitted model
+  getActivePredictionTrainingVariables(
+    state: RequestState,
+    getters: any
+  ): Variable[] {
+    const predictions = <Predictions>getters.getActivePredictions;
+    const variables = <Variable[]>getters.getVariablesMap;
+    return predictions.features.map(p => variables[p.featureName]);
   }
 };

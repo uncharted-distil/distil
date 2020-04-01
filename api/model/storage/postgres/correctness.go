@@ -17,7 +17,6 @@ package postgres
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/jackc/pgx"
@@ -132,8 +131,8 @@ func (s *Storage) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*api
 		}
 	}
 
-	min := int64(math.MaxInt32)
-	max := int64(-math.MaxInt32)
+	var min int64
+	var max int64
 	if incorrectBucket.Count < correctBucket.Count {
 		min = incorrectBucket.Count
 		max = correctBucket.Count

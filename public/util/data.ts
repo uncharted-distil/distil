@@ -11,7 +11,12 @@ import {
   D3M_INDEX_FIELD,
   SummaryMode
 } from "../store/dataset/index";
-import { Solution, SOLUTION_COMPLETED } from "../store/requests/index";
+import {
+  Solution,
+  SOLUTION_COMPLETED,
+  Predictions,
+  PREDICT_COMPLETED
+} from "../store/requests/index";
 import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
 import store from "../store/store";
@@ -329,11 +334,10 @@ export function createErrorSummary(
   };
 }
 
-export function fetchSolutionResultSummary(
+export async function fetchSolutionResultSummary(
   context: ResultsContext,
   endpoint: string,
   solution: Solution,
-  target: string,
   key: string,
   label: string,
   resultSummaries: VariableSummary[],
@@ -343,6 +347,7 @@ export function fetchSolutionResultSummary(
 ): Promise<any> {
   const dataset = solution.dataset;
   const solutionId = solution.solutionId;
+  const target = solution.feature;
   const resultId = solution.resultId;
 
   const exists = _.find(
@@ -353,7 +358,7 @@ export function fetchSolutionResultSummary(
     // add placeholder
     updateFunction(
       context,
-      createPendingSummary(key, label, dataset, solutionId)
+      createPendingSummary(key, label, "", dataset, solutionId)
     );
   }
 
@@ -368,34 +373,27 @@ export function fetchSolutionResultSummary(
     : `${endpoint}/${resultId}`;
 
   // return promise
-  return axios
-    .post(completeEndpoint, filterParams ? filterParams : {})
-    .then(response => {
-      // save the histogram data
-      const summary = response.data.summary;
-      return fetchResultExemplars(
-        dataset,
-        target,
-        key,
-        solutionId,
-        summary
-      ).then(() => {
-        summary.solutionId = solutionId;
-        summary.dataset = dataset;
-        updateFunction(context, summary);
-      });
-    })
-    .catch(error => {
-      console.error(error);
-      updateFunction(context, createErrorSummary(key, label, dataset, error));
-    });
+  try {
+    const response = await axios.post(
+      completeEndpoint,
+      filterParams ? filterParams : {}
+    );
+    // save the histogram data
+    const summary = response.data.summary;
+    await fetchResultExemplars(dataset, target, key, solutionId, summary);
+    summary.solutionId = solutionId;
+    summary.dataset = dataset;
+    updateFunction(context, summary);
+  } catch (error) {
+    console.error(error);
+    updateFunction(context, createErrorSummary(key, label, dataset, error));
+  }
 }
 
-export function fetchPredictionResultSummary(
+export async function fetchPredictionResultSummary(
   context: PredictionContext,
   endpoint: string,
-  solution: Solution,
-  target: string,
+  predictions: Predictions,
   key: string,
   label: string,
   resultSummaries: VariableSummary[],
@@ -403,8 +401,8 @@ export function fetchPredictionResultSummary(
   filterParams: FilterParams,
   varMode: SummaryMode
 ): Promise<any> {
-  const dataset = solution.dataset;
-  const solutionId = solution.solutionId;
+  const dataset = predictions.dataset;
+  const resultId = predictions.resultId;
 
   const exists = _.find(
     resultSummaries,
@@ -412,43 +410,28 @@ export function fetchPredictionResultSummary(
   );
   if (!exists) {
     // add placeholder
-    updateFunction(
-      context,
-      createPendingSummary(key, label, dataset, solutionId)
-    );
+    updateFunction(context, createPendingSummary(key, label, "", dataset));
   }
 
   // fetch the results for each solution
-  if (solution.progress !== SOLUTION_COMPLETED) {
+  if (predictions.progress !== PREDICT_COMPLETED) {
     // skip
     return;
   }
 
   // return promise
-  return axios
-    .post(
-      `${endpoint}/${solution.resultId}/${varMode}`,
+  try {
+    const response = await axios.post(
+      `${endpoint}/${resultId}/${varMode}`,
       filterParams ? filterParams : {}
-    )
-    .then(response => {
-      // save the histogram data
-      const summary = response.data.summary;
-      return fetchResultExemplars(
-        dataset,
-        target,
-        key,
-        solutionId,
-        summary
-      ).then(() => {
-        summary.solutionId = solutionId;
-        summary.dataset = dataset;
-        updateFunction(context, summary);
-      });
-    })
-    .catch(error => {
-      console.error(error);
-      updateFunction(context, createErrorSummary(key, label, dataset, error));
-    });
+    );
+    const summary = <VariableSummary>response.data.summary;
+    summary.dataset = dataset;
+    updateFunction(context, summary);
+  } catch (error) {
+    console.error(error);
+    updateFunction(context, createErrorSummary(key, label, dataset, error));
+  }
 }
 
 export function filterVariablesByPage(
