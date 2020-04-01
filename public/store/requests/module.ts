@@ -32,6 +32,14 @@ export const getters = {
   ),
   getActiveSolutionTargetVariable: read(
     moduleGetters.getActiveSolutionTargetVariable
+  ),
+  getPredictions: read(moduleGetters.getPredictions),
+  getCompletedPredictions: read(moduleGetters.getCompletedPredictions),
+  getRunningPredictions: read(moduleGetters.getRunningPredictions),
+  getRelevantPredictions: read(moduleGetters.getRelevantPredictions),
+  getActivePredictions: read(moduleGetters.getActivePredictions),
+  getActivePredictionTrainingVariables: read(
+    moduleGetters.getActivePredictionTrainingVariables
   )
 };
 
@@ -41,12 +49,19 @@ export const actions = {
   createSolutionRequest: dispatch(moduleActions.createSolutionRequest),
   stopSolutionRequest: dispatch(moduleActions.stopSolutionRequest),
   fetchSolutions: dispatch(moduleActions.fetchSolutions),
-  fetchSolution: dispatch(moduleActions.fetchSolution)
+  fetchSolution: dispatch(moduleActions.fetchSolution),
+
+  createPredictRequest: dispatch(moduleActions.createPredictRequest),
+  stopPredictRequest: dispatch(moduleActions.stopPredictRequest),
+  fetchPredictions: dispatch(moduleActions.fetchPredictions),
+  fetchPrediction: dispatch(moduleActions.fetchPrediction)
 };
 
 export const mutations = {
   updateSolutionRequests: commit(moduleMutations.updateSolutionRequests),
   updateSolutions: commit(moduleMutations.updateSolutions),
   clearSolutionRequests: commit(moduleMutations.clearSolutionRequests),
-  clearSolutions: commit(moduleMutations.clearSolutions)
+  clearSolutions: commit(moduleMutations.clearSolutions),
+  updatePredictions: commit(moduleMutations.updatePredictions),
+  clearPredictions: commit(moduleMutations.clearPredictions)
 };

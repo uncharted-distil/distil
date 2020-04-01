@@ -214,6 +214,9 @@ export default Vue.extend({
         : matchesLabel + erroneousLabel;
     },
     errorCount(dataColumn: TableRow[]): number {
+      if (this.isPrediction) {
+        return 0;
+      }
       return dataColumn.filter(item => {
         if (this.regressionEnabled) {
           if (!item[this.solution.errorKey]) {

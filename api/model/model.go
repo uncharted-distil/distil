@@ -23,6 +23,13 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 )
 
+const (
+	// SolutionResultTypeInference is the solution result type for inferences.
+	SolutionResultTypeInference = "inference"
+	// SolutionResultTypeTest is the solution result type for tests.
+	SolutionResultTypeTest = "test"
+)
+
 var (
 	suffixReg = regexp.MustCompile(`:error|:predicted$`)
 )
@@ -46,6 +53,17 @@ type Request struct {
 	LastUpdatedTime time.Time     `json:"lastUpdatedTime"`
 	Features        []*Feature    `json:"features"`
 	Filters         *FilterParams `json:"filters"`
+}
+
+// Prediction represents the prediction metadata.
+type Prediction struct {
+	RequestID        string    `json:"requestId"`
+	Dataset          string    `json:"dataset"`
+	Target           string    `json:"target"`
+	FittedSolutionID string    `json:"fittedSolutionId"`
+	Progress         string    `json:"progress"`
+	CreatedTime      time.Time `json:"timestamp"`
+	LastUpdatedTime  time.Time `json:"lastUpdatedTime"`
 }
 
 // TargetFeature returns the target feature out of the feature set.
