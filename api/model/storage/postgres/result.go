@@ -158,11 +158,27 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 }
 
 // PersistResult stores the solution result to Postgres.
-func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string) error {
+func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, confidenceURI string, target string) error {
 	// Read the results file.
 	records, err := s.readCSVFile(resultURI)
 	if err != nil {
 		return err
+	}
+
+	// read the confidence file
+	confidences := make(map[string][]float64)
+	if confidenceURI != "" {
+		confidenceRecords, err := s.readCSVFile(confidenceURI)
+		if err != nil {
+			return err
+		}
+
+		// build the confidence lookup
+		for _, row := range confidenceRecords {
+			low, _ := strconv.ParseFloat(row[3], 64)
+			high, _ := strconv.ParseFloat(row[4], 64)
+			confidences[row[0]] = []float64{low, high}
+		}
 	}
 
 	// currently only support a single result column.
@@ -215,11 +231,24 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			parsedVal = int64(parsedValFloat)
 		}
 
-		insertData = append(insertData, []interface{}{resultURI, parsedVal, targetVariable.Name, records[i][targetIndex]})
+		dataForInsert := []interface{}{resultURI, parsedVal, targetVariable.Name, records[i][targetIndex]}
+		if confidences[records[i][d3mIndexIndex]] != nil {
+			cf := confidences[records[i][d3mIndexIndex]]
+			dataForInsert = append(dataForInsert, cf[0])
+			dataForInsert = append(dataForInsert, cf[1])
+		}
+
+		insertData = append(insertData, dataForInsert)
+	}
+
+	fields := []string{"result_id", "index", "target", "value"}
+	if len(confidences) > 0 {
+		fields = append(fields, "confidence_low")
+		fields = append(fields, "confidence_high")
 	}
 
 	// store all results to the storage
-	err = s.InsertBatch(s.getResultTable(storageName), []string{"result_id", "index", "target", "value"}, insertData)
+	err = s.InsertBatch(s.getResultTable(storageName), fields, insertData)
 	if err != nil {
 		return errors.Wrap(err, "failed to insert result in database")
 	}

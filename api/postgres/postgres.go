@@ -37,7 +37,9 @@ const (
 			result_id	varchar(1000)	NOT NULL,
 			index		BIGINT,
 			target		varchar(100),
-			value		varchar(200)
+			value		varchar(200),
+			confidence_low double precision,
+			confidence_high double precision
 		);`
 
 	requestTableName               = "request"

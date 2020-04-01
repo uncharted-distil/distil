@@ -474,7 +474,7 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client,
 	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string,
-	solutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string, resultURI string) {
+	solutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string, resultURI string, confidenceURI string) {
 	// persist the completed state
 	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -490,7 +490,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist results
-	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURI, s.TargetFeature.Name)
+	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURI, confidenceURI, s.TargetFeature.Name)
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)

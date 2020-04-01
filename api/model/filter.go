@@ -66,6 +66,20 @@ func (f *FilterParams) AddVariable(nv string) {
 	f.Variables = append(f.Variables, nv)
 }
 
+func filtersEqual(first *model.Filter, second *model.Filter) bool {
+	baseEquals := first.Key == second.Key &&
+		first.Min == second.Min &&
+		first.Max == second.Max
+	boundsEquals := (first.Bounds == nil && second.Bounds == nil) ||
+		(first.Bounds != nil && second.Bounds != nil &&
+			first.Bounds.MinX == second.Bounds.MinX &&
+			first.Bounds.MaxX == second.Bounds.MaxX &&
+			first.Bounds.MinY == second.Bounds.MinY &&
+			first.Bounds.MaxY == second.Bounds.MaxY)
+
+	return baseEquals && boundsEquals && model.StringSliceEqual(first.Categories, second.Categories)
+}
+
 // Merge merges another set of filter params into this set, expanding all
 // properties.
 func (f *FilterParams) Merge(other *FilterParams) {
@@ -80,14 +94,7 @@ func (f *FilterParams) Merge(other *FilterParams) {
 	for _, filter := range other.Filters {
 		found := false
 		for _, currentFilter := range f.Filters {
-			if filter.Key == currentFilter.Key &&
-				filter.Min == currentFilter.Min &&
-				filter.Max == currentFilter.Max &&
-				filter.Bounds.MinX == currentFilter.Bounds.MinX &&
-				filter.Bounds.MaxX == currentFilter.Bounds.MaxX &&
-				filter.Bounds.MinY == currentFilter.Bounds.MinY &&
-				filter.Bounds.MaxY == currentFilter.Bounds.MaxY &&
-				model.StringSliceEqual(filter.Categories, currentFilter.Categories) {
+			if filtersEqual(filter, currentFilter) {
 				found = true
 				break
 			}

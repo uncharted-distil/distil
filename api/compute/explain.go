@@ -33,10 +33,48 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
+const (
+	explainableTypeSolution   = "solution"
+	explainableTypeStep       = "step"
+	explainableTypeConfidence = "confidence"
+)
+
 var (
 	explainablePrimitivesSolution = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
-	explainablePrimitivesStep     = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
+	explainablePrimitivesStep     = map[string]string{
+		"e0ad06ce-b484-46b0-a478-c567e1ea7e02": "produce_shap_values",
+		"76b5a479-c209-4d94-92b5-7eba7a4d4499": "produce_confidence_intervals",
+	}
+	explainableOutputPrimitives = map[string][]*explainableOutput{
+		"e0ad06ce-b484-46b0-a478-c567e1ea7e02": {
+			{
+				primitiveID:     "e0ad06ce-b484-46b0-a478-c567e1ea7e02",
+				produceFunction: "produce_shap_values",
+				explainableType: explainableTypeStep,
+			},
+			{
+				primitiveID:     "e0ad06ce-b484-46b0-a478-c567e1ea7e02",
+				produceFunction: "produce_feature_importances",
+				explainableType: explainableTypeSolution,
+			},
+		},
+		"76b5a479-c209-4d94-92b5-7eba7a4d4499": {
+			{
+				primitiveID:     "76b5a479-c209-4d94-92b5-7eba7a4d4499",
+				produceFunction: "produce_confidence_intervals",
+				explainableType: explainableTypeConfidence,
+				parsingParams:   []interface{}{0: 3, 1: 4},
+			},
+		},
+	}
 )
+
+type explainableOutput struct {
+	primitiveID     string
+	produceFunction string
+	explainableType string
+	parsingParams   []interface{}
+}
 
 func (s *SolutionRequest) createExplainPipeline(client *compute.Client, desc *pipeline.DescribeSolutionResponse) (*pipeline.PipelineDescription, error) {
 	// cycle through the description to determine if any primitive can be explained
@@ -147,69 +185,45 @@ func (s *SolutionRequest) parseSolutionWeight(solutionID string, outputURI strin
 
 func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) (bool, *pipeline.PipelineDescription) {
 	pipelineDesc := solutionDesc.Pipeline
-	explainStep := -1
-	explainSolution := -1
+	explainable := false
 	for si, ps := range pipelineDesc.Steps {
 		// get the step outputs
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
-			if isExplainablePrimitiveStep(primitive.Primitive.Id) {
+			explainFunctions := explainableFunctions(primitive.Primitive.Id)
+			for _, ef := range explainFunctions {
 				primitive.Outputs = append(primitive.Outputs, &pipeline.StepOutput{
-					Id: "produce_shap_values",
+					Id: ef.produceFunction,
 				})
-				explainStep = si
-			}
-			if isExplainablePrimitiveSolution(primitive.Primitive.Id) {
-				primitive.Outputs = append(primitive.Outputs, &pipeline.StepOutput{
-					Id: "produce_feature_importances",
+				pipelineDesc.Outputs = append(pipelineDesc.Outputs, &pipeline.PipelineDescriptionOutput{
+					Name: ef.explainableType,
+					Data: fmt.Sprintf("steps.%d.%s", si, ef.produceFunction),
 				})
-				explainSolution = si
+				explainable = true
 			}
 		}
 	}
 
-	if explainStep >= 0 {
-		pipelineDesc.Outputs = append(pipelineDesc.Outputs, &pipeline.PipelineDescriptionOutput{
-			Name: "explain_step",
-			Data: fmt.Sprintf("steps.%d.produce_shap_values", explainStep),
-		})
-	}
-	if explainSolution >= 0 {
-		pipelineDesc.Outputs = append(pipelineDesc.Outputs, &pipeline.PipelineDescriptionOutput{
-			Name: "explain_solution",
-			Data: fmt.Sprintf("steps.%d.produce_feature_importances", explainStep),
-		})
-	}
-
-	return explainSolution >= 0 || explainStep >= 0, pipelineDesc
+	return explainable, pipelineDesc
 }
 
-func isExplainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) (bool, bool) {
+func isExplainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) bool {
 	pipelineDesc := solutionDesc.Pipeline
-	featureExplainable := false
-	solutionExplainable := false
 	for _, ps := range pipelineDesc.Steps {
 		// get the step outputs
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
-			if isExplainablePrimitiveStep(primitive.Primitive.Id) {
-				featureExplainable = true
-			}
-			if isExplainablePrimitiveSolution(primitive.Primitive.Id) {
-				solutionExplainable = true
+			if len(explainableFunctions(primitive.Primitive.Id)) > 0 {
+				return true
 			}
 		}
 	}
 
-	return featureExplainable, solutionExplainable
+	return false
 }
 
-func isExplainablePrimitiveStep(primitive string) bool {
-	return explainablePrimitivesStep[primitive]
-}
-
-func isExplainablePrimitiveSolution(primitive string) bool {
-	return explainablePrimitivesSolution[primitive]
+func explainableFunctions(primitiveID string) []*explainableOutput {
+	return explainableOutputPrimitives[primitiveID]
 }
 
 func mapRowIndex(d3mIndexCol int, data [][]string) map[int]string {

@@ -37,7 +37,7 @@ type DataStorage interface {
 	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool) (*FilteredData, error)
 	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams, invert bool, mode SummaryMode) (*VariableSummary, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
-	PersistResult(dataset string, storageName string, resultURI string, target string) error
+	PersistResult(dataset string, storageName string, resultURI string, confidenceURI string, target string) error
 	PersistSolutionFeatureWeight(dataset string, storageName string, solutionID string, weights [][]string) error
 	FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *FilterParams, removeTargetColumn bool) (*FilteredData, error)
 	FetchPredictedSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
