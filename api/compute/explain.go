@@ -190,7 +190,7 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 		// get the step outputs
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
-			explainFunctions := explainableFunctions(primitive.Primitive.Id)
+			explainFunctions := explainablePrimitiveFunctions(primitive.Primitive.Id)
 			for _, ef := range explainFunctions {
 				primitive.Outputs = append(primitive.Outputs, &pipeline.StepOutput{
 					Id: ef.produceFunction,
@@ -213,7 +213,7 @@ func isExplainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) bool
 		// get the step outputs
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
-			if len(explainableFunctions(primitive.Primitive.Id)) > 0 {
+			if len(explainablePrimitiveFunctions(primitive.Primitive.Id)) > 0 {
 				return true
 			}
 		}
@@ -222,8 +222,25 @@ func isExplainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) bool
 	return false
 }
 
-func explainableFunctions(primitiveID string) []*explainableOutput {
+func explainablePrimitiveFunctions(primitiveID string) []*explainableOutput {
 	return explainableOutputPrimitives[primitiveID]
+}
+
+func explainablePipelineFunctions(solutionDesc *pipeline.DescribeSolutionResponse) []*explainableOutput {
+	explainableCalls := make([]*explainableOutput, 0)
+	pipelineDesc := solutionDesc.Pipeline
+	for _, ps := range pipelineDesc.Steps {
+		// get the step outputs
+		primitive := ps.GetPrimitive()
+		if primitive != nil {
+			ep := explainablePrimitiveFunctions(primitive.Primitive.Id)
+			if len(ep) > 0 {
+				explainableCalls = append(explainableCalls, ep...)
+			}
+		}
+	}
+
+	return explainableCalls
 }
 
 func mapRowIndex(d3mIndexCol int, data [][]string) map[int]string {

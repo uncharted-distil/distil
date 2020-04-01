@@ -333,12 +333,10 @@ func GeneratePredictions(datasetURI string, initialSearchSolutionID string,
 		return "", nil, err
 	}
 
-	featureExplainable, solutionExplainable := isExplainablePipeline(desc)
+	explainableCalls := explainablePipelineFunctions(desc)
 	outputs := []string{defaultExposedOutputKey}
-	if featureExplainable {
+	if explainableCalls != nil {
 		outputs = append(outputs, explainFeatureOutputkey)
-	}
-	if solutionExplainable {
 		outputs = append(outputs, explainSolutionOutputkey)
 	}
 
@@ -360,14 +358,14 @@ func GeneratePredictions(datasetURI string, initialSearchSolutionID string,
 			return "", nil, err
 		}
 		var explainFeatureURI string
-		if featureExplainable {
+		if explainableCalls != nil {
 			explainFeatureURI, err = getFileFromOutput(response, explainFeatureOutputkey)
 			if err != nil {
 				return "", nil, err
 			}
 		}
 		var explainSolutionURI string
-		if solutionExplainable {
+		if explainableCalls != nil {
 			explainSolutionURI, err = getFileFromOutput(response, explainSolutionOutputkey)
 			if err != nil {
 				return "", nil, err
@@ -703,7 +701,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			// persist results
 			log.Infof("persisting results in URI '%s'", resultURI)
 			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
-				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID, produceRequestID, resultID, resultURI)
+				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID, produceRequestID, resultID, "", resultURI)
 		}
 	})
 	if err != nil {
