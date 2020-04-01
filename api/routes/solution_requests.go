@@ -113,3 +113,11 @@ func SolutionRequestHandler(solutionCtor model.SolutionStorageCtor) func(http.Re
 		}
 	}
 }
+
+func handleNullParameter(value string) string {
+	if value == "null" {
+		return ""
+	}
+
+	return value
+}

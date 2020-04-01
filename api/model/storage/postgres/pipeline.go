@@ -374,7 +374,7 @@ func (s *Storage) FetchSolutionResults(solutionID string) ([]*api.SolutionResult
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
 		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
-		"WHERE result.solution_id = $1 "+
+		"WHERE result.solution_id = $1 AND result.result_type = 'test' "+
 		"ORDER BY result.created_time desc LIMIT 1;", postgres.SolutionResultTableName, postgres.SolutionTableName, postgres.RequestTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
@@ -399,7 +399,7 @@ func (s *Storage) FetchSolutionResultsByFittedSolutionID(fittedSolutionID string
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
 		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
-		"WHERE result.fitted_solution_id = $1 "+
+		"WHERE result.fitted_solution_id = $1 AND result.result_type = 'test' "+
 		"ORDER BY result.created_time desc LIMIT 1;", postgres.SolutionResultTableName, postgres.SolutionTableName, postgres.RequestTableName)
 
 	rows, err := s.client.Query(sql, fittedSolutionID)

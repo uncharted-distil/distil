@@ -72,30 +72,32 @@ func PredictionsHandler(solutionCtor api.SolutionStorageCtor) func(http.Response
 
 		predictions := []*PredictionResponse{}
 		for _, predictionReq := range requests {
-			// gather predictions
-			solRes, err := solution.FetchSolutionResultsByFittedSolutionID(fittedSolutionID)
+			// check to see if we have results ready and the ID if so
+			predictionResults, err := solution.FetchPredictionResultByProduceRequestID(predictionReq.RequestID)
 			if err != nil {
 				handleError(w, err)
 				return
 			}
-
-			for _, sol := range solRes {
-				predictionResponse := &PredictionResponse{
-					// request
-					RequestID:        predictionReq.RequestID,
-					Dataset:          predictionReq.Dataset,
-					Feature:          predictionReq.Target,
-					Features:         features,
-					FittedSolutionID: predictionReq.FittedSolutionID,
-					// solution
-					Timestamp: sol.CreatedTime,
-					Progress:  sol.Progress,
-					// keys
-					PredictedKey: api.GetPredictedKey(sol.SolutionID),
-					ResultID:     sol.ResultUUID,
-				}
-				predictions = append(predictions, predictionResponse)
+			var resultID string
+			if predictionResults != nil {
+				resultID = predictionResults.ResultUUID
 			}
+
+			predictionResponse := &PredictionResponse{
+				// request
+				RequestID:        predictionReq.RequestID,
+				Dataset:          predictionReq.Dataset,
+				Feature:          predictionReq.Target,
+				Features:         features,
+				FittedSolutionID: predictionReq.FittedSolutionID,
+				// solution
+				Timestamp: predictionReq.CreatedTime,
+				Progress:  predictionReq.Progress,
+				// keys
+				PredictedKey: api.GetPredictedKey(predictionReq.RequestID),
+				ResultID:     resultID,
+			}
+			predictions = append(predictions, predictionResponse)
 		}
 
 		// marshal data and sent the response back
@@ -114,18 +116,6 @@ func PredictionHandler(solutionCtor api.SolutionStorageCtor) func(http.ResponseW
 		requestID := pat.Param(r, "request-id")
 
 		solution, err := solutionCtor()
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		solRes, err := solution.FetchSolutionResultByProduceRequestID(requestID)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		sol, err := solution.FetchSolution(solRes.SolutionID)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -150,6 +140,17 @@ func PredictionHandler(solutionCtor api.SolutionStorageCtor) func(http.ResponseW
 			}
 		}
 
+		// check to see if we have results ready and the ID if so
+		predictionResults, err := solution.FetchPredictionResultByProduceRequestID(predictionReq.RequestID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		var resultID string
+		if predictionResults != nil {
+			resultID = predictionResults.ResultUUID
+		}
+
 		predictionResponse := &PredictionResponse{
 			// request
 			RequestID:        predictionReq.RequestID,
@@ -158,11 +159,11 @@ func PredictionHandler(solutionCtor api.SolutionStorageCtor) func(http.ResponseW
 			Features:         features,             // features used in making predictions
 			FittedSolutionID: predictionReq.FittedSolutionID,
 			// solution
-			Timestamp: sol.CreatedTime,
-			Progress:  solRes.Progress,
+			Timestamp: predictionReq.CreatedTime,
+			Progress:  predictionReq.Progress,
 			// keys
-			PredictedKey: api.GetPredictedKey(sol.SolutionID),
-			ResultID:     solRes.ResultUUID,
+			PredictedKey: api.GetPredictedKey(predictionReq.RequestID),
+			ResultID:     resultID,
 		}
 
 		// marshal data and sent the response back

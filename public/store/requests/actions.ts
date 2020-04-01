@@ -164,8 +164,6 @@ function updateCurrentPredictResults(
   });
 
   predictActions.fetchPredictedSummary(store, {
-    dataset: req.datasetId,
-    target: req.target,
     highlight: context.getters.getDecodedHighlight,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)

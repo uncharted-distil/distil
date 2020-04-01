@@ -338,7 +338,6 @@ export async function fetchSolutionResultSummary(
   context: ResultsContext,
   endpoint: string,
   solution: Solution,
-  target: string,
   key: string,
   label: string,
   resultSummaries: VariableSummary[],
@@ -348,6 +347,7 @@ export async function fetchSolutionResultSummary(
 ): Promise<any> {
   const dataset = solution.dataset;
   const solutionId = solution.solutionId;
+  const target = solution.feature;
   const resultId = solution.resultId;
 
   const exists = _.find(

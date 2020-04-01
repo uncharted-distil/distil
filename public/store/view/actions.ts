@@ -493,8 +493,6 @@ export const actions = {
       produceRequestId: produceRequestId
     });
     predictionActions.fetchPredictedSummary(store, {
-      dataset: inferenceDataset,
-      target: target,
       highlight: highlight,
       varMode: SummaryMode.Default,
       produceRequestId: produceRequestId

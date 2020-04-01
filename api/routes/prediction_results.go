@@ -77,6 +77,20 @@ func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 		// get the original solution ID out of the result
 		solutionID := predictResult.SolutionID
 
+		// get the filters
+		req, err := solution.FetchRequestBySolutionID(solutionID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		if req == nil {
+			handleError(w, errors.Errorf("solution id `%s` cannot be mapped to result URI", solutionID))
+			return
+		}
+
+		// merge provided filterParams with those of the request
+		filterParams.Merge(req.Filters)
+
 		// Expand any grouped variables defined in filters into their subcomponents
 		dataset := predictResult.Dataset
 		updatedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, meta)

@@ -92,7 +92,7 @@ func (s *Storage) FetchPredictionResultByProduceRequestID(produceRequestID strin
 
 	rows, err := s.client.Query(sql, produceRequestID)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to pull solution results from Postgres")
+		return nil, errors.Wrap(err, "Unable to pull prediction results from Postgres")
 	}
 	if rows != nil {
 		defer rows.Close()
@@ -100,7 +100,36 @@ func (s *Storage) FetchPredictionResultByProduceRequestID(produceRequestID strin
 
 	results, err := s.parseSolutionResult(rows)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to parse solution results from Postgres")
+		return nil, errors.Wrap(err, "Unable to parse predicdtion results from Postgres")
+	}
+
+	var res *api.SolutionResult
+	if len(results) > 0 {
+		res = results[0]
+	}
+
+	return res, nil
+}
+
+// FetchPredictionResultByUUID pulls solution result information from Postgres.
+func (s *Storage) FetchPredictionResultByUUID(resultUUID string) (*api.SolutionResult, error) {
+	sql := fmt.Sprintf("SELECT result.solution_id, result.fitted_solution_id, result.produce_request_id, result.result_type, result.result_uuid, "+
+		"result.result_uri, result.progress, result.created_time, prediction.dataset "+
+		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
+		"INNER JOIN %s AS prediction ON result.produce_request_id = prediction.request_id "+
+		"WHERE result.result_uuid = $1;", postgres.SolutionResultTableName, postgres.SolutionTableName, postgres.PredictionTableName)
+
+	rows, err := s.client.Query(sql, resultUUID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull prediction results from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	results, err := s.parseSolutionResult(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse prediction results from Postgres")
 	}
 
 	var res *api.SolutionResult

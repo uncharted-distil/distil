@@ -250,21 +250,11 @@ export const actions = {
   fetchPredictionSummary(
     context: PredictionContext,
     args: {
-      dataset: string;
-      target: string;
       highlight: Highlight;
       varMode: SummaryMode;
       produceRequestId: string;
     }
   ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.target) {
-      console.warn("`target` argument is missing");
-      return null;
-    }
     if (!args.varMode) {
       console.warn("`varMode` argument is missing");
       return null;
@@ -284,7 +274,7 @@ export const actions = {
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
-    const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
+    const endpoint = `/distil/prediction-result-summary`;
     const key = predictions.predictedKey;
     const label = "Predicted";
     return fetchPredictionResultSummary(

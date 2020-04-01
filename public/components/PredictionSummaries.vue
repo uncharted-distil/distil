@@ -87,10 +87,6 @@ export default Vue.extend({
   },
 
   computed: {
-    solutionId(): string {
-      return routeGetters.getRouteSolutionId(this.$store);
-    },
-
     produceRequestId(): string {
       return routeGetters.getRouteProduceRequestId(this.$store);
     },
@@ -119,7 +115,7 @@ export default Vue.extend({
     summaries(): VariableSummary[] {
       return predictionsGetters
         .getPredictionSummaries(this.$store)
-        .filter(s => s.solutionId === this.solutionId);
+        .filter(s => s.solutionId === this.produceRequestId);
     },
 
     highlight(): Highlight {
