@@ -18,7 +18,6 @@ type PredictRequest struct {
 	MaxTime          int
 
 	requestChannel chan PredictStatus
-	listener       PredictStatusListener
 	finished       chan error
 }
 
@@ -71,9 +70,6 @@ func NewPredictRequest(data []byte) (*PredictRequest, error) {
 
 	return req, nil
 }
-
-// PredictStatusListener executes whenever prediction status is returned by the downstream autoML system.
-type PredictStatusListener func(status PredictStatus)
 
 // ExtractDatasetEncodedFromRawRequest extracts the dataset name from the raw message.
 func ExtractDatasetEncodedFromRawRequest(data []byte) (string, error) {
