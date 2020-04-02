@@ -72,6 +72,7 @@ type SolutionStorageCtor func() (SolutionStorage, error)
 // SolutionStorage defines the functions available to query the underlying
 // solution storage.
 type SolutionStorage interface {
+	PersistPrediction(requestID string, dataset string, target string, fittedSolutionID string, progress string, createdTime time.Time) error
 	PersistRequest(requestID string, dataset string, progress string, createdTime time.Time) error
 	PersistRequestFeature(requestID string, featureName string, featureType string) error
 	PersistRequestFilters(requestID string, filters *FilterParams) error
@@ -95,7 +96,11 @@ type SolutionStorage interface {
 	FetchSolutionResults(solutionID string) ([]*SolutionResult, error)
 	FetchSolutionResultsByFittedSolutionID(fittedSolutionID string) ([]*SolutionResult, error)
 	FetchSolutionResultByProduceRequestID(produceRequestID string) (*SolutionResult, error)
+	FetchPredictionResultByProduceRequestID(produceRequestID string) (*SolutionResult, error)
+	FetchPredictionResultByUUID(reusultUUID string) (*SolutionResult, error)
 	FetchSolutionScores(solutionID string) ([]*SolutionScore, error)
+	FetchPrediction(requestID string) (*Prediction, error)
+	FetchPredictionsByFittedSolutionID(fittedSolutionID string) ([]*Prediction, error)
 }
 
 // MetadataStorageCtor represents a client constructor to instantiate a

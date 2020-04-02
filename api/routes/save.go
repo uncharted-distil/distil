@@ -55,9 +55,8 @@ func SaveHandler(client *compute.Client) func(http.ResponseWriter, *http.Request
 		if err != nil {
 			handleError(w, errors.Wrap(err, "failed solution export request"))
 			return
-		} else {
-			log.Infof("Completed export request for %s", solutionID)
 		}
+		log.Infof("Completed export request for %s", solutionID)
 
 		err = handleJSON(w, map[string]interface{}{"solution-id": solutionID, "result": "saved"})
 		if err != nil {

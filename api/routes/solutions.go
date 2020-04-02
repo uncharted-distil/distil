@@ -45,15 +45,8 @@ type SolutionResponse struct {
 func SolutionsHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
-		dataset := pat.Param(r, "dataset")
-		target := pat.Param(r, "target")
-
-		if dataset == "null" {
-			dataset = ""
-		}
-		if target == "null" {
-			target = ""
-		}
+		dataset := handleNullParameter(pat.Param(r, "dataset"))
+		target := handleNullParameter(pat.Param(r, "target"))
 
 		solution, err := solutionCtor()
 		if err != nil {
@@ -133,6 +126,11 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			return
 		}
 
+		resultID := ""
+		if len(sol.Results) > 0 {
+			resultID = sol.Results[0].ResultUUID
+		}
+
 		solutionResponse := SolutionResponse{
 			// request
 			RequestID: req.RequestID,
@@ -145,7 +143,7 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			Scores:     sol.Scores,
 			Timestamp:  sol.CreatedTime,
 			Progress:   sol.State.Progress,
-			ResultID:   sol.Results[0].ResultUUID,
+			ResultID:   resultID,
 			// keys
 			PredictedKey: model.GetPredictedKey(sol.SolutionID),
 			ErrorKey:     model.GetErrorKey(sol.SolutionID),

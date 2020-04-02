@@ -406,14 +406,13 @@ export const actions = {
       filters: []
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
-    const endpoint = `/distil/predicted-summary/${args.dataset}/${args.target}`;
+    const endpoint = `/distil/solution-result-summary`;
     const key = solution.predictedKey;
     const label = "Predicted";
     return fetchSolutionResultSummary(
       context,
       endpoint,
       solution,
-      args.target,
       key,
       label,
       resultGetters.getPredictedSummaries(context),
@@ -508,7 +507,6 @@ export const actions = {
       context,
       endPoint,
       solution,
-      args.target,
       key,
       label,
       resultGetters.getResidualsSummaries(context),
@@ -594,7 +592,6 @@ export const actions = {
       context,
       endPoint,
       solution,
-      args.target,
       key,
       label,
       resultGetters.getCorrectnessSummaries(context),

@@ -52,13 +52,14 @@ import moment from "moment";
 import ResultGroup from "../components/ResultGroup";
 import { VariableSummary } from "../store/dataset/index";
 import {
-  REQUEST_COMPLETED,
-  REQUEST_ERRORED,
+  SOLUTION_REQUEST_COMPLETED,
+  SOLUTION_REQUEST_ERRORED,
   Solution,
   Score
 } from "../store/requests/index";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as predictionsGetters } from "../store/predictions/module";
 import {
   getters as requestGetters,
   actions as requestActions
@@ -134,10 +135,10 @@ export default Vue.extend({
     },
 
     requestGroups(): RequestGroup[] {
-      const requestsMap = _.keyBy(
-        requestGetters.getRelevantSolutionRequests(this.$store),
-        s => s.requestId
+      const solutionRequests = requestGetters.getRelevantSolutionRequests(
+        this.$store
       );
+      const requestsMap = _.keyBy(solutionRequests, s => s.requestId);
       const solutions = requestGetters.getRelevantSolutions(this.$store);
 
       // create a summary group for each search result
@@ -182,15 +183,18 @@ export default Vue.extend({
 
   methods: {
     isPending(status: string): boolean {
-      return status !== REQUEST_COMPLETED && status !== REQUEST_ERRORED;
+      return (
+        status !== SOLUTION_REQUEST_COMPLETED &&
+        status !== SOLUTION_REQUEST_ERRORED
+      );
     },
 
     isCompleted(status: string): boolean {
-      return status === REQUEST_COMPLETED;
+      return status === SOLUTION_REQUEST_COMPLETED;
     },
 
     isErrored(status: string): boolean {
-      return status === REQUEST_ERRORED;
+      return status === SOLUTION_REQUEST_ERRORED;
     },
 
     stopRequest(requestId: string) {
