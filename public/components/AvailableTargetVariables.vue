@@ -25,7 +25,7 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { createRouteEntry, varModesToString } from "../util/routes";
 import { filterSummariesByDataset, getComposedVariableKey } from "../util/data";
-import VariableFacets from "../components/VariableFacets.vue";
+import VariableFacets from "./facets/VariableFacets.vue";
 import {
   Grouping,
   Variable,

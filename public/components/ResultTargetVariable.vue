@@ -13,7 +13,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import VariableFacets from "../components/VariableFacets";
+import VariableFacets from "./facets/VariableFacets.vue";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as resultsGetters } from "../store/results/module";
 import {

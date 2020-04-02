@@ -1,21 +1,54 @@
 <template>
-  <div
-    class="facets-root"
-    v-bind:class="{ 'highlighting-enabled': enableHighlighting }"
-  >
-    <div class="facet-tooltip" style="display:none;"></div>
+  <div>
+    <component v-if="facetType" :is="facetType" :data.prop="facetData">
+      <div slot="header-label" class="facet-header-container">
+        <i
+          v-if="facetType === 'facet-terms'"
+          :class="getGroupIcon(summary) + ' facet-header-icon'"
+        ></i>
+        <span>{{ summary.label.toUpperCase() }}</span>
+        <type-change-menu
+          class="facet-header-dropdown"
+          :dataset="summary.dataset"
+          :field="summary.key"
+          :expandCollapse="expandCollapse"
+        >
+        </type-change-menu>
+      </div>
+
+      <div slot="footer" class="facet-footer-container">
+        <div v-if="facetDisplayMore" class="facet-footer-more">
+          <span>{{ facetValueCount - getNumToDisplay(summary) }} more</span>
+        </div>
+        <div
+          v-if="this.html"
+          v-child="computeCustomHTML()"
+          class="facet-footer-custom-html"
+        ></div>
+      </div>
+    </component>
+    <div
+      class="facets-root"
+      v-bind:class="{ 'highlighting-enabled': enableHighlighting }"
+    >
+      <div class="facet-tooltip" style="display:none;"></div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
+import "@uncharted/facets-core";
+import { FacetBarsData } from "@uncharted/facets-core/dist/types/facet-bars/FacetBars";
+import { FacetTermsData } from "@uncharted/facets-core/dist/types/facet-terms/FacetTerms";
+
 import _ from "lodash";
 import $ from "jquery";
 import Vue from "vue";
 import moment from "moment";
 
-import IconFork from "./icons/IconFork";
-import IconBookmark from "./icons/IconBookmark";
-import { createIcon } from "../util/icon";
+import IconFork from "../icons/IconFork.vue";
+import IconBookmark from "../icons/IconBookmark.vue";
+import { createIcon } from "../../util/icon";
 import {
   CATEGORICAL_FILTER,
   NUMERICAL_FILTER,
@@ -23,42 +56,60 @@ import {
   BIVARIATE_FILTER,
   TIMESERIES_FILTER,
   INCLUDE_FILTER
-} from "../util/filters";
+} from "../../util/filters";
 import {
   createGroup,
   Group,
   CategoricalFacet,
   isCategoricalFacet,
   getCategoricalChunkSize,
-  isNumericalFacet
-} from "../util/facets";
+  isNumericalFacet,
+  getGroupIcon,
+  CATEGORICAL_CHUNK_SIZE
+} from "../../util/facets";
 import {
   VariableSummary,
   Highlight,
   RowSelection,
   Row,
-  Variable
-} from "../store/dataset/index";
-import { Dictionary } from "../util/dict";
-import { getSelectedRows } from "../util/row";
+  Variable,
+  CATEGORICAL_SUMMARY,
+  NUMERICAL_SUMMARY
+} from "../../store/dataset";
+import { Dictionary } from "../../util/dict";
+import { getSelectedRows } from "../../util/row";
 import Facets from "@uncharted.software/stories-facets";
-import ImagePreview from "../components/ImagePreview";
-import TypeChangeMenu from "../components/TypeChangeMenu";
+import ImagePreview from "../ImagePreview.vue";
+import TypeChangeMenu from "../TypeChangeMenu.vue";
 import {
   getVarType,
   isClusterType,
   addClusterPrefix,
   hasComputedVarPrefix,
   GEOCOORDINATE_TYPE,
-  DATETIME_UNIX_ADJUSTMENT
-} from "../util/types";
-import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from "../util/data";
-import { getters as datasetGetters } from "../store/dataset/module";
+  DATETIME_UNIX_ADJUSTMENT,
+  TIMESERIES_TYPE
+} from "../../util/types";
+import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from "../../util/data";
+import { getters as datasetGetters } from "../../store/dataset/module";
 
 import "@uncharted.software/stories-facets/dist/facets.css";
 
 export default Vue.extend({
   name: "facet-entry",
+
+  components: {
+    TypeChangeMenu
+  },
+
+  directives: {
+    child(el, binding): void {
+      el.innerHTML = "";
+      if (binding.value) {
+        el.appendChild(binding.value);
+      }
+    }
+  },
 
   props: {
     summary: Object as () => VariableSummary,
@@ -352,6 +403,47 @@ export default Vue.extend({
       }
 
       return group;
+    },
+
+    facetType(): string {
+      const summary = this.summary;
+      if (!summary.err && !summary.pending) {
+        switch (summary.type) {
+          case CATEGORICAL_SUMMARY:
+            if (summary.varType === TIMESERIES_TYPE) {
+              // not implemented yet
+              break;
+            } else {
+              return "facet-terms";
+            }
+          case NUMERICAL_SUMMARY:
+            return "facet-bars";
+          default:
+            break;
+        }
+      }
+      return null;
+    },
+
+    facetData(): FacetBarsData | FacetTermsData | null {
+      if (this.facetType === "facet-terms") {
+        return this.computeTermsData(this.summary);
+      } else if (this.facetType === "facet-bars") {
+        return this.computeBarsData(this.summary);
+      }
+      return null;
+    },
+
+    facetValueCount(): number {
+      return this.summary.baseline.buckets.length;
+    },
+
+    facetDisplayMore(): boolean {
+      if (this.facetType === "facet-terms") {
+        const chunkSize = getCategoricalChunkSize(this.summary.type);
+        return this.facetValueCount > chunkSize;
+      }
+      return false;
     }
   },
 
@@ -398,6 +490,78 @@ export default Vue.extend({
   },
 
   methods: {
+    getNumToDisplay(summary: VariableSummary): number {
+      return (
+        this.numToDisplay[summary.key] || getCategoricalChunkSize(summary.type)
+      );
+    },
+
+    computeTermsData(summary: VariableSummary): FacetTermsData {
+      const numToDisplay = this.getNumToDisplay(summary);
+      const values = [];
+      if (summary.baseline.buckets.length) {
+        const buckets = summary.baseline.buckets;
+        const maxCount = summary.baseline.extrema.max;
+        for (
+          let i = 0, n = Math.min(buckets.length, numToDisplay);
+          i < n;
+          ++i
+        ) {
+          values.push({
+            ratio: buckets[i].count / maxCount,
+            label: buckets[i].key,
+            value: buckets[i].count
+          });
+        }
+      }
+      return {
+        label: summary.label.toUpperCase(),
+        values
+      };
+    },
+
+    computeBarsData(summary: VariableSummary): FacetBarsData {
+      const values = [];
+      if (summary.baseline.buckets.length) {
+        const buckets = summary.baseline.buckets;
+        // seems to be incorrect compute based on the current buckets
+        // const maxCount = summary.baseline.extrema.max;
+        const maxCount = buckets.reduce(
+          (max, bucket) => Math.max(max, bucket.count),
+          0
+        );
+        for (let i = 0, n = buckets.length; i < n; ++i) {
+          values.push({
+            ratio: buckets[i].count / maxCount,
+            label: buckets[i].key
+          });
+        }
+      }
+      return {
+        label: summary.label.toUpperCase(),
+        values
+      };
+    },
+
+    computeCustomHTML(): HTMLElement | null {
+      // hack to get the custom html buttons showing up
+      // changing this would mean to change how the instantiation of the facets works
+      // right now they are wrapped by other components like
+      // available-target-variables, available-training-variables, etc
+      // those components inject HTML into the facets through their `html` function
+      // we might want to change that in the future though
+      if (this.html) {
+        return _.isFunction(this.html)
+          ? this.html({
+              colName: this.summary.key
+            })
+          : this.html;
+      }
+      return null;
+    },
+
+    getGroupIcon,
+
     injectHTML(group: Group, $elem: JQuery) {
       const $groupFooter = $(
         '<div class="group-footer"><div class="html-slot"></div></div>'
@@ -1101,6 +1265,37 @@ export default Vue.extend({
 </script>
 
 <style>
+.facet-header-container {
+  display: flex;
+  align-items: center;
+}
+
+.facet-header-icon {
+  margin-right: 4px;
+}
+
+.facet-header-dropdown {
+  position: absolute;
+  right: 12px;
+}
+
+.facet-footer-container {
+  min-height: 12px;
+  padding: 6px 12px 5px;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.facet-footer-more {
+  margin-bottom: 4px;
+}
+
+.facet-footer-custom-html {
+  margin-top: 6px;
+}
+
 .group-facet-container {
   position: relative;
 }

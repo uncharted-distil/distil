@@ -39,7 +39,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import VariableFacets from "../components/VariableFacets";
+import VariableFacets from "./facets/VariableFacets.vue";
 import { Variable, VariableSummary, Highlight } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";

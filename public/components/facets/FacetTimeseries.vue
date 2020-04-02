@@ -41,9 +41,9 @@
 
 <script lang="ts">
 import Vue from "vue";
-import FacetEntry from "../components/FacetEntry";
-import { getters as datasetGetters } from "../store/dataset/module";
-import { getters as routeGetters } from "../store/route/module";
+import FacetEntry from "./FacetEntry.vue";
+import { getters as datasetGetters } from "../../store/dataset/module";
+import { getters as routeGetters } from "../../store/route/module";
 import {
   Dataset,
   Variable,
@@ -52,12 +52,12 @@ import {
   RowSelection,
   Row,
   NUMERICAL_SUMMARY
-} from "../store/dataset/index";
+} from "../../store/dataset";
 import {
   INTEGER_TYPE,
   EXPAND_ACTION_TYPE,
   COLLAPSE_ACTION_TYPE
-} from "../util/types";
+} from "../../util/types";
 
 export default Vue.extend({
   name: "facet-timeseries",

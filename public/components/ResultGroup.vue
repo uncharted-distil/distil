@@ -137,8 +137,8 @@
 // of prediction-truth residuals, and scoring information.
 
 import Vue from "vue";
-import FacetEntry from "../components/FacetEntry";
-import FacetTimeseries from "../components/FacetTimeseries";
+import FacetEntry from "./facets/FacetEntry.vue";
+import FacetTimeseries from "./facets/FacetTimeseries.vue";
 import {
   Extrema,
   VariableSummary,

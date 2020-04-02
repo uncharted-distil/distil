@@ -374,11 +374,9 @@ export default Vue.extend({
 
           return null;
         });
-    }
-  },
+    },
 
-  mounted() {
-    this.$root.$on("bv::dropdown::show", () => {
+    handleDropdownShow(): void {
       const dataset = this.dataset;
       const field = this.field;
       if (!this.isGeocoordinate) {
@@ -388,7 +386,15 @@ export default Vue.extend({
           isColTypeReviewed: true
         });
       }
-    });
+    }
+  },
+
+  mounted() {
+    this.$root.$on("bv::dropdown::show", this.handleDropdownShow);
+  },
+
+  destroyed(): void {
+    this.$root.$off("bv::dropdown::show", this.handleDropdownShow);
   }
 });
 </script>

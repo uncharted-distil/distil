@@ -39,7 +39,7 @@
       </div>
     </div>
     <div v-if="expand" class="latlon">
-      <facet-entry
+      <facet-categorical
         :instanceName="latSummary.label"
         :summary="latSummary"
         :enabledTypeChanges="enabledTypeChanges"
@@ -47,8 +47,8 @@
         :highlight="latHighlight"
         @numerical-click="latHistogramClick"
         @range-change="latRangeChange"
-      ></facet-entry>
-      <facet-entry
+      ></facet-categorical>
+      <facet-categorical
         :instanceName="lonSummary.label"
         :summary="lonSummary"
         :enabledTypeChanges="enabledTypeChanges"
@@ -56,7 +56,7 @@
         :highlight="lonHighlight"
         @numerical-click="lonHistogramClick"
         @range-change="lonRangeChange"
-      ></facet-entry>
+      ></facet-categorical>
     </div>
   </div>
 </template>
@@ -66,16 +66,16 @@ import _ from "lodash";
 import $ from "jquery";
 import leaflet from "leaflet";
 import Vue from "vue";
-import IconBase from "./icons/IconBase";
-import IconCropFree from "./icons/IconCropFree";
+import IconBase from "../icons/IconBase.vue";
+import IconCropFree from "../icons/IconCropFree.vue";
 import { scaleThreshold } from "d3";
 import {
   actions as datasetActions,
   getters as datasetGetters
-} from "../store/dataset/module";
-import { getters as routeGetters } from "../store/route/module";
-import { actions as appActions } from "../store/app/module";
-import { Dictionary } from "../util/dict";
+} from "../../store/dataset/module";
+import { getters as routeGetters } from "../../store/route/module";
+import { actions as appActions } from "../../store/app/module";
+import { Dictionary } from "../../util/dict";
 import {
   TableRow,
   VariableSummary,
@@ -84,10 +84,10 @@ import {
   Highlight,
   NUMERICAL_SUMMARY,
   RowSelection
-} from "../store/dataset/index";
-import TypeChangeMenu from "../components/TypeChangeMenu";
-import FacetEntry from "../components/FacetEntry";
-import { updateHighlight, clearHighlight } from "../util/highlights";
+} from "../../store/dataset";
+import TypeChangeMenu from "../TypeChangeMenu.vue";
+import FacetEntry from "./FacetEntry.vue";
+import { updateHighlight, clearHighlight } from "../../util/highlights";
 import {
   GEOCOORDINATE_TYPE,
   LATITUDE_TYPE,
@@ -95,10 +95,10 @@ import {
   REAL_VECTOR_TYPE,
   EXPAND_ACTION_TYPE,
   COLLAPSE_ACTION_TYPE
-} from "../util/types";
-import { overlayRouteEntry } from "../util/routes";
-import { Filter, removeFiltersByName } from "../util/filters";
-import { Feature, Activity, SubActivity } from "../util/userEvents";
+} from "../../util/types";
+import { overlayRouteEntry } from "../../util/routes";
+import { Filter, removeFiltersByName } from "../../util/filters";
+import { Feature, Activity, SubActivity } from "../../util/userEvents";
 
 import "leaflet/dist/leaflet.css";
 
