@@ -31,7 +31,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import VariableFacets from "../components/VariableFacets";
+import VariableFacets from "../components/facets/VariableFacets.vue";
 import ResultsComparison from "../components/ResultsComparison";
 import ResultSummaries from "../components/ResultSummaries";
 import { VariableSummary } from "../store/dataset/index";
