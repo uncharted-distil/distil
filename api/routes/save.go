@@ -16,14 +16,14 @@
 package routes
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/task"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -38,18 +38,43 @@ func parseBoolParam(value string) bool {
 
 // SaveHandler exports the caller supplied solution by calling through to the compute
 // server export functionality.
-func SaveHandler(client *compute.Client) func(http.ResponseWriter, *http.Request) {
+func SaveHandler(modelStorageCtor api.ExportedModelStorageCtor, solutionStorageCtor api.SolutionStorageCtor,
+	metadataStorageCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		solutionID := pat.Param(r, "solution-id")
 		fitted := pat.Param(r, "fitted")
 		fittedBool := parseBoolParam(fitted)
 
-		var err error
+		modelStorage, err := modelStorageCtor()
+		if err != nil {
+			handleError(w, errors.Wrap(err, "failed to create model storage client"))
+			return
+		}
+
+		metadataStorage, err := metadataStorageCtor()
+		if err != nil {
+			handleError(w, errors.Wrap(err, "failed to create metadata storage client"))
+			return
+		}
+
+		solutionStorage, err := solutionStorageCtor()
+		if err != nil {
+			handleError(w, errors.Wrap(err, "failed to create solution storage client"))
+			return
+		}
+
 		if fittedBool {
-			err = client.SaveFittedSolution(context.Background(), solutionID)
+			var exported *api.ExportedModel
+			exported, err = task.SaveFittedSolution(solutionID, solutionStorage, metadataStorage)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "failed saving fitted solution"))
+				return
+			}
+
+			err = modelStorage.PersistExportedModel(exported)
 		} else {
-			err = client.SaveSolution(context.Background(), solutionID)
+			_, err = task.SaveSolution(solutionID)
 		}
 
 		if err != nil {

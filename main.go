@@ -117,6 +117,9 @@ func main() {
 	// instantiate the metadata storage (using ES).
 	esMetadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
 
+	// instantiate the exported model storage (using ES).
+	esExportedModelStorageCtor := es.NewExportedModelStorage(config.ESModelsIndex, esClientCtor)
+
 	// instantiate the metadata storage (using filesystem).
 	fileMetadataStorageCtor := file.NewMetadataStorage(config.D3MOutputDir)
 
@@ -266,7 +269,7 @@ func main() {
 	registerRoutePost(mux, "/distil/timeseries/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:invert", routes.TimeseriesHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries-forecast/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:result-uuid", routes.TimeseriesForecastHandler(pgDataStorageCtor, pgSolutionStorageCtor))
 	registerRoutePost(mux, "/distil/event", routes.UserEventHandler(discoveryLogger))
-	registerRoutePost(mux, "/distil/save/:solution-id/:fitted", routes.SaveHandler(solutionClient))
+	registerRoutePost(mux, "/distil/save/:solution-id/:fitted", routes.SaveHandler(esExportedModelStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor))
 
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:file", routes.ImageHandler(esMetadataStorageCtor, &config))
