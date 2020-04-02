@@ -5,7 +5,7 @@
   "author": "Uncharted Software <info@uncharted.software>",
   "scripts": {
     "build": "prettier --check public/**/*.{vue,ts} && webpack",
-    "watch": "webpack --watch",
+    "watch": "webpack --progress --watch",
     "tslint-check": "tslint-config-prettier-check ./tslint.json",
     "prettier-check": "prettier --check public/**/*.{vue,ts}",
     "prettier-fix": "prettier --write public/**/*.{vue,ts}"
