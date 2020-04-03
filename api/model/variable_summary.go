@@ -57,7 +57,6 @@ type VariableSummary struct {
 	Type             string     `json:"type"`
 	VarType          string     `json:"varType"`
 	Dataset          string     `json:"dataset"`
-	SolutionID       string     `json:"solutionId,omitempty"`
 	Baseline         *Histogram `json:"baseline"`
 	Filtered         *Histogram `json:"filtered"`
 	Timeline         *Histogram `json:"timeline"`

@@ -130,7 +130,6 @@ export interface VariableSummary {
   dataset: string;
   type?: string;
   varType?: string;
-  solutionId?: string;
   baseline: Histogram;
   filtered?: Histogram;
   timeline?: Histogram;

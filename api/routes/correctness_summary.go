@@ -85,7 +85,6 @@ func CorrectnessSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor ap
 		}
 		summary.Key = api.GetErrorKey(res.SolutionID)
 		summary.Label = "Error"
-		summary.SolutionID = res.SolutionID
 
 		// marshal data and sent the response back
 		err = handleJSON(w, CorrectnessSummary{

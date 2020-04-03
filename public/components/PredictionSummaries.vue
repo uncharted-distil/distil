@@ -63,6 +63,7 @@ import { Solution } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { createRouteEntry } from "../util/routes";
 import { PREDICTION_UPLOAD } from "../util/uploads";
+import { getPredictionResultSummary } from "../util/summaries";
 import { sum } from "d3";
 
 export default Vue.extend({
@@ -113,9 +114,7 @@ export default Vue.extend({
     },
 
     summaries(): VariableSummary[] {
-      return predictionsGetters
-        .getPredictionSummaries(this.$store)
-        .filter(s => s.solutionId === this.produceRequestId);
+      return [getPredictionResultSummary(this.produceRequestId)];
     },
 
     highlight(): Highlight {

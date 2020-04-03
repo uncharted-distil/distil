@@ -30,6 +30,7 @@ import store from "../store/store";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { Forecast } from "../store/results";
+import { getIDFromKey } from "./summaries";
 
 export const CATEGORICAL_CHUNK_SIZE = 5;
 export const IMAGE_CHUNK_SIZE = 5;
@@ -283,17 +284,16 @@ function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 
   let timeseries = null as TimeSeries;
   let forecasts = null as Forecast;
-  if (summary.solutionId) {
-    timeseries = resultGetters.getPredictedTimeseries(store)[
-      summary.solutionId
-    ];
-    forecasts = resultGetters.getPredictedForecasts(store)[summary.solutionId];
+  const solutionId = getIDFromKey(summary.key);
+  if (solutionId) {
+    timeseries = resultGetters.getPredictedTimeseries(store)[solutionId];
+    forecasts = resultGetters.getPredictedForecasts(store)[solutionId];
   } else {
     timeseries = datasetGetters.getTimeseries(store)[group.dataset];
   }
 
   group.all.forEach((facet: CategoricalFacet) => {
-    if (summary.solutionId) {
+    if (solutionId) {
       facet.multipleTimeseries = [
         timeseries.timeseriesData[facet.file],
         forecasts.forecastData[facet.file]

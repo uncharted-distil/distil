@@ -66,6 +66,11 @@ import {
 } from "../store/requests/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getSolutionRequestIndex } from "../util/solutions";
+import {
+  getSolutionResultSummary,
+  getResidualSummary,
+  getCorrectnessSummary
+} from "../util/summaries";
 
 interface SummaryGroup {
   requestId: string;
@@ -113,23 +118,6 @@ export default Vue.extend({
       return routeGetters.getRouteTargetVariable(this.$store);
     },
 
-    predictedSummaries(): VariableSummary[] {
-      return resultsGetters.getPredictedSummaries(this.$store);
-    },
-
-    residualSummaries(): VariableSummary[] {
-      return this.showError &&
-        (this.isRegression || routeGetters.getRouteTask(this.$store))
-        ? resultsGetters.getResidualsSummaries(this.$store)
-        : [];
-    },
-
-    correctnessSummaries(): VariableSummary[] {
-      return this.showError && !this.isRegression
-        ? resultsGetters.getCorrectnessSummaries(this.$store)
-        : [];
-    },
-
     resultTargetSummary(): VariableSummary {
       return resultsGetters.getTargetSummary(this.$store);
     },
@@ -145,17 +133,14 @@ export default Vue.extend({
       const summaryGroups: SummaryGroup[] = solutions.map(solution => {
         const solutionId = solution.solutionId;
         const requestId = solution.requestId;
-
-        const predictedSummary = _.find(
-          this.predictedSummaries,
-          summary => summary.solutionId === solutionId
+        const predictedSummary = getSolutionResultSummary(solutionId);
+        const residualSummary = this.isRegression
+          ? getResidualSummary(solutionId)
+          : null;
+        const correctnessSummary = !this.isRegression
+          ? null
+          : getCorrectnessSummary(solutionId);
         );
-
-        const residualSummary = _.find(
-          this.residualSummaries,
-          summary => summary.solutionId === solutionId
-        );
-
         const correctnessSummary = _.find(
           this.correctnessSummaries,
           summary => summary.solutionId === solutionId
