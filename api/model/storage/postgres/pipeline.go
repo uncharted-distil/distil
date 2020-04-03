@@ -26,11 +26,12 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/model"
+	postgres "github.com/uncharted-distil/distil/api/postgres"
 )
 
 // PersistSolution persists the solution to Postgres.
 func (s *Storage) PersistSolution(requestID string, solutionID string, initialSearchSolutionID string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, solution_id, initial_search_solution_id, created_time) VALUES ($1, $2, $3, $4);", solutionTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, solution_id, initial_search_solution_id, created_time) VALUES ($1, $2, $3, $4);", postgres.SolutionTableName)
 
 	_, err := s.client.Exec(sql, requestID, solutionID, initialSearchSolutionID, createdTime)
 
@@ -39,7 +40,7 @@ func (s *Storage) PersistSolution(requestID string, solutionID string, initialSe
 
 // PersistSolutionWeight persists the solution feature weight to Postgres.
 func (s *Storage) PersistSolutionWeight(solutionID string, featureName string, featureIndex int64, weight float64) error {
-	sql := fmt.Sprintf("INSERT INTO %s (solution_id, feature_name, feature_index, weight) VALUES ($1, $2, $3, $4);", solutionFeatureWeightTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (solution_id, feature_name, feature_index, weight) VALUES ($1, $2, $3, $4);", postgres.SolutionFeatureWeightTableName)
 
 	_, err := s.client.Exec(sql, solutionID, featureName, featureIndex, weight)
 
@@ -48,7 +49,7 @@ func (s *Storage) PersistSolutionWeight(solutionID string, featureName string, f
 
 // PersistSolutionState persists the solution state to Postgres.
 func (s *Storage) PersistSolutionState(solutionID string, progress string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (solution_id, progress, created_time) VALUES ($1, $2, $3);", solutionStateTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (solution_id, progress, created_time) VALUES ($1, $2, $3);", postgres.SolutionStateTableName)
 
 	_, err := s.client.Exec(sql, solutionID, progress, createdTime)
 
@@ -58,7 +59,7 @@ func (s *Storage) PersistSolutionState(solutionID string, progress string, creat
 // PersistSolutionResult persists the solution result metadata to Postgres.
 func (s *Storage) PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string,
 	resultType string, resultUUID string, resultURI string, progress string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (solution_id, fitted_solution_id, produce_request_id, result_type, result_uuid, result_uri, progress, created_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);", solutionResultTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (solution_id, fitted_solution_id, produce_request_id, result_type, result_uuid, result_uri, progress, created_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);", postgres.SolutionResultTableName)
 
 	_, err := s.client.Exec(sql, solutionID, fittedSolutionID, produceRequestID, resultType, resultUUID, resultURI, progress, createdTime)
 
@@ -67,7 +68,7 @@ func (s *Storage) PersistSolutionResult(solutionID string, fittedSolutionID stri
 
 // PersistSolutionScore persist the solution score to Postgres.
 func (s *Storage) PersistSolutionScore(solutionID string, metric string, score float64) error {
-	sql := fmt.Sprintf("INSERT INTO %s (solution_id, metric, score) VALUES ($1, $2, $3);", solutionScoreTableName)
+	sql := fmt.Sprintf("INSERT INTO %s (solution_id, metric, score) VALUES ($1, $2, $3);", postgres.SolutionScoreTableName)
 
 	_, err := s.client.Exec(sql, solutionID, metric, score)
 
@@ -121,7 +122,7 @@ func (s *Storage) isBadSolution(solution *api.Solution) (bool, error) {
 
 // FetchSolution pulls solution information from Postgres.
 func (s *Storage) FetchSolution(solutionID string) (*api.Solution, error) {
-	sql := fmt.Sprintf("SELECT request_id, solution_id, initial_search_solution_id, created_time FROM %s WHERE solution_id = $1 ORDER BY created_time desc LIMIT 1;", solutionTableName)
+	sql := fmt.Sprintf("SELECT request_id, solution_id, initial_search_solution_id, created_time FROM %s WHERE solution_id = $1 ORDER BY created_time desc LIMIT 1;", postgres.SolutionTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
@@ -208,7 +209,7 @@ func (s *Storage) parseSolutionWeight(rows *pgx.Rows) ([]*api.SolutionWeight, er
 
 // FetchSolutionWeights fetches solution feature weights from Postgres.
 func (s *Storage) FetchSolutionWeights(solutionID string) ([]*api.SolutionWeight, error) {
-	sql := fmt.Sprintf("SELECT solution_id, feature_name, feature_index, weight FROM %s WHERE solution_id = $1;", solutionFeatureWeightTableName)
+	sql := fmt.Sprintf("SELECT solution_id, feature_name, feature_index, weight FROM %s WHERE solution_id = $1;", postgres.SolutionFeatureWeightTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
@@ -344,7 +345,7 @@ func (s *Storage) FetchSolutionState(solutionID string) (*api.SolutionState, err
 	sql := fmt.Sprintf("SELECT solution_id, progress, created_time "+
 		"FROM %s AS state "+
 		"WHERE state.solution_id = $1 "+
-		"ORDER BY state.created_time desc LIMIT 1;", solutionStateTableName)
+		"ORDER BY state.created_time desc LIMIT 1;", postgres.SolutionStateTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
@@ -373,8 +374,8 @@ func (s *Storage) FetchSolutionResults(solutionID string) ([]*api.SolutionResult
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
 		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
-		"WHERE result.solution_id = $1 "+
-		"ORDER BY result.created_time desc LIMIT 1;", solutionResultTableName, solutionTableName, requestTableName)
+		"WHERE result.solution_id = $1 AND result.result_type = 'test' "+
+		"ORDER BY result.created_time desc LIMIT 1;", postgres.SolutionResultTableName, postgres.SolutionTableName, postgres.RequestTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
@@ -398,8 +399,8 @@ func (s *Storage) FetchSolutionResultsByFittedSolutionID(fittedSolutionID string
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
 		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
-		"WHERE result.fitted_solution_id = $1 "+
-		"ORDER BY result.created_time desc LIMIT 1;", solutionResultTableName, solutionTableName, requestTableName)
+		"WHERE result.fitted_solution_id = $1 AND result.result_type = 'test' "+
+		"ORDER BY result.created_time desc LIMIT 1;", postgres.SolutionResultTableName, postgres.SolutionTableName, postgres.RequestTableName)
 
 	rows, err := s.client.Query(sql, fittedSolutionID)
 	if err != nil {
@@ -423,7 +424,7 @@ func (s *Storage) FetchSolutionResultByUUID(resultUUID string) (*api.SolutionRes
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
 		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
-		"WHERE result.result_uuid = $1;", solutionResultTableName, solutionTableName, requestTableName)
+		"WHERE result.result_uuid = $1;", postgres.SolutionResultTableName, postgres.SolutionTableName, postgres.RequestTableName)
 
 	rows, err := s.client.Query(sql, resultUUID)
 	if err != nil {
@@ -452,7 +453,7 @@ func (s *Storage) FetchSolutionResultByProduceRequestID(produceRequestID string)
 		"result.result_uri, result.progress, result.created_time, request.dataset "+
 		"FROM %s AS result INNER JOIN %s AS solution ON result.solution_id = solution.solution_id "+
 		"INNER JOIN %s AS request ON solution.request_id = request.request_id "+
-		"WHERE result.produce_request_id = $1;", solutionResultTableName, solutionTableName, requestTableName)
+		"WHERE result.produce_request_id = $1;", postgres.SolutionResultTableName, postgres.SolutionTableName, postgres.RequestTableName)
 
 	rows, err := s.client.Query(sql, produceRequestID)
 	if err != nil {
@@ -477,7 +478,7 @@ func (s *Storage) FetchSolutionResultByProduceRequestID(produceRequestID string)
 
 // FetchSolutionScores pulls solution score from Postgres.
 func (s *Storage) FetchSolutionScores(solutionID string) ([]*api.SolutionScore, error) {
-	sql := fmt.Sprintf("SELECT solution_id, metric, score FROM %s WHERE solution_id = $1;", solutionScoreTableName)
+	sql := fmt.Sprintf("SELECT solution_id, metric, score FROM %s WHERE solution_id = $1;", postgres.SolutionScoreTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
@@ -516,7 +517,7 @@ func (s *Storage) FetchSolutionsByDatasetTarget(dataset string, target string) (
 	sql := fmt.Sprintf("SELECT DISTINCT solution.solution_id "+
 		"FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id "+
 		"INNER JOIN %s solution ON request.request_id = solution.request_id ",
-		requestTableName, featureTableName, solutionTableName)
+		postgres.RequestTableName, postgres.RequestFeatureTableName, postgres.SolutionTableName)
 	params := make([]interface{}, 0)
 
 	if dataset != "" {
@@ -564,7 +565,7 @@ func (s *Storage) FetchSolutionsByRequestID(requestID string) ([]*api.Solution, 
 		"FROM %s request INNER JOIN %s rf ON request.request_id = rf.request_id "+
 		"INNER JOIN %s solution ON request.request_id = solution.request_id "+
 		"AND request.request_id = $1",
-		requestTableName, featureTableName, solutionTableName)
+		postgres.RequestTableName, postgres.RequestFeatureTableName, postgres.SolutionTableName)
 
 	params := []interface{}{requestID}
 	sql = fmt.Sprintf("%s;", sql)

@@ -1,0 +1,34 @@
+{
+  "about": {
+    "datasetID": "196_autoMpg_MIN_METADATA_dataset_TRAIN",
+    "datasetName": "NULL",
+    "license": "CC-BY license",
+    "approximateSize": "",
+    "datasetSchemaVersion": "4.0.0",
+    "redacted": true,
+    "datasetVersion": "4.0.0",
+    "digest": "af6462c2a79e214de0f24698029f70d6c9fae92ba37cda5b78ee16432f81d2e5"
+  },
+  "dataResources": [
+    {
+      "resID": "learningData",
+      "resPath": "tables/learningData.csv",
+      "resType": "table",
+      "resFormat": {
+        "text/csv": [
+          "csv"
+        ]
+      },
+      "columns": [
+        {
+          "colIndex": 0,
+          "colName": "d3mIndex",
+          "colType": "integer",
+          "role": [
+            "index"
+          ]
+        }
+      ]
+    }
+  ]
+}

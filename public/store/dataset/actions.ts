@@ -19,7 +19,8 @@ import {
   SummaryMode
 } from "./index";
 import { mutations, getters } from "./module";
-import { DistilState } from "../store";
+import { actions as resultActions } from "../requests/module";
+import store, { DistilState } from "../store";
 import { Highlight } from "../dataset/index";
 import { FilterParams } from "../../util/filters";
 import {
@@ -228,28 +229,6 @@ export const actions = {
     };
     mutations.updatePendingRequests(context, request);
 
-    // Hack: force to include datamart.upload.fc0ceee28cb74bad83e4f8872979b111 to the result since that data set does not appear on the suggestion list.
-    /*
-		return axios.get(`/distil/datasets/${args.dataset}`)
-			.then(res => {
-				const dataset = res.data.dataset;
-				const search = dataset.summaryML || dataset.summary || '';
-				return Promise.all([
-					// axios.get(`/distil/join-suggestions/${args.dataset}`, { params: { search } }).catch(e => ({data: undefined})),
-					axios.get(`/distil/datasets`, { params: { search: 'employment' } }),
-				]);
-			})
-			.then((response) => {
-				// const suggestions = (response[0].data && response[0].data.datasets) || [];
-				const employmentData = ((response[0].data && response[0].data.datasets) || []).filter(dataset =>
-					dataset.id === 'datamart.upload.fc0ceee28cb74bad83e4f8872979b111' ||
-					dataset.id === 'world_bank_2018');
-				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.RESOLVED, suggestions: [...employmentData] });
-			}).catch(error => {
-				mutations.updatePendingRequests(context, { ...request, status: DatasetPendingRequestStatus.ERROR });
-				console.error(error);
-			});
-		*/
     const query = args.searchQuery
       ? `?search=${args.searchQuery.split(" ").join(",")}`
       : "";
@@ -332,60 +311,42 @@ export const actions = {
       });
   },
 
-  uploadDataFile(
+  async uploadDataFile(
     context: DatasetContext,
-    args: { datasetID: string; file: File; type: string; solutionId?: string }
-  ): any {
+    args: {
+      datasetID: string;
+      file: File;
+      type: string;
+      targetType: string;
+      fittedSolutionId: string;
+    }
+  ): Promise<void> {
     if (!args.datasetID) {
       console.warn("`datasetID` argument is missing");
-      return null;
+      return;
     }
     if (!args.file) {
       console.warn("`file` argument is missing");
-      return null;
+      return;
     }
     if (!args.type) {
       console.warn("`type` argument is missing");
-      return null;
+      return;
     }
     const data = new FormData();
     data.append("file", args.file);
 
-    switch (args.type) {
-      case PREDICTION_UPLOAD:
-        if (!args.solutionId) {
-          console.warn("`solutionId` argument is missing");
-          return null;
-        }
-        return axios
-          .post(
-            `/distil/predict/${args.datasetID}/tabular/${args.solutionId}`,
-            data,
-            {
-              headers: { "Content-Type": "multipart/form-data" }
-            }
-          )
-          .then(response => {
-            return response;
-          });
-      case DATASET_UPLOAD:
-        return axios
-          .post(`/distil/upload/${args.datasetID}?type=table`, data, {
-            headers: { "Content-Type": "multipart/form-data" }
-          })
-          .then(response => {
-            return actions.importDataset(context, {
-              datasetID: args.datasetID,
-              source: "augmented",
-              provenance: "local",
-              terms: args.datasetID,
-              originalDataset: null,
-              joinedDataset: null
-            });
-          });
-      default:
-        console.log("unknown upload type");
-    }
+    await axios.post(`/distil/upload/${args.datasetID}?type=table`, data, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    return actions.importDataset(context, {
+      datasetID: args.datasetID,
+      source: "augmented",
+      provenance: "local",
+      terms: args.datasetID,
+      originalDataset: null,
+      joinedDataset: null
+    });
   },
 
   async importDataset(
@@ -415,8 +376,7 @@ export const actions = {
         joinedDataset: args.joinedDataset
       };
     }
-
-    const response = await axios.post(
+    await axios.post(
       `/distil/import/${args.datasetID}/${args.source}/${args.provenance}`,
       postParams
     );

@@ -10,6 +10,7 @@ import {
 } from "../store/route/index";
 import { SummaryMode } from "../store/dataset";
 
+// TODO: should really have a separate definintion for each route
 export interface RouteArgs {
   dataset?: string;
   terms?: string;
@@ -31,9 +32,10 @@ export interface RouteArgs {
   groupingType?: string;
   availableTargetVarsPage?: number;
   task?: string;
-  produceRequestId?: string;
   varModes?: string;
+  produceRequestId?: string;
   inferenceDataset?: string;
+  fittedSolutionId?: string;
 
   // we currently don't have a way to add these to the interface
   //
@@ -146,6 +148,9 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
   }
   if (!_.isUndefined(args.inferenceDataset)) {
     query.inferenceDataset = args.inferenceDataset;
+  }
+  if (!_.isUndefined(args.fittedSolutionId)) {
+    query.fittedSolutionId = args.fittedSolutionId;
   }
   if (args[JOINED_VARS_INSTANCE_PAGE]) {
     query[JOINED_VARS_INSTANCE_PAGE] = args[JOINED_VARS_INSTANCE_PAGE];

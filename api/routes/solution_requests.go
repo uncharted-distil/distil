@@ -40,15 +40,8 @@ type SolutionRequest struct {
 func SolutionRequestsHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
-		dataset := pat.Param(r, "dataset")
-		target := pat.Param(r, "target")
-
-		if dataset == "null" {
-			dataset = ""
-		}
-		if target == "null" {
-			target = ""
-		}
+		dataset := handleNullParameter(pat.Param(r, "dataset"))
+		target := handleNullParameter(pat.Param(r, "target"))
 
 		solution, err := solutionCtor()
 		if err != nil {
@@ -119,4 +112,12 @@ func SolutionRequestHandler(solutionCtor model.SolutionStorageCtor) func(http.Re
 			return
 		}
 	}
+}
+
+func handleNullParameter(value string) string {
+	if value == "null" {
+		return ""
+	}
+
+	return value
 }

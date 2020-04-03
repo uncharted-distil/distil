@@ -49,6 +49,7 @@ type Config struct {
 	ElasticEndpoint                    string  `env:"ES_ENDPOINT" envDefault:"http://localhost:9200"`
 	ElasticTimeout                     int     `env:"ES_TIMEOUT" envDefault:"300"`
 	ESDatasetsIndex                    string  `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
+	ESModelsIndex                      string  `env:"ES_DATASETS_INDEX" envDefault:"models"`
 	FeaturizationOutputDataRelative    string  `env:"FEATURIZATION_OUTPUT_DATA" envDefault:"features/tables/learningData.csv"`
 	FeaturizationOutputSchemaRelative  string  `env:"FEATURIZATION_OUTPUT_SCHEMA" envDefault:"features/datasetDoc.json"`
 	FormatOutputDataRelative           string  `env:"FORMAT_OUTPUT_DATA" envDefault:"format/tables/learningData.csv"`

@@ -21,10 +21,9 @@
       <results-comparison
         class="col-12 col-md-6 results-result-comparison"
       ></results-comparison>
-      <result-summaries
+      <prediction-summaries
         class="col-12 col-md-3 border-gray-left results-result-summaries"
-        :isPrediction="true"
-      ></result-summaries>
+      ></prediction-summaries>
     </div>
   </div>
 </template>
@@ -33,12 +32,13 @@
 import Vue from "vue";
 import VariableFacets from "../components/facets/VariableFacets.vue";
 import ResultsComparison from "../components/ResultsComparison";
-import ResultSummaries from "../components/ResultSummaries";
+import PredictionSummaries from "../components/PredictionSummaries";
 import { VariableSummary } from "../store/dataset/index";
 import { actions as viewActions } from "../store/view/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as predictionGetters } from "../store/predictions/module";
 import { Feature, Activity } from "../util/userEvents";
 
 export default Vue.extend({
@@ -47,7 +47,7 @@ export default Vue.extend({
   components: {
     VariableFacets,
     ResultsComparison,
-    ResultSummaries
+    PredictionSummaries
   },
 
   data() {
@@ -61,7 +61,7 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
     trainingSummaries(): VariableSummary[] {
-      return resultGetters.getTrainingSummaries(this.$store);
+      return predictionGetters.getTrainingSummaries(this.$store);
     },
     solutionId(): string {
       return routeGetters.getRouteSolutionId(this.$store);
@@ -83,9 +83,6 @@ export default Vue.extend({
 
   watch: {
     highlightString() {
-      viewActions.updatePrediction(this.$store);
-    },
-    solutionId() {
       viewActions.updatePrediction(this.$store);
     },
     produceRequestId() {

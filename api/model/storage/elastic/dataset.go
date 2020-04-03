@@ -167,7 +167,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
 	// execute the ES query
 	res, err := s.client.Search().
-		Index(s.index).
+		Index(s.datasetIndex).
 		FetchSource(true).
 		Size(datasetsListSize).
 		Do(context.Background())
@@ -183,7 +183,7 @@ func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMet
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
-		Index(s.index).
+		Index(s.datasetIndex).
 		FetchSource(true).
 		Size(datasetsListSize).
 		Do(context.Background())
@@ -205,7 +205,7 @@ func (s *Storage) SearchDatasets(terms string, baseDataset *api.Dataset, include
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
-		Index(s.index).
+		Index(s.datasetIndex).
 		FetchSource(true).
 		Size(datasetsListSize).
 		Do(context.Background())
@@ -248,14 +248,14 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 
 	// push the document into the metadata index
 	_, err := s.client.Update().
-		Index(s.index).
+		Index(s.datasetIndex).
 		Type(metadataType).
 		Id(dataset).
 		Doc(source).
 		Refresh("true").
 		Do(context.Background())
 	if err != nil {
-		return errors.Wrapf(err, "failed to add document to index `%s`", s.index)
+		return errors.Wrapf(err, "failed to add document to index `%s`", s.datasetIndex)
 	}
 
 	return nil
@@ -380,7 +380,7 @@ func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayN
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
-		Index(s.index).
+		Index(s.datasetIndex).
 		FetchSource(true).
 		Size(datasetsListSize).
 		Do(context.Background())
@@ -418,14 +418,14 @@ func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayN
 
 	// push the document into the metadata index
 	_, err = s.client.Index().
-		Index(s.index).
+		Index(s.datasetIndex).
 		Type(metadataType).
 		Id(dataset).
 		BodyJson(source).
 		Refresh("true").
 		Do(context.Background())
 	if err != nil {
-		return errors.Wrapf(err, "failed to add document to index `%s`", s.index)
+		return errors.Wrapf(err, "failed to add document to index `%s`", s.datasetIndex)
 	}
 
 	return nil
@@ -438,7 +438,7 @@ func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.Group
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
-		Index(s.index).
+		Index(s.datasetIndex).
 		FetchSource(true).
 		Size(datasetsListSize).
 		Do(context.Background())
@@ -477,14 +477,14 @@ func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.Group
 
 	// push the document into the metadata index
 	_, err = s.client.Index().
-		Index(s.index).
+		Index(s.datasetIndex).
 		Type(metadataType).
 		Id(datasetName).
 		BodyJson(source).
 		Refresh("true").
 		Do(context.Background())
 	if err != nil {
-		return errors.Wrapf(err, "failed to add document to index `%s`", s.index)
+		return errors.Wrapf(err, "failed to add document to index `%s`", s.datasetIndex)
 	}
 
 	return nil
