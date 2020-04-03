@@ -22,9 +22,9 @@ import (
 
 	"github.com/go-pg/pg"
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -42,15 +42,18 @@ const (
 			confidence_high double precision
 		);`
 
-	requestTableName               = "request"
-	solutionTableName              = "solution"
-	solutionFeatureWeightTableName = "solution_weight"
-	solutionStateTableName         = "solution_state"
-	solutionResultTableName        = "solution_result"
-	solutionScoreTableName         = "solution_score"
-	requestFeatureTableName        = "request_feature"
-	requestFilterTableName         = "request_filter"
-	wordStemTableName              = "word_stem"
+	// PredictionTableName is the name of the table for prediction requests.
+	PredictionTableName = "prediction"
+	RequestTableName    = "request"
+
+	SolutionTableName              = "solution"
+	SolutionFeatureWeightTableName = "solution_weight"
+	SolutionStateTableName         = "solution_state"
+	SolutionResultTableName        = "solution_result"
+	SolutionScoreTableName         = "solution_score"
+	RequestFeatureTableName        = "request_feature"
+	RequestFilterTableName         = "request_filter"
+	WordStemTableName              = "word_stem"
 
 	requestTableCreationSQL = `CREATE TABLE %s (
 			request_id			varchar(200),
@@ -59,6 +62,15 @@ const (
 			created_time		timestamp,
 			last_updated_time	timestamp
 		);`
+	predictionTableCreationSQL = `CREATE TABLE %s (
+				request_id			varchar(200),
+				dataset				varchar(200),
+				target		varchar(100),
+				fitted_solution_id	varchar(200),
+				progress			varchar(40),
+				created_time		timestamp,
+				last_updated_time	timestamp
+			);`
 	solutionTableCreationSQL = `CREATE TABLE %s (
 			request_id		varchar(200),
 			solution_id		varchar(200),
@@ -174,7 +186,7 @@ func NewDatabase(config *Config) (*Database, error) {
 		BatchSize: config.BatchSize,
 	}
 
-	database.Tables[wordStemTableName] = NewDataset(wordStemTableName, wordStemTableName, "", nil)
+	database.Tables[WordStemTableName] = NewDataset(WordStemTableName, WordStemTableName, "", nil)
 
 	return database, nil
 }
@@ -184,56 +196,62 @@ func (d *Database) CreateSolutionMetadataTables() error {
 	// Create the solution tables.
 	log.Infof("Creating solution metadata tables.")
 
-	d.DropTable(requestTableName)
-	_, err := d.DB.Exec(fmt.Sprintf(requestTableCreationSQL, requestTableName))
+	_ = d.DropTable(PredictionTableName)
+	_, err := d.DB.Exec(fmt.Sprintf(predictionTableCreationSQL, PredictionTableName))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to drop table")
 	}
 
-	d.DropTable(requestFeatureTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(requestFeatureTableCreationSQL, requestFeatureTableName))
+	_ = d.DropTable(RequestTableName)
+	_, err = d.DB.Exec(fmt.Sprintf(requestTableCreationSQL, RequestTableName))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to drop table")
 	}
 
-	d.DropTable(requestFilterTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(requestFilterTableCreationSQL, requestFilterTableName))
+	_ = d.DropTable(RequestFeatureTableName)
+	_, err = d.DB.Exec(fmt.Sprintf(requestFeatureTableCreationSQL, RequestFeatureTableName))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to drop table")
 	}
 
-	d.DropTable(solutionTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(solutionTableCreationSQL, solutionTableName))
+	_ = d.DropTable(RequestFilterTableName)
+	_, err = d.DB.Exec(fmt.Sprintf(requestFilterTableCreationSQL, RequestFilterTableName))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to drop table")
 	}
 
-	d.DropTable(solutionFeatureWeightTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(solutionFeatureWeightTableCreationSQL, solutionFeatureWeightTableName))
+	_ = d.DropTable(SolutionTableName)
+	_, err = d.DB.Exec(fmt.Sprintf(solutionTableCreationSQL, SolutionTableName))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to drop table")
 	}
 
-	d.DropTable(solutionStateTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(solutionStateTableCreationSQL, solutionStateTableName))
+	_ = d.DropTable(SolutionFeatureWeightTableName)
+	_, err = d.DB.Exec(fmt.Sprintf(solutionFeatureWeightTableCreationSQL, SolutionFeatureWeightTableName))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to drop table")
 	}
 
-	d.DropTable(solutionResultTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(solutionResultTableCreationSQL, solutionResultTableName))
+	_ = d.DropTable(SolutionStateTableName)
+	_, err = d.DB.Exec(fmt.Sprintf(solutionStateTableCreationSQL, SolutionStateTableName))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to drop table")
 	}
 
-	d.DropTable(solutionScoreTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(solutionScoreTableCreationSQL, solutionScoreTableName))
+	_ = d.DropTable(SolutionResultTableName)
+	_, err = d.DB.Exec(fmt.Sprintf(solutionResultTableCreationSQL, SolutionResultTableName))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to drop table")
+	}
+
+	_ = d.DropTable(SolutionScoreTableName)
+	_, err = d.DB.Exec(fmt.Sprintf(solutionScoreTableCreationSQL, SolutionScoreTableName))
+	if err != nil {
+		return errors.Wrap(err, "failed to drop table")
 	}
 
 	// do not drop the word stem table as we want it to include all words.
-	d.DB.Exec(fmt.Sprintf(wordStemsTableCreationSQL, wordStemTableName))
+	_, _ = d.DB.Exec(fmt.Sprintf(wordStemsTableCreationSQL, WordStemTableName))
 	// ignore the error in the word stem creation.
 	// Almost certainly due to the table already existing.
 
@@ -321,11 +339,11 @@ func (d *Database) DeleteDataset(name string) {
 	variableName := fmt.Sprintf("%s%s", name, variableTableSuffix)
 	explainName := fmt.Sprintf("%s%s", name, explainTableSuffix)
 
-	d.DropView(name)
-	d.DropTable(baseName)
-	d.DropTable(resultName)
-	d.DropTable(variableName)
-	d.DropTable(explainName)
+	_ = d.DropView(name)
+	_ = d.DropTable(baseName)
+	_ = d.DropTable(resultName)
+	_ = d.DropTable(variableName)
+	_ = d.DropTable(explainName)
 }
 
 // IngestRow parses the raw csv data and stores it to the table specified.
@@ -368,7 +386,7 @@ func (d *Database) IngestRow(tableName string, data []string) error {
 func (d *Database) InsertRemainingRows() error {
 	for tableName, ds := range d.Tables {
 		if ds.GetBatchSize() > 0 {
-			if tableName != wordStemTableName {
+			if tableName != WordStemTableName {
 				err := d.executeInserts(tableName)
 				if err != nil {
 					return errors.Wrap(err, "unable to insert remaining rows for table "+tableName)
@@ -387,7 +405,7 @@ func (d *Database) InsertRemainingRows() error {
 
 // AddWordStems builds the word stemming lookup in the database.
 func (d *Database) AddWordStems(data []string) error {
-	ds := d.Tables[wordStemTableName]
+	ds := d.Tables[WordStemTableName]
 
 	for i := 0; i < len(data); i++ {
 		// split the field into tokens.
@@ -399,12 +417,12 @@ func (d *Database) AddWordStems(data []string) error {
 			}
 
 			// query for the stemmed version of each word.
-			query := fmt.Sprintf("INSERT INTO %s VALUES (unnest(tsvector_to_array(to_tsvector(?))), ?) ON CONFLICT (stem) DO NOTHING;", wordStemTableName)
+			query := fmt.Sprintf("INSERT INTO %s VALUES (unnest(tsvector_to_array(to_tsvector(?))), ?) ON CONFLICT (stem) DO NOTHING;", WordStemTableName)
 			ds.AddInsert(query, []interface{}{fieldValue, strings.ToLower(fieldValue)})
 			if ds.GetBatchSize() >= d.BatchSize {
-				err := d.executeInsertsComplete(wordStemTableName)
+				err := d.executeInsertsComplete(WordStemTableName)
 				if err != nil {
-					return errors.Wrap(err, "unable to insert to table "+wordStemTableName)
+					return errors.Wrap(err, "unable to insert to table "+WordStemTableName)
 				}
 
 				ds.ResetBatch()

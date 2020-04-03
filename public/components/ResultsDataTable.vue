@@ -407,12 +407,28 @@ export default Vue.extend({
       if (!weight || !this.hasMultipleFeatures) {
         return "";
       }
+
       const absoluteWeight = Math.abs(
         weight / this.d3mRowWeightExtrema[data.item[D3M_INDEX_FIELD]]
       );
-      const red = 255 - 128 * absoluteWeight;
-      const green = 255 - 64 * absoluteWeight;
-      const blue = 255;
+
+      let red;
+      let green;
+      let blue;
+      if (weight > 0) {
+        red = 242 - 128 * absoluteWeight;
+        green = 242 - 64 * absoluteWeight;
+        blue = 255;
+      } else if (weight === 0) {
+        red = 255;
+        green = 255;
+        blue = 255;
+      } else {
+        red = 255;
+        green = 242 - 255 * absoluteWeight;
+        blue = 242 - 128 * absoluteWeight;
+      }
+
       return `background: rgba(${red}, ${green}, ${blue}, .75)`;
     }
   }

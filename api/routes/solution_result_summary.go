@@ -75,14 +75,9 @@ func fetchSolutionPredictedExtrema(meta api.MetadataStorage, data api.DataStorag
 	return api.NewExtrema(min, max)
 }
 
-// PredictedSummaryHandler bins predicted result data for consumption in a downstream summary view.
-func PredictedSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+// SolutionResultSummaryHandler bins predicted result data for consumption in a downstream summary view.
+func SolutionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// extract route parameters
-		dataset := pat.Param(r, "dataset")
-		target := pat.Param(r, "target")
-		storageName := model.NormalizeDatasetID(dataset)
-
 		// get variable summary mode
 		mode, err := api.SummaryModeFromString(pat.Param(r, "mode"))
 		if err != nil {
@@ -128,22 +123,30 @@ func PredictedSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 			return
 		}
 
-		// extract extrema for solution
-		extrema, err := fetchSolutionPredictedExtrema(meta, data, solution, dataset, storageName, target, "")
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		// get the result URI. Error ignored to make it ES compatible.
+		// Fetch the solution result.
 		res, err := solution.FetchSolutionResultByUUID(resultUUID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
+		// Fetch the request so we have access to the original parameters.
+		request, err := solution.FetchRequestBySolutionID(res.SolutionID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// extract extrema for solution
+		storageName := model.NormalizeDatasetID(request.Dataset)
+		extrema, err := fetchSolutionPredictedExtrema(meta, data, solution, request.Dataset, storageName, request.TargetFeature(), "")
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// fetch summary histogram
-		summary, err := data.FetchPredictedSummary(dataset, storageName, res.ResultURI, filterParams, extrema, api.SummaryMode(mode))
+		summary, err := data.FetchPredictedSummary(request.Dataset, storageName, res.ResultURI, filterParams, extrema, api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return

@@ -20,18 +20,6 @@ import (
 	"github.com/uncharted-distil/distil/api/postgres"
 )
 
-const (
-	requestTableName               = "request"
-	solutionTableName              = "solution"
-	solutionStateTableName         = "solution_state"
-	solutionFeatureWeightTableName = "solution_weight"
-	solutionResultTableName        = "solution_result"
-	solutionScoreTableName         = "solution_score"
-	featureTableName               = "request_feature"
-	filterTableName                = "request_filter"
-	wordStemTableName              = "word_stem"
-)
-
 // Storage accesses the underlying postgres database.
 type Storage struct {
 	client   postgres.DatabaseDriver

@@ -1,0 +1,34 @@
+{
+  "about": {
+    "datasetID": "196_autoMpg_MIN_METADATA_dataset_TEST",
+    "datasetName": "NULL",
+    "license": "CC-BY license",
+    "approximateSize": "",
+    "datasetSchemaVersion": "4.0.0",
+    "redacted": true,
+    "datasetVersion": "4.0.0",
+    "digest": "550d27d0908304a423acd89d81689399bd5c29fd433288be963b6929314c66ab"
+  },
+  "dataResources": [
+    {
+      "resID": "learningData",
+      "resPath": "tables/learningData.csv",
+      "resType": "table",
+      "resFormat": {
+        "text/csv": [
+          "csv"
+        ]
+      },
+      "columns": [
+        {
+          "colIndex": 0,
+          "colName": "d3mIndex",
+          "colType": "integer",
+          "role": [
+            "index"
+          ]
+        }
+      ]
+    }
+  ]
+}

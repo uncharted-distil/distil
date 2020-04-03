@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	postgres "github.com/uncharted-distil/distil/api/postgres"
 )
 
 // TextField defines behaviour for the text field type.
@@ -293,7 +294,7 @@ func (f *TextField) getTopCategories(filterParams *api.FilterParams, invert bool
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem %s FROM %s %s) as r "+
 		"LEFT OUTER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY COALESCE(w.word, r.stem) ORDER BY count desc, COALESCE(w.word, r.stem) LIMIT %d;",
-		f.Key, getCountSQL(f.Count), f.Key, countSubselect, f.DatasetStorageName, where, wordStemTableName, 5)
+		f.Key, getCountSQL(f.Count), f.Key, countSubselect, f.DatasetStorageName, where, postgres.WordStemTableName, 5)
 
 	// execute the postgres query
 	rows, err := f.Storage.client.Query(query, params...)
@@ -340,7 +341,7 @@ func (f *TextField) fetchHistogram(filterParams *api.FilterParams, invert bool) 
 		"FROM (SELECT unnest(tsvector_to_array(to_tsvector(\"%s\"))) as stem %s FROM %s %s) as r "+
 		"LEFT OUTER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY COALESCE(w.word, r.stem) ORDER BY count desc, COALESCE(w.word, r.stem) LIMIT %d;",
-		f.Key, getCountSQL(f.Count), f.Key, countSubselect, f.DatasetStorageName, where, wordStemTableName, catResultLimit)
+		f.Key, getCountSQL(f.Count), f.Key, countSubselect, f.DatasetStorageName, where, postgres.WordStemTableName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -381,7 +382,7 @@ func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *api.F
 		"LEFT OUTER JOIN %s as w on r.stem = w.stem "+
 		"GROUP BY COALESCE(w.word, r.stem) ORDER BY count desc, COALESCE(w.word, r.stem) LIMIT %d;",
 		f.Key, getCountSQL(f.Count), f.Key, countSubselect, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
-		model.D3MIndexFieldName, len(params), where, wordStemTableName, catResultLimit)
+		model.D3MIndexFieldName, len(params), where, postgres.WordStemTableName, catResultLimit)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -490,7 +491,7 @@ func (f *TextField) fetchPredictedSummaryData(resultURI string, datasetResult st
 		"WHERE %s) r LEFT OUTER JOIN %s word_b ON r.stem_b = word_b.stem LEFT OUTER JOIN %s word_v ON r.stem_v = word_v.stem "+
 		"GROUP BY COALESCE(word_v.word, r.stem_v), COALESCE(word_b.word, r.stem_b) "+
 		"ORDER BY count desc;", targetName, getCountSQL(f.Count), targetName, countSubselect, datasetResult,
-		f.DatasetStorageName, strings.Join(wheres, " AND "), wordStemTableName, wordStemTableName)
+		f.DatasetStorageName, strings.Join(wheres, " AND "), postgres.WordStemTableName, postgres.WordStemTableName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

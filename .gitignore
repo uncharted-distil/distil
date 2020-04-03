@@ -16,7 +16,8 @@ package-lock.json
 public/static
 api/compute/test/tmp_data
 api/task/test_data/augmented
-/datasets
+/datasets/*
+!datasets/196_autoMpg_MIN_METADATA
 /datamart
 /distil
 /inputs

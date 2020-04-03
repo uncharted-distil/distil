@@ -101,18 +101,6 @@ type SolutionRequest struct {
 	finished         chan error
 }
 
-// SolutionRequestDiscovery represents a discovered problem solution request.
-type SolutionRequestDiscovery struct {
-	Dataset              string
-	DatasetInput         string
-	TargetFeature        *model.Variable
-	AllFeatures          []*model.Variable
-	SelectedFeatures     []string
-	SourceURI            string
-	UserAgent            string
-	DatasetAugmentations []*model.DatasetOrigin
-}
-
 // NewSolutionRequest instantiates a new SolutionRequest.
 func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequest, error) {
 	req := &SolutionRequest{
@@ -911,57 +899,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.ID, searchRequest, datasetInputDir, datasetPathTrain, datasetPathTest, dataVariables)
 
 	return nil
-}
-
-// CreateSearchSolutionRequest creates a search solution request, including
-// the pipeline steps required to process the data.
-func CreateSearchSolutionRequest(request *SolutionRequestDiscovery, skipPreprocessing bool) (*pipeline.SearchSolutionsRequest, error) {
-	uuid, err := uuid.NewV4()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to create uuid")
-	}
-
-	name := fmt.Sprintf("preprocessing-%s-%s", request.Dataset, uuid.String())
-	desc := fmt.Sprintf("Preprocessing pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", request.Dataset, uuid.String())
-
-	var preprocessingPipeline *pipeline.PipelineDescription
-	if !skipPreprocessing {
-		var augments []*description.UserDatasetAugmentation
-		if request.DatasetAugmentations != nil {
-			augments = make([]*description.UserDatasetAugmentation, len(request.DatasetAugmentations))
-			for i, da := range request.DatasetAugmentations {
-				augments[i] = &description.UserDatasetAugmentation{
-					SearchResult:  da.SearchResult,
-					SystemID:      da.Provenance,
-					BaseDatasetID: request.Dataset,
-				}
-			}
-		}
-
-		preprocessingPipeline, err = description.CreateUserDatasetPipeline(name, desc,
-			&description.UserDatasetDescription{
-				AllFeatures:      request.AllFeatures,
-				TargetFeature:    request.TargetFeature,
-				SelectedFeatures: request.SelectedFeatures,
-				Filters:          nil,
-			}, augments)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to create preprocessing pipeline")
-		}
-	}
-
-	targetVariable := request.TargetFeature
-	task := DefaultTaskType(targetVariable.Type, "")
-	metrics := DefaultMetrics(task)
-
-	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(targetVariable.Index, preprocessingPipeline, request.SourceURI,
-		request.UserAgent, request.TargetFeature, request.DatasetInput, metrics, task, 600)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to create search solution request")
-	}
-
-	return searchRequest, nil
 }
 
 func findVariable(variableName string, variables []*model.Variable) (*model.Variable, error) {

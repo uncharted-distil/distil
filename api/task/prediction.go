@@ -180,7 +180,13 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, err
 	}
 
-	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, produceRequestID, "inference", resultID, resultURIs[0], comp.SolutionCompletedStatus, time.Now())
+	// Persist the prediction request metadata
+	createdTime := time.Now()
+	err = params.SolutionStorage.PersistPrediction(produceRequestID, params.Dataset, params.Target.Name, params.FittedSolutionID, "PREDICT_COMPLETED", createdTime)
+	if err != nil {
+		return nil, err
+	}
+	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, produceRequestID, api.SolutionResultTypeInference, resultID, resultURIs[0], "PREDICT_COMPLETED", createdTime)
 	if err != nil {
 		return nil, err
 	}
@@ -192,12 +198,10 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	log.Infof("stored prediction results to the database")
 
 	// set the dataset to the inference dataset
-	res, err := params.SolutionStorage.FetchSolutionResultByProduceRequestID(produceRequestID)
+	res, err := params.SolutionStorage.FetchPredictionResultByProduceRequestID(produceRequestID)
 	if err != nil {
 		return nil, err
 	}
-	res.Dataset = params.Dataset
-
 	return res, nil
 }
 
