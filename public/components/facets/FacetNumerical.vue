@@ -13,6 +13,11 @@
     </div>
 
     <div slot="footer" class="facet-footer-container">
+      <facet-plugin-scrollbar
+        min-bar-width="8"
+        auto-hide="true"
+        round-caps="true"
+      ></facet-plugin-scrollbar>
       <div
         v-if="this.html"
         v-child="computeCustomHTML()"
@@ -26,6 +31,7 @@
 import Vue from "vue";
 
 import "@uncharted/facets-core";
+import "@uncharted/facets-plugins";
 import { FacetBarsData } from "@uncharted/facets-core/dist/types/facet-bars/FacetBars";
 
 import TypeChangeMenu from "../TypeChangeMenu";
