@@ -34,7 +34,7 @@
 </template>
 
 <script lang="ts">
-import FacetEntry from "../components/FacetEntry";
+import FacetEntry from "../components/facets/FacetEntry";
 import FileUploader from "../components/FileUploader";
 import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
