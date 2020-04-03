@@ -256,14 +256,6 @@ export default Vue.extend({
 
     residualSummaries(): VariableSummary[] {
       return this.residualsSummary ? [this.residualsSummary] : [];
-      // groups.forEach(group => {
-      //  group.facets.forEach((facet: any) => {
-      //    if (facet.histogram) {
-      //      facet.histogram.showOrigin = true;
-      //    }
-      //  });
-      // });
-      // return groups;
     },
 
     highlight(): Highlight {

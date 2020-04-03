@@ -98,14 +98,9 @@ export default Vue.extend({
 
   props: {
     // display results in regression vs. classification mode
-    isRegression: {
+    showResiduals: {
       type: Boolean as () => boolean,
       default: () => false
-    },
-    // display correctness information / scores
-    showError: {
-      type: Boolean as () => boolean,
-      default: () => true
     }
   },
 
@@ -134,19 +129,13 @@ export default Vue.extend({
         const solutionId = solution.solutionId;
         const requestId = solution.requestId;
         const predictedSummary = getSolutionResultSummary(solutionId);
-        const residualSummary = this.isRegression
+        const residualSummary = this.showResiduals
           ? getResidualSummary(solutionId)
           : null;
-        const correctnessSummary = !this.isRegression
-          ? null
-          : getCorrectnessSummary(solutionId);
-        );
-        const correctnessSummary = _.find(
-          this.correctnessSummaries,
-          summary => summary.solutionId === solutionId
-        );
-
-        const scores = this.showError ? solution.scores : [];
+        const correctnessSummary = !this.showResiduals
+          ? getCorrectnessSummary(solutionId)
+          : null;
+        const scores = solution.scores;
 
         return {
           requestId: requestId,
