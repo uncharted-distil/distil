@@ -40,11 +40,6 @@ const (
 )
 
 var (
-	explainablePrimitivesSolution = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
-	explainablePrimitivesStep     = map[string]string{
-		"e0ad06ce-b484-46b0-a478-c567e1ea7e02": "produce_shap_values",
-		"76b5a479-c209-4d94-92b5-7eba7a4d4499": "produce_confidence_intervals",
-	}
 	explainableOutputPrimitives = map[string][]*explainableOutput{
 		"e0ad06ce-b484-46b0-a478-c567e1ea7e02": {
 			{
@@ -58,7 +53,7 @@ var (
 				explainableType: explainableTypeSolution,
 			},
 		},
-		"76b5a479-c209-4d94-92b5-7eba7a4d4499": {
+		"STUBBED OUT": {
 			{
 				primitiveID:     "76b5a479-c209-4d94-92b5-7eba7a4d4499",
 				produceFunction: "produce_confidence_intervals",
