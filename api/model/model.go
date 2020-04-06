@@ -38,7 +38,7 @@ var (
 type ExportedModel struct {
 	ModelName        string   `json:"modelName"`
 	ModelDescription string   `json:"modelDescription"`
-	FilePath         string   `json:"filepath"`
+	FilePath         string   `json:"filePath"`
 	FittedSolutionID string   `json:"fittedSolutionId"`
 	DatasetID        string   `json:"datasetId"`
 	DatasetName      string   `json:"datasetName"`

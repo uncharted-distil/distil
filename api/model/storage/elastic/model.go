@@ -39,32 +39,32 @@ func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, 
 		// extract the model name
 		modelName, ok := json.String(src, "modelName")
 		if !ok {
-			return nil, errors.Wrap(err, "failed to parse model name")
+			return nil, errors.New("failed to parse model name")
 		}
 		// extract the model description
 		modelDescription, ok := json.String(src, "modelDescription")
 		if !ok {
-			return nil, errors.Wrap(err, "failed to parse model description")
+			return nil, errors.New("failed to parse model description")
 		}
 		// extract the file path
 		filePath, ok := json.String(src, "filePath")
 		if !ok {
-			return nil, errors.Wrap(err, "failed to parse file path")
+			return nil, errors.New("failed to parse file path")
 		}
 		// get id
-		fittedSolutionID, ok := json.String(src, "fittedSolutionID")
+		fittedSolutionID, ok := json.String(src, "fittedSolutionId")
 		if !ok {
-			return nil, errors.Wrap(err, "failed to parse the fitted solution id")
+			return nil, errors.New("failed to parse the fitted solution id")
 		}
 		// get dataset id
-		datasetID, ok := json.String(src, "datasetID")
+		datasetID, ok := json.String(src, "datasetId")
 		if !ok {
-			return nil, errors.Wrap(err, "failed to parse the dataset id")
+			return nil, errors.New("failed to parse the dataset id")
 		}
 		// extract the target
 		target, ok := json.String(src, "target")
 		if !ok {
-			return nil, errors.Wrap(err, "failed to parse the target")
+			return nil, errors.New("failed to parse the target")
 		}
 		// extract the name
 		name, ok := json.String(src, "datasetName")
@@ -147,7 +147,7 @@ func (s *Storage) FetchModel(modelName string) (*api.ExportedModel, error) {
 // SearchModels returns the models that match the search criteria in the
 // provided index.
 func (s *Storage) SearchModels(terms string) ([]*api.ExportedModel, error) {
-	query := elastic.NewMultiMatchQuery(terms, "_id", "modelName", "modelDescription", "datasetID", "datasetName", "target", "variables").
+	query := elastic.NewMultiMatchQuery(terms, "_id", "modelName", "modelDescription", "datasetId", "datasetName", "target", "variables").
 		Analyzer("standard")
 	// execute the ES query
 	res, err := s.client.Search().
