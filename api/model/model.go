@@ -36,6 +36,8 @@ var (
 
 // ExportedModel represents a description of an exported model.
 type ExportedModel struct {
+	ModelName        string   `json:"modelName"`
+	ModelDescription string   `json:"modelDescription"`
 	FilePath         string   `json:"filepath"`
 	FittedSolutionID string   `json:"fittedSolutionId"`
 	DatasetID        string   `json:"datasetId"`

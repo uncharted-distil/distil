@@ -45,8 +45,7 @@ type DatasetsResult struct {
 	Datasets []*model.Dataset `json:"datasets"`
 }
 
-// DatasetHandler generates a route handler that returns a specified dataset
-// summary.
+// DatasetHandler generates a route handler that returns a specified dataset summary.
 func DatasetHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -72,7 +71,7 @@ func DatasetHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, *h
 			Dataset: res,
 		})
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
+			handleError(w, errors.Wrap(err, "unable to marshal dataset result into JSON"))
 			return
 		}
 	}
@@ -151,7 +150,7 @@ func DatasetsHandler(metaCtors map[string]model.MetadataStorageCtor) func(http.R
 			Datasets: deconflicted,
 		})
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
+			handleError(w, errors.Wrap(err, "unable to marshal dataset results into JSON"))
 			return
 		}
 	}
