@@ -196,6 +196,7 @@ export default Vue.extend({
   flex-wrap: wrap;
 }
 
+/* 2 columns design by default. */
 /* Re-order items into rows */
 .available-target-variables .variable-facets-item:nth-child(2n + 1) {
   order: 1;
@@ -204,7 +205,7 @@ export default Vue.extend({
   order: 2;
 }
 
-/* Force new columns */
+/* Force new column */
 .available-target-variables .variable-facets-container::before {
   content: "";
   flex-basis: 100%;
@@ -217,6 +218,7 @@ export default Vue.extend({
   width: calc(100% / 2 - 1rem);
 }
 
+/* 3 columns design for larger screen. */
 @media (min-width: 1200px) {
   /* Re-order items into rows */
   .available-target-variables .variable-facets-item:nth-child(3n + 1) {
