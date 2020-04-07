@@ -75,16 +75,8 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 		return "", err
 	}
 
-	// create the raw dataset schema doc
-	datasetID := model.NormalizeDatasetID(dataset)
-	meta := model.NewMetadata(dataset, dataset, "", datasetID)
-	meta.Type = string(typ)
-	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeRaw, map[string][]string{compute.D3MResourceFormat: {"csv"}})
-	dr.ResPath = dataFilePath
-	meta.DataResources = []*model.DataResource{dr}
-
 	schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
-	err = metadata.WriteSchema(meta, schemaPath, true)
+	err = metadata.WriteSchema(ds.Metadata, schemaPath, true)
 	if err != nil {
 		return "", err
 	}

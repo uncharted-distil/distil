@@ -35,12 +35,7 @@ func Format(datasetSource metadata.DatasetSource, schemaFile string, dataset str
 	if err != nil {
 		return "", errors.Wrap(err, "unable to load original schema file")
 	}
-
-	// check to make sure only a single data resource exists
-	if len(meta.DataResources) != 1 {
-		return "", errors.Errorf("formatting requires that the dataset have only 1 data resource (%d exist)", len(meta.DataResources))
-	}
-	dr := meta.DataResources[0]
+	dr := getMainDataResource(meta)
 
 	// copy the data to a new directory
 	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.FormatOutputSchemaRelative, config.FormatOutputDataRelative)
@@ -73,7 +68,7 @@ func Format(datasetSource metadata.DatasetSource, schemaFile string, dataset str
 }
 
 func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]string) error {
-	dr := meta.GetMainDataResource()
+	dr := getMainDataResource(meta)
 
 	// append the row count as d3m index
 	// initialize csv writer
@@ -118,7 +113,7 @@ func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]strin
 
 func addD3MIndex(schemaFile string, meta *model.Metadata, data [][]string) (*model.Metadata, [][]string, error) {
 	// add the d3m index variable to the metadata
-	dr := meta.DataResources[0]
+	dr := getMainDataResource(meta)
 	name := model.D3MIndexFieldName
 	v := model.NewVariable(len(dr.Variables), name, name, name, model.IntegerType, model.IntegerType, "required index field", []string{"index"}, model.VarRoleIndex, nil, dr.Variables, false)
 	dr.Variables = append(dr.Variables, v)
@@ -143,4 +138,13 @@ func checkD3MIndexExists(meta *model.Metadata) bool {
 	}
 
 	return false
+}
+
+func getMainDataResource(meta *model.Metadata) *model.DataResource {
+	dr := meta.GetMainDataResource()
+	if dr == nil {
+		dr = meta.DataResources[0]
+	}
+
+	return dr
 }

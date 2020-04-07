@@ -36,6 +36,10 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
+const (
+	defaultImageType = "jpeg"
+)
+
 var (
 	imageTypeMap = map[string]string{
 		"png":  "png",
@@ -121,16 +125,16 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 		log.Infof("building csv data")
 		for _, imageFile := range imageFiles {
 			imageFilename := imageFile.Name()
-			imageFilename = path.Join(imageFolder, imageFilename)
+			imageFilenameFull := path.Join(imageFolder, imageFilename)
 
-			imageLoaded, err := readImage(imageFilename, i.ImageType)
+			imageLoaded, err := readImage(imageFilenameFull, i.ImageType)
 			if err != nil {
 				return nil, err
 			}
 
 			targetImageFilename := imageFilename
-			if path.Ext(targetImageFilename) != i.ImageType {
-				targetImageFilename = fmt.Sprintf("%s.%s", imageFilename, i.ImageType)
+			if path.Ext(targetImageFilename) != fmt.Sprintf(".%s", defaultImageType) {
+				targetImageFilename = fmt.Sprintf("%s.%s", imageFilename, defaultImageType)
 			}
 			targetImageFilename = getUniqueName(path.Join(mediaFolder, targetImageFilename))
 
@@ -139,12 +143,12 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 				return nil, err
 			}
 
-			err = ioutil.WriteFile(targetImageFilename, imageOutput, os.ModePerm)
+			err = util.WriteFileWithDirs(targetImageFilename, imageOutput, os.ModePerm)
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to save processed image file")
 			}
 
-			csvData = append(csvData, []string{fmt.Sprintf("%d", len(csvData)-1), path.Base(imageFilename), label})
+			csvData = append(csvData, []string{fmt.Sprintf("%d", len(csvData)-1), path.Base(targetImageFilename), label})
 		}
 	}
 
@@ -170,7 +174,7 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 			model.VarRoleData, nil, dr.Variables, false))
 
 	// create the data resource for the referenced images
-	imageTypeLookup := imageTypeMap[i.ImageType]
+	imageTypeLookup := imageTypeMap[defaultImageType]
 	refDR := model.NewDataResource("0", model.ResTypeImage, map[string][]string{fmt.Sprintf("image/%s", imageTypeLookup): imageTypeContentMap[imageTypeLookup]})
 	refDR.ResPath = path.Base(mediaFolder)
 	refDR.IsCollection = true
@@ -215,7 +219,10 @@ func readImage(imagePath string, defaultType string) (image.Image, error) {
 	typ := path.Ext(imagePath)
 	if typ == "" {
 		typ = defaultType
+	} else {
+		typ = typ[1:]
 	}
+
 	switch typ {
 	case "png":
 		return png.Decode(bytes.NewReader(imageRaw))
