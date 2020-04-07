@@ -21,6 +21,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil/api/dataset"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
 	log "github.com/unchartedsoftware/plog"
@@ -264,14 +265,18 @@ func materializeISIDataset(datamart *Storage, id string, uri string) (string, er
 	}
 
 	// parse out the raw data
-	var dataset ISIMaterializedDataset
-	err = json.Unmarshal(data, &dataset)
+	var datasetRaw ISIMaterializedDataset
+	err = json.Unmarshal(data, &datasetRaw)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to parse ISI datamart materialized dataset")
 	}
 
 	// create the dataset meeting the d3m spec
-	datasetPath, err := task.CreateDataset(id, []byte(dataset.Data), datamart.outputPath, api.DatasetTypeModelling, datamart.config)
+	ds, err := dataset.NewTableDataset(id, []byte(datasetRaw.Data), datamart.config)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to create raw dataset from ISI datamart materialized dataset")
+	}
+	datasetPath, err := task.CreateDataset(id, ds, datamart.outputPath, api.DatasetTypeModelling, datamart.config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to store dataset from ISI datamart")
 	}

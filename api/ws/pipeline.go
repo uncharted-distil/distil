@@ -30,6 +30,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/compute"
+	"github.com/uncharted-distil/distil/api/dataset"
 	"github.com/uncharted-distil/distil/api/env"
 	apiModel "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
@@ -325,23 +326,28 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 
 	// config objects required for ingest
 	config, _ := env.LoadConfig()
-	ingestConfig := task.NewConfig(config)
+
+	ds, err := dataset.NewTableDataset(request.DatasetID, []byte(data), &config)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to create raw table dataset"))
+		return
+	}
 
 	predictParams := &task.PredictParams{
-		Meta:             meta,
-		Dataset:          request.DatasetID,
-		SolutionID:       sr.SolutionID,
-		FittedSolutionID: request.FittedSolutionID,
-		CSVData:          []byte(data),
-		OutputPath:       path.Join(config.D3MOutputDir, config.AugmentedSubFolder),
-		Index:            config.ESDatasetsIndex,
-		Target:           targetVar,
-		MetaStorage:      metaStorage,
-		DataStorage:      dataStorage,
-		SolutionStorage:  solutionStorage,
-		DatasetIngested:  false,
-		DatasetImported:  false,
-		Config:           ingestConfig,
+		Meta:               meta,
+		Dataset:            request.DatasetID,
+		SolutionID:         sr.SolutionID,
+		FittedSolutionID:   request.FittedSolutionID,
+		DatasetConstructor: ds,
+		OutputPath:         path.Join(config.D3MOutputDir, config.AugmentedSubFolder),
+		Index:              config.ESDatasetsIndex,
+		Target:             targetVar,
+		MetaStorage:        metaStorage,
+		DataStorage:        dataStorage,
+		SolutionStorage:    solutionStorage,
+		DatasetIngested:    false,
+		DatasetImported:    false,
+		Config:             &config,
 	}
 
 	// run predictions - synchronous call for now

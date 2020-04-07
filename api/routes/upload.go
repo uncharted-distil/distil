@@ -24,12 +24,14 @@ import (
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil/api/dataset"
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
 )
 
 // UploadHandler uploads a file to the local file system and then imports it.
-func UploadHandler(outputPath string, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
+func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 
@@ -78,10 +80,14 @@ func UploadHandler(outputPath string, config *task.IngestTaskConfig) func(http.R
 	}
 }
 
-func uploadTableDataset(dataset string, outputPath string, config *task.IngestTaskConfig, data []byte) (string, error) {
+func uploadTableDataset(datasetName string, outputPath string, config *env.Config, data []byte) (string, error) {
+	ds, err := dataset.NewTableDataset(datasetName, data, config)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to create raw dataset")
+	}
 
 	// create the raw dataset schema doc
-	formattedPath, err := task.CreateDataset(dataset, data, outputPath, api.DatasetTypeModelling, config)
+	formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create dataset")
 	}
@@ -89,10 +95,14 @@ func uploadTableDataset(dataset string, outputPath string, config *task.IngestTa
 	return formattedPath, nil
 }
 
-func uploadImageDataset(dataset string, outputPath string, config *task.IngestTaskConfig, data []byte, imageType string) (string, error) {
+func uploadImageDataset(datasetName string, outputPath string, config *env.Config, data []byte, imageType string) (string, error) {
+	ds, err := dataset.NewImageDataset(datasetName, imageType, data, config)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to create raw dataset")
+	}
 
 	// create the raw dataset schema doc
-	formattedPath, err := task.CreateImageDataset(dataset, data, imageType, outputPath, config)
+	formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create dataset")
 	}

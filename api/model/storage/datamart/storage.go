@@ -16,6 +16,7 @@
 package datamart
 
 import (
+	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/rest"
 	"github.com/uncharted-distil/distil/api/task"
@@ -39,14 +40,15 @@ type Storage struct {
 	outputPath     string
 	getFunction    string
 	searchFunction string
-	config         *task.IngestTaskConfig
+	ingestConfig   *task.IngestTaskConfig
+	config         *env.Config
 	search         searchQuery
 	parse          parseSearchResult
 	download       downloadDataset
 }
 
 // NewNYUMetadataStorage returns a constructor for an NYU datamart.
-func NewNYUMetadataStorage(outputPath string, config *task.IngestTaskConfig, clientCtor rest.ClientCtor) model.MetadataStorageCtor {
+func NewNYUMetadataStorage(outputPath string, config *env.Config, ingestConfig *task.IngestTaskConfig, clientCtor rest.ClientCtor) model.MetadataStorageCtor {
 	return func() (model.MetadataStorage, error) {
 		return &Storage{
 			client:         clientCtor(),
@@ -54,6 +56,7 @@ func NewNYUMetadataStorage(outputPath string, config *task.IngestTaskConfig, cli
 			getFunction:    nyuGetFunction,
 			searchFunction: nyuSearchFunction,
 			config:         config,
+			ingestConfig:   ingestConfig,
 			search:         nyuSearch,
 			parse:          parseNYUSearchResult,
 			download:       materializeNYUDataset,
@@ -62,7 +65,7 @@ func NewNYUMetadataStorage(outputPath string, config *task.IngestTaskConfig, cli
 }
 
 // NewISIMetadataStorage returns a constructor for an ISI datamart.
-func NewISIMetadataStorage(outputPath string, config *task.IngestTaskConfig, clientCtor rest.ClientCtor) model.MetadataStorageCtor {
+func NewISIMetadataStorage(outputPath string, config *env.Config, ingestConfig *task.IngestTaskConfig, clientCtor rest.ClientCtor) model.MetadataStorageCtor {
 	return func() (model.MetadataStorage, error) {
 		return &Storage{
 			client:         clientCtor(),
@@ -70,6 +73,7 @@ func NewISIMetadataStorage(outputPath string, config *task.IngestTaskConfig, cli
 			getFunction:    isiGetFunction,
 			searchFunction: isiSearchFunction,
 			config:         config,
+			ingestConfig:   ingestConfig,
 			search:         isiSearch,
 			parse:          parseISISearchResult,
 			download:       materializeISIDataset,

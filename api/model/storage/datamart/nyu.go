@@ -234,7 +234,7 @@ func materializeNYUDataset(datamart *Storage, id string, uri string) (string, er
 
 	// format the dataset
 	extractedSchema := path.Join(extractedArchivePath, compute.D3MDataSchema)
-	formattedPath, err := task.Format(metadata.Contrib, extractedSchema, name, datamart.config)
+	formattedPath, err := task.Format(metadata.Contrib, extractedSchema, name, datamart.ingestConfig)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to format datamart dataset")
 	}

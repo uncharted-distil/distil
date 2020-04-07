@@ -179,11 +179,11 @@ func main() {
 	datamartCtors := make(map[string]model.MetadataStorageCtor)
 	if config.DatamartNYUEnabled {
 		nyuDatamartClientCtor := rest.NewClient(config.DatamartURINYU)
-		datamartCtors[dm.ProvenanceNYU] = dm.NewNYUMetadataStorage(config.DatamartImportFolder, ingestConfig, nyuDatamartClientCtor)
+		datamartCtors[dm.ProvenanceNYU] = dm.NewNYUMetadataStorage(config.DatamartImportFolder, &config, ingestConfig, nyuDatamartClientCtor)
 	}
 	if config.DatamartISIEnabled {
 		isiDatamartClientCtor := rest.NewClient(config.DatamartURIISI)
-		datamartCtors[dm.ProvenanceISI] = dm.NewISIMetadataStorage(config.DatamartImportFolder, ingestConfig, isiDatamartClientCtor)
+		datamartCtors[dm.ProvenanceISI] = dm.NewISIMetadataStorage(config.DatamartImportFolder, &config, ingestConfig, isiDatamartClientCtor)
 	}
 	datamartCtors[es.Provenance] = esMetadataStorageCtor
 
@@ -263,8 +263,8 @@ func main() {
 	registerRoutePost(mux, "/distil/solution-result-summary/:results-uuid/:mode", routes.SolutionResultSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/cluster/:dataset/:variable", routes.ClusteringHandler(esMetadataStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), ingestConfig))
-	registerRoutePost(mux, "/distil/predict/:dataset/:target-type/:fitted-solution-id", routes.InferenceHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), pgDataStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor, &config, ingestConfig))
+	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), &config))
+	registerRoutePost(mux, "/distil/predict/:dataset/:target-type/:fitted-solution-id", routes.InferenceHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), pgDataStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor, &config))
 	registerRoutePost(mux, "/distil/join", routes.JoinHandler(esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:invert", routes.TimeseriesHandler(pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries-forecast/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:result-uuid", routes.TimeseriesForecastHandler(pgDataStorageCtor, pgSolutionStorageCtor))

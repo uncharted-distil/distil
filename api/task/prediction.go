@@ -16,10 +16,7 @@
 package task
 
 import (
-	"bytes"
-	"encoding/csv"
 	"fmt"
-	"io"
 	"path"
 	"strings"
 	"time"
@@ -29,6 +26,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	comp "github.com/uncharted-distil/distil/api/compute"
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
@@ -39,23 +37,49 @@ const (
 	DefaultSeparator = "_"
 )
 
+type predictionDataset struct {
+	params *PredictParams
+}
+
+func (p *predictionDataset) CreateDataset(rootDataPath string, config *env.Config) (*api.RawDataset, error) {
+	// need to do a bit of processing on the usual setup
+	ds, err := p.params.DatasetConstructor.CreateDataset(rootDataPath, config)
+	if err != nil {
+		return nil, err
+	}
+
+	// match the source dataset
+	csvDataAugmented, err := augmentPredictionDataset(ds.Data, ds.Metadata.DataResources[0].Variables)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.RawDataset{
+		ID:       p.params.Dataset,
+		Name:     p.params.Dataset,
+		Data:     csvDataAugmented,
+		Metadata: p.params.Meta,
+	}, nil
+}
+
 // PredictParams contains all parameters passed to the predict function.
 type PredictParams struct {
-	Meta             *model.Metadata
-	SourceDataset    *api.Dataset
-	Dataset          string
-	SolutionID       string
-	FittedSolutionID string
-	CSVData          []byte
-	OutputPath       string
-	Index            string
-	Target           *model.Variable
-	MetaStorage      api.MetadataStorage
-	DataStorage      api.DataStorage
-	SolutionStorage  api.SolutionStorage
-	DatasetIngested  bool
-	DatasetImported  bool
-	Config           *IngestTaskConfig
+	Meta               *model.Metadata
+	SourceDataset      *api.Dataset
+	Dataset            string
+	SolutionID         string
+	FittedSolutionID   string
+	DatasetConstructor DatasetConstructor
+	OutputPath         string
+	Index              string
+	Target             *model.Variable
+	MetaStorage        api.MetadataStorage
+	DataStorage        api.DataStorage
+	SolutionStorage    api.SolutionStorage
+	DatasetIngested    bool
+	DatasetImported    bool
+	IngestConfig       *IngestTaskConfig
+	Config             *env.Config
 }
 
 // Predict processes input data to generate predictions.
@@ -73,14 +97,12 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
 		log.Infof("dataset already imported at %s", datasetPath)
 	} else {
-		// match the source dataset
-		csvDataAugmented, err := augmentPredictionDataset(params.CSVData, meta.DataResources[0].Variables)
-		if err != nil {
-			return nil, err
+		predictionDatasetCtor := &predictionDataset{
+			params: params,
 		}
 
 		// create the dataset to be used for predictions
-		datasetPath, err = CreateDataset(params.Dataset, csvDataAugmented, params.OutputPath, api.DatasetTypeInference, params.Config)
+		datasetPath, err = CreateDataset(params.Dataset, predictionDatasetCtor, params.OutputPath, api.DatasetTypeInference, params.Config)
 		if err != nil {
 			return nil, err
 		}
@@ -117,7 +139,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	if !params.DatasetIngested {
 		// ingest the dataset but without running simon, duke, etc.
-		_, err = Ingest(schemaPath, schemaPath, params.MetaStorage, params.Index, params.Dataset, metadata.Contrib, nil, params.Config, false, false)
+		_, err = Ingest(schemaPath, schemaPath, params.MetaStorage, params.Index, params.Dataset, metadata.Contrib, nil, params.IngestConfig, false, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to ingest ranked data")
 		}
@@ -206,19 +228,11 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	return res, nil
 }
 
-func augmentPredictionDataset(csvData []byte, sourceVariables []*model.Variable) ([]byte, error) {
+func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Variable) ([][]string, error) {
 	log.Infof("augment inference dataset fields")
 
-	// read the header in the prediction dataset
-	data := bytes.NewReader(csvData)
-	reader := csv.NewReader(data)
-
-	header, err := reader.Read()
-	if err != nil {
-		return nil, err
-	}
-
 	// map fields to indices
+	header := csvData[0]
 	headerSource := make([]string, len(sourceVariables))
 	sourceVariableMap := make(map[string]*model.Variable)
 	for _, v := range sourceVariables {
@@ -242,26 +256,12 @@ func augmentPredictionDataset(csvData []byte, sourceVariables []*model.Variable)
 		}
 	}
 
-	// write the header
-	outputBytes := &bytes.Buffer{}
-	writerOutput := csv.NewWriter(outputBytes)
-	err = writerOutput.Write(headerSource)
-	if err != nil {
-		return nil, err
-	}
-
 	// read the rest of the data
 	log.Infof("rewriting inference dataset to match source dataset structure")
 	count := 0
 	d3mFieldIndex := sourceVariableMap[model.D3MIndexName].Index
-	for {
-		line, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, errors.Wrap(err, "failed to read line from file")
-		}
-
+	outputData := [][]string{headerSource}
+	for _, line := range csvData[1:] {
 		// write the columns in the same order as the source dataset
 		output := make([]string, len(sourceVariableMap))
 		for i, f := range line {
@@ -275,18 +275,12 @@ func augmentPredictionDataset(csvData []byte, sourceVariables []*model.Variable)
 			output[d3mFieldIndex] = fmt.Sprintf("%d", count)
 		}
 		count = count + 1
-
-		err = writerOutput.Write(output)
-		if err != nil {
-			return nil, err
-		}
+		outputData = append(outputData, output)
 	}
-
-	writerOutput.Flush()
 
 	log.Infof("done augmenting inference dataset")
 
-	return outputBytes.Bytes(), nil
+	return outputData, nil
 }
 
 // CreateComposedVariable creates a new variable to use as group id.

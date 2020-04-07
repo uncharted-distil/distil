@@ -18,18 +18,15 @@ package task
 import (
 	"bytes"
 	"encoding/csv"
-	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
-	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
 )
@@ -46,13 +43,34 @@ var (
 	}
 )
 
+// DatasetConstructor is used to build a dataset.
+type DatasetConstructor interface {
+	CreateDataset(rootDataPath string, config *env.Config) (*api.RawDataset, error)
+}
+
 // CreateDataset structures a raw csv file into a valid D3M dataset.
-func CreateDataset(dataset string, csvData []byte, outputPath string, typ api.DatasetType, config *IngestTaskConfig) (string, error) {
+func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath string, typ api.DatasetType, config *env.Config) (string, error) {
+	ingestConfig := NewConfig(*config)
+
 	// save the csv file in the file system datasets folder
 	outputDatasetPath := path.Join(outputPath, dataset)
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 	dataPath := path.Join(outputDatasetPath, dataFilePath)
-	err := util.WriteFileWithDirs(dataPath, csvData, os.ModePerm)
+
+	ds, err := datasetCtor.CreateDataset(outputDatasetPath, config)
+	if err != nil {
+		return "", err
+	}
+
+	var outputBuffer bytes.Buffer
+	csvWriter := csv.NewWriter(&outputBuffer)
+	err = csvWriter.WriteAll(ds.Data)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to write csv data to buffer")
+	}
+	csvWriter.Flush()
+
+	err = util.WriteFileWithDirs(dataPath, outputBuffer.Bytes(), os.ModePerm)
 	if err != nil {
 		return "", err
 	}
@@ -72,7 +90,7 @@ func CreateDataset(dataset string, csvData []byte, outputPath string, typ api.Da
 	}
 
 	// format the dataset into a D3M format
-	formattedPath, err := Format(metadata.Contrib, schemaPath, dataset, config)
+	formattedPath, err := Format(metadata.Contrib, schemaPath, dataset, ingestConfig)
 	if err != nil {
 		return "", err
 	}
@@ -91,129 +109,6 @@ func CreateDataset(dataset string, csvData []byte, outputPath string, typ api.Da
 	}
 
 	return formattedPath, nil
-}
-
-// CreateImageDataset creates a D3M dataset from a collection of folders that
-// each contain images. The name of the folder represents the label to give
-// for the images within.
-func CreateImageDataset(dataset string, data []byte, imageType string, outputPath string, config *IngestTaskConfig) (string, error) {
-	// generate all the image data for the csv table
-	log.Infof("creating image dataset '%s' of type '%s'", dataset, imageType)
-	outputDatasetPath := path.Join(outputPath, dataset)
-	schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
-	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
-	dataPath := path.Join(outputDatasetPath, dataFilePath)
-
-	// clear the output dataset path location
-	err := util.RemoveContents(outputDatasetPath)
-	if err != nil {
-		log.Warnf("unable to remove contents: %v", err)
-	}
-
-	// store and expand raw data
-	zipFilename := path.Join(outputDatasetPath, "raw.zip")
-	err = util.WriteFileWithDirs(zipFilename, data, os.ModePerm)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to write raw image data archive")
-	}
-	extractedArchivePath := outputDatasetPath
-	err = util.Unzip(zipFilename, extractedArchivePath)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to extract raw image data archive")
-	}
-
-	// get image folders
-	imageFolders := make([]string, 0)
-	extractedFiles, err := ioutil.ReadDir(extractedArchivePath)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to read extracted data")
-	}
-	for _, f := range extractedFiles {
-		if f.IsDir() {
-			imageFolders = append(imageFolders, path.Join(extractedArchivePath, f.Name()))
-		}
-	}
-
-	csvData := make([][]string, 0)
-	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "label"})
-	mediaFolder := getUniqueFolder(path.Join(outputDatasetPath, "media"))
-
-	// the folder name represents the label to apply for all containing images
-	for _, imageFolder := range imageFolders {
-		log.Infof("processing image folder '%s'", imageFolder)
-		label := path.Base(imageFolder)
-
-		imageFiles, err := ioutil.ReadDir(imageFolder)
-		if err != nil {
-			return "", err
-		}
-
-		// copy images while building the csv data
-		log.Infof("building csv data")
-		for _, imageFile := range imageFiles {
-			imageFilename := imageFile.Name()
-			if path.Ext(imageFilename) != fmt.Sprintf(".%s", imageType) {
-				imageFilename = fmt.Sprintf("%s.%s", imageFilename, imageType)
-			}
-			imageFilename = getUniqueName(path.Join(mediaFolder, imageFilename))
-
-			err = util.Copy(path.Join(imageFolder, imageFile.Name()), imageFilename)
-			if err != nil {
-				return "", err
-			}
-
-			csvData = append(csvData, []string{fmt.Sprintf("%d", len(csvData)-1), path.Base(imageFilename), label})
-		}
-	}
-
-	log.Infof("creating metadata")
-
-	// create the dataset schema doc
-	datasetID := model.NormalizeDatasetID(dataset)
-	meta := model.NewMetadata(dataset, dataset, "", datasetID)
-	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
-	dr.ResPath = dataFilePath
-	dr.Variables = append(dr.Variables,
-		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName,
-			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
-			[]string{model.RoleIndex}, model.VarRoleIndex, nil, dr.Variables, false),
-	)
-	dr.Variables = append(dr.Variables,
-		model.NewVariable(1, "image_file", "image_file", "image_file", model.StringType,
-			model.StringType, "Reference to image file", []string{"attribute"},
-			model.VarRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
-	dr.Variables = append(dr.Variables,
-		model.NewVariable(2, "label", "label", "label", model.StringType,
-			model.StringType, "Label of the image", []string{"suggestedTarget"},
-			model.VarRoleData, nil, dr.Variables, false))
-
-	// create the data resource for the referenced images
-	refDR := model.NewDataResource("0", model.ResTypeImage, map[string][]string{fmt.Sprintf("image/%s", imageTypeMap[imageType]): {"jpeg", "jpg"}})
-	refDR.ResPath = path.Base(mediaFolder)
-	refDR.IsCollection = true
-
-	meta.DataResources = []*model.DataResource{refDR, dr}
-
-	log.Infof("writing schema to '%s'", schemaPath)
-	err = metadata.WriteSchema(meta, schemaPath, true)
-	if err != nil {
-		return "", err
-	}
-
-	// write out the dataset
-	buf := bytes.NewBuffer(nil)
-	csvOutput := csv.NewWriter(buf)
-	err = csvOutput.WriteAll(csvData)
-	if err != nil {
-		return "", err
-	}
-
-	err = util.WriteFileWithDirs(dataPath, buf.Bytes(), os.ModePerm)
-	if err != nil {
-		return "", err
-	}
-
-	return outputDatasetPath, nil
 }
 
 func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, config *IngestTaskConfig) (string, error) {
@@ -252,39 +147,6 @@ func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, confi
 	}
 
 	return formattedPath, nil
-}
-
-func createMetadata(dataset string, config *IngestTaskConfig) *model.Metadata {
-	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
-
-	// create the raw dataset schema doc
-	datasetID := model.NormalizeDatasetID(dataset)
-	meta := model.NewMetadata(dataset, dataset, "", datasetID)
-	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeRaw, map[string][]string{compute.D3MResourceFormat: {"csv"}})
-	dr.ResPath = dataFilePath
-	meta.DataResources = []*model.DataResource{dr}
-
-	return meta
-}
-
-func getUniqueName(filename string) string {
-	extension := path.Ext(filename)
-	baseFilename := strings.TrimSuffix(filename, extension)
-	currentFilename := filename
-	for i := 1; util.FileExists(currentFilename); i++ {
-		currentFilename = fmt.Sprintf("%s_%d.%s", baseFilename, i, extension)
-	}
-
-	return currentFilename
-}
-
-func getUniqueFolder(folder string) string {
-	currentFilename := folder
-	for i := 1; util.FileExists(currentFilename); i++ {
-		currentFilename = fmt.Sprintf("%s_%d", folder, i)
-	}
-
-	return currentFilename
 }
 
 // UpdateExtremas will update every field's extremas in the specified dataset.
