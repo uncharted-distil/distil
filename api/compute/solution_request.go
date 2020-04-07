@@ -321,16 +321,11 @@ func GeneratePredictions(datasetURI string, initialSearchSolutionID string,
 		return "", nil, err
 	}
 
-	featureExplainable, solutionExplainable := isExplainablePipeline(desc)
-	outputs := []string{defaultExposedOutputKey}
-	if featureExplainable {
-		outputs = append(outputs, explainFeatureOutputkey)
-	}
-	if solutionExplainable {
-		outputs = append(outputs, explainSolutionOutputkey)
-	}
+	explainableCalls := explainablePipelineFunctions(desc)
+	outputs := getPipelineOutputs(desc)
+	keys := extractOutputKeys(outputs)
 
-	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, outputs)
+	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, keys)
 	produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
 	if err != nil {
 		return "", nil, err
@@ -348,14 +343,14 @@ func GeneratePredictions(datasetURI string, initialSearchSolutionID string,
 			return "", nil, err
 		}
 		var explainFeatureURI string
-		if featureExplainable {
+		if explainableCalls != nil {
 			explainFeatureURI, err = getFileFromOutput(response, explainFeatureOutputkey)
 			if err != nil {
 				return "", nil, err
 			}
 		}
 		var explainSolutionURI string
-		if solutionExplainable {
+		if explainableCalls != nil {
 			explainSolutionURI, err = getFileFromOutput(response, explainSolutionOutputkey)
 			if err != nil {
 				return "", nil, err
@@ -462,7 +457,7 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client,
 	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string,
-	solutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string, resultURI string) {
+	solutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string, resultURI string, confidenceURI string) {
 	// persist the completed state
 	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -478,7 +473,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist results
-	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURI, s.TargetFeature.Name)
+	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURI, confidenceURI, s.TargetFeature.Name)
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -519,7 +514,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	// The client API will also reference things by the initial IDs.
 
 	// get the pipeline description
-	explainDesc, err := s.createExplainPipeline(client, desc)
+	explainDesc, outputKeysExplain, err := s.createExplainPipeline(client, desc)
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
@@ -602,10 +597,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 		// generate output keys, adding one extra for explanation output if we expect it to exist
 		outputKeys := []string{defaultExposedOutputKey}
-		if explainDesc != nil {
-			outputKeys = append(outputKeys, explainFeatureOutputkey)
-			outputKeys = append(outputKeys, explainSolutionOutputkey)
-		}
+		outputKeys = append(outputKeys, extractOutputKeys(outputKeysExplain)...)
+
 		// generate predictions -  for timeseries we want to use the entire source dataset, for anything else
 		// we only want the test data predictions.
 		produceDatasetURI := datasetURITest
@@ -654,8 +647,9 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			}
 
 			// explain features per-record if the explanation is available
-			explainFeatureURI, ok := outputKeyURIs[explainFeatureOutputkey]
-			if ok {
+			explainFeatureOutput := outputKeysExplain[explainableTypeStep]
+			if explainFeatureOutput != nil {
+				explainFeatureURI := outputKeyURIs[explainFeatureOutput.key]
 				log.Infof("explaining feature output from URI '%s'", explainFeatureURI)
 				featureWeights, err := ExplainFeatureOutput(resultURI, datasetURITest, explainFeatureURI)
 				if err != nil {
@@ -672,8 +666,9 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			}
 
 			// explain the features at the model level if the explanation is available
-			explainSolutionURI, ok := outputKeyURIs[explainSolutionOutputkey]
-			if ok {
+			explainSolutionOutput := outputKeysExplain[explainableTypeSolution]
+			if explainSolutionOutput != nil {
+				explainSolutionURI := outputKeyURIs[explainSolutionOutput.key]
 				log.Infof("explaining solution output from URI '%s'", explainSolutionURI)
 				solutionWeights, err := s.explainSolutionOutput(resultURI, explainSolutionURI, initialSearchSolutionID, variables)
 				if err != nil {
@@ -688,10 +683,16 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 				}
 			}
 
+			confidenceURI := ""
+			explainConfidenceOutput := outputKeysExplain[explainableTypeConfidence]
+			if explainConfidenceOutput != nil {
+				confidenceURI = outputKeyURIs[explainConfidenceOutput.key]
+			}
+
 			// persist results
 			log.Infof("persisting results in URI '%s'", resultURI)
 			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
-				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID, produceRequestID, resultID, resultURI)
+				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID, produceRequestID, resultID, resultURI, confidenceURI)
 		}
 	})
 	if err != nil {

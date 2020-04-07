@@ -191,8 +191,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, err
 	}
 
-	// Persist the prediction results
-	err = params.DataStorage.PersistResult(params.Dataset, model.NormalizeDatasetID(params.Dataset), resultURIs[0], target.Name)
+	err = params.DataStorage.PersistResult(params.Dataset, model.NormalizeDatasetID(params.Dataset), resultURIs[0], "", target.Name)
 	if err != nil {
 		return nil, err
 	}
