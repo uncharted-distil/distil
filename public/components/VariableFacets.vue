@@ -21,7 +21,7 @@
         <slot></slot>
       </div>
       <div class="row flex-1">
-        <div class="col-12 flex-column variable-facets-container h-100">
+        <div class="col-12 variable-facets-container h-100">
           <div
             class="variable-facets-item"
             v-for="summary in paginatedSummaries"
@@ -345,26 +345,32 @@ export default Vue.extend({
 button {
   cursor: pointer;
 }
+
 .page-link {
   color: #868e96;
 }
+
 .page-item.active .page-link {
   z-index: 2;
   color: #fff;
   background-color: #868e96;
   border-color: #868e96;
 }
+
 .variable-facets-container {
   overflow-x: hidden;
   overflow-y: auto;
 }
+
 .variable-facets-container .variable-facets-item {
   margin: 0.5rem 0;
   vertical-align: bottom;
 }
+
 .variable-facets-container .facets-root-container .facets-group-container {
   background-color: inherit;
 }
+
 .variable-facets-container
   .facets-root-container
   .facets-group-container
@@ -375,6 +381,7 @@ button {
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.3s ease-in-out;
 }
+
 .variable-facets-container
   .facets-root-container
   .facets-group-container
@@ -389,6 +396,7 @@ button {
   align-content: center;
   align-items: stretch;
 }
+
 .variable-facets-container
   .facets-root-container
   .facets-group-container
@@ -404,6 +412,7 @@ button {
   height: 20px;
   white-space: nowrap;
 }
+
 .variable-facets-container
   .facets-root-container
   .facets-group-container
@@ -416,6 +425,7 @@ button {
   align-self: auto;
   text-align: left;
 }
+
 .variable-facets-container
   .facets-root-container
   .facets-group-container
@@ -427,12 +437,15 @@ button {
   align-self: auto;
   text-align: right;
 }
+
 .facet-filters {
   margin: 0 -10px 4px -10px;
 }
+
 .facet-filters span {
   font-size: 0.9rem;
 }
+
 .variable-page-nav {
   padding-top: 10px;
 }
