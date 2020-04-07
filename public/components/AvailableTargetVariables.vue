@@ -214,7 +214,8 @@ export default Vue.extend({
 }
 
 .available-target-variables .variable-facets-item {
-  margin: 0.5rem;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
   width: calc(100% / 2 - 1rem);
 }
 

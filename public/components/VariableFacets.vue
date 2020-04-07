@@ -363,6 +363,7 @@ button {
 }
 
 .variable-facets-container .variable-facets-item {
+  margin: 0.5rem 0;
   vertical-align: bottom;
 }
 
