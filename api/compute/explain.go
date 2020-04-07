@@ -254,9 +254,10 @@ func getPipelineOutputs(solutionDesc *pipeline.DescribeSolutionResponse) map[str
 	outputs := make(map[string]*pipelineOutput)
 	for _, o := range solutionDesc.Pipeline.Outputs {
 		output := createPipelineOutputFromDescription(o)
-		outputs[output.typ] = output
+		if output != nil {
+			outputs[output.typ] = output
+		}
 	}
-
 	return outputs
 }
 
