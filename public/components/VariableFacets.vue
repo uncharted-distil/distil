@@ -359,8 +359,7 @@ button {
   overflow-y: auto;
 }
 .variable-facets-container .variable-facets-item {
-  margin: 2px 2px 4px 2px;
-  min-height: 150px;
+  margin: 0.5rem 0;
   vertical-align: bottom;
 }
 .variable-facets-container .facets-root-container .facets-group-container {
