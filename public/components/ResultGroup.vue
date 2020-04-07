@@ -18,12 +18,12 @@
           ></i>
         </div>
         <!--
-				<div class="pull-right">|</div>
-				-->
+        <div class="pull-right">|</div>
+        -->
       </template>
       <!--
-			<div class="pull-right pr-2 solution-button" @click.stop="onDelete"><i class="fa fa-trash"></i></div>
-			-->
+      <div class="pull-right pr-2 solution-button" @click.stop="onDelete"><i class="fa fa-trash"></i></div>
+      -->
       <template v-if="isPending">
         <b-badge variant="info">{{ progressLabel }}</b-badge>
         <b-progress
@@ -253,11 +253,11 @@ export default Vue.extend({
     residualSummaries(): VariableSummary[] {
       return this.residualsSummary ? [this.residualsSummary] : [];
       // groups.forEach(group => {
-      // 	group.facets.forEach((facet: any) => {
-      // 		if (facet.histogram) {
-      // 			facet.histogram.showOrigin = true;
-      // 		}
-      // 	});
+      //  group.facets.forEach((facet: any) => {
+      //    if (facet.histogram) {
+      //      facet.histogram.showOrigin = true;
+      //    }
+      //  });
       // });
       // return groups;
     },

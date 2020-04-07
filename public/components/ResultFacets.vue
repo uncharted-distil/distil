@@ -145,18 +145,22 @@ export default Vue.extend({
       const summaryGroups: SummaryGroup[] = solutions.map(solution => {
         const solutionId = solution.solutionId;
         const requestId = solution.requestId;
+
         const predictedSummary = _.find(
           this.predictedSummaries,
           summary => summary.solutionId === solutionId
         );
+
         const residualSummary = _.find(
           this.residualSummaries,
           summary => summary.solutionId === solutionId
         );
+
         const correctnessSummary = _.find(
           this.correctnessSummaries,
           summary => summary.solutionId === solutionId
         );
+
         const scores = this.showError ? solution.scores : [];
 
         return {

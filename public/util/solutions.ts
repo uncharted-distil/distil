@@ -45,7 +45,7 @@ export function getSolutionIndex(solutionId: string) {
     return -1;
   });
 
-  const index = _.findIndex(solutions, (solution) => {
+  const index = _.findIndex(solutions, solution => {
     return solution.solutionId === solutionId;
   });
 
