@@ -24,7 +24,7 @@ postgres:
 #     - $D3MOUTPUTDIR:$D3MOUTPUTDIR
 
 distil-auto-ml:
-  image: registry.datadrivendiscovery.org/uncharted/distil-integration/distil-auto-ml:latest
+  image: docker.uncharted.software/distil-auto-ml
   environment:
     - D3MINPUTDIR=$D3MINPUTDIR
     - D3MOUTPUTDIR=$D3MOUTPUTDIR
