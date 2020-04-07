@@ -36,25 +36,35 @@ func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, 
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse model")
 		}
+		// extract the model name
+		modelName, ok := json.String(src, "modelName")
+		if !ok {
+			return nil, errors.New("failed to parse model name")
+		}
+		// extract the model description
+		modelDescription, ok := json.String(src, "modelDescription")
+		if !ok {
+			return nil, errors.New("failed to parse model description")
+		}
 		// extract the file path
 		filePath, ok := json.String(src, "filePath")
 		if !ok {
-			return nil, errors.Wrap(err, "failed to parse file path")
+			return nil, errors.New("failed to parse file path")
 		}
 		// get id
-		fittedSolutionID, ok := json.String(src, "fittedSolutionID")
+		fittedSolutionID, ok := json.String(src, "fittedSolutionId")
 		if !ok {
-			return nil, errors.Wrap(err, "failed to parse the fitted solution id")
+			return nil, errors.New("failed to parse the fitted solution id")
 		}
 		// get dataset id
-		datasetID, ok := json.String(src, "datasetID")
+		datasetID, ok := json.String(src, "datasetId")
 		if !ok {
-			return nil, errors.Wrap(err, "failed to parse the dataset id")
+			return nil, errors.New("failed to parse the dataset id")
 		}
 		// extract the target
 		target, ok := json.String(src, "target")
 		if !ok {
-			return nil, errors.Wrap(err, "failed to parse the target")
+			return nil, errors.New("failed to parse the target")
 		}
 		// extract the name
 		name, ok := json.String(src, "datasetName")
@@ -66,6 +76,8 @@ func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, 
 
 		// write everythign out to result struct
 		models = append(models, &api.ExportedModel{
+			ModelName:        modelName,
+			ModelDescription: modelDescription,
 			FilePath:         filePath,
 			FittedSolutionID: fittedSolutionID,
 			DatasetID:        datasetID,
@@ -108,6 +120,44 @@ func (s *Storage) FetchModels() ([]*api.ExportedModel, error) {
 		Do(context.Background())
 	if err != nil {
 		return nil, errors.Wrap(err, "elasticsearch model fetch query failed")
+	}
+	return s.parseModels(res)
+}
+
+// FetchModel returns a model in the provided index.
+func (s *Storage) FetchModel(modelName string) (*api.ExportedModel, error) {
+	query := elastic.NewMatchQuery("modelName", modelName)
+	// execute the ES query
+	res, err := s.client.Search().
+		Query(query).
+		Index(s.modelIndex).
+		FetchSource(true).
+		Size(modelsListSize).
+		Do(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "elasticsearch model fetch query failed")
+	}
+	models, err := s.parseModels(res)
+	if err != nil {
+		return nil, err
+	}
+	return models[0], nil
+}
+
+// SearchModels returns the models that match the search criteria in the
+// provided index.
+func (s *Storage) SearchModels(terms string) ([]*api.ExportedModel, error) {
+	query := elastic.NewMultiMatchQuery(terms, "_id", "modelName", "modelDescription", "datasetId", "datasetName", "target", "variables").
+		Analyzer("standard")
+	// execute the ES query
+	res, err := s.client.Search().
+		Query(query).
+		Index(s.modelIndex).
+		FetchSource(true).
+		Size(modelsListSize).
+		Do(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "elasticsearch model search query failed")
 	}
 	return s.parseModels(res)
 }

@@ -230,6 +230,8 @@ func main() {
 	// GET
 	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler(datamartCtors))
 	registerRoute(mux, "/distil/datasets/:dataset", routes.DatasetHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/models", routes.ModelsHandler(esExportedModelStorageCtor))
+	registerRoute(mux, "/distil/models/:model", routes.ModelHandler(esExportedModelStorageCtor))
 	registerRoute(mux, "/distil/join-suggestions/:dataset", routes.JoinSuggestionHandler(esMetadataStorageCtor, datamartCtors))
 	registerRoute(mux, "/distil/solution/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/solutions/:dataset/:target", routes.SolutionsHandler(pgSolutionStorageCtor))
