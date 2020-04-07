@@ -1,4 +1,5 @@
 import _, { Dictionary } from "lodash";
+import moment from "moment";
 
 import { sortSolutionsByScore } from "../store/requests/getters";
 import { getters as requestGetters } from "../store/requests/module";
@@ -32,10 +33,22 @@ export const SOLUTION_PROGRESS: Dictionary<number> = {
 };
 
 export function getSolutionIndex(solutionId: string) {
+  // Get the solutions sorted by score.
   const solutions = requestGetters.getRelevantSolutions(store);
-  const index = _.findIndex(solutions, solution => {
+
+  // Sort the solutions by timestamp if they are not part of the same request.
+  solutions.sort((a, b) => {
+    if (b.requestId !== a.requestId) {
+      return moment(b.timestamp).unix() - moment(a.timestamp).unix();
+    }
+
+    return -1;
+  });
+
+  const index = _.findIndex(solutions, (solution) => {
     return solution.solutionId === solutionId;
   });
+
   return solutions.length - index - 1;
 }
 

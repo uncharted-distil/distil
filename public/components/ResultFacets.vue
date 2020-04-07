@@ -6,7 +6,7 @@
       v-for="request in requestGroups"
     >
       <p class="nav-link font-weight-bold">
-        Search <sup>{{ getRequestIndex(request.requestId) }}</sup>
+        Search <sup>{{ request.requestIndex }}</sup>
       </p>
 
       <div v-if="isPending(request.progress)">
@@ -175,6 +175,7 @@ export default Vue.extend({
       const summariesByRequestId = _.groupBy(summaryGroups, s => s.requestId);
       return _.map(summariesByRequestId, (groups, requestId) => ({
         requestId: requestId,
+        requestIndex: this.getRequestIndex(requestId),
         progress: requestsMap[requestId].progress,
         groups: groups
       }));
