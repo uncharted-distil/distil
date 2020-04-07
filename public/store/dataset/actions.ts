@@ -40,8 +40,6 @@ import {
   isRankableVariableType
 } from "../../util/types";
 
-import { DATASET_UPLOAD, PREDICTION_UPLOAD } from "../../util/uploads";
-
 // fetches variables and add dataset name to each variable
 async function getVariables(dataset: string): Promise<Variable[]> {
   const response = await axios.get(`/distil/variables/${dataset}`);
@@ -335,8 +333,18 @@ export const actions = {
     }
     const data = new FormData();
     data.append("file", args.file);
-
-    await axios.post(`/distil/upload/${args.datasetID}?type=table`, data, {
+    let options = "";
+    switch (args.file.type) {
+      case "text/csv":
+        options = "type=table";
+        break;
+      case "application/zip":
+        options = "type=image&image=jpg";
+        break;
+      default:
+        options = "type=table";
+    }
+    await axios.post(`/distil/upload/${args.datasetID}?${options}`, data, {
       headers: { "Content-Type": "multipart/form-data" }
     });
     return actions.importDataset(context, {

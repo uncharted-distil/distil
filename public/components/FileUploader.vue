@@ -12,12 +12,12 @@
       @ok="handleOk()"
       @show="clearFile()"
     >
-      <p>Select a csv file to import</p>
+      <p>{{ modalText }}</p>
       <b-form-file
         ref="fileinput"
         v-model="file"
         :state="Boolean(file)"
-        accept=".csv"
+        :accept="allowedTypes"
         plain
       />
       <div class="mt-3">Selected file: {{ file ? file.name : "" }}</div>
@@ -58,6 +58,25 @@ export default Vue.extend({
           return "Import File";
       }
     },
+    modalText(): string {
+      switch (this.uploadType) {
+        case PREDICTION_UPLOAD:
+          return "Select a csv file to import";
+        case DATASET_UPLOAD:
+        default:
+          return "Select a csv or zip file to import";
+      }
+    },
+    allowedTypes(): string {
+      switch (this.uploadType) {
+        case PREDICTION_UPLOAD:
+          return ".csv";
+        case DATASET_UPLOAD:
+        default:
+          return ".csv, .zip";
+      }
+    },
+
     filename(): string {
       return this.file ? this.file.name : "";
     },
@@ -79,7 +98,7 @@ export default Vue.extend({
     clearFile() {
       this.file = null;
       const $refs = this.$refs as any;
-      $refs.fileinput.reset();
+      if ($refs && $refs.fileinput) $refs.fileinput.reset();
     },
     handleOk() {
       if (!this.file) {
