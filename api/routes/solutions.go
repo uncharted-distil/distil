@@ -129,8 +129,10 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 		}
 
 		resultID := ""
+		fittedSolutionID := ""
 		if len(sol.Results) > 0 {
 			resultID = sol.Results[0].ResultUUID
+			fittedSolutionID = sol.Results[0].FittedSolutionID
 		}
 
 		solutionResponse := SolutionResponse{
@@ -141,11 +143,12 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			Features:  req.Features,
 			Filters:   req.Filters,
 			// solution
-			SolutionID: sol.SolutionID,
-			Scores:     sol.Scores,
-			Timestamp:  sol.CreatedTime,
-			Progress:   sol.State.Progress,
-			ResultID:   resultID,
+			SolutionID:       sol.SolutionID,
+			Scores:           sol.Scores,
+			Timestamp:        sol.CreatedTime,
+			Progress:         sol.State.Progress,
+			ResultID:         resultID,
+			FittedSolutionID: fittedSolutionID,
 			// keys
 			PredictedKey: model.GetPredictedKey(sol.SolutionID),
 			ErrorKey:     model.GetErrorKey(sol.SolutionID),

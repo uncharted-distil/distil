@@ -80,5 +80,7 @@ export const getters = {
   getGeoCenter: read(moduleGetters.getGeoCenter),
   getGeoZoom: read(moduleGetters.getGeoZoom),
   getGroupingType: read(moduleGetters.getGroupingType),
-  getRouteTask: read(moduleGetters.getRouteTask)
+  getRouteTask: read(moduleGetters.getRouteTask),
+  getRouteFittedSolutionID: read(moduleGetters.getRouteFittedSolutionId),
+  getRouteInferenceDataset: read(moduleGetters.getRouteInferenceDataset)
 };

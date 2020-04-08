@@ -335,6 +335,9 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 	keys := []string{defaultExposedOutputKey}
 	keys = append(keys, extractOutputKeys(outputs)...)
 
+	keys := []string{defaultExposedOutputKey}
+	// keys = append(keys, extractOutputKeys(outputs)...)
+
 	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, keys)
 	produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
 	if err != nil {

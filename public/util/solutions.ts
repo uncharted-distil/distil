@@ -4,7 +4,6 @@ import moment from "moment";
 import { sortSolutionsByScore } from "../store/requests/getters";
 import { getters as requestGetters } from "../store/requests/module";
 import {
-  RequestState,
   Solution,
   SOLUTION_PENDING,
   SOLUTION_FITTING,

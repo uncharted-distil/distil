@@ -1,9 +1,10 @@
 import { VariableSummary } from "../store/dataset";
 import store from "../store/store";
 import { getters as resultGetters } from "../store/results/module";
+import { getters as predictionGetters } from "../store/predictions/module";
 
 export function getIDFromKey(key: string): string {
-  return key.split(":")[0];
+  return key ? key.split(":")[0] : "";
 }
 
 export function getSolutionResultSummary(solutionID: string): VariableSummary {
@@ -26,7 +27,7 @@ export function getCorrectnessSummary(solutionID: string): VariableSummary {
 }
 
 export function getPredictionResultSummary(requestId: string): VariableSummary {
-  return resultGetters
-    .getPredictedSummaries(store)
+  return predictionGetters
+    .getPredictionSummaries(store)
     .find(s => getIDFromKey(s.key) === requestId);
 }

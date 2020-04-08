@@ -27,7 +27,8 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
-func fetchPredictionResultExtrema(meta api.MetadataStorage, data api.DataStorage, solution api.SolutionStorage, dataset string, storageName string, target string, solutionID string) (*api.Extrema, error) {
+func fetchPredictionResultExtrema(meta api.MetadataStorage, data api.DataStorage, solution api.SolutionStorage,
+	dataset string, storageName string, target string, fittedSolutionID string, resultURI string) (*api.Extrema, error) {
 	// check target var type
 	variable, err := meta.FetchVariable(dataset, target)
 	if err != nil {
@@ -38,39 +39,28 @@ func fetchPredictionResultExtrema(meta api.MetadataStorage, data api.DataStorage
 		return nil, nil
 	}
 
-	// we need to get extrema min and max for all solutions sharing dataset and target
-	solutions, err := solution.FetchSolutionsByDatasetTarget(dataset, target)
-	if err != nil {
-		return nil, err
-	}
-
 	// get extrema
 	min := math.MaxFloat64
 	max := -math.MaxFloat64
-	for _, sol := range solutions {
-		if len(sol.Results) > 0 && !sol.IsBad {
-			// result uri
-			resultURI := sol.Results[0].ResultURI
-			// predicted extrema
-			predictedExtrema, err := data.FetchResultsExtremaByURI(dataset, storageName, resultURI)
-			if err != nil {
-				return nil, err
-			}
-			max = math.Max(max, predictedExtrema.Max)
-			min = math.Min(min, predictedExtrema.Min)
-			// result extrema
-			resultExtrema, err := data.FetchExtremaByURI(dataset, storageName, resultURI, target)
-			if err != nil {
-				return nil, err
-			}
-			max = math.Max(max, resultExtrema.Max)
-			min = math.Min(min, resultExtrema.Min)
-		}
+	// predicted extrema
+	predictedExtrema, err := data.FetchResultsExtremaByURI(dataset, storageName, resultURI)
+	if err != nil {
+		return nil, err
 	}
+	max = math.Max(max, predictedExtrema.Max)
+	min = math.Min(min, predictedExtrema.Min)
+	// result extrema
+	resultExtrema, err := data.FetchExtremaByURI(dataset, storageName, resultURI, target)
+	if err != nil {
+		return nil, err
+	}
+	max = math.Max(max, resultExtrema.Max)
+	min = math.Min(min, resultExtrema.Min)
+
 	return api.NewExtrema(min, max)
 }
 
-// ResultSummaryHandler bins predicted result data for consumption in a downstream summary view.
+// PredictionResultSummaryHandler bins predicted result data for consumption in a downstream summary view.
 func PredictionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get variable summary mode
@@ -125,7 +115,7 @@ func PredictionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCt
 			return
 		}
 
-		// get the associated predictdion request.
+		// get the associated prediction request.
 		prediction, err := solution.FetchPrediction(res.ProduceRequestID)
 		if err != nil {
 			handleError(w, err)
@@ -134,7 +124,7 @@ func PredictionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCt
 
 		// extract extrema for solution
 		storageName := model.NormalizeDatasetID(prediction.Dataset)
-		extrema, err := fetchPredictionResultExtrema(meta, data, solution, prediction.Dataset, storageName, prediction.Target, "")
+		extrema, err := fetchPredictionResultExtrema(meta, data, solution, prediction.Dataset, storageName, prediction.Target, prediction.FittedSolutionID, res.ResultURI)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -146,7 +136,12 @@ func PredictionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCt
 			handleError(w, err)
 			return
 		}
-		summary.Key = api.GetPredictedKey(res.ProduceRequestID)
+		// NOTE: for model result summaries we created a key that consists of the solution
+		// ID + a string to indicate whether the summary facet is for the values returned by
+		// the model, or the residual / correctness summary.  We don't need to do that with
+		// predictions because there is only ever one summary facet associated wit a prediction
+		// request.
+		summary.Key = res.ProduceRequestID
 		summary.Label = "Predicted"
 
 		// marshal data and sent the response back

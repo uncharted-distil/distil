@@ -149,7 +149,6 @@ export default Vue.extend({
         const routeArgs = {
           fittedSolutionId: this.fittedSolutionId,
           produceRequestId: response.produceRequestId,
-          inferenceDataset: response.dataset,
           target: this.target
         };
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
