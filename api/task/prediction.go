@@ -49,7 +49,7 @@ func (p *predictionDataset) CreateDataset(rootDataPath string, config *env.Confi
 	}
 
 	// match the source dataset
-	csvDataAugmented, err := augmentPredictionDataset(ds.Data, ds.Metadata.DataResources[0].Variables)
+	csvDataAugmented, err := augmentPredictionDataset(ds.Data, p.params.Meta.DataResources[0].Variables)
 	if err != nil {
 		return nil, err
 	}

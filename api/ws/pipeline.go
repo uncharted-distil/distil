@@ -326,6 +326,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 
 	// config objects required for ingest
 	config, _ := env.LoadConfig()
+	ingestConfig := task.NewConfig(config)
 
 	ds, err := dataset.NewTableDataset(request.DatasetID, []byte(data), &config)
 	if err != nil {
@@ -348,6 +349,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		DatasetIngested:    false,
 		DatasetImported:    false,
 		Config:             &config,
+		IngestConfig:       ingestConfig,
 	}
 
 	// run predictions - synchronous call for now
