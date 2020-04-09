@@ -177,8 +177,14 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, errors.Wrap(err, "unable to update dataset doc")
 	}
 
+	// get the explained solution id
+	solution, err := params.SolutionStorage.FetchSolution(params.SolutionID)
+	if err != nil {
+		return nil, err
+	}
+
 	// submit the new dataset for predictions
-	predictionResult, err := comp.GeneratePredictions(datasetPath, params.SolutionID, params.FittedSolutionID, client)
+	predictionResult, err := comp.GeneratePredictions(datasetPath, solution.ExplainedSolutionID, params.FittedSolutionID, client)
 	if err != nil {
 		return nil, err
 	}

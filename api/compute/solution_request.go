@@ -332,7 +332,8 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 	}
 
 	outputs := getPipelineOutputs(desc)
-	keys := extractOutputKeys(outputs)
+	keys := []string{defaultExposedOutputKey}
+	keys = append(keys, extractOutputKeys(outputs)...)
 
 	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, keys)
 	produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
@@ -352,8 +353,8 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 			return nil, err
 		}
 		var explainFeatureURI string
-		if outputs[explainFeatureOutputkey] != nil {
-			explainFeatureURI, err = getFileFromOutput(response, outputs[explainFeatureOutputkey].key)
+		if outputs[explainableTypeStep] != nil {
+			explainFeatureURI, err = getFileFromOutput(response, outputs[explainableTypeStep].key)
 			if err != nil {
 				return nil, err
 			}
