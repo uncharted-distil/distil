@@ -20,8 +20,8 @@
         <!-- injectable slot -->
         <slot></slot>
       </div>
-      <div class="row flex-1">
-        <div class="col-12 variable-facets-container h-100">
+      <div class="row flex-1 variable-facets-wrapper">
+        <div class="col-12 flex-column variable-facets-container">
           <div
             class="variable-facets-item"
             v-for="summary in paginatedSummaries"
@@ -357,7 +357,8 @@ button {
   border-color: #868e96;
 }
 
-.variable-facets-container {
+/* To display scrollbars on the list of variables facets. */
+.variable-facets-wrapper {
   overflow-x: hidden;
   overflow-y: auto;
 }

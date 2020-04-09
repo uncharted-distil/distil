@@ -191,60 +191,15 @@ export default Vue.extend({
 
 /* Render items as columns */
 .available-target-variables .variable-facets-container {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-}
-
-/* 2 columns design by default. */
-/* Re-order items into rows */
-.available-target-variables .variable-facets-item:nth-child(2n + 1) {
-  order: 1;
-}
-.available-target-variables .variable-facets-item:nth-child(2n) {
-  order: 2;
-}
-
-/* Force new column */
-.available-target-variables .variable-facets-container::before {
-  content: "";
-  flex-basis: 100%;
-  width: 0;
-  order: 2;
+  column-count: 3;
+  column-gap: 1rem;
 }
 
 .available-target-variables .variable-facets-item {
+  display: inline-block;
   margin-left: 0.5rem;
   margin-right: 0.5rem;
-  width: calc(100% / 2 - 1rem);
-}
-
-/* 3 columns design for larger screen. */
-@media (min-width: 1200px) {
-  /* Re-order items into rows */
-  .available-target-variables .variable-facets-item:nth-child(3n + 1) {
-    order: 1;
-  }
-  .available-target-variables .variable-facets-item:nth-child(3n + 2) {
-    order: 2;
-  }
-  .available-target-variables .variable-facets-item:nth-child(3n) {
-    order: 3;
-  }
-
-  /* Force new columns */
-  .available-target-variables .variable-facets-container::before,
-  .available-target-variables .variable-facets-container::after {
-    content: "";
-    flex-basis: 100%;
-    width: 0;
-    order: 2;
-  }
-
-  .available-target-variables .variable-facets-item {
-    margin: 0.5rem;
-    width: calc(100% / 3 - 1rem);
-  }
+  width: 100%;
 }
 
 .available-target-variables
