@@ -396,8 +396,8 @@ func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, s
 	log.Errorf("solution '%s' errored: %v", solutionID, err)
 }
 
-func (s *SolutionRequest) persistSolution(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, initialSearchSolutionID string) {
-	err := solutionStorage.PersistSolution(searchID, solutionID, initialSearchSolutionID, time.Now())
+func (s *SolutionRequest) persistSolution(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, explainedSolutionID string) {
+	err := solutionStorage.PersistSolution(searchID, solutionID, explainedSolutionID, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
@@ -457,7 +457,7 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client,
 	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string,
-	solutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string, resultURI string, confidenceURI string) {
+	explainedSolutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string, resultURI string, confidenceURI string) {
 	// persist the completed state
 	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -542,6 +542,12 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 		// persist the solution info
 		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionFittingStatus)
+
+		err = solutionStorage.UpdateSolution(initialSearchSolutionID, solutionID)
+		if err != nil {
+			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+			return
+		}
 
 		// fit solution
 		fitResults, err := client.GenerateSolutionFit(context.Background(), solutionID, []string{datasetURITrain})
