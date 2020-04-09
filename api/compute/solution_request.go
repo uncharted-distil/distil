@@ -79,6 +79,16 @@ func newStatusChannel() chan SolutionStatus {
 	return make(chan SolutionStatus, 1)
 }
 
+// PredictionResult contains the output from a prediction produce call.
+type PredictionResult struct {
+	ProduceRequestID         string
+	FittedSolutionID         string
+	ResultURI                string
+	ConfidenceURI            string
+	SolutionFeatureWeightURI string
+	StepFeatureWeightURI     string
+}
+
 // SolutionRequest represents a solution search request.
 type SolutionRequest struct {
 	Dataset              string
@@ -313,22 +323,21 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 }
 
 // GeneratePredictions produces predictions using the specified.
-func GeneratePredictions(datasetURI string, initialSearchSolutionID string,
-	fittedSolutionID string, client *compute.Client) (string, []string, error) {
+func GeneratePredictions(datasetURI string, explainedSolutionID string,
+	fittedSolutionID string, client *compute.Client) (*PredictionResult, error) {
 	// check if the solution can be explained
-	desc, err := client.GetSolutionDescription(context.Background(), initialSearchSolutionID)
+	desc, err := client.GetSolutionDescription(context.Background(), explainedSolutionID)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
-	explainableCalls := explainablePipelineFunctions(desc)
 	outputs := getPipelineOutputs(desc)
 	keys := extractOutputKeys(outputs)
 
 	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, keys)
 	produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	for _, response := range predictionResponses {
@@ -340,26 +349,41 @@ func GeneratePredictions(datasetURI string, initialSearchSolutionID string,
 
 		resultURI, err := getFileFromOutput(response, defaultExposedOutputKey)
 		if err != nil {
-			return "", nil, err
+			return nil, err
 		}
 		var explainFeatureURI string
-		if explainableCalls != nil {
-			explainFeatureURI, err = getFileFromOutput(response, explainFeatureOutputkey)
+		if outputs[explainFeatureOutputkey] != nil {
+			explainFeatureURI, err = getFileFromOutput(response, outputs[explainFeatureOutputkey].key)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 		}
 		var explainSolutionURI string
-		if explainableCalls != nil {
-			explainSolutionURI, err = getFileFromOutput(response, explainSolutionOutputkey)
+		if outputs[explainableTypeSolution] != nil {
+			explainSolutionURI, err = getFileFromOutput(response, outputs[explainableTypeSolution].key)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 		}
-		return produceRequestID, []string{resultURI, explainFeatureURI, explainSolutionURI}, nil
+		var confidenceURI string
+		if outputs[explainableTypeConfidence] != nil {
+			confidenceURI, err = getFileFromOutput(response, outputs[explainableTypeConfidence].key)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return &PredictionResult{
+			ProduceRequestID:         produceRequestID,
+			FittedSolutionID:         fittedSolutionID,
+			ResultURI:                resultURI,
+			ConfidenceURI:            confidenceURI,
+			StepFeatureWeightURI:     explainFeatureURI,
+			SolutionFeatureWeightURI: explainSolutionURI,
+		}, nil
 	}
 
-	return "", nil, errors.Errorf("no results retrieved")
+	return nil, errors.Errorf("no results retrieved")
 }
 
 func createProduceSolutionRequest(datasetURI string, fittedSolutionID string, outputs []string) *pipeline.ProduceSolutionRequest {
