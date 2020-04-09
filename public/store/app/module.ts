@@ -29,6 +29,7 @@ export const getters = {
 
 // typed actions
 export const actions = {
+  saveModel: dispatch(moduleActions.saveModel),
   exportSolution: dispatch(moduleActions.exportSolution),
   exportProblem: dispatch(moduleActions.exportProblem),
   fetchConfig: dispatch(moduleActions.fetchConfig),

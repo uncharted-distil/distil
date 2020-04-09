@@ -20,7 +20,7 @@
     </b-button>
 
     <file-uploader
-      class="file-uploader"
+      class="result-button-alignment"
       @uploadstart="onUploadStart"
       @uploadfinish="onUploadFinish"
       :upload-type="uploadType"
@@ -29,6 +29,16 @@
       :target-type="targetType"
       v-if="!isPrediction"
     ></file-uploader>
+
+    <b-button
+      v-if="!isPrediction"
+      block
+      variant="primary"
+      class="result-button-alignment"
+      v-on:click="saveModel"
+    >
+      Save Model
+    </b-button>
 
     <b-modal id="export" title="Export" @ok="onExport">
       <div class="check-message-container">
@@ -269,6 +279,27 @@ export default Vue.extend({
       modal.hide();
       this.$router.replace(ROOT_ROUTE);
       this.$router.go(0);
+    },
+    saveModel () {
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.EXPORT_MODEL,
+        activity: Activity.MODEL_SELECTION,
+        subActivity: SubActivity.MODEL_SAVE,
+        details: {
+          solution: this.activeSolution.solutionId,
+          fittedSolution: this.fittedSolutionId
+        }
+      });
+      appActions
+        .saveModel(this.$store, {
+          solutionId: this.activeSolution.solutionId,
+          fittedSolutionId: this.fittedSolutionId
+        })
+        .then(err => {
+          if (err) {
+            console.log(err);
+          }
+        });
     }
   }
 });
@@ -319,5 +350,9 @@ export default Vue.extend({
 .check-button {
   width: 60%;
   margin: 0 20%;
+}
+
+.result-button-alignment {
+  padding: 0 0 15px;
 }
 </style>

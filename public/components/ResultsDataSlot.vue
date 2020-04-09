@@ -173,7 +173,6 @@ export default Vue.extend({
   position: relative;
   display: flex;
   flex-grow: 1;
-  overflow: auto;
   background-color: white;
 }
 
