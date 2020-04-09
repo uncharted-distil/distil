@@ -119,7 +119,7 @@ export default Vue.extend({
   font-weight: bold;
 }
 
-.file-uploader {
+.search-view .file-uploader {
   flex-shrink: 0;
   margin-left: 20px;
 }

@@ -359,7 +359,6 @@ export default Vue.extend({
 
 <style>
 .select-data-container {
-  overflow: auto;
   position: relative;
   display: flex;
   background-color: white;
