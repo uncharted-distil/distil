@@ -12,6 +12,7 @@
           <facet-entry
             enable-highlighting
             :summary="summary"
+            :key="summary.key"
             :highlight="highlight"
             :enabled-type-changes="[]"
             :row-selection="rowSelection"
@@ -120,7 +121,7 @@ export default Vue.extend({
           details: { requestId: key }
         });
         const routeEntry = overlayRouteEntry(this.$route, {
-          produceRequestId: key,
+          produceRequestId: key.split(":")[0],
           highlights: null
         });
         this.$router.push(routeEntry);
@@ -128,7 +129,11 @@ export default Vue.extend({
     },
 
     active(summaryKey: string): string {
-      return summaryKey === this.produceRequestId
+      const predictions = getPredictionsById(
+        requestGetters.getRelevantPredictions(this.$store),
+        this.produceRequestId
+      );
+      return summaryKey === predictions.predictedKey
         ? "prediction-group-selected prediction-group"
         : "prediction-group";
     },

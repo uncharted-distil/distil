@@ -81,6 +81,5 @@ export const getters = {
   getGeoZoom: read(moduleGetters.getGeoZoom),
   getGroupingType: read(moduleGetters.getGroupingType),
   getRouteTask: read(moduleGetters.getRouteTask),
-  getRouteFittedSolutionID: read(moduleGetters.getRouteFittedSolutionId),
-  getRouteInferenceDataset: read(moduleGetters.getRouteInferenceDataset)
+  getRouteFittedSolutionID: read(moduleGetters.getRouteFittedSolutionId)
 };

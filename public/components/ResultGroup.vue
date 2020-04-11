@@ -120,19 +120,6 @@
         </facet-entry>
       </template>
     </div>
-    <b-modal v-model="openDeleteModal" hide-footer hide-header>
-      <h6 class="my-4 text-center">
-        Are you sure you would like to delete this solution?
-      </h6>
-      <footer class="modal-footer">
-        <b-btn class="mt-3" variant="danger" @click="deleteSolution"
-          >Delete</b-btn
-        >
-        <b-btn class="mt-3" variant="secondary" @click="openDeleteModal = false"
-          >Cancel</b-btn
-        >
-      </footer>
-    </b-modal>
   </div>
 </template>
 
