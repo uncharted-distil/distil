@@ -1,6 +1,7 @@
 import { Location } from "vue-router";
 import { LAST_STATE } from "../store/view/index";
 import localStorage from "store";
+import { local } from "d3";
 
 export function saveView(args: { view: string; key: string; route: Location }) {
   const value = {
@@ -16,6 +17,9 @@ export function saveView(args: { view: string; key: string; route: Location }) {
 }
 
 export function restoreView(view: string, key: string): Location {
-  const res = localStorage.get(`${view}:${key}`);
+  let res = localStorage.get(`${view}:${key}`);
+  if (!res) {
+    res = localStorage.get(`${view}:${LAST_STATE}`);
+  }
   return res || null;
 }
