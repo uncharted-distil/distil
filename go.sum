@@ -94,8 +94,6 @@ github.com/smartystreets/go-aws-auth v0.0.0-20180515143844-0c1422d1fdb9/go.mod h
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
-github.com/uncharted-distil/distil-compute v0.0.0-20200406202453-2a9371d38549 h1:QA/dv98KsUdz3+2+PhGNgWpAvxkTExyHYOD4NQpslCI=
-github.com/uncharted-distil/distil-compute v0.0.0-20200406202453-2a9371d38549/go.mod h1:0OFz5vP7mV1nuvKvINOG7hdz8YU0+rWhjppdYBzOSew=
 github.com/uncharted-distil/distil-compute v0.0.0-20200412215558-57cb4e39639e h1:oSjbUaCl5wNHEgVTcL+72QHwkNy3VAeR2CK3GNe5/cs=
 github.com/uncharted-distil/distil-compute v0.0.0-20200412215558-57cb4e39639e/go.mod h1:0OFz5vP7mV1nuvKvINOG7hdz8YU0+rWhjppdYBzOSew=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9 h1:P1B7OAnmyIdSN9UGhDvIU3s8K3/2rQcvntYV5WPi+qY=
