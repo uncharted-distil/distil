@@ -1,10 +1,14 @@
 <template>
-  <div v-bind:class="currentClass" @click="onClick()">
+  <div
+    class="result-group"
+    v-bind:class="{ 'result-group-selected': isSelected }"
+    @click="onClick()"
+  >
     <div class="result-group-title">
       <b
         >{{ name }} <sup>{{ solutionIndex }}</sup></b
       >
-      <template v-if="!isErrored">
+      <template v-if="!isErrored && !isSelected">
         <div
           class="pull-right pl-2 solution-button"
           @click.stop="minimized = !minimized"
@@ -266,12 +270,6 @@ export default Vue.extend({
       return routeGetters.getDecodedHighlight(this.$store);
     },
 
-    currentClass(): string {
-      return this.predictedSummary && this.solutionId === this.routeSolutionId
-        ? "result-group-selected result-group"
-        : "result-group";
-    },
-
     residualThreshold(): Extrema {
       return {
         min: _.toNumber(routeGetters.getRouteResidualThresholdMin(this.$store)),
@@ -314,6 +312,10 @@ export default Vue.extend({
         this.routeSolutionId === this.solutionId ||
         (!this.isMinimized && !this.isErrored)
       );
+    },
+
+    isSelected(): boolean {
+      return this.predictedSummary && this.solutionId === this.routeSolutionId;
     },
 
     isTopN(): boolean {
