@@ -34,7 +34,7 @@ export const SOLUTION_PROGRESS: Dictionary<number> = {
 
 export function getSolutionIndex(solutionId: string) {
   // Get the solutions sorted by score.
-  const solutions = requestGetters.getRelevantSolutions(store);
+  const solutions = [...requestGetters.getRelevantSolutions(store)];
 
   // Sort the solutions by timestamp if they are not part of the same request.
   solutions.sort((a, b) => {
