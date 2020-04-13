@@ -30,12 +30,27 @@ import (
 )
 
 // PersistSolution persists the solution to Postgres.
-func (s *Storage) PersistSolution(requestID string, solutionID string, initialSearchSolutionID string, createdTime time.Time) error {
-	sql := fmt.Sprintf("INSERT INTO %s (request_id, solution_id, initial_search_solution_id, created_time) VALUES ($1, $2, $3, $4);", postgres.SolutionTableName)
+func (s *Storage) PersistSolution(requestID string, solutionID string, explainedSolutionID string, createdTime time.Time) error {
+	sql := fmt.Sprintf("INSERT INTO %s (request_id, solution_id, explained_solution_id, created_time) VALUES ($1, $2, $3, $4);", postgres.SolutionTableName)
 
-	_, err := s.client.Exec(sql, requestID, solutionID, initialSearchSolutionID, createdTime)
+	_, err := s.client.Exec(sql, requestID, solutionID, explainedSolutionID, createdTime)
+	if err != nil {
+		return errors.Wrap(err, "unable to persist solution")
+	}
 
-	return err
+	return nil
+}
+
+// UpdateSolution updates the solution in Postgres.
+func (s *Storage) UpdateSolution(solutionID string, explainedSolutionID string) error {
+	sql := fmt.Sprintf("UPDATE %s SET explained_solution_id = $2 WHERE solution_id = $1;", postgres.SolutionTableName)
+
+	_, err := s.client.Exec(sql, solutionID, explainedSolutionID)
+	if err != nil {
+		return errors.Wrap(err, "unable to update solution")
+	}
+
+	return nil
 }
 
 // PersistSolutionWeight persists the solution feature weight to Postgres.
@@ -122,7 +137,7 @@ func (s *Storage) isBadSolution(solution *api.Solution) (bool, error) {
 
 // FetchSolution pulls solution information from Postgres.
 func (s *Storage) FetchSolution(solutionID string) (*api.Solution, error) {
-	sql := fmt.Sprintf("SELECT request_id, solution_id, initial_search_solution_id, created_time FROM %s WHERE solution_id = $1 ORDER BY created_time desc LIMIT 1;", postgres.SolutionTableName)
+	sql := fmt.Sprintf("SELECT request_id, solution_id, explained_solution_id, created_time FROM %s WHERE solution_id = $1 ORDER BY created_time desc LIMIT 1;", postgres.SolutionTableName)
 
 	rows, err := s.client.Query(sql, solutionID)
 	if err != nil {
@@ -150,10 +165,10 @@ func (s *Storage) FetchSolution(solutionID string) (*api.Solution, error) {
 func (s *Storage) parseSolution(rows *pgx.Rows) (*api.Solution, error) {
 	var requestID string
 	var solutionID string
-	var initialSearchSolutionID string
+	var explainedSolutionID string
 	var createdTime time.Time
 
-	err := rows.Scan(&requestID, &solutionID, &initialSearchSolutionID, &createdTime)
+	err := rows.Scan(&requestID, &solutionID, &explainedSolutionID, &createdTime)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to parse solution from Postgres")
 	}
@@ -174,12 +189,13 @@ func (s *Storage) parseSolution(rows *pgx.Rows) (*api.Solution, error) {
 	}
 
 	return &api.Solution{
-		RequestID:   requestID,
-		SolutionID:  solutionID,
-		State:       state,
-		CreatedTime: createdTime,
-		Results:     results,
-		Scores:      scores,
+		RequestID:           requestID,
+		SolutionID:          solutionID,
+		ExplainedSolutionID: explainedSolutionID,
+		State:               state,
+		CreatedTime:         createdTime,
+		Results:             results,
+		Scores:              scores,
 	}, nil
 }
 

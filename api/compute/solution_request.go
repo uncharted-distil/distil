@@ -79,6 +79,16 @@ func newStatusChannel() chan SolutionStatus {
 	return make(chan SolutionStatus, 1)
 }
 
+// PredictionResult contains the output from a prediction produce call.
+type PredictionResult struct {
+	ProduceRequestID         string
+	FittedSolutionID         string
+	ResultURI                string
+	ConfidenceURI            string
+	SolutionFeatureWeightURI string
+	StepFeatureWeightURI     string
+}
+
 // SolutionRequest represents a solution search request.
 type SolutionRequest struct {
 	Dataset              string
@@ -313,22 +323,22 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 }
 
 // GeneratePredictions produces predictions using the specified.
-func GeneratePredictions(datasetURI string, initialSearchSolutionID string,
-	fittedSolutionID string, client *compute.Client) (string, []string, error) {
+func GeneratePredictions(datasetURI string, explainedSolutionID string,
+	fittedSolutionID string, client *compute.Client) (*PredictionResult, error) {
 	// check if the solution can be explained
-	desc, err := client.GetSolutionDescription(context.Background(), initialSearchSolutionID)
+	desc, err := client.GetSolutionDescription(context.Background(), explainedSolutionID)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
-	explainableCalls := explainablePipelineFunctions(desc)
 	outputs := getPipelineOutputs(desc)
-	keys := extractOutputKeys(outputs)
+	keys := []string{defaultExposedOutputKey}
+	keys = append(keys, extractOutputKeys(outputs)...)
 
 	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, keys)
 	produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	for _, response := range predictionResponses {
@@ -340,26 +350,41 @@ func GeneratePredictions(datasetURI string, initialSearchSolutionID string,
 
 		resultURI, err := getFileFromOutput(response, defaultExposedOutputKey)
 		if err != nil {
-			return "", nil, err
+			return nil, err
 		}
 		var explainFeatureURI string
-		if explainableCalls != nil {
-			explainFeatureURI, err = getFileFromOutput(response, explainFeatureOutputkey)
+		if outputs[explainableTypeStep] != nil {
+			explainFeatureURI, err = getFileFromOutput(response, outputs[explainableTypeStep].key)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 		}
 		var explainSolutionURI string
-		if explainableCalls != nil {
-			explainSolutionURI, err = getFileFromOutput(response, explainSolutionOutputkey)
+		if outputs[explainableTypeSolution] != nil {
+			explainSolutionURI, err = getFileFromOutput(response, outputs[explainableTypeSolution].key)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 		}
-		return produceRequestID, []string{resultURI, explainFeatureURI, explainSolutionURI}, nil
+		var confidenceURI string
+		if outputs[explainableTypeConfidence] != nil {
+			confidenceURI, err = getFileFromOutput(response, outputs[explainableTypeConfidence].key)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return &PredictionResult{
+			ProduceRequestID:         produceRequestID,
+			FittedSolutionID:         fittedSolutionID,
+			ResultURI:                resultURI,
+			ConfidenceURI:            confidenceURI,
+			StepFeatureWeightURI:     explainFeatureURI,
+			SolutionFeatureWeightURI: explainSolutionURI,
+		}, nil
 	}
 
-	return "", nil, errors.Errorf("no results retrieved")
+	return nil, errors.Errorf("no results retrieved")
 }
 
 func createProduceSolutionRequest(datasetURI string, fittedSolutionID string, outputs []string) *pipeline.ProduceSolutionRequest {
@@ -396,8 +421,8 @@ func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, s
 	log.Errorf("solution '%s' errored: %v", solutionID, err)
 }
 
-func (s *SolutionRequest) persistSolution(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, initialSearchSolutionID string) {
-	err := solutionStorage.PersistSolution(searchID, solutionID, initialSearchSolutionID, time.Now())
+func (s *SolutionRequest) persistSolution(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, explainedSolutionID string) {
+	err := solutionStorage.PersistSolution(searchID, solutionID, explainedSolutionID, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, searchID, solutionID, err)
@@ -457,7 +482,7 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client,
 	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string,
-	solutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string, resultURI string, confidenceURI string) {
+	explainedSolutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string, resultURI string, confidenceURI string) {
 	// persist the completed state
 	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -542,6 +567,12 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 		// persist the solution info
 		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionFittingStatus)
+
+		err = solutionStorage.UpdateSolution(initialSearchSolutionID, solutionID)
+		if err != nil {
+			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+			return
+		}
 
 		// fit solution
 		fitResults, err := client.GenerateSolutionFit(context.Background(), solutionID, []string{datasetURITrain})
