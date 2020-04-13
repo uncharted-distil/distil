@@ -177,18 +177,24 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, errors.Wrap(err, "unable to update dataset doc")
 	}
 
-	// submit the new dataset for predictions
-	produceRequestID, resultURIs, err := comp.GeneratePredictions(datasetPath, params.SolutionID, params.FittedSolutionID, client)
+	// get the explained solution id
+	solution, err := params.SolutionStorage.FetchSolution(params.SolutionID)
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("generated predictions stored at %v", resultURIs)
 
-	featureWeights, err := comp.ExplainFeatureOutput(resultURIs[0], schemaPath, resultURIs[1])
+	// submit the new dataset for predictions
+	predictionResult, err := comp.GeneratePredictions(datasetPath, solution.ExplainedSolutionID, params.FittedSolutionID, client)
 	if err != nil {
 		return nil, err
 	}
-	if featureWeights != nil {
+	log.Infof("generated predictions stored at %v", predictionResult.ResultURI)
+
+	if predictionResult.StepFeatureWeightURI != "" {
+		featureWeights, err := comp.ExplainFeatureOutput(predictionResult.ResultURI, schemaPath, predictionResult.StepFeatureWeightURI)
+		if err != nil {
+			return nil, err
+		}
 		err = params.DataStorage.PersistSolutionFeatureWeight(params.Dataset, model.NormalizeDatasetID(params.Dataset), featureWeights.ResultURI, featureWeights.Weights)
 		if err != nil {
 			return nil, err
@@ -197,30 +203,30 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	log.Infof("stored feature weights to the database")
 
 	// get the result UUID. NOTE: Doing sha1 for now.
-	resultID, err := util.Hash(resultURIs[0])
+	resultID, err := util.Hash(predictionResult.ResultURI)
 	if err != nil {
 		return nil, err
 	}
 
 	// Persist the prediction request metadata
 	createdTime := time.Now()
-	err = params.SolutionStorage.PersistPrediction(produceRequestID, params.Dataset, params.Target.Name, params.FittedSolutionID, "PREDICT_COMPLETED", createdTime)
+	err = params.SolutionStorage.PersistPrediction(predictionResult.ProduceRequestID, params.Dataset, params.Target.Name, params.FittedSolutionID, "PREDICT_COMPLETED", createdTime)
 	if err != nil {
 		return nil, err
 	}
-	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, produceRequestID, api.SolutionResultTypeInference, resultID, resultURIs[0], "PREDICT_COMPLETED", createdTime)
+	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, predictionResult.ProduceRequestID, api.SolutionResultTypeInference, resultID, predictionResult.ResultURI, "PREDICT_COMPLETED", createdTime)
 	if err != nil {
 		return nil, err
 	}
 
-	err = params.DataStorage.PersistResult(params.Dataset, model.NormalizeDatasetID(params.Dataset), resultURIs[0], "", target.Name)
+	err = params.DataStorage.PersistResult(params.Dataset, model.NormalizeDatasetID(params.Dataset), predictionResult.ResultURI, "", target.Name)
 	if err != nil {
 		return nil, err
 	}
 	log.Infof("stored prediction results to the database")
 
 	// set the dataset to the inference dataset
-	res, err := params.SolutionStorage.FetchPredictionResultByProduceRequestID(produceRequestID)
+	res, err := params.SolutionStorage.FetchPredictionResultByProduceRequestID(predictionResult.ProduceRequestID)
 	if err != nil {
 		return nil, err
 	}
