@@ -161,7 +161,9 @@ func PredictionHandler(solutionCtor api.SolutionStorageCtor) func(http.ResponseW
 			// solution
 			Timestamp: predictionReq.CreatedTime,
 			Progress:  predictionReq.Progress,
-			ResultID:  resultID,
+			//keys
+			PredictedKey: api.GetPredictedKey(predictionReq.RequestID),
+			ResultID:     resultID,
 		}
 
 		// marshal data and sent the response back

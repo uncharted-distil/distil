@@ -136,12 +136,7 @@ func PredictionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCt
 			handleError(w, err)
 			return
 		}
-		// NOTE: for model result summaries we created a key that consists of the solution
-		// ID + a string to indicate whether the summary facet is for the values returned by
-		// the model, or the residual / correctness summary.  We don't need to do that with
-		// predictions because there is only ever one summary facet associated wit a prediction
-		// request.
-		summary.Key = res.ProduceRequestID
+		summary.Key = api.GetPredictedKey(res.ProduceRequestID)
 		summary.Label = "Predicted"
 
 		// marshal data and sent the response back

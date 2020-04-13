@@ -17,6 +17,9 @@
             :enabled-type-changes="[]"
             :row-selection="rowSelection"
             :instanceName="instanceName"
+            @facet-click="onCategoricalClick"
+            @numerical-click="onNumericalClick"
+            @range-change="onRangeChange"
           >
           </facet-entry>
         </div>
@@ -70,9 +73,10 @@ import { Solution } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 import { PREDICTION_UPLOAD } from "../util/uploads";
-import { getPredictionResultSummary } from "../util/summaries";
+import { getPredictionResultSummary, getIDFromKey } from "../util/summaries";
 import { sum } from "d3";
 import { getPredictionsById } from "../util/predictions";
+import { updateHighlight, clearHighlight } from "../util/highlights";
 
 export default Vue.extend({
   name: "prediction-summaries",
@@ -113,7 +117,10 @@ export default Vue.extend({
 
   methods: {
     onClick(key: string) {
-      if (this.summaries && this.produceRequestId !== key) {
+      // Note that the key is of the form <requestId>:predicted and so needs to be
+      // parsed.
+      const requestId = getIDFromKey(key);
+      if (this.summaries && this.produceRequestId !== requestId) {
         appActions.logUserEvent(this.$store, {
           feature: Feature.SELECT_PREDICTIONS,
           activity: Activity.PREDICTION_ANALYSIS,
@@ -121,11 +128,92 @@ export default Vue.extend({
           details: { requestId: key }
         });
         const routeEntry = overlayRouteEntry(this.$route, {
-          produceRequestId: key.split(":")[0],
+          produceRequestId: requestId,
           highlights: null
         });
         this.$router.push(routeEntry);
       }
+    },
+
+    onCategoricalClick(
+      context: string,
+      key: string,
+      value: string,
+      dataset: string
+    ) {
+      if (key && value) {
+        // If this isn't the currently selected prediction set, first update it.
+        // Note that the key is of the form <requestId>:predicted and so needs to be
+        // parsed.
+        if (this.summaries && this.produceRequestId !== getIDFromKey(key)) {
+          this.onClick(key);
+        }
+
+        // extract the var name from the key
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value
+        });
+      } else {
+        clearHighlight(this.$router);
+      }
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.CHANGE_HIGHLIGHT,
+        activity: Activity.PREDICTION_ANALYSIS,
+        subActivity: SubActivity.MODEL_PREDICTIONS,
+        details: { key: key, value: value }
+      });
+    },
+
+    onNumericalClick(
+      context: string,
+      key: string,
+      value: { from: number; to: number },
+      dataset: string
+    ) {
+      if (!this.highlight || this.highlight.key !== key) {
+        // If this isn't the currently selected prediction set, first update it.
+        // Note that the key is of the form <requestId>:predicted and so needs to be
+        // parsed.
+        if (this.summaries && this.produceRequestId !== getIDFromKey(key)) {
+          this.onClick(key);
+        }
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value
+        });
+        appActions.logUserEvent(this.$store, {
+          feature: Feature.CHANGE_HIGHLIGHT,
+          activity: Activity.MODEL_SELECTION,
+          subActivity: SubActivity.MODEL_EXPLANATION,
+          details: { key: key, value: value }
+        });
+      }
+    },
+
+    onRangeChange(
+      context: string,
+      key: string,
+      value: { from: { label: string[] }; to: { label: string[] } },
+      dataset: string
+    ) {
+      updateHighlight(this.$router, {
+        context: context,
+        dataset: dataset,
+        key: key,
+        value: value
+      });
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.CHANGE_HIGHLIGHT,
+        activity: Activity.MODEL_SELECTION,
+        subActivity: SubActivity.MODEL_EXPLANATION,
+        details: { key: key, value: value }
+      });
+      this.$emit("range-change", key, value);
     },
 
     active(summaryKey: string): string {
