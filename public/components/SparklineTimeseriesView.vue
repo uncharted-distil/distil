@@ -78,6 +78,7 @@ import { updateHighlight } from "../util/highlights";
 import { getTimeseriesGroupingsFromFields } from "../util/data";
 import { isTimeType } from "../util/types";
 import { getSolutionIndex } from "../util/solutions";
+import { getSolutionResultSummary } from "../util/summaries";
 
 const TICK_SIZE = 8;
 const SELECTED_TICK_SIZE = 18;
@@ -175,14 +176,9 @@ export default Vue.extend({
     },
 
     predictedSummaries(): VariableSummary[] {
-      const summaries = resultsGetters.getPredictedSummaries(this.$store);
-      const solutions = requestGetters.getRelevantSolutions(this.$store);
-      return solutions
-        .map(solution => {
-          return _.find(summaries, summary => {
-            return summary.solutionId === solution.solutionId;
-          });
-        })
+      return requestGetters
+        .getRelevantSolutions(this.$store)
+        .map(solution => getSolutionResultSummary(solution.solutionId))
         .filter(summary => !!summary); // remove errors
     },
 

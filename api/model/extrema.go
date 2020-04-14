@@ -17,7 +17,6 @@ package model
 
 import (
 	"errors"
-	"fmt"
 	"math"
 
 	"github.com/uncharted-distil/distil-compute/model"
@@ -55,7 +54,7 @@ type BinningArgs struct {
 // NewExtrema instantiates a new extrema struct.
 func NewExtrema(min float64, max float64) (*Extrema, error) {
 	if min >= max {
-		return nil, fmt.Errorf("extrema min cannot be equal to or greater than max")
+		return nil, errors.New("extrema min cannot be equal to or greater than max")
 	}
 	if math.IsNaN(min) || math.IsNaN(max) {
 		return nil, errors.New("extrema cannot contain NaN values")

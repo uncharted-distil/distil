@@ -90,7 +90,7 @@ export const actions = {
         // add placeholder
         mutations.updateTrainingSummary(
           context,
-          createPendingSummary(key, label, description, dataset, solutionId)
+          createPendingSummary(key, label, description, dataset)
         );
       }
       // fetch summary
@@ -204,13 +204,7 @@ export const actions = {
       const targetVar = dataGetters.getVariablesMap(store)[args.target];
       mutations.updateTargetSummary(
         context,
-        createPendingSummary(
-          key,
-          label,
-          targetVar.colDescription,
-          dataset,
-          args.solutionId
-        )
+        createPendingSummary(key, label, targetVar.colDescription, dataset)
       );
     }
 

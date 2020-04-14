@@ -302,8 +302,7 @@ export function createPendingSummary(
   key: string,
   label: string,
   description: string,
-  dataset: string,
-  solutionId?: string
+  dataset: string
 ): VariableSummary {
   return {
     key: key,
@@ -312,8 +311,7 @@ export function createPendingSummary(
     dataset: dataset,
     pending: true,
     baseline: null,
-    filtered: null,
-    solutionId: solutionId
+    filtered: null
   };
 }
 
@@ -356,10 +354,7 @@ export async function fetchSolutionResultSummary(
   );
   if (!exists) {
     // add placeholder
-    updateFunction(
-      context,
-      createPendingSummary(key, label, "", dataset, solutionId)
-    );
+    updateFunction(context, createPendingSummary(key, label, "", dataset));
   }
 
   // fetch the results for each solution

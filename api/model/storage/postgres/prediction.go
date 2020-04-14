@@ -58,7 +58,7 @@ func (s *Storage) FetchPrediction(requestID string) (*api.Prediction, error) {
 // fitted solution id.
 func (s *Storage) FetchPredictionsByFittedSolutionID(fittedSolutionID string) ([]*api.Prediction, error) {
 	sql := fmt.Sprintf("SELECT request_id, dataset, target, fitted_solution_id, progress, created_time, last_updated_time FROM %s "+
-		"WHERE fitted_solution_id = $1 ORDER BY created_time desc LIMIT 1;", postgres.PredictionTableName)
+		"WHERE fitted_solution_id = $1 ORDER BY created_time desc;", postgres.PredictionTableName)
 
 	rows, err := s.client.Query(sql, fittedSolutionID)
 	if err != nil {

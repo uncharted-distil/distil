@@ -10,7 +10,8 @@ import {
 } from "../dataset/module";
 import {
   actions as requestActions,
-  mutations as solutionMutations
+  mutations as requestMutations,
+  getters as requestGetters
 } from "../requests/module";
 import {
   actions as resultActions,
@@ -21,7 +22,8 @@ import {
   mutations as predictionMutations
 } from "../predictions/module";
 import { getters as routeGetters } from "../route/module";
-import { TaskTypes, SummaryMode } from "../dataset";
+import { TaskTypes, SummaryMode, Variable, Highlight } from "../dataset";
+import { getPredictionsById } from "../../util/predictions";
 
 enum ParamCacheKey {
   VARIABLES = "VARIABLES",
@@ -177,8 +179,8 @@ export type ViewContext = ActionContext<ViewState, DistilState>;
 export const actions = {
   async fetchHomeData(context: ViewContext) {
     // clear any previous state
-    solutionMutations.clearSolutionRequests(store);
-    solutionMutations.clearSolutions(store);
+    requestMutations.clearSolutionRequests(store);
+    requestMutations.clearSolutions(store);
 
     // fetch new state
     await requestActions.fetchSolutions(store, {});
@@ -454,15 +456,23 @@ export const actions = {
     predictionMutations.setIncludedPredictionTableData(store, null);
     predictionMutations.setExcludedPredictionTableData(store, null);
 
-    const dataset = context.getters.getRouteInferenceDataset;
+    const produceRequestId = <string>context.getters.getRouteProduceRequestId;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId;
 
-    // fetch new state
-    await fetchVariables(context, {
-      dataset: dataset
-    });
+    // fetch the predictions
     await fetchPredictions(context, {
       fittedSolutionId: fittedSolutionId
+    });
+
+    // recover the dataset associated with the currently selected predictions set
+    const inferenceDataset = getPredictionsById(
+      context.getters.getPredictions,
+      produceRequestId
+    ).dataset;
+
+    // fetch variales for that dataset
+    await fetchVariables(context, {
+      dataset: inferenceDataset
     });
     return actions.updatePredictions(context);
   },
@@ -473,13 +483,19 @@ export const actions = {
     predictionMutations.setExcludedPredictionTableData(store, null);
 
     // fetch new state
-    const inferenceDataset = context.getters.getRouteInferenceDataset;
-    const target = context.getters.getRouteTargetVariable;
-    const trainingVariables =
-      context.getters.getActivePredictionTrainingVariables;
-    const highlight = context.getters.getDecodedHighlight;
-    const produceRequestId = context.getters.getRouteProduceRequestId;
-    const varModes = context.getters.getDecodedVarModes;
+    const produceRequestId = <string>context.getters.getRouteProduceRequestId;
+    const fittedSolutionId = <string>context.getters.getRouteFittedSolutionId;
+    const inferenceDataset = getPredictionsById(
+      context.getters.getPredictions,
+      produceRequestId
+    ).dataset;
+    const trainingVariables = <Variable[]>(
+      context.getters.getActivePredictionTrainingVariables
+    );
+    const highlight = <Highlight>context.getters.getDecodedHighlight;
+    const varModes = <Map<string, SummaryMode>>(
+      context.getters.getDecodedVarModes
+    );
     predictionActions.fetchPredictionTableData(store, {
       dataset: inferenceDataset,
       highlight: highlight,
@@ -492,10 +508,9 @@ export const actions = {
       varModes: varModes,
       produceRequestId: produceRequestId
     });
-    predictionActions.fetchPredictedSummary(store, {
+    predictionActions.fetchPredictedSummaries(store, {
       highlight: highlight,
-      varMode: SummaryMode.Default,
-      produceRequestId: produceRequestId
+      fittedSolutionId: fittedSolutionId
     });
   }
 };

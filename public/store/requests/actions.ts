@@ -505,6 +505,7 @@ export const actions = {
         // log any error
         if (response.error) {
           console.error(response.error);
+          resolve(response);
         }
 
         // handle prediction request progress

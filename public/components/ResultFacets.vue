@@ -66,6 +66,11 @@ import {
 } from "../store/requests/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getSolutionRequestIndex } from "../util/solutions";
+import {
+  getSolutionResultSummary,
+  getResidualSummary,
+  getCorrectnessSummary
+} from "../util/summaries";
 
 interface SummaryGroup {
   requestId: string;
@@ -93,14 +98,9 @@ export default Vue.extend({
 
   props: {
     // display results in regression vs. classification mode
-    isRegression: {
+    showResiduals: {
       type: Boolean as () => boolean,
       default: () => false
-    },
-    // display correctness information / scores
-    showError: {
-      type: Boolean as () => boolean,
-      default: () => true
     }
   },
 
@@ -111,23 +111,6 @@ export default Vue.extend({
 
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
-    },
-
-    predictedSummaries(): VariableSummary[] {
-      return resultsGetters.getPredictedSummaries(this.$store);
-    },
-
-    residualSummaries(): VariableSummary[] {
-      return this.showError &&
-        (this.isRegression || routeGetters.getRouteTask(this.$store))
-        ? resultsGetters.getResidualsSummaries(this.$store)
-        : [];
-    },
-
-    correctnessSummaries(): VariableSummary[] {
-      return this.showError && !this.isRegression
-        ? resultsGetters.getCorrectnessSummaries(this.$store)
-        : [];
     },
 
     resultTargetSummary(): VariableSummary {
@@ -145,23 +128,14 @@ export default Vue.extend({
       const summaryGroups: SummaryGroup[] = solutions.map(solution => {
         const solutionId = solution.solutionId;
         const requestId = solution.requestId;
-
-        const predictedSummary = _.find(
-          this.predictedSummaries,
-          summary => summary.solutionId === solutionId
-        );
-
-        const residualSummary = _.find(
-          this.residualSummaries,
-          summary => summary.solutionId === solutionId
-        );
-
-        const correctnessSummary = _.find(
-          this.correctnessSummaries,
-          summary => summary.solutionId === solutionId
-        );
-
-        const scores = this.showError ? solution.scores : [];
+        const predictedSummary = getSolutionResultSummary(solutionId);
+        const residualSummary = this.showResiduals
+          ? getResidualSummary(solutionId)
+          : null;
+        const correctnessSummary = !this.showResiduals
+          ? getCorrectnessSummary(solutionId)
+          : null;
+        const scores = solution.scores;
 
         return {
           requestId: requestId,

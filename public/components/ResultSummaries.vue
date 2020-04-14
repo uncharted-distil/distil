@@ -2,22 +2,13 @@
   <div class="result-summaries">
     <p class="nav-link font-weight-bold">Results</p>
     <p></p>
-    <div
-      v-if="regressionEnabled && !isPrediction"
-      class="result-summaries-error"
-    >
+    <div v-if="showResiduals" class="result-summaries-error">
       <error-threshold-slider></error-threshold-slider>
     </div>
     <p class="nav-link font-weight-bold">
       Predictions by Model
     </p>
-    <result-facets :isRegression="regressionEnabled" :showError="!isPrediction">
-    </result-facets>
-
-    <!-- TODO: For show right now.-->
-    <b-button v-if="isPrediction" block variant="primary">
-      Export Predictions
-    </b-button>
+    <result-facets :showResiduals="showResiduals" />
 
     <file-uploader
       class="result-button-alignment"
@@ -27,11 +18,8 @@
       :fitted-solution-id="fittedSolutionId"
       :target="target"
       :target-type="targetType"
-      v-if="!isPrediction"
     ></file-uploader>
-
     <b-button
-      v-if="!isPrediction"
       block
       variant="primary"
       class="result-button-alignment"
@@ -39,56 +27,6 @@
     >
       Save Model
     </b-button>
-
-    <b-modal id="export" title="Export" @ok="onExport">
-      <div class="check-message-container">
-        <i class="fa fa-check-circle fa-3x check-icon"></i>
-        <div>
-          This action will export solution <b>{{ activeSolutionName }}</b> and
-          return to the application start screen.
-        </div>
-      </div>
-    </b-modal>
-
-    <b-modal
-      ref="exportSuccessModal"
-      title="Export Succeeded"
-      cancel-disabled
-      hide-header
-      hide-footer
-    >
-      <div class="check-message-container">
-        <i class="fa fa-check-circle fa-3x check-icon"></i>
-        <div>Export Succeeded.</div>
-        <b-btn
-          class="mt-3 ml-3 close-modal"
-          variant="success"
-          block
-          @click="hideSuccessModal"
-          >OK</b-btn
-        >
-      </div>
-    </b-modal>
-
-    <b-modal
-      ref="exportFailModal"
-      title="Export Failed"
-      cancel-disabled
-      hide-header
-      hide-footer
-    >
-      <div class="check-message-container">
-        <i class="fa fa-exclamation-triangle fa-3x fail-icon"></i>
-        <div><b>Export Failed:</b> {{ exportFailureMsg }}</div>
-        <b-btn
-          class="mt-3 ml-3 close-modal"
-          variant="success"
-          block
-          @click="hideFailureModal"
-          >OK</b-btn
-        >
-      </div>
-    </b-modal>
   </div>
 </template>
 
@@ -122,13 +60,6 @@ import { PREDICTION_UPLOAD } from "../util/uploads";
 export default Vue.extend({
   name: "result-summaries",
 
-  props: {
-    isPrediction: {
-      type: Boolean as () => boolean,
-      default: () => false
-    }
-  },
-
   components: {
     ResultFacets,
     FileUploader,
@@ -141,7 +72,6 @@ export default Vue.extend({
       formatter(arg) {
         return arg ? arg.toFixed(2) : "";
       },
-      exportFailureMsg: "",
       symmetricSlider: true,
       file: null,
       uploadData: {},
@@ -173,31 +103,20 @@ export default Vue.extend({
       return routeGetters.getRouteTask(this.$store);
     },
 
-    regressionEnabled(): boolean {
+    showResiduals(): boolean {
       return this.taskArgs && this.taskArgs.includes(TaskTypes.REGRESSION);
     },
 
     solutionId(): string {
-      return routeGetters.getRouteSolutionId(this.$store);
+      return requestGetters.getActiveSolution(this.$store)?.solutionId;
     },
 
     fittedSolutionId(): string {
-      return resultGetters.hasIncludedResultTableData(this.$store)
-        ? resultGetters.getFittedSolutionId(this.$store)
-        : null;
-    },
-
-    produceRequestId(): string {
-      return resultGetters.hasIncludedResultTableData(this.$store)
-        ? resultGetters.getProduceRequestId(this.$store)
-        : null;
+      return requestGetters.getActiveSolution(this.$store)?.fittedSolutionId;
     },
 
     activeSolution(): Solution {
-      return getSolutionById(
-        store.state.requestsModule.solutions,
-        this.solutionId
-      );
+      return requestGetters.getActiveSolution(this.$store)
     },
 
     activeSolutionName(): string {
@@ -223,7 +142,6 @@ export default Vue.extend({
       });
     },
 
-    // todo - fix the typing here
     onUploadFinish(err: Error, response: any) {
       this.uploadStatus = err ? "error" : "success";
 
@@ -231,54 +149,11 @@ export default Vue.extend({
         const routeArgs = {
           fittedSolutionId: this.fittedSolutionId,
           produceRequestId: response.produceRequestId,
-          inferenceDataset: response.dataset,
           target: this.target
         };
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
         this.$router.push(entry);
       }
-    },
-
-    onExport() {
-      appActions.logUserEvent(this.$store, {
-        feature: Feature.EXPORT_MODEL,
-        activity: Activity.MODEL_SELECTION,
-        subActivity: SubActivity.MODEL_EXPORT,
-        details: {
-          solution: this.activeSolution.solutionId,
-          score: this.activeSolution.scores.map(s => ({
-            metric: s.metric,
-            value: s.value
-          }))
-        }
-      });
-      appActions
-        .exportSolution(this.$store, {
-          solutionId: this.activeSolution.solutionId
-        })
-        .then(err => {
-          if (err) {
-            // failed, this is because the wrong variable was selected
-            const modal = this.$refs.exportFailModal as any;
-            this.exportFailureMsg = err.message;
-            modal.show();
-          } else {
-            const modal = this.$refs.exportSuccessModal as any;
-            modal.show();
-          }
-        });
-    },
-
-    hideFailureModal() {
-      const modal = this.$refs.exportFailModal as any;
-      modal.hide();
-    },
-
-    hideSuccessModal() {
-      const modal = this.$refs.exportSuccessModal as any;
-      modal.hide();
-      this.$router.replace(ROOT_ROUTE);
-      this.$router.go(0);
     },
     saveModel () {
       appActions.logUserEvent(this.$store, {

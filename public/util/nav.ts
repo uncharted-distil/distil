@@ -9,7 +9,8 @@ import {
   JOIN_DATASETS_ROUTE,
   SELECT_TARGET_ROUTE,
   SELECT_TRAINING_ROUTE,
-  RESULTS_ROUTE
+  RESULTS_ROUTE,
+  PREDICTION_ROUTE
 } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
 
@@ -49,4 +50,8 @@ export function gotoSelectData(router: VueRouter) {
 
 export function gotoResults(router: VueRouter) {
   gotoView(router, RESULTS_ROUTE);
+}
+
+export function gotoPredictions(route: VueRouter) {
+  gotoView(route, PREDICTION_ROUTE);
 }

@@ -15,8 +15,10 @@ import {
   createEmptyTableData,
   fetchSummaryExemplars
 } from "../../util/data";
-import { getters as predictionGetters } from "../predictions/module";
-import { RouteArgs } from "../../util/routes";
+import {
+  getters as predictionGetters,
+  mutations as predictionMutations
+} from "../predictions/module";
 import { getPredictionsById } from "../../util/predictions";
 
 export type PredictionContext = ActionContext<PredictionState, DistilState>;
@@ -60,32 +62,38 @@ export const actions = {
     const promises = [];
 
     // remove summaries not used to predict the newly selected model
-    context.state.trainingSummaries.forEach(v => {
-      const isTrainingArg = args.training.reduce((isTrain, variable) => {
-        if (!isTrain) {
-          isTrain = variable.colName === v.key;
-        }
-        return isTrain;
-      }, false);
-      if (v.dataset !== args.dataset || !isTrainingArg) {
-        mutations.removeTrainingSummary(context, v);
-      }
-    });
+    context.state.trainingSummaries
+      .filter(summary =>
+        args.training.find(variable => variable.colName !== summary.key)
+      )
+      .filter(summary => summary.dataset !== args.dataset)
+      .forEach(summary =>
+        predictionMutations.removeTrainingSummary(context, summary)
+      );
 
     args.training.forEach(variable => {
       const key = variable.colName;
       const label = variable.colDisplayName;
       const description = variable.colDescription;
-      const exists = _.find(context.state.trainingSummaries, v => {
-        return v.dataset === args.dataset && v.key === variable.colName;
-      });
-      if (!exists) {
-        // add placeholder
-        mutations.updateTrainingSummary(
-          context,
-          createPendingSummary(key, label, description, dataset)
-        );
-      }
+
+      // TODO:  This breaks in the current FacetEntry, but there's no point in fixing it until
+      // the migration to the new facets lib is complete.  It looks like its caused by the fact
+      // that the removal above doesn't get reflected in the facet state, and the placeholder looks
+      // like an update to the previous facet, rather than a complete replacement.  Updates expect
+      // that the facet being replaced and the new facet have the same key+dataset, which causes
+      // an internal failure.
+      //
+      // const exists = context.state.trainingSummaries.find(
+      //   ts => ts.dataset === dataset && ts.key === variable.colName
+      // );
+      // if (!exists) {
+      //   // add placeholder
+      //   mutations.updateTrainingSummary(
+      //     context,
+      //     createPendingSummary(key, label, description, dataset)
+      //   );
+      // }
+
       // fetch summary
       promises.push(
         actions.fetchTrainingSummary(context, {
@@ -246,7 +254,7 @@ export const actions = {
     ]);
   },
 
-  // fetches result summary for a given solution id.
+  // fetches result summary for prediction request id.
   fetchPredictionSummary(
     context: PredictionContext,
     args: {
@@ -287,6 +295,28 @@ export const actions = {
       mutations.updatePredictedSummary,
       filterParams,
       args.varMode
+    );
+  },
+
+  // fetches all result summaries for a fitted solution id.
+  fetchPredictionSummaries(
+    context: PredictionContext,
+    args: {
+      highlight: Highlight;
+      fittedSolutionId: string;
+    }
+  ) {
+    const predictions = context.rootState.requestsModule.predictions.filter(
+      p => p.fittedSolutionId === args.fittedSolutionId
+    );
+    return Promise.all(
+      predictions.map(p =>
+        actions.fetchPredictionSummary(context, {
+          highlight: args.highlight,
+          varMode: SummaryMode.Default,
+          produceRequestId: p.requestId
+        })
+      )
     );
   },
 

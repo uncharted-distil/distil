@@ -79,7 +79,8 @@ export const actions = {
   fetchPredictionTableData: dispatch(moduleActions.fetchPredictionTableData),
 
   // predicted value summary
-  fetchPredictedSummary: dispatch(moduleActions.fetchPredictionSummary)
+  fetchPredictedSummary: dispatch(moduleActions.fetchPredictionSummary),
+  fetchPredictedSummaries: dispatch(moduleActions.fetchPredictionSummaries)
 };
 
 // Typed mutations

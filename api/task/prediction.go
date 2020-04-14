@@ -146,6 +146,13 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		log.Infof("finished ingesting the dataset")
 	}
 
+	// Apply the var types associated with the fitted solution to the inference data - the model types and input types should
+	// should match.
+	if err := updateVariableTypes(params.SolutionStorage, params.MetaStorage, params.DataStorage, params.FittedSolutionID, params.Dataset); err != nil {
+		return nil, err
+	}
+
+	// Handle grouped variables.
 	target := params.Target
 	if params.Target.Grouping != nil && model.IsTimeSeries(params.Target.Type) {
 		log.Infof("target is a timeseries so need to extract the prediction target from the grouping")
@@ -374,4 +381,35 @@ func createComposedFields(data []*api.FilteredDataValue, fields []string, mapped
 		dataToJoin[i] = fmt.Sprintf("%v", data[mappedFields[field]].Value)
 	}
 	return strings.Join(dataToJoin, separator)
+}
+
+// Apply the var types associated with the fitted solution to the inference data - the model types and input types should
+// should match.
+func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage, dataStorage api.DataStorage, fittedSolutionID string, dataset string) error {
+	solutionRequest, err := solutionStorage.FetchRequestByFittedSolutionID(fittedSolutionID)
+	if err != nil {
+		return err
+	}
+
+	variables, err := metaStorage.FetchVariables(solutionRequest.Dataset, false, true)
+	if err != nil {
+		return err
+	}
+	variableMap := map[string]*model.Variable{}
+	for _, variable := range variables {
+		variableMap[variable.Name] = variable
+	}
+
+	storageName := model.NormalizeDatasetID(dataset)
+	for _, feature := range solutionRequest.Features {
+		if variable, ok := variableMap[feature.FeatureName]; ok {
+			if err := metaStorage.SetDataType(dataset, feature.FeatureName, variable.Type); err != nil {
+				return err
+			}
+			if err := dataStorage.SetDataType(dataset, storageName, variable.Name, variable.Type); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

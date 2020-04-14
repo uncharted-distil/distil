@@ -84,6 +84,7 @@ func TrainingSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.D
 			handleError(w, err)
 			return
 		}
+
 		// fetch summary histogram
 		summary, err := data.FetchSummaryByResult(dataset, storageName, variable, result.ResultURI, filterParams, nil, api.SummaryMode(mode))
 		if err != nil {

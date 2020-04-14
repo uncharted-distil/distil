@@ -16,12 +16,10 @@
 package ws
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -87,16 +85,6 @@ func handleSolutionMessage(client *compute.Client, metadataCtor apiModel.Metadat
 		// handle message
 		go handleMessage(conn, client, metadataCtor, dataCtor, solutionCtor, msg)
 	}
-}
-
-func parseMessage(bytes []byte) (*Message, error) {
-	var msg *Message
-	err := json.Unmarshal(bytes, &msg)
-	if err != nil {
-		return nil, err
-	}
-	msg.Timestamp = time.Now()
-	return msg, nil
 }
 
 func handleMessage(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,

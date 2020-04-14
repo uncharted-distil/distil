@@ -170,6 +170,9 @@ export const getters = {
     getters: any
   ): Variable[] {
     const predictions = <Predictions>getters.getActivePredictions;
+    if (!predictions || !predictions.features) {
+      return [];
+    }
     const variables = <Variable[]>getters.getVariablesMap;
     return predictions.features.map(p => variables[p.featureName]);
   }
