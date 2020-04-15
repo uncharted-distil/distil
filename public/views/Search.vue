@@ -30,8 +30,20 @@
     </div>
     <div class="row flex-10 justify-content-center pb-3">
       <div class="search-container col-12 col-md-10 d-flex">
-        <search-results class="search-search-results" :is-pending="isPending">
-        </search-results>
+        <dataset-search-results
+          class="search-search-results"
+          :is-pending="isPending"
+        >
+        </dataset-search-results>
+      </div>
+    </div>
+    <div class="row flex-10 justify-content-center pb-3">
+      <div class="search-container col-12 col-md-10 d-flex">
+        <model-search-results
+          class="search-search-results"
+          :is-pending="isPending"
+        >
+        </model-search-results>
       </div>
     </div>
   </div>
@@ -44,8 +56,10 @@ import FileUploader from "../components/FileUploader";
 import FileUploaderStatus from "../components/FileUploaderStatus";
 import DatasetPreviewCard from "../components/DatasetPreviewCard";
 import SearchBar from "../components/SearchBar";
-import SearchResults from "../components/SearchResults";
+import DatasetSearchResults from "../components/DatasetSearchResults";
+import ModelSearchResults from "../components/ModelSearchResults";
 import { Dataset } from "../store/dataset/index";
+import { Model } from "../store/model/index";
 import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
@@ -53,6 +67,7 @@ import {
   getters as datasetGetters,
   actions as datasetActions
 } from "../store/dataset/module";
+import { getters as modelGetters } from "../store/model/module";
 import { SEARCH_ROUTE, JOIN_DATASETS_ROUTE } from "../store/route/index";
 import { DATASET_UPLOAD } from "../util/uploads";
 
@@ -61,7 +76,8 @@ export default Vue.extend({
 
   components: {
     SearchBar,
-    SearchResults,
+    DatasetSearchResults,
+    ModelSearchResults,
     DatasetPreviewCard,
     FileUploader,
     FileUploaderStatus
@@ -79,9 +95,6 @@ export default Vue.extend({
   computed: {
     terms(): string {
       return routeGetters.getRouteTerms(this.$store);
-    },
-    datasets(): Dataset[] {
-      return datasetGetters.getDatasets(this.$store);
     }
   },
 

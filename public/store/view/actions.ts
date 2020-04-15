@@ -10,8 +10,7 @@ import {
 } from "../dataset/module";
 import {
   actions as requestActions,
-  mutations as requestMutations,
-  getters as requestGetters
+  mutations as requestMutations
 } from "../requests/module";
 import {
   actions as resultActions,
@@ -21,6 +20,7 @@ import {
   actions as predictionActions,
   mutations as predictionMutations
 } from "../predictions/module";
+import { actions as modelActions } from "../model/module";
 import { getters as routeGetters } from "../route/module";
 import { TaskTypes, SummaryMode, Variable, Highlight } from "../dataset";
 import { getPredictionsById } from "../../util/predictions";
@@ -196,7 +196,9 @@ export const actions = {
         dataset: id
       });
     });
+
     promises.push(datasetActions.searchDatasets(store, terms));
+    promises.push(modelActions.searchModels(store, terms));
 
     return Promise.all(promises);
   },
