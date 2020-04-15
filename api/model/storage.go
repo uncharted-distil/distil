@@ -112,6 +112,7 @@ type MetadataStorageCtor func() (MetadataStorage, error)
 // metadata storage.
 type MetadataStorage interface {
 	FetchVariables(dataset string, includeIndex bool, includeMeta bool) ([]*model.Variable, error)
+	FetchVariablesByName(dataset string, varNames []string, includeIndex bool, includeMeta bool) ([]*model.Variable, error)
 	FetchVariablesDisplay(dataset string) ([]*model.Variable, error)
 	DoesVariableExist(dataset string, varName string) (bool, error)
 	FetchVariable(dataset string, varName string) (*model.Variable, error)

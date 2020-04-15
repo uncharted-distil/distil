@@ -26,22 +26,27 @@ func (s *Storage) DoesVariableExist(dataset string, varName string) (bool, error
 	return false, errors.Errorf("Not implemented")
 }
 
-// FetchVariable returns the variable for the provided index, dataset, and variable.
+// FetchVariable returns the variable for the provided dataset, and variable.
 func (s *Storage) FetchVariable(dataset string, varName string) (*model.Variable, error) {
 	return nil, errors.Errorf("Not implemented")
 }
 
-// FetchVariableDisplay returns the display variable for the provided index, dataset, and variable.
+// FetchVariableDisplay returns the display variable for the provided dataset, and variable.
 func (s *Storage) FetchVariableDisplay(dataset string, varName string) (*model.Variable, error) {
 	return nil, errors.Errorf("Not implemented")
 }
 
-// FetchVariables returns all the variables for the provided index and dataset.
+// FetchVariables returns all the variables for the provided dataset.
 func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
 	return nil, errors.Errorf("Not implemented")
 }
 
-// FetchVariablesDisplay returns all the display variables for the provided index and dataset.
+// FetchVariablesDisplay returns all the display variables for the provided dataset.
 func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, error) {
+	return nil, errors.Errorf("Not implemented")
+}
+
+// FetchVariablesByName returns all the variables for the provided dataset and names.
+func (s *Storage) FetchVariablesByName(dataset string, variables []string, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
 	return nil, errors.Errorf("Not implemented")
 }
