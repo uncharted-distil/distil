@@ -132,7 +132,8 @@ export default Vue.extend({
             datasetActions
               .fetchTask(this.$store, {
                 dataset: dataset,
-                targetName: group.colName
+                targetName: group.colName,
+                variableNames: []
               })
               .then(response => {
                 const task = response.data.task.join(",");

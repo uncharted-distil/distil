@@ -42,7 +42,10 @@ import Vue from "vue";
 import VariableFacets from "../components/VariableFacets";
 import { Variable, VariableSummary, Highlight } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {
+  getters as datasetGetters,
+  actions as datasetActions
+} from "../store/dataset/module";
 import { TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
 import { NUM_PER_PAGE } from "../util/data";
@@ -120,7 +123,7 @@ export default Vue.extend({
         remove.className += "btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2";
         remove.innerHTML = "Remove";
 
-        remove.addEventListener("click", () => {
+        remove.addEventListener("click", async () => {
           appActions.logUserEvent(this.$store, {
             feature: Feature.REMOVE_FEATURE,
             activity: Activity.DATA_PREPARATION,
@@ -132,8 +135,17 @@ export default Vue.extend({
             this.$store
           );
           training.splice(training.indexOf(group.colName), 1);
+
+          // update task based on the current training data
+          const taskResponse = await datasetActions.fetchTask(this.$store, {
+            dataset: routeGetters.getRouteDataset(this.$store),
+            targetName: routeGetters.getRouteTargetVariable(this.$store),
+            variableNames: training
+          });
+
           const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-            training: training.join(",")
+            training: training.join(","),
+            task: taskResponse.data.task.join(",")
           });
           this.$router.push(entry);
           removeFiltersByName(this.$router, group.colName);
