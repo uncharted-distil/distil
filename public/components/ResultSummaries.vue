@@ -167,7 +167,6 @@ export default Vue.extend({
       });
       appActions
         .saveModel(this.$store, {
-          solutionId: this.activeSolution.solutionId,
           fittedSolutionId: this.fittedSolutionId
         })
         .then(err => {
