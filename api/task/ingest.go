@@ -474,8 +474,9 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, dataset
 
 		// store the updated metadata
 		if updated {
-			log.Infof("storing updated metadata to %s", originalSchemaFile)
-			err = metadata.WriteSchema(meta, originalSchemaFile, false)
+			extendedOutput := source == metadata.Augmented
+			log.Infof("storing updated (extended: %v) metadata to %s", extendedOutput, originalSchemaFile)
+			err = metadata.WriteSchema(meta, originalSchemaFile, extendedOutput)
 			if err != nil {
 				return "", nil, errors.Wrap(err, "unable to store updated metadata")
 			}
