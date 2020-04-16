@@ -28,7 +28,12 @@ import {
   actions as datasetActions
 } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
-import { formatValue, isIntegerType, isTimeType } from "../util/types";
+import {
+  formatValue,
+  isIntegerType,
+  isTimeType,
+  hasComputedVarPrefix
+} from "../util/types";
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
@@ -274,7 +279,7 @@ export function filterSummariesByDataset(
   dataset: string
 ): VariableSummary[] {
   return summaries.filter(summary => {
-    return summary.dataset === dataset;
+    return summary.dataset === dataset && !hasComputedVarPrefix(summary.key);
   });
 }
 
