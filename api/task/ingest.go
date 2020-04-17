@@ -290,7 +290,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// ingest the data
-	err = IngestPostgres(originalSchemaFile, schemaFile, index, dataset, source, config, false, false, fallbackMerged)
+	err = IngestPostgres(originalSchemaFile, schemaFile, index, dataset, source, config, true, false, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
