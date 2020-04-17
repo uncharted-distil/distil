@@ -16,11 +16,13 @@
 package routes
 
 import (
+	"io/ioutil"
 	"net/http"
 	"path"
 
 	"goji.io/v3/pat"
 
+	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/distil/api/model"
 )
@@ -35,7 +37,6 @@ func ImageHandler(ctor model.MetadataStorageCtor, config *env.Config) func(http.
 		// resources can either be local or remote
 		dataset := pat.Param(r, "dataset")
 		file := pat.Param(r, "file")
-		path := path.Join(imageFolder, file)
 
 		// get metadata client
 		storage, err := ctor()
@@ -52,11 +53,15 @@ func ImageHandler(ctor model.MetadataStorageCtor, config *env.Config) func(http.
 
 		sourcePath := env.ResolvePath(res.Source, res.Folder)
 
-		bytes, err := fetchResourceBytes(sourcePath, dataset, path)
+		bytes, err := ioutil.ReadFile(path.Join(sourcePath, imageFolder, file))
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		w.Write(bytes)
+		_, err = w.Write(bytes)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "failed to write image resource bytes"))
+			return
+		}
 	}
 }
