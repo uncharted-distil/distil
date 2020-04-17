@@ -54,20 +54,10 @@ func TaskHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageCto
 		}
 
 		// look up the task variables
-		variableMap := map[string]*model.Variable{}
-		variables, err := metaStorage.FetchVariables(dataset, false, false)
+		variables, err := metaStorage.FetchVariablesByName(dataset, variableNames, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
-		}
-		for _, variable := range variables {
-			variableMap[variable.Name] = variable
-		}
-		taskVariables := []*model.Variable{}
-		for _, variableName := range variableNames {
-			if variable, ok := variableMap[variableName]; ok {
-				taskVariables = append(taskVariables, variable)
-			}
 		}
 
 		// look up the target variable
@@ -78,7 +68,7 @@ func TaskHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageCto
 		}
 
 		// resolve the task based on the dataset and target
-		task, err := apiCompute.ResolveTask(dataStorage, storageName, variable, taskVariables)
+		task, err := apiCompute.ResolveTask(dataStorage, storageName, variable, variables)
 		if err != nil {
 			handleError(w, err)
 			return

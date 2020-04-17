@@ -14,6 +14,16 @@ type Task struct {
 	Task []string `json:"task"`
 }
 
+// HasTaskType indicates whether or not a given Task includes the supplied task type.
+func HasTaskType(task *Task, taskType string) bool {
+	for _, typ := range task.Task {
+		if typ == taskType {
+			return true
+		}
+	}
+	return false
+}
+
 const semiSupervisedThreshold = 0.1
 
 // ResolveTask will determine the task and subtask given a dataset, training and target variables.
