@@ -98,6 +98,10 @@ func (s *Storage) formatFilterKey(alias string, key string) string {
 	return getFullName(alias, key)
 }
 
+func featureVarName(varName string) string {
+	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, varName)
+}
+
 func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, alias string, filter *model.Filter) ([]string, []interface{}) {
 
 	name := s.formatFilterKey(alias, filter.Key)

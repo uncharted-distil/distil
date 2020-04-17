@@ -62,23 +62,23 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.Filter
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert)
+		baseline, err = f.fetchHistogram(nil, invert, mode)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty() {
-			filtered, err = f.fetchHistogram(filterParams, invert)
+			filtered, err = f.fetchHistogram(filterParams, invert, mode)
 			if err != nil {
 				return nil, err
 			}
 		}
 	} else {
-		baseline, err = f.fetchHistogramByResult(resultURI, nil)
+		baseline, err = f.fetchHistogramByResult(resultURI, nil, mode)
 		if err != nil {
 			return nil, err
 		}
 		if !filterParams.Empty() {
-			filtered, err = f.fetchHistogramByResult(resultURI, filterParams)
+			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, mode)
 			if err != nil {
 				return nil, err
 			}
@@ -95,17 +95,22 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.Filter
 	}, nil
 }
 
-func featureVarName(varName string) string {
-	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, varName)
+// selects the target feature for the summary based on the mode - for images that's default vs. cluster display
+func (f *ImageField) featureVarName(mode api.SummaryMode) string {
+	clusterCol := featureVarName(f.Key)
+	if mode == api.ClusterMode && api.HasClusterData(f.GetDatasetName(), clusterCol, f.GetStorage().metadata) {
+		return clusterCol
+	}
+	return f.Key
 }
 
-func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket) ([]string, error) {
+func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket, mode api.SummaryMode) ([]string, error) {
 
 	var imageFiles []string
 
 	for _, bucket := range categoryBuckets {
 
-		prefixedVarName := featureVarName(f.Key)
+		prefixedVarName := f.featureVarName(mode)
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
@@ -130,13 +135,13 @@ func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket) ([
 	return imageFiles, nil
 }
 
-func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
+func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool, mode api.SummaryMode) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
 
-	prefixedVarName := featureVarName(f.Key)
+	prefixedVarName := f.featureVarName(mode)
 
 	fieldSelect := fmt.Sprintf("\"%s\"", prefixedVarName)
 
@@ -154,7 +159,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 	if err != nil {
 		// if the clustering column doesnt exist, return an empty response
 		if strings.Contains(err.Error(), "column \"_cluster_") {
-			return f.parseHistogram(nil)
+			return f.parseHistogram(nil, mode)
 		}
 		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
 	}
@@ -162,12 +167,12 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res)
+	histogram, err := f.parseHistogram(res, mode)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationImages(histogram.Buckets)
+	files, err := f.fetchRepresentationImages(histogram.Buckets, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +180,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool)
 	return histogram, nil
 }
 
-func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
@@ -190,7 +195,7 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
-	prefixedVarName := featureVarName(f.Key)
+	prefixedVarName := f.featureVarName(mode)
 
 	// Get count by category.
 	query := fmt.Sprintf(
@@ -212,12 +217,12 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 		defer res.Close()
 	}
 
-	histogram, err := f.parseHistogram(res)
+	histogram, err := f.parseHistogram(res, mode)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationImages(histogram.Buckets)
+	files, err := f.fetchRepresentationImages(histogram.Buckets, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -225,8 +230,8 @@ func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.
 	return histogram, nil
 }
 
-func (f *ImageField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
-	prefixedVarName := featureVarName(f.Key)
+func (f *ImageField) parseHistogram(rows *pgx.Rows, mode api.SummaryMode) (*api.Histogram, error) {
+	prefixedVarName := f.featureVarName(mode)
 
 	termsAggName := api.TermsAggPrefix + prefixedVarName
 
@@ -278,12 +283,12 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult s
 		return nil, err
 	}
 
-	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema)
+	baseline, err = f.fetchPredictedSummaryData(resultURI, datasetResult, nil, extrema, mode)
 	if err != nil {
 		return nil, err
 	}
 	if !filterParams.Empty() {
-		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
+		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema, mode)
 		if err != nil {
 			return nil, err
 		}
@@ -298,8 +303,8 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult s
 	}, nil
 }
 
-func (f *ImageField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema) (*api.Histogram, error) {
-	targetName := featureVarName(f.Key)
+func (f *ImageField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.Histogram, error) {
+	targetName := f.featureVarName(mode)
 
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
@@ -325,12 +330,12 @@ func (f *ImageField) fetchPredictedSummaryData(resultURI string, datasetResult s
 	}
 	defer res.Close()
 
-	histogram, err := f.parseHistogram(res)
+	histogram, err := f.parseHistogram(res, mode)
 	if err != nil {
 		return nil, err
 	}
 
-	files, err := f.fetchRepresentationImages(histogram.Buckets)
+	files, err := f.fetchRepresentationImages(histogram.Buckets, mode)
 	if err != nil {
 		return nil, err
 	}
