@@ -259,25 +259,39 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 
 	addIndex := true
 	predictVariablesMap := make(map[int]int)
-	for i, predictVariable := range predictionVariables {
-		if sourceVariableMap[predictVariable.Name] != nil {
-			predictVariablesMap[i] = sourceVariableMap[predictVariable.Name].Index
-			log.Infof("mapped '%s' to index %d", predictVariable.Name, predictVariablesMap[i])
-		} else if predictVariable.IsMediaReference() {
-			log.Warnf("media reference field '%s' not found in source dataset - attempting to match by type", predictVariable.Name)
-			// loop back over the source vars utnil we find one that is also a media reference
-			for _, sourceVariable := range sourceVariables {
-				if sourceVariable.IsMediaReference() {
-					predictVariablesMap[i] = sourceVariableMap[sourceVariable.Name].Index
-					break
-				}
+
+	// If the variable list for prediction set is empty (as is the case for tabular data) then we just use the
+	// header values as the list of variable names to build the map.
+	if len(predictionVariables) == 0 {
+		for i, pv := range csvData[0] {
+			if sourceVariableMap[pv] != nil {
+				predictVariablesMap[i] = sourceVariableMap[pv].Index
+				log.Infof("mapped '%s' to index %d", pv, predictVariablesMap[i])
 			}
-		} else {
-			log.Warnf("field '%s' not found in source dataset - column will be empty", predictVariable.Name)
-			predictVariablesMap[i] = -1
 		}
-		if predictVariable.Name == model.D3MIndexName {
-			addIndex = false
+	} else {
+		// Otherwise, we have the variables defined, and leverage the extra info provided to help map columns between model
+		// and prediction datasets.
+		for i, predictVariable := range predictionVariables {
+			if sourceVariableMap[predictVariable.Name] != nil {
+				predictVariablesMap[i] = sourceVariableMap[predictVariable.Name].Index
+				log.Infof("mapped '%s' to index %d", predictVariable.Name, predictVariablesMap[i])
+			} else if predictVariable.IsMediaReference() {
+				log.Warnf("media reference field '%s' not found in source dataset - attempting to match by type", predictVariable.Name)
+				// loop back over the source vars utnil we find one that is also a media reference
+				for _, sourceVariable := range sourceVariables {
+					if sourceVariable.IsMediaReference() {
+						predictVariablesMap[i] = sourceVariableMap[sourceVariable.Name].Index
+						break
+					}
+				}
+			} else {
+				log.Warnf("field '%s' not found in source dataset - column will be empty", predictVariable.Name)
+				predictVariablesMap[i] = -1
+			}
+			if predictVariable.Name == model.D3MIndexName {
+				addIndex = false
+			}
 		}
 	}
 

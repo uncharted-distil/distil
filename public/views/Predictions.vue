@@ -44,7 +44,10 @@ import StatusPanel from "../components/StatusPanel";
 import StatusSidebar from "../components/StatusSidebar";
 import { VariableSummary } from "../store/dataset/index";
 import { actions as viewActions } from "../store/view/module";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {
+  getters as datasetGetters,
+  actions as datasetActions
+} from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as predictionGetters } from "../store/predictions/module";
@@ -98,6 +101,7 @@ export default Vue.extend({
     },
     produceRequestId() {
       viewActions.updatePrediction(this.$store);
+      datasetActions.fetchClusters(this.$store, { dataset: this.dataset });
     },
     resultTrainingVarsPage() {
       viewActions.updatePrediction(this.$store);
