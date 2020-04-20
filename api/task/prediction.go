@@ -48,10 +48,17 @@ func (p *predictionDataset) CreateDataset(rootDataPath string, config *env.Confi
 		return nil, err
 	}
 
-	// match the source dataset
-	csvDataAugmented, err := augmentPredictionDataset(ds.Data, p.params.Meta.DataResources[0].Variables)
+	// updated the new dataset to match the var types and ordering of the source dataset - required
+	// so that the model lines up
+	variables := p.params.Meta.GetMainDataResource().Variables
+	csvDataAugmented, err := augmentPredictionDataset(ds.Data, variables, ds.Metadata.GetMainDataResource().Variables)
 	if err != nil {
 		return nil, err
+	}
+
+	// update the data resources to match those from the created dataset - they may have changed file types
+	for i, dataResource := range ds.Metadata.DataResources {
+		p.params.Meta.DataResources[i].ResFormat = dataResource.ResFormat
 	}
 
 	return &api.RawDataset{
@@ -87,13 +94,12 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	log.Infof("generating predictions for fitted solution ID %s", params.FittedSolutionID)
 	meta := params.Meta
 	sourceDatasetID := meta.ID
-	datasetPath := ""
+	datasetPath := path.Join(params.OutputPath, params.Dataset)
 	schemaPath := ""
 	var err error
 
 	// if the dataset was already imported, then just produce on it
 	if params.DatasetImported {
-		datasetPath = path.Join(params.OutputPath, params.Dataset)
 		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
 		log.Infof("dataset already imported at %s", datasetPath)
 	} else {
@@ -102,7 +108,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		}
 
 		// create the dataset to be used for predictions
-		datasetPath, err = CreateDataset(params.Dataset, predictionDatasetCtor, params.OutputPath, api.DatasetTypeInference, params.Config)
+		_, err = CreateDataset(params.Dataset, predictionDatasetCtor, params.OutputPath, api.DatasetTypeInference, params.Config)
 		if err != nil {
 			return nil, err
 		}
@@ -119,7 +125,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		for i, f := range rawHeader {
 			// TODO: may have to check the name rather than display name
 			// TODO: col index not necessarily the same as index and thats what needs checking
-			if meta.DataResources[0].Variables[i].DisplayName != f {
+			if meta.GetMainDataResource().Variables[i].DisplayName != f {
 				return nil, errors.Errorf("variables in new prediction file do not match variables in original dataset")
 			}
 		}
@@ -139,7 +145,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	if !params.DatasetIngested {
 		// ingest the dataset but without running simon, duke, etc.
-		_, err = Ingest(schemaPath, schemaPath, params.MetaStorage, params.Index, params.Dataset, metadata.Contrib, nil, params.IngestConfig, false, false)
+		_, err = Ingest(schemaPath, schemaPath, params.MetaStorage, params.Index, params.Dataset, metadata.Augmented, nil, params.IngestConfig, false, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to ingest ranked data")
 		}
@@ -240,11 +246,10 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	return res, nil
 }
 
-func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Variable) ([][]string, error) {
+func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Variable, predictionVariables []*model.Variable) ([][]string, error) {
 	log.Infof("augment inference dataset fields")
 
 	// map fields to indices
-	header := csvData[0]
 	headerSource := make([]string, len(sourceVariables))
 	sourceVariableMap := make(map[string]*model.Variable)
 	for _, v := range sourceVariables {
@@ -254,24 +259,52 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 
 	addIndex := true
 	predictVariablesMap := make(map[int]int)
-	for i, pv := range header {
-		if sourceVariableMap[pv] != nil {
-			predictVariablesMap[i] = sourceVariableMap[pv].Index
-			log.Infof("mapped '%s' to index %d", pv, predictVariablesMap[i])
-		} else {
-			predictVariablesMap[i] = -1
-			log.Warnf("field '%s' not found in source dataset", pv)
-		}
 
-		if pv == model.D3MIndexName {
-			addIndex = false
+	// If the variable list for prediction set is empty (as is the case for tabular data) then we just use the
+	// header values as the list of variable names to build the map.
+	if len(predictionVariables) == 0 {
+		for i, pv := range csvData[0] {
+			if sourceVariableMap[pv] != nil {
+				predictVariablesMap[i] = sourceVariableMap[pv].Index
+				log.Infof("mapped '%s' to index %d", pv, predictVariablesMap[i])
+			}
+		}
+	} else {
+		// Otherwise, we have the variables defined, and leverage the extra info provided to help map columns between model
+		// and prediction datasets.
+		for i, predictVariable := range predictionVariables {
+			if sourceVariableMap[predictVariable.Name] != nil {
+				predictVariablesMap[i] = sourceVariableMap[predictVariable.Name].Index
+				log.Infof("mapped '%s' to index %d", predictVariable.Name, predictVariablesMap[i])
+			} else if predictVariable.IsMediaReference() {
+				log.Warnf("media reference field '%s' not found in source dataset - attempting to match by type", predictVariable.Name)
+				// loop back over the source vars utnil we find one that is also a media reference
+				for _, sourceVariable := range sourceVariables {
+					if sourceVariable.IsMediaReference() {
+						predictVariablesMap[i] = sourceVariableMap[sourceVariable.Name].Index
+						break
+					}
+				}
+			} else {
+				log.Warnf("field '%s' not found in source dataset - column will be empty", predictVariable.Name)
+				predictVariablesMap[i] = -1
+			}
+			if predictVariable.Name == model.D3MIndexName {
+				addIndex = false
+			}
 		}
 	}
 
 	// read the rest of the data
 	log.Infof("rewriting inference dataset to match source dataset structure")
 	count := 0
-	d3mFieldIndex := sourceVariableMap[model.D3MIndexName].Index
+
+	// read the d3m field index if present
+	d3mFieldIndex := -1
+	if variable, ok := sourceVariableMap[model.D3MIndexName]; ok {
+		d3mFieldIndex = variable.Index
+	}
+
 	outputData := [][]string{headerSource}
 	for _, line := range csvData[1:] {
 		// write the columns in the same order as the source dataset
@@ -283,7 +316,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 			}
 		}
 
-		if addIndex {
+		if addIndex && d3mFieldIndex >= 0 {
 			output[d3mFieldIndex] = fmt.Sprintf("%d", count)
 		}
 		count = count + 1

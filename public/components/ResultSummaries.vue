@@ -56,6 +56,7 @@ import { Solution } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { createRouteEntry } from "../util/routes";
 import { PREDICTION_UPLOAD } from "../util/uploads";
+import { getPredictionsById } from "../util/predictions";
 
 export default Vue.extend({
   name: "result-summaries",
@@ -146,10 +147,16 @@ export default Vue.extend({
       this.uploadStatus = err ? "error" : "success";
 
       if (this.uploadStatus !== "error" && !response.complete) {
+        const dataset = getPredictionsById(
+          requestGetters.getPredictions(this.$store),
+          response.produceRequestId
+        ).dataset;
+
         const routeArgs = {
           fittedSolutionId: this.fittedSolutionId,
           produceRequestId: response.produceRequestId,
-          target: this.target
+          target: this.target,
+          dataset: dataset
         };
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
         this.$router.push(entry);

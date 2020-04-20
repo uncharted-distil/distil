@@ -108,7 +108,7 @@ func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 			return
 		}
 
-		results, err := data.FetchResults(dataset, model.NormalizeDatasetID(dataset), predictResult.ResultURI, solutionID, updatedFilterParams, true)
+		results, err := data.FetchResults(dataset, model.NormalizeDatasetID(dataset), predictResult.ResultURI, produceRequestID, updatedFilterParams, true)
 		if err != nil {
 			handleError(w, err)
 			return

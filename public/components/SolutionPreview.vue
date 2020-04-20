@@ -110,7 +110,8 @@ export default Vue.extend({
         dataActions
           .fetchTask(this.$store, {
             dataset: this.solution.dataset,
-            targetName: this.solution.feature
+            targetName: this.solution.feature,
+            variableNames: this.solution.features.map(f => f.featureName)
           })
           .then(result => this.pushRouteEntry(result.data.task.join(",")))
           .catch(error => console.error(error));

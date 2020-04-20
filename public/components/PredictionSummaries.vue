@@ -127,9 +127,14 @@ export default Vue.extend({
           subActivity: SubActivity.MODEL_PREDICTIONS,
           details: { requestId: key }
         });
+        const dataset = getPredictionsById(
+          requestGetters.getPredictions(this.$store),
+          requestId
+        ).dataset;
         const routeEntry = overlayRouteEntry(this.$route, {
           produceRequestId: requestId,
-          highlights: null
+          highlights: null,
+          dataset: dataset
         });
         this.$router.push(routeEntry);
       }
