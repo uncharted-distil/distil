@@ -237,7 +237,7 @@ func main() {
 	registerRoute(mux, "/distil/solutions/:dataset/:target", routes.SolutionsHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/solution-requests/:dataset/:target", routes.SolutionRequestsHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/solution-request/:request-id", routes.SolutionRequestHandler(pgSolutionStorageCtor))
-	registerRoute(mux, "/distil/prediction/:prediction-id", routes.PredictionHandler(pgSolutionStorageCtor))
+	registerRoute(mux, "/distil/prediction/:request-id", routes.PredictionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/predictions/:fitted-solution-id", routes.PredictionsHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/variable-rankings/:dataset/:target", routes.VariableRankingHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
