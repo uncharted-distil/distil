@@ -27,6 +27,7 @@ import {
   getters as datasetGetters,
   actions as datasetActions
 } from "../store/dataset/module";
+import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import {
   formatValue,
@@ -176,15 +177,23 @@ export function fetchSummaryExemplars(
     if (variable.grouping) {
       if (variable.grouping.type === "timeseries") {
         // if there a linked exemplars, fetch those before resolving
+        const solutionId = routeGetters.getRouteSolutionId(store);
+
         return Promise.all(
           exemplars.map(exemplar => {
-            return datasetActions.fetchTimeseries(store, {
+            const args = {
               dataset: datasetName,
               timeseriesColName: variable.grouping.idCol,
               xColName: variable.grouping.properties.xCol,
               yColName: variable.grouping.properties.yCol,
-              timeseriesID: exemplar
-            });
+              timeseriesID: exemplar,
+              solutionId: solutionId
+            };
+            if (solutionId) {
+              return resultsActions.fetchForecastedTimeseries(store, args);
+            } else {
+              return datasetActions.fetchTimeseries(store, args);
+            }
           })
         );
       }
