@@ -1276,8 +1276,12 @@ export const actions = {
 
   fetchTask(
     context: DatasetContext,
-    args: { dataset: string; targetName: string }
+    args: { dataset: string; targetName: string; variableNames: string[] }
   ): Promise<AxiosResponse<Task>> {
-    return axios.get<Task>(`/distil/task/${args.dataset}/${args.targetName}`);
+    const varNamesStr =
+      args.variableNames.length > 0 ? args.variableNames.join(",") : null;
+    return axios.get<Task>(
+      `/distil/task/${args.dataset}/${args.targetName}/${varNamesStr}`
+    );
   }
 };

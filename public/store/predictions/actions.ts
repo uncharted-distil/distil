@@ -61,12 +61,15 @@ export const actions = {
 
     const promises = [];
 
-    // remove summaries not used to predict the newly selected model
     context.state.trainingSummaries
-      .filter(summary =>
-        args.training.find(variable => variable.colName !== summary.key)
+      .filter(
+        summary =>
+          !args.training.find(
+            variable =>
+              variable.colName === summary.key &&
+              args.dataset === summary.dataset
+          )
       )
-      .filter(summary => summary.dataset !== args.dataset)
       .forEach(summary =>
         predictionMutations.removeTrainingSummary(context, summary)
       );

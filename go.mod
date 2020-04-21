@@ -30,14 +30,14 @@ require (
 	github.com/shopspring/decimal v0.0.0-20191009025716-f1972eb1d1f5 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/uncharted-distil/distil-compute v0.0.0-20200406202453-2a9371d38549
+	github.com/uncharted-distil/distil-compute v0.0.0-20200416220053-4c1c057380fe
 	github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48
 	github.com/zenazn/goji v0.9.0
 	goji.io/v3 v3.0.0
-	golang.org/x/crypto v0.0.0-20190510104115-cbcb75029529 // indirect
-	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
+	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
 	golang.org/x/text v0.3.2 // indirect
+	google.golang.org/genproto v0.0.0-20191115221424-83cc0476cb11 // indirect
 	google.golang.org/grpc v1.25.1
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/olivere/elastic.v5 v5.0.83

@@ -14,10 +14,20 @@ type Task struct {
 	Task []string `json:"task"`
 }
 
+// HasTaskType indicates whether or not a given Task includes the supplied task type.
+func HasTaskType(task *Task, taskType string) bool {
+	for _, typ := range task.Task {
+		if typ == taskType {
+			return true
+		}
+	}
+	return false
+}
+
 const semiSupervisedThreshold = 0.1
 
-// ResolveTask will determine the task and subtask given training and target variables, and the ability of the underlying target labels.
-func ResolveTask(storage api.DataStorage, datasetStorageName string, targetVariable *model.Variable) (*Task, error) {
+// ResolveTask will determine the task and subtask given a dataset, training and target variables.
+func ResolveTask(storage api.DataStorage, datasetStorageName string, targetVariable *model.Variable, features []*model.Variable) (*Task, error) {
 	// Given the target variable and dataset, compute the task and subtask.
 	// If there's no target variable, we'll treat this as an unsupervised clustering task.
 	if targetVariable == nil {
@@ -29,17 +39,40 @@ func ResolveTask(storage api.DataStorage, datasetStorageName string, targetVaria
 		return &Task{[]string{compute.ForecastingTask, compute.TimeSeriesTask}}, nil
 	}
 
-	// If this is numerical target type we'll treat this a regression task.
+	// If this is numerical target type we'll treat this a regression task.  Determine whether its an image
+	// regression or numerical regression.
 	if model.IsNumerical(targetVariable.Type) {
+		tasks := []string{compute.RegressionTask}
+		for _, feature := range features {
+			if model.IsImage(feature.Type) {
+				tasks = append(tasks, compute.ImageTask)
+				return &Task{tasks}, nil
+			}
+			if model.IsTimeSeries(feature.Type) {
+				tasks = append(tasks, compute.TimeSeriesTask)
+				return &Task{tasks}, nil
+			}
+		}
+
 		// Numerical regression.  Currently no support for multivariate, so we default
 		// to univariate.
-		return &Task{[]string{compute.RegressionTask, compute.UnivariateTask}}, nil
+		return &Task{[]string{compute.RegressionTask}}, nil
 	}
 
 	// Classification.  This can be binary, multiclass, or semi-supervised depending on what we have for
-	// label distribution.
+	// label distribution, and may involve image data.
 	if model.IsCategorical(targetVariable.Type) {
 		task := []string{compute.ClassificationTask}
+
+		// Flag the presence of image features.
+		for _, feature := range features {
+			if model.IsImage(feature.Type) {
+				task = append(task, compute.ImageTask)
+			}
+			if model.IsTimeSeries(feature.Type) {
+				task = append(task, compute.TimeSeriesTask)
+			}
+		}
 
 		// Fetch the counts for each category
 		targetCounts, err := storage.FetchCategoryCounts(datasetStorageName, targetVariable)

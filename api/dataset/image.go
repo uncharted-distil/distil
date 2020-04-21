@@ -133,8 +133,9 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 			}
 
 			targetImageFilename := imageFilename
-			if path.Ext(targetImageFilename) != fmt.Sprintf(".%s", defaultImageType) {
-				targetImageFilename = fmt.Sprintf("%s.%s", imageFilename, defaultImageType)
+			extension := path.Ext(targetImageFilename)
+			if extension != fmt.Sprintf(".%s", defaultImageType) {
+				targetImageFilename = fmt.Sprintf("%s.%s", strings.TrimSuffix(targetImageFilename, extension), defaultImageType)
 			}
 			targetImageFilename = getUniqueName(path.Join(mediaFolder, targetImageFilename))
 

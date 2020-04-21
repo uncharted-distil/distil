@@ -9,17 +9,10 @@ import { Feature, Activity, SubActivity } from "../../util/userEvents";
 export type AppContext = ActionContext<AppState, DistilState>;
 
 export const actions = {
-  async saveModel(
-    context: AppContext,
-    args: { solutionId: string; fittedSolutionId: string }
-  ) {
+  async saveModel(context: AppContext, args: { fittedSolutionId: string }) {
     try {
-      await axios.post(
-        `/distil/save/${args.solutionId}/${args.fittedSolutionId}`
-      );
-      console.warn(
-        `User saved model for ${args.solutionId} and ${args.fittedSolutionId}`
-      );
+      await axios.post(`/distil/save/${args.fittedSolutionId}/true`);
+      console.warn(`User saved model for ${args.fittedSolutionId}`);
     } catch (error) {
       // If there's a proxy involved (NGINX) we will end up getting a 502 on a successful export because
       // the server exits.  We need to explicitly check for the condition here so that we don't interpret
@@ -28,9 +21,7 @@ export const actions = {
         return new Error(error.response.data);
       } else {
         // NOTE: request always fails because we exit on the server
-        console.warn(
-          `User saved model for ${args.solutionId} and ${args.fittedSolutionId}`
-        );
+        console.warn(`User saved model for ${args.fittedSolutionId}`);
       }
     }
   },

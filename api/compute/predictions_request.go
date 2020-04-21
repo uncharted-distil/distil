@@ -12,7 +12,6 @@ import (
 type PredictRequest struct {
 	DatasetID        string
 	Dataset          string
-	TargetType       string
 	FittedSolutionID string
 	TimestampField   string
 	MaxTime          int
@@ -60,12 +59,6 @@ func NewPredictRequest(data []byte) (*PredictRequest, error) {
 	req.Dataset, ok = json.String(jsonMap, "dataset")
 	if !ok {
 		return nil, errors.Errorf("no `dataset` in predict request")
-	}
-
-	// the
-	req.TargetType, ok = json.String(jsonMap, "targetType")
-	if !ok {
-		return nil, errors.Errorf("no `target` in predict request")
 	}
 
 	return req, nil

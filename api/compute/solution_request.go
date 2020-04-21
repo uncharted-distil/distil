@@ -837,7 +837,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	datasetInputDir := env.ResolvePath(datasetInput.Source, datasetInput.Folder)
 
 	// compute the task and subtask from the target and dataset
-	task, err := ResolveTask(dataStorage, dataset.StorageName, s.TargetFeature)
+	task, err := ResolveTask(dataStorage, dataset.StorageName, s.TargetFeature, variables)
 	if err != nil {
 		return err
 	}

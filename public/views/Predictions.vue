@@ -1,29 +1,36 @@
 <template>
-  <div class="container-fluid d-flex flex-column h-100 results-view">
-    <div class="row flex-0-nav"></div>
-    <div class="row flex-1 pb-3">
-      <div
-        class="variable-summaries col-12 col-md-3 border-gray-right results-variable-summaries"
-      >
-        <p class="nav-link font-weight-bold">Feature Summaries</p>
-        <variable-facets
-          class="h-100"
-          enable-search
-          enable-highlighting
-          model-selection
-          instance-name="resultTrainingVars"
-          :summaries="trainingSummaries"
-          :log-activity="logActivity"
+  <div class="predictions-view d-flex h-100">
+    <status-panel></status-panel>
+    <div class="sidebar-container d-flex flex-column h-100">
+      <div class="padding-nav"></div>
+      <status-sidebar></status-sidebar>
+    </div>
+    <div class="container-fluid d-flex flex-column h-100 results-view">
+      <div class="row flex-0-nav"></div>
+      <div class="row flex-1 pb-3">
+        <div
+          class="variable-summaries col-12 col-md-3 border-gray-right results-variable-summaries"
         >
-        </variable-facets>
-      </div>
+          <p class="nav-link font-weight-bold">Feature Summaries</p>
+          <variable-facets
+            class="h-100"
+            enable-search
+            enable-highlighting
+            model-selection
+            instance-name="resultTrainingVars"
+            :summaries="trainingSummaries"
+            :log-activity="logActivity"
+          >
+          </variable-facets>
+        </div>
 
-      <results-comparison
-        class="col-12 col-md-6 results-result-comparison"
-      ></results-comparison>
-      <prediction-summaries
-        class="col-12 col-md-3 border-gray-left results-result-summaries"
-      ></prediction-summaries>
+        <results-comparison
+          class="col-12 col-md-6 results-result-comparison"
+        ></results-comparison>
+        <prediction-summaries
+          class="col-12 col-md-3 border-gray-left results-result-summaries"
+        ></prediction-summaries>
+      </div>
     </div>
   </div>
 </template>
@@ -33,9 +40,14 @@ import Vue from "vue";
 import VariableFacets from "../components/VariableFacets";
 import ResultsComparison from "../components/ResultsComparison";
 import PredictionSummaries from "../components/PredictionSummaries";
+import StatusPanel from "../components/StatusPanel";
+import StatusSidebar from "../components/StatusSidebar";
 import { VariableSummary } from "../store/dataset/index";
 import { actions as viewActions } from "../store/view/module";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {
+  getters as datasetGetters,
+  actions as datasetActions
+} from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as predictionGetters } from "../store/predictions/module";
@@ -47,7 +59,9 @@ export default Vue.extend({
   components: {
     VariableFacets,
     ResultsComparison,
-    PredictionSummaries
+    PredictionSummaries,
+    StatusPanel,
+    StatusSidebar
   },
 
   data() {
@@ -87,6 +101,7 @@ export default Vue.extend({
     },
     produceRequestId() {
       viewActions.updatePrediction(this.$store);
+      datasetActions.fetchClusters(this.$store, { dataset: this.dataset });
     },
     resultTrainingVarsPage() {
       viewActions.updatePrediction(this.$store);
@@ -103,6 +118,9 @@ export default Vue.extend({
 .variable-summaries .facets-group {
   /* for the spinners, this isn't needed on other views because of the buttoms that create the space */
   padding-bottom: 20px;
+}
+.predictions-view {
+  flex-direction: row-reverse;
 }
 .results-view .nav-link {
   padding: 1rem 0 0.25rem 0;

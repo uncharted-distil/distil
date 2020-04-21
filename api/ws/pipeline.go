@@ -290,7 +290,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	// get the source dataset from the fitted solution ID
 	req, err := solutionStorage.FetchRequestByFittedSolutionID(sr.FittedSolutionID)
 	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "unable to fetch request using fitted solution id"))
+		handleErr(conn, msg, err)
 		return
 	}
 
@@ -308,7 +308,20 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	// and then resolve the actual target.
 	targetVar, err := metaStorage.FetchVariable(meta.ID, target)
 	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "unable to get target var from metadata storage"))
+		handleErr(conn, msg, err)
+		return
+	}
+
+	variables, err := metaStorage.FetchVariablesByName(req.Dataset, req.Filters.Variables, false, false)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// resolve the task so we know what type of data we should be expecting
+	requestTask, err := api.ResolveTask(dataStorage, model.NormalizeDatasetID(req.Dataset), targetVar, variables)
+	if err != nil {
+		handleErr(conn, msg, err)
 		return
 	}
 
@@ -316,10 +329,20 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	config, _ := env.LoadConfig()
 	ingestConfig := task.NewConfig(config)
 
-	ds, err := dataset.NewTableDataset(request.DatasetID, []byte(data), &config)
-	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "unable to create raw table dataset"))
-		return
+	//
+	var ds task.DatasetConstructor
+	if !api.HasTaskType(requestTask, compute.ImageTask) {
+		ds, err = dataset.NewTableDataset(request.DatasetID, []byte(data), &config)
+		if err != nil {
+			handleErr(conn, msg, errors.Wrap(err, "unable to create raw table dataset"))
+			return
+		}
+	} else {
+		ds, err = dataset.NewImageDataset(request.DatasetID, "png", []byte(data), &config)
+		if err != nil {
+			handleErr(conn, msg, errors.Wrap(err, "unable to create raw dataset"))
+			return
+		}
 	}
 
 	predictParams := &task.PredictParams{
@@ -343,7 +366,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	// run predictions - synchronous call for now
 	result, err := task.Predict(predictParams)
 	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "unable to generate predictions"))
+		handleErr(conn, msg, err)
 		return
 	}
 

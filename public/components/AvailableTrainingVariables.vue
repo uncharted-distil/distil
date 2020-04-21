@@ -39,7 +39,8 @@ import { overlayRouteEntry } from "../util/routes";
 import {
   DatasetPendingRequestType,
   Variable,
-  VariableSummary
+  VariableSummary,
+  Task
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
@@ -94,7 +95,7 @@ export default Vue.extend({
         trainingElem.className +=
           "btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2";
         trainingElem.innerHTML = "Add";
-        trainingElem.addEventListener("click", () => {
+        trainingElem.addEventListener("click", async () => {
           // log UI event on server
           appActions.logUserEvent(this.$store, {
             feature: Feature.ADD_FEATURE,
@@ -103,12 +104,22 @@ export default Vue.extend({
             details: { feature: group.colName }
           });
 
+          // get an updated view of the training data list
+          const training = routeGetters
+            .getDecodedTrainingVariableNames(this.$store)
+            .concat([group.colName]);
+
+          // update task based on the current training data
+          const taskResponse = await datasetActions.fetchTask(this.$store, {
+            dataset: routeGetters.getRouteDataset(this.$store),
+            targetName: routeGetters.getRouteTargetVariable(this.$store),
+            variableNames: training
+          });
+
           // update route with training data
-          const training = routeGetters.getDecodedTrainingVariableNames(
-            this.$store
-          );
           const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-            training: training.concat([group.colName]).join(",")
+            training: training.join(","),
+            task: taskResponse.data.task.join(",")
           });
           this.$router.push(entry);
         });

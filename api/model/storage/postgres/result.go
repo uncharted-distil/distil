@@ -540,8 +540,9 @@ func addTableAlias(prefix string, fields []string, addToColumn bool) []string {
 	return fieldsPrepended
 }
 
-// FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *api.FilterParams, predictionResultMode bool) (*api.FilteredData, error) {
+// FetchResults pulls the results from the Postgres database.  Note the generalized `id` string parameter - this will be
+// a solution ID if this is a solution result, or a produce request ID is this is a predictions result.
+func (s *Storage) FetchResults(dataset string, storageName string, resultURI string, id string, filterParams *api.FilterParams, predictionResultMode bool) (*api.FilteredData, error) {
 	storageNameResult := s.getResultTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
@@ -632,10 +633,10 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	if isTimeSeriesValue(variables, variable) {
 		selectedVars = fmt.Sprintf("%s %s ", distincts, strings.Join(fieldsData, ", "))
 	} else {
-		predictedCol := api.GetPredictedKey(solutionID)
+		predictedCol := api.GetPredictedKey(id)
 
 		// If our results are numerical we need to compute residuals and store them in a column called 'error'
-		errorCol := api.GetErrorKey(solutionID)
+		errorCol := api.GetErrorKey(id)
 		errorExpr := ""
 		if model.IsNumerical(variable.Type) && !predictionResultMode {
 			errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(dataTableAlias, variable.Name), errorCol)
