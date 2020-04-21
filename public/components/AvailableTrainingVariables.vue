@@ -34,9 +34,17 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { isEmpty } from "lodash";
 import { overlayRouteEntry } from "../util/routes";
-import { Variable, VariableSummary } from "../store/dataset/index";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {
+  DatasetPendingRequestType,
+  Variable,
+  VariableSummary
+} from "../store/dataset/index";
+import {
+  actions as datasetActions,
+  getters as datasetGetters
+} from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { filterSummariesByDataset, NUM_PER_PAGE } from "../util/data";
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from "../store/route/index";
@@ -50,7 +58,7 @@ export default Vue.extend({
   name: "available-training-variables",
 
   components: {
-    VariableFacets,
+    VariableFacets
   },
 
   computed: {
@@ -92,7 +100,7 @@ export default Vue.extend({
             feature: Feature.ADD_FEATURE,
             activity: Activity.DATA_PREPARATION,
             subActivity: SubActivity.DATA_TRANSFORMATION,
-            details: { feature: group.colName },
+            details: { feature: group.colName }
           });
 
           // update route with training data
@@ -100,14 +108,14 @@ export default Vue.extend({
             this.$store
           );
           const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-            training: training.concat([group.colName]).join(","),
+            training: training.concat([group.colName]).join(",")
           });
           this.$router.push(entry);
         });
         container.appendChild(trainingElem);
         return container;
       };
-    },
+    }
   },
 
   methods: {
@@ -117,22 +125,22 @@ export default Vue.extend({
         feature: Feature.ADD_ALL_FEATURES,
         activity: Activity.DATA_PREPARATION,
         subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: {},
+        details: {}
       });
 
       const facets = this.$refs.facets as any;
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
       );
-      facets.availableVariables().forEach((variable) => {
+      facets.availableVariables().forEach(variable => {
         training.push(variable);
       });
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        training: training.join(","),
+        training: training.join(",")
       });
       this.$router.push(entry);
-    },
-  },
+    }
+  }
 });
 </script>
 
