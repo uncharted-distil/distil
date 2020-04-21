@@ -5,7 +5,7 @@ import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
 
 export const routeModule: Module<Route, DistilState> = {
-  getters: moduleGetters
+  getters: moduleGetters,
 };
 
 const { read } = getStoreAccessors<Route, DistilState>(null);
@@ -81,5 +81,5 @@ export const getters = {
   getGeoZoom: read(moduleGetters.getGeoZoom),
   getGroupingType: read(moduleGetters.getGroupingType),
   getRouteTask: read(moduleGetters.getRouteTask),
-  getRouteFittedSolutionID: read(moduleGetters.getRouteFittedSolutionId)
+  getRouteFittedSolutionID: read(moduleGetters.getRouteFittedSolutionId),
 };

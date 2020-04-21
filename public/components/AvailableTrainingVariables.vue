@@ -50,20 +50,23 @@ export default Vue.extend({
   name: "available-training-variables",
 
   components: {
-    VariableFacets
+    VariableFacets,
   },
 
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
     },
+
     availableVariableSummaries(): VariableSummary[] {
       const summaries = routeGetters.getAvailableVariableSummaries(this.$store);
       return filterSummariesByDataset(summaries, this.dataset);
     },
+
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
@@ -89,7 +92,7 @@ export default Vue.extend({
             feature: Feature.ADD_FEATURE,
             activity: Activity.DATA_PREPARATION,
             subActivity: SubActivity.DATA_TRANSFORMATION,
-            details: { feature: group.colName }
+            details: { feature: group.colName },
           });
 
           // update route with training data
@@ -97,14 +100,14 @@ export default Vue.extend({
             this.$store
           );
           const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-            training: training.concat([group.colName]).join(",")
+            training: training.concat([group.colName]).join(","),
           });
           this.$router.push(entry);
         });
         container.appendChild(trainingElem);
         return container;
       };
-    }
+    },
   },
 
   methods: {
@@ -114,22 +117,22 @@ export default Vue.extend({
         feature: Feature.ADD_ALL_FEATURES,
         activity: Activity.DATA_PREPARATION,
         subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: {}
+        details: {},
       });
 
       const facets = this.$refs.facets as any;
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
       );
-      facets.availableVariables().forEach(variable => {
+      facets.availableVariables().forEach((variable) => {
         training.push(variable);
       });
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        training: training.join(",")
+        training: training.join(","),
       });
       this.$router.push(entry);
-    }
-  }
+    },
+  },
 });
 </script>
 
