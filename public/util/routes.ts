@@ -12,6 +12,7 @@ import { SummaryMode } from "../store/dataset";
 
 // TODO: should really have a separate definintion for each route
 export interface RouteArgs {
+  clustering?: string;
   dataset?: string;
   terms?: string;
   filters?: string;
@@ -83,6 +84,9 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
   // If `undefined` or empty array do not add property. This is to allow args
   // of `''` and `null` to overwrite existing values.
 
+  if (!_.isUndefined(args.clustering)) {
+    query.clustering = args.clustering;
+  }
   if (!_.isUndefined(args.dataset)) {
     query.dataset = args.dataset;
   }

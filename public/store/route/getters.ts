@@ -166,6 +166,11 @@ export const getters = {
     return state.query.varRanked && state.query.varRanked === "1"; // Use "1" for truth.
   },
 
+  // Returns a boolean to say that the cluster for this dataset has been generated..
+  getRouteIsClusterGenerated(state: Route): boolean {
+    return state.query.clustering && state.query.clustering === "1"; // Use "1" for truth.
+  },
+
   getRouteJoinDatasetsVarsParge(state: Route): number {
     const pageVar = JOINED_VARS_INSTANCE_PAGE;
     return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;

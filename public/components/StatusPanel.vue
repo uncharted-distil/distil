@@ -79,6 +79,13 @@ export default Vue.extend({
   components: {
     StatusPanelJoin
   },
+
+  mounted: function() {
+    if (routeGetters.getRouteIsClusterGenerated(this.$store)) {
+      this.applyClusteringChange();
+    }
+  },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
@@ -192,8 +199,10 @@ export default Vue.extend({
           });
 
           // Update the route to know that the training variables have been ranked.
-          const entry = overlayRouteEntry(this.$route, { varRanked: "1" });
-          this.$router.push(entry);
+          const varRankedEntry = overlayRouteEntry(this.$route, {
+            varRanked: "1"
+          });
+          this.$router.push(varRankedEntry);
 
           this.clearData();
           break;
@@ -211,9 +220,14 @@ export default Vue.extend({
         case DatasetPendingRequestType.JOIN_SUGGESTION:
           break;
         case DatasetPendingRequestType.CLUSTERING:
-          this.applyClusteringChange(<ClusteringPendingRequest>(
-            this.requestData
-          ));
+          this.applyClusteringChange();
+
+          // Update the route to know that the clustering has been applied.
+          const clusterEntry = overlayRouteEntry(this.$route, {
+            clustering: "1"
+          });
+          this.$router.push(clusterEntry);
+
           this.clearData();
           break;
         default:
@@ -234,7 +248,7 @@ export default Vue.extend({
     },
 
     // Applies clustering changes and refetches update variable summaries
-    applyClusteringChange(clusterRequest: ClusteringPendingRequest) {
+    applyClusteringChange() {
       // fetch the var modes map
       const varModesMap = routeGetters.getDecodedVarModes(this.$store);
 
