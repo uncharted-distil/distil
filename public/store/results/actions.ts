@@ -672,7 +672,13 @@ export const actions = {
 
     try {
       const response = await axios.post(
-        `distil/timeseries-forecast/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}/${solution.resultId}`,
+        `distil/timeseries-forecast/${encodeURIComponent(
+          args.dataset
+        )}/${encodeURIComponent(args.timeseriesColName)}/${encodeURIComponent(
+          args.xColName
+        )}/${encodeURIComponent(args.yColName)}/${encodeURIComponent(
+          args.timeseriesID
+        )}/${encodeURIComponent(solution.resultId)}`,
         {}
       );
       mutations.updatePredictedTimeseries(context, {
