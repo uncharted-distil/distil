@@ -927,29 +927,19 @@ export const actions = {
       // If we have valid rankings and they are different than those previously computed we mark
       // as resolved so the user can apply them.  Otherwise we mark as reviewed, so that there is
       // no flag for the user to apply.
+      let status = DatasetPendingRequestStatus.REVIEWED;
       if (computedRankings && !_.isEqual(oldRankings, rankings)) {
-        let status = DatasetPendingRequestStatus.RESOLVED;
-
         // If the request has already been reviewed, we apply the rankings.
         if (routeGetters.getRouteIsTrainingVariablesRanked(store)) {
           mutations.setVariableRankings(context, { dataset, rankings });
           mutations.updateVariableRankings(context, rankings);
-          status = DatasetPendingRequestStatus.REVIEWED;
+        } else {
+          status = DatasetPendingRequestStatus.RESOLVED;
         }
-
-        // Update the status.
-        mutations.updatePendingRequests(context, {
-          ...update,
-          status,
-          rankings
-        });
-      } else {
-        mutations.updatePendingRequests(context, {
-          ...update,
-          status: DatasetPendingRequestStatus.REVIEWED,
-          rankings: response.data.rankings
-        });
       }
+
+      // Update the status.
+      mutations.updatePendingRequests(context, { ...update, status, rankings });
     } catch (error) {
       mutations.updatePendingRequests(context, {
         ...update,

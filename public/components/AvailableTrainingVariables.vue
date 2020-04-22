@@ -34,14 +34,8 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { isEmpty } from "lodash";
 import { overlayRouteEntry } from "../util/routes";
-import {
-  DatasetPendingRequestType,
-  Variable,
-  VariableSummary,
-  Task
-} from "../store/dataset/index";
+import { Variable, VariableSummary, Task } from "../store/dataset/index";
 import {
   actions as datasetActions,
   getters as datasetGetters
@@ -66,16 +60,13 @@ export default Vue.extend({
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
-
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
     },
-
     availableVariableSummaries(): VariableSummary[] {
       const summaries = routeGetters.getAvailableVariableSummaries(this.$store);
       return filterSummariesByDataset(summaries, this.dataset);
     },
-
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
