@@ -456,7 +456,6 @@ export const actions = {
     // clear previous state
     predictionMutations.clearTrainingSummaries(store);
     predictionMutations.setIncludedPredictionTableData(store, null);
-    predictionMutations.setExcludedPredictionTableData(store, null);
 
     const produceRequestId = <string>context.getters.getRouteProduceRequestId;
     const fittedSolutionId = context.getters.getRouteFittedSolutionId;
@@ -482,7 +481,6 @@ export const actions = {
   updatePredictions(context: ViewContext) {
     // clear previous state
     predictionMutations.setIncludedPredictionTableData(store, null);
-    predictionMutations.setExcludedPredictionTableData(store, null);
 
     // fetch new state
     const produceRequestId = <string>context.getters.getRouteProduceRequestId;

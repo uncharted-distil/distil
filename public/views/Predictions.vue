@@ -1,15 +1,15 @@
 <template>
-  <div class="predictions-view d-flex h-100">
+  <div class="predictions-data-view d-flex h-100">
     <status-panel></status-panel>
     <div class="sidebar-container d-flex flex-column h-100">
       <div class="padding-nav"></div>
       <status-sidebar></status-sidebar>
     </div>
-    <div class="container-fluid d-flex flex-column h-100 results-view">
+    <div class="container-fluid d-flex flex-column h-100 predictions-view">
       <div class="row flex-0-nav"></div>
       <div class="row flex-1 pb-3">
         <div
-          class="variable-summaries col-12 col-md-3 border-gray-right results-variable-summaries"
+          class="variable-summaries col-12 col-md-3 border-gray-right predictions-variable-summaries"
         >
           <p class="nav-link font-weight-bold">Feature Summaries</p>
           <variable-facets
@@ -24,11 +24,12 @@
           </variable-facets>
         </div>
 
-        <results-comparison
-          class="col-12 col-md-6 results-result-comparison"
-        ></results-comparison>
+        <predictions-data-slot
+          class="col-12 col-md-6 d-flex flex-column predictions-predictions-data"
+        ></predictions-data-slot>
+
         <prediction-summaries
-          class="col-12 col-md-3 border-gray-left results-result-summaries"
+          class="col-12 col-md-3 border-gray-left predictions-predictions-summaries"
         ></prediction-summaries>
       </div>
     </div>
@@ -38,7 +39,7 @@
 <script lang="ts">
 import Vue from "vue";
 import VariableFacets from "../components/VariableFacets";
-import ResultsComparison from "../components/ResultsComparison";
+import PredictionsDataSlot from "../components/PredictionsDataSlot";
 import PredictionSummaries from "../components/PredictionSummaries";
 import StatusPanel from "../components/StatusPanel";
 import StatusSidebar from "../components/StatusSidebar";
@@ -54,11 +55,11 @@ import { getters as predictionGetters } from "../store/predictions/module";
 import { Feature, Activity } from "../util/userEvents";
 
 export default Vue.extend({
-  name: "results-view",
+  name: "predictions-view",
 
   components: {
     VariableFacets,
-    ResultsComparison,
+    PredictionsDataSlot,
     PredictionSummaries,
     StatusPanel,
     StatusSidebar
@@ -85,25 +86,22 @@ export default Vue.extend({
     },
     highlightString(): string {
       return routeGetters.getRouteHighlight(this.$store);
-    },
-    resultTrainingVarsPage(): number {
-      return routeGetters.getRouteResultTrainingVarsPage(this.$store);
     }
   },
 
   beforeMount() {
     viewActions.fetchPredictionsData(this.$store);
+    datasetActions.fetchClusters(this.$store, { dataset: this.dataset });
   },
 
   watch: {
+    produceRequestId() {
+      viewActions.updatePrediction(this.$store);
+    },
     highlightString() {
       viewActions.updatePrediction(this.$store);
     },
-    produceRequestId() {
-      viewActions.updatePrediction(this.$store);
-      datasetActions.fetchClusters(this.$store, { dataset: this.dataset });
-    },
-    resultTrainingVarsPage() {
+    trainingVarsPage() {
       viewActions.updatePrediction(this.$store);
     }
   }
@@ -111,48 +109,35 @@ export default Vue.extend({
 </script>
 
 <style>
-.variable-summaries {
-  display: flex;
-  flex-direction: column;
-}
-.variable-summaries .facets-group {
-  /* for the spinners, this isn't needed on other views because of the buttoms that create the space */
-  padding-bottom: 20px;
-}
-.predictions-view {
+.predictions-data-view {
   flex-direction: row-reverse;
 }
-.results-view .nav-link {
+
+.predictions-view .nav-link {
   padding: 1rem 0 0.25rem 0;
   border-bottom: 1px solid #e0e0e0;
   color: rgba(0, 0, 0, 0.87);
 }
-.header-label {
-  padding: 1rem 0 0.5rem 0;
-  font-weight: bold;
+
+.variable-summaries {
+  display: flex;
+  flex-direction: column;
 }
-.results-view .table td {
-  text-align: left;
-  padding: 0px;
+
+.variable-summaries .facets-group {
+  /* for the spinners, this isn't needed on other views because of the buttoms that create the space */
+  padding-bottom: 20px;
 }
-.results-view .table td > div {
-  text-align: left;
-  padding: 0.3rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.result-facets {
-  margin-bottom: 12px;
-}
-.results-variable-summaries,
-.results-result-comparison,
-.results-result-summaries {
+
+.predictions-variable-summaries,
+.predictions-predictions-data,
+.predictions-predictions-summaries {
   height: 100%;
 }
 @media (max-width: 767px) {
-  .results-variable-summaries,
-  .results-result-comparison,
-  .results-result-summaries {
+  .predictions-variable-summaries,
+  .predictions-predictions-data,
+  .predictions-predictions-summaries {
     height: unset;
   }
 }

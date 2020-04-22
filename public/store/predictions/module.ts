@@ -41,24 +41,14 @@ export const getters = {
   getIncludedPredictionTableDataFields: read(
     moduleGetters.getIncludedPredictionTableDataFields
   ),
-  hasExcludedPredictionTableData: read(
-    moduleGetters.hasExcludedPredictionTableData
-  ),
-  getExcludedPredictionTableData: read(
-    moduleGetters.getExcludedPredictionTableData
-  ),
-  getExcludedPredictionTableDataItems: read(
-    moduleGetters.getExcludedPredictionTableDataItems
-  ),
-  getExcludedPredictionTableDataFields: read(
-    moduleGetters.getExcludedPredictionTableDataFields
-  ),
+
   // predicted
   getPredictionSummaries: read(moduleGetters.getPredictionSummaries),
   getTrainingSummaries: read(moduleGetters.getTrainingSummaries),
 
   // result table data
   getPredictionDataNumRows: read(moduleGetters.getPredictionDataNumRows),
+
   // forecasts
   getPredictedTimeseries: read(moduleGetters.getPredictionTimeseries),
   getPredictedForecasts: read(moduleGetters.getPredictionForecasts)
@@ -72,9 +62,6 @@ export const actions = {
   // result table data
   fetchIncludedPredictionTableData: dispatch(
     moduleActions.fetchIncludedPredictionTableData
-  ),
-  fetchExcludedPredictionTableData: dispatch(
-    moduleActions.fetchExcludedPredictionTableData
   ),
   fetchPredictionTableData: dispatch(moduleActions.fetchPredictionTableData),
 
@@ -92,9 +79,6 @@ export const mutations = {
   // result
   setIncludedPredictionTableData: commit(
     moduleMutations.setIncludedPredictionTableData
-  ),
-  setExcludedPredictionTableData: commit(
-    moduleMutations.setExcludedPredictionTableData
   ),
   // predicted
   clearPredictedSummary: commit(moduleMutations.clearPredictedSummary),

@@ -27,14 +27,6 @@ export const mutations = {
     state.includedPredictionTableData = predictionData;
   },
 
-  // sets the current Prediction data into the store
-  setExcludedPredictionTableData(
-    state: PredictionState,
-    predictionData: TableData
-  ) {
-    state.excludedPredictionTableData = predictionData;
-  },
-
   // predicted
   updatePredictedSummary(state: PredictionState, summary: VariableSummary) {
     updateSummaries(summary, state.predictedSummaries);

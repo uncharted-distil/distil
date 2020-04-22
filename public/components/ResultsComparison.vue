@@ -106,15 +106,11 @@ export default Vue.extend({
     },
 
     includedTableDataItems(): TableRow[] {
-      return this.isPrediction
-        ? predictionGetters.getIncludedPredictionTableDataItems(this.$store)
-        : resultsGetters.getIncludedResultTableDataItems(this.$store);
+      return resultsGetters.getIncludedResultTableDataItems(this.$store);
     },
 
     includedDataTableFields(): Dictionary<TableColumn> {
-      return this.isPrediction
-        ? predictionGetters.getIncludedPredictionTableDataFields(this.$store)
-        : resultsGetters.getIncludedResultTableDataFields(this.$store);
+      return resultsGetters.getIncludedResultTableDataFields(this.$store);
     },
 
     numIncludedResultItems(): number {
@@ -131,15 +127,11 @@ export default Vue.extend({
     },
 
     excludedTableDataItems(): TableRow[] {
-      return this.isPrediction
-        ? predictionGetters.getExcludedPredictionTableDataItems(this.$store)
-        : resultsGetters.getExcludedResultTableDataItems(this.$store);
+      return resultsGetters.getExcludedResultTableDataItems(this.$store);
     },
 
     excludedResultTableDataFields(): Dictionary<TableColumn> {
-      return this.isPrediction
-        ? predictionGetters.getExcludedPredictionTableDataFields(this.$store)
-        : resultsGetters.getExcludedResultTableDataFields(this.$store);
+      return resultsGetters.getExcludedResultTableDataFields(this.$store);
     },
 
     numExcludedResultItems(): number {
@@ -169,19 +161,12 @@ export default Vue.extend({
     },
 
     numRows(): number {
-      return this.isPrediction
-        ? predictionGetters.getPredictionDataNumRows(this.$store)
-        : resultsGetters.getResultDataNumRows(this.$store);
+      return resultsGetters.getResultDataNumRows(this.$store);
     },
 
     isForecasting(): boolean {
       const routeArgs = routeGetters.getRouteTask(this.$store);
       return routeArgs && routeArgs.includes(TaskTypes.FORECASTING);
-    },
-
-    isPrediction(): boolean {
-      const routePath = routeGetters.getRoutePath(this.$store);
-      return routePath && routePath === PREDICTION_ROUTE;
     },
 
     topSlotTitle(): string {
@@ -209,14 +194,9 @@ export default Vue.extend({
     errorTitle(itemCount: number, errorCount: number): string {
       const matchesLabel = `Displaying ${itemCount} of ${this.numRows}`;
       const erroneousLabel = `, including ${errorCount} <b class="erroneous-color">erroneous</b> predictions`;
-      return this.isForecasting || this.isPrediction
-        ? matchesLabel
-        : matchesLabel + erroneousLabel;
+      return this.isForecasting ? matchesLabel : matchesLabel + erroneousLabel;
     },
     errorCount(dataColumn: TableRow[]): number {
-      if (this.isPrediction) {
-        return 0;
-      }
       return dataColumn.filter(item => {
         if (this.regressionEnabled) {
           if (!item[this.solution.errorKey]) {

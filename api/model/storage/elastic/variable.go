@@ -350,7 +350,7 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 	return result, nil
 }
 
-// FetchVariablesDisplay returns all the display variables for the provided index and dataset.
+// FetchVariablesByName returns all the caller supplied variables.
 func (s *Storage) FetchVariablesByName(dataset string, varNames []string, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
 	fetchedVariables, err := s.FetchVariables(dataset, includeIndex, includeMeta)
 	if err != nil {

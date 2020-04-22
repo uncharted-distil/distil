@@ -137,7 +137,6 @@ func PredictionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCt
 			return
 		}
 		summary.Key = api.GetPredictedKey(res.ProduceRequestID)
-		summary.Label = "Predicted"
 
 		// marshal data and sent the response back
 		err = handleJSON(w, PredictedSummary{
