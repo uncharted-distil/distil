@@ -127,6 +127,29 @@ func Copy(sourceFolder string, destinationFolder string) error {
 	return nil
 }
 
+// CopyFile the source file to destination. Any existing file will be overwritten and will not
+// copy file attributes.
+func CopyFile(sourceFile string, destinationFile string) error {
+	in, err := os.Open(sourceFile)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(destinationFile)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // RemoveContents removes the files and directories from the supplied parent.
 func RemoveContents(dir string) error {
 	d, err := os.Open(dir)
