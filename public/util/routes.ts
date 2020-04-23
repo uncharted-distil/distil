@@ -12,6 +12,7 @@ import { SummaryMode } from "../store/dataset";
 
 // TODO: should really have a separate definintion for each route
 export interface RouteArgs {
+  clustering?: string;
   dataset?: string;
   terms?: string;
   filters?: string;
@@ -33,6 +34,7 @@ export interface RouteArgs {
   availableTargetVarsPage?: number;
   task?: string;
   varModes?: string;
+  varRanked?: string;
   produceRequestId?: string;
   fittedSolutionId?: string;
 
@@ -82,6 +84,9 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
   // If `undefined` or empty array do not add property. This is to allow args
   // of `''` and `null` to overwrite existing values.
 
+  if (!_.isUndefined(args.clustering)) {
+    query.clustering = args.clustering;
+  }
   if (!_.isUndefined(args.dataset)) {
     query.dataset = args.dataset;
   }
@@ -144,6 +149,9 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
   }
   if (!_.isUndefined(args.varModes)) {
     query.varModes = args.varModes;
+  }
+  if (!_.isUndefined(args.varRanked)) {
+    query.varRanked = args.varRanked;
   }
   if (!_.isUndefined(args.fittedSolutionId)) {
     query.fittedSolutionId = args.fittedSolutionId;

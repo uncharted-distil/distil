@@ -37,8 +37,8 @@ import Vue from "vue";
 import { overlayRouteEntry } from "../util/routes";
 import { Variable, VariableSummary, Task } from "../store/dataset/index";
 import {
-  getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
+  getters as datasetGetters
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { filterSummariesByDataset, NUM_PER_PAGE } from "../util/data";

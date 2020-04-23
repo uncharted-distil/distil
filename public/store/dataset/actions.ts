@@ -39,6 +39,7 @@ import {
   GEOCOORDINATE_TYPE,
   isRankableVariableType
 } from "../../util/types";
+import { getters as routeGetters } from "../route/module";
 
 // fetches variables and add dataset name to each variable
 async function getVariables(dataset: string): Promise<Variable[]> {
@@ -909,30 +910,36 @@ export const actions = {
 
     mutations.updatePendingRequests(context, update);
     try {
+      const dataset = args.dataset;
+
       const response = await axios.get(
-        `/distil/variable-rankings/${args.dataset}/${args.target}`
+        `/distil/variable-rankings/${dataset}/${args.target}`
       );
+
       const rankings = <Dictionary<number>>response.data.rankings;
+
       // check to see if we got any non-zero rank info back
       const computedRankings = _.filter(rankings, (r, v) => r !== 0).length > 0;
+
       // check to see if the returned ranks are different than any that we may have previously computed
       const oldRankings = getters.getVariableRankings(context)[args.dataset];
+
       // If we have valid rankings and they are different than those previously computed we mark
       // as resolved so the user can apply them.  Otherwise we mark as reviewed, so that there is
       // no flag for the user to apply.
+      let status = DatasetPendingRequestStatus.REVIEWED;
       if (computedRankings && !_.isEqual(oldRankings, rankings)) {
-        mutations.updatePendingRequests(context, {
-          ...update,
-          status: DatasetPendingRequestStatus.RESOLVED,
-          rankings: response.data.rankings
-        });
-      } else {
-        mutations.updatePendingRequests(context, {
-          ...update,
-          status: DatasetPendingRequestStatus.REVIEWED,
-          rankings: response.data.rankings
-        });
+        // If the request has already been reviewed, we apply the rankings.
+        if (routeGetters.getRouteIsTrainingVariablesRanked(store)) {
+          mutations.setVariableRankings(context, { dataset, rankings });
+          mutations.updateVariableRankings(context, rankings);
+        } else {
+          status = DatasetPendingRequestStatus.RESOLVED;
+        }
       }
+
+      // Update the status.
+      mutations.updatePendingRequests(context, { ...update, status, rankings });
     } catch (error) {
       mutations.updatePendingRequests(context, {
         ...update,
