@@ -265,8 +265,6 @@ export const actions = {
       status: DatasetPendingRequestStatus.PENDING
     };
 
-    const sheblag = getters.getVariables(context);
-
     // Find variables that require cluster requests.  If there are none, then
     // quick exit.
     const clusterVariables = getters
