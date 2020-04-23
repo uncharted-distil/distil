@@ -175,19 +175,10 @@ export default Vue.extend({
 .select-training-view {
   flex-direction: row-reverse;
 }
-
 .select-view .nav-link {
   padding: 1rem 0 0.25rem 0;
   border-bottom: 1px solid #e0e0e0;
   color: rgba(0, 0, 0, 0.87);
-}
-.header-label {
-  padding: 1rem 0 0.5rem 0;
-  font-weight: bold;
-}
-.select-data-container {
-  flex: 1;
-  z-index: 1; /* to show the scroll bar */
 }
 .select-target-variables {
   min-width: 500px;

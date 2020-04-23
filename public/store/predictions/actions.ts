@@ -200,41 +200,6 @@ export const actions = {
     }
   },
 
-  async fetchExcludedPredictionTableData(
-    context: PredictionContext,
-    args: {
-      dataset: string;
-      highlight: Highlight;
-      produceRequestId: string;
-    }
-  ) {
-    let filterParams = {
-      highlight: null,
-      variables: [],
-      filters: []
-    };
-    filterParams = addHighlightToFilterParams(
-      filterParams,
-      args.highlight,
-      EXCLUDE_FILTER
-    );
-
-    try {
-      const response = await axios.post(
-        `distil/prediction-results/${encodeURIComponent(
-          args.produceRequestId
-        )}`,
-        filterParams
-      );
-      mutations.setExcludedPredictionTableData(context, response.data);
-    } catch (error) {
-      console.error(
-        `Failed to fetch results from ${args.produceRequestId} with error ${error}`
-      );
-      mutations.setExcludedPredictionTableData(context, createEmptyTableData());
-    }
-  },
-
   fetchPredictionTableData(
     context: PredictionContext,
     args: {
@@ -245,11 +210,6 @@ export const actions = {
   ) {
     return Promise.all([
       actions.fetchIncludedPredictionTableData(context, {
-        dataset: args.dataset,
-        highlight: args.highlight,
-        produceRequestId: args.produceRequestId
-      }),
-      actions.fetchExcludedPredictionTableData(context, {
         dataset: args.dataset,
         highlight: args.highlight,
         produceRequestId: args.produceRequestId

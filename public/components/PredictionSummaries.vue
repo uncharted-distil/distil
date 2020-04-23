@@ -1,7 +1,7 @@
 <template>
   <div class="prediction-summaries">
     <p class="nav-link font-weight-bold">
-      Predictions for Model
+      Predictions for Dataset
     </p>
     <div v-for="summary in summaries" :key="summary.key">
       <div v-bind:class="active(summary.key)" @click="onClick(summary.key)">
@@ -77,6 +77,8 @@ import { getPredictionResultSummary, getIDFromKey } from "../util/summaries";
 import { sum } from "d3";
 import { getPredictionsById } from "../util/predictions";
 import { updateHighlight, clearHighlight } from "../util/highlights";
+import moment from "moment";
+import _ from "lodash";
 
 export default Vue.extend({
   name: "prediction-summaries",
@@ -91,15 +93,12 @@ export default Vue.extend({
       return routeGetters.getRouteProduceRequestId(this.$store);
     },
 
-    fittedSolutionId(): string {
-      return routeGetters.getRouteFittedSolutionID(this.$store);
-    },
-
     instanceName(): string {
-      return "predictions";
+      return requestGetters.getActivePredictions(this.$store).feature;
     },
 
     summaries(): VariableSummary[] {
+      // get the list of variable summaries, sorting by timestamp
       return requestGetters
         .getRelevantPredictions(this.$store)
         .map(p => getPredictionResultSummary(p.requestId))
@@ -193,7 +192,7 @@ export default Vue.extend({
         });
         appActions.logUserEvent(this.$store, {
           feature: Feature.CHANGE_HIGHLIGHT,
-          activity: Activity.MODEL_SELECTION,
+          activity: Activity.PREDICTION_ANALYSIS,
           subActivity: SubActivity.MODEL_EXPLANATION,
           details: { key: key, value: value }
         });
@@ -214,7 +213,7 @@ export default Vue.extend({
       });
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
-        activity: Activity.MODEL_SELECTION,
+        activity: Activity.PREDICTION_ANALYSIS,
         subActivity: SubActivity.MODEL_EXPLANATION,
         details: { key: key, value: value }
       });
@@ -242,6 +241,15 @@ export default Vue.extend({
 </script>
 
 <style>
+.prediction-summaries {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.prediction-summaries .facets-facet-base {
+  overflow: visible;
+}
+
 .prediction-group {
   margin: 5px;
   padding: 10px;
