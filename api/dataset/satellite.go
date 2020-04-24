@@ -43,7 +43,7 @@ var (
 		"tiff": {"tif", "tiff"},
 	}
 
-	bandRegex = regexp.MustCompile(`_B[0-9][0-9][a-zA-Z]?[.]`)
+	bandRegex = regexp.MustCompile(`_B[0-9][0-9a-zA-Z][.]`)
 )
 
 // Satellite captures the data in a satellite (remote sensing) dataset.
@@ -88,7 +88,7 @@ func (b *BoundingBox) pointToString(point *Point) string {
 }
 
 // NewSatelliteDataset creates a new satelitte dataset from geotiff files
-func NewSatelliteDataset(dataset string, imageType string, rawData []byte, config *env.Config) (*Image, error) {
+func NewSatelliteDataset(dataset string, imageType string, rawData []byte, config *env.Config) (*Satellite, error) {
 	outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
 	outputDatasetPath := path.Join(outputPath, dataset)
 
@@ -110,7 +110,7 @@ func NewSatelliteDataset(dataset string, imageType string, rawData []byte, confi
 		return nil, errors.Wrap(err, "unable to extract raw image data archive")
 	}
 
-	return &Image{
+	return &Satellite{
 		Dataset:           dataset,
 		ImageType:         imageType,
 		RawFilePath:       zipFilename,
@@ -124,20 +124,18 @@ func (s *Satellite) CreateDataset(rootDataPath string, config *env.Config) (*api
 	outputDatasetPath := path.Join(outputPath, s.Dataset)
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 
-	imageFolders := make([]string, 0)
-	extractedFiles, err := ioutil.ReadDir(s.ExtractedFilePath)
+	imageFolders, err := getImageFolders(s.ExtractedFilePath)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to read extracted data")
-	}
-	for _, f := range extractedFiles {
-		if f.IsDir() {
-			imageFolders = append(imageFolders, path.Join(s.ExtractedFilePath, f.Name()))
-		}
+		return nil, err
 	}
 
 	csvData := make([][]string, 0)
-	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "band", "coordinates", "label"})
+	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "coordinates", "label"})
 	mediaFolder := getUniqueFolder(path.Join(outputDatasetPath, "media"))
+
+	// need to keep track of d3m Index values since they are shared for a whole group
+	d3mIDs := make(map[string]int)
+	d3mIDRunning := 1
 
 	// the folder name represents the label to apply for all containing images
 	for _, imageFolder := range imageFolders {
@@ -185,7 +183,16 @@ func (s *Satellite) CreateDataset(rootDataPath string, config *env.Config) (*api
 				continue
 			}
 
-			csvData = append(csvData, []string{fmt.Sprintf("%d", len(csvData)-1), path.Base(targetImageFilename), band, coordinates.ToString(), label})
+			groupID := extractGroupID(targetImageFilename)
+
+			d3mID := d3mIDs[groupID]
+			if d3mID == 0 {
+				d3mID = d3mIDRunning
+				d3mIDRunning = d3mIDRunning + 1
+				d3mIDs[groupID] = d3mID
+			}
+
+			csvData = append(csvData, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, coordinates.ToString(), label})
 		}
 	}
 
@@ -199,22 +206,26 @@ func (s *Satellite) CreateDataset(rootDataPath string, config *env.Config) (*api
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName,
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
-			[]string{model.RoleIndex}, model.VarRoleIndex, nil, dr.Variables, false),
+			[]string{model.RoleMultiIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
 	)
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(1, "image_file", "image_file", "image_file", model.StringType,
 			model.StringType, "Reference to image file", []string{"attribute"},
 			model.VarRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(2, "band", "band", "band", model.StringType,
+		model.NewVariable(2, "group_id", "group_id", "group_id", model.StringType,
 			model.StringType, "Image band", []string{"attribute"},
 			model.VarRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(3, "coordinates", "coordinates", "coordinates", model.RealVectorType,
+		model.NewVariable(3, "band", "band", "band", model.StringType,
+			model.StringType, "Image band", []string{"attribute"},
+			model.VarRoleData, nil, dr.Variables, false))
+	dr.Variables = append(dr.Variables,
+		model.NewVariable(4, "coordinates", "coordinates", "coordinates", model.RealVectorType,
 			model.RealVectorType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
 			model.VarRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(4, "label", "label", "label", model.StringType,
+		model.NewVariable(5, "label", "label", "label", model.StringType,
 			model.StringType, "Label of the image", []string{"suggestedTarget"},
 			model.VarRoleData, nil, dr.Variables, false))
 
@@ -249,10 +260,22 @@ func extractBand(filename string) (string, error) {
 	bandRaw := bandRegex.Find([]byte(filename))
 	if len(bandRaw) > 0 {
 		band := string(bandRaw)
-		return band[1 : len(band)-1], nil
+		return band[2 : len(band)-1], nil
 	}
 
 	return "", errors.New("unable to extract band from filename")
+}
+
+func extractGroupID(filename string) string {
+	bandRaw := bandRegex.Find([]byte(filename))
+	adjustedFilename := path.Base(filename)
+	if len(bandRaw) > 0 {
+		adjustedFilename = strings.Replace(adjustedFilename, string(bandRaw), ".", 1)
+	}
+
+	adjustedFilename = strings.TrimSuffix(adjustedFilename, path.Ext(adjustedFilename))
+
+	return adjustedFilename
 }
 
 func extractCoordinates(filename string) (*BoundingBox, error) {

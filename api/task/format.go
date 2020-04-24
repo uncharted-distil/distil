@@ -115,7 +115,8 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, data [][]string) (*mod
 	// add the d3m index variable to the metadata
 	dr := getMainDataResource(meta)
 	name := model.D3MIndexFieldName
-	v := model.NewVariable(len(dr.Variables), name, name, name, model.IntegerType, model.IntegerType, "required index field", []string{"index"}, model.VarRoleIndex, nil, dr.Variables, false)
+	v := model.NewVariable(len(dr.Variables), name, name, name, model.IntegerType, model.IntegerType,
+		"required index field", []string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false)
 	dr.Variables = append(dr.Variables, v)
 
 	// parse the raw output and write the line out
