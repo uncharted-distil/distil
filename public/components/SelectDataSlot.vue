@@ -359,13 +359,15 @@ export default Vue.extend({
 
 <style>
 .select-data-container {
-  position: relative;
-  display: flex;
   background-color: white;
+  display: flex;
   flex-flow: wrap;
   height: 100%;
+  overflow: scroll;
+  position: relative;
   width: 100%;
 }
+
 .select-data-no-results {
   position: absolute;
   display: block;
