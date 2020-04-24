@@ -55,35 +55,18 @@
     <div class="result-group-body" v-if="isMaximized">
       <template v-if="isCompleted">
         <div v-for="summary in predictedSummaries" :key="summary.key">
-          <template v-if="summary.varType === 'timeseries'">
-            <facet-timeseries
-              :summary="summary"
-              :highlight="highlight"
-              :row-selection="rowSelection"
-              :instanceName="predictedInstanceName"
-              :enabled-type-changes="[]"
-              :enable-highlighting="[true, true]"
-              @numerical-click="onResultNumericalClick"
-              @range-change="onResultRangeChange"
-              @histogram-numerical-click="onResultNumericalClick"
-              @histogram-range-change="onResultRangeChange"
-            >
-            </facet-timeseries>
-          </template>
-          <template v-else>
-            <facet-entry
-              enable-highlighting
-              :summary="summary"
-              :highlight="highlight"
-              :enabled-type-changes="[]"
-              :row-selection="rowSelection"
-              :instanceName="predictedInstanceName"
-              @numerical-click="onResultNumericalClick"
-              @range-change="onResultRangeChange"
-              @facet-click="onResultCategoricalClick"
-            >
-            </facet-entry>
-          </template>
+          <facet-entry
+            enable-highlighting
+            :summary="summary"
+            :highlight="highlight"
+            :enabled-type-changes="[]"
+            :row-selection="rowSelection"
+            :instanceName="predictedInstanceName"
+            @numerical-click="onResultNumericalClick"
+            @range-change="onResultRangeChange"
+            @facet-click="onResultCategoricalClick"
+          >
+          </facet-entry>
         </div>
 
         <div class="residual-group-container">
@@ -129,7 +112,6 @@
 
 import Vue from "vue";
 import FacetEntry from "../components/FacetEntry";
-import FacetTimeseries from "../components/FacetTimeseries";
 import {
   Extrema,
   VariableSummary,
@@ -158,8 +140,7 @@ export default Vue.extend({
   name: "result-group",
 
   components: {
-    FacetEntry,
-    FacetTimeseries
+    FacetEntry
   },
 
   props: {

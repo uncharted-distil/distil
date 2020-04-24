@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -143,6 +144,9 @@ func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variab
 	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
 		aggQuery, storageName, s.getResultTable(storageName), model.D3MIndexFieldName)
 
+	log.Warnf("============> %s", queryString)
+	log.Warnf("============> %s", resultURI)
+
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
 	// hides db exceptions.
@@ -159,7 +163,6 @@ func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variab
 
 // FetchExtremaByURI return extrema of a variable in a result set.
 func (s *Storage) FetchExtremaByURI(dataset string, storageName string, resultURI string, varName string) (*api.Extrema, error) {
-
 	variable, err := s.metadata.FetchVariable(dataset, varName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch variable description for summary")

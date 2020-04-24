@@ -758,41 +758,16 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 		return nil, err
 	}
 
+	// use the variable type to guide the summary creation
 	var field Field
-
-	if variable.Grouping != nil {
-		if model.IsTimeSeries(variable.Grouping.Type) {
-
-			timeColVar, err := s.metadata.FetchVariable(dataset, variable.Grouping.Properties.XCol)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
-			}
-
-			valueColVar, err := s.metadata.FetchVariable(dataset, variable.Grouping.Properties.YCol)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
-			}
-
-			field = NewTimeSeriesField(s, dataset, storageName, variable.Grouping.Properties.ClusterCol, variable.Name, variable.DisplayName, variable.Type,
-				variable.Grouping.IDCol, timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
-
-		} else {
-			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Name, variable.Type)
-		}
-
+	if model.IsNumerical(variable.Type) {
+		field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
+	} else if model.IsCategorical(variable.Type) {
+		field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
+	} else if model.IsVector(variable.Type) {
+		field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else {
-
-		// use the variable type to guide the summary creation
-
-		if model.IsNumerical(variable.Type) {
-			field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
-		} else if model.IsCategorical(variable.Type) {
-			field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
-		} else if model.IsVector(variable.Type) {
-			field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
-		} else {
-			return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
-		}
+		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 
 	summary, err := field.FetchPredictedSummaryData(resultURI, storageNameResult, filterParams, extrema, mode)

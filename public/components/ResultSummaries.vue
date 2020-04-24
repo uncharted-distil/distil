@@ -88,7 +88,7 @@ import vueSlider from "vue-slider-component";
 import Vue from "vue";
 import { Solution } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
-import { createRouteEntry } from "../util/routes";
+import { createRouteEntry, varModesToString } from "../util/routes";
 import { PREDICTION_UPLOAD } from "../util/uploads";
 import { getPredictionsById } from "../util/predictions";
 
@@ -138,12 +138,14 @@ export default Vue.extend({
       return datasetGetters.getVariables(this.$store);
     },
 
-    taskArgs(): string {
-      return routeGetters.getRouteTask(this.$store);
+    taskArgs(): string[] {
+      return routeGetters.getRouteTask(this.$store).split(",");
     },
 
     showResiduals(): boolean {
-      return this.taskArgs && this.taskArgs.includes(TaskTypes.REGRESSION);
+      return this.taskArgs &&
+        !!this.taskArgs.find
+          (t => t ===  TaskTypes.REGRESSION || t === TaskTypes.FORECASTING);
     },
 
     solutionId(): string {
@@ -195,11 +197,14 @@ export default Vue.extend({
           response.produceRequestId
         ).dataset;
 
+        const varModes = varModesToString(routeGetters.getDecodedVarModes(this.$store));
+
         const routeArgs = {
           fittedSolutionId: this.fittedSolutionId,
           produceRequestId: response.produceRequestId,
           target: this.target,
-          dataset: dataset
+          dataset: dataset,
+          varModes: varModes
         };
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
         this.$router.push(entry);

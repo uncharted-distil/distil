@@ -128,7 +128,7 @@ func (s *Storage) IsValidDataType(dataset string, storageName string, varName st
 
 	// update field type in lookup.
 	if fields[varName] == nil {
-		return false, fmt.Errorf("field '%s' not found in existing fields", varName)
+		return false, errors.Errorf("field '%s' not found in existing fields", varName)
 	}
 	fields[varName].Type = varType
 
@@ -161,7 +161,7 @@ func (s *Storage) SetDataType(dataset string, storageName string, varName string
 
 	// update field type in lookup.
 	if fields[varName] == nil {
-		return fmt.Errorf("field '%s' not found in existing fields", varName)
+		return errors.Errorf("field '%s' not found in existing fields", varName)
 	}
 	fields[varName].Type = varType
 
