@@ -44,6 +44,24 @@
           {{ data.value.value }}
         </div>
       </template>
+
+      <template
+        v-for="timeseriesGrouping in timeseriesGroupings"
+        v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
+      >
+        <sparkline-preview
+          :key="data.item[timeseriesGrouping.idCol].value"
+          :truth-dataset="truthDataset"
+          :forecast-dataset="predictions.dataset"
+          :x-col="timeseriesGrouping.properties.xCol"
+          :y-col="timeseriesGrouping.properties.yCol"
+          :timeseries-col="timeseriesGrouping.idCol"
+          :timeseries-id="data.item[timeseriesGrouping.idCol].value"
+          :predictions-id="predictions.requestId"
+          :include-forecast="true"
+        >
+        </sparkline-preview>
+      </template>
     </b-table>
   </fixed-header-table>
 </template>
@@ -128,9 +146,8 @@ export default Vue.extend({
       return this.predictions ? `${this.predictions.predictedKey}` : "";
     },
 
-    isTargetTimeseries(): boolean {
-      const target = this.predictions.feature;
-      return getVarType(target) === "timeseries";
+    truthDataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
     },
 
     hasData(): boolean {

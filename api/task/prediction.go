@@ -424,6 +424,7 @@ func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.Me
 		return err
 	}
 
+	// get a variable map for quick look up
 	variables, err := metaStorage.FetchVariables(solutionRequest.Dataset, false, true)
 	if err != nil {
 		return err
@@ -433,16 +434,44 @@ func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.Me
 		variableMap[variable.Name] = variable
 	}
 
+	//
 	storageName := model.NormalizeDatasetID(dataset)
 	for _, feature := range solutionRequest.Features {
+		// if this is a grouped variable we need to treat its components separately
 		if variable, ok := variableMap[feature.FeatureName]; ok {
-			if err := metaStorage.SetDataType(dataset, feature.FeatureName, variable.Type); err != nil {
-				return err
-			}
-			if err := dataStorage.SetDataType(dataset, storageName, variable.Name, variable.Type); err != nil {
-				return err
+			componentVarNames := getComponentVariables(variable)
+			for _, componentVarName := range componentVarNames {
+				if componentVar, ok := variableMap[componentVarName]; ok {
+					// update variable type
+					if err := metaStorage.SetDataType(dataset, componentVar.Name, componentVar.Type); err != nil {
+						return err
+					}
+					if err := dataStorage.SetDataType(dataset, storageName, componentVar.Name, componentVar.Type); err != nil {
+						return err
+					}
+				}
 			}
 		}
 	}
 	return nil
+}
+
+// Extracts the list of components that used to create a compound variable.
+func getComponentVariables(variable *model.Variable) []string {
+	componentVars := []string{}
+	if variable.Grouping != nil {
+
+		// Include X and Y col when not dealing with time series - time series data is fetched subsequently
+		componentVars = append(componentVars, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol)
+
+		// include the grouping sub-ids if the ID is created from mutliple columns
+		if variable.Grouping.SubIDs != nil && len(variable.Grouping.SubIDs) > 0 {
+			componentVars = append(componentVars, variable.Grouping.SubIDs...)
+		} else if variable.Grouping.IDCol != "" {
+			// include the grouping ID if present and there were no sub IDs
+			componentVars = append(componentVars, variable.Grouping.IDCol)
+		}
+		return componentVars
+	}
+	return append(componentVars, variable.Name)
 }

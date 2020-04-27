@@ -133,7 +133,7 @@ export default Vue.extend({
         const routeEntry = overlayRouteEntry(this.$route, {
           produceRequestId: requestId,
           highlights: null,
-          dataset: dataset
+          predictionsDataset: dataset
         });
         this.$router.push(routeEntry);
       }

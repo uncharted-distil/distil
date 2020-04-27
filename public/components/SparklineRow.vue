@@ -151,7 +151,7 @@ export default Vue.extend({
           xColName: this.xCol,
           yColName: this.yCol,
           timeseriesColName: this.timeseriesCol,
-          timeseriesID: this.timeseriesId,
+          timeseriesId: this.timeseriesId,
           solutionId: this.solutionId
         });
       } else {
@@ -160,7 +160,7 @@ export default Vue.extend({
           xColName: this.xCol,
           yColName: this.yCol,
           timeseriesColName: this.timeseriesCol,
-          timeseriesID: this.timeseriesId
+          timeseriesId: this.timeseriesId
         });
       }
     }

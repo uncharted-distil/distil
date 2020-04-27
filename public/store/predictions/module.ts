@@ -67,7 +67,10 @@ export const actions = {
 
   // predicted value summary
   fetchPredictedSummary: dispatch(moduleActions.fetchPredictionSummary),
-  fetchPredictedSummaries: dispatch(moduleActions.fetchPredictionSummaries)
+  fetchPredictedSummaries: dispatch(moduleActions.fetchPredictionSummaries),
+
+  // time series forecast data
+  fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries)
 };
 
 // Typed mutations

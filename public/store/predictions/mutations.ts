@@ -41,25 +41,28 @@ export const mutations = {
   updatePredictedTimeseries(
     state: PredictionState,
     args: {
-      solutionId: string;
+      predictionsId: string;
       id: string;
       timeseries: number[][];
       isDateTime: boolean;
     }
   ) {
-    if (!state.timeseries[args.solutionId]) {
-      Vue.set(state.timeseries, args.solutionId, {});
+    if (!state.timeseries[args.predictionsId]) {
+      Vue.set(state.timeseries, args.predictionsId, {});
     }
-    if (!state.timeseries[args.solutionId].timeseriesData) {
-      Vue.set(state.timeseries[args.solutionId], "timeseriesData", {});
+    if (!state.timeseries[args.predictionsId].timeseriesData) {
+      Vue.set(state.timeseries[args.predictionsId], "timeseriesData", {});
+    }
+    if (!state.timeseries[args.predictionsId].isDateTime) {
+      Vue.set(state.timeseries[args.predictionsId], "isDateTime", {});
     }
     Vue.set(
-      state.timeseries[args.solutionId].timeseriesData,
+      state.timeseries[args.predictionsId].timeseriesData,
       args.id,
       args.timeseries
     );
     Vue.set(
-      state.timeseries[args.solutionId].isDateTime,
+      state.timeseries[args.predictionsId].isDateTime,
       args.id,
       args.isDateTime
     );
@@ -68,37 +71,37 @@ export const mutations = {
   updatePredictedForecast(
     state: PredictionState,
     args: {
-      solutionId: string;
+      predictionsId: string;
       id: string;
       forecast: number[][];
       forecastTestRange: number[];
       isDateTime: boolean;
     }
   ) {
-    if (!state.forecasts[args.solutionId]) {
-      Vue.set(state.forecasts, args.solutionId, {});
+    if (!state.forecasts[args.predictionsId]) {
+      Vue.set(state.forecasts, args.predictionsId, {});
     }
-    if (!state.forecasts[args.solutionId].forecastData) {
-      Vue.set(state.forecasts[args.solutionId], "forecastData", {});
+    if (!state.forecasts[args.predictionsId].forecastData) {
+      Vue.set(state.forecasts[args.predictionsId], "forecastData", {});
     }
-    if (!state.forecasts[args.solutionId].forecastRange) {
-      Vue.set(state.forecasts[args.solutionId], "forecastRange", {});
+    if (!state.forecasts[args.predictionsId].forecastRange) {
+      Vue.set(state.forecasts[args.predictionsId], "forecastRange", {});
     }
-    if (!state.forecasts[args.solutionId].isDateTime) {
-      Vue.set(state.forecasts[args.solutionId], "isDateTime", {});
+    if (!state.forecasts[args.predictionsId].isDateTime) {
+      Vue.set(state.forecasts[args.predictionsId], "isDateTime", {});
     }
     Vue.set(
-      state.forecasts[args.solutionId].forecastData,
+      state.forecasts[args.predictionsId].forecastData,
       args.id,
       args.forecast
     );
     Vue.set(
-      state.forecasts[args.solutionId].forecastRange,
+      state.forecasts[args.predictionsId].forecastRange,
       args.id,
       args.forecastTestRange
     );
     Vue.set(
-      state.forecasts[args.solutionId].isDateTime,
+      state.forecasts[args.predictionsId].isDateTime,
       args.id,
       args.isDateTime
     );
