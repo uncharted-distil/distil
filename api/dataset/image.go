@@ -112,6 +112,8 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 	mediaFolder := getUniqueFolder(path.Join(outputDatasetPath, "media"))
 
 	// the folder name represents the label to apply for all containing images
+	totalCounts := make(map[string]int)
+	successCounts := make(map[string]int)
 	for _, imageFolder := range imageFolders {
 		log.Infof("processing image folder '%s'", imageFolder)
 		label := path.Base(imageFolder)
@@ -126,10 +128,12 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 		for _, imageFile := range imageFiles {
 			imageFilename := imageFile.Name()
 			imageFilenameFull := path.Join(imageFolder, imageFilename)
+			totalCounts[label] = totalCounts[label] + 1
 
 			imageLoaded, err := readImage(imageFilenameFull, i.ImageType)
 			if err != nil {
-				return nil, err
+				log.Warnf("unable to read image: %v", err)
+				continue
 			}
 
 			targetImageFilename := imageFilename
@@ -141,15 +145,26 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 
 			imageOutput, err := toJPEG(&imageLoaded)
 			if err != nil {
-				return nil, err
+				log.Warnf("unable to convert image: %v", err)
+				continue
 			}
 
 			err = util.WriteFileWithDirs(targetImageFilename, imageOutput, os.ModePerm)
 			if err != nil {
-				return nil, errors.Wrap(err, "unable to save processed image file")
+				log.Warnf("unable to save processed image file: %v", err)
+				continue
 			}
 
 			csvData = append(csvData, []string{fmt.Sprintf("%d", len(csvData)-1), path.Base(targetImageFilename), label})
+			successCounts[label] = successCounts[label] + 1
+		}
+	}
+
+	// check counts and flag if too many errors
+	for label, count := range totalCounts {
+		successes := successCounts[label]
+		if count*int((1.0-config.ImportErrorThreshold)) < successes {
+			return nil, errors.Errorf("too many errors when processing label '%s' (%d out of %d failed)", label, count-successes, count)
 		}
 	}
 
