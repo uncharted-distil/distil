@@ -8,6 +8,10 @@ if [[ -z "${D3MOUTPUTDIR}" ]]; then
   export D3MOUTPUTDIR="$PWD/outputs"
 fi
 
+if [[ -z "${DATAMART_IMPORT_FOLDER}" ]]; then
+  export DATAMART_IMPORT_FOLDER="$PWD/datamart"
+fi
+
 export SOLUTION_COMPUTE_ENDPOINT=localhost:45042
 export ES_ENDPOINT=http://localhost:9200
 export SOLUTION_COMPUTE_TRACE=true
