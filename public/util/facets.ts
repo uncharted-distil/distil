@@ -300,7 +300,7 @@ function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
         forecasts.forecastData[facet.file]
       ];
       facet.colors = ["#000", "#00c6e1"];
-    } else {
+    } else if (timeseries) {
       facet.timeseries = timeseries.timeseriesData[facet.file];
     }
   });

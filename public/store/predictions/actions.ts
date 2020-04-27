@@ -286,16 +286,21 @@ export const actions = {
   async fetchForecastedTimeseries(
     context: PredictionContext,
     args: {
-      dataset: string;
+      truthDataset: string;
+      forecastDataset: string;
       xColName: string;
       yColName: string;
       timeseriesColName: string;
-      timeseriesID: any;
-      solutionId: string;
+      timeseriesId: any;
+      predictionsId: string;
     }
   ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!args.truthDataset) {
+      console.warn("`truthDataset` argument is missing");
+      return null;
+    }
+    if (!args.forecastDataset) {
+      console.warn("`forecastDataset` argument is missing");
       return null;
     }
     if (!args.xColName) {
@@ -310,38 +315,40 @@ export const actions = {
       console.warn("`timeseriesColName` argument is missing");
       return null;
     }
-    if (!args.timeseriesID) {
+    if (!args.timeseriesId) {
       console.warn("`timeseriesID` argument is missing");
       return null;
     }
-    if (!args.solutionId) {
+    if (!args.predictionsId) {
       console.warn("`solutionId` argument is missing");
       return null;
     }
 
-    const solution = getSolutionById(
-      context.rootState.requestsModule.solutions,
-      args.solutionId
+    const predictions = getPredictionsById(
+      context.rootState.requestsModule.predictions,
+      args.predictionsId
     );
-    if (!solution.resultId) {
+    if (!predictions.resultId) {
       // no results ready to pull
       return null;
     }
 
     try {
       const response = await axios.post(
-        `distil/timeseries-forecast/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}/${solution.resultId}`,
+        `distil/timeseries-forecast/${args.truthDataset}/${args.forecastDataset}` +
+          `/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesId}` +
+          `/${predictions.resultId}`,
         {}
       );
       mutations.updatePredictedTimeseries(context, {
-        solutionId: args.solutionId,
-        id: args.timeseriesID,
+        predictionsId: args.predictionsId,
+        id: args.timeseriesId,
         timeseries: response.data.timeseries,
         isDateTime: response.data.isDateTime
       });
       mutations.updatePredictedForecast(context, {
-        solutionId: args.solutionId,
-        id: args.timeseriesID,
+        predictionsId: args.predictionsId,
+        id: args.timeseriesId,
         forecast: response.data.forecast,
         forecastTestRange: response.data.forecastRange,
         isDateTime: response.data.isDateTime

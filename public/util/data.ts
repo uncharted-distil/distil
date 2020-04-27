@@ -186,7 +186,7 @@ export function fetchSummaryExemplars(
               timeseriesColName: variable.grouping.idCol,
               xColName: variable.grouping.properties.xCol,
               yColName: variable.grouping.properties.yCol,
-              timeseriesID: exemplar,
+              timeseriesId: exemplar,
               solutionId: solutionId
             };
             if (solutionId) {
@@ -238,7 +238,7 @@ export function fetchResultExemplars(
               timeseriesColName: variable.grouping.idCol,
               xColName: variable.grouping.properties.xCol,
               yColName: variable.grouping.properties.yCol,
-              timeseriesID: exemplar,
+              timeseriesId: exemplar,
               solutionId: solutionId
             });
           })

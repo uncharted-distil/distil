@@ -8,7 +8,8 @@
       :timeseries="timeseries"
       :forecast="forecast"
       :forecast-extrema="forecastExtrema"
-      :highlightRange="highlightRange"
+      :highlight-range="highlightRange"
+      :join-forecast="!!predictionsId"
     >
     </sparkline-svg>
     <i class="fa fa-plus zoom-sparkline-icon" @click.stop="onClick"></i>
@@ -22,10 +23,11 @@
       <sparkline-chart
         :timeseries="timeseries"
         :forecast="forecast"
-        :highlightRange="highlightRange"
-        :xAxisTitle="xCol"
-        :yAxisTitle="yCol"
-        :xAxisDateTime="isDateTime"
+        :highlight-range="highlightRange"
+        :x-axis-title="xCol"
+        :y-axis-title="yCol"
+        :x-axis-date-time="isDateTime"
+        :join-forecast="!!predictionsId"
         v-if="zoomSparkline"
       ></sparkline-chart>
     </b-modal>
@@ -47,6 +49,10 @@ import {
   getters as resultsGetters,
   actions as resultsActions
 } from "../store/results/module";
+import {
+  getters as predictionsGetters,
+  actions as predictionsActions
+} from "../store/predictions/module";
 import * as types from "../util/types";
 
 export default Vue.extend({
@@ -58,12 +64,14 @@ export default Vue.extend({
   },
 
   props: {
-    dataset: String as () => string,
+    truthDataset: String as () => string,
+    forecastDataset: String as () => string,
     xCol: String as () => string,
     yCol: String as () => string,
     timeseriesCol: String as () => string,
     timeseriesId: String as () => string,
     solutionId: String as () => string,
+    predictionsId: String as () => string,
     includeForecast: Boolean as () => boolean
   },
   data() {
@@ -82,15 +90,27 @@ export default Vue.extend({
           return null;
         }
         return solutions.timeseriesData[this.timeseriesId];
-      } else {
-        const timeseries = datasetGetters.getTimeseries(this.$store);
-        const datasets = timeseries[this.dataset];
-        if (!datasets) {
+      }
+
+      if (this.predictionsId) {
+        const timeseries = predictionsGetters.getPredictedTimeseries(
+          this.$store
+        );
+        const predictions = timeseries[this.predictionsId];
+        if (!predictions) {
           return null;
         }
-        return datasets.timeseriesData[this.timeseriesId];
+        return predictions.timeseriesData[this.timeseriesId];
       }
+
+      const timeseries = datasetGetters.getTimeseries(this.$store);
+      const datasets = timeseries[this.truthDataset];
+      if (!datasets) {
+        return null;
+      }
+      return datasets.timeseriesData[this.timeseriesId];
     },
+
     forecast(): number[][] {
       if (this.solutionId && this.includeForecast) {
         const forecasts = resultsGetters.getPredictedForecasts(this.$store);
@@ -99,10 +119,20 @@ export default Vue.extend({
           return null;
         }
         return solutions.forecastData[this.timeseriesId];
-      } else {
-        return null;
       }
+
+      if (this.predictionsId && this.includeForecast) {
+        const forecasts = predictionsGetters.getPredictedForecasts(this.$store);
+        const predictions = forecasts[this.predictionsId];
+        if (!predictions || !predictions.forecastData[this.timeseriesId]) {
+          return null;
+        }
+        return predictions.forecastData[this.timeseriesId];
+      }
+
+      return null;
     },
+
     highlightRange(): number[] {
       if (this.solutionId && this.includeForecast) {
         const forecasts = resultsGetters.getPredictedForecasts(this.$store);
@@ -111,10 +141,10 @@ export default Vue.extend({
           return null;
         }
         return solutions.forecastRange[this.timeseriesId];
-      } else {
-        return null;
       }
+      return null;
     },
+
     timeseriesExtrema(): TimeseriesExtrema {
       if (!this.timeseries) {
         return null;
@@ -153,9 +183,18 @@ export default Vue.extend({
           return null;
         }
         return solutions.isDateTime[this.timeseriesId];
+      } else if (this.predictionsId) {
+        const timeseries = predictionsGetters.getPredictedTimeseries(
+          this.$store
+        );
+        const datasets = timeseries[this.truthDataset];
+        if (!datasets) {
+          return null;
+        }
+        return datasets.isDateTime[this.timeseriesId];
       } else {
         const timeseries = datasetGetters.getTimeseries(this.$store);
-        const datasets = timeseries[this.dataset];
+        const datasets = timeseries[this.truthDataset];
         if (!datasets) {
           return null;
         }
@@ -182,20 +221,30 @@ export default Vue.extend({
 
       if (this.solutionId) {
         resultsActions.fetchForecastedTimeseries(this.$store, {
-          dataset: this.dataset,
+          dataset: this.truthDataset,
           xColName: this.xCol,
           yColName: this.yCol,
           timeseriesColName: this.timeseriesCol,
-          timeseriesID: this.timeseriesId,
+          timeseriesId: this.timeseriesId,
           solutionId: this.solutionId
+        });
+      } else if (this.predictionsId) {
+        predictionsActions.fetchForecastedTimeseries(this.$store, {
+          truthDataset: this.truthDataset,
+          forecastDataset: this.forecastDataset,
+          xColName: this.xCol,
+          yColName: this.yCol,
+          timeseriesColName: this.timeseriesCol,
+          timeseriesId: this.timeseriesId,
+          predictionsId: this.predictionsId
         });
       } else {
         datasetActions.fetchTimeseries(this.$store, {
-          dataset: this.dataset,
+          dataset: this.truthDataset,
           xColName: this.xCol,
           yColName: this.yCol,
           timeseriesColName: this.timeseriesCol,
-          timeseriesID: this.timeseriesId
+          timeseriesId: this.timeseriesId
         });
       }
     }

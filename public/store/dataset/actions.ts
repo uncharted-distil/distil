@@ -1040,7 +1040,7 @@ export const actions = {
       xColName: string;
       yColName: string;
       timeseriesColName: string;
-      timeseriesID: any;
+      timeseriesId: any;
     }
   ) {
     if (!args.dataset) {
@@ -1059,8 +1059,8 @@ export const actions = {
       console.warn("`timeseriesColName` argument is missing");
       return null;
     }
-    if (!args.timeseriesID) {
-      console.warn("`timeseriesID` argument is missing");
+    if (!args.timeseriesId) {
+      console.warn("`timeseriesId` argument is missing");
       return null;
     }
 
@@ -1071,13 +1071,13 @@ export const actions = {
         )}/${encodeURIComponent(args.timeseriesColName)}/${encodeURIComponent(
           args.xColName
         )}/${encodeURIComponent(args.yColName)}/${encodeURIComponent(
-          args.timeseriesID
+          args.timeseriesId
         )}/false`,
         {}
       );
       mutations.updateTimeseries(context, {
         dataset: args.dataset,
-        id: args.timeseriesID,
+        id: args.timeseriesId,
         timeseries: response.data.timeseries,
         isDateTime: response.data.isDateTime
       });

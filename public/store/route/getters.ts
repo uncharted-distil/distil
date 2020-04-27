@@ -407,5 +407,13 @@ export const getters = {
       return null;
     }
     return id;
+  },
+
+  getRoutePredictionsDataset(state: Route, getters: any): string {
+    const dataset = <string>state.query.predictionsDataset;
+    if (!dataset) {
+      return null;
+    }
+    return dataset;
   }
 };

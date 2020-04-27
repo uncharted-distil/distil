@@ -192,7 +192,7 @@ export default Vue.extend({
       this.uploadStatus = err ? "error" : "success";
 
       if (this.uploadStatus !== "error" && !response.complete) {
-        const dataset = getPredictionsById(
+        const predictionDataset = getPredictionsById(
           requestGetters.getPredictions(this.$store),
           response.produceRequestId
         ).dataset;
@@ -203,7 +203,8 @@ export default Vue.extend({
           fittedSolutionId: this.fittedSolutionId,
           produceRequestId: response.produceRequestId,
           target: this.target,
-          dataset: dataset,
+          predictionDataset: predictionDataset,
+          dataset: this.dataset,
           varModes: varModes
         };
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);

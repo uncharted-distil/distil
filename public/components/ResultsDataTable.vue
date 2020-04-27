@@ -47,7 +47,7 @@
       >
         <sparkline-preview
           :key="data.item[timeseriesGrouping.idCol].value"
-          :dataset="dataset"
+          :truth-dataset="dataset"
           :x-col="timeseriesGrouping.properties.xCol"
           :y-col="timeseriesGrouping.properties.yCol"
           :timeseries-col="timeseriesGrouping.idCol"
