@@ -23,10 +23,44 @@
       block
       variant="primary"
       class="result-button-alignment"
-      v-on:click="saveModel"
+      v-b-modal.save-model-modal
     >
       Save Model
     </b-button>
+    <b-modal
+      title="Save Model"
+      id="save-model-modal"
+      @ok="handleOk"
+      @cancel="resetModal"
+      @close="resetModal"
+    >
+      <form ref="saveModelForm" @submit.stop.prevent="saveModel">
+        <b-form-group
+          label="Model Name"
+          label-for="model-name-input"
+          invalid-feedback="Model Name is Required"
+          :state="saveNameState"
+        >
+          <b-form-input
+            id="model-name-input"
+            v-model="saveName"
+            :state="saveNameState"
+            required
+          ></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="Model Description"
+          label-for="model-desc-input"
+          :state="saveDescriptionState"
+        >
+          <b-form-input
+            id="model-desc-input"
+            v-model="saveDescription"
+            :state="saveDescriptionState"
+          ></b-form-input>
+        </b-form-group>
+      </form>
+    </b-modal>
   </div>
 </template>
 
@@ -77,7 +111,11 @@ export default Vue.extend({
       file: null,
       uploadData: {},
       uploadStatus: "",
-      uploadType: PREDICTION_UPLOAD
+      uploadType: PREDICTION_UPLOAD,
+      saveName: "",
+      saveNameState: null,
+      saveDescription: "",
+      saveDescriptionState: null
     };
   },
 
@@ -130,6 +168,11 @@ export default Vue.extend({
   },
 
   methods: {
+    validForm() {
+      const valid = this.saveName.length > 0
+      this.saveNameState = valid;
+      return valid
+    },
     onUploadStart(uploadData) {
       this.uploadData = uploadData;
       this.uploadStatus = "started";
@@ -162,7 +205,24 @@ export default Vue.extend({
         this.$router.push(entry);
       }
     },
+    handleOk(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault();
+      // Trigger submit handler
+      this.saveModel();
+    },
+    resetModal() {
+      this.saveName = '';
+      this.saveNameState = null;
+      this.saveDescription = '';
+      this.saveDescriptionState = null;
+    },
     saveModel () {
+      if (!this.validForm()) {
+        console.log(this.validForm());
+        return;
+      }
+
       appActions.logUserEvent(this.$store, {
         feature: Feature.EXPORT_MODEL,
         activity: Activity.MODEL_SELECTION,
@@ -172,15 +232,23 @@ export default Vue.extend({
           fittedSolution: this.fittedSolutionId
         }
       });
+
       appActions
         .saveModel(this.$store, {
-          fittedSolutionId: this.fittedSolutionId
+          fittedSolutionId: this.fittedSolutionId,
+          modelName: this.saveName,
+          modelDescription: this.saveDescription
         })
         .then(err => {
           if (err) {
             console.log(err);
           }
         });
+
+      this.$nextTick(() => {
+        this.$bvModal.hide('save-model-modal');
+        this.resetModal();
+      });
     }
   }
 });

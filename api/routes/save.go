@@ -24,6 +24,7 @@ import (
 
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
+	"github.com/uncharted-distil/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -63,10 +64,27 @@ func SaveHandler(modelStorageCtor api.ExportedModelStorageCtor, solutionStorageC
 			handleError(w, errors.Wrap(err, "failed to create solution storage client"))
 			return
 		}
+		// parse POST params
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+			return
+		}
+
+		modelName, ok := json.String(params, "modelName")
+		if !ok {
+			handleError(w, errors.Errorf("Unable to parse model name parameter"))
+			return
+		}
+		modelDescription, ok := json.String(params, "modelDescription")
+		if !ok {
+			handleError(w, errors.Errorf("Unable to parse model description parameter"))
+			return
+		}
 
 		if fittedBool {
 			var exported *api.ExportedModel
-			exported, err = task.SaveFittedSolution(solutionID, solutionStorage, metadataStorage)
+			exported, err = task.SaveFittedSolution(solutionID, modelName, modelDescription, solutionStorage, metadataStorage)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "failed saving fitted solution"))
 				return
