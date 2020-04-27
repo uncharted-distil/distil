@@ -132,7 +132,7 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 
 			imageLoaded, err := readImage(imageFilenameFull, i.ImageType)
 			if err != nil {
-				log.Warnf("unable to read image: %v", err)
+				log.Warnf("unable to read image '%s': %v", imageFilename, err)
 				continue
 			}
 
@@ -145,13 +145,13 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 
 			imageOutput, err := toJPEG(&imageLoaded)
 			if err != nil {
-				log.Warnf("unable to convert image: %v", err)
+				log.Warnf("unable to convert image '%s': %v", imageFilename, err)
 				continue
 			}
 
 			err = util.WriteFileWithDirs(targetImageFilename, imageOutput, os.ModePerm)
 			if err != nil {
-				log.Warnf("unable to save processed image file: %v", err)
+				log.Warnf("unable to save processed image file '%s': %v", imageFilename, err)
 				continue
 			}
 
@@ -163,7 +163,7 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 	// check counts and flag if too many errors
 	for label, count := range totalCounts {
 		successes := successCounts[label]
-		if count*int((1.0-config.ImportErrorThreshold)) < successes {
+		if successes < int(float64(count)*(1.0-config.ImportErrorThreshold)) {
 			return nil, errors.Errorf("too many errors when processing label '%s' (%d out of %d failed)", label, count-successes, count)
 		}
 	}
