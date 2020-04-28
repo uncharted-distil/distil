@@ -185,9 +185,7 @@ func getUniqueOutputFolder(dataset string, outputPath string) (string, error) {
 		}
 	}
 
-	uniqueDataset := getUniqueString(dataset, dirs)
-
-	return uniqueDataset, nil
+	return getUniqueString(dataset, dirs), nil
 }
 
 func getUniqueString(base string, existing []string) string {
@@ -198,7 +196,7 @@ func getUniqueString(base string, existing []string) string {
 	}
 
 	unique := base
-	for count := 1; !existingMap[unique]; count++ {
+	for count := 1; existingMap[unique]; count++ {
 		unique = fmt.Sprintf("%s_%d", base, count)
 	}
 

@@ -61,22 +61,16 @@ type Image struct {
 
 // NewImageDataset creates a new image dataset from raw byte data, assuming json.
 func NewImageDataset(dataset string, imageType string, rawData []byte, config *env.Config) (*Image, error) {
-	outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
-	outputDatasetPath := path.Join(outputPath, dataset)
-
-	// clear the output dataset path location
-	err := util.RemoveContents(outputDatasetPath)
-	if err != nil {
-		log.Warnf("unable to remove contents: %v", err)
-	}
-
 	// store and expand raw data
-	zipFilename := path.Join(outputDatasetPath, "raw.zip")
-	err = util.WriteFileWithDirs(zipFilename, rawData, os.ModePerm)
+	tmpPath := env.GetTmpPath()
+	zipFilename := path.Join(tmpPath, fmt.Sprintf("%s_raw.zip", dataset))
+	zipFilename = getUniqueName(zipFilename)
+	err := util.WriteFileWithDirs(zipFilename, rawData, os.ModePerm)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to write raw image data archive")
 	}
-	extractedArchivePath := outputDatasetPath
+
+	extractedArchivePath := getUniqueFolder(path.Join(tmpPath, dataset))
 	err = util.Unzip(zipFilename, extractedArchivePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to extract raw image data archive")
