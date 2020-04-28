@@ -194,6 +194,10 @@ func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMet
 	if err != nil {
 		return nil, err
 	}
+	if len(datasets) < 1 {
+		return nil, nil
+	}
+
 	return datasets[0], nil
 }
 

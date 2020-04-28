@@ -48,7 +48,7 @@ var (
 
 // DatasetConstructor is used to build a dataset.
 type DatasetConstructor interface {
-	CreateDataset(rootDataPath string, config *env.Config) (*api.RawDataset, error)
+	CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error)
 }
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.
@@ -70,7 +70,7 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 	dataPath := path.Join(outputDatasetPath, dataFilePath)
 
-	ds, err := datasetCtor.CreateDataset(outputDatasetPath, config)
+	ds, err := datasetCtor.CreateDataset(outputDatasetPath, dataset, config)
 	if err != nil {
 		return "", "", err
 	}

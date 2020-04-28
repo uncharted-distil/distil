@@ -85,9 +85,11 @@ func NewImageDataset(dataset string, imageType string, rawData []byte, config *e
 }
 
 // CreateDataset processes the raw image dataset and creates a raw D3M dataset.
-func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.RawDataset, error) {
-	outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
-	outputDatasetPath := path.Join(outputPath, i.Dataset)
+func (i *Image) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+	if datasetName == "" {
+		datasetName = i.Dataset
+	}
+	outputDatasetPath := rootDataPath
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 
 	imageFolders := make([]string, 0)
@@ -165,8 +167,8 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 	log.Infof("creating metadata")
 
 	// create the dataset schema doc
-	datasetID := model.NormalizeDatasetID(i.Dataset)
-	meta := model.NewMetadata(i.Dataset, i.Dataset, "", datasetID)
+	datasetID := model.NormalizeDatasetID(datasetName)
+	meta := model.NewMetadata(datasetName, datasetName, "", datasetID)
 	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	dr.Variables = append(dr.Variables,
@@ -193,7 +195,7 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 
 	return &api.RawDataset{
 		ID:       datasetID,
-		Name:     i.Dataset,
+		Name:     datasetName,
 		Data:     csvData,
 		Metadata: meta,
 	}, nil

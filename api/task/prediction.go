@@ -41,9 +41,9 @@ type predictionDataset struct {
 	params *PredictParams
 }
 
-func (p *predictionDataset) CreateDataset(rootDataPath string, config *env.Config) (*api.RawDataset, error) {
+func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
 	// need to do a bit of processing on the usual setup
-	ds, err := p.params.DatasetConstructor.CreateDataset(rootDataPath, config)
+	ds, err := p.params.DatasetConstructor.CreateDataset(rootDataPath, datasetName, config)
 	if err != nil {
 		return nil, err
 	}
