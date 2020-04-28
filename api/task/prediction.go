@@ -108,7 +108,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		}
 
 		// create the dataset to be used for predictions
-		_, err = CreateDataset(params.Dataset, predictionDatasetCtor, params.OutputPath, api.DatasetTypeInference, params.Config)
+		_, _, err = CreateDataset(params.Dataset, predictionDatasetCtor, params.OutputPath, api.DatasetTypeInference, params.Config)
 		if err != nil {
 			return nil, err
 		}
