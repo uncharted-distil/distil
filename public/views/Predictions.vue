@@ -119,6 +119,17 @@ export default Vue.extend({
   color: rgba(0, 0, 0, 0.87);
 }
 
+.predictions-view .table td {
+  text-align: left;
+  padding: 0px;
+}
+.predictions-view .table td > div {
+  text-align: left;
+  padding: 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .variable-summaries {
   display: flex;
   flex-direction: column;
