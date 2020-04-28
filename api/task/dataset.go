@@ -18,6 +18,7 @@ package task
 import (
 	"bytes"
 	"encoding/csv"
+	"fmt"
 	"os"
 	"path"
 
@@ -53,7 +54,15 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 	ingestConfig := NewConfig(*config)
 
 	// save the csv file in the file system datasets folder
+	var err error
 	outputDatasetPath := path.Join(outputPath, dataset)
+	if !config.IngestOverwrite {
+		outputDatasetPath, err = getUniqueOutputFolder(outputDatasetPath, outputPath)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 	dataPath := path.Join(outputDatasetPath, dataFilePath)
 
@@ -156,4 +165,31 @@ func UpdateExtremas(dataset string, metaStorage api.MetadataStorage, dataStorage
 	}
 
 	return nil
+}
+
+func getUniqueOutputFolder(datasetPath string, outputPath string) (string, error) {
+	// read the folders in the output path
+	datasets, err := util.GetDirectories(outputPath)
+	if err != nil {
+		return "", err
+	}
+
+	uniqueDataset := getUniqueString(datasetPath, datasets)
+
+	return uniqueDataset, nil
+}
+
+func getUniqueString(base string, existing []string) string {
+	// create a unique name if the current name is already in use
+	existingMap := make(map[string]bool)
+	for _, e := range existing {
+		existingMap[e] = true
+	}
+
+	unique := base
+	for count := 1; !existingMap[unique]; count++ {
+		unique = fmt.Sprintf("%s_%d", base, count)
+	}
+
+	return unique
 }

@@ -586,15 +586,10 @@ func getUniqueDatasetName(meta *model.Metadata, storage api.MetadataStorage) (st
 		return "", err
 	}
 
-	datasetNames := make(map[string]bool)
+	datasetNames := make([]string, 0)
 	for _, ds := range datasets {
-		datasetNames[ds.Name] = true
+		datasetNames = append(datasetNames, ds.Name)
 	}
 
-	uniqueName := meta.Name
-	for count := 1; !datasetNames[uniqueName]; count++ {
-		uniqueName = fmt.Sprintf("%s_%d", meta.Name, count)
-	}
-
-	return uniqueName, nil
+	return getUniqueString(meta.Name, datasetNames), nil
 }
