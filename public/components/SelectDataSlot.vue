@@ -363,7 +363,6 @@ export default Vue.extend({
   display: flex;
   flex-flow: wrap;
   height: 100%;
-  overflow: scroll;
   position: relative;
   width: 100%;
 }
