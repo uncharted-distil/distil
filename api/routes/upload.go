@@ -87,7 +87,7 @@ func uploadTableDataset(datasetName string, outputPath string, config *env.Confi
 	}
 
 	// create the raw dataset schema doc
-	formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
+	_, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create dataset")
 	}
@@ -102,7 +102,7 @@ func uploadImageDataset(datasetName string, outputPath string, config *env.Confi
 	}
 
 	// create the raw dataset schema doc
-	formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
+	_, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create dataset")
 	}
