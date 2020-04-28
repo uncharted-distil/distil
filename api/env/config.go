@@ -58,6 +58,7 @@ type Config struct {
 	GeocodingOutputSchemaRelative      string  `env:"GEOCODING_OUTPUT_SCHEMA" envDefault:"geocoded/datasetDoc.json"`
 	GeocodingEnabled                   bool    `env:"GEOCODING_ENABLED" envDefault:"false"`
 	IngestHardFail                     bool    `env:"INGEST_HARD_FAIL" envDefault:"false"`
+	IngestOverwrite                    bool    `env:"INGEST_OVERWRITE" envDefault:"false"`
 	InitialDataset                     string  `env:"INITIAL_DATASET" envDefault:""`
 	MaxTrainingRows                    int     `env:"MAX_TRAINING_ROWS" envDefault:"10000"`
 	MaxTestRows                        int     `env:"MAX_TEST_ROWS" envDefault:"10000"`

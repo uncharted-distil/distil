@@ -79,6 +79,7 @@ type IngestTaskConfig struct {
 	ESTimeout                          int
 	ESDatasetPrefix                    string
 	HardFail                           bool
+	IngestOverwrite                    bool
 }
 
 // NewDefaultClient creates a new client to use when submitting pipelines.
@@ -131,23 +132,24 @@ func NewConfig(config env.Config) *IngestTaskConfig {
 		ESTimeout:                          config.ElasticTimeout,
 		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
 		HardFail:                           config.IngestHardFail,
+		IngestOverwrite:                    config.IngestOverwrite,
 	}
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor,
-	index string, dataset string, origins []*model.DatasetOrigin, config *IngestTaskConfig) error {
+	index string, dataset string, origins []*model.DatasetOrigin, config *IngestTaskConfig) (string, error) {
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
 	metaStorage, err := metaCtor()
 	if err != nil {
-		return errors.Wrap(err, "unable to initialize metadata storage")
+		return "", errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
 	dataStorage, err := dataCtor()
 	if err != nil {
-		return errors.Wrap(err, "unable to initialize data storage")
+		return "", errors.Wrap(err, "unable to initialize data storage")
 	}
 
 	sourceFolder := env.ResolvePath(datasetSource, dataset)
@@ -160,7 +162,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		output, err = ClusterDataset(datasetSource, latestSchemaOutput, index, dataset, config)
 		if err != nil {
 			if config.HardFail {
-				return errors.Wrap(err, "unable to cluster all data")
+				return "", errors.Wrap(err, "unable to cluster all data")
 			}
 			log.Errorf("unable to cluster all data: %v", err)
 		} else {
@@ -171,21 +173,21 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 
 	output, err = Merge(datasetSource, latestSchemaOutput, index, dataset, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to merge all data into a single file")
+		return "", errors.Wrap(err, "unable to merge all data into a single file")
 	}
 	latestSchemaOutput = output
 	log.Infof("finished merging the dataset")
 
 	output, err = Clean(datasetSource, latestSchemaOutput, index, dataset, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to clean all data")
+		return "", errors.Wrap(err, "unable to clean all data")
 	}
 	latestSchemaOutput = output
 	log.Infof("finished cleaning the dataset")
 
 	_, err = Classify(latestSchemaOutput, index, dataset, config)
 	if err != nil {
-		return errors.Wrap(err, "unable to classify fields")
+		return "", errors.Wrap(err, "unable to classify fields")
 	}
 	log.Infof("finished classifying the dataset")
 
@@ -200,7 +202,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished summarizing the dataset")
 		if err != nil {
 			if config.HardFail {
-				return errors.Wrap(err, "unable to summarize the dataset")
+				return "", errors.Wrap(err, "unable to summarize the dataset")
 			}
 			log.Errorf("unable to summarize the dataset: %v", err)
 		}
@@ -211,7 +213,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	if config.GeocodingEnabled {
 		output, err = GeocodeForwardDataset(datasetSource, latestSchemaOutput, index, dataset, config)
 		if err != nil {
-			return errors.Wrap(err, "unable to geocode all data")
+			return "", errors.Wrap(err, "unable to geocode all data")
 		}
 		latestSchemaOutput = output
 		log.Infof("finished geocoding the dataset")
@@ -219,7 +221,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 
 	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, origins, config, true, true)
 	if err != nil {
-		return errors.Wrap(err, "unable to ingest ranked data")
+		return "", errors.Wrap(err, "unable to ingest ranked data")
 	}
 	log.Infof("finished ingesting the dataset")
 
@@ -230,7 +232,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	}
 	log.Infof("finished updating extremas")
 
-	return nil
+	return datasetID, nil
 }
 
 // Ingest the metadata to ES and the data to Postgres.
@@ -239,6 +241,26 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, nil, config, true, fallbackMerged)
 	if err != nil {
 		return "", err
+	}
+
+	if !config.IngestOverwrite {
+		// get the unique name, and if it is different then write out the updated metadata
+		uniqueName, err := getUniqueDatasetName(meta, storage)
+		if err != nil {
+			return "", err
+		}
+
+		if uniqueName != meta.Name {
+			meta.Name = uniqueName
+			meta.ID = model.NormalizeDatasetID(uniqueName)
+			extendedOutput := source == metadata.Augmented
+			log.Infof("storing (extended: %v) metadata with new name to %s", extendedOutput, originalSchemaFile)
+			err = metadata.WriteSchema(meta, originalSchemaFile, extendedOutput)
+			if err != nil {
+				return "", errors.Wrap(err, "unable to store updated metadata")
+			}
+			log.Infof("updated metadata with new name written to %s", originalSchemaFile)
+		}
 	}
 
 	// create elasticsearch client
@@ -267,7 +289,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// Check for existing dataset
-	if checkMatch {
+	if checkMatch && config.IngestOverwrite {
 		match, err := matchDataset(storage, meta, index)
 		// Ignore the error for now as if this fails we still want ingest to succeed.
 		if err != nil {
@@ -555,4 +577,24 @@ func deleteDataset(name string, index string, pg *postgres.Database, es *elastic
 	}
 
 	return nil
+}
+
+func getUniqueDatasetName(meta *model.Metadata, storage api.MetadataStorage) (string, error) {
+	// create a unique name if the current name is already in use
+	datasets, err := storage.FetchDatasets(false, false)
+	if err != nil {
+		return "", err
+	}
+
+	datasetNames := make(map[string]bool)
+	for _, ds := range datasets {
+		datasetNames[ds.Name] = true
+	}
+
+	uniqueName := meta.Name
+	for count := 1; !datasetNames[uniqueName]; count++ {
+		uniqueName = fmt.Sprintf("%s_%d", meta.Name, count)
+	}
+
+	return uniqueName, nil
 }
