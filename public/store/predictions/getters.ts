@@ -47,27 +47,6 @@ export const getters = {
     return getTableDataFields(state.includedPredictionTableData);
   },
 
-  hasExcludedPredictionTableData(state: PredictionState): boolean {
-    return !!state.excludedPredictionTableData;
-  },
-
-  getExcludedPredictionTableData(state: PredictionState): TableData {
-    return state.excludedPredictionTableData;
-  },
-
-  getExcludedPredictionTableDataItems(
-    state: PredictionState,
-    getters: any
-  ): TableRow[] {
-    return getTableDataItems(state.excludedPredictionTableData);
-  },
-
-  getExcludedPredictionTableDataFields(
-    state: PredictionState
-  ): Dictionary<TableColumn> {
-    return getTableDataFields(state.excludedPredictionTableData);
-  },
-
   // predicted
 
   getPredictionSummaries(state: PredictionState): VariableSummary[] {

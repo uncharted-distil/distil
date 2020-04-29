@@ -79,7 +79,7 @@ func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWrit
 		}
 
 		// create the raw dataset schema doc
-		formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
+		datasetName, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to create d3m dataset"))
 			return
@@ -92,7 +92,7 @@ func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWrit
 
 		log.Infof("uploaded new dataset %s at %s", datasetName, formattedPath)
 		// marshal data and sent the response back
-		err = handleJSON(w, map[string]interface{}{"result": "uploaded"})
+		err = handleJSON(w, map[string]interface{}{"dataset": datasetName, "result": "uploaded"})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
 			return

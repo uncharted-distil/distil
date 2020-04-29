@@ -3,6 +3,7 @@ import { Route } from "vue-router";
 import { getters as moduleGetters } from "./getters";
 import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
+import { modelModule } from "../model/module";
 
 export const routeModule: Module<Route, DistilState> = {
   getters: moduleGetters
@@ -34,6 +35,10 @@ export const getters = {
     moduleGetters.getJoinDatasetsVariableSummaries
   ),
   getRouteTrainingVariables: read(moduleGetters.getRouteTrainingVariables),
+  getRouteIsTrainingVariablesRanked: read(
+    moduleGetters.getRouteIsTrainingVariablesRanked
+  ),
+  getRouteIsClusterGenerated: read(moduleGetters.getRouteIsClusterGenerated),
   getDecodedTrainingVariableNames: read(
     moduleGetters.getDecodedTrainingVariableNames
   ),
@@ -81,5 +86,6 @@ export const getters = {
   getGeoZoom: read(moduleGetters.getGeoZoom),
   getGroupingType: read(moduleGetters.getGroupingType),
   getRouteTask: read(moduleGetters.getRouteTask),
-  getRouteFittedSolutionID: read(moduleGetters.getRouteFittedSolutionId)
+  getRouteFittedSolutionID: read(moduleGetters.getRouteFittedSolutionId),
+  getRoutePredictionsDataset: read(moduleGetters.getRoutePredictionsDataset)
 };

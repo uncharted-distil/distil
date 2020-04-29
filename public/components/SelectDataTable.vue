@@ -37,7 +37,7 @@
         <div class="container" :key="data.item[timeseriesGrouping.idCol].value">
           <div class="row">
             <sparkline-preview
-              :dataset="dataset"
+              :truth-dataset="dataset"
               :x-col="timeseriesGrouping.properties.xCol"
               :y-col="timeseriesGrouping.properties.yCol"
               :timeseries-col="timeseriesGrouping.idCol"

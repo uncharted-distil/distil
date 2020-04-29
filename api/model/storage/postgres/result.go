@@ -540,8 +540,9 @@ func addTableAlias(prefix string, fields []string, addToColumn bool) []string {
 	return fieldsPrepended
 }
 
-// FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *api.FilterParams, predictionResultMode bool) (*api.FilteredData, error) {
+// FetchResults pulls the results from the Postgres database.  Note the generalized `id` string parameter - this will be
+// a solution ID if this is a solution result, or a produce request ID is this is a predictions result.
+func (s *Storage) FetchResults(dataset string, storageName string, resultURI string, id string, filterParams *api.FilterParams, predictionResultMode bool) (*api.FilteredData, error) {
 	storageNameResult := s.getResultTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
@@ -632,10 +633,10 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	if isTimeSeriesValue(variables, variable) {
 		selectedVars = fmt.Sprintf("%s %s ", distincts, strings.Join(fieldsData, ", "))
 	} else {
-		predictedCol := api.GetPredictedKey(solutionID)
+		predictedCol := api.GetPredictedKey(id)
 
 		// If our results are numerical we need to compute residuals and store them in a column called 'error'
-		errorCol := api.GetErrorKey(solutionID)
+		errorCol := api.GetErrorKey(id)
 		errorExpr := ""
 		if model.IsNumerical(variable.Type) && !predictionResultMode {
 			errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(dataTableAlias, variable.Name), errorCol)
@@ -757,41 +758,16 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 		return nil, err
 	}
 
+	// use the variable type to guide the summary creation
 	var field Field
-
-	if variable.Grouping != nil {
-		if model.IsTimeSeries(variable.Grouping.Type) {
-
-			timeColVar, err := s.metadata.FetchVariable(dataset, variable.Grouping.Properties.XCol)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
-			}
-
-			valueColVar, err := s.metadata.FetchVariable(dataset, variable.Grouping.Properties.YCol)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
-			}
-
-			field = NewTimeSeriesField(s, dataset, storageName, variable.Grouping.Properties.ClusterCol, variable.Name, variable.DisplayName, variable.Type,
-				variable.Grouping.IDCol, timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
-
-		} else {
-			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Name, variable.Type)
-		}
-
+	if model.IsNumerical(variable.Type) {
+		field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
+	} else if model.IsCategorical(variable.Type) {
+		field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
+	} else if model.IsVector(variable.Type) {
+		field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else {
-
-		// use the variable type to guide the summary creation
-
-		if model.IsNumerical(variable.Type) {
-			field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
-		} else if model.IsCategorical(variable.Type) {
-			field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
-		} else if model.IsVector(variable.Type) {
-			field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
-		} else {
-			return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
-		}
+		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 
 	summary, err := field.FetchPredictedSummaryData(resultURI, storageNameResult, filterParams, extrema, mode)

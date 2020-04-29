@@ -89,22 +89,16 @@ func (b *BoundingBox) pointToString(point *Point) string {
 
 // NewSatelliteDataset creates a new satelitte dataset from geotiff files
 func NewSatelliteDataset(dataset string, imageType string, rawData []byte, config *env.Config) (*Satellite, error) {
-	outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
-	outputDatasetPath := path.Join(outputPath, dataset)
-
-	// clear the output dataset path location
-	err := util.RemoveContents(outputDatasetPath)
-	if err != nil {
-		log.Warnf("unable to remove contents: %v", err)
-	}
-
 	// store and expand raw data
-	zipFilename := path.Join(outputDatasetPath, "raw.zip")
-	err = util.WriteFileWithDirs(zipFilename, rawData, os.ModePerm)
+	tmpPath := env.GetTmpPath()
+	zipFilename := path.Join(tmpPath, fmt.Sprintf("%s_raw.zip", dataset))
+	zipFilename = getUniqueName(zipFilename)
+	err := util.WriteFileWithDirs(zipFilename, rawData, os.ModePerm)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to write raw image data archive")
 	}
-	extractedArchivePath := outputDatasetPath
+
+	extractedArchivePath := getUniqueFolder(path.Join(tmpPath, dataset))
 	err = util.Unzip(zipFilename, extractedArchivePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to extract raw image data archive")
@@ -119,9 +113,11 @@ func NewSatelliteDataset(dataset string, imageType string, rawData []byte, confi
 }
 
 // CreateDataset processes the raw satellite dataset and creates a raw D3M dataset.
-func (s *Satellite) CreateDataset(rootDataPath string, config *env.Config) (*api.RawDataset, error) {
-	outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
-	outputDatasetPath := path.Join(outputPath, s.Dataset)
+func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+	if datasetName == "" {
+		datasetName = s.Dataset
+	}
+	outputDatasetPath := rootDataPath
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 
 	imageFolders, err := getImageFolders(s.ExtractedFilePath)
@@ -199,8 +195,8 @@ func (s *Satellite) CreateDataset(rootDataPath string, config *env.Config) (*api
 	log.Infof("creating metadata")
 
 	// create the dataset schema doc
-	datasetID := model.NormalizeDatasetID(s.Dataset)
-	meta := model.NewMetadata(s.Dataset, s.Dataset, "", datasetID)
+	datasetID := model.NormalizeDatasetID(datasetName)
+	meta := model.NewMetadata(datasetName, datasetName, "", datasetID)
 	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	dr.Variables = append(dr.Variables,
@@ -239,7 +235,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, config *env.Config) (*api
 
 	return &api.RawDataset{
 		ID:       datasetID,
-		Name:     s.Dataset,
+		Name:     datasetName,
 		Data:     csvData,
 		Metadata: meta,
 	}, nil

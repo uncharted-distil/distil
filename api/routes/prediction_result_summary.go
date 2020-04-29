@@ -39,7 +39,6 @@ func fetchPredictionResultExtrema(meta api.MetadataStorage, data api.DataStorage
 		return nil, nil
 	}
 
-	// get extrema
 	min := math.MaxFloat64
 	max := -math.MaxFloat64
 	// predicted extrema
@@ -49,13 +48,6 @@ func fetchPredictionResultExtrema(meta api.MetadataStorage, data api.DataStorage
 	}
 	max = math.Max(max, predictedExtrema.Max)
 	min = math.Min(min, predictedExtrema.Min)
-	// result extrema
-	resultExtrema, err := data.FetchExtremaByURI(dataset, storageName, resultURI, target)
-	if err != nil {
-		return nil, err
-	}
-	max = math.Max(max, resultExtrema.Max)
-	min = math.Min(min, resultExtrema.Min)
 
 	return api.NewExtrema(min, max)
 }
@@ -137,7 +129,6 @@ func PredictionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCt
 			return
 		}
 		summary.Key = api.GetPredictedKey(res.ProduceRequestID)
-		summary.Label = "Predicted"
 
 		// marshal data and sent the response back
 		err = handleJSON(w, PredictedSummary{

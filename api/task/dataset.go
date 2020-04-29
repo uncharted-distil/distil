@@ -18,12 +18,15 @@ package task
 import (
 	"bytes"
 	"encoding/csv"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil/api/env"
@@ -45,62 +48,72 @@ var (
 
 // DatasetConstructor is used to build a dataset.
 type DatasetConstructor interface {
-	CreateDataset(rootDataPath string, config *env.Config) (*api.RawDataset, error)
+	CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error)
 }
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.
-func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath string, typ api.DatasetType, config *env.Config) (string, error) {
+func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath string, typ api.DatasetType, config *env.Config) (string, string, error) {
 	ingestConfig := NewConfig(*config)
 
 	// save the csv file in the file system datasets folder
+	if !config.IngestOverwrite {
+		datasetUnique, err := getUniqueOutputFolder(dataset, outputPath)
+		if err != nil {
+			return "", "", err
+		}
+		if datasetUnique != dataset {
+			log.Infof("dataset changed to '%s' from '%s'", datasetUnique, dataset)
+			dataset = datasetUnique
+		}
+	}
 	outputDatasetPath := path.Join(outputPath, dataset)
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 	dataPath := path.Join(outputDatasetPath, dataFilePath)
 
-	ds, err := datasetCtor.CreateDataset(outputDatasetPath, config)
+	ds, err := datasetCtor.CreateDataset(outputDatasetPath, dataset, config)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	var outputBuffer bytes.Buffer
 	csvWriter := csv.NewWriter(&outputBuffer)
 	err = csvWriter.WriteAll(ds.Data)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to write csv data to buffer")
+		return "", "", errors.Wrap(err, "unable to write csv data to buffer")
 	}
 	csvWriter.Flush()
 
 	err = util.WriteFileWithDirs(dataPath, outputBuffer.Bytes(), os.ModePerm)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
 	err = metadata.WriteSchema(ds.Metadata, schemaPath, true)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// format the dataset into a D3M format
 	formattedPath, err := Format(metadata.Contrib, schemaPath, dataset, ingestConfig)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// copy to the original output location for consistency
 	if formattedPath != outputDatasetPath {
 		err = os.RemoveAll(outputDatasetPath)
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 
 		err = util.Copy(formattedPath, path.Dir(schemaPath))
 		if err != nil {
-			return "", err
+			return "", "", err
 		}
 	}
 
-	return formattedPath, nil
+	return dataset, formattedPath, nil
 }
 
 func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, config *IngestTaskConfig) (string, error) {
@@ -156,4 +169,36 @@ func UpdateExtremas(dataset string, metaStorage api.MetadataStorage, dataStorage
 	}
 
 	return nil
+}
+
+func getUniqueOutputFolder(dataset string, outputPath string) (string, error) {
+	// read the folders in the output path
+	files, err := ioutil.ReadDir(outputPath)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to list output path content")
+	}
+
+	dirs := make([]string, 0)
+	for _, f := range files {
+		if f.IsDir() {
+			dirs = append(dirs, f.Name())
+		}
+	}
+
+	return getUniqueString(dataset, dirs), nil
+}
+
+func getUniqueString(base string, existing []string) string {
+	// create a unique name if the current name is already in use
+	existingMap := make(map[string]bool)
+	for _, e := range existing {
+		existingMap[e] = true
+	}
+
+	unique := base
+	for count := 1; existingMap[unique]; count++ {
+		unique = fmt.Sprintf("%s_%d", base, count)
+	}
+
+	return unique
 }

@@ -632,7 +632,7 @@ export const actions = {
       xColName: string;
       yColName: string;
       timeseriesColName: string;
-      timeseriesID: any;
+      timeseriesId: any;
       solutionId: string;
     }
   ) {
@@ -652,7 +652,7 @@ export const actions = {
       console.warn("`timeseriesColName` argument is missing");
       return null;
     }
-    if (!args.timeseriesID) {
+    if (!args.timeseriesId) {
       console.warn("`timeseriesID` argument is missing");
       return null;
     }
@@ -672,18 +672,25 @@ export const actions = {
 
     try {
       const response = await axios.post(
-        `distil/timeseries-forecast/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}/${solution.resultId}`,
+        `distil/timeseries-forecast/` +
+          `${encodeURIComponent(args.dataset)}/` +
+          `${encodeURIComponent(args.dataset)}/` +
+          `${encodeURIComponent(args.timeseriesColName)}/` +
+          `${encodeURIComponent(args.xColName)}/` +
+          `${encodeURIComponent(args.yColName)}/` +
+          `${encodeURIComponent(args.timeseriesId)}/` +
+          `${encodeURIComponent(solution.resultId)}`,
         {}
       );
       mutations.updatePredictedTimeseries(context, {
         solutionId: args.solutionId,
-        id: args.timeseriesID,
+        id: args.timeseriesId,
         timeseries: response.data.timeseries,
         isDateTime: response.data.isDateTime
       });
       mutations.updatePredictedForecast(context, {
         solutionId: args.solutionId,
-        id: args.timeseriesID,
+        id: args.timeseriesId,
         forecast: response.data.forecast,
         forecastTestRange: response.data.forecastTestRange,
         isDateTime: response.data.isDateTime

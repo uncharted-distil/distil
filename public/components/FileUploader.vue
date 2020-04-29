@@ -8,10 +8,26 @@
     <b-modal
       id="upload-modal"
       title="Import local file"
-      :ok-disabled="!Boolean(file)"
+      :ok-disabled="!Boolean(file) || importDataName.length < 0"
       @ok="handleOk()"
-      @show="clearFile()"
+      @show="clearForm()"
     >
+      <div v-if="showImportDataName">
+        <b-form-group
+          label="Imported Data Name"
+          label-for="import-name-input"
+          invalid-feedback="Imported Data Name is Required"
+          :state="importDataNameState"
+        >
+          <b-form-input
+            ref="importnameinput"
+            id="import-name-input"
+            v-model="importDataName"
+            :state="importDataNameState"
+            required
+          ></b-form-input>
+        </b-form-group>
+      </div>
       <p>{{ modalText }}</p>
       <b-form-file
         ref="fileinput"
@@ -37,7 +53,9 @@ export default Vue.extend({
 
   data() {
     return {
-      file: null
+      file: null,
+      importDataName: "",
+      importDataNameState: null
     };
   },
 
@@ -49,6 +67,9 @@ export default Vue.extend({
   },
 
   computed: {
+    showImportDataName(): boolean {
+      return this.uploadType === PREDICTION_UPLOAD;
+    },
     buttonText(): string {
       switch (this.uploadType) {
         case PREDICTION_UPLOAD:
@@ -81,13 +102,14 @@ export default Vue.extend({
       return this.file ? this.file.name : "";
     },
     datasetID(): string {
-      if (this.filename) {
+      if (this.filename.length > 0 && this.importDataName.length > 0) {
         const fileNameTokens = this.filename.split(".");
         const fname =
-          fileNameTokens.length > 1
+          this.importDataName +
+          (fileNameTokens.length > 1
             ? fileNameTokens.slice(0, -1).join(".")
-            : fileNameTokens.join(".");
-        const datasetID = fname.replace(" ", "_");
+            : fileNameTokens.join("."));
+        const datasetID = fname.replace(/\s/g, "");
         return datasetID;
       }
       return "";
@@ -95,13 +117,20 @@ export default Vue.extend({
   },
 
   methods: {
-    clearFile() {
+    clearForm() {
       this.file = null;
       const $refs = this.$refs as any;
       if ($refs && $refs.fileinput) $refs.fileinput.reset();
+      if ($refs && $refs.importnameinput) $refs.fileinput.reset();
     },
     handleOk() {
       if (!this.file) {
+        return;
+      }
+      if (
+        this.uploadType === PREDICTION_UPLOAD &&
+        this.importDataName.length < 0
+      ) {
         return;
       }
       this.$emit("uploadstart", {

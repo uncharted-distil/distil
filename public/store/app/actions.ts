@@ -9,9 +9,19 @@ import { Feature, Activity, SubActivity } from "../../util/userEvents";
 export type AppContext = ActionContext<AppState, DistilState>;
 
 export const actions = {
-  async saveModel(context: AppContext, args: { fittedSolutionId: string }) {
+  async saveModel(
+    context: AppContext,
+    args: {
+      fittedSolutionId: string;
+      modelName: string;
+      modelDescription: string;
+    }
+  ) {
     try {
-      await axios.post(`/distil/save/${args.fittedSolutionId}/true`);
+      await axios.post(`/distil/save/${args.fittedSolutionId}/true`, {
+        modelName: args.modelName,
+        modelDescription: args.modelDescription
+      });
       console.warn(`User saved model for ${args.fittedSolutionId}`);
     } catch (error) {
       // If there's a proxy involved (NGINX) we will end up getting a 502 on a successful export because

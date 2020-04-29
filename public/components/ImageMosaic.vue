@@ -35,7 +35,10 @@
           </div>
           <div v-if="!showError" class="image-label-container">
             <template v-for="(fieldInfo, fieldKey) in fields">
-              <div v-if="fieldKey == targetField" class="image-label">
+              <div
+                v-if="fieldKey == targetField || fieldKey == predictedField"
+                class="image-label"
+              >
                 {{ item[fieldKey].value }}
               </div>
             </template>
@@ -120,18 +123,12 @@ export default Vue.extend({
     },
 
     imageFields(): string[] {
-      return _.map(this.fields, (field, key) => {
-        return {
-          key: key,
-          type: field.type
-        };
-      })
+      return _.map(this.fields, (field, key) => ({
+        key: key,
+        type: field.type
+      }))
         .filter(field => field.type === IMAGE_TYPE)
         .map(field => field.key);
-    },
-
-    solution(): Solution {
-      return requestGetters.getActiveSolution(this.$store);
     },
 
     targetField(): string {
@@ -139,11 +136,19 @@ export default Vue.extend({
     },
 
     predictedField(): string {
-      return this.solution ? `${this.solution.predictedKey}` : "";
+      const predictions = requestGetters.getActivePredictions(this.$store);
+      if (predictions) {
+        return predictions.predictedKey;
+      }
+
+      const solution = requestGetters.getActiveSolution(this.$store);
+      return solution ? `${solution.predictedKey}` : "";
     },
 
     showError(): boolean {
-      return this.predictedField !== "";
+      return (
+        this.predictedField && !requestGetters.getActivePredictions(this.$store)
+      );
     }
   },
 
@@ -177,6 +182,7 @@ export default Vue.extend({
 .image-mosaic {
   display: block;
   overflow: visible;
+  padding-bottom: 0.5rem; /* To add some spacing on overflow. */
 }
 
 .image-tile {

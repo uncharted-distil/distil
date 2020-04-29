@@ -61,22 +61,16 @@ type Image struct {
 
 // NewImageDataset creates a new image dataset from raw byte data, assuming json.
 func NewImageDataset(dataset string, imageType string, rawData []byte, config *env.Config) (*Image, error) {
-	outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
-	outputDatasetPath := path.Join(outputPath, dataset)
-
-	// clear the output dataset path location
-	err := util.RemoveContents(outputDatasetPath)
-	if err != nil {
-		log.Warnf("unable to remove contents: %v", err)
-	}
-
 	// store and expand raw data
-	zipFilename := path.Join(outputDatasetPath, "raw.zip")
-	err = util.WriteFileWithDirs(zipFilename, rawData, os.ModePerm)
+	tmpPath := env.GetTmpPath()
+	zipFilename := path.Join(tmpPath, fmt.Sprintf("%s_raw.zip", dataset))
+	zipFilename = getUniqueName(zipFilename)
+	err := util.WriteFileWithDirs(zipFilename, rawData, os.ModePerm)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to write raw image data archive")
 	}
-	extractedArchivePath := outputDatasetPath
+
+	extractedArchivePath := getUniqueFolder(path.Join(tmpPath, dataset))
 	err = util.Unzip(zipFilename, extractedArchivePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to extract raw image data archive")
@@ -91,9 +85,11 @@ func NewImageDataset(dataset string, imageType string, rawData []byte, config *e
 }
 
 // CreateDataset processes the raw image dataset and creates a raw D3M dataset.
-func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.RawDataset, error) {
-	outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
-	outputDatasetPath := path.Join(outputPath, i.Dataset)
+func (i *Image) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+	if datasetName == "" {
+		datasetName = i.Dataset
+	}
+	outputDatasetPath := rootDataPath
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 
 	imageFolders, err := getImageFolders(i.ExtractedFilePath)
@@ -106,6 +102,8 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 	mediaFolder := getUniqueFolder(path.Join(outputDatasetPath, "media"))
 
 	// the folder name represents the label to apply for all containing images
+	totalCounts := make(map[string]int)
+	successCounts := make(map[string]int)
 	for _, imageFolder := range imageFolders {
 		log.Infof("processing image folder '%s'", imageFolder)
 		label := path.Base(imageFolder)
@@ -120,37 +118,51 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 		for _, imageFile := range imageFiles {
 			imageFilename := imageFile.Name()
 			imageFilenameFull := path.Join(imageFolder, imageFilename)
+			totalCounts[label] = totalCounts[label] + 1
 
 			imageLoaded, err := readImage(imageFilenameFull, i.ImageType)
 			if err != nil {
-				return nil, err
+				log.Warnf("unable to read image '%s': %v", imageFilename, err)
+				continue
 			}
 
 			targetImageFilename := imageFilename
-			if path.Ext(targetImageFilename) != fmt.Sprintf(".%s", defaultImageType) {
-				targetImageFilename = fmt.Sprintf("%s.%s", imageFilename, defaultImageType)
+			extension := path.Ext(targetImageFilename)
+			if extension != fmt.Sprintf(".%s", defaultImageType) {
+				targetImageFilename = fmt.Sprintf("%s.%s", strings.TrimSuffix(targetImageFilename, extension), defaultImageType)
 			}
 			targetImageFilename = getUniqueName(path.Join(mediaFolder, targetImageFilename))
 
 			imageOutput, err := toJPEG(&imageLoaded)
 			if err != nil {
-				return nil, err
+				log.Warnf("unable to convert image '%s': %v", imageFilename, err)
+				continue
 			}
 
 			err = util.WriteFileWithDirs(targetImageFilename, imageOutput, os.ModePerm)
 			if err != nil {
-				return nil, errors.Wrap(err, "unable to save processed image file")
+				log.Warnf("unable to save processed image file '%s': %v", imageFilename, err)
+				continue
 			}
 
 			csvData = append(csvData, []string{fmt.Sprintf("%d", len(csvData)-1), path.Base(targetImageFilename), label})
+			successCounts[label] = successCounts[label] + 1
+		}
+	}
+
+	// check counts and flag if too many errors
+	for label, count := range totalCounts {
+		successes := successCounts[label]
+		if successes < int(float64(count)*(1.0-config.ImportErrorThreshold)) {
+			return nil, errors.Errorf("too many errors when processing label '%s' (%d out of %d failed)", label, count-successes, count)
 		}
 	}
 
 	log.Infof("creating metadata")
 
 	// create the dataset schema doc
-	datasetID := model.NormalizeDatasetID(i.Dataset)
-	meta := model.NewMetadata(i.Dataset, i.Dataset, "", datasetID)
+	datasetID := model.NormalizeDatasetID(datasetName)
+	meta := model.NewMetadata(datasetName, datasetName, "", datasetID)
 	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	dr.Variables = append(dr.Variables,
@@ -177,7 +189,7 @@ func (i *Image) CreateDataset(rootDataPath string, config *env.Config) (*api.Raw
 
 	return &api.RawDataset{
 		ID:       datasetID,
-		Name:     i.Dataset,
+		Name:     datasetName,
 		Data:     csvData,
 		Metadata: meta,
 	}, nil

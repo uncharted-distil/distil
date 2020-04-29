@@ -159,7 +159,6 @@ func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variab
 
 // FetchExtremaByURI return extrema of a variable in a result set.
 func (s *Storage) FetchExtremaByURI(dataset string, storageName string, resultURI string, varName string) (*api.Extrema, error) {
-
 	variable, err := s.metadata.FetchVariable(dataset, varName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch variable description for summary")

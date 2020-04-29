@@ -27,6 +27,7 @@ import {
   getters as datasetGetters,
   actions as datasetActions
 } from "../store/dataset/module";
+import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import {
   formatValue,
@@ -176,15 +177,23 @@ export function fetchSummaryExemplars(
     if (variable.grouping) {
       if (variable.grouping.type === "timeseries") {
         // if there a linked exemplars, fetch those before resolving
+        const solutionId = routeGetters.getRouteSolutionId(store);
+
         return Promise.all(
           exemplars.map(exemplar => {
-            return datasetActions.fetchTimeseries(store, {
+            const args = {
               dataset: datasetName,
               timeseriesColName: variable.grouping.idCol,
               xColName: variable.grouping.properties.xCol,
               yColName: variable.grouping.properties.yCol,
-              timeseriesID: exemplar
-            });
+              timeseriesId: exemplar,
+              solutionId: solutionId
+            };
+            if (solutionId) {
+              return resultsActions.fetchForecastedTimeseries(store, args);
+            } else {
+              return datasetActions.fetchTimeseries(store, args);
+            }
           })
         );
       }
@@ -229,7 +238,7 @@ export function fetchResultExemplars(
               timeseriesColName: variable.grouping.idCol,
               xColName: variable.grouping.properties.xCol,
               yColName: variable.grouping.properties.yCol,
-              timeseriesID: exemplar,
+              timeseriesId: exemplar,
               solutionId: solutionId
             });
           })
@@ -567,4 +576,65 @@ export function isDatamartProvenance(provenance: string): boolean {
     provenance === DATAMART_PROVENANCE_NYU ||
     provenance === DATAMART_PROVENANCE_ISI
   );
+}
+
+// Computes the cell colour based on the
+export function explainCellColor(
+  weight: number,
+  data: any,
+  tableFields: TableColumn[],
+  dataItems: TableRow[]
+): string {
+  if (!weight || !hasMultipleFeatures(tableFields)) {
+    return "";
+  }
+
+  const absoluteWeight = Math.abs(
+    weight /
+      d3mRowWeightExtrema(tableFields, dataItems)[data.item[D3M_INDEX_FIELD]]
+  );
+
+  let red: number;
+  let green: number;
+  let blue: number;
+  if (weight > 0) {
+    red = 242 - 128 * absoluteWeight;
+    green = 242 - 64 * absoluteWeight;
+    blue = 255;
+  } else if (weight === 0) {
+    red = 255;
+    green = 255;
+    blue = 255;
+  } else {
+    red = 255;
+    green = 242 - 255 * absoluteWeight;
+    blue = 242 - 128 * absoluteWeight;
+  }
+
+  return `background: rgba(${red}, ${green}, ${blue}, .75)`;
+}
+
+function hasMultipleFeatures(tableFields: TableColumn[]): boolean {
+  const featureNames = tableFields.reduce((uniqueNames, field) => {
+    uniqueNames[field.label] = true;
+    return uniqueNames;
+  }, {});
+  return Object.keys(featureNames).length > 2;
+}
+
+function d3mRowWeightExtrema(
+  tableFields: TableColumn[],
+  dataItems: TableRow[]
+): Dictionary<number> {
+  return dataItems.reduce((extremas, item) => {
+    extremas[item[D3M_INDEX_FIELD]] = tableFields.reduce((rowMax, tableCol) => {
+      if (item[tableCol.key].weight) {
+        const currentWeight = Math.abs(item[tableCol.key].weight);
+        return currentWeight > rowMax ? currentWeight : rowMax;
+      } else {
+        return rowMax;
+      }
+    }, 0);
+    return extremas;
+  }, {});
 }
