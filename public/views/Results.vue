@@ -67,7 +67,9 @@ import { actions as viewActions } from "../store/view/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { Feature, Activity } from "../util/userEvents";
+import { openModelSolution } from "../util/solutions";
 
 export default Vue.extend({
   name: "results-view",
@@ -111,8 +113,14 @@ export default Vue.extend({
     trainingSummaries(): VariableSummary[] {
       return resultGetters.getTrainingSummaries(this.$store);
     },
+    predictedSummaries(): VariableSummary[] {
+      return resultGetters.getPredictedSummaries(this.$store);
+    },
     solutionId(): string {
       return routeGetters.getRouteSolutionId(this.$store);
+    },
+    fittedSolutionId(): string {
+      return routeGetters.getRouteFittedSolutionID(this.$store);
     },
     highlightString(): string {
       return routeGetters.getRouteHighlight(this.$store);
@@ -126,7 +134,35 @@ export default Vue.extend({
     viewActions.fetchResultsData(this.$store);
   },
 
+  methods: {
+    initSolutionId() {
+      if (
+        !this.solutionId &&
+        this.fittedSolutionId &&
+        this.predictedSummaries.length > 0
+      ) {
+        const targetSolution = requestGetters.getSolutionByRouteFittedSolutionId(
+          this.$store
+        );
+        const targetSolutionId = targetSolution.solutionId;
+        if (targetSolutionId) {
+          openModelSolution(this.$router, {
+            datasetName: routeGetters.getRouteDataset(this.$store),
+            targetFeature: this.target,
+            solutionId: targetSolutionId,
+            variableFeatures: datasetGetters
+              .getVariables(this.$store)
+              .map(v => v.colName)
+          });
+        }
+      }
+    }
+  },
+
   watch: {
+    predictedSummaries() {
+      this.initSolutionId();
+    },
     highlightString() {
       viewActions.updateResultsSolution(this.$store);
     },

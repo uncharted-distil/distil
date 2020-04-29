@@ -3,6 +3,9 @@ import moment from "moment";
 
 import { sortSolutionsByScore } from "../store/requests/getters";
 import { getters as requestGetters } from "../store/requests/module";
+import { getters as routeGetters } from "../store/route/module";
+import { actions as dataActions } from "../store/dataset/module";
+import { createRouteEntry } from "../util/routes";
 import {
   Solution,
   SOLUTION_PENDING,
@@ -12,7 +15,9 @@ import {
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED
 } from "../store/requests/index";
+import { RESULTS_ROUTE } from "../store/route/index";
 import store from "../store/store";
+import VueRouter from "vue-router";
 
 export const SOLUTION_LABELS: Dictionary<string> = {
   [SOLUTION_PENDING]: "PENDING",
@@ -94,4 +99,41 @@ export function isTopSolutionByScore(
     .sort(sortSolutionsByScore)
     .slice(0, n);
   return !!topN.find(result => result.solutionId === solutionId);
+}
+
+export async function openModelSolution(
+  router: VueRouter,
+  args: {
+    datasetName: string;
+    targetFeature: string;
+    fittedSolutionId?: string;
+    solutionId?: string;
+    variableFeatures: string[];
+  }
+) {
+  let task = routeGetters.getRouteTask(store);
+  if (!task) {
+    const taskResponse = await dataActions.fetchTask(store, {
+      dataset: args.datasetName,
+      targetName: args.targetFeature,
+      variableNames: args.variableFeatures // solution.features.map(f => f.featureName)
+    });
+    task = taskResponse.data.task.join(",");
+  }
+  const routeDefintion = {
+    dataset: args.datasetName,
+    target: args.targetFeature,
+    task: task,
+    solutionId: undefined,
+    fittedSolutionId: undefined
+  };
+  if (args.solutionId) {
+    routeDefintion.solutionId = args.solutionId;
+  } else {
+    routeDefintion.fittedSolutionId = args.fittedSolutionId;
+  }
+  const entry = createRouteEntry(RESULTS_ROUTE, routeDefintion);
+  router.push(entry).catch(err => {
+    console.warn(err);
+  });
 }

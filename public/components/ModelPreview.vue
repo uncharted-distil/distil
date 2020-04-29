@@ -1,5 +1,5 @@
 <template>
-  <div class="card card-result">
+  <div class="card card-result" @click="onResult()">
     <div class="model-header hover card-header" variant="dark">
       <a class="nav-link"><b>Model Name:</b> {{ model.modelName }}</a>
       <a class="nav-link"><b>Dateset Name:</b> {{ model.datasetName }}</a>
@@ -31,12 +31,24 @@
 import _ from "lodash";
 import Vue from "vue";
 import { Model } from "../store/model/index";
+import { openModelSolution } from "../util/solutions";
 
 export default Vue.extend({
   name: "model-preview",
 
   props: {
     model: Object as () => Model
+  },
+
+  methods: {
+    onResult() {
+      openModelSolution(this.$router, {
+        datasetName: this.model.datasetName,
+        targetFeature: this.model.target,
+        fittedSolutionId: this.model.fittedSolutionId,
+        variableFeatures: this.model.variables
+      });
+    }
   }
 });
 </script>

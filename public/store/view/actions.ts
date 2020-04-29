@@ -387,7 +387,10 @@ export const actions = {
     const dataset = context.getters.getRouteDataset;
     const target = context.getters.getRouteTargetVariable;
     const requestIds = context.getters.getRelevantSolutionRequestIds;
-    const solutionId = context.getters.getRouteSolutionId;
+    const routeSolutionId = context.getters.getRouteSolutionId;
+    const solutionId = routeSolutionId
+      ? routeSolutionId
+      : context.getters.getSolutionByRouteFittedSolutionId;
     const trainingVariables =
       context.getters.getActiveSolutionTrainingVariables;
     const highlight = context.getters.getDecodedHighlight;

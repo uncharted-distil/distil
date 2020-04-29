@@ -61,7 +61,11 @@ import { RESULTS_ROUTE } from "../store/route/index";
 import Vue from "vue";
 import { Location } from "vue-router";
 import { Dictionary } from "lodash";
-import { SOLUTION_PROGRESS, SOLUTION_LABELS } from "../util/solutions";
+import {
+  SOLUTION_PROGRESS,
+  SOLUTION_LABELS,
+  openModelSolution
+} from "../util/solutions";
 
 export default Vue.extend({
   name: "solution-preview",
@@ -104,30 +108,12 @@ export default Vue.extend({
 
   methods: {
     onResult() {
-      // In the case of launching into a solution from the home screen, we may not yet have fetched the task yet.
-      const task = routeGetters.getRouteTask(this.$store);
-      if (!task) {
-        dataActions
-          .fetchTask(this.$store, {
-            dataset: this.solution.dataset,
-            targetName: this.solution.feature,
-            variableNames: this.solution.features.map(f => f.featureName)
-          })
-          .then(result => this.pushRouteEntry(result.data.task.join(",")))
-          .catch(error => console.error(error));
-      } else {
-        this.pushRouteEntry(task);
-      }
-    },
-
-    pushRouteEntry(task: string) {
-      const entry = createRouteEntry(RESULTS_ROUTE, {
-        dataset: this.solution.dataset,
-        target: this.solution.feature,
+      openModelSolution(this.$router, {
+        datasetName: this.solution.dataset,
+        targetFeature: this.solution.feature,
         solutionId: this.solution.solutionId,
-        task: task
+        variableFeatures: this.solution.features.map(f => f.featureName)
       });
-      this.$router.push(entry);
     }
   }
 });
