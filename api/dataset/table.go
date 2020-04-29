@@ -48,19 +48,22 @@ func NewTableDataset(dataset string, rawData []byte, config *env.Config) (*Table
 }
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.
-func (t *Table) CreateDataset(rootDataPath string, config *env.Config) (*api.RawDataset, error) {
+func (t *Table) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+	if datasetName == "" {
+		datasetName = t.Dataset
+	}
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 
 	// create the raw dataset schema doc
-	datasetID := model.NormalizeDatasetID(t.Dataset)
-	meta := model.NewMetadata(t.Dataset, t.Dataset, "", datasetID)
+	datasetID := model.NormalizeDatasetID(datasetName)
+	meta := model.NewMetadata(datasetName, datasetName, "", datasetID)
 	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeRaw, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	meta.DataResources = []*model.DataResource{dr}
 
 	return &api.RawDataset{
 		ID:       datasetID,
-		Name:     t.Dataset,
+		Name:     datasetName,
 		Data:     t.CSVData,
 		Metadata: meta,
 	}, nil

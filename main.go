@@ -87,6 +87,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	createOutputFolders(&config)
+
 	// initialize the pipeline cache and
 	pipelineCacheFilename := path.Join(env.GetTmpPath(), config.PipelineCacheFilename)
 	err = api.InitializeCache(pipelineCacheFilename)
@@ -214,7 +216,7 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
-		err = task.IngestDataset(metadata.Contrib, pgDataStorageCtor, esMetadataStorageCtor, config.ESDatasetsIndex, "initial", nil, ingestConfig)
+		_, err = task.IngestDataset(metadata.Contrib, pgDataStorageCtor, esMetadataStorageCtor, config.ESDatasetsIndex, "initial", nil, ingestConfig)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -313,4 +315,10 @@ func updateExtremas(metaStorage model.MetadataStorage, dataStorage model.DataSto
 	log.Infof("done updating all extremas")
 
 	return nil
+}
+
+func createOutputFolders(config *env.Config) {
+	// create the augmented data folder
+	augmentPath := env.GetAugmentedPath()
+	os.MkdirAll(augmentPath, os.ModePerm)
 }
