@@ -43,7 +43,8 @@ var (
 		"tiff": {"tif", "tiff"},
 	}
 
-	bandRegex = regexp.MustCompile(`_B[0-9][0-9a-zA-Z][.]`)
+	bandRegex      = regexp.MustCompile(`_B[0-9][0-9a-zA-Z][.]`)
+	timestampRegex = regexp.MustCompile(`\d{8}T\d{6}`)
 )
 
 // Satellite captures the data in a satellite (remote sensing) dataset.
@@ -126,7 +127,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	}
 
 	csvData := make([][]string, 0)
-	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "coordinates", "label"})
+	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", "label"})
 	mediaFolder := getUniqueFolder(path.Join(outputDatasetPath, "media"))
 
 	// need to keep track of d3m Index values since they are shared for a whole group
@@ -179,6 +180,12 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 				continue
 			}
 
+			timestamp, err := extractTimestamp(targetImageFilename)
+			if err != nil {
+				log.Warnf("unable to extract timestamp from '%s': %v", targetImageFilename, err)
+				continue
+			}
+
 			groupID := extractGroupID(targetImageFilename)
 
 			d3mID := d3mIDs[groupID]
@@ -188,7 +195,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 				d3mIDs[groupID] = d3mID
 			}
 
-			csvData = append(csvData, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, coordinates.ToString(), label})
+			csvData = append(csvData, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.ToString(), label})
 		}
 	}
 
@@ -217,11 +224,15 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.StringType, "Image band", []string{"attribute"},
 			model.VarRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(4, "coordinates", "coordinates", "coordinates", model.RealVectorType,
+		model.NewVariable(4, "timestamp", "timestamp", "timestamp", model.StringType,
+			model.StringType, "Image timestamp", []string{"attribute"},
+			model.VarRoleData, nil, dr.Variables, false))
+	dr.Variables = append(dr.Variables,
+		model.NewVariable(5, "coordinates", "coordinates", "coordinates", model.RealVectorType,
 			model.RealVectorType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
 			model.VarRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(5, "label", "label", "label", model.StringType,
+		model.NewVariable(6, "label", "label", "label", model.StringType,
 			model.StringType, "Label of the image", []string{"suggestedTarget"},
 			model.VarRoleData, nil, dr.Variables, false))
 
@@ -257,6 +268,15 @@ func extractBand(filename string) (string, error) {
 	if len(bandRaw) > 0 {
 		band := string(bandRaw)
 		return band[2 : len(band)-1], nil
+	}
+
+	return "", errors.New("unable to extract band from filename")
+}
+
+func extractTimestamp(filename string) (string, error) {
+	timestampRaw := timestampRegex.Find([]byte(filename))
+	if len(timestampRaw) > 0 {
+		return string(timestampRaw), nil
 	}
 
 	return "", errors.New("unable to extract band from filename")
