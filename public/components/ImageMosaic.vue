@@ -181,8 +181,10 @@ export default Vue.extend({
 <style>
 .image-mosaic {
   display: block;
-  overflow: visible;
+  overflow: auto;
   padding-bottom: 0.5rem; /* To add some spacing on overflow. */
+  height: 100%;
+  width: 100%;
 }
 
 .image-tile {
