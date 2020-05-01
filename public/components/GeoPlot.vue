@@ -35,6 +35,8 @@ import leaflet, { MarkerOptions } from "leaflet";
 import Vue from "vue";
 import IconBase from "./icons/IconBase";
 import IconCropFree from "./icons/IconCropFree";
+import { getters as appGetters } from "../store/app/module";
+import { SatelliteBand } from "../store/app/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
@@ -103,7 +105,6 @@ export default Vue.extend({
   data() {
     return {
       map: null,
-      baseLayer: null,
       markers: null,
       closeButton: null,
       startingLatLng: null,
@@ -112,6 +113,7 @@ export default Vue.extend({
       isSelectionMode: false
     };
   },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
@@ -232,8 +234,32 @@ export default Vue.extend({
     mapZoom(): number {
       return routeGetters.getGeoZoom(this.$store);
     },
+
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
+    },
+
+    isSatelliteImages(): boolean {
+      return datasetGetters.isSatelliteImages(this.$store);
+    },
+
+    currentSatelliteBand(): SatelliteBand {
+      return appGetters.getCurrentSatelliteBand(this.$store);
+    },
+
+    /**
+     * Base layer for the map.
+     * @returns {TileLayer}
+     */
+    baseLayer(): any {
+      let URL = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
+
+      if (this.isSatelliteImages) {
+        const { r, g, b } = this.currentSatelliteBand;
+        URL = `distil/dataset/tile/${r}/${g}/${b}/{z}/{x}/{y}.png`;
+      }
+
+      return leaflet.tileLayer(URL);
     }
   },
 
@@ -490,32 +516,41 @@ export default Vue.extend({
       });
     },
 
-    paint() {
-      if (!this.map) {
-        // NOTE: this component re-mounts on any change, so do everything in here
-        this.map = leaflet.map(this.mapID, {
-          center: [30, 0],
-          zoom: 2
-        });
-        if (this.mapZoom) {
-          this.map.setZoom(this.mapZoom, { animate: true });
-        }
-        if (this.mapCenter) {
-          this.map.panTo(
-            {
-              lat: this.mapCenter[1],
-              lng: this.mapCenter[0]
-            },
-            { animate: true }
-          );
-        }
-        this.baseLayer = leaflet.tileLayer(
-          "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-        );
-        this.baseLayer.addTo(this.map);
-        // this.map.on('click', this.clearSelection);
+    /**
+     * Create a Leaflet map, if it doesn't exist already, with basic defaults.
+     */
+    createMap() {
+      if (this.map) {
+        return;
       }
 
+      // NOTE: this component re-mounts on any change, so do everything in here
+      this.map = leaflet.map(this.mapID, {
+        center: [30, 0],
+        zoom: 2
+      });
+
+      if (this.mapZoom) {
+        this.map.setZoom(this.mapZoom, { animate: true });
+      }
+
+      if (this.mapCenter) {
+        this.map.panTo(
+          {
+            lat: this.mapCenter[1],
+            lng: this.mapCenter[0]
+          },
+          { animate: true }
+        );
+      }
+
+      this.baseLayer.addTo(this.map);
+
+      // this.map.on('click', this.clearSelection);
+    },
+
+    paint() {
+      this.createMap();
       this.clear();
 
       const bounds = leaflet.latLngBounds(null);
@@ -563,6 +598,7 @@ export default Vue.extend({
     dataItems() {
       this.paint();
     },
+
     rowSelection() {
       const markers = _.map(this.markers, markerLayer =>
         markerLayer.getLayers()

@@ -23,6 +23,8 @@ export const getters = {
   getDatasets: read(moduleGetters.getDatasets),
   getFilteredDatasets: read(moduleGetters.getFilteredDatasets),
   getPendingRequests: read(moduleGetters.getPendingRequests),
+  isSatelliteImages: read(moduleGetters.isSatelliteImages),
+
   // variables
   getVariables: read(moduleGetters.getVariables),
   getGroupings: read(moduleGetters.getGroupings),
@@ -36,18 +38,22 @@ export const getters = {
     moduleGetters.getExcludedVariableSummaries
   ),
   getVariableRankings: read(moduleGetters.getVariableRankings),
+
   // files
   getFiles: read(moduleGetters.getFiles),
   getTimeseries: read(moduleGetters.getTimeseries),
   getTimeseriesExtrema: read(moduleGetters.getTimeseriesExtrema),
+
   // join data
   getJoinDatasetsTableData: read(moduleGetters.getJoinDatasetsTableData),
+
   // included data
   hasIncludedTableData: read(moduleGetters.hasIncludedTableData),
   getIncludedTableData: read(moduleGetters.getIncludedTableData),
   getIncludedTableDataNumRows: read(moduleGetters.getIncludedTableDataNumRows),
   getIncludedTableDataItems: read(moduleGetters.getIncludedTableDataItems),
   getIncludedTableDataFields: read(moduleGetters.getIncludedTableDataFields),
+
   // excluded data
   hasExcludedTableData: read(moduleGetters.hasExcludedTableData),
   getExcludedTableData: read(moduleGetters.getExcludedTableData),

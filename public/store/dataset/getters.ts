@@ -131,5 +131,9 @@ export const getters = {
     getters: any
   ): Dictionary<TableColumn> {
     return getTableDataFields(state.excludedSet.tableData);
+  },
+
+  isSatelliteImages(state: DatasetState): boolean {
+    return state.isSatelliteImages;
   }
 };
