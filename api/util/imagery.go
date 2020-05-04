@@ -27,9 +27,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/lukeroth/gdal"
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/gdal"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -90,7 +90,7 @@ var (
 		FalseColorInfrared:     {FalseColorInfrared, "False Color Infrared", []string{"b08", "b04", "b03"}},
 		FalseColorUrban:        {FalseColorUrban, "False Color Urban", []string{"b12", "b11", "b04"}},
 		Agriculture:            {Agriculture, "Agriculture", []string{"b11", "b08", "b02"}},
-		AtmosphericPenetration: {AtmosphericPenetration, "Atmospheric Penetration", []string{"b12", "b11", "b08A"}},
+		AtmosphericPenetration: {AtmosphericPenetration, "Atmospheric Penetration", []string{"b12", "b11", "b8A"}},
 		HealthyVegetation:      {HealthyVegetation, "Healthy Vegetation", []string{"b08", "b11", "b02"}},
 		LandWater:              {LandWater, "Land/Water", []string{"b08", "b11", "b04"}},
 		AtmosphericRemoval:     {AtmosphericRemoval, "Atmospheric Removal", []string{"b12", "b08", "b03"}},

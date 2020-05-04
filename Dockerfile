@@ -1,7 +1,10 @@
-FROM alpine:3.5
+FROM alpine:3.11.6
 
-# add bash for compatibility with NIST env
-RUN apk update && apk add bash 
+# add bash + packages to support CGO
+RUN apk update && apk add bash git make build-base
+
+# add GDAL for geospatial support
+RUN apk add gdal gdal-dev
 
 RUN mkdir /distil
 
