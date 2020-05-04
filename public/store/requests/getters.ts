@@ -64,15 +64,6 @@ export const getters = {
     return state.solutions;
   },
 
-  // Gets solution by current route fitted solution id.
-  getSolutionByRouteFittedSolutionId(state: RequestState, getters: any) {
-    const fittedSolutionId = <string>getters.getRouteFittedSolutionId;
-    const targetSolution = state.solutions.filter(
-      searchResult => searchResult.fittedSolutionId === fittedSolutionId
-    );
-    return targetSolution[0] ? targetSolution[0] : null;
-  },
-
   // Returns search results relevant to the current dataset and target.
   getRelevantSolutions(state: RequestState, getters: any): Solution[] {
     const target = <string>getters.getRouteTargetVariable;

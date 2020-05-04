@@ -21,9 +21,6 @@ export const getters = {
   getRunningSolutions: read(moduleGetters.getRunningSolutions),
   getCompletedSolutions: read(moduleGetters.getCompletedSolutions),
   getSolutions: read(moduleGetters.getSolutions),
-  getSolutionByRouteFittedSolutionId: read(
-    moduleGetters.getSolutionByRouteFittedSolutionId
-  ),
   getRelevantSolutions: read(moduleGetters.getRelevantSolutions),
   getRelevantSolutionRequests: read(moduleGetters.getRelevantSolutionRequests),
   getRelevantSolutionRequestIds: read(
