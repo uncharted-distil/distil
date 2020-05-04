@@ -67,9 +67,7 @@ import { actions as viewActions } from "../store/view/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as requestGetters } from "../store/requests/module";
 import { Feature, Activity } from "../util/userEvents";
-import { openModelSolution } from "../util/solutions";
 
 export default Vue.extend({
   name: "results-view",
