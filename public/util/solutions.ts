@@ -2,7 +2,10 @@ import _, { Dictionary } from "lodash";
 import moment from "moment";
 
 import { sortSolutionsByScore } from "../store/requests/getters";
-import { getters as requestGetters } from "../store/requests/module";
+import {
+  getters as requestGetters,
+  actions as requestActions
+} from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as dataActions } from "../store/dataset/module";
 import { createRouteEntry } from "../util/routes";
@@ -120,18 +123,26 @@ export async function openModelSolution(
     });
     task = taskResponse.data.task.join(",");
   }
+  const solutionArgs = {
+    dataset: args.datasetName,
+    target: args.targetFeature
+  };
+  await Promise.all([
+    requestActions.fetchSolutionRequests(store, solutionArgs),
+    requestActions.fetchSolutions(store, solutionArgs)
+  ]);
+  const solutionId = args.solutionId
+    ? args.solutionId
+    : requestGetters
+        .getSolutions(store)
+        .find(s => s.fittedSolutionId === args.fittedSolutionId).solutionId;
   const routeDefintion = {
     dataset: args.datasetName,
     target: args.targetFeature,
     task: task,
-    solutionId: undefined,
-    fittedSolutionId: undefined
+    solutionId: solutionId
   };
-  if (args.solutionId) {
-    routeDefintion.solutionId = args.solutionId;
-  } else {
-    routeDefintion.fittedSolutionId = args.fittedSolutionId;
-  }
+
   const entry = createRouteEntry(RESULTS_ROUTE, routeDefintion);
   router.push(entry).catch(err => {
     console.warn(err);
