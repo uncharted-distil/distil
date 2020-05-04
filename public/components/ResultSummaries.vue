@@ -225,7 +225,6 @@ export default Vue.extend({
     },
     saveModel () {
       if (!this.validForm()) {
-        console.log(this.validForm());
         return;
       }
 
@@ -247,7 +246,7 @@ export default Vue.extend({
         })
         .then(err => {
           if (err) {
-            console.log(err);
+            console.warn(err);
           }
         });
 
