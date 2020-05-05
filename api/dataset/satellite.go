@@ -267,7 +267,7 @@ func extractBand(filename string) (string, error) {
 	bandRaw := bandRegex.Find([]byte(filename))
 	if len(bandRaw) > 0 {
 		band := string(bandRaw)
-		return band[2 : len(band)-1], nil
+		return strings.ToLower(band[2 : len(band)-1]), nil
 	}
 
 	return "", errors.New("unable to extract band from filename")
@@ -299,6 +299,7 @@ func extractCoordinates(filename string) (*BoundingBox, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open geotiff file")
 	}
+	defer ds.Close()
 
 	width := float64(ds.RasterXSize())
 	height := float64(ds.RasterYSize())
