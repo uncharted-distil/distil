@@ -78,9 +78,9 @@ type BandCombinationID string
 
 // BandCombination defines a mapping of satellite bands to image RGB channels.
 type BandCombination struct {
-	id          BandCombinationID
-	displayName string
-	mapping     []string
+	ID          BandCombinationID
+	DisplayName string
+	Mapping     []string
 }
 
 var (
@@ -104,7 +104,7 @@ var (
 func ImageFromCombination(datasetDir string, fileID string, bandCombination BandCombinationID) (*image.RGBA, error) {
 	filePaths := []string{}
 	if bandCombo, ok := SentinelBandCombinations[strings.ToLower(string(bandCombination))]; ok {
-		for _, bandLabel := range bandCombo.mapping {
+		for _, bandLabel := range bandCombo.Mapping {
 			filePath := getFilePath(datasetDir, fileID, bandLabel)
 			filePaths = append(filePaths, filePath)
 		}
