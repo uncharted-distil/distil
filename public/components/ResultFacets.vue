@@ -5,26 +5,26 @@
       :key="request.requestId"
       v-for="request in requestGroups"
     >
-      <p class="nav-link font-weight-bold">
+      <header class="request-group-header">
         Search <sup>{{ request.requestIndex }}</sup>
-      </p>
+      </header>
 
-      <div v-if="isPending(request.progress)">
-        <b-badge variant="info">{{ request.progress }}</b-badge>
-        <b-button
-          variant="danger"
-          size="sm"
-          class="pull-right abort-search-button"
-          @click="stopRequest(request.requestId)"
-          >Stop</b-button
-        >
-      </div>
+      <aside class="request-group-status">
+        <template v-if="isPending(request.progress)">
+          <b-badge variant="info">{{ request.progress }}</b-badge>
+          <b-button
+            variant="danger"
+            size="sm"
+            class="pull-right abort-search-button"
+            @click="stopRequest(request.requestId)"
+            >Stop</b-button
+          >
+        </template>
 
-      <div v-if="isErrored(request.progress)">
-        <b-badge variant="danger">
-          ERROR
-        </b-badge>
-      </div>
+        <template v-if="isErrored(request.progress)">
+          <b-badge variant="danger">ERROR</b-badge>
+        </template>
+      </aside>
 
       <result-group
         class="result-group-container"
@@ -190,8 +190,23 @@ export default Vue.extend({
 </script>
 
 <style>
-button {
+.request-group-header {
+  border-bottom: 1px solid #e0e0e0;
+  color: rgba(0, 0, 0, 0.87);
+  font-weight: 600;
+  padding: 1rem 0 0.25rem;
+}
+
+.request-group-status {
+  align-items: center; /* Keep the button taller. */
+  display: flex;
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.request-group-status button {
   cursor: pointer;
+  margin-left: auto; /* Display on the right. */
 }
 
 .result-group-container {
