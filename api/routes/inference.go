@@ -216,12 +216,18 @@ func getTarget(request *api.Request) string {
 	return ""
 }
 
-func createImageFromRequest(data []byte, dataset string, outputPath string, imageType string, config *env.Config) (bool, []byte, error) {
+func createImageFromRequest(data []byte, datasetName string, outputPath string, imageType string, config *env.Config) (bool, []byte, error) {
 	// raw request is zip file of image dataset that needs to be imported
-	_, formattedPath, err := uploadImageDataset(dataset, outputPath, config, data, imageType)
+	ds, err := uploadImageDataset(datasetName, outputPath, config, data, imageType)
 	if err != nil {
 		return false, nil, err
 	}
+
+	_, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
+	if err != nil {
+		return false, nil, err
+	}
+
 	formattedPath = path.Join(formattedPath, "tables", "learningData.csv")
 
 	// once imported, read the csv file as the data to use for the inference

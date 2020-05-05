@@ -92,15 +92,9 @@ func (i *Image) CreateDataset(rootDataPath string, datasetName string, config *e
 	outputDatasetPath := rootDataPath
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 
-	imageFolders := make([]string, 0)
-	extractedFiles, err := ioutil.ReadDir(i.ExtractedFilePath)
+	imageFolders, err := getImageFolders(i.ExtractedFilePath)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to read extracted data")
-	}
-	for _, f := range extractedFiles {
-		if f.IsDir() {
-			imageFolders = append(imageFolders, path.Join(i.ExtractedFilePath, f.Name()))
-		}
+		return nil, err
 	}
 
 	csvData := make([][]string, 0)
@@ -174,7 +168,7 @@ func (i *Image) CreateDataset(rootDataPath string, datasetName string, config *e
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName,
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
-			[]string{model.RoleIndex}, model.VarRoleIndex, nil, dr.Variables, false),
+			[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
 	)
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(1, "image_file", "image_file", "image_file", model.StringType,
@@ -261,4 +255,19 @@ func toPNG(img *image.Image) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+func getImageFolders(folderPath string) ([]string, error) {
+	imageFolders := make([]string, 0)
+	extractedFiles, err := ioutil.ReadDir(folderPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read extracted data")
+	}
+	for _, f := range extractedFiles {
+		if f.IsDir() {
+			imageFolders = append(imageFolders, path.Join(folderPath, f.Name()))
+		}
+	}
+
+	return imageFolders, nil
 }
