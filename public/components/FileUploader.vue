@@ -8,7 +8,9 @@
     <b-modal
       id="upload-modal"
       title="Import local file"
-      :ok-disabled="!Boolean(file) || importDataName.length < 0"
+      :ok-disabled="
+        !Boolean(file) || (this.isPrediction && this.importDataName.length <= 0)
+      "
       @ok="handleOk()"
       @show="clearForm()"
     >
@@ -88,6 +90,9 @@ export default Vue.extend({
           return "Select a csv or zip file to import";
       }
     },
+    isPrediction(): boolean {
+      return PREDICTION_UPLOAD === this.uploadType;
+    },
     allowedTypes(): string {
       switch (this.uploadType) {
         case PREDICTION_UPLOAD:
@@ -102,17 +107,19 @@ export default Vue.extend({
       return this.file ? this.file.name : "";
     },
     datasetID(): string {
-      if (this.filename.length > 0 && this.importDataName.length > 0) {
+      let datasetID = "";
+      if (this.importDataName.length > 0) {
+        datasetID = datasetID.concat(this.importDataName.replace(/\s/g, ""));
+      }
+      if (this.filename.length > 0) {
         const fileNameTokens = this.filename.split(".");
         const fname =
-          this.importDataName +
-          (fileNameTokens.length > 1
+          fileNameTokens.length > 1
             ? fileNameTokens.slice(0, -1).join(".")
-            : fileNameTokens.join("."));
-        const datasetID = fname.replace(/\s/g, "");
-        return datasetID;
+            : fileNameTokens.join(".");
+        datasetID = datasetID.concat(fname.replace(/\s/g, ""));
       }
-      return "";
+      return datasetID;
     }
   },
 
@@ -127,10 +134,7 @@ export default Vue.extend({
       if (!this.file) {
         return;
       }
-      if (
-        this.uploadType === PREDICTION_UPLOAD &&
-        this.importDataName.length < 0
-      ) {
+      if (this.isPrediction && this.importDataName.length <= 0) {
         return;
       }
       this.$emit("uploadstart", {
