@@ -248,6 +248,8 @@ func main() {
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath, datasetDocPath))
 	registerRoute(mux, "/distil/task/:dataset/:target/:variables", routes.TaskHandler(pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
+	registerRoute(mux, "/distil/:multiband-image/dataset/:image-id/:band-combination", routes.MultiBandImageHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/:multiband-combinations/:dataset", routes.MultiBandCombinationsHandler(esMetadataStorageCtor))
 
 	// POST
 	registerRoutePost(mux, "/distil/grouping/:dataset", routes.GroupingHandler(pgDataStorageCtor, esMetadataStorageCtor))

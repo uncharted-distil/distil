@@ -127,6 +127,38 @@ func Copy(sourceFolder string, destinationFolder string) error {
 	return nil
 }
 
+// CopyFile the source file to destination. Any existing file will be overwritten and will not
+// copy file attributes.
+func CopyFile(sourceFile string, destinationFile string) error {
+	in, err := os.Open(sourceFile)
+	if err != nil {
+		return errors.Wrap(err, "unable to open source file")
+	}
+	defer in.Close()
+
+	// check if the target directory exists and create it if not
+	destinationDir := path.Dir(destinationFile)
+	if !FileExists(destinationDir) {
+		err = os.MkdirAll(destinationDir, os.ModePerm)
+		if err != nil {
+			return errors.Wrap(err, "unable to make destination folder")
+		}
+	}
+
+	out, err := os.Create(destinationFile)
+	if err != nil {
+		return errors.Wrap(err, "unable to create destination file")
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return errors.Wrap(err, "unable to copy file")
+	}
+
+	return nil
+}
+
 // RemoveContents removes the files and directories from the supplied parent.
 func RemoveContents(dir string) error {
 	d, err := os.Open(dir)

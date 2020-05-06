@@ -33,7 +33,7 @@ import (
 // UploadHandler uploads a file to the local file system and then imports it.
 func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		dataset := pat.Param(r, "dataset")
+		datasetName := pat.Param(r, "dataset")
 
 		// type cant be a post param since the upload is the actual data
 		queryValues := r.URL.Query()
@@ -46,17 +46,25 @@ func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWrit
 			return
 		}
 
-		formattedPath := ""
+		var ds task.DatasetConstructor
 		if typ == "table" {
-			dataset, formattedPath, err = uploadTableDataset(dataset, outputPath, config, data)
+			ds, err = uploadTableDataset(datasetName, outputPath, config, data)
 		} else if typ == "image" {
 			imageType, ok := queryValues["image"]
 			if !ok {
-				handleError(w, errors.Errorf("unable to parse 'type' parameter"))
+				handleError(w, errors.Errorf("unable to parse 'image' parameter"))
 				return
 			}
 
-			dataset, formattedPath, err = uploadImageDataset(dataset, outputPath, config, data, imageType[0])
+			ds, err = uploadImageDataset(datasetName, outputPath, config, data, imageType[0])
+		} else if typ == "remote" {
+			imageType, ok := queryValues["image"]
+			if !ok {
+				handleError(w, errors.Errorf("unable to parse 'image' parameter"))
+				return
+			}
+
+			ds, err = uploadRemoteSensingDataset(datasetName, outputPath, config, data, imageType[0])
 		} else if typ == "" {
 			handleError(w, errors.Errorf("upload type parameter not specified"))
 			return
@@ -66,13 +74,25 @@ func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWrit
 		}
 
 		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to create raw dataset"))
+			return
+		}
+
+		// create the raw dataset schema doc
+		datasetName, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to create d3m dataset"))
+			return
+		}
+
+		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to upload dataset"))
 			return
 		}
 
-		log.Infof("uploaded new dataset %s at %s", dataset, formattedPath)
+		log.Infof("uploaded new dataset %s at %s", datasetName, formattedPath)
 		// marshal data and sent the response back
-		err = handleJSON(w, map[string]interface{}{"dataset": dataset, "result": "uploaded"})
+		err = handleJSON(w, map[string]interface{}{"dataset": datasetName, "result": "uploaded"})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
 			return
@@ -80,34 +100,31 @@ func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWrit
 	}
 }
 
-func uploadTableDataset(datasetName string, outputPath string, config *env.Config, data []byte) (string, string, error) {
+func uploadTableDataset(datasetName string, outputPath string, config *env.Config, data []byte) (task.DatasetConstructor, error) {
 	ds, err := dataset.NewTableDataset(datasetName, data, config)
 	if err != nil {
-		return "", "", errors.Wrap(err, "unable to create raw dataset")
+		return nil, errors.Wrap(err, "unable to create raw dataset")
 	}
 
-	// create the raw dataset schema doc
-	datasetName, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
-	if err != nil {
-		return "", "", errors.Wrap(err, "unable to create dataset")
-	}
-
-	return datasetName, formattedPath, nil
+	return ds, nil
 }
 
-func uploadImageDataset(datasetName string, outputPath string, config *env.Config, data []byte, imageType string) (string, string, error) {
+func uploadImageDataset(datasetName string, outputPath string, config *env.Config, data []byte, imageType string) (task.DatasetConstructor, error) {
 	ds, err := dataset.NewImageDataset(datasetName, imageType, data, config)
 	if err != nil {
-		return "", "", errors.Wrap(err, "unable to create raw dataset")
+		return nil, errors.Wrap(err, "unable to create raw dataset")
 	}
 
-	// create the raw dataset schema doc
-	datasetName, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
+	return ds, nil
+}
+
+func uploadRemoteSensingDataset(datasetName string, outputPath string, config *env.Config, data []byte, imageType string) (task.DatasetConstructor, error) {
+	ds, err := dataset.NewSatelliteDataset(datasetName, imageType, data, config)
 	if err != nil {
-		return "", "", errors.Wrap(err, "unable to create dataset")
+		return nil, errors.Wrap(err, "unable to create raw dataset")
 	}
 
-	return datasetName, formattedPath, nil
+	return ds, nil
 }
 
 func receiveFile(r *http.Request) ([]byte, error) {
