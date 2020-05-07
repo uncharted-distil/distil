@@ -43,7 +43,7 @@ var (
 	}
 
 	bandRegex      = regexp.MustCompile(`_B[0-9][0-9a-zA-Z][.]`)
-	timestampRegex = regexp.MustCompile(`\d{8}T\d+z{6,8}`)
+	timestampRegex = regexp.MustCompile(`\d{8}T\d{4,6}`)
 )
 
 // Satellite captures the data in a satellite (remote sensing) dataset.
