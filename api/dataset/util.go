@@ -29,13 +29,15 @@ import (
 	log "github.com/unchartedsoftware/plog"
 )
 
-type ExpandedDataset struct {
+// ExpandedDatasetPaths stores paths info about the input dataset archive
+// and the expanded archive.
+type ExpandedDatasetPaths struct {
 	RawFilePath       string
 	ExtractedFilePath string
 }
 
 // ExpandZipDataset decompresses a zipped dataset for further downstream processing.
-func ExpandZipDataset(dataset string, rawData []byte) (*ExpandedDataset, error) {
+func ExpandZipDataset(dataset string, rawData []byte) (*ExpandedDatasetPaths, error) {
 	// store and expand raw data
 	tmpPath := env.GetTmpPath()
 	zipFilename := path.Join(tmpPath, fmt.Sprintf("%s_raw.zip", dataset))
@@ -50,10 +52,10 @@ func ExpandZipDataset(dataset string, rawData []byte) (*ExpandedDataset, error) 
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to extract raw image data archive")
 	}
-	return &ExpandedDataset{zipFilename, extractedArchivePath}, nil
+	return &ExpandedDatasetPaths{zipFilename, extractedArchivePath}, nil
 }
 
-// CheckFileType does a bread first directory traversal until it finds a file, then it checks
+// CheckFileType does a breadth first directory traversal until it finds a file, then it checks
 // its type and returns it to the caller.
 func CheckFileType(extractedArchivePath string) (string, error) {
 	dirQueue := []string{extractedArchivePath}
@@ -77,9 +79,8 @@ func CheckFileType(extractedArchivePath string) (string, error) {
 					continue
 				}
 				return kind.Extension, nil
-			} else {
-				dirQueue = append(dirQueue, path.Join(currentDir, f.Name()))
 			}
+			dirQueue = append(dirQueue, path.Join(currentDir, f.Name()))
 		}
 	}
 	return "", nil

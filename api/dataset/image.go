@@ -74,7 +74,7 @@ func NewImageDataset(dataset string, imageType string, rawData []byte) (*Image, 
 	}, nil
 }
 
-// NewImageDataset creates a new image dataset from raw byte data, assuming json.
+// NewImageDatasetFromExpanded creates a new image dataset from raw byte data, assuming json.
 func NewImageDatasetFromExpanded(dataset string, imageType string, zipFileName string, extractedArchivePath string) (*Image, error) {
 	return &Image{
 		Dataset:           dataset,

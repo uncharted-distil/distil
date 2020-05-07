@@ -103,7 +103,7 @@ func NewSatelliteDataset(dataset string, imageType string, rawData []byte) (*Sat
 	}, nil
 }
 
-// NewSatelliteDatasetExpanded creates a new satelitte dataset from geotiff files where the archive has already been expanded.
+// NewSatelliteDatasetFromExpanded creates a new satelitte dataset from geotiff files where the archive has already been expanded.
 func NewSatelliteDatasetFromExpanded(dataset string, imageType string, rawFilePath string, extractedFilePath string) (*Satellite, error) {
 	return &Satellite{
 		Dataset:           dataset,
