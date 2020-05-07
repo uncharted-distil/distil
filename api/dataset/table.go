@@ -35,7 +35,7 @@ type Table struct {
 }
 
 // NewTableDataset creates a new table dataset from raw byte data, assuming csv.
-func NewTableDataset(dataset string, rawData []byte, config *env.Config) (*Table, error) {
+func NewTableDataset(dataset string, rawData []byte) (*Table, error) {
 	reader := csv.NewReader(bytes.NewReader(rawData))
 	csvData, err := reader.ReadAll()
 	if err != nil {

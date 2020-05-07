@@ -18,7 +18,6 @@ package dataset
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"regexp"
 	"strings"
@@ -44,7 +43,7 @@ var (
 	}
 
 	bandRegex      = regexp.MustCompile(`_B[0-9][0-9a-zA-Z][.]`)
-	timestampRegex = regexp.MustCompile(`\d{8}T\d{6}`)
+	timestampRegex = regexp.MustCompile(`\d{8}T\d+z{6,8}`)
 )
 
 // Satellite captures the data in a satellite (remote sensing) dataset.
@@ -89,27 +88,28 @@ func (b *BoundingBox) pointToString(point *Point) string {
 }
 
 // NewSatelliteDataset creates a new satelitte dataset from geotiff files
-func NewSatelliteDataset(dataset string, imageType string, rawData []byte, config *env.Config) (*Satellite, error) {
+func NewSatelliteDataset(dataset string, imageType string, rawData []byte) (*Satellite, error) {
 	// store and expand raw data
-	tmpPath := env.GetTmpPath()
-	zipFilename := path.Join(tmpPath, fmt.Sprintf("%s_raw.zip", dataset))
-	zipFilename = getUniqueName(zipFilename)
-	err := util.WriteFileWithDirs(zipFilename, rawData, os.ModePerm)
+	expandedInfo, err := ExpandZipDataset(dataset, rawData)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to write raw image data archive")
-	}
-
-	extractedArchivePath := getUniqueFolder(path.Join(tmpPath, dataset))
-	err = util.Unzip(zipFilename, extractedArchivePath)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to extract raw image data archive")
+		return nil, err
 	}
 
 	return &Satellite{
 		Dataset:           dataset,
 		ImageType:         imageType,
-		RawFilePath:       zipFilename,
-		ExtractedFilePath: extractedArchivePath,
+		RawFilePath:       expandedInfo.RawFilePath,
+		ExtractedFilePath: expandedInfo.ExtractedFilePath,
+	}, nil
+}
+
+// NewSatelliteDatasetExpanded creates a new satelitte dataset from geotiff files where the archive has already been expanded.
+func NewSatelliteDatasetFromExpanded(dataset string, imageType string, rawFilePath string, extractedFilePath string) (*Satellite, error) {
+	return &Satellite{
+		Dataset:           dataset,
+		ImageType:         imageType,
+		RawFilePath:       rawFilePath,
+		ExtractedFilePath: extractedFilePath,
 	}, nil
 }
 

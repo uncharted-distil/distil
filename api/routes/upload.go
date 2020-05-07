@@ -45,26 +45,38 @@ func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWrit
 			handleError(w, errors.Wrap(err, "unable to receive file from request"))
 			return
 		}
-
+		// Figure out what type of dataset we've got
 		var ds task.DatasetConstructor
 		if typ == "table" {
-			ds, err = uploadTableDataset(datasetName, outputPath, config, data)
+			ds, err = uploadTableDataset(datasetName, outputPath, data)
 		} else if typ == "image" {
-			imageType, ok := queryValues["image"]
-			if !ok {
-				handleError(w, errors.Errorf("unable to parse 'image' parameter"))
+			// Expand the data into temp storage
+			expandedInfo, err := dataset.ExpandZipDataset(datasetName, data)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to receive file from request"))
 				return
 			}
-
-			ds, err = uploadImageDataset(datasetName, outputPath, config, data, imageType[0])
-		} else if typ == "remote" {
-			imageType, ok := queryValues["image"]
-			if !ok {
-				handleError(w, errors.Errorf("unable to parse 'image' parameter"))
+			// check to see what type of files it contains
+			fileType, err := dataset.CheckFileType(expandedInfo.ExtractedFilePath)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to receive file from request"))
 				return
 			}
-
-			ds, err = uploadRemoteSensingDataset(datasetName, outputPath, config, data, imageType[0])
+			if fileType == "png" || fileType == "jpeg" || fileType == "jpg" {
+				ds, err = uploadImageDataset(datasetName, fileType, expandedInfo.RawFilePath, expandedInfo.ExtractedFilePath)
+				if err != nil {
+					handleError(w, errors.Wrap(err, "unable to receive file from request"))
+					return
+				}
+			} else if fileType == "tif" {
+				ds, err = uploadRemoteSensingDataset(datasetName, fileType, expandedInfo.RawFilePath, expandedInfo.ExtractedFilePath)
+				if err != nil {
+					handleError(w, errors.Wrap(err, "unable to receive file from request"))
+					return
+				}
+			} else {
+				handleError(w, errors.Errorf("unsupported archived file type %s", fileType))
+			}
 		} else if typ == "" {
 			handleError(w, errors.Errorf("upload type parameter not specified"))
 			return
@@ -100,8 +112,8 @@ func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWrit
 	}
 }
 
-func uploadTableDataset(datasetName string, outputPath string, config *env.Config, data []byte) (task.DatasetConstructor, error) {
-	ds, err := dataset.NewTableDataset(datasetName, data, config)
+func uploadTableDataset(datasetName string, outputPath string, data []byte) (task.DatasetConstructor, error) {
+	ds, err := dataset.NewTableDataset(datasetName, data)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create raw dataset")
 	}
@@ -109,8 +121,8 @@ func uploadTableDataset(datasetName string, outputPath string, config *env.Confi
 	return ds, nil
 }
 
-func uploadImageDataset(datasetName string, outputPath string, config *env.Config, data []byte, imageType string) (task.DatasetConstructor, error) {
-	ds, err := dataset.NewImageDataset(datasetName, imageType, data, config)
+func uploadImageDataset(datasetName string, imageType string, rawFilePath string, extractedFilePath string) (task.DatasetConstructor, error) {
+	ds, err := dataset.NewImageDatasetFromExpanded(datasetName, imageType, rawFilePath, extractedFilePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create raw dataset")
 	}
@@ -118,8 +130,8 @@ func uploadImageDataset(datasetName string, outputPath string, config *env.Confi
 	return ds, nil
 }
 
-func uploadRemoteSensingDataset(datasetName string, outputPath string, config *env.Config, data []byte, imageType string) (task.DatasetConstructor, error) {
-	ds, err := dataset.NewSatelliteDataset(datasetName, imageType, data, config)
+func uploadRemoteSensingDataset(datasetName string, imageType string, rawFilePath string, archiveFilePath string) (task.DatasetConstructor, error) {
+	ds, err := dataset.NewSatelliteDatasetFromExpanded(datasetName, imageType, rawFilePath, archiveFilePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create raw dataset")
 	}
