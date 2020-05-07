@@ -168,7 +168,7 @@ func InferenceHandler(outputPath string, dataStorageCtor api.DataStorageCtor, so
 			return
 		}
 
-		ds, err := dataset.NewTableDataset(datasetName, data, config)
+		ds, err := dataset.NewTableDataset(datasetName, data)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to create inference dataset"))
 			return
@@ -218,11 +218,15 @@ func getTarget(request *api.Request) string {
 
 func createImageFromRequest(data []byte, datasetName string, outputPath string, imageType string, config *env.Config) (bool, []byte, error) {
 	// raw request is zip file of image dataset that needs to be imported
-	ds, err := uploadImageDataset(datasetName, outputPath, config, data, imageType)
+
+	expandedInfo, err := dataset.ExpandZipDataset(datasetName, data)
 	if err != nil {
 		return false, nil, err
 	}
-
+	ds, err := uploadImageDataset(datasetName, imageType, expandedInfo.RawFilePath, expandedInfo.ExtractedFilePath)
+	if err != nil {
+		return false, nil, err
+	}
 	_, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
 	if err != nil {
 		return false, nil, err

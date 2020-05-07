@@ -24,7 +24,7 @@ import (
 
 	"github.com/mattn/go-isatty"
 	"github.com/mgutz/ansi"
-	"github.com/unchartedsoftware/plog"
+	log "github.com/unchartedsoftware/plog"
 	"github.com/vova616/xxhash"
 )
 
