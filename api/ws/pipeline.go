@@ -332,13 +332,13 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	//
 	var ds task.DatasetConstructor
 	if !api.HasTaskType(requestTask, compute.ImageTask) {
-		ds, err = dataset.NewTableDataset(request.DatasetID, []byte(data), &config)
+		ds, err = dataset.NewTableDataset(request.DatasetID, []byte(data))
 		if err != nil {
 			handleErr(conn, msg, errors.Wrap(err, "unable to create raw table dataset"))
 			return
 		}
 	} else {
-		ds, err = dataset.NewImageDataset(request.DatasetID, "png", []byte(data), &config)
+		ds, err = dataset.NewImageDataset(request.DatasetID, "png", []byte(data))
 		if err != nil {
 			handleErr(conn, msg, errors.Wrap(err, "unable to create raw dataset"))
 			return

@@ -60,26 +60,26 @@ type Image struct {
 }
 
 // NewImageDataset creates a new image dataset from raw byte data, assuming json.
-func NewImageDataset(dataset string, imageType string, rawData []byte, config *env.Config) (*Image, error) {
+func NewImageDataset(dataset string, imageType string, rawData []byte) (*Image, error) {
 	// store and expand raw data
-	tmpPath := env.GetTmpPath()
-	zipFilename := path.Join(tmpPath, fmt.Sprintf("%s_raw.zip", dataset))
-	zipFilename = getUniqueName(zipFilename)
-	err := util.WriteFileWithDirs(zipFilename, rawData, os.ModePerm)
+	expandedInfo, err := ExpandZipDataset(dataset, rawData)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to write raw image data archive")
+		return nil, err
 	}
-
-	extractedArchivePath := getUniqueFolder(path.Join(tmpPath, dataset))
-	err = util.Unzip(zipFilename, extractedArchivePath)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to extract raw image data archive")
-	}
-
 	return &Image{
 		Dataset:           dataset,
 		ImageType:         imageType,
-		RawFilePath:       zipFilename,
+		RawFilePath:       expandedInfo.RawFilePath,
+		ExtractedFilePath: expandedInfo.ExtractedFilePath,
+	}, nil
+}
+
+// NewImageDatasetFromExpanded creates a new image dataset from raw byte data, assuming json.
+func NewImageDatasetFromExpanded(dataset string, imageType string, zipFileName string, extractedArchivePath string) (*Image, error) {
+	return &Image{
+		Dataset:           dataset,
+		ImageType:         imageType,
+		RawFilePath:       zipFileName,
 		ExtractedFilePath: extractedArchivePath,
 	}, nil
 }
@@ -193,26 +193,6 @@ func (i *Image) CreateDataset(rootDataPath string, datasetName string, config *e
 		Data:     csvData,
 		Metadata: meta,
 	}, nil
-}
-
-func getUniqueName(filename string) string {
-	extension := path.Ext(filename)
-	baseFilename := strings.TrimSuffix(filename, extension)
-	currentFilename := filename
-	for i := 1; util.FileExists(currentFilename); i++ {
-		currentFilename = fmt.Sprintf("%s_%d.%s", baseFilename, i, extension)
-	}
-
-	return currentFilename
-}
-
-func getUniqueFolder(folder string) string {
-	currentFilename := folder
-	for i := 1; util.FileExists(currentFilename); i++ {
-		currentFilename = fmt.Sprintf("%s_%d", folder, i)
-	}
-
-	return currentFilename
 }
 
 func readImage(imagePath string, defaultType string) (image.Image, error) {
