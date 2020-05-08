@@ -80,13 +80,27 @@ interface GeoField {
 interface LatLng {
   lat: number;
   lng: number;
-  row: TableRow;
+  row?: TableRow;
 }
 
 interface PointGroup {
   field: GeoField;
   points: LatLng[];
 }
+
+type TileLayer = import("leaflet").TileLayer;
+type LatLngBoundsLiteral = import("leaflet").LatLngBoundsLiteral;
+
+interface Area {
+  id: number;
+  coordinates: LatLngBoundsLiteral;
+}
+
+const FAKEDATA = [
+  { id: 1, coordinates: [[35, 36], [45, 46]] },
+  { id: 2, coordinates: [[24, 25], [34, 35]] },
+  { id: 3, coordinates: [[13, 14], [23, 24]] }
+] as Area[];
 
 export default Vue.extend({
   name: "geo-plot",
@@ -157,6 +171,7 @@ export default Vue.extend({
       let lng = null;
       let lat = null;
       const fields = [];
+
       matches.forEach(match => {
         if (match.grouping && match.grouping.type === GEOCOORDINATE_TYPE) {
           lng = match.grouping.properties.xCol;
@@ -174,6 +189,7 @@ export default Vue.extend({
             lat = match.colName;
           }
         }
+
         // TODO: currently we pair any two random lat / lngs, we should
         // eventually use the groupings functionality to let the user
         // group the two vars into a single point field.
@@ -203,10 +219,12 @@ export default Vue.extend({
           field: fieldSpec,
           points: []
         };
+
         group.points = this.dataItems
           .map(item => {
             const lat = this.latValue(fieldSpec, item);
             const lng = this.lngValue(fieldSpec, item);
+
             if (lat !== undefined && lng !== undefined) {
               return {
                 lng: lng,
@@ -214,13 +232,26 @@ export default Vue.extend({
                 row: item
               };
             }
+
             return null;
           })
-          .filter(p => !!p);
+          .filter(point => !!point);
+
         groups.push(group);
       });
 
       return groups;
+    },
+
+    /**
+     * Data with multiple geocordinates to be displayed as an area on the map.
+     */
+    areas(): Area[] {
+      if (!this.dataItems) {
+        return [];
+      }
+
+      return FAKEDATA;
     },
 
     highlight(): Highlight {
@@ -239,8 +270,8 @@ export default Vue.extend({
       return routeGetters.getDecodedRowSelection(this.$store);
     },
 
-    isSatelliteImages(): boolean {
-      return datasetGetters.isSatelliteImages(this.$store);
+    isRemoteSensing(): boolean {
+      return routeGetters.isRemoteSensing(this.$store);
     },
 
     currentSatelliteBand(): SatelliteBand {
@@ -251,10 +282,10 @@ export default Vue.extend({
      * Base layer for the map.
      * @returns {TileLayer}
      */
-    baseLayer(): any {
+    baseLayer(): TileLayer {
       let URL = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
 
-      if (this.isSatelliteImages) {
+      if (this.isRemoteSensing) {
         const { r, g, b } = this.currentSatelliteBand;
         URL = `distil/dataset/tile/${r}/${g}/${b}/{z}/{x}/{y}.png`;
       }
@@ -278,6 +309,7 @@ export default Vue.extend({
         this.closeButton = null;
       }
     },
+
     onMouseDown(event: MouseEvent) {
       const mapEventTarget = event.target as HTMLElement;
 
@@ -319,6 +351,7 @@ export default Vue.extend({
         this.map.dragging.disable();
       }
     },
+
     onMouseUp(event: MouseEvent) {
       if (this.currentRect) {
         this.setSelection(this.currentRect);
@@ -329,6 +362,7 @@ export default Vue.extend({
         // this.map.on('click', this.clearSelection);
       }
     },
+
     onMouseMove(event: MouseEvent) {
       if (this.currentRect) {
         const offset = $(this.map.getContainer()).offset();
@@ -340,6 +374,7 @@ export default Vue.extend({
         this.currentRect.setBounds(bounds);
       }
     },
+
     onEsc() {
       if (this.currentRect) {
         this.clearSelectionRect();
@@ -347,6 +382,7 @@ export default Vue.extend({
         this.map.dragging.enable();
       }
     },
+
     setSelection(rect) {
       this.clearSelection();
 
@@ -372,6 +408,7 @@ export default Vue.extend({
         maxY: ne.lat
       });
     },
+
     clearSelection() {
       if (this.selectedRect) {
         $(this.selectedRect._path).removeClass("selected");
@@ -381,6 +418,7 @@ export default Vue.extend({
         this.closeButton.remove();
       }
     },
+
     createHighlight(value: {
       minX: number;
       maxX: number;
@@ -412,6 +450,7 @@ export default Vue.extend({
         value: value
       });
     },
+
     drawHighlight() {
       if (
         this.highlight &&
@@ -439,6 +478,7 @@ export default Vue.extend({
         this.setSelection(rect);
       }
     },
+
     drawFilters() {
       // TODO: impl this
     },
@@ -469,17 +509,21 @@ export default Vue.extend({
         this.selectedRect.remove();
         this.selectedRect = null;
       }
+
       if (this.currentRect) {
         this.currentRect.remove();
         this.currentRect = null;
       }
+
       if (this.closeButton) {
         this.closeButton.remove();
         this.closeButton = null;
       }
+
       _.forIn(this.markers, markerLayer => {
         markerLayer.removeFrom(this.map);
       });
+
       this.markers = {};
       this.startingLatLng = null;
     },
@@ -549,44 +593,97 @@ export default Vue.extend({
       // this.map.on('click', this.clearSelection);
     },
 
+    /**
+     * Add areas has rectangle layers on the map.
+     */
+    addAreas() {
+      const displayOptions = {
+        color: "chartreuse"
+      };
+
+      // Create a layer group to contain all the areas to be displayed.
+      const layerGroup = leaflet.layerGroup();
+
+      // Bounds object to know the full extent of all the areas.
+      const bounds = leaflet.latLngBounds(null);
+
+      // Add each area to the layer group.
+      this.areas.forEach(area => {
+        const { coordinates, id } = area;
+
+        // Make sure the new area fit on the map.
+        coordinates.forEach(coordinate => bounds.extend(coordinate));
+
+        // Create a rectangle to display the area on the map.
+        const rectangle = leaflet
+          .rectangle(coordinates, displayOptions)
+          .on("click", () => console.debug(`Open image modal for ${id}.`))
+          .bindTooltip(`Satellite Image ${id}`);
+
+        // Add the rectangle to the layer group.
+        layerGroup.addLayer(rectangle);
+      });
+
+      layerGroup.addTo(this.map);
+
+      if (bounds.isValid()) {
+        this.map.fitBounds(bounds);
+      }
+    },
+
     paint() {
       this.createMap();
       this.clear();
 
-      const bounds = leaflet.latLngBounds(null);
-      this.pointGroups.forEach(group => {
-        const hash = this.fieldHash(group.field);
-        const layer = leaflet.layerGroup([]);
-        group.points.forEach(p => {
-          const marker = leaflet.marker(p, {
-            row: (<any>p).row
-          } as MarkerOptions);
-          bounds.extend([p.lat, p.lng]);
-          marker.bindTooltip(() => {
-            const target = p.row[this.target].value;
-            const values = [];
-            const MAX_VALUES = 5;
-            this.getTopVariables.forEach(v => {
-              if (p.row[v] && values.length <= MAX_VALUES) {
-                values.push(`<b>${_.capitalize(v)}:</b> ${p.row[v].value}`);
-              }
+      if (this.isRemoteSensing) {
+        // -- Display areas
+        this.addAreas();
+      } else {
+        const bounds = leaflet.latLngBounds(null);
+
+        this.pointGroups.forEach(group => {
+          const hash = this.fieldHash(group.field);
+          const layer = leaflet.layerGroup([]);
+
+          group.points.forEach(point => {
+            const marker = leaflet.marker(point, {
+              row: (<any>point).row
+            } as MarkerOptions);
+
+            bounds.extend([point.lat, point.lng]);
+
+            marker.bindTooltip(() => {
+              const target = point.row[this.target].value;
+              const values = [];
+              const MAX_VALUES = 5;
+
+              this.getTopVariables.forEach(v => {
+                if (point.row[v] && values.length <= MAX_VALUES) {
+                  values.push(
+                    `<b>${_.capitalize(v)}:</b> ${point.row[v].value}`
+                  );
+                }
+              });
+
+              return [`<b>${_.capitalize(target)}</b>`]
+                .concat(values)
+                .join("<br>");
             });
-            return [`<b>${_.capitalize(target)}</b>`]
-              .concat(values)
-              .join("<br>");
+
+            marker.on("click", this.toggleSelection);
+
+            layer.addLayer(marker);
           });
 
-          marker.on("click", this.toggleSelection);
+          this.markers[hash] = layer;
 
-          layer.addLayer(marker);
+          layer.on("add", () => this.updateMarkerSelection(layer.getLayers()));
+          layer.addTo(this.map);
         });
-        this.markers[hash] = layer;
-        layer.on("add", () => this.updateMarkerSelection(layer.getLayers()));
-        layer.addTo(this.map);
-      });
 
-      if (bounds.isValid()) {
-        this.map.fitBounds(bounds);
+        if (bounds.isValid()) {
+          this.map.fitBounds(bounds);
+        }
       }
 
       this.drawHighlight();

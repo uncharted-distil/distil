@@ -23,7 +23,6 @@ export const getters = {
   getDatasets: read(moduleGetters.getDatasets),
   getFilteredDatasets: read(moduleGetters.getFilteredDatasets),
   getPendingRequests: read(moduleGetters.getPendingRequests),
-  isSatelliteImages: read(moduleGetters.isSatelliteImages),
 
   // variables
   getVariables: read(moduleGetters.getVariables),

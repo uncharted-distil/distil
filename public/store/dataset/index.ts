@@ -301,7 +301,6 @@ export interface DatasetState {
   timeseriesExtrema: Dictionary<TimeseriesExtrema>;
   joinTableData: Dictionary<TableData>;
   includedSet: WorkingSet;
-  isSatelliteImages: boolean;
   excludedSet: WorkingSet;
   pendingRequests: DatasetPendingRequest[];
   task: Task;
@@ -316,7 +315,6 @@ export const state: DatasetState = {
   // datasets and filtered datasets
   datasets: [],
   filteredDatasets: [],
-  isSatelliteImages: false,
 
   // variable list and rankings for the active dataset
   variables: [],
