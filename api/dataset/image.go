@@ -173,11 +173,11 @@ func (i *Image) CreateDataset(rootDataPath string, datasetName string, config *e
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(1, "image_file", "image_file", "image_file", model.StringType,
 			model.StringType, "Reference to image file", []string{"attribute"},
-			model.VarRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
+			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(2, "label", "label", "label", model.StringType,
 			model.StringType, "Label of the image", []string{"suggestedTarget"},
-			model.VarRoleData, nil, dr.Variables, false))
+			model.VarDistilRoleData, nil, dr.Variables, false))
 
 	// create the data resource for the referenced images
 	imageTypeLookup := imageTypeMap[defaultImageType]
