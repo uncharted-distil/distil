@@ -241,7 +241,7 @@ func parseTimeColValue(timeColValue string) (float64, error) {
 	return f, nil
 }
 
-func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool, targetCol int, maxTrainingCount int, maxTestCount int, stratify bool) error {
+func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool, targetCol int, groupingCol int, maxTrainingCount int, maxTestCount int, stratify bool) error {
 	// create the writers
 	outputTrain := &bytes.Buffer{}
 	writerTrain := csv.NewWriter(outputTrain)
@@ -290,14 +290,14 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 		// second pass - randomly sample each category to generate train/test split
 		for _, data := range categoryRowData {
 			maxCategoryRows := int(float64(len(data)) / float64(len(rowData)) * float64(maxTrainingCount))
-			err := shuffleAndWrite(data, targetCol, maxCategoryRows, maxTestCount, writerTrain, writerTest)
+			err := shuffleAndWrite(data, targetCol, groupingCol, maxCategoryRows, maxTestCount, writerTrain, writerTest)
 			if err != nil {
 				return err
 			}
 		}
 	} else {
 		// randomly select from entire dataset
-		err := shuffleAndWrite(rowData, targetCol, maxTrainingCount, maxTestCount, writerTrain, writerTest)
+		err := shuffleAndWrite(rowData, targetCol, groupingCol, maxTrainingCount, maxTestCount, writerTrain, writerTest)
 		if err != nil {
 			return err
 		}
@@ -319,7 +319,7 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 	return nil
 }
 
-func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, maxTestCount int, writerTrain *csv.Writer, writerTest *csv.Writer) error {
+func shuffleAndWrite(rowData [][]string, targetCol int, groupCol int, maxTrainingCount int, maxTestCount int, writerTrain *csv.Writer, writerTest *csv.Writer) error {
 	if maxTrainingCount <= 0 {
 		maxTrainingCount = math.MaxInt64
 	}
@@ -335,24 +335,30 @@ func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, ma
 	// Write out to train test
 	testCount := 0
 	trainCount := 0
+	groupMap := make(map[string]*csv.Writer)
+	var writer *csv.Writer
 	for _, row := range rowData {
-		if row[targetCol] != "" && testCount < numTest {
+		if groupCol >= 0 && groupMap[row[groupCol]] != nil {
+			writer = groupMap[row[groupCol]]
+		} else if row[targetCol] != "" && testCount < numTest {
 			testCount++
-			err := writerTest.Write(row)
-			if err != nil {
-				return errors.Wrap(err, "unable to write data to train output")
-			}
+			writer = writerTest
 		} else if trainCount < numTrain {
 			trainCount++
-			err := writerTrain.Write(row)
-			if err != nil {
-				return errors.Wrap(err, "unable to write data to test output")
-			}
+			writer = writerTrain
 		}
 
-		// if we've hit our train and test targets, bail out
-		if testCount >= numTest && trainCount >= numTrain {
-			break
+		// write out data and keep reference for the group
+		if writer != nil {
+			err := writer.Write(row)
+			if err != nil {
+				return errors.Wrap(err, "unable to write data to train/test output")
+			}
+
+			if groupCol >= 0 {
+				groupMap[row[groupCol]] = writer
+			}
+			writer = nil
 		}
 	}
 	return nil
@@ -360,14 +366,14 @@ func shuffleAndWrite(rowData [][]string, targetCol int, maxTrainingCount int, ma
 
 // check if the data has already been split using the existing context
 type persistedDataParams struct {
-	DatasetName          string
-	SchemaFile           string
-	SourceDataFolder     string
-	TmpDataFolder        string
-	TaskType             []string
-	TimeseriesFieldIndex int
-	TargetFieldIndex     int
-	Stratify             bool
+	DatasetName        string
+	SchemaFile         string
+	SourceDataFolder   string
+	TmpDataFolder      string
+	TaskType           []string
+	GroupingFieldIndex int
+	TargetFieldIndex   int
+	Stratify           bool
 }
 
 // persistOriginalData copies the original data and splits it into a train &
@@ -444,13 +450,13 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	}
 
 	if hasForecasting {
-		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, params.TimeseriesFieldIndex)
+		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, params.GroupingFieldIndex)
 	} else {
 		config, err = env.LoadConfig()
 		if err != nil {
 			return "", "", errors.Wrap(err, "unable to load config")
 		}
-		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex, config.MaxTrainingRows, config.MaxTestRows, params.Stratify)
+		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex, params.GroupingFieldIndex, config.MaxTrainingRows, config.MaxTestRows, params.Stratify)
 	}
 	if err != nil {
 		return "", "", err
