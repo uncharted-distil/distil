@@ -317,5 +317,9 @@ export const mutations = {
 
   updateTask(state: DatasetState, task: Task) {
     state.task = task;
+  },
+
+  updateBands(state: DatasetState, bands: Object) {
+    state.bands = bands;
   }
 };

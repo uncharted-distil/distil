@@ -1192,5 +1192,23 @@ export const actions = {
     return axios.get<Task>(
       `/distil/task/${args.dataset}/${args.targetName}/${varNamesStr}`
     );
+  },
+
+  async fetchMultiBandCombinations(
+    context: DatasetContext,
+    args: { dataset: string }
+  ) {
+    if (!validateArgs(args, ["dataset"])) {
+      return null;
+    }
+
+    try {
+      const bands = await axios.get(
+        `distil/multiband-combinations/${args.dataset}`
+      );
+      mutations.updateBands(context, { dataset: args.dataset, bands: bands });
+    } catch (error) {
+      console.error(error);
+    }
   }
 };

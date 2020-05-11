@@ -304,6 +304,7 @@ export interface DatasetState {
   excludedSet: WorkingSet;
   pendingRequests: DatasetPendingRequest[];
   task: Task;
+  bands: Object;
 }
 
 export interface WorkingSet {
@@ -344,5 +345,8 @@ export const state: DatasetState = {
   // task information
   task: {
     task: [TaskTypes.CLASSIFICATION, TaskTypes.MULTICLASS]
-  }
+  },
+
+  // bands
+  bands: {}
 };
