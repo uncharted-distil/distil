@@ -27,7 +27,8 @@ import {
   createPendingSummary,
   createErrorSummary,
   createEmptyTableData,
-  fetchSummaryExemplars
+  fetchSummaryExemplars,
+  validateArgs
 } from "../../util/data";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import { loadImage } from "../../util/image";
@@ -60,8 +61,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string }
   ): Promise<void> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset"])) {
       return null;
     }
     try {
@@ -90,8 +90,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string }
   ): Promise<void> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset"])) {
       return null;
     }
     try {
@@ -108,8 +107,7 @@ export const actions = {
     context: DatasetContext,
     args: { datasets: string[] }
   ): Promise<void> {
-    if (!args.datasets) {
-      console.warn("`datasets` argument is missing");
+    if (!validateArgs(args, ["datasets"])) {
       return null;
     }
     try {
@@ -130,12 +128,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; field: string }
   ): Promise<any> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.field) {
-      console.warn("`field` argument is missing");
+    if (!validateArgs(args, ["dataset", "field"])) {
       return null;
     }
     const update: GeocodingPendingRequest = {
@@ -215,8 +208,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; searchQuery: string }
   ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset"])) {
       return null;
     }
     const request: JoinSuggestionPendingRequest = {
@@ -255,8 +247,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string }
   ): Promise<any> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset"])) {
       return null;
     }
     const update: ClusteringPendingRequest = {
@@ -320,17 +311,8 @@ export const actions = {
       fittedSolutionId: string;
     }
   ): Promise<void> {
-    if (!args.datasetID) {
-      console.warn("`datasetID` argument is missing");
-      return;
-    }
-    if (!args.file) {
-      console.warn("`file` argument is missing");
-      return;
-    }
-    if (!args.type) {
-      console.warn("`type` argument is missing");
-      return;
+    if (!validateArgs(args, ["datasetID", "file", "type"])) {
+      return null;
     }
     const data = new FormData();
     data.append("file", args.file);
@@ -369,12 +351,7 @@ export const actions = {
       joinedDataset: Dataset;
     }
   ): Promise<void> {
-    if (!args.datasetID) {
-      console.warn("`datasetID` argument is missing");
-      return null;
-    }
-    if (!args.source) {
-      console.warn("`source` argument is missing");
+    if (!validateArgs(args, ["datasetID", "source"])) {
       return null;
     }
 
@@ -401,8 +378,7 @@ export const actions = {
       searchResults: DatasetOrigin[];
     }
   ): Promise<any> {
-    if (!args.datasetID && args.datasetID.length > 0) {
-      console.warn("`datasetID` argument is missing");
+    if (!validateArgs(args, ["dataset"])) {
       return null;
     }
 
@@ -439,16 +415,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; key: string; vars: string[] }
   ): Promise<void> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.key) {
-      console.warn("`key` argument is missing");
-      return null;
-    }
-    if (!args.vars) {
-      console.warn("`vars` argument is missing");
+    if (!validateArgs(args, ["dataset", "key", "vars"])) {
       return null;
     }
     return axios.post(`/distil/compose/${args.dataset}`, {
@@ -461,12 +428,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; key: string }
   ): Promise<any> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.key) {
-      console.warn("`key` argument is missing");
+    if (!validateArgs(args, ["dataset", "key"])) {
       return null;
     }
     try {
@@ -518,17 +480,7 @@ export const actions = {
       joinSuggestionIndex: number;
     }
   ): Promise<void> {
-    if (!args.datasetA) {
-      console.warn("`datasetA` argument is missing");
-      return null;
-    }
-    if (!args.datasetB) {
-      console.warn("`datasetB` argument is missing");
-      return null;
-    }
-
-    if (_.isNil(args.joinAccuracy)) {
-      console.warn("`joinAccuracy` argument is missing");
+    if (!validateArgs(args, ["datasetA", "datasetB", "joinAccuracy"])) {
       return null;
     }
 
@@ -553,12 +505,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; grouping: Grouping }
   ): Promise<any> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.grouping) {
-      console.warn("`grouping` argument is missing");
+    if (!validateArgs(args, ["dataset", "grouping"])) {
       return null;
     }
     try {
@@ -607,12 +554,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; variable: string }
   ): Promise<any> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.variable) {
-      console.warn("`grouping` argument is missing");
+    if (!validateArgs(args, ["dataset", "variable"])) {
       return null;
     }
     try {
@@ -666,16 +608,7 @@ export const actions = {
       mutations.updateVariableType(context, args);
       return;
     }
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.field) {
-      console.warn("`field` argument is missing");
-      return null;
-    }
-    if (!args.type) {
-      console.warn("`type` argument is missing");
+    if (!validateArgs(args, ["dataset", "field", "type"])) {
       return null;
     }
 
@@ -780,12 +713,7 @@ export const actions = {
       varModes: Map<string, SummaryMode>;
     }
   ): Promise<void[]> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.variables) {
-      console.warn("`variables` argument is missing");
+    if (!validateArgs(args, ["dataset", "variables"])) {
       return null;
     }
 
@@ -844,12 +772,7 @@ export const actions = {
       mode: SummaryMode;
     }
   ): Promise<void> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.variable) {
-      console.warn("`variable` argument is missing");
+    if (!validateArgs(args, ["dataset", "variable"])) {
       return null;
     }
 
@@ -984,8 +907,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; variable: string; urls: string[] }
   ) {
-    if (!args.urls) {
-      console.warn("`url` argument is missing");
+    if (!validateArgs(args, ["dataset", "variable", "urls"])) {
       return null;
     }
     const type = getVarType(args.variable);
@@ -1015,12 +937,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; url: string }
   ) {
-    if (!args.url) {
-      console.warn("`url` argument is missing");
-      return null;
-    }
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset", "url"])) {
       return null;
     }
     try {
@@ -1043,24 +960,15 @@ export const actions = {
       timeseriesId: any;
     }
   ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.xColName) {
-      console.warn("`xColName` argument is missing");
-      return null;
-    }
-    if (!args.yColName) {
-      console.warn("`yColName` argument is missing");
-      return null;
-    }
-    if (!args.timeseriesColName) {
-      console.warn("`timeseriesColName` argument is missing");
-      return null;
-    }
-    if (!args.timeseriesId) {
-      console.warn("`timeseriesId` argument is missing");
+    if (
+      !validateArgs(args, [
+        "dataset",
+        "xColName",
+        "yColName",
+        "timeseriesColName",
+        "timeseriesId"
+      ])
+    ) {
       return null;
     }
 
@@ -1086,16 +994,33 @@ export const actions = {
     }
   },
 
+  async fetchMultiBandImage(
+    context: DatasetContext,
+    args: {
+      dataset: string;
+      imageId: string;
+      bandCombination: string;
+    }
+  ) {
+    if (!validateArgs(args, ["dataset", "imageId", "bandCombination"])) {
+      return null;
+    }
+
+    try {
+      const response = await loadImage(
+        `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}`
+      );
+      mutations.updateFile(context, { url: args.imageId, file: response });
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
   async fetchGraph(
     context: DatasetContext,
     args: { dataset: string; url: string }
   ) {
-    if (!args.url) {
-      console.warn("`url` argument is missing");
-      return null;
-    }
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset", "url"])) {
       return null;
     }
     try {
@@ -1135,12 +1060,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; url: string }
   ) {
-    if (!args.url) {
-      console.warn("`url` argument is missing");
-      return null;
-    }
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset", "url"])) {
       return null;
     }
     try {
@@ -1162,12 +1082,7 @@ export const actions = {
       highlight: Highlight;
     }
   ) {
-    if (!args.datasets) {
-      console.warn("`datasets` argument is missing");
-      return null;
-    }
-    if (!args.filterParams) {
-      console.warn("`filterParams` argument is missing");
+    if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
     return Promise.all(
@@ -1234,12 +1149,7 @@ export const actions = {
       include: boolean;
     }
   ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.filterParams) {
-      console.warn("`filterParams` argument is missing");
+    if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
 

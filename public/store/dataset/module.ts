@@ -101,6 +101,7 @@ export const actions = {
   // files
   fetchFiles: dispatch(moduleActions.fetchFiles),
   fetchImage: dispatch(moduleActions.fetchImage),
+  fetchMultiBandImage: dispatch(moduleActions.fetchMultiBandImage),
   fetchTimeseries: dispatch(moduleActions.fetchTimeseries),
   fetchGraph: dispatch(moduleActions.fetchGraph),
   fetchFile: dispatch(moduleActions.fetchFile),
