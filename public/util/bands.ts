@@ -1,0 +1,10 @@
+export const NATURAL_COLORS = "natural_colors";
+export const FALSE_COLOR_INFRARED = "false_color_infrared";
+export const FALSE_COLOR_URBAN = "false_color_urban";
+export const AGRICULTURE = "agriculture";
+export const ATMOSPHERIC_PENETRATION = "atmospheric_penetration";
+export const HEALTHY_VEGETATION = "healthy_vegetation";
+export const LAND_WATER = "land_water";
+export const ATMOSPHERIC_REMOVAL = "atmospheric_removal";
+export const SHORTWAVE_INFRARED = "shortwave_infrared";
+export const VEGETATION_ANALYSIS = "vegetation_analysis";

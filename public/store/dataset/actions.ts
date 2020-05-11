@@ -38,8 +38,10 @@ import {
   GEOCODED_LON_PREFIX,
   GEOCODED_LAT_PREFIX,
   GEOCOORDINATE_TYPE,
-  isRankableVariableType
+  isRankableVariableType,
+  MULTIBAND_IMAGE_TYPE
 } from "../../util/types";
+import { NATURAL_COLORS } from "../../util/bands";
 import { getters as routeGetters } from "../route/module";
 
 // fetches variables and add dataset name to each variable
@@ -917,6 +919,13 @@ export const actions = {
           return actions.fetchImage(context, {
             dataset: args.dataset,
             url: url
+          });
+        }
+        if (type === MULTIBAND_IMAGE_TYPE) {
+          return actions.fetchMultiBandImage(context, {
+            dataset: args.dataset,
+            imageId: url,
+            bandCombination: NATURAL_COLORS
           });
         }
         if (type === "graph") {

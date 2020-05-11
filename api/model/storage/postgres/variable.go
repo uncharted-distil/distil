@@ -225,6 +225,8 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 			field = NewTextField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsImage(variable.Type) {
 			field = NewImageField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
+		} else if model.IsMultiBandImage(variable.Type) {
+			field = NewMultiBandImageField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsDateTime(variable.Type) {
 			field = NewDateTimeField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else {

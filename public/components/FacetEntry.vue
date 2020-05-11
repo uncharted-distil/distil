@@ -1058,7 +1058,7 @@ export default Vue.extend({
     },
 
     injectImagePreview(group: Group, $elem: JQuery) {
-      if (group.type === "image") {
+      if (group.type === "image" || group.type === "multiband_image") {
         const $facets = $elem.find(".facet-block");
         group.facets.forEach((facet: any, index) => {
           const $facet = $($facets.get(index));
