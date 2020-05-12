@@ -10,57 +10,59 @@
     </p>
     <result-facets :showResiduals="showResiduals" />
 
-    <file-uploader
-      class="result-button-alignment"
-      @uploadstart="onUploadStart"
-      @uploadfinish="onUploadFinish"
-      :upload-type="uploadType"
-      :fitted-solution-id="fittedSolutionId"
-      :target="target"
-      :target-type="targetType"
-    ></file-uploader>
-    <b-button
-      block
-      variant="primary"
-      class="result-button-alignment"
-      v-b-modal.save-model-modal
-    >
-      Save Model
-    </b-button>
-    <b-modal
-      title="Save Model"
-      id="save-model-modal"
-      @ok="handleOk"
-      @cancel="resetModal"
-      @close="resetModal"
-    >
-      <form ref="saveModelForm" @submit.stop.prevent="saveModel">
-        <b-form-group
-          label="Model Name"
-          label-for="model-name-input"
-          invalid-feedback="Model Name is Required"
-          :state="saveNameState"
-        >
-          <b-form-input
-            id="model-name-input"
-            v-model="saveName"
+    <template v-if="isActiveSolutionCompleted">
+      <file-uploader
+        class="result-button-alignment"
+        @uploadstart="onUploadStart"
+        @uploadfinish="onUploadFinish"
+        :upload-type="uploadType"
+        :fitted-solution-id="fittedSolutionId"
+        :target="target"
+        :target-type="targetType"
+      ></file-uploader>
+      <b-button
+        block
+        variant="primary"
+        class="result-button-alignment"
+        v-b-modal.save-model-modal
+      >
+        Save Model
+      </b-button>
+      <b-modal
+        title="Save Model"
+        id="save-model-modal"
+        @ok="handleOk"
+        @cancel="resetModal"
+        @close="resetModal"
+      >
+        <form ref="saveModelForm" @submit.stop.prevent="saveModel">
+          <b-form-group
+            label="Model Name"
+            label-for="model-name-input"
+            invalid-feedback="Model Name is Required"
             :state="saveNameState"
-            required
-          ></b-form-input>
-        </b-form-group>
-        <b-form-group
-          label="Model Description"
-          label-for="model-desc-input"
-          :state="saveDescriptionState"
-        >
-          <b-form-input
-            id="model-desc-input"
-            v-model="saveDescription"
+          >
+            <b-form-input
+              id="model-name-input"
+              v-model="saveName"
+              :state="saveNameState"
+              required
+            ></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="Model Description"
+            label-for="model-desc-input"
             :state="saveDescriptionState"
-          ></b-form-input>
-        </b-form-group>
-      </form>
-    </b-modal>
+          >
+            <b-form-input
+              id="model-desc-input"
+              v-model="saveDescription"
+              :state="saveDescriptionState"
+            ></b-form-input>
+          </b-form-group>
+        </form>
+      </b-modal>
+    </template>
   </div>
 </template>
 
@@ -83,6 +85,7 @@ import {
   ROOT_ROUTE,
   PREDICTION_ROUTE
 } from "../store/route/index";
+import { SOLUTION_COMPLETED } from "../store/requests/index";
 import { Variable, TaskTypes } from "../store/dataset/index";
 import vueSlider from "vue-slider-component";
 import Vue from "vue";
@@ -166,7 +169,16 @@ export default Vue.extend({
 
     instanceName(): string {
       return "groundTruth";
-    }
+    },
+
+    /**
+     * Check that the active solution is completed.
+     * This is used to display possible actions on the selected model.
+     * @returns {Boolean}
+     */
+    isActiveSolutionCompleted(): boolean {
+      return !!(this.activeSolution && this.activeSolution.progress === SOLUTION_COMPLETED);
+    },
   },
 
   methods: {
