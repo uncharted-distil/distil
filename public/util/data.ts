@@ -33,7 +33,9 @@ import {
   formatValue,
   isIntegerType,
   isTimeType,
-  hasComputedVarPrefix
+  hasComputedVarPrefix,
+  IMAGE_TYPE,
+  MULTIBAND_IMAGE_TYPE
 } from "../util/types";
 
 // Postfixes for special variable names
@@ -653,4 +655,18 @@ function d3mRowWeightExtrema(
     }, 0);
     return extremas;
   }, {});
+}
+
+export function getImageFields(
+  fields: Dictionary<TableColumn>
+): { key: string; type: string }[] {
+  const imageFields = _.map(fields, (field, key) => {
+    return {
+      key: key,
+      type: field.type
+    };
+  }).filter(
+    field => field.type === IMAGE_TYPE || field.type === MULTIBAND_IMAGE_TYPE
+  );
+  return imageFields;
 }

@@ -56,7 +56,8 @@ import {
   IMAGE_TYPE,
   LONGITUDE_TYPE,
   LATITUDE_TYPE,
-  GEOCOORDINATE_TYPE
+  GEOCOORDINATE_TYPE,
+  MULTIBAND_IMAGE_TYPE
 } from "../util/types";
 
 const TABLE_VIEW = "table";
@@ -99,7 +100,11 @@ export default Vue.extend({
       }
     },
     hasImageVariables(): boolean {
-      return this.variables.filter(v => v.colType === IMAGE_TYPE).length > 0;
+      return (
+        this.variables.filter(
+          v => v.colType === IMAGE_TYPE || v.colType === MULTIBAND_IMAGE_TYPE
+        ).length > 0
+      );
     },
     hasGraphVariables(): boolean {
       // TODO: add this in

@@ -5,13 +5,14 @@
         <div class="image-tile">
           <template v-for="(fieldInfo, fieldKey) in fields">
             <image-preview
-              v-if="fieldKey === imageField"
+              v-if="fieldKey === imageField.key"
               class="image-preview"
               :row="item"
               :image-url="item[fieldKey].value"
               :width="imageWidth"
               :height="imageHeight"
               :on-click="onImageClick"
+              :type="imageField.type"
             ></image-preview>
           </template>
           <div v-if="showError" class="image-label-container">
@@ -70,7 +71,7 @@ import {
   isRowSelected,
   updateTableRowSelection
 } from "../util/row";
-import { IMAGE_TYPE } from "../util/types";
+import { getImageFields } from "../util/data";
 import { Solution } from "../store/requests/index";
 
 export default Vue.extend({
@@ -122,13 +123,8 @@ export default Vue.extend({
       return routeGetters.getDecodedRowSelection(this.$store);
     },
 
-    imageFields(): string[] {
-      return _.map(this.fields, (field, key) => ({
-        key: key,
-        type: field.type
-      }))
-        .filter(field => field.type === IMAGE_TYPE)
-        .map(field => field.key);
+    imageFields(): { key: string; type: string }[] {
+      return getImageFields(this.fields);
     },
 
     targetField(): string {
