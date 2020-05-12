@@ -8,7 +8,8 @@ import {
   VariableSummary,
   TableData,
   DatasetPendingRequest,
-  Task
+  Task,
+  BandCombination
 } from "./index";
 import { updateSummaries, isDatamartProvenance } from "../../util/data";
 import {
@@ -319,7 +320,7 @@ export const mutations = {
     state.task = task;
   },
 
-  updateBands(state: DatasetState, bands: Object) {
+  updateBands(state: DatasetState, bands: BandCombination[]) {
     state.bands = bands;
   }
 };

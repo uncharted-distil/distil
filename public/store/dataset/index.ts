@@ -220,6 +220,19 @@ export enum TaskTypes {
   LUPI = "lupi"
 }
 
+export enum BandID {
+  NATURAL_COLORS = "natural_colors",
+  FALSE_COLOR_INFRARED = "false_color_infrared",
+  FALSE_COLOR_URBAN = "false_color_urban",
+  AGRICULTURE = "agriculture",
+  ATMOSPHERIC_PENETRATION = "atmospheric_penetration",
+  HEALTHY_VEGETATION = "healthy_vegetation",
+  LAND_WATER = "land_water",
+  ATMOSPHERIC_REMOVAL = "atmospheric_removal",
+  SHORTWAVE_INFRARED = "shortwave_infrared",
+  VEGETATION_ANALYSIS = "vegetation_analysis"
+}
+
 export interface Task {
   task: TaskTypes[];
 }
@@ -310,6 +323,15 @@ export interface DatasetState {
 export interface WorkingSet {
   variableSummaries: VariableSummary[];
   tableData: TableData;
+}
+
+export interface BandCombination {
+  id: BandID;
+  displayName: String;
+}
+
+export interface BandCombinations {
+  combinations: BandCombination[];
 }
 
 export const state: DatasetState = {

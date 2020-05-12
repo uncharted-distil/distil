@@ -16,7 +16,9 @@ import {
   JoinDatasetImportPendingRequest,
   Task,
   ClusteringPendingRequest,
-  SummaryMode
+  SummaryMode,
+  BandCombinations,
+  BandID
 } from "./index";
 import { mutations, getters } from "./module";
 import { actions as resultActions } from "../requests/module";
@@ -41,7 +43,6 @@ import {
   isRankableVariableType,
   MULTIBAND_IMAGE_TYPE
 } from "../../util/types";
-import { NATURAL_COLORS } from "../../util/bands";
 import { getters as routeGetters } from "../route/module";
 
 // fetches variables and add dataset name to each variable
@@ -925,7 +926,7 @@ export const actions = {
           return actions.fetchMultiBandImage(context, {
             dataset: args.dataset,
             imageId: url,
-            bandCombination: NATURAL_COLORS
+            bandCombination: BandID.NATURAL_COLORS
           });
         }
         if (type === "graph") {
@@ -1203,10 +1204,11 @@ export const actions = {
     }
 
     try {
-      const bands = await axios.get(
+      const repsonse = await axios.get<BandCombinations>(
         `distil/multiband-combinations/${args.dataset}`
       );
-      mutations.updateBands(context, { dataset: args.dataset, bands: bands });
+      const bands = repsonse.data.combinations;
+      mutations.updateBands(context, bands);
     } catch (error) {
       console.error(error);
     }
