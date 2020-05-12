@@ -317,7 +317,7 @@ export interface DatasetState {
   excludedSet: WorkingSet;
   pendingRequests: DatasetPendingRequest[];
   task: Task;
-  bands: Object;
+  bands: BandCombination[];
 }
 
 export interface WorkingSet {
@@ -370,5 +370,5 @@ export const state: DatasetState = {
   },
 
   // bands
-  bands: {}
+  bands: []
 };
