@@ -85,11 +85,10 @@ import {
   ROOT_ROUTE,
   PREDICTION_ROUTE
 } from "../store/route/index";
-import { SOLUTION_COMPLETED } from "../store/requests/index";
 import { Variable, TaskTypes } from "../store/dataset/index";
 import vueSlider from "vue-slider-component";
 import Vue from "vue";
-import { Solution } from "../store/requests/index";
+import { Solution, SOLUTION_COMPLETED } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { createRouteEntry, varModesToString } from "../util/routes";
 import { PREDICTION_UPLOAD } from "../util/uploads";
