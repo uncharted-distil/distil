@@ -55,7 +55,7 @@ export const getters = {
   // Returns completed search results.
   getCompletedSolutions(state: RequestState): Solution[] {
     return state.solutions
-      .filter(searchResult => searchResult.progress !== SOLUTION_COMPLETED)
+      .filter(solution => solution.progress === SOLUTION_COMPLETED)
       .sort(sortSolutionsByScore);
   },
 
