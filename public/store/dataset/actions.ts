@@ -16,7 +16,9 @@ import {
   JoinDatasetImportPendingRequest,
   Task,
   ClusteringPendingRequest,
-  SummaryMode
+  SummaryMode,
+  BandCombinations,
+  BandID
 } from "./index";
 import { mutations, getters } from "./module";
 import { actions as resultActions } from "../requests/module";
@@ -27,7 +29,8 @@ import {
   createPendingSummary,
   createErrorSummary,
   createEmptyTableData,
-  fetchSummaryExemplars
+  fetchSummaryExemplars,
+  validateArgs
 } from "../../util/data";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import { loadImage } from "../../util/image";
@@ -37,10 +40,10 @@ import {
   GEOCODED_LON_PREFIX,
   GEOCODED_LAT_PREFIX,
   GEOCOORDINATE_TYPE,
-  isRankableVariableType
+  isRankableVariableType,
+  MULTIBAND_IMAGE_TYPE
 } from "../../util/types";
-
-import { DATASET_UPLOAD, PREDICTION_UPLOAD } from "../../util/uploads";
+import { getters as routeGetters } from "../route/module";
 
 // fetches variables and add dataset name to each variable
 async function getVariables(dataset: string): Promise<Variable[]> {
@@ -61,8 +64,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string }
   ): Promise<void> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset"])) {
       return null;
     }
     try {
@@ -91,8 +93,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string }
   ): Promise<void> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset"])) {
       return null;
     }
     try {
@@ -109,8 +110,7 @@ export const actions = {
     context: DatasetContext,
     args: { datasets: string[] }
   ): Promise<void> {
-    if (!args.datasets) {
-      console.warn("`datasets` argument is missing");
+    if (!validateArgs(args, ["datasets"])) {
       return null;
     }
     try {
@@ -131,12 +131,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; field: string }
   ): Promise<any> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.field) {
-      console.warn("`field` argument is missing");
+    if (!validateArgs(args, ["dataset", "field"])) {
       return null;
     }
     const update: GeocodingPendingRequest = {
@@ -216,8 +211,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; searchQuery: string }
   ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset"])) {
       return null;
     }
     const request: JoinSuggestionPendingRequest = {
@@ -256,8 +250,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string }
   ): Promise<any> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset"])) {
       return null;
     }
     const update: ClusteringPendingRequest = {
@@ -321,22 +314,23 @@ export const actions = {
       fittedSolutionId: string;
     }
   ): Promise<void> {
-    if (!args.datasetID) {
-      console.warn("`datasetID` argument is missing");
-      return;
-    }
-    if (!args.file) {
-      console.warn("`file` argument is missing");
-      return;
-    }
-    if (!args.type) {
-      console.warn("`type` argument is missing");
-      return;
+    if (!validateArgs(args, ["datasetID", "file", "type"])) {
+      return null;
     }
     const data = new FormData();
     data.append("file", args.file);
-
-    await axios.post(`/distil/upload/${args.datasetID}?type=table`, data, {
+    let options = "";
+    switch (args.file.type) {
+      case "text/csv":
+        options = "type=table";
+        break;
+      case "application/zip":
+        options = "type=image&image=jpg";
+        break;
+      default:
+        options = "type=table";
+    }
+    await axios.post(`/distil/upload/${args.datasetID}?${options}`, data, {
       headers: { "Content-Type": "multipart/form-data" }
     });
     return actions.importDataset(context, {
@@ -360,12 +354,7 @@ export const actions = {
       joinedDataset: Dataset;
     }
   ): Promise<void> {
-    if (!args.datasetID) {
-      console.warn("`datasetID` argument is missing");
-      return null;
-    }
-    if (!args.source) {
-      console.warn("`source` argument is missing");
+    if (!validateArgs(args, ["datasetID", "source"])) {
       return null;
     }
 
@@ -392,8 +381,7 @@ export const actions = {
       searchResults: DatasetOrigin[];
     }
   ): Promise<any> {
-    if (!args.datasetID && args.datasetID.length > 0) {
-      console.warn("`datasetID` argument is missing");
+    if (!validateArgs(args, ["dataset"])) {
       return null;
     }
 
@@ -430,16 +418,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; key: string; vars: string[] }
   ): Promise<void> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.key) {
-      console.warn("`key` argument is missing");
-      return null;
-    }
-    if (!args.vars) {
-      console.warn("`vars` argument is missing");
+    if (!validateArgs(args, ["dataset", "key", "vars"])) {
       return null;
     }
     return axios.post(`/distil/compose/${args.dataset}`, {
@@ -452,12 +431,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; key: string }
   ): Promise<any> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.key) {
-      console.warn("`key` argument is missing");
+    if (!validateArgs(args, ["dataset", "key"])) {
       return null;
     }
     try {
@@ -509,17 +483,7 @@ export const actions = {
       joinSuggestionIndex: number;
     }
   ): Promise<void> {
-    if (!args.datasetA) {
-      console.warn("`datasetA` argument is missing");
-      return null;
-    }
-    if (!args.datasetB) {
-      console.warn("`datasetB` argument is missing");
-      return null;
-    }
-
-    if (_.isNil(args.joinAccuracy)) {
-      console.warn("`joinAccuracy` argument is missing");
+    if (!validateArgs(args, ["datasetA", "datasetB", "joinAccuracy"])) {
       return null;
     }
 
@@ -544,12 +508,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; grouping: Grouping }
   ): Promise<any> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.grouping) {
-      console.warn("`grouping` argument is missing");
+    if (!validateArgs(args, ["dataset", "grouping"])) {
       return null;
     }
     try {
@@ -598,12 +557,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; variable: string }
   ): Promise<any> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.variable) {
-      console.warn("`grouping` argument is missing");
+    if (!validateArgs(args, ["dataset", "variable"])) {
       return null;
     }
     try {
@@ -657,16 +611,7 @@ export const actions = {
       mutations.updateVariableType(context, args);
       return;
     }
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.field) {
-      console.warn("`field` argument is missing");
-      return null;
-    }
-    if (!args.type) {
-      console.warn("`type` argument is missing");
+    if (!validateArgs(args, ["dataset", "field", "type"])) {
       return null;
     }
 
@@ -771,12 +716,7 @@ export const actions = {
       varModes: Map<string, SummaryMode>;
     }
   ): Promise<void[]> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.variables) {
-      console.warn("`variables` argument is missing");
+    if (!validateArgs(args, ["dataset", "variables"])) {
       return null;
     }
 
@@ -835,12 +775,7 @@ export const actions = {
       mode: SummaryMode;
     }
   ): Promise<void> {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.variable) {
-      console.warn("`variable` argument is missing");
+    if (!validateArgs(args, ["dataset", "variable"])) {
       return null;
     }
 
@@ -901,30 +836,36 @@ export const actions = {
 
     mutations.updatePendingRequests(context, update);
     try {
+      const dataset = args.dataset;
+
       const response = await axios.get(
-        `/distil/variable-rankings/${args.dataset}/${args.target}`
+        `/distil/variable-rankings/${dataset}/${args.target}`
       );
+
       const rankings = <Dictionary<number>>response.data.rankings;
+
       // check to see if we got any non-zero rank info back
       const computedRankings = _.filter(rankings, (r, v) => r !== 0).length > 0;
+
       // check to see if the returned ranks are different than any that we may have previously computed
       const oldRankings = getters.getVariableRankings(context)[args.dataset];
+
       // If we have valid rankings and they are different than those previously computed we mark
       // as resolved so the user can apply them.  Otherwise we mark as reviewed, so that there is
       // no flag for the user to apply.
+      let status = DatasetPendingRequestStatus.REVIEWED;
       if (computedRankings && !_.isEqual(oldRankings, rankings)) {
-        mutations.updatePendingRequests(context, {
-          ...update,
-          status: DatasetPendingRequestStatus.RESOLVED,
-          rankings: response.data.rankings
-        });
-      } else {
-        mutations.updatePendingRequests(context, {
-          ...update,
-          status: DatasetPendingRequestStatus.REVIEWED,
-          rankings: response.data.rankings
-        });
+        // If the request has already been reviewed, we apply the rankings.
+        if (routeGetters.getRouteIsTrainingVariablesRanked(store)) {
+          mutations.setVariableRankings(context, { dataset, rankings });
+          mutations.updateVariableRankings(context, rankings);
+        } else {
+          status = DatasetPendingRequestStatus.RESOLVED;
+        }
       }
+
+      // Update the status.
+      mutations.updatePendingRequests(context, { ...update, status, rankings });
     } catch (error) {
       mutations.updatePendingRequests(context, {
         ...update,
@@ -969,8 +910,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; variable: string; urls: string[] }
   ) {
-    if (!args.urls) {
-      console.warn("`url` argument is missing");
+    if (!validateArgs(args, ["dataset", "variable", "urls"])) {
       return null;
     }
     const type = getVarType(args.variable);
@@ -980,6 +920,13 @@ export const actions = {
           return actions.fetchImage(context, {
             dataset: args.dataset,
             url: url
+          });
+        }
+        if (type === MULTIBAND_IMAGE_TYPE) {
+          return actions.fetchMultiBandImage(context, {
+            dataset: args.dataset,
+            imageId: url,
+            bandCombination: BandID.NATURAL_COLORS
           });
         }
         if (type === "graph") {
@@ -1000,12 +947,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; url: string }
   ) {
-    if (!args.url) {
-      console.warn("`url` argument is missing");
-      return null;
-    }
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset", "url"])) {
       return null;
     }
     try {
@@ -1025,27 +967,18 @@ export const actions = {
       xColName: string;
       yColName: string;
       timeseriesColName: string;
-      timeseriesID: any;
+      timeseriesId: any;
     }
   ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.xColName) {
-      console.warn("`xColName` argument is missing");
-      return null;
-    }
-    if (!args.yColName) {
-      console.warn("`yColName` argument is missing");
-      return null;
-    }
-    if (!args.timeseriesColName) {
-      console.warn("`timeseriesColName` argument is missing");
-      return null;
-    }
-    if (!args.timeseriesID) {
-      console.warn("`timeseriesID` argument is missing");
+    if (
+      !validateArgs(args, [
+        "dataset",
+        "xColName",
+        "yColName",
+        "timeseriesColName",
+        "timeseriesId"
+      ])
+    ) {
       return null;
     }
 
@@ -1056,16 +989,38 @@ export const actions = {
         )}/${encodeURIComponent(args.timeseriesColName)}/${encodeURIComponent(
           args.xColName
         )}/${encodeURIComponent(args.yColName)}/${encodeURIComponent(
-          args.timeseriesID
+          args.timeseriesId
         )}/false`,
         {}
       );
       mutations.updateTimeseries(context, {
         dataset: args.dataset,
-        id: args.timeseriesID,
+        id: args.timeseriesId,
         timeseries: response.data.timeseries,
         isDateTime: response.data.isDateTime
       });
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
+  async fetchMultiBandImage(
+    context: DatasetContext,
+    args: {
+      dataset: string;
+      imageId: string;
+      bandCombination: string;
+    }
+  ) {
+    if (!validateArgs(args, ["dataset", "imageId", "bandCombination"])) {
+      return null;
+    }
+
+    try {
+      const response = await loadImage(
+        `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}`
+      );
+      mutations.updateFile(context, { url: args.imageId, file: response });
     } catch (error) {
       console.error(error);
     }
@@ -1075,12 +1030,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; url: string }
   ) {
-    if (!args.url) {
-      console.warn("`url` argument is missing");
-      return null;
-    }
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset", "url"])) {
       return null;
     }
     try {
@@ -1120,12 +1070,7 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; url: string }
   ) {
-    if (!args.url) {
-      console.warn("`url` argument is missing");
-      return null;
-    }
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!validateArgs(args, ["dataset", "url"])) {
       return null;
     }
     try {
@@ -1147,12 +1092,7 @@ export const actions = {
       highlight: Highlight;
     }
   ) {
-    if (!args.datasets) {
-      console.warn("`datasets` argument is missing");
-      return null;
-    }
-    if (!args.filterParams) {
-      console.warn("`filterParams` argument is missing");
+    if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
     return Promise.all(
@@ -1219,12 +1159,7 @@ export const actions = {
       include: boolean;
     }
   ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.filterParams) {
-      console.warn("`filterParams` argument is missing");
+    if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
 
@@ -1251,8 +1186,31 @@ export const actions = {
 
   fetchTask(
     context: DatasetContext,
-    args: { dataset: string; targetName: string }
+    args: { dataset: string; targetName: string; variableNames: string[] }
   ): Promise<AxiosResponse<Task>> {
-    return axios.get<Task>(`/distil/task/${args.dataset}/${args.targetName}`);
+    const varNamesStr =
+      args.variableNames.length > 0 ? args.variableNames.join(",") : null;
+    return axios.get<Task>(
+      `/distil/task/${args.dataset}/${args.targetName}/${varNamesStr}`
+    );
+  },
+
+  async fetchMultiBandCombinations(
+    context: DatasetContext,
+    args: { dataset: string }
+  ) {
+    if (!validateArgs(args, ["dataset"])) {
+      return null;
+    }
+
+    try {
+      const repsonse = await axios.get<BandCombinations>(
+        `distil/multiband-combinations/${args.dataset}`
+      );
+      const bands = repsonse.data.combinations;
+      mutations.updateBands(context, bands);
+    } catch (error) {
+      console.error(error);
+    }
   }
 };

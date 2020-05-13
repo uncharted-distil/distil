@@ -29,6 +29,7 @@ import {
 import store from "../store/store";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
+import { getters as routeGetters } from "../store/route/module";
 import { Forecast } from "../store/results";
 
 export const CATEGORICAL_CHUNK_SIZE = 5;
@@ -283,23 +284,23 @@ function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
 
   let timeseries = null as TimeSeries;
   let forecasts = null as Forecast;
-  if (summary.solutionId) {
-    timeseries = resultGetters.getPredictedTimeseries(store)[
-      summary.solutionId
-    ];
-    forecasts = resultGetters.getPredictedForecasts(store)[summary.solutionId];
+  const solutionId = routeGetters.getRouteSolutionId(store);
+
+  if (solutionId) {
+    timeseries = resultGetters.getPredictedTimeseries(store)[solutionId];
+    forecasts = resultGetters.getPredictedForecasts(store)[solutionId];
   } else {
     timeseries = datasetGetters.getTimeseries(store)[group.dataset];
   }
 
   group.all.forEach((facet: CategoricalFacet) => {
-    if (summary.solutionId) {
+    if (solutionId && timeseries && forecasts) {
       facet.multipleTimeseries = [
         timeseries.timeseriesData[facet.file],
         forecasts.forecastData[facet.file]
       ];
       facet.colors = ["#000", "#00c6e1"];
-    } else {
+    } else if (timeseries) {
       facet.timeseries = timeseries.timeseriesData[facet.file];
     }
   });

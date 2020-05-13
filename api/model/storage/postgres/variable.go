@@ -159,7 +159,6 @@ func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variab
 
 // FetchExtremaByURI return extrema of a variable in a result set.
 func (s *Storage) FetchExtremaByURI(dataset string, storageName string, resultURI string, varName string) (*api.Extrema, error) {
-
 	variable, err := s.metadata.FetchVariable(dataset, varName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch variable description for summary")
@@ -226,6 +225,8 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 			field = NewTextField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsImage(variable.Type) {
 			field = NewImageField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
+		} else if model.IsMultiBandImage(variable.Type) {
+			field = NewMultiBandImageField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsDateTime(variable.Type) {
 			field = NewDateTimeField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else {

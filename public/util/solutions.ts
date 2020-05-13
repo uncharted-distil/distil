@@ -1,9 +1,15 @@
 import _, { Dictionary } from "lodash";
+import moment from "moment";
 
 import { sortSolutionsByScore } from "../store/requests/getters";
-import { getters as requestGetters } from "../store/requests/module";
 import {
-  RequestState,
+  getters as requestGetters,
+  actions as requestActions
+} from "../store/requests/module";
+import { getters as routeGetters } from "../store/route/module";
+import { actions as dataActions } from "../store/dataset/module";
+import { createRouteEntry } from "../util/routes";
+import {
   Solution,
   SOLUTION_PENDING,
   SOLUTION_FITTING,
@@ -12,7 +18,9 @@ import {
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED
 } from "../store/requests/index";
+import { RESULTS_ROUTE } from "../store/route/index";
 import store from "../store/store";
+import VueRouter from "vue-router";
 
 export const SOLUTION_LABELS: Dictionary<string> = {
   [SOLUTION_PENDING]: "PENDING",
@@ -32,10 +40,22 @@ export const SOLUTION_PROGRESS: Dictionary<number> = {
 };
 
 export function getSolutionIndex(solutionId: string) {
-  const solutions = requestGetters.getRelevantSolutions(store);
+  // Get the solutions sorted by score.
+  const solutions = [...requestGetters.getRelevantSolutions(store)];
+
+  // Sort the solutions by timestamp if they are not part of the same request.
+  solutions.sort((a, b) => {
+    if (b.requestId !== a.requestId) {
+      return moment(b.timestamp).unix() - moment(a.timestamp).unix();
+    }
+
+    return -1;
+  });
+
   const index = _.findIndex(solutions, solution => {
     return solution.solutionId === solutionId;
   });
+
   return solutions.length - index - 1;
 }
 
@@ -82,4 +102,49 @@ export function isTopSolutionByScore(
     .sort(sortSolutionsByScore)
     .slice(0, n);
   return !!topN.find(result => result.solutionId === solutionId);
+}
+
+export async function openModelSolution(
+  router: VueRouter,
+  args: {
+    datasetName: string;
+    targetFeature: string;
+    fittedSolutionId?: string;
+    solutionId?: string;
+    variableFeatures: string[];
+  }
+) {
+  let task = routeGetters.getRouteTask(store);
+  if (!task) {
+    const taskResponse = await dataActions.fetchTask(store, {
+      dataset: args.datasetName,
+      targetName: args.targetFeature,
+      variableNames: args.variableFeatures // solution.features.map(f => f.featureName)
+    });
+    task = taskResponse.data.task.join(",");
+  }
+  const solutionArgs = {
+    dataset: args.datasetName,
+    target: args.targetFeature
+  };
+  await Promise.all([
+    requestActions.fetchSolutionRequests(store, solutionArgs),
+    requestActions.fetchSolutions(store, solutionArgs)
+  ]);
+  const solutionId = args.solutionId
+    ? args.solutionId
+    : requestGetters
+        .getSolutions(store)
+        .find(s => s.fittedSolutionId === args.fittedSolutionId).solutionId;
+  const routeDefintion = {
+    dataset: args.datasetName,
+    target: args.targetFeature,
+    task: task,
+    solutionId: solutionId
+  };
+
+  const entry = createRouteEntry(RESULTS_ROUTE, routeDefintion);
+  router.push(entry).catch(err => {
+    console.warn(err);
+  });
 }

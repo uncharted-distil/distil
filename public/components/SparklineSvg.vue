@@ -46,6 +46,12 @@ export default Vue.extend({
     },
     isDateTime: {
       type: Boolean as () => Boolean
+    },
+    // join last element of timeseries to first element of forecast, or display both
+    // seperately
+    joinForecast: {
+      type: Boolean as () => Boolean,
+      default: false
     }
   },
   data() {
@@ -83,6 +89,14 @@ export default Vue.extend({
     },
     max(): number {
       return this.timeseries ? d3.max(this.timeseries, d => d[1]) : 0;
+    },
+    displayForecast(): number[][] {
+      // Join the last element of the truth timeseries and the first element of the forecast
+      // time series.  Used when not visualizing an in-sample forecast.
+      if (this.joinForecast) {
+        return [_.last(this.timeseries)].concat(this.forecast);
+      }
+      return this.forecast;
     },
     showTooltip(): boolean {
       return (
@@ -316,7 +330,7 @@ export default Vue.extend({
           `translate(${this.margin.left}, ${this.margin.top})`
         );
 
-      g.datum(this.forecast);
+      g.datum(this.displayForecast);
 
       g.append("path")
         .attr("fill", "none")

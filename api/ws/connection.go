@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -53,8 +54,6 @@ func NewConnection(w http.ResponseWriter, r *http.Request, handler requestHandle
 	if err != nil {
 		return nil, err
 	}
-	// set the message read limit
-	conn.SetReadLimit(maxMessageSize)
 	return &Connection{
 		conn:    conn,
 		handler: handler,
@@ -82,7 +81,10 @@ func (c *Connection) SendResponse(res interface{}) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	// write response to websocket
-	c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+	err := c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+	if err != nil {
+		return errors.Wrap(err, "failed to set socket write deadline")
+	}
 	return c.conn.WriteJSON(res)
 }
 

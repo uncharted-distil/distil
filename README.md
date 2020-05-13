@@ -6,10 +6,11 @@
 
 ## Dependencies
 
--   [Go](https://golang.org/) programming language binaries with the `GOPATH` environment variable specified and `$GOPATH/bin` in your `PATH`.
--   [NodeJS](http://nodejs.org/) JavaScript runtime.
--   [Docker](https://www.docker.com/) platform.
--   [Docker Compose](https://docs.docker.com/compose/) (optional) for managing multi-container dev environments.
+- [Git](https://git-scm.com) and [Git LFS](https://git-lfs.github.com) Versioning softwares.
+- [Go](https://golang.org/) programming language binaries with the `GOPATH` environment variable specified and `$GOPATH/bin` in your `PATH`.
+- [NodeJS](http://nodejs.org/) JavaScript runtime.
+- [Docker](https://www.docker.com/) platform.
+- [Docker Compose](https://docs.docker.com/compose/) (optional) for managing multi-container dev environments.
 
 ## Development
 
@@ -54,9 +55,9 @@ make peg
 
 The application requires:
 
--   ElasticSearch
--   PostgreSQL
--   TA2 Pipeline Server Stub
+- ElasticSearch
+- PostgreSQL
+- TA2 Pipeline Server Stub
 
 Docker images for each are available at the following registry:
 
@@ -68,6 +69,15 @@ docker.uncharted.software
 
 ```bash
 sudo docker login docker.uncharted.software
+```
+
+##### Update `docker-compose.yml`
+
+```yaml
+
+---
+distil-auto-ml:
+  image: docker.uncharted.software/distil-auto-ml
 ```
 
 #### Pull Images:
@@ -94,6 +104,8 @@ Using three separate terminals:
 yarn watch
 ```
 
+The app will be accessible at `localhost:8080`.
+
 ##### Terminal 3 - Build, watch, and run server:
 
 ```bash
@@ -108,10 +120,10 @@ The location of the dataset directory can be changed by setting the `D3MINPUTDIR
 
 #### "dep: command not found":
 
--   **Cause**: `$GOPATH/bin` has not been added to your `$PATH`.
--   **Solution**: Add `export PATH=$PATH:$GOPATH/bin` to your `.bash_profile` or `.bashrc`.
+- **Cause**: `$GOPATH/bin` has not been added to your `$PATH`.
+- **Solution**: Add `export PATH=$PATH:$GOPATH/bin` to your `.bash_profile` or `.bashrc`.
 
 #### "../repo/subpackage/file.go:10:2: cannot find package "github.com/company/package/subpackage" in any of":
 
--   **Cause**: Dependencies are out of date or have not been installed
--   **Solution**: Run `make install` to install latest dependencies.
+- **Cause**: Dependencies are out of date or have not been installed
+- **Solution**: Run `make install` to install latest dependencies.

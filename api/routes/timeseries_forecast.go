@@ -38,13 +38,15 @@ type TimeseriesForecastResult struct {
 func TimeseriesForecastHandler(dataCtor api.DataStorageCtor, solutionCtor api.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		dataset := pat.Param(r, "dataset")
+		truthDataset := pat.Param(r, "truthDataset")
+		forecastDataset := pat.Param(r, "forecastDataset")
 		timeseriesColName := pat.Param(r, "timeseriesColName")
 		xColName := pat.Param(r, "xColName")
 		yColName := pat.Param(r, "yColName")
 		resultUUID := pat.Param(r, "result-uuid")
 		timeseriesURI := pat.Param(r, "timeseriesURI")
-		storageName := model.NormalizeDatasetID(dataset)
+		truthStorageName := model.NormalizeDatasetID(truthDataset)
+		predictedStorageName := model.NormalizeDatasetID(forecastDataset)
 
 		// parse POST params
 		params, err := getPostParameters(r)
@@ -73,8 +75,8 @@ func TimeseriesForecastHandler(dataCtor api.DataStorageCtor, solutionCtor api.So
 			return
 		}
 
-		// fetch timeseries
-		timeseries, err := data.FetchTimeseries(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURI, filterParams, false)
+		// fetch the ground truth timeseries
+		timeseries, err := data.FetchTimeseries(truthDataset, truthStorageName, timeseriesColName, xColName, yColName, timeseriesURI, filterParams, false)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -87,7 +89,8 @@ func TimeseriesForecastHandler(dataCtor api.DataStorageCtor, solutionCtor api.So
 			return
 		}
 
-		forecast, err := data.FetchTimeseriesForecast(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURI, res.ResultURI, filterParams)
+		// fetch the predicted timeseries
+		forecast, err := data.FetchTimeseriesForecast(forecastDataset, predictedStorageName, timeseriesColName, xColName, yColName, timeseriesURI, res.ResultURI, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return

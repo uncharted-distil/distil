@@ -2,83 +2,67 @@
   <div class="result-summaries">
     <p class="nav-link font-weight-bold">Results</p>
     <p></p>
-    <div
-      v-if="regressionEnabled && !isPrediction"
-      class="result-summaries-error"
-    >
+    <div v-if="showResiduals" class="result-summaries-error">
       <error-threshold-slider></error-threshold-slider>
     </div>
     <p class="nav-link font-weight-bold">
       Predictions by Model
     </p>
-    <result-facets :isRegression="regressionEnabled" :showError="!isPrediction">
-    </result-facets>
+    <result-facets :showResiduals="showResiduals" />
 
-    <!-- TODO: For show right now.-->
-    <b-button v-if="isPrediction" block variant="primary">
-      Export Predictions
-    </b-button>
-
-    <file-uploader
-      class="file-uploader"
-      @uploadstart="onUploadStart"
-      @uploadfinish="onUploadFinish"
-      :upload-type="uploadType"
-      :fitted-solution-id="fittedSolutionId"
-      :target="target"
-      :target-type="targetType"
-      v-if="!isPrediction"
-    ></file-uploader>
-
-    <b-modal id="export" title="Export" @ok="onExport">
-      <div class="check-message-container">
-        <i class="fa fa-check-circle fa-3x check-icon"></i>
-        <div>
-          This action will export solution <b>{{ activeSolutionName }}</b> and
-          return to the application start screen.
-        </div>
-      </div>
-    </b-modal>
-
-    <b-modal
-      ref="exportSuccessModal"
-      title="Export Succeeded"
-      cancel-disabled
-      hide-header
-      hide-footer
-    >
-      <div class="check-message-container">
-        <i class="fa fa-check-circle fa-3x check-icon"></i>
-        <div>Export Succeeded.</div>
-        <b-btn
-          class="mt-3 ml-3 close-modal"
-          variant="success"
-          block
-          @click="hideSuccessModal"
-          >OK</b-btn
-        >
-      </div>
-    </b-modal>
-
-    <b-modal
-      ref="exportFailModal"
-      title="Export Failed"
-      cancel-disabled
-      hide-header
-      hide-footer
-    >
-      <div class="check-message-container">
-        <i class="fa fa-exclamation-triangle fa-3x fail-icon"></i>
-        <div><b>Export Failed:</b> {{ exportFailureMsg }}</div>
-        <b-btn
-          class="mt-3 ml-3 close-modal"
-          variant="success"
-          block
-          @click="hideFailureModal"
-          >OK</b-btn
-        >
-      </div>
-    </b-modal>
+    <template v-if="isActiveSolutionCompleted">
+      <file-uploader
+        class="result-button-alignment"
+        @uploadstart="onUploadStart"
+        @uploadfinish="onUploadFinish"
+        :upload-type="uploadType"
+        :fitted-solution-id="fittedSolutionId"
+        :target="target"
+        :target-type="targetType"
+      ></file-uploader>
+      <b-button
+        block
+        variant="primary"
+        class="result-button-alignment"
+        v-b-modal.save-model-modal
+      >
+        Save Model
+      </b-button>
+      <b-modal
+        title="Save Model"
+        id="save-model-modal"
+        @ok="handleOk"
+        @cancel="resetModal"
+        @close="resetModal"
+      >
+        <form ref="saveModelForm" @submit.stop.prevent="saveModel">
+          <b-form-group
+            label="Model Name"
+            label-for="model-name-input"
+            invalid-feedback="Model Name is Required"
+            :state="saveNameState"
+          >
+            <b-form-input
+              id="model-name-input"
+              v-model="saveName"
+              :state="saveNameState"
+              required
+            ></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="Model Description"
+            label-for="model-desc-input"
+            :state="saveDescriptionState"
+          >
+            <b-form-input
+              id="model-desc-input"
+              v-model="saveDescription"
+              :state="saveDescriptionState"
+            ></b-form-input>
+          </b-form-group>
+        </form>
+      </b-modal>
+    </template>
   </div>
 </template>
 
@@ -104,20 +88,14 @@ import {
 import { Variable, TaskTypes } from "../store/dataset/index";
 import vueSlider from "vue-slider-component";
 import Vue from "vue";
-import { Solution } from "../store/requests/index";
+import { Solution, SOLUTION_COMPLETED } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
-import { createRouteEntry } from "../util/routes";
+import { createRouteEntry, varModesToString } from "../util/routes";
 import { PREDICTION_UPLOAD } from "../util/uploads";
+import { getPredictionsById } from "../util/predictions";
 
 export default Vue.extend({
   name: "result-summaries",
-
-  props: {
-    isPrediction: {
-      type: Boolean as () => boolean,
-      default: () => false
-    }
-  },
 
   components: {
     ResultFacets,
@@ -131,12 +109,15 @@ export default Vue.extend({
       formatter(arg) {
         return arg ? arg.toFixed(2) : "";
       },
-      exportFailureMsg: "",
       symmetricSlider: true,
       file: null,
       uploadData: {},
       uploadStatus: "",
-      uploadType: PREDICTION_UPLOAD
+      uploadType: PREDICTION_UPLOAD,
+      saveName: "",
+      saveNameState: null,
+      saveDescription: "",
+      saveDescriptionState: null
     };
   },
 
@@ -159,35 +140,26 @@ export default Vue.extend({
       return datasetGetters.getVariables(this.$store);
     },
 
-    taskArgs(): string {
-      return routeGetters.getRouteTask(this.$store);
+    taskArgs(): string[] {
+      return routeGetters.getRouteTask(this.$store).split(",");
     },
 
-    regressionEnabled(): boolean {
-      return this.taskArgs && this.taskArgs.includes(TaskTypes.REGRESSION);
+    showResiduals(): boolean {
+      return this.taskArgs &&
+        !!this.taskArgs.find
+          (t => t ===  TaskTypes.REGRESSION || t === TaskTypes.FORECASTING);
     },
 
     solutionId(): string {
-      return routeGetters.getRouteSolutionId(this.$store);
+      return requestGetters.getActiveSolution(this.$store)?.solutionId;
     },
 
     fittedSolutionId(): string {
-      return resultGetters.hasIncludedResultTableData(this.$store)
-        ? resultGetters.getFittedSolutionId(this.$store)
-        : null;
-    },
-
-    produceRequestId(): string {
-      return resultGetters.hasIncludedResultTableData(this.$store)
-        ? resultGetters.getProduceRequestId(this.$store)
-        : null;
+      return requestGetters.getActiveSolution(this.$store)?.fittedSolutionId;
     },
 
     activeSolution(): Solution {
-      return getSolutionById(
-        store.state.requestsModule.solutions,
-        this.solutionId
-      );
+      return requestGetters.getActiveSolution(this.$store)
     },
 
     activeSolutionName(): string {
@@ -196,10 +168,24 @@ export default Vue.extend({
 
     instanceName(): string {
       return "groundTruth";
-    }
+    },
+
+    /**
+     * Check that the active solution is completed.
+     * This is used to display possible actions on the selected model.
+     * @returns {Boolean}
+     */
+    isActiveSolutionCompleted(): boolean {
+      return !!(this.activeSolution && this.activeSolution.progress === SOLUTION_COMPLETED);
+    },
   },
 
   methods: {
+    validForm() {
+      const valid = this.saveName.length > 0
+      this.saveNameState = valid;
+      return valid
+    },
     onUploadStart(uploadData) {
       this.uploadData = uploadData;
       this.uploadStatus = "started";
@@ -213,62 +199,72 @@ export default Vue.extend({
       });
     },
 
-    // todo - fix the typing here
     onUploadFinish(err: Error, response: any) {
       this.uploadStatus = err ? "error" : "success";
 
       if (this.uploadStatus !== "error" && !response.complete) {
+        const predictionDataset = getPredictionsById(
+          requestGetters.getPredictions(this.$store),
+          response.produceRequestId
+        ).dataset;
+
+        const varModes = varModesToString(routeGetters.getDecodedVarModes(this.$store));
+
         const routeArgs = {
           fittedSolutionId: this.fittedSolutionId,
           produceRequestId: response.produceRequestId,
-          inferenceDataset: response.dataset,
-          target: this.target
+          target: this.target,
+          predictionDataset: predictionDataset,
+          dataset: this.dataset,
+          varModes: varModes
         };
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
         this.$router.push(entry);
       }
     },
+    handleOk(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault();
+      // Trigger submit handler
+      this.saveModel();
+    },
+    resetModal() {
+      this.saveName = '';
+      this.saveNameState = null;
+      this.saveDescription = '';
+      this.saveDescriptionState = null;
+    },
+    saveModel () {
+      if (!this.validForm()) {
+        return;
+      }
 
-    onExport() {
       appActions.logUserEvent(this.$store, {
         feature: Feature.EXPORT_MODEL,
         activity: Activity.MODEL_SELECTION,
-        subActivity: SubActivity.MODEL_EXPORT,
+        subActivity: SubActivity.MODEL_SAVE,
         details: {
           solution: this.activeSolution.solutionId,
-          score: this.activeSolution.scores.map(s => ({
-            metric: s.metric,
-            value: s.value
-          }))
+          fittedSolution: this.fittedSolutionId
         }
       });
+
       appActions
-        .exportSolution(this.$store, {
-          solutionId: this.activeSolution.solutionId
+        .saveModel(this.$store, {
+          fittedSolutionId: this.fittedSolutionId,
+          modelName: this.saveName,
+          modelDescription: this.saveDescription
         })
         .then(err => {
           if (err) {
-            // failed, this is because the wrong variable was selected
-            const modal = this.$refs.exportFailModal as any;
-            this.exportFailureMsg = err.message;
-            modal.show();
-          } else {
-            const modal = this.$refs.exportSuccessModal as any;
-            modal.show();
+            console.warn(err);
           }
         });
-    },
 
-    hideFailureModal() {
-      const modal = this.$refs.exportFailModal as any;
-      modal.hide();
-    },
-
-    hideSuccessModal() {
-      const modal = this.$refs.exportSuccessModal as any;
-      modal.hide();
-      this.$router.replace(ROOT_ROUTE);
-      this.$router.go(0);
+      this.$nextTick(() => {
+        this.$bvModal.hide('save-model-modal');
+        this.resetModal();
+      });
     }
   }
 });
@@ -319,5 +315,9 @@ export default Vue.extend({
 .check-button {
   width: 60%;
   margin: 0 20%;
+}
+
+.result-button-alignment {
+  padding: 0 0 15px;
 }
 </style>

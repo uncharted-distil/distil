@@ -36,7 +36,9 @@ var (
 
 // ExportedModel represents a description of an exported model.
 type ExportedModel struct {
-	FilePath         string   `json:"filepath"`
+	ModelName        string   `json:"modelName"`
+	ModelDescription string   `json:"modelDescription"`
+	FilePath         string   `json:"filePath"`
 	FittedSolutionID string   `json:"fittedSolutionId"`
 	DatasetID        string   `json:"datasetId"`
 	DatasetName      string   `json:"datasetName"`
@@ -85,14 +87,14 @@ type Feature struct {
 
 // Solution is a container for a TA2 solution.
 type Solution struct {
-	SolutionID              string            `json:"solutionId"`
-	InitialSearchSolutionID string            `json:"initialSolutionId"`
-	RequestID               string            `json:"requestId"`
-	CreatedTime             time.Time         `json:"timestamp"`
-	State                   *SolutionState    `json:"state"`
-	Results                 []*SolutionResult `json:"results"`
-	Scores                  []*SolutionScore  `json:"scores"`
-	IsBad                   bool              `json:"isBad"`
+	SolutionID          string            `json:"solutionId"`
+	ExplainedSolutionID string            `json:"explainedSolutionId"`
+	RequestID           string            `json:"requestId"`
+	CreatedTime         time.Time         `json:"timestamp"`
+	State               *SolutionState    `json:"state"`
+	Results             []*SolutionResult `json:"results"`
+	Scores              []*SolutionScore  `json:"scores"`
+	IsBad               bool              `json:"isBad"`
 }
 
 // SolutionState represents the state updates for a solution.

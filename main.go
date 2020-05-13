@@ -87,6 +87,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	createOutputFolders(&config)
+
 	// initialize the pipeline cache and
 	pipelineCacheFilename := path.Join(env.GetTmpPath(), config.PipelineCacheFilename)
 	err = api.InitializeCache(pipelineCacheFilename)
@@ -179,11 +181,11 @@ func main() {
 	datamartCtors := make(map[string]model.MetadataStorageCtor)
 	if config.DatamartNYUEnabled {
 		nyuDatamartClientCtor := rest.NewClient(config.DatamartURINYU)
-		datamartCtors[dm.ProvenanceNYU] = dm.NewNYUMetadataStorage(config.DatamartImportFolder, ingestConfig, nyuDatamartClientCtor)
+		datamartCtors[dm.ProvenanceNYU] = dm.NewNYUMetadataStorage(config.DatamartImportFolder, &config, ingestConfig, nyuDatamartClientCtor)
 	}
 	if config.DatamartISIEnabled {
 		isiDatamartClientCtor := rest.NewClient(config.DatamartURIISI)
-		datamartCtors[dm.ProvenanceISI] = dm.NewISIMetadataStorage(config.DatamartImportFolder, ingestConfig, isiDatamartClientCtor)
+		datamartCtors[dm.ProvenanceISI] = dm.NewISIMetadataStorage(config.DatamartImportFolder, &config, ingestConfig, isiDatamartClientCtor)
 	}
 	datamartCtors[es.Provenance] = esMetadataStorageCtor
 
@@ -214,7 +216,7 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
-		err = task.IngestDataset(metadata.Contrib, pgDataStorageCtor, esMetadataStorageCtor, config.ESDatasetsIndex, "initial", nil, ingestConfig)
+		_, err = task.IngestDataset(metadata.Contrib, pgDataStorageCtor, esMetadataStorageCtor, config.ESDatasetsIndex, "initial", nil, ingestConfig)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
@@ -230,20 +232,24 @@ func main() {
 	// GET
 	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler(datamartCtors))
 	registerRoute(mux, "/distil/datasets/:dataset", routes.DatasetHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/models", routes.ModelsHandler(esExportedModelStorageCtor))
+	registerRoute(mux, "/distil/models/:model", routes.ModelHandler(esExportedModelStorageCtor))
 	registerRoute(mux, "/distil/join-suggestions/:dataset", routes.JoinSuggestionHandler(esMetadataStorageCtor, datamartCtors))
 	registerRoute(mux, "/distil/solution/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/solutions/:dataset/:target", routes.SolutionsHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/solution-requests/:dataset/:target", routes.SolutionRequestsHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/solution-request/:request-id", routes.SolutionRequestHandler(pgSolutionStorageCtor))
-	registerRoute(mux, "/distil/prediction/:prediction-id", routes.PredictionHandler(pgSolutionStorageCtor))
+	registerRoute(mux, "/distil/prediction/:request-id", routes.PredictionHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/predictions/:fitted-solution-id", routes.PredictionsHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/variables/:dataset", routes.VariablesHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/variable-rankings/:dataset/:target", routes.VariableRankingHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/residuals-extrema/:dataset/:target", routes.ResidualsExtremaHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(solutionClient, config.D3MOutputDir, discoveryLogger))
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath, datasetDocPath))
-	registerRoute(mux, "/distil/task/:dataset/:target", routes.TaskHandler(pgDataStorageCtor, esMetadataStorageCtor))
+	registerRoute(mux, "/distil/task/:dataset/:target/:variables", routes.TaskHandler(pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
+	registerRoute(mux, "/distil/multiband-image/:dataset/:image-id/:band-combination", routes.MultiBandImageHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/multiband-combinations/:dataset", routes.MultiBandCombinationsHandler(esMetadataStorageCtor))
 
 	// POST
 	registerRoutePost(mux, "/distil/grouping/:dataset", routes.GroupingHandler(pgDataStorageCtor, esMetadataStorageCtor))
@@ -263,11 +269,11 @@ func main() {
 	registerRoutePost(mux, "/distil/solution-result-summary/:results-uuid/:mode", routes.SolutionResultSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/cluster/:dataset/:variable", routes.ClusteringHandler(esMetadataStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), ingestConfig))
-	registerRoutePost(mux, "/distil/predict/:dataset/:target-type/:fitted-solution-id", routes.InferenceHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), pgDataStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor, &config, ingestConfig))
+	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), &config))
+	registerRoutePost(mux, "/distil/predict/:dataset/:target-type/:fitted-solution-id", routes.InferenceHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), pgDataStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor, &config))
 	registerRoutePost(mux, "/distil/join", routes.JoinHandler(esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:invert", routes.TimeseriesHandler(pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/timeseries-forecast/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:result-uuid", routes.TimeseriesForecastHandler(pgDataStorageCtor, pgSolutionStorageCtor))
+	registerRoutePost(mux, "/distil/timeseries-forecast/:truthDataset/:forecastDataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:result-uuid", routes.TimeseriesForecastHandler(pgDataStorageCtor, pgSolutionStorageCtor))
 	registerRoutePost(mux, "/distil/event", routes.UserEventHandler(discoveryLogger))
 	registerRoutePost(mux, "/distil/save/:solution-id/:fitted", routes.SaveHandler(esExportedModelStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor))
 
@@ -311,4 +317,10 @@ func updateExtremas(metaStorage model.MetadataStorage, dataStorage model.DataSto
 	log.Infof("done updating all extremas")
 
 	return nil
+}
+
+func createOutputFolders(config *env.Config) {
+	// create the augmented data folder
+	augmentPath := env.GetAugmentedPath()
+	os.MkdirAll(augmentPath, os.ModePerm)
 }

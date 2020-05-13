@@ -42,10 +42,12 @@ import { circleSpinnerHTML } from "../util/spinner";
 import {
   D3M_INDEX_FIELD,
   TableRow,
-  RowSelection
+  RowSelection,
+  BandID
 } from "../store/dataset/index";
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
+import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
 
 export default Vue.extend({
   name: "image-preview",
@@ -53,6 +55,7 @@ export default Vue.extend({
   props: {
     row: Object as () => TableRow,
     imageUrl: String as () => string,
+    type: String as () => string,
     width: {
       default: 64,
       type: Number as () => number
@@ -100,14 +103,21 @@ export default Vue.extend({
   },
 
   computed: {
+    imageId(): string {
+      return this.imageUrl.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
+    },
     files(): Dictionary<any> {
       return datasetGetters.getFiles(this.$store);
     },
     isLoaded(): boolean {
-      return !!this.files[this.imageUrl];
+      return !!this.files[this.imageUrl] && !!this.files[this.imageId];
     },
     image(): HTMLImageElement {
-      return this.files[this.imageUrl];
+      return this.files[this.imageUrl]
+        ? this.files[this.imageUrl]
+        : this.files[this.imageId]
+        ? this.files[this.imageId]
+        : null;
     },
     spinnerHTML(): string {
       return circleSpinnerHTML();
@@ -203,16 +213,32 @@ export default Vue.extend({
 
     requestImage() {
       this.hasRequested = true;
-      datasetActions
-        .fetchImage(this.$store, {
-          dataset: this.dataset,
-          url: this.imageUrl
-        })
-        .then(() => {
-          if (this.isVisible) {
-            this.injectImage();
-          }
-        });
+      if (this.type === IMAGE_TYPE) {
+        datasetActions
+          .fetchImage(this.$store, {
+            dataset: this.dataset,
+            url: this.imageUrl
+          })
+          .then(() => {
+            if (this.isVisible) {
+              this.injectImage();
+            }
+          });
+      } else if (this.type === MULTIBAND_IMAGE_TYPE) {
+        datasetActions
+          .fetchMultiBandImage(this.$store, {
+            dataset: this.dataset,
+            imageId: this.imageId,
+            bandCombination: BandID.NATURAL_COLORS
+          })
+          .then(() => {
+            if (this.isVisible) {
+              this.injectImage();
+            }
+          });
+      } else {
+        console.warn(`Image Data Type ${this.type} is not supported`);
+      }
     }
   }
 });

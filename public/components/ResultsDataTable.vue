@@ -33,11 +33,12 @@
 
       <template
         v-for="imageField in imageFields"
-        v-slot:[cellSlot(imageField)]="data"
+        v-slot:[cellSlot(imageField.key)]="data"
       >
         <image-preview
-          :key="imageField"
-          :image-url="data.item[imageField].value"
+          :key="imageField.key"
+          :type="imageField.type"
+          :image-url="data.item[imageField.key].value"
         ></image-preview>
       </template>
 
@@ -47,7 +48,7 @@
       >
         <sparkline-preview
           :key="data.item[timeseriesGrouping.idCol].value"
-          :dataset="dataset"
+          :truth-dataset="dataset"
           :x-col="timeseriesGrouping.properties.xCol"
           :y-col="timeseriesGrouping.properties.yCol"
           :timeseries-col="timeseriesGrouping.idCol"
@@ -124,12 +125,7 @@ import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Solution } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
-import {
-  getVarType,
-  isTextType,
-  IMAGE_TYPE,
-  hasComputedVarPrefix
-} from "../util/types";
+import { getVarType, isTextType, hasComputedVarPrefix } from "../util/types";
 import {
   addRowSelection,
   removeRowSelection,
@@ -139,7 +135,9 @@ import {
 import {
   getTimeseriesGroupingsFromFields,
   formatSlot,
-  formatFieldsAsArray
+  formatFieldsAsArray,
+  explainCellColor,
+  getImageFields
 } from "../util/data";
 import { getSolutionIndex } from "../util/solutions";
 
@@ -257,15 +255,8 @@ export default Vue.extend({
       });
     },
 
-    imageFields(): string[] {
-      return _.map(this.fields, (field, key) => {
-        return {
-          key: key,
-          type: field.type
-        };
-      })
-        .filter(field => field.type === IMAGE_TYPE)
-        .map(field => field.key);
+    imageFields(): { key: string; type: string }[] {
+      return getImageFields(this.fields);
     },
 
     timeseriesGroupings(): Grouping[] {
@@ -284,29 +275,6 @@ export default Vue.extend({
         return true;
       }
       return false;
-    },
-    d3mRowWeightExtrema(): Object {
-      return this.dataItems.reduce((extremas, item) => {
-        extremas[item[D3M_INDEX_FIELD]] = this.tableFields.reduce(
-          (rowMax, tableCol) => {
-            if (item[tableCol.key].weight) {
-              const currentWeight = Math.abs(item[tableCol.key].weight);
-              return currentWeight > rowMax ? currentWeight : rowMax;
-            } else {
-              return rowMax;
-            }
-          },
-          0
-        );
-        return extremas;
-      }, {});
-    },
-    hasMultipleFeatures(): boolean {
-      const featureNames = this.tableFields.reduce((uniqueNames, field) => {
-        uniqueNames[field.label] = true;
-        return uniqueNames;
-      }, {});
-      return Object.keys(featureNames).length > 2;
     }
   },
 
@@ -404,32 +372,7 @@ export default Vue.extend({
     },
 
     cellColor(weight: number, data: any): string {
-      if (!weight || !this.hasMultipleFeatures) {
-        return "";
-      }
-
-      const absoluteWeight = Math.abs(
-        weight / this.d3mRowWeightExtrema[data.item[D3M_INDEX_FIELD]]
-      );
-
-      let red;
-      let green;
-      let blue;
-      if (weight > 0) {
-        red = 242 - 128 * absoluteWeight;
-        green = 242 - 64 * absoluteWeight;
-        blue = 255;
-      } else if (weight === 0) {
-        red = 255;
-        green = 255;
-        blue = 255;
-      } else {
-        red = 255;
-        green = 242 - 255 * absoluteWeight;
-        blue = 242 - 128 * absoluteWeight;
-      }
-
-      return `background: rgba(${red}, ${green}, ${blue}, .75)`;
+      return explainCellColor(weight, data, this.tableFields, this.dataItems);
     }
   }
 });

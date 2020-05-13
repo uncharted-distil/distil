@@ -27,18 +27,19 @@ import (
 
 // SolutionResponse represents a pipeline solution.
 type SolutionResponse struct {
-	RequestID    string                 `json:"requestId"`
-	Feature      string                 `json:"feature"`
-	Dataset      string                 `json:"dataset"`
-	Features     []*model.Feature       `json:"features"`
-	Filters      *model.FilterParams    `json:"filters"`
-	SolutionID   string                 `json:"solutionId"`
-	ResultID     string                 `json:"resultId"`
-	Progress     string                 `json:"progress"`
-	Scores       []*model.SolutionScore `json:"scores"`
-	Timestamp    time.Time              `json:"timestamp"`
-	PredictedKey string                 `json:"predictedKey"`
-	ErrorKey     string                 `json:"errorKey"`
+	RequestID        string                 `json:"requestId"`
+	Feature          string                 `json:"feature"`
+	Dataset          string                 `json:"dataset"`
+	Features         []*model.Feature       `json:"features"`
+	Filters          *model.FilterParams    `json:"filters"`
+	SolutionID       string                 `json:"solutionId"`
+	FittedSolutionID string                 `json:"fittedSolutionId"`
+	ResultID         string                 `json:"resultId"`
+	Progress         string                 `json:"progress"`
+	Scores           []*model.SolutionScore `json:"scores"`
+	Timestamp        time.Time              `json:"timestamp"`
+	PredictedKey     string                 `json:"predictedKey"`
+	ErrorKey         string                 `json:"errorKey"`
 }
 
 // SolutionsHandler fetches solutions associated with a given dataset and target.
@@ -88,6 +89,7 @@ func SolutionsHandler(solutionCtor model.SolutionStorageCtor) func(http.Response
 				if len(sol.Results) > 0 {
 					// result
 					solution.ResultID = sol.Results[0].ResultUUID
+					solution.FittedSolutionID = sol.Results[0].FittedSolutionID
 				}
 				solutions = append(solutions, solution)
 			}
@@ -127,8 +129,10 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 		}
 
 		resultID := ""
+		fittedSolutionID := ""
 		if len(sol.Results) > 0 {
 			resultID = sol.Results[0].ResultUUID
+			fittedSolutionID = sol.Results[0].FittedSolutionID
 		}
 
 		solutionResponse := SolutionResponse{
@@ -139,11 +143,12 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			Features:  req.Features,
 			Filters:   req.Filters,
 			// solution
-			SolutionID: sol.SolutionID,
-			Scores:     sol.Scores,
-			Timestamp:  sol.CreatedTime,
-			Progress:   sol.State.Progress,
-			ResultID:   resultID,
+			SolutionID:       sol.SolutionID,
+			Scores:           sol.Scores,
+			Timestamp:        sol.CreatedTime,
+			Progress:         sol.State.Progress,
+			ResultID:         resultID,
+			FittedSolutionID: fittedSolutionID,
 			// keys
 			PredictedKey: model.GetPredictedKey(sol.SolutionID),
 			ErrorKey:     model.GetErrorKey(sol.SolutionID),

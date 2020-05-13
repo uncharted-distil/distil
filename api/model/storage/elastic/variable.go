@@ -192,7 +192,7 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to parse variable")
 		}
-		if !includeIndex && len(variable.Role) > 0 && variable.Role[0] == model.VarRoleIndex {
+		if !includeIndex && len(variable.Role) > 0 && model.IsIndexRole(variable.Role[0]) {
 			continue
 		}
 		if !includeMeta && variable.DistilRole == model.VarRoleMetadata {
@@ -348,4 +348,27 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 	}
 
 	return result, nil
+}
+
+// FetchVariablesByName returns all the caller supplied variables.
+func (s *Storage) FetchVariablesByName(dataset string, varNames []string, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
+	fetchedVariables, err := s.FetchVariables(dataset, includeIndex, includeMeta)
+	if err != nil {
+		return nil, err
+	}
+
+	// put the var names into a set for quick lookup
+	varNameSet := map[string]bool{}
+	for _, varName := range varNames {
+		varNameSet[varName] = true
+	}
+
+	// filter the returned variables to match our input list
+	filteredVariables := []*model.Variable{}
+	for _, variable := range fetchedVariables {
+		if varNameSet[variable.Name] {
+			filteredVariables = append(filteredVariables, variable)
+		}
+	}
+	return filteredVariables, nil
 }

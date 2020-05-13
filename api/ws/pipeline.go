@@ -16,12 +16,10 @@
 package ws
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -30,6 +28,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/compute"
+	"github.com/uncharted-distil/distil/api/dataset"
 	"github.com/uncharted-distil/distil/api/env"
 	apiModel "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
@@ -86,16 +85,6 @@ func handleSolutionMessage(client *compute.Client, metadataCtor apiModel.Metadat
 		// handle message
 		go handleMessage(conn, client, metadataCtor, dataCtor, solutionCtor, msg)
 	}
-}
-
-func parseMessage(bytes []byte) (*Message, error) {
-	var msg *Message
-	err := json.Unmarshal(bytes, &msg)
-	if err != nil {
-		return nil, err
-	}
-	msg.Timestamp = time.Now()
-	return msg, nil
 }
 
 func handleMessage(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
@@ -301,7 +290,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	// get the source dataset from the fitted solution ID
 	req, err := solutionStorage.FetchRequestByFittedSolutionID(sr.FittedSolutionID)
 	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "unable to fetch request using fitted solution id"))
+		handleErr(conn, msg, err)
 		return
 	}
 
@@ -319,7 +308,20 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	// and then resolve the actual target.
 	targetVar, err := metaStorage.FetchVariable(meta.ID, target)
 	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "unable to get target var from metadata storage"))
+		handleErr(conn, msg, err)
+		return
+	}
+
+	variables, err := metaStorage.FetchVariablesByName(req.Dataset, req.Filters.Variables, false, false)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// resolve the task so we know what type of data we should be expecting
+	requestTask, err := api.ResolveTask(dataStorage, model.NormalizeDatasetID(req.Dataset), targetVar, variables)
+	if err != nil {
+		handleErr(conn, msg, err)
 		return
 	}
 
@@ -327,27 +329,44 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	config, _ := env.LoadConfig()
 	ingestConfig := task.NewConfig(config)
 
+	//
+	var ds task.DatasetConstructor
+	if !api.HasTaskType(requestTask, compute.ImageTask) {
+		ds, err = dataset.NewTableDataset(request.DatasetID, []byte(data))
+		if err != nil {
+			handleErr(conn, msg, errors.Wrap(err, "unable to create raw table dataset"))
+			return
+		}
+	} else {
+		ds, err = dataset.NewImageDataset(request.DatasetID, "png", []byte(data))
+		if err != nil {
+			handleErr(conn, msg, errors.Wrap(err, "unable to create raw dataset"))
+			return
+		}
+	}
+
 	predictParams := &task.PredictParams{
-		Meta:             meta,
-		Dataset:          request.DatasetID,
-		SolutionID:       sr.SolutionID,
-		FittedSolutionID: request.FittedSolutionID,
-		CSVData:          []byte(data),
-		OutputPath:       path.Join(config.D3MOutputDir, config.AugmentedSubFolder),
-		Index:            config.ESDatasetsIndex,
-		Target:           targetVar,
-		MetaStorage:      metaStorage,
-		DataStorage:      dataStorage,
-		SolutionStorage:  solutionStorage,
-		DatasetIngested:  false,
-		DatasetImported:  false,
-		Config:           ingestConfig,
+		Meta:               meta,
+		Dataset:            request.DatasetID,
+		SolutionID:         sr.SolutionID,
+		FittedSolutionID:   request.FittedSolutionID,
+		DatasetConstructor: ds,
+		OutputPath:         path.Join(config.D3MOutputDir, config.AugmentedSubFolder),
+		Index:              config.ESDatasetsIndex,
+		Target:             targetVar,
+		MetaStorage:        metaStorage,
+		DataStorage:        dataStorage,
+		SolutionStorage:    solutionStorage,
+		DatasetIngested:    false,
+		DatasetImported:    false,
+		Config:             &config,
+		IngestConfig:       ingestConfig,
 	}
 
 	// run predictions - synchronous call for now
 	result, err := task.Predict(predictParams)
 	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "unable to generate predictions"))
+		handleErr(conn, msg, err)
 		return
 	}
 

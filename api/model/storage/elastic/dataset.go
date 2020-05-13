@@ -194,6 +194,10 @@ func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMet
 	if err != nil {
 		return nil, err
 	}
+	if len(datasets) < 1 {
+		return nil, nil
+	}
+
 	return datasets[0], nil
 }
 
@@ -329,7 +333,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varDisplayName str
 		if v.Name == varName {
 			// check if it has been deleted
 			if !v.Deleted {
-				return fmt.Errorf("variable already exists under this key")
+				return errors.Errorf("variable already exists under this key")
 			}
 
 			// deleted, add the new var in its place

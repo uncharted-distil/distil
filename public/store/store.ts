@@ -10,6 +10,8 @@ import { requestsModule } from "./requests/module";
 import { RequestState } from "./requests/index";
 import { predictionsModule } from "./predictions/module";
 import { PredictionState } from "./predictions/index";
+import { modelModule } from "./model/module";
+import { ModelState } from "./model/index";
 import { viewModule } from "./view/module";
 import { ViewState } from "./view/index";
 import { appModule } from "./app/module";
@@ -23,6 +25,7 @@ export interface DistilState {
   requestsModule: RequestState;
   resultsModule: ResultsState;
   predictionsModule: PredictionState;
+  modelModule: ModelState;
   viewModule: ViewState;
   appModule: AppState;
 }
@@ -34,6 +37,7 @@ const store = new Store<DistilState>({
     requestsModule,
     resultsModule,
     predictionsModule,
+    modelModule,
     viewModule,
     appModule
   },

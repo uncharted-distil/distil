@@ -37,21 +37,32 @@ const (
 			result_id	varchar(1000)	NOT NULL,
 			index		BIGINT,
 			target		varchar(100),
-			value		varchar(200)
+			value		varchar(200),
+			confidence_low double precision,
+			confidence_high double precision
 		);`
 
 	// PredictionTableName is the name of the table for prediction requests.
 	PredictionTableName = "prediction"
-	RequestTableName    = "request"
+	// RequestTableName is the name of the table for solution requests.
+	RequestTableName = "request"
 
-	SolutionTableName              = "solution"
+	// SolutionTableName is the name of the table for solutions.
+	SolutionTableName = "solution"
+	// SolutionFeatureWeightTableName is the name of the table for solution feature weights.
 	SolutionFeatureWeightTableName = "solution_weight"
-	SolutionStateTableName         = "solution_state"
-	SolutionResultTableName        = "solution_result"
-	SolutionScoreTableName         = "solution_score"
-	RequestFeatureTableName        = "request_feature"
-	RequestFilterTableName         = "request_filter"
-	WordStemTableName              = "word_stem"
+	// SolutionStateTableName is the name of the table for solution state.
+	SolutionStateTableName = "solution_state"
+	// SolutionResultTableName is the name of the table for the result.
+	SolutionResultTableName = "solution_result"
+	// SolutionScoreTableName is the name of the table for the score.
+	SolutionScoreTableName = "solution_score"
+	// RequestFeatureTableName is the name of the table for the request features.
+	RequestFeatureTableName = "request_feature"
+	// RequestFilterTableName is the name of the table for the request filters.
+	RequestFilterTableName = "request_filter"
+	// WordStemTableName is the name of the table for the word stems.
+	WordStemTableName = "word_stem"
 
 	requestTableCreationSQL = `CREATE TABLE %s (
 			request_id			varchar(200),
@@ -72,7 +83,7 @@ const (
 	solutionTableCreationSQL = `CREATE TABLE %s (
 			request_id		varchar(200),
 			solution_id		varchar(200),
-			initial_search_solution_id varchar(200),
+			explained_solution_id varchar(200),
 			created_time	timestamp,
 			deleted         boolean
 		);`

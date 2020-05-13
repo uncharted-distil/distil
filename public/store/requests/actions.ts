@@ -26,7 +26,6 @@ import { actions as resultsActions } from "../results/module";
 import { actions as predictActions } from "../predictions/module";
 import { getters as routeGetters } from "../route/module";
 import { TaskTypes, SummaryMode } from "../dataset";
-import { getters } from "../results/getters";
 
 const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
@@ -305,7 +304,7 @@ async function handleProgress(
   }
 }
 
-function handlePredictProgress(
+async function handlePredictProgress(
   context: RequestContext,
   request: PredictRequestMsg,
   response: PredictStatusMsg
@@ -318,27 +317,12 @@ function handlePredictProgress(
     case PREDICT_COMPLETED:
     case PREDICT_ERRORED:
       // no waiting for data here - we get single response back when the prediction is complete
-      const predictions = parsePredictResponse(response);
-      mutations.updatePredictions(store, predictions);
+      await actions.fetchPrediction(context, {
+        requestId: response.produceRequestId
+      });
       updateCurrentPredictResults(context, request, response);
       break;
   }
-}
-
-// parse returned server data into predictions that can be added to the index
-function parsePredictResponse(responseData: any): Predictions {
-  return {
-    requestId: responseData.produceRequestId,
-    progress: responseData.progress,
-    timestamp: responseData.timestamp,
-    fittedSolutionId: responseData.fittedSolutionId,
-    resultId: responseData.resultId,
-    dataset: responseData.dataset,
-    feature: responseData.feature,
-    features: responseData.features,
-    predictedKey: responseData.predictedKey,
-    isBad: false
-  };
 }
 
 export const actions = {
@@ -505,17 +489,21 @@ export const actions = {
         // log any error
         if (response.error) {
           console.error(response.error);
-        }
-
-        // handle prediction request progress
-        if (response.progress) {
-          handlePredictProgress(context, request, response);
-        }
-
-        // resolve the promise on the first update
-        if (!receivedUpdate) {
-          receivedUpdate = true;
           resolve(response);
+        }
+
+        // handle prediction request progress - this is currently a one-shot operation, rather than
+        // one that streams in progress updates like solution processing.  We need to have the prediction
+        // data ready in order to move on, so we don't flag the resolve until handling of the predict complete
+        // message is finished
+        if (response.progress) {
+          handlePredictProgress(context, request, response).then(() => {
+            // resolve the promise on the first update
+            if (!receivedUpdate) {
+              receivedUpdate = true;
+              resolve(response);
+            }
+          });
         }
 
         // close stream on complete

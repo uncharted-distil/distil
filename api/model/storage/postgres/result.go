@@ -158,11 +158,27 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 }
 
 // PersistResult stores the solution result to Postgres.
-func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string) error {
+func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, confidenceURI string, target string) error {
 	// Read the results file.
 	records, err := s.readCSVFile(resultURI)
 	if err != nil {
 		return err
+	}
+
+	// read the confidence file
+	confidences := make(map[string][]float64)
+	if confidenceURI != "" {
+		confidenceRecords, err := s.readCSVFile(confidenceURI)
+		if err != nil {
+			return err
+		}
+
+		// build the confidence lookup
+		for _, row := range confidenceRecords {
+			low, _ := strconv.ParseFloat(row[3], 64)
+			high, _ := strconv.ParseFloat(row[4], 64)
+			confidences[row[0]] = []float64{low, high}
+		}
 	}
 
 	// currently only support a single result column.
@@ -215,11 +231,24 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			parsedVal = int64(parsedValFloat)
 		}
 
-		insertData = append(insertData, []interface{}{resultURI, parsedVal, targetVariable.Name, records[i][targetIndex]})
+		dataForInsert := []interface{}{resultURI, parsedVal, targetVariable.Name, records[i][targetIndex]}
+		if confidences[records[i][d3mIndexIndex]] != nil {
+			cf := confidences[records[i][d3mIndexIndex]]
+			dataForInsert = append(dataForInsert, cf[0])
+			dataForInsert = append(dataForInsert, cf[1])
+		}
+
+		insertData = append(insertData, dataForInsert)
+	}
+
+	fields := []string{"result_id", "index", "target", "value"}
+	if len(confidences) > 0 {
+		fields = append(fields, "confidence_low")
+		fields = append(fields, "confidence_high")
 	}
 
 	// store all results to the storage
-	err = s.InsertBatch(s.getResultTable(storageName), []string{"result_id", "index", "target", "value"}, insertData)
+	err = s.InsertBatch(s.getResultTable(storageName), fields, insertData)
 	if err != nil {
 		return errors.Wrap(err, "failed to insert result in database")
 	}
@@ -511,8 +540,9 @@ func addTableAlias(prefix string, fields []string, addToColumn bool) []string {
 	return fieldsPrepended
 }
 
-// FetchResults pulls the results from the Postgres database.
-func (s *Storage) FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *api.FilterParams, predictionResultMode bool) (*api.FilteredData, error) {
+// FetchResults pulls the results from the Postgres database.  Note the generalized `id` string parameter - this will be
+// a solution ID if this is a solution result, or a produce request ID is this is a predictions result.
+func (s *Storage) FetchResults(dataset string, storageName string, resultURI string, id string, filterParams *api.FilterParams, predictionResultMode bool) (*api.FilteredData, error) {
 	storageNameResult := s.getResultTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
@@ -603,10 +633,10 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	if isTimeSeriesValue(variables, variable) {
 		selectedVars = fmt.Sprintf("%s %s ", distincts, strings.Join(fieldsData, ", "))
 	} else {
-		predictedCol := api.GetPredictedKey(solutionID)
+		predictedCol := api.GetPredictedKey(id)
 
 		// If our results are numerical we need to compute residuals and store them in a column called 'error'
-		errorCol := api.GetErrorKey(solutionID)
+		errorCol := api.GetErrorKey(id)
 		errorExpr := ""
 		if model.IsNumerical(variable.Type) && !predictionResultMode {
 			errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(dataTableAlias, variable.Name), errorCol)
@@ -728,41 +758,16 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 		return nil, err
 	}
 
+	// use the variable type to guide the summary creation
 	var field Field
-
-	if variable.Grouping != nil {
-		if model.IsTimeSeries(variable.Grouping.Type) {
-
-			timeColVar, err := s.metadata.FetchVariable(dataset, variable.Grouping.Properties.XCol)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
-			}
-
-			valueColVar, err := s.metadata.FetchVariable(dataset, variable.Grouping.Properties.YCol)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
-			}
-
-			field = NewTimeSeriesField(s, dataset, storageName, variable.Grouping.Properties.ClusterCol, variable.Name, variable.DisplayName, variable.Type,
-				variable.Grouping.IDCol, timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
-
-		} else {
-			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Name, variable.Type)
-		}
-
+	if model.IsNumerical(variable.Type) {
+		field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
+	} else if model.IsCategorical(variable.Type) {
+		field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
+	} else if model.IsVector(variable.Type) {
+		field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else {
-
-		// use the variable type to guide the summary creation
-
-		if model.IsNumerical(variable.Type) {
-			field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
-		} else if model.IsCategorical(variable.Type) {
-			field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
-		} else if model.IsVector(variable.Type) {
-			field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
-		} else {
-			return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
-		}
+		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
 	}
 
 	summary, err := field.FetchPredictedSummaryData(resultURI, storageNameResult, filterParams, extrema, mode)

@@ -5,13 +5,14 @@
         <div class="image-tile">
           <template v-for="(fieldInfo, fieldKey) in fields">
             <image-preview
-              v-if="fieldKey === imageField"
+              v-if="fieldKey === imageField.key"
               class="image-preview"
               :row="item"
               :image-url="item[fieldKey].value"
               :width="imageWidth"
               :height="imageHeight"
               :on-click="onImageClick"
+              :type="imageField.type"
             ></image-preview>
           </template>
           <div v-if="showError" class="image-label-container">
@@ -35,7 +36,10 @@
           </div>
           <div v-if="!showError" class="image-label-container">
             <template v-for="(fieldInfo, fieldKey) in fields">
-              <div v-if="fieldKey == targetField" class="image-label">
+              <div
+                v-if="fieldKey == targetField || fieldKey == predictedField"
+                class="image-label"
+              >
                 {{ item[fieldKey].value }}
               </div>
             </template>
@@ -67,7 +71,7 @@ import {
   isRowSelected,
   updateTableRowSelection
 } from "../util/row";
-import { IMAGE_TYPE } from "../util/types";
+import { getImageFields } from "../util/data";
 import { Solution } from "../store/requests/index";
 
 export default Vue.extend({
@@ -119,19 +123,8 @@ export default Vue.extend({
       return routeGetters.getDecodedRowSelection(this.$store);
     },
 
-    imageFields(): string[] {
-      return _.map(this.fields, (field, key) => {
-        return {
-          key: key,
-          type: field.type
-        };
-      })
-        .filter(field => field.type === IMAGE_TYPE)
-        .map(field => field.key);
-    },
-
-    solution(): Solution {
-      return requestGetters.getActiveSolution(this.$store);
+    imageFields(): { key: string; type: string }[] {
+      return getImageFields(this.fields);
     },
 
     targetField(): string {
@@ -139,11 +132,19 @@ export default Vue.extend({
     },
 
     predictedField(): string {
-      return this.solution ? `${this.solution.predictedKey}` : "";
+      const predictions = requestGetters.getActivePredictions(this.$store);
+      if (predictions) {
+        return predictions.predictedKey;
+      }
+
+      const solution = requestGetters.getActiveSolution(this.$store);
+      return solution ? `${solution.predictedKey}` : "";
     },
 
     showError(): boolean {
-      return this.predictedField !== "";
+      return (
+        this.predictedField && !requestGetters.getActivePredictions(this.$store)
+      );
     }
   },
 
@@ -176,7 +177,10 @@ export default Vue.extend({
 <style>
 .image-mosaic {
   display: block;
-  overflow: visible;
+  overflow: auto;
+  padding-bottom: 0.5rem; /* To add some spacing on overflow. */
+  height: 100%;
+  width: 100%;
 }
 
 .image-tile {

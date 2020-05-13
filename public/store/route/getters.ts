@@ -161,6 +161,16 @@ export const getters = {
     return state.query.training ? (state.query.training as string) : null;
   },
 
+  // Returns a boolean to say that the variables for this dataset has been ranked.
+  getRouteIsTrainingVariablesRanked(state: Route): boolean {
+    return state.query.varRanked && state.query.varRanked === "1"; // Use "1" for truth.
+  },
+
+  // Returns a boolean to say that the cluster for this dataset has been generated..
+  getRouteIsClusterGenerated(state: Route): boolean {
+    return state.query.clustering && state.query.clustering === "1"; // Use "1" for truth.
+  },
+
   getRouteJoinDatasetsVarsParge(state: Route): number {
     const pageVar = JOINED_VARS_INSTANCE_PAGE;
     return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
@@ -391,20 +401,19 @@ export const getters = {
     return modeMap;
   },
 
-  // Fetches the dataset used for inference from the route
-  getRouteInferenceDataset(state: Route, getters: any): string {
-    const dataset = state.query.inferenceDataset as string;
-    if (!dataset) {
-      return null;
-    }
-    return dataset;
-  },
-
   getRouteFittedSolutionId(state: Route, getters: any): string {
     const id = <string>state.query.fittedSolutionId;
     if (!id) {
       return null;
     }
     return id;
+  },
+
+  getRoutePredictionsDataset(state: Route, getters: any): string {
+    const dataset = <string>state.query.predictionsDataset;
+    if (!dataset) {
+      return null;
+    }
+    return dataset;
   }
 };

@@ -67,7 +67,7 @@
         <b-nav-text>View Models</b-nav-text>
       </b-nav-item>
       <b-nav-item
-        @click="onResults"
+        @click="onPredictions"
         :active="isActive(PREDICTION_ROUTE)"
         :disabled="!hasView(PREDICTION_ROUTE)"
         v-bind:class="{ active: isActive(PREDICTION_ROUTE) }"
@@ -95,7 +95,8 @@ import {
   gotoJoinDatasets,
   gotoSelectTarget,
   gotoSelectData,
-  gotoResults
+  gotoResults,
+  gotoPredictions
 } from "../util/nav";
 import {
   actions as appActions,
@@ -178,6 +179,9 @@ export default Vue.extend({
     },
     onResults() {
       gotoResults(this.$router);
+    },
+    onPredictions() {
+      gotoPredictions(this.$router);
     },
     hasView(view: string): boolean {
       return (

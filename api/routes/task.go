@@ -17,6 +17,7 @@ package routes
 
 import (
 	"net/http"
+	"strings"
 
 	"goji.io/v3/pat"
 
@@ -30,8 +31,14 @@ import (
 func TaskHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
-		variableName := pat.Param(r, "target")
 		storageName := model.NormalizeDatasetID(dataset)
+		targetName := pat.Param(r, "target")
+		variablesParam := pat.Param(r, "variables")
+
+		variableNames := []string{}
+		if variablesParam != "null" {
+			variableNames = strings.Split(variablesParam, ",")
+		}
 
 		// initialize the storage
 		metaStorage, err := esMetaCtor()
@@ -46,15 +53,22 @@ func TaskHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageCto
 			return
 		}
 
+		// look up the task variables
+		variables, err := metaStorage.FetchVariablesByName(dataset, variableNames, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// look up the target variable
-		variable, err := metaStorage.FetchVariable(dataset, variableName)
+		variable, err := metaStorage.FetchVariable(dataset, targetName)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// resolve the task based on the dataset and target
-		task, err := apiCompute.ResolveTask(dataStorage, storageName, variable)
+		task, err := apiCompute.ResolveTask(dataStorage, storageName, variable, variables)
 		if err != nil {
 			handleError(w, err)
 			return

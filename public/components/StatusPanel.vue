@@ -79,6 +79,13 @@ export default Vue.extend({
   components: {
     StatusPanelJoin
   },
+
+  mounted: function() {
+    if (routeGetters.getRouteIsClusterGenerated(this.$store)) {
+      this.applyClusteringChange();
+    }
+  },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
@@ -179,6 +186,7 @@ export default Vue.extend({
       }
       appActions.closeStatusPanel(this.$store);
     },
+
     applyChange() {
       switch (this.statusType) {
         case DatasetPendingRequestType.VARIABLE_RANKING:
@@ -189,6 +197,13 @@ export default Vue.extend({
             dataset: variableRequest.dataset,
             rankings: variableRequest.rankings
           });
+
+          // Update the route to know that the training variables have been ranked.
+          const varRankedEntry = overlayRouteEntry(this.$route, {
+            varRanked: "1"
+          });
+          this.$router.push(varRankedEntry);
+
           this.clearData();
           break;
         case DatasetPendingRequestType.GEOCODING:
@@ -205,9 +220,14 @@ export default Vue.extend({
         case DatasetPendingRequestType.JOIN_SUGGESTION:
           break;
         case DatasetPendingRequestType.CLUSTERING:
-          this.applyClusteringChange(<ClusteringPendingRequest>(
-            this.requestData
-          ));
+          this.applyClusteringChange();
+
+          // Update the route to know that the clustering has been applied.
+          const clusterEntry = overlayRouteEntry(this.$route, {
+            clustering: "1"
+          });
+          this.$router.push(clusterEntry);
+
           this.clearData();
           break;
         default:
@@ -220,15 +240,18 @@ export default Vue.extend({
         details: {}
       });
     },
+
     clearData() {
       if (this.requestData) {
         datasetActions.removePendingRequest(this.$store, this.requestData.id);
       }
     },
+
     // Applies clustering changes and refetches update variable summaries
-    applyClusteringChange(clusterRequest: ClusteringPendingRequest) {
+    applyClusteringChange() {
       // fetch the var modes map
       const varModesMap = routeGetters.getDecodedVarModes(this.$store);
+
       // find any grouped vars that are using this cluster data and update their
       // mode to cluster now that data is available
       datasetGetters
@@ -237,6 +260,7 @@ export default Vue.extend({
         .forEach(v => {
           varModesMap.set(v.colName, SummaryMode.Cluster);
         });
+
       // find any image variables using this cluster data and update their mode
       datasetGetters
         .getVariables(this.$store)

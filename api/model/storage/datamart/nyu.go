@@ -29,6 +29,7 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
 	"github.com/uncharted-distil/distil/api/util"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // SearchResults is the basic search result container.
@@ -120,7 +121,11 @@ func parseNYUJoinSuggestion(result *SearchResult, baseDataset *api.Dataset) ([]*
 		for _, joinColumns := range result.Augmentation.RightColumns {
 			colNames := []string{}
 			for _, colIndex := range joinColumns {
-				colNames = append(colNames, result.Metadata.Columns[colIndex].Name)
+				if colIndex >= 0 {
+					colNames = append(colNames, result.Metadata.Columns[colIndex].Name)
+				} else {
+					log.Warnf("invalid column index (%d) received for join suggestion from NYU", colIndex)
+				}
 			}
 			rightColumnNames = append(rightColumnNames, strings.Join(colNames[:], ", "))
 		}
@@ -234,7 +239,7 @@ func materializeNYUDataset(datamart *Storage, id string, uri string) (string, er
 
 	// format the dataset
 	extractedSchema := path.Join(extractedArchivePath, compute.D3MDataSchema)
-	formattedPath, err := task.Format(metadata.Contrib, extractedSchema, name, datamart.config)
+	formattedPath, err := task.Format(metadata.Contrib, extractedSchema, name, datamart.ingestConfig)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to format datamart dataset")
 	}

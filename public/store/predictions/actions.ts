@@ -15,8 +15,10 @@ import {
   createEmptyTableData,
   fetchSummaryExemplars
 } from "../../util/data";
-import { getters as predictionGetters } from "../predictions/module";
-import { RouteArgs } from "../../util/routes";
+import {
+  getters as predictionGetters,
+  mutations as predictionMutations
+} from "../predictions/module";
 import { getPredictionsById } from "../../util/predictions";
 
 export type PredictionContext = ActionContext<PredictionState, DistilState>;
@@ -59,33 +61,42 @@ export const actions = {
 
     const promises = [];
 
-    // remove summaries not used to predict the newly selected model
-    context.state.trainingSummaries.forEach(v => {
-      const isTrainingArg = args.training.reduce((isTrain, variable) => {
-        if (!isTrain) {
-          isTrain = variable.colName === v.key;
-        }
-        return isTrain;
-      }, false);
-      if (v.dataset !== args.dataset || !isTrainingArg) {
-        mutations.removeTrainingSummary(context, v);
-      }
-    });
+    context.state.trainingSummaries
+      .filter(
+        summary =>
+          !args.training.find(
+            variable =>
+              variable.colName === summary.key &&
+              args.dataset === summary.dataset
+          )
+      )
+      .forEach(summary =>
+        predictionMutations.removeTrainingSummary(context, summary)
+      );
 
     args.training.forEach(variable => {
       const key = variable.colName;
       const label = variable.colDisplayName;
       const description = variable.colDescription;
-      const exists = _.find(context.state.trainingSummaries, v => {
-        return v.dataset === args.dataset && v.key === variable.colName;
-      });
-      if (!exists) {
-        // add placeholder
-        mutations.updateTrainingSummary(
-          context,
-          createPendingSummary(key, label, description, dataset)
-        );
-      }
+
+      // TODO:  This breaks in the current FacetEntry, but there's no point in fixing it until
+      // the migration to the new facets lib is complete.  It looks like its caused by the fact
+      // that the removal above doesn't get reflected in the facet state, and the placeholder looks
+      // like an update to the previous facet, rather than a complete replacement.  Updates expect
+      // that the facet being replaced and the new facet have the same key+dataset, which causes
+      // an internal failure.
+      //
+      // const exists = context.state.trainingSummaries.find(
+      //   ts => ts.dataset === dataset && ts.key === variable.colName
+      // );
+      // if (!exists) {
+      //   // add placeholder
+      //   mutations.updateTrainingSummary(
+      //     context,
+      //     createPendingSummary(key, label, description, dataset)
+      //   );
+      // }
+
       // fetch summary
       promises.push(
         actions.fetchTrainingSummary(context, {
@@ -189,41 +200,6 @@ export const actions = {
     }
   },
 
-  async fetchExcludedPredictionTableData(
-    context: PredictionContext,
-    args: {
-      dataset: string;
-      highlight: Highlight;
-      produceRequestId: string;
-    }
-  ) {
-    let filterParams = {
-      highlight: null,
-      variables: [],
-      filters: []
-    };
-    filterParams = addHighlightToFilterParams(
-      filterParams,
-      args.highlight,
-      EXCLUDE_FILTER
-    );
-
-    try {
-      const response = await axios.post(
-        `distil/prediction-results/${encodeURIComponent(
-          args.produceRequestId
-        )}`,
-        filterParams
-      );
-      mutations.setExcludedPredictionTableData(context, response.data);
-    } catch (error) {
-      console.error(
-        `Failed to fetch results from ${args.produceRequestId} with error ${error}`
-      );
-      mutations.setExcludedPredictionTableData(context, createEmptyTableData());
-    }
-  },
-
   fetchPredictionTableData(
     context: PredictionContext,
     args: {
@@ -237,16 +213,11 @@ export const actions = {
         dataset: args.dataset,
         highlight: args.highlight,
         produceRequestId: args.produceRequestId
-      }),
-      actions.fetchExcludedPredictionTableData(context, {
-        dataset: args.dataset,
-        highlight: args.highlight,
-        produceRequestId: args.produceRequestId
       })
     ]);
   },
 
-  // fetches result summary for a given solution id.
+  // fetches result summary for prediction request id.
   fetchPredictionSummary(
     context: PredictionContext,
     args: {
@@ -290,19 +261,46 @@ export const actions = {
     );
   },
 
+  // fetches all result summaries for a fitted solution id.
+  fetchPredictionSummaries(
+    context: PredictionContext,
+    args: {
+      highlight: Highlight;
+      fittedSolutionId: string;
+    }
+  ) {
+    const predictions = context.rootState.requestsModule.predictions.filter(
+      p => p.fittedSolutionId === args.fittedSolutionId
+    );
+    return Promise.all(
+      predictions.map(p =>
+        actions.fetchPredictionSummary(context, {
+          highlight: args.highlight,
+          varMode: SummaryMode.Default,
+          produceRequestId: p.requestId
+        })
+      )
+    );
+  },
+
   async fetchForecastedTimeseries(
     context: PredictionContext,
     args: {
-      dataset: string;
+      truthDataset: string;
+      forecastDataset: string;
       xColName: string;
       yColName: string;
       timeseriesColName: string;
-      timeseriesID: any;
-      solutionId: string;
+      timeseriesId: any;
+      predictionsId: string;
     }
   ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
+    if (!args.truthDataset) {
+      console.warn("`truthDataset` argument is missing");
+      return null;
+    }
+    if (!args.forecastDataset) {
+      console.warn("`forecastDataset` argument is missing");
       return null;
     }
     if (!args.xColName) {
@@ -317,38 +315,40 @@ export const actions = {
       console.warn("`timeseriesColName` argument is missing");
       return null;
     }
-    if (!args.timeseriesID) {
+    if (!args.timeseriesId) {
       console.warn("`timeseriesID` argument is missing");
       return null;
     }
-    if (!args.solutionId) {
+    if (!args.predictionsId) {
       console.warn("`solutionId` argument is missing");
       return null;
     }
 
-    const solution = getSolutionById(
-      context.rootState.requestsModule.solutions,
-      args.solutionId
+    const predictions = getPredictionsById(
+      context.rootState.requestsModule.predictions,
+      args.predictionsId
     );
-    if (!solution.resultId) {
+    if (!predictions.resultId) {
       // no results ready to pull
       return null;
     }
 
     try {
       const response = await axios.post(
-        `distil/timeseries-forecast/${args.dataset}/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesID}/${solution.resultId}`,
+        `distil/timeseries-forecast/${args.truthDataset}/${args.forecastDataset}` +
+          `/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesId}` +
+          `/${predictions.resultId}`,
         {}
       );
       mutations.updatePredictedTimeseries(context, {
-        solutionId: args.solutionId,
-        id: args.timeseriesID,
+        predictionsId: args.predictionsId,
+        id: args.timeseriesId,
         timeseries: response.data.timeseries,
         isDateTime: response.data.isDateTime
       });
       mutations.updatePredictedForecast(context, {
-        solutionId: args.solutionId,
-        id: args.timeseriesID,
+        predictionsId: args.predictionsId,
+        id: args.timeseriesId,
         forecast: response.data.forecast,
         forecastTestRange: response.data.forecastRange,
         isDateTime: response.data.isDateTime

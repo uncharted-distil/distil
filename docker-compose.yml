@@ -24,16 +24,18 @@ postgres:
 #     - $D3MOUTPUTDIR:$D3MOUTPUTDIR
 
 distil-auto-ml:
-  image: registry.datadrivendiscovery.org/uncharted/distil-integration/distil-auto-ml:latest
+  image: docker.uncharted.software/distil-auto-ml
   environment:
     - D3MINPUTDIR=$D3MINPUTDIR
     - D3MOUTPUTDIR=$D3MOUTPUTDIR
     - D3MSTATICDIR=$D3MSTATICDIR
+    - DATAMART_IMPORT_FOLDER=$DATAMART_IMPORT_FOLDER
     - D3MRUN=ta2
     - DATAMART_URL_NYU=https://auctus.vida-nyu.org
   volumes:
     - $D3MINPUTDIR:$D3MINPUTDIR
     - $D3MOUTPUTDIR:$D3MOUTPUTDIR
     - $D3MSTATICDIR:$D3MSTATICDIR
+    - $DATAMART_IMPORT_FOLDER:$DATAMART_IMPORT_FOLDER
   ports:
     - "45042:45042"

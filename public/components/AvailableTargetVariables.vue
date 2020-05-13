@@ -132,7 +132,8 @@ export default Vue.extend({
             datasetActions
               .fetchTask(this.$store, {
                 dataset: dataset,
-                targetName: group.colName
+                targetName: group.colName,
+                variableNames: []
               })
               .then(response => {
                 const task = response.data.task.join(",");
@@ -189,10 +190,17 @@ export default Vue.extend({
   height: 100%;
 }
 
+/* Render items as columns */
 .available-target-variables .variable-facets-container {
-  justify-content: center;
-  flex-wrap: wrap;
-  flex-direction: row;
+  column-count: 3;
+  column-gap: 1rem;
+}
+
+.available-target-variables .variable-facets-item {
+  display: inline-block;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+  width: 100%;
 }
 
 .available-target-variables
@@ -204,13 +212,5 @@ export default Vue.extend({
 
 .available-target-variables .facet-filters {
   padding: 2rem;
-}
-
-.available-target-variables .variable-facets-item {
-  flex-grow: 1;
-  display: inline-block;
-  width: 30%;
-  max-width: 30%;
-  margin: 5px;
 }
 </style>

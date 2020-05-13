@@ -55,7 +55,7 @@ export const getters = {
   // Returns completed search results.
   getCompletedSolutions(state: RequestState): Solution[] {
     return state.solutions
-      .filter(searchResult => searchResult.progress !== SOLUTION_COMPLETED)
+      .filter(solution => solution.progress === SOLUTION_COMPLETED)
       .sort(sortSolutionsByScore);
   },
 
@@ -170,6 +170,9 @@ export const getters = {
     getters: any
   ): Variable[] {
     const predictions = <Predictions>getters.getActivePredictions;
+    if (!predictions || !predictions.features) {
+      return [];
+    }
     const variables = <Variable[]>getters.getVariablesMap;
     return predictions.features.map(p => variables[p.featureName]);
   }

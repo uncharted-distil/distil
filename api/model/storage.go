@@ -37,7 +37,7 @@ type DataStorage interface {
 	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool) (*FilteredData, error)
 	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams, invert bool, mode SummaryMode) (*VariableSummary, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
-	PersistResult(dataset string, storageName string, resultURI string, target string) error
+	PersistResult(dataset string, storageName string, resultURI string, confidenceURI string, target string) error
 	PersistSolutionFeatureWeight(dataset string, storageName string, solutionID string, weights [][]string) error
 	FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *FilterParams, removeTargetColumn bool) (*FilteredData, error)
 	FetchPredictedSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
@@ -76,12 +76,13 @@ type SolutionStorage interface {
 	PersistRequest(requestID string, dataset string, progress string, createdTime time.Time) error
 	PersistRequestFeature(requestID string, featureName string, featureType string) error
 	PersistRequestFilters(requestID string, filters *FilterParams) error
-	PersistSolution(requestID string, solutionID string, initialSearchSolutionID string, createdTime time.Time) error
+	PersistSolution(requestID string, solutionID string, explainedSolutionID string, createdTime time.Time) error
 	PersistSolutionWeight(solutionID string, featureName string, featureIndex int64, weight float64) error
 	PersistSolutionState(solutionID string, progress string, createdTime time.Time) error
 	PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string, resultType string, resultUUID string, resultURI string, progress string, createdTime time.Time) error
 	PersistSolutionScore(solutionID string, metric string, score float64) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
+	UpdateSolution(solutionID string, explainedSolutionID string) error
 	FetchRequest(requestID string) (*Request, error)
 	FetchRequestBySolutionID(solutionID string) (*Request, error)
 	FetchRequestByFittedSolutionID(fittedSolutionID string) (*Request, error)
@@ -111,6 +112,7 @@ type MetadataStorageCtor func() (MetadataStorage, error)
 // metadata storage.
 type MetadataStorage interface {
 	FetchVariables(dataset string, includeIndex bool, includeMeta bool) ([]*model.Variable, error)
+	FetchVariablesByName(dataset string, varNames []string, includeIndex bool, includeMeta bool) ([]*model.Variable, error)
 	FetchVariablesDisplay(dataset string) ([]*model.Variable, error)
 	DoesVariableExist(dataset string, varName string) (bool, error)
 	FetchVariable(dataset string, varName string) (*model.Variable, error)
@@ -137,5 +139,7 @@ type ExportedModelStorageCtor func() (ExportedModelStorage, error)
 // model storage.
 type ExportedModelStorage interface {
 	PersistExportedModel(exportedModel *ExportedModel) error
+	FetchModel(model string) (*ExportedModel, error)
 	FetchModels() ([]*ExportedModel, error)
+	SearchModels(terms string) ([]*ExportedModel, error)
 }

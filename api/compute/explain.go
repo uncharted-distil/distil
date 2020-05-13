@@ -33,17 +33,55 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
-var (
-	explainablePrimitivesSolution = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
-	explainablePrimitivesStep     = map[string]bool{"e0ad06ce-b484-46b0-a478-c567e1ea7e02": true}
+const (
+	explainableTypeSolution   = "solution"
+	explainableTypeStep       = "step"
+	explainableTypeConfidence = "confidence"
 )
 
-func (s *SolutionRequest) createExplainPipeline(client *compute.Client, desc *pipeline.DescribeSolutionResponse) (*pipeline.PipelineDescription, error) {
-	// cycle through the description to determine if any primitive can be explained
-	if ok, pipExplain := s.explainablePipeline(desc); ok {
-		return pipExplain, nil
+var (
+	explainableOutputPrimitives = map[string][]*explainableOutput{
+		"e0ad06ce-b484-46b0-a478-c567e1ea7e02": {
+			{
+				primitiveID:     "e0ad06ce-b484-46b0-a478-c567e1ea7e02",
+				produceFunction: "produce_shap_values",
+				explainableType: explainableTypeStep,
+			},
+			{
+				primitiveID:     "e0ad06ce-b484-46b0-a478-c567e1ea7e02",
+				produceFunction: "produce_feature_importances",
+				explainableType: explainableTypeSolution,
+			},
+		},
+		"STUBBED OUT": {
+			{
+				primitiveID:     "76b5a479-c209-4d94-92b5-7eba7a4d4499",
+				produceFunction: "produce_confidence_intervals",
+				explainableType: explainableTypeConfidence,
+				parsingParams:   []interface{}{0: 3, 1: 4},
+			},
+		},
 	}
-	return nil, nil
+)
+
+type explainableOutput struct {
+	primitiveID     string
+	produceFunction string
+	explainableType string
+	parsingParams   []interface{}
+}
+
+type pipelineOutput struct {
+	key string
+	typ string
+}
+
+func (s *SolutionRequest) createExplainPipeline(client *compute.Client, desc *pipeline.DescribeSolutionResponse) (*pipeline.PipelineDescription, map[string]*pipelineOutput, error) {
+	// cycle through the description to determine if any primitive can be explained
+	if ok, pipExplain, outputs := s.explainablePipeline(desc); ok {
+		return pipExplain, outputs, nil
+	}
+	return nil, nil, nil
 }
 
 // ExplainFeatureOutput parses the explain feature output.
@@ -145,71 +183,106 @@ func (s *SolutionRequest) parseSolutionWeight(solutionID string, outputURI strin
 	return weights, nil
 }
 
-func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) (bool, *pipeline.PipelineDescription) {
+func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) (bool, *pipeline.PipelineDescription, map[string]*pipelineOutput) {
 	pipelineDesc := solutionDesc.Pipeline
-	explainStep := -1
-	explainSolution := -1
+	explainable := false
+	outputs := make(map[string]*pipelineOutput)
 	for si, ps := range pipelineDesc.Steps {
 		// get the step outputs
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
-			if isExplainablePrimitiveStep(primitive.Primitive.Id) {
+			explainFunctions := explainablePrimitiveFunctions(primitive.Primitive.Id)
+			for _, ef := range explainFunctions {
+				outputName := fmt.Sprintf("outputs.%d", len(outputs)+1)
 				primitive.Outputs = append(primitive.Outputs, &pipeline.StepOutput{
-					Id: "produce_shap_values",
+					Id: ef.produceFunction,
 				})
-				explainStep = si
-			}
-			if isExplainablePrimitiveSolution(primitive.Primitive.Id) {
-				primitive.Outputs = append(primitive.Outputs, &pipeline.StepOutput{
-					Id: "produce_feature_importances",
+				pipelineDesc.Outputs = append(pipelineDesc.Outputs, &pipeline.PipelineDescriptionOutput{
+					Name: outputName,
+					Data: fmt.Sprintf("steps.%d.%s", si, ef.produceFunction),
 				})
-				explainSolution = si
+				explainable = true
+
+				// output 0 is the produce call
+				outputs[ef.explainableType] = &pipelineOutput{
+					typ: ef.explainableType,
+					key: outputName,
+				}
 			}
 		}
 	}
 
-	if explainStep >= 0 {
-		pipelineDesc.Outputs = append(pipelineDesc.Outputs, &pipeline.PipelineDescriptionOutput{
-			Name: "explain_step",
-			Data: fmt.Sprintf("steps.%d.produce_shap_values", explainStep),
-		})
-	}
-	if explainSolution >= 0 {
-		pipelineDesc.Outputs = append(pipelineDesc.Outputs, &pipeline.PipelineDescriptionOutput{
-			Name: "explain_solution",
-			Data: fmt.Sprintf("steps.%d.produce_feature_importances", explainStep),
-		})
-	}
-
-	return explainSolution >= 0 || explainStep >= 0, pipelineDesc
+	return explainable, pipelineDesc, outputs
 }
 
-func isExplainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) (bool, bool) {
+func isExplainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) bool {
 	pipelineDesc := solutionDesc.Pipeline
-	featureExplainable := false
-	solutionExplainable := false
 	for _, ps := range pipelineDesc.Steps {
 		// get the step outputs
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
-			if isExplainablePrimitiveStep(primitive.Primitive.Id) {
-				featureExplainable = true
-			}
-			if isExplainablePrimitiveSolution(primitive.Primitive.Id) {
-				solutionExplainable = true
+			if len(explainablePrimitiveFunctions(primitive.Primitive.Id)) > 0 {
+				return true
 			}
 		}
 	}
 
-	return featureExplainable, solutionExplainable
+	return false
 }
 
-func isExplainablePrimitiveStep(primitive string) bool {
-	return explainablePrimitivesStep[primitive]
+func explainablePrimitiveFunctions(primitiveID string) []*explainableOutput {
+	return explainableOutputPrimitives[primitiveID]
 }
 
-func isExplainablePrimitiveSolution(primitive string) bool {
-	return explainablePrimitivesSolution[primitive]
+func explainablePipelineFunctions(solutionDesc *pipeline.DescribeSolutionResponse) []*explainableOutput {
+	explainableCalls := make([]*explainableOutput, 0)
+	pipelineDesc := solutionDesc.Pipeline
+	for _, ps := range pipelineDesc.Steps {
+		// get the step outputs
+		primitive := ps.GetPrimitive()
+		if primitive != nil {
+			ep := explainablePrimitiveFunctions(primitive.Primitive.Id)
+			if len(ep) > 0 {
+				explainableCalls = append(explainableCalls, ep...)
+			}
+		}
+	}
+
+	return explainableCalls
+}
+
+func getPipelineOutputs(solutionDesc *pipeline.DescribeSolutionResponse) map[string]*pipelineOutput {
+	outputs := make(map[string]*pipelineOutput)
+	for _, o := range solutionDesc.Pipeline.Outputs {
+		output := createPipelineOutputFromDescription(o)
+		if output != nil {
+			outputs[output.typ] = output
+		}
+	}
+	return outputs
+}
+
+func createPipelineOutputFromDescription(output *pipeline.PipelineDescriptionOutput) *pipelineOutput {
+	// use the produce function name to determine what kind of data is being output
+	produceFunction := output.Data
+	if strings.Contains(produceFunction, "confidence") {
+		return &pipelineOutput{
+			typ: explainableTypeConfidence,
+			key: output.Name,
+		}
+	} else if strings.Contains(produceFunction, "feature") {
+		return &pipelineOutput{
+			typ: explainableTypeSolution,
+			key: output.Name,
+		}
+	} else if strings.Contains(produceFunction, "shap") {
+		return &pipelineOutput{
+			typ: explainableTypeStep,
+			key: output.Name,
+		}
+	}
+
+	return nil
 }
 
 func mapRowIndex(d3mIndexCol int, data [][]string) map[int]string {
@@ -258,4 +331,13 @@ func readDatasetData(uri string) ([][]string, error) {
 	}
 
 	return res, nil
+}
+
+func extractOutputKeys(outputs map[string]*pipelineOutput) []string {
+	keys := make([]string, 0)
+	for _, po := range outputs {
+		keys = append(keys, po.key)
+	}
+
+	return keys
 }

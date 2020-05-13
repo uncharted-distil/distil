@@ -34,6 +34,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil/api/dataset"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
@@ -43,9 +44,9 @@ import (
 // InferenceHandler receives a file and produces results using the specified
 // fitted solution id
 func InferenceHandler(outputPath string, dataStorageCtor api.DataStorageCtor, solutionStorageCtor api.SolutionStorageCtor,
-	metaStorageCtor api.MetadataStorageCtor, config *env.Config, ingestConfig *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
+	metaStorageCtor api.MetadataStorageCtor, config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		dataset := pat.Param(r, "dataset")
+		datasetName := pat.Param(r, "dataset")
 		fittedSolutionID := pat.Param(r, "fitted-solution-id")
 		targetType := pat.Param(r, "target-type")
 
@@ -110,7 +111,7 @@ func InferenceHandler(outputPath string, dataStorageCtor api.DataStorageCtor, so
 				handleError(w, errors.Wrap(err, "unable to create timeseries datat"))
 				return
 			}
-			log.Infof("created timeseries data to use for predictions for dataset %s solution %s", dataset, fittedSolutionID)
+			log.Infof("created timeseries data to use for predictions for dataset %s solution %s", datasetName, fittedSolutionID)
 		} else if targetType == "image" {
 			// type cant be a post param since the upload is the actual data
 			queryValues := r.URL.Query()
@@ -127,7 +128,7 @@ func InferenceHandler(outputPath string, dataStorageCtor api.DataStorageCtor, so
 				return
 			}
 
-			datasetImported, data, err = createImageFromRequest(data, dataset, outputPath, imageType[0], ingestConfig)
+			datasetImported, data, err = createImageFromRequest(data, datasetName, outputPath, imageType[0], config)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable to create image dataset from request"))
 				return
@@ -139,7 +140,7 @@ func InferenceHandler(outputPath string, dataStorageCtor api.DataStorageCtor, so
 				handleError(w, errors.Wrap(err, "unable to receive file from request"))
 				return
 			}
-			log.Infof("received data to use for predictions for dataset %s solution %s", dataset, fittedSolutionID)
+			log.Infof("received data to use for predictions for dataset %s solution %s", datasetName, fittedSolutionID)
 		}
 
 		// get the source dataset from the fitted solution ID
@@ -167,21 +168,27 @@ func InferenceHandler(outputPath string, dataStorageCtor api.DataStorageCtor, so
 			return
 		}
 
+		ds, err := dataset.NewTableDataset(datasetName, data)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to create inference dataset"))
+			return
+		}
+
 		predictParams := &task.PredictParams{
-			Meta:             meta,
-			Dataset:          dataset,
-			SolutionID:       sr.SolutionID,
-			FittedSolutionID: fittedSolutionID,
-			CSVData:          data,
-			OutputPath:       outputPath,
-			Index:            config.ESDatasetsIndex,
-			Target:           targetVar,
-			MetaStorage:      metaStorage,
-			DataStorage:      dataStorage,
-			SolutionStorage:  solutionStorage,
-			DatasetIngested:  datasetIngested,
-			DatasetImported:  datasetImported,
-			Config:           ingestConfig,
+			Meta:               meta,
+			Dataset:            datasetName,
+			SolutionID:         sr.SolutionID,
+			FittedSolutionID:   fittedSolutionID,
+			DatasetConstructor: ds,
+			OutputPath:         outputPath,
+			Index:              config.ESDatasetsIndex,
+			Target:             targetVar,
+			MetaStorage:        metaStorage,
+			DataStorage:        dataStorage,
+			SolutionStorage:    solutionStorage,
+			DatasetIngested:    datasetIngested,
+			DatasetImported:    datasetImported,
+			Config:             config,
 		}
 
 		res, err := task.Predict(predictParams)
@@ -209,12 +216,22 @@ func getTarget(request *api.Request) string {
 	return ""
 }
 
-func createImageFromRequest(data []byte, dataset string, outputPath string, imageType string, ingestConfig *task.IngestTaskConfig) (bool, []byte, error) {
+func createImageFromRequest(data []byte, datasetName string, outputPath string, imageType string, config *env.Config) (bool, []byte, error) {
 	// raw request is zip file of image dataset that needs to be imported
-	formattedPath, err := uploadImageDataset(dataset, outputPath, ingestConfig, data, imageType)
+
+	expandedInfo, err := dataset.ExpandZipDataset(datasetName, data)
 	if err != nil {
 		return false, nil, err
 	}
+	ds, err := uploadImageDataset(datasetName, imageType, expandedInfo.RawFilePath, expandedInfo.ExtractedFilePath)
+	if err != nil {
+		return false, nil, err
+	}
+	_, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
+	if err != nil {
+		return false, nil, err
+	}
+
 	formattedPath = path.Join(formattedPath, "tables", "learningData.csv")
 
 	// once imported, read the csv file as the data to use for the inference

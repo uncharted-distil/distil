@@ -183,7 +183,7 @@ export default Vue.extend({
         residualThresholdMin: `${this.denormalize(min)}`,
         residualThresholdMax: `${this.denormalize(max)}`
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch(err => console.warn(err));
     },
 
     onSlide(value: number[]) {

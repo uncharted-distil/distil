@@ -161,7 +161,7 @@ func PredictionHandler(solutionCtor api.SolutionStorageCtor) func(http.ResponseW
 			// solution
 			Timestamp: predictionReq.CreatedTime,
 			Progress:  predictionReq.Progress,
-			// keys
+			//keys
 			PredictedKey: api.GetPredictedKey(predictionReq.RequestID),
 			ResultID:     resultID,
 		}

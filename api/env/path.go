@@ -133,6 +133,11 @@ func GetTmpPath() string {
 	return outputPath
 }
 
+// GetAugmentedPath returns the augmented path as initialized.
+func GetAugmentedPath() string {
+	return augmentedPath
+}
+
 // ResolvePath returns an absolute path based on the dataset source.
 func ResolvePath(datasetSource metadata.DatasetSource, relativePath string) string {
 	switch datasetSource {

@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { Route, Location } from "vue-router";
+import { Route, Location, RouteRecord } from "vue-router";
 import { Dictionary } from "./dict";
 import {
   JOINED_VARS_INSTANCE_PAGE,
@@ -12,6 +12,7 @@ import { SummaryMode } from "../store/dataset";
 
 // TODO: should really have a separate definintion for each route
 export interface RouteArgs {
+  clustering?: string;
   dataset?: string;
   terms?: string;
   filters?: string;
@@ -33,9 +34,10 @@ export interface RouteArgs {
   availableTargetVarsPage?: number;
   task?: string;
   varModes?: string;
+  varRanked?: string;
   produceRequestId?: string;
-  inferenceDataset?: string;
   fittedSolutionId?: string;
+  predictionsDataset?: string;
 
   // we currently don't have a way to add these to the interface
   //
@@ -78,100 +80,16 @@ export function getRouteFacetPage(key: string, route: Route): number {
 }
 
 function validateQueryArgs(args: RouteArgs): RouteArgs {
-  const query: RouteArgs = {};
-
-  // If `undefined` or empty array do not add property. This is to allow args
-  // of `''` and `null` to overwrite existing values.
-
-  if (!_.isUndefined(args.dataset)) {
-    query.dataset = args.dataset;
-  }
-  if (!_.isUndefined(args.terms)) {
-    query.terms = args.terms;
-  }
-  if (!_.isUndefined(args.target)) {
-    query.target = args.target;
-  }
-  if (!_.isUndefined(args.include)) {
-    query.include = args.include;
-  }
-  if (!_.isUndefined(args.solutionId)) {
-    query.solutionId = args.solutionId;
-  }
-  if (!_.isUndefined(args.filters)) {
-    query.filters = args.filters;
-  }
-  if (!_.isUndefined(args.training)) {
-    query.training = args.training;
-  }
-  if (!_.isUndefined(args.residualThresholdMin)) {
-    query.residualThresholdMin = args.residualThresholdMin;
-  }
-  if (!_.isUndefined(args.residualThresholdMax)) {
-    query.residualThresholdMax = args.residualThresholdMax;
-  }
-  if (!_.isUndefined(args.highlights)) {
-    query.highlights = args.highlights;
-  }
-  if (!_.isUndefined(args.row)) {
-    query.row = args.row;
-  }
-  if (!_.isUndefined(args.joinDatasets)) {
-    query.joinDatasets = args.joinDatasets;
-  }
-  if (!_.isUndefined(args.joinColumnA)) {
-    query.joinColumnA = args.joinColumnA;
-  }
-  if (!_.isUndefined(args.joinColumnB)) {
-    query.joinColumnB = args.joinColumnB;
-  }
-  if (!_.isUndefined(args.baseColumnSuggestions)) {
-    query.baseColumnSuggestions = args.baseColumnSuggestions;
-  }
-  if (!_.isUndefined(args.joinColumnSuggestions)) {
-    query.joinColumnSuggestions = args.joinColumnSuggestions;
-  }
-  if (!_.isUndefined(args.joinAccuracy)) {
-    query.joinAccuracy = args.joinAccuracy;
-  }
-  if (!_.isUndefined(args.groupingType)) {
-    query.groupingType = args.groupingType;
-  }
-  if (!_.isUndefined(args.task)) {
-    query.task = args.task;
-  }
-  if (!_.isUndefined(args.produceRequestId)) {
-    query.produceRequestId = args.produceRequestId;
-  }
-  if (!_.isUndefined(args.varModes)) {
-    query.varModes = args.varModes;
-  }
-  if (!_.isUndefined(args.inferenceDataset)) {
-    query.inferenceDataset = args.inferenceDataset;
-  }
-  if (!_.isUndefined(args.fittedSolutionId)) {
-    query.fittedSolutionId = args.fittedSolutionId;
-  }
-  if (args[JOINED_VARS_INSTANCE_PAGE]) {
-    query[JOINED_VARS_INSTANCE_PAGE] = args[JOINED_VARS_INSTANCE_PAGE];
-  }
-  if (args[AVAILABLE_TARGET_VARS_INSTANCE_PAGE]) {
-    query[AVAILABLE_TARGET_VARS_INSTANCE_PAGE] =
-      args[AVAILABLE_TARGET_VARS_INSTANCE_PAGE];
-  }
-  if (args[AVAILABLE_TRAINING_VARS_INSTANCE_PAGE]) {
-    query[AVAILABLE_TRAINING_VARS_INSTANCE_PAGE] =
-      args[AVAILABLE_TRAINING_VARS_INSTANCE_PAGE];
-  }
-  if (args[TRAINING_VARS_INSTANCE_PAGE]) {
-    query[TRAINING_VARS_INSTANCE_PAGE] = args[TRAINING_VARS_INSTANCE_PAGE];
-  }
-  if (args[RESULT_TRAINING_VARS_INSTANCE_PAGE]) {
-    query[RESULT_TRAINING_VARS_INSTANCE_PAGE] =
-      args[RESULT_TRAINING_VARS_INSTANCE_PAGE];
-  }
-
-  return query;
+  return _.reduce(
+    args,
+    (query, value, arg) => {
+      if (!_.isUndefined(value)) {
+        query[arg] = value;
+      }
+      return query;
+    },
+    {} as RouteArgs
+  );
 }
 
 export function varModesToString(varModes: Map<string, SummaryMode>): string {

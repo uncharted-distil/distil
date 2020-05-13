@@ -23,7 +23,7 @@ import (
 )
 
 // SaveFittedSolution saves a fitted solution to disk via TA2TA3 API.
-func SaveFittedSolution(fittedSolutionID string, solutionStorage api.SolutionStorage, metadataStorage api.MetadataStorage) (*api.ExportedModel, error) {
+func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescription string, solutionStorage api.SolutionStorage, metadataStorage api.MetadataStorage) (*api.ExportedModel, error) {
 	uri, err := client.SaveFittedSolution(context.Background(), fittedSolutionID)
 	if err != nil {
 		return nil, err
@@ -58,6 +58,8 @@ func SaveFittedSolution(fittedSolutionID string, solutionStorage api.SolutionSto
 		DatasetName:      metadata.Name,
 		Variables:        vars,
 		Target:           target,
+		ModelName:        modelName,
+		ModelDescription: modelDescription,
 	}, nil
 }
 

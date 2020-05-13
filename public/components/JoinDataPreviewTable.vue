@@ -18,8 +18,9 @@
         slot-scope="data"
       >
         <image-preview
-          :key="imageField"
-          :image-url="data.item[imageField]"
+          :key="imageField.key"
+          :image-url="data.item[imageField.key]"
+          :type="imageField.type"
         ></image-preview>
       </template>
 
@@ -58,8 +59,12 @@ import {
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
-import { IMAGE_TYPE, TIMESERIES_TYPE } from "../util/types";
-import { getTimeseriesGroupingsFromFields } from "../util/data";
+import {
+  IMAGE_TYPE,
+  TIMESERIES_TYPE,
+  MULTIBAND_IMAGE_TYPE
+} from "../util/types";
+import { getTimeseriesGroupingsFromFields, getImageFields } from "../util/data";
 
 export default Vue.extend({
   name: "join-data-preview-table",
@@ -81,15 +86,8 @@ export default Vue.extend({
       return datasetGetters.getVariables(this.$store);
     },
 
-    imageFields(): string[] {
-      return _.map(this.fields, (field, key) => {
-        return {
-          key: key,
-          type: field.type
-        };
-      })
-        .filter(field => field.type === IMAGE_TYPE)
-        .map(field => field.key);
+    imageFields(): { key: string; type: string }[] {
+      return getImageFields(this.fields);
     },
 
     timeseriesGroupings(): Grouping[] {

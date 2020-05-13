@@ -27,8 +27,16 @@ import {
   getters as datasetGetters,
   actions as datasetActions
 } from "../store/dataset/module";
+import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
-import { formatValue, isIntegerType, isTimeType } from "../util/types";
+import {
+  formatValue,
+  isIntegerType,
+  isTimeType,
+  hasComputedVarPrefix,
+  IMAGE_TYPE,
+  MULTIBAND_IMAGE_TYPE
+} from "../util/types";
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
@@ -171,15 +179,23 @@ export function fetchSummaryExemplars(
     if (variable.grouping) {
       if (variable.grouping.type === "timeseries") {
         // if there a linked exemplars, fetch those before resolving
+        const solutionId = routeGetters.getRouteSolutionId(store);
+
         return Promise.all(
           exemplars.map(exemplar => {
-            return datasetActions.fetchTimeseries(store, {
+            const args = {
               dataset: datasetName,
               timeseriesColName: variable.grouping.idCol,
               xColName: variable.grouping.properties.xCol,
               yColName: variable.grouping.properties.yCol,
-              timeseriesID: exemplar
-            });
+              timeseriesId: exemplar,
+              solutionId: solutionId
+            };
+            if (solutionId) {
+              return resultsActions.fetchForecastedTimeseries(store, args);
+            } else {
+              return datasetActions.fetchTimeseries(store, args);
+            }
           })
         );
       }
@@ -224,7 +240,7 @@ export function fetchResultExemplars(
               timeseriesColName: variable.grouping.idCol,
               xColName: variable.grouping.properties.xCol,
               yColName: variable.grouping.properties.yCol,
-              timeseriesID: exemplar,
+              timeseriesId: exemplar,
               solutionId: solutionId
             });
           })
@@ -274,7 +290,7 @@ export function filterSummariesByDataset(
   dataset: string
 ): VariableSummary[] {
   return summaries.filter(summary => {
-    return summary.dataset === dataset;
+    return summary.dataset === dataset && !hasComputedVarPrefix(summary.key);
   });
 }
 
@@ -302,8 +318,7 @@ export function createPendingSummary(
   key: string,
   label: string,
   description: string,
-  dataset: string,
-  solutionId?: string
+  dataset: string
 ): VariableSummary {
   return {
     key: key,
@@ -312,8 +327,7 @@ export function createPendingSummary(
     dataset: dataset,
     pending: true,
     baseline: null,
-    filtered: null,
-    solutionId: solutionId
+    filtered: null
   };
 }
 
@@ -356,10 +370,7 @@ export async function fetchSolutionResultSummary(
   );
   if (!exists) {
     // add placeholder
-    updateFunction(
-      context,
-      createPendingSummary(key, label, "", dataset, solutionId)
-    );
+    updateFunction(context, createPendingSummary(key, label, "", dataset));
   }
 
   // fetch the results for each solution
@@ -567,4 +578,95 @@ export function isDatamartProvenance(provenance: string): boolean {
     provenance === DATAMART_PROVENANCE_NYU ||
     provenance === DATAMART_PROVENANCE_ISI
   );
+}
+
+// Validates argument object based on input array of expected object fields
+// if there's invalid members, it logs warning with the invalid members and
+// returns false. Returns true otherwise.
+export function validateArgs(args: object, expectedArgs: string[]) {
+  const missingArgs = expectedArgs.reduce((missing, arg) => {
+    if (args[arg] === undefined || args[arg] === null) missing.push(arg);
+    return missing;
+  }, []);
+  if (missingArgs.length === 0) {
+    return true;
+  } else {
+    console.warn(`${missingArgs} argument(s) are missing`);
+    return false;
+  }
+}
+
+// Computes the cell colour based on the
+export function explainCellColor(
+  weight: number,
+  data: any,
+  tableFields: TableColumn[],
+  dataItems: TableRow[]
+): string {
+  if (!weight || !hasMultipleFeatures(tableFields)) {
+    return "";
+  }
+
+  const absoluteWeight = Math.abs(
+    weight /
+      d3mRowWeightExtrema(tableFields, dataItems)[data.item[D3M_INDEX_FIELD]]
+  );
+
+  let red: number;
+  let green: number;
+  let blue: number;
+  if (weight > 0) {
+    red = 242 - 128 * absoluteWeight;
+    green = 242 - 64 * absoluteWeight;
+    blue = 255;
+  } else if (weight === 0) {
+    red = 255;
+    green = 255;
+    blue = 255;
+  } else {
+    red = 255;
+    green = 242 - 255 * absoluteWeight;
+    blue = 242 - 128 * absoluteWeight;
+  }
+
+  return `background: rgba(${red}, ${green}, ${blue}, .75)`;
+}
+
+function hasMultipleFeatures(tableFields: TableColumn[]): boolean {
+  const featureNames = tableFields.reduce((uniqueNames, field) => {
+    uniqueNames[field.label] = true;
+    return uniqueNames;
+  }, {});
+  return Object.keys(featureNames).length > 2;
+}
+
+function d3mRowWeightExtrema(
+  tableFields: TableColumn[],
+  dataItems: TableRow[]
+): Dictionary<number> {
+  return dataItems.reduce((extremas, item) => {
+    extremas[item[D3M_INDEX_FIELD]] = tableFields.reduce((rowMax, tableCol) => {
+      if (item[tableCol.key].weight) {
+        const currentWeight = Math.abs(item[tableCol.key].weight);
+        return currentWeight > rowMax ? currentWeight : rowMax;
+      } else {
+        return rowMax;
+      }
+    }, 0);
+    return extremas;
+  }, {});
+}
+
+export function getImageFields(
+  fields: Dictionary<TableColumn>
+): { key: string; type: string }[] {
+  const imageFields = _.map(fields, (field, key) => {
+    return {
+      key: key,
+      type: field.type
+    };
+  }).filter(
+    field => field.type === IMAGE_TYPE || field.type === MULTIBAND_IMAGE_TYPE
+  );
+  return imageFields;
 }

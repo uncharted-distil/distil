@@ -8,16 +8,34 @@
     <b-modal
       id="upload-modal"
       title="Import local file"
-      :ok-disabled="!Boolean(file)"
+      :ok-disabled="
+        !Boolean(file) || (this.isPrediction && this.importDataName.length <= 0)
+      "
       @ok="handleOk()"
-      @show="clearFile()"
+      @show="clearForm()"
     >
-      <p>Select a csv file to import</p>
+      <div v-if="showImportDataName">
+        <b-form-group
+          label="Imported Data Name"
+          label-for="import-name-input"
+          invalid-feedback="Imported Data Name is Required"
+          :state="importDataNameState"
+        >
+          <b-form-input
+            ref="importnameinput"
+            id="import-name-input"
+            v-model="importDataName"
+            :state="importDataNameState"
+            required
+          ></b-form-input>
+        </b-form-group>
+      </div>
+      <p>{{ modalText }}</p>
       <b-form-file
         ref="fileinput"
         v-model="file"
         :state="Boolean(file)"
-        accept=".csv"
+        :accept="allowedTypes"
         plain
       />
       <div class="mt-3">Selected file: {{ file ? file.name : "" }}</div>
@@ -37,7 +55,9 @@ export default Vue.extend({
 
   data() {
     return {
-      file: null
+      file: null,
+      importDataName: "",
+      importDataNameState: null
     };
   },
 
@@ -49,6 +69,9 @@ export default Vue.extend({
   },
 
   computed: {
+    showImportDataName(): boolean {
+      return this.uploadType === PREDICTION_UPLOAD;
+    },
     buttonText(): string {
       switch (this.uploadType) {
         case PREDICTION_UPLOAD:
@@ -58,31 +81,60 @@ export default Vue.extend({
           return "Import File";
       }
     },
+    modalText(): string {
+      switch (this.uploadType) {
+        case PREDICTION_UPLOAD:
+          return "Select a csv file to import";
+        case DATASET_UPLOAD:
+        default:
+          return "Select a csv or zip file to import";
+      }
+    },
+    isPrediction(): boolean {
+      return PREDICTION_UPLOAD === this.uploadType;
+    },
+    allowedTypes(): string {
+      switch (this.uploadType) {
+        case PREDICTION_UPLOAD:
+          return ".csv";
+        case DATASET_UPLOAD:
+        default:
+          return ".csv, .zip";
+      }
+    },
+
     filename(): string {
       return this.file ? this.file.name : "";
     },
     datasetID(): string {
-      if (this.filename) {
+      let datasetID = "";
+      if (this.importDataName.length > 0) {
+        datasetID = datasetID.concat(this.importDataName.replace(/\s/g, ""));
+      }
+      if (this.filename.length > 0) {
         const fileNameTokens = this.filename.split(".");
         const fname =
           fileNameTokens.length > 1
             ? fileNameTokens.slice(0, -1).join(".")
             : fileNameTokens.join(".");
-        const datasetID = fname.replace(" ", "_");
-        return datasetID;
+        datasetID = datasetID.concat(fname.replace(/\s/g, ""));
       }
-      return "";
+      return datasetID;
     }
   },
 
   methods: {
-    clearFile() {
+    clearForm() {
       this.file = null;
       const $refs = this.$refs as any;
-      $refs.fileinput.reset();
+      if ($refs && $refs.fileinput) $refs.fileinput.reset();
+      if ($refs && $refs.importnameinput) $refs.fileinput.reset();
     },
     handleOk() {
       if (!this.file) {
+        return;
+      }
+      if (this.isPrediction && this.importDataName.length <= 0) {
         return;
       }
       this.$emit("uploadstart", {

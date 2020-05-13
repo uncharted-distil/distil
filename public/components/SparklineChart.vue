@@ -38,6 +38,9 @@ export default Vue.extend({
     },
     xAxisDateTime: {
       type: Boolean as () => boolean
+    },
+    joinForecast: {
+      type: Boolean as () => boolean
     }
   },
   data() {
@@ -84,6 +87,14 @@ export default Vue.extend({
       return this.forecast
         ? Math.max(max, d3.max(this.forecast, d => d[1]))
         : max;
+    },
+    displayForecast(): number[][] {
+      // Join the last element of the truth timeseries and the first element of the forecast
+      // time series.  Used when not visualizing an in-sample forecast.
+      if (this.joinForecast) {
+        return [_.last(this.timeseries)].concat(this.forecast);
+      }
+      return this.forecast;
     }
   },
   mounted() {
@@ -183,7 +194,7 @@ export default Vue.extend({
         .attr("transform", `translate(${this.margin.left}, 0)`)
         .attr("class", "line-chart");
 
-      g.datum(this.forecast);
+      g.datum(this.displayForecast);
 
       g.append("path")
         .attr("fill", "none")

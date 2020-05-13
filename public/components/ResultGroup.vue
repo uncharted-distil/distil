@@ -1,10 +1,14 @@
 <template>
-  <div v-bind:class="currentClass" @click="onClick()">
+  <div
+    class="result-group"
+    v-bind:class="{ 'result-group-selected': isSelected }"
+    @click="onClick()"
+  >
     <div class="result-group-title">
       <b
         >{{ name }} <sup>{{ solutionIndex }}</sup></b
       >
-      <template v-if="!isErrored">
+      <template v-if="!isErrored && !isSelected">
         <div
           class="pull-right pl-2 solution-button"
           @click.stop="minimized = !minimized"
@@ -18,12 +22,12 @@
           ></i>
         </div>
         <!--
-				<div class="pull-right">|</div>
-				-->
+        <div class="pull-right">|</div>
+        -->
       </template>
       <!--
-			<div class="pull-right pr-2 solution-button" @click.stop="onDelete"><i class="fa fa-trash"></i></div>
-			-->
+      <div class="pull-right pr-2 solution-button" @click.stop="onDelete"><i class="fa fa-trash"></i></div>
+      -->
       <template v-if="isPending">
         <b-badge variant="info">{{ progressLabel }}</b-badge>
         <b-progress
@@ -51,35 +55,18 @@
     <div class="result-group-body" v-if="isMaximized">
       <template v-if="isCompleted">
         <div v-for="summary in predictedSummaries" :key="summary.key">
-          <template v-if="summary.varType === 'timeseries'">
-            <facet-timeseries
-              :summary="summary"
-              :highlight="highlight"
-              :row-selection="rowSelection"
-              :instanceName="predictedInstanceName"
-              :enabled-type-changes="[]"
-              :enable-highlighting="[true, true]"
-              @numerical-click="onResultNumericalClick"
-              @range-change="onResultRangeChange"
-              @histogram-numerical-click="onResultNumericalClick"
-              @histogram-range-change="onResultRangeChange"
-            >
-            </facet-timeseries>
-          </template>
-          <template v-else>
-            <facet-entry
-              enable-highlighting
-              :summary="summary"
-              :highlight="highlight"
-              :enabled-type-changes="[]"
-              :row-selection="rowSelection"
-              :instanceName="predictedInstanceName"
-              @numerical-click="onResultNumericalClick"
-              @range-change="onResultRangeChange"
-              @facet-click="onResultCategoricalClick"
-            >
-            </facet-entry>
-          </template>
+          <facet-entry
+            enable-highlighting
+            :summary="summary"
+            :highlight="highlight"
+            :enabled-type-changes="[]"
+            :row-selection="rowSelection"
+            :instanceName="predictedInstanceName"
+            @numerical-click="onResultNumericalClick"
+            @range-change="onResultRangeChange"
+            @facet-click="onResultCategoricalClick"
+          >
+          </facet-entry>
         </div>
 
         <div class="residual-group-container">
@@ -116,19 +103,6 @@
         </facet-entry>
       </template>
     </div>
-    <b-modal v-model="openDeleteModal" hide-footer hide-header>
-      <h6 class="my-4 text-center">
-        Are you sure you would like to delete this solution?
-      </h6>
-      <footer class="modal-footer">
-        <b-btn class="mt-3" variant="danger" @click="deleteSolution"
-          >Delete</b-btn
-        >
-        <b-btn class="mt-3" variant="secondary" @click="openDeleteModal = false"
-          >Cancel</b-btn
-        >
-      </footer>
-    </b-modal>
   </div>
 </template>
 
@@ -167,8 +141,7 @@ export default Vue.extend({
   name: "result-group",
 
   components: {
-    FacetEntry,
-    FacetTimeseries
+    FacetEntry
   },
 
   props: {
@@ -252,24 +225,10 @@ export default Vue.extend({
 
     residualSummaries(): VariableSummary[] {
       return this.residualsSummary ? [this.residualsSummary] : [];
-      // groups.forEach(group => {
-      // 	group.facets.forEach((facet: any) => {
-      // 		if (facet.histogram) {
-      // 			facet.histogram.showOrigin = true;
-      // 		}
-      // 	});
-      // });
-      // return groups;
     },
 
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
-    },
-
-    currentClass(): string {
-      return this.predictedSummary && this.solutionId === this.routeSolutionId
-        ? "result-group-selected result-group"
-        : "result-group";
     },
 
     residualThreshold(): Extrema {
@@ -314,6 +273,10 @@ export default Vue.extend({
         this.routeSolutionId === this.solutionId ||
         (!this.isMinimized && !this.isErrored)
       );
+    },
+
+    isSelected(): boolean {
+      return this.predictedSummary && this.solutionId === this.routeSolutionId;
     },
 
     isTopN(): boolean {
