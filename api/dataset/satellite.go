@@ -330,6 +330,8 @@ func extractCoordinates(filename string) (*BoundingBox, error) {
 		return nil, errors.New("unable to transform points")
 	}
 
+	defer transform.Destroy()
+
 	return &BoundingBox{
 		LowerLeft: &Point{
 			X: pointsX[0],

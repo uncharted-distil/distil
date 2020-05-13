@@ -12,13 +12,15 @@
       <template v-slot:cell()="data">
         {{ data.value.value }}
       </template>
+
       <template
         v-for="imageField in imageFields"
-        v-slot:[cellSlot(imageField)]="data"
+        v-slot:[cellSlot(imageField.key)]="data"
       >
         <image-preview
-          :key="imageField"
-          :image-url="data.item[imageField]"
+          :key="imageField.key"
+          :type="imageField.type"
+          :image-url="data.item[imageField.key].value"
         ></image-preview>
       </template>
 
@@ -56,11 +58,12 @@ import {
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { IMAGE_TYPE, TIMESERIES_TYPE, isJoinable } from "../util/types";
+import { TIMESERIES_TYPE, isJoinable } from "../util/types";
 import {
   getTimeseriesGroupingsFromFields,
   formatFieldsAsArray,
-  formatSlot
+  formatSlot,
+  getImageFields
 } from "../util/data";
 
 function findSuggestionIndex(
@@ -209,15 +212,8 @@ export default Vue.extend({
       );
     },
 
-    imageFields(): string[] {
-      return _.map(this.fields, (field, key) => {
-        return {
-          key: key,
-          type: field.type
-        };
-      })
-        .filter(field => field.type === IMAGE_TYPE)
-        .map(field => field.key);
+    imageFields(): { key: string; type: string }[] {
+      return getImageFields(this.fields);
     },
 
     timeseriesGroupings(): Grouping[] {
