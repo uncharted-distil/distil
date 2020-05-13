@@ -22,7 +22,6 @@
             class="file-uploader"
             @uploadstart="onUploadStart"
             @uploadfinish="onUploadFinish"
-            :upload-type="uploadType"
           ></file-uploader>
         </div>
       </div>
@@ -51,7 +50,6 @@ import RunningSolutions from "../components/RunningSolutions";
 import SearchBar from "../components/SearchBar";
 import { getters as appGetters } from "../store/app/module";
 import { actions as viewActions } from "../store/view/module";
-import { DATASET_UPLOAD } from "../util/uploads";
 import Vue from "vue";
 
 export default Vue.extend({
@@ -68,8 +66,7 @@ export default Vue.extend({
   data() {
     return {
       uploadData: {},
-      uploadStatus: "",
-      uploadType: DATASET_UPLOAD
+      uploadStatus: ""
     };
   },
 
