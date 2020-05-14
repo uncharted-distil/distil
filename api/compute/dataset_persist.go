@@ -319,6 +319,11 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 	return nil
 }
 
+type shuffleTracker struct {
+	writer *csv.Writer
+	count  int
+}
+
 func shuffleAndWrite(rowData [][]string, targetCol int, groupCol int, maxTrainingCount int, maxTestCount int, writerTrain *csv.Writer, writerTest *csv.Writer) error {
 	if maxTrainingCount <= 0 {
 		maxTrainingCount = math.MaxInt64
@@ -333,24 +338,29 @@ func shuffleAndWrite(rowData [][]string, targetCol int, groupCol int, maxTrainin
 	numTest := min(maxTestCount, int(math.Ceil(float64(len(rowData))*(1.0-TrainTestSplitThreshold))))
 
 	// Write out to train test
-	testCount := 0
-	trainCount := 0
-	groupMap := make(map[string]*csv.Writer)
-	var writer *csv.Writer
+	shuffleTest := &shuffleTracker{
+		writer: writerTest,
+		count:  0,
+	}
+	shuffleTrain := &shuffleTracker{
+		writer: writerTrain,
+		count:  0,
+	}
+	groupMap := make(map[string]*shuffleTracker)
+	var writer *shuffleTracker
 	for _, row := range rowData {
 		if groupCol >= 0 && groupMap[row[groupCol]] != nil {
 			writer = groupMap[row[groupCol]]
-		} else if row[targetCol] != "" && testCount < numTest {
-			testCount++
-			writer = writerTest
-		} else if trainCount < numTrain {
-			trainCount++
-			writer = writerTrain
+		} else if row[targetCol] != "" && shuffleTest.count < numTest {
+			writer = shuffleTest
+		} else if shuffleTrain.count < numTrain {
+			writer = shuffleTrain
 		}
 
 		// write out data and keep reference for the group
 		if writer != nil {
-			err := writer.Write(row)
+			writer.count++
+			err := writer.writer.Write(row)
 			if err != nil {
 				return errors.Wrap(err, "unable to write data to train/test output")
 			}
