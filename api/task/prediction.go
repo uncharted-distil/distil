@@ -83,6 +83,7 @@ type PredictParams struct {
 	MetaStorage        api.MetadataStorage
 	DataStorage        api.DataStorage
 	SolutionStorage    api.SolutionStorage
+	ModelStorage       api.ExportedModelStorage
 	DatasetIngested    bool
 	DatasetImported    bool
 	IngestConfig       *IngestTaskConfig
@@ -192,6 +193,16 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	// get the explained solution id
 	solution, err := params.SolutionStorage.FetchSolution(params.SolutionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// ensure the ta2 has fitted solution loaded
+	exportedModel, err := params.ModelStorage.FetchModelByID(params.FittedSolutionID)
+	if err != nil {
+		return nil, err
+	}
+	_, err = LoadFittedSolution(exportedModel.FilePath, params.SolutionStorage, params.MetaStorage)
 	if err != nil {
 		return nil, err
 	}
