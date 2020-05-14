@@ -142,7 +142,10 @@ func (s *Storage) FetchModel(modelName string) (*api.ExportedModel, error) {
 	if err != nil {
 		return nil, err
 	}
-	return models[0], nil
+	if len(models) > 0 {
+		return models[0], nil
+	}
+	return nil, nil
 }
 
 // FetchModelByID returns a model in the provided index using the model's fitted solution ID.
@@ -162,7 +165,10 @@ func (s *Storage) FetchModelByID(fittedSolutionID string) (*api.ExportedModel, e
 	if err != nil {
 		return nil, err
 	}
-	return models[0], nil
+	if len(models) > 0 {
+		return models[0], nil
+	}
+	return nil, nil
 }
 
 // SearchModels returns the models that match the search criteria in the
