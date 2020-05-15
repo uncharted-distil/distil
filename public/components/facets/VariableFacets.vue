@@ -490,4 +490,13 @@ button {
   max-width: 500px;
   height: 300px;
 }
+
+.variable-facets-container .facet-header-container {
+  overflow: scroll !important;
+}
+
+.variable-facets-container .facet-header-container .dropdown-menu {
+  max-height: 200px;
+  overflow-y: auto;
+}
 </style>
