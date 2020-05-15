@@ -381,7 +381,8 @@ export const actions = {
       fetchSolutions(context, {
         dataset: dataset,
         target: target
-      })
+      }),
+      datasetActions.searchDatasets(store, "")
     ]);
     return actions.updateResultsSolution(context);
   },
