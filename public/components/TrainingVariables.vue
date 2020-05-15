@@ -9,8 +9,8 @@
     </p>
     <variable-facets
       ref="facets"
-      enable-search
       enable-highlighting
+      enable-search
       enable-type-change
       :log-activity="logActivity"
       :instance-name="instanceName"
