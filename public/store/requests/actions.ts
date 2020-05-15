@@ -26,6 +26,7 @@ import { actions as resultsActions } from "../results/module";
 import { actions as predictActions } from "../predictions/module";
 import { getters as routeGetters } from "../route/module";
 import { TaskTypes, SummaryMode } from "../dataset";
+import { validateArgs } from "../../util/data";
 
 const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
@@ -563,7 +564,10 @@ export const actions = {
 
   // fetches a specific prediction by request ID
   async fetchPrediction(context: RequestContext, args: { requestId: string }) {
-    args.requestId = args.requestId || "";
+    if (!validateArgs(args, ["requestId"])) {
+      return;
+    }
+
     try {
       // fetch and uddate the search data
       const requestResponse = await axios.get<Predictions>(

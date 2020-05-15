@@ -1,186 +1,121 @@
 <template>
   <div>
-    <b-button block variant="primary" v-b-modal.upload-modal>{{
-      buttonText
-    }}</b-button>
+    <b-button block variant="primary" v-b-modal.upload-modal
+      >Import File</b-button
+    >
 
     <!-- Modal Component -->
     <b-modal
       id="upload-modal"
       title="Import local file"
-      :ok-disabled="
-        !Boolean(file) || (this.isPrediction && this.importDataName.length <= 0)
-      "
+      :ok-disabled="!Boolean(file) || this.importDataName.length <= 0"
       @ok="handleOk()"
       @show="clearForm()"
     >
-      <div v-if="showImportDataName">
-        <b-form-group
-          label="Imported Data Name"
-          label-for="import-name-input"
-          invalid-feedback="Imported Data Name is Required"
+      <b-form-group
+        label="Dataset Name"
+        label-for="import-name-input"
+        invalid-feedback="Dataset name required"
+        :state="importDataNameState"
+      >
+        <b-form-input
+          ref="importnameinput"
+          id="import-name-input"
+          v-model="importDataName"
           :state="importDataNameState"
-        >
-          <b-form-input
-            ref="importnameinput"
-            id="import-name-input"
-            v-model="importDataName"
-            :state="importDataNameState"
-            required
-          ></b-form-input>
-        </b-form-group>
-      </div>
-      <p>{{ modalText }}</p>
+          required
+        ></b-form-input>
+      </b-form-group>
+
+      <p>Source File (csv, zip)</p>
       <b-form-file
         ref="fileinput"
         v-model="file"
         :state="Boolean(file)"
-        :accept="allowedTypes"
+        accept=".csv, .zip"
         plain
       />
-      <div class="mt-3">Selected file: {{ file ? file.name : "" }}</div>
     </b-modal>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import { actions as datasetActions } from "../store/dataset/module";
+import {
+  getters as datasetGetters,
+  actions as datasetActions
+} from "../store/dataset/module";
 import { actions as requestActions } from "../store/requests/module";
 import { filterSummariesByDataset } from "../util/data";
-import { PREDICTION_UPLOAD, DATASET_UPLOAD, getBase64 } from "../util/uploads";
+import { getBase64, removeExtension, generateUniqueDatasetName } from "../util/uploads";
+import _ from "lodash";
 
 export default Vue.extend({
   name: "file-uploader",
 
   data() {
     return {
-      file: null,
+      file: null as File,
       importDataName: "",
-      importDataNameState: null
+      importDataNameState: null as Boolean
     };
   },
 
   props: {
-    uploadType: String as () => string,
-    fittedSolutionId: String as () => string,
     target: String as () => string,
     targetType: String as () => string
   },
 
-  computed: {
-    showImportDataName(): boolean {
-      return this.uploadType === PREDICTION_UPLOAD;
-    },
-    buttonText(): string {
-      switch (this.uploadType) {
-        case PREDICTION_UPLOAD:
-          return "Apply Model";
-        case DATASET_UPLOAD:
-        default:
-          return "Import File";
-      }
-    },
-    modalText(): string {
-      switch (this.uploadType) {
-        case PREDICTION_UPLOAD:
-          return "Select a csv file to import";
-        case DATASET_UPLOAD:
-        default:
-          return "Select a csv or zip file to import";
-      }
-    },
-    isPrediction(): boolean {
-      return PREDICTION_UPLOAD === this.uploadType;
-    },
-    allowedTypes(): string {
-      switch (this.uploadType) {
-        case PREDICTION_UPLOAD:
-          return ".csv";
-        case DATASET_UPLOAD:
-        default:
-          return ".csv, .zip";
-      }
-    },
-
-    filename(): string {
-      return this.file ? this.file.name : "";
-    },
-    datasetID(): string {
-      let datasetID = "";
-      if (this.importDataName.length > 0) {
-        datasetID = datasetID.concat(this.importDataName.replace(/\s/g, ""));
-      }
-      if (this.filename.length > 0) {
-        const fileNameTokens = this.filename.split(".");
-        const fname =
-          fileNameTokens.length > 1
-            ? fileNameTokens.slice(0, -1).join(".")
-            : fileNameTokens.join(".");
-        datasetID = datasetID.concat(fname.replace(/\s/g, ""));
-      }
-      return datasetID;
-    }
-  },
-
   methods: {
     clearForm() {
-      this.file = null;
       const $refs = this.$refs as any;
       if ($refs && $refs.fileinput) $refs.fileinput.reset();
       if ($refs && $refs.importnameinput) $refs.fileinput.reset();
+      this.file = null;
+      this.importDataName = "";
+      this.importDataNameState = null;
     },
-    handleOk() {
-      if (!this.file) {
-        return;
-      }
-      if (this.isPrediction && this.importDataName.length <= 0) {
-        return;
-      }
+    async handleOk() {
+      const deconflictedName = generateUniqueDatasetName(this.importDataName);
+
+      // Notify external listeners that the file upload is starting
       this.$emit("uploadstart", {
         file: this.file,
-        filename: this.filename,
-        datasetID: this.datasetID
+        filename: this.file.name,
+        datasetID: deconflictedName
       });
-      let uploadError;
-      switch (this.uploadType) {
-        case PREDICTION_UPLOAD:
-          // Apply model to a new prediction set.  The selected file's contents will be uploaded and
-          // fed into a fitted solution.  The prediction request goes through a websocket similar to
-          getBase64(this.file).then(dataset => {
-            const requestMsg = {
-              datasetId: this.datasetID,
-              dataset: dataset,
-              fittedSolutionId: this.fittedSolutionId,
-              target: this.target,
-              targetType: this.targetType
-            };
-            requestActions
-              .createPredictRequest(this.$store, requestMsg)
-              .catch(err => {
-                uploadError = err;
-              })
-              .then(response => {
-                this.$emit("uploadfinish", uploadError, response);
-              });
-          });
-          break;
-        case DATASET_UPLOAD:
-        default:
-          datasetActions
-            .uploadDataFile(this.$store, {
-              datasetID: this.datasetID,
-              file: this.file,
-              type: this.uploadType,
-              fittedSolutionId: this.fittedSolutionId,
-              targetType: this.targetType
-            })
-            .catch(err => {
-              uploadError = err;
-            })
-            .then(response => {
-              this.$emit("uploadfinish", uploadError, response);
-            });
+      try {
+        // Upload the file and notify when complete
+        const response = await datasetActions.uploadDataFile(this.$store, {
+          datasetID: deconflictedName,
+          file: this.file,
+          targetType: this.targetType
+        });
+        this.$emit("uploadfinish", null, response);
+      } catch (err) {
+        this.$emit("uploadfinish", err, null);
+      }
+    }
+  },
+
+  watch: {
+    // Watches for file name changes, setting a dataset import name value if the user
+    // hans't done so.
+    file() {
+      if (!this.importDataName && this.file?.name) {
+        // use the filname without the extension
+        this.importDataName = removeExtension(this.file.name);
+        this.importDataNameState = true;
+      }
+    },
+
+    // Watches the import data name so that the valid/invalid state can be updated
+    importDataName() {
+      // allowed transitions are null -> true, true -> false, false -> true
+      if (this.importDataNameState === null && !!this.importDataName) {
+        this.importDataNameState = true;
+      } else if (this.importDataNameState !== null) {
+        this.importDataNameState = !!this.importDataName;
       }
     }
   }

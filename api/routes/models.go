@@ -25,16 +25,6 @@ import (
 	"github.com/uncharted-distil/distil/api/model"
 )
 
-// ModelResult represents the result of a model response.
-type ModelResult struct {
-	Model *model.ExportedModel `json:"model"`
-}
-
-// ModelsResult represents the result of a models response.
-type ModelsResult struct {
-	Models []*model.ExportedModel `json:"models"`
-}
-
 // ModelHandler generates a route handler that returns a specified model summary.
 func ModelHandler(ctor model.ExportedModelStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -57,9 +47,7 @@ func ModelHandler(ctor model.ExportedModelStorageCtor) func(http.ResponseWriter,
 		}
 
 		// marshal data
-		err = handleJSON(w, ModelResult{
-			Model: res,
-		})
+		err = handleJSON(w, res)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to marshal model result into JSON"))
 			return
@@ -87,16 +75,19 @@ func ModelsHandler(modelCtor model.ExportedModelStorageCtor) func(http.ResponseW
 			return
 		}
 
-		models, err := storage.SearchModels(terms)
+		var models []*model.ExportedModel
+		if terms != "" {
+			models, err = storage.SearchModels(terms)
+		} else {
+			models, err = storage.FetchModels()
+		}
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// marshal data
-		err = handleJSON(w, ModelsResult{
-			Models: models,
-		})
+		err = handleJSON(w, models)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to marshal model results into JSON"))
 			return

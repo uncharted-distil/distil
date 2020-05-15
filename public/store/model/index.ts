@@ -1,3 +1,5 @@
+import { Dictionary } from "vue-router/types/router";
+
 export interface Model {
   modelName: string;
   modelDescription: string;
@@ -10,9 +12,13 @@ export interface Model {
 }
 
 export interface ModelState {
-  models: Model[];
+  // list of of all saved models, keyed by fitted solution id
+  models: Dictionary<Model>;
+  // fitted solution id of models that are currently being filtered
+  filteredModelIds: string[];
 }
 
 export const state: ModelState = {
-  models: []
+  models: {},
+  filteredModelIds: []
 };
