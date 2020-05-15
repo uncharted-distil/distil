@@ -15,8 +15,11 @@
 <script lang="ts">
 import SolutionPreview from "../components/SolutionPreview";
 import { getters as requestGetters } from "../store/requests/module";
+import { getters as modelGetters } from "../store/model/module";
 import { Solution } from "../store/requests/index";
 import Vue from "vue";
+import _ from "lodash";
+import moment from "moment";
 
 export default Vue.extend({
   name: "recent-solutions",
@@ -33,9 +36,19 @@ export default Vue.extend({
   },
 
   computed: {
+    // Return recent solutions, filtering down to only those that have
+    // been saved.  This is to ensure that the TA2 can re-load the fitted solution
+    // for additional produce calls.
     recentSolutions(): Solution[] {
+      // find solutions associated with exported models
+      const savedModelsMap = _.mapKeys(
+        modelGetters.getModels(this.$store),
+        m => m.fittedSolutionId
+      );
       return requestGetters
         .getSolutions(this.$store)
+        .filter(s => savedModelsMap[s.fittedSolutionId])
+        .sort((a, b) => moment(b.timestamp).unix() - moment(a.timestamp).unix())
         .slice(0, this.maxSolutions);
     }
   }

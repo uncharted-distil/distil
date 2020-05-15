@@ -140,6 +140,7 @@ type ExportedModelStorageCtor func() (ExportedModelStorage, error)
 type ExportedModelStorage interface {
 	PersistExportedModel(exportedModel *ExportedModel) error
 	FetchModel(model string) (*ExportedModel, error)
+	FetchModelByID(fittedSolutionID string) (*ExportedModel, error)
 	FetchModels() ([]*ExportedModel, error)
 	SearchModels(terms string) ([]*ExportedModel, error)
 }

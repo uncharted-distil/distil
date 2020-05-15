@@ -11,15 +11,14 @@
     <result-facets :showResiduals="showResiduals" />
 
     <template v-if="isActiveSolutionCompleted">
-      <file-uploader
+      <predictions-data-uploader
         class="result-button-alignment"
         @uploadstart="onUploadStart"
         @uploadfinish="onUploadFinish"
-        :upload-type="uploadType"
         :fitted-solution-id="fittedSolutionId"
         :target="target"
         :target-type="targetType"
-      ></file-uploader>
+      ></predictions-data-uploader>
       <b-button
         block
         variant="primary"
@@ -68,7 +67,7 @@
 
 <script lang="ts">
 import ResultFacets from "../components/ResultFacets";
-import FileUploader from "../components/FileUploader";
+import PredictionsDataUploader from "../components/PredictionsDataUploader";
 import ErrorThresholdSlider from "../components/ErrorThresholdSlider";
 import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -91,7 +90,6 @@ import Vue from "vue";
 import { Solution, SOLUTION_COMPLETED } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { createRouteEntry, varModesToString } from "../util/routes";
-import { PREDICTION_UPLOAD } from "../util/uploads";
 import { getPredictionsById } from "../util/predictions";
 
 export default Vue.extend({
@@ -99,7 +97,7 @@ export default Vue.extend({
 
   components: {
     ResultFacets,
-    FileUploader,
+    PredictionsDataUploader,
     ErrorThresholdSlider,
     vueSlider
   },
@@ -113,7 +111,6 @@ export default Vue.extend({
       file: null,
       uploadData: {},
       uploadStatus: "",
-      uploadType: PREDICTION_UPLOAD,
       saveName: "",
       saveNameState: null,
       saveDescription: "",

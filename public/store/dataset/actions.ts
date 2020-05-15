@@ -309,9 +309,7 @@ export const actions = {
     args: {
       datasetID: string;
       file: File;
-      type: string;
       targetType: string;
-      fittedSolutionId: string;
     }
   ): Promise<void> {
     if (!validateArgs(args, ["datasetID", "file", "type"])) {

@@ -182,6 +182,7 @@ func (q *Queue) Dequeue() (*QueueItem, bool) {
 	return item, true
 }
 
+// Done flags a task queue as being completed, which removes it from the in progress slot.
 func (q *Queue) Done() {
 	q.mu.Lock()
 	q.inProgress = nil

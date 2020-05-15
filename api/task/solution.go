@@ -67,3 +67,21 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 func SaveSolution(solutionID string) (string, error) {
 	return client.SaveSolution(context.Background(), solutionID)
 }
+
+// LoadFittedSolution loads a fitted solution via TA2TA3 API.
+func LoadFittedSolution(fittedSolutionURI string, solutionStorage api.SolutionStorage, metadataStorage api.MetadataStorage) (string, error) {
+	fittedSolutionID, err := client.LoadFittedSolution(context.Background(), fittedSolutionURI)
+	if err != nil {
+		return "", err
+	}
+	return fittedSolutionID, nil
+}
+
+// LoadSolution loads an unfitted solution via TA2TA3 API.
+func LoadSolution(solutionURI string) (string, error) {
+	fittedSolutionID, err := client.LoadFittedSolution(context.Background(), solutionURI)
+	if err != nil {
+		return "", err
+	}
+	return fittedSolutionID, nil
+}

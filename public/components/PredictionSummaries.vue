@@ -72,7 +72,6 @@ import Vue from "vue";
 import { Solution } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { createRouteEntry, overlayRouteEntry } from "../util/routes";
-import { PREDICTION_UPLOAD } from "../util/uploads";
 import { getPredictionResultSummary, getIDFromKey } from "../util/summaries";
 import { sum } from "d3";
 import { getPredictionsById } from "../util/predictions";

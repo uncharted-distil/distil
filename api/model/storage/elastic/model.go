@@ -124,9 +124,10 @@ func (s *Storage) FetchModels() ([]*api.ExportedModel, error) {
 	return s.parseModels(res)
 }
 
-// FetchModel returns a model in the provided index.
+// FetchModel returns a model in the provided index.  Model name is the named assigend
+// to the model by the user.
 func (s *Storage) FetchModel(modelName string) (*api.ExportedModel, error) {
-	query := elastic.NewMatchQuery("modelName", modelName)
+	query := elastic.NewMatchQuery("id", modelName)
 	// execute the ES query
 	res, err := s.client.Search().
 		Query(query).
@@ -141,7 +142,33 @@ func (s *Storage) FetchModel(modelName string) (*api.ExportedModel, error) {
 	if err != nil {
 		return nil, err
 	}
-	return models[0], nil
+	if len(models) > 0 {
+		return models[0], nil
+	}
+	return nil, nil
+}
+
+// FetchModelByID returns a model in the provided index using the model's fitted solution ID.
+func (s *Storage) FetchModelByID(fittedSolutionID string) (*api.ExportedModel, error) {
+	query := elastic.NewMatchQuery("_id", fittedSolutionID)
+	// execute the ES query
+	res, err := s.client.Search().
+		Query(query).
+		Index(s.modelIndex).
+		FetchSource(true).
+		Size(modelsListSize).
+		Do(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "elasticsearch model fetch query failed")
+	}
+	models, err := s.parseModels(res)
+	if err != nil {
+		return nil, err
+	}
+	if len(models) > 0 {
+		return models[0], nil
+	}
+	return nil, nil
 }
 
 // SearchModels returns the models that match the search criteria in the
