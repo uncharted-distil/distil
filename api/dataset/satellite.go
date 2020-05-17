@@ -121,7 +121,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	outputDatasetPath := rootDataPath
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 
-	imageFolders, err := getImageFolders(s.ExtractedFilePath)
+	imageFolders, err := getLabelFolders(s.ExtractedFilePath)
 	if err != nil {
 		return nil, err
 	}

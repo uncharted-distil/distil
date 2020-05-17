@@ -122,7 +122,7 @@ func uploadTableDataset(datasetName string, outputPath string, data []byte) (tas
 }
 
 func uploadImageDataset(datasetName string, imageType string, rawFilePath string, extractedFilePath string) (task.DatasetConstructor, error) {
-	ds, err := dataset.NewImageDatasetFromExpanded(datasetName, imageType, rawFilePath, extractedFilePath)
+	ds, err := dataset.NewMediaDatasetFromExpanded(datasetName, imageType, "jpeg", rawFilePath, extractedFilePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create raw dataset")
 	}

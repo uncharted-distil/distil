@@ -349,7 +349,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 			return
 		}
 	} else {
-		ds, err = dataset.NewImageDataset(request.DatasetID, "png", []byte(data))
+		ds, err = dataset.NewMediaDataset(request.DatasetID, "png", "jpeg", []byte(data))
 		if err != nil {
 			handleErr(conn, msg, errors.Wrap(err, "unable to create raw dataset"))
 			return

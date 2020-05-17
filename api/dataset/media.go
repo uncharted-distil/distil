@@ -36,116 +36,116 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
-const (
-	defaultImageType = "jpeg"
-)
-
 var (
-	imageTypeMap = map[string]string{
+	mediaTypeMap = map[string]string{
 		"png":  "png",
 		"jpeg": "jpeg",
 		"jpg":  "jpeg",
+		"txt":  "text",
 	}
-	imageTypeContentMap = map[string][]string{
+	mediaFormatMap = map[string]string{
+		"jpeg": "image/jpeg",
+		"jpg":  "image/jpeg",
+		"txt":  "text/plain",
+	}
+	mediaTypeContentMap = map[string][]string{
 		"jpeg": {"jpeg", "jpg"},
+		"txt":  {"txt"},
 	}
 )
 
-// Image captures the data in an image dataset.
-type Image struct {
+// Media captures the data in a media dataset.
+type Media struct {
 	Dataset           string `json:"dataset"`
-	ImageType         string `json:"imageType"`
+	MediaType         string `json:"mediaType"`
+	TargetMediaType   string `json:"targetMediaType"`
 	RawFilePath       string `json:"rawFilePath"`
 	ExtractedFilePath string `json:"extractedFilePath"`
 }
 
-// NewImageDataset creates a new image dataset from raw byte data, assuming json.
-func NewImageDataset(dataset string, imageType string, rawData []byte) (*Image, error) {
+// NewMediaDataset creates a new media dataset from raw byte data, assuming json.
+func NewMediaDataset(dataset string, mediaType string, targetMediaType string, rawData []byte) (*Media, error) {
 	// store and expand raw data
 	expandedInfo, err := ExpandZipDataset(dataset, rawData)
 	if err != nil {
 		return nil, err
 	}
-	return &Image{
+	return &Media{
 		Dataset:           dataset,
-		ImageType:         imageType,
+		MediaType:         mediaType,
+		TargetMediaType:   targetMediaType,
 		RawFilePath:       expandedInfo.RawFilePath,
 		ExtractedFilePath: expandedInfo.ExtractedFilePath,
 	}, nil
 }
 
-// NewImageDatasetFromExpanded creates a new image dataset from raw byte data, assuming json.
-func NewImageDatasetFromExpanded(dataset string, imageType string, zipFileName string, extractedArchivePath string) (*Image, error) {
-	return &Image{
+// NewMediaDatasetFromExpanded creates a new media dataset from raw byte data, assuming json.
+func NewMediaDatasetFromExpanded(dataset string, mediaType string, targetMediaType string, zipFileName string, extractedArchivePath string) (*Media, error) {
+	return &Media{
 		Dataset:           dataset,
-		ImageType:         imageType,
+		MediaType:         mediaType,
+		TargetMediaType:   targetMediaType,
 		RawFilePath:       zipFileName,
 		ExtractedFilePath: extractedArchivePath,
 	}, nil
 }
 
 // CreateDataset processes the raw image dataset and creates a raw D3M dataset.
-func (i *Image) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
 	if datasetName == "" {
-		datasetName = i.Dataset
+		datasetName = m.Dataset
 	}
 	outputDatasetPath := rootDataPath
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 
-	imageFolders, err := getImageFolders(i.ExtractedFilePath)
+	labelFolders, err := getLabelFolders(m.ExtractedFilePath)
 	if err != nil {
 		return nil, err
 	}
 
 	csvData := make([][]string, 0)
-	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "label"})
+	csvData = append(csvData, []string{model.D3MIndexFieldName, "media_file", "label"})
 	mediaFolder := getUniqueFolder(path.Join(outputDatasetPath, "media"))
 
 	// the folder name represents the label to apply for all containing images
 	totalCounts := make(map[string]int)
 	successCounts := make(map[string]int)
-	for _, imageFolder := range imageFolders {
-		log.Infof("processing image folder '%s'", imageFolder)
-		label := path.Base(imageFolder)
+	for _, folder := range labelFolders {
+		log.Infof("processing label folder '%s'", folder)
+		label := path.Base(folder)
 
-		imageFiles, err := ioutil.ReadDir(imageFolder)
+		mediaFiles, err := ioutil.ReadDir(folder)
 		if err != nil {
 			return nil, err
 		}
 
 		// copy images while building the csv data
 		log.Infof("building csv data")
-		for _, imageFile := range imageFiles {
-			imageFilename := imageFile.Name()
-			imageFilenameFull := path.Join(imageFolder, imageFilename)
+		for _, file := range mediaFiles {
+			mediaFilename := file.Name()
+			mediaFilenameFull := path.Join(folder, mediaFilename)
 			totalCounts[label] = totalCounts[label] + 1
 
-			imageLoaded, err := readImage(imageFilenameFull, i.ImageType)
+			mediaLoaded, err := loadMedia(mediaFilenameFull, m.MediaType)
 			if err != nil {
-				log.Warnf("unable to read image '%s': %v", imageFilename, err)
+				log.Warnf("unable to load media '%s': %v", mediaFilenameFull, err)
 				continue
 			}
 
-			targetImageFilename := imageFilename
-			extension := path.Ext(targetImageFilename)
-			if extension != fmt.Sprintf(".%s", defaultImageType) {
-				targetImageFilename = fmt.Sprintf("%s.%s", strings.TrimSuffix(targetImageFilename, extension), defaultImageType)
+			targetMediaFilename := mediaFilename
+			extension := path.Ext(targetMediaFilename)
+			if extension != fmt.Sprintf(".%s", m.TargetMediaType) {
+				targetMediaFilename = fmt.Sprintf("%s.%s", strings.TrimSuffix(targetMediaFilename, extension), m.TargetMediaType)
 			}
-			targetImageFilename = getUniqueName(path.Join(mediaFolder, targetImageFilename))
+			targetMediaFilename = getUniqueName(path.Join(mediaFolder, targetMediaFilename))
 
-			imageOutput, err := toJPEG(&imageLoaded)
+			err = util.WriteFileWithDirs(targetMediaFilename, mediaLoaded, os.ModePerm)
 			if err != nil {
-				log.Warnf("unable to convert image '%s': %v", imageFilename, err)
+				log.Warnf("unable to save processed image file '%s': %v", mediaFilenameFull, err)
 				continue
 			}
 
-			err = util.WriteFileWithDirs(targetImageFilename, imageOutput, os.ModePerm)
-			if err != nil {
-				log.Warnf("unable to save processed image file '%s': %v", imageFilename, err)
-				continue
-			}
-
-			csvData = append(csvData, []string{fmt.Sprintf("%d", len(csvData)-1), path.Base(targetImageFilename), label})
+			csvData = append(csvData, []string{fmt.Sprintf("%d", len(csvData)-1), path.Base(targetMediaFilename), label})
 			successCounts[label] = successCounts[label] + 1
 		}
 	}
@@ -171,17 +171,16 @@ func (i *Image) CreateDataset(rootDataPath string, datasetName string, config *e
 			[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
 	)
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(1, "image_file", "image_file", "image_file", model.StringType,
-			model.StringType, "Reference to image file", []string{"attribute"},
+		model.NewVariable(1, "media_file", "media_file", "media_file", model.StringType,
+			model.StringType, "Reference to media file", []string{"attribute"},
 			model.VarRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(2, "label", "label", "label", model.StringType,
-			model.StringType, "Label of the image", []string{"suggestedTarget"},
+			model.StringType, "Label of the media", []string{"suggestedTarget"},
 			model.VarRoleData, nil, dr.Variables, false))
 
 	// create the data resource for the referenced images
-	imageTypeLookup := imageTypeMap[defaultImageType]
-	refDR := model.NewDataResource("0", model.ResTypeImage, map[string][]string{fmt.Sprintf("image/%s", imageTypeLookup): imageTypeContentMap[imageTypeLookup]})
+	refDR := model.NewDataResource("0", mediaTypeMap[m.TargetMediaType], map[string][]string{mediaFormatMap[m.TargetMediaType]: mediaTypeContentMap[m.TargetMediaType]})
 	refDR.ResPath = path.Base(mediaFolder)
 	refDR.IsCollection = true
 
@@ -193,6 +192,32 @@ func (i *Image) CreateDataset(rootDataPath string, datasetName string, config *e
 		Data:     csvData,
 		Metadata: meta,
 	}, nil
+}
+
+func loadMedia(filename string, typ string) ([]byte, error) {
+	var data []byte
+	var err error
+	switch typ {
+	case "png", "jpg", "jpeg":
+		imageLoaded, err := readImage(filename, typ)
+		if err != nil {
+			return nil, err
+		}
+
+		data, err = toJPEG(&imageLoaded)
+		if err != nil {
+			return nil, err
+		}
+		break
+	case "txt":
+		data, err = ioutil.ReadFile(filename)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to read file")
+		}
+		break
+	}
+
+	return data, nil
 }
 
 func readImage(imagePath string, defaultType string) (image.Image, error) {
@@ -237,7 +262,7 @@ func toPNG(img *image.Image) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func getImageFolders(folderPath string) ([]string, error) {
+func getLabelFolders(folderPath string) ([]string, error) {
 	imageFolders := make([]string, 0)
 	extractedFiles, err := ioutil.ReadDir(folderPath)
 	if err != nil {
