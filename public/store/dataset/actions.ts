@@ -323,7 +323,7 @@ export const actions = {
         options = "type=table";
         break;
       case "application/zip":
-        options = "type=image&image=jpg";
+        options = "type=media&image=jpg";
         break;
       default:
         options = "type=table";
