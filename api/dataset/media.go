@@ -38,9 +38,9 @@ import (
 
 var (
 	mediaTypeMap = map[string]string{
-		"png":  "png",
-		"jpeg": "jpeg",
-		"jpg":  "jpeg",
+		"png":  "image",
+		"jpeg": "image",
+		"jpg":  "image",
 		"txt":  "text",
 	}
 	mediaFormatMap = map[string]string{
@@ -90,7 +90,7 @@ func NewMediaDatasetFromExpanded(dataset string, mediaType string, targetMediaTy
 	}, nil
 }
 
-// CreateDataset processes the raw image dataset and creates a raw D3M dataset.
+// CreateDataset processes the raw media dataset and creates a raw D3M dataset.
 func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
 	if datasetName == "" {
 		datasetName = m.Dataset
@@ -107,7 +107,7 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 	csvData = append(csvData, []string{model.D3MIndexFieldName, "media_file", "label"})
 	mediaFolder := getUniqueFolder(path.Join(outputDatasetPath, "media"))
 
-	// the folder name represents the label to apply for all containing images
+	// the folder name represents the label to apply for all containing media
 	totalCounts := make(map[string]int)
 	successCounts := make(map[string]int)
 	for _, folder := range labelFolders {
@@ -119,7 +119,7 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 			return nil, err
 		}
 
-		// copy images while building the csv data
+		// copy media while building the csv data
 		log.Infof("building csv data")
 		for _, file := range mediaFiles {
 			mediaFilename := file.Name()
@@ -141,7 +141,7 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 
 			err = util.WriteFileWithDirs(targetMediaFilename, mediaLoaded, os.ModePerm)
 			if err != nil {
-				log.Warnf("unable to save processed image file '%s': %v", mediaFilenameFull, err)
+				log.Warnf("unable to save processed media file '%s': %v", mediaFilenameFull, err)
 				continue
 			}
 
@@ -179,7 +179,7 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 			model.StringType, "Label of the media", []string{"suggestedTarget"},
 			model.VarRoleData, nil, dr.Variables, false))
 
-	// create the data resource for the referenced images
+	// create the data resource for the referenced media
 	refDR := model.NewDataResource("0", mediaTypeMap[m.TargetMediaType], map[string][]string{mediaFormatMap[m.TargetMediaType]: mediaTypeContentMap[m.TargetMediaType]})
 	refDR.ResPath = path.Base(mediaFolder)
 	refDR.IsCollection = true
@@ -263,16 +263,16 @@ func toPNG(img *image.Image) ([]byte, error) {
 }
 
 func getLabelFolders(folderPath string) ([]string, error) {
-	imageFolders := make([]string, 0)
+	labelFolders := make([]string, 0)
 	extractedFiles, err := ioutil.ReadDir(folderPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read extracted data")
 	}
 	for _, f := range extractedFiles {
 		if f.IsDir() {
-			imageFolders = append(imageFolders, path.Join(folderPath, f.Name()))
+			labelFolders = append(labelFolders, path.Join(folderPath, f.Name()))
 		}
 	}
 
-	return imageFolders, nil
+	return labelFolders, nil
 }

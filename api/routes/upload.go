@@ -77,6 +77,8 @@ func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWrit
 			} else {
 				handleError(w, errors.Errorf("unsupported archived file type %s", fileType))
 			}
+		} else if typ == "text" {
+			ds, err = uploadTextDataset(datasetName, outputPath, data)
 		} else if typ == "" {
 			handleError(w, errors.Errorf("upload type parameter not specified"))
 			return
@@ -114,6 +116,15 @@ func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWrit
 
 func uploadTableDataset(datasetName string, outputPath string, data []byte) (task.DatasetConstructor, error) {
 	ds, err := dataset.NewTableDataset(datasetName, data)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create raw dataset")
+	}
+
+	return ds, nil
+}
+
+func uploadTextDataset(datasetName string, outputPath string, data []byte) (task.DatasetConstructor, error) {
+	ds, err := dataset.NewMediaDataset(datasetName, "txt", "txt", data)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create raw dataset")
 	}
