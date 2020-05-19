@@ -87,5 +87,6 @@ export const getters = {
   getGroupingType: read(moduleGetters.getGroupingType),
   getRouteTask: read(moduleGetters.getRouteTask),
   getRouteFittedSolutionID: read(moduleGetters.getRouteFittedSolutionId),
-  getRoutePredictionsDataset: read(moduleGetters.getRoutePredictionsDataset)
+  getRoutePredictionsDataset: read(moduleGetters.getRoutePredictionsDataset),
+  isRemoteSensing: read(moduleGetters.isRemoteSensing)
 };
