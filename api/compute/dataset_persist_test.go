@@ -115,14 +115,14 @@ func TestParamChange(t *testing.T) {
 
 func createTestParams(stratify bool) *persistedDataParams {
 	return &persistedDataParams{
-		DatasetName:          "test_dataset",
-		SchemaFile:           compute.D3MDataSchema,
-		SourceDataFolder:     "./test/test_dataset",
-		TmpDataFolder:        "./test/tmp_data",
-		TaskType:             []string{"classification"},
-		TimeseriesFieldIndex: -1,
-		TargetFieldIndex:     2,
-		Stratify:             stratify,
+		DatasetName:        "test_dataset",
+		SchemaFile:         compute.D3MDataSchema,
+		SourceDataFolder:   "./test/test_dataset",
+		TmpDataFolder:      "./test/tmp_data",
+		TaskType:           []string{"classification"},
+		GroupingFieldIndex: -1,
+		TargetFieldIndex:   2,
+		Stratify:           stratify,
 	}
 }
 

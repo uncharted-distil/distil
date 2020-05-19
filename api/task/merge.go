@@ -85,7 +85,7 @@ func Merge(datasetSource metadata.DatasetSource, schemaFile string, index string
 		v := vars[field]
 		if v == nil {
 			// create new variables (ex: series_id)
-			v = model.NewVariable(i, field, field, field, model.StringType, model.StringType, "", []string{"attribute"}, model.VarRoleData, nil, outputMeta.DataResources[0].Variables, false)
+			v = model.NewVariable(i, field, field, field, model.StringType, model.StringType, "", []string{"attribute"}, model.VarDistilRoleData, nil, outputMeta.DataResources[0].Variables, false)
 		}
 		v.Index = i
 		outputMeta.DataResources[0].Variables = append(outputMeta.DataResources[0].Variables, v)
