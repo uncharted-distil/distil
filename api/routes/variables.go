@@ -19,6 +19,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil-compute/model"
@@ -60,8 +61,8 @@ func VariablesHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			if model.IsNumerical(v.Type) || model.IsDateTime(v.Type) {
 				extrema, err := data.FetchExtrema(storageName, v)
 				if err != nil {
-					handleError(w, err)
-					return
+					log.Warnf("defaulting extrema values due to error fetching extrema for '%s': %+v", v.Name, err)
+					extrema = getDefaultExtrema(v)
 				}
 				v.Min = extrema.Min
 				v.Max = extrema.Max
@@ -76,4 +77,21 @@ func VariablesHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			return
 		}
 	}
+}
+
+func getDefaultExtrema(variable *model.Variable) *api.Extrema {
+	extrema := &api.Extrema{}
+	switch variable.Type {
+	case model.LatitudeType:
+		extrema.Min = -90
+		extrema.Max = 90
+	case model.LongitudeType:
+		extrema.Min = -180
+		extrema.Max = 180
+	default:
+		extrema.Min = 0
+		extrema.Max = 0
+	}
+
+	return extrema
 }
