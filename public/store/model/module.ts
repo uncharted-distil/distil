@@ -19,13 +19,16 @@ const { commit, read, dispatch } = getStoreAccessors<ModelState, DistilState>(
 );
 
 export const getters = {
+  getFilteredModels: read(moduleGetters.getFilteredModels),
   getModels: read(moduleGetters.getModels)
 };
 
 export const actions = {
-  searchModels: dispatch(moduleActions.searchModels)
+  searchModels: dispatch(moduleActions.searchModels),
+  fetchModels: dispatch(moduleActions.fetchModels)
 };
 
 export const mutations = {
-  setModels: commit(moduleMutations.setModels)
+  setModels: commit(moduleMutations.setModels),
+  setFilteredModels: commit(moduleMutations.setFilteredModels)
 };

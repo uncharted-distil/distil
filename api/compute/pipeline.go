@@ -122,6 +122,7 @@ type Queue struct {
 	mu            sync.RWMutex
 	tasks         chan *QueueItem
 	alreadyQueued map[string]*QueueItem
+	inProgress    *QueueItem
 }
 
 // Enqueue adds one entry to the queue, providing the response channel as result.
@@ -138,6 +139,14 @@ func (q *Queue) Enqueue(key string, data interface{}) chan *QueueResponse {
 		log.Infof("'%s' already in queue so adding one more channel to output", key)
 		queuedItem.output = append(queuedItem.output, output)
 		queuedItem.data = data
+		q.mu.Unlock()
+
+		return output
+	}
+	if q.inProgress != nil && q.inProgress.key == key {
+		log.Infof("'%s' already in progress so adding one more channel to output", key)
+		q.inProgress.output = append(q.inProgress.output, output)
+		q.inProgress.data = data
 		q.mu.Unlock()
 
 		return output
@@ -167,9 +176,17 @@ func (q *Queue) Dequeue() (*QueueItem, bool) {
 
 	q.mu.Lock()
 	q.alreadyQueued[item.key] = nil
+	q.inProgress = item
 	q.mu.Unlock()
 
 	return item, true
+}
+
+// Done flags a task queue as being completed, which removes it from the in progress slot.
+func (q *Queue) Done() {
+	q.mu.Lock()
+	q.inProgress = nil
+	q.mu.Unlock()
 }
 
 // InitializeCache sets up an empty cache or if a source file provided, reads
@@ -253,6 +270,7 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 
 	datasetURI := result.Output.(string)
 	cache.cache.Set(hashedPipelineUniqueKey, datasetURI, gc.DefaultExpiration)
+	queue.Done()
 	err = cache.PersistCache()
 	if err != nil {
 		log.Warnf("error persisting cache: %v", err)

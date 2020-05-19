@@ -1058,7 +1058,7 @@ export default Vue.extend({
     },
 
     injectImagePreview(group: Group, $elem: JQuery) {
-      if (group.type === "image") {
+      if (group.type === "image" || group.type === "multiband_image") {
         const $facets = $elem.find(".facet-block");
         group.facets.forEach((facet: any, index) => {
           const $facet = $($facets.get(index));
@@ -1071,7 +1071,8 @@ export default Vue.extend({
               // NOTE: there seems to be an issue with the visibility plugin used
               // when injecting this way. Cancel the visibility flagging for facets.
               preventHiding: true,
-              imageUrl: facet.file || facet.value
+              imageUrl: facet.file || facet.value,
+              type: group.type
             }
           });
           preview.$mount($slot[0]);

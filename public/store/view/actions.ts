@@ -20,7 +20,10 @@ import {
   actions as predictionActions,
   mutations as predictionMutations
 } from "../predictions/module";
-import { actions as modelActions } from "../model/module";
+import {
+  actions as modelActions,
+  mutations as modelMutations
+} from "../model/module";
 import { getters as routeGetters } from "../route/module";
 import { TaskTypes, SummaryMode, Variable, Highlight } from "../dataset";
 import { getPredictionsById } from "../../util/predictions";
@@ -181,15 +184,21 @@ export const actions = {
     // clear any previous state
     requestMutations.clearSolutionRequests(store);
     requestMutations.clearSolutions(store);
+    modelMutations.setModels(store, []);
+    modelMutations.setFilteredModels(store, []);
 
     // fetch new state
+    await modelActions.fetchModels(store);
     await requestActions.fetchSolutions(store, {});
     requestActions.fetchSolutionRequests(store, {});
   },
 
-  fetchSearchData(context: ViewContext) {
+  async fetchSearchData(context: ViewContext) {
     const terms = context.getters.getRouteTerms;
     const datasetIDs = context.getters.getRouteJoinDatasets;
+
+    // fetch saved models - subsequent calls to
+    await modelActions.fetchModels(store);
 
     const promises = datasetIDs.map((id: string) => {
       return datasetActions.fetchDataset(store, {
@@ -372,7 +381,8 @@ export const actions = {
       fetchSolutions(context, {
         dataset: dataset,
         target: target
-      })
+      }),
+      datasetActions.searchDatasets(store, "")
     ]);
     return actions.updateResultsSolution(context);
   },

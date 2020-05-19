@@ -27,11 +27,12 @@
 
       <template
         v-for="imageField in imageFields"
-        v-slot:[cellSlot(imageField)]="data"
+        v-slot:[cellSlot(imageField.key)]="data"
       >
         <image-preview
-          :key="imageField"
-          :image-url="data.item[imageField].value"
+          :key="imageField.key"
+          :type="imageField.type"
+          :image-url="data.item[imageField.key].value"
         ></image-preview>
       </template>
 
@@ -94,12 +95,7 @@ import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Solution, Predictions } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
-import {
-  getVarType,
-  isTextType,
-  IMAGE_TYPE,
-  hasComputedVarPrefix
-} from "../util/types";
+import { getVarType, isTextType, hasComputedVarPrefix } from "../util/types";
 import {
   addRowSelection,
   removeRowSelection,
@@ -110,7 +106,8 @@ import {
   getTimeseriesGroupingsFromFields,
   formatSlot,
   formatFieldsAsArray,
-  explainCellColor
+  explainCellColor,
+  getImageFields
 } from "../util/data";
 import { getSolutionIndex } from "../util/solutions";
 import { getPredictionsIndex } from "../util/predictions";
@@ -187,13 +184,8 @@ export default Vue.extend({
       });
     },
 
-    imageFields(): string[] {
-      return _.map(this.fields, (field, key) => ({
-        key: key,
-        type: field.type
-      }))
-        .filter(field => field.type === IMAGE_TYPE)
-        .map(field => field.key);
+    imageFields(): { key: string; type: string }[] {
+      return getImageFields(this.fields);
     },
 
     timeseriesGroupings(): Grouping[] {

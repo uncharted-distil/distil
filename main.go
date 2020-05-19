@@ -23,6 +23,7 @@ import (
 	"syscall"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 	"github.com/zenazn/goji/graceful"
 	goji "goji.io/v3"
@@ -247,9 +248,10 @@ func main() {
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(solutionClient, config.D3MOutputDir, discoveryLogger))
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath, datasetDocPath))
 	registerRoute(mux, "/distil/task/:dataset/:target/:variables", routes.TaskHandler(pgDataStorageCtor, esMetadataStorageCtor))
-	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor))
-	registerRoute(mux, "/distil/:multiband-image/dataset/:image-id/:band-combination", routes.MultiBandImageHandler(esMetadataStorageCtor))
-	registerRoute(mux, "/distil/:multiband-combinations/:dataset", routes.MultiBandCombinationsHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/multiband-image/:dataset/:image-id/:band-combination", routes.MultiBandImageHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/multiband-combinations/:dataset", routes.MultiBandCombinationsHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/load/:solution-id/:fitted", routes.LoadHandler(esExportedModelStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor))
+	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, esExportedModelStorageCtor))
 
 	// POST
 	registerRoutePost(mux, "/distil/grouping/:dataset", routes.GroupingHandler(pgDataStorageCtor, esMetadataStorageCtor))
@@ -322,5 +324,7 @@ func updateExtremas(metaStorage model.MetadataStorage, dataStorage model.DataSto
 func createOutputFolders(config *env.Config) {
 	// create the augmented data folder
 	augmentPath := env.GetAugmentedPath()
-	os.MkdirAll(augmentPath, os.ModePerm)
+	if err := os.MkdirAll(augmentPath, os.ModePerm); err != nil {
+		log.Error(errors.Wrap(err, "failed to created output folder"))
+	}
 }

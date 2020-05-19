@@ -22,11 +22,12 @@
 
       <template
         v-for="imageField in imageFields"
-        v-slot:[cellSlot(imageField)]="data"
+        v-slot:[cellSlot(imageField.key)]="data"
       >
         <image-preview
-          :key="imageField"
-          :image-url="data.item[imageField].value"
+          :key="imageField.key"
+          :type="imageField.type"
+          :image-url="data.item[imageField.key].value"
         ></image-preview>
       </template>
 
@@ -75,11 +76,7 @@ import {
   RowSelection
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import {
-  IMAGE_TYPE,
-  TIMESERIES_TYPE,
-  hasComputedVarPrefix
-} from "../util/types";
+import { TIMESERIES_TYPE, hasComputedVarPrefix } from "../util/types";
 import {
   addRowSelection,
   removeRowSelection,
@@ -89,7 +86,8 @@ import {
 import {
   getTimeseriesGroupingsFromFields,
   formatSlot,
-  formatFieldsAsArray
+  formatFieldsAsArray,
+  getImageFields
 } from "../util/data";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
@@ -140,16 +138,8 @@ export default Vue.extend({
       return formatFieldsAsArray(this.fields);
     },
 
-    imageFields(): string[] {
-      const imageColumns = _.map(this.fields, (field, key) => {
-        return {
-          key: key,
-          type: field.type
-        };
-      })
-        .filter(field => field.type === IMAGE_TYPE)
-        .map(field => field.key);
-      return imageColumns;
+    imageFields(): { key: string; type: string }[] {
+      return getImageFields(this.fields);
     },
 
     timeseriesGroupings(): Grouping[] {

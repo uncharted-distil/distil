@@ -49,7 +49,7 @@ func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWrit
 		var ds task.DatasetConstructor
 		if typ == "table" {
 			ds, err = uploadTableDataset(datasetName, outputPath, data)
-		} else if typ == "image" {
+		} else if typ == "media" {
 			// Expand the data into temp storage
 			expandedInfo, err := dataset.ExpandZipDataset(datasetName, data)
 			if err != nil {
@@ -74,8 +74,15 @@ func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWrit
 					handleError(w, errors.Wrap(err, "unable to receive file from request"))
 					return
 				}
+			} else if fileType == "txt" {
+				ds, err = uploadTextDataset(datasetName, outputPath, data)
+				if err != nil {
+					handleError(w, errors.Wrap(err, "unable to receive file from request"))
+					return
+				}
 			} else {
 				handleError(w, errors.Errorf("unsupported archived file type %s", fileType))
+				return
 			}
 		} else if typ == "" {
 			handleError(w, errors.Errorf("upload type parameter not specified"))
@@ -121,8 +128,17 @@ func uploadTableDataset(datasetName string, outputPath string, data []byte) (tas
 	return ds, nil
 }
 
+func uploadTextDataset(datasetName string, outputPath string, data []byte) (task.DatasetConstructor, error) {
+	ds, err := dataset.NewMediaDataset(datasetName, "txt", "txt", data)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to create raw dataset")
+	}
+
+	return ds, nil
+}
+
 func uploadImageDataset(datasetName string, imageType string, rawFilePath string, extractedFilePath string) (task.DatasetConstructor, error) {
-	ds, err := dataset.NewImageDatasetFromExpanded(datasetName, imageType, rawFilePath, extractedFilePath)
+	ds, err := dataset.NewMediaDatasetFromExpanded(datasetName, imageType, "jpeg", rawFilePath, extractedFilePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create raw dataset")
 	}

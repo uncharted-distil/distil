@@ -10,63 +10,64 @@
     </p>
     <result-facets :showResiduals="showResiduals" />
 
-    <file-uploader
-      class="result-button-alignment"
-      @uploadstart="onUploadStart"
-      @uploadfinish="onUploadFinish"
-      :upload-type="uploadType"
-      :fitted-solution-id="fittedSolutionId"
-      :target="target"
-      :target-type="targetType"
-    ></file-uploader>
-    <b-button
-      block
-      variant="primary"
-      class="result-button-alignment"
-      v-b-modal.save-model-modal
-    >
-      Save Model
-    </b-button>
-    <b-modal
-      title="Save Model"
-      id="save-model-modal"
-      @ok="handleOk"
-      @cancel="resetModal"
-      @close="resetModal"
-    >
-      <form ref="saveModelForm" @submit.stop.prevent="saveModel">
-        <b-form-group
-          label="Model Name"
-          label-for="model-name-input"
-          invalid-feedback="Model Name is Required"
-          :state="saveNameState"
-        >
-          <b-form-input
-            id="model-name-input"
-            v-model="saveName"
+    <template v-if="isActiveSolutionCompleted">
+      <predictions-data-uploader
+        class="result-button-alignment"
+        @uploadstart="onUploadStart"
+        @uploadfinish="onUploadFinish"
+        :fitted-solution-id="fittedSolutionId"
+        :target="target"
+        :target-type="targetType"
+      ></predictions-data-uploader>
+      <b-button
+        block
+        variant="primary"
+        class="result-button-alignment"
+        v-b-modal.save-model-modal
+      >
+        Save Model
+      </b-button>
+      <b-modal
+        title="Save Model"
+        id="save-model-modal"
+        @ok="handleOk"
+        @cancel="resetModal"
+        @close="resetModal"
+      >
+        <form ref="saveModelForm" @submit.stop.prevent="saveModel">
+          <b-form-group
+            label="Model Name"
+            label-for="model-name-input"
+            invalid-feedback="Model Name is Required"
             :state="saveNameState"
-            required
-          ></b-form-input>
-        </b-form-group>
-        <b-form-group
-          label="Model Description"
-          label-for="model-desc-input"
-          :state="saveDescriptionState"
-        >
-          <b-form-input
-            id="model-desc-input"
-            v-model="saveDescription"
+          >
+            <b-form-input
+              id="model-name-input"
+              v-model="saveName"
+              :state="saveNameState"
+              required
+            ></b-form-input>
+          </b-form-group>
+          <b-form-group
+            label="Model Description"
+            label-for="model-desc-input"
             :state="saveDescriptionState"
-          ></b-form-input>
-        </b-form-group>
-      </form>
-    </b-modal>
+          >
+            <b-form-input
+              id="model-desc-input"
+              v-model="saveDescription"
+              :state="saveDescriptionState"
+            ></b-form-input>
+          </b-form-group>
+        </form>
+      </b-modal>
+    </template>
   </div>
 </template>
 
 <script lang="ts">
 import ResultFacets from "../components/ResultFacets";
-import FileUploader from "../components/FileUploader";
+import PredictionsDataUploader from "../components/PredictionsDataUploader";
 import ErrorThresholdSlider from "../components/ErrorThresholdSlider";
 import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -86,10 +87,9 @@ import {
 import { Variable, TaskTypes } from "../store/dataset/index";
 import vueSlider from "vue-slider-component";
 import Vue from "vue";
-import { Solution } from "../store/requests/index";
+import { Solution, SOLUTION_COMPLETED } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { createRouteEntry, varModesToString } from "../util/routes";
-import { PREDICTION_UPLOAD } from "../util/uploads";
 import { getPredictionsById } from "../util/predictions";
 
 export default Vue.extend({
@@ -97,7 +97,7 @@ export default Vue.extend({
 
   components: {
     ResultFacets,
-    FileUploader,
+    PredictionsDataUploader,
     ErrorThresholdSlider,
     vueSlider
   },
@@ -111,7 +111,6 @@ export default Vue.extend({
       file: null,
       uploadData: {},
       uploadStatus: "",
-      uploadType: PREDICTION_UPLOAD,
       saveName: "",
       saveNameState: null,
       saveDescription: "",
@@ -166,7 +165,16 @@ export default Vue.extend({
 
     instanceName(): string {
       return "groundTruth";
-    }
+    },
+
+    /**
+     * Check that the active solution is completed.
+     * This is used to display possible actions on the selected model.
+     * @returns {Boolean}
+     */
+    isActiveSolutionCompleted(): boolean {
+      return !!(this.activeSolution && this.activeSolution.progress === SOLUTION_COMPLETED);
+    },
   },
 
   methods: {

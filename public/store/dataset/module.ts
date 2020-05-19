@@ -101,6 +101,7 @@ export const actions = {
   // files
   fetchFiles: dispatch(moduleActions.fetchFiles),
   fetchImage: dispatch(moduleActions.fetchImage),
+  fetchMultiBandImage: dispatch(moduleActions.fetchMultiBandImage),
   fetchTimeseries: dispatch(moduleActions.fetchTimeseries),
   fetchGraph: dispatch(moduleActions.fetchGraph),
   fetchFile: dispatch(moduleActions.fetchFile),
@@ -113,7 +114,9 @@ export const actions = {
   fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),
   fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
   // task info
-  fetchTask: dispatch(moduleActions.fetchTask)
+  fetchTask: dispatch(moduleActions.fetchTask),
+  // multiband image band combinations
+  fetchMultiBandCombinations: dispatch(moduleActions.fetchMultiBandCombinations)
 };
 
 // Typed mutations
@@ -147,5 +150,6 @@ export const mutations = {
     moduleMutations.clearJoinDatasetsTableData
   ),
   setIncludedTableData: commit(moduleMutations.setIncludedTableData),
-  setExcludedTableData: commit(moduleMutations.setExcludedTableData)
+  setExcludedTableData: commit(moduleMutations.setExcludedTableData),
+  updateBands: commit(moduleMutations.updateBands)
 };

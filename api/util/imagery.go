@@ -52,7 +52,7 @@ const (
 	FalseColorUrban = "false_color_urban"
 
 	// Agriculture identifies a band mapping that displays an image in false color for visualization agricultural activity.
-	Agriculture = "argriculture"
+	Agriculture = "agriculture"
 
 	// AtmosphericPenetration identifies a band mapping that displays an image in false for visualizing atmospheric penetration.
 	AtmosphericPenetration = "atmospheric_penetration"

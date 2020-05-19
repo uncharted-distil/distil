@@ -121,7 +121,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	outputDatasetPath := rootDataPath
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 
-	imageFolders, err := getImageFolders(s.ExtractedFilePath)
+	imageFolders, err := getLabelFolders(s.ExtractedFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -329,6 +329,8 @@ func extractCoordinates(filename string) (*BoundingBox, error) {
 	if !success {
 		return nil, errors.New("unable to transform points")
 	}
+
+	defer transform.Destroy()
 
 	return &BoundingBox{
 		LowerLeft: &Point{

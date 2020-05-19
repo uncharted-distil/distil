@@ -33,7 +33,9 @@ import {
   formatValue,
   isIntegerType,
   isTimeType,
-  hasComputedVarPrefix
+  hasComputedVarPrefix,
+  IMAGE_TYPE,
+  MULTIBAND_IMAGE_TYPE
 } from "../util/types";
 
 // Postfixes for special variable names
@@ -578,6 +580,22 @@ export function isDatamartProvenance(provenance: string): boolean {
   );
 }
 
+// Validates argument object based on input array of expected object fields
+// if there's invalid members, it logs warning with the invalid members and
+// returns false. Returns true otherwise.
+export function validateArgs(args: object, expectedArgs: string[]) {
+  const missingArgs = expectedArgs.reduce((missing, arg) => {
+    if (args[arg] === undefined || args[arg] === null) missing.push(arg);
+    return missing;
+  }, []);
+  if (missingArgs.length === 0) {
+    return true;
+  } else {
+    console.warn(`${missingArgs} argument(s) are missing`);
+    return false;
+  }
+}
+
 // Computes the cell colour based on the
 export function explainCellColor(
   weight: number,
@@ -637,4 +655,18 @@ function d3mRowWeightExtrema(
     }, 0);
     return extremas;
   }, {});
+}
+
+export function getImageFields(
+  fields: Dictionary<TableColumn>
+): { key: string; type: string }[] {
+  const imageFields = _.map(fields, (field, key) => {
+    return {
+      key: key,
+      type: field.type
+    };
+  }).filter(
+    field => field.type === IMAGE_TYPE || field.type === MULTIBAND_IMAGE_TYPE
+  );
+  return imageFields;
 }

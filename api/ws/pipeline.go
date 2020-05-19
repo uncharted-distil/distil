@@ -53,11 +53,12 @@ func SetProblemFile(file string) {
 
 // SolutionHandler represents a solution websocket handler.
 func SolutionHandler(client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
-	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor,
+	modelCtor apiModel.ExportedModelStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// create conn
-		conn, err := NewConnection(w, r, handleSolutionMessage(client, metadataCtor, dataCtor, solutionCtor))
+		conn, err := NewConnection(w, r, handleSolutionMessage(client, metadataCtor, dataCtor, solutionCtor, modelCtor))
 		if err != nil {
 			log.Warn(err)
 			return
@@ -73,7 +74,8 @@ func SolutionHandler(client *compute.Client, metadataCtor apiModel.MetadataStora
 }
 
 func handleSolutionMessage(client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
-	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor) func(conn *Connection, bytes []byte) {
+	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor,
+	modelCtor apiModel.ExportedModelStorageCtor) func(conn *Connection, bytes []byte) {
 	return func(conn *Connection, bytes []byte) {
 		// parse the message
 		msg, err := NewMessage(bytes)
@@ -83,12 +85,13 @@ func handleSolutionMessage(client *compute.Client, metadataCtor apiModel.Metadat
 			return
 		}
 		// handle message
-		go handleMessage(conn, client, metadataCtor, dataCtor, solutionCtor, msg)
+		go handleMessage(conn, client, metadataCtor, dataCtor, solutionCtor, modelCtor, msg)
 	}
 }
 
 func handleMessage(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
-	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor, msg *Message) {
+	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor, modelCtor apiModel.ExportedModelStorageCtor,
+	msg *Message) {
 	switch msg.Type {
 	case createSolutions:
 		handleCreateSolutions(conn, client, metadataCtor, dataCtor, solutionCtor, msg)
@@ -97,7 +100,7 @@ func handleMessage(conn *Connection, client *compute.Client, metadataCtor apiMod
 		handleStopSolutions(conn, client, msg)
 		return
 	case predict:
-		handlePredict(conn, client, metadataCtor, dataCtor, solutionCtor, msg)
+		handlePredict(conn, client, metadataCtor, dataCtor, solutionCtor, modelCtor, msg)
 	default:
 		// unrecognized type
 		handleErr(conn, msg, errors.New("unrecognized message type"))
@@ -231,7 +234,8 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 }
 
 func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
-	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor, msg *Message) {
+	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor,
+	modelCtor apiModel.ExportedModelStorageCtor, msg *Message) {
 
 	// initialize the storage
 	dataStorage, err := dataCtor()
@@ -249,6 +253,13 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 
 	// initialize solution storage
 	solutionStorage, err := solutionCtor()
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to initialize solution storage"))
+		return
+	}
+
+	// initialize save model storage
+	modelStorage, err := modelCtor()
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to initialize solution storage"))
 		return
@@ -338,7 +349,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 			return
 		}
 	} else {
-		ds, err = dataset.NewImageDataset(request.DatasetID, "png", []byte(data))
+		ds, err = dataset.NewMediaDataset(request.DatasetID, "png", "jpeg", []byte(data))
 		if err != nil {
 			handleErr(conn, msg, errors.Wrap(err, "unable to create raw dataset"))
 			return
@@ -357,6 +368,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		MetaStorage:        metaStorage,
 		DataStorage:        dataStorage,
 		SolutionStorage:    solutionStorage,
+		ModelStorage:       modelStorage,
 		DatasetIngested:    false,
 		DatasetImported:    false,
 		Config:             &config,

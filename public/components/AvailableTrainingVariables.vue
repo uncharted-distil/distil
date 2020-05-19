@@ -9,6 +9,7 @@
     </p>
     <variable-facets
       ref="facets"
+      enable-highlighting
       enable-search
       enable-type-change
       :instance-name="instanceName"
