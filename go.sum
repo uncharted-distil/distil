@@ -104,6 +104,12 @@ github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJy
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/uncharted-distil/distil-compute v0.0.0-20200515142542-b138195051e6 h1:0sIE74Jq9OCGshB0jNeUSjgarxdo+w8oMtEQ8ySRgFo=
 github.com/uncharted-distil/distil-compute v0.0.0-20200515142542-b138195051e6/go.mod h1:y+IwSCHwnfJh7lXYrjyYayYeUcuE4oHGFf7wozYmPhM=
+github.com/uncharted-distil/distil-compute v0.0.0-20200519191412-3f8cc36f230b h1:ewKJWcPS8+QBo0xHcxjL/SkhuG1bG/KECSCHl08IrLc=
+github.com/uncharted-distil/distil-compute v0.0.0-20200519191412-3f8cc36f230b/go.mod h1:y+IwSCHwnfJh7lXYrjyYayYeUcuE4oHGFf7wozYmPhM=
+github.com/uncharted-distil/distil-compute v0.0.0-20200520115733-1b02c4269168 h1:iHm0KHhNjg1846cLA/sJ5IOEd5OYhTftfuM4xST6yp0=
+github.com/uncharted-distil/distil-compute v0.0.0-20200520115733-1b02c4269168/go.mod h1:y+IwSCHwnfJh7lXYrjyYayYeUcuE4oHGFf7wozYmPhM=
+github.com/uncharted-distil/distil-compute v0.0.0-20200520171407-76d5ae3c18f0 h1:11kU9jgt+qJV2YOZYLU0VwzA0s1xJ0H8KSeqGGuXNNs=
+github.com/uncharted-distil/distil-compute v0.0.0-20200520171407-76d5ae3c18f0/go.mod h1:y+IwSCHwnfJh7lXYrjyYayYeUcuE4oHGFf7wozYmPhM=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a h1:BPJrlnjdhxMBrJWiU4/Gl3PVdCUlY9JspWFTJ9UVO0Y=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a/go.mod h1:L8AZAnu0MT3E5I3WPNTo5BZaT5b3q21TrX1U9R9+/9E=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9 h1:P1B7OAnmyIdSN9UGhDvIU3s8K3/2rQcvntYV5WPi+qY=

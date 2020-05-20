@@ -822,15 +822,16 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// save timestamp variable index for data splitting
 	targetVariable := s.TargetFeature
 	if model.IsTimeSeries(targetVariable.Type) {
+		tsg := targetVariable.Grouping.(*model.TimeseriesGrouping)
 		// find the index of the timestamp variable of the timeseries
-		timestampVariable, err := findVariable(targetVariable.Grouping.Properties.XCol, dataVariables)
+		timestampVariable, err := findVariable(tsg.XCol, dataVariables)
 		if err != nil {
 			return err
 		}
 		groupingVariableIndex = timestampVariable.Index
 
 		// update the target variable to be the Y col of the timeseries group
-		targetVariable, err = findVariable(targetVariable.Grouping.Properties.YCol, dataVariables)
+		targetVariable, err = findVariable(tsg.YCol, dataVariables)
 		if err != nil {
 			return err
 		}

@@ -371,7 +371,7 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 }
 
 // AddGroupedVariable adds a grouping to the metadata.
-func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.Grouping) error {
+func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.BaseGrouping) error {
 
 	// Create a new grouping variable
 	err := s.AddVariable(dataset, varName, varDisplayName, varType, varRole)
@@ -436,7 +436,7 @@ func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayN
 }
 
 // RemoveGroupedVariable removes a grouping to the metadata.
-func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.Grouping) error {
+func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.BaseGrouping) error {
 
 	query := elastic.NewMatchQuery("_id", datasetName)
 	// execute the ES query
@@ -469,7 +469,7 @@ func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.Group
 	found := false
 	for _, variable := range variables {
 		name, ok := json.String(variable, "colName")
-		if ok && name == grouping.IDCol {
+		if ok && name == grouping.GetIDCol() {
 			delete(variable, model.VarGroupingField)
 			variable["colType"] = variable["colOriginalType"]
 			found = true

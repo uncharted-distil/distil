@@ -253,7 +253,8 @@ func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dat
 	}
 
 	// find the timsetamp column and id columns
-	timestampCol := groupingVar.Grouping.Properties.XCol
+	tsg := groupingVar.Grouping.(*model.TimeseriesGrouping)
+	timestampCol := tsg.XCol
 	var timestampVar *model.Variable
 	for _, v := range datasetES.Variables {
 		if v.Name == timestampCol {
@@ -264,7 +265,7 @@ func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dat
 
 	// get the distinct values for the id columns
 	idValues := make(map[string][]string)
-	for _, vID := range groupingVar.Grouping.SubIDs {
+	for _, vID := range tsg.SubIDs {
 		vals, err := dataStorage.FetchRawDistinctValues(datasetES.ID, datasetES.StorageName, vID)
 		if err != nil {
 			return false, nil, errors.Wrapf(err, "unable to fetch distinct values for '%s' from data storage", vID)

@@ -82,12 +82,12 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 }
 
 // AddGroupedVariable adds a variable grouping.
-func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.Grouping) error {
+func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.BaseGrouping) error {
 	return errors.Errorf("Not supported")
 }
 
 // RemoveGroupedVariable removes a variable grouping.
-func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.Grouping) error {
+func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.BaseGrouping) error {
 	return errors.Errorf("Not supported")
 }
 

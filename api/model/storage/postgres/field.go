@@ -99,12 +99,12 @@ func updateClusterHighlight(metadataStorage api.MetadataStorage, dataset string,
 		}
 
 		if variable.Grouping != nil {
-			if variable.Grouping.Properties.ClusterCol != "" &&
-				api.HasClusterData(dataset, variable.Grouping.Properties.ClusterCol, metadataStorage) {
-				filterParams.Highlight.Key = variable.Grouping.Properties.ClusterCol
+			clusterCol, ok := api.GetClusterColFromGrouping(variable.Grouping)
+			if ok && api.HasClusterData(dataset, clusterCol, metadataStorage) {
+				filterParams.Highlight.Key = clusterCol
 				return nil
 			}
-			filterParams.Highlight.Key = variable.Grouping.IDCol
+			filterParams.Highlight.Key = variable.Grouping.GetIDCol()
 		}
 	}
 	return nil
