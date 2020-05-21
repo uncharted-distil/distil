@@ -9,7 +9,7 @@ export const getters = {
   getModels(state: ModelState): Model[] {
     return values(state.models);
   },
-  
+
   getCountOfModels(state: ModelState): number {
     const count = values(state.models).length;
     return isInteger(count) ? count : 0;

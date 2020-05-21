@@ -21,7 +21,7 @@ export const getters = {
   getFilteredDatasets(state: DatasetState): Dataset[] {
     return state.filteredDatasets;
   },
-  
+
   getCountOfFilteredDatasets(state: DatasetState): number {
     const count = values(state.filteredDatasets).length;
     return isInteger(count) ? count : 0;
