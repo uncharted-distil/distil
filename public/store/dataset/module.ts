@@ -22,6 +22,7 @@ export const getters = {
   // dataset
   getDatasets: read(moduleGetters.getDatasets),
   getFilteredDatasets: read(moduleGetters.getFilteredDatasets),
+  getCountOfFilteredDatasets: read(moduleGetters.getCountOfFilteredDatasets),
   getPendingRequests: read(moduleGetters.getPendingRequests),
 
   // variables

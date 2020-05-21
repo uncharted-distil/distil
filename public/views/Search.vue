@@ -27,24 +27,29 @@
         </div>
       </div>
     </div>
-    <div class="row flex-10 justify-content-center pb-3">
-      <div class="search-container col-12 col-md-10 d-flex">
-        <dataset-search-results
-          class="search-search-results"
-          :is-pending="isPending"
-        >
-        </dataset-search-results>
-      </div>
-    </div>
-    <div class="row flex-10 justify-content-center pb-3">
-      <div class="search-container col-12 col-md-10 d-flex">
-        <model-search-results
-          class="search-search-results"
-          :is-pending="isPending"
-        >
-        </model-search-results>
-      </div>
-    </div>
+    
+    <section class="row flex-10">
+      <b-tabs 
+        align="center" 
+        class="search-content"
+        content-class="search-content-tab">
+        
+        <b-tab :title="'Models (' + nbSearchModels + ')'" active>
+          <model-search-results 
+            class="search-search-results" 
+            :is-pending="isPending">
+          </model-search-results>
+        </b-tab>
+        
+        <b-tab :title="'Datasets (' + nbSearchDatasets + ')'">
+          <dataset-search-results 
+            class="search-search-results" 
+            :is-pending="isPending">
+          </dataset-search-results>
+        </b-tab>
+        
+      </b-tabs>
+    </section>
   </div>
 </template>
 
@@ -92,7 +97,10 @@ export default Vue.extend({
   computed: {
     terms(): string {
       return routeGetters.getRouteTerms(this.$store);
-    }
+    },
+    
+    nbSearchDatasets(): number { return datasetGetters.getCountOfFilteredDatasets(this.$store); },
+    nbSearchModels(): number { return modelGetters.getCountOfModels(this.$store); },
   },
 
   beforeMount() {
@@ -137,22 +145,45 @@ export default Vue.extend({
 .row .file-uploader-status {
   padding: 0;
 }
+
 .search-search-bar {
   width: 100%;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
 }
+
 .search-container {
   height: 100%;
 }
+
 .close-join-button {
   position: absolute;
   top: 4px;
   right: 4px;
   cursor: pointer;
 }
+
 .join-datasets-button,
 .join-datasets-button i {
   line-height: 32px !important;
   text-align: center;
+}
+
+.search-content {
+  height: 100%;
+  width: 100%;
+}
+
+.search-content .nav-link {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.search-content-tab {
+  align-self: center;
+  height: calc(100% - 30px); /* 30px ≈ height of the tab nav. */
+  overflow: scroll;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 83.33%; /* Bootstrap ≈ .col-10 */
 }
 </style>

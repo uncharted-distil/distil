@@ -20,7 +20,8 @@ const { commit, read, dispatch } = getStoreAccessors<ModelState, DistilState>(
 
 export const getters = {
   getFilteredModels: read(moduleGetters.getFilteredModels),
-  getModels: read(moduleGetters.getModels)
+  getModels: read(moduleGetters.getModels),
+  getCountOfModels: read(moduleGetters.getCountOfModels)
 };
 
 export const actions = {
