@@ -73,7 +73,7 @@ func (s *Storage) getResultTargetVariable(dataset string, targetName string) (*m
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to get target variable information")
 	}
-	if variable.Grouping != nil && model.IsTimeSeries(variable.Type) {
+	if variable.IsGrouping() && model.IsTimeSeries(variable.Type) {
 		// extract the time series value column
 		tsg := variable.Grouping.(*model.TimeseriesGrouping)
 		return s.metadata.FetchVariable(dataset, tsg.YCol)
@@ -816,7 +816,7 @@ func mapFields(fields []*model.Variable) map[string]*model.Variable {
 
 func isTimeSeriesValue(variables []*model.Variable, targetVariable *model.Variable) bool {
 	for _, v := range variables {
-		if v.Grouping != nil && model.IsTimeSeries(v.Grouping.GetType()) {
+		if v.IsGrouping() && model.IsTimeSeries(v.Grouping.GetType()) {
 			tsg := v.Grouping.(*model.TimeseriesGrouping)
 			if tsg.YCol == targetVariable.Name {
 				return true

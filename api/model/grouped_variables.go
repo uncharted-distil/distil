@@ -19,7 +19,7 @@ func FetchSummaryVariables(dataset string, metaStore MetadataStorage) ([]*model.
 	// get the hidden list from any grouped variables
 	hidden := []string{}
 	for _, variable := range variables {
-		if variable.Grouping != nil && variable.Grouping.GetHidden() != nil {
+		if variable.IsGrouping() && variable.Grouping.GetHidden() != nil {
 			hidden = append(hidden, variable.Grouping.GetHidden()...)
 		}
 	}
@@ -46,7 +46,7 @@ func FetchDatasetVariables(dataset string, metaStore MetadataStorage) ([]*model.
 	// drop grouped variables - only their components are stored in DB
 	retainedVariables := []*model.Variable{}
 	for _, variable := range variables {
-		if variable.Grouping == nil {
+		if !variable.IsGrouping() {
 			retainedVariables = append(retainedVariables, variable)
 		}
 	}
@@ -72,8 +72,7 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, metaStore Me
 	// If it does, update the filter key to use the highlight column.
 	if updatedFilterParams.Highlight != nil {
 		for _, variable := range variables {
-			if variable.Name == updatedFilterParams.Highlight.Key &&
-				variable.Grouping != nil {
+			if variable.Name == updatedFilterParams.Highlight.Key && variable.IsGrouping() {
 				cluserCol, ok := GetClusterColFromGrouping(variable.Grouping)
 				if ok && HasClusterData(dataset, cluserCol, metaStore) {
 					updatedFilterParams.Highlight.Key = cluserCol
@@ -93,7 +92,7 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, metaStore Me
 	for _, filterVar := range filterParams.Variables {
 		if varMap[filterVar] != nil {
 			variable := varMap[filterVar]
-			if variable.Grouping != nil {
+			if variable.IsGrouping() {
 				componentVars := []string{}
 
 				// Include X and Y col when not dealing with time series - time series data is fetched subsequently

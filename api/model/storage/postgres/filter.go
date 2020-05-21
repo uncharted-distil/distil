@@ -543,7 +543,7 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 	// match order by for distinct
 	var groupings []string
 	for _, v := range variables {
-		if v.Grouping != nil && v.Grouping.GetIDCol() != "" {
+		if v.IsGrouping() && v.Grouping.GetIDCol() != "" {
 			groupings = append(groupings, v.Grouping.GetIDCol())
 		}
 	}
@@ -635,7 +635,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	// match order by for distinct
 	var groupings []string
 	for _, v := range variables {
-		if v.Grouping != nil && v.Grouping.GetIDCol() != "" {
+		if v.IsGrouping() && v.Grouping.GetIDCol() != "" {
 			groupings = append(groupings, "\""+v.Grouping.GetIDCol()+"\"")
 		}
 	}

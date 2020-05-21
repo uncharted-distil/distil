@@ -110,6 +110,10 @@ github.com/uncharted-distil/distil-compute v0.0.0-20200520115733-1b02c4269168 h1
 github.com/uncharted-distil/distil-compute v0.0.0-20200520115733-1b02c4269168/go.mod h1:y+IwSCHwnfJh7lXYrjyYayYeUcuE4oHGFf7wozYmPhM=
 github.com/uncharted-distil/distil-compute v0.0.0-20200520171407-76d5ae3c18f0 h1:11kU9jgt+qJV2YOZYLU0VwzA0s1xJ0H8KSeqGGuXNNs=
 github.com/uncharted-distil/distil-compute v0.0.0-20200520171407-76d5ae3c18f0/go.mod h1:y+IwSCHwnfJh7lXYrjyYayYeUcuE4oHGFf7wozYmPhM=
+github.com/uncharted-distil/distil-compute v0.0.0-20200521015357-9405e5270092 h1:InqbpLaXSoWfvsNoffq0crJB6T5SdAsRn5+5uQKffns=
+github.com/uncharted-distil/distil-compute v0.0.0-20200521015357-9405e5270092/go.mod h1:y+IwSCHwnfJh7lXYrjyYayYeUcuE4oHGFf7wozYmPhM=
+github.com/uncharted-distil/distil-compute v0.0.0-20200521015732-f811f3f678f9 h1:niBl0RB1fScJId1QopUhUL0DQz7nABP0NtGu65aDol4=
+github.com/uncharted-distil/distil-compute v0.0.0-20200521015732-f811f3f678f9/go.mod h1:y+IwSCHwnfJh7lXYrjyYayYeUcuE4oHGFf7wozYmPhM=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a h1:BPJrlnjdhxMBrJWiU4/Gl3PVdCUlY9JspWFTJ9UVO0Y=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a/go.mod h1:L8AZAnu0MT3E5I3WPNTo5BZaT5b3q21TrX1U9R9+/9E=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9 h1:P1B7OAnmyIdSN9UGhDvIU3s8K3/2rQcvntYV5WPi+qY=

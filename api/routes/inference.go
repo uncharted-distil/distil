@@ -246,7 +246,7 @@ func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dat
 	// need to create timeseries based on start time and step count
 	var groupingVar *model.Variable
 	for _, v := range datasetES.Variables {
-		if v.Grouping != nil {
+		if v.IsGrouping() {
 			groupingVar = v
 			break
 		}

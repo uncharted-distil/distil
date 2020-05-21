@@ -132,10 +132,10 @@ func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*a
 
 func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variable *model.Variable) (*api.Extrema, error) {
 	varName := variable.Name
-	if variable.Grouping != nil && model.IsTimeSeries(variable.Grouping.GetType()) {
+	if variable.IsGrouping() && model.IsTimeSeries(variable.Grouping.GetType()) {
 		tsg := variable.Grouping.(*model.TimeseriesGrouping)
 		varName = tsg.YCol
-	} else if variable.Grouping != nil && model.IsGeoCoordinate(variable.Grouping.GetType()) {
+	} else if variable.IsGrouping() && model.IsGeoCoordinate(variable.Grouping.GetType()) {
 		gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
 		varName = gcg.YCol
 	}
@@ -180,7 +180,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 	// get the histogram by using the variable type.
 	var field Field
 
-	if variable.Grouping != nil {
+	if variable.IsGrouping() {
 
 		if model.IsTimeSeries(variable.Type) {
 			tsg := variable.Grouping.(*model.TimeseriesGrouping)
@@ -215,7 +215,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 				return nil, err
 			}
 			for _, v := range vars {
-				if v.Grouping != nil {
+				if v.IsGrouping() {
 					countCol = v.Grouping.GetIDCol()
 				}
 			}

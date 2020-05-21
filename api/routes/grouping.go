@@ -152,7 +152,7 @@ func RemoveGroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataSt
 			return
 		}
 
-		if variable.Grouping == nil {
+		if !variable.IsGrouping() {
 			handleError(w, errors.Errorf("variable %s is not grouped", variableName))
 			return
 		}

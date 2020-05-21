@@ -161,7 +161,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	// Handle grouped variables.
 	target := params.Target
-	if target.Grouping != nil && model.IsTimeSeries(target.Grouping.GetType()) {
+	if target.IsGrouping() && model.IsTimeSeries(target.Grouping.GetType()) {
 		tsg := target.Grouping.(*model.TimeseriesGrouping)
 		log.Infof("target is a timeseries so need to extract the prediction target from the grouping")
 		target, err = params.MetaStorage.FetchVariable(meta.ID, tsg.YCol)
@@ -475,7 +475,7 @@ func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.Me
 func getComponentVariables(variable *model.Variable) []string {
 	componentVars := []string{}
 	// only implemented for geo coordinate groups
-	if variable.Grouping != nil && model.IsGeoCoordinate(variable.Grouping.GetType()) {
+	if variable.IsGrouping() && model.IsGeoCoordinate(variable.Grouping.GetType()) {
 		gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
 		// Include X and Y col
 		componentVars = append(componentVars, gcg.XCol, gcg.YCol)
