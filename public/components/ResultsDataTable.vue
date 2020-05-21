@@ -49,8 +49,8 @@
         <sparkline-preview
           :key="data.item[timeseriesGrouping.idCol].value"
           :truth-dataset="dataset"
-          :x-col="timeseriesGrouping.properties.xCol"
-          :y-col="timeseriesGrouping.properties.yCol"
+          :x-col="timeseriesGrouping.xCol"
+          :y-col="timeseriesGrouping.yCol"
           :timeseries-col="timeseriesGrouping.idCol"
           :timeseries-id="data.item[timeseriesGrouping.idCol].value"
           :solution-id="solutionId"
@@ -115,7 +115,8 @@ import {
   Grouping,
   Variable,
   RowSelection,
-  TaskTypes
+  TaskTypes,
+  TimeseriesGrouping
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
@@ -259,7 +260,7 @@ export default Vue.extend({
       return getImageFields(this.fields);
     },
 
-    timeseriesGroupings(): Grouping[] {
+    timeseriesGroupings(): TimeseriesGrouping[] {
       return getTimeseriesGroupingsFromFields(this.variables, this.fields);
     },
 

@@ -37,10 +37,10 @@ export interface SuggestedType {
   type: string;
 }
 
-export interface GroupingProperties {
-  xCol: string;
-  yCol: string;
-  clusterCol: string;
+export function isClusteredGrouping(
+  grouping: Grouping
+): grouping is ClusteredGrouping {
+  return (grouping as ClusteredGrouping).clusterCol !== undefined;
 }
 
 export interface Grouping {
@@ -49,7 +49,25 @@ export interface Grouping {
   subIds: string[];
   type: string;
   hidden: string[];
-  properties: GroupingProperties;
+}
+
+export interface ClusteredGrouping extends Grouping {
+  clusterCol: string;
+}
+
+export interface TimeseriesGrouping extends ClusteredGrouping {
+  xCol: string;
+  yCol: string;
+}
+
+export interface GeoCoordinateGrouping extends Grouping {
+  xCol: string;
+  yCol: string;
+}
+
+export interface RemoteSensingGrouping extends Grouping {
+  imageCol: string;
+  bandCol: string;
 }
 
 export interface Variable {

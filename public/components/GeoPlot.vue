@@ -45,7 +45,8 @@ import {
   TableRow,
   D3M_INDEX_FIELD,
   Highlight,
-  RowSelection
+  RowSelection,
+  GeoCoordinateGrouping
 } from "../store/dataset/index";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import {
@@ -174,8 +175,9 @@ export default Vue.extend({
 
       matches.forEach(match => {
         if (match.grouping && match.grouping.type === GEOCOORDINATE_TYPE) {
-          lng = match.grouping.properties.xCol;
-          lat = match.grouping.properties.yCol;
+          const grouping = match.grouping as GeoCoordinateGrouping;
+          lng = grouping.xCol;
+          lat = grouping.yCol;
         } else if (match.colType === REAL_VECTOR_TYPE) {
           fields.push({
             type: SINGLE_FIELD,

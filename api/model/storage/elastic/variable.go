@@ -19,6 +19,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/uncharted-distil/distil-compute/model"
@@ -83,9 +84,9 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 		max = 0
 	}
 
-	grouping := &model.Grouping{}
-	ok = json.Struct(child, grouping, model.VarGroupingField)
-	if !ok {
+	grouping, err := s.parseGrouping(child)
+	if err != nil {
+		log.Warnf("grouping parsing error: %+v", err)
 		grouping = nil
 	}
 
@@ -211,6 +212,42 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 		}
 	}
 	return filtered, nil
+}
+
+func (s *Storage) parseGrouping(variable map[string]interface{}) (model.BaseGrouping, error) {
+	if !json.Exists(variable, model.VarGroupingField, "type") {
+		return nil, nil
+	}
+
+	groupingType, ok := json.String(variable, model.VarGroupingField, "type")
+	if !ok {
+		return nil, errors.New("unable to read grouping type")
+	}
+
+	var grouping model.BaseGrouping
+	if model.IsTimeSeries(groupingType) {
+		grouping = &model.TimeseriesGrouping{}
+		ok = json.Struct(variable, grouping, model.VarGroupingField)
+		if !ok {
+			return nil, errors.New("unable to parse timeseries grouping")
+		}
+	} else if model.IsGeoCoordinate(groupingType) {
+		grouping = &model.GeoCoordinateGrouping{}
+		ok = json.Struct(variable, grouping, model.VarGroupingField)
+		if !ok {
+			return nil, errors.New("unable to parse geocoordinate grouping")
+		}
+	} else if model.IsRemoteSensing(groupingType) {
+		grouping = &model.GeoCoordinateGrouping{}
+		ok = json.Struct(variable, grouping, model.VarGroupingField)
+		if !ok {
+			return nil, errors.New("unable to parse remote sensing grouping")
+		}
+	} else {
+		return nil, errors.Errorf("unrecognized grouping type '%s'", groupingType)
+	}
+
+	return grouping, nil
 }
 
 // DoesVariableExist returns whether or not a variable exists.

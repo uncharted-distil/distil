@@ -8,6 +8,7 @@ import {
   DatasetState,
   Variable,
   Grouping,
+  ClusteredGrouping,
   DatasetPendingRequestType,
   DatasetPendingRequestStatus,
   VariableRankingPendingRequest,
@@ -18,7 +19,8 @@ import {
   ClusteringPendingRequest,
   SummaryMode,
   BandCombinations,
-  BandID
+  BandID,
+  isClusteredGrouping
 } from "./index";
 import { mutations, getters } from "./module";
 import { actions as resultActions } from "../requests/module";
@@ -266,7 +268,7 @@ export const actions = {
       .getVariables(context)
       .filter(
         v =>
-          (v.grouping && v.grouping.properties.clusterCol) ||
+          (v.grouping && isClusteredGrouping(v.grouping)) ||
           v.colType === "image"
       );
     if (clusterVariables.length === 0) {
@@ -278,7 +280,7 @@ export const actions = {
     // Find grouped fields that have clusters defined against them and request that they
     // cluster.
     const promises = clusterVariables.map(v => {
-      if (v.grouping && v.grouping.properties.clusterCol) {
+      if (v.grouping && isClusteredGrouping(v.grouping)) {
         return axios.post(
           `/distil/cluster/${args.dataset}/${v.grouping.idCol}`,
           {}

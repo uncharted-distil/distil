@@ -29,8 +29,8 @@
         :key="item[timeseriesGrouping.idCol].value"
       >
         <sparkline-row
-          :x-col="timeseriesGrouping.properties.xCol"
-          :y-col="timeseriesGrouping.properties.yCol"
+          :x-col="timeseriesGrouping.xCol"
+          :y-col="timeseriesGrouping.yCol"
           :timeseries-col="timeseriesGrouping.idCol"
           :timeseries-id="item[timeseriesGrouping.idCol].value"
           :timeseries-extrema="
@@ -68,7 +68,8 @@ import {
   Grouping,
   RowSelection,
   Highlight,
-  TaskTypes
+  TaskTypes,
+  TimeseriesGrouping
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -150,7 +151,7 @@ export default Vue.extend({
       return this.hasPredictedCol && !this.isForecasting;
     },
 
-    timeseriesGrouping(): Grouping {
+    timeseriesGrouping(): TimeseriesGrouping {
       // TODO: support more than one grouping
       const groupings = getTimeseriesGroupingsFromFields(
         this.variables,
@@ -165,9 +166,7 @@ export default Vue.extend({
 
     isDateScale(): boolean {
       const grouping = this.timeseriesGrouping;
-      const timeVar = this.variables.find(
-        v => v.colName === grouping.properties.xCol
-      );
+      const timeVar = this.variables.find(v => v.colName === grouping.xCol);
       return timeVar && isTimeType(timeVar.colType);
     },
 
