@@ -483,3 +483,17 @@ export function getTimeseriesFacetValue(
     )
   };
 }
+
+export function getSubSelectionValues(
+  summary: VariableSummary,
+  max: number
+): number[] {
+  const values = [];
+  if (summary.filtered && summary.filtered.buckets.length) {
+    const buckets = summary.filtered.buckets;
+    for (let i = 0, n = buckets.length; i < n; ++i) {
+      values.push(buckets[i].count / max);
+    }
+  }
+  return values;
+}

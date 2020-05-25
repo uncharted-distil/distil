@@ -375,30 +375,30 @@
   resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.17.tgz#5abb41d57b653f354780a1ffb91d03b6a3d7f0a8"
   integrity sha512-hMX6XRum11pQtspw1Oar+nCyk0fdQyj73/dGt1zNHL313c61UAKT/gH3iOaFs+6ukKtHiHOAFy+qTiTFDenwpg==
 
-"@uncharted/css-options@^0.1.0":
-  version "0.1.0"
-  resolved "https://npm.uncharted.software/repository/uncharted/@uncharted/css-options/-/css-options-0.1.0.tgz#a77c4e0eb937dd48aa25fb5462ddbc35f87a5f40"
-  integrity sha512-Lg+lLeQw+0ZRSlRjDZZzQq/hY0a5g/IGrfBSsioSTcpuocZyvPR04IiWRm3CoBpxdyCkFtHnRPzGPrWBZXvZPw==
+"@uncharted/css-options@^0.2.1":
+  version "0.2.1"
+  resolved "https://npm.uncharted.software/repository/uncharted/@uncharted/css-options/-/css-options-0.2.1.tgz#26f9f107d3fa0ab21209ad6426a223c9028b2b3a"
+  integrity sha512-WhOn5jyZR+OoiEeI9o6apa7FdBwbhDUuYWFoObMFUGKfHwRkxoF5Vp/F9ZWtrO2h9aMslc6H7f1ynKEkNHQNUg==
 
-"@uncharted/facets-core@^0.1.0":
-  version "0.1.0"
-  resolved "https://npm.uncharted.software/repository/uncharted/@uncharted/facets-core/-/facets-core-0.1.0.tgz#27de3ce2d1974908cb977fb07ef8fcbe8c66bdfe"
-  integrity sha512-5eSskjHtOb1m8aiJ6IOw6UXsoaB6ATQmUBpeTD9+NYuz9XjKqo7QZC119NVrBL9O91pJ0WgBlQp1LfKsNUzsaA==
+"@uncharted/facets-core@^0.2.1":
+  version "0.2.1"
+  resolved "https://npm.uncharted.software/repository/uncharted/@uncharted/facets-core/-/facets-core-0.2.1.tgz#4ccca155695b825ec069810f40f707ea4a2a1002"
+  integrity sha512-eWI7+ojMEJ6yJA8Nhoobtwd0SF0NseRj5I+8q8AE5pybkln4lHU1NiOpJE0fpjYXq5LB3HFr05Vm1kDKUx17/g==
   dependencies:
     "@fortawesome/free-regular-svg-icons" "^5.10.2"
     "@fortawesome/free-solid-svg-icons" "^5.10.2"
-    "@uncharted/css-options" "^0.1.0"
+    "@uncharted/css-options" "^0.2.1"
     lit-element "^2.2.1"
     lit-html "^1.1.2"
 
-"@uncharted/facets-plugins@^0.1.0":
-  version "0.1.0"
-  resolved "https://npm.uncharted.software/repository/uncharted/@uncharted/facets-plugins/-/facets-plugins-0.1.0.tgz#7db1f713c3f162277ca74283e85f865ea2282832"
-  integrity sha512-DFrwjwQLGzE78Lvgvnr1b9QJjIfrl0BaknEJeiNWjzlu5vlCTXMOqfmNmvWXN2TV2XczWUgd1T0dfih+HDVLVw==
+"@uncharted/facets-plugins@^0.2.1":
+  version "0.2.1"
+  resolved "https://npm.uncharted.software/repository/uncharted/@uncharted/facets-plugins/-/facets-plugins-0.2.1.tgz#293a7b12fbd8a9321b8e0bdaa09ee10b34197e09"
+  integrity sha512-EvbReHqlWQFnBdJZhx8Xb2Hxhp+GJB2Tt+GMDYHf87JnJEj9Ii9azn9B/U8UlPinsPOM64L1JjZ9DjCQxW4f5w==
   dependencies:
     "@fortawesome/free-regular-svg-icons" "^5.10.2"
     "@fortawesome/free-solid-svg-icons" "^5.10.2"
-    "@uncharted/facets-core" "^0.1.0"
+    "@uncharted/facets-core" "^0.2.1"
     lit-element "^2.2.1"
     lit-html "^1.1.2"
 

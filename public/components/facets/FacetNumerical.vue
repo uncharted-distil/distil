@@ -1,5 +1,10 @@
 <template>
-  <facet-bars :data.prop="facetData">
+  <facet-bars
+    :data.prop="facetData"
+    :selection.prop="selection"
+    :subselection.prop="subSelection"
+    @facet-element-updated="updateSelection"
+  >
     <div slot="header-label" class="facet-header-container">
       <span>{{ summary.label.toUpperCase() }}</span>
       <type-change-menu
@@ -35,7 +40,8 @@ import "@uncharted/facets-plugins";
 import { FacetBarsData } from "@uncharted/facets-core/dist/types/facet-bars/FacetBars";
 
 import TypeChangeMenu from "../TypeChangeMenu";
-import { VariableSummary } from "../../store/dataset";
+import { Highlight, VariableSummary } from "../../store/dataset";
+import { getSubSelectionValues } from "../../util/facets";
 import _ from "lodash";
 
 export default Vue.extend({
@@ -62,24 +68,30 @@ export default Vue.extend({
       Object as () => any,
       Function as () => Function
     ],
-    expandCollapse: Function as () => Function
+    expandCollapse: Function as () => Function,
+    highlight: Object as () => Highlight,
+    enableHighlighting: Boolean as () => boolean,
+    instanceName: String as () => string
   },
 
   computed: {
+    max(): number {
+      if (this.summary.baseline.buckets.length) {
+        const buckets = this.summary.baseline.buckets;
+        // seems to be incorrect compute based on the current buckets
+        // const maxCount = summary.baseline.extrema.max;
+        return buckets.reduce((max, bucket) => Math.max(max, bucket.count), 0);
+      }
+      return 0;
+    },
     facetData(): FacetBarsData {
       const summary = this.summary;
       const values = [];
       if (summary.baseline.buckets.length) {
         const buckets = summary.baseline.buckets;
-        // seems to be incorrect compute based on the current buckets
-        // const maxCount = summary.baseline.extrema.max;
-        const maxCount = buckets.reduce(
-          (max, bucket) => Math.max(max, bucket.count),
-          0
-        );
         for (let i = 0, n = buckets.length; i < n; ++i) {
           values.push({
-            ratio: buckets[i].count / maxCount,
+            ratio: buckets[i].count / this.max,
             label: buckets[i].key
           });
         }
@@ -89,14 +101,74 @@ export default Vue.extend({
         values
       };
     },
-
     facetEnableTypeChanges(): boolean {
       const key = `${this.summary.dataset}:${this.summary.key}`;
       return Boolean(this.enabledTypeChanges.find(e => e === key));
+    },
+    subSelection(): number[] {
+      return getSubSelectionValues(this.summary, this.max);
+    },
+    selection(): number[] {
+      if (!this.isHighlightedGroup(this.highlight, this.summary.key)) {
+        return null;
+      }
+      const highlightValue = this.getHighlightValue(this.highlight);
+      if (!highlightValue) {
+        return null;
+      }
+      const highlightAsSelection = this.summary.baseline.buckets.reduce(
+        (acc, val, ind) => {
+          const key = _.toNumber(val.key);
+          if (key === highlightValue.from || key === highlightValue.to) {
+            acc.push(ind);
+          }
+          return acc;
+        },
+        []
+      );
+      return highlightAsSelection.length ? highlightAsSelection : null;
     }
   },
 
   methods: {
+    getHighlightValue(highlight: Highlight): any {
+      if (highlight && highlight.value) {
+        return highlight.value;
+      }
+      return null;
+    },
+    isHighlightedInstance(highlight: Highlight): boolean {
+      return highlight && highlight.context === this.instanceName;
+    },
+    isHighlightedGroup(highlight: Highlight, colName: string): boolean {
+      return this.isHighlightedInstance(highlight) && highlight.key === colName;
+    },
+    updateSelection(event) {
+      if (!this.enableHighlighting) return;
+      const facet = event.currentTarget;
+      if (
+        event.detail.changedProperties.get("selection") !== undefined &&
+        !_.isEqual(facet.selection, this.selection)
+      ) {
+        const range =
+          facet.selection && facet.selection.length > 1
+            ? {
+                from: _.toNumber(
+                  this.facetData.values[facet.selection[0]].label
+                ),
+                to: _.toNumber(this.facetData.values[facet.selection[1]].label),
+                type: this.summary.type
+              }
+            : null;
+        this.$emit(
+          "range-change",
+          this.instanceName,
+          this.summary.key,
+          range,
+          this.summary.dataset
+        );
+      }
+    },
     computeCustomHTML(): HTMLElement | null {
       // hack to get the custom html buttons showing up
       // changing this would mean to change how the instantiation of the facets works

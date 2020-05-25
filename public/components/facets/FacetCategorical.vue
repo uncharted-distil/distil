@@ -1,5 +1,11 @@
 <template>
-  <facet-terms :data.prop="facetData" action-buttons="0">
+  <facet-terms
+    :data.prop="facetData"
+    action-buttons="0"
+    :selection.prop="selection"
+    :subselection.prop="subSelection"
+    @facet-element-updated="updateSelection"
+  >
     <div slot="header-label" class="facet-header-container">
       <i :class="getGroupIcon(summary) + ' facet-header-icon'"></i>
       <span>{{ summary.label.toUpperCase() }}</span>
@@ -33,8 +39,12 @@ import "@uncharted/facets-core";
 import { FacetTermsData } from "@uncharted/facets-core/dist/types/facet-terms/FacetTerms";
 
 import TypeChangeMenu from "../TypeChangeMenu";
-import { VariableSummary } from "../../store/dataset";
-import { getCategoricalChunkSize, getGroupIcon } from "../../util/facets";
+import { Highlight, VariableSummary } from "../../store/dataset";
+import {
+  getCategoricalChunkSize,
+  getGroupIcon,
+  getSubSelectionValues
+} from "../../util/facets";
 import _ from "lodash";
 
 export default Vue.extend({
@@ -61,7 +71,10 @@ export default Vue.extend({
       Object as () => any,
       Function as () => Function
     ],
-    expandCollapse: Function as () => Function
+    expandCollapse: Function as () => Function,
+    highlight: Object as () => Highlight,
+    enableHighlighting: Boolean as () => boolean,
+    instanceName: String as () => string
   },
 
   data() {
@@ -71,20 +84,25 @@ export default Vue.extend({
   },
 
   computed: {
+    max(): number {
+      if (this.summary.baseline.buckets.length) {
+        return this.summary.baseline.extrema.max;
+      }
+      return 0;
+    },
     facetData(): FacetTermsData {
       const summary = this.summary;
       const numToDisplay = this.numToDisplay;
       const values = [];
       if (summary.baseline.buckets.length) {
         const buckets = summary.baseline.buckets;
-        const maxCount = summary.baseline.extrema.max;
         for (
           let i = 0, n = Math.min(buckets.length, numToDisplay);
           i < n;
           ++i
         ) {
           values.push({
-            ratio: buckets[i].count / maxCount,
+            ratio: buckets[i].count / this.max,
             label: buckets[i].key,
             value: buckets[i].count
           });
@@ -95,7 +113,6 @@ export default Vue.extend({
         values
       };
     },
-
     facetValueCount(): number {
       return this.summary.baseline.buckets.length;
     },
@@ -112,10 +129,72 @@ export default Vue.extend({
 
     facetMoreCount(): number {
       return this.facetValueCount - this.numToDisplay;
+    },
+    subSelection(): number[] {
+      return getSubSelectionValues(this.summary, this.max);
+    },
+    selection(): {} {
+      if (!this.isHighlightedGroup(this.highlight, this.summary.key)) {
+        return null;
+      }
+      const highlightValue = this.getHighlightValue(this.highlight);
+      if (!highlightValue) {
+        return null;
+      }
+      const highlightAsSelection = this.summary.baseline.buckets.reduce(
+        (acc, val, ind) => {
+          if (val.key === highlightValue) acc[ind] = true;
+          return acc;
+        },
+        {}
+      );
+      return highlightAsSelection;
     }
   },
 
   methods: {
+    getHighlightValue(highlight: Highlight): any {
+      if (highlight && highlight.value) {
+        return highlight.value;
+      }
+      return null;
+    },
+    isHighlightedInstance(highlight: Highlight): boolean {
+      return highlight && highlight.context === this.instanceName;
+    },
+    isHighlightedGroup(highlight: Highlight, colName: string): boolean {
+      return this.isHighlightedInstance(highlight) && highlight.key === colName;
+    },
+    updateSelection(event) {
+      if (!this.enableHighlighting) return;
+      const facet = event.currentTarget;
+      if (
+        event.detail.changedProperties.get("selection") !== undefined &&
+        !_.isEqual(facet.selection, this.selection)
+      ) {
+        let value = null;
+        if (facet.selection) {
+          if (this.selection) {
+            const oldKey = Object.keys(this.selection)[0];
+            const incomingKeys = Object.keys(facet.selection);
+            const newKey = incomingKeys.filter(
+              iKey => oldKey.indexOf(iKey) < 0
+            )[0];
+            value = this.facetData.values[newKey].label;
+          } else {
+            const newKey = Object.keys(facet.selection)[0];
+            value = this.facetData.values[newKey].label;
+          }
+        }
+        this.$emit(
+          "facet-click",
+          this.instanceName,
+          this.summary.key,
+          value,
+          this.summary.dataset
+        );
+      }
+    },
     computeCustomHTML(): HTMLElement | null {
       // hack to get the custom html buttons showing up
       // changing this would mean to change how the instantiation of the facets works
@@ -132,7 +211,6 @@ export default Vue.extend({
       }
       return null;
     },
-
     getGroupIcon
   }
 });
