@@ -117,31 +117,29 @@ func (f *RemoteSensingField) fetchHistogram(filterParams *api.FilterParams, inve
 	xNumBuckets, yNumBuckets := getEqualBivariateBuckets(numBuckets, xExtrema, yExtrema)
 
 	// generate a histogram query for each
-	xMinHistogramName, xMinBucketQuery, xMinHistogramQuery := f.getHistogramAggQuery(xExtrema, xNumBuckets, 1)
-	xMaxHistogramName, xMaxBucketQuery, xMaxHistogramQuery := f.getHistogramAggQuery(xExtrema, xNumBuckets, 5)
-	yMinHistogramName, yMinBucketQuery, yMinHistogramQuery := f.getHistogramAggQuery(yExtrema, yNumBuckets, 2)
-	yMaxHistogramName, yMaxBucketQuery, yMaxHistogramQuery := f.getHistogramAggQuery(yExtrema, yNumBuckets, 6)
+	xMinHistogramName, xMinBucketQuery, intervalX, minX := f.getHistogramAggQuery(xExtrema, xNumBuckets, 1)
+	_, xMaxBucketQuery, _, _ := f.getHistogramAggQuery(xExtrema, xNumBuckets, 5)
+	yMinHistogramName, yMinBucketQuery, intervalY, minY := f.getHistogramAggQuery(yExtrema, yNumBuckets, 2)
+	_, yMaxBucketQuery, _, _ := f.getHistogramAggQuery(yExtrema, yNumBuckets, 6)
+	xNumBuckets = xExtrema.GetBucketCount(numBuckets)
+	yNumBuckets = yExtrema.GetBucketCount(numBuckets)
 
 	// Get count by x & y
 	query := fmt.Sprintf(`
-        SELECT xbuckets, ybuckets, COUNT(%s) FROM
+        SELECT
+          xbuckets, CAST(xbuckets * %g + %g AS double precision) AS %s,
+          ybuckets, CAST(ybuckets * %g + %g AS double precision) AS %s, COUNT(%s) FROM
         (
-          SELECT * FROM
-          (
-            SELECT %s,
-            %s AS minx, CAST(%s AS double precision) AS %s, %s AS maxx, CAST(%s AS double precision) AS %s,
-            %s AS miny, CAST(%s AS double precision) AS %s, %s AS maxy, CAST(%s AS double precision) AS %s
-            FROM %s %s
-          ) AS points
-          INNER JOIN generate_series(0, %d) AS xbuckets ON xbuckets >= minx AND xbuckets <= maxx
-        ) AS inner_data
+          SELECT %s,
+          %s AS minx, %s AS maxx, %s AS miny, %s AS maxy
+          FROM %s %s
+        ) AS points
+        INNER JOIN generate_series(0, %d) AS xbuckets ON xbuckets >= minx AND xbuckets <= maxx
         INNER JOIN generate_series(0, %d) AS ybuckets ON ybuckets >= miny AND ybuckets <= maxy
         GROUP BY xbuckets, ybuckets
         ORDER BY xbuckets, ybuckets;`,
-		f.Count, f.Count, xMinBucketQuery, xMinHistogramQuery, xMinHistogramName,
-		xMaxBucketQuery, xMaxHistogramQuery, xMaxHistogramName,
-		yMinBucketQuery, yMinHistogramQuery, yMinHistogramName,
-		yMaxBucketQuery, yMaxHistogramQuery, yMaxHistogramName,
+		intervalX, minX, xMinHistogramName, intervalY, minY, yMinHistogramName,
+		f.Count, f.Count, xMinBucketQuery, xMaxBucketQuery, yMinBucketQuery, yMaxBucketQuery,
 		f.DatasetStorageName, where, xNumBuckets, yNumBuckets)
 
 	// execute the postgres query
@@ -181,7 +179,7 @@ func (f *RemoteSensingField) fetchExtrema() (*api.Extrema, *api.Extrema, error) 
 	return f.parseExtrema(res)
 }
 
-func (f *RemoteSensingField) getHistogramAggQuery(extrema *api.Extrema, numBuckets int, index int) (string, string, string) {
+func (f *RemoteSensingField) getHistogramAggQuery(extrema *api.Extrema, numBuckets int, index int) (string, string, float64, float64) {
 	interval := extrema.GetBucketInterval(numBuckets)
 
 	// get histogram agg name & query string.
@@ -198,9 +196,7 @@ func (f *RemoteSensingField) getHistogramAggQuery(extrema *api.Extrema, numBucke
 			extrema.Key, index, rounded.Min, rounded.Max, extrema.GetBucketCount(numBuckets))
 	}
 
-	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
-
-	return histogramAggName, bucketQueryString, histogramQueryString
+	return histogramAggName, bucketQueryString, interval, rounded.Min
 }
 
 func (f *RemoteSensingField) getMinMaxAggsQuery(key string, label string, indexMin int, indexMax int) string {
@@ -237,14 +233,14 @@ func (f *RemoteSensingField) parseExtrema(rows *pgx.Rows) (*api.Extrema, *api.Ex
 	}
 	// assign attributes
 	xExtrema := &api.Extrema{
-		Key:  f.Key,
-		Type: f.Type,
+		Key:  f.CoordinateCol,
+		Type: model.LongitudeType,
 		Min:  *minXValue,
 		Max:  *maxXValue,
 	}
 	yExtrema := &api.Extrema{
-		Key:  f.Key,
-		Type: f.Type,
+		Key:  f.CoordinateCol,
+		Type: model.LatitudeType,
 		Min:  *minYValue,
 		Max:  *maxYValue,
 	}

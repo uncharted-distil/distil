@@ -76,7 +76,7 @@ func (b *BoundingBox) ToString() string {
 		b.pointToString(b.UpperRight),
 		b.pointToString(b.LowerRight),
 	}
-	return strings.Join(coords, ",")
+	return fmt.Sprintf("{%s}", strings.Join(coords, ","))
 }
 
 func (b *BoundingBox) pointToString(point *Point) string {

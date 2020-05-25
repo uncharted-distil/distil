@@ -117,7 +117,12 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import { Variable, Grouping, TimeseriesGrouping } from "../store/dataset/index";
+import {
+  Variable,
+  Grouping,
+  TimeseriesGrouping,
+  GeoCoordinateGrouping
+} from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions
@@ -355,8 +360,13 @@ export default Vue.extend({
         hidden: hiddenCols
       };
 
-      if (this.isTimeseries || this.isGeocoordinate) {
+      if (this.isTimeseries) {
         const tsGrouping = grouping as TimeseriesGrouping;
+        tsGrouping.xCol = this.xCol;
+        tsGrouping.yCol = this.yCol;
+        tsGrouping.clusterCol = null;
+      } else if (this.isGeocoordinate) {
+        const tsGrouping = grouping as GeoCoordinateGrouping;
         tsGrouping.xCol = this.xCol;
         tsGrouping.yCol = this.yCol;
         tsGrouping.clusterCol = null;

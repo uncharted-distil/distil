@@ -238,7 +238,7 @@ func (s *Storage) parseGrouping(variable map[string]interface{}) (model.BaseGrou
 			return nil, errors.New("unable to parse geocoordinate grouping")
 		}
 	} else if model.IsRemoteSensing(groupingType) {
-		grouping = &model.GeoCoordinateGrouping{}
+		grouping = &model.RemoteSensingGrouping{}
 		ok = json.Struct(variable, grouping, model.VarGroupingField)
 		if !ok {
 			return nil, errors.New("unable to parse remote sensing grouping")
