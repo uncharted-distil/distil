@@ -96,9 +96,12 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, metaStore Me
 				componentVars := []string{}
 
 				// Include X and Y col when not dealing with time series - time series data is fetched subsequently
-				if !model.IsTimeSeries(variable.Type) {
-					timeseriesGrouping := variable.Grouping.(*model.TimeseriesGrouping)
-					componentVars = append(componentVars, timeseriesGrouping.XCol, timeseriesGrouping.YCol)
+				if model.IsGeoCoordinate(variable.Type) {
+					gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
+					componentVars = append(componentVars, gcg.XCol, gcg.YCol)
+				} else if model.IsRemoteSensing(variable.Type) {
+					rsg := variable.Grouping.(*model.RemoteSensingGrouping)
+					componentVars = append(componentVars, rsg.CoordinateCol)
 				}
 
 				// include the grouping ID if present

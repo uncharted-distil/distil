@@ -369,7 +369,6 @@ export default Vue.extend({
         const tsGrouping = grouping as GeoCoordinateGrouping;
         tsGrouping.xCol = this.xCol;
         tsGrouping.yCol = this.yCol;
-        tsGrouping.clusterCol = null;
       }
 
       datasetActions

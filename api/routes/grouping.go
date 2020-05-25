@@ -114,7 +114,7 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 				return
 			}
 
-			err = meta.AddGroupedVariable(dataset, rsg.IDCol+"_group", "Geocoordinate", model.GeoCoordinateType, model.VarDistilRoleGrouping, rsg)
+			err = meta.AddGroupedVariable(dataset, rsg.IDCol+"_group", "Geocoordinate", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
 			if err != nil {
 				handleError(w, err)
 				return
