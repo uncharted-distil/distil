@@ -495,5 +495,5 @@ export function getSubSelectionValues(
       values.push(buckets[i].count / max);
     }
   }
-  return values;
+  return values.length > 0 ? values : null;
 }

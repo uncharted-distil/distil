@@ -126,7 +126,7 @@ export default Vue.extend({
         },
         []
       );
-      return highlightAsSelection.length ? highlightAsSelection : null;
+      return highlightAsSelection.length > 0 ? highlightAsSelection : null;
     }
   },
 
