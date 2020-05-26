@@ -8,7 +8,7 @@
         <model-preview :model="model"> </model-preview>
       </div>
       <div
-        class="row justify-content-center"
+        class="row justify-content-center pt-3"
         v-if="!isPending && (!models || models.length === 0)"
       >
         <h5>No models found for search</h5>

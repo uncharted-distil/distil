@@ -11,6 +11,7 @@ import {
 } from "./index";
 import { Dictionary } from "../../util/dict";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
+import { isInteger, values } from "lodash";
 
 export const getters = {
   getDatasets(state: DatasetState): Dataset[] {
@@ -19,6 +20,11 @@ export const getters = {
 
   getFilteredDatasets(state: DatasetState): Dataset[] {
     return state.filteredDatasets;
+  },
+
+  getCountOfFilteredDatasets(state: DatasetState): number {
+    const count = values(state.filteredDatasets).length;
+    return isInteger(count) ? count : 0;
   },
 
   getVariables(state: DatasetState, getters: any): Variable[] {
