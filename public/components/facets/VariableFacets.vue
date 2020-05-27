@@ -492,7 +492,7 @@ button {
 }
 
 .variable-facets-container .facet-header-container {
-  overflow: scroll !important;
+  overflow-y: scroll !important;
 }
 
 .variable-facets-container .facet-header-container .dropdown-menu {
