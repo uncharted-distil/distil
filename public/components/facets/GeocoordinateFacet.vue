@@ -39,7 +39,7 @@
       </div>
     </div>
     <div v-if="expand" class="latlon">
-      <facet-categorical
+      <facet-numerical
         :instanceName="latSummary.label"
         :summary="latSummary"
         :enabledTypeChanges="enabledTypeChanges"
@@ -47,8 +47,8 @@
         :highlight="latHighlight"
         @numerical-click="latHistogramClick"
         @range-change="latRangeChange"
-      ></facet-categorical>
-      <facet-categorical
+      ></facet-numerical>
+      <facet-numerical
         :instanceName="lonSummary.label"
         :summary="lonSummary"
         :enabledTypeChanges="enabledTypeChanges"
@@ -56,7 +56,7 @@
         :highlight="lonHighlight"
         @numerical-click="lonHistogramClick"
         @range-change="lonRangeChange"
-      ></facet-categorical>
+      ></facet-numerical>
     </div>
   </div>
 </template>
@@ -86,7 +86,7 @@ import {
   RowSelection
 } from "../../store/dataset";
 import TypeChangeMenu from "../TypeChangeMenu.vue";
-import FacetEntry from "./FacetEntry.vue";
+import FacetNumerical from "./FacetNumerical.vue";
 import { updateHighlight, clearHighlight } from "../../util/highlights";
 import {
   GEOCOORDINATE_TYPE,
@@ -180,7 +180,7 @@ export default Vue.extend({
     TypeChangeMenu,
     IconBase,
     IconCropFree,
-    FacetEntry
+    FacetNumerical
   },
 
   props: {

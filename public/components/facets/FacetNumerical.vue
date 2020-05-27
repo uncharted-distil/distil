@@ -5,7 +5,7 @@
     :subselection.prop="subSelection"
     @facet-element-updated="updateSelection"
   >
-    <div slot="header-label" class="facet-header-container">
+    <div slot="header-label" :class="headerClass">
       <span>{{ summary.label.toUpperCase() }}</span>
       <type-change-menu
         v-if="facetEnableTypeChanges"
@@ -104,6 +104,11 @@ export default Vue.extend({
     facetEnableTypeChanges(): boolean {
       const key = `${this.summary.dataset}:${this.summary.key}`;
       return Boolean(this.enabledTypeChanges.find(e => e === key));
+    },
+    headerClass(): string {
+      return this.facetEnableTypeChanges
+        ? "facet-header-container"
+        : "facet-header-container-no-scroll";
     },
     subSelection(): number[] {
       return getSubSelectionValues(this.summary, this.max);
@@ -211,5 +216,18 @@ export default Vue.extend({
 
 .facet-footer-custom-html {
   margin-top: 6px;
+}
+
+.facet-header-container {
+  overflow-y: scroll !important;
+}
+
+.facet-header-container-no-scroll {
+  overflow: auto;
+}
+
+.facet-header-container .dropdown-menu {
+  max-height: 200px;
+  overflow-y: auto;
 }
 </style>
