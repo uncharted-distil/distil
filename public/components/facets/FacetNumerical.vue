@@ -142,7 +142,6 @@ export default Vue.extend({
       if (highlightAsSelection.length === 1) {
         highlightAsSelection.push(buckets.length);
       }
-      console.log(this.summary.key, highlightAsSelection, highlightValue);
       return highlightAsSelection.length > 0 ? highlightAsSelection : null;
     }
   },
