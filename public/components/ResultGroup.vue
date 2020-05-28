@@ -4,10 +4,12 @@
     v-bind:class="{ 'result-group-selected': isSelected }"
     @click="onClick()"
   >
-    <div class="result-group-title">
+    <header class="result-group-title">
+      <h5 v-if="modelName">{{ modelName }}</h5>
       <b
         >{{ name }} <sup>{{ solutionIndex }}</sup></b
       >
+
       <template v-if="!isErrored && !isSelected">
         <div
           class="pull-right pl-2 solution-button"
@@ -51,7 +53,8 @@
           ERROR
         </b-badge>
       </template>
-    </div>
+    </header>
+
     <div class="result-group-body" v-if="isMaximized">
       <template v-if="isCompleted">
         <div v-for="summary in predictedSummaries" :key="summary.key">
@@ -128,6 +131,7 @@ import {
   SOLUTION_PROGRESS,
   SOLUTION_LABELS
 } from "../util/solutions";
+import { getModelNameByFittedSolutionId } from "../util/models";
 import { overlayRouteEntry } from "../util/routes";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import { actions as appActions } from "../store/app/module";
@@ -169,6 +173,25 @@ export default Vue.extend({
 
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
+    },
+
+    /**
+     * Name of the model if it exist.
+     * @return {String}
+     */
+    modelName(): string {
+      // Find the fitted solution ID.
+      const fittedSolutionId = getSolutionById(
+        store.state.requestsModule.solutions,
+        this.solutionId
+      )?.fittedSolutionId;
+      if (_.isEmpty(fittedSolutionId)) { return; }
+
+      // Retreive the model name from the fitted solution.
+      const name = getModelNameByFittedSolutionId(fittedSolutionId);
+
+      // Return the name if it exist, null otherwise.
+      return _.isNil(name) ? null : name;
     },
 
     predictedInstanceName(): string {
