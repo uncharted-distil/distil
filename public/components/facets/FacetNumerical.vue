@@ -121,16 +121,28 @@ export default Vue.extend({
       if (!highlightValue) {
         return null;
       }
-      const highlightAsSelection = this.summary.baseline.buckets.reduce(
-        (acc, val, ind) => {
-          const key = _.toNumber(val.key);
-          if (key === highlightValue.from || key === highlightValue.to) {
-            acc.push(ind);
-          }
-          return acc;
-        },
-        []
-      );
+      const buckets = this.summary.baseline.buckets;
+
+      // map the values used for the highlight filter back to the buckets
+      const highlightAsSelection = buckets.reduce((acc, val, ind) => {
+        const key = _.toNumber(val.key);
+        if (
+          key === _.toNumber(highlightValue.from) ||
+          key === _.toNumber(highlightValue.to)
+        ) {
+          acc.push(ind);
+        }
+        return acc;
+      }, []);
+
+      // we can over shoot the bucket mapping if it's set to top end of
+      // the range as the buckets are keyed to minimum bucket value
+      // so in the event we've only mapped back one index, we set the
+      // second index to the bucket length.
+      if (highlightAsSelection.length === 1) {
+        highlightAsSelection.push(buckets.length);
+      }
+      console.log(this.summary.key, highlightAsSelection, highlightValue);
       return highlightAsSelection.length > 0 ? highlightAsSelection : null;
     }
   },
@@ -148,6 +160,35 @@ export default Vue.extend({
     isHighlightedGroup(highlight: Highlight, colName: string): boolean {
       return this.isHighlightedInstance(highlight) && highlight.key === colName;
     },
+    getRange(facet): { from: number; to: number; type: string } {
+      if (!facet.selection) {
+        return null;
+      }
+      if (facet.selection.length < 2) {
+        return null;
+      }
+
+      const values = this.facetData.values;
+      const minIndex = facet.selection[0];
+      const maxIndex = facet.selection[1];
+
+      const lowerBound = _.toNumber(values[minIndex].label);
+      let upperBound;
+
+      if (this.summary.baseline.buckets.length > maxIndex) {
+        upperBound = _.toNumber(values[maxIndex].label);
+      } else {
+        const maxBasis = _.toNumber(values[maxIndex - 1].label);
+        const offset = maxBasis - _.toNumber(values[maxIndex - 2].label);
+        upperBound = maxBasis + offset;
+      }
+
+      return {
+        from: lowerBound,
+        to: upperBound,
+        type: this.summary.type
+      };
+    },
     updateSelection(event) {
       if (!this.enableHighlighting) return;
       const facet = event.currentTarget;
@@ -155,21 +196,11 @@ export default Vue.extend({
         event.detail.changedProperties.get("selection") !== undefined &&
         !_.isEqual(facet.selection, this.selection)
       ) {
-        const range =
-          facet.selection && facet.selection.length > 1
-            ? {
-                from: _.toNumber(
-                  this.facetData.values[facet.selection[0]].label
-                ),
-                to: _.toNumber(this.facetData.values[facet.selection[1]].label),
-                type: this.summary.type
-              }
-            : null;
         this.$emit(
           "range-change",
           this.instanceName,
           this.summary.key,
-          range,
+          this.getRange(facet),
           this.summary.dataset
         );
       }

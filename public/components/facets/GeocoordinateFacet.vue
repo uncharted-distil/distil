@@ -590,14 +590,18 @@ export default Vue.extend({
           minY: currentValue.minY,
           maxY: currentValue.maxY
         };
-        if (geocoordinateComponent === LONGITUDE_TYPE) {
-          highlightValue.minX = value.from;
-          highlightValue.maxX = value.to;
+        if (value === null) {
+          clearHighlight(this.$router);
         } else {
-          highlightValue.minY = value.from;
-          highlightValue.maxY = value.to;
+          if (geocoordinateComponent === LONGITUDE_TYPE) {
+            highlightValue.minX = value.from;
+            highlightValue.maxX = value.to;
+          } else {
+            highlightValue.minY = value.from;
+            highlightValue.maxY = value.to;
+          }
+          this.createHighlight(highlightValue);
         }
-        this.createHighlight(highlightValue);
       } else {
         this.createHighlight({
           minX: this.lonSummary.baseline.extrema.min,
@@ -772,6 +776,7 @@ export default Vue.extend({
     }) {
       if (
         this.highlight &&
+        this.highlight.value &&
         this.highlight.value.minX === value.minX &&
         this.highlight.value.maxX === value.maxX &&
         this.highlight.value.minY === value.minY &&
@@ -1004,10 +1009,6 @@ export default Vue.extend({
 </script>
 
 <style>
-.training-variables .facet-card {
-  padding-left: 32px;
-}
-
 .facet-card .group-header {
   font-family: inherit;
   font-size: 0.867rem;
