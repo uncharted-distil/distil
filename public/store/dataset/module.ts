@@ -27,6 +27,9 @@ export const getters = {
   // variables
   getVariables: read(moduleGetters.getVariables),
   getGroupings: read(moduleGetters.getGroupings),
+  getTimeseriesGroupingVariables: read(
+    moduleGetters.getTimeseriesGroupingVariables
+  ),
   getVariablesMap: read(moduleGetters.getVariablesMap),
   getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
   getVariableSummaries: read(moduleGetters.getVariableSummaries),

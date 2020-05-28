@@ -29,6 +29,24 @@ export const getters = {
     return state.variables.filter(v => v.grouping);
   },
 
+  /**
+   * Return the varibles used on the timeseries grouping.
+   * @return {Array<String>}
+   */
+  getTimeseriesGroupingVariables(state: DatasetState): string[] {
+    // Get only the timeseries grouping.
+    const timeseriesGrouping = state.variables.find(
+      v => v.grouping && v.grouping.type === "timeseries"
+    );
+
+    // Return an empty array if none have been found.
+    if (!timeseriesGrouping) {
+      return [];
+    }
+
+    return timeseriesGrouping.grouping.subIds;
+  },
+
   getPendingRequests(state: DatasetState) {
     return state.pendingRequests;
   },
