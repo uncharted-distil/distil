@@ -99,7 +99,6 @@ func (s *Storage) PersistExportedModel(model *api.ExportedModel) error {
 	// push the document into the model index
 	_, err = s.client.Index().
 		Index(s.modelIndex).
-		Type("model").
 		Id(model.FittedSolutionID).
 		BodyString(string(bytes)).
 		Refresh("true").

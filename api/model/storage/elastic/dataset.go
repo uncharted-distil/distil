@@ -28,9 +28,6 @@ import (
 )
 
 const (
-	// DatasetSuffix is the suffix for the dataset entry when stored in
-	// elasticsearch.
-	metadataType = "metadata"
 	// Provenance for elastic
 	Provenance       = "elastic"
 	datasetsListSize = 1000
@@ -253,7 +250,6 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 	// push the document into the metadata index
 	_, err := s.client.Update().
 		Index(s.datasetIndex).
-		Type(metadataType).
 		Id(dataset).
 		Doc(source).
 		Refresh("true").
@@ -423,7 +419,6 @@ func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayN
 	// push the document into the metadata index
 	_, err = s.client.Index().
 		Index(s.datasetIndex).
-		Type(metadataType).
 		Id(dataset).
 		BodyJson(source).
 		Refresh("true").
@@ -482,7 +477,6 @@ func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.BaseG
 	// push the document into the metadata index
 	_, err = s.client.Index().
 		Index(s.datasetIndex).
-		Type(metadataType).
 		Id(datasetName).
 		BodyJson(source).
 		Refresh("true").
