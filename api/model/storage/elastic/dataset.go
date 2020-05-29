@@ -19,12 +19,12 @@ import (
 	"context"
 	"fmt"
 
+	elastic "github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util/json"
-	elastic "gopkg.in/olivere/elastic.v5"
 )
 
 const (
@@ -45,7 +45,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 	var datasets []*api.Dataset
 	for _, hit := range res.Hits.Hits {
 		// parse hit into JSON
-		src, err := json.Unmarshal(*hit.Source)
+		src, err := json.Unmarshal(hit.Source)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
@@ -398,7 +398,7 @@ func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayN
 	hit := res.Hits.Hits[0]
 
 	// parse hit into JSON
-	source, err := json.Unmarshal(*hit.Source)
+	source, err := json.Unmarshal(hit.Source)
 	if err != nil {
 		return errors.Wrap(err, "elasticsearch dataset unmarshal failed")
 	}
@@ -456,7 +456,7 @@ func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.BaseG
 	hit := res.Hits.Hits[0]
 
 	// parse hit into JSON
-	source, err := json.Unmarshal(*hit.Source)
+	source, err := json.Unmarshal(hit.Source)
 	if err != nil {
 		return errors.Wrap(err, "elasticsearch dataset unmarshal failed")
 	}

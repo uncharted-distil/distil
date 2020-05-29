@@ -16,9 +16,9 @@
 package elastic
 
 import (
+	elastic "github.com/olivere/elastic/v7"
 	es "github.com/uncharted-distil/distil/api/elastic"
 	"github.com/uncharted-distil/distil/api/model"
-	elastic "gopkg.in/olivere/elastic.v5"
 )
 
 // Storage accesses the underlying ES instance.

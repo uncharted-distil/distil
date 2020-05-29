@@ -18,9 +18,9 @@ package elastic
 import (
 	"context"
 
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
-	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil/api/util/json"
@@ -150,7 +150,7 @@ func (s *Storage) parseSuggestedType(json map[string]interface{}) (*model.Sugges
 
 func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*model.Variable, error) {
 	// unmarshal the hit source
-	src, err := json.Unmarshal(*searchHit.Source)
+	src, err := json.Unmarshal(searchHit.Source)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse search result")
 	}
@@ -176,7 +176,7 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 
 func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
 	// unmarshal the hit source
-	src, err := json.Unmarshal(*searchHit.Source)
+	src, err := json.Unmarshal(searchHit.Source)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to parse search result")
 	}
