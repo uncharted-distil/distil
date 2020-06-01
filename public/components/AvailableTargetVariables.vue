@@ -85,7 +85,7 @@ export default Vue.extend({
         const targetElem = document.createElement("button");
 
         const unsupported = this.unsupportedTargets.has(group.colName);
-        targetElem.className += "btn btn-sm btn-success ml-2 mr-2 mb-2";
+        targetElem.className += "btn btn-sm btn-success mb-2";
         if (unsupported) {
           targetElem.className += " disabled";
         }
