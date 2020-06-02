@@ -1,6 +1,6 @@
 <template>
   <div class="facet-timeseries">
-    <facet-entry
+    <facet-categorical
       :summary="summary"
       :highlight="highlight"
       :row-selection="rowSelection"
@@ -18,8 +18,8 @@
       @facet-click="onFacetClick"
       @range-change="onRangeChange"
     >
-    </facet-entry>
-    <facet-numerical
+    </facet-categorical>
+    <facet-date-time
       v-if="!!timelineSummary && expand"
       :summary="timelineSummary"
       :highlight="highlight"
@@ -35,14 +35,14 @@
       @categorical-click="onHistogramCategoricalClick"
       @range-change="onHistogramRangeChange"
     >
-    </facet-numerical>
+    </facet-date-time>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import FacetEntry from "./FacetEntry.vue";
-import FacetNumerical from "./FacetNumerical.vue";
+import FacetCategorical from "./FacetCategorical.vue";
+import FacetDateTime from "./FacetDateTime.vue";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
 import {
@@ -64,8 +64,8 @@ export default Vue.extend({
   name: "facet-timeseries",
 
   components: {
-    FacetEntry,
-    FacetNumerical
+    FacetCategorical,
+    FacetDateTime
   },
 
   props: {
