@@ -24,7 +24,7 @@
         <div>
           {{ subtitle }}
         </div>
-        <div v-if="trainingVariableSummaries.length > 0">
+        <div v-if="isAllTrainingVariablesRemovable">
           <b-button size="sm" variant="outline-secondary" @click="removeAll"
             >Remove All</b-button
           >
@@ -86,6 +86,26 @@ export default Vue.extend({
     trainingVariableSummaries(): VariableSummary[] {
       return routeGetters.getTrainingVariableSummaries(this.$store);
     },
+
+    /**
+     * Check if all the training variables are removable.
+     * @return {Boolean}
+     */
+    isAllTrainingVariablesRemovable(): boolean {
+      // Fetch the variables in the timeseries grouping.
+      const timeseriesGrouping = datasetGetters.getTimeseriesGroupingVariables(
+        this.$store
+      );
+
+      // Filter them out of the available training variables.
+      const trainingVariables = Array.from(
+        this.trainingVariableSummaries
+      ).filter(variable => !timeseriesGrouping.includes(variable.key));
+
+      // The variables can be removed.
+      return trainingVariables.length > 0;
+    },
+
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
@@ -95,6 +115,7 @@ export default Vue.extend({
     instanceName(): string {
       return TRAINING_VARS_INSTANCE;
     },
+
     html(): (Group) => HTMLDivElement {
       return (group: Group) => {
         // exclude remove button if the var is an id / sub-id of the
