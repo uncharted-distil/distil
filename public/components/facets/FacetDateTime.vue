@@ -1,5 +1,5 @@
 <template>
-  <facet-timeline
+  <facet-bars
     :data.prop="facetData"
     :selection.prop="selection"
     :subselection.prop="subSelection"
@@ -29,7 +29,7 @@
         class="facet-footer-custom-html"
       ></div>
     </div>
-  </facet-timeline>
+  </facet-bars>
 </template>
 
 <script lang="ts">
@@ -37,7 +37,6 @@ import Vue from "vue";
 
 import "@uncharted/facets-core";
 import "@uncharted/facets-plugins";
-import { FacetTimelineData } from "@uncharted/facets-core/dist/types/facet-timeline/FacetTimeline";
 
 import TypeChangeMenu from "../TypeChangeMenu";
 import { Highlight, VariableSummary } from "../../store/dataset";
@@ -87,7 +86,7 @@ export default Vue.extend({
       }
       return 0;
     },
-    facetData(): any[] {
+    facetData(): { label: string; values: { ratio: number; label: string }[] } {
       const summary = this.summary;
       const values = [];
       if (summary.baseline.buckets.length) {
@@ -99,7 +98,10 @@ export default Vue.extend({
           });
         }
       }
-      return values;
+      return {
+        label: summary.label.toUpperCase(),
+        values
+      };
     },
     facetEnableTypeChanges(): boolean {
       const key = `${this.summary.dataset}:${this.summary.key}`;
@@ -178,7 +180,7 @@ export default Vue.extend({
         return null;
       }
 
-      const values = this.facetData;
+      const values = this.facetData.values;
       const minIndex = facet.selection[0];
       const maxIndex = facet.selection[1];
 
