@@ -139,7 +139,7 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 			if fieldsMap[i] > 0 {
 				w, err := strconv.ParseFloat(row[fieldsMap[i]-1], 64)
 				if err != nil {
-					return nil
+					return errors.Wrap(err, "failed to parse feature weight")
 				}
 				parsedWeights[count] = w
 				count = count + 1

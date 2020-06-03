@@ -114,6 +114,8 @@ github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/uncharted-distil/distil-compute v0.0.0-20200529151237-7cc113a345d2 h1:whb8sMtNeRsZc+yRcAueE6W5PuEQtZKz3cSzd433bMI=
 github.com/uncharted-distil/distil-compute v0.0.0-20200529151237-7cc113a345d2/go.mod h1:QVZkHnsUQRxeMf5qhSEFDNdh+Nh+GvgcZPNHQKR5CNE=
+github.com/uncharted-distil/distil-compute v0.0.0-20200603163657-b306977deba2 h1:cx2iHTkUDPPpHsfYJ3/jkU/slSJXbxJDibOhUvX3rXQ=
+github.com/uncharted-distil/distil-compute v0.0.0-20200603163657-b306977deba2/go.mod h1:QVZkHnsUQRxeMf5qhSEFDNdh+Nh+GvgcZPNHQKR5CNE=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a h1:BPJrlnjdhxMBrJWiU4/Gl3PVdCUlY9JspWFTJ9UVO0Y=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a/go.mod h1:L8AZAnu0MT3E5I3WPNTo5BZaT5b3q21TrX1U9R9+/9E=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9 h1:P1B7OAnmyIdSN9UGhDvIU3s8K3/2rQcvntYV5WPi+qY=
