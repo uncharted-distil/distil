@@ -1,4 +1,4 @@
-import { isNil } from "lodash";
+import _ from "lodash";
 import store from "../store/store";
 import { getters as modelGetters } from "../store/model/module";
 
@@ -7,11 +7,13 @@ import { getters as modelGetters } from "../store/model/module";
  * @param  {String} fittedSolutionId
  * @return {String}
  */
-export function getModelNameByFittedSolutionId(fittedSolutionId: string) {
+export function getModelNameByFittedSolutionId(
+  fittedSolutionId: string
+): string {
   const model = modelGetters
     .getModels(store)
     .find(model => model.fittedSolutionId === fittedSolutionId);
 
   // Return the name if it exist, null otherwise.
-  return isNil(model.modelName) ? null : model.modelName;
+  return _.isNil(_.get(model, "modelName")) ? null : model.modelName;
 }
