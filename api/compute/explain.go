@@ -76,8 +76,15 @@ type pipelineOutput struct {
 	typ string
 }
 
-func (s *SolutionRequest) createExplainPipeline(client *compute.Client, desc *pipeline.DescribeSolutionResponse) (*pipeline.PipelineDescription, map[string]*pipelineOutput, error) {
-	// cycle through the description to determine if any primitive can be explained
+func (s *SolutionRequest) createExplainPipeline(client *compute.Client,
+	desc *pipeline.DescribeSolutionResponse, keywords []pipeline.TaskKeyword) (*pipeline.PipelineDescription, map[string]*pipelineOutput, error) {
+	// remote sensing is not explainable
+	for _, kw := range keywords {
+		if kw == pipeline.TaskKeyword_REMOTE_SENSING {
+			return nil, nil, nil
+		}
+	}
+
 	if ok, pipExplain, outputs := s.explainablePipeline(desc); ok {
 		return pipExplain, outputs, nil
 	}

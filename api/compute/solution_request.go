@@ -539,7 +539,12 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	// The client API will also reference things by the initial IDs.
 
 	// get the pipeline description
-	explainDesc, outputKeysExplain, err := s.createExplainPipeline(client, desc)
+	keywords := make([]pipeline.TaskKeyword, 0)
+	if searchRequest.Problem != nil && searchRequest.Problem.Problem != nil {
+		keywords = searchRequest.Problem.Problem.TaskKeywords
+	}
+
+	explainDesc, outputKeysExplain, err := s.createExplainPipeline(client, desc, keywords)
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
