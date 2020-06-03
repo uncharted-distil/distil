@@ -6,7 +6,7 @@
     :subselection.prop="subSelection"
     @facet-element-updated="updateSelection"
   >
-    <div slot="header-label" class="facet-header-container">
+    <div slot="header-label" :class="headerClass">
       <i :class="getGroupIcon(summary) + ' facet-header-icon'"></i>
       <span>{{ summary.label.toUpperCase() }}</span>
       <type-change-menu
@@ -121,7 +121,11 @@ export default Vue.extend({
       const key = `${this.summary.dataset}:${this.summary.key}`;
       return Boolean(this.enabledTypeChanges.find(e => e === key));
     },
-
+    headerClass(): string {
+      return this.facetEnableTypeChanges
+        ? "facet-header-container"
+        : "facet-header-container-no-scroll";
+    },
     facetDisplayMore(): boolean {
       const chunkSize = getCategoricalChunkSize(this.summary.type);
       return this.facetValueCount > chunkSize;
@@ -246,5 +250,18 @@ export default Vue.extend({
 
 .facet-footer-custom-html {
   margin-top: 6px;
+}
+
+.facet-header-container {
+  overflow-y: scroll !important;
+}
+
+.facet-header-container-no-scroll {
+  overflow: auto;
+}
+
+.facet-header-container .dropdown-menu {
+  max-height: 200px;
+  overflow-y: auto;
 }
 </style>
