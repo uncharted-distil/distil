@@ -88,8 +88,7 @@ export default Vue.extend({
         // Upload the file and notify when complete
         const response = await datasetActions.uploadDataFile(this.$store, {
           datasetID: deconflictedName,
-          file: this.file,
-          targetType: this.targetType
+          file: this.file
         });
         this.$emit("uploadfinish", null, response);
       } catch (err) {
