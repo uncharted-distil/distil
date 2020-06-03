@@ -51,7 +51,8 @@ import {
   Highlight,
   RowSelection,
   Row,
-  NUMERICAL_SUMMARY
+  NUMERICAL_SUMMARY,
+  TimeseriesGrouping
 } from "../store/dataset/index";
 import {
   INTEGER_TYPE,
@@ -110,11 +111,11 @@ export default Vue.extend({
         return null;
       }
 
-      const grouping = this.variable.grouping;
-      if (!grouping) {
+      if (!this.variable.grouping) {
         return null;
       }
-      const timeVarName = grouping.properties.xCol;
+      const grouping = this.variable.grouping as TimeseriesGrouping;
+      const timeVarName = grouping.xCol;
 
       if (this.summary.pending || !this.variable) {
         return null;

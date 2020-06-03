@@ -19,8 +19,8 @@ func FetchSummaryVariables(dataset string, metaStore MetadataStorage) ([]*model.
 	// get the hidden list from any grouped variables
 	hidden := []string{}
 	for _, variable := range variables {
-		if variable.Grouping != nil && variable.Grouping.Hidden != nil {
-			hidden = append(hidden, variable.Grouping.Hidden...)
+		if variable.IsGrouping() && variable.Grouping.GetHidden() != nil {
+			hidden = append(hidden, variable.Grouping.GetHidden()...)
 		}
 	}
 
@@ -46,7 +46,7 @@ func FetchDatasetVariables(dataset string, metaStore MetadataStorage) ([]*model.
 	// drop grouped variables - only their components are stored in DB
 	retainedVariables := []*model.Variable{}
 	for _, variable := range variables {
-		if variable.Grouping == nil {
+		if !variable.IsGrouping() {
 			retainedVariables = append(retainedVariables, variable)
 		}
 	}
@@ -72,10 +72,12 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, metaStore Me
 	// If it does, update the filter key to use the highlight column.
 	if updatedFilterParams.Highlight != nil {
 		for _, variable := range variables {
-			if variable.Name == updatedFilterParams.Highlight.Key &&
-				variable.Grouping != nil && HasClusterData(dataset, variable.Grouping.Properties.ClusterCol, metaStore) {
-				updatedFilterParams.Highlight.Key = variable.Grouping.Properties.ClusterCol
-				break
+			if variable.Name == updatedFilterParams.Highlight.Key && variable.IsGrouping() {
+				cluserCol, ok := GetClusterColFromGrouping(variable.Grouping)
+				if ok && HasClusterData(dataset, cluserCol, metaStore) {
+					updatedFilterParams.Highlight.Key = cluserCol
+					break
+				}
 			}
 		}
 	}
@@ -90,22 +92,26 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, metaStore Me
 	for _, filterVar := range filterParams.Variables {
 		if varMap[filterVar] != nil {
 			variable := varMap[filterVar]
-			if variable.Grouping != nil {
+			if variable.IsGrouping() {
 				componentVars := []string{}
 
 				// Include X and Y col when not dealing with time series - time series data is fetched subsequently
-				if !model.IsTimeSeries(variable.Type) {
-					componentVars = append(componentVars, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol)
+				if model.IsGeoCoordinate(variable.Type) {
+					gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
+					componentVars = append(componentVars, gcg.XCol, gcg.YCol)
+				} else if model.IsRemoteSensing(variable.Type) {
+					rsg := variable.Grouping.(*model.RemoteSensingGrouping)
+					componentVars = append(componentVars, rsg.CoordinateCol)
 				}
 
 				// include the grouping ID if present
-				if variable.Grouping.IDCol != "" {
-					componentVars = append(componentVars, variable.Grouping.IDCol)
+				if variable.Grouping.GetIDCol() != "" {
+					componentVars = append(componentVars, variable.Grouping.GetIDCol())
 				}
 
 				// include the grouping sub-ids if the ID is created from mutliple columns
-				if variable.Grouping.SubIDs != nil && len(variable.Grouping.SubIDs) > 0 {
-					componentVars = append(componentVars, variable.Grouping.SubIDs...)
+				if len(variable.Grouping.GetSubIDs()) > 0 {
+					componentVars = append(componentVars, variable.Grouping.GetSubIDs()...)
 				}
 
 				// filter out any hidden variables for timeseries
@@ -145,4 +151,14 @@ func HasClusterData(datasetName string, variableName string, metaStore MetadataS
 		log.Warn(err)
 	}
 	return result
+}
+
+// GetClusterColFromGrouping return the cluster column if it exists in the group.
+func GetClusterColFromGrouping(group model.BaseGrouping) (string, bool) {
+	clustered, ok := group.(*model.TimeseriesGrouping)
+	if ok {
+		return clustered.ClusterCol, true
+	}
+
+	return "", false
 }

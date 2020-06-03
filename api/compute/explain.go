@@ -76,8 +76,15 @@ type pipelineOutput struct {
 	typ string
 }
 
-func (s *SolutionRequest) createExplainPipeline(client *compute.Client, desc *pipeline.DescribeSolutionResponse) (*pipeline.PipelineDescription, map[string]*pipelineOutput, error) {
-	// cycle through the description to determine if any primitive can be explained
+func (s *SolutionRequest) createExplainPipeline(client *compute.Client,
+	desc *pipeline.DescribeSolutionResponse, keywords []pipeline.TaskKeyword) (*pipeline.PipelineDescription, map[string]*pipelineOutput, error) {
+	// remote sensing is not explainable
+	for _, kw := range keywords {
+		if kw == pipeline.TaskKeyword_REMOTE_SENSING {
+			return nil, nil, nil
+		}
+	}
+
 	if ok, pipExplain, outputs := s.explainablePipeline(desc); ok {
 		return pipExplain, outputs, nil
 	}
@@ -147,12 +154,7 @@ func parseFeatureWeight(resultURI string, outputURI string, d3mIndexLookup map[i
 		return nil, errors.Wrap(err, "unable to read feature weight output")
 	}
 
-	err = setD3MIndex(0, d3mIndexLookup, res)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to update d3m index")
-	}
-	res[0][0] = model.D3MIndexFieldName
-
+	res = addD3MIndex(d3mIndexLookup, res)
 	return &api.SolutionFeatureWeights{
 		ResultURI: resultURI,
 		Weights:   res,
@@ -294,16 +296,15 @@ func mapRowIndex(d3mIndexCol int, data [][]string) map[int]string {
 	return indexMap
 }
 
-func setD3MIndex(indexCol int, d3mIndexLookup map[int]string, data [][]string) error {
+func addD3MIndex(d3mIndexLookup map[int]string, data [][]string) [][]string {
+	// assume row order matches for the lookup
+	clone := make([][]string, len(data))
+	clone[0] = append(data[0], model.D3MIndexFieldName)
 	for i := 1; i < len(data); i++ {
-		index, err := strconv.Atoi(data[i][indexCol])
-		if err != nil {
-			return err
-		}
-		data[i][indexCol] = d3mIndexLookup[index]
+		clone[i] = append(data[i], d3mIndexLookup[i-1])
 	}
 
-	return nil
+	return clone
 }
 
 func getD3MFieldIndex(header []string) int {

@@ -161,9 +161,10 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	// Handle grouped variables.
 	target := params.Target
-	if params.Target.Grouping != nil && model.IsTimeSeries(params.Target.Type) {
+	if target.IsGrouping() && model.IsTimeSeries(target.Grouping.GetType()) {
+		tsg := target.Grouping.(*model.TimeseriesGrouping)
 		log.Infof("target is a timeseries so need to extract the prediction target from the grouping")
-		target, err = params.MetaStorage.FetchVariable(meta.ID, params.Target.Grouping.Properties.YCol)
+		target, err = params.MetaStorage.FetchVariable(meta.ID, tsg.YCol)
 		if err != nil {
 			return nil, err
 		}
@@ -171,13 +172,13 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		// need to run the grouping compose to create the needed ID column
 		log.Infof("creating composed variables on inferrence dataset '%s'", params.Dataset)
 		err = CreateComposedVariable(params.MetaStorage, params.DataStorage, params.Dataset,
-			params.Target.Grouping.IDCol, params.Target.Grouping.IDCol, params.Target.Grouping.SubIDs)
+			tsg.IDCol, tsg.IDCol, tsg.SubIDs)
 		if err != nil {
 			return nil, err
 		}
 
 		err = params.MetaStorage.AddGroupedVariable(params.Dataset, params.Target.Name, params.Target.DisplayName,
-			params.Target.Type, params.Target.DistilRole, *params.Target.Grouping)
+			params.Target.Type, params.Target.DistilRole, tsg)
 		if err != nil {
 			return nil, err
 		}
@@ -473,17 +474,17 @@ func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.Me
 // Extracts the list of components that used to create a compound variable.
 func getComponentVariables(variable *model.Variable) []string {
 	componentVars := []string{}
-	if variable.Grouping != nil {
-
-		// Include X and Y col when not dealing with time series - time series data is fetched subsequently
-		componentVars = append(componentVars, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol)
+	// only implemented for geo coordinate groups
+	if variable.IsGrouping() && model.IsGeoCoordinate(variable.Grouping.GetType()) {
+		gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
+		// Include X and Y col
+		componentVars = append(componentVars, gcg.XCol, gcg.YCol)
 
 		// include the grouping sub-ids if the ID is created from mutliple columns
-		if variable.Grouping.SubIDs != nil && len(variable.Grouping.SubIDs) > 0 {
-			componentVars = append(componentVars, variable.Grouping.SubIDs...)
-		} else if variable.Grouping.IDCol != "" {
+		componentVars = append(componentVars, variable.Grouping.GetSubIDs()...)
+		if variable.Grouping.GetIDCol() != "" {
 			// include the grouping ID if present and there were no sub IDs
-			componentVars = append(componentVars, variable.Grouping.IDCol)
+			componentVars = append(componentVars, variable.Grouping.GetIDCol())
 		}
 		return componentVars
 	}

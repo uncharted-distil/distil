@@ -132,8 +132,12 @@ func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*a
 
 func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variable *model.Variable) (*api.Extrema, error) {
 	varName := variable.Name
-	if variable.Grouping != nil {
-		varName = variable.Grouping.Properties.YCol
+	if variable.IsGrouping() && model.IsTimeSeries(variable.Grouping.GetType()) {
+		tsg := variable.Grouping.(*model.TimeseriesGrouping)
+		varName = tsg.YCol
+	} else if variable.IsGrouping() && model.IsGeoCoordinate(variable.Grouping.GetType()) {
+		gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
+		varName = gcg.YCol
 	}
 
 	// add min / max aggregation
@@ -176,27 +180,32 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 	// get the histogram by using the variable type.
 	var field Field
 
-	if variable.Grouping != nil {
+	if variable.IsGrouping() {
 
 		if model.IsTimeSeries(variable.Type) {
+			tsg := variable.Grouping.(*model.TimeseriesGrouping)
 
-			timeColVar, err := s.metadata.FetchVariable(dataset, variable.Grouping.Properties.XCol)
+			timeColVar, err := s.metadata.FetchVariable(dataset, tsg.XCol)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 			}
 
-			valueColVar, err := s.metadata.FetchVariable(dataset, variable.Grouping.Properties.YCol)
+			valueColVar, err := s.metadata.FetchVariable(dataset, tsg.YCol)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 			}
 
-			field = NewTimeSeriesField(s, dataset, storageName, variable.Grouping.Properties.ClusterCol, variable.Name, variable.DisplayName, variable.Type,
-				variable.Grouping.IDCol, timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
+			field = NewTimeSeriesField(s, dataset, storageName, tsg.ClusterCol, variable.Name, variable.DisplayName, variable.Type,
+				variable.Grouping.GetIDCol(), timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
 
-		} else if model.IsGeoCoordinate(variable.Grouping.Type) {
-			field = NewCoordinateField(variable.Name, s, dataset, storageName, variable.Grouping.Properties.XCol, variable.Grouping.Properties.YCol, variable.DisplayName, variable.Grouping.Type, "")
+		} else if model.IsGeoCoordinate(variable.Grouping.GetType()) {
+			gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
+			field = NewCoordinateField(variable.Name, s, dataset, storageName, gcg.XCol, gcg.YCol, variable.DisplayName, variable.Grouping.GetType(), "")
+		} else if model.IsRemoteSensing(variable.Grouping.GetType()) {
+			rsg := variable.Grouping.(*model.RemoteSensingGrouping)
+			field = NewRemoteSensingField(rsg.IDCol, s, dataset, storageName, rsg.CoordinateCol, variable.DisplayName, variable.Grouping.GetType(), model.D3MIndexName)
 		} else {
-			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.IDCol, variable.Grouping.Type)
+			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.GetIDCol(), variable.Grouping.GetType())
 		}
 
 	} else {
@@ -209,8 +218,8 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 				return nil, err
 			}
 			for _, v := range vars {
-				if v.Grouping != nil {
-					countCol = v.Grouping.IDCol
+				if v.IsGrouping() {
+					countCol = v.Grouping.GetIDCol()
 				}
 			}
 		}

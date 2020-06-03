@@ -18,10 +18,10 @@ package elastic
 import (
 	"context"
 
+	elastic "github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util/json"
-	elastic "gopkg.in/olivere/elastic.v5"
 )
 
 const (
@@ -32,7 +32,7 @@ func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, 
 	var models []*api.ExportedModel
 	for _, hit := range res.Hits.Hits {
 		// parse hit into JSON
-		src, err := json.Unmarshal(*hit.Source)
+		src, err := json.Unmarshal(hit.Source)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse model")
 		}
@@ -99,7 +99,6 @@ func (s *Storage) PersistExportedModel(model *api.ExportedModel) error {
 	// push the document into the model index
 	_, err = s.client.Index().
 		Index(s.modelIndex).
-		Type("model").
 		Id(model.FittedSolutionID).
 		BodyString(string(bytes)).
 		Refresh("true").

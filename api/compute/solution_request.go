@@ -539,7 +539,12 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	// The client API will also reference things by the initial IDs.
 
 	// get the pipeline description
-	explainDesc, outputKeysExplain, err := s.createExplainPipeline(client, desc)
+	keywords := make([]pipeline.TaskKeyword, 0)
+	if searchRequest.Problem != nil && searchRequest.Problem.Problem != nil {
+		keywords = searchRequest.Problem.Problem.TaskKeywords
+	}
+
+	explainDesc, outputKeysExplain, err := s.createExplainPipeline(client, desc, keywords)
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
@@ -822,15 +827,16 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// save timestamp variable index for data splitting
 	targetVariable := s.TargetFeature
 	if model.IsTimeSeries(targetVariable.Type) {
+		tsg := targetVariable.Grouping.(*model.TimeseriesGrouping)
 		// find the index of the timestamp variable of the timeseries
-		timestampVariable, err := findVariable(targetVariable.Grouping.Properties.XCol, dataVariables)
+		timestampVariable, err := findVariable(tsg.XCol, dataVariables)
 		if err != nil {
 			return err
 		}
 		groupingVariableIndex = timestampVariable.Index
 
 		// update the target variable to be the Y col of the timeseries group
-		targetVariable, err = findVariable(targetVariable.Grouping.Properties.YCol, dataVariables)
+		targetVariable, err = findVariable(tsg.YCol, dataVariables)
 		if err != nil {
 			return err
 		}

@@ -19,18 +19,15 @@ import (
 	"context"
 	"fmt"
 
+	elastic "github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util/json"
-	elastic "gopkg.in/olivere/elastic.v5"
 )
 
 const (
-	// DatasetSuffix is the suffix for the dataset entry when stored in
-	// elasticsearch.
-	metadataType = "metadata"
 	// Provenance for elastic
 	Provenance       = "elastic"
 	datasetsListSize = 1000
@@ -45,7 +42,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 	var datasets []*api.Dataset
 	for _, hit := range res.Hits.Hits {
 		// parse hit into JSON
-		src, err := json.Unmarshal(*hit.Source)
+		src, err := json.Unmarshal(hit.Source)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse dataset")
 		}
@@ -253,7 +250,6 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 	// push the document into the metadata index
 	_, err := s.client.Update().
 		Index(s.datasetIndex).
-		Type(metadataType).
 		Id(dataset).
 		Doc(source).
 		Refresh("true").
@@ -371,7 +367,7 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 }
 
 // AddGroupedVariable adds a grouping to the metadata.
-func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.Grouping) error {
+func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.BaseGrouping) error {
 
 	// Create a new grouping variable
 	err := s.AddVariable(dataset, varName, varDisplayName, varType, varRole)
@@ -398,7 +394,7 @@ func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayN
 	hit := res.Hits.Hits[0]
 
 	// parse hit into JSON
-	source, err := json.Unmarshal(*hit.Source)
+	source, err := json.Unmarshal(hit.Source)
 	if err != nil {
 		return errors.Wrap(err, "elasticsearch dataset unmarshal failed")
 	}
@@ -423,7 +419,6 @@ func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayN
 	// push the document into the metadata index
 	_, err = s.client.Index().
 		Index(s.datasetIndex).
-		Type(metadataType).
 		Id(dataset).
 		BodyJson(source).
 		Refresh("true").
@@ -436,7 +431,7 @@ func (s *Storage) AddGroupedVariable(dataset string, varName string, varDisplayN
 }
 
 // RemoveGroupedVariable removes a grouping to the metadata.
-func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.Grouping) error {
+func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.BaseGrouping) error {
 
 	query := elastic.NewMatchQuery("_id", datasetName)
 	// execute the ES query
@@ -456,7 +451,7 @@ func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.Group
 	hit := res.Hits.Hits[0]
 
 	// parse hit into JSON
-	source, err := json.Unmarshal(*hit.Source)
+	source, err := json.Unmarshal(hit.Source)
 	if err != nil {
 		return errors.Wrap(err, "elasticsearch dataset unmarshal failed")
 	}
@@ -469,7 +464,7 @@ func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.Group
 	found := false
 	for _, variable := range variables {
 		name, ok := json.String(variable, "colName")
-		if ok && name == grouping.IDCol {
+		if ok && name == grouping.GetIDCol() {
 			delete(variable, model.VarGroupingField)
 			variable["colType"] = variable["colOriginalType"]
 			found = true
@@ -482,7 +477,6 @@ func (s *Storage) RemoveGroupedVariable(datasetName string, grouping model.Group
 	// push the document into the metadata index
 	_, err = s.client.Index().
 		Index(s.datasetIndex).
-		Type(metadataType).
 		Id(datasetName).
 		BodyJson(source).
 		Refresh("true").
