@@ -8,7 +8,7 @@ import { getters as modelGetters } from "../store/model/module";
  * @return {String}
  */
 export function getModelNameByFittedSolutionId(
-  fittedSolutionId: string
+  fittedSolutionId: string | null
 ): string {
   const model = modelGetters
     .getModels(store)
