@@ -9,7 +9,7 @@
         </dataset-preview>
       </div>
       <div
-        class="row justify-content-center"
+        class="row justify-content-center pt-3"
         v-if="
           !isPending && (!filteredDatasets || filteredDatasets.length === 0)
         "

@@ -309,10 +309,9 @@ export const actions = {
     args: {
       datasetID: string;
       file: File;
-      targetType: string;
     }
   ): Promise<void> {
-    if (!validateArgs(args, ["datasetID", "file", "type"])) {
+    if (!validateArgs(args, ["datasetID", "file"])) {
       return null;
     }
     const data = new FormData();

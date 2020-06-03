@@ -1,5 +1,5 @@
 import { Model, ModelState } from "./index";
-import _ from "lodash";
+import { isInteger, values } from "lodash";
 
 export const getters = {
   getFilteredModels(state: ModelState): Model[] {
@@ -7,6 +7,11 @@ export const getters = {
   },
 
   getModels(state: ModelState): Model[] {
-    return _.values(state.models);
+    return values(state.models);
+  },
+
+  getCountOfModels(state: ModelState): number {
+    const count = values(state.models).length;
+    return isInteger(count) ? count : 0;
   }
 };
