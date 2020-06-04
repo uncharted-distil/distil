@@ -43,7 +43,8 @@ import { Highlight, VariableSummary } from "../../store/dataset";
 import {
   getCategoricalChunkSize,
   getGroupIcon,
-  getSubSelectionValues
+  getSubSelectionValues,
+  hasBaseline
 } from "../../util/facets";
 import _ from "lodash";
 
@@ -85,16 +86,16 @@ export default Vue.extend({
 
   computed: {
     max(): number {
-      if (this.summary.baseline.buckets.length) {
+      if (hasBaseline(this.summary)) {
         return this.summary.baseline.extrema.max;
       }
       return 0;
     },
     facetData(): FacetTermsData {
-      const summary = this.summary;
-      const numToDisplay = this.numToDisplay;
       const values = [];
-      if (summary.baseline.buckets.length) {
+      const summary = this.summary;
+      if (hasBaseline(summary)) {
+        const numToDisplay = this.numToDisplay;
         const buckets = summary.baseline.buckets;
         for (
           let i = 0, n = Math.min(buckets.length, numToDisplay);

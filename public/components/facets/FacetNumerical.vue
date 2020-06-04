@@ -41,7 +41,7 @@ import { FacetBarsData } from "@uncharted/facets-core/dist/types/facet-bars/Face
 
 import TypeChangeMenu from "../TypeChangeMenu";
 import { Highlight, VariableSummary } from "../../store/dataset";
-import { getSubSelectionValues } from "../../util/facets";
+import { getSubSelectionValues, hasBaseline } from "../../util/facets";
 import _ from "lodash";
 
 export default Vue.extend({
@@ -76,7 +76,7 @@ export default Vue.extend({
 
   computed: {
     max(): number {
-      if (this.summary.baseline.buckets.length) {
+      if (hasBaseline(this.summary)) {
         const buckets = this.summary.baseline.buckets;
         // seems to be incorrect compute based on the current buckets
         // const maxCount = summary.baseline.extrema.max;
@@ -87,7 +87,7 @@ export default Vue.extend({
     facetData(): FacetBarsData {
       const summary = this.summary;
       const values = [];
-      if (summary.baseline.buckets.length) {
+      if (hasBaseline(summary)) {
         const buckets = summary.baseline.buckets;
         for (let i = 0, n = buckets.length; i < n; ++i) {
           values.push({

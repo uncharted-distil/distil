@@ -484,16 +484,45 @@ export function getTimeseriesFacetValue(
   };
 }
 
+export function hasSummary(summary: VariableSummary) {
+  return !!summary;
+}
+
+export function hasBaseline(summary: VariableSummary) {
+  return (
+    hasSummary(summary) &&
+    !!summary.baseline &&
+    !!summary.baseline.buckets &&
+    summary.baseline.buckets.length > 0
+  );
+}
+
+export function hasFiltered(summary: VariableSummary) {
+  return (
+    hasSummary(summary) &&
+    !!summary.filtered &&
+    !!summary.filtered.buckets &&
+    summary.filtered.buckets.length > 0
+  );
+}
+
 export function getSubSelectionValues(
   summary: VariableSummary,
   max: number
 ): number[] {
-  const values = [];
-  if (summary.filtered && summary.filtered.buckets.length) {
-    const buckets = summary.filtered.buckets;
-    for (let i = 0, n = buckets.length; i < n; ++i) {
-      values.push(buckets[i].count / max);
-    }
+  if (!hasFiltered(summary)) {
+    return null;
   }
-  return values.length > 0 ? values : null;
+  return summary.filtered.buckets.map(bucket => bucket.count / max);
+}
+
+export function getFacetByType(type: string): string {
+  switch (type) {
+    case CATEGORICAL_SUMMARY:
+      return "facet-categorical";
+    case NUMERICAL_SUMMARY:
+      return "facet-numerical";
+    default:
+      return null;
+  }
 }

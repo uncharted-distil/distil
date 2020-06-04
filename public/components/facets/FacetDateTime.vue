@@ -40,7 +40,11 @@ import "@uncharted/facets-plugins";
 
 import TypeChangeMenu from "../TypeChangeMenu";
 import { Highlight, VariableSummary } from "../../store/dataset";
-import { getSubSelectionValues } from "../../util/facets";
+import {
+  getSubSelectionValues,
+  hasBaseline,
+  hasSummary
+} from "../../util/facets";
 import { DATETIME_FILTER } from "../../util/filters";
 import { DATETIME_UNIX_ADJUSTMENT } from "../../util/types";
 import _ from "lodash";
@@ -78,7 +82,7 @@ export default Vue.extend({
 
   computed: {
     max(): number {
-      if (this.summary.baseline.buckets.length) {
+      if (hasBaseline(this.summary)) {
         const buckets = this.summary.baseline.buckets;
         // seems to be incorrect compute based on the current buckets
         // const maxCount = summary.baseline.extrema.max;
@@ -89,7 +93,7 @@ export default Vue.extend({
     facetData(): { label: string; values: { ratio: number; label: string }[] } {
       const summary = this.summary;
       const values = [];
-      if (summary.baseline.buckets.length) {
+      if (hasBaseline(summary)) {
         const buckets = summary.baseline.buckets;
         for (let i = 0, n = buckets.length; i < n; ++i) {
           values.push({
