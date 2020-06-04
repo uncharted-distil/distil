@@ -22,10 +22,15 @@ export const getters = {
   // dataset
   getDatasets: read(moduleGetters.getDatasets),
   getFilteredDatasets: read(moduleGetters.getFilteredDatasets),
+  getCountOfFilteredDatasets: read(moduleGetters.getCountOfFilteredDatasets),
   getPendingRequests: read(moduleGetters.getPendingRequests),
+
   // variables
   getVariables: read(moduleGetters.getVariables),
   getGroupings: read(moduleGetters.getGroupings),
+  getTimeseriesGroupingVariables: read(
+    moduleGetters.getTimeseriesGroupingVariables
+  ),
   getVariablesMap: read(moduleGetters.getVariablesMap),
   getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
   getVariableSummaries: read(moduleGetters.getVariableSummaries),
@@ -36,18 +41,22 @@ export const getters = {
     moduleGetters.getExcludedVariableSummaries
   ),
   getVariableRankings: read(moduleGetters.getVariableRankings),
+
   // files
   getFiles: read(moduleGetters.getFiles),
   getTimeseries: read(moduleGetters.getTimeseries),
   getTimeseriesExtrema: read(moduleGetters.getTimeseriesExtrema),
+
   // join data
   getJoinDatasetsTableData: read(moduleGetters.getJoinDatasetsTableData),
+
   // included data
   hasIncludedTableData: read(moduleGetters.hasIncludedTableData),
   getIncludedTableData: read(moduleGetters.getIncludedTableData),
   getIncludedTableDataNumRows: read(moduleGetters.getIncludedTableDataNumRows),
   getIncludedTableDataItems: read(moduleGetters.getIncludedTableDataItems),
   getIncludedTableDataFields: read(moduleGetters.getIncludedTableDataFields),
+
   // excluded data
   hasExcludedTableData: read(moduleGetters.hasExcludedTableData),
   getExcludedTableData: read(moduleGetters.getExcludedTableData),

@@ -75,7 +75,7 @@ func Get(json map[string]interface{}, path ...string) (map[string]interface{}, b
 // Struct fills a struct under the given path.
 func Struct(j map[string]interface{}, arg interface{}, path ...string) bool {
 	v, ok := get(j, path...)
-	if !ok {
+	if !ok || v == nil {
 		return false
 	}
 	bs, err := Marshal(v)

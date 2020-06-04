@@ -11,6 +11,7 @@ import {
 } from "./index";
 import { Dictionary } from "../../util/dict";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
+import { isInteger, values } from "lodash";
 
 export const getters = {
   getDatasets(state: DatasetState): Dataset[] {
@@ -21,12 +22,35 @@ export const getters = {
     return state.filteredDatasets;
   },
 
+  getCountOfFilteredDatasets(state: DatasetState): number {
+    const count = values(state.filteredDatasets).length;
+    return isInteger(count) ? count : 0;
+  },
+
   getVariables(state: DatasetState, getters: any): Variable[] {
     return state.variables;
   },
 
   getGroupings(state: DatasetState, getters: any): Variable[] {
     return state.variables.filter(v => v.grouping);
+  },
+
+  /**
+   * Return the varibles used on the timeseries grouping.
+   * @return {Array<String>}
+   */
+  getTimeseriesGroupingVariables(state: DatasetState): string[] {
+    // Get only the timeseries grouping.
+    const timeseriesGrouping = state.variables.find(
+      v => v.grouping && v.grouping.type === "timeseries"
+    );
+
+    // Return an empty array if none have been found.
+    if (!timeseriesGrouping) {
+      return [];
+    }
+
+    return timeseriesGrouping.grouping.subIds;
   },
 
   getPendingRequests(state: DatasetState) {

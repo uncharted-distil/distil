@@ -131,7 +131,7 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 	}
 
-	// treat each axis as a separte field for the purposes of query generation
+	// treat each axis as a separate field for the purposes of query generation
 	xField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.XCol, f.XCol, model.RealType, "")
 	yField := NewNumericalField(f.Storage, f.DatasetName, f.DatasetStorageName, f.YCol, f.YCol, model.RealType, "")
 
@@ -145,7 +145,7 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 		return nil, err
 	}
 
-	xNumBuckets, yNumBuckets := f.getNumBuckets(numBuckets, xExtrema, yExtrema)
+	xNumBuckets, yNumBuckets := getEqualBivariateBuckets(numBuckets, xExtrema, yExtrema)
 
 	// generate a histogram query for each
 	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema, xNumBuckets)
@@ -205,7 +205,7 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 		return nil, err
 	}
 
-	xNumBuckets, yNumBuckets := f.getNumBuckets(numBuckets, xExtrema, yExtrema)
+	xNumBuckets, yNumBuckets := getEqualBivariateBuckets(numBuckets, xExtrema, yExtrema)
 
 	// create histograms given the the extrema
 	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema, xNumBuckets)
@@ -339,18 +339,4 @@ func (f *CoordinateField) fetchDefaultFilter(fieldName string) *model.Filter {
 	}
 
 	return filter
-}
-
-func (f *CoordinateField) getNumBuckets(numBuckets int, xExtrema *api.Extrema, yExtrema *api.Extrema) (int, int) {
-	// adjust the buckets to account for x/y ratio
-	xSize := xExtrema.Max - xExtrema.Min
-	ySize := yExtrema.Max - yExtrema.Min
-	xNumBuckets := numBuckets
-	yNumBuckets := numBuckets
-	if xSize > ySize {
-		yNumBuckets = int(ySize / xSize * float64(yNumBuckets))
-	} else {
-		xNumBuckets = int(xSize / ySize * float64(xNumBuckets))
-	}
-	return xNumBuckets, yNumBuckets
 }

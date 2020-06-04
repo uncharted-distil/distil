@@ -54,8 +54,8 @@
           :key="data.item[timeseriesGrouping.idCol].value"
           :truth-dataset="truthDataset"
           :forecast-dataset="predictions.dataset"
-          :x-col="timeseriesGrouping.properties.xCol"
-          :y-col="timeseriesGrouping.properties.yCol"
+          :x-col="timeseriesGrouping.xCol"
+          :y-col="timeseriesGrouping.yCol"
           :timeseries-col="timeseriesGrouping.idCol"
           :timeseries-id="data.item[timeseriesGrouping.idCol].value"
           :predictions-id="predictions.requestId"
@@ -84,7 +84,8 @@ import {
   Grouping,
   Variable,
   RowSelection,
-  TaskTypes
+  TaskTypes,
+  TimeseriesGrouping
 } from "../store/dataset/index";
 import { getters as predictionsGetters } from "../store/predictions/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -188,7 +189,7 @@ export default Vue.extend({
       return getImageFields(this.fields);
     },
 
-    timeseriesGroupings(): Grouping[] {
+    timeseriesGroupings(): TimeseriesGrouping[] {
       const variables = datasetGetters.getVariables(this.$store);
       return getTimeseriesGroupingsFromFields(variables, this.fields);
     }

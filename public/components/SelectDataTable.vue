@@ -39,8 +39,8 @@
           <div class="row">
             <sparkline-preview
               :truth-dataset="dataset"
-              :x-col="timeseriesGrouping.properties.xCol"
-              :y-col="timeseriesGrouping.properties.yCol"
+              :x-col="timeseriesGrouping.xCol"
+              :y-col="timeseriesGrouping.yCol"
               :timeseries-col="timeseriesGrouping.idCol"
               :timeseries-id="data.item[timeseriesGrouping.idCol].value"
             >
@@ -73,7 +73,8 @@ import {
   Grouping,
   Variable,
   D3M_INDEX_FIELD,
-  RowSelection
+  RowSelection,
+  TimeseriesGrouping
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { TIMESERIES_TYPE, hasComputedVarPrefix } from "../util/types";
@@ -142,7 +143,7 @@ export default Vue.extend({
       return getImageFields(this.fields);
     },
 
-    timeseriesGroupings(): Grouping[] {
+    timeseriesGroupings(): TimeseriesGrouping[] {
       return getTimeseriesGroupingsFromFields(this.variables, this.fields);
     },
 

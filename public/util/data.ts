@@ -8,6 +8,7 @@ import {
   TableRow,
   TableColumn,
   Grouping,
+  TimeseriesGrouping,
   D3M_INDEX_FIELD,
   SummaryMode
 } from "../store/dataset/index";
@@ -35,7 +36,8 @@ import {
   isTimeType,
   hasComputedVarPrefix,
   IMAGE_TYPE,
-  MULTIBAND_IMAGE_TYPE
+  MULTIBAND_IMAGE_TYPE,
+  TIMESERIES_TYPE
 } from "../util/types";
 
 // Postfixes for special variable names
@@ -67,7 +69,7 @@ export function getTimeseriesSummaryTopCategories(
 export function getTimeseriesGroupingsFromFields(
   variables: Variable[],
   fields: Dictionary<TableColumn>
-): Grouping[] {
+): TimeseriesGrouping[] {
   // Check to see if any of the fields are the ID column of one of our variables
   const fieldKeys = _.map(fields, (_, key) => key);
   return variables
@@ -77,7 +79,7 @@ export function getTimeseriesGroupingsFromFields(
         v.grouping.idCol &&
         _.includes(fieldKeys, v.grouping.idCol)
     )
-    .map(v => v.grouping);
+    .map(v => v.grouping as TimeseriesGrouping);
 }
 
 export function getComposedVariableKey(keys: string[]): string {
@@ -177,17 +179,18 @@ export function fetchSummaryExemplars(
 
   if (exemplars) {
     if (variable.grouping) {
-      if (variable.grouping.type === "timeseries") {
+      if (variable.grouping.type === TIMESERIES_TYPE) {
         // if there a linked exemplars, fetch those before resolving
         const solutionId = routeGetters.getRouteSolutionId(store);
+        const grouping = variable.grouping as TimeseriesGrouping;
 
         return Promise.all(
           exemplars.map(exemplar => {
             const args = {
               dataset: datasetName,
-              timeseriesColName: variable.grouping.idCol,
-              xColName: variable.grouping.properties.xCol,
-              yColName: variable.grouping.properties.yCol,
+              timeseriesColName: grouping.idCol,
+              xColName: grouping.xCol,
+              yColName: grouping.yCol,
               timeseriesId: exemplar,
               solutionId: solutionId
             };
@@ -231,15 +234,16 @@ export function fetchResultExemplars(
 
   if (exemplars) {
     if (variable.grouping) {
-      if (variable.grouping.type === "timeseries") {
+      if (variable.grouping.type === TIMESERIES_TYPE) {
+        const grouping = variable.grouping as TimeseriesGrouping;
         // if there a linked exemplars, fetch those before resolving
         return Promise.all(
           exemplars.map(exemplar => {
             return resultsActions.fetchForecastedTimeseries(store, {
               dataset: datasetName,
-              timeseriesColName: variable.grouping.idCol,
-              xColName: variable.grouping.properties.xCol,
-              yColName: variable.grouping.properties.yCol,
+              timeseriesColName: grouping.idCol,
+              xColName: grouping.xCol,
+              yColName: grouping.yCol,
               timeseriesId: exemplar,
               solutionId: solutionId
             });

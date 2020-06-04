@@ -31,10 +31,10 @@
 
     <p class="small-margin">
       <b-button
-        class="float-right"
+        class="float-right select-data-action-exclude"
         v-if="includedActive"
         variant="outline-secondary"
-        :disabled="!isFilteringHighlights && !isFilteringSelection"
+        :disabled="isExcludeDisabled"
         @click="onExcludeClick"
       >
         <i
@@ -187,6 +187,10 @@ export default Vue.extend({
       return datasetGetters.getVariables(this.$store);
     },
 
+    availableVariables(): Variable[] {
+      return routeGetters.getAvailableVariables(this.$store);
+    },
+
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
     },
@@ -232,6 +236,34 @@ export default Vue.extend({
       return createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
     },
 
+    /**
+     * Check if the Active Filter is from an available feature.
+     * @returns {Boolean}
+     */
+    isActiveFilterFromAnAvailableFeature(): Boolean {
+      if (!this.activeFilter) {
+        return false;
+      }
+
+      const activeFilterName = this.activeFilter.key;
+      const availableVariablesNames = this.availableVariables.map(
+        v => v.colName
+      );
+
+      return availableVariablesNames.includes(activeFilterName);
+    },
+
+    /**
+     * Disable the Exclude filter button.
+     * @returns {Boolean}
+     */
+    isExcludeDisabled(): Boolean {
+      return (
+        (!this.isFilteringHighlights && !this.isFilteringSelection) ||
+        this.isActiveFilterFromAnAvailableFeature
+      );
+    },
+
     filters(): Filter[] {
       return routeGetters.getDecodedFilters(this.$store);
     },
@@ -275,6 +307,7 @@ export default Vue.extend({
     filterHash(filter: Filter) {
       return JSON.stringify(filter);
     },
+
     onExcludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {
@@ -306,6 +339,7 @@ export default Vue.extend({
         details: { filter: filter }
       });
     },
+
     onReincludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {
@@ -337,6 +371,7 @@ export default Vue.extend({
         details: { filter: filter }
       });
     },
+
     setIncludedActive() {
       const entry = overlayRouteEntry(this.$route, {
         include: "true"
@@ -378,6 +413,7 @@ export default Vue.extend({
   opacity: 1;
   z-index: 1;
 }
+
 table.b-table > tfoot > tr > th.sorting:before,
 table.b-table > thead > tr > th.sorting:before,
 table.b-table > tfoot > tr > th.sorting:after,
@@ -388,24 +424,30 @@ table.b-table > thead > tr > th.sorting:after {
 table tr {
   cursor: pointer;
 }
+
 .select-data-table .small-margin {
   margin-bottom: 0.5rem;
 }
-.include-highlight,
-.exclude-highlight {
+
+.select-data-action-exclude:not([disabled]) .include-highlight,
+.select-data-action-exclude:not([disabled]) .exclude-highlight {
   color: #00c6e1;
 }
-.include-selection,
-.exclude-selection {
+
+.select-data-action-exclude:not([disabled]) .include-selection,
+.select-data-action-exclude:not([disabled]) .exclude-selection {
   color: #ff0067;
 }
+
 .row-number-label {
   position: relative;
   top: 20px;
 }
+
 .matching-color {
   color: #00c6e1;
 }
+
 .fake-search-input {
   position: relative;
   height: 38px;
@@ -415,9 +457,11 @@ table tr {
   border: 1px solid #ccc;
   border-radius: 0.2rem;
 }
+
 .pending {
   opacity: 0.5;
 }
+
 .selected-color {
   color: #ff0067;
 }

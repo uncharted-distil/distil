@@ -539,7 +539,12 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	// The client API will also reference things by the initial IDs.
 
 	// get the pipeline description
-	explainDesc, outputKeysExplain, err := s.createExplainPipeline(client, desc)
+	keywords := make([]pipeline.TaskKeyword, 0)
+	if searchRequest.Problem != nil && searchRequest.Problem.Problem != nil {
+		keywords = searchRequest.Problem.Problem.TaskKeywords
+	}
+
+	explainDesc, outputKeysExplain, err := s.createExplainPipeline(client, desc, keywords)
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
@@ -796,9 +801,13 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// TODO: imported datasets have d3m index as distil role = "index".
 	//       need to figure out if that causes issues!!!
 	dataVariables := []*model.Variable{}
+	groupingVariableIndex := -1
 	for _, variable := range variables {
-		if model.IsTA2Field(variable.DistilRole) {
+		if model.IsTA2Field(variable.DistilRole, variable.SelectedRole) {
 			dataVariables = append(dataVariables, variable)
+		}
+		if variable.DistilRole == model.VarDistilRoleGrouping {
+			groupingVariableIndex = variable.Index
 		}
 	}
 
@@ -816,18 +825,18 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	// timeseries specific handling - the target needs to be set to the timeseries Y field, and we need to
 	// save timestamp variable index for data splitting
-	timestampVariableIndex := -1
 	targetVariable := s.TargetFeature
 	if model.IsTimeSeries(targetVariable.Type) {
+		tsg := targetVariable.Grouping.(*model.TimeseriesGrouping)
 		// find the index of the timestamp variable of the timeseries
-		timestampVariable, err := findVariable(targetVariable.Grouping.Properties.XCol, dataVariables)
+		timestampVariable, err := findVariable(tsg.XCol, dataVariables)
 		if err != nil {
 			return err
 		}
-		timestampVariableIndex = timestampVariable.Index
+		groupingVariableIndex = timestampVariable.Index
 
 		// update the target variable to be the Y col of the timeseries group
-		targetVariable, err = findVariable(targetVariable.Grouping.Properties.YCol, dataVariables)
+		targetVariable, err = findVariable(tsg.YCol, dataVariables)
 		if err != nil {
 			return err
 		}
@@ -848,14 +857,14 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	// perist the datasets and get URI
 	params := &persistedDataParams{
-		DatasetName:          s.DatasetInput,
-		SchemaFile:           compute.D3MDataSchema,
-		SourceDataFolder:     datasetInputDir,
-		TmpDataFolder:        datasetDir,
-		TaskType:             s.Task,
-		TimeseriesFieldIndex: timestampVariableIndex,
-		TargetFieldIndex:     targetVariable.Index,
-		Stratify:             stratify,
+		DatasetName:        s.DatasetInput,
+		SchemaFile:         compute.D3MDataSchema,
+		SourceDataFolder:   datasetInputDir,
+		TmpDataFolder:      datasetDir,
+		TaskType:           s.Task,
+		GroupingFieldIndex: groupingVariableIndex,
+		TargetFieldIndex:   targetVariable.Index,
+		Stratify:           stratify,
 	}
 	datasetPathTrain, datasetPathTest, err := persistOriginalData(params)
 	if err != nil {

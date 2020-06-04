@@ -73,9 +73,10 @@ func (s *Storage) getResultTargetVariable(dataset string, targetName string) (*m
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to get target variable information")
 	}
-	if variable.Grouping != nil && model.IsTimeSeries(variable.Type) {
+	if variable.IsGrouping() && model.IsTimeSeries(variable.Type) {
 		// extract the time series value column
-		return s.metadata.FetchVariable(dataset, variable.Grouping.Properties.YCol)
+		tsg := variable.Grouping.(*model.TimeseriesGrouping)
+		return s.metadata.FetchVariable(dataset, tsg.YCol)
 	}
 	return variable, nil
 }
@@ -138,7 +139,7 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 			if fieldsMap[i] > 0 {
 				w, err := strconv.ParseFloat(row[fieldsMap[i]-1], 64)
 				if err != nil {
-					return nil
+					return errors.Wrap(err, "failed to parse feature weight")
 				}
 				parsedWeights[count] = w
 				count = count + 1
@@ -219,6 +220,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 
 	// build the batch data
 	insertData := make([][]interface{}, 0)
+	indicesParsed := make(map[int64]bool)
 	for i := 1; i < len(records); i++ {
 		// Each data row is index, target.
 		// handle the parsed result/error - should be an int some TA2 systems return floats
@@ -230,6 +232,13 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			}
 			parsedVal = int64(parsedValFloat)
 		}
+
+		// assume (FOR NOW!!!) multi index results will be the same for a given
+		// d3m index so store only 1 / index to not have duplicate query results
+		if indicesParsed[parsedVal] {
+			continue
+		}
+		indicesParsed[parsedVal] = true
 
 		dataForInsert := []interface{}{resultURI, parsedVal, targetVariable.Name, records[i][targetIndex]}
 		if confidences[records[i][d3mIndexIndex]] != nil {
@@ -243,8 +252,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 
 	fields := []string{"result_id", "index", "target", "value"}
 	if len(confidences) > 0 {
-		fields = append(fields, "confidence_low")
-		fields = append(fields, "confidence_high")
+		fields = append(fields, "confidence_low", "confidence_high")
 	}
 
 	// store all results to the storage
@@ -808,8 +816,11 @@ func mapFields(fields []*model.Variable) map[string]*model.Variable {
 
 func isTimeSeriesValue(variables []*model.Variable, targetVariable *model.Variable) bool {
 	for _, v := range variables {
-		if v.Grouping != nil && v.Grouping.Properties.YCol == targetVariable.Name {
-			return true
+		if v.IsGrouping() && model.IsTimeSeries(v.Grouping.GetType()) {
+			tsg := v.Grouping.(*model.TimeseriesGrouping)
+			if tsg.YCol == targetVariable.Name {
+				return true
+			}
 		}
 	}
 	return false

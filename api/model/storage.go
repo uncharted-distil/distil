@@ -127,8 +127,8 @@ type MetadataStorage interface {
 	SetExtrema(dataset string, varName string, extrema *Extrema) error
 	AddVariable(dataset string, varName string, varDisplayName string, varType string, varDistilRole string) error
 	DeleteVariable(dataset string, varName string) error
-	AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.Grouping) error
-	RemoveGroupedVariable(datasetName string, grouping model.Grouping) error
+	AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.BaseGrouping) error
+	RemoveGroupedVariable(datasetName string, grouping model.BaseGrouping) error
 }
 
 // ExportedModelStorageCtor represents a client constructor to instantiate a

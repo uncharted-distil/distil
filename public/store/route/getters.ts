@@ -3,7 +3,8 @@ import {
   VariableSummary,
   Highlight,
   RowSelection,
-  SummaryMode
+  SummaryMode,
+  TaskTypes
 } from "../dataset/index";
 import {
   JOINED_VARS_INSTANCE_PAGE,
@@ -415,5 +416,21 @@ export const getters = {
       return null;
     }
     return dataset;
+  },
+
+  /**
+   * Check if the current task includes Remote Sensing.
+   * @param {Route} state
+   * @returns {Boolean}
+   */
+  isRemoteSensing(state: Route): boolean {
+    // Get the list of task of the route.
+    const task = state.query.task as string;
+    if (!task) {
+      return false;
+    }
+
+    // Check if REMOTE_SENSING is part of it.
+    return task.includes(TaskTypes.REMOTE_SENSING);
   }
 };

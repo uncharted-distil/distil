@@ -474,6 +474,11 @@ button {
   text-align: right;
 }
 
+.variable-facets-container .dropdown-menu {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
 .facet-filters {
   margin: 0 -10px 4px -10px;
 }

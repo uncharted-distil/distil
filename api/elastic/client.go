@@ -20,9 +20,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 	"github.com/unchartedsoftware/plog"
-	"gopkg.in/olivere/elastic.v5"
 )
 
 const (

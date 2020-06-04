@@ -50,7 +50,8 @@ import {
   DatasetPendingRequestStatus,
   GeocodingPendingRequest,
   ClusteringPendingRequest,
-  SummaryMode
+  SummaryMode,
+  isClusteredGrouping
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
@@ -256,7 +257,7 @@ export default Vue.extend({
       // mode to cluster now that data is available
       datasetGetters
         .getGroupings(this.$store)
-        .filter(v => v.grouping.properties.clusterCol)
+        .filter(v => isClusteredGrouping(v.grouping))
         .forEach(v => {
           varModesMap.set(v.colName, SummaryMode.Cluster);
         });

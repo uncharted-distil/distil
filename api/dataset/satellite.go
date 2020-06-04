@@ -76,7 +76,7 @@ func (b *BoundingBox) ToString() string {
 		b.pointToString(b.UpperRight),
 		b.pointToString(b.LowerRight),
 	}
-	return strings.Join(coords, ",")
+	return fmt.Sprintf("{%s}", strings.Join(coords, ","))
 }
 
 func (b *BoundingBox) pointToString(point *Point) string {
@@ -121,7 +121,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	outputDatasetPath := rootDataPath
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 
-	imageFolders, err := getImageFolders(s.ExtractedFilePath)
+	imageFolders, err := getLabelFolders(s.ExtractedFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -212,29 +212,29 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			[]string{model.RoleMultiIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
 	)
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(1, "image_file", "image_file", "image_file", model.StringType,
-			model.StringType, "Reference to image file", []string{"attribute"},
-			model.VarRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
+		model.NewVariable(1, "image_file", "image_file", "image_file", model.MultiBandImageType,
+			model.MultiBandImageType, "Reference to image file", []string{"attribute"},
+			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(2, "group_id", "group_id", "group_id", model.StringType,
 			model.StringType, "ID linking all bands of a particular image set together", []string{"attribute"},
-			model.VarRoleData, nil, dr.Variables, false))
+			model.VarDistilRoleGrouping, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(3, "band", "band", "band", model.StringType,
-			model.StringType, "Image band", []string{"attribute"},
-			model.VarRoleData, nil, dr.Variables, false))
+			model.StringType, "Image band", []string{"attribute", "suggestedGroupingKey"},
+			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(4, "timestamp", "timestamp", "timestamp", model.StringType,
 			model.StringType, "Image timestamp", []string{"attribute"},
-			model.VarRoleData, nil, dr.Variables, false))
+			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(5, "coordinates", "coordinates", "coordinates", model.RealVectorType,
 			model.RealVectorType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
-			model.VarRoleData, nil, dr.Variables, false))
+			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(6, "label", "label", "label", model.StringType,
 			model.StringType, "Label of the image", []string{"suggestedTarget"},
-			model.VarRoleData, nil, dr.Variables, false))
+			model.VarDistilRoleData, nil, dr.Variables, false))
 
 	// create the data resource for the referenced images
 	imageTypeLookup := satTypeMap[s.ImageType]

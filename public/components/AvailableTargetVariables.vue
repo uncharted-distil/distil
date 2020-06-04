@@ -59,10 +59,26 @@ export default Vue.extend({
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+
     summaries(): VariableSummary[] {
-      const summaries = datasetGetters.getVariableSummaries(this.$store);
-      return filterSummariesByDataset(summaries, this.dataset);
+      let summaries = datasetGetters.getVariableSummaries(this.$store);
+      summaries = filterSummariesByDataset(summaries, this.dataset);
+
+      // Fetch the grouped features.
+      const groupedFeatures = datasetGetters
+        .getGroupings(this.$store)
+        .filter(group => Array.isArray(group.grouping.subIds))
+        .map(group => group.grouping.subIds)
+        .flat();
+
+      // Remove summaries of features used in a grouping.
+      summaries = summaries.filter(
+        summary => !groupedFeatures.includes(summary.key)
+      );
+
+      return summaries;
     },
+
     numRowsPerPage(): number {
       return NUM_TARGET_PER_PAGE;
     },

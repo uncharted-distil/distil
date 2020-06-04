@@ -29,6 +29,10 @@ import (
 	log "github.com/unchartedsoftware/plog"
 )
 
+var (
+	simpleFileTypes = map[string]string{"txt": "txt"}
+)
+
 // ExpandedDatasetPaths stores paths info about the input dataset archive
 // and the expanded archive.
 type ExpandedDatasetPaths struct {
@@ -73,6 +77,15 @@ func CheckFileType(extractedArchivePath string) (string, error) {
 					log.Error(err)
 					continue
 				}
+				// check simple extention names since the library doesnt handle them
+				ext := path.Ext(f.Name())
+				if len(ext) > 1 {
+					ext = ext[1:]
+				}
+				if simpleFileTypes[ext] != "" {
+					return simpleFileTypes[ext], nil
+				}
+
 				kind, err := filetype.Match(buf)
 				if err != nil {
 					log.Error(err)
