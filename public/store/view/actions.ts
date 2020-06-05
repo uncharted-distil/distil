@@ -360,30 +360,39 @@ export const actions = {
     resultMutations.clearResidualsExtrema(store);
     resultMutations.setIncludedResultTableData(store, null);
     resultMutations.setExcludedResultTableData(store, null);
+    modelMutations.setModels(store, []);
 
     const dataset = context.getters.getRouteDataset;
     const target = context.getters.getRouteTargetVariable;
+
     // fetch new state
     await fetchVariables(context, {
       dataset: dataset
     });
-    // These are long running processces we won't wait on
+    await modelActions.fetchModels(store); // Fetch saved models.
+
+    // These are long running processes we won't wait on
     fetchVariableRankings(context, {
       dataset: dataset,
       target: target
     });
+
     fetchClusters(context, { dataset: dataset });
+
     await Promise.all([
       fetchSolutionRequests(context, {
         dataset: dataset,
         target: target
       }),
+
       fetchSolutions(context, {
         dataset: dataset,
         target: target
       }),
+
       datasetActions.searchDatasets(store, "")
     ]);
+
     return actions.updateResultsSolution(context);
   },
 
