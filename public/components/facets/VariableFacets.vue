@@ -381,6 +381,11 @@ button {
   cursor: pointer;
 }
 
+.facet-terms-container {
+  max-height: 200px !important;
+  overflow-y: auto;
+}
+
 .page-link {
   color: #868e96;
 }

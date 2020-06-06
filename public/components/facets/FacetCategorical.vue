@@ -21,7 +21,15 @@
 
     <div slot="footer" class="facet-footer-container">
       <div v-if="facetDisplayMore" class="facet-footer-more">
-        <span v-if="facetMoreCount > 0">{{ facetMoreCount }} more</span>
+        <div class="facet-footer-more-section">
+          <div class="facet-footer-more-count">
+            <span v-if="facetMoreCount > 0">{{ facetMoreCount }} more</span>
+          </div>
+          <div class="facet-footer-more-controls">
+            <span v-if="hasMore" @click="viewMore"> show more</span>
+            <span v-if="hasLess" @click="viewLess"> show less</span>
+          </div>
+        </div>
       </div>
       <div
         v-if="this.html"
@@ -80,11 +88,15 @@ export default Vue.extend({
 
   data() {
     return {
-      numToDisplay: getCategoricalChunkSize(this.summary.type)
+      baseNumToDisplay: getCategoricalChunkSize(this.summary.type),
+      moreNumToDisplay: 0
     };
   },
 
   computed: {
+    numToDisplay(): number {
+      return this.baseNumToDisplay + this.moreNumToDisplay;
+    },
     max(): number {
       if (hasBaseline(this.summary)) {
         return this.summary.baseline.extrema.max;
@@ -154,10 +166,30 @@ export default Vue.extend({
         {}
       );
       return highlightAsSelection;
+    },
+    hasMore(): boolean {
+      return this.numToDisplay < this.facetValueCount;
+    },
+    hasLess(): boolean {
+      return this.moreNumToDisplay > 0;
     }
   },
 
   methods: {
+    viewMore() {
+      this.moreNumToDisplay =
+        this.facetMoreCount > this.baseNumToDisplay
+          ? this.moreNumToDisplay + this.baseNumToDisplay
+          : this.moreNumToDisplay +
+            (this.facetValueCount % this.baseNumToDisplay);
+    },
+    viewLess() {
+      this.moreNumToDisplay =
+        this.facetMoreCount === 0
+          ? this.moreNumToDisplay -
+            (this.facetValueCount % this.baseNumToDisplay)
+          : this.moreNumToDisplay - this.baseNumToDisplay;
+    },
     getHighlightValue(highlight: Highlight): any {
       if (highlight && highlight.value) {
         return highlight.value;
@@ -247,6 +279,31 @@ export default Vue.extend({
 
 .facet-footer-more {
   margin-bottom: 4px;
+}
+
+.facet-footer-more-section {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-content: stretch;
+  align-items: flex-start;
+}
+
+.facet-footer-more-count {
+  order: 0;
+  flex: 1 1 auto;
+  align-self: auto;
+}
+
+.facet-footer-more-controls {
+  order: 0;
+  flex: 0 1 auto;
+  align-self: auto;
+}
+
+.facet-footer-more-controls > span {
+  cursor: pointer;
 }
 
 .facet-footer-custom-html {
