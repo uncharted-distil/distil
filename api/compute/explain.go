@@ -72,8 +72,9 @@ type explainableOutput struct {
 }
 
 type pipelineOutput struct {
-	key string
-	typ string
+	key           string
+	typ           string
+	parsingParams []interface{}
 }
 
 func (s *SolutionRequest) createExplainPipeline(client *compute.Client,
@@ -92,7 +93,7 @@ func (s *SolutionRequest) createExplainPipeline(client *compute.Client,
 }
 
 // ExplainFeatureOutput parses the explain feature output.
-func ExplainFeatureOutput(resultURI string, datasetURITest string, outputURI string) (*api.SolutionFeatureWeights, error) {
+func ExplainFeatureOutput(resultURI string, datasetURITest string, outputURI string) (*api.SolutionExplainResult, error) {
 	// An unset outputURI means that there is no explanation output, which is a valid case,
 	// so we return nil rather than an error so it can be handled downstream.
 	if outputURI == "" {
@@ -147,7 +148,7 @@ func (s *SolutionRequest) explainSolutionOutput(resultURI string, outputURI stri
 	return output, nil
 }
 
-func parseFeatureWeight(resultURI string, outputURI string, d3mIndexLookup map[int]string) (*api.SolutionFeatureWeights, error) {
+func parseFeatureWeight(resultURI string, outputURI string, d3mIndexLookup map[int]string) (*api.SolutionExplainResult, error) {
 	// all results on one row, with header row having feature names
 	res, err := util.ReadCSVFile(outputURI, false)
 	if err != nil {
@@ -155,9 +156,10 @@ func parseFeatureWeight(resultURI string, outputURI string, d3mIndexLookup map[i
 	}
 
 	res = addD3MIndex(d3mIndexLookup, res)
-	return &api.SolutionFeatureWeights{
-		ResultURI: resultURI,
-		Weights:   res,
+	return &api.SolutionExplainResult{
+		ResultURI:     resultURI,
+		Values:        res,
+		D3MIndexIndex: len(res[0]) - 1,
 	}, nil
 }
 
@@ -207,8 +209,9 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 
 				// output 0 is the produce call
 				outputs[ef.explainableType] = &pipelineOutput{
-					typ: ef.explainableType,
-					key: outputName,
+					typ:           ef.explainableType,
+					key:           outputName,
+					parsingParams: ef.parsingParams,
 				}
 			}
 		}
