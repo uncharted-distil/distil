@@ -289,8 +289,9 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 
 		// second pass - randomly sample each category to generate train/test split
 		for _, data := range categoryRowData {
-			maxCategoryRows := int(float64(len(data)) / float64(len(rowData)) * float64(maxTrainingCount))
-			err := shuffleAndWrite(data, targetCol, groupingCol, maxCategoryRows, maxTestCount, writerTrain, writerTest)
+			maxCategoryTrainingRows := int(float64(len(data)) / float64(len(rowData)) * float64(maxTrainingCount))
+			maxCategoryTestRows := int(float64(len(data)) / float64(len(rowData)) * float64(maxTestCount))
+			err := shuffleAndWrite(data, targetCol, groupingCol, maxCategoryTrainingRows, maxCategoryTestRows, writerTrain, writerTest)
 			if err != nil {
 				return err
 			}
@@ -322,6 +323,11 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 type shuffleTracker struct {
 	writer *csv.Writer
 	count  int
+	max    int
+}
+
+func (s *shuffleTracker) lessThanMax() bool {
+	return s.count < s.max
 }
 
 func shuffleAndWrite(rowData [][]string, targetCol int, groupCol int, maxTrainingCount int, maxTestCount int, writerTrain *csv.Writer, writerTest *csv.Writer) error {
@@ -331,44 +337,79 @@ func shuffleAndWrite(rowData [][]string, targetCol int, groupCol int, maxTrainin
 
 	// shuffle array
 	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(rowData), func(i, j int) { rowData[i], rowData[j] = rowData[j], rowData[i] })
 
 	// Figure out the number of train and test rows to use capping on the limit supplied by the caller.
 	numTrain := min(maxTrainingCount, int(math.Floor(float64(len(rowData))*TrainTestSplitThreshold)))
 	numTest := min(maxTestCount, int(math.Ceil(float64(len(rowData))*(1.0-TrainTestSplitThreshold))))
 
-	// Write out to train test
+	// structures for tracking test and train counts
 	shuffleTest := &shuffleTracker{
 		writer: writerTest,
 		count:  0,
+		max:    numTest,
 	}
 	shuffleTrain := &shuffleTracker{
 		writer: writerTrain,
 		count:  0,
+		max:    numTrain,
 	}
-	groupMap := make(map[string]*shuffleTracker)
-	var writer *shuffleTracker
-	for _, row := range rowData {
-		if groupCol >= 0 && groupMap[row[groupCol]] != nil {
-			writer = groupMap[row[groupCol]]
-		} else if row[targetCol] != "" && shuffleTest.count < numTest {
-			writer = shuffleTest
-		} else if shuffleTrain.count < numTrain {
-			writer = shuffleTrain
-		}
 
-		// write out data and keep reference for the group
-		if writer != nil {
-			writer.count++
-			err := writer.writer.Write(row)
+	if groupCol < 0 {
+		// Shuffle the list of unique group keys to randomize their order.
+		rand.Shuffle(len(rowData), func(i, j int) { rowData[i], rowData[j] = rowData[j], rowData[i] })
+
+		// write out training data until we we reach the max training count, then write out the
+		// test data
+		tracker := shuffleTrain
+		for _, data := range rowData {
+			err := tracker.writer.Write(data)
 			if err != nil {
 				return errors.Wrap(err, "unable to write data to train/test output")
 			}
-
-			if groupCol >= 0 {
-				groupMap[row[groupCol]] = writer
+			tracker.count++
+			if !tracker.lessThanMax() {
+				if tracker == shuffleTrain {
+					tracker = shuffleTest
+				} else {
+					break
+				}
 			}
-			writer = nil
+		}
+	} else {
+		groupData := map[string][][]string{}
+		groupKeys := []string{}
+
+		// Break the rows out by group key, and build a list of the unique group keys for later use
+		for _, row := range rowData {
+			groupKey := row[groupCol]
+			if _, ok := groupData[groupKey]; !ok {
+				groupData[groupKey] = [][]string{}
+				groupKeys = append(groupKeys, groupKey)
+			}
+			groupData[groupKey] = append(groupData[groupKey], row)
+		}
+
+		// Shuffle the list of unique group keys to randomize their order.
+		rand.Shuffle(len(groupKeys), func(i, j int) { groupKeys[i], groupKeys[j] = groupKeys[j], groupKeys[i] })
+
+		// Iterate over the randomized list of group keys, looking up the associated rows for each.  Write out
+		// the train rows, then the test rows.
+		tracker := shuffleTrain
+		for _, groupKey := range groupKeys {
+			for _, row := range groupData[groupKey] {
+				err := tracker.writer.Write(row)
+				if err != nil {
+					return errors.Wrap(err, "unable to write data to train/test output")
+				}
+				tracker.count++
+			}
+			if !tracker.lessThanMax() {
+				if tracker == shuffleTrain {
+					tracker = shuffleTest
+				} else {
+					break
+				}
+			}
 		}
 	}
 	return nil
