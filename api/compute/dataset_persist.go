@@ -540,10 +540,10 @@ func SplitTimeStamps(timestamps []float64, trainPercentage float64) TimeStampSpl
 // SplitTimeSeries splits a set of (timestamps, value) tuples such that `trainPercentage` *data points* are less than or equal
 // to the split value, and the remaining data points are greater than the split value.  The timestamps are assumed
 // to be ordered.
-func SplitTimeSeries(timeseries [][]float64, trainPercentage float64) TimeStampSplit {
+func SplitTimeSeries(timeseries []*api.TimeseriesObservation, trainPercentage float64) TimeStampSplit {
 	timestamps := make([]float64, len(timeseries))
 	for i, v := range timeseries {
-		timestamps[i] = v[0]
+		timestamps[i] = v.Time
 	}
 	return SplitTimeStamps(timestamps, trainPercentage)
 }

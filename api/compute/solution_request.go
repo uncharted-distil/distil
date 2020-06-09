@@ -685,10 +685,9 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 			// explain features per-record if the explanation is available
 			explainedResults := make(map[string]*api.SolutionExplainResult)
-			explainFeatureOutput := outputKeysExplain[explainableTypeStep]
 			for _, explain := range outputKeysExplain {
 				if explain.typ == explainableTypeStep || explain.typ == explainableTypeConfidence {
-					explainURI := outputKeyURIs[explainFeatureOutput.key]
+					explainURI := outputKeyURIs[explain.key]
 					log.Infof("explaining feature output from URI '%s'", explainURI)
 					parsedExplainResult, err := ExplainFeatureOutput(resultURI, datasetURITest, explainURI)
 					if err != nil {

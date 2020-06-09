@@ -223,7 +223,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		if err != nil {
 			return nil, err
 		}
-		err = params.DataStorage.PersistSolutionFeatureWeight(params.Dataset, model.NormalizeDatasetID(params.Dataset), featureWeights.ResultURI, featureWeights.Weights)
+		err = params.DataStorage.PersistSolutionFeatureWeight(params.Dataset, model.NormalizeDatasetID(params.Dataset), featureWeights.ResultURI, featureWeights.Values)
 		if err != nil {
 			return nil, err
 		}
@@ -247,7 +247,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, err
 	}
 
-	err = params.DataStorage.PersistResult(params.Dataset, model.NormalizeDatasetID(params.Dataset), predictionResult.ResultURI, "", target.Name)
+	err = params.DataStorage.PersistResult(params.Dataset, model.NormalizeDatasetID(params.Dataset), predictionResult.ResultURI, target.Name, nil)
 	if err != nil {
 		return nil, err
 	}

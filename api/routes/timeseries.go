@@ -27,8 +27,8 @@ import (
 
 // TimeseriesResult represents the result of a timeseries request.
 type TimeseriesResult struct {
-	Timeseries [][]float64 `json:"timeseries"`
-	IsDateTime bool        `json:"isDateTime"`
+	Timeseries []*api.TimeseriesObservation `json:"timeseries"`
+	IsDateTime bool                         `json:"isDateTime"`
 }
 
 // TimeseriesHandler returns timeseries data.

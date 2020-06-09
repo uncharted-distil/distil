@@ -1,13 +1,18 @@
 import { Dictionary } from "../../util/dict";
-import { VariableSummary, Extrema, TableData } from "../dataset/index";
+import {
+  VariableSummary,
+  Extrema,
+  TableData,
+  TimeSeriesValue
+} from "../dataset/index";
 
 export interface TimeSeries {
-  timeseriesData: Dictionary<number[][]>;
+  timeseriesData: Dictionary<TimeSeriesValue[]>;
   isDateTime: Dictionary<boolean>;
 }
 
 export interface Forecast {
-  forecastData: Dictionary<number[][]>;
+  forecastData: Dictionary<TimeSeriesValue[]>;
   forecastRange: Dictionary<number[]>;
   isDateTime: Dictionary<boolean>;
 }

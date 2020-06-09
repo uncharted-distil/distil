@@ -21,9 +21,17 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 )
 
+// TimeseriesObservation represents a timeseries value along with confidences.
+type TimeseriesObservation struct {
+	Value          float64 `json:"value"`
+	Time           float64 `json:"time"`
+	ConfidenceLow  float64 `json:"confidenceLow,omitempty"`
+	ConfidenceHigh float64 `json:"confidenceHigh,omitempty"`
+}
+
 // TimeseriesData represents the result of a timeseries request.
 type TimeseriesData struct {
-	Timeseries [][]float64
+	Timeseries []*TimeseriesObservation
 	IsDateTime bool
 }
 
