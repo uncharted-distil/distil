@@ -360,7 +360,7 @@ func shuffleAndWrite(rowData [][]string, targetCol int, groupCol int, maxTrainin
 
 		// write out training data until we we reach the max training count, then write out the
 		// test data
-		tracker := shuffleTrain
+		tracker := shuffleTest
 		for _, data := range rowData {
 			err := tracker.writer.Write(data)
 			if err != nil {
@@ -368,8 +368,8 @@ func shuffleAndWrite(rowData [][]string, targetCol int, groupCol int, maxTrainin
 			}
 			tracker.count++
 			if !tracker.lessThanMax() {
-				if tracker == shuffleTrain {
-					tracker = shuffleTest
+				if tracker == shuffleTest {
+					tracker = shuffleTrain
 				} else {
 					break
 				}
@@ -394,7 +394,7 @@ func shuffleAndWrite(rowData [][]string, targetCol int, groupCol int, maxTrainin
 
 		// Iterate over the randomized list of group keys, looking up the associated rows for each.  Write out
 		// the train rows, then the test rows.
-		tracker := shuffleTrain
+		tracker := shuffleTest
 		for _, groupKey := range groupKeys {
 			for _, row := range groupData[groupKey] {
 				err := tracker.writer.Write(row)
@@ -404,8 +404,8 @@ func shuffleAndWrite(rowData [][]string, targetCol int, groupCol int, maxTrainin
 				tracker.count++
 			}
 			if !tracker.lessThanMax() {
-				if tracker == shuffleTrain {
-					tracker = shuffleTest
+				if tracker == shuffleTest {
+					tracker = shuffleTrain
 				} else {
 					break
 				}
