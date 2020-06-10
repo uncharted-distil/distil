@@ -554,7 +554,9 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
       } else if (isErrorCol(col.key)) {
         variable = requestGetters.getActiveSolutionTargetVariable(store)[0];
         label = "Error";
-        description = `Difference between actual and predicted value for ${variable.colName}`;
+        description = `Difference between actual and predicted value for ${
+          variable.colName
+        }`;
       } else {
         variable = variables[col.key];
         label = col.label;
