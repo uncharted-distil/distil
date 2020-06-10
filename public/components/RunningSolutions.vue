@@ -5,19 +5,25 @@
       v-bind:key="solution.solutionId"
       v-for="solution in runningSolutions"
     >
-      <solution-preview :result="solution"></solution-preview>
+      <b-list-group-item href="#" v-bind:key="solution.solutionId">
+        <solution-preview :solution="solution"></solution-preview>
+      </b-list-group-item>
     </b-list-group>
   </b-card>
 </template>
 
 <script lang="ts">
 import SolutionPreview from "../components/SolutionPreview";
-import { getters } from "../store/requests/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { Solution } from "../store/requests/index";
 import Vue from "vue";
 
 export default Vue.extend({
   name: "running-solutions",
+
+  components: {
+    SolutionPreview
+  },
 
   props: {
     maxSolutions: {
@@ -26,13 +32,9 @@ export default Vue.extend({
     }
   },
 
-  components: {
-    SolutionPreview
-  },
-
   computed: {
     runningSolutions(): Solution[] {
-      return getters
+      return requestGetters
         .getRunningSolutions(this.$store)
         .slice(0, this.maxSolutions);
     }
