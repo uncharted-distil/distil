@@ -36,7 +36,7 @@ type ImportanceResult struct {
 }
 
 // Rank will rank the dataset using a primitive.
-func Rank(schemaPath string, index string, dataset string, config *IngestTaskConfig) (string, error) {
+func Rank(schemaPath string, dataset string, config *IngestTaskConfig) (string, error) {
 	schemaDoc := path.Dir(schemaPath)
 
 	// create & submit the solution request

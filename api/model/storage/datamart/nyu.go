@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -239,7 +238,7 @@ func materializeNYUDataset(datamart *Storage, id string, uri string) (string, er
 
 	// format the dataset
 	extractedSchema := path.Join(extractedArchivePath, compute.D3MDataSchema)
-	formattedPath, err := task.Format(metadata.Contrib, extractedSchema, name, datamart.ingestConfig)
+	formattedPath, err := task.Format(extractedSchema, name, datamart.ingestConfig)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to format datamart dataset")
 	}

@@ -38,6 +38,13 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	return "", errors.Errorf("Not Supported")
 }
 
+// DeleteDataset deletes a dataset from ES.
+func (s *Storage) DeleteDataset(dataset string) error {
+	_, err := s.client.Delete().Index(s.datasetIndex).Id(dataset).Do(context.Background())
+
+	return err
+}
+
 func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
 	var datasets []*api.Dataset
 	for _, hit := range res.Hits.Hits {

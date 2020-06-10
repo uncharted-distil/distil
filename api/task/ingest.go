@@ -16,7 +16,6 @@
 package task
 
 import (
-	"context"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -159,7 +158,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 
 	output := latestSchemaOutput
 	if config.ClusteringEnabled {
-		output, err = ClusterDataset(datasetSource, latestSchemaOutput, index, dataset, config)
+		output, err = ClusterDataset(latestSchemaOutput, dataset, config)
 		if err != nil {
 			if config.HardFail {
 				return "", errors.Wrap(err, "unable to cluster all data")
@@ -171,34 +170,34 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished clustering the dataset")
 	}
 
-	output, err = Merge(datasetSource, latestSchemaOutput, index, dataset, config)
+	output, err = Merge(latestSchemaOutput, dataset, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to merge all data into a single file")
 	}
 	latestSchemaOutput = output
 	log.Infof("finished merging the dataset")
 
-	output, err = Clean(datasetSource, latestSchemaOutput, index, dataset, config)
+	output, err = Clean(latestSchemaOutput, dataset, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to clean all data")
 	}
 	latestSchemaOutput = output
 	log.Infof("finished cleaning the dataset")
 
-	_, err = Classify(latestSchemaOutput, index, dataset, config)
+	_, err = Classify(latestSchemaOutput, dataset, config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to classify fields")
 	}
 	log.Infof("finished classifying the dataset")
 
-	_, err = Rank(latestSchemaOutput, index, dataset, config)
+	_, err = Rank(latestSchemaOutput, dataset, config)
 	if err != nil {
 		log.Errorf("unable to rank field importance: %v", err)
 	}
 	log.Infof("finished ranking the dataset")
 
 	if config.SummaryEnabled {
-		_, err = Summarize(latestSchemaOutput, index, dataset, config)
+		_, err = Summarize(latestSchemaOutput, dataset, config)
 		log.Infof("finished summarizing the dataset")
 		if err != nil {
 			if config.HardFail {
@@ -211,7 +210,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	}
 
 	if config.GeocodingEnabled {
-		output, err = GeocodeForwardDataset(datasetSource, latestSchemaOutput, index, dataset, config)
+		output, err = GeocodeForwardDataset(latestSchemaOutput, dataset, config)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to geocode all data")
 		}
@@ -263,17 +262,6 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 		}
 	}
 
-	// create elasticsearch client
-	elasticClient, err := elastic.NewClient(
-		elastic.SetURL(config.ESEndpoint),
-		elastic.SetHttpClient(&http.Client{Timeout: time.Second * time.Duration(config.ESTimeout)}),
-		elastic.SetMaxRetries(10),
-		elastic.SetSniff(false),
-		elastic.SetGzip(true))
-	if err != nil {
-		return "", errors.Wrap(err, "unable to initialize elastic client")
-	}
-
 	// Connect to the database.
 	postgresConfig := &postgres.Config{
 		Password:  config.DatabasePassword,
@@ -290,14 +278,14 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 
 	// Check for existing dataset
 	if checkMatch && config.IngestOverwrite {
-		match, err := matchDataset(storage, meta, index)
+		match, err := matchDataset(storage, meta)
 		// Ignore the error for now as if this fails we still want ingest to succeed.
 		if err != nil {
 			log.Error(err)
 		}
 		if match != "" {
 			log.Infof("Matched %s to dataset %s", meta.Name, match)
-			err = deleteDataset(match, index, pg, elasticClient)
+			err = deleteDataset(match, index, pg, storage)
 			if err != nil {
 				log.Errorf("error deleting dataset: %v", err)
 			}
@@ -312,7 +300,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// ingest the data
-	err = IngestPostgres(originalSchemaFile, schemaFile, index, dataset, source, config, true, false, fallbackMerged)
+	err = IngestPostgres(originalSchemaFile, schemaFile, dataset, source, config, true, false, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
@@ -359,7 +347,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, index string, 
 }
 
 // IngestPostgres ingests a dataset to PG storage.
-func IngestPostgres(originalSchemaFile string, schemaFile string, index string, dataset string, source metadata.DatasetSource,
+func IngestPostgres(originalSchemaFile string, schemaFile string, dataset string, source metadata.DatasetSource,
 	config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool, fallbackMerged bool) error {
 	datasetDir, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, nil, config, verifyMetadata, fallbackMerged)
 	if err != nil {
@@ -536,7 +524,7 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, dataset
 	return datasetDir, meta, nil
 }
 
-func matchDataset(storage api.MetadataStorage, meta *model.Metadata, index string) (string, error) {
+func matchDataset(storage api.MetadataStorage, meta *model.Metadata) (string, error) {
 	// load the datasets from ES.
 	datasets, err := storage.FetchDatasets(true, true)
 	if err != nil {
@@ -561,11 +549,10 @@ func matchDataset(storage api.MetadataStorage, meta *model.Metadata, index strin
 	return "", nil
 }
 
-func deleteDataset(name string, index string, pg *postgres.Database, es *elastic.Client) error {
-	id := name
+func deleteDataset(name string, index string, pg *postgres.Database, meta api.MetadataStorage) error {
 	success := false
 	for i := 0; i < 10 && !success; i++ {
-		_, err := es.Delete().Index(index).Id(id).Type("metadata").Do(context.Background())
+		err := meta.DeleteDataset(name)
 		if err != nil {
 			log.Error(err)
 		} else {

@@ -59,6 +59,11 @@ func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool) ([]*api.Dat
 	return s.SearchDatasets("", nil, includeIndex, includeMeta)
 }
 
+// DeleteDataset deletes a dataset from the datamart.
+func (s *Storage) DeleteDataset(dataset string) error {
+	return errors.Errorf("Not implemented")
+}
+
 // FetchDataset returns a dataset in the provided index.
 func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMeta bool) (*api.Dataset, error) {
 	return nil, errors.Errorf("Not implemented")

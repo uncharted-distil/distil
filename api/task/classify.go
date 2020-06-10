@@ -79,7 +79,7 @@ func castProbabilityArray(in []interface{}) ([]float64, error) {
 }
 
 // Classify will classify the dataset using a primitive.
-func Classify(schemaPath string, index string, dataset string, config *IngestTaskConfig) (string, error) {
+func Classify(schemaPath string, dataset string, config *IngestTaskConfig) (string, error) {
 	schemaDoc := path.Dir(schemaPath)
 
 	// create & submit the solution request
