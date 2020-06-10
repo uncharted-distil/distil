@@ -8,6 +8,7 @@
 import * as d3 from "d3";
 import _ from "lodash";
 import Vue from "vue";
+import { TimeSeriesValue } from "../store/dataset/index";
 
 export default Vue.extend({
   name: "sparkline-chart",
@@ -22,10 +23,10 @@ export default Vue.extend({
       })
     },
     timeseries: {
-      type: Array as () => number[][]
+      type: Array as () => TimeSeriesValue[]
     },
     forecast: {
-      type: Array as () => number[][]
+      type: Array as () => TimeSeriesValue[]
     },
     highlightRange: {
       type: Array as () => number[]
@@ -65,30 +66,30 @@ export default Vue.extend({
       return dims.height - this.margin.top - this.margin.bottom;
     },
     minX(): number {
-      const min = d3.min(this.timeseries, d => d[0]);
+      const min = d3.min(this.timeseries, d => d.time);
       return this.forecast
-        ? Math.min(min, d3.min(this.forecast, d => d[0]))
+        ? Math.min(min, d3.min(this.forecast, d => d.time))
         : min;
     },
     maxX(): number {
-      const max = d3.max(this.timeseries, d => d[0]);
+      const max = d3.max(this.timeseries, d => d.time);
       return this.forecast
-        ? Math.max(max, d3.max(this.forecast, d => d[0]))
+        ? Math.max(max, d3.max(this.forecast, d => d.time))
         : max;
     },
     minY(): number {
-      const min = d3.min(this.timeseries, d => d[1]);
+      const min = d3.min(this.timeseries, d => d.value);
       return this.forecast
-        ? Math.min(min, d3.min(this.forecast, d => d[1]))
+        ? Math.min(min, d3.min(this.forecast, d => d.value))
         : min;
     },
     maxY(): number {
-      const max = d3.max(this.timeseries, d => d[1]);
+      const max = d3.max(this.timeseries, d => d.value);
       return this.forecast
-        ? Math.max(max, d3.max(this.forecast, d => d[1]))
+        ? Math.max(max, d3.max(this.forecast, d => d.value))
         : max;
     },
-    displayForecast(): number[][] {
+    displayForecast(): TimeSeriesValue[] {
       // Join the last element of the truth timeseries and the first element of the forecast
       // time series.  Used when not visualizing an in-sample forecast.
       if (this.joinForecast) {
@@ -175,7 +176,7 @@ export default Vue.extend({
         .attr("transform", `translate(${this.margin.left}, 0)`)
         .attr("class", "line-chart");
 
-      g.datum(this.timeseries);
+      g.datum(this.timeseries.map(x => [x.time, x.value]));
 
       g.append("path")
         .attr("fill", "none")
@@ -194,7 +195,7 @@ export default Vue.extend({
         .attr("transform", `translate(${this.margin.left}, 0)`)
         .attr("class", "line-chart");
 
-      g.datum(this.displayForecast);
+      g.datum(this.displayForecast.map(x => [x.time, x.value]));
 
       g.append("path")
         .attr("fill", "none")
