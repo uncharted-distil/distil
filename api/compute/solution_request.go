@@ -482,7 +482,8 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client,
 	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string,
-	explainedSolutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string, resultURI string, confidenceURI string) {
+	explainedSolutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string,
+	resultURI string, confidenceValues *api.SolutionExplainResult) {
 	// persist the completed state
 	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -498,7 +499,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist results
-	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURI, confidenceURI, s.TargetFeature.Name)
+	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURI, s.TargetFeature.Name, confidenceValues)
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -683,21 +684,27 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			}
 
 			// explain features per-record if the explanation is available
-			explainFeatureOutput := outputKeysExplain[explainableTypeStep]
-			if explainFeatureOutput != nil {
-				explainFeatureURI := outputKeyURIs[explainFeatureOutput.key]
-				log.Infof("explaining feature output from URI '%s'", explainFeatureURI)
-				featureWeights, err := ExplainFeatureOutput(resultURI, datasetURITest, explainFeatureURI)
-				if err != nil {
-					log.Warnf("failed to fetch output explanantion - %v", err)
-				}
-				if featureWeights != nil {
-					log.Infof("persisting feature weights")
-					err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Weights)
+			explainedResults := make(map[string]*api.SolutionExplainResult)
+			for _, explain := range outputKeysExplain {
+				if explain.typ == explainableTypeStep || explain.typ == explainableTypeConfidence {
+					explainURI := outputKeyURIs[explain.key]
+					log.Infof("explaining feature output from URI '%s'", explainURI)
+					parsedExplainResult, err := ExplainFeatureOutput(resultURI, datasetURITest, explainURI)
 					if err != nil {
-						s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-						return
+						log.Warnf("failed to fetch output explanation - %v", err)
 					}
+					parsedExplainResult.ParsingParams = explain.parsingParams
+					explainedResults[explain.typ] = parsedExplainResult
+				}
+			}
+
+			featureWeights := explainedResults[explainableTypeStep]
+			if featureWeights != nil {
+				log.Infof("persisting feature weights")
+				err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Values)
+				if err != nil {
+					s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+					return
 				}
 			}
 
@@ -719,16 +726,11 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 				}
 			}
 
-			confidenceURI := ""
-			explainConfidenceOutput := outputKeysExplain[explainableTypeConfidence]
-			if explainConfidenceOutput != nil {
-				confidenceURI = outputKeyURIs[explainConfidenceOutput.key]
-			}
-
 			// persist results
 			log.Infof("persisting results in URI '%s'", resultURI)
 			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
-				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID, produceRequestID, resultID, resultURI, confidenceURI)
+				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID,
+				produceRequestID, resultID, resultURI, explainedResults[explainableTypeConfidence])
 		}
 	})
 	if err != nil {

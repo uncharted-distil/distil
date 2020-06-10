@@ -104,10 +104,12 @@ type SolutionState struct {
 	CreatedTime time.Time `json:"timestamp"`
 }
 
-// SolutionFeatureWeights captures the weights given to all features of a result.
-type SolutionFeatureWeights struct {
-	ResultURI string
-	Weights   [][]string
+// SolutionExplainResult captures the explainable output by row.
+type SolutionExplainResult struct {
+	ResultURI     string
+	Values        [][]string
+	D3MIndexIndex int
+	ParsingParams []interface{}
 }
 
 // SolutionFeatureWeight captures the weights for a given d3m index and result.

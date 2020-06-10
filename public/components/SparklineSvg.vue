@@ -17,7 +17,7 @@ import _ from "lodash";
 import $ from "jquery";
 import Vue from "vue";
 import { circleSpinnerHTML } from "../util/spinner";
-import { TimeseriesExtrema } from "../store/dataset/index";
+import { TimeseriesExtrema, TimeSeriesValue } from "../store/dataset/index";
 
 export default Vue.extend({
   name: "sparkline-svg",
@@ -35,8 +35,8 @@ export default Vue.extend({
     highlightPixelX: {
       type: Number as () => number
     },
-    timeseries: Array as () => number[][],
-    forecast: Array as () => number[][],
+    timeseries: Array as () => TimeSeriesValue[],
+    forecast: Array as () => TimeSeriesValue[],
     highlightRange: Array as () => number[],
     timeseriesExtrema: {
       type: Object as () => TimeseriesExtrema
@@ -85,12 +85,12 @@ export default Vue.extend({
       return dims.height - this.margin.top - this.margin.bottom;
     },
     min(): number {
-      return this.timeseries ? d3.min(this.timeseries, d => d[1]) : 0;
+      return this.timeseries ? d3.min(this.timeseries, d => d.value) : 0;
     },
     max(): number {
-      return this.timeseries ? d3.max(this.timeseries, d => d[1]) : 0;
+      return this.timeseries ? d3.max(this.timeseries, d => d.value) : 0;
     },
-    displayForecast(): number[][] {
+    displayForecast(): TimeSeriesValue[] {
       // Join the last element of the truth timeseries and the first element of the forecast
       // time series.  Used when not visualizing an in-sample forecast.
       if (this.joinForecast) {
@@ -192,7 +192,7 @@ export default Vue.extend({
         }).left;
         const index = bisect(this.timeseries, xVal);
         if (index >= 0 && index < this.timeseries.length) {
-          const yVal = this.timeseries[index][1];
+          const yVal = this.timeseries[index].value;
           this.$tooltip
             .css({
               left: this.highlightPixelX
@@ -277,7 +277,7 @@ export default Vue.extend({
           `translate(${this.margin.left}, ${this.margin.top})`
         );
 
-      g.datum(this.timeseries);
+      g.datum(this.timeseries.map(x => [x.time, x.value]));
 
       g.append("path")
         .attr("fill", "none")
@@ -330,7 +330,7 @@ export default Vue.extend({
           `translate(${this.margin.left}, ${this.margin.top})`
         );
 
-      g.datum(this.displayForecast);
+      g.datum(this.displayForecast.map(x => [x.time, x.value]));
 
       g.append("path")
         .attr("fill", "none")

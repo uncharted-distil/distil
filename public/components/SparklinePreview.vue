@@ -40,7 +40,7 @@ import Vue from "vue";
 import SparklineChart from "../components/SparklineChart";
 import SparklineSvg from "../components/SparklineSvg";
 import { Dictionary } from "../util/dict";
-import { TimeseriesExtrema } from "../store/dataset/index";
+import { TimeseriesExtrema, TimeSeriesValue } from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions
@@ -82,7 +82,7 @@ export default Vue.extend({
     };
   },
   computed: {
-    timeseries(): number[][] {
+    timeseries(): TimeSeriesValue[] {
       if (this.solutionId) {
         const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
         const solutions = timeseries[this.solutionId];
@@ -111,7 +111,7 @@ export default Vue.extend({
       return datasets.timeseriesData[this.timeseriesId];
     },
 
-    forecast(): number[][] {
+    forecast(): TimeSeriesValue[] {
       if (this.solutionId && this.includeForecast) {
         const forecasts = resultsGetters.getPredictedForecasts(this.$store);
         const solutions = forecasts[this.solutionId];
@@ -151,12 +151,12 @@ export default Vue.extend({
       }
       return {
         x: {
-          min: d3.min(this.timeseries, d => d[0]),
-          max: d3.max(this.timeseries, d => d[0])
+          min: d3.min(this.timeseries, d => d.time),
+          max: d3.max(this.timeseries, d => d.time)
         },
         y: {
-          min: d3.min(this.timeseries, d => d[1]),
-          max: d3.max(this.timeseries, d => d[1])
+          min: d3.min(this.timeseries, d => d.value),
+          max: d3.max(this.timeseries, d => d.value)
         }
       };
     },
@@ -166,12 +166,12 @@ export default Vue.extend({
       }
       return {
         x: {
-          min: d3.min(this.forecast, d => d[0]),
-          max: d3.max(this.forecast, d => d[0])
+          min: d3.min(this.forecast, d => d.time),
+          max: d3.max(this.forecast, d => d.time)
         },
         y: {
-          min: d3.min(this.forecast, d => d[1]),
-          max: d3.max(this.forecast, d => d[1])
+          min: d3.min(this.forecast, d => d.value),
+          max: d3.max(this.forecast, d => d.value)
         }
       };
     },

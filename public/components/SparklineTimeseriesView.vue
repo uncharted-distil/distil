@@ -61,6 +61,7 @@ import {
   TableRow,
   TableColumn,
   TimeseriesExtrema,
+  TimeSeriesValue,
   Variable,
   Histogram,
   Bucket,
@@ -286,7 +287,7 @@ export default Vue.extend({
   },
 
   methods: {
-    getTimeseries(timeseriesId: string): number[][] {
+    getTimeseries(timeseriesId: string): TimeSeriesValue[] {
       const timeseries = datasetGetters.getTimeseries(this.$store);
       const datasets = timeseries[this.dataset];
       if (!datasets) {
@@ -295,7 +296,7 @@ export default Vue.extend({
       return datasets[timeseriesId] ? datasets[timeseriesId] : [];
     },
 
-    getPredictedTimeseries(timeseriesId: string): number[][] {
+    getPredictedTimeseries(timeseriesId: string): TimeSeriesValue[] {
       const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
       const solutions = timeseries[this.solutionId];
       if (!solutions) {
@@ -304,7 +305,7 @@ export default Vue.extend({
       return solutions[timeseriesId] ? solutions[timeseriesId] : [];
     },
 
-    getPredictedForecasts(timeseriesId: string): number[][] {
+    getPredictedForecasts(timeseriesId: string): TimeSeriesValue[] {
       const forecasts = resultsGetters.getPredictedForecasts(this.$store);
       const solutions = forecasts[this.solutionId];
       if (!solutions) {
@@ -320,10 +321,10 @@ export default Vue.extend({
         const timeseries = this.getPredictedTimeseries(timeseriesId);
         const forecasts = this.getPredictedForecasts(timeseriesId);
         const both = timeseries.concat(forecasts);
-        yValues = both.map(v => v[1]);
+        yValues = both.map(v => v.value);
       } else {
         const timeseries = this.getTimeseries(timeseriesId);
-        yValues = timeseries.map(v => v[1]);
+        yValues = timeseries.map(v => v.value);
       }
 
       const yMin: number = _.min(yValues);
