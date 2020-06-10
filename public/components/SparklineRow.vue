@@ -33,7 +33,7 @@ import $ from "jquery";
 import Vue from "vue";
 import SparklineSvg from "./SparklineSvg";
 import { getters as routeGetters } from "../store/route/module";
-import { TimeseriesExtrema } from "../store/dataset/index";
+import { TimeseriesExtrema, TimeSeriesValue } from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions
@@ -75,7 +75,7 @@ export default Vue.extend({
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
-    timeseries(): number[][] {
+    timeseries(): TimeSeriesValue[] {
       if (this.solutionId) {
         return resultsGetters.getPredictedTimeseries(this.$store)[
           this.solutionId
@@ -86,7 +86,7 @@ export default Vue.extend({
         ];
       }
     },
-    forecast(): number[][] {
+    forecast(): TimeSeriesValue[] {
       if (this.solutionId && this.includeForecast) {
         const forecasts = resultsGetters.getPredictedForecasts(this.$store);
         const solutions = forecasts[this.solutionId];
@@ -111,10 +111,10 @@ export default Vue.extend({
       }
     },
     min(): number {
-      return this.timeseries ? d3.min(this.timeseries, d => d[1]) : 0;
+      return this.timeseries ? d3.min(this.timeseries, d => d.value) : 0;
     },
     max(): number {
-      return this.timeseries ? d3.max(this.timeseries, d => d[1]) : 0;
+      return this.timeseries ? d3.max(this.timeseries, d => d.value) : 0;
     },
     isDateTime(): boolean {
       if (this.solutionId) {

@@ -298,12 +298,15 @@ function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
   group.all.forEach((facet: CategoricalFacet) => {
     if (solutionId && timeseries && forecasts) {
       facet.multipleTimeseries = [
-        timeseries.timeseriesData[facet.file],
-        forecasts.forecastData[facet.file]
+        timeseries.timeseriesData[facet.file].map(v => [v.time, v.value]),
+        forecasts.forecastData[facet.file].map(v => [v.time, v.value])
       ];
       facet.colors = ["#000", "#00c6e1"];
     } else if (timeseries) {
-      facet.timeseries = timeseries.timeseriesData[facet.file];
+      facet.timeseries = timeseries.timeseriesData[facet.file].map(v => [
+        v.time,
+        v.value
+      ]);
     }
   });
 

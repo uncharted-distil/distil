@@ -159,7 +159,7 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 }
 
 // PersistResult stores the solution result to Postgres.
-func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, confidenceURI string, target string) error {
+func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string, confidenceValues *api.SolutionExplainResult) error {
 	// Read the results file.
 	records, err := s.readCSVFile(resultURI)
 	if err != nil {
@@ -168,17 +168,15 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 
 	// read the confidence file
 	confidences := make(map[string][]float64)
-	if confidenceURI != "" {
-		confidenceRecords, err := s.readCSVFile(confidenceURI)
-		if err != nil {
-			return err
-		}
+	if confidenceValues != nil {
+		lowIndex := confidenceValues.ParsingParams[0].(int)
+		highIndex := confidenceValues.ParsingParams[1].(int)
 
 		// build the confidence lookup
-		for _, row := range confidenceRecords {
-			low, _ := strconv.ParseFloat(row[3], 64)
-			high, _ := strconv.ParseFloat(row[4], 64)
-			confidences[row[0]] = []float64{low, high}
+		for _, row := range confidenceValues.Values {
+			low, _ := strconv.ParseFloat(row[lowIndex], 64)
+			high, _ := strconv.ParseFloat(row[highIndex], 64)
+			confidences[row[confidenceValues.D3MIndexIndex]] = []float64{low, high}
 		}
 	}
 
@@ -243,8 +241,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		dataForInsert := []interface{}{resultURI, parsedVal, targetVariable.Name, records[i][targetIndex]}
 		if confidences[records[i][d3mIndexIndex]] != nil {
 			cf := confidences[records[i][d3mIndexIndex]]
-			dataForInsert = append(dataForInsert, cf[0])
-			dataForInsert = append(dataForInsert, cf[1])
+			dataForInsert = append(dataForInsert, cf[0], cf[1])
 		}
 
 		insertData = append(insertData, dataForInsert)

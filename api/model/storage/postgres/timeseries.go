@@ -63,8 +63,8 @@ func NewTimeSeriesField(storage *Storage, datasetName string, datasetStorageName
 	return field
 }
 
-func (s *Storage) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
-	var points [][]float64
+func (s *Storage) parseTimeseries(rows *pgx.Rows) ([]*api.TimeseriesObservation, error) {
+	var points []*api.TimeseriesObservation
 	if rows != nil {
 		for rows.Next() {
 			var x float64
@@ -73,34 +73,86 @@ func (s *Storage) parseTimeseries(rows *pgx.Rows) ([][]float64, error) {
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
-			points = append(points, []float64{x, y})
+
+			points = append(points, &api.TimeseriesObservation{
+				Value: y,
+				Time:  x,
+			})
 		}
 	}
-
-	sort.Slice(points, func(i, j int) bool {
-		return points[i][0] < points[j][0]
-	})
 
 	return points, nil
 }
 
-func (s *Storage) parseDateTimeTimeseries(rows *pgx.Rows) ([][]float64, error) {
-	var points [][]float64
+func (s *Storage) parseDateTimeTimeseries(rows *pgx.Rows) ([]*api.TimeseriesObservation, error) {
+	var points []*api.TimeseriesObservation
 	if rows != nil {
 		for rows.Next() {
 			var time time.Time
 			var value float64
+
 			err := rows.Scan(&time, &value)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
-			points = append(points, []float64{float64(time.Unix() * 1000), value})
+
+			points = append(points, &api.TimeseriesObservation{
+				Value: value,
+				Time:  float64(time.Unix() * 1000),
+			})
 		}
 	}
 
-	sort.Slice(points, func(i, j int) bool {
-		return points[i][0] < points[j][0]
-	})
+	return points, nil
+}
+
+func (s *Storage) parseTimeseriesForecast(rows *pgx.Rows) ([]*api.TimeseriesObservation, error) {
+	var points []*api.TimeseriesObservation
+	if rows != nil {
+		for rows.Next() {
+			var time float64
+			var value float64
+			var confidenceLow float64
+			var confidenceHigh float64
+			err := rows.Scan(&time, &value, &confidenceLow, &confidenceHigh)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to parse row result")
+			}
+
+			points = append(points, &api.TimeseriesObservation{
+				Value:          value,
+				Time:           time,
+				ConfidenceLow:  confidenceLow,
+				ConfidenceHigh: confidenceHigh,
+			})
+		}
+	}
+
+	return points, nil
+}
+
+func (s *Storage) parseDateTimeTimeseriesForecast(rows *pgx.Rows) ([]*api.TimeseriesObservation, error) {
+	var points []*api.TimeseriesObservation
+	if rows != nil {
+		for rows.Next() {
+			var time time.Time
+			var value float64
+			var confidenceLow float64
+			var confidenceHigh float64
+
+			err := rows.Scan(&time, &value, &confidenceLow, &confidenceHigh)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to parse row result")
+			}
+
+			points = append(points, &api.TimeseriesObservation{
+				Value:          value,
+				Time:           float64(time.Unix() * 1000),
+				ConfidenceLow:  confidenceLow,
+				ConfidenceHigh: confidenceHigh,
+			})
+		}
+	}
 
 	return points, nil
 }
@@ -193,7 +245,7 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	if err != nil {
 		return nil, err
 	}
-	var response [][]float64
+	var response []*api.TimeseriesObservation
 	var dateTime bool
 	if xColVariable.Type == model.DateTimeType {
 		response, err = s.parseDateTimeTimeseries(res)
@@ -202,12 +254,18 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 			return nil, err
 		}
 	} else {
-		// sum duplicate timestamps
 		response, err = s.parseTimeseries(res)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	// sort the timeseries
+	sort.Slice(response, func(i, j int) bool {
+		return response[i].Time < response[j].Time
+	})
+
+	// sum duplicate timestamps
 	response = removeDuplicates(response)
 
 	return &api.TimeseriesData{
@@ -233,7 +291,7 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 
 	// Get count by category.
-	query := fmt.Sprintf(`SELECT "%s", CAST(result.value as double precision)
+	query := fmt.Sprintf(`SELECT "%s", CAST(result.value as double precision), result.confidence_low, result.confidence_high
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		%s`,
 		xColName, storageName, s.getResultTable(storageName),
@@ -254,16 +312,16 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 	if err != nil {
 		return nil, err
 	}
-	var response [][]float64
+	var response []*api.TimeseriesObservation
 	var dateTime bool
 	if xColVariable.Type == model.DateTimeType {
-		response, err = s.parseDateTimeTimeseries(res)
+		response, err = s.parseDateTimeTimeseriesForecast(res)
 		dateTime = true
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		response, err = s.parseTimeseries(res)
+		response, err = s.parseTimeseriesForecast(res)
 		if err != nil {
 			return nil, err
 		}
@@ -574,44 +632,37 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 }
 
 // Sums any duplicate timestamps encountered.  Assumes data is sorted.
-func removeDuplicates(timeseriesData [][]float64) [][]float64 {
-	cleanedData := [][]float64{}
-	currIdx := 0
-	for currIdx < len(timeseriesData)-1 {
-		timestamp := timeseriesData[currIdx][0]
-		nextTimestamp := timeseriesData[currIdx+1][0]
+func removeDuplicates(timeseriesData []*api.TimeseriesObservation) []*api.TimeseriesObservation {
+	cleanedData := []*api.TimeseriesObservation{}
+	observationClone := &api.TimeseriesObservation{
+		Value:          timeseriesData[0].Value,
+		Time:           timeseriesData[0].Time,
+		ConfidenceHigh: timeseriesData[0].ConfidenceHigh,
+		ConfidenceLow:  timeseriesData[0].ConfidenceLow,
+	}
 
-		if timestamp != nextTimestamp {
-			count := timeseriesData[currIdx][1]
-			cleanedData = append(cleanedData, []float64{timestamp, count})
-			currIdx++
+	// sum the timestamp values, thereby removing duplicate timestamps
+	currIdx := 1
+	for currIdx < len(timeseriesData) {
+		observation := timeseriesData[currIdx]
+		if observationClone.Time == observation.Time {
+			// still dealing with the same timestamp
+			observationClone.Value += observation.Value
 		} else {
-			first := true
-			for timestamp == nextTimestamp {
-				count := timeseriesData[currIdx][1]
-				if first {
-					// add current until next doesn't match or next is out of bounds
-					cleanedData = append(cleanedData, []float64{timestamp, count})
-					first = false
-				} else {
-					cleanedData[len(cleanedData)-1][1] += count
-				}
-				currIdx++
-				if currIdx == len(timeseriesData)-1 {
-					break
-				}
-				timestamp = timeseriesData[currIdx][0]
-				nextTimestamp = timeseriesData[currIdx+1][0]
+			// new timestamp so append the rolling count and initialize
+			cleanedData = append(cleanedData, observationClone)
+
+			observationClone = &api.TimeseriesObservation{
+				Value:          observation.Value,
+				Time:           observation.Time,
+				ConfidenceHigh: observation.ConfidenceHigh,
+				ConfidenceLow:  observation.ConfidenceLow,
 			}
-			count := timeseriesData[currIdx][1]
-			cleanedData[len(cleanedData)-1][1] += count
-			currIdx++
 		}
+		currIdx++
 	}
 
-	// last element is different than second last
-	if currIdx == len(timeseriesData)-1 {
-		cleanedData = append(cleanedData, timeseriesData[currIdx])
-	}
+	// add the last timestamp
+	cleanedData = append(cleanedData, observationClone)
 	return cleanedData
 }

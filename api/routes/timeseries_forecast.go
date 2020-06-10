@@ -28,10 +28,10 @@ import (
 
 // TimeseriesForecastResult represents the result of a timeseries request.
 type TimeseriesForecastResult struct {
-	Timeseries        [][]float64 `json:"timeseries"`
-	Forecast          [][]float64 `json:"forecast"`
-	ForecastTestRange []float64   `json:"forecastTestRange"`
-	IsDateTime        bool        `json:"isDateTime"`
+	Timeseries        []*api.TimeseriesObservation `json:"timeseries"`
+	Forecast          []*api.TimeseriesObservation `json:"forecast"`
+	ForecastTestRange []float64                    `json:"forecastTestRange"`
+	IsDateTime        bool                         `json:"isDateTime"`
 }
 
 // TimeseriesForecastHandler returns timeseries data.

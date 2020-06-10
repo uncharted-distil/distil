@@ -317,8 +317,15 @@ export type DatasetPendingRequest =
   | JoinDatasetImportPendingRequest
   | ClusteringPendingRequest;
 
+export interface TimeSeriesValue {
+  value: number;
+  time: number;
+  confidenceLow: number;
+  confidenceHigh: number;
+}
+
 export interface TimeSeries {
-  timeseriesData: Dictionary<number[][]>;
+  timeseriesData: Dictionary<TimeSeriesValue[]>;
   isDateTime: Dictionary<boolean>;
 }
 
