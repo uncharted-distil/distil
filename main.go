@@ -217,7 +217,8 @@ func main() {
 			log.Errorf("%+v", err)
 			os.Exit(1)
 		}
-		_, err = task.IngestDataset(metadata.Contrib, pgDataStorageCtor, esMetadataStorageCtor, config.ESDatasetsIndex, "initial", nil, ingestConfig)
+		_, err = task.IngestDataset(metadata.Contrib, pgDataStorageCtor, esMetadataStorageCtor,
+			config.ESDatasetsIndex, "initial", nil, model.DatasetTypeModelling, ingestConfig)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)
