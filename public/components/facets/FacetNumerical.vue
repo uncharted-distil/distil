@@ -40,7 +40,7 @@ import "@uncharted/facets-plugins";
 import { FacetBarsData } from "@uncharted/facets-core/dist/types/facet-bars/FacetBars";
 
 import TypeChangeMenu from "../TypeChangeMenu";
-import { Highlight, VariableSummary } from "../../store/dataset";
+import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import { getSubSelectionValues, hasBaseline } from "../../util/facets";
 import _ from "lodash";
 
@@ -71,7 +71,8 @@ export default Vue.extend({
     expandCollapse: Function as () => Function,
     highlight: Object as () => Highlight,
     enableHighlighting: Boolean as () => boolean,
-    instanceName: String as () => string
+    instanceName: String as () => string,
+    rowSelection: Object as () => RowSelection
   },
 
   computed: {
@@ -110,8 +111,8 @@ export default Vue.extend({
         ? "facet-header-container"
         : "facet-header-container-no-scroll";
     },
-    subSelection(): number[] {
-      return getSubSelectionValues(this.summary, this.max);
+    subSelection(): number[][] {
+      return getSubSelectionValues(this.summary, this.rowSelection, this.max);
     },
     selection(): number[] {
       if (!this.isHighlightedGroup(this.highlight, this.summary.key)) {

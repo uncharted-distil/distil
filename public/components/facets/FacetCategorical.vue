@@ -47,7 +47,7 @@ import "@uncharted/facets-core";
 import { FacetTermsData } from "@uncharted/facets-core/dist/types/facet-terms/FacetTerms";
 
 import TypeChangeMenu from "../TypeChangeMenu";
-import { Highlight, VariableSummary } from "../../store/dataset";
+import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getCategoricalChunkSize,
   getGroupIcon,
@@ -83,7 +83,8 @@ export default Vue.extend({
     expandCollapse: Function as () => Function,
     highlight: Object as () => Highlight,
     enableHighlighting: Boolean as () => boolean,
-    instanceName: String as () => string
+    instanceName: String as () => string,
+    rowSelection: Object as () => RowSelection
   },
 
   data() {
@@ -147,8 +148,8 @@ export default Vue.extend({
     facetMoreCount(): number {
       return this.facetValueCount - this.numToDisplay;
     },
-    subSelection(): number[] {
-      return getSubSelectionValues(this.summary, this.max);
+    subSelection(): number[][] {
+      return getSubSelectionValues(this.summary, this.rowSelection, this.max);
     },
     selection(): {} {
       if (!this.isHighlightedGroup(this.highlight, this.summary.key)) {

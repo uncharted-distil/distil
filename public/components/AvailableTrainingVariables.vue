@@ -84,8 +84,7 @@ export default Vue.extend({
       return (group: Group) => {
         const container = document.createElement("div");
         const trainingElem = document.createElement("button");
-        trainingElem.className +=
-          "btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2";
+        trainingElem.className += "btn btn-sm btn-outline-secondary mb-2";
         trainingElem.innerHTML = "Add";
         trainingElem.addEventListener("click", async () => {
           // log UI event on server
