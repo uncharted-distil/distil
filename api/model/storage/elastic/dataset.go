@@ -162,8 +162,10 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 
 // FetchDatasets returns all datasets in the provided index.
 func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
+	query := elastic.NewBoolQuery().MustNot(elastic.NewTermQuery("type", api.DatasetTypeInference))
 	// execute the ES query
 	res, err := s.client.Search().
+		Query(query).
 		Index(s.datasetIndex).
 		FetchSource(true).
 		Size(datasetsListSize).
