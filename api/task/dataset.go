@@ -52,7 +52,7 @@ type DatasetConstructor interface {
 }
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.
-func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath string, typ api.DatasetType, config *env.Config) (string, string, error) {
+func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath string, config *env.Config) (string, string, error) {
 	ingestConfig := NewConfig(*config)
 
 	// save the csv file in the file system datasets folder

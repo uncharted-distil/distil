@@ -227,7 +227,7 @@ func createImageFromRequest(data []byte, datasetName string, outputPath string, 
 	if err != nil {
 		return false, nil, err
 	}
-	_, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
+	_, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, config)
 	if err != nil {
 		return false, nil, err
 	}

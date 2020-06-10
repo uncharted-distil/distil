@@ -138,7 +138,7 @@ func NewConfig(config env.Config) *IngestTaskConfig {
 
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor,
-	index string, dataset string, origins []*model.DatasetOrigin, config *IngestTaskConfig) (string, error) {
+	index string, dataset string, origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig) (string, error) {
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
@@ -219,7 +219,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished geocoding the dataset")
 	}
 
-	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, origins, config, true, true)
+	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, origins, datasetType, config, true, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -236,8 +236,8 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 }
 
 // Ingest the metadata to ES and the data to Postgres.
-func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string, dataset string,
-	source metadata.DatasetSource, origins []*model.DatasetOrigin, config *IngestTaskConfig, checkMatch bool, fallbackMerged bool) (string, error) {
+func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string, dataset string, source metadata.DatasetSource,
+	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, checkMatch bool, fallbackMerged bool) (string, error) {
 	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, nil, config, true, fallbackMerged)
 	if err != nil {
 		return "", err
@@ -306,7 +306,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// ingest the metadata
-	_, err = IngestMetadata(originalSchemaFile, schemaFile, index, dataset, source, origins, config, true, fallbackMerged)
+	_, err = IngestMetadata(originalSchemaFile, schemaFile, index, dataset, source, origins, datasetType, config, true, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
@@ -322,11 +322,12 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 
 // IngestMetadata ingests the data to ES.
 func IngestMetadata(originalSchemaFile string, schemaFile string, index string, dataset string, source metadata.DatasetSource,
-	origins []*model.DatasetOrigin, config *IngestTaskConfig, verifyMetadata bool, fallbackMerged bool) (string, error) {
+	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, verifyMetadata bool, fallbackMerged bool) (string, error) {
 	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, origins, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
+	meta.Type = string(datasetType)
 
 	// create elasticsearch client
 	elasticClient, err := elastic.NewClient(
