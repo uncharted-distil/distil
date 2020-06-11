@@ -134,20 +134,14 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 
 	var step *description.FullySpecifiedPipeline
 	var err error
-	addMeta := false
 	if model.IsImage(clusteringVar.Type) {
 		step, err = description.CreateImageClusteringPipeline("business", "basic image clustering", []*model.Variable{clusteringVar})
-		if err != nil {
-			return false, nil, err
-		}
-		addMeta = true
 	} else {
 		step, err = description.CreateSlothPipeline("time series clustering",
 			"k-means time series clustering", "", "", features)
-		if err != nil {
-			return false, nil, err
-		}
-		addMeta = true
+	}
+	if err != nil {
+		return false, nil, err
 	}
 
 	datasetURI, err := submitPipeline([]string{datasetInputDir}, step)
@@ -182,5 +176,5 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 		}
 	}
 
-	return addMeta, clusteredData, nil
+	return true, clusteredData, nil
 }
