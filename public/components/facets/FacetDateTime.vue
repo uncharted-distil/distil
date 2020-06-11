@@ -99,7 +99,7 @@ export default Vue.extend({
         for (let i = 0, n = buckets.length; i < n; ++i) {
           values.push({
             ratio: buckets[i].count / this.max,
-            label: this.keyToDate(buckets[i].key)
+            label: this.numToDate(buckets[i].key)
           });
         }
       }
@@ -129,14 +129,13 @@ export default Vue.extend({
         return null;
       }
       const buckets = this.summary.baseline.buckets;
+      const hlFrom = this.numToDate(highlightValue.from);
+      const hlTo = this.numToDate(highlightValue.to);
 
       // map the values used for the highlight filter back to the buckets
       const highlightAsSelection = buckets.reduce((acc, val, ind) => {
-        const key = _.toInteger(val.key);
-        if (
-          key === _.toInteger(highlightValue.from) ||
-          key === _.toInteger(highlightValue.to)
-        ) {
+        const key = this.numToDate(val.key);
+        if (key === hlFrom || key === hlTo) {
           acc.push(ind);
         }
         return acc;
@@ -154,13 +153,11 @@ export default Vue.extend({
   },
 
   methods: {
-    keyToDate(key: string): string[] {
-      return [
-        moment
-          .unix(_.toNumber(key))
-          .utc()
-          .format("YYYY/MM/DD")
-      ];
+    numToDate(key: any): string {
+      return moment
+        .unix(_.toNumber(key))
+        .utc()
+        .format("YYYY/MM/DD");
     },
     dateToNum(dateStr: string): number {
       return Date.parse(dateStr) / DATETIME_UNIX_ADJUSTMENT;
