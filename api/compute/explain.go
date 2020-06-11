@@ -78,10 +78,10 @@ type pipelineOutput struct {
 }
 
 func (s *SolutionRequest) createExplainPipeline(client *compute.Client,
-	desc *pipeline.DescribeSolutionResponse, keywords []pipeline.TaskKeyword) (*pipeline.PipelineDescription, map[string]*pipelineOutput, error) {
+	desc *pipeline.DescribeSolutionResponse, keywords []string) (*pipeline.PipelineDescription, map[string]*pipelineOutput, error) {
 	// remote sensing is not explainable
 	for _, kw := range keywords {
-		if kw == pipeline.TaskKeyword_REMOTE_SENSING {
+		if kw == compute.ConvertTaskKeywordsFromTA3ToTA2([]string{compute.RemoteSensingTask})[0] {
 			return nil, nil, nil
 		}
 	}

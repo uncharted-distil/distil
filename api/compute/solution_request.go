@@ -261,10 +261,10 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 		TimeBoundRun: float64(maxTime),
 
 		// we accept dataset and csv uris as return types
-		AllowedValueTypes: []pipeline.ValueType{
-			pipeline.ValueType_DATASET_URI,
-			pipeline.ValueType_CSV_URI,
-			pipeline.ValueType_RAW,
+		AllowedValueTypes: []string{
+			compute.CSVURIValueType,
+			compute.DatasetURIValueType,
+			compute.RawValueType,
 		},
 
 		// URI of the input dataset
@@ -398,8 +398,8 @@ func createProduceSolutionRequest(datasetURI string, fittedSolutionID string, ou
 			},
 		},
 		ExposeOutputs: outputs,
-		ExposeValueTypes: []pipeline.ValueType{
-			pipeline.ValueType_CSV_URI,
+		ExposeValueTypes: []string{
+			compute.CSVURIValueType,
 		},
 	}
 }
@@ -540,7 +540,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 	// The client API will also reference things by the initial IDs.
 
 	// get the pipeline description
-	keywords := make([]pipeline.TaskKeyword, 0)
+	keywords := make([]string, 0)
 	if searchRequest.Problem != nil && searchRequest.Problem.Problem != nil {
 		keywords = searchRequest.Problem.Problem.TaskKeywords
 	}
@@ -616,9 +616,9 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 				for _, score := range response.Scores {
 					metric := ""
 					if score.GetMetric() == nil {
-						metric = compute.ConvertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric().String()
+						metric = compute.ConvertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric()
 					} else {
-						metric = score.Metric.Metric.String()
+						metric = score.Metric.Metric
 					}
 					err := solutionStorage.PersistSolutionScore(initialSearchSolutionID, metric, score.Value.GetRaw().GetDouble())
 					if err != nil {
