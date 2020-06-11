@@ -52,7 +52,7 @@ type DatasetConstructor interface {
 }
 
 // CreateDataset structures a raw csv file into a valid D3M dataset.
-func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath string, typ api.DatasetType, config *env.Config) (string, string, error) {
+func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath string, config *env.Config) (string, string, error) {
 	ingestConfig := NewConfig(*config)
 
 	// save the csv file in the file system datasets folder
@@ -95,7 +95,7 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 	}
 
 	// format the dataset into a D3M format
-	formattedPath, err := Format(metadata.Contrib, schemaPath, dataset, ingestConfig)
+	formattedPath, err := Format(schemaPath, dataset, ingestConfig)
 	if err != nil {
 		return "", "", err
 	}
@@ -133,7 +133,7 @@ func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, confi
 	}
 
 	// format the dataset into a D3M format
-	formattedPath, err := Format(metadata.Contrib, schemaPath, meta.Name, config)
+	formattedPath, err := Format(schemaPath, meta.Name, config)
 	if err != nil {
 		return "", err
 	}

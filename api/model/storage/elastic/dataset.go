@@ -38,6 +38,73 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	return "", errors.Errorf("Not Supported")
 }
 
+// IngestDataset adds a document consisting of the metadata to ES.
+func (s *Storage) IngestDataset(datasetSource metadata.DatasetSource, meta *model.Metadata) error {
+
+	if len(meta.DataResources) > 1 && meta.SchemaSource != model.SchemaSourceOriginal {
+		return errors.New("metadata variables not merged into a single dataset")
+	}
+
+	mainDR := meta.GetMainDataResource()
+
+	// clear refers to
+	for _, v := range mainDR.Variables {
+		v.RefersTo = nil
+	}
+	var origins []map[string]interface{}
+	if meta.DatasetOrigins != nil {
+		origins = make([]map[string]interface{}, len(meta.DatasetOrigins))
+		for i, ds := range meta.DatasetOrigins {
+			origins[i] = map[string]interface{}{
+				"searchResult":  ds.SearchResult,
+				"provenance":    ds.Provenance,
+				"sourceDataset": ds.SourceDataset,
+			}
+		}
+	}
+
+	source := map[string]interface{}{
+		"datasetName":      meta.Name,
+		"datasetID":        meta.ID,
+		"parentDatasetIDs": meta.ParentDatasetIDs,
+		"storageName":      meta.StorageName,
+		"description":      meta.Description,
+		"summary":          meta.Summary,
+		"summaryMachine":   meta.SummaryMachine,
+		"numRows":          meta.NumRows,
+		"numBytes":         meta.NumBytes,
+		"variables":        mainDR.Variables,
+		"datasetFolder":    meta.DatasetFolder,
+		"source":           datasetSource,
+		"datasetOrigins":   origins,
+		"type":             meta.Type,
+	}
+
+	bytes, err := json.Marshal(source)
+	if err != nil {
+		return errors.Wrapf(err, "failed to marshal document source")
+	}
+
+	// push the document into the metadata index
+	_, err = s.client.Index().
+		Index(s.datasetIndex).
+		Id(meta.ID).
+		BodyString(string(bytes)).
+		Refresh("true").
+		Do(context.Background())
+	if err != nil {
+		return errors.Wrapf(err, "failed to add document to index `%s`", s.datasetIndex)
+	}
+	return nil
+}
+
+// DeleteDataset deletes a dataset from ES.
+func (s *Storage) DeleteDataset(dataset string) error {
+	_, err := s.client.Delete().Index(s.datasetIndex).Id(dataset).Do(context.Background())
+
+	return err
+}
+
 func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
 	var datasets []*api.Dataset
 	for _, hit := range res.Hits.Hits {
@@ -162,8 +229,10 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 
 // FetchDatasets returns all datasets in the provided index.
 func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
+	query := elastic.NewBoolQuery().MustNot(elastic.NewTermQuery("type", api.DatasetTypeInference))
 	// execute the ES query
 	res, err := s.client.Search().
+		Query(query).
 		Index(s.datasetIndex).
 		FetchSource(true).
 		Size(datasetsListSize).

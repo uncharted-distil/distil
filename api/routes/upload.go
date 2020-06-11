@@ -26,7 +26,6 @@ import (
 
 	"github.com/uncharted-distil/distil/api/dataset"
 	"github.com/uncharted-distil/distil/api/env"
-	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
 )
 
@@ -98,7 +97,7 @@ func UploadHandler(outputPath string, config *env.Config) func(http.ResponseWrit
 		}
 
 		// create the raw dataset schema doc
-		datasetName, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, api.DatasetTypeModelling, config)
+		datasetName, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, config)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to create d3m dataset"))
 			return

@@ -73,12 +73,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				}
 			}
 		}
-		// update ingest config to use ingest URI.
-		cfg, err := env.LoadConfig()
-		if err != nil {
-			handleError(w, err)
-			return
-		}
 
 		meta, err := createMetadataStorageForSource(source, provenance, datamartCtors, fileMetaCtor, esMetaCtor)
 		if err != nil {
@@ -98,7 +92,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		}
 
 		// ingest the imported dataset
-		datasetID, err = task.IngestDataset(source, dataCtor, esMetaCtor, cfg.ESDatasetsIndex, datasetID, origins, &ingestConfig)
+		datasetID, err = task.IngestDataset(source, dataCtor, esMetaCtor, datasetID, origins, api.DatasetTypeModelling, &ingestConfig)
 		if err != nil {
 			handleError(w, err)
 			return

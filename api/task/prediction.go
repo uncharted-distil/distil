@@ -78,7 +78,6 @@ type PredictParams struct {
 	FittedSolutionID   string
 	DatasetConstructor DatasetConstructor
 	OutputPath         string
-	Index              string
 	Target             *model.Variable
 	MetaStorage        api.MetadataStorage
 	DataStorage        api.DataStorage
@@ -109,7 +108,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		}
 
 		// create the dataset to be used for predictions
-		_, _, err = CreateDataset(params.Dataset, predictionDatasetCtor, params.OutputPath, api.DatasetTypeInference, params.Config)
+		_, _, err = CreateDataset(params.Dataset, predictionDatasetCtor, params.OutputPath, params.Config)
 		if err != nil {
 			return nil, err
 		}
@@ -146,7 +145,8 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	if !params.DatasetIngested {
 		// ingest the dataset but without running simon, duke, etc.
-		_, err = Ingest(schemaPath, schemaPath, params.MetaStorage, params.Index, params.Dataset, metadata.Augmented, nil, params.IngestConfig, false, false)
+		_, err = Ingest(schemaPath, schemaPath, params.MetaStorage, params.Dataset,
+			metadata.Augmented, nil, api.DatasetTypeInference, params.IngestConfig, false, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to ingest ranked data")
 		}

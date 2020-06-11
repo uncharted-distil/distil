@@ -30,7 +30,7 @@ import (
 )
 
 // Format will format a dataset to have the required structures for D3M.
-func Format(datasetSource metadata.DatasetSource, schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
+func Format(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to load original schema file")

@@ -276,7 +276,7 @@ func materializeISIDataset(datamart *Storage, id string, uri string) (string, er
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create raw dataset from ISI datamart materialized dataset")
 	}
-	_, datasetPath, err := task.CreateDataset(id, ds, datamart.outputPath, api.DatasetTypeModelling, datamart.config)
+	_, datasetPath, err := task.CreateDataset(id, ds, datamart.outputPath, datamart.config)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to store dataset from ISI datamart")
 	}
