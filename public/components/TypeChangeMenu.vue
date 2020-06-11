@@ -65,7 +65,12 @@ import _ from "lodash";
 import Vue from "vue";
 import IconBase from "./icons/IconBase";
 import IconBookmark from "./icons/IconBookmark";
-import { SuggestedType, Variable, Highlight } from "../store/dataset/index";
+import {
+  SuggestedType,
+  Variable,
+  Highlight,
+  RemoteSensingGrouping
+} from "../store/dataset/index";
 import {
   actions as datasetActions,
   getters as datasetGetters
@@ -84,6 +89,7 @@ import {
   GEOCOORDINATE_TYPE,
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
+  REMOTE_SENSING_TYPE,
   hasComputedVarPrefix,
   COLLAPSE_ACTION_TYPE,
   EXPAND_ACTION_TYPE,
@@ -281,6 +287,10 @@ export default Vue.extend({
           {
             type: GEOCOORDINATE_TYPE,
             label: "Geocoordinate..."
+          },
+          {
+            type: REMOTE_SENSING_TYPE,
+            label: "Satellite Image..."
           }
         );
       }
@@ -294,6 +304,21 @@ export default Vue.extend({
           groupingType: type
         });
         this.$router.push(entry);
+      } else if (type === REMOTE_SENSING_TYPE) {
+        // CDB: Temporary for dev/debug.  Needs to be removed.
+        datasetActions.setGrouping(this.$store, {
+          dataset: this.dataset,
+          grouping: {
+            dataset: this.dataset,
+            idCol: "group_id",
+            type: REMOTE_SENSING_TYPE,
+            imageCol: "image_file",
+            bandCol: "band",
+            coordinateCol: "coordinates",
+            subIds: [],
+            hidden: ["image_file", "band", "coordinates", "group_id"]
+          } as RemoteSensingGrouping
+        });
       } else if (
         this.expandCollapse &&
         (type === COLLAPSE_ACTION_TYPE || type === EXPAND_ACTION_TYPE)

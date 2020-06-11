@@ -43,7 +43,7 @@ import {
   GEOCODED_LAT_PREFIX,
   GEOCOORDINATE_TYPE,
   isRankableVariableType,
-  MULTIBAND_IMAGE_TYPE
+  REMOTE_SENSING_TYPE
 } from "../../util/types";
 import { getters as routeGetters } from "../route/module";
 
@@ -411,19 +411,6 @@ export const actions = {
       });
       console.error(error);
     }
-  },
-
-  composeVariables(
-    context: DatasetContext,
-    args: { dataset: string; key: string; vars: string[] }
-  ): Promise<void> {
-    if (!validateArgs(args, ["dataset", "key", "vars"])) {
-      return null;
-    }
-    return axios.post(`/distil/compose/${args.dataset}`, {
-      varName: args.key,
-      variables: args.vars
-    });
   },
 
   async deleteVariable(
@@ -921,7 +908,7 @@ export const actions = {
             url: url
           });
         }
-        if (type === MULTIBAND_IMAGE_TYPE) {
+        if (type === REMOTE_SENSING_TYPE) {
           return actions.fetchMultiBandImage(context, {
             dataset: args.dataset,
             imageId: url,

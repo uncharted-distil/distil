@@ -47,15 +47,6 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 			return
 		}
 
-		// extract the grouping info
-		//grouping, err := parseGrouping(g)
-		//grouping := model.Grouping{}
-		//err = json.MapToStruct(&grouping, g)
-		//if err != nil {
-		//	handleError(w, errors.Wrap(err, "Unable to parse grouping parameter"))
-		//	return
-		//}
-
 		data, err := dataCtor()
 		if err != nil {
 			handleError(w, err)
@@ -114,11 +105,14 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 				return
 			}
 
-			err = meta.AddGroupedVariable(dataset, rsg.IDCol+"_group", "Geocoordinate", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
+			err = meta.AddGroupedVariable(dataset, rsg.IDCol+"_group", "Tile", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
 			if err != nil {
 				handleError(w, err)
 				return
 			}
+		} else {
+			handleError(w, errors.Errorf("unhandled group type %s", groupingType))
+			return
 		}
 
 		// marshal data

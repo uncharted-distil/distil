@@ -63,7 +63,7 @@ import { getters as routeGetters } from "../store/route/module";
 import {
   IMAGE_TYPE,
   TIMESERIES_TYPE,
-  MULTIBAND_IMAGE_TYPE
+  REMOTE_SENSING_TYPE
 } from "../util/types";
 import { getTimeseriesGroupingsFromFields, getImageFields } from "../util/data";
 
