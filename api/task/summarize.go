@@ -35,7 +35,7 @@ type SummaryResult struct {
 }
 
 // Summarize will summarize the dataset using a primitive.
-func Summarize(schemaPath string, index string, dataset string, config *IngestTaskConfig) (string, error) {
+func Summarize(schemaPath string, dataset string, config *IngestTaskConfig) (string, error) {
 	schemaDoc := path.Dir(schemaPath)
 
 	// create & submit the solution request

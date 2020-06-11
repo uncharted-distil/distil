@@ -181,7 +181,6 @@ func InferenceHandler(outputPath string, dataStorageCtor api.DataStorageCtor, so
 			FittedSolutionID:   fittedSolutionID,
 			DatasetConstructor: ds,
 			OutputPath:         outputPath,
-			Index:              config.ESDatasetsIndex,
 			Target:             targetVar,
 			MetaStorage:        metaStorage,
 			DataStorage:        dataStorage,

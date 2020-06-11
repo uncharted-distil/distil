@@ -31,7 +31,7 @@ import (
 )
 
 // Merge will merge data resources into a single data resource.
-func Merge(datasetSource metadata.DatasetSource, schemaFile string, index string, dataset string, config *IngestTaskConfig) (string, error) {
+func Merge(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
 	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.MergedOutputSchemaPathRelative, config.MergedOutputPathRelative)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to copy source data folder")

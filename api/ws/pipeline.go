@@ -363,7 +363,6 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		FittedSolutionID:   request.FittedSolutionID,
 		DatasetConstructor: ds,
 		OutputPath:         path.Join(config.D3MOutputDir, config.AugmentedSubFolder),
-		Index:              config.ESDatasetsIndex,
 		Target:             targetVar,
 		MetaStorage:        metaStorage,
 		DataStorage:        dataStorage,

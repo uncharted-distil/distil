@@ -53,10 +53,20 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	return s.download(s, id, uri)
 }
 
+// IngestDataset adds a document consisting of the metadata to the datamart.
+func (s *Storage) IngestDataset(datasetSource metadata.DatasetSource, meta *model.Metadata) error {
+	return errors.Errorf("Not implemented")
+}
+
 // FetchDatasets returns all datasets in the provided index.
 func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
 	// use default string in search to get complete list
 	return s.SearchDatasets("", nil, includeIndex, includeMeta)
+}
+
+// DeleteDataset deletes a dataset from the datamart.
+func (s *Storage) DeleteDataset(dataset string) error {
+	return errors.Errorf("Not implemented")
 }
 
 // FetchDataset returns a dataset in the provided index.
