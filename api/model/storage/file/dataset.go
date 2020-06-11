@@ -39,6 +39,11 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	return uri, nil
 }
 
+// IngestDataset adds a document consisting of the metadata to the file system.
+func (s *Storage) IngestDataset(datasetSource metadata.DatasetSource, meta *model.Metadata) error {
+	return errors.Errorf("Not implemented")
+}
+
 // DeleteDataset deletes a dataset from the file system.
 func (s *Storage) DeleteDataset(dataset string) error {
 	return errors.Errorf("Not implemented")

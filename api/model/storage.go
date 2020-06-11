@@ -18,6 +18,7 @@ package model
 import (
 	"time"
 
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 )
 
@@ -138,6 +139,7 @@ type MetadataStorage interface {
 	AddGroupedVariable(dataset string, varName string, varDisplayName string, varType string, varRole string, grouping model.BaseGrouping) error
 	RemoveGroupedVariable(datasetName string, grouping model.BaseGrouping) error
 	DeleteDataset(dataset string) error
+	IngestDataset(datasetSource metadata.DatasetSource, meta *model.Metadata) error
 }
 
 // ExportedModelStorageCtor represents a client constructor to instantiate a

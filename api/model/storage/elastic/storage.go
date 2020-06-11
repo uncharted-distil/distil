@@ -16,7 +16,11 @@
 package elastic
 
 import (
+	"context"
+	"fmt"
+
 	elastic "github.com/olivere/elastic/v7"
+	"github.com/pkg/errors"
 	es "github.com/uncharted-distil/distil/api/elastic"
 	"github.com/uncharted-distil/distil/api/model"
 )
@@ -29,31 +33,357 @@ type Storage struct {
 }
 
 // NewMetadataStorage returns a constructor for a metadata storage.
-func NewMetadataStorage(datasetIndex string, clientCtor es.ClientCtor) model.MetadataStorageCtor {
+func NewMetadataStorage(datasetIndex string, initialize bool, clientCtor es.ClientCtor) model.MetadataStorageCtor {
 	return func() (model.MetadataStorage, error) {
 		esClient, err := clientCtor()
 		if err != nil {
 			return nil, err
 		}
 
-		return &Storage{
+		storage := &Storage{
 			client:       esClient,
 			datasetIndex: datasetIndex,
-		}, nil
+		}
+
+		if initialize {
+			err = storage.InitializeMetadataStorage(true)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return storage, nil
 	}
 }
 
 // NewExportedModelStorage returns a constructor for an exported model storage.
-func NewExportedModelStorage(modelIndex string, clientCtor es.ClientCtor) model.ExportedModelStorageCtor {
+func NewExportedModelStorage(modelIndex string, initialize bool, clientCtor es.ClientCtor) model.ExportedModelStorageCtor {
 	return func() (model.ExportedModelStorage, error) {
 		esClient, err := clientCtor()
 		if err != nil {
 			return nil, err
 		}
 
-		return &Storage{
+		storage := &Storage{
 			client:     esClient,
 			modelIndex: modelIndex,
-		}, nil
+		}
+
+		if initialize {
+			err = storage.InitializeModelStorage(true)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return storage, nil
 	}
+}
+
+// InitializeMetadataStorage creates a new ElasticSearch index with our target
+// mappings. An ngram analyze is defined and applied to the variable names to
+// allow for substring searching.
+func (s *Storage) InitializeMetadataStorage(overwrite bool) error {
+	// check if it already exists
+	exists, err := s.client.IndexExists(s.datasetIndex).Do(context.Background())
+	if err != nil {
+		return errors.Wrapf(err, "failed to complete check for existence of index %s", s.datasetIndex)
+	}
+
+	// delete the index if it already exists
+	if exists {
+		if overwrite {
+			deleted, err := s.client.
+				DeleteIndex(s.datasetIndex).
+				Do(context.Background())
+			if err != nil {
+				return errors.Wrapf(err, "failed to delete index %s", s.datasetIndex)
+			}
+			if !deleted.Acknowledged {
+				return fmt.Errorf("failed to create index `%s`, index could not be deleted", s.datasetIndex)
+			}
+		} else {
+			return nil
+		}
+	}
+
+	// create body
+	body := `{
+		"settings": {
+			"max_ngram_diff": 20,
+			"analysis": {
+				"filter": {
+					"ngram_filter": {
+						"type": "ngram",
+						"min_gram": 4,
+						"max_gram": 20
+					},
+					"search_filter": {
+						"type": "edge_ngram",
+						"min_gram": 1,
+						"max_gram": 20
+					}
+				},
+				"tokenizer": {
+					"search_tokenizer": {
+						"type": "edge_ngram",
+						"min_gram": 1,
+						"max_gram": 20,
+						"token_chars": [
+							"letter",
+							"digit"
+						]
+					}
+				},
+				"analyzer": {
+					"ngram_analyzer": {
+						"type": "custom",
+						"tokenizer": "standard",
+						"filter": [
+							"lowercase",
+							"ngram_filter"
+						]
+					},
+					"search_analyzer": {
+						"type": "custom",
+						"tokenizer": "search_tokenizer",
+						"filter": [
+							"lowercase",
+							"search_filter"
+						]
+					},
+					"id_analyzer": {
+						"type":	  "pattern",
+						"pattern":   "\\W|_",
+						"lowercase": true
+					}
+				}
+			}
+		},
+		"mappings": {
+			"properties": {
+				"datasetID": {
+					"type": "text",
+					"analyzer": "search_analyzer"
+				},
+				"datasetName": {
+					"type": "text",
+					"analyzer": "search_analyzer",
+					"fields": {
+						"keyword": {
+							"type": "keyword",
+							"ignore_above": 256
+						}
+					}
+				},
+				"parentDatasetIDs": {
+					"type": "text",
+					"analyzer": "search_analyzer"
+				},
+				"storageName": {
+					"type": "text"
+				},
+				"datasetFolder": {
+					"type": "text"
+				},
+				"description": {
+					"type": "text",
+					"analyzer": "search_analyzer"
+				},
+				"summary": {
+					"type": "text",
+					"analyzer": "search_analyzer"
+				},
+				"summaryMachine": {
+					"type": "text",
+					"analyzer": "search_analyzer"
+				},
+				"numRows": {
+					"type": "long"
+				},
+				"numBytes": {
+					"type": "long"
+				},
+				"variables": {
+					"properties": {
+						"varDescription": {
+							"type": "text"
+						},
+						"varName": {
+							"type": "text",
+							"analyzer": "search_analyzer",
+							"term_vector": "yes"
+						},
+						"colName": {
+							"type": "text",
+							"analyzer": "search_analyzer",
+							"term_vector": "yes"
+						},
+						"varRole": {
+							"type": "text"
+						},
+						"varType": {
+							"type": "text"
+						},
+						"varOriginalType": {
+							"type": "text"
+						},
+						"varOriginalName": {
+							"type": "text"
+						},
+						"varDisplayName": {
+							"type": "text"
+						},
+						"importance": {
+							"type": "integer"
+						}
+					}
+				}
+			}
+		}
+	}`
+
+	// create index
+	created, err := s.client.
+		CreateIndex(s.datasetIndex).
+		BodyString(body).
+		Do(context.Background())
+	if err != nil {
+		return errors.Wrapf(err, "failed to create index %s", s.datasetIndex)
+	}
+	if !created.Acknowledged {
+		return fmt.Errorf("Failed to create new index %s", s.datasetIndex)
+	}
+	return nil
+}
+
+// InitializeModelStorage creates a new ElasticSearch index for the models.
+func (s *Storage) InitializeModelStorage(overwrite bool) error {
+	// check if it already exists
+	exists, err := s.client.IndexExists(s.modelIndex).Do(context.Background())
+	if err != nil {
+		return errors.Wrapf(err, "failed to complete check for existence of index %s", s.modelIndex)
+	}
+
+	// delete the index if it already exists
+	if exists {
+		if overwrite {
+			deleted, err := s.client.
+				DeleteIndex(s.modelIndex).
+				Do(context.Background())
+			if err != nil {
+				return errors.Wrapf(err, "failed to delete index %s", s.modelIndex)
+			}
+			if !deleted.Acknowledged {
+				return fmt.Errorf("failed to create index `%s`, index could not be deleted", s.modelIndex)
+			}
+		} else {
+			return nil
+		}
+	}
+
+	// create body
+	body := `{
+		"settings": {
+			"max_ngram_diff": 20,
+			"analysis": {
+				"filter": {
+					"ngram_filter": {
+						"type": "ngram",
+						"min_gram": 4,
+						"max_gram": 20
+					},
+					"search_filter": {
+						"type": "edge_ngram",
+						"min_gram": 1,
+						"max_gram": 20
+					}
+				},
+				"tokenizer": {
+					"search_tokenizer": {
+						"type": "edge_ngram",
+						"min_gram": 1,
+						"max_gram": 20,
+						"token_chars": [
+							"letter",
+							"digit"
+						]
+					}
+				},
+				"analyzer": {
+					"ngram_analyzer": {
+						"type": "custom",
+						"tokenizer": "standard",
+						"filter": [
+							"lowercase",
+							"ngram_filter"
+						]
+					},
+					"search_analyzer": {
+						"type": "custom",
+						"tokenizer": "search_tokenizer",
+						"filter": [
+							"lowercase",
+							"search_filter"
+						]
+					},
+					"id_analyzer": {
+						"type":	  "pattern",
+						"pattern":   "\\W|_",
+						"lowercase": true
+					}
+				}
+			}
+		},
+		"mappings": {
+			"properties": {
+				"modelName": {
+					"type": "text",
+					"analyzer": "search_analyzer"
+				},
+				"modelDescription": {
+					"type": "text",
+					"analyzer": "search_analyzer"
+				},
+				"filepath": {
+					"type": "text"
+				},
+				"fittedSolutionId": {
+					"type": "text"
+				},
+				"datasetId": {
+					"type": "text",
+					"analyzer": "search_analyzer"
+				},
+				"datasetName": {
+					"type": "text",
+					"analyzer": "search_analyzer",
+					"fields": {
+						"keyword": {
+							"type": "keyword",
+							"ignore_above": 256
+						}
+					}
+				},
+				"variables": {
+					"type": "text",
+					"analyzer": "search_analyzer",
+					"term_vector": "yes"
+				}
+			}
+		}
+	}`
+
+	// create index
+	created, err := s.client.
+		CreateIndex(s.modelIndex).
+		BodyString(body).
+		Do(context.Background())
+	if err != nil {
+		return errors.Wrapf(err, "failed to create index %s", s.modelIndex)
+	}
+	if !created.Acknowledged {
+		return fmt.Errorf("Failed to create new index %s", s.modelIndex)
+	}
+	return nil
 }

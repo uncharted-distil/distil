@@ -118,10 +118,10 @@ func main() {
 		config.PostgresDatabase, config.PostgresLogLevel)
 
 	// instantiate the metadata storage (using ES).
-	esMetadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, esClientCtor)
+	esMetadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, false, esClientCtor)
 
 	// instantiate the exported model storage (using ES).
-	esExportedModelStorageCtor := es.NewExportedModelStorage(config.ESModelsIndex, esClientCtor)
+	esExportedModelStorageCtor := es.NewExportedModelStorage(config.ESModelsIndex, false, esClientCtor)
 
 	// instantiate the metadata storage (using filesystem).
 	fileMetadataStorageCtor := file.NewMetadataStorage(config.D3MOutputDir)
@@ -218,7 +218,7 @@ func main() {
 			os.Exit(1)
 		}
 		_, err = task.IngestDataset(metadata.Contrib, pgDataStorageCtor, esMetadataStorageCtor,
-			config.ESDatasetsIndex, "initial", nil, model.DatasetTypeModelling, ingestConfig)
+			"initial", nil, model.DatasetTypeModelling, ingestConfig)
 		if err != nil {
 			log.Errorf("%+v", err)
 			os.Exit(1)

@@ -19,12 +19,10 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path"
 	"time"
 
-	elastic "github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/middleware"
@@ -137,7 +135,7 @@ func NewConfig(config env.Config) *IngestTaskConfig {
 
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor,
-	index string, dataset string, origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig) (string, error) {
+	dataset string, origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig) (string, error) {
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
@@ -218,7 +216,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished geocoding the dataset")
 	}
 
-	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, index, dataset, datasetSource, origins, datasetType, config, true, true)
+	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, dataset, datasetSource, origins, datasetType, config, true, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -235,7 +233,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 }
 
 // Ingest the metadata to ES and the data to Postgres.
-func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, index string, dataset string, source metadata.DatasetSource,
+func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, dataset string, source metadata.DatasetSource,
 	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, checkMatch bool, fallbackMerged bool) (string, error) {
 	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, nil, config, true, fallbackMerged)
 	if err != nil {
@@ -285,7 +283,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 		}
 		if match != "" {
 			log.Infof("Matched %s to dataset %s", meta.Name, match)
-			err = deleteDataset(match, index, pg, storage)
+			err = deleteDataset(match, pg, storage)
 			if err != nil {
 				log.Errorf("error deleting dataset: %v", err)
 			}
@@ -294,7 +292,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// ingest the metadata
-	_, err = IngestMetadata(originalSchemaFile, schemaFile, index, dataset, source, origins, datasetType, config, true, fallbackMerged)
+	_, err = IngestMetadata(originalSchemaFile, schemaFile, storage, dataset, source, origins, datasetType, config, true, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
@@ -309,7 +307,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 }
 
 // IngestMetadata ingests the data to ES.
-func IngestMetadata(originalSchemaFile string, schemaFile string, index string, dataset string, source metadata.DatasetSource,
+func IngestMetadata(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, dataset string, source metadata.DatasetSource,
 	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, verifyMetadata bool, fallbackMerged bool) (string, error) {
 	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, dataset, source, origins, config, verifyMetadata, fallbackMerged)
 	if err != nil {
@@ -317,26 +315,8 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, index string, 
 	}
 	meta.Type = string(datasetType)
 
-	// create elasticsearch client
-	elasticClient, err := elastic.NewClient(
-		elastic.SetURL(config.ESEndpoint),
-		elastic.SetHttpClient(&http.Client{Timeout: time.Second * time.Duration(config.ESTimeout)}),
-		elastic.SetMaxRetries(10),
-		elastic.SetSniff(false),
-		elastic.SetGzip(true))
-	if err != nil {
-		return "", errors.Wrap(err, "unable to initialize elastic client")
-	}
-
-	// ingest the metadata
-	// Create the metadata index if it doesn't exist
-	err = metadata.CreateMetadataIndex(elasticClient, index, false)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to create metadata index")
-	}
-
-	// Ingest the dataset info into the metadata index
-	err = metadata.IngestMetadata(elasticClient, index, config.ESDatasetPrefix, source, meta)
+	// Ingest the dataset info into the metadata storage
+	err = storage.IngestDataset(source, meta)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to ingest metadata")
 	}
@@ -549,7 +529,7 @@ func matchDataset(storage api.MetadataStorage, meta *model.Metadata) (string, er
 	return "", nil
 }
 
-func deleteDataset(name string, index string, pg *postgres.Database, meta api.MetadataStorage) error {
+func deleteDataset(name string, pg *postgres.Database, meta api.MetadataStorage) error {
 	success := false
 	for i := 0; i < 10 && !success; i++ {
 		err := meta.DeleteDataset(name)
