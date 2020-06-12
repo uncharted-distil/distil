@@ -69,6 +69,26 @@
               >
               </geocoordinate-facet>
             </template>
+            <template
+              v-else-if="
+                summary.varType === 'image' ||
+                  summary.varType === 'multiband_image'
+              "
+            >
+              <facet-image
+                :summary="summary"
+                :highlight="highlight"
+                :row-selection="rowSelection"
+                :ranking="ranking[summary.key]"
+                :html="html"
+                :enabled-type-changes="enabledTypeChanges"
+                :enable-highlighting="enableHighlighting"
+                :ignore-highlights="ignoreHighlights"
+                :instanceName="instanceName"
+                @facet-click="onFacetClick"
+              >
+              </facet-image>
+            </template>
             <template v-else-if="summary.type === 'categorical'">
               <facet-categorical
                 :summary="summary"
@@ -80,9 +100,6 @@
                 :enable-highlighting="enableHighlighting"
                 :ignore-highlights="ignoreHighlights"
                 :instanceName="instanceName"
-                @numerical-click="onNumericalClick"
-                @categorical-click="onCategoricalClick"
-                @range-change="onRangeChange"
                 @facet-click="onFacetClick"
               >
               </facet-categorical>
@@ -130,6 +147,7 @@
 <script lang="ts">
 import _ from "lodash";
 import FacetEntry from "./FacetEntry.vue";
+import FacetImage from "./FacetImage.vue";
 import FacetTimeseries from "./FacetTimeseries.vue";
 import FacetCategorical from "./FacetCategorical.vue";
 import FacetNumerical from "./FacetNumerical.vue";
@@ -168,6 +186,7 @@ export default Vue.extend({
 
   components: {
     FacetEntry,
+    FacetImage,
     FacetTimeseries,
     GeocoordinateFacet,
     FacetCategorical,

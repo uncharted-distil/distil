@@ -18,7 +18,11 @@
       >
       </type-change-menu>
     </div>
-
+    <facet-template target="facet-terms-value">
+      <div slot="header" class="facet-image-preview-display">
+        ${metadata.getImagePreview(metadata.imageContext)}
+      </div>
+    </facet-template>
     <div slot="footer" class="facet-footer-container">
       <div v-if="facetDisplayMore" class="facet-footer-more">
         <div class="facet-footer-more-section">
@@ -47,6 +51,7 @@ import "@uncharted/facets-core";
 import { FacetTermsData } from "@uncharted/facets-core/dist/types/facet-terms/FacetTerms";
 
 import TypeChangeMenu from "../TypeChangeMenu";
+import ImagePreview from "../ImagePreview";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getCategoricalChunkSize,
@@ -55,12 +60,14 @@ import {
   hasBaseline
 } from "../../util/facets";
 import _ from "lodash";
+import { IMAGE_TYPE } from "../../util/types";
 
 export default Vue.extend({
-  name: "facet-categorical",
+  name: "facet-image",
 
   components: {
-    TypeChangeMenu
+    TypeChangeMenu,
+    ImagePreview
   },
 
   directives: {
@@ -164,16 +171,45 @@ export default Vue.extend({
     },
     hasLess(): boolean {
       return this.moreNumToDisplay > 0;
+    },
+    varType(): string {
+      return this.summary.varType;
     }
   },
 
   methods: {
-    getBucketData(bucket): { ratio: number; label: string; value: number } {
+    getBucketData(
+      bucket
+    ): { ratio: number; label: string; value: number; metadata: {} } {
       return {
         ratio: bucket.count / this.max,
         label: bucket.key,
-        value: bucket.count
+        value: bucket.count,
+        metadata: {
+          imageContext: {
+            store: this.$store,
+            router: this.$router,
+            imageUrl: bucket.key,
+            type: this.summary.varType
+          },
+          getImagePreview: this.getImagePreview
+        }
       };
+    },
+    getImagePreview(imageContext: { store; router; imageUrl; type }) {
+      const ip = new ImagePreview({
+        store: imageContext.store,
+        router: imageContext.router,
+        propsData: {
+          // NOTE: there seems to be an issue with the visibility plugin used
+          // when injecting this way. Cancel the visibility flagging for facets.
+          preventHiding: true,
+          imageUrl: imageContext.imageUrl,
+          type: imageContext.type
+        }
+      });
+      ip.$mount();
+      return ip.$el;
     },
     viewMore() {
       this.moreNumToDisplay =
@@ -253,6 +289,9 @@ export default Vue.extend({
 </script>
 
 <style scoped>
+.facet-image-preview-display {
+  padding-left: 10px;
+}
 .facet-header-container {
   display: flex;
   align-items: center;
