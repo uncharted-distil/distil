@@ -95,19 +95,10 @@ export default Vue.extend({
   },
 
   computed: {
-    numToDisplay(): number {
-      return this.baseNumToDisplay + this.moreNumToDisplay;
-    },
-    max(): number {
-      if (hasBaseline(this.summary)) {
-        return this.summary.baseline.extrema.max;
-      }
-      return 0;
-    },
     facetData(): FacetTermsData {
       const values = [];
       const summary = this.summary;
-      if (hasBaseline(summary)) {
+      if (this.hasBaseline) {
         const buckets = summary.baseline.buckets;
         for (let i = 0; i < this.numToDisplay; ++i) {
           values.push(this.getBucketData(buckets[i]));
@@ -118,10 +109,6 @@ export default Vue.extend({
         values
       };
     },
-    facetValueCount(): number {
-      return this.summary.baseline.buckets.length;
-    },
-
     facetEnableTypeChanges(): boolean {
       const key = `${this.summary.dataset}:${this.summary.key}`;
       return Boolean(this.enabledTypeChanges.find(e => e === key));
@@ -130,14 +117,6 @@ export default Vue.extend({
       return this.facetEnableTypeChanges
         ? "facet-header-container"
         : "facet-header-container-no-scroll";
-    },
-    facetDisplayMore(): boolean {
-      const chunkSize = getCategoricalChunkSize(this.summary.type);
-      return this.facetValueCount > chunkSize;
-    },
-
-    facetMoreCount(): number {
-      return this.facetValueCount - this.numToDisplay;
     },
     subSelection(): number[][] {
       return getSubSelectionValues(this.summary, this.rowSelection, this.max);
@@ -158,6 +137,27 @@ export default Vue.extend({
         {}
       );
       return highlightAsSelection;
+    },
+    facetValueCount(): number {
+      return this.hasBaseline ? this.summary.baseline.buckets.length : 0;
+    },
+    facetDisplayMore(): boolean {
+      const chunkSize = getCategoricalChunkSize(this.summary.type);
+      return this.facetValueCount > chunkSize;
+    },
+    facetMoreCount(): number {
+      return this.facetValueCount - this.numToDisplay;
+    },
+    numToDisplay(): number {
+      return this.hasBaseline && this.facetValueCount < this.baseNumToDisplay
+        ? this.facetValueCount
+        : this.baseNumToDisplay + this.moreNumToDisplay;
+    },
+    max(): number {
+      return this.hasBaseline ? this.summary.baseline.extrema.max : 0;
+    },
+    hasBaseline(): boolean {
+      return hasBaseline(this.summary);
     },
     hasMore(): boolean {
       return this.numToDisplay < this.facetValueCount;

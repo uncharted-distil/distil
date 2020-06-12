@@ -89,6 +89,21 @@
               >
               </facet-image>
             </template>
+            <template v-else-if="summary.varType === 'dateTime'">
+              <facet-date-time
+                :summary="summary"
+                :highlight="highlight"
+                :row-selection="rowSelection"
+                :ranking="ranking[summary.key]"
+                :html="html"
+                :enabled-type-changes="enabledTypeChanges"
+                :enable-highlighting="enableHighlighting"
+                :ignore-highlights="ignoreHighlights"
+                :instanceName="instanceName"
+                @facet-click="onFacetClick"
+              >
+              </facet-date-time>
+            </template>
             <template v-else-if="summary.type === 'categorical'">
               <facet-categorical
                 :summary="summary"
@@ -148,6 +163,7 @@
 import _ from "lodash";
 import FacetEntry from "./FacetEntry.vue";
 import FacetImage from "./FacetImage.vue";
+import FacetDateTime from "./FacetDateTime.vue";
 import FacetTimeseries from "./FacetTimeseries.vue";
 import FacetCategorical from "./FacetCategorical.vue";
 import FacetNumerical from "./FacetNumerical.vue";
@@ -187,6 +203,7 @@ export default Vue.extend({
   components: {
     FacetEntry,
     FacetImage,
+    FacetDateTime,
     FacetTimeseries,
     GeocoordinateFacet,
     FacetCategorical,
