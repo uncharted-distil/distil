@@ -98,6 +98,8 @@ const FLOATING_POINT_TYPES = [
   LONGITUDE_TYPE
 ];
 
+const LIST_TYPES = [REAL_LIST_TYPE, REAL_VECTOR_TYPE];
+
 const CLUSTER_TYPES = [IMAGE_TYPE, GEOCOORDINATE_TYPE, TIMESERIES_TYPE];
 
 const NUMERIC_TYPES = INTEGER_TYPES.concat(FLOATING_POINT_TYPES);
@@ -395,6 +397,10 @@ export function isLocationType(type: string): boolean {
 
 export function isTextSimpleType(type: string): boolean {
   return TEXT_SIMPLE_TYPES.indexOf(type) !== -1;
+}
+
+export function isListType(type: string): boolean {
+  return LIST_TYPES.indexOf(type) !== -1;
 }
 
 export function hasComputedVarPrefix(varName: string): boolean {

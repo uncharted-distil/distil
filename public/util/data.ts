@@ -7,11 +7,9 @@ import {
   TableData,
   TableRow,
   TableColumn,
-  Grouping,
   TimeseriesGrouping,
   D3M_INDEX_FIELD,
-  SummaryMode,
-  RemoteSensingGrouping
+  SummaryMode
 } from "../store/dataset/index";
 import {
   Solution,
@@ -35,6 +33,7 @@ import {
   formatValue,
   isIntegerType,
   isTimeType,
+  isListType,
   hasComputedVarPrefix,
   IMAGE_TYPE,
   REMOTE_SENSING_TYPE,
@@ -689,4 +688,13 @@ export function getImageFields(
 
   // the two are probably mutually exclusive, but it doesn't hurt anything to allow for both
   return imageFields.concat(remoteSensingFields);
+}
+
+export function getListFields(
+  fields: Dictionary<TableColumn>
+): { key: string; type: string }[] {
+  return _.filter(fields, f => isListType(f.type)).map(f => ({
+    key: f.key,
+    type: f.type
+  }));
 }
