@@ -103,7 +103,9 @@ export default Vue.extend({
 
   computed: {
     numToDisplay(): number {
-      return this.baseNumToDisplay + this.moreNumToDisplay;
+      return this.hasExamplars
+        ? this.summary.baseline.exemplars.length
+        : this.baseNumToDisplay + this.moreNumToDisplay;
     },
     max(): number {
       if (hasBaseline(this.summary)) {
@@ -111,17 +113,16 @@ export default Vue.extend({
       }
       return 0;
     },
+    hasExamplars(): boolean {
+      return !!this.summary.baseline.exemplars;
+    },
     facetData(): FacetTermsData {
-      const values = [];
-      const summary = this.summary;
-      if (hasBaseline(summary)) {
-        const buckets = summary.baseline.buckets;
-        for (let i = 0; i < this.numToDisplay; ++i) {
-          values.push(this.getBucketData(buckets[i]));
-        }
+      let values = [];
+      if (hasBaseline(this.summary)) {
+        values = this.getFacetValues();
       }
       return {
-        label: summary.label.toUpperCase(),
+        label: this.summary.label.toUpperCase(),
         values
       };
     },
@@ -171,30 +172,38 @@ export default Vue.extend({
     },
     hasLess(): boolean {
       return this.moreNumToDisplay > 0;
-    },
-    varType(): string {
-      return this.summary.varType;
     }
   },
 
   methods: {
-    getBucketData(
-      bucket
-    ): { ratio: number; label: string; value: number; metadata: {} } {
-      return {
-        ratio: bucket.count / this.max,
-        label: bucket.key,
-        value: bucket.count,
-        metadata: {
-          imageContext: {
-            store: this.$store,
-            router: this.$router,
-            imageUrl: bucket.key,
-            type: this.summary.varType
-          },
-          getImagePreview: this.getImagePreview
-        }
-      };
+    getFacetValues(): {
+      ratio: number;
+      label: string;
+      value: number;
+      metadata: {};
+    }[] {
+      const summary = this.summary;
+      const buckets = summary.baseline.buckets;
+      const facetData = [];
+      for (let i = 0; i < this.numToDisplay; ++i) {
+        facetData.push({
+          ratio: buckets[i].count / this.max,
+          label: buckets[i].key,
+          value: buckets[i].count,
+          metadata: {
+            imageContext: {
+              store: this.$store,
+              router: this.$router,
+              imageUrl: this.hasExamplars
+                ? summary.baseline.exemplars[i]
+                : buckets[i].key,
+              type: summary.varType
+            },
+            getImagePreview: this.getImagePreview
+          }
+        });
+      }
+      return facetData;
     },
     getImagePreview(imageContext: { store; router; imageUrl; type }) {
       const ip = new ImagePreview({
