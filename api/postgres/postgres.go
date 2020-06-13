@@ -368,7 +368,7 @@ func (d *Database) IngestRow(tableName string, data []string) error {
 		var val interface{}
 		if d.isNullVariable(variables[i].Type, data[i]) {
 			val = nil
-		} else if d.isArray(variables[i].Type) {
+		} else if d.isArray(variables[i].Type) && !d.dataIsArray(data[i]) {
 			val = fmt.Sprintf("{%s}", data[i])
 		} else {
 			val = data[i]
@@ -530,4 +530,13 @@ func (d *Database) isNullVariable(typ, value string) bool {
 
 func (d *Database) isArray(typ string) bool {
 	return strings.HasSuffix(typ, "Vector")
+}
+
+func (d *Database) dataIsArray(data string) bool {
+	dataLength := len(data)
+	if dataLength < 2 {
+		return false
+	}
+
+	return data[0] == '{' && data[dataLength-1] == '}'
 }
