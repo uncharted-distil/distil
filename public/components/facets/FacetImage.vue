@@ -20,7 +20,7 @@
     </div>
     <facet-template target="facet-terms-value">
       <div slot="header" class="facet-image-preview-display">
-        ${metadata.getImagePreview(metadata.imageContext)}
+        ${metadata}
       </div>
     </facet-template>
     <div slot="footer" class="facet-footer-container">
@@ -186,35 +186,28 @@ export default Vue.extend({
       const buckets = summary.baseline.buckets;
       const facetData = [];
       for (let i = 0; i < this.numToDisplay; ++i) {
+        const imageUrl = this.hasExamplars
+          ? summary.baseline.exemplars[i]
+          : buckets[i].key;
         facetData.push({
           ratio: buckets[i].count / this.max,
           label: buckets[i].key,
           value: buckets[i].count,
-          metadata: {
-            imageContext: {
-              store: this.$store,
-              router: this.$router,
-              imageUrl: this.hasExamplars
-                ? summary.baseline.exemplars[i]
-                : buckets[i].key,
-              type: summary.varType
-            },
-            getImagePreview: this.getImagePreview
-          }
+          metadata: this.getImagePreview(imageUrl)
         });
       }
       return facetData;
     },
-    getImagePreview(imageContext: { store; router; imageUrl; type }) {
+    getImagePreview(imageUrl: string) {
       const ip = new ImagePreview({
-        store: imageContext.store,
-        router: imageContext.router,
+        store: this.$store,
+        router: this.$router,
         propsData: {
           // NOTE: there seems to be an issue with the visibility plugin used
           // when injecting this way. Cancel the visibility flagging for facets.
           preventHiding: true,
-          imageUrl: imageContext.imageUrl,
-          type: imageContext.type
+          imageUrl,
+          type: this.summary.varType
         }
       });
       ip.$mount();
