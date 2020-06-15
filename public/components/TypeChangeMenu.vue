@@ -9,7 +9,7 @@
         :disabled="isDisabled"
       >
         <template v-if="!isComputedFeature">
-          <template v-if="!isGroupedClusterOrGeo">
+          <template v-if="!isGroupedCluster">
             <b-dropdown-item
               v-for="suggested in getSuggestedList()"
               v-bind:class="{
@@ -33,7 +33,7 @@
               /></icon-base>
             </b-dropdown-item>
           </template>
-          <template v-if="!isGroupedClusterOrGeo">
+          <template v-if="!isGroupedCluster">
             <b-dropdown-divider></b-dropdown-divider>
           </template>
           <template>
@@ -118,13 +118,9 @@ export default Vue.extend({
   props: {
     dataset: String as () => string,
     field: String as () => string,
-    geocoordinate: Boolean,
     expandCollapse: Function as () => Function
   },
   computed: {
-    isGeocoordinate(): boolean {
-      return this.geocoordinate;
-    },
     isPredictionOrResultsView(): boolean {
       const routePath = routeGetters.getRoutePath(this.$store);
       return (
@@ -132,8 +128,8 @@ export default Vue.extend({
         (routePath === PREDICTION_ROUTE || routePath === RESULTS_ROUTE)
       );
     },
-    isGroupedClusterOrGeo(): boolean {
-      return (this.geocoordinate || this.isCluster) && this.isGrouping;
+    isGroupedCluster(): boolean {
+      return this.isCluster && this.isGrouping;
     },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
@@ -158,16 +154,6 @@ export default Vue.extend({
       });
       return selectedVariable ? selectedVariable : geocoordVariable;
     },
-    hasLon(): boolean {
-      return !!this.variables.filter(
-        variable => variable.colName === LONGITUDE_TYPE
-      ).length;
-    },
-    hasLat(): boolean {
-      return !!this.variables.filter(
-        variable => variable.colName === LATITUDE_TYPE
-      ).length;
-    },
     isGrouping(): boolean {
       if (!this.variable) {
         return false;
@@ -184,12 +170,7 @@ export default Vue.extend({
       return this.variable ? this.variable.colOriginalType : "";
     },
     label(): string {
-      if (this.geocoordinate) {
-        return getLabelFromType(GEOCOORDINATE_TYPE);
-      } else {
-        return this.type !== "" ? getLabelFromType(this.type) : "";
-      }
-      this.$forceUpdate();
+      return this.type !== "" ? getLabelFromType(this.type) : "";
     },
     suggestedTypes(): SuggestedType[] {
       const suggestedType = this.variable ? this.variable.suggestedTypes : [];
@@ -406,13 +387,6 @@ export default Vue.extend({
     this.$root.$on("bv::dropdown::show", () => {
       const dataset = this.dataset;
       const field = this.field;
-      if (!this.isGeocoordinate) {
-        datasetActions.reviewVariableType(this.$store, {
-          dataset: dataset,
-          field: field,
-          isColTypeReviewed: true
-        });
-      }
     });
   }
 });
