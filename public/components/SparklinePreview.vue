@@ -7,6 +7,7 @@
       :forecast-extrema="forecastExtrema"
       :highlight-range="highlightRange"
       :join-forecast="!!predictionsId"
+      :isDateTime="isDateTime()"
     >
     </sparkline-svg>
     <i class="fa fa-plus zoom-sparkline-icon" @click.stop="onClick"></i>
@@ -23,7 +24,7 @@
         :highlight-range="highlightRange"
         :x-axis-title="xCol"
         :y-axis-title="yCol"
-        :x-axis-date-time="isDateTime"
+        :x-axis-date-time="isDateTime()"
         :join-forecast="!!predictionsId"
         v-if="zoomSparkline"
       ></sparkline-chart>
@@ -177,7 +178,9 @@ export default Vue.extend({
           max: d3.max(this.forecast, d => d.value)
         }
       };
-    },
+    }
+  },
+  methods: {
     isDateTime(): boolean {
       if (this.solutionId) {
         const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
@@ -203,9 +206,7 @@ export default Vue.extend({
         }
         return datasets.isDateTime[this.timeseriesId];
       }
-    }
-  },
-  methods: {
+    },
     visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRequested) {

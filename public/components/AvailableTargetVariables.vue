@@ -217,6 +217,10 @@ export default Vue.extend({
   margin-left: 0.5rem;
   margin-right: 0.5rem;
   width: 100%;
+  -webkit-backface-visibility: hidden;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 
 .available-target-variables

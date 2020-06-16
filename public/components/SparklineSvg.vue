@@ -428,7 +428,7 @@ export default Vue.extend({
       this.svg
         .append("text")
         .attr("class", "sparkline-axis-title")
-        .attr("x", 400)
+        .attr("x", this.width() + 20)
         .attr("y", 40)
         .style("text-anchor", "end")
         .text(dateMaxX);

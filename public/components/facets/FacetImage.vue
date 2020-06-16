@@ -30,8 +30,8 @@
             <span v-if="facetMoreCount > 0">{{ facetMoreCount }} more</span>
           </div>
           <div class="facet-footer-more-controls">
-            <span v-if="hasMore" @click="viewMore"> show more</span>
             <span v-if="hasLess" @click="viewLess"> show less</span>
+            <span v-if="hasMore" @click="viewMore"> show more</span>
           </div>
         </div>
       </div>
