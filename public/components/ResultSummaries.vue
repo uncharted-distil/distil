@@ -142,9 +142,12 @@ export default Vue.extend({
     },
 
     showResiduals(): boolean {
-      return this.taskArgs &&
-        !!this.taskArgs.find
-          (t => t ===  TaskTypes.REGRESSION || t === TaskTypes.FORECASTING);
+      return (
+        this.taskArgs &&
+        !!this.taskArgs.find(
+          t => t === TaskTypes.REGRESSION || t === TaskTypes.FORECASTING
+        )
+      );
     },
 
     solutionId(): string {
@@ -156,7 +159,7 @@ export default Vue.extend({
     },
 
     activeSolution(): Solution {
-      return requestGetters.getActiveSolution(this.$store)
+      return requestGetters.getActiveSolution(this.$store);
     },
 
     activeSolutionName(): string {
@@ -173,15 +176,18 @@ export default Vue.extend({
      * @returns {Boolean}
      */
     isActiveSolutionCompleted(): boolean {
-      return !!(this.activeSolution && this.activeSolution.progress === SOLUTION_COMPLETED);
-    },
+      return !!(
+        this.activeSolution &&
+        this.activeSolution.progress === SOLUTION_COMPLETED
+      );
+    }
   },
 
   methods: {
     validForm() {
-      const valid = this.saveName.length > 0
+      const valid = this.saveName.length > 0;
       this.saveNameState = valid;
-      return valid
+      return valid;
     },
     onUploadStart(uploadData) {
       this.uploadData = uploadData;
@@ -205,7 +211,9 @@ export default Vue.extend({
           response.produceRequestId
         ).dataset;
 
-        const varModes = varModesToString(routeGetters.getDecodedVarModes(this.$store));
+        const varModes = varModesToString(
+          routeGetters.getDecodedVarModes(this.$store)
+        );
 
         const routeArgs = {
           fittedSolutionId: this.fittedSolutionId,
@@ -226,12 +234,12 @@ export default Vue.extend({
       this.saveModel();
     },
     resetModal() {
-      this.saveName = '';
+      this.saveName = "";
       this.saveNameState = null;
-      this.saveDescription = '';
+      this.saveDescription = "";
       this.saveDescriptionState = null;
     },
-    saveModel () {
+    saveModel() {
       if (!this.validForm()) {
         return;
       }
@@ -259,7 +267,7 @@ export default Vue.extend({
         });
 
       this.$nextTick(() => {
-        this.$bvModal.hide('save-model-modal');
+        this.$bvModal.hide("save-model-modal");
         this.resetModal();
       });
     }
