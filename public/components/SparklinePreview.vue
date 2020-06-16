@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="sparkline-preview-container"
-    v-observe-visibility="visibilityChanged"
-  >
+  <div :class="displayClass" :observe-visibility="visibilityChanged">
     <sparkline-svg
       :timeseries-extrema="timeseriesExtrema"
       :timeseries="timeseries"
@@ -64,6 +61,7 @@ export default Vue.extend({
   },
 
   props: {
+    facetView: Boolean as () => Boolean,
     truthDataset: String as () => string,
     forecastDataset: String as () => string,
     xCol: String as () => string,
@@ -82,6 +80,11 @@ export default Vue.extend({
     };
   },
   computed: {
+    displayClass(): string {
+      return this.facetView
+        ? "facet-sparkline-preview-container"
+        : "sparkline-preview-container";
+    },
     timeseries(): TimeSeriesValue[] {
       if (this.solutionId) {
         const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
@@ -269,6 +272,16 @@ export default Vue.extend({
 }
 
 .sparkline-preview-container:hover .zoom-sparkline-icon {
+  visibility: visible;
+}
+
+.facet-sparkline-preview-container {
+  position: relative;
+  width: 100%;
+  max-height: 45px;
+}
+
+.facet-sparkline-preview-container:hover .zoom-sparkline-icon {
   visibility: visible;
 }
 

@@ -19,7 +19,7 @@
       </type-change-menu>
     </div>
     <facet-template target="facet-terms-value">
-      <div slot="header" class="facet-image-preview-display">
+      <div slot="header" class="facet-sparkline-display">
         ${metadata}
       </div>
     </facet-template>
@@ -51,8 +51,13 @@ import "@uncharted/facets-core";
 import { FacetTermsData } from "@uncharted/facets-core/dist/types/facet-terms/FacetTerms";
 
 import TypeChangeMenu from "../TypeChangeMenu";
-import ImagePreview from "../ImagePreview";
-import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
+import SparklinePreview from "../SparklinePreview";
+import {
+  Highlight,
+  RowSelection,
+  TimeseriesGrouping,
+  VariableSummary
+} from "../../store/dataset";
 import {
   getCategoricalChunkSize,
   getGroupIcon,
@@ -65,11 +70,11 @@ import _ from "lodash";
 import { IMAGE_TYPE } from "../../util/types";
 
 export default Vue.extend({
-  name: "facet-image",
+  name: "facet-sparklines",
 
   components: {
     TypeChangeMenu,
-    ImagePreview
+    SparklinePreview
   },
 
   directives: {
@@ -82,18 +87,19 @@ export default Vue.extend({
   },
 
   props: {
-    summary: Object as () => VariableSummary,
     enabledTypeChanges: Array as () => string[],
+    enableHighlighting: Boolean as () => boolean,
+    expandCollapse: Function as () => Function,
+    highlight: Object as () => Highlight,
+    grouping: Object as () => TimeseriesGrouping,
     html: [
       String as () => string,
       Object as () => any,
       Function as () => Function
     ],
-    expandCollapse: Function as () => Function,
-    highlight: Object as () => Highlight,
-    enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
-    rowSelection: Object as () => RowSelection
+    rowSelection: Object as () => RowSelection,
+    summary: Object as () => VariableSummary
   },
 
   data() {
@@ -106,7 +112,7 @@ export default Vue.extend({
   computed: {
     facetData(): FacetTermsData {
       let values = [];
-      if (hasBaseline(this.summary)) {
+      if (hasBaseline(this.summary) && this.grouping) {
         values = this.getFacetValues();
       }
       return {
@@ -154,17 +160,12 @@ export default Vue.extend({
       return this.facetValueCount - this.numToDisplay;
     },
     numToDisplay(): number {
-      return this.hasExamplars
-        ? this.summary.baseline.exemplars.length
-        : this.hasBaseline && this.facetValueCount < this.baseNumToDisplay
+      return this.hasBaseline && this.facetValueCount < this.baseNumToDisplay
         ? this.facetValueCount
         : this.baseNumToDisplay + this.moreNumToDisplay;
     },
     max(): number {
       return this.hasBaseline ? this.summary.baseline.extrema.max : 0;
-    },
-    hasExamplars(): boolean {
-      return !!this.summary.baseline.exemplars;
     },
     hasBaseline(): boolean {
       return hasBaseline(this.summary);
@@ -188,32 +189,30 @@ export default Vue.extend({
       const buckets = summary.baseline.buckets;
       const facetData = [];
       for (let i = 0; i < this.numToDisplay; ++i) {
-        const imageUrl = this.hasExamplars
-          ? summary.baseline.exemplars[i]
-          : buckets[i].key;
         facetData.push({
           ratio: buckets[i].count / this.max,
           label: buckets[i].key,
           value: buckets[i].count,
-          metadata: this.getImagePreview(imageUrl)
+          metadata: this.getSparkline(buckets[i].key)
         });
       }
       return facetData;
     },
-    getImagePreview(imageUrl: string) {
-      const ip = new ImagePreview({
+    getSparkline(sparklineId: string) {
+      const sp = new SparklinePreview({
         store: this.$store,
         router: this.$router,
         propsData: {
-          // NOTE: there seems to be an issue with the visibility plugin used
-          // when injecting this way. Cancel the visibility flagging for facets.
-          preventHiding: true,
-          imageUrl,
-          type: this.summary.varType
+          facetView: true,
+          timeseriesCol: this.grouping.idCol,
+          timeseriesId: sparklineId,
+          truthDataset: this.summary.dataset,
+          xCol: this.grouping.xCol,
+          yCol: this.grouping.yCol
         }
       });
-      ip.$mount();
-      return ip.$el;
+      sp.$mount();
+      return sp.$el;
     },
     viewMore() {
       this.moreNumToDisplay = viewMoreData(
@@ -295,9 +294,16 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.facet-image-preview-display {
-  padding-left: 10px;
+.facet-sparkline-display {
+  padding-left: 12px;
+  width: 100%;
+  height: 40px;
 }
+
+.facet-content-overflow {
+  overflow: auto;
+}
+
 .facet-header-container {
   display: flex;
   align-items: center;

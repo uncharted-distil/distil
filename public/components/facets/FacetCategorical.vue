@@ -52,7 +52,9 @@ import {
   getCategoricalChunkSize,
   getGroupIcon,
   getSubSelectionValues,
-  hasBaseline
+  hasBaseline,
+  viewMoreData,
+  viewLessData
 } from "../../util/facets";
 import _ from "lodash";
 
@@ -176,18 +178,20 @@ export default Vue.extend({
       };
     },
     viewMore() {
-      this.moreNumToDisplay =
-        this.facetMoreCount > this.baseNumToDisplay
-          ? this.moreNumToDisplay + this.baseNumToDisplay
-          : this.moreNumToDisplay +
-            (this.facetValueCount % this.baseNumToDisplay);
+      this.moreNumToDisplay = viewMoreData(
+        this.moreNumToDisplay,
+        this.facetMoreCount,
+        this.baseNumToDisplay,
+        this.facetValueCount
+      );
     },
     viewLess() {
-      this.moreNumToDisplay =
-        this.facetMoreCount === 0
-          ? this.moreNumToDisplay -
-            (this.facetValueCount % this.baseNumToDisplay)
-          : this.moreNumToDisplay - this.baseNumToDisplay;
+      this.moreNumToDisplay = viewLessData(
+        this.moreNumToDisplay,
+        this.facetMoreCount,
+        this.baseNumToDisplay,
+        this.facetValueCount
+      );
     },
     getHighlightValue(highlight: Highlight): any {
       if (highlight && highlight.value) {

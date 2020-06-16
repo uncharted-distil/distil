@@ -585,3 +585,25 @@ export function getFacetByType(type: string): string {
       return null;
   }
 }
+
+export function viewMoreData(
+  moreNumToDisplay: number,
+  facetMoreCount: number,
+  baseNumToDisplay: number,
+  facetValueCount: number
+): number {
+  return facetMoreCount >= baseNumToDisplay
+    ? moreNumToDisplay + baseNumToDisplay
+    : moreNumToDisplay + (facetValueCount % baseNumToDisplay);
+}
+
+export function viewLessData(
+  moreNumToDisplay: number,
+  facetMoreCount: number,
+  baseNumToDisplay: number,
+  facetValueCount: number
+): number {
+  return facetMoreCount === 0 && facetValueCount % baseNumToDisplay !== 0
+    ? moreNumToDisplay - (facetValueCount % baseNumToDisplay)
+    : moreNumToDisplay - baseNumToDisplay;
+}
