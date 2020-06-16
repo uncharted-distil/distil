@@ -47,7 +47,7 @@
               >
               </facet-timeseries>
             </template>
-            <template v-else-if="summary.varType === 'geocoordinate'">
+            <template v-else-if="isGeoLocated(summary.varType)">
               <geocoordinate-facet
                 :summary="summary"
                 :enable-highlighting="enableHighlighting"
@@ -126,7 +126,12 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { ROUTE_PAGE_SUFFIX } from "../store/route/index";
 import { Group } from "../util/facets";
-import { LATITUDE_TYPE, LONGITUDE_TYPE } from "../util/types";
+import {
+  LATITUDE_TYPE,
+  LONGITUDE_TYPE,
+  isLocationType,
+  isGeoLocatedType
+} from "../util/types";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { updateHighlight, clearHighlight } from "../util/highlights";
@@ -336,6 +341,10 @@ export default Vue.extend({
         }
       }
       return false;
+    },
+
+    isGeoLocated(location: string): boolean {
+      return isGeoLocatedType(location);
     }
   }
 });

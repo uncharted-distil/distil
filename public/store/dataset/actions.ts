@@ -8,7 +8,6 @@ import {
   DatasetState,
   Variable,
   Grouping,
-  ClusteredGrouping,
   DatasetPendingRequestType,
   DatasetPendingRequestStatus,
   VariableRankingPendingRequest,
@@ -23,7 +22,6 @@ import {
   isClusteredGrouping
 } from "./index";
 import { mutations, getters } from "./module";
-import { actions as resultActions } from "../requests/module";
 import store, { DistilState } from "../store";
 import { Highlight } from "../dataset/index";
 import { FilterParams } from "../../util/filters";
@@ -41,7 +39,6 @@ import {
   IMAGE_TYPE,
   GEOCODED_LON_PREFIX,
   GEOCODED_LAT_PREFIX,
-  GEOCOORDINATE_TYPE,
   isRankableVariableType,
   REMOTE_SENSING_TYPE
 } from "../../util/types";
@@ -593,10 +590,6 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; field: string; type: string }
   ): Promise<any> {
-    if (args.type === GEOCOORDINATE_TYPE) {
-      mutations.updateVariableType(context, args);
-      return;
-    }
     if (!validateArgs(args, ["dataset", "field", "type"])) {
       return null;
     }

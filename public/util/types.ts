@@ -151,6 +151,8 @@ const TEXT_SIMPLE_TYPES = [
   BOOL_TYPE
 ];
 
+const GEOLOCATED_TYPES = [GEOCOORDINATE_TYPE, REMOTE_SENSING_TYPE];
+
 const BOOL_SUGGESTIONS = [TEXT_TYPE, CATEGORICAL_TYPE, BOOL_TYPE, INTEGER_TYPE];
 
 const EMAIL_SUGGESTIONS = [TEXT_TYPE, EMAIL_TYPE];
@@ -401,6 +403,10 @@ export function isTextSimpleType(type: string): boolean {
 
 export function isListType(type: string): boolean {
   return LIST_TYPES.indexOf(type) !== -1;
+}
+
+export function isGeoLocatedType(type: string): boolean {
+  return GEOLOCATED_TYPES.indexOf(type) !== -1;
 }
 
 export function hasComputedVarPrefix(varName: string): boolean {

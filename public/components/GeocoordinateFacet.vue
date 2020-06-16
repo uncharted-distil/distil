@@ -390,7 +390,7 @@ export default Vue.extend({
     },
 
     headerLabel(): string {
-      return GEOCOORDINATE_TYPE.toUpperCase();
+      return this.summary.label.toUpperCase();
     },
     hasFilters(): boolean {
       return routeGetters.getDecodedFilters(this.$store).length > 0;
