@@ -98,9 +98,27 @@ interface Area {
 }
 
 const FAKEDATA = [
-  { id: 1, coordinates: [[35, 36], [45, 46]] },
-  { id: 2, coordinates: [[24, 25], [34, 35]] },
-  { id: 3, coordinates: [[13, 14], [23, 24]] }
+  {
+    id: 1,
+    coordinates: [
+      [35, 36],
+      [45, 46]
+    ]
+  },
+  {
+    id: 2,
+    coordinates: [
+      [24, 25],
+      [34, 35]
+    ]
+  },
+  {
+    id: 3,
+    coordinates: [
+      [13, 14],
+      [23, 24]
+    ]
+  }
 ] as Area[];
 
 export default Vue.extend({
