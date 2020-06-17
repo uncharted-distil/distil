@@ -169,7 +169,7 @@ func RemoveGroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataSt
 		}
 
 		// If there was an ID col associated with this group that was built from SubIDs, delete it now
-		if variable.Grouping.GetIDCol() != "" && variable.Grouping.GetSubIDs() != nil {
+		if variable.Grouping.GetIDCol() != "" && len(variable.Grouping.GetSubIDs()) != 0 {
 			err = meta.DeleteVariable(dataset, variable.Grouping.GetIDCol())
 			if err != nil {
 				handleError(w, err)
