@@ -47,7 +47,11 @@ import {
 } from "../store/dataset/module";
 import { actions as requestActions } from "../store/requests/module";
 import { filterSummariesByDataset } from "../util/data";
-import { getBase64, removeExtension, generateUniqueDatasetName } from "../util/uploads";
+import {
+  getBase64,
+  removeExtension,
+  generateUniqueDatasetName
+} from "../util/uploads";
 import _ from "lodash";
 
 export default Vue.extend({

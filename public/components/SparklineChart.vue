@@ -68,25 +68,37 @@ export default Vue.extend({
     minX(): number {
       const min = d3.min(this.timeseries, d => d.time);
       return this.forecast
-        ? Math.min(min, d3.min(this.forecast, d => d.time))
+        ? Math.min(
+            min,
+            d3.min(this.forecast, d => d.time)
+          )
         : min;
     },
     maxX(): number {
       const max = d3.max(this.timeseries, d => d.time);
       return this.forecast
-        ? Math.max(max, d3.max(this.forecast, d => d.time))
+        ? Math.max(
+            max,
+            d3.max(this.forecast, d => d.time)
+          )
         : max;
     },
     minY(): number {
       const min = d3.min(this.timeseries, d => d.value);
       return this.forecast
-        ? Math.min(min, d3.min(this.forecast, d => d.value))
+        ? Math.min(
+            min,
+            d3.min(this.forecast, d => d.value)
+          )
         : min;
     },
     maxY(): number {
       const max = d3.max(this.timeseries, d => d.value);
       return this.forecast
-        ? Math.max(max, d3.max(this.forecast, d => d.value))
+        ? Math.max(
+            max,
+            d3.max(this.forecast, d => d.value)
+          )
         : max;
     },
     displayForecast(): TimeSeriesValue[] {

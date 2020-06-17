@@ -46,7 +46,7 @@ func NewMetadataStorage(datasetIndex string, initialize bool, clientCtor es.Clie
 		}
 
 		if initialize {
-			err = storage.InitializeMetadataStorage(true)
+			err = storage.InitializeMetadataStorage(false)
 			if err != nil {
 				return nil, err
 			}
@@ -70,7 +70,7 @@ func NewExportedModelStorage(modelIndex string, initialize bool, clientCtor es.C
 		}
 
 		if initialize {
-			err = storage.InitializeModelStorage(true)
+			err = storage.InitializeModelStorage(false)
 			if err != nil {
 				return nil, err
 			}

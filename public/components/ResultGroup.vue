@@ -193,7 +193,9 @@ export default Vue.extend({
         store.state.requestsModule.solutions,
         this.solutionId
       )?.fittedSolutionId;
-      if (_.isEmpty(fittedSolutionId)) { return; }
+      if (_.isEmpty(fittedSolutionId)) {
+        return;
+      }
 
       // Retreive the model name from the fitted solution.
       const name = getModelNameByFittedSolutionId(fittedSolutionId);
