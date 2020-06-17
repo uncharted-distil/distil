@@ -809,7 +809,16 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			dataVariables = append(dataVariables, variable)
 		}
 		if variable.DistilRole == model.VarDistilRoleGrouping {
-			groupingVariableIndex = variable.Index
+			// if this is a group var, find the grouping ID col and use that
+			if variable.Grouping != nil {
+				groupVariable, err := findVariable(variable.Grouping.GetIDCol(), variables)
+				if err != nil {
+					return err
+				}
+				groupingVariableIndex = groupVariable.Index
+			} else {
+				groupingVariableIndex = variable.Index
+			}
 		}
 	}
 

@@ -72,7 +72,7 @@ func ResolveTask(storage api.DataStorage, datasetStorageName string, targetVaria
 		for _, feature := range features {
 			if model.IsImage(feature.Type) {
 				task = append(task, compute.ImageTask)
-			} else if model.IsMultiBandImage(feature.Type) {
+			} else if model.IsRemoteSensing(feature.Type) {
 				task = append(task, compute.RemoteSensingTask)
 			} else if model.IsTimeSeries(feature.Type) {
 				task = append(task, compute.TimeSeriesTask)
