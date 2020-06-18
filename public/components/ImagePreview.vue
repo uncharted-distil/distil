@@ -47,7 +47,7 @@ import {
 } from "../store/dataset/index";
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
-import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
+import { REMOTE_SENSING_TYPE, IMAGE_TYPE } from "../util/types";
 
 export default Vue.extend({
   name: "image-preview",
@@ -224,7 +224,7 @@ export default Vue.extend({
               this.injectImage();
             }
           });
-      } else if (this.type === MULTIBAND_IMAGE_TYPE) {
+      } else if (this.type === REMOTE_SENSING_TYPE) {
         datasetActions
           .fetchMultiBandImage(this.$store, {
             dataset: this.dataset,

@@ -390,7 +390,7 @@ export default Vue.extend({
     },
 
     headerLabel(): string {
-      return GEOCOORDINATE_TYPE.toUpperCase();
+      return this.summary.label.toUpperCase();
     },
     hasFilters(): boolean {
       return routeGetters.getDecodedFilters(this.$store).length > 0;
@@ -622,24 +622,45 @@ export default Vue.extend({
         this.expand = false;
       }
     },
-    selectFeature() {
-      const training = routeGetters.getDecodedTrainingVariableNames(
-        this.$store
-      );
-      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        training: training.concat([this.summary.key]).join(",")
+    async selectFeature() {
+      const training = routeGetters
+        .getDecodedTrainingVariableNames(this.$store)
+        .concat([this.summary.key]);
+
+      // update task based on the current training data
+      const taskResponse = await datasetActions.fetchTask(this.$store, {
+        dataset: routeGetters.getRouteDataset(this.$store),
+        targetName: routeGetters.getRouteTargetVariable(this.$store),
+        variableNames: training
       });
+
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        training: training.join(","),
+        task: taskResponse.data.task.join(",")
+      });
+
       this.$router.push(entry);
     },
-    removeFeature() {
+    async removeFeature() {
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
       );
-      training.splice(training.indexOf(this.summary.key), 1);
-      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        training: training.join(",")
+      _.remove(training, t => t === this.summary.key);
+
+      // update task based on the current training data
+      const taskResponse = await datasetActions.fetchTask(this.$store, {
+        dataset: routeGetters.getRouteDataset(this.$store),
+        targetName: routeGetters.getRouteTargetVariable(this.$store),
+        variableNames: training
       });
+
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        training: training.join(","),
+        task: taskResponse.data.task.join(",")
+      });
+
       this.$router.push(entry);
+
       removeFiltersByName(this.$router, this.summary.key);
     },
     clearSelectionRect() {

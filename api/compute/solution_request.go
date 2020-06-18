@@ -303,7 +303,7 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 	}
 
 	// replace any grouped variables in filter params with the group's
-	expandedFilters, err := api.ExpandFilterParams(s.Dataset, s.Filters, metaStorage)
+	expandedFilters, err := api.ExpandFilterParams(s.Dataset, s.Filters, true, metaStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -809,7 +809,16 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			dataVariables = append(dataVariables, variable)
 		}
 		if variable.DistilRole == model.VarDistilRoleGrouping {
-			groupingVariableIndex = variable.Index
+			// if this is a group var, find the grouping ID col and use that
+			if variable.Grouping != nil {
+				groupVariable, err := findVariable(variable.Grouping.GetIDCol(), variables)
+				if err != nil {
+					return err
+				}
+				groupingVariableIndex = groupVariable.Index
+			} else {
+				groupingVariableIndex = variable.Index
+			}
 		}
 	}
 
@@ -888,7 +897,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
-		preprocessing, err = s.createPreprocessingPipeline(dataVariables, metaStorage)
+		preprocessing, err = s.createPreprocessingPipeline(variables, metaStorage)
 		if err != nil {
 			return err
 		}

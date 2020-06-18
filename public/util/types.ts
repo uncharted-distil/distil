@@ -46,7 +46,7 @@ export const PHONE_TYPE = "phone";
 export const POSTAL_CODE_TYPE = "postal_code";
 export const URI_TYPE = "uri";
 export const IMAGE_TYPE = "image";
-export const MULTIBAND_IMAGE_TYPE = "multiband_image";
+export const REMOTE_SENSING_TYPE = "remote_sensing";
 export const TIMESERIES_TYPE = "timeseries";
 export const UNKNOWN_TYPE = "unknown";
 export const GEOCOORDINATE_TYPE = "geocoordinate";
@@ -74,7 +74,7 @@ const TYPES_TO_LABELS: Dictionary<string> = {
   [DATE_TIME_TYPE]: "Date/Time",
   [BOOL_TYPE]: "Boolean",
   [IMAGE_TYPE]: "Image",
-  [MULTIBAND_IMAGE_TYPE]: "Satellite Image",
+  [REMOTE_SENSING_TYPE]: "Satellite Image",
   [TIMESERIES_TYPE]: "Timeseries",
   [UNKNOWN_TYPE]: "Unknown",
   [GEOCOORDINATE_TYPE]: "Geocoordinate"
@@ -98,6 +98,8 @@ const FLOATING_POINT_TYPES = [
   LONGITUDE_TYPE
 ];
 
+const LIST_TYPES = [REAL_LIST_TYPE, REAL_VECTOR_TYPE];
+
 const CLUSTER_TYPES = [IMAGE_TYPE, GEOCOORDINATE_TYPE, TIMESERIES_TYPE];
 
 const NUMERIC_TYPES = INTEGER_TYPES.concat(FLOATING_POINT_TYPES);
@@ -105,7 +107,7 @@ const NUMERIC_TYPES = INTEGER_TYPES.concat(FLOATING_POINT_TYPES);
 const TEXT_TYPES = [
   TEXT_TYPE,
   IMAGE_TYPE,
-  MULTIBAND_IMAGE_TYPE,
+  REMOTE_SENSING_TYPE,
   TIMESERIES_TYPE,
   CATEGORICAL_TYPE,
   ORDINAL_TYPE,
@@ -149,6 +151,8 @@ const TEXT_SIMPLE_TYPES = [
   BOOL_TYPE
 ];
 
+const GEOLOCATED_TYPES = [GEOCOORDINATE_TYPE, REMOTE_SENSING_TYPE];
+
 const BOOL_SUGGESTIONS = [TEXT_TYPE, CATEGORICAL_TYPE, BOOL_TYPE, INTEGER_TYPE];
 
 const EMAIL_SUGGESTIONS = [TEXT_TYPE, EMAIL_TYPE];
@@ -169,8 +173,7 @@ const TEXT_SUGGESTIONS = [
   COUNTRY_TYPE,
   POSTAL_CODE_TYPE,
   DATE_TIME_TYPE,
-  IMAGE_TYPE,
-  MULTIBAND_IMAGE_TYPE
+  IMAGE_TYPE
 ];
 
 const INTEGER_SUGGESTIONS = [
@@ -203,12 +206,7 @@ const COORDINATE_SUGGESTIONS = [
   ORDINAL_TYPE
 ];
 
-const IMAGE_SUGGESTIONS = [
-  IMAGE_TYPE,
-  MULTIBAND_IMAGE_TYPE,
-  TEXT_TYPE,
-  CATEGORICAL_TYPE
-];
+const IMAGE_SUGGESTIONS = [IMAGE_TYPE, TEXT_TYPE, CATEGORICAL_TYPE];
 
 export const BASIC_SUGGESTIONS = [
   INTEGER_TYPE,
@@ -217,10 +215,8 @@ export const BASIC_SUGGESTIONS = [
   ORDINAL_TYPE,
   TEXT_TYPE,
   IMAGE_TYPE,
-  MULTIBAND_IMAGE_TYPE,
   DATE_TIME_TYPE,
   TIMESTAMP_TYPE,
-  TIMESERIES_TYPE,
   UNKNOWN_TYPE
 ];
 
@@ -246,7 +242,7 @@ const EQUIV_TYPES = {
   [DATE_TIME_LOWER_TYPE]: [DATE_TIME_TYPE, DATE_TIME_LOWER_TYPE],
   [BOOL_TYPE]: [BOOL_TYPE],
   [IMAGE_TYPE]: [IMAGE_TYPE],
-  [MULTIBAND_IMAGE_TYPE]: [MULTIBAND_IMAGE_TYPE],
+  [REMOTE_SENSING_TYPE]: [REMOTE_SENSING_TYPE],
   [TIMESERIES_TYPE]: [TIMESERIES_TYPE],
   [UNKNOWN_TYPE]: [UNKNOWN_TYPE]
 };
@@ -275,14 +271,14 @@ const TYPE_TO_SUGGESTIONS = {
   [POSTAL_CODE_TYPE]: TEXT_SUGGESTIONS,
   [URI_TYPE]: URI_SUGGESTIONS,
   [IMAGE_TYPE]: IMAGE_SUGGESTIONS,
-  [MULTIBAND_IMAGE_TYPE]: MULTIBAND_IMAGE_TYPE,
+  [REMOTE_SENSING_TYPE]: REMOTE_SENSING_TYPE,
   [TIMESERIES_TYPE]: TIME_SUGGESTIONS,
   [UNKNOWN_TYPE]: TEXT_SUGGESTIONS
 };
 
 export const UNSUPPORTED_TARGET_TYPES = new Set([
   IMAGE_TYPE,
-  MULTIBAND_IMAGE_TYPE,
+  REMOTE_SENSING_TYPE,
   GEOCOORDINATE_TYPE,
   TEXT_TYPE
 ]);
@@ -403,6 +399,14 @@ export function isLocationType(type: string): boolean {
 
 export function isTextSimpleType(type: string): boolean {
   return TEXT_SIMPLE_TYPES.indexOf(type) !== -1;
+}
+
+export function isListType(type: string): boolean {
+  return LIST_TYPES.indexOf(type) !== -1;
+}
+
+export function isGeoLocatedType(type: string): boolean {
+  return GEOLOCATED_TYPES.indexOf(type) !== -1;
 }
 
 export function hasComputedVarPrefix(varName: string): boolean {

@@ -9,7 +9,7 @@
         :disabled="isDisabled"
       >
         <template v-if="!isComputedFeature">
-          <template v-if="!isGroupedClusterOrGeo">
+          <template v-if="!isGroupedCluster">
             <b-dropdown-item
               v-for="suggested in getSuggestedList()"
               v-bind:class="{
@@ -33,7 +33,7 @@
               /></icon-base>
             </b-dropdown-item>
           </template>
-          <template v-if="!isGroupedClusterOrGeo">
+          <template v-if="!isGroupedCluster">
             <b-dropdown-divider></b-dropdown-divider>
           </template>
           <template>
@@ -65,7 +65,12 @@ import _ from "lodash";
 import Vue from "vue";
 import IconBase from "./icons/IconBase";
 import IconBookmark from "./icons/IconBookmark";
-import { SuggestedType, Variable, Highlight } from "../store/dataset/index";
+import {
+  SuggestedType,
+  Variable,
+  Highlight,
+  RemoteSensingGrouping
+} from "../store/dataset/index";
 import {
   actions as datasetActions,
   getters as datasetGetters
@@ -84,6 +89,7 @@ import {
   GEOCOORDINATE_TYPE,
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
+  REMOTE_SENSING_TYPE,
   hasComputedVarPrefix,
   COLLAPSE_ACTION_TYPE,
   EXPAND_ACTION_TYPE,
@@ -112,13 +118,9 @@ export default Vue.extend({
   props: {
     dataset: String as () => string,
     field: String as () => string,
-    geocoordinate: Boolean,
     expandCollapse: Function as () => Function
   },
   computed: {
-    isGeocoordinate(): boolean {
-      return this.geocoordinate;
-    },
     isPredictionOrResultsView(): boolean {
       const routePath = routeGetters.getRoutePath(this.$store);
       return (
@@ -126,8 +128,8 @@ export default Vue.extend({
         (routePath === PREDICTION_ROUTE || routePath === RESULTS_ROUTE)
       );
     },
-    isGroupedClusterOrGeo(): boolean {
-      return (this.geocoordinate || this.isCluster) && this.isGrouping;
+    isGroupedCluster(): boolean {
+      return this.isCluster && this.isGrouping;
     },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
@@ -152,16 +154,6 @@ export default Vue.extend({
       });
       return selectedVariable ? selectedVariable : geocoordVariable;
     },
-    hasLon(): boolean {
-      return !!this.variables.filter(
-        variable => variable.colName === LONGITUDE_TYPE
-      ).length;
-    },
-    hasLat(): boolean {
-      return !!this.variables.filter(
-        variable => variable.colName === LATITUDE_TYPE
-      ).length;
-    },
     isGrouping(): boolean {
       if (!this.variable) {
         return false;
@@ -178,12 +170,7 @@ export default Vue.extend({
       return this.variable ? this.variable.colOriginalType : "";
     },
     label(): string {
-      if (this.geocoordinate) {
-        return getLabelFromType(GEOCOORDINATE_TYPE);
-      } else {
-        return this.type !== "" ? getLabelFromType(this.type) : "";
-      }
-      this.$forceUpdate();
+      return this.type !== "" ? getLabelFromType(this.type) : "";
     },
     suggestedTypes(): SuggestedType[] {
       const suggestedType = this.variable ? this.variable.suggestedTypes : [];
@@ -281,6 +268,10 @@ export default Vue.extend({
           {
             type: GEOCOORDINATE_TYPE,
             label: "Geocoordinate..."
+          },
+          {
+            type: REMOTE_SENSING_TYPE,
+            label: "Satellite Image..."
           }
         );
       }
@@ -294,6 +285,21 @@ export default Vue.extend({
           groupingType: type
         });
         this.$router.push(entry);
+      } else if (type === REMOTE_SENSING_TYPE) {
+        // CDB: Temporary for dev/debug.  Needs to be removed.
+        datasetActions.setGrouping(this.$store, {
+          dataset: this.dataset,
+          grouping: {
+            dataset: this.dataset,
+            idCol: "group_id",
+            type: REMOTE_SENSING_TYPE,
+            imageCol: "image_file",
+            bandCol: "band",
+            coordinateCol: "coordinates",
+            subIds: [],
+            hidden: ["image_file", "band", "coordinates", "group_id"]
+          } as RemoteSensingGrouping
+        });
       } else if (
         this.expandCollapse &&
         (type === COLLAPSE_ACTION_TYPE || type === EXPAND_ACTION_TYPE)
@@ -381,13 +387,6 @@ export default Vue.extend({
     this.$root.$on("bv::dropdown::show", () => {
       const dataset = this.dataset;
       const field = this.field;
-      if (!this.isGeocoordinate) {
-        datasetActions.reviewVariableType(this.$store, {
-          dataset: dataset,
-          field: field,
-          isColTypeReviewed: true
-        });
-      }
     });
   }
 });

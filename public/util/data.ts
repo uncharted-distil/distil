@@ -7,7 +7,6 @@ import {
   TableData,
   TableRow,
   TableColumn,
-  Grouping,
   TimeseriesGrouping,
   D3M_INDEX_FIELD,
   SummaryMode
@@ -34,9 +33,10 @@ import {
   formatValue,
   isIntegerType,
   isTimeType,
+  isListType,
   hasComputedVarPrefix,
   IMAGE_TYPE,
-  MULTIBAND_IMAGE_TYPE,
+  REMOTE_SENSING_TYPE,
   TIMESERIES_TYPE
 } from "../util/types";
 
@@ -77,6 +77,7 @@ export function getTimeseriesGroupingsFromFields(
       v =>
         v.grouping &&
         v.grouping.idCol &&
+        v.colType === TIMESERIES_TYPE &&
         _.includes(fieldKeys, v.grouping.idCol)
     )
     .map(v => v.grouping as TimeseriesGrouping);
@@ -664,13 +665,36 @@ function d3mRowWeightExtrema(
 export function getImageFields(
   fields: Dictionary<TableColumn>
 ): { key: string; type: string }[] {
+  // find basic image fields
   const imageFields = _.map(fields, (field, key) => {
     return {
       key: key,
       type: field.type
     };
-  }).filter(
-    field => field.type === IMAGE_TYPE || field.type === MULTIBAND_IMAGE_TYPE
-  );
-  return imageFields;
+  }).filter(field => field.type === IMAGE_TYPE);
+
+  // find remote senings image fields
+  const fieldKeys = _.map(fields, (_, key) => key);
+  const remoteSensingFields = datasetGetters
+    .getVariables(store)
+    .filter(
+      v =>
+        v.grouping &&
+        v.grouping.idCol &&
+        v.colType === REMOTE_SENSING_TYPE &&
+        _.includes(fieldKeys, v.grouping.idCol)
+    )
+    .map(v => ({ key: v.grouping.idCol, type: v.colType }));
+
+  // the two are probably mutually exclusive, but it doesn't hurt anything to allow for both
+  return imageFields.concat(remoteSensingFields);
+}
+
+export function getListFields(
+  fields: Dictionary<TableColumn>
+): { key: string; type: string }[] {
+  return _.filter(fields, f => isListType(f.type)).map(f => ({
+    key: f.key,
+    type: f.type
+  }));
 }
