@@ -55,7 +55,7 @@ func FetchDatasetVariables(dataset string, metaStore MetadataStorage) ([]*model.
 
 // ExpandFilterParams examines filter parameters for grouped variables, and replaces them with their constituent components
 // as necessary.
-func ExpandFilterParams(dataset string, filterParams *FilterParams, metaStore MetadataStorage) (*FilterParams, error) {
+func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidden bool, metaStore MetadataStorage) (*FilterParams, error) {
 	if filterParams == nil {
 		return nil, nil
 	}
@@ -95,7 +95,10 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, metaStore Me
 			if variable.IsGrouping() {
 				componentVars := []string{}
 
-				// Include X and Y col when not dealing with time series - time series data is fetched subsequently
+				// Force inclusion of some columns for table data.
+				// TODO: A better solution for this would be to separate this out, so that a request for
+				// variable ignores hidden, but a request for table data can include
+				// some subset of parameters.
 				if model.IsGeoCoordinate(variable.Type) {
 					gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
 					componentVars = append(componentVars, gcg.XCol, gcg.YCol)
@@ -114,7 +117,11 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, metaStore Me
 					componentVars = append(componentVars, variable.Grouping.GetSubIDs()...)
 				}
 
-				// filter out any hidden variables for timeseries
+				// include any hidden components if requested - see above TODO
+				if includeHidden && len(variable.Grouping.GetHidden()) > 0 {
+					componentVars = append(componentVars, variable.Grouping.GetHidden()...)
+				}
+
 				for _, componentVarName := range componentVars {
 					updatedFilterParams.AddVariable(componentVarName)
 				}

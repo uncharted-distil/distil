@@ -303,7 +303,7 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 	}
 
 	// replace any grouped variables in filter params with the group's
-	expandedFilters, err := api.ExpandFilterParams(s.Dataset, s.Filters, metaStorage)
+	expandedFilters, err := api.ExpandFilterParams(s.Dataset, s.Filters, true, metaStorage)
 	if err != nil {
 		return nil, err
 	}
