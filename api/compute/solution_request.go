@@ -897,7 +897,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
-		preprocessing, err = s.createPreprocessingPipeline(dataVariables, metaStorage)
+		preprocessing, err = s.createPreprocessingPipeline(variables, metaStorage)
 		if err != nil {
 			return err
 		}
