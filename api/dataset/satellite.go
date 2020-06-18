@@ -33,6 +33,10 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
+const (
+	errorLogLimit = 50
+)
+
 var (
 	satTypeMap = map[string]string{
 		"tif":  "tiff",
@@ -135,6 +139,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	d3mIDRunning := 1
 
 	// the folder name represents the label to apply for all containing images
+	errorCount := 0
 	for _, imageFolder := range imageFolders {
 		log.Infof("processing satellite image folder '%s'", imageFolder)
 		label := path.Base(imageFolder)
@@ -152,7 +157,8 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 
 			ok := verifySatelliteImage(imageFilenameFull, s.ImageType)
 			if !ok {
-				log.Warnf("'%s' is not a valid or supported satellite image", imageFilenameFull)
+				logWarning(errorCount, "'%s' is not a valid or supported satellite image", imageFilenameFull)
+				errorCount++
 				continue
 			}
 
@@ -170,20 +176,22 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 
 			coordinates, err := extractCoordinates(targetImageFilename)
 			if err != nil {
-				log.Warnf("unable to extract coordinates from '%s': %v", targetImageFilename, err)
+				logWarning(errorCount, "unable to extract coordinates from '%s': %v", targetImageFilename, err)
+				errorCount++
 				continue
 			}
 
 			band, err := extractBand(targetImageFilename)
 			if err != nil {
-				log.Warnf("unable to extract band from '%s': %v", targetImageFilename, err)
+				logWarning(errorCount, "unable to extract band from '%s': %v", targetImageFilename, err)
+				errorCount++
 				continue
 			}
 
 			timestamp, err := extractTimestamp(targetImageFilename)
 			if err != nil {
-				log.Warnf("unable to extract timestamp from '%s': %v", targetImageFilename, err)
-				continue
+				logWarning(errorCount, "unable to extract timestamp from '%s': %v", targetImageFilename, err)
+				errorCount++
 			}
 
 			groupID := extractGroupID(targetImageFilename)
@@ -198,8 +206,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			csvData = append(csvData, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.ToString(), label})
 		}
 	}
-
-	log.Infof("creating metadata")
+	log.Infof("parsed all input data creating %d rows of data and %d errors", len(csvData)-1, errorCount)
 
 	// create the dataset schema doc
 	datasetID := model.NormalizeDatasetID(datasetName)
@@ -350,4 +357,12 @@ func extractCoordinates(filename string) (*BoundingBox, error) {
 			Y: pointsY[0],
 		},
 	}, nil
+}
+
+func logWarning(currentCount int, warning string, params ...interface{}) {
+	if currentCount < errorLogLimit {
+		log.Warnf(warning, params...)
+	} else if currentCount == errorLogLimit {
+		log.Warnf("reached error log limit (%d) so no further parsing errors will be logged", errorLogLimit)
+	}
 }
