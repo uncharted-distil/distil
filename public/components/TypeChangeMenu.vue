@@ -238,7 +238,6 @@ export default Vue.extend({
       };
     }
   },
-
   methods: {
     groupingOptions() {
       const options = [];
@@ -381,6 +380,12 @@ export default Vue.extend({
           return null;
         });
     }
+  },
+  mounted() {
+    this.$root.$on("bv::dropdown::show", () => {
+      const dataset = this.dataset;
+      const field = this.field;
+    });
   }
 });
 </script>
