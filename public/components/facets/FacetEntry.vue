@@ -91,9 +91,9 @@ import {
   TIMESERIES_TYPE,
   IMAGE_TYPE,
   REMOTE_SENSING_TYPE
-} from "../util/types";
-import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from "../util/data";
-import { getters as datasetGetters } from "../store/dataset/module";
+} from "../../util/types";
+import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from "../../util/data";
+import { getters as datasetGetters } from "../../store/dataset/module";
 
 import "@uncharted.software/stories-facets/dist/facets.css";
 
