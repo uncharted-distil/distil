@@ -264,6 +264,36 @@ func ImageToJPEG(image *image.RGBA) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// SplitMultiBandImage splits a multiband image into separate images, each
+// being for a single band. Bands can be mapped and dropped.
+func SplitMultiBandImage(dataset gdal.Dataset, outputFolder string, bandMapping map[int]string) []string {
+	// make the output folder
+	os.MkdirAll(outputFolder, os.ModePerm)
+	filename := dataset.FileList()[0]
+	tileName := path.Base(filename)
+	tileName = strings.TrimSuffix(tileName, path.Ext(tileName))
+
+	os.MkdirAll(outputFolder, os.ModePerm)
+
+	files := make([]string, 0)
+	for band := 1; band <= dataset.RasterCount(); band++ {
+		mappedBand, ok := bandMapping[band]
+		if ok && mappedBand == "" {
+			continue
+		} else if !ok {
+			mappedBand = fmt.Sprintf("%02d", band)
+		}
+
+		name := fmt.Sprintf("%s_B%s.tiff", tileName, mappedBand)
+		fullName := path.Join(outputFolder, name)
+		dst := gdal.GDALTranslate(fullName, dataset, []string{"-b", fmt.Sprintf("%d", band)})
+		dst.Close()
+		files = append(files, fullName)
+	}
+
+	return files
+}
+
 // getFilePath takes a top level dataset directory, a file ID and a band label and composes them
 // into a coherent path for a BigEarthNet file.
 func getFilePath(datasetDir string, fileID string, bandLabel string) string {
