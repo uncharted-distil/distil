@@ -7,7 +7,8 @@ import {
   TableData,
   TableRow,
   TableColumn,
-  TimeSeries
+  TimeSeries,
+  BandCombination
 } from "./index";
 import { Dictionary } from "../../util/dict";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
@@ -125,10 +126,7 @@ export const getters = {
     return getTableDataItems(state.includedSet.tableData);
   },
 
-  getIncludedTableDataFields(
-    state: DatasetState,
-    getters: any
-  ): Dictionary<TableColumn> {
+  getIncludedTableDataFields(state: DatasetState): Dictionary<TableColumn> {
     return getTableDataFields(state.includedSet.tableData);
   },
 
@@ -150,10 +148,11 @@ export const getters = {
     return getTableDataItems(state.excludedSet.tableData);
   },
 
-  getExcludedTableDataFields(
-    state: DatasetState,
-    getters: any
-  ): Dictionary<TableColumn> {
+  getExcludedTableDataFields(state: DatasetState): Dictionary<TableColumn> {
     return getTableDataFields(state.excludedSet.tableData);
+  },
+
+  getMultiBandCombinations(state: DatasetState): BandCombination[] {
+    return state.bands;
   }
 };

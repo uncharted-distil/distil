@@ -8,7 +8,6 @@ import {
   DatasetState,
   Variable,
   Grouping,
-  ClusteredGrouping,
   DatasetPendingRequestType,
   DatasetPendingRequestStatus,
   VariableRankingPendingRequest,
@@ -23,7 +22,6 @@ import {
   isClusteredGrouping
 } from "./index";
 import { mutations, getters } from "./module";
-import { actions as resultActions } from "../requests/module";
 import store, { DistilState } from "../store";
 import { Highlight } from "../dataset/index";
 import { FilterParams } from "../../util/filters";
@@ -41,9 +39,8 @@ import {
   IMAGE_TYPE,
   GEOCODED_LON_PREFIX,
   GEOCODED_LAT_PREFIX,
-  GEOCOORDINATE_TYPE,
   isRankableVariableType,
-  MULTIBAND_IMAGE_TYPE
+  REMOTE_SENSING_TYPE
 } from "../../util/types";
 import { getters as routeGetters } from "../route/module";
 
@@ -413,19 +410,6 @@ export const actions = {
     }
   },
 
-  composeVariables(
-    context: DatasetContext,
-    args: { dataset: string; key: string; vars: string[] }
-  ): Promise<void> {
-    if (!validateArgs(args, ["dataset", "key", "vars"])) {
-      return null;
-    }
-    return axios.post(`/distil/compose/${args.dataset}`, {
-      varName: args.key,
-      variables: args.vars
-    });
-  },
-
   async deleteVariable(
     context: DatasetContext,
     args: { dataset: string; key: string }
@@ -606,10 +590,6 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; field: string; type: string }
   ): Promise<any> {
-    if (args.type === GEOCOORDINATE_TYPE) {
-      mutations.updateVariableType(context, args);
-      return;
-    }
     if (!validateArgs(args, ["dataset", "field", "type"])) {
       return null;
     }
@@ -921,7 +901,7 @@ export const actions = {
             url: url
           });
         }
-        if (type === MULTIBAND_IMAGE_TYPE) {
+        if (type === REMOTE_SENSING_TYPE) {
           return actions.fetchMultiBandImage(context, {
             dataset: args.dataset,
             imageId: url,

@@ -88,10 +88,12 @@ import {
   hasComputedVarPrefix,
   GEOCOORDINATE_TYPE,
   DATETIME_UNIX_ADJUSTMENT,
-  TIMESERIES_TYPE
-} from "../../util/types";
-import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from "../../util/data";
-import { getters as datasetGetters } from "../../store/dataset/module";
+  TIMESERIES_TYPE,
+  IMAGE_TYPE,
+  REMOTE_SENSING_TYPE
+} from "../util/types";
+import { IMPORTANT_VARIABLE_RANKING_THRESHOLD } from "../util/data";
+import { getters as datasetGetters } from "../store/dataset/module";
 
 import "@uncharted.software/stories-facets/dist/facets.css";
 
@@ -1222,7 +1224,7 @@ export default Vue.extend({
     },
 
     injectImagePreview(group: Group, $elem: JQuery) {
-      if (group.type === "image" || group.type === "multiband_image") {
+      if (group.type === IMAGE_TYPE || group.type === REMOTE_SENSING_TYPE) {
         const $facets = $elem.find(".facet-block");
         group.facets.forEach((facet: any, index) => {
           const $facet = $($facets.get(index));

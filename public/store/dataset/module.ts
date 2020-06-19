@@ -5,6 +5,7 @@ import { actions as moduleActions } from "./actions";
 import { mutations as moduleMutations } from "./mutations";
 import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
+import { radialArea } from "d3";
 
 export const datasetModule: Module<DatasetState, DistilState> = {
   getters: moduleGetters,
@@ -62,7 +63,10 @@ export const getters = {
   getExcludedTableData: read(moduleGetters.getExcludedTableData),
   getExcludedTableDataNumRows: read(moduleGetters.getExcludedTableDataNumRows),
   getExcludedTableDataItems: read(moduleGetters.getExcludedTableDataItems),
-  getExcludedTableDataFields: read(moduleGetters.getExcludedTableDataFields)
+  getExcludedTableDataFields: read(moduleGetters.getExcludedTableDataFields),
+
+  // Remote sensing image band combinatinos
+  getMultiBandCombinations: read(moduleGetters.getMultiBandCombinations)
 };
 
 // Typed actions
@@ -72,7 +76,6 @@ export const actions = {
   searchDatasets: dispatch(moduleActions.searchDatasets),
   geocodeVariable: dispatch(moduleActions.geocodeVariable),
   importDataset: dispatch(moduleActions.importDataset),
-  composeVariables: dispatch(moduleActions.composeVariables),
   deleteVariable: dispatch(moduleActions.deleteVariable),
   setGrouping: dispatch(moduleActions.setGrouping),
   removeGrouping: dispatch(moduleActions.removeGrouping),

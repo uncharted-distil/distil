@@ -93,7 +93,7 @@ func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 
 		// Expand any grouped variables defined in filters into their subcomponents
 		dataset := predictResult.Dataset
-		updatedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, meta)
+		updatedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, meta)
 		if err != nil {
 			handleError(w, err)
 			return

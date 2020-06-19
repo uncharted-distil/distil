@@ -68,6 +68,7 @@ export interface GeoCoordinateGrouping extends Grouping {
 export interface RemoteSensingGrouping extends Grouping {
   imageCol: string;
   bandCol: string;
+  coordinateCol: string;
 }
 
 export interface Variable {
@@ -352,7 +353,7 @@ export interface WorkingSet {
 
 export interface BandCombination {
   id: BandID;
-  displayName: String;
+  displayName: string;
 }
 
 export interface BandCombinations {

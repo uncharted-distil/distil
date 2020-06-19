@@ -49,6 +49,13 @@
         </div>
       </template>
 
+      <template
+        v-for="listField in listFields"
+        v-slot:[cellSlot(listField.key)]="data"
+      >
+        <span :title="formatList(data)">{{ formatList(data) }}</span>
+      </template>
+
       <template v-slot:cell()="data">
         <span :title="data.value.value">{{ data.value.value }}</span>
       </template>
@@ -74,7 +81,9 @@ import {
   Variable,
   D3M_INDEX_FIELD,
   RowSelection,
-  TimeseriesGrouping
+  TimeseriesGrouping,
+  TableData,
+  TableValue
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { TIMESERIES_TYPE, hasComputedVarPrefix } from "../util/types";
@@ -88,7 +97,8 @@ import {
   getTimeseriesGroupingsFromFields,
   formatSlot,
   formatFieldsAsArray,
-  getImageFields
+  getImageFields,
+  getListFields
 } from "../util/data";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
@@ -154,6 +164,10 @@ export default Vue.extend({
       return computedColumns;
     },
 
+    listFields(): { key: string; type: string }[] {
+      return getListFields(this.fields);
+    },
+
     filters(): Filter[] {
       return routeGetters.getDecodedFilters(this.$store);
     },
@@ -207,6 +221,13 @@ export default Vue.extend({
     },
     cellSlot(key: string): string {
       return formatSlot(key, "cell");
+    },
+    formatList(value: TableValue) {
+      const listData = value.value.value.Elements as {
+        Float: number;
+        Status: number;
+      }[];
+      return listData.map(l => l.Float);
     }
   }
 });
