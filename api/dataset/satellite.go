@@ -33,6 +33,10 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
+const (
+	errorLogLimit = 50
+)
+
 var (
 	satTypeMap = map[string]string{
 		"tif":  "tiff",
@@ -44,6 +48,15 @@ var (
 
 	bandRegex      = regexp.MustCompile(`_B[0-9][0-9a-zA-Z][.]`)
 	timestampRegex = regexp.MustCompile(`\d{8}T\d{4,6}`)
+
+	// eurosat drops cloud layer, has the 8A layer and offsets everything else.
+	eurosatBandMapping = map[int]string{
+		9:  "8A",
+		10: "09",
+		11: "",
+		12: "11",
+		13: "12",
+	}
 )
 
 // Satellite captures the data in a satellite (remote sensing) dataset.
@@ -135,6 +148,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	d3mIDRunning := 1
 
 	// the folder name represents the label to apply for all containing images
+	errorCount := 0
 	for _, imageFolder := range imageFolders {
 		log.Infof("processing satellite image folder '%s'", imageFolder)
 		label := path.Base(imageFolder)
@@ -152,54 +166,51 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 
 			ok := verifySatelliteImage(imageFilenameFull, s.ImageType)
 			if !ok {
-				log.Warnf("'%s' is not a valid or supported satellite image", imageFilenameFull)
+				logWarning(errorCount, "'%s' is not a valid or supported satellite image", imageFilenameFull)
+				errorCount++
 				continue
 			}
 
-			targetImageFilename := imageFilename
-			extension := path.Ext(targetImageFilename)
-			if extension != fmt.Sprintf(".%s", s.ImageType) {
-				targetImageFilename = fmt.Sprintf("%s.%s", strings.TrimSuffix(targetImageFilename, extension), s.ImageType)
-			}
-			targetImageFilename = getUniqueName(path.Join(mediaFolder, targetImageFilename))
-
-			err = util.CopyFile(imageFilenameFull, targetImageFilename)
+			filesToProcess, err := copyAndSplitMultiBandImage(imageFilenameFull, s.ImageType, mediaFolder)
 			if err != nil {
-				return nil, errors.Wrap(err, "unable to copy image file")
+				return nil, err
 			}
 
-			coordinates, err := extractCoordinates(targetImageFilename)
-			if err != nil {
-				log.Warnf("unable to extract coordinates from '%s': %v", targetImageFilename, err)
-				continue
+			for _, targetImageFilename := range filesToProcess {
+				coordinates, err := extractCoordinates(targetImageFilename)
+				if err != nil {
+					logWarning(errorCount, "unable to extract coordinates from '%s': %v", targetImageFilename, err)
+					errorCount++
+					continue
+				}
+
+				band, err := extractBand(targetImageFilename)
+				if err != nil {
+					logWarning(errorCount, "unable to extract band from '%s': %v", targetImageFilename, err)
+					errorCount++
+					continue
+				}
+
+				timestamp, err := extractTimestamp(targetImageFilename)
+				if err != nil {
+					logWarning(errorCount, "unable to extract timestamp from '%s': %v", targetImageFilename, err)
+					errorCount++
+				}
+
+				groupID := extractGroupID(targetImageFilename)
+
+				d3mID := d3mIDs[groupID]
+				if d3mID == 0 {
+					d3mID = d3mIDRunning
+					d3mIDRunning = d3mIDRunning + 1
+					d3mIDs[groupID] = d3mID
+				}
+
+				csvData = append(csvData, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.ToString(), label})
 			}
-
-			band, err := extractBand(targetImageFilename)
-			if err != nil {
-				log.Warnf("unable to extract band from '%s': %v", targetImageFilename, err)
-				continue
-			}
-
-			timestamp, err := extractTimestamp(targetImageFilename)
-			if err != nil {
-				log.Warnf("unable to extract timestamp from '%s': %v", targetImageFilename, err)
-				continue
-			}
-
-			groupID := extractGroupID(targetImageFilename)
-
-			d3mID := d3mIDs[groupID]
-			if d3mID == 0 {
-				d3mID = d3mIDRunning
-				d3mIDRunning = d3mIDRunning + 1
-				d3mIDs[groupID] = d3mID
-			}
-
-			csvData = append(csvData, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.ToString(), label})
 		}
 	}
-
-	log.Infof("creating metadata")
+	log.Infof("parsed all input data creating %d rows of data and %d errors", len(csvData)-1, errorCount)
 
 	// create the dataset schema doc
 	datasetID := model.NormalizeDatasetID(datasetName)
@@ -350,4 +361,47 @@ func extractCoordinates(filename string) (*BoundingBox, error) {
 			Y: pointsY[0],
 		},
 	}, nil
+}
+
+func logWarning(currentCount int, warning string, params ...interface{}) {
+	if currentCount < errorLogLimit {
+		log.Warnf(warning, params...)
+	} else if currentCount == errorLogLimit {
+		log.Warnf("reached error log limit (%d) so no further parsing errors will be logged", errorLogLimit)
+	}
+}
+
+func copyAndSplitMultiBandImage(imageFilename string, imageType string, outputFolder string) ([]string, error) {
+	files := make([]string, 0)
+
+	// open file
+	dataset, err := gdal.Open(imageFilename, gdal.ReadOnly)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to load geotiff")
+	}
+	defer dataset.Close()
+
+	// check number of bands
+	bandCount := dataset.RasterCount()
+
+	if bandCount == 1 {
+		// only one band means a simple copy of the file
+		targetImageFilename := path.Base(imageFilename)
+		extension := path.Ext(targetImageFilename)
+		if extension != fmt.Sprintf(".%s", imageType) {
+			targetImageFilename = fmt.Sprintf("%s.%s", strings.TrimSuffix(targetImageFilename, extension), imageType)
+		}
+		targetImageFilename = getUniqueName(path.Join(outputFolder, targetImageFilename))
+
+		err := util.CopyFile(imageFilename, targetImageFilename)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to copy image file")
+		}
+		files = append(files, targetImageFilename)
+	} else {
+		// multiband so need to split it into separate files
+		files = util.SplitMultiBandImage(dataset, outputFolder, eurosatBandMapping)
+	}
+
+	return files, nil
 }
