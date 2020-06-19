@@ -121,8 +121,6 @@ func (f *RemoteSensingField) fetchHistogram(filterParams *api.FilterParams, inve
 	_, xMaxBucketQuery, _, _ := f.getHistogramAggQuery(xExtrema, xNumBuckets, 5)
 	yMinHistogramName, yMinBucketQuery, intervalY, minY := f.getHistogramAggQuery(yExtrema, yNumBuckets, 2)
 	_, yMaxBucketQuery, _, _ := f.getHistogramAggQuery(yExtrema, yNumBuckets, 6)
-	xNumBuckets = xExtrema.GetBucketCount(numBuckets)
-	yNumBuckets = yExtrema.GetBucketCount(numBuckets)
 
 	// Get count by x & y
 	query := fmt.Sprintf(`
@@ -336,9 +334,9 @@ func getEqualBivariateBuckets(numBuckets int, xExtrema *api.Extrema, yExtrema *a
 	xNumBuckets := numBuckets
 	yNumBuckets := numBuckets
 	if xSize > ySize {
-		yNumBuckets = int(ySize / xSize * float64(yNumBuckets))
-	} else {
 		xNumBuckets = int(xSize / ySize * float64(xNumBuckets))
+	} else {
+		yNumBuckets = int(ySize / xSize * float64(yNumBuckets))
 	}
 	return xNumBuckets, yNumBuckets
 }
