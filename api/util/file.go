@@ -260,3 +260,21 @@ func FileExists(filename string) bool {
 	}
 	return true
 }
+
+// GetFolderFileType returns the extension of the first file in the media folder.
+func GetFolderFileType(folder string) (string, error) {
+	files, err := ioutil.ReadDir(folder)
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to read folder")
+	}
+	if len(files) == 0 {
+		return "", nil
+	}
+
+	extension := path.Ext(files[0].Name())
+	if len(extension) > 0 {
+		extension = extension[1:]
+	}
+
+	return extension, nil
+}

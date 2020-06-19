@@ -102,10 +102,15 @@ var (
 // ImageFromCombination takes a base datsaet directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for BigEarthNet data.
 func ImageFromCombination(datasetDir string, fileID string, bandCombination BandCombinationID) (*image.RGBA, error) {
+	fileType, err := GetFolderFileType(datasetDir)
+	if err != nil {
+		return nil, err
+	}
+
 	filePaths := []string{}
 	if bandCombo, ok := SentinelBandCombinations[strings.ToLower(string(bandCombination))]; ok {
 		for _, bandLabel := range bandCombo.Mapping {
-			filePath := getFilePath(datasetDir, fileID, bandLabel)
+			filePath := getFilePath(datasetDir, fileID, bandLabel, fileType)
 			filePaths = append(filePaths, filePath)
 		}
 	}
@@ -296,7 +301,7 @@ func SplitMultiBandImage(dataset gdal.Dataset, outputFolder string, bandMapping 
 
 // getFilePath takes a top level dataset directory, a file ID and a band label and composes them
 // into a coherent path for a BigEarthNet file.
-func getFilePath(datasetDir string, fileID string, bandLabel string) string {
-	fileName := fmt.Sprintf("%s_%s.tif", fileID, strings.ToUpper(bandLabel))
+func getFilePath(datasetDir string, fileID string, bandLabel string, fileType string) string {
+	fileName := fmt.Sprintf("%s_%s.%s", fileID, strings.ToUpper(bandLabel), fileType)
 	return path.Join(datasetDir, fileName)
 }
