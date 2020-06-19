@@ -38,6 +38,7 @@ export interface RouteArgs {
   produceRequestId?: string;
   fittedSolutionId?: string;
   predictionsDataset?: string;
+  bandCombinationId?: string;
 
   // we currently don't have a way to add these to the interface
   //
