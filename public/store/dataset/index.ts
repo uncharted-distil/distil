@@ -353,7 +353,7 @@ export interface WorkingSet {
 
 export interface BandCombination {
   id: BandID;
-  displayName: String;
+  displayName: string;
 }
 
 export interface BandCombinations {

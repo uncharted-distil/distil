@@ -25,6 +25,16 @@
       :visible="!!zoomImage"
       hide-footer
     >
+      <div v-if="availableBands.length > 0">
+        <b-dropdown :text="band" size="sm">
+          <b-dropdown-item
+            v-for="bandInfo in availableBands"
+            :key="bandInfo.id"
+            @click="setBandCombination(bandInfo.id)"
+            >{{ bandInfo.displayName }}</b-dropdown-item
+          >
+        </b-dropdown>
+      </div>
       <div class="image-elem-zoom" ref="imageElemZoom"></div>
     </b-modal>
   </div>
@@ -32,6 +42,7 @@
 
 <script lang="ts">
 import $ from "jquery";
+import _ from "lodash";
 import Vue from "vue";
 import {
   getters as datasetGetters,
@@ -43,11 +54,14 @@ import {
   D3M_INDEX_FIELD,
   TableRow,
   RowSelection,
-  BandID
+  BandID,
+  BandCombination,
+  TaskTypes
 } from "../store/dataset/index";
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
 import { REMOTE_SENSING_TYPE, IMAGE_TYPE } from "../util/types";
+import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 
 export default Vue.extend({
   name: "image-preview",
@@ -72,7 +86,7 @@ export default Vue.extend({
   },
 
   watch: {
-    imageUrl(newUrl, oldUrl) {
+    imageUrl(newUrl: string, oldUrl: string) {
       if (newUrl !== oldUrl) {
         this.hasRendered = false;
         this.hasRequested = false;
@@ -82,6 +96,13 @@ export default Vue.extend({
         } else {
           this.injectImage();
         }
+      }
+    },
+    // Refresh image on band change
+    band(newBand: string, oldBand: string) {
+      if (newBand !== oldBand) {
+        this.clearImage();
+        this.requestImage();
       }
     }
   },
@@ -135,6 +156,17 @@ export default Vue.extend({
       if (this.row) {
         return isRowSelected(this.rowSelection, this.row[D3M_INDEX_FIELD]);
       }
+    },
+    band(): string {
+      const bandID = routeGetters.getBandCombinationId(this.$store);
+      return this.availableBands.find(b => b.id === bandID)?.displayName;
+    },
+    availableBands(): BandCombination[] {
+      // Show available bands for remote sensing only
+      if (this.type === REMOTE_SENSING_TYPE) {
+        return datasetGetters.getMultiBandCombinations(this.$store);
+      }
+      return [];
     }
   },
 
@@ -158,6 +190,14 @@ export default Vue.extend({
           image: this.image
         });
       }
+    },
+
+    // Writes a new band combination into the route
+    setBandCombination(bandID: BandID) {
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        bandCombinationId: bandID
+      });
+      this.$router.push(entry);
     },
 
     injectZoomedImage() {
@@ -211,34 +251,39 @@ export default Vue.extend({
       }
     },
 
-    requestImage() {
+    async requestImage() {
       this.hasRequested = true;
       if (this.type === IMAGE_TYPE) {
-        datasetActions
-          .fetchImage(this.$store, {
-            dataset: this.dataset,
-            url: this.imageUrl
-          })
-          .then(() => {
-            if (this.isVisible) {
-              this.injectImage();
-            }
-          });
+        await datasetActions.fetchImage(this.$store, {
+          dataset: this.dataset,
+          url: this.imageUrl
+        });
+        if (this.isVisible) {
+          this.injectImage();
+        }
       } else if (this.type === REMOTE_SENSING_TYPE) {
-        datasetActions
-          .fetchMultiBandImage(this.$store, {
-            dataset: this.dataset,
-            imageId: this.imageId,
-            bandCombination: BandID.NATURAL_COLORS
-          })
-          .then(() => {
-            if (this.isVisible) {
-              this.injectImage();
-            }
-          });
+        await datasetActions.fetchMultiBandImage(this.$store, {
+          dataset: this.dataset,
+          imageId: this.imageId,
+          bandCombination: routeGetters.getBandCombinationId(this.$store)
+        });
+        if (this.isVisible) {
+          this.injectImage();
+        }
       } else {
         console.warn(`Image Data Type ${this.type} is not supported`);
       }
+    }
+  },
+  async beforeMount() {
+    // lazy fetch available band types
+    if (
+      this.type === REMOTE_SENSING_TYPE &&
+      _.isEmpty(datasetGetters.getMultiBandCombinations(this.$store))
+    ) {
+      await datasetActions.fetchMultiBandCombinations(this.$store, {
+        dataset: this.dataset
+      });
     }
   }
 });

@@ -4,7 +4,9 @@ import {
   Highlight,
   RowSelection,
   SummaryMode,
-  TaskTypes
+  TaskTypes,
+  BandCombination,
+  BandID
 } from "../dataset/index";
 import {
   JOINED_VARS_INSTANCE_PAGE,
@@ -432,5 +434,10 @@ export const getters = {
 
     // Check if REMOTE_SENSING is part of it.
     return task.includes(TaskTypes.REMOTE_SENSING);
+  },
+
+  getBandCombinationId(state: Route): BandID {
+    const bandCombo = state.query.bandCombinationId;
+    return _.isEmpty(bandCombo) ? BandID.NATURAL_COLORS : <BandID>bandCombo;
   }
 };
