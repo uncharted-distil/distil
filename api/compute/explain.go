@@ -62,6 +62,11 @@ var (
 			},
 		},
 	}
+
+	unexplainableTask = map[string]bool{
+		compute.ConvertProblemTaskToTA2(compute.RemoteSensingTask): true,
+		compute.ConvertProblemTaskToTA2(compute.ImageTask):         true,
+	}
 )
 
 type explainableOutput struct {
@@ -79,9 +84,11 @@ type pipelineOutput struct {
 
 func (s *SolutionRequest) createExplainPipeline(client *compute.Client,
 	desc *pipeline.DescribeSolutionResponse, keywords []string) (*pipeline.PipelineDescription, map[string]*pipelineOutput, error) {
-	// remote sensing is not explainable
+	// remote sensing and images are not explainable
+	// TODO: we may want to look into folding this filtering functionality into
+	// the function that builds the explainable pipeline (explainablePipeline).
 	for _, kw := range keywords {
-		if kw == compute.ConvertTaskKeywordsFromTA3ToTA2([]string{compute.RemoteSensingTask})[0] {
+		if unexplainableTask[kw] {
 			return nil, nil, nil
 		}
 	}
