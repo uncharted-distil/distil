@@ -27,6 +27,7 @@ import (
 	"path"
 	"strings"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/gdal"
@@ -97,14 +98,36 @@ var (
 		ShortwaveInfrared:      {ShortwaveInfrared, "Shortwave Infrared", []string{"b12", "b08", "b04"}},
 		VegetationAnalysis:     {VegetationAnalysis, "Vegetation Analysis", []string{"b11", "b08", "b04"}},
 	}
+
+	// Cache to hold
+	folderTypeCache *lru.Cache
 )
+
+func init() {
+	// create an LRU cache to hold the results of time consuming directory content analysis
+	var err error
+	folderTypeCache, err = lru.New(100)
+	if err != nil {
+		log.Error(errors.Wrap(err, "failed to init directory type cache"))
+	}
+}
 
 // ImageFromCombination takes a base datsaet directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for BigEarthNet data.
 func ImageFromCombination(datasetDir string, fileID string, bandCombination BandCombinationID) (*image.RGBA, error) {
-	fileType, err := GetFolderFileType(datasetDir)
-	if err != nil {
-		return nil, err
+	// attempt to get the folder file type for the supplied dataset dir from the cache, if
+	// not do the look up
+	var fileType string
+	cacheValue, ok := folderTypeCache.Get(datasetDir)
+	if !ok {
+		var err error
+		fileType, err = GetFolderFileType(datasetDir)
+		if err != nil {
+			return nil, err
+		}
+		folderTypeCache.Add(datasetDir, fileType)
+	} else {
+		fileType = cacheValue.(string)
 	}
 
 	filePaths := []string{}

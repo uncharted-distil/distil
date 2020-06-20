@@ -12,6 +12,7 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/gorilla/websocket v1.4.0
 	github.com/h2non/filetype v1.0.12
+	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgx v3.2.0+incompatible
 	github.com/jinzhu/inflection v1.0.0 // indirect
