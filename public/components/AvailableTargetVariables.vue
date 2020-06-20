@@ -163,12 +163,6 @@ export default Vue.extend({
                       varModesMap.set(v, SummaryMode.Timeseries);
                     }
                   });
-                } else if (task.includes("remoteSensing")) {
-                  training.forEach(v => {
-                    if (v !== group.colName) {
-                      varModesMap.set(v, SummaryMode.RemoteSensing);
-                    }
-                  });
                 }
                 const varModesStr = varModesToString(varModesMap);
 
