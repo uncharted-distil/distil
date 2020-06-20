@@ -400,7 +400,10 @@ func copyAndSplitMultiBandImage(imageFilename string, imageType string, outputFo
 		files = append(files, targetImageFilename)
 	} else {
 		// multiband so need to split it into separate files
-		files = util.SplitMultiBandImage(dataset, outputFolder, eurosatBandMapping)
+		files, err = util.SplitMultiBandImage(dataset, outputFolder, eurosatBandMapping)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return files, nil

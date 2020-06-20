@@ -27,6 +27,7 @@ import (
 	"path"
 	"strings"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/gdal"
@@ -97,14 +98,36 @@ var (
 		ShortwaveInfrared:      {ShortwaveInfrared, "Shortwave Infrared", []string{"b12", "b08", "b04"}},
 		VegetationAnalysis:     {VegetationAnalysis, "Vegetation Analysis", []string{"b11", "b08", "b04"}},
 	}
+
+	// Cache to hold
+	folderTypeCache *lru.Cache
 )
+
+func init() {
+	// create an LRU cache to hold the results of time consuming directory content analysis
+	var err error
+	folderTypeCache, err = lru.New(100)
+	if err != nil {
+		log.Error(errors.Wrap(err, "failed to init directory type cache"))
+	}
+}
 
 // ImageFromCombination takes a base datsaet directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for BigEarthNet data.
 func ImageFromCombination(datasetDir string, fileID string, bandCombination BandCombinationID) (*image.RGBA, error) {
-	fileType, err := GetFolderFileType(datasetDir)
-	if err != nil {
-		return nil, err
+	// attempt to get the folder file type for the supplied dataset dir from the cache, if
+	// not do the look up
+	var fileType string
+	cacheValue, ok := folderTypeCache.Get(datasetDir)
+	if !ok {
+		var err error
+		fileType, err = GetFolderFileType(datasetDir)
+		if err != nil {
+			return nil, err
+		}
+		folderTypeCache.Add(datasetDir, fileType)
+	} else {
+		fileType = cacheValue.(string)
 	}
 
 	filePaths := []string{}
@@ -271,14 +294,14 @@ func ImageToJPEG(image *image.RGBA) ([]byte, error) {
 
 // SplitMultiBandImage splits a multiband image into separate images, each
 // being for a single band. Bands can be mapped and dropped.
-func SplitMultiBandImage(dataset gdal.Dataset, outputFolder string, bandMapping map[int]string) []string {
+func SplitMultiBandImage(dataset gdal.Dataset, outputFolder string, bandMapping map[int]string) ([]string, error) {
 	// make the output folder
-	os.MkdirAll(outputFolder, os.ModePerm)
+	if err := os.MkdirAll(outputFolder, os.ModePerm); err != nil {
+		return nil, errors.Wrap(err, "failed to create dir for multiband image split")
+	}
 	filename := dataset.FileList()[0]
 	tileName := path.Base(filename)
 	tileName = strings.TrimSuffix(tileName, path.Ext(tileName))
-
-	os.MkdirAll(outputFolder, os.ModePerm)
 
 	files := make([]string, 0)
 	for band := 1; band <= dataset.RasterCount(); band++ {
@@ -296,7 +319,7 @@ func SplitMultiBandImage(dataset gdal.Dataset, outputFolder string, bandMapping 
 		files = append(files, fullName)
 	}
 
-	return files
+	return files, nil
 }
 
 // getFilePath takes a top level dataset directory, a file ID and a band label and composes them
