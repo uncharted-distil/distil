@@ -74,6 +74,8 @@ const (
 	ClusterMode
 	// TimeseriesMode use the timeseries grouping to return timeseries counts rather than observation counts.
 	TimeseriesMode
+	// RemoteSensingMode use the remote sensing grouping to return tile counts rather than image counts.
+	RemoteSensingMode
 )
 
 // SummaryModeFromString creates a SummaryMode from the supplied string
@@ -83,6 +85,8 @@ func SummaryModeFromString(s string) (SummaryMode, error) {
 		return ClusterMode, nil
 	case "timeseries":
 		return TimeseriesMode, nil
+	case "remoteSensing":
+		return RemoteSensingMode, nil
 	case "default":
 		return DefaultMode, nil
 	default:

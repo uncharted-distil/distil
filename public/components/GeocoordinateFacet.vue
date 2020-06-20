@@ -83,7 +83,8 @@ import {
   Extrema,
   Highlight,
   NUMERICAL_SUMMARY,
-  RowSelection
+  RowSelection,
+  SummaryMode
 } from "../store/dataset/index";
 import TypeChangeMenu from "../components/TypeChangeMenu";
 import FacetEntry from "../components/FacetEntry";
@@ -96,7 +97,7 @@ import {
   EXPAND_ACTION_TYPE,
   COLLAPSE_ACTION_TYPE
 } from "../util/types";
-import { overlayRouteEntry } from "../util/routes";
+import { overlayRouteEntry, varModesToString } from "../util/routes";
 import { Filter, removeFiltersByName } from "../util/filters";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
@@ -634,9 +635,31 @@ export default Vue.extend({
         variableNames: training
       });
 
+      const task = taskResponse.data.task.join(",");
+      const varModesMap = routeGetters.getDecodedVarModes(this.$store);
+
+      if (task.includes("remoteSensing")) {
+        const available = routeGetters.getAvailableVariables(this.$store);
+
+        training.forEach(v => {
+          varModesMap.set(v, SummaryMode.RemoteSensing);
+        });
+
+        available.forEach(v => {
+          varModesMap.set(v.colName, SummaryMode.RemoteSensing);
+        });
+
+        varModesMap.set(
+          routeGetters.getRouteTargetVariable(this.$store),
+          SummaryMode.RemoteSensing
+        );
+      }
+      const varModesStr = varModesToString(varModesMap);
+
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         training: training.join(","),
-        task: taskResponse.data.task.join(",")
+        task: task,
+        varModes: varModesStr
       });
 
       this.$router.push(entry);
