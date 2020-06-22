@@ -136,9 +136,22 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 	var err error
 	if model.IsImage(clusteringVar.Type) {
 		step, err = description.CreateImageClusteringPipeline("business", "basic image clustering", []*model.Variable{clusteringVar})
-	} else {
+	} else if model.IsTimeSeries(clusteringVar.Type) {
 		step, err = description.CreateSlothPipeline("time series clustering",
 			"k-means time series clustering", "", "", features)
+	} else {
+		// general clustering pipeline
+		selectedFeatures := make([]string, len(features))
+		for i, f := range features {
+			selectedFeatures[i] = f.Name
+		}
+		datasetDescription := &description.UserDatasetDescription{
+			AllFeatures:      features,
+			TargetFeature:    clusteringVar,
+			SelectedFeatures: selectedFeatures,
+		}
+		step, err = description.CreateGeneralClusteringPipeline("time series clustering",
+			"k-means time series clustering", datasetDescription, nil)
 	}
 	if err != nil {
 		return false, nil, err
