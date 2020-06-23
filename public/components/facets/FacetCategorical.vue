@@ -2,6 +2,7 @@
   <facet-terms
     :data.prop="facetData"
     action-buttons="0"
+    multiselect="false"
     :selection.prop="selection"
     :subselection.prop="subSelection"
     @facet-element-updated="updateSelection"
@@ -124,9 +125,13 @@ export default Vue.extend({
       return getSubSelectionValues(this.summary, this.rowSelection, this.max);
     },
     selection(): {} {
-      if (!this.isHighlightedGroup(this.highlight, this.summary.key)) {
+      if (
+        !this.enableHighlighting ||
+        !this.isHighlightedGroup(this.highlight, this.summary.key)
+      ) {
         return null;
       }
+
       const highlightValue = this.getHighlightValue(this.highlight);
       if (!highlightValue) {
         return null;
