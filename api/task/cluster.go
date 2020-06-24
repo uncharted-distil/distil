@@ -174,6 +174,10 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 
 	// find the field with the feature output
 	clusterIndex := getFieldIndex(header, "__cluster")
+	if clusterIndex == -1 {
+		// cluster label may be returned with target name
+		clusterIndex = getFieldIndex(header, variable)
+	}
 	d3mIndexIndex := getFieldIndex(header, model.D3MIndexName)
 
 	// build the output (skipping the header)
