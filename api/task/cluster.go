@@ -136,7 +136,8 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 	var err error
 	if model.IsImage(clusteringVar.Type) {
 		step, err = description.CreateImageClusteringPipeline("business", "basic image clustering", []*model.Variable{clusteringVar})
-	} else if model.IsTimeSeries(clusteringVar.Type) {
+	} else if clusteringVar.DistilRole == model.VarDistilRoleGrouping {
+		// assume timeseries for now if distil role is grouping
 		step, err = description.CreateSlothPipeline("time series clustering",
 			"k-means time series clustering", "", "", features)
 	} else {
