@@ -689,7 +689,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 				if explain.typ == explainableTypeStep || explain.typ == explainableTypeConfidence {
 					explainURI := outputKeyURIs[explain.key]
 					log.Infof("explaining feature output from URI '%s'", explainURI)
-					parsedExplainResult, err := ExplainFeatureOutput(resultURI, datasetURITest, explainURI)
+					produceDatasetURI = compute.BuildSchemaFileURI(produceDatasetURI)
+					parsedExplainResult, err := ExplainFeatureOutput(resultURI, produceDatasetURI, explainURI)
 					if err != nil {
 						log.Warnf("failed to fetch output explanation - %v", err)
 					}

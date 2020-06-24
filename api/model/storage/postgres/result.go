@@ -19,6 +19,7 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -173,10 +174,22 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		highIndex := confidenceValues.ParsingParams[1].(int)
 
 		// build the confidence lookup
+		missingConfidences := 0
 		for _, row := range confidenceValues.Values {
-			low, _ := strconv.ParseFloat(row[lowIndex], 64)
-			high, _ := strconv.ParseFloat(row[highIndex], 64)
+			low, err := strconv.ParseFloat(row[lowIndex], 64)
+			if err != nil {
+				low = math.NaN()
+				missingConfidences++
+			}
+			high, err := strconv.ParseFloat(row[highIndex], 64)
+			if err != nil {
+				high = math.NaN()
+				missingConfidences++
+			}
 			confidences[row[confidenceValues.D3MIndexIndex]] = []float64{low, high}
+		}
+		if missingConfidences > 0 {
+			log.Warnf("%d invalid values for confidence intervals replaced with NaN", missingConfidences)
 		}
 	}
 
@@ -222,14 +235,11 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	for i := 1; i < len(records); i++ {
 		// Each data row is index, target.
 		// handle the parsed result/error - should be an int some TA2 systems return floats
-		parsedVal, err := strconv.ParseInt(records[i][d3mIndexIndex], 10, 64)
+		parsedValFloat, err := strconv.ParseFloat(records[i][d3mIndexIndex], 64)
 		if err != nil {
-			parsedValFloat, err := strconv.ParseFloat(records[i][d3mIndexIndex], 64)
-			if err != nil {
-				return errors.Wrap(err, "failed csv index parsing")
-			}
-			parsedVal = int64(parsedValFloat)
+			return errors.Wrap(err, "failed csv index parsing")
 		}
+		parsedVal := int64(parsedValFloat)
 
 		// assume (FOR NOW!!!) multi index results will be the same for a given
 		// d3m index so store only 1 / index to not have duplicate query results

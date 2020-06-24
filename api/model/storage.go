@@ -16,18 +16,33 @@
 package model
 
 import (
+	"math"
+	"strconv"
 	"time"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 )
 
+// NullableFloat64 is float64 with custom JSON marshalling to allow for NaN values
+// to be handled gracefully.
+type NullableFloat64 float64
+
+// MarshalJSON provides a custom float JSON marshaller that will handle a NaN float64
+// value by replacing it with empty data.
+func (f NullableFloat64) MarshalJSON() ([]byte, error) {
+	if math.IsNaN(float64(f)) {
+		return []byte("null"), nil
+	}
+	return []byte(strconv.FormatFloat(float64(f), 'f', -1, 32)), nil
+}
+
 // TimeseriesObservation represents a timeseries value along with confidences.
 type TimeseriesObservation struct {
-	Value          float64 `json:"value"`
-	Time           float64 `json:"time"`
-	ConfidenceLow  float64 `json:"confidenceLow,omitempty"`
-	ConfidenceHigh float64 `json:"confidenceHigh,omitempty"`
+	Value          NullableFloat64 `json:"value"`
+	Time           float64         `json:"time"`
+	ConfidenceLow  NullableFloat64 `json:"confidenceLow"`
+	ConfidenceHigh NullableFloat64 `json:"confidenceHigh"`
 }
 
 // TimeseriesData represents the result of a timeseries request.
