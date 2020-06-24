@@ -136,9 +136,23 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 	var err error
 	if model.IsImage(clusteringVar.Type) {
 		step, err = description.CreateImageClusteringPipeline("business", "basic image clustering", []*model.Variable{clusteringVar})
-	} else {
+	} else if clusteringVar.DistilRole == model.VarDistilRoleGrouping {
+		// assume timeseries for now if distil role is grouping
 		step, err = description.CreateSlothPipeline("time series clustering",
 			"k-means time series clustering", "", "", features)
+	} else {
+		// general clustering pipeline
+		selectedFeatures := make([]string, len(features))
+		for i, f := range features {
+			selectedFeatures[i] = f.Name
+		}
+		datasetDescription := &description.UserDatasetDescription{
+			AllFeatures:      features,
+			TargetFeature:    clusteringVar,
+			SelectedFeatures: selectedFeatures,
+		}
+		step, err = description.CreateGeneralClusteringPipeline("time series clustering",
+			"k-means time series clustering", datasetDescription, nil)
 	}
 	if err != nil {
 		return false, nil, err
@@ -161,6 +175,10 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 
 	// find the field with the feature output
 	clusterIndex := getFieldIndex(header, "__cluster")
+	if clusterIndex == -1 {
+		// cluster label may be returned with target name
+		clusterIndex = getFieldIndex(header, variable)
+	}
 	d3mIndexIndex := getFieldIndex(header, model.D3MIndexName)
 
 	// build the output (skipping the header)
