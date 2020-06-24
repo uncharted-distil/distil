@@ -61,6 +61,14 @@ var (
 				parsingParams:   []interface{}{0: 1, 1: 2},
 			},
 		},
+		"76b5a479-c209-4d94-92b5-7eba7a4d4499": {
+			{
+				primitiveID:     "76b5a479-c209-4d94-92b5-7eba7a4d4499",
+				produceFunction: "produce_confidence_intervals",
+				explainableType: explainableTypeConfidence,
+				parsingParams:   []interface{}{0: 1, 1: 2},
+			},
+		},
 	}
 
 	unexplainableTask = map[string]bool{
