@@ -4,6 +4,7 @@
     action-buttons="0"
     :selection.prop="selection"
     :subselection.prop="subSelection"
+    :disabled.prop="!enableHighlighting"
     @facet-element-updated="updateSelection"
   >
     <div slot="header-label" :class="headerClass">
@@ -47,8 +48,8 @@
 <script lang="ts">
 import Vue from "vue";
 
-import "@uncharted/facets-core";
-import { FacetTermsData } from "@uncharted/facets-core/dist/types/facet-terms/FacetTerms";
+import "@uncharted.software/facets-core";
+import { FacetTermsData } from "@uncharted.software/facets-core/dist/types/facet-terms/FacetTerms";
 
 import TypeChangeMenu from "../TypeChangeMenu";
 import ImagePreview from "../ImagePreview";

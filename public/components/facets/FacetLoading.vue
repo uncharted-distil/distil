@@ -7,8 +7,8 @@
 <script lang="ts">
 import Vue from "vue";
 
-import "@uncharted/facets-core";
-import { FacetBarsData } from "@uncharted/facets-core/dist/types/facet-bars/FacetBars";
+import "@uncharted.software/facets-core";
+import { FacetBarsData } from "@uncharted.software/facets-core/dist/types/facet-bars/FacetBars";
 
 import { VariableSummary } from "../../store/dataset";
 

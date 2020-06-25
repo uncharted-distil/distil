@@ -37,9 +37,9 @@
 </template>
 
 <script lang="ts">
-import "@uncharted/facets-core";
-import { FacetBarsData } from "@uncharted/facets-core/dist/types/facet-bars/FacetBars";
-import { FacetTermsData } from "@uncharted/facets-core/dist/types/facet-terms/FacetTerms";
+import "@uncharted.software/facets-core";
+import { FacetBarsData } from "@uncharted.software/facets-core/dist/types/facet-bars/FacetBars";
+import { FacetTermsData } from "@uncharted.software/facets-core/dist/types/facet-terms/FacetTerms";
 
 import _ from "lodash";
 import $ from "jquery";

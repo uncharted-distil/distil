@@ -21,7 +21,7 @@
 <script lang="ts">
 import Vue from "vue";
 
-import "@uncharted/facets-core";
+import "@uncharted.software/facets-core";
 import { VariableSummary } from "../../store/dataset";
 
 import TypeChangeMenu from "../TypeChangeMenu";

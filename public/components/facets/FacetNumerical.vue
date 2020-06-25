@@ -3,6 +3,7 @@
     :data.prop="facetData"
     :selection.prop="selection"
     :subselection.prop="subSelection"
+    :disabled.prop="!enableHighlighting"
     @facet-element-updated="updateSelection"
   >
     <div slot="header-label" :class="headerClass">
@@ -35,9 +36,9 @@
 <script lang="ts">
 import Vue from "vue";
 
-import "@uncharted/facets-core";
-import "@uncharted/facets-plugins";
-import { FacetBarsData } from "@uncharted/facets-core/dist/types/facet-bars/FacetBars";
+import "@uncharted.software/facets-core";
+import "@uncharted.software/facets-plugins";
+import { FacetBarsData } from "@uncharted.software/facets-core/dist/types/facet-bars/FacetBars";
 
 import TypeChangeMenu from "../TypeChangeMenu";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
