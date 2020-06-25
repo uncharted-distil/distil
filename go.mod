@@ -12,6 +12,7 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/gorilla/websocket v1.4.0
 	github.com/h2non/filetype v1.0.12
+	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgx v3.2.0+incompatible
 	github.com/jinzhu/inflection v1.0.0 // indirect
@@ -33,7 +34,7 @@ require (
 	github.com/shopspring/decimal v0.0.0-20191009025716-f1972eb1d1f5 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.5.1
-	github.com/uncharted-distil/distil-compute v0.0.0-20200618191142-56fb63256916
+	github.com/uncharted-distil/distil-compute v0.0.0-20200625143454-5edd41607d73
 	github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a
 	github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48

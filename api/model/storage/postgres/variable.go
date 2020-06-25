@@ -212,7 +212,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 		// if timeseries mode, get the grouping field and use that for counts
 		countCol := ""
-		if mode == api.TimeseriesMode {
+		if mode == api.TimeseriesMode || mode == api.RemoteSensingMode {
 			vars, err := s.metadata.FetchVariables(dataset, false, true)
 			if err != nil {
 				return nil, err

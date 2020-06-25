@@ -165,7 +165,8 @@ export interface VariableSummary {
 export enum SummaryMode {
   Default = "default",
   Cluster = "cluster",
-  Timeseries = "timeseries"
+  Timeseries = "timeseries",
+  RemoteSensing = "remoteSensing"
 }
 
 export interface TableValue {
