@@ -272,6 +272,9 @@ func initializeDatasetCopy(schemaFile string, dataset string, schemaPathRelative
 
 func createFriendlyLabel(label string) string {
 	// label is a char between 1 and cluster max
+	if label == "-1" {
+		return "Other"
+	}
 	return fmt.Sprintf("Pattern %s", string('A'-'0'+label[0]))
 }
 
