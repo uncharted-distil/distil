@@ -183,17 +183,9 @@ export default Vue.extend({
     title(): string {
       const included = getNumIncludedRows(this.rowSelection);
       if (included > 0) {
-        return `${
-          this.numItems
-        } <b class="matching-color">matching</b> samples of ${
-          this.numRows
-        } processed by model, ${included} <b class="selected-color">selected</b>`;
+        return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} processed by model, ${included} <b class="selected-color">selected</b>`;
       } else {
-        return `${
-          this.numItems
-        } <b class="matching-color">matching</b> samples of ${
-          this.numRows
-        } processed by model`;
+        return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} processed by model`;
       }
     }
   }

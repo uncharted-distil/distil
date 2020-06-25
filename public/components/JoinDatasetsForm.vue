@@ -133,11 +133,7 @@ export default Vue.extend({
     },
     joinWarning(): string {
       if (this.columnTypesDoNotMatch) {
-        return `Unable to join column <b>${
-          this.datasetAColumn.key
-        }</b> of type <b>${this.datasetAColumn.type}</b> with <b>${
-          this.datasetBColumn.key
-        }</b> of type <b>${this.datasetBColumn.type}</b>`;
+        return `Unable to join column <b>${this.datasetAColumn.key}</b> of type <b>${this.datasetAColumn.type}</b> with <b>${this.datasetBColumn.key}</b> of type <b>${this.datasetBColumn.type}</b>`;
       }
     },
     disableJoin(): boolean {

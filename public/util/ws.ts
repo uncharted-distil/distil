@@ -84,9 +84,7 @@ function establishConnection(
     // log close only if conn was ever open
     if (conn.isOpen) {
       console.warn(
-        `WebSocket connection on /${
-          conn.url
-        } lost, attempting to reconnect in ${RETRY_INTERVAL_MS}ms`
+        `WebSocket connection on /${conn.url} lost, attempting to reconnect in ${RETRY_INTERVAL_MS}ms`
       );
     } else {
       callback(
