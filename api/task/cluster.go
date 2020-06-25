@@ -180,6 +180,10 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 		clusterIndex = getFieldIndex(header, variable)
 	}
 	d3mIndexIndex := getFieldIndex(header, model.D3MIndexName)
+	if clusterIndex == -1 && len(header) == 2 {
+		// default to second column
+		clusterIndex = (d3mIndexIndex + 1) % 2
+	}
 
 	// build the output (skipping the header)
 	clusteredData := make([]*ClusterPoint, len(res)-1)
