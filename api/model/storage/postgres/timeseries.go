@@ -291,10 +291,11 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 	// Get count by category.
 	query := fmt.Sprintf(`
 		SELECT "%s", CAST(CASE WHEN result.value = '' THEN 'NaN' ELSE result.value END as double precision), result.confidence_low, result.confidence_high
-		FROM %s data INNER JOIN %s result ON data."%s" = result.index
-		%s`,
+		FROM %s data INNER JOIN  %s result ON data."%s" = result.index
+		%s
+		ORDER BY %s`,
 		xColName, storageName, s.getResultTable(storageName),
-		model.D3MIndexFieldName, where)
+		model.D3MIndexFieldName, where, xColName)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)

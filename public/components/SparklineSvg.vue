@@ -284,7 +284,7 @@ export default Vue.extend({
 
       g.append("path")
         .attr("fill", "none")
-        .attr("class", "line")
+        .attr("class", "sparkline-timeseries")
         .attr("d", line);
 
       return true;
@@ -302,8 +302,7 @@ export default Vue.extend({
       this.svg
         .append("rect")
         .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`)
-        .attr("fill", "#00ffff44")
-        .attr("stroke", "none")
+        .attr("class", "sparkline-area-score")
         .attr("x", this.xScale(this.highlightRange[0]))
         .attr("y", 0)
         .attr(
@@ -336,9 +335,7 @@ export default Vue.extend({
       g.datum(this.displayForecast.map(x => [x.time, x.value]));
 
       g.append("path")
-        .attr("fill", "none")
-        .attr("class", "line")
-        .attr("stroke", "#00c6e188")
+        .attr("class", "sparkline-forecast")
         .attr("d", line);
 
       return true;
@@ -450,10 +447,10 @@ export default Vue.extend({
       }
 
       this.clearSVG();
-      this.injectSparkline();
-      this.injectHighlightRegion();
-      this.injectPrediction();
       this.injectAxis();
+      this.injectHighlightRegion();
+      this.injectSparkline();
+      this.injectPrediction();
 
       this.hasRendered = true;
     }
@@ -484,5 +481,26 @@ svg .sparkline-axis-title {
   position: absolute;
   top: 0;
   pointer-events: none;
+}
+
+.sparkline-timeseries {
+  stroke: rgb(200, 200, 200);
+}
+
+.sparkline-forecast {
+  stroke: rgb(2, 117, 216);
+  fill: none;
+}
+
+.sparkline-confidence {
+  fill: rgb(2, 117, 216);
+  opacity: 0.3;
+  stroke: none;
+}
+
+.sparkline-area-score {
+  fill: rgb(2, 117, 216);
+  opacity: 0.1;
+  stroke: none;
 }
 </style>
