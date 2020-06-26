@@ -136,6 +136,9 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 	var err error
 	if model.IsImage(clusteringVar.Type) {
 		step, err = description.CreateImageClusteringPipeline("business", "basic image clustering", []*model.Variable{clusteringVar})
+	} else if model.IsRemoteSensing(clusteringVar.Type) {
+		rsg := clusteringVar.Grouping.(*model.RemoteSensingGrouping)
+		step, err = description.CreateMultiBandImageClusteringPipeline("5-eyes", "I see you", rsg, features)
 	} else if clusteringVar.DistilRole == model.VarDistilRoleGrouping {
 		// assume timeseries for now if distil role is grouping
 		step, err = description.CreateSlothPipeline("time series clustering",
