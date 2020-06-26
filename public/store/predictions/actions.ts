@@ -79,24 +79,6 @@ export const actions = {
       const label = variable.colDisplayName;
       const description = variable.colDescription;
 
-      // TODO:  This breaks in the current FacetEntry, but there's no point in fixing it until
-      // the migration to the new facets lib is complete.  It looks like its caused by the fact
-      // that the removal above doesn't get reflected in the facet state, and the placeholder looks
-      // like an update to the previous facet, rather than a complete replacement.  Updates expect
-      // that the facet being replaced and the new facet have the same key+dataset, which causes
-      // an internal failure.
-      //
-      // const exists = context.state.trainingSummaries.find(
-      //   ts => ts.dataset === dataset && ts.key === variable.colName
-      // );
-      // if (!exists) {
-      //   // add placeholder
-      //   mutations.updateTrainingSummary(
-      //     context,
-      //     createPendingSummary(key, label, description, dataset)
-      //   );
-      // }
-
       // fetch summary
       promises.push(
         actions.fetchTrainingSummary(context, {

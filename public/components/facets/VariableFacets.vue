@@ -161,7 +161,6 @@
 
 <script lang="ts">
 import _ from "lodash";
-import FacetEntry from "./FacetEntry.vue";
 import FacetImage from "./FacetImage.vue";
 import FacetDateTime from "./FacetDateTime.vue";
 import FacetTimeseries from "./FacetTimeseries.vue";
@@ -206,7 +205,6 @@ export default Vue.extend({
   name: "variable-facets",
 
   components: {
-    FacetEntry,
     FacetImage,
     FacetDateTime,
     FacetTimeseries,
