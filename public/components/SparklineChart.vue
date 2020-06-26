@@ -85,14 +85,22 @@ export default Vue.extend({
     },
     minY(): number {
       const timeSeriesMin = d3.min(this.timeseries, d => d.value);
-      const forecastMin = d3.min(this.forecast, d => d.value);
-      const confidenceMin = d3.min(this.forecast, d => d.confidenceLow);
+      const forecastMin = this.forecast
+        ? d3.min(this.forecast, d => d.value)
+        : NaN;
+      const confidenceMin = this.forecast
+        ? d3.min(this.forecast, d => d.confidenceLow)
+        : NaN;
       return d3.min([timeSeriesMin, forecastMin, confidenceMin], d => d);
     },
     maxY(): number {
       const timeSeriesMax = d3.max(this.timeseries, d => d.value);
-      const forecastMax = d3.max(this.forecast, d => d.value);
-      const confidenceMax = d3.max(this.forecast, d => d.confidenceHigh);
+      const forecastMax = this.forecast
+        ? d3.max(this.forecast, d => d.value)
+        : NaN;
+      const confidenceMax = this.forecast
+        ? d3.max(this.forecast, d => d.confidenceHigh)
+        : NaN;
       return d3.max([timeSeriesMax, forecastMax, confidenceMax], d => d);
     },
     displayForecast(): TimeSeriesValue[] {
@@ -201,7 +209,11 @@ export default Vue.extend({
         .attr("transform", `translate(${this.margin.left}, 0)`)
         .attr("class", "line-chart");
 
-      g.datum(this.displayForecast.map(x => [x.time, x.value]));
+      g.datum(
+        this.displayForecast
+          .filter(x => !_.isNil(x.value))
+          .map(x => [x.time, x.value])
+      );
 
       g.append("path")
         .attr("fill", "none")
@@ -220,11 +232,9 @@ export default Vue.extend({
         .attr("transform", `translate(${this.margin.left}, 0)`);
 
       g.datum(
-        this.displayForecast.map(x => [
-          x.time,
-          x.confidenceHigh,
-          x.confidenceLow
-        ])
+        this.displayForecast
+          .filter(x => !_.isNil(x.confidenceHigh) && !_.isNil(x.confidenceLow))
+          .map(x => [x.time, x.confidenceHigh, x.confidenceLow])
       );
 
       g.append("path")

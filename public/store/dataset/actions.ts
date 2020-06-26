@@ -19,7 +19,8 @@ import {
   SummaryMode,
   BandCombinations,
   BandID,
-  isClusteredGrouping
+  isClusteredGrouping,
+  TimeSeriesValue
 } from "./index";
 import { mutations, getters } from "./module";
 import store, { DistilState } from "../store";
@@ -975,8 +976,8 @@ export const actions = {
       mutations.updateTimeseries(context, {
         dataset: args.dataset,
         id: args.timeseriesId,
-        timeseries: response.data.timeseries,
-        isDateTime: response.data.isDateTime
+        timeseries: <TimeSeriesValue[]>response.data.timeseries,
+        isDateTime: <boolean>response.data.isDateTime
       });
     } catch (error) {
       console.error(error);
