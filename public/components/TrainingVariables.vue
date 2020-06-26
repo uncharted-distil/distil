@@ -141,7 +141,7 @@ export default Vue.extend({
 
         const container = document.createElement("div");
         const remove = document.createElement("button");
-        remove.className += "btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2";
+        remove.className += "btn btn-sm btn-outline-secondary mr-1 mb-2";
         remove.innerHTML = "Remove";
 
         remove.addEventListener("click", async () => {

@@ -20,7 +20,8 @@
       @range-change="onRangeChange"
     >
     </facet-sparklines>
-    <facet-date-time
+    <component
+      :is="facetType"
       v-if="!!timelineSummary && expand"
       :summary="timelineSummary"
       :highlight="highlight"
@@ -36,13 +37,14 @@
       @categorical-click="onHistogramCategoricalClick"
       @range-change="onHistogramRangeChange"
     >
-    </facet-date-time>
+    </component>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
 import FacetDateTime from "./FacetDateTime.vue";
+import FacetNumerical from "./FacetNumerical.vue";
 import FacetSparklines from "./FacetSparklines.vue";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
@@ -67,7 +69,8 @@ export default Vue.extend({
 
   components: {
     FacetSparklines,
-    FacetDateTime
+    FacetDateTime,
+    FacetNumerical
   },
 
   props: {
@@ -121,7 +124,6 @@ export default Vue.extend({
       if (!summaryVar || !this.grouping || !this.variable) {
         return null;
       }
-
       return {
         label: this.grouping.xCol,
         key: this.grouping.xCol,
@@ -132,6 +134,13 @@ export default Vue.extend({
         baseline: this.summary.timelineBaseline,
         filtered: this.summary.timeline
       };
+    },
+    facetType(): string {
+      if (this.timelineSummary.varType === "dateTime") {
+        return "facet-date-time";
+      } else {
+        return "facet-numerical";
+      }
     }
   },
 

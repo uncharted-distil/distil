@@ -397,11 +397,6 @@
     lit-element "^2.2.1"
     lit-html "^1.1.2"
 
-"@uncharted.software/stories-facets@^2.12.17":
-  version "2.12.17"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.17.tgz#5abb41d57b653f354780a1ffb91d03b6a3d7f0a8"
-  integrity sha512-hMX6XRum11pQtspw1Oar+nCyk0fdQyj73/dGt1zNHL313c61UAKT/gH3iOaFs+6ukKtHiHOAFy+qTiTFDenwpg==
-
 "@vue/component-compiler-utils@^3.1.0":
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/@vue/component-compiler-utils/-/component-compiler-utils-3.1.1.tgz#d4ef8f80292674044ad6211e336a302e4d2a6575"

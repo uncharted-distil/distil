@@ -122,9 +122,7 @@ body {
 .btn-secondary {
   color: white;
 }
-
-/* setting styles for facet sub-selection such we can reflect row selection as needed */
-body {
+html {
   --facet-terms-bar-2-normal: #999999;
   --facet-terms-bar-2-normal-contrast: #999999;
   --facet-terms-bar-2-normal-contrast-hover: #bbbbbb;
@@ -151,29 +149,55 @@ body {
   --facet-bars-2-muted-contrast: #999999;
   --facet-bars-2-muted-contrast-hover: #bbbbbb;
 
-  --facet-terms-bar-1-normal: #ff0000;
-  --facet-terms-bar-1-normal-contrast: #ff0000;
-  --facet-terms-bar-1-normal-contrast-hover: #ff8888;
-  --facet-terms-bar-1-selected: #ff0000;
-  --facet-terms-bar-1-selected-contrast: #ff0000;
-  --facet-terms-bar-1-selected-contrast-hover: #ff8888;
-  --facet-terms-bar-1-unselected: #ff0000;
-  --facet-terms-bar-1-unselected-contrast: #ff0000;
-  --facet-terms-bar-1-unselected-contrast-hover: #ff8888;
-  --facet-terms-bar-1-muted: #ff0000;
-  --facet-terms-bar-1-muted-contrast: #ff0000;
-  --facet-terms-bar-1-muted-contrast-hover: #ff8888;
+  --facet-terms-bar-1-normal: #ff0067;
+  --facet-terms-bar-1-normal-contrast: #ff0067;
+  --facet-terms-bar-1-normal-contrast-hover: #ffaaaa;
+  --facet-terms-bar-1-selected: #ff0067;
+  --facet-terms-bar-1-selected-contrast: #ff0067;
+  --facet-terms-bar-1-selected-contrast-hover: #ffaaaa;
+  --facet-terms-bar-1-unselected: #ff0067;
+  --facet-terms-bar-1-unselected-contrast: #ff0067;
+  --facet-terms-bar-1-unselected-contrast-hover: #ffaaaa;
+  --facet-terms-bar-1-muted: #ff0067;
+  --facet-terms-bar-1-muted-contrast: #ff0067;
+  --facet-terms-bar-1-muted-contrast-hover: #ffaaaa;
 
-  --facet-bars-1-normal: #ff0000;
-  --facet-bars-1-normal-contrast: #ff0000;
-  --facet-bars-1-normal-contrast-hover: #ff8888;
-  --facet-bars-1-selected: #ff0000;
-  --facet-bars-1-selected-contrast: #ff0000;
-  --facet-bars-1-selected-contrast-hover: #ff8888;
-  --facet-bars-1-unselected: #ff0000;
-  --facet-bars-1-unselected-contrast: #ff0000;
-  --facet-bars-1-unselected-contrast-hover: #ff8888;
-  --facet-bars-1-muted: #ff0000;
-  --facet-bars-1-muted-contrast: #ff0000;
-  --facet-bars-1-muted-contrast-hover: #ff8888;
+  --facet-bars-1-normal: #ff0067;
+  --facet-bars-1-normal-contrast: #ff0067;
+  --facet-bars-1-normal-contrast-hover: #ffaaaa;
+  --facet-bars-1-selected: #ff0067;
+  --facet-bars-1-selected-contrast: #ff0067;
+  --facet-bars-1-selected-contrast-hover: #ffaaaa;
+  --facet-bars-1-unselected: #ff0067;
+  --facet-bars-1-unselected-contrast: #ff0067;
+  --facet-bars-1-unselected-contrast-hover: #ffaaaa;
+  --facet-bars-1-muted: #ff0067;
+  --facet-bars-1-muted-contrast: #ff0067;
+  --facet-bars-1-muted-contrast-hover: #ffaaaa;
+
+  --facet-terms-bar-0-normal: #00c6e1;
+  --facet-terms-bar-0-normal-contrast: #00c6e1;
+  --facet-terms-bar-0-normal-contrast-hover: #aaffff;
+  --facet-terms-bar-0-selected: #00c6e1;
+  --facet-terms-bar-0-selected-contrast: #00c6e1;
+  --facet-terms-bar-0-selected-contrast-hover: #aaffff;
+  --facet-terms-bar-0-unselected: #00c6e1;
+  --facet-terms-bar-0-unselected-contrast: #00c6e1;
+  --facet-terms-bar-0-unselected-contrast-hover: #aaffff;
+  --facet-terms-bar-0-muted: #00c6e1;
+  --facet-terms-bar-0-muted-contrast: #00c6e1;
+  --facet-terms-bar-0-muted-contrast-hover: #aaffff;
+
+  --facet-bars-0-normal: #00c6e1;
+  --facet-bars-0-normal-contrast: #00c6e1;
+  --facet-bars-0-normal-contrast-hover: #aaffff;
+  --facet-bars-0-selected: #00c6e1;
+  --facet-bars-0-selected-contrast: #00c6e1;
+  --facet-bars-0-selected-contrast-hover: #aaffff;
+  --facet-bars-0-unselected: #00c6e1;
+  --facet-bars-0-unselected-contrast: #00c6e1;
+  --facet-bars-0-unselected-contrast-hover: #aaffff;
+  --facet-bars-0-muted: #00c6e1;
+  --facet-bars-0-muted-contrast: #00c6e1;
+  --facet-bars-0-muted-contrast-hover: #aaffff;
 }
