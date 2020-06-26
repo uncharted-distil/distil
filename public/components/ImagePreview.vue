@@ -146,17 +146,8 @@ export default Vue.extend({
       }
     },
     band(): string {
-      const bandID = routeGetters.getBandCombinationId(this.$store);
-      return this.availableBands.find(b => b.id === bandID)?.displayName;
+      return routeGetters.getBandCombinationId(this.$store);
     },
-
-    availableBands(): BandCombination[] {
-      // Show available bands for remote sensing only
-      if (this.type === REMOTE_SENSING_TYPE) {
-        return datasetGetters.getMultiBandCombinations(this.$store);
-      }
-      return [];
-    }
   },
 
   methods: {

@@ -274,7 +274,7 @@ export default Vue.extend({
         */
         const coordinates = [
           [fullCoordinates[1].Float, fullCoordinates[0].Float], // Corner A as [Lat, Lng]
-          [fullCoordinates[5].Float, fullCoordinates[4].Float] // Corner B as [Lat, Lng]
+          [fullCoordinates[5].Float, fullCoordinates[4].Float] // Corner C as [Lat, Lng]
         ] as LatLngBoundsLiteral;
 
         return { imageUrl, coordinates } as Area;

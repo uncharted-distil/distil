@@ -31,15 +31,15 @@ const imageId = (imageUrl: String) => imageUrl.split(/_B[0-9][0-9a-zA-Z][.]/)[0]
  * Display a modal with drilldowned information about an image.
  *
  * @param visible  {Boolean} Display or hide the modal.
- * @param imageUrl {String=} URL of the image to be drilldown.
+ * @param imageUrl {String}  URL of the image to be drilldown.
  * @param title    {String=} Title of the modal.
  */
 export default Vue.extend({
   name: "image-drilldown",
 
   props: {
-    visible: { type: Boolean as () => boolean, required: true },
-    imageUrl: String,
+    visible: { type: Boolean, required: true },
+    imageUrl: { type: String, required: true },
     title: String,
   },
 
