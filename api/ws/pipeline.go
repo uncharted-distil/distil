@@ -339,21 +339,10 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	// config objects required for ingest
 	config, _ := env.LoadConfig()
 	ingestConfig := task.NewConfig(config)
-
-	//
-	var ds task.DatasetConstructor
-	if !api.HasTaskType(requestTask, compute.ImageTask) {
-		ds, err = dataset.NewTableDataset(request.DatasetID, []byte(data))
-		if err != nil {
-			handleErr(conn, msg, errors.Wrap(err, "unable to create raw table dataset"))
-			return
-		}
-	} else {
-		ds, err = dataset.NewMediaDataset(request.DatasetID, "png", "jpeg", []byte(data))
-		if err != nil {
-			handleErr(conn, msg, errors.Wrap(err, "unable to create raw dataset"))
-			return
-		}
+	ds, err := createPredictionDataset(requestTask, request.DatasetID, data)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to create raw dataset"))
+		return
 	}
 
 	predictParams := &task.PredictParams{
@@ -397,4 +386,23 @@ func getTarget(request *apiModel.Request) string {
 	}
 
 	return ""
+}
+
+func createPredictionDataset(requestTask *api.Task, datasetID string, rawData string) (task.DatasetConstructor, error) {
+	data := []byte(rawData)
+	var ds task.DatasetConstructor
+	var err error
+	if api.HasTaskType(requestTask, compute.RemoteSensingTask) {
+		ds, err = dataset.NewSatelliteDataset(datasetID, "tif", data)
+	} else if api.HasTaskType(requestTask, compute.ImageTask) {
+		ds, err = dataset.NewMediaDataset(datasetID, "png", "jpeg", []byte(data))
+	} else {
+		ds, err = dataset.NewTableDataset(datasetID, []byte(data))
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ds, nil
 }
