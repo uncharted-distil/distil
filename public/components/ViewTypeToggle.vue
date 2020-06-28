@@ -113,7 +113,9 @@ export default Vue.extend({
     hasGeoVariables(): boolean {
       const hasGeocoord =
         this.variables.filter(
-          v => v.grouping && v.grouping.type === GEOCOORDINATE_TYPE
+          v =>
+            v.grouping &&
+            [GEOCOORDINATE_TYPE, REMOTE_SENSING_TYPE].includes(v.grouping.type)
         ).length > 0;
       const hasLat =
         this.variables.filter(v => v.colType === LONGITUDE_TYPE).length > 0;

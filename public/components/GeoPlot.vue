@@ -1,21 +1,28 @@
 <template>
   <div
     class="geo-plot-container"
-    v-bind:class="{ 'selection-mode': isSelectionMode }"
+    :class="{ 'selection-mode': isSelectionMode }"
   >
     <div
       class="geo-plot"
-      v-bind:id="mapID"
-      v-on:mousedown="onMouseDown"
-      v-on:mouseup="onMouseUp"
-      v-on:mousemove="onMouseMove"
-      v-on:keydown.esc="onEsc"
+      :id="mapID"
+      @mousedown="onMouseDown"
+      @mouseup="onMouseUp"
+      @mousemove="onMouseMove"
+      @keydown.esc="onEsc"
     ></div>
+
+    <image-drilldown
+      v-if="isRemoteSensing"
+      @hide="hideImageDrilldown"
+      :imageUrl="imageUrl"
+      :visible="isImageDrilldown"
+    ></image-drilldown>
 
     <div
       class="selection-toggle"
-      v-bind:class="{ active: isSelectionMode }"
-      v-on:click="isSelectionMode = !isSelectionMode"
+      :class="{ active: isSelectionMode }"
+      @click="isSelectionMode = !isSelectionMode"
     >
       <a
         class="selection-toggle-control"
@@ -35,6 +42,7 @@ import leaflet, { MarkerOptions } from "leaflet";
 import Vue from "vue";
 import IconBase from "./icons/IconBase";
 import IconCropFree from "./icons/IconCropFree";
+import ImageDrilldown from "./ImageDrilldown.vue";
 import { getters as appGetters } from "../store/app/module";
 import { SatelliteBand } from "../store/app/index";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -93,40 +101,17 @@ type TileLayer = import("leaflet").TileLayer;
 type LatLngBoundsLiteral = import("leaflet").LatLngBoundsLiteral;
 
 interface Area {
-  id: number;
   coordinates: LatLngBoundsLiteral;
+  imageUrl: String;
 }
-
-const FAKEDATA = [
-  {
-    id: 1,
-    coordinates: [
-      [35, 36],
-      [45, 46]
-    ]
-  },
-  {
-    id: 2,
-    coordinates: [
-      [24, 25],
-      [34, 35]
-    ]
-  },
-  {
-    id: 3,
-    coordinates: [
-      [13, 14],
-      [23, 24]
-    ]
-  }
-] as Area[];
 
 export default Vue.extend({
   name: "geo-plot",
 
   components: {
     IconBase,
-    IconCropFree
+    IconCropFree,
+    ImageDrilldown
   },
 
   props: {
@@ -143,7 +128,9 @@ export default Vue.extend({
       startingLatLng: null,
       currentRect: null,
       selectedRect: null,
-      isSelectionMode: false
+      isSelectionMode: false,
+      isImageDrilldown: false,
+      imageUrl: null
     };
   },
 
@@ -271,7 +258,27 @@ export default Vue.extend({
         return [];
       }
 
-      return FAKEDATA;
+      return this.dataItems.map(item => {
+        const imageUrl = item.group_id.value;
+        const fullCoordinates = item.coordinates.value.Elements;
+        /* 
+          Item store the coordinates as a list of 8 values being four pairs of [Lng, Lat], 
+          one for each corner of the remote-sensing image.
+
+          [0,1]     [2,3]
+            A-------B
+            |       |
+            |       |
+            D-------C
+          [6,7]     [4,5]
+        */
+        const coordinates = [
+          [fullCoordinates[1].Float, fullCoordinates[0].Float], // Corner A as [Lat, Lng]
+          [fullCoordinates[5].Float, fullCoordinates[4].Float] // Corner C as [Lat, Lng]
+        ] as LatLngBoundsLiteral;
+
+        return { imageUrl, coordinates } as Area;
+      });
     },
 
     highlight(): Highlight {
@@ -303,13 +310,7 @@ export default Vue.extend({
      * @returns {TileLayer}
      */
     baseLayer(): TileLayer {
-      let URL = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
-
-      if (this.isRemoteSensing) {
-        const { r, g, b } = this.currentSatelliteBand;
-        URL = `distil/dataset/tile/${r}/${g}/${b}/{z}/{x}/{y}.png`;
-      }
-
+      const URL = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
       return leaflet.tileLayer(URL);
     }
   },
@@ -580,6 +581,14 @@ export default Vue.extend({
       });
     },
 
+    showImageDrilldown(imageUrl: String) {
+      this.imageUrl = imageUrl;
+      this.isImageDrilldown = true;
+    },
+    hideImageDrilldown() {
+      this.isImageDrilldown = false;
+    },
+
     /**
      * Create a Leaflet map, if it doesn't exist already, with basic defaults.
      */
@@ -629,7 +638,7 @@ export default Vue.extend({
 
       // Add each area to the layer group.
       this.areas.forEach(area => {
-        const { coordinates, id } = area;
+        const { coordinates, imageUrl } = area;
 
         // Make sure the new area fit on the map.
         coordinates.forEach(coordinate => bounds.extend(coordinate));
@@ -637,8 +646,8 @@ export default Vue.extend({
         // Create a rectangle to display the area on the map.
         const rectangle = leaflet
           .rectangle(coordinates, displayOptions)
-          .on("click", () => console.debug(`Open image modal for ${id}.`))
-          .bindTooltip(`Satellite Image ${id}`);
+          .on("click", () => this.showImageDrilldown(imageUrl))
+          .bindTooltip(`Satellite Image ${imageUrl}`);
 
         // Add the rectangle to the layer group.
         layerGroup.addLayer(rectangle);
