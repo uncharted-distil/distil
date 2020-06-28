@@ -261,8 +261,8 @@ export default Vue.extend({
       return this.dataItems.map(item => {
         const imageUrl = item.group_id.value;
         const fullCoordinates = item.coordinates.value.Elements;
-        /* 
-          Item store the coordinates as a list of 8 values being four pairs of [Lng, Lat], 
+        /*
+          Item store the coordinates as a list of 8 values being four pairs of [Lng, Lat],
           one for each corner of the remote-sensing image.
 
           [0,1]     [2,3]
@@ -627,7 +627,7 @@ export default Vue.extend({
      */
     addAreas() {
       const displayOptions = {
-        color: "chartreuse"
+        color: "rgb(42, 198, 223)"
       };
 
       // Create a layer group to contain all the areas to be displayed.
