@@ -147,7 +147,7 @@ export default Vue.extend({
     },
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
-    },
+    }
   },
 
   methods: {

@@ -25,7 +25,8 @@ import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import { overlayRouteEntry } from "../util/routes";
 
-const imageId = (imageUrl: String) => imageUrl.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
+const imageId = (imageUrl: String) =>
+  imageUrl.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
 
 /**
  * Display a modal with drilldowned information about an image.
@@ -40,7 +41,7 @@ export default Vue.extend({
   props: {
     visible: { type: Boolean, required: true },
     imageUrl: { type: String, required: true },
-    title: String,
+    title: String
   },
 
   mounted() {
@@ -70,7 +71,9 @@ export default Vue.extend({
     },
 
     image(): HTMLImageElement {
-      return this.files[this.imageUrl] ?? this.files[imageId(this.imageUrl)] ?? null;
+      return (
+        this.files[this.imageUrl] ?? this.files[imageId(this.imageUrl)] ?? null
+      );
     },
 
     isRemoteSensing(): boolean {
@@ -79,12 +82,12 @@ export default Vue.extend({
 
     visibleTitle(): string {
       return this.title ?? this.imageUrl ?? "Image Drilldown";
-    },
+    }
   },
 
   methods: {
     hide() {
-      this.$emit('hide');
+      this.$emit("hide");
     },
 
     injectImage() {
@@ -92,9 +95,7 @@ export default Vue.extend({
 
       if (this.image && container) {
         container.innerHTML = "";
-        container.appendChild(
-          this.image.cloneNode() as HTMLImageElement
-        );
+        container.appendChild(this.image.cloneNode() as HTMLImageElement);
       }
     },
 
@@ -118,7 +119,7 @@ export default Vue.extend({
 
       // Request the new band of the image.
       this.requestMultiBandImage();
-    },
+    }
   }
 });
 </script>
