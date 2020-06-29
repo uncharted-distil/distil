@@ -25,8 +25,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import { overlayRouteEntry } from "../util/routes";
 
-const imageId = (imageUrl: String) =>
-  imageUrl.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
+const imageId = imageUrl => imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
 
 /**
  * Display a modal with drilldowned information about an image.
@@ -39,8 +38,8 @@ export default Vue.extend({
   name: "image-drilldown",
 
   props: {
-    visible: { type: Boolean, required: true },
-    imageUrl: { type: String, required: true },
+    visible: Boolean,
+    imageUrl: String,
     title: String
   },
 
@@ -93,7 +92,7 @@ export default Vue.extend({
     injectImage() {
       const container = this.$refs.imageContainer as any;
 
-      if (this.image && container) {
+      if (!!this.image && container) {
         container.innerHTML = "";
         container.appendChild(this.image.cloneNode() as HTMLImageElement);
       }

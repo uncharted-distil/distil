@@ -46,6 +46,7 @@ import ImageDrilldown from "./ImageDrilldown.vue";
 import { getters as appGetters } from "../store/app/module";
 import { SatelliteBand } from "../store/app/index";
 import { getters as datasetGetters } from "../store/dataset/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import {
@@ -102,7 +103,8 @@ type LatLngBoundsLiteral = import("leaflet").LatLngBoundsLiteral;
 
 interface Area {
   coordinates: LatLngBoundsLiteral;
-  imageUrl: String;
+  imageUrl: string;
+  correctPrediction: boolean;
 }
 
 export default Vue.extend({
@@ -250,6 +252,20 @@ export default Vue.extend({
       return groups;
     },
 
+    predictedField(): string {
+      const predictions = requestGetters.getActivePredictions(this.$store);
+      if (predictions) {
+        return predictions.predictedKey;
+      }
+
+      const solution = requestGetters.getActiveSolution(this.$store);
+      return solution ? `${solution.predictedKey}` : "";
+    },
+
+    targetField(): string {
+      return routeGetters.getRouteTargetVariable(this.$store);
+    },
+
     /**
      * Data with multiple geocordinates to be displayed as an area on the map.
      */
@@ -277,7 +293,9 @@ export default Vue.extend({
           [fullCoordinates[5].Float, fullCoordinates[4].Float] // Corner C as [Lat, Lng]
         ] as LatLngBoundsLiteral;
 
-        return { imageUrl, coordinates } as Area;
+        const correctPrediction = this.correctPrediction(item);
+
+        return { imageUrl, coordinates, correctPrediction } as Area;
       });
     },
 
@@ -589,6 +607,10 @@ export default Vue.extend({
       this.isImageDrilldown = false;
     },
 
+    correctPrediction(item: any) {
+      return item[this.targetField].value === item[this.predictedField].value;
+    },
+
     /**
      * Create a Leaflet map, if it doesn't exist already, with basic defaults.
      */
@@ -626,10 +648,6 @@ export default Vue.extend({
      * Add areas has rectangle layers on the map.
      */
     addAreas() {
-      const displayOptions = {
-        color: "chartreuse"
-      };
-
       // Create a layer group to contain all the areas to be displayed.
       const layerGroup = leaflet.layerGroup();
 
@@ -638,7 +656,11 @@ export default Vue.extend({
 
       // Add each area to the layer group.
       this.areas.forEach(area => {
-        const { coordinates, imageUrl } = area;
+        const { coordinates, imageUrl, correctPrediction } = area;
+
+        const displayOptions = {
+          color: correctPrediction ? "#03c003" : "#be0000" // Correct: green, Incorrect: red.
+        };
 
         // Make sure the new area fit on the map.
         coordinates.forEach(coordinate => bounds.extend(coordinate));
