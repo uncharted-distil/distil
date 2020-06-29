@@ -248,10 +248,10 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 		}
 
 		if uniqueName != meta.Name {
+			extendedOutput := source == metadata.Augmented
+			log.Infof("storing (extended: %v) metadata with new name to %s (new: '%s', old: '%s')", extendedOutput, originalSchemaFile, uniqueName, meta.Name)
 			meta.Name = uniqueName
 			meta.ID = model.NormalizeDatasetID(uniqueName)
-			extendedOutput := source == metadata.Augmented
-			log.Infof("storing (extended: %v) metadata with new name to %s", extendedOutput, originalSchemaFile)
 			err = metadata.WriteSchema(meta, originalSchemaFile, extendedOutput)
 			if err != nil {
 				return "", errors.Wrap(err, "unable to store updated metadata")
