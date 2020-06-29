@@ -15,35 +15,12 @@
               :type="imageField.type"
             ></image-preview>
           </template>
-          <div v-if="showError" class="image-label-container">
-            <template v-for="(fieldInfo, fieldKey) in fields">
-              <div v-if="fieldKey == targetField" class="image-label">
-                {{ item[fieldKey].value }}
-              </div>
-              <div
-                v-if="fieldKey == predictedField && correct(item)"
-                class="image-label-correct"
-              >
-                {{ item[fieldKey].value }}
-              </div>
-              <div
-                v-if="fieldKey == predictedField && !correct(item)"
-                class="image-label-incorrect"
-              >
-                {{ item[fieldKey].value }}
-              </div>
-            </template>
-          </div>
-          <div v-if="!showError" class="image-label-container">
-            <template v-for="(fieldInfo, fieldKey) in fields">
-              <div
-                v-if="fieldKey == targetField || fieldKey == predictedField"
-                class="image-label"
-              >
-                {{ item[fieldKey].value }}
-              </div>
-            </template>
-          </div>
+          <image-label
+            class="image-label"
+            :dataFields="dataFields"
+            includedActive
+            :item="item"
+          />
         </div>
       </template>
     </template>
@@ -51,11 +28,10 @@
 </template>
 
 <script lang="ts">
-import _ from "lodash";
 import Vue from "vue";
+import ImageLabel from "./ImageLabel";
 import ImagePreview from "./ImagePreview";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getters as requestGetters } from "../store/requests/module";
 import {
   RowSelection,
   TableColumn,
@@ -78,6 +54,7 @@ export default Vue.extend({
   name: "image-mosaic",
 
   components: {
+    ImageLabel,
     ImagePreview
   },
 
@@ -125,26 +102,6 @@ export default Vue.extend({
 
     imageFields(): { key: string; type: string }[] {
       return getImageFields(this.fields);
-    },
-
-    targetField(): string {
-      return routeGetters.getRouteTargetVariable(this.$store);
-    },
-
-    predictedField(): string {
-      const predictions = requestGetters.getActivePredictions(this.$store);
-      if (predictions) {
-        return predictions.predictedKey;
-      }
-
-      const solution = requestGetters.getActiveSolution(this.$store);
-      return solution ? `${solution.predictedKey}` : "";
-    },
-
-    showError(): boolean {
-      return (
-        this.predictedField && !requestGetters.getActivePredictions(this.$store)
-      );
     }
   },
 
@@ -165,10 +122,6 @@ export default Vue.extend({
           event.row[D3M_INDEX_FIELD]
         );
       }
-    },
-
-    correct(item: any): boolean {
-      return item[this.targetField].value === item[this.predictedField].value;
     }
   }
 });
@@ -194,34 +147,10 @@ export default Vue.extend({
   position: relative;
 }
 
-.image-label-container {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  z-index: 1;
-}
-
 .image-label {
-  float: right;
-  background-color: #424242;
-  color: #fff;
-  padding: 0 4px;
-  margin: 0, 2px;
-}
-
-.image-label-correct {
-  float: right;
-  background-color: #03c003;
-  color: #fff;
-  padding: 0 4px;
-  margin: 0, 2px;
-}
-
-.image-label-incorrect {
-  float: right;
-  background-color: #be0000;
-  color: #fff;
-  padding: 0 4px;
-  margin: 0, 2px;
+  position: absolute;
+  right: 4px;
+  top: 2px;
+  z-index: 1;
 }
 </style>
