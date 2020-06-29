@@ -518,7 +518,7 @@ export function getSubSelectionValues(
 ): number[][] {
   const hasFilterBuckets = hasFiltered(summary);
   if (!hasFilterBuckets && !rowSelection) {
-    return null;
+    return summary.baseline?.buckets?.map(b => [null, b.count / max]);
   }
   const rowLabels = getRowSelectionLabels(rowSelection, summary);
   let subSelectionValues = null;
