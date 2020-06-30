@@ -106,7 +106,7 @@ type LatLngBoundsLiteral = import("leaflet").LatLngBoundsLiteral;
 
 interface Area {
   coordinates: LatLngBoundsLiteral;
-  correctPrediction: boolean;
+  color: string;
   imageUrl: string;
   item: TableRow;
 }
@@ -298,9 +298,9 @@ export default Vue.extend({
           [fullCoordinates[5].Float, fullCoordinates[4].Float] // Corner C as [Lat, Lng]
         ] as LatLngBoundsLiteral;
 
-        const correctPrediction = this.correctPrediction(item);
+        const color = this.colorPrediction(item);
 
-        return { item, imageUrl, coordinates, correctPrediction } as Area;
+        return { item, imageUrl, coordinates, color } as Area;
       });
     },
 
@@ -613,8 +613,17 @@ export default Vue.extend({
       this.isImageDrilldown = false;
     },
 
-    correctPrediction(item: any) {
-      return item[this.targetField].value === item[this.predictedField].value;
+    colorPrediction(item: any) {
+      let color = "#00c6e1"; // Default
+
+      if (item[this.targetField] && item[this.predictedField]) {
+        color =
+          item[this.targetField].value === item[this.predictedField].value
+            ? "#03c003" // Correct: green.
+            : "#be0000"; // Incorrect: red.
+      }
+
+      return color;
     },
 
     /**
@@ -662,11 +671,9 @@ export default Vue.extend({
 
       // Add each area to the layer group.
       this.areas.forEach(area => {
-        const { correctPrediction, coordinates, imageUrl, item } = area;
+        const { color, coordinates, imageUrl, item } = area;
 
-        const displayOptions = {
-          color: correctPrediction ? "#03c003" : "#be0000" // Correct: green, Incorrect: red.
-        };
+        const displayOptions = { color };
 
         // Make sure the new area fit on the map.
         coordinates.forEach(coordinate => bounds.extend(coordinate));

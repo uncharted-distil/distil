@@ -179,8 +179,8 @@ export default Vue.extend({
   methods: {
     correct(): boolean {
       return (
-        this.item[this.targetField].value ===
-        this.item[this.predictedField].value
+        this.item[this.targetField]?.value ===
+        this.item[this.predictedField]?.value
       );
     },
 
