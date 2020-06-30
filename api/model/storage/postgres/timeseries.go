@@ -222,7 +222,7 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	wheres = append(wheres, fmt.Sprintf("\"%s\" = $1", timeseriesColName))
 	params = append(params, timeseriesURI)
 
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, invert)
 	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 
 	// Get count by category.
@@ -283,7 +283,7 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 	wheres = append(wheres, fmt.Sprintf("\"%s\" = $1", timeseriesColName))
 	params = append(params, timeseriesURI)
 
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, "", filterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, false)
 
 	params = append(params, resultURI)
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))
@@ -413,7 +413,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, false)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, false)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -454,7 +454,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 	var err error
 	if f.Type != "timeseries" {
 		// get filter where / params
-		wheres, params, err = f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
+		wheres, params, err = f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
 		if err != nil {
 			return nil, err
 		}
@@ -583,7 +583,7 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 	var err error
 	if f.Type != "timeseries" {
 		// get filter where / params
-		wheres, params, err = f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
+		wheres, params, err = f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
 		if err != nil {
 			return nil, err
 		}

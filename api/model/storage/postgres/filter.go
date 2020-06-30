@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -102,7 +103,7 @@ func featureVarName(varName string) string {
 	return fmt.Sprintf("%s%s", model.ClusterVarPrefix, varName)
 }
 
-func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, alias string, filter *model.Filter) ([]string, []interface{}) {
+func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []interface{}, alias string, filter *model.Filter) ([]string, []interface{}) {
 
 	name := s.formatFilterKey(alias, filter.Key)
 
@@ -138,21 +139,18 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, alia
 	case model.BivariateFilter:
 		// bivariate
 		// cast to double precision in case of string based representation
-		split := strings.Split(filter.Key, ":")
-		where := ""
-		if len(split) > 1 {
-			xKey := s.formatFilterKey(alias, split[0])
-			yKey := s.formatFilterKey(alias, split[1])
-			where = fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d AND cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d", xKey, len(params)+1, xKey, len(params)+2, yKey, len(params)+3, yKey, len(params)+4)
+		fields, err := s.getBivariateFilterKeys(dataset, filter.Key, alias)
+		if err != nil {
+			log.Warnf("%+v", err)
 		} else {
-			// hardcode [lat, lon] format for now
-			where = fmt.Sprintf("%s[2] >= $%d AND %s[2] <= $%d AND %s[1] >= $%d AND %s[1] <= $%d", name, len(params)+1, name, len(params)+2, name, len(params)+3, name, len(params)+4)
+			where := fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d AND cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d",
+				fields[0], len(params)+1, fields[0], len(params)+2, fields[1], len(params)+3, fields[1], len(params)+4)
+			wheres = append(wheres, where)
+			params = append(params, filter.Bounds.MinX)
+			params = append(params, filter.Bounds.MaxX)
+			params = append(params, filter.Bounds.MinY)
+			params = append(params, filter.Bounds.MaxY)
 		}
-		wheres = append(wheres, where)
-		params = append(params, filter.Bounds.MinX)
-		params = append(params, filter.Bounds.MaxX)
-		params = append(params, filter.Bounds.MinY)
-		params = append(params, filter.Bounds.MaxY)
 
 	case model.CategoricalFilter:
 		// categorical
@@ -196,6 +194,36 @@ func (s *Storage) buildIncludeFilter(wheres []string, params []interface{}, alia
 		}
 	}
 	return wheres, params
+}
+
+func (s *Storage) getBivariateFilterKeys(dataset string, key string, alias string) ([]string, error) {
+	split := strings.Split(key, ":")
+	fields := make([]string, 2)
+	if len(split) > 1 {
+		fields[0] = s.formatFilterKey(alias, split[0])
+		fields[1] = s.formatFilterKey(alias, split[1])
+	} else {
+		// assume the name is a grouping and get it
+		g, err := s.metadata.FetchVariable(dataset, key)
+		if err != nil {
+			return nil, err
+		}
+
+		if g.IsGrouping() && model.IsRemoteSensing(g.Grouping.GetType()) {
+			// only checking top left for now
+			rsg := g.Grouping.(*model.RemoteSensingGrouping)
+			name := s.formatFilterKey(alias, rsg.CoordinateCol)
+			fields[0] = fmt.Sprintf("%s[1]", name)
+			fields[1] = fmt.Sprintf("%s[2]", name)
+		} else {
+			// hardcode [lat, lon] format for now
+			name := s.formatFilterKey(alias, key)
+			fields[0] = fmt.Sprintf("%s[1]", name)
+			fields[1] = fmt.Sprintf("%s[2]", name)
+		}
+	}
+
+	return fields, nil
 }
 
 func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, alias string, filter *model.Filter) ([]string, []interface{}) {
@@ -294,7 +322,7 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, alia
 	return wheres, params
 }
 
-func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{}, alias string, filterParams *api.FilterParams, invert bool) ([]string, []interface{}) {
+func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, params []interface{}, alias string, filterParams *api.FilterParams, invert bool) ([]string, []interface{}) {
 
 	if filterParams == nil {
 		return wheres, params
@@ -304,7 +332,7 @@ func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{},
 	if highlight != nil {
 		switch highlight.Mode {
 		case model.IncludeFilter:
-			wheres, params = s.buildIncludeFilter(wheres, params, alias, highlight)
+			wheres, params = s.buildIncludeFilter(dataset, wheres, params, alias, highlight)
 		case model.ExcludeFilter:
 			wheres, params = s.buildExcludeFilter(wheres, params, alias, highlight)
 		}
@@ -314,7 +342,7 @@ func (s *Storage) buildFilteredQueryWhere(wheres []string, params []interface{},
 	for _, filter := range filterParams.Filters {
 		switch filter.Mode {
 		case model.IncludeFilter:
-			filterWheres, params = s.buildIncludeFilter(filterWheres, params, alias, filter)
+			filterWheres, params = s.buildIncludeFilter(dataset, filterWheres, params, alias, filter)
 		case model.ExcludeFilter:
 			filterWheres, params = s.buildExcludeFilter(filterWheres, params, alias, filter)
 		}
@@ -429,18 +457,18 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 	return wheres, params, nil
 }
 
-func (s *Storage) buildPredictedResultWhere(wheres []string, params []interface{}, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
+func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
 	// handle the general category case
 
 	filterParams := &api.FilterParams{
 		Filters: []*model.Filter{resultFilter},
 	}
 
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, "", filterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, false)
 	return wheres, params, nil
 }
 
-func (s *Storage) buildResultQueryFilters(storageName string, resultURI string, filterParams *api.FilterParams) ([]string, []interface{}, error) {
+func (s *Storage) buildResultQueryFilters(dataset string, storageName string, resultURI string, filterParams *api.FilterParams) ([]string, []interface{}, error) {
 	// pull filters generated against the result facet out for special handling
 	filters := s.splitFilters(filterParams)
 
@@ -451,12 +479,12 @@ func (s *Storage) buildResultQueryFilters(storageName string, resultURI string, 
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, "", genericFilterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", genericFilterParams, false)
 
 	// assemble split filters
 	var err error
 	if filters.predictedFilter != nil {
-		wheres, params, err = s.buildPredictedResultWhere(wheres, params, resultURI, filters.predictedFilter)
+		wheres, params, err = s.buildPredictedResultWhere(dataset, wheres, params, resultURI, filters.predictedFilter)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -626,7 +654,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, invert)
 
 	if len(wheres) > 0 {
 		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(wheres, " AND "))
