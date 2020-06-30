@@ -226,7 +226,7 @@ func (s *Storage) getBivariateFilterKeys(dataset string, key string, alias strin
 	return fields, nil
 }
 
-func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, alias string, filter *model.Filter) ([]string, []interface{}) {
+func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []interface{}, alias string, filter *model.Filter) ([]string, []interface{}) {
 
 	name := s.formatFilterKey(alias, filter.Key)
 
@@ -262,21 +262,18 @@ func (s *Storage) buildExcludeFilter(wheres []string, params []interface{}, alia
 	case model.BivariateFilter:
 		// bivariate
 		// cast to double precision in case of string based representation
-		split := strings.Split(filter.Key, ":")
-		where := ""
-		if len(split) > 1 {
-			xKey := s.formatFilterKey(alias, split[0])
-			yKey := s.formatFilterKey(alias, split[1])
-			where = fmt.Sprintf("((%s < $%d OR %s > $%d) OR (%s < $%d OR %s > $%d))", xKey, len(params)+1, xKey, len(params)+2, yKey, len(params)+3, yKey, len(params)+4)
+		fields, err := s.getBivariateFilterKeys(dataset, filter.Key, alias)
+		if err != nil {
+			log.Warnf("%+v", err)
 		} else {
-			// hardcode [lat, lon] format for now
-			where = fmt.Sprintf("((%s[2] < $%d OR %s[2] > $%d) OR (%s[1] < $%d OR %s[1] > $%d))", name, len(params)+1, name, len(params)+2, name, len(params)+3, name, len(params)+4)
+			where := fmt.Sprintf("(cast(%s as double precision) < $%d OR cast(%s as double precision) > $%d) OR (cast(%s as double precision) < $%d OR cast(%s as double precision) > $%d)",
+				fields[0], len(params)+1, fields[0], len(params)+2, fields[1], len(params)+3, fields[1], len(params)+4)
+			wheres = append(wheres, where)
+			params = append(params, filter.Bounds.MinX)
+			params = append(params, filter.Bounds.MaxX)
+			params = append(params, filter.Bounds.MinY)
+			params = append(params, filter.Bounds.MaxY)
 		}
-		wheres = append(wheres, where)
-		params = append(params, filter.Bounds.MinX)
-		params = append(params, filter.Bounds.MaxX)
-		params = append(params, filter.Bounds.MinY)
-		params = append(params, filter.Bounds.MaxY)
 
 	case model.CategoricalFilter:
 		// categorical
@@ -334,7 +331,7 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 		case model.IncludeFilter:
 			wheres, params = s.buildIncludeFilter(dataset, wheres, params, alias, highlight)
 		case model.ExcludeFilter:
-			wheres, params = s.buildExcludeFilter(wheres, params, alias, highlight)
+			wheres, params = s.buildExcludeFilter(dataset, wheres, params, alias, highlight)
 		}
 	}
 
@@ -344,7 +341,7 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 		case model.IncludeFilter:
 			filterWheres, params = s.buildIncludeFilter(dataset, filterWheres, params, alias, filter)
 		case model.ExcludeFilter:
-			filterWheres, params = s.buildExcludeFilter(filterWheres, params, alias, filter)
+			filterWheres, params = s.buildExcludeFilter(dataset, filterWheres, params, alias, filter)
 		}
 	}
 	if len(filterWheres) > 0 {
