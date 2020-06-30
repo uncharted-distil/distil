@@ -101,7 +101,7 @@ func (f *RemoteSensingField) fetchHistogram(filterParams *api.FilterParams, inve
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -248,7 +248,7 @@ func (f *RemoteSensingField) parseExtrema(rows *pgx.Rows) (*api.Extrema, *api.Ex
 
 func (f *RemoteSensingField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error) {
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}

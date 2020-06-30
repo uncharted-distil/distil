@@ -16,7 +16,8 @@ import {
   createPendingSummary,
   createErrorSummary,
   createEmptyTableData,
-  fetchSummaryExemplars
+  fetchSummaryExemplars,
+  validateArgs
 } from "../../util/data";
 import { getters as resultGetters } from "../results/module";
 import { getters as dataGetters } from "../dataset/module";
@@ -549,17 +550,14 @@ export const actions = {
     context: ResultsContext,
     args: {
       dataset: string;
-      target: string;
       solutionId: string;
       highlight: Highlight;
+      varMode: SummaryMode;
     }
   ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.solutionId) {
-      console.warn("`pipelineId` argument is missing");
+    if (
+      !validateArgs(args, ["dataset", "solutionId", "highlight", "varMode"])
+    ) {
       return null;
     }
 
@@ -591,7 +589,7 @@ export const actions = {
       resultGetters.getCorrectnessSummaries(context),
       mutations.updateCorrectnessSummaries,
       filterParams,
-      SummaryMode.Default
+      args.varMode
     );
   },
 
@@ -600,15 +598,17 @@ export const actions = {
     context: ResultsContext,
     args: {
       dataset: string;
-      target: string;
       requestIds: string[];
       highlight: Highlight;
+      varMode: SummaryMode;
     }
   ) {
-    if (!args.requestIds) {
-      console.warn("`requestIds` argument is missing");
+    if (
+      !validateArgs(args, ["dataset", "requestIds", "highlight", "varMode"])
+    ) {
       return null;
     }
+
     const solutions = getSolutionsBySolutionRequestIds(
       context.rootState.requestsModule.solutions,
       args.requestIds
@@ -617,9 +617,9 @@ export const actions = {
       solutions.map(solution => {
         return actions.fetchCorrectnessSummary(context, {
           dataset: args.dataset,
-          target: args.target,
           solutionId: solution.solutionId,
-          highlight: args.highlight
+          highlight: args.highlight,
+          varMode: args.varMode
         });
       })
     );

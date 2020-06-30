@@ -91,7 +91,7 @@ function updateCurrentSolutionResults(
     .getRouteTask(store)
     .includes(TaskTypes.FORECASTING);
 
-  const varModes = context.getters.getDecodedVarModes;
+  const varModes: Map<string, SummaryMode> = context.getters.getDecodedVarModes;
 
   resultsActions.fetchResultTableData(store, {
     dataset: req.dataset,
@@ -142,9 +142,11 @@ function updateCurrentSolutionResults(
   } else if (isClassification) {
     resultsActions.fetchCorrectnessSummary(store, {
       dataset: req.dataset,
-      target: req.target,
       solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight
+      highlight: context.getters.getDecodedHighlight,
+      varMode: varModes.has(req.target)
+        ? varModes.get(req.target)
+        : SummaryMode.Default
     });
   }
 }
@@ -222,9 +224,11 @@ function updateSolutionResults(
   } else if (isClassification) {
     resultsActions.fetchCorrectnessSummary(store, {
       dataset: req.dataset,
-      target: req.target,
       solutionId: res.solutionId,
-      highlight: context.getters.getDecodedHighlight
+      highlight: context.getters.getDecodedHighlight,
+      varMode: varModes.has(req.target)
+        ? varModes.get(req.target)
+        : SummaryMode.Default
     });
   }
 }
