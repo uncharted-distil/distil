@@ -13,6 +13,7 @@
               :height="imageHeight"
               :on-click="onImageClick"
               :type="imageField.type"
+              :key="fieldKey"
             ></image-preview>
           </template>
           <image-label
@@ -31,15 +32,19 @@
 import Vue from "vue";
 import ImageLabel from "./ImageLabel";
 import ImagePreview from "./ImagePreview";
-import { getters as datasetGetters } from "../store/dataset/module";
 import {
   RowSelection,
   TableColumn,
   TableRow,
   D3M_INDEX_FIELD,
-  Row
+  Row,
+  Variable,
+  VariableSummary
 } from "../store/dataset/index";
+import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as resultGetters } from "../store/results/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { Dictionary } from "../util/dict";
 import {
   addRowSelection,
@@ -49,6 +54,8 @@ import {
 } from "../util/row";
 import { getImageFields } from "../util/data";
 import { Solution } from "../store/requests/index";
+import { keys } from "d3";
+import { min } from "moment";
 
 export default Vue.extend({
   name: "image-mosaic",
@@ -149,8 +156,10 @@ export default Vue.extend({
 
 .image-label {
   position: absolute;
-  right: 4px;
+  left: 2px;
   top: 2px;
+  padding: 0 2px;
+  margin: 0 2px;
   z-index: 1;
 }
 </style>
