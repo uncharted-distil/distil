@@ -3,6 +3,7 @@
     <li
       v-for="(label, index) in labels"
       :key="index"
+      :title="label.title"
       class="label"
       :class="label.status"
     >
@@ -24,6 +25,7 @@ import _ from "lodash";
 interface Label {
   status: string;
   value: string;
+  title: string;
 }
 
 /**
@@ -62,8 +64,8 @@ export default Vue.extend({
     },
 
     labels(): Label[] {
-      const labels = [];
-      let status;
+      const labels: Label[] = [];
+      let status: string;
 
       for (const key in this.fields) {
         status = null;
@@ -81,10 +83,20 @@ export default Vue.extend({
 
         // Display the label
         if (key === this.targetField || key === this.predictedField) {
-          const label = this.shortenLabels
-            ? this.shortenLabel(this.item[key].value)
-            : this.item[key].value;
-          labels.push({ status, value: label } as Label);
+          const fullLabel = <string>this.item[key].value;
+          if (this.shortenLabels) {
+            labels.push({
+              status,
+              value: this.shortenLabel(fullLabel),
+              title: fullLabel
+            });
+          } else {
+            labels.push({
+              status,
+              value: fullLabel,
+              title: ""
+            });
+          }
         }
       }
 
