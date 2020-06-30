@@ -1,5 +1,5 @@
 <template>
-  <ol class="labels">
+  <ol class="labels" :class="alignment">
     <li
       v-for="(label, index) in labels"
       :key="index"
@@ -42,7 +42,14 @@ export default Vue.extend({
     dataFields: Object as () => Dictionary<TableColumn>,
     includedActive: Boolean as () => boolean,
     item: Object as () => TableRow,
-    shortenLabels: Boolean as () => boolean
+    shortenLabels: {
+      type: Boolean as () => boolean,
+      default: false
+    },
+    alignHorizontal: {
+      type: Boolean as () => boolean,
+      default: false
+    }
   },
 
   computed: {
@@ -61,9 +68,15 @@ export default Vue.extend({
       for (const key in this.fields) {
         status = null;
 
-        // Define status of label (correct or incorrect) if we want to show the predicted error.
-        if (key === this.predictedField && this.showError) {
-          status = this.correct() ? "correct" : "incorrect";
+        // If we're showing error, we want to show
+        // a) *just* the correct label or
+        // b) the incorrect label *and* the ground truth label for comparison.
+        if (this.showError) {
+          if (key === this.predictedField) {
+            status = this.correct() ? "correct" : "incorrect";
+          } else if (key === this.targetField && this.correct()) {
+            continue;
+          }
         }
 
         // Display the label
@@ -92,6 +105,10 @@ export default Vue.extend({
       return (
         this.predictedField && !requestGetters.getActivePredictions(this.$store)
       );
+    },
+
+    alignment(): string {
+      return this.alignHorizontal ? "horizontal" : "vertical";
     },
 
     targetField(): string {
@@ -172,8 +189,11 @@ export default Vue.extend({
   list-style: none;
   list-style-position: outside;
   max-width: 100%;
+  padding-inline-start: 0px;
 }
-
+.labels.horizontal {
+  display: inline-flex;
+}
 .label {
   background-color: #424242;
   overflow: hidden;

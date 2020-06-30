@@ -21,6 +21,7 @@
             :dataFields="dataFields"
             includedActive
             shortenLabels
+            alignHorizontal
             :item="item"
           />
         </div>
@@ -180,6 +181,7 @@ export default Vue.extend({
   left: 2px;
   top: 2px;
   padding: 0 2px;
+  margin: 0 2px;
   z-index: 1;
 }
 </style>
