@@ -20,6 +20,8 @@
             class="image-label"
             :dataFields="dataFields"
             includedActive
+            shortenLabels
+            alignHorizontal
             :item="item"
           />
         </div>
@@ -134,7 +136,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .image-mosaic {
   display: block;
   overflow: auto;
@@ -158,8 +160,6 @@ export default Vue.extend({
   position: absolute;
   left: 2px;
   top: 2px;
-  padding: 0 2px;
-  margin: 0 2px;
   z-index: 1;
 }
 </style>

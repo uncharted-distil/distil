@@ -15,7 +15,9 @@
     <image-drilldown
       v-if="isRemoteSensing"
       @hide="hideImageDrilldown"
+      :dataFields="dataFields"
       :imageUrl="imageUrl"
+      :item="item"
       :visible="isImageDrilldown"
     ></image-drilldown>
 
@@ -43,6 +45,7 @@ import Vue from "vue";
 import IconBase from "./icons/IconBase";
 import IconCropFree from "./icons/IconCropFree";
 import ImageDrilldown from "./ImageDrilldown.vue";
+import ImageLabel from "./ImageLabel";
 import { getters as appGetters } from "../store/app/module";
 import { SatelliteBand } from "../store/app/index";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -103,8 +106,9 @@ type LatLngBoundsLiteral = import("leaflet").LatLngBoundsLiteral;
 
 interface Area {
   coordinates: LatLngBoundsLiteral;
-  imageUrl: string;
   correctPrediction: boolean;
+  imageUrl: string;
+  item: TableRow;
 }
 
 export default Vue.extend({
@@ -132,7 +136,8 @@ export default Vue.extend({
       selectedRect: null,
       isSelectionMode: false,
       isImageDrilldown: false,
-      imageUrl: null
+      imageUrl: null,
+      item: null
     };
   },
 
@@ -295,7 +300,7 @@ export default Vue.extend({
 
         const correctPrediction = this.correctPrediction(item);
 
-        return { imageUrl, coordinates, correctPrediction } as Area;
+        return { item, imageUrl, coordinates, correctPrediction } as Area;
       });
     },
 
@@ -599,8 +604,9 @@ export default Vue.extend({
       });
     },
 
-    showImageDrilldown(imageUrl: String) {
-      this.imageUrl = imageUrl;
+    showImageDrilldown(imageUrl: string, item: TableRow) {
+      this.imageUrl = imageUrl ?? null;
+      this.item = item ?? null;
       this.isImageDrilldown = true;
     },
     hideImageDrilldown() {
@@ -656,7 +662,7 @@ export default Vue.extend({
 
       // Add each area to the layer group.
       this.areas.forEach(area => {
-        const { coordinates, imageUrl, correctPrediction } = area;
+        const { correctPrediction, coordinates, imageUrl, item } = area;
 
         const displayOptions = {
           color: correctPrediction ? "#03c003" : "#be0000" // Correct: green, Incorrect: red.
@@ -665,11 +671,23 @@ export default Vue.extend({
         // Make sure the new area fit on the map.
         coordinates.forEach(coordinate => bounds.extend(coordinate));
 
+        // Create a Vue tooltip for the area with the label for the image.
+        const ImageLabelComponent = Vue.extend(ImageLabel);
+        const tooltip = new ImageLabelComponent({
+          parent: this,
+          propsData: {
+            dataFields: this.dataFields,
+            includeActive: true,
+            item: item
+          },
+          store: this.$store
+        }).$mount();
+
         // Create a rectangle to display the area on the map.
         const rectangle = leaflet
           .rectangle(coordinates, displayOptions)
-          .on("click", () => this.showImageDrilldown(imageUrl))
-          .bindTooltip(`Satellite Image ${imageUrl}`);
+          .bindTooltip(tooltip.$el as HTMLElement)
+          .on("click", () => this.showImageDrilldown(imageUrl, item));
 
         // Add the rectangle to the layer group.
         layerGroup.addLayer(rectangle);

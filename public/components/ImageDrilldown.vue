@@ -1,5 +1,12 @@
 <template>
   <b-modal @hide="hide" hide-footer :title="visibleTitle" :visible="visible">
+    <image-label
+      v-if="item && dataFields"
+      class="image-label"
+      :dataFields="dataFields"
+      includedActive
+      :item="item"
+    />
     <div v-if="isRemoteSensing && availableBands.length > 0">
       <b-dropdown :text="band" size="sm">
         <b-dropdown-item
@@ -16,7 +23,13 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { BandID, BandCombination } from "../store/dataset/index";
+import ImageLabel from "./ImageLabel";
+import {
+  BandID,
+  BandCombination,
+  TableColumn,
+  TableRow
+} from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions
@@ -30,17 +43,25 @@ const imageId = imageUrl => imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
 /**
  * Display a modal with drilldowned information about an image.
  *
- * @param visible  {Boolean} Display or hide the modal.
- * @param imageUrl {String}  URL of the image to be drilldown.
- * @param title    {String=} Title of the modal.
+ * @param visible    {Boolean} Display or hide the modal.
+ * @param imageUrl   {String}  URL of the image to be drilldown.
+ * @param title      {String=} Title of the modal.
+ * @param dataFields {Array<TableColumn>}
+ * @param item       {TableRow} item being drilldown.
  */
 export default Vue.extend({
   name: "image-drilldown",
 
+  components: {
+    ImageLabel
+  },
+
   props: {
-    visible: Boolean,
+    dataFields: Object as () => Dictionary<TableColumn>,
     imageUrl: String,
-    title: String
+    item: Object as () => TableRow,
+    title: String,
+    visible: Boolean
   },
 
   mounted() {
@@ -123,7 +144,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .image-container {
   /* Keep the image under 25% of screen width. */
   max-height: 25vw;
