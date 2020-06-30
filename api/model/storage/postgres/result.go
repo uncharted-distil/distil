@@ -763,12 +763,17 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 		return nil, err
 	}
 
+	countCol, err := s.getCountCol(dataset, mode)
+	if err != nil {
+		return nil, err
+	}
+
 	// use the variable type to guide the summary creation
 	var field Field
 	if model.IsNumerical(variable.Type) {
-		field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
+		field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 	} else if model.IsCategorical(variable.Type) {
-		field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
+		field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 	} else if model.IsVector(variable.Type) {
 		field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
 	} else {

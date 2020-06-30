@@ -75,6 +75,11 @@ func (s *Storage) fetchHistogram(dataset string, storageName string, variable *m
 	if err != nil {
 		return nil, err
 	}
+	if countCol == "" {
+		countCol = "*"
+	} else {
+		countCol = fmt.Sprintf("DISTINCT \"%s\"", countCol)
+	}
 
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, targetName)
@@ -98,7 +103,7 @@ func (s *Storage) fetchHistogram(dataset string, storageName string, variable *m
 }
 
 func (s *Storage) getCountCol(dataset string, mode api.SummaryMode) (string, error) {
-	countCol := "*"
+	countCol := ""
 	if mode == api.RemoteSensingMode {
 		// remote sensing group should be distinct by group id
 		vars, err := s.metadata.FetchVariables(dataset, false, true)
@@ -108,7 +113,7 @@ func (s *Storage) getCountCol(dataset string, mode api.SummaryMode) (string, err
 
 		for _, v := range vars {
 			if v.IsGrouping() {
-				countCol = fmt.Sprintf("DISTINCT \"%s\"", v.Grouping.GetIDCol())
+				countCol = v.Grouping.GetIDCol()
 			}
 		}
 
