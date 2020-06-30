@@ -13,37 +13,17 @@
               :height="imageHeight"
               :on-click="onImageClick"
               :type="imageField.type"
+              :key="fieldKey"
             ></image-preview>
           </template>
-          <div v-if="showError" class="image-label-container">
-            <template v-for="(fieldInfo, fieldKey) in fields">
-              <div v-if="fieldKey == targetField" class="image-label">
-                {{ item[fieldKey].value }}
-              </div>
-              <div
-                v-if="fieldKey == predictedField && correct(item)"
-                class="image-label-correct"
-              >
-                {{ item[fieldKey].value }}
-              </div>
-              <div
-                v-if="fieldKey == predictedField && !correct(item)"
-                class="image-label-incorrect"
-              >
-                {{ item[fieldKey].value }}
-              </div>
-            </template>
-          </div>
-          <div v-if="!showError" class="image-label-container">
-            <template v-for="(fieldInfo, fieldKey) in fields">
-              <div
-                v-if="fieldKey == targetField || fieldKey == predictedField"
-                class="image-label"
-              >
-                {{ item[fieldKey].value }}
-              </div>
-            </template>
-          </div>
+          <image-label
+            class="image-label"
+            :dataFields="dataFields"
+            includedActive
+            shortenLabels
+            alignHorizontal
+            :item="item"
+          />
         </div>
       </template>
     </template>
@@ -51,19 +31,22 @@
 </template>
 
 <script lang="ts">
-import _ from "lodash";
 import Vue from "vue";
+import ImageLabel from "./ImageLabel";
 import ImagePreview from "./ImagePreview";
-import { getters as datasetGetters } from "../store/dataset/module";
-import { getters as requestGetters } from "../store/requests/module";
 import {
   RowSelection,
   TableColumn,
   TableRow,
   D3M_INDEX_FIELD,
-  Row
+  Row,
+  Variable,
+  VariableSummary
 } from "../store/dataset/index";
+import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as resultGetters } from "../store/results/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { Dictionary } from "../util/dict";
 import {
   addRowSelection,
@@ -73,11 +56,14 @@ import {
 } from "../util/row";
 import { getImageFields } from "../util/data";
 import { Solution } from "../store/requests/index";
+import { keys } from "d3";
+import { min } from "moment";
 
 export default Vue.extend({
   name: "image-mosaic",
 
   components: {
+    ImageLabel,
     ImagePreview
   },
 
@@ -165,10 +151,6 @@ export default Vue.extend({
           event.row[D3M_INDEX_FIELD]
         );
       }
-    },
-
-    correct(item: any): boolean {
-      return item[this.targetField].value === item[this.predictedField].value;
     }
   }
 });
@@ -194,34 +176,12 @@ export default Vue.extend({
   position: relative;
 }
 
-.image-label-container {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  z-index: 1;
-}
-
 .image-label {
-  float: right;
-  background-color: #424242;
-  color: #fff;
-  padding: 0 4px;
-  margin: 0, 2px;
-}
-
-.image-label-correct {
-  float: right;
-  background-color: #03c003;
-  color: #fff;
-  padding: 0 4px;
-  margin: 0, 2px;
-}
-
-.image-label-incorrect {
-  float: right;
-  background-color: #be0000;
-  color: #fff;
-  padding: 0 4px;
-  margin: 0, 2px;
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  padding: 0 2px;
+  margin: 0 2px;
+  z-index: 1;
 }
 </style>
