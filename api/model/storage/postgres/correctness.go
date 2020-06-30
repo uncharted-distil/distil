@@ -26,7 +26,7 @@ import (
 )
 
 // FetchCorrectnessSummary fetches a histogram of the residuals associated with a set of numerical predictions.
-func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams) (*api.VariableSummary, error) {
+func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.VariableSummary, error) {
 
 	storageNameResult := s.getResultTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
@@ -41,12 +41,12 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, re
 
 	var baseline *api.Histogram
 	var filtered *api.Histogram
-	baseline, err = s.fetchHistogram(dataset, storageName, variable, targetName, resultURI, nil)
+	baseline, err = s.fetchHistogram(dataset, storageName, variable, targetName, resultURI, nil, mode)
 	if err != nil {
 		return nil, err
 	}
 	if !filterParams.Empty() {
-		filtered, err = s.fetchHistogram(dataset, storageName, variable, targetName, resultURI, filterParams)
+		filtered, err = s.fetchHistogram(dataset, storageName, variable, targetName, resultURI, filterParams, mode)
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +62,7 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, re
 	}, nil
 }
 
-func (s *Storage) fetchHistogram(dataset string, storageName string, variable *model.Variable, targetName string, resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
+func (s *Storage) fetchHistogram(dataset string, storageName string, variable *model.Variable, targetName string, resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 	storageNameResult := s.getResultTable(storageName)
 
 	// get filter where / params
@@ -71,16 +71,21 @@ func (s *Storage) fetchHistogram(dataset string, storageName string, variable *m
 		return nil, err
 	}
 
+	countCol, err := s.getCountCol(dataset, mode)
+	if err != nil {
+		return nil, err
+	}
+
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, targetName)
 
 	query := fmt.Sprintf(
-		`SELECT data."%s", result.value, COUNT(*) AS count
+		`SELECT data."%s", result.value, COUNT(%s) AS count
 		 FROM %s AS result INNER JOIN %s AS data ON result.index = data."%s"
 		 WHERE %s
 		 GROUP BY result.value, data."%s"
 		 ORDER BY count desc;`,
-		targetName, storageNameResult, storageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
+		targetName, countCol, storageNameResult, storageName, model.D3MIndexFieldName, strings.Join(wheres, " AND "), targetName)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
@@ -90,6 +95,26 @@ func (s *Storage) fetchHistogram(dataset string, storageName string, variable *m
 	defer res.Close()
 
 	return s.parseHistogram(res, variable)
+}
+
+func (s *Storage) getCountCol(dataset string, mode api.SummaryMode) (string, error) {
+	countCol := "*"
+	if mode == api.RemoteSensingMode {
+		// remote sensing group should be distinct by group id
+		vars, err := s.metadata.FetchVariables(dataset, false, true)
+		if err != nil {
+			return "", err
+		}
+
+		for _, v := range vars {
+			if v.IsGrouping() {
+				countCol = fmt.Sprintf("DISTINCT \"%s\"", v.Grouping.GetIDCol())
+			}
+		}
+
+	}
+
+	return countCol, nil
 }
 
 func (s *Storage) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*api.Histogram, error) {

@@ -38,6 +38,13 @@ func CorrectnessSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor ap
 		dataset := pat.Param(r, "dataset")
 		storageName := model.NormalizeDatasetID(dataset)
 
+		// get variable summary mode
+		mode, err := api.SummaryModeFromString(pat.Param(r, "mode"))
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		resultUUID, err := url.PathUnescape(pat.Param(r, "results-uuid"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape results uuid"))
@@ -78,7 +85,7 @@ func CorrectnessSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor ap
 		}
 
 		// fetch summary histogram
-		summary, err := data.FetchCorrectnessSummary(dataset, storageName, res.ResultURI, filterParams)
+		summary, err := data.FetchCorrectnessSummary(dataset, storageName, res.ResultURI, filterParams, api.SummaryMode(mode))
 		if err != nil {
 			handleError(w, err)
 			return
