@@ -277,43 +277,45 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 
 	// Parse the columns (skipping weights columns)
 	if rows != nil {
-		fields := rows.FieldDescriptions()
-		columns := make([]api.Column, 0)
+		var columns []api.Column
 		weightCount := 0
-		for i := 0; i < len(fields); i++ {
-			key := string(fields[i].Name)
-			label := key
-			typ := "unknown"
-			if api.IsPredictedKey(key) {
-				label = "Predicted " + api.StripKeySuffix(key)
-				typ = target.Type
-			} else if api.IsErrorKey(key) {
-				label = "Error"
-				typ = target.Type
-			} else if strings.HasPrefix(key, "__weights_") {
-				weightCount = weightCount + 1
-				continue
-			} else {
-				if key == target.Name {
-					typ = target.Type
-				} else {
-					v := getVariableByKey(key, variables)
-					if v != nil {
-						typ = v.Type
-						label = v.DisplayName
-					}
-				}
-			}
-
-			columns = append(columns, api.Column{
-				Key:   key,
-				Label: label,
-				Type:  typ,
-			})
-		}
-
 		// Parse the row data.
 		for rows.Next() {
+			if columns == nil {
+				fields := rows.FieldDescriptions()
+				columns = make([]api.Column, 0)
+				for i := 0; i < len(fields); i++ {
+					key := string(fields[i].Name)
+					label := key
+					typ := "unknown"
+					if api.IsPredictedKey(key) {
+						label = "Predicted " + api.StripKeySuffix(key)
+						typ = target.Type
+					} else if api.IsErrorKey(key) {
+						label = "Error"
+						typ = target.Type
+					} else if strings.HasPrefix(key, "__weights_") {
+						weightCount = weightCount + 1
+						continue
+					} else {
+						if key == target.Name {
+							typ = target.Type
+						} else {
+							v := getVariableByKey(key, variables)
+							if v != nil {
+								typ = v.Type
+								label = v.DisplayName
+							}
+						}
+					}
+
+					columns = append(columns, api.Column{
+						Key:   key,
+						Label: label,
+						Type:  typ,
+					})
+				}
+			}
 			columnValues, err := rows.Values()
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract fields from query result")

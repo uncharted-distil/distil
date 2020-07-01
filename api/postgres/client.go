@@ -43,6 +43,7 @@ type DatabaseDriver interface {
 	QueryRow(string, ...interface{}) pgx.Row
 	Exec(string, ...interface{}) (pgconn.CommandTag, error)
 	GetBatchClient() *pg.DB
+	SendBatch(batch *pgx.Batch) pgx.BatchResults
 }
 
 // ClientCtor repressents a client constructor to instantiate a postgres client.
@@ -85,6 +86,11 @@ func (ic IntegratedClient) QueryRow(sql string, params ...interface{}) pgx.Row {
 // Exec executes the sql command.
 func (ic IntegratedClient) Exec(sql string, params ...interface{}) (pgconn.CommandTag, error) {
 	return ic.pgxClient.Exec(context.Background(), sql, params...)
+}
+
+// SendBatch submits a batch.
+func (ic IntegratedClient) SendBatch(batch *pgx.Batch) pgx.BatchResults {
+	return ic.pgxClient.SendBatch(context.Background(), batch)
 }
 
 func (p pgxLogAdapter) Log(level pgx.LogLevel, msg string, data map[string]interface{}) {
@@ -146,8 +152,8 @@ func NewClient(host string, port int, user string, password string, database str
 		client, ok := clients[endpoint]
 		if !ok {
 			log.Infof("Creating new Postgres connection to endpoint %s", endpoint)
-			connString := fmt.Sprintf("user=%s password=%s host=%s port=%d dbname=%s sslmode=verify-ca pool_max_conns=%d",
-				user, password, host, port, database, 64)
+			connString := fmt.Sprintf("user=%s host=%s port=%d dbname=%s pool_max_conns=%d",
+				user, host, port, database, 64)
 			poolConfig, err := pool.ParseConfig(connString)
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to parse postgres config")

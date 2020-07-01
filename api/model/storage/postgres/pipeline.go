@@ -305,13 +305,13 @@ func (s *Storage) parseSolutionFeatureWeight(resultURI string, rows pgx.Rows) (*
 	}
 
 	if rows != nil {
-		fields := rows.FieldDescriptions()
-		columns := make([]string, len(fields))
-		for i, f := range fields {
-			columns[i] = string(f.Name)
-		}
-
 		if rows.Next() {
+			fields := rows.FieldDescriptions()
+			columns := make([]string, len(fields))
+			for i, f := range fields {
+				columns[i] = string(f.Name)
+			}
+
 			columnValues, err := rows.Values()
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract fields from query result")

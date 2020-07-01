@@ -51,23 +51,6 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 
 	// Parse the columns.
 	if rows != nil {
-		fields := rows.FieldDescriptions()
-		columns := make([]api.Column, len(fields))
-		for i := 0; i < len(fields); i++ {
-			key := string(fields[i].Name)
-
-			v := getVariableByKey(key, variables)
-			if v == nil {
-				return nil, fmt.Errorf("unable to lookup variable for %s", key)
-			}
-			columns[i] = api.Column{
-				Key:   key,
-				Label: v.DisplayName,
-				Type:  v.Type,
-			}
-		}
-		result.Columns = columns
-
 		// Parse the row data.
 		for rows.Next() {
 			columnValues, err := rows.Values()
@@ -85,6 +68,23 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 
 			result.Values = append(result.Values, weightedValues)
 		}
+
+		fields := rows.FieldDescriptions()
+		columns := make([]api.Column, len(fields))
+		for i := 0; i < len(fields); i++ {
+			key := string(fields[i].Name)
+
+			v := getVariableByKey(key, variables)
+			if v == nil {
+				return nil, fmt.Errorf("unable to lookup variable for %s", key)
+			}
+			columns[i] = api.Column{
+				Key:   key,
+				Label: v.DisplayName,
+				Type:  v.Type,
+			}
+		}
+		result.Columns = columns
 	} else {
 		result.Columns = make([]api.Column, 0)
 	}
@@ -647,7 +647,9 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	}
 
 	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
-	query := fmt.Sprintf("SELECT %s FROM %s", fields, storageName)
+	batch := &pgx.Batch{}
+	batch.Queue("SELECT setseed(0.2);")
+	query := fmt.Sprintf(" SELECT %s FROM %s", fields, storageName)
 
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -675,11 +677,13 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	query = query + ";"
 
 	// execute the postgres query
-	_, err = s.client.Query("SELECT setseed(0.2);")
+	batch.Queue(query, params...)
+	resBatch := s.client.SendBatch(batch)
+	_, err = resBatch.Exec()
 	if err != nil {
-		return nil, errors.Wrap(err, "postgres filtered data seed setting query failed")
+		return nil, errors.Wrap(err, "postgres filtered data set seed query failed")
 	}
-	res, err := s.client.Query(query, params...)
+	res, err := resBatch.Query()
 	if err != nil {
 		return nil, errors.Wrap(err, "postgres filtered data query failed")
 	}
