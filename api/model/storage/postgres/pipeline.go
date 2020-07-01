@@ -20,7 +20,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 
 	"github.com/uncharted-distil/distil-compute/model"
@@ -162,7 +162,7 @@ func (s *Storage) FetchSolution(solutionID string) (*api.Solution, error) {
 	return solution, nil
 }
 
-func (s *Storage) parseSolution(rows *pgx.Rows) (*api.Solution, error) {
+func (s *Storage) parseSolution(rows pgx.Rows) (*api.Solution, error) {
 	var requestID string
 	var solutionID string
 	var explainedSolutionID string
@@ -199,7 +199,7 @@ func (s *Storage) parseSolution(rows *pgx.Rows) (*api.Solution, error) {
 	}, nil
 }
 
-func (s *Storage) parseSolutionWeight(rows *pgx.Rows) ([]*api.SolutionWeight, error) {
+func (s *Storage) parseSolutionWeight(rows pgx.Rows) ([]*api.SolutionWeight, error) {
 	results := make([]*api.SolutionWeight, 0)
 	for rows.Next() {
 		var solutionID string
@@ -243,7 +243,7 @@ func (s *Storage) FetchSolutionWeights(solutionID string) ([]*api.SolutionWeight
 	return results, nil
 }
 
-func (s *Storage) parseSolutionState(rows *pgx.Rows) ([]*api.SolutionState, error) {
+func (s *Storage) parseSolutionState(rows pgx.Rows) ([]*api.SolutionState, error) {
 	results := make([]*api.SolutionState, 0)
 	for rows.Next() {
 		var solutionID string
@@ -265,7 +265,7 @@ func (s *Storage) parseSolutionState(rows *pgx.Rows) ([]*api.SolutionState, erro
 	return results, nil
 }
 
-func (s *Storage) parseSolutionResult(rows *pgx.Rows) ([]*api.SolutionResult, error) {
+func (s *Storage) parseSolutionResult(rows pgx.Rows) ([]*api.SolutionResult, error) {
 	results := make([]*api.SolutionResult, 0)
 	for rows.Next() {
 		var solutionID string
@@ -299,7 +299,7 @@ func (s *Storage) parseSolutionResult(rows *pgx.Rows) ([]*api.SolutionResult, er
 	return results, nil
 }
 
-func (s *Storage) parseSolutionFeatureWeight(resultURI string, rows *pgx.Rows) (*api.SolutionFeatureWeight, error) {
+func (s *Storage) parseSolutionFeatureWeight(resultURI string, rows pgx.Rows) (*api.SolutionFeatureWeight, error) {
 	result := &api.SolutionFeatureWeight{
 		ResultURI: resultURI,
 	}
@@ -308,7 +308,7 @@ func (s *Storage) parseSolutionFeatureWeight(resultURI string, rows *pgx.Rows) (
 		fields := rows.FieldDescriptions()
 		columns := make([]string, len(fields))
 		for i, f := range fields {
-			columns[i] = f.Name
+			columns[i] = string(f.Name)
 		}
 
 		if rows.Next() {

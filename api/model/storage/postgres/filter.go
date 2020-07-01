@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -43,7 +43,7 @@ func getVariableByKey(key string, variables []*model.Variable) *model.Variable {
 	return nil
 }
 
-func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable, numRows int, rows *pgx.Rows) (*api.FilteredData, error) {
+func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable, numRows int, rows pgx.Rows) (*api.FilteredData, error) {
 	result := &api.FilteredData{
 		NumRows: numRows,
 		Values:  make([][]*api.FilteredDataValue, 0),
@@ -54,7 +54,7 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 		fields := rows.FieldDescriptions()
 		columns := make([]api.Column, len(fields))
 		for i := 0; i < len(fields); i++ {
-			key := fields[i].Name
+			key := string(fields[i].Name)
 
 			v := getVariableByKey(key, variables)
 			if v == nil {
@@ -668,13 +668,17 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	orderBy := strings.Join(groupings, ",")
 
 	// order & limit the filtered data.
-	query = fmt.Sprintf("%s ORDER BY %s", query, orderBy)
+	query = fmt.Sprintf("%s ORDER BY random(), %s", query, orderBy)
 	if filterParams.Size > 0 {
 		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
 	}
 	query = query + ";"
 
 	// execute the postgres query
+	_, err = s.client.Query("SELECT setseed(0.2);")
+	if err != nil {
+		return nil, errors.Wrap(err, "postgres filtered data seed setting query failed")
+	}
 	res, err := s.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "postgres filtered data query failed")

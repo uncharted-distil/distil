@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -286,7 +286,7 @@ func (f *NumericalField) getHistogramAggQuery(extrema *api.Extrema, numBuckets i
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
-func (f *NumericalField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
+func (f *NumericalField) parseHistogram(rows pgx.Rows, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := api.HistogramAggPrefix + extrema.Key
 
@@ -340,7 +340,7 @@ func (f *NumericalField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema, nu
 	}, nil
 }
 
-func (f *NumericalField) parseExtrema(rows *pgx.Rows) (*api.Extrema, error) {
+func (f *NumericalField) parseExtrema(rows pgx.Rows) (*api.Extrema, error) {
 	var minValue *float64
 	var maxValue *float64
 	if rows != nil {
@@ -605,7 +605,7 @@ func (f *NumericalField) FetchNumericalStatsByResult(resultURI string, filterPar
 	return f.parseStats(res)
 }
 
-func (f *NumericalField) parseStats(row *pgx.Rows) (*NumericalStats, error) {
+func (f *NumericalField) parseStats(row pgx.Rows) (*NumericalStats, error) {
 	var stats *NumericalStats
 	if row != nil {
 		var stddev *float64

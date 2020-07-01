@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -269,7 +269,7 @@ func (s *Storage) executeInsertResultStatement(storageName string, resultID stri
 	return err
 }
 
-func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int, rows *pgx.Rows, target *model.Variable) (*api.FilteredData, error) {
+func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int, rows pgx.Rows, target *model.Variable) (*api.FilteredData, error) {
 	result := &api.FilteredData{
 		NumRows: numRows,
 		Values:  make([][]*api.FilteredDataValue, 0),
@@ -281,7 +281,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 		columns := make([]api.Column, 0)
 		weightCount := 0
 		for i := 0; i < len(fields); i++ {
-			key := fields[i].Name
+			key := string(fields[i].Name)
 			label := key
 			typ := "unknown"
 			if api.IsPredictedKey(key) {

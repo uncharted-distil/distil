@@ -20,7 +20,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -227,7 +227,7 @@ func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams
 	return f.parseHistogram(res)
 }
 
-func (f *CategoricalField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
+func (f *CategoricalField) parseHistogram(rows pgx.Rows) (*api.Histogram, error) {
 	termsAggName := api.TermsAggPrefix + f.Key
 
 	// Parse bucket results.

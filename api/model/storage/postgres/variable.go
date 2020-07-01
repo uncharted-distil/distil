@@ -18,7 +18,7 @@ package postgres
 import (
 	"fmt"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -29,7 +29,7 @@ const (
 	timeSeriesCatResultLimit = 10
 )
 
-func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*api.Extrema, error) {
+func (s *Storage) parseExtrema(row pgx.Rows, variable *model.Variable) (*api.Extrema, error) {
 	var minValue *float64
 	var maxValue *float64
 	if row != nil {
@@ -56,7 +56,7 @@ func (s *Storage) parseExtrema(row *pgx.Rows, variable *model.Variable) (*api.Ex
 	}, nil
 }
 
-func (s *Storage) parseDateExtrema(row *pgx.Rows, variable *model.Variable) (*api.Extrema, error) {
+func (s *Storage) parseDateExtrema(row pgx.Rows, variable *model.Variable) (*api.Extrema, error) {
 	var minValue *int64
 	var maxValue *int64
 	if row != nil {
