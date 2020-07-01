@@ -34,6 +34,15 @@ const (
 	IncorrectCategory = "incorrect"
 )
 
+var (
+	pgRandomSeed = 0.2
+)
+
+// SetRandomSeed sets the random seed to use when reading a subset of data from the database.
+func SetRandomSeed(seed float64) {
+	pgRandomSeed = seed
+}
+
 func getVariableByKey(key string, variables []*model.Variable) *model.Variable {
 	for _, variable := range variables {
 		if variable.Name == key {
@@ -648,7 +657,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
 	batch := &pgx.Batch{}
-	batch.Queue("SELECT setseed(0.2);")
+	batch.Queue("SELECT setseed(%v);", pgRandomSeed)
 	query := fmt.Sprintf(" SELECT %s FROM %s", fields, storageName)
 
 	wheres := make([]string, 0)

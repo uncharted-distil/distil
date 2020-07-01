@@ -68,12 +68,13 @@ type Config struct {
 	PipelineCacheFilename              string  `env:"PIPELINE_CACHE_FILENAME" envDefault:"cache.bin"`
 	PipelineQueueSize                  int     `env:"PIPELINE_QUEUE_SIZE" envDefault:"10"`
 	PostgresBatchSize                  int     `env:"PG_BATCH_SIZE" envDefault:"1000"`
-	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
-	PostgresPort                       int     `env:"PG_PORT" envDefault:"5432"`
-	PostgresUser                       string  `env:"PG_USER" envDefault:"distil"`
-	PostgresPassword                   string  `env:"PG_PASSWORD" envDefault:""`
 	PostgresDatabase                   string  `env:"PG_DATABASE" envDefault:"distil"`
+	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
 	PostgresLogLevel                   string  `env:"PG_LOG_LEVEL" envDefault:"none"`
+	PostgresPassword                   string  `env:"PG_PASSWORD" envDefault:""`
+	PostgresPort                       int     `env:"PG_PORT" envDefault:"5432"`
+	PostgresRandomSeed                 float64 `env:"PG_RANDOM_SEED" envDefault:"0.2"`
+	PostgresUser                       string  `env:"PG_USER" envDefault:"distil"`
 	RankingOutputPath                  string  `env:"RANKING_OUTPUT_PATH" envDefault:"importance.json"`
 	RankingRowLimit                    int     `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
 	SchemaPath                         string  `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`
