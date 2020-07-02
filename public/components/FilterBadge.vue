@@ -103,7 +103,7 @@ export default Vue.extend({
 }
 
 .filter-badge.active {
-  background-color: #00c6e1;
+  background-color: #255dcc;
 }
 
 button.remove-button {
@@ -118,12 +118,12 @@ button.remove-button {
 }
 button.remove-button:hover {
   color: #fff;
-  background-color: #0089a4;
+  background-color: #3d70d3;
   border: none;
   border-left: 1px solid #fff;
 }
 
 .active button.remove-button:hover {
-  background-color: #0089a4;
+  background-color: #3d70d3;
 }
 </style>

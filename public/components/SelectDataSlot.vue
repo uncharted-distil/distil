@@ -431,7 +431,7 @@ table tr {
 
 .select-data-action-exclude:not([disabled]) .include-highlight,
 .select-data-action-exclude:not([disabled]) .exclude-highlight {
-  color: #00c6e1;
+  color: #255dcc;
 }
 
 .select-data-action-exclude:not([disabled]) .include-selection,
@@ -445,7 +445,7 @@ table tr {
 }
 
 .matching-color {
-  color: #00c6e1;
+  color: #255dcc;
 }
 
 .fake-search-input {
