@@ -179,8 +179,8 @@ export default Vue.extend({
   methods: {
     correct(): boolean {
       return (
-        this.item[this.targetField].value ===
-        this.item[this.predictedField].value
+        this.item[this.targetField]?.value ===
+        this.item[this.predictedField]?.value
       );
     },
 
@@ -197,23 +197,28 @@ export default Vue.extend({
 
 <style scoped>
 .labels {
-  color: white;
+  color: #ffffff;
+  display: inline-block;
   list-style: none;
   list-style-position: outside;
   max-width: 100%;
   padding-inline-start: 0px;
 }
+
 .labels.horizontal {
   display: inline-flex;
 }
+
 .label {
   background-color: #424242;
   overflow: hidden;
-  padding: 0 2px;
+  padding: 0.1em 0.4em;
 }
+
 .label.correct {
   background-color: #03c003;
 }
+
 .label.incorrect {
   background-color: #be0000;
 }

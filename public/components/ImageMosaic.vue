@@ -111,26 +111,6 @@ export default Vue.extend({
 
     imageFields(): { key: string; type: string }[] {
       return getImageFields(this.fields);
-    },
-
-    targetField(): string {
-      return routeGetters.getRouteTargetVariable(this.$store);
-    },
-
-    predictedField(): string {
-      const predictions = requestGetters.getActivePredictions(this.$store);
-      if (predictions) {
-        return predictions.predictedKey;
-      }
-
-      const solution = requestGetters.getActiveSolution(this.$store);
-      return solution ? `${solution.predictedKey}` : "";
-    },
-
-    showError(): boolean {
-      return (
-        this.predictedField && !requestGetters.getActivePredictions(this.$store)
-      );
     }
   },
 
@@ -156,7 +136,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .image-mosaic {
   display: block;
   overflow: auto;
@@ -180,8 +160,6 @@ export default Vue.extend({
   position: absolute;
   left: 2px;
   top: 2px;
-  padding: 0 2px;
-  margin: 0 2px;
   z-index: 1;
 }
 </style>
