@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -261,7 +261,7 @@ func (f *DateTimeField) parseValueToDateString(value string) (string, error) {
 	return time.Unix(ival, 0).Format(time.RFC3339), nil
 }
 
-func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
+func (f *DateTimeField) parseHistogram(rows pgx.Rows, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := api.HistogramAggPrefix + extrema.Key
 
@@ -316,7 +316,7 @@ func (f *DateTimeField) parseHistogram(rows *pgx.Rows, extrema *api.Extrema, num
 	}, nil
 }
 
-func (f *DateTimeField) parseExtrema(rows *pgx.Rows) (*api.Extrema, error) {
+func (f *DateTimeField) parseExtrema(rows pgx.Rows) (*api.Extrema, error) {
 	var minValue *time.Time
 	var maxValue *time.Time
 	if rows != nil {

@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -122,7 +122,7 @@ func (s *Storage) getCountCol(dataset string, mode api.SummaryMode) (string, err
 	return countCol, nil
 }
 
-func (s *Storage) parseHistogram(rows *pgx.Rows, variable *model.Variable) (*api.Histogram, error) {
+func (s *Storage) parseHistogram(rows pgx.Rows, variable *model.Variable) (*api.Histogram, error) {
 
 	termsAggName := api.TermsAggPrefix + variable.Name
 

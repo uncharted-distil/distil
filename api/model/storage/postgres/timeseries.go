@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -63,7 +63,7 @@ func NewTimeSeriesField(storage *Storage, datasetName string, datasetStorageName
 	return field
 }
 
-func (s *Storage) parseTimeseries(rows *pgx.Rows) ([]*api.TimeseriesObservation, error) {
+func (s *Storage) parseTimeseries(rows pgx.Rows) ([]*api.TimeseriesObservation, error) {
 	var points []*api.TimeseriesObservation
 	if rows != nil {
 		for rows.Next() {
@@ -84,7 +84,7 @@ func (s *Storage) parseTimeseries(rows *pgx.Rows) ([]*api.TimeseriesObservation,
 	return points, nil
 }
 
-func (s *Storage) parseDateTimeTimeseries(rows *pgx.Rows) ([]*api.TimeseriesObservation, error) {
+func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows) ([]*api.TimeseriesObservation, error) {
 	var points []*api.TimeseriesObservation
 	if rows != nil {
 		for rows.Next() {
@@ -106,7 +106,7 @@ func (s *Storage) parseDateTimeTimeseries(rows *pgx.Rows) ([]*api.TimeseriesObse
 	return points, nil
 }
 
-func (s *Storage) parseTimeseriesForecast(rows *pgx.Rows) ([]*api.TimeseriesObservation, error) {
+func (s *Storage) parseTimeseriesForecast(rows pgx.Rows) ([]*api.TimeseriesObservation, error) {
 	var points []*api.TimeseriesObservation
 	if rows != nil {
 		for rows.Next() {
@@ -131,7 +131,7 @@ func (s *Storage) parseTimeseriesForecast(rows *pgx.Rows) ([]*api.TimeseriesObse
 	return points, nil
 }
 
-func (s *Storage) parseDateTimeTimeseriesForecast(rows *pgx.Rows) ([]*api.TimeseriesObservation, error) {
+func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) ([]*api.TimeseriesObservation, error) {
 	var points []*api.TimeseriesObservation
 	if rows != nil {
 		for rows.Next() {
@@ -502,7 +502,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 	return histogram, nil
 }
 
-func (f *TimeSeriesField) parseHistogram(rows *pgx.Rows, mode api.SummaryMode) (*api.Histogram, error) {
+func (f *TimeSeriesField) parseHistogram(rows pgx.Rows, mode api.SummaryMode) (*api.Histogram, error) {
 	keyColName := f.keyColName(mode)
 
 	termsAggName := api.TermsAggPrefix + keyColName

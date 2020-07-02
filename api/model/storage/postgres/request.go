@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -141,7 +141,7 @@ func (s *Storage) FetchRequestByFittedSolutionID(fittedSolutionID string) (*api.
 	return s.loadRequest(rows)
 }
 
-func (s *Storage) loadRequest(rows *pgx.Rows) (*api.Request, error) {
+func (s *Storage) loadRequest(rows pgx.Rows) (*api.Request, error) {
 	var requestID string
 	var dataset string
 	var progress string

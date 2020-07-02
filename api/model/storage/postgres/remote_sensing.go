@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -209,7 +209,7 @@ func (f *RemoteSensingField) getMinMaxAggsQuery(key string, label string, indexM
 	return queryPart
 }
 
-func (f *RemoteSensingField) parseExtrema(rows *pgx.Rows) (*api.Extrema, *api.Extrema, error) {
+func (f *RemoteSensingField) parseExtrema(rows pgx.Rows) (*api.Extrema, *api.Extrema, error) {
 	var minXValue *float64
 	var maxXValue *float64
 	var minYValue *float64
@@ -311,7 +311,7 @@ func (f *RemoteSensingField) fetchHistogramByResult(resultURI string, filterPara
 	return histogram, nil
 }
 
-func (f *RemoteSensingField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, yExtrema *api.Extrema, xNumBuckets int, yNumBuckets int) (*api.Histogram, error) {
+func (f *RemoteSensingField) parseHistogram(rows pgx.Rows, xExtrema *api.Extrema, yExtrema *api.Extrema, xNumBuckets int, yNumBuckets int) (*api.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := api.HistogramAggPrefix + f.Key
 

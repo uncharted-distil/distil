@@ -20,7 +20,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -231,7 +231,7 @@ func (f *MultiBandImageField) fetchHistogramByResult(resultURI string, filterPar
 	return histogram, nil
 }
 
-func (f *MultiBandImageField) parseHistogram(rows *pgx.Rows, mode api.SummaryMode) (*api.Histogram, error) {
+func (f *MultiBandImageField) parseHistogram(rows pgx.Rows, mode api.SummaryMode) (*api.Histogram, error) {
 	prefixedVarName := f.featureVarName(mode)
 
 	termsAggName := api.TermsAggPrefix + prefixedVarName

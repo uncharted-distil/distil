@@ -20,7 +20,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -239,7 +239,7 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 	return histogram, nil
 }
 
-func (f *CoordinateField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, yExtrema *api.Extrema, xNumBuckets int, yNumBuckets int) (*api.Histogram, error) {
+func (f *CoordinateField) parseHistogram(rows pgx.Rows, xExtrema *api.Extrema, yExtrema *api.Extrema, xNumBuckets int, yNumBuckets int) (*api.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := api.HistogramAggPrefix + f.Key
 

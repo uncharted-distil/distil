@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -34,6 +34,15 @@ const (
 	IncorrectCategory = "incorrect"
 )
 
+var (
+	pgRandomSeed = 0.2
+)
+
+// SetRandomSeed sets the random seed to use when reading a subset of data from the database.
+func SetRandomSeed(seed float64) {
+	pgRandomSeed = seed
+}
+
 func getVariableByKey(key string, variables []*model.Variable) *model.Variable {
 	for _, variable := range variables {
 		if variable.Name == key {
@@ -43,7 +52,7 @@ func getVariableByKey(key string, variables []*model.Variable) *model.Variable {
 	return nil
 }
 
-func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable, numRows int, rows *pgx.Rows) (*api.FilteredData, error) {
+func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable, numRows int, rows pgx.Rows) (*api.FilteredData, error) {
 	result := &api.FilteredData{
 		NumRows: numRows,
 		Values:  make([][]*api.FilteredDataValue, 0),
@@ -51,23 +60,6 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 
 	// Parse the columns.
 	if rows != nil {
-		fields := rows.FieldDescriptions()
-		columns := make([]api.Column, len(fields))
-		for i := 0; i < len(fields); i++ {
-			key := fields[i].Name
-
-			v := getVariableByKey(key, variables)
-			if v == nil {
-				return nil, fmt.Errorf("unable to lookup variable for %s", key)
-			}
-			columns[i] = api.Column{
-				Key:   key,
-				Label: v.DisplayName,
-				Type:  v.Type,
-			}
-		}
-		result.Columns = columns
-
 		// Parse the row data.
 		for rows.Next() {
 			columnValues, err := rows.Values()
@@ -85,6 +77,23 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 
 			result.Values = append(result.Values, weightedValues)
 		}
+
+		fields := rows.FieldDescriptions()
+		columns := make([]api.Column, len(fields))
+		for i := 0; i < len(fields); i++ {
+			key := string(fields[i].Name)
+
+			v := getVariableByKey(key, variables)
+			if v == nil {
+				return nil, fmt.Errorf("unable to lookup variable for %s", key)
+			}
+			columns[i] = api.Column{
+				Key:   key,
+				Label: v.DisplayName,
+				Type:  v.Type,
+			}
+		}
+		result.Columns = columns
 	} else {
 		result.Columns = make([]api.Column, 0)
 	}
@@ -647,7 +656,9 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	}
 
 	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
-	query := fmt.Sprintf("SELECT %s FROM %s", fields, storageName)
+	batch := &pgx.Batch{}
+	batch.Queue(fmt.Sprintf("SELECT setseed(%v);", pgRandomSeed))
+	query := fmt.Sprintf(" SELECT %s FROM %s", fields, storageName)
 
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -668,14 +679,20 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	orderBy := strings.Join(groupings, ",")
 
 	// order & limit the filtered data.
-	query = fmt.Sprintf("%s ORDER BY %s", query, orderBy)
+	query = fmt.Sprintf("SELECT * FROM (%s ORDER BY %s) data ORDER BY random()", query, orderBy)
 	if filterParams.Size > 0 {
 		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
 	}
 	query = query + ";"
 
 	// execute the postgres query
-	res, err := s.client.Query(query, params...)
+	batch.Queue(query, params...)
+	resBatch := s.client.SendBatch(batch)
+	_, err = resBatch.Exec()
+	if err != nil {
+		return nil, errors.Wrap(err, "postgres filtered data set seed query failed")
+	}
+	res, err := resBatch.Query()
 	if err != nil {
 		return nil, errors.Wrap(err, "postgres filtered data query failed")
 	}

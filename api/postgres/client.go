@@ -16,11 +16,14 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
 	"github.com/go-pg/pg"
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
+	pool "github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 )
@@ -36,10 +39,11 @@ func init() {
 
 // DatabaseDriver defines the behaviour of the querying engine.
 type DatabaseDriver interface {
-	Query(string, ...interface{}) (*pgx.Rows, error)
-	QueryRow(string, ...interface{}) *pgx.Row
-	Exec(string, ...interface{}) (pgx.CommandTag, error)
+	Query(string, ...interface{}) (pgx.Rows, error)
+	QueryRow(string, ...interface{}) pgx.Row
+	Exec(string, ...interface{}) (pgconn.CommandTag, error)
 	GetBatchClient() *pg.DB
+	SendBatch(batch *pgx.Batch) pgx.BatchResults
 }
 
 // ClientCtor repressents a client constructor to instantiate a postgres client.
@@ -52,7 +56,7 @@ type pgxLogAdapter struct {
 // IntegratedClient is a postgres client that can be used to
 // query a postgres database.
 type IntegratedClient struct {
-	pgxClient *pgx.ConnPool
+	pgxClient *pool.Pool
 	host      string
 	user      string
 	password  string
@@ -70,21 +74,26 @@ func (ic IntegratedClient) GetBatchClient() *pg.DB {
 }
 
 // Query queries the database and returns the matching rows.
-func (ic IntegratedClient) Query(sql string, params ...interface{}) (*pgx.Rows, error) {
-	return ic.pgxClient.Query(sql, params...)
+func (ic IntegratedClient) Query(sql string, params ...interface{}) (pgx.Rows, error) {
+	return ic.pgxClient.Query(context.Background(), sql, params...)
 }
 
 // QueryRow returns the first row from the query execution.
-func (ic IntegratedClient) QueryRow(sql string, params ...interface{}) *pgx.Row {
-	return ic.pgxClient.QueryRow(sql, params...)
+func (ic IntegratedClient) QueryRow(sql string, params ...interface{}) pgx.Row {
+	return ic.pgxClient.QueryRow(context.Background(), sql, params...)
 }
 
 // Exec executes the sql command.
-func (ic IntegratedClient) Exec(sql string, params ...interface{}) (pgx.CommandTag, error) {
-	return ic.pgxClient.Exec(sql, params...)
+func (ic IntegratedClient) Exec(sql string, params ...interface{}) (pgconn.CommandTag, error) {
+	return ic.pgxClient.Exec(context.Background(), sql, params...)
 }
 
-func (p pgxLogAdapter) Log(level pgx.LogLevel, msg string, data map[string]interface{}) {
+// SendBatch submits a batch.
+func (ic IntegratedClient) SendBatch(batch *pgx.Batch) pgx.BatchResults {
+	return ic.pgxClient.SendBatch(context.Background(), batch)
+}
+
+func (p pgxLogAdapter) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
 	switch level {
 	case pgx.LogLevelDebug:
 		p.Debug(msg, data)
@@ -143,22 +152,18 @@ func NewClient(host string, port int, user string, password string, database str
 		client, ok := clients[endpoint]
 		if !ok {
 			log.Infof("Creating new Postgres connection to endpoint %s", endpoint)
-			dbConfig := pgx.ConnConfig{
-				Host:     host,
-				Port:     uint16(port),
-				User:     user,
-				Password: password,
-				Database: database,
-				Logger:   logAdapter,
-				LogLevel: int(level),
+			connString := fmt.Sprintf("user=%s host=%s port=%d dbname=%s pool_max_conns=%d",
+				user, host, port, database, 64)
+			poolConfig, err := pool.ParseConfig(connString)
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to parse postgres config")
 			}
+			poolConfig.LazyConnect = true
+			poolConfig.ConnConfig.Logger = logAdapter
+			poolConfig.ConnConfig.LogLevel = level
 
-			poolConfig := pgx.ConnPoolConfig{
-				ConnConfig:     dbConfig,
-				MaxConnections: 64,
-			}
 			//TODO: Need to close the pool eventually. Not sure how to hook that in.
-			pgxClient, err := pgx.NewConnPool(poolConfig)
+			pgxClient, err := pool.ConnectConfig(context.Background(), poolConfig)
 			client = &IntegratedClient{
 				pgxClient: pgxClient,
 				host:      fmt.Sprintf("%s:%d", host, port),

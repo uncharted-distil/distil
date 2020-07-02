@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 
 	api "github.com/uncharted-distil/distil/api/model"
@@ -140,7 +140,7 @@ func (s *Storage) FetchPredictionResultByUUID(resultUUID string) (*api.SolutionR
 	return res, nil
 }
 
-func (s *Storage) loadPrediction(rows *pgx.Rows) (*api.Prediction, error) {
+func (s *Storage) loadPrediction(rows pgx.Rows) (*api.Prediction, error) {
 	var requestID string
 	var dataset string
 	var target string

@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -153,7 +153,7 @@ func (f *TextField) fetchTimeExtremaByResultURI(timeVar *model.Variable, resultU
 	return f.parseTimeExtrema(timeVar, res)
 }
 
-func (f *TextField) parseTimeExtrema(timeVar *model.Variable, rows *pgx.Rows) (*api.Extrema, error) {
+func (f *TextField) parseTimeExtrema(timeVar *model.Variable, rows pgx.Rows) (*api.Extrema, error) {
 	var minValue *int64
 	var maxValue *int64
 	if rows != nil {
@@ -207,7 +207,7 @@ func (f *TextField) getTimeseriesHistogramAggQuery(extrema *api.Extrema, interva
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
-func (f *TextField) parseTimeHistogram(rows *pgx.Rows, extrema *api.Extrema, interval int) (*api.Histogram, error) {
+func (f *TextField) parseTimeHistogram(rows pgx.Rows, extrema *api.Extrema, interval int) (*api.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := api.HistogramAggPrefix + extrema.Key
 
@@ -396,7 +396,7 @@ func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *api.F
 	return f.parseHistogram(res)
 }
 
-func (f *TextField) parseHistogram(rows *pgx.Rows) (*api.Histogram, error) {
+func (f *TextField) parseHistogram(rows pgx.Rows) (*api.Histogram, error) {
 	termsAggName := api.TermsAggPrefix + f.Key
 
 	buckets := make([]*api.Bucket, 0)
