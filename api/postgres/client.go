@@ -93,7 +93,7 @@ func (ic IntegratedClient) SendBatch(batch *pgx.Batch) pgx.BatchResults {
 	return ic.pgxClient.SendBatch(context.Background(), batch)
 }
 
-func (p pgxLogAdapter) Log(level pgx.LogLevel, msg string, data map[string]interface{}) {
+func (p pgxLogAdapter) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
 	switch level {
 	case pgx.LogLevelDebug:
 		p.Debug(msg, data)
@@ -130,20 +130,20 @@ func NewClient(host string, port int, user string, password string, database str
 
 		// Default logs to disabled - note that just setting level to 'none' is insufficient
 		// as internally pgx defaults that to Debug.
-		//var level pgx.LogLevel
-		//var err error
-		//level = pgx.LogLevelNone
-		//var logAdapter pgxLogAdapter
-		//if logLevel != "" {
-		//	level, err = pgx.LogLevelFromString(logLevel)
-		//	if err != nil {
-		//		log.Warnf("Failed to parse log level [%s] with error [%s] - Disabling postgres logging", logLevel, err)
-		//		level = pgx.LogLevelNone
-		//	}
-		//	if level != pgx.LogLevelNone {
-		//		logAdapter = pgxLogAdapter{}
-		//	}
-		//}
+		var level pgx.LogLevel
+		var err error
+		level = pgx.LogLevelNone
+		var logAdapter pgxLogAdapter
+		if logLevel != "" {
+			level, err = pgx.LogLevelFromString(logLevel)
+			if err != nil {
+				log.Warnf("Failed to parse log level [%s] with error [%s] - Disabling postgres logging", logLevel, err)
+				level = pgx.LogLevelNone
+			}
+			if level != pgx.LogLevelNone {
+				logAdapter = pgxLogAdapter{}
+			}
+		}
 
 		mu.Lock()
 		defer mu.Unlock()
@@ -159,6 +159,8 @@ func NewClient(host string, port int, user string, password string, database str
 				return nil, errors.Wrap(err, "unable to parse postgres config")
 			}
 			poolConfig.LazyConnect = true
+			poolConfig.ConnConfig.Logger = logAdapter
+			poolConfig.ConnConfig.LogLevel = level
 
 			//TODO: Need to close the pool eventually. Not sure how to hook that in.
 			pgxClient, err := pool.ConnectConfig(context.Background(), poolConfig)
