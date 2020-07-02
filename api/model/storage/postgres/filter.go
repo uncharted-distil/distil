@@ -657,7 +657,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	// construct a Postgres query that fetches documents from the dataset with the supplied variable filters applied
 	batch := &pgx.Batch{}
-	batch.Queue("SELECT setseed(%v);", pgRandomSeed)
+	batch.Queue(fmt.Sprintf("SELECT setseed(%v);", pgRandomSeed))
 	query := fmt.Sprintf(" SELECT %s FROM %s", fields, storageName)
 
 	wheres := make([]string, 0)
@@ -679,7 +679,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	orderBy := strings.Join(groupings, ",")
 
 	// order & limit the filtered data.
-	query = fmt.Sprintf("%s ORDER BY random(), %s", query, orderBy)
+	query = fmt.Sprintf("SELECT * FROM (%s ORDER BY %s) data ORDER BY random()", query, orderBy)
 	if filterParams.Size > 0 {
 		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
 	}
