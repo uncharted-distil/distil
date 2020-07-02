@@ -125,7 +125,7 @@ export default Vue.extend({
           return v.colName === this.target;
         });
 
-        if (targetVar.grouping) {
+        if (targetVar?.grouping) {
           let isGroupingID = false;
           if (targetVar.grouping.subIds.length > 0) {
             isGroupingID = !!targetVar.grouping.subIds.find(v => {

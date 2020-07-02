@@ -73,9 +73,8 @@ func (s *Storage) parseTimeseries(rows pgx.Rows) ([]*api.TimeseriesObservation, 
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
-
 			points = append(points, &api.TimeseriesObservation{
-				Value: y,
+				Value: api.NullableFloat64(y),
 				Time:  x,
 			})
 		}
@@ -97,7 +96,7 @@ func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows) ([]*api.TimeseriesObser
 			}
 
 			points = append(points, &api.TimeseriesObservation{
-				Value: value,
+				Value: api.NullableFloat64(value),
 				Time:  float64(time.Unix() * 1000),
 			})
 		}
@@ -118,12 +117,11 @@ func (s *Storage) parseTimeseriesForecast(rows pgx.Rows) ([]*api.TimeseriesObser
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
-
 			points = append(points, &api.TimeseriesObservation{
-				Value:          value,
+				Value:          api.NullableFloat64(value),
 				Time:           time,
-				ConfidenceLow:  confidenceLow,
-				ConfidenceHigh: confidenceHigh,
+				ConfidenceLow:  api.NullableFloat64(confidenceLow),
+				ConfidenceHigh: api.NullableFloat64(confidenceHigh),
 			})
 		}
 	}
@@ -146,10 +144,10 @@ func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) ([]*api.Timeser
 			}
 
 			points = append(points, &api.TimeseriesObservation{
-				Value:          value,
+				Value:          api.NullableFloat64(value),
 				Time:           float64(time.Unix() * 1000),
-				ConfidenceLow:  confidenceLow,
-				ConfidenceHigh: confidenceHigh,
+				ConfidenceLow:  api.NullableFloat64(confidenceLow),
+				ConfidenceHigh: api.NullableFloat64(confidenceHigh),
 			})
 		}
 	}
@@ -291,11 +289,13 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 
 	// Get count by category.
-	query := fmt.Sprintf(`SELECT "%s", CAST(result.value as double precision), result.confidence_low, result.confidence_high
-		FROM %s data INNER JOIN %s result ON data."%s" = result.index
-		%s`,
+	query := fmt.Sprintf(`
+		SELECT "%s", CAST(CASE WHEN result.value = '' THEN 'NaN' ELSE result.value END as double precision), result.confidence_low, result.confidence_high
+		FROM %s data INNER JOIN  %s result ON data."%s" = result.index
+		%s
+		ORDER BY %s`,
 		xColName, storageName, s.getResultTable(storageName),
-		model.D3MIndexFieldName, where)
+		model.D3MIndexFieldName, where, xColName)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
@@ -332,6 +332,10 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 		Timeseries: response,
 		IsDateTime: dateTime,
 	}, nil
+}
+
+func replaceNaNs() {
+
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.

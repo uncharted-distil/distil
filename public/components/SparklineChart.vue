@@ -84,22 +84,24 @@ export default Vue.extend({
         : max;
     },
     minY(): number {
-      const min = d3.min(this.timeseries, d => d.value);
-      return this.forecast
-        ? Math.min(
-            min,
-            d3.min(this.forecast, d => d.value)
-          )
-        : min;
+      const timeSeriesMin = d3.min(this.timeseries, d => d.value);
+      const forecastMin = this.forecast
+        ? d3.min(this.forecast, d => d.value)
+        : NaN;
+      const confidenceMin = this.forecast
+        ? d3.min(this.forecast, d => d.confidenceLow)
+        : NaN;
+      return d3.min([timeSeriesMin, forecastMin, confidenceMin], d => d);
     },
     maxY(): number {
-      const max = d3.max(this.timeseries, d => d.value);
-      return this.forecast
-        ? Math.max(
-            max,
-            d3.max(this.forecast, d => d.value)
-          )
-        : max;
+      const timeSeriesMax = d3.max(this.timeseries, d => d.value);
+      const forecastMax = this.forecast
+        ? d3.max(this.forecast, d => d.value)
+        : NaN;
+      const confidenceMax = this.forecast
+        ? d3.max(this.forecast, d => d.confidenceHigh)
+        : NaN;
+      return d3.max([timeSeriesMax, forecastMax, confidenceMax], d => d);
     },
     displayForecast(): TimeSeriesValue[] {
       // Join the last element of the truth timeseries and the first element of the forecast
@@ -192,7 +194,7 @@ export default Vue.extend({
 
       g.append("path")
         .attr("fill", "none")
-        .attr("class", "line")
+        .attr("class", "line-timeseries")
         .attr("d", line);
     },
     injectForecast() {
@@ -207,13 +209,39 @@ export default Vue.extend({
         .attr("transform", `translate(${this.margin.left}, 0)`)
         .attr("class", "line-chart");
 
-      g.datum(this.displayForecast.map(x => [x.time, x.value]));
+      g.datum(
+        this.displayForecast
+          .filter(x => !_.isNil(x.value))
+          .map(x => [x.time, x.value])
+      );
 
       g.append("path")
         .attr("fill", "none")
-        .attr("class", "line")
-        .attr("stroke", "#00c6e1")
+        .attr("class", "line-forecast")
         .attr("d", line);
+    },
+    injectConfidence(): boolean {
+      const area = d3
+        .area<[number, number, number]>()
+        .x(d => this.xScale(d[0]))
+        .y0(d => this.yScale(d[1]))
+        .y1(d => this.yScale(d[2]));
+
+      const g = this.svg
+        .append("g")
+        .attr("transform", `translate(${this.margin.left}, 0)`);
+
+      g.datum(
+        this.displayForecast
+          .filter(x => !_.isNil(x.confidenceHigh) && !_.isNil(x.confidenceLow))
+          .map(x => [x.time, x.confidenceHigh, x.confidenceLow])
+      );
+
+      g.append("path")
+        .attr("class", "line-confidence")
+        .attr("d", area);
+
+      return true;
     },
     injectTimeRangeHighligh() {
       if (!this.highlightRange || this.highlightRange.length !== 2) {
@@ -222,9 +250,8 @@ export default Vue.extend({
 
       this.svg
         .append("rect")
+        .attr("class", "area-score")
         .attr("transform", `translate(${this.margin.left}, 0)`)
-        .attr("fill", "#00ffff44")
-        .attr("stroke", "none")
         .attr("x", this.xScale(this.highlightRange[0]))
         .attr("y", 0)
         .attr(
@@ -251,10 +278,13 @@ export default Vue.extend({
 
       this.clearSVG();
       this.injectAxes();
+      if (this.forecast) {
+        this.injectTimeRangeHighligh();
+      }
       this.injectTimeseries();
       if (this.forecast) {
+        this.injectConfidence();
         this.injectForecast();
-        this.injectTimeRangeHighligh();
       }
     }
   }
@@ -273,8 +303,26 @@ export default Vue.extend({
 }
 
 .line-chart {
-  stroke: #666;
   stroke-width: 2px;
+}
+
+.line-timeseries {
+  stroke: rgb(200, 200, 200);
+}
+
+.line-forecast {
+  stroke: rgb(2, 117, 216);
+}
+
+.line-confidence {
+  fill: rgb(2, 117, 216);
+  opacity: 0.3;
+}
+
+.area-score {
+  fill: rgb(200, 200, 200);
+  opacity: 0.2;
+  stroke: none;
 }
 
 .axis {
@@ -284,5 +332,6 @@ export default Vue.extend({
 .axis-title {
   fill: #000;
   stroke-width: 1px;
+  font-size: 12px;
 }
 </style>

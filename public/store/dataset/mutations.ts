@@ -9,7 +9,8 @@ import {
   TableData,
   DatasetPendingRequest,
   Task,
-  BandCombination
+  BandCombination,
+  TimeSeriesValue
 } from "./index";
 import { updateSummaries, isDatamartProvenance } from "../../util/data";
 import {
@@ -245,7 +246,7 @@ export const mutations = {
     args: {
       dataset: string;
       id: string;
-      timeseries: { time: number; value: number }[];
+      timeseries: TimeSeriesValue[];
       isDateTime: boolean;
     }
   ) {
@@ -269,10 +270,11 @@ export const mutations = {
       args.isDateTime
     );
 
-    const minX = _.minBy(args.timeseries, d => d.time).time;
-    const maxX = _.maxBy(args.timeseries, d => d.time).time;
-    const minY = _.minBy(args.timeseries, d => d.value).value;
-    const maxY = _.maxBy(args.timeseries, d => d.value).value;
+    const validTimeseries = args.timeseries.filter(t => !_.isNil(t));
+    const minX = _.minBy(validTimeseries, d => d.time).time;
+    const maxX = _.maxBy(validTimeseries, d => d.time).time;
+    const minY = _.minBy(validTimeseries, d => d.value).value;
+    const maxY = _.maxBy(validTimeseries, d => d.value).value;
 
     if (!state.timeseriesExtrema[args.dataset]) {
       Vue.set(state.timeseriesExtrema, args.dataset, {

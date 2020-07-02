@@ -127,7 +127,6 @@ export default Vue.extend({
           // returns true, but the svg element using `v-if="isLoaded"`
           // has not yet rendered. Use this to ensure the DOM updates
           // before attempting to inject
-
           if (
             oldExtrema &&
             newExtrema.x.min === oldExtrema.x.min &&
@@ -228,11 +227,7 @@ export default Vue.extend({
     clearSVG() {
       this.svg.selectAll("*").remove();
     },
-    injectSparkline(): boolean {
-      if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
-        return false;
-      }
-
+    computeLayout() {
       let minX = this.timeseriesExtrema.x.min;
       let maxX = this.timeseriesExtrema.x.max;
       let minY = this.timeseriesExtrema.y.min;
@@ -266,6 +261,11 @@ export default Vue.extend({
         .scaleLinear()
         .domain([minY, maxY])
         .range([this.height(), 0]);
+    },
+    injectSparkline(): boolean {
+      if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
+        return false;
+      }
 
       const line = d3
         .line()
@@ -284,7 +284,7 @@ export default Vue.extend({
 
       g.append("path")
         .attr("fill", "none")
-        .attr("class", "line")
+        .attr("class", "sparkline-timeseries")
         .attr("d", line);
 
       return true;
@@ -302,8 +302,7 @@ export default Vue.extend({
       this.svg
         .append("rect")
         .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`)
-        .attr("fill", "#00ffff44")
-        .attr("stroke", "none")
+        .attr("class", "sparkline-area-score")
         .attr("x", this.xScale(this.highlightRange[0]))
         .attr("y", 0)
         .attr(
@@ -333,24 +332,29 @@ export default Vue.extend({
           `translate(${this.margin.left}, ${this.margin.top})`
         );
 
-      g.datum(this.displayForecast.map(x => [x.time, x.value]));
+      g.datum(
+        this.displayForecast
+          .filter(x => !_.isNil(x.value))
+          .map(x => [x.time, x.value])
+      );
 
       g.append("path")
-        .attr("fill", "none")
-        .attr("class", "line")
-        .attr("stroke", "#00c6e188")
+        .attr("class", "sparkline-forecast")
         .attr("d", line);
 
       return true;
     },
     formatExtremaX(extrema): string {
-      return this.isDateTime
-        ? new Date(extrema)
-            .toISOString()
-            .slice(0, 10)
-            .replace(/-/g, "/")
-            .toString()
-        : extrema.toString();
+      if (this.isDateTime) {
+        return new Date(extrema)
+          .toISOString()
+          .slice(0, 10)
+          .replace(/-/g, "/")
+          .toString();
+      } else {
+        const format = d3.format(".1~f");
+        return format(extrema.toString());
+      }
     },
     injectAxis(): boolean {
       if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
@@ -384,6 +388,10 @@ export default Vue.extend({
       const dateMinX = this.formatExtremaX(minX);
       const dateMaxX = this.formatExtremaX(maxX);
 
+      const format = d3.format(".1~f");
+      const minYFormatted = format(minY);
+      const maxYFormatted = format(maxY);
+
       this.xScale = d3
         .scaleLinear()
         .domain([minX, maxX])
@@ -415,7 +423,7 @@ export default Vue.extend({
         .attr("x", 0)
         .attr("y", 10)
         .style("text-anchor", "start")
-        .text(maxY);
+        .text(maxYFormatted);
       // Create y-min & x-min
       this.svg
         .append("text")
@@ -423,7 +431,7 @@ export default Vue.extend({
         .attr("x", 0)
         .attr("y", 40)
         .style("text-anchor", "start")
-        .text(`${minY} ${dateMinX}`);
+        .text(`${minYFormatted} ${dateMinX}`);
       // Create x-max
       this.svg
         .append("text")
@@ -450,8 +458,9 @@ export default Vue.extend({
       }
 
       this.clearSVG();
-      this.injectSparkline();
+      this.computeLayout();
       this.injectHighlightRegion();
+      this.injectSparkline();
       this.injectPrediction();
       this.injectAxis();
 
@@ -469,8 +478,7 @@ svg.line-chart-row {
 }
 
 svg.line-chart-row g {
-  stroke: #666;
-  stroke-width: 2px;
+  stroke-width: 1px;
 }
 svg .sparkline-axis-title {
   font-size: 11px;
@@ -484,5 +492,26 @@ svg .sparkline-axis-title {
   position: absolute;
   top: 0;
   pointer-events: none;
+}
+
+.sparkline-timeseries {
+  stroke: rgb(120, 120, 120);
+}
+
+.sparkline-forecast {
+  stroke: rgb(2, 117, 216);
+  fill: none;
+}
+
+.sparkline-confidence {
+  fill: rgb(2, 117, 216);
+  opacity: 0.3;
+  stroke: none;
+}
+
+.sparkline-area-score {
+  fill: rgb(200, 200, 200);
+  opacity: 0.3;
+  stroke: none;
 }
 </style>

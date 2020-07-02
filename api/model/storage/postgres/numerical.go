@@ -491,10 +491,11 @@ func (f *NumericalField) getResultMinMaxAggsQuery(resultVariable *model.Variable
 	maxAggName := api.MaxAggPrefix + resultVariable.Name
 
 	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
+	fieldTyped := fmt.Sprintf("CAST(CASE WHEN \"%s\" = '' THEN 'NaN' ELSE \"%s\" END as double precision)", resultVariable.Name, resultVariable.Name)
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", fieldTyped, minAggName, fieldTyped, maxAggName)
+
 	// add aggregations
 	return queryPart
 }
@@ -504,7 +505,7 @@ func (f *NumericalField) getResultHistogramAggQuery(extrema *api.Extrema, result
 	interval := extrema.GetBucketInterval(numBuckets)
 
 	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
+	fieldTyped := fmt.Sprintf("CAST(CASE WHEN \"%s\" = '' THEN 'NaN' ELSE \"%s\" END as double precision)", resultVariable.Name, resultVariable.Name)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)

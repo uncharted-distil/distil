@@ -1,5 +1,5 @@
 <template>
-  <div :class="displayClass" :observe-visibility="visibilityChanged">
+  <div :class="displayClass" v-observe-visibility="visibilityChanged">
     <sparkline-svg
       :timeseries-extrema="timeseriesExtrema"
       :timeseries="timeseries"
