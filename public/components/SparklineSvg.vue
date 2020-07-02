@@ -127,7 +127,6 @@ export default Vue.extend({
           // returns true, but the svg element using `v-if="isLoaded"`
           // has not yet rendered. Use this to ensure the DOM updates
           // before attempting to inject
-
           if (
             oldExtrema &&
             newExtrema.x.min === oldExtrema.x.min &&
@@ -261,7 +260,7 @@ export default Vue.extend({
       this.yScale = d3
         .scaleLinear()
         .domain([minY, maxY])
-        .range([this.height, 0]);
+        .range([this.height(), 0]);
     },
     injectSparkline(): boolean {
       if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
