@@ -270,10 +270,11 @@ export const mutations = {
       args.isDateTime
     );
 
-    const minX = _.minBy(args.timeseries, d => d[0])[0];
-    const maxX = _.maxBy(args.timeseries, d => d[0])[0];
-    const minY = _.minBy(args.timeseries, d => d[1])[1];
-    const maxY = _.maxBy(args.timeseries, d => d[1])[1];
+    const validTimeseries = args.timeseries.filter(t => !_.isNil(t));
+    const minX = _.minBy(validTimeseries, d => d.time).time;
+    const maxX = _.maxBy(validTimeseries, d => d.time).time;
+    const minY = _.minBy(validTimeseries, d => d.value).value;
+    const maxY = _.maxBy(validTimeseries, d => d.value).value;
 
     if (!state.timeseriesExtrema[args.dataset]) {
       Vue.set(state.timeseriesExtrema, args.dataset, {
