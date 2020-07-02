@@ -125,7 +125,7 @@ func (f *CategoricalField) getTopCategories(filterParams *api.FilterParams, inve
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -165,7 +165,7 @@ func (f *CategoricalField) fetchHistogram(filterParams *api.FilterParams, invert
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -192,7 +192,7 @@ func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +306,7 @@ func (f *CategoricalField) fetchPredictedSummaryData(resultURI string, datasetRe
 	targetName := f.Key
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}

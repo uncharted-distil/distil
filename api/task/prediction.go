@@ -96,6 +96,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	sourceDatasetID := meta.ID
 	datasetPath := path.Join(params.OutputPath, params.Dataset)
 	schemaPath := ""
+	datasetName := params.Dataset
 	var err error
 
 	// if the dataset was already imported, then just produce on it
@@ -108,11 +109,11 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		}
 
 		// create the dataset to be used for predictions
-		_, _, err = CreateDataset(params.Dataset, predictionDatasetCtor, params.OutputPath, params.Config)
+		datasetName, datasetPath, err = CreateDataset(params.Dataset, predictionDatasetCtor, params.OutputPath, params.Config)
 		if err != nil {
 			return nil, err
 		}
-		log.Infof("created dataset for new data")
+		log.Infof("created dataset for new data with id '%s' found at location '%s'", datasetName, datasetPath)
 
 		// read the header of the new dataset to get the field names
 		// if they dont match the original, then cant use the same pipeline
@@ -132,30 +133,31 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		log.Infof("dataset fields match original dataset fields")
 
 		// update the dataset doc to reflect original types
-		meta.ID = params.Dataset
-		meta.StorageName = model.NormalizeDatasetID(params.Dataset)
+		meta.ID = datasetName
+		meta.Name = datasetName
+		meta.StorageName = model.NormalizeDatasetID(datasetName)
 		meta.DatasetFolder = path.Base(datasetPath)
 		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
 		err = metadata.WriteSchema(meta, schemaPath, true)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update dataset doc")
 		}
-		log.Infof("wrote out schema doc for new dataset")
+		log.Infof("wrote out schema doc for new dataset with id '%s' at location '%s'", meta.ID, schemaPath)
 	}
 
 	if !params.DatasetIngested {
 		// ingest the dataset but without running simon, duke, etc.
-		_, err = Ingest(schemaPath, schemaPath, params.MetaStorage, params.Dataset,
+		datasetName, err = Ingest(schemaPath, schemaPath, params.MetaStorage, datasetName,
 			metadata.Augmented, nil, api.DatasetTypeInference, params.IngestConfig, false, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to ingest ranked data")
 		}
-		log.Infof("finished ingesting the dataset")
+		log.Infof("finished ingesting dataset '%s'", datasetName)
 	}
 
 	// Apply the var types associated with the fitted solution to the inference data - the model types and input types should
 	// should match.
-	if err := updateVariableTypes(params.SolutionStorage, params.MetaStorage, params.DataStorage, params.FittedSolutionID, params.Dataset); err != nil {
+	if err := updateVariableTypes(params.SolutionStorage, params.MetaStorage, params.DataStorage, params.FittedSolutionID, datasetName); err != nil {
 		return nil, err
 	}
 
@@ -170,14 +172,14 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		}
 
 		// need to run the grouping compose to create the needed ID column
-		log.Infof("creating composed variables on inferrence dataset '%s'", params.Dataset)
-		err = CreateComposedVariable(params.MetaStorage, params.DataStorage, params.Dataset,
+		log.Infof("creating composed variables on inferrence dataset '%s'", datasetName)
+		err = CreateComposedVariable(params.MetaStorage, params.DataStorage, datasetName,
 			tsg.IDCol, tsg.IDCol, tsg.SubIDs)
 		if err != nil {
 			return nil, err
 		}
 
-		err = params.MetaStorage.AddGroupedVariable(params.Dataset, params.Target.Name, params.Target.DisplayName,
+		err = params.MetaStorage.AddGroupedVariable(datasetName, params.Target.Name, params.Target.DisplayName,
 			params.Target.Type, params.Target.DistilRole, tsg)
 		if err != nil {
 			return nil, err
@@ -212,6 +214,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	}
 
 	// submit the new dataset for predictions
+	log.Infof("generating predictions using data found at '%s'", datasetPath)
 	predictionResult, err := comp.GeneratePredictions(datasetPath, solution.ExplainedSolutionID, params.FittedSolutionID, client)
 	if err != nil {
 		return nil, err
@@ -223,7 +226,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		if err != nil {
 			return nil, err
 		}
-		err = params.DataStorage.PersistSolutionFeatureWeight(params.Dataset, model.NormalizeDatasetID(params.Dataset), featureWeights.ResultURI, featureWeights.Values)
+		err = params.DataStorage.PersistSolutionFeatureWeight(datasetName, model.NormalizeDatasetID(datasetName), featureWeights.ResultURI, featureWeights.Values)
 		if err != nil {
 			return nil, err
 		}
@@ -238,7 +241,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	// Persist the prediction request metadata
 	createdTime := time.Now()
-	err = params.SolutionStorage.PersistPrediction(predictionResult.ProduceRequestID, params.Dataset, params.Target.Name, params.FittedSolutionID, "PREDICT_COMPLETED", createdTime)
+	err = params.SolutionStorage.PersistPrediction(predictionResult.ProduceRequestID, datasetName, params.Target.Name, params.FittedSolutionID, "PREDICT_COMPLETED", createdTime)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +250,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, err
 	}
 
-	err = params.DataStorage.PersistResult(params.Dataset, model.NormalizeDatasetID(params.Dataset), predictionResult.ResultURI, target.Name, nil)
+	err = params.DataStorage.PersistResult(datasetName, model.NormalizeDatasetID(datasetName), predictionResult.ResultURI, target.Name, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -475,18 +478,25 @@ func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.Me
 func getComponentVariables(variable *model.Variable) []string {
 	componentVars := []string{}
 	// only implemented for geo coordinate groups
-	if variable.IsGrouping() && model.IsGeoCoordinate(variable.Grouping.GetType()) {
-		gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
-		// Include X and Y col
-		componentVars = append(componentVars, gcg.XCol, gcg.YCol)
+	if variable.IsGrouping() {
+		if model.IsGeoCoordinate(variable.Grouping.GetType()) {
+			gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
+			// Include X and Y col
+			componentVars = append(componentVars, gcg.XCol, gcg.YCol)
 
-		// include the grouping sub-ids if the ID is created from mutliple columns
-		componentVars = append(componentVars, variable.Grouping.GetSubIDs()...)
-		if variable.Grouping.GetIDCol() != "" {
-			// include the grouping ID if present and there were no sub IDs
-			componentVars = append(componentVars, variable.Grouping.GetIDCol())
+			// include the grouping sub-ids if the ID is created from mutliple columns
+			componentVars = append(componentVars, variable.Grouping.GetSubIDs()...)
+			if variable.Grouping.GetIDCol() != "" {
+				// include the grouping ID if present and there were no sub IDs
+				componentVars = append(componentVars, variable.Grouping.GetIDCol())
+			}
+		} else if model.IsRemoteSensing(variable.Grouping.GetType()) {
+			rsg := variable.Grouping.(*model.RemoteSensingGrouping)
+			componentVars = append(componentVars, rsg.BandCol, rsg.CoordinateCol, rsg.IDCol, rsg.ImageCol)
 		}
-		return componentVars
+	} else {
+		componentVars = append(componentVars, variable.Name)
 	}
-	return append(componentVars, variable.Name)
+
+	return componentVars
 }

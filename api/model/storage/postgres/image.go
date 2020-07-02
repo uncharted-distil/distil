@@ -139,7 +139,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool,
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
 
 	prefixedVarName := f.featureVarName(mode)
 
@@ -183,7 +183,7 @@ func (f *ImageField) fetchHistogram(filterParams *api.FilterParams, invert bool,
 func (f *ImageField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ func (f *ImageField) fetchPredictedSummaryData(resultURI string, datasetResult s
 	targetName := f.featureVarName(mode)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}

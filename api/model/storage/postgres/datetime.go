@@ -125,7 +125,7 @@ func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, invert bo
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
 
 	// need the extrema to calculate the histogram interval
 	extrema, err := f.fetchExtrema()
@@ -162,7 +162,7 @@ func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *a
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +433,7 @@ func (f *DateTimeField) fetchPredictedSummaryData(resultURI string, datasetResul
 	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, resultVariable, numBuckets)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
 		return nil, err
 	}

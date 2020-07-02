@@ -36,7 +36,7 @@
         ></results-geo-plot>
         <image-mosaic
           v-if="viewType === IMAGE_VIEW"
-          :included-active="includedActive"
+          included-active
           :instance-name="instanceName"
           :data-fields="dataFields"
           :data-items="dataItems"
@@ -93,7 +93,6 @@ export default Vue.extend({
 
   data() {
     return {
-      includedActive: true,
       TABLE_VIEW: TABLE_VIEW,
       IMAGE_VIEW: IMAGE_VIEW,
       GRAPH_VIEW: GRAPH_VIEW,

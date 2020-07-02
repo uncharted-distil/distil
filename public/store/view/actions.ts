@@ -410,7 +410,8 @@ export const actions = {
     const trainingVariables =
       context.getters.getActiveSolutionTrainingVariables;
     const highlight = context.getters.getDecodedHighlight;
-    const varModes = context.getters.getDecodedVarModes;
+    const varModes: Map<string, SummaryMode> =
+      context.getters.getDecodedVarModes;
 
     resultActions.fetchResultTableData(store, {
       dataset: dataset,
@@ -462,9 +463,11 @@ export const actions = {
     } else if (task.includes(TaskTypes.CLASSIFICATION)) {
       resultActions.fetchCorrectnessSummaries(store, {
         dataset: dataset,
-        target: target,
         requestIds: requestIds,
-        highlight: highlight
+        highlight: highlight,
+        varMode: varModes.has(target)
+          ? varModes.get(target)
+          : SummaryMode.Default
       });
     } else {
       console.error(`unhandled task type ${task}`);

@@ -832,7 +832,7 @@ export default Vue.extend({
       updateHighlight(this.$router, {
         context: this.instanceName,
         dataset: this.dataset,
-        key: LON_LAT_KEY,
+        key: this.summary.key,
         value: value
       });
     },

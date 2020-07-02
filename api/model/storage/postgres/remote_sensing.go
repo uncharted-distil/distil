@@ -101,7 +101,7 @@ func (f *RemoteSensingField) fetchHistogram(filterParams *api.FilterParams, inve
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(wheres, params, "", filterParams, invert)
+	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -247,9 +247,68 @@ func (f *RemoteSensingField) parseExtrema(rows *pgx.Rows) (*api.Extrema, *api.Ex
 }
 
 func (f *RemoteSensingField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error) {
-	//TODO: FIXME!
+	// get filter where / params
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	params = append(params, resultURI)
+
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
+	}
+
+	// get the extrema for each axis
+	xExtrema, yExtrema, err := f.fetchExtrema()
+	if err != nil {
+		return nil, err
+	}
+
+	xNumBuckets, yNumBuckets := getEqualBivariateBuckets(numBuckets, xExtrema, yExtrema)
+
+	// generate a histogram query for each
+	xMinHistogramName, xMinBucketQuery, intervalX, minX := f.getHistogramAggQuery(xExtrema, xNumBuckets, 1)
+	_, xMaxBucketQuery, _, _ := f.getHistogramAggQuery(xExtrema, xNumBuckets, 5)
+	yMinHistogramName, yMinBucketQuery, intervalY, minY := f.getHistogramAggQuery(yExtrema, yNumBuckets, 2)
+	_, yMaxBucketQuery, _, _ := f.getHistogramAggQuery(yExtrema, yNumBuckets, 6)
+
+	// Get count by x & y
+	query := fmt.Sprintf(`
+        SELECT
+          xbuckets, CAST(xbuckets * %g + %g AS double precision) AS %s,
+          ybuckets, CAST(ybuckets * %g + %g AS double precision) AS %s, COUNT(%s) FROM
+        (
+          SELECT %s,
+          %s AS minx, %s AS maxx, %s AS miny, %s AS maxy
+          FROM %s data INNER JOIN %s result ON data."%s" = result.index
+					WHERE result.result_id = $%d %s
+        ) AS points
+        INNER JOIN generate_series(0, %d) AS xbuckets ON xbuckets >= minx AND xbuckets <= maxx
+        INNER JOIN generate_series(0, %d) AS ybuckets ON ybuckets >= miny AND ybuckets <= maxy
+        GROUP BY xbuckets, ybuckets
+        ORDER BY xbuckets, ybuckets;`,
+		intervalX, minX, xMinHistogramName, intervalY, minY, yMinHistogramName,
+		f.Count, f.Count, xMinBucketQuery, xMaxBucketQuery, yMinBucketQuery, yMaxBucketQuery,
+		f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName,
+		len(params), where, xNumBuckets, yNumBuckets)
+
+	// execute the postgres query
+	res, err := f.Storage.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	histogram, err := f.parseHistogram(res, xExtrema, yExtrema, xNumBuckets, yNumBuckets)
+	if err != nil {
+		return nil, err
+	}
+
+	return histogram, nil
 }
 
 func (f *RemoteSensingField) parseHistogram(rows *pgx.Rows, xExtrema *api.Extrema, yExtrema *api.Extrema, xNumBuckets int, yNumBuckets int) (*api.Histogram, error) {
