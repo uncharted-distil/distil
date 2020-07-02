@@ -20,11 +20,13 @@ import {
   DATE_TIME_LOWER_TYPE
 } from "../util/types";
 import { getTimeseriesSummaryTopCategories } from "../util/data";
+import { getSelectedRows } from "../util/row";
 import {
   VariableSummary,
   CATEGORICAL_SUMMARY,
   NUMERICAL_SUMMARY,
-  TimeSeries
+  TimeSeries,
+  RowSelection
 } from "../store/dataset/index";
 import store from "../store/store";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -485,4 +487,123 @@ export function getTimeseriesFacetValue(
       _.maxBy(summary.baseline.buckets, b => _.toNumber(b.key)).key
     )
   };
+}
+
+export function hasSummary(summary: VariableSummary) {
+  return !!summary;
+}
+
+export function hasBaseline(summary: VariableSummary) {
+  return (
+    hasSummary(summary) &&
+    !!summary.baseline &&
+    !!summary.baseline.buckets &&
+    summary.baseline.buckets.length > 0
+  );
+}
+
+export function hasFiltered(summary: VariableSummary) {
+  return (
+    hasSummary(summary) &&
+    !!summary.filtered &&
+    !!summary.filtered.buckets &&
+    summary.filtered.buckets.length > 0
+  );
+}
+
+export function getSubSelectionValues(
+  summary: VariableSummary,
+  rowSelection: RowSelection,
+  max: number
+): number[][] {
+  const hasFilterBuckets = hasFiltered(summary);
+  if (!hasFilterBuckets && !rowSelection) {
+    return summary.baseline?.buckets?.map(b => [null, b.count / max]);
+  }
+  const rowLabels = getRowSelectionLabels(rowSelection, summary);
+  let subSelectionValues = null;
+
+  if (hasFilterBuckets) {
+    const filterKeys = summary.filtered.buckets.reduce((acc, b) => {
+      acc[b.key] = b.count;
+      return acc;
+    }, {});
+    subSelectionValues = summary.baseline.buckets.map(b => {
+      const bucketCount = filterKeys[b.key] ? filterKeys[b.key] : 0;
+      return rowLabels.indexOf(b.key) > -1
+        ? [bucketCount / max, null]
+        : [null, bucketCount / max];
+    });
+  } else {
+    subSelectionValues = summary.baseline.buckets.map(b => [
+      rowLabels.indexOf(b.key) > -1 ? b.count / max : null,
+      null
+    ]);
+  }
+  return subSelectionValues;
+}
+
+export function getRowSelectionLabels(
+  rowSelection: RowSelection,
+  summary: VariableSummary
+): string[] {
+  const selectedRows = getSelectedRows(rowSelection);
+  if (selectedRows.length === 0) return [];
+  let rowKeys = [];
+  let rowLabels = [];
+
+  selectedRows.forEach(row =>
+    row.cols.forEach(col => {
+      if (col.key === summary.label) rowKeys.push(col.value.value);
+    })
+  );
+
+  if (summary.type === NUMERICAL_SUMMARY) {
+    const bucketFloors = summary.baseline.buckets.map(b => _.toNumber(b.key));
+    rowKeys = rowKeys.map(rk => _.toNumber(rk));
+    rowLabels = rowKeys.map(rk => {
+      return `${bucketFloors.filter(bf => rk > bf).pop()}`;
+    });
+  } else {
+    rowLabels = summary.baseline.buckets.reduce((acc, b) => {
+      if (rowKeys.indexOf(b.key) > -1) {
+        acc.push(b.key);
+      }
+      return acc;
+    }, []);
+  }
+  return rowLabels;
+}
+
+export function getFacetByType(type: string): string {
+  switch (type) {
+    case CATEGORICAL_SUMMARY:
+      return "facet-categorical";
+    case NUMERICAL_SUMMARY:
+      return "facet-numerical";
+    default:
+      return null;
+  }
+}
+
+export function viewMoreData(
+  moreNumToDisplay: number,
+  facetMoreCount: number,
+  baseNumToDisplay: number,
+  facetValueCount: number
+): number {
+  return facetMoreCount >= baseNumToDisplay
+    ? moreNumToDisplay + baseNumToDisplay
+    : moreNumToDisplay + (facetValueCount % baseNumToDisplay);
+}
+
+export function viewLessData(
+  moreNumToDisplay: number,
+  facetMoreCount: number,
+  baseNumToDisplay: number,
+  facetValueCount: number
+): number {
+  return facetMoreCount === 0 && facetValueCount % baseNumToDisplay !== 0
+    ? moreNumToDisplay - (facetValueCount % baseNumToDisplay)
+    : moreNumToDisplay - baseNumToDisplay;
 }

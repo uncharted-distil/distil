@@ -90,7 +90,7 @@ import Vue from "vue";
 import vueSlider from "vue-slider-component";
 import JoinDatasetsForm from "../components/JoinDatasetsForm";
 import JoinDataSlot from "../components/JoinDataSlot";
-import VariableFacets from "../components/VariableFacets";
+import VariableFacets from "../components/facets/VariableFacets.vue";
 import TypeChangeMenu from "../components/TypeChangeMenu";
 import { overlayRouteEntry } from "../util/routes";
 import { Dictionary } from "../util/dict";

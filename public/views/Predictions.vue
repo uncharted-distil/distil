@@ -38,7 +38,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import VariableFacets from "../components/VariableFacets";
+import VariableFacets from "../components/facets/VariableFacets.vue";
 import PredictionsDataSlot from "../components/PredictionsDataSlot";
 import PredictionSummaries from "../components/PredictionSummaries";
 import StatusPanel from "../components/StatusPanel";

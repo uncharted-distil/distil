@@ -27,7 +27,16 @@
             v-for="summary in paginatedSummaries"
             :key="summary.key"
           >
-            <template v-if="summary.varType === 'timeseries'">
+            <template v-if="summary.pending">
+              <facet-loading :summary="summary"> </facet-loading>
+            </template>
+            <template v-else-if="summary.err">
+              <facet-error
+                :summary="summary"
+                :enabled-type-changes="enabledTypeChanges"
+              ></facet-error>
+            </template>
+            <template v-else-if="summary.varType === 'timeseries'">
               <facet-timeseries
                 :summary="summary"
                 :highlight="highlight"
@@ -60,8 +69,58 @@
               >
               </geocoordinate-facet>
             </template>
-            <template v-else>
-              <facet-entry
+            <template
+              v-else-if="
+                summary.varType === 'image' ||
+                  summary.varType === 'multiband_image'
+              "
+            >
+              <facet-image
+                :summary="summary"
+                :highlight="highlight"
+                :row-selection="rowSelection"
+                :ranking="ranking[summary.key]"
+                :html="html"
+                :enabled-type-changes="enabledTypeChanges"
+                :enable-highlighting="enableHighlighting"
+                :ignore-highlights="ignoreHighlights"
+                :instanceName="instanceName"
+                @facet-click="onFacetClick"
+              >
+              </facet-image>
+            </template>
+            <template v-else-if="summary.varType === 'dateTime'">
+              <facet-date-time
+                :summary="summary"
+                :highlight="highlight"
+                :row-selection="rowSelection"
+                :ranking="ranking[summary.key]"
+                :html="html"
+                :enabled-type-changes="enabledTypeChanges"
+                :enable-highlighting="enableHighlighting"
+                :ignore-highlights="ignoreHighlights"
+                :instanceName="instanceName"
+                @facet-click="onFacetClick"
+              >
+              </facet-date-time>
+            </template>
+            <template v-else-if="summary.type === 'categorical'">
+              <facet-categorical
+                :summary="summary"
+                :highlight="highlight"
+                :row-selection="rowSelection"
+                :ranking="ranking[summary.key]"
+                :html="html"
+                :enabled-type-changes="enabledTypeChanges"
+                :enable-highlighting="enableHighlighting"
+                :ignore-highlights="ignoreHighlights"
+                :instanceName="instanceName"
+                @facet-click="onFacetClick"
+              >
+              </facet-categorical>
+            </template>
+            <template v-else-if="summary.type === 'numerical'">
+              <facet-numerical
                 :summary="summary"
                 :highlight="highlight"
                 :row-selection="rowSelection"
@@ -76,7 +135,7 @@
                 @range-change="onRangeChange"
                 @facet-click="onFacetClick"
               >
-              </facet-entry>
+              </facet-numerical>
             </template>
           </div>
         </div>
@@ -102,48 +161,58 @@
 
 <script lang="ts">
 import _ from "lodash";
-import FacetEntry from "../components/FacetEntry";
-import FacetTimeseries from "../components/FacetTimeseries";
-import GeocoordinateFacet from "../components/GeocoordinateFacet";
-import { overlayRouteEntry, getRouteFacetPage } from "../util/routes";
-import { Dictionary } from "../util/dict";
+import FacetImage from "./FacetImage.vue";
+import FacetDateTime from "./FacetDateTime.vue";
+import FacetTimeseries from "./FacetTimeseries.vue";
+import FacetCategorical from "./FacetCategorical.vue";
+import FacetNumerical from "./FacetNumerical.vue";
+import FacetLoading from "./FacetLoading.vue";
+import FacetError from "./FacetError.vue";
+import GeocoordinateFacet from "./GeocoordinateFacet.vue";
+import { overlayRouteEntry, getRouteFacetPage } from "../../util/routes";
+import { Dictionary } from "../../util/dict";
 import {
   sortSummariesByImportance,
   filterVariablesByPage,
   getVariableRanking,
   getVariableImportance
-} from "../util/data";
+} from "../../util/data";
 import {
   Highlight,
   RowSelection,
   Variable,
   VariableSummary
-} from "../store/dataset/index";
+} from "../../store/dataset";
 import {
   getters as datasetGetters,
   actions as datasetActions
-} from "../store/dataset/module";
-import { getters as routeGetters } from "../store/route/module";
-import { ROUTE_PAGE_SUFFIX } from "../store/route/index";
-import { Group } from "../util/facets";
+} from "../../store/dataset/module";
+import { getters as routeGetters } from "../../store/route/module";
+import { ROUTE_PAGE_SUFFIX } from "../../store/route/index";
+import { Group } from "../../util/facets";
 import {
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
   isLocationType,
   isGeoLocatedType
-} from "../util/types";
-import { actions as appActions } from "../store/app/module";
-import { Feature, Activity, SubActivity } from "../util/userEvents";
-import { updateHighlight, clearHighlight } from "../util/highlights";
+} from "../../util/types";
+import { actions as appActions } from "../../store/app/module";
+import { Feature, Activity, SubActivity } from "../../util/userEvents";
+import { updateHighlight, clearHighlight } from "../../util/highlights";
 import Vue from "vue";
 
 export default Vue.extend({
   name: "variable-facets",
 
   components: {
-    FacetEntry,
+    FacetImage,
+    FacetDateTime,
     FacetTimeseries,
-    GeocoordinateFacet
+    GeocoordinateFacet,
+    FacetCategorical,
+    FacetNumerical,
+    FacetLoading,
+    FacetError
   },
 
   props: {
@@ -355,6 +424,11 @@ button {
   cursor: pointer;
 }
 
+.facet-terms-container {
+  max-height: 200px !important;
+  overflow-y: auto;
+}
+
 .page-link {
   color: #868e96;
 }
@@ -468,5 +542,14 @@ button {
 .geocoordinate {
   max-width: 500px;
   height: 300px;
+}
+
+.variable-facets-container .facet-header-container {
+  overflow-y: scroll !important;
+}
+
+.variable-facets-container .facet-header-container .dropdown-menu {
+  max-height: 200px;
+  overflow-y: auto;
 }
 </style>

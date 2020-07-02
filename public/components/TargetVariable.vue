@@ -14,7 +14,7 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import VariableFacets from "../components/VariableFacets";
+import VariableFacets from "./facets/VariableFacets.vue";
 import { getters as routeGetters } from "../store/route/module";
 import {
   getNumericalFacetValue,

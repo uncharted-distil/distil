@@ -18,6 +18,25 @@
     esutils "^2.0.2"
     js-tokens "^4.0.0"
 
+"@fortawesome/fontawesome-common-types@^0.2.28":
+  version "0.2.28"
+  resolved "https://registry.npmjs.org/@fortawesome/fontawesome-common-types/-/fontawesome-common-types-0.2.28.tgz#1091bdfe63b3f139441e9cba27aa022bff97d8b2"
+  integrity sha512-gtis2/5yLdfI6n0ia0jH7NJs5i/Z/8M/ZbQL6jXQhCthEOe5Cr5NcQPhgTvFxNOtURE03/ZqUcEskdn2M+QaBg==
+
+"@fortawesome/free-regular-svg-icons@^5.10.2":
+  version "5.13.0"
+  resolved "https://registry.npmjs.org/@fortawesome/free-regular-svg-icons/-/free-regular-svg-icons-5.13.0.tgz#925a13d8bdda0678f71551828cac80ab47b8150c"
+  integrity sha512-70FAyiS5j+ANYD4dh9NGowTorNDnyvQHHpCM7FpnF7GxtDjBUCKdrFqCPzesEIpNDFNd+La3vex+jDk4nnUfpA==
+  dependencies:
+    "@fortawesome/fontawesome-common-types" "^0.2.28"
+
+"@fortawesome/free-solid-svg-icons@^5.10.2":
+  version "5.13.0"
+  resolved "https://registry.npmjs.org/@fortawesome/free-solid-svg-icons/-/free-solid-svg-icons-5.13.0.tgz#44d9118668ad96b4fd5c9434a43efc5903525739"
+  integrity sha512-IHUgDJdomv6YtG4p3zl1B5wWf9ffinHIvebqQOmV3U+3SLw4fC+LUCCgwfETkbTtjy5/Qws2VoVf6z/ETQpFpg==
+  dependencies:
+    "@fortawesome/fontawesome-common-types" "^0.2.28"
+
 "@nuxt/opencollective@^0.3.0":
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/@nuxt/opencollective/-/opencollective-0.3.0.tgz#11d8944dcf2d526e31660bb69570be03f8fb72b7"
@@ -351,10 +370,32 @@
   resolved "https://registry.yarnpkg.com/@types/store/-/store-2.0.2.tgz#6263d4f1aab225032ea55b17d94f3b725a21c943"
   integrity sha512-ZPHnXkzmGMfk+pHqAGzTSpA9CbsHmJLgkvOl5w52LZ0XTxB1ZIHWZzQ7lEtjTNWScBbsQekg8TjApMXkMe4nkw==
 
-"@uncharted.software/stories-facets@^2.12.17":
-  version "2.12.17"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/stories-facets/-/stories-facets-2.12.17.tgz#5abb41d57b653f354780a1ffb91d03b6a3d7f0a8"
-  integrity sha512-hMX6XRum11pQtspw1Oar+nCyk0fdQyj73/dGt1zNHL313c61UAKT/gH3iOaFs+6ukKtHiHOAFy+qTiTFDenwpg==
+"@uncharted.software/css-options@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/css-options/-/css-options-3.0.1.tgz#03060adbb9e58d8cac3c8a020a9d81867be7d1b4"
+  integrity sha512-YmcGqD5NdSNJgp1nqJ4g9zXgojXvi4utxbP21u8rzdfkhD29kWNosm3FOTpvEYrjFROrGHWwKbMwIs5+zgqa1g==
+
+"@uncharted.software/facets-core@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-core/-/facets-core-3.0.1.tgz#03288c65f228f0402b3ccb9b28004466ca266f65"
+  integrity sha512-Sm3KQlwV7PSSJh8bPZuv+sgnIaqTHFjfzitPXVNYHDevKM3xJigvxAwfp/DXEJGnatIJkX0XsJO4LEMq1OFbag==
+  dependencies:
+    "@fortawesome/free-regular-svg-icons" "^5.10.2"
+    "@fortawesome/free-solid-svg-icons" "^5.10.2"
+    "@uncharted.software/css-options" "^3.0.1"
+    lit-element "^2.2.1"
+    lit-html "^1.1.2"
+
+"@uncharted.software/facets-plugins@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-plugins/-/facets-plugins-3.0.1.tgz#1f1878f14cb9664dd72f9e0e8c244614f1e6f764"
+  integrity sha512-5R9xAqqAkxKhbIhY8r+Wxm4vGHVCEGIhj0uO2g5d+FoUT0sZBu8aDWoZ5bK/CdABo4ocLrigghs7T6EOj0VmyA==
+  dependencies:
+    "@fortawesome/free-regular-svg-icons" "^5.10.2"
+    "@fortawesome/free-solid-svg-icons" "^5.10.2"
+    "@uncharted.software/facets-core" "^3.0.1"
+    lit-element "^2.2.1"
+    lit-html "^1.1.2"
 
 "@vue/component-compiler-utils@^3.1.0":
   version "3.1.1"
@@ -3045,6 +3086,18 @@ lines-and-columns@^1.1.6:
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.1.6.tgz#1c00c743b433cd0a4e80758f7b64a57440d9ff00"
   integrity sha1-HADHQ7QzzQpOgHWPe2SldEDZ/wA=
+
+lit-element@^2.2.1:
+  version "2.3.1"
+  resolved "https://registry.npmjs.org/lit-element/-/lit-element-2.3.1.tgz#73343b978fa1e73d60526c6bb6ad60f53a16c343"
+  integrity sha512-tOcUAmeO3BzwiQ7FGWdsshNvC0HVHcTFYw/TLIImmKwXYoV0E7zCBASa8IJ7DiP4cen/Yoj454gS0qqTnIGsFA==
+  dependencies:
+    lit-html "^1.1.1"
+
+lit-html@^1.1.1, lit-html@^1.1.2:
+  version "1.2.1"
+  resolved "https://registry.npmjs.org/lit-html/-/lit-html-1.2.1.tgz#1fb933dc1e2ddc095f60b8086277d4fcd9d62cc8"
+  integrity sha512-GSJHHXMGLZDzTRq59IUfL9FCdAlGfqNp/dEa7k7aBaaWD+JKaCjsAk9KYm2V12ItonVaYx2dprN66Zdm1AuBTQ==
 
 loader-runner@^2.4.0:
   version "2.4.0"

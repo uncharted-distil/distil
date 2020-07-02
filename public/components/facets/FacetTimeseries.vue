@@ -1,6 +1,6 @@
 <template>
   <div class="facet-timeseries">
-    <facet-entry
+    <facet-sparklines
       :summary="summary"
       :highlight="highlight"
       :row-selection="rowSelection"
@@ -12,14 +12,16 @@
       :instanceName="instanceName"
       :html="customHtml"
       :expandCollapse="expandCollapse"
+      :grouping="grouping"
       @html-appended="onHtmlAppend"
       @numerical-click="onNumericalClick"
       @categorical-click="onCategoricalClick"
       @facet-click="onFacetClick"
       @range-change="onRangeChange"
     >
-    </facet-entry>
-    <facet-entry
+    </facet-sparklines>
+    <component
+      :is="facetType"
       v-if="!!timelineSummary && expand"
       :summary="timelineSummary"
       :highlight="highlight"
@@ -35,15 +37,17 @@
       @categorical-click="onHistogramCategoricalClick"
       @range-change="onHistogramRangeChange"
     >
-    </facet-entry>
+    </component>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import FacetEntry from "../components/FacetEntry";
-import { getters as datasetGetters } from "../store/dataset/module";
-import { getters as routeGetters } from "../store/route/module";
+import FacetDateTime from "./FacetDateTime.vue";
+import FacetNumerical from "./FacetNumerical.vue";
+import FacetSparklines from "./FacetSparklines.vue";
+import { getters as datasetGetters } from "../../store/dataset/module";
+import { getters as routeGetters } from "../../store/route/module";
 import {
   Dataset,
   Variable,
@@ -53,18 +57,20 @@ import {
   Row,
   NUMERICAL_SUMMARY,
   TimeseriesGrouping
-} from "../store/dataset/index";
+} from "../../store/dataset";
 import {
   INTEGER_TYPE,
   EXPAND_ACTION_TYPE,
   COLLAPSE_ACTION_TYPE
-} from "../util/types";
+} from "../../util/types";
 
 export default Vue.extend({
   name: "facet-timeseries",
 
   components: {
-    FacetEntry
+    FacetSparklines,
+    FacetDateTime,
+    FacetNumerical
   },
 
   props: {
@@ -99,6 +105,13 @@ export default Vue.extend({
       return this.variables.find(v => v.colName === this.summary.key);
     },
 
+    grouping(): TimeseriesGrouping {
+      if (!this.variable.grouping) {
+        return null;
+      }
+      return this.variable.grouping as TimeseriesGrouping;
+    },
+
     timelineSummary(): VariableSummary {
       if (this.summary.pending) {
         return null;
@@ -107,23 +120,13 @@ export default Vue.extend({
       const summaryVar = this.variables.find(
         v => v.colName === this.summary.key
       );
-      if (!summaryVar) {
+
+      if (!summaryVar || !this.grouping || !this.variable) {
         return null;
       }
-
-      if (!this.variable.grouping) {
-        return null;
-      }
-      const grouping = this.variable.grouping as TimeseriesGrouping;
-      const timeVarName = grouping.xCol;
-
-      if (this.summary.pending || !this.variable) {
-        return null;
-      }
-
       return {
-        label: timeVarName,
-        key: timeVarName,
+        label: this.grouping.xCol,
+        key: this.grouping.xCol,
         dataset: this.summary.dataset,
         description: this.summary.description,
         type: NUMERICAL_SUMMARY,
@@ -131,6 +134,13 @@ export default Vue.extend({
         baseline: this.summary.timelineBaseline,
         filtered: this.summary.timeline
       };
+    },
+    facetType(): string {
+      if (this.timelineSummary.varType === "dateTime") {
+        return "facet-date-time";
+      } else {
+        return "facet-numerical";
+      }
     }
   },
 

@@ -76,14 +76,6 @@ export default Vue.extend({
     $svg(): any {
       return this.$refs.svg as any;
     },
-    width(): number {
-      const dims = this.$svg.getBoundingClientRect();
-      return dims.width - this.margin.left - this.margin.right;
-    },
-    height(): number {
-      const dims = this.$svg.getBoundingClientRect();
-      return dims.height - this.margin.top - this.margin.bottom;
-    },
     min(): number {
       return this.timeseries ? d3.min(this.timeseries, d => d.value) : 0;
     },
@@ -208,6 +200,17 @@ export default Vue.extend({
   },
 
   methods: {
+    svgBounding(): any {
+      return this.$svg.getBoundingClientRect();
+    },
+    width(): number {
+      const dims = this.svgBounding();
+      return dims.width - this.margin.left - this.margin.right;
+    },
+    height(): number {
+      const dims = this.svgBounding();
+      return dims.height - this.margin.top - this.margin.bottom;
+    },
     visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRendered) {
@@ -257,12 +260,12 @@ export default Vue.extend({
       this.xScale = d3
         .scaleLinear()
         .domain([minX, maxX])
-        .range([0, this.width]);
+        .range([0, this.width()]);
 
       this.yScale = d3
         .scaleLinear()
         .domain([minY, maxY])
-        .range([this.height, 0]);
+        .range([this.height(), 0]);
 
       const line = d3
         .line()
@@ -308,7 +311,7 @@ export default Vue.extend({
           this.xScale(this.highlightRange[1]) -
             this.xScale(this.highlightRange[0])
         )
-        .attr("height", this.height);
+        .attr("height", this.height());
 
       return true;
     },
@@ -384,22 +387,22 @@ export default Vue.extend({
       this.xScale = d3
         .scaleLinear()
         .domain([minX, maxX])
-        .range([0, this.width]);
+        .range([0, this.width()]);
 
       this.yScale = d3
         .scaleLinear()
         .domain([minY, maxY])
-        .range([this.height, 0]);
+        .range([this.height(), 0]);
 
       this.xScale = d3
         .scaleLinear()
         .domain([minX, maxX])
-        .range([0, this.width]);
+        .range([0, this.width()]);
 
       this.yScale = d3
         .scaleLinear()
         .domain([minY, maxY])
-        .range([this.height, 0]);
+        .range([this.height(), 0]);
 
       // Create axes
       const xAxis = d3.axisBottom(this.xScale).ticks(1);
@@ -425,7 +428,7 @@ export default Vue.extend({
       this.svg
         .append("text")
         .attr("class", "sparkline-axis-title")
-        .attr("x", 400)
+        .attr("x", this.width() + 20)
         .attr("y", 40)
         .style("text-anchor", "end")
         .text(dateMaxX);
@@ -436,12 +439,12 @@ export default Vue.extend({
         return;
       }
 
-      if (this.width <= 0) {
+      if (this.width() <= 0) {
         console.warn("Invalid width for line chart");
         return;
       }
 
-      if (this.height <= 0) {
+      if (this.height() <= 0) {
         console.warn("Invalid height for line chart");
         return;
       }

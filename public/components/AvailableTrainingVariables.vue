@@ -45,7 +45,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { filterSummariesByDataset, NUM_PER_PAGE } from "../util/data";
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
-import VariableFacets from "../components/VariableFacets";
+import VariableFacets from "./facets/VariableFacets.vue";
 import { Dictionary } from "vue-router/types/router";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
@@ -84,8 +84,7 @@ export default Vue.extend({
       return (group: Group) => {
         const container = document.createElement("div");
         const trainingElem = document.createElement("button");
-        trainingElem.className +=
-          "btn btn-sm btn-outline-secondary ml-2 mr-1 mb-2";
+        trainingElem.className += "btn btn-sm btn-outline-secondary mb-2";
         trainingElem.innerHTML = "Add";
         trainingElem.addEventListener("click", async () => {
           // log UI event on server

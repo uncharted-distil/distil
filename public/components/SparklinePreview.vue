@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="sparkline-preview-container"
-    v-observe-visibility="visibilityChanged"
-  >
+  <div :class="displayClass" :observe-visibility="visibilityChanged">
     <sparkline-svg
       :timeseries-extrema="timeseriesExtrema"
       :timeseries="timeseries"
@@ -10,6 +7,7 @@
       :forecast-extrema="forecastExtrema"
       :highlight-range="highlightRange"
       :join-forecast="!!predictionsId"
+      :isDateTime="isDateTime()"
     >
     </sparkline-svg>
     <i class="fa fa-plus zoom-sparkline-icon" @click.stop="onClick"></i>
@@ -26,7 +24,7 @@
         :highlight-range="highlightRange"
         :x-axis-title="xCol"
         :y-axis-title="yCol"
-        :x-axis-date-time="isDateTime"
+        :x-axis-date-time="isDateTime()"
         :join-forecast="!!predictionsId"
         v-if="zoomSparkline"
       ></sparkline-chart>
@@ -64,6 +62,7 @@ export default Vue.extend({
   },
 
   props: {
+    facetView: Boolean as () => Boolean,
     truthDataset: String as () => string,
     forecastDataset: String as () => string,
     xCol: String as () => string,
@@ -82,6 +81,11 @@ export default Vue.extend({
     };
   },
   computed: {
+    displayClass(): string {
+      return this.facetView
+        ? "facet-sparkline-preview-container"
+        : "sparkline-preview-container";
+    },
     timeseries(): TimeSeriesValue[] {
       if (this.solutionId) {
         const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
@@ -174,7 +178,9 @@ export default Vue.extend({
           max: d3.max(this.forecast, d => d.value)
         }
       };
-    },
+    }
+  },
+  methods: {
     isDateTime(): boolean {
       if (this.solutionId) {
         const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
@@ -200,9 +206,7 @@ export default Vue.extend({
         }
         return datasets.isDateTime[this.timeseriesId];
       }
-    }
-  },
-  methods: {
+    },
     visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRequested) {
@@ -269,6 +273,16 @@ export default Vue.extend({
 }
 
 .sparkline-preview-container:hover .zoom-sparkline-icon {
+  visibility: visible;
+}
+
+.facet-sparkline-preview-container {
+  position: relative;
+  width: 100%;
+  max-height: 45px;
+}
+
+.facet-sparkline-preview-container:hover .zoom-sparkline-icon {
   visibility: visible;
 }
 

@@ -58,7 +58,8 @@
     <div class="result-group-body" v-if="isMaximized">
       <template v-if="isCompleted">
         <div v-for="summary in predictedSummaries" :key="summary.key">
-          <facet-entry
+          <component
+            :is="getFacetByType(summary.type)"
             enable-highlighting
             :summary="summary"
             :highlight="highlight"
@@ -69,13 +70,14 @@
             @range-change="onResultRangeChange"
             @facet-click="onResultCategoricalClick"
           >
-          </facet-entry>
+          </component>
         </div>
 
         <div class="residual-group-container">
-          <facet-entry
+          <component
             v-for="summary in residualSummaries"
             :key="summary.key"
+            :is="getFacetByType(summary.type)"
             class="residual-container"
             show-origin
             enable-highlighting
@@ -89,12 +91,13 @@
             @range-change="onResidualRangeChange"
             @facet-click="onResultCategoricalClick"
           >
-          </facet-entry>
+          </component>
         </div>
 
-        <facet-entry
+        <component
           v-for="summary in correctnessSummaries"
           :key="summary.key"
+          :is="getFacetByType(summary.type)"
           enable-highlighting
           :summary="summary"
           :highlight="highlight"
@@ -103,7 +106,7 @@
           :instanceName="correctnessInstanceName"
           @facet-click="onCorrectnessCategoricalClick"
         >
-        </facet-entry>
+        </component>
       </template>
     </div>
   </div>
@@ -114,16 +117,20 @@
 // of prediction-truth residuals, and scoring information.
 
 import Vue from "vue";
-import FacetEntry from "../components/FacetEntry";
+import FacetNumerical from "../components/facets/FacetNumerical";
+import FacetCategorical from "../components/facets/FacetCategorical";
 import {
   Extrema,
   VariableSummary,
   RowSelection,
-  Highlight
+  Highlight,
+  CATEGORICAL_SUMMARY,
+  NUMERICAL_SUMMARY
 } from "../store/dataset/index";
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from "../store/requests/index";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
+import { getFacetByType } from "../util/facets";
 import {
   getSolutionIndex,
   getSolutionById,
@@ -144,7 +151,8 @@ export default Vue.extend({
   name: "result-group",
 
   components: {
-    FacetEntry
+    FacetNumerical,
+    FacetCategorical
   },
 
   props: {
@@ -314,6 +322,7 @@ export default Vue.extend({
   },
 
   methods: {
+    getFacetByType: getFacetByType,
     onResultCategoricalClick(
       context: string,
       key: string,

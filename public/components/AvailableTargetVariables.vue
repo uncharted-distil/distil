@@ -25,7 +25,7 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { createRouteEntry, varModesToString } from "../util/routes";
 import { filterSummariesByDataset, getComposedVariableKey } from "../util/data";
-import VariableFacets from "../components/VariableFacets.vue";
+import VariableFacets from "./facets/VariableFacets.vue";
 import {
   Grouping,
   Variable,
@@ -101,7 +101,7 @@ export default Vue.extend({
         const targetElem = document.createElement("button");
 
         const unsupported = this.unsupportedTargets.has(group.colName);
-        targetElem.className += "btn btn-sm btn-success ml-2 mr-2 mb-2";
+        targetElem.className += "btn btn-sm btn-success mb-2";
         if (unsupported) {
           targetElem.className += " disabled";
         }
@@ -217,6 +217,10 @@ export default Vue.extend({
   margin-left: 0.5rem;
   margin-right: 0.5rem;
   width: 100%;
+  -webkit-backface-visibility: hidden;
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 
 .available-target-variables

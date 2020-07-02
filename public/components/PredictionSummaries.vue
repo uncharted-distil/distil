@@ -9,10 +9,12 @@
           <p>{{ summary.dataset }}</p>
         </div>
         <div class="prediction-group-body">
-          <facet-entry
+          <!-- we need the new facets in here-->
+          <component
             enable-highlighting
             :summary="summary"
             :key="summary.key"
+            :is="getFacetByType(summary.type)"
             :highlight="highlight"
             :enabled-type-changes="[]"
             :row-selection="rowSelection"
@@ -21,7 +23,7 @@
             @numerical-click="onNumericalClick"
             @range-change="onRangeChange"
           >
-          </facet-entry>
+          </component>
         </div>
       </div>
     </div>
@@ -44,8 +46,9 @@
 </template>
 
 <script lang="ts">
-import FacetEntry from "../components/FacetEntry";
 import FileUploader from "../components/FileUploader";
+import FacetNumerical from "../components/facets/FacetNumerical";
+import FacetCategorical from "../components/facets/FacetCategorical";
 import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -71,6 +74,7 @@ import {
 import Vue from "vue";
 import { Solution } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { getFacetByType } from "../util/facets";
 import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 import { getPredictionResultSummary, getIDFromKey } from "../util/summaries";
 import { sum } from "d3";
@@ -83,7 +87,8 @@ export default Vue.extend({
   name: "prediction-summaries",
 
   components: {
-    FacetEntry,
+    FacetNumerical,
+    FacetCategorical,
     FileUploader
   },
 
@@ -114,6 +119,7 @@ export default Vue.extend({
   },
 
   methods: {
+    getFacetByType: getFacetByType,
     onClick(key: string) {
       // Note that the key is of the form <requestId>:predicted and so needs to be
       // parsed.
