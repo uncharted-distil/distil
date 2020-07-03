@@ -188,13 +188,17 @@ export default Vue.extend({
     }[] {
       const summary = this.summary;
       const buckets = summary.baseline.buckets;
+      // Use exemplars to fetch a timeseries that is representative of this bucket.  When clusters
+      // are applied there are multiple timeseries associated with each pattern, and the examplar array
+      // returns the ID of one example for each.
+      const exemplars = summary.baseline.exemplars;
       const facetData = [];
       for (let i = 0; i < this.numToDisplay; ++i) {
         facetData.push({
           ratio: buckets[i].count / this.max,
           label: buckets[i].key,
           value: buckets[i].count,
-          metadata: this.getSparkline(buckets[i].key)
+          metadata: this.getSparkline(exemplars[i])
         });
       }
       return facetData;
