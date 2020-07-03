@@ -394,6 +394,32 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	}
 
 	// split the filters to make sure the result based filters can be applied properly
+	filtersSplit := splitFilters(filterParams)
+	joins := make([]*joinDefinition, 0)
+	wheres := []string{}
+	params := []interface{}{}
+	if filtersSplit.correctnessFilter != nil {
+
+	}
+	if filtersSplit.predictedFilter != nil {
+
+	}
+	if filtersSplit.residualFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filtersSplit.residualFilter)
+		if err != nil {
+			return nil, err
+		}
+
+		joins = append(joins, &joinDefinition{
+			baseAlias:  "bb",
+			baseColumn: f.Key,
+			joinAlias:  "r",
+			joinColumn: "k",
+			joinTableName: fmt.Sprintf("(SELECT DISTINCT \"%s\" AS k FROM %s AS b INNER JOIN %s AS r ON b.\"%s\" = r.index WHERE r.value != '' AND %s)",
+				f.Key, f.GetDatasetStorageName(), f.Storage.getResultTable(f.GetDatasetStorageName()), model.D3MIndexFieldName, strings.Join(wheres, " AND ")),
+		},
+		)
+	}
 
 	// Handle timeseries that use a timestamp/int as their time value, or those that use a date time.
 	var timelineField TimelineField
@@ -405,11 +431,11 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		return nil, errors.Errorf("unsupported timeseries field variable type %s:%s", f.XCol, f.XColType)
 	}
 
-	timelineBaseline, err := timelineField.fetchHistogram(nil, invert, api.MaxNumBuckets)
+	timelineBaseline, err := timelineField.fetchHistogramWithJoins(nil, invert, api.MaxNumBuckets, joins, wheres, params)
 	if err != nil {
 		return nil, err
 	}
-	timeline, err := timelineField.fetchHistogram(filterParams, invert, api.MaxNumBuckets)
+	timeline, err := timelineField.fetchHistogramWithJoins(filterParams, invert, api.MaxNumBuckets, joins, wheres, params)
 	if err != nil {
 		return nil, err
 	}

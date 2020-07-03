@@ -125,15 +125,13 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 }
 
 func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
-	return f.fetchHistogramWithJoins(filterParams, invert, numBuckets, nil)
+	return f.fetchHistogramWithJoins(filterParams, invert, numBuckets, nil, []string{}, []interface{}{})
 }
 
-func (f *NumericalField) fetchHistogramWithJoins(filterParams *api.FilterParams, invert bool, numBuckets int, joins []*joinDefinition) (*api.Histogram, error) {
+func (f *NumericalField) fetchHistogramWithJoins(filterParams *api.FilterParams, invert bool, numBuckets int, joins []*joinDefinition, wheres []string, params []interface{}) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query.
-	wheres := make([]string, 0)
-	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
 	wheres = append(wheres, f.getNaNFilter())
 

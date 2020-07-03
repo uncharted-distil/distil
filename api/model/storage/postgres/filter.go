@@ -480,7 +480,7 @@ func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, par
 
 func (s *Storage) buildResultQueryFilters(dataset string, storageName string, resultURI string, filterParams *api.FilterParams) ([]string, []interface{}, error) {
 	// pull filters generated against the result facet out for special handling
-	filters := s.splitFilters(filterParams)
+	filters := splitFilters(filterParams)
 
 	genericFilterParams := &api.FilterParams{
 		Filters: filters.genericFilters,
@@ -519,7 +519,7 @@ type filters struct {
 	correctnessFilter *model.Filter
 }
 
-func (s *Storage) splitFilters(filterParams *api.FilterParams) *filters {
+func splitFilters(filterParams *api.FilterParams) *filters {
 	// Groups filters for handling downstream
 	var predictedFilter *model.Filter
 	var residualFilter *model.Filter

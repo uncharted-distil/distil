@@ -595,7 +595,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	fieldsExplain := addTableAlias("weights", fields, true)
 
 	// break filters out groups for specific handling
-	filters := s.splitFilters(filterParams)
+	filters := splitFilters(filterParams)
 
 	genericFilterParams := &api.FilterParams{
 		Filters: filters.genericFilters,

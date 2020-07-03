@@ -38,7 +38,7 @@ type Field interface {
 type TimelineField interface {
 	Field
 	fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error)
-	fetchHistogramWithJoins(filterParams *api.FilterParams, invert bool, numBuckets int, joins []*joinDefinition) (*api.Histogram, error)
+	fetchHistogramWithJoins(filterParams *api.FilterParams, invert bool, numBuckets int, joins []*joinDefinition, wheres []string, params []interface{}) (*api.Histogram, error)
 }
 
 // BasicField provides access to baseline field data
