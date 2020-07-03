@@ -1,7 +1,12 @@
 import Vue from "vue";
 import _ from "lodash";
 import { ResultsState } from "./index";
-import { VariableSummary, Extrema, TableData } from "../dataset/index";
+import {
+  VariableSummary,
+  Extrema,
+  TableData,
+  TimeSeriesValue
+} from "../dataset/index";
 import { updateSummaries, removeSummary } from "../../util/data";
 
 export const mutations = {
@@ -107,7 +112,7 @@ export const mutations = {
     args: {
       solutionId: string;
       id: string;
-      forecast: number[][];
+      forecast: TimeSeriesValue[];
       forecastTestRange: number[];
       isDateTime: boolean;
     }

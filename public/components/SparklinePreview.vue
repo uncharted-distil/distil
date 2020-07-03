@@ -18,6 +18,18 @@
       :visible="zoomSparkline"
       hide-footer
     >
+      <div v-if="forecast">
+        <div class="sparkline-legend">
+          <div class="sparkline-legend-historical"></div>
+          <div class="sparkline-legend-label">Historical</div>
+          <div class="sparkline-legend-predicted"></div>
+          <div class="sparkline-legend-label">Predicted</div>
+          <div class="sparkline-legend-variability"></div>
+          <div class="sparkline-legend-label">Variability</div>
+          <div class="sparkline-legend-scoring"></div>
+          <div class="sparkline-legend-label">Scoring</div>
+        </div>
+      </div>
       <sparkline-chart
         :timeseries="timeseries"
         :forecast="forecast"
@@ -298,5 +310,44 @@ export default Vue.extend({
 
 #sparkline-zoom-modal .modal-dialog {
   max-width: 50%;
+}
+
+.sparkline-legend {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.sparkline-legend-label {
+  margin-left: 6px;
+}
+
+.sparkline-legend-historical {
+  background: rgb(200, 200, 200);
+  width: 16px;
+  height: 2px;
+}
+
+.sparkline-legend-predicted {
+  background: rgb(2, 117, 216);
+  width: 16px;
+  height: 2px;
+  margin-left: 14px;
+}
+
+.sparkline-legend-variability {
+  background: rgb(2, 117, 216);
+  opacity: 0.3;
+  width: 12px;
+  height: 12px;
+  margin-left: 14px;
+}
+
+.sparkline-legend-scoring {
+  background: rgb(200, 200, 200);
+  opacity: 0.2;
+  width: 12px;
+  height: 12px;
+  margin-left: 14px;
 }
 </style>
