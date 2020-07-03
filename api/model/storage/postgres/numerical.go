@@ -469,6 +469,7 @@ func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResu
 
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, f.Key)
+	wheres = append(wheres, fmt.Sprintf("%s != ''", resultVariable.Name))
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`

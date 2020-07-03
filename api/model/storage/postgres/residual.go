@@ -206,8 +206,9 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storage
 	query := fmt.Sprintf(`
 		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
 		FROM %s
-		WHERE result_id = $1 AND target = $2 %s
-		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName, fromClause, where, bucketQuery, histogramName)
+		WHERE result_id = $1 AND target = $2 AND %s != '' %s
+		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName,
+		fromClause, resultVariable.Name, where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)

@@ -680,7 +680,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 		"SELECT %s"+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"LEFT OUTER JOIN %s as weights on weights.\"%s\" = predicted.index AND weights.result_id = predicted.result_id "+
-			"WHERE predicted.result_id = $%d AND target = $%d",
+			"WHERE predicted.result_id = $%d AND target = $%d AND predicted.value != ''",
 		selectedVars, storageNameResult, storageName, model.D3MIndexFieldName,
 		s.getSolutionFeatureWeightTable(storageName), model.D3MIndexFieldName,
 		len(params)+1, len(params)+2)
