@@ -155,6 +155,10 @@ func (f *CategoricalField) getTopCategories(filterParams *api.FilterParams, inve
 			}
 			categories = append(categories, category)
 		}
+		err = rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 	}
 	return categories, nil
 }
@@ -257,6 +261,10 @@ func (f *CategoricalField) parseHistogram(rows pgx.Rows) (*api.Histogram, error)
 			if bucketCount > max {
 				max = bucketCount
 			}
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 

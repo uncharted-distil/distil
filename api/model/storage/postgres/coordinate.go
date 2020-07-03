@@ -301,6 +301,10 @@ func (f *CoordinateField) parseHistogram(rows pgx.Rows, xExtrema *api.Extrema, y
 		}
 		xBuckets[xBucket].Buckets[yBucket].Count += yRowBucketCount
 	}
+	err := rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	// assign histogram attributes
 	return &api.Histogram{

@@ -147,6 +147,10 @@ func (s *Storage) FetchSolution(solutionID string) (*api.Solution, error) {
 		defer rows.Close()
 	}
 	rows.Next()
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	solution, err := s.parseSolution(rows)
 	if err != nil {
@@ -219,6 +223,10 @@ func (s *Storage) parseSolutionWeight(rows pgx.Rows) ([]*api.SolutionWeight, err
 			Weight:       weight,
 		})
 	}
+	err := rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	return results, nil
 }
@@ -261,6 +269,10 @@ func (s *Storage) parseSolutionState(rows pgx.Rows) ([]*api.SolutionState, error
 			CreatedTime: createdTime,
 		})
 	}
+	err := rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	return results, nil
 }
@@ -295,6 +307,10 @@ func (s *Storage) parseSolutionResult(rows pgx.Rows) ([]*api.SolutionResult, err
 			Dataset:          dataset,
 		})
 	}
+	err := rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	return results, nil
 }
@@ -328,6 +344,10 @@ func (s *Storage) parseSolutionFeatureWeight(resultURI string, rows pgx.Rows) (*
 			}
 
 			result.Weights = output
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 
@@ -523,6 +543,10 @@ func (s *Storage) FetchSolutionScores(solutionID string) ([]*api.SolutionScore, 
 			SortMultiplier: compute.GetMetricScoreMultiplier(metric),
 		})
 	}
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	return results, nil
 }
@@ -570,6 +594,10 @@ func (s *Storage) FetchSolutionsByDatasetTarget(dataset string, target string) (
 		}
 		solutions = append(solutions, solution)
 	}
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	return solutions, nil
 }
@@ -607,6 +635,10 @@ func (s *Storage) FetchSolutionsByRequestID(requestID string) ([]*api.Solution, 
 			return nil, err
 		}
 		solutions = append(solutions, solution)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
 	}
 
 	return solutions, nil

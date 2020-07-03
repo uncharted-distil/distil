@@ -77,6 +77,10 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 
 			result.Values = append(result.Values, weightedValues)
 		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 
 		fields := rows.FieldDescriptions()
 		columns := make([]api.Column, len(fields))

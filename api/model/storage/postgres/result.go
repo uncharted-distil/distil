@@ -65,6 +65,10 @@ func (s *Storage) getResultTargetName(storageName string, resultURI string) (str
 
 		return targetName, nil
 	}
+	err = rows.Err()
+	if err != nil {
+		return "", errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	return "", errors.Errorf("Target feature for result URI `%s` not found", resultURI)
 }
@@ -345,6 +349,10 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 				}
 			}
 			result.Values = append(result.Values, weightedValues)
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 		result.Columns = columns
 	} else {

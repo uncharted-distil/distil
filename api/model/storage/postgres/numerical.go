@@ -333,6 +333,11 @@ func (f *NumericalField) parseHistogram(rows pgx.Rows, extrema *api.Extrema, num
 			buckets[len(buckets)-1].Count += bucketCount
 		}
 	}
+	err := rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
+
 	// assign histogram attributes
 	return &api.Histogram{
 		Extrema: rounded,
@@ -530,7 +535,7 @@ func (f *NumericalField) fetchResultsExtrema(resultURI string, dataset string, r
 	aggQuery := f.getResultMinMaxAggsQuery(resultVariable)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, dataset)
+	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2 AND %s != '';", aggQuery, dataset, resultVariable.Name)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(queryString, resultURI, f.Key)

@@ -153,7 +153,7 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, storageName string, va
 	fromClause := getResultJoin("res", storageName)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, fromClause)
+	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2 AND value != '';", aggQuery, fromClause)
 
 	// execute the postgres query
 	res, err := s.client.Query(queryString, resultURI, targetName)

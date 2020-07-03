@@ -308,6 +308,10 @@ func (f *DateTimeField) parseHistogram(rows pgx.Rows, extrema *api.Extrema, numB
 
 		}
 	}
+	err := rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	// assign histogram attributes
 	return &api.Histogram{

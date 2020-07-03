@@ -78,6 +78,10 @@ func (s *Storage) parseTimeseries(rows pgx.Rows) ([]*api.TimeseriesObservation, 
 				Time:  x,
 			})
 		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 	}
 
 	return points, nil
@@ -99,6 +103,10 @@ func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows) ([]*api.TimeseriesObser
 				Value: api.NullableFloat64(value),
 				Time:  float64(time.Unix() * 1000),
 			})
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 
@@ -123,6 +131,10 @@ func (s *Storage) parseTimeseriesForecast(rows pgx.Rows) ([]*api.TimeseriesObser
 				ConfidenceLow:  api.NullableFloat64(confidenceLow),
 				ConfidenceHigh: api.NullableFloat64(confidenceHigh),
 			})
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 
@@ -149,6 +161,10 @@ func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) ([]*api.Timeser
 				ConfidenceLow:  api.NullableFloat64(confidenceLow),
 				ConfidenceHigh: api.NullableFloat64(confidenceHigh),
 			})
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 
@@ -201,6 +217,10 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 
 			rows.Close()
 			return nil, errors.Wrap(fmt.Errorf("timeseries id type not recognized %v", values[0]), "unable to parse timeseries id")
+		}
+		err = rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 
@@ -535,6 +555,10 @@ func (f *TimeSeriesField) parseHistogram(rows pgx.Rows, mode api.SummaryMode) (*
 			if bucketCount > max {
 				max = bucketCount
 			}
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 
