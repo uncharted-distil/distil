@@ -133,23 +133,22 @@ interface BucketData {
 const GEOCOORDINATE_LABEL = "longitude";
 
 const BLUE_PALETTE = [
-  "#E2F8FB",
-  "#D4F5FA",
-  "#C6F2F8",
-  "#B8EFF6",
-  "#AAECF5",
-  "#9BE8F3",
-  "#8DE5F1",
-  "#7FE2F0",
-  "#71DFEE",
-  "#63DCEC",
-  "#55D9EB",
-  "#46D5E9",
-  "#38D2E7",
-  "#2ACFE6",
-  "#1CCCE4",
-  "#0EC9E2",
-  "#00C6E1"
+  "#D8EAFA",
+  "#CCE1F8",
+  "#C0D9F6",
+  "#B4D0F4",
+  "#A8C8F2",
+  "#9CBEEF",
+  "#90B5EB",
+  "#84ABE8",
+  "#78A1E4",
+  "#6C97E1",
+  "#618EDD",
+  "#5584DA",
+  "#497AD6",
+  "#3D70D3",
+  "#3167CF",
+  "#255DCC"
 ];
 
 const BLACK_PALETTE = [
@@ -761,7 +760,7 @@ export default Vue.extend({
         );
 
         this.currentRect = leaflet.rectangle(bounds, {
-          color: this.includedActive ? "#00c6e1" : "black",
+          color: this.includedActive ? "#255DCC" : "black",
           weight: 1,
           bubblingMouseEvents: false
         });
@@ -850,7 +849,7 @@ export default Vue.extend({
             [this.highlight.value.maxY, this.highlight.value.maxX]
           ],
           {
-            color: "#00c6e1",
+            color: "#255DCC",
             weight: 1,
             bubblingMouseEvents: false
           }

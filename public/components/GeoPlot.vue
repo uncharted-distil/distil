@@ -381,7 +381,7 @@ export default Vue.extend({
 
         const bounds = [this.startingLatLng, this.startingLatLng];
         this.currentRect = leaflet.rectangle(bounds, {
-          color: "#00c6e1",
+          color: "#255DCC",
           weight: 1,
           bubblingMouseEvents: false
         });
@@ -509,7 +509,7 @@ export default Vue.extend({
             [this.highlight.value.maxY, this.highlight.value.maxX]
           ],
           {
-            color: "#00c6e1",
+            color: "#255DCC",
             weight: 1,
             bubblingMouseEvents: false
           }
@@ -614,7 +614,7 @@ export default Vue.extend({
     },
 
     colorPrediction(item: any) {
-      let color = "#00c6e1"; // Default
+      let color = "#255DCC"; // Default
 
       if (item[this.targetField] && item[this.predictedField]) {
         color =

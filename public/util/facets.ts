@@ -1,9 +1,5 @@
 import _ from "lodash";
-import moment from "moment";
-import { spinnerHTML } from "../util/spinner";
 import {
-  formatValue,
-  TIMESERIES_TYPE,
   CATEGORICAL_TYPE,
   ORDINAL_TYPE,
   BOOL_TYPE,
@@ -25,14 +21,8 @@ import {
   VariableSummary,
   CATEGORICAL_SUMMARY,
   NUMERICAL_SUMMARY,
-  TimeSeries,
   RowSelection
 } from "../store/dataset/index";
-import store from "../store/store";
-import { getters as datasetGetters } from "../store/dataset/module";
-import { getters as resultGetters } from "../store/results/module";
-import { getters as routeGetters } from "../store/route/module";
-import { Forecast } from "../store/results";
 
 export const CATEGORICAL_CHUNK_SIZE = 5;
 export const IMAGE_CHUNK_SIZE = 5;
@@ -110,79 +100,6 @@ export interface Group {
   summary: VariableSummary;
 }
 
-export function createGroup(summary: VariableSummary): Group {
-  if (summary.err) {
-    // create error facet
-    return createErrorFacet(summary);
-  }
-  if (summary.pending) {
-    // create pending facet
-    return createPendingFacet(summary);
-  }
-  // create facet
-  return createSummaryFacet(summary);
-}
-
-// creates a facet to display a data fetch error
-export function createErrorFacet(summary: VariableSummary): Group {
-  return {
-    dataset: summary.dataset,
-    colName: summary.key,
-    description: summary.description,
-    label: summary.label,
-    key: `${summary.dataset}:${summary.key}`,
-    type: summary.varType,
-    collapsible: false,
-    collapsed: false,
-    facets: [
-      {
-        placeholder: true,
-        html: `<div>${summary.err}</div>`,
-        filterable: false
-      }
-    ],
-    summary: null
-  };
-}
-
-// creates a place holder facet to dispay a spinner
-export function createPendingFacet(summary: VariableSummary): Group {
-  return {
-    dataset: summary.dataset,
-    colName: summary.key,
-    label: summary.label,
-    description: summary.description,
-    key: `${summary.dataset}:${summary.key}`,
-    type: summary.varType,
-    collapsible: false,
-    collapsed: false,
-    facets: [
-      {
-        placeholder: true,
-        html: spinnerHTML(),
-        filterable: false
-      }
-    ],
-    summary: null
-  };
-}
-
-// creates categorical or numerical summary facets based on the input summary type
-export function createSummaryFacet(summary: VariableSummary): Group {
-  switch (summary.type) {
-    case CATEGORICAL_SUMMARY:
-      if (summary.varType === TIMESERIES_TYPE) {
-        return createTimeseriesSummaryFacet(summary);
-      } else {
-        return createCategoricalSummaryFacet(summary);
-      }
-    case NUMERICAL_SUMMARY:
-      return createNumericalSummaryFacet(summary);
-  }
-  console.warn("unrecognized summary type", summary.type);
-  return null;
-}
-
 export function getGroupIcon(summary: VariableSummary): string {
   switch (summary.varType) {
     case CATEGORICAL_TYPE:
@@ -220,153 +137,6 @@ export function getCategoricalChunkSize(type: string): number {
     return IMAGE_CHUNK_SIZE;
   }
   return CATEGORICAL_CHUNK_SIZE;
-}
-
-// creates a categorical facet
-function createCategoricalSummaryFacet(summary: VariableSummary): Group {
-  let total = 0;
-  const facets = summary.baseline.buckets.map((b, index) => {
-    const segments = [];
-    const selected = {
-      count: b.count
-    };
-    const countLabel = b.count.toString();
-
-    const facet: CategoricalFacet = {
-      icon: {
-        class: getGroupIcon(summary)
-      },
-      value: b.key,
-      countLabel: countLabel,
-      count: b.count,
-      selected: selected,
-      segments: segments,
-      filterable: false,
-      file: summary.baseline.exemplars
-        ? summary.baseline.exemplars[index]
-        : null
-    };
-    total += b.count;
-    return facet;
-  });
-
-  facets.sort((a, b) => {
-    return b.count - a.count;
-  });
-
-  const chunkSize = getCategoricalChunkSize(summary.varType);
-  const top = facets.slice(0, chunkSize);
-  const remaining = facets.length > chunkSize ? facets.slice(chunkSize) : [];
-  let remainingTotal = 0;
-  remaining.forEach(facet => {
-    remainingTotal += facet.count;
-  });
-
-  // Generate a facet group
-  return {
-    dataset: summary.dataset,
-    colName: summary.key,
-    label: summary.label,
-    description: summary.description,
-    key: `${summary.dataset}:${summary.key}`,
-    type: summary.varType,
-    collapsible: false,
-    collapsed: false,
-    facets: top,
-    total: total,
-    more: remaining.length,
-    moreTotal: remainingTotal,
-    all: facets,
-    summary: summary
-  };
-}
-
-function createTimeseriesSummaryFacet(summary: VariableSummary): Group {
-  const group = createCategoricalSummaryFacet(summary);
-
-  let timeseries = null as TimeSeries;
-  let forecasts = null as Forecast;
-  const solutionId = routeGetters.getRouteSolutionId(store);
-
-  if (solutionId) {
-    timeseries = resultGetters.getPredictedTimeseries(store)[solutionId];
-    forecasts = resultGetters.getPredictedForecasts(store)[solutionId];
-  } else {
-    timeseries = datasetGetters.getTimeseries(store)[group.dataset];
-  }
-
-  group.all.forEach((facet: CategoricalFacet) => {
-    if (solutionId && timeseries && forecasts) {
-      facet.multipleTimeseries = [
-        timeseries.timeseriesData[facet.file].map(v => [v.time, v.value]),
-        forecasts.forecastData[facet.file].map(v => [v.time, v.value])
-      ];
-      facet.colors = ["#000", "#00c6e1"];
-    } else if (timeseries) {
-      facet.timeseries = timeseries.timeseriesData[facet.file].map(v => [
-        v.time,
-        v.value
-      ]);
-    }
-  });
-
-  return group;
-}
-
-function getHistogramSlices(summary: VariableSummary) {
-  const buckets = summary.baseline.buckets;
-  const extrema = summary.baseline.extrema;
-  const slices = new Array(buckets.length);
-  for (let i = 0; i < buckets.length; i++) {
-    const bucket = buckets[i];
-    let from: any, to: any;
-    if (summary.varType === DATE_TIME_TYPE) {
-      from = bucket.key;
-      to = i < buckets.length - 1 ? buckets[i + 1].key : extrema.max;
-      from = moment
-        .unix(_.toNumber(from))
-        .utc()
-        .format("YYYY/MM/DD");
-      to = moment
-        .unix(_.toNumber(to))
-        .utc()
-        .format("YYYY/MM/DD");
-    } else {
-      from = _.toNumber(bucket.key);
-      to =
-        i < buckets.length - 1 ? _.toNumber(buckets[i + 1].key) : extrema.max;
-    }
-    slices[i] = {
-      label: `${formatValue(from, summary.varType)}`,
-      toLabel: `${formatValue(to, summary.varType)}`,
-      count: bucket.count
-    };
-  }
-  return slices;
-}
-
-function createNumericalSummaryFacet(summary: VariableSummary): Group {
-  const slices = getHistogramSlices(summary);
-  return {
-    dataset: summary.dataset,
-    colName: summary.key,
-    label: summary.label,
-    description: summary.description,
-    key: `${summary.dataset}:${summary.key}`,
-    type: summary.varType,
-    collapsible: false,
-    collapsed: false,
-    facets: [
-      {
-        histogram: {
-          slices: slices
-        },
-        filterable: false,
-        selection: {} as any
-      }
-    ],
-    summary: summary
-  };
 }
 
 export function isCategoricalFacet(

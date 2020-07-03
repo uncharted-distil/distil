@@ -234,7 +234,7 @@ export default Vue.extend({
   height: 100%;
 }
 .matching-color {
-  color: #00c6e1;
+  color: #255dcc;
 }
 .other-color {
   color: #333;
