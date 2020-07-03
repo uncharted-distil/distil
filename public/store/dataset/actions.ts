@@ -41,7 +41,8 @@ import {
   GEOCODED_LON_PREFIX,
   GEOCODED_LAT_PREFIX,
   isRankableVariableType,
-  REMOTE_SENSING_TYPE
+  REMOTE_SENSING_TYPE,
+  isImageType
 } from "../../util/types";
 import { getters as routeGetters } from "../route/module";
 
@@ -267,7 +268,7 @@ export const actions = {
       .filter(
         v =>
           (v.grouping && isClusteredGrouping(v.grouping)) ||
-          v.colType === "image"
+          isImageType(v.colType)
       );
     if (clusterVariables.length === 0) {
       return Promise.resolve();
@@ -283,7 +284,7 @@ export const actions = {
           `/distil/cluster/${args.dataset}/${v.grouping.idCol}`,
           {}
         );
-      } else if (v.colType === "image") {
+      } else if (isImageType(v.colType)) {
         return axios.post(`/distil/cluster/${args.dataset}/${v.colName}`, {});
       }
       return null;
