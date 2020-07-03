@@ -125,6 +125,10 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 }
 
 func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
+	return f.fetchHistogramWithJoins(filterParams, invert, numBuckets, nil)
+}
+
+func (f *NumericalField) fetchHistogramWithJoins(filterParams *api.FilterParams, invert bool, numBuckets int, joins []*joinDefinition) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query.
@@ -148,9 +152,11 @@ func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, invert b
 		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 	}
 
+	joinSQL := createJoinStatements(joins)
+
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s %s GROUP BY %s ORDER BY %s;",
-		bucketQuery, histogramQuery, histogramName, f.Count, fromClause, where, bucketQuery, histogramName)
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s %s %s GROUP BY %s ORDER BY %s;",
+		bucketQuery, histogramQuery, histogramName, f.Count, fromClause, joinSQL, where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

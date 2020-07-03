@@ -393,6 +393,8 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		}
 	}
 
+	// split the filters to make sure the result based filters can be applied properly
+
 	// Handle timeseries that use a timestamp/int as their time value, or those that use a date time.
 	var timelineField TimelineField
 	if f.XColType == model.DateTimeType {
@@ -472,16 +474,10 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 }
 
 func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
-
-	wheres := []string{}
-	params := []interface{}{}
-	var err error
-	if f.Type != "timeseries" {
-		// get filter where / params
-		wheres, params, err = f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
-		if err != nil {
-			return nil, err
-		}
+	// get filter where / params
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	if err != nil {
+		return nil, err
 	}
 
 	params = append(params, resultURI)
@@ -497,7 +493,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 	query := fmt.Sprintf(
 		`SELECT data."%s", COUNT(DISTINCT "%s") AS __count__
 		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
-		 WHERE result.result_id = $%d %s
+		 WHERE result.result_id = $%d AND result.value != '' %s
 		 GROUP BY "%s"
 		 ORDER BY __count__ desc, "%s" LIMIT %d;`,
 		keyColName, f.IDCol, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
@@ -605,16 +601,10 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 }
 
 func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.Histogram, error) {
-
-	wheres := []string{}
-	params := []interface{}{}
-	var err error
-	if f.Type != "timeseries" {
-		// get filter where / params
-		wheres, params, err = f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
-		if err != nil {
-			return nil, err
-		}
+	// get filter where / params
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	if err != nil {
+		return nil, err
 	}
 
 	params = append(params, resultURI)
