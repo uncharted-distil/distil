@@ -11,6 +11,7 @@
 - [NodeJS](http://nodejs.org/) JavaScript runtime.
 - [Docker](https://www.docker.com/) platform.
 - [Docker Compose](https://docs.docker.com/compose/) (optional) for managing multi-container dev environments.
+- [GDAL](https://gdal.org/) v2.4.2 or better for geospatial data access.  Available as a package for most Linux distributions, and  OSX through Homebrew.
 
 ## Development
 
@@ -127,3 +128,8 @@ The location of the dataset directory can be changed by setting the `D3MINPUTDIR
 
 - **Cause**: Dependencies are out of date or have not been installed
 - **Solution**: Run `make install` to install latest dependencies.
+
+#### "# pkg-config --cflags  -- gdal gdal gdal gdal gdal gdal Package gdal was not found in the pkg-config search path."
+
+- **Cause**: GDAL has not been installed
+- **Solution**: Install GDAL using a package for your environment or download and build from source.
