@@ -210,33 +210,32 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 }
 
 func (s *Storage) getBivariateFilterKeys(dataset string, key string, alias string) ([]string, error) {
-	split := strings.Split(key, ":")
-	fields := make([]string, 2)
-	if len(split) > 1 {
-		fields[0] = s.formatFilterKey(alias, split[0])
-		fields[1] = s.formatFilterKey(alias, split[1])
-	} else {
-		// assume the name is a grouping and get it
-		g, err := s.metadata.FetchVariable(dataset, key)
-		if err != nil {
-			return nil, err
-		}
 
-		if g.IsGrouping() && model.IsRemoteSensing(g.Grouping.GetType()) {
+	fields := make([]string, 2)
+
+	// assume the name is a grouping and get it
+	g, err := s.metadata.FetchVariable(dataset, key)
+	if err != nil {
+		return nil, err
+	}
+
+	if g.IsGrouping() {
+		if model.IsRemoteSensing(g.Grouping.GetType()) {
 			// only checking top left for now
 			rsg := g.Grouping.(*model.RemoteSensingGrouping)
 			name := s.formatFilterKey(alias, rsg.CoordinateCol)
 			fields[0] = fmt.Sprintf("%s[1]", name)
 			fields[1] = fmt.Sprintf("%s[2]", name)
+		} else if model.IsGeoCoordinate(g.Grouping.GetType()) {
+			cg := g.Grouping.(*model.GeoCoordinateGrouping)
+			fields[0] = s.formatFilterKey(alias, cg.XCol)
+			fields[1] = s.formatFilterKey(alias, cg.YCol)
 		} else {
-			// hardcode [lat, lon] format for now
-			name := s.formatFilterKey(alias, key)
-			fields[0] = fmt.Sprintf("%s[1]", name)
-			fields[1] = fmt.Sprintf("%s[2]", name)
+			return nil, errors.Errorf("unsupported field type %s for bivariate filter", g.Grouping.GetType())
 		}
+		return fields, nil
 	}
-
-	return fields, nil
+	return nil, errors.Errorf("unsupported field type %s for bivariate filter", g.Type)
 }
 
 func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []interface{}, alias string, filter *model.Filter) ([]string, []interface{}) {
