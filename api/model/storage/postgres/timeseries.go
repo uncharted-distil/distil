@@ -412,14 +412,22 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 
 		joins = append(joins, &joinDefinition{
 			baseAlias:  "bb",
-			baseColumn: f.Key,
+			baseColumn: f.IDCol,
 			joinAlias:  "r",
 			joinColumn: "k",
 			joinTableName: fmt.Sprintf("(SELECT DISTINCT \"%s\" AS k FROM %s AS b INNER JOIN %s AS r ON b.\"%s\" = r.index WHERE r.value != '' AND %s)",
-				f.Key, f.GetDatasetStorageName(), f.Storage.getResultTable(f.GetDatasetStorageName()), model.D3MIndexFieldName, strings.Join(wheres, " AND ")),
+				f.IDCol, f.GetDatasetStorageName(), f.Storage.getResultTable(f.GetDatasetStorageName()), model.D3MIndexFieldName, strings.Join(wheres, " AND ")),
 		},
 		)
 	}
+
+	// reset the filter params since the residual filter has been handled already
+	filterParamsClone := filterParams.Clone()
+	filterParamsClone.Highlight = nil
+	filterParamsClone.Filters = filtersSplit.genericFilters
+
+	// clear filters since they are used in subselect
+	wheres = []string{}
 
 	// Handle timeseries that use a timestamp/int as their time value, or those that use a date time.
 	var timelineField TimelineField
@@ -435,7 +443,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	if err != nil {
 		return nil, err
 	}
-	timeline, err := timelineField.fetchHistogramWithJoins(filterParams, invert, api.MaxNumBuckets, joins, wheres, params)
+	timeline, err := timelineField.fetchHistogramWithJoins(filterParamsClone, invert, api.MaxNumBuckets, joins, wheres, params)
 	if err != nil {
 		return nil, err
 	}

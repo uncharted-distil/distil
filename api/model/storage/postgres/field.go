@@ -88,9 +88,6 @@ func createJoinStatements(joins []*joinDefinition) string {
 		joinSQL = fmt.Sprintf("%s INNER JOIN %s AS %s ON %s.\"%s\" = %s.\"%s\"",
 			joinSQL, j.joinTableName, j.joinAlias, j.baseAlias, j.baseColumn, j.joinAlias, j.joinColumn)
 	}
-	if len(joinSQL) > 0 {
-		joinSQL = fmt.Sprintf("INNER JOIN %s", joinSQL)
-	}
 
 	return joinSQL
 }

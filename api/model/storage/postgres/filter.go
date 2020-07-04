@@ -124,7 +124,7 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 	case model.DatetimeFilter:
 		// datetime
 		// extract epoch for comparison
-		where := fmt.Sprintf("cast(extract(epoch from %s) as double precision) >= $%d AND cast(extract(epoch from %s) as double precision) <= $%d", name, len(params)+1, name, len(params)+2)
+		where := fmt.Sprintf("cast(extract(epoch from %s) as double precision) >= $%d AND cast(extract(epoch from %s) as double precision) < $%d", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -132,7 +132,7 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 	case model.NumericalFilter:
 		// numerical
 		// cast to double precision in case of string based representation
-		where := fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d", name, len(params)+1, name, len(params)+2)
+		where := fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) < $%d", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -156,7 +156,7 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 		if err != nil {
 			log.Warnf("%+v", err)
 		} else {
-			where := fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d AND cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d",
+			where := fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) < $%d AND cast(%s as double precision) >= $%d AND cast(%s as double precision) < $%d",
 				fields[0], len(params)+1, fields[0], len(params)+2, fields[1], len(params)+3, fields[1], len(params)+4)
 			wheres = append(wheres, where)
 			params = append(params, filter.Bounds.MinX)
@@ -247,7 +247,7 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 	case model.DatetimeFilter:
 		// datetime
 		// extract epoch for comparison
-		where := fmt.Sprintf("cast(extract(epoch from %s) as double precision) < $%d OR cast(extract(epoch from %s) as double precision) > $%d", name, len(params)+1, name, len(params)+2)
+		where := fmt.Sprintf("cast(extract(epoch from %s) as double precision) < $%d OR cast(extract(epoch from %s) as double precision) >= $%d", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -255,7 +255,7 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 	case model.NumericalFilter:
 		// numerical
 		//TODO: WHY DOES THIS QUERY NOT CAST TO DOUBLE LIKE THE INCLUDE???
-		where := fmt.Sprintf("(%s < $%d OR %s > $%d)", name, len(params)+1, name, len(params)+2)
+		where := fmt.Sprintf("(%s < $%d OR %s >= $%d)", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -279,7 +279,7 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 		if err != nil {
 			log.Warnf("%+v", err)
 		} else {
-			where := fmt.Sprintf("(cast(%s as double precision) < $%d OR cast(%s as double precision) > $%d) OR (cast(%s as double precision) < $%d OR cast(%s as double precision) > $%d)",
+			where := fmt.Sprintf("(cast(%s as double precision) < $%d OR cast(%s as double precision) >= $%d) OR (cast(%s as double precision) < $%d OR cast(%s as double precision) >= $%d)",
 				fields[0], len(params)+1, fields[0], len(params)+2, fields[1], len(params)+3, fields[1], len(params)+4)
 			wheres = append(wheres, where)
 			params = append(params, filter.Bounds.MinX)

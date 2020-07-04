@@ -153,7 +153,7 @@ func (f *NumericalField) fetchHistogramWithJoins(filterParams *api.FilterParams,
 	joinSQL := createJoinStatements(joins)
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s %s %s GROUP BY %s ORDER BY %s;",
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s AS bb %s %s GROUP BY %s ORDER BY %s;",
 		bucketQuery, histogramQuery, histogramName, f.Count, fromClause, joinSQL, where, bucketQuery, histogramName)
 
 	// execute the postgres query
