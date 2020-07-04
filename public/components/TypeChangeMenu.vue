@@ -277,7 +277,7 @@ export default Vue.extend({
       return options;
     },
 
-    onGroupingSelect(type) {
+    async onGroupingSelect(type) {
       if (type === TIMESERIES_TYPE || type === GEOCOORDINATE_TYPE) {
         const entry = createRouteEntry(GROUPING_ROUTE, {
           dataset: routeGetters.getRouteDataset(this.$store),
@@ -286,7 +286,7 @@ export default Vue.extend({
         this.$router.push(entry);
       } else if (type === REMOTE_SENSING_TYPE) {
         // CDB: Temporary for dev/debug.  Needs to be removed.
-        datasetActions.setGrouping(this.$store, {
+        await datasetActions.setGrouping(this.$store, {
           dataset: this.dataset,
           grouping: {
             dataset: this.dataset,
@@ -294,10 +294,12 @@ export default Vue.extend({
             type: REMOTE_SENSING_TYPE,
             imageCol: "image_file",
             bandCol: "band",
-            coordinateCol: "coordinates",
             subIds: [],
-            hidden: ["image_file", "band", "coordinates", "group_id"]
+            hidden: ["image_file", "band", "group_id"]
           } as RemoteSensingGrouping
+        });
+        datasetActions.fetchClusters(this.$store, {
+          dataset: this.dataset
         });
       } else if (
         this.expandCollapse &&

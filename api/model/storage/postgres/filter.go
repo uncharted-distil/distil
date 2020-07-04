@@ -235,7 +235,8 @@ func (s *Storage) getBivariateFilterKeys(dataset string, key string, alias strin
 		}
 		return fields, nil
 	}
-	return nil, errors.Errorf("unsupported field type %s for bivariate filter", g.Type)
+
+	return fields, nil
 }
 
 func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []interface{}, alias string, filter *model.Filter) ([]string, []interface{}) {

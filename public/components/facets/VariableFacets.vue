@@ -69,12 +69,7 @@
               >
               </geocoordinate-facet>
             </template>
-            <template
-              v-else-if="
-                summary.varType === 'image' ||
-                  summary.varType === 'multiband_image'
-              "
-            >
+            <template v-else-if="isImage(summary.varType)">
               <facet-image
                 :summary="summary"
                 :highlight="highlight"
@@ -194,7 +189,8 @@ import {
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
   isLocationType,
-  isGeoLocatedType
+  isGeoLocatedType,
+  isImageType
 } from "../../util/types";
 import { actions as appActions } from "../../store/app/module";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
@@ -414,6 +410,10 @@ export default Vue.extend({
 
     isGeoLocated(location: string): boolean {
       return isGeoLocatedType(location);
+    },
+
+    isImage(type: string): boolean {
+      return isImageType(type);
     }
   }
 });

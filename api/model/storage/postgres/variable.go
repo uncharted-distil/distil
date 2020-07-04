@@ -238,10 +238,11 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 			field = NewMultiBandImageField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsDateTime(variable.Type) {
 			field = NewDateTimeField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
+		} else if model.IsGeoBounds(variable.Type) {
+			field = NewGeoBoundsField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else {
 			return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
 		}
-
 	}
 
 	summary, err := field.FetchSummaryData(resultURI, filterParams, extrema, invert, mode)

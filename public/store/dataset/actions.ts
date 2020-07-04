@@ -42,7 +42,8 @@ import {
   GEOCODED_LAT_PREFIX,
   isRankableVariableType,
   REMOTE_SENSING_TYPE,
-  isImageType
+  isImageType,
+  UNKNOWN_TYPE
 } from "../../util/types";
 import { getters as routeGetters } from "../route/module";
 
@@ -625,17 +626,18 @@ export const actions = {
         })
       ]);
     } catch (error) {
-      const key = args.field;
-      const label = args.field;
-      const dataset = args.dataset;
-      mutations.updateIncludedVariableSummaries(
-        context,
-        createErrorSummary(key, label, dataset, error)
-      );
-      mutations.updateExcludedVariableSummaries(
-        context,
-        createErrorSummary(key, label, dataset, error)
-      );
+      // const key = args.field;
+      // const label = args.field;
+      // const dataset = args.dataset;
+      // mutations.updateIncludedVariableSummaries(
+      //   context,
+      //   createErrorSummary(key, label, dataset, error)
+      // );
+      // mutations.updateExcludedVariableSummaries(
+      //   context,
+      //   createErrorSummary(key, label, dataset, error)
+      // );
+      mutations.updateVariableType(context, { ...args, type: UNKNOWN_TYPE });
     }
   },
 
