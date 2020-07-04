@@ -131,6 +131,10 @@ func (f *MultiBandImageField) fetchRepresentationGroups(categoryBuckets []*api.B
 			imageFiles = append(imageFiles, imageFile)
 		}
 		rows.Close()
+		err = rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 	}
 	return imageFiles, nil
 }
@@ -259,6 +263,10 @@ func (f *MultiBandImageField) parseHistogram(rows pgx.Rows, mode api.SummaryMode
 			if bucketCount > max {
 				max = bucketCount
 			}
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 

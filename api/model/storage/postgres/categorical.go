@@ -155,6 +155,10 @@ func (f *CategoricalField) getTopCategories(filterParams *api.FilterParams, inve
 			}
 			categories = append(categories, category)
 		}
+		err = rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 	}
 	return categories, nil
 }
@@ -208,7 +212,7 @@ func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams
 	query := fmt.Sprintf(
 		`SELECT data."%s", COUNT(%s) AS count
 		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
-		 WHERE result.result_id = $%d %s
+		 WHERE result.result_id = $%d AND result.value != '' %s
 		 GROUP BY "%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
 		f.Key, f.Count, fromClause, f.Storage.getResultTable(f.DatasetStorageName),
@@ -257,6 +261,10 @@ func (f *CategoricalField) parseHistogram(rows pgx.Rows) (*api.Histogram, error)
 			if bucketCount > max {
 				max = bucketCount
 			}
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 

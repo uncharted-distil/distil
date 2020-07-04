@@ -99,6 +99,10 @@ func (s *Storage) FetchRequest(requestID string) (*api.Request, error) {
 		defer rows.Close()
 	}
 	rows.Next()
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	return s.loadRequest(rows)
 }
@@ -118,6 +122,10 @@ func (s *Storage) FetchRequestBySolutionID(solutionID string) (*api.Request, err
 		defer rows.Close()
 	}
 	rows.Next()
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	return s.loadRequest(rows)
 }
@@ -137,6 +145,10 @@ func (s *Storage) FetchRequestByFittedSolutionID(fittedSolutionID string) (*api.
 		defer rows.Close()
 	}
 	rows.Next()
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	return s.loadRequest(rows)
 }
@@ -202,6 +214,10 @@ func (s *Storage) FetchRequestFeatures(requestID string) ([]*api.Feature, error)
 			FeatureName: featureName,
 			FeatureType: featureType,
 		})
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
 	}
 
 	return results, nil
@@ -278,6 +294,10 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 			))
 		}
 	}
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	for _, feature := range features {
 		filters.Variables = append(filters.Variables, feature.FeatureName)
@@ -334,6 +354,10 @@ func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string) ([]
 			return nil, err
 		}
 		requests = append(requests, request)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
 	}
 	return requests, nil
 }

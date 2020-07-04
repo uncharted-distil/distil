@@ -50,6 +50,10 @@ func (s *Storage) FetchPrediction(requestID string) (*api.Prediction, error) {
 		defer rows.Close()
 	}
 	rows.Next()
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	return s.loadPrediction(rows)
 }
@@ -75,6 +79,10 @@ func (s *Storage) FetchPredictionsByFittedSolutionID(fittedSolutionID string) ([
 			return nil, err
 		}
 		predictions = append(predictions, prediction)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
 	}
 
 	return predictions, nil

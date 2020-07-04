@@ -78,6 +78,10 @@ func (s *Storage) parseTimeseries(rows pgx.Rows) ([]*api.TimeseriesObservation, 
 				Time:  x,
 			})
 		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 	}
 
 	return points, nil
@@ -99,6 +103,10 @@ func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows) ([]*api.TimeseriesObser
 				Value: api.NullableFloat64(value),
 				Time:  float64(time.Unix() * 1000),
 			})
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 
@@ -123,6 +131,10 @@ func (s *Storage) parseTimeseriesForecast(rows pgx.Rows) ([]*api.TimeseriesObser
 				ConfidenceLow:  api.NullableFloat64(confidenceLow),
 				ConfidenceHigh: api.NullableFloat64(confidenceHigh),
 			})
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 
@@ -149,6 +161,10 @@ func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) ([]*api.Timeser
 				ConfidenceLow:  api.NullableFloat64(confidenceLow),
 				ConfidenceHigh: api.NullableFloat64(confidenceHigh),
 			})
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 
@@ -201,6 +217,10 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 
 			rows.Close()
 			return nil, errors.Wrap(fmt.Errorf("timeseries id type not recognized %v", values[0]), "unable to parse timeseries id")
+		}
+		err = rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 
@@ -373,6 +393,42 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		}
 	}
 
+	// split the filters to make sure the result based filters can be applied properly
+	filtersSplit := splitFilters(filterParams)
+	joins := make([]*joinDefinition, 0)
+	wheres := []string{}
+	params := []interface{}{}
+	if filtersSplit.correctnessFilter != nil {
+
+	}
+	if filtersSplit.predictedFilter != nil {
+
+	}
+	if filtersSplit.residualFilter != nil {
+		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filtersSplit.residualFilter)
+		if err != nil {
+			return nil, err
+		}
+
+		joins = append(joins, &joinDefinition{
+			baseAlias:  "bb",
+			baseColumn: f.IDCol,
+			joinAlias:  "r",
+			joinColumn: "k",
+			joinTableName: fmt.Sprintf("(SELECT DISTINCT \"%s\" AS k FROM %s AS b INNER JOIN %s AS r ON b.\"%s\" = r.index WHERE r.value != '' AND %s)",
+				f.IDCol, f.GetDatasetStorageName(), f.Storage.getResultTable(f.GetDatasetStorageName()), model.D3MIndexFieldName, strings.Join(wheres, " AND ")),
+		},
+		)
+	}
+
+	// reset the filter params since the residual filter has been handled already
+	filterParamsClone := filterParams.Clone()
+	filterParamsClone.Highlight = nil
+	filterParamsClone.Filters = filtersSplit.genericFilters
+
+	// clear filters since they are used in subselect
+	wheres = []string{}
+
 	// Handle timeseries that use a timestamp/int as their time value, or those that use a date time.
 	var timelineField TimelineField
 	if f.XColType == model.DateTimeType {
@@ -383,11 +439,11 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		return nil, errors.Errorf("unsupported timeseries field variable type %s:%s", f.XCol, f.XColType)
 	}
 
-	timelineBaseline, err := timelineField.fetchHistogram(nil, invert, api.MaxNumBuckets)
+	timelineBaseline, err := timelineField.fetchHistogramWithJoins(nil, invert, api.MaxNumBuckets, joins, wheres, params)
 	if err != nil {
 		return nil, err
 	}
-	timeline, err := timelineField.fetchHistogram(filterParams, invert, api.MaxNumBuckets)
+	timeline, err := timelineField.fetchHistogramWithJoins(filterParamsClone, invert, api.MaxNumBuckets, joins, wheres, params)
 	if err != nil {
 		return nil, err
 	}
@@ -452,16 +508,10 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 }
 
 func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
-
-	wheres := []string{}
-	params := []interface{}{}
-	var err error
-	if f.Type != "timeseries" {
-		// get filter where / params
-		wheres, params, err = f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
-		if err != nil {
-			return nil, err
-		}
+	// get filter where / params
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	if err != nil {
+		return nil, err
 	}
 
 	params = append(params, resultURI)
@@ -477,7 +527,7 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 	query := fmt.Sprintf(
 		`SELECT data."%s", COUNT(DISTINCT "%s") AS __count__
 		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
-		 WHERE result.result_id = $%d %s
+		 WHERE result.result_id = $%d AND result.value != '' %s
 		 GROUP BY "%s"
 		 ORDER BY __count__ desc, "%s" LIMIT %d;`,
 		keyColName, f.IDCol, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
@@ -536,6 +586,10 @@ func (f *TimeSeriesField) parseHistogram(rows pgx.Rows, mode api.SummaryMode) (*
 				max = bucketCount
 			}
 		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 	}
 
 	// assign histogram attributes
@@ -581,16 +635,10 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 }
 
 func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.Histogram, error) {
-
-	wheres := []string{}
-	params := []interface{}{}
-	var err error
-	if f.Type != "timeseries" {
-		// get filter where / params
-		wheres, params, err = f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
-		if err != nil {
-			return nil, err
-		}
+	// get filter where / params
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	if err != nil {
+		return nil, err
 	}
 
 	params = append(params, resultURI)

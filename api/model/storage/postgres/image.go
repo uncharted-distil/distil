@@ -131,6 +131,10 @@ func (f *ImageField) fetchRepresentationImages(categoryBuckets []*api.Bucket, mo
 			imageFiles = append(imageFiles, imageFile)
 		}
 		rows.Close()
+		err = rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 	}
 	return imageFiles, nil
 }
@@ -258,6 +262,10 @@ func (f *ImageField) parseHistogram(rows pgx.Rows, mode api.SummaryMode) (*api.H
 			if bucketCount > max {
 				max = bucketCount
 			}
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 

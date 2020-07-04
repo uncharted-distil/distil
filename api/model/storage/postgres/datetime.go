@@ -120,11 +120,13 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 }
 
 func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
+	return f.fetchHistogramWithJoins(filterParams, invert, numBuckets, nil, []string{}, []interface{}{})
+}
+
+func (f *DateTimeField) fetchHistogramWithJoins(filterParams *api.FilterParams, invert bool, numBuckets int, joins []*joinDefinition, wheres []string, params []interface{}) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query.
-	wheres := make([]string, 0)
-	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
 
 	// need the extrema to calculate the histogram interval
@@ -142,9 +144,11 @@ func (f *DateTimeField) fetchHistogram(filterParams *api.FilterParams, invert bo
 		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 	}
 
+	joinSQL := createJoinStatements(joins)
+
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s %s GROUP BY %s ORDER BY %s;",
-		bucketQuery, histogramQuery, histogramName, f.Count, fromClause, where, bucketQuery, histogramName)
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s %s %s GROUP BY %s ORDER BY %s;",
+		bucketQuery, histogramQuery, histogramName, f.Count, fromClause, joinSQL, where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -307,6 +311,10 @@ func (f *DateTimeField) parseHistogram(rows pgx.Rows, extrema *api.Extrema, numB
 			buckets[len(buckets)-1].Count += bucketCount
 
 		}
+	}
+	err := rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
 	}
 
 	// assign histogram attributes

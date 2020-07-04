@@ -142,6 +142,10 @@ func (s *Storage) parseHistogram(rows pgx.Rows, variable *model.Variable) (*api.
 			}
 			countMap[predictedTerm][targetTerm] = bucketCount
 		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 	}
 
 	correctBucket := &api.Bucket{

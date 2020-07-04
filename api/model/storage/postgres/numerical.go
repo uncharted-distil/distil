@@ -125,11 +125,13 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 }
 
 func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
+	return f.fetchHistogramWithJoins(filterParams, invert, numBuckets, nil, []string{}, []interface{}{})
+}
+
+func (f *NumericalField) fetchHistogramWithJoins(filterParams *api.FilterParams, invert bool, numBuckets int, joins []*joinDefinition, wheres []string, params []interface{}) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 
 	// create the filter for the query.
-	wheres := make([]string, 0)
-	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
 	wheres = append(wheres, f.getNaNFilter())
 
@@ -148,9 +150,11 @@ func (f *NumericalField) fetchHistogram(filterParams *api.FilterParams, invert b
 		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 	}
 
+	joinSQL := createJoinStatements(joins)
+
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s %s GROUP BY %s ORDER BY %s;",
-		bucketQuery, histogramQuery, histogramName, f.Count, fromClause, where, bucketQuery, histogramName)
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s AS bb %s %s GROUP BY %s ORDER BY %s;",
+		bucketQuery, histogramQuery, histogramName, f.Count, fromClause, joinSQL, where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -333,6 +337,11 @@ func (f *NumericalField) parseHistogram(rows pgx.Rows, extrema *api.Extrema, num
 			buckets[len(buckets)-1].Count += bucketCount
 		}
 	}
+	err := rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
+
 	// assign histogram attributes
 	return &api.Histogram{
 		Extrema: rounded,
@@ -464,6 +473,7 @@ func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResu
 
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, f.Key)
+	wheres = append(wheres, fmt.Sprintf("%s != ''", resultVariable.Name))
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
@@ -530,7 +540,7 @@ func (f *NumericalField) fetchResultsExtrema(resultURI string, dataset string, r
 	aggQuery := f.getResultMinMaxAggsQuery(resultVariable)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, dataset)
+	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2 AND %s != '';", aggQuery, dataset, resultVariable.Name)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(queryString, resultURI, f.Key)

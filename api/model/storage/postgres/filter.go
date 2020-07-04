@@ -77,6 +77,10 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 
 			result.Values = append(result.Values, weightedValues)
 		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 
 		fields := rows.FieldDescriptions()
 		columns := make([]api.Column, len(fields))
@@ -120,7 +124,7 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 	case model.DatetimeFilter:
 		// datetime
 		// extract epoch for comparison
-		where := fmt.Sprintf("cast(extract(epoch from %s) as double precision) >= $%d AND cast(extract(epoch from %s) as double precision) <= $%d", name, len(params)+1, name, len(params)+2)
+		where := fmt.Sprintf("cast(extract(epoch from %s) as double precision) >= $%d AND cast(extract(epoch from %s) as double precision) < $%d", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -128,7 +132,7 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 	case model.NumericalFilter:
 		// numerical
 		// cast to double precision in case of string based representation
-		where := fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d", name, len(params)+1, name, len(params)+2)
+		where := fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) < $%d", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -152,7 +156,7 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 		if err != nil {
 			log.Warnf("%+v", err)
 		} else {
-			where := fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d AND cast(%s as double precision) >= $%d AND cast(%s as double precision) <= $%d",
+			where := fmt.Sprintf("cast(%s as double precision) >= $%d AND cast(%s as double precision) < $%d AND cast(%s as double precision) >= $%d AND cast(%s as double precision) < $%d",
 				fields[0], len(params)+1, fields[0], len(params)+2, fields[1], len(params)+3, fields[1], len(params)+4)
 			wheres = append(wheres, where)
 			params = append(params, filter.Bounds.MinX)
@@ -243,7 +247,7 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 	case model.DatetimeFilter:
 		// datetime
 		// extract epoch for comparison
-		where := fmt.Sprintf("cast(extract(epoch from %s) as double precision) < $%d OR cast(extract(epoch from %s) as double precision) > $%d", name, len(params)+1, name, len(params)+2)
+		where := fmt.Sprintf("cast(extract(epoch from %s) as double precision) < $%d OR cast(extract(epoch from %s) as double precision) >= $%d", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -251,7 +255,7 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 	case model.NumericalFilter:
 		// numerical
 		//TODO: WHY DOES THIS QUERY NOT CAST TO DOUBLE LIKE THE INCLUDE???
-		where := fmt.Sprintf("(%s < $%d OR %s > $%d)", name, len(params)+1, name, len(params)+2)
+		where := fmt.Sprintf("(%s < $%d OR %s >= $%d)", name, len(params)+1, name, len(params)+2)
 		wheres = append(wheres, where)
 		params = append(params, *filter.Min)
 		params = append(params, *filter.Max)
@@ -275,7 +279,7 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 		if err != nil {
 			log.Warnf("%+v", err)
 		} else {
-			where := fmt.Sprintf("(cast(%s as double precision) < $%d OR cast(%s as double precision) > $%d) OR (cast(%s as double precision) < $%d OR cast(%s as double precision) > $%d)",
+			where := fmt.Sprintf("(cast(%s as double precision) < $%d OR cast(%s as double precision) >= $%d) OR (cast(%s as double precision) < $%d OR cast(%s as double precision) >= $%d)",
 				fields[0], len(params)+1, fields[0], len(params)+2, fields[1], len(params)+3, fields[1], len(params)+4)
 			wheres = append(wheres, where)
 			params = append(params, filter.Bounds.MinX)
@@ -476,7 +480,7 @@ func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, par
 
 func (s *Storage) buildResultQueryFilters(dataset string, storageName string, resultURI string, filterParams *api.FilterParams) ([]string, []interface{}, error) {
 	// pull filters generated against the result facet out for special handling
-	filters := s.splitFilters(filterParams)
+	filters := splitFilters(filterParams)
 
 	genericFilterParams := &api.FilterParams{
 		Filters: filters.genericFilters,
@@ -515,7 +519,7 @@ type filters struct {
 	correctnessFilter *model.Filter
 }
 
-func (s *Storage) splitFilters(filterParams *api.FilterParams) *filters {
+func splitFilters(filterParams *api.FilterParams) *filters {
 	// Groups filters for handling downstream
 	var predictedFilter *model.Filter
 	var residualFilter *model.Filter

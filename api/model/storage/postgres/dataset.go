@@ -315,8 +315,13 @@ func (s *Storage) insertBatchData(db *pg.DB, storageName string, varNames []stri
 	count := 0
 	for i := 0; i < len(inserts); i++ {
 		insertSQL = fmt.Sprintf("%s %s", insertSQL, basicInsert)
-		for j := 0; j < fieldCount; j++ {
+		for j := 0; j < len(inserts[i]); j++ {
 			params = append(params, inserts[i][j])
+		}
+
+		// append nil for remaining fields
+		for j := len(inserts[i]); j < fieldCount; j++ {
+			params = append(params, nil)
 		}
 
 		count = count + 1

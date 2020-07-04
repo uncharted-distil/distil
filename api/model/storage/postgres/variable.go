@@ -302,6 +302,10 @@ func (s *Storage) FetchCategoryCounts(storageName string, variable *model.Variab
 			}
 			counts[label] = count
 		}
+		err = rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 	}
 	return counts, nil
 }
@@ -327,6 +331,10 @@ func (s *Storage) FetchRawDistinctValues(dataset string, storageName string, var
 			}
 			values = append(values, val)
 		}
+		err = rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 	}
 	return values, nil
 }
@@ -340,5 +348,11 @@ func (s *Storage) DoesVariableExist(dataset string, storageName string, varName 
 	}
 	defer rows.Close()
 
-	return rows.Next(), nil
+	exists := rows.Next()
+	err = rows.Err()
+	if err != nil {
+		return false, errors.Wrapf(err, "error reading data from postgres")
+	}
+
+	return exists, nil
 }

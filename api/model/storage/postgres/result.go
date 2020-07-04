@@ -65,6 +65,10 @@ func (s *Storage) getResultTargetName(storageName string, resultURI string) (str
 
 		return targetName, nil
 	}
+	err = rows.Err()
+	if err != nil {
+		return "", errors.Wrapf(err, "error reading data from postgres")
+	}
 
 	return "", errors.Errorf("Target feature for result URI `%s` not found", resultURI)
 }
@@ -346,6 +350,10 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 			}
 			result.Values = append(result.Values, weightedValues)
 		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
 		result.Columns = columns
 	} else {
 		result.Columns = make([]api.Column, 0)
@@ -587,7 +595,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	fieldsExplain := addTableAlias("weights", fields, true)
 
 	// break filters out groups for specific handling
-	filters := s.splitFilters(filterParams)
+	filters := splitFilters(filterParams)
 
 	genericFilterParams := &api.FilterParams{
 		Filters: filters.genericFilters,
@@ -672,7 +680,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 		"SELECT %s"+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"LEFT OUTER JOIN %s as weights on weights.\"%s\" = predicted.index AND weights.result_id = predicted.result_id "+
-			"WHERE predicted.result_id = $%d AND target = $%d",
+			"WHERE predicted.result_id = $%d AND target = $%d AND predicted.value != ''",
 		selectedVars, storageNameResult, storageName, model.D3MIndexFieldName,
 		s.getSolutionFeatureWeightTable(storageName), model.D3MIndexFieldName,
 		len(params)+1, len(params)+2)
