@@ -20,7 +20,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/go-pg/pg"
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 
@@ -158,7 +157,7 @@ var (
 
 // Database is a struct representing a full logical database.
 type Database struct {
-	DB        *pg.DB
+	Client    DatabaseDriver
 	Tables    map[string]*Dataset
 	BatchSize int
 }
@@ -171,26 +170,25 @@ type WordStem struct {
 
 // Config has the necessary configuration values for a postgres connection.
 type Config struct {
-	Database  string
-	Table     string
-	User      string
-	Password  string
-	Port      int
-	Host      string
-	BatchSize int
+	Database         string
+	Table            string
+	User             string
+	Password         string
+	Port             int
+	Host             string
+	BatchSize        int
+	PostgresLogLevel string
 }
 
 // NewDatabase creates a new database instance.
-func NewDatabase(config *Config) (*Database, error) {
-	db := pg.Connect(&pg.Options{
-		Addr:     fmt.Sprintf("%s:%d", config.Host, config.Port),
-		User:     config.User,
-		Password: config.Password,
-		Database: config.Database,
-	})
+func NewDatabase(config *Config, batch bool) (*Database, error) {
+	client, err := NewClient(config.Host, config.Port, config.User, config.Password, config.Database, config.PostgresLogLevel, batch)()
+	if err != nil {
+		return nil, err
+	}
 
 	database := &Database{
-		DB:        db,
+		Client:    client,
 		Tables:    make(map[string]*Dataset),
 		BatchSize: config.BatchSize,
 	}
@@ -206,61 +204,61 @@ func (d *Database) CreateSolutionMetadataTables() error {
 	log.Infof("Creating solution metadata tables.")
 
 	_ = d.DropTable(PredictionTableName)
-	_, err := d.DB.Exec(fmt.Sprintf(predictionTableCreationSQL, PredictionTableName))
+	_, err := d.Client.Exec(fmt.Sprintf(predictionTableCreationSQL, PredictionTableName))
 	if err != nil {
 		return errors.Wrap(err, "failed to drop table")
 	}
 
 	_ = d.DropTable(RequestTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(requestTableCreationSQL, RequestTableName))
+	_, err = d.Client.Exec(fmt.Sprintf(requestTableCreationSQL, RequestTableName))
 	if err != nil {
 		return errors.Wrap(err, "failed to drop table")
 	}
 
 	_ = d.DropTable(RequestFeatureTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(requestFeatureTableCreationSQL, RequestFeatureTableName))
+	_, err = d.Client.Exec(fmt.Sprintf(requestFeatureTableCreationSQL, RequestFeatureTableName))
 	if err != nil {
 		return errors.Wrap(err, "failed to drop table")
 	}
 
 	_ = d.DropTable(RequestFilterTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(requestFilterTableCreationSQL, RequestFilterTableName))
+	_, err = d.Client.Exec(fmt.Sprintf(requestFilterTableCreationSQL, RequestFilterTableName))
 	if err != nil {
 		return errors.Wrap(err, "failed to drop table")
 	}
 
 	_ = d.DropTable(SolutionTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(solutionTableCreationSQL, SolutionTableName))
+	_, err = d.Client.Exec(fmt.Sprintf(solutionTableCreationSQL, SolutionTableName))
 	if err != nil {
 		return errors.Wrap(err, "failed to drop table")
 	}
 
 	_ = d.DropTable(SolutionFeatureWeightTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(solutionFeatureWeightTableCreationSQL, SolutionFeatureWeightTableName))
+	_, err = d.Client.Exec(fmt.Sprintf(solutionFeatureWeightTableCreationSQL, SolutionFeatureWeightTableName))
 	if err != nil {
 		return errors.Wrap(err, "failed to drop table")
 	}
 
 	_ = d.DropTable(SolutionStateTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(solutionStateTableCreationSQL, SolutionStateTableName))
+	_, err = d.Client.Exec(fmt.Sprintf(solutionStateTableCreationSQL, SolutionStateTableName))
 	if err != nil {
 		return errors.Wrap(err, "failed to drop table")
 	}
 
 	_ = d.DropTable(SolutionResultTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(solutionResultTableCreationSQL, SolutionResultTableName))
+	_, err = d.Client.Exec(fmt.Sprintf(solutionResultTableCreationSQL, SolutionResultTableName))
 	if err != nil {
 		return errors.Wrap(err, "failed to drop table")
 	}
 
 	_ = d.DropTable(SolutionScoreTableName)
-	_, err = d.DB.Exec(fmt.Sprintf(solutionScoreTableCreationSQL, SolutionScoreTableName))
+	_, err = d.Client.Exec(fmt.Sprintf(solutionScoreTableCreationSQL, SolutionScoreTableName))
 	if err != nil {
 		return errors.Wrap(err, "failed to drop table")
 	}
 
 	// do not drop the word stem table as we want it to include all words.
-	_, _ = d.DB.Exec(fmt.Sprintf(wordStemsTableCreationSQL, WordStemTableName))
+	_, _ = d.Client.Exec(fmt.Sprintf(wordStemsTableCreationSQL, WordStemTableName))
 	// ignore the error in the word stem creation.
 	// Almost certainly due to the table already existing.
 
@@ -268,21 +266,18 @@ func (d *Database) CreateSolutionMetadataTables() error {
 }
 
 func (d *Database) executeInserts(tableName string) error {
-	ds := d.Tables[tableName]
+	batch := d.Tables[tableName].GetBatch()
+	count := batch.Len()
+	res := d.Client.SendBatch(batch)
+	defer res.Close()
+	for i := 0; i < count; i++ {
+		_, err := res.Exec()
+		if err != nil {
+			return errors.Wrapf(err, "unable to insert batch to postgres")
+		}
+	}
 
-	insertStatement := fmt.Sprintf("INSERT INTO %s.%s.%s_base VALUES %s;", "distil", "public", tableName, strings.Join(ds.GetBatch(), ", "))
-
-	_, err := d.DB.Exec(insertStatement, ds.GetBatchArgs()...)
-
-	return err
-}
-
-func (d *Database) executeInsertsComplete(tableName string) error {
-	ds := d.Tables[tableName]
-
-	_, err := d.DB.Exec(strings.Join(ds.GetBatch(), " "), ds.GetBatchArgs()...)
-
-	return err
+	return nil
 }
 
 // CreateResultTable creates an empty table for the solution results.
@@ -300,7 +295,7 @@ func (d *Database) CreateResultTable(tableName string) error {
 	// Create the variable table.
 	log.Infof("Creating result table %s", resultTableName)
 	createStatement := fmt.Sprintf(resultTableCreationSQL, resultTableName)
-	_, err = d.DB.Exec(createStatement)
+	_, err = d.Client.Exec(createStatement)
 	if err != nil {
 		return err
 	}
@@ -323,18 +318,18 @@ func (d *Database) StoreMetadata(tableName string) error {
 	// Create the variable table.
 	log.Infof("Creating variable table %s", variableTableName)
 	createStatement := fmt.Sprintf(metadataTableCreationSQL, variableTableName)
-	_, err = d.DB.Exec(createStatement)
+	_, err = d.Client.Exec(createStatement)
 	if err != nil {
 		return err
 	}
 
 	// Insert the variable metadata into the new table.
 	for _, v := range d.Tables[tableName].Variables {
-		insertStatement := fmt.Sprintf("INSERT INTO %s (name, role, type) VALUES (?, ?, ?);", variableTableName)
-		values := []interface{}{v.Name, v.Role, v.Type}
-		_, err = d.DB.Exec(insertStatement, values...)
+		insertStatement := fmt.Sprintf("INSERT INTO %s (name, role, type) VALUES ($1, $2, $3);", variableTableName)
+		values := []interface{}{v.Name, v.DistilRole, v.Type}
+		_, err = d.Client.Exec(insertStatement, values...)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "unable to store variable in postgres")
 		}
 	}
 
@@ -373,13 +368,14 @@ func (d *Database) IngestRow(tableName string, data []string) error {
 		} else {
 			val = data[i]
 		}
-		insertStatement = fmt.Sprintf("%s, ?", insertStatement)
+		insertStatement = fmt.Sprintf("%s, $%d", insertStatement, i+1)
 		values[i] = val
 	}
-	insertStatement = fmt.Sprintf("(%s)", insertStatement[2:])
+	insertStatement = fmt.Sprintf("INSERT INTO distil.public.\"%s_base\" (%s) VALUES (%s)", tableName, ds.fieldSQL, insertStatement[2:])
 	ds.AddInsert(insertStatement, values)
 
 	if ds.GetBatchSize() >= d.BatchSize {
+
 		err := d.executeInserts(tableName)
 		if err != nil {
 			return errors.Wrap(err, "unable to insert to table "+tableName)
@@ -395,16 +391,9 @@ func (d *Database) IngestRow(tableName string, data []string) error {
 func (d *Database) InsertRemainingRows() error {
 	for tableName, ds := range d.Tables {
 		if ds.GetBatchSize() > 0 {
-			if tableName != WordStemTableName {
-				err := d.executeInserts(tableName)
-				if err != nil {
-					return errors.Wrap(err, "unable to insert remaining rows for table "+tableName)
-				}
-			} else {
-				err := d.executeInsertsComplete(tableName)
-				if err != nil {
-					return errors.Wrap(err, "unable to insert remaining rows for table "+tableName)
-				}
+			err := d.executeInserts(tableName)
+			if err != nil {
+				return errors.Wrap(err, "unable to insert remaining rows for table "+tableName)
 			}
 		}
 	}
@@ -426,10 +415,10 @@ func (d *Database) AddWordStems(data []string) error {
 			}
 
 			// query for the stemmed version of each word.
-			query := fmt.Sprintf("INSERT INTO %s VALUES (unnest(tsvector_to_array(to_tsvector(?))), ?) ON CONFLICT (stem) DO NOTHING;", WordStemTableName)
+			query := fmt.Sprintf("INSERT INTO %s VALUES (unnest(tsvector_to_array(to_tsvector($1))), $2) ON CONFLICT (stem) DO NOTHING;", WordStemTableName)
 			ds.AddInsert(query, []interface{}{fieldValue, strings.ToLower(fieldValue)})
 			if ds.GetBatchSize() >= d.BatchSize {
-				err := d.executeInsertsComplete(WordStemTableName)
+				err := d.executeInserts(WordStemTableName)
 				if err != nil {
 					return errors.Wrap(err, "unable to insert to table "+WordStemTableName)
 				}
@@ -446,7 +435,7 @@ func (d *Database) AddWordStems(data []string) error {
 func (d *Database) DropTable(tableName string) error {
 	log.Infof("Dropping table %s", tableName)
 	drop := fmt.Sprintf("DROP TABLE IF EXISTS %s;", tableName)
-	_, err := d.DB.Exec(drop)
+	_, err := d.Client.Exec(drop)
 	log.Infof("Dropped table %s", tableName)
 
 	return err
@@ -456,7 +445,7 @@ func (d *Database) DropTable(tableName string) error {
 func (d *Database) DropView(viewName string) error {
 	log.Infof("Dropping view %s", viewName)
 	drop := fmt.Sprintf("DROP VIEW IF EXISTS %s;", viewName)
-	_, err := d.DB.Exec(drop)
+	_, err := d.Client.Exec(drop)
 	log.Infof("Dropped view %s", viewName)
 
 	return err
@@ -490,7 +479,7 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 	log.Infof("Creating table %s_base", tableName)
 
 	// Create the table.
-	_, err := d.DB.Exec(createStatementTable)
+	_, err := d.Client.Exec(createStatementTable)
 	if err != nil {
 		return err
 	}
@@ -499,7 +488,7 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 	log.Infof("Creating view %s", tableName)
 
 	// Create the view.
-	_, err = d.DB.Exec(createStatementView)
+	_, err = d.Client.Exec(createStatementView)
 	if err != nil {
 		return err
 	}
@@ -509,7 +498,7 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 	log.Infof("Creating table %s", explainName)
 
 	// Create the feature weight table.
-	_, err = d.DB.Exec(createStatementExplain)
+	_, err = d.Client.Exec(createStatementExplain)
 	if err != nil {
 		return err
 	}

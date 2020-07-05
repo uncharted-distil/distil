@@ -688,6 +688,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	// execute the postgres query
 	batch.Queue(query, params...)
 	resBatch := s.client.SendBatch(batch)
+	defer resBatch.Close()
 	_, err = resBatch.Exec()
 	if err != nil {
 		return nil, errors.Wrap(err, "postgres filtered data set seed query failed")

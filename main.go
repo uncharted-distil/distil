@@ -115,7 +115,9 @@ func main() {
 
 	// instantiate the postgres client constructor.
 	postgresClientCtor := postgres.NewClient(config.PostgresHost, config.PostgresPort, config.PostgresUser, config.PostgresPassword,
-		config.PostgresDatabase, config.PostgresLogLevel)
+		config.PostgresDatabase, config.PostgresLogLevel, false)
+	postgresBatchClientCtor := postgres.NewClient(config.PostgresHost, config.PostgresPort, config.PostgresUser, config.PostgresPassword,
+		config.PostgresDatabase, "error", true)
 
 	// instantiate the metadata storage (using ES).
 	esMetadataStorageCtor := es.NewMetadataStorage(config.ESDatasetsIndex, false, esClientCtor)
@@ -127,7 +129,7 @@ func main() {
 	fileMetadataStorageCtor := file.NewMetadataStorage(config.D3MOutputDir)
 
 	// instantiate the postgres data storage constructor.
-	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, esMetadataStorageCtor)
+	pgDataStorageCtor := pg.NewDataStorage(postgresClientCtor, postgresBatchClientCtor, esMetadataStorageCtor)
 
 	// instantiate the postgres solution storage constructor.
 	pgSolutionStorageCtor := pg.NewSolutionStorage(postgresClientCtor, esMetadataStorageCtor)

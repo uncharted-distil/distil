@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/go-pg/pg"
+	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -297,49 +298,59 @@ func (s *Storage) InsertBatch(storageName string, varNames []string, inserts [][
 }
 
 func (s *Storage) insertBatchData(db *pg.DB, storageName string, varNames []string, inserts [][]interface{}) error {
-	// get the boiler plater of the query
+	// get the boiler plate of the query
 	fieldCount := len(varNames)
-	basicInsert := "INSERT INTO \"%s\" (%s) VALUES (%s);"
-	paramList := strings.Repeat(", ?", fieldCount)[2:]
+	paramList := ""
+	for i := 0; i < fieldCount; i++ {
+		paramList = fmt.Sprintf("%s, $%d", paramList, i+1)
+	}
+	paramList = paramList[2:]
 
 	// need to quote the fields
 	// after joining, the first and last fields are missing a quote
 	fieldList := strings.Join(varNames, "\", \"")
 	fieldList = fmt.Sprintf("\"%s\"", fieldList)
 
-	basicInsert = fmt.Sprintf(basicInsert, storageName, fieldList, paramList)
+	batchSQL := fmt.Sprintf("INSERT INTO \"%s\" (%s) VALUES (%s);", storageName, fieldList, paramList)
 
 	// build the batches and run the queries
-	params := make([]interface{}, 0)
-	insertSQL := ""
-	count := 0
+	batch := &pgx.Batch{}
 	for i := 0; i < len(inserts); i++ {
-		insertSQL = fmt.Sprintf("%s %s", insertSQL, basicInsert)
+		params := make([]interface{}, 0)
 		for j := 0; j < fieldCount; j++ {
 			params = append(params, inserts[i][j])
 		}
+		batch.Queue(batchSQL, params...)
 
-		count = count + 1
-		if count > maxBatchSize {
+		if batch.Len() > maxBatchSize {
 			// submit the batch
-			_, err := db.Exec(insertSQL, params...)
-			if err != nil {
-				return errors.Wrap(err, "unable to insert batch")
+			resBatch := s.client.SendBatch(batch)
+			for i := 0; i < maxBatchSize; i++ {
+				_, err := resBatch.Exec()
+				if err != nil {
+					resBatch.Close()
+					return errors.Wrapf(err, "unable to insert batch")
+				}
 			}
+			resBatch.Close()
 
 			// reset the batch
-			insertSQL = ""
-			count = 0
-			params = make([]interface{}, 0)
+			batch = &pgx.Batch{}
 		}
 	}
 
 	// submit remaining rows
+	count := batch.Len()
 	if count > 0 {
-		_, err := db.Exec(insertSQL, params...)
-		if err != nil {
-			return errors.Wrap(err, "unable to insert batch")
+		resBatch := s.client.SendBatch(batch)
+		for i := 0; i < count; i++ {
+			_, err := resBatch.Exec()
+			if err != nil {
+				resBatch.Close()
+				return errors.Wrapf(err, "unable to insert final batch")
+			}
 		}
+		resBatch.Close()
 	}
 
 	return nil

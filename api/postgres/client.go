@@ -29,12 +29,14 @@ import (
 )
 
 var (
-	mu      = &sync.Mutex{}
-	clients map[string]*IntegratedClient
+	mu           = &sync.Mutex{}
+	clients      map[string]*IntegratedClient
+	clientsBatch map[string]*IntegratedClient
 )
 
 func init() {
 	clients = make(map[string]*IntegratedClient)
+	clientsBatch = make(map[string]*IntegratedClient)
 }
 
 // DatabaseDriver defines the behaviour of the querying engine.
@@ -124,7 +126,7 @@ func (pgxLogAdapter) Error(msg string, ctx ...interface{}) {
 
 // NewClient instantiates and returns a new postgres client constructor.  Log level is one
 // of none, info, warn, error, debug.
-func NewClient(host string, port int, user string, password string, database string, logLevel string) ClientCtor {
+func NewClient(host string, port int, user string, password string, database string, logLevel string, batch bool) ClientCtor {
 	return func() (DatabaseDriver, error) {
 		endpoint := fmt.Sprintf("%s:%d", host, port)
 
@@ -149,7 +151,13 @@ func NewClient(host string, port int, user string, password string, database str
 		defer mu.Unlock()
 
 		// see if we have an existing connection
-		client, ok := clients[endpoint]
+		var clientsMap map[string]*IntegratedClient
+		if batch {
+			clientsMap = clientsBatch
+		} else {
+			clientsMap = clients
+		}
+		client, ok := clientsMap[endpoint]
 		if !ok {
 			log.Infof("Creating new Postgres connection to endpoint %s", endpoint)
 			connString := fmt.Sprintf("user=%s host=%s port=%d dbname=%s pool_max_conns=%d",
@@ -176,7 +184,7 @@ func NewClient(host string, port int, user string, password string, database str
 				return nil, errors.Wrap(err, "Postgres client init failed")
 			}
 			log.Infof("Postgres connection established to endpoint %s", endpoint)
-			clients[endpoint] = client
+			clientsMap[endpoint] = client
 		}
 		return client, nil
 	}
