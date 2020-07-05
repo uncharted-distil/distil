@@ -314,10 +314,15 @@ func (s *Storage) insertBatchData(storageName string, varNames []string, inserts
 	batch := &pgx.Batch{}
 	for i := 0; i < len(inserts); i++ {
 		params := make([]interface{}, 0)
-		for j := 0; j < fieldCount; j++ {
+		for j := 0; j < len(inserts[i]); j++ {
 			params = append(params, inserts[i][j])
 		}
 		batch.Queue(batchSQL, params...)
+
+		// append nil for remaining fields
+		for j := len(inserts[i]); j < fieldCount; j++ {
+			params = append(params, nil)
+		}
 
 		if batch.Len() > maxBatchSize {
 			// submit the batch

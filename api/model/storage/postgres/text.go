@@ -162,7 +162,12 @@ func (f *TextField) parseTimeExtrema(timeVar *model.Variable, rows pgx.Rows) (*a
 		if !exists {
 			return nil, fmt.Errorf("no rows in extrema query result")
 		}
-		err := rows.Scan(&minValue, &maxValue)
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
+
+		err = rows.Scan(&minValue, &maxValue)
 		if err != nil {
 			return nil, errors.Wrap(err, "no min / max aggregation found")
 		}
@@ -265,6 +270,10 @@ func (f *TextField) parseTimeHistogram(rows pgx.Rows, extrema *api.Extrema, inte
 			buckets[len(buckets)-1].Count += bucketCount
 		}
 	}
+	err := rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
 	// assign histogram attributes
 	return &api.Histogram{
 		Extrema:         binning.Rounded,
@@ -315,6 +324,10 @@ func (f *TextField) getTopCategories(filterParams *api.FilterParams, invert bool
 				return nil, err
 			}
 			categories = append(categories, category)
+		}
+		err = rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 	return categories, nil
@@ -422,6 +435,10 @@ func (f *TextField) parseHistogram(rows pgx.Rows) (*api.Histogram, error) {
 			if bucketCount > max {
 				max = bucketCount
 			}
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
 	}
 

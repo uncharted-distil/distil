@@ -38,6 +38,7 @@ type Field interface {
 type TimelineField interface {
 	Field
 	fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error)
+	fetchHistogramWithJoins(filterParams *api.FilterParams, invert bool, numBuckets int, joins []*joinDefinition, wheres []string, params []interface{}) (*api.Histogram, error)
 }
 
 // BasicField provides access to baseline field data
@@ -79,6 +80,16 @@ func (b *BasicField) GetLabel() string {
 // GetType returns the internal Distil type of the field.
 func (b *BasicField) GetType() string {
 	return b.Type
+}
+
+func createJoinStatements(joins []*joinDefinition) string {
+	joinSQL := ""
+	for _, j := range joins {
+		joinSQL = fmt.Sprintf("%s INNER JOIN %s AS %s ON %s.\"%s\" = %s.\"%s\"",
+			joinSQL, j.joinTableName, j.joinAlias, j.baseAlias, j.baseColumn, j.joinAlias, j.joinColumn)
+	}
+
+	return joinSQL
 }
 
 // Checks to see if the highlighted variable has cluster data.  If so, the highlight key will be switched to the
