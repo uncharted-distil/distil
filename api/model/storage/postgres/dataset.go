@@ -379,8 +379,6 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 	}
 
 	// loop through the updates, building batches to minimize overhead
-	db := s.client.GetBatchClient()
-	defer db.Close()
 	tableNameTmp := fmt.Sprintf("%s_utmp", storageName)
 	dataSQL := fmt.Sprintf("CREATE TEMP TABLE \"%s\" (\"%s\" TEXT NOT NULL, \"%s\" TEXT);",
 		tableNameTmp, model.D3MIndexName, varName)

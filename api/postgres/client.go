@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/go-pg/pg"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	pool "github.com/jackc/pgx/v4/pgxpool"
@@ -44,7 +43,6 @@ type DatabaseDriver interface {
 	Query(string, ...interface{}) (pgx.Rows, error)
 	QueryRow(string, ...interface{}) pgx.Row
 	Exec(string, ...interface{}) (pgconn.CommandTag, error)
-	GetBatchClient() *pg.DB
 	SendBatch(batch *pgx.Batch) pgx.BatchResults
 }
 
@@ -63,16 +61,6 @@ type IntegratedClient struct {
 	user      string
 	password  string
 	database  string
-}
-
-// GetBatchClient returns the client to use for updates.
-func (ic IntegratedClient) GetBatchClient() *pg.DB {
-	return pg.Connect(&pg.Options{
-		Addr:     ic.host,
-		User:     ic.user,
-		Password: ic.password,
-		Database: ic.database,
-	})
 }
 
 // Query queries the database and returns the matching rows.
