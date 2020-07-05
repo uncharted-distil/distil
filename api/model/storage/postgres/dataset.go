@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-pg/pg"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -286,10 +285,8 @@ func (s *Storage) DeleteVariable(dataset string, storageName string, varName str
 
 // InsertBatch batches the data to insert for increased performance.
 func (s *Storage) InsertBatch(storageName string, varNames []string, inserts [][]interface{}) error {
-	db := s.client.GetBatchClient()
-	defer db.Close()
 
-	err := s.insertBatchData(db, storageName, varNames, inserts)
+	err := s.insertBatchData(storageName, varNames, inserts)
 	if err != nil {
 		return errors.Wrap(err, "unable to insert batches")
 	}
@@ -297,7 +294,7 @@ func (s *Storage) InsertBatch(storageName string, varNames []string, inserts [][
 	return nil
 }
 
-func (s *Storage) insertBatchData(db *pg.DB, storageName string, varNames []string, inserts [][]interface{}) error {
+func (s *Storage) insertBatchData(storageName string, varNames []string, inserts [][]interface{}) error {
 	// get the boiler plate of the query
 	fieldCount := len(varNames)
 	paramList := ""
@@ -324,7 +321,7 @@ func (s *Storage) insertBatchData(db *pg.DB, storageName string, varNames []stri
 
 		if batch.Len() > maxBatchSize {
 			// submit the batch
-			resBatch := s.client.SendBatch(batch)
+			resBatch := s.batchClient.SendBatch(batch)
 			for i := 0; i < maxBatchSize; i++ {
 				_, err := resBatch.Exec()
 				if err != nil {
@@ -342,7 +339,7 @@ func (s *Storage) insertBatchData(db *pg.DB, storageName string, varNames []stri
 	// submit remaining rows
 	count := batch.Len()
 	if count > 0 {
-		resBatch := s.client.SendBatch(batch)
+		resBatch := s.batchClient.SendBatch(batch)
 		for i := 0; i < count; i++ {
 			_, err := resBatch.Exec()
 			if err != nil {
@@ -387,12 +384,12 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 	tableNameTmp := fmt.Sprintf("%s_utmp", storageName)
 	dataSQL := fmt.Sprintf("CREATE TEMP TABLE \"%s\" (\"%s\" TEXT NOT NULL, \"%s\" TEXT);",
 		tableNameTmp, model.D3MIndexName, varName)
-	_, err := db.Exec(dataSQL)
+	_, err := s.batchClient.Exec(dataSQL)
 	if err != nil {
 		return errors.Wrap(err, "unable to create temp table")
 	}
 
-	err = s.insertBatchData(db, tableNameTmp, []string{model.D3MIndexName, varName}, params)
+	err = s.insertBatchData(tableNameTmp, []string{model.D3MIndexName, varName}, params)
 	if err != nil {
 		return errors.Wrap(err, "unable to insert into temp table")
 	}
@@ -400,10 +397,11 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 	// run the update
 	updateSQL := fmt.Sprintf("UPDATE %s.%s.\"%s_base\" AS b SET \"%s\" = t.\"%s\" FROM \"%s\" AS t WHERE t.\"%s\" = b.\"%s\";",
 		"distil", "public", storageName, varName, varName, tableNameTmp, model.D3MIndexName, model.D3MIndexName)
-	_, err = db.Exec(updateSQL)
+	_, err = s.batchClient.Exec(updateSQL)
 	if err != nil {
 		return errors.Wrap(err, "unable to update base data")
 	}
+	s.batchClient.Exec(fmt.Sprintf("DROP TABLE \"%s\"", tableNameTmp))
 
 	return nil
 }
