@@ -25,19 +25,18 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
-// RemoteSensingField defines behaviour for the remote sensing field type.
-type RemoteSensingField struct {
+// BoundsField defines behaviour for the remote sensing field type.
+type BoundsField struct {
 	BasicField
-	CoordinateCol string
 }
 
-// NewRemoteSensingField creates a new field for remote sensing types.
-func NewRemoteSensingField(groupIDCol string, storage *Storage, datasetName string, datasetStorageName string, coordinateCol string, label string, typ string, count string) *RemoteSensingField {
+// NewBoundsField creates a new field for remote sensing types.
+func NewBoundsField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *BoundsField {
 	count = getCountSQL(count)
 
-	field := &RemoteSensingField{
+	field := &BoundsField{
 		BasicField: BasicField{
-			Key:                groupIDCol,
+			Key:                key,
 			Storage:            storage,
 			DatasetName:        datasetName,
 			DatasetStorageName: datasetStorageName,
@@ -45,14 +44,13 @@ func NewRemoteSensingField(groupIDCol string, storage *Storage, datasetName stri
 			Type:               typ,
 			Count:              count,
 		},
-		CoordinateCol: coordinateCol,
 	}
 
 	return field
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
-func (f *RemoteSensingField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
+func (f *BoundsField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
 	var baseline *api.Histogram
 	var filtered *api.Histogram
 	var err error
@@ -97,7 +95,7 @@ func (f *RemoteSensingField) FetchSummaryData(resultURI string, filterParams *ap
 	}, nil
 }
 
-func (f *RemoteSensingField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
+func (f *BoundsField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -157,10 +155,10 @@ func (f *RemoteSensingField) fetchHistogram(filterParams *api.FilterParams, inve
 	return histogram, nil
 }
 
-func (f *RemoteSensingField) fetchExtrema() (*api.Extrema, *api.Extrema, error) {
+func (f *BoundsField) fetchExtrema() (*api.Extrema, *api.Extrema, error) {
 	// add min / max aggregation
-	aggQueryX := f.getMinMaxAggsQuery(f.CoordinateCol, "x", 1, 5)
-	aggQueryY := f.getMinMaxAggsQuery(f.CoordinateCol, "y", 2, 6)
+	aggQueryX := f.getMinMaxAggsQuery(f.Key, "x", 1, 5)
+	aggQueryY := f.getMinMaxAggsQuery(f.Key, "y", 2, 6)
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s, %s FROM %s;", aggQueryX, aggQueryY, f.DatasetStorageName)
@@ -177,7 +175,7 @@ func (f *RemoteSensingField) fetchExtrema() (*api.Extrema, *api.Extrema, error) 
 	return f.parseExtrema(res)
 }
 
-func (f *RemoteSensingField) getHistogramAggQuery(extrema *api.Extrema, numBuckets int, index int) (string, string, float64, float64) {
+func (f *BoundsField) getHistogramAggQuery(extrema *api.Extrema, numBuckets int, index int) (string, string, float64, float64) {
 	interval := extrema.GetBucketInterval(numBuckets)
 
 	// get histogram agg name & query string.
@@ -197,7 +195,7 @@ func (f *RemoteSensingField) getHistogramAggQuery(extrema *api.Extrema, numBucke
 	return histogramAggName, bucketQueryString, interval, rounded.Min
 }
 
-func (f *RemoteSensingField) getMinMaxAggsQuery(key string, label string, indexMin int, indexMax int) string {
+func (f *BoundsField) getMinMaxAggsQuery(key string, label string, indexMin int, indexMax int) string {
 	// get min / max agg names
 	minAggName := api.MinAggPrefix + label
 	maxAggName := api.MaxAggPrefix + label
@@ -209,7 +207,7 @@ func (f *RemoteSensingField) getMinMaxAggsQuery(key string, label string, indexM
 	return queryPart
 }
 
-func (f *RemoteSensingField) parseExtrema(rows pgx.Rows) (*api.Extrema, *api.Extrema, error) {
+func (f *BoundsField) parseExtrema(rows pgx.Rows) (*api.Extrema, *api.Extrema, error) {
 	var minXValue *float64
 	var maxXValue *float64
 	var minYValue *float64
@@ -231,13 +229,13 @@ func (f *RemoteSensingField) parseExtrema(rows pgx.Rows) (*api.Extrema, *api.Ext
 	}
 	// assign attributes
 	xExtrema := &api.Extrema{
-		Key:  f.CoordinateCol,
+		Key:  f.Key,
 		Type: model.LongitudeType,
 		Min:  *minXValue,
 		Max:  *maxXValue,
 	}
 	yExtrema := &api.Extrema{
-		Key:  f.CoordinateCol,
+		Key:  f.Key,
 		Type: model.LatitudeType,
 		Min:  *minYValue,
 		Max:  *maxYValue,
@@ -246,7 +244,7 @@ func (f *RemoteSensingField) parseExtrema(rows pgx.Rows) (*api.Extrema, *api.Ext
 	return xExtrema, yExtrema, nil
 }
 
-func (f *RemoteSensingField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error) {
+func (f *BoundsField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error) {
 	// get filter where / params
 	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
 	if err != nil {
@@ -311,7 +309,7 @@ func (f *RemoteSensingField) fetchHistogramByResult(resultURI string, filterPara
 	return histogram, nil
 }
 
-func (f *RemoteSensingField) parseHistogram(rows pgx.Rows, xExtrema *api.Extrema, yExtrema *api.Extrema, xNumBuckets int, yNumBuckets int) (*api.Histogram, error) {
+func (f *BoundsField) parseHistogram(rows pgx.Rows, xExtrema *api.Extrema, yExtrema *api.Extrema, xNumBuckets int, yNumBuckets int) (*api.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := api.HistogramAggPrefix + f.Key
 
@@ -386,20 +384,6 @@ func (f *RemoteSensingField) parseHistogram(rows pgx.Rows, xExtrema *api.Extrema
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
 // the coordinate histogram for the field.
-func (f *RemoteSensingField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
+func (f *BoundsField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
-}
-
-func getEqualBivariateBuckets(numBuckets int, xExtrema *api.Extrema, yExtrema *api.Extrema) (int, int) {
-	// adjust the buckets to account for x/y ratio
-	xSize := xExtrema.Max - xExtrema.Min
-	ySize := yExtrema.Max - yExtrema.Min
-	xNumBuckets := numBuckets
-	yNumBuckets := numBuckets
-	if xSize > ySize {
-		xNumBuckets = int(xSize / ySize * float64(xNumBuckets))
-	} else {
-		yNumBuckets = int(ySize / xSize * float64(yNumBuckets))
-	}
-	return xNumBuckets, yNumBuckets
 }

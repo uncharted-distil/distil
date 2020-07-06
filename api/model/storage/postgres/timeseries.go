@@ -354,10 +354,6 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 	}, nil
 }
 
-func replaceNaNs() {
-
-}
-
 // FetchSummaryData pulls summary data from the database and builds a histogram.
 func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error) {
 	var baseline *api.Histogram

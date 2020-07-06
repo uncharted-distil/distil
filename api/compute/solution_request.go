@@ -858,7 +858,11 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	datasetInputDir := env.ResolvePath(datasetInput.Source, datasetInput.Folder)
 
 	// compute the task and subtask from the target and dataset
-	task, err := ResolveTask(dataStorage, dataset.StorageName, s.TargetFeature, variables)
+	trainingVariables, err := findVariables(s.Filters.Variables, variables)
+	if err != nil {
+		return err
+	}
+	task, err := ResolveTask(dataStorage, dataset.StorageName, s.TargetFeature, trainingVariables)
 	if err != nil {
 		return err
 	}
@@ -968,6 +972,18 @@ func findVariable(variableName string, variables []*model.Variable) (*model.Vari
 		return nil, errors.Errorf("can't find target variable instance %s", variableName)
 	}
 	return variable, nil
+}
+
+func findVariables(variableNames []string, variables []*model.Variable) ([]*model.Variable, error) {
+	filterVariables := make([]*model.Variable, len(variableNames))
+	for i, varName := range variableNames {
+		var err error
+		filterVariables[i], err = findVariable(varName, variables)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return filterVariables, nil
 }
 
 func getFileFromOutput(response *pipeline.GetProduceSolutionResultsResponse, outputKey string) (string, error) {

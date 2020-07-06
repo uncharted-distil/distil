@@ -102,9 +102,6 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 				if model.IsGeoCoordinate(variable.Type) {
 					gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
 					componentVars = append(componentVars, gcg.XCol, gcg.YCol)
-				} else if model.IsRemoteSensing(variable.Type) {
-					rsg := variable.Grouping.(*model.RemoteSensingGrouping)
-					componentVars = append(componentVars, rsg.CoordinateCol)
 				}
 
 				// include the grouping ID if present

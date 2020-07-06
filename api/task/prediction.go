@@ -492,7 +492,7 @@ func getComponentVariables(variable *model.Variable) []string {
 			}
 		} else if model.IsRemoteSensing(variable.Grouping.GetType()) {
 			rsg := variable.Grouping.(*model.RemoteSensingGrouping)
-			componentVars = append(componentVars, rsg.BandCol, rsg.CoordinateCol, rsg.IDCol, rsg.ImageCol)
+			componentVars = append(componentVars, rsg.BandCol, rsg.IDCol, rsg.ImageCol)
 		}
 	} else {
 		componentVars = append(componentVars, variable.Name)

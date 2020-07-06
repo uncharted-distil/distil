@@ -48,7 +48,7 @@ func ResolveTask(storage api.DataStorage, datasetStorageName string, targetVaria
 				tasks = append(tasks, compute.ImageTask)
 				return &Task{tasks}, nil
 			}
-			if model.IsMultiBandImage(feature.Type) {
+			if model.IsRemoteSensing(feature.Type) {
 				tasks = append(tasks, compute.RemoteSensingTask)
 				return &Task{tasks}, nil
 			}

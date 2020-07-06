@@ -219,22 +219,21 @@ func (s *Storage) getBivariateFilterKeys(dataset string, key string, alias strin
 		return nil, err
 	}
 
-	if g.IsGrouping() {
-		if model.IsRemoteSensing(g.Grouping.GetType()) {
-			// only checking top left for now
-			rsg := g.Grouping.(*model.RemoteSensingGrouping)
-			name := s.formatFilterKey(alias, rsg.CoordinateCol)
-			fields[0] = fmt.Sprintf("%s[1]", name)
-			fields[1] = fmt.Sprintf("%s[2]", name)
-		} else if model.IsGeoCoordinate(g.Grouping.GetType()) {
-			cg := g.Grouping.(*model.GeoCoordinateGrouping)
-			fields[0] = s.formatFilterKey(alias, cg.XCol)
-			fields[1] = s.formatFilterKey(alias, cg.YCol)
-		} else {
-			return nil, errors.Errorf("unsupported field type %s for bivariate filter", g.Grouping.GetType())
-		}
+	if model.IsGeoBounds(g.Type) {
+		// only checking top left for now
+		name := s.formatFilterKey(alias, g.Name)
+		fields[0] = fmt.Sprintf("%s[1]", name)
+		fields[1] = fmt.Sprintf("%s[2]", name)
 		return fields, nil
 	}
+
+	if g.IsGrouping() && model.IsGeoCoordinate(g.Grouping.GetType()) {
+		cg := g.Grouping.(*model.GeoCoordinateGrouping)
+		fields[0] = s.formatFilterKey(alias, cg.XCol)
+		fields[1] = s.formatFilterKey(alias, cg.YCol)
+		return fields, nil
+	}
+
 	return nil, errors.Errorf("unsupported field type %s for bivariate filter", g.Type)
 }
 
