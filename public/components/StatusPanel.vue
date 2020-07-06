@@ -65,7 +65,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { StatusPanelState, StatusPanelContentType } from "../store/app";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry, varModesToString } from "../util/routes";
-import { IMAGE_TYPE } from "../util/types";
+import { IMAGE_TYPE, isClusterType } from "../util/types";
 import { $enum } from "ts-enum-util";
 
 const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
@@ -257,7 +257,7 @@ export default Vue.extend({
       // mode to cluster now that data is available
       datasetGetters
         .getGroupings(this.$store)
-        .filter(v => isClusteredGrouping(v.grouping))
+        .filter(v => isClusterType(v.colType))
         .forEach(v => {
           varModesMap.set(v.colName, SummaryMode.Cluster);
         });

@@ -29,11 +29,13 @@ import (
 // MultiBandImageField defines behaviour for the image field type.
 type MultiBandImageField struct {
 	BasicField
+	IDCol string
 }
 
 // NewMultiBandImageField creates a new field for mutli band image types.
-func NewMultiBandImageField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *MultiBandImageField {
-	count = getCountSQL(count)
+func NewMultiBandImageField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string,
+	idCol string, bandCol string) *MultiBandImageField {
+	count := getCountSQL(idCol)
 
 	field := &MultiBandImageField{
 		BasicField: BasicField{
@@ -45,6 +47,7 @@ func NewMultiBandImageField(storage *Storage, datasetName string, datasetStorage
 			Type:               typ,
 			Count:              count,
 		},
+		IDCol: idCol,
 	}
 
 	return field
@@ -95,13 +98,13 @@ func (f *MultiBandImageField) FetchSummaryData(resultURI string, filterParams *a
 	}, nil
 }
 
-// selects the target feature for the summary based on the mode - for multiband images that's group_id vs. cluster display
+// selects the target feature for the summary based on the mode - for multiband images that's group ID vs. cluster display
 func (f *MultiBandImageField) featureVarName(mode api.SummaryMode) string {
 	clusterCol := featureVarName(f.Key)
 	if mode == api.ClusterMode && api.HasClusterData(f.GetDatasetName(), clusterCol, f.GetStorage().metadata) {
 		return clusterCol
 	}
-	return "group_id"
+	return f.IDCol
 }
 
 func (f *MultiBandImageField) fetchRepresentationGroups(categoryBuckets []*api.Bucket, mode api.SummaryMode) ([]string, error) {
@@ -114,7 +117,7 @@ func (f *MultiBandImageField) fetchRepresentationGroups(categoryBuckets []*api.B
 
 		// pull sample row containing bucket
 		query := fmt.Sprintf("SELECT \"%s\" FROM %s WHERE \"%s\" = $1 LIMIT 1;",
-			"group_id", f.DatasetStorageName, prefixedVarName)
+			f.IDCol, f.DatasetStorageName, prefixedVarName)
 
 		// execute the postgres query
 		rows, err := f.Storage.client.Query(query, bucket.Key)
@@ -148,7 +151,6 @@ func (f *MultiBandImageField) fetchHistogram(filterParams *api.FilterParams, inv
 	prefixedVarName := f.featureVarName(mode)
 
 	fieldSelect := fmt.Sprintf("\"%s\"", prefixedVarName)
-	fmt.Printf(fieldSelect)
 
 	where := ""
 	if len(wheres) > 0 {
@@ -350,4 +352,18 @@ func (f *MultiBandImageField) fetchPredictedSummaryData(resultURI string, datase
 	}
 	histogram.Exemplars = files
 	return histogram, nil
+}
+
+func getEqualBivariateBuckets(numBuckets int, xExtrema *api.Extrema, yExtrema *api.Extrema) (int, int) {
+	// adjust the buckets to account for x/y ratio
+	xSize := xExtrema.Max - xExtrema.Min
+	ySize := yExtrema.Max - yExtrema.Min
+	xNumBuckets := numBuckets
+	yNumBuckets := numBuckets
+	if xSize > ySize {
+		xNumBuckets = int(xSize / ySize * float64(xNumBuckets))
+	} else {
+		yNumBuckets = int(ySize / xSize * float64(yNumBuckets))
+	}
+	return xNumBuckets, yNumBuckets
 }
