@@ -127,7 +127,7 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 	fields := []string{"result_id"}
 	for dbFieldIndex, dbField := range fieldsDatabase {
 		for i := 0; i < len(fieldsWeight); i++ {
-			if fieldsMetadataMap[dbField] != nil && fieldsMetadataMap[dbField].DisplayName == fieldsWeight[i] {
+			if fieldsMetadataMap[dbField] != nil && fieldsMetadataMap[dbField].Name == fieldsWeight[i] {
 				fieldsMap[dbFieldIndex] = i + 1
 				fields = append(fields, dbField)
 			}
