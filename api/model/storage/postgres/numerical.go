@@ -395,8 +395,8 @@ func (f *NumericalField) fetchExtremaByURI(resultURI string) (*api.Extrema, erro
 	aggQuery := f.getMinMaxAggsQuery(f.Key)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1 AND %s;",
-		aggQuery, fromClause, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, f.getNaNFilter())
+	queryString := fmt.Sprintf("SELECT %s FROM %s INNER JOIN %s result ON %s.\"%s\" = result.index WHERE result.result_id = $1 AND %s;",
+		aggQuery, fromClause, f.Storage.getResultTable(f.DatasetStorageName), baseTableAlias, model.D3MIndexFieldName, f.getNaNFilter())
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -601,8 +601,8 @@ func (f *NumericalField) FetchNumericalStatsByResult(resultURI string, filterPar
 	}
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT coalesce(stddev(\"%s\"), 0) as stddev, avg(\"%s\") as avg FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s;",
-		f.Key, f.Key, fromClause, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where)
+	query := fmt.Sprintf("SELECT coalesce(stddev(\"%s\"), 0) as stddev, avg(\"%s\") as avg FROM %s INNER JOIN %s result ON %s.\"%s\" = result.index WHERE result.result_id = $%d %s;",
+		f.Key, f.Key, fromClause, f.Storage.getResultTable(f.DatasetStorageName), baseTableAlias, model.D3MIndexFieldName, len(params), where)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)

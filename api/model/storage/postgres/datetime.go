@@ -195,12 +195,13 @@ func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *a
 	// Create the complete query string.
 	query := fmt.Sprintf(`
 		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
-		FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		FROM %s INNER JOIN %s result ON %s."%s" = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY %s
 		ORDER BY %s;`,
 		bucketQuery, histogramQuery, histogramName, f.Count, fromClause,
-		f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
+		f.Storage.getResultTable(f.DatasetStorageName), baseTableAlias,
+		model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -370,8 +371,8 @@ func (f *DateTimeField) fetchExtremaByURI(resultURI string) (*api.Extrema, error
 	aggQuery := f.getMinMaxAggsQuery()
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1;",
-		aggQuery, fromClause, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName)
+	queryString := fmt.Sprintf("SELECT %s FROM %s INNER JOIN %s result ON %s.\"%s\" = result.index WHERE result.result_id = $1;",
+		aggQuery, fromClause, f.Storage.getResultTable(f.DatasetStorageName), baseTableAlias, model.D3MIndexFieldName)
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -526,12 +527,11 @@ func (f *DateTimeField) fetchResultsExtrema(resultURI string, dataset string, re
 }
 
 func (f *DateTimeField) getFromClause(alias bool) string {
-	fromClause := f.DatasetStorageName
+	fromClause := fmt.Sprintf("%s AS %s", f.DatasetStorageName, baseTableAlias)
 	if f.subSelect != nil {
 		fromClause = f.subSelect()
 		if alias {
-			fromClause = fmt.Sprintf("%s as nested INNER JOIN %s as data on nested.\"%s\" = data.\"%s\"", fromClause, f.DatasetStorageName, model.D3MIndexFieldName, model.D3MIndexFieldName)
-			//fromClause = fmt.Sprintf("%s as %s", fromClause, f.Dataset)
+			fromClause = fmt.Sprintf("%s AS nested INNER JOIN %s AS %s on nested.\"%s\" = %s.\"%s\"", fromClause, f.DatasetStorageName, baseTableAlias, model.D3MIndexFieldName, baseTableAlias, model.D3MIndexFieldName)
 		}
 	}
 
