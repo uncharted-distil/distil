@@ -22,6 +22,10 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
+const (
+	baseTableAlias = "data"
+)
+
 // Field defines behaviour for a database field type.
 type Field interface {
 	FetchSummaryData(resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, invert bool, mode api.SummaryMode) (*api.VariableSummary, error)

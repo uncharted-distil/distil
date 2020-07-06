@@ -153,7 +153,7 @@ func (f *NumericalField) fetchHistogramWithJoins(filterParams *api.FilterParams,
 	joinSQL := createJoinStatements(joins)
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s AS bb %s %s GROUP BY %s ORDER BY %s;",
+	query := fmt.Sprintf("SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count FROM %s %s %s GROUP BY %s ORDER BY %s;",
 		bucketQuery, histogramQuery, histogramName, f.Count, fromClause, joinSQL, where, bucketQuery, histogramName)
 
 	// execute the postgres query
@@ -214,12 +214,13 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 	// Create the complete query string.
 	query := fmt.Sprintf(`
 		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
-		FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		FROM %s INNER JOIN %s result ON %s."%s" = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY %s
 		ORDER BY %s;`,
 		bucketQuery, histogramQuery, histogramName, f.Count, fromClause,
-		f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
+		f.Storage.getResultTable(f.DatasetStorageName), baseTableAlias,
+		model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -395,8 +396,8 @@ func (f *NumericalField) fetchExtremaByURI(resultURI string) (*api.Extrema, erro
 	aggQuery := f.getMinMaxAggsQuery(f.Key)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $1 AND %s;",
-		aggQuery, fromClause, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, f.getNaNFilter())
+	queryString := fmt.Sprintf("SELECT %s FROM %s INNER JOIN %s result ON %s.\"%s\" = result.index WHERE result.result_id = $1 AND %s;",
+		aggQuery, fromClause, f.Storage.getResultTable(f.DatasetStorageName), baseTableAlias, model.D3MIndexFieldName, f.getNaNFilter())
 
 	// execute the postgres query
 	// NOTE: We may want to use the regular Query operation since QueryRow
@@ -601,8 +602,8 @@ func (f *NumericalField) FetchNumericalStatsByResult(resultURI string, filterPar
 	}
 
 	// Create the complete query string.
-	query := fmt.Sprintf("SELECT coalesce(stddev(\"%s\"), 0) as stddev, avg(\"%s\") as avg FROM %s data INNER JOIN %s result ON data.\"%s\" = result.index WHERE result.result_id = $%d %s;",
-		f.Key, f.Key, fromClause, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where)
+	query := fmt.Sprintf("SELECT coalesce(stddev(\"%s\"), 0) as stddev, avg(\"%s\") as avg FROM %s INNER JOIN %s result ON %s.\"%s\" = result.index WHERE result.result_id = $%d %s;",
+		f.Key, f.Key, fromClause, f.Storage.getResultTable(f.DatasetStorageName), baseTableAlias, model.D3MIndexFieldName, len(params), where)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -653,11 +654,12 @@ func (f *NumericalField) parseStats(row pgx.Rows) (*NumericalStats, error) {
 }
 
 func (f *NumericalField) getFromClause(alias bool) string {
-	fromClause := f.DatasetStorageName
+	fromClause := fmt.Sprintf("%s AS %s", f.DatasetStorageName, baseTableAlias)
 	if f.subSelect != nil {
 		fromClause = f.subSelect()
 		if alias {
-			fromClause = fmt.Sprintf("%s as nested INNER JOIN %s as data on nested.\"%s\" = data.\"%s\"", fromClause, f.DatasetStorageName, model.D3MIndexFieldName, model.D3MIndexFieldName)
+			fromClause = fmt.Sprintf("%s AS nested INNER JOIN %s AS %s on nested.\"%s\" = %s.\"%s\"",
+				fromClause, f.DatasetStorageName, baseTableAlias, model.D3MIndexFieldName, baseTableAlias, model.D3MIndexFieldName)
 		}
 	}
 

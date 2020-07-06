@@ -407,7 +407,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 		}
 
 		joins = append(joins, &joinDefinition{
-			baseAlias:  "bb",
+			baseAlias:  baseTableAlias,
 			baseColumn: f.IDCol,
 			joinAlias:  "r",
 			joinColumn: "k",
