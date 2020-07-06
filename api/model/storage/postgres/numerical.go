@@ -214,12 +214,13 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 	// Create the complete query string.
 	query := fmt.Sprintf(`
 		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
-		FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		FROM %s INNER JOIN %s result ON %s."%s" = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY %s
 		ORDER BY %s;`,
 		bucketQuery, histogramQuery, histogramName, f.Count, fromClause,
-		f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
+		f.Storage.getResultTable(f.DatasetStorageName), baseTableAlias,
+		model.D3MIndexFieldName, len(params), where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -657,7 +658,8 @@ func (f *NumericalField) getFromClause(alias bool) string {
 	if f.subSelect != nil {
 		fromClause = f.subSelect()
 		if alias {
-			fromClause = fmt.Sprintf("%s AS nested INNER JOIN %s AS %s on nested.\"%s\" = %s.\"%s\"", fromClause, f.DatasetStorageName, baseTableAlias, model.D3MIndexFieldName, baseTableAlias, model.D3MIndexFieldName)
+			fromClause = fmt.Sprintf("%s AS nested INNER JOIN %s AS %s on nested.\"%s\" = %s.\"%s\"",
+				fromClause, f.DatasetStorageName, baseTableAlias, model.D3MIndexFieldName, baseTableAlias, model.D3MIndexFieldName)
 		}
 	}
 
