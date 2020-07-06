@@ -16,6 +16,10 @@
 package postgres
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/jackc/pgx/v4"
 	"github.com/uncharted-distil/distil-compute/model"
 )
 
@@ -26,8 +30,8 @@ type Dataset struct {
 	Description     string
 	Variables       []*model.Variable
 	variablesLookup map[string]bool
-	insertBatch     []string
-	insertArgs      []interface{}
+	insertBatch     *pgx.Batch
+	fieldSQL        string
 }
 
 // NewDataset creates a new dataset instance.
@@ -41,6 +45,11 @@ func NewDataset(id, name, description string, meta *model.Metadata) *Dataset {
 	// NOTE: Can only support data in a single data resource for now.
 	if meta != nil {
 		ds.Variables = meta.GetMainDataResource().Variables
+		fields := []string{}
+		for _, v := range ds.Variables {
+			fields = append(fields, v.Name)
+		}
+		ds.fieldSQL = fmt.Sprintf("\"%s\"", strings.Join(fields, "\",\""))
 	}
 
 	ds.ResetBatch()
@@ -50,8 +59,7 @@ func NewDataset(id, name, description string, meta *model.Metadata) *Dataset {
 
 // ResetBatch clears the batch contents.
 func (ds *Dataset) ResetBatch() {
-	ds.insertBatch = make([]string, 0)
-	ds.insertArgs = make([]interface{}, 0)
+	ds.insertBatch = &pgx.Batch{}
 }
 
 // HasVariable checks to see if a variable is already contained in the dataset.
@@ -67,21 +75,15 @@ func (ds *Dataset) AddVariable(variable *model.Variable) {
 
 // AddInsert adds an insert statement and parameters to the batch.
 func (ds *Dataset) AddInsert(statement string, args []interface{}) {
-	ds.insertBatch = append(ds.insertBatch, statement)
-	ds.insertArgs = append(ds.insertArgs, args...)
+	ds.insertBatch.Queue(statement, args...)
 }
 
 // GetBatch returns the insert statement batch.
-func (ds *Dataset) GetBatch() []string {
+func (ds *Dataset) GetBatch() *pgx.Batch {
 	return ds.insertBatch
 }
 
 // GetBatchSize gets the insert batch count.
 func (ds *Dataset) GetBatchSize() int {
-	return len(ds.insertBatch)
-}
-
-// GetBatchArgs returns the insert batch arguments.
-func (ds *Dataset) GetBatchArgs() []interface{} {
-	return ds.insertArgs
+	return ds.insertBatch.Len()
 }

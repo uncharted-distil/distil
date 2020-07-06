@@ -69,6 +69,7 @@ type IngestTaskConfig struct {
 	DatabaseHost                       string
 	DatabasePort                       int
 	DatabaseBatchSize                  int
+	DatabaseLogLevel                   string
 	SummaryOutputPathRelative          string
 	SummaryMachineOutputPathRelative   string
 	SummaryEnabled                     bool
@@ -122,6 +123,7 @@ func NewConfig(config env.Config) *IngestTaskConfig {
 		DatabaseHost:                       config.PostgresHost,
 		DatabasePort:                       config.PostgresPort,
 		DatabaseBatchSize:                  config.PostgresBatchSize,
+		DatabaseLogLevel:                   config.PostgresLogLevel,
 		SummaryOutputPathRelative:          config.SummaryPath,
 		SummaryMachineOutputPathRelative:   config.SummaryMachinePath,
 		SummaryEnabled:                     config.SummaryEnabled,
@@ -262,14 +264,15 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 
 	// Connect to the database.
 	postgresConfig := &postgres.Config{
-		Password:  config.DatabasePassword,
-		User:      config.DatabaseUser,
-		Database:  config.Database,
-		Host:      config.DatabaseHost,
-		Port:      config.DatabasePort,
-		BatchSize: config.DatabaseBatchSize,
+		Password:         config.DatabasePassword,
+		User:             config.DatabaseUser,
+		Database:         config.Database,
+		Host:             config.DatabaseHost,
+		Port:             config.DatabasePort,
+		BatchSize:        config.DatabaseBatchSize,
+		PostgresLogLevel: "error",
 	}
-	pg, err := postgres.NewDatabase(postgresConfig)
+	pg, err := postgres.NewDatabase(postgresConfig, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to initialize a new database")
 	}
@@ -338,14 +341,15 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 
 	// Connect to the database.
 	postgresConfig := &postgres.Config{
-		Password:  config.DatabasePassword,
-		User:      config.DatabaseUser,
-		Database:  config.Database,
-		Host:      config.DatabaseHost,
-		Port:      config.DatabasePort,
-		BatchSize: config.DatabaseBatchSize,
+		Password:         config.DatabasePassword,
+		User:             config.DatabaseUser,
+		Database:         config.Database,
+		Host:             config.DatabaseHost,
+		Port:             config.DatabasePort,
+		BatchSize:        config.DatabaseBatchSize,
+		PostgresLogLevel: "error",
 	}
-	pg, err := postgres.NewDatabase(postgresConfig)
+	pg, err := postgres.NewDatabase(postgresConfig, true)
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize a new database")
 	}

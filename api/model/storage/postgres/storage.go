@@ -22,28 +22,37 @@ import (
 
 // Storage accesses the underlying postgres database.
 type Storage struct {
-	client   postgres.DatabaseDriver
-	metadata model.MetadataStorage
+	client      postgres.DatabaseDriver
+	batchClient postgres.DatabaseDriver
+	metadata    model.MetadataStorage
 }
 
 // NewDataStorage returns a constructor for a data storage.
-func NewDataStorage(clientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) model.DataStorageCtor {
+func NewDataStorage(clientCtor postgres.ClientCtor, batchClientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) model.DataStorageCtor {
 	return func() (model.DataStorage, error) {
-		return newStorage(clientCtor, metadataCtor)
+		return newStorage(clientCtor, batchClientCtor, metadataCtor)
 	}
 }
 
 // NewSolutionStorage returns a constructor for a solution storage.
 func NewSolutionStorage(clientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) model.SolutionStorageCtor {
 	return func() (model.SolutionStorage, error) {
-		return newStorage(clientCtor, metadataCtor)
+		return newStorage(clientCtor, nil, metadataCtor)
 	}
 }
 
-func newStorage(clientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) (*Storage, error) {
+func newStorage(clientCtor postgres.ClientCtor, batchClientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) (*Storage, error) {
 	client, err := clientCtor()
 	if err != nil {
 		return nil, err
+	}
+
+	var batchClient postgres.DatabaseDriver
+	if batchClientCtor != nil {
+		batchClient, err = batchClientCtor()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	metadata, err := metadataCtor()
@@ -52,7 +61,8 @@ func newStorage(clientCtor postgres.ClientCtor, metadataCtor model.MetadataStora
 	}
 
 	return &Storage{
-		client:   client,
-		metadata: metadata,
+		client:      client,
+		batchClient: batchClient,
+		metadata:    metadata,
 	}, nil
 }

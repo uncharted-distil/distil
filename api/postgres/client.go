@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/go-pg/pg"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	pool "github.com/jackc/pgx/v4/pgxpool"
@@ -29,12 +28,14 @@ import (
 )
 
 var (
-	mu      = &sync.Mutex{}
-	clients map[string]*IntegratedClient
+	mu           = &sync.Mutex{}
+	clients      map[string]*IntegratedClient
+	clientsBatch map[string]*IntegratedClient
 )
 
 func init() {
 	clients = make(map[string]*IntegratedClient)
+	clientsBatch = make(map[string]*IntegratedClient)
 }
 
 // DatabaseDriver defines the behaviour of the querying engine.
@@ -42,7 +43,6 @@ type DatabaseDriver interface {
 	Query(string, ...interface{}) (pgx.Rows, error)
 	QueryRow(string, ...interface{}) pgx.Row
 	Exec(string, ...interface{}) (pgconn.CommandTag, error)
-	GetBatchClient() *pg.DB
 	SendBatch(batch *pgx.Batch) pgx.BatchResults
 }
 
@@ -61,16 +61,6 @@ type IntegratedClient struct {
 	user      string
 	password  string
 	database  string
-}
-
-// GetBatchClient returns the client to use for updates.
-func (ic IntegratedClient) GetBatchClient() *pg.DB {
-	return pg.Connect(&pg.Options{
-		Addr:     ic.host,
-		User:     ic.user,
-		Password: ic.password,
-		Database: ic.database,
-	})
 }
 
 // Query queries the database and returns the matching rows.
@@ -124,7 +114,7 @@ func (pgxLogAdapter) Error(msg string, ctx ...interface{}) {
 
 // NewClient instantiates and returns a new postgres client constructor.  Log level is one
 // of none, info, warn, error, debug.
-func NewClient(host string, port int, user string, password string, database string, logLevel string) ClientCtor {
+func NewClient(host string, port int, user string, password string, database string, logLevel string, batch bool) ClientCtor {
 	return func() (DatabaseDriver, error) {
 		endpoint := fmt.Sprintf("%s:%d", host, port)
 
@@ -149,7 +139,13 @@ func NewClient(host string, port int, user string, password string, database str
 		defer mu.Unlock()
 
 		// see if we have an existing connection
-		client, ok := clients[endpoint]
+		var clientsMap map[string]*IntegratedClient
+		if batch {
+			clientsMap = clientsBatch
+		} else {
+			clientsMap = clients
+		}
+		client, ok := clientsMap[endpoint]
 		if !ok {
 			log.Infof("Creating new Postgres connection to endpoint %s", endpoint)
 			connString := fmt.Sprintf("user=%s host=%s port=%d dbname=%s pool_max_conns=%d",
@@ -158,7 +154,7 @@ func NewClient(host string, port int, user string, password string, database str
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to parse postgres config")
 			}
-			poolConfig.LazyConnect = true
+			poolConfig.LazyConnect = false
 			poolConfig.ConnConfig.Logger = logAdapter
 			poolConfig.ConnConfig.LogLevel = level
 
@@ -176,7 +172,7 @@ func NewClient(host string, port int, user string, password string, database str
 				return nil, errors.Wrap(err, "Postgres client init failed")
 			}
 			log.Infof("Postgres connection established to endpoint %s", endpoint)
-			clients[endpoint] = client
+			clientsMap[endpoint] = client
 		}
 		return client, nil
 	}
