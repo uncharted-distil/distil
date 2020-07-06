@@ -154,7 +154,7 @@ func NewClient(host string, port int, user string, password string, database str
 			if err != nil {
 				return nil, errors.Wrap(err, "unable to parse postgres config")
 			}
-			poolConfig.LazyConnect = true
+			poolConfig.LazyConnect = false
 			poolConfig.ConnConfig.Logger = logAdapter
 			poolConfig.ConnConfig.LogLevel = level
 
