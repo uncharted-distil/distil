@@ -111,6 +111,9 @@ interface Area {
   item: TableRow;
 }
 
+// Minimum pixels size of clickable target displayed on the map.
+const TARGETSIZE = 10;
+
 export default Vue.extend({
   name: "geo-plot",
 
@@ -128,8 +131,10 @@ export default Vue.extend({
 
   data() {
     return {
+      areasMapLayer: null,
       map: null,
       markers: null,
+      areasMeanLng: 0,
       closeButton: null,
       startingLatLng: null,
       currentRect: null,
@@ -144,6 +149,19 @@ export default Vue.extend({
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
+    },
+
+    /* 
+     Flag to decide if we display accurate areas based on coordinates, or if they are physically 
+     too small, we present a circle big enough for the user to interact with them.
+
+     @return {Boolean}
+     */
+    displayCircleMarker(): boolean {
+      const pointA = this.map.latLngToContainerPoint([0, 0]);
+      const pointB = this.map.latLngToContainerPoint([0, this.areasMeanLng]);
+      const distanceInPixel = Math.abs(pointB.x - pointA.x);
+      return distanceInPixel < TARGETSIZE;
     },
 
     target(): string {
@@ -279,7 +297,10 @@ export default Vue.extend({
         return [];
       }
 
-      return this.dataItems.map(item => {
+      // Array to store the longitude width (degrees) of each areas.
+      const longitudes = [];
+
+      const areas = this.dataItems.map(item => {
         const imageUrl = item.group_id.value;
         const fullCoordinates = item.coordinates.value.Elements;
         /*
@@ -300,8 +321,16 @@ export default Vue.extend({
 
         const color = this.colorPrediction(item);
 
+        longitudes.push(fullCoordinates[4].Float - fullCoordinates[0].Float); // Corner C Lng - Corner A Lng
+
         return { item, imageUrl, coordinates, color } as Area;
       });
+
+      // Calculate the mean longitude of the areas.
+      this.areasMeanLng =
+        longitudes.reduce((acc, val) => acc + val, 0) / longitudes.length;
+
+      return areas;
     },
 
     highlight(): Highlight {
@@ -568,6 +597,10 @@ export default Vue.extend({
         markerLayer.removeFrom(this.map);
       });
 
+      if (this.map.hasLayer(this.areasMapLayer)) {
+        this.map.removeLayer(this.areasMapLayer);
+      }
+
       this.markers = {};
       this.startingLatLng = null;
     },
@@ -660,11 +693,12 @@ export default Vue.extend({
     },
 
     /**
-     * Add areas has rectangle layers on the map.
+     * Create a Leaflet Group to contains the areas if it doesn't exist already.
      */
-    addAreas() {
+    createAreaMapLayer() {
       // Create a layer group to contain all the areas to be displayed.
-      const areaLayerGroup = leaflet.layerGroup();
+      this.areasMapLayer = leaflet.layerGroup();
+      this.areasMapLayer.addTo(this.map);
 
       // Extend the bounds of the map to include all coordinates.
       const bounds = leaflet.latLngBounds(null);
@@ -674,40 +708,33 @@ export default Vue.extend({
       if (bounds.isValid()) {
         this.map.fitBounds(bounds);
       }
+    },
 
-      /* 
-        Flag to decide if we display accurate areas based on coordinates, 
-        or if they are physically too small, we present a circle big enough 
-        for the user to interact with them.
-        The test run once based on the assumption that all areas have identical dimensions.
-       */
-      let displayCircleMarker = false;
-      const targetSize = 20; // in pixels.
+    /**
+     * Display areas as circleMarker or rectangle layers on the map.
+     */
+    displayAreas() {
+      // Test if the area Layer is already on the map.
+      if (!this.map.hasLayer(this.areasMapLayer)) {
+        this.createAreaMapLayer();
+      } else {
+        // Let's clear all of it before adding new ones.
+        this.areasMapLayer.clearLayers();
+      }
 
       // Add each area to the layer group.
       this.areas.forEach(area => {
         const { color, coordinates, imageUrl, item } = area;
 
-        if (!displayCircleMarker) {
-          const cornerNW = this.map.latLngToContainerPoint(coordinates[0]);
-          const cornerSE = this.map.latLngToContainerPoint(coordinates[1]);
-          const areaWidth = cornerSE.x - cornerNW.x;
-          const areaHeight = cornerNW.y - cornerSE.y;
-
-          if (Math.min(areaHeight, areaWidth) <= targetSize) {
-            displayCircleMarker = true;
-          }
-        }
-
-        // Create the layer for the user to interact, a circle or a rectangle.
+        // Create the layer (circleMarker or rectangle) for the user to interact.
         let layer: any;
-        if (displayCircleMarker) {
-          const center = [
+        if (this.displayCircleMarker) {
+          const centerOfCoordinates = [
             coordinates[0][0] + (coordinates[1][0] - coordinates[0][0]), // Lat
             coordinates[0][1] + (coordinates[1][1] - coordinates[0][1]) // Lng
           ] as LatLngTuple;
-          const displayOptions = { color, radius: targetSize / 2 };
-          layer = leaflet.circleMarker(center, displayOptions);
+          const displayOptions = { color, radius: TARGETSIZE / 2 };
+          layer = leaflet.circleMarker(centerOfCoordinates, displayOptions);
         } else {
           layer = leaflet.rectangle(coordinates, { color });
         }
@@ -730,11 +757,8 @@ export default Vue.extend({
           .on("click", () => this.showImageDrilldown(imageUrl, item));
 
         // Add the rectangle to the layer group.
-        areaLayerGroup.addLayer(layer);
+        this.areasMapLayer.addLayer(layer);
       });
-
-      // Add the group of areas to the map.
-      areaLayerGroup.addTo(this.map);
     },
 
     paint() {
@@ -742,8 +766,9 @@ export default Vue.extend({
       this.clear();
 
       if (this.isRemoteSensing) {
-        // -- Display areas
-        this.addAreas();
+        // Display areas and update them on zoom to be sure they are selectable.
+        this.displayAreas();
+        this.map.on("zoomend", () => this.displayAreas());
       } else {
         const bounds = leaflet.latLngBounds(null);
 
