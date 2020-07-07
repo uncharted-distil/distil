@@ -20,10 +20,12 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil/api/dataset"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
@@ -99,6 +101,25 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			return
 		}
 
+		if source == metadata.Augmented && provenance == "local" {
+			dataStorage, err := dataCtor()
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			esDataStorage, err := esMetaCtor()
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+
+			if isRemoteSensingDataset(datasetID, esDataStorage) {
+				// setup group variables
+				rawGrouping := dataset.CreateSatelliteGrouping()
+				createGrouping(datasetID, model.RemoteSensingType, rawGrouping, esDataStorage, dataStorage)
+			}
+		}
+
 		// marshal data and sent the response back
 		err = handleJSON(w, map[string]interface{}{"dataset": datasetID, "result": "ingested"})
 		if err != nil {
@@ -167,4 +188,20 @@ func createMetadataStorageForSource(datasetSource metadata.DatasetSource, proven
 		return fileMetaCtor()
 	}
 	return nil, fmt.Errorf("unrecognized source `%v`", datasetSource)
+}
+
+func isRemoteSensingDataset(datasetID string, metaStorage api.MetadataStorage) bool {
+	variables, err := metaStorage.FetchVariables(datasetID, false, false)
+	if err != nil {
+		log.Warnf("unable to fetch variables from metadata storage so assuming dataset is not remote sensing")
+		return false
+	}
+
+	for _, v := range variables {
+		if model.IsMultiBandImage(v.OriginalType) {
+			return true
+		}
+	}
+
+	return false
 }
