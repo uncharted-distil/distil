@@ -131,10 +131,10 @@ export default Vue.extend({
 
   data() {
     return {
-      areaMapLayer: null,
+      areasMapLayer: null,
       map: null,
       markers: null,
-      meanAreasLng: 0,
+      areasMeanLng: 0,
       closeButton: null,
       startingLatLng: null,
       currentRect: null,
@@ -154,11 +154,12 @@ export default Vue.extend({
     /* 
      Flag to decide if we display accurate areas based on coordinates, or if they are physically 
      too small, we present a circle big enough for the user to interact with them.
-     The test run once based on the assumption that all areas have identical dimensions.
+
+     @return {Boolean}
      */
     displayCircleMarker(): boolean {
       const pointA = this.map.latLngToContainerPoint([0, 0]);
-      const pointB = this.map.latLngToContainerPoint([0, this.meanAreasLng]);
+      const pointB = this.map.latLngToContainerPoint([0, this.areasMeanLng]);
       const distanceInPixel = Math.abs(pointB.x - pointA.x);
       return distanceInPixel < TARGETSIZE;
     },
@@ -296,7 +297,7 @@ export default Vue.extend({
         return [];
       }
 
-      // Array to store the longitude width of each areas.
+      // Array to store the longitude width (degrees) of each areas.
       const longitudes = [];
 
       const areas = this.dataItems.map(item => {
@@ -320,13 +321,13 @@ export default Vue.extend({
 
         const color = this.colorPrediction(item);
 
-        longitudes.push(fullCoordinates[4].Float - fullCoordinates[0].Float);
+        longitudes.push(fullCoordinates[4].Float - fullCoordinates[0].Float); // Corner C Lng - Corner A Lng
 
         return { item, imageUrl, coordinates, color } as Area;
       });
 
-      // Calculate the mean longitude of the areas
-      this.meanAreasLng =
+      // Calculate the mean longitude of the areas.
+      this.areasMeanLng =
         longitudes.reduce((acc, val) => acc + val, 0) / longitudes.length;
 
       return areas;
@@ -596,8 +597,8 @@ export default Vue.extend({
         markerLayer.removeFrom(this.map);
       });
 
-      if (this.map.hasLayer(this.areaMapLayer)) {
-        this.map.removeLayer(this.areaMapLayer);
+      if (this.map.hasLayer(this.areasMapLayer)) {
+        this.map.removeLayer(this.areasMapLayer);
       }
 
       this.markers = {};
@@ -696,8 +697,8 @@ export default Vue.extend({
      */
     createAreaMapLayer() {
       // Create a layer group to contain all the areas to be displayed.
-      this.areaMapLayer = leaflet.layerGroup();
-      this.areaMapLayer.addTo(this.map);
+      this.areasMapLayer = leaflet.layerGroup();
+      this.areasMapLayer.addTo(this.map);
 
       // Extend the bounds of the map to include all coordinates.
       const bounds = leaflet.latLngBounds(null);
@@ -714,11 +715,11 @@ export default Vue.extend({
      */
     displayAreas() {
       // Test if the area Layer is already on the map.
-      if (!this.map.hasLayer(this.areaMapLayer)) {
+      if (!this.map.hasLayer(this.areasMapLayer)) {
         this.createAreaMapLayer();
       } else {
         // Let's clear all of it before adding new ones.
-        this.areaMapLayer.clearLayers();
+        this.areasMapLayer.clearLayers();
       }
 
       // Add each area to the layer group.
@@ -756,7 +757,7 @@ export default Vue.extend({
           .on("click", () => this.showImageDrilldown(imageUrl, item));
 
         // Add the rectangle to the layer group.
-        this.areaMapLayer.addLayer(layer);
+        this.areasMapLayer.addLayer(layer);
       });
     },
 
@@ -765,7 +766,7 @@ export default Vue.extend({
       this.clear();
 
       if (this.isRemoteSensing) {
-        // -- Display areas
+        // Display areas and update them on zoom to be sure they are selectable.
         this.displayAreas();
         this.map.on("zoomend", () => this.displayAreas());
       } else {
