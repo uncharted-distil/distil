@@ -36,10 +36,11 @@ const (
 // RawDataset contains basic information about the structure of the dataset as well
 // as the raw learning data.
 type RawDataset struct {
-	ID       string
-	Name     string
-	Metadata *model.Metadata
-	Data     [][]string
+	ID              string
+	Name            string
+	Metadata        *model.Metadata
+	Data            [][]string
+	DefinitiveTypes bool
 }
 
 // Dataset represents a decsription of a dataset.
