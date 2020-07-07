@@ -92,7 +92,8 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		}
 
 		// ingest the imported dataset
-		datasetID, err = task.IngestDataset(source, dataCtor, esMetaCtor, datasetID, origins, api.DatasetTypeModelling, &ingestConfig)
+		ingestSteps := &task.IngestSteps{ClassificationOverwrite: false}
+		datasetID, err = task.IngestDataset(source, dataCtor, esMetaCtor, datasetID, origins, api.DatasetTypeModelling, &ingestConfig, ingestSteps)
 		if err != nil {
 			handleError(w, err)
 			return

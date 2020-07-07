@@ -224,7 +224,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	)
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(1, "image_file", "image_file", "image_file", model.MultiBandImageType,
-			model.MultiBandImageType, "Reference to image file", []string{"attribute"},
+			model.StringType, "Reference to image file", []string{"attribute"},
 			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(2, "group_id", "group_id", "group_id", model.StringType,
@@ -239,8 +239,8 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.StringType, "Image timestamp", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(5, "coordinates", "coordinates", "coordinates", model.RealVectorType,
-			model.RealVectorType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
+		model.NewVariable(5, "coordinates", "coordinates", "coordinates", model.GeoBoundsType,
+			model.GeoBoundsType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(6, "label", "label", "label", model.StringType,
@@ -256,10 +256,11 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	meta.DataResources = []*model.DataResource{refDR, dr}
 
 	return &api.RawDataset{
-		ID:       datasetID,
-		Name:     datasetName,
-		Data:     csvData,
-		Metadata: meta,
+		ID:              datasetID,
+		Name:            datasetName,
+		Data:            csvData,
+		Metadata:        meta,
+		DefinitiveTypes: true,
 	}, nil
 }
 
