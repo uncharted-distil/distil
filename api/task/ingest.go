@@ -188,7 +188,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	latestSchemaOutput = output
 	log.Infof("finished cleaning the dataset")
 
-	if steps.ClassificationOverwrite || !classificationExists(dataset, config) {
+	if steps.ClassificationOverwrite || !classificationExists(latestSchemaOutput, config) {
 		_, err = Classify(latestSchemaOutput, dataset, config)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to classify fields")

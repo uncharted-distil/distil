@@ -160,7 +160,7 @@ func mapClassifiedTypes(types []string) []string {
 	return types
 }
 
-func classificationExists(dataset string, config *IngestTaskConfig) bool {
-	classificationPath := path.Join(dataset, config.ClassificationOutputPathRelative)
+func classificationExists(schemaPath string, config *IngestTaskConfig) bool {
+	classificationPath := path.Join(path.Dir(schemaPath), config.ClassificationOutputPathRelative)
 	return util.FileExists(classificationPath)
 }

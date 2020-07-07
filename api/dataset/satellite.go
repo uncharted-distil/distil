@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/araddon/dateparse"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -235,7 +236,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.StringType, "Image band", []string{"attribute", "suggestedGroupingKey"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(4, "timestamp", "timestamp", "timestamp", model.StringType,
+		model.NewVariable(4, "timestamp", "timestamp", "timestamp", model.DateTimeType,
 			model.StringType, "Image timestamp", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
@@ -243,7 +244,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.GeoBoundsType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(6, "label", "label", "label", model.StringType,
+		model.NewVariable(6, "label", "label", "label", model.CategoricalType,
 			model.StringType, "Label of the image", []string{"suggestedTarget"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 
@@ -287,11 +288,16 @@ func extractBand(filename string) (string, error) {
 
 func extractTimestamp(filename string) (string, error) {
 	timestampRaw := timestampRegex.Find([]byte(filename))
-	if len(timestampRaw) > 0 {
-		return string(timestampRaw), nil
+	if len(timestampRaw) == 0 {
+		return "", errors.New("unable to extract band from filename")
 	}
 
-	return "", errors.New("unable to extract band from filename")
+	parsed, err := dateparse.ParseAny(strings.Replace(string(timestampRaw), "T", "", -1))
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to parse timestamp")
+	}
+
+	return parsed.Format("2006-01-02 03:04:05"), nil
 }
 
 func extractGroupID(filename string) string {
