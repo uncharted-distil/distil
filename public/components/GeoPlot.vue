@@ -40,7 +40,7 @@
 <script lang="ts">
 import _ from "lodash";
 import $ from "jquery";
-import leaflet, { MarkerOptions } from "leaflet";
+import leaflet, { MarkerOptions, LatLngTuple } from "leaflet";
 import Vue from "vue";
 import IconBase from "./icons/IconBase";
 import IconCropFree from "./icons/IconCropFree";
@@ -664,19 +664,53 @@ export default Vue.extend({
      */
     addAreas() {
       // Create a layer group to contain all the areas to be displayed.
-      const layerGroup = leaflet.layerGroup();
+      const areaLayerGroup = leaflet.layerGroup();
 
-      // Bounds object to know the full extent of all the areas.
+      // Extend the bounds of the map to include all coordinates.
       const bounds = leaflet.latLngBounds(null);
+      this.areas.forEach(area => {
+        area.coordinates.forEach(coordinate => bounds.extend(coordinate));
+      });
+      if (bounds.isValid()) {
+        this.map.fitBounds(bounds);
+      }
+
+      /* 
+        Flag to decide if we display accurate areas based on coordinates, 
+        or if they are physically too small, we present a circle big enough 
+        for the user to interact with them.
+        The test run once based on the assumption that all areas have identical dimensions.
+       */
+      let displayCircleMarker = false;
+      const targetSize = 20; // in pixels.
 
       // Add each area to the layer group.
       this.areas.forEach(area => {
         const { color, coordinates, imageUrl, item } = area;
 
-        const displayOptions = { color };
+        if (!displayCircleMarker) {
+          const cornerNW = this.map.latLngToContainerPoint(coordinates[0]);
+          const cornerSE = this.map.latLngToContainerPoint(coordinates[1]);
+          const areaWidth = cornerSE.x - cornerNW.x;
+          const areaHeight = cornerNW.y - cornerSE.y;
 
-        // Make sure the new area fit on the map.
-        coordinates.forEach(coordinate => bounds.extend(coordinate));
+          if (Math.min(areaHeight, areaWidth) <= targetSize) {
+            displayCircleMarker = true;
+          }
+        }
+
+        // Create the layer for the user to interact, a circle or a rectangle.
+        let layer: any;
+        if (displayCircleMarker) {
+          const center = [
+            coordinates[0][0] + (coordinates[1][0] - coordinates[0][0]), // Lat
+            coordinates[0][1] + (coordinates[1][1] - coordinates[0][1]) // Lng
+          ] as LatLngTuple;
+          const displayOptions = { color, radius: targetSize / 2 };
+          layer = leaflet.circleMarker(center, displayOptions);
+        } else {
+          layer = leaflet.rectangle(coordinates, { color });
+        }
 
         // Create a Vue tooltip for the area with the label for the image.
         const ImageLabelComponent = Vue.extend(ImageLabel);
@@ -690,21 +724,17 @@ export default Vue.extend({
           store: this.$store
         }).$mount();
 
-        // Create a rectangle to display the area on the map.
-        const rectangle = leaflet
-          .rectangle(coordinates, displayOptions)
+        // Add interactivity to the layer.
+        layer
           .bindTooltip(tooltip.$el as HTMLElement)
           .on("click", () => this.showImageDrilldown(imageUrl, item));
 
         // Add the rectangle to the layer group.
-        layerGroup.addLayer(rectangle);
+        areaLayerGroup.addLayer(layer);
       });
 
-      layerGroup.addTo(this.map);
-
-      if (bounds.isValid()) {
-        this.map.fitBounds(bounds);
-      }
+      // Add the group of areas to the map.
+      areaLayerGroup.addTo(this.map);
     },
 
     paint() {
