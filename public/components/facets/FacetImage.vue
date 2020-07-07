@@ -6,6 +6,7 @@
     :subselection.prop="subSelection"
     :disabled.prop="!enableHighlighting"
     @facet-element-updated="updateSelection"
+    class="facet-image"
   >
     <div slot="header-label" :class="headerClass">
       <i :class="getGroupIcon(summary) + ' facet-header-icon'"></i>
@@ -19,10 +20,15 @@
       >
       </type-change-menu>
     </div>
-    <facet-template target="facet-terms-value">
+    <facet-template target="facet-terms-value" class="facet-content-container">
       <div slot="header" class="facet-image-preview-display">
         ${metadata}
       </div>
+      <div slot="label" class="facet-image-label" title="${value} ${label}">
+        ${value} ${label}
+      </div>
+      <div slot="annotation" class="collapse-unused" />
+      <div slot="value" class="collapse-unused" />
     </facet-template>
     <div slot="footer" class="facet-footer-container">
       <div v-if="facetDisplayMore" class="facet-footer-more">
@@ -155,7 +161,8 @@ export default Vue.extend({
       return this.facetValueCount - this.numToDisplay;
     },
     numToDisplay(): number {
-      return this.hasExamplars
+      return this.hasExamplars &&
+        this.summary.baseline.exemplars.length < this.baseNumToDisplay
         ? this.summary.baseline.exemplars.length
         : this.hasBaseline && this.facetValueCount < this.baseNumToDisplay
         ? this.facetValueCount
@@ -295,7 +302,29 @@ export default Vue.extend({
 });
 </script>
 
+<style>
+.facet-image .facet-terms-container {
+  max-height: 200px !important;
+  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+}
+</style>
 <style scoped>
+.collapse-unused {
+  display: none;
+}
+.facet-image-label {
+  max-width: 75px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.facet-content-container {
+  display: inline-block;
+  width: 85px;
+  overflow: hidden;
+}
 .facet-image-preview-display {
   padding-left: 10px;
 }

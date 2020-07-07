@@ -200,6 +200,14 @@ export default Vue.extend({
         this.clearImage(elem);
         const image = this.image.cloneNode() as HTMLImageElement;
         elem.appendChild(image);
+
+        // fit image preview to available area with no overflows
+        if (
+          this.width === this.height &&
+          elem.children[0].height > elem.children[0].width
+        ) {
+          elem.children[0].style.height = elem.children[0].width + "px";
+        }
         this.hasRendered = true;
       }
     },
