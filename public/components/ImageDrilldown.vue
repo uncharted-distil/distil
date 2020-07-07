@@ -1,5 +1,11 @@
 <template>
-  <b-modal @hide="hide" hide-footer :title="visibleTitle" :visible="visible">
+  <b-modal
+    size="lg"
+    @hide="hide"
+    hide-footer
+    :title="visibleTitle"
+    :visible="visible"
+  >
     <image-label
       v-if="item && dataFields"
       class="image-label"
@@ -93,6 +99,7 @@ export default Vue.extend({
       if (!!this.image && container) {
         container.innerHTML = "";
         container.appendChild(this.image.cloneNode() as HTMLImageElement);
+        container.children[0].style.width = "100%";
       }
     }
   }
@@ -101,10 +108,9 @@ export default Vue.extend({
 
 <style scoped>
 .image-container {
-  /* Keep the image under 25% of screen width. */
-  max-height: 25vw;
-  max-width: 25vw;
-
+  max-height: 100%;
+  max-width: 100%;
+  overflow: auto;
   text-align: center;
 }
 
