@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/araddon/dateparse"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -224,7 +225,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	)
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(1, "image_file", "image_file", "image_file", model.MultiBandImageType,
-			model.MultiBandImageType, "Reference to image file", []string{"attribute"},
+			model.StringType, "Reference to image file", []string{"attribute"},
 			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(2, "group_id", "group_id", "group_id", model.StringType,
@@ -235,15 +236,15 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.StringType, "Image band", []string{"attribute", "suggestedGroupingKey"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(4, "timestamp", "timestamp", "timestamp", model.StringType,
+		model.NewVariable(4, "timestamp", "timestamp", "timestamp", model.DateTimeType,
 			model.StringType, "Image timestamp", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(5, "coordinates", "coordinates", "coordinates", model.RealVectorType,
-			model.RealVectorType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
+		model.NewVariable(5, "coordinates", "coordinates", "coordinates", model.GeoBoundsType,
+			model.GeoBoundsType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(6, "label", "label", "label", model.StringType,
+		model.NewVariable(6, "label", "label", "label", model.CategoricalType,
 			model.StringType, "Label of the image", []string{"suggestedTarget"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 
@@ -256,10 +257,11 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	meta.DataResources = []*model.DataResource{refDR, dr}
 
 	return &api.RawDataset{
-		ID:       datasetID,
-		Name:     datasetName,
-		Data:     csvData,
-		Metadata: meta,
+		ID:              datasetID,
+		Name:            datasetName,
+		Data:            csvData,
+		Metadata:        meta,
+		DefinitiveTypes: true,
 	}, nil
 }
 
@@ -286,11 +288,16 @@ func extractBand(filename string) (string, error) {
 
 func extractTimestamp(filename string) (string, error) {
 	timestampRaw := timestampRegex.Find([]byte(filename))
-	if len(timestampRaw) > 0 {
-		return string(timestampRaw), nil
+	if len(timestampRaw) == 0 {
+		return "", errors.New("unable to extract band from filename")
 	}
 
-	return "", errors.New("unable to extract band from filename")
+	parsed, err := dateparse.ParseAny(strings.Replace(string(timestampRaw), "T", "", -1))
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to parse timestamp")
+	}
+
+	return parsed.Format("2006-01-02 03:04:05"), nil
 }
 
 func extractGroupID(filename string) string {
@@ -407,4 +414,18 @@ func copyAndSplitMultiBandImage(imageFilename string, imageType string, outputFo
 	}
 
 	return files, nil
+}
+
+// CreateSatelliteGrouping dumps the satellite grouping structure into a map.
+// It assumes that the dataset has the same structure as during upload.
+func CreateSatelliteGrouping() map[string]interface{} {
+	// assume dataset structure matches what would be created during ingest
+	grouping := map[string]interface{}{}
+	grouping["bandCol"] = "band"
+	grouping["idCol"] = "group_id"
+	grouping["imageCol"] = "image_file"
+	grouping["type"] = "remote_sensing"
+	grouping["hidden"] = []string{"image_file", "band", "group_id"}
+
+	return grouping
 }

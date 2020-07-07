@@ -59,59 +59,9 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 		}
 
 		groupingType := g["type"].(string)
-		if model.IsTimeSeries(groupingType) {
-			tsg, err := parseTimeseriesGrouping(g)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-
-			if tsg.IDCol != "" {
-				// Create a new variable and column for the time series key.
-				if err := task.CreateComposedVariable(meta, data, dataset, tsg.IDCol, tsg.YCol, tsg.SubIDs); err != nil {
-					handleError(w, errors.Wrapf(err, "unable to create new variable %s", tsg.IDCol))
-					return
-				}
-
-				// Set the name of the expected cluster column - it doesn't necessarily exist.
-				tsg.ClusterCol = model.ClusterVarPrefix + tsg.IDCol
-			}
-
-			// Create a new grouped variable for the time series.
-			groupingVarName := strings.Join([]string{tsg.XCol, tsg.YCol}, task.DefaultSeparator)
-			err = meta.AddGroupedVariable(dataset, groupingVarName, tsg.YCol, model.TimeSeriesType, model.VarDistilRoleGrouping, tsg)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-		} else if model.IsGeoCoordinate(groupingType) {
-			gcg, err := parseGeoCoordinateGrouping(g)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-
-			// No key required in this case.
-			groupingVarName := strings.Join([]string{gcg.XCol, gcg.YCol}, task.DefaultSeparator)
-			err = meta.AddGroupedVariable(dataset, groupingVarName, "Geocoordinate", model.GeoCoordinateType, model.VarDistilRoleGrouping, gcg)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-		} else if model.IsRemoteSensing(groupingType) {
-			rsg, err := parseRemoteSensingGrouping(g)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-
-			err = meta.AddGroupedVariable(dataset, rsg.IDCol+"_group", "Tile", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-		} else {
-			handleError(w, errors.Errorf("unhandled group type %s", groupingType))
+		err = createGrouping(dataset, groupingType, g, meta, data)
+		if err != nil {
+			handleError(w, err)
 			return
 		}
 
@@ -237,4 +187,56 @@ func parseRemoteSensingGrouping(rawGrouping map[string]interface{}) (*model.Remo
 	}
 
 	return grouping, nil
+}
+
+func createGrouping(dataset string, groupingType string, rawGrouping map[string]interface{}, meta api.MetadataStorage, data api.DataStorage) error {
+	if model.IsTimeSeries(groupingType) {
+		tsg, err := parseTimeseriesGrouping(rawGrouping)
+		if err != nil {
+			return err
+		}
+
+		if tsg.IDCol != "" {
+			// Create a new variable and column for the time series key.
+			if err := task.CreateComposedVariable(meta, data, dataset, tsg.IDCol, tsg.YCol, tsg.SubIDs); err != nil {
+				return errors.Wrapf(err, "unable to create new variable %s", tsg.IDCol)
+			}
+
+			// Set the name of the expected cluster column - it doesn't necessarily exist.
+			tsg.ClusterCol = model.ClusterVarPrefix + tsg.IDCol
+		}
+
+		// Create a new grouped variable for the time series.
+		groupingVarName := strings.Join([]string{tsg.XCol, tsg.YCol}, task.DefaultSeparator)
+		err = meta.AddGroupedVariable(dataset, groupingVarName, tsg.YCol, model.TimeSeriesType, model.VarDistilRoleGrouping, tsg)
+		if err != nil {
+			return err
+		}
+	} else if model.IsGeoCoordinate(groupingType) {
+		gcg, err := parseGeoCoordinateGrouping(rawGrouping)
+		if err != nil {
+			return err
+		}
+
+		// No key required in this case.
+		groupingVarName := strings.Join([]string{gcg.XCol, gcg.YCol}, task.DefaultSeparator)
+		err = meta.AddGroupedVariable(dataset, groupingVarName, "Geocoordinate", model.GeoCoordinateType, model.VarDistilRoleGrouping, gcg)
+		if err != nil {
+			return err
+		}
+	} else if model.IsRemoteSensing(groupingType) {
+		rsg, err := parseRemoteSensingGrouping(rawGrouping)
+		if err != nil {
+			return err
+		}
+
+		err = meta.AddGroupedVariable(dataset, rsg.IDCol+"_group", "Tile", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
+		if err != nil {
+			return err
+		}
+	} else {
+		return errors.Errorf("unhandled group type %s", groupingType)
+	}
+
+	return nil
 }

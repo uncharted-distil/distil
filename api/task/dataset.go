@@ -100,6 +100,18 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 		return "", "", err
 	}
 
+	// if definitive types provided, write out the classification information
+	if ds.DefinitiveTypes {
+		outputPath := path.Join(formattedPath, config.ClassificationOutputPath)
+		log.Infof("write definitve types to '%s'", outputPath)
+		classification := buildClassificationFromMetadata(ds.Metadata)
+		classification.Path = outputPath
+		err := metadata.WriteClassification(classification, outputPath)
+		if err != nil {
+			return "", "", err
+		}
+	}
+
 	// copy to the original output location for consistency
 	if formattedPath != outputDatasetPath {
 		err = os.RemoveAll(outputDatasetPath)
@@ -201,4 +213,19 @@ func getUniqueString(base string, existing []string) string {
 	}
 
 	return unique
+}
+
+func buildClassificationFromMetadata(meta *model.Metadata) *model.ClassificationData {
+	// cycle through the variables and collect the types
+	mainDR := meta.GetMainDataResource()
+	classification := &model.ClassificationData{
+		Labels:        make([][]string, len(mainDR.Variables)),
+		Probabilities: make([][]float64, len(mainDR.Variables)),
+	}
+	for _, v := range mainDR.Variables {
+		classification.Labels[v.Index] = []string{v.Type}
+		classification.Probabilities[v.Index] = []float64{1}
+	}
+
+	return classification
 }

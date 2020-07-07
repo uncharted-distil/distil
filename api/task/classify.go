@@ -36,13 +36,6 @@ const (
 	defaultEmptyProb = "1.0"
 )
 
-// ClassificationResult represents a classification result.
-type ClassificationResult struct {
-	Labels        [][]string  `json:"labels"`
-	Probabilities [][]float64 `json:"label_probabilities"`
-	Path          string      `json:"path"`
-}
-
 func castTypeArray(in []interface{}) ([]string, error) {
 	strArr := make([]string, 0)
 	for _, v := range in {
@@ -137,7 +130,7 @@ func Classify(schemaPath string, dataset string, config *IngestTaskConfig) (stri
 			probabilities[colIndex] = probs
 		}
 	}
-	classification := &ClassificationResult{
+	classification := &model.ClassificationData{
 		Path:          datasetURI,
 		Labels:        labels,
 		Probabilities: probabilities,
@@ -165,4 +158,9 @@ func mapClassifiedTypes(types []string) []string {
 	}
 
 	return types
+}
+
+func classificationExists(schemaPath string, config *IngestTaskConfig) bool {
+	classificationPath := path.Join(path.Dir(schemaPath), config.ClassificationOutputPathRelative)
+	return util.FileExists(classificationPath)
 }

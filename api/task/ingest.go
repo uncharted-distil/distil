@@ -80,6 +80,10 @@ type IngestTaskConfig struct {
 	IngestOverwrite                    bool
 }
 
+type IngestSteps struct {
+	ClassificationOverwrite bool
+}
+
 // NewDefaultClient creates a new client to use when submitting pipelines.
 func NewDefaultClient(config env.Config, userAgent string, discoveryLogger middleware.MethodLogger) (*compute.Client, error) {
 	return compute.NewClient(
@@ -137,7 +141,7 @@ func NewConfig(config env.Config) *IngestTaskConfig {
 
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor,
-	dataset string, origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig) (string, error) {
+	dataset string, origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, steps *IngestSteps) (string, error) {
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
@@ -184,11 +188,15 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	latestSchemaOutput = output
 	log.Infof("finished cleaning the dataset")
 
-	_, err = Classify(latestSchemaOutput, dataset, config)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to classify fields")
+	if steps.ClassificationOverwrite || !classificationExists(latestSchemaOutput, config) {
+		_, err = Classify(latestSchemaOutput, dataset, config)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to classify fields")
+		}
+		log.Infof("finished classifying the dataset")
+	} else {
+		log.Infof("skipping classification because it already exists")
 	}
-	log.Infof("finished classifying the dataset")
 
 	_, err = Rank(latestSchemaOutput, dataset, config)
 	if err != nil {
