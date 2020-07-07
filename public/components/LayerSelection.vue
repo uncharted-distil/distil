@@ -37,7 +37,9 @@ export default Vue.extend({
 
     // Returns list of band combinations
     availableBands(): BandCombination[] {
-      return datasetGetters.getMultiBandCombinations(this.$store);
+      return datasetGetters
+        .getMultiBandCombinations(this.$store)
+        .sort((a, b) => a.displayName.localeCompare(b.displayName));
     }
   },
 

@@ -97,8 +97,12 @@ export default Vue.extend({
     // Refresh image on band change
     band(newBand: string, oldBand: string) {
       if (newBand !== oldBand) {
-        this.clearImage();
-        this.requestImage();
+        this.hasRendered = false;
+        this.hasRequested = false;
+        if (this.isVisible) {
+          this.clearImage();
+          this.requestImage();
+        }
       }
     }
   },
