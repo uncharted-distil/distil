@@ -7,16 +7,6 @@
       includedActive
       :item="item"
     />
-    <div v-if="isRemoteSensing && availableBands.length > 0">
-      <b-dropdown :text="band" size="sm">
-        <b-dropdown-item
-          v-for="bandInfo in availableBands"
-          :key="bandInfo.id"
-          @click="setBandCombination(bandInfo.id)"
-          >{{ bandInfo.displayName }}
-        </b-dropdown-item>
-      </b-dropdown>
-    </div>
     <div class="image-container" ref="imageContainer"></div>
   </b-modal>
 </template>
@@ -73,15 +63,6 @@ export default Vue.extend({
   },
 
   computed: {
-    availableBands(): BandCombination[] {
-      return datasetGetters.getMultiBandCombinations(this.$store);
-    },
-
-    band(): string {
-      const bandID = routeGetters.getBandCombinationId(this.$store);
-      return this.availableBands.find(b => b.id === bandID)?.displayName;
-    },
-
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
@@ -94,10 +75,6 @@ export default Vue.extend({
       return (
         this.files[this.imageUrl] ?? this.files[imageId(this.imageUrl)] ?? null
       );
-    },
-
-    isRemoteSensing(): boolean {
-      return routeGetters.isRemoteSensing(this.$store);
     },
 
     visibleTitle(): string {
@@ -117,28 +94,6 @@ export default Vue.extend({
         container.innerHTML = "";
         container.appendChild(this.image.cloneNode() as HTMLImageElement);
       }
-    },
-
-    async requestMultiBandImage() {
-      await datasetActions.fetchMultiBandImage(this.$store, {
-        dataset: this.dataset,
-        imageId: imageId(this.imageUrl),
-        bandCombination: routeGetters.getBandCombinationId(this.$store)
-      });
-
-      // Display the image for that band.
-      this.injectImage();
-    },
-
-    setBandCombination(bandID: BandID) {
-      // Writes a new band combination into the route
-      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        bandCombinationId: bandID
-      });
-      this.$router.push(entry);
-
-      // Request the new band of the image.
-      this.requestMultiBandImage();
     }
   }
 });

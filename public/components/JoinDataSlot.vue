@@ -86,7 +86,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .join-data-container {
   display: flex;
   background-color: white;

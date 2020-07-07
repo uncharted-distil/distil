@@ -16,7 +16,7 @@
     </view-type-toggle>
 
     <div class="fake-search-input">
-      <div class="filter-badges">
+      <div>
         <filter-badge v-if="activeFilter" active-filter :filter="activeFilter">
         </filter-badge>
         <filter-badge
@@ -29,9 +29,14 @@
       </div>
     </div>
 
-    <p class="small-margin">
+    <div class="table-title-container">
+      <small class="row-number-label" v-html="tableTitle"></small>
+      <layer-selection
+        v-if="isRemoteSensing"
+        class="layer-select-dropdown"
+      ></layer-selection>
       <b-button
-        class="float-right select-data-action-exclude"
+        class="select-data-action-exclude"
         v-if="includedActive"
         variant="outline-secondary"
         :disabled="isExcludeDisabled"
@@ -47,7 +52,6 @@
         >Exclude
       </b-button>
       <b-button
-        class="float-right"
         v-if="!includedActive"
         variant="outline-secondary"
         :disabled="!isFilteringSelection"
@@ -59,8 +63,7 @@
         ></i
         >Reinclude
       </b-button>
-      <small class="row-number-label" v-html="tableTitle"></small>
-    </p>
+    </div>
 
     <div class="select-data-container" v-bind:class="{ pending: !hasData }">
       <div class="select-data-no-results" v-if="!hasData">
@@ -107,6 +110,7 @@ import SelectGeoPlot from "./SelectGeoPlot";
 import SelectGraphView from "./SelectGraphView";
 import FilterBadge from "./FilterBadge";
 import ViewTypeToggle from "./ViewTypeToggle";
+import LayerSelection from "./LayerSelection";
 import { overlayRouteEntry } from "../util/routes";
 import {
   actions as datasetActions,
@@ -155,7 +159,8 @@ export default Vue.extend({
     SelectGraphView,
     SelectGeoPlot,
     SelectTimeseriesView,
-    ViewTypeToggle
+    ViewTypeToggle,
+    LayerSelection
   },
 
   data() {
@@ -298,6 +303,10 @@ export default Vue.extend({
       return !!this.rowSelection;
     },
 
+    isRemoteSensing(): boolean {
+      return routeGetters.isRemoteSensing(this.$store);
+    },
+
     viewType(): string {
       return this.viewTypeModel;
     }
@@ -392,7 +401,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .select-data-container {
   background-color: white;
   display: flex;
@@ -439,23 +448,19 @@ table tr {
   color: #ff0067;
 }
 
-.row-number-label {
-  position: relative;
-  top: 20px;
-}
-
 .matching-color {
   color: #255dcc;
 }
 
 .fake-search-input {
-  position: relative;
-  height: 38px;
-  padding: 2px 2px;
-  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  flex-grow: 1;
   background-color: #eee;
   border: 1px solid #ccc;
   border-radius: 0.2rem;
+  padding: 3px;
 }
 
 .pending {
@@ -464,5 +469,25 @@ table tr {
 
 .selected-color {
   color: #ff0067;
+}
+
+.table-title-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 4px;
+  margin-top: 6px;
+}
+
+.layer-select-dropdown {
+  margin-right: 6px;
+}
+
+.row-number-label {
+  margin-right: auto;
+  margin-top: auto;
+  vertical-align: baseline;
+  margin-bottom: -3px;
 }
 </style>
