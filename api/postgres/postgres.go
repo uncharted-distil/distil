@@ -28,15 +28,15 @@ import (
 
 const (
 	metadataTableCreationSQL = `CREATE TABLE %s (
-			name	varchar(100)	NOT NULL,
+			name	text	NOT NULL,
 			role	varchar(100),
 			type	varchar(100)
 		);`
 	resultTableCreationSQL = `CREATE TABLE %s (
-			result_id	varchar(1000)	NOT NULL,
+			result_id	text	NOT NULL,
 			index		BIGINT,
-			target		varchar(100),
-			value		varchar(200),
+			target		text,
+			value		text,
 			confidence_low double precision,
 			confidence_high double precision
 		);`
@@ -64,47 +64,47 @@ const (
 	WordStemTableName = "word_stem"
 
 	requestTableCreationSQL = `CREATE TABLE %s (
-			request_id			varchar(200),
+			request_id			text,
 			dataset				varchar(200),
 			progress			varchar(40),
 			created_time		timestamp,
 			last_updated_time	timestamp
 		);`
 	predictionTableCreationSQL = `CREATE TABLE %s (
-				request_id			varchar(200),
+				request_id			text,
 				dataset				varchar(200),
-				target		varchar(100),
-				fitted_solution_id	varchar(200),
+				target		text,
+				fitted_solution_id	text,
 				progress			varchar(40),
 				created_time		timestamp,
 				last_updated_time	timestamp
 			);`
 	solutionTableCreationSQL = `CREATE TABLE %s (
-			request_id		varchar(200),
-			solution_id		varchar(200),
-			explained_solution_id varchar(200),
+			request_id		text,
+			solution_id		text,
+			explained_solution_id text,
 			created_time	timestamp,
 			deleted         boolean
 		);`
 	solutionFeatureWeightTableCreationSQL = `CREATE TABLE %s (
-			solution_id	varchar(200),
-			feature_name	varchar(100),
+			solution_id	text,
+			feature_name	text,
 			feature_index int,
 			weight		double precision
 		);`
 	solutionStateTableCreationSQL = `CREATE TABLE %s (
-			solution_id		varchar(200),
+			solution_id		text,
 			progress		varchar(40),
 			created_time	timestamp
 		);`
 	requestFeatureTableCreationSQL = `CREATE TABLE %s (
-			request_id		varchar(200),
-			feature_name	varchar(100),
+			request_id		text,
+			feature_name	text,
 			feature_type	varchar(20)
 		);`
 	requestFilterTableCreationSQL = `CREATE TABLE %s (
-			request_id			varchar(200),
-			feature_name		varchar(100),
+			request_id			text,
+			feature_name		text,
 			filter_type			varchar(40),
 			filter_mode			varchar(40),
 			filter_min			double precision,
@@ -117,27 +117,27 @@ const (
 			filter_indices		varchar(200)
 		);`
 	modelFeatureWeightTableCreationSQL = `CREATE TABLE %s (
-			result_id	varchar(1000)	NOT NULL,
+			result_id	text	NOT NULL,
 			%s
 		);`
 	solutionScoreTableCreationSQL = `CREATE TABLE %s (
-			solution_id	varchar(200),
+			solution_id	text,
 			metric		varchar(40),
 			score		double precision
 		);`
 	solutionResultTableCreationSQL = `CREATE TABLE %s (
-			solution_id			varchar(200),
-			fitted_solution_id	varchar(200),
-			produce_request_id varchar(200),
+			solution_id			text,
+			fitted_solution_id	text,
+			produce_request_id text,
 			result_type varchar(20),
-			result_uuid			varchar(200),
-			result_uri			varchar(200),
+			result_uuid			text,
+			result_uri			text,
 			progress			varchar(40),
 			created_time		timestamp
 		);`
 	wordStemsTableCreationSQL = `CREATE TABLE %s (
-			stem		varchar(200) PRIMARY KEY,
-			word		varchar(200)
+			stem		text PRIMARY KEY,
+			word		text
 		);`
 
 	resultTableSuffix   = "_result"
