@@ -194,6 +194,12 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, errors.Wrap(err, "unable to update dataset doc")
 	}
 
+	// add feature groups
+	err = copyFeatureGroups(params.FittedSolutionID, datasetName, params.SolutionStorage, params.MetaStorage)
+	if err != nil {
+		return nil, err
+	}
+
 	// get the explained solution id
 	solution, err := params.SolutionStorage.FetchSolution(params.SolutionID)
 	if err != nil {
@@ -499,4 +505,41 @@ func getComponentVariables(variable *model.Variable) []string {
 	}
 
 	return componentVars
+}
+
+func copyFeatureGroups(fittedSolutionID string, datasetName string, solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage) error {
+	// get the features in the solution
+	solutionRequest, err := solutionStorage.FetchRequestByFittedSolutionID(fittedSolutionID)
+	if err != nil {
+		return err
+	}
+
+	// get a variable map for quick look up
+	variables, err := metaStorage.FetchVariables(solutionRequest.Dataset, false, true)
+	if err != nil {
+		return err
+	}
+	variableMap := createVarMap(variables, false)
+	variablesPrediction, err := metaStorage.FetchVariables(datasetName, false, true)
+	if err != nil {
+		return err
+	}
+	variablePredictionMap := createVarMap(variablesPrediction, false)
+
+	// copy over the groups that are found and dont already exist in the prediction dataset
+	for _, feature := range solutionRequest.Features {
+		if feature.FeatureType == "train" && variablePredictionMap[feature.FeatureName] == nil {
+			sf := variableMap[feature.FeatureName]
+			if sf.IsGrouping() && model.IsRemoteSensing(sf.Grouping.GetType()) {
+				rsg := sf.Grouping.(*model.RemoteSensingGrouping)
+				rsg.Dataset = datasetName
+				err = metaStorage.AddGroupedVariable(datasetName, sf.Name, sf.DisplayName, sf.Type, sf.DistilRole, rsg)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }

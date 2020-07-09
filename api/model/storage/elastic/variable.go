@@ -52,7 +52,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 		importance = 0
 	}
 	role, ok := json.StringArray(child, model.VarRoleField)
-	if !ok {
+	if !ok || role == nil {
 		role = make([]string, 0)
 	}
 	selectedRole, ok := json.String(child, model.VarSelectedRoleField)
