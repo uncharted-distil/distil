@@ -271,38 +271,58 @@ func explainablePipelineFunctions(solutionDesc *pipeline.DescribeSolutionRespons
 	return explainableCalls
 }
 
-func getPipelineOutputs(solutionDesc *pipeline.DescribeSolutionResponse) map[string]*pipelineOutput {
+func getPipelineOutputs(solutionDesc *pipeline.DescribeSolutionResponse) (map[string]*pipelineOutput, error) {
 	outputs := make(map[string]*pipelineOutput)
 	for _, o := range solutionDesc.Pipeline.Outputs {
-		output := createPipelineOutputFromDescription(o)
+		output, stepIndex, err := createPipelineOutputFromDescription(o)
+		if err != nil {
+			return nil, err
+		}
 		if output != nil {
+			outputPrimitive := solutionDesc.Pipeline.Steps[stepIndex].GetPrimitive()
+			explainOutputs := explainableOutputPrimitives[outputPrimitive.Primitive.Id]
+			for _, eo := range explainOutputs {
+				if eo.explainableType == output.typ {
+					output.parsingParams = eo.parsingParams
+				}
+			}
 			outputs[output.typ] = output
 		}
 	}
-	return outputs
+	return outputs, nil
 }
 
-func createPipelineOutputFromDescription(output *pipeline.PipelineDescriptionOutput) *pipelineOutput {
+func createPipelineOutputFromDescription(output *pipeline.PipelineDescriptionOutput) (*pipelineOutput, int, error) {
 	// use the produce function name to determine what kind of data is being output
+	var explainedOutput *pipelineOutput
 	produceFunction := output.Data
 	if strings.Contains(produceFunction, "confidence") {
-		return &pipelineOutput{
+		explainedOutput = &pipelineOutput{
 			typ: explainableTypeConfidence,
 			key: output.Name,
 		}
 	} else if strings.Contains(produceFunction, "feature") {
-		return &pipelineOutput{
+		explainedOutput = &pipelineOutput{
 			typ: explainableTypeSolution,
 			key: output.Name,
 		}
 	} else if strings.Contains(produceFunction, "shap") {
-		return &pipelineOutput{
+		explainedOutput = &pipelineOutput{
 			typ: explainableTypeStep,
 			key: output.Name,
 		}
 	}
 
-	return nil
+	step := 0
+	if explainedOutput != nil {
+		stepRaw, err := strconv.Atoi(strings.Split(produceFunction, ".")[1])
+		if err != nil {
+			return nil, -1, errors.Wrapf(err, "unable to parse output step for explained output")
+		}
+		step = stepRaw
+	}
+
+	return explainedOutput, step, nil
 }
 
 func mapRowIndex(d3mIndexCol int, data [][]string) map[int]string {

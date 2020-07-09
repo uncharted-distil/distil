@@ -18,6 +18,7 @@ package compute
 import (
 	"context"
 	"fmt"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -84,7 +85,7 @@ type PredictionResult struct {
 	ProduceRequestID         string
 	FittedSolutionID         string
 	ResultURI                string
-	ConfidenceURI            string
+	Confidences              *api.SolutionExplainResult
 	SolutionFeatureWeightURI string
 	StepFeatureWeightURI     string
 }
@@ -331,7 +332,11 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 		return nil, err
 	}
 
-	outputs := getPipelineOutputs(desc)
+	outputs, err := getPipelineOutputs(desc)
+	if err != nil {
+		return nil, err
+	}
+
 	keys := []string{defaultExposedOutputKey}
 	keys = append(keys, extractOutputKeys(outputs)...)
 
@@ -366,11 +371,17 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 				return nil, err
 			}
 		}
-		var confidenceURI string
+		var confidenceResult *api.SolutionExplainResult
 		if outputs[explainableTypeConfidence] != nil {
-			confidenceURI, err = getFileFromOutput(response, outputs[explainableTypeConfidence].key)
+			confidenceURI, err := getFileFromOutput(response, outputs[explainableTypeConfidence].key)
 			if err != nil {
 				return nil, err
+			}
+			confidenceResult, err = ExplainFeatureOutput(resultURI, path.Join(datasetURI, compute.D3MDataSchema), confidenceURI)
+			if err != nil {
+				return nil, err
+			} else {
+				confidenceResult.ParsingParams = outputs[explainableTypeConfidence].parsingParams
 			}
 		}
 
@@ -378,7 +389,7 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 			ProduceRequestID:         produceRequestID,
 			FittedSolutionID:         fittedSolutionID,
 			ResultURI:                resultURI,
-			ConfidenceURI:            confidenceURI,
+			Confidences:              confidenceResult,
 			StepFeatureWeightURI:     explainFeatureURI,
 			SolutionFeatureWeightURI: explainSolutionURI,
 		}, nil
@@ -693,6 +704,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 					parsedExplainResult, err := ExplainFeatureOutput(resultURI, produceDatasetURI, explainURI)
 					if err != nil {
 						log.Warnf("failed to fetch output explanation - %v", err)
+						continue
 					}
 					parsedExplainResult.ParsingParams = explain.parsingParams
 					explainedResults[explain.typ] = parsedExplainResult

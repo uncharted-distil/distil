@@ -305,12 +305,14 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 
 	params = append(params, resultURI)
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))
+	wheres = append(wheres, "result.value != ''")
 
 	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 
 	// Get count by category.
 	query := fmt.Sprintf(`
-		SELECT "%s", CAST(CASE WHEN result.value = '' THEN 'NaN' ELSE result.value END as double precision), result.confidence_low, result.confidence_high
+		SELECT "%s", CAST(CASE WHEN result.value = '' THEN 'NaN' ELSE result.value END as double precision),
+		coalesce(result.confidence_low, 'NaN') AS confidence_low, coalesce(result.confidence_high, 'NaN') AS confidence_high
 		FROM %s data INNER JOIN  %s result ON data."%s" = result.index
 		%s
 		ORDER BY %s`,

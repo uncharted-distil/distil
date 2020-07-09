@@ -250,7 +250,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, err
 	}
 
-	err = params.DataStorage.PersistResult(datasetName, model.NormalizeDatasetID(datasetName), predictionResult.ResultURI, target.Name, nil)
+	err = params.DataStorage.PersistResult(datasetName, model.NormalizeDatasetID(datasetName), predictionResult.ResultURI, target.Name, predictionResult.Confidences)
 	if err != nil {
 		return nil, err
 	}
