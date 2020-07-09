@@ -1,66 +1,30 @@
 <template>
-  <div class="result-summaries">
-    <p class="nav-link font-weight-bold">Results</p>
-    <p></p>
-    <div v-if="showResiduals" class="result-summaries-error">
-      <error-threshold-slider></error-threshold-slider>
+  <div class="result-panel">
+    <div class="result-summaries">
+      <p class="nav-link font-weight-bold">Results</p>
+      <p></p>
+      <div v-if="showResiduals" class="result-summaries-error">
+        <error-threshold-slider></error-threshold-slider>
+      </div>
+      <p class="nav-link font-weight-bold">
+        Predictions by Model
+      </p>
+      <result-facets :showResiduals="showResiduals" />
     </div>
-    <p class="nav-link font-weight-bold">
-      Predictions by Model
-    </p>
-    <result-facets :showResiduals="showResiduals" />
-
     <template v-if="isActiveSolutionCompleted">
-      <predictions-data-uploader
-        class="result-button-alignment"
-        @uploadstart="onUploadStart"
-        @uploadfinish="onUploadFinish"
-        :fitted-solution-id="fittedSolutionId"
-        :target="target"
-        :target-type="targetType"
-      ></predictions-data-uploader>
+      <save-model
+        :solutionId="solutionId"
+        :fittedSolutionId="fittedSolutionId"
+      ></save-model>
+      <hr />
       <b-button
-        block
-        variant="primary"
-        class="result-button-alignment"
+        variant="success"
+        class="save-button"
         v-b-modal.save-model-modal
       >
+        <i class="fa fa-floppy-o"></i>
         Save Model
       </b-button>
-      <b-modal
-        title="Save Model"
-        id="save-model-modal"
-        @ok="handleOk"
-        @cancel="resetModal"
-        @close="resetModal"
-      >
-        <form ref="saveModelForm" @submit.stop.prevent="saveModel">
-          <b-form-group
-            label="Model Name"
-            label-for="model-name-input"
-            invalid-feedback="Model Name is Required"
-            :state="saveNameState"
-          >
-            <b-form-input
-              id="model-name-input"
-              v-model="saveName"
-              :state="saveNameState"
-              required
-            ></b-form-input>
-          </b-form-group>
-          <b-form-group
-            label="Model Description"
-            label-for="model-desc-input"
-            :state="saveDescriptionState"
-          >
-            <b-form-input
-              id="model-desc-input"
-              v-model="saveDescription"
-              :state="saveDescriptionState"
-            ></b-form-input>
-          </b-form-group>
-        </form>
-      </b-modal>
     </template>
   </div>
 </template>
@@ -69,6 +33,7 @@
 import ResultFacets from "../components/ResultFacets";
 import PredictionsDataUploader from "../components/PredictionsDataUploader";
 import ErrorThresholdSlider from "../components/ErrorThresholdSlider";
+import SaveModel from "../components/SaveModel";
 import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -99,7 +64,8 @@ export default Vue.extend({
     ResultFacets,
     PredictionsDataUploader,
     ErrorThresholdSlider,
-    vueSlider
+    vueSlider,
+    SaveModel
   },
 
   data() {
@@ -110,11 +76,7 @@ export default Vue.extend({
       symmetricSlider: true,
       file: null,
       uploadData: {},
-      uploadStatus: "",
-      saveName: "",
-      saveNameState: null,
-      saveDescription: "",
-      saveDescriptionState: null
+      uploadStatus: ""
     };
   },
 
@@ -184,11 +146,6 @@ export default Vue.extend({
   },
 
   methods: {
-    validForm() {
-      const valid = this.saveName.length > 0;
-      this.saveNameState = valid;
-      return valid;
-    },
     onUploadStart(uploadData) {
       this.uploadData = uploadData;
       this.uploadStatus = "started";
@@ -226,50 +183,6 @@ export default Vue.extend({
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
         this.$router.push(entry);
       }
-    },
-    handleOk(bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault();
-      // Trigger submit handler
-      this.saveModel();
-    },
-    resetModal() {
-      this.saveName = "";
-      this.saveNameState = null;
-      this.saveDescription = "";
-      this.saveDescriptionState = null;
-    },
-    saveModel() {
-      if (!this.validForm()) {
-        return;
-      }
-
-      appActions.logUserEvent(this.$store, {
-        feature: Feature.EXPORT_MODEL,
-        activity: Activity.MODEL_SELECTION,
-        subActivity: SubActivity.MODEL_SAVE,
-        details: {
-          solution: this.activeSolution.solutionId,
-          fittedSolution: this.fittedSolutionId
-        }
-      });
-
-      appActions
-        .saveModel(this.$store, {
-          fittedSolutionId: this.fittedSolutionId,
-          modelName: this.saveName,
-          modelDescription: this.saveDescription
-        })
-        .then(err => {
-          if (err) {
-            console.warn(err);
-          }
-        });
-
-      this.$nextTick(() => {
-        this.$bvModal.hide("save-model-modal");
-        this.resetModal();
-      });
     }
   }
 });
@@ -322,7 +235,17 @@ export default Vue.extend({
   margin: 0 20%;
 }
 
-.result-button-alignment {
-  padding: 0 0 15px;
+.save-button {
+  flex-shrink: 0;
+  flex-grow: 0;
+  margin-top: 15px;
+  margin-bottom: 0px;
+  margin-left: auto;
+  margin-right: 8px;
+}
+
+.result-panel {
+  display: flex;
+  flex-direction: column;
 }
 </style>
