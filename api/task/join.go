@@ -62,8 +62,8 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 	varsRight []*model.Variable, rightOrigin *model.DatasetOrigin, submitter primitiveSubmitter,
 	config *env.Config) (*apiModel.FilteredData, error) {
 	// put the vars into a map for quick lookup
-	leftVarsMap := createVarMap(varsLeft)
-	rightVarsMap := createVarMap(varsRight)
+	leftVarsMap := createVarMap(varsLeft, true)
+	rightVarsMap := createVarMap(varsRight, true)
 	searchResult := ""
 	provenance := ""
 	if rightOrigin != nil {
@@ -116,10 +116,14 @@ func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *description.F
 	return submitPipeline(datasetURIs, pipelineDesc)
 }
 
-func createVarMap(vars []*model.Variable) map[string]*model.Variable {
+func createVarMap(vars []*model.Variable, useDisplayName bool) map[string]*model.Variable {
 	varsMap := map[string]*model.Variable{}
 	for _, v := range vars {
-		varsMap[v.DisplayName] = v
+		name := v.Name
+		if useDisplayName {
+			name = v.DisplayName
+		}
+		varsMap[name] = v
 	}
 	return varsMap
 }
