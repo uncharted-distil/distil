@@ -53,7 +53,7 @@ func UploadHandler(config *env.Config) func(http.ResponseWriter, *http.Request) 
 			tmpPath := env.GetTmpPath()
 			csvFilename := path.Join(tmpPath, fmt.Sprintf("%s_raw.csv", datasetName))
 			outputPath = util.GetUniqueName(csvFilename)
-			err = util.WriteFileWithDirs(csvFilename, data, os.ModePerm)
+			err = util.WriteFileWithDirs(outputPath, data, os.ModePerm)
 		} else if typ == "media" {
 			// Expand the data into temp storage
 			outputPath, err = dataset.StoreZipDataset(datasetName, data)

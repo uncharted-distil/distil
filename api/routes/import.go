@@ -45,7 +45,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		provenance := pat.Param(r, "provenance")
 
 		var origins []*model.DatasetOrigin
-		if source == metadata.Augmented && provenance != "local" {
+		if source == metadata.Augmented && provenance == "local" {
 			// parse POST params
 			params, err := getPostParameters(r)
 			if err != nil {
@@ -64,6 +64,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				handleError(w, errors.Wrap(err, "unable to create raw dataset"))
 				return
 			}
+			log.Infof("create dataset '%s' from local source '%s'", datasetID, datasetPath)
 		} else if source == metadata.Augmented {
 			// parse POST params
 			params, err := getPostParameters(r)
@@ -220,7 +221,7 @@ func isRemoteSensingDataset(datasetID string, metaStorage api.MetadataStorage) b
 	}
 
 	for _, v := range variables {
-		if model.IsMultiBandImage(v.OriginalType) {
+		if model.IsMultiBandImage(v.Type) {
 			return true
 		}
 	}
@@ -292,16 +293,12 @@ func createRawDataset(datasetPath string, datasetName string) (task.DatasetConst
 
 func rawDatasetIsTabular(datasetPath string) bool {
 	// check if datasetPath is a folder
-	if !util.IsDirectory(datasetPath) {
+	if !util.FileExists(datasetPath) || util.IsDirectory(datasetPath) {
 		return false
 	}
 
-	// check if it contains a single csv file
-	files, err := ioutil.ReadDir(datasetPath)
-	if err != nil {
-		return false
-	}
-	return len(files) == 1 && path.Ext(files[0].Name()) == ".csv"
+	// check if it is a csv file
+	return path.Ext(datasetPath) == ".csv"
 }
 
 func createTableDataset(datasetPath string, datasetName string) (task.DatasetConstructor, error) {

@@ -200,7 +200,8 @@ export default Vue.extend({
           source: "contrib",
           provenance: this.dataset.provenance,
           originalDataset: null,
-          joinedDataset: null
+          joinedDataset: null,
+          path: ""
         })
         .then(() => {
           this.importPending = false;

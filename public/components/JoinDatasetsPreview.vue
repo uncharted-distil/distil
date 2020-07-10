@@ -148,7 +148,8 @@ export default Vue.extend({
         provenance: "local",
         originalDataset: this.datasetA,
         joinedDataset: this.datasetB,
-        searchResultIndex: this.searchResultIndex
+        searchResultIndex: this.searchResultIndex,
+        path: ""
       };
       datasetActions
         .importDataset(this.$store, importDatasetArgs)

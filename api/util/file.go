@@ -183,15 +183,13 @@ func RemoveContents(dir string) error {
 // IsDatasetDir indicates whether or not a directory contains a single d3m dataset.
 func IsDatasetDir(dir string) bool {
 	datasetPath := path.Join(dir, "TRAIN", "dataset_TRAIN")
-	_, err := os.Stat(datasetPath)
-	if !os.IsNotExist(err) {
+	if IsDirectory(datasetPath) {
 		dir = datasetPath
 	}
 
 	// check for dataset doc
 	schemaPath := path.Join(dir, "datasetDoc.json")
-	_, err = os.Stat(schemaPath)
-	return !os.IsNotExist(err)
+	return FileExists(schemaPath)
 }
 
 // GetDirectories returns a list of directories found using the supplied path.
@@ -259,6 +257,13 @@ func GenerateTimeFileNameStr() string {
 
 // FileExists checks if a file already exists on disk.
 func FileExists(filename string) bool {
+	// check that the directory of the file exists as a directory
+	// if the "directory" of the file is actually a file, then the simple
+	// stat check fails with an unrelated error
+	if !IsDirectory(path.Dir(filename)) {
+		return false
+	}
+
 	_, err := os.Stat(filename)
 	if err == nil {
 		return true
@@ -306,7 +311,7 @@ func GetUniqueName(filename string) string {
 	baseFilename := strings.TrimSuffix(filename, extension)
 	currentFilename := filename
 	for i := 1; FileExists(currentFilename); i++ {
-		currentFilename = fmt.Sprintf("%s_%d.%s", baseFilename, i, extension)
+		currentFilename = fmt.Sprintf("%s_%d%s", baseFilename, i, extension)
 	}
 
 	return currentFilename

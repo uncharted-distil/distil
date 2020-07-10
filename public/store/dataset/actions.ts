@@ -323,22 +323,28 @@ export const actions = {
       case "text/csv":
         options = "type=table";
         break;
+      case "application/x-zip-compressed":
       case "application/zip":
         options = "type=media&image=jpg";
         break;
       default:
         options = "type=table";
     }
-    await axios.post(`/distil/upload/${args.datasetID}?${options}`, data, {
-      headers: { "Content-Type": "multipart/form-data" }
-    });
+    const uploadResponse = await axios.post(
+      `/distil/upload/${args.datasetID}?${options}`,
+      data,
+      {
+        headers: { "Content-Type": "multipart/form-data" }
+      }
+    );
     return actions.importDataset(context, {
       datasetID: args.datasetID,
       source: "augmented",
       provenance: "local",
       terms: args.datasetID,
       originalDataset: null,
-      joinedDataset: null
+      joinedDataset: null,
+      path: uploadResponse.data.location
     });
   },
 
@@ -351,6 +357,7 @@ export const actions = {
       terms: string;
       originalDataset: Dataset;
       joinedDataset: Dataset;
+      path: string;
     }
   ): Promise<void> {
     if (!validateArgs(args, ["datasetID", "source"])) {
@@ -362,6 +369,10 @@ export const actions = {
       postParams = {
         originalDataset: args.originalDataset,
         joinedDataset: args.joinedDataset
+      };
+    } else if (args.path !== "") {
+      postParams = {
+        path: args.path
       };
     }
     await axios.post(
