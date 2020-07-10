@@ -8,7 +8,7 @@
       :variables="variables"
       class="view-toggle"
     >
-      <p class="font-weight-bold">Samples</p>
+      <p class="font-weight-bold mr-auto">Samples</p>
       <layer-selection
         v-if="isRemoteSensing"
         class="layer-button"
@@ -230,6 +230,19 @@ export default Vue.extend({
 });
 </script>
 
+<!-- used in generated strings so can't be scoped -->
+<style>
+.matching-color {
+  color: #255dcc;
+}
+.other-color {
+  color: #333;
+}
+.erroneous-color {
+  color: #e05353;
+}
+</style>
+
 <style scoped>
 .results-slots {
   display: flex;
@@ -243,20 +256,17 @@ export default Vue.extend({
 .one-slot .results-data-slot {
   height: 100%;
 }
-.matching-color {
-  color: #255dcc;
-}
-.other-color {
-  color: #333;
-}
-.erroneous-color {
-  color: #e05353;
-}
 .layer-button {
   display: flex;
   flex-direction: column;
   flex-grow: 0;
   margin-right: 10px;
   margin-left: auto;
+}
+.view-toggle >>> .form-group {
+  margin-bottom: 0px;
+}
+.view-toggle {
+  flex-shrink: 0;
 }
 </style>

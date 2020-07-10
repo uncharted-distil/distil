@@ -1,32 +1,10 @@
 <template>
   <div class="container-fluid d-flex flex-column h-100 results-view">
     <div class="row flex-0-nav"></div>
-
-    <div class="row align-items-center justify-content-center bg-white">
-      <div class="col-12 col-md-6 d-flex flex-column">
-        <h5 class="header-label">
-          Select Model That Best Predicts {{ targetLabel.toUpperCase() }}
-        </h5>
-
-        <div class="row col-12 pl-4">
-          <div>
-            {{ targetLabel.toUpperCase() }} is being modeled as a
-            {{ targetType }}
-          </div>
-        </div>
-        <div class="row col-12 pl-4">
-          <p>
-            Use interactive feature highlighting to analyze models. Go back to
-            revise features, if needed.
-          </p>
-        </div>
-      </div>
-
-      <div class="col-12 col-md-6 d-flex flex-column">
-        <result-target-variable
-          class="col-12 d-flex flex-column result-target-variables"
-        ></result-target-variable>
-      </div>
+    <div class="row align-items-center justify-content-left bg-white">
+      <h5 class="header-label ">
+        Check Models: Review results to understand model performance
+      </h5>
     </div>
 
     <div class="row flex-1 pb-3">
@@ -156,6 +134,7 @@ export default Vue.extend({
 }
 .header-label {
   padding: 1rem 0 0.5rem 0;
+  margin-left: 200px;
   font-weight: bold;
 }
 .results-view .table td {
@@ -182,13 +161,5 @@ export default Vue.extend({
   .results-result-summaries {
     height: unset;
   }
-}
-.result-target-variables {
-  min-width: 500px;
-  max-width: 600px !important;
-  align-self: flex-end;
-}
-.result-target-variables .facet-sparkline-container {
-  height: 30px !important;
 }
 </style>
