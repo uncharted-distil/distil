@@ -159,4 +159,8 @@ export default Vue.extend({
   .facets-group {
   box-shadow: none;
 }
+.result-target-variable {
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
 </style>

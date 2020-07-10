@@ -1,9 +1,5 @@
 <template>
   <div>
-    <b-button block variant="primary" v-b-modal.predictions-data-upload-modal
-      >Apply Model
-    </b-button>
-
     <!-- Modal Component -->
     <b-modal
       id="predictions-data-upload-modal"
@@ -27,7 +23,12 @@
 <script lang="ts">
 import Vue from "vue";
 import { actions as datasetActions } from "../store/dataset/module";
-import { actions as requestActions } from "../store/requests/module";
+import {
+  actions as requestActions,
+  getters as requestGetters
+} from "../store/requests/module";
+import { actions as appActions } from "../store/app/module";
+import { getters as routeGetters } from "../store/route/module";
 import { filterSummariesByDataset } from "../util/data";
 import {
   getBase64,
@@ -35,6 +36,10 @@ import {
   removeExtension
 } from "../util/uploads";
 import moment from "moment";
+import { getPredictionsById } from "../util/predictions";
+import { varModesToString, createRouteEntry } from "../util/routes";
+import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { PREDICTION_ROUTE } from "../store/route";
 
 export default Vue.extend({
   name: "predictions-uploader",
@@ -42,7 +47,9 @@ export default Vue.extend({
   data() {
     return {
       file: null as File,
-      importDataName: ""
+      importDataName: "",
+      uploadData: {},
+      uploadStatus: ""
     };
   },
 
@@ -50,6 +57,12 @@ export default Vue.extend({
     fittedSolutionId: String as () => string,
     target: String as () => string,
     targetType: String as () => string
+  },
+
+  computed: {
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    }
   },
 
   methods: {
@@ -67,7 +80,7 @@ export default Vue.extend({
         removeExtension(this.file.name)
       );
 
-      this.$emit("uploadstart", {
+      this.uploadStart({
         file: this.file,
         filename: this.file.name,
         datasetID: deconflictedName
@@ -88,9 +101,48 @@ export default Vue.extend({
           this.$store,
           requestMsg
         );
-        this.$emit("uploadfinish", null, response);
+        this.uploadFinish(null, response);
       } catch (err) {
-        this.$emit("uploadfinish", err, null);
+        this.uploadFinish(err, null);
+      }
+    },
+
+    uploadStart(uploadData) {
+      this.uploadData = uploadData;
+      this.uploadStatus = "started";
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.EXPORT_MODEL,
+        activity: Activity.MODEL_SELECTION,
+        subActivity: SubActivity.IMPORT_INFERENCE,
+        details: {
+          activeSolution: this.fittedSolutionId
+        }
+      });
+    },
+
+    uploadFinish(err: Error, response: any) {
+      this.uploadStatus = err ? "error" : "success";
+
+      if (this.uploadStatus !== "error" && !response.complete) {
+        const predictionDataset = getPredictionsById(
+          requestGetters.getPredictions(this.$store),
+          response.produceRequestId
+        ).dataset;
+
+        const varModes = varModesToString(
+          routeGetters.getDecodedVarModes(this.$store)
+        );
+
+        const routeArgs = {
+          fittedSolutionId: this.fittedSolutionId,
+          produceRequestId: response.produceRequestId,
+          target: this.target,
+          predictionDataset: predictionDataset,
+          dataset: this.dataset,
+          varModes: varModes
+        };
+        const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
+        this.$router.push(entry);
       }
     }
   }

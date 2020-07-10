@@ -1,14 +1,18 @@
 <template>
   <div
     class="results-slots"
-    v-bind:class="{ 'one-slot': !hasHighlights, 'two-slots': hasHighlights }"
+    :class="{ 'one-slot': !hasHighlights, 'two-slots': hasHighlights }"
   >
     <view-type-toggle
-      class="flex-shrink-0"
       v-model="viewTypeModel"
       :variables="variables"
+      class="view-toggle"
     >
-      Samples Modeled
+      <p class="font-weight-bold mr-auto">Samples</p>
+      <layer-selection
+        v-if="isRemoteSensing"
+        class="layer-button"
+      ></layer-selection>
     </view-type-toggle>
 
     <div v-if="hasHighlights" class="flex-grow-1">
@@ -44,6 +48,7 @@ import _ from "lodash";
 import Vue from "vue";
 import ResultsDataSlot from "../components/ResultsDataSlot";
 import ViewTypeToggle from "../components/ViewTypeToggle";
+import LayerSelection from "../components/LayerSelection";
 import { Dictionary } from "../util/dict";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
@@ -67,7 +72,8 @@ export default Vue.extend({
 
   components: {
     ResultsDataSlot,
-    ViewTypeToggle
+    ViewTypeToggle,
+    LayerSelection
   },
 
   data() {
@@ -169,6 +175,10 @@ export default Vue.extend({
       return routeArgs && routeArgs.includes(TaskTypes.FORECASTING);
     },
 
+    isRemoteSensing(): boolean {
+      return routeGetters.isRemoteSensing(this.$store);
+    },
+
     topSlotTitle(): string {
       return this.errorTitle(
         this.numIncludedResultItems,
@@ -220,7 +230,20 @@ export default Vue.extend({
 });
 </script>
 
+<!-- used in generated strings so can't be scoped -->
 <style>
+.matching-color {
+  color: #255dcc;
+}
+.other-color {
+  color: #333;
+}
+.erroneous-color {
+  color: #e05353;
+}
+</style>
+
+<style scoped>
 .results-slots {
   display: flex;
   flex-direction: column;
@@ -233,13 +256,17 @@ export default Vue.extend({
 .one-slot .results-data-slot {
   height: 100%;
 }
-.matching-color {
-  color: #255dcc;
+.layer-button {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 0;
+  margin-right: 10px;
+  margin-left: auto;
 }
-.other-color {
-  color: #333;
+.view-toggle >>> .form-group {
+  margin-bottom: 0px;
 }
-.erroneous-color {
-  color: #e05353;
+.view-toggle {
+  flex-shrink: 0;
 }
 </style>
