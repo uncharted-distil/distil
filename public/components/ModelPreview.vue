@@ -1,7 +1,10 @@
 <template>
   <div class="card card-result" @click="onResult()">
     <div class="model-header hover card-header" variant="dark">
-      <a class="nav-link"><b>Model Name:</b> {{ model.modelName }}</a>
+      <a class="nav-link">
+        <i class="fa fa-connectdevelop"></i> <b>Model Name:</b>
+        {{ model.modelName }}
+      </a>
       <a class="nav-link"><b>Dateset Name:</b> {{ model.datasetName }}</a>
       <a class="nav-link"><b>Features:</b> {{ model.variables.length }}</a>
       <a class="nav-link"><b>Target:</b> {{ model.target }}</a>

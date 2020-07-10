@@ -1,8 +1,8 @@
 <template>
   <div>
-    <b-button block variant="primary" v-b-modal.upload-modal
-      >Import File</b-button
-    >
+    <b-button block variant="primary" v-b-modal.upload-modal>
+      <i class="fa fa-plus-circle"></i> Import File
+    </b-button>
 
     <!-- Modal Component -->
     <b-modal
