@@ -1,30 +1,44 @@
 <template>
   <div class="result-panel">
+    <p class="nav-link font-weight-bold flex-shrink-0">Ground Truth</p>
+    <result-target-variable
+      class="result-target-variable"
+    ></result-target-variable>
+
+    <p class="nav-link font-weight-bold flex-shrink-0">Results</p>
     <div class="result-summaries">
-      <p class="nav-link font-weight-bold">Results</p>
-      <p></p>
       <div v-if="showResiduals" class="result-summaries-error">
         <error-threshold-slider></error-threshold-slider>
       </div>
-      <p class="nav-link font-weight-bold">
-        Predictions by Model
-      </p>
       <result-facets :showResiduals="showResiduals" />
     </div>
     <template v-if="isActiveSolutionCompleted">
-      <save-model
-        :solutionId="solutionId"
-        :fittedSolutionId="fittedSolutionId"
-      ></save-model>
-      <hr />
-      <b-button
-        variant="success"
-        class="save-button"
-        v-b-modal.save-model-modal
-      >
-        <i class="fa fa-floppy-o"></i>
-        Save Model
-      </b-button>
+      <div class="d-flex flex-row flex-shrink-0 justify-content-end">
+        <predictions-data-uploader
+          class="result-button-alignment"
+          :fitted-solution-id="fittedSolutionId"
+          :target="target"
+          :target-type="targetType"
+        ></predictions-data-uploader>
+        <b-button
+          variant="primary"
+          class="apply-button"
+          v-b-modal.predictions-data-upload-modal
+          >Apply Model
+        </b-button>
+        <save-model
+          :solutionId="solutionId"
+          :fittedSolutionId="fittedSolutionId"
+        ></save-model>
+        <b-button
+          variant="success"
+          class="save-button"
+          v-b-modal.save-model-modal
+        >
+          <i class="fa fa-floppy-o"></i>
+          Save Model
+        </b-button>
+      </div>
     </template>
   </div>
 </template>
@@ -34,6 +48,7 @@ import ResultFacets from "../components/ResultFacets";
 import PredictionsDataUploader from "../components/PredictionsDataUploader";
 import ErrorThresholdSlider from "../components/ErrorThresholdSlider";
 import SaveModel from "../components/SaveModel";
+import ResultTargetVariable from "../components/ResultTargetVariable";
 import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -65,7 +80,8 @@ export default Vue.extend({
     PredictionsDataUploader,
     ErrorThresholdSlider,
     vueSlider,
-    SaveModel
+    SaveModel,
+    ResultTargetVariable
   },
 
   data() {
@@ -73,10 +89,7 @@ export default Vue.extend({
       formatter(arg) {
         return arg ? arg.toFixed(2) : "";
       },
-      symmetricSlider: true,
-      file: null,
-      uploadData: {},
-      uploadStatus: ""
+      symmetricSlider: true
     };
   },
 
@@ -143,47 +156,6 @@ export default Vue.extend({
         this.activeSolution.progress === SOLUTION_COMPLETED
       );
     }
-  },
-
-  methods: {
-    onUploadStart(uploadData) {
-      this.uploadData = uploadData;
-      this.uploadStatus = "started";
-      appActions.logUserEvent(this.$store, {
-        feature: Feature.EXPORT_MODEL,
-        activity: Activity.MODEL_SELECTION,
-        subActivity: SubActivity.IMPORT_INFERENCE,
-        details: {
-          activeSolution: this.activeSolution.solutionId
-        }
-      });
-    },
-
-    onUploadFinish(err: Error, response: any) {
-      this.uploadStatus = err ? "error" : "success";
-
-      if (this.uploadStatus !== "error" && !response.complete) {
-        const predictionDataset = getPredictionsById(
-          requestGetters.getPredictions(this.$store),
-          response.produceRequestId
-        ).dataset;
-
-        const varModes = varModesToString(
-          routeGetters.getDecodedVarModes(this.$store)
-        );
-
-        const routeArgs = {
-          fittedSolutionId: this.fittedSolutionId,
-          produceRequestId: response.produceRequestId,
-          target: this.target,
-          predictionDataset: predictionDataset,
-          dataset: this.dataset,
-          varModes: varModes
-        };
-        const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
-        this.$router.push(entry);
-      }
-    }
   }
 });
 </script>
@@ -240,12 +212,24 @@ export default Vue.extend({
   flex-grow: 0;
   margin-top: 15px;
   margin-bottom: 0px;
-  margin-left: auto;
+  margin-right: 8px;
+}
+
+.apply-button {
+  flex-shrink: 0;
+  flex-grow: 0;
+  margin-top: 15px;
+  margin-bottom: 0px;
   margin-right: 8px;
 }
 
 .result-panel {
   display: flex;
   flex-direction: column;
+}
+
+.result-target-variable .variable-facets-item {
+  margin-top: 0px;
+  padding-top: 0px;
 }
 </style>

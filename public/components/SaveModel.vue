@@ -108,6 +108,7 @@ export default Vue.extend({
     // apply model workflow.
     apply() {
       this.resetModal();
+      this.$bvModal.show("predictions-data-upload-modal");
     },
 
     // Return to the search screen.
