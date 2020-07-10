@@ -18,6 +18,7 @@ package util
 import (
 	"archive/zip"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -179,10 +180,17 @@ func RemoveContents(dir string) error {
 	return nil
 }
 
-// IsDatasetDir indicate whether or not a directory contains a single d3m dataset.
+// IsDatasetDir indicates whether or not a directory contains a single d3m dataset.
 func IsDatasetDir(dir string) bool {
 	datasetPath := path.Join(dir, "TRAIN", "dataset_TRAIN")
 	_, err := os.Stat(datasetPath)
+	if !os.IsNotExist(err) {
+		dir = datasetPath
+	}
+
+	// check for dataset doc
+	schemaPath := path.Join(dir, "datasetDoc.json")
+	_, err = os.Stat(schemaPath)
 	return !os.IsNotExist(err)
 }
 
@@ -255,10 +263,18 @@ func FileExists(filename string) bool {
 	if err == nil {
 		return true
 	}
-	if os.IsNotExist(err) {
+
+	return !os.IsNotExist(err)
+}
+
+// IsDirectory checks if a path is a directory.
+func IsDirectory(filePath string) bool {
+	fi, err := os.Stat(filePath)
+	if err != nil {
 		return false
 	}
-	return true
+
+	return fi.IsDir()
 }
 
 // GetFolderFileType returns the extension of the first file in the media folder.
@@ -277,4 +293,31 @@ func GetFolderFileType(folder string) (string, error) {
 	}
 
 	return extension, nil
+}
+
+// IsArchiveFile returns true if the specified path is an archive.
+func IsArchiveFile(filePath string) bool {
+	return path.Ext(filePath) == ".zip" || path.Ext(filePath) == ".tar.gz"
+}
+
+// GetUniqueName creates a unique filename using a base filename.
+func GetUniqueName(filename string) string {
+	extension := path.Ext(filename)
+	baseFilename := strings.TrimSuffix(filename, extension)
+	currentFilename := filename
+	for i := 1; FileExists(currentFilename); i++ {
+		currentFilename = fmt.Sprintf("%s_%d.%s", baseFilename, i, extension)
+	}
+
+	return currentFilename
+}
+
+// GetUniqueFolder creates a unique folder name using a base folder name.
+func GetUniqueFolder(folder string) string {
+	currentFilename := folder
+	for i := 1; FileExists(currentFilename); i++ {
+		currentFilename = fmt.Sprintf("%s_%d", folder, i)
+	}
+
+	return currentFilename
 }
