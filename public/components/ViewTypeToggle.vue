@@ -3,7 +3,7 @@
     <b-nav :tabs="hasTabs">
       <slot></slot>
       <template>
-        <b-form-group class="view-button ml-auto">
+        <b-form-group class="view-button">
           <b-form-radio-group
             buttons
             v-model="content"

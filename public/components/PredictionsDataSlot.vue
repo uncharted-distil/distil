@@ -5,7 +5,11 @@
       v-model="viewTypeModel"
       :variables="variables"
     >
-      Samples Predicted
+      <p class="font-weight-bold">Samples Predicted</p>
+      <layer-selection
+        v-if="isRemoteSensing"
+        class="layer-button"
+      ></layer-selection>
     </view-type-toggle>
 
     <p class="predictions-data-slot-summary" v-if="hasResults">
@@ -187,6 +191,10 @@ export default Vue.extend({
       } else {
         return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} processed by model`;
       }
+    },
+
+    isRemoteSensing(): boolean {
+      return routeGetters.isRemoteSensing(this.$store);
     }
   }
 });
@@ -226,5 +234,13 @@ export default Vue.extend({
 
 .pending {
   opacity: 0.5;
+}
+
+.layer-button {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 0;
+  margin-right: 10px;
+  margin-left: auto;
 }
 </style>

@@ -8,7 +8,7 @@
         >Samples to Model From</b-nav-item
       >
       <b-nav-item
-        class="font-weight-bold"
+        class="font-weight-bold mr-auto"
         @click="setExcludedActive"
         :active="!includedActive"
         >Excluded Samples</b-nav-item
