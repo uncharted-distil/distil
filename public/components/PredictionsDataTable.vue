@@ -36,6 +36,13 @@
         ></image-preview>
       </template>
 
+      <template
+        v-for="listField in listFields"
+        v-slot:[cellSlot(listField.key)]="data"
+      >
+        <span :title="formatList(data)">{{ formatList(data) }}</span>
+      </template>
+
       <template v-slot:cell()="data">
         <div
           v-if="data.value.value.length > 0"
@@ -85,7 +92,8 @@ import {
   Variable,
   RowSelection,
   TaskTypes,
-  TimeseriesGrouping
+  TimeseriesGrouping,
+  TableValue
 } from "../store/dataset/index";
 import { getters as predictionsGetters } from "../store/predictions/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -108,7 +116,8 @@ import {
   formatSlot,
   formatFieldsAsArray,
   explainCellColor,
-  getImageFields
+  getImageFields,
+  getListFields
 } from "../util/data";
 import { getSolutionIndex } from "../util/solutions";
 import { getPredictionsIndex } from "../util/predictions";
@@ -183,6 +192,10 @@ export default Vue.extend({
       return Object.keys(this.fields).filter(key => {
         return hasComputedVarPrefix(key);
       });
+    },
+
+    listFields(): { key: string; type: string }[] {
+      return getListFields(this.fields);
     },
 
     imageFields(): { key: string; type: string }[] {
@@ -260,6 +273,14 @@ export default Vue.extend({
         this.$store
       );
       return explainCellColor(weight, data, this.tableFields, items);
+    },
+
+    formatList(value: TableValue) {
+      const listData = value.value.value.Elements as {
+        Float: number;
+        Status: number;
+      }[];
+      return listData.map(l => l.Float);
     }
   }
 });
