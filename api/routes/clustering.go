@@ -36,7 +36,7 @@ type ClusteringResult struct {
 
 // ClusteringHandler generates a route handler that enables clustering
 // of a variable and the creation of the new column to hold the cluster label.
-func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
@@ -88,7 +88,7 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 			}
 
 			// cluster data
-			addMeta, clustered, err := task.Cluster(sourceFolder, dataset, variable, datasetMeta.Variables)
+			addMeta, clustered, err := task.Cluster(sourceFolder, dataset, variable, datasetMeta.Variables, config.ClusteringKMeans)
 			if err != nil {
 				handleError(w, err)
 				return

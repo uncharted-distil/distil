@@ -35,9 +35,10 @@ type Config struct {
 	ClassificationEnabled              bool    `env:"CLASSIFICATION_ENABLED" envDefault:"true"`
 	CleanOutputDataRelative            string  `env:"CLEAN_OUTPUT_DATA" envDefault:"clean/tables/learningData.csv"`
 	CleanOutputSchemaRelative          string  `env:"CLEAN_OUTPUT_SCHEMA" envDefault:"clean/datasetDoc.json"`
+	ClusteringEnabled                  bool    `env:"CLUSTERING_ENABLED" envDefault:"true"`
 	ClusteringOutputDataRelative       string  `env:"CLUSTERING_OUTPUT_DATA" envDefault:"clusters/tables/learningData.csv"`
 	ClusteringOutputSchemaRelative     string  `env:"CLUSTERING_OUTPUT_SCHEMA" envDefault:"clusters/datasetDoc.json"`
-	ClusteringEnabled                  bool    `env:"CLUSTERING_ENABLED" envDefault:"true"`
+	ClusteringKMeans                   bool    `env:"CLUSTERING_KMEANS" envDefault:"true"`
 	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:"datasets"`
 	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
 	DatamartURIISI                     string  `env:"DATAMART_URL_ISI" envDefault:"https://dsbox02.isi.edu:9000"`
