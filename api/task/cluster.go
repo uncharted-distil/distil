@@ -124,7 +124,7 @@ func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig)
 }
 
 // Cluster will cluster the dataset fields using a primitive.
-func Cluster(datasetInputDir string, dataset string, variable string, features []*model.Variable) (bool, []*ClusterPoint, error) {
+func Cluster(datasetInputDir string, dataset string, variable string, features []*model.Variable, useKMeans bool) (bool, []*ClusterPoint, error) {
 	var clusteringVar *model.Variable
 	for _, v := range features {
 		if v.Name == variable {
@@ -135,10 +135,10 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 	var step *description.FullySpecifiedPipeline
 	var err error
 	if model.IsImage(clusteringVar.Type) {
-		step, err = description.CreateImageClusteringPipeline("business", "basic image clustering", []*model.Variable{clusteringVar})
+		step, err = description.CreateImageClusteringPipeline("business", "basic image clustering", []*model.Variable{clusteringVar}, useKMeans)
 	} else if model.IsRemoteSensing(clusteringVar.Type) {
 		rsg := clusteringVar.Grouping.(*model.RemoteSensingGrouping)
-		step, err = description.CreateMultiBandImageClusteringPipeline("5-eyes", "I see you", rsg, features)
+		step, err = description.CreateMultiBandImageClusteringPipeline("5-eyes", "I see you", rsg, features, useKMeans)
 	} else if clusteringVar.DistilRole == model.VarDistilRoleGrouping {
 		// assume timeseries for now if distil role is grouping
 		step, err = description.CreateSlothPipeline("time series clustering",
@@ -155,7 +155,7 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 			SelectedFeatures: selectedFeatures,
 		}
 		step, err = description.CreateGeneralClusteringPipeline("time series clustering",
-			"k-means time series clustering", datasetDescription, nil)
+			"k-means time series clustering", datasetDescription, nil, useKMeans)
 	}
 	if err != nil {
 		return false, nil, err
