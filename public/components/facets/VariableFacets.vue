@@ -104,7 +104,7 @@
                 :summary="summary"
                 :highlight="highlight"
                 :row-selection="rowSelection"
-                :ranking="ranking[summary.key]"
+                :importance="ranking[summary.key]"
                 :html="html"
                 :enabled-type-changes="enabledTypeChanges"
                 :enable-highlighting="enableHighlighting"
@@ -119,7 +119,7 @@
                 :summary="summary"
                 :highlight="highlight"
                 :row-selection="rowSelection"
-                :ranking="ranking[summary.key]"
+                :importance="ranking[summary.key]"
                 :html="html"
                 :enabled-type-changes="enabledTypeChanges"
                 :enable-highlighting="enableHighlighting"
@@ -135,20 +135,20 @@
           </div>
         </div>
       </div>
-      <div
-        v-if="numSummaries > rowsPerPage"
-        class="row align-items-center variable-page-nav"
-      >
-        <div class="col-12 flex-column">
-          <b-pagination
-            size="sm"
-            align="center"
-            :total-rows="numSummaries"
-            :per-page="rowsPerPage"
-            v-model="currentPage"
-            class="mb-0"
-          />
-        </div>
+    </div>
+    <div
+      v-if="numSummaries > rowsPerPage"
+      class="row align-items-center variable-page-nav"
+    >
+      <div class="col-12 flex-column">
+        <b-pagination
+          size="sm"
+          align="center"
+          :total-rows="numSummaries"
+          :per-page="rowsPerPage"
+          v-model="currentPage"
+          class="mb-0"
+        />
       </div>
     </div>
   </div>
@@ -169,8 +169,7 @@ import { Dictionary } from "../../util/dict";
 import {
   sortSummariesByImportance,
   filterVariablesByPage,
-  getVariableRanking,
-  getVariableImportance
+  getVariableRanking
 } from "../../util/data";
 import {
   Highlight,
@@ -196,6 +195,7 @@ import { actions as appActions } from "../../store/app/module";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
 import { updateHighlight, clearHighlight } from "../../util/highlights";
 import Vue from "vue";
+import { randomNormal } from "d3";
 
 export default Vue.extend({
   name: "variable-facets",
