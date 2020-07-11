@@ -104,7 +104,12 @@ func (b *BoundingBox) pointToString(point *Point) string {
 // NewSatelliteDataset creates a new satelitte dataset from geotiff files
 func NewSatelliteDataset(dataset string, imageType string, rawData []byte) (*Satellite, error) {
 	// store and expand raw data
-	expandedInfo, err := ExpandZipDataset(dataset, rawData)
+	zipPath, err := StoreZipDataset(dataset, rawData)
+	if err != nil {
+		return nil, err
+	}
+
+	expandedInfo, err := ExpandZipDataset(dataset, zipPath)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +147,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 
 	csvData := make([][]string, 0)
 	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", "label"})
-	mediaFolder := getUniqueFolder(path.Join(outputDatasetPath, "media"))
+	mediaFolder := util.GetUniqueFolder(path.Join(outputDatasetPath, "media"))
 
 	// need to keep track of d3m Index values since they are shared for a whole group
 	d3mIDs := make(map[string]int)
@@ -398,7 +403,7 @@ func copyAndSplitMultiBandImage(imageFilename string, imageType string, outputFo
 		if extension != fmt.Sprintf(".%s", imageType) {
 			targetImageFilename = fmt.Sprintf("%s.%s", strings.TrimSuffix(targetImageFilename, extension), imageType)
 		}
-		targetImageFilename = getUniqueName(path.Join(outputFolder, targetImageFilename))
+		targetImageFilename = util.GetUniqueName(path.Join(outputFolder, targetImageFilename))
 
 		err := util.CopyFile(imageFilename, targetImageFilename)
 		if err != nil {
