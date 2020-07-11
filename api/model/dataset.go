@@ -60,6 +60,7 @@ type Dataset struct {
 	JoinSuggestions []*JoinSuggestion      `json:"joinSuggestion"`
 	JoinScore       float64                `json:"joinScore"`
 	Type            DatasetType            `json:"type"`
+	LearningDataset string                 `json:"learningDataset"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.

@@ -204,6 +204,9 @@ func (s *Storage) InitializeMetadataStorage(overwrite bool) error {
 				"numBytes": {
 					"type": "long"
 				},
+				"learningDataset": {
+					"type": "text"
+				},
 				"variables": {
 					"properties": {
 						"varDescription": {

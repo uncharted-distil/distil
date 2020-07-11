@@ -78,6 +78,7 @@ func (s *Storage) IngestDataset(datasetSource metadata.DatasetSource, meta *mode
 		"source":           datasetSource,
 		"datasetOrigins":   origins,
 		"type":             meta.Type,
+		"learningDataset":  meta.LearningDataset,
 	}
 
 	bytes, err := json.Marshal(source)
@@ -142,6 +143,11 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		folder, ok := json.String(src, "datasetFolder")
 		if !ok {
 			folder = ""
+		}
+		// extract the learning dataset
+		learningDataset, ok := json.String(src, "learningDataset")
+		if !ok {
+			learningDataset = ""
 		}
 		// extract the machine learned summary
 		summaryMachine, ok := json.String(src, "summaryMachine")
@@ -222,6 +228,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			Source:          metadata.DatasetSource(source),
 			JoinSuggestions: datasetOrigins,
 			Type:            typ,
+			LearningDataset: learningDataset,
 		})
 	}
 	return datasets, nil
