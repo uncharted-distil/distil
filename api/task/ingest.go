@@ -46,6 +46,7 @@ type IngestTaskConfig struct {
 	ClusteringOutputDataRelative       string
 	ClusteringOutputSchemaRelative     string
 	ClusteringEnabled                  bool
+	ClusteringKMeans                   bool
 	FeaturizationOutputDataRelative    string
 	FeaturizationOutputSchemaRelative  string
 	FormatOutputDataRelative           string
@@ -104,6 +105,7 @@ func NewConfig(config env.Config) *IngestTaskConfig {
 		ClusteringOutputDataRelative:       config.ClusteringOutputDataRelative,
 		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,
 		ClusteringEnabled:                  config.ClusteringEnabled,
+		ClusteringKMeans:                   config.ClusteringKMeans,
 		FeaturizationOutputDataRelative:    config.FeaturizationOutputDataRelative,
 		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
 		FormatOutputDataRelative:           config.FormatOutputDataRelative,

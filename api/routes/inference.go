@@ -217,12 +217,16 @@ func getTarget(request *api.Request) string {
 
 func createImageFromRequest(data []byte, datasetName string, outputPath string, imageType string, config *env.Config) (bool, []byte, error) {
 	// raw request is zip file of image dataset that needs to be imported
-
-	expandedInfo, err := dataset.ExpandZipDataset(datasetName, data)
+	datasetPath, err := dataset.StoreZipDataset(datasetName, data)
 	if err != nil {
 		return false, nil, err
 	}
-	ds, err := uploadImageDataset(datasetName, imageType, expandedInfo.RawFilePath, expandedInfo.ExtractedFilePath)
+
+	expandedInfo, err := dataset.ExpandZipDataset(datasetName, datasetPath)
+	if err != nil {
+		return false, nil, err
+	}
+	ds, err := createMediaDataset(datasetName, imageType, expandedInfo.ExtractedFilePath)
 	if err != nil {
 		return false, nil, err
 	}

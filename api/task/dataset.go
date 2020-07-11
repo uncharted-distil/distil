@@ -70,6 +70,7 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
 	dataPath := path.Join(outputDatasetPath, dataFilePath)
 
+	log.Infof("running dataset creation for dataset '%s', writing output to '%s'", dataset, outputDatasetPath)
 	ds, err := datasetCtor.CreateDataset(outputDatasetPath, dataset, config)
 	if err != nil {
 		return "", "", err

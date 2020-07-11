@@ -17,7 +17,9 @@ package routes
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"path"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -29,18 +31,41 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
+	"github.com/uncharted-distil/distil/api/util"
 	"github.com/uncharted-distil/distil/api/util/json"
 )
 
 // ImportHandler imports a dataset to the local file system and then ingests it.
-func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.MetadataStorageCtor, fileMetaCtor api.MetadataStorageCtor, esMetaCtor api.MetadataStorageCtor, config *task.IngestTaskConfig) func(http.ResponseWriter, *http.Request) {
+func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.MetadataStorageCtor,
+	fileMetaCtor api.MetadataStorageCtor, esMetaCtor api.MetadataStorageCtor,
+	config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		datasetID := pat.Param(r, "datasetID")
 		source := metadata.DatasetSource(pat.Param(r, "source"))
 		provenance := pat.Param(r, "provenance")
 
 		var origins []*model.DatasetOrigin
-		if source == metadata.Augmented && provenance != "local" {
+		if source == metadata.Augmented && provenance == "local" {
+			// parse POST params
+			params, err := getPostParameters(r)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+				return
+			}
+
+			if params["path"] == nil {
+				missingParamErr(w, "path")
+				return
+			}
+
+			datasetPath := params["path"].(string)
+			datasetID, _, err = createDataset(datasetPath, datasetID, config)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to create raw dataset"))
+				return
+			}
+			log.Infof("create dataset '%s' from local source '%s'", datasetID, datasetPath)
+		} else if source == metadata.Augmented {
 			// parse POST params
 			params, err := getPostParameters(r)
 			if err != nil {
@@ -70,7 +95,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				// combine the origin and joined dateset into an array of structs
 				origins, err = getOriginsFromMaps(originalDataset, joinedDataset)
 				if err != nil {
-					handleError(w, errors.Wrap(err, "unable marshal dataset origins from JSON to struct"))
+					handleError(w, errors.Wrap(err, "unable to marshal dataset origins from JSON to struct"))
 					return
 				}
 			}
@@ -84,9 +109,6 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 
 		// import the dataset to the local filesystem.
 		uri := env.ResolvePath(source, datasetID)
-
-		ingestConfig := *config
-
 		_, err = meta.ImportDataset(datasetID, uri)
 		if err != nil {
 			handleError(w, err)
@@ -95,7 +117,8 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 
 		// ingest the imported dataset
 		ingestSteps := &task.IngestSteps{ClassificationOverwrite: false}
-		datasetID, err = task.IngestDataset(source, dataCtor, esMetaCtor, datasetID, origins, api.DatasetTypeModelling, &ingestConfig, ingestSteps)
+		ingestConfig := task.NewConfig(*config)
+		datasetID, err = task.IngestDataset(source, dataCtor, esMetaCtor, datasetID, origins, api.DatasetTypeModelling, ingestConfig, ingestSteps)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -198,10 +221,123 @@ func isRemoteSensingDataset(datasetID string, metaStorage api.MetadataStorage) b
 	}
 
 	for _, v := range variables {
-		if model.IsMultiBandImage(v.OriginalType) {
+		if model.IsMultiBandImage(v.Type) {
 			return true
 		}
 	}
 
 	return false
+}
+
+func createDataset(datasetPath string, datasetName string, config *env.Config) (string, string, error) {
+	// check if already a dataset
+	if util.IsDatasetDir(datasetPath) {
+		return datasetName, datasetPath, nil
+	}
+
+	// create the raw dataset
+	ds, err := createRawDataset(datasetPath, datasetName)
+	if err != nil {
+		return "", "", err
+	}
+
+	// create the formatted d3m dataset
+	outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
+	datasetName, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, config)
+	if err != nil {
+		return "", "", err
+	}
+
+	return datasetName, formattedPath, nil
+}
+
+func createRawDataset(datasetPath string, datasetName string) (task.DatasetConstructor, error) {
+	if util.IsArchiveFile(datasetPath) {
+		// expand the archive
+		expandedInfo, err := dataset.ExpandZipDataset(datasetPath, datasetName)
+		if err != nil {
+			return nil, err
+		}
+
+		datasetPath = expandedInfo.ExtractedFilePath
+	}
+
+	// create the dataset constructors for downstream processing
+	var ds task.DatasetConstructor
+	var err error
+	if rawDatasetIsTabular(datasetPath) {
+		ds, err = createTableDataset(datasetPath, datasetName)
+	} else {
+		// check to see what type of files it contains
+		var fileType string
+		fileType, err = dataset.CheckFileType(datasetPath)
+		if err != nil {
+			return nil, err
+		}
+		if fileType == "png" || fileType == "jpeg" || fileType == "jpg" {
+			ds, err = createMediaDataset(datasetName, fileType, datasetPath)
+		} else if fileType == "tif" {
+			ds, err = createRemoteSensingDataset(datasetName, fileType, datasetPath)
+		} else if fileType == "txt" {
+			ds, err = createTextDataset(datasetName, datasetPath)
+		} else {
+			err = errors.Errorf("unsupported archived file type %s", fileType)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return ds, nil
+}
+
+func rawDatasetIsTabular(datasetPath string) bool {
+	// check if datasetPath is a folder
+	if !util.FileExists(datasetPath) || util.IsDirectory(datasetPath) {
+		return false
+	}
+
+	// check if it is a csv file
+	return path.Ext(datasetPath) == ".csv"
+}
+
+func createTableDataset(datasetPath string, datasetName string) (task.DatasetConstructor, error) {
+	data, err := ioutil.ReadFile(datasetPath)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to read raw tabular data")
+	}
+
+	ds, err := dataset.NewTableDataset(datasetName, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return ds, nil
+}
+
+func createTextDataset(datasetName string, extractedFilePath string) (task.DatasetConstructor, error) {
+	ds, err := dataset.NewMediaDatasetFromExpanded(datasetName, "txt", "txt", "", extractedFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return ds, nil
+}
+
+func createMediaDataset(datasetName string, imageType string, extractedFilePath string) (task.DatasetConstructor, error) {
+	ds, err := dataset.NewMediaDatasetFromExpanded(datasetName, imageType, "jpeg", "", extractedFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return ds, nil
+}
+
+func createRemoteSensingDataset(datasetName string, imageType string, extractedFilePath string) (task.DatasetConstructor, error) {
+	ds, err := dataset.NewSatelliteDatasetFromExpanded(datasetName, imageType, "", extractedFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return ds, nil
 }
