@@ -22,6 +22,7 @@
 .hover {
   cursor: pointer;
 }
+
 html,
 body {
   width: 100%;
@@ -122,7 +123,11 @@ body {
 .btn-secondary {
   color: white;
 }
+
 html {
+  --black: rgba(0, 0, 0, 0.87);
+  --blue: #007bff;
+
   --facet-terms-bar-2-normal: #999999;
   --facet-terms-bar-2-normal-contrast: #999999;
   --facet-terms-bar-2-normal-contrast-hover: #bbbbbb;

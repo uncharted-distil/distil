@@ -1,13 +1,19 @@
 <template>
   <div class="container-fluid d-flex flex-column h-100 search-view">
+    <!-- Spacer for the App.vue <navigation> component. -->
     <div class="row flex-0-nav"></div>
 
-    <div class="row align-items-center justify-content-center bg-white">
+    <!-- Title of the page. -->
+    <header class="row align-items-center justify-content-center bg-white">
       <div class="col-12 col-md-10">
-        <h5 class="header-label">Select a Dataset</h5>
+        <h5 class="header-label">
+          Select a Model to reuse or a Dataset to create a model
+        </h5>
       </div>
-    </div>
-    <div class="row">
+    </header>
+
+    <!-- Placeholder for the file uploader component status. -->
+    <div class="row  justify-content-center">
       <file-uploader-status
         class="file-uploader-status col-12"
         :status="uploadStatus"
@@ -15,41 +21,110 @@
         :datasetID="uploadData.datasetID"
       />
     </div>
-    <div class="row flex-2 align-items-center justify-content-center">
-      <div class="col-12 col-md-6">
-        <div class="d-flex">
-          <search-bar class="search-search-bar"></search-bar>
+
+    <!-- Search bar -->
+    <section class="row justify-content-center">
+      <div class="col-12 col-md-8">
+        <search-bar class="search-search-bar"></search-bar>
+      </div>
+    </section>
+
+    <!-- Search navigation -->
+    <section class="row justify-content-center">
+      <div class="col-12 col-md-8">
+        <nav class="search-nav">
+          <button
+            class="search-nav-tab"
+            @click="tab = 'all'"
+            :class="[tab === 'all' ? 'active' : '']"
+          >
+            All
+            <span class="badge badge-pill badge-danger">{{
+              nbSearchModels + nbSearchDatasets
+            }}</span>
+          </button>
+          <button
+            class="search-nav-tab"
+            @click="tab = 'models'"
+            :class="[tab === 'models' ? 'active' : '']"
+          >
+            <i class="fa fa-connectdevelop"></i> Models
+            <span class="badge badge-pill badge-danger">{{
+              nbSearchModels
+            }}</span>
+          </button>
+          <button
+            class="search-nav-tab"
+            @click="tab = 'datasets'"
+            :class="[tab === 'datasets' ? 'active' : '']"
+          >
+            <i class="fa fa-table"></i> Datasets
+            <span class="badge badge-pill badge-danger">{{
+              nbSearchDatasets
+            }}</span>
+          </button>
+          <b-dropdown variant="light" size="sm">
+            <template v-slot:button-content>
+              Sort by: <i :class="sortingIcon"></i>
+              <strong>{{ sortingDisplayName }}</strong>
+            </template>
+            <!-- <b-dropdown-item-button @click="sortRecentDesc">
+              <i class="fa fa-sort-amount-desc"></i> Recent Activity
+            </b-dropdown-item-button>
+            <b-dropdown-divider></b-dropdown-divider> -->
+            <b-dropdown-item-button @click="sortNameAsc">
+              <i class="fa fa-sort-alpha-asc"></i> Name
+            </b-dropdown-item-button>
+            <b-dropdown-item-button @click="sortNameDesc">
+              <i class="fa fa-sort-alpha-desc"></i> Name
+            </b-dropdown-item-button>
+            <b-dropdown-divider></b-dropdown-divider>
+            <b-dropdown-item-button @click="sortFeaturesAsc">
+              <i class="fa fa-sort-numeric-asc"></i> Features
+            </b-dropdown-item-button>
+            <b-dropdown-item-button @click="sortFeaturesDesc">
+              <i class="fa fa-sort-numeric-desc"></i> Features
+            </b-dropdown-item-button>
+          </b-dropdown>
           <file-uploader
             class="file-uploader"
             @uploadstart="onUploadStart"
             @uploadfinish="onUploadFinish"
           ></file-uploader>
+        </nav>
+      </div>
+    </section>
+
+    <!-- Main view. -->
+    <section class="row flex-1 justify-content-center">
+      <div class="col-12 col-md-8 search-content-wrapper">
+        <div
+          v-if="isPending"
+          v-html="spinnerHTML"
+          class="search-content-spinner"
+        ></div>
+        <p v-else-if="isSearchResultsEmpty" class="search-content-empty">
+          No {{ tab === "all" ? "datasets or models" : tab }} found for search
+        </p>
+        <div v-else class="search-content">
+          <template v-for="result in sortedResults">
+            <dataset-preview
+              v-if="result.type === 'dataset'"
+              :key="result.dataset.id"
+              :dataset="result.dataset"
+              allow-join
+              allow-import
+            >
+            </dataset-preview>
+            <model-preview
+              v-if="result.type === 'model'"
+              :key="result.model.fittedSolutionId"
+              :model="result.model"
+            >
+            </model-preview>
+          </template>
         </div>
       </div>
-    </div>
-
-    <section class="row flex-10">
-      <b-tabs
-        align="center"
-        class="search-content"
-        content-class="search-content-tab"
-      >
-        <b-tab :title="'Models (' + nbSearchModels + ')'" active>
-          <model-search-results
-            class="search-search-results"
-            :is-pending="isPending"
-          >
-          </model-search-results>
-        </b-tab>
-
-        <b-tab :title="'Datasets (' + nbSearchDatasets + ')'">
-          <dataset-search-results
-            class="search-search-results"
-            :is-pending="isPending"
-          >
-          </dataset-search-results>
-        </b-tab>
-      </b-tabs>
     </section>
   </div>
 </template>
@@ -57,54 +132,156 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
+import DatasetPreview from "../components/DatasetPreview";
 import FileUploader from "../components/FileUploader";
 import FileUploaderStatus from "../components/FileUploaderStatus";
-import DatasetPreviewCard from "../components/DatasetPreviewCard";
+import ModelPreview from "../components/ModelPreview";
 import SearchBar from "../components/SearchBar";
-import DatasetSearchResults from "../components/DatasetSearchResults";
-import ModelSearchResults from "../components/ModelSearchResults";
 import { Dataset } from "../store/dataset/index";
-import { Model } from "../store/model/index";
-import { createRouteEntry, overlayRouteEntry } from "../util/routes";
-import { getters as routeGetters } from "../store/route/module";
-import { actions as viewActions } from "../store/view/module";
 import {
   getters as datasetGetters,
   actions as datasetActions
 } from "../store/dataset/module";
+import { Model } from "../store/model/index";
 import { getters as modelGetters } from "../store/model/module";
+import { getters as routeGetters } from "../store/route/module";
 import { SEARCH_ROUTE, JOIN_DATASETS_ROUTE } from "../store/route/index";
+import { actions as viewActions } from "../store/view/module";
+import { createRouteEntry, overlayRouteEntry } from "../util/routes";
+import { spinnerHTML } from "../util/spinner";
 
 export default Vue.extend({
   name: "search-view",
 
   components: {
-    SearchBar,
-    DatasetSearchResults,
-    ModelSearchResults,
-    DatasetPreviewCard,
+    DatasetPreview,
     FileUploader,
-    FileUploaderStatus
+    FileUploaderStatus,
+    ModelPreview,
+    SearchBar
   },
 
   data() {
     return {
       isPending: false,
+      sorting: {
+        asc: true,
+        type: "name"
+      },
+      tab: "datasets",
       uploadData: {},
       uploadStatus: ""
     };
   },
 
   computed: {
+    filteredDatasets(): Dataset[] {
+      return datasetGetters.getFilteredDatasets(this.$store);
+    },
+
+    filteredDatasetsIds(): Set<String> {
+      const ids = this.filteredDatasets.map(dataset => dataset.id);
+      return new Set(ids);
+    },
+
+    filteredModels(): Model[] {
+      const models = modelGetters.getModels(this.$store);
+
+      // Only display the models using dataset that the search bar has found.
+      return models.filter(model =>
+        this.filteredDatasetsIds.has(model.datasetId)
+      );
+    },
+
+    nbSearchDatasets(): number {
+      return this.filteredDatasets.length ?? 0;
+    },
+
+    nbSearchModels(): number {
+      return this.filteredModels.length ?? 0;
+    },
+
+    /**
+     * List of search results to be displayed.
+     */
+    searchResults(): any[] {
+      const results = [] as any[];
+
+      // If tab is either 'models' or 'all' we display the models.
+      if (this.tab !== "datasets") {
+        const models = this.filteredModels.map(model => {
+          return { type: "model", model };
+        });
+        results.push(...models);
+      }
+
+      // If tab is either 'datasets' or 'all' we display the datasets.
+      if (this.tab !== "models") {
+        const datasets = this.filteredDatasets.map(dataset => {
+          return { type: "dataset", dataset };
+        });
+        results.push(...datasets);
+      }
+
+      return results;
+    },
+
+    /**
+     * Sort the results based on the sorting selected.
+     */
+    sortedResults(): any[] {
+      return this.searchResults.slice().sort((a, b) => {
+        // Sort by recent activity
+        // if (this.sorting.type === "recent") {
+        // ...
+        // }
+
+        // Sort by name
+        if (this.sorting.type === "name") {
+          a = this.getNameFromResult(a);
+          b = this.getNameFromResult(b);
+          return this.sorting.asc ? a.localeCompare(b) : b.localeCompare(a);
+        }
+
+        // Sort by features
+        if (this.sorting.type === "features") {
+          a = this.getFeatureFromResult(a);
+          b = this.getFeatureFromResult(b);
+          return this.sorting.asc ? a - b : b - a;
+        }
+      });
+    },
+
+    isSearchResultsEmpty(): Boolean {
+      return _.isEmpty(this.searchResults);
+    },
+
+    spinnerHTML(): string {
+      return spinnerHTML();
+    },
+
     terms(): string {
       return routeGetters.getRouteTerms(this.$store);
     },
 
-    nbSearchDatasets(): number {
-      return datasetGetters.getCountOfFilteredDatasets(this.$store);
+    /* Font Awesome class for the soring dropdown. */
+    sortingIcon(): string {
+      let type = "amount";
+      if (this.sorting.type === "name") {
+        type = "alpha";
+      }
+      if (this.sorting.type === "features") {
+        type = "numeric";
+      }
+      const asc = this.sorting.asc ? "asc" : "desc";
+      return `fa fa-sort-${type}-${asc}`;
     },
-    nbSearchModels(): number {
-      return modelGetters.getCountOfModels(this.$store);
+    /* Dropdown name to be displayed. */
+    sortingDisplayName(): string {
+      if (this.sorting.type !== "recent") {
+        return _.capitalize(this.sorting.type);
+      }
+      return "Recent Activity";
     }
   },
 
@@ -125,12 +302,42 @@ export default Vue.extend({
         this.isPending = false;
       });
     },
+
     onUploadStart(uploadData) {
       this.uploadData = uploadData;
       this.uploadStatus = "started";
     },
+
     onUploadFinish(err) {
       this.uploadStatus = err ? "error" : "success";
+    },
+
+    getNameFromResult(result: any) {
+      return result.type === "model"
+        ? result.model.modelName.toUpperCase()
+        : result.dataset.name.toUpperCase();
+    },
+
+    getFeatureFromResult(result: any) {
+      return result.type === "model"
+        ? result.model.variables.length ?? 0
+        : result.dataset.variables.length ?? 0;
+    },
+
+    sortRecentDesc() {
+      this.sorting = { asc: false, type: "recent" };
+    },
+    sortNameAsc() {
+      this.sorting = { asc: true, type: "name" };
+    },
+    sortNameDesc() {
+      this.sorting = { asc: false, type: "name" };
+    },
+    sortFeaturesAsc() {
+      this.sorting = { asc: true, type: "features" };
+    },
+    sortFeaturesDesc() {
+      this.sorting = { asc: false, type: "features" };
     }
   }
 });
@@ -142,22 +349,14 @@ export default Vue.extend({
   font-weight: bold;
 }
 
-.search-view .file-uploader {
-  flex-shrink: 0;
-  margin-left: 20px;
-}
-
 .row .file-uploader-status {
   padding: 0;
 }
 
 .search-search-bar {
-  width: 100%;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
-}
-
-.search-container {
-  height: 100%;
+  margin-top: 1rem;
+  width: 100%;
 }
 
 .close-join-button {
@@ -173,22 +372,56 @@ export default Vue.extend({
   text-align: center;
 }
 
+/* Navigation */
+
+.search-nav {
+  align-items: center;
+  display: flex;
+  padding: 1rem;
+}
+
+.search-nav > * + * {
+  margin-left: 2em;
+}
+
+.search-nav-tab {
+  border-color: transparent;
+  border-style: solid;
+  border-width: 0 0 3px 0;
+  padding: 0.25em 0;
+}
+
+.search-nav-tab.active {
+  border-bottom-color: var(--blue);
+}
+
+.search-nav .file-uploader {
+  margin-left: auto; /* Align to the right of the navigation. */
+}
+
+/* Content */
+
+.search-content-wrapper {
+  /* As we use flexbox with .row, the height needs to be define
+     here to allow .search-content to be scrollable. */
+  height: 100%;
+}
+
 .search-content {
   height: 100%;
-  width: 100%;
-}
-
-.search-content .nav-link {
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-
-.search-content-tab {
-  align-self: center;
-  height: calc(100% - 30px); /* 30px ≈ height of the tab nav. */
   overflow: scroll;
-  margin-left: auto;
-  margin-right: auto;
-  max-width: 83.33%; /* Bootstrap ≈ .col-10 */
+}
+
+.search-content-empty,
+.search-content-spinner {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+.search-content-empty {
+  color: var(--black);
+  font-size: 1.2em;
+  font-weight: bold;
+  line-height: 1.2;
 }
 </style>

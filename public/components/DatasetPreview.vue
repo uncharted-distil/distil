@@ -9,7 +9,10 @@
         disabled: isImportReady || importPending
       }"
     >
-      <a class="nav-link"><b>Name:</b> {{ dataset.name }}</a>
+      <a class="nav-link">
+        <i class="fa fa-table"></i> <b>Dateset Name:</b>
+        {{ dataset.name }}
+      </a>
       <a class="nav-link"><b>Features:</b> {{ dataset.variables.length }}</a>
       <a class="nav-link"><b>Rows:</b> {{ dataset.numRows }}</a>
       <a class="nav-link"><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</a>
