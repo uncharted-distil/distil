@@ -44,7 +44,8 @@ import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getSubSelectionValues,
   hasBaseline,
-  hasSummary
+  hasSummary,
+  facetTypeChangeState
 } from "../../util/facets";
 import { DATETIME_FILTER } from "../../util/filters";
 import { DATETIME_UNIX_ADJUSTMENT } from "../../util/types";
@@ -110,8 +111,11 @@ export default Vue.extend({
       };
     },
     facetEnableTypeChanges(): boolean {
-      const key = `${this.summary.dataset}:${this.summary.key}`;
-      return Boolean(this.enabledTypeChanges.find(e => e === key));
+      return facetTypeChangeState(
+        this.summary.dataset,
+        this.summary.key,
+        this.enabledTypeChanges
+      );
     },
     headerClass(): string {
       return this.facetEnableTypeChanges
