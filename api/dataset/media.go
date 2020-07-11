@@ -66,10 +66,16 @@ type Media struct {
 // NewMediaDataset creates a new media dataset from raw byte data, assuming json.
 func NewMediaDataset(dataset string, mediaType string, targetMediaType string, rawData []byte) (*Media, error) {
 	// store and expand raw data
-	expandedInfo, err := ExpandZipDataset(dataset, rawData)
+	zipPath, err := StoreZipDataset(dataset, rawData)
 	if err != nil {
 		return nil, err
 	}
+
+	expandedInfo, err := ExpandZipDataset(dataset, zipPath)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Media{
 		Dataset:           dataset,
 		MediaType:         mediaType,
@@ -105,7 +111,7 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 
 	csvData := make([][]string, 0)
 	csvData = append(csvData, []string{model.D3MIndexFieldName, "media_file", "label"})
-	mediaFolder := getUniqueFolder(path.Join(outputDatasetPath, "media"))
+	mediaFolder := util.GetUniqueFolder(path.Join(outputDatasetPath, "media"))
 
 	// the folder name represents the label to apply for all containing media
 	totalCounts := make(map[string]int)
@@ -137,7 +143,7 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 			if extension != fmt.Sprintf(".%s", m.TargetMediaType) {
 				targetMediaFilename = fmt.Sprintf("%s.%s", strings.TrimSuffix(targetMediaFilename, extension), m.TargetMediaType)
 			}
-			targetMediaFilename = getUniqueName(path.Join(mediaFolder, targetMediaFilename))
+			targetMediaFilename = util.GetUniqueName(path.Join(mediaFolder, targetMediaFilename))
 
 			err = util.WriteFileWithDirs(targetMediaFilename, mediaLoaded, os.ModePerm)
 			if err != nil {

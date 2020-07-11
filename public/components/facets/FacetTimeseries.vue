@@ -106,7 +106,7 @@ export default Vue.extend({
     },
 
     grouping(): TimeseriesGrouping {
-      if (!this.variable.grouping) {
+      if (!this.variable || !this.variable.grouping) {
         return null;
       }
       return this.variable.grouping as TimeseriesGrouping;

@@ -20,7 +20,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/h2non/filetype"
 	"github.com/pkg/errors"
@@ -40,23 +39,28 @@ type ExpandedDatasetPaths struct {
 	ExtractedFilePath string
 }
 
-// ExpandZipDataset decompresses a zipped dataset for further downstream processing.
-func ExpandZipDataset(dataset string, rawData []byte) (*ExpandedDatasetPaths, error) {
-	// store and expand raw data
+// StoreZipDataset writes the archive file to temporary storage
+func StoreZipDataset(dataset string, rawData []byte) (string, error) {
 	tmpPath := env.GetTmpPath()
 	zipFilename := path.Join(tmpPath, fmt.Sprintf("%s_raw.zip", dataset))
-	zipFilename = getUniqueName(zipFilename)
+	zipFilename = util.GetUniqueName(zipFilename)
 	err := util.WriteFileWithDirs(zipFilename, rawData, os.ModePerm)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to write raw image data archive")
+		return "", errors.Wrap(err, "unable to write raw image data archive")
 	}
 
-	extractedArchivePath := getUniqueFolder(path.Join(tmpPath, dataset))
-	err = util.Unzip(zipFilename, extractedArchivePath)
+	return zipFilename, nil
+}
+
+// ExpandZipDataset decompresses a zipped dataset for further downstream processing.
+func ExpandZipDataset(datasetPath string, datasetName string) (*ExpandedDatasetPaths, error) {
+	tmpPath := env.GetTmpPath()
+	extractedArchivePath := util.GetUniqueFolder(path.Join(tmpPath, datasetName))
+	err := util.Unzip(datasetPath, extractedArchivePath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to extract raw image data archive")
 	}
-	return &ExpandedDatasetPaths{zipFilename, extractedArchivePath}, nil
+	return &ExpandedDatasetPaths{datasetPath, extractedArchivePath}, nil
 }
 
 // CheckFileType does a breadth first directory traversal until it finds a file, then it checks
@@ -97,24 +101,4 @@ func CheckFileType(extractedArchivePath string) (string, error) {
 		}
 	}
 	return "", nil
-}
-
-func getUniqueName(filename string) string {
-	extension := path.Ext(filename)
-	baseFilename := strings.TrimSuffix(filename, extension)
-	currentFilename := filename
-	for i := 1; util.FileExists(currentFilename); i++ {
-		currentFilename = fmt.Sprintf("%s_%d.%s", baseFilename, i, extension)
-	}
-
-	return currentFilename
-}
-
-func getUniqueFolder(folder string) string {
-	currentFilename := folder
-	for i := 1; util.FileExists(currentFilename); i++ {
-		currentFilename = fmt.Sprintf("%s_%d", folder, i)
-	}
-
-	return currentFilename
 }

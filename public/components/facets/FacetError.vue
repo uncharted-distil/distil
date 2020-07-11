@@ -23,7 +23,7 @@ import Vue from "vue";
 
 import "@uncharted.software/facets-core";
 import { VariableSummary } from "../../store/dataset";
-
+import { facetTypeChangeState } from "../../util/facets";
 import TypeChangeMenu from "../TypeChangeMenu";
 
 export default Vue.extend({
@@ -40,8 +40,11 @@ export default Vue.extend({
 
   computed: {
     facetEnableTypeChanges(): boolean {
-      const key = `${this.summary.dataset}:${this.summary.key}`;
-      return Boolean(this.enabledTypeChanges.find(e => e === key));
+      return facetTypeChangeState(
+        this.summary.dataset,
+        this.summary.key,
+        this.enabledTypeChanges
+      );
     }
   }
 });

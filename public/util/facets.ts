@@ -13,7 +13,9 @@ import {
   URI_TYPE,
   DATE_TIME_TYPE,
   IMAGE_TYPE,
-  DATE_TIME_LOWER_TYPE
+  DATE_TIME_LOWER_TYPE,
+  GEOCOORDINATE_TYPE,
+  TIMESERIES_TYPE
 } from "../util/types";
 import { getTimeseriesSummaryTopCategories } from "../util/data";
 import { getSelectedRows } from "../util/row";
@@ -351,6 +353,10 @@ export function getFacetByType(type: string): string {
       return "facet-categorical";
     case NUMERICAL_SUMMARY:
       return "facet-numerical";
+    case GEOCOORDINATE_TYPE:
+      return "geocoordinate-facet";
+    case TIMESERIES_TYPE:
+      return "facet-timeseries";
     default:
       return null;
   }
@@ -376,4 +382,15 @@ export function viewLessData(
   return facetMoreCount === 0 && facetValueCount % baseNumToDisplay !== 0
     ? moreNumToDisplay - (facetValueCount % baseNumToDisplay)
     : moreNumToDisplay - baseNumToDisplay;
+}
+
+export function facetTypeChangeState(
+  dataset: string,
+  key: string,
+  enabledTypeChanges: string[]
+): boolean {
+  const typeKey = `${dataset}:${key}`;
+  return enabledTypeChanges
+    ? Boolean(enabledTypeChanges.find(e => e === typeKey))
+    : false;
 }

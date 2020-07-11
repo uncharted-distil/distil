@@ -65,7 +65,8 @@ import {
   getSubSelectionValues,
   hasBaseline,
   viewMoreData,
-  viewLessData
+  viewLessData,
+  facetTypeChangeState
 } from "../../util/facets";
 import _ from "lodash";
 import { IMAGE_TYPE } from "../../util/types";
@@ -122,8 +123,11 @@ export default Vue.extend({
       };
     },
     facetEnableTypeChanges(): boolean {
-      const key = `${this.summary.dataset}:${this.summary.key}`;
-      return Boolean(this.enabledTypeChanges.find(e => e === key));
+      return facetTypeChangeState(
+        this.summary.dataset,
+        this.summary.key,
+        this.enabledTypeChanges
+      );
     },
     headerClass(): string {
       return this.facetEnableTypeChanges
