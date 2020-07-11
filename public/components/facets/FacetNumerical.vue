@@ -42,7 +42,11 @@ import { FacetBarsData } from "@uncharted.software/facets-core/dist/types/facet-
 
 import TypeChangeMenu from "../TypeChangeMenu";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
-import { getSubSelectionValues, hasBaseline } from "../../util/facets";
+import {
+  getSubSelectionValues,
+  hasBaseline,
+  facetTypeChangeState
+} from "../../util/facets";
 import _ from "lodash";
 
 export default Vue.extend({
@@ -104,8 +108,11 @@ export default Vue.extend({
       };
     },
     facetEnableTypeChanges(): boolean {
-      const key = `${this.summary.dataset}:${this.summary.key}`;
-      return Boolean(this.enabledTypeChanges.find(e => e === key));
+      return facetTypeChangeState(
+        this.summary.dataset,
+        this.summary.key,
+        this.enabledTypeChanges
+      );
     },
     headerClass(): string {
       return this.facetEnableTypeChanges

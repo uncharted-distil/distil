@@ -11,106 +11,138 @@
       </div>
     </div>
 
-    <div class="row justify-content-center h-100 p-3">
-      <div class="col-12 col-md-8 flex-column d-flex h-100">
-        <div v-if="isTimeseries">
-          <div
-            class="row mt-1 mb-1"
-            v-for="(idCol, index) in idCols"
-            :key="idCol.value"
-          >
-            <div class="col-3">
-              <template v-if="index === 0">
-                <b>Series ID Column(s):</b>
-              </template>
+    <b-container class="mt-3 h-100">
+      <b-row>
+        <b-col cols="6">
+          <b-row v-if="isTimeseries">
+            <div
+              class="row mt-1 mb-1 col-12"
+              v-for="(idCol, index) in idCols"
+              :key="idCol.value"
+            >
+              <div class="col-3">
+                <template v-if="index === 0">
+                  <b>Series ID Column(s):</b>
+                </template>
+              </div>
+
+              <div class="col-5">
+                <b-form-select
+                  v-model="idCol.value"
+                  :options="idOptions(idCol.value)"
+                  @input="onIdChange"
+                />
+              </div>
             </div>
 
-            <div class="col-5">
-              <b-form-select
-                v-model="idCol.value"
-                :options="idOptions(idCol.value)"
-                @input="onIdChange"
-              />
+            <div class="row mt-1 mb-1 col-12">
+              <div class="col-3">
+                <b>Time Column:</b>
+              </div>
+
+              <div class="col-5">
+                <b-form-select
+                  v-model="xCol"
+                  :options="xColOptions"
+                  @input="onChange"
+                />
+              </div>
             </div>
+
+            <div class="row mt-1 mb-1 col-12">
+              <div class="col-3">
+                <b>Value Column:</b>
+              </div>
+
+              <div class="col-5">
+                <b-form-select
+                  v-model="yCol"
+                  :options="yColOptions"
+                  @input="onChange"
+                />
+              </div>
+            </div>
+          </b-row>
+          <b-row v-if="isGeocoordinate">
+            <div class="row mt-1 mb-1 col-12">
+              <div class="col-3">
+                <b>Longitude Column:</b>
+              </div>
+
+              <div class="col-5">
+                <b-form-select
+                  v-model="xCol"
+                  :options="xColOptions"
+                  @input="onChange"
+                />
+              </div>
+            </div>
+
+            <div class="row mt-1 mb-1 col-12">
+              <div class="col-3">
+                <b>Latitude Column:</b>
+              </div>
+
+              <div class="col-5">
+                <b-form-select
+                  v-model="yCol"
+                  :options="yColOptions"
+                  @input="onChange"
+                />
+              </div>
+            </div>
+          </b-row>
+        </b-col>
+
+        <b-col cols="6">
+          <div v-if="isReady && previewSummary && previewSummary.baseline">
+            <component
+              :summary="previewSummary"
+              :is="getFacetByType(groupingType)"
+            >
+            </component>
           </div>
-
-          <div class="row mt-1 mb-1" v-if="isTimeseries">
-            <div class="col-3">
-              <b>Time Column:</b>
-            </div>
-
-            <div class="col-5">
-              <b-form-select v-model="xCol" :options="xColOptions" />
-            </div>
+          <div v-else>
+            <facet-loading :summary="{ label: 'pending' }"> </facet-loading>
           </div>
+        </b-col>
+      </b-row>
 
-          <div class="row mt-1 mb-1" v-if="isTimeseries">
-            <div class="col-3">
-              <b>Value Column:</b>
-            </div>
-
-            <div class="col-5">
-              <b-form-select v-model="yCol" :options="yColOptions" />
-            </div>
+      <b-row align-h="center">
+        <b-btn
+          class="mt-3 var-grouping-button"
+          variant="outline-secondary"
+          :disabled="isPending"
+          @click="onClose"
+        >
+          <div class="row justify-content-center">
+            <i class="fa fa-times-circle fa-2x mr-2"></i>
+            <b>Cancel</b>
           </div>
-        </div>
-
-        <div class="row mt-1 mb-1" v-if="isGeocoordinate">
-          <div class="col-3">
-            <b>Longitude Column:</b>
+        </b-btn>
+        <b-btn
+          class="mt-3 var-grouping-button"
+          variant="primary"
+          :disabled="isPending || !isReady"
+          @click="onGroup"
+        >
+          <div class="row justify-content-center">
+            <i class="fa fa-check-circle fa-2x mr-2"></i>
+            <b>Submit</b>
           </div>
+        </b-btn>
+      </b-row>
 
-          <div class="col-5">
-            <b-form-select v-model="xCol" :options="xColOptions" />
-          </div>
-        </div>
-
-        <div class="row mt-1 mb-1" v-if="isGeocoordinate">
-          <div class="col-3">
-            <b>Latitude Column:</b>
-          </div>
-
-          <div class="col-5">
-            <b-form-select v-model="yCol" :options="yColOptions" />
-          </div>
-        </div>
-
-        <div v-if="isReady" class="row justify-content-center">
-          <b-btn
-            class="mt-3 var-grouping-button"
-            variant="outline-success"
-            :disabled="isPending"
-            @click="onGroup"
-          >
-            <div class="row justify-content-center">
-              <i class="fa fa-check-circle fa-2x mr-2"></i>
-              <b>Submit</b>
-            </div>
-          </b-btn>
-          <b-btn
-            class="mt-3 var-grouping-button"
-            variant="outline-danger"
-            :disabled="isPending"
-            @click="onClose"
-          >
-            <div class="row justify-content-center">
-              <i class="fa fa-times-circle fa-2x mr-2"></i>
-              <b>Cancel</b>
-            </div>
-          </b-btn>
-        </div>
-
-        <div class="grouping-progress">
-          <b-progress
-            v-if="isPending"
-            :value="percentComplete"
-            variant="outline-secondary"
-            striped
-            :animated="true"
-          ></b-progress>
-        </div>
-      </div>
-    </div>
+      <b-row class="grouping-progress">
+        <b-progress
+          v-if="isPending"
+          :value="percentComplete"
+          variant="secondary"
+          striped
+          :animated="true"
+        ></b-progress>
+      </b-row>
+    </b-container>
   </div>
 </template>
 
@@ -118,6 +150,7 @@
 import _ from "lodash";
 import Vue from "vue";
 import {
+  VariableSummary,
   Variable,
   Grouping,
   TimeseriesGrouping,
@@ -142,14 +175,22 @@ import {
   LATITUDE_TYPE,
   LONGITUDE_TYPE
 } from "../util/types";
-import { getComposedVariableKey } from "../util/data";
+import { filterSummariesByDataset, getComposedVariableKey } from "../util/data";
+import { getFacetByType } from "../util/facets";
 import { SELECT_TARGET_ROUTE } from "../store/route/index";
 import { createRouteEntry, overlayRouteEntry } from "../util/routes";
+import FacetLoading from "../components/facets/FacetLoading.vue";
+import FacetTimeseries from "../components/facets/FacetTimeseries.vue";
+import GeocoordinateFacet from "../components/facets/GeocoordinateFacet.vue";
 
 export default Vue.extend({
   name: "variable-grouping",
 
-  components: {},
+  components: {
+    FacetLoading,
+    FacetTimeseries,
+    GeocoordinateFacet
+  },
 
   data() {
     return {
@@ -287,10 +328,37 @@ export default Vue.extend({
         return [].concat(def, suggestions);
       }
     },
-
     isReady(): boolean {
-      return this.xCol !== null && this.groupingType !== null;
-      // return this.idCols.length > 1 && this.xCol && this.yCol && this.groupingType;
+      const hasBasicFields =
+        this.xCol !== null && this.yCol !== null && this.groupingType !== null;
+      if (this.isGeocoordinate) {
+        return hasBasicFields;
+      } else {
+        return hasBasicFields && this.idCols.length > 1;
+      }
+    },
+    summaries(): VariableSummary[] {
+      let summaries = datasetGetters.getVariableSummaries(this.$store);
+      summaries = filterSummariesByDataset(summaries, this.dataset);
+
+      // Fetch the grouped features.
+      const groupedFeatures = datasetGetters
+        .getGroupings(this.$store)
+        .filter(group => Array.isArray(group.grouping.subIds))
+        .map(group => group.grouping.subIds)
+        .flat();
+
+      // Remove summaries of features used in a grouping.
+      summaries = summaries.filter(
+        summary => !groupedFeatures.includes(summary.key)
+      );
+      return summaries;
+    },
+    previewSummary(): VariableSummary {
+      const pv = this.summaries.filter(
+        v => v.key.indexOf(this.xCol) > -1 && v.key.indexOf(this.yCol) > -1
+      )[0];
+      return pv;
     }
   },
 
@@ -298,6 +366,15 @@ export default Vue.extend({
     viewActions.fetchSelectTargetData(this.$store, false);
   },
   methods: {
+    getFacetByType: getFacetByType,
+    async clearGrouping() {
+      if (this.previewSummary) {
+        await datasetActions.removeGrouping(this.$store, {
+          dataset: this.dataset,
+          variable: this.previewSummary.key
+        });
+      }
+    },
     idOptions(idCol): Object[] {
       const ID_COL_TYPES = {
         [TEXT_TYPE]: true,
@@ -308,8 +385,6 @@ export default Vue.extend({
       const suggestions = this.variables
         .filter(v => ID_COL_TYPES[v.colType])
         .filter(v => v.colName === idCol || !this.isIDCol(v.colName))
-        .filter(v => !this.isXCol(v.colName))
-        .filter(v => !this.isYCol(v.colName))
         .map(v => {
           return { value: v.colName, text: v.colDisplayName };
         });
@@ -324,6 +399,7 @@ export default Vue.extend({
       this.idCols.push({ value: null });
       this.hideIdCol.push(false);
       this.prevIdCols++;
+      this.onChange();
     },
     isIDCol(arg): boolean {
       return !!this.idCols.find(id => id.value === arg);
@@ -337,20 +413,30 @@ export default Vue.extend({
     isOtherCol(arg): boolean {
       return this.other.indexOf(arg) !== -1;
     },
-    onGroup() {
-      this.submitGrouping();
+    onChange() {
+      if (this.isReady) {
+        this.submitGrouping(false);
+      }
     },
-    submitGrouping() {
+    onGroup() {
+      this.submitGrouping(true);
+    },
+    getHiddenCols(idCol) {
+      const hiddenCols = [this.xCol, this.yCol];
+      if (idCol !== null) {
+        hiddenCols.push(idCol);
+      }
+      return hiddenCols;
+    },
+    async submitGrouping(gotoTarget: boolean) {
+      await this.clearGrouping();
       // Create a list of id values, filtering out the empty entry
       const ids = this.idCols.map(c => c.value).filter(v => v);
 
       // generate the grouping structure that describes how the vars will be grouped
       const idCol = this.isTimeseries ? getComposedVariableKey(ids) : null;
 
-      const hiddenCols = [this.xCol, this.yCol];
-      if (idCol !== null) {
-        hiddenCols.push(idCol);
-      }
+      const hiddenCols = gotoTarget ? this.getHiddenCols(idCol) : [];
 
       const grouping: Grouping = {
         type: this.groupingType,
@@ -371,22 +457,24 @@ export default Vue.extend({
         tsGrouping.yCol = this.yCol;
       }
 
-      datasetActions
-        .setGrouping(this.$store, {
-          dataset: this.dataset,
-          grouping: grouping
-        })
-        .then(() => {
-          // If this dataset contains multiple timeseries, then we need to request clustering be run on it
-          if (this.isTimeseries && ids.length > 0) {
-            datasetActions.fetchClusters(this.$store, {
-              dataset: this.dataset
-            });
-          }
-          this.gotoTargetSelection();
+      await datasetActions.setGrouping(this.$store, {
+        dataset: this.dataset,
+        grouping: grouping
+      });
+
+      // If this dataset contains multiple timeseries, then we need to request clustering be run on it
+      if (this.isTimeseries && ids.length > 0) {
+        await datasetActions.fetchClusters(this.$store, {
+          dataset: this.dataset
         });
+      }
+
+      if (gotoTarget) {
+        this.gotoTargetSelection();
+      }
     },
-    onClose() {
+    async onClose() {
+      await this.clearGrouping();
       this.gotoTargetSelection();
     },
     gotoTargetSelection() {

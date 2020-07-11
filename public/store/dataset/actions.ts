@@ -248,7 +248,7 @@ export const actions = {
   },
 
   // Sends a request to the server to generate cluaster for all data that is a valid target for clustering.
-  fetchClusters(
+  async fetchClusters(
     context: DatasetContext,
     args: { dataset: string }
   ): Promise<any> {
