@@ -281,36 +281,6 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 	}, nil
 }
 
-// createPreFeaturizedPipeline creates pipeline prepend to process a featurized dataset.
-func (s *SolutionRequest) createPreFeaturizedPipeline(learningDataset string, variables []*model.Variable, metaStorage api.MetadataStorage) (*pipeline.PipelineDescription, error) {
-	uuid, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
-
-	name := fmt.Sprintf("prefeaturized-%s-%s-%s", s.Dataset, learningDataset, uuid.String())
-	desc := fmt.Sprintf("Prefeaturized pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
-
-	// replace any grouped variables in filter params with the group's
-	expandedFilters, err := api.ExpandFilterParams(s.Dataset, s.Filters, true, metaStorage)
-	if err != nil {
-		return nil, err
-	}
-
-	prefeaturizedPipeline, err := description.CreatePreFeaturizedDatasetPipeline(name, desc,
-		&description.UserDatasetDescription{
-			AllFeatures:      variables,
-			TargetFeature:    s.TargetFeature,
-			SelectedFeatures: expandedFilters.Variables,
-			Filters:          s.Filters.Filters,
-		}, nil, len(variables))
-	if err != nil {
-		return nil, err
-	}
-
-	return prefeaturizedPipeline, nil
-}
-
 // createPreprocessingPipeline creates pipeline to enfore user feature selection and typing
 func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable, metaStorage api.MetadataStorage) (*pipeline.PipelineDescription, error) {
 	uuid, err := uuid.NewV4()
@@ -557,23 +527,33 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 	}
 }
 
-func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, initialSearchID string, initialSearchSolutionID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
-	datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
-
+func describeSolution(client *compute.Client, initialSearchSolutionID string) (*pipeline.DescribeSolutionResponse, error) {
 	// need to wait until a valid description is returned before proceeding
 	var desc *pipeline.DescribeSolutionResponse
 	var err error
 	for wait := true; wait; {
 		desc, err = client.GetSolutionDescription(context.Background(), initialSearchSolutionID)
 		if err != nil {
-			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-			return
+			return nil, err
 		}
 		wait = desc == nil || desc.Pipeline == nil
 		if wait {
 			time.Sleep(10 * time.Second)
 		}
+	}
+
+	return desc, nil
+}
+
+func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
+	dataStorage api.DataStorage, initialSearchID string, initialSearchSolutionID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
+	datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
+
+	// get solution description
+	desc, err := describeSolution(client, initialSearchSolutionID)
+	if err != nil {
+		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+		return
 	}
 
 	// Need to create a new solution that has the explain output. This is the solution
@@ -586,7 +566,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		keywords = searchRequest.Problem.Problem.TaskKeywords
 	}
 
-	explainDesc, outputKeysExplain, err := s.createExplainPipeline(client, desc, keywords)
+	explainDesc, outputKeysExplain, err := s.createExplainPipeline(desc, keywords)
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return

@@ -90,8 +90,8 @@ type pipelineOutput struct {
 	parsingParams []interface{}
 }
 
-func (s *SolutionRequest) createExplainPipeline(client *compute.Client,
-	desc *pipeline.DescribeSolutionResponse, keywords []string) (*pipeline.PipelineDescription, map[string]*pipelineOutput, error) {
+func (s *SolutionRequest) createExplainPipeline(desc *pipeline.DescribeSolutionResponse,
+	keywords []string) (*pipeline.PipelineDescription, map[string]*pipelineOutput, error) {
 	// remote sensing and images are not explainable
 	// TODO: we may want to look into folding this filtering functionality into
 	// the function that builds the explainable pipeline (explainablePipeline).
