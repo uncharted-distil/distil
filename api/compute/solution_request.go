@@ -281,6 +281,36 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 	}, nil
 }
 
+// createPreFeaturizedPipeline creates pipeline prepend to process a featurized dataset.
+func (s *SolutionRequest) createPreFeaturizedPipeline(learningDataset string, variables []*model.Variable, metaStorage api.MetadataStorage) (*pipeline.PipelineDescription, error) {
+	uuid, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
+	name := fmt.Sprintf("prefeaturized-%s-%s-%s", s.Dataset, learningDataset, uuid.String())
+	desc := fmt.Sprintf("Prefeaturized pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
+
+	// replace any grouped variables in filter params with the group's
+	expandedFilters, err := api.ExpandFilterParams(s.Dataset, s.Filters, true, metaStorage)
+	if err != nil {
+		return nil, err
+	}
+
+	prefeaturizedPipeline, err := description.CreatePreFeaturizedDatasetPipeline(name, desc,
+		&description.UserDatasetDescription{
+			AllFeatures:      variables,
+			TargetFeature:    s.TargetFeature,
+			SelectedFeatures: expandedFilters.Variables,
+			Filters:          s.Filters.Filters,
+		}, nil, len(variables))
+	if err != nil {
+		return nil, err
+	}
+
+	return prefeaturizedPipeline, nil
+}
+
 // createPreprocessingPipeline creates pipeline to enfore user feature selection and typing
 func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.Variable, metaStorage api.MetadataStorage) (*pipeline.PipelineDescription, error) {
 	uuid, err := uuid.NewV4()
@@ -867,7 +897,11 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// add dataset name to path
-	datasetInputDir := env.ResolvePath(datasetInput.Source, datasetInput.Folder)
+	datasetPath := datasetInput.Folder
+	if datasetInput.LearningDataset != "" {
+		datasetPath = datasetInput.LearningDataset
+	}
+	datasetInputDir := env.ResolvePath(datasetInput.Source, datasetPath)
 
 	// compute the task and subtask from the target and dataset
 	trainingVariables, err := findVariables(s.Filters.Variables, variables)
@@ -914,7 +948,11 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
-		preprocessing, err = s.createPreprocessingPipeline(variables, metaStorage)
+		if datasetInput.LearningDataset == "" {
+			preprocessing, err = s.createPreprocessingPipeline(variables, metaStorage)
+		} else {
+			preprocessing, err = s.createPreFeaturizedPipeline(datasetInput.LearningDataset, variables, metaStorage)
+		}
 		if err != nil {
 			return err
 		}
