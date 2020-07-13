@@ -1,6 +1,6 @@
 <template>
   <div
-    class="d-flex flex-row align-items-baseline"
+    class="d-inline-flex flex-row align-items-baseline"
     :title="`${importanceLabel} estimated importance`"
   >
     <div
