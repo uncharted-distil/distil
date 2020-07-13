@@ -89,6 +89,7 @@
                 :summary="summary"
                 :highlight="highlight"
                 :row-selection="rowSelection"
+                :importance="ranking[summary.key]"
                 :ranking="ranking[summary.key]"
                 :html="html"
                 :enabled-type-changes="enabledTypeChanges"
