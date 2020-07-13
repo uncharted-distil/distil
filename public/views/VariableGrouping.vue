@@ -273,11 +273,6 @@ export default Vue.extend({
           .map(v => {
             return { value: v.colName, text: v.colDisplayName };
           });
-
-        if (suggestions.length === 1) {
-          this.xCol = suggestions[0].value;
-          return suggestions;
-        }
         return [].concat(def, suggestions);
       } else if (this.isTimeseries) {
         const X_COL_TYPES = {
@@ -294,11 +289,6 @@ export default Vue.extend({
           .map(v => {
             return { value: v.colName, text: v.colDisplayName };
           });
-
-        if (suggestions.length === 1) {
-          this.xCol = suggestions[0].value;
-          return suggestions;
-        }
 
         return [].concat(def, suggestions);
       }
@@ -326,11 +316,6 @@ export default Vue.extend({
             return { value: v.colName, text: v.colDisplayName };
           });
 
-        if (suggestions.length === 1) {
-          this.yCol = suggestions[0].value;
-          return suggestions;
-        }
-
         return [].concat(def, suggestions);
       } else if (this.isTimeseries) {
         const Y_COL_TYPES = {
@@ -346,11 +331,6 @@ export default Vue.extend({
           .map(v => {
             return { value: v.colName, text: v.colDisplayName };
           });
-
-        if (suggestions.length === 1) {
-          this.yCol = suggestions[0].value;
-          return suggestions;
-        }
 
         return [].concat(def, suggestions);
       }
