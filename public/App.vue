@@ -16,7 +16,7 @@ import router from "./router/router";
 
 import "font-awesome/css/font-awesome.css";
 import "bootstrap-vue/dist/bootstrap-vue.css";
-import "./styles/bootstrap-v4beta2-custom.css";
+import "./styles/uncharted-bootstrap-v4.5-custom.css";
 import "./styles/main.css";
 
 // DEBUG: this is a mocked graph until we support actual graph data
