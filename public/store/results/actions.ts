@@ -713,7 +713,7 @@ export const actions = {
     const rankings = <Dictionary<number>>response.data;
     mutations.setVariableRankings(store, {
       solutionID: args.solutionID,
-      rankings: rankings
+      rankings: _.pickBy(rankings, ranking => ranking !== null)
     });
   }
 };

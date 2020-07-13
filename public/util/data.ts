@@ -20,7 +20,10 @@ import {
 import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
 import store from "../store/store";
-import { actions as resultsActions } from "../store/results/module";
+import {
+  actions as resultsActions,
+  getters as resultsGetters
+} from "../store/results/module";
 import { ResultsContext } from "../store/results/actions";
 import { PredictionContext } from "../store/predictions/actions";
 import {
@@ -471,6 +474,17 @@ export function getVariableRanking(v: Variable): number {
   return v.ranking !== undefined ? v.ranking : 0;
 }
 
+export function getSolutionVariableRanking(
+  v: Variable,
+  solutionID: string
+): number {
+  const solutionRanks = resultsGetters.getVariableRankings(store)[solutionID];
+  if (solutionRanks) {
+    return solutionRanks[v.colName];
+  }
+  return null;
+}
+
 export function sortVariablesByImportance(variables: Variable[]): Variable[] {
   variables.sort((a, b) => {
     return getVariableImportance(b) - getVariableImportance(a);
@@ -486,6 +500,26 @@ export function sortSummariesByImportance(
   const importance: Dictionary<number> = {};
   variables.forEach(variable => {
     importance[variable.colName] = getVariableImportance(variable);
+  });
+  // sort by importance
+  summaries.sort((a, b) => {
+    return importance[b.key] - importance[a.key];
+  });
+  return summaries;
+}
+
+export function sortSolutionSummariesByImportance(
+  summaries: VariableSummary[],
+  variables: Variable[],
+  solutionID: string
+): VariableSummary[] {
+  // create importance lookup map
+  const importance: Dictionary<number> = {};
+  variables.forEach(variable => {
+    importance[variable.colName] = getSolutionVariableRanking(
+      variable,
+      solutionID
+    );
   });
   // sort by importance
   summaries.sort((a, b) => {

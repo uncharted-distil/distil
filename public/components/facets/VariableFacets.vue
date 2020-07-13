@@ -169,7 +169,9 @@ import { Dictionary } from "../../util/dict";
 import {
   sortSummariesByImportance,
   filterVariablesByPage,
-  getVariableRanking
+  getVariableRanking,
+  getSolutionVariableRanking,
+  sortSolutionSummariesByImportance
 } from "../../util/data";
 import {
   Highlight,
@@ -219,6 +221,7 @@ export default Vue.extend({
     enableTypefiltering: Boolean as () => boolean,
     isAvailableFeatures: Boolean as () => boolean,
     isFeaturesToModel: Boolean as () => boolean,
+    isResultFeatures: Boolean as () => boolean,
     ignoreHighlights: Boolean as () => boolean,
     summaries: Array as () => VariableSummary[],
     subtitle: String as () => string,
@@ -268,6 +271,13 @@ export default Vue.extend({
     },
 
     sortedFilteredSummaries(): VariableSummary[] {
+      if (this.isResultFeatures) {
+        return sortSolutionSummariesByImportance(
+          this.filteredSummaries,
+          this.variables,
+          routeGetters.getRouteSolutionId(this.$store)
+        );
+      }
       return sortSummariesByImportance(this.filteredSummaries, this.variables);
     },
 
@@ -293,9 +303,22 @@ export default Vue.extend({
     },
 
     ranking(): Dictionary<number> {
+      // Only show ranks for available feature, model features and result features
+      if (
+        !this.isAvailableFeatures &&
+        !this.isFeaturesToModel &&
+        !this.isResultFeatures
+      ) {
+        return {};
+      }
       const ranking: Dictionary<number> = {};
       this.variables.forEach(variable => {
-        ranking[variable.colName] = getVariableRanking(variable);
+        ranking[variable.colName] = this.isResultFeatures
+          ? getSolutionVariableRanking(
+              variable,
+              routeGetters.getRouteSolutionId(this.$store)
+            )
+          : getVariableRanking(variable);
       });
       return ranking;
     },
