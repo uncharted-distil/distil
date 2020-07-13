@@ -10,7 +10,8 @@ import {
 } from "../dataset/module";
 import {
   actions as requestActions,
-  mutations as requestMutations
+  mutations as requestMutations,
+  getters as requestGetters
 } from "../requests/module";
 import {
   actions as resultActions,
@@ -32,6 +33,7 @@ enum ParamCacheKey {
   VARIABLES = "VARIABLES",
   VARIABLE_SUMMARIES = "VARIABLE_SUMMARIES",
   VARIABLE_RANKINGS = "VARIABLE_RANKINGS",
+  SOLUTION_VARIABLE_RANKINGS = "SOLUTION_VARIABLE_RANKINGS",
   SEARCH_REQUESTS = "SEARCH_REQUESTS",
   SOLUTIONS = "SOLUTIONS",
   PREDICTIONS_REQUESTS = "PREDICTIONS_REQUESTS",
@@ -119,6 +121,13 @@ const fetchVariableRankings = createCacheable(
       dataset: args.dataset,
       target: args.target
     });
+  }
+);
+
+const fetchSolutionVariableRankings = createCacheable(
+  ParamCacheKey.SOLUTION_VARIABLE_RANKINGS,
+  (context, args) => {
+    resultActions.fetchVariableRankings(store, { solutionID: args.solutionID });
   }
 );
 
@@ -362,8 +371,9 @@ export const actions = {
     resultMutations.setExcludedResultTableData(store, null);
     modelMutations.setModels(store, []);
 
-    const dataset = context.getters.getRouteDataset;
-    const target = context.getters.getRouteTargetVariable;
+    const dataset = routeGetters.getRouteDataset(store);
+    const target = routeGetters.getRouteTargetVariable(store);
+    const solutionID = routeGetters.getRouteSolutionId(store);
 
     // fetch new state
     await fetchVariables(context, {
@@ -372,14 +382,11 @@ export const actions = {
     await modelActions.fetchModels(store); // Fetch saved models.
 
     // These are long running processes we won't wait on
-    fetchVariableRankings(context, {
-      dataset: dataset,
-      target: target
-    });
-
     fetchClusters(context, { dataset: dataset });
 
     await Promise.all([
+      fetchSolutionVariableRankings(context, { solutionID: solutionID }),
+
       fetchSolutionRequests(context, {
         dataset: dataset,
         target: target
@@ -403,15 +410,17 @@ export const actions = {
     resultMutations.setExcludedResultTableData(store, null);
 
     // fetch new state
-    const dataset = context.getters.getRouteDataset;
-    const target = context.getters.getRouteTargetVariable;
-    const requestIds = context.getters.getRelevantSolutionRequestIds;
-    const solutionId = context.getters.getRouteSolutionId;
-    const trainingVariables =
-      context.getters.getActiveSolutionTrainingVariables;
-    const highlight = context.getters.getDecodedHighlight;
-    const varModes: Map<string, SummaryMode> =
-      context.getters.getDecodedVarModes;
+    const dataset = routeGetters.getRouteDataset(store);
+    const target = routeGetters.getRouteTargetVariable(store);
+    const requestIds = requestGetters.getRelevantSolutionRequestIds(store);
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    const trainingVariables = requestGetters.getActiveSolutionTrainingVariables(
+      store
+    );
+    const highlight = routeGetters.getDecodedHighlight(store);
+    const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
+      store
+    );
 
     resultActions.fetchResultTableData(store, {
       dataset: dataset,
@@ -439,6 +448,7 @@ export const actions = {
       highlight: highlight,
       varModes: varModes
     });
+    resultActions.fetchVariableRankings(store, { solutionID: solutionId });
 
     const task = routeGetters.getRouteTask(store);
 

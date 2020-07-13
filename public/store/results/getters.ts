@@ -106,5 +106,11 @@ export const getters = {
 
   getPredictedForecasts(state: ResultsState): Dictionary<Forecast> {
     return state.forecasts;
+  },
+
+  // variable rankings
+
+  getVariableRankings(state: ResultsState): Dictionary<Dictionary<number>> {
+    return state.variableRankings;
   }
 };
