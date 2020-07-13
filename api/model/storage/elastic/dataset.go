@@ -38,6 +38,26 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	return "", errors.Errorf("Not Supported")
 }
 
+// UpdateDataset updates a dataset already stored in ES.
+func (s *Storage) UpdateDataset(dataset *api.Dataset) error {
+	bytes, err := json.Marshal(dataset)
+	if err != nil {
+		return errors.Wrapf(err, "failed to marshal document source")
+	}
+
+	// update the document in the metadata index
+	_, err = s.client.Index().
+		Index(s.datasetIndex).
+		Id(dataset.ID).
+		BodyString(string(bytes)).
+		Refresh("true").
+		Do(context.Background())
+	if err != nil {
+		return errors.Wrapf(err, "failed to update document in index `%s`", s.datasetIndex)
+	}
+	return nil
+}
+
 // IngestDataset adds a document consisting of the metadata to ES.
 func (s *Storage) IngestDataset(datasetSource metadata.DatasetSource, meta *model.Metadata) error {
 

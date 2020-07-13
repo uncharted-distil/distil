@@ -81,6 +81,7 @@ type IngestTaskConfig struct {
 	IngestOverwrite                    bool
 }
 
+// IngestSteps is a collection of parameters that specify ingest behaviour.
 type IngestSteps struct {
 	ClassificationOverwrite bool
 }
@@ -233,6 +234,22 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		return "", errors.Wrap(err, "unable to ingest ranked data")
 	}
 	log.Infof("finished ingesting the dataset")
+
+	// featurize dataset for downstream efficiencies
+	_, featurizedDatasetPath, err := FeaturizeDataset(latestSchemaOutput, dataset, config)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to featurize dataset")
+	}
+	log.Infof("finished featurizing the dataset")
+	ingestedDataset, err := metaStorage.FetchDataset(dataset, true, true)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to load metadata")
+	}
+	ingestedDataset.LearningDataset = featurizedDatasetPath
+	err = metaStorage.UpdateDataset(ingestedDataset)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to store updated metadata")
+	}
 
 	// updating extremas is optional
 	err = UpdateExtremas(datasetID, metaStorage, dataStorage)

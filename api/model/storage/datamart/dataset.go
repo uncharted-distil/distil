@@ -53,6 +53,11 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	return s.download(s, id, uri)
 }
 
+// UpdateDataset updates a document consisting of the metadata to the datamart.
+func (s *Storage) UpdateDataset(dataset *api.Dataset) error {
+	return errors.Errorf("Not implemented")
+}
+
 // IngestDataset adds a document consisting of the metadata to the datamart.
 func (s *Storage) IngestDataset(datasetSource metadata.DatasetSource, meta *model.Metadata) error {
 	return errors.Errorf("Not implemented")
