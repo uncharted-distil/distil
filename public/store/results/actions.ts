@@ -21,6 +21,7 @@ import {
 } from "../../util/data";
 import { getters as resultGetters } from "../results/module";
 import { getters as dataGetters } from "../dataset/module";
+import { Dictionary } from "vue-router/types/router";
 
 export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
@@ -698,5 +699,21 @@ export const actions = {
     } catch (error) {
       console.error(error);
     }
+  },
+
+  // Fetch variable rankings associated with a computed solution.  If the solution results are
+  // available, then the rankings will have been computed.
+  async fetchVariableRankings(
+    context: ResultsContext,
+    args: { solutionID: string }
+  ) {
+    const response = await axios.get(
+      `/distil/solution-variable-rankings/${args.solutionID}`
+    );
+    const rankings = <Dictionary<number>>response.data;
+    mutations.setVariableRankings(store, {
+      solutionID: args.solutionID,
+      rankings: _.pickBy(rankings, ranking => ranking !== null)
+    });
   }
 };

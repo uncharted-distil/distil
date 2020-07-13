@@ -89,6 +89,7 @@
                 :summary="summary"
                 :highlight="highlight"
                 :row-selection="rowSelection"
+                :importance="ranking[summary.key]"
                 :ranking="ranking[summary.key]"
                 :html="html"
                 :enabled-type-changes="enabledTypeChanges"
@@ -104,7 +105,7 @@
                 :summary="summary"
                 :highlight="highlight"
                 :row-selection="rowSelection"
-                :ranking="ranking[summary.key]"
+                :importance="ranking[summary.key]"
                 :html="html"
                 :enabled-type-changes="enabledTypeChanges"
                 :enable-highlighting="enableHighlighting"
@@ -119,7 +120,7 @@
                 :summary="summary"
                 :highlight="highlight"
                 :row-selection="rowSelection"
-                :ranking="ranking[summary.key]"
+                :importance="ranking[summary.key]"
                 :html="html"
                 :enabled-type-changes="enabledTypeChanges"
                 :enable-highlighting="enableHighlighting"
@@ -135,20 +136,20 @@
           </div>
         </div>
       </div>
-      <div
-        v-if="numSummaries > rowsPerPage"
-        class="row align-items-center variable-page-nav"
-      >
-        <div class="col-12 flex-column">
-          <b-pagination
-            size="sm"
-            align="center"
-            :total-rows="numSummaries"
-            :per-page="rowsPerPage"
-            v-model="currentPage"
-            class="mb-0"
-          />
-        </div>
+    </div>
+    <div
+      v-if="numSummaries > rowsPerPage"
+      class="row align-items-center variable-page-nav"
+    >
+      <div class="col-12 flex-column">
+        <b-pagination
+          size="sm"
+          align="center"
+          :total-rows="numSummaries"
+          :per-page="rowsPerPage"
+          v-model="currentPage"
+          class="mb-0"
+        />
       </div>
     </div>
   </div>
@@ -170,7 +171,8 @@ import {
   sortSummariesByImportance,
   filterVariablesByPage,
   getVariableRanking,
-  getVariableImportance
+  getSolutionVariableRanking,
+  sortSolutionSummariesByImportance
 } from "../../util/data";
 import {
   Highlight,
@@ -196,6 +198,7 @@ import { actions as appActions } from "../../store/app/module";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
 import { updateHighlight, clearHighlight } from "../../util/highlights";
 import Vue from "vue";
+import { randomNormal } from "d3";
 
 export default Vue.extend({
   name: "variable-facets",
@@ -219,6 +222,7 @@ export default Vue.extend({
     enableTypefiltering: Boolean as () => boolean,
     isAvailableFeatures: Boolean as () => boolean,
     isFeaturesToModel: Boolean as () => boolean,
+    isResultFeatures: Boolean as () => boolean,
     ignoreHighlights: Boolean as () => boolean,
     summaries: Array as () => VariableSummary[],
     subtitle: String as () => string,
@@ -268,6 +272,13 @@ export default Vue.extend({
     },
 
     sortedFilteredSummaries(): VariableSummary[] {
+      if (this.isResultFeatures) {
+        return sortSolutionSummariesByImportance(
+          this.filteredSummaries,
+          this.variables,
+          routeGetters.getRouteSolutionId(this.$store)
+        );
+      }
       return sortSummariesByImportance(this.filteredSummaries, this.variables);
     },
 
@@ -293,9 +304,22 @@ export default Vue.extend({
     },
 
     ranking(): Dictionary<number> {
+      // Only show ranks for available feature, model features and result features
+      if (
+        !this.isAvailableFeatures &&
+        !this.isFeaturesToModel &&
+        !this.isResultFeatures
+      ) {
+        return {};
+      }
       const ranking: Dictionary<number> = {};
       this.variables.forEach(variable => {
-        ranking[variable.colName] = getVariableRanking(variable);
+        ranking[variable.colName] = this.isResultFeatures
+          ? getSolutionVariableRanking(
+              variable,
+              routeGetters.getRouteSolutionId(this.$store)
+            )
+          : getVariableRanking(variable);
       });
       return ranking;
     },

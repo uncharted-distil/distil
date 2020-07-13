@@ -836,7 +836,7 @@ export const actions = {
         `/distil/variable-rankings/${dataset}/${args.target}`
       );
 
-      const rankings = <Dictionary<number>>response.data.rankings;
+      const rankings = <Dictionary<number>>response.data;
 
       // check to see if we got any non-zero rank info back
       const computedRankings = _.filter(rankings, (r, v) => r !== 0).length > 0;

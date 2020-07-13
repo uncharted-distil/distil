@@ -53,7 +53,9 @@ export const getters = {
   getResultDataNumRows: read(moduleGetters.getResultDataNumRows),
   // forecasts
   getPredictedTimeseries: read(moduleGetters.getPredictedTimeseries),
-  getPredictedForecasts: read(moduleGetters.getPredictedForecasts)
+  getPredictedForecasts: read(moduleGetters.getPredictedForecasts),
+  // rankings
+  getVariableRankings: read(moduleGetters.getVariableRankings)
 };
 
 // Typed actions
@@ -80,7 +82,9 @@ export const actions = {
   fetchCorrectnessSummary: dispatch(moduleActions.fetchCorrectnessSummary),
   fetchCorrectnessSummaries: dispatch(moduleActions.fetchCorrectnessSummaries),
   // forecast
-  fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries)
+  fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries),
+  // variable rankings
+  fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings)
 };
 
 // Typed mutations
@@ -111,5 +115,7 @@ export const mutations = {
   ),
   // forecasts
   updatePredictedTimeseries: commit(moduleMutations.updatePredictedTimeseries),
-  updatePredictedForecast: commit(moduleMutations.updatePredictedForecast)
+  updatePredictedForecast: commit(moduleMutations.updatePredictedForecast),
+  // variable rankings
+  setVariableRankings: commit(moduleMutations.setVariableRankings)
 };

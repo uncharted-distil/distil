@@ -8,6 +8,10 @@
   >
     <div slot="header-label" :class="headerClass">
       <span>{{ summary.label.toUpperCase() }}</span>
+      <importance-bars
+        v-if="importance"
+        :importance="importance"
+      ></importance-bars>
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"
@@ -40,6 +44,7 @@ import "@uncharted.software/facets-core";
 import "@uncharted.software/facets-plugins";
 
 import TypeChangeMenu from "../TypeChangeMenu";
+import ImportanceBars from "../ImportanceBars";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getSubSelectionValues,
@@ -56,7 +61,8 @@ export default Vue.extend({
   name: "facet-date-time",
 
   components: {
-    TypeChangeMenu
+    TypeChangeMenu,
+    ImportanceBars
   },
 
   directives: {
@@ -80,7 +86,8 @@ export default Vue.extend({
     highlight: Object as () => Highlight,
     enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
-    rowSelection: Object as () => RowSelection
+    rowSelection: Object as () => RowSelection,
+    importance: Number as () => number
   },
 
   computed: {

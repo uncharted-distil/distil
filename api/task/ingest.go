@@ -81,6 +81,7 @@ type IngestTaskConfig struct {
 	IngestOverwrite                    bool
 }
 
+// IngestSteps provides configuration information for ingest steps.
 type IngestSteps struct {
 	ClassificationOverwrite bool
 }
