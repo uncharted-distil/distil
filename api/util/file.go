@@ -209,6 +209,25 @@ func GetDirectories(inputPath string) ([]string, error) {
 	return dirs, nil
 }
 
+// ReadCSVHeader reads the first line of a CSV file.
+func ReadCSVHeader(filename string) ([]string, error) {
+	// open the file
+	csvFile, err := os.Open(filename)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to open data file")
+	}
+	defer csvFile.Close()
+	reader := csv.NewReader(csvFile)
+	reader.FieldsPerRecord = 0
+
+	header, err := reader.Read()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read header from file")
+	}
+
+	return header, nil
+}
+
 // ReadCSVFile reads a csv file and returns the string slice representation of the data.
 func ReadCSVFile(filename string, hasHeader bool) ([][]string, error) {
 	// open the file
