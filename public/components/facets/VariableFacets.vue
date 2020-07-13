@@ -139,7 +139,7 @@
     </div>
     <div
       v-if="numSummaries > rowsPerPage"
-      class="row align-items-center variable-page-nav ml-0"
+      class="col-12 row align-items-center variable-page-nav"
     >
       <div class="col-12 flex-column">
         <b-pagination
