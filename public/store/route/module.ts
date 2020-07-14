@@ -88,6 +88,7 @@ export const getters = {
   getRouteTask: read(moduleGetters.getRouteTask),
   getRouteFittedSolutionID: read(moduleGetters.getRouteFittedSolutionId),
   getRoutePredictionsDataset: read(moduleGetters.getRoutePredictionsDataset),
+  isSingleSolution: read(moduleGetters.isSingleSolution),
   isRemoteSensing: read(moduleGetters.isRemoteSensing),
   getBandCombinationId: read(moduleGetters.getBandCombinationId)
 };

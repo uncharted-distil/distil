@@ -160,6 +160,7 @@ export default Vue.extend({
     timestamp: String as () => string,
     requestId: String as () => string,
     solutionId: String as () => string,
+    singleSolution: Boolean as () => boolean,
     scores: Array as () => number[],
     targetSummary: Object as () => VariableSummary,
     predictedSummary: Object as () => VariableSummary,
@@ -308,7 +309,11 @@ export default Vue.extend({
     },
 
     isSelected(): boolean {
-      return this.predictedSummary && this.solutionId === this.routeSolutionId;
+      return (
+        !this.singleSolution &&
+        this.predictedSummary &&
+        this.solutionId === this.routeSolutionId
+      );
     },
 
     isTopN(): boolean {
