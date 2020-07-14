@@ -420,6 +420,11 @@ export const getters = {
     return dataset;
   },
 
+  isSingleSolution(state: Route, getters: any): boolean {
+    const isSingleSolution = <string>state.query.singleSolution;
+    return !!isSingleSolution;
+  },
+
   /**
    * Check if the current task includes Remote Sensing.
    * @param {Route} state

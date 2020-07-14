@@ -5,7 +5,7 @@
       :key="request.requestId"
       v-for="request in requestGroups"
     >
-      <header class="request-group-header">
+      <header v-if="!singleSolution" class="request-group-header">
         Search <sup>{{ request.requestIndex }}</sup>
       </header>
 
@@ -34,6 +34,7 @@
         :timestamp="group.timestamp"
         :request-id="group.requestId"
         :solution-id="group.solutionId"
+        :single-solution="singleSolution"
         :scores="group.scores"
         :target-summary="group.targetSummary"
         :predicted-summary="group.predictedSummary"
@@ -65,7 +66,7 @@ import {
   actions as requestActions
 } from "../store/requests/module";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getSolutionRequestIndex } from "../util/solutions";
+import { getSolutionRequestIndex, getSolutionById } from "../util/solutions";
 import {
   getSolutionResultSummary,
   getResidualSummary,
@@ -101,6 +102,10 @@ export default Vue.extend({
     showResiduals: {
       type: Boolean as () => boolean,
       default: () => false
+    },
+    singleSolution: {
+      type: Boolean as () => boolean,
+      default: () => false
     }
   },
 
@@ -118,11 +123,28 @@ export default Vue.extend({
     },
 
     requestGroups(): RequestGroup[] {
-      const solutionRequests = requestGetters.getRelevantSolutionRequests(
+      let solutionRequests = requestGetters.getRelevantSolutionRequests(
         this.$store
       );
+      let solutions = requestGetters.getRelevantSolutions(this.$store);
+
+      if (this.singleSolution) {
+        const solutionId = routeGetters.getRouteSolutionId(this.$store);
+        const solution = getSolutionById(
+          <Solution[]>this.$store.state.requestsModule.solutions,
+          solutionId
+        );
+        if (solution) {
+          solutions = [solution];
+          solutionRequests = [
+            solutionRequests.find(
+              request => request.requestId === solution.requestId
+            )
+          ];
+        }
+      }
+
       const requestsMap = _.keyBy(solutionRequests, s => s.requestId);
-      const solutions = requestGetters.getRelevantSolutions(this.$store);
 
       // create a summary group for each search result
       const summaryGroups: SummaryGroup[] = solutions.map(solution => {

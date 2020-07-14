@@ -37,6 +37,7 @@ export interface RouteArgs {
   varRanked?: string;
   produceRequestId?: string;
   fittedSolutionId?: string;
+  singleSolution?: string;
   predictionsDataset?: string;
   bandCombinationId?: string;
 

@@ -10,7 +10,10 @@
       <div v-if="showResiduals" class="result-summaries-error">
         <error-threshold-slider></error-threshold-slider>
       </div>
-      <result-facets :showResiduals="showResiduals" />
+      <result-facets
+        :showResiduals="showResiduals"
+        :single-solution="isSingleSolution"
+      />
     </div>
     <template v-if="isActiveSolutionCompleted">
       <div class="d-flex flex-row flex-shrink-0 justify-content-end">
@@ -31,6 +34,7 @@
           :fittedSolutionId="fittedSolutionId"
         ></save-model>
         <b-button
+          v-if="!isSingleSolution"
           variant="success"
           class="save-button"
           v-b-modal.save-model-modal
@@ -155,6 +159,14 @@ export default Vue.extend({
         this.activeSolution &&
         this.activeSolution.progress === SOLUTION_COMPLETED
       );
+    },
+
+    // Indicates whether or not the contained result facets should show "relevant"
+    // results, which consist of those that match the target/dataset, or a single
+    // result, which matches the route solutionID.  The latter case occurs when the
+    // user selects a model directly from the search screen.
+    isSingleSolution(): boolean {
+      return routeGetters.isSingleSolution(this.$store);
     }
   }
 });
