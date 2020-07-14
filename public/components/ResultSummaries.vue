@@ -24,6 +24,7 @@
           :target-type="targetType"
         ></predictions-data-uploader>
         <b-button
+          v-if="isSingleSolution"
           variant="primary"
           class="apply-button"
           v-b-modal.predictions-data-upload-modal
