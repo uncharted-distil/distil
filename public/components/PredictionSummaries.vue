@@ -29,7 +29,7 @@
     </div>
 
     <!-- TODO: For show right now.-->
-    <b-button block variant="primary">
+    <b-button variant="primary" class="float-right mt-2">
       Export Predictions
     </b-button>
 

@@ -1,11 +1,11 @@
 <template>
   <div class="predictions-data-slot">
     <view-type-toggle
-      class="flex-shrink-0"
+      class="view-toggle"
       v-model="viewTypeModel"
       :variables="variables"
     >
-      <p class="font-weight-bold">Samples Predicted</p>
+      <p class="font-weight-bold mr-auto">Samples Predicted</p>
       <layer-selection
         v-if="isRemoteSensing"
         class="layer-button"
@@ -242,5 +242,12 @@ export default Vue.extend({
   flex-grow: 0;
   margin-right: 10px;
   margin-left: auto;
+}
+
+.view-toggle >>> .form-group {
+  margin-bottom: 0px;
+}
+.view-toggle {
+  flex-shrink: 0;
 }
 </style>
