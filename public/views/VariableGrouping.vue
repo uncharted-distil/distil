@@ -18,8 +18,8 @@
             To predict a value over time <strong>(forecasting)</strong> your
             target should be a <strong>timeseries.</strong><br />
             Select a <strong>time</strong> column, a
-            <strong>count</strong> column and
-            <strong>grouping</strong> column(s) to create multiple timeseries.
+            <strong>value</strong> column and optionally add one or more
+            <strong>series id</strong> column(s) to create multiple timeseries.
           </p>
         </b-col>
         <b-col v-if="isGeocoordinate" cols="12">
@@ -40,7 +40,7 @@
           >
             <b-col cols="5">
               <template v-if="index === 0">
-                <b>Group Column(s):</b>
+                <b>Series ID Column(s):</b>
               </template>
             </b-col>
 
@@ -338,11 +338,7 @@ export default Vue.extend({
     isReady(): boolean {
       const hasBasicFields =
         this.xCol !== null && this.yCol !== null && this.groupingType !== null;
-      if (this.isGeocoordinate) {
-        return hasBasicFields;
-      } else {
-        return hasBasicFields && this.idCols.length > 1;
-      }
+      return hasBasicFields;
     },
     summaries(): VariableSummary[] {
       let summaries = datasetGetters.getVariableSummaries(this.$store);
