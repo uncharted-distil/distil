@@ -24,27 +24,28 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil/api/env"
+	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil/api/util/json"
 )
 
 // FeaturizeDataset creates a featurized output of the data that can be used
 // in simplified pipelines.
-func FeaturizeDataset(schemaFile string, dataset string, config *IngestTaskConfig) (string, string, error) {
-	// load the metadata from the source schema file
-	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(path.Dir(schemaFile), config.ClassificationOutputPathRelative), false, true)
+func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset string, metaStorage api.MetadataStorage, config *IngestTaskConfig) (string, string, error) {
+	// load the metadata from the metadata storage
+	ds, err := metaStorage.FetchDataset(dataset, true, true)
 	if err != nil {
 		return "", "", err
 	}
-	mainDR := meta.GetMainDataResource()
 
 	// create & submit the featurize pipeline
-	pip, err := description.CreateMultiBandImageFeaturizationPipeline("Euler", "", mainDR.Variables)
+	pip, err := description.CreateMultiBandImageFeaturizationPipeline("Euler", "", ds.Variables)
 	if err != nil {
 		return "", "", err
 	}
 
 	// pipeline execution assumes datasetDoc.json as schema file
-	datasetURI, err := submitPipeline([]string{schemaFile}, pip)
+	datasetURI, err := submitPipeline([]string{originalSchemaFile}, pip)
 	if err != nil {
 		return "", "", err
 	}
@@ -70,6 +71,13 @@ func FeaturizeDataset(schemaFile string, dataset string, config *IngestTaskConfi
 		return "", "", err
 	}
 
+	// load the metadata from the source schema file
+	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(path.Dir(schemaFile), config.ClassificationOutputPathRelative), false, true)
+	if err != nil {
+		return "", "", err
+	}
+	mainDR := meta.GetMainDataResource()
+
 	// update the metadata to have all the new fields as floats
 	schemaOutputPath := path.Join(featurizedOutputPath, compute.D3MDataSchema)
 	for i := len(mainDR.Variables); i < len(header); i++ {
@@ -83,4 +91,36 @@ func FeaturizeDataset(schemaFile string, dataset string, config *IngestTaskConfi
 	}
 
 	return featurizedDatasetID, featurizedOutputPath, nil
+}
+
+// SetGroups updates the dataset metadata (as stored) to capture group information.
+func SetGroups(datasetID string, rawGrouping map[string]interface{}, meta api.MetadataStorage, config *IngestTaskConfig) error {
+	ds, err := meta.FetchDataset(datasetID, true, true)
+	if err != nil {
+		return err
+	}
+	if isRemoteSensingDataset(ds) {
+		rsg := &model.RemoteSensingGrouping{}
+		err = json.MapToStruct(rsg, rawGrouping)
+		if err != nil {
+			return err
+		}
+
+		err = meta.AddGroupedVariable(datasetID, rsg.IDCol+"_group", "Tile", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func isRemoteSensingDataset(ds *api.Dataset) bool {
+	for _, v := range ds.Variables {
+		if model.IsMultiBandImage(v.Type) {
+			return true
+		}
+	}
+
+	return false
 }
