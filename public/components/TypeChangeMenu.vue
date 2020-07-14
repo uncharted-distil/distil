@@ -118,7 +118,8 @@ export default Vue.extend({
   props: {
     dataset: String as () => string,
     field: String as () => string,
-    expandCollapse: Function as () => Function
+    expandCollapse: Function as () => Function,
+    expand: Boolean as () => Boolean
   },
   computed: {
     isPredictionOrResultsView(): boolean {
@@ -242,16 +243,17 @@ export default Vue.extend({
     groupingOptions() {
       const options = [];
       if (this.isGrouping) {
-        options.push(
-          {
+        if (this.expand) {
+          options.push({
             type: COLLAPSE_ACTION_TYPE,
             label: "Collapse"
-          },
-          {
+          });
+        } else {
+          options.push({
             type: EXPAND_ACTION_TYPE,
             label: "Expand"
-          }
-        );
+          });
+        }
         if (!this.isPredictionOrResultsView) {
           options.push({
             type: EXPLODE_ACTION_TYPE,

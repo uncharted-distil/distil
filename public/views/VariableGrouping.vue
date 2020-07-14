@@ -1,96 +1,123 @@
 <template>
   <div class="container-fluid d-flex flex-column h-100">
-    <div class="row flex-0-nav"></div>
+    <b-row class="flex-0-nav"></b-row>
 
-    <div class="row flex-shrink-0 align-items-center bg-white">
-      <div v-if="isTimeseries" class="col-4 offset-md-1">
+    <b-row class="flex-shrink-0 align-items-center bg-white">
+      <b-col v-if="isTimeseries" cols="4" class=" offset-md-1">
         <h5 class="header-label">Configure Time Series</h5>
-      </div>
-      <div v-if="isGeocoordinate" class="col-4 offset-md-1">
+      </b-col>
+      <b-col v-if="isGeocoordinate" cols="4" class=" offset-md-1">
         <h5 class="header-label">Configure Geocoordinate</h5>
-      </div>
-    </div>
+      </b-col>
+    </b-row>
 
     <b-container class="mt-3 h-100">
       <b-row>
-        <b-col cols="6">
-          <b-row v-if="isTimeseries">
-            <div
-              class="row mt-1 mb-1 col-12"
-              v-for="(idCol, index) in idCols"
-              :key="idCol.value"
-            >
-              <div class="col-3">
-                <template v-if="index === 0">
-                  <b>Series ID Column(s):</b>
-                </template>
-              </div>
+        <b-col v-if="isTimeseries" cols="12">
+          <p>
+            To predict a value over time <strong>(forecasting)</strong> your
+            target should be a <strong>timeseries.</strong><br />
+            Select a <strong>time</strong> column, a
+            <strong>count</strong> column and
+            <strong>grouping</strong> column(s) to create multiple timeseries.
+          </p>
+        </b-col>
+        <b-col v-if="isGeocoordinate" cols="12">
+          <p>
+            If your data contains geocoordinate data (<strong
+              >latitude, longitude</strong
+            >) in separate columns, select those to display the location data on
+            a map.
+          </p>
+        </b-col>
+      </b-row>
+      <b-row>
+        <b-col cols="6" v-if="isTimeseries">
+          <b-row
+            class="mt-1 mb-1"
+            v-for="(idCol, index) in idCols"
+            :key="idCol.value"
+          >
+            <b-col cols="5">
+              <template v-if="index === 0">
+                <b>Group Column(s):</b>
+              </template>
+            </b-col>
 
-              <div class="col-5">
-                <b-form-select
-                  v-model="idCol.value"
-                  :options="idOptions(idCol.value)"
-                  @input="onIdChange"
-                />
-              </div>
-            </div>
-
-            <div class="row mt-1 mb-1 col-12">
-              <div class="col-3">
-                <b>Time Column:</b>
-              </div>
-
-              <div class="col-5">
-                <b-form-select
-                  v-model="xCol"
-                  :options="xColOptions"
-                  @input="onChange"
-                />
-              </div>
-            </div>
-
-            <div class="row mt-1 mb-1 col-12">
-              <div class="col-3">
-                <b>Value Column:</b>
-              </div>
-
-              <div class="col-5">
-                <b-form-select
-                  v-model="yCol"
-                  :options="yColOptions"
-                  @input="onChange"
-                />
-              </div>
-            </div>
+            <b-col cols="7" class="d-flex align-content-center">
+              <b-form-select
+                class="mr-auto"
+                v-model="idCol.value"
+                :options="idOptions(idCol.value)"
+                @input="onIdChange"
+              />
+              <b-button
+                class="ml-1"
+                variant="outline-danger"
+                v-if="idCol.value"
+                title="Clear Selection"
+                @click="removeIdCol(idCol.value)"
+              >
+                <i class="fa fa-times-circle"></i>
+              </b-button>
+            </b-col>
           </b-row>
-          <b-row v-if="isGeocoordinate">
-            <div class="row mt-1 mb-1 col-12">
-              <div class="col-3">
-                <b>Longitude Column:</b>
-              </div>
 
-              <div class="col-5">
-                <b-form-select
-                  v-model="xCol"
-                  :options="xColOptions"
-                  @input="onChange"
-                />
-              </div>
-            </div>
+          <b-row class="mt-1 mb-1">
+            <b-col cols="5">
+              <b>Time Column:</b>
+            </b-col>
 
-            <div class="row mt-1 mb-1 col-12">
-              <div class="col-3">
-                <b>Latitude Column:</b>
-              </div>
+            <b-col cols="7">
+              <b-form-select
+                v-model="xCol"
+                :options="xColOptions"
+                @input="onChange"
+              />
+            </b-col>
+          </b-row>
 
-              <div class="col-5">
-                <b-form-select
-                  v-model="yCol"
-                  :options="yColOptions"
-                  @input="onChange"
-                />
-              </div>
-            </div>
+          <b-row class="mt-1 mb-1">
+            <b-col cols="5">
+              <b>Value Column:</b>
+            </b-col>
+
+            <b-col cols="7">
+              <b-form-select
+                v-model="yCol"
+                :options="yColOptions"
+                @input="onChange"
+              />
+            </b-col>
+          </b-row>
+        </b-col>
+        <b-col cols="6" v-if="isGeocoordinate">
+          <b-row class="mt-1 mb-1">
+            <b-col cols="5">
+              <b>Longitude Column:</b>
+            </b-col>
+
+            <b-col cols="7">
+              <b-form-select
+                v-model="xCol"
+                :options="xColOptions"
+                @input="onChange"
+              />
+            </b-col>
+          </b-row>
+
+          <b-row class="mt-1 mb-1">
+            <b-col cols="5">
+              <b>Latitude Column:</b>
+            </b-col>
+
+            <b-col cols="7">
+              <b-form-select
+                v-model="yCol"
+                :options="yColOptions"
+                @input="onChange"
+              />
+            </b-col>
           </b-row>
         </b-col>
 
@@ -246,11 +273,6 @@ export default Vue.extend({
           .map(v => {
             return { value: v.colName, text: v.colDisplayName };
           });
-
-        if (suggestions.length === 1) {
-          this.xCol = suggestions[0].value;
-          return suggestions;
-        }
         return [].concat(def, suggestions);
       } else if (this.isTimeseries) {
         const X_COL_TYPES = {
@@ -267,11 +289,6 @@ export default Vue.extend({
           .map(v => {
             return { value: v.colName, text: v.colDisplayName };
           });
-
-        if (suggestions.length === 1) {
-          this.xCol = suggestions[0].value;
-          return suggestions;
-        }
 
         return [].concat(def, suggestions);
       }
@@ -299,11 +316,6 @@ export default Vue.extend({
             return { value: v.colName, text: v.colDisplayName };
           });
 
-        if (suggestions.length === 1) {
-          this.yCol = suggestions[0].value;
-          return suggestions;
-        }
-
         return [].concat(def, suggestions);
       } else if (this.isTimeseries) {
         const Y_COL_TYPES = {
@@ -319,11 +331,6 @@ export default Vue.extend({
           .map(v => {
             return { value: v.colName, text: v.colDisplayName };
           });
-
-        if (suggestions.length === 1) {
-          this.yCol = suggestions[0].value;
-          return suggestions;
-        }
 
         return [].concat(def, suggestions);
       }
@@ -400,6 +407,15 @@ export default Vue.extend({
       this.hideIdCol.push(false);
       this.prevIdCols++;
       this.onChange();
+    },
+    removeIdCol(value) {
+      this.idCols = this.idCols.filter(idCol => idCol.value !== value);
+      this.prevIdCols--;
+      if (this.isReady) {
+        this.submitGrouping(false);
+      } else {
+        this.clearGrouping();
+      }
     },
     isIDCol(arg): boolean {
       return !!this.idCols.find(id => id.value === arg);

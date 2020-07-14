@@ -10,6 +10,7 @@
         :dataset="dataset"
         :field="target"
         :expandCollapse="expandCollapse"
+        :expand="expand"
       >
       </type-change-menu>
     </div>
@@ -206,7 +207,7 @@ export default Vue.extend({
       selectedRect: null as leaflet.Rectangle,
       baseLineLayer: null as leaflet.Layer,
       filteredLayer: null as leaflet.Layer,
-      expand: true,
+      expand: false,
       enabledTypeChanges: new Array(0),
       blockNextEvent: false
     };

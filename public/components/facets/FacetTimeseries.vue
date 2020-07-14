@@ -13,6 +13,7 @@
       :html="customHtml"
       :expandCollapse="expandCollapse"
       :grouping="grouping"
+      :expand="expand"
       @html-appended="onHtmlAppend"
       @numerical-click="onNumericalClick"
       @categorical-click="onCategoricalClick"
@@ -92,7 +93,7 @@ export default Vue.extend({
     return {
       customHtml: this.html,
       footerHtml: undefined,
-      expand: true
+      expand: false
     };
   },
 

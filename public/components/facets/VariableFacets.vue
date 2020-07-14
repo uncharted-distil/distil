@@ -1,6 +1,6 @@
 <template>
   <div class="variable-facets row">
-    <div class="col-12 flex-column d-flex h-100">
+    <div class="col-12 flex-column d-flex variable-facets-list">
       <div v-if="enableSearch" class="row align-items-center facet-filters">
         <div class="col-12 flex-column d-flex">
           <b-form-input size="sm" v-model="filter" placeholder="Search" />
@@ -139,7 +139,7 @@
     </div>
     <div
       v-if="numSummaries > rowsPerPage"
-      class="row align-items-center variable-page-nav"
+      class="col-12 row align-items-center variable-page-nav"
     >
       <div class="col-12 flex-column">
         <b-pagination
@@ -575,5 +575,9 @@ button {
 .variable-facets-container .facet-header-container .dropdown-menu {
   max-height: 200px;
   overflow-y: auto;
+}
+
+.variable-facets-list {
+  max-height: 90%;
 }
 </style>
