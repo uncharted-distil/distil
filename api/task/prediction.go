@@ -483,7 +483,6 @@ func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.Me
 // Extracts the list of components that used to create a compound variable.
 func getComponentVariables(variable *model.Variable) []string {
 	componentVars := []string{}
-	// only implemented for geo coordinate groups
 	if variable.IsGrouping() {
 		if model.IsGeoCoordinate(variable.Grouping.GetType()) {
 			gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
@@ -499,6 +498,9 @@ func getComponentVariables(variable *model.Variable) []string {
 		} else if model.IsRemoteSensing(variable.Grouping.GetType()) {
 			rsg := variable.Grouping.(*model.RemoteSensingGrouping)
 			componentVars = append(componentVars, rsg.BandCol, rsg.IDCol, rsg.ImageCol)
+		} else if model.IsTimeSeries(variable.Grouping.GetType()) {
+			tsg := variable.Grouping.(*model.TimeseriesGrouping)
+			componentVars = append(componentVars, tsg.XCol, tsg.YCol)
 		}
 	} else {
 		componentVars = append(componentVars, variable.Name)
