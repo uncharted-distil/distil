@@ -71,7 +71,7 @@ func NewMediaDataset(dataset string, mediaType string, targetMediaType string, r
 		return nil, err
 	}
 
-	expandedInfo, err := ExpandZipDataset(dataset, zipPath)
+	expandedInfo, err := ExpandZipDataset(zipPath, dataset)
 	if err != nil {
 		return nil, err
 	}
