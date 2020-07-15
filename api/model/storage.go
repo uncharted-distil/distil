@@ -74,7 +74,7 @@ type DataStorage interface {
 	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams, invert bool) (*TimeseriesData, error)
 	FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultUUID string, filterParams *FilterParams) (*TimeseriesData, error)
 	FetchCategoryCounts(storageName string, variable *model.Variable) (map[string]int, error)
-	FetchSolutionFeatureWeights(dataset string, resultURI string, d3mIndex int64) (*SolutionFeatureWeight, error)
+	FetchSolutionFeatureWeights(dataset string, storageName string, resultURI string, d3mIndex int64) (*SolutionFeatureWeight, error)
 
 	// Dataset manipulation
 	IsValidDataType(dataset string, storageName string, varName string, varType string) (bool, error)

@@ -114,8 +114,14 @@ func PredictionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCt
 			return
 		}
 
+		ds, err := meta.FetchDataset(prediction.Dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
+
 		// extract extrema for solution
-		storageName := model.NormalizeDatasetID(prediction.Dataset)
 		extrema, err := fetchPredictionResultExtrema(meta, data, solution, prediction.Dataset, storageName, prediction.Target, prediction.FittedSolutionID, res.ResultURI)
 		if err != nil {
 			handleError(w, err)

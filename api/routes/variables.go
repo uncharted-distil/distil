@@ -38,7 +38,6 @@ func VariablesHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
-		storageName := model.NormalizeDatasetID(dataset)
 		// get elasticsearch client
 		meta, err := metaCtor()
 		if err != nil {
@@ -50,6 +49,13 @@ func VariablesHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			handleError(w, err)
 			return
 		}
+
+		ds, err := meta.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
 
 		variables, err := api.FetchSummaryVariables(dataset, meta)
 		if err != nil {

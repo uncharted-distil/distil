@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -32,7 +31,7 @@ type TimeseriesResult struct {
 }
 
 // TimeseriesHandler returns timeseries data.
-func TimeseriesHandler(ctorStorage api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		dataset := pat.Param(r, "dataset")
@@ -40,7 +39,6 @@ func TimeseriesHandler(ctorStorage api.DataStorageCtor) func(http.ResponseWriter
 		xColName := pat.Param(r, "xColName")
 		yColName := pat.Param(r, "yColName")
 		timeseriesURI := pat.Param(r, "timeseriesURI")
-		storageName := model.NormalizeDatasetID(dataset)
 		invert := pat.Param(r, "invert")
 		invertBool := parseBoolParam(invert)
 
@@ -64,6 +62,19 @@ func TimeseriesHandler(ctorStorage api.DataStorageCtor) func(http.ResponseWriter
 			handleError(w, err)
 			return
 		}
+
+		meta, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		ds, err := meta.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
 
 		// fetch timeseries
 		timeseries, err := storage.FetchTimeseries(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURI, filterParams, invertBool)

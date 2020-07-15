@@ -137,8 +137,14 @@ func SolutionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor
 			return
 		}
 
+		ds, err := meta.FetchDataset(request.Dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
+
 		// extract extrema for solution
-		storageName := model.NormalizeDatasetID(request.Dataset)
 		extrema, err := fetchSolutionPredictedExtrema(meta, data, solution, request.Dataset, storageName, request.TargetFeature(), "")
 		if err != nil {
 			handleError(w, err)

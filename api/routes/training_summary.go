@@ -22,18 +22,16 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
 // TrainingSummaryHandler generates a route handler that facilitates the
 // creation and retrieval of summary information about the specified variable
 // for data returned in a result set.
-func TrainingSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func TrainingSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
-		storageName := model.NormalizeDatasetID(dataset)
 		// get variable name
 		variable := pat.Param(r, "variable")
 		// get variable summary mode
@@ -84,6 +82,19 @@ func TrainingSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.D
 			handleError(w, err)
 			return
 		}
+
+		meta, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		ds, err := meta.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
 
 		// fetch summary histogram
 		summary, err := data.FetchSummaryByResult(dataset, storageName, variable, result.ResultURI, filterParams, nil, api.SummaryMode(mode))

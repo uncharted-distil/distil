@@ -491,8 +491,8 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 	return nil
 }
 
-func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client,
-	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string,
+func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
+	dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string, storageName string,
 	explainedSolutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string,
 	resultURI string, confidenceValues *api.SolutionExplainResult) {
 	// persist the completed state
@@ -510,7 +510,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist results
-	err = dataStorage.PersistResult(dataset, model.NormalizeDatasetID(dataset), resultURI, s.TargetFeature.Name, confidenceValues)
+	err = dataStorage.PersistResult(dataset, storageName, resultURI, s.TargetFeature.Name, confidenceValues)
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -546,8 +546,8 @@ func describeSolution(client *compute.Client, initialSearchSolutionID string) (*
 }
 
 func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, initialSearchID string, initialSearchSolutionID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
-	datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
+	dataStorage api.DataStorage, initialSearchID string, initialSearchSolutionID string, dataset string, storageName string,
+	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
 	// get solution description
 	desc, err := describeSolution(client, initialSearchSolutionID)
@@ -724,7 +724,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			featureWeights := explainedResults[explainableTypeStep]
 			if featureWeights != nil {
 				log.Infof("persisting feature weights")
-				err = dataStorage.PersistSolutionFeatureWeight(dataset, model.NormalizeDatasetID(dataset), featureWeights.ResultURI, featureWeights.Values)
+				err = dataStorage.PersistSolutionFeatureWeight(dataset, storageName, featureWeights.ResultURI, featureWeights.Values)
 				if err != nil {
 					s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 					return
@@ -752,7 +752,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			// persist results
 			log.Infof("persisting results in URI '%s'", resultURI)
 			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
-				initialSearchID, dataset, solutionID, initialSearchSolutionID, fittedSolutionID,
+				initialSearchID, dataset, storageName, solutionID, initialSearchSolutionID, fittedSolutionID,
 				produceRequestID, resultID, resultURI, explainedResults[explainableTypeConfidence])
 		}
 	})
@@ -765,7 +765,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 }
 
 func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage,
-	searchID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
+	searchID string, dataset string, storageName string, searchRequest *pipeline.SearchSolutionsRequest,
 	datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
 	// update request status
@@ -785,7 +785,8 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		s.persistSolution(c, solutionStorage, searchID, solution.SolutionId, "")
 		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
 		// dispatch it
-		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID, solution.SolutionId, dataset, searchRequest, datasetURI, datasetURITrain, datasetURITest, variables)
+		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID,
+			solution.SolutionId, dataset, storageName, searchRequest, datasetURI, datasetURITrain, datasetURITest, variables)
 		// once done, mark as complete
 		s.completeSolution()
 		close(c)
@@ -1005,7 +1006,8 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// dispatch search request
-	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.ID, searchRequest, datasetInputDir, datasetPathTrain, datasetPathTest, dataVariables)
+	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.ID,
+		datasetInput.StorageName, searchRequest, datasetInputDir, datasetPathTrain, datasetPathTest, dataVariables)
 
 	return nil
 }

@@ -19,7 +19,6 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util/json"
 	"goji.io/v3/pat"
@@ -59,6 +58,13 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 			return
 		}
 
+		ds, err := metaStore.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
+
 		// replace any grouped variables in filter params with the group's
 		expandedFilterParams, err := api.ExpandFilterParams(dataset, filterParams, false, metaStore)
 		if err != nil {
@@ -67,7 +73,6 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		}
 
 		// fetch filtered data based on the supplied search parameters
-		storageName := model.NormalizeDatasetID(dataset)
 		data, err := storage.FetchData(dataset, storageName, expandedFilterParams, invertBool)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable fetch filtered data"))

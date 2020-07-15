@@ -40,7 +40,6 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
-		storageName := model.NormalizeDatasetID(dataset)
 		// get variable name
 		varName := pat.Param(r, "variable")
 
@@ -55,6 +54,14 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			handleError(w, err)
 			return
 		}
+
+		ds, err := metaStorage.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
+
 		latVarName := fmt.Sprintf("_lat_%s", varName)
 		lonVarName := fmt.Sprintf("_lon_%s", varName)
 

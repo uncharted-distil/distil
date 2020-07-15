@@ -17,7 +17,6 @@ package postgres
 
 import (
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/jackc/pgx/v4"
@@ -90,51 +89,6 @@ func (s *Storage) PersistSolutionScore(solutionID string, metric string, score f
 	return err
 }
 
-func (s *Storage) isBadSolution(solution *api.Solution) (bool, error) {
-
-	if len(solution.Results) == 0 {
-		return false, nil
-	}
-
-	request, err := s.FetchRequest(solution.RequestID)
-	if err != nil {
-		return false, err
-	}
-
-	dataset := request.Dataset
-	storageName := model.NormalizeDatasetID(request.Dataset)
-	target := request.TargetFeature()
-
-	// check target var type
-	variable, err := s.metadata.FetchVariable(dataset, target)
-	if err != nil {
-		return false, err
-	}
-
-	if !model.IsNumerical(variable.Type) {
-		return false, nil
-	}
-	f := NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, "")
-
-	// predicted extrema
-	predictedExtrema, err := s.FetchResultsExtremaByURI(dataset, storageName, solution.Results[0].ResultURI)
-	if err != nil {
-		return false, err
-	}
-
-	// result mean and stddev
-	stats, err := f.FetchNumericalStats(&api.FilterParams{}, false)
-	if err != nil {
-		return false, err
-	}
-
-	minDiff := math.Abs(predictedExtrema.Min - stats.Mean)
-	maxDiff := math.Abs(predictedExtrema.Max - stats.Mean)
-	numStdDevs := 10.0
-
-	return minDiff > (numStdDevs*stats.StdDev) || maxDiff > (numStdDevs*stats.StdDev), nil
-}
-
 // FetchSolution pulls solution information from Postgres.
 func (s *Storage) FetchSolution(solutionID string) (*api.Solution, error) {
 	sql := fmt.Sprintf("SELECT request_id, solution_id, explained_solution_id, created_time FROM %s WHERE solution_id = $1 ORDER BY created_time desc LIMIT 1;", postgres.SolutionTableName)
@@ -157,12 +111,7 @@ func (s *Storage) FetchSolution(solutionID string) (*api.Solution, error) {
 		return nil, err
 	}
 
-	isBad, err := s.isBadSolution(solution)
-	if err != nil {
-		return nil, err
-	}
-
-	solution.IsBad = isBad
+	solution.IsBad = false
 	return solution, nil
 }
 
@@ -355,8 +304,7 @@ func (s *Storage) parseSolutionFeatureWeight(resultURI string, rows pgx.Rows) (*
 }
 
 // FetchSolutionFeatureWeights fetches solution feature weights from Postgres.
-func (s *Storage) FetchSolutionFeatureWeights(dataset string, resultURI string, d3mIndex int64) (*api.SolutionFeatureWeight, error) {
-	storageName := model.NormalizeDatasetID(dataset)
+func (s *Storage) FetchSolutionFeatureWeights(dataset string, storageName string, resultURI string, d3mIndex int64) (*api.SolutionFeatureWeight, error) {
 	sql := fmt.Sprintf("SELECT * FROM %s WHERE result_id = $1 and \"d3mIndex\" = $2;",
 		s.getSolutionFeatureWeightTable(storageName))
 

@@ -23,7 +23,6 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util/json"
 )
@@ -48,7 +47,6 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 			return
 		}
 		dataset := pat.Param(r, "dataset")
-		storageName := model.NormalizeDatasetID(dataset)
 
 		// get clients
 		storage, err := storageCtor()
@@ -61,6 +59,13 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 			handleError(w, err)
 			return
 		}
+
+		ds, err := meta.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
 
 		// check the variable type to make sure it is valid
 		isValid, err := storage.IsValidDataType(dataset, storageName, field, typ)

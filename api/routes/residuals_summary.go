@@ -22,7 +22,6 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -37,7 +36,6 @@ func ResidualsSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")
 		target := pat.Param(r, "target")
-		storageName := model.NormalizeDatasetID(dataset)
 
 		// get variable summary mode
 		mode, err := api.SummaryModeFromString(pat.Param(r, "mode"))
@@ -83,6 +81,13 @@ func ResidualsSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 			handleError(w, err)
 			return
 		}
+
+		ds, err := meta.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
 
 		// get the result URI. Error ignored to make it ES compatible.
 		res, err := solution.FetchSolutionResultByUUID(resultUUID)

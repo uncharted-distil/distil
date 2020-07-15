@@ -96,7 +96,8 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 	leftName := joinLeft.DatasetID
 	rightName := joinRight.DatasetID
 	datasetName := strings.Join([]string{leftName, rightName}, "-")
-	mergedVariables, err := createDatasetFromCSV(config, csvFile, datasetName, leftVarsMap, rightVarsMap)
+	storageName := model.NormalizeDatasetID(datasetName)
+	mergedVariables, err := createDatasetFromCSV(config, csvFile, datasetName, storageName, leftVarsMap, rightVarsMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create dataset from result CSV")
 	}
@@ -165,7 +166,7 @@ func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Vari
 	return mergedVariables, nil
 }
 
-func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName string,
+func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName string, storageName string,
 	leftVarsMap map[string]*model.Variable, rightVarsMap map[string]*model.Variable) ([]*model.Variable, error) {
 
 	reader := csv.NewReader(csvFile)
@@ -174,7 +175,7 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 		return nil, errors.Wrap(err, "failed to read header line")
 	}
 
-	metadata := model.NewMetadata(datasetName, datasetName, datasetName, model.NormalizeDatasetID(datasetName))
+	metadata := model.NewMetadata(datasetName, datasetName, datasetName, storageName)
 	dataResource := model.NewDataResource(compute.DefaultResourceID, compute.D3MResourceType, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 
 	mergedVariables, err := createMergedVariables(fields, leftVarsMap, rightVarsMap)

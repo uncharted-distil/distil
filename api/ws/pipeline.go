@@ -330,7 +330,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	}
 
 	// resolve the task so we know what type of data we should be expecting
-	requestTask, err := api.ResolveTask(dataStorage, model.NormalizeDatasetID(req.Dataset), targetVar, variables)
+	requestTask, err := api.ResolveTask(dataStorage, meta.StorageName, targetVar, variables)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return

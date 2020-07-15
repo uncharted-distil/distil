@@ -22,7 +22,6 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -33,7 +32,6 @@ func TargetSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.Sol
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
-		storageName := model.NormalizeDatasetID(dataset)
 		// get variable name
 		target := pat.Param(r, "target")
 
@@ -82,6 +80,13 @@ func TargetSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.Sol
 			handleError(w, err)
 			return
 		}
+
+		ds, err := meta.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
 
 		// get result URI
 		result, err := solution.FetchSolutionResultByUUID(resultID)
