@@ -124,12 +124,20 @@ export default Vue.extend({
 
       return (hasLat && hasLon) || hasGeocoord;
     },
+
+    /* 
+      TODO - Reimplement test once the Timeseries view works again. 
+      See https://github.com/uncharted-distil/distil/issues/1690
+    */
     hasTimeseriesVariables(): boolean {
+      return false;
+      /*
       return (
         this.variables.filter(
           v => v.grouping && v.grouping.type === TIMESERIES_TYPE
         ).length > 0
       );
+      */
     }
   }
 });
