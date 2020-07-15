@@ -4,9 +4,9 @@
     <div class="row flex-0-nav"></div>
 
     <!-- Title of the page. -->
-    <header class="row align-items-center justify-content-center bg-white">
+    <header class="header row">
       <div class="col-12 col-md-10">
-        <h5 class="header-label">
+        <h5 class="header-title">
           Select a Model to reuse or a Dataset to create a model
         </h5>
       </div>
@@ -344,11 +344,6 @@ export default Vue.extend({
 </script>
 
 <style>
-.header-label {
-  padding: 1rem 0 0.5rem 0;
-  font-weight: bold;
-}
-
 .row .file-uploader-status {
   padding: 0;
 }
