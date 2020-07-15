@@ -78,14 +78,28 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	}
 	mainDR := meta.GetMainDataResource()
 
-	// update the metadata to have all the new fields as floats
-	schemaOutputPath := path.Join(featurizedOutputPath, compute.D3MDataSchema)
-	for i := len(mainDR.Variables); i < len(header); i++ {
-		mainDR.Variables = append(mainDR.Variables, model.NewVariable(i, header[i], header[i],
-			header[i], model.RealType, model.RealType, "featurized value",
-			[]string{model.RoleAttribute}, model.VarDistilRoleData, nil, mainDR.Variables, false))
+	// keep only the fields in the output (including the new fields as floats)
+	vars := []*model.Variable{}
+	metadataVariables := map[string]*model.Variable{}
+	for _, v := range mainDR.Variables {
+		metadataVariables[v.Name] = v
 	}
-	err = metadata.WriteSchema(meta, schemaOutputPath, false)
+	for index, field := range header {
+		var v *model.Variable
+		if metadataVariables[field] != nil {
+			v = metadataVariables[field]
+			v.Index = index
+		} else {
+			v = model.NewVariable(index, field, field, field, model.RealType,
+				model.RealType, "featurized value", []string{model.RoleAttribute},
+				model.VarDistilRoleMetadata, nil, mainDR.Variables, false)
+		}
+		vars = append(vars, v)
+	}
+	mainDR.Variables = vars
+
+	schemaOutputPath := path.Join(featurizedOutputPath, compute.D3MDataSchema)
+	err = metadata.WriteSchema(meta, schemaOutputPath, true)
 	if err != nil {
 		return "", "", err
 	}

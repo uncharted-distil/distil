@@ -111,7 +111,9 @@ func dispatchFeaturizeSolution(client *compute.Client, initialSearchSolutionID s
 }
 
 // createPreFeaturizedPipeline creates pipeline prepend to process a featurized dataset.
-func (s *SolutionRequest) createPreFeaturizedPipeline(learningDataset string, variables []*model.Variable, metaStorage api.MetadataStorage) (*pipeline.PipelineDescription, error) {
+func (s *SolutionRequest) createPreFeaturizedPipeline(learningDataset string,
+	sourceVariables []*model.Variable, featurizedVariables []*model.Variable,
+	metaStorage api.MetadataStorage, targetIndex int) (*pipeline.PipelineDescription, error) {
 	uuid, err := uuid.NewV4()
 	if err != nil {
 		return nil, err
@@ -128,11 +130,11 @@ func (s *SolutionRequest) createPreFeaturizedPipeline(learningDataset string, va
 
 	prefeaturizedPipeline, err := description.CreatePreFeaturizedDatasetPipeline(name, desc,
 		&description.UserDatasetDescription{
-			AllFeatures:      variables,
-			TargetFeature:    s.TargetFeature,
+			AllFeatures:      featurizedVariables,
+			TargetFeature:    featurizedVariables[targetIndex],
 			SelectedFeatures: expandedFilters.Variables,
 			Filters:          s.Filters.Filters,
-		}, nil, len(variables))
+		}, nil)
 	if err != nil {
 		return nil, err
 	}

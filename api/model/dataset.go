@@ -48,7 +48,7 @@ type Dataset struct {
 	ID              string                 `json:"id"`
 	Name            string                 `json:"name"`
 	StorageName     string                 `json:"storageName"`
-	Folder          string                 `json:"folder"`
+	Folder          string                 `json:"datasetFolder"`
 	Description     string                 `json:"description"`
 	Summary         string                 `json:"summary"`
 	SummaryML       string                 `json:"summaryML"`

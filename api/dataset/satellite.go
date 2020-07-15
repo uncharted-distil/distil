@@ -234,11 +234,11 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(2, "group_id", "group_id", "group_id", model.StringType,
-			model.StringType, "ID linking all bands of a particular image set together", []string{"attribute"},
+			model.StringType, "ID linking all bands of a particular image set together", []string{"attribute", "suggestedGroupingKey"},
 			model.VarDistilRoleGrouping, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(3, "band", "band", "band", model.StringType,
-			model.StringType, "Image band", []string{"attribute", "suggestedGroupingKey"},
+			model.StringType, "Image band", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(4, "timestamp", "timestamp", "timestamp", model.DateTimeType,

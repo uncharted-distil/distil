@@ -26,6 +26,7 @@ import (
 
 	uuid "github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -877,11 +878,31 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// add dataset name to path
-	datasetPath := datasetInput.Folder
-	if datasetInput.LearningDataset != "" {
-		datasetPath = datasetInput.LearningDataset
+	var featurizedVariables []*model.Variable
+	var datasetInputDir string
+	targetIndex := -1
+	if datasetInput.LearningDataset == "" {
+		datasetInputDir = datasetInput.Folder
+		datasetInputDir = env.ResolvePath(datasetInput.Source, datasetInputDir)
+		targetIndex = targetVariable.Index
+	} else {
+		datasetInputDir = datasetInput.LearningDataset
+		groupingVariableIndex = -1
+
+		// need to lookup the target variable and the variables in the featurized dataset
+		meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(datasetInputDir, compute.D3MDataSchema), false)
+		if err != nil {
+			return err
+		}
+		featurizedVariables = meta.GetMainDataResource().Variables
+
+		for _, v := range featurizedVariables {
+			if v.Name == targetVariable.Name {
+				targetIndex = v.Index
+				break
+			}
+		}
 	}
-	datasetInputDir := env.ResolvePath(datasetInput.Source, datasetPath)
 
 	// compute the task and subtask from the target and dataset
 	trainingVariables, err := findVariables(s.Filters.Variables, variables)
@@ -905,7 +926,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		TmpDataFolder:      datasetDir,
 		TaskType:           s.Task,
 		GroupingFieldIndex: groupingVariableIndex,
-		TargetFieldIndex:   targetVariable.Index,
+		TargetFieldIndex:   targetIndex,
 		Stratify:           stratify,
 	}
 	datasetPathTrain, datasetPathTest, err := persistOriginalData(params)
@@ -931,7 +952,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		if datasetInput.LearningDataset == "" {
 			preprocessing, err = s.createPreprocessingPipeline(variables, metaStorage)
 		} else {
-			preprocessing, err = s.createPreFeaturizedPipeline(datasetInput.LearningDataset, variables, metaStorage)
+			preprocessing, err = s.createPreFeaturizedPipeline(datasetInput.LearningDataset, variables, featurizedVariables, metaStorage, targetIndex)
 		}
 		if err != nil {
 			return err
@@ -939,7 +960,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(targetVariable.Index, preprocessing, datasetPathTrain, client.UserAgent, targetVariable, s.DatasetInput, s.Metrics, s.Task, int64(s.MaxTime))
+	searchRequest, err := createSearchSolutionsRequest(targetIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVariable, s.DatasetInput, s.Metrics, s.Task, int64(s.MaxTime))
 	if err != nil {
 		return err
 	}
