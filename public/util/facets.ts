@@ -358,7 +358,7 @@ export function getRowSelectionLabels(
     const bucketFloors = summary.baseline.buckets.map(b => _.toNumber(b.key));
     rowKeys = rowKeys.map(rk => _.toNumber(rk));
     rowLabels = rowKeys.map(rk => {
-      return `${bucketFloors.filter(bf => rk > bf).pop()}`;
+      return `${bucketFloors.filter(bf => rk >= bf).pop()}`;
     });
   } else {
     rowLabels = summary.baseline.buckets.reduce((acc, b) => {
