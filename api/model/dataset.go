@@ -48,7 +48,7 @@ type Dataset struct {
 	ID              string                 `json:"id"`
 	Name            string                 `json:"name"`
 	StorageName     string                 `json:"storageName"`
-	Folder          string                 `json:"folder"`
+	Folder          string                 `json:"datasetFolder"`
 	Description     string                 `json:"description"`
 	Summary         string                 `json:"summary"`
 	SummaryML       string                 `json:"summaryML"`
@@ -60,6 +60,7 @@ type Dataset struct {
 	JoinSuggestions []*JoinSuggestion      `json:"joinSuggestion"`
 	JoinScore       float64                `json:"joinScore"`
 	Type            DatasetType            `json:"type"`
+	LearningDataset string                 `json:"learningDataset"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.

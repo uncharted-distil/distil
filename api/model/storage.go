@@ -155,6 +155,7 @@ type MetadataStorage interface {
 	RemoveGroupedVariable(datasetName string, grouping model.BaseGrouping) error
 	DeleteDataset(dataset string) error
 	IngestDataset(datasetSource metadata.DatasetSource, meta *model.Metadata) error
+	UpdateDataset(dataset *Dataset) error
 }
 
 // ExportedModelStorageCtor represents a client constructor to instantiate a

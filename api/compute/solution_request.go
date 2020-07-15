@@ -26,6 +26,7 @@ import (
 
 	uuid "github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -526,23 +527,33 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 	}
 }
 
-func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, initialSearchID string, initialSearchSolutionID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
-	datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
-
+func describeSolution(client *compute.Client, initialSearchSolutionID string) (*pipeline.DescribeSolutionResponse, error) {
 	// need to wait until a valid description is returned before proceeding
 	var desc *pipeline.DescribeSolutionResponse
 	var err error
 	for wait := true; wait; {
 		desc, err = client.GetSolutionDescription(context.Background(), initialSearchSolutionID)
 		if err != nil {
-			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-			return
+			return nil, err
 		}
 		wait = desc == nil || desc.Pipeline == nil
 		if wait {
 			time.Sleep(10 * time.Second)
 		}
+	}
+
+	return desc, nil
+}
+
+func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
+	dataStorage api.DataStorage, initialSearchID string, initialSearchSolutionID string, dataset string, searchRequest *pipeline.SearchSolutionsRequest,
+	datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
+
+	// get solution description
+	desc, err := describeSolution(client, initialSearchSolutionID)
+	if err != nil {
+		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+		return
 	}
 
 	// Need to create a new solution that has the explain output. This is the solution
@@ -555,7 +566,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		keywords = searchRequest.Problem.Problem.TaskKeywords
 	}
 
-	explainDesc, outputKeysExplain, err := s.createExplainPipeline(client, desc, keywords)
+	explainDesc, outputKeysExplain, err := s.createExplainPipeline(desc, keywords)
 	if err != nil {
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
@@ -866,7 +877,31 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// add dataset name to path
-	datasetInputDir := env.ResolvePath(datasetInput.Source, datasetInput.Folder)
+	var featurizedVariables []*model.Variable
+	var datasetInputDir string
+	targetIndex := -1
+	if datasetInput.LearningDataset == "" {
+		datasetInputDir = datasetInput.Folder
+		datasetInputDir = env.ResolvePath(datasetInput.Source, datasetInputDir)
+		targetIndex = targetVariable.Index
+	} else {
+		datasetInputDir = datasetInput.LearningDataset
+		groupingVariableIndex = -1
+
+		// need to lookup the target variable and the variables in the featurized dataset
+		meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(datasetInputDir, compute.D3MDataSchema), false)
+		if err != nil {
+			return err
+		}
+		featurizedVariables = meta.GetMainDataResource().Variables
+
+		for _, v := range featurizedVariables {
+			if v.Name == targetVariable.Name {
+				targetIndex = v.Index
+				break
+			}
+		}
+	}
 
 	// compute the task and subtask from the target and dataset
 	trainingVariables, err := findVariables(s.Filters.Variables, variables)
@@ -890,7 +925,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		TmpDataFolder:      datasetDir,
 		TaskType:           s.Task,
 		GroupingFieldIndex: groupingVariableIndex,
-		TargetFieldIndex:   targetVariable.Index,
+		TargetFieldIndex:   targetIndex,
 		Stratify:           stratify,
 	}
 	datasetPathTrain, datasetPathTest, err := persistOriginalData(params)
@@ -913,14 +948,18 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// generate the pre-processing pipeline to enforce feature selection and semantic type changes
 	var preprocessing *pipeline.PipelineDescription
 	if !client.SkipPreprocessing {
-		preprocessing, err = s.createPreprocessingPipeline(variables, metaStorage)
+		if datasetInput.LearningDataset == "" {
+			preprocessing, err = s.createPreprocessingPipeline(variables, metaStorage)
+		} else {
+			preprocessing, err = s.createPreFeaturizedPipeline(datasetInput.LearningDataset, variables, featurizedVariables, metaStorage, targetIndex)
+		}
 		if err != nil {
 			return err
 		}
 	}
 
 	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(targetVariable.Index, preprocessing, datasetPathTrain, client.UserAgent, targetVariable, s.DatasetInput, s.Metrics, s.Task, int64(s.MaxTime))
+	searchRequest, err := createSearchSolutionsRequest(targetIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVariable, s.DatasetInput, s.Metrics, s.Task, int64(s.MaxTime))
 	if err != nil {
 		return err
 	}
