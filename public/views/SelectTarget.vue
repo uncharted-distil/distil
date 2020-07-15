@@ -1,22 +1,29 @@
 <template>
   <div class="container-fluid d-flex flex-column h-100 select-view">
+    <!-- Spacer for the App.vue <navigation> component. -->
     <div class="row flex-0-nav"></div>
 
-    <div class="row flex-shrink-0 align-items-center bg-white">
-      <div class="col-4 offset-md-1">
-        <h5 class="header-label">Select Feature to Predict</h5>
+    <!-- Title of the page. -->
+    <header class="header row">
+      <div class="col-12 col-md-10">
+        <h5 class="header-title">
+          Dataset Overview: Select Feature to Predict
+        </h5>
       </div>
-      <!-- <div class="col-2 offset-md-4">
-				<b-button class="grouping-button" variant="primary" @click="onGroupingClick">
-					Create Variable Grouping
-				</b-button>
-			</div> -->
-    </div>
-    <div class="row justify-content-center pb-3 h-100">
-      <div class="col-12 col-md-10 flex-column d-flex h-100">
-        <available-target-variables> </available-target-variables>
+    </header>
+
+    <!--
+      <b-button @click="onGroupingClick">
+        Create Variable Grouping
+      </b-button>
+    -->
+
+    <!-- List of features -->
+    <section class="target-container row justify-content-center">
+      <div class="col-12 col-md-10">
+        <available-target-variables />
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -90,12 +97,9 @@ export default Vue.extend({
 .select-view .nav-tabs .nav-link.active {
   color: rgba(0, 0, 0, 0.87);
 }
-.header-label {
-  padding: 1rem 0 0.5rem 0;
-  font-weight: bold;
-}
-.grouping-button {
-  margin: 0 8px;
-  width: 100%;
+
+.select-view .target-container {
+  height: 100%;
+  padding-bottom: 1rem;
 }
 </style>

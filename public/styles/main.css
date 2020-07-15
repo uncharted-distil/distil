@@ -177,3 +177,17 @@ html {
   --facet-bars-1-muted-contrast: #ff0067;
   --facet-bars-1-muted-contrast-hover: #ffaaaa;
 }
+
+/* Header */
+.header {
+  background-color: var(--white);
+}
+
+.header > div {
+  margin: 0 auto; /* center the container of the title. */
+}
+
+.header-title {
+  padding: 1rem 0 0.5rem 0;
+  font-weight: bold;
+}
