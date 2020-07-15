@@ -3,7 +3,6 @@
     <variable-facets
       enable-search
       enable-type-change
-      enable-title
       ignore-highlights
       enable-typefiltering
       :instance-name="instanceName"
@@ -202,7 +201,8 @@ export default Vue.extend({
 </script>
 
 <style>
-.available-target-variables {
+.available-target-variables,
+.available-target-variables .variable-facets {
   height: 100%;
 }
 

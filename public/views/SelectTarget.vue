@@ -79,24 +79,7 @@ export default Vue.extend({
 </script>
 
 <style>
-.select-view .nav-link {
-  padding: 1rem 0 0.25rem 0;
-  border-bottom: 1px solid #e0e0e0;
-  color: rgba(0, 0, 0, 0.87);
-}
-.select-view .variable-facets {
-  height: 100%;
-}
-.select-view .nav-tabs .nav-item a {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-}
-.select-view .nav-tabs .nav-link {
-  color: #757575;
-}
-.select-view .nav-tabs .nav-link.active {
-  color: rgba(0, 0, 0, 0.87);
-}
+/* List of targets */
 
 .select-view .target-container {
   height: 100%;
