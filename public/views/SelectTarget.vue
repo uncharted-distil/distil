@@ -18,17 +18,9 @@
         <h6 class="sub-header-title">
           Select feature to infer below (target).
         </h6>
-        If you want to predict a value over time, create a&nbsp;<a
-          role="button"
-          @click="onTimeseriesClick"
-          href="#"
-          >Timeseries</a
-        >. If you have geospatial data, you can plot it on a&nbsp;<a
-          role="button"
-          @click="onMapClick"
-          href="#"
-          >Map</a
-        >.
+        If you want to predict a value over time, create
+        a&nbsp;<strong>Timeseries</strong>. If you have geospatial data, you can
+        plot it on a&nbsp;<strong>Map</strong>.
 
         <span class="sub-header-action">
           <b-button @click="onTimeseriesClick" variant="dark">
@@ -283,16 +275,6 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.sub-header a {
-  color: var(--color-text-second);
-  font-weight: bold;
-}
-
-.sub-header a:focus,
-.sub-header a:hover {
-  text-decoration: underline;
-}
-
 .sub-header-action {
   position: absolute;
   bottom: 0;
