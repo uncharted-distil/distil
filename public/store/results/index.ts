@@ -38,6 +38,8 @@ export interface ResultsState {
   // result IDs
   fittedSolutionId: string;
   produceRequestId: string;
+  // variable rankings - maps {solutionID, {featureName: rank value}}
+  variableRankings: Dictionary<Dictionary<number>>;
 }
 
 export const state: ResultsState = {
@@ -59,5 +61,7 @@ export const state: ResultsState = {
   forecasts: {},
   // result IDs
   fittedSolutionId: null,
-  produceRequestId: null
+  produceRequestId: null,
+  // variable rankings
+  variableRankings: {}
 };

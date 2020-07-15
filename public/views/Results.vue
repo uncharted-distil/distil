@@ -17,6 +17,7 @@
           enable-search
           enable-highlighting
           model-selection
+          is-result-features
           instance-name="resultTrainingVars"
           :summaries="trainingSummaries"
           :log-activity="logActivity"

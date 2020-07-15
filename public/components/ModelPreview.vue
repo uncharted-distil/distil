@@ -46,7 +46,7 @@ export default Vue.extend({
   methods: {
     onResult() {
       openModelSolution(this.$router, {
-        datasetName: this.model.datasetName,
+        datasetId: this.model.datasetId,
         targetFeature: this.model.target,
         fittedSolutionId: this.model.fittedSolutionId,
         variableFeatures: this.model.variables

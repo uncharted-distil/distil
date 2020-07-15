@@ -11,6 +11,10 @@
     <div slot="header-label" :class="headerClass">
       <i :class="getGroupIcon(summary) + ' facet-header-icon'"></i>
       <span>{{ summary.label.toUpperCase() }}</span>
+      <importance-bars
+        v-if="importance"
+        :importance="importance"
+      ></importance-bars>
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"
@@ -49,6 +53,7 @@ import "@uncharted.software/facets-core";
 import { FacetTermsData } from "@uncharted.software/facets-core/dist/types/facet-terms/FacetTerms";
 
 import TypeChangeMenu from "../TypeChangeMenu";
+import ImportanceBars from "../ImportanceBars";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getCategoricalChunkSize,
@@ -60,12 +65,14 @@ import {
   facetTypeChangeState
 } from "../../util/facets";
 import _ from "lodash";
+import { getVariableImportance } from "../../util/data";
 
 export default Vue.extend({
   name: "facet-categorical",
 
   components: {
-    TypeChangeMenu
+    TypeChangeMenu,
+    ImportanceBars
   },
 
   directives: {
@@ -89,7 +96,8 @@ export default Vue.extend({
     highlight: Object as () => Highlight,
     enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
-    rowSelection: Object as () => RowSelection
+    rowSelection: Object as () => RowSelection,
+    importance: Number as () => number
   },
 
   data() {
@@ -267,11 +275,6 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.facet-header-container {
-  display: flex;
-  align-items: center;
-}
-
 .facet-header-icon {
   margin-right: 6px;
 }
@@ -324,10 +327,14 @@ export default Vue.extend({
 }
 
 .facet-header-container {
+  color: rgba(0, 0, 0, 0.54);
+  display: flex;
+  align-items: center;
   overflow-y: scroll !important;
 }
 
 .facet-header-container-no-scroll {
+  color: rgba(0, 0, 0, 0.54);
   overflow: auto;
 }
 

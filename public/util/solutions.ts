@@ -107,7 +107,7 @@ export function isTopSolutionByScore(
 export async function openModelSolution(
   router: VueRouter,
   args: {
-    datasetName: string;
+    datasetId: string;
     targetFeature: string;
     fittedSolutionId?: string;
     solutionId?: string;
@@ -117,14 +117,14 @@ export async function openModelSolution(
   let task = routeGetters.getRouteTask(store);
   if (!task) {
     const taskResponse = await dataActions.fetchTask(store, {
-      dataset: args.datasetName,
+      dataset: args.datasetId,
       targetName: args.targetFeature,
       variableNames: args.variableFeatures // solution.features.map(f => f.featureName)
     });
     task = taskResponse.data.task.join(",");
   }
   const solutionArgs = {
-    dataset: args.datasetName,
+    dataset: args.datasetId,
     target: args.targetFeature
   };
   await Promise.all([
@@ -137,10 +137,11 @@ export async function openModelSolution(
         .getSolutions(store)
         .find(s => s.fittedSolutionId === args.fittedSolutionId).solutionId;
   const routeDefintion = {
-    dataset: args.datasetName,
+    dataset: args.datasetId,
     target: args.targetFeature,
     task: task,
-    solutionId: solutionId
+    solutionId: solutionId,
+    singleSolution: true.toString()
   };
 
   const entry = createRouteEntry(RESULTS_ROUTE, routeDefintion);

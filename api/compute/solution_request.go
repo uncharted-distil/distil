@@ -381,9 +381,8 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 			confidenceResult, err = ExplainFeatureOutput(resultURI, path.Join(datasetURI, compute.D3MDataSchema), confidenceURI)
 			if err != nil {
 				return nil, err
-			} else {
-				confidenceResult.ParsingParams = outputs[explainableTypeConfidence].parsingParams
 			}
+			confidenceResult.ParsingParams = outputs[explainableTypeConfidence].parsingParams
 		}
 
 		return &PredictionResult{

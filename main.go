@@ -257,6 +257,7 @@ func main() {
 	registerRoute(mux, "/distil/multiband-image/:dataset/:image-id/:band-combination", routes.MultiBandImageHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/distil/multiband-combinations/:dataset", routes.MultiBandCombinationsHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/distil/load/:solution-id/:fitted", routes.LoadHandler(esExportedModelStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor))
+	registerRoute(mux, "/distil/solution-variable-rankings/:solution-id", routes.SolutionVariableRankingHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, esExportedModelStorageCtor))
 
 	// POST

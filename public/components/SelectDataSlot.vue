@@ -461,6 +461,7 @@ table tr {
   border: 1px solid #ccc;
   border-radius: 0.2rem;
   padding: 3px;
+  height: 38px;
 }
 
 .pending {

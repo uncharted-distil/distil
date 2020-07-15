@@ -292,6 +292,7 @@ export function getSubSelectionValues(
   if (!hasFilterBuckets && !rowSelection) {
     return summary.baseline?.buckets?.map(b => [null, b.count / max]);
   }
+  const isNumeric = summary.type === NUMERICAL_SUMMARY;
   const rowLabels = getRowSelectionLabels(rowSelection, summary);
   let subSelectionValues = null;
 
@@ -302,17 +303,40 @@ export function getSubSelectionValues(
     }, {});
     subSelectionValues = summary.baseline.buckets.map(b => {
       const bucketCount = filterKeys[b.key] ? filterKeys[b.key] : 0;
-      return rowLabels.indexOf(b.key) > -1
+      return rowLabelMatches(rowLabels, b.key, isNumeric)
         ? [bucketCount / max, null]
         : [null, bucketCount / max];
     });
   } else {
     subSelectionValues = summary.baseline.buckets.map(b => [
-      rowLabels.indexOf(b.key) > -1 ? b.count / max : null,
+      rowLabelMatches(rowLabels, b.key, isNumeric) ? b.count / max : null,
       null
     ]);
   }
   return subSelectionValues;
+}
+
+export function rowLabelMatches(
+  rowLabels: string[],
+  bucketKey: string,
+  isNumeric: boolean
+): boolean {
+  if (isNumeric) {
+    const numBk = _.toNumber(bucketKey);
+    return rowLabels.reduce((hasRl: boolean, rl: string) => {
+      if (_.toNumber(rl) === numBk) {
+        hasRl = true;
+      }
+      return hasRl;
+    }, false);
+  } else {
+    return rowLabels.reduce((hasRl: boolean, rl: string) => {
+      if (rl === bucketKey) {
+        hasRl = true;
+      }
+      return hasRl;
+    }, false);
+  }
 }
 
 export function getRowSelectionLabels(
@@ -334,7 +358,7 @@ export function getRowSelectionLabels(
     const bucketFloors = summary.baseline.buckets.map(b => _.toNumber(b.key));
     rowKeys = rowKeys.map(rk => _.toNumber(rk));
     rowLabels = rowKeys.map(rk => {
-      return `${bucketFloors.filter(bf => rk > bf).pop()}`;
+      return `${bucketFloors.filter(bf => rk >= bf).pop()}`;
     });
   } else {
     rowLabels = summary.baseline.buckets.reduce((acc, b) => {

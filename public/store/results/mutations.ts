@@ -8,6 +8,7 @@ import {
   TimeSeriesValue
 } from "../dataset/index";
 import { updateSummaries, removeSummary } from "../../util/data";
+import { Dictionary } from "vue-router/types/router";
 
 export const mutations = {
   // training / target
@@ -144,5 +145,12 @@ export const mutations = {
       args.id,
       args.isDateTime
     );
+  },
+
+  setVariableRankings(
+    state: ResultsState,
+    args: { solutionID: string; rankings: Dictionary<number> }
+  ) {
+    Vue.set(state.variableRankings, args.solutionID, args.rankings);
   }
 };
