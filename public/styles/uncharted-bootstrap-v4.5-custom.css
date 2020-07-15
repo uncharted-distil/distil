@@ -64,6 +64,9 @@ html {
   --danger: #dc3545;
   --light: #fafafa;
   --dark: #616161;
+  --color-text-base: rgba(0, 0, 0, 0.87);
+  --color-text-second: rgba(0, 0, 0, 0.54);
+  --color-text-disable: rgba(0, 0, 0, 0.38);
   font-family: sans-serif;
   line-height: 1.15;
   -webkit-text-size-adjust: 100%;

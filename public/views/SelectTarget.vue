@@ -1,9 +1,9 @@
 <template>
   <div class="container-fluid d-flex flex-column h-100">
-    <!-- Spacer for the App.vue <navigation> component. -->
+    <!-- Spacer for the App.vue <navigation> component -->
     <div class="row flex-0-nav"></div>
 
-    <!-- Title of the page. -->
+    <!-- Title of the page -->
     <header class="header row">
       <div class="col-12 col-md-10">
         <h5 class="header-title">
@@ -11,6 +11,20 @@
         </h5>
       </div>
     </header>
+
+    <!-- Information -->
+    <section class="sub-header row">
+      <div class="col-12 col-md-10">
+        <h6 class="sub-header-title">
+          Select feature to infer below (target).
+        </h6>
+        <p>
+          If you want to predict a value over time, create a
+          <a href="#">Timeseries</a>. If you have geospatial data, you can plot
+          it on a <a href="#">Map</a>
+        </p>
+      </div>
+    </section>
 
     <!-- List of features -->
     <section class="available-target row justify-content-center">
@@ -269,6 +283,6 @@ export default Vue.extend({
 }
 
 .available-target-variables /deep/ .facet-filters {
-  padding: 2rem 0;
+  padding: 1rem 0;
 }
 </style>

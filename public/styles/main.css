@@ -183,11 +183,24 @@ html {
   background-color: var(--white);
 }
 
-.header > div {
+.header > [class^="col"],
+.sub-header > [class^="col"] {
   margin: 0 auto; /* center the container of the title. */
 }
 
 .header-title {
   padding: 1rem 0 0.5rem 0;
   font-weight: bold;
+}
+
+.sub-header {
+  padding-top: 1rem;
+}
+
+.sub-header-title {
+  color: var(--color-text-second);
+  font-size: 1em; /* Reset to page rules. */
+  font-weight: bold;
+  line-height: unset; /* Reset to page rules. */
+  margin: 0;
 }
