@@ -87,6 +87,9 @@ type DataStorage interface {
 
 	// Raw data queries
 	FetchRawDistinctValues(dataset string, storageName string, varName string) ([]string, error)
+
+	// Property queries
+	GetStorageName(dataset string) (string, error)
 }
 
 // SolutionStorageCtor represents a client constructor to instantiate a

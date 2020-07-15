@@ -147,7 +147,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	if !params.DatasetIngested {
 		// ingest the dataset but without running simon, duke, etc.
-		datasetName, err = Ingest(schemaPath, schemaPath, params.MetaStorage, datasetName,
+		datasetName, err = Ingest(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, datasetName,
 			metadata.Augmented, nil, api.DatasetTypeInference, params.IngestConfig, false, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to ingest ranked data")
