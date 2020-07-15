@@ -53,6 +53,30 @@ var (
 				explainableType: explainableTypeSolution,
 			},
 		},
+		"fe0841b7-6e70-4bc3-a56c-0670a95ebc6a": {
+			{
+				primitiveID:     "fe0841b7-6e70-4bc3-a56c-0670a95ebc6a",
+				produceFunction: "produce_shap_values",
+				explainableType: explainableTypeStep,
+			},
+			{
+				primitiveID:     "fe0841b7-6e70-4bc3-a56c-0670a95ebc6a",
+				produceFunction: "produce_feature_importances",
+				explainableType: explainableTypeSolution,
+			},
+		},
+		"cdbb80e4-e9de-4caa-a710-16b5d727b959": {
+			{
+				primitiveID:     "cdbb80e4-e9de-4caa-a710-16b5d727b959",
+				produceFunction: "produce_shap_values",
+				explainableType: explainableTypeStep,
+			},
+			{
+				primitiveID:     "cdbb80e4-e9de-4caa-a710-16b5d727b959",
+				produceFunction: "produce_feature_importances",
+				explainableType: explainableTypeSolution,
+			},
+		},
 		"3410d709-0a13-4187-a1cb-159dd24b584b": {
 			{
 				primitiveID:     "3410d709-0a13-4187-a1cb-159dd24b584b",
