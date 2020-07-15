@@ -107,7 +107,10 @@ export default Vue.extend({
       // Join the last element of the truth timeseries and the first element of the forecast
       // time series.  Used when not visualizing an in-sample forecast.
       if (this.joinForecast) {
-        return [_.last(this.timeseries)].concat(this.forecast);
+        const last = _.clone(_.last(this.timeseries));
+        last.confidenceLow = last.value;
+        last.confidenceHigh = last.value;
+        return [last, ...this.forecast];
       }
       return this.forecast;
     }
