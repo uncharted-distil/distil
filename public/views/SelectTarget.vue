@@ -18,11 +18,26 @@
         <h6 class="sub-header-title">
           Select feature to infer below (target).
         </h6>
-        <p>
-          If you want to predict a value over time, create a
-          <a href="#">Timeseries</a>. If you have geospatial data, you can plot
-          it on a <a href="#">Map</a>
-        </p>
+        If you want to predict a value over time, create a&nbsp;<a
+          role="button"
+          @click="onTimeseriesClick"
+          href="#"
+          >Timeseries</a
+        >. If you have geospatial data, you can plot it on a&nbsp;<a
+          role="button"
+          @click="onMapClick"
+          href="#"
+          >Map</a
+        >.
+
+        <span class="sub-header-action">
+          <b-button @click="onTimeseriesClick" variant="dark">
+            <i class="fa fa-area-chart"></i> Timeseries
+          </b-button>
+          <b-button @click="onMapClick" variant="dark">
+            <i class="fa fa-globe"></i> Map
+          </b-button>
+        </span>
       </div>
     </section>
 
@@ -57,13 +72,18 @@ import {
 } from "../store/dataset/module";
 import {
   AVAILABLE_TARGET_VARS_INSTANCE,
+  GROUPING_ROUTE,
   SELECT_TRAINING_ROUTE
 } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
 import { filterSummariesByDataset } from "../util/data";
 import { Group } from "../util/facets";
 import { createRouteEntry, varModesToString } from "../util/routes";
-import { isUnsupportedTargetVar } from "../util/types";
+import {
+  isUnsupportedTargetVar,
+  GEOCOORDINATE_TYPE,
+  TIMESERIES_TYPE
+} from "../util/types";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
 // 9 so it makes a nice clean grid
@@ -240,11 +260,57 @@ export default Vue.extend({
 
   beforeMount() {
     viewActions.fetchSelectTargetData(this.$store, true);
+  },
+
+  methods: {
+    groupingClick(type) {
+      const entry = createRouteEntry(GROUPING_ROUTE, {
+        dataset: routeGetters.getRouteDataset(this.$store),
+        groupingType: type
+      });
+      this.$router.push(entry);
+    },
+
+    onMapClick() {
+      this.groupingClick(GEOCOORDINATE_TYPE);
+    },
+
+    onTimeseriesClick() {
+      this.groupingClick(TIMESERIES_TYPE);
+    }
   }
 });
 </script>
 
 <style scoped>
+.sub-header a {
+  color: var(--color-text-second);
+  font-weight: bold;
+}
+
+.sub-header a:focus,
+.sub-header a:hover {
+  text-decoration: underline;
+}
+
+.sub-header-action {
+  position: absolute;
+  bottom: 0;
+  right: 15px; /* padding-right used by Bootstrap on .col element. */
+}
+
+.sub-header-action /deep/ .btn {
+  font-weight: bold;
+}
+
+.sub-header-action /deep/ .btn + .btn {
+  margin-left: 0.5em;
+}
+
+.sub-header-action /deep/ .fa {
+  margin-right: 0.5em;
+}
+
 /* List of targets */
 .available-target {
   padding-bottom: 1rem;
