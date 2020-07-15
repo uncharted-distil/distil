@@ -67,12 +67,12 @@ func SolutionVariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCt
 
 		// if no ranking were generated, fall back on the dataset/target rank estimates
 		if len(rankings) == 0 {
-			summaryVariables, err := api.FetchSummaryVariables(dataset.Name, storage)
+			summaryVariables, err := api.FetchSummaryVariables(dataset.ID, storage)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable to expand grouped variables"))
 				return
 			}
-			rankings, err = targetRank(dataset.Name, request.TargetFeature(), dataset.Folder, summaryVariables, dataset.Source)
+			rankings, err = targetRank(dataset.ID, request.TargetFeature(), dataset.Folder, summaryVariables, dataset.Source)
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable get variable ranking"))
 				return
