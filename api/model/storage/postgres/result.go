@@ -291,13 +291,13 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 
 	// Parse the columns (skipping weights columns)
 	if rows != nil {
-		var columns []api.Column
+		var columns []*api.Column
 		weightCount := 0
 		// Parse the row data.
 		for rows.Next() {
 			if columns == nil {
 				fields := rows.FieldDescriptions()
-				columns = make([]api.Column, 0)
+				columns = make([]*api.Column, 0)
 				for i := 0; i < len(fields); i++ {
 					key := string(fields[i].Name)
 					label := key
@@ -323,7 +323,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 						}
 					}
 
-					columns = append(columns, api.Column{
+					columns = append(columns, &api.Column{
 						Key:   key,
 						Label: label,
 						Type:  typ,
@@ -356,7 +356,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 		}
 		result.Columns = columns
 	} else {
-		result.Columns = make([]api.Column, 0)
+		result.Columns = make([]*api.Column, 0)
 	}
 
 	return result, nil
@@ -676,21 +676,22 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			distincts, predictedCol, targetColumnQuery, errorExpr, strings.Join(fieldsData, ", "), strings.Join(fieldsExplain, ", "))
 	}
 
+	wheres = append(wheres, fmt.Sprintf("predicted.result_id = $%d", len(params)+1))
+	wheres = append(wheres, fmt.Sprintf("target = $%d", len(params)+2))
+	wheres = append(wheres, "predicted.value != ''")
+	params = append(params, resultURI)
+	params = append(params, targetName)
+
+	whereStatement := strings.Join(wheres, " AND ")
+
 	query := fmt.Sprintf(
 		"SELECT %s"+
 			"FROM %s as predicted inner join %s as data on data.\"%s\" = predicted.index "+
 			"LEFT OUTER JOIN %s as weights on weights.\"%s\" = predicted.index AND weights.result_id = predicted.result_id "+
-			"WHERE predicted.result_id = $%d AND target = $%d AND predicted.value != ''",
+			"WHERE %s",
 		selectedVars, storageNameResult, storageName, model.D3MIndexFieldName,
 		s.getSolutionFeatureWeightTable(storageName), model.D3MIndexFieldName,
-		len(params)+1, len(params)+2)
-
-	params = append(params, resultURI)
-	params = append(params, targetName)
-
-	if len(wheres) > 0 {
-		query = fmt.Sprintf("%s AND %s", query, strings.Join(wheres, " AND "))
-	}
+		whereStatement)
 
 	// Do not return the whole result set to the client.
 	query = fmt.Sprintf("%s LIMIT %d;", query, filterParams.Size)
@@ -720,7 +721,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 		return nil, err
 	}
 
-	weights, err := s.getAverageWeights(dataset, storageName, resultURI, variables)
+	weights, err := s.getAverageWeights(dataset, storageName, storageNameResult, resultURI, variables, whereStatement, params)
 	if err != nil {
 		return nil, err
 	}
@@ -731,17 +732,22 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	return filteredData, nil
 }
 
-func (s *Storage) getAverageWeights(dataset string, storageName string, resultURI string, variables []*model.Variable) (map[string]float64, error) {
+func (s *Storage) getAverageWeights(dataset string, storageName string, storageNameResult string, resultURI string,
+	variables []*model.Variable, whereStatement string, params []interface{}) (map[string]float64, error) {
 	variablesSQL := []string{}
 	for _, v := range variables {
-		variablesSQL = append(variablesSQL, fmt.Sprintf("AVG(\"%s\") as \"%s\"", v.Name, v.Name))
+		variablesSQL = append(variablesSQL, fmt.Sprintf("AVG(weights.\"%s\") as \"%s\"", v.Name, v.Name))
 	}
 
-	sql := fmt.Sprintf("SELECT %s FROM %s;", strings.Join(variablesSQL, ", "), s.getSolutionFeatureWeightTable(storageName))
-	rows, err := s.client.Query(sql)
+	sql := fmt.Sprintf("SELECT %s FROM %s AS weights INNER JOIN %s AS data on data.\"%s\" = weights.\"%s\" "+
+		"INNER JOIN %s as predicted on data.\"%s\" = predicted.index WHERE %s",
+		strings.Join(variablesSQL, ", "), s.getSolutionFeatureWeightTable(storageName),
+		storageName, model.D3MIndexFieldName, model.D3MIndexFieldName, storageNameResult, model.D3MIndexFieldName, whereStatement)
+	rows, err := s.client.Query(sql, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to query for average result weights")
 	}
+	defer rows.Close()
 
 	featureWeights, err := s.parseSolutionFeatureWeight(resultURI, rows)
 	if err != nil {

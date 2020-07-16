@@ -135,7 +135,7 @@ type FilteredDataValue struct {
 // input filter.
 type FilteredData struct {
 	NumRows int                    `json:"numRows"`
-	Columns []Column               `json:"columns"`
+	Columns []*Column              `json:"columns"`
 	Values  [][]*FilteredDataValue `json:"values"`
 }
 

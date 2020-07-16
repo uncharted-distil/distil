@@ -83,7 +83,7 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 		}
 
 		fields := rows.FieldDescriptions()
-		columns := make([]api.Column, len(fields))
+		columns := make([]*api.Column, len(fields))
 		for i := 0; i < len(fields); i++ {
 			key := string(fields[i].Name)
 
@@ -91,7 +91,7 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 			if v == nil {
 				return nil, fmt.Errorf("unable to lookup variable for %s", key)
 			}
-			columns[i] = api.Column{
+			columns[i] = &api.Column{
 				Key:   key,
 				Label: v.DisplayName,
 				Type:  v.Type,
@@ -99,7 +99,7 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 		}
 		result.Columns = columns
 	} else {
-		result.Columns = make([]api.Column, 0)
+		result.Columns = make([]*api.Column, 0)
 	}
 
 	return result, nil
@@ -647,7 +647,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	if invert && filterParams.Filters == nil {
 		return &api.FilteredData{
 			NumRows: numRows,
-			Columns: make([]api.Column, 0),
+			Columns: make([]*api.Column, 0),
 			Values:  make([][]*api.FilteredDataValue, 0),
 		}, nil
 	}
