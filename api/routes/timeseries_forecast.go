@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil/api/compute"
 	api "github.com/uncharted-distil/distil/api/model"
 )
@@ -35,7 +34,7 @@ type TimeseriesForecastResult struct {
 }
 
 // TimeseriesForecastHandler returns timeseries data.
-func TimeseriesForecastHandler(dataCtor api.DataStorageCtor, solutionCtor api.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, solutionCtor api.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		truthDataset := pat.Param(r, "truthDataset")
@@ -45,8 +44,6 @@ func TimeseriesForecastHandler(dataCtor api.DataStorageCtor, solutionCtor api.So
 		yColName := pat.Param(r, "yColName")
 		resultUUID := pat.Param(r, "result-uuid")
 		timeseriesURI := pat.Param(r, "timeseriesURI")
-		truthStorageName := model.NormalizeDatasetID(truthDataset)
-		predictedStorageName := model.NormalizeDatasetID(forecastDataset)
 
 		// parse POST params
 		params, err := getPostParameters(r)
@@ -74,6 +71,26 @@ func TimeseriesForecastHandler(dataCtor api.DataStorageCtor, solutionCtor api.So
 			handleError(w, err)
 			return
 		}
+
+		meta, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		dst, err := meta.FetchDataset(truthDataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		truthStorageName := dst.StorageName
+
+		dsf, err := meta.FetchDataset(forecastDataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		predictedStorageName := dsf.StorageName
 
 		// fetch the ground truth timeseries
 		timeseries, err := data.FetchTimeseries(truthDataset, truthStorageName, timeseriesColName, xColName, yColName, timeseriesURI, filterParams, false)

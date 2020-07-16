@@ -147,7 +147,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	if !params.DatasetIngested {
 		// ingest the dataset but without running simon, duke, etc.
-		datasetName, err = Ingest(schemaPath, schemaPath, params.MetaStorage, datasetName,
+		datasetName, err = Ingest(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, datasetName,
 			metadata.Augmented, nil, api.DatasetTypeInference, params.IngestConfig, false, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to ingest ranked data")
@@ -157,7 +157,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	// Apply the var types associated with the fitted solution to the inference data - the model types and input types should
 	// should match.
-	if err := updateVariableTypes(params.SolutionStorage, params.MetaStorage, params.DataStorage, params.FittedSolutionID, datasetName); err != nil {
+	if err := updateVariableTypes(params.SolutionStorage, params.MetaStorage, params.DataStorage, params.FittedSolutionID, datasetName, meta.StorageName); err != nil {
 		return nil, err
 	}
 
@@ -174,7 +174,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		// need to run the grouping compose to create the needed ID column
 		log.Infof("creating composed variables on inferrence dataset '%s'", datasetName)
 		err = CreateComposedVariable(params.MetaStorage, params.DataStorage, datasetName,
-			tsg.IDCol, tsg.IDCol, tsg.SubIDs)
+			meta.StorageName, tsg.IDCol, tsg.IDCol, tsg.SubIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -232,7 +232,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		if err != nil {
 			return nil, err
 		}
-		err = params.DataStorage.PersistSolutionFeatureWeight(datasetName, model.NormalizeDatasetID(datasetName), featureWeights.ResultURI, featureWeights.Values)
+		err = params.DataStorage.PersistSolutionFeatureWeight(datasetName, meta.StorageName, featureWeights.ResultURI, featureWeights.Values)
 		if err != nil {
 			return nil, err
 		}
@@ -256,7 +256,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, err
 	}
 
-	err = params.DataStorage.PersistResult(datasetName, model.NormalizeDatasetID(datasetName), predictionResult.ResultURI, target.Name, predictionResult.Confidences)
+	err = params.DataStorage.PersistResult(datasetName, meta.StorageName, predictionResult.ResultURI, target.Name, predictionResult.Confidences)
 	if err != nil {
 		return nil, err
 	}
@@ -354,11 +354,9 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 
 // CreateComposedVariable creates a new variable to use as group id.
 func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.DataStorage,
-	dataset string, composedVarName string, composedVarDisplayName string, sourceVarNames []string) error {
+	dataset string, storageName string, composedVarName string, composedVarDisplayName string, sourceVarNames []string) error {
 
 	// create the variable data store entry
-	datasetStorageName := model.NormalizeDatasetID(dataset)
-
 	varExists, err := metaStorage.DoesVariableExist(dataset, composedVarName)
 	if err != nil {
 		return err
@@ -371,7 +369,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 			return err
 		}
 
-		err = dataStorage.AddVariable(dataset, datasetStorageName, composedVarName, model.StringType)
+		err = dataStorage.AddVariable(dataset, storageName, composedVarName, model.StringType)
 		if err != nil {
 			return err
 		}
@@ -391,7 +389,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 			Variables: []string{model.D3MIndexName},
 		}
 	}
-	rawData, err := dataStorage.FetchData(dataset, datasetStorageName, filter, false)
+	rawData, err := dataStorage.FetchData(dataset, storageName, filter, false)
 	if err != nil {
 		return err
 	}
@@ -424,7 +422,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 	}
 
 	// Save the new column
-	err = dataStorage.UpdateVariableBatch(datasetStorageName, composedVarName, composedData)
+	err = dataStorage.UpdateVariableBatch(storageName, composedVarName, composedData)
 	if err != nil {
 		return err
 	}
@@ -442,7 +440,8 @@ func createComposedFields(data []*api.FilteredDataValue, fields []string, mapped
 
 // Apply the var types associated with the fitted solution to the inference data - the model types and input types should
 // should match.
-func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage, dataStorage api.DataStorage, fittedSolutionID string, dataset string) error {
+func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage,
+	dataStorage api.DataStorage, fittedSolutionID string, dataset string, storageName string) error {
 	solutionRequest, err := solutionStorage.FetchRequestByFittedSolutionID(fittedSolutionID)
 	if err != nil {
 		return err
@@ -458,8 +457,6 @@ func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.Me
 		variableMap[variable.Name] = variable
 	}
 
-	//
-	storageName := model.NormalizeDatasetID(dataset)
 	for _, feature := range solutionRequest.Features {
 		// if this is a grouped variable we need to treat its components separately
 		if variable, ok := variableMap[feature.FeatureName]; ok {

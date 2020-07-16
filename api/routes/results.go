@@ -22,7 +22,6 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -50,7 +49,6 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 		}
 
 		dataset := pat.Param(r, "dataset")
-		storageName := model.NormalizeDatasetID(dataset)
 
 		solutionID, err := url.PathUnescape(pat.Param(r, "solution-id"))
 		if err != nil {
@@ -75,6 +73,13 @@ func ResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStora
 			handleError(w, err)
 			return
 		}
+
+		ds, err := meta.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
 
 		// get the filters
 		req, err := solution.FetchRequestBySolutionID(solutionID)

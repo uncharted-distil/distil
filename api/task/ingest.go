@@ -230,7 +230,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished geocoding the dataset")
 	}
 
-	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, metaStorage, dataset, datasetSource, origins, datasetType, config, true, true)
+	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, dataStorage, metaStorage, dataset, datasetSource, origins, datasetType, config, true, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -273,7 +273,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 }
 
 // Ingest the metadata to ES and the data to Postgres.
-func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, dataset string, source metadata.DatasetSource,
+func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, storage api.MetadataStorage, dataset string, source metadata.DatasetSource,
 	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, checkMatch bool, fallbackMerged bool) (string, error) {
 	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, true, fallbackMerged)
 	if err != nil {
@@ -333,7 +333,7 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 	}
 
 	// ingest the metadata
-	_, err = IngestMetadata(originalSchemaFile, schemaFile, storage, source, origins, datasetType, config, true, fallbackMerged)
+	_, err = IngestMetadata(originalSchemaFile, schemaFile, data, storage, source, origins, datasetType, config, true, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
@@ -348,13 +348,25 @@ func Ingest(originalSchemaFile string, schemaFile string, storage api.MetadataSt
 }
 
 // IngestMetadata ingests the data to ES.
-func IngestMetadata(originalSchemaFile string, schemaFile string, storage api.MetadataStorage, source metadata.DatasetSource,
+func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataStorage, storage api.MetadataStorage, source metadata.DatasetSource,
 	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, verifyMetadata bool, fallbackMerged bool) (string, error) {
 	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, origins, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
 	meta.Type = string(datasetType)
+
+	storageName, err := data.GetStorageName(meta.ID)
+	if err != nil {
+		return "", err
+	}
+	if meta.StorageName != storageName {
+		meta.StorageName = storageName
+		err = metadata.WriteSchema(meta, schemaFile, true)
+		if err != nil {
+			return "", err
+		}
+	}
 
 	// Ingest the dataset info into the metadata storage
 	err = storage.IngestDataset(source, meta)

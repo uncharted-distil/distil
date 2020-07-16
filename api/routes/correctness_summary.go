@@ -22,7 +22,6 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -32,11 +31,10 @@ type CorrectnessSummary struct {
 }
 
 // CorrectnessSummaryHandler bins predicted result data for consumption in a downstream summary view.
-func CorrectnessSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func CorrectnessSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		dataset := pat.Param(r, "dataset")
-		storageName := model.NormalizeDatasetID(dataset)
 
 		// get variable summary mode
 		mode, err := api.SummaryModeFromString(pat.Param(r, "mode"))
@@ -76,6 +74,19 @@ func CorrectnessSummaryHandler(solutionCtor api.SolutionStorageCtor, dataCtor ap
 			handleError(w, err)
 			return
 		}
+
+		meta, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		ds, err := meta.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
 
 		// get the result URI. Error ignored to make it ES compatible.
 		res, err := solution.FetchSolutionResultByUUID(resultUUID)

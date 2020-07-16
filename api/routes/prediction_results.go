@@ -22,7 +22,6 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -108,7 +107,14 @@ func PredictionResultsHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 			return
 		}
 
-		results, err := data.FetchResults(dataset, model.NormalizeDatasetID(dataset), predictResult.ResultURI, produceRequestID, updatedFilterParams, true)
+		ds, err := meta.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
+
+		results, err := data.FetchResults(dataset, storageName, predictResult.ResultURI, produceRequestID, updatedFilterParams, true)
 		if err != nil {
 			handleError(w, err)
 			return

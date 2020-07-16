@@ -16,7 +16,13 @@
 package postgres
 
 import (
-	"github.com/uncharted-distil/distil/api/model"
+	"fmt"
+
+	"github.com/pkg/errors"
+
+	"github.com/uncharted-distil/distil-compute/model"
+
+	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/postgres"
 )
 
@@ -24,24 +30,24 @@ import (
 type Storage struct {
 	client      postgres.DatabaseDriver
 	batchClient postgres.DatabaseDriver
-	metadata    model.MetadataStorage
+	metadata    api.MetadataStorage
 }
 
 // NewDataStorage returns a constructor for a data storage.
-func NewDataStorage(clientCtor postgres.ClientCtor, batchClientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) model.DataStorageCtor {
-	return func() (model.DataStorage, error) {
+func NewDataStorage(clientCtor postgres.ClientCtor, batchClientCtor postgres.ClientCtor, metadataCtor api.MetadataStorageCtor) api.DataStorageCtor {
+	return func() (api.DataStorage, error) {
 		return newStorage(clientCtor, batchClientCtor, metadataCtor)
 	}
 }
 
 // NewSolutionStorage returns a constructor for a solution storage.
-func NewSolutionStorage(clientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) model.SolutionStorageCtor {
-	return func() (model.SolutionStorage, error) {
+func NewSolutionStorage(clientCtor postgres.ClientCtor, metadataCtor api.MetadataStorageCtor) api.SolutionStorageCtor {
+	return func() (api.SolutionStorage, error) {
 		return newStorage(clientCtor, nil, metadataCtor)
 	}
 }
 
-func newStorage(clientCtor postgres.ClientCtor, batchClientCtor postgres.ClientCtor, metadataCtor model.MetadataStorageCtor) (*Storage, error) {
+func newStorage(clientCtor postgres.ClientCtor, batchClientCtor postgres.ClientCtor, metadataCtor api.MetadataStorageCtor) (*Storage, error) {
 	client, err := clientCtor()
 	if err != nil {
 		return nil, err
@@ -65,4 +71,37 @@ func newStorage(clientCtor postgres.ClientCtor, batchClientCtor postgres.ClientC
 		batchClient: batchClient,
 		metadata:    metadata,
 	}, nil
+}
+
+// GetStorageName returns a valid unique name to use for a given dataset name.
+func (s *Storage) GetStorageName(dataset string) (string, error) {
+	// format normalize the dataset
+	storageName := model.NormalizeDatasetID(dataset)
+
+	// get all database tables
+	existingTables := map[string]bool{}
+	rows, err := s.client.Query("select table_name from information_schema.tables;")
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to get list of existing tables")
+	}
+	for rows.Next() {
+		var existingName string
+		err = rows.Scan(&existingName)
+		if err != nil {
+			return "", errors.Wrapf(err, "unable to scan table name")
+		}
+		existingTables[existingName] = true
+	}
+	err = rows.Err()
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to read list of existing tables")
+	}
+
+	// get a unique value
+	currentName := storageName
+	for i := 1; existingTables[currentName]; i++ {
+		currentName = fmt.Sprintf("%s_%d", storageName, i)
+	}
+
+	return currentName, nil
 }

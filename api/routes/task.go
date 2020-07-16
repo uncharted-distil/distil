@@ -22,7 +22,6 @@ import (
 	"goji.io/v3/pat"
 
 	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil-compute/model"
 	apiCompute "github.com/uncharted-distil/distil/api/compute"
 	api "github.com/uncharted-distil/distil/api/model"
 )
@@ -31,7 +30,6 @@ import (
 func TaskHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
-		storageName := model.NormalizeDatasetID(dataset)
 		targetName := pat.Param(r, "target")
 		variablesParam := pat.Param(r, "variables")
 
@@ -52,6 +50,13 @@ func TaskHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageCto
 			handleError(w, err)
 			return
 		}
+
+		ds, err := metaStorage.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
 
 		// look up the task variables
 		variables, err := metaStorage.FetchVariablesByName(dataset, variableNames, false, false)

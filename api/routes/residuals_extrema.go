@@ -76,7 +76,6 @@ func ResidualsExtremaHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		target := pat.Param(r, "target")
-		storageName := model.NormalizeDatasetID(dataset)
 
 		meta, err := metaCtor()
 		if err != nil {
@@ -95,6 +94,13 @@ func ResidualsExtremaHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.
 			handleError(w, err)
 			return
 		}
+
+		ds, err := meta.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
 
 		// extract extrema for solution
 		extrema, err := fetchSolutionResidualExtrema(meta, data, solution, dataset, storageName, target, "")

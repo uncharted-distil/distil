@@ -40,7 +40,6 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
-		storageName := model.NormalizeDatasetID(dataset)
 		// get variable name
 		variable := pat.Param(r, "variable")
 
@@ -55,6 +54,14 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 			handleError(w, err)
 			return
 		}
+
+		ds, err := metaStorage.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
+
 		clusterVarName := fmt.Sprintf("%s%s", model.ClusterVarPrefix, variable)
 
 		// check if the cluster variables exist

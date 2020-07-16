@@ -20,7 +20,6 @@ import (
 
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -29,7 +28,6 @@ func DeleteHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageC
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		variable := pat.Param(r, "variable")
-		storageName := model.NormalizeDatasetID(dataset)
 
 		// initialize the storage
 		metaStorage, err := esMetaCtor()
@@ -43,6 +41,13 @@ func DeleteHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageC
 			handleError(w, err)
 			return
 		}
+
+		ds, err := metaStorage.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
 
 		// delete the var
 		err = metaStorage.DeleteVariable(dataset, variable)

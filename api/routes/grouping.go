@@ -58,8 +58,15 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 			return
 		}
 
+		ds, err := meta.FetchDataset(dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		storageName := ds.StorageName
+
 		groupingType := g["type"].(string)
-		err = createGrouping(dataset, groupingType, g, meta, data)
+		err = createGrouping(dataset, storageName, groupingType, g, meta, data)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -189,7 +196,7 @@ func parseRemoteSensingGrouping(rawGrouping map[string]interface{}) (*model.Remo
 	return grouping, nil
 }
 
-func createGrouping(dataset string, groupingType string, rawGrouping map[string]interface{}, meta api.MetadataStorage, data api.DataStorage) error {
+func createGrouping(dataset string, storageName string, groupingType string, rawGrouping map[string]interface{}, meta api.MetadataStorage, data api.DataStorage) error {
 	if model.IsTimeSeries(groupingType) {
 		tsg, err := parseTimeseriesGrouping(rawGrouping)
 		if err != nil {
@@ -198,7 +205,7 @@ func createGrouping(dataset string, groupingType string, rawGrouping map[string]
 
 		if tsg.IDCol != "" {
 			// Create a new variable and column for the time series key.
-			if err := task.CreateComposedVariable(meta, data, dataset, tsg.IDCol, tsg.YCol, tsg.SubIDs); err != nil {
+			if err := task.CreateComposedVariable(meta, data, dataset, storageName, tsg.IDCol, tsg.YCol, tsg.SubIDs); err != nil {
 				return errors.Wrapf(err, "unable to create new variable %s", tsg.IDCol)
 			}
 
