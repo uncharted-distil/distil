@@ -37,12 +37,12 @@ const (
 	dataTableAlias           = "data"
 )
 
-func (s *Storage) getResultTable(dataset string) string {
-	return fmt.Sprintf("%s%s", dataset, resultTableSuffix)
+func (s *Storage) getResultTable(storageName string) string {
+	return fmt.Sprintf("%s%s", storageName, resultTableSuffix)
 }
 
-func (s *Storage) getSolutionFeatureWeightTable(dataset string) string {
-	return fmt.Sprintf("%s%s", dataset, featureWeightTableSuffix)
+func (s *Storage) getSolutionFeatureWeightTable(storageName string) string {
+	return fmt.Sprintf("%s%s", storageName, featureWeightTableSuffix)
 }
 
 func (s *Storage) getResultTargetName(storageName string, resultURI string) (string, error) {
@@ -715,7 +715,40 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
 
-	return s.parseFilteredResults(variables, numRows, rows, variable)
+	filteredData, err := s.parseFilteredResults(variables, numRows, rows, variable)
+	if err != nil {
+		return nil, err
+	}
+
+	weights, err := s.getAverageWeights(dataset, storageName, resultURI, variables)
+	if err != nil {
+		return nil, err
+	}
+	for _, c := range filteredData.Columns {
+		c.Weight = weights[c.Key]
+	}
+
+	return filteredData, nil
+}
+
+func (s *Storage) getAverageWeights(dataset string, storageName string, resultURI string, variables []*model.Variable) (map[string]float64, error) {
+	variablesSQL := []string{}
+	for _, v := range variables {
+		variablesSQL = append(variablesSQL, fmt.Sprintf("AVG(\"%s\") as \"%s\"", v.Name, v.Name))
+	}
+
+	sql := fmt.Sprintf("SELECT %s FROM %s;", strings.Join(variablesSQL, ", "), s.getSolutionFeatureWeightTable(storageName))
+	rows, err := s.client.Query(sql)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to query for average result weights")
+	}
+
+	featureWeights, err := s.parseSolutionFeatureWeight(resultURI, rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return featureWeights.Weights, nil
 }
 
 func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
