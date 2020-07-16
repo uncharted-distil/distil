@@ -4,33 +4,36 @@
     <div class="row flex-0-nav"></div>
 
     <!-- Title of the page -->
-    <header class="header row">
-      <div class="col-12 col-md-10">
+    <header class="header row justify-content-center">
+      <b-col cols="12" md="10">
         <h5 class="header-title">
           Dataset Overview: Select Feature to Predict
         </h5>
-      </div>
+      </b-col>
     </header>
 
     <!-- Information -->
-    <section class="sub-header row">
-      <div class="col-12 col-md-10">
-        <h6 class="sub-header-title">
-          Select feature to infer below (target).
-        </h6>
-        If you want to predict a value over time, create
-        a&nbsp;<strong>Timeseries</strong>. If you have geospatial data, you can
-        plot it on a&nbsp;<strong>Map</strong>.
-
-        <span class="sub-header-action">
-          <b-button @click="onTimeseriesClick" variant="dark">
-            <i class="fa fa-area-chart"></i> Timeseries
-          </b-button>
-          <b-button @click="onMapClick" variant="dark">
-            <i class="fa fa-globe"></i> Map
-          </b-button>
-        </span>
-      </div>
+    <section class="sub-header row justify-content-center">
+      <b-col cols="12" md="10">
+        <b-row no-gutters>
+          <b-col cols="12" md="7" class="mr-auto">
+            <h6 class="sub-header-title">
+              Select feature to infer below (target).
+            </h6>
+            If you want to predict a value over time, create
+            a&nbsp;<strong>Timeseries</strong>. If you have geospatial data, you
+            can plot it on a&nbsp;<strong>Map</strong>.
+          </b-col>
+          <span class="sub-header-action">
+            <b-button @click="onTimeseriesClick" variant="dark">
+              <i class="fa fa-area-chart"></i> Timeseries
+            </b-button>
+            <b-button @click="onMapClick" variant="dark">
+              <i class="fa fa-globe"></i> Map
+            </b-button>
+          </span>
+        </b-row>
+      </b-col>
     </section>
 
     <!-- List of features -->
@@ -276,9 +279,8 @@ export default Vue.extend({
 
 <style scoped>
 .sub-header-action {
-  position: absolute;
-  bottom: 0;
-  right: 15px; /* padding-right used by Bootstrap on .col element. */
+  align-self: end;
+  margin-top: 1em;
 }
 
 .sub-header-action /deep/ .btn {

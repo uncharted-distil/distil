@@ -4,7 +4,7 @@
     <div class="row flex-0-nav"></div>
 
     <!-- Title of the page. -->
-    <header class="header row">
+    <header class="header row justify-content-center">
       <div class="col-12 col-md-10">
         <h5 class="header-title">
           Select a Model to reuse or a Dataset to create a model
@@ -13,7 +13,7 @@
     </header>
 
     <!-- Placeholder for the file uploader component status. -->
-    <div class="row  justify-content-center">
+    <div class="row justify-content-center">
       <file-uploader-status
         class="file-uploader-status col-12"
         :status="uploadStatus"
