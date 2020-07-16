@@ -207,11 +207,11 @@ export function fetchSummaryExemplars(
         );
       }
     } else {
-      // if there a linked files, fetch those before resolving
+      // if there are linked files, fetch some of them before resolving
       return datasetActions.fetchFiles(store, {
         dataset: datasetName,
         variable: variableName,
-        urls: exemplars
+        urls: exemplars.slice(0, 5)
       });
     }
   }
