@@ -62,14 +62,20 @@ export default Vue.extend({
   padding: 6px 12px 5px;
   box-sizing: content-box;
 
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  color: rgba(0, 0, 0, 0.54);
+  display: flex;
+  align-items: center;
+  overflow-y: scroll !important;
 }
 
 .facet-header > i {
   color: red;
   padding-right: 6px;
+}
+
+.facet-header .dropdown-menu {
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .facet-header-dropdown {
