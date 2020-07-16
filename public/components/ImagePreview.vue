@@ -136,6 +136,10 @@ export default Vue.extend({
       return circleSpinnerHTML();
     },
     dataset(): string {
+      const dataset = routeGetters.getRoutePredictionsDataset(this.$store);
+      if (dataset) {
+        return dataset;
+      }
       return routeGetters.getRouteDataset(this.$store);
     },
     hasClick(): boolean {
