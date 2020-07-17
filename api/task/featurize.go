@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"path"
 
+	log "github.com/unchartedsoftware/plog"
+
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -137,4 +139,14 @@ func isRemoteSensingDataset(ds *api.Dataset) bool {
 	}
 
 	return false
+}
+
+func canFeaturize(datasetID string, meta api.MetadataStorage) bool {
+	dataset, err := meta.FetchDataset(datasetID, true, true)
+	if err != nil {
+		log.Warnf("error fetching dataset to determine if it can be featurized: %+v", err)
+		return false
+	}
+
+	return isRemoteSensingDataset(dataset)
 }
