@@ -13,83 +13,61 @@
           <i class="fa fa-home nav-icon"></i> Select Model or Dataset
         </b-nav-item>
 
-        <b-nav-item
-          @click="onSelectTarget"
-          :active="isActive(SELECT_TARGET_ROUTE)"
-          :disabled="!hasView(SELECT_TARGET_ROUTE)"
-        >
-          <i class="fa fa-dot-circle-o nav-icon"></i> New Model: Select Target
-        </b-nav-item>
+        <!-- If search produces a model of interest, select it for reuse: will start Apply Model workflow. -->
+        <template v-if="false">
+          <b-nav-item
+            @click="onResults"
+            :active="isActive(RESULTS_ROUTE)"
+            :disabled="!hasView(RESULTS_ROUTE)"
+          >
+            <i class="fa fa-table nav-icon"></i> Apply Model: Select New Data
+          </b-nav-item>
 
-        <b-nav-item
-          @click="onSelectData"
-          :active="isActive(SELECT_TRAINING_ROUTE)"
-          :disabled="!hasView(SELECT_TRAINING_ROUTE)"
-        >
-          <i class="fa fa-sign-in nav-icon"></i> Select Model Features
-        </b-nav-item>
+          <b-nav-item
+            @click="onPredictions"
+            :active="isActive(PREDICTION_ROUTE)"
+            :disabled="!hasView(PREDICTION_ROUTE)"
+          >
+            <i class="fa fa-line-chart nav-icon"></i> View Predictions
+          </b-nav-item>
+        </template>
 
-        <b-nav-item
-          @click="onResults"
-          :active="isActive(RESULTS_ROUTE)"
-          :disabled="!hasView(RESULTS_ROUTE)"
-        >
-          <i class="fa fa-check-circle nav-icon"></i> Check Models
-        </b-nav-item>
+        <!-- If no appropriate model exist, select a dataset: will start New Model workflow. -->
+        <template v-else>
+          <b-nav-item
+            @click="onSelectTarget"
+            :active="isActive(SELECT_TARGET_ROUTE)"
+            :disabled="!hasView(SELECT_TARGET_ROUTE)"
+          >
+            <i class="fa fa-dot-circle-o nav-icon"></i> New Model: Select Target
+          </b-nav-item>
+
+          <b-nav-item
+            @click="onSelectData"
+            :active="isActive(SELECT_TRAINING_ROUTE)"
+            :disabled="!hasView(SELECT_TRAINING_ROUTE)"
+          >
+            <i class="fa fa-sign-in nav-icon"></i> Select Model Features
+          </b-nav-item>
+
+          <b-nav-item
+            @click="onResults"
+            :active="isActive(RESULTS_ROUTE)"
+            :disabled="!hasView(RESULTS_ROUTE)"
+          >
+            <i class="fa fa-check-circle nav-icon"></i> Check Models
+          </b-nav-item>
+        </template>
       </b-navbar-nav>
     </b-collapse>
 
-    <!--
-        <b-nav-item
-          @click="onSearch"
-          :active="isActive(SEARCH_ROUTE)"
-        >
-          <i class="fa fa-file-text-o nav-icon"></i>
-          <b-nav-text>Select Data</b-nav-text>
-        </b-nav-item>
-        <b-nav-item
-          @click="onSelectTarget"
-          :active="isActive(SELECT_TARGET_ROUTE)"
-          :disabled="!hasView(SELECT_TARGET_ROUTE)"
-        >
-          <i class="fa fa-dot-circle-o nav-icon"></i>
-          <b-nav-text>Select Target</b-nav-text>
-        </b-nav-item>
-        <b-nav-item
-          @click="onSelectData"
-          :active="isActive(SELECT_TRAINING_ROUTE)"
-          :disabled="!hasView(SELECT_TRAINING_ROUTE)"
-        >
-          <i class="fa fa-code-fork nav-icon"></i>
-          <b-nav-text>Create Models</b-nav-text>
-        </b-nav-item>
-        <b-nav-item
-          @click="onJoinDatasets"
-          v-if="isJoinDatasets && isActive(JOIN_DATASETS_ROUTE)"
-          :active="isActive(JOIN_DATASETS_ROUTE)"
-          v-bind:class="{ active: isActive(JOIN_DATASETS_ROUTE) }"
-        >
-          <i class="fa fa-angle-right nav-arrow"></i>
-          <i class="fa fa-database nav-icon"></i>
-          <b-nav-text>Join Datasets</b-nav-text>
-        </b-nav-item>
-        <b-nav-item
-          @click="onResults"
-          :active="isActive(RESULTS_ROUTE)"
-          :disabled="!hasView(RESULTS_ROUTE)"
-        >
-          <i class="fa fa-line-chart nav-icon"></i>
-          <b-nav-text>View Models</b-nav-text>
-        </b-nav-item>
-        <b-nav-item
-          @click="onPredictions"
-          :active="isActive(PREDICTION_ROUTE)"
-          :disabled="!hasView(PREDICTION_ROUTE)"
-        >
-          <i class="fa fa-eye nav-icon"></i>
-          <b-nav-text>View Predictions</b-nav-text>
-        </b-nav-item>
-    -->
+    <!--<b-nav-item
+      @click="onJoinDatasets"
+      v-if="isJoinDatasets && isActive(JOIN_DATASETS_ROUTE)"
+      :active="isActive(JOIN_DATASETS_ROUTE)"
+    >
+      <i class="fa fa-database nav-icon"></i> Join Datasets
+    </b-nav-item>-->
 
     <!-- Right side -->
     <b-navbar-nav class="ml-auto">
