@@ -119,9 +119,10 @@ func (f *FilterParams) Merge(other *FilterParams) {
 
 // Column represents a column for filtered data.
 type Column struct {
-	Label string `json:"label"`
-	Key   string `json:"key"`
-	Type  string `json:"type"`
+	Label  string  `json:"label"`
+	Key    string  `json:"key"`
+	Type   string  `json:"type"`
+	Weight float64 `json:"weight"`
 }
 
 // FilteredDataValue represents a data value combined with an optional weight.
@@ -134,7 +135,7 @@ type FilteredDataValue struct {
 // input filter.
 type FilteredData struct {
 	NumRows int                    `json:"numRows"`
-	Columns []Column               `json:"columns"`
+	Columns []*Column              `json:"columns"`
 	Values  [][]*FilteredDataValue `json:"values"`
 }
 

@@ -243,9 +243,9 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 func createFilteredData(csvFile *os.File, variables []*model.Variable, lineCount int) (*apiModel.FilteredData, error) {
 	data := &apiModel.FilteredData{}
 
-	data.Columns = []apiModel.Column{}
+	data.Columns = []*apiModel.Column{}
 	for _, variable := range variables {
-		data.Columns = append(data.Columns, apiModel.Column{
+		data.Columns = append(data.Columns, &apiModel.Column{
 			Label: variable.DisplayName,
 			Key:   variable.Name,
 			Type:  variable.Type,

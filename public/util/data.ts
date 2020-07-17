@@ -602,6 +602,7 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
         label: label,
         key: col.key,
         type: col.type,
+        weight: col.weight,
         headerTitle: description ? label.concat(": ", description) : label,
         sortable: true
       };

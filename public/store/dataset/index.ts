@@ -184,6 +184,7 @@ export interface TableColumn {
   label: string;
   key: string;
   type: string;
+  weight: number;
   headerTitle: string;
   sortable?: boolean;
   variant?: string;
