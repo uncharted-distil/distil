@@ -192,6 +192,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	latestSchemaOutput = output
 	log.Infof("finished cleaning the dataset")
 
+	definitiveClassification := false
 	if steps.ClassificationOverwrite || !classificationExists(latestSchemaOutput, config) {
 		_, err = Classify(latestSchemaOutput, dataset, config)
 		if err != nil {
@@ -199,6 +200,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		}
 		log.Infof("finished classifying the dataset")
 	} else {
+		definitiveClassification = true
 		log.Infof("skipping classification because it already exists")
 	}
 
@@ -230,7 +232,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished geocoding the dataset")
 	}
 
-	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, dataStorage, metaStorage, dataset, datasetSource, origins, datasetType, config, true, true)
+	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, dataStorage, metaStorage, dataset, datasetSource, origins, datasetType, config, true, !definitiveClassification, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -274,8 +276,8 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, storage api.MetadataStorage, dataset string, source metadata.DatasetSource,
-	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, checkMatch bool, fallbackMerged bool) (string, error) {
-	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, true, fallbackMerged)
+	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, checkMatch bool, verifyMetadata bool, fallbackMerged bool) (string, error) {
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
