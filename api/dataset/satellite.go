@@ -155,6 +155,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 
 	// the folder name represents the label to apply for all containing images
 	errorCount := 0
+	timestampType := model.DateTimeType
 	for _, imageFolder := range imageFolders {
 		log.Infof("processing satellite image folder '%s'", imageFolder)
 		label := path.Base(imageFolder)
@@ -201,6 +202,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 				if err != nil {
 					logWarning(errorCount, "unable to extract timestamp from '%s': %v", targetImageFilename, err)
 					errorCount++
+					timestampType = model.StringType
 				}
 
 				groupID := extractGroupID(targetImageFilename)
@@ -241,7 +243,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.StringType, "Image band", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(4, "timestamp", "timestamp", "timestamp", model.DateTimeType,
+		model.NewVariable(4, "timestamp", "timestamp", "timestamp", timestampType,
 			model.StringType, "Image timestamp", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
