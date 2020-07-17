@@ -35,6 +35,7 @@ const (
 	resultTableSuffix        = "_result"
 	featureWeightTableSuffix = "_explain"
 	dataTableAlias           = "data"
+	confidenceName           = "confidence"
 )
 
 func (s *Storage) getResultTable(storageName string) string {
@@ -218,11 +219,14 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	// locally stored indices, so we fetch by name from the source to be safe.
 	targetIndex := -1
 	d3mIndexIndex := -1
+	confidenceIndex := -1
 	for i, v := range records[0] {
 		if v == targetDisplayName {
 			targetIndex = i
 		} else if v == model.D3MIndexFieldName {
 			d3mIndexIndex = i
+		} else if v == confidenceName {
+			confidenceIndex = i
 		}
 	}
 	// result is not in valid format - d3mIndex and target col need to have correct name
@@ -253,6 +257,9 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		indicesParsed[parsedVal] = true
 
 		dataForInsert := []interface{}{resultURI, parsedVal, targetVariable.Name, records[i][targetIndex]}
+		if confidenceIndex >= 0 {
+			dataForInsert = append(dataForInsert, records[i][confidenceIndex])
+		}
 		if confidences[records[i][d3mIndexIndex]] != nil {
 			cf := confidences[records[i][d3mIndexIndex]]
 			dataForInsert = append(dataForInsert, cf[0], cf[1])
@@ -262,6 +269,9 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	}
 
 	fields := []string{"result_id", "index", "target", "value"}
+	if confidenceIndex < 0 {
+		fields = append(fields, "confidence")
+	}
 	if len(confidences) > 0 {
 		fields = append(fields, "confidence_low", "confidence_high")
 	}
@@ -293,6 +303,8 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 	if rows != nil {
 		var columns []*api.Column
 		weightCount := 0
+		confidenceCol := -1
+		targetCol := -1
 		// Parse the row data.
 		for rows.Next() {
 			if columns == nil {
@@ -308,9 +320,12 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 					} else if api.IsErrorKey(key) {
 						label = "Error"
 						typ = target.Type
+						targetCol = i
 					} else if strings.HasPrefix(key, "__weights_") {
 						weightCount = weightCount + 1
 						continue
+					} else if key == "__predicted_confidence" {
+						confidenceCol = i
 					} else {
 						if key == target.Name {
 							typ = target.Type
@@ -347,6 +362,10 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 				} else if columnValues[i] != nil && columns[i-weightCount].Key != model.D3MIndexFieldName {
 					weightedValues[i-weightCount].Weight = columnValues[i].(float64)
 				}
+			}
+
+			if confidenceCol >= 0 {
+				weightedValues[targetCol].Confidence = columnValues[confidenceCol].(float64)
 			}
 			result.Values = append(result.Values, weightedValues)
 		}
@@ -672,7 +691,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			targetColumnQuery = fmt.Sprintf("data.\"%s\" as \"%s\", ", targetName, targetName)
 		}
 
-		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", %s %s %s, %s ",
+		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", predicted.confidence as \"__predicted_confidence\", %s %s %s, %s ",
 			distincts, predictedCol, targetColumnQuery, errorExpr, strings.Join(fieldsData, ", "), strings.Join(fieldsExplain, ", "))
 	}
 

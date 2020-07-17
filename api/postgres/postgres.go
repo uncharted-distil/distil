@@ -37,6 +37,7 @@ const (
 			index		BIGINT,
 			target		text,
 			value		text,
+			confidence double precision,
 			confidence_low double precision,
 			confidence_high double precision
 		);`
