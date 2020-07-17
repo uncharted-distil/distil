@@ -14,7 +14,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { saveView } from "../util/view";
 import {
   ROOT_ROUTE,
-  HOME_ROUTE,
+  // HOME_ROUTE,
   SEARCH_ROUTE,
   GROUPING_ROUTE,
   JOIN_DATASETS_ROUTE,
@@ -29,8 +29,8 @@ Vue.use(VueRouter);
 
 const router = new VueRouter({
   routes: [
-    { path: ROOT_ROUTE, redirect: HOME_ROUTE },
-    { path: HOME_ROUTE, component: Home },
+    { path: ROOT_ROUTE, redirect: SEARCH_ROUTE },
+    // { path: HOME_ROUTE, component: Home },
     { path: SEARCH_ROUTE, component: Search },
     { path: JOIN_DATASETS_ROUTE, component: JoinDatasets },
     { path: GROUPING_ROUTE, component: VariableGrouping },
