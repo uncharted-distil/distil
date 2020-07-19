@@ -199,8 +199,8 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	}
 
 	// currently only support a single result column.
-	if len(records[0]) > 2 {
-		log.Warnf("Result contains %d columns, expected 2.  Additional columns will be ignored.", len(records[0]))
+	if len(records[0]) > 3 {
+		log.Warnf("Result contains %d columns, expected 2 or 3 (confidence).  Additional columns will be ignored.", len(records[0]))
 	}
 
 	// Fetch the actual target variable (this can be different than the requested target for grouped variables)
@@ -269,7 +269,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	}
 
 	fields := []string{"result_id", "index", "target", "value"}
-	if confidenceIndex < 0 {
+	if confidenceIndex >= 0 {
 		fields = append(fields, "confidence")
 	}
 	if len(confidences) > 0 {
@@ -304,7 +304,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 		var columns []*api.Column
 		weightCount := 0
 		confidenceCol := -1
-		targetCol := -1
+		predictedCol := -1
 		// Parse the row data.
 		for rows.Next() {
 			if columns == nil {
@@ -317,15 +317,16 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 					if api.IsPredictedKey(key) {
 						label = "Predicted " + api.StripKeySuffix(key)
 						typ = target.Type
+						predictedCol = i
 					} else if api.IsErrorKey(key) {
 						label = "Error"
 						typ = target.Type
-						targetCol = i
 					} else if strings.HasPrefix(key, "__weights_") {
 						weightCount = weightCount + 1
 						continue
 					} else if key == "__predicted_confidence" {
 						confidenceCol = i
+						continue
 					} else {
 						if key == target.Name {
 							typ = target.Type
@@ -354,18 +355,25 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int,
 			// weights are always the last columns, and match in order
 			// with the value columns (skip the d3m index weight)
 			weightedValues := make([]*api.FilteredDataValue, len(columns))
+			varIndex := 0
 			for i := 0; i < len(columnValues); i++ {
-				if i < len(weightedValues) {
-					weightedValues[i] = &api.FilteredDataValue{
+				if i == confidenceCol {
+					if i < weightCount {
+						// confidence column IS NOT a variable and so indices need to be adjusted
+						varIndex--
+					}
+				} else if varIndex < len(weightedValues) {
+					weightedValues[varIndex] = &api.FilteredDataValue{
 						Value: columnValues[i],
 					}
-				} else if columnValues[i] != nil && columns[i-weightCount].Key != model.D3MIndexFieldName {
-					weightedValues[i-weightCount].Weight = columnValues[i].(float64)
+				} else if columnValues[i] != nil && columns[varIndex-weightCount].Key != model.D3MIndexFieldName {
+					weightedValues[varIndex-weightCount].Weight = columnValues[i].(float64)
 				}
+				varIndex++
 			}
 
 			if confidenceCol >= 0 {
-				weightedValues[targetCol].Confidence = columnValues[confidenceCol].(float64)
+				weightedValues[predictedCol].Confidence = api.NullableFloat64(columnValues[confidenceCol].(float64))
 			}
 			result.Values = append(result.Values, weightedValues)
 		}
@@ -691,7 +699,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			targetColumnQuery = fmt.Sprintf("data.\"%s\" as \"%s\", ", targetName, targetName)
 		}
 
-		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", predicted.confidence as \"__predicted_confidence\", %s %s %s, %s ",
+		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", COALESCE(predicted.confidence, 'NaN') as \"__predicted_confidence\", %s %s %s, %s ",
 			distincts, predictedCol, targetColumnQuery, errorExpr, strings.Join(fieldsData, ", "), strings.Join(fieldsExplain, ", "))
 	}
 
