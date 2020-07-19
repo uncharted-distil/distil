@@ -40,7 +40,7 @@
 <script lang="ts">
 import _ from "lodash";
 import $ from "jquery";
-import leaflet, { MarkerOptions, LatLngTuple } from "leaflet";
+import leaflet, { MarkerOptions, LatLngTuple, LatLngBounds } from "leaflet";
 import Vue from "vue";
 import IconBase from "./icons/IconBase";
 import IconCropFree from "./icons/IconCropFree";
@@ -112,7 +112,7 @@ interface Area {
 }
 
 // Minimum pixels size of clickable target displayed on the map.
-const TARGETSIZE = 10;
+const TARGETSIZE = 6;
 
 export default Vue.extend({
   name: "geo-plot",
@@ -151,8 +151,8 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
 
-    /* 
-     Flag to decide if we display accurate areas based on coordinates, or if they are physically 
+    /*
+     Flag to decide if we display accurate areas based on coordinates, or if they are physically
      too small, we present a circle big enough for the user to interact with them.
 
      @return {Boolean}
@@ -733,7 +733,12 @@ export default Vue.extend({
             coordinates[0][0] + (coordinates[1][0] - coordinates[0][0]), // Lat
             coordinates[0][1] + (coordinates[1][1] - coordinates[0][1]) // Lng
           ] as LatLngTuple;
-          const displayOptions = { color, radius: TARGETSIZE / 2 };
+          const displayOptions = {
+            color: color,
+            radius: TARGETSIZE / 2,
+            stroke: false,
+            fillOpacity: 1.0
+          };
           layer = leaflet.circleMarker(centerOfCoordinates, displayOptions);
         } else {
           layer = leaflet.rectangle(coordinates, { color });
