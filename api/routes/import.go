@@ -229,16 +229,18 @@ func createDataset(datasetPath string, datasetName string, config *env.Config) (
 	}
 
 	// create the raw dataset
-	ds, group, err := createRawDataset(datasetPath, datasetName)
+	formattedPath, ds, group, err := createRawDataset(datasetPath, datasetName)
 	if err != nil {
 		return nil, err
 	}
 
 	// create the formatted d3m dataset
-	outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
-	datasetName, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, config)
-	if err != nil {
-		return nil, err
+	if ds != nil {
+		outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
+		datasetName, formattedPath, err = task.CreateDataset(datasetName, ds, outputPath, config)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &datasetCreationResult{
@@ -248,12 +250,12 @@ func createDataset(datasetPath string, datasetName string, config *env.Config) (
 	}, nil
 }
 
-func createRawDataset(datasetPath string, datasetName string) (task.DatasetConstructor, map[string]interface{}, error) {
+func createRawDataset(datasetPath string, datasetName string) (string, task.DatasetConstructor, map[string]interface{}, error) {
 	if util.IsArchiveFile(datasetPath) {
 		// expand the archive
 		expandedInfo, err := dataset.ExpandZipDataset(datasetPath, datasetName)
 		if err != nil {
-			return nil, nil, err
+			return "", nil, nil, err
 		}
 
 		datasetPath = expandedInfo.ExtractedFilePath
@@ -263,14 +265,16 @@ func createRawDataset(datasetPath string, datasetName string) (task.DatasetConst
 	var ds task.DatasetConstructor
 	var err error
 	var group map[string]interface{}
-	if rawDatasetIsTabular(datasetPath) {
+	if util.IsDatasetDir(datasetPath) {
+		ds, err = dataset.NewD3MDataset(datasetName, datasetPath)
+	} else if rawDatasetIsTabular(datasetPath) {
 		ds, err = createTableDataset(datasetPath, datasetName)
 	} else {
 		// check to see what type of files it contains
 		var fileType string
 		fileType, err = dataset.CheckFileType(datasetPath)
 		if err != nil {
-			return nil, nil, err
+			return "", nil, nil, err
 		}
 		if fileType == "png" || fileType == "jpeg" || fileType == "jpg" {
 			ds, err = createMediaDataset(datasetName, fileType, datasetPath)
@@ -284,10 +288,10 @@ func createRawDataset(datasetPath string, datasetName string) (task.DatasetConst
 		}
 	}
 	if err != nil {
-		return nil, nil, err
+		return "", nil, nil, err
 	}
 
-	return ds, group, nil
+	return datasetPath, ds, group, nil
 }
 
 func rawDatasetIsTabular(datasetPath string) bool {
