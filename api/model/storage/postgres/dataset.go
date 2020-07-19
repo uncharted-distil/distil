@@ -284,7 +284,7 @@ func (s *Storage) DeleteVariable(dataset string, storageName string, varName str
 }
 
 func (s *Storage) insertBulkCopy(storageName string, varNames []string, inserts [][]interface{}) error {
-	rowsCopied, err := s.client.CopyFrom(storageName, varNames, inserts)
+	rowsCopied, err := s.batchClient.CopyFrom(storageName, varNames, inserts)
 	if err != nil {
 		return errors.Wrapf(err, "unable to bulk copy data to postgres")
 	}
@@ -405,7 +405,7 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 		return errors.Wrap(err, "unable to create temp table")
 	}
 
-	err = s.insertBatchData(tableNameTmp, []string{model.D3MIndexName, varName}, params)
+	err = s.insertBulkCopy(tableNameTmp, []string{model.D3MIndexName, varName}, params)
 	if err != nil {
 		return errors.Wrap(err, "unable to insert into temp table")
 	}

@@ -267,7 +267,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	}
 
 	// store all results to the storage
-	err = s.InsertBatch(s.getResultTable(storageName), fields, insertData)
+	err = s.insertBulkCopy(s.getResultTable(storageName), fields, insertData)
 	if err != nil {
 		return errors.Wrap(err, "failed to insert result in database")
 	}
