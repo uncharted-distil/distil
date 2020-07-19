@@ -263,7 +263,9 @@ func createRawDataset(datasetPath string, datasetName string) (task.DatasetConst
 	var ds task.DatasetConstructor
 	var err error
 	var group map[string]interface{}
-	if rawDatasetIsTabular(datasetPath) {
+	if util.IsDatasetDir(datasetPath) {
+		ds, err = dataset.NewD3MDataset(datasetName, datasetPath)
+	} else if rawDatasetIsTabular(datasetPath) {
 		ds, err = createTableDataset(datasetPath, datasetName)
 	} else {
 		// check to see what type of files it contains
