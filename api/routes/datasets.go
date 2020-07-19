@@ -201,6 +201,15 @@ func AvailableDatasetsHandler(metaCtor model.MetadataStorageCtor) func(http.Resp
 				available = append(available, f.Name())
 			}
 		}
+
+		// marshal data
+		err = handleJSON(w, map[string][]string{
+			"availableDatasets": available,
+		})
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to marshal dataset results into JSON"))
+			return
+		}
 	}
 }
 
