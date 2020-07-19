@@ -32,6 +32,7 @@ type Dataset struct {
 	variablesLookup map[string]bool
 	insertBatch     *pgx.Batch
 	fieldSQL        string
+	insertValues    [][]interface{}
 }
 
 // NewDataset creates a new dataset instance.
@@ -60,6 +61,7 @@ func NewDataset(id, name, description string, meta *model.Metadata) *Dataset {
 // ResetBatch clears the batch contents.
 func (ds *Dataset) ResetBatch() {
 	ds.insertBatch = &pgx.Batch{}
+	ds.insertValues = make([][]interface{}, 0)
 }
 
 // HasVariable checks to see if a variable is already contained in the dataset.
@@ -78,12 +80,37 @@ func (ds *Dataset) AddInsert(statement string, args []interface{}) {
 	ds.insertBatch.Queue(statement, args...)
 }
 
+// AddInsertFromSource adds a row to insert using the copy protocol.
+func (ds *Dataset) AddInsertFromSource(values []interface{}) {
+	ds.insertValues = append(ds.insertValues, values)
+}
+
+// GetColumns builds captures the variable names in a string slice.
+func (ds *Dataset) GetColumns() []string {
+	columns := make([]string, len(ds.Variables))
+	for i, v := range ds.Variables {
+		columns[i] = v.Name
+	}
+
+	return columns
+}
+
 // GetBatch returns the insert statement batch.
 func (ds *Dataset) GetBatch() *pgx.Batch {
 	return ds.insertBatch
 }
 
+// GetInsertSource returns the insert from source batch.
+func (ds *Dataset) GetInsertSource() [][]interface{} {
+	return ds.insertValues
+}
+
 // GetBatchSize gets the insert batch count.
 func (ds *Dataset) GetBatchSize() int {
 	return ds.insertBatch.Len()
+}
+
+// GetInsertSourceLength gets the insert from source size.
+func (ds *Dataset) GetInsertSourceLength() int {
+	return len(ds.insertValues)
 }
