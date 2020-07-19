@@ -44,6 +44,7 @@ type DatabaseDriver interface {
 	QueryRow(string, ...interface{}) pgx.Row
 	Exec(string, ...interface{}) (pgconn.CommandTag, error)
 	SendBatch(batch *pgx.Batch) pgx.BatchResults
+	CopyFrom(string, []string, [][]interface{}) (int64, error)
 }
 
 // ClientCtor repressents a client constructor to instantiate a postgres client.
@@ -81,6 +82,12 @@ func (ic IntegratedClient) Exec(sql string, params ...interface{}) (pgconn.Comma
 // SendBatch submits a batch.
 func (ic IntegratedClient) SendBatch(batch *pgx.Batch) pgx.BatchResults {
 	return ic.pgxClient.SendBatch(context.Background(), batch)
+}
+
+// CopyFrom copies data using the Postgres copy protocol for bulk data insertion.
+func (ic IntegratedClient) CopyFrom(storageName string, columns []string, rows [][]interface{}) (int64, error) {
+	sourceValues := pgx.CopyFromRows(rows)
+	return ic.pgxClient.CopyFrom(context.Background(), pgx.Identifier{storageName}, columns, sourceValues)
 }
 
 func (p pgxLogAdapter) Log(ctx context.Context, level pgx.LogLevel, msg string, data map[string]interface{}) {
