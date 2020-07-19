@@ -171,6 +171,7 @@ export enum SummaryMode {
 export interface TableValue {
   value: any;
   weight: number;
+  confidence: number;
 }
 export interface TableData {
   numRows: number;
