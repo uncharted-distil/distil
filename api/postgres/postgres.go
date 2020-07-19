@@ -267,14 +267,27 @@ func (d *Database) CreateSolutionMetadataTables() error {
 }
 
 func (d *Database) executeInserts(tableName string) error {
-	batch := d.Tables[tableName].GetBatch()
-	count := batch.Len()
-	res := d.Client.SendBatch(batch)
-	defer res.Close()
-	for i := 0; i < count; i++ {
-		_, err := res.Exec()
+	ds := d.Tables[tableName]
+	if ds.GetInsertSourceLength() > 0 {
+		insertCount, err := d.Client.CopyFrom(fmt.Sprintf("%s_base", tableName), ds.GetColumns(), ds.GetInsertSource())
 		if err != nil {
 			return errors.Wrapf(err, "unable to insert batch to postgres")
+		}
+		if insertCount != int64(ds.GetInsertSourceLength()) {
+			return errors.Errorf("batch insert only copied %d rows from source out of %d", insertCount, ds.GetInsertSourceLength())
+		}
+	}
+
+	batchCount := ds.GetBatchSize()
+	if batchCount > 0 {
+		batch := ds.GetBatch()
+		res := d.Client.SendBatch(batch)
+		defer res.Close()
+		for i := 0; i < batchCount; i++ {
+			_, err := res.Exec()
+			if err != nil {
+				return errors.Wrapf(err, "unable to insert batch to postgres")
+			}
 		}
 	}
 
@@ -356,7 +369,6 @@ func (d *Database) DeleteDataset(name string) {
 func (d *Database) IngestRow(tableName string, data []string) error {
 	ds := d.Tables[tableName]
 
-	insertStatement := ""
 	variables := ds.Variables
 	values := make([]interface{}, len(variables))
 	for i := 0; i < len(variables); i++ {
@@ -369,13 +381,11 @@ func (d *Database) IngestRow(tableName string, data []string) error {
 		} else {
 			val = data[i]
 		}
-		insertStatement = fmt.Sprintf("%s, $%d", insertStatement, i+1)
 		values[i] = val
 	}
-	insertStatement = fmt.Sprintf("INSERT INTO distil.public.\"%s_base\" (%s) VALUES (%s)", tableName, ds.fieldSQL, insertStatement[2:])
-	ds.AddInsert(insertStatement, values)
+	ds.AddInsertFromSource(values)
 
-	if ds.GetBatchSize() >= d.BatchSize {
+	if ds.GetInsertSourceLength() >= d.BatchSize {
 
 		err := d.executeInserts(tableName)
 		if err != nil {
