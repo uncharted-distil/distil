@@ -238,6 +238,7 @@ func main() {
 	routes.SetVerboseError(config.VerboseError)
 	// GET
 	registerRoute(mux, "/distil/datasets", routes.DatasetsHandler(datamartCtors))
+	registerRoute(mux, "/distil/available", routes.AvailableDatasetsHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/distil/datasets/:dataset", routes.DatasetHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/distil/models", routes.ModelsHandler(esExportedModelStorageCtor))
 	registerRoute(mux, "/distil/models/:model", routes.ModelHandler(esExportedModelStorageCtor))
