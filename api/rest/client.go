@@ -49,7 +49,11 @@ func NewClient(endpoint string) ClientCtor {
 
 // Get performs a get using the provided params as query string parameters.
 func (c *Client) Get(function string, params map[string]string) ([]byte, error) {
-	url := fmt.Sprintf("%s/%s", c.BaseEndpoint, function)
+	url := function
+	if c.BaseEndpoint != "" {
+		url = fmt.Sprintf("%s/%s", c.BaseEndpoint, function)
+	}
+
 	queryString := ""
 	for name, value := range params {
 		queryString = fmt.Sprintf("%s&%s=%s", queryString, name, value)
