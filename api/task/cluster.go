@@ -136,8 +136,8 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 	var err error
 	if model.IsImage(clusteringVar.Type) {
 		step, err = description.CreateImageClusteringPipeline("business", "basic image clustering", []*model.Variable{clusteringVar}, useKMeans)
-	} else if model.IsRemoteSensing(clusteringVar.Type) {
-		rsg := clusteringVar.Grouping.(*model.RemoteSensingGrouping)
+	} else if model.IsRemoteSensing(getClusterGroup(clusteringVar.Name, features).GetType()) {
+		rsg := getClusterGroup(clusteringVar.Name, features).(*model.RemoteSensingGrouping)
 		step, err = description.CreateMultiBandImageClusteringPipeline("5-eyes", "I see you", rsg, features, useKMeans)
 	} else if clusteringVar.DistilRole == model.VarDistilRoleGrouping {
 		// assume timeseries for now if distil role is grouping
@@ -202,4 +202,13 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 	}
 
 	return true, clusteredData, nil
+}
+
+func getClusterGroup(clusterVar string, features []*model.Variable) model.BaseGrouping {
+	for _, feature := range features {
+		if feature.IsGrouping() && feature.Grouping.GetIDCol() == clusterVar {
+			return feature.Grouping
+		}
+	}
+	return nil
 }

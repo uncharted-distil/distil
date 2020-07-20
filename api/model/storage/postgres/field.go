@@ -18,7 +18,6 @@ package postgres
 import (
 	"fmt"
 
-	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -114,7 +113,7 @@ func updateClusterHighlight(metadataStorage api.MetadataStorage, dataset string,
 			return err
 		}
 
-		if variable.IsGrouping() && model.IsTimeSeries(variable.Grouping.GetType()) {
+		if variable.IsGrouping() {
 			clusterCol, ok := api.GetClusterColFromGrouping(variable.Grouping)
 			if ok && api.HasClusterData(dataset, clusterCol, metadataStorage) {
 				filterParams.Highlight.Key = clusterCol

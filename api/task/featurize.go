@@ -121,8 +121,10 @@ func SetGroups(datasetID string, rawGrouping map[string]interface{}, meta api.Me
 		if err != nil {
 			return err
 		}
-
-		err = meta.AddGroupedVariable(datasetID, rsg.IDCol+"_group", "Tile", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
+		// Set the name of the expected cluster column - it doesn't necessarily exist.
+		varName := rsg.IDCol + "_group"
+		rsg.ClusterCol = model.ClusterVarPrefix + rsg.IDCol
+		err = meta.AddGroupedVariable(datasetID, varName, "Tile", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
 		if err != nil {
 			return err
 		}

@@ -65,7 +65,7 @@ export interface GeoCoordinateGrouping extends Grouping {
   yCol: string;
 }
 
-export interface RemoteSensingGrouping extends Grouping {
+export interface RemoteSensingGrouping extends ClusteredGrouping {
   imageCol: string;
   bandCol: string;
 }

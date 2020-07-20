@@ -203,7 +203,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 			field = NewCoordinateField(variable.Name, s, dataset, storageName, gcg.XCol, gcg.YCol, variable.DisplayName, variable.Grouping.GetType(), "")
 		} else if model.IsRemoteSensing(variable.Grouping.GetType()) {
 			rsg := variable.Grouping.(*model.RemoteSensingGrouping)
-			field = NewMultiBandImageField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Grouping.GetType(), rsg.IDCol, rsg.BandCol)
+			field = NewMultiBandImageField(s, dataset, storageName, rsg.ClusterCol, variable.Name, variable.DisplayName, variable.Grouping.GetType(), rsg.IDCol, rsg.BandCol)
 		} else {
 			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.GetIDCol(), variable.Grouping.GetType())
 		}
