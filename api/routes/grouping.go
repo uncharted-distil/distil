@@ -237,7 +237,10 @@ func createGrouping(dataset string, storageName string, groupingType string, raw
 			return err
 		}
 
-		err = meta.AddGroupedVariable(dataset, rsg.IDCol+"_group", "Tile", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
+		// Set the name of the expected cluster column - it doesn't necessarily exist.
+		varName := rsg.IDCol + "_group"
+		rsg.ClusterCol = model.ClusterVarPrefix + rsg.IDCol
+		err = meta.AddGroupedVariable(dataset, varName, "Tile", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
 		if err != nil {
 			return err
 		}

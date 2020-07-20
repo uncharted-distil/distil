@@ -29,11 +29,12 @@ import (
 // MultiBandImageField defines behaviour for the image field type.
 type MultiBandImageField struct {
 	BasicField
-	IDCol string
+	IDCol      string
+	ClusterCol string
 }
 
 // NewMultiBandImageField creates a new field for mutli band image types.
-func NewMultiBandImageField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string,
+func NewMultiBandImageField(storage *Storage, datasetName string, datasetStorageName string, clusterCol string, key string, label string, typ string,
 	idCol string, bandCol string) *MultiBandImageField {
 	count := getCountSQL(idCol)
 
@@ -47,7 +48,8 @@ func NewMultiBandImageField(storage *Storage, datasetName string, datasetStorage
 			Type:               typ,
 			Count:              count,
 		},
-		IDCol: idCol,
+		IDCol:      idCol,
+		ClusterCol: clusterCol,
 	}
 
 	return field
@@ -100,9 +102,8 @@ func (f *MultiBandImageField) FetchSummaryData(resultURI string, filterParams *a
 
 // selects the target feature for the summary based on the mode - for multiband images that's group ID vs. cluster display
 func (f *MultiBandImageField) featureVarName(mode api.SummaryMode) string {
-	clusterCol := featureVarName(f.Key)
-	if mode == api.ClusterMode && api.HasClusterData(f.GetDatasetName(), clusterCol, f.GetStorage().metadata) {
-		return clusterCol
+	if mode == api.ClusterMode && api.HasClusterData(f.GetDatasetName(), f.ClusterCol, f.GetStorage().metadata) {
+		return f.ClusterCol
 	}
 	return f.IDCol
 }
