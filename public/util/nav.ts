@@ -5,7 +5,7 @@ import { restoreView } from "../util/view";
 import {
   // HOME_ROUTE,
   SEARCH_ROUTE,
-  //GROUPING_ROUTE,
+  // GROUPING_ROUTE,
   JOIN_DATASETS_ROUTE,
   SELECT_TARGET_ROUTE,
   SELECT_TRAINING_ROUTE,

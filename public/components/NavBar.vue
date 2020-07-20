@@ -124,18 +124,23 @@ export default Vue.extend({
     path(): string {
       return routeGetters.getRoutePath(this.$store);
     },
+
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+
     joinDatasets(): string[] {
       return routeGetters.getRouteJoinDatasets(this.$store);
     },
+
     joinDatasetsHash(): string {
       return routeGetters.getRouteJoinDatasetsHash(this.$store);
     },
+
     isJoinDatasets(): boolean {
       return this.joinDatasets.length === 2 || this.hasJoinDatasetView();
     },
+
     activeSteps(): string[] {
       const steps = [
         SELECT_TARGET_ROUTE,
@@ -152,35 +157,45 @@ export default Vue.extend({
     isActive(view) {
       return view === this.path;
     },
+
     // onHome() {
     //   gotoHome(this.$router);
     // },
+
     onSearch() {
       gotoSearch(this.$router);
     },
+
     onJoinDatasets() {
       gotoJoinDatasets(this.$router);
     },
+
     onSelectTarget() {
       gotoSelectTarget(this.$router);
     },
+
     onSelectData() {
       gotoSelectData(this.$router);
     },
+
     onResults() {
       gotoResults(this.$router);
     },
+
     onApplyModel() {
       gotoApplyModel(this.$router);
     },
+
     onPredictions() {
       gotoPredictions(this.$router);
     },
+
     hasView(view: string): boolean {
       return (
         !!restoreView(view, this.dataset) && this.activeSteps.indexOf(view) > -1
       );
     },
+
     hasJoinDatasetView(): boolean {
       return !!restoreView(JOIN_DATASETS_ROUTE, this.joinDatasetsHash);
     }
