@@ -52,11 +52,8 @@ var (
 
 	// eurosat drops cloud layer, has the 8A layer and offsets everything else.
 	eurosatBandMapping = map[int]string{
-		9:  "8A",
-		10: "09",
-		11: "",
-		12: "11",
-		13: "12",
+		10: "",
+		13: "8A",
 	}
 )
 
