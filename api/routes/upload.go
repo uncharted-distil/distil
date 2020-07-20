@@ -19,7 +19,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 
@@ -27,8 +29,10 @@ import (
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil/api/dataset"
 	"github.com/uncharted-distil/distil/api/env"
+	"github.com/uncharted-distil/distil/api/rest"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -41,28 +45,45 @@ func UploadHandler(config *env.Config) func(http.ResponseWriter, *http.Request) 
 		queryValues := r.URL.Query()
 		typ := queryValues.Get("type")
 
-		// read the file from the request
-		data, err := receiveFile(r)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to receive file from request"))
-			return
-		}
-		// Figure out what type of dataset we've got
 		var outputPath string
-		if typ == "table" {
-			tmpPath := env.GetTmpPath()
-			csvFilename := path.Join(tmpPath, fmt.Sprintf("%s_raw.csv", datasetName))
-			outputPath = util.GetUniqueName(csvFilename)
-			err = util.WriteFileWithDirs(outputPath, data, os.ModePerm)
-		} else if typ == "media" {
-			// Expand the data into temp storage
-			outputPath, err = dataset.StoreZipDataset(datasetName, data)
-		} else if typ == "" {
-			handleError(w, errors.Errorf("upload type parameter not specified"))
-			return
+		var err error
+		if typ == "datamart" {
+			var params map[string]interface{}
+			params, err = getPostParameters(r)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
+				return
+			}
+
+			urlString := params["url"].(string)
+			if isValidDownloadURL(urlString, config) {
+				outputPath, err = downloadFile(datasetName, urlString, config)
+			} else {
+				err = errors.Errorf("supplied url is invalid")
+			}
 		} else {
-			handleError(w, errors.Errorf("unrecognized upload type"))
-			return
+			// read the file from the request
+			var data []byte
+			data, err = receiveFile(r)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to receive file from request"))
+				return
+			}
+
+			// Figure out what type of dataset we've got
+			if typ == "table" {
+				tmpPath := env.GetTmpPath()
+				csvFilename := path.Join(tmpPath, fmt.Sprintf("%s_raw.csv", datasetName))
+				outputPath = util.GetUniqueName(csvFilename)
+				err = util.WriteFileWithDirs(outputPath, data, os.ModePerm)
+			} else if typ == "media" {
+				// Expand the data into temp storage
+				outputPath, err = dataset.StoreZipDataset(datasetName, data)
+			} else if typ == "" {
+				err = errors.Errorf("upload type parameter not specified")
+			} else {
+				err = errors.Errorf("unrecognized upload type")
+			}
 		}
 
 		if err != nil {
@@ -78,6 +99,47 @@ func UploadHandler(config *env.Config) func(http.ResponseWriter, *http.Request) 
 			return
 		}
 	}
+}
+
+func isValidDownloadURL(urlString string, config *env.Config) bool {
+	u, err := url.Parse(urlString)
+	if err != nil {
+		return false
+	}
+
+	if u.Scheme == "" || u.Host == "" || u.Path == "" {
+		return false
+	}
+
+	// check to make sure it comes from datamart
+	ud, err := url.Parse(config.DatamartURINYU)
+	if err != nil {
+		return false
+	}
+	if u.Host != ud.Host {
+		return false
+	}
+
+	return true
+}
+
+func downloadFile(datasetName string, urlString string, config *env.Config) (string, error) {
+	// get the file
+	restClient := rest.NewClient("")()
+	fileData, err := restClient.Get(urlString, nil)
+	if err != nil {
+		return "", err
+	}
+
+	// store it to the augmented folder
+	outputPath := env.ResolvePath(metadata.Augmented, datasetName)
+	outputPath = util.GetUniqueName(outputPath)
+	err = ioutil.WriteFile(outputPath, fileData, os.ModePerm)
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to write downloaded dataset to the file system")
+	}
+
+	return outputPath, nil
 }
 
 func receiveFile(r *http.Request) ([]byte, error) {
