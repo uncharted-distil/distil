@@ -213,6 +213,7 @@ export default Vue.extend({
 .navbar {
   background-color: var(--gray-900);
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.1);
+  justify-content: flex-start;
 }
 
 .app-icon {
@@ -222,17 +223,33 @@ export default Vue.extend({
 .nav-item {
   font-weight: bold;
   letter-spacing: 0.01rem;
-  overflow: hidden;
   white-space: nowrap;
 }
 
 /* Display an arrow if two link are next to each others. */
-.nav-item + .nav-item .nav-link::before {
+.navbar-collapse:not(.show) .nav-item + .nav-item .nav-link::before,
+.navbar-collapse.show .nav-item + .nav-item::before {
   color: var(--gray-600);
-  content: "\f105"; /* angle-right => https://fontawesome.com/v4.7.0/cheatsheet/ */
   font-family: FontAwesome;
   font-weight: bold;
+}
+
+/* Horizontal arrow if the menu is visible (not collapsed). */
+.navbar-collapse:not(.show) .nav-item + .nav-item .nav-link::before {
+  content: "\f105"; /* angle-right => https://fontawesome.com/v4.7.0/cheatsheet/ */
   margin-right: 1em;
+}
+
+/* Change the arrow to be vertical if the menu is collapsed. */
+.navbar-collapse.show .nav-item + .nav-item {
+  position: relative;
+  margin-top: 1em;
+}
+.navbar-collapse.show .nav-item + .nav-item::before {
+  content: "\f107"; /* angle-down => https://fontawesome.com/v4.7.0/cheatsheet/ */
+  left: 0.65em;
+  position: absolute;
+  top: -1em;
 }
 
 /* Icon. */
