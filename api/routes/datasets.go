@@ -16,8 +16,10 @@
 package routes
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	"github.com/microcosm-cc/bluemonday"
@@ -26,8 +28,10 @@ import (
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/model/storage/datamart"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 const (
@@ -154,6 +158,72 @@ func DatasetsHandler(metaCtors map[string]model.MetadataStorageCtor) func(http.R
 			return
 		}
 	}
+}
+
+// AvailableDatasetsHandler generates a route handle that will return the list of
+// files & folders that can be imported.
+func AvailableDatasetsHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// restrict to augmented folder
+		rootFolder := env.GetAugmentedPath()
+		files, err := ioutil.ReadDir(rootFolder)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to read augmented folder contents"))
+			return
+		}
+
+		// get the existing dataset folders
+		meta, err := metaCtor()
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to create metadata storage"))
+			return
+		}
+
+		datasets, err := meta.FetchDatasets(false, false)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to fetch existing datasets"))
+			return
+		}
+
+		existingFolders := []string{}
+		for _, ds := range datasets {
+			existingFolders = append(existingFolders, ds.Folder)
+		}
+
+		// folders could be datasets that are already imported
+		available := []string{}
+		for _, f := range files {
+			if f.IsDir() {
+				if isAvailableForImport(path.Join(rootFolder, f.Name()), existingFolders) {
+					available = append(available, f.Name())
+				}
+			} else {
+				available = append(available, f.Name())
+			}
+		}
+
+		// marshal data
+		err = handleJSON(w, map[string][]string{
+			"availableDatasets": available,
+		})
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to marshal dataset results into JSON"))
+			return
+		}
+	}
+}
+
+func isAvailableForImport(folderPath string, existingDatasets []string) bool {
+	// if it is in D3M format, it could already be ingested
+	if util.IsDatasetDir(folderPath) {
+		for _, ds := range existingDatasets {
+			if path.Base(folderPath) == ds {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 func loadDatasets(storage model.MetadataStorage, terms string, baseDataset *model.Dataset, results chan []*model.Dataset, errors chan error) {

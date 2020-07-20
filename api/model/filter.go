@@ -127,8 +127,9 @@ type Column struct {
 
 // FilteredDataValue represents a data value combined with an optional weight.
 type FilteredDataValue struct {
-	Value  interface{} `json:"value"`
-	Weight float64     `json:"weight,omitempty"`
+	Value      interface{}     `json:"value"`
+	Weight     float64         `json:"weight,omitempty"`
+	Confidence NullableFloat64 `json:"confidence,omitempty"`
 }
 
 // FilteredData provides the metadata and raw data values that match a supplied

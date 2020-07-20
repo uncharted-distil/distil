@@ -47,8 +47,7 @@ type IngestTaskConfig struct {
 	ClusteringOutputSchemaRelative     string
 	ClusteringEnabled                  bool
 	ClusteringKMeans                   bool
-	FeaturizationOutputDataRelative    string
-	FeaturizationOutputSchemaRelative  string
+	FeaturizationEnabled               bool
 	FormatOutputDataRelative           string
 	FormatOutputSchemaRelative         string
 	CleanOutputDataRelative            string
@@ -108,8 +107,7 @@ func NewConfig(config env.Config) *IngestTaskConfig {
 		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,
 		ClusteringEnabled:                  config.ClusteringEnabled,
 		ClusteringKMeans:                   config.ClusteringKMeans,
-		FeaturizationOutputDataRelative:    config.FeaturizationOutputDataRelative,
-		FeaturizationOutputSchemaRelative:  config.FeaturizationOutputSchemaRelative,
+		FeaturizationEnabled:               config.FeaturizationEnabled,
 		FormatOutputDataRelative:           config.FormatOutputDataRelative,
 		FormatOutputSchemaRelative:         config.FormatOutputSchemaRelative,
 		CleanOutputDataRelative:            config.CleanOutputDataRelative,
@@ -192,6 +190,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	latestSchemaOutput = output
 	log.Infof("finished cleaning the dataset")
 
+	definitiveClassification := false
 	if steps.ClassificationOverwrite || !classificationExists(latestSchemaOutput, config) {
 		_, err = Classify(latestSchemaOutput, dataset, config)
 		if err != nil {
@@ -199,6 +198,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		}
 		log.Infof("finished classifying the dataset")
 	} else {
+		definitiveClassification = true
 		log.Infof("skipping classification because it already exists")
 	}
 
@@ -230,7 +230,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished geocoding the dataset")
 	}
 
-	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, dataStorage, metaStorage, dataset, datasetSource, origins, datasetType, config, true, true)
+	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, dataStorage, metaStorage, dataset, datasetSource, origins, datasetType, config, true, !definitiveClassification, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -247,19 +247,21 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	}
 
 	// featurize dataset for downstream efficiencies
-	_, featurizedDatasetPath, err := FeaturizeDataset(originalSchemaFile, latestSchemaOutput, dataset, metaStorage, config)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to featurize dataset")
-	}
-	log.Infof("finished featurizing the dataset")
-	ingestedDataset, err := metaStorage.FetchDataset(dataset, true, true)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to load metadata")
-	}
-	ingestedDataset.LearningDataset = featurizedDatasetPath
-	err = metaStorage.UpdateDataset(ingestedDataset)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to store updated metadata")
+	if config.FeaturizationEnabled && canFeaturize(dataset, metaStorage) {
+		_, featurizedDatasetPath, err := FeaturizeDataset(originalSchemaFile, latestSchemaOutput, dataset, metaStorage, config)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to featurize dataset")
+		}
+		log.Infof("finished featurizing the dataset")
+		ingestedDataset, err := metaStorage.FetchDataset(dataset, true, true)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to load metadata")
+		}
+		ingestedDataset.LearningDataset = featurizedDatasetPath
+		err = metaStorage.UpdateDataset(ingestedDataset)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to store updated metadata")
+		}
 	}
 
 	// updating extremas is optional
@@ -274,8 +276,8 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, storage api.MetadataStorage, dataset string, source metadata.DatasetSource,
-	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, checkMatch bool, fallbackMerged bool) (string, error) {
-	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, true, fallbackMerged)
+	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, checkMatch bool, verifyMetadata bool, fallbackMerged bool) (string, error) {
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
@@ -333,13 +335,13 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 	}
 
 	// ingest the metadata
-	_, err = IngestMetadata(originalSchemaFile, schemaFile, data, storage, source, origins, datasetType, config, true, fallbackMerged)
+	_, err = IngestMetadata(originalSchemaFile, schemaFile, data, storage, source, origins, datasetType, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
 
 	// ingest the data
-	err = IngestPostgres(originalSchemaFile, schemaFile, source, config, true, false, fallbackMerged)
+	err = IngestPostgres(originalSchemaFile, schemaFile, source, config, verifyMetadata, false, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
@@ -501,12 +503,6 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 	}
 
 	mainDR := meta.GetMainDataResource()
-	log.Infof("main DR: %v", mainDR)
-	if mainDR == nil {
-		for _, dr := range meta.DataResources {
-			log.Infof("DR: %v", dr)
-		}
-	}
 	dataDir := path.Join(datasetDir, mainDR.ResPath)
 	log.Infof("using %s as data directory (built from %s and %s)", dataDir, datasetDir, mainDR.ResPath)
 

@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"path"
 
+	log "github.com/unchartedsoftware/plog"
+
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -119,8 +121,10 @@ func SetGroups(datasetID string, rawGrouping map[string]interface{}, meta api.Me
 		if err != nil {
 			return err
 		}
-
-		err = meta.AddGroupedVariable(datasetID, rsg.IDCol+"_group", "Tile", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
+		// Set the name of the expected cluster column - it doesn't necessarily exist.
+		varName := rsg.IDCol + "_group"
+		rsg.ClusterCol = model.ClusterVarPrefix + rsg.IDCol
+		err = meta.AddGroupedVariable(datasetID, varName, "Tile", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
 		if err != nil {
 			return err
 		}
@@ -137,4 +141,14 @@ func isRemoteSensingDataset(ds *api.Dataset) bool {
 	}
 
 	return false
+}
+
+func canFeaturize(datasetID string, meta api.MetadataStorage) bool {
+	dataset, err := meta.FetchDataset(datasetID, true, true)
+	if err != nil {
+		log.Warnf("error fetching dataset to determine if it can be featurized: %+v", err)
+		return false
+	}
+
+	return isRemoteSensingDataset(dataset)
 }

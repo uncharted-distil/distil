@@ -65,7 +65,7 @@ export interface GeoCoordinateGrouping extends Grouping {
   yCol: string;
 }
 
-export interface RemoteSensingGrouping extends Grouping {
+export interface RemoteSensingGrouping extends ClusteredGrouping {
   imageCol: string;
   bandCol: string;
 }
@@ -171,6 +171,7 @@ export enum SummaryMode {
 export interface TableValue {
   value: any;
   weight: number;
+  confidence: number;
 }
 export interface TableData {
   numRows: number;

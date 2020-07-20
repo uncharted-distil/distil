@@ -73,9 +73,9 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 	if updatedFilterParams.Highlight != nil {
 		for _, variable := range variables {
 			if variable.Name == updatedFilterParams.Highlight.Key && variable.IsGrouping() {
-				cluserCol, ok := GetClusterColFromGrouping(variable.Grouping)
-				if ok && HasClusterData(dataset, cluserCol, metaStore) {
-					updatedFilterParams.Highlight.Key = cluserCol
+				clusterCol, ok := GetClusterColFromGrouping(variable.Grouping)
+				if ok && HasClusterData(dataset, clusterCol, metaStore) {
+					updatedFilterParams.Highlight.Key = clusterCol
 					break
 				}
 			}
@@ -159,9 +159,9 @@ func HasClusterData(datasetName string, variableName string, metaStore MetadataS
 
 // GetClusterColFromGrouping return the cluster column if it exists in the group.
 func GetClusterColFromGrouping(group model.BaseGrouping) (string, bool) {
-	clustered, ok := group.(*model.TimeseriesGrouping)
+	clustered, ok := group.(model.ClusteredGrouping)
 	if ok {
-		return clustered.ClusterCol, true
+		return clustered.GetClusterCol(), true
 	}
 
 	return "", false

@@ -51,8 +51,7 @@ type Config struct {
 	ElasticTimeout                     int     `env:"ES_TIMEOUT" envDefault:"300"`
 	ESDatasetsIndex                    string  `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
 	ESModelsIndex                      string  `env:"ES_DATASETS_INDEX" envDefault:"models"`
-	FeaturizationOutputDataRelative    string  `env:"FEATURIZATION_OUTPUT_DATA" envDefault:"features/tables/learningData.csv"`
-	FeaturizationOutputSchemaRelative  string  `env:"FEATURIZATION_OUTPUT_SCHEMA" envDefault:"features/datasetDoc.json"`
+	FeaturizationEnabled               bool    `env:"FEATURIZATION_ENABLED" envDefault:"false"`
 	FormatOutputDataRelative           string  `env:"FORMAT_OUTPUT_DATA" envDefault:"format/tables/learningData.csv"`
 	FormatOutputSchemaRelative         string  `env:"FORMAT_OUTPUT_SCHEMA" envDefault:"format/datasetDoc.json"`
 	GeocodingOutputDataRelative        string  `env:"GEOCODING_OUTPUT_DATA" envDefault:"geocoded/tables/learningData.csv"`
