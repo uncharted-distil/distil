@@ -14,11 +14,10 @@
         </b-nav-item>
 
         <!-- If search produces a model of interest, select it for reuse: will start Apply Model workflow. -->
-        <template v-if="false">
+        <template v-if="hasSolutionId">
           <b-nav-item
             @click="onApplyModel"
-            :active="isActive(RESULTS_ROUTE)"
-            :disabled="!hasView(RESULTS_ROUTE)"
+            :active="isActive(APPLY_MODEL_ROUTE)"
           >
             <i class="fa fa-table nav-icon"></i> Apply Model: Select New Data
           </b-nav-item>
@@ -26,18 +25,17 @@
           <b-nav-item
             @click="onPredictions"
             :active="isActive(PREDICTION_ROUTE)"
-            :disabled="!hasView(PREDICTION_ROUTE)"
+            :disabled="isActive(APPLY_MODEL_ROUTE)"
           >
             <i class="fa fa-line-chart nav-icon"></i> View Predictions
           </b-nav-item>
         </template>
 
         <!-- If no appropriate model exist, select a dataset: will start New Model workflow. -->
-        <template v-else>
+        <template v-else-if="hasDataset">
           <b-nav-item
             @click="onSelectTarget"
             :active="isActive(SELECT_TARGET_ROUTE)"
-            :disabled="!hasView(SELECT_TARGET_ROUTE)"
           >
             <i class="fa fa-dot-circle-o nav-icon"></i> New Model: Select Target
           </b-nav-item>
@@ -45,7 +43,7 @@
           <b-nav-item
             @click="onSelectData"
             :active="isActive(SELECT_TRAINING_ROUTE)"
-            :disabled="!hasView(SELECT_TRAINING_ROUTE)"
+            :disabled="hasNoDatasetAndTarget"
           >
             <i class="fa fa-sign-in nav-icon"></i> Select Model Features
           </b-nav-item>
@@ -53,7 +51,7 @@
           <b-nav-item
             @click="onResults"
             :active="isActive(RESULTS_ROUTE)"
-            :disabled="!hasView(RESULTS_ROUTE)"
+            :disabled="hasNoDatasetAndTarget"
           >
             <i class="fa fa-check-circle nav-icon"></i> Check Models
           </b-nav-item>
@@ -94,6 +92,7 @@ import {
 } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
+  APPLY_MODEL_ROUTE,
   // HOME_ROUTE,
   SEARCH_ROUTE,
   JOIN_DATASETS_ROUTE,
@@ -110,6 +109,7 @@ export default Vue.extend({
 
   data() {
     return {
+      APPLY_MODEL_ROUTE: APPLY_MODEL_ROUTE,
       // HOME_ROUTE: HOME_ROUTE,
       SEARCH_ROUTE: SEARCH_ROUTE,
       JOIN_DATASETS_ROUTE: JOIN_DATASETS_ROUTE,
@@ -129,6 +129,17 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
 
+    target(): string {
+      return routeGetters.getRouteTargetVariable(this.$store);
+    },
+
+    solutionId(): string {
+      return (
+        routeGetters.getRouteSolutionId(this.$store) ??
+        routeGetters.getRouteFittedSolutionID(this.$store)
+      );
+    },
+
     joinDatasets(): string[] {
       return routeGetters.getRouteJoinDatasets(this.$store);
     },
@@ -141,15 +152,16 @@ export default Vue.extend({
       return this.joinDatasets.length === 2 || this.hasJoinDatasetView();
     },
 
-    activeSteps(): string[] {
-      const steps = [
-        SELECT_TARGET_ROUTE,
-        SELECT_TRAINING_ROUTE,
-        RESULTS_ROUTE,
-        PREDICTION_ROUTE
-      ];
-      const currentStep = steps.indexOf(this.$route.path) + 1;
-      return steps.slice(0, currentStep);
+    hasSolutionId(): boolean {
+      return !!this.solutionId;
+    },
+
+    hasDataset(): boolean {
+      return !!this.dataset;
+    },
+
+    hasNoDatasetAndTarget(): boolean {
+      return !(!!this.dataset && !!this.target);
     }
   },
 
@@ -188,12 +200,6 @@ export default Vue.extend({
 
     onPredictions() {
       gotoPredictions(this.$router);
-    },
-
-    hasView(view: string): boolean {
-      return (
-        !!restoreView(view, this.dataset) && this.activeSteps.indexOf(view) > -1
-      );
     },
 
     hasJoinDatasetView(): boolean {
