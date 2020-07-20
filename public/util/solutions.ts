@@ -141,7 +141,8 @@ export async function openModelSolution(
     target: args.targetFeature,
     task: task,
     solutionId: solutionId,
-    singleSolution: true.toString()
+    singleSolution: true.toString(),
+    applyModel: true.toString()
   };
 
   const entry = createRouteEntry(APPLY_MODEL_ROUTE, routeDefintion);

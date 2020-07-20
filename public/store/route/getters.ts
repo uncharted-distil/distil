@@ -425,6 +425,12 @@ export const getters = {
     return !!isSingleSolution;
   },
 
+  /* Check if the model should be open using the 'Apply model' navigation. */
+  isApplyModel(state: Route, getters: any): boolean {
+    const isApplyModel = <string>state.query.applyModel;
+    return !!isApplyModel;
+  },
+
   /**
    * Check if the current task includes Remote Sensing.
    * @param {Route} state

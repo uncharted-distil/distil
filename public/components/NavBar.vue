@@ -14,7 +14,7 @@
         </b-nav-item>
 
         <!-- If search produces a model of interest, select it for reuse: will start Apply Model workflow. -->
-        <template v-if="hasSolutionId">
+        <template v-if="isApplyModel">
           <b-nav-item
             @click="onApplyModel"
             :active="isActive(APPLY_MODEL_ROUTE)"
@@ -133,13 +133,6 @@ export default Vue.extend({
       return routeGetters.getRouteTargetVariable(this.$store);
     },
 
-    solutionId(): string {
-      return (
-        routeGetters.getRouteSolutionId(this.$store) ??
-        routeGetters.getRouteFittedSolutionID(this.$store)
-      );
-    },
-
     joinDatasets(): string[] {
       return routeGetters.getRouteJoinDatasets(this.$store);
     },
@@ -152,8 +145,15 @@ export default Vue.extend({
       return this.joinDatasets.length === 2 || this.hasJoinDatasetView();
     },
 
-    hasSolutionId(): boolean {
-      return !!this.solutionId;
+    isApplyModel(): boolean {
+      /* 
+        Check if we requested in the route for an Apply Model navigation,
+        or, in the case of a prediction a fitted solution ID.
+       */
+      return (
+        routeGetters.isApplyModel(this.$store) ||
+        !!routeGetters.getRouteFittedSolutionID(this.$store)
+      );
     },
 
     hasDataset(): boolean {
