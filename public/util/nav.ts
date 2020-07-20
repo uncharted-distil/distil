@@ -3,6 +3,7 @@ import store from "../store/store";
 import { createRouteEntry } from "../util/routes";
 import { restoreView } from "../util/view";
 import {
+  APPLY_MODEL_ROUTE,
   // HOME_ROUTE,
   SEARCH_ROUTE,
   // GROUPING_ROUTE,
@@ -53,7 +54,7 @@ export function gotoResults(router: VueRouter) {
 }
 
 export function gotoApplyModel(router: VueRouter) {
-  gotoView(router, RESULTS_ROUTE);
+  gotoView(router, APPLY_MODEL_ROUTE);
 }
 
 export function gotoPredictions(route: VueRouter) {

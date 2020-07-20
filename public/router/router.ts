@@ -1,6 +1,6 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import Home from "../views/Home";
+// import Home from "../views/Home";
 import Search from "../views/Search";
 import JoinDatasets from "../views/JoinDatasets";
 import SelectTarget from "../views/SelectTarget";
