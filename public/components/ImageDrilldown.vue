@@ -34,6 +34,8 @@ import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import { overlayRouteEntry } from "../util/routes";
 
+const IMAGE_MAX_SIZE = 4;
+
 const imageId = imageUrl => imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
 
 /**
@@ -99,7 +101,10 @@ export default Vue.extend({
       if (!!this.image && container) {
         container.innerHTML = "";
         container.appendChild(this.image.cloneNode() as HTMLImageElement);
-        container.children[0].style.width = "100%";
+
+        const image = container.children[0];
+        image.height = this.image.height * IMAGE_MAX_SIZE;
+        image.width = this.image.width * IMAGE_MAX_SIZE;
       }
     }
   }
@@ -115,7 +120,7 @@ export default Vue.extend({
 }
 
 /* Keep the image in its container. */
-.image-container img {
+.image-container /deep/ img {
   max-height: 100%;
   max-width: 100%;
   position: relative;
