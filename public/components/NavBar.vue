@@ -1,5 +1,5 @@
 <template>
-  <b-navbar toggleable="md" type="dark" class="fixed-top">
+  <b-navbar toggleable="lg" type="dark" class="fixed-top">
     <b-nav-toggle target="nav-collapse"></b-nav-toggle>
 
     <!-- Branding -->
@@ -16,7 +16,7 @@
         <!-- If search produces a model of interest, select it for reuse: will start Apply Model workflow. -->
         <template v-if="false">
           <b-nav-item
-            @click="onResults"
+            @click="onApplyModel"
             :active="isActive(RESULTS_ROUTE)"
             :disabled="!hasView(RESULTS_ROUTE)"
           >
@@ -79,13 +79,14 @@
 <script lang="ts">
 import "../assets/images/uncharted.svg";
 import {
+  gotoApplyModel,
   // gotoHome,
-  gotoSearch,
   gotoJoinDatasets,
-  gotoSelectTarget,
-  gotoSelectData,
+  gotoPredictions,
   gotoResults,
-  gotoPredictions
+  gotoSearch,
+  gotoSelectData,
+  gotoSelectTarget
 } from "../util/nav";
 import {
   actions as appActions,
@@ -168,6 +169,9 @@ export default Vue.extend({
     },
     onResults() {
       gotoResults(this.$router);
+    },
+    onApplyModel() {
+      gotoApplyModel(this.$router);
     },
     onPredictions() {
       gotoPredictions(this.$router);
