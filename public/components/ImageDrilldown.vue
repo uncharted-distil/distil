@@ -13,7 +13,11 @@
       includedActive
       :item="item"
     />
-    <div class="image-container" ref="imageContainer"></div>
+    <div
+      class="image-container"
+      ref="imageContainer"
+      :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
+    ></div>
   </b-modal>
 </template>
 
@@ -33,6 +37,9 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import { overlayRouteEntry } from "../util/routes";
+
+const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drilldown in pixels.
+const IMAGE_MAX_ZOOM = 4; // We don't want an image to be too magnified to avoid blurriness.
 
 const imageId = imageUrl => imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
 
@@ -58,6 +65,12 @@ export default Vue.extend({
     item: Object as () => TableRow,
     title: String,
     visible: Boolean
+  },
+
+  data() {
+    return {
+      IMAGE_MAX_SIZE: IMAGE_MAX_SIZE
+    };
   },
 
   mounted() {
@@ -97,9 +110,21 @@ export default Vue.extend({
       const container = this.$refs.imageContainer as any;
 
       if (!!this.image && container) {
+        const image = this.image.cloneNode() as HTMLImageElement;
+
+        // Calculate how much bigger we can make the image to fit in the modal box.
+        const ratio = Math.min(
+          IMAGE_MAX_SIZE / Math.max(this.image.height, this.image.width),
+          IMAGE_MAX_ZOOM
+        );
+
+        // Update the image to be bigger, but not bigger than the modal box.
+        image.height = this.image.height * ratio;
+        image.width = this.image.width * ratio;
+
+        // Add the image to the container.
         container.innerHTML = "";
-        container.appendChild(this.image.cloneNode() as HTMLImageElement);
-        container.children[0].style.width = "100%";
+        container.appendChild(image);
       }
     }
   }
@@ -115,9 +140,9 @@ export default Vue.extend({
 }
 
 /* Keep the image in its container. */
-.image-container img {
-  max-height: 100%;
-  max-width: 100%;
+.image-container /deep/ img {
+  max-height: var(--IMAGE_MAX_SIZE);
+  max-width: var(--IMAGE_MAX_SIZE);
   position: relative;
 }
 </style>
