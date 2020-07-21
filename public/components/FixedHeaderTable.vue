@@ -195,7 +195,8 @@ export default Vue.extend({
 }
 .fixed-header-table tbody {
   width: 100%;
-  overflow: auto;
+  overflow-x: scroll;
+  overflow-y: auto;
   flex: 1;
 }
 .fixed-header-table tbody td {

@@ -1,6 +1,6 @@
 <template>
-  <div class="variable-facets row">
-    <div class="col-12 flex-column d-flex variable-facets-list">
+  <div class="variable-facets row h-100">
+    <div :class="variableFacetListClass + ' col-12 flex-column d-flex'">
       <div v-if="enableSearch" class="row align-items-center facet-filters">
         <div class="col-12 flex-column d-flex">
           <b-form-input size="sm" v-model="filter" placeholder="Search" />
@@ -138,7 +138,7 @@
       </div>
     </div>
     <div
-      v-if="numSummaries > rowsPerPage"
+      v-if="hasPages"
       class="col-12 row align-items-center variable-page-nav"
     >
       <div class="col-12 flex-column">
@@ -257,7 +257,6 @@ export default Vue.extend({
         return getRouteFacetPage(this.routePageKey(), this.$route);
       }
     },
-
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
@@ -333,6 +332,14 @@ export default Vue.extend({
         }
       });
       return typeChangeStatus;
+    },
+    hasPages(): boolean {
+      return this.numSummaries > this.rowsPerPage;
+    },
+    variableFacetListClass(): string {
+      return this.hasPages
+        ? "variable-facets-list-with-footer"
+        : "variable-facets-list";
     }
   },
 
@@ -577,7 +584,11 @@ button {
   overflow-y: auto;
 }
 
+.variable-facets-list-with-footer {
+  max-height: calc(100% - 45px);
+}
+
 .variable-facets-list {
-  max-height: 90%;
+  max-height: 100%;
 }
 </style>
