@@ -217,4 +217,8 @@ export default Vue.extend({
   padding: 4px 0;
   line-height: 30px;
 }
+
+.training-variables /deep/ .variable-facets-wrapper {
+  height: 100%;
+}
 </style>
