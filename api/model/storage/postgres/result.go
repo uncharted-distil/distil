@@ -258,7 +258,11 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 
 		dataForInsert := []interface{}{resultURI, parsedVal, targetVariable.Name, records[i][targetIndex]}
 		if confidenceIndex >= 0 {
-			dataForInsert = append(dataForInsert, records[i][confidenceIndex])
+			cfs, err := strconv.ParseFloat(records[i][confidenceIndex], 64)
+			if err != nil {
+				return errors.Wrap(err, "failed confidence value parsing")
+			}
+			dataForInsert = append(dataForInsert, cfs)
 		}
 		if confidences[records[i][d3mIndexIndex]] != nil {
 			cf := confidences[records[i][d3mIndexIndex]]
