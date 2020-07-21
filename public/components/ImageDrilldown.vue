@@ -40,11 +40,11 @@ const imageId = imageUrl => imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
 /**
  * Display a modal with drilldowned information about an image.
  *
- * @param visible       {Boolean} Display or hide the modal.
- * @param imageUrl      {String}  URL of the image to be drilldown.
- * @param title         {String=} Title of the modal.
- * @param dataFields    {Array<TableColumn>}
- * @param item          {TableRow} item being drilldown.
+ * @param visible    {Boolean} Display or hide the modal.
+ * @param imageUrl   {String}  URL of the image to be drilldown.
+ * @param title      {String=} Title of the modal.
+ * @param dataFields {Array<TableColumn>}
+ * @param item       {TableRow} item being drilldown.
  */
 export default Vue.extend({
   name: "image-drilldown",
@@ -84,7 +84,6 @@ export default Vue.extend({
 
   updated() {
     this.requestImage();
-    this.injectImage();
   },
 
   computed: {
@@ -156,6 +155,7 @@ export default Vue.extend({
           url: this.imageUrl
         });
       }
+      this.injectImage();
     }
   }
 });
