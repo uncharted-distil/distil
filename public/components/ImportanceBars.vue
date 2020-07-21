@@ -26,6 +26,9 @@ interface Bar {
 // Labels associated with confidences for tooltips
 const TOOLTIP_LABELS = ["LOW", "MEDIUM", "HIGH"];
 
+// Bias exponent to apply to importance values.
+const IMPORTANCE_EXPONENT = 0.3;
+
 export default Vue.extend({
   name: "importance-bars",
 
@@ -53,10 +56,15 @@ export default Vue.extend({
   },
 
   computed: {
+    // biased bar
+    biasedImportance(): number {
+      return Math.pow(this.importance, IMPORTANCE_EXPONENT);
+    },
+
     // Render descriptions of bars
     bars(): Bar[] {
       const entries: Bar[] = [];
-      const numActive = Math.round(this.importance * this.numBars);
+      const numActive = Math.round(this.biasedImportance * this.numBars);
       for (let i = 0; i < this.numBars; i++) {
         const entry = {
           height: i * this.barHeightIncrement,
@@ -73,7 +81,7 @@ export default Vue.extend({
       const label =
         TOOLTIP_LABELS[
           Math.min(
-            Math.round(this.importance * (TOOLTIP_LABELS.length - 1)),
+            Math.round(this.biasedImportance * (TOOLTIP_LABELS.length - 1)),
             TOOLTIP_LABELS.length - 1
           )
         ];
