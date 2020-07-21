@@ -23,11 +23,12 @@
     </div>
 
     <div slot="footer" class="facet-footer-container">
-      <facet-plugin-scrollbar
+      <facet-plugin-zoom-bar
         min-bar-width="8"
         auto-hide="true"
         round-caps="true"
-      ></facet-plugin-scrollbar>
+      >
+      </facet-plugin-zoom-bar>
       <div
         v-if="this.html"
         v-child="computeCustomHTML()"
