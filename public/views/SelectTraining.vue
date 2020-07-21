@@ -1,10 +1,12 @@
 <template>
   <div class="select-training-view d-flex h-100">
+    <!-- Status Panel -->
     <status-panel></status-panel>
     <div class="sidebar-container d-flex flex-column h-100">
       <div class="padding-nav"></div>
       <status-sidebar></status-sidebar>
     </div>
+
     <div class="container-fluid d-flex flex-column h-100 select-view">
       <div class="row flex-0-nav"></div>
 

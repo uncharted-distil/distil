@@ -1,6 +1,6 @@
 <template>
   <div id="distil-app">
-    <navigation></navigation>
+    <nav-bar />
     <router-view class="view"></router-view>
   </div>
 </template>
@@ -10,7 +10,7 @@ import Vue from "vue";
 import VueRouterSync from "vuex-router-sync";
 import VueObserveVisibility from "vue-observe-visibility";
 import BootstrapVue from "bootstrap-vue";
-import Navigation from "./views/Navigation";
+import NavBar from "./components/NavBar";
 import store from "./store/store";
 import router from "./router/router";
 
@@ -34,9 +34,7 @@ export default Vue.extend({
   store: store,
   router: router,
   components: {
-    Navigation
+    NavBar
   }
 });
 </script>
-
-<style></style>

@@ -1,11 +1,12 @@
 export const ROOT_ROUTE = "/";
-export const HOME_ROUTE = "/home";
+// export const HOME_ROUTE = "/home";
 export const SEARCH_ROUTE = "/search";
 export const JOIN_DATASETS_ROUTE = "/join";
 export const GROUPING_ROUTE = "/grouping";
 export const SELECT_TARGET_ROUTE = "/select";
 export const SELECT_TRAINING_ROUTE = "/create";
 export const RESULTS_ROUTE = "/results";
+export const APPLY_MODEL_ROUTE = "/results";
 export const PREDICTION_ROUTE = "/prediction";
 export const EXPORT_SUCCESS_ROUTE = "/export-success";
 

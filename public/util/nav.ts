@@ -3,9 +3,10 @@ import store from "../store/store";
 import { createRouteEntry } from "../util/routes";
 import { restoreView } from "../util/view";
 import {
-  HOME_ROUTE,
+  APPLY_MODEL_ROUTE,
+  // HOME_ROUTE,
   SEARCH_ROUTE,
-  GROUPING_ROUTE,
+  // GROUPING_ROUTE,
   JOIN_DATASETS_ROUTE,
   SELECT_TARGET_ROUTE,
   SELECT_TRAINING_ROUTE,
@@ -24,9 +25,9 @@ export function gotoView(router: VueRouter, view: string) {
   router.push(entry);
 }
 
-export function gotoHome(router: VueRouter) {
-  gotoView(router, HOME_ROUTE);
-}
+// export function gotoHome(router: VueRouter) {
+//   gotoView(router, HOME_ROUTE);
+// }
 
 export function gotoSearch(router: VueRouter) {
   gotoView(router, SEARCH_ROUTE);
@@ -50,6 +51,10 @@ export function gotoSelectData(router: VueRouter) {
 
 export function gotoResults(router: VueRouter) {
   gotoView(router, RESULTS_ROUTE);
+}
+
+export function gotoApplyModel(router: VueRouter) {
+  gotoView(router, APPLY_MODEL_ROUTE);
 }
 
 export function gotoPredictions(route: VueRouter) {

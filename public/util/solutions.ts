@@ -18,7 +18,7 @@ import {
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED
 } from "../store/requests/index";
-import { RESULTS_ROUTE } from "../store/route/index";
+import { APPLY_MODEL_ROUTE } from "../store/route/index";
 import store from "../store/store";
 import VueRouter from "vue-router";
 
@@ -141,10 +141,11 @@ export async function openModelSolution(
     target: args.targetFeature,
     task: task,
     solutionId: solutionId,
-    singleSolution: true.toString()
+    singleSolution: true.toString(),
+    applyModel: true.toString()
   };
 
-  const entry = createRouteEntry(RESULTS_ROUTE, routeDefintion);
+  const entry = createRouteEntry(APPLY_MODEL_ROUTE, routeDefintion);
   router.push(entry).catch(err => {
     console.warn(err);
   });

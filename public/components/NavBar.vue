@@ -1,88 +1,75 @@
 <template>
-  <b-navbar
-    toggleable="md"
-    type="dark"
-    class="navbar-fixed-top bottom-shadowed"
-  >
+  <b-navbar toggleable="lg" type="dark" class="fixed-top">
     <b-nav-toggle target="nav-collapse"></b-nav-toggle>
 
-    <img src="/images/uncharted.svg" class="app-icon" />
-    <span class="navbar-brand">Distil</span>
-    <b-navbar-nav>
-      <b-nav-item
-        @click="onHome"
-        :active="isActive(HOME_ROUTE)"
-        v-bind:class="{ active: isActive(HOME_ROUTE) }"
-      >
-        <i class="fa fa-home nav-icon"></i>
-        <b-nav-text>Home</b-nav-text>
-      </b-nav-item>
-      <b-nav-item
-        @click="onSearch"
-        :active="isActive(SEARCH_ROUTE)"
-        v-bind:class="{ active: isActive(SEARCH_ROUTE) }"
-      >
-        <i class="fa fa-angle-right nav-arrow"></i>
-        <i class="fa fa-file-text-o nav-icon"></i>
-        <b-nav-text>Select Data</b-nav-text>
-      </b-nav-item>
-      <b-nav-item
-        @click="onSelectTarget"
-        :active="isActive(SELECT_TARGET_ROUTE)"
-        :disabled="!hasView(SELECT_TARGET_ROUTE)"
-        v-bind:class="{ active: isActive(SELECT_TARGET_ROUTE) }"
-      >
-        <i class="fa fa-angle-right nav-arrow"></i>
-        <i class="fa fa-dot-circle-o  nav-icon"></i>
-        <b-nav-text>Select Target</b-nav-text>
-      </b-nav-item>
-      <b-nav-item
-        @click="onSelectData"
-        :active="isActive(SELECT_TRAINING_ROUTE)"
-        :disabled="!hasView(SELECT_TRAINING_ROUTE)"
-        v-bind:class="{ active: isActive(SELECT_TRAINING_ROUTE) }"
-      >
-        <i class="fa fa-angle-right nav-arrow"></i>
-        <i class="fa fa-code-fork  nav-icon"></i>
-        <b-nav-text>Create Models</b-nav-text>
-      </b-nav-item>
-      <b-nav-item
-        @click="onJoinDatasets"
-        v-if="isJoinDatasets && isActive(JOIN_DATASETS_ROUTE)"
-        :active="isActive(JOIN_DATASETS_ROUTE)"
-        v-bind:class="{ active: isActive(JOIN_DATASETS_ROUTE) }"
-      >
-        <i class="fa fa-angle-right nav-arrow"></i>
-        <i class="fa fa-database nav-icon"></i>
-        <b-nav-text>Join Datasets</b-nav-text>
-      </b-nav-item>
-      <b-nav-item
-        @click="onResults"
-        :active="isActive(RESULTS_ROUTE)"
-        :disabled="!hasView(RESULTS_ROUTE)"
-        v-bind:class="{ active: isActive(RESULTS_ROUTE) }"
-      >
-        <i class="fa fa-angle-right nav-arrow"></i>
-        <i class="fa fa-line-chart nav-icon"></i>
-        <b-nav-text>View Models</b-nav-text>
-      </b-nav-item>
-      <b-nav-item
-        @click="onPredictions"
-        :active="isActive(PREDICTION_ROUTE)"
-        :disabled="!hasView(PREDICTION_ROUTE)"
-        v-bind:class="{ active: isActive(PREDICTION_ROUTE) }"
-      >
-        <i class="fa fa-angle-right nav-arrow"></i>
-        <i class="fa fa-eye nav-icon"></i>
-        <b-nav-text>View Predictions</b-nav-text>
-      </b-nav-item>
-    </b-navbar-nav>
+    <!-- Branding -->
+    <img src="/images/uncharted.svg" class="app-icon" height="36" width="36" />
+    <b-navbar-brand>Distil</b-navbar-brand>
+
+    <!-- Left Side -->
+    <b-collapse id="nav-collapse" is-nav>
+      <b-navbar-nav>
+        <b-nav-item @click="onSearch" :active="isActive(SEARCH_ROUTE)">
+          <i class="fa fa-home nav-icon"></i> Select Model or Dataset
+        </b-nav-item>
+
+        <!-- If search produces a model of interest, select it for reuse: will start Apply Model workflow. -->
+        <template v-if="isApplyModel">
+          <b-nav-item
+            @click="onApplyModel"
+            :active="isActive(APPLY_MODEL_ROUTE)"
+          >
+            <i class="fa fa-table nav-icon"></i> Apply Model: Select New Data
+          </b-nav-item>
+
+          <b-nav-item
+            @click="onPredictions"
+            :active="isActive(PREDICTION_ROUTE)"
+            :disabled="isActive(APPLY_MODEL_ROUTE)"
+          >
+            <i class="fa fa-line-chart nav-icon"></i> View Predictions
+          </b-nav-item>
+        </template>
+
+        <!-- If no appropriate model exist, select a dataset: will start New Model workflow. -->
+        <template v-else-if="hasDataset">
+          <b-nav-item
+            @click="onSelectTarget"
+            :active="isActive(SELECT_TARGET_ROUTE)"
+          >
+            <i class="fa fa-dot-circle-o nav-icon"></i> New Model: Select Target
+          </b-nav-item>
+
+          <b-nav-item
+            @click="onSelectData"
+            :active="isActive(SELECT_TRAINING_ROUTE)"
+            :disabled="hasNoDatasetAndTarget"
+          >
+            <i class="fa fa-sign-in nav-icon"></i> Select Model Features
+          </b-nav-item>
+
+          <b-nav-item
+            @click="onResults"
+            :active="isActive(RESULTS_ROUTE)"
+            :disabled="hasNoDatasetAndTarget"
+          >
+            <i class="fa fa-check-circle nav-icon"></i> Check Models
+          </b-nav-item>
+        </template>
+      </b-navbar-nav>
+    </b-collapse>
+
+    <!--<b-nav-item
+      @click="onJoinDatasets"
+      v-if="isJoinDatasets && isActive(JOIN_DATASETS_ROUTE)"
+      :active="isActive(JOIN_DATASETS_ROUTE)"
+    >
+      <i class="fa fa-database nav-icon"></i> Join Datasets
+    </b-nav-item>-->
+
+    <!-- Right side -->
     <b-navbar-nav class="ml-auto">
-      <b-nav-item href="/help">
-        <b-nav-text>
-          Help
-        </b-nav-text>
-      </b-nav-item>
+      <b-nav-item href="/help">Help</b-nav-item>
     </b-navbar-nav>
   </b-navbar>
 </template>
@@ -90,13 +77,14 @@
 <script lang="ts">
 import "../assets/images/uncharted.svg";
 import {
-  gotoHome,
-  gotoSearch,
+  gotoApplyModel,
+  // gotoHome,
   gotoJoinDatasets,
-  gotoSelectTarget,
-  gotoSelectData,
+  gotoPredictions,
   gotoResults,
-  gotoPredictions
+  gotoSearch,
+  gotoSelectData,
+  gotoSelectTarget
 } from "../util/nav";
 import {
   actions as appActions,
@@ -104,7 +92,8 @@ import {
 } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
-  HOME_ROUTE,
+  APPLY_MODEL_ROUTE,
+  // HOME_ROUTE,
   SEARCH_ROUTE,
   JOIN_DATASETS_ROUTE,
   SELECT_TARGET_ROUTE,
@@ -120,7 +109,8 @@ export default Vue.extend({
 
   data() {
     return {
-      HOME_ROUTE: HOME_ROUTE,
+      APPLY_MODEL_ROUTE: APPLY_MODEL_ROUTE,
+      // HOME_ROUTE: HOME_ROUTE,
       SEARCH_ROUTE: SEARCH_ROUTE,
       JOIN_DATASETS_ROUTE: JOIN_DATASETS_ROUTE,
       SELECT_TARGET_ROUTE: SELECT_TARGET_ROUTE,
@@ -134,27 +124,44 @@ export default Vue.extend({
     path(): string {
       return routeGetters.getRoutePath(this.$store);
     },
+
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+
+    target(): string {
+      return routeGetters.getRouteTargetVariable(this.$store);
+    },
+
     joinDatasets(): string[] {
       return routeGetters.getRouteJoinDatasets(this.$store);
     },
+
     joinDatasetsHash(): string {
       return routeGetters.getRouteJoinDatasetsHash(this.$store);
     },
+
     isJoinDatasets(): boolean {
       return this.joinDatasets.length === 2 || this.hasJoinDatasetView();
     },
-    activeSteps(): string[] {
-      const steps = [
-        SELECT_TARGET_ROUTE,
-        SELECT_TRAINING_ROUTE,
-        RESULTS_ROUTE,
-        PREDICTION_ROUTE
-      ];
-      const currentStep = steps.indexOf(this.$route.path) + 1;
-      return steps.slice(0, currentStep);
+
+    isApplyModel(): boolean {
+      /* 
+        Check if we requested in the route for an Apply Model navigation,
+        or, in the case of a prediction a fitted solution ID.
+       */
+      return (
+        routeGetters.isApplyModel(this.$store) ||
+        !!routeGetters.getRouteFittedSolutionID(this.$store)
+      );
+    },
+
+    hasDataset(): boolean {
+      return !!this.dataset;
+    },
+
+    hasNoDatasetAndTarget(): boolean {
+      return !(!!this.dataset && !!this.target);
     }
   },
 
@@ -162,32 +169,39 @@ export default Vue.extend({
     isActive(view) {
       return view === this.path;
     },
-    onHome() {
-      gotoHome(this.$router);
-    },
+
+    // onHome() {
+    //   gotoHome(this.$router);
+    // },
+
     onSearch() {
       gotoSearch(this.$router);
     },
+
     onJoinDatasets() {
       gotoJoinDatasets(this.$router);
     },
+
     onSelectTarget() {
       gotoSelectTarget(this.$router);
     },
+
     onSelectData() {
       gotoSelectData(this.$router);
     },
+
     onResults() {
       gotoResults(this.$router);
     },
+
+    onApplyModel() {
+      gotoApplyModel(this.$router);
+    },
+
     onPredictions() {
       gotoPredictions(this.$router);
     },
-    hasView(view: string): boolean {
-      return (
-        !!restoreView(view, this.dataset) && this.activeSteps.indexOf(view) > -1
-      );
-    },
+
     hasJoinDatasetView(): boolean {
       return !!restoreView(JOIN_DATASETS_ROUTE, this.joinDatasetsHash);
     }
@@ -195,98 +209,88 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .navbar {
-  background-color: #424242;
-}
-.navbar-fixed-top {
-  position: fixed !important;
-  right: 0;
-  left: 0;
-}
-.nav-arrow {
-  color: rgba(255, 255, 255, 1);
-  padding-right: 5px;
-}
-.nav-icon {
-  padding: 7px;
-  width: 30px;
-  height: 30px;
-  text-align: center;
-  border-radius: 50%;
-}
-.nav-item {
-  white-space: nowrap;
-  overflow: hidden;
-}
-.nav-item .nav-link {
-  padding: 2px;
-}
-.nav-item .navbar-text {
-  letter-spacing: 0.01rem;
-}
-.navbar-nav .btn {
-  letter-spacing: 0.01rem;
-  font-weight: bold;
-}
-.navbar-nav li a .nav-icon {
-  color: white;
-  background-color: #616161;
-}
-.navbar-nav li.active a .nav-icon {
-  background-color: #1b1b1b;
-}
-.navbar-nav li.active a .navbar-text {
-  color: rgba(255, 255, 255, 1);
-}
-.navbar-nav li:hover a .nav-icon {
-  transition: 0.5s all ease;
-  color: white;
-  background-color: #1b1b1b;
-}
-.navbar-nav li:hover a .navbar-text {
-  transition: 0.5s all ease;
-  color: rgba(255, 255, 255, 1);
-}
-.navbar-nav li.active ~ li a .nav-icon {
-  color: hsla(0, 0%, 100%, 0.5);
-  background-color: inherit;
-}
-.navbar-nav li.active ~ li a .navbar-text {
-  background-color: inherit;
-}
-.navbar-nav li.active ~ li a:hover .nav-icon {
-  transition: 0.5s all ease;
-  color: white;
-  background-color: #1b1b1b;
-}
-.navbar-nav li.active ~ li a:hover .navbar-text {
-  transition: 0.5s all ease;
-  color: rgba(255, 255, 255, 1);
-}
-.session-not-ready {
-  color: #cf3835 !important;
-}
-.session-ready {
-  color: #00c07f !important;
-}
-.app-icon {
-  height: 36px;
-  margin-right: 5px;
-}
-.app-icon path {
-  fill: #c90;
-}
-.session-label {
-  padding-right: 4px;
-}
-.bottom-shadowed {
+  background-color: var(--gray-900);
   box-shadow: 0 6px 12px 0 rgba(0, 0, 0, 0.1);
+  justify-content: flex-start;
 }
 
-@media (max-width: 576px) {
-  .nav-item .nav-link {
-    padding: 5px;
-  }
+.app-icon {
+  margin-right: 0.33em;
+}
+
+.nav-item {
+  font-weight: bold;
+  letter-spacing: 0.01rem;
+  white-space: nowrap;
+}
+
+/* Display an arrow if two link are next to each others. */
+.navbar-collapse:not(.show) .nav-item + .nav-item .nav-link::before,
+.navbar-collapse.show .nav-item + .nav-item::before {
+  color: var(--gray-600);
+  font-family: FontAwesome;
+  font-weight: bold;
+}
+
+/* Horizontal arrow if the menu is visible (not collapsed). */
+.navbar-collapse:not(.show) .nav-item + .nav-item .nav-link::before {
+  content: "\f105"; /* angle-right => https://fontawesome.com/v4.7.0/cheatsheet/ */
+  margin-right: 1em;
+}
+
+/* Change the arrow to be vertical if the menu is collapsed. */
+.navbar-collapse.show .nav-item + .nav-item {
+  position: relative;
+  margin-top: 1em;
+}
+.navbar-collapse.show .nav-item + .nav-item::before {
+  content: "\f107"; /* angle-down => https://fontawesome.com/v4.7.0/cheatsheet/ */
+  left: 0.65em;
+  position: absolute;
+  top: -1em;
+}
+
+/* Icon. */
+.nav-icon {
+  border-radius: 50%;
+  height: 30px;
+  margin-right: 0.25em;
+  padding: 7px;
+  text-align: center;
+  width: 30px;
+}
+
+/* 
+  In the following I use the ID #distil-app to overwrite the Bootstrap CSS
+  by increasing the selectors specificity. 
+*/
+
+/* Default colours */
+#distil-app .nav-link {
+  transition: color 0.25s;
+  color: var(--gray-600);
+}
+#distil-app .nav-link .nav-icon {
+  transition: background 0.25s, color 0.25s;
+  background-color: var(--gray-800);
+  color: var(--gray-400);
+}
+
+/* Active and non disabled on hover nav-item */
+#distil-app .nav-link.active,
+#distil-app .nav-link:not(.disable):hover {
+  color: var(--gray-400);
+}
+#distil-app .nav-link.active .nav-icon,
+#distil-app .nav-link:not(.disable):hover .nav-icon {
+  background-color: var(--black);
+}
+
+/* Disabled Nav-item */
+#distil-app .nav-link.disabled .nav-icon {
+  background: none;
+  color: var(--gray-600);
 }
 </style>

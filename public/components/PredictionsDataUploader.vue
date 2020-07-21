@@ -139,7 +139,8 @@ export default Vue.extend({
           target: this.target,
           predictionDataset: predictionDataset,
           dataset: this.dataset,
-          varModes: varModes
+          varModes: varModes,
+          applyModel: true.toString()
         };
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
         this.$router.push(entry);
