@@ -63,9 +63,9 @@
               nbSearchDatasets
             }}</span>
           </button>
-          <b-dropdown variant="light" size="sm">
+          <b-dropdown variant="outline-dark" size="sm">
             <template v-slot:button-content>
-              Sort by: <i :class="sortingIcon"></i>
+              <i :class="sortingIcon"></i> Sort by:
               <strong>{{ sortingDisplayName }}</strong>
             </template>
             <!-- <b-dropdown-item-button @click="sortRecentDesc">
@@ -380,6 +380,7 @@ export default Vue.extend({
 }
 
 .search-nav-tab {
+  background: #eeeeee;
   border-color: transparent;
   border-style: solid;
   border-width: 0 0 3px 0;
