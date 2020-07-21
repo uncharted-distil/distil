@@ -401,7 +401,7 @@ func (d *Database) IngestRow(tableName string, data []string) error {
 // InsertRemainingRows empties all batches and inserts the data to the database.
 func (d *Database) InsertRemainingRows() error {
 	for tableName, ds := range d.Tables {
-		if ds.GetBatchSize() > 0 {
+		if ds.GetBatchSize() > 0 || ds.GetInsertSourceLength() > 0 {
 			err := d.executeInserts(tableName)
 			if err != nil {
 				return errors.Wrap(err, "unable to insert remaining rows for table "+tableName)

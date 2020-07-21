@@ -94,6 +94,21 @@ func TrainingSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 			handleError(w, err)
 			return
 		}
+
+		// get the dataset for predictions
+		if ds == nil {
+			pred, err := solution.FetchPredictionResultByProduceRequestID(result.ProduceRequestID)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			dataset = pred.Dataset
+			ds, err = meta.FetchDataset(dataset, false, false)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+		}
 		storageName := ds.StorageName
 
 		// fetch summary histogram
