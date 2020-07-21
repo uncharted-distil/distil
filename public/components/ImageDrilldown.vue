@@ -65,7 +65,6 @@ export default Vue.extend({
     // Refresh image on band change
     band(newBand: String, oldBand: String) {
       if (newBand !== oldBand) {
-        this.hasRequested = false;
         this.requestImage();
       }
     }
@@ -73,8 +72,7 @@ export default Vue.extend({
 
   data() {
     return {
-      IMAGE_MAX_SIZE: IMAGE_MAX_SIZE,
-      hasRequested: false
+      IMAGE_MAX_SIZE: IMAGE_MAX_SIZE
     };
   },
 
@@ -87,6 +85,10 @@ export default Vue.extend({
   },
 
   computed: {
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
+
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
@@ -103,10 +105,6 @@ export default Vue.extend({
 
     isRemoteSensing(): boolean {
       return routeGetters.isRemoteSensing(this.$store);
-    },
-
-    band(): string {
-      return routeGetters.getBandCombinationId(this.$store);
     },
 
     visibleTitle(): string {
@@ -142,7 +140,6 @@ export default Vue.extend({
     },
 
     async requestImage() {
-      this.hasRequested = true;
       if (this.isRemoteSensing) {
         await datasetActions.fetchMultiBandImage(this.$store, {
           dataset: this.dataset,
