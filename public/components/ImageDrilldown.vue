@@ -61,15 +61,6 @@ export default Vue.extend({
     visible: Boolean
   },
 
-  watch: {
-    // Refresh image on band change
-    band(newBand: String, oldBand: String) {
-      if (newBand !== oldBand) {
-        this.requestImage();
-      }
-    }
-  },
-
   data() {
     return {
       IMAGE_MAX_SIZE: IMAGE_MAX_SIZE
