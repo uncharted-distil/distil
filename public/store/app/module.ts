@@ -19,7 +19,6 @@ const { commit, read, dispatch } = getStoreAccessors<AppState, DistilState>(
 
 // typed getters
 export const getters = {
-  getCurrentSatelliteBand: read(moduleGetters.getCurrentSatelliteBand),
   getVersionNumber: read(moduleGetters.getVersionNumber),
   getVersionTimestamp: read(moduleGetters.getVersionTimestamp),
   getProblemDataset: read(moduleGetters.getProblemDataset),
