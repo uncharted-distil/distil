@@ -358,15 +358,17 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 	}
 	meta.Type = string(datasetType)
 
-	storageName, err := data.GetStorageName(meta.ID)
-	if err != nil {
-		return "", err
-	}
-	if meta.StorageName != storageName {
-		meta.StorageName = storageName
-		err = metadata.WriteSchema(meta, schemaFile, true)
+	if data != nil {
+		storageName, err := data.GetStorageName(meta.ID)
 		if err != nil {
 			return "", err
+		}
+		if meta.StorageName != storageName {
+			meta.StorageName = storageName
+			err = metadata.WriteSchema(meta, schemaFile, true)
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 
