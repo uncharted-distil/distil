@@ -46,8 +46,6 @@ import IconBase from "./icons/IconBase";
 import IconCropFree from "./icons/IconCropFree";
 import ImageDrilldown from "./ImageDrilldown.vue";
 import ImageLabel from "./ImageLabel";
-import { getters as appGetters } from "../store/app/module";
-import { SatelliteBand } from "../store/app/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -351,10 +349,6 @@ export default Vue.extend({
 
     isRemoteSensing(): boolean {
       return routeGetters.isRemoteSensing(this.$store);
-    },
-
-    currentSatelliteBand(): SatelliteBand {
-      return appGetters.getCurrentSatelliteBand(this.$store);
     },
 
     /**

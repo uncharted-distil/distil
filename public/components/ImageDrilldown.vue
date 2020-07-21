@@ -24,19 +24,13 @@
 <script lang="ts">
 import Vue from "vue";
 import ImageLabel from "./ImageLabel";
-import {
-  BandID,
-  BandCombination,
-  TableColumn,
-  TableRow
-} from "../store/dataset/index";
+import { BandCombination, TableColumn, TableRow } from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
-import { overlayRouteEntry } from "../util/routes";
 
 const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drilldown in pixels.
 const IMAGE_MAX_ZOOM = 4; // We don't want an image to be too magnified to avoid blurriness.
@@ -46,11 +40,11 @@ const imageId = imageUrl => imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
 /**
  * Display a modal with drilldowned information about an image.
  *
- * @param visible    {Boolean} Display or hide the modal.
- * @param imageUrl   {String}  URL of the image to be drilldown.
- * @param title      {String=} Title of the modal.
- * @param dataFields {Array<TableColumn>}
- * @param item       {TableRow} item being drilldown.
+ * @param visible       {Boolean} Display or hide the modal.
+ * @param imageUrl      {String}  URL of the image to be drilldown.
+ * @param title         {String=} Title of the modal.
+ * @param dataFields    {Array<TableColumn>}
+ * @param item          {TableRow} item being drilldown.
  */
 export default Vue.extend({
   name: "image-drilldown",
@@ -67,9 +61,20 @@ export default Vue.extend({
     visible: Boolean
   },
 
+  watch: {
+    // Refresh image on band change
+    band(newBand: String, oldBand: String) {
+      if (newBand !== oldBand) {
+        this.hasRequested = false;
+        this.requestImage();
+      }
+    }
+  },
+
   data() {
     return {
-      IMAGE_MAX_SIZE: IMAGE_MAX_SIZE
+      IMAGE_MAX_SIZE: IMAGE_MAX_SIZE,
+      hasRequested: false
     };
   },
 
@@ -78,7 +83,8 @@ export default Vue.extend({
   },
 
   updated() {
-    this.$nextTick(this.injectImage);
+    this.requestImage();
+    this.injectImage();
   },
 
   computed: {
@@ -94,6 +100,14 @@ export default Vue.extend({
       return (
         this.files[this.imageUrl] ?? this.files[imageId(this.imageUrl)] ?? null
       );
+    },
+
+    isRemoteSensing(): boolean {
+      return routeGetters.isRemoteSensing(this.$store);
+    },
+
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
     },
 
     visibleTitle(): string {
@@ -125,6 +139,22 @@ export default Vue.extend({
         // Add the image to the container.
         container.innerHTML = "";
         container.appendChild(image);
+      }
+    },
+
+    async requestImage() {
+      this.hasRequested = true;
+      if (this.isRemoteSensing) {
+        await datasetActions.fetchMultiBandImage(this.$store, {
+          dataset: this.dataset,
+          imageId: imageId(this.imageUrl),
+          bandCombination: this.band
+        });
+      } else {
+        await datasetActions.fetchImage(this.$store, {
+          dataset: this.dataset,
+          url: this.imageUrl
+        });
       }
     }
   }
