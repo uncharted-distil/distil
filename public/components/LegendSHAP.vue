@@ -38,8 +38,8 @@ export default Vue.extend({
 
 .legend li {
   background-color: var(
-    --color
-  ); /* Get the SHAP colour from the method used for the results. */
+    --color /* Get the SHAP colour from the method used for the results. */
+  );
   border: 1px solid var(--gray-500); /* To make the colours pop from a light background. */
   height: 1.5rem;
   margin-left: 0.33rem;
@@ -47,7 +47,7 @@ export default Vue.extend({
   width: 1.5rem;
 }
 
-/* Display the title underneath to the first and last one. */
+/* Display a label underneath the first and last one. */
 .legend li::after {
   font-size: 0.7em;
   position: absolute;
@@ -56,6 +56,6 @@ export default Vue.extend({
 }
 .legend li:first-of-type::after,
 .legend li:last-of-type::after {
-  content: attr(title);
+  content: attr(title); /* Use the title as a label. */
 }
 </style>
