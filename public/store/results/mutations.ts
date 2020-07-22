@@ -99,7 +99,7 @@ export const mutations = {
     Vue.set(
       state.timeseries[args.solutionId].timeseriesData,
       args.id,
-      args.timeseries
+      Object.freeze(args.timeseries)
     );
     Vue.set(
       state.timeseries[args.solutionId].isDateTime,
@@ -133,7 +133,7 @@ export const mutations = {
     Vue.set(
       state.forecasts[args.solutionId].forecastData,
       args.id,
-      args.forecast
+      Object.freeze(args.forecast)
     );
     Vue.set(
       state.forecasts[args.solutionId].forecastRange,

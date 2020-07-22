@@ -275,9 +275,9 @@ export function updateSummaries(
     return s.dataset === summary.dataset && s.key === summary.key;
   });
   if (index >= 0) {
-    Vue.set(summaries, index, summary);
+    Vue.set(summaries, index, Object.freeze(summary));
   } else {
-    summaries.push(summary);
+    summaries.push(Object.freeze(summary));
   }
 }
 

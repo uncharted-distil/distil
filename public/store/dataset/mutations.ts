@@ -262,7 +262,7 @@ export const mutations = {
     Vue.set(
       state.timeseries[args.dataset].timeseriesData,
       args.id,
-      args.timeseries
+      Object.freeze(args.timeseries)
     );
     Vue.set(
       state.timeseries[args.dataset].isDateTime,
