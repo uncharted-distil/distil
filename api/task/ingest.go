@@ -191,15 +191,22 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	log.Infof("finished cleaning the dataset")
 
 	definitiveClassification := false
-	if steps.ClassificationOverwrite || !classificationExists(latestSchemaOutput, config) {
-		_, err = Classify(latestSchemaOutput, dataset, config)
-		if err != nil {
-			return "", errors.Wrap(err, "unable to classify fields")
+	if config.ClassificationEnabled {
+		if steps.ClassificationOverwrite || !classificationExists(latestSchemaOutput, config) {
+			_, err = Classify(latestSchemaOutput, dataset, config)
+			if err != nil {
+				if config.HardFail {
+					return "", errors.Wrap(err, "unable to classify fields")
+				}
+				log.Errorf("unable to classify fields: %+v", err)
+			}
+			log.Infof("finished classifying the dataset")
+		} else {
+			definitiveClassification = true
+			log.Infof("skipping classification because it already exists")
 		}
-		log.Infof("finished classifying the dataset")
 	} else {
-		definitiveClassification = true
-		log.Infof("skipping classification because it already exists")
+		log.Infof("classification disabled")
 	}
 
 	_, err = Rank(latestSchemaOutput, dataset, config)
