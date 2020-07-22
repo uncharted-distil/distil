@@ -38,7 +38,7 @@ type Dataset struct {
 }
 
 // NewDataset creates a new dataset instance.
-func NewDataset(id, name, description string, meta *model.Metadata, uniqueValues bool, primaryKey string) *Dataset {
+func NewDataset(id, name, description string, variables []*model.Variable, uniqueValues bool, primaryKey string) *Dataset {
 	ds := &Dataset{
 		ID:              id,
 		Name:            name,
@@ -48,8 +48,8 @@ func NewDataset(id, name, description string, meta *model.Metadata, uniqueValues
 		primaryKey:      primaryKey,
 	}
 	// NOTE: Can only support data in a single data resource for now.
-	if meta != nil {
-		ds.Variables = meta.GetMainDataResource().Variables
+	if len(variables) > 0 {
+		ds.Variables = variables
 		fields := []string{}
 		for _, v := range ds.Variables {
 			fields = append(fields, v.Name)
@@ -119,13 +119,18 @@ func (ds *Dataset) GetInsertSourceLength() int {
 	return len(ds.insertValues)
 }
 
-func (ds *Dataset) createTableSQL(tableName string) string {
+func (ds *Dataset) createTableSQL(tableName string, temp bool) string {
 	fieldsSQL := []string{}
 	for _, v := range ds.Variables {
 		fieldsSQL = append(fieldsSQL, fmt.Sprintf("\"%s\" %s", v.Name, model.MapD3MTypeToPostgresType(v.Type)))
 	}
 
-	return fmt.Sprintf("CREATE TABLE \"%s\" (%s);", tableName, strings.Join(fieldsSQL, ", "))
+	tempString := ""
+	if temp {
+		tempString = "TEMP"
+	}
+
+	return fmt.Sprintf("CREATE %s TABLE \"%s\" (%s);", tempString, tableName, strings.Join(fieldsSQL, ", "))
 }
 
 // GetPrimaryKey returns the primary key of the dataset.

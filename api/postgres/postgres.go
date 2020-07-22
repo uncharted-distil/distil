@@ -194,7 +194,8 @@ func NewDatabase(config *Config, batch bool) (*Database, error) {
 		BatchSize: config.BatchSize,
 	}
 
-	database.Tables[WordStemTableName] = NewDataset(WordStemTableName, WordStemTableName, "", nil, true, "stem")
+	database.Tables[WordStemTableName] = NewDataset(WordStemTableName, WordStemTableName, "",
+		[]*model.Variable{{Name: "stem"}, {Name: "word"}}, true, "stem")
 
 	return database, nil
 }
@@ -272,11 +273,14 @@ func (d *Database) executeInserts(tableName string) error {
 		if ds.uniqueValues {
 			// first ingest to a temporary table
 			tmpTableName := fmt.Sprintf("tmp_%s", tableName)
-			createSQL := ds.createTableSQL(tmpTableName)
+			createSQL := ds.createTableSQL(tmpTableName, true)
 			_, err := d.Client.Exec(createSQL)
 			if err != nil {
 				return errors.Wrapf(err, "unable to create tmp table for inserts")
 			}
+			// drop the temp table
+			defer d.DropTable(tmpTableName)
+
 			tmpInsertCount, err := d.Client.CopyFrom(tmpTableName, ds.GetColumns(), ds.GetInsertSource())
 			if err != nil {
 				return errors.Wrapf(err, "unable to insert batch to postgres")
@@ -286,15 +290,12 @@ func (d *Database) executeInserts(tableName string) error {
 			}
 
 			// then copy from the temp table to the real table all new rows
-			updateSQL := fmt.Sprintf("INSERT INTO \"%s\" SELECT d.* FROM \"%s\" AS d WHERE NOT EXISTS (SELECT 1 FROM \"%s\" AS d2 WHERE d.\"%s\" == d2.\"%s\");",
+			updateSQL := fmt.Sprintf("INSERT INTO \"%s\" SELECT d.* FROM \"%s\" AS d WHERE NOT EXISTS (SELECT 1 FROM \"%s\" AS d2 WHERE d.\"%s\" = d2.\"%s\");",
 				tableName, tmpTableName, tableName, ds.GetPrimaryKey(), ds.GetPrimaryKey())
 			_, err = d.Client.Exec(updateSQL)
 			if err != nil {
 				return errors.Wrapf(err, "unable to create tmp table for inserts")
 			}
-
-			// drop the temp table
-			d.DropTable(tmpTableName)
 		} else {
 			insertCount, err := d.Client.CopyFrom(fmt.Sprintf("%s_base", tableName), ds.GetColumns(), ds.GetInsertSource())
 			if err != nil {
@@ -454,9 +455,9 @@ func (d *Database) AddWordStems(data []string) error {
 			}
 
 			// query for the stemmed version of each word.
-			query := fmt.Sprintf("INSERT INTO %s VALUES (unnest(tsvector_to_array(to_tsvector($1))), $2) ON CONFLICT (stem) DO NOTHING;", WordStemTableName)
-			ds.AddInsert(query, []interface{}{fieldValue, strings.ToLower(fieldValue)})
-			if ds.GetBatchSize() >= d.BatchSize {
+			//query := fmt.Sprintf("INSERT INTO %s VALUES (unnest(tsvector_to_array(to_tsvector($1))), $2) ON CONFLICT (stem) DO NOTHING;", WordStemTableName)
+			ds.AddInsertFromSource([]interface{}{fieldValue, strings.ToLower(fieldValue)})
+			if ds.GetInsertSourceLength() >= d.BatchSize {
 				err := d.executeInserts(WordStemTableName)
 				if err != nil {
 					return errors.Wrap(err, "unable to insert to table "+WordStemTableName)
@@ -547,7 +548,7 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 
 // InitializeDataset initializes the dataset with the provided metadata.
 func (d *Database) InitializeDataset(meta *model.Metadata) (*Dataset, error) {
-	ds := NewDataset(meta.ID, meta.Name, meta.Description, meta, false, "")
+	ds := NewDataset(meta.ID, meta.Name, meta.Description, meta.GetMainDataResource().Variables, false, "")
 
 	return ds, nil
 }
