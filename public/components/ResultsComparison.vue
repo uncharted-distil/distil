@@ -8,7 +8,8 @@
       :variables="variables"
       class="view-toggle"
     >
-      <p class="font-weight-bold mr-auto">Samples</p>
+      <p class="font-weight-bold">Samples</p>
+      <legend-shap v-if="isTableView" class="ml-5 mr-auto" />
       <layer-selection
         v-if="isRemoteSensing"
         class="layer-button"
@@ -46,9 +47,10 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
+import LayerSelection from "../components/LayerSelection";
+import LegendShap from "../components/LegendSHAP";
 import ResultsDataSlot from "../components/ResultsDataSlot";
 import ViewTypeToggle from "../components/ViewTypeToggle";
-import LayerSelection from "../components/LayerSelection";
 import { Dictionary } from "../util/dict";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
@@ -71,9 +73,10 @@ export default Vue.extend({
   name: "results-comparison",
 
   components: {
+    LayerSelection,
+    LegendShap,
     ResultsDataSlot,
-    ViewTypeToggle,
-    LayerSelection
+    ViewTypeToggle
   },
 
   data() {
@@ -104,6 +107,10 @@ export default Vue.extend({
 
     viewType(): string {
       return this.viewTypeModel;
+    },
+
+    isTableView(): boolean {
+      return this.viewType === TABLE_VIEW;
     },
 
     hasHighlights(): boolean {
