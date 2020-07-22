@@ -194,7 +194,7 @@ func NewDatabase(config *Config, batch bool) (*Database, error) {
 		BatchSize: config.BatchSize,
 	}
 
-	database.Tables[WordStemTableName] = NewDataset(WordStemTableName, WordStemTableName, "", nil)
+	database.Tables[WordStemTableName] = NewDataset(WordStemTableName, WordStemTableName, "", nil, true, "stem")
 
 	return database, nil
 }
@@ -269,12 +269,40 @@ func (d *Database) CreateSolutionMetadataTables() error {
 func (d *Database) executeInserts(tableName string) error {
 	ds := d.Tables[tableName]
 	if ds.GetInsertSourceLength() > 0 {
-		insertCount, err := d.Client.CopyFrom(fmt.Sprintf("%s_base", tableName), ds.GetColumns(), ds.GetInsertSource())
-		if err != nil {
-			return errors.Wrapf(err, "unable to insert batch to postgres")
-		}
-		if insertCount != int64(ds.GetInsertSourceLength()) {
-			return errors.Errorf("batch insert only copied %d rows from source out of %d", insertCount, ds.GetInsertSourceLength())
+		if ds.uniqueValues {
+			// first ingest to a temporary table
+			tmpTableName := fmt.Sprintf("tmp_%s", tableName)
+			createSQL := ds.createTableSQL(tmpTableName)
+			_, err := d.Client.Exec(createSQL)
+			if err != nil {
+				return errors.Wrapf(err, "unable to create tmp table for inserts")
+			}
+			tmpInsertCount, err := d.Client.CopyFrom(tmpTableName, ds.GetColumns(), ds.GetInsertSource())
+			if err != nil {
+				return errors.Wrapf(err, "unable to insert batch to postgres")
+			}
+			if tmpInsertCount != int64(ds.GetInsertSourceLength()) {
+				return errors.Errorf("batch insert only copied %d rows from source out of %d", tmpInsertCount, ds.GetInsertSourceLength())
+			}
+
+			// then copy from the temp table to the real table all new rows
+			updateSQL := fmt.Sprintf("INSERT INTO \"%s\" SELECT d.* FROM \"%s\" AS d WHERE NOT EXISTS (SELECT 1 FROM \"%s\" AS d2 WHERE d.\"%s\" == d2.\"%s\");",
+				tableName, tmpTableName, tableName, ds.GetPrimaryKey(), ds.GetPrimaryKey())
+			_, err = d.Client.Exec(updateSQL)
+			if err != nil {
+				return errors.Wrapf(err, "unable to create tmp table for inserts")
+			}
+
+			// drop the temp table
+			d.DropTable(tmpTableName)
+		} else {
+			insertCount, err := d.Client.CopyFrom(fmt.Sprintf("%s_base", tableName), ds.GetColumns(), ds.GetInsertSource())
+			if err != nil {
+				return errors.Wrapf(err, "unable to insert batch to postgres")
+			}
+			if insertCount != int64(ds.GetInsertSourceLength()) {
+				return errors.Errorf("batch insert only copied %d rows from source out of %d", insertCount, ds.GetInsertSourceLength())
+			}
 		}
 	}
 
@@ -519,7 +547,7 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 
 // InitializeDataset initializes the dataset with the provided metadata.
 func (d *Database) InitializeDataset(meta *model.Metadata) (*Dataset, error) {
-	ds := NewDataset(meta.ID, meta.Name, meta.Description, meta)
+	ds := NewDataset(meta.ID, meta.Name, meta.Description, meta, false, "")
 
 	return ds, nil
 }
