@@ -652,11 +652,13 @@ export function explainCellColor(
       d3mRowWeightExtrema(tableFields, dataItems)[data.item[D3M_INDEX_FIELD]]
   );
 
-  const red = 255 - 128 * absoluteWeight;
-  const green = 255 - 64 * absoluteWeight;
-  const blue = 255;
+  return `background: ${colorByWeight(absoluteWeight)}`;
+}
 
-  return `background: rgba(${red}, ${green}, ${blue}, .75)`;
+export function colorByWeight(weight: number): string {
+  const red = 255 - 128 * weight;
+  const green = 255 - 64 * weight;
+  return `rgba(${red}, ${green}, 255, .75)`;
 }
 
 function hasMultipleFeatures(tableFields: TableColumn[]): boolean {
