@@ -1,10 +1,6 @@
-import { AppState, SatelliteBand, StatusPanelState } from "./index";
+import { AppState, StatusPanelState } from "./index";
 
 export const getters = {
-  getCurrentSatelliteBand(state: AppState): SatelliteBand {
-    return state.currentSatelliteBand;
-  },
-
   getVersionNumber(state: AppState): string {
     return state.versionNumber;
   },

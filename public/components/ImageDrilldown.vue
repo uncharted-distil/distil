@@ -24,22 +24,16 @@
 <script lang="ts">
 import Vue from "vue";
 import ImageLabel from "./ImageLabel";
-import {
-  BandID,
-  BandCombination,
-  TableColumn,
-  TableRow
-} from "../store/dataset/index";
+import { BandCombination, TableColumn, TableRow } from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
-import { overlayRouteEntry } from "../util/routes";
 
 const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drilldown in pixels.
-const IMAGE_MAX_ZOOM = 4; // We don't want an image to be too magnified to avoid blurriness.
+const IMAGE_MAX_ZOOM = 3; // We don't want an image to be too magnified to avoid blurriness.
 
 const imageId = imageUrl => imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
 
@@ -78,10 +72,14 @@ export default Vue.extend({
   },
 
   updated() {
-    this.$nextTick(this.injectImage);
+    this.requestImage();
   },
 
   computed: {
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
+
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
@@ -94,6 +92,10 @@ export default Vue.extend({
       return (
         this.files[this.imageUrl] ?? this.files[imageId(this.imageUrl)] ?? null
       );
+    },
+
+    isRemoteSensing(): boolean {
+      return routeGetters.isRemoteSensing(this.$store);
     },
 
     visibleTitle(): string {
@@ -126,6 +128,22 @@ export default Vue.extend({
         container.innerHTML = "";
         container.appendChild(image);
       }
+    },
+
+    async requestImage() {
+      if (this.isRemoteSensing) {
+        await datasetActions.fetchMultiBandImage(this.$store, {
+          dataset: this.dataset,
+          imageId: imageId(this.imageUrl),
+          bandCombination: this.band
+        });
+      } else {
+        await datasetActions.fetchImage(this.$store, {
+          dataset: this.dataset,
+          url: this.imageUrl
+        });
+      }
+      this.injectImage();
     }
   }
 });
