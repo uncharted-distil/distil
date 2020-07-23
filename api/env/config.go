@@ -41,8 +41,8 @@ type Config struct {
 	ClusteringKMeans                   bool    `env:"CLUSTERING_KMEANS" envDefault:"true"`
 	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:"datasets"`
 	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
-	DatamartURIISI                     string  `env:"DATAMART_URL_ISI" envDefault:"https://dsbox02.isi.edu:9000"`
-	DatamartURINYU                     string  `env:"DATAMART_URL_NYU" envDefault:"https://auctus.vida-nyu.org"`
+	DatamartURIISI                     string  `env:"DATAMART_ISI_URL" envDefault:"https://dsbox02.isi.edu:9000"`
+	DatamartURINYU                     string  `env:"DATAMART_NYU_URL" envDefault:"https://auctus.vida-nyu.org"`
 	DatamartISIEnabled                 bool    `env:"DATAMART_ISI_ENABLED" envDefault:"false"`
 	DatamartNYUEnabled                 bool    `env:"DATAMART_NYU_ENABLED" envDefault:"true"`
 	DatamartImportFolder               string  `env:"DATAMART_IMPORT_FOLDER" envDefault:"datamart"`
