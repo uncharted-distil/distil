@@ -20,6 +20,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	log "github.com/unchartedsoftware/plog"
+
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -61,9 +63,12 @@ func TargetRank(dataset string, target string, features []*model.Variable, sourc
 			if !ok {
 				return nil, fmt.Errorf("unable to parse rank key")
 			}
+
+			// default to 0 for rank if error parsing (empty value most likely)
 			rank, err := strconv.ParseFloat(v[2].(string), 64)
 			if err != nil {
-				return nil, errors.Wrap(err, "unable to parse rank value")
+				log.Errorf("defaulting target rank to 0 due to error parsing rank value value: %+v", err)
+				rank = 0
 			}
 			ranks[key] = rank
 		}
