@@ -158,9 +158,11 @@ var (
 
 // Database is a struct representing a full logical database.
 type Database struct {
-	Client    DatabaseDriver
-	Tables    map[string]*Dataset
-	BatchSize int
+	Client            DatabaseDriver
+	Tables            map[string]*Dataset
+	BatchSize         int
+	BatchSizeStemWord int
+	wordStemCache     map[string]bool
 }
 
 // WordStem contains the pairing of a word and its stemmed version.
@@ -189,9 +191,11 @@ func NewDatabase(config *Config, batch bool) (*Database, error) {
 	}
 
 	database := &Database{
-		Client:    client,
-		Tables:    make(map[string]*Dataset),
-		BatchSize: config.BatchSize,
+		Client:            client,
+		Tables:            make(map[string]*Dataset),
+		BatchSize:         config.BatchSize,
+		BatchSizeStemWord: config.BatchSize * 10,
+		wordStemCache:     make(map[string]bool),
 	}
 
 	database.Tables[WordStemTableName] = NewDataset(WordStemTableName, WordStemTableName, "",
@@ -450,20 +454,21 @@ func (d *Database) AddWordStems(data []string) error {
 		fields := strings.Fields(data[i])
 		for _, f := range fields {
 			fieldValue := wordRegex.ReplaceAllString(f, "")
-			if fieldValue == "" {
+			if fieldValue == "" || d.wordStemCache[fieldValue] {
 				continue
 			}
 
 			// query for the stemmed version of each word.
-			//query := fmt.Sprintf("INSERT INTO %s VALUES (unnest(tsvector_to_array(to_tsvector($1))), $2) ON CONFLICT (stem) DO NOTHING;", WordStemTableName)
 			ds.AddInsertFromSource([]interface{}{fieldValue, strings.ToLower(fieldValue)})
-			if ds.GetInsertSourceLength() >= d.BatchSize {
+			d.wordStemCache[fieldValue] = true
+			if ds.GetInsertSourceLength() >= d.BatchSizeStemWord {
 				err := d.executeInserts(WordStemTableName)
 				if err != nil {
 					return errors.Wrap(err, "unable to insert to table "+WordStemTableName)
 				}
 
 				ds.ResetBatch()
+				d.wordStemCache = make(map[string]bool)
 			}
 		}
 	}
