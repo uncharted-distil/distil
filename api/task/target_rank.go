@@ -67,7 +67,7 @@ func TargetRank(dataset string, target string, features []*model.Variable, sourc
 			// default to 0 for rank if error parsing (empty value most likely)
 			rank, err := strconv.ParseFloat(v[2].(string), 64)
 			if err != nil {
-				log.Errorf("defaulting target rank to 0 due to error parsing rank value value: %+v", err)
+				log.Warnf("defaulting target rank to 0 due to error parsing rank value value: %+v", err)
 				rank = 0
 			}
 			ranks[key] = rank
