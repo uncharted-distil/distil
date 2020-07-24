@@ -158,9 +158,11 @@ var (
 
 // Database is a struct representing a full logical database.
 type Database struct {
-	Client    DatabaseDriver
-	Tables    map[string]*Dataset
-	BatchSize int
+	Client            DatabaseDriver
+	Tables            map[string]*Dataset
+	BatchSize         int
+	BatchSizeStemWord int
+	wordStemCache     map[string]bool
 }
 
 // WordStem contains the pairing of a word and its stemmed version.
@@ -189,12 +191,15 @@ func NewDatabase(config *Config, batch bool) (*Database, error) {
 	}
 
 	database := &Database{
-		Client:    client,
-		Tables:    make(map[string]*Dataset),
-		BatchSize: config.BatchSize,
+		Client:            client,
+		Tables:            make(map[string]*Dataset),
+		BatchSize:         config.BatchSize,
+		BatchSizeStemWord: config.BatchSize * 10,
+		wordStemCache:     make(map[string]bool),
 	}
 
-	database.Tables[WordStemTableName] = NewDataset(WordStemTableName, WordStemTableName, "", nil)
+	database.Tables[WordStemTableName] = NewDataset(WordStemTableName, WordStemTableName, "",
+		[]*model.Variable{{Name: "stem"}, {Name: "word"}}, true, "stem")
 
 	return database, nil
 }
@@ -269,12 +274,40 @@ func (d *Database) CreateSolutionMetadataTables() error {
 func (d *Database) executeInserts(tableName string) error {
 	ds := d.Tables[tableName]
 	if ds.GetInsertSourceLength() > 0 {
-		insertCount, err := d.Client.CopyFrom(fmt.Sprintf("%s_base", tableName), ds.GetColumns(), ds.GetInsertSource())
-		if err != nil {
-			return errors.Wrapf(err, "unable to insert batch to postgres")
-		}
-		if insertCount != int64(ds.GetInsertSourceLength()) {
-			return errors.Errorf("batch insert only copied %d rows from source out of %d", insertCount, ds.GetInsertSourceLength())
+		if ds.uniqueValues {
+			// first ingest to a temporary table
+			tmpTableName := fmt.Sprintf("tmp_%s", tableName)
+			createSQL := ds.createTableSQL(tmpTableName, true)
+			_, err := d.Client.Exec(createSQL)
+			if err != nil {
+				return errors.Wrapf(err, "unable to create tmp table for inserts")
+			}
+			// drop the temp table
+			defer d.DropTable(tmpTableName)
+
+			tmpInsertCount, err := d.Client.CopyFrom(tmpTableName, ds.GetColumns(), ds.GetInsertSource())
+			if err != nil {
+				return errors.Wrapf(err, "unable to insert batch to postgres")
+			}
+			if tmpInsertCount != int64(ds.GetInsertSourceLength()) {
+				return errors.Errorf("batch insert only copied %d rows from source out of %d", tmpInsertCount, ds.GetInsertSourceLength())
+			}
+
+			// then copy from the temp table to the real table all new rows
+			updateSQL := fmt.Sprintf("INSERT INTO \"%s\" SELECT d.* FROM \"%s\" AS d WHERE NOT EXISTS (SELECT 1 FROM \"%s\" AS d2 WHERE d.\"%s\" = d2.\"%s\");",
+				tableName, tmpTableName, tableName, ds.GetPrimaryKey(), ds.GetPrimaryKey())
+			_, err = d.Client.Exec(updateSQL)
+			if err != nil {
+				return errors.Wrapf(err, "unable to create tmp table for inserts")
+			}
+		} else {
+			insertCount, err := d.Client.CopyFrom(fmt.Sprintf("%s_base", tableName), ds.GetColumns(), ds.GetInsertSource())
+			if err != nil {
+				return errors.Wrapf(err, "unable to insert batch to postgres")
+			}
+			if insertCount != int64(ds.GetInsertSourceLength()) {
+				return errors.Errorf("batch insert only copied %d rows from source out of %d", insertCount, ds.GetInsertSourceLength())
+			}
 		}
 	}
 
@@ -421,20 +454,22 @@ func (d *Database) AddWordStems(data []string) error {
 		fields := strings.Fields(data[i])
 		for _, f := range fields {
 			fieldValue := wordRegex.ReplaceAllString(f, "")
-			if fieldValue == "" {
+			if fieldValue == "" || d.wordStemCache[fieldValue] {
 				continue
 			}
 
 			// query for the stemmed version of each word.
 			query := fmt.Sprintf("INSERT INTO %s VALUES (unnest(tsvector_to_array(to_tsvector($1))), $2) ON CONFLICT (stem) DO NOTHING;", WordStemTableName)
 			ds.AddInsert(query, []interface{}{fieldValue, strings.ToLower(fieldValue)})
-			if ds.GetBatchSize() >= d.BatchSize {
+			d.wordStemCache[fieldValue] = true
+			if ds.GetBatchSize() >= d.BatchSizeStemWord {
 				err := d.executeInserts(WordStemTableName)
 				if err != nil {
 					return errors.Wrap(err, "unable to insert to table "+WordStemTableName)
 				}
 
 				ds.ResetBatch()
+				d.wordStemCache = make(map[string]bool)
 			}
 		}
 	}
@@ -519,7 +554,7 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 
 // InitializeDataset initializes the dataset with the provided metadata.
 func (d *Database) InitializeDataset(meta *model.Metadata) (*Dataset, error) {
-	ds := NewDataset(meta.ID, meta.Name, meta.Description, meta)
+	ds := NewDataset(meta.ID, meta.Name, meta.Description, meta.GetMainDataResource().Variables, false, "")
 
 	return ds, nil
 }

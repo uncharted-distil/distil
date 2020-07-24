@@ -33,19 +33,23 @@ type Dataset struct {
 	insertBatch     *pgx.Batch
 	fieldSQL        string
 	insertValues    [][]interface{}
+	uniqueValues    bool
+	primaryKey      string
 }
 
 // NewDataset creates a new dataset instance.
-func NewDataset(id, name, description string, meta *model.Metadata) *Dataset {
+func NewDataset(id, name, description string, variables []*model.Variable, uniqueValues bool, primaryKey string) *Dataset {
 	ds := &Dataset{
 		ID:              id,
 		Name:            name,
 		Description:     description,
 		variablesLookup: make(map[string]bool),
+		uniqueValues:    uniqueValues,
+		primaryKey:      primaryKey,
 	}
 	// NOTE: Can only support data in a single data resource for now.
-	if meta != nil {
-		ds.Variables = meta.GetMainDataResource().Variables
+	if len(variables) > 0 {
+		ds.Variables = variables
 		fields := []string{}
 		for _, v := range ds.Variables {
 			fields = append(fields, v.Name)
@@ -113,4 +117,23 @@ func (ds *Dataset) GetBatchSize() int {
 // GetInsertSourceLength gets the insert from source size.
 func (ds *Dataset) GetInsertSourceLength() int {
 	return len(ds.insertValues)
+}
+
+func (ds *Dataset) createTableSQL(tableName string, temp bool) string {
+	fieldsSQL := []string{}
+	for _, v := range ds.Variables {
+		fieldsSQL = append(fieldsSQL, fmt.Sprintf("\"%s\" %s", v.Name, model.MapD3MTypeToPostgresType(v.Type)))
+	}
+
+	tempString := ""
+	if temp {
+		tempString = "TEMP"
+	}
+
+	return fmt.Sprintf("CREATE %s TABLE \"%s\" (%s);", tempString, tableName, strings.Join(fieldsSQL, ", "))
+}
+
+// GetPrimaryKey returns the primary key of the dataset.
+func (ds *Dataset) GetPrimaryKey() string {
+	return ds.primaryKey
 }
