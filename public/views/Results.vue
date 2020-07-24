@@ -153,7 +153,8 @@ export default Vue.extend({
 }
 .results-variable-summaries,
 .results-result-comparison,
-.results-result-summaries {
+.results-result-summaries,
+.results-variable-summaries /deep/ .variable-facets-wrapper {
   height: 100%;
 }
 @media (max-width: 767px) {
