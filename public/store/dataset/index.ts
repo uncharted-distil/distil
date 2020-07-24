@@ -173,6 +173,7 @@ export interface TableValue {
   weight: number;
   confidence: number;
 }
+
 export interface TableData {
   numRows: number;
   columns: TableColumn[];
