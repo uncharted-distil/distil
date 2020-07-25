@@ -37,6 +37,8 @@ const (
 	DefaultSeparator = "_"
 )
 
+// PredictionTimeseriesDataset has the paramaters necessary to create a timeseries dataset
+// from minimal information.
 type PredictionTimeseriesDataset struct {
 	params               *PredictParams
 	start                int64
@@ -44,6 +46,7 @@ type PredictionTimeseriesDataset struct {
 	count                int
 	isDatetimeTimeseries bool
 	idValues             map[string][]string
+	timestampVariable    *model.Variable
 }
 
 type predictionDataset struct {
@@ -52,53 +55,72 @@ type predictionDataset struct {
 
 // NewPredictionTimeseriesDataset creates prediction timeseries dataset.
 func NewPredictionTimeseriesDataset(params *PredictParams, interval float64, count int) (*PredictionTimeseriesDataset, error) {
-	return &PredictionTimeseriesDataset{
-		params:   params,
-		interval: interval,
-		count:    count,
-		//isDatetimeTimeseries: isDatetimeTimeseries,
-		//idValues:             idValues,
-	}, nil
-}
-
-// CreateDataset creates a raw dataset based on minimum timeseries parameters.
-func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
-	// need to create timeseries based on start time and step count
+	// get the timestamp variable
+	variables, err := params.MetaStorage.FetchVariables(params.Dataset, true, true)
+	if err != nil {
+		return nil, err
+	}
 	var groupingVar *model.Variable
-	mainDR := p.params.Meta.GetMainDataResource()
-	for _, v := range mainDR.Variables {
+	for _, v := range variables {
 		if v.IsGrouping() {
 			groupingVar = v
 			break
 		}
 	}
 
-	// find the timsetamp column and id columns
 	tsg := groupingVar.Grouping.(*model.TimeseriesGrouping)
-	timestampCol := tsg.XCol
 	var timestampVar *model.Variable
-	for _, v := range mainDR.Variables {
-		if v.Name == timestampCol {
+	for _, v := range variables {
+		if v.Name == tsg.XCol {
 			timestampVar = v
 			break
 		}
 	}
 
+	// determine the start date via timestamp extrema
+	extrema, err := params.DataStorage.FetchExtrema(params.Meta.StorageName, timestampVar)
+	if err != nil {
+		return nil, err
+	}
+
+	// get existing id values
+	idValues := make(map[string][]string)
+	for _, vID := range tsg.SubIDs {
+		vals, err := params.DataStorage.FetchRawDistinctValues(params.Meta.ID, params.Meta.StorageName, vID)
+		if err != nil {
+			return nil, err
+		}
+		idValues[vID] = vals
+	}
+
+	return &PredictionTimeseriesDataset{
+		params:               params,
+		interval:             interval,
+		count:                count,
+		isDatetimeTimeseries: model.IsDateTime(extrema.Type),
+		start:                int64(extrema.Max),
+		idValues:             idValues,
+		timestampVariable:    timestampVar,
+	}, nil
+}
+
+// CreateDataset creates a raw dataset based on minimum timeseries parameters.
+func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
 	// generate timestamps to use for prediction based on type of timestamp
 	var timestampPredictionValues []string
 	var err error
-	if model.IsDateTime(timestampVar.Type) {
+	if model.IsDateTime(p.timestampVariable.Type) {
 		timestampPredictionValues, err = generateTimestampValues(p.interval, p.start, p.count)
-	} else if model.IsNumerical(timestampVar.Type) {
+	} else if model.IsNumerical(p.timestampVariable.Type) {
 		timestampPredictionValues, err = generateIntValues(p.interval, p.start, p.count)
 	} else {
-		err = errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", timestampVar.Name, timestampVar.Type)
+		err = errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", p.timestampVariable.Name, p.timestampVariable.Type)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	timeseriesData, err := createTimeseriesData(p.idValues, timestampCol, timestampPredictionValues)
+	timeseriesData, err := createTimeseriesData(p.idValues, p.timestampVariable.Name, timestampPredictionValues)
 	if err != nil {
 		return nil, err
 	}
