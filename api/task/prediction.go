@@ -37,8 +37,78 @@ const (
 	DefaultSeparator = "_"
 )
 
+type PredictionTimeseriesDataset struct {
+	params               *PredictParams
+	start                int64
+	interval             float64
+	count                int
+	isDatetimeTimeseries bool
+	idValues             map[string][]string
+}
+
 type predictionDataset struct {
 	params *PredictParams
+}
+
+// NewPredictionTimeseriesDataset creates prediction timeseries dataset.
+func NewPredictionTimeseriesDataset(params *PredictParams, interval float64, count int) (*PredictionTimeseriesDataset, error) {
+	return &PredictionTimeseriesDataset{
+		params:   params,
+		interval: interval,
+		count:    count,
+		//isDatetimeTimeseries: isDatetimeTimeseries,
+		//idValues:             idValues,
+	}, nil
+}
+
+// CreateDataset creates a raw dataset based on minimum timeseries parameters.
+func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+	// need to create timeseries based on start time and step count
+	var groupingVar *model.Variable
+	mainDR := p.params.Meta.GetMainDataResource()
+	for _, v := range mainDR.Variables {
+		if v.IsGrouping() {
+			groupingVar = v
+			break
+		}
+	}
+
+	// find the timsetamp column and id columns
+	tsg := groupingVar.Grouping.(*model.TimeseriesGrouping)
+	timestampCol := tsg.XCol
+	var timestampVar *model.Variable
+	for _, v := range mainDR.Variables {
+		if v.Name == timestampCol {
+			timestampVar = v
+			break
+		}
+	}
+
+	// generate timestamps to use for prediction based on type of timestamp
+	var timestampPredictionValues []string
+	var err error
+	if model.IsDateTime(timestampVar.Type) {
+		timestampPredictionValues, err = generateTimestampValues(p.interval, p.start, p.count)
+	} else if model.IsNumerical(timestampVar.Type) {
+		timestampPredictionValues, err = generateIntValues(p.interval, p.start, p.count)
+	} else {
+		err = errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", timestampVar.Name, timestampVar.Type)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	timeseriesData, err := createTimeseriesData(p.idValues, timestampCol, timestampPredictionValues)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.RawDataset{
+		ID:       p.params.Dataset,
+		Name:     p.params.Dataset,
+		Data:     timeseriesData,
+		Metadata: p.params.Meta,
+	}, nil
 }
 
 func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
@@ -541,4 +611,70 @@ func copyFeatureGroups(fittedSolutionID string, datasetName string, solutionStor
 	}
 
 	return nil
+}
+
+func generateIntValues(interval float64, start int64, stepCount int) ([]string, error) {
+	// iterate until all required steps are created
+	currentValue := start
+	timeData := make([]string, 0)
+	for i := 0; i < stepCount; i++ {
+		timeData = append(timeData, fmt.Sprintf("%d", currentValue))
+		currentValue = currentValue + int64(interval)
+	}
+
+	return timeData, nil
+}
+
+func generateTimestampValues(interval float64, start int64, stepCount int) ([]string, error) {
+	// parse the start time
+	startDate := time.Unix(start, 0)
+
+	// iterate until all required steps are created
+	currentTime := startDate
+	intervalDuration := time.Duration(int64(interval)) * time.Second
+	timeData := make([]string, 0)
+	for i := 0; i < stepCount; i++ {
+		timeData = append(timeData, currentTime.String())
+		currentTime = currentTime.Add(intervalDuration)
+	}
+
+	return timeData, nil
+}
+
+func createTimeseriesData(seriesFields map[string][]string, timestampFieldName string, timestampPredictionValues []string) ([][]string, error) {
+	// create the header and the ids to use to generate the timeseries
+	header := make([]string, 0)
+	ids := make([][]string, 0)
+	for name, field := range seriesFields {
+		ids = append(ids, field)
+		header = append(header, name)
+	}
+	header = append(header, timestampFieldName)
+
+	// treat the timestamp values as just another set of values to generate on
+	ids = append(ids, timestampPredictionValues)
+
+	// the cartesian product will generate all the values needed for the timeseries
+	cartesianData := createGroupings(ids)
+
+	return append([][]string{header}, cartesianData...), nil
+}
+
+func createGroupings(ids [][]string) [][]string {
+	// end condition when empty list passed in
+	if len(ids) == 0 {
+		return [][]string{nil}
+	}
+
+	// use recursion to get cartesian product
+	nested := createGroupings(ids[1:])
+
+	// create the combined output
+	output := make([][]string, 0)
+	for _, id := range ids[0] {
+		for _, product := range nested {
+			output = append(output, append([]string{id}, product...))
+		}
+	}
+	return output
 }
