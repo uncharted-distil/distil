@@ -7,7 +7,7 @@
       @close="showCreateFailure = !showCreateFailure"
     >
     </error-modal>
-    <settings-modal @ok="handleOk"></settings-modal>
+    <settings-modal></settings-modal>
     <div class="row justify-content-center">
       <b-button-group>
         <b-button
