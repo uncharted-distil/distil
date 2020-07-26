@@ -51,6 +51,7 @@ type Config struct {
 	ElasticTimeout                     int     `env:"ES_TIMEOUT" envDefault:"300"`
 	ESDatasetsIndex                    string  `env:"ES_DATASETS_INDEX" envDefault:"datasets"`
 	ESModelsIndex                      string  `env:"ES_DATASETS_INDEX" envDefault:"models"`
+	FastDataPercentage                 float64 `env:"FAST_DATA_PERCENTAGE" envDefault:"0.2"`
 	FeaturizationEnabled               bool    `env:"FEATURIZATION_ENABLED" envDefault:"false"`
 	FormatOutputDataRelative           string  `env:"FORMAT_OUTPUT_DATA" envDefault:"format/tables/learningData.csv"`
 	FormatOutputSchemaRelative         string  `env:"FORMAT_OUTPUT_SCHEMA" envDefault:"format/datasetDoc.json"`
@@ -61,10 +62,12 @@ type Config struct {
 	IngestHardFail                     bool    `env:"INGEST_HARD_FAIL" envDefault:"false"`
 	IngestOverwrite                    bool    `env:"INGEST_OVERWRITE" envDefault:"false"`
 	InitialDataset                     string  `env:"INITIAL_DATASET" envDefault:""`
-	MaxTrainingRows                    int     `env:"MAX_TRAINING_ROWS" envDefault:"10000"`
-	MaxTestRows                        int     `env:"MAX_TEST_ROWS" envDefault:"10000"`
+	MaxTrainingRows                    int     `env:"MAX_TRAINING_ROWS" envDefault:"100000"`
+	MaxTestRows                        int     `env:"MAX_TEST_ROWS" envDefault:"100000"`
 	MergedOutputDataPath               string  `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"merged/tables/learningData.csv"`
 	MergedOutputSchemaPath             string  `env:"MERGED_OUTPUT_SCHEMA_PATH" envDefault:"merged/datasetDoc.json"`
+	MinTrainingRows                    int     `env:"MIN_TRAINING_ROWS" envDefault:"100"`
+	MinTestRows                        int     `env:"MIN_TEST_ROWS" envDefault:"100"`
 	PipelineCacheFilename              string  `env:"PIPELINE_CACHE_FILENAME" envDefault:"cache.bin"`
 	PipelineQueueSize                  int     `env:"PIPELINE_QUEUE_SIZE" envDefault:"10"`
 	PostgresBatchSize                  int     `env:"PG_BATCH_SIZE" envDefault:"1000"`

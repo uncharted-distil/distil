@@ -28,7 +28,6 @@ import (
 	"path"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/araddon/dateparse"
@@ -115,10 +114,6 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *api.Fil
 		return 0, errors.Wrapf(err, "failed to generate hashcode for %s", dataset)
 	}
 	return hash, nil
-}
-
-func updateSchemaReferenceFile(schema string, prevReferenceFile string, newReferenceFile string) string {
-	return strings.Replace(schema, fmt.Sprintf("\"resPath\": \"%s\"", prevReferenceFile), fmt.Sprintf("\"resPath\": \"%s\"", newReferenceFile), 1)
 }
 
 func splitTrainTestHeader(reader *csv.Reader, writerTrain *csv.Writer, writerTest *csv.Writer, hasHeader bool) error {
@@ -241,7 +236,8 @@ func parseTimeColValue(timeColValue string) (float64, error) {
 	return f, nil
 }
 
-func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool, targetCol int, groupingCol int, maxTrainingCount int, maxTestCount int, stratify bool) error {
+func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool, targetCol int, groupingCol int,
+	stratify bool, rowLimits rowLimits) error {
 	// create the writers
 	outputTrain := &bytes.Buffer{}
 	writerTrain := csv.NewWriter(outputTrain)
@@ -273,6 +269,9 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 		rowData = append(rowData, line)
 	}
 
+	numDatasetRows := len(rowData)
+	numTrainingRows := rowLimits.trainingRows(numDatasetRows)
+	numTestRows := rowLimits.testRows(numDatasetRows)
 	if stratify {
 		// For statification we use a proportionate allocation strategy, dividing the dataset up into
 		// subsets by category, and then sampling the subsets using the supplied train/test ratio.
@@ -289,16 +288,16 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 
 		// second pass - randomly sample each category to generate train/test split
 		for _, data := range categoryRowData {
-			maxCategoryTrainingRows := int(float64(len(data)) / float64(len(rowData)) * float64(maxTrainingCount))
-			maxCategoryTestRows := int(float64(len(data)) / float64(len(rowData)) * float64(maxTestCount))
+			maxCategoryTrainingRows := int(math.Max(1, float64(len(data))/float64(len(rowData))*float64(numTrainingRows)))
+			maxCategoryTestRows := int(math.Max(1, float64(len(data))/float64(len(rowData))*float64(numTestRows)))
 			err := shuffleAndWrite(data, targetCol, groupingCol, maxCategoryTrainingRows, maxCategoryTestRows, writerTrain, writerTest)
 			if err != nil {
 				return err
 			}
 		}
 	} else {
-		// randomly select from entire dataset
-		err := shuffleAndWrite(rowData, targetCol, groupingCol, maxTrainingCount, maxTestCount, writerTrain, writerTest)
+		// randomly select from dataset based on row limits
+		err := shuffleAndWrite(rowData, targetCol, groupingCol, numTrainingRows, numTestRows, writerTrain, writerTest)
 		if err != nil {
 			return err
 		}
@@ -425,6 +424,52 @@ type persistedDataParams struct {
 	GroupingFieldIndex int
 	TargetFieldIndex   int
 	Stratify           bool
+	Quality            string
+}
+
+type rowLimits struct {
+	minTrainingRows int
+	minTestRows     int
+	maxTrainingRows int
+	maxTestRows     int
+	sample          float64
+	quality         string
+}
+
+func (s rowLimits) trainingRows(rows int) int {
+	// determine whether or not we need to sample
+	sampledRows := rows
+	if s.quality == ModelQualityFast {
+		sampledRows = int(float64(rows) * s.sample)
+	} else if s.quality != ModelQualityHigh {
+		log.Warnf("model quality %s unsupported - defaulting to 'high'", s.quality)
+	}
+
+	// limit samples by configured bounds
+	if sampledRows < s.minTrainingRows {
+		sampledRows = s.minTrainingRows
+	} else if sampledRows > s.maxTrainingRows {
+		sampledRows = s.maxTrainingRows
+	}
+	return sampledRows
+}
+
+func (s rowLimits) testRows(rows int) int {
+	// determine whether or not we need to sample
+	sampledRows := rows
+	if s.quality == ModelQualityFast {
+		sampledRows = int(float64(rows) * s.sample)
+	} else if s.quality != ModelQualityHigh {
+		log.Warnf("model quality %s unsupported - defaulting to 'high'", s.quality)
+	}
+
+	// limit samples by configured bounds
+	if sampledRows < s.minTestRows {
+		sampledRows = s.minTestRows
+	} else if sampledRows > s.maxTestRows {
+		sampledRows = s.maxTestRows
+	}
+	return sampledRows
 }
 
 // persistOriginalData copies the original data and splits it into a train &
@@ -486,7 +531,7 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	mainDR := meta.GetMainDataResource()
 
 	// split the source data into train & test
-	var config env.Config
+
 	dataPath := path.Join(params.SourceDataFolder, mainDR.ResPath)
 	trainDataFile := path.Join(trainFolder, mainDR.ResPath)
 	testDataFile := path.Join(testFolder, mainDR.ResPath)
@@ -500,14 +545,27 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 		}
 	}
 
+	var config env.Config
+	config, err = env.LoadConfig()
+	if err != nil {
+		return "", "", errors.Wrap(err, "unable to load config")
+	}
+
+	// configure a struct to help calculate row limits based on quality during the train / test split
+	rowLimits := rowLimits{
+		minTrainingRows: config.MinTrainingRows,
+		minTestRows:     config.MinTestRows,
+		maxTrainingRows: config.MaxTestRows,
+		maxTestRows:     config.MaxTestRows,
+		sample:          config.FastDataPercentage,
+		quality:         params.Quality,
+	}
+
 	if hasForecasting {
 		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, params.GroupingFieldIndex)
 	} else {
-		config, err = env.LoadConfig()
-		if err != nil {
-			return "", "", errors.Wrap(err, "unable to load config")
-		}
-		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex, params.GroupingFieldIndex, config.MaxTrainingRows, config.MaxTestRows, params.Stratify)
+		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex, params.GroupingFieldIndex,
+			params.Stratify, rowLimits)
 	}
 	if err != nil {
 		return "", "", err
@@ -546,10 +604,6 @@ func LoadDatasetSchemaFromFile(filename string) (*DataSchema, error) {
 		return nil, err
 	}
 	return dataDoc, nil
-}
-
-func referencesResource(variable *model.Variable) bool {
-	return variable.Type == model.ImageType
 }
 
 func min(a, b int) int {
