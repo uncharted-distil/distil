@@ -108,22 +108,15 @@ func NewPredictionTimeseriesDataset(params *PredictParams, interval float64, cou
 func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
 	// generate timestamps to use for prediction based on type of timestamp
 	var timestampPredictionValues []string
-	var err error
 	if model.IsDateTime(p.timestampVariable.Type) {
-		timestampPredictionValues, err = generateTimestampValues(p.interval, p.start, p.count)
+		timestampPredictionValues = generateTimestampValues(p.interval, p.start, p.count)
 	} else if model.IsNumerical(p.timestampVariable.Type) {
-		timestampPredictionValues, err = generateIntValues(p.interval, p.start, p.count)
+		timestampPredictionValues = generateIntValues(p.interval, p.start, p.count)
 	} else {
-		err = errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", p.timestampVariable.Name, p.timestampVariable.Type)
-	}
-	if err != nil {
-		return nil, err
+		return nil, errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", p.timestampVariable.Name, p.timestampVariable.Type)
 	}
 
-	timeseriesData, err := createTimeseriesData(p.idValues, p.timestampVariable.Name, timestampPredictionValues)
-	if err != nil {
-		return nil, err
-	}
+	timeseriesData := createTimeseriesData(p.idValues, p.timestampVariable.Name, timestampPredictionValues)
 
 	return &api.RawDataset{
 		ID:       p.params.Dataset,
@@ -635,7 +628,7 @@ func copyFeatureGroups(fittedSolutionID string, datasetName string, solutionStor
 	return nil
 }
 
-func generateIntValues(interval float64, start int64, stepCount int) ([]string, error) {
+func generateIntValues(interval float64, start int64, stepCount int) []string {
 	// iterate until all required steps are created
 	currentValue := start
 	timeData := make([]string, 0)
@@ -644,10 +637,10 @@ func generateIntValues(interval float64, start int64, stepCount int) ([]string, 
 		currentValue = currentValue + int64(interval)
 	}
 
-	return timeData, nil
+	return timeData
 }
 
-func generateTimestampValues(interval float64, start int64, stepCount int) ([]string, error) {
+func generateTimestampValues(interval float64, start int64, stepCount int) []string {
 	// parse the start time
 	startDate := time.Unix(start, 0)
 
@@ -660,10 +653,10 @@ func generateTimestampValues(interval float64, start int64, stepCount int) ([]st
 		currentTime = currentTime.Add(intervalDuration)
 	}
 
-	return timeData, nil
+	return timeData
 }
 
-func createTimeseriesData(seriesFields map[string][]string, timestampFieldName string, timestampPredictionValues []string) ([][]string, error) {
+func createTimeseriesData(seriesFields map[string][]string, timestampFieldName string, timestampPredictionValues []string) [][]string {
 	// create the header and the ids to use to generate the timeseries
 	header := make([]string, 0)
 	ids := make([][]string, 0)
@@ -679,7 +672,7 @@ func createTimeseriesData(seriesFields map[string][]string, timestampFieldName s
 	// the cartesian product will generate all the values needed for the timeseries
 	cartesianData := createGroupings(ids)
 
-	return append([][]string{header}, cartesianData...), nil
+	return append([][]string{header}, cartesianData...)
 }
 
 func createGroupings(ids [][]string) [][]string {
