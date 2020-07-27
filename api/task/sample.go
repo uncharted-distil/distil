@@ -16,6 +16,7 @@
 package task
 
 import (
+	"math"
 	"os"
 	"path"
 
@@ -30,11 +31,11 @@ import (
 
 // Sample takes a sample of the dataset since larger datasets can lead to broken
 // user experience through long lasting TA2 processing.
-func Sample(originalSchemaFile string, schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
+func Sample(originalSchemaFile string, schemaFile string, dataset string, config *IngestTaskConfig) (string, bool, int, error) {
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to load original schema file")
+		return "", false, 0, errors.Wrap(err, "unable to load original schema file")
 	}
 	mainDR := meta.GetMainDataResource()
 
@@ -43,31 +44,35 @@ func Sample(originalSchemaFile string, schemaFile string, dataset string, config
 	originalCSVFilePath := path.Join(path.Dir(originalSchemaFile), mainDR.ResPath)
 	csvData, err := util.ReadCSVFile(csvFilePath, false)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to parse complete csv dataset")
+		return "", false, 0, errors.Wrap(err, "unable to parse complete csv dataset")
 	}
 
 	sampledData, err := compute.SampleDataset(csvData, config.SampleRowLimit, true)
 	if err != nil {
-		return "", err
+		return "", false, 0, err
 	}
 
 	// copy the full csv to keep it if needed
 	err = util.CopyFile(originalCSVFilePath, path.Join(path.Dir(originalCSVFilePath), "learningData-full.csv"))
 	if err != nil {
-		return "", err
+		return "", false, 0, err
 	}
 
 	// output to the expected location (learningData.csv)
 	err = util.WriteFileWithDirs(csvFilePath, sampledData, os.ModePerm)
 	if err != nil {
-		return "", err
+		return "", false, 0, err
 	}
 	err = util.CopyFile(csvFilePath, originalCSVFilePath)
 	if err != nil {
-		return "", err
+		return "", false, 0, err
 	}
 
-	return schemaFile, nil
+	// if csv data > max sample count, then assume max sample count is the count of
+	// rows sampled in the output.
+	rowCount := int(math.Min(float64(len(csvData)-1), float64(config.SampleRowLimit)))
+
+	return schemaFile, rowCount < len(csvData), rowCount, nil
 }
 
 func canSample(schemaFile string) bool {

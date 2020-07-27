@@ -121,14 +121,18 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		// ingest the imported dataset
 		ingestSteps := &task.IngestSteps{ClassificationOverwrite: false, RawGrouping: rawGrouping}
 		ingestConfig := task.NewConfig(*config)
-		datasetID, err = task.IngestDataset(source, dataCtor, esMetaCtor, datasetID, origins, api.DatasetTypeModelling, ingestConfig, ingestSteps)
+		ingestResult, err := task.IngestDataset(source, dataCtor, esMetaCtor, datasetID, origins, api.DatasetTypeModelling, ingestConfig, ingestSteps)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// marshal data and sent the response back
-		err = handleJSON(w, map[string]interface{}{"dataset": datasetID, "result": "ingested"})
+		err = handleJSON(w, map[string]interface{}{
+			"dataset":  ingestResult.DatasetID,
+			"sampled":  ingestResult.Sampled,
+			"rowCount": ingestResult.RowCount,
+			"result":   "ingested"})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
 			return
