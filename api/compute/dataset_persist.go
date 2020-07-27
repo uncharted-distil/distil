@@ -475,8 +475,24 @@ func (s rowLimits) testRows(rows int) int {
 // persistOriginalData copies the original data and splits it into a train &
 // test subset to be used as needed.
 func persistOriginalData(params *persistedDataParams) (string, string, error) {
+	var config env.Config
+	config, err := env.LoadConfig()
+	if err != nil {
+		return "", "", errors.Wrap(err, "unable to load config")
+	}
 
-	splitDatasetName, err := generateSplitDatasetName(params)
+	// configure a struct to help calculate row limits based on quality during the train / test split
+	limits := &rowLimits{
+		minTrainingRows: config.MinTrainingRows,
+		minTestRows:     config.MinTestRows,
+		maxTrainingRows: config.MaxTestRows,
+		maxTestRows:     config.MaxTestRows,
+		sample:          config.FastDataPercentage,
+		quality:         params.Quality,
+	}
+
+	// generate a unique dataset name from the params and the limit values
+	splitDatasetName, err := generateSplitDatasetName(params, limits)
 	if err != nil {
 		return "", "", err
 	}
@@ -545,22 +561,6 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 		}
 	}
 
-	var config env.Config
-	config, err = env.LoadConfig()
-	if err != nil {
-		return "", "", errors.Wrap(err, "unable to load config")
-	}
-
-	// configure a struct to help calculate row limits based on quality during the train / test split
-	rowLimits := rowLimits{
-		minTrainingRows: config.MinTrainingRows,
-		minTestRows:     config.MinTestRows,
-		maxTrainingRows: config.MaxTestRows,
-		maxTestRows:     config.MaxTestRows,
-		sample:          config.FastDataPercentage,
-		quality:         params.Quality,
-	}
-
 	if hasForecasting {
 		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, params.GroupingFieldIndex)
 	} else {
@@ -574,9 +574,16 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	return trainSchemaFile, testSchemaFile, nil
 }
 
-func generateSplitDatasetName(params *persistedDataParams) (string, error) {
+func generateSplitDatasetName(params *persistedDataParams, limits *rowLimits) (string, error) {
 	// generate the hash from the params
-	hash, err := hashstructure.Hash(params, nil)
+	hashStruct := struct {
+		params    *persistedDataParams
+		rowLimits *rowLimits
+	}{
+		params:    params,
+		rowLimits: limits,
+	}
+	hash, err := hashstructure.Hash(hashStruct, nil)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate persisted data hash")
 	}
