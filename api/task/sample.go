@@ -45,7 +45,7 @@ func Sample(schemaFile string, dataset string, config *IngestTaskConfig) (string
 		return "", errors.Wrap(err, "unable to parse complete csv dataset")
 	}
 
-	sampledData, err := compute.SampleDataset(csvData, config.SampleRowLimit)
+	sampledData, err := compute.SampleDataset(csvData, config.SampleRowLimit, true)
 	if err != nil {
 		return "", err
 	}

@@ -654,10 +654,18 @@ func SplitTimeSeries(timeseries []*api.TimeseriesObservation, trainPercentage fl
 
 // SampleDataset shuffles a dataset's rows and takes a subsample, returning
 // the raw byte data of the sampled dataset.
-func SampleDataset(rawData [][]string, maxRows int) ([]byte, error) {
+func SampleDataset(rawData [][]string, maxRows int, hasHeader bool) ([]byte, error) {
 	// initialize csv writer
 	output := &bytes.Buffer{}
 	writer := csv.NewWriter(output)
+
+	if hasHeader {
+		err := writer.Write(rawData[0])
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to write header to sampled data")
+		}
+		rawData = rawData[1:]
+	}
 
 	err := shuffleAndWrite(rawData, -1, maxRows, 0, writer, nil)
 	if err != nil {
