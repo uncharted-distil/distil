@@ -58,10 +58,12 @@ interface SolutionStatusMsg {
 
 interface PredictRequestMsg {
   datasetId: string;
-  dataset: string; // base64 encoded version of dataset
+  dataset?: string; // base64 encoded version of dataset
   fittedSolutionId: string;
   target: string;
   targetType: string;
+  intervalCount?: number; // Used for Forecast Horizon, in seconds.
+  intervalLength?: number; // Used for Forecast Horizon as integer.
 }
 
 // Prediction status.
@@ -529,7 +531,9 @@ export const actions = {
         fittedSolutionId: request.fittedSolutionId,
         datasetId: request.datasetId,
         dataset: request.dataset,
-        targetType: request.targetType
+        targetType: request.targetType,
+        intervalCount: request.intervalCount ?? null,
+        intervalLength: request.intervalLength ?? null
       });
     });
   },

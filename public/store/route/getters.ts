@@ -5,7 +5,6 @@ import {
   RowSelection,
   SummaryMode,
   TaskTypes,
-  BandCombination,
   BandID
 } from "../dataset/index";
 import {
@@ -445,6 +444,22 @@ export const getters = {
 
     // Check if REMOTE_SENSING is part of it.
     return task.includes(TaskTypes.REMOTE_SENSING);
+  },
+
+  /**
+   * Check if the current task includes Timeseries.
+   * @param {Route} state
+   * @returns {Boolean}
+   */
+  isTimeseries(state: Route): boolean {
+    // Get the list of task of the route.
+    const task = state.query.task as string;
+    if (!task) {
+      return false;
+    }
+
+    // Check if TIME_SERIES is part of it.
+    return task.includes(TaskTypes.TIME_SERIES);
   },
 
   getBandCombinationId(state: Route): BandID {
