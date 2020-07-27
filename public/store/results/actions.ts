@@ -556,9 +556,7 @@ export const actions = {
       varMode: SummaryMode;
     }
   ) {
-    if (
-      !validateArgs(args, ["dataset", "solutionId", "highlight", "varMode"])
-    ) {
+    if (!validateArgs(args, ["dataset", "solutionId", "varMode"])) {
       return null;
     }
 
@@ -599,14 +597,13 @@ export const actions = {
     context: ResultsContext,
     args: {
       dataset: string;
+      target: string;
       requestIds: string[];
       highlight: Highlight;
-      varMode: SummaryMode;
+      varModes: Map<string, SummaryMode>;
     }
   ) {
-    if (
-      !validateArgs(args, ["dataset", "requestIds", "highlight", "varMode"])
-    ) {
+    if (!validateArgs(args, ["dataset", "target", "requestIds"])) {
       return null;
     }
 
@@ -620,7 +617,9 @@ export const actions = {
           dataset: args.dataset,
           solutionId: solution.solutionId,
           highlight: args.highlight,
-          varMode: args.varMode
+          varMode: args.varModes.has(args.target)
+            ? args.varModes.get(args.target)
+            : SummaryMode.Default
         });
       })
     );

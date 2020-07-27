@@ -24,14 +24,17 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
 func TestPersistOriginalDataUnstratified(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
-	params := createTestParams(false)
+	params := createTestParams(false, ModelQualityHigh)
+	limits, err := createLimits(ModelQualityHigh)
+	assert.NoError(t, err)
 
-	splitDatasetName, err := generateSplitDatasetName(params)
+	splitDatasetName, err := generateSplitDatasetName(params, limits)
 	assert.NoError(t, err)
 	trainPath := fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName)
 	testPath := fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName)
@@ -54,9 +57,11 @@ func TestPersistOriginalDataUnstratified(t *testing.T) {
 
 func TestPersistOriginalDataStratified(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
-	params := createTestParams(true)
+	params := createTestParams(true, ModelQualityHigh)
+	limits, err := createLimits(ModelQualityHigh)
+	assert.NoError(t, err)
 
-	splitDatasetName, err := generateSplitDatasetName(params)
+	splitDatasetName, err := generateSplitDatasetName(params, limits)
 	assert.NoError(t, err)
 	trainPath := fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName)
 	testPath := fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName)
@@ -89,8 +94,10 @@ func TestPersistOriginalDataStratified(t *testing.T) {
 func TestParamChange(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
 
-	params := createTestParams(false)
-	splitDatasetName0, err := generateSplitDatasetName(params)
+	params := createTestParams(false, ModelQualityHigh)
+	limits, err := createLimits(ModelQualityHigh)
+	assert.NoError(t, err)
+	splitDatasetName0, err := generateSplitDatasetName(params, limits)
 	assert.NoError(t, err)
 
 	_, _, err = persistOriginalData(params)
@@ -100,8 +107,8 @@ func TestParamChange(t *testing.T) {
 	testPath := fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName0)
 	assert.FileExists(t, testPath)
 
-	params = createTestParams(true)
-	splitDatasetName1, err := generateSplitDatasetName(params)
+	params = createTestParams(true, ModelQualityHigh)
+	splitDatasetName1, err := generateSplitDatasetName(params, limits)
 	assert.NoError(t, err)
 	assert.NotEqual(t, splitDatasetName0, splitDatasetName1)
 
@@ -113,7 +120,38 @@ func TestParamChange(t *testing.T) {
 	assert.FileExists(t, testPath)
 }
 
-func createTestParams(stratify bool) *persistedDataParams {
+func TestLimitChange(t *testing.T) {
+	assert.NoError(t, removeTestFiles())
+
+	params := createTestParams(false, ModelQualityHigh)
+	limits, err := createLimits(ModelQualityHigh)
+	assert.NoError(t, err)
+	splitDatasetName0, err := generateSplitDatasetName(params, limits)
+	assert.NoError(t, err)
+
+	_, _, err = persistOriginalData(params)
+	assert.NoError(t, err)
+	trainPath := fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName0)
+	assert.FileExists(t, trainPath)
+	testPath := fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName0)
+	assert.FileExists(t, testPath)
+
+	params = createTestParams(false, ModelQualityFast)
+	limits, err = createLimits(ModelQualityFast)
+	assert.NoError(t, err)
+	splitDatasetName1, err := generateSplitDatasetName(params, limits)
+	assert.NoError(t, err)
+	assert.NotEqual(t, splitDatasetName0, splitDatasetName1)
+
+	_, _, err = persistOriginalData(params)
+	assert.NoError(t, err)
+	trainPath = fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName1)
+	assert.FileExists(t, trainPath)
+	testPath = fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName1)
+	assert.FileExists(t, testPath)
+}
+
+func createTestParams(stratify bool, quality string) *persistedDataParams {
 	return &persistedDataParams{
 		DatasetName:        "test_dataset",
 		SchemaFile:         compute.D3MDataSchema,
@@ -123,7 +161,24 @@ func createTestParams(stratify bool) *persistedDataParams {
 		GroupingFieldIndex: -1,
 		TargetFieldIndex:   2,
 		Stratify:           stratify,
+		Quality:            quality,
 	}
+}
+
+func createLimits(quality string) (*rowLimits, error) {
+	var config env.Config
+	config, err := env.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+	return &rowLimits{
+		MinTrainingRows: config.MinTrainingRows,
+		MinTestRows:     config.MinTestRows,
+		MaxTrainingRows: config.MaxTestRows,
+		MaxTestRows:     config.MaxTestRows,
+		Sample:          config.FastDataPercentage,
+		Quality:         quality,
+	}, nil
 }
 
 func removeTestFiles() error {

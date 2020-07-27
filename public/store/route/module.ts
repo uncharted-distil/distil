@@ -3,7 +3,6 @@ import { Route } from "vue-router";
 import { getters as moduleGetters } from "./getters";
 import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
-import { modelModule } from "../model/module";
 
 export const routeModule: Module<Route, DistilState> = {
   getters: moduleGetters
@@ -92,5 +91,8 @@ export const getters = {
   isApplyModel: read(moduleGetters.isApplyModel),
   isRemoteSensing: read(moduleGetters.isRemoteSensing),
   isTimeseries: read(moduleGetters.isTimeseries),
-  getBandCombinationId: read(moduleGetters.getBandCombinationId)
+  getBandCombinationId: read(moduleGetters.getBandCombinationId),
+  getModelLimit: read(moduleGetters.getModelLimit),
+  getModelTimeLimit: read(moduleGetters.getModelTimeLimit),
+  getModelQuality: read(moduleGetters.getModelQuality)
 };

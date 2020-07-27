@@ -473,11 +473,10 @@ export const actions = {
     } else if (task.includes(TaskTypes.CLASSIFICATION)) {
       resultActions.fetchCorrectnessSummaries(store, {
         dataset: dataset,
+        target: target,
         requestIds: requestIds,
         highlight: highlight,
-        varMode: varModes.has(target)
-          ? varModes.get(target)
-          : SummaryMode.Default
+        varModes: varModes
       });
     } else {
       console.error(`unhandled task type ${task}`);

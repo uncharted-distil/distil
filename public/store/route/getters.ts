@@ -14,6 +14,7 @@ import {
   TRAINING_VARS_INSTANCE_PAGE,
   RESULT_TRAINING_VARS_INSTANCE_PAGE
 } from "../route/index";
+import { ModelQuality } from "../requests/index";
 import { decodeFilters, Filter, FilterParams } from "../../util/filters";
 import { decodeHighlights } from "../../util/highlights";
 import { decodeRowSelection } from "../../util/row";
@@ -465,5 +466,32 @@ export const getters = {
   getBandCombinationId(state: Route): BandID {
     const bandCombo = state.query.bandCombinationId;
     return _.isEmpty(bandCombo) ? BandID.NATURAL_COLORS : <BandID>bandCombo;
+  },
+
+  getModelTimeLimit(state: Route): number {
+    const timeLimit = <string>state.query.modelTimeLimit;
+    if (!timeLimit) {
+      return null;
+    }
+    return parseInt(timeLimit, 10);
+  },
+
+  getModelLimit(state: Route): number {
+    const limit = <string>state.query.modelLimit;
+    if (!limit) {
+      return null;
+    }
+    return parseInt(limit, 10);
+  },
+
+  getModelQuality(state: Route): ModelQuality {
+    const qualityStr = <string>state.query.modelQuality;
+    if (!qualityStr) {
+      return null;
+    }
+    return $enum(ModelQuality).asValueOrDefault(
+      qualityStr,
+      ModelQuality.HIGHER_QUALITY
+    );
   }
 };
