@@ -428,28 +428,28 @@ type persistedDataParams struct {
 }
 
 type rowLimits struct {
-	minTrainingRows int
-	minTestRows     int
-	maxTrainingRows int
-	maxTestRows     int
-	sample          float64
-	quality         string
+	MinTrainingRows int
+	MinTestRows     int
+	MaxTrainingRows int
+	MaxTestRows     int
+	Sample          float64
+	Quality         string
 }
 
 func (s rowLimits) trainingRows(rows int) int {
 	// determine whether or not we need to sample
 	sampledRows := rows
-	if s.quality == ModelQualityFast {
-		sampledRows = int(float64(rows) * s.sample)
-	} else if s.quality != ModelQualityHigh {
-		log.Warnf("model quality %s unsupported - defaulting to 'high'", s.quality)
+	if s.Quality == ModelQualityFast {
+		sampledRows = int(float64(rows) * s.Sample)
+	} else if s.Quality != ModelQualityHigh {
+		log.Warnf("model quality '%s' unsupported - defaulting to %s", s.Quality, ModelQualityHigh)
 	}
 
 	// limit samples by configured bounds
-	if sampledRows < s.minTrainingRows {
-		sampledRows = s.minTrainingRows
-	} else if sampledRows > s.maxTrainingRows {
-		sampledRows = s.maxTrainingRows
+	if sampledRows < s.MinTrainingRows {
+		sampledRows = s.MinTrainingRows
+	} else if sampledRows > s.MaxTrainingRows {
+		sampledRows = s.MaxTrainingRows
 	}
 	return sampledRows
 }
@@ -457,17 +457,17 @@ func (s rowLimits) trainingRows(rows int) int {
 func (s rowLimits) testRows(rows int) int {
 	// determine whether or not we need to sample
 	sampledRows := rows
-	if s.quality == ModelQualityFast {
-		sampledRows = int(float64(rows) * s.sample)
-	} else if s.quality != ModelQualityHigh {
-		log.Warnf("model quality %s unsupported - defaulting to 'high'", s.quality)
+	if s.Quality == ModelQualityFast {
+		sampledRows = int(float64(rows) * s.Sample)
+	} else if s.Quality != ModelQualityHigh {
+		log.Warnf("model quality '%s' unsupported - defaulting to '%s'", s.Quality, ModelQualityHigh)
 	}
 
 	// limit samples by configured bounds
-	if sampledRows < s.minTestRows {
-		sampledRows = s.minTestRows
-	} else if sampledRows > s.maxTestRows {
-		sampledRows = s.maxTestRows
+	if sampledRows < s.MinTestRows {
+		sampledRows = s.MinTestRows
+	} else if sampledRows > s.MaxTestRows {
+		sampledRows = s.MaxTestRows
 	}
 	return sampledRows
 }
@@ -482,17 +482,17 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	}
 
 	// configure a struct to help calculate row limits based on quality during the train / test split
-	limits := &rowLimits{
-		minTrainingRows: config.MinTrainingRows,
-		minTestRows:     config.MinTestRows,
-		maxTrainingRows: config.MaxTestRows,
-		maxTestRows:     config.MaxTestRows,
-		sample:          config.FastDataPercentage,
-		quality:         params.Quality,
+	limits := rowLimits{
+		MinTrainingRows: config.MinTrainingRows,
+		MinTestRows:     config.MinTestRows,
+		MaxTrainingRows: config.MaxTestRows,
+		MaxTestRows:     config.MaxTestRows,
+		Sample:          config.FastDataPercentage,
+		Quality:         params.Quality,
 	}
 
 	// generate a unique dataset name from the params and the limit values
-	splitDatasetName, err := generateSplitDatasetName(params, limits)
+	splitDatasetName, err := generateSplitDatasetName(params, &limits)
 	if err != nil {
 		return "", "", err
 	}
@@ -565,7 +565,7 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, params.GroupingFieldIndex)
 	} else {
 		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex, params.GroupingFieldIndex,
-			params.Stratify, rowLimits)
+			params.Stratify, limits)
 	}
 	if err != nil {
 		return "", "", err
@@ -577,11 +577,11 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 func generateSplitDatasetName(params *persistedDataParams, limits *rowLimits) (string, error) {
 	// generate the hash from the params
 	hashStruct := struct {
-		params    *persistedDataParams
-		rowLimits *rowLimits
+		Params    *persistedDataParams
+		RowLimits *rowLimits
 	}{
-		params:    params,
-		rowLimits: limits,
+		Params:    params,
+		RowLimits: limits,
 	}
 	hash, err := hashstructure.Hash(hashStruct, nil)
 	if err != nil {
