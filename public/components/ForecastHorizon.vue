@@ -1,5 +1,4 @@
 <template>
-  <!-- Modal Component -->
   <b-modal id="forecast-horizon-modal" title="Forecast Horizon" @ok="handleOk">
     <b-form-group label="Interval size">
       <b-form-spinbutton v-model="intervalLength" inline min="1" />
@@ -23,6 +22,9 @@ import { PREDICTION_ROUTE } from "../store/route";
 
 /**
  * Modal to request a Forecast Horizon.
+ *
+ * TODO - Add test on the Interval Length and Count to offer the user with useful
+ * limits (Yearly, Monthly, days, minutes, etc.) and limited counts.
  */
 export default Vue.extend({
   name: "forecast-horizon",
@@ -41,8 +43,6 @@ export default Vue.extend({
     targetType: String
   },
 
-  computed: {},
-
   methods: {
     async handleOk() {
       try {
@@ -51,7 +51,7 @@ export default Vue.extend({
           fittedSolutionId: this.fittedSolutionId,
           target: this.target,
           targetType: this.targetType,
-          intervalCount: this.intervalCount,
+          intervalCount: this.intervalCount, // in seconds
           intervalLength: this.intervalLength
         };
 
@@ -62,10 +62,16 @@ export default Vue.extend({
 
         this.predidctionFinish(response);
       } catch (err) {
-        console.error("Forecase Horizon", "Prediction could not finish");
+        /**
+         * TODO
+         *
+         * Display a visual error message on the message box.
+         */
+        console.error("Forecast Horizon", "Prediction could not finish");
       }
     },
 
+    /* Once the prediction is finished, we send the user to the prediction page. */
     predidctionFinish(response: any) {
       const predictionDataset = getPredictionsById(
         requestGetters.getPredictions(this.$store),
