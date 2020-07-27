@@ -249,7 +249,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	// not sure if better to call canSample here, or as the first part of the sample step
 	sampled := false
 	rowCount := 0
-	if canSample(latestSchemaOutput) {
+	if canSample(latestSchemaOutput, config) {
 		log.Infof("sampling dataset")
 		latestSchemaOutput, sampled, rowCount, err = Sample(originalSchemaFile, latestSchemaOutput, dataset, config)
 		if err != nil {

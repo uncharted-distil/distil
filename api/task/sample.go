@@ -35,7 +35,7 @@ func Sample(originalSchemaFile string, schemaFile string, dataset string, config
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
 	if err != nil {
-		return "", false, 0, errors.Wrap(err, "unable to load original schema file")
+		return "", false, 0, errors.Wrap(err, "unable to load schema file")
 	}
 	mainDR := meta.GetMainDataResource()
 
@@ -72,11 +72,11 @@ func Sample(originalSchemaFile string, schemaFile string, dataset string, config
 	// rows sampled in the output.
 	rowCount := int(math.Min(float64(len(csvData)-1), float64(config.SampleRowLimit)))
 
-	return schemaFile, rowCount < len(csvData), rowCount, nil
+	return schemaFile, rowCount < (len(csvData) - 1), rowCount, nil
 }
 
-func canSample(schemaFile string) bool {
-	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
+func canSample(schemaFile string, config *IngestTaskConfig) bool {
+	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(path.Dir(schemaFile), config.ClassificationOutputPathRelative), true, false)
 	if err != nil {
 		log.Warnf("unable to load schema file for sampling: %+v", err)
 		return false
@@ -84,7 +84,7 @@ func canSample(schemaFile string) bool {
 
 	for _, dr := range meta.DataResources {
 		for _, v := range dr.Variables {
-			if model.IsRemoteSensing(v.Type) || model.IsTimeSeries(v.Type) {
+			if model.IsRemoteSensing(v.Type) || model.IsTimeSeries(v.Type) || model.IsGeoBounds(v.Type) {
 				return false
 			}
 		}
