@@ -30,7 +30,7 @@ import (
 
 // Sample takes a sample of the dataset since larger datasets can lead to broken
 // user experience through long lasting TA2 processing.
-func Sample(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
+func Sample(originalSchemaFile string, schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
 	if err != nil {
@@ -40,6 +40,7 @@ func Sample(schemaFile string, dataset string, config *IngestTaskConfig) (string
 
 	// extract a sample by simply reading the main CSV file and selecting a subset
 	csvFilePath := path.Join(path.Dir(schemaFile), mainDR.ResPath)
+	originalCSVFilePath := path.Join(path.Dir(originalSchemaFile), mainDR.ResPath)
 	csvData, err := util.ReadCSVFile(csvFilePath, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to parse complete csv dataset")
@@ -51,13 +52,17 @@ func Sample(schemaFile string, dataset string, config *IngestTaskConfig) (string
 	}
 
 	// copy the full csv to keep it if needed
-	err = util.CopyFile(csvFilePath, path.Join(path.Dir(schemaFile), "learningData-full.csv"))
+	err = util.CopyFile(originalCSVFilePath, path.Join(path.Dir(originalCSVFilePath), "learningData-full.csv"))
 	if err != nil {
 		return "", err
 	}
 
 	// output to the expected location (learningData.csv)
 	err = util.WriteFileWithDirs(csvFilePath, sampledData, os.ModePerm)
+	if err != nil {
+		return "", err
+	}
+	err = util.CopyFile(csvFilePath, originalCSVFilePath)
 	if err != nil {
 		return "", err
 	}

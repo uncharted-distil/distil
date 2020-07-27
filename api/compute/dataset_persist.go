@@ -671,6 +671,7 @@ func SampleDataset(rawData [][]string, maxRows int, hasHeader bool) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
+	writer.Flush()
 
 	return output.Bytes(), nil
 }

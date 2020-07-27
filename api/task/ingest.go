@@ -242,7 +242,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	// not sure if better to call canSample here, or as the first part of the sample step
 	if canSample(latestSchemaOutput) {
 		log.Infof("sampling dataset")
-		latestSchemaOutput, err = Sample(latestSchemaOutput, dataset, config)
+		latestSchemaOutput, err = Sample(originalSchemaFile, latestSchemaOutput, dataset, config)
 		if err != nil {
 			return "", errors.Wrap(err, "unable to sample dataset")
 		}
@@ -551,11 +551,12 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 		log.Warnf("unable to load importance from file: %v", err)
 	}
 
-	// load stats
+	// load stats and adjust for header row (may want to do in the LoadDatasetStats function)
 	err = metadata.LoadDatasetStats(meta, dataDir)
 	if err != nil {
 		log.Warnf("unable to load stats: %v", err)
 	}
+	meta.NumRows = meta.NumRows - 1
 
 	// load summary
 	metadata.LoadSummaryFromDescription(meta, path.Join(datasetDir, config.SummaryOutputPathRelative))
