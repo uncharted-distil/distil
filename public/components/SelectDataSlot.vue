@@ -1,6 +1,6 @@
 <template>
   <div class="select-data-slot">
-    <view-type-toggle v-model="viewTypeModel" has-tabs :variables="variables">
+    <view-type-toggle has-tabs v-model="viewTypeModel" :variables="variables">
       <b-nav-item
         class="font-weight-bold"
         @click="setIncludedActive"
@@ -490,5 +490,22 @@ table tr {
   margin-top: auto;
   vertical-align: baseline;
   margin-bottom: -3px;
+}
+.select-data-slot .nav-link.active {
+  border-top: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #e0e0e0;
+  border-left: 1px solid #aaa;
+  border-top-left-radius: 2px;
+  border-top-left-radius: 0.125rem;
+  border-top-right-radius: 2px;
+  border-top-right-radius: 0.125rem;
+  color: rgba(0, 0, 0, 1);
+}
+.select-data-slot .nav-item > a {
+  color: rgba(0, 0, 0, 0.5);
+}
+.select-data-slot .nav-tabs .nav-link {
+  padding: 0.5rem 0.75rem 1rem;
 }
 </style>
