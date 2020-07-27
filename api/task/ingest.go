@@ -78,6 +78,7 @@ type IngestTaskConfig struct {
 	ESDatasetPrefix                    string
 	HardFail                           bool
 	IngestOverwrite                    bool
+	SampleRowLimit                     int
 }
 
 // IngestSteps is a collection of parameters that specify ingest behaviour.
@@ -138,6 +139,7 @@ func NewConfig(config env.Config) *IngestTaskConfig {
 		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
 		HardFail:                           config.IngestHardFail,
 		IngestOverwrite:                    config.IngestOverwrite,
+		SampleRowLimit:                     config.IngestSampleRowLimit,
 	}
 }
 
@@ -235,6 +237,16 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		}
 		latestSchemaOutput = output
 		log.Infof("finished geocoding the dataset")
+	}
+
+	// not sure if better to call canSample here, or as the first part of the sample step
+	if canSample(latestSchemaOutput) {
+		log.Infof("sampling dataset")
+		latestSchemaOutput, err = Sample(latestSchemaOutput, dataset, config)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to sample dataset")
+		}
+		log.Infof("finished sampling dataset")
 	}
 
 	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, dataStorage, metaStorage, dataset, datasetSource, origins, datasetType, config, true, !definitiveClassification, true)
