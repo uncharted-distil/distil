@@ -3,8 +3,6 @@ import { Route } from "vue-router";
 import { getters as moduleGetters } from "./getters";
 import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
-import { modelModule } from "../model/module";
-import { radialArea } from "d3";
 
 export const routeModule: Module<Route, DistilState> = {
   getters: moduleGetters
