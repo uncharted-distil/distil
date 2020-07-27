@@ -62,6 +62,11 @@ export interface Feature {
   featureType: string;
 }
 
+export enum ModelQuality {
+  SPEED = "speed",
+  HIGHER_QUALITY = "quality"
+}
+
 export interface RequestState {
   solutionRequests: SolutionRequest[];
   solutions: Solution[];

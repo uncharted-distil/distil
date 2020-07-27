@@ -40,6 +40,9 @@ export interface RouteArgs {
   singleSolution?: string;
   predictionsDataset?: string;
   bandCombinationId?: string;
+  modelTimeLimit?: number;
+  modelLimit?: number;
+  modelQuality?: string;
 
   // we currently don't have a way to add these to the interface
   //

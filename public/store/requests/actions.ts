@@ -15,7 +15,8 @@ import {
   Solution,
   PREDICT_COMPLETED,
   PREDICT_ERRORED,
-  Predictions
+  Predictions,
+  ModelQuality
 } from "./index";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
@@ -27,6 +28,7 @@ import { actions as predictActions } from "../predictions/module";
 import { getters as routeGetters } from "../route/module";
 import { TaskTypes, SummaryMode } from "../dataset";
 import { validateArgs } from "../../util/data";
+import { Model } from "../model";
 
 const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
@@ -43,6 +45,7 @@ interface SolutionRequestMsg {
   metrics: string[];
   maxSolutions: number;
   maxTime: number;
+  quality: ModelQuality;
   filters: FilterParams;
 }
 
@@ -466,6 +469,7 @@ export const actions = {
         metrics: request.metrics,
         maxSolutions: request.maxSolutions,
         maxTime: request.maxTime,
+        quality: request.quality,
         filters: request.filters
       });
     });
