@@ -439,6 +439,14 @@ func (d *Database) InsertRemainingRows() error {
 			if err != nil {
 				return errors.Wrap(err, "unable to insert remaining rows for table "+tableName)
 			}
+
+			if tableName != WordStemTableName {
+				tableName = fmt.Sprintf("%s_base", tableName)
+			}
+			_, err = d.Client.Exec(fmt.Sprintf("ANALYZE \"%s\"", tableName))
+			if err != nil {
+				log.Warnf("error updating stats for %s: %+v", tableName, err)
+			}
 		}
 	}
 

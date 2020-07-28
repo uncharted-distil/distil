@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/model"
 
@@ -104,4 +105,11 @@ func (s *Storage) GetStorageName(dataset string) (string, error) {
 	}
 
 	return currentName, nil
+}
+
+func (s *Storage) updateStats(storageName string) {
+	_, err := s.client.Exec(fmt.Sprintf("ANALYZE \"%s\"", storageName))
+	if err != nil {
+		log.Warnf("error updating postgres stats for %s: %+v", storageName, err)
+	}
 }
