@@ -7,12 +7,7 @@
     @cancel="showError = false"
   >
     <b-form-group label="Interval size" description="Size of the prediction">
-      <b-form-spinbutton
-        v-model="intervalLength"
-        class="flex-0"
-        inline
-        min="1"
-      />
+      <b-form-spinbutton v-model="intervalLength" inline min="1" />
       <!-- Add a dateTime scale selection. -->
       <b-dropdown
         v-if="isDateTime"
@@ -150,7 +145,6 @@ export default Vue.extend({
           requestMsg
         );
 
-        // this.$bvModal.hide("forecast-horizon-modal");
         this.predidctionFinish(response);
       } catch (error) {
         this.showError = true;
