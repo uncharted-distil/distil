@@ -90,6 +90,7 @@ export const getters = {
   isSingleSolution: read(moduleGetters.isSingleSolution),
   isApplyModel: read(moduleGetters.isApplyModel),
   isRemoteSensing: read(moduleGetters.isRemoteSensing),
+  isTimeseries: read(moduleGetters.isTimeseries),
   getBandCombinationId: read(moduleGetters.getBandCombinationId),
   getModelLimit: read(moduleGetters.getModelLimit),
   getModelTimeLimit: read(moduleGetters.getModelTimeLimit),

@@ -7,8 +7,8 @@
 
     <p class="nav-link font-weight-bold flex-shrink-0">Results</p>
     <div class="result-summaries">
-      <div v-if="showResiduals" class="result-summaries-error">
-        <error-threshold-slider></error-threshold-slider>
+      <div v-if="showResiduals && !isTimeseries" class="result-summaries-error">
+        <error-threshold-slider />
       </div>
       <result-facets
         :showResiduals="showResiduals"
@@ -17,32 +17,51 @@
     </div>
     <template v-if="isActiveSolutionCompleted">
       <div class="d-flex flex-row flex-shrink-0 justify-content-end">
-        <predictions-data-uploader
-          class="result-button-alignment"
-          :fitted-solution-id="fittedSolutionId"
-          :target="target"
-          :target-type="targetType"
-        ></predictions-data-uploader>
-        <b-button
-          v-if="isSingleSolution"
-          variant="primary"
-          class="apply-button"
-          v-b-modal.predictions-data-upload-modal
-          >Apply Model
-        </b-button>
-        <save-model
-          :solutionId="solutionId"
-          :fittedSolutionId="fittedSolutionId"
-        ></save-model>
-        <b-button
-          v-if="!isSingleSolution"
-          variant="success"
-          class="save-button"
-          v-b-modal.save-model-modal
-        >
-          <i class="fa fa-floppy-o"></i>
-          Save Model
-        </b-button>
+        <template v-if="isSingleSolution">
+          <template v-if="isTimeseries">
+            <forecast-horizon
+              v-if="isTimeseries"
+              :dataset="dataset"
+              :fitted-solution-id="fittedSolutionId"
+              :target="target"
+              :target-type="targetType"
+            />
+            <b-button
+              variant="primary"
+              class="apply-button"
+              v-b-modal.forecast-horizon-modal
+              >Forecast
+            </b-button>
+          </template>
+          <template v-else>
+            <predictions-data-uploader
+              class="result-button-alignment"
+              :fitted-solution-id="fittedSolutionId"
+              :target="target"
+              :target-type="targetType"
+            ></predictions-data-uploader>
+            <b-button
+              variant="primary"
+              class="apply-button"
+              v-b-modal.predictions-data-upload-modal
+              >Apply Model
+            </b-button>
+          </template>
+        </template>
+        <template v-else>
+          <save-model
+            :solutionId="solutionId"
+            :fittedSolutionId="fittedSolutionId"
+          ></save-model>
+          <b-button
+            variant="success"
+            class="save-button"
+            v-b-modal.save-model-modal
+          >
+            <i class="fa fa-floppy-o"></i>
+            Save Model
+          </b-button>
+        </template>
       </div>
     </template>
   </div>
@@ -51,6 +70,7 @@
 <script lang="ts">
 import ResultFacets from "../components/ResultFacets";
 import PredictionsDataUploader from "../components/PredictionsDataUploader";
+import ForecastHorizon from "../components/ForecastHorizon";
 import ErrorThresholdSlider from "../components/ErrorThresholdSlider";
 import SaveModel from "../components/SaveModel";
 import ResultTargetVariable from "../components/ResultTargetVariable";
@@ -84,6 +104,7 @@ export default Vue.extend({
     ResultFacets,
     PredictionsDataUploader,
     ErrorThresholdSlider,
+    ForecastHorizon,
     vueSlider,
     SaveModel,
     ResultTargetVariable
@@ -168,6 +189,10 @@ export default Vue.extend({
     // user selects a model directly from the search screen.
     isSingleSolution(): boolean {
       return routeGetters.isSingleSolution(this.$store);
+    },
+
+    isTimeseries(): boolean {
+      return routeGetters.isTimeseries(this.$store);
     }
   }
 });
