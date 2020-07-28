@@ -40,9 +40,7 @@ import (
 )
 
 const (
-	defaultExposedOutputKey  = "outputs.0"
-	explainFeatureOutputkey  = "outputs.1"
-	explainSolutionOutputkey = "outputs.2"
+	defaultExposedOutputKey = "outputs.0"
 	// SolutionPendingStatus represents that the solution request has been acknoledged by not yet sent to the API
 	SolutionPendingStatus = "SOLUTION_PENDING"
 	// SolutionFittingStatus represents that the solution request has been sent to the API.
@@ -63,6 +61,15 @@ const (
 	RequestErroredStatus = "REQUEST_ERRORED"
 	// RequestCompletedStatus represents that the solution request has completed successfully.
 	RequestCompletedStatus = "REQUEST_COMPLETED"
+
+	defaultMaxSolution = 5
+	defaultMaxTime     = 5
+	defaultQuality     = "quality"
+
+	// ModelQualityFast indicates that the system should try to generate models quickly at the expense of quality
+	ModelQualityFast = "speed"
+	// ModelQualityHigh indicates the the system should focus on higher quality models at the expense of speed
+	ModelQualityHigh = "quality"
 )
 
 var (
@@ -100,6 +107,7 @@ type SolutionRequest struct {
 	TimestampField       string
 	MaxSolutions         int
 	MaxTime              int
+	Quality              string
 	ProblemType          string
 	Metrics              []string
 	Filters              *api.FilterParams
@@ -146,8 +154,9 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 	}
 
 	req.Task, _ = json.StringArray(j, "task")
-	req.MaxSolutions = json.IntDefault(j, 5, "maxSolutions")
-	req.MaxTime = json.IntDefault(j, 0, "maxTime")
+	req.MaxSolutions = json.IntDefault(j, defaultMaxSolution, "maxSolutions")
+	req.MaxTime = json.IntDefault(j, defaultMaxTime, "maxTime")
+	req.Quality = json.StringDefault(j, defaultQuality, "quality")
 	req.ProblemType = json.StringDefault(j, "", "problemType")
 	req.Metrics, _ = json.StringArray(j, "metrics")
 
@@ -232,11 +241,13 @@ func (s *SolutionRequest) Listen(listener SolutionStatusListener) error {
 
 func (s *SolutionRequest) createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
 	datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
-	return createSearchSolutionsRequest(columnIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset, s.Metrics, s.Task, int64(s.MaxTime))
+	return createSearchSolutionsRequest(columnIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset,
+		s.Metrics, s.Task, int64(s.MaxTime), int64(s.MaxSolutions))
 }
 
 func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
-	datasetURI string, userAgent string, targetFeature *model.Variable, dataset string, metrics []string, task []string, maxTime int64) (*pipeline.SearchSolutionsRequest, error) {
+	datasetURI string, userAgent string, targetFeature *model.Variable, dataset string, metrics []string, task []string,
+	maxTime int64, maxSolutions int64) (*pipeline.SearchSolutionsRequest, error) {
 
 	return &pipeline.SearchSolutionsRequest{
 		Problem: &pipeline.ProblemDescription{
@@ -261,6 +272,9 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 
 		// Requested max time for pipeline run - not guaranteed to be honoured
 		TimeBoundRun: float64(maxTime),
+
+		// Request maximum number of solutions
+		RankSolutionsLimit: int32(maxSolutions),
 
 		// we accept dataset and csv uris as return types
 		AllowedValueTypes: []string{
@@ -928,6 +942,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		GroupingFieldIndex: groupingVariableIndex,
 		TargetFieldIndex:   targetIndex,
 		Stratify:           stratify,
+		Quality:            s.Quality,
 	}
 	datasetPathTrain, datasetPathTest, err := persistOriginalData(params)
 	if err != nil {
@@ -960,7 +975,8 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// create search solutions request
-	searchRequest, err := createSearchSolutionsRequest(targetIndex, preprocessing, datasetPathTrain, client.UserAgent, targetVariable, s.DatasetInput, s.Metrics, s.Task, int64(s.MaxTime))
+	searchRequest, err := createSearchSolutionsRequest(targetIndex, preprocessing, datasetPathTrain, client.UserAgent,
+		targetVariable, s.DatasetInput, s.Metrics, s.Task, int64(s.MaxTime), int64(s.MaxSolutions))
 	if err != nil {
 		return err
 	}

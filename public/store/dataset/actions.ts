@@ -133,6 +133,10 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; field: string }
   ): Promise<any> {
+    return null;
+    /* TODO
+     * Disabled because the current solution is not responsive enough:
+     * https://github.com/uncharted-distil/distil/issues/1815
     if (!validateArgs(args, ["dataset", "field"])) {
       return null;
     }
@@ -157,6 +161,7 @@ export const actions = {
       });
       console.error(error);
     }
+    */
   },
 
   fetchGeocodingResults(

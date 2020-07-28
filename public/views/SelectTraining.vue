@@ -177,11 +177,6 @@ export default Vue.extend({
 .select-training-view {
   flex-direction: row-reverse;
 }
-.select-view .nav-link {
-  padding: 1rem 0 0.25rem 0;
-  border-bottom: 1px solid #e0e0e0;
-  color: rgba(0, 0, 0, 0.87);
-}
 .select-target-variables {
   min-width: 500px;
   max-width: 600px !important;

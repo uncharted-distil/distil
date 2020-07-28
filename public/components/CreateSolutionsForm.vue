@@ -1,75 +1,5 @@
 <template>
   <div class="create-solutions-form">
-    <b-modal
-      v-model="showExportSuccess"
-      cancel-disabled
-      hide-header
-      hide-footer
-    >
-      <div class="row justify-content-center">
-        <div class="check-message-container">
-          <i class="fa fa-check-circle fa-3x check-icon"></i>
-          <div><b>Export Succeded</b></div>
-        </div>
-      </div>
-      <div class="row justify-content-center">
-        <b-btn
-          class="mt-3 close-modal"
-          block
-          @click="showExportSuccess = !showExportSuccess"
-          >OK</b-btn
-        >
-      </div>
-    </b-modal>
-
-    <error-modal
-      :show="showExportFailure"
-      title="Export Failed"
-      @close="showExportFailure = !showExportFailure"
-    >
-    </error-modal>
-
-    <b-modal
-      id="meaningful-modal"
-      v-model="showExport"
-      cancel-disabled
-      hide-header
-      hide-footer
-    >
-      <div class="row justify-content-center">
-        <div class="meaningful-text">Is this a meaningful problem?</div>
-      </div>
-      <div class="row justify-content-center">
-        <div class="radio-container">
-          <input
-            type="radio"
-            v-model="meaningful"
-            :value="true"
-            id="yes_radio"
-          />
-          <label for="yes_radio">Yes</label>
-        </div>
-        <div class="radio-container">
-          <input
-            type="radio"
-            v-model="meaningful"
-            :value="false"
-            id="no_radio"
-          />
-          <label for="no_radio">No</label>
-        </div>
-      </div>
-      <div class="row justify-content-center">
-        <b-btn
-          class="mt-3 close-modal"
-          variant="success"
-          block
-          @click="exportData"
-          >Export</b-btn
-        >
-      </div>
-    </b-modal>
-
     <error-modal
       :show="showCreateFailure"
       title="Model Failed"
@@ -77,16 +7,24 @@
       @close="showCreateFailure = !showCreateFailure"
     >
     </error-modal>
-
+    <settings-modal></settings-modal>
     <div class="row justify-content-center">
-      <b-button
-        class="create-button"
-        :variant="createVariant"
-        @click="create"
-        :disabled="disableCreate"
-      >
-        Create Models
-      </b-button>
+      <b-button-group>
+        <b-button
+          :variant="createVariant"
+          :disabled="disableCreate"
+          @click="create"
+        >
+          Create Models
+        </b-button>
+        <b-button
+          v-b-modal.settings
+          :variant="createVariant"
+          :disabled="disableCreate"
+        >
+          <i class="fa fa-cog" aria-hidden="true"></i>
+        </b-button>
+      </b-button-group>
     </div>
     <div class="solution-progress">
       <b-progress
@@ -104,6 +42,7 @@
 import _ from "lodash";
 import { createRouteEntry, varModesToString } from "../util/routes";
 import ErrorModal from "../components/ErrorModal";
+import SettingsModal from "../components/SettingsModal";
 import {
   actions as appActions,
   getters as appGetters
@@ -124,13 +63,13 @@ export default Vue.extend({
   name: "create-solutions-form",
 
   components: {
-    ErrorModal
+    ErrorModal,
+    SettingsModal
   },
 
   data() {
     return {
       pending: false,
-      meaningful: true,
       showExport: false,
       showExportSuccess: false,
       showExportFailure: false,
@@ -175,14 +114,8 @@ export default Vue.extend({
     disableCreate(): boolean {
       return this.isPending || !this.targetSelected || !this.trainingSelected;
     },
-    disableExport(): boolean {
-      return !this.targetSelected || !this.trainingSelected;
-    },
     createVariant(): string {
       return !this.disableCreate ? "success" : "outline-secondary";
-    },
-    exportVariant(): string {
-      return !this.disableExport ? "dark" : "outline-secondary";
     },
     percentComplete(): number {
       return 100;
@@ -207,9 +140,9 @@ export default Vue.extend({
           filters: this.filterParams,
           target: routeGetters.getRouteTargetVariable(this.$store),
           metrics: this.metrics,
-          maxSolutions: NUM_SOLUTIONS,
-          // intentionally nulled for now - should be made user settable in the future
-          maxTime: null
+          maxSolutions: routeGetters.getModelLimit(this.$store),
+          maxTime: routeGetters.getModelTimeLimit(this.$store),
+          quality: routeGetters.getModelQuality(this.$store)
         })
         .then((res: Solution) => {
           this.pending = false;
@@ -221,7 +154,10 @@ export default Vue.extend({
             task: routeGetters.getRouteTask(this.$store),
             varModes: varModesToString(
               routeGetters.getDecodedVarModes(this.$store)
-            )
+            ),
+            modelLimit: routeGetters.getModelLimit(this.$store),
+            modelTimeLimit: routeGetters.getModelTimeLimit(this.$store),
+            modelQuality: routeGetters.getModelQuality(this.$store)
           });
           this.$router.push(entry);
         })
@@ -231,42 +167,12 @@ export default Vue.extend({
           this.createErrorMessage = err.message;
           this.showCreateFailure = true;
         });
-    },
-
-    exportData() {
-      appActions
-        .exportProblem(this.$store, {
-          dataset: this.dataset,
-          target: this.target,
-          filterParams: this.filterParams,
-          meaningful: this.meaningful ? "Yes" : "No"
-        })
-        .then(res => {
-          this.showExportSuccess = !this.showExportSuccess;
-          this.meaningful = true;
-          this.$bvModal.hide("meaningful-modal");
-        })
-        .catch(err => {
-          this.showExportFailure = !this.showExportFailure;
-          this.meaningful = true;
-          this.$bvModal.hide("meaningful-modal");
-        });
     }
   }
 });
 </script>
 
 <style>
-.create-button {
-  margin: 0 8px;
-  width: 35%;
-}
-
-.export-button {
-  margin: 0 8px;
-  width: 35%;
-}
-
 .close-modal {
   width: 35% !important;
 }

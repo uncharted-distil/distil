@@ -523,6 +523,12 @@ export function sortSolutionSummariesByImportance(
   });
   // sort by importance
   summaries.sort((a, b) => {
+    if (!importance[b.key]) {
+      return -1;
+    }
+    if (!importance[a.key]) {
+      return 1;
+    }
     return importance[b.key] - importance[a.key];
   });
   return summaries;

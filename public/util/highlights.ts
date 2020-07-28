@@ -6,7 +6,8 @@ import {
   BIVARIATE_FILTER,
   CLUSTER_FILTER,
   VECTOR_FILTER,
-  INCLUDE_FILTER
+  INCLUDE_FILTER,
+  TEXT_FILTER
 } from "../util/filters";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -14,6 +15,7 @@ import { overlayRouteEntry } from "../util/routes";
 import {
   TIMESERIES_TYPE,
   IMAGE_TYPE,
+  TEXT_TYPE,
   getVarType,
   isCollectionType
 } from "../util/types";
@@ -60,6 +62,15 @@ export function createFilterFromHighlight(
     return {
       key: key,
       type: CLUSTER_FILTER,
+      mode: mode,
+      categories: [highlight.value]
+    };
+  }
+
+  if (type === TEXT_TYPE) {
+    return {
+      key: key,
+      type: TEXT_FILTER,
       mode: mode,
       categories: [highlight.value]
     };

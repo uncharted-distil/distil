@@ -44,14 +44,17 @@
       <p>
         The model {{ this.saveName.toUpperCase() }} will now be available on the
         start page for re-use. To use it now on new data, click
-        <b>Apply Model</b> or <b>Go Back to Start Page</b> to work on something
-        else.
+        <b v-if="isTimeseries">Forecast</b><b v-else>Apply Model</b> or
+        <b>Go Back to Start Page</b> to work on something else.
       </p>
       <template v-slot:modal-footer>
         <b-button variant="secondary" @click="back()">
           Go Back to Start Page
         </b-button>
-        <b-button variant="primary" @click="apply()">
+        <b-button v-if="isTimeseries" variant="primary" @click="forecast()">
+          Forecast
+        </b-button>
+        <b-button v-else variant="primary" @click="apply()">
           Apply Model
         </b-button>
       </template>
@@ -61,15 +64,12 @@
 
 <script lang="ts">
 import Vue from "vue";
-import {
-  actions as appActions,
-  getters as appGetters
-} from "../store/app/module";
-import { Feature, Activity, SubActivity } from "../util/userEvents";
-import { routeModule } from "../store/route/module";
-import { createRouteEntry } from "../util/routes";
-import router from "../router/router";
+import { actions as appActions } from "../store/app/module";
 import { SEARCH_ROUTE } from "../store/route";
+import { getters as routeGetters } from "../store/route/module";
+import { createRouteEntry } from "../util/routes";
+import { Feature, Activity, SubActivity } from "../util/userEvents";
+import router from "../router/router";
 
 export default Vue.extend({
   name: "save-model",
@@ -91,6 +91,10 @@ export default Vue.extend({
   computed: {
     successTitle(): string {
       return `<i class="fa fa-check-circle header-icon"></i> Model ${this.saveName.toUpperCase()} was successfully saved`;
+    },
+
+    isTimeseries(): boolean {
+      return routeGetters.isTimeseries(this.$store);
     }
   },
 
@@ -109,6 +113,11 @@ export default Vue.extend({
     apply() {
       this.resetModal();
       this.$bvModal.show("predictions-data-upload-modal");
+    },
+
+    forecast() {
+      this.resetModal();
+      this.$bvModal.show("forecast-horizon-modal");
     },
 
     // Return to the search screen.

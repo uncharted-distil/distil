@@ -16,7 +16,7 @@ import Vue from "vue";
 import { colorByWeight } from "../util/data";
 
 export default Vue.extend({
-  name: "legend-shap",
+  name: "legend-weight",
   methods: { colorByWeight }
 });
 </script>
@@ -38,7 +38,7 @@ export default Vue.extend({
 
 .legend li {
   background-color: var(
-    --color /* Get the SHAP colour from the method used for the results. */
+    --color /* Get the weight colour from the method used for the results. */
   );
   border: 1px solid var(--gray-500); /* To make the colours pop from a light background. */
   height: 1.5rem;

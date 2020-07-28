@@ -8,8 +8,8 @@
       :variables="variables"
       class="view-toggle"
     >
-      <p class="font-weight-bold">Samples</p>
-      <legend-shap v-if="isTableView" class="ml-5 mr-auto" />
+      <p class="font-weight-bold" :class="{ 'mr-auto': !hasWeight }">Samples</p>
+      <legend-weight v-if="hasWeight" class="ml-5 mr-auto" />
       <layer-selection
         v-if="isRemoteSensing"
         class="layer-button"
@@ -48,7 +48,7 @@
 import _ from "lodash";
 import Vue from "vue";
 import LayerSelection from "../components/LayerSelection";
-import LegendShap from "../components/LegendSHAP";
+import LegendWeight from "../components/LegendWeight";
 import ResultsDataSlot from "../components/ResultsDataSlot";
 import ViewTypeToggle from "../components/ViewTypeToggle";
 import { Dictionary } from "../util/dict";
@@ -74,7 +74,7 @@ export default Vue.extend({
 
   components: {
     LayerSelection,
-    LegendShap,
+    LegendWeight,
     ResultsDataSlot,
     ViewTypeToggle
   },
@@ -109,8 +109,12 @@ export default Vue.extend({
       return this.viewTypeModel;
     },
 
-    isTableView(): boolean {
-      return this.viewType === TABLE_VIEW;
+    /* Check if any items display on the table have a weight property. */
+    hasWeight(): boolean {
+      const data = this.includedTableDataItems ?? [];
+      return data.some(item =>
+        Object.values(item).some(variable => variable.hasOwnProperty("weight"))
+      );
     },
 
     hasHighlights(): boolean {
@@ -213,6 +217,7 @@ export default Vue.extend({
       const erroneousLabel = `, including ${errorCount} <b class="erroneous-color">erroneous</b> predictions`;
       return this.isForecasting ? matchesLabel : matchesLabel + erroneousLabel;
     },
+
     errorCount(dataColumn: TableRow[]): number {
       return dataColumn.filter(item => {
         if (this.regressionEnabled) {

@@ -15,7 +15,8 @@ import {
   Solution,
   PREDICT_COMPLETED,
   PREDICT_ERRORED,
-  Predictions
+  Predictions,
+  ModelQuality
 } from "./index";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
@@ -27,6 +28,7 @@ import { actions as predictActions } from "../predictions/module";
 import { getters as routeGetters } from "../route/module";
 import { TaskTypes, SummaryMode } from "../dataset";
 import { validateArgs } from "../../util/data";
+import { Model } from "../model";
 
 const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
@@ -43,6 +45,7 @@ interface SolutionRequestMsg {
   metrics: string[];
   maxSolutions: number;
   maxTime: number;
+  quality: ModelQuality;
   filters: FilterParams;
 }
 
@@ -58,10 +61,12 @@ interface SolutionStatusMsg {
 
 interface PredictRequestMsg {
   datasetId: string;
-  dataset: string; // base64 encoded version of dataset
+  dataset?: string; // base64 encoded version of dataset
   fittedSolutionId: string;
   target: string;
   targetType: string;
+  intervalCount?: number; // Used for Forecast Horizon, in seconds.
+  intervalLength?: number; // Used for Forecast Horizon as integer.
 }
 
 // Prediction status.
@@ -466,6 +471,7 @@ export const actions = {
         metrics: request.metrics,
         maxSolutions: request.maxSolutions,
         maxTime: request.maxTime,
+        quality: request.quality,
         filters: request.filters
       });
     });
@@ -529,7 +535,9 @@ export const actions = {
         fittedSolutionId: request.fittedSolutionId,
         datasetId: request.datasetId,
         dataset: request.dataset,
-        targetType: request.targetType
+        targetType: request.targetType,
+        intervalCount: request.intervalCount ?? null,
+        intervalLength: request.intervalLength ?? null
       });
     });
   },
