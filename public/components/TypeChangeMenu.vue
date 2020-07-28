@@ -340,12 +340,17 @@ export default Vue.extend({
           type: type
         })
         .then(() => {
+          /* TODO
+           * Disabled because the current solution is not responsive enough:
+           * https://github.com/uncharted-distil/distil/issues/1815
           if (isLocationType(type)) {
             return datasetActions.geocodeVariable(this.$store, {
               dataset: dataset,
               field: field
             });
-          } else if (type === "image") {
+          } else if (type === "image") { 
+          */
+          if (type === "image") {
             return datasetActions.fetchClusters(this.$store, {
               dataset: this.dataset
             });

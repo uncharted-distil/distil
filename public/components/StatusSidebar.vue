@@ -12,6 +12,9 @@
           class="new-update-notification fa fa-refresh fa-spin"
         ></i>
       </div>
+      <!-- TODO
+        * Disabled because the current solution is not responsive enough:
+        * https://github.com/uncharted-distil/distil/issues/1815
       <div class="status-icon-wrapper" @click="onStatusIconClick(1)">
         <i
           class="status-icon fa fa-2x fa-location-arrow"
@@ -26,6 +29,7 @@
           class="new-update-notification fa fa-refresh fa-spin"
         ></i>
       </div>
+      -->
       <div class="status-icon-wrapper" @click="onStatusIconClick(2)">
         <i class="status-icon fa fa-2x fa-share-alt" aria-hidden="true"></i>
         <i
@@ -198,7 +202,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .status-sidebar {
   background-color: #fff;
   width: 55px;
@@ -220,7 +224,7 @@ export default Vue.extend({
 }
 .status-sidebar .new-update-notification {
   position: absolute;
-  color: #dc3545;
+  color: var(--red);
   top: 10px;
   right: 10px;
 }
