@@ -14,7 +14,9 @@
     </span>
     <span
       v-if="
-        filter.type === CATEGORICAL_FILTER || filter.type === CLUSTER_FILTER
+        filter.type === CATEGORICAL_FILTER ||
+          filter.type === CLUSTER_FILTER ||
+          filter.type === TEXT_FILTER
       "
     >
       {{ filter.categories.join(",") }}
@@ -36,7 +38,8 @@ import {
   DATETIME_FILTER,
   BIVARIATE_FILTER,
   CATEGORICAL_FILTER,
-  CLUSTER_FILTER
+  CLUSTER_FILTER,
+  TEXT_FILTER
 } from "../util/filters";
 import { clearHighlight } from "../util/highlights";
 import { getVarType, isClusterType, removeClusterPrefix } from "../util/types";
@@ -65,6 +68,9 @@ export default Vue.extend({
     },
     CATEGORICAL_FILTER(): string {
       return CATEGORICAL_FILTER;
+    },
+    TEXT_FILTER(): string {
+      return TEXT_FILTER;
     },
     CLUSTER_FILTER(): string {
       return CLUSTER_FILTER;
