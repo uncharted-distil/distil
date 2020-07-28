@@ -89,7 +89,6 @@ import {
   GEOCOORDINATE_TYPE,
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
-  REMOTE_SENSING_TYPE,
   hasComputedVarPrefix,
   COLLAPSE_ACTION_TYPE,
   EXPAND_ACTION_TYPE,
@@ -227,6 +226,7 @@ export default Vue.extend({
         this.type === this.originalType && // we haven't changed the type (check from server)
         !this.isColTypeReviewed && // check if user ever reviewed the col type (client)
         this.hasSchemaType &&
+        this.schemaType.type != "unknown" && // don't flag for check when the schema type was unknown (which is the base type)
         this.hasNonSchemaTypes &&
         this.topNonSchemaType.probability >= PROBABILITY_THRESHOLD && // it has both schema and ML types
         !isEquivalentType(this.schemaType.type, this.topNonSchemaType.type)
@@ -269,10 +269,6 @@ export default Vue.extend({
           {
             type: GEOCOORDINATE_TYPE,
             label: "Geocoordinate..."
-          },
-          {
-            type: REMOTE_SENSING_TYPE,
-            label: "Satellite Image..."
           }
         );
       }
@@ -286,23 +282,6 @@ export default Vue.extend({
           groupingType: type
         });
         this.$router.push(entry);
-      } else if (type === REMOTE_SENSING_TYPE) {
-        // CDB: Temporary for dev/debug.  Needs to be removed.
-        await datasetActions.setGrouping(this.$store, {
-          dataset: this.dataset,
-          grouping: {
-            dataset: this.dataset,
-            idCol: "group_id",
-            type: REMOTE_SENSING_TYPE,
-            imageCol: "image_file",
-            bandCol: "band",
-            subIds: [],
-            hidden: ["image_file", "band", "group_id"]
-          } as RemoteSensingGrouping
-        });
-        datasetActions.fetchClusters(this.$store, {
-          dataset: this.dataset
-        });
       } else if (
         this.expandCollapse &&
         (type === COLLAPSE_ACTION_TYPE || type === EXPAND_ACTION_TYPE)
