@@ -80,7 +80,7 @@ export default Vue.extend({
               ? cellOffsetWidth
               : remainingCellWidth
             : cellOffsetWidth < maxCellWidth ||
-              !!tbodyCells[i].querySelector("div")
+              !!tbodyCells[i].querySelector("div.container")
             ? cellOffsetWidth
             : maxCellWidth;
         remainingCellWidth = remainingCellWidth - headCellWidth;
