@@ -542,7 +542,7 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 
 	// check and fix metadata issues
 	if verifyMetadata {
-		updated, err := metadata.VerifyAndUpdate(meta, dataDir)
+		updated, err := metadata.VerifyAndUpdate(meta, dataDir, source)
 		if err != nil {
 			return "", nil, errors.Wrap(err, "unable to fix metadata")
 		}
