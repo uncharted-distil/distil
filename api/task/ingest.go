@@ -78,6 +78,7 @@ type IngestTaskConfig struct {
 	ESDatasetPrefix                    string
 	HardFail                           bool
 	IngestOverwrite                    bool
+	SampleRowLimit                     int
 }
 
 // IngestSteps is a collection of parameters that specify ingest behaviour.
@@ -138,23 +139,31 @@ func NewConfig(config env.Config) *IngestTaskConfig {
 		ESDatasetPrefix:                    config.ElasticDatasetPrefix,
 		HardFail:                           config.IngestHardFail,
 		IngestOverwrite:                    config.IngestOverwrite,
+		SampleRowLimit:                     config.IngestSampleRowLimit,
 	}
+}
+
+// IngestResult captures the result of a dataset ingest process.
+type IngestResult struct {
+	DatasetID string
+	Sampled   bool
+	RowCount  int
 }
 
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor,
-	dataset string, origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, steps *IngestSteps) (string, error) {
+	dataset string, origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, steps *IngestSteps) (*IngestResult, error) {
 	// Set the probability threshold
 	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
 
 	metaStorage, err := metaCtor()
 	if err != nil {
-		return "", errors.Wrap(err, "unable to initialize metadata storage")
+		return nil, errors.Wrap(err, "unable to initialize metadata storage")
 	}
 
 	dataStorage, err := dataCtor()
 	if err != nil {
-		return "", errors.Wrap(err, "unable to initialize data storage")
+		return nil, errors.Wrap(err, "unable to initialize data storage")
 	}
 
 	sourceFolder := env.ResolvePath(datasetSource, dataset)
@@ -167,7 +176,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		output, err = ClusterDataset(latestSchemaOutput, dataset, config)
 		if err != nil {
 			if config.HardFail {
-				return "", errors.Wrap(err, "unable to cluster all data")
+				return nil, errors.Wrap(err, "unable to cluster all data")
 			}
 			log.Errorf("unable to cluster all data: %v", err)
 		} else {
@@ -178,14 +187,14 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 
 	output, err = Merge(latestSchemaOutput, dataset, config)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to merge all data into a single file")
+		return nil, errors.Wrap(err, "unable to merge all data into a single file")
 	}
 	latestSchemaOutput = output
 	log.Infof("finished merging the dataset")
 
 	output, err = Clean(latestSchemaOutput, dataset, config)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to clean all data")
+		return nil, errors.Wrap(err, "unable to clean all data")
 	}
 	latestSchemaOutput = output
 	log.Infof("finished cleaning the dataset")
@@ -196,7 +205,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 			_, err = Classify(latestSchemaOutput, dataset, config)
 			if err != nil {
 				if config.HardFail {
-					return "", errors.Wrap(err, "unable to classify fields")
+					return nil, errors.Wrap(err, "unable to classify fields")
 				}
 				log.Errorf("unable to classify fields: %+v", err)
 			}
@@ -220,7 +229,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished summarizing the dataset")
 		if err != nil {
 			if config.HardFail {
-				return "", errors.Wrap(err, "unable to summarize the dataset")
+				return nil, errors.Wrap(err, "unable to summarize the dataset")
 			}
 			log.Errorf("unable to summarize the dataset: %v", err)
 		}
@@ -231,15 +240,27 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	if config.GeocodingEnabled {
 		output, err = GeocodeForwardDataset(latestSchemaOutput, dataset, config)
 		if err != nil {
-			return "", errors.Wrap(err, "unable to geocode all data")
+			return nil, errors.Wrap(err, "unable to geocode all data")
 		}
 		latestSchemaOutput = output
 		log.Infof("finished geocoding the dataset")
 	}
 
+	// not sure if better to call canSample here, or as the first part of the sample step
+	sampled := false
+	rowCount := 0
+	if canSample(latestSchemaOutput, config) {
+		log.Infof("sampling dataset")
+		latestSchemaOutput, sampled, rowCount, err = Sample(originalSchemaFile, latestSchemaOutput, dataset, config)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to sample dataset")
+		}
+		log.Infof("finished sampling dataset")
+	}
+
 	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, dataStorage, metaStorage, dataset, datasetSource, origins, datasetType, config, true, !definitiveClassification, true)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to ingest ranked data")
+		return nil, errors.Wrap(err, "unable to ingest ranked data")
 	}
 	log.Infof("finished ingesting the dataset")
 
@@ -248,7 +269,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("creating groupings in metadata")
 		err = SetGroups(datasetID, steps.RawGrouping, metaStorage, config)
 		if err != nil {
-			return "", errors.Wrap(err, "unable to set grouping")
+			return nil, errors.Wrap(err, "unable to set grouping")
 		}
 		log.Infof("done creating groupings in metadata")
 	}
@@ -257,17 +278,17 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	if config.FeaturizationEnabled && canFeaturize(dataset, metaStorage) {
 		_, featurizedDatasetPath, err := FeaturizeDataset(originalSchemaFile, latestSchemaOutput, dataset, metaStorage, config)
 		if err != nil {
-			return "", errors.Wrap(err, "unable to featurize dataset")
+			return nil, errors.Wrap(err, "unable to featurize dataset")
 		}
 		log.Infof("finished featurizing the dataset")
 		ingestedDataset, err := metaStorage.FetchDataset(dataset, true, true)
 		if err != nil {
-			return "", errors.Wrap(err, "unable to load metadata")
+			return nil, errors.Wrap(err, "unable to load metadata")
 		}
 		ingestedDataset.LearningDataset = featurizedDatasetPath
 		err = metaStorage.UpdateDataset(ingestedDataset)
 		if err != nil {
-			return "", errors.Wrap(err, "unable to store updated metadata")
+			return nil, errors.Wrap(err, "unable to store updated metadata")
 		}
 	}
 
@@ -278,7 +299,11 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	}
 	log.Infof("finished updating extremas")
 
-	return datasetID, nil
+	return &IngestResult{
+		DatasetID: datasetID,
+		Sampled:   sampled,
+		RowCount:  rowCount,
+	}, nil
 }
 
 // Ingest the metadata to ES and the data to Postgres.
@@ -539,11 +564,12 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 		log.Warnf("unable to load importance from file: %v", err)
 	}
 
-	// load stats
+	// load stats and adjust for header row (may want to do in the LoadDatasetStats function)
 	err = metadata.LoadDatasetStats(meta, dataDir)
 	if err != nil {
 		log.Warnf("unable to load stats: %v", err)
 	}
+	meta.NumRows = meta.NumRows - 1
 
 	// load summary
 	metadata.LoadSummaryFromDescription(meta, path.Join(datasetDir, config.SummaryOutputPathRelative))
