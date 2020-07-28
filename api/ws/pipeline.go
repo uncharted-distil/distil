@@ -400,7 +400,7 @@ func createPredictionDataset(requestTask *api.Task, rawData string,
 	} else if api.HasTaskType(requestTask, compute.ImageTask) {
 		ds, err = dataset.NewMediaDataset(datasetID, "png", "jpeg", []byte(data))
 	} else if api.HasTaskType(requestTask, compute.TimeSeriesTask) && api.HasTaskType(requestTask, compute.ForecastingTask) {
-		ds, err = task.NewPredictionTimeseriesDataset(predictParams, 0, 0)
+		ds, err = task.NewPredictionTimeseriesDataset(predictParams, request.IntervalLength, request.IntervalCount)
 	} else {
 		ds, err = dataset.NewTableDataset(datasetID, []byte(data))
 	}

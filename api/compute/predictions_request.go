@@ -15,6 +15,8 @@ type PredictRequest struct {
 	FittedSolutionID string
 	TimestampField   string
 	MaxTime          int
+	IntervalCount    int
+	IntervalLength   float64
 
 	requestChannel chan PredictStatus
 	finished       chan error
@@ -59,6 +61,17 @@ func NewPredictRequest(data []byte) (*PredictRequest, error) {
 	req.Dataset, ok = json.String(jsonMap, "dataset")
 	if !ok {
 		return nil, errors.Errorf("no `dataset` in predict request")
+	}
+
+	// timeseries prediction fields
+	req.IntervalCount, ok = json.Int(jsonMap, "intervalCount")
+	if !ok {
+		req.IntervalCount = 0
+	}
+
+	req.IntervalLength, ok = json.Float(jsonMap, "intervalLength")
+	if !ok {
+		req.IntervalLength = 0
 	}
 
 	return req, nil
