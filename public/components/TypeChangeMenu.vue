@@ -226,7 +226,7 @@ export default Vue.extend({
         this.type === this.originalType && // we haven't changed the type (check from server)
         !this.isColTypeReviewed && // check if user ever reviewed the col type (client)
         this.hasSchemaType &&
-        this.schemaType.type != "unknown" && // don't flag for check when the schema type was unknown (which is the base type)
+        this.schemaType.type !== "unknown" && // don't flag for check when the schema type was unknown (which is the base type)
         this.hasNonSchemaTypes &&
         this.topNonSchemaType.probability >= PROBABILITY_THRESHOLD && // it has both schema and ML types
         !isEquivalentType(this.schemaType.type, this.topNonSchemaType.type)
@@ -340,12 +340,17 @@ export default Vue.extend({
           type: type
         })
         .then(() => {
+          /* TODO
+           * Disabled because the current solution is not responsive enough:
+           * https://github.com/uncharted-distil/distil/issues/1815
           if (isLocationType(type)) {
             return datasetActions.geocodeVariable(this.$store, {
               dataset: dataset,
               field: field
             });
-          } else if (type === "image") {
+          } else if (type === "image") { 
+          */
+          if (type === "image") {
             return datasetActions.fetchClusters(this.$store, {
               dataset: this.dataset
             });
