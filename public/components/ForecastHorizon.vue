@@ -1,16 +1,49 @@
 <template>
-  <b-modal id="forecast-horizon-modal" title="Forecast Horizon" @ok="handleOk">
-    <b-form-group label="Interval size">
-      <b-form-spinbutton v-model="intervalLength" inline min="1" />
+  <b-modal
+    id="forecast-horizon-modal"
+    title="Forecast Horizon"
+    ok-title="Forecast"
+    @ok="handleOk"
+    @cancel="showError = false"
+  >
+    <b-form-group label="Interval size" description="Size of the prediction">
+      <b-form-spinbutton
+        v-model="intervalLength"
+        class="flex-0"
+        inline
+        min="1"
+      />
+      <!-- Add a dateTime scale selection. -->
+      <b-dropdown
+        v-if="isDateTime"
+        :text="intervalScaleTitle"
+        variant="outline-secondary"
+      >
+        <b-dropdown-item
+          v-for="(scale, index) in intervalScale"
+          :key="index"
+          @click="intervalScaleSelected = index"
+        >
+          {{ scale.caption }}
+        </b-dropdown-item>
+      </b-dropdown>
     </b-form-group>
-    <b-form-group label="Number of intervals">
+    <b-form-group
+      label="Number of intervals"
+      description="How many times this interval should be predicted."
+    >
       <b-form-spinbutton v-model="intervalCount" inline min="1" />
     </b-form-group>
+
+    <b-alert v-model="showError" variant="danger" dismissible>
+      The Forecast prediction could not be made.
+    </b-alert>
   </b-modal>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
+import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
   actions as requestActions,
@@ -20,19 +53,33 @@ import { getPredictionsById } from "../util/predictions";
 import { varModesToString, createRouteEntry } from "../util/routes";
 import { PREDICTION_ROUTE } from "../store/route";
 
+interface Extremas {
+  max: number;
+  min: number;
+}
+
 /**
  * Modal to request a Forecast Horizon.
- *
- * TODO - Add test on the Interval Length and Count to offer the user with useful
- * limits (Yearly, Monthly, days, minutes, etc.) and limited counts.
  */
 export default Vue.extend({
   name: "forecast-horizon",
 
   data() {
     return {
-      intervalCount: 0,
-      intervalLength: 0
+      intervalCount: 1,
+      intervalLength: 1,
+      intervalScale: [
+        { caption: "Seconds", value: 1 },
+        { caption: "Minutes", value: 60 },
+        { caption: "Hours", value: 3600 },
+        { caption: "Days", value: 86400 },
+        { caption: "Weeks", value: 604800 },
+        { caption: "Months", value: 2629800 },
+        { caption: "Years", value: 31557600 },
+        { caption: "Decades", value: 315576000 }
+      ],
+      intervalScaleSelected: 0,
+      showError: false
     };
   },
 
@@ -43,16 +90,59 @@ export default Vue.extend({
     targetType: String
   },
 
+  computed: {
+    /* Get the interval length in seconds. */
+    intervalLengthInSeconds(): number {
+      if (this.isDateTime) {
+        return (
+          this.intervalLength *
+          this.intervalScale[this.intervalScaleSelected].value
+        );
+      } else {
+        return this.intervalLength;
+      }
+    },
+
+    intervalScaleTitle(): String {
+      return this.intervalScale[this.intervalScaleSelected].caption;
+    },
+
+    /* Get the current timeseries extremas. */
+    /*
+    timeseriesExtremas(): Extremas {
+      const extremas = datasetGetters.getTimeseriesExtrema(this.$store);
+      if (!extremas[this.dataset]) return { max: 1, min: 1 };
+      return extremas[this.dataset].x;
+    },
+    */
+
+    /* Test if all the current timeseries variables are DateTime. */
+    isDateTime(): Boolean {
+      const timeseries = datasetGetters.getTimeseries(this.$store);
+      if (!timeseries[this.dataset]) return false;
+
+      const values = Object.values(timeseries[this.dataset].isDateTime);
+      return values.every(value => value);
+    }
+  },
+
   methods: {
-    async handleOk() {
+    handleOk(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault();
+      this.makePredictionRequest();
+    },
+
+    /* Send the prediction to the server. */
+    async makePredictionRequest() {
       try {
         const requestMsg = {
           datasetId: this.dataset,
           fittedSolutionId: this.fittedSolutionId,
           target: this.target,
           targetType: this.targetType,
-          intervalCount: this.intervalCount, // in seconds
-          intervalLength: this.intervalLength
+          intervalCount: this.intervalCount,
+          intervalLength: this.intervalLengthInSeconds
         };
 
         const response = await requestActions.createPredictRequest(
@@ -60,14 +150,11 @@ export default Vue.extend({
           requestMsg
         );
 
+        // this.$bvModal.hide("forecast-horizon-modal");
         this.predidctionFinish(response);
-      } catch (err) {
-        /**
-         * TODO
-         *
-         * Display a visual error message on the message box.
-         */
-        console.error("Forecast Horizon", "Prediction could not finish");
+      } catch (error) {
+        this.showError = true;
+        console.error("Forecast prediction could not be made", error);
       }
     },
 
