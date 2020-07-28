@@ -124,9 +124,8 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		}
 		rawHeader := rawCSVData[0]
 		for i, f := range rawHeader {
-			// TODO: may have to check the name rather than display name
 			// TODO: col index not necessarily the same as index and thats what needs checking
-			if meta.GetMainDataResource().Variables[i].DisplayName != f {
+			if meta.GetMainDataResource().Variables[i].Name != f {
 				return nil, errors.Errorf("variables in new prediction file do not match variables in original dataset")
 			}
 		}
