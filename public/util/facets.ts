@@ -297,21 +297,35 @@ export function getSubSelectionValues(
   let subSelectionValues = null;
 
   if (hasFilterBuckets) {
-    const filterKeys = summary.filtered.buckets.reduce((acc, b) => {
+    const filteredKeys = summary.filtered.buckets.reduce((acc, b) => {
+      acc[b.key] = b.count;
+      return acc;
+    }, {});
+    const variableKeys = summary.baseline.buckets.reduce((acc, b) => {
       acc[b.key] = b.count;
       return acc;
     }, {});
     subSelectionValues = summary.baseline.buckets.map(b => {
-      const bucketCount = filterKeys[b.key] ? filterKeys[b.key] : 0;
-      return rowLabelMatches(rowLabels, b.key, isNumeric)
+      const hasRowLabels = rowLabelMatches(rowLabels, b.key, isNumeric);
+      const bucketCount = hasRowLabels
+        ? filteredKeys[b.key]
+          ? filteredKeys[b.key]
+          : variableKeys[b.key]
+          ? variableKeys[b.key]
+          : 0
+        : filteredKeys[b.key]
+        ? filteredKeys[b.key]
+        : 0;
+      return hasRowLabels
         ? [bucketCount / max, null]
         : [null, bucketCount / max];
     });
   } else {
-    subSelectionValues = summary.baseline.buckets.map(b => [
-      rowLabelMatches(rowLabels, b.key, isNumeric) ? b.count / max : null,
-      null
-    ]);
+    subSelectionValues = summary.baseline.buckets.map(b =>
+      rowLabelMatches(rowLabels, b.key, isNumeric)
+        ? [b.count / max, null]
+        : [null, b.count / max]
+    );
   }
   return subSelectionValues;
 }
@@ -350,7 +364,8 @@ export function getRowSelectionLabels(
 
   selectedRows.forEach(row =>
     row.cols.forEach(col => {
-      if (col.key === summary.label) rowKeys.push(col.value.value);
+      if (col.key === summary.label || col.key === summary.key)
+        rowKeys.push(col.value.value);
     })
   );
 
