@@ -30,7 +30,7 @@
     </b-form-group>
     <b-form-group
       label="Number of intervals"
-      description="How many times this interval should be predicted."
+      description="How many interval should the prediction made."
     >
       <b-form-spinbutton v-model="intervalCount" inline min="1" />
     </b-form-group>
@@ -53,10 +53,10 @@ import { getPredictionsById } from "../util/predictions";
 import { varModesToString, createRouteEntry } from "../util/routes";
 import { PREDICTION_ROUTE } from "../store/route";
 
-interface Extremas {
-  max: number;
-  min: number;
-}
+// interface Extremas {
+//   max: number;
+//   min: number;
+// }
 
 /**
  * Modal to request a Forecast Horizon.
@@ -92,7 +92,7 @@ export default Vue.extend({
 
   computed: {
     /* Get the interval length in seconds. */
-    intervalLengthInSeconds(): number {
+    intervalLengthFormatted(): number {
       if (this.isDateTime) {
         return (
           this.intervalLength *
@@ -108,7 +108,7 @@ export default Vue.extend({
     },
 
     /* Get the current timeseries extremas. */
-    /*
+    /* TODO - to be used to calculate "safe" extremas for the interval values.
     timeseriesExtremas(): Extremas {
       const extremas = datasetGetters.getTimeseriesExtrema(this.$store);
       if (!extremas[this.dataset]) return { max: 1, min: 1 };
@@ -142,7 +142,7 @@ export default Vue.extend({
           target: this.target,
           targetType: this.targetType,
           intervalCount: this.intervalCount,
-          intervalLength: this.intervalLengthInSeconds
+          intervalLength: this.intervalLengthFormatted
         };
 
         const response = await requestActions.createPredictRequest(
