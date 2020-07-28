@@ -293,6 +293,9 @@ func (s *Storage) insertBulkCopy(storageName string, varNames []string, inserts 
 		return errors.Errorf("only bulk copied %d of %d rows to postgres", rowsCopied, len(inserts))
 	}
 
+	// update the stats to make sure postgres runs the best queries possible
+	s.updateStats(storageName)
+
 	return nil
 }
 
@@ -367,6 +370,9 @@ func (s *Storage) insertBatchData(storageName string, varNames []string, inserts
 		}
 		resBatch.Close()
 	}
+
+	// update the stats to make sure postgres runs the best queries possible
+	s.updateStats(storageName)
 
 	return nil
 }
