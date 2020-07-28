@@ -68,13 +68,13 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 
 		leftJoin := &task.JoinSpec{
 			DatasetID:     datasetLeft["id"].(string),
-			DatasetFolder: datasetLeft["folder"].(string),
+			DatasetFolder: datasetLeft["datasetFolder"].(string),
 			DatasetSource: metadata.DatasetSource(datasetLeft["source"].(string)),
 		}
 
 		rightJoin := &task.JoinSpec{
 			DatasetID:     datasetRight["id"].(string),
-			DatasetFolder: datasetRight["folder"].(string),
+			DatasetFolder: datasetRight["datasetFolder"].(string),
 			DatasetSource: metadata.DatasetSource(datasetRight["source"].(string)),
 		}
 
@@ -88,6 +88,19 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 			handleError(w, errors.Wrap(err, "unable to parse right variables"))
 			return
 		}
+
+		// add d3m variables to left variables
+		meta, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		d3mIndexVar, err := meta.FetchVariable(datasetLeft["id"].(string), model.D3MIndexFieldName)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		leftVariables = append(leftVariables, d3mIndexVar)
 
 		// need to find the right join suggestion since a single dataset
 		// can have multiple join suggestions
@@ -138,11 +151,26 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 func parseVariables(variablesRaw []interface{}) ([]*model.Variable, error) {
 	variables := make([]*model.Variable, len(variablesRaw))
 	for i, varRaw := range variablesRaw {
+		varData := varRaw.(map[string]interface{})
+		// groups need to be handled separately as they depend on type
+		var groupingParsed model.BaseGrouping
+		if varData["grouping"] != nil {
+			if model.IsTimeSeries(varData["colType"].(string)) {
+				groupingTimeseries := model.TimeseriesGrouping{}
+				err := json.MapToStruct(&groupingTimeseries, varData["grouping"].(map[string]interface{}))
+				if err != nil {
+					return nil, errors.Wrap(err, "Unable to parse timeseries grouping")
+				}
+				groupingParsed = &groupingTimeseries
+			}
+			varData["grouping"] = nil
+		}
 		v := model.Variable{}
-		err := json.MapToStruct(&v, varRaw.(map[string]interface{}))
+		err := json.MapToStruct(&v, varData)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse Variables")
 		}
+		v.Grouping = groupingParsed
 		variables[i] = &v
 	}
 
