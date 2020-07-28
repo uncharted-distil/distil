@@ -68,7 +68,7 @@ const (
 
 	// ModelQualityFast indicates that the system should try to generate models quickly at the expense of quality
 	ModelQualityFast = "speed"
-	// ModelQualityHight indicates the the system should focus on higher quality models at the expense of speed
+	// ModelQualityHigh indicates the the system should focus on higher quality models at the expense of speed
 	ModelQualityHigh = "quality"
 )
 
