@@ -364,8 +364,9 @@ export function getRowSelectionLabels(
 
   selectedRows.forEach(row =>
     row.cols.forEach(col => {
-      if (col.key === summary.label || col.key === summary.key)
+      if (col.key === summary.label || col.key === summary.key) {
         rowKeys.push(col.value.value);
+      }
     })
   );
 
