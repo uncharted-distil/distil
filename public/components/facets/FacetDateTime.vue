@@ -22,6 +22,9 @@
       </type-change-menu>
     </div>
 
+    <facet-template target="facet-bars-value" title="${tooltip}">
+    </facet-template>
+
     <div slot="footer" class="facet-footer-container">
       <facet-plugin-zoom-bar
         min-bar-width="8"
@@ -107,9 +110,12 @@ export default Vue.extend({
       if (hasBaseline(summary)) {
         const buckets = summary.baseline.buckets;
         for (let i = 0, n = buckets.length; i < n; ++i) {
+          const bucketDate = this.numToDate(buckets[i].key);
+          const count = buckets[i].count;
           values.push({
-            ratio: buckets[i].count / this.max,
-            label: this.numToDate(buckets[i].key)
+            ratio: count / this.max,
+            label: bucketDate,
+            tooltip: `Date:\t\t${bucketDate}\nTotal Count:\t${count}`
           });
         }
       }
