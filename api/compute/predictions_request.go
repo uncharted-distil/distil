@@ -60,7 +60,7 @@ func NewPredictRequest(data []byte) (*PredictRequest, error) {
 	// the dataset contents as a base 64 encded string
 	req.Dataset, ok = json.String(jsonMap, "dataset")
 	if !ok {
-		return nil, errors.Errorf("no `dataset` in predict request")
+		req.Dataset = ""
 	}
 
 	// timeseries prediction fields

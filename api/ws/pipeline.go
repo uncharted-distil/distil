@@ -291,11 +291,14 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		return
 	}
 
-	// read the raw data out of the request
-	data, err := api.ExtractDatasetEncodedFromRawRequest(msg.Raw)
-	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "unable to pull dataset from request"))
-		return
+	// read the raw data out of the request for non timeseries datasets
+	var data string
+	if request.IntervalCount <= 0 {
+		data, err = api.ExtractDatasetEncodedFromRawRequest(msg.Raw)
+		if err != nil {
+			handleErr(conn, msg, errors.Wrap(err, "unable to pull dataset from request"))
+			return
+		}
 	}
 
 	// get the source dataset from the fitted solution ID

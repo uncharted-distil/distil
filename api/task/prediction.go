@@ -45,7 +45,8 @@ type PredictionTimeseriesDataset struct {
 	interval             float64
 	count                int
 	isDatetimeTimeseries bool
-	idValues             map[string][]string
+	idValues             [][]string
+	idKeys               []string
 	timestampVariable    *model.Variable
 }
 
@@ -84,13 +85,9 @@ func NewPredictionTimeseriesDataset(params *PredictParams, interval float64, cou
 	}
 
 	// get existing id values
-	idValues := make(map[string][]string)
-	for _, vID := range tsg.SubIDs {
-		vals, err := params.DataStorage.FetchRawDistinctValues(params.Meta.ID, params.Meta.StorageName, vID)
-		if err != nil {
-			return nil, err
-		}
-		idValues[vID] = vals
+	idValues, err := params.DataStorage.FetchRawDistinctValues(params.Meta.ID, params.Meta.StorageName, tsg.SubIDs)
+	if err != nil {
+		return nil, err
 	}
 
 	return &PredictionTimeseriesDataset{
@@ -98,8 +95,9 @@ func NewPredictionTimeseriesDataset(params *PredictParams, interval float64, cou
 		interval:             interval,
 		count:                count,
 		isDatetimeTimeseries: model.IsDateTime(extrema.Type),
-		start:                int64(extrema.Max),
+		start:                int64(extrema.Max + interval),
 		idValues:             idValues,
+		idKeys:               tsg.SubIDs,
 		timestampVariable:    timestampVar,
 	}, nil
 }
@@ -116,7 +114,7 @@ func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, dataset
 		return nil, errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", p.timestampVariable.Name, p.timestampVariable.Type)
 	}
 
-	timeseriesData := createTimeseriesData(p.idValues, p.timestampVariable.Name, timestampPredictionValues)
+	timeseriesData := createTimeseriesData(p.idKeys, p.idValues, p.timestampVariable.Name, timestampPredictionValues)
 
 	return &api.RawDataset{
 		ID:       p.params.Dataset,
@@ -656,23 +654,19 @@ func generateTimestampValues(interval float64, start int64, stepCount int) []str
 	return timeData
 }
 
-func createTimeseriesData(seriesFields map[string][]string, timestampFieldName string, timestampPredictionValues []string) [][]string {
-	// create the header and the ids to use to generate the timeseries
-	header := make([]string, 0)
-	ids := make([][]string, 0)
-	for name, field := range seriesFields {
-		ids = append(ids, field)
-		header = append(header, name)
+func createTimeseriesData(idFields []string, idValues [][]string, timestampFieldName string, timestampPredictionValues []string) [][]string {
+	// create the header
+	header := append(idFields, timestampFieldName)
+
+	// cycle through the distinct id values and generate one row / timestamp
+	generatedData := [][]string{header}
+	for _, row := range idValues {
+		for _, ts := range timestampPredictionValues {
+			generatedData = append(generatedData, append(row, ts))
+		}
 	}
-	header = append(header, timestampFieldName)
 
-	// treat the timestamp values as just another set of values to generate on
-	ids = append(ids, timestampPredictionValues)
-
-	// the cartesian product will generate all the values needed for the timeseries
-	cartesianData := createGroupings(ids)
-
-	return append([][]string{header}, cartesianData...)
+	return generatedData
 }
 
 func createGroupings(ids [][]string) [][]string {
