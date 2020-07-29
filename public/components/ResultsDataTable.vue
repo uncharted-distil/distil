@@ -7,9 +7,7 @@
       :items="items"
       :fields="tableFields"
       :sort-by="errorCol"
-      :sort-compare="
-        sortingByResidualError ? sortingByErrorFunction : undefined
-      "
+      :sort-compare="sortFunction"
       @row-clicked="onRowClick"
       @sort-changed="onSortChanged"
     >
@@ -20,8 +18,8 @@
         <div :key="computedField" :title="data.value.value">
           {{ data.value.value }}
           <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
-            <icon-fork
-          /></icon-base>
+            <icon-fork />
+          </icon-base>
         </div>
       </template>
 
@@ -69,7 +67,11 @@
       <template v-slot:[cellSlot(errorCol)]="data">
         <!-- residual error -->
         <div>
-          <div class="error-bar-container" v-if="isTargetNumerical">
+          <div
+            class="error-bar-container"
+            v-if="isTargetNumerical"
+            :title="data.value.value"
+          >
             <div
               class="error-bar"
               v-bind:style="{
@@ -282,13 +284,14 @@ export default Vue.extend({
     },
 
     sortingByResidualError(): boolean {
-      if (
+      return (
         this.isRegression &&
         (this.sortingBy === this.errorCol || this.sortingBy === undefined)
-      ) {
-        return true;
-      }
-      return false;
+      );
+    },
+
+    sortFunction(): any {
+      return this.sortingByResidualError ? this.sortingByErrorFunction : null;
     }
   },
 
@@ -361,8 +364,11 @@ export default Vue.extend({
       return "#9e9e9e";
     },
 
-    sortingByErrorFunction(a, b, key): number {
-      return Math.abs(_.toNumber(a[key])) - Math.abs(_.toNumber(b[key]));
+    // Sort error column by absolute values.
+    sortingByErrorFunction(aRow, bRow, key): number {
+      const a = Math.abs(_.toNumber(aRow[key].value));
+      const b = Math.abs(_.toNumber(bRow[key].value));
+      return a - b;
     },
 
     onSortChanged(event) {
