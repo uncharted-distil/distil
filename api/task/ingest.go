@@ -396,6 +396,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 			return "", err
 		}
 		if meta.StorageName != storageName {
+			log.Infof("updating storage name in metadata from %s to %s", meta.StorageName, storageName)
 			meta.StorageName = storageName
 			err = metadata.WriteSchema(meta, schemaFile, true)
 			if err != nil {

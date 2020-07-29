@@ -179,7 +179,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	sourceDatasetID := meta.ID
 	datasetPath := path.Join(params.OutputPath, params.Dataset)
 	schemaPath := ""
-	datasetName := params.Dataset
+	datasetName := fmt.Sprintf("pred_%s", params.Dataset)
 	var err error
 
 	// if the dataset was already imported, then just produce on it
@@ -192,7 +192,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		}
 
 		// create the dataset to be used for predictions
-		datasetName, datasetPath, err = CreateDataset(params.Dataset, predictionDatasetCtor, params.OutputPath, params.Config)
+		datasetName, datasetPath, err = CreateDataset(datasetName, predictionDatasetCtor, params.OutputPath, params.Config)
 		if err != nil {
 			return nil, err
 		}
@@ -233,7 +233,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		datasetName, err = Ingest(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, datasetName,
 			metadata.Augmented, nil, api.DatasetTypeInference, params.IngestConfig, false, true, false)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to ingest ranked data")
+			return nil, errors.Wrap(err, "unable to ingest prediction data")
 		}
 		log.Infof("finished ingesting dataset '%s'", datasetName)
 	}
@@ -255,9 +255,9 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		}
 
 		// need to run the grouping compose to create the needed ID column
-		log.Infof("creating composed variables on inferrence dataset '%s'", datasetName)
+		log.Infof("creating composed variables on prediction dataset '%s'", datasetName)
 		err = CreateComposedVariable(params.MetaStorage, params.DataStorage, datasetName,
-			meta.StorageName, tsg.IDCol, tsg.IDCol, tsg.SubIDs)
+			meta.StorageName, tsg.IDCol, target.DisplayName, tsg.SubIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -271,6 +271,11 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	}
 
 	// the dataset id needs to match the original dataset id for TA2 to be able to use the model
+	// read from source in case any step has updated it along the way
+	meta, err = metadata.LoadMetadataFromOriginalSchema(schemaPath, false)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read latest dataset doc")
+	}
 	meta.ID = sourceDatasetID
 	err = metadata.WriteSchema(meta, schemaPath, true)
 	if err != nil {
@@ -354,7 +359,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 }
 
 func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Variable, predictionVariables []*model.Variable) ([][]string, error) {
-	log.Infof("augment inference dataset fields")
+	log.Infof("augmenting prediction dataset fields")
 
 	// map fields to indices
 	headerSource := make([]string, len(sourceVariables))
@@ -403,7 +408,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 	}
 
 	// read the rest of the data
-	log.Infof("rewriting inference dataset to match source dataset structure")
+	log.Infof("rewriting prediction dataset to match source dataset structure")
 	count := 0
 
 	// read the d3m field index if present
@@ -430,7 +435,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 		outputData = append(outputData, output)
 	}
 
-	log.Infof("done augmenting inference dataset")
+	log.Infof("done augmenting prediction dataset")
 
 	return outputData, nil
 }
@@ -656,34 +661,22 @@ func generateTimestampValues(interval float64, start int64, stepCount int) []str
 
 func createTimeseriesData(idFields []string, idValues [][]string, timestampFieldName string, timestampPredictionValues []string) [][]string {
 	// create the header
-	header := append(idFields, timestampFieldName)
+	header := []string{model.D3MIndexFieldName}
+	header = append(header, idFields...)
+	header = append(header, timestampFieldName)
 
 	// cycle through the distinct id values and generate one row / timestamp
+	rowCount := 0
 	generatedData := [][]string{header}
 	for _, row := range idValues {
 		for _, ts := range timestampPredictionValues {
-			generatedData = append(generatedData, append(row, ts))
+			rowData := []string{fmt.Sprintf("%d", rowCount)}
+			rowData = append(rowData, row...)
+			rowData = append(rowData, ts)
+			generatedData = append(generatedData, rowData)
+			rowCount++
 		}
 	}
 
 	return generatedData
-}
-
-func createGroupings(ids [][]string) [][]string {
-	// end condition when empty list passed in
-	if len(ids) == 0 {
-		return [][]string{nil}
-	}
-
-	// use recursion to get cartesian product
-	nested := createGroupings(ids[1:])
-
-	// create the combined output
-	output := make([][]string, 0)
-	for _, id := range ids[0] {
-		for _, product := range nested {
-			output = append(output, append([]string{id}, product...))
-		}
-	}
-	return output
 }
