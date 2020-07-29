@@ -2,7 +2,6 @@
   <b-modal
     id="forecast-horizon-modal"
     title="Forecast Horizon"
-    ok-title="Forecast"
     @ok="handleOk"
     @cancel="showError = false"
   >
@@ -30,6 +29,23 @@
       <b-form-spinbutton v-model="intervalCount" inline min="1" />
     </b-form-group>
 
+    <template v-slot:modal-footer="{ ok, cancel }">
+      <b-button @click="cancel()" :disabled="isWaiting">Cancel</b-button>
+
+      <b-overlay
+        :show="isWaiting"
+        rounded
+        opacity="0.6"
+        spinner-small
+        spinner-variant="primary"
+        class="d-inline-block"
+      >
+        <b-button variant="primary" @click="ok()" :disabled="isWaiting">
+          Forecast
+        </b-button>
+      </b-overlay>
+    </template>
+
     <b-alert v-model="showError" variant="danger" dismissible>
       The Forecast prediction could not be made.
     </b-alert>
@@ -38,6 +54,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { Extrema } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -47,11 +64,6 @@ import {
 import { getPredictionsById } from "../util/predictions";
 import { varModesToString, createRouteEntry } from "../util/routes";
 import { PREDICTION_ROUTE } from "../store/route";
-
-// interface Extremas {
-//   max: number;
-//   min: number;
-// }
 
 /**
  * Modal to request a Forecast Horizon.
@@ -74,7 +86,8 @@ export default Vue.extend({
         { caption: "Decades", value: 315576000 }
       ],
       intervalScaleSelected: 0,
-      showError: false
+      showError: false,
+      isWaiting: false
     };
   },
 
@@ -104,7 +117,7 @@ export default Vue.extend({
 
     /* Get the current timeseries extremas. */
     /* TODO - to be used to calculate "safe" extremas for the interval values.
-    timeseriesExtremas(): Extremas {
+    timeseriesExtremas(): Extrema {
       const extremas = datasetGetters.getTimeseriesExtrema(this.$store);
       if (!extremas[this.dataset]) return { max: 1, min: 1 };
       return extremas[this.dataset].x;
@@ -130,30 +143,34 @@ export default Vue.extend({
 
     /* Send the prediction to the server. */
     async makePredictionRequest() {
-      try {
-        const requestMsg = {
-          datasetId: this.dataset,
-          fittedSolutionId: this.fittedSolutionId,
-          target: this.target,
-          targetType: this.targetType,
-          intervalCount: this.intervalCount,
-          intervalLength: this.intervalLengthFormatted
-        };
+      this.isWaiting = true;
 
+      const requestMsg = {
+        datasetId: this.dataset,
+        fittedSolutionId: this.fittedSolutionId,
+        target: this.target,
+        targetType: this.targetType,
+        intervalCount: this.intervalCount,
+        intervalLength: this.intervalLengthFormatted
+      };
+
+      try {
         const response = await requestActions.createPredictRequest(
           this.$store,
           requestMsg
         );
 
-        this.predidctionFinish(response);
+        this.redirectToPredictionPage(response);
       } catch (error) {
         this.showError = true;
         console.error("Forecast prediction could not be made", error);
       }
+
+      this.isWaiting = false;
     },
 
-    /* Once the prediction is finished, we send the user to the prediction page. */
-    predidctionFinish(response: any) {
+    /* Once the prediction is requested, we send the user to the prediction page. */
+    redirectToPredictionPage(response: any) {
       const predictionDataset = getPredictionsById(
         requestGetters.getPredictions(this.$store),
         response.produceRequestId
@@ -174,7 +191,6 @@ export default Vue.extend({
       };
 
       const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
-
       this.$router.push(entry);
     }
   }
