@@ -25,7 +25,6 @@
       />
       <predictions-data-uploader
         v-else
-        class="result-button-alignment"
         :fitted-solution-id="fittedSolutionId"
         :target="target"
         :target-type="targetType"
@@ -37,14 +36,14 @@
             v-if="isTimeseries"
             variant="primary"
             class="apply-button"
-            v-b-modal.forecast-horizon-modal
+            @click="$bvModal.show('forecast-horizon-modal')"
             >Forecast
           </b-button>
           <b-button
             v-else
             variant="primary"
             class="apply-button"
-            v-b-modal.predictions-data-upload-modal
+            @click="$bvModal.show('predictions-data-upload-modal')"
             >Apply Model
           </b-button>
         </template>
@@ -56,7 +55,7 @@
           <b-button
             variant="success"
             class="save-button"
-            v-b-modal.save-model-modal
+            @click="$bvModal.show('save-model-modal')"
           >
             <i class="fa fa-floppy-o"></i>
             Save Model
