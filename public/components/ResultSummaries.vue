@@ -1,9 +1,7 @@
 <template>
   <div class="result-panel">
     <p class="nav-link font-weight-bold flex-shrink-0">Ground Truth</p>
-    <result-target-variable
-      class="result-target-variable"
-    ></result-target-variable>
+    <result-target-variable class="result-target-variable" />
 
     <p class="nav-link font-weight-bold flex-shrink-0">Results</p>
     <div class="result-summaries">
@@ -15,38 +13,40 @@
         :single-solution="isSingleSolution"
       />
     </div>
+
     <template v-if="isActiveSolutionCompleted">
+      <!-- Modal boxes to apply new data to models. -->
+      <forecast-horizon
+        v-if="isTimeseries"
+        :dataset="dataset"
+        :fitted-solution-id="fittedSolutionId"
+        :target="target"
+        :target-type="targetType"
+      />
+      <predictions-data-uploader
+        v-else
+        class="result-button-alignment"
+        :fitted-solution-id="fittedSolutionId"
+        :target="target"
+        :target-type="targetType"
+      />
+
       <div class="d-flex flex-row flex-shrink-0 justify-content-end">
-        <template v-if="isSingleSolution">
-          <template v-if="isTimeseries">
-            <forecast-horizon
-              v-if="isTimeseries"
-              :dataset="dataset"
-              :fitted-solution-id="fittedSolutionId"
-              :target="target"
-              :target-type="targetType"
-            />
-            <b-button
-              variant="primary"
-              class="apply-button"
-              v-b-modal.forecast-horizon-modal
-              >Forecast
-            </b-button>
-          </template>
-          <template v-else>
-            <predictions-data-uploader
-              class="result-button-alignment"
-              :fitted-solution-id="fittedSolutionId"
-              :target="target"
-              :target-type="targetType"
-            ></predictions-data-uploader>
-            <b-button
-              variant="primary"
-              class="apply-button"
-              v-b-modal.predictions-data-upload-modal
-              >Apply Model
-            </b-button>
-          </template>
+        <template v-if="isSingleSolution || isActiveSolutionSaved">
+          <b-button
+            v-if="isTimeseries"
+            variant="primary"
+            class="apply-button"
+            v-b-modal.forecast-horizon-modal
+            >Forecast
+          </b-button>
+          <b-button
+            v-else
+            variant="primary"
+            class="apply-button"
+            v-b-modal.predictions-data-upload-modal
+            >Apply Model
+          </b-button>
         </template>
         <template v-else>
           <save-model
@@ -96,6 +96,7 @@ import { Solution, SOLUTION_COMPLETED } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { createRouteEntry, varModesToString } from "../util/routes";
 import { getPredictionsById } from "../util/predictions";
+import { isFittedSolutionIdSavedAsModel } from "../util/models";
 
 export default Vue.extend({
   name: "result-summaries",
@@ -117,6 +118,10 @@ export default Vue.extend({
       },
       symmetricSlider: true
     };
+  },
+
+  methods: {
+    isFittedSolutionIdSavedAsModel
   },
 
   computed: {
@@ -181,6 +186,15 @@ export default Vue.extend({
         this.activeSolution &&
         this.activeSolution.progress === SOLUTION_COMPLETED
       );
+    },
+
+    /**
+     * Check that the active solution is saved as a model.
+     * This is used to display possible actions on the selected model.
+     * @returns {Boolean}
+     */
+    isActiveSolutionSaved(): boolean {
+      return this.isFittedSolutionIdSavedAsModel(this.fittedSolutionId);
     },
 
     // Indicates whether or not the contained result facets should show "relevant"

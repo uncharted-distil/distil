@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- Modal to save the model. -->
     <b-modal
       title="Save Model"
       id="save-model-modal"
@@ -36,27 +37,25 @@
         </b-form-group>
       </form>
     </b-modal>
+
+    <!-- Modal to offer to apply the model once saved. -->
     <b-modal
       id="save-success-modal"
       :title-html="successTitle"
       header-class="success-modal-header"
     >
       <p>
-        The model {{ this.saveName.toUpperCase() }} will now be available on the
+        The model {{ saveName.toUpperCase() }} will now be available on the
         start page for re-use. To use it now on new data, click
-        <b v-if="isTimeseries">Forecast</b><b v-else>Apply Model</b> or
-        <b>Go Back to Start Page</b> to work on something else.
+        <b>{{ actionName }}</b> or <b>Go Back to Start Page</b> to work on
+        something else.
       </p>
+
       <template v-slot:modal-footer>
         <b-button variant="secondary" @click="back()">
           Go Back to Start Page
         </b-button>
-        <b-button v-if="isTimeseries" variant="primary" @click="forecast()">
-          Forecast
-        </b-button>
-        <b-button v-else variant="primary" @click="apply()">
-          Apply Model
-        </b-button>
+        <b-button variant="primary" @click="apply()">{{ actionName }}</b-button>
       </template>
     </b-modal>
   </div>
@@ -89,6 +88,10 @@ export default Vue.extend({
   },
 
   computed: {
+    actionName(): string {
+      return this.isTimeseries ? "Forecast" : "Apply Model";
+    },
+
     successTitle(): string {
       return `<i class="fa fa-check-circle header-icon"></i> Model ${this.saveName.toUpperCase()} was successfully saved`;
     },
@@ -112,12 +115,12 @@ export default Vue.extend({
     // apply model workflow.
     apply() {
       this.resetModal();
-      this.$bvModal.show("predictions-data-upload-modal");
-    },
 
-    forecast() {
-      this.resetModal();
-      this.$bvModal.show("forecast-horizon-modal");
+      if (this.isTimeseries) {
+        this.$bvModal.show("forecast-horizon-modal");
+      } else {
+        this.$bvModal.show("predictions-data-upload-modal");
+      }
     },
 
     // Return to the search screen.
