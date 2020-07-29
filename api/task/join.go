@@ -62,8 +62,8 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 	varsRight []*model.Variable, rightOrigin *model.DatasetOrigin, submitter primitiveSubmitter,
 	config *env.Config) (*apiModel.FilteredData, error) {
 	// put the vars into a map for quick lookup
-	leftVarsMap := createVarMap(varsLeft, true)
-	rightVarsMap := createVarMap(varsRight, true)
+	leftVarsMap := createVarMap(varsLeft, true, true)
+	rightVarsMap := createVarMap(varsRight, true, true)
 	searchResult := ""
 	provenance := ""
 	if rightOrigin != nil {
@@ -117,9 +117,12 @@ func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *description.F
 	return submitPipeline(datasetURIs, pipelineDesc)
 }
 
-func createVarMap(vars []*model.Variable, useDisplayName bool) map[string]*model.Variable {
+func createVarMap(vars []*model.Variable, useDisplayName bool, keepOnlyDataVars bool) map[string]*model.Variable {
 	varsMap := map[string]*model.Variable{}
 	for _, v := range vars {
+		if !model.IsTA2Field(v.DistilRole, v.SelectedRole) && keepOnlyDataVars {
+			continue
+		}
 		name := v.Name
 		if useDisplayName {
 			name = v.DisplayName
@@ -139,26 +142,18 @@ func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Vari
 				// variable is probably an aggregation
 				// create a new variable and default type to string
 				// ingest process should be able to provide better info
-				v = &model.Variable{
-					Name:             varName,
-					Type:             model.StringType,
-					OriginalType:     model.StringType,
-					SelectedRole:     "attribute",
-					Role:             []string{"attribute"},
-					DistilRole:       "data",
-					OriginalVariable: varName,
-					DisplayName:      varName,
+				v = model.NewVariable(i, varName, varName, varName, model.UnknownType,
+					model.UnknownType, "", []string{"attribute"}, "data", nil, mergedVariables, false)
+			} else {
+				// map any distil types (country, city, etc.) back to LL schema types since we are
+				// persisting as an LL dataset
+				if v.OriginalType != "" {
+					v.Type = v.OriginalType
 				}
+				v.Name = v.DisplayName
+				v.OriginalVariable = v.DisplayName
 			}
 		}
-
-		// map any distil types (country, city, etc.) back to LL schema types since we are
-		// persisting as an LL dataset
-		if v.OriginalType != "" {
-			v.Type = v.OriginalType
-		}
-		v.Name = v.DisplayName
-		v.OriginalVariable = v.DisplayName
 
 		v.Index = i
 		mergedVariables = append(mergedVariables, v)

@@ -54,53 +54,48 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				return
 			}
 
-			if params["path"] == nil {
-				missingParamErr(w, "path")
-				return
-			}
-
-			datasetPath := params["path"].(string)
-			creationResult, err := createDataset(datasetPath, datasetID, config)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "unable to create raw dataset"))
-				return
-			}
-			datasetID = creationResult.name
-			rawGrouping = creationResult.group
-			log.Infof("create dataset '%s' from local source '%s'", datasetID, datasetPath)
-		} else if source == metadata.Augmented {
-			// parse POST params
-			params, err := getPostParameters(r)
-			if err != nil {
-				handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
-				return
-			}
-
 			if params == nil {
 				missingParamErr(w, "parameters")
 				return
 			}
 
-			if params["originalDataset"] == nil {
-				missingParamErr(w, "originalDataset")
-				return
-			}
-
-			if params["joinedDataset"] == nil {
-				missingParamErr(w, "joinedDataset")
-				return
-			}
-
-			// set the origin information
-			originalDataset, okOriginal := params["originalDataset"].(map[string]interface{})
-			joinedDataset, okJoined := params["joinedDataset"].(map[string]interface{})
-			if okOriginal && okJoined {
-				// combine the origin and joined dateset into an array of structs
-				origins, err = getOriginsFromMaps(originalDataset, joinedDataset)
-				if err != nil {
-					handleError(w, errors.Wrap(err, "unable to marshal dataset origins from JSON to struct"))
+			if params["joinedDataset"] != nil {
+				if params["originalDataset"] == nil {
+					missingParamErr(w, "originalDataset")
 					return
 				}
+
+				if params["joinedDataset"] == nil {
+					missingParamErr(w, "joinedDataset")
+					return
+				}
+
+				// set the origin information
+				originalDataset, okOriginal := params["originalDataset"].(map[string]interface{})
+				joinedDataset, okJoined := params["joinedDataset"].(map[string]interface{})
+				if okOriginal && okJoined {
+					// combine the origin and joined dateset into an array of structs
+					origins, err = getOriginsFromMaps(originalDataset, joinedDataset)
+					if err != nil {
+						handleError(w, errors.Wrap(err, "unable to marshal dataset origins from JSON to struct"))
+						return
+					}
+				}
+			} else {
+				if params["path"] == nil {
+					missingParamErr(w, "path")
+					return
+				}
+
+				datasetPath := params["path"].(string)
+				creationResult, err := createDataset(datasetPath, datasetID, config)
+				if err != nil {
+					handleError(w, errors.Wrap(err, "unable to create raw dataset"))
+					return
+				}
+				datasetID = creationResult.name
+				rawGrouping = creationResult.group
+				log.Infof("create dataset '%s' from local source '%s'", datasetID, datasetPath)
 			}
 		}
 

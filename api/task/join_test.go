@@ -41,16 +41,19 @@ func TestJoin(t *testing.T) {
 			Name:        "d3mIndex",
 			DisplayName: "D3M Index",
 			Type:        model.IntegerType,
+			DistilRole:  "data",
 		},
 		{
 			Name:        "alpha",
 			DisplayName: "Alpha",
 			Type:        model.RealType,
+			DistilRole:  "data",
 		},
 		{
 			Name:        "bravo",
 			DisplayName: "Bravo",
 			Type:        model.IntegerType,
+			DistilRole:  "data",
 		},
 	}
 
@@ -59,17 +62,20 @@ func TestJoin(t *testing.T) {
 			Name:        "d3mIndex",
 			DisplayName: "D3M Index",
 			Type:        model.IntegerType,
+			DistilRole:  "data",
 		},
 		{
 			Name:         "charlie",
 			DisplayName:  "Charlie",
 			Type:         model.CountryType,
 			OriginalType: model.CategoricalFilter,
+			DistilRole:   "data",
 		},
 		{
 			Name:        "delta",
 			DisplayName: "Delta",
 			Type:        model.IntegerType,
+			DistilRole:  "data",
 		},
 	}
 
@@ -126,13 +132,13 @@ func TestJoin(t *testing.T) {
 	assert.ElementsMatch(t, result.Columns, []*apiModel.Column{
 		{
 			Label:  "D3M Index",
-			Key:    "D3M Index",
+			Key:    "d3mIndex",
 			Type:   model.IntegerType,
 			Weight: float64(0),
 		},
 		{
 			Label:  "Alpha",
-			Key:    "Alpha",
+			Key:    "alpha",
 			Type:   model.RealType,
 			Weight: float64(0),
 		},
