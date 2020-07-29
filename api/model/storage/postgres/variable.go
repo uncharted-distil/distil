@@ -17,6 +17,7 @@ package postgres
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
@@ -310,30 +311,30 @@ func (s *Storage) FetchCategoryCounts(storageName string, variable *model.Variab
 }
 
 // FetchRawDistinctValues fetches the distinct values for a variable from the base table.
-func (s *Storage) FetchRawDistinctValues(dataset string, storageName string, varName string) ([]string, error) {
-	sql := fmt.Sprintf("SELECT DISTINCT \"%s\" FROM %s_base;", varName, storageName)
+func (s *Storage) FetchRawDistinctValues(dataset string, storageName string, varNames []string) ([][]string, error) {
+	sql := fmt.Sprintf("SELECT DISTINCT \"%s\" FROM %s_base;", strings.Join(varNames, "\",\""), storageName)
 	rows, err := s.client.Query(sql)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to count categories for %s", varName)
+		return nil, errors.Wrapf(err, "failed to read distinct values")
 	}
+	defer rows.Close()
 
 	// Exract into a (category,count) map
-	values := make([]string, 0)
-	if rows != nil {
-		defer rows.Close()
-
-		for rows.Next() {
-			var val string
-			err := rows.Scan(&val)
-			if err != nil {
-				return nil, err
-			}
-			values = append(values, val)
-		}
-		err = rows.Err()
+	values := make([][]string, 0)
+	for rows.Next() {
+		rowValues, err := rows.Values()
 		if err != nil {
-			return nil, errors.Wrapf(err, "error reading data from postgres")
+			return nil, err
 		}
+		stringVals := make([]string, len(rowValues))
+		for i, v := range rowValues {
+			stringVals[i] = v.(string)
+		}
+		values = append(values, stringVals)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
 	}
 	return values, nil
 }

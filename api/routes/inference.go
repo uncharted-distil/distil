@@ -269,15 +269,15 @@ func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dat
 	// get the distinct values for the id columns
 	idValues := make(map[string][]string)
 	for _, vID := range tsg.SubIDs {
-		vals, err := dataStorage.FetchRawDistinctValues(datasetES.ID, datasetES.StorageName, vID)
+		vals, err := dataStorage.FetchRawDistinctValues(datasetES.ID, datasetES.StorageName, []string{vID})
 		if err != nil {
 			return false, nil, errors.Wrapf(err, "unable to fetch distinct values for '%s' from data storage", vID)
 		}
-		idValues[vID] = vals
+		idValues[vID] = vals[0]
 	}
 
 	// get the step duration
-	timestampValues, err := dataStorage.FetchRawDistinctValues(datasetES.ID, datasetES.StorageName, timestampCol)
+	timestampValues, err := dataStorage.FetchRawDistinctValues(datasetES.ID, datasetES.StorageName, []string{timestampCol})
 	if err != nil {
 		return false, nil, errors.Wrapf(err, "unable to fetch distinct timestamp values from data storage")
 	}
@@ -285,9 +285,9 @@ func createTimeseriesFromRequest(dataStorage api.DataStorage, datasetES *api.Dat
 	// generate timestamps to use for prediction based on type of timestamp
 	var timestampPredictionValues []string
 	if model.IsDateTime(timestampVar.Type) {
-		timestampPredictionValues, err = generateTimestampValues(timestampValues, startStr, stepCount)
+		timestampPredictionValues, err = generateTimestampValuesInference(timestampValues[0], startStr, stepCount)
 	} else if model.IsNumerical(timestampVar.Type) {
-		timestampPredictionValues, err = generateIntValues(timestampValues, startStr, stepCount)
+		timestampPredictionValues, err = generateIntValuesInference(timestampValues[0], startStr, stepCount)
 	} else {
 		return false, nil, errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", timestampVar.Name, timestampVar.Type)
 	}
@@ -355,7 +355,7 @@ func createGroupings(ids [][]string) [][]string {
 	return output
 }
 
-func generateIntValues(existingValues []string, startStr string, stepCount int) ([]string, error) {
+func generateIntValuesInference(existingValues []string, startStr string, stepCount int) ([]string, error) {
 	start, err := strconv.Atoi(startStr)
 	if err != nil {
 		return nil, errors.Errorf("Unable to parse start into int")
@@ -389,7 +389,7 @@ func generateIntValues(existingValues []string, startStr string, stepCount int) 
 	return timeData, nil
 }
 
-func generateTimestampValues(existingValues []string, startStr string, stepCount int) ([]string, error) {
+func generateTimestampValuesInference(existingValues []string, startStr string, stepCount int) ([]string, error) {
 	// parse the start time
 	start, err := dateparse.ParseAny(startStr)
 	if err != nil {

@@ -37,8 +37,91 @@ const (
 	DefaultSeparator = "_"
 )
 
+// PredictionTimeseriesDataset has the paramaters necessary to create a timeseries dataset
+// from minimal information.
+type PredictionTimeseriesDataset struct {
+	params               *PredictParams
+	start                int64
+	interval             float64
+	count                int
+	isDatetimeTimeseries bool
+	idValues             [][]string
+	idKeys               []string
+	timestampVariable    *model.Variable
+}
+
 type predictionDataset struct {
 	params *PredictParams
+}
+
+// NewPredictionTimeseriesDataset creates prediction timeseries dataset.
+func NewPredictionTimeseriesDataset(params *PredictParams, interval float64, count int) (*PredictionTimeseriesDataset, error) {
+	// get the timestamp variable
+	variables, err := params.MetaStorage.FetchVariables(params.Dataset, true, true)
+	if err != nil {
+		return nil, err
+	}
+	var groupingVar *model.Variable
+	for _, v := range variables {
+		if v.IsGrouping() {
+			groupingVar = v
+			break
+		}
+	}
+
+	tsg := groupingVar.Grouping.(*model.TimeseriesGrouping)
+	var timestampVar *model.Variable
+	for _, v := range variables {
+		if v.Name == tsg.XCol {
+			timestampVar = v
+			break
+		}
+	}
+
+	// determine the start date via timestamp extrema
+	extrema, err := params.DataStorage.FetchExtrema(params.Meta.StorageName, timestampVar)
+	if err != nil {
+		return nil, err
+	}
+
+	// get existing id values
+	idValues, err := params.DataStorage.FetchRawDistinctValues(params.Meta.ID, params.Meta.StorageName, tsg.SubIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PredictionTimeseriesDataset{
+		params:               params,
+		interval:             interval,
+		count:                count,
+		isDatetimeTimeseries: model.IsDateTime(extrema.Type),
+		start:                int64(extrema.Max + interval),
+		idValues:             idValues,
+		idKeys:               tsg.SubIDs,
+		timestampVariable:    timestampVar,
+	}, nil
+}
+
+// CreateDataset creates a raw dataset based on minimum timeseries parameters.
+func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
+	// generate timestamps to use for prediction based on type of timestamp
+	var timestampPredictionValues []string
+	if model.IsDateTime(p.timestampVariable.Type) {
+		timestampPredictionValues = generateTimestampValues(p.interval, p.start, p.count)
+	} else if model.IsNumerical(p.timestampVariable.Type) {
+		timestampPredictionValues = generateIntValues(p.interval, p.start, p.count)
+	} else {
+		return nil, errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", p.timestampVariable.Name, p.timestampVariable.Type)
+	}
+
+	timeseriesData := createTimeseriesData(p.idKeys, p.idValues, p.timestampVariable.Name, timestampPredictionValues)
+
+	return &api.RawDataset{
+		ID:       p.params.Dataset,
+		Name:     p.params.Dataset,
+		Data:     timeseriesData,
+		Metadata: p.params.Meta,
+	}, nil
 }
 
 func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
@@ -96,7 +179,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	sourceDatasetID := meta.ID
 	datasetPath := path.Join(params.OutputPath, params.Dataset)
 	schemaPath := ""
-	datasetName := params.Dataset
+	datasetName := fmt.Sprintf("pred_%s", params.Dataset)
 	var err error
 
 	// if the dataset was already imported, then just produce on it
@@ -109,7 +192,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		}
 
 		// create the dataset to be used for predictions
-		datasetName, datasetPath, err = CreateDataset(params.Dataset, predictionDatasetCtor, params.OutputPath, params.Config)
+		datasetName, datasetPath, err = CreateDataset(datasetName, predictionDatasetCtor, params.OutputPath, params.Config)
 		if err != nil {
 			return nil, err
 		}
@@ -150,7 +233,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		datasetName, err = Ingest(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, datasetName,
 			metadata.Augmented, nil, api.DatasetTypeInference, params.IngestConfig, false, true, false)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to ingest ranked data")
+			return nil, errors.Wrap(err, "unable to ingest prediction data")
 		}
 		log.Infof("finished ingesting dataset '%s'", datasetName)
 	}
@@ -172,9 +255,9 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		}
 
 		// need to run the grouping compose to create the needed ID column
-		log.Infof("creating composed variables on inferrence dataset '%s'", datasetName)
+		log.Infof("creating composed variables on prediction dataset '%s'", datasetName)
 		err = CreateComposedVariable(params.MetaStorage, params.DataStorage, datasetName,
-			meta.StorageName, tsg.IDCol, tsg.IDCol, tsg.SubIDs)
+			meta.StorageName, tsg.IDCol, target.DisplayName, tsg.SubIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -188,6 +271,11 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	}
 
 	// the dataset id needs to match the original dataset id for TA2 to be able to use the model
+	// read from source in case any step has updated it along the way
+	meta, err = metadata.LoadMetadataFromOriginalSchema(schemaPath, false)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read latest dataset doc")
+	}
 	meta.ID = sourceDatasetID
 	err = metadata.WriteSchema(meta, schemaPath, true)
 	if err != nil {
@@ -271,7 +359,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 }
 
 func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Variable, predictionVariables []*model.Variable) ([][]string, error) {
-	log.Infof("augment inference dataset fields")
+	log.Infof("augmenting prediction dataset fields")
 
 	// map fields to indices
 	headerSource := make([]string, len(sourceVariables))
@@ -320,7 +408,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 	}
 
 	// read the rest of the data
-	log.Infof("rewriting inference dataset to match source dataset structure")
+	log.Infof("rewriting prediction dataset to match source dataset structure")
 	count := 0
 
 	// read the d3m field index if present
@@ -347,7 +435,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 		outputData = append(outputData, output)
 	}
 
-	log.Infof("done augmenting inference dataset")
+	log.Infof("done augmenting prediction dataset")
 
 	return outputData, nil
 }
@@ -541,4 +629,54 @@ func copyFeatureGroups(fittedSolutionID string, datasetName string, solutionStor
 	}
 
 	return nil
+}
+
+func generateIntValues(interval float64, start int64, stepCount int) []string {
+	// iterate until all required steps are created
+	currentValue := start
+	timeData := make([]string, 0)
+	for i := 0; i < stepCount; i++ {
+		timeData = append(timeData, fmt.Sprintf("%d", currentValue))
+		currentValue = currentValue + int64(interval)
+	}
+
+	return timeData
+}
+
+func generateTimestampValues(interval float64, start int64, stepCount int) []string {
+	// parse the start time
+	startDate := time.Unix(start, 0)
+
+	// iterate until all required steps are created
+	currentTime := startDate
+	intervalDuration := time.Duration(int64(interval)) * time.Second
+	timeData := make([]string, 0)
+	for i := 0; i < stepCount; i++ {
+		timeData = append(timeData, currentTime.String())
+		currentTime = currentTime.Add(intervalDuration)
+	}
+
+	return timeData
+}
+
+func createTimeseriesData(idFields []string, idValues [][]string, timestampFieldName string, timestampPredictionValues []string) [][]string {
+	// create the header
+	header := []string{model.D3MIndexFieldName}
+	header = append(header, idFields...)
+	header = append(header, timestampFieldName)
+
+	// cycle through the distinct id values and generate one row / timestamp
+	rowCount := 0
+	generatedData := [][]string{header}
+	for _, row := range idValues {
+		for _, ts := range timestampPredictionValues {
+			rowData := []string{fmt.Sprintf("%d", rowCount)}
+			rowData = append(rowData, row...)
+			rowData = append(rowData, ts)
+			generatedData = append(generatedData, rowData)
+			rowCount++
+		}
+	}
+
+	return generatedData
 }

@@ -86,7 +86,7 @@ type DataStorage interface {
 	DoesVariableExist(dataset string, storageName string, varName string) (bool, error)
 
 	// Raw data queries
-	FetchRawDistinctValues(dataset string, storageName string, varName string) ([]string, error)
+	FetchRawDistinctValues(dataset string, storageName string, varNames []string) ([][]string, error)
 
 	// Property queries
 	GetStorageName(dataset string) (string, error)
