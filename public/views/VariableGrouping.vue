@@ -18,8 +18,9 @@
             To predict a value over time <strong>(forecasting)</strong> your
             target should be a <strong>timeseries.</strong><br />
             Select a <strong>time</strong> column, a
-            <strong>value</strong> column and optionally add one or more
-            <strong>series id</strong> column(s) to create multiple timeseries.
+            <strong>value</strong> column and if available, optionally add one
+            or more <strong>series id</strong> column(s) to create multiple
+            timeseries.
           </p>
         </b-col>
         <b-col v-if="isGeocoordinate" cols="12">
@@ -33,35 +34,43 @@
       </b-row>
       <b-row>
         <b-col cols="6" v-if="isTimeseries">
-          <b-row
-            class="mt-1 mb-1"
-            v-for="(idCol, index) in idCols"
-            :key="idCol.value"
-          >
-            <b-col cols="5">
-              <template v-if="index === 0">
-                <b>Series ID Column(s):</b>
-              </template>
-            </b-col>
+          <template v-if="idCols.length > 0">
+            <b-row
+              class="mt-1 mb-1"
+              v-for="(idCol, index) in idCols"
+              :key="idCol.value"
+            >
+              <b-col cols="5">
+                <template
+                  v-if="index === 0 && idOptions(idCol.value).length !== 0"
+                >
+                  <b>Series ID Column(s):</b>
+                </template>
+              </b-col>
 
-            <b-col cols="7" class="d-flex align-content-center">
-              <b-form-select
-                class="mr-auto"
-                v-model="idCol.value"
-                :options="idOptions(idCol.value)"
-                @input="onIdChange"
-              />
-              <b-button
-                class="ml-1"
-                variant="outline-danger"
-                v-if="idCol.value"
-                title="Clear Selection"
-                @click="removeIdCol(idCol.value)"
+              <b-col
+                cols="7"
+                class="d-flex align-content-center"
+                v-if="idOptions(idCol.value).length !== 0"
               >
-                <i class="fa fa-times-circle"></i>
-              </b-button>
-            </b-col>
-          </b-row>
+                <b-form-select
+                  class="mr-auto"
+                  v-model="idCol.value"
+                  :options="idOptions(idCol.value)"
+                  @input="onIdChange"
+                />
+                <b-button
+                  class="ml-1"
+                  variant="outline-danger"
+                  v-if="idCol.value"
+                  title="Clear Selection"
+                  @click="removeIdCol(idCol.value)"
+                >
+                  <i class="fa fa-times-circle"></i>
+                </b-button>
+              </b-col>
+            </b-row>
+          </template>
 
           <b-row class="mt-1 mb-1">
             <b-col cols="5">
@@ -384,7 +393,6 @@ export default Vue.extend({
         [ORDINAL_TYPE]: true,
         [CATEGORICAL_TYPE]: true
       };
-      const def = [{ value: null, text: "Choose ID", disabled: true }];
       const suggestions = this.variables
         .filter(v => ID_COL_TYPES[v.colType])
         .filter(v => v.colName === idCol || !this.isIDCol(v.colName))
@@ -392,7 +400,11 @@ export default Vue.extend({
           return { value: v.colName, text: v.colDisplayName };
         });
 
-      return [].concat(def, suggestions);
+      if (suggestions.length > 0) {
+        const def = [{ value: null, text: "Choose ID", disabled: true }];
+        return [].concat(def, suggestions);
+      }
+      return [];
     },
     onIdChange(arg) {
       const values = this.idCols.map(c => c.value).filter(v => v);
