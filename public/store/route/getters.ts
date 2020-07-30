@@ -9,6 +9,7 @@ import {
 } from "../dataset/index";
 import {
   SELECT_TARGET_ROUTE,
+  SELECT_TRAINING_ROUTE,
   JOINED_VARS_INSTANCE_PAGE,
   AVAILABLE_TARGET_VARS_INSTANCE_PAGE,
   AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
@@ -491,5 +492,10 @@ export const getters = {
   /* Check if the current page is SELECT_TARGET_ROUTE. */
   isPageSelectTarget(state: Route): Boolean {
     return state.path === SELECT_TARGET_ROUTE;
+  },
+
+  /* Check if the current page is SELECT_TRAINING_ROUTE. */
+  isPageSelectTraining(state: Route): Boolean {
+    return state.path === SELECT_TRAINING_ROUTE;
   }
 };

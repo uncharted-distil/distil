@@ -128,6 +128,11 @@ export default Vue.extend({
         (routePath === PREDICTION_ROUTE || routePath === RESULTS_ROUTE)
       );
     },
+
+    isPageSelectTraining(): Boolean {
+      return routeGetters.isPageSelectTraining(this.$store);
+    },
+
     isGroupedCluster(): boolean {
       return this.isCluster && this.isGrouping;
     },
@@ -254,7 +259,7 @@ export default Vue.extend({
             label: "Expand"
           });
         }
-        if (!this.isPredictionOrResultsView) {
+        if (!this.isPredictionOrResultsView && !this.isPageSelectTraining) {
           options.push({
             type: EXPLODE_ACTION_TYPE,
             label: "Explode"
