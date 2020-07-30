@@ -20,6 +20,7 @@ export const state: AppState = {
   versionTimestamp: "unknown",
   problemDataset: "unknown",
   problemTarget: "unknown",
+  helpURL: "",
   problemMetrics: [],
   statusPanelState: {
     contentType: undefined,

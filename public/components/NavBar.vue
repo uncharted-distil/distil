@@ -69,7 +69,7 @@
 
     <!-- Right side -->
     <b-navbar-nav class="ml-auto">
-      <b-nav-item href="/help">Help</b-nav-item>
+      <b-nav-item :href="helpURL">Help</b-nav-item>
     </b-navbar-nav>
   </b-navbar>
 </template>
@@ -146,7 +146,7 @@ export default Vue.extend({
     },
 
     isApplyModel(): boolean {
-      /* 
+      /*
         Check if we requested in the route for an Apply Model navigation,
         or, in the case of a prediction a fitted solution ID.
        */
@@ -158,6 +158,10 @@ export default Vue.extend({
 
     hasDataset(): boolean {
       return !!this.dataset;
+    },
+
+    helpURL(): string {
+      return getters.getHelpURL(this.$store);
     },
 
     hasNoDatasetAndTarget(): boolean {
@@ -262,9 +266,9 @@ export default Vue.extend({
   width: 30px;
 }
 
-/* 
+/*
   In the following I use the ID #distil-app to overwrite the Bootstrap CSS
-  by increasing the selectors specificity. 
+  by increasing the selectors specificity.
 */
 
 /* Default colours */
