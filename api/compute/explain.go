@@ -132,7 +132,7 @@ func (s *SolutionRequest) createExplainPipeline(desc *pipeline.DescribeSolutionR
 }
 
 // ExplainFeatureOutput parses the explain feature output.
-func ExplainFeatureOutput(resultURI string, datasetURITest string, outputURI string) (*api.SolutionExplainResult, error) {
+func ExplainFeatureOutput(resultURI string, outputURI string) (*api.SolutionExplainResult, error) {
 	// An unset outputURI means that there is no explanation output, which is a valid case,
 	// so we return nil rather than an error so it can be handled downstream.
 	if outputURI == "" {
@@ -141,8 +141,8 @@ func ExplainFeatureOutput(resultURI string, datasetURITest string, outputURI str
 
 	// get the d3m index lookup
 	log.Infof("explaining feature output")
-	log.Infof("reading raw dataset found in '%s'", datasetURITest)
-	rawData, err := readDatasetData(datasetURITest)
+	log.Infof("reading raw dataset found in '%s'", resultURI)
+	rawData, err := readDatasetData(resultURI)
 	if err != nil {
 		return nil, err
 	}
@@ -381,13 +381,17 @@ func getD3MFieldIndex(header []string) int {
 
 func readDatasetData(uri string) ([][]string, error) {
 	uriRaw := strings.TrimPrefix(uri, "file://")
-	meta, err := metadata.LoadMetadataFromOriginalSchema(uriRaw, true)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to load original schema file")
-	}
-	mainDR := meta.GetMainDataResource()
+	dataPath := uriRaw
+	if path.Ext(dataPath) == ".json" {
+		meta, err := metadata.LoadMetadataFromOriginalSchema(uriRaw, true)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to load original schema file")
+		}
+		mainDR := meta.GetMainDataResource()
 
-	dataPath := path.Join(path.Dir(uriRaw), mainDR.ResPath)
+		dataPath = path.Join(path.Dir(uriRaw), mainDR.ResPath)
+	}
+
 	res, err := util.ReadCSVFile(dataPath, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read raw input data")

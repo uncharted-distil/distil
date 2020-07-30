@@ -316,7 +316,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	log.Infof("generated predictions stored at %v", predictionResult.ResultURI)
 
 	if predictionResult.StepFeatureWeightURI != "" {
-		featureWeights, err := comp.ExplainFeatureOutput(predictionResult.ResultURI, schemaPath, predictionResult.StepFeatureWeightURI)
+		featureWeights, err := comp.ExplainFeatureOutput(predictionResult.ResultURI, predictionResult.StepFeatureWeightURI)
 		if err != nil {
 			return nil, err
 		}
