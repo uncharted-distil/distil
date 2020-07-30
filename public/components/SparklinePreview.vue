@@ -1,22 +1,21 @@
 <template>
   <div :class="displayClass" v-observe-visibility="visibilityChanged">
     <sparkline-svg
-      :timeseries-extrema="timeseriesExtrema"
       :timeseries="timeseries"
+      :timeseries-extrema="timeseriesExtrema"
       :forecast="forecast"
       :forecast-extrema="forecastExtrema"
       :highlight-range="highlightRange"
       :join-forecast="!!predictionsId"
       :isDateTime="isDateTime()"
-    >
-    </sparkline-svg>
+    />
     <i class="fa fa-plus zoom-sparkline-icon" @click.stop="onClick"></i>
     <b-modal
       id="sparkline-zoom-modal"
-      :title="timeseriesId"
-      @hide="hideModal"
-      :visible="zoomSparkline"
       hide-footer
+      :title="timeseriesId"
+      :visible="zoomSparkline"
+      @hide="hideModal"
     >
       <div v-if="forecast">
         <div class="sparkline-legend">
@@ -31,6 +30,7 @@
         </div>
       </div>
       <sparkline-chart
+        v-if="zoomSparkline"
         :timeseries="timeseries"
         :forecast="forecast"
         :highlight-range="highlightRange"
@@ -38,8 +38,7 @@
         :y-axis-title="yCol"
         :x-axis-date-time="isDateTime()"
         :join-forecast="!!predictionsId"
-        v-if="zoomSparkline"
-      ></sparkline-chart>
+      />
     </b-modal>
   </div>
 </template>
@@ -219,6 +218,7 @@ export default Vue.extend({
         return datasets.isDateTime[this.timeseriesId];
       }
     },
+
     visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRequested) {

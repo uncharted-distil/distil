@@ -19,41 +19,27 @@ import Vue from "vue";
 import { circleSpinnerHTML } from "../util/spinner";
 import { TimeseriesExtrema, TimeSeriesValue } from "../store/dataset/index";
 
+const MARGIN = { top: 2, right: 16, bottom: 2, left: 16 };
+
 export default Vue.extend({
   name: "sparkline-svg",
 
   props: {
     margin: {
       type: Object as () => any,
-      default: () => ({
-        top: 2,
-        right: 16,
-        bottom: 2,
-        left: 16
-      })
+      default: () => MARGIN
     },
-    highlightPixelX: {
-      type: Number as () => number
-    },
+    highlightPixelX: Number,
     timeseries: Array as () => TimeSeriesValue[],
     forecast: Array as () => TimeSeriesValue[],
     highlightRange: Array as () => number[],
-    timeseriesExtrema: {
-      type: Object as () => TimeseriesExtrema
-    },
-    forecastExtrema: {
-      type: Object as () => TimeseriesExtrema
-    },
-    isDateTime: {
-      type: Boolean as () => Boolean
-    },
-    // join last element of timeseries to first element of forecast, or display both
-    // seperately
-    joinForecast: {
-      type: Boolean as () => Boolean,
-      default: false
-    }
+    timeseriesExtrema: Object as () => TimeseriesExtrema,
+    forecastExtrema: Object as () => TimeseriesExtrema,
+    isDateTime: Boolean,
+    // join last element of timeseries to first element of forecast, or display both seperately.
+    joinForecast: { type: Boolean, default: false }
   },
+
   data() {
     return {
       zoomSparkline: false,
@@ -63,25 +49,32 @@ export default Vue.extend({
       yScale: null
     };
   },
+
   computed: {
     isLoaded(): boolean {
       return !!this.timeseries;
     },
+
     spinnerHTML(): string {
       return circleSpinnerHTML();
     },
+
     svg(): d3.Selection<SVGElement, {}, HTMLElement, any> {
       return d3.select(this.$svg);
     },
+
     $svg(): any {
       return this.$refs.svg as any;
     },
+
     min(): number {
       return this.timeseries ? d3.min(this.timeseries, d => d.value) : 0;
     },
+
     max(): number {
       return this.timeseries ? d3.max(this.timeseries, d => d.value) : 0;
     },
+
     displayForecast(): TimeSeriesValue[] {
       // Join the last element of the truth timeseries and the first element of the forecast
       // time series.  Used when not visualizing an in-sample forecast.
@@ -90,11 +83,13 @@ export default Vue.extend({
       }
       return this.forecast;
     },
+
     showTooltip(): boolean {
       return (
         this.highlightPixelX !== null && this.hasRendered && this.isVisible
       );
     },
+
     $tooltip(): any {
       const tooltip = this.$refs.tooltip as any;
       return $(tooltip);
@@ -118,6 +113,7 @@ export default Vue.extend({
       },
       deep: true
     },
+
     timeseriesExtrema: {
       handler(newExtrema, oldExtrema) {
         if (this.isVisible && this.isLoaded) {
@@ -146,6 +142,7 @@ export default Vue.extend({
       },
       deep: true
     },
+
     forecastExtrema: {
       handler(newExtrema, oldExtrema) {
         if (this.isVisible && this.isLoaded) {
@@ -175,6 +172,7 @@ export default Vue.extend({
       },
       deep: true
     },
+
     highlightPixelX() {
       if (this.showTooltip) {
         const xVal = this.xScale.invert(this.highlightPixelX);
@@ -202,14 +200,17 @@ export default Vue.extend({
     svgBounding(): any {
       return this.$svg.getBoundingClientRect();
     },
+
     width(): number {
       const dims = this.svgBounding();
       return dims.width - this.margin.left - this.margin.right;
     },
+
     height(): number {
       const dims = this.svgBounding();
       return dims.height - this.margin.top - this.margin.bottom;
     },
+
     visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRendered) {
@@ -218,15 +219,19 @@ export default Vue.extend({
         });
       }
     },
+
     onClick() {
       this.zoomSparkline = true;
     },
+
     hideModal() {
       this.zoomSparkline = false;
     },
+
     clearSVG() {
       this.svg.selectAll("*").remove();
     },
+
     computeLayout() {
       let minX = this.timeseriesExtrema.x.min;
       let maxX = this.timeseriesExtrema.x.max;
@@ -262,6 +267,7 @@ export default Vue.extend({
         .domain([minY, maxY])
         .range([this.height(), 0]);
     },
+
     injectSparkline(): boolean {
       if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
         return false;
@@ -269,6 +275,7 @@ export default Vue.extend({
 
       const line = d3
         .line()
+        .defined(d => !_.isNaN(d[1])) // Define a filter for NaN values.
         .x(d => this.xScale(d[0]))
         .y(d => this.yScale(d[1]))
         .curve(d3.curveLinear);
@@ -280,15 +287,23 @@ export default Vue.extend({
           `translate(${this.margin.left}, ${this.margin.top})`
         );
 
-      g.datum(this.timeseries.map(x => [x.time, x.value]));
+      const datum = this.timeseries.map(x => [x.time, x.value]);
 
+      // Empty values line
       g.append("path")
-        .attr("fill", "none")
+        .datum(datum.filter(line.defined()))
+        .attr("class", "sparkline-void")
+        .attr("d", line);
+
+      // Sparkline.
+      g.append("path")
+        .datum(datum)
         .attr("class", "sparkline-timeseries")
         .attr("d", line);
 
       return true;
     },
+
     // draws a shaded rectangle
     injectHighlightRegion(): boolean {
       if (
@@ -314,6 +329,7 @@ export default Vue.extend({
 
       return true;
     },
+
     injectPrediction(): boolean {
       if (!this.$svg || !this.forecast || this.forecast.length === 0) {
         return false;
@@ -344,6 +360,7 @@ export default Vue.extend({
 
       return true;
     },
+
     formatExtremaX(extrema): string {
       if (this.isDateTime) {
         return new Date(extrema)
@@ -356,6 +373,7 @@ export default Vue.extend({
         return format(extrema.toString());
       }
     },
+
     injectAxis(): boolean {
       if (!this.$svg || !this.timeseries || this.timeseries.length === 0) {
         return false;
@@ -442,6 +460,7 @@ export default Vue.extend({
         .text(dateMaxX);
       return true;
     },
+
     injectTimeseries() {
       if (_.isEmpty(this.timeseries) || !this.$refs.svg) {
         return;
@@ -480,6 +499,7 @@ svg.line-chart-row {
 svg.line-chart-row g {
   stroke-width: 1px;
 }
+
 svg .sparkline-axis-title {
   font-size: 11px;
   font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
@@ -495,22 +515,30 @@ svg .sparkline-axis-title {
 }
 
 .sparkline-timeseries {
-  stroke: rgb(120, 120, 120);
+  fill: none;
+  stroke: var(--gray-700); /* rgb(120, 120, 120); */
+  stroke-width: 1.5;
+}
+
+.sparkline-void {
+  fill: none;
+  stroke: var(--gray-500);
+  stroke-dasharray: 2 5;
 }
 
 .sparkline-forecast {
-  stroke: rgb(2, 117, 216);
+  stroke: var(--blue); /* rgb(2, 117, 216); */
   fill: none;
 }
 
 .sparkline-confidence {
-  fill: rgb(2, 117, 216);
+  stroke: var(--blue); /* rgb(2, 117, 216); */
   opacity: 0.3;
   stroke: none;
 }
 
 .sparkline-area-score {
-  fill: rgb(200, 200, 200);
+  fill: var(--gray-500); /* rgb(200, 200, 200); */
   opacity: 0.3;
   stroke: none;
 }
