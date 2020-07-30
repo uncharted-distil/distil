@@ -1,5 +1,31 @@
 <template>
   <div class="container-fluid d-flex flex-column h-100">
+    <b-modal
+      v-model="showGeoModal"
+      title="Missing Geocoordinate Features"
+      ok-only
+      hide-header-close
+      @ok="onClose"
+    >
+      <p>Not enough columns to create a Geocoordinate feature.</p>
+      <p>
+        Please check the dataset to see if additional columns can be set to a
+        Latitude, Longitude or Decimal Type.
+      </p>
+    </b-modal>
+    <b-modal
+      v-model="showTimeModal"
+      title="Missing Time Series Features"
+      ok-only
+      hide-header-close
+      @ok="onClose"
+    >
+      <p>Not enough columns to create a Time feature.</p>
+      <p>
+        Please check the dataset to see if additional columns can be set to a
+        Integer, Date/Time or Decimal Type.
+      </p>
+    </b-modal>
     <b-row class="flex-0-nav"></b-row>
 
     <b-row class="flex-shrink-0 align-items-center bg-white">
@@ -209,9 +235,18 @@ import {
   GEOCOORDINATE_TYPE,
   TIMESERIES_TYPE,
   LATITUDE_TYPE,
-  LONGITUDE_TYPE
+  LONGITUDE_TYPE,
+  isLongitudeGroupType,
+  isTimeGroupType,
+  isLatitudeGroupType,
+  isValueGroupType
 } from "../util/types";
-import { filterSummariesByDataset, getComposedVariableKey } from "../util/data";
+import {
+  filterSummariesByDataset,
+  getComposedVariableKey,
+  hasTimeseriesFeatures,
+  hasGeoordinateFeatures
+} from "../util/data";
 import { getFacetByType } from "../util/facets";
 import { SELECT_TARGET_ROUTE } from "../store/route/index";
 import { createRouteEntry, overlayRouteEntry } from "../util/routes";
@@ -240,7 +275,8 @@ export default Vue.extend({
       hideClusterCol: true,
       other: [],
       isPending: false,
-      percentComplete: 100
+      percentComplete: 100,
+      isUpdating: false
     };
   },
   computed: {
@@ -263,86 +299,63 @@ export default Vue.extend({
       return this.groupingType === TIMESERIES_TYPE;
     },
     xColOptions(): Object[] {
-      if (this.isGeocoordinate) {
-        const X_COL_TYPES = {
-          [LONGITUDE_TYPE]: true,
-          [REAL_TYPE]: true
-        };
-        const def = [
-          {
-            value: null,
-            text: `Choose ${LONGITUDE_TYPE} column`,
-            disabled: true
-          }
-        ];
-        const suggestions = this.variables
-          .filter(v => X_COL_TYPES[v.colType])
-          .filter(v => !this.isIDCol(v.colName))
-          .filter(v => !this.isYCol(v.colName))
-          .map(v => {
-            return { value: v.colName, text: v.colDisplayName };
-          });
-        return [].concat(def, suggestions);
-      } else if (this.isTimeseries) {
-        const X_COL_TYPES = {
-          [INTEGER_TYPE]: true,
-          [DATE_TIME_TYPE]: true,
-          [TIMESTAMP_TYPE]: true
-        };
-        const def = [{ value: null, text: "Choose column", disabled: true }];
-
-        const suggestions = this.variables
-          .filter(v => X_COL_TYPES[v.colType])
-          .filter(v => !this.isIDCol(v.colName))
-          .filter(v => !this.isYCol(v.colName))
-          .map(v => {
-            return { value: v.colName, text: v.colDisplayName };
-          });
-
-        return [].concat(def, suggestions);
+      if (!this.isGeocoordinate && !this.isTimeseries) {
+        return [];
       }
+
+      const def = {
+        value: null,
+        text: "",
+        disabled: true
+      };
+      let xFilterFunction = null;
+
+      if (this.isGeocoordinate) {
+        def.text = `Choose ${LONGITUDE_TYPE} column`;
+        xFilterFunction = isLongitudeGroupType;
+      } else if (this.isTimeseries) {
+        def.text = "Choose value column";
+        xFilterFunction = isTimeGroupType;
+      }
+
+      const suggestions = this.variables
+        .filter(v => xFilterFunction(v.colType))
+        .filter(v => !this.isIDCol(v.colName))
+        .filter(v => !this.isYCol(v.colName))
+        .map(v => {
+          return { value: v.colName, text: v.colDisplayName };
+        });
+      return [].concat([def], suggestions);
     },
 
     yColOptions(): Object[] {
-      if (this.isGeocoordinate) {
-        const Y_COL_TYPES = {
-          [LATITUDE_TYPE]: true,
-          [REAL_TYPE]: true
-        };
-        const def = [
-          {
-            value: null,
-            text: `Choose ${LATITUDE_TYPE} column`,
-            disabled: true
-          }
-        ];
-
-        const suggestions = this.variables
-          .filter(v => Y_COL_TYPES[v.colType])
-          .filter(v => !this.isIDCol(v.colName))
-          .filter(v => !this.isXCol(v.colName))
-          .map(v => {
-            return { value: v.colName, text: v.colDisplayName };
-          });
-
-        return [].concat(def, suggestions);
-      } else if (this.isTimeseries) {
-        const Y_COL_TYPES = {
-          [INTEGER_TYPE]: true,
-          [REAL_TYPE]: true
-        };
-        const def = [{ value: null, text: "Choose column", disabled: true }];
-
-        const suggestions = this.variables
-          .filter(v => Y_COL_TYPES[v.colType])
-          .filter(v => !this.isIDCol(v.colName))
-          .filter(v => !this.isXCol(v.colName))
-          .map(v => {
-            return { value: v.colName, text: v.colDisplayName };
-          });
-
-        return [].concat(def, suggestions);
+      if (!this.isGeocoordinate && !this.isTimeseries) {
+        return [];
       }
+
+      const def = {
+        value: null,
+        text: "",
+        disabled: true
+      };
+      let yFilterFunction = null;
+
+      if (this.isGeocoordinate) {
+        def.text = `Choose ${LATITUDE_TYPE} column`;
+        yFilterFunction = isLatitudeGroupType;
+      } else if (this.isTimeseries) {
+        def.text = "Choose value column";
+        yFilterFunction = isValueGroupType;
+      }
+
+      const suggestions = this.variables
+        .filter(v => yFilterFunction(v.colType))
+        .filter(v => !this.isIDCol(v.colName))
+        .filter(v => !this.isXCol(v.colName))
+        .map(v => {
+          return { value: v.colName, text: v.colDisplayName };
+        });
+      return [].concat(def, suggestions);
     },
     isReady(): boolean {
       const hasBasicFields =
@@ -371,6 +384,32 @@ export default Vue.extend({
         v => v.key.indexOf(this.xCol) > -1 && v.key.indexOf(this.yCol) > -1
       )[0];
       return pv;
+    },
+    showGeoModal: {
+      get(): boolean {
+        return (
+          this.variables &&
+          this.isGeocoordinate &&
+          !this.isUpdating &&
+          !hasGeoordinateFeatures(this.variables)
+        );
+      },
+      set: () => {
+        console.info("insufficient geocoordinate variables");
+      }
+    },
+    showTimeModal: {
+      get(): boolean {
+        return (
+          this.variables &&
+          this.isTimeseries &&
+          !this.isUpdating &&
+          !hasTimeseriesFeatures(this.variables)
+        );
+      },
+      set: () => {
+        console.info("insufficient timeseries variables");
+      }
     }
   },
 
@@ -454,6 +493,7 @@ export default Vue.extend({
     },
     async submitGrouping(gotoTarget: boolean) {
       await this.clearGrouping();
+      this.isUpdating = true;
       // Create a list of id values, filtering out the empty entry
       const ids = this.idCols.map(c => c.value).filter(v => v);
 
@@ -496,6 +536,8 @@ export default Vue.extend({
       if (gotoTarget) {
         this.gotoTargetSelection();
       }
+
+      this.isUpdating = false;
     },
     async onClose() {
       await this.clearGrouping();
