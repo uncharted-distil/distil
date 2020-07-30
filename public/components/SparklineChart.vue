@@ -184,6 +184,7 @@ export default Vue.extend({
     injectTimeseries() {
       const line = d3
         .line()
+        .defined(d => _.isFinite(d[1])) // Define a filter for non number values.
         .x(d => this.xScale(d[0]))
         .y(d => this.yScale(d[1]))
         .curve(d3.curveLinear);
@@ -193,10 +194,17 @@ export default Vue.extend({
         .attr("transform", `translate(${this.margin.left}, 0)`)
         .attr("class", "line-chart");
 
-      g.datum(this.timeseries.map(x => [x.time, x.value]));
+      const datum = this.timeseries.map(x => [x.time, x.value]);
 
+      // Empty values line
       g.append("path")
-        .attr("fill", "none")
+        .datum(datum.filter(line.defined()))
+        .attr("class", "line-void")
+        .attr("d", line);
+
+      // Sparkline.
+      g.append("path")
+        .datum(datum)
         .attr("class", "line-timeseries")
         .attr("d", line);
     },
@@ -310,20 +318,28 @@ export default Vue.extend({
 }
 
 .line-timeseries {
-  stroke: rgb(200, 200, 200);
+  fill: none;
+  stroke: var(--gray-700); /* rgb(120, 120, 120); */
+  stroke-width: 1.5;
+}
+
+.line-void {
+  fill: none;
+  stroke: var(--gray-500);
+  stroke-dasharray: 2 5;
 }
 
 .line-forecast {
-  stroke: rgb(2, 117, 216);
+  stroke: var(--blue); /* rgb(2, 117, 216); */
 }
 
 .line-confidence {
-  fill: rgb(2, 117, 216);
+  fill: var(--blue); /* rgb(2, 117, 216); */
   opacity: 0.3;
 }
 
 .area-score {
-  fill: rgb(200, 200, 200);
+  fill: var(--gray-500); /* rgb(200, 200, 200); */
   opacity: 0.2;
   stroke: none;
 }
