@@ -181,8 +181,6 @@ github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJy
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H4=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
-github.com/uncharted-distil/distil-compute v0.0.0-20200728172328-30cf91548df8 h1:cQaXBw7sl9v8FNluYwWMvroSueOsQc+IlMsQ0Yb1Ceo=
-github.com/uncharted-distil/distil-compute v0.0.0-20200728172328-30cf91548df8/go.mod h1:+2yftisLjKetRuMlUsAuJS7Rtom/VI5CP5nd+57Vtl0=
 github.com/uncharted-distil/distil-compute v0.0.0-20200730112314-4b3621e84cca h1:5QFbu2NKVthcqDf0YK19tbjUBmSSnbYYVjbffRYkflU=
 github.com/uncharted-distil/distil-compute v0.0.0-20200730112314-4b3621e84cca/go.mod h1:+2yftisLjKetRuMlUsAuJS7Rtom/VI5CP5nd+57Vtl0=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a h1:BPJrlnjdhxMBrJWiU4/Gl3PVdCUlY9JspWFTJ9UVO0Y=

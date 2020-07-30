@@ -46,6 +46,7 @@
                 :enable-highlighting="[enableHighlighting, enableHighlighting]"
                 :ignore-highlights="[ignoreHighlights, ignoreHighlights]"
                 :instanceName="instanceName"
+                :expanded="expandGeoAndTimeseriesFacets"
                 @numerical-click="onNumericalClick"
                 @categorical-click="onCategoricalClick"
                 @facet-click="onFacetClick"
@@ -63,6 +64,7 @@
                 :isAvailableFeatures="isAvailableFeatures"
                 :isFeaturesToModel="isFeaturesToModel"
                 :log-activity="logActivity"
+                :expanded="expandGeoAndTimeseriesFacets"
                 @histogram-numerical-click="onNumericalClick"
                 @histogram-range-change="onRangeChange"
               />
@@ -251,6 +253,7 @@ export default Vue.extend({
         return getRouteFacetPage(this.routePageKey(), this.$route);
       }
     },
+
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
@@ -336,6 +339,11 @@ export default Vue.extend({
       return this.hasPages
         ? "variable-facets-list-with-footer"
         : "variable-facets-list";
+    },
+
+    expandGeoAndTimeseriesFacets(): Boolean {
+      // The Geocoordinates and Timeseries Facets are expanded on SELECT_TARGET_ROUTE
+      return routeGetters.isPageSelectTarget(this.$store);
     }
   },
 
@@ -457,14 +465,14 @@ button {
 }
 
 .page-link {
-  color: #868e96;
+  color: var(--gray-600);
 }
 
 .page-item.active .page-link {
   z-index: 2;
-  color: #fff;
-  background-color: #868e96;
-  border-color: #868e96;
+  color: var(--white);
+  background-color: var(--gray-700);
+  border-color: var(--gray-700);
 }
 
 /* To display scrollbars on the list of variables facets. */
@@ -486,9 +494,9 @@ button {
   .facets-root-container
   .facets-group-container
   .facets-group {
-  background: white;
+  background: var(--white);
   font-size: 0.867rem;
-  color: rgba(0, 0, 0, 0.87);
+  color: var(--color-text-base);
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.3s ease-in-out;
 }
