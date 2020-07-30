@@ -8,6 +8,7 @@ import {
   BandID
 } from "../dataset/index";
 import {
+  SELECT_TARGET_ROUTE,
   JOINED_VARS_INSTANCE_PAGE,
   AVAILABLE_TARGET_VARS_INSTANCE_PAGE,
   AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
@@ -431,11 +432,7 @@ export const getters = {
     return !!isApplyModel;
   },
 
-  /**
-   * Check if the current task includes Remote Sensing.
-   * @param {Route} state
-   * @returns {Boolean}
-   */
+  /* Check if the current task includes Remote Sensing. */
   isRemoteSensing(state: Route): boolean {
     // Get the list of task of the route.
     const task = state.query.task as string;
@@ -447,11 +444,7 @@ export const getters = {
     return task.includes(TaskTypes.REMOTE_SENSING);
   },
 
-  /**
-   * Check if the current task includes Timeseries.
-   * @param {Route} state
-   * @returns {Boolean}
-   */
+  /* Check if the current task includes Timeseries. */
   isTimeseries(state: Route): boolean {
     // Get the list of task of the route.
     const task = state.query.task as string;
@@ -493,5 +486,10 @@ export const getters = {
       qualityStr,
       ModelQuality.HIGHER_QUALITY
     );
+  },
+
+  /* Check if the current page is SELECT_TARGET_ROUTE. */
+  isPageSelectTarget(state: Route): Boolean {
+    return state.path === SELECT_TARGET_ROUTE;
   }
 };

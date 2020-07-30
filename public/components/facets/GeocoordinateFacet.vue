@@ -11,8 +11,7 @@
         :field="target"
         :expandCollapse="expandCollapse"
         :expand="expand"
-      >
-      </type-change-menu>
+      />
     </div>
     <div class="geofacet-container">
       <div
@@ -48,7 +47,7 @@
         :highlight="latHighlight"
         @numerical-click="latHistogramClick"
         @range-change="latRangeChange"
-      ></facet-numerical>
+      />
       <facet-numerical
         :instanceName="lonSummary.label"
         :summary="lonSummary"
@@ -57,7 +56,7 @@
         :highlight="lonHighlight"
         @numerical-click="lonHistogramClick"
         @range-change="lonRangeChange"
-      ></facet-numerical>
+      />
     </div>
   </div>
 </template>
@@ -174,6 +173,10 @@ const BLACK_PALETTE = [
   "#000000"
 ];
 
+/**
+ * Geocoordinate Facet.
+ * @param {Boolean} [expanded=false] - To display the facet expanded; Collapsed by default.
+ */
 export default Vue.extend({
   name: "geocoordinate-facet",
 
@@ -193,7 +196,8 @@ export default Vue.extend({
     logActivity: {
       type: String as () => Activity,
       default: Activity.DATA_PREPARATION
-    }
+    },
+    expanded: { type: Boolean, default: false }
   },
 
   data() {
@@ -207,15 +211,17 @@ export default Vue.extend({
       selectedRect: null as leaflet.Rectangle,
       baseLineLayer: null as leaflet.Layer,
       filteredLayer: null as leaflet.Layer,
-      expand: false,
+      expand: this.expanded,
       enabledTypeChanges: new Array(0),
       blockNextEvent: false
     };
   },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+
     latSummary(): VariableSummary {
       const latSummary: VariableSummary = {
         label: LATITUDE_TYPE,
@@ -228,6 +234,7 @@ export default Vue.extend({
       };
       return latSummary;
     },
+
     lonSummary(): VariableSummary {
       const lonSummary: VariableSummary = {
         label: LONGITUDE_TYPE,
@@ -240,6 +247,7 @@ export default Vue.extend({
       };
       return lonSummary;
     },
+
     latHighlight(): Object {
       if (this.hasValidGeoHighlight) {
         return {
@@ -255,6 +263,7 @@ export default Vue.extend({
         return null;
       }
     },
+
     lonHighlight(): Object {
       if (this.hasValidGeoHighlight) {
         return {
@@ -270,21 +279,27 @@ export default Vue.extend({
         return null;
       }
     },
+
     target(): string {
       return this.summary.key;
     },
+
     instanceName(): string {
       return "unique-map";
     },
+
     mapID(): string {
       return `map-${this.instanceName}`;
     },
+
     // Computes the bounds of the summary data.
     bucketBounds(): helpers.BBox {
       return bbox(this.bucketFeatures);
     },
-    // Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.  The collection represents
-    // the baseline bucket set for geocoordinate, and does not change as filters / highlights are introduced.
+
+    // Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer
+    // for rendering.  The collection represents the baseline bucket set for geocoordinate,
+    // and does not change as filters / highlights are introduced.
     bucketFeatures(): helpers.FeatureCollection {
       // compute the bucket size in degrees
       const buckets = this.summary.baseline.buckets;
@@ -321,12 +336,12 @@ export default Vue.extend({
       return featureCollection(features);
     },
 
-    // Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer for rendering.  The collection
-    // represents the subset of buckets to be rendered based on the currently applied filters and highlights.
+    // Creates a GeoJSON feature collection that can be passed directly to a Leaflet layer
+    // for rendering.  The collection represents the subset of buckets to be rendered based
+    // on the currently applied filters and highlights.
     filteredBucketFeatures(): helpers.FeatureCollection {
-      // compute the bucket size in degrees
-
       if (this.summary.filtered) {
+        // compute the bucket size in degrees
         const buckets = this.summary.filtered.buckets;
         const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
         const ySize =
@@ -382,6 +397,7 @@ export default Vue.extend({
         Number.MIN_SAFE_INTEGER
       );
     },
+
     filteredMinCount(): number {
       return this.filteredBucketFeatures.features.reduce(
         (min, feature) =>
@@ -393,17 +409,21 @@ export default Vue.extend({
     headerLabel(): string {
       return this.summary.label.toUpperCase();
     },
+
     hasFilters(): boolean {
       return routeGetters.getDecodedFilters(this.$store).length > 0;
     },
+
     // is the display in included (blue) or excluded (black) mode
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
     },
+
     // is data currently being highlighted
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
     },
+
     hasValidGeoHighlight(): Boolean {
       return (
         !!this.highlight &&
@@ -414,9 +434,11 @@ export default Vue.extend({
         !!this.highlight.value.maxY
       );
     },
+
     selectedRows(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
+
     selectedPoints(): helpers.Point[] {
       if (this.selectedRows) {
         const tableItems = this.includedActive
@@ -435,6 +457,7 @@ export default Vue.extend({
       return [];
     }
   },
+
   methods: {
     calcBucketKey(value: string, type: string): string {
       const numValue = _.toNumber(value);
@@ -445,6 +468,7 @@ export default Vue.extend({
       const step = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
       return _.toString(numValue - (numValue % step));
     },
+
     numericWithMetadata(buckets: Bucket[]): BucketData {
       const extrema = {
         min: _.toNumber(buckets[0].key),
@@ -524,6 +548,7 @@ export default Vue.extend({
         "numerical-click"
       );
     },
+
     lonHistogramClick(
       context: string,
       key: string,
@@ -543,6 +568,7 @@ export default Vue.extend({
         "numerical-click"
       );
     },
+
     latRangeChange(
       context: string,
       key: string,
@@ -559,6 +585,7 @@ export default Vue.extend({
         "range-change"
       );
     },
+
     lonRangeChange(
       context: string,
       key: string,
@@ -575,6 +602,7 @@ export default Vue.extend({
         "range-change"
       );
     },
+
     onHistogramAction(
       context: string,
       key: string,
@@ -620,6 +648,7 @@ export default Vue.extend({
         details: { key: key, value: value }
       });
     },
+
     expandCollapse(action) {
       if (action === EXPAND_ACTION_TYPE) {
         this.expand = true;
@@ -627,6 +656,7 @@ export default Vue.extend({
         this.expand = false;
       }
     },
+
     async selectFeature() {
       const training = routeGetters
         .getDecodedTrainingVariableNames(this.$store)
@@ -668,6 +698,7 @@ export default Vue.extend({
 
       this.$router.push(entry);
     },
+
     async removeFeature() {
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
@@ -690,6 +721,7 @@ export default Vue.extend({
 
       removeFiltersByName(this.$router, this.summary.key);
     },
+
     clearSelectionRect() {
       if (this.selectedRect) {
         this.selectedRect.remove();
@@ -704,6 +736,7 @@ export default Vue.extend({
         this.closeButton = null;
       }
     },
+
     onMouseUp(event: MouseEvent) {
       if (this.currentRect) {
         // prevent creation of a single point highlight via click
@@ -721,6 +754,7 @@ export default Vue.extend({
         this.currentRect = null;
       }
     },
+
     onMouseMove(event: MouseEvent) {
       if (this.currentRect) {
         const offset = $(this.map.getContainer()).offset();
@@ -731,6 +765,7 @@ export default Vue.extend({
         this.currentRect.setBounds(bounds);
       }
     },
+
     onMouseDown(event: MouseEvent) {
       const mapEventTarget = event.target as HTMLElement;
 
@@ -776,6 +811,7 @@ export default Vue.extend({
         this.map.dragging.disable();
       }
     },
+
     setSelection(rect: leaflet.Rectangle) {
       this.clearSelection();
 
@@ -802,6 +838,7 @@ export default Vue.extend({
         maxY: ne.lat
       });
     },
+
     clearSelection() {
       if (this.selectedRect) {
         const rectPath = (<any>this.selectedRect)._path;
@@ -812,6 +849,7 @@ export default Vue.extend({
         this.closeButton.remove();
       }
     },
+
     createHighlight(value: {
       minX: number;
       maxX: number;
@@ -836,6 +874,7 @@ export default Vue.extend({
         value: value
       });
     },
+
     drawHighlight() {
       if (
         this.highlight &&
@@ -863,6 +902,7 @@ export default Vue.extend({
         this.setSelection(rect);
       }
     },
+
     paint() {
       // NOTE: this component re-mounts on any change, so do everything in here
       if (!this.highlight) {
@@ -1029,16 +1069,19 @@ export default Vue.extend({
     selectedPoints() {
       this.paint();
     },
+
     bucketFeatures() {
       if (this.summary.baseline) {
         this.paint();
       }
     },
+
     filteredBucketFeatures() {
       if (this.summary.filtered) {
         this.paint();
       }
     },
+
     includedActive() {
       if (!this.includedActive) {
         this.clearSelectionRect();
@@ -1057,8 +1100,8 @@ export default Vue.extend({
   font-family: inherit;
   font-size: 0.867rem;
   font-weight: 700;
-  color: rgba(0, 0, 0, 0.54);
-  background: white;
+  color: var(--color-text-second);
+  background: var(--white);
   padding: 4px 8px 6px;
   position: relative;
   z-index: 1;
@@ -1071,13 +1114,13 @@ export default Vue.extend({
 .facet-card .geofacet-container .action-btn {
   position: relative;
   bottom: 37px;
-  background: white;
+  background: var(--white);
 }
 
 .facet-card .geofacet-container .action-btn:hover {
-  color: #fff;
-  background-color: #9e9e9e;
-  border-color: #9e9e9e;
+  color: var(--white);
+  background-color: var(--gray-600);
+  border-color: var(--gray-600);
 }
 
 .header-title {

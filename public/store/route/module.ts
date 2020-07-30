@@ -94,5 +94,6 @@ export const getters = {
   getBandCombinationId: read(moduleGetters.getBandCombinationId),
   getModelLimit: read(moduleGetters.getModelLimit),
   getModelTimeLimit: read(moduleGetters.getModelTimeLimit),
-  getModelQuality: read(moduleGetters.getModelQuality)
+  getModelQuality: read(moduleGetters.getModelQuality),
+  isPageSelectTarget: read(moduleGetters.isPageSelectTarget)
 };
