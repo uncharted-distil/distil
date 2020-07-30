@@ -19,8 +19,7 @@
       @categorical-click="onCategoricalClick"
       @facet-click="onFacetClick"
       @range-change="onRangeChange"
-    >
-    </facet-sparklines>
+    />
     <component
       :is="facetType"
       v-if="!!timelineSummary && expand"
@@ -37,8 +36,7 @@
       @numerical-click="onHistogramNumericalClick"
       @categorical-click="onHistogramCategoricalClick"
       @range-change="onHistogramRangeChange"
-    >
-    </component>
+    />
   </div>
 </template>
 
@@ -65,6 +63,10 @@ import {
   COLLAPSE_ACTION_TYPE
 } from "../../util/types";
 
+/**
+ * Timeseries Facet.
+ * @param {Boolean} [expanded=false] - To display the facet expanded; Collapsed by default.
+ */
 export default Vue.extend({
   name: "facet-timeseries",
 
@@ -86,14 +88,15 @@ export default Vue.extend({
       String as () => string,
       Object as () => any,
       Function as () => Function
-    ]
+    ],
+    expanded: { type: Boolean, default: false }
   },
 
   data() {
     return {
       customHtml: this.html,
       footerHtml: undefined,
-      expand: false
+      expand: this.expanded
     };
   },
 
