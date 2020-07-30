@@ -275,7 +275,7 @@ export default Vue.extend({
 
       const line = d3
         .line()
-        .defined(d => !_.isNaN(d[1])) // Define a filter for NaN values.
+        .defined(d => _.isFinite(d[1])) // Define a filter for non number values.
         .x(d => this.xScale(d[0]))
         .y(d => this.yScale(d[1]))
         .curve(d3.curveLinear);
