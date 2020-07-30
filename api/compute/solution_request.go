@@ -392,7 +392,7 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 			if err != nil {
 				return nil, err
 			}
-			confidenceResult, err = ExplainFeatureOutput(resultURI, path.Join(datasetURI, compute.D3MDataSchema), confidenceURI)
+			confidenceResult, err = ExplainFeatureOutput(resultURI, confidenceURI)
 			if err != nil {
 				return nil, err
 			}
@@ -725,7 +725,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 					explainURI := outputKeyURIs[explain.key]
 					log.Infof("explaining feature output from URI '%s'", explainURI)
 					produceDatasetURI = compute.BuildSchemaFileURI(produceDatasetURI)
-					parsedExplainResult, err := ExplainFeatureOutput(resultURI, produceDatasetURI, explainURI)
+					parsedExplainResult, err := ExplainFeatureOutput(resultURI, explainURI)
 					if err != nil {
 						log.Warnf("failed to fetch output explanation - %v", err)
 						continue
