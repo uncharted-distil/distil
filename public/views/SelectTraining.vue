@@ -1,67 +1,46 @@
 <template>
   <div class="select-training-view d-flex h-100">
-    <!-- Status Panel -->
-    <status-panel></status-panel>
+    <!-- Status Panel and Sidebar -->
+    <status-panel />
     <div class="sidebar-container d-flex flex-column h-100">
       <div class="padding-nav"></div>
-      <status-sidebar></status-sidebar>
+      <status-sidebar />
     </div>
 
+    <!-- Main -->
     <div class="container-fluid d-flex flex-column h-100 select-view">
+      <!-- Spacer for the navigation. -->
       <div class="row flex-0-nav"></div>
 
-      <div class="row align-items-center justify-content-center bg-white">
+      <!-- Header -->
+      <header class="header row align-items-center justify-content-center">
         <div class="col-12 col-md-6 d-flex flex-column">
-          <h5 class="header-label">
-            Select Features That May Predict {{ targetLabel.toUpperCase() }}
+          <h5 class="header-title">
+            Select Features That May Predict
+            <strong>{{ targetLabel.toUpperCase() }}</strong>
           </h5>
-
-          <div class="row col-12 pl-4">
-            <div>{{ targetLabel.toUpperCase() }} is being modeled as a</div>
-            <div class="pl-2">
-              <type-change-menu
-                :dataset="dataset"
-                :field="target"
-                :values="targetSampleValues"
-              ></type-change-menu>
-            </div>
-          </div>
-          <div class="row col-12 pl-4">
-            <p>
-              <b
-                >Select Features That May Predict
-                {{ targetLabel.toUpperCase() }}</b
-              >. Use interactive feature highlighting to analyze relationships
-              or to exclude samples from the model. Features which appear to
-              have stronger relation are listed first.
-            </p>
-          </div>
+          <p>
+            Use interactive feature highlighting to analyze relationships or to
+            exclude samples from the model. Features which appear to have
+            stronger relation are listed&nbsp;first.
+          </p>
         </div>
 
         <div class="col-12 col-md-6 d-flex flex-column">
           <div class="select-target-variables">
-            <target-variable
-              class="col-12 d-flex flex-column"
-            ></target-variable>
+            <target-variable class="col-12 d-flex flex-column" />
           </div>
         </div>
-      </div>
+      </header>
 
+      <!-- Content -->
       <div class="row flex-1 pb-3">
-        <available-training-variables
-          class="col-12 col-md-3 d-flex h-100"
-        ></available-training-variables>
-        <training-variables
-          class="col-12 col-md-3 nopadding d-flex h-100"
-        ></training-variables>
+        <available-training-variables class="col-12 col-md-3 d-flex h-100" />
+        <training-variables class="col-12 col-md-3 nopadding d-flex h-100" />
 
         <div class="col-12 col-md-6 d-flex flex-column h-100">
-          <select-data-slot
-            class="flex-1 d-flex flex-column pb-3 pt-2"
-          ></select-data-slot>
-          <create-solutions-form
-            class="select-create-solutions"
-          ></create-solutions-form>
+          <select-data-slot class="flex-1 d-flex flex-column pb-3 pt-2" />
+          <create-solutions-form class="select-create-solutions" />
         </div>
       </div>
     </div>

@@ -95,5 +95,6 @@ export const getters = {
   getModelLimit: read(moduleGetters.getModelLimit),
   getModelTimeLimit: read(moduleGetters.getModelTimeLimit),
   getModelQuality: read(moduleGetters.getModelQuality),
-  isPageSelectTarget: read(moduleGetters.isPageSelectTarget)
+  isPageSelectTarget: read(moduleGetters.isPageSelectTarget),
+  isPageSelectTraining: read(moduleGetters.isPageSelectTraining)
 };

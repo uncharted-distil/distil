@@ -1,13 +1,13 @@
 <template>
-  <div v-bind:class="{ included: includedActive, excluded: !includedActive }">
+  <div :class="{ included: includedActive, excluded: !includedActive }">
     <variable-facets
       class="target-summary"
       enable-highlighting
+      enable-type-change
       :summaries="targetSummaries"
       :instance-name="instanceName"
       :log-activity="logActivity"
-    >
-    </variable-facets>
+    />
   </div>
 </template>
 

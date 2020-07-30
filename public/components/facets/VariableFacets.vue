@@ -28,13 +28,13 @@
             :key="summary.key"
           >
             <template v-if="summary.pending">
-              <facet-loading :summary="summary"> </facet-loading>
+              <facet-loading :summary="summary" />
             </template>
             <template v-else-if="summary.err">
               <facet-error
                 :summary="summary"
                 :enabled-type-changes="enabledTypeChanges"
-              ></facet-error>
+              />
             </template>
             <template v-else-if="summary.varType === 'timeseries'">
               <facet-timeseries
@@ -54,8 +54,7 @@
                 @histogram-numerical-click="onNumericalClick"
                 @histogram-categorical-click="onCategoricalClick"
                 @histogram-range-change="onRangeChange"
-              >
-              </facet-timeseries>
+              />
             </template>
             <template v-else-if="isGeoLocated(summary.varType)">
               <geocoordinate-facet
@@ -68,8 +67,7 @@
                 :expanded="expandGeoAndTimeseriesFacets"
                 @histogram-numerical-click="onNumericalClick"
                 @histogram-range-change="onRangeChange"
-              >
-              </geocoordinate-facet>
+              />
             </template>
             <template v-else-if="isImage(summary.varType)">
               <facet-image
@@ -83,8 +81,7 @@
                 :ignore-highlights="ignoreHighlights"
                 :instanceName="instanceName"
                 @facet-click="onFacetClick"
-              >
-              </facet-image>
+              />
             </template>
             <template v-else-if="summary.varType === 'dateTime'">
               <facet-date-time
@@ -99,8 +96,7 @@
                 :ignore-highlights="ignoreHighlights"
                 :instanceName="instanceName"
                 @facet-click="onFacetClick"
-              >
-              </facet-date-time>
+              />
             </template>
             <template v-else-if="summary.type === 'categorical'">
               <facet-categorical
@@ -114,8 +110,7 @@
                 :ignore-highlights="ignoreHighlights"
                 :instanceName="instanceName"
                 @facet-click="onFacetClick"
-              >
-              </facet-categorical>
+              />
             </template>
             <template v-else-if="summary.type === 'numerical'">
               <facet-numerical
@@ -132,8 +127,7 @@
                 @categorical-click="onCategoricalClick"
                 @range-change="onRangeChange"
                 @facet-click="onFacetClick"
-              >
-              </facet-numerical>
+              />
             </template>
           </div>
         </div>
