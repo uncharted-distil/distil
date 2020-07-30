@@ -1,23 +1,41 @@
 <template>
-  <div>
-    <!-- Modal Component -->
-    <b-modal
-      id="predictions-data-upload-modal"
-      title="Select input data"
-      @ok="handleOk()"
-      @show="clearForm()"
-    >
-      <p>Select a csv or zip file to import</p>
-      <b-form-file
-        ref="fileinput"
-        v-model="file"
-        :state="Boolean(file)"
-        accept=".csv, .zip"
-        plain
-      />
-      <div class="mt-3">Selected file: {{ file ? file.name : "" }}</div>
-    </b-modal>
-  </div>
+  <b-modal
+    id="predictions-data-upload-modal"
+    title="Select input data"
+    @ok="handleOk"
+    @show="clearForm"
+  >
+    <p>Select a csv or zip file to import</p>
+    <b-form-file
+      ref="fileinput"
+      v-model="file"
+      :state="Boolean(file)"
+      accept=".csv, .zip"
+      plain
+    />
+    <div class="mt-3">Selected file: {{ file ? file.name : "" }}</div>
+
+    <template v-slot:modal-footer="{ ok, cancel }">
+      <b-button @click="cancel()" :disabled="isWaiting">Cancel</b-button>
+
+      <b-overlay
+        :show="isWaiting"
+        rounded
+        opacity="0.6"
+        spinner-small
+        spinner-variant="primary"
+        class="d-inline-block"
+      >
+        <b-button
+          variant="primary"
+          @click="ok()"
+          :disabled="isWaiting || !Boolean(file)"
+        >
+          Apply Model
+        </b-button>
+      </b-overlay>
+    </template>
+  </b-modal>
 </template>
 
 <script lang="ts">
@@ -49,7 +67,8 @@ export default Vue.extend({
       file: null as File,
       importDataName: "",
       uploadData: {},
-      uploadStatus: ""
+      uploadStatus: "",
+      isWaiting: false
     };
   },
 
@@ -71,11 +90,20 @@ export default Vue.extend({
       const $refs = this.$refs as any;
       if ($refs && $refs.fileinput) $refs.fileinput.reset();
     },
-    async handleOk() {
+
+    handleOk(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault();
+
       if (!this.file) {
         return;
       }
 
+      this.isWaiting = true;
+      this.makeRequest();
+    },
+
+    async makeRequest() {
       const deconflictedName = generateUniqueDatasetName(
         removeExtension(this.file.name)
       );
@@ -121,6 +149,7 @@ export default Vue.extend({
     },
 
     uploadFinish(err: Error, response: any) {
+      this.isWaiting = false;
       this.uploadStatus = err ? "error" : "success";
 
       if (this.uploadStatus !== "error" && !response.complete) {
@@ -149,5 +178,3 @@ export default Vue.extend({
   }
 });
 </script>
-
-<style></style>
