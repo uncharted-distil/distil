@@ -12,6 +12,10 @@ import VueObserveVisibility from "vue-observe-visibility";
 import BootstrapVue from "bootstrap-vue";
 import NavBar from "./components/NavBar";
 import store from "./store/store";
+import {
+  getters as appGetters,
+  actions as appActions
+} from "./store/app/module";
 import router from "./router/router";
 
 import "font-awesome/css/font-awesome.css";
@@ -35,6 +39,9 @@ export default Vue.extend({
   router: router,
   components: {
     NavBar
+  },
+  beforeMount() {
+    appActions.fetchConfig(this.$store);
   }
 });
 </script>

@@ -2,6 +2,7 @@ import { DatasetPendingRequestType } from "../dataset/index";
 
 export interface AppState {
   versionNumber: string;
+  helpURL: string;
   versionTimestamp: string;
   problemDataset: string;
   problemTarget: string;

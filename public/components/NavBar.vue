@@ -161,7 +161,7 @@ export default Vue.extend({
     },
 
     helpURL(): string {
-      return getters.getHelpURL(this.$store);
+      return appGetters.getHelpURL(this.$store);
     },
 
     hasNoDatasetAndTarget(): boolean {
