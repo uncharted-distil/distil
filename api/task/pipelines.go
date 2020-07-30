@@ -139,7 +139,7 @@ func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest
 				outputName := ""
 				if colNames, ok := getTimeValueCols(res); ok {
 					step, err = description.CreateSlothPipeline("time series clustering",
-						"k-means time series clustering", colNames.timeCol, colNames.valueCol, res.Variables)
+						"k-means time series clustering", colNames.timeCol, colNames.valueCol, nil, res.Variables)
 					outputName = slothResultFieldName
 				}
 

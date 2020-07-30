@@ -141,8 +141,8 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 		step, err = description.CreateMultiBandImageClusteringPipeline("5-eyes", "I see you", rsg, features, useKMeans)
 	} else if clusteringVar.DistilRole == model.VarDistilRoleGrouping {
 		// assume timeseries for now if distil role is grouping
-		step, err = description.CreateSlothPipeline("time series clustering",
-			"k-means time series clustering", "", "", features)
+		step, err = description.CreateSlothPipeline("time series clustering", "k-means time series clustering",
+			"", "", getClusterGroup(clusteringVar.Name, features).(*model.TimeseriesGrouping), features)
 	} else {
 		// general clustering pipeline
 		selectedFeatures := make([]string, len(features))

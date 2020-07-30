@@ -290,14 +290,14 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 		for _, data := range categoryRowData {
 			maxCategoryTrainingRows := int(math.Max(1, float64(len(data))/float64(len(rowData))*float64(numTrainingRows)))
 			maxCategoryTestRows := int(math.Max(1, float64(len(data))/float64(len(rowData))*float64(numTestRows)))
-			err := shuffleAndWrite(data, groupingCol, maxCategoryTrainingRows, maxCategoryTestRows, writerTrain, writerTest)
+			err := shuffleAndWrite(data, groupingCol, maxCategoryTrainingRows, maxCategoryTestRows, true, writerTrain, writerTest)
 			if err != nil {
 				return err
 			}
 		}
 	} else {
 		// randomly select from dataset based on row limits
-		err := shuffleAndWrite(rowData, groupingCol, numTrainingRows, numTestRows, writerTrain, writerTest)
+		err := shuffleAndWrite(rowData, groupingCol, numTrainingRows, numTestRows, true, writerTrain, writerTest)
 		if err != nil {
 			return err
 		}
@@ -329,7 +329,8 @@ func (s *shuffleTracker) lessThanMax() bool {
 	return s.count < s.max
 }
 
-func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int, maxTestCount int, writerTrain *csv.Writer, writerTest *csv.Writer) error {
+func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int,
+	maxTestCount int, adjustCount bool, writerTrain *csv.Writer, writerTest *csv.Writer) error {
 	if maxTrainingCount <= 0 {
 		maxTrainingCount = math.MaxInt64
 	}
@@ -338,8 +339,12 @@ func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int, max
 	rand.Seed(time.Now().UnixNano())
 
 	// Figure out the number of train and test rows to use capping on the limit supplied by the caller.
-	numTrain := min(maxTrainingCount, int(math.Floor(float64(len(rowData))*TrainTestSplitThreshold)))
-	numTest := min(maxTestCount, int(math.Ceil(float64(len(rowData))*(1.0-TrainTestSplitThreshold))))
+	numTrain := maxTrainingCount
+	numTest := maxTestCount
+	if adjustCount {
+		numTrain = min(maxTrainingCount, int(math.Floor(float64(len(rowData))*TrainTestSplitThreshold)))
+		numTest = min(maxTestCount, int(math.Ceil(float64(len(rowData))*(1.0-TrainTestSplitThreshold))))
+	}
 
 	// structures for tracking test and train counts
 	shuffleTest := &shuffleTracker{
@@ -667,7 +672,7 @@ func SampleDataset(rawData [][]string, maxRows int, hasHeader bool) ([]byte, err
 		rawData = rawData[1:]
 	}
 
-	err := shuffleAndWrite(rawData, -1, maxRows, 0, writer, nil)
+	err := shuffleAndWrite(rawData, -1, maxRows, 0, false, writer, nil)
 	if err != nil {
 		return nil, err
 	}
