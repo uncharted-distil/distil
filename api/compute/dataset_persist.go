@@ -492,7 +492,7 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	limits := rowLimits{
 		MinTrainingRows: config.MinTrainingRows,
 		MinTestRows:     config.MinTestRows,
-		MaxTrainingRows: config.MaxTestRows,
+		MaxTrainingRows: config.MaxTrainingRows,
 		MaxTestRows:     config.MaxTestRows,
 		Sample:          config.FastDataPercentage,
 		Quality:         params.Quality,
