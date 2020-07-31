@@ -10,46 +10,32 @@ import _ from "lodash";
 import Vue from "vue";
 import { TimeSeriesValue } from "../store/dataset/index";
 
+const MARGIN = { top: 24, right: 48, bottom: 16, left: 48 };
+
 export default Vue.extend({
   name: "sparkline-chart",
+
   props: {
     margin: {
       type: Object as () => any,
-      default: () => ({
-        top: 24,
-        right: 48,
-        bottom: 16,
-        left: 48
-      })
+      default: () => MARGIN
     },
-    timeseries: {
-      type: Array as () => TimeSeriesValue[]
-    },
-    forecast: {
-      type: Array as () => TimeSeriesValue[]
-    },
-    highlightRange: {
-      type: Array as () => number[]
-    },
-    xAxisTitle: {
-      type: String as () => string
-    },
-    yAxisTitle: {
-      type: String as () => string
-    },
-    xAxisDateTime: {
-      type: Boolean as () => boolean
-    },
-    joinForecast: {
-      type: Boolean as () => boolean
-    }
+    timeseries: Array as () => TimeSeriesValue[],
+    forecast: Array as () => TimeSeriesValue[],
+    highlightRange: Array as () => number[],
+    xAxisTitle: String,
+    yAxisTitle: String,
+    xAxisDateTime: Boolean,
+    joinForecast: Boolean
   },
+
   data() {
     return {
       xScale: null,
       yScale: null
     };
   },
+
   computed: {
     svg(): d3.Selection<SVGElement, {}, HTMLElement, any> {
       const $svg = this.$refs.svg as any;
@@ -115,15 +101,18 @@ export default Vue.extend({
       return this.forecast;
     }
   },
+
   mounted() {
     setTimeout(() => {
       this.draw();
     });
   },
+
   methods: {
     clearSVG() {
       this.svg.selectAll("*").remove();
     },
+
     injectAxes() {
       const minX = this.xAxisDateTime ? new Date(this.minX) : this.minX;
       const maxX = this.xAxisDateTime ? new Date(this.maxX) : this.maxX;
@@ -181,25 +170,55 @@ export default Vue.extend({
         .style("text-anchor", "middle")
         .text(this.yAxisTitle);
     },
+
     injectTimeseries() {
+      const datum = this.timeseries.map(x => [x.time, x.value]);
+
+      // Define a filter for non number values.
+      const filterMissingData = d => _.isFinite(d[1]);
+
+      // the Sparkline
       const line = d3
         .line()
+        .defined(filterMissingData)
         .x(d => this.xScale(d[0]))
         .y(d => this.yScale(d[1]))
         .curve(d3.curveLinear);
 
+      // the area underneath the Sparkline
+      const y0 = this.yScale(this.minY);
+      const area = d3
+        .area()
+        .defined(filterMissingData)
+        .x(d => this.xScale(d[0]))
+        .y0(y0)
+        .y1(d => this.yScale(d[1]));
+
+      // Graph to use a container
       const g = this.svg
         .append("g")
         .attr("transform", `translate(${this.margin.left}, 0)`)
         .attr("class", "line-chart");
 
-      g.datum(this.timeseries.map(x => [x.time, x.value]));
-
+      // Empty values line
       g.append("path")
-        .attr("fill", "none")
+        .datum(datum.filter(line.defined()))
+        .attr("class", "line-void")
+        .attr("d", line);
+
+      // Area underneath the line
+      g.append("path")
+        .datum(datum)
+        .attr("class", "line-area")
+        .attr("d", area);
+
+      // Sparkline.
+      g.append("path")
+        .datum(datum)
         .attr("class", "line-timeseries")
         .attr("d", line);
     },
+
     injectForecast() {
       const line = d3
         .line()
@@ -223,6 +242,7 @@ export default Vue.extend({
         .attr("class", "line-forecast")
         .attr("d", line);
     },
+
     injectConfidence(): boolean {
       const area = d3
         .area<[number, number, number]>()
@@ -246,24 +266,36 @@ export default Vue.extend({
 
       return true;
     },
+
     injectTimeRangeHighligh() {
       if (!this.highlightRange || this.highlightRange.length !== 2) {
         return;
       }
 
-      this.svg
-        .append("rect")
+      const g = this.svg.append("g").attr("class", "area-scoring");
+      const x0 = this.xScale(this.highlightRange[0]);
+      const x1 = this.xScale(this.highlightRange[1]);
+      const translate = `translate(${this.margin.left}, 0)`;
+
+      // Line to demarcate the scoring test.
+      g.append("line")
+        .attr("class", "line-score")
+        .attr("transform", translate)
+        .attr("x1", x0)
+        .attr("x2", x0)
+        .attr("y1", 0)
+        .attr("y2", this.height);
+
+      // area to show the scoring test
+      g.append("rect")
         .attr("class", "area-score")
-        .attr("transform", `translate(${this.margin.left}, 0)`)
-        .attr("x", this.xScale(this.highlightRange[0]))
+        .attr("transform", translate)
+        .attr("x", x0)
         .attr("y", 0)
-        .attr(
-          "width",
-          this.xScale(this.highlightRange[1]) -
-            this.xScale(this.highlightRange[0])
-        )
+        .attr("width", x1 - x0)
         .attr("height", this.height);
     },
+
     draw() {
       if (_.isEmpty(this.timeseries)) {
         return;
@@ -281,11 +313,9 @@ export default Vue.extend({
 
       this.clearSVG();
       this.injectAxes();
-      if (this.forecast) {
-        this.injectTimeRangeHighligh();
-      }
       this.injectTimeseries();
       if (this.forecast) {
+        this.injectTimeRangeHighligh();
         this.injectConfidence();
         this.injectForecast();
       }
@@ -310,21 +340,39 @@ export default Vue.extend({
 }
 
 .line-timeseries {
-  stroke: rgb(200, 200, 200);
+  fill: none;
+  stroke: var(--gray-700);
+}
+
+.line-area {
+  fill: var(--gray-400);
+  stroke: none;
+}
+
+.line-void {
+  fill: none;
+  stroke: var(--gray-500);
+  stroke-dasharray: 2 5;
 }
 
 .line-forecast {
-  stroke: rgb(2, 117, 216);
+  stroke: var(--blue);
 }
 
 .line-confidence {
-  fill: rgb(2, 117, 216);
+  fill: var(--blue);
   opacity: 0.3;
 }
 
+.line-score {
+  stroke: var(--yellow);
+  stroke-width: 2;
+  opacity: 0.5;
+}
+
 .area-score {
-  fill: rgb(200, 200, 200);
-  opacity: 0.2;
+  fill: var(--yellow);
+  opacity: 0.04;
   stroke: none;
 }
 
