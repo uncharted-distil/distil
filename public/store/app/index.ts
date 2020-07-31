@@ -2,6 +2,7 @@ import { DatasetPendingRequestType } from "../dataset/index";
 
 export interface AppState {
   versionNumber: string;
+  helpURL: string;
   versionTimestamp: string;
   problemDataset: string;
   problemTarget: string;
@@ -20,6 +21,7 @@ export const state: AppState = {
   versionTimestamp: "unknown",
   problemDataset: "unknown",
   problemTarget: "unknown",
+  helpURL: "",
   problemMetrics: [],
   statusPanelState: {
     contentType: undefined,

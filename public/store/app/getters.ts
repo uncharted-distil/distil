@@ -5,6 +5,10 @@ export const getters = {
     return state.versionNumber;
   },
 
+  getHelpURL(state: AppState): string {
+    return state.helpURL;
+  },
+
   getVersionTimestamp(state: AppState): string {
     return state.versionTimestamp;
   },

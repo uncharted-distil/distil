@@ -58,6 +58,7 @@ type Config struct {
 	GeocodingOutputDataRelative        string  `env:"GEOCODING_OUTPUT_DATA" envDefault:"geocoded/tables/learningData.csv"`
 	GeocodingOutputSchemaRelative      string  `env:"GEOCODING_OUTPUT_SCHEMA" envDefault:"geocoded/datasetDoc.json"`
 	GeocodingEnabled                   bool    `env:"GEOCODING_ENABLED" envDefault:"false"`
+	HelpURL                            string  `env:"HELP_URL" envDefault:"https://d3m.uncharted.software/"`
 	ImportErrorThreshold               float64 `env:"IMPORT_ERROR_THRESHOLD" envDefault:"0.1"`
 	IngestHardFail                     bool    `env:"INGEST_HARD_FAIL" envDefault:"false"`
 	IngestOverwrite                    bool    `env:"INGEST_OVERWRITE" envDefault:"false"`

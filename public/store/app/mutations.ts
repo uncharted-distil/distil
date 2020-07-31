@@ -6,6 +6,10 @@ export const mutations = {
     state.versionNumber = versionNumber;
   },
 
+  setHelpURL(state: AppState, helpURL: string) {
+    state.helpURL = helpURL;
+  },
+
   setVersionTimestamp(state: AppState, versionTimestamp: string) {
     state.versionTimestamp = versionTimestamp;
   },

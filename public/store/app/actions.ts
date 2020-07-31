@@ -88,6 +88,7 @@ export const actions = {
     try {
       const response = await axios.get(`/distil/config`);
       mutations.setVersionNumber(context, response.data.version);
+      mutations.setHelpURL(context, response.data.help);
       mutations.setVersionTimestamp(context, response.data.timestamp);
       mutations.setProblemDataset(context, response.data.dataset);
       mutations.setProblemTarget(context, response.data.target);
