@@ -47,6 +47,10 @@ func Sample(originalSchemaFile string, schemaFile string, dataset string, config
 		return "", false, 0, errors.Wrap(err, "unable to parse complete csv dataset")
 	}
 
+	if len(csvData) <= config.SampleRowLimit {
+		return schemaFile, false, len(csvData), nil
+	}
+
 	sampledData, err := compute.SampleDataset(csvData, config.SampleRowLimit, true)
 	if err != nil {
 		return "", false, 0, err
