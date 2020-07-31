@@ -273,13 +273,29 @@ export default Vue.extend({
         return false;
       }
 
+      const datum = this.timeseries.map(x => [x.time, x.value]);
+
+      // Define a filter for non number values.
+      const filterMissingData = d => _.isFinite(d[1]);
+
+      // the Sparkline
       const line = d3
         .line()
-        .defined(d => _.isFinite(d[1])) // Define a filter for non number values.
+        .defined(filterMissingData)
         .x(d => this.xScale(d[0]))
         .y(d => this.yScale(d[1]))
         .curve(d3.curveLinear);
 
+      // the area underneath the Sparkline
+      const y0 = this.yScale(0);
+      const area = d3
+        .area()
+        .defined(filterMissingData)
+        .x(d => this.xScale(d[0]))
+        .y0(y0)
+        .y1(d => this.yScale(d[1]));
+
+      // Graph to use a container
       const g = this.svg
         .append("g")
         .attr(
@@ -287,13 +303,17 @@ export default Vue.extend({
           `translate(${this.margin.left}, ${this.margin.top})`
         );
 
-      const datum = this.timeseries.map(x => [x.time, x.value]);
-
       // Empty values line
       g.append("path")
         .datum(datum.filter(line.defined()))
         .attr("class", "sparkline-void")
         .attr("d", line);
+
+      // Area underneath the line
+      g.append("path")
+        .datum(datum)
+        .attr("class", "sparkline-area")
+        .attr("d", area);
 
       // Sparkline.
       g.append("path")
@@ -516,8 +536,13 @@ svg .sparkline-axis-title {
 
 .sparkline-timeseries {
   fill: none;
-  stroke: var(--gray-700); /* rgb(120, 120, 120); */
+  stroke: var(--gray-700);
   stroke-width: 1.5;
+}
+
+.sparkline-area {
+  fill: var(--gray-400);
+  stroke: none;
 }
 
 .sparkline-void {

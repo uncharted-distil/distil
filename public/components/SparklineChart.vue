@@ -12,6 +12,7 @@ import { TimeSeriesValue } from "../store/dataset/index";
 
 export default Vue.extend({
   name: "sparkline-chart",
+
   props: {
     margin: {
       type: Object as () => any,
@@ -44,12 +45,14 @@ export default Vue.extend({
       type: Boolean as () => boolean
     }
   },
+
   data() {
     return {
       xScale: null,
       yScale: null
     };
   },
+
   computed: {
     svg(): d3.Selection<SVGElement, {}, HTMLElement, any> {
       const $svg = this.$refs.svg as any;
@@ -115,15 +118,18 @@ export default Vue.extend({
       return this.forecast;
     }
   },
+
   mounted() {
     setTimeout(() => {
       this.draw();
     });
   },
+
   methods: {
     clearSVG() {
       this.svg.selectAll("*").remove();
     },
+
     injectAxes() {
       const minX = this.xAxisDateTime ? new Date(this.minX) : this.minX;
       const maxX = this.xAxisDateTime ? new Date(this.maxX) : this.maxX;
@@ -181,20 +187,35 @@ export default Vue.extend({
         .style("text-anchor", "middle")
         .text(this.yAxisTitle);
     },
+
     injectTimeseries() {
+      const datum = this.timeseries.map(x => [x.time, x.value]);
+
+      // Define a filter for non number values.
+      const filterMissingData = d => _.isFinite(d[1]);
+
+      // the Sparkline
       const line = d3
         .line()
-        .defined(d => _.isFinite(d[1])) // Define a filter for non number values.
+        .defined(filterMissingData)
         .x(d => this.xScale(d[0]))
         .y(d => this.yScale(d[1]))
         .curve(d3.curveLinear);
 
+      // the area underneath the Sparkline
+      const y0 = this.yScale(this.minY);
+      const area = d3
+        .area()
+        .defined(filterMissingData)
+        .x(d => this.xScale(d[0]))
+        .y0(y0)
+        .y1(d => this.yScale(d[1]));
+
+      // Graph to use a container
       const g = this.svg
         .append("g")
         .attr("transform", `translate(${this.margin.left}, 0)`)
         .attr("class", "line-chart");
-
-      const datum = this.timeseries.map(x => [x.time, x.value]);
 
       // Empty values line
       g.append("path")
@@ -202,12 +223,19 @@ export default Vue.extend({
         .attr("class", "line-void")
         .attr("d", line);
 
+      // Area underneath the line
+      g.append("path")
+        .datum(datum)
+        .attr("class", "line-area")
+        .attr("d", area);
+
       // Sparkline.
       g.append("path")
         .datum(datum)
         .attr("class", "line-timeseries")
         .attr("d", line);
     },
+
     injectForecast() {
       const line = d3
         .line()
@@ -231,6 +259,7 @@ export default Vue.extend({
         .attr("class", "line-forecast")
         .attr("d", line);
     },
+
     injectConfidence(): boolean {
       const area = d3
         .area<[number, number, number]>()
@@ -254,6 +283,7 @@ export default Vue.extend({
 
       return true;
     },
+
     injectTimeRangeHighligh() {
       if (!this.highlightRange || this.highlightRange.length !== 2) {
         return;
@@ -272,6 +302,7 @@ export default Vue.extend({
         )
         .attr("height", this.height);
     },
+
     draw() {
       if (_.isEmpty(this.timeseries)) {
         return;
@@ -319,8 +350,12 @@ export default Vue.extend({
 
 .line-timeseries {
   fill: none;
-  stroke: var(--gray-700); /* rgb(120, 120, 120); */
-  stroke-width: 1.5;
+  stroke: var(--gray-700);
+}
+
+.line-area {
+  fill: var(--gray-400);
+  stroke: none;
 }
 
 .line-void {
