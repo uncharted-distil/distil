@@ -40,8 +40,7 @@
         :predicted-summary="group.predictedSummary"
         :residuals-summary="group.residualsSummary"
         :correctness-summary="group.correctnessSummary"
-      >
-      </result-group>
+      />
     </div>
   </div>
 </template>
@@ -66,7 +65,11 @@ import {
   actions as requestActions
 } from "../store/requests/module";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getSolutionRequestIndex, getSolutionById } from "../util/solutions";
+import {
+  getSolutionRequestIndex,
+  getSolutionById,
+  getSolutionIndex
+} from "../util/solutions";
 import {
   getSolutionResultSummary,
   getResidualSummary,
@@ -99,14 +102,8 @@ export default Vue.extend({
 
   props: {
     // display results in regression vs. classification mode
-    showResiduals: {
-      type: Boolean as () => boolean,
-      default: () => false
-    },
-    singleSolution: {
-      type: Boolean as () => boolean,
-      default: () => false
-    }
+    showResiduals: { type: Boolean, default: false },
+    singleSolution: { type: Boolean, default: false }
   },
 
   computed: {
@@ -126,8 +123,8 @@ export default Vue.extend({
       let solutionRequests = requestGetters.getRelevantSolutionRequests(
         this.$store
       );
-      let solutions = requestGetters.getRelevantSolutions(this.$store);
 
+      let solutions = [];
       if (this.singleSolution) {
         const solutionId = routeGetters.getRouteSolutionId(this.$store);
         const solution = getSolutionById(
@@ -142,11 +139,14 @@ export default Vue.extend({
             )
           ];
         }
+      } else {
+        // multiple solutions
+        solutions = requestGetters.getRelevantSolutions(this.$store);
       }
 
       const requestsMap = _.keyBy(solutionRequests, s => s.requestId);
 
-      // create a summary group for each search result
+      // Create a summary group for each search result.
       const summaryGroups: SummaryGroup[] = solutions.map(solution => {
         const solutionId = solution.solutionId;
         const requestId = solution.requestId;
@@ -171,14 +171,17 @@ export default Vue.extend({
         };
       });
 
-      // group the requests by their request ID and return them as a RequestGroup array
-      const summariesByRequestId = _.groupBy(summaryGroups, s => s.requestId);
+      // Group the requests by their request ID.
+      const summariesByRequestId = _.groupBy(summaryGroups, "requestId");
+
+      // Map them as a RequestGroup array sorted by DESC requestIndex,
+      // with their groups sorted by Scores DESC.
       return _.map(summariesByRequestId, (groups, requestId) => ({
-        requestId: requestId,
-        requestIndex: this.getRequestIndex(requestId),
+        groups: groups.sort(this.sortByScoreDESC),
         progress: requestsMap[requestId].progress,
-        groups: groups
-      }));
+        requestId: requestId,
+        requestIndex: this.getRequestIndex(requestId)
+      })).sort(this.sortByRequestIndexDESC);
     }
   },
 
@@ -206,6 +209,22 @@ export default Vue.extend({
 
     getRequestIndex(requestId: string) {
       return getSolutionRequestIndex(requestId);
+    },
+
+    /* Sort SummaryGroup DESC by Scores, or by SolutionIndex. */
+    sortByScoreDESC(a, b) {
+      const aScore = a.scores[0].value;
+      const bScore = b.scores[0].value;
+      if (aScore !== bScore) {
+        return bScore - aScore;
+      }
+
+      return getSolutionIndex(b.solutionId) - getSolutionIndex(b.solutionId);
+    },
+
+    /* Sort RequestGroup DESC by RequestIndex. */
+    sortByRequestIndexDESC(a, b) {
+      return b.requestIndex - a.requestIndex;
     }
   }
 });
@@ -213,8 +232,8 @@ export default Vue.extend({
 
 <style>
 .request-group-header {
-  border-bottom: 1px solid #e0e0e0;
-  color: rgba(0, 0, 0, 0.87);
+  border-bottom: 1px solid var(--gray-400);
+  color: var(--color-text-base);
   font-weight: 600;
   padding: 0.25rem 0 0.25rem;
 }
