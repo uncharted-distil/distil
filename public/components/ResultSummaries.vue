@@ -277,6 +277,7 @@ export default Vue.extend({
 .result-panel {
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
 .result-target-variable .variable-facets-item {
