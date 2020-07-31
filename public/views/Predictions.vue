@@ -128,6 +128,7 @@ export default Vue.extend({
   padding: 0.3rem;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-height: 1.875rem;
 }
 
 .variable-summaries {

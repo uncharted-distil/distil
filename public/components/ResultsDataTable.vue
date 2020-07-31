@@ -97,7 +97,6 @@
 
       <template v-slot:cell()="data">
         <div
-          v-if="data.value.value.length > 0"
           :title="data.value.value"
           :style="cellColor(data.value.weight, data)"
         >
