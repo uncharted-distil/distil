@@ -229,6 +229,14 @@ const REAL_COLLECTION_SUGGESTIONS = [
   GEOBOUNDS_TYPE
 ];
 
+const LATITUDE_GROUPING_TYPES = [LATITUDE_TYPE, REAL_TYPE];
+
+const LONGITUDE_GROUPING_TYPES = [LONGITUDE_TYPE, REAL_TYPE];
+
+const TIME_GROUPING_TYPES = [INTEGER_TYPE, DATE_TIME_TYPE, TIMESTAMP_TYPE];
+
+const VALUE_GROUPING_TYPES = [INTEGER_TYPE, REAL_TYPE];
+
 export const BASIC_SUGGESTIONS = [
   INTEGER_TYPE,
   REAL_TYPE,
@@ -444,6 +452,22 @@ export function hasComputedVarPrefix(varName: string): boolean {
 
 export function isClusterType(type: string): boolean {
   return CLUSTER_TYPES.indexOf(type) !== -1;
+}
+
+export function isLatitudeGroupType(type: string): boolean {
+  return LATITUDE_GROUPING_TYPES.indexOf(type) !== -1;
+}
+
+export function isLongitudeGroupType(type: string): boolean {
+  return LONGITUDE_GROUPING_TYPES.indexOf(type) !== -1;
+}
+
+export function isTimeGroupType(type: string): boolean {
+  return TIME_GROUPING_TYPES.indexOf(type) !== -1;
+}
+
+export function isValueGroupType(type: string): boolean {
+  return VALUE_GROUPING_TYPES.indexOf(type) !== -1;
 }
 
 export function addClusterPrefix(varName: string): string {

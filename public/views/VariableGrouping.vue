@@ -1,5 +1,31 @@
 <template>
   <div class="container-fluid d-flex flex-column h-100">
+    <b-modal
+      v-model="showGeoModal"
+      title="Missing Geocoordinate Features"
+      ok-only
+      hide-header-close
+      @ok="onClose"
+    >
+      <p>Not enough columns to create a Geocoordinate feature.</p>
+      <p>
+        Please check the dataset to see if additional columns can be set to a
+        Latitude, Longitude or Decimal Type.
+      </p>
+    </b-modal>
+    <b-modal
+      v-model="showTimeModal"
+      title="Missing Time Series Features"
+      ok-only
+      hide-header-close
+      @ok="onClose"
+    >
+      <p>Not enough columns to create a Time feature.</p>
+      <p>
+        Please check the dataset to see if additional columns can be set to a
+        Integer, Date/Time or Decimal Type.
+      </p>
+    </b-modal>
     <b-row class="flex-0-nav"></b-row>
 
     <b-row class="flex-shrink-0 align-items-center bg-white">
@@ -18,8 +44,9 @@
             To predict a value over time <strong>(forecasting)</strong> your
             target should be a <strong>timeseries.</strong><br />
             Select a <strong>time</strong> column, a
-            <strong>value</strong> column and optionally add one or more
-            <strong>series id</strong> column(s) to create multiple timeseries.
+            <strong>value</strong> column and if available, optionally add one
+            or more <strong>series id</strong> column(s) to create multiple
+            timeseries.
           </p>
         </b-col>
         <b-col v-if="isGeocoordinate" cols="12">
@@ -33,35 +60,43 @@
       </b-row>
       <b-row>
         <b-col cols="6" v-if="isTimeseries">
-          <b-row
-            class="mt-1 mb-1"
-            v-for="(idCol, index) in idCols"
-            :key="idCol.value"
-          >
-            <b-col cols="5">
-              <template v-if="index === 0">
-                <b>Series ID Column(s):</b>
-              </template>
-            </b-col>
+          <template v-if="idCols.length > 0">
+            <b-row
+              class="mt-1 mb-1"
+              v-for="(idCol, index) in idCols"
+              :key="idCol.value"
+            >
+              <b-col cols="5">
+                <template
+                  v-if="index === 0 && idOptions(idCol.value).length !== 0"
+                >
+                  <b>Series ID Column(s):</b>
+                </template>
+              </b-col>
 
-            <b-col cols="7" class="d-flex align-content-center">
-              <b-form-select
-                class="mr-auto"
-                v-model="idCol.value"
-                :options="idOptions(idCol.value)"
-                @input="onIdChange"
-              />
-              <b-button
-                class="ml-1"
-                variant="outline-danger"
-                v-if="idCol.value"
-                title="Clear Selection"
-                @click="removeIdCol(idCol.value)"
+              <b-col
+                cols="7"
+                class="d-flex align-content-center"
+                v-if="idOptions(idCol.value).length !== 0"
               >
-                <i class="fa fa-times-circle"></i>
-              </b-button>
-            </b-col>
-          </b-row>
+                <b-form-select
+                  class="mr-auto"
+                  v-model="idCol.value"
+                  :options="idOptions(idCol.value)"
+                  @input="onIdChange"
+                />
+                <b-button
+                  class="ml-1"
+                  variant="outline-danger"
+                  v-if="idCol.value"
+                  title="Clear Selection"
+                  @click="removeIdCol(idCol.value)"
+                >
+                  <i class="fa fa-times-circle"></i>
+                </b-button>
+              </b-col>
+            </b-row>
+          </template>
 
           <b-row class="mt-1 mb-1">
             <b-col cols="5">
@@ -200,9 +235,18 @@ import {
   GEOCOORDINATE_TYPE,
   TIMESERIES_TYPE,
   LATITUDE_TYPE,
-  LONGITUDE_TYPE
+  LONGITUDE_TYPE,
+  isLongitudeGroupType,
+  isTimeGroupType,
+  isLatitudeGroupType,
+  isValueGroupType
 } from "../util/types";
-import { filterSummariesByDataset, getComposedVariableKey } from "../util/data";
+import {
+  filterSummariesByDataset,
+  getComposedVariableKey,
+  hasTimeseriesFeatures,
+  hasGeoordinateFeatures
+} from "../util/data";
 import { getFacetByType } from "../util/facets";
 import { SELECT_TARGET_ROUTE } from "../store/route/index";
 import { createRouteEntry, overlayRouteEntry } from "../util/routes";
@@ -231,7 +275,8 @@ export default Vue.extend({
       hideClusterCol: true,
       other: [],
       isPending: false,
-      percentComplete: 100
+      percentComplete: 100,
+      isUpdating: false
     };
   },
   computed: {
@@ -254,86 +299,63 @@ export default Vue.extend({
       return this.groupingType === TIMESERIES_TYPE;
     },
     xColOptions(): Object[] {
-      if (this.isGeocoordinate) {
-        const X_COL_TYPES = {
-          [LONGITUDE_TYPE]: true,
-          [REAL_TYPE]: true
-        };
-        const def = [
-          {
-            value: null,
-            text: `Choose ${LONGITUDE_TYPE} column`,
-            disabled: true
-          }
-        ];
-        const suggestions = this.variables
-          .filter(v => X_COL_TYPES[v.colType])
-          .filter(v => !this.isIDCol(v.colName))
-          .filter(v => !this.isYCol(v.colName))
-          .map(v => {
-            return { value: v.colName, text: v.colDisplayName };
-          });
-        return [].concat(def, suggestions);
-      } else if (this.isTimeseries) {
-        const X_COL_TYPES = {
-          [INTEGER_TYPE]: true,
-          [DATE_TIME_TYPE]: true,
-          [TIMESTAMP_TYPE]: true
-        };
-        const def = [{ value: null, text: "Choose column", disabled: true }];
-
-        const suggestions = this.variables
-          .filter(v => X_COL_TYPES[v.colType])
-          .filter(v => !this.isIDCol(v.colName))
-          .filter(v => !this.isYCol(v.colName))
-          .map(v => {
-            return { value: v.colName, text: v.colDisplayName };
-          });
-
-        return [].concat(def, suggestions);
+      if (!this.isGeocoordinate && !this.isTimeseries) {
+        return [];
       }
+
+      const def = {
+        value: null,
+        text: "",
+        disabled: true
+      };
+      let xFilterFunction = null;
+
+      if (this.isGeocoordinate) {
+        def.text = `Choose ${LONGITUDE_TYPE} column`;
+        xFilterFunction = isLongitudeGroupType;
+      } else if (this.isTimeseries) {
+        def.text = "Choose value column";
+        xFilterFunction = isTimeGroupType;
+      }
+
+      const suggestions = this.variables
+        .filter(v => xFilterFunction(v.colType))
+        .filter(v => !this.isIDCol(v.colName))
+        .filter(v => !this.isYCol(v.colName))
+        .map(v => {
+          return { value: v.colName, text: v.colDisplayName };
+        });
+      return [].concat([def], suggestions);
     },
 
     yColOptions(): Object[] {
-      if (this.isGeocoordinate) {
-        const Y_COL_TYPES = {
-          [LATITUDE_TYPE]: true,
-          [REAL_TYPE]: true
-        };
-        const def = [
-          {
-            value: null,
-            text: `Choose ${LATITUDE_TYPE} column`,
-            disabled: true
-          }
-        ];
-
-        const suggestions = this.variables
-          .filter(v => Y_COL_TYPES[v.colType])
-          .filter(v => !this.isIDCol(v.colName))
-          .filter(v => !this.isXCol(v.colName))
-          .map(v => {
-            return { value: v.colName, text: v.colDisplayName };
-          });
-
-        return [].concat(def, suggestions);
-      } else if (this.isTimeseries) {
-        const Y_COL_TYPES = {
-          [INTEGER_TYPE]: true,
-          [REAL_TYPE]: true
-        };
-        const def = [{ value: null, text: "Choose column", disabled: true }];
-
-        const suggestions = this.variables
-          .filter(v => Y_COL_TYPES[v.colType])
-          .filter(v => !this.isIDCol(v.colName))
-          .filter(v => !this.isXCol(v.colName))
-          .map(v => {
-            return { value: v.colName, text: v.colDisplayName };
-          });
-
-        return [].concat(def, suggestions);
+      if (!this.isGeocoordinate && !this.isTimeseries) {
+        return [];
       }
+
+      const def = {
+        value: null,
+        text: "",
+        disabled: true
+      };
+      let yFilterFunction = null;
+
+      if (this.isGeocoordinate) {
+        def.text = `Choose ${LATITUDE_TYPE} column`;
+        yFilterFunction = isLatitudeGroupType;
+      } else if (this.isTimeseries) {
+        def.text = "Choose value column";
+        yFilterFunction = isValueGroupType;
+      }
+
+      const suggestions = this.variables
+        .filter(v => yFilterFunction(v.colType))
+        .filter(v => !this.isIDCol(v.colName))
+        .filter(v => !this.isXCol(v.colName))
+        .map(v => {
+          return { value: v.colName, text: v.colDisplayName };
+        });
+      return [].concat(def, suggestions);
     },
     isReady(): boolean {
       const hasBasicFields =
@@ -362,6 +384,32 @@ export default Vue.extend({
         v => v.key.indexOf(this.xCol) > -1 && v.key.indexOf(this.yCol) > -1
       )[0];
       return pv;
+    },
+    showGeoModal: {
+      get(): boolean {
+        return (
+          this.variables &&
+          this.isGeocoordinate &&
+          !this.isUpdating &&
+          !hasGeoordinateFeatures(this.variables)
+        );
+      },
+      set: () => {
+        console.info("insufficient geocoordinate variables");
+      }
+    },
+    showTimeModal: {
+      get(): boolean {
+        return (
+          this.variables &&
+          this.isTimeseries &&
+          !this.isUpdating &&
+          !hasTimeseriesFeatures(this.variables)
+        );
+      },
+      set: () => {
+        console.info("insufficient timeseries variables");
+      }
     }
   },
 
@@ -384,7 +432,6 @@ export default Vue.extend({
         [ORDINAL_TYPE]: true,
         [CATEGORICAL_TYPE]: true
       };
-      const def = [{ value: null, text: "Choose ID", disabled: true }];
       const suggestions = this.variables
         .filter(v => ID_COL_TYPES[v.colType])
         .filter(v => v.colName === idCol || !this.isIDCol(v.colName))
@@ -392,7 +439,11 @@ export default Vue.extend({
           return { value: v.colName, text: v.colDisplayName };
         });
 
-      return [].concat(def, suggestions);
+      if (suggestions.length > 0) {
+        const def = [{ value: null, text: "Choose ID", disabled: true }];
+        return [].concat(def, suggestions);
+      }
+      return [];
     },
     onIdChange(arg) {
       const values = this.idCols.map(c => c.value).filter(v => v);
@@ -442,6 +493,7 @@ export default Vue.extend({
     },
     async submitGrouping(gotoTarget: boolean) {
       await this.clearGrouping();
+      this.isUpdating = true;
       // Create a list of id values, filtering out the empty entry
       const ids = this.idCols.map(c => c.value).filter(v => v);
 
@@ -484,6 +536,8 @@ export default Vue.extend({
       if (gotoTarget) {
         this.gotoTargetSelection();
       }
+
+      this.isUpdating = false;
     },
     async onClose() {
       await this.clearGrouping();
