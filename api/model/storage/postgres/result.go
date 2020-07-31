@@ -122,14 +122,15 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 	}
 	fieldsMetadataMap := mapFields(fieldsMetadata)
 
-	// field map will use index + 1 since not in map will default to 0
+	// build the map of shap output -> explain index
 	fieldsWeight := weights[0]
 	fieldsMap := make(map[int]int)
 	fields := []string{"result_id"}
-	for dbFieldIndex, dbField := range fieldsDatabase {
+	for _, dbField := range fieldsDatabase {
 		for i := 0; i < len(fieldsWeight); i++ {
 			if fieldsMetadataMap[dbField] != nil && fieldsMetadataMap[dbField].Name == fieldsWeight[i] {
-				fieldsMap[dbFieldIndex] = i + 1
+				// before we append the field, the length will give us the index for the field we will append
+				fieldsMap[i] = len(fields)
 				fields = append(fields, dbField)
 			}
 		}
@@ -137,18 +138,17 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 
 	values := make([][]interface{}, 0)
 	for _, row := range weights[1:] {
-		// parse into floats for storage (and add solution id)
+		// parse into floats for storage (and add result uri)
 		parsedWeights := make([]interface{}, len(fields))
 		parsedWeights[0] = resultURI
-		count := 1
 		for i := 0; i < len(row); i++ {
-			if fieldsMap[i] > 0 {
-				w, err := strconv.ParseFloat(row[fieldsMap[i]-1], 64)
+			weightIndex, ok := fieldsMap[i]
+			if ok {
+				w, err := strconv.ParseFloat(row[i], 64)
 				if err != nil {
 					return errors.Wrap(err, "failed to parse feature weight")
 				}
-				parsedWeights[count] = w
-				count = count + 1
+				parsedWeights[weightIndex] = w
 			}
 		}
 
