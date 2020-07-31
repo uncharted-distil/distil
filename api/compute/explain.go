@@ -54,11 +54,12 @@ var (
 			},
 		},
 		"fe0841b7-6e70-4bc3-a56c-0670a95ebc6a": {
-			{
-				primitiveID:     "fe0841b7-6e70-4bc3-a56c-0670a95ebc6a",
-				produceFunction: "produce_shap_values",
-				explainableType: explainableTypeStep,
-			},
+			// This is currently failing for larger datasets for 2020-07 eval
+			// {
+			// 	primitiveID:     "fe0841b7-6e70-4bc3-a56c-0670a95ebc6a",
+			// 	produceFunction: "produce_shap_values",
+			// 	explainableType: explainableTypeStep,
+			// },
 			{
 				primitiveID:     "fe0841b7-6e70-4bc3-a56c-0670a95ebc6a",
 				produceFunction: "produce_feature_importances",
