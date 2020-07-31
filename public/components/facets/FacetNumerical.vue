@@ -106,7 +106,7 @@ export default Vue.extend({
       const values = [];
       if (hasBaseline(summary)) {
         const buckets = summary.baseline.buckets;
-        const bucketSize = buckets[1].key
+        const bucketSize = buckets[1]?.key
           ? parseFloat(buckets[1].key) - parseFloat(buckets[0].key)
           : 0;
         for (let i = 0, n = buckets.length; i < n; ++i) {
