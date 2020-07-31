@@ -212,7 +212,10 @@ export default Vue.extend({
     },
 
     /* Sort SummaryGroup DESC by Scores, or by SolutionIndex. */
-    sortByScoreDESC(a, b) {
+    sortByScoreDESC(a: SummaryGroup, b: SummaryGroup): number {
+      if (_.isEmpty(a.scores) || _.isEmpty(b.scores)) {
+        return 0;
+      }
       const aScore = a.scores[0].value;
       const bScore = b.scores[0].value;
       if (aScore !== bScore) {
