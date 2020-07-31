@@ -334,18 +334,28 @@ export default Vue.extend({
         return false;
       }
 
-      this.svg
-        .append("rect")
-        .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`)
+      const g = this.svg.append("g").attr("class", "area-scoring");
+      const x0 = this.xScale(this.highlightRange[0]);
+      const x1 = this.xScale(this.highlightRange[1]);
+      const translate = `translate(${this.margin.left}, ${this.margin.top})`;
+
+      // Line to demarcate the scoring test.
+      g.append("line")
+        .attr("class", "sparkline-line-score")
+        .attr("transform", translate)
+        .attr("x1", x0)
+        .attr("x2", x0)
+        .attr("y1", 0)
+        .attr("y2", this.height);
+
+      // area to show the scoring test
+      g.append("rect")
         .attr("class", "sparkline-area-score")
-        .attr("x", this.xScale(this.highlightRange[0]))
+        .attr("transform", translate)
+        .attr("x", x0)
         .attr("y", 0)
-        .attr(
-          "width",
-          this.xScale(this.highlightRange[1]) -
-            this.xScale(this.highlightRange[0])
-        )
-        .attr("height", this.height());
+        .attr("width", x1 - x0)
+        .attr("height", this.height);
 
       return true;
     },
@@ -498,8 +508,8 @@ export default Vue.extend({
 
       this.clearSVG();
       this.computeLayout();
-      this.injectHighlightRegion();
       this.injectSparkline();
+      this.injectHighlightRegion();
       this.injectPrediction();
       this.injectAxis();
 
@@ -562,9 +572,15 @@ svg .sparkline-axis-title {
   stroke: none;
 }
 
+.sparkline-line-score {
+  stroke: var(--yellow);
+  stroke-width: 2;
+  opacity: 0.5;
+}
+
 .sparkline-area-score {
-  fill: var(--gray-500); /* rgb(200, 200, 200); */
-  opacity: 0.3;
+  fill: var(--yellow);
+  opacity: 0.04;
   stroke: none;
 }
 </style>

@@ -17,17 +17,17 @@
       :visible="zoomSparkline"
       @hide="hideModal"
     >
-      <div v-if="forecast">
-        <div class="sparkline-legend">
-          <div class="sparkline-legend-historical"></div>
-          <div class="sparkline-legend-label">Historical</div>
-          <div class="sparkline-legend-predicted"></div>
-          <div class="sparkline-legend-label">Predicted</div>
-          <div class="sparkline-legend-variability"></div>
-          <div class="sparkline-legend-label">Variability</div>
-          <div class="sparkline-legend-scoring"></div>
-          <div class="sparkline-legend-label">Scoring</div>
-        </div>
+      <div v-if="forecast" class="sparkline-legend">
+        <div class="sparkline-legend-historical"></div>
+        <div class="sparkline-legend-label">Historical</div>
+        <div class="sparkline-legend-missing"></div>
+        <div class="sparkline-legend-label">Missing</div>
+        <div class="sparkline-legend-predicted"></div>
+        <div class="sparkline-legend-label">Predicted</div>
+        <div class="sparkline-legend-variability"></div>
+        <div class="sparkline-legend-label">Variability</div>
+        <div class="sparkline-legend-scoring"></div>
+        <div class="sparkline-legend-label">Scoring</div>
       </div>
       <sparkline-chart
         v-if="zoomSparkline"
@@ -323,20 +323,20 @@ export default Vue.extend({
 }
 
 .sparkline-legend-historical {
-  background: rgb(200, 200, 200);
+  background: var(--gray-700);
   width: 16px;
   height: 2px;
 }
 
 .sparkline-legend-predicted {
-  background: rgb(2, 117, 216);
+  background: var(--blue);
   width: 16px;
   height: 2px;
   margin-left: 14px;
 }
 
 .sparkline-legend-variability {
-  background: rgb(2, 117, 216);
+  background: var(--blue);
   opacity: 0.3;
   width: 12px;
   height: 12px;
@@ -344,10 +344,18 @@ export default Vue.extend({
 }
 
 .sparkline-legend-scoring {
-  background: rgb(200, 200, 200);
-  opacity: 0.2;
+  background: var(--yellow);
+  opacity: 0.5;
   width: 12px;
   height: 12px;
+  margin-left: 14px;
+}
+
+.sparkline-legend-missing {
+  border-color: var(--gray-500);
+  border-style: dotted;
+  border-width: 0 0 2px 0;
+  width: 16px;
   margin-left: 14px;
 }
 </style>

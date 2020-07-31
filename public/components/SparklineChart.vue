@@ -10,40 +10,23 @@ import _ from "lodash";
 import Vue from "vue";
 import { TimeSeriesValue } from "../store/dataset/index";
 
+const MARGIN = { top: 24, right: 48, bottom: 16, left: 48 };
+
 export default Vue.extend({
   name: "sparkline-chart",
 
   props: {
     margin: {
       type: Object as () => any,
-      default: () => ({
-        top: 24,
-        right: 48,
-        bottom: 16,
-        left: 48
-      })
+      default: () => MARGIN
     },
-    timeseries: {
-      type: Array as () => TimeSeriesValue[]
-    },
-    forecast: {
-      type: Array as () => TimeSeriesValue[]
-    },
-    highlightRange: {
-      type: Array as () => number[]
-    },
-    xAxisTitle: {
-      type: String as () => string
-    },
-    yAxisTitle: {
-      type: String as () => string
-    },
-    xAxisDateTime: {
-      type: Boolean as () => boolean
-    },
-    joinForecast: {
-      type: Boolean as () => boolean
-    }
+    timeseries: Array as () => TimeSeriesValue[],
+    forecast: Array as () => TimeSeriesValue[],
+    highlightRange: Array as () => number[],
+    xAxisTitle: String,
+    yAxisTitle: String,
+    xAxisDateTime: Boolean,
+    joinForecast: Boolean
   },
 
   data() {
@@ -289,17 +272,27 @@ export default Vue.extend({
         return;
       }
 
-      this.svg
-        .append("rect")
+      const g = this.svg.append("g").attr("class", "area-scoring");
+      const x0 = this.xScale(this.highlightRange[0]);
+      const x1 = this.xScale(this.highlightRange[1]);
+      const translate = `translate(${this.margin.left}, 0)`;
+
+      // Line to demarcate the scoring test.
+      g.append("line")
+        .attr("class", "line-score")
+        .attr("transform", translate)
+        .attr("x1", x0)
+        .attr("x2", x0)
+        .attr("y1", 0)
+        .attr("y2", this.height);
+
+      // area to show the scoring test
+      g.append("rect")
         .attr("class", "area-score")
-        .attr("transform", `translate(${this.margin.left}, 0)`)
-        .attr("x", this.xScale(this.highlightRange[0]))
+        .attr("transform", translate)
+        .attr("x", x0)
         .attr("y", 0)
-        .attr(
-          "width",
-          this.xScale(this.highlightRange[1]) -
-            this.xScale(this.highlightRange[0])
-        )
+        .attr("width", x1 - x0)
         .attr("height", this.height);
     },
 
@@ -320,10 +313,10 @@ export default Vue.extend({
 
       this.clearSVG();
       this.injectAxes();
+      this.injectTimeseries();
       if (this.forecast) {
         this.injectTimeRangeHighligh();
       }
-      this.injectTimeseries();
       if (this.forecast) {
         this.injectConfidence();
         this.injectForecast();
@@ -365,17 +358,23 @@ export default Vue.extend({
 }
 
 .line-forecast {
-  stroke: var(--blue); /* rgb(2, 117, 216); */
+  stroke: var(--blue);
 }
 
 .line-confidence {
-  fill: var(--blue); /* rgb(2, 117, 216); */
+  fill: var(--blue);
   opacity: 0.3;
 }
 
+.line-score {
+  stroke: var(--yellow);
+  stroke-width: 2;
+  opacity: 0.5;
+}
+
 .area-score {
-  fill: var(--gray-500); /* rgb(200, 200, 200); */
-  opacity: 0.2;
+  fill: var(--yellow);
+  opacity: 0.04;
   stroke: none;
 }
 
