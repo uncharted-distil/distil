@@ -316,8 +316,6 @@ export default Vue.extend({
       this.injectTimeseries();
       if (this.forecast) {
         this.injectTimeRangeHighligh();
-      }
-      if (this.forecast) {
         this.injectConfidence();
         this.injectForecast();
       }
