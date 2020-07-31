@@ -4,10 +4,10 @@
       Predictions for Dataset
     </p>
     <div v-for="summary in summaries" :key="summary.key">
-      <div v-bind:class="active(summary.key)" @click="onClick(summary.key)">
-        <div class="prediction-group-title">
-          <p>{{ summary.dataset }}</p>
-        </div>
+      <div :class="active(summary.key)" @click="onClick(summary.key)">
+        <header class="prediction-group-title" :title="summary.dataset">
+          {{ summary.dataset }}
+        </header>
         <div class="prediction-group-body">
           <!-- we need the new facets in here-->
           <component
@@ -22,13 +22,13 @@
             @facet-click="onCategoricalClick"
             @numerical-click="onNumericalClick"
             @range-change="onRangeChange"
-          >
-          </component>
+          />
         </div>
       </div>
     </div>
 
     <!-- TODO: For show right now.-->
+    <!-- 
     <b-button variant="primary" class="float-right mt-2">
       Export Predictions
     </b-button>
@@ -42,10 +42,15 @@
         </div>
       </div>
     </b-modal>
+    -->
   </div>
 </template>
 
 <script lang="ts">
+import Vue from "vue";
+import moment from "moment";
+import _ from "lodash";
+import { sum } from "d3";
 import FileUploader from "../components/FileUploader";
 import FacetNumerical from "../components/facets/FacetNumerical";
 import FacetCategorical from "../components/facets/FacetCategorical";
@@ -71,17 +76,13 @@ import {
   Highlight,
   RowSelection
 } from "../store/dataset/index";
-import Vue from "vue";
 import { Solution } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { getFacetByType } from "../util/facets";
 import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 import { getPredictionResultSummary, getIDFromKey } from "../util/summaries";
-import { sum } from "d3";
 import { getPredictionsById } from "../util/predictions";
 import { updateHighlight, clearHighlight } from "../util/highlights";
-import moment from "moment";
-import _ from "lodash";
 
 export default Vue.extend({
   name: "prediction-summaries",
@@ -120,9 +121,9 @@ export default Vue.extend({
 
   methods: {
     getFacetByType: getFacetByType,
+
     onClick(key: string) {
-      // Note that the key is of the form <requestId>:predicted and so needs to be
-      // parsed.
+      // Note that the key is of the form <requestId>:predicted and so needs to be parsed.
       const requestId = getIDFromKey(key);
       if (this.summaries && this.produceRequestId !== requestId) {
         appActions.logUserEvent(this.$store, {
@@ -264,7 +265,10 @@ export default Vue.extend({
 }
 
 .prediction-group-title {
-  vertical-align: middle;
+  color: var(--color-text-base);
+  overflow: hidden;
+  padding: 0.25rem 0 0.25rem;
+  text-overflow: ellipsis;
 }
 
 .prediction-group-body {
@@ -274,8 +278,8 @@ export default Vue.extend({
 .prediction-group-selected {
   padding: 9px;
   border-style: solid;
-  border-color: #007bff;
-  box-shadow: 0 0 10px #007bff;
+  border-color: var(--blue);
+  box-shadow: 0 0 10px var(--blue);
   border-width: 1px;
   border-radius: 2px;
   padding-bottom: 10px;
