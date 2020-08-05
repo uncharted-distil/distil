@@ -22,7 +22,6 @@ import (
 	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil/api/compute"
-	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -35,7 +34,7 @@ type TimeseriesForecastResult struct {
 }
 
 // TimeseriesForecastHandler returns timeseries data.
-func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, solutionCtor api.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, solutionCtor api.SolutionStorageCtor, trainTestSplitTimeSeries float64) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		truthDataset := pat.Param(r, "truthDataset")
@@ -115,12 +114,7 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 		}
 
 		// Recompute train/test split info for visualization purposes
-		config, err := env.LoadConfig()
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		split := compute.SplitTimeSeries(timeseries.Timeseries, config.TrainTestSplitTimeSeries)
+		split := compute.SplitTimeSeries(timeseries.Timeseries, trainTestSplitTimeSeries)
 
 		err = handleJSON(w, TimeseriesForecastResult{
 			Timeseries:        timeseries.Timeseries,
