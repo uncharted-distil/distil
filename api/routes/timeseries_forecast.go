@@ -120,7 +120,7 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 			handleError(w, err)
 			return
 		}
-		split := compute.SplitTimeSeries(timeseries.Timeseries, config.TrainTestSplit)
+		split := compute.SplitTimeSeries(timeseries.Timeseries, config.TrainTestSplitTimeSeries)
 
 		err = handleJSON(w, TimeseriesForecastResult{
 			Timeseries:        timeseries.Timeseries,
