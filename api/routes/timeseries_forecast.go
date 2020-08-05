@@ -22,6 +22,7 @@ import (
 	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil/api/compute"
+	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -114,7 +115,12 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 		}
 
 		// Recompute train/test split info for visualization purposes
-		split := compute.SplitTimeSeries(timeseries.Timeseries, compute.TimeSeriesTrainTestSplitThreshold)
+		config, err := env.LoadConfig()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		split := compute.SplitTimeSeries(timeseries.Timeseries, config.TrainTestSplit)
 
 		err = handleJSON(w, TimeseriesForecastResult{
 			Timeseries:        timeseries.Timeseries,
