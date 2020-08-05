@@ -14,7 +14,8 @@ import {
   AVAILABLE_TARGET_VARS_INSTANCE_PAGE,
   AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
   TRAINING_VARS_INSTANCE_PAGE,
-  RESULT_TRAINING_VARS_INSTANCE_PAGE
+  RESULT_TRAINING_VARS_INSTANCE_PAGE,
+  RESULT_SIZE_DEFAULT
 } from "../route/index";
 import { ModelQuality } from "../requests/index";
 import { decodeFilters, Filter, FilterParams } from "../../util/filters";
@@ -227,6 +228,11 @@ export const getters = {
 
   getRouteResultFilters(state: Route): string {
     return state.query.results ? (state.query.results as string) : null;
+  },
+
+  getRouteResultSize(state: Route, getters: any): number {
+    const size = state.query.size;
+    return size ? _.toInteger(size) : RESULT_SIZE_DEFAULT;
   },
 
   getRouteProduceRequestId(state: Route): string {

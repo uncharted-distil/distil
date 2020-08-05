@@ -421,11 +421,13 @@ export const actions = {
     const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
       store
     );
+    const size = routeGetters.getRouteResultSize(store);
 
     resultActions.fetchResultTableData(store, {
-      dataset: dataset,
-      solutionId: solutionId,
-      highlight: highlight
+      dataset,
+      solutionId,
+      highlight,
+      size
     });
     resultActions.fetchTargetSummary(store, {
       dataset: dataset,
