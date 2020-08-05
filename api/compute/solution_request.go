@@ -633,6 +633,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		if fittedSolutionID == "" {
 			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID,
 				errors.Errorf("no fitted solution ID for solution `%s` ('%s')", solutionID, initialSearchSolutionID))
+			return
 		}
 
 		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionScoringStatus)
