@@ -231,8 +231,8 @@ export const getters = {
   },
 
   getRouteResultSize(state: Route, getters: any): number {
-    const size = state.query.size;
-    return size ? _.toInteger(size) : RESULT_SIZE_DEFAULT;
+    const resultSize = state.query.resultSize;
+    return resultSize ? _.toInteger(resultSize) : RESULT_SIZE_DEFAULT;
   },
 
   getRouteProduceRequestId(state: Route): string {
