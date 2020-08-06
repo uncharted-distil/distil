@@ -131,6 +131,12 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 		filterParams := &api.FilterParams{
 			Size: rowCount,
 		}
+		filterParams.Merge(req.Filters)
+		filterParams, err = api.ExpandFilterParams(dataset, filterParams, false, meta)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 
 		results, err := data.FetchResults(dataset, storageName, predictResult.ResultURI, produceRequestID, filterParams, true)
 		if err != nil {
@@ -159,12 +165,14 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 		for _, row := range results.Values {
 			record := make([]string, len(row))
 			for i, v := range row {
-				record[i] = fmt.Sprintf("%v", v.Value)
-				err = wr.Write(record)
-				if err != nil {
-					handleError(w, err)
-					return
+				if v != nil {
+					record[i] = fmt.Sprintf("%v", v.Value)
 				}
+			}
+			err = wr.Write(record)
+			if err != nil {
+				handleError(w, err)
+				return
 			}
 		}
 		wr.Flush()
