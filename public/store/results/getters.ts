@@ -55,6 +55,12 @@ export const getters = {
     return getTableDataFields(state.includedResultTableData);
   },
 
+  getIncludedResultTableDataCount(state: ResultsState): number {
+    return state.includedResultTableData?.values
+      ? state.includedResultTableData.values.length
+      : 0;
+  },
+
   hasExcludedResultTableData(state: ResultsState): boolean {
     return !!state.excludedResultTableData;
   },
@@ -74,6 +80,12 @@ export const getters = {
     state: ResultsState
   ): Dictionary<TableColumn> {
     return getTableDataFields(state.excludedResultTableData);
+  },
+
+  getExcludedResultTableDataCount(state: ResultsState): number {
+    return state.excludedResultTableData?.values
+      ? state.excludedResultTableData.values.length
+      : 0;
   },
 
   // predicted
