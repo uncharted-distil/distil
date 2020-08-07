@@ -13,7 +13,10 @@
         <i class="fa fa-table"></i> <b>Dateset Name:</b>
         {{ dataset.name }}
       </a>
-      <a class="nav-link"><b>Features:</b> {{ dataset.variables.length }}</a>
+      <a class="nav-link"
+        ><b>Features:</b>
+        {{ filterVariablesByFeature(dataset.variables).length }}</a
+      >
       <a class="nav-link"><b>Rows:</b> {{ dataset.numRows }}</a>
       <a class="nav-link"><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</a>
       <a v-if="isImportReady">
@@ -98,7 +101,11 @@ import Vue from "vue";
 import ErrorModal from "../components/ErrorModal";
 import { createRouteEntry } from "../util/routes";
 import { formatBytes } from "../util/bytes";
-import { sortVariablesByImportance, isDatamartProvenance } from "../util/data";
+import {
+  sortVariablesByImportance,
+  isDatamartProvenance,
+  filterVariablesByFeature
+} from "../util/data";
 import { getters as routeGetters } from "../store/route/module";
 import { Dataset, Variable } from "../store/dataset/index";
 import { actions as datasetActions } from "../store/dataset/module";
@@ -133,10 +140,9 @@ export default Vue.extend({
       );
     },
     topVariables(): Variable[] {
-      return sortVariablesByImportance(this.dataset.variables.slice(0)).slice(
-        0,
-        NUM_TOP_FEATURES
-      );
+      return sortVariablesByImportance(
+        filterVariablesByFeature(this.dataset.variables).slice(0)
+      ).slice(0, NUM_TOP_FEATURES);
     },
     percentComplete(): number {
       return 100;
@@ -154,6 +160,9 @@ export default Vue.extend({
   methods: {
     formatBytes(n: number): string {
       return formatBytes(n);
+    },
+    filterVariablesByFeature(variables: Variable[]): Variable[] {
+      return filterVariablesByFeature(variables);
     },
     setActiveDataset() {
       if (this.isImportReady || this.importPending) {
