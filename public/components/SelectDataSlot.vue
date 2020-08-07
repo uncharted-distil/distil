@@ -17,24 +17,23 @@
 
     <div class="fake-search-input">
       <div>
-        <filter-badge v-if="activeFilter" active-filter :filter="activeFilter">
-        </filter-badge>
+        <filter-badge
+          v-if="activeFilter"
+          active-filter
+          :filter="activeFilter"
+        />
         <filter-badge
           v-if="filter.type !== 'row'"
           v-for="filter in filters"
           :key="filterHash(filter)"
           :filter="filter"
-        >
-        </filter-badge>
+        />
       </div>
     </div>
 
     <div class="table-title-container">
       <small class="row-number-label" v-html="tableTitle"></small>
-      <layer-selection
-        v-if="isRemoteSensing"
-        class="layer-select-dropdown"
-      ></layer-selection>
+      <layer-selection v-if="isRemoteSensing" class="layer-select-dropdown" />
       <b-button
         class="select-data-action-exclude"
         v-if="includedActive"
@@ -65,37 +64,15 @@
       </b-button>
     </div>
 
-    <div class="select-data-container" v-bind:class="{ pending: !hasData }">
+    <div class="select-data-container" :class="{ pending: !hasData }">
       <div class="select-data-no-results" v-if="!hasData">
         <div v-html="spinnerHTML"></div>
       </div>
-      <template>
-        <select-data-table
-          v-if="viewType === TABLE_VIEW"
-          :included-active="includedActive"
-          :instance-name="instanceName"
-        ></select-data-table>
-        <image-mosaic
-          v-if="viewType === IMAGE_VIEW"
-          :included-active="includedActive"
-          :instance-name="instanceName"
-        ></image-mosaic>
-        <select-graph-view
-          v-if="viewType === GRAPH_VIEW"
-          :included-active="includedActive"
-          :instance-name="instanceName"
-        ></select-graph-view>
-        <select-geo-plot
-          v-if="viewType === GEO_VIEW"
-          :included-active="includedActive"
-          :instance-name="instanceName"
-        ></select-geo-plot>
-        <select-timeseries-view
-          v-if="viewType === TIMESERIES_VIEW"
-          :included-active="includedActive"
-          :instance-name="instanceName"
-        ></select-timeseries-view>
-      </template>
+      <component
+        :is="viewComponent"
+        :included-active="includedActive"
+        :instance-name="instanceName"
+      />
     </div>
   </div>
 </template>
@@ -143,10 +120,10 @@ import {
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
-const TABLE_VIEW = "table";
-const IMAGE_VIEW = "image";
-const GRAPH_VIEW = "graph";
 const GEO_VIEW = "geo";
+const GRAPH_VIEW = "graph";
+const IMAGE_VIEW = "image";
+const TABLE_VIEW = "table";
 const TIMESERIES_VIEW = "timeseries";
 
 export default Vue.extend({
@@ -166,17 +143,13 @@ export default Vue.extend({
   data() {
     return {
       instanceName: "select-data",
-      viewTypeModel: null,
-      TABLE_VIEW: TABLE_VIEW,
-      IMAGE_VIEW: IMAGE_VIEW,
-      GRAPH_VIEW: GRAPH_VIEW,
+      viewTypeModel: TABLE_VIEW,
       GEO_VIEW: GEO_VIEW,
+      GRAPH_VIEW: GRAPH_VIEW,
+      IMAGE_VIEW: IMAGE_VIEW,
+      TABLE_VIEW: TABLE_VIEW,
       TIMESERIES_VIEW: TIMESERIES_VIEW
     };
-  },
-
-  created() {
-    this.viewTypeModel = TABLE_VIEW;
   },
 
   computed: {
@@ -307,8 +280,13 @@ export default Vue.extend({
       return routeGetters.isRemoteSensing(this.$store);
     },
 
-    viewType(): string {
-      return this.viewTypeModel;
+    /* Select which component to display the data. */
+    viewComponent() {
+      if (this.viewTypeModel === GEO_VIEW) return "SelectGeoPlot";
+      if (this.viewTypeModel === GRAPH_VIEW) return "SelectGraphView";
+      if (this.viewTypeModel === IMAGE_VIEW) return "ImageMosaic";
+      if (this.viewTypeModel === TABLE_VIEW) return "SelectDataTable";
+      if (this.viewTypeModel === TIMESERIES_VIEW) return "SelectTimeseriesView";
     }
   },
 
@@ -403,7 +381,7 @@ export default Vue.extend({
 
 <style scoped>
 .select-data-container {
-  background-color: white;
+  background-color: var(--white);
   display: flex;
   flex-flow: wrap;
   height: 100%;
@@ -440,16 +418,19 @@ table tr {
 
 .select-data-action-exclude:not([disabled]) .include-highlight,
 .select-data-action-exclude:not([disabled]) .exclude-highlight {
-  color: #255dcc;
+  color: var(--blue); /* #255dcc; */
 }
 
 .select-data-action-exclude:not([disabled]) .include-selection,
 .select-data-action-exclude:not([disabled]) .exclude-selection {
-  color: #ff0067;
+  color: var(--red); /* #ff0067; */
 }
 
 .matching-color {
-  color: #255dcc;
+  color: var(--blue); /* #255dcc; */
+}
+.selected-color {
+  color: var(--red); /* #ff0067; */
 }
 
 .fake-search-input {
@@ -457,8 +438,8 @@ table tr {
   flex-direction: column;
   flex-shrink: 0;
   flex-grow: 1;
-  background-color: #eee;
-  border: 1px solid #ccc;
+  background-color: var(--gray-300);
+  border: 1px solid var(--gray-500); /* #ccc */
   border-radius: 0.2rem;
   padding: 3px;
   height: 38px;
@@ -466,10 +447,6 @@ table tr {
 
 .pending {
   opacity: 0.5;
-}
-
-.selected-color {
-  color: #ff0067;
 }
 
 .table-title-container {

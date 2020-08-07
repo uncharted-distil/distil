@@ -3,13 +3,14 @@
     <h6 class="sidebar-title">Ground Truth</h6>
     <result-target-variable class="result-target-variable" />
 
-    <h6 class="sidebar-title">Results</h6>
+    <h6 class="sidebar-title">Options</h6>
     <section class="result-options">
       <error-threshold-slider v-if="showResiduals && !isTimeseries" />
       <result-size />
     </section>
 
     <!-- Searchs results -->
+    <h6 class="sidebar-title">Results</h6>
     <section class="result-summaries">
       <result-facets
         :showResiduals="showResiduals"

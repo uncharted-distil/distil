@@ -6,54 +6,26 @@
       :variables="variables"
     >
       <p class="font-weight-bold mr-auto">Samples Predicted</p>
-      <layer-selection
-        v-if="isRemoteSensing"
-        class="layer-button"
-      ></layer-selection>
+      <layer-selection v-if="isRemoteSensing" class="layer-button" />
     </view-type-toggle>
 
     <p class="predictions-data-slot-summary" v-if="hasResults">
       <small v-html="title"></small>
     </p>
 
-    <div
-      class="predictions-data-slot-container"
-      v-bind:class="{ pending: !hasData }"
-    >
-      <div class="predictions-data-no-results" v-if="isPending">
-        <div v-html="spinnerHTML"></div>
-      </div>
-      <div class="predictions-data-no-results" v-if="hasNoResults">
-        No results available
+    <div class="predictions-data-slot-container" :class="{ pending: !hasData }">
+      <div class="predictions-data-no-results" v-if="isPending || hasNoResults">
+        <div v-if="isPending" v-html="spinnerHTML"></div>
+        <p v-if="hasNoResults">No results available</p>
       </div>
 
-      <template>
-        <predictions-data-table
-          v-if="viewType === TABLE_VIEW"
-          :data-fields="dataFields"
-          :data-items="dataItems"
-          :instance-name="instanceName"
-        ></predictions-data-table>
-        <results-timeseries-view
-          v-if="viewType === TIMESERIES_VIEW"
-          :fields="dataFields"
-          :items="dataItems"
-          :instance-name="instanceName"
-        ></results-timeseries-view>
-        <results-geo-plot
-          v-if="viewType === GEO_VIEW"
-          :data-fields="dataFields"
-          :data-items="dataItems"
-          :instance-name="instanceName"
-        ></results-geo-plot>
-        <image-mosaic
-          v-if="viewType === IMAGE_VIEW"
-          :included-active="includedActive"
-          :instance-name="instanceName"
-          :data-fields="dataFields"
-          :data-items="dataItems"
-        ></image-mosaic>
-      </template>
+      <component
+        :is="viewComponent"
+        :data-fields="dataFields"
+        :data-items="dataItems"
+        :included-active="includedActive"
+        :instance-name="instanceName"
+      />
     </div>
   </div>
 </template>
@@ -64,7 +36,7 @@ import _ from "lodash";
 import PredictionsDataTable from "./PredictionsDataTable";
 import ImageMosaic from "./ImageMosaic";
 import ResultsTimeseriesView from "./ResultsTimeseriesView";
-import ResultsGeoPlot from "./ResultsGeoPlot";
+import GeoPlot from "./GeoPlot";
 import { spinnerHTML } from "../util/spinner";
 import {
   TableRow,
@@ -95,10 +67,10 @@ export default Vue.extend({
   name: "predictions-data-slot",
 
   components: {
+    GeoPlot,
+    ImageMosaic,
     PredictionsDataTable,
     ResultsTimeseriesView,
-    ResultsGeoPlot,
-    ImageMosaic,
     ViewTypeToggle
   },
 
@@ -187,14 +159,26 @@ export default Vue.extend({
     title(): string {
       const included = getNumIncludedRows(this.rowSelection);
       if (included > 0) {
-        return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} processed by model, ${included} <b class="selected-color">selected</b>`;
+        return `${this.numItems} <strong class="matching-color">matching</strong> samples of ${this.numRows} processed by model, ${included} <strong class="selected-color">selected</strong>`;
       } else {
-        return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} processed by model`;
+        return `${this.numItems} <strong class="matching-color">matching</strong> samples of ${this.numRows} processed by model`;
       }
     },
 
     isRemoteSensing(): boolean {
       return routeGetters.isRemoteSensing(this.$store);
+    },
+
+    /* Select which component to display the data. */
+    viewComponent() {
+      if (this.viewType === GEO_VIEW) return "GeoPlot";
+      if (this.viewType === IMAGE_VIEW) return "ImageMosaic";
+      if (this.viewType === TABLE_VIEW) return "PredictionsDataTable";
+      if (this.viewType === TIMESERIES_VIEW) return "ResultsTimeseriesView";
+    },
+
+    includedActive(): boolean {
+      return routeGetters.getRouteInclude(this.$store);
     }
   }
 });
