@@ -65,6 +65,9 @@ export default Vue.extend({
     formatBytes(n: number): string {
       return formatBytes(n);
     },
+    filterVariablesByFeature(variables: Variable[]): Variable[] {
+      return filterVariablesByFeature(variables);
+    },
     removeFromJoin(arg) {
       this.$emit("remove-from-join", arg);
     }

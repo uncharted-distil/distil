@@ -161,6 +161,9 @@ export default Vue.extend({
     formatBytes(n: number): string {
       return formatBytes(n);
     },
+    filterVariablesByFeature(variables: Variable[]): Variable[] {
+      return filterVariablesByFeature(variables);
+    },
     setActiveDataset() {
       if (this.isImportReady || this.importPending) {
         return;
