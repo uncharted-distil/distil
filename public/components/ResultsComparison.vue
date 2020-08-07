@@ -15,7 +15,6 @@
 
     <div v-if="hasHighlights" class="flex-grow-1">
       <results-data-slot
-        included
         instance-name="results-slot-top"
         :view-type="viewType"
       />

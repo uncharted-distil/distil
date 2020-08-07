@@ -6,19 +6,19 @@
       spinner-small
       spinner-variant="primary"
     >
-      <b-input-group size="sm" :prepend-html="numDisplay">
+      <b-input-group size="sm" :prepend="numDisplay">
         <b-form-input
           v-model="resultSize"
           number
           min="1"
-          :max="numRows"
+          :max="total"
           step="1"
           type="range"
         />
         <b-input-group-append>
           <b-button
             :disabled="updateDisabled"
-            variant="outline-secondary"
+            variant="primary"
             @click="onUpdate"
           >
             Update
@@ -42,13 +42,23 @@ import { overlayRouteEntry } from "../../util/routes";
 
 /**
  * Button to change the size of a current result.
+ * @param {Number} count - the current number of results.
+ * @param {Number} total - the total number of results.
+ * @param {Boolean} excluded - display only excluded results.
+ * @emits updated - a boolean to signal that the size has been updated.
  */
 export default Vue.extend({
   name: "result-size",
 
+  props: {
+    count: Number,
+    total: Number,
+    excluded: Boolean
+  },
+
   data() {
     return {
-      resultSize: 1,
+      resultSize: this.count,
       isUpdating: false
     };
   },
@@ -68,40 +78,12 @@ export default Vue.extend({
 
     /* Display the selected number of results displayed. */
     numDisplay(): string {
-      const num = this.resultSize.toString();
-      const length = this.numRows.toString().length;
-      return num.padStart(length, "‎‎-").replace(/-/gi, "&nbsp;");
-    },
-
-    /* Number of result exluded by the filter */
-    numExcludedResults(): number {
-      return resultsGetters.getExcludedResultTableDataCount(this.$store);
-    },
-
-    /* Number of result inluded by the filter */
-    numIncludedResults(): number {
-      return resultsGetters.getIncludedResultTableDataCount(this.$store);
-    },
-
-    /* Get the number of results items returned by the back-end */
-    numResults(): number {
-      // If they are identical, this mean that no filter has been applied
-      if (this.numIncludedResults === this.numExcludedResults) {
-        return this.numExcludedResults;
-      }
-
-      // To know the true number of results, we add those included and excluded.
-      return this.numIncludedResults + this.numExcludedResults;
-    },
-
-    /* Get the total number of items available */
-    numRows(): number {
-      return resultsGetters.getResultDataNumRows(this.$store);
+      return this.resultSize.toString();
     },
 
     /* Disable the Update button */
     updateDisabled(): boolean {
-      return this.isUpdating || this.resultSize === this.numResults;
+      return this.isUpdating || this.resultSize === this.count;
     }
   },
 
@@ -109,19 +91,27 @@ export default Vue.extend({
     /* Set the resultSize in the URI, and reload the page */
     onUpdate() {
       this.isUpdating = true;
-      resultsActions.fetchResultTableData(this.$store, {
+      const args = {
         dataset: this.dataset,
         solutionId: this.solutionId,
         highlight: this.highlight,
         size: this.resultSize
-      });
+      };
+
+      if (this.excluded) {
+        resultsActions.fetchExcludedResultTableData(this.$store, args);
+      } else {
+        resultsActions.fetchIncludedResultTableData(this.$store, args);
+      }
     }
   },
 
   watch: {
-    numResults() {
-      this.resultSize = this.numResults; // Set the input range to the appropriate value.
+    count(oldValue, newValue) {
+      if (oldValue === newValue) return;
+      this.resultSize = this.count; // Set the input range to the appropriate value.
       this.isUpdating = false;
+      this.$emit("updated");
     }
   }
 });

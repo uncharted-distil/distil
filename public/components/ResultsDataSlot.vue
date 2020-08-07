@@ -1,7 +1,23 @@
 <template>
   <div class="results-data-slot">
     <p class="results-data-slot-summary" v-if="hasResults">
-      Displaying {{ itemCount }} of {{ numRows
+      Displaying
+      <b-dropdown
+        :text="itemCount.toString()"
+        ref="size"
+        variant="light"
+        size="sm"
+      >
+        <b-dropdown-form form-class="result-size-dropdown">
+          <result-size
+            :excluded="excluded"
+            :count="itemCount"
+            :total="numRows"
+            @updated="$refs.size.hide()"
+          />
+        </b-dropdown-form>
+      </b-dropdown>
+      of {{ numRows
       }}<template v-if="!isForecasting"
         >, including {{ numErrors }}
         <strong class="erroneous-color">erroneous</strong> predictions
@@ -31,6 +47,7 @@ import _ from "lodash";
 import GeoPlot from "./GeoPlot";
 import ImageMosaic from "./ImageMosaic";
 import ResultsDataTable from "./ResultsDataTable";
+import ResultSize from "../components/buttons/ResultSize";
 import ResultsTimeseriesView from "./ResultsTimeseriesView";
 import {
   TableRow,
@@ -56,7 +73,6 @@ const TIMESERIES_VIEW = "timeseries";
 
 /**
  * Display results based on a VIEW type.
- * @param {Boolean} included - display only included results
  * @param {Boolean} excluded - display only excluded results
  */
 export default Vue.extend({
@@ -66,13 +82,13 @@ export default Vue.extend({
     GeoPlot,
     ImageMosaic,
     ResultsDataTable,
+    ResultSize,
     ResultsTimeseriesView
   },
 
   props: {
     instanceName: String,
     viewType: String,
-    included: Boolean,
     excluded: Boolean
   },
 
@@ -143,19 +159,17 @@ export default Vue.extend({
     dataItems(): TableRow[] {
       if (this.excluded) {
         return resultsGetters.getExcludedResultTableDataItems(this.$store);
-      } else {
-        // included or none get the same data
-        return resultsGetters.getIncludedResultTableDataItems(this.$store);
       }
+      // included or none get the same data
+      return resultsGetters.getIncludedResultTableDataItems(this.$store);
     },
 
     dataFields(): Dictionary<TableColumn> {
       if (this.excluded) {
         return resultsGetters.getExcludedResultTableDataFields(this.$store);
-      } else {
-        // included or none get the same data
-        return resultsGetters.getIncludedResultTableDataFields(this.$store);
       }
+      // included or none get the same data
+      return resultsGetters.getIncludedResultTableDataFields(this.$store);
     },
 
     rowSelection(): RowSelection {
@@ -234,7 +248,7 @@ export default Vue.extend({
 <style scoped>
 .results-data-slot-summary {
   flex-shrink: 0;
-  font-size: 80%;
+  font-size: 90%;
   margin: 0;
 }
 
@@ -268,5 +282,9 @@ export default Vue.extend({
 
 .pending {
   opacity: 0.5;
+}
+
+.result-size-dropdown {
+  width: 300px;
 }
 </style>
