@@ -13,7 +13,10 @@
         <i class="fa fa-table"></i> <b>Dateset Name:</b>
         {{ dataset.name }}
       </a>
-      <a class="nav-link"><b>Features:</b> {{ dataset.variables.length }}</a>
+      <a class="nav-link"
+        ><b>Features:</b>
+        {{ dataset.variables.filter(v => v.distilRole === "data").length }}</a
+      >
       <a class="nav-link"><b>Rows:</b> {{ dataset.numRows }}</a>
       <a class="nav-link"><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</a>
       <a v-if="isImportReady">
@@ -133,10 +136,9 @@ export default Vue.extend({
       );
     },
     topVariables(): Variable[] {
-      return sortVariablesByImportance(this.dataset.variables.slice(0)).slice(
-        0,
-        NUM_TOP_FEATURES
-      );
+      return sortVariablesByImportance(
+        this.dataset.variables.filter(v => v.distilRole === "data").slice(0)
+      ).slice(0, NUM_TOP_FEATURES);
     },
     percentComplete(): number {
       return 100;

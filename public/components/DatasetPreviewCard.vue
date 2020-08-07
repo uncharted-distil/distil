@@ -13,7 +13,10 @@
     <div class="card-body">
       <div class="row align-items-center justify-content-center">
         <div class="col-6">
-          <div><b>Features:</b> {{ dataset.variables.length }}</div>
+          <div>
+            <b>Features:</b>
+            {{ dataset.variables.filter(v => v.distilRole === "data").length }}
+          </div>
           <div><b>Rows:</b> {{ dataset.numRows }}</div>
           <div><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</div>
         </div>
