@@ -101,7 +101,11 @@ import Vue from "vue";
 import ErrorModal from "../components/ErrorModal";
 import { createRouteEntry } from "../util/routes";
 import { formatBytes } from "../util/bytes";
-import { sortVariablesByImportance, , filterVariablesByFeature } from "../util/data";
+import {
+  sortVariablesByImportance,
+  isDatamartProvenance,
+  filterVariablesByFeature
+} from "../util/data";
 import { getters as routeGetters } from "../store/route/module";
 import { Dataset, Variable } from "../store/dataset/index";
 import { actions as datasetActions } from "../store/dataset/module";
