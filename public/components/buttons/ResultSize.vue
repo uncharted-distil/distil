@@ -42,7 +42,7 @@ import { overlayRouteEntry } from "../../util/routes";
 
 /**
  * Button to change the size of a current result.
- * @param {Number} count - the current number of results.
+ * @param {Number} currentSize - the current number of results.
  * @param {Number} total - the total number of results.
  * @param {Boolean} excluded - display only excluded results.
  * @emits updated - a boolean to signal that the size has been updated.
@@ -51,14 +51,14 @@ export default Vue.extend({
   name: "result-size",
 
   props: {
-    count: Number,
+    currentSize: Number,
     total: Number,
     excluded: Boolean
   },
 
   data() {
     return {
-      resultSize: this.count,
+      resultSize: this.currentSize,
       isUpdating: false
     };
   },
@@ -83,7 +83,7 @@ export default Vue.extend({
 
     /* Disable the Update button */
     updateDisabled(): boolean {
-      return this.isUpdating || this.resultSize === this.count;
+      return this.isUpdating || this.resultSize === this.currentSize;
     }
   },
 
@@ -107,9 +107,9 @@ export default Vue.extend({
   },
 
   watch: {
-    count(oldValue, newValue) {
+    currentSize(oldValue, newValue) {
       if (oldValue === newValue) return;
-      this.resultSize = this.count; // Set the input range to the appropriate value.
+      this.resultSize = this.currentSize; // Set the input range to the appropriate value.
       this.isUpdating = false;
       this.$emit("updated");
     }

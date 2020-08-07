@@ -30,8 +30,7 @@ export default Vue.extend({
   props: {
     dataItems: Array as () => TableRow[],
     dataFields: Object as () => Dictionary<TableColumn>,
-    instanceName: String as () => string,
-    includedActive: Boolean as () => boolean
+    instanceName: String as () => string
   },
 
   computed: {
@@ -47,6 +46,10 @@ export default Vue.extend({
 
     predictedCol(): string {
       return this.solution ? this.solution.predictedKey : "";
+    },
+
+    includedActive(): boolean {
+      return routeGetters.getRouteInclude(this.$store);
     }
   }
 });

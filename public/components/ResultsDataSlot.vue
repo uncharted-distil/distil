@@ -34,7 +34,6 @@
         :is="viewComponent"
         :data-fields="dataFields"
         :data-items="dataItems"
-        :included-active="includedActive"
         :instance-name="instanceName"
       />
     </div>
@@ -186,10 +185,6 @@ export default Vue.extend({
       if (this.viewType === IMAGE_VIEW) return "ImageMosaic";
       if (this.viewType === TABLE_VIEW) return "ResultsDataTable";
       if (this.viewType === TIMESERIES_VIEW) return "ResultsTimeseriesView";
-    },
-
-    includedActive(): boolean {
-      return routeGetters.getRouteInclude(this.$store);
     },
 
     /* Count the number of items */
