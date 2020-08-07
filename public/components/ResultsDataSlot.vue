@@ -54,6 +54,11 @@ const IMAGE_VIEW = "image";
 const TABLE_VIEW = "table";
 const TIMESERIES_VIEW = "timeseries";
 
+/**
+ * Display results based on a VIEW type.
+ * @param {Boolean} included - display only included results
+ * @param {Boolean} excluded - display only excluded results
+ */
 export default Vue.extend({
   name: "results-data-slot",
 
@@ -65,10 +70,10 @@ export default Vue.extend({
   },
 
   props: {
-    dataItems: Array as () => any[],
-    dataFields: Object as () => Dictionary<TableColumn>,
-    instanceName: String as () => string,
-    viewType: String as () => string
+    instanceName: String,
+    viewType: String,
+    included: Boolean,
+    excluded: Boolean
   },
 
   data() {
@@ -133,6 +138,24 @@ export default Vue.extend({
         this.rowSelection,
         this.instanceName
       );
+    },
+
+    dataItems(): TableRow[] {
+      if (this.excluded) {
+        return resultsGetters.getExcludedResultTableDataItems(this.$store);
+      } else {
+        // included or none get the same data
+        return resultsGetters.getIncludedResultTableDataItems(this.$store);
+      }
+    },
+
+    dataFields(): Dictionary<TableColumn> {
+      if (this.excluded) {
+        return resultsGetters.getExcludedResultTableDataFields(this.$store);
+      } else {
+        // included or none get the same data
+        return resultsGetters.getIncludedResultTableDataFields(this.$store);
+      }
     },
 
     rowSelection(): RowSelection {

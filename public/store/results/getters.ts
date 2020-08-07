@@ -88,6 +88,16 @@ export const getters = {
       : 0;
   },
 
+  /* Check if any items have a weight property */
+  hasResultTableDataItemsWeight(state: ResultsState): boolean {
+    const data = getTableDataItems(state.includedResultTableData) ?? [];
+    return data.some(item =>
+      Object.keys(item).some(variable =>
+        item[variable].hasOwnProperty("weight")
+      )
+    );
+  },
+
   // predicted
 
   getPredictedSummaries(state: ResultsState): VariableSummary[] {

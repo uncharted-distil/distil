@@ -48,6 +48,9 @@ export const getters = {
   getExcludedResultTableDataCount: read(
     moduleGetters.getExcludedResultTableDataCount
   ),
+  hasResultTableDataItemsWeight: read(
+    moduleGetters.hasResultTableDataItemsWeight
+  ),
 
   // predicted
   getPredictedSummaries: read(moduleGetters.getPredictedSummaries),
