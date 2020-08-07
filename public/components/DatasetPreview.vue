@@ -15,7 +15,7 @@
       </a>
       <a class="nav-link"
         ><b>Features:</b>
-        {{ dataset.variables.filter(v => v.distilRole === "data").length }}</a
+        {{ filterVariablesByFeature(dataset.variables).length }}</a
       >
       <a class="nav-link"><b>Rows:</b> {{ dataset.numRows }}</a>
       <a class="nav-link"><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</a>
@@ -101,7 +101,7 @@ import Vue from "vue";
 import ErrorModal from "../components/ErrorModal";
 import { createRouteEntry } from "../util/routes";
 import { formatBytes } from "../util/bytes";
-import { sortVariablesByImportance, isDatamartProvenance } from "../util/data";
+import { sortVariablesByImportance, , filterVariablesByFeature } from "../util/data";
 import { getters as routeGetters } from "../store/route/module";
 import { Dataset, Variable } from "../store/dataset/index";
 import { actions as datasetActions } from "../store/dataset/module";

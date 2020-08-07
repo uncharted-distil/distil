@@ -15,7 +15,7 @@
         <div class="col-6">
           <div>
             <b>Features:</b>
-            {{ dataset.variables.filter(v => v.distilRole === "data").length }}
+            {{ filterVariablesByFeature(dataset.variables).length }}
           </div>
           <div><b>Rows:</b> {{ dataset.numRows }}</div>
           <div><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</div>
@@ -36,7 +36,10 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import { sortVariablesByImportance } from "../util/data";
+import {
+  sortVariablesByImportance,
+  filterVariablesByFeature
+} from "../util/data";
 import { formatBytes } from "../util/bytes";
 import { Dataset, Variable } from "../store/dataset/index";
 
