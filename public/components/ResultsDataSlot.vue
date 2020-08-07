@@ -11,7 +11,7 @@
         <b-dropdown-form form-class="result-size-dropdown">
           <result-size
             :excluded="excluded"
-            :count="itemCount"
+            :currentSize="itemCount"
             :total="numRows"
             @updated="$refs.size.hide()"
           />

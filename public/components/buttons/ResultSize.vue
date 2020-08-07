@@ -51,8 +51,8 @@ export default Vue.extend({
   name: "result-size",
 
   props: {
-    currentSize: Number,
-    total: Number,
+    currentSize: { type: Number, default: 1 },
+    total: { type: Number, default: 1 },
     excluded: Boolean
   },
 
