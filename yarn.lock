@@ -370,30 +370,30 @@
   resolved "https://registry.yarnpkg.com/@types/store/-/store-2.0.2.tgz#6263d4f1aab225032ea55b17d94f3b725a21c943"
   integrity sha512-ZPHnXkzmGMfk+pHqAGzTSpA9CbsHmJLgkvOl5w52LZ0XTxB1ZIHWZzQ7lEtjTNWScBbsQekg8TjApMXkMe4nkw==
 
-"@uncharted.software/css-options@^3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/css-options/-/css-options-3.0.1.tgz#03060adbb9e58d8cac3c8a020a9d81867be7d1b4"
-  integrity sha512-YmcGqD5NdSNJgp1nqJ4g9zXgojXvi4utxbP21u8rzdfkhD29kWNosm3FOTpvEYrjFROrGHWwKbMwIs5+zgqa1g==
+"@uncharted.software/css-options@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.npmjs.org/@uncharted.software/css-options/-/css-options-3.1.0.tgz#dbfc05ba0c43f2b3c4b72cf11506c4417f5fd48e"
+  integrity sha512-ZZ7D4bwewzweBKdA9iObQjx9khXoDXphTWKrvByZiWmC0zTenbwtjsZbzUZyCFzKJV10p/SDm/eQEbL/Z1oGEg==
 
-"@uncharted.software/facets-core@^3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-core/-/facets-core-3.0.1.tgz#03288c65f228f0402b3ccb9b28004466ca266f65"
-  integrity sha512-Sm3KQlwV7PSSJh8bPZuv+sgnIaqTHFjfzitPXVNYHDevKM3xJigvxAwfp/DXEJGnatIJkX0XsJO4LEMq1OFbag==
+"@uncharted.software/facets-core@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.npmjs.org/@uncharted.software/facets-core/-/facets-core-3.1.0.tgz#ff9d744ca872a4a13d55b59e91f659d2b516f713"
+  integrity sha512-QSobPesOkPyVrtUbh5DPAk+eMBzTub4S56PWlI74JIbSJkH9lPOU/cN5b29YLtP8sQ5nS9a6dgwsk3T6AprMBw==
   dependencies:
     "@fortawesome/free-regular-svg-icons" "^5.10.2"
     "@fortawesome/free-solid-svg-icons" "^5.10.2"
-    "@uncharted.software/css-options" "^3.0.1"
+    "@uncharted.software/css-options" "^3.1.0"
     lit-element "^2.2.1"
     lit-html "^1.1.2"
 
-"@uncharted.software/facets-plugins@^3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@uncharted.software/facets-plugins/-/facets-plugins-3.0.1.tgz#1f1878f14cb9664dd72f9e0e8c244614f1e6f764"
-  integrity sha512-5R9xAqqAkxKhbIhY8r+Wxm4vGHVCEGIhj0uO2g5d+FoUT0sZBu8aDWoZ5bK/CdABo4ocLrigghs7T6EOj0VmyA==
+"@uncharted.software/facets-plugins@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.npmjs.org/@uncharted.software/facets-plugins/-/facets-plugins-3.1.0.tgz#eed7a8f5f68e7825d24228fae9b71a51517b901a"
+  integrity sha512-lZ8ahgYZIyhhHA3sbD/DfIb5gCP+9dzEn29cTgUKeNP7QGCNH4G88IOvQbWYaIOWj9VNmiOHwfYSlJbY7CeWQw==
   dependencies:
     "@fortawesome/free-regular-svg-icons" "^5.10.2"
     "@fortawesome/free-solid-svg-icons" "^5.10.2"
-    "@uncharted.software/facets-core" "^3.0.1"
+    "@uncharted.software/facets-core" "^3.1.0"
     lit-element "^2.2.1"
     lit-html "^1.1.2"
 
