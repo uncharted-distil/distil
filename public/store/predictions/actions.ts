@@ -2,15 +2,13 @@ import axios from "axios";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import { DistilState } from "../store";
-import { EXCLUDE_FILTER } from "../../util/filters";
-import { getSolutionById } from "../../util/solutions";
+import { FilterParams } from "../../util/filters";
 import { Variable, Highlight, SummaryMode } from "../dataset/index";
 import { mutations } from "./module";
 import { PredictionState } from "./index";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import {
   fetchPredictionResultSummary,
-  createPendingSummary,
   createErrorSummary,
   createEmptyTableData,
   fetchSummaryExemplars
@@ -157,14 +155,20 @@ export const actions = {
       dataset: string;
       highlight: Highlight;
       produceRequestId: string;
+      size?: number;
     }
   ) {
-    let filterParams = {
+    let filterParams: FilterParams = {
       highlight: null,
       variables: [],
       filters: []
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+
+    // Add the size limit to results if provided.
+    if (_.isInteger(args.size)) {
+      filterParams.size = args.size;
+    }
 
     try {
       const response = await axios.post(
@@ -188,14 +192,11 @@ export const actions = {
       dataset: string;
       highlight: Highlight;
       produceRequestId: string;
+      size?: number;
     }
   ) {
     return Promise.all([
-      actions.fetchIncludedPredictionTableData(context, {
-        dataset: args.dataset,
-        highlight: args.highlight,
-        produceRequestId: args.produceRequestId
-      })
+      actions.fetchIncludedPredictionTableData(context, args)
     ]);
   },
 

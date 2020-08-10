@@ -529,10 +529,13 @@ export const actions = {
     const varModes = <Map<string, SummaryMode>>(
       context.getters.getDecodedVarModes
     );
+    const size = routeGetters.getRouteResultSize(store);
+
     predictionActions.fetchPredictionTableData(store, {
       dataset: inferenceDataset,
       highlight: highlight,
-      produceRequestId: produceRequestId
+      produceRequestId: produceRequestId,
+      size
     });
     predictionActions.fetchTrainingSummaries(store, {
       dataset: inferenceDataset,
