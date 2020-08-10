@@ -87,6 +87,7 @@ export interface Variable {
   min: number;
   max: number;
   role: string[];
+  distilRole: string;
 }
 
 export interface Dataset {

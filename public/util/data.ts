@@ -297,6 +297,10 @@ export function removeSummary(
   }
 }
 
+export function filterVariablesByFeature(variables: Variable[]): Variable[] {
+  return variables.filter(v => v.distilRole === "data");
+}
+
 export function filterSummariesByDataset(
   summaries: VariableSummary[],
   dataset: string
