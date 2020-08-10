@@ -36,6 +36,7 @@ import {
   actions as resultsActions,
   getters as resultsGetters
 } from "../../store/results/module";
+import { actions as predictionsActions } from "../../store/predictions/module";
 import { getters as requestsGetters } from "../../store/requests/module";
 import { getters as routeGetters } from "../../store/route/module";
 import { overlayRouteEntry } from "../../util/routes";
@@ -68,12 +69,16 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
 
+    highlight(): Highlight {
+      return routeGetters.getDecodedHighlight(this.$store);
+    },
+
     solutionId(): string {
       return requestsGetters.getActiveSolution(this.$store)?.solutionId;
     },
 
-    highlight(): Highlight {
-      return routeGetters.getDecodedHighlight(this.$store);
+    produceRequestId(): string {
+      return routeGetters.getRouteProduceRequestId(this.$store);
     },
 
     /* Display the selected number of results displayed. */
@@ -84,6 +89,10 @@ export default Vue.extend({
     /* Disable the Update button */
     updateDisabled(): boolean {
       return this.isUpdating || this.resultSize === this.currentSize;
+    },
+
+    isPagePrediction(): Boolean {
+      return routeGetters.isPagePrediction(this.$store);
     }
   },
 
@@ -91,17 +100,22 @@ export default Vue.extend({
     /* Set the resultSize in the URI, and reload the page */
     onUpdate() {
       this.isUpdating = true;
-      const args = {
+      const args: any = {
         dataset: this.dataset,
-        solutionId: this.solutionId,
         highlight: this.highlight,
         size: this.resultSize
       };
 
-      if (this.excluded) {
-        resultsActions.fetchExcludedResultTableData(this.$store, args);
+      if (this.isPagePrediction) {
+        args.produceRequestId = this.produceRequestId;
+        predictionsActions.fetchPredictionTableData(this.$store, args);
       } else {
-        resultsActions.fetchIncludedResultTableData(this.$store, args);
+        args.solutionId = this.solutionId;
+        if (this.excluded) {
+          resultsActions.fetchExcludedResultTableData(this.$store, args);
+        } else {
+          resultsActions.fetchIncludedResultTableData(this.$store, args);
+        }
       }
     }
   },

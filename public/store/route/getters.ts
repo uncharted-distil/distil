@@ -8,6 +8,7 @@ import {
   BandID
 } from "../dataset/index";
 import {
+  PREDICTION_ROUTE,
   SELECT_TARGET_ROUTE,
   SELECT_TRAINING_ROUTE,
   JOINED_VARS_INSTANCE_PAGE,
@@ -503,5 +504,10 @@ export const getters = {
   /* Check if the current page is SELECT_TRAINING_ROUTE. */
   isPageSelectTraining(state: Route): Boolean {
     return state.path === SELECT_TRAINING_ROUTE;
+  },
+
+  /* Check if the current page is PREDICTION_ROUTE. */
+  isPagePrediction(state: Route): Boolean {
+    return state.path === PREDICTION_ROUTE;
   }
 };
