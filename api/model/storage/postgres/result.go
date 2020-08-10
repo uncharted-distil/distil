@@ -297,10 +297,9 @@ func (s *Storage) executeInsertResultStatement(storageName string, resultID stri
 	return err
 }
 
-func (s *Storage) parseFilteredResults(variables []*model.Variable, numRows int, rows pgx.Rows, target *model.Variable) (*api.FilteredData, error) {
+func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Rows, target *model.Variable) (*api.FilteredData, error) {
 	result := &api.FilteredData{
-		NumRows: numRows,
-		Values:  make([][]*api.FilteredDataValue, 0),
+		Values: make([][]*api.FilteredDataValue, 0),
 	}
 
 	// Parse the columns (skipping weights columns)
@@ -733,24 +732,27 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 	defer rows.Close()
 
-	countFilter := map[string]interface{}{
-		"result_id": resultURI,
-	}
 	joinDef := &joinDefinition{
 		baseColumn:    model.D3MIndexFieldName,
 		joinTableName: storageNameResult,
 		joinAlias:     "joined",
 		joinColumn:    "index",
 	}
-	numRows, err := s.fetchNumRowsJoined(storageName, variables, countFilter, joinDef)
+	numRows, err := s.fetchNumRowsJoined(storageName, variables, []string{"result_id = $1"}, []interface{}{resultURI}, joinDef)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
+	numRowsFiltered, err := s.fetchNumRowsJoined(storageName, variables, wheres, params, joinDef)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not pull filtered num rows")
+	}
 
-	filteredData, err := s.parseFilteredResults(variables, numRows, rows, variable)
+	filteredData, err := s.parseFilteredResults(variables, rows, variable)
 	if err != nil {
 		return nil, err
 	}
+	filteredData.NumRows = numRows
+	filteredData.NumRowsFiltered = numRowsFiltered
 
 	weights, err := s.getAverageWeights(dataset, storageName, storageNameResult, resultURI, variables, whereStatement, params)
 	if err != nil {
