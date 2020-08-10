@@ -16,7 +16,8 @@ import {
   AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
   TRAINING_VARS_INSTANCE_PAGE,
   RESULT_TRAINING_VARS_INSTANCE_PAGE,
-  RESULT_SIZE_DEFAULT
+  RESULT_SIZE_DEFAULT,
+  RESULT_SIZE_REMOTE_SENSING_DEFAULT
 } from "../route/index";
 import { ModelQuality } from "../requests/index";
 import { decodeFilters, Filter, FilterParams } from "../../util/filters";
@@ -233,7 +234,14 @@ export const getters = {
 
   getRouteResultSize(state: Route, getters: any): number {
     const resultSize = state.query.resultSize;
-    return resultSize ? _.toInteger(resultSize) : RESULT_SIZE_DEFAULT;
+    if (resultSize) {
+      return _.toInteger(resultSize);
+    }
+
+    const isRemoteSensing = getters.isRemoteSensing;
+    return isRemoteSensing
+      ? RESULT_SIZE_REMOTE_SENSING_DEFAULT
+      : RESULT_SIZE_DEFAULT;
   },
 
   getRouteProduceRequestId(state: Route): string {
