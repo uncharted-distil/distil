@@ -3,7 +3,7 @@
     <p class="results-data-slot-summary" v-if="hasResults">
       Displaying
       <b-dropdown
-        :text="itemCount.toString()"
+        :text="numItems.toString()"
         ref="size"
         variant="light"
         size="sm"
@@ -11,7 +11,7 @@
         <b-dropdown-form form-class="result-size-dropdown">
           <result-size
             :excluded="excluded"
-            :currentSize="itemCount"
+            :currentSize="numItems"
             :total="numRows"
             @updated="$refs.size.hide()"
           />
@@ -188,7 +188,7 @@ export default Vue.extend({
     },
 
     /* Count the number of items */
-    itemCount(): number {
+    numItems(): number {
       return this.dataItems ? this.dataItems.length : 0;
     },
 

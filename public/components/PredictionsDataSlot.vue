@@ -10,7 +10,25 @@
     </view-type-toggle>
 
     <p class="predictions-data-slot-summary" v-if="hasResults">
-      <small v-html="title"></small>
+      <b-dropdown
+        :text="numItems.toString()"
+        ref="size"
+        variant="light"
+        size="sm"
+      >
+        <b-dropdown-form form-class="result-size-dropdown">
+          <result-size
+            :currentSize="numItems"
+            :total="numRows"
+            @updated="$refs.size.hide()"
+          />
+        </b-dropdown-form>
+      </b-dropdown>
+      <strong class="matching-color">matching</strong> samples of
+      {{ numRows }} processed by model<template v-if="numIncludedRows > 0"
+        >, {{ numIncludedRows }}
+        <strong class="selected-color">selected</strong>
+      </template>
     </p>
 
     <div class="predictions-data-slot-container" :class="{ pending: !hasData }">
@@ -34,6 +52,7 @@ import Vue from "vue";
 import _ from "lodash";
 import PredictionsDataTable from "./PredictionsDataTable";
 import ImageMosaic from "./ImageMosaic";
+import ResultSize from "../components/buttons/ResultSize";
 import ResultsTimeseriesView from "./ResultsTimeseriesView";
 import GeoPlot from "./GeoPlot";
 import { spinnerHTML } from "../util/spinner";
@@ -69,6 +88,7 @@ export default Vue.extend({
     GeoPlot,
     ImageMosaic,
     PredictionsDataTable,
+    ResultSize,
     ResultsTimeseriesView,
     ViewTypeToggle
   },
@@ -155,13 +175,8 @@ export default Vue.extend({
       return spinnerHTML();
     },
 
-    title(): string {
-      const included = getNumIncludedRows(this.rowSelection);
-      if (included > 0) {
-        return `${this.numItems} <strong class="matching-color">matching</strong> samples of ${this.numRows} processed by model, ${included} <strong class="selected-color">selected</strong>`;
-      } else {
-        return `${this.numItems} <strong class="matching-color">matching</strong> samples of ${this.numRows} processed by model`;
-      }
+    numIncludedRows(): number {
+      return getNumIncludedRows(this.rowSelection);
     },
 
     isRemoteSensing(): boolean {
@@ -179,10 +194,11 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .predictions-data-slot-summary {
-  margin: 10px, 0, 0, 0;
   flex-shrink: 0;
+  font-size: 90%;
+  margin: 0;
 }
 
 .predictions-data-slot {
@@ -228,5 +244,9 @@ export default Vue.extend({
 }
 .view-toggle {
   flex-shrink: 0;
+}
+
+.result-size-dropdown {
+  width: 300px;
 }
 </style>
