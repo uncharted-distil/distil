@@ -2,21 +2,11 @@
   <div class="results-data-slot">
     <p class="results-data-slot-summary" v-if="hasResults">
       Displaying
-      <b-dropdown
-        :text="numItems.toString()"
-        ref="size"
-        variant="light"
-        size="sm"
-      >
-        <b-dropdown-form form-class="data-size-dropdown">
-          <data-size
-            :currentSize="numItems"
-            :total="numRows"
-            @updated="$refs.size.hide()"
-            @submit="onDataSizeSubmit"
-          />
-        </b-dropdown-form>
-      </b-dropdown>
+      <data-size
+        :currentSize="numItems"
+        :total="numRows"
+        @submit="onDataSizeSubmit"
+      />
       of {{ numRows
       }}<template v-if="!isForecasting"
         >, including {{ numErrors }}
@@ -309,9 +299,5 @@ export default Vue.extend({
 
 .pending {
   opacity: 0.5;
-}
-
-.data-size-dropdown {
-  width: 300px;
 }
 </style>

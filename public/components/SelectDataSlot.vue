@@ -33,21 +33,11 @@
 
     <div class="table-title-container">
       <p class="selection-data-slot-summary">
-        <b-dropdown
-          :text="numItems.toString()"
-          ref="size"
-          variant="light"
-          size="sm"
-        >
-          <b-dropdown-form form-class="data-size-dropdown">
-            <data-size
-              :currentSize="numItems"
-              :total="numRows"
-              @updated="$refs.size.hide()"
-              @submit="onDataSizeSubmit"
-            />
-          </b-dropdown-form>
-        </b-dropdown>
+        <data-size
+          :currentSize="numItems"
+          :total="numRows"
+          @submit="onDataSizeSubmit"
+        />
         <strong class="matching-color">matching</strong> samples of
         {{ numRows }} to model<template v-if="selectionNumRows > 0"
           >, {{ selectionNumRows }}
@@ -503,9 +493,5 @@ table tr {
 
 .select-data-slot .nav-tabs .nav-link {
   padding: 0.5rem 0.75rem 1rem;
-}
-
-.data-size-dropdown {
-  width: 300px;
 }
 </style>

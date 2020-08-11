@@ -10,21 +10,12 @@
     </view-type-toggle>
 
     <p class="predictions-data-slot-summary" v-if="hasResults">
-      <b-dropdown
-        :text="numItems.toString()"
-        ref="size"
-        variant="light"
-        size="sm"
-      >
-        <b-dropdown-form form-class="data-size-dropdown">
-          <data-size
-            :currentSize="numItems"
-            :total="numRows"
-            @updated="$refs.size.hide()"
-            @submit="onDataSizeSubmit"
-          />
-        </b-dropdown-form>
-      </b-dropdown>
+      <data-size
+        :currentSize="numItems"
+        :total="numRows"
+        @updated="$refs.size.hide()"
+        @submit="onDataSizeSubmit"
+      />
       <strong class="matching-color">matching</strong> samples of
       {{ numRows }} processed by model<template v-if="numIncludedRows > 0"
         >, {{ numIncludedRows }}
@@ -271,11 +262,8 @@ export default Vue.extend({
 .view-toggle >>> .form-group {
   margin-bottom: 0px;
 }
+
 .view-toggle {
   flex-shrink: 0;
-}
-
-.data-size-dropdown {
-  width: 300px;
 }
 </style>

@@ -1,33 +1,44 @@
 <template>
-  <b-form-group label="Number of Data displayed">
-    <b-input-group size="sm" :append="numDisplay">
-      <b-form-input
-        v-model="dataSize"
-        number
-        min="1"
-        :max="total"
-        step="1"
-        type="range"
-      />
-    </b-input-group>
-    <b-overlay
-      :show="isUpdating"
-      class="d-inline-block"
-      opacity="0.6"
-      rounded
-      spinner-small
-      spinner-variant="primary"
-    >
-      <b-button
-        :disabled="isDisabled"
-        size="sm"
-        variant="primary"
-        @click="onUpdate"
-      >
-        Update
-      </b-button>
-    </b-overlay>
-  </b-form-group>
+  <b-dropdown
+    :text="currentSize.toString()"
+    ref="dropdown"
+    variant="light"
+    size="sm"
+  >
+    <b-dropdown-form form-class="data-size-form">
+      <b-form-group label="Number of data displayed">
+        <b-input-group size="sm" :append="numDisplay">
+          <b-form-input
+            v-model="dataSize"
+            number
+            min="1"
+            :max="total"
+            step="1"
+            type="range"
+          />
+        </b-input-group>
+      </b-form-group>
+      <b-form-group>
+        <b-overlay
+          :show="isUpdating"
+          class="d-inline-block"
+          opacity="0.6"
+          rounded
+          spinner-small
+          spinner-variant="primary"
+        >
+          <b-button
+            :disabled="isDisabled"
+            size="sm"
+            variant="primary"
+            @click="onUpdate"
+          >
+            Update
+          </b-button>
+        </b-overlay>
+      </b-form-group>
+    </b-dropdown-form>
+  </b-dropdown>
 </template>
 
 <script lang="ts">
@@ -80,8 +91,19 @@ export default Vue.extend({
       if (oldValue === newValue) return;
       this.dataSize = this.currentSize; // Set the input range to the appropriate value.
       this.isUpdating = false;
-      this.$emit("updated");
+
+      // Close the dropdown
+      // Create a TS error, even if its right and works:
+      // https://github.com/bootstrap-vue/bootstrap-vue/blob/dev/src/components/dropdown/index.d.ts#L14
+      // @ts-expect-error
+      this.$refs.dropdown.hide();
     }
   }
 });
 </script>
+
+<style scoped>
+.data-size-form {
+  width: 300px;
+}
+</style>
