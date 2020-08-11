@@ -51,7 +51,7 @@ export const getters = {
   getRouteResultTrainingVarsPage: read(
     moduleGetters.getRouteResultTrainingVarsPage
   ),
-  getRouteResultSize: read(moduleGetters.getRouteResultSize),
+  getRouteDataSize: read(moduleGetters.getRouteDataSize),
   getRouteTargetVariable: read(moduleGetters.getRouteTargetVariable),
   getRouteSolutionId: read(moduleGetters.getRouteSolutionId),
   getRouteFilters: read(moduleGetters.getRouteFilters),
@@ -97,6 +97,5 @@ export const getters = {
   getModelTimeLimit: read(moduleGetters.getModelTimeLimit),
   getModelQuality: read(moduleGetters.getModelQuality),
   isPageSelectTarget: read(moduleGetters.isPageSelectTarget),
-  isPageSelectTraining: read(moduleGetters.isPageSelectTraining),
-  isPagePrediction: read(moduleGetters.isPagePrediction)
+  isPageSelectTraining: read(moduleGetters.isPageSelectTraining)
 };

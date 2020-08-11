@@ -8,12 +8,12 @@
         variant="light"
         size="sm"
       >
-        <b-dropdown-form form-class="result-size-dropdown">
-          <result-size
-            :excluded="excluded"
+        <b-dropdown-form form-class="data-size-dropdown">
+          <data-size
             :currentSize="numItems"
             :total="numRows"
             @updated="$refs.size.hide()"
+            @submit="onDataSizeSubmit"
           />
         </b-dropdown-form>
       </b-dropdown>
@@ -43,12 +43,13 @@
 <script lang="ts">
 import Vue from "vue";
 import _ from "lodash";
+import DataSize from "../components/buttons/DataSize";
 import GeoPlot from "./GeoPlot";
 import ImageMosaic from "./ImageMosaic";
 import ResultsDataTable from "./ResultsDataTable";
-import ResultSize from "../components/buttons/ResultSize";
 import ResultsTimeseriesView from "./ResultsTimeseriesView";
 import {
+  Highlight,
   TableRow,
   TableColumn,
   TaskTypes,
@@ -58,8 +59,11 @@ import {
 import { Solution, SOLUTION_ERRORED } from "../store/requests/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as resultsGetters } from "../store/results/module";
-import { getters as requestGetters } from "../store/requests/module";
+import {
+  actions as resultsActions,
+  getters as resultsGetters
+} from "../store/results/module";
+import { getters as requestsGetters } from "../store/requests/module";
 import { Dictionary } from "../util/dict";
 import { updateTableRowSelection } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
@@ -78,10 +82,10 @@ export default Vue.extend({
   name: "results-data-slot",
 
   components: {
+    DataSize,
     GeoPlot,
     ImageMosaic,
     ResultsDataTable,
-    ResultSize,
     ResultsTimeseriesView
   },
 
@@ -106,12 +110,20 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
 
+    highlight(): Highlight {
+      return routeGetters.getDecodedHighlight(this.$store);
+    },
+
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
 
     solution(): Solution {
-      return requestGetters.getActiveSolution(this.$store);
+      return requestsGetters.getActiveSolution(this.$store);
+    },
+
+    solutionId(): string {
+      return this.solution?.solutionId;
     },
 
     solutionHasErrored(): boolean {
@@ -239,6 +251,22 @@ export default Vue.extend({
           );
         }
       }).length;
+    },
+
+    /* When the user request to fetch a different size of data. */
+    onDataSizeSubmit(dataSize: number) {
+      const args: any = {
+        dataset: this.dataset,
+        highlight: this.highlight,
+        size: dataSize,
+        solutionId: this.solutionId
+      };
+
+      if (this.excluded) {
+        resultsActions.fetchExcludedResultTableData(this.$store, args);
+      } else {
+        resultsActions.fetchIncludedResultTableData(this.$store, args);
+      }
     }
   }
 });
@@ -283,7 +311,7 @@ export default Vue.extend({
   opacity: 0.5;
 }
 
-.result-size-dropdown {
+.data-size-dropdown {
   width: 300px;
 }
 </style>

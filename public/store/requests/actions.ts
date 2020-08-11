@@ -95,7 +95,7 @@ function updateCurrentSolutionResults(
   const isForecasting = routeGetters
     .getRouteTask(store)
     .includes(TaskTypes.FORECASTING);
-  const size = routeGetters.getRouteResultSize(store);
+  const size = routeGetters.getRouteDataSize(store);
 
   const varModes: Map<string, SummaryMode> = context.getters.getDecodedVarModes;
 

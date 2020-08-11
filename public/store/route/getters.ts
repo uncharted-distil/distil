@@ -16,8 +16,8 @@ import {
   AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
   TRAINING_VARS_INSTANCE_PAGE,
   RESULT_TRAINING_VARS_INSTANCE_PAGE,
-  RESULT_SIZE_DEFAULT,
-  RESULT_SIZE_REMOTE_SENSING_DEFAULT
+  DATA_SIZE_DEFAULT,
+  DATA_SIZE_REMOTE_SENSING_DEFAULT
 } from "../route/index";
 import { ModelQuality } from "../requests/index";
 import { decodeFilters, Filter, FilterParams } from "../../util/filters";
@@ -232,16 +232,16 @@ export const getters = {
     return state.query.results ? (state.query.results as string) : null;
   },
 
-  getRouteResultSize(state: Route, getters: any): number {
-    const resultSize = state.query.resultSize;
-    if (resultSize) {
-      return _.toInteger(resultSize);
+  getRouteDataSize(state: Route, getters: any): number {
+    const dataSize = state.query.dataSize;
+    if (dataSize) {
+      return _.toInteger(dataSize);
     }
 
     const isRemoteSensing = getters.isRemoteSensing;
     return isRemoteSensing
-      ? RESULT_SIZE_REMOTE_SENSING_DEFAULT
-      : RESULT_SIZE_DEFAULT;
+      ? DATA_SIZE_REMOTE_SENSING_DEFAULT
+      : DATA_SIZE_DEFAULT;
   },
 
   getRouteProduceRequestId(state: Route): string {
@@ -272,10 +272,12 @@ export const getters = {
     getters: any
   ): FilterParams {
     const filters = getters.getDecodedFilters;
+    const size = getters.getRouteDataSize;
     const filterParams = _.cloneDeep({
       highlight: null,
-      filters: filters,
-      variables: []
+      variables: [],
+      filters,
+      size
     });
     // add training vars
     const training = getters.getDecodedTrainingVariableNames;
@@ -512,10 +514,5 @@ export const getters = {
   /* Check if the current page is SELECT_TRAINING_ROUTE. */
   isPageSelectTraining(state: Route): Boolean {
     return state.path === SELECT_TRAINING_ROUTE;
-  },
-
-  /* Check if the current page is PREDICTION_ROUTE. */
-  isPagePrediction(state: Route): Boolean {
-    return state.path === PREDICTION_ROUTE;
   }
 };

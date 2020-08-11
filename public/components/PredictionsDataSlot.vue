@@ -16,11 +16,12 @@
         variant="light"
         size="sm"
       >
-        <b-dropdown-form form-class="result-size-dropdown">
-          <result-size
+        <b-dropdown-form form-class="data-size-dropdown">
+          <data-size
             :currentSize="numItems"
             :total="numRows"
             @updated="$refs.size.hide()"
+            @submit="onDataSizeSubmit"
           />
         </b-dropdown-form>
       </b-dropdown>
@@ -50,20 +51,24 @@
 <script lang="ts">
 import Vue from "vue";
 import _ from "lodash";
+import DataSize from "../components/buttons/DataSize";
 import PredictionsDataTable from "./PredictionsDataTable";
 import ImageMosaic from "./ImageMosaic";
-import ResultSize from "../components/buttons/ResultSize";
 import ResultsTimeseriesView from "./ResultsTimeseriesView";
 import GeoPlot from "./GeoPlot";
 import { spinnerHTML } from "../util/spinner";
 import {
+  Highlight,
   TableRow,
   TableColumn,
   Variable,
   RowSelection
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getters as predictionsGetters } from "../store/predictions/module";
+import {
+  actions as predictionsActions,
+  getters as predictionsGetters
+} from "../store/predictions/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import {
@@ -85,10 +90,10 @@ export default Vue.extend({
   name: "predictions-data-slot",
 
   components: {
+    DataSize,
     GeoPlot,
     ImageMosaic,
     PredictionsDataTable,
-    ResultSize,
     ResultsTimeseriesView,
     ViewTypeToggle
   },
@@ -110,6 +115,18 @@ export default Vue.extend({
   },
 
   computed: {
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
+
+    highlight(): Highlight {
+      return routeGetters.getDecodedHighlight(this.$store);
+    },
+
+    produceRequestId(): string {
+      return routeGetters.getRouteProduceRequestId(this.$store);
+    },
+
     dataItems(): TableRow[] {
       return predictionsGetters.getIncludedPredictionTableDataItems(
         this.$store
@@ -190,6 +207,18 @@ export default Vue.extend({
       if (this.viewType === TABLE_VIEW) return "PredictionsDataTable";
       if (this.viewType === TIMESERIES_VIEW) return "ResultsTimeseriesView";
     }
+  },
+
+  methods: {
+    /* When the user request to fetch a different size of data. */
+    onDataSizeSubmit(dataSize: number) {
+      predictionsActions.fetchPredictionTableData(this.$store, {
+        dataset: this.dataset,
+        highlight: this.highlight,
+        produceRequestId: this.produceRequestId,
+        size: dataSize
+      });
+    }
   }
 });
 </script>
@@ -246,7 +275,7 @@ export default Vue.extend({
   flex-shrink: 0;
 }
 
-.result-size-dropdown {
+.data-size-dropdown {
   width: 300px;
 }
 </style>

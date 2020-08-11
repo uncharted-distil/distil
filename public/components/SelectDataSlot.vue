@@ -32,7 +32,29 @@
     </div>
 
     <div class="table-title-container">
-      <small class="row-number-label" v-html="tableTitle"></small>
+      <p class="selection-data-slot-summary">
+        <b-dropdown
+          :text="numItems.toString()"
+          ref="size"
+          variant="light"
+          size="sm"
+        >
+          <b-dropdown-form form-class="data-size-dropdown">
+            <data-size
+              :currentSize="numItems"
+              :total="numRows"
+              @updated="$refs.size.hide()"
+              @submit="onDataSizeSubmit"
+            />
+          </b-dropdown-form>
+        </b-dropdown>
+        <strong class="matching-color">matching</strong> samples of
+        {{ numRows }} to model<template v-if="selectionNumRows > 0"
+          >, {{ selectionNumRows }}
+          <strong class="selected-color">selected</strong>
+        </template>
+      </p>
+
       <layer-selection v-if="isRemoteSensing" class="layer-select-dropdown" />
       <b-button
         class="select-data-action-exclude"
@@ -43,12 +65,12 @@
       >
         <i
           class="fa fa-minus-circle pr-1"
-          v-bind:class="{
+          :class="{
             'exclude-highlight': isFilteringHighlights,
             'exclude-selection': isFilteringSelection
           }"
-        ></i
-        >Exclude
+        ></i>
+        Exclude
       </b-button>
       <b-button
         v-if="!includedActive"
@@ -58,9 +80,9 @@
       >
         <i
           class="fa fa-plus-circle pr-1"
-          v-bind:class="{ 'include-selection': isFilteringSelection }"
-        ></i
-        >Reinclude
+          :class="{ 'include-selection': isFilteringSelection }"
+        ></i>
+        Reinclude
       </b-button>
     </div>
 
@@ -80,6 +102,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { spinnerHTML } from "../util/spinner";
+import DataSize from "../components/buttons/DataSize";
 import SelectDataTable from "./SelectDataTable";
 import ImageMosaic from "./ImageMosaic";
 import SelectTimeseriesView from "./SelectTimeseriesView";
@@ -103,6 +126,7 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import {
   Filter,
+  FilterParams,
   addFilterToRoute,
   EXCLUDE_FILTER,
   INCLUDE_FILTER
@@ -118,6 +142,7 @@ import {
   createFilterFromRowSelection
 } from "../util/row";
 import { actions as appActions } from "../store/app/module";
+import { actions as viewActions } from "../store/view/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
 const GEO_VIEW = "geo";
@@ -130,14 +155,15 @@ export default Vue.extend({
   name: "select-data-slot",
 
   components: {
+    DataSize,
     FilterBadge,
-    SelectDataTable,
     ImageMosaic,
-    SelectGraphView,
+    LayerSelection,
+    SelectDataTable,
     SelectGeoPlot,
+    SelectGraphView,
     SelectTimeseriesView,
-    ViewTypeToggle,
-    LayerSelection
+    ViewTypeToggle
   },
 
   data() {
@@ -214,10 +240,7 @@ export default Vue.extend({
       return createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
     },
 
-    /**
-     * Check if the Active Filter is from an available feature.
-     * @returns {Boolean}
-     */
+    /* Check if the Active Filter is from an available feature. */
     isActiveFilterFromAnAvailableFeature(): Boolean {
       if (!this.activeFilter) {
         return false;
@@ -231,10 +254,7 @@ export default Vue.extend({
       return availableVariablesNames.includes(activeFilterName);
     },
 
-    /**
-     * Disable the Exclude filter button.
-     * @returns {Boolean}
-     */
+    /* Disable the Exclude filter button. */
     isExcludeDisabled(): Boolean {
       return (
         (!this.isFilteringHighlights && !this.isFilteringSelection) ||
@@ -250,21 +270,11 @@ export default Vue.extend({
       return routeGetters.getDecodedRowSelection(this.$store);
     },
 
-    tableTitle(): string {
+    selectionNumRows(): number {
       if (this.includedActive) {
-        const included = getNumIncludedRows(this.rowSelection);
-        if (included > 0) {
-          return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${included} <b class="selected-color">selected</b>`;
-        } else {
-          return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
-        }
+        return getNumIncludedRows(this.rowSelection);
       } else {
-        const excluded = getNumExcludedRows(this.rowSelection);
-        if (excluded > 0) {
-          return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${excluded} <b class="selected-color">selected</b>`;
-        } else {
-          return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
-        }
+        return getNumExcludedRows(this.rowSelection);
       }
     },
 
@@ -367,6 +377,7 @@ export default Vue.extend({
 
       clearRowSelection(this.$router);
     },
+
     setExcludedActive() {
       const entry = overlayRouteEntry(this.$route, {
         include: "false"
@@ -374,6 +385,13 @@ export default Vue.extend({
       this.$router.push(entry);
 
       clearRowSelection(this.$router);
+    },
+
+    /* When the user request to fetch a different size of data. */
+    onDataSizeSubmit(dataSize: number) {
+      const entry = overlayRouteEntry(this.$route, { dataSize });
+      this.$router.push(entry);
+      viewActions.updateSelectTrainingData(this.$store);
     }
   }
 });
@@ -427,10 +445,10 @@ table tr {
 }
 
 .matching-color {
-  color: var(--blue); /* #255dcc; */
+  color: var(--blue);
 }
 .selected-color {
-  color: var(--red); /* #ff0067; */
+  color: var(--red);
 }
 
 .fake-search-input {
@@ -462,12 +480,11 @@ table tr {
   margin-right: 6px;
 }
 
-.row-number-label {
-  margin-right: auto;
-  margin-top: auto;
-  vertical-align: baseline;
-  margin-bottom: -3px;
+.selection-data-slot-summary {
+  font-size: 90%;
+  margin: auto auto -3px 0; /* Display against the table */
 }
+
 .select-data-slot .nav-link.active {
   border-top: 1px solid #ccc;
   border-right: 1px solid #ccc;
@@ -479,10 +496,16 @@ table tr {
   border-top-right-radius: 0.125rem;
   color: rgba(0, 0, 0, 1);
 }
+
 .select-data-slot .nav-item > a {
   color: rgba(0, 0, 0, 0.5);
 }
+
 .select-data-slot .nav-tabs .nav-link {
   padding: 0.5rem 0.75rem 1rem;
+}
+
+.data-size-dropdown {
+  width: 300px;
 }
 </style>
