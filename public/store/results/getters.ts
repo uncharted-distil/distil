@@ -56,8 +56,8 @@ export const getters = {
   },
 
   getIncludedResultTableDataCount(state: ResultsState): number {
-    return state.includedResultTableData?.values
-      ? state.includedResultTableData.values.length
+    return state.includedResultTableData.numRowsFiltered
+      ? state.includedResultTableData.numRowsFiltered
       : 0;
   },
 
@@ -83,8 +83,8 @@ export const getters = {
   },
 
   getExcludedResultTableDataCount(state: ResultsState): number {
-    return state.excludedResultTableData?.values
-      ? state.excludedResultTableData.values.length
+    return state.excludedResultTableData.numRowsFiltered
+      ? state.excludedResultTableData.numRowsFiltered
       : 0;
   },
 

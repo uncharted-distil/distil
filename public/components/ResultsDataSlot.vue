@@ -194,7 +194,11 @@ export default Vue.extend({
 
     /* Get the total number of items available */
     numRows(): number {
-      return resultsGetters.getResultDataNumRows(this.$store);
+      if (this.excluded) {
+        return resultsGetters.getExcludedResultTableDataCount(this.$store);
+      }
+      // included or none get the same data
+      return resultsGetters.getIncludedResultTableDataCount(this.$store);
     },
 
     numErrors(): number {
