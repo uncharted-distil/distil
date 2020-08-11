@@ -595,12 +595,13 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 	}
 
 	joinSQL := ""
+	tableAlias := "base_data"
 	if join != nil {
-		join.baseAlias = "base_data"
+		tableAlias = join.baseAlias
 		joinSQL = getJoinSQL(join, true)
 	}
 
-	query := fmt.Sprintf("SELECT count(%s) FROM %s AS base_data %s", countTarget, storageName, joinSQL)
+	query := fmt.Sprintf("SELECT count(%s) FROM %s AS %s %s", countTarget, storageName, tableAlias, joinSQL)
 	if len(filters) > 0 {
 		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(filters, " AND "))
 	}

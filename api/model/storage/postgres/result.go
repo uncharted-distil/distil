@@ -733,9 +733,10 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	defer rows.Close()
 
 	joinDef := &joinDefinition{
+		baseAlias:     "data",
 		baseColumn:    model.D3MIndexFieldName,
 		joinTableName: storageNameResult,
-		joinAlias:     "joined",
+		joinAlias:     "predicted",
 		joinColumn:    "index",
 	}
 	numRows, err := s.fetchNumRowsJoined(storageName, variables, []string{"result_id = $1"}, []interface{}{resultURI}, joinDef)
