@@ -566,13 +566,13 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 }
 
 // FetchNumRows pulls the number of rows in the table.
-func (s *Storage) FetchNumRows(storageName string, variables []*model.Variable, filters map[string]interface{}) (int, error) {
+func (s *Storage) FetchNumRows(storageName string, variables []*model.Variable) (int, error) {
 
-	return s.fetchNumRowsJoined(storageName, variables, filters, nil)
+	return s.fetchNumRowsJoined(storageName, variables, nil, nil, nil)
 }
 
-// FetchNumRows pulls the number of rows in the table.
-func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Variable, filters map[string]interface{}, join *joinDefinition) (int, error) {
+// fetchNumRowsJoined pulls the number of rows in the table.
+func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Variable, filters []string, params []interface{}, join *joinDefinition) (int, error) {
 
 	countTarget := "*"
 
@@ -595,20 +595,15 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 	}
 
 	joinSQL := ""
+	tableAlias := "base_data"
 	if join != nil {
-		join.baseAlias = "base_data"
+		tableAlias = join.baseAlias
 		joinSQL = getJoinSQL(join, true)
 	}
 
-	query := fmt.Sprintf("SELECT count(%s) FROM %s AS base_data %s", countTarget, storageName, joinSQL)
-	params := make([]interface{}, 0)
+	query := fmt.Sprintf("SELECT count(%s) FROM %s AS %s %s", countTarget, storageName, tableAlias, joinSQL)
 	if len(filters) > 0 {
-		clauses := make([]string, 0)
-		for field, value := range filters {
-			clauses = append(clauses, fmt.Sprintf("%s = $%d", field, len(clauses)+1))
-			params = append(params, value)
-		}
-		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(clauses, " AND "))
+		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(filters, " AND "))
 	}
 	var numRows int
 	err := s.client.QueryRow(query, params...).Scan(&numRows)
@@ -637,7 +632,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
-	numRows, err := s.FetchNumRows(storageName, variables, nil)
+	numRows, err := s.FetchNumRows(storageName, variables)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}

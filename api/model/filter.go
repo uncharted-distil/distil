@@ -135,9 +135,10 @@ type FilteredDataValue struct {
 // FilteredData provides the metadata and raw data values that match a supplied
 // input filter.
 type FilteredData struct {
-	NumRows int                    `json:"numRows"`
-	Columns []*Column              `json:"columns"`
-	Values  [][]*FilteredDataValue `json:"values"`
+	NumRows         int                    `json:"numRows"`
+	NumRowsFiltered int                    `json:"numRowsFiltered"`
+	Columns         []*Column              `json:"columns"`
+	Values          [][]*FilteredDataValue `json:"values"`
 }
 
 // GetFilterVariables builds the filtered list of fields based on the filtering parameters.
