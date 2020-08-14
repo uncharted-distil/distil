@@ -184,7 +184,7 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, "data")
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema, numBuckets, "data")
+	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema, numBuckets, baseTableAlias)
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
@@ -470,7 +470,7 @@ func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResu
 	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, resultVariable, numBuckets)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, "data")
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {
 		return nil, err
 	}
@@ -591,7 +591,7 @@ func (f *NumericalField) FetchNumericalStatsByResult(resultURI string, filterPar
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, "")
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {
 		return nil, err
 	}

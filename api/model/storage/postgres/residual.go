@@ -185,7 +185,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storage
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, variable.Name, resultVariable, numBuckets, "data")
+	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, variable.Name, resultVariable, numBuckets, baseTableAlias)
 
 	fromClause := getResultJoin("result", storageName)
 
