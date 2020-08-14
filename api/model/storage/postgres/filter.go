@@ -465,18 +465,18 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 	return wheres, params, nil
 }
 
-func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
+func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, alias string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
 	// handle the general category case
 
 	filterParams := &api.FilterParams{
 		Filters: []*model.Filter{resultFilter},
 	}
 
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, filterParams, false)
 	return wheres, params, nil
 }
 
-func (s *Storage) buildResultQueryFilters(dataset string, storageName string, resultURI string, filterParams *api.FilterParams) ([]string, []interface{}, error) {
+func (s *Storage) buildResultQueryFilters(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, alias string) ([]string, []interface{}, error) {
 	// pull filters generated against the result facet out for special handling
 	filters := splitFilters(filterParams)
 
@@ -487,12 +487,12 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", genericFilterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, genericFilterParams, false)
 
 	// assemble split filters
 	var err error
 	if filters.predictedFilter != nil {
-		wheres, params, err = s.buildPredictedResultWhere(dataset, wheres, params, resultURI, filters.predictedFilter)
+		wheres, params, err = s.buildPredictedResultWhere(dataset, wheres, params, alias, resultURI, filters.predictedFilter)
 		if err != nil {
 			return nil, nil, err
 		}

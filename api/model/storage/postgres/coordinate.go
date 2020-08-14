@@ -179,7 +179,7 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, "data")
 	if err != nil {
 		return nil, err
 	}

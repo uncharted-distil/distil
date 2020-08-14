@@ -184,7 +184,7 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, "data")
 	if err != nil {
 		return nil, err
 	}
@@ -470,7 +470,7 @@ func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResu
 	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, resultVariable, numBuckets)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, "data")
 	if err != nil {
 		return nil, err
 	}
@@ -591,7 +591,7 @@ func (f *NumericalField) FetchNumericalStatsByResult(resultURI string, filterPar
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, "")
 	if err != nil {
 		return nil, err
 	}

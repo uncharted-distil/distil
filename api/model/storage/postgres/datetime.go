@@ -166,7 +166,7 @@ func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *a
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, "")
 	if err != nil {
 		return nil, err
 	}
@@ -445,7 +445,7 @@ func (f *DateTimeField) fetchPredictedSummaryData(resultURI string, datasetResul
 	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, resultVariable, numBuckets)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, "data")
 	if err != nil {
 		return nil, err
 	}
