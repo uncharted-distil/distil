@@ -526,8 +526,8 @@ func (f *TimeSeriesField) fetchHistogramByResult(resultURI string, filterParams 
 		`SELECT data."%s", COUNT(DISTINCT "%s") AS __count__
 		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		 WHERE result.result_id = $%d AND result.value != '' %s
-		 GROUP BY "%s"
-		 ORDER BY __count__ desc, "%s" LIMIT %d;`,
+		 GROUP BY data."%s"
+		 ORDER BY __count__ desc, data."%s" LIMIT %d;`,
 		keyColName, f.IDCol, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, keyColName,
 		keyColName, timeSeriesCatResultLimit)
@@ -653,8 +653,8 @@ func (f *TimeSeriesField) fetchPredictedSummaryData(resultURI string, datasetRes
 		`SELECT data."%s", COUNT(DISTINCT "%s") AS __count__
 		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		 WHERE result.result_id = $%d %s
-		 GROUP BY "%s"
-		 ORDER BY __count__ desc, "%s" LIMIT %d;`,
+		 GROUP BY data."%s"
+		 ORDER BY __count__ desc, data."%s" LIMIT %d;`,
 		keyColName, f.IDCol, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, keyColName,
 		keyColName, timeSeriesCatResultLimit)

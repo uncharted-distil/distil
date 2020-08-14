@@ -137,7 +137,7 @@ func (f *DateTimeField) fetchHistogramWithJoins(filterParams *api.FilterParams, 
 
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema, numBuckets)
+	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema, numBuckets, "")
 
 	where := ""
 	if len(wheres) > 0 {
@@ -190,7 +190,7 @@ func (f *DateTimeField) fetchHistogramByResult(resultURI string, filterParams *a
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema, numBuckets)
+	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema, numBuckets, baseTableAlias)
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
@@ -237,20 +237,23 @@ func (f *DateTimeField) fetchExtrema() (*api.Extrema, error) {
 	return f.parseExtrema(res)
 }
 
-func (f *DateTimeField) getHistogramAggQuery(extrema *api.Extrema, numBuckets int) (string, string, string) {
+func (f *DateTimeField) getHistogramAggQuery(extrema *api.Extrema, numBuckets int, alias string) (string, string, string) {
 	interval := extrema.GetBucketInterval(numBuckets)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
 
 	bucketQueryString := ""
+	if alias != "" {
+		alias = alias + "."
+	}
 	// if only a single value, then return a simple count.
 	if extrema.Max == extrema.Min {
 		// want to return the count under bucket 0.
-		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", extrema.Key, extrema.Key)
+		bucketQueryString = fmt.Sprintf("(%s\"%s\" - %s\"%s\")", alias, extrema.Key, alias, extrema.Key)
 	} else {
-		bucketQueryString = fmt.Sprintf("width_bucket(cast(extract(epoch from \"%s\") as integer), %d, %d, %d) - 1",
-			extrema.Key, int(extrema.Min), int(extrema.Max), extrema.GetBucketCount(numBuckets))
+		bucketQueryString = fmt.Sprintf("width_bucket(cast(extract(epoch from %s\"%s\") as integer), %d, %d, %d) - 1",
+			alias, extrema.Key, int(extrema.Min), int(extrema.Max), extrema.GetBucketCount(numBuckets))
 	}
 
 	histogramQueryString := fmt.Sprintf("(%s) * %d + %d", bucketQueryString, int(interval), int(extrema.Min))

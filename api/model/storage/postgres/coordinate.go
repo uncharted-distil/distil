@@ -148,8 +148,8 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 	xNumBuckets, yNumBuckets := getEqualBivariateBuckets(numBuckets, xExtrema, yExtrema)
 
 	// generate a histogram query for each
-	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema, xNumBuckets)
-	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema, yNumBuckets)
+	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema, xNumBuckets, "")
+	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema, yNumBuckets, "")
 
 	// Get count by x & y
 	query := fmt.Sprintf(`SELECT %s as bucket, CAST(%s as double precision) AS %s, %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
@@ -208,8 +208,8 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 	xNumBuckets, yNumBuckets := getEqualBivariateBuckets(numBuckets, xExtrema, yExtrema)
 
 	// create histograms given the the extrema
-	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema, xNumBuckets)
-	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema, yNumBuckets)
+	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema, xNumBuckets, "data")
+	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema, yNumBuckets, "data")
 
 	// Get count by x & y
 	query := fmt.Sprintf(`

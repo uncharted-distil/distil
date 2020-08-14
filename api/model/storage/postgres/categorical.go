@@ -213,7 +213,7 @@ func (f *CategoricalField) fetchHistogramByResult(resultURI string, filterParams
 		`SELECT data."%s", COUNT(%s) AS count
 		 FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		 WHERE result.result_id = $%d AND result.value != '' %s
-		 GROUP BY "%s"
+		 GROUP BY data."%s"
 		 ORDER BY count desc, "%s" LIMIT %d;`,
 		f.Key, f.Count, fromClause, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, f.Key,
