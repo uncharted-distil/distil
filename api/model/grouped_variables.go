@@ -74,9 +74,11 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 		for _, variable := range variables {
 			if variable.Name == updatedFilterParams.Highlight.Key && variable.IsGrouping() {
 				clusterCol, ok := GetClusterColFromGrouping(variable.Grouping)
-				if ok && HasClusterData(dataset, clusterCol, metaStore) {
+				if ok && filterParams.DataMode == ClusterDataMode && HasClusterData(dataset, clusterCol, metaStore) {
 					updatedFilterParams.Highlight.Key = clusterCol
 					break
+				} else {
+					updatedFilterParams.Highlight.Key = variable.Grouping.GetIDCol()
 				}
 			}
 		}
