@@ -169,6 +169,14 @@ export enum SummaryMode {
   RemoteSensing = "remoteSensing"
 }
 
+// Flags the display mode for filtering.  Generally Default is correct,
+// but in the case where a cluster has been applied, then filtering needs to be
+// done on the cluster column.
+export enum DataMode {
+  Default = "default",
+  Cluster = "cluster"
+}
+
 export interface TableValue {
   value: any;
   weight: number;

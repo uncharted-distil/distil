@@ -26,7 +26,13 @@ import {
   mutations as modelMutations
 } from "../model/module";
 import { getters as routeGetters } from "../route/module";
-import { TaskTypes, SummaryMode, Variable, Highlight } from "../dataset";
+import {
+  TaskTypes,
+  SummaryMode,
+  DataMode,
+  Variable,
+  Highlight
+} from "../dataset";
 import { getPredictionsById } from "../../util/predictions";
 
 enum ParamCacheKey {
@@ -89,12 +95,14 @@ const fetchVariableSummaries = createCacheable(
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
     const highlight = context.getters.getDecodedHighlight;
     const varModes = context.getters.getDecodedVarModes;
+    const dataMode = context.getters.getDataMode;
     return Promise.all([
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: dataset,
         variables: variables,
         filterParams: filterParams,
         highlight: highlight,
+        dataMode: dataMode,
         varModes: varModes
       }),
       datasetActions.fetchExcludedVariableSummaries(store, {
@@ -102,6 +110,7 @@ const fetchVariableSummaries = createCacheable(
         variables: variables,
         filterParams: filterParams,
         highlight: highlight,
+        dataMode: dataMode,
         varModes: varModes
       })
     ]);

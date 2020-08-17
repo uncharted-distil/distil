@@ -51,6 +51,7 @@ import {
   GeocodingPendingRequest,
   ClusteringPendingRequest,
   SummaryMode,
+  DataMode,
   isClusteredGrouping
 } from "../store/dataset/index";
 import {
@@ -273,7 +274,8 @@ export default Vue.extend({
       // serialize the modes map into a string and add to the route
       const varModesStr = varModesToString(varModesMap);
       const entry = overlayRouteEntry(this.$route, {
-        varModes: varModesStr
+        varModes: varModesStr,
+        dataMode: DataMode.Cluster
       });
       this.$router.push(entry);
 
@@ -290,6 +292,7 @@ export default Vue.extend({
           highlight: highlight,
           filterParams: filterParams,
           include: true,
+          dataMode: DataMode.Cluster,
           mode: $enum(SummaryMode).asValueOrDefault(v, SummaryMode.Default)
         });
       }

@@ -33,6 +33,7 @@ export interface RouteArgs {
   groupingType?: string;
   availableTargetVarsPage?: number;
   task?: string;
+  dataMode?: string;
   varModes?: string;
   varRanked?: string;
   produceRequestId?: string;
@@ -100,9 +101,12 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
 export function varModesToString(varModes: Map<string, SummaryMode>): string {
   // serialize the modes map into a string and add to the route
   return Array.from(varModes)
-    .reduce((acc, curr) => {
-      acc.push(`${curr[0]}:${curr[1]}`);
-      return acc;
-    }, [] as String[])
+    .reduce(
+      (acc, curr) => {
+        acc.push(`${curr[0]}:${curr[1]}`);
+        return acc;
+      },
+      [] as String[]
+    )
     .join(",");
 }

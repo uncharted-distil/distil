@@ -17,6 +17,7 @@ import {
   Task,
   ClusteringPendingRequest,
   SummaryMode,
+  DataMode,
   BandCombinations,
   BandID,
   isClusteredGrouping,
@@ -185,6 +186,7 @@ export const actions = {
         highlight: highlight,
         filterParams: filterParams,
         include: true,
+        dataMode: DataMode.Default,
         mode: SummaryMode.Default
       }),
       actions.fetchVariableSummary(context, {
@@ -193,6 +195,7 @@ export const actions = {
         highlight: highlight,
         filterParams: filterParams,
         include: false,
+        dataMode: DataMode.Default,
         mode: SummaryMode.Default
       }),
       actions.fetchVariableSummary(context, {
@@ -201,6 +204,7 @@ export const actions = {
         highlight: highlight,
         filterParams: filterParams,
         include: true,
+        dataMode: DataMode.Default,
         mode: SummaryMode.Default
       }),
       actions.fetchVariableSummary(context, {
@@ -209,6 +213,7 @@ export const actions = {
         highlight: highlight,
         filterParams: filterParams,
         include: false,
+        dataMode: DataMode.Default,
         mode: SummaryMode.Default
       })
     ]);
@@ -630,6 +635,7 @@ export const actions = {
           filterParams: filterParams,
           highlight: highlight,
           include: true,
+          dataMode: DataMode.Default,
           mode: SummaryMode.Default
         }),
         actions.fetchVariableSummary(context, {
@@ -638,6 +644,7 @@ export const actions = {
           filterParams: filterParams,
           highlight: highlight,
           include: false,
+          dataMode: DataMode.Default,
           mode: SummaryMode.Default
         })
       ]);
@@ -671,6 +678,7 @@ export const actions = {
       variables: Variable[];
       highlight: Highlight;
       filterParams: FilterParams;
+      dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
   ): Promise<void[]> {
@@ -680,6 +688,7 @@ export const actions = {
       filterParams: args.filterParams,
       highlight: args.highlight,
       include: true,
+      dataMode: args.dataMode,
       varModes: args.varModes
     });
   },
@@ -691,6 +700,7 @@ export const actions = {
       variables: Variable[];
       highlight: Highlight;
       filterParams: FilterParams;
+      dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
   ): Promise<void[]> {
@@ -700,6 +710,7 @@ export const actions = {
       filterParams: args.filterParams,
       highlight: args.highlight,
       include: false,
+      dataMode: args.DataMode,
       varModes: args.varModes
     });
   },
@@ -712,6 +723,7 @@ export const actions = {
       highlight: Highlight;
       filterParams: FilterParams;
       include: boolean;
+      dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
   ): Promise<void[]> {
@@ -755,6 +767,7 @@ export const actions = {
           filterParams: args.filterParams,
           highlight: args.highlight,
           include: args.include,
+          dataMode: dataMode,
           mode: mode
         })
       );
@@ -771,6 +784,7 @@ export const actions = {
       highlight?: Highlight;
       filterParams: FilterParams;
       include: boolean;
+      dataMode: DataMode;
       mode: SummaryMode;
     }
   ): Promise<void> {
@@ -786,6 +800,8 @@ export const actions = {
       ? mutations.updateIncludedVariableSummaries
       : mutations.updateExcludedVariableSummaries;
 
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
     try {
       const response = await axios.post(
         `/distil/variable-summary/${args.dataset}/${

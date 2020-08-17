@@ -115,7 +115,7 @@ func updateClusterHighlight(metadataStorage api.MetadataStorage, dataset string,
 
 		if variable.IsGrouping() {
 			clusterCol, ok := api.GetClusterColFromGrouping(variable.Grouping)
-			if ok && api.HasClusterData(dataset, clusterCol, metadataStorage) {
+			if ok && mode == api.ClusterMode && api.HasClusterData(dataset, clusterCol, metadataStorage) {
 				filterParams.Highlight.Key = clusterCol
 				return nil
 			}
