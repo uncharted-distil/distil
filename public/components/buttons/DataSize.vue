@@ -43,6 +43,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { BDropdown } from "bootstrap-vue";
 
 /**
  * Button to change the size of a current data.
@@ -91,12 +92,8 @@ export default Vue.extend({
       if (oldValue === newValue) return;
       this.dataSize = this.currentSize; // Set the input range to the appropriate value.
       this.isUpdating = false;
-
-      // Close the dropdown
-      // Create a TS error, even if its right and works:
-      // https://github.com/bootstrap-vue/bootstrap-vue/blob/dev/src/components/dropdown/index.d.ts#L14
-      // @ts-expect-error
-      this.$refs.dropdown.hide();
+      const dropdown = this.$refs.dropdown as typeof BDropdown;
+      dropdown.hide();
     }
   }
 });
