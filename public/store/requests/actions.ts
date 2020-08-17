@@ -95,13 +95,15 @@ function updateCurrentSolutionResults(
   const isForecasting = routeGetters
     .getRouteTask(store)
     .includes(TaskTypes.FORECASTING);
+  const size = routeGetters.getRouteDataSize(store);
 
   const varModes: Map<string, SummaryMode> = context.getters.getDecodedVarModes;
 
   resultsActions.fetchResultTableData(store, {
     dataset: req.dataset,
     solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight
+    highlight: context.getters.getDecodedHighlight,
+    size
   });
   resultsActions.fetchPredictedSummary(store, {
     dataset: req.dataset,

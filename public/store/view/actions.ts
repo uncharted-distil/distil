@@ -421,11 +421,13 @@ export const actions = {
     const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
       store
     );
+    const size = routeGetters.getRouteDataSize(store);
 
     resultActions.fetchResultTableData(store, {
-      dataset: dataset,
-      solutionId: solutionId,
-      highlight: highlight
+      dataset,
+      solutionId,
+      highlight,
+      size
     });
     resultActions.fetchTargetSummary(store, {
       dataset: dataset,
@@ -527,10 +529,13 @@ export const actions = {
     const varModes = <Map<string, SummaryMode>>(
       context.getters.getDecodedVarModes
     );
+    const size = routeGetters.getRouteDataSize(store);
+
     predictionActions.fetchPredictionTableData(store, {
       dataset: inferenceDataset,
       highlight: highlight,
-      produceRequestId: produceRequestId
+      produceRequestId: produceRequestId,
+      size
     });
     predictionActions.fetchTrainingSummaries(store, {
       dataset: inferenceDataset,

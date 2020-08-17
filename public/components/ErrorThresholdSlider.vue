@@ -220,6 +220,7 @@ export default Vue.extend({
 
 <style>
 .error-threshold-slider {
+  padding-bottom: 2rem;
   position: relative;
   width: 100%;
 }

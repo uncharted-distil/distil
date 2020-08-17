@@ -34,6 +34,9 @@ export const getters = {
   getIncludedResultTableDataFields: read(
     moduleGetters.getIncludedResultTableDataFields
   ),
+  getIncludedResultTableDataCount: read(
+    moduleGetters.getIncludedResultTableDataCount
+  ),
   hasExcludedResultTableData: read(moduleGetters.hasExcludedResultTableData),
   getExcludedResultTableData: read(moduleGetters.getExcludedResultTableData),
   getExcludedResultTableDataItems: read(
@@ -42,6 +45,13 @@ export const getters = {
   getExcludedResultTableDataFields: read(
     moduleGetters.getExcludedResultTableDataFields
   ),
+  getExcludedResultTableDataCount: read(
+    moduleGetters.getExcludedResultTableDataCount
+  ),
+  hasResultTableDataItemsWeight: read(
+    moduleGetters.hasResultTableDataItemsWeight
+  ),
+
   // predicted
   getPredictedSummaries: read(moduleGetters.getPredictedSummaries),
   // residual

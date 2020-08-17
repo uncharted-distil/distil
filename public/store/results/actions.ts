@@ -2,7 +2,7 @@ import axios from "axios";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
-import { EXCLUDE_FILTER } from "../../util/filters";
+import { EXCLUDE_FILTER, FilterParams } from "../../util/filters";
 import {
   getSolutionById,
   getSolutionsBySolutionRequestIds
@@ -235,7 +235,12 @@ export const actions = {
 
   async fetchIncludedResultTableData(
     context: ResultsContext,
-    args: { solutionId: string; dataset: string; highlight: Highlight }
+    args: {
+      solutionId: string;
+      dataset: string;
+      highlight: Highlight;
+      size?: number;
+    }
   ) {
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
@@ -246,11 +251,17 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
+    let filterParams: FilterParams = {
       highlight: null,
       variables: [],
       filters: []
     };
+
+    // Add the size limit to results if provided.
+    if (_.isInteger(args.size)) {
+      filterParams.size = args.size;
+    }
+
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
     try {
@@ -271,7 +282,12 @@ export const actions = {
 
   async fetchExcludedResultTableData(
     context: ResultsContext,
-    args: { solutionId: string; dataset: string; highlight: Highlight }
+    args: {
+      solutionId: string;
+      dataset: string;
+      highlight: Highlight;
+      size?: number;
+    }
   ) {
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
@@ -282,11 +298,17 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
+    let filterParams: FilterParams = {
       highlight: null,
       variables: [],
       filters: []
     };
+
+    // Add the size limit to results if provided.
+    if (_.isInteger(args.size)) {
+      filterParams.size = args.size;
+    }
+
     filterParams = addHighlightToFilterParams(
       filterParams,
       args.highlight,
@@ -311,19 +333,16 @@ export const actions = {
 
   fetchResultTableData(
     context: ResultsContext,
-    args: { solutionId: string; dataset: string; highlight: Highlight }
+    args: {
+      solutionId: string;
+      dataset: string;
+      highlight: Highlight;
+      size?: number;
+    }
   ) {
     return Promise.all([
-      actions.fetchIncludedResultTableData(context, {
-        dataset: args.dataset,
-        solutionId: args.solutionId,
-        highlight: args.highlight
-      }),
-      actions.fetchExcludedResultTableData(context, {
-        dataset: args.dataset,
-        solutionId: args.solutionId,
-        highlight: args.highlight
-      })
+      actions.fetchIncludedResultTableData(context, args),
+      actions.fetchExcludedResultTableData(context, args)
     ]);
   },
 
