@@ -456,6 +456,7 @@ export const actions = {
       const filterParams = context.getters
         .getDecodedSolutionRequestFilterParams as FilterParams;
       const highlight = context.getters.getDecodedHighlight as Highlight;
+      const dataMode = context.getters.getDataMode as DataMode;
       const varModes = context.getters.getDecodedVarModes as Map<
         string,
         SummaryMode
@@ -466,6 +467,7 @@ export const actions = {
           variables: variables,
           filterParams: filterParams,
           highlight: highlight,
+          dataMode: dataMode,
           varModes: varModes
         }),
         actions.fetchExcludedVariableSummaries(context, {
@@ -473,6 +475,7 @@ export const actions = {
           variables: variables,
           filterParams: filterParams,
           highlight: highlight,
+          dataMode: dataMode,
           varModes: varModes
         })
       ]);
@@ -535,6 +538,7 @@ export const actions = {
       const filterParams = context.getters
         .getDecodedSolutionRequestFilterParams as FilterParams;
       const highlight = context.getters.getDecodedHighlight as Highlight;
+      const dataMode = context.getters.getDataMode as DataMode;
       const varModes = context.getters.getDecodedVarModes as Map<
         string,
         SummaryMode
@@ -545,6 +549,7 @@ export const actions = {
           variables: variables,
           filterParams: filterParams,
           highlight: highlight,
+          dataMode: dataMode,
           varModes: varModes
         }),
         actions.fetchExcludedVariableSummaries(context, {
@@ -552,6 +557,7 @@ export const actions = {
           variables: variables,
           filterParams: filterParams,
           highlight: highlight,
+          dataMode: dataMode,
           varModes: varModes
         })
       ]);
@@ -585,6 +591,7 @@ export const actions = {
       const filterParams = context.getters
         .getDecodedSolutionRequestFilterParams as FilterParams;
       const highlight = context.getters.getDecodedHighlight as Highlight;
+      const dataMode = context.getters.getDataMode as DataMode;
       const varModes = context.getters.getDecodedVarModes as Map<
         string,
         SummaryMode
@@ -595,6 +602,7 @@ export const actions = {
           variables: variables,
           filterParams: filterParams,
           highlight: highlight,
+          dataMode: dataMode,
           varModes: varModes
         }),
         actions.fetchExcludedVariableSummaries(context, {
@@ -602,6 +610,7 @@ export const actions = {
           variables: variables,
           filterParams: filterParams,
           highlight: highlight,
+          dataMode: dataMode,
           varModes: varModes
         })
       ]);
@@ -710,7 +719,7 @@ export const actions = {
       filterParams: args.filterParams,
       highlight: args.highlight,
       include: false,
-      dataMode: args.DataMode,
+      dataMode: args.dataMode,
       varModes: args.varModes
     });
   },
@@ -767,7 +776,7 @@ export const actions = {
           filterParams: args.filterParams,
           highlight: args.highlight,
           include: args.include,
-          dataMode: dataMode,
+          dataMode: args.dataMode,
           mode: mode
         })
       );
@@ -1143,25 +1152,37 @@ export const actions = {
 
   fetchIncludedTableData(
     context: DatasetContext,
-    args: { dataset: string; filterParams: FilterParams; highlight: Highlight }
+    args: {
+      dataset: string;
+      filterParams: FilterParams;
+      highlight: Highlight;
+      dataMode: DataMode;
+    }
   ) {
     return actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
       highlight: args.highlight,
-      include: true
+      include: true,
+      dataMode: args.dataMode
     });
   },
 
   fetchExcludedTableData(
     context: DatasetContext,
-    args: { dataset: string; filterParams: FilterParams; highlight: Highlight }
+    args: {
+      dataset: string;
+      filterParams: FilterParams;
+      highlight: Highlight;
+      dataMode: DataMode;
+    }
   ) {
     return actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
       highlight: args.highlight,
-      include: false
+      include: false,
+      dataMode: args.dataMode
     });
   },
 
@@ -1172,6 +1193,7 @@ export const actions = {
       filterParams: FilterParams;
       highlight: Highlight;
       include: boolean;
+      dataMode: DataMode;
     }
   ) {
     if (!validateArgs(args, ["dataset", "filterParams"])) {
@@ -1186,6 +1208,9 @@ export const actions = {
       args.filterParams,
       args.highlight
     );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
 
     try {
       const response = await axios.post(

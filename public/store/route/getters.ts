@@ -393,7 +393,7 @@ export const getters = {
     if (!mode) {
       return null;
     }
-    return $enum(DataMode).asValueOrDefault(v, DataMode.Default);
+    return $enum(DataMode).asValueOrDefault(mode, DataMode.Default);
   },
 
   // Returns a map of (variable ID, summary mode) tuples that indicated the mode args that should be

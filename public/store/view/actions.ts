@@ -259,6 +259,7 @@ export const actions = {
     const highlight = context.getters.getDecodedHighlight;
     const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
     const datasets = context.getters.getDatasets;
+    const dataMode = context.getters.getDataMode as DataMode;
     const varModes = context.getters.getDecodedVarModes;
     const datasetIDA = datasetIDs[0];
     const datasetIDB = datasetIDs[1];
@@ -277,6 +278,7 @@ export const actions = {
         variables: datasetA.variables,
         filterParams: filterParams,
         highlight: highlight,
+        dataMode: dataMode,
         varModes: varModes
       }),
       datasetActions.fetchIncludedVariableSummaries(store, {
@@ -284,6 +286,7 @@ export const actions = {
         variables: datasetB.variables,
         filterParams: filterParams,
         highlight: highlight,
+        dataMode: dataMode,
         varModes: varModes
       }),
       datasetActions.fetchJoinDatasetsTableData(store, {
@@ -349,6 +352,7 @@ export const actions = {
     const dataset = context.getters.getRouteDataset;
     const highlight = context.getters.getDecodedHighlight;
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+    const dataMode = context.getters.getDataMode;
     const varModes = context.getters.getDecodedVarModes;
 
     return Promise.all([
@@ -361,12 +365,14 @@ export const actions = {
       datasetActions.fetchIncludedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,
-        highlight: highlight
+        highlight: highlight,
+        dataMode: dataMode
       }),
       datasetActions.fetchExcludedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,
-        highlight: highlight
+        highlight: highlight,
+        dataMode: dataMode
       })
     ]);
   },
