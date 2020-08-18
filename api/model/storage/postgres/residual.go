@@ -82,7 +82,7 @@ func (s *Storage) fetchResidualsSummary(dataset string, storageName string, vari
 	// Just return a nil in the case where we were asked to return residuals for a non-numeric variable.
 	if model.IsNumerical(variable.Type) || variable.Type == model.TimeSeriesType {
 		// update the highlight key to use the cluster if necessary
-		if err := updateClusterHighlight(s.metadata, dataset, filterParams, mode); err != nil {
+		if err := updateClusterFilters(s.metadata, dataset, filterParams, mode); err != nil {
 			return nil, err
 		}
 

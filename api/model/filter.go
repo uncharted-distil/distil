@@ -76,6 +76,7 @@ func (f *FilterParams) Clone() *FilterParams {
 	}
 	clone.Variables = append(clone.Variables, f.Variables...)
 	clone.Size = f.Size
+	clone.DataMode = f.DataMode
 	return clone
 }
 

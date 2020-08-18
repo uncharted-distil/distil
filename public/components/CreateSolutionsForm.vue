@@ -45,7 +45,7 @@ import ErrorModal from "../components/ErrorModal";
 import SettingsModal from "../components/SettingsModal";
 import {
   actions as appActions,
-  getters as appGetters
+  getters as appGetters,
 } from "../store/app/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -53,7 +53,7 @@ import { actions as viewActions } from "../store/view/module";
 import { RESULTS_ROUTE } from "../store/route/index";
 import { actions as requestActions } from "../store/requests/module";
 import { Solution, NUM_SOLUTIONS } from "../store/requests/index";
-import { Variable, TaskTypes } from "../store/dataset/index";
+import { Variable, TaskTypes, DataMode } from "../store/dataset/index";
 import { TIMESERIES_TYPE } from "../util/types";
 import { FilterParams } from "../util/filters";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
@@ -64,7 +64,7 @@ export default Vue.extend({
 
   components: {
     ErrorModal,
-    SettingsModal
+    SettingsModal,
   },
 
   data() {
@@ -75,7 +75,7 @@ export default Vue.extend({
       showExportFailure: false,
       showCreateFailure: false,
       createErrorMessage: null,
-      $bvModal: null
+      $bvModal: null,
     };
   },
   computed: {
@@ -104,7 +104,7 @@ export default Vue.extend({
       return routeGetters.getRouteTargetVariable(this.$store);
     },
     targetVariable(): Variable {
-      return _.find(this.variables, v => {
+      return _.find(this.variables, (v) => {
         return _.toLower(v.colName) === _.toLower(this.target);
       });
     },
@@ -119,7 +119,7 @@ export default Vue.extend({
     },
     percentComplete(): number {
       return 100;
-    }
+    },
   },
   methods: {
     // create button handler
@@ -128,7 +128,7 @@ export default Vue.extend({
         feature: Feature.CREATE_MODEL,
         activity: Activity.DATA_PREPARATION,
         subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: {}
+        details: {},
       });
 
       // flag as pending
@@ -142,33 +142,37 @@ export default Vue.extend({
           metrics: this.metrics,
           maxSolutions: routeGetters.getModelLimit(this.$store),
           maxTime: routeGetters.getModelTimeLimit(this.$store),
-          quality: routeGetters.getModelQuality(this.$store)
+          quality: routeGetters.getModelQuality(this.$store),
         })
         .then((res: Solution) => {
           this.pending = false;
+          const dataMode = routeGetters.getDataMode(this.$store);
+          const dataModeDefault = dataMode ? dataMode : DataMode.Default;
+
           // transition to result screen
           const entry = createRouteEntry(RESULTS_ROUTE, {
             dataset: routeGetters.getRouteDataset(this.$store),
             target: routeGetters.getRouteTargetVariable(this.$store),
             solutionId: res.solutionId,
             task: routeGetters.getRouteTask(this.$store),
+            dataMode: dataModeDefault,
             varModes: varModesToString(
               routeGetters.getDecodedVarModes(this.$store)
             ),
             modelLimit: routeGetters.getModelLimit(this.$store),
             modelTimeLimit: routeGetters.getModelTimeLimit(this.$store),
-            modelQuality: routeGetters.getModelQuality(this.$store)
+            modelQuality: routeGetters.getModelQuality(this.$store),
           });
           this.$router.push(entry);
         })
-        .catch(err => {
+        .catch((err) => {
           // display error modal
           this.pending = false;
           this.createErrorMessage = err.message;
           this.showCreateFailure = true;
         });
-    }
-  }
+    },
+  },
 });
 </script>
 
