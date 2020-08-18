@@ -44,6 +44,7 @@ export interface RouteArgs {
   modelTimeLimit?: number;
   modelLimit?: number;
   modelQuality?: string;
+  dataSize?: number;
 
   // we currently don't have a way to add these to the interface
   //

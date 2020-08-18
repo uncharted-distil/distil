@@ -2,7 +2,7 @@ import axios from "axios";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
-import { EXCLUDE_FILTER } from "../../util/filters";
+import { EXCLUDE_FILTER, FilterParams } from "../../util/filters";
 import {
   getSolutionById,
   getSolutionsBySolutionRequestIds
@@ -262,6 +262,7 @@ export const actions = {
       dataset: string;
       highlight: Highlight;
       dataMode: DataMode;
+      size?: number;
     }
   ) {
     const solution = getSolutionById(
@@ -284,7 +285,10 @@ export const actions = {
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
-    filterParams.dataMode = dataModeDefault;
+    filterParams.dataMode = dataModeDefault; // Add the size limit to results if provided.
+    if (_.isInteger(args.size)) {
+      filterParams.size = args.size;
+    }
 
     try {
       const response = await axios.post(
@@ -309,6 +313,7 @@ export const actions = {
       dataset: string;
       highlight: Highlight;
       dataMode: DataMode;
+      size?: number;
     }
   ) {
     const solution = getSolutionById(
@@ -333,6 +338,10 @@ export const actions = {
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;
+    // Add the size limit to results if provided.
+    if (_.isInteger(args.size)) {
+      filterParams.size = args.size;
+    }
 
     try {
       const response = await axios.post(
@@ -357,21 +366,12 @@ export const actions = {
       dataset: string;
       highlight: Highlight;
       dataMode: DataMode;
+      size?: number;
     }
   ) {
     return Promise.all([
-      actions.fetchIncludedResultTableData(context, {
-        dataset: args.dataset,
-        solutionId: args.solutionId,
-        highlight: args.highlight,
-        dataMode: args.dataMode
-      }),
-      actions.fetchExcludedResultTableData(context, {
-        dataset: args.dataset,
-        solutionId: args.solutionId,
-        highlight: args.highlight,
-        dataMode: args.dataMode
-      })
+      actions.fetchIncludedResultTableData(context, args),
+      actions.fetchExcludedResultTableData(context, args)
     ]);
   },
 

@@ -185,6 +185,7 @@ export interface TableValue {
 
 export interface TableData {
   numRows: number;
+  numRowsFiltered?: number;
   columns: TableColumn[];
   values: TableValue[][];
   fittedSolutionId: string;

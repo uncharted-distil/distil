@@ -9,13 +9,16 @@ import {
   BandID
 } from "../dataset/index";
 import {
+  PREDICTION_ROUTE,
   SELECT_TARGET_ROUTE,
   SELECT_TRAINING_ROUTE,
   JOINED_VARS_INSTANCE_PAGE,
   AVAILABLE_TARGET_VARS_INSTANCE_PAGE,
   AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
   TRAINING_VARS_INSTANCE_PAGE,
-  RESULT_TRAINING_VARS_INSTANCE_PAGE
+  RESULT_TRAINING_VARS_INSTANCE_PAGE,
+  DATA_SIZE_DEFAULT,
+  DATA_SIZE_REMOTE_SENSING_DEFAULT
 } from "../route/index";
 import { ModelQuality } from "../requests/index";
 import { decodeFilters, Filter, FilterParams } from "../../util/filters";
@@ -230,6 +233,18 @@ export const getters = {
     return state.query.results ? (state.query.results as string) : null;
   },
 
+  getRouteDataSize(state: Route, getters: any): number {
+    const dataSize = state.query.dataSize;
+    if (dataSize) {
+      return _.toInteger(dataSize);
+    }
+
+    const isRemoteSensing = getters.isRemoteSensing;
+    return isRemoteSensing
+      ? DATA_SIZE_REMOTE_SENSING_DEFAULT
+      : DATA_SIZE_DEFAULT;
+  },
+
   getRouteProduceRequestId(state: Route): string {
     return state.query.produceRequestId
       ? (state.query.produceRequestId as string)
@@ -258,10 +273,12 @@ export const getters = {
     getters: any
   ): FilterParams {
     const filters = getters.getDecodedFilters;
+    const size = getters.getRouteDataSize;
     const filterParams = _.cloneDeep({
       highlight: null,
-      filters: filters,
-      variables: []
+      variables: [],
+      filters,
+      size
     });
     // add training vars
     const training = getters.getDecodedTrainingVariableNames;

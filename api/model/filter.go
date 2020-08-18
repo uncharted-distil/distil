@@ -107,8 +107,10 @@ func filtersEqual(first *model.Filter, second *model.Filter) bool {
 // Merge merges another set of filter params into this set, expanding all
 // properties.
 func (f *FilterParams) Merge(other *FilterParams) {
-	// take greater of sizes
-	if other.Size > f.Size {
+
+	// If the filters has a nil or negative value, we use the value use by default on distil-model
+	// https://github.com/uncharted-distil/distil/blob/master/api/model/storage/postgres/request.go#L239
+	if f.Size < 0 {
 		f.Size = other.Size
 	}
 	if other.Highlight != nil && f.Highlight == nil {

@@ -7,8 +7,7 @@
     :items="items"
     :fields="fields"
     :predictedCol="predictedCol"
-  >
-  </sparkline-timeseries-view>
+  />
 </template>
 
 <script lang="ts">
@@ -29,10 +28,9 @@ export default Vue.extend({
   },
 
   props: {
-    items: Array as () => TableRow[],
-    fields: Object as () => Dictionary<TableColumn>,
-    instanceName: String as () => string,
-    includedActive: Boolean as () => boolean
+    dataItems: Array as () => TableRow[],
+    dataFields: Object as () => Dictionary<TableColumn>,
+    instanceName: String as () => string
   },
 
   computed: {
@@ -48,9 +46,11 @@ export default Vue.extend({
 
     predictedCol(): string {
       return this.solution ? this.solution.predictedKey : "";
+    },
+
+    includedActive(): boolean {
+      return routeGetters.getRouteInclude(this.$store);
     }
   }
 });
 </script>
-
-<style></style>

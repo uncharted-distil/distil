@@ -51,6 +51,7 @@ export const getters = {
   getRouteResultTrainingVarsPage: read(
     moduleGetters.getRouteResultTrainingVarsPage
   ),
+  getRouteDataSize: read(moduleGetters.getRouteDataSize),
   getRouteTargetVariable: read(moduleGetters.getRouteTargetVariable),
   getRouteSolutionId: read(moduleGetters.getRouteSolutionId),
   getRouteFilters: read(moduleGetters.getRouteFilters),

@@ -69,7 +69,6 @@ export default Vue.extend({
 
   props: {
     instanceName: String as () => string,
-    includedActive: Boolean as () => boolean,
     dataItems: Array as () => any[],
     dataFields: Object as () => Dictionary<TableColumn>
   },
@@ -111,6 +110,10 @@ export default Vue.extend({
 
     imageFields(): { key: string; type: string }[] {
       return getImageFields(this.fields);
+    },
+
+    includedActive(): boolean {
+      return routeGetters.getRouteInclude(this.$store);
     }
   },
 

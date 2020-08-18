@@ -5,7 +5,7 @@
       :key="request.requestId"
       v-for="request in requestGroups"
     >
-      <header v-if="!singleSolution" class="request-group-header">
+      <header v-if="!singleSolution" class="sidebar-title">
         Search <sup>{{ request.requestIndex }}</sup>
       </header>
 
@@ -233,14 +233,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
-.request-group-header {
-  border-bottom: 1px solid var(--gray-400);
-  color: var(--color-text-base);
-  font-weight: 600;
-  padding: 0.25rem 0 0.25rem;
-}
-
+<style scoped>
 .request-group-status {
   align-items: center; /* Keep the button taller. */
   display: flex;
