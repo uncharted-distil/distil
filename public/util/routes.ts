@@ -33,6 +33,7 @@ export interface RouteArgs {
   groupingType?: string;
   availableTargetVarsPage?: number;
   task?: string;
+  dataMode?: string;
   varModes?: string;
   varRanked?: string;
   produceRequestId?: string;

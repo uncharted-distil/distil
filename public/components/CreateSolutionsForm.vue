@@ -53,7 +53,7 @@ import { actions as viewActions } from "../store/view/module";
 import { RESULTS_ROUTE } from "../store/route/index";
 import { actions as requestActions } from "../store/requests/module";
 import { Solution, NUM_SOLUTIONS } from "../store/requests/index";
-import { Variable, TaskTypes } from "../store/dataset/index";
+import { Variable, TaskTypes, DataMode } from "../store/dataset/index";
 import { TIMESERIES_TYPE } from "../util/types";
 import { FilterParams } from "../util/filters";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
@@ -146,12 +146,16 @@ export default Vue.extend({
         })
         .then((res: Solution) => {
           this.pending = false;
+          const dataMode = routeGetters.getDataMode(this.$store);
+          const dataModeDefault = dataMode ? dataMode : DataMode.Default;
+
           // transition to result screen
           const entry = createRouteEntry(RESULTS_ROUTE, {
             dataset: routeGetters.getRouteDataset(this.$store),
             target: routeGetters.getRouteTargetVariable(this.$store),
             solutionId: res.solutionId,
             task: routeGetters.getRouteTask(this.$store),
+            dataMode: dataModeDefault,
             varModes: varModesToString(
               routeGetters.getDecodedVarModes(this.$store)
             ),

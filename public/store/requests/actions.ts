@@ -98,11 +98,13 @@ function updateCurrentSolutionResults(
   const size = routeGetters.getRouteDataSize(store);
 
   const varModes: Map<string, SummaryMode> = context.getters.getDecodedVarModes;
+  const dataMode = context.getters.getDataMode;
 
   resultsActions.fetchResultTableData(store, {
     dataset: req.dataset,
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
+    dataMode: dataMode,
     size
   });
   resultsActions.fetchPredictedSummary(store, {
@@ -110,6 +112,7 @@ function updateCurrentSolutionResults(
     target: req.target,
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
+    dataMode: dataMode,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
       : SummaryMode.Default
@@ -119,6 +122,7 @@ function updateCurrentSolutionResults(
     training: context.getters.getActiveSolutionTrainingVariables,
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
+    dataMode: dataMode,
     varModes: varModes
   });
   resultsActions.fetchTargetSummary(store, {
@@ -126,6 +130,7 @@ function updateCurrentSolutionResults(
     target: req.target,
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
+    dataMode: dataMode,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
       : SummaryMode.Default
@@ -142,6 +147,7 @@ function updateCurrentSolutionResults(
       target: req.target,
       solutionId: res.solutionId,
       highlight: context.getters.getDecodedHighlight,
+      dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
         : SummaryMode.Default
@@ -151,6 +157,7 @@ function updateCurrentSolutionResults(
       dataset: req.dataset,
       solutionId: res.solutionId,
       highlight: context.getters.getDecodedHighlight,
+      dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
         : SummaryMode.Default
@@ -201,6 +208,7 @@ function updateSolutionResults(
   const isForecasting = taskArgs && taskArgs.includes(TaskTypes.FORECASTING);
 
   const varModes = context.getters.getDecodedVarModes;
+  const dataMode = context.getters.getDataMode;
 
   // if current solutionId, pull result summaries
   resultsActions.fetchPredictedSummary(store, {
@@ -208,6 +216,7 @@ function updateSolutionResults(
     target: req.target,
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
+    dataMode: dataMode,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
       : SummaryMode.Default
@@ -224,6 +233,7 @@ function updateSolutionResults(
       target: req.target,
       solutionId: res.solutionId,
       highlight: context.getters.getDecodedHighlight,
+      dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
         : SummaryMode.Default
@@ -233,6 +243,7 @@ function updateSolutionResults(
       dataset: req.dataset,
       solutionId: res.solutionId,
       highlight: context.getters.getDecodedHighlight,
+      dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
         : SummaryMode.Default

@@ -82,7 +82,7 @@ func (s *Storage) fetchResidualsSummary(dataset string, storageName string, vari
 	// Just return a nil in the case where we were asked to return residuals for a non-numeric variable.
 	if model.IsNumerical(variable.Type) || variable.Type == model.TimeSeriesType {
 		// update the highlight key to use the cluster if necessary
-		if err := updateClusterHighlight(s.metadata, dataset, filterParams, mode); err != nil {
+		if err := updateClusterFilters(s.metadata, dataset, filterParams, mode); err != nil {
 			return nil, err
 		}
 
@@ -104,12 +104,12 @@ func getErrorTyped(alias string, variableName string) string {
 	return fmt.Sprintf("(cast(value as double precision) - cast(%s as double precision))", fullName)
 }
 
-func (s *Storage) getResidualsHistogramAggQuery(extrema *api.Extrema, variableName string, resultVariable *model.Variable, numBuckets int) (string, string, string) {
+func (s *Storage) getResidualsHistogramAggQuery(extrema *api.Extrema, variableName string, resultVariable *model.Variable, numBuckets int, alias string) (string, string, string) {
 	// compute the bucket interval for the histogram
 	interval := extrema.GetBucketInterval(numBuckets)
 
 	// Only numeric types should occur.
-	errorTyped := getErrorTyped("", variableName)
+	errorTyped := getErrorTyped(alias, variableName)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
@@ -185,7 +185,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storage
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, variable.Name, resultVariable, numBuckets)
+	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, variable.Name, resultVariable, numBuckets, baseTableAlias)
 
 	fromClause := getResultJoin("result", storageName)
 
@@ -206,7 +206,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storage
 	query := fmt.Sprintf(`
 		SELECT %s as bucket, CAST(%s as double precision) AS %s, COUNT(*) AS count
 		FROM %s
-		WHERE result_id = $1 AND target = $2 AND %s != '' %s
+		WHERE result.result_id = $1 AND result.target = $2 AND result.%s != '' %s
 		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName,
 		fromClause, resultVariable.Name, where, bucketQuery, histogramName)
 

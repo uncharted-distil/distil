@@ -707,7 +707,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	wheres = append(wheres, fmt.Sprintf("predicted.result_id = $%d", len(params)+1))
-	wheres = append(wheres, fmt.Sprintf("target = $%d", len(params)+2))
+	wheres = append(wheres, fmt.Sprintf("predicted.target = $%d", len(params)+2))
 	wheres = append(wheres, "predicted.value != ''")
 	params = append(params, resultURI)
 	params = append(params, targetName)

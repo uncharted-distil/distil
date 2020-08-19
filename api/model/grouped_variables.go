@@ -53,6 +53,20 @@ func FetchDatasetVariables(dataset string, metaStore MetadataStorage) ([]*model.
 	return retainedVariables, nil
 }
 
+func expandFilter(metaStore MetadataStorage, dataset string, dataMode DataMode, filter *model.Filter, variables []*model.Variable) {
+	for _, variable := range variables {
+		if variable.Name == filter.Key && variable.IsGrouping() {
+			clusterCol, ok := GetClusterColFromGrouping(variable.Grouping)
+			if ok && dataMode == ClusterDataMode && HasClusterData(dataset, clusterCol, metaStore) {
+				filter.Key = clusterCol
+			} else {
+				filter.Key = variable.Grouping.GetIDCol()
+			}
+			break
+		}
+	}
+}
+
 // ExpandFilterParams examines filter parameters for grouped variables, and replaces them with their constituent components
 // as necessary.
 func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidden bool, metaStore MetadataStorage) (*FilterParams, error) {
@@ -71,15 +85,10 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 	// Check if the highlight variable is a group variable, and if it has associated cluster data.
 	// If it does, update the filter key to use the highlight column.
 	if updatedFilterParams.Highlight != nil {
-		for _, variable := range variables {
-			if variable.Name == updatedFilterParams.Highlight.Key && variable.IsGrouping() {
-				clusterCol, ok := GetClusterColFromGrouping(variable.Grouping)
-				if ok && HasClusterData(dataset, clusterCol, metaStore) {
-					updatedFilterParams.Highlight.Key = clusterCol
-					break
-				}
-			}
-		}
+		expandFilter(metaStore, dataset, updatedFilterParams.DataMode, updatedFilterParams.Highlight, variables)
+	}
+	for _, f := range updatedFilterParams.Filters {
+		expandFilter(metaStore, dataset, updatedFilterParams.DataMode, f, variables)
 	}
 
 	// create variable lookup

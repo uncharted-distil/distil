@@ -371,7 +371,7 @@ func (f *TextField) fetchHistogram(filterParams *api.FilterParams, invert bool) 
 func (f *TextField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams) (*api.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {
 		return nil, err
 	}
@@ -488,7 +488,7 @@ func (f *TextField) fetchPredictedSummaryData(resultURI string, datasetResult st
 	targetName := f.Key
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, "base")
 	if err != nil {
 		return nil, err
 	}

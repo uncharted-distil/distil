@@ -7,7 +7,7 @@ import {
   getSolutionById,
   getSolutionsBySolutionRequestIds
 } from "../../util/solutions";
-import { Variable, Highlight, SummaryMode } from "../dataset/index";
+import { Variable, Highlight, SummaryMode, DataMode } from "../dataset/index";
 import { mutations } from "./module";
 import { ResultsState } from "./index";
 import { addHighlightToFilterParams } from "../../util/highlights";
@@ -34,6 +34,7 @@ export const actions = {
       training: Variable[];
       solutionId: string;
       highlight: Highlight;
+      dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
   ) {
@@ -51,6 +52,10 @@ export const actions = {
     }
     if (!args.varModes) {
       console.warn("`varModes` argument is missing");
+      return null;
+    }
+    if (!args.dataMode) {
+      console.warn("`dataMode` argument is missing");
       return null;
     }
     const solution = getSolutionById(
@@ -102,6 +107,7 @@ export const actions = {
           variable: variable,
           resultID: solution.resultId,
           highlight: args.highlight,
+          dataMode: args.dataMode,
           varMode: varModes.has(variable.colName)
             ? varModes.get(variable.colName)
             : SummaryMode.Default
@@ -118,6 +124,7 @@ export const actions = {
       variable: Variable;
       resultID: string;
       highlight: Highlight;
+      dataMode: DataMode;
       varMode: SummaryMode;
     }
   ): Promise<void> {
@@ -134,12 +141,19 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
       filters: []
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
+
     try {
       const response = await axios.post(
         `/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}/${args.varMode}`,
@@ -169,6 +183,7 @@ export const actions = {
       target: string;
       solutionId: string;
       highlight: Highlight;
+      dataMode: DataMode;
       varMode: SummaryMode;
     }
   ) {
@@ -210,12 +225,19 @@ export const actions = {
       );
     }
 
-    let filterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
       filters: []
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
+
     try {
       const response = await axios.post(
         `/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}/${args.varMode}`,
@@ -239,6 +261,7 @@ export const actions = {
       solutionId: string;
       dataset: string;
       highlight: Highlight;
+      dataMode: DataMode;
       size?: number;
     }
   ) {
@@ -251,18 +274,21 @@ export const actions = {
       return null;
     }
 
-    let filterParams: FilterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
       filters: []
     };
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
 
-    // Add the size limit to results if provided.
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault; // Add the size limit to results if provided.
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
     }
-
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
     try {
       const response = await axios.post(
@@ -286,6 +312,7 @@ export const actions = {
       solutionId: string;
       dataset: string;
       highlight: Highlight;
+      dataMode: DataMode;
       size?: number;
     }
   ) {
@@ -298,22 +325,23 @@ export const actions = {
       return null;
     }
 
-    let filterParams: FilterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
       filters: []
     };
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight,
+      EXCLUDE_FILTER
+    );
 
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
     // Add the size limit to results if provided.
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
     }
-
-    filterParams = addHighlightToFilterParams(
-      filterParams,
-      args.highlight,
-      EXCLUDE_FILTER
-    );
 
     try {
       const response = await axios.post(
@@ -337,6 +365,7 @@ export const actions = {
       solutionId: string;
       dataset: string;
       highlight: Highlight;
+      dataMode: DataMode;
       size?: number;
     }
   ) {
@@ -386,6 +415,7 @@ export const actions = {
       target: string;
       solutionId: string;
       highlight: Highlight;
+      dataMode: DataMode;
       varMode: SummaryMode;
     }
   ) {
@@ -415,12 +445,19 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
       filters: []
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
+
     const endpoint = `/distil/solution-result-summary`;
     const key = solution.predictedKey;
     const label = "Predicted";
@@ -445,6 +482,7 @@ export const actions = {
       target: string;
       requestIds: string[];
       highlight: Highlight;
+      dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
   ) {
@@ -463,6 +501,7 @@ export const actions = {
           target: args.target,
           solutionId: solution.solutionId,
           highlight: args.highlight,
+          dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
             : SummaryMode.Default
@@ -479,6 +518,7 @@ export const actions = {
       target: string;
       solutionId: string;
       highlight: Highlight;
+      dataMode: DataMode;
       varMode: SummaryMode;
     }
   ) {
@@ -508,12 +548,18 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
       filters: []
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
 
     const endPoint = `/distil/residuals-summary/${args.dataset}/${args.target}`;
     const key = solution.errorKey;
@@ -539,6 +585,7 @@ export const actions = {
       target: string;
       requestIds: string[];
       highlight: Highlight;
+      dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
   ) {
@@ -557,6 +604,7 @@ export const actions = {
           target: args.target,
           solutionId: solution.solutionId,
           highlight: args.highlight,
+          dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
             : SummaryMode.Default
@@ -572,6 +620,7 @@ export const actions = {
       dataset: string;
       solutionId: string;
       highlight: Highlight;
+      dataMode: DataMode;
       varMode: SummaryMode;
     }
   ) {
@@ -588,12 +637,18 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
       filters: []
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
 
     const endPoint = `/distil/correctness-summary/${args.dataset}`;
     const key = solution.errorKey;
@@ -619,6 +674,7 @@ export const actions = {
       target: string;
       requestIds: string[];
       highlight: Highlight;
+      dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
   ) {
@@ -636,6 +692,7 @@ export const actions = {
           dataset: args.dataset,
           solutionId: solution.solutionId,
           highlight: args.highlight,
+          dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
             : SummaryMode.Default

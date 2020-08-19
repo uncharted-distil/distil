@@ -101,6 +101,7 @@ export interface FilterParams {
   filters: Filter[];
   variables: string[];
   size?: number;
+  dataMode?: string;
 }
 
 /**

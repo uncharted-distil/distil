@@ -4,6 +4,7 @@ import {
   Highlight,
   RowSelection,
   SummaryMode,
+  DataMode,
   TaskTypes,
   BandID
 } from "../dataset/index";
@@ -402,6 +403,14 @@ export const getters = {
       return null;
     }
     return task;
+  },
+
+  getDataMode(state: Route, getters: any): DataMode {
+    const mode = state.query.dataMode as string;
+    if (!mode) {
+      return null;
+    }
+    return $enum(DataMode).asValueOrDefault(mode, DataMode.Default);
   },
 
   // Returns a map of (variable ID, summary mode) tuples that indicated the mode args that should be

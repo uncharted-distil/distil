@@ -148,8 +148,8 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 	xNumBuckets, yNumBuckets := getEqualBivariateBuckets(numBuckets, xExtrema, yExtrema)
 
 	// generate a histogram query for each
-	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema, xNumBuckets)
-	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema, yNumBuckets)
+	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema, xNumBuckets, "")
+	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema, yNumBuckets, "")
 
 	// Get count by x & y
 	query := fmt.Sprintf(`SELECT %s as bucket, CAST(%s as double precision) AS %s, %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
@@ -179,7 +179,7 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {
 		return nil, err
 	}
@@ -208,8 +208,8 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 	xNumBuckets, yNumBuckets := getEqualBivariateBuckets(numBuckets, xExtrema, yExtrema)
 
 	// create histograms given the the extrema
-	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema, xNumBuckets)
-	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema, yNumBuckets)
+	xHistogramName, xBucketQuery, xHistogramQuery := xField.getHistogramAggQuery(xExtrema, xNumBuckets, baseTableAlias)
+	yHistogramName, yBucketQuery, yHistogramQuery := yField.getHistogramAggQuery(yExtrema, yNumBuckets, baseTableAlias)
 
 	// Get count by x & y
 	query := fmt.Sprintf(`

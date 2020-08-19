@@ -26,7 +26,13 @@ import {
   mutations as modelMutations
 } from "../model/module";
 import { getters as routeGetters } from "../route/module";
-import { TaskTypes, SummaryMode, Variable, Highlight } from "../dataset";
+import {
+  TaskTypes,
+  SummaryMode,
+  DataMode,
+  Variable,
+  Highlight
+} from "../dataset";
 import { getPredictionsById } from "../../util/predictions";
 
 enum ParamCacheKey {
@@ -89,12 +95,14 @@ const fetchVariableSummaries = createCacheable(
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
     const highlight = context.getters.getDecodedHighlight;
     const varModes = context.getters.getDecodedVarModes;
+    const dataMode = context.getters.getDataMode;
     return Promise.all([
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: dataset,
         variables: variables,
         filterParams: filterParams,
         highlight: highlight,
+        dataMode: dataMode,
         varModes: varModes
       }),
       datasetActions.fetchExcludedVariableSummaries(store, {
@@ -102,6 +110,7 @@ const fetchVariableSummaries = createCacheable(
         variables: variables,
         filterParams: filterParams,
         highlight: highlight,
+        dataMode: dataMode,
         varModes: varModes
       })
     ]);
@@ -250,6 +259,7 @@ export const actions = {
     const highlight = context.getters.getDecodedHighlight;
     const filterParams = context.getters.getDecodedJoinDatasetsFilterParams;
     const datasets = context.getters.getDatasets;
+    const dataMode = context.getters.getDataMode as DataMode;
     const varModes = context.getters.getDecodedVarModes;
     const datasetIDA = datasetIDs[0];
     const datasetIDB = datasetIDs[1];
@@ -268,6 +278,7 @@ export const actions = {
         variables: datasetA.variables,
         filterParams: filterParams,
         highlight: highlight,
+        dataMode: dataMode,
         varModes: varModes
       }),
       datasetActions.fetchIncludedVariableSummaries(store, {
@@ -275,6 +286,7 @@ export const actions = {
         variables: datasetB.variables,
         filterParams: filterParams,
         highlight: highlight,
+        dataMode: dataMode,
         varModes: varModes
       }),
       datasetActions.fetchJoinDatasetsTableData(store, {
@@ -340,6 +352,7 @@ export const actions = {
     const dataset = context.getters.getRouteDataset;
     const highlight = context.getters.getDecodedHighlight;
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+    const dataMode = context.getters.getDataMode;
     const varModes = context.getters.getDecodedVarModes;
 
     return Promise.all([
@@ -352,12 +365,14 @@ export const actions = {
       datasetActions.fetchIncludedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,
-        highlight: highlight
+        highlight: highlight,
+        dataMode: dataMode
       }),
       datasetActions.fetchExcludedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,
-        highlight: highlight
+        highlight: highlight,
+        dataMode: dataMode
       })
     ]);
   },
@@ -418,15 +433,17 @@ export const actions = {
       store
     );
     const highlight = routeGetters.getDecodedHighlight(store);
+    const dataMode = context.getters.getDataMode;
     const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
       store
     );
     const size = routeGetters.getRouteDataSize(store);
 
     resultActions.fetchResultTableData(store, {
-      dataset,
-      solutionId,
-      highlight,
+      dataset: dataset,
+      solutionId: solutionId,
+      highlight: highlight,
+      dataMode: dataMode,
       size
     });
     resultActions.fetchTargetSummary(store, {
@@ -434,6 +451,7 @@ export const actions = {
       target: target,
       solutionId: solutionId,
       highlight: highlight,
+      dataMode: dataMode,
       varMode: varModes.has(target) ? varModes.get(target) : SummaryMode.Default
     });
     resultActions.fetchTrainingSummaries(store, {
@@ -441,6 +459,7 @@ export const actions = {
       training: trainingVariables,
       solutionId: solutionId,
       highlight: highlight,
+      dataMode: dataMode,
       varModes: varModes
     });
     resultActions.fetchPredictedSummaries(store, {
@@ -448,6 +467,7 @@ export const actions = {
       target: target,
       requestIds: requestIds,
       highlight: highlight,
+      dataMode: dataMode,
       varModes: varModes
     });
     resultActions.fetchVariableRankings(store, { solutionID: solutionId });
@@ -470,6 +490,7 @@ export const actions = {
         target: target,
         requestIds: requestIds,
         highlight: highlight,
+        dataMode: dataMode,
         varModes: varModes
       });
     } else if (task.includes(TaskTypes.CLASSIFICATION)) {
@@ -478,6 +499,7 @@ export const actions = {
         target: target,
         requestIds: requestIds,
         highlight: highlight,
+        dataMode: dataMode,
         varModes: varModes
       });
     } else {

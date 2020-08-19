@@ -26,6 +26,28 @@ import (
 	"github.com/uncharted-distil/distil/api/util/json"
 )
 
+// DataMode defines the data filter modes.
+type DataMode int
+
+const (
+	// DefaultDataMode use the id field for filtering, ex. clustering not applied
+	DefaultDataMode = iota + 1
+	// ClusterDataMode use computed cluster information for filtering if availble, ex. timeseries clusters
+	ClusterDataMode
+)
+
+// DataModeFromString creates a DataMode from the supplied string
+func DataModeFromString(s string) (DataMode, error) {
+	switch s {
+	case "cluster":
+		return ClusterDataMode, nil
+	case "default":
+		return DefaultDataMode, nil
+	default:
+		return 0, errors.Errorf("%s is not a valid DataMode", s)
+	}
+}
+
 // FilterParams defines the set of numeric range and categorical filters. Variables
 // with no range or category filters are also allowed.
 type FilterParams struct {
@@ -33,6 +55,7 @@ type FilterParams struct {
 	Highlight *model.Filter   `json:"highlight"`
 	Filters   []*model.Filter `json:"filters"`
 	Variables []string        `json:"variables"`
+	DataMode  DataMode        `json:"dataMode"`
 }
 
 // Empty returns if the filter set is empty.
@@ -53,6 +76,7 @@ func (f *FilterParams) Clone() *FilterParams {
 	}
 	clone.Variables = append(clone.Variables, f.Variables...)
 	clone.Size = f.Size
+	clone.DataMode = f.DataMode
 	return clone
 }
 
@@ -314,8 +338,15 @@ func parseFilter(filter map[string]interface{}) (*model.Filter, error) {
 
 // ParseFilterParamsFromJSON parses filter parameters out of a map[string]interface{}
 func ParseFilterParamsFromJSON(params map[string]interface{}) (*FilterParams, error) {
+	dataMode := json.StringDefault(params, "default", "dataMode")
+	dataModeParsed, err := DataModeFromString(dataMode)
+	if err != nil {
+		return nil, err
+	}
+
 	filterParams := &FilterParams{
-		Size: json.IntDefault(params, model.DefaultFilterSize, "size"),
+		Size:     json.IntDefault(params, model.DefaultFilterSize, "size"),
+		DataMode: dataModeParsed,
 	}
 
 	if params == nil {
