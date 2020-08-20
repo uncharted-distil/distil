@@ -571,6 +571,12 @@ func (s *Storage) FetchNumRows(storageName string, variables []*model.Variable) 
 	return s.fetchNumRowsJoined(storageName, variables, nil, nil, nil)
 }
 
+// FetchNumRowsFiltered pulls the number of filtered rows in the table.
+func (s *Storage) FetchNumRowsFiltered(storageName string, variables []*model.Variable, filters []string, params []interface{}) (int, error) {
+
+	return s.fetchNumRowsJoined(storageName, variables, filters, params, nil)
+}
+
 // fetchNumRowsJoined pulls the number of rows in the table.
 func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Variable, filters []string, params []interface{}, join *joinDefinition) (int, error) {
 
@@ -699,5 +705,17 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	}
 
 	// parse the result
-	return s.parseFilteredData(dataset, variables, numRows, res)
+	filteredData, err := s.parseFilteredData(dataset, variables, numRows, res)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the num filtered rows
+	numRowsFiltered, err := s.FetchNumRowsFiltered(storageName, variables, wheres, params)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not pull filtered num rows")
+	}
+	filteredData.NumRowsFiltered = numRowsFiltered
+
+	return filteredData, nil
 }
