@@ -135,20 +135,6 @@ func TestImageToJPEG(t *testing.T) {
 	assert.GreaterOrEqual(t, len(jpegBytes), 1)
 }
 
-// func TestColorRamp(t *testing.T) {
-// 	generatedRamp := generateRamp([][]uint8{{255, 0, 0}, {0, 255, 0}, {0, 0, 255}}, 2, Lab)
-// 	testRamp := []uint8{
-// 		255, 0, 0,
-// 		170, 85, 0,
-// 		85, 170, 0,
-// 		0, 255, 0,
-// 		0, 170, 85,
-// 		0, 85, 170,
-// 		0, 0, 255,
-// 	}
-// 	assert.Equal(t, testRamp, generatedRamp)
-// }
-
 func generateTestImage(xSize int, ySize int) *image.RGBA {
 	image := image.NewRGBA(image.Rect(0, 0, xSize, ySize))
 	offset := 0

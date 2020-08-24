@@ -28,7 +28,6 @@ import (
 	"strings"
 
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/lucasb-eyer/go-colorful"
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/gdal"
@@ -82,13 +81,6 @@ const (
 
 	// NDMI idenfifies a band mapping that display Normalized Difference Moisture Index mapped using an RGB ramp.
 	NDMI = "ndmi"
-
-	// Blend modes
-	RGB BlendMode = iota
-	HSV
-	HCL
-	Lab
-	None
 )
 
 // BandCombinationID uniquely identifies a band combination
@@ -103,21 +95,17 @@ type BandCombination struct {
 	Transform   func(...uint16) float64
 }
 
-func NormalizingTransform(bandValues ...uint16) float64 {
-	return float64(int32(bandValues[0])-int32(bandValues[1])) / float64(int32(bandValues[0])+int32(bandValues[1]))
+func ClampedNormalizingTransform(bandValues ...uint16) float64 {
+	// Transforms to a range of (-1, 1) and then clamps to (0, 1)
+	return math.Max(0, float64(int32(bandValues[0])-int32(bandValues[1]))/float64(int32(bandValues[0])+int32(bandValues[1])))
 }
 
-// BlendMode indicates the blend mode to use when building the colour ramp
-type BlendMode int
+func NormalizingTransform(bandValues ...uint16) float64 {
+	// Transforms to a range of (-1, 1) and then normalizes to (0, 1)
+	return (1.0 + float64(int32(bandValues[0])-int32(bandValues[1]))/float64(int32(bandValues[0])+int32(bandValues[1]))) / 2.0
+}
 
 var (
-	// ViridisRamp defines the viridis ramp from matplotlib (python)
-	ViridisRamp = []uint8{}
-	// RedYellowGreenRamp defines an evenly spaced ramp suitable for visualizing vegetation
-	RedYellowGreenRamp = []uint8{}
-
-	BlueYellowBrownRamp = []uint8{}
-
 	// SentinelBandCombinations defines a list of recommended band combinations for sentinel 2 satellite missions
 	SentinelBandCombinations = map[string]*BandCombination{
 		NaturalColors:          {NaturalColors, "Natural Colors", []string{"b04", "b03", "b02"}, nil, nil},
@@ -130,8 +118,8 @@ var (
 		AtmosphericRemoval:     {AtmosphericRemoval, "Atmospheric Removal", []string{"b12", "b08", "b03"}, nil, nil},
 		ShortwaveInfrared:      {ShortwaveInfrared, "Shortwave Infrared", []string{"b12", "b08", "b04"}, nil, nil},
 		VegetationAnalysis:     {VegetationAnalysis, "Vegetation Analysis", []string{"b11", "b08", "b04"}, nil, nil},
-		NDVI:                   {NDVI, "Normalized Difference Vegetation Index", []string{"b08", "b04"}, RedYellowGreenRamp, NormalizingTransform},
-		NDMI:                   {NDWI, "Normalized Difference Moisture Index ", []string{"b08", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
+		NDVI:                   {NDVI, "Normalized Difference Vegetation Index", []string{"b08", "b04"}, RedYellowGreenRamp, ClampedNormalizingTransform},
+		NDMI:                   {NDMI, "Normalized Difference Moisture Index ", []string{"b08", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
 		NDWI:                   {NDWI, "Normalized Difference Water Index", []string{"b03", "b08"}, BlueYellowBrownRamp, NormalizingTransform},
 	}
 
@@ -146,34 +134,6 @@ func init() {
 	if err != nil {
 		log.Error(errors.Wrap(err, "failed to init directory type cache"))
 	}
-
-	// populate color ramps
-	ViridisRamp = generateRamp([][]uint8{
-		{68, 1, 84},
-		{72, 40, 120},
-		{62, 74, 137},
-		{49, 104, 142},
-		{38, 130, 142},
-		{31, 158, 137},
-		{53, 183, 121},
-		{109, 205, 89},
-		{180, 222, 44},
-		{253, 231, 37},
-	}, 10, Lab)
-
-	RedYellowGreenRamp = generateRamp([][]uint8{
-		{162, 13, 42},
-		{249, 246, 179},
-		{16, 103, 57},
-	}, 50, Lab)
-
-	BlueYellowBrownRamp = generateRamp([][]uint8{
-		{179, 114, 59},
-		{243, 238, 63},
-		{42, 198, 223},
-		{5, 29, 148},
-	}, 50, Lab)
-
 }
 
 // ImageFromCombination takes a base datsaet directory, fileID and a band combination label and
@@ -357,7 +317,7 @@ func createRGBAFromRamp(xSize int, ySize int, bandImages []*image.Gray16, transf
 		if grayValue0 != 0 || grayValue1 != 0 {
 			transformedValue = transform(grayValue0, grayValue1)
 		}
-		pixelOffset := int(math.Max(0, transformedValue*float64(rampElements)))
+		pixelOffset := int(transformedValue * float64(rampElements))
 
 		outputImage.Pix[outputIdx] = uint8(ramp[pixelOffset*3])
 		outputImage.Pix[outputIdx+1] = uint8(ramp[pixelOffset*3+1])
@@ -366,51 +326,6 @@ func createRGBAFromRamp(xSize int, ySize int, bandImages []*image.Gray16, transf
 		outputIdx += 4
 	}
 	return outputImage
-}
-
-func generateRamp(colors [][]uint8, step int, blendMode BlendMode) []uint8 {
-	if len(colors) == 0 || step == 0 {
-		return []uint8{}
-	}
-
-	ramp := []colorful.Color{}
-	for i := 0; i < len(colors)-1; i++ {
-		// add the color point
-		rgbColor := colors[i]
-		color0 := colorful.Color{R: float64(rgbColor[0]) / 255, G: float64(rgbColor[1]) / 255, B: float64(rgbColor[2]) / 255}
-		ramp = append(ramp, color0)
-
-		// add the interpolated color points
-		rgbColor = colors[i+1]
-		color1 := colorful.Color{R: float64(rgbColor[0]) / 255, G: float64(rgbColor[1]) / 255, B: float64(rgbColor[2]) / 255}
-		for s := 0; s < step; s++ {
-			t := float64(s+1) / float64(step+1)
-			switch blendMode {
-			case RGB:
-				ramp = append(ramp, color0.BlendRgb(color1, t))
-			case HSV:
-				ramp = append(ramp, color0.BlendHsv(color1, t))
-			case HCL:
-				ramp = append(ramp, color0.BlendHcl(color1, t))
-			case Lab:
-				ramp = append(ramp, color0.BlendLab(color1, t))
-			}
-		}
-	}
-	// add the final color point
-	rgbColor := colors[len(colors)-1]
-	lastColor := colorful.Color{R: float64(rgbColor[0]) / 255, G: float64(rgbColor[1]) / 255, B: float64(rgbColor[2]) / 255}
-	ramp = append(ramp, lastColor)
-
-	// convert result into uint rgb
-	result := make([]uint8, len(ramp)*3)
-	for i, color := range ramp {
-		r, g, b := color.RGB255()
-		result[i*3] = r
-		result[i*3+1] = g
-		result[i*3+2] = b
-	}
-	return result
 }
 
 // LoadPNGImage loads an RGBA PNG from the caller supplied path, decodes it,
