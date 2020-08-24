@@ -118,7 +118,7 @@ export const getters = {
 
   getIncludedTableDataNumRows(state: DatasetState): number {
     return state.includedSet.tableData
-      ? state.includedSet.tableData.numRows
+      ? state.includedSet.tableData.numRowsFiltered
       : 0;
   },
 
@@ -140,7 +140,7 @@ export const getters = {
 
   getExcludedTableDataNumRows(state: DatasetState): number {
     return state.excludedSet.tableData
-      ? state.excludedSet.tableData.numRows
+      ? state.excludedSet.tableData.numRowsFiltered
       : 0;
   },
 
