@@ -43,7 +43,7 @@ func TestImageFromBandsTrueColor(t *testing.T) {
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B03.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B02.tif",
-	})
+	}, nil, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -63,13 +63,32 @@ func TestImageFromBandsResize(t *testing.T) {
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-	})
+	}, nil, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
 
 	// compare to gold standard image
 	testImage, err := LoadPNGImage("test/12_8_4.png")
+	if err != nil {
+		log.Error(err)
+	}
+	assert.Equal(t, testImage, composedImage)
+}
+
+func TestImageFromRamp(t *testing.T) {
+	// Tests loading data from sources that are 3 different sizes in terms
+	// of pixels.
+	composedImage, err := ImageFromBands([]string{
+		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
+		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
+	}, RedYellowGreenRamp, NormalizingTransform)
+	assert.NoError(t, err)
+	assert.NotNil(t, composedImage)
+	assert.True(t, len(composedImage.Pix) > 0)
+
+	// compare to gold standard image
+	testImage, err := LoadPNGImage("test/8_4_ramp.png")
 	if err != nil {
 		log.Error(err)
 	}
@@ -83,7 +102,7 @@ func TestImageFromBandsMissing(t *testing.T) {
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B120.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-	})
+	}, nil, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -115,6 +134,20 @@ func TestImageToJPEG(t *testing.T) {
 	assert.NoError(t, err)
 	assert.GreaterOrEqual(t, len(jpegBytes), 1)
 }
+
+// func TestColorRamp(t *testing.T) {
+// 	generatedRamp := generateRamp([][]uint8{{255, 0, 0}, {0, 255, 0}, {0, 0, 255}}, 2, Lab)
+// 	testRamp := []uint8{
+// 		255, 0, 0,
+// 		170, 85, 0,
+// 		85, 170, 0,
+// 		0, 255, 0,
+// 		0, 170, 85,
+// 		0, 85, 170,
+// 		0, 0, 255,
+// 	}
+// 	assert.Equal(t, testRamp, generatedRamp)
+// }
 
 func generateTestImage(xSize int, ySize int) *image.RGBA {
 	image := image.NewRGBA(image.Rect(0, 0, xSize, ySize))

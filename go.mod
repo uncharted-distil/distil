@@ -13,6 +13,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jackc/pgconn v1.6.1
 	github.com/jackc/pgx/v4 v4.7.1
+	github.com/lucasb-eyer/go-colorful v1.0.3
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/microcosm-cc/bluemonday v1.0.1
