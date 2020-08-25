@@ -35,11 +35,15 @@ type RampEntry struct {
 }
 
 const (
-	// Blend modes
+	// RGB color space blend mode
 	RGB BlendMode = iota
+	// HSV color space blend mode
 	HSV
+	// HCL color space blend mode
 	HCL
+	// Lab color space blend mode
 	Lab
+	// None indicates no blend mode
 	None
 )
 
@@ -53,12 +57,15 @@ var (
 
 func init() {
 	// populate color ramps
+
+	//RedYellowGreenRamp creates a ramp suitable for visualizing vegetation
 	RedYellowGreenRamp = GenerateRamp([]RampEntry{
 		{0.0, color.RGBA{162, 13, 42, 255}},
 		{0.5, color.RGBA{249, 246, 179, 255}},
 		{1.0, color.RGBA{16, 103, 57, 255}},
 	}, 255, Lab)
 
+	// BlueYellowBrownRamp generates a ramp sutiable for visualizing water and moisture
 	BlueYellowBrownRamp = GenerateRamp([]RampEntry{
 		{0.0, color.RGBA{179, 114, 59, 255}},
 		{0.333, color.RGBA{243, 238, 63, 255}},
@@ -136,14 +143,16 @@ func GenerateRamp(colors []RampEntry, steps int, blendMode BlendMode) []uint8 {
 	return result
 }
 
+// RampToImage converts a color ramp to an image for debugging purposes
 func RampToImage(height int, ramp []uint8) *image.RGBA {
 	blocks := len(ramp) / 3
 	blockw := 10
 	img := image.NewRGBA(image.Rect(0, 0, blocks*blockw, height))
-	cptr := 0
+	colorIdx := 0
 	for i := 0; i < blocks; i++ {
-		draw.Draw(img, image.Rect(i*blockw, 0, (i+1)*blockw, height), &image.Uniform{color.RGBA{ramp[cptr], ramp[cptr+1], ramp[cptr+2], 255}}, image.Point{}, draw.Src)
-		cptr += 3
+		draw.Draw(img, image.Rect(i*blockw, 0, (i+1)*blockw, height), &image.Uniform{color.RGBA{ramp[colorIdx],
+			ramp[colorIdx+1], ramp[colorIdx+2], 255}}, image.Point{}, draw.Src)
+		colorIdx += 3
 	}
 	return img
 }

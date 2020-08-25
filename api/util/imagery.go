@@ -95,13 +95,13 @@ type BandCombination struct {
 	Transform   func(...uint16) float64
 }
 
+// ClampedNormalizingTransform transforms to a range of (-1, 1) and then clamps to (0, 1)
 func ClampedNormalizingTransform(bandValues ...uint16) float64 {
-	// Transforms to a range of (-1, 1) and then clamps to (0, 1)
 	return math.Max(0, float64(int32(bandValues[0])-int32(bandValues[1]))/float64(int32(bandValues[0])+int32(bandValues[1])))
 }
 
+// NormalizingTransform transforms to a range of (-1, 1) and then normalizes to (0, 1)
 func NormalizingTransform(bandValues ...uint16) float64 {
-	// Transforms to a range of (-1, 1) and then normalizes to (0, 1)
 	return (1.0 + float64(int32(bandValues[0])-int32(bandValues[1]))/float64(int32(bandValues[0])+int32(bandValues[1]))) / 2.0
 }
 
