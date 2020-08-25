@@ -176,6 +176,12 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 		where := fmt.Sprintf("%s IN (%s)", name, strings.Join(categories, ", "))
 		wheres = append(wheres, where)
 
+	case model.GeoBoundsFilter:
+		// geo bounds
+		where := fmt.Sprintf("ST_WITHIN(%s, %d)", name, len(params)+1)
+		params = append(params, buildBoundsGeometryString(filter.Bounds))
+		wheres = append(wheres, where)
+
 	case model.ClusterFilter:
 		// cluster
 		name = s.formatFilterKey(alias, featureVarName(filter.Key))
@@ -295,6 +301,12 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 			params = append(params, category)
 		}
 		where := fmt.Sprintf("%s NOT IN (%s)", name, strings.Join(categories, ", "))
+		wheres = append(wheres, where)
+
+	case model.GeoBoundsFilter:
+		// geo bounds
+		where := fmt.Sprintf("!ST_WITHIN(%s, %d)", name, len(params)+1)
+		params = append(params, buildBoundsGeometryString(filter.Bounds))
 		wheres = append(wheres, where)
 
 	case model.ClusterFilter:

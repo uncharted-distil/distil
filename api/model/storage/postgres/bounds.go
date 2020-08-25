@@ -30,6 +30,16 @@ type BoundsField struct {
 	BasicField
 }
 
+type geometryBucket struct {
+	bounds *model.Bounds
+	x      int
+	y      int
+}
+
+func (g *geometryBucket) toGeometryString() string {
+	return buildBoundsGeometryString(g.bounds)
+}
+
 // NewBoundsField creates a new field for remote sensing types.
 func NewBoundsField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *BoundsField {
 	count = getCountSQL(count)
@@ -113,30 +123,39 @@ func (f *BoundsField) fetchHistogram(filterParams *api.FilterParams, invert bool
 	}
 
 	xNumBuckets, yNumBuckets := getEqualBivariateBuckets(numBuckets, xExtrema, yExtrema)
+	buckets := getGeoBoundsBuckets(xExtrema, yExtrema, xNumBuckets, yNumBuckets)
 
-	// generate a histogram query for each
-	xMinHistogramName, xMinBucketQuery, intervalX, minX := f.getHistogramAggQuery(xExtrema, xNumBuckets, 1)
-	_, xMaxBucketQuery, _, _ := f.getHistogramAggQuery(xExtrema, xNumBuckets, 5)
-	yMinHistogramName, yMinBucketQuery, intervalY, minY := f.getHistogramAggQuery(yExtrema, yNumBuckets, 2)
-	_, yMaxBucketQuery, _, _ := f.getHistogramAggQuery(yExtrema, yNumBuckets, 6)
+	// insert all the buckets into a temp table
+	tmpTableName := "tmp_" + f.DatasetStorageName
+	tmpTableCreateSQL := fmt.Sprintf(`
+		CREATE TEMPORARY TABLE "%s" (
+			xbuckets INT,
+			xcoord DOUBLE PRECISION,
+			ybuckets INT,
+			ycoord DOUBLE PRECISION,
+			coordinates geometry
+		)`, tmpTableName)
+	_, err = f.Storage.client.Exec(tmpTableCreateSQL)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to create temp geometry table")
+	}
+	bucketSQL := `INSERT INTO "%s" (xbuckets, xcoordm ybuckets, ycoord, coordinates) VALUES (%d, %g, %d, %g, %s)`
+	insertSQLs := []string{}
+	for _, b := range buckets {
+		insertSQLs = append(insertSQLs, fmt.Sprintf(bucketSQL, tmpTableName, b.x, b.bounds.MinX, b.y, b.bounds.MinY, b.toGeometryString()))
+	}
+	_, err = f.Storage.client.Exec(strings.Join(insertSQLs, "; "))
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to insert temp geometry data")
+	}
 
-	// Get count by x & y
+	// join the temp table to the main table to get bucketed data
+
 	query := fmt.Sprintf(`
-        SELECT
-          xbuckets, CAST(xbuckets * %g + %g AS double precision) AS %s,
-          ybuckets, CAST(ybuckets * %g + %g AS double precision) AS %s, COUNT(%s) FROM
-        (
-          SELECT %s,
-          %s AS minx, %s AS maxx, %s AS miny, %s AS maxy
-          FROM %s %s
-        ) AS points
-        INNER JOIN generate_series(0, %d) AS xbuckets ON xbuckets >= minx AND xbuckets <= maxx
-        INNER JOIN generate_series(0, %d) AS ybuckets ON ybuckets >= miny AND ybuckets <= maxy
-        GROUP BY xbuckets, ybuckets
-        ORDER BY xbuckets, ybuckets;`,
-		intervalX, minX, xMinHistogramName, intervalY, minY, yMinHistogramName,
-		f.Count, f.Count, xMinBucketQuery, xMaxBucketQuery, yMinBucketQuery, yMaxBucketQuery,
-		f.DatasetStorageName, where, xNumBuckets, yNumBuckets)
+		SELECT b.xbuckets, b.xcoord, b.ybuckets, b.ycoord, COUNT(%s)
+		FROM %s AS d inner join %s AS b ON ST_WITHIN(d."%s", b.coordinates) %s
+		GROUP BY b.xbuckets, b.ybuckets
+		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, f.DatasetStorageName, tmpTableName, f.Key, where)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -386,4 +405,50 @@ func (f *BoundsField) parseHistogram(rows pgx.Rows, xExtrema *api.Extrema, yExtr
 // the coordinate histogram for the field.
 func (f *BoundsField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
+}
+
+func buildBoundsGeometryString(bounds *model.Bounds) string {
+	coords := []string{
+		pointToString(bounds.MinX, bounds.MinY, " "),
+		pointToString(bounds.MinX, bounds.MaxY, " "),
+		pointToString(bounds.MaxX, bounds.MaxY, " "),
+		pointToString(bounds.MaxX, bounds.MinY, " "),
+		pointToString(bounds.MinX, bounds.MinY, " "),
+	}
+	return fmt.Sprintf("POLYGON((%s))", strings.Join(coords, ","))
+}
+
+func pointToString(x float64, y float64, separator string) string {
+	return fmt.Sprintf("%f%s%f", x, separator, y)
+}
+
+func getGeoBoundsBuckets(xExtrema *api.Extrema, yExtrema *api.Extrema,
+	xNumBuckets int, yNumBuckets int) []*geometryBucket {
+	// build a list of bounds representing the buckets
+	xInterval := xExtrema.GetBucketInterval(xNumBuckets)
+	yInterval := yExtrema.GetBucketInterval(yNumBuckets)
+
+	buckets := []*geometryBucket{}
+	xLeft := xExtrema.Min
+	xRight := xLeft + xInterval
+	for xCount := 0; xRight <= xExtrema.Max; xLeft, xRight = xLeft+xInterval, xRight+xInterval {
+		yBottom := yExtrema.Min
+		yTop := yBottom + yInterval
+		for yCount := 0; yTop <= yExtrema.Max; yBottom, yTop = yBottom+yInterval, yTop+yInterval {
+			buckets = append(buckets, &geometryBucket{
+				bounds: &model.Bounds{
+					MinX: xLeft,
+					MaxX: xRight,
+					MinY: yBottom,
+					MaxY: yTop,
+				},
+				x: xCount,
+				y: yCount,
+			})
+			yCount++
+		}
+		xCount++
+	}
+
+	return buckets
 }
