@@ -107,6 +107,21 @@ func NormalizingTransform(bandValues ...uint16) float64 {
 
 var (
 	// SentinelBandCombinations defines a list of recommended band combinations for sentinel 2 satellite missions
+	SentinelBandCombinations = map[string]*BandCombination{}
+
+	// Cache to hold directory file type search results
+	folderTypeCache *lru.Cache
+)
+
+func init() {
+	// create an LRU cache to hold the results of time consuming directory content analysis
+	var err error
+	folderTypeCache, err = lru.New(100)
+	if err != nil {
+		log.Error(errors.Wrap(err, "failed to init directory type cache"))
+	}
+
+	// initialize the band combination structures - needs to be done in init so that referenced color ramps are built
 	SentinelBandCombinations = map[string]*BandCombination{
 		NaturalColors:          {NaturalColors, "Natural Colors", []string{"b04", "b03", "b02"}, nil, nil},
 		FalseColorInfrared:     {FalseColorInfrared, "False Color Infrared", []string{"b08", "b04", "b03"}, nil, nil},
@@ -121,18 +136,6 @@ var (
 		NDVI:                   {NDVI, "Normalized Difference Vegetation Index", []string{"b08", "b04"}, RedYellowGreenRamp, ClampedNormalizingTransform},
 		NDMI:                   {NDMI, "Normalized Difference Moisture Index ", []string{"b08", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
 		NDWI:                   {NDWI, "Normalized Difference Water Index", []string{"b03", "b08"}, BlueYellowBrownRamp, NormalizingTransform},
-	}
-
-	// Cache to hold directory file type search results
-	folderTypeCache *lru.Cache
-)
-
-func init() {
-	// create an LRU cache to hold the results of time consuming directory content analysis
-	var err error
-	folderTypeCache, err = lru.New(100)
-	if err != nil {
-		log.Error(errors.Wrap(err, "failed to init directory type cache"))
 	}
 }
 
