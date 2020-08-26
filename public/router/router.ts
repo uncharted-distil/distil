@@ -22,7 +22,7 @@ import {
   SELECT_TRAINING_ROUTE,
   RESULTS_ROUTE,
   EXPORT_SUCCESS_ROUTE,
-  PREDICTION_ROUTE
+  PREDICTION_ROUTE,
 } from "../store/route";
 
 Vue.use(VueRouter);
@@ -38,8 +38,8 @@ const router = new VueRouter({
     { path: SELECT_TRAINING_ROUTE, component: SelectTraining },
     { path: RESULTS_ROUTE, component: Results },
     { path: EXPORT_SUCCESS_ROUTE, component: ExportSuccess },
-    { path: PREDICTION_ROUTE, component: Predictions }
-  ]
+    { path: PREDICTION_ROUTE, component: Predictions },
+  ],
 });
 
 router.afterEach((_, fromRoute) => {
@@ -55,7 +55,7 @@ router.afterEach((_, fromRoute) => {
   saveView({
     view: fromRoute.path,
     key: key,
-    route: fromRoute
+    route: fromRoute,
   });
 });
 

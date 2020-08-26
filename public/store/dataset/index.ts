@@ -166,7 +166,7 @@ export enum SummaryMode {
   Default = "default",
   Cluster = "cluster",
   Timeseries = "timeseries",
-  RemoteSensing = "remoteSensing"
+  RemoteSensing = "remoteSensing",
 }
 
 // Flags the display mode for filtering.  Generally Default is correct,
@@ -174,7 +174,7 @@ export enum SummaryMode {
 // done on the cluster column.
 export enum DataMode {
   Default = "default",
-  Cluster = "cluster"
+  Cluster = "cluster",
 }
 
 export interface TableValue {
@@ -249,7 +249,7 @@ export enum TaskTypes {
   GROUPED = "grouped",
   GEOSPATIAL = "geospatial",
   REMOTE_SENSING = "remoteSensing",
-  LUPI = "lupi"
+  LUPI = "lupi",
 }
 
 export enum BandID {
@@ -262,7 +262,7 @@ export enum BandID {
   LAND_WATER = "land_water",
   ATMOSPHERIC_REMOVAL = "atmospheric_removal",
   SHORTWAVE_INFRARED = "shortwave_infrared",
-  VEGETATION_ANALYSIS = "vegetation_analysis"
+  VEGETATION_ANALYSIS = "vegetation_analysis",
 }
 
 export interface Task {
@@ -274,7 +274,7 @@ export enum DatasetPendingRequestType {
   GEOCODING = "GEOCODING",
   JOIN_SUGGESTION = "JOIN_SUGGESTION",
   JOIN_DATASET_IMPORT = "JOIN_DATASET_IMPORT",
-  CLUSTERING = "CLUSTERING"
+  CLUSTERING = "CLUSTERING",
 }
 
 export enum DatasetPendingRequestStatus {
@@ -282,7 +282,7 @@ export enum DatasetPendingRequestStatus {
   RESOLVED = "RESOLVED",
   ERROR = "ERROR",
   REVIEWED = "REVIEWED",
-  ERROR_REVIEWED = "ERROR_REVIEWED"
+  ERROR_REVIEWED = "ERROR_REVIEWED",
 }
 
 export interface VariableRankingPendingRequest {
@@ -385,11 +385,11 @@ export const state: DatasetState = {
   // working set of data
   includedSet: {
     variableSummaries: [],
-    tableData: null
+    tableData: null,
   },
   excludedSet: {
     variableSummaries: [],
-    tableData: null
+    tableData: null,
   },
 
   // linked files / representation data
@@ -405,9 +405,9 @@ export const state: DatasetState = {
 
   // task information
   task: {
-    task: [TaskTypes.CLASSIFICATION, TaskTypes.MULTICLASS]
+    task: [TaskTypes.CLASSIFICATION, TaskTypes.MULTICLASS],
   },
 
   // bands
-  bands: []
+  bands: [],
 };

@@ -73,12 +73,12 @@ export default Vue.extend({
     TargetVariable,
     TypeChangeMenu,
     StatusPanel,
-    StatusSidebar
+    StatusSidebar,
   },
 
   data() {
     return {
-      binningIntervalModel: null
+      binningIntervalModel: null,
     };
   },
 
@@ -123,7 +123,7 @@ export default Vue.extend({
     },
     trainingVarsPage(): number {
       return routeGetters.getRouteTrainingVarsPage(this.$store);
-    }
+    },
   },
 
   watch: {
@@ -144,11 +144,11 @@ export default Vue.extend({
     },
     dataset() {
       viewActions.fetchSelectTrainingData(this.$store, true);
-    }
+    },
   },
   beforeMount() {
     viewActions.fetchSelectTrainingData(this.$store, false);
-  }
+  },
 });
 </script>
 

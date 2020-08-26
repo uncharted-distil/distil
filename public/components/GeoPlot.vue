@@ -56,19 +56,19 @@ import {
   D3M_INDEX_FIELD,
   Highlight,
   RowSelection,
-  GeoCoordinateGrouping
+  GeoCoordinateGrouping,
 } from "../store/dataset/index";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import {
   addRowSelection,
   removeRowSelection,
-  isRowSelected
+  isRowSelected,
 } from "../util/row";
 import {
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
   REAL_VECTOR_TYPE,
-  GEOCOORDINATE_TYPE
+  GEOCOORDINATE_TYPE,
 } from "../util/types";
 
 import "leaflet/dist/leaflet.css";
@@ -118,13 +118,13 @@ export default Vue.extend({
   components: {
     IconBase,
     IconCropFree,
-    ImageDrilldown
+    ImageDrilldown,
   },
 
   props: {
     instanceName: String as () => string,
     dataItems: Array as () => any[],
-    dataFields: Object as () => Dictionary<TableColumn>
+    dataFields: Object as () => Dictionary<TableColumn>,
   },
 
   data() {
@@ -140,7 +140,7 @@ export default Vue.extend({
       isSelectionMode: false,
       isImageDrilldown: false,
       imageUrl: null,
-      item: null
+      item: null,
     };
   },
 
@@ -169,16 +169,16 @@ export default Vue.extend({
     getTopVariables(): string[] {
       const variables = datasetGetters
         .getVariables(this.$store)
-        .filter(v => v.datasetName === this.dataset);
+        .filter((v) => v.datasetName === this.dataset);
       return variables
-        .map(variable => ({
+        .map((variable) => ({
           variable: variable.colName,
           order: _.isNumber(variable.ranking)
             ? variable.ranking
-            : variable.importance
+            : variable.importance,
         }))
         .sort((a, b) => b.order - a.order)
-        .map(r => r.variable);
+        .map((r) => r.variable);
     },
 
     mapID(): string {
@@ -188,7 +188,7 @@ export default Vue.extend({
     fieldSpecs(): GeoField[] {
       const variables = datasetGetters.getVariables(this.$store);
 
-      const matches = variables.filter(v => {
+      const matches = variables.filter((v) => {
         return (
           (v.grouping && v.grouping.type === GEOCOORDINATE_TYPE) ||
           v.colType === LONGITUDE_TYPE ||
@@ -201,7 +201,7 @@ export default Vue.extend({
       let lat = null;
       const fields = [];
 
-      matches.forEach(match => {
+      matches.forEach((match) => {
         if (match.grouping && match.grouping.type === GEOCOORDINATE_TYPE) {
           const grouping = match.grouping as GeoCoordinateGrouping;
           lng = grouping.xCol;
@@ -209,7 +209,7 @@ export default Vue.extend({
         } else if (match.colType === REAL_VECTOR_TYPE) {
           fields.push({
             type: SINGLE_FIELD,
-            field: match.colName
+            field: match.colName,
           });
         } else {
           if (match.colType === LONGITUDE_TYPE) {
@@ -227,7 +227,7 @@ export default Vue.extend({
           fields.push({
             type: SPLIT_FIELD,
             lngField: lng,
-            latField: lat
+            latField: lat,
           });
           lng = null;
           lat = null;
@@ -244,14 +244,14 @@ export default Vue.extend({
         return groups;
       }
 
-      this.fieldSpecs.forEach(fieldSpec => {
+      this.fieldSpecs.forEach((fieldSpec) => {
         const group = {
           field: fieldSpec,
-          points: []
+          points: [],
         };
 
         group.points = this.dataItems
-          .map(item => {
+          .map((item) => {
             const lat = this.latValue(fieldSpec, item);
             const lng = this.lngValue(fieldSpec, item);
 
@@ -259,13 +259,13 @@ export default Vue.extend({
               return {
                 lng: lng,
                 lat: lat,
-                row: item
+                row: item,
               };
             }
 
             return null;
           })
-          .filter(point => !!point);
+          .filter((point) => !!point);
 
         groups.push(group);
       });
@@ -298,7 +298,7 @@ export default Vue.extend({
       // Array to store the longitude width (degrees) of each areas.
       const longitudes = [];
 
-      const areas = this.dataItems.map(item => {
+      const areas = this.dataItems.map((item) => {
         const imageUrl = item.group_id.value;
         const fullCoordinates = item.coordinates.value.Elements;
         /*
@@ -314,7 +314,7 @@ export default Vue.extend({
         */
         const coordinates = [
           [fullCoordinates[1].Float, fullCoordinates[0].Float], // Corner A as [Lat, Lng]
-          [fullCoordinates[5].Float, fullCoordinates[4].Float] // Corner C as [Lat, Lng]
+          [fullCoordinates[5].Float, fullCoordinates[4].Float], // Corner C as [Lat, Lng]
         ] as LatLngBoundsLiteral;
 
         const color = this.colorPrediction(item);
@@ -358,7 +358,7 @@ export default Vue.extend({
     baseLayer(): TileLayer {
       const URL = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
       return leaflet.tileLayer(URL);
-    }
+    },
   },
 
   methods: {
@@ -399,16 +399,16 @@ export default Vue.extend({
         const offset = $(this.map.getContainer()).offset();
         this.startingLatLng = this.map.containerPointToLatLng({
           x: event.pageX - offset.left,
-          y: event.pageY - offset.top
+          y: event.pageY - offset.top,
         });
 
         const bounds = [this.startingLatLng, this.startingLatLng];
         this.currentRect = leaflet.rectangle(bounds, {
           color: "#255DCC",
           weight: 1,
-          bubblingMouseEvents: false
+          bubblingMouseEvents: false,
         });
-        this.currentRect.on("click", e => {
+        this.currentRect.on("click", (e) => {
           this.setSelection(e.target);
         });
         this.currentRect.addTo(this.map);
@@ -435,7 +435,7 @@ export default Vue.extend({
         const offset = $(this.map.getContainer()).offset();
         const latLng = this.map.containerPointToLatLng({
           x: event.pageX - offset.left,
-          y: event.pageY - offset.top
+          y: event.pageY - offset.top,
         });
         const bounds = [this.startingLatLng, latLng];
         this.currentRect.setBounds(bounds);
@@ -462,17 +462,17 @@ export default Vue.extend({
       const icon = leaflet.divIcon({
         className: CLOSE_BUTTON_CLASS,
         iconSize: null,
-        html: `<i class="fa ${CLOSE_ICON_CLASS}"></i>`
+        html: `<i class="fa ${CLOSE_ICON_CLASS}"></i>`,
       });
       this.closeButton = leaflet.marker([ne.lat, ne.lng], {
-        icon: icon
+        icon: icon,
       });
       this.closeButton.addTo(this.map);
       this.createHighlight({
         minX: sw.lng,
         maxX: ne.lng,
         minY: sw.lat,
-        maxY: ne.lat
+        maxY: ne.lat,
       });
     },
 
@@ -514,7 +514,7 @@ export default Vue.extend({
         context: this.instanceName,
         dataset: this.dataset,
         key: key,
-        value: value
+        value: value,
       });
     },
 
@@ -529,15 +529,15 @@ export default Vue.extend({
         const rect = leaflet.rectangle(
           [
             [this.highlight.value.minY, this.highlight.value.minX],
-            [this.highlight.value.maxY, this.highlight.value.maxX]
+            [this.highlight.value.maxY, this.highlight.value.maxX],
           ],
           {
             color: "#255DCC",
             weight: 1,
-            bubblingMouseEvents: false
+            bubblingMouseEvents: false,
           }
         );
-        rect.on("click", e => {
+        rect.on("click", (e) => {
           this.setSelection(e.target);
         });
         rect.addTo(this.map);
@@ -587,7 +587,7 @@ export default Vue.extend({
         this.closeButton = null;
       }
 
-      _.forIn(this.markers, markerLayer => {
+      _.forIn(this.markers, (markerLayer) => {
         markerLayer.removeFrom(this.map);
       });
 
@@ -620,7 +620,7 @@ export default Vue.extend({
     },
 
     updateMarkerSelection(markers) {
-      markers.forEach(marker => {
+      markers.forEach((marker) => {
         const row = marker.options.row;
         const markerElem = marker.getElement();
         const isSelected = isRowSelected(
@@ -664,7 +664,7 @@ export default Vue.extend({
       // NOTE: this component re-mounts on any change, so do everything in here
       this.map = leaflet.map(this.mapID, {
         center: [30, 0],
-        zoom: 2
+        zoom: 2,
       });
 
       if (this.mapZoom) {
@@ -675,7 +675,7 @@ export default Vue.extend({
         this.map.panTo(
           {
             lat: this.mapCenter[1],
-            lng: this.mapCenter[0]
+            lng: this.mapCenter[0],
           },
           { animate: true }
         );
@@ -696,8 +696,8 @@ export default Vue.extend({
 
       // Extend the bounds of the map to include all coordinates.
       const bounds = leaflet.latLngBounds(null);
-      this.areas.forEach(area => {
-        area.coordinates.forEach(coordinate => bounds.extend(coordinate));
+      this.areas.forEach((area) => {
+        area.coordinates.forEach((coordinate) => bounds.extend(coordinate));
       });
       if (bounds.isValid()) {
         this.map.fitBounds(bounds);
@@ -717,7 +717,7 @@ export default Vue.extend({
       }
 
       // Add each area to the layer group.
-      this.areas.forEach(area => {
+      this.areas.forEach((area) => {
         const { color, coordinates, imageUrl, item } = area;
 
         // Create the layer (circleMarker or rectangle) for the user to interact.
@@ -725,13 +725,13 @@ export default Vue.extend({
         if (this.displayCircleMarker) {
           const centerOfCoordinates = [
             coordinates[0][0] + (coordinates[1][0] - coordinates[0][0]), // Lat
-            coordinates[0][1] + (coordinates[1][1] - coordinates[0][1]) // Lng
+            coordinates[0][1] + (coordinates[1][1] - coordinates[0][1]), // Lng
           ] as LatLngTuple;
           const displayOptions = {
             color: color,
             radius: TARGETSIZE / 2,
             stroke: false,
-            fillOpacity: 1.0
+            fillOpacity: 1.0,
           };
           layer = leaflet.circleMarker(centerOfCoordinates, displayOptions);
         } else {
@@ -745,9 +745,9 @@ export default Vue.extend({
           propsData: {
             dataFields: this.dataFields,
             includeActive: true,
-            item: item
+            item: item,
           },
-          store: this.$store
+          store: this.$store,
         }).$mount();
 
         // Add interactivity to the layer.
@@ -771,13 +771,13 @@ export default Vue.extend({
       } else {
         const bounds = leaflet.latLngBounds(null);
 
-        this.pointGroups.forEach(group => {
+        this.pointGroups.forEach((group) => {
           const hash = this.fieldHash(group.field);
           const layer = leaflet.layerGroup([]);
 
-          group.points.forEach(point => {
+          group.points.forEach((point) => {
             const marker = leaflet.marker(point, {
-              row: (<any>point).row
+              row: (<any>point).row,
             } as MarkerOptions);
 
             bounds.extend([point.lat, point.lng]);
@@ -787,7 +787,7 @@ export default Vue.extend({
               const values = [];
               const MAX_VALUES = 5;
 
-              this.getTopVariables.forEach(v => {
+              this.getTopVariables.forEach((v) => {
                 if (point.row[v] && values.length <= MAX_VALUES) {
                   values.push(
                     `<b>${_.capitalize(v)}:</b> ${point.row[v].value}`
@@ -818,7 +818,7 @@ export default Vue.extend({
 
       this.drawHighlight();
       this.drawFilters();
-    }
+    },
   },
 
   watch: {
@@ -827,16 +827,16 @@ export default Vue.extend({
     },
 
     rowSelection() {
-      const markers = _.map(this.markers, markerLayer =>
+      const markers = _.map(this.markers, (markerLayer) =>
         markerLayer.getLayers()
       ).reduce((prev, cur) => [...prev, ...cur], []);
       this.updateMarkerSelection(markers);
-    }
+    },
   },
 
   mounted() {
     this.paint();
-  }
+  },
 });
 </script>
 

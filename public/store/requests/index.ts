@@ -64,7 +64,7 @@ export interface Feature {
 
 export enum ModelQuality {
   SPEED = "speed",
-  HIGHER_QUALITY = "quality"
+  HIGHER_QUALITY = "quality",
 }
 
 export interface RequestState {
@@ -76,5 +76,5 @@ export interface RequestState {
 export const state: RequestState = {
   solutionRequests: [],
   solutions: [],
-  predictions: []
+  predictions: [],
 };

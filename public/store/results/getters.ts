@@ -3,7 +3,7 @@ import {
   Extrema,
   TableData,
   TableRow,
-  TableColumn
+  TableColumn,
 } from "../dataset/index";
 import { ResultsState, Forecast, TimeSeries } from "./index";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
@@ -91,8 +91,8 @@ export const getters = {
   /* Check if any items have a weight property */
   hasResultTableDataItemsWeight(state: ResultsState): boolean {
     const data = getTableDataItems(state.includedResultTableData) ?? [];
-    return data.some(item =>
-      Object.keys(item).some(variable =>
+    return data.some((item) =>
+      Object.keys(item).some((variable) =>
         item[variable].hasOwnProperty("weight")
       )
     );
@@ -134,5 +134,5 @@ export const getters = {
 
   getVariableRankings(state: ResultsState): Dictionary<Dictionary<number>> {
     return state.variableRankings;
-  }
+  },
 };

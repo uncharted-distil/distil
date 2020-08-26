@@ -22,14 +22,14 @@ export default Vue.extend({
   name: "running-solutions",
 
   components: {
-    SolutionPreview
+    SolutionPreview,
   },
 
   props: {
     maxSolutions: {
       default: 20,
-      type: Number as () => number
-    }
+      type: Number as () => number,
+    },
   },
 
   computed: {
@@ -37,8 +37,8 @@ export default Vue.extend({
       return requestGetters
         .getRunningSolutions(this.$store)
         .slice(0, this.maxSolutions);
-    }
-  }
+    },
+  },
 });
 </script>
 
