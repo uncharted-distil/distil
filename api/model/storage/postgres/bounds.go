@@ -16,6 +16,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -126,7 +127,42 @@ func (f *BoundsField) fetchHistogram(filterParams *api.FilterParams, invert bool
 	buckets := getGeoBoundsBuckets(xExtrema, yExtrema, xNumBuckets, yNumBuckets)
 
 	// insert all the buckets into a temp table
+	tx, err := f.Storage.client.Begin()
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to begin transaction")
+	}
 	tmpTableName := "tmp_" + f.DatasetStorageName
+	err = f.prepareBucketsForQuery(tx, tmpTableName, buckets)
+	if err != nil {
+		return nil, err
+	}
+
+	// join the temp table to the main table to get bucketed data
+	query := fmt.Sprintf(`
+		SELECT b.xbuckets, b.xcoord, b.ybuckets, b.ycoord, COUNT(%s)
+		FROM %s AS d inner join %s AS b ON ST_WITHIN(d."%s", b.coordinates) %s
+		GROUP BY b.xbuckets, b.xcoord, b.ybuckets, b.ycoord
+		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, f.DatasetStorageName, tmpTableName, f.Key, where)
+	res, err := tx.Query(context.Background(), query, params...)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return nil, errors.Wrapf(err, "unable to query for histogram")
+	}
+
+	histogram, err := f.parseHistogram(res, xExtrema, yExtrema, xNumBuckets, yNumBuckets)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return nil, err
+	}
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to commit transaction")
+	}
+
+	return histogram, nil
+}
+
+func (f *BoundsField) prepareBucketsForQuery(tx pgx.Tx, tmpTableName string, buckets []*geometryBucket) error {
 	tmpTableCreateSQL := fmt.Sprintf(`
 		CREATE TEMPORARY TABLE "%s" (
 			xbuckets INT,
@@ -134,50 +170,31 @@ func (f *BoundsField) fetchHistogram(filterParams *api.FilterParams, invert bool
 			ybuckets INT,
 			ycoord DOUBLE PRECISION,
 			coordinates geometry
-		)`, tmpTableName)
-	_, err = f.Storage.client.Exec(tmpTableCreateSQL)
+		) ON COMMIT DROP`, tmpTableName)
+	_, err := tx.Exec(context.Background(), tmpTableCreateSQL)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to create temp geometry table")
+		tx.Rollback(context.Background())
+		return errors.Wrapf(err, "unable to create temp table")
 	}
-	bucketSQL := `INSERT INTO "%s" (xbuckets, xcoordm ybuckets, ycoord, coordinates) VALUES (%d, %g, %d, %g, %s)`
+
+	bucketSQL := `INSERT INTO "%s" (xbuckets, xcoord, ybuckets, ycoord, coordinates) VALUES (%d, %g, %d, %g, '%s'::geometry)`
 	insertSQLs := []string{}
 	for _, b := range buckets {
 		insertSQLs = append(insertSQLs, fmt.Sprintf(bucketSQL, tmpTableName, b.x, b.bounds.MinX, b.y, b.bounds.MinY, b.toGeometryString()))
 	}
-	_, err = f.Storage.client.Exec(strings.Join(insertSQLs, "; "))
+	_, err = tx.Exec(context.Background(), strings.Join(insertSQLs, "; "))
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to insert temp geometry data")
+		tx.Rollback(context.Background())
+		return errors.Wrapf(err, "unable to insert to temp table")
 	}
 
-	// join the temp table to the main table to get bucketed data
-
-	query := fmt.Sprintf(`
-		SELECT b.xbuckets, b.xcoord, b.ybuckets, b.ycoord, COUNT(%s)
-		FROM %s AS d inner join %s AS b ON ST_WITHIN(d."%s", b.coordinates) %s
-		GROUP BY b.xbuckets, b.ybuckets
-		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, f.DatasetStorageName, tmpTableName, f.Key, where)
-
-	// execute the postgres query
-	res, err := f.Storage.client.Query(query, params...)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
-	}
-	if res != nil {
-		defer res.Close()
-	}
-
-	histogram, err := f.parseHistogram(res, xExtrema, yExtrema, xNumBuckets, yNumBuckets)
-	if err != nil {
-		return nil, err
-	}
-
-	return histogram, nil
+	return nil
 }
 
 func (f *BoundsField) fetchExtrema() (*api.Extrema, *api.Extrema, error) {
 	// add min / max aggregation
-	aggQueryX := f.getMinMaxAggsQuery(f.Key, "x", 1, 5)
-	aggQueryY := f.getMinMaxAggsQuery(f.Key, "y", 2, 6)
+	aggQueryX := f.getMinMaxAggsQuery(f.Key, "x", "X")
+	aggQueryY := f.getMinMaxAggsQuery(f.Key, "y", "Y")
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s, %s FROM %s;", aggQueryX, aggQueryY, f.DatasetStorageName)
@@ -214,14 +231,14 @@ func (f *BoundsField) getHistogramAggQuery(extrema *api.Extrema, numBuckets int,
 	return histogramAggName, bucketQueryString, interval, rounded.Min
 }
 
-func (f *BoundsField) getMinMaxAggsQuery(key string, label string, indexMin int, indexMax int) string {
+func (f *BoundsField) getMinMaxAggsQuery(key string, label string, axisLabel string) string {
 	// get min / max agg names
 	minAggName := api.MinAggPrefix + label
 	maxAggName := api.MaxAggPrefix + label
 
 	// create aggregations
-	queryPart := fmt.Sprintf("MIN(\"%s\"[%d]) AS \"%s\", MAX(\"%s\"[%d]) AS \"%s\"",
-		key, indexMin, minAggName, key, indexMax, maxAggName)
+	queryPart := fmt.Sprintf("MIN(ST_%sMin(\"%s\")) AS \"%s\", MAX(ST_%sMax(\"%s\")) AS \"%s\"",
+		axisLabel, key, minAggName, axisLabel, key, maxAggName)
 
 	return queryPart
 }
@@ -284,37 +301,32 @@ func (f *BoundsField) fetchHistogramByResult(resultURI string, filterParams *api
 	}
 
 	xNumBuckets, yNumBuckets := getEqualBivariateBuckets(numBuckets, xExtrema, yExtrema)
+	buckets := getGeoBoundsBuckets(xExtrema, yExtrema, xNumBuckets, yNumBuckets)
 
-	// generate a histogram query for each
-	xMinHistogramName, xMinBucketQuery, intervalX, minX := f.getHistogramAggQuery(xExtrema, xNumBuckets, 1)
-	_, xMaxBucketQuery, _, _ := f.getHistogramAggQuery(xExtrema, xNumBuckets, 5)
-	yMinHistogramName, yMinBucketQuery, intervalY, minY := f.getHistogramAggQuery(yExtrema, yNumBuckets, 2)
-	_, yMaxBucketQuery, _, _ := f.getHistogramAggQuery(yExtrema, yNumBuckets, 6)
-
-	// Get count by x & y
-	query := fmt.Sprintf(`
-        SELECT
-          xbuckets, CAST(xbuckets * %g + %g AS double precision) AS %s,
-          ybuckets, CAST(ybuckets * %g + %g AS double precision) AS %s, COUNT(%s) FROM
-        (
-          SELECT %s,
-          %s AS minx, %s AS maxx, %s AS miny, %s AS maxy
-          FROM %s data INNER JOIN %s result ON data."%s" = result.index
-					WHERE result.result_id = $%d %s
-        ) AS points
-        INNER JOIN generate_series(0, %d) AS xbuckets ON xbuckets >= minx AND xbuckets <= maxx
-        INNER JOIN generate_series(0, %d) AS ybuckets ON ybuckets >= miny AND ybuckets <= maxy
-        GROUP BY xbuckets, ybuckets
-        ORDER BY xbuckets, ybuckets;`,
-		intervalX, minX, xMinHistogramName, intervalY, minY, yMinHistogramName,
-		f.Count, f.Count, xMinBucketQuery, xMaxBucketQuery, yMinBucketQuery, yMaxBucketQuery,
-		f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName,
-		len(params), where, xNumBuckets, yNumBuckets)
-
-	// execute the postgres query
-	res, err := f.Storage.client.Query(query, params...)
+	// insert all the buckets into a temp table
+	tx, err := f.Storage.client.Begin()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
+		return nil, errors.Wrapf(err, "unable to begin transaction")
+	}
+	tmpTableName := "tmp_" + f.DatasetStorageName
+	err = f.prepareBucketsForQuery(tx, tmpTableName, buckets)
+	if err != nil {
+		return nil, err
+	}
+
+	// join the temp table to the main table to get bucketed data
+	query := fmt.Sprintf(`
+		SELECT b.xbuckets, b.xcoord, b.ybuckets, b.ycoord, COUNT(%s)
+		FROM %s AS data inner join %s AS b ON ST_WITHIN(data."%s", b.coordinates)
+		INNER JOIN %s result ON data."%s" = result.index
+		WHERE result.result_id = $%d %s
+		GROUP BY b.xbuckets, b.xcoord, b.ybuckets, b.ycoord
+		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, f.DatasetStorageName, tmpTableName, f.Key,
+		f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where)
+	res, err := tx.Query(context.Background(), query, params...)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return nil, errors.Wrapf(err, "failed to fetch histograms for variable summaries from postgres")
 	}
 	if res != nil {
 		defer res.Close()
@@ -322,7 +334,12 @@ func (f *BoundsField) fetchHistogramByResult(resultURI string, filterParams *api
 
 	histogram, err := f.parseHistogram(res, xExtrema, yExtrema, xNumBuckets, yNumBuckets)
 	if err != nil {
+		tx.Rollback(context.Background())
 		return nil, err
+	}
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to commit transaction")
 	}
 
 	return histogram, nil
@@ -431,10 +448,10 @@ func getGeoBoundsBuckets(xExtrema *api.Extrema, yExtrema *api.Extrema,
 	buckets := []*geometryBucket{}
 	xLeft := xExtrema.Min
 	xRight := xLeft + xInterval
-	for xCount := 0; xRight <= xExtrema.Max; xLeft, xRight = xLeft+xInterval, xRight+xInterval {
+	for xCount := 0; xLeft <= xExtrema.Max; xLeft, xRight = xLeft+xInterval, xRight+xInterval {
 		yBottom := yExtrema.Min
 		yTop := yBottom + yInterval
-		for yCount := 0; yTop <= yExtrema.Max; yBottom, yTop = yBottom+yInterval, yTop+yInterval {
+		for yCount := 0; yBottom <= yExtrema.Max; yBottom, yTop = yBottom+yInterval, yTop+yInterval {
 			buckets = append(buckets, &geometryBucket{
 				bounds: &model.Bounds{
 					MinX: xLeft,

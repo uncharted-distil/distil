@@ -40,6 +40,7 @@ func init() {
 
 // DatabaseDriver defines the behaviour of the querying engine.
 type DatabaseDriver interface {
+	Begin() (pgx.Tx, error)
 	Query(string, ...interface{}) (pgx.Rows, error)
 	QueryRow(string, ...interface{}) pgx.Row
 	Exec(string, ...interface{}) (pgconn.CommandTag, error)
@@ -77,6 +78,11 @@ func (ic IntegratedClient) QueryRow(sql string, params ...interface{}) pgx.Row {
 // Exec executes the sql command.
 func (ic IntegratedClient) Exec(sql string, params ...interface{}) (pgconn.CommandTag, error) {
 	return ic.pgxClient.Exec(context.Background(), sql, params...)
+}
+
+// Begin creates a new transaction.
+func (ic IntegratedClient) Begin() (pgx.Tx, error) {
+	return ic.pgxClient.Begin(context.Background())
 }
 
 // SendBatch submits a batch.
