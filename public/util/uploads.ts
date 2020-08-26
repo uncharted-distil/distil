@@ -28,7 +28,7 @@ export function removeExtension(filename: string): string {
 // We make the comparison case insensitive.
 export function generateUniqueDatasetName(datasetName: string): string {
   const datasetNames = new Set(
-    datasetGetters.getDatasets(store).map((d) => _.toLower(d.id)),
+    datasetGetters.getDatasets(store).map((d) => _.toLower(d.id))
   );
   let newName = datasetName;
   let count = 1;

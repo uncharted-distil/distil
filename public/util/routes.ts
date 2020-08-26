@@ -95,7 +95,7 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
       }
       return query;
     },
-    {} as RouteArgs,
+    {} as RouteArgs
   );
 }
 

@@ -82,7 +82,7 @@ export default Vue.extend({
         TOOLTIP_LABELS[
           Math.min(
             Math.round(this.biasedImportance * (TOOLTIP_LABELS.length - 1)),
-            TOOLTIP_LABELS.length - 1,
+            TOOLTIP_LABELS.length - 1
           )
         ];
       return label;

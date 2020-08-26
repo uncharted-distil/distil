@@ -115,7 +115,7 @@ export default Vue.extend({
 
     mergeExtrema(
       a: TimeseriesExtrema,
-      b: TimeseriesExtrema,
+      b: TimeseriesExtrema
     ): TimeseriesExtrema {
       return {
         x: {
@@ -133,7 +133,7 @@ export default Vue.extend({
     numericBucketsToTimeseries(
       key: string,
       label: string,
-      buckets: Bucket[],
+      buckets: Bucket[]
     ): TimeseriesSet {
       const timeseries = buckets.map((b) => [_.parseInt(b.key), b.count]);
       const extrema = this.getExtremaFromTimeseries(timeseries);
@@ -155,7 +155,7 @@ export default Vue.extend({
     categoryBucketsToTimeseries(
       key: string,
       label: string,
-      buckets: Dictionary<Bucket[]>,
+      buckets: Dictionary<Bucket[]>
     ): TimeseriesSet {
       let extrema: TimeseriesExtrema = {
         x: { min: Infinity, max: -Infinity },
@@ -192,13 +192,13 @@ export default Vue.extend({
     variableSummaryToTimeseries(
       key: string,
       label: string,
-      histogram: Histogram,
+      histogram: Histogram
     ): TimeseriesSet {
       if (histogram.categoryBuckets) {
         return this.categoryBucketsToTimeseries(
           key,
           label,
-          histogram.categoryBuckets,
+          histogram.categoryBuckets
         );
       }
       return this.numericBucketsToTimeseries(key, label, histogram.buckets);

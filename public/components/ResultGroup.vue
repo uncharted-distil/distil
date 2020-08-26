@@ -190,7 +190,7 @@ export default Vue.extend({
       // Find the fitted solution ID.
       const fittedSolutionId = getSolutionById(
         store.state.requestsModule.solutions,
-        this.solutionId,
+        this.solutionId
       )?.fittedSolutionId;
       if (_.isEmpty(fittedSolutionId)) {
         return;
@@ -222,7 +222,7 @@ export default Vue.extend({
     solutionStatus(): string {
       const solution = getSolutionById(
         store.state.requestsModule.solutions,
-        this.solutionId,
+        this.solutionId
       );
       if (solution) {
         return solution.progress;
@@ -287,7 +287,7 @@ export default Vue.extend({
     isBad(): boolean {
       const solution = getSolutionById(
         store.state.requestsModule.solutions,
-        this.solutionId,
+        this.solutionId
       );
       if (solution) {
         return solution.isBad;
@@ -319,7 +319,7 @@ export default Vue.extend({
         store.state.requestsModule.solutions,
         this.requestId,
         this.solutionId,
-        3,
+        3
       );
     },
   },
@@ -330,7 +330,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: string,
-      dataset: string,
+      dataset: string
     ) {
       if (key && value) {
         // extract the var name from the key
@@ -355,7 +355,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: string,
-      dataset: string,
+      dataset: string
     ) {
       if (key && value) {
         // extract the var name from the key
@@ -380,7 +380,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: { from: number; to: number },
-      dataset: string,
+      dataset: string
     ) {
       if (!this.highlight || this.highlight.key !== key) {
         updateHighlight(this.$router, {
@@ -396,7 +396,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: { from: { label: string[] }; to: { label: string[] } },
-      dataset: string,
+      dataset: string
     ) {
       updateHighlight(this.$router, {
         context: context,
@@ -417,7 +417,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: { from: number; to: number },
-      dataset: string,
+      dataset: string
     ) {
       if (!this.highlight || this.highlight.key !== key) {
         updateHighlight(this.$router, {
@@ -433,7 +433,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: { from: number; to: number },
-      dataset: string,
+      dataset: string
     ) {
       updateHighlight(this.$router, {
         context: context,

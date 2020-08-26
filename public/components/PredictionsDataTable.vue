@@ -158,24 +158,24 @@ export default Vue.extend({
 
     hasData(): boolean {
       return !!predictionsGetters.getIncludedPredictionTableDataItems(
-        this.$store,
+        this.$store
       );
     },
 
     items(): TableRow[] {
       const items = predictionsGetters.getIncludedPredictionTableDataItems(
-        this.$store,
+        this.$store
       );
       return updateTableRowSelection(
         items,
         this.rowSelection,
-        this.instanceName,
+        this.instanceName
       );
     },
 
     fields(): Dictionary<TableColumn> {
       return predictionsGetters.getIncludedPredictionTableDataFields(
-        this.$store,
+        this.$store
       );
     },
 
@@ -221,7 +221,7 @@ export default Vue.extend({
           this.$router,
           this.instanceName,
           this.rowSelection,
-          row[D3M_INDEX_FIELD],
+          row[D3M_INDEX_FIELD]
         );
 
         appActions.logUserEvent(this.$store, {
@@ -235,7 +235,7 @@ export default Vue.extend({
           this.$router,
           this.instanceName,
           this.rowSelection,
-          row[D3M_INDEX_FIELD],
+          row[D3M_INDEX_FIELD]
         );
 
         appActions.logUserEvent(this.$store, {
@@ -269,7 +269,7 @@ export default Vue.extend({
 
     cellColor(weight: number, data: any): string {
       const items = predictionsGetters.getIncludedPredictionTableDataItems(
-        this.$store,
+        this.$store
       );
       return explainCellColor(weight, data, this.tableFields, items);
     },

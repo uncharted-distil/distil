@@ -156,7 +156,7 @@ export default Vue.extend({
       // TODO: support more than one grouping
       const groupings = getTimeseriesGroupingsFromFields(
         this.variables,
-        this.fields,
+        this.fields
       );
       return groupings[0];
     },
@@ -400,7 +400,7 @@ export default Vue.extend({
           "transform",
           `translate(${this.margin.left}, ${
             -this.margin.bottom + this.height - TICK_SIZE * 2
-          })`,
+          })`
         )
         .call(d3.axisBottom(this.microScale).tickFormat(this.axisFormat()));
 
@@ -411,7 +411,7 @@ export default Vue.extend({
         .attr("y", this.margin.top + TICK_SIZE * 2)
         .attr(
           "width",
-          this.macroScale(this.microMax) - this.macroScale(this.microMin),
+          this.macroScale(this.microMax) - this.macroScale(this.microMin)
         )
         .attr("height", SELECTED_TICK_SIZE);
 
@@ -439,7 +439,7 @@ export default Vue.extend({
           "transform",
           `translate(${this.margin.left}, ${
             this.margin.top + SELECTED_TICK_SIZE + TICK_SIZE * 2
-          })`,
+          })`
         )
         .call(d3.axisTop(this.macroScale).tickFormat(this.axisFormat()));
 
@@ -459,7 +459,7 @@ export default Vue.extend({
             "transform",
             `translate(${this.margin.left}, ${
               this.margin.top + SELECTED_TICK_SIZE + TICK_SIZE * 2
-            })`,
+            })`
           )
           .call(this.microRangeSelection);
 
@@ -535,7 +535,7 @@ export default Vue.extend({
             .drag()
             .on("start", dragstarted)
             .on("drag", dragged)
-            .on("end", dragended),
+            .on("end", dragended)
         );
     },
     attachTranslationHandlers() {
@@ -590,7 +590,7 @@ export default Vue.extend({
             .drag()
             .on("start", dragstarted)
             .on("drag", dragged)
-            .on("end", dragended),
+            .on("end", dragended)
         );
     },
     clearSVG() {

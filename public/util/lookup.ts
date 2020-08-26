@@ -8,7 +8,7 @@ export function buildLookup(strs: any[]): Dictionary<boolean> {
       lookup[str.toLowerCase()] = true;
     } else {
       console.error(
-        "Ignoring NULL string in look-up parameter list.  This should not happen.",
+        "Ignoring NULL string in look-up parameter list.  This should not happen."
       );
     }
   });

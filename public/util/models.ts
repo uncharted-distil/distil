@@ -20,7 +20,7 @@ function getModelByFittedSolutionId(fittedSolutionId: string | null): Model {
  * @return {String}
  */
 export function getModelNameByFittedSolutionId(
-  fittedSolutionId: string | null,
+  fittedSolutionId: string | null
 ): string {
   const model = getModelByFittedSolutionId(fittedSolutionId);
 
@@ -34,7 +34,7 @@ export function getModelNameByFittedSolutionId(
  * @return {Boolean}
  */
 export function isFittedSolutionIdSavedAsModel(
-  fittedSolutionId: string | null,
+  fittedSolutionId: string | null
 ): boolean {
   return !!getModelByFittedSolutionId(fittedSolutionId);
 }

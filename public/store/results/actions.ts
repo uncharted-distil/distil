@@ -36,7 +36,7 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
-    },
+    }
   ) {
     if (!args.dataset) {
       console.warn("`dataset` argument is missing");
@@ -60,7 +60,7 @@ export const actions = {
     }
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
-      args.solutionId,
+      args.solutionId
     );
     if (!solution || !solution.resultId) {
       // no results ready to pull
@@ -97,7 +97,7 @@ export const actions = {
         // add placeholder
         mutations.updateTrainingSummary(
           context,
-          createPendingSummary(key, label, description, dataset),
+          createPendingSummary(key, label, description, dataset)
         );
       }
       // fetch summary
@@ -111,7 +111,7 @@ export const actions = {
           varMode: varModes.has(variable.colName)
             ? varModes.get(variable.colName)
             : SummaryMode.Default,
-        }),
+        })
       );
     });
     return Promise.all(promises);
@@ -126,7 +126,7 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       varMode: SummaryMode;
-    },
+    }
   ): Promise<void> {
     if (!args.dataset) {
       console.warn("`dataset` argument is missing");
@@ -148,7 +148,7 @@ export const actions = {
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight,
+      args.highlight
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -157,7 +157,7 @@ export const actions = {
     try {
       const response = await axios.post(
         `/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}/${args.varMode}`,
-        filterParams,
+        filterParams
       );
       const summary = response.data.summary;
       await fetchSummaryExemplars(args.dataset, args.variable.colName, summary);
@@ -170,8 +170,8 @@ export const actions = {
           args.variable.colName,
           args.variable.colDisplayName,
           args.dataset,
-          error,
-        ),
+          error
+        )
       );
     }
   },
@@ -185,7 +185,7 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       varMode: SummaryMode;
-    },
+    }
   ) {
     if (!args.dataset) {
       console.warn("`dataset` argument is missing");
@@ -205,7 +205,7 @@ export const actions = {
     }
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
-      args.solutionId,
+      args.solutionId
     );
     if (!solution || !solution.resultId) {
       // no results ready to pull
@@ -221,7 +221,7 @@ export const actions = {
       const targetVar = dataGetters.getVariablesMap(store)[args.target];
       mutations.updateTargetSummary(
         context,
-        createPendingSummary(key, label, targetVar.colDescription, dataset),
+        createPendingSummary(key, label, targetVar.colDescription, dataset)
       );
     }
 
@@ -232,7 +232,7 @@ export const actions = {
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight,
+      args.highlight
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -241,7 +241,7 @@ export const actions = {
     try {
       const response = await axios.post(
         `/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}/${args.varMode}`,
-        filterParams,
+        filterParams
       );
       const summary = response.data.summary;
       await fetchSummaryExemplars(args.dataset, args.target, summary);
@@ -250,7 +250,7 @@ export const actions = {
       console.error(error);
       mutations.updateTargetSummary(
         context,
-        createErrorSummary(key, label, dataset, error),
+        createErrorSummary(key, label, dataset, error)
       );
     }
   },
@@ -263,11 +263,11 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       size?: number;
-    },
+    }
   ) {
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
-      args.solutionId,
+      args.solutionId
     );
     if (!solution || !solution.resultId) {
       // no results ready to pull
@@ -281,7 +281,7 @@ export const actions = {
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight,
+      args.highlight
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -293,14 +293,14 @@ export const actions = {
     try {
       const response = await axios.post(
         `/distil/results/${args.dataset}/${encodeURIComponent(
-          args.solutionId,
+          args.solutionId
         )}`,
-        filterParams,
+        filterParams
       );
       mutations.setIncludedResultTableData(context, response.data);
     } catch (error) {
       console.error(
-        `Failed to fetch results from ${args.solutionId} with error ${error}`,
+        `Failed to fetch results from ${args.solutionId} with error ${error}`
       );
       mutations.setIncludedResultTableData(context, createEmptyTableData());
     }
@@ -314,11 +314,11 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       size?: number;
-    },
+    }
   ) {
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
-      args.solutionId,
+      args.solutionId
     );
     if (!solution || !solution.resultId) {
       // no results ready to pull
@@ -333,7 +333,7 @@ export const actions = {
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
       args.highlight,
-      EXCLUDE_FILTER,
+      EXCLUDE_FILTER
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -346,14 +346,14 @@ export const actions = {
     try {
       const response = await axios.post(
         `/distil/results/${args.dataset}/${encodeURIComponent(
-          args.solutionId,
+          args.solutionId
         )}`,
-        filterParams,
+        filterParams
       );
       mutations.setExcludedResultTableData(context, response.data);
     } catch (error) {
       console.error(
-        `Failed to fetch results from ${args.solutionId} with error ${error}`,
+        `Failed to fetch results from ${args.solutionId} with error ${error}`
       );
       mutations.setExcludedResultTableData(context, createEmptyTableData());
     }
@@ -367,7 +367,7 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       size?: number;
-    },
+    }
   ) {
     return Promise.all([
       actions.fetchIncludedResultTableData(context, args),
@@ -377,7 +377,7 @@ export const actions = {
 
   async fetchResidualsExtrema(
     context: ResultsContext,
-    args: { dataset: string; target: string; solutionId: string },
+    args: { dataset: string; target: string; solutionId: string }
   ) {
     if (!args.dataset) {
       console.warn("`dataset` argument is missing");
@@ -390,7 +390,7 @@ export const actions = {
 
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
-      args.solutionId,
+      args.solutionId
     );
     if (!solution || !solution.resultId) {
       // no results ready to pull
@@ -399,7 +399,7 @@ export const actions = {
 
     try {
       const response = await axios.get(
-        `/distil/residuals-extrema/${args.dataset}/${args.target}`,
+        `/distil/residuals-extrema/${args.dataset}/${args.target}`
       );
       mutations.updateResidualsExtrema(context, response.data.extrema);
     } catch (error) {
@@ -417,7 +417,7 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       varMode: SummaryMode;
-    },
+    }
   ) {
     if (!args.dataset) {
       console.warn("`dataset` argument is missing");
@@ -438,7 +438,7 @@ export const actions = {
 
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
-      args.solutionId,
+      args.solutionId
     );
     if (!solution || !solution.resultId) {
       // no results ready to pull
@@ -452,7 +452,7 @@ export const actions = {
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight,
+      args.highlight
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -470,7 +470,7 @@ export const actions = {
       resultGetters.getPredictedSummaries(context),
       mutations.updatePredictedSummaries,
       filterParams,
-      args.varMode,
+      args.varMode
     );
   },
 
@@ -484,7 +484,7 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
-    },
+    }
   ) {
     if (!args.requestIds) {
       console.warn("`requestIds` argument is missing");
@@ -492,7 +492,7 @@ export const actions = {
     }
     const solutions = getSolutionsBySolutionRequestIds(
       context.rootState.requestsModule.solutions,
-      args.requestIds,
+      args.requestIds
     );
     return Promise.all(
       solutions.map((solution) => {
@@ -506,7 +506,7 @@ export const actions = {
             ? args.varModes.get(args.target)
             : SummaryMode.Default,
         });
-      }),
+      })
     );
   },
 
@@ -520,7 +520,7 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       varMode: SummaryMode;
-    },
+    }
   ) {
     if (!args.dataset) {
       console.warn("`dataset` argument is missing");
@@ -541,7 +541,7 @@ export const actions = {
 
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
-      args.solutionId,
+      args.solutionId
     );
     if (!solution.resultId) {
       // no results ready to pull
@@ -555,7 +555,7 @@ export const actions = {
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight,
+      args.highlight
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -573,7 +573,7 @@ export const actions = {
       resultGetters.getResidualsSummaries(context),
       mutations.updateResidualsSummaries,
       filterParams,
-      args.varMode,
+      args.varMode
     );
   },
 
@@ -587,7 +587,7 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
-    },
+    }
   ) {
     if (!args.requestIds) {
       console.warn("`requestIds` argument is missing");
@@ -595,7 +595,7 @@ export const actions = {
     }
     const solutions = getSolutionsBySolutionRequestIds(
       context.rootState.requestsModule.solutions,
-      args.requestIds,
+      args.requestIds
     );
     return Promise.all(
       solutions.map((solution) => {
@@ -609,7 +609,7 @@ export const actions = {
             ? args.varModes.get(args.target)
             : SummaryMode.Default,
         });
-      }),
+      })
     );
   },
 
@@ -622,7 +622,7 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       varMode: SummaryMode;
-    },
+    }
   ) {
     if (!validateArgs(args, ["dataset", "solutionId", "varMode"])) {
       return null;
@@ -630,7 +630,7 @@ export const actions = {
 
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
-      args.solutionId,
+      args.solutionId
     );
     if (!solution || !solution.resultId) {
       // no results ready to pull
@@ -644,7 +644,7 @@ export const actions = {
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
-      args.highlight,
+      args.highlight
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
@@ -662,7 +662,7 @@ export const actions = {
       resultGetters.getCorrectnessSummaries(context),
       mutations.updateCorrectnessSummaries,
       filterParams,
-      args.varMode,
+      args.varMode
     );
   },
 
@@ -676,7 +676,7 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
-    },
+    }
   ) {
     if (!validateArgs(args, ["dataset", "target", "requestIds"])) {
       return null;
@@ -684,7 +684,7 @@ export const actions = {
 
     const solutions = getSolutionsBySolutionRequestIds(
       context.rootState.requestsModule.solutions,
-      args.requestIds,
+      args.requestIds
     );
     return Promise.all(
       solutions.map((solution) => {
@@ -697,7 +697,7 @@ export const actions = {
             ? args.varModes.get(args.target)
             : SummaryMode.Default,
         });
-      }),
+      })
     );
   },
 
@@ -710,7 +710,7 @@ export const actions = {
       timeseriesColName: string;
       timeseriesId: any;
       solutionId: string;
-    },
+    }
   ) {
     if (!args.dataset) {
       console.warn("`dataset` argument is missing");
@@ -739,7 +739,7 @@ export const actions = {
 
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
-      args.solutionId,
+      args.solutionId
     );
     if (!solution || !solution.resultId) {
       // no results ready to pull
@@ -756,7 +756,7 @@ export const actions = {
           `${encodeURIComponent(args.yColName)}/` +
           `${encodeURIComponent(args.timeseriesId)}/` +
           `${encodeURIComponent(solution.resultId)}`,
-        {},
+        {}
       );
       mutations.updatePredictedTimeseries(context, {
         solutionId: args.solutionId,
@@ -780,10 +780,10 @@ export const actions = {
   // available, then the rankings will have been computed.
   async fetchVariableRankings(
     context: ResultsContext,
-    args: { solutionID: string },
+    args: { solutionID: string }
   ) {
     const response = await axios.get(
-      `/distil/solution-variable-rankings/${args.solutionID}`,
+      `/distil/solution-variable-rankings/${args.solutionID}`
     );
     const rankings = <Dictionary<number>>response.data;
     mutations.setVariableRankings(store, {

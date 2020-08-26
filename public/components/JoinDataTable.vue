@@ -69,7 +69,7 @@ import {
 
 function findSuggestionIndex(
   columnSuggestions: string[],
-  colName: string,
+  colName: string
 ): number {
   return columnSuggestions.findIndex((col) => {
     // col can be something like "lat+lng" for multi column suggestions
@@ -122,7 +122,7 @@ export default Vue.extend({
     selectedSuggestedBaseColumn(): string {
       const index = findSuggestionIndex(
         this.baseColumnSuggestions,
-        this.selectedBaseColumn.key,
+        this.selectedBaseColumn.key
       );
       return index >= 0 ? this.selectedBaseColumn.key : undefined;
     },
@@ -135,7 +135,7 @@ export default Vue.extend({
     selectedSuggestedJoinColumn(): string {
       const index = findSuggestionIndex(
         this.baseColumnSuggestions,
-        this.selectedJoinColumn.key,
+        this.selectedJoinColumn.key
       );
       return index >= 0 ? this.selectedJoinColumn.key : undefined;
     },
@@ -182,7 +182,7 @@ export default Vue.extend({
           const isFieldSuggested =
             findSuggestionIndex(
               this.baseColumnSuggestions,
-              this.selectedBaseColumn.key,
+              this.selectedBaseColumn.key
             ) === findSuggestionIndex(this.joinColumnSuggestions, field.key);
           if (
             this.selectedSuggestedBaseColumn !== undefined &&
@@ -209,7 +209,7 @@ export default Vue.extend({
       return formatFieldsAsArray(
         this.isBaseJoinTable
           ? this.emphasizedBaseTableFields
-          : this.emphasizedJoinTableFields,
+          : this.emphasizedJoinTableFields
       );
     },
 

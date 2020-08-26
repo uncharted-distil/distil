@@ -122,7 +122,7 @@ export default Vue.extend({
       }
 
       const summaryVar = this.variables.find(
-        (v) => v.colName === this.summary.key,
+        (v) => v.colName === this.summary.key
       );
 
       if (!summaryVar || !this.grouping || !this.variable) {

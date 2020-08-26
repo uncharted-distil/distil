@@ -37,7 +37,7 @@ export default Vue.extend({
       const headTargetCells = [];
       const minCellWidth = 200;
       const evenCellWidth = Math.ceil(
-        this.tbody.clientWidth / theadCells.length,
+        this.tbody.clientWidth / theadCells.length
       );
       const maxCellWidth =
         minCellWidth > evenCellWidth ? minCellWidth : evenCellWidth;

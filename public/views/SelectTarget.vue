@@ -115,7 +115,7 @@ export default Vue.extend({
             const target = group.colName;
             // remove from training
             const training = routeGetters.getDecodedTrainingVariableNames(
-              this.$store,
+              this.$store
             );
             const index = training.indexOf(target);
             if (index !== -1) {
@@ -157,7 +157,7 @@ export default Vue.extend({
                 const task = response.data.task.join(",");
 
                 const varModesMap = routeGetters.getDecodedVarModes(
-                  this.$store,
+                  this.$store
                 );
                 if (task.includes("timeseries")) {
                   training.forEach((v) => {
@@ -186,7 +186,7 @@ export default Vue.extend({
 
                 const entry = createRouteEntry(
                   SELECT_TRAINING_ROUTE,
-                  routeArgs,
+                  routeArgs
                 );
                 this.$router.push(entry);
               })
@@ -225,7 +225,7 @@ export default Vue.extend({
 
       // Remove summaries of features used in a grouping.
       summaries = summaries.filter(
-        (summary) => !groupedFeatures.includes(summary.key),
+        (summary) => !groupedFeatures.includes(summary.key)
       );
 
       return summaries;
@@ -235,7 +235,7 @@ export default Vue.extend({
       return new Set(
         this.variables
           .filter((v) => isUnsupportedTargetVar(v.colName, v.colType))
-          .map((v) => v.colName),
+          .map((v) => v.colName)
       );
     },
 

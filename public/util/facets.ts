@@ -142,19 +142,19 @@ export function getCategoricalChunkSize(type: string): number {
 }
 
 export function isCategoricalFacet(
-  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet,
+  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet
 ): facet is CategoricalFacet {
   return (<CategoricalFacet>facet).value !== undefined;
 }
 
 export function isNumericalFacet(
-  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet,
+  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet
 ): facet is NumericalFacet {
   return (<NumericalFacet>facet).histogram !== undefined;
 }
 
 export function isPlaceHolderFacet(
-  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet,
+  facet: PlaceHolderFacet | CategoricalFacet | NumericalFacet
 ): facet is PlaceHolderFacet {
   return (<PlaceHolderFacet>facet).placeholder !== undefined;
 }
@@ -167,7 +167,7 @@ export function getCategoricalFacetValue(summary: VariableSummary): string {
 
 export function getNumericalFacetValue(
   summary: VariableSummary,
-  type: string,
+  type: string
 ): { from: number; to: number; type: string } {
   // facet library is incapable of selecting a range that isnt exactly
   // on a bin boundary, so we need to iterate through and find it
@@ -249,14 +249,14 @@ export function getNumericalFacetValue(
 
 export function getTimeseriesFacetValue(
   summary: VariableSummary,
-  type: string,
+  type: string
 ): { from: number; to: number } {
   return {
     from: _.toNumber(
-      _.minBy(summary.baseline.buckets, (b) => _.toNumber(b.key)).key,
+      _.minBy(summary.baseline.buckets, (b) => _.toNumber(b.key)).key
     ),
     to: _.toNumber(
-      _.maxBy(summary.baseline.buckets, (b) => _.toNumber(b.key)).key,
+      _.maxBy(summary.baseline.buckets, (b) => _.toNumber(b.key)).key
     ),
   };
 }
@@ -286,7 +286,7 @@ export function hasFiltered(summary: VariableSummary) {
 export function getSubSelectionValues(
   summary: VariableSummary,
   rowSelection: RowSelection,
-  max: number,
+  max: number
 ): number[][] {
   const hasFilterBuckets = hasFiltered(summary);
   if (!hasFilterBuckets && !rowSelection) {
@@ -324,7 +324,7 @@ export function getSubSelectionValues(
     subSelectionValues = summary.baseline.buckets.map((b) =>
       rowLabelMatches(rowLabels, b.key, isNumeric)
         ? [b.count / max, null]
-        : [null, b.count / max],
+        : [null, b.count / max]
     );
   }
   return subSelectionValues;
@@ -333,7 +333,7 @@ export function getSubSelectionValues(
 export function rowLabelMatches(
   rowLabels: string[],
   bucketKey: string,
-  isNumeric: boolean,
+  isNumeric: boolean
 ): boolean {
   if (isNumeric) {
     const numBk = _.toNumber(bucketKey);
@@ -355,7 +355,7 @@ export function rowLabelMatches(
 
 export function getRowSelectionLabels(
   rowSelection: RowSelection,
-  summary: VariableSummary,
+  summary: VariableSummary
 ): string[] {
   const selectedRows = getSelectedRows(rowSelection);
   if (selectedRows.length === 0) return [];
@@ -367,7 +367,7 @@ export function getRowSelectionLabels(
       if (col.key === summary.label || col.key === summary.key) {
         rowKeys.push(col.value.value);
       }
-    }),
+    })
   );
 
   if (summary.type === NUMERICAL_SUMMARY) {
@@ -406,7 +406,7 @@ export function viewMoreData(
   moreNumToDisplay: number,
   facetMoreCount: number,
   baseNumToDisplay: number,
-  facetValueCount: number,
+  facetValueCount: number
 ): number {
   return facetMoreCount >= baseNumToDisplay
     ? moreNumToDisplay + baseNumToDisplay
@@ -417,7 +417,7 @@ export function viewLessData(
   moreNumToDisplay: number,
   facetMoreCount: number,
   baseNumToDisplay: number,
-  facetValueCount: number,
+  facetValueCount: number
 ): number {
   return facetMoreCount === 0 && facetValueCount % baseNumToDisplay !== 0
     ? moreNumToDisplay - (facetValueCount % baseNumToDisplay)
@@ -427,7 +427,7 @@ export function viewLessData(
 export function facetTypeChangeState(
   dataset: string,
   key: string,
-  enabledTypeChanges: string[],
+  enabledTypeChanges: string[]
 ): boolean {
   const typeKey = `${dataset}:${key}`;
   return enabledTypeChanges

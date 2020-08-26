@@ -141,7 +141,7 @@ export default Vue.extend({
     },
     topVariables(): Variable[] {
       return sortVariablesByImportance(
-        filterVariablesByFeature(this.dataset.variables).slice(0),
+        filterVariablesByFeature(this.dataset.variables).slice(0)
       ).slice(0, NUM_TOP_FEATURES);
     },
     percentComplete(): number {
@@ -193,7 +193,7 @@ export default Vue.extend({
       const regex = new RegExp(`(${joined})(?![^<]*>)`, "gm");
       return this.dataset.description.replace(
         regex,
-        '<span class="highlight">$1</span>',
+        '<span class="highlight">$1</span>'
       );
     },
     addRecentDataset(dataset: string) {

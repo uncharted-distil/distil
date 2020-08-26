@@ -43,7 +43,7 @@ export default Vue.extend({
       return facetTypeChangeState(
         this.summary.dataset,
         this.summary.key,
-        this.enabledTypeChanges,
+        this.enabledTypeChanges
       );
     },
   },

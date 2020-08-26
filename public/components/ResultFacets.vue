@@ -121,7 +121,7 @@ export default Vue.extend({
 
     requestGroups(): RequestGroup[] {
       let solutionRequests = requestGetters.getRelevantSolutionRequests(
-        this.$store,
+        this.$store
       );
 
       let solutions = [];
@@ -129,13 +129,13 @@ export default Vue.extend({
         const solutionId = routeGetters.getRouteSolutionId(this.$store);
         const solution = getSolutionById(
           <Solution[]>this.$store.state.requestsModule.solutions,
-          solutionId,
+          solutionId
         );
         if (solution) {
           solutions = [solution];
           solutionRequests = [
             solutionRequests.find(
-              (request) => request.requestId === solution.requestId,
+              (request) => request.requestId === solution.requestId
             ),
           ];
         }

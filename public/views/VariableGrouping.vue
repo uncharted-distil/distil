@@ -375,13 +375,13 @@ export default Vue.extend({
 
       // Remove summaries of features used in a grouping.
       summaries = summaries.filter(
-        (summary) => !groupedFeatures.includes(summary.key),
+        (summary) => !groupedFeatures.includes(summary.key)
       );
       return summaries;
     },
     previewSummary(): VariableSummary {
       const pv = this.summaries.filter(
-        (v) => v.key.indexOf(this.xCol) > -1 && v.key.indexOf(this.yCol) > -1,
+        (v) => v.key.indexOf(this.xCol) > -1 && v.key.indexOf(this.yCol) > -1
       )[0];
       return pv;
     },

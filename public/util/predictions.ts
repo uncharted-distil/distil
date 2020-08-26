@@ -6,7 +6,7 @@ import _ from "lodash";
 
 export function getPredictionsById(
   predictions: Predictions[],
-  predictionsId: string,
+  predictionsId: string
 ): Predictions {
   const id = predictionsId || "";
   return predictions.find((r) => r.requestId === id);

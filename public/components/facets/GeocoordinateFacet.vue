@@ -326,7 +326,7 @@ export default Vue.extend({
                   [xCoord, yCoord],
                 ],
               ],
-              { selected: false, count: latBucket.count },
+              { selected: false, count: latBucket.count }
             );
             features.push(feature);
           }
@@ -366,7 +366,7 @@ export default Vue.extend({
                     [xCoord, yCoord],
                   ],
                 ],
-                { selected: false, count: latBucket.count },
+                { selected: false, count: latBucket.count }
               );
               features.push(feature);
             }
@@ -385,7 +385,7 @@ export default Vue.extend({
       return this.bucketFeatures.features.reduce(
         (min, feature) =>
           feature.properties.count < min ? feature.properties.count : min,
-        Number.MAX_SAFE_INTEGER,
+        Number.MAX_SAFE_INTEGER
       );
     },
 
@@ -394,7 +394,7 @@ export default Vue.extend({
       return this.bucketFeatures.features.reduce(
         (max, feature) =>
           feature.properties.count > max ? feature.properties.count : max,
-        Number.MIN_SAFE_INTEGER,
+        Number.MIN_SAFE_INTEGER
       );
     },
 
@@ -402,7 +402,7 @@ export default Vue.extend({
       return this.filteredBucketFeatures.features.reduce(
         (min, feature) =>
           feature.properties.count < min ? feature.properties.count : min,
-        Number.MAX_SAFE_INTEGER,
+        Number.MAX_SAFE_INTEGER
       );
     },
 
@@ -448,10 +448,10 @@ export default Vue.extend({
           const selectedItems = this.selectedRows.d3mIndices.flatMap(
             (index) => {
               return tableItems.filter((item) => item.d3mIndex === index);
-            },
+            }
           );
           const selectedPoints = selectedItems.map((item) =>
-            point([Number(item.longitude), Number(item.latitude)]),
+            point([Number(item.longitude), Number(item.latitude)])
           );
           return selectedPoints.map((p) => p.geometry);
         }
@@ -497,7 +497,7 @@ export default Vue.extend({
             });
             return lbs;
           },
-          [],
+          []
         );
         return this.numericWithMetadata(lonBuckets);
       } else {
@@ -523,7 +523,7 @@ export default Vue.extend({
             }
             return lbs;
           },
-          [],
+          []
         );
         return this.numericWithMetadata(latBuckets);
       } else {
@@ -535,7 +535,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: { from: number; to: number; type: string },
-      dataset: string,
+      dataset: string
     ) {
       if (this.blockNextEvent) {
         this.blockNextEvent = false;
@@ -547,7 +547,7 @@ export default Vue.extend({
         value,
         dataset,
         LATITUDE_TYPE,
-        "numerical-click",
+        "numerical-click"
       );
     },
 
@@ -555,7 +555,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: { from: number; to: number; type: string },
-      dataset: string,
+      dataset: string
     ) {
       if (this.blockNextEvent) {
         this.blockNextEvent = false;
@@ -567,7 +567,7 @@ export default Vue.extend({
         value,
         dataset,
         LONGITUDE_TYPE,
-        "numerical-click",
+        "numerical-click"
       );
     },
 
@@ -575,7 +575,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: { from: number; to: number; type: string },
-      dataset: string,
+      dataset: string
     ) {
       this.blockNextEvent = true;
       this.onHistogramAction(
@@ -584,7 +584,7 @@ export default Vue.extend({
         value,
         dataset,
         LATITUDE_TYPE,
-        "range-change",
+        "range-change"
       );
     },
 
@@ -592,7 +592,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: { from: number; to: number; type: string },
-      dataset: string,
+      dataset: string
     ) {
       this.blockNextEvent = true;
       this.onHistogramAction(
@@ -601,7 +601,7 @@ export default Vue.extend({
         value,
         dataset,
         LONGITUDE_TYPE,
-        "range-change",
+        "range-change"
       );
     },
 
@@ -611,7 +611,7 @@ export default Vue.extend({
       value: { from: number; to: number; type: string },
       dataset: string,
       geocoordinateComponent: string,
-      actionType,
+      actionType
     ) {
       if (this.hasValidGeoHighlight) {
         const currentValue = this.highlight.value;
@@ -687,7 +687,7 @@ export default Vue.extend({
 
         varModesMap.set(
           routeGetters.getRouteTargetVariable(this.$store),
-          SummaryMode.RemoteSensing,
+          SummaryMode.RemoteSensing
         );
       }
       const varModesStr = varModesToString(varModesMap);
@@ -703,7 +703,7 @@ export default Vue.extend({
 
     async removeFeature() {
       const training = routeGetters.getDecodedTrainingVariableNames(
-        this.$store,
+        this.$store
       );
       _.remove(training, (t) => t === this.summary.key);
 
@@ -761,7 +761,7 @@ export default Vue.extend({
       if (this.currentRect) {
         const offset = $(this.map.getContainer()).offset();
         const latLng = this.map.containerPointToLatLng(
-          leaflet.point(event.pageX - offset.left, event.pageY - offset.top),
+          leaflet.point(event.pageX - offset.left, event.pageY - offset.top)
         );
         const bounds = leaflet.latLngBounds(this.startingLatLng, latLng);
         this.currentRect.setBounds(bounds);
@@ -789,12 +789,12 @@ export default Vue.extend({
         const offset = $(this.map.getContainer()).offset();
 
         this.startingLatLng = this.map.containerPointToLatLng(
-          leaflet.point(event.pageX - offset.left, event.pageY - offset.top),
+          leaflet.point(event.pageX - offset.left, event.pageY - offset.top)
         );
 
         const bounds = leaflet.latLngBounds(
           this.startingLatLng,
-          this.startingLatLng,
+          this.startingLatLng
         );
 
         this.currentRect = leaflet.rectangle(bounds, {
@@ -894,7 +894,7 @@ export default Vue.extend({
             color: "#255DCC",
             weight: 1,
             bubblingMouseEvents: false,
-          },
+          }
         );
         rect.on("click", (e) => {
           this.setSelection(e.target);
@@ -931,7 +931,7 @@ export default Vue.extend({
         this.map.dragging.disable();
 
         this.baseLayer = leaflet.tileLayer(
-          "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+          "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
         );
         this.baseLayer.addTo(this.map);
       }
@@ -958,7 +958,7 @@ export default Vue.extend({
             // if there's no highlight active render from the baseline (all) set of buckets.
             const d = (maxVal - minVal) / BLUE_PALETTE.length;
             const domain = BLUE_PALETTE.map(
-              (val, index) => minVal + d * (index + 1),
+              (val, index) => minVal + d * (index + 1)
             );
             const scaleColors = scaleThreshold()
               .range(BLUE_PALETTE as any)
@@ -996,7 +996,7 @@ export default Vue.extend({
             const filteredMinVal = this.filteredMinCount;
             const dVal = (maxVal - minVal) / BLUE_PALETTE.length;
             const filteredDomain = BLUE_PALETTE.map(
-              (val, index) => filteredMinVal + dVal * (index + 1),
+              (val, index) => filteredMinVal + dVal * (index + 1)
             );
             const filteredScaleColors = scaleThreshold()
               .range(BLUE_PALETTE as any)
@@ -1035,7 +1035,7 @@ export default Vue.extend({
           const filteredMinVal = this.filteredMinCount;
           const dVal = (maxVal - minVal) / BLACK_PALETTE.length;
           const filteredDomain = BLACK_PALETTE.map(
-            (val, index) => filteredMinVal + dVal * (index + 1),
+            (val, index) => filteredMinVal + dVal * (index + 1)
           );
           const filteredScaleColors = scaleThreshold()
             .range(BLACK_PALETTE as any)
@@ -1045,7 +1045,7 @@ export default Vue.extend({
             style: (feature) => {
               return {
                 fillColor: filteredScaleColors(
-                  feature.properties.count,
+                  feature.properties.count
                 ).toString(16),
                 weight: 0,
                 opacity: 1,

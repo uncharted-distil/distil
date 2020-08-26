@@ -84,7 +84,7 @@ export type RequestContext = ActionContext<RequestState, DistilState>;
 function updateCurrentSolutionResults(
   context: RequestContext,
   req: SolutionRequestMsg,
-  res: SolutionStatusMsg,
+  res: SolutionStatusMsg
 ) {
   const isRegression = routeGetters
     .getRouteTask(store)
@@ -169,7 +169,7 @@ function updateCurrentSolutionResults(
 function updateCurrentPredictResults(
   context: RequestContext,
   req: PredictRequestMsg,
-  res: PredictStatusMsg,
+  res: PredictStatusMsg
 ) {
   const varModes = context.getters.getDecodedVarModes;
 
@@ -199,7 +199,7 @@ function updateCurrentPredictResults(
 function updateSolutionResults(
   context: RequestContext,
   req: SolutionRequestMsg,
-  res: SolutionStatusMsg,
+  res: SolutionStatusMsg
 ) {
   const taskArgs = routeGetters.getRouteTask(store);
   const isRegression = taskArgs && taskArgs.includes(TaskTypes.REGRESSION);
@@ -254,7 +254,7 @@ function updateSolutionResults(
 function handleRequestProgress(
   context: RequestContext,
   request: SolutionRequestMsg,
-  response: SolutionStatusMsg,
+  response: SolutionStatusMsg
 ) {
   // no-op
 }
@@ -262,7 +262,7 @@ function handleRequestProgress(
 function handleSolutionProgress(
   context: RequestContext,
   request: SolutionRequestMsg,
-  response: SolutionStatusMsg,
+  response: SolutionStatusMsg
 ) {
   switch (response.progress) {
     case SOLUTION_COMPLETED:
@@ -304,12 +304,12 @@ function isSolutionResponse(response: SolutionStatusMsg) {
 async function handleProgress(
   context: RequestContext,
   request: SolutionRequestMsg,
-  response: SolutionStatusMsg,
+  response: SolutionStatusMsg
 ) {
   if (isSolutionRequestResponse(response)) {
     // request
     console.log(
-      `Progress for request ${response.requestId} updated to ${response.progress}`,
+      `Progress for request ${response.requestId} updated to ${response.progress}`
     );
     await actions.fetchSolutionRequest(context, {
       requestId: response.requestId,
@@ -318,7 +318,7 @@ async function handleProgress(
   } else if (isSolutionResponse(response)) {
     // solution
     console.log(
-      `Progress for solution ${response.solutionId} updated to ${response.progress}`,
+      `Progress for solution ${response.solutionId} updated to ${response.progress}`
     );
     await actions.fetchSolution(context, {
       solutionId: response.solutionId,
@@ -330,11 +330,11 @@ async function handleProgress(
 async function handlePredictProgress(
   context: RequestContext,
   request: PredictRequestMsg,
-  response: PredictStatusMsg,
+  response: PredictStatusMsg
 ) {
   // request
   console.log(
-    `Progress for request ${response.resultId} updated to ${response.progress}`,
+    `Progress for request ${response.resultId} updated to ${response.progress}`
   );
   switch (response.progress) {
     case PREDICT_COMPLETED:
@@ -351,7 +351,7 @@ async function handlePredictProgress(
 export const actions = {
   async fetchSolutionRequests(
     context: RequestContext,
-    args: { dataset?: string; target?: string },
+    args: { dataset?: string; target?: string }
   ) {
     if (!args.dataset) {
       args.dataset = null;
@@ -363,7 +363,7 @@ export const actions = {
     try {
       // fetch and uddate the search data
       const requestResponse = await axios.get<SolutionRequest[]>(
-        `/distil/solution-requests/${args.dataset}/${args.target}`,
+        `/distil/solution-requests/${args.dataset}/${args.target}`
       );
       const requests = requestResponse.data;
       for (const request of requests) {
@@ -377,7 +377,7 @@ export const actions = {
 
   async fetchSolutionRequest(
     context: RequestContext,
-    args: { requestId: string },
+    args: { requestId: string }
   ) {
     if (!args.requestId) {
       args.requestId = null;
@@ -386,7 +386,7 @@ export const actions = {
     try {
       // fetch and uddate the search data
       const requestResponse = await axios.get<SolutionRequest>(
-        `/distil/solution-request/${args.requestId}`,
+        `/distil/solution-request/${args.requestId}`
       );
       // update request data
       mutations.updateSolutionRequests(context, requestResponse.data);
@@ -397,7 +397,7 @@ export const actions = {
 
   async fetchSolutions(
     context: RequestContext,
-    args: { dataset?: string; target?: string },
+    args: { dataset?: string; target?: string }
   ) {
     if (!args.dataset) {
       args.dataset = null;
@@ -409,7 +409,7 @@ export const actions = {
     try {
       // fetch update the solution data
       const solutionResponse = await axios.get<Solution[]>(
-        `/distil/solutions/${args.dataset}/${args.target}`,
+        `/distil/solutions/${args.dataset}/${args.target}`
       );
       if (!solutionResponse.data) {
         return;
@@ -426,7 +426,7 @@ export const actions = {
     try {
       // fetch update the solution data
       const solutionResponse = await axios.get<Solution>(
-        `/distil/solution/${args.solutionId}`,
+        `/distil/solution/${args.solutionId}`
       );
       if (!solutionResponse.data) {
         return;
@@ -571,13 +571,13 @@ export const actions = {
   // fetches all predictions for a given fitted solution
   async fetchPredictions(
     context: RequestContext,
-    args: { fittedSolutionId: string },
+    args: { fittedSolutionId: string }
   ) {
     args.fittedSolutionId = args.fittedSolutionId || "";
     try {
       // fetch and uddate the search data
       const predictionsResponse = await axios.get<Predictions[]>(
-        `/distil/predictions/${args.fittedSolutionId}`,
+        `/distil/predictions/${args.fittedSolutionId}`
       );
       for (const predictions of predictionsResponse.data) {
         mutations.updatePredictions(context, predictions);
@@ -596,7 +596,7 @@ export const actions = {
     try {
       // fetch and uddate the search data
       const requestResponse = await axios.get<Predictions>(
-        `/distil/prediction/${args.requestId}`,
+        `/distil/prediction/${args.requestId}`
       );
       // update request data
       mutations.updatePredictions(context, requestResponse.data);

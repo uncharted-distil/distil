@@ -130,7 +130,7 @@ export default Vue.extend({
       return facetTypeChangeState(
         this.summary.dataset,
         this.summary.key,
-        this.enabledTypeChanges,
+        this.enabledTypeChanges
       );
     },
     headerClass(): string {
@@ -228,7 +228,7 @@ export default Vue.extend({
           this.instanceName,
           this.summary.key,
           this.getRange(facet),
-          this.summary.dataset,
+          this.summary.dataset
         );
       }
     },

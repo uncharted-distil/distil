@@ -43,7 +43,7 @@ export default Vue.extend({
       // find solutions associated with exported models
       const savedModelsMap = _.mapKeys(
         modelGetters.getModels(this.$store),
-        (m) => m.fittedSolutionId,
+        (m) => m.fittedSolutionId
       );
       return requestGetters
         .getSolutions(this.$store)

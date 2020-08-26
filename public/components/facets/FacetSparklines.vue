@@ -126,7 +126,7 @@ export default Vue.extend({
       return facetTypeChangeState(
         this.summary.dataset,
         this.summary.key,
-        this.enabledTypeChanges,
+        this.enabledTypeChanges
       );
     },
     headerClass(): string {
@@ -150,7 +150,7 @@ export default Vue.extend({
           if (val.key === highlightValue) acc[ind] = true;
           return acc;
         },
-        {},
+        {}
       );
       return highlightAsSelection;
     },
@@ -228,7 +228,7 @@ export default Vue.extend({
         this.moreNumToDisplay,
         this.facetMoreCount,
         this.baseNumToDisplay,
-        this.facetValueCount,
+        this.facetValueCount
       );
     },
     viewLess() {
@@ -236,7 +236,7 @@ export default Vue.extend({
         this.moreNumToDisplay,
         this.facetMoreCount,
         this.baseNumToDisplay,
-        this.facetValueCount,
+        this.facetValueCount
       );
     },
     getHighlightValue(highlight: Highlight): any {
@@ -264,7 +264,7 @@ export default Vue.extend({
             const oldKey = Object.keys(this.selection)[0];
             const incomingKeys = Object.keys(facet.selection);
             const newKey = incomingKeys.filter(
-              (iKey) => oldKey.indexOf(iKey) < 0,
+              (iKey) => oldKey.indexOf(iKey) < 0
             )[0];
             value = this.facetData.values[newKey].label;
           } else {
@@ -277,7 +277,7 @@ export default Vue.extend({
           this.instanceName,
           this.summary.key,
           value,
-          this.summary.dataset,
+          this.summary.dataset
         );
       }
     },

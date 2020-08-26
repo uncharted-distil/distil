@@ -95,12 +95,12 @@ export default Vue.extend({
     isAllTrainingVariablesRemovable(): boolean {
       // Fetch the variables in the timeseries grouping.
       const timeseriesGrouping = datasetGetters.getTimeseriesGroupingVariables(
-        this.$store,
+        this.$store
       );
 
       // Filter them out of the available training variables.
       const trainingVariables = Array.from(
-        this.trainingVariableSummaries,
+        this.trainingVariableSummaries
       ).filter((variable) => !timeseriesGrouping.includes(variable.key));
 
       // The variables can be removed.
@@ -154,7 +154,7 @@ export default Vue.extend({
           });
 
           const training = routeGetters.getDecodedTrainingVariableNames(
-            this.$store,
+            this.$store
           );
           training.splice(training.indexOf(group.colName), 1);
 
@@ -189,7 +189,7 @@ export default Vue.extend({
 
       const facets = this.$refs.facets as any;
       const training = routeGetters.getDecodedTrainingVariableNames(
-        this.$store,
+        this.$store
       );
       facets.availableVariables().forEach((variable) => {
         training.splice(training.indexOf(variable), 1);

@@ -12,7 +12,7 @@ export interface IconBaseProps {
 // render provided vue icon component and return it's html element
 export function createIcon(
   IconComponentConstructor: VueConstructor,
-  props?: IconBaseProps,
+  props?: IconBaseProps
 ) {
   const iconBase = new IconBase({
     propsData: props,

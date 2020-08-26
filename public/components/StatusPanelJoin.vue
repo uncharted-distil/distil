@@ -248,7 +248,7 @@ export default Vue.extend({
         .find(
           (request) =>
             request.dataset === this.dataset &&
-            request.type === DatasetPendingRequestType.JOIN_SUGGESTION,
+            request.type === DatasetPendingRequestType.JOIN_SUGGESTION
         );
       return <JoinSuggestionPendingRequest>request;
     },
@@ -275,7 +275,7 @@ export default Vue.extend({
                   .indexOf(this.filterString.toLowerCase()) > -1 ||
                 item.dataset.description
                   .toLowerCase()
-                  .indexOf(this.filterString.toLowerCase()) > -1,
+                  .indexOf(this.filterString.toLowerCase()) > -1
             )
           : this.suggestionDatasets;
       return filteredItems;
@@ -286,12 +286,12 @@ export default Vue.extend({
         .getPendingRequests(this.$store)
         .find(
           (request) =>
-            request.type === DatasetPendingRequestType.JOIN_DATASET_IMPORT,
+            request.type === DatasetPendingRequestType.JOIN_DATASET_IMPORT
         );
       const isInSuggestionList = Boolean(
         this.joinSuggestions.find(
-          (item) => item.id === (request && request.dataset),
-        ),
+          (item) => item.id === (request && request.dataset)
+        )
       );
       return isInSuggestionList
         ? <JoinDatasetImportPendingRequest>request
@@ -305,7 +305,7 @@ export default Vue.extend({
     },
     importedItem(): JoinSuggestionDatasetItem {
       return this.suggestionDatasets.find(
-        (item) => item.dataset.id === this.joinDatasetImportRequestData.dataset,
+        (item) => item.dataset.id === this.joinDatasetImportRequestData.dataset
       );
     },
     importedDataset(): Dataset {
@@ -330,7 +330,7 @@ export default Vue.extend({
     },
     selectedSuggestion(): JoinSuggestionItem {
       const dataset = this.suggestionDatasets.find(
-        (item) => !!item.suggestionItems.find((js) => js.selected),
+        (item) => !!item.suggestionItems.find((js) => js.selected)
       );
       if (dataset) {
         return dataset.suggestionItems.find((js) => js.selected);
@@ -430,7 +430,7 @@ export default Vue.extend({
       this.previewJoin(
         currentDataset,
         selected.dataset,
-        this.selectedSuggestion.joinSuggestion.index,
+        this.selectedSuggestion.joinSuggestion.index
       );
     },
     previewJoin(datasetA, datasetB, joinSuggestionIndex) {

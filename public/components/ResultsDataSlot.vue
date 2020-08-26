@@ -153,7 +153,7 @@ export default Vue.extend({
       return updateTableRowSelection(
         this.dataItems,
         this.rowSelection,
-        this.instanceName,
+        this.instanceName
       );
     },
 

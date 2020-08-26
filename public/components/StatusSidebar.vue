@@ -112,7 +112,7 @@ export default Vue.extend({
     variableRankingRequestData(): VariableRankingPendingRequest {
       return <VariableRankingPendingRequest>(
         this.pendingRequests.find(
-          (item) => item.type === DatasetPendingRequestType.VARIABLE_RANKING,
+          (item) => item.type === DatasetPendingRequestType.VARIABLE_RANKING
         )
       );
     },
@@ -120,7 +120,7 @@ export default Vue.extend({
     geocodingRequestData(): GeocodingPendingRequest {
       return <GeocodingPendingRequest>(
         this.pendingRequests.find(
-          (item) => item.type === DatasetPendingRequestType.GEOCODING,
+          (item) => item.type === DatasetPendingRequestType.GEOCODING
         )
       );
     },
@@ -128,7 +128,7 @@ export default Vue.extend({
     clusterRequestData(): ClusteringPendingRequest {
       return <ClusteringPendingRequest>(
         this.pendingRequests.find(
-          (item) => item.type === DatasetPendingRequestType.CLUSTERING,
+          (item) => item.type === DatasetPendingRequestType.CLUSTERING
         )
       );
     },
@@ -136,7 +136,7 @@ export default Vue.extend({
     joinSuggestionRequestData(): JoinSuggestionPendingRequest {
       return <JoinSuggestionPendingRequest>(
         this.pendingRequests.find(
-          (item) => item.type === DatasetPendingRequestType.JOIN_SUGGESTION,
+          (item) => item.type === DatasetPendingRequestType.JOIN_SUGGESTION
         )
       );
     },
@@ -146,11 +146,11 @@ export default Vue.extend({
       const joinSuggestions = this.joinSuggestionRequestData.suggestions;
       const importRequest = <JoinDatasetImportPendingRequest>(
         pendingRequests.find(
-          (item) => item.type === DatasetPendingRequestType.JOIN_DATASET_IMPORT,
+          (item) => item.type === DatasetPendingRequestType.JOIN_DATASET_IMPORT
         )
       );
       const matchingDataset = joinSuggestions.find(
-        (dataset) => dataset.id === (importRequest && importRequest.dataset),
+        (dataset) => dataset.id === (importRequest && importRequest.dataset)
       );
       return matchingDataset && importRequest;
     },

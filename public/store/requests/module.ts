@@ -14,7 +14,7 @@ export const requestsModule: Module<RequestState, DistilState> = {
 };
 
 const { commit, read, dispatch } = getStoreAccessors<RequestState, DistilState>(
-  null,
+  null
 );
 
 export const getters = {
@@ -24,14 +24,14 @@ export const getters = {
   getRelevantSolutions: read(moduleGetters.getRelevantSolutions),
   getRelevantSolutionRequests: read(moduleGetters.getRelevantSolutionRequests),
   getRelevantSolutionRequestIds: read(
-    moduleGetters.getRelevantSolutionRequestIds,
+    moduleGetters.getRelevantSolutionRequestIds
   ),
   getActiveSolution: read(moduleGetters.getActiveSolution),
   getActiveSolutionTrainingVariables: read(
-    moduleGetters.getActiveSolutionTrainingVariables,
+    moduleGetters.getActiveSolutionTrainingVariables
   ),
   getActiveSolutionTargetVariable: read(
-    moduleGetters.getActiveSolutionTargetVariable,
+    moduleGetters.getActiveSolutionTargetVariable
   ),
   getPredictions: read(moduleGetters.getPredictions),
   getCompletedPredictions: read(moduleGetters.getCompletedPredictions),
@@ -39,7 +39,7 @@ export const getters = {
   getRelevantPredictions: read(moduleGetters.getRelevantPredictions),
   getActivePredictions: read(moduleGetters.getActivePredictions),
   getActivePredictionTrainingVariables: read(
-    moduleGetters.getActivePredictionTrainingVariables,
+    moduleGetters.getActivePredictionTrainingVariables
   ),
 };
 

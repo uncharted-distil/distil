@@ -133,7 +133,7 @@ export default Vue.extend({
 
       const facets = this.$refs.facets as any;
       const training = routeGetters.getDecodedTrainingVariableNames(
-        this.$store,
+        this.$store
       );
       facets.availableVariables().forEach((variable) => {
         training.push(variable);

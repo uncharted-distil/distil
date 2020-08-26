@@ -6,7 +6,7 @@ export function loadImage(url: string): Promise<HTMLImageElement> {
     };
     image.onerror = (event: any) => {
       const err = new Error(
-        `Unable to load image from URL: \`${event.path[0].currentSrc}\``,
+        `Unable to load image from URL: \`${event.path[0].currentSrc}\``
       );
       reject(err);
     };

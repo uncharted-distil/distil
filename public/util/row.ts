@@ -25,7 +25,7 @@ export function decodeRowSelection(row: string): RowSelection {
 
 export function createFilterFromRowSelection(
   selection: RowSelection,
-  mode: string,
+  mode: string
 ): Filter {
   if (!selection || selection.d3mIndices.length === 0) {
     return null;
@@ -68,7 +68,7 @@ export function getNumExcludedRows(selection: RowSelection): number {
 
 export function isRowSelected(
   selection: RowSelection,
-  d3mIndex: number,
+  d3mIndex: number
 ): boolean {
   if (!selection || selection.d3mIndices.length === 0) {
     return false;
@@ -84,7 +84,7 @@ export function isRowSelected(
 export function updateTableRowSelection(
   items: any,
   selection: RowSelection,
-  context: string,
+  context: string
 ) {
   if (!items) {
     return null;
@@ -180,7 +180,7 @@ export function addRowSelection(
   router: VueRouter,
   context: string,
   selection: RowSelection,
-  d3mIndex: number,
+  d3mIndex: number
 ) {
   if (!selection || selection.context !== context) {
     selection = {
@@ -199,7 +199,7 @@ export function removeRowSelection(
   router: VueRouter,
   context: string,
   selection: RowSelection,
-  d3mIndex: number,
+  d3mIndex: number
 ) {
   if (!selection) {
     return;

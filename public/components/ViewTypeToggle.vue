@@ -102,7 +102,7 @@ export default Vue.extend({
     hasImageVariables(): boolean {
       return (
         this.variables.filter(
-          (v) => v.colType === IMAGE_TYPE || v.colType === REMOTE_SENSING_TYPE,
+          (v) => v.colType === IMAGE_TYPE || v.colType === REMOTE_SENSING_TYPE
         ).length > 0
       );
     },
@@ -115,7 +115,7 @@ export default Vue.extend({
         this.variables.filter(
           (v) =>
             v.grouping &&
-            [GEOCOORDINATE_TYPE, REMOTE_SENSING_TYPE].includes(v.grouping.type),
+            [GEOCOORDINATE_TYPE, REMOTE_SENSING_TYPE].includes(v.grouping.type)
         ).length > 0;
       const hasLat =
         this.variables.filter((v) => v.colType === LONGITUDE_TYPE).length > 0;

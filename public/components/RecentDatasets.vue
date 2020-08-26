@@ -34,7 +34,7 @@ export default Vue.extend({
       const datasets = recent.slice(0, this.maxDatasets);
       return this.filterDatasets(
         datasets,
-        datasetGetters.getDatasets(this.$store),
+        datasetGetters.getDatasets(this.$store)
       );
     },
   },
