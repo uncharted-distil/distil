@@ -11,7 +11,7 @@ module.exports = {
     path: path.resolve(__dirname, "./dist"),
     filename: "build.js",
     // Taken from https://www.mistergoodcat.com/post/the-joy-that-is-source-maps-with-vuejs-and-typescript to prevent duplicate sources in chrome debugger
-    devtoolModuleFilenameTemplate: info => {
+    devtoolModuleFilenameTemplate: (info) => {
       let $filename = "sources://" + info.resourcePath;
       if (
         info.resourcePath.match(/\.vue$/) &&
@@ -22,17 +22,17 @@ module.exports = {
       }
       return $filename;
     },
-    devtoolFallbackModuleFilenameTemplate: "webpack:///[resource-path]?[hash]"
+    devtoolFallbackModuleFilenameTemplate: "webpack:///[resource-path]?[hash]",
   },
   resolve: {
     extensions: [".js", ".vue", ".json", ".ts"],
-    symlinks: false
+    symlinks: false,
   },
   module: {
     rules: [
       {
         test: /\.vue$/,
-        loader: "vue-loader"
+        loader: "vue-loader",
       },
       {
         test: /\.(ts|tsx)?$/,
@@ -42,45 +42,49 @@ module.exports = {
             loader: "ts-loader",
             options: {
               // Needed for <script lang="ts"> to work in *.vue files; see https://github.com/vuejs/vue-loader/issues/109
-              appendTsSuffixTo: [/\.vue$/]
-            }
+              appendTsSuffixTo: [/\.vue$/],
+            },
           },
           {
-            loader: "tslint-loader"
-          }
-        ]
+            loader: "tslint-loader",
+          },
+        ],
       },
       {
         test: /\.css$/,
-        use: ["style-loader", "css-loader", "postcss-loader"]
+        use: ["style-loader", "css-loader", "postcss-loader"],
       },
       {
         test: /images\/.*\.(png|jpg|jpeg|gif|svg)$/,
-        loader: "file-loader?name=images/[name].[ext]"
+        loader: "file-loader?name=images/[name].[ext]",
       },
       {
         test: /graphs\/.*\.(gml)$/,
-        loader: "file-loader?name=graphs/[name].[ext]"
+        loader: "file-loader?name=graphs/[name].[ext]",
       },
       {
         test: /fonts\/.*\.(ttf|otf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
-        loader: "file-loader?name=fonts/[name].[ext]"
-      }
-    ]
+        loader: "file-loader?name=fonts/[name].[ext]",
+      },
+    ],
   },
   plugins: [
     new VueLoaderPlugin(),
     new HtmlPlugin({
       template: "./public/templates/index.template.ejs",
-      inject: "body"
+      inject: "body",
     }),
     new webpack.ProvidePlugin({
       // Required for facets.js peer dependency
       $: "jquery",
-      jQuery: "jquery"
+      jQuery: "jquery",
     }),
-    new CopyWebpackPlugin([{ from: "public/static" }]),
-    new CopyWebpackPlugin([{ from: "public/assets/favicons", to: "favicons" }])
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: "public/static" },
+        { from: "public/assets/favicons", to: "favicons" },
+      ],
+    }),
   ],
-  devtool: "eval-source-map"
+  devtool: "eval-source-map",
 };
