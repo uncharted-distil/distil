@@ -24,13 +24,13 @@ export default Vue.extend({
   name: "results-timeseries-view",
 
   components: {
-    SparklineTimeseriesView
+    SparklineTimeseriesView,
   },
 
   props: {
     dataItems: Array as () => TableRow[],
     dataFields: Object as () => Dictionary<TableColumn>,
-    instanceName: String as () => string
+    instanceName: String as () => string,
   },
 
   computed: {
@@ -50,7 +50,7 @@ export default Vue.extend({
 
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
-    }
-  }
+    },
+  },
 });
 </script>

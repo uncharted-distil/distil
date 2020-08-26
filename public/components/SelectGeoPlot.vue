@@ -18,12 +18,12 @@ export default Vue.extend({
   name: "select-geo-plot",
 
   components: {
-    GeoPlot
+    GeoPlot,
   },
 
   props: {
     instanceName: String as () => string,
-    includedActive: Boolean as () => boolean
+    includedActive: Boolean as () => boolean,
   },
 
   computed: {
@@ -37,8 +37,8 @@ export default Vue.extend({
       return this.includedActive
         ? datasetGetters.getIncludedTableDataItems(this.$store)
         : datasetGetters.getExcludedTableDataItems(this.$store);
-    }
-  }
+    },
+  },
 });
 </script>
 

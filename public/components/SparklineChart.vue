@@ -18,7 +18,7 @@ export default Vue.extend({
   props: {
     margin: {
       type: Object as () => any,
-      default: () => MARGIN
+      default: () => MARGIN,
     },
     timeseries: Array as () => TimeSeriesValue[],
     forecast: Array as () => TimeSeriesValue[],
@@ -26,13 +26,13 @@ export default Vue.extend({
     xAxisTitle: String,
     yAxisTitle: String,
     xAxisDateTime: Boolean,
-    joinForecast: Boolean
+    joinForecast: Boolean,
   },
 
   data() {
     return {
       xScale: null,
-      yScale: null
+      yScale: null,
     };
   },
 
@@ -52,42 +52,42 @@ export default Vue.extend({
       return dims.height - this.margin.top - this.margin.bottom;
     },
     minX(): number {
-      const min = d3.min(this.timeseries, d => d.time);
+      const min = d3.min(this.timeseries, (d) => d.time);
       return this.forecast
         ? Math.min(
             min,
-            d3.min(this.forecast, d => d.time)
+            d3.min(this.forecast, (d) => d.time)
           )
         : min;
     },
     maxX(): number {
-      const max = d3.max(this.timeseries, d => d.time);
+      const max = d3.max(this.timeseries, (d) => d.time);
       return this.forecast
         ? Math.max(
             max,
-            d3.max(this.forecast, d => d.time)
+            d3.max(this.forecast, (d) => d.time)
           )
         : max;
     },
     minY(): number {
-      const timeSeriesMin = d3.min(this.timeseries, d => d.value);
+      const timeSeriesMin = d3.min(this.timeseries, (d) => d.value);
       const forecastMin = this.forecast
-        ? d3.min(this.forecast, d => d.value)
+        ? d3.min(this.forecast, (d) => d.value)
         : NaN;
       const confidenceMin = this.forecast
-        ? d3.min(this.forecast, d => d.confidenceLow)
+        ? d3.min(this.forecast, (d) => d.confidenceLow)
         : NaN;
-      return d3.min([timeSeriesMin, forecastMin, confidenceMin], d => d);
+      return d3.min([timeSeriesMin, forecastMin, confidenceMin], (d) => d);
     },
     maxY(): number {
-      const timeSeriesMax = d3.max(this.timeseries, d => d.value);
+      const timeSeriesMax = d3.max(this.timeseries, (d) => d.value);
       const forecastMax = this.forecast
-        ? d3.max(this.forecast, d => d.value)
+        ? d3.max(this.forecast, (d) => d.value)
         : NaN;
       const confidenceMax = this.forecast
-        ? d3.max(this.forecast, d => d.confidenceHigh)
+        ? d3.max(this.forecast, (d) => d.confidenceHigh)
         : NaN;
-      return d3.max([timeSeriesMax, forecastMax, confidenceMax], d => d);
+      return d3.max([timeSeriesMax, forecastMax, confidenceMax], (d) => d);
     },
     displayForecast(): TimeSeriesValue[] {
       // Join the last element of the truth timeseries and the first element of the forecast
@@ -99,7 +99,7 @@ export default Vue.extend({
         return [last, ...this.forecast];
       }
       return this.forecast;
-    }
+    },
   },
 
   mounted() {
@@ -172,17 +172,17 @@ export default Vue.extend({
     },
 
     injectTimeseries() {
-      const datum = this.timeseries.map(x => [x.time, x.value]);
+      const datum = this.timeseries.map((x) => [x.time, x.value]);
 
       // Define a filter for non number values.
-      const filterMissingData = d => _.isFinite(d[1]);
+      const filterMissingData = (d) => _.isFinite(d[1]);
 
       // the Sparkline
       const line = d3
         .line()
         .defined(filterMissingData)
-        .x(d => this.xScale(d[0]))
-        .y(d => this.yScale(d[1]))
+        .x((d) => this.xScale(d[0]))
+        .y((d) => this.yScale(d[1]))
         .curve(d3.curveLinear);
 
       // the area underneath the Sparkline
@@ -190,9 +190,9 @@ export default Vue.extend({
       const area = d3
         .area()
         .defined(filterMissingData)
-        .x(d => this.xScale(d[0]))
+        .x((d) => this.xScale(d[0]))
         .y0(y0)
-        .y1(d => this.yScale(d[1]));
+        .y1((d) => this.yScale(d[1]));
 
       // Graph to use a container
       const g = this.svg
@@ -207,10 +207,7 @@ export default Vue.extend({
         .attr("d", line);
 
       // Area underneath the line
-      g.append("path")
-        .datum(datum)
-        .attr("class", "line-area")
-        .attr("d", area);
+      g.append("path").datum(datum).attr("class", "line-area").attr("d", area);
 
       // Sparkline.
       g.append("path")
@@ -222,8 +219,8 @@ export default Vue.extend({
     injectForecast() {
       const line = d3
         .line()
-        .x(d => this.xScale(d[0]))
-        .y(d => this.yScale(d[1]))
+        .x((d) => this.xScale(d[0]))
+        .y((d) => this.yScale(d[1]))
         .curve(d3.curveLinear);
 
       const g = this.svg
@@ -233,8 +230,8 @@ export default Vue.extend({
 
       g.datum(
         this.displayForecast
-          .filter(x => !_.isNil(x.value))
-          .map(x => [x.time, x.value])
+          .filter((x) => !_.isNil(x.value))
+          .map((x) => [x.time, x.value])
       );
 
       g.append("path")
@@ -246,9 +243,9 @@ export default Vue.extend({
     injectConfidence(): boolean {
       const area = d3
         .area<[number, number, number]>()
-        .x(d => this.xScale(d[0]))
-        .y0(d => this.yScale(d[1]))
-        .y1(d => this.yScale(d[2]));
+        .x((d) => this.xScale(d[0]))
+        .y0((d) => this.yScale(d[1]))
+        .y1((d) => this.yScale(d[2]));
 
       const g = this.svg
         .append("g")
@@ -256,13 +253,13 @@ export default Vue.extend({
 
       g.datum(
         this.displayForecast
-          .filter(x => !_.isNil(x.confidenceHigh) && !_.isNil(x.confidenceLow))
-          .map(x => [x.time, x.confidenceHigh, x.confidenceLow])
+          .filter(
+            (x) => !_.isNil(x.confidenceHigh) && !_.isNil(x.confidenceLow)
+          )
+          .map((x) => [x.time, x.confidenceHigh, x.confidenceLow])
       );
 
-      g.append("path")
-        .attr("class", "line-confidence")
-        .attr("d", area);
+      g.append("path").attr("class", "line-confidence").attr("d", area);
 
       return true;
     },
@@ -319,8 +316,8 @@ export default Vue.extend({
         this.injectConfidence();
         this.injectForecast();
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

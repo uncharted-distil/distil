@@ -10,24 +10,24 @@ export function getIDFromKey(key: string): string {
 export function getSolutionResultSummary(solutionID: string): VariableSummary {
   return resultGetters
     .getPredictedSummaries(store)
-    .find(s => getIDFromKey(s.key) === solutionID);
+    .find((s) => getIDFromKey(s.key) === solutionID);
 }
 
 export function getResidualSummary(solutionID: string): VariableSummary {
   return resultGetters
     .getResidualsSummaries(store)
-    .find(s => getIDFromKey(s.key) === solutionID);
+    .find((s) => getIDFromKey(s.key) === solutionID);
 }
 
 export function getCorrectnessSummary(solutionID: string): VariableSummary {
   return resultGetters
     .getCorrectnessSummaries(store)
-    .find(s => getIDFromKey(s.key) === solutionID);
+    .find((s) => getIDFromKey(s.key) === solutionID);
   return null;
 }
 
 export function getPredictionResultSummary(requestId: string): VariableSummary {
   return predictionGetters
     .getPredictionSummaries(store)
-    .find(s => getIDFromKey(s.key) === requestId);
+    .find((s) => getIDFromKey(s.key) === requestId);
 }

@@ -10,7 +10,7 @@ export const viewModule: Module<ViewState, DistilState> = {
   state: state,
   actions: moduleActions,
   getters: moduleGetters,
-  mutations: moduleMutations
+  mutations: moduleMutations,
 };
 
 const { commit, read, dispatch } = getStoreAccessors<ViewState, DistilState>(
@@ -18,11 +18,11 @@ const { commit, read, dispatch } = getStoreAccessors<ViewState, DistilState>(
 );
 
 export const getters = {
-  getFetchParamsCache: read(moduleGetters.getFetchParamsCache)
+  getFetchParamsCache: read(moduleGetters.getFetchParamsCache),
 };
 
 export const mutations = {
-  setFetchParamsCache: commit(moduleMutations.setFetchParamsCache)
+  setFetchParamsCache: commit(moduleMutations.setFetchParamsCache),
 };
 
 export const actions = {
@@ -37,5 +37,5 @@ export const actions = {
   fetchResultsData: dispatch(moduleActions.fetchResultsData),
   updateResultsSolution: dispatch(moduleActions.updateResultsSolution),
   fetchPredictionsData: dispatch(moduleActions.fetchPredictionsData),
-  updatePrediction: dispatch(moduleActions.updatePredictions)
+  updatePrediction: dispatch(moduleActions.updatePredictions),
 };

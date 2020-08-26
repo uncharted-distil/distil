@@ -84,11 +84,11 @@ import {
   gotoResults,
   gotoSearch,
   gotoSelectData,
-  gotoSelectTarget
+  gotoSelectTarget,
 } from "../util/nav";
 import {
   actions as appActions,
-  getters as appGetters
+  getters as appGetters,
 } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -99,7 +99,7 @@ import {
   SELECT_TARGET_ROUTE,
   SELECT_TRAINING_ROUTE,
   RESULTS_ROUTE,
-  PREDICTION_ROUTE
+  PREDICTION_ROUTE,
 } from "../store/route/index";
 import { restoreView } from "../util/view";
 import Vue from "vue";
@@ -116,7 +116,7 @@ export default Vue.extend({
       SELECT_TARGET_ROUTE: SELECT_TARGET_ROUTE,
       SELECT_TRAINING_ROUTE: SELECT_TRAINING_ROUTE,
       RESULTS_ROUTE: RESULTS_ROUTE,
-      PREDICTION_ROUTE: PREDICTION_ROUTE
+      PREDICTION_ROUTE: PREDICTION_ROUTE,
     };
   },
 
@@ -166,7 +166,7 @@ export default Vue.extend({
 
     hasNoDatasetAndTarget(): boolean {
       return !(!!this.dataset && !!this.target);
-    }
+    },
   },
 
   methods: {
@@ -208,8 +208,8 @@ export default Vue.extend({
 
     hasJoinDatasetView(): boolean {
       return !!restoreView(JOIN_DATASETS_ROUTE, this.joinDatasetsHash);
-    }
-  }
+    },
+  },
 });
 </script>
 

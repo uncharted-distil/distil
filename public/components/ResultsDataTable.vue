@@ -77,7 +77,7 @@
               v-bind:style="{
                 'background-color': errorBarColor(data.value.value),
                 width: errorBarWidth(data.value.value),
-                left: errorBarLeft(data.value.value)
+                left: errorBarLeft(data.value.value),
               }"
             ></div>
             <div class="error-bar-center"></div>
@@ -125,7 +125,7 @@ import {
   RowSelection,
   TaskTypes,
   TimeseriesGrouping,
-  TableValue
+  TableValue,
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
@@ -140,7 +140,7 @@ import {
   addRowSelection,
   removeRowSelection,
   isRowSelected,
-  updateTableRowSelection
+  updateTableRowSelection,
 } from "../util/row";
 import {
   getTimeseriesGroupingsFromFields,
@@ -148,7 +148,7 @@ import {
   formatFieldsAsArray,
   explainCellColor,
   getImageFields,
-  getListFields
+  getListFields,
 } from "../util/data";
 import { getSolutionIndex } from "../util/solutions";
 
@@ -160,19 +160,19 @@ export default Vue.extend({
     SparklinePreview,
     FixedHeaderTable,
     IconBase,
-    IconFork
+    IconFork,
   },
 
   data() {
     return {
-      sortingBy: undefined
+      sortingBy: undefined,
     };
   },
 
   props: {
     dataItems: Array as () => any[],
     dataFields: Object as () => Dictionary<TableColumn>,
-    instanceName: String as () => string
+    instanceName: String as () => string,
   },
 
   computed: {
@@ -261,7 +261,7 @@ export default Vue.extend({
     },
 
     computedFields(): string[] {
-      return Object.keys(this.fields).filter(key => {
+      return Object.keys(this.fields).filter((key) => {
         return hasComputedVarPrefix(key);
       });
     },
@@ -291,7 +291,7 @@ export default Vue.extend({
 
     sortFunction(): any {
       return this.sortingByResidualError ? this.sortingByErrorFunction : null;
-    }
+    },
   },
 
   updated() {
@@ -315,7 +315,7 @@ export default Vue.extend({
           feature: Feature.CHANGE_SELECTION,
           activity: Activity.MODEL_SELECTION,
           subActivity: SubActivity.MODEL_EXPLANATION,
-          details: { selected: row[D3M_INDEX_FIELD] }
+          details: { selected: row[D3M_INDEX_FIELD] },
         });
       } else {
         removeRowSelection(
@@ -329,7 +329,7 @@ export default Vue.extend({
           feature: Feature.CHANGE_SELECTION,
           activity: Activity.MODEL_SELECTION,
           subActivity: SubActivity.MODEL_EXPLANATION,
-          details: { deselected: row[D3M_INDEX_FIELD] }
+          details: { deselected: row[D3M_INDEX_FIELD] },
         });
       }
     },
@@ -399,9 +399,9 @@ export default Vue.extend({
         Float: number;
         Status: number;
       }[];
-      return listData.map(l => l.Float);
-    }
-  }
+      return listData.map((l) => l.Float);
+    },
+  },
 });
 </script>
 

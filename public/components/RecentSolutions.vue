@@ -25,14 +25,14 @@ export default Vue.extend({
   name: "recent-solutions",
 
   components: {
-    SolutionPreview
+    SolutionPreview,
   },
 
   props: {
     maxSolutions: {
       default: 20,
-      type: Number as () => number
-    }
+      type: Number as () => number,
+    },
   },
 
   computed: {
@@ -43,15 +43,15 @@ export default Vue.extend({
       // find solutions associated with exported models
       const savedModelsMap = _.mapKeys(
         modelGetters.getModels(this.$store),
-        m => m.fittedSolutionId
+        (m) => m.fittedSolutionId
       );
       return requestGetters
         .getSolutions(this.$store)
-        .filter(s => savedModelsMap[s.fittedSolutionId])
+        .filter((s) => savedModelsMap[s.fittedSolutionId])
         .sort((a, b) => moment(b.timestamp).unix() - moment(a.timestamp).unix())
         .slice(0, this.maxSolutions);
-    }
-  }
+    },
+  },
 });
 </script>
 

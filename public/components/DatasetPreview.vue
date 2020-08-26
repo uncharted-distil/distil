@@ -6,7 +6,7 @@
       @click.stop="setActiveDataset()"
       v-bind:class="{
         collapsed: !expanded,
-        disabled: isImportReady || importPending
+        disabled: isImportReady || importPending,
       }"
     >
       <a class="nav-link">
@@ -104,7 +104,7 @@ import { formatBytes } from "../util/bytes";
 import {
   sortVariablesByImportance,
   isDatamartProvenance,
-  filterVariablesByFeature
+  filterVariablesByFeature,
 } from "../util/data";
 import { getters as routeGetters } from "../store/route/module";
 import { Dataset, Variable } from "../store/dataset/index";
@@ -120,12 +120,12 @@ export default Vue.extend({
   name: "dataset-preview",
 
   components: {
-    ErrorModal
+    ErrorModal,
   },
 
   props: {
     dataset: Object as () => Dataset,
-    allowImport: Boolean as () => boolean
+    allowImport: Boolean as () => boolean,
   },
 
   computed: {
@@ -146,14 +146,14 @@ export default Vue.extend({
     },
     percentComplete(): number {
       return 100;
-    }
+    },
   },
 
   data() {
     return {
       expanded: false,
       importPending: false,
-      showImportFailure: false
+      showImportFailure: false,
     };
   },
 
@@ -169,7 +169,7 @@ export default Vue.extend({
         return;
       }
       const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
-        dataset: this.dataset.id
+        dataset: this.dataset.id,
       });
       this.$router.push(entry);
       this.addRecentDataset(this.dataset.id);
@@ -177,7 +177,7 @@ export default Vue.extend({
         feature: Feature.SELECT_DATASET,
         activity: Activity.DATA_PREPARATION,
         subActivity: SubActivity.DATA_OPEN,
-        details: { dataset: this.dataset.id }
+        details: { dataset: this.dataset.id },
       });
     },
     toggleExpansion() {
@@ -213,7 +213,7 @@ export default Vue.extend({
           provenance: this.dataset.provenance,
           originalDataset: null,
           joinedDataset: null,
-          path: ""
+          path: "",
         })
         .then(() => {
           this.importPending = false;
@@ -225,8 +225,8 @@ export default Vue.extend({
     },
     datamartProvenance(provenance: string): boolean {
       return isDatamartProvenance(provenance);
-    }
-  }
+    },
+  },
 });
 </script>
 

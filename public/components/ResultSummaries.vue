@@ -82,13 +82,13 @@ import { getters as requestGetters } from "../store/requests/module";
 import { getters as resultGetters } from "../store/results/module";
 import {
   actions as appActions,
-  getters as appGetters
+  getters as appGetters,
 } from "../store/app/module";
 import store from "../store/store";
 import {
   EXPORT_SUCCESS_ROUTE,
   ROOT_ROUTE,
-  PREDICTION_ROUTE
+  PREDICTION_ROUTE,
 } from "../store/route/index";
 import { Variable, TaskTypes } from "../store/dataset/index";
 import vueSlider from "vue-slider-component";
@@ -109,7 +109,7 @@ export default Vue.extend({
     ResultFacets,
     ResultTargetVariable,
     SaveModel,
-    vueSlider
+    vueSlider,
   },
 
   data() {
@@ -117,12 +117,12 @@ export default Vue.extend({
       formatter(arg) {
         return arg ? arg.toFixed(2) : "";
       },
-      symmetricSlider: true
+      symmetricSlider: true,
     };
   },
 
   methods: {
-    isFittedSolutionIdSavedAsModel
+    isFittedSolutionIdSavedAsModel,
   },
 
   computed: {
@@ -137,7 +137,7 @@ export default Vue.extend({
     targetType(): string {
       const targetName = this.target;
       const variables = this.variables;
-      return variables.find(v => v.colName === targetName)?.colType;
+      return variables.find((v) => v.colName === targetName)?.colType;
     },
 
     variables(): Variable[] {
@@ -152,7 +152,7 @@ export default Vue.extend({
       return (
         this.taskArgs &&
         !!this.taskArgs.find(
-          t => t === TaskTypes.REGRESSION || t === TaskTypes.FORECASTING
+          (t) => t === TaskTypes.REGRESSION || t === TaskTypes.FORECASTING
         )
       );
     },
@@ -206,8 +206,8 @@ export default Vue.extend({
 
     isTimeseries(): boolean {
       return routeGetters.isTimeseries(this.$store);
-    }
-  }
+    },
+  },
 });
 </script>
 

@@ -15,7 +15,7 @@ import {
   IMAGE_TYPE,
   DATE_TIME_LOWER_TYPE,
   GEOCOORDINATE_TYPE,
-  TIMESERIES_TYPE
+  TIMESERIES_TYPE,
 } from "../util/types";
 import { getTimeseriesSummaryTopCategories } from "../util/data";
 import { getSelectedRows } from "../util/row";
@@ -23,7 +23,7 @@ import {
   VariableSummary,
   CATEGORICAL_SUMMARY,
   NUMERICAL_SUMMARY,
-  RowSelection
+  RowSelection,
 } from "../store/dataset/index";
 
 export const CATEGORICAL_CHUNK_SIZE = 5;
@@ -243,7 +243,7 @@ export function getNumericalFacetValue(
     from: fromSlice,
     to: toSlice,
     type:
-      summary.varType === DATE_TIME_TYPE ? DATE_TIME_LOWER_TYPE : summary.type
+      summary.varType === DATE_TIME_TYPE ? DATE_TIME_LOWER_TYPE : summary.type,
   };
 }
 
@@ -253,11 +253,11 @@ export function getTimeseriesFacetValue(
 ): { from: number; to: number } {
   return {
     from: _.toNumber(
-      _.minBy(summary.baseline.buckets, b => _.toNumber(b.key)).key
+      _.minBy(summary.baseline.buckets, (b) => _.toNumber(b.key)).key
     ),
     to: _.toNumber(
-      _.maxBy(summary.baseline.buckets, b => _.toNumber(b.key)).key
-    )
+      _.maxBy(summary.baseline.buckets, (b) => _.toNumber(b.key)).key
+    ),
   };
 }
 
@@ -290,7 +290,7 @@ export function getSubSelectionValues(
 ): number[][] {
   const hasFilterBuckets = hasFiltered(summary);
   if (!hasFilterBuckets && !rowSelection) {
-    return summary.baseline?.buckets?.map(b => [null, b.count / max]);
+    return summary.baseline?.buckets?.map((b) => [null, b.count / max]);
   }
   const isNumeric = summary.type === NUMERICAL_SUMMARY;
   const rowLabels = getRowSelectionLabels(rowSelection, summary);
@@ -305,7 +305,7 @@ export function getSubSelectionValues(
       acc[b.key] = b.count;
       return acc;
     }, {});
-    subSelectionValues = summary.baseline.buckets.map(b => {
+    subSelectionValues = summary.baseline.buckets.map((b) => {
       const hasRowLabels = rowLabelMatches(rowLabels, b.key, isNumeric);
       const bucketCount = hasRowLabels
         ? filteredKeys[b.key]
@@ -321,7 +321,7 @@ export function getSubSelectionValues(
         : [null, bucketCount / max];
     });
   } else {
-    subSelectionValues = summary.baseline.buckets.map(b =>
+    subSelectionValues = summary.baseline.buckets.map((b) =>
       rowLabelMatches(rowLabels, b.key, isNumeric)
         ? [b.count / max, null]
         : [null, b.count / max]
@@ -362,8 +362,8 @@ export function getRowSelectionLabels(
   let rowKeys = [];
   let rowLabels = [];
 
-  selectedRows.forEach(row =>
-    row.cols.forEach(col => {
+  selectedRows.forEach((row) =>
+    row.cols.forEach((col) => {
       if (col.key === summary.label || col.key === summary.key) {
         rowKeys.push(col.value.value);
       }
@@ -371,10 +371,10 @@ export function getRowSelectionLabels(
   );
 
   if (summary.type === NUMERICAL_SUMMARY) {
-    const bucketFloors = summary.baseline.buckets.map(b => _.toNumber(b.key));
-    rowKeys = rowKeys.map(rk => _.toNumber(rk));
-    rowLabels = rowKeys.map(rk => {
-      return `${bucketFloors.filter(bf => rk >= bf).pop()}`;
+    const bucketFloors = summary.baseline.buckets.map((b) => _.toNumber(b.key));
+    rowKeys = rowKeys.map((rk) => _.toNumber(rk));
+    rowLabels = rowKeys.map((rk) => {
+      return `${bucketFloors.filter((bf) => rk >= bf).pop()}`;
     });
   } else {
     rowLabels = summary.baseline.buckets.reduce((acc, b) => {
@@ -431,6 +431,6 @@ export function facetTypeChangeState(
 ): boolean {
   const typeKey = `${dataset}:${key}`;
   return enabledTypeChanges
-    ? Boolean(enabledTypeChanges.find(e => e === typeKey))
+    ? Boolean(enabledTypeChanges.find((e) => e === typeKey))
     : false;
 }

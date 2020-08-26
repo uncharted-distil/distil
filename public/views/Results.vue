@@ -2,7 +2,7 @@
   <div class="container-fluid d-flex flex-column h-100 results-view">
     <div class="row flex-0-nav"></div>
     <div class="row align-items-center justify-content-left bg-white">
-      <h5 class="header-label ">
+      <h5 class="header-label">
         Check Models: Review results to understand model performance
       </h5>
     </div>
@@ -55,12 +55,12 @@ export default Vue.extend({
     VariableFacets,
     ResultTargetVariable,
     ResultsComparison,
-    ResultSummaries
+    ResultSummaries,
   },
 
   data() {
     return {
-      logActivity: Activity.MODEL_SELECTION
+      logActivity: Activity.MODEL_SELECTION,
     };
   },
 
@@ -98,7 +98,7 @@ export default Vue.extend({
     },
     resultTrainingVarsPage(): number {
       return routeGetters.getRouteResultTrainingVarsPage(this.$store);
-    }
+    },
   },
 
   beforeMount() {
@@ -114,8 +114,8 @@ export default Vue.extend({
     },
     resultTrainingVarsPage() {
       viewActions.updateResultsSolution(this.$store);
-    }
-  }
+    },
+  },
 });
 </script>
 
