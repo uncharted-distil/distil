@@ -67,8 +67,8 @@ func (s *Storage) PersistRequestFilters(requestID string, filters *api.FilterPar
 			if err != nil {
 				return errors.Wrap(err, "failed to persist numerical filter")
 			}
-		case model.BivariateFilter:
-			_, err := s.client.Exec(sql, requestID, filter.Key, model.BivariateFilter, filter.Mode, 0, 0, filter.Bounds.MinX, filter.Bounds.MaxX, filter.Bounds.MinY, filter.Bounds.MaxY, "", "")
+		case model.BivariateFilter, model.GeoBoundsFilter:
+			_, err := s.client.Exec(sql, requestID, filter.Key, filter.Type, filter.Mode, 0, 0, filter.Bounds.MinX, filter.Bounds.MaxX, filter.Bounds.MinY, filter.Bounds.MaxY, "", "")
 			if err != nil {
 				return errors.Wrap(err, "failed to persist bivariate filter")
 			}
@@ -280,6 +280,15 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 			))
 		case model.BivariateFilter:
 			filters.Filters = append(filters.Filters, model.NewBivariateFilter(
+				featureName,
+				filterMode,
+				filterMinX,
+				filterMaxX,
+				filterMinY,
+				filterMaxY,
+			))
+		case model.GeoBoundsFilter:
+			filters.Filters = append(filters.Filters, model.NewGeoBoundsFilter(
 				featureName,
 				filterMode,
 				filterMinX,

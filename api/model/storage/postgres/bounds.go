@@ -138,6 +138,9 @@ func (f *BoundsField) fetchHistogram(filterParams *api.FilterParams, invert bool
 	}
 
 	// join the temp table to the main table to get bucketed data
+	//TODO: TEST WITH ST_INTERSECTS
+	//	ST_WITHIN WILL UNDERCOUNT THOSE THAT CROSS BOUNDARIES
+	//	ST_INTERSECTS WILL OVERCOUNT THOSE THAT CROSS BOUNDARIES
 	query := fmt.Sprintf(`
 		SELECT b.xbuckets, b.xcoord, b.ybuckets, b.ycoord, COUNT(%s)
 		FROM %s AS d inner join %s AS b ON ST_WITHIN(d."%s", b.coordinates) %s
@@ -209,26 +212,6 @@ func (f *BoundsField) fetchExtrema() (*api.Extrema, *api.Extrema, error) {
 	}
 
 	return f.parseExtrema(res)
-}
-
-func (f *BoundsField) getHistogramAggQuery(extrema *api.Extrema, numBuckets int, index int) (string, string, float64, float64) {
-	interval := extrema.GetBucketInterval(numBuckets)
-
-	// get histogram agg name & query string.
-	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
-	rounded := extrema.GetBucketMinMax(numBuckets)
-
-	bucketQueryString := ""
-	// if only a single value, then return a simple count.
-	if rounded.Max == rounded.Min {
-		// want to return the count under bucket 0.
-		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", extrema.Key, extrema.Key)
-	} else {
-		bucketQueryString = fmt.Sprintf("width_bucket(\"%s\"[%d], %g, %g, %d) - 1",
-			extrema.Key, index, rounded.Min, rounded.Max, extrema.GetBucketCount(numBuckets))
-	}
-
-	return histogramAggName, bucketQueryString, interval, rounded.Min
 }
 
 func (f *BoundsField) getMinMaxAggsQuery(key string, label string, axisLabel string) string {
