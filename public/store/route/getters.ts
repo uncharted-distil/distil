@@ -6,7 +6,7 @@ import {
   SummaryMode,
   DataMode,
   TaskTypes,
-  BandID
+  BandID,
 } from "../dataset/index";
 import {
   PREDICTION_ROUTE,
@@ -20,7 +20,7 @@ import {
   TRAINING_VARS_INSTANCE_PAGE,
   RESULT_TRAINING_VARS_INSTANCE_PAGE,
   DATA_SIZE_DEFAULT,
-  DATA_SIZE_REMOTE_SENSING_DEFAULT
+  DATA_SIZE_REMOTE_SENSING_DEFAULT,
 } from "../route/index";
 import { ModelQuality } from "../requests/index";
 import { decodeFilters, Filter, FilterParams } from "../../util/filters";
@@ -72,21 +72,21 @@ export const getters = {
       return [];
     }
     const datasets = getters.getDatasets;
-    const datasetA = _.find(datasets, d => {
+    const datasetA = _.find(datasets, (d) => {
       return d.id === datasetIDs[0];
     });
-    const datasetB = _.find(datasets, d => {
+    const datasetB = _.find(datasets, (d) => {
       return d.id === datasetIDs[1];
     });
     let variables = [];
     if (datasetA) {
-      datasetA.variables.forEach(v => {
+      datasetA.variables.forEach((v) => {
         v.datasetName = datasetIDs[0];
       });
       variables = variables.concat(datasetA.variables);
     }
     if (datasetB) {
-      datasetB.variables.forEach(v => {
+      datasetB.variables.forEach((v) => {
         v.datasetName = datasetIDs[1];
       });
       variables = variables.concat(datasetB.variables);
@@ -104,11 +104,11 @@ export const getters = {
 
     const variables = getters.getJoinDatasetsVariables;
     const lookup = buildLookup(
-      variables.map(v => hashSummary(v.datasetName, v.colName))
+      variables.map((v) => hashSummary(v.datasetName, v.colName))
     );
     const summaries = getters.getVariableSummaries;
     return summaries.filter(
-      summary => lookup[hashSummary(summary.dataset, summary.key)]
+      (summary) => lookup[hashSummary(summary.dataset, summary.key)]
     );
   },
 
@@ -145,22 +145,22 @@ export const getters = {
     const res = {};
 
     // build filter params for each dataset
-    datasetIDs.forEach(datasetID => {
-      const dataset = _.find(datasets, d => {
+    datasetIDs.forEach((datasetID) => {
+      const dataset = _.find(datasets, (d) => {
         return d.id === datasetID;
       });
       if (dataset) {
         const filters = getters.getDecodedFilters;
 
         // only include filters for this dataset
-        const lookup = buildLookup(dataset.variables.map(v => v.colName));
-        const filtersForDataset = filters.filter(f => {
+        const lookup = buildLookup(dataset.variables.map((v) => v.colName));
+        const filtersForDataset = filters.filter((f) => {
           return lookup[f.key];
         });
 
         const filterParams = _.cloneDeep({
           filters: filtersForDataset,
-          variables: dataset.variables.map(v => v.colName)
+          variables: dataset.variables.map((v) => v.colName),
         });
         res[datasetID] = filterParams;
       }
@@ -289,7 +289,7 @@ export const getters = {
       highlight: null,
       variables: [],
       filters,
-      size
+      size,
     });
     // add training vars
     const training = getters.getDecodedTrainingVariableNames;
@@ -314,7 +314,9 @@ export const getters = {
     const training = getters.getDecodedTrainingVariableNames;
     const lookup = buildLookup(training);
     const variables = getters.getVariables;
-    return variables.filter(variable => lookup[variable.colName.toLowerCase()]);
+    return variables.filter(
+      (variable) => lookup[variable.colName.toLowerCase()]
+    );
   },
 
   getTrainingVariableSummaries(state: Route, getters: any): VariableSummary[] {
@@ -324,7 +326,7 @@ export const getters = {
       ? getters.getIncludedVariableSummaries
       : getters.getExcludedVariableSummaries;
     const lookup = buildLookup(training);
-    return summaries.filter(summary => lookup[summary.key.toLowerCase()]);
+    return summaries.filter((summary) => lookup[summary.key.toLowerCase()]);
   },
 
   getTargetVariable(state: Route, getters: any): Variable {
@@ -332,7 +334,7 @@ export const getters = {
     if (target) {
       const variables = getters.getVariables;
       const found = variables.filter(
-        summary => target.toLowerCase() === summary.colName.toLowerCase()
+        (summary) => target.toLowerCase() === summary.colName.toLowerCase()
       );
       if (found) {
         return found[0];
@@ -349,7 +351,7 @@ export const getters = {
         ? getters.getIncludedVariableSummaries
         : getters.getExcludedVariableSummaries;
       return summaries.filter(
-        summary => target.toLowerCase() === summary.key.toLowerCase()
+        (summary) => target.toLowerCase() === summary.key.toLowerCase()
       );
     }
     return [];
@@ -362,7 +364,7 @@ export const getters = {
     const lookup =
       training && target ? buildLookup(training.concat([target])) : null;
     return variables.filter(
-      variable => !lookup[variable.colName.toLowerCase()]
+      (variable) => !lookup[variable.colName.toLowerCase()]
     );
   },
 
@@ -375,7 +377,7 @@ export const getters = {
     const summaries = include
       ? getters.getIncludedVariableSummaries
       : getters.getExcludedVariableSummaries;
-    return summaries.filter(summary => !lookup[summary.key.toLowerCase()]);
+    return summaries.filter((summary) => !lookup[summary.key.toLowerCase()]);
   },
 
   getActiveSolutionIndex(state: Route, getters: any): number {
@@ -433,7 +435,7 @@ export const getters = {
     }
     const modeTuples = varModes.split(",");
     const modeMap: Map<string, SummaryMode> = new Map();
-    modeTuples.forEach(m => {
+    modeTuples.forEach((m) => {
       const [k, v] = m.split(":");
       modeMap.set(
         k,
@@ -534,5 +536,5 @@ export const getters = {
   /* Check if the current page is SELECT_TRAINING_ROUTE. */
   isPageSelectTraining(state: Route): Boolean {
     return state.path === SELECT_TRAINING_ROUTE;
-  }
+  },
 };

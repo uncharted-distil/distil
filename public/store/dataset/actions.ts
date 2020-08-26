@@ -22,7 +22,7 @@ import {
   BandID,
   isClusteredGrouping,
   TimeSeriesValue,
-  VariableSummary
+  VariableSummary,
 } from "./index";
 import { mutations, getters } from "./module";
 import store, { DistilState } from "../store";
@@ -34,7 +34,7 @@ import {
   createEmptyTableData,
   fetchSummaryExemplars,
   validateArgs,
-  minimumRouteKey
+  minimumRouteKey,
 } from "../../util/data";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import { loadImage } from "../../util/image";
@@ -46,7 +46,7 @@ import {
   isRankableVariableType,
   REMOTE_SENSING_TYPE,
   isImageType,
-  UNKNOWN_TYPE
+  UNKNOWN_TYPE,
 } from "../../util/types";
 import { getters as routeGetters } from "../route/module";
 
@@ -54,10 +54,10 @@ import { getters as routeGetters } from "../route/module";
 async function getVariables(dataset: string): Promise<Variable[]> {
   const response = await axios.get(`/distil/variables/${dataset}`);
   // extend variable with datasetName and isColTypeReviewed property to track type reviewed state in the client state
-  return response.data.variables.map(variable => ({
+  return response.data.variables.map((variable) => ({
     ...variable,
     datasetName: dataset,
-    isColTypeReviewed: false
+    isColTypeReviewed: false,
   }));
 }
 
@@ -121,7 +121,7 @@ export const actions = {
     try {
       const res = await Promise.all([
         getVariables(args.datasets[0]),
-        getVariables(args.datasets[1])
+        getVariables(args.datasets[1]),
       ]);
       const varsA = res[0];
       const varsB = res[1];
@@ -177,10 +177,10 @@ export const actions = {
 
     return Promise.all([
       actions.fetchDataset(context, {
-        dataset: args.dataset
+        dataset: args.dataset,
       }),
       actions.fetchVariables(context, {
-        dataset: args.dataset
+        dataset: args.dataset,
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
@@ -189,7 +189,7 @@ export const actions = {
         filterParams: filterParams,
         include: true,
         dataMode: DataMode.Default,
-        mode: SummaryMode.Default
+        mode: SummaryMode.Default,
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
@@ -198,7 +198,7 @@ export const actions = {
         filterParams: filterParams,
         include: false,
         dataMode: DataMode.Default,
-        mode: SummaryMode.Default
+        mode: SummaryMode.Default,
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
@@ -207,7 +207,7 @@ export const actions = {
         filterParams: filterParams,
         include: true,
         dataMode: DataMode.Default,
-        mode: SummaryMode.Default
+        mode: SummaryMode.Default,
       }),
       actions.fetchVariableSummary(context, {
         dataset: args.dataset,
@@ -216,8 +216,8 @@ export const actions = {
         filterParams: filterParams,
         include: false,
         dataMode: DataMode.Default,
-        mode: SummaryMode.Default
-      })
+        mode: SummaryMode.Default,
+      }),
     ]);
   },
 
@@ -233,7 +233,7 @@ export const actions = {
       dataset: args.dataset,
       type: DatasetPendingRequestType.JOIN_SUGGESTION,
       status: DatasetPendingRequestStatus.PENDING,
-      suggestions: []
+      suggestions: [],
     };
     mutations.updatePendingRequests(context, request);
 
@@ -248,12 +248,12 @@ export const actions = {
       mutations.updatePendingRequests(context, {
         ...request,
         status: DatasetPendingRequestStatus.RESOLVED,
-        suggestions
+        suggestions,
       });
     } catch (error) {
       mutations.updatePendingRequests(context, {
         ...request,
-        status: DatasetPendingRequestStatus.ERROR
+        status: DatasetPendingRequestStatus.ERROR,
       });
       console.error(error);
     }
@@ -271,7 +271,7 @@ export const actions = {
       id: _.uniqueId(),
       dataset: args.dataset,
       type: DatasetPendingRequestType.CLUSTERING,
-      status: DatasetPendingRequestStatus.PENDING
+      status: DatasetPendingRequestStatus.PENDING,
     };
 
     // Find variables that require cluster requests.  If there are none, then
@@ -279,7 +279,7 @@ export const actions = {
     const clusterVariables = getters
       .getVariables(context)
       .filter(
-        v =>
+        (v) =>
           (v.grouping && isClusteredGrouping(v.grouping)) ||
           isImageType(v.colType)
       );
@@ -291,7 +291,7 @@ export const actions = {
 
     // Find grouped fields that have clusters defined against them and request that they
     // cluster.
-    const promises = clusterVariables.map(v => {
+    const promises = clusterVariables.map((v) => {
       if (v.grouping && isClusteredGrouping(v.grouping)) {
         return axios.post(
           `/distil/cluster/${args.dataset}/${v.grouping.idCol}`,
@@ -306,13 +306,13 @@ export const actions = {
       .then(() => {
         mutations.updatePendingRequests(context, {
           ...update,
-          status: DatasetPendingRequestStatus.RESOLVED
+          status: DatasetPendingRequestStatus.RESOLVED,
         });
       })
-      .catch(error => {
+      .catch((error) => {
         mutations.updatePendingRequests(context, {
           ...update,
-          status: DatasetPendingRequestStatus.ERROR
+          status: DatasetPendingRequestStatus.ERROR,
         });
         console.error(error);
       });
@@ -346,7 +346,7 @@ export const actions = {
       `/distil/upload/${args.datasetID}?${options}`,
       data,
       {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: { "Content-Type": "multipart/form-data" },
       }
     );
     return actions.importDataset(context, {
@@ -356,7 +356,7 @@ export const actions = {
       terms: args.datasetID,
       originalDataset: null,
       joinedDataset: null,
-      path: uploadResponse.data.location
+      path: uploadResponse.data.location,
     });
   },
 
@@ -380,11 +380,11 @@ export const actions = {
     if (args.originalDataset !== null) {
       postParams = {
         originalDataset: args.originalDataset,
-        joinedDataset: args.joinedDataset
+        joinedDataset: args.joinedDataset,
       };
     } else if (args.path !== "") {
       postParams = {
-        path: args.path
+        path: args.path,
       };
     }
     await axios.post(
@@ -412,25 +412,25 @@ export const actions = {
       id,
       dataset: args.datasetID,
       type: DatasetPendingRequestType.JOIN_DATASET_IMPORT,
-      status: DatasetPendingRequestStatus.PENDING
+      status: DatasetPendingRequestStatus.PENDING,
     };
     mutations.updatePendingRequests(context, update);
     try {
       const response = await axios.post(
         `/distil/import/${args.datasetID}/${args.source}/${args.provenance}`,
         {
-          searchResults: args.searchResults
+          searchResults: args.searchResults,
         }
       );
       mutations.updatePendingRequests(context, {
         ...update,
-        status: DatasetPendingRequestStatus.RESOLVED
+        status: DatasetPendingRequestStatus.RESOLVED,
       });
       return response && response.data;
     } catch (error) {
       mutations.updatePendingRequests(context, {
         ...update,
-        status: DatasetPendingRequestStatus.ERROR
+        status: DatasetPendingRequestStatus.ERROR,
       });
       console.error(error);
     }
@@ -447,11 +447,11 @@ export const actions = {
       await axios.post(`/distil/delete/${args.dataset}/${args.key}`, {});
       await Promise.all([
         actions.fetchDataset(context, {
-          dataset: args.dataset
+          dataset: args.dataset,
         }),
         actions.fetchVariables(context, {
-          dataset: args.dataset
-        })
+          dataset: args.dataset,
+        }),
       ]);
       mutations.clearVariableSummaries(context);
       const variables = context.getters.getVariables as Variable[];
@@ -472,7 +472,7 @@ export const actions = {
           highlight: highlight,
           dataMode: dataMode,
           varModes: varModes,
-          pages: pages
+          pages: pages,
         }),
         actions.fetchExcludedVariableSummaries(context, {
           dataset: args.dataset,
@@ -481,8 +481,8 @@ export const actions = {
           highlight: highlight,
           dataMode: dataMode,
           varModes: varModes,
-          pages: pages
-        })
+          pages: pages,
+        }),
       ]);
     } catch (error) {
       console.error(error);
@@ -504,7 +504,7 @@ export const actions = {
 
     const datasetBrevised: Dataset = JSON.parse(JSON.stringify(args.datasetB));
 
-    datasetBrevised.variables = datasetBrevised.variables.map(v => {
+    datasetBrevised.variables = datasetBrevised.variables.map((v) => {
       const roledVar = v;
       roledVar.role = ["attribute"];
       return roledVar;
@@ -514,7 +514,7 @@ export const actions = {
       accuracy: args.joinAccuracy,
       datasetLeft: args.datasetA,
       datasetRight: datasetBrevised,
-      searchResultIndex: args.joinSuggestionIndex
+      searchResultIndex: args.joinSuggestionIndex,
     });
     return response.data;
   },
@@ -528,15 +528,15 @@ export const actions = {
     }
     try {
       await axios.post(`/distil/grouping/${args.dataset}`, {
-        grouping: args.grouping
+        grouping: args.grouping,
       });
       await Promise.all([
         actions.fetchDataset(context, {
-          dataset: args.dataset
+          dataset: args.dataset,
         }),
         actions.fetchVariables(context, {
-          dataset: args.dataset
-        })
+          dataset: args.dataset,
+        }),
       ]);
       mutations.clearVariableSummaries(context);
       const variables = context.getters.getVariables as Variable[];
@@ -557,7 +557,7 @@ export const actions = {
           highlight: highlight,
           dataMode: dataMode,
           varModes: varModes,
-          pages: pages
+          pages: pages,
         }),
         actions.fetchExcludedVariableSummaries(context, {
           dataset: args.dataset,
@@ -566,8 +566,8 @@ export const actions = {
           highlight: highlight,
           dataMode: dataMode,
           varModes: varModes,
-          pages: pages
-        })
+          pages: pages,
+        }),
       ]);
     } catch (error) {
       console.error(error);
@@ -588,11 +588,11 @@ export const actions = {
       );
       await Promise.all([
         actions.fetchDataset(context, {
-          dataset: args.dataset
+          dataset: args.dataset,
         }),
         actions.fetchVariables(context, {
-          dataset: args.dataset
-        })
+          dataset: args.dataset,
+        }),
       ]);
       mutations.clearVariableSummaries(context);
       const variables = context.getters.getVariables as Variable[];
@@ -613,7 +613,7 @@ export const actions = {
           highlight: highlight,
           dataMode: dataMode,
           varModes: varModes,
-          pages: pages
+          pages: pages,
         }),
         actions.fetchExcludedVariableSummaries(context, {
           dataset: args.dataset,
@@ -622,8 +622,8 @@ export const actions = {
           highlight: highlight,
           dataMode: dataMode,
           varModes: varModes,
-          pages: pages
-        })
+          pages: pages,
+        }),
       ]);
     } catch (error) {
       console.error(error);
@@ -641,7 +641,7 @@ export const actions = {
     try {
       await axios.post(`/distil/variables/${args.dataset}`, {
         field: args.field,
-        type: args.type
+        type: args.type,
       });
       mutations.updateVariableType(context, args);
       // update variable summary
@@ -656,7 +656,7 @@ export const actions = {
           highlight: highlight,
           include: true,
           dataMode: DataMode.Default,
-          mode: SummaryMode.Default
+          mode: SummaryMode.Default,
         }),
         actions.fetchVariableSummary(context, {
           dataset: args.dataset,
@@ -665,8 +665,8 @@ export const actions = {
           highlight: highlight,
           include: false,
           dataMode: DataMode.Default,
-          mode: SummaryMode.Default
-        })
+          mode: SummaryMode.Default,
+        }),
       ]);
     } catch (error) {
       mutations.updateVariableType(context, { ...args, type: UNKNOWN_TYPE });
@@ -700,7 +700,7 @@ export const actions = {
       include: true,
       dataMode: args.dataMode,
       varModes: args.varModes,
-      pages: args.pages
+      pages: args.pages,
     });
   },
 
@@ -724,7 +724,7 @@ export const actions = {
       include: false,
       dataMode: args.dataMode,
       varModes: args.varModes,
-      pages: args.pages
+      pages: args.pages,
     });
   },
 
@@ -754,13 +754,13 @@ export const actions = {
       : context.state.excludedSet.variableSummariesByKey;
     const routeKey = minimumRouteKey();
     const existingSummaries = args.variables.map(
-      v => summariesByVariable?.[v.colName]?.[routeKey]
+      (v) => summariesByVariable?.[v.colName]?.[routeKey]
     );
     const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
     const promises = [];
 
-    args.variables.forEach(variable => {
-      const existingVariableSummary = _.find(existingSummaries, v => {
+    args.variables.forEach((variable) => {
+      const existingVariableSummary = _.find(existingSummaries, (v) => {
         return v?.dataset === args.dataset && v?.key === variable.colName;
       });
 
@@ -769,7 +769,7 @@ export const actions = {
           dataset: args.dataset,
           include: args.include,
           summary: existingVariableSummary,
-          variable: variable.colName
+          variable: variable.colName,
         });
         promises.push(existingVariableSummary);
       } else {
@@ -793,7 +793,7 @@ export const actions = {
             highlight: args.highlight,
             include: args.include,
             dataMode: args.dataMode,
-            mode: mode
+            mode: mode,
           })
         );
       }
@@ -888,7 +888,7 @@ export const actions = {
       type: DatasetPendingRequestType.VARIABLE_RANKING,
       status: DatasetPendingRequestStatus.PENDING,
       rankings: null,
-      target: args.target
+      target: args.target,
     };
 
     // quick exit if we don't have variables/target that are going to yield ranking
@@ -896,7 +896,7 @@ export const actions = {
     const rankableVariables = getters
       .getVariables(context)
       .filter(
-        f => f.colName !== target.colName && isRankableVariableType(f.colType)
+        (f) => f.colName !== target.colName && isRankableVariableType(f.colType)
       );
     if (
       !isRankableVariableType(target.colType) ||
@@ -940,7 +940,7 @@ export const actions = {
     } catch (error) {
       mutations.updatePendingRequests(context, {
         ...update,
-        status: DatasetPendingRequestStatus.ERROR
+        status: DatasetPendingRequestStatus.ERROR,
       });
       console.error(error);
     }
@@ -952,7 +952,7 @@ export const actions = {
   ) {
     mutations.setVariableRankings(context, {
       dataset: args.dataset,
-      rankings: args.rankings
+      rankings: args.rankings,
     });
     mutations.updateVariableRankings(context, args.rankings);
   },
@@ -962,12 +962,12 @@ export const actions = {
     args: { id: string; status: DatasetPendingRequestStatus }
   ) {
     const update = context.getters.getPendingRequests.find(
-      item => item.id === args.id
+      (item) => item.id === args.id
     );
     if (update) {
       mutations.updatePendingRequests(context, {
         ...update,
-        status: args.status
+        status: args.status,
       });
     }
   },
@@ -986,29 +986,29 @@ export const actions = {
     }
     const type = getVarType(args.variable);
     return Promise.all(
-      args.urls.map(url => {
+      args.urls.map((url) => {
         if (type === IMAGE_TYPE) {
           return actions.fetchImage(context, {
             dataset: args.dataset,
-            url: url
+            url: url,
           });
         }
         if (type === REMOTE_SENSING_TYPE) {
           return actions.fetchMultiBandImage(context, {
             dataset: args.dataset,
             imageId: url,
-            bandCombination: BandID.NATURAL_COLORS
+            bandCombination: BandID.NATURAL_COLORS,
           });
         }
         if (type === "graph") {
           return actions.fetchGraph(context, {
             dataset: args.dataset,
-            url: url
+            url: url,
           });
         }
         return actions.fetchFile(context, {
           dataset: args.dataset,
-          url: url
+          url: url,
         });
       })
     );
@@ -1047,7 +1047,7 @@ export const actions = {
         "xColName",
         "yColName",
         "timeseriesColName",
-        "timeseriesId"
+        "timeseriesId",
       ])
     ) {
       return null;
@@ -1068,7 +1068,7 @@ export const actions = {
         dataset: args.dataset,
         id: args.timeseriesId,
         timeseries: <TimeSeriesValue[]>response.data.timeseries,
-        isDateTime: <boolean>response.data.isDateTime
+        isDateTime: <boolean>response.data.isDateTime,
       });
     } catch (error) {
       console.error(error);
@@ -1111,14 +1111,14 @@ export const actions = {
       if (response.data.graphs.length > 0) {
         const graph = response.data.graphs[0];
         const parsed = {
-          nodes: graph.nodes.map(n => {
+          nodes: graph.nodes.map((n) => {
             return {
               id: n.id,
               label: n.label,
               x: n.attributes.attr1,
               y: n.attributes.attr2,
               size: 1,
-              color: "#ec5148"
+              color: "#ec5148",
             };
           }),
           edges: graph.edges.map((e, i) => {
@@ -1126,9 +1126,9 @@ export const actions = {
               id: `e${i}`,
               source: e.source,
               target: e.target,
-              color: "#aaa"
+              color: "#aaa",
             };
-          })
+          }),
         };
         mutations.updateFile(context, { url: args.url, file: parsed });
       }
@@ -1167,7 +1167,7 @@ export const actions = {
       return null;
     }
     return Promise.all(
-      args.datasets.map(async dataset => {
+      args.datasets.map(async (dataset) => {
         const highlight =
           (args.highlight && args.highlight.dataset) === dataset
             ? args.highlight
@@ -1184,13 +1184,13 @@ export const actions = {
           );
           mutations.setJoinDatasetsTableData(context, {
             dataset: dataset,
-            data: response.data
+            data: response.data,
           });
         } catch (error) {
           console.error(error);
           mutations.setJoinDatasetsTableData(context, {
             dataset: dataset,
-            data: createEmptyTableData()
+            data: createEmptyTableData(),
           });
         }
       })
@@ -1211,7 +1211,7 @@ export const actions = {
       filterParams: args.filterParams,
       highlight: args.highlight,
       include: true,
-      dataMode: args.dataMode
+      dataMode: args.dataMode,
     });
   },
 
@@ -1229,7 +1229,7 @@ export const actions = {
       filterParams: args.filterParams,
       highlight: args.highlight,
       include: false,
-      dataMode: args.dataMode
+      dataMode: args.dataMode,
     });
   },
 
@@ -1299,5 +1299,5 @@ export const actions = {
     } catch (error) {
       console.error(error);
     }
-  }
+  },
 };

@@ -25,8 +25,8 @@ export const state: AppState = {
   problemMetrics: [],
   statusPanelState: {
     contentType: undefined,
-    isOpen: false
-  }
+    isOpen: false,
+  },
 };
 
 export type StatusPanelContentType = DatasetPendingRequestType;

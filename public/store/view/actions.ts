@@ -6,24 +6,24 @@ import { mutations as viewMutations, getters as viewGetters } from "./module";
 import { Dictionary } from "../../util/dict";
 import {
   actions as datasetActions,
-  mutations as datasetMutations
+  mutations as datasetMutations,
 } from "../dataset/module";
 import {
   actions as requestActions,
   mutations as requestMutations,
-  getters as requestGetters
+  getters as requestGetters,
 } from "../requests/module";
 import {
   actions as resultActions,
-  mutations as resultMutations
+  mutations as resultMutations,
 } from "../results/module";
 import {
   actions as predictionActions,
-  mutations as predictionMutations
+  mutations as predictionMutations,
 } from "../predictions/module";
 import {
   actions as modelActions,
-  mutations as modelMutations
+  mutations as modelMutations,
 } from "../model/module";
 import { getters as routeGetters } from "../route/module";
 import {
@@ -31,13 +31,13 @@ import {
   SummaryMode,
   DataMode,
   Variable,
-  Highlight
+  Highlight,
 } from "../dataset";
 import { getPredictionsById } from "../../util/predictions";
 import {
   NUM_PER_PAGE,
   NUM_PER_TARGET_PAGE,
-  sortVariablesByImportance
+  sortVariablesByImportance,
 } from "../../util/data";
 import { SELECT_TARGET_ROUTE } from "../route";
 
@@ -51,7 +51,7 @@ enum ParamCacheKey {
   PREDICTIONS_REQUESTS = "PREDICTIONS_REQUESTS",
   PREDICTIONS = "PREDICTIONS",
   JOIN_SUGGESTIONS = "JOIN_SUGGESTIONS",
-  CLUSTERS = "CLUSTERS"
+  CLUSTERS = "CLUSTERS",
 }
 
 function createCacheable(
@@ -65,7 +65,7 @@ function createCacheable(
     if (cachedParams !== params) {
       viewMutations.setFetchParamsCache(context, {
         key: key,
-        value: params
+        value: params,
       });
       return Promise.resolve(func(context, args));
     }
@@ -86,7 +86,7 @@ function createDeepCacheable(
     if (cachedParams !== params) {
       viewMutations.setFetchParamsCache(context, {
         key: deepKey,
-        value: params
+        value: params,
       });
       console.log("not cached");
       return Promise.resolve(func(context, args));
@@ -101,7 +101,7 @@ const fetchJoinSuggestions = createCacheable(
   (context, args) => {
     return datasetActions.fetchJoinSuggestions(store, {
       dataset: args.dataset,
-      searchQuery: args.searchQuery
+      searchQuery: args.searchQuery,
     });
   }
 );
@@ -110,7 +110,7 @@ const fetchVariables = createCacheable(
   ParamCacheKey.VARIABLES,
   (context, args) => {
     return datasetActions.fetchVariables(store, {
-      dataset: args.dataset
+      dataset: args.dataset,
     });
   }
 );
@@ -134,7 +134,7 @@ const fetchVariableSummaries = async (context, args) => {
     ? [targetVariable, ...trainingVariables]
     : [];
 
-  const starterVariableNames = starterVariables.map(sv =>
+  const starterVariableNames = starterVariables.map((sv) =>
     sv.colDisplayName.toLowerCase()
   );
 
@@ -147,7 +147,7 @@ const fetchVariableSummaries = async (context, args) => {
     currentRoute === SELECT_TARGET_ROUTE ? NUM_PER_TARGET_PAGE : NUM_PER_PAGE;
   const currentPageVariables = presortedVariables
     .filter(
-      v => starterVariableNames.indexOf(v.colDisplayName.toLowerCase()) < 0
+      (v) => starterVariableNames.indexOf(v.colDisplayName.toLowerCase()) < 0
     )
     .slice((currentPageIndex - 1) * pageLength, currentPageIndex * pageLength);
   const allActiveVariables = [...starterVariables, ...currentPageVariables];
@@ -160,7 +160,7 @@ const fetchVariableSummaries = async (context, args) => {
       highlight: highlight,
       dataMode: dataMode,
       varModes: varModes,
-      pages: pages
+      pages: pages,
     }),
     datasetActions.fetchExcludedVariableSummaries(store, {
       dataset: dataset,
@@ -169,8 +169,8 @@ const fetchVariableSummaries = async (context, args) => {
       highlight: highlight,
       dataMode: dataMode,
       varModes: varModes,
-      pages: pages
-    })
+      pages: pages,
+    }),
   ]);
 };
 
@@ -181,11 +181,11 @@ const fetchVariableRankings = createCacheable(
     // this is needed because since user decides variable rankings to be updated, re-fetching doesn't always replace the previous data
     datasetActions.updateVariableRankings(store, {
       dataset: args.dataset,
-      rankings: {}
+      rankings: {},
     });
     datasetActions.fetchVariableRankings(store, {
       dataset: args.dataset,
-      target: args.target
+      target: args.target,
     });
   }
 );
@@ -201,7 +201,7 @@ const fetchClusters = createCacheable(
   ParamCacheKey.CLUSTERS,
   (context, args) => {
     datasetActions.fetchClusters(store, {
-      dataset: args.dataset
+      dataset: args.dataset,
     });
   }
 );
@@ -211,7 +211,7 @@ const fetchSolutionRequests = createCacheable(
   (context, args) => {
     return requestActions.fetchSolutionRequests(store, {
       dataset: args.dataset,
-      target: args.target
+      target: args.target,
     });
   }
 );
@@ -221,7 +221,7 @@ const fetchSolutions = createCacheable(
   (context, args) => {
     return requestActions.fetchSolutions(store, {
       dataset: args.dataset,
-      target: args.target
+      target: args.target,
     });
   }
 );
@@ -230,7 +230,7 @@ const fetchPredictions = createCacheable(
   ParamCacheKey.PREDICTIONS,
   (context, args) => {
     return requestActions.fetchPredictions(store, {
-      fittedSolutionId: args.fittedSolutionId
+      fittedSolutionId: args.fittedSolutionId,
     });
   }
 );
@@ -239,7 +239,7 @@ function clearVariablesParamCache(context: ViewContext) {
   // clear variable param cache to allow re-fetching variables
   viewMutations.setFetchParamsCache(context, {
     key: ParamCacheKey.VARIABLES,
-    value: undefined
+    value: undefined,
   });
 }
 
@@ -248,7 +248,7 @@ function clearVariableSummaries(context: ViewContext) {
 
   viewMutations.setFetchParamsCache(context, {
     key: ParamCacheKey.VARIABLE_SUMMARIES,
-    value: undefined
+    value: undefined,
   });
 }
 
@@ -277,7 +277,7 @@ export const actions = {
 
     const promises = datasetIDs.map((id: string) => {
       return datasetActions.fetchDataset(store, {
-        dataset: id
+        dataset: id,
       });
     });
 
@@ -295,14 +295,14 @@ export const actions = {
     const datasetIDB = datasetIDs[1];
     Promise.all([
       datasetActions.fetchDataset(store, {
-        dataset: datasetIDA
+        dataset: datasetIDA,
       }),
       datasetActions.fetchDataset(store, {
-        dataset: datasetIDB
+        dataset: datasetIDB,
       }),
       datasetActions.fetchJoinDatasetsVariables(store, {
-        datasets: datasetIDs
-      })
+        datasets: datasetIDs,
+      }),
     ]).then(() => {
       return actions.updateJoinDatasetsData(context);
     });
@@ -323,10 +323,10 @@ export const actions = {
     const datasetIDB = datasetIDs[1];
 
     // fetch new state
-    const datasetA = _.find(datasets, d => {
+    const datasetA = _.find(datasets, (d) => {
       return d.id === datasetIDA;
     });
-    const datasetB = _.find(datasets, d => {
+    const datasetB = _.find(datasets, (d) => {
       return d.id === datasetIDB;
     });
 
@@ -338,7 +338,7 @@ export const actions = {
         highlight: highlight,
         dataMode: dataMode,
         varModes: varModes,
-        pages: pages
+        pages: pages,
       }),
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: datasetB.id,
@@ -347,13 +347,13 @@ export const actions = {
         highlight: highlight,
         dataMode: dataMode,
         varModes: varModes,
-        pages: pages
+        pages: pages,
       }),
       datasetActions.fetchJoinDatasetsTableData(store, {
         datasets: datasetIDs,
         filterParams: filterParams,
-        highlight: highlight
-      })
+        highlight: highlight,
+      }),
     ]);
   },
 
@@ -367,11 +367,11 @@ export const actions = {
     const dataset = context.getters.getRouteDataset;
     const pages = JSON.stringify(routeGetters.getAllRoutePages(store));
     await fetchVariables(context, {
-      dataset: dataset
+      dataset: dataset,
     });
     return fetchVariableSummaries(context, {
       dataset: dataset,
-      pages: pages
+      pages: pages,
     });
   },
 
@@ -393,16 +393,16 @@ export const actions = {
     const target = context.getters.getRouteTargetVariable;
 
     fetchJoinSuggestions(context, {
-      dataset: dataset
+      dataset: dataset,
     });
 
     await Promise.all([
       fetchVariables(context, {
-        dataset: dataset
+        dataset: dataset,
       }),
       datasetActions.fetchDataset(store, {
-        dataset: dataset
-      })
+        dataset: dataset,
+      }),
     ]);
     fetchVariableRankings(context, { dataset, target });
     fetchClusters(context, { dataset });
@@ -425,20 +425,20 @@ export const actions = {
         filterParams: filterParams,
         highlight: highlight,
         varModes: varModes,
-        pages: pages
+        pages: pages,
       }),
       datasetActions.fetchIncludedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,
         highlight: highlight,
-        dataMode: dataMode
+        dataMode: dataMode,
       }),
       datasetActions.fetchExcludedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,
         highlight: highlight,
-        dataMode: dataMode
-      })
+        dataMode: dataMode,
+      }),
     ]);
   },
 
@@ -457,7 +457,7 @@ export const actions = {
 
     // fetch new state
     await fetchVariables(context, {
-      dataset: dataset
+      dataset: dataset,
     });
     await modelActions.fetchModels(store); // Fetch saved models.
 
@@ -469,15 +469,15 @@ export const actions = {
 
       fetchSolutionRequests(context, {
         dataset: dataset,
-        target: target
+        target: target,
       }),
 
       fetchSolutions(context, {
         dataset: dataset,
-        target: target
+        target: target,
       }),
 
-      datasetActions.searchDatasets(store, "")
+      datasetActions.searchDatasets(store, ""),
     ]);
 
     return actions.updateResultsSolution(context);
@@ -509,7 +509,7 @@ export const actions = {
       solutionId: solutionId,
       highlight: highlight,
       dataMode: dataMode,
-      size
+      size,
     });
     resultActions.fetchTargetSummary(store, {
       dataset: dataset,
@@ -517,7 +517,9 @@ export const actions = {
       solutionId: solutionId,
       highlight: highlight,
       dataMode: dataMode,
-      varMode: varModes.has(target) ? varModes.get(target) : SummaryMode.Default
+      varMode: varModes.has(target)
+        ? varModes.get(target)
+        : SummaryMode.Default,
     });
     resultActions.fetchTrainingSummaries(store, {
       dataset: dataset,
@@ -525,7 +527,7 @@ export const actions = {
       solutionId: solutionId,
       highlight: highlight,
       dataMode: dataMode,
-      varModes: varModes
+      varModes: varModes,
     });
     resultActions.fetchPredictedSummaries(store, {
       dataset: dataset,
@@ -533,7 +535,7 @@ export const actions = {
       requestIds: requestIds,
       highlight: highlight,
       dataMode: dataMode,
-      varModes: varModes
+      varModes: varModes,
     });
     resultActions.fetchVariableRankings(store, { solutionID: solutionId });
 
@@ -548,7 +550,7 @@ export const actions = {
       resultActions.fetchResidualsExtrema(store, {
         dataset: dataset,
         target: target,
-        solutionId: solutionId
+        solutionId: solutionId,
       });
       resultActions.fetchResidualsSummaries(store, {
         dataset: dataset,
@@ -556,7 +558,7 @@ export const actions = {
         requestIds: requestIds,
         highlight: highlight,
         dataMode: dataMode,
-        varModes: varModes
+        varModes: varModes,
       });
     } else if (task.includes(TaskTypes.CLASSIFICATION)) {
       resultActions.fetchCorrectnessSummaries(store, {
@@ -565,7 +567,7 @@ export const actions = {
         requestIds: requestIds,
         highlight: highlight,
         dataMode: dataMode,
-        varModes: varModes
+        varModes: varModes,
       });
     } else {
       console.error(`unhandled task type ${task}`);
@@ -582,7 +584,7 @@ export const actions = {
 
     // fetch the predictions
     await fetchPredictions(context, {
-      fittedSolutionId: fittedSolutionId
+      fittedSolutionId: fittedSolutionId,
     });
 
     // recover the dataset associated with the currently selected predictions set
@@ -593,7 +595,7 @@ export const actions = {
 
     // fetch variales for that dataset
     await fetchVariables(context, {
-      dataset: inferenceDataset
+      dataset: inferenceDataset,
     });
     return actions.updatePredictions(context);
   },
@@ -622,18 +624,18 @@ export const actions = {
       dataset: inferenceDataset,
       highlight: highlight,
       produceRequestId: produceRequestId,
-      size
+      size,
     });
     predictionActions.fetchTrainingSummaries(store, {
       dataset: inferenceDataset,
       training: trainingVariables,
       highlight: highlight,
       varModes: varModes,
-      produceRequestId: produceRequestId
+      produceRequestId: produceRequestId,
     });
     predictionActions.fetchPredictedSummaries(store, {
       highlight: highlight,
-      fittedSolutionId: fittedSolutionId
+      fittedSolutionId: fittedSolutionId,
     });
-  }
+  },
 };

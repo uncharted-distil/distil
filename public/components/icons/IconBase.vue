@@ -22,21 +22,21 @@ export default Vue.extend({
   props: {
     title: {
       type: String,
-      default: ""
+      default: "",
     },
     width: {
       type: [Number, String],
-      default: 18
+      default: 18,
     },
     height: {
       type: [Number, String],
-      default: 18
+      default: 18,
     },
     iconColor: {
       type: String,
-      default: "currentColor"
-    }
-  }
+      default: "currentColor",
+    },
+  },
 });
 </script>
 

@@ -27,5 +27,5 @@ export const getters = {
 
   getStatusPanelState(state: AppState): StatusPanelState {
     return state.statusPanelState;
-  }
+  },
 };

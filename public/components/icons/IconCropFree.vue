@@ -12,7 +12,7 @@
 <script lang="ts">
 import Vue from "vue";
 export default Vue.extend({
-  name: "icon-crop-free"
+  name: "icon-crop-free",
 });
 </script>
 

@@ -10,18 +10,18 @@ import {
   DatasetPendingRequest,
   Task,
   BandCombination,
-  TimeSeriesValue
+  TimeSeriesValue,
 } from "./index";
 import {
   updateSummaries,
   updateSummariesPerVariable,
   isDatamartProvenance,
-  sortSummaries
+  sortSummaries,
 } from "../../util/data";
 import {
   GEOCOORDINATE_TYPE,
   LONGITUDE_TYPE,
-  LATITUDE_TYPE
+  LATITUDE_TYPE,
 } from "../../util/types";
 
 function sortDatasets(a: Dataset, b: Dataset) {
@@ -51,7 +51,7 @@ function sortDatasets(a: Dataset, b: Dataset) {
 
 export const mutations = {
   setDataset(state: DatasetState, dataset: Dataset) {
-    const index = _.findIndex(state.datasets, d => {
+    const index = _.findIndex(state.datasets, (d) => {
       return d.id === dataset.id;
     });
     if (index === -1) {
@@ -68,7 +68,7 @@ export const mutations = {
     state.datasets.forEach((d, index) => {
       lookup[d.id] = index;
     });
-    datasets.forEach(d => {
+    datasets.forEach((d) => {
       const index = lookup[d.id];
       if (index !== undefined) {
         // update if it already exists
@@ -88,12 +88,12 @@ export const mutations = {
   setVariables(state: DatasetState, variables: Variable[]) {
     const oldVariables = new Map();
 
-    state.variables.forEach(variable => {
+    state.variables.forEach((variable) => {
       const { datasetName, colName } = variable;
       oldVariables.set(`${datasetName}:${colName}`, variable);
     });
 
-    const newVariables = variables.map(variable => {
+    const newVariables = variables.map((variable) => {
       const { datasetName, colName } = variable;
       const variableKey = `${datasetName}:${colName}`;
       const oldVariable = oldVariables.get(variableKey);
@@ -124,16 +124,16 @@ export const mutations = {
     }
 
     // update dataset variables
-    const dataset = state.datasets.find(d => d.name === args.dataset);
+    const dataset = state.datasets.find((d) => d.name === args.dataset);
     if (dataset) {
-      const variable = dataset.variables.find(v => v.colName === args.field);
+      const variable = dataset.variables.find((v) => v.colName === args.field);
       if (variable) {
         variable.colType = args.type;
       }
     }
 
     // update variables
-    const variable = state.variables.find(v => {
+    const variable = state.variables.find((v) => {
       return v.colName === args.field && v.datasetName === args.dataset;
     });
 
@@ -144,7 +144,7 @@ export const mutations = {
     // update table data
     if (state.includedSet.tableData) {
       const col = state.includedSet.tableData.columns.find(
-        c => c.key === args.field
+        (c) => c.key === args.field
       );
       if (col) {
         col.type = args.type;
@@ -152,7 +152,7 @@ export const mutations = {
     }
     if (state.excludedSet.tableData) {
       const col = state.excludedSet.tableData.columns.find(
-        c => c.key === args.field
+        (c) => c.key === args.field
       );
       if (col) {
         col.type = args.type;
@@ -161,14 +161,14 @@ export const mutations = {
 
     const joined = state.joinTableData[args.dataset];
     if (joined) {
-      const col = joined.columns.find(c => c.key === args.field);
+      const col = joined.columns.find((c) => c.key === args.field);
       if (col) {
         col.type = args.type;
       }
     }
   },
   reviewVariableType(state: DatasetState, update) {
-    const index = _.findIndex(state.variables, v => {
+    const index = _.findIndex(state.variables, (v) => {
       return v.colName === update.field;
     });
     state.variables[index].isColTypeReviewed = update.isColTypeReviewed;
@@ -211,7 +211,7 @@ export const mutations = {
   updateVariableRankings(state: DatasetState, rankings: Dictionary<number>) {
     // add rank property if ranking data returned, otherwise don't include it
     if (!_.isEmpty(rankings)) {
-      state.variables.forEach(v => {
+      state.variables.forEach((v) => {
         let rank = 0;
         if (rankings[v.colName]) {
           rank = rankings[v.colName];
@@ -219,7 +219,7 @@ export const mutations = {
         Vue.set(v, "ranking", rank);
       });
     } else {
-      state.variables.forEach(v => Vue.delete(v, "ranking"));
+      state.variables.forEach((v) => Vue.delete(v, "ranking"));
     }
   },
 
@@ -228,10 +228,10 @@ export const mutations = {
     pendingRequest: DatasetPendingRequest
   ) {
     const sameIdIndex = state.pendingRequests.findIndex(
-      item => pendingRequest.id === item.id
+      (item) => pendingRequest.id === item.id
     );
     const sameTypeIndex = state.pendingRequests.findIndex(
-      item => pendingRequest.type === item.type
+      (item) => pendingRequest.type === item.type
     );
     if (sameIdIndex >= 0) {
       Vue.set(state.pendingRequests, sameIdIndex, pendingRequest);
@@ -245,7 +245,7 @@ export const mutations = {
 
   removePendingRequest(state: DatasetState, id: string) {
     state.pendingRequests = state.pendingRequests.filter(
-      item => item.id !== id
+      (item) => item.id !== id
     );
   },
 
@@ -282,22 +282,22 @@ export const mutations = {
       args.isDateTime
     );
 
-    const validTimeseries = args.timeseries.filter(t => !_.isNil(t));
-    const minX = _.minBy(validTimeseries, d => d.time).time;
-    const maxX = _.maxBy(validTimeseries, d => d.time).time;
-    const minY = _.minBy(validTimeseries, d => d.value).value;
-    const maxY = _.maxBy(validTimeseries, d => d.value).value;
+    const validTimeseries = args.timeseries.filter((t) => !_.isNil(t));
+    const minX = _.minBy(validTimeseries, (d) => d.time).time;
+    const maxX = _.maxBy(validTimeseries, (d) => d.time).time;
+    const minY = _.minBy(validTimeseries, (d) => d.value).value;
+    const maxY = _.maxBy(validTimeseries, (d) => d.value).value;
 
     if (!state.timeseriesExtrema[args.dataset]) {
       Vue.set(state.timeseriesExtrema, args.dataset, {
         x: {
           min: minX,
-          max: maxX
+          max: maxX,
         },
         y: {
           min: minY,
-          max: maxY
-        }
+          max: maxY,
+        },
       });
       return;
     }
@@ -358,5 +358,5 @@ export const mutations = {
       args.variables,
       args.ranked
     );
-  }
+  },
 };

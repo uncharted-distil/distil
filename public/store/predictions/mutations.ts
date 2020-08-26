@@ -105,5 +105,5 @@ export const mutations = {
       args.id,
       args.isDateTime
     );
-  }
+  },
 };

@@ -5,7 +5,7 @@ import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
 
 export const routeModule: Module<Route, DistilState> = {
-  getters: moduleGetters
+  getters: moduleGetters,
 };
 
 const { read } = getStoreAccessors<Route, DistilState>(null);
@@ -99,5 +99,5 @@ export const getters = {
   getModelTimeLimit: read(moduleGetters.getModelTimeLimit),
   getModelQuality: read(moduleGetters.getModelQuality),
   isPageSelectTarget: read(moduleGetters.isPageSelectTarget),
-  isPageSelectTraining: read(moduleGetters.isPageSelectTraining)
+  isPageSelectTraining: read(moduleGetters.isPageSelectTraining),
 };
