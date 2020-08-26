@@ -135,13 +135,25 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 	var step *description.FullySpecifiedPipeline
 	var err error
 	if model.IsImage(clusteringVar.Type) {
-		step, err = description.CreateImageClusteringPipeline("business", "basic image clustering", []*model.Variable{clusteringVar}, useKMeans)
+		step, err = description.CreateImageClusteringPipeline("image_cluster", "basic image clustering", []*model.Variable{clusteringVar}, useKMeans)
 	} else if model.IsRemoteSensing(getClusterGroup(clusteringVar.Name, features).GetType()) {
-		rsg := getClusterGroup(clusteringVar.Name, features).(*model.RemoteSensingGrouping)
-		step, err = description.CreateMultiBandImageClusteringPipeline("5-eyes", "I see you", rsg, features, useKMeans)
+		// rsg := getClusterGroup(clusteringVar.Name, features).(*model.RemoteSensingGrouping)
+		// step, err = description.CreateMultiBandImageClusteringPipeline("remote_sensing_cluster", "multiband image clustering", rsg, features, useKMeans)
+		// general clustering pipeline
+		selectedFeatures := make([]string, len(features))
+		for i, f := range features {
+			selectedFeatures[i] = f.Name
+		}
+		datasetDescription := &description.UserDatasetDescription{
+			AllFeatures:      features,
+			TargetFeature:    clusteringVar,
+			SelectedFeatures: selectedFeatures,
+		}
+		step, err = description.CreateGeneralClusteringPipeline("tabular_cluster",
+			"k-means tabular clustering", datasetDescription, nil, useKMeans)
 	} else if clusteringVar.DistilRole == model.VarDistilRoleGrouping {
 		// assume timeseries for now if distil role is grouping
-		step, err = description.CreateSlothPipeline("time series clustering", "k-means time series clustering",
+		step, err = description.CreateSlothPipeline("timeseries_cluster", "k-means time series clustering",
 			"", "", getClusterGroup(clusteringVar.Name, features).(*model.TimeseriesGrouping), features)
 	} else {
 		// general clustering pipeline
@@ -154,8 +166,8 @@ func Cluster(datasetInputDir string, dataset string, variable string, features [
 			TargetFeature:    clusteringVar,
 			SelectedFeatures: selectedFeatures,
 		}
-		step, err = description.CreateGeneralClusteringPipeline("time series clustering",
-			"k-means time series clustering", datasetDescription, nil, useKMeans)
+		step, err = description.CreateGeneralClusteringPipeline("tabular_cluster",
+			"k-means tabular clustering", datasetDescription, nil, useKMeans)
 	}
 	if err != nil {
 		return false, nil, err

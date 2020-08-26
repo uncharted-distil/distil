@@ -18,11 +18,14 @@ package routes
 import (
 	"fmt"
 	"net/http"
+	"path"
 
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
@@ -77,7 +80,32 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 			handleError(w, err)
 			return
 		}
+		variables := datasetMeta.Variables
 		sourceFolder := env.ResolvePath(datasetMeta.Source, datasetMeta.Folder)
+
+		// Check to see if this dataset redirects to a different dataset for actual learning / analytic tasks.
+		// The current case for this is pre-featurized remote sensing data.
+		if datasetMeta.LearningDataset != "" {
+			// get the source dataset folder
+			datasetInputDir := datasetMeta.LearningDataset
+			meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(datasetInputDir, compute.D3MDataSchema), false)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+
+			var groupingVar *model.Variable
+			for _, variable := range variables {
+				if variable.IsGrouping() {
+					groupingVar = variable
+					break
+				}
+			}
+
+			variables = meta.GetMainDataResource().Variables
+			variables = append(variables, groupingVar)
+			sourceFolder = datasetMeta.LearningDataset
+		}
 
 		// create the new metadata and database variables
 		if !clusterVarExist {
@@ -95,7 +123,7 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 			}
 
 			// cluster data
-			addMeta, clustered, err := task.Cluster(sourceFolder, dataset, variable, datasetMeta.Variables, config.ClusteringKMeans)
+			addMeta, clustered, err := task.Cluster(sourceFolder, dataset, variable, variables, config.ClusteringKMeans)
 			if err != nil {
 				handleError(w, err)
 				return
