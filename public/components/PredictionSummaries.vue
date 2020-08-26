@@ -1,8 +1,6 @@
 <template>
   <div class="prediction-summaries">
-    <p class="nav-link font-weight-bold">
-      Predictions for Dataset
-    </p>
+    <p class="nav-link font-weight-bold">Predictions for Dataset</p>
     <div v-for="summary in summaries" :key="summary.key">
       <div :class="active(summary.key)" @click="onClick(summary.key)">
         <header class="prediction-group-title" :title="summary.dataset">

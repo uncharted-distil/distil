@@ -24,9 +24,7 @@
             </b-badge>
           </div>
           <div v-if="isErrored">
-            <b-badge variant="danger">
-              ERROR
-            </b-badge>
+            <b-badge variant="danger"> ERROR </b-badge>
           </div>
         </div>
       </div>

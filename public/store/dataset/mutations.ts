@@ -121,7 +121,6 @@ export const mutations = {
     // geocoordinate temporary logic
     if (args.type === GEOCOORDINATE_TYPE) {
       Vue.set(state, "isGeocoordinateFacet", [LONGITUDE_TYPE, LATITUDE_TYPE]);
-      console.table("state", state);
     }
 
     // update dataset variables

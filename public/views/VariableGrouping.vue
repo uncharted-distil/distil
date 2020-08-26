@@ -29,10 +29,10 @@
     <b-row class="flex-0-nav"></b-row>
 
     <b-row class="flex-shrink-0 align-items-center bg-white">
-      <b-col v-if="isTimeseries" cols="4" class=" offset-md-1">
+      <b-col v-if="isTimeseries" cols="4" class="offset-md-1">
         <h5 class="header-label">Configure Time Series</h5>
       </b-col>
-      <b-col v-if="isGeocoordinate" cols="4" class=" offset-md-1">
+      <b-col v-if="isGeocoordinate" cols="4" class="offset-md-1">
         <h5 class="header-label">Configure Geocoordinate</h5>
       </b-col>
     </b-row>

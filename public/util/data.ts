@@ -9,8 +9,7 @@ import {
   TableColumn,
   TimeseriesGrouping,
   D3M_INDEX_FIELD,
-  SummaryMode,
-  DatasetState
+  SummaryMode
 } from "../store/dataset/index";
 import {
   Solution,

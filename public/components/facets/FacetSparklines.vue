@@ -21,9 +21,7 @@
       </type-change-menu>
     </div>
     <facet-template target="facet-terms-value">
-      <div slot="header" class="facet-sparkline-display">
-        ${metadata}
-      </div>
+      <div slot="header" class="facet-sparkline-display">${metadata}</div>
     </facet-template>
     <div slot="footer" class="facet-footer-container">
       <div v-if="facetDisplayMore" class="facet-footer-more">

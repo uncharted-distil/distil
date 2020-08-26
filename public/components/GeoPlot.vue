@@ -19,7 +19,7 @@
       :imageUrl="imageUrl"
       :item="item"
       :visible="isImageDrilldown"
-    ></image-drilldown>
+    />
 
     <div
       class="selection-toggle"
@@ -40,12 +40,17 @@
 <script lang="ts">
 import _ from "lodash";
 import $ from "jquery";
-import leaflet, { MarkerOptions, LatLngTuple, LatLngBounds } from "leaflet";
+import leaflet, {
+  MarkerOptions,
+  LatLngTuple,
+  LatLngBounds,
+  CircleMarkerOptions
+} from "leaflet";
 import Vue from "vue";
-import IconBase from "./icons/IconBase";
-import IconCropFree from "./icons/IconCropFree";
+import IconBase from "./icons/IconBase.vue";
+import IconCropFree from "./icons/IconCropFree.vue";
 import ImageDrilldown from "./ImageDrilldown.vue";
-import ImageLabel from "./ImageLabel";
+import ImageLabel from "./ImageLabel.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -88,15 +93,16 @@ interface GeoField {
   field?: string;
 }
 
-interface LatLng {
+interface Point {
   lat: number;
   lng: number;
   row?: TableRow;
+  color?: string;
 }
 
 interface PointGroup {
   field: GeoField;
-  points: LatLng[];
+  points: Point[];
 }
 
 type TileLayer = import("leaflet").TileLayer;
@@ -129,7 +135,7 @@ export default Vue.extend({
 
   data() {
     return {
-      areasMapLayer: null,
+      poiLayer: null,
       map: null,
       markers: null,
       areasMeanLng: 0,
@@ -152,9 +158,7 @@ export default Vue.extend({
     /*
      Flag to decide if we display accurate areas based on coordinates, or if they are physically
      too small, we present a circle big enough for the user to interact with them.
-
-     @return {Boolean}
-     */
+    */
     displayCircleMarker(): boolean {
       const pointA = this.map.latLngToContainerPoint([0, 0]);
       const pointB = this.map.latLngToContainerPoint([0, this.areasMeanLng]);
@@ -259,7 +263,8 @@ export default Vue.extend({
               return {
                 lng: lng,
                 lat: lat,
-                row: item
+                row: item,
+                color: this.colorPrediction(item)
               };
             }
 
@@ -287,9 +292,7 @@ export default Vue.extend({
       return routeGetters.getRouteTargetVariable(this.$store);
     },
 
-    /**
-     * Data with multiple geocordinates to be displayed as an area on the map.
-     */
+    /* Data with multiple geocordinates to be displayed as an area on the map. */
     areas(): Area[] {
       if (!this.dataItems) {
         return [];
@@ -301,6 +304,8 @@ export default Vue.extend({
       const areas = this.dataItems.map(item => {
         const imageUrl = item.group_id.value;
         const fullCoordinates = item.coordinates.value.Elements;
+        if (fullCoordinates.some(x => x === undefined)) return;
+
         /*
           Item store the coordinates as a list of 8 values being four pairs of [Lng, Lat],
           one for each corner of the remote-sensing image.
@@ -351,10 +356,7 @@ export default Vue.extend({
       return routeGetters.isRemoteSensing(this.$store);
     },
 
-    /**
-     * Base layer for the map.
-     * @returns {TileLayer}
-     */
+    /* Base layer for the map. */
     baseLayer(): TileLayer {
       const URL = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
       return leaflet.tileLayer(URL);
@@ -591,8 +593,8 @@ export default Vue.extend({
         markerLayer.removeFrom(this.map);
       });
 
-      if (this.map.hasLayer(this.areasMapLayer)) {
-        this.map.removeLayer(this.areasMapLayer);
+      if (this.map.hasLayer(this.poiLayer)) {
+        this.map.removeLayer(this.poiLayer);
       }
 
       this.markers = {};
@@ -636,6 +638,7 @@ export default Vue.extend({
       this.item = item ?? null;
       this.isImageDrilldown = true;
     },
+
     hideImageDrilldown() {
       this.isImageDrilldown = false;
     },
@@ -653,9 +656,7 @@ export default Vue.extend({
       return color;
     },
 
-    /**
-     * Create a Leaflet map, if it doesn't exist already, with basic defaults.
-     */
+    /* Create a Leaflet map, if it doesn't exist already, with basic defaults. */
     createMap() {
       if (this.map) {
         return;
@@ -686,35 +687,35 @@ export default Vue.extend({
       // this.map.on('click', this.clearSelection);
     },
 
-    /**
-     * Create a Leaflet Group to contains the areas if it doesn't exist already.
-     */
-    createAreaMapLayer() {
-      // Create a layer group to contain all the areas to be displayed.
-      this.areasMapLayer = leaflet.layerGroup();
-      this.areasMapLayer.addTo(this.map);
+    /* Create a Leaflet Group to contains the Point Of Interest (POI) if it doesn't exist already. */
+    createPoiLayer(pois) {
+      // Test if the area Layer is already on the map.
+      if (this.map.hasLayer(this.poiLayer)) {
+        // Let's clear all of it before adding new ones.
+        this.poiLayer.clearLayers();
+      } else {
+        // Create a layer group to contain all the POIS to be displayed.
+        this.poiLayer = leaflet.layerGroup();
+        this.poiLayer.addTo(this.map);
+      }
 
       // Extend the bounds of the map to include all coordinates.
       const bounds = leaflet.latLngBounds(null);
-      this.areas.forEach(area => {
-        area.coordinates.forEach(coordinate => bounds.extend(coordinate));
+      pois.forEach(poi => {
+        if (poi.coordinates) {
+          poi.coordinates.forEach(coordinate => bounds.extend(coordinate));
+        } else {
+          bounds.extend([poi.lat, poi.lng]);
+        }
       });
       if (bounds.isValid()) {
         this.map.fitBounds(bounds);
       }
     },
 
-    /**
-     * Display areas as circleMarker or rectangle layers on the map.
-     */
+    /* Display areas as circleMarker or rectangle layers on the map. */
     displayAreas() {
-      // Test if the area Layer is already on the map.
-      if (!this.map.hasLayer(this.areasMapLayer)) {
-        this.createAreaMapLayer();
-      } else {
-        // Let's clear all of it before adding new ones.
-        this.areasMapLayer.clearLayers();
-      }
+      this.createPoiLayer(this.areas);
 
       // Add each area to the layer group.
       this.areas.forEach(area => {
@@ -756,7 +757,59 @@ export default Vue.extend({
           .on("click", () => this.showImageDrilldown(imageUrl, item));
 
         // Add the rectangle to the layer group.
-        this.areasMapLayer.addLayer(layer);
+        this.poiLayer.addLayer(layer);
+      });
+    },
+
+    /* Display point as circleMarker on the map. */
+    displayPoints() {
+      this.createPoiLayer(this.pointGroups[0].points);
+
+      this.pointGroups.forEach(group => {
+        const hash = this.fieldHash(group.field);
+        const layerGroup = leaflet.layerGroup([]);
+
+        group.points.forEach(point => {
+          const coordinate = [point.lat, point.lng] as LatLngTuple;
+          const displayOptions = {
+            className: "markerPoint",
+            fillColor: point.color,
+            fillOpacity: 1.0,
+            radius: TARGETSIZE / 2,
+            row: (<any>point).row,
+            stroke: false
+          } as CircleMarkerOptions;
+          const layer = leaflet.circleMarker(coordinate, displayOptions);
+
+          layer.bindTooltip(() => {
+            const target = point.row[this.target].value;
+            const values = [];
+            const MAX_VALUES = 5;
+
+            this.getTopVariables.forEach(v => {
+              if (point.row[v] && values.length <= MAX_VALUES) {
+                values.push(`<b>${_.capitalize(v)}:</b> ${point.row[v].value}`);
+              }
+            });
+
+            return [`<b>${_.capitalize(target)}</b>`]
+              .concat(values)
+              .join("<br>");
+          });
+
+          layer.on("click", this.toggleSelection);
+
+          // Add the point to the layer group.
+          layerGroup.addLayer(layer);
+        });
+
+        this.markers[hash] = layerGroup;
+        layerGroup.on("add", () =>
+          this.updateMarkerSelection(layerGroup.getLayers())
+        );
+
+        // Add the point to the layer group.
+        this.poiLayer.addLayer(layerGroup);
       });
     },
 
@@ -769,51 +822,7 @@ export default Vue.extend({
         this.displayAreas();
         this.map.on("zoomend", () => this.displayAreas());
       } else {
-        const bounds = leaflet.latLngBounds(null);
-
-        this.pointGroups.forEach(group => {
-          const hash = this.fieldHash(group.field);
-          const layer = leaflet.layerGroup([]);
-
-          group.points.forEach(point => {
-            const marker = leaflet.marker(point, {
-              row: (<any>point).row
-            } as MarkerOptions);
-
-            bounds.extend([point.lat, point.lng]);
-
-            marker.bindTooltip(() => {
-              const target = point.row[this.target].value;
-              const values = [];
-              const MAX_VALUES = 5;
-
-              this.getTopVariables.forEach(v => {
-                if (point.row[v] && values.length <= MAX_VALUES) {
-                  values.push(
-                    `<b>${_.capitalize(v)}:</b> ${point.row[v].value}`
-                  );
-                }
-              });
-
-              return [`<b>${_.capitalize(target)}</b>`]
-                .concat(values)
-                .join("<br>");
-            });
-
-            marker.on("click", this.toggleSelection);
-
-            layer.addLayer(marker);
-          });
-
-          this.markers[hash] = layer;
-
-          layer.on("add", () => this.updateMarkerSelection(layer.getLayers()));
-          layer.addTo(this.map);
-        });
-
-        if (bounds.isValid()) {
-          this.map.fitBounds(bounds);
-        }
+        this.displayPoints();
       }
 
       this.drawHighlight();
@@ -849,6 +858,7 @@ export default Vue.extend({
   height: 100%;
   bottom: 0;
 }
+
 .geo-plot-container .selection-toggle {
   position: absolute;
   z-index: 999;
@@ -862,14 +872,17 @@ export default Vue.extend({
   text-align: center;
   border-radius: 4px;
 }
+
 .geo-plot-container .selection-toggle:hover {
   background-color: #f4f4f4;
 }
+
 .geo-plot-container .selection-toggle-control {
   text-decoration: none;
   color: black;
   cursor: pointer;
 }
+
 .geo-plot-container .selection-toggle-control:hover {
   text-decoration: none;
   color: black;
@@ -892,11 +905,11 @@ path.selected {
   fill-opacity: 0.4;
 }
 
-.geo-plot .leaflet-marker-icon:hover {
+.geo-plot .markerPoint:hover {
   filter: brightness(1.2);
 }
 
-.geo-plot .leaflet-marker-icon.selected {
+.geo-plot .markerPoint.selected {
   filter: hue-rotate(150deg);
 }
 

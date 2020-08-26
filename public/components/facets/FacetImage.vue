@@ -21,9 +21,7 @@
       </type-change-menu>
     </div>
     <facet-template target="facet-terms-value" class="facet-content-container">
-      <div slot="header" class="facet-image-preview-display">
-        ${metadata}
-      </div>
+      <div slot="header" class="facet-image-preview-display">${metadata}</div>
       <div slot="label" class="facet-image-label" title="${value} ${label}">
         ${value} ${label}
       </div>
