@@ -7,7 +7,7 @@ import {
   CLUSTER_FILTER,
   VECTOR_FILTER,
   INCLUDE_FILTER,
-  TEXT_FILTER
+  TEXT_FILTER,
 } from "../util/filters";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -17,7 +17,7 @@ import {
   IMAGE_TYPE,
   TEXT_TYPE,
   getVarType,
-  isCollectionType
+  isCollectionType,
 } from "../util/types";
 import _ from "lodash";
 import store from "../store/store";
@@ -50,7 +50,7 @@ export function createFilterFromHighlight(
 
   const variables = datasetGetters.getVariables(store);
 
-  const variable = variables.find(v => v.colName === key);
+  const variable = variables.find((v) => v.colName === key);
   let grouping = null;
   if (variable && variable.grouping) {
     grouping = variable.grouping;
@@ -63,7 +63,7 @@ export function createFilterFromHighlight(
       key: key,
       type: CLUSTER_FILTER,
       mode: mode,
-      categories: [highlight.value]
+      categories: [highlight.value],
     };
   }
 
@@ -72,7 +72,7 @@ export function createFilterFromHighlight(
       key: key,
       type: TEXT_FILTER,
       mode: mode,
-      categories: [highlight.value]
+      categories: [highlight.value],
     };
   }
 
@@ -81,7 +81,7 @@ export function createFilterFromHighlight(
       key: key,
       type: CATEGORICAL_FILTER,
       mode: mode,
-      categories: [highlight.value]
+      categories: [highlight.value],
     };
   }
 
@@ -99,7 +99,7 @@ export function createFilterFromHighlight(
         nestedType: highlight.value.type,
         mode: mode,
         min: highlight.value.from,
-        max: highlight.value.to
+        max: highlight.value.to,
       };
     }
 
@@ -108,7 +108,7 @@ export function createFilterFromHighlight(
       type: highlight.value.type,
       mode: mode,
       min: highlight.value.from,
-      max: highlight.value.to
+      max: highlight.value.to,
     };
   }
   if (
@@ -124,7 +124,7 @@ export function createFilterFromHighlight(
       minX: highlight.value.minX,
       maxX: highlight.value.maxX,
       minY: highlight.value.minY,
-      maxY: highlight.value.maxY
+      maxY: highlight.value.maxY,
     };
   }
   return null;
@@ -146,7 +146,7 @@ export function addHighlightToFilterParams(
 export function updateHighlight(router: VueRouter, highlight: Highlight) {
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
     highlights: encodeHighlights(highlight),
-    row: null // clear row
+    row: null, // clear row
   });
   router.push(entry);
 }
@@ -154,7 +154,7 @@ export function updateHighlight(router: VueRouter, highlight: Highlight) {
 export function clearHighlight(router: VueRouter) {
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
     highlights: null,
-    row: null // clear row
+    row: null, // clear row
   });
   router.push(entry);
 }

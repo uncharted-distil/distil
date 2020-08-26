@@ -15,8 +15,8 @@
     <span
       v-if="
         filter.type === CATEGORICAL_FILTER ||
-          filter.type === CLUSTER_FILTER ||
-          filter.type === TEXT_FILTER
+        filter.type === CLUSTER_FILTER ||
+        filter.type === TEXT_FILTER
       "
     >
       {{ filter.categories.join(",") }}
@@ -39,7 +39,7 @@ import {
   GEOBOUNDS_FILTER,
   CATEGORICAL_FILTER,
   CLUSTER_FILTER,
-  TEXT_FILTER
+  TEXT_FILTER,
 } from "../util/filters";
 import { clearHighlight } from "../util/highlights";
 import { getVarType, isClusterType, removeClusterPrefix } from "../util/types";
@@ -49,7 +49,7 @@ export default Vue.extend({
 
   props: {
     filter: Object as () => Filter,
-    activeFilter: Boolean as () => boolean
+    activeFilter: Boolean as () => boolean,
   },
 
   computed: {
@@ -77,7 +77,7 @@ export default Vue.extend({
     },
     GEOBOUNDS_FILTER(): string {
       return GEOBOUNDS_FILTER;
-    }
+    },
   },
 
   methods: {
@@ -91,8 +91,8 @@ export default Vue.extend({
 
     formatDate(epochTime: number): string {
       return moment(epochTime).format("YYYY/MM/DD");
-    }
-  }
+    },
+  },
 });
 </script>
 
