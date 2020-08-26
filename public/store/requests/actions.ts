@@ -16,7 +16,7 @@ import {
   PREDICT_COMPLETED,
   PREDICT_ERRORED,
   Predictions,
-  ModelQuality
+  ModelQuality,
 } from "./index";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
@@ -84,7 +84,7 @@ export type RequestContext = ActionContext<RequestState, DistilState>;
 function updateCurrentSolutionResults(
   context: RequestContext,
   req: SolutionRequestMsg,
-  res: SolutionStatusMsg
+  res: SolutionStatusMsg,
 ) {
   const isRegression = routeGetters
     .getRouteTask(store)
@@ -105,7 +105,7 @@ function updateCurrentSolutionResults(
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
     dataMode: dataMode,
-    size
+    size,
   });
   resultsActions.fetchPredictedSummary(store, {
     dataset: req.dataset,
@@ -115,7 +115,7 @@ function updateCurrentSolutionResults(
     dataMode: dataMode,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
-      : SummaryMode.Default
+      : SummaryMode.Default,
   });
   resultsActions.fetchTrainingSummaries(store, {
     dataset: req.dataset,
@@ -123,7 +123,7 @@ function updateCurrentSolutionResults(
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
     dataMode: dataMode,
-    varModes: varModes
+    varModes: varModes,
   });
   resultsActions.fetchTargetSummary(store, {
     dataset: req.dataset,
@@ -133,14 +133,14 @@ function updateCurrentSolutionResults(
     dataMode: dataMode,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
-      : SummaryMode.Default
+      : SummaryMode.Default,
   });
 
   if (isRegression || isForecasting) {
     resultsActions.fetchResidualsExtrema(store, {
       dataset: req.dataset,
       target: req.target,
-      solutionId: res.solutionId
+      solutionId: res.solutionId,
     });
     resultsActions.fetchResidualsSummary(store, {
       dataset: req.dataset,
@@ -150,7 +150,7 @@ function updateCurrentSolutionResults(
       dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
-        : SummaryMode.Default
+        : SummaryMode.Default,
     });
   } else if (isClassification) {
     resultsActions.fetchCorrectnessSummary(store, {
@@ -160,7 +160,7 @@ function updateCurrentSolutionResults(
       dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
-        : SummaryMode.Default
+        : SummaryMode.Default,
     });
   }
 }
@@ -169,14 +169,14 @@ function updateCurrentSolutionResults(
 function updateCurrentPredictResults(
   context: RequestContext,
   req: PredictRequestMsg,
-  res: PredictStatusMsg
+  res: PredictStatusMsg,
 ) {
   const varModes = context.getters.getDecodedVarModes;
 
   predictActions.fetchPredictionTableData(store, {
     dataset: req.datasetId,
     highlight: context.getters.getDecodedHighlight,
-    produceRequestId: res.produceRequestId
+    produceRequestId: res.produceRequestId,
   });
 
   predictActions.fetchPredictedSummary(store, {
@@ -184,7 +184,7 @@ function updateCurrentPredictResults(
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
       : SummaryMode.Default,
-    produceRequestId: res.produceRequestId
+    produceRequestId: res.produceRequestId,
   });
 
   predictActions.fetchTrainingSummaries(store, {
@@ -192,14 +192,14 @@ function updateCurrentPredictResults(
     training: context.getters.getActiveSolutionTrainingVariables,
     highlight: context.getters.getDecodedHighlight,
     varModes: varModes,
-    produceRequestId: res.produceRequestId
+    produceRequestId: res.produceRequestId,
   });
 }
 
 function updateSolutionResults(
   context: RequestContext,
   req: SolutionRequestMsg,
-  res: SolutionStatusMsg
+  res: SolutionStatusMsg,
 ) {
   const taskArgs = routeGetters.getRouteTask(store);
   const isRegression = taskArgs && taskArgs.includes(TaskTypes.REGRESSION);
@@ -219,14 +219,14 @@ function updateSolutionResults(
     dataMode: dataMode,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
-      : SummaryMode.Default
+      : SummaryMode.Default,
   });
 
   if (isRegression || isForecasting) {
     resultsActions.fetchResidualsExtrema(store, {
       dataset: req.dataset,
       target: req.target,
-      solutionId: res.solutionId
+      solutionId: res.solutionId,
     });
     resultsActions.fetchResidualsSummary(store, {
       dataset: req.dataset,
@@ -236,7 +236,7 @@ function updateSolutionResults(
       dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
-        : SummaryMode.Default
+        : SummaryMode.Default,
     });
   } else if (isClassification) {
     resultsActions.fetchCorrectnessSummary(store, {
@@ -246,7 +246,7 @@ function updateSolutionResults(
       dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
-        : SummaryMode.Default
+        : SummaryMode.Default,
     });
   }
 }
@@ -254,7 +254,7 @@ function updateSolutionResults(
 function handleRequestProgress(
   context: RequestContext,
   request: SolutionRequestMsg,
-  response: SolutionStatusMsg
+  response: SolutionStatusMsg,
 ) {
   // no-op
 }
@@ -262,7 +262,7 @@ function handleRequestProgress(
 function handleSolutionProgress(
   context: RequestContext,
   request: SolutionRequestMsg,
-  response: SolutionStatusMsg
+  response: SolutionStatusMsg,
 ) {
   switch (response.progress) {
     case SOLUTION_COMPLETED:
@@ -304,24 +304,24 @@ function isSolutionResponse(response: SolutionStatusMsg) {
 async function handleProgress(
   context: RequestContext,
   request: SolutionRequestMsg,
-  response: SolutionStatusMsg
+  response: SolutionStatusMsg,
 ) {
   if (isSolutionRequestResponse(response)) {
     // request
     console.log(
-      `Progress for request ${response.requestId} updated to ${response.progress}`
+      `Progress for request ${response.requestId} updated to ${response.progress}`,
     );
     await actions.fetchSolutionRequest(context, {
-      requestId: response.requestId
+      requestId: response.requestId,
     });
     handleRequestProgress(context, request, response);
   } else if (isSolutionResponse(response)) {
     // solution
     console.log(
-      `Progress for solution ${response.solutionId} updated to ${response.progress}`
+      `Progress for solution ${response.solutionId} updated to ${response.progress}`,
     );
     await actions.fetchSolution(context, {
-      solutionId: response.solutionId
+      solutionId: response.solutionId,
     });
     handleSolutionProgress(context, request, response);
   }
@@ -330,18 +330,18 @@ async function handleProgress(
 async function handlePredictProgress(
   context: RequestContext,
   request: PredictRequestMsg,
-  response: PredictStatusMsg
+  response: PredictStatusMsg,
 ) {
   // request
   console.log(
-    `Progress for request ${response.resultId} updated to ${response.progress}`
+    `Progress for request ${response.resultId} updated to ${response.progress}`,
   );
   switch (response.progress) {
     case PREDICT_COMPLETED:
     case PREDICT_ERRORED:
       // no waiting for data here - we get single response back when the prediction is complete
       await actions.fetchPrediction(context, {
-        requestId: response.produceRequestId
+        requestId: response.produceRequestId,
       });
       updateCurrentPredictResults(context, request, response);
       break;
@@ -351,7 +351,7 @@ async function handlePredictProgress(
 export const actions = {
   async fetchSolutionRequests(
     context: RequestContext,
-    args: { dataset?: string; target?: string }
+    args: { dataset?: string; target?: string },
   ) {
     if (!args.dataset) {
       args.dataset = null;
@@ -363,7 +363,7 @@ export const actions = {
     try {
       // fetch and uddate the search data
       const requestResponse = await axios.get<SolutionRequest[]>(
-        `/distil/solution-requests/${args.dataset}/${args.target}`
+        `/distil/solution-requests/${args.dataset}/${args.target}`,
       );
       const requests = requestResponse.data;
       for (const request of requests) {
@@ -377,7 +377,7 @@ export const actions = {
 
   async fetchSolutionRequest(
     context: RequestContext,
-    args: { requestId: string }
+    args: { requestId: string },
   ) {
     if (!args.requestId) {
       args.requestId = null;
@@ -386,7 +386,7 @@ export const actions = {
     try {
       // fetch and uddate the search data
       const requestResponse = await axios.get<SolutionRequest>(
-        `/distil/solution-request/${args.requestId}`
+        `/distil/solution-request/${args.requestId}`,
       );
       // update request data
       mutations.updateSolutionRequests(context, requestResponse.data);
@@ -397,7 +397,7 @@ export const actions = {
 
   async fetchSolutions(
     context: RequestContext,
-    args: { dataset?: string; target?: string }
+    args: { dataset?: string; target?: string },
   ) {
     if (!args.dataset) {
       args.dataset = null;
@@ -409,7 +409,7 @@ export const actions = {
     try {
       // fetch update the solution data
       const solutionResponse = await axios.get<Solution[]>(
-        `/distil/solutions/${args.dataset}/${args.target}`
+        `/distil/solutions/${args.dataset}/${args.target}`,
       );
       if (!solutionResponse.data) {
         return;
@@ -426,7 +426,7 @@ export const actions = {
     try {
       // fetch update the solution data
       const solutionResponse = await axios.get<Solution>(
-        `/distil/solution/${args.solutionId}`
+        `/distil/solution/${args.solutionId}`,
       );
       if (!solutionResponse.data) {
         return;
@@ -445,7 +445,7 @@ export const actions = {
 
       let receivedFirstSolution = false;
 
-      const stream = conn.stream(response => {
+      const stream = conn.stream((response) => {
         // log any error
         if (response.error) {
           console.error(response.error);
@@ -485,7 +485,7 @@ export const actions = {
         maxSolutions: request.maxSolutions,
         maxTime: request.maxTime,
         quality: request.quality,
-        filters: request.filters
+        filters: request.filters,
       });
     });
   },
@@ -498,7 +498,7 @@ export const actions = {
     }
     stream.send({
       type: STOP_SOLUTIONS,
-      requestId: args.requestId
+      requestId: args.requestId,
     });
   },
 
@@ -509,7 +509,7 @@ export const actions = {
 
     return new Promise((resolve, reject) => {
       const conn = getWebSocketConnection();
-      const stream = conn.stream(response => {
+      const stream = conn.stream((response) => {
         // log any error
         if (response.error) {
           console.error(response.error);
@@ -550,7 +550,7 @@ export const actions = {
         dataset: request.dataset,
         targetType: request.targetType,
         intervalCount: request.intervalCount ?? null,
-        intervalLength: request.intervalLength ?? null
+        intervalLength: request.intervalLength ?? null,
       });
     });
   },
@@ -564,20 +564,20 @@ export const actions = {
     }
     stream.send({
       type: STOP_PREDICTIONS,
-      requestId: args.requestId
+      requestId: args.requestId,
     });
   },
 
   // fetches all predictions for a given fitted solution
   async fetchPredictions(
     context: RequestContext,
-    args: { fittedSolutionId: string }
+    args: { fittedSolutionId: string },
   ) {
     args.fittedSolutionId = args.fittedSolutionId || "";
     try {
       // fetch and uddate the search data
       const predictionsResponse = await axios.get<Predictions[]>(
-        `/distil/predictions/${args.fittedSolutionId}`
+        `/distil/predictions/${args.fittedSolutionId}`,
       );
       for (const predictions of predictionsResponse.data) {
         mutations.updatePredictions(context, predictions);
@@ -596,12 +596,12 @@ export const actions = {
     try {
       // fetch and uddate the search data
       const requestResponse = await axios.get<Predictions>(
-        `/distil/prediction/${args.requestId}`
+        `/distil/prediction/${args.requestId}`,
       );
       // update request data
       mutations.updatePredictions(context, requestResponse.data);
     } catch (error) {
       console.error(error);
     }
-  }
+  },
 };

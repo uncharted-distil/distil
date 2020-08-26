@@ -5,7 +5,7 @@ import {
   VariableSummary,
   Extrema,
   TableData,
-  TimeSeriesValue
+  TimeSeriesValue,
 } from "../dataset/index";
 import { updateSummaries, removeSummary } from "../../util/data";
 import { Dictionary } from "vue-router/types/router";
@@ -66,7 +66,7 @@ export const mutations = {
   clearResidualsExtrema(state: ResultsState) {
     state.residualsExtrema = {
       min: null,
-      max: null
+      max: null,
     };
   },
 
@@ -85,7 +85,7 @@ export const mutations = {
       id: string;
       timeseries: number[][];
       isDateTime: boolean;
-    }
+    },
   ) {
     if (!state.timeseries[args.solutionId]) {
       Vue.set(state.timeseries, args.solutionId, {});
@@ -99,12 +99,12 @@ export const mutations = {
     Vue.set(
       state.timeseries[args.solutionId].timeseriesData,
       args.id,
-      Object.freeze(args.timeseries)
+      Object.freeze(args.timeseries),
     );
     Vue.set(
       state.timeseries[args.solutionId].isDateTime,
       args.id,
-      args.isDateTime
+      args.isDateTime,
     );
   },
 
@@ -116,7 +116,7 @@ export const mutations = {
       forecast: TimeSeriesValue[];
       forecastTestRange: number[];
       isDateTime: boolean;
-    }
+    },
   ) {
     if (!state.forecasts[args.solutionId]) {
       Vue.set(state.forecasts, args.solutionId, {});
@@ -133,24 +133,24 @@ export const mutations = {
     Vue.set(
       state.forecasts[args.solutionId].forecastData,
       args.id,
-      Object.freeze(args.forecast)
+      Object.freeze(args.forecast),
     );
     Vue.set(
       state.forecasts[args.solutionId].forecastRange,
       args.id,
-      args.forecastTestRange
+      args.forecastTestRange,
     );
     Vue.set(
       state.forecasts[args.solutionId].isDateTime,
       args.id,
-      args.isDateTime
+      args.isDateTime,
     );
   },
 
   setVariableRankings(
     state: ResultsState,
-    args: { solutionID: string; rankings: Dictionary<number> }
+    args: { solutionID: string; rankings: Dictionary<number> },
   ) {
     Vue.set(state.variableRankings, args.solutionID, args.rankings);
-  }
+  },
 };

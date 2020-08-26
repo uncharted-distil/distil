@@ -275,7 +275,7 @@ export default Vue.extend({
         return sortSolutionSummariesByImportance(
           this.filteredSummaries,
           this.variables,
-          routeGetters.getRouteSolutionId(this.$store)
+          routeGetters.getRouteSolutionId(this.$store),
         );
       }
       return sortSummariesByImportance(this.filteredSummaries, this.variables);
@@ -285,7 +285,7 @@ export default Vue.extend({
       const filteredVariables = filterVariablesByPage(
         this.currentPage,
         this.rowsPerPage,
-        this.sortedFilteredSummaries
+        this.sortedFilteredSummaries,
       );
       return filteredVariables;
     },
@@ -316,7 +316,7 @@ export default Vue.extend({
         ranking[variable.colName] = this.isResultFeatures
           ? getSolutionVariableRanking(
               variable,
-              routeGetters.getRouteSolutionId(this.$store)
+              routeGetters.getRouteSolutionId(this.$store),
             )
           : getVariableRanking(variable);
       });
@@ -361,7 +361,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: { from: number; to: number },
-      dataset: string
+      dataset: string,
     ) {
       updateHighlight(this.$router, {
         context: context,
@@ -408,7 +408,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: { from: number; to: number; type: string },
-      dataset: string
+      dataset: string,
     ) {
       if (this.enableHighlighting) {
         if (!this.highlight || this.highlight.key !== key) {

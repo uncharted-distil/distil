@@ -11,11 +11,11 @@ export const resultsModule: Module<ResultsState, DistilState> = {
   actions: moduleActions,
   mutations: moduleMutations,
   state: state,
-  namespaced: true
+  namespaced: true,
 };
 
 const { commit, read, dispatch } = getStoreAccessors<ResultsState, DistilState>(
-  "resultsModule"
+  "resultsModule",
 );
 
 // Typed getters
@@ -29,27 +29,27 @@ export const getters = {
   hasIncludedResultTableData: read(moduleGetters.hasIncludedResultTableData),
   getIncludedResultTableData: read(moduleGetters.getIncludedResultTableData),
   getIncludedResultTableDataItems: read(
-    moduleGetters.getIncludedResultTableDataItems
+    moduleGetters.getIncludedResultTableDataItems,
   ),
   getIncludedResultTableDataFields: read(
-    moduleGetters.getIncludedResultTableDataFields
+    moduleGetters.getIncludedResultTableDataFields,
   ),
   getIncludedResultTableDataCount: read(
-    moduleGetters.getIncludedResultTableDataCount
+    moduleGetters.getIncludedResultTableDataCount,
   ),
   hasExcludedResultTableData: read(moduleGetters.hasExcludedResultTableData),
   getExcludedResultTableData: read(moduleGetters.getExcludedResultTableData),
   getExcludedResultTableDataItems: read(
-    moduleGetters.getExcludedResultTableDataItems
+    moduleGetters.getExcludedResultTableDataItems,
   ),
   getExcludedResultTableDataFields: read(
-    moduleGetters.getExcludedResultTableDataFields
+    moduleGetters.getExcludedResultTableDataFields,
   ),
   getExcludedResultTableDataCount: read(
-    moduleGetters.getExcludedResultTableDataCount
+    moduleGetters.getExcludedResultTableDataCount,
   ),
   hasResultTableDataItemsWeight: read(
-    moduleGetters.hasResultTableDataItemsWeight
+    moduleGetters.hasResultTableDataItemsWeight,
   ),
 
   // predicted
@@ -65,7 +65,7 @@ export const getters = {
   getPredictedTimeseries: read(moduleGetters.getPredictedTimeseries),
   getPredictedForecasts: read(moduleGetters.getPredictedForecasts),
   // rankings
-  getVariableRankings: read(moduleGetters.getVariableRankings)
+  getVariableRankings: read(moduleGetters.getVariableRankings),
 };
 
 // Typed actions
@@ -75,10 +75,10 @@ export const actions = {
   fetchTargetSummary: dispatch(moduleActions.fetchTargetSummary),
   // result
   fetchIncludedResultTableData: dispatch(
-    moduleActions.fetchIncludedResultTableData
+    moduleActions.fetchIncludedResultTableData,
   ),
   fetchExcludedResultTableData: dispatch(
-    moduleActions.fetchExcludedResultTableData
+    moduleActions.fetchExcludedResultTableData,
   ),
   fetchResultTableData: dispatch(moduleActions.fetchResultTableData),
   // predicted
@@ -94,7 +94,7 @@ export const actions = {
   // forecast
   fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries),
   // variable rankings
-  fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings)
+  fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
 };
 
 // Typed mutations
@@ -107,10 +107,10 @@ export const mutations = {
   removeTrainingSummary: commit(moduleMutations.removeTrainingSummary),
   // result
   setIncludedResultTableData: commit(
-    moduleMutations.setIncludedResultTableData
+    moduleMutations.setIncludedResultTableData,
   ),
   setExcludedResultTableData: commit(
-    moduleMutations.setExcludedResultTableData
+    moduleMutations.setExcludedResultTableData,
   ),
   // predicted
   updatePredictedSummaries: commit(moduleMutations.updatePredictedSummaries),
@@ -121,11 +121,11 @@ export const mutations = {
   // correctness
   clearCorrectnessSummaries: commit(moduleMutations.clearCorrectnessSummaries),
   updateCorrectnessSummaries: commit(
-    moduleMutations.updateCorrectnessSummaries
+    moduleMutations.updateCorrectnessSummaries,
   ),
   // forecasts
   updatePredictedTimeseries: commit(moduleMutations.updatePredictedTimeseries),
   updatePredictedForecast: commit(moduleMutations.updatePredictedForecast),
   // variable rankings
-  setVariableRankings: commit(moduleMutations.setVariableRankings)
+  setVariableRankings: commit(moduleMutations.setVariableRankings),
 };
