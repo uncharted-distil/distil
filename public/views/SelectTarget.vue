@@ -49,6 +49,7 @@
           :summaries="summaries"
           :html="html"
           :logActivity="problemDefinition"
+          :pagination="variables.length > numRowsPerPage"
         />
       </div>
     </section>
