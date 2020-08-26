@@ -13,21 +13,21 @@ import { circleSpinnerHTML } from "../util/spinner";
 import { getters as routeGetters } from "../store/route/module";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 
 export default Vue.extend({
   name: "select-graph-view",
 
   props: {
-    instanceName: String as () => string
+    instanceName: String as () => string,
     // graphUrl: String as () => string
   },
 
   data() {
     return {
       s: null,
-      graphUrl: "mock"
+      graphUrl: "mock",
     };
   },
 
@@ -46,28 +46,28 @@ export default Vue.extend({
     },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
-    }
+    },
   },
 
   methods: {
     injectGraph() {
       this.s = new sigma({
         graph: this.graph,
-        container: "graph-container"
+        container: "graph-container",
       });
-    }
+    },
   },
 
   mounted() {
     datasetActions
       .fetchGraph(this.$store, {
         dataset: this.dataset,
-        url: this.graphUrl
+        url: this.graphUrl,
       })
       .then(() => {
         this.injectGraph();
       });
-  }
+  },
 });
 </script>
 

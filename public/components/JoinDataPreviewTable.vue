@@ -56,14 +56,14 @@ import {
   D3M_INDEX_FIELD,
   Grouping,
   Variable,
-  TimeseriesGrouping
+  TimeseriesGrouping,
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
   IMAGE_TYPE,
   TIMESERIES_TYPE,
-  REMOTE_SENSING_TYPE
+  REMOTE_SENSING_TYPE,
 } from "../util/types";
 import { getTimeseriesGroupingsFromFields, getImageFields } from "../util/data";
 
@@ -73,13 +73,13 @@ export default Vue.extend({
   components: {
     ImagePreview,
     SparklinePreview,
-    FixedHeaderTable
+    FixedHeaderTable,
   },
 
   props: {
     items: Array as () => TableRow[],
     fields: Object as () => Dictionary<TableColumn>,
-    instanceName: String as () => string
+    instanceName: String as () => string,
   },
 
   computed: {
@@ -93,7 +93,7 @@ export default Vue.extend({
 
     timeseriesGroupings(): TimeseriesGrouping[] {
       return getTimeseriesGroupingsFromFields(this.variables, this.fields);
-    }
+    },
   },
 
   methods: {
@@ -105,8 +105,8 @@ export default Vue.extend({
         fixedHeaderTable.resizeTableCells();
         fixedHeaderTable.setScrollLeft(currentScrollLeft);
       });
-    }
-  }
+    },
+  },
 });
 </script>
 

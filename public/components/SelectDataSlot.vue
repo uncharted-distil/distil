@@ -57,7 +57,7 @@
           class="fa fa-minus-circle pr-1"
           :class="{
             'exclude-highlight': isFilteringHighlights,
-            'exclude-selection': isFilteringSelection
+            'exclude-selection': isFilteringSelection,
           }"
         ></i>
         Exclude
@@ -104,14 +104,14 @@ import LayerSelection from "./LayerSelection";
 import { overlayRouteEntry } from "../util/routes";
 import {
   actions as datasetActions,
-  getters as datasetGetters
+  getters as datasetGetters,
 } from "../store/dataset/module";
 import {
   TableRow,
   D3M_INDEX_FIELD,
   Variable,
   Highlight,
-  RowSelection
+  RowSelection,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -119,7 +119,7 @@ import {
   FilterParams,
   addFilterToRoute,
   EXCLUDE_FILTER,
-  INCLUDE_FILTER
+  INCLUDE_FILTER,
 } from "../util/filters";
 import { clearHighlight, createFilterFromHighlight } from "../util/highlights";
 import {
@@ -129,7 +129,7 @@ import {
   isRowSelected,
   getNumIncludedRows,
   getNumExcludedRows,
-  createFilterFromRowSelection
+  createFilterFromRowSelection,
 } from "../util/row";
 import { actions as appActions } from "../store/app/module";
 import { actions as viewActions } from "../store/view/module";
@@ -153,7 +153,7 @@ export default Vue.extend({
     SelectGeoPlot,
     SelectGraphView,
     SelectTimeseriesView,
-    ViewTypeToggle
+    ViewTypeToggle,
   },
 
   data() {
@@ -164,7 +164,7 @@ export default Vue.extend({
       GRAPH_VIEW: GRAPH_VIEW,
       IMAGE_VIEW: IMAGE_VIEW,
       TABLE_VIEW: TABLE_VIEW,
-      TIMESERIES_VIEW: TIMESERIES_VIEW
+      TIMESERIES_VIEW: TIMESERIES_VIEW,
     };
   },
 
@@ -238,7 +238,7 @@ export default Vue.extend({
 
       const activeFilterName = this.activeFilter.key;
       const availableVariablesNames = this.availableVariables.map(
-        v => v.colName
+        (v) => v.colName
       );
 
       return availableVariablesNames.includes(activeFilterName);
@@ -287,7 +287,7 @@ export default Vue.extend({
       if (this.viewTypeModel === IMAGE_VIEW) return "ImageMosaic";
       if (this.viewTypeModel === TABLE_VIEW) return "SelectDataTable";
       if (this.viewTypeModel === TIMESERIES_VIEW) return "SelectTimeseriesView";
-    }
+    },
   },
 
   methods: {
@@ -316,14 +316,14 @@ export default Vue.extend({
 
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
-        target: this.target
+        target: this.target,
       });
 
       appActions.logUserEvent(this.$store, {
         feature: Feature.FILTER_DATA,
         activity: Activity.DATA_PREPARATION,
         subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: { filter: filter }
+        details: { filter: filter },
       });
     },
 
@@ -348,20 +348,20 @@ export default Vue.extend({
 
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
-        target: this.target
+        target: this.target,
       });
 
       appActions.logUserEvent(this.$store, {
         feature: Feature.UNFILTER_DATA,
         activity: Activity.DATA_PREPARATION,
         subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: { filter: filter }
+        details: { filter: filter },
       });
     },
 
     setIncludedActive() {
       const entry = overlayRouteEntry(this.$route, {
-        include: "true"
+        include: "true",
       });
       this.$router.push(entry);
 
@@ -370,7 +370,7 @@ export default Vue.extend({
 
     setExcludedActive() {
       const entry = overlayRouteEntry(this.$route, {
-        include: "false"
+        include: "false",
       });
       this.$router.push(entry);
 
@@ -382,8 +382,8 @@ export default Vue.extend({
       const entry = overlayRouteEntry(this.$route, { dataSize });
       this.$router.push(entry);
       viewActions.updateSelectTrainingData(this.$store);
-    }
-  }
+    },
+  },
 });
 </script>
 

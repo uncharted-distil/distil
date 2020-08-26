@@ -32,7 +32,7 @@ export default Vue.extend({
     // Returns currently selected band ID as a string
     band(): string {
       const bandID = routeGetters.getBandCombinationId(this.$store);
-      return this.availableBands.find(b => b.id === bandID)?.displayName;
+      return this.availableBands.find((b) => b.id === bandID)?.displayName;
     },
 
     // Returns list of band combinations
@@ -41,18 +41,18 @@ export default Vue.extend({
         .getMultiBandCombinations(this.$store)
         .slice() // copy so we don't mutate vuex store object
         .sort((a, b) => a.displayName.localeCompare(b.displayName));
-    }
+    },
   },
 
   methods: {
     // Writes a new band combination into the route
     setBandCombination(bandID: BandID) {
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        bandCombinationId: bandID
+        bandCombinationId: bandID,
       });
       this.$router.push(entry);
-    }
-  }
+    },
+  },
 });
 </script>
 

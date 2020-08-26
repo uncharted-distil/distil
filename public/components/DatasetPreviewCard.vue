@@ -38,7 +38,7 @@ import _ from "lodash";
 import Vue from "vue";
 import {
   sortVariablesByImportance,
-  filterVariablesByFeature
+  filterVariablesByFeature,
 } from "../util/data";
 import { formatBytes } from "../util/bytes";
 import { Dataset, Variable } from "../store/dataset/index";
@@ -49,7 +49,7 @@ export default Vue.extend({
   name: "dataset-preview-card",
 
   props: {
-    dataset: Object as () => Dataset
+    dataset: Object as () => Dataset,
   },
 
   computed: {
@@ -58,7 +58,7 @@ export default Vue.extend({
         0,
         NUM_TOP_FEATURES
       );
-    }
+    },
   },
 
   methods: {
@@ -70,8 +70,8 @@ export default Vue.extend({
     },
     removeFromJoin(arg) {
       this.$emit("remove-from-join", arg);
-    }
-  }
+    },
+  },
 });
 </script>
 

@@ -75,7 +75,7 @@ export default Vue.extend({
 
   props: {
     solutionId: String as () => string,
-    fittedSolutionId: String as () => string
+    fittedSolutionId: String as () => string,
   },
 
   data() {
@@ -83,7 +83,7 @@ export default Vue.extend({
       saveName: "",
       saveNameState: null,
       saveDescription: "",
-      saveDescriptionState: null
+      saveDescriptionState: null,
     };
   },
 
@@ -98,7 +98,7 @@ export default Vue.extend({
 
     isTimeseries(): boolean {
       return routeGetters.isTimeseries(this.$store);
-    }
+    },
   },
 
   methods: {
@@ -150,15 +150,15 @@ export default Vue.extend({
         subActivity: SubActivity.MODEL_SAVE,
         details: {
           solution: this.solutionId,
-          fittedSolution: this.fittedSolutionId
-        }
+          fittedSolution: this.fittedSolutionId,
+        },
       });
 
       try {
         await appActions.saveModel(this.$store, {
           fittedSolutionId: this.fittedSolutionId,
           modelName: this.saveName,
-          modelDescription: this.saveDescription
+          modelDescription: this.saveDescription,
         });
       } catch (err) {
         console.warn(err);
@@ -171,7 +171,7 @@ export default Vue.extend({
       const valid = this.saveName.length > 0;
       this.saveNameState = valid;
       return valid;
-    }
+    },
   },
 
   watch: {
@@ -184,8 +184,8 @@ export default Vue.extend({
       } else if (this.saveNameState !== null) {
         this.saveNameState = !!this.saveName;
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

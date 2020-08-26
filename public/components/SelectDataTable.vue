@@ -83,7 +83,7 @@ import {
   RowSelection,
   TimeseriesGrouping,
   TableData,
-  TableValue
+  TableValue,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { TIMESERIES_TYPE, hasComputedVarPrefix } from "../util/types";
@@ -91,14 +91,14 @@ import {
   addRowSelection,
   removeRowSelection,
   isRowSelected,
-  updateTableRowSelection
+  updateTableRowSelection,
 } from "../util/row";
 import {
   getTimeseriesGroupingsFromFields,
   formatSlot,
   formatFieldsAsArray,
   getImageFields,
-  getListFields
+  getListFields,
 } from "../util/data";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
@@ -111,12 +111,12 @@ export default Vue.extend({
     SparklinePreview,
     FixedHeaderTable,
     IconBase,
-    IconFork
+    IconFork,
   },
 
   props: {
     instanceName: String as () => string,
-    includedActive: Boolean as () => boolean
+    includedActive: Boolean as () => boolean,
   },
 
   computed: {
@@ -158,7 +158,7 @@ export default Vue.extend({
     },
 
     computedFields(): string[] {
-      const computedColumns = Object.keys(this.fields).filter(key => {
+      const computedColumns = Object.keys(this.fields).filter((key) => {
         return hasComputedVarPrefix(key);
       });
       return computedColumns;
@@ -174,7 +174,7 @@ export default Vue.extend({
 
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
-    }
+    },
   },
   updated() {
     const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
@@ -196,7 +196,7 @@ export default Vue.extend({
           feature: Feature.CHANGE_SELECTION,
           activity: Activity.DATA_PREPARATION,
           subActivity: SubActivity.DATA_TRANSFORMATION,
-          details: { select: row[D3M_INDEX_FIELD] }
+          details: { select: row[D3M_INDEX_FIELD] },
         });
         addRowSelection(
           this.$router,
@@ -209,7 +209,7 @@ export default Vue.extend({
           feature: Feature.CHANGE_SELECTION,
           activity: Activity.DATA_PREPARATION,
           subActivity: SubActivity.DATA_TRANSFORMATION,
-          details: { deselect: row[D3M_INDEX_FIELD] }
+          details: { deselect: row[D3M_INDEX_FIELD] },
         });
         removeRowSelection(
           this.$router,
@@ -227,9 +227,9 @@ export default Vue.extend({
         Float: number;
         Status: number;
       }[];
-      return listData.map(l => l.Float);
-    }
-  }
+      return listData.map((l) => l.Float);
+    },
+  },
 });
 </script>
 

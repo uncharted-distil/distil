@@ -52,15 +52,15 @@ import {
   ClusteringPendingRequest,
   SummaryMode,
   DataMode,
-  isClusteredGrouping
+  isClusteredGrouping,
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
-  getters as datasetGetters
+  getters as datasetGetters,
 } from "../store/dataset/module";
 import {
   actions as appActions,
-  getters as appGetters
+  getters as appGetters,
 } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
 import { StatusPanelState, StatusPanelContentType } from "../store/app";
@@ -73,16 +73,16 @@ const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
   [DatasetPendingRequestType.VARIABLE_RANKING, Feature.RANK_FEATURES],
   [DatasetPendingRequestType.GEOCODING, Feature.GEOCODE_FEATURES],
   [DatasetPendingRequestType.CLUSTERING, Feature.CLUSTER_DATA],
-  [DatasetPendingRequestType.JOIN_SUGGESTION, Feature.JOIN_DATASETS]
+  [DatasetPendingRequestType.JOIN_SUGGESTION, Feature.JOIN_DATASETS],
 ]);
 
 export default Vue.extend({
   name: "status-panel",
   components: {
-    StatusPanelJoin
+    StatusPanelJoin,
   },
 
-  mounted: function() {
+  mounted: function () {
     if (routeGetters.getRouteIsClusterGenerated(this.$store)) {
       this.applyClusteringChange();
     }
@@ -105,7 +105,7 @@ export default Vue.extend({
       const request = datasetGetters
         .getPendingRequests(this.$store)
         .find(
-          request =>
+          (request) =>
             request.dataset === this.dataset && request.type === this.statusType
         );
       return request;
@@ -140,7 +140,7 @@ export default Vue.extend({
             resolvedMsg:
               "Variable ranking has been updated. Would you like to apply the changes to the feature list?",
             errorMsg:
-              "Unexpected error has happened while calculating variable rankings"
+              "Unexpected error has happened while calculating variable rankings",
           };
         case DatasetPendingRequestType.GEOCODING:
           return {
@@ -148,7 +148,7 @@ export default Vue.extend({
             pendingMsg: "Geocoding place names...",
             resolvedMsg:
               "Geocoding has been processed. Would you like to apply the change to the feature list?",
-            errorMsg: "Unexpected error has happened while geocoding"
+            errorMsg: "Unexpected error has happened while geocoding",
           };
         case DatasetPendingRequestType.CLUSTERING:
           return {
@@ -156,21 +156,21 @@ export default Vue.extend({
             pendingMsg: "Computing data clusters...",
             resolvedMsg:
               "Data clusters have been generated. Would you like to apply the change to the dataset?",
-            errorMsg: "Unexpected error has happened while clustering"
+            errorMsg: "Unexpected error has happened while clustering",
           };
         case DatasetPendingRequestType.JOIN_SUGGESTION:
           return {
             title: "Join Suggestion",
             pendingMsg: "Compuing join suggestions...",
             errorMsg:
-              "Unexpected error has happened while retreving join suggestions"
+              "Unexpected error has happened while retreving join suggestions",
           };
         default:
           return {
-            title: ""
+            title: "",
           };
       }
-    }
+    },
   },
   methods: {
     close() {
@@ -183,7 +183,7 @@ export default Vue.extend({
           status:
             this.requestData.status === DatasetPendingRequestStatus.ERROR
               ? DatasetPendingRequestStatus.ERROR_REVIEWED
-              : DatasetPendingRequestStatus.REVIEWED
+              : DatasetPendingRequestStatus.REVIEWED,
         });
       }
       appActions.closeStatusPanel(this.$store);
@@ -197,12 +197,12 @@ export default Vue.extend({
           );
           datasetActions.updateVariableRankings(this.$store, {
             dataset: variableRequest.dataset,
-            rankings: variableRequest.rankings
+            rankings: variableRequest.rankings,
           });
 
           // Update the route to know that the training variables have been ranked.
           const varRankedEntry = overlayRouteEntry(this.$route, {
-            varRanked: "1"
+            varRanked: "1",
           });
           this.$router.push(varRankedEntry);
 
@@ -230,7 +230,7 @@ export default Vue.extend({
           datasetActions
             .fetchGeocodingResults(this.$store, {
               dataset: geoRequest.dataset,
-              field: geoRequest.field
+              field: geoRequest.field,
             })
             .then(() => {
               this.clearData();
@@ -243,7 +243,7 @@ export default Vue.extend({
 
           // Update the route to know that the clustering has been applied.
           const clusterEntry = overlayRouteEntry(this.$route, {
-            clustering: "1"
+            clustering: "1",
           });
           this.$router.push(clusterEntry);
 
@@ -256,7 +256,7 @@ export default Vue.extend({
         feature: status,
         activity: Activity.DATA_PREPARATION,
         subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: {}
+        details: {},
       });
     },
 
@@ -275,16 +275,16 @@ export default Vue.extend({
       // mode to cluster now that data is available
       datasetGetters
         .getGroupings(this.$store)
-        .filter(v => isClusterType(v.colType))
-        .forEach(v => {
+        .filter((v) => isClusterType(v.colType))
+        .forEach((v) => {
           varModesMap.set(v.colName, SummaryMode.Cluster);
         });
 
       // find any image variables using this cluster data and update their mode
       datasetGetters
         .getVariables(this.$store)
-        .filter(v => v.colType === IMAGE_TYPE)
-        .forEach(v => {
+        .filter((v) => v.colType === IMAGE_TYPE)
+        .forEach((v) => {
           varModesMap.set(v.colName, SummaryMode.Cluster);
         });
 
@@ -292,7 +292,7 @@ export default Vue.extend({
       const varModesStr = varModesToString(varModesMap);
       const entry = overlayRouteEntry(this.$route, {
         varModes: varModesStr,
-        dataMode: DataMode.Cluster
+        dataMode: DataMode.Cluster,
       });
       this.$router.push(entry);
 
@@ -310,11 +310,11 @@ export default Vue.extend({
           filterParams: filterParams,
           include: true,
           dataMode: DataMode.Cluster,
-          mode: $enum(SummaryMode).asValueOrDefault(v, SummaryMode.Default)
+          mode: $enum(SummaryMode).asValueOrDefault(v, SummaryMode.Default),
         });
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

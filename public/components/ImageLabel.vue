@@ -46,12 +46,12 @@ export default Vue.extend({
     item: Object as () => TableRow,
     shortenLabels: {
       type: Boolean as () => boolean,
-      default: false
+      default: false,
     },
     alignHorizontal: {
       type: Boolean as () => boolean,
-      default: false
-    }
+      default: false,
+    },
   },
 
   computed: {
@@ -88,13 +88,13 @@ export default Vue.extend({
             labels.push({
               status,
               value: this.shortenLabel(fullLabel),
-              title: fullLabel
+              title: fullLabel,
             });
           } else {
             labels.push({
               status,
               value: fullLabel,
-              title: ""
+              title: "",
             });
           }
         }
@@ -139,9 +139,9 @@ export default Vue.extend({
       } else {
         summary = datasetGetters
           .getVariableSummaries(this.$store)
-          .find(v => v.key === this.targetField);
+          .find((v) => v.key === this.targetField);
       }
-      const bucketNames = summary.baseline.buckets.map(b => b.key);
+      const bucketNames = summary.baseline.buckets.map((b) => b.key);
       // If this isn't categorical, don't generate the table.
       if (!bucketNames) {
         return {};
@@ -149,7 +149,7 @@ export default Vue.extend({
 
       // initailize label lengths with zeroes
       const imageLabelLengths: Dictionary<number> = {};
-      bucketNames.forEach(b => (imageLabelLengths[b[0]] = 0));
+      bucketNames.forEach((b) => (imageLabelLengths[b[0]] = 0));
 
       // Compare each label to the others
       for (let i = 0; i < bucketNames.length; i++) {
@@ -173,7 +173,7 @@ export default Vue.extend({
         }
       }
       return imageLabelLengths;
-    }
+    },
   },
 
   methods: {
@@ -190,8 +190,8 @@ export default Vue.extend({
       return _.isNil(labelLength)
         ? rawLabel
         : rawLabel.substring(0, labelLength + 1);
-    }
-  }
+    },
+  },
 });
 </script>
 

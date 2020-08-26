@@ -92,7 +92,7 @@ import {
   RowSelection,
   TaskTypes,
   TimeseriesGrouping,
-  TableValue
+  TableValue,
 } from "../store/dataset/index";
 import { getters as predictionsGetters } from "../store/predictions/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -108,7 +108,7 @@ import {
   addRowSelection,
   removeRowSelection,
   isRowSelected,
-  updateTableRowSelection
+  updateTableRowSelection,
 } from "../util/row";
 import {
   getTimeseriesGroupingsFromFields,
@@ -116,7 +116,7 @@ import {
   formatFieldsAsArray,
   explainCellColor,
   getImageFields,
-  getListFields
+  getListFields,
 } from "../util/data";
 import { getSolutionIndex } from "../util/solutions";
 import { getPredictionsIndex } from "../util/predictions";
@@ -130,17 +130,17 @@ export default Vue.extend({
     SparklinePreview,
     FixedHeaderTable,
     IconBase,
-    IconFork
+    IconFork,
   },
 
   data() {
     return {
-      sortingBy: undefined
+      sortingBy: undefined,
     };
   },
 
   props: {
-    instanceName: String as () => string
+    instanceName: String as () => string,
   },
 
   computed: {
@@ -188,7 +188,7 @@ export default Vue.extend({
     },
 
     computedFields(): string[] {
-      return Object.keys(this.fields).filter(key => {
+      return Object.keys(this.fields).filter((key) => {
         return hasComputedVarPrefix(key);
       });
     },
@@ -204,7 +204,7 @@ export default Vue.extend({
     timeseriesGroupings(): TimeseriesGrouping[] {
       const variables = datasetGetters.getVariables(this.$store);
       return getTimeseriesGroupingsFromFields(variables, this.fields);
-    }
+    },
   },
 
   updated() {
@@ -228,7 +228,7 @@ export default Vue.extend({
           feature: Feature.CHANGE_SELECTION,
           activity: Activity.MODEL_SELECTION,
           subActivity: SubActivity.MODEL_EXPLANATION,
-          details: { selected: row[D3M_INDEX_FIELD] }
+          details: { selected: row[D3M_INDEX_FIELD] },
         });
       } else {
         removeRowSelection(
@@ -242,7 +242,7 @@ export default Vue.extend({
           feature: Feature.CHANGE_SELECTION,
           activity: Activity.MODEL_SELECTION,
           subActivity: SubActivity.MODEL_EXPLANATION,
-          details: { deselected: row[D3M_INDEX_FIELD] }
+          details: { deselected: row[D3M_INDEX_FIELD] },
         });
       }
     },
@@ -279,9 +279,9 @@ export default Vue.extend({
         Float: number;
         Status: number;
       }[];
-      return listData.map(l => l.Float);
-    }
-  }
+      return listData.map((l) => l.Float);
+    },
+  },
 });
 </script>
 

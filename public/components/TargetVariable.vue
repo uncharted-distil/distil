@@ -20,7 +20,7 @@ import {
   getNumericalFacetValue,
   getCategoricalFacetValue,
   getTimeseriesFacetValue,
-  TOP_RANGE_HIGHLIGHT
+  TOP_RANGE_HIGHLIGHT,
 } from "../util/facets";
 import { TARGET_VAR_INSTANCE } from "../store/route/index";
 import { Variable, VariableSummary, Highlight } from "../store/dataset/index";
@@ -32,7 +32,7 @@ export default Vue.extend({
   name: "target-variable",
 
   components: {
-    VariableFacets
+    VariableFacets,
   },
 
   computed: {
@@ -70,15 +70,15 @@ export default Vue.extend({
 
     defaultHighlightType(): string {
       return TOP_RANGE_HIGHLIGHT;
-    }
+    },
   },
 
   data() {
     return {
       hasDefaultedAlready: false,
-      logActivity: Activity.DATA_PREPARATION
+      logActivity: Activity.DATA_PREPARATION,
     };
-  }
+  },
 });
 </script>
 

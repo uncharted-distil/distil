@@ -39,13 +39,13 @@ function establishConnection(
     conn.isOpen = true;
     console.log(`WebSocket conn established on /${conn.url}`);
     // send pending messages
-    conn.pending.forEach(message => {
+    conn.pending.forEach((message) => {
       conn.socket.send(JSON.stringify(message.payload));
     });
     conn.pending = [];
     // send pending stream messages
-    conn.streams.forEach(stream => {
-      stream.pending.forEach(msg => {
+    conn.streams.forEach((stream) => {
+      stream.pending.forEach((msg) => {
         conn.socket.send(JSON.stringify(msg));
       });
       stream.pending = [];
@@ -53,7 +53,7 @@ function establishConnection(
     callback(null, conn);
   };
   // on message
-  conn.socket.onmessage = event => {
+  conn.socket.onmessage = (event) => {
     const res = JSON.parse(event.data);
     if (!conn.tracking.has(res.id)) {
       console.error("Unrecognized response: ", res, ", discarding");

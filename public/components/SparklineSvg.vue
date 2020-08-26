@@ -27,7 +27,7 @@ export default Vue.extend({
   props: {
     margin: {
       type: Object as () => any,
-      default: () => MARGIN
+      default: () => MARGIN,
     },
     highlightPixelX: Number,
     timeseries: Array as () => TimeSeriesValue[],
@@ -37,7 +37,7 @@ export default Vue.extend({
     forecastExtrema: Object as () => TimeseriesExtrema,
     isDateTime: Boolean,
     // join last element of timeseries to first element of forecast, or display both seperately.
-    joinForecast: { type: Boolean, default: false }
+    joinForecast: { type: Boolean, default: false },
   },
 
   data() {
@@ -46,7 +46,7 @@ export default Vue.extend({
       isVisible: false,
       hasRendered: false,
       xScale: null,
-      yScale: null
+      yScale: null,
     };
   },
 
@@ -68,11 +68,11 @@ export default Vue.extend({
     },
 
     min(): number {
-      return this.timeseries ? d3.min(this.timeseries, d => d.value) : 0;
+      return this.timeseries ? d3.min(this.timeseries, (d) => d.value) : 0;
     },
 
     max(): number {
-      return this.timeseries ? d3.max(this.timeseries, d => d.value) : 0;
+      return this.timeseries ? d3.max(this.timeseries, (d) => d.value) : 0;
     },
 
     displayForecast(): TimeSeriesValue[] {
@@ -93,7 +93,7 @@ export default Vue.extend({
     $tooltip(): any {
       const tooltip = this.$refs.tooltip as any;
       return $(tooltip);
-    }
+    },
   },
 
   mounted() {
@@ -111,7 +111,7 @@ export default Vue.extend({
           });
         }
       },
-      deep: true
+      deep: true,
     },
 
     timeseriesExtrema: {
@@ -140,7 +140,7 @@ export default Vue.extend({
           this.hasRendered = false;
         }
       },
-      deep: true
+      deep: true,
     },
 
     forecastExtrema: {
@@ -170,13 +170,13 @@ export default Vue.extend({
           this.hasRendered = false;
         }
       },
-      deep: true
+      deep: true,
     },
 
     highlightPixelX() {
       if (this.showTooltip) {
         const xVal = this.xScale.invert(this.highlightPixelX);
-        const bisect = d3.bisector(d => {
+        const bisect = d3.bisector((d) => {
           return d[0];
         }).left;
         const index = bisect(this.timeseries, xVal);
@@ -184,7 +184,7 @@ export default Vue.extend({
           const yVal = this.timeseries[index].value;
           this.$tooltip
             .css({
-              left: this.highlightPixelX
+              left: this.highlightPixelX,
             })
             .text(yVal.toFixed(2))
             .show();
@@ -193,7 +193,7 @@ export default Vue.extend({
       } else {
         this.$tooltip.hide();
       }
-    }
+    },
   },
 
   methods: {
@@ -273,17 +273,17 @@ export default Vue.extend({
         return false;
       }
 
-      const datum = this.timeseries.map(x => [x.time, x.value]);
+      const datum = this.timeseries.map((x) => [x.time, x.value]);
 
       // Define a filter for non number values.
-      const filterMissingData = d => _.isFinite(d[1]);
+      const filterMissingData = (d) => _.isFinite(d[1]);
 
       // the Sparkline
       const line = d3
         .line()
         .defined(filterMissingData)
-        .x(d => this.xScale(d[0]))
-        .y(d => this.yScale(d[1]))
+        .x((d) => this.xScale(d[0]))
+        .y((d) => this.yScale(d[1]))
         .curve(d3.curveLinear);
 
       // the area underneath the Sparkline
@@ -291,9 +291,9 @@ export default Vue.extend({
       const area = d3
         .area()
         .defined(filterMissingData)
-        .x(d => this.xScale(d[0]))
+        .x((d) => this.xScale(d[0]))
         .y0(y0)
-        .y1(d => this.yScale(d[1]));
+        .y1((d) => this.yScale(d[1]));
 
       // Graph to use a container
       const g = this.svg
@@ -367,8 +367,8 @@ export default Vue.extend({
 
       const line = d3
         .line()
-        .x(d => this.xScale(d[0]))
-        .y(d => this.yScale(d[1]))
+        .x((d) => this.xScale(d[0]))
+        .y((d) => this.yScale(d[1]))
         .curve(d3.curveLinear);
 
       const g = this.svg
@@ -380,13 +380,11 @@ export default Vue.extend({
 
       g.datum(
         this.displayForecast
-          .filter(x => !_.isNil(x.value))
-          .map(x => [x.time, x.value])
+          .filter((x) => !_.isNil(x.value))
+          .map((x) => [x.time, x.value])
       );
 
-      g.append("path")
-        .attr("class", "sparkline-forecast")
-        .attr("d", line);
+      g.append("path").attr("class", "sparkline-forecast").attr("d", line);
 
       return true;
     },
@@ -514,8 +512,8 @@ export default Vue.extend({
       this.injectAxis();
 
       this.hasRendered = true;
-    }
-  }
+    },
+  },
 });
 </script>
 

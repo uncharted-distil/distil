@@ -53,7 +53,7 @@ import {
   SOLUTION_PRODUCING,
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED,
-  Solution
+  Solution,
 } from "../store/requests/index";
 import { RESULTS_ROUTE } from "../store/route/index";
 import Vue from "vue";
@@ -62,14 +62,14 @@ import { Dictionary } from "lodash";
 import {
   SOLUTION_PROGRESS,
   SOLUTION_LABELS,
-  openModelSolution
+  openModelSolution,
 } from "../util/solutions";
 
 export default Vue.extend({
   name: "solution-preview",
 
   props: {
-    solution: Object as () => Solution
+    solution: Object as () => Solution,
   },
 
   computed: {
@@ -101,7 +101,7 @@ export default Vue.extend({
     },
     isBad(): boolean {
       return this.solution.isBad;
-    }
+    },
   },
 
   methods: {
@@ -110,10 +110,10 @@ export default Vue.extend({
         datasetId: this.solution.dataset,
         targetFeature: this.solution.feature,
         solutionId: this.solution.solutionId,
-        variableFeatures: this.solution.features.map(f => f.featureName)
+        variableFeatures: this.solution.features.map((f) => f.featureName),
       });
-    }
-  }
+    },
+  },
 });
 </script>
 

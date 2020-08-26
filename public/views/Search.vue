@@ -140,7 +140,7 @@ import SearchBar from "../components/SearchBar";
 import { Dataset } from "../store/dataset/index";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import { Model } from "../store/model/index";
 import { getters as modelGetters } from "../store/model/module";
@@ -158,7 +158,7 @@ export default Vue.extend({
     FileUploader,
     FileUploaderStatus,
     ModelPreview,
-    SearchBar
+    SearchBar,
   },
 
   data() {
@@ -166,11 +166,11 @@ export default Vue.extend({
       isPending: false,
       sorting: {
         asc: true,
-        type: "name"
+        type: "name",
       },
       tab: "datasets",
       uploadData: {},
-      uploadStatus: ""
+      uploadStatus: "",
     };
   },
 
@@ -180,7 +180,7 @@ export default Vue.extend({
     },
 
     filteredDatasetsIds(): Set<String> {
-      const ids = this.filteredDatasets.map(dataset => dataset.id);
+      const ids = this.filteredDatasets.map((dataset) => dataset.id);
       return new Set(ids);
     },
 
@@ -188,7 +188,7 @@ export default Vue.extend({
       const models = modelGetters.getModels(this.$store);
 
       // Only display the models using dataset that the search bar has found.
-      return models.filter(model =>
+      return models.filter((model) =>
         this.filteredDatasetsIds.has(model.datasetId)
       );
     },
@@ -209,7 +209,7 @@ export default Vue.extend({
 
       // If tab is either 'models' or 'all' we display the models.
       if (this.tab !== "datasets") {
-        const models = this.filteredModels.map(model => {
+        const models = this.filteredModels.map((model) => {
           return { type: "model", model };
         });
         results.push(...models);
@@ -217,7 +217,7 @@ export default Vue.extend({
 
       // If tab is either 'datasets' or 'all' we display the datasets.
       if (this.tab !== "models") {
-        const datasets = this.filteredDatasets.map(dataset => {
+        const datasets = this.filteredDatasets.map((dataset) => {
           return { type: "dataset", dataset };
         });
         results.push(...datasets);
@@ -282,7 +282,7 @@ export default Vue.extend({
         return _.capitalize(this.sorting.type);
       }
       return "Recent Activity";
-    }
+    },
   },
 
   beforeMount() {
@@ -292,7 +292,7 @@ export default Vue.extend({
   watch: {
     terms() {
       this.fetch();
-    }
+    },
   },
 
   methods: {
@@ -338,8 +338,8 @@ export default Vue.extend({
     },
     sortFeaturesDesc() {
       this.sorting = { asc: false, type: "features" };
-    }
-  }
+    },
+  },
 });
 </script>
 

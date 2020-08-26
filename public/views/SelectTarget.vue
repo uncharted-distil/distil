@@ -63,12 +63,12 @@ import { actions as appActions } from "../store/app/module";
 import { Variable, VariableSummary, SummaryMode } from "../store/dataset/index";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import {
   AVAILABLE_TARGET_VARS_INSTANCE,
   GROUPING_ROUTE,
-  SELECT_TRAINING_ROUTE
+  SELECT_TRAINING_ROUTE,
 } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
 import { filterSummariesByDataset, NUM_PER_TARGET_PAGE } from "../util/data";
@@ -77,7 +77,7 @@ import { createRouteEntry, varModesToString } from "../util/routes";
 import {
   isUnsupportedTargetVar,
   GEOCOORDINATE_TYPE,
-  TIMESERIES_TYPE
+  TIMESERIES_TYPE,
 } from "../util/types";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
@@ -85,7 +85,7 @@ export default Vue.extend({
   name: "select-target-view",
 
   components: {
-    VariableFacets
+    VariableFacets,
   },
 
   computed: {
@@ -122,13 +122,13 @@ export default Vue.extend({
               training.splice(index, 1);
             }
 
-            const v = this.variables.find(v => {
+            const v = this.variables.find((v) => {
               return v.colName === group.colName;
             });
             if (v && v.grouping) {
               if (v.grouping.subIds.length > 0) {
-                v.grouping.subIds.forEach(subId => {
-                  const exists = training.find(t => {
+                v.grouping.subIds.forEach((subId) => {
+                  const exists = training.find((t) => {
                     return t === subId;
                   });
                   if (!exists) {
@@ -136,7 +136,7 @@ export default Vue.extend({
                   }
                 });
               } else {
-                const exists = training.find(t => {
+                const exists = training.find((t) => {
                   return t === v.grouping.idCol;
                 });
                 if (!exists) {
@@ -151,16 +151,16 @@ export default Vue.extend({
               .fetchTask(this.$store, {
                 dataset: dataset,
                 targetName: group.colName,
-                variableNames: []
+                variableNames: [],
               })
-              .then(response => {
+              .then((response) => {
                 const task = response.data.task.join(",");
 
                 const varModesMap = routeGetters.getDecodedVarModes(
                   this.$store
                 );
                 if (task.includes("timeseries")) {
-                  training.forEach(v => {
+                  training.forEach((v) => {
                     if (v !== group.colName) {
                       varModesMap.set(v, SummaryMode.Timeseries);
                     }
@@ -174,14 +174,14 @@ export default Vue.extend({
                   filters: routeGetters.getRouteFilters(this.$store),
                   training: training.join(","),
                   task: task,
-                  varModes: varModesStr
+                  varModes: varModesStr,
                 };
 
                 appActions.logUserEvent(this.$store, {
                   feature: Feature.SELECT_TARGET,
                   activity: Activity.PROBLEM_DEFINITION,
                   subActivity: SubActivity.PROBLEM_SPECIFICATION,
-                  details: { target: group.colName }
+                  details: { target: group.colName },
                 });
 
                 const entry = createRouteEntry(
@@ -190,7 +190,7 @@ export default Vue.extend({
                 );
                 this.$router.push(entry);
               })
-              .catch(error => {
+              .catch((error) => {
                 console.error(error);
               });
           });
@@ -219,13 +219,13 @@ export default Vue.extend({
       // Fetch the grouped features.
       const groupedFeatures = datasetGetters
         .getGroupings(this.$store)
-        .filter(group => Array.isArray(group.grouping.subIds))
-        .map(group => group.grouping.subIds)
+        .filter((group) => Array.isArray(group.grouping.subIds))
+        .map((group) => group.grouping.subIds)
         .flat();
 
       // Remove summaries of features used in a grouping.
       summaries = summaries.filter(
-        summary => !groupedFeatures.includes(summary.key)
+        (summary) => !groupedFeatures.includes(summary.key)
       );
 
       return summaries;
@@ -234,20 +234,20 @@ export default Vue.extend({
     unsupportedTargets(): Set<string> {
       return new Set(
         this.variables
-          .filter(v => isUnsupportedTargetVar(v.colName, v.colType))
-          .map(v => v.colName)
+          .filter((v) => isUnsupportedTargetVar(v.colName, v.colType))
+          .map((v) => v.colName)
       );
     },
 
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
-    }
+    },
   },
 
   watch: {
     availableTargetVarsPage() {
       viewActions.fetchSelectTargetData(this.$store, false);
-    }
+    },
   },
 
   beforeMount() {
@@ -258,7 +258,7 @@ export default Vue.extend({
     groupingClick(type) {
       const entry = createRouteEntry(GROUPING_ROUTE, {
         dataset: routeGetters.getRouteDataset(this.$store),
-        groupingType: type
+        groupingType: type,
       });
       this.$router.push(entry);
     },
@@ -269,8 +269,8 @@ export default Vue.extend({
 
     onTimeseriesClick() {
       this.groupingClick(TIMESERIES_TYPE);
-    }
-  }
+    },
+  },
 });
 </script>
 

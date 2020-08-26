@@ -6,7 +6,7 @@ import {
   AVAILABLE_TARGET_VARS_INSTANCE_PAGE,
   AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
   TRAINING_VARS_INSTANCE_PAGE,
-  RESULT_TRAINING_VARS_INSTANCE_PAGE
+  RESULT_TRAINING_VARS_INSTANCE_PAGE,
 } from "../store/route/index";
 import { SummaryMode } from "../store/dataset";
 
@@ -66,7 +66,7 @@ export interface RouteArgs {
 export function createRouteEntry(path: string, args: RouteArgs = {}): Location {
   const routeEntry: Location = {
     path: path,
-    query: validateQueryArgs(args) as Dictionary<string>
+    query: validateQueryArgs(args) as Dictionary<string>,
   };
 
   return routeEntry;
@@ -76,7 +76,7 @@ export function overlayRouteEntry(route: Route, args: RouteArgs): Location {
   // initialize a new object from the supplied route
   const routeEntry: Location = {
     path: route.path,
-    query: _.merge({}, route.query, validateQueryArgs(args))
+    query: _.merge({}, route.query, validateQueryArgs(args)),
   };
   return routeEntry;
 }

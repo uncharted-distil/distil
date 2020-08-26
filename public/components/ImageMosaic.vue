@@ -41,7 +41,7 @@ import {
   D3M_INDEX_FIELD,
   Row,
   Variable,
-  VariableSummary
+  VariableSummary,
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -52,7 +52,7 @@ import {
   addRowSelection,
   removeRowSelection,
   isRowSelected,
-  updateTableRowSelection
+  updateTableRowSelection,
 } from "../util/row";
 import { getImageFields } from "../util/data";
 import { Solution } from "../store/requests/index";
@@ -64,19 +64,19 @@ export default Vue.extend({
 
   components: {
     ImageLabel,
-    ImagePreview
+    ImagePreview,
   },
 
   props: {
     instanceName: String as () => string,
     dataItems: Array as () => any[],
-    dataFields: Object as () => Dictionary<TableColumn>
+    dataFields: Object as () => Dictionary<TableColumn>,
   },
 
   data() {
     return {
       imageWidth: 128,
-      imageHeight: 128
+      imageHeight: 128,
     };
   },
 
@@ -114,7 +114,7 @@ export default Vue.extend({
 
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
-    }
+    },
   },
 
   methods: {
@@ -134,8 +134,8 @@ export default Vue.extend({
           event.row[D3M_INDEX_FIELD]
         );
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

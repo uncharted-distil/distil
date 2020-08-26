@@ -62,11 +62,11 @@ import {
   Dataset,
   TableData,
   TableColumn,
-  TableRow
+  TableRow,
 } from "../store/dataset/index";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import { getTableDataItems, getTableDataFields } from "../util/data";
 
@@ -74,7 +74,7 @@ export default Vue.extend({
   name: "join-datasets-preview",
 
   components: {
-    JoinDataPreviewSlot
+    JoinDataPreviewSlot,
   },
 
   props: {
@@ -82,12 +82,12 @@ export default Vue.extend({
     datasetB: Object as () => Dataset,
     joinedColumn: String as () => string,
     previewTableData: Object as () => TableData,
-    searchResultIndex: Number as () => number
+    searchResultIndex: Number as () => number,
   },
 
   data() {
     return {
-      pending: false
+      pending: false,
     };
   },
 
@@ -118,13 +118,13 @@ export default Vue.extend({
     },
     emphasizedFields(): Dictionary<TableColumn> {
       const emphasized = {};
-      _.forIn(this.joinDataPreviewFields, field => {
+      _.forIn(this.joinDataPreviewFields, (field) => {
         const emph = {
           label: field.label,
           key: field.key,
           type: field.type,
           sortable: field.sortable,
-          variant: null
+          variant: null,
         };
 
         const isFieldSelected = field.key === this.joinedColumn;
@@ -135,7 +135,7 @@ export default Vue.extend({
         emphasized[field.key] = emph;
       });
       return emphasized;
-    }
+    },
   },
 
   methods: {
@@ -149,7 +149,7 @@ export default Vue.extend({
         originalDataset: this.datasetA,
         joinedDataset: this.datasetB,
         searchResultIndex: this.searchResultIndex,
-        path: ""
+        path: "",
       };
       datasetActions
         .importDataset(this.$store, importDatasetArgs)
@@ -164,8 +164,8 @@ export default Vue.extend({
     },
     onClose() {
       this.$emit("close");
-    }
-  }
+    },
+  },
 });
 </script>
 

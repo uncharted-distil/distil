@@ -9,26 +9,26 @@ import {
   TableColumn,
   TimeseriesGrouping,
   D3M_INDEX_FIELD,
-  SummaryMode
+  SummaryMode,
 } from "../store/dataset/index";
 import {
   Solution,
   SOLUTION_COMPLETED,
   Predictions,
-  PREDICT_COMPLETED
+  PREDICT_COMPLETED,
 } from "../store/requests/index";
 import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
 import store from "../store/store";
 import {
   actions as resultsActions,
-  getters as resultsGetters
+  getters as resultsGetters,
 } from "../store/results/module";
 import { ResultsContext } from "../store/results/actions";
 import { PredictionContext } from "../store/predictions/actions";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
@@ -44,7 +44,7 @@ import {
   isLatitudeGroupType,
   isLongitudeGroupType,
   isValueGroupType,
-  isTimeGroupType
+  isTimeGroupType,
 } from "../util/types";
 
 // Postfixes for special variable names
@@ -67,11 +67,11 @@ export function getTimeseriesSummaryTopCategories(
   return _.map(summary.baseline.categoryBuckets, (buckets, category) => {
     return {
       category: category,
-      count: _.sumBy(buckets, b => b.count)
+      count: _.sumBy(buckets, (b) => b.count),
     };
   })
     .sort((a, b) => b.count - a.count)
-    .map(c => c.category);
+    .map((c) => c.category);
 }
 
 export function getTimeseriesGroupingsFromFields(
@@ -82,13 +82,13 @@ export function getTimeseriesGroupingsFromFields(
   const fieldKeys = _.map(fields, (_, key) => key);
   return variables
     .filter(
-      v =>
+      (v) =>
         v.grouping &&
         v.grouping.idCol &&
         v.colType === TIMESERIES_TYPE &&
         _.includes(fieldKeys, v.grouping.idCol)
     )
-    .map(v => v.grouping as TimeseriesGrouping);
+    .map((v) => v.grouping as TimeseriesGrouping);
 }
 
 export function getComposedVariableKey(keys: string[]): string {
@@ -119,35 +119,35 @@ export function getTimeseriesAnalysisIntervals(
       return [
         { value: SECONDS_VALUE, text: SECONDS_LABEL },
         { value: MINUTES_VALUE, text: MINUTES_LABEL },
-        { value: HOURS_VALUE, text: HOURS_LABEL }
+        { value: HOURS_VALUE, text: HOURS_LABEL },
       ];
     } else if (range < 2 * WEEKS_VALUE) {
       return [
         { value: HOURS_VALUE, text: HOURS_LABEL },
         { value: DAYS_VALUE, text: DAYS_LABEL },
-        { value: WEEKS_VALUE, text: WEEKS_LABEL }
+        { value: WEEKS_VALUE, text: WEEKS_LABEL },
       ];
     } else if (range < MONTHS_VALUE) {
       return [
         { value: HOURS_VALUE, text: HOURS_LABEL },
         { value: DAYS_VALUE, text: DAYS_LABEL },
-        { value: WEEKS_VALUE, text: WEEKS_LABEL }
+        { value: WEEKS_VALUE, text: WEEKS_LABEL },
       ];
     } else if (range < 4 * MONTHS_VALUE) {
       return [
         { value: DAYS_VALUE, text: DAYS_LABEL },
         { value: WEEKS_VALUE, text: WEEKS_LABEL },
-        { value: MONTHS_VALUE, text: MONTHS_LABEL }
+        { value: MONTHS_VALUE, text: MONTHS_LABEL },
       ];
     } else if (range < YEARS_VALUE) {
       return [
         { value: WEEKS_VALUE, text: WEEKS_LABEL },
-        { value: MONTHS_VALUE, text: MONTHS_LABEL }
+        { value: MONTHS_VALUE, text: MONTHS_LABEL },
       ];
     } else {
       return [
         { value: MONTHS_VALUE, text: MONTHS_LABEL },
-        { value: YEARS_VALUE, text: YEARS_LABEL }
+        { value: YEARS_VALUE, text: YEARS_LABEL },
       ];
     }
   }
@@ -167,7 +167,7 @@ export function getTimeseriesAnalysisIntervals(
   return [
     { value: small, text: `${small}` },
     { value: med, text: `${med}` },
-    { value: large, text: `${large}` }
+    { value: large, text: `${large}` },
   ];
 }
 
@@ -177,7 +177,7 @@ export function fetchSummaryExemplars(
   summary: VariableSummary
 ) {
   const variables = datasetGetters.getVariables(store);
-  const variable = variables.find(v => v.colName === variableName);
+  const variable = variables.find((v) => v.colName === variableName);
 
   const baselineExemplars = summary.baseline.exemplars;
   const filteredExemplars =
@@ -194,14 +194,14 @@ export function fetchSummaryExemplars(
         const grouping = variable.grouping as TimeseriesGrouping;
 
         return Promise.all(
-          exemplars.map(exemplar => {
+          exemplars.map((exemplar) => {
             const args = {
               dataset: datasetName,
               timeseriesColName: grouping.idCol,
               xColName: grouping.xCol,
               yColName: grouping.yCol,
               timeseriesId: exemplar,
-              solutionId: solutionId
+              solutionId: solutionId,
             };
             if (solutionId) {
               return resultsActions.fetchForecastedTimeseries(store, args);
@@ -216,12 +216,12 @@ export function fetchSummaryExemplars(
       return datasetActions.fetchFiles(store, {
         dataset: datasetName,
         variable: variableName,
-        urls: exemplars.slice(0, 5)
+        urls: exemplars.slice(0, 5),
       });
     }
   }
 
-  return new Promise(res => res());
+  return new Promise((res) => res());
 }
 
 export function fetchResultExemplars(
@@ -232,7 +232,7 @@ export function fetchResultExemplars(
   summary: VariableSummary
 ) {
   const variables = datasetGetters.getVariables(store);
-  const variable = variables.find(v => v.colName === variableName);
+  const variable = variables.find((v) => v.colName === variableName);
 
   const baselineExemplars = summary.baseline.exemplars;
   const filteredExemplars =
@@ -247,14 +247,14 @@ export function fetchResultExemplars(
         const grouping = variable.grouping as TimeseriesGrouping;
         // if there a linked exemplars, fetch those before resolving
         return Promise.all(
-          exemplars.map(exemplar => {
+          exemplars.map((exemplar) => {
             return resultsActions.fetchForecastedTimeseries(store, {
               dataset: datasetName,
               timeseriesColName: grouping.idCol,
               xColName: grouping.xCol,
               yColName: grouping.yCol,
               timeseriesId: exemplar,
-              solutionId: solutionId
+              solutionId: solutionId,
             });
           })
         );
@@ -264,12 +264,12 @@ export function fetchResultExemplars(
       return datasetActions.fetchFiles(store, {
         dataset: datasetName,
         variable: variableName,
-        urls: exemplars
+        urls: exemplars,
       });
     }
   }
 
-  return new Promise(res => res());
+  return new Promise((res) => res());
 }
 
 export function minimumRouteKey(): string {
@@ -288,7 +288,7 @@ export function updateSummaries(
   summary: VariableSummary,
   summaries: VariableSummary[]
 ) {
-  const index = _.findIndex(summaries, s => {
+  const index = _.findIndex(summaries, (s) => {
     return s.dataset === summary.dataset && s.key === summary.key;
   });
   if (index >= 0) {
@@ -321,8 +321,8 @@ export function sortSummariesByVariables(
 ) {
   summaries.sort((a, b) => {
     return (
-      variables.findIndex(v => v.colName === a.key) -
-      variables.findIndex(v => v.colName === b.key)
+      variables.findIndex((v) => v.colName === a.key) -
+      variables.findIndex((v) => v.colName === b.key)
     );
   });
 }
@@ -341,7 +341,7 @@ export function removeSummary(
   summary: VariableSummary,
   summaries: VariableSummary[]
 ) {
-  const index = _.findIndex(summaries, s => {
+  const index = _.findIndex(summaries, (s) => {
     return s.dataset === summary.dataset && s.key === summary.key;
   });
   if (index >= 0) {
@@ -350,14 +350,14 @@ export function removeSummary(
 }
 
 export function filterVariablesByFeature(variables: Variable[]): Variable[] {
-  return variables.filter(v => v.distilRole === "data");
+  return variables.filter((v) => v.distilRole === "data");
 }
 
 export function filterSummariesByDataset(
   summaries: VariableSummary[],
   dataset: string
 ): VariableSummary[] {
-  return summaries.filter(summary => {
+  return summaries.filter((summary) => {
     return summary.dataset === dataset && !hasComputedVarPrefix(summary.key);
   });
 }
@@ -368,7 +368,7 @@ export function createEmptyTableData(): TableData {
     columns: [],
     values: [],
     fittedSolutionId: null,
-    produceRequestId: null
+    produceRequestId: null,
   };
 }
 
@@ -379,7 +379,7 @@ export function formatSlot(key: string, slotType: string): string {
 export function formatFieldsAsArray(
   fields: Dictionary<TableColumn>
 ): TableColumn[] {
-  return _.map(fields, field => field);
+  return _.map(fields, (field) => field);
 }
 
 export function createPendingSummary(
@@ -395,7 +395,7 @@ export function createPendingSummary(
     dataset: dataset,
     pending: true,
     baseline: null,
-    filtered: null
+    filtered: null,
   };
 }
 
@@ -412,7 +412,7 @@ export function createErrorSummary(
     dataset: dataset,
     baseline: null,
     filtered: null,
-    err: error.response ? error.response.data : error
+    err: error.response ? error.response.data : error,
   };
 }
 
@@ -434,7 +434,7 @@ export async function fetchSolutionResultSummary(
 
   const exists = _.find(
     resultSummaries,
-    v => v.dataset === dataset && v.key === key
+    (v) => v.dataset === dataset && v.key === key
   );
   if (!exists) {
     // add placeholder
@@ -485,7 +485,7 @@ export async function fetchPredictionResultSummary(
 
   const exists = _.find(
     resultSummaries,
-    v => v.dataset === dataset && v.key === key
+    (v) => v.dataset === dataset && v.key === key
   );
   if (!exists) {
     // add placeholder
@@ -558,7 +558,7 @@ export function sortSummariesByImportance(
 ): VariableSummary[] {
   // create importance lookup map
   const importance: Dictionary<number> = {};
-  variables.forEach(variable => {
+  variables.forEach((variable) => {
     importance[variable.colName] = getVariableImportance(variable);
   });
   // sort by importance
@@ -575,7 +575,7 @@ export function sortSolutionSummariesByImportance(
 ): VariableSummary[] {
   // create importance lookup map
   const importance: Dictionary<number> = {};
-  variables.forEach(variable => {
+  variables.forEach((variable) => {
     importance[variable.colName] = getSolutionVariableRanking(
       variable,
       solutionID
@@ -670,7 +670,7 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
         type: col.type,
         weight: col.weight,
         headerTitle: description ? label.concat(": ", description) : label,
-        sortable: true
+        sortable: true,
       };
     }
 
@@ -759,22 +759,22 @@ export function getImageFields(
   const imageFields = _.map(fields, (field, key) => {
     return {
       key: key,
-      type: field.type
+      type: field.type,
     };
-  }).filter(field => field.type === IMAGE_TYPE);
+  }).filter((field) => field.type === IMAGE_TYPE);
 
   // find remote senings image fields
   const fieldKeys = _.map(fields, (_, key) => key);
   const remoteSensingFields = datasetGetters
     .getVariables(store)
     .filter(
-      v =>
+      (v) =>
         v.grouping &&
         v.grouping.idCol &&
         v.colType === REMOTE_SENSING_TYPE &&
         _.includes(fieldKeys, v.grouping.idCol)
     )
-    .map(v => ({ key: v.grouping.idCol, type: v.colType }));
+    .map((v) => ({ key: v.grouping.idCol, type: v.colType }));
 
   // the two are probably mutually exclusive, but it doesn't hurt anything to allow for both
   return imageFields.concat(remoteSensingFields);
@@ -783,15 +783,15 @@ export function getImageFields(
 export function getListFields(
   fields: Dictionary<TableColumn>
 ): { key: string; type: string }[] {
-  return _.filter(fields, f => isListType(f.type)).map(f => ({
+  return _.filter(fields, (f) => isListType(f.type)).map((f) => ({
     key: f.key,
-    type: f.type
+    type: f.type,
   }));
 }
 
 export function hasTimeseriesFeatures(variables: Variable[]): boolean {
-  const valueColumns = variables.filter(v => isValueGroupType(v.colType));
-  const timeColumns = variables.filter(v => isTimeGroupType(v.colType));
+  const valueColumns = variables.filter((v) => isValueGroupType(v.colType));
+  const timeColumns = variables.filter((v) => isTimeGroupType(v.colType));
 
   if (
     (valueColumns.length === 1 &&
@@ -807,8 +807,8 @@ export function hasTimeseriesFeatures(variables: Variable[]): boolean {
 }
 
 export function hasGeoordinateFeatures(variables: Variable[]): boolean {
-  const latColumns = variables.filter(v => isLatitudeGroupType(v.colType));
-  const lonColumns = variables.filter(v => isLongitudeGroupType(v.colType));
+  const latColumns = variables.filter((v) => isLatitudeGroupType(v.colType));
+  const lonColumns = variables.filter((v) => isLongitudeGroupType(v.colType));
   if (
     (latColumns.length === 1 &&
       lonColumns.length === 1 &&

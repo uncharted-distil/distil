@@ -30,20 +30,20 @@ export default Vue.extend({
   props: {
     title: {
       type: String as () => string,
-      default: "Error"
+      default: "Error",
     },
     error: {
       type: String as () => string,
-      default: "Internal server error"
+      default: "Internal server error",
     },
-    show: Boolean as () => boolean
+    show: Boolean as () => boolean,
   },
 
   methods: {
     onClose() {
       this.$emit("close");
-    }
-  }
+    },
+  },
 });
 </script>
 

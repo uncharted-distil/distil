@@ -47,7 +47,7 @@ import { VariableSummary } from "../store/dataset/index";
 import { actions as viewActions } from "../store/view/module";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -62,12 +62,12 @@ export default Vue.extend({
     PredictionsDataSlot,
     PredictionSummaries,
     StatusPanel,
-    StatusSidebar
+    StatusSidebar,
   },
 
   data() {
     return {
-      logActivity: Activity.PREDICTION_ANALYSIS
+      logActivity: Activity.PREDICTION_ANALYSIS,
     };
   },
 
@@ -86,7 +86,7 @@ export default Vue.extend({
     },
     highlightString(): string {
       return routeGetters.getRouteHighlight(this.$store);
-    }
+    },
   },
 
   beforeMount() {
@@ -103,8 +103,8 @@ export default Vue.extend({
     },
     trainingVarsPage() {
       viewActions.updatePrediction(this.$store);
-    }
-  }
+    },
+  },
 });
 </script>
 

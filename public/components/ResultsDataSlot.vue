@@ -44,14 +44,14 @@ import {
   TableColumn,
   TaskTypes,
   Variable,
-  RowSelection
+  RowSelection,
 } from "../store/dataset/index";
 import { Solution, SOLUTION_ERRORED } from "../store/requests/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
   actions as resultsActions,
-  getters as resultsGetters
+  getters as resultsGetters,
 } from "../store/results/module";
 import { getters as requestsGetters } from "../store/requests/module";
 import { Dictionary } from "../util/dict";
@@ -76,13 +76,13 @@ export default Vue.extend({
     GeoPlot,
     ImageMosaic,
     ResultsDataTable,
-    ResultsTimeseriesView
+    ResultsTimeseriesView,
   },
 
   props: {
     instanceName: String,
     viewType: String,
-    excluded: Boolean
+    excluded: Boolean,
   },
 
   data() {
@@ -91,7 +91,7 @@ export default Vue.extend({
       GRAPH_VIEW: GRAPH_VIEW,
       IMAGE_VIEW: IMAGE_VIEW,
       TABLE_VIEW: TABLE_VIEW,
-      TIMESERIES_VIEW: TIMESERIES_VIEW
+      TIMESERIES_VIEW: TIMESERIES_VIEW,
     };
   },
 
@@ -218,12 +218,12 @@ export default Vue.extend({
 
     residualThresholdMax(): number {
       return _.toNumber(routeGetters.getRouteResidualThresholdMax(this.$store));
-    }
+    },
   },
 
   methods: {
     errorCount(dataColumn: TableRow[]): number {
-      return dataColumn.filter(item => {
+      return dataColumn.filter((item) => {
         if (this.regressionEnabled) {
           if (!item[this.solution.errorKey]) {
             return false;
@@ -249,7 +249,7 @@ export default Vue.extend({
         dataset: this.dataset,
         highlight: this.highlight,
         size: dataSize,
-        solutionId: this.solutionId
+        solutionId: this.solutionId,
       };
 
       if (this.excluded) {
@@ -257,8 +257,8 @@ export default Vue.extend({
       } else {
         resultsActions.fetchIncludedResultTableData(this.$store, args);
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

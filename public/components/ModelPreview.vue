@@ -40,7 +40,7 @@ export default Vue.extend({
   name: "model-preview",
 
   props: {
-    model: Object as () => Model
+    model: Object as () => Model,
   },
 
   methods: {
@@ -49,10 +49,10 @@ export default Vue.extend({
         datasetId: this.model.datasetId,
         targetFeature: this.model.target,
         fittedSolutionId: this.model.fittedSolutionId,
-        variableFeatures: this.model.variables
+        variableFeatures: this.model.variables,
       });
-    }
-  }
+    },
+  },
 });
 </script>
 

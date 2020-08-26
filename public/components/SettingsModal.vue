@@ -66,7 +66,8 @@ export default Vue.extend({
       modelLimit: routeGetters.getModelLimit(this.$store) || 5,
       timeLimit: routeGetters.getModelTimeLimit(this.$store) || 5,
       speedQuality:
-        routeGetters.getModelQuality(this.$store) || ModelQuality.HIGHER_QUALITY
+        routeGetters.getModelQuality(this.$store) ||
+        ModelQuality.HIGHER_QUALITY,
     };
   },
 
@@ -79,11 +80,11 @@ export default Vue.extend({
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         modelLimit: this.modelLimit,
         modelTimeLimit: this.timeLimit,
-        modelQuality: this.speedQuality
+        modelQuality: this.speedQuality,
       });
       this.$router.push(entry);
-    }
-  }
+    },
+  },
 });
 </script>
 

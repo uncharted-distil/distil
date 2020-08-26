@@ -55,7 +55,7 @@ export default Vue.extend({
           headTargetCells.push({ elem: theadCells[i], width: bodyCellWidth });
         }
       }
-      const setCellWidth = cell => {
+      const setCellWidth = (cell) => {
         cell.elem.style["max-width"] = cell.width + "px";
         cell.elem.style["min-width"] = cell.width + "px";
       };
@@ -67,7 +67,7 @@ export default Vue.extend({
       const allRows = this.tbody && this.tbody.querySelectorAll("tr");
       const allBodyCellsAsRows = [];
 
-      allRows.forEach(row => {
+      allRows.forEach((row) => {
         const rowCells = row.querySelectorAll("td");
         allBodyCellsAsRows.push(rowCells);
       });
@@ -85,7 +85,7 @@ export default Vue.extend({
             : maxCellWidth;
         remainingCellWidth = remainingCellWidth - headCellWidth;
         headCells.push({ elem: theadCells[i], width: headCellWidth });
-        allBodyCellsAsRows.forEach(row => {
+        allBodyCellsAsRows.forEach((row) => {
           bodyCells.push({ elem: row[i], width: headCellWidth });
         });
       }
@@ -123,7 +123,7 @@ export default Vue.extend({
         // set title for displaying full text on hover
         target.setAttribute("title", text);
       }
-    }
+    },
   },
 
   data() {
@@ -131,11 +131,11 @@ export default Vue.extend({
       table: {} as HTMLTableElement,
       tbody: {} as HTMLTableSectionElement,
       thead: {} as HTMLTableSectionElement,
-      tableHeaderRow: {} as HTMLTableRowElement
+      tableHeaderRow: {} as HTMLTableRowElement,
     };
   },
 
-  mounted: function() {
+  mounted: function () {
     this.table = this.$el.querySelector("table");
     this.tbody = this.$el.querySelector("tbody");
     this.thead = this.$el.querySelector("thead");
@@ -148,10 +148,10 @@ export default Vue.extend({
     this.resizeTableCells();
   },
 
-  beforeDestroy: function() {
+  beforeDestroy: function () {
     this.tbody.removeEventListener("scroll", this.onScroll);
     window.removeEventListener("resize", this.resizeTableCells);
-  }
+  },
 });
 </script>
 

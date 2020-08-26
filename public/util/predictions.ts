@@ -9,7 +9,7 @@ export function getPredictionsById(
   predictionsId: string
 ): Predictions {
   const id = predictionsId || "";
-  return predictions.find(r => r.requestId === id);
+  return predictions.find((r) => r.requestId === id);
 }
 
 // Finds the index to assign to a given prediction, based on timestamps of prediction execution.
@@ -25,7 +25,7 @@ export function getPredictionsIndex(predictionId: string): number {
     return -1;
   });
 
-  const index = _.findIndex(predictions, prediction => {
+  const index = _.findIndex(predictions, (prediction) => {
     return prediction.requestId === predictionId;
   });
 

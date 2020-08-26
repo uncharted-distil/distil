@@ -55,12 +55,12 @@ export default Vue.extend({
     VariableFacets,
     ResultTargetVariable,
     ResultsComparison,
-    ResultSummaries
+    ResultSummaries,
   },
 
   data() {
     return {
-      logActivity: Activity.MODEL_SELECTION
+      logActivity: Activity.MODEL_SELECTION,
     };
   },
 
@@ -98,7 +98,7 @@ export default Vue.extend({
     },
     resultTrainingVarsPage(): number {
       return routeGetters.getRouteResultTrainingVarsPage(this.$store);
-    }
+    },
   },
 
   beforeMount() {
@@ -114,8 +114,8 @@ export default Vue.extend({
     },
     resultTrainingVarsPage() {
       viewActions.updateResultsSolution(this.$store);
-    }
-  }
+    },
+  },
 });
 </script>
 

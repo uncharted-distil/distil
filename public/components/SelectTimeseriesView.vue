@@ -21,12 +21,12 @@ export default Vue.extend({
   name: "select-timeseries-view",
 
   components: {
-    SparklineTimeseriesView
+    SparklineTimeseriesView,
   },
 
   props: {
     instanceName: String as () => string,
-    includedActive: Boolean as () => boolean
+    includedActive: Boolean as () => boolean,
   },
 
   computed: {
@@ -46,8 +46,8 @@ export default Vue.extend({
       return this.includedActive
         ? datasetGetters.getIncludedTableDataFields(this.$store)
         : datasetGetters.getExcludedTableDataFields(this.$store);
-    }
-  }
+    },
+  },
 });
 </script>
 

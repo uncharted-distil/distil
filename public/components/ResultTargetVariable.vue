@@ -19,7 +19,7 @@ import { getters as resultsGetters } from "../store/results/module";
 import {
   getNumericalFacetValue,
   getCategoricalFacetValue,
-  TOP_RANGE_HIGHLIGHT
+  TOP_RANGE_HIGHLIGHT,
 } from "../util/facets";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import { RESULT_TARGET_VAR_INSTANCE } from "../store/route/index";
@@ -27,7 +27,7 @@ import {
   Variable,
   VariableSummary,
   Highlight,
-  RowSelection
+  RowSelection,
 } from "../store/dataset/index";
 import { isNumericType, TIMESERIES_TYPE } from "../util/types";
 import { Activity } from "../util/userEvents";
@@ -36,7 +36,7 @@ export default Vue.extend({
   name: "result-target-variable",
 
   components: {
-    VariableFacets
+    VariableFacets,
   },
 
   computed: {
@@ -74,80 +74,15 @@ export default Vue.extend({
 
     defaultHighlightType(): string {
       return TOP_RANGE_HIGHLIGHT;
-    }
+    },
   },
 
   data() {
     return {
       hasDefaultedAlready: false,
-      logActivity: Activity.MODEL_SELECTION
+      logActivity: Activity.MODEL_SELECTION,
     };
   },
-
-  watch: {
-    targetSummaries() {
-      this.defaultTargetHighlight();
-    },
-    targetVariable() {
-      this.defaultTargetHighlight();
-    }
-  },
-
-  mounted() {
-    this.defaultTargetHighlight();
-  },
-
-  methods: {
-    defaultTargetHighlight() {
-      // only default higlight numeric types
-      if (!this.targetVariable) {
-        return;
-      }
-
-      if (
-        this.targetVariable.grouping &&
-        this.targetVariable.grouping.type === TIMESERIES_TYPE
-      ) {
-        // dont default timeseries groupings
-        return;
-      }
-
-      // if we have no current highlight, and no filters, highlight default range
-      if (this.highlight || this.hasFilters || this.hasDefaultedAlready) {
-        return;
-      }
-
-      if (this.resultTargetSummary && !this.resultTargetSummary.pending) {
-        if (isNumericType(this.targetVariable.colType)) {
-          this.selectDefaultNumerical();
-        } else {
-          this.selectDefaultCategorical();
-        }
-        this.hasDefaultedAlready = true;
-      }
-    },
-
-    selectDefaultNumerical() {
-      updateHighlight(this.$router, {
-        context: this.instanceName,
-        dataset: this.dataset,
-        key: this.target,
-        value: getNumericalFacetValue(
-          this.resultTargetSummary,
-          this.defaultHighlightType
-        )
-      });
-    },
-
-    selectDefaultCategorical() {
-      updateHighlight(this.$router, {
-        context: this.instanceName,
-        dataset: this.dataset,
-        key: this.target,
-        value: getCategoricalFacetValue(this.resultTargetSummary)
-      });
-    }
-  }
 });
 </script>
 

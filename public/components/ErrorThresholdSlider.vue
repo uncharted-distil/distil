@@ -63,7 +63,7 @@ export default Vue.extend({
   name: "error-threshold-slider",
 
   components: {
-    vueSlider
+    vueSlider,
   },
 
   data() {
@@ -72,7 +72,7 @@ export default Vue.extend({
       min: null as number,
       max: null as number,
       hasModified: false,
-      lastExtrema: { min: -1.0, max: 1.0 } as Extrema
+      lastExtrema: { min: -1.0, max: 1.0 } as Extrema,
     };
   },
 
@@ -80,7 +80,7 @@ export default Vue.extend({
     sliderValue(): number[] {
       return [
         Math.ceil(this.normalize(this.thresholdMin)),
-        Math.floor(this.normalize(this.thresholdMax))
+        Math.floor(this.normalize(this.thresholdMax)),
       ];
     },
 
@@ -104,12 +104,12 @@ export default Vue.extend({
       } else {
         this.lastExtrema = {
           min: extrema.min,
-          max: extrema.max
+          max: extrema.max,
         };
       }
       return {
         min: extrema.min,
-        max: extrema.max
+        max: extrema.max,
       };
     },
 
@@ -125,7 +125,7 @@ export default Vue.extend({
 
     hasThreshold(): boolean {
       return this.thresholdMin !== null && this.thresholdMax !== null;
-    }
+    },
   },
 
   methods: {
@@ -181,9 +181,9 @@ export default Vue.extend({
 
       const entry = overlayRouteEntry(this.$route, {
         residualThresholdMin: `${this.denormalize(min)}`,
-        residualThresholdMax: `${this.denormalize(max)}`
+        residualThresholdMax: `${this.denormalize(max)}`,
       });
-      this.$router.push(entry).catch(err => console.warn(err));
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
 
     onSlide(value: number[]) {
@@ -194,11 +194,11 @@ export default Vue.extend({
         feature: Feature.CHANGE_ERROR_THRESHOLD,
         activity: Activity.MODEL_SELECTION,
         subActivity: SubActivity.MODEL_EXPLANATION,
-        details: { min: this.min, max: this.max }
+        details: { min: this.min, max: this.max },
       });
 
       this.updateThreshold(newValues[0], newValues[1]);
-    }
+    },
   },
 
   watch: {
@@ -213,8 +213,8 @@ export default Vue.extend({
         const defaultMax = Math.floor(ORIGIN + DEVIATION);
         this.updateThreshold(defaultMin, defaultMax);
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

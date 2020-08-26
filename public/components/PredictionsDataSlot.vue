@@ -53,19 +53,19 @@ import {
   TableRow,
   TableColumn,
   Variable,
-  RowSelection
+  RowSelection,
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import {
   actions as predictionsActions,
-  getters as predictionsGetters
+  getters as predictionsGetters,
 } from "../store/predictions/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import {
   Solution,
   SOLUTION_ERRORED,
-  PREDICT_ERRORED
+  PREDICT_ERRORED,
 } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
 import { updateTableRowSelection, getNumIncludedRows } from "../util/row";
@@ -86,7 +86,7 @@ export default Vue.extend({
     ImageMosaic,
     PredictionsDataTable,
     ResultsTimeseriesView,
-    ViewTypeToggle
+    ViewTypeToggle,
   },
 
   data() {
@@ -97,7 +97,7 @@ export default Vue.extend({
       IMAGE_VIEW: IMAGE_VIEW,
       GRAPH_VIEW: GRAPH_VIEW,
       GEO_VIEW: GEO_VIEW,
-      TIMESERIES_VIEW: TIMESERIES_VIEW
+      TIMESERIES_VIEW: TIMESERIES_VIEW,
     };
   },
 
@@ -197,7 +197,7 @@ export default Vue.extend({
       if (this.viewType === IMAGE_VIEW) return "ImageMosaic";
       if (this.viewType === TABLE_VIEW) return "PredictionsDataTable";
       if (this.viewType === TIMESERIES_VIEW) return "ResultsTimeseriesView";
-    }
+    },
   },
 
   methods: {
@@ -207,10 +207,10 @@ export default Vue.extend({
         dataset: this.dataset,
         highlight: this.highlight,
         produceRequestId: this.produceRequestId,
-        size: dataSize
+        size: dataSize,
       });
-    }
-  }
+    },
+  },
 });
 </script>
 
