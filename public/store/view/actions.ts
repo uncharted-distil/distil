@@ -34,6 +34,12 @@ import {
   Highlight
 } from "../dataset";
 import { getPredictionsById } from "../../util/predictions";
+import {
+  NUM_PER_PAGE,
+  NUM_PER_TARGET_PAGE,
+  sortVariablesByImportance
+} from "../../util/data";
+import { SELECT_TARGET_ROUTE } from "../route";
 
 enum ParamCacheKey {
   VARIABLES = "VARIABLES",
@@ -67,6 +73,29 @@ function createCacheable(
   };
 }
 
+function createDeepCacheable(
+  key: ParamCacheKey,
+  func: (context: ViewContext, args: Dictionary<string>) => any
+) {
+  return (context: ViewContext, args: Dictionary<string>) => {
+    // execute provided function if params are not cached already or changed
+    const params = JSON.stringify(args);
+    const deepKey = key + params;
+    const cachedParams = viewGetters.getFetchParamsCache(store)[deepKey];
+    console.log("deep cache \n", params, "\n", cachedParams);
+    if (cachedParams !== params) {
+      viewMutations.setFetchParamsCache(context, {
+        key: deepKey,
+        value: params
+      });
+      console.log("not cached");
+      return Promise.resolve(func(context, args));
+    }
+    console.log("cached");
+    return Promise.resolve();
+  };
+}
+
 const fetchJoinSuggestions = createCacheable(
   ParamCacheKey.JOIN_SUGGESTIONS,
   (context, args) => {
@@ -86,36 +115,64 @@ const fetchVariables = createCacheable(
   }
 );
 
-const fetchVariableSummaries = createCacheable(
-  ParamCacheKey.VARIABLE_SUMMARIES,
-  async (context, args) => {
-    await fetchVariables(context, args);
-    const dataset = args.dataset as string;
-    const variables = context.getters.getVariables;
-    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
-    const highlight = context.getters.getDecodedHighlight;
-    const varModes = context.getters.getDecodedVarModes;
-    const dataMode = context.getters.getDataMode;
-    return Promise.all([
-      datasetActions.fetchIncludedVariableSummaries(store, {
-        dataset: dataset,
-        variables: variables,
-        filterParams: filterParams,
-        highlight: highlight,
-        dataMode: dataMode,
-        varModes: varModes
-      }),
-      datasetActions.fetchExcludedVariableSummaries(store, {
-        dataset: dataset,
-        variables: variables,
-        filterParams: filterParams,
-        highlight: highlight,
-        dataMode: dataMode,
-        varModes: varModes
-      })
-    ]);
-  }
-);
+const fetchVariableSummaries = async (context, args) => {
+  await fetchVariables(context, args);
+  const dataset = args.dataset as string;
+  const variables = context.getters.getVariables as Variable[];
+  const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+  const highlight = context.getters.getDecodedHighlight;
+  const varModes = context.getters.getDecodedVarModes;
+  const dataMode = context.getters.getDataMode;
+
+  const currentRoute = routeGetters.getRoutePath(store);
+  const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
+  const pages = routeGetters.getAllRoutePages(store);
+  const targetVariable = routeGetters.getTargetVariable(store);
+  const trainingVariables = routeGetters.getTrainingVariables(store);
+
+  const starterVariables = targetVariable
+    ? [targetVariable, ...trainingVariables]
+    : [];
+
+  const starterVariableNames = starterVariables.map(sv =>
+    sv.colDisplayName.toLowerCase()
+  );
+
+  const presortedVariables = ranked
+    ? sortVariablesByImportance(variables.slice())
+    : variables;
+
+  const currentPageIndex = pages[currentRoute];
+  const pageLength =
+    currentRoute === SELECT_TARGET_ROUTE ? NUM_PER_TARGET_PAGE : NUM_PER_PAGE;
+  const currentPageVariables = presortedVariables
+    .filter(
+      v => starterVariableNames.indexOf(v.colDisplayName.toLowerCase()) < 0
+    )
+    .slice((currentPageIndex - 1) * pageLength, currentPageIndex * pageLength);
+  const allActiveVariables = [...starterVariables, ...currentPageVariables];
+
+  return Promise.all([
+    datasetActions.fetchIncludedVariableSummaries(store, {
+      dataset: dataset,
+      variables: allActiveVariables,
+      filterParams: filterParams,
+      highlight: highlight,
+      dataMode: dataMode,
+      varModes: varModes,
+      pages: pages
+    }),
+    datasetActions.fetchExcludedVariableSummaries(store, {
+      dataset: dataset,
+      variables: allActiveVariables,
+      filterParams: filterParams,
+      highlight: highlight,
+      dataMode: dataMode,
+      varModes: varModes,
+      pages: pages
+    })
+  ]);
+};
 
 const fetchVariableRankings = createCacheable(
   ParamCacheKey.VARIABLE_RANKINGS,
@@ -261,6 +318,7 @@ export const actions = {
     const datasets = context.getters.getDatasets;
     const dataMode = context.getters.getDataMode as DataMode;
     const varModes = context.getters.getDecodedVarModes;
+    const pages = context.getters.getAllRoutePages;
     const datasetIDA = datasetIDs[0];
     const datasetIDB = datasetIDs[1];
 
@@ -279,7 +337,8 @@ export const actions = {
         filterParams: filterParams,
         highlight: highlight,
         dataMode: dataMode,
-        varModes: varModes
+        varModes: varModes,
+        pages: pages
       }),
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: datasetB.id,
@@ -287,7 +346,8 @@ export const actions = {
         filterParams: filterParams,
         highlight: highlight,
         dataMode: dataMode,
-        varModes: varModes
+        varModes: varModes,
+        pages: pages
       }),
       datasetActions.fetchJoinDatasetsTableData(store, {
         datasets: datasetIDs,
@@ -305,11 +365,14 @@ export const actions = {
 
     // fetch new state
     const dataset = context.getters.getRouteDataset;
-    const args = {
+    const pages = JSON.stringify(routeGetters.getAllRoutePages(store));
+    await fetchVariables(context, {
       dataset: dataset
-    };
-    await fetchVariables(context, args);
-    return fetchVariableSummaries(context, args);
+    });
+    return fetchVariableSummaries(context, {
+      dataset: dataset,
+      pages: pages
+    });
   },
 
   clearJoinDatasetsData(context) {
@@ -354,13 +417,15 @@ export const actions = {
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
     const dataMode = context.getters.getDataMode;
     const varModes = context.getters.getDecodedVarModes;
+    const pages = JSON.stringify(routeGetters.getAllRoutePages(store));
 
     return Promise.all([
       fetchVariableSummaries(context, {
         dataset: dataset,
         filterParams: filterParams,
         highlight: highlight,
-        varModes: varModes
+        varModes: varModes,
+        pages: pages
       }),
       datasetActions.fetchIncludedTableData(store, {
         dataset: dataset,

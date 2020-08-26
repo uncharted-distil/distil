@@ -10,6 +10,8 @@ import {
 } from "../dataset/index";
 import {
   PREDICTION_ROUTE,
+  JOIN_DATASETS_ROUTE,
+  RESULTS_ROUTE,
   SELECT_TARGET_ROUTE,
   SELECT_TRAINING_ROUTE,
   JOINED_VARS_INSTANCE_PAGE,
@@ -180,7 +182,7 @@ export const getters = {
     return state.query.clustering && state.query.clustering === "1"; // Use "1" for truth.
   },
 
-  getRouteJoinDatasetsVarsParge(state: Route): number {
+  getRouteJoinDatasetsVarsPage(state: Route): number {
     const pageVar = JOINED_VARS_INSTANCE_PAGE;
     return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
   },
@@ -203,6 +205,15 @@ export const getters = {
   getRouteResultTrainingVarsPage(state: Route): number {
     const pageVar = RESULT_TRAINING_VARS_INSTANCE_PAGE;
     return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
+  },
+
+  getAllRoutePages(state: Route, getters: any): Object {
+    const pages = {};
+    pages[JOIN_DATASETS_ROUTE] = getters.getRouteJoinDatasetsVarsPage;
+    pages[SELECT_TARGET_ROUTE] = getters.getRouteAvailableTargetVarsPage;
+    pages[SELECT_TRAINING_ROUTE] = getters.getRouteAvailableTrainingVarsPage;
+    pages[RESULTS_ROUTE] = getters.getRouteResultTrainingVarsPage;
+    return pages;
   },
 
   getRouteTargetVariable(state: Route): string {

@@ -168,7 +168,8 @@ import {
   filterVariablesByPage,
   getVariableRanking,
   getSolutionVariableRanking,
-  sortSolutionSummariesByImportance
+  sortSolutionSummariesByImportance,
+  NUM_PER_PAGE
 } from "../../util/data";
 import {
   Highlight,
@@ -228,7 +229,7 @@ export default Vue.extend({
       Function as () => Function
     ],
     instanceName: { type: String as () => string, default: "variableFacets" },
-    rowsPerPage: { type: Number as () => number, default: 10 },
+    rowsPerPage: { type: Number as () => number, default: NUM_PER_PAGE },
     logActivity: {
       type: String as () => Activity,
       default: Activity.DATA_PREPARATION
@@ -288,7 +289,7 @@ export default Vue.extend({
     },
 
     numSummaries(): number {
-      return this.filteredSummaries.length;
+      return this.variables.length;
     },
 
     highlight(): Highlight {

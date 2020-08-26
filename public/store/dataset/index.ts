@@ -362,6 +362,7 @@ export interface DatasetState {
 export interface WorkingSet {
   variableSummaries: VariableSummary[];
   tableData: TableData;
+  variableSummariesByKey?: Dictionary<Dictionary<VariableSummary>>;
 }
 
 export interface BandCombination {
@@ -385,11 +386,13 @@ export const state: DatasetState = {
   // working set of data
   includedSet: {
     variableSummaries: [],
-    tableData: null
+    tableData: null,
+    variableSummariesByKey: {}
   },
   excludedSet: {
     variableSummaries: [],
-    tableData: null
+    tableData: null,
+    variableSummariesByKey: {}
   },
 
   // linked files / representation data

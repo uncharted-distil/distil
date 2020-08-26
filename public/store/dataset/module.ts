@@ -163,5 +163,7 @@ export const mutations = {
   ),
   setIncludedTableData: commit(moduleMutations.setIncludedTableData),
   setExcludedTableData: commit(moduleMutations.setExcludedTableData),
-  updateBands: commit(moduleMutations.updateBands)
+  updateBands: commit(moduleMutations.updateBands),
+  sortIncludedSummaries: commit(moduleMutations.sortIncludedSummaries),
+  sortExcludedSummaries: commit(moduleMutations.sortExcludedSummaries)
 };

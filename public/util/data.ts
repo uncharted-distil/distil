@@ -9,7 +9,8 @@ import {
   TableColumn,
   TimeseriesGrouping,
   D3M_INDEX_FIELD,
-  SummaryMode
+  SummaryMode,
+  DatasetState
 } from "../store/dataset/index";
 import {
   Solution,
@@ -52,6 +53,7 @@ export const PREDICTED_SUFFIX = "_predicted";
 export const ERROR_SUFFIX = "_error";
 
 export const NUM_PER_PAGE = 10;
+export const NUM_PER_TARGET_PAGE = 9;
 
 export const DATAMART_PROVENANCE_NYU = "NYU";
 export const DATAMART_PROVENANCE_ISI = "ISI";
@@ -271,6 +273,18 @@ export function fetchResultExemplars(
   return new Promise(res => res());
 }
 
+export function minimumRouteKey(): string {
+  return btoa(
+    JSON.stringify(routeGetters.getRouteDataset(store)) +
+      JSON.stringify(routeGetters.getRouteHighlight(store)) +
+      JSON.stringify(routeGetters.getRouteFilters(store)) +
+      JSON.stringify(routeGetters.getDataMode(store)) +
+      JSON.stringify(routeGetters.getDecodedVarModes(store)) +
+      +"ranked" +
+      JSON.stringify(routeGetters.getRouteIsTrainingVariablesRanked)
+  );
+}
+
 export function updateSummaries(
   summary: VariableSummary,
   summaries: VariableSummary[]
@@ -283,6 +297,45 @@ export function updateSummaries(
   } else {
     summaries.push(Object.freeze(summary));
   }
+}
+
+export function updateSummariesPerVariable(
+  summary: VariableSummary,
+  variableSummaryDictionary: Dictionary<Dictionary<VariableSummary>>
+) {
+  const routeKey = minimumRouteKey();
+  const summaryKey = summary.key;
+  // check for existing summaries for that variable, if not, instantiate
+  if (!variableSummaryDictionary[summaryKey]) {
+    Vue.set(variableSummaryDictionary, summaryKey, {});
+  }
+  Vue.set(
+    variableSummaryDictionary[summaryKey],
+    routeKey,
+    Object.freeze(summary)
+  );
+}
+
+export function sortSummariesByVariables(
+  summaries: VariableSummary[],
+  variables: Variable[]
+) {
+  summaries.sort((a, b) => {
+    return (
+      variables.findIndex(v => v.colName === a.key) -
+      variables.findIndex(v => v.colName === b.key)
+    );
+  });
+}
+
+export function sortSummaries(
+  summaries: VariableSummary[],
+  variables: Variable[],
+  ranked: boolean
+) {
+  ranked
+    ? sortSummariesByImportance(summaries, variables)
+    : sortSummariesByVariables(summaries, variables);
 }
 
 export function removeSummary(

@@ -12,7 +12,12 @@ import {
   BandCombination,
   TimeSeriesValue
 } from "./index";
-import { updateSummaries, isDatamartProvenance } from "../../util/data";
+import {
+  updateSummaries,
+  updateSummariesPerVariable,
+  isDatamartProvenance,
+  sortSummaries
+} from "../../util/data";
 import {
   GEOCOORDINATE_TYPE,
   LONGITUDE_TYPE,
@@ -175,6 +180,10 @@ export const mutations = {
     summary: VariableSummary
   ) {
     updateSummaries(summary, state.includedSet.variableSummaries);
+    updateSummariesPerVariable(
+      summary,
+      state.includedSet.variableSummariesByKey
+    );
   },
 
   updateExcludedVariableSummaries(
@@ -182,6 +191,10 @@ export const mutations = {
     summary: VariableSummary
   ) {
     updateSummaries(summary, state.excludedSet.variableSummaries);
+    updateSummariesPerVariable(
+      summary,
+      state.excludedSet.variableSummariesByKey
+    );
   },
 
   clearVariableSummaries(state: DatasetState) {
@@ -324,5 +337,27 @@ export const mutations = {
 
   updateBands(state: DatasetState, bands: BandCombination[]) {
     state.bands = bands;
+  },
+
+  sortIncludedSummaries(
+    state: DatasetState,
+    args: { variables: Variable[]; ranked: boolean }
+  ) {
+    sortSummaries(
+      state.includedSet.variableSummaries,
+      args.variables,
+      args.ranked
+    );
+  },
+
+  sortExcludedSummaries(
+    state: DatasetState,
+    args: { variables: Variable[]; ranked: boolean }
+  ) {
+    sortSummaries(
+      state.includedSet.variableSummaries,
+      args.variables,
+      args.ranked
+    );
   }
 };

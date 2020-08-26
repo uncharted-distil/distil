@@ -71,7 +71,7 @@ import {
   SELECT_TRAINING_ROUTE
 } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
-import { filterSummariesByDataset } from "../util/data";
+import { filterSummariesByDataset, NUM_PER_TARGET_PAGE } from "../util/data";
 import { Group } from "../util/facets";
 import { createRouteEntry, varModesToString } from "../util/routes";
 import {
@@ -80,9 +80,6 @@ import {
   TIMESERIES_TYPE
 } from "../util/types";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
-
-// 9 so it makes a nice clean grid
-const NUM_TARGET_PER_PAGE = 9;
 
 export default Vue.extend({
   name: "select-target-view",
@@ -208,7 +205,7 @@ export default Vue.extend({
     },
 
     numRowsPerPage(): number {
-      return NUM_TARGET_PER_PAGE;
+      return NUM_PER_TARGET_PAGE;
     },
 
     problemDefinition(): string {
