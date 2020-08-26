@@ -56,7 +56,7 @@ export default Vue.extend({
       return this.forecast
         ? Math.min(
             min,
-            d3.min(this.forecast, (d) => d.time)
+            d3.min(this.forecast, (d) => d.time),
           )
         : min;
     },
@@ -65,7 +65,7 @@ export default Vue.extend({
       return this.forecast
         ? Math.max(
             max,
-            d3.max(this.forecast, (d) => d.time)
+            d3.max(this.forecast, (d) => d.time),
           )
         : max;
     },
@@ -231,7 +231,7 @@ export default Vue.extend({
       g.datum(
         this.displayForecast
           .filter((x) => !_.isNil(x.value))
-          .map((x) => [x.time, x.value])
+          .map((x) => [x.time, x.value]),
       );
 
       g.append("path")
@@ -254,9 +254,9 @@ export default Vue.extend({
       g.datum(
         this.displayForecast
           .filter(
-            (x) => !_.isNil(x.confidenceHigh) && !_.isNil(x.confidenceLow)
+            (x) => !_.isNil(x.confidenceHigh) && !_.isNil(x.confidenceLow),
           )
-          .map((x) => [x.time, x.confidenceHigh, x.confidenceLow])
+          .map((x) => [x.time, x.confidenceHigh, x.confidenceLow]),
       );
 
       g.append("path").attr("class", "line-confidence").attr("d", area);

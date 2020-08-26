@@ -152,7 +152,7 @@ export default Vue.extend({
       return (
         this.taskArgs &&
         !!this.taskArgs.find(
-          (t) => t === TaskTypes.REGRESSION || t === TaskTypes.FORECASTING
+          (t) => t === TaskTypes.REGRESSION || t === TaskTypes.FORECASTING,
         )
       );
     },

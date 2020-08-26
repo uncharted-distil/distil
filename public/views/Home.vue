@@ -73,7 +73,7 @@ export default Vue.extend({
   computed: {
     version(): string {
       return `version: ${appGetters.getVersionNumber(
-        this.$store
+        this.$store,
       )} at ${appGetters.getVersionTimestamp(this.$store)}`;
     },
   },

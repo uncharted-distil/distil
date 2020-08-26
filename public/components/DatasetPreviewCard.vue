@@ -56,7 +56,7 @@ export default Vue.extend({
     topVariables(): Variable[] {
       return sortVariablesByImportance(this.dataset.variables.slice(0)).slice(
         0,
-        NUM_TOP_FEATURES
+        NUM_TOP_FEATURES,
       );
     },
   },

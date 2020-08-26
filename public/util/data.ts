@@ -62,7 +62,7 @@ export const FILE_PROVENANCE = "file";
 export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
 
 export function getTimeseriesSummaryTopCategories(
-  summary: VariableSummary
+  summary: VariableSummary,
 ): string[] {
   return _.map(summary.baseline.categoryBuckets, (buckets, category) => {
     return {
@@ -76,7 +76,7 @@ export function getTimeseriesSummaryTopCategories(
 
 export function getTimeseriesGroupingsFromFields(
   variables: Variable[],
-  fields: Dictionary<TableColumn>
+  fields: Dictionary<TableColumn>,
 ): TimeseriesGrouping[] {
   // Check to see if any of the fields are the ID column of one of our variables
   const fieldKeys = _.map(fields, (_, key) => key);
@@ -86,7 +86,7 @@ export function getTimeseriesGroupingsFromFields(
         v.grouping &&
         v.grouping.idCol &&
         v.colType === TIMESERIES_TYPE &&
-        _.includes(fieldKeys, v.grouping.idCol)
+        _.includes(fieldKeys, v.grouping.idCol),
     )
     .map((v) => v.grouping as TimeseriesGrouping);
 }
@@ -97,7 +97,7 @@ export function getComposedVariableKey(keys: string[]): string {
 
 export function getTimeseriesAnalysisIntervals(
   timeVar: Variable,
-  range: number
+  range: number,
 ): any[] {
   const SECONDS_VALUE = 1;
   const MINUTES_VALUE = SECONDS_VALUE * 60;
@@ -174,7 +174,7 @@ export function getTimeseriesAnalysisIntervals(
 export function fetchSummaryExemplars(
   datasetName: string,
   variableName: string,
-  summary: VariableSummary
+  summary: VariableSummary,
 ) {
   const variables = datasetGetters.getVariables(store);
   const variable = variables.find((v) => v.colName === variableName);
@@ -208,7 +208,7 @@ export function fetchSummaryExemplars(
             } else {
               return datasetActions.fetchTimeseries(store, args);
             }
-          })
+          }),
         );
       }
     } else {
@@ -229,7 +229,7 @@ export function fetchResultExemplars(
   variableName: string,
   key: string,
   solutionId: string,
-  summary: VariableSummary
+  summary: VariableSummary,
 ) {
   const variables = datasetGetters.getVariables(store);
   const variable = variables.find((v) => v.colName === variableName);
@@ -256,7 +256,7 @@ export function fetchResultExemplars(
               timeseriesId: exemplar,
               solutionId: solutionId,
             });
-          })
+          }),
         );
       }
     } else {
@@ -280,13 +280,13 @@ export function minimumRouteKey(): string {
       JSON.stringify(routeGetters.getDataMode(store)) +
       JSON.stringify(routeGetters.getDecodedVarModes(store)) +
       +"ranked" +
-      JSON.stringify(routeGetters.getRouteIsTrainingVariablesRanked)
+      JSON.stringify(routeGetters.getRouteIsTrainingVariablesRanked),
   );
 }
 
 export function updateSummaries(
   summary: VariableSummary,
-  summaries: VariableSummary[]
+  summaries: VariableSummary[],
 ) {
   const index = _.findIndex(summaries, (s) => {
     return s.dataset === summary.dataset && s.key === summary.key;
@@ -300,7 +300,7 @@ export function updateSummaries(
 
 export function updateSummariesPerVariable(
   summary: VariableSummary,
-  variableSummaryDictionary: Dictionary<Dictionary<VariableSummary>>
+  variableSummaryDictionary: Dictionary<Dictionary<VariableSummary>>,
 ) {
   const routeKey = minimumRouteKey();
   const summaryKey = summary.key;
@@ -311,13 +311,13 @@ export function updateSummariesPerVariable(
   Vue.set(
     variableSummaryDictionary[summaryKey],
     routeKey,
-    Object.freeze(summary)
+    Object.freeze(summary),
   );
 }
 
 export function sortSummariesByVariables(
   summaries: VariableSummary[],
-  variables: Variable[]
+  variables: Variable[],
 ) {
   summaries.sort((a, b) => {
     return (
@@ -330,7 +330,7 @@ export function sortSummariesByVariables(
 export function sortSummaries(
   summaries: VariableSummary[],
   variables: Variable[],
-  ranked: boolean
+  ranked: boolean,
 ) {
   ranked
     ? sortSummariesByImportance(summaries, variables)
@@ -339,7 +339,7 @@ export function sortSummaries(
 
 export function removeSummary(
   summary: VariableSummary,
-  summaries: VariableSummary[]
+  summaries: VariableSummary[],
 ) {
   const index = _.findIndex(summaries, (s) => {
     return s.dataset === summary.dataset && s.key === summary.key;
@@ -355,7 +355,7 @@ export function filterVariablesByFeature(variables: Variable[]): Variable[] {
 
 export function filterSummariesByDataset(
   summaries: VariableSummary[],
-  dataset: string
+  dataset: string,
 ): VariableSummary[] {
   return summaries.filter((summary) => {
     return summary.dataset === dataset && !hasComputedVarPrefix(summary.key);
@@ -377,7 +377,7 @@ export function formatSlot(key: string, slotType: string): string {
 }
 
 export function formatFieldsAsArray(
-  fields: Dictionary<TableColumn>
+  fields: Dictionary<TableColumn>,
 ): TableColumn[] {
   return _.map(fields, (field) => field);
 }
@@ -386,7 +386,7 @@ export function createPendingSummary(
   key: string,
   label: string,
   description: string,
-  dataset: string
+  dataset: string,
 ): VariableSummary {
   return {
     key: key,
@@ -403,7 +403,7 @@ export function createErrorSummary(
   key: string,
   label: string,
   dataset: string,
-  error: any
+  error: any,
 ): VariableSummary {
   return {
     key: key,
@@ -425,7 +425,7 @@ export async function fetchSolutionResultSummary(
   resultSummaries: VariableSummary[],
   updateFunction: (arg: ResultsContext, summary: VariableSummary) => void,
   filterParams: FilterParams,
-  varMode: SummaryMode
+  varMode: SummaryMode,
 ): Promise<any> {
   const dataset = solution.dataset;
   const solutionId = solution.solutionId;
@@ -434,7 +434,7 @@ export async function fetchSolutionResultSummary(
 
   const exists = _.find(
     resultSummaries,
-    (v) => v.dataset === dataset && v.key === key
+    (v) => v.dataset === dataset && v.key === key,
   );
   if (!exists) {
     // add placeholder
@@ -455,7 +455,7 @@ export async function fetchSolutionResultSummary(
   try {
     const response = await axios.post(
       completeEndpoint,
-      filterParams ? filterParams : {}
+      filterParams ? filterParams : {},
     );
     // save the histogram data
     const summary = response.data.summary;
@@ -478,14 +478,14 @@ export async function fetchPredictionResultSummary(
   resultSummaries: VariableSummary[],
   updateFunction: (arg: PredictionContext, summary: VariableSummary) => void,
   filterParams: FilterParams,
-  varMode: SummaryMode
+  varMode: SummaryMode,
 ): Promise<any> {
   const dataset = predictions.dataset;
   const resultId = predictions.resultId;
 
   const exists = _.find(
     resultSummaries,
-    (v) => v.dataset === dataset && v.key === key
+    (v) => v.dataset === dataset && v.key === key,
   );
   if (!exists) {
     // add placeholder
@@ -502,7 +502,7 @@ export async function fetchPredictionResultSummary(
   try {
     const response = await axios.post(
       `${endpoint}/${resultId}/${varMode}`,
-      filterParams ? filterParams : {}
+      filterParams ? filterParams : {},
     );
     const summary = <VariableSummary>response.data.summary;
     summary.dataset = dataset;
@@ -516,7 +516,7 @@ export async function fetchPredictionResultSummary(
 export function filterVariablesByPage(
   pageIndex: number,
   numPerPage: number,
-  variables: VariableSummary[]
+  variables: VariableSummary[],
 ): VariableSummary[] {
   if (variables.length > numPerPage) {
     const firstIndex = numPerPage * (pageIndex - 1);
@@ -536,7 +536,7 @@ export function getVariableRanking(v: Variable): number {
 
 export function getSolutionVariableRanking(
   v: Variable,
-  solutionID: string
+  solutionID: string,
 ): number {
   const solutionRanks = resultsGetters.getVariableRankings(store)[solutionID];
   if (solutionRanks) {
@@ -554,7 +554,7 @@ export function sortVariablesByImportance(variables: Variable[]): Variable[] {
 
 export function sortSummariesByImportance(
   summaries: VariableSummary[],
-  variables: Variable[]
+  variables: Variable[],
 ): VariableSummary[] {
   // create importance lookup map
   const importance: Dictionary<number> = {};
@@ -571,14 +571,14 @@ export function sortSummariesByImportance(
 export function sortSolutionSummariesByImportance(
   summaries: VariableSummary[],
   variables: Variable[],
-  solutionID: string
+  solutionID: string,
 ): VariableSummary[] {
   // create importance lookup map
   const importance: Dictionary<number> = {};
   variables.forEach((variable) => {
     importance[variable.colName] = getSolutionVariableRanking(
       variable,
-      solutionID
+      solutionID,
     );
   });
   // sort by importance
@@ -707,7 +707,7 @@ export function explainCellColor(
   weight: number,
   data: any,
   tableFields: TableColumn[],
-  dataItems: TableRow[]
+  dataItems: TableRow[],
 ): string {
   if (!weight || !hasMultipleFeatures(tableFields)) {
     return "";
@@ -715,7 +715,7 @@ export function explainCellColor(
 
   const absoluteWeight = Math.abs(
     weight /
-      d3mRowWeightExtrema(tableFields, dataItems)[data.item[D3M_INDEX_FIELD]]
+      d3mRowWeightExtrema(tableFields, dataItems)[data.item[D3M_INDEX_FIELD]],
   );
 
   return `background: ${colorByWeight(absoluteWeight)}`;
@@ -737,7 +737,7 @@ function hasMultipleFeatures(tableFields: TableColumn[]): boolean {
 
 function d3mRowWeightExtrema(
   tableFields: TableColumn[],
-  dataItems: TableRow[]
+  dataItems: TableRow[],
 ): Dictionary<number> {
   return dataItems.reduce((extremas, item) => {
     extremas[item[D3M_INDEX_FIELD]] = tableFields.reduce((rowMax, tableCol) => {
@@ -753,7 +753,7 @@ function d3mRowWeightExtrema(
 }
 
 export function getImageFields(
-  fields: Dictionary<TableColumn>
+  fields: Dictionary<TableColumn>,
 ): { key: string; type: string }[] {
   // find basic image fields
   const imageFields = _.map(fields, (field, key) => {
@@ -772,7 +772,7 @@ export function getImageFields(
         v.grouping &&
         v.grouping.idCol &&
         v.colType === REMOTE_SENSING_TYPE &&
-        _.includes(fieldKeys, v.grouping.idCol)
+        _.includes(fieldKeys, v.grouping.idCol),
     )
     .map((v) => ({ key: v.grouping.idCol, type: v.colType }));
 
@@ -781,7 +781,7 @@ export function getImageFields(
 }
 
 export function getListFields(
-  fields: Dictionary<TableColumn>
+  fields: Dictionary<TableColumn>,
 ): { key: string; type: string }[] {
   return _.filter(fields, (f) => isListType(f.type)).map((f) => ({
     key: f.key,

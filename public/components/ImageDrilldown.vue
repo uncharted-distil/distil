@@ -117,7 +117,7 @@ export default Vue.extend({
         // Calculate how much bigger we can make the image to fit in the modal box.
         const ratio = Math.min(
           IMAGE_MAX_SIZE / Math.max(this.image.height, this.image.width),
-          IMAGE_MAX_ZOOM
+          IMAGE_MAX_ZOOM,
         );
 
         // Update the image to be bigger, but not bigger than the modal box.

@@ -91,7 +91,7 @@ export default Vue.extend({
       return updateTableRowSelection(
         items,
         this.rowSelection,
-        this.instanceName
+        this.instanceName,
       );
     },
 
@@ -124,14 +124,14 @@ export default Vue.extend({
           this.$router,
           this.instanceName,
           this.rowSelection,
-          event.row[D3M_INDEX_FIELD]
+          event.row[D3M_INDEX_FIELD],
         );
       } else {
         removeRowSelection(
           this.$router,
           this.instanceName,
           this.rowSelection,
-          event.row[D3M_INDEX_FIELD]
+          event.row[D3M_INDEX_FIELD],
         );
       }
     },

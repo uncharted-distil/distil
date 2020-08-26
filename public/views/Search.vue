@@ -189,7 +189,7 @@ export default Vue.extend({
 
       // Only display the models using dataset that the search bar has found.
       return models.filter((model) =>
-        this.filteredDatasetsIds.has(model.datasetId)
+        this.filteredDatasetsIds.has(model.datasetId),
       );
     },
 

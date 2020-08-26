@@ -157,7 +157,7 @@ export default Vue.extend({
             task: routeGetters.getRouteTask(this.$store),
             dataMode: dataModeDefault,
             varModes: varModesToString(
-              routeGetters.getDecodedVarModes(this.$store)
+              routeGetters.getDecodedVarModes(this.$store),
             ),
             modelLimit: routeGetters.getModelLimit(this.$store),
             modelTimeLimit: routeGetters.getModelTimeLimit(this.$store),

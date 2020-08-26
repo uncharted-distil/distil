@@ -54,7 +54,7 @@ import {
   getSubSelectionValues,
   hasBaseline,
   hasSummary,
-  facetTypeChangeState
+  facetTypeChangeState,
 } from "../../util/facets";
 import { DATETIME_FILTER } from "../../util/filters";
 import { DATETIME_UNIX_ADJUSTMENT } from "../../util/types";
@@ -66,7 +66,7 @@ export default Vue.extend({
 
   components: {
     TypeChangeMenu,
-    ImportanceBars
+    ImportanceBars,
   },
 
   directives: {
@@ -75,7 +75,7 @@ export default Vue.extend({
       if (binding.value) {
         el.appendChild(binding.value);
       }
-    }
+    },
   },
 
   props: {
@@ -84,14 +84,14 @@ export default Vue.extend({
     html: [
       String as () => string,
       Object as () => any,
-      Function as () => Function
+      Function as () => Function,
     ],
     expandCollapse: Function as () => Function,
     highlight: Object as () => Highlight,
     enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
-    importance: Number as () => number
+    importance: Number as () => number,
   },
 
   computed: {
@@ -115,20 +115,20 @@ export default Vue.extend({
           values.push({
             ratio: count / this.max,
             label: bucketDate,
-            tooltip: `Date:\t\t${bucketDate}\nTotal Count:\t${count}`
+            tooltip: `Date:\t\t${bucketDate}\nTotal Count:\t${count}`,
           });
         }
       }
       return {
         label: summary.label.toUpperCase(),
-        values
+        values,
       };
     },
     facetEnableTypeChanges(): boolean {
       return facetTypeChangeState(
         this.summary.dataset,
         this.summary.key,
-        this.enabledTypeChanges
+        this.enabledTypeChanges,
       );
     },
     headerClass(): string {
@@ -168,15 +168,12 @@ export default Vue.extend({
         highlightAsSelection.push(buckets.length);
       }
       return highlightAsSelection.length > 0 ? highlightAsSelection : null;
-    }
+    },
   },
 
   methods: {
     numToDate(key: any): string {
-      return moment
-        .unix(_.toNumber(key))
-        .utc()
-        .format("YYYY/MM/DD");
+      return moment.unix(_.toNumber(key)).utc().format("YYYY/MM/DD");
     },
     dateToNum(dateStr: string): number {
       return Date.parse(dateStr) / DATETIME_UNIX_ADJUSTMENT;
@@ -219,7 +216,7 @@ export default Vue.extend({
       return {
         from: lowerBound,
         to: upperBound,
-        type: DATETIME_FILTER
+        type: DATETIME_FILTER,
       };
     },
     updateSelection(event) {
@@ -234,7 +231,7 @@ export default Vue.extend({
           this.instanceName,
           this.summary.key,
           this.getRange(facet),
-          this.summary.dataset
+          this.summary.dataset,
         );
       }
     },
@@ -248,13 +245,13 @@ export default Vue.extend({
       if (this.html) {
         return _.isFunction(this.html)
           ? this.html({
-              colName: this.summary.key
+              colName: this.summary.key,
             })
           : this.html;
       }
       return null;
-    }
-  }
+    },
+  },
 });
 </script>
 

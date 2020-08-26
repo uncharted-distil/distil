@@ -70,7 +70,7 @@ export function getSolutionRequestIndex(requestId: string) {
 // Utility function to return all solution results associated with a given request ID
 export function getSolutionsBySolutionRequestIds(
   solutions: Solution[],
-  requestIds: string[]
+  requestIds: string[],
 ): Solution[] {
   const ids = new Set(requestIds);
   return solutions.filter((result) => ids.has(result.requestId));
@@ -79,7 +79,7 @@ export function getSolutionsBySolutionRequestIds(
 // Returns a specific solution result given a request and its solution id.
 export function getSolutionById(
   solutions: Solution[],
-  solutionId: string
+  solutionId: string,
 ): Solution {
   if (!solutionId) {
     return null;
@@ -91,7 +91,7 @@ export function isTopSolutionByScore(
   solutions: Solution[],
   requestId: string,
   solutionId: string,
-  n: number
+  n: number,
 ): boolean {
   if (!solutionId) {
     return null;
@@ -112,7 +112,7 @@ export async function openModelSolution(
     fittedSolutionId?: string;
     solutionId?: string;
     variableFeatures: string[];
-  }
+  },
 ) {
   let task = routeGetters.getRouteTask(store);
   if (!task) {

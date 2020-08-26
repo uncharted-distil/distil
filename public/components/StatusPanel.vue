@@ -106,7 +106,8 @@ export default Vue.extend({
         .getPendingRequests(this.$store)
         .find(
           (request) =>
-            request.dataset === this.dataset && request.type === this.statusType
+            request.dataset === this.dataset &&
+            request.type === this.statusType,
         );
       return request;
     },
@@ -299,7 +300,7 @@ export default Vue.extend({
       // update variables
       // pull the updated dataset, vars, and summaries
       const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
-        this.$store
+        this.$store,
       );
       const highlight = routeGetters.getDecodedHighlight(this.$store);
       for (const [k, v] of varModesMap) {

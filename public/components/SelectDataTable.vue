@@ -135,7 +135,7 @@ export default Vue.extend({
       return updateTableRowSelection(
         items,
         this.rowSelection,
-        this.instanceName
+        this.instanceName,
       );
     },
 
@@ -202,7 +202,7 @@ export default Vue.extend({
           this.$router,
           this.instanceName,
           this.rowSelection,
-          row[D3M_INDEX_FIELD]
+          row[D3M_INDEX_FIELD],
         );
       } else {
         appActions.logUserEvent(this.$store, {
@@ -215,7 +215,7 @@ export default Vue.extend({
           this.$router,
           this.instanceName,
           this.rowSelection,
-          row[D3M_INDEX_FIELD]
+          row[D3M_INDEX_FIELD],
         );
       }
     },

@@ -105,7 +105,7 @@ export default Vue.extend({
 
     async makeRequest() {
       const deconflictedName = generateUniqueDatasetName(
-        removeExtension(this.file.name)
+        removeExtension(this.file.name),
       );
 
       this.uploadStart({
@@ -127,7 +127,7 @@ export default Vue.extend({
         };
         const response = await requestActions.createPredictRequest(
           this.$store,
-          requestMsg
+          requestMsg,
         );
         this.uploadFinish(null, response);
       } catch (err) {
@@ -155,11 +155,11 @@ export default Vue.extend({
       if (this.uploadStatus !== "error" && !response.complete) {
         const predictionDataset = getPredictionsById(
           requestGetters.getPredictions(this.$store),
-          response.produceRequestId
+          response.produceRequestId,
         ).dataset;
 
         const varModes = varModesToString(
-          routeGetters.getDecodedVarModes(this.$store)
+          routeGetters.getDecodedVarModes(this.$store),
         );
 
         const routeArgs = {

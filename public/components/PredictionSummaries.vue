@@ -132,7 +132,7 @@ export default Vue.extend({
         });
         const dataset = getPredictionsById(
           requestGetters.getPredictions(this.$store),
-          requestId
+          requestId,
         ).dataset;
         const routeEntry = overlayRouteEntry(this.$route, {
           produceRequestId: requestId,
@@ -147,7 +147,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: string,
-      dataset: string
+      dataset: string,
     ) {
       if (key && value) {
         // If this isn't the currently selected prediction set, first update it.
@@ -179,7 +179,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: { from: number; to: number },
-      dataset: string
+      dataset: string,
     ) {
       if (!this.highlight || this.highlight.key !== key) {
         // If this isn't the currently selected prediction set, first update it.
@@ -207,7 +207,7 @@ export default Vue.extend({
       context: string,
       key: string,
       value: { from: { label: string[] }; to: { label: string[] } },
-      dataset: string
+      dataset: string,
     ) {
       updateHighlight(this.$router, {
         context: context,
@@ -227,7 +227,7 @@ export default Vue.extend({
     active(summaryKey: string): string {
       const predictions = getPredictionsById(
         requestGetters.getRelevantPredictions(this.$store),
-        this.produceRequestId
+        this.produceRequestId,
       );
       return summaryKey === predictions.predictedKey
         ? "prediction-group-selected prediction-group"
@@ -237,7 +237,7 @@ export default Vue.extend({
     datasetByRequestId(requestId: string): string {
       return getPredictionsById(
         requestGetters.getRelevantPredictions(this.$store),
-        requestId
+        requestId,
       ).dataset;
     },
   },

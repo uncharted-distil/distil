@@ -120,13 +120,13 @@ export default Vue.extend({
 
     dataItems(): TableRow[] {
       return predictionsGetters.getIncludedPredictionTableDataItems(
-        this.$store
+        this.$store,
       );
     },
 
     dataFields(): Dictionary<TableColumn> {
       return predictionsGetters.getIncludedPredictionTableDataFields(
-        this.$store
+        this.$store,
       );
     },
 
@@ -171,7 +171,7 @@ export default Vue.extend({
       return updateTableRowSelection(
         this.dataItems,
         this.rowSelection,
-        this.instanceName
+        this.instanceName,
       );
     },
 

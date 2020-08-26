@@ -334,7 +334,7 @@ export function isEquivalentType(a: string, b: string): boolean {
   const equiv = EQUIV_TYPES[a];
   if (!equiv) {
     console.warn(
-      `Unable to find equivalent types for type '${a}', type unrecognized`
+      `Unable to find equivalent types for type '${a}', type unrecognized`,
     );
     return false;
   }
@@ -448,7 +448,7 @@ export function isImageType(type: string): boolean {
 
 export function hasComputedVarPrefix(varName: string): boolean {
   return Boolean(
-    COMPUTED_VAR_PREFIXES.find((prefix) => varName.indexOf(prefix) === 0)
+    COMPUTED_VAR_PREFIXES.find((prefix) => varName.indexOf(prefix) === 0),
   );
 }
 
@@ -491,7 +491,7 @@ export function isJoinable(type: string, otherType: string): boolean {
  */
 export function isUnsupportedTargetVar(
   varName: string,
-  varType: string
+  varType: string,
 ): boolean {
   return UNSUPPORTED_TARGET_TYPES.has(varType) || hasComputedVarPrefix(varName);
 }
@@ -507,7 +507,7 @@ export function isRankableVariableType(varType: string): boolean {
 export function addTypeSuggestions(types: any[]): string[] {
   const suggestions = types.reduce((allSuggestions, type) => {
     allSuggestions = allSuggestions.concat(
-      getSuggestionsByType(normalizedEquivalentType(type))
+      getSuggestionsByType(normalizedEquivalentType(type)),
     );
     return allSuggestions;
   }, []);
@@ -531,7 +531,7 @@ export function getLabelFromType(schemaType: string) {
     return TYPES_TO_LABELS[schemaType];
   }
   console.warn(
-    `No label exists for type \`${schemaType}\` - using type as default label`
+    `No label exists for type \`${schemaType}\` - using type as default label`,
   );
   return schemaType;
 }

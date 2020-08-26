@@ -537,7 +537,7 @@ export default Vue.extend({
             color: "#255DCC",
             weight: 1,
             bubblingMouseEvents: false,
-          }
+          },
         );
         rect.on("click", (e) => {
           this.setSelection(e.target);
@@ -609,14 +609,14 @@ export default Vue.extend({
           this.$router,
           this.instanceName,
           this.rowSelection,
-          row[D3M_INDEX_FIELD]
+          row[D3M_INDEX_FIELD],
         );
       } else {
         removeRowSelection(
           this.$router,
           this.instanceName,
           this.rowSelection,
-          row[D3M_INDEX_FIELD]
+          row[D3M_INDEX_FIELD],
         );
       }
     },
@@ -627,7 +627,7 @@ export default Vue.extend({
         const markerElem = marker.getElement();
         const isSelected = isRowSelected(
           this.rowSelection,
-          row[D3M_INDEX_FIELD]
+          row[D3M_INDEX_FIELD],
         );
         markerElem.classList.toggle("selected", isSelected);
       });
@@ -678,7 +678,7 @@ export default Vue.extend({
             lat: this.mapCenter[1],
             lng: this.mapCenter[0],
           },
-          { animate: true }
+          { animate: true },
         );
       }
 
@@ -805,7 +805,7 @@ export default Vue.extend({
 
         this.markers[hash] = layerGroup;
         layerGroup.on("add", () =>
-          this.updateMarkerSelection(layerGroup.getLayers())
+          this.updateMarkerSelection(layerGroup.getLayers()),
         );
 
         // Add the point to the layer group.
@@ -837,7 +837,7 @@ export default Vue.extend({
 
     rowSelection() {
       const markers = _.map(this.markers, (markerLayer) =>
-        markerLayer.getLayers()
+        markerLayer.getLayers(),
       ).reduce((prev, cur) => [...prev, ...cur], []);
       this.updateMarkerSelection(markers);
     },

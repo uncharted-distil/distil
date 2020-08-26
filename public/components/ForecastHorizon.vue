@@ -157,7 +157,7 @@ export default Vue.extend({
       try {
         const response = await requestActions.createPredictRequest(
           this.$store,
-          requestMsg
+          requestMsg,
         );
 
         this.redirectToPredictionPage(response);
@@ -173,11 +173,11 @@ export default Vue.extend({
     redirectToPredictionPage(response: any) {
       const predictionDataset = getPredictionsById(
         requestGetters.getPredictions(this.$store),
-        response.produceRequestId
+        response.produceRequestId,
       ).dataset;
 
       const varModes = varModesToString(
-        routeGetters.getDecodedVarModes(this.$store)
+        routeGetters.getDecodedVarModes(this.$store),
       );
 
       const routeArgs = {

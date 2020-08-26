@@ -39,7 +39,7 @@ export function decodeHighlights(highlight: string): Highlight {
 
 export function createFilterFromHighlight(
   highlight: Highlight,
-  mode: string
+  mode: string,
 ): Filter {
   if (!highlight || highlight.value === null || highlight.value === undefined) {
     return null;
@@ -133,7 +133,7 @@ export function createFilterFromHighlight(
 export function addHighlightToFilterParams(
   filterParams: FilterParams,
   highlight: Highlight,
-  mode: string = INCLUDE_FILTER
+  mode: string = INCLUDE_FILTER,
 ): FilterParams {
   const params = _.cloneDeep(filterParams);
   const highlightFilter = createFilterFromHighlight(highlight, mode);

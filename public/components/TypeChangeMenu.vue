@@ -274,7 +274,7 @@ export default Vue.extend({
           {
             type: GEOCOORDINATE_TYPE,
             label: "Geocoordinate...",
-          }
+          },
         );
       }
       return options;
@@ -304,7 +304,7 @@ export default Vue.extend({
       const flatSuggestedTypes = this.suggestedTypes.map((st) => st.type);
       const missingSuggestions = addTypeSuggestions(flatSuggestedTypes);
       const nonSchemaSuggestions = this.suggestedNonSchemaTypes.map(
-        (suggested) => normalizedEquivalentType(suggested.type)
+        (suggested) => normalizedEquivalentType(suggested.type),
       );
       const menuSuggestions = _.uniq([
         ...nonSchemaSuggestions,

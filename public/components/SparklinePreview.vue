@@ -109,7 +109,7 @@ export default Vue.extend({
 
       if (this.predictionsId) {
         const timeseries = predictionsGetters.getPredictedTimeseries(
-          this.$store
+          this.$store,
         );
         const predictions = timeseries[this.predictionsId];
         if (!predictions) {
@@ -202,7 +202,7 @@ export default Vue.extend({
         return solutions.isDateTime[this.timeseriesId];
       } else if (this.predictionsId) {
         const timeseries = predictionsGetters.getPredictedTimeseries(
-          this.$store
+          this.$store,
         );
         const datasets = timeseries[this.truthDataset];
         if (!datasets) {

@@ -241,19 +241,19 @@ export default Vue.extend({
       if (this.forecastExtrema) {
         minX = Math.min(
           this.timeseriesExtrema.x.min,
-          this.forecastExtrema.x.min
+          this.forecastExtrema.x.min,
         );
         maxX = Math.max(
           this.timeseriesExtrema.x.max,
-          this.forecastExtrema.x.max
+          this.forecastExtrema.x.max,
         );
         minY = Math.min(
           this.timeseriesExtrema.y.min,
-          this.forecastExtrema.y.min
+          this.forecastExtrema.y.min,
         );
         maxY = Math.max(
           this.timeseriesExtrema.y.max,
-          this.forecastExtrema.y.max
+          this.forecastExtrema.y.max,
         );
       }
 
@@ -300,7 +300,7 @@ export default Vue.extend({
         .append("g")
         .attr(
           "transform",
-          `translate(${this.margin.left}, ${this.margin.top})`
+          `translate(${this.margin.left}, ${this.margin.top})`,
         );
 
       // Empty values line
@@ -375,13 +375,13 @@ export default Vue.extend({
         .append("g")
         .attr(
           "transform",
-          `translate(${this.margin.left}, ${this.margin.top})`
+          `translate(${this.margin.left}, ${this.margin.top})`,
         );
 
       g.datum(
         this.displayForecast
           .filter((x) => !_.isNil(x.value))
-          .map((x) => [x.time, x.value])
+          .map((x) => [x.time, x.value]),
       );
 
       g.append("path").attr("class", "sparkline-forecast").attr("d", line);
@@ -415,19 +415,19 @@ export default Vue.extend({
       if (this.forecastExtrema) {
         minX = Math.min(
           this.timeseriesExtrema.x.min,
-          this.forecastExtrema.x.min
+          this.forecastExtrema.x.min,
         );
         maxX = Math.max(
           this.timeseriesExtrema.x.max,
-          this.forecastExtrema.x.max
+          this.forecastExtrema.x.max,
         );
         minY = Math.min(
           this.timeseriesExtrema.y.min,
-          this.forecastExtrema.y.min
+          this.forecastExtrema.y.min,
         );
         maxY = Math.max(
           this.timeseriesExtrema.y.max,
-          this.forecastExtrema.y.max
+          this.forecastExtrema.y.max,
         );
       }
 

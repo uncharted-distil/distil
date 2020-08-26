@@ -238,7 +238,7 @@ export default Vue.extend({
 
       const activeFilterName = this.activeFilter.key;
       const availableVariablesNames = this.availableVariables.map(
-        (v) => v.colName
+        (v) => v.colName,
       );
 
       return availableVariablesNames.includes(activeFilterName);
@@ -302,7 +302,7 @@ export default Vue.extend({
       } else {
         filter = createFilterFromRowSelection(
           this.rowSelection,
-          EXCLUDE_FILTER
+          EXCLUDE_FILTER,
         );
       }
 
@@ -334,7 +334,7 @@ export default Vue.extend({
       } else {
         filter = createFilterFromRowSelection(
           this.rowSelection,
-          INCLUDE_FILTER
+          INCLUDE_FILTER,
         );
       }
 

@@ -31,7 +31,7 @@ function getHost() {
 
 function establishConnection(
   conn: Connection,
-  callback: (x: any, c: Connection) => void
+  callback: (x: any, c: Connection) => void,
 ) {
   conn.socket = new WebSocket(`${getHost()}${conn.url}`);
   // on open
@@ -84,12 +84,12 @@ function establishConnection(
     // log close only if conn was ever open
     if (conn.isOpen) {
       console.warn(
-        `WebSocket connection on /${conn.url} lost, attempting to reconnect in ${RETRY_INTERVAL_MS}ms`
+        `WebSocket connection on /${conn.url} lost, attempting to reconnect in ${RETRY_INTERVAL_MS}ms`,
       );
     } else {
       callback(
         new Error(`Unable to establish websocket connection on /${conn.url}`),
-        null
+        null,
       );
       return;
     }
