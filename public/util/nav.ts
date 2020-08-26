@@ -11,7 +11,7 @@ import {
   SELECT_TARGET_ROUTE,
   SELECT_TRAINING_ROUTE,
   RESULTS_ROUTE,
-  PREDICTION_ROUTE
+  PREDICTION_ROUTE,
 } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
 

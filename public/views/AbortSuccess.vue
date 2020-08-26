@@ -11,7 +11,7 @@
 import Vue from "vue";
 
 export default Vue.extend({
-  name: "abort-success"
+  name: "abort-success",
 });
 </script>
 

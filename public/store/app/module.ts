@@ -10,7 +10,7 @@ export const appModule: Module<AppState, DistilState> = {
   state: state,
   getters: moduleGetters,
   actions: moduleActions,
-  mutations: moduleMutations
+  mutations: moduleMutations,
 };
 
 const { commit, read, dispatch } = getStoreAccessors<AppState, DistilState>(
@@ -25,7 +25,7 @@ export const getters = {
   getProblemDataset: read(moduleGetters.getProblemDataset),
   getProblemTarget: read(moduleGetters.getProblemTarget),
   getProblemMetrics: read(moduleGetters.getProblemMetrics),
-  getStatusPanelState: read(moduleGetters.getStatusPanelState)
+  getStatusPanelState: read(moduleGetters.getStatusPanelState),
 };
 
 // typed actions
@@ -38,7 +38,7 @@ export const actions = {
     moduleActions.openStatusPanelWithContentType
   ),
   closeStatusPanel: dispatch(moduleActions.closeStatusPanel),
-  logUserEvent: dispatch(moduleActions.logUserEvent)
+  logUserEvent: dispatch(moduleActions.logUserEvent),
 };
 
 // type mutators
@@ -51,5 +51,5 @@ export const mutations = {
   setProblemMetrics: commit(moduleMutations.setProblemMetrics),
   setStatusPanelContentType: commit(moduleMutations.setStatusPanelContentType),
   openStatusPanel: commit(moduleMutations.openStatusPanel),
-  closeStatusPanel: commit(moduleMutations.closeStatusPanel)
+  closeStatusPanel: commit(moduleMutations.closeStatusPanel),
 };

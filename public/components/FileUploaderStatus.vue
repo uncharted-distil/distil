@@ -23,15 +23,15 @@ export default Vue.extend({
   props: {
     status: {
       type: String,
-      required: true
+      required: true,
     },
     filename: {
-      type: String
+      type: String,
     },
     datasetID: {
-      type: String
-    }
-  }
+      type: String,
+    },
+  },
 });
 </script>
 

@@ -8,7 +8,7 @@ import {
   TableRow,
   TableColumn,
   TimeSeries,
-  BandCombination
+  BandCombination,
 } from "./index";
 import { Dictionary } from "../../util/dict";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
@@ -33,7 +33,7 @@ export const getters = {
   },
 
   getGroupings(state: DatasetState, getters: any): Variable[] {
-    return state.variables.filter(v => v.grouping);
+    return state.variables.filter((v) => v.grouping);
   },
 
   /**
@@ -43,7 +43,7 @@ export const getters = {
   getTimeseriesGroupingVariables(state: DatasetState): string[] {
     // Get only the timeseries grouping.
     const timeseriesGrouping = state.variables.find(
-      v => v.grouping && v.grouping.type === "timeseries"
+      (v) => v.grouping && v.grouping.type === "timeseries"
     );
 
     // Return an empty array if none have been found.
@@ -60,7 +60,7 @@ export const getters = {
 
   getVariablesMap(state: DatasetState): Dictionary<Variable> {
     const map = {};
-    state.variables.forEach(variable => {
+    state.variables.forEach((variable) => {
       map[variable.colName] = variable;
       map[variable.colName.toLowerCase()] = variable;
     });
@@ -69,7 +69,7 @@ export const getters = {
 
   getVariableTypesMap(state: DatasetState): Dictionary<string> {
     const map = {};
-    state.variables.forEach(variable => {
+    state.variables.forEach((variable) => {
       map[variable.colName] = variable.colType;
       map[variable.colName.toLowerCase()] = variable.colType;
     });
@@ -118,7 +118,7 @@ export const getters = {
 
   getIncludedTableDataNumRows(state: DatasetState): number {
     return state.includedSet.tableData
-      ? state.includedSet.tableData.numRows
+      ? state.includedSet.tableData.numRowsFiltered
       : 0;
   },
 
@@ -140,7 +140,7 @@ export const getters = {
 
   getExcludedTableDataNumRows(state: DatasetState): number {
     return state.excludedSet.tableData
-      ? state.excludedSet.tableData.numRows
+      ? state.excludedSet.tableData.numRowsFiltered
       : 0;
   },
 
@@ -154,5 +154,5 @@ export const getters = {
 
   getMultiBandCombinations(state: DatasetState): BandCombination[] {
     return state.bands;
-  }
+  },
 };

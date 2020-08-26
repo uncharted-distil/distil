@@ -71,7 +71,7 @@ import IconCropFree from "../icons/IconCropFree.vue";
 import { scaleThreshold } from "d3";
 import {
   actions as datasetActions,
-  getters as datasetGetters
+  getters as datasetGetters,
 } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
 import { actions as appActions } from "../../store/app/module";
@@ -84,7 +84,7 @@ import {
   Highlight,
   NUMERICAL_SUMMARY,
   RowSelection,
-  SummaryMode
+  SummaryMode,
 } from "../../store/dataset";
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import FacetNumerical from "./FacetNumerical.vue";
@@ -95,7 +95,7 @@ import {
   LONGITUDE_TYPE,
   REAL_VECTOR_TYPE,
   EXPAND_ACTION_TYPE,
-  COLLAPSE_ACTION_TYPE
+  COLLAPSE_ACTION_TYPE,
 } from "../../util/types";
 import { overlayRouteEntry, varModesToString } from "../../util/routes";
 import { Filter, removeFiltersByName } from "../../util/filters";
@@ -148,7 +148,7 @@ const BLUE_PALETTE = [
   "#497AD6",
   "#3D70D3",
   "#3167CF",
-  "#255DCC"
+  "#255DCC",
 ];
 
 const BLACK_PALETTE = [
@@ -170,7 +170,7 @@ const BLACK_PALETTE = [
   "#151515",
   "#0E0E0E",
   "#070707",
-  "#000000"
+  "#000000",
 ];
 
 /**
@@ -184,7 +184,7 @@ export default Vue.extend({
     TypeChangeMenu,
     IconBase,
     IconCropFree,
-    FacetNumerical
+    FacetNumerical,
   },
 
   props: {
@@ -195,9 +195,9 @@ export default Vue.extend({
     ignoreHighlights: Boolean as () => boolean,
     logActivity: {
       type: String as () => Activity,
-      default: Activity.DATA_PREPARATION
+      default: Activity.DATA_PREPARATION,
     },
-    expanded: { type: Boolean, default: false }
+    expanded: { type: Boolean, default: false },
   },
 
   data() {
@@ -213,7 +213,7 @@ export default Vue.extend({
       filteredLayer: null as leaflet.Layer,
       expand: this.expanded,
       enabledTypeChanges: new Array(0),
-      blockNextEvent: false
+      blockNextEvent: false,
     };
   },
 
@@ -230,7 +230,7 @@ export default Vue.extend({
         key: this.summary.key,
         dataset: this.summary.dataset,
         baseline: this.latitudeToNumeric("baseline"),
-        filtered: this.latitudeToNumeric("filtered")
+        filtered: this.latitudeToNumeric("filtered"),
       };
       return latSummary;
     },
@@ -243,7 +243,7 @@ export default Vue.extend({
         key: this.summary.key,
         dataset: this.summary.dataset,
         baseline: this.longitudeToNumeric("baseline"),
-        filtered: this.longitudeToNumeric("filtered")
+        filtered: this.longitudeToNumeric("filtered"),
       };
       return lonSummary;
     },
@@ -253,11 +253,11 @@ export default Vue.extend({
         return {
           value: {
             from: this.calcBucketKey(this.highlight.value.minY, LATITUDE_TYPE),
-            to: this.calcBucketKey(this.highlight.value.maxY, LATITUDE_TYPE)
+            to: this.calcBucketKey(this.highlight.value.maxY, LATITUDE_TYPE),
           },
           context: LATITUDE_TYPE,
           key: this.summary.key,
-          dataset: this.dataset
+          dataset: this.dataset,
         };
       } else {
         return null;
@@ -269,11 +269,11 @@ export default Vue.extend({
         return {
           value: {
             from: this.calcBucketKey(this.highlight.value.minX, LONGITUDE_TYPE),
-            to: this.calcBucketKey(this.highlight.value.maxX, LONGITUDE_TYPE)
+            to: this.calcBucketKey(this.highlight.value.maxX, LONGITUDE_TYPE),
           },
           context: LONGITUDE_TYPE,
           key: this.summary.key,
-          dataset: this.dataset
+          dataset: this.dataset,
         };
       } else {
         return null;
@@ -310,8 +310,8 @@ export default Vue.extend({
 
       // create a feature collection from the server-supplied bucket data
       const features: helpers.Feature[] = [];
-      this.summary.baseline.buckets.forEach(lonBucket => {
-        lonBucket.buckets.forEach(latBucket => {
+      this.summary.baseline.buckets.forEach((lonBucket) => {
+        lonBucket.buckets.forEach((latBucket) => {
           // Don't include features with a count of 0.
           if (latBucket.count > 0) {
             const xCoord = _.toNumber(lonBucket.key);
@@ -323,8 +323,8 @@ export default Vue.extend({
                   [xCoord, yCoord + ySize],
                   [xCoord + xSize, yCoord + ySize],
                   [xCoord + xSize, yCoord],
-                  [xCoord, yCoord]
-                ]
+                  [xCoord, yCoord],
+                ],
               ],
               { selected: false, count: latBucket.count }
             );
@@ -350,8 +350,8 @@ export default Vue.extend({
 
         // create a feature collection from the server-supplied bucket data
         const features: helpers.Feature[] = [];
-        this.summary.filtered.buckets.forEach(lonBucket => {
-          lonBucket.buckets.forEach(latBucket => {
+        this.summary.filtered.buckets.forEach((lonBucket) => {
+          lonBucket.buckets.forEach((latBucket) => {
             // Don't include features with a count of 0.
             if (latBucket.count > 0) {
               const xCoord = _.toNumber(lonBucket.key);
@@ -363,8 +363,8 @@ export default Vue.extend({
                     [xCoord, yCoord + ySize],
                     [xCoord + xSize, yCoord + ySize],
                     [xCoord + xSize, yCoord],
-                    [xCoord, yCoord]
-                  ]
+                    [xCoord, yCoord],
+                  ],
                 ],
                 { selected: false, count: latBucket.count }
               );
@@ -445,17 +445,19 @@ export default Vue.extend({
           ? datasetGetters.getIncludedTableDataItems(this.$store)
           : datasetGetters.getExcludedTableDataItems(this.$store);
         if (this.isGeoTableRows(tableItems)) {
-          const selectedItems = this.selectedRows.d3mIndices.flatMap(index => {
-            return tableItems.filter(item => item.d3mIndex === index);
-          });
-          const selectedPoints = selectedItems.map(item =>
+          const selectedItems = this.selectedRows.d3mIndices.flatMap(
+            (index) => {
+              return tableItems.filter((item) => item.d3mIndex === index);
+            }
+          );
+          const selectedPoints = selectedItems.map((item) =>
             point([Number(item.longitude), Number(item.latitude)])
           );
-          return selectedPoints.map(p => p.geometry);
+          return selectedPoints.map((p) => p.geometry);
         }
       }
       return [];
-    }
+    },
   },
 
   methods: {
@@ -475,11 +477,11 @@ export default Vue.extend({
         max:
           _.toNumber(buckets[buckets.length - 1].key) +
           _.toNumber(buckets[buckets.length - 1].key) -
-          _.toNumber(buckets[buckets.length - 2].key)
+          _.toNumber(buckets[buckets.length - 2].key),
       };
       return {
         extrema,
-        buckets
+        buckets,
       };
     },
 
@@ -491,7 +493,7 @@ export default Vue.extend({
               key: lonBucket.key,
               count: lonBucket.buckets.reduce((total, latBucket) => {
                 return (total += latBucket.count);
-              }, 0)
+              }, 0),
             });
             return lbs;
           },
@@ -512,10 +514,10 @@ export default Vue.extend({
                 lbs[ind].count += latBucket.count;
               });
             } else {
-              lbs = lonBucket.buckets.map(b => {
+              lbs = lonBucket.buckets.map((b) => {
                 return {
                   key: b.key,
-                  count: b.count
+                  count: b.count,
                 };
               });
             }
@@ -617,7 +619,7 @@ export default Vue.extend({
           minX: currentValue.minX,
           maxX: currentValue.maxX,
           minY: currentValue.minY,
-          maxY: currentValue.maxY
+          maxY: currentValue.maxY,
         };
         if (value === null) {
           clearHighlight(this.$router);
@@ -636,7 +638,7 @@ export default Vue.extend({
           minX: this.lonSummary.baseline.extrema.min,
           maxX: this.lonSummary.baseline.extrema.max,
           minY: this.latSummary.baseline.extrema.min,
-          maxY: this.latSummary.baseline.extrema.max
+          maxY: this.latSummary.baseline.extrema.max,
         });
       }
       this.clearSelectionRect();
@@ -645,7 +647,7 @@ export default Vue.extend({
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: this.logActivity,
         subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: { key: key, value: value }
+        details: { key: key, value: value },
       });
     },
 
@@ -666,7 +668,7 @@ export default Vue.extend({
       const taskResponse = await datasetActions.fetchTask(this.$store, {
         dataset: routeGetters.getRouteDataset(this.$store),
         targetName: routeGetters.getRouteTargetVariable(this.$store),
-        variableNames: training
+        variableNames: training,
       });
 
       const task = taskResponse.data.task.join(",");
@@ -675,11 +677,11 @@ export default Vue.extend({
       if (task.includes("remoteSensing")) {
         const available = routeGetters.getAvailableVariables(this.$store);
 
-        training.forEach(v => {
+        training.forEach((v) => {
           varModesMap.set(v, SummaryMode.RemoteSensing);
         });
 
-        available.forEach(v => {
+        available.forEach((v) => {
           varModesMap.set(v.colName, SummaryMode.RemoteSensing);
         });
 
@@ -693,7 +695,7 @@ export default Vue.extend({
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         training: training.join(","),
         task: task,
-        varModes: varModesStr
+        varModes: varModesStr,
       });
 
       this.$router.push(entry);
@@ -703,18 +705,18 @@ export default Vue.extend({
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
       );
-      _.remove(training, t => t === this.summary.key);
+      _.remove(training, (t) => t === this.summary.key);
 
       // update task based on the current training data
       const taskResponse = await datasetActions.fetchTask(this.$store, {
         dataset: routeGetters.getRouteDataset(this.$store),
         targetName: routeGetters.getRouteTargetVariable(this.$store),
-        variableNames: training
+        variableNames: training,
       });
 
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         training: training.join(","),
-        task: taskResponse.data.task.join(",")
+        task: taskResponse.data.task.join(","),
       });
 
       this.$router.push(entry);
@@ -798,10 +800,10 @@ export default Vue.extend({
         this.currentRect = leaflet.rectangle(bounds, {
           color: this.includedActive ? "#255DCC" : "black",
           weight: 1,
-          bubblingMouseEvents: false
+          bubblingMouseEvents: false,
         });
 
-        this.currentRect.on("click", e => {
+        this.currentRect.on("click", (e) => {
           this.setSelection(e.target);
         });
 
@@ -825,17 +827,17 @@ export default Vue.extend({
       const icon = leaflet.divIcon({
         className: CLOSE_BUTTON_CLASS,
         iconSize: null,
-        html: `<i class="fa ${CLOSE_ICON_CLASS}"></i>`
+        html: `<i class="fa ${CLOSE_ICON_CLASS}"></i>`,
       });
       this.closeButton = leaflet.marker([ne.lat, ne.lng], {
-        icon: icon
+        icon: icon,
       });
       this.closeButton.addTo(this.map);
       this.createHighlight({
         minX: sw.lng,
         maxX: ne.lng,
         minY: sw.lat,
-        maxY: ne.lat
+        maxY: ne.lat,
       });
     },
 
@@ -871,7 +873,7 @@ export default Vue.extend({
         context: this.instanceName,
         dataset: this.dataset,
         key: this.summary.key,
-        value: value
+        value: value,
       });
     },
 
@@ -886,15 +888,15 @@ export default Vue.extend({
         const rect = leaflet.rectangle(
           [
             [this.highlight.value.minY, this.highlight.value.minX],
-            [this.highlight.value.maxY, this.highlight.value.maxX]
+            [this.highlight.value.maxY, this.highlight.value.maxX],
           ],
           {
             color: "#255DCC",
             weight: 1,
-            bubblingMouseEvents: false
+            bubblingMouseEvents: false,
           }
         );
-        rect.on("click", e => {
+        rect.on("click", (e) => {
           this.setSelection(e.target);
         });
         rect.addTo(this.map);
@@ -924,7 +926,7 @@ export default Vue.extend({
           zoom: 2,
           scrollWheelZoom: false,
           zoomControl: false,
-          doubleClickZoom: false
+          doubleClickZoom: false,
         });
         this.map.dragging.disable();
 
@@ -964,7 +966,7 @@ export default Vue.extend({
 
             // Render the heatmap buckets as a GeoJSON layer
             this.baseLineLayer = leaflet.geoJSON(this.bucketFeatures, {
-              style: feature => {
+              style: (feature) => {
                 let containsSelected = false;
 
                 for (const point of this.selectedPoints) {
@@ -983,9 +985,9 @@ export default Vue.extend({
                   opacity: 1,
                   color: "rgba(0,0,0,0)",
                   dashArray: "3",
-                  fillOpacity: 0.7
+                  fillOpacity: 0.7,
                 };
-              }
+              },
             });
             this.baseLineLayer.addTo(this.map);
           } else {
@@ -1001,7 +1003,7 @@ export default Vue.extend({
               .domain(filteredDomain);
 
             this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
-              style: feature => {
+              style: (feature) => {
                 let containsSelected = false;
 
                 for (const point of this.selectedPoints) {
@@ -1020,9 +1022,9 @@ export default Vue.extend({
                   opacity: 1,
                   color: "rgba(0,0,0,0)",
                   dashArray: "3",
-                  fillOpacity: 0.7
+                  fillOpacity: 0.7,
                 };
-              }
+              },
             });
             this.filteredLayer.addTo(this.map);
           }
@@ -1040,7 +1042,7 @@ export default Vue.extend({
             .domain(filteredDomain);
 
           this.filteredLayer = leaflet.geoJSON(this.filteredBucketFeatures, {
-            style: feature => {
+            style: (feature) => {
               return {
                 fillColor: filteredScaleColors(
                   feature.properties.count
@@ -1049,9 +1051,9 @@ export default Vue.extend({
                 opacity: 1,
                 color: "rgba(0,0,0,0)",
                 dashArray: "3",
-                fillOpacity: 0.7
+                fillOpacity: 0.7,
               };
-            }
+            },
           });
           this.filteredLayer.addTo(this.map);
           this.clearSelectionRect();
@@ -1062,7 +1064,7 @@ export default Vue.extend({
     // type guard for geo table data
     isGeoTableRows(rows: TableRow[]): rows is GeoTableRow[] {
       return (rows as GeoTableRow[])[0].latitude !== undefined;
-    }
+    },
   },
 
   watch: {
@@ -1086,12 +1088,12 @@ export default Vue.extend({
       if (!this.includedActive) {
         this.clearSelectionRect();
       }
-    }
+    },
   },
 
   mounted() {
     this.paint();
-  }
+  },
 });
 </script>
 

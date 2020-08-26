@@ -44,7 +44,7 @@ export default Vue.extend({
 
   components: {
     FilterBadge,
-    JoinDataTable
+    JoinDataTable,
   },
 
   props: {
@@ -55,7 +55,7 @@ export default Vue.extend({
     hasData: Boolean as () => boolean,
     selectedColumn: Object as () => TableColumn,
     otherSelectedColumn: Object as () => TableColumn,
-    instanceName: String as () => string
+    instanceName: String as () => string,
   },
 
   computed: {
@@ -75,14 +75,14 @@ export default Vue.extend({
         return null;
       }
       return createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
-    }
+    },
   },
 
   methods: {
     onColumnClicked(field) {
       this.$emit("col-clicked", field);
-    }
-  }
+    },
+  },
 });
 </script>
 

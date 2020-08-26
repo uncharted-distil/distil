@@ -55,7 +55,7 @@ import {
   D3M_INDEX_FIELD,
   Grouping,
   Variable,
-  TimeseriesGrouping
+  TimeseriesGrouping,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -64,17 +64,17 @@ import {
   getTimeseriesGroupingsFromFields,
   formatFieldsAsArray,
   formatSlot,
-  getImageFields
+  getImageFields,
 } from "../util/data";
 
 function findSuggestionIndex(
   columnSuggestions: string[],
   colName: string
 ): number {
-  return columnSuggestions.findIndex(col => {
+  return columnSuggestions.findIndex((col) => {
     // col can be something like "lat+lng" for multi column suggestions
     const colNames = col.split("+");
-    return Boolean(colNames.find(c => c === colName));
+    return Boolean(colNames.find((c) => c === colName));
   });
 }
 
@@ -84,7 +84,7 @@ export default Vue.extend({
   components: {
     ImagePreview,
     SparklinePreview,
-    FixedHeaderTable
+    FixedHeaderTable,
   },
 
   props: {
@@ -93,7 +93,7 @@ export default Vue.extend({
     fields: Object as () => Dictionary<TableColumn>,
     selectedColumn: Object as () => TableColumn,
     otherSelectedColumn: Object as () => TableColumn,
-    instanceName: String as () => string
+    instanceName: String as () => string,
   },
 
   computed: {
@@ -142,13 +142,13 @@ export default Vue.extend({
 
     emphasizedBaseTableFields(): Dictionary<TableColumn> {
       const emphasized = {};
-      _.forIn(this.fields, field => {
+      _.forIn(this.fields, (field) => {
         const emph = {
           label: field.label,
           key: field.key,
           type: field.type,
           sortable: field.sortable,
-          variant: null
+          variant: null,
         };
         const isFieldSuggested =
           findSuggestionIndex(this.baseColumnSuggestions, field.key) >= 0;
@@ -167,13 +167,13 @@ export default Vue.extend({
 
     emphasizedJoinTableFields(): Dictionary<TableColumn> {
       const emphasized = {};
-      _.forIn(this.fields, field => {
+      _.forIn(this.fields, (field) => {
         const emph = {
           label: field.label,
           key: field.key,
           type: field.type,
           sortable: field.sortable,
-          variant: null
+          variant: null,
         };
         const isFieldSelected =
           this.selectedJoinColumn && field.key === this.selectedJoinColumn.key;
@@ -219,7 +219,7 @@ export default Vue.extend({
 
     timeseriesGroupings(): TimeseriesGrouping[] {
       return getTimeseriesGroupingsFromFields(this.variables, this.fields);
-    }
+    },
   },
 
   methods: {
@@ -241,8 +241,8 @@ export default Vue.extend({
     },
     cellSlot(key: string): string {
       return formatSlot(key, "cell");
-    }
-  }
+    },
+  },
 });
 </script>
 

@@ -70,7 +70,7 @@ import {
   RowSelection,
   Highlight,
   TaskTypes,
-  TimeseriesGrouping
+  TimeseriesGrouping,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -91,7 +91,7 @@ export default Vue.extend({
 
   components: {
     SparklineRow,
-    SparklineVariable
+    SparklineVariable,
   },
 
   props: {
@@ -101,7 +101,7 @@ export default Vue.extend({
     items: Array as () => TableRow[],
     fields: Object as () => Dictionary<TableColumn>,
     predictedCol: String as () => string,
-    disableHighlighting: Boolean as () => boolean
+    disableHighlighting: Boolean as () => boolean,
   },
 
   data() {
@@ -110,14 +110,14 @@ export default Vue.extend({
         top: 2,
         right: 16,
         bottom: 2,
-        left: 16
+        left: 16,
       },
       macroScale: null,
       microScale: null,
       microRangeSelection: null,
       selectedMicroMin: null,
       selectedMicroMax: null,
-      highlightPixelX: null
+      highlightPixelX: null,
     };
   },
 
@@ -167,7 +167,7 @@ export default Vue.extend({
 
     isDateScale(): boolean {
       const grouping = this.timeseriesGrouping;
-      const timeVar = this.variables.find(v => v.colName === grouping.xCol);
+      const timeVar = this.variables.find((v) => v.colName === grouping.xCol);
       return timeVar && isTimeType(timeVar.colType);
     },
 
@@ -178,8 +178,8 @@ export default Vue.extend({
     predictedSummaries(): VariableSummary[] {
       return requestGetters
         .getRelevantSolutions(this.$store)
-        .map(solution => getSolutionResultSummary(solution.solutionId))
-        .filter(summary => !!summary); // remove errors
+        .map((solution) => getSolutionResultSummary(solution.solutionId))
+        .filter((summary) => !!summary); // remove errors
     },
 
     timeseriesExtrema(): TimeseriesExtrema {
@@ -216,12 +216,12 @@ export default Vue.extend({
       return {
         x: {
           min: this.microMin,
-          max: this.microMax
+          max: this.microMax,
         },
         y: {
           min: this.timeseriesExtrema ? this.timeseriesExtrema.y.min : 0,
-          max: this.timeseriesExtrema ? this.timeseriesExtrema.y.max : 1
-        }
+          max: this.timeseriesExtrema ? this.timeseriesExtrema.y.max : 1,
+        },
       };
     },
 
@@ -283,7 +283,7 @@ export default Vue.extend({
 
     $axis(): any {
       return this.$timeseries.find(".timeseries-chart-axis");
-    }
+    },
   },
 
   methods: {
@@ -321,10 +321,10 @@ export default Vue.extend({
         const timeseries = this.getPredictedTimeseries(timeseriesId);
         const forecasts = this.getPredictedForecasts(timeseriesId);
         const both = timeseries.concat(forecasts);
-        yValues = both.map(v => v.value);
+        yValues = both.map((v) => v.value);
       } else {
         const timeseries = this.getTimeseries(timeseriesId);
-        yValues = timeseries.map(v => v.value);
+        yValues = timeseries.map((v) => v.value);
       }
 
       const yMin: number = _.min(yValues);
@@ -333,12 +333,12 @@ export default Vue.extend({
       return {
         x: {
           min: this.microMin,
-          max: this.microMax
+          max: this.microMax,
         },
         y: {
           min: yMin !== undefined ? yMin : 0,
-          max: yMax !== undefined ? yMax : 1
-        }
+          max: yMax !== undefined ? yMax : 1,
+        },
       };
     },
 
@@ -348,7 +348,7 @@ export default Vue.extend({
       }
       return {
         value: row[this.predictedCol],
-        isCorrect: row[this.predictedCol] === row[this.target]
+        isCorrect: row[this.predictedCol] === row[this.target],
       };
     },
 
@@ -370,7 +370,7 @@ export default Vue.extend({
         this.$line.show();
         this.$line.css({
           left: relX,
-          top: chartScroll
+          top: chartScroll,
         });
         this.highlightPixelX = relX - chartLeft - this.margin.left;
       } else {
@@ -398,9 +398,9 @@ export default Vue.extend({
         .attr("class", "micro-axis")
         .attr(
           "transform",
-          `translate(${this.margin.left}, ${-this.margin.bottom +
-            this.height -
-            TICK_SIZE * 2})`
+          `translate(${this.margin.left}, ${
+            -this.margin.bottom + this.height - TICK_SIZE * 2
+          })`
         )
         .call(d3.axisBottom(this.microScale).tickFormat(this.axisFormat()));
 
@@ -437,9 +437,9 @@ export default Vue.extend({
         .attr("class", "macro-axis")
         .attr(
           "transform",
-          `translate(${this.margin.left}, ${this.margin.top +
-            SELECTED_TICK_SIZE +
-            TICK_SIZE * 2})`
+          `translate(${this.margin.left}, ${
+            this.margin.top + SELECTED_TICK_SIZE + TICK_SIZE * 2
+          })`
         )
         .call(d3.axisTop(this.macroScale).tickFormat(this.axisFormat()));
 
@@ -457,9 +457,9 @@ export default Vue.extend({
           .attr("class", "axis-selection")
           .attr(
             "transform",
-            `translate(${this.margin.left}, ${this.margin.top +
-              SELECTED_TICK_SIZE +
-              TICK_SIZE * 2})`
+            `translate(${this.margin.left}, ${
+              this.margin.top + SELECTED_TICK_SIZE + TICK_SIZE * 2
+            })`
           )
           .call(this.microRangeSelection);
 
@@ -523,18 +523,20 @@ export default Vue.extend({
           key: this.timeseriesGrouping.idCol,
           value: {
             from: this.microMin,
-            to: this.microMax
-          }
+            to: this.microMax,
+          },
         });
       };
 
-      this.svg.selectAll(".axis-selection .tick").call(
-        d3
-          .drag()
-          .on("start", dragstarted)
-          .on("drag", dragged)
-          .on("end", dragended)
-      );
+      this.svg
+        .selectAll(".axis-selection .tick")
+        .call(
+          d3
+            .drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+        );
     },
     attachTranslationHandlers() {
       const dragstarted = (d, index, elem) => {
@@ -576,24 +578,26 @@ export default Vue.extend({
           key: this.timeseriesGrouping.idCol,
           value: {
             from: this.microMin,
-            to: this.microMax
-          }
+            to: this.microMax,
+          },
         });
       };
 
-      this.svg.selectAll(".axis-selection-rect").call(
-        d3
-          .drag()
-          .on("start", dragstarted)
-          .on("drag", dragged)
-          .on("end", dragended)
-      );
+      this.svg
+        .selectAll(".axis-selection-rect")
+        .call(
+          d3
+            .drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended)
+        );
     },
     clearSVG() {
       this.svg.selectAll("*").remove();
     },
     axisFormat() {
-      return v => {
+      return (v) => {
         if (this.isDateScale) {
           let m = null;
           if (_.isString(v)) {
@@ -609,7 +613,7 @@ export default Vue.extend({
     },
     isCorrect(item: TableRow): boolean {
       return item[this.predictedCol] === item[this.target];
-    }
+    },
   },
 
   watch: {
@@ -619,7 +623,7 @@ export default Vue.extend({
           this.injectSVG();
         });
       },
-      deep: true
+      deep: true,
     },
     timeseriesExtrema: {
       handler() {
@@ -627,13 +631,13 @@ export default Vue.extend({
           this.injectSVG();
         });
       },
-      deep: true
-    }
+      deep: true,
+    },
   },
 
   mounted() {
     this.injectSVG();
-  }
+  },
 });
 </script>
 

@@ -14,7 +14,7 @@
               v-for="suggested in getSuggestedList()"
               v-bind:class="{
                 selected: suggested.isSelected,
-                recommended: suggested.isRecommended
+                recommended: suggested.isRecommended,
               }"
               @click.stop="onTypeChange(suggested.type)"
               :key="suggested.type"
@@ -69,11 +69,11 @@ import {
   SuggestedType,
   Variable,
   Highlight,
-  RemoteSensingGrouping
+  RemoteSensingGrouping,
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
-  getters as datasetGetters
+  getters as datasetGetters,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -92,14 +92,14 @@ import {
   hasComputedVarPrefix,
   COLLAPSE_ACTION_TYPE,
   EXPAND_ACTION_TYPE,
-  EXPLODE_ACTION_TYPE
+  EXPLODE_ACTION_TYPE,
 } from "../util/types";
 import { hasFilterInRoute } from "../util/filters";
 import { createRouteEntry } from "../util/routes";
 import {
   GROUPING_ROUTE,
   PREDICTION_ROUTE,
-  RESULTS_ROUTE
+  RESULTS_ROUTE,
 } from "../store/route";
 import { getComposedVariableKey } from "../util/data";
 import { actions as appActions } from "../store/app/module";
@@ -112,13 +112,13 @@ export default Vue.extend({
 
   components: {
     IconBase,
-    IconBookmark
+    IconBookmark,
   },
   props: {
     dataset: String as () => string,
     field: String as () => string,
     expandCollapse: Function as () => Function,
-    expand: Boolean as () => Boolean
+    expand: Boolean as () => Boolean,
   },
   computed: {
     isPredictionOrResultsView(): boolean {
@@ -144,7 +144,7 @@ export default Vue.extend({
         return null;
       }
 
-      const selectedVariable = this.variables.find(v => {
+      const selectedVariable = this.variables.find((v) => {
         if (this.field === null) {
           return;
         }
@@ -154,7 +154,7 @@ export default Vue.extend({
         );
       });
 
-      const geocoordVariable = this.variables.find(v => {
+      const geocoordVariable = this.variables.find((v) => {
         return v.colOriginalType === "real" && v.datasetName === this.dataset;
       });
       return selectedVariable ? selectedVariable : geocoordVariable;
@@ -182,7 +182,7 @@ export default Vue.extend({
       return _.orderBy(suggestedType, "probability", "desc");
     },
     suggestedNonSchemaTypes(): SuggestedType[] {
-      const nonSchemaTypes = _.filter(this.suggestedTypes, t => {
+      const nonSchemaTypes = _.filter(this.suggestedTypes, (t) => {
         return t.provenance !== "schema";
       });
       return nonSchemaTypes;
@@ -216,13 +216,13 @@ export default Vue.extend({
     },
     hasNonSchemaTypes(): boolean {
       return (
-        _.find(this.suggestedTypes, t => {
+        _.find(this.suggestedTypes, (t) => {
           return t.provenance !== "schema";
         }) !== undefined
       );
     },
     schemaType(): SuggestedType {
-      return _.find(this.suggestedTypes, t => {
+      return _.find(this.suggestedTypes, (t) => {
         return t.provenance === "schema";
       });
     },
@@ -240,9 +240,9 @@ export default Vue.extend({
     delay(): any {
       return {
         show: 10,
-        hide: 10
+        hide: 10,
       };
-    }
+    },
   },
   methods: {
     groupingOptions() {
@@ -251,29 +251,29 @@ export default Vue.extend({
         if (this.expand) {
           options.push({
             type: COLLAPSE_ACTION_TYPE,
-            label: "Collapse"
+            label: "Collapse",
           });
         } else {
           options.push({
             type: EXPAND_ACTION_TYPE,
-            label: "Expand"
+            label: "Expand",
           });
         }
         if (!this.isPredictionOrResultsView && !this.isPageSelectTraining) {
           options.push({
             type: EXPLODE_ACTION_TYPE,
-            label: "Explode"
+            label: "Explode",
           });
         }
       } else {
         options.push(
           {
             type: TIMESERIES_TYPE,
-            label: "Timeseries..."
+            label: "Timeseries...",
           },
           {
             type: GEOCOORDINATE_TYPE,
-            label: "Geocoordinate..."
+            label: "Geocoordinate...",
           }
         );
       }
@@ -284,7 +284,7 @@ export default Vue.extend({
       if (type === TIMESERIES_TYPE || type === GEOCOORDINATE_TYPE) {
         const entry = createRouteEntry(GROUPING_ROUTE, {
           dataset: routeGetters.getRouteDataset(this.$store),
-          groupingType: type
+          groupingType: type,
         });
         this.$router.push(entry);
       } else if (
@@ -295,26 +295,26 @@ export default Vue.extend({
       } else {
         datasetActions.removeGrouping(this.$store, {
           dataset: this.dataset,
-          variable: this.variable.colName
+          variable: this.variable.colName,
         });
       }
     },
 
     addMissingSuggestions() {
-      const flatSuggestedTypes = this.suggestedTypes.map(st => st.type);
+      const flatSuggestedTypes = this.suggestedTypes.map((st) => st.type);
       const missingSuggestions = addTypeSuggestions(flatSuggestedTypes);
-      const nonSchemaSuggestions = this.suggestedNonSchemaTypes.map(suggested =>
-        normalizedEquivalentType(suggested.type)
+      const nonSchemaSuggestions = this.suggestedNonSchemaTypes.map(
+        (suggested) => normalizedEquivalentType(suggested.type)
       );
       const menuSuggestions = _.uniq([
         ...nonSchemaSuggestions,
-        ...missingSuggestions
+        ...missingSuggestions,
       ]);
       return menuSuggestions;
     },
     getSuggestedList() {
       const currentNormalizedType = normalizedEquivalentType(this.type);
-      const combinedSuggestions = this.addMissingSuggestions().map(type => {
+      const combinedSuggestions = this.addMissingSuggestions().map((type) => {
         const normalizedType = normalizedEquivalentType(type);
         return {
           type: normalizedType,
@@ -322,7 +322,7 @@ export default Vue.extend({
           isRecommended:
             this.topNonSchemaType &&
             this.topNonSchemaType.type.toLowerCase() === type.toLowerCase(),
-          isSelected: currentNormalizedType === normalizedType
+          isSelected: currentNormalizedType === normalizedType,
         };
       });
       return combinedSuggestions;
@@ -336,13 +336,13 @@ export default Vue.extend({
         feature: Feature.RETYPE_FEATURE,
         activity: Activity.PROBLEM_DEFINITION,
         subActivity: SubActivity.PROBLEM_SPECIFICATION,
-        details: { from: this.type, to: type }
+        details: { from: this.type, to: type },
       });
       datasetActions
         .setVariableType(this.$store, {
           dataset: dataset,
           field: field,
-          type: type
+          type: type,
         })
         .then(() => {
           /* TODO
@@ -357,7 +357,7 @@ export default Vue.extend({
           */
           if (type === "image") {
             return datasetActions.fetchClusters(this.$store, {
-              dataset: this.dataset
+              dataset: this.dataset,
             });
           }
           return null;
@@ -366,20 +366,20 @@ export default Vue.extend({
           if (this.target && !this.isPredictionOrResultsView) {
             return datasetActions.fetchVariableRankings(this.$store, {
               dataset: dataset,
-              target: this.target
+              target: this.target,
             });
           }
 
           return null;
         });
-    }
+    },
   },
   mounted() {
     this.$root.$on("bv::dropdown::show", () => {
       const dataset = this.dataset;
       const field = this.field;
     });
-  }
+  },
 });
 </script>
 

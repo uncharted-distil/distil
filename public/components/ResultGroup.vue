@@ -19,7 +19,7 @@
             class="fa"
             v-bind:class="{
               'fa-angle-down': !isMaximized,
-              'fa-angle-up': isMaximized
+              'fa-angle-up': isMaximized,
             }"
           ></i>
         </div>
@@ -49,9 +49,7 @@
         </b-badge>
       </template>
       <template v-if="isErrored">
-        <b-badge variant="danger">
-          ERROR
-        </b-badge>
+        <b-badge variant="danger"> ERROR </b-badge>
       </template>
     </header>
 
@@ -125,7 +123,7 @@ import {
   RowSelection,
   Highlight,
   CATEGORICAL_SUMMARY,
-  NUMERICAL_SUMMARY
+  NUMERICAL_SUMMARY,
 } from "../store/dataset/index";
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from "../store/requests/index";
 import { getters as routeGetters } from "../store/route/module";
@@ -136,7 +134,7 @@ import {
   getSolutionById,
   isTopSolutionByScore,
   SOLUTION_PROGRESS,
-  SOLUTION_LABELS
+  SOLUTION_LABELS,
 } from "../util/solutions";
 import { getModelNameByFittedSolutionId } from "../util/models";
 import { overlayRouteEntry } from "../util/routes";
@@ -152,7 +150,7 @@ export default Vue.extend({
 
   components: {
     FacetNumerical,
-    FacetCategorical
+    FacetCategorical,
   },
 
   props: {
@@ -165,13 +163,13 @@ export default Vue.extend({
     targetSummary: Object as () => VariableSummary,
     predictedSummary: Object as () => VariableSummary,
     residualsSummary: Object as () => VariableSummary,
-    correctnessSummary: Object as () => VariableSummary
+    correctnessSummary: Object as () => VariableSummary,
   },
 
   data() {
     return {
       minimized: null,
-      openDeleteModal: false
+      openDeleteModal: false,
     };
   },
 
@@ -267,7 +265,7 @@ export default Vue.extend({
     residualThreshold(): Extrema {
       return {
         min: _.toNumber(routeGetters.getRouteResidualThresholdMin(this.$store)),
-        max: _.toNumber(routeGetters.getRouteResidualThresholdMax(this.$store))
+        max: _.toNumber(routeGetters.getRouteResidualThresholdMax(this.$store)),
       };
     },
 
@@ -323,7 +321,7 @@ export default Vue.extend({
         this.solutionId,
         3
       );
-    }
+    },
   },
 
   methods: {
@@ -340,7 +338,7 @@ export default Vue.extend({
           context: context,
           dataset: dataset,
           key: key,
-          value: value
+          value: value,
         });
       } else {
         clearHighlight(this.$router);
@@ -349,7 +347,7 @@ export default Vue.extend({
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.MODEL_SELECTION,
         subActivity: SubActivity.MODEL_EXPLANATION,
-        details: { key: key, value: value }
+        details: { key: key, value: value },
       });
     },
 
@@ -365,7 +363,7 @@ export default Vue.extend({
           context: context,
           dataset: dataset,
           key: key,
-          value: value
+          value: value,
         });
       } else {
         clearHighlight(this.$router);
@@ -374,7 +372,7 @@ export default Vue.extend({
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.MODEL_SELECTION,
         subActivity: SubActivity.MODEL_EXPLANATION,
-        details: { key: key, value: value }
+        details: { key: key, value: value },
       });
     },
 
@@ -389,7 +387,7 @@ export default Vue.extend({
           context: context,
           dataset: dataset,
           key: key,
-          value: value
+          value: value,
         });
       }
     },
@@ -404,13 +402,13 @@ export default Vue.extend({
         context: context,
         dataset: dataset,
         key: key,
-        value: value
+        value: value,
       });
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.MODEL_SELECTION,
         subActivity: SubActivity.MODEL_EXPLANATION,
-        details: { key: key, value: value }
+        details: { key: key, value: value },
       });
       this.$emit("range-change", key, value);
     },
@@ -426,7 +424,7 @@ export default Vue.extend({
           context: context,
           dataset: dataset,
           key: key,
-          value: value
+          value: value,
         });
       }
     },
@@ -441,13 +439,13 @@ export default Vue.extend({
         context: context,
         dataset: dataset,
         key: key,
-        value: value
+        value: value,
       });
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.MODEL_SELECTION,
         subActivity: SubActivity.MODEL_EXPLANATION,
-        details: { key: key, value: value }
+        details: { key: key, value: value },
       });
       this.$emit("range-change", key, value);
     },
@@ -458,11 +456,11 @@ export default Vue.extend({
           feature: Feature.SELECT_MODEL,
           activity: Activity.MODEL_SELECTION,
           subActivity: SubActivity.MODEL_EXPLANATION,
-          details: { solutionId: this.solutionId }
+          details: { solutionId: this.solutionId },
         });
         const routeEntry = overlayRouteEntry(this.$route, {
           solutionId: this.solutionId,
-          highlights: null
+          highlights: null,
         });
         this.$router.push(routeEntry);
       }
@@ -474,8 +472,8 @@ export default Vue.extend({
 
     deleteSolution() {
       this.openDeleteModal = false;
-    }
-  }
+    },
+  },
 });
 </script>
 

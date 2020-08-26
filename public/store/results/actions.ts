@@ -5,7 +5,7 @@ import store, { DistilState } from "../store";
 import { EXCLUDE_FILTER, FilterParams } from "../../util/filters";
 import {
   getSolutionById,
-  getSolutionsBySolutionRequestIds
+  getSolutionsBySolutionRequestIds,
 } from "../../util/solutions";
 import { Variable, Highlight, SummaryMode, DataMode } from "../dataset/index";
 import { mutations } from "./module";
@@ -17,7 +17,7 @@ import {
   createErrorSummary,
   createEmptyTableData,
   fetchSummaryExemplars,
-  validateArgs
+  validateArgs,
 } from "../../util/data";
 import { getters as resultGetters } from "../results/module";
 import { getters as dataGetters } from "../dataset/module";
@@ -74,7 +74,7 @@ export const actions = {
     const promises = [];
 
     // remove summaries not used to predict the newly selected model
-    context.state.trainingSummaries.forEach(v => {
+    context.state.trainingSummaries.forEach((v) => {
       const isTrainingArg = args.training.reduce((isTrain, variable) => {
         if (!isTrain) {
           isTrain = variable.colName === v.key;
@@ -86,11 +86,11 @@ export const actions = {
       }
     });
 
-    args.training.forEach(variable => {
+    args.training.forEach((variable) => {
       const key = variable.colName;
       const label = variable.colDisplayName;
       const description = variable.colDescription;
-      const exists = _.find(context.state.trainingSummaries, v => {
+      const exists = _.find(context.state.trainingSummaries, (v) => {
         return v.dataset === args.dataset && v.key === variable.colName;
       });
       if (!exists) {
@@ -110,7 +110,7 @@ export const actions = {
           dataMode: args.dataMode,
           varMode: varModes.has(variable.colName)
             ? varModes.get(variable.colName)
-            : SummaryMode.Default
+            : SummaryMode.Default,
         })
       );
     });
@@ -144,7 +144,7 @@ export const actions = {
     const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -228,7 +228,7 @@ export const actions = {
     const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -277,7 +277,7 @@ export const actions = {
     const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -328,7 +328,7 @@ export const actions = {
     const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -371,7 +371,7 @@ export const actions = {
   ) {
     return Promise.all([
       actions.fetchIncludedResultTableData(context, args),
-      actions.fetchExcludedResultTableData(context, args)
+      actions.fetchExcludedResultTableData(context, args),
     ]);
   },
 
@@ -448,7 +448,7 @@ export const actions = {
     const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -495,7 +495,7 @@ export const actions = {
       args.requestIds
     );
     return Promise.all(
-      solutions.map(solution => {
+      solutions.map((solution) => {
         return actions.fetchPredictedSummary(context, {
           dataset: args.dataset,
           target: args.target,
@@ -504,7 +504,7 @@ export const actions = {
           dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
-            : SummaryMode.Default
+            : SummaryMode.Default,
         });
       })
     );
@@ -551,7 +551,7 @@ export const actions = {
     const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -598,7 +598,7 @@ export const actions = {
       args.requestIds
     );
     return Promise.all(
-      solutions.map(solution => {
+      solutions.map((solution) => {
         return actions.fetchResidualsSummary(context, {
           dataset: args.dataset,
           target: args.target,
@@ -607,7 +607,7 @@ export const actions = {
           dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
-            : SummaryMode.Default
+            : SummaryMode.Default,
         });
       })
     );
@@ -640,7 +640,7 @@ export const actions = {
     const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
     const filterParams = addHighlightToFilterParams(
       filterParamsBlank,
@@ -687,7 +687,7 @@ export const actions = {
       args.requestIds
     );
     return Promise.all(
-      solutions.map(solution => {
+      solutions.map((solution) => {
         return actions.fetchCorrectnessSummary(context, {
           dataset: args.dataset,
           solutionId: solution.solutionId,
@@ -695,7 +695,7 @@ export const actions = {
           dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
-            : SummaryMode.Default
+            : SummaryMode.Default,
         });
       })
     );
@@ -762,14 +762,14 @@ export const actions = {
         solutionId: args.solutionId,
         id: args.timeseriesId,
         timeseries: response.data.timeseries,
-        isDateTime: response.data.isDateTime
+        isDateTime: response.data.isDateTime,
       });
       mutations.updatePredictedForecast(context, {
         solutionId: args.solutionId,
         id: args.timeseriesId,
         forecast: response.data.forecast,
         forecastTestRange: response.data.forecastTestRange,
-        isDateTime: response.data.isDateTime
+        isDateTime: response.data.isDateTime,
       });
     } catch (error) {
       console.error(error);
@@ -788,7 +788,7 @@ export const actions = {
     const rankings = <Dictionary<number>>response.data;
     mutations.setVariableRankings(store, {
       solutionID: args.solutionID,
-      rankings: _.pickBy(rankings, ranking => ranking !== null)
+      rankings: _.pickBy(rankings, (ranking) => ranking !== null),
     });
-  }
+  },
 };

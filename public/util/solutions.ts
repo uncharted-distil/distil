@@ -4,7 +4,7 @@ import moment from "moment";
 import { sortSolutionsByScore } from "../store/requests/getters";
 import {
   getters as requestGetters,
-  actions as requestActions
+  actions as requestActions,
 } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as dataActions } from "../store/dataset/module";
@@ -16,7 +16,7 @@ import {
   SOLUTION_SCORING,
   SOLUTION_PRODUCING,
   SOLUTION_COMPLETED,
-  SOLUTION_ERRORED
+  SOLUTION_ERRORED,
 } from "../store/requests/index";
 import { APPLY_MODEL_ROUTE } from "../store/route/index";
 import store from "../store/store";
@@ -28,7 +28,7 @@ export const SOLUTION_LABELS: Dictionary<string> = {
   [SOLUTION_SCORING]: "SCORING",
   [SOLUTION_PRODUCING]: "PREDICTING",
   [SOLUTION_COMPLETED]: "COMPLETED",
-  [SOLUTION_ERRORED]: "ERRORED"
+  [SOLUTION_ERRORED]: "ERRORED",
 };
 
 export const SOLUTION_PROGRESS: Dictionary<number> = {
@@ -36,7 +36,7 @@ export const SOLUTION_PROGRESS: Dictionary<number> = {
   [SOLUTION_FITTING]: 25,
   [SOLUTION_SCORING]: 75,
   [SOLUTION_PRODUCING]: 80,
-  [SOLUTION_COMPLETED]: 100
+  [SOLUTION_COMPLETED]: 100,
 };
 
 export function getSolutionIndex(solutionId: string) {
@@ -52,7 +52,7 @@ export function getSolutionIndex(solutionId: string) {
     return -1;
   });
 
-  const index = _.findIndex(solutions, solution => {
+  const index = _.findIndex(solutions, (solution) => {
     return solution.solutionId === solutionId;
   });
 
@@ -61,7 +61,7 @@ export function getSolutionIndex(solutionId: string) {
 
 export function getSolutionRequestIndex(requestId: string) {
   const requests = requestGetters.getRelevantSolutionRequests(store);
-  const index = _.findIndex(requests, req => {
+  const index = _.findIndex(requests, (req) => {
     return req.requestId === requestId;
   });
   return requests.length - index - 1;
@@ -73,7 +73,7 @@ export function getSolutionsBySolutionRequestIds(
   requestIds: string[]
 ): Solution[] {
   const ids = new Set(requestIds);
-  return solutions.filter(result => ids.has(result.requestId));
+  return solutions.filter((result) => ids.has(result.requestId));
 }
 
 // Returns a specific solution result given a request and its solution id.
@@ -84,7 +84,7 @@ export function getSolutionById(
   if (!solutionId) {
     return null;
   }
-  return solutions.find(result => result.solutionId === solutionId);
+  return solutions.find((result) => result.solutionId === solutionId);
 }
 
 export function isTopSolutionByScore(
@@ -97,11 +97,11 @@ export function isTopSolutionByScore(
     return null;
   }
   const topN = solutions
-    .filter(req => req.requestId === requestId)
+    .filter((req) => req.requestId === requestId)
     .slice()
     .sort(sortSolutionsByScore)
     .slice(0, n);
-  return !!topN.find(result => result.solutionId === solutionId);
+  return !!topN.find((result) => result.solutionId === solutionId);
 }
 
 export async function openModelSolution(
@@ -119,34 +119,34 @@ export async function openModelSolution(
     const taskResponse = await dataActions.fetchTask(store, {
       dataset: args.datasetId,
       targetName: args.targetFeature,
-      variableNames: args.variableFeatures // solution.features.map(f => f.featureName)
+      variableNames: args.variableFeatures, // solution.features.map(f => f.featureName)
     });
     task = taskResponse.data.task.join(",");
   }
   const solutionArgs = {
     dataset: args.datasetId,
-    target: args.targetFeature
+    target: args.targetFeature,
   };
   await Promise.all([
     requestActions.fetchSolutionRequests(store, solutionArgs),
-    requestActions.fetchSolutions(store, solutionArgs)
+    requestActions.fetchSolutions(store, solutionArgs),
   ]);
   const solutionId = args.solutionId
     ? args.solutionId
     : requestGetters
         .getSolutions(store)
-        .find(s => s.fittedSolutionId === args.fittedSolutionId).solutionId;
+        .find((s) => s.fittedSolutionId === args.fittedSolutionId).solutionId;
   const routeDefintion = {
     dataset: args.datasetId,
     target: args.targetFeature,
     task: task,
     solutionId: solutionId,
     singleSolution: true.toString(),
-    applyModel: true.toString()
+    applyModel: true.toString(),
   };
 
   const entry = createRouteEntry(APPLY_MODEL_ROUTE, routeDefintion);
-  router.push(entry).catch(err => {
+  router.push(entry).catch((err) => {
     console.warn(err);
   });
 }

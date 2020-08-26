@@ -14,7 +14,7 @@ import NavBar from "./components/NavBar";
 import store from "./store/store";
 import {
   getters as appGetters,
-  actions as appActions
+  actions as appActions,
 } from "./store/app/module";
 import router from "./router/router";
 
@@ -38,10 +38,10 @@ export default Vue.extend({
   store: store,
   router: router,
   components: {
-    NavBar
+    NavBar,
   },
   beforeMount() {
     appActions.fetchConfig(this.$store);
-  }
+  },
 });
 </script>

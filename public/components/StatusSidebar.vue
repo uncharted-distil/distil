@@ -70,7 +70,7 @@
 import Vue from "vue";
 import {
   actions as datasetActions,
-  getters as datasetGetters
+  getters as datasetGetters,
 } from "../store/dataset/module";
 import { actions as appActions } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -82,7 +82,7 @@ import {
   GeocodingPendingRequest,
   JoinSuggestionPendingRequest,
   JoinDatasetImportPendingRequest,
-  ClusteringPendingRequest
+  ClusteringPendingRequest,
 } from "../store/dataset/index";
 import { Feature, Activity } from "../util/userEvents";
 import { Dictionary } from "vue-router/types/router";
@@ -91,7 +91,7 @@ const STATUS_TYPES = [
   DatasetPendingRequestType.VARIABLE_RANKING,
   DatasetPendingRequestType.GEOCODING,
   DatasetPendingRequestType.CLUSTERING,
-  DatasetPendingRequestType.JOIN_SUGGESTION
+  DatasetPendingRequestType.JOIN_SUGGESTION,
 ];
 
 export default Vue.extend({
@@ -105,14 +105,14 @@ export default Vue.extend({
       // pending requests for given dataset
       const updates = datasetGetters
         .getPendingRequests(this.$store)
-        .filter(update => update.dataset === this.dataset);
+        .filter((update) => update.dataset === this.dataset);
       return updates;
     },
 
     variableRankingRequestData(): VariableRankingPendingRequest {
       return <VariableRankingPendingRequest>(
         this.pendingRequests.find(
-          item => item.type === DatasetPendingRequestType.VARIABLE_RANKING
+          (item) => item.type === DatasetPendingRequestType.VARIABLE_RANKING
         )
       );
     },
@@ -120,7 +120,7 @@ export default Vue.extend({
     geocodingRequestData(): GeocodingPendingRequest {
       return <GeocodingPendingRequest>(
         this.pendingRequests.find(
-          item => item.type === DatasetPendingRequestType.GEOCODING
+          (item) => item.type === DatasetPendingRequestType.GEOCODING
         )
       );
     },
@@ -128,7 +128,7 @@ export default Vue.extend({
     clusterRequestData(): ClusteringPendingRequest {
       return <ClusteringPendingRequest>(
         this.pendingRequests.find(
-          item => item.type === DatasetPendingRequestType.CLUSTERING
+          (item) => item.type === DatasetPendingRequestType.CLUSTERING
         )
       );
     },
@@ -136,7 +136,7 @@ export default Vue.extend({
     joinSuggestionRequestData(): JoinSuggestionPendingRequest {
       return <JoinSuggestionPendingRequest>(
         this.pendingRequests.find(
-          item => item.type === DatasetPendingRequestType.JOIN_SUGGESTION
+          (item) => item.type === DatasetPendingRequestType.JOIN_SUGGESTION
         )
       );
     },
@@ -146,11 +146,11 @@ export default Vue.extend({
       const joinSuggestions = this.joinSuggestionRequestData.suggestions;
       const importRequest = <JoinDatasetImportPendingRequest>(
         pendingRequests.find(
-          item => item.type === DatasetPendingRequestType.JOIN_DATASET_IMPORT
+          (item) => item.type === DatasetPendingRequestType.JOIN_DATASET_IMPORT
         )
       );
       const matchingDataset = joinSuggestions.find(
-        dataset => dataset.id === (importRequest && importRequest.dataset)
+        (dataset) => dataset.id === (importRequest && importRequest.dataset)
       );
       return matchingDataset && importRequest;
     },
@@ -179,7 +179,7 @@ export default Vue.extend({
       return (
         this.joinDataImportRequestData && this.joinDataImportRequestData.status
       );
-    }
+    },
   },
   methods: {
     isNew(status) {
@@ -197,8 +197,8 @@ export default Vue.extend({
     onStatusIconClick(iconIndex) {
       const statusType = STATUS_TYPES[iconIndex];
       appActions.openStatusPanelWithContentType(this.$store, statusType);
-    }
-  }
+    },
+  },
 });
 </script>
 

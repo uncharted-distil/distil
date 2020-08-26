@@ -31,5 +31,5 @@ export const state: PredictionState = {
   timeseries: {},
   forecasts: {},
   fittedSolutionId: null,
-  produceRequestId: null
+  produceRequestId: null,
 };

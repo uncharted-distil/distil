@@ -137,15 +137,15 @@ export function encodeFilters(filters: Filter[]): string {
  * maximum of two row filters, one for includes, one for excludes.
  */
 function dedupeRowFilters(filters: Filter[]): Filter[] {
-  const rowFilters = filters.filter(filter => filter.type === ROW_FILTER);
-  const remaining = filters.filter(filter => filter.type !== ROW_FILTER);
+  const rowFilters = filters.filter((filter) => filter.type === ROW_FILTER);
+  const remaining = filters.filter((filter) => filter.type !== ROW_FILTER);
 
   const included = {};
   const excluded = {};
   const d3mIndices = {};
 
   rowFilters.forEach((filter, filterIndex) => {
-    filter.d3mIndices.forEach(d3mIndex => {
+    filter.d3mIndices.forEach((d3mIndex) => {
       if (filter.mode === INCLUDE_FILTER) {
         included[d3mIndex] = filterIndex;
       } else {
@@ -158,15 +158,15 @@ function dedupeRowFilters(filters: Filter[]): Filter[] {
   const includes = {
     type: ROW_FILTER,
     mode: INCLUDE_FILTER,
-    d3mIndices: []
+    d3mIndices: [],
   };
   const excludes = {
     type: ROW_FILTER,
     mode: EXCLUDE_FILTER,
-    d3mIndices: []
+    d3mIndices: [],
   };
 
-  _.keys(d3mIndices).forEach(d3mIndex => {
+  _.keys(d3mIndices).forEach((d3mIndex) => {
     const includedIndex = included[d3mIndex];
     const excludedIndex = excluded[d3mIndex];
 
@@ -206,7 +206,7 @@ function addFilter(filters: string, filter: Filter): string {
 function removeFilter(filters: string, filter: Filter): string {
   // decode the provided filters
   const decoded = decodeFilters(filters);
-  const index = _.findIndex(decoded, f => {
+  const index = _.findIndex(decoded, (f) => {
     return _.isEqual(f, filter);
   });
   if (index !== -1) {
@@ -222,7 +222,7 @@ export function hasFilterInRoute(variable: string): boolean {
   const filters = routeGetters.getRouteFilters(store);
   const decoded = decodeFilters(filters);
   return (
-    decoded.filter(filter => {
+    decoded.filter((filter) => {
       return filter.key && filter.key === variable;
     }).length > 0
   );
@@ -234,7 +234,7 @@ export function addFilterToRoute(router: VueRouter, filter: Filter) {
   // merge the updated filters back into the route query params
   const updated = addFilter(filters, filter);
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
-    filters: updated
+    filters: updated,
   });
   router.push(entry);
 }
@@ -245,7 +245,7 @@ export function removeFilterFromRoute(router: VueRouter, filter: Filter) {
   // merge the updated filters back into the route query params
   const updated = removeFilter(filters, filter);
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
-    filters: updated
+    filters: updated,
   });
   router.push(entry);
 }
@@ -254,12 +254,12 @@ export function removeFiltersByName(router: VueRouter, key: string) {
   // retrieve the filters from the route
   const filters = routeGetters.getRouteFilters(store);
   let decoded = decodeFilters(filters);
-  decoded = decoded.filter(filter => {
+  decoded = decoded.filter((filter) => {
     return filter.key !== key;
   });
   const encoded = encodeFilters(decoded);
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
-    filters: encoded
+    filters: encoded,
   });
   router.push(entry);
 }

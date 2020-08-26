@@ -57,13 +57,13 @@ export default Vue.extend({
   props: {
     currentSize: { type: Number, default: 1 },
     total: { type: Number, default: 1 },
-    excluded: Boolean
+    excluded: Boolean,
   },
 
   data() {
     return {
       dataSize: this.currentSize,
-      isUpdating: false
+      isUpdating: false,
     };
   },
 
@@ -76,7 +76,7 @@ export default Vue.extend({
     /* Disable the Update button */
     isDisabled(): boolean {
       return this.isUpdating || this.dataSize === this.currentSize;
-    }
+    },
   },
 
   methods: {
@@ -84,7 +84,7 @@ export default Vue.extend({
     onUpdate() {
       this.isUpdating = true;
       this.$emit("submit", this.dataSize);
-    }
+    },
   },
 
   watch: {
@@ -94,8 +94,8 @@ export default Vue.extend({
       this.isUpdating = false;
       const dropdown = this.$refs.dropdown as typeof BDropdown;
       dropdown.hide();
-    }
-  }
+    },
+  },
 });
 </script>
 

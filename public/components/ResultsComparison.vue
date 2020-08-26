@@ -53,12 +53,12 @@ export default Vue.extend({
     LayerSelection,
     LegendWeight,
     ResultsDataSlot,
-    ViewTypeToggle
+    ViewTypeToggle,
   },
 
   data() {
     return {
-      viewType: TABLE_VIEW
+      viewType: TABLE_VIEW,
     };
   },
 
@@ -79,8 +79,8 @@ export default Vue.extend({
 
     isRemoteSensing(): boolean {
       return routeGetters.isRemoteSensing(this.$store);
-    }
-  }
+    },
+  },
 });
 </script>
 
