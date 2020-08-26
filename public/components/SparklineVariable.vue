@@ -30,7 +30,7 @@ import {
   TimeseriesExtrema,
   VariableSummary,
   Histogram,
-  Bucket
+  Bucket,
 } from "../store/dataset/index";
 
 interface TimeseriesSet {
@@ -48,7 +48,7 @@ export default Vue.extend({
   name: "sparkline-variable",
 
   components: {
-    SparklineSvg
+    SparklineSvg,
   },
 
   props: {
@@ -56,15 +56,15 @@ export default Vue.extend({
     minX: Number as () => number,
     maxX: Number as () => number,
     highlightPixelX: {
-      type: Number as () => number
-    }
+      type: Number as () => number,
+    },
   },
   computed: {
     timeseriesSet(): TimeseriesSet {
       if (!this.summary.filtered && !this.summary.baseline) {
         return {
           summaries: [],
-          extrema: null
+          extrema: null,
         };
       }
       const key = this.summary.key;
@@ -78,22 +78,22 @@ export default Vue.extend({
       return {
         x: {
           min: this.minX,
-          max: this.maxX
+          max: this.maxX,
         },
         y: {
           min: this.timeseriesSet.extrema.y.min,
-          max: this.timeseriesSet.extrema.y.max
-        }
+          max: this.timeseriesSet.extrema.y.max,
+        },
       };
-    }
+    },
   },
   methods: {
     min(timeseries: number[][]): number {
-      const min = d3.min(timeseries, d => d[1]);
+      const min = d3.min(timeseries, (d) => d[1]);
       return min !== undefined ? min : 0;
     },
     max(timeseries: number[][]): number {
-      const max = d3.max(timeseries, d => d[1]);
+      const max = d3.max(timeseries, (d) => d[1]);
       return max !== undefined ? max : 0;
     },
 
@@ -101,7 +101,7 @@ export default Vue.extend({
       const extrema = {
         x: { min: Infinity, max: -Infinity },
         y: { min: Infinity, max: -Infinity },
-        sum: 0
+        sum: 0,
       };
       for (let i = 0; i < points.length; i++) {
         extrema.x.min = Math.min(extrema.x.min, Math.min(points[i][0]));
@@ -120,13 +120,13 @@ export default Vue.extend({
       return {
         x: {
           min: Math.min(a.x.min, b.x.min),
-          max: Math.max(a.x.max, b.x.max)
+          max: Math.max(a.x.max, b.x.max),
         },
         y: {
           min: Math.min(a.y.min, b.y.min),
-          max: Math.max(a.y.max, b.y.max)
+          max: Math.max(a.y.max, b.y.max),
         },
-        sum: a.sum + b.sum
+        sum: a.sum + b.sum,
       };
     },
 
@@ -135,20 +135,20 @@ export default Vue.extend({
       label: string,
       buckets: Bucket[]
     ): TimeseriesSet {
-      const timeseries = buckets.map(b => [_.parseInt(b.key), b.count]);
+      const timeseries = buckets.map((b) => [_.parseInt(b.key), b.count]);
       const extrema = this.getExtremaFromTimeseries(timeseries);
 
       const summaries = [
         {
           label: label,
           key: key,
-          timeseries: timeseries
-        }
+          timeseries: timeseries,
+        },
       ];
 
       return {
         summaries: summaries,
-        extrema: extrema
+        extrema: extrema,
       };
     },
 
@@ -160,11 +160,11 @@ export default Vue.extend({
       let extrema: TimeseriesExtrema = {
         x: { min: Infinity, max: -Infinity },
         y: { min: Infinity, max: -Infinity },
-        sum: 0
+        sum: 0,
       };
       const summaries = _.map(buckets, (buckets, category) => {
         const sublabel = `${label} - ${category}`;
-        const timeseries = buckets.map(b => [_.parseInt(b.key), b.count]);
+        const timeseries = buckets.map((b) => [_.parseInt(b.key), b.count]);
         const subExtrema = this.getExtremaFromTimeseries(timeseries);
 
         extrema = this.mergeExtrema(extrema, subExtrema);
@@ -174,7 +174,7 @@ export default Vue.extend({
           key: key,
           category: category,
           timeseries: timeseries,
-          sum: subExtrema.sum
+          sum: subExtrema.sum,
         };
       });
 
@@ -185,7 +185,7 @@ export default Vue.extend({
 
       return {
         summaries: summaries,
-        extrema: extrema
+        extrema: extrema,
       };
     },
 
@@ -202,8 +202,8 @@ export default Vue.extend({
         );
       }
       return this.numericBucketsToTimeseries(key, label, histogram.buckets);
-    }
-  }
+    },
+  },
 });
 </script>
 

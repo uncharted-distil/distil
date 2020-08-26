@@ -12,7 +12,7 @@ export const predictionsModule: Module<PredictionState, DistilState> = {
   actions: moduleActions,
   mutations: moduleMutations,
   state: state,
-  namespaced: true
+  namespaced: true,
 };
 
 const { commit, read, dispatch } = getStoreAccessors<
@@ -51,7 +51,7 @@ export const getters = {
 
   // forecasts
   getPredictedTimeseries: read(moduleGetters.getPredictionTimeseries),
-  getPredictedForecasts: read(moduleGetters.getPredictionForecasts)
+  getPredictedForecasts: read(moduleGetters.getPredictionForecasts),
 };
 
 // Typed actions
@@ -70,7 +70,7 @@ export const actions = {
   fetchPredictedSummaries: dispatch(moduleActions.fetchPredictionSummaries),
 
   // time series forecast data
-  fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries)
+  fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries),
 };
 
 // Typed mutations
@@ -88,5 +88,5 @@ export const mutations = {
   updatePredictedSummary: commit(moduleMutations.updatePredictedSummary),
   // forecasts
   updatePredictedTimeseries: commit(moduleMutations.updatePredictedTimeseries),
-  updatePredictedForecast: commit(moduleMutations.updatePredictedForecast)
+  updatePredictedForecast: commit(moduleMutations.updatePredictedForecast),
 };

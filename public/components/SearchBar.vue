@@ -30,7 +30,7 @@ export default Vue.extend({
   data() {
     return {
       uncommittedInput: false,
-      uncommittedTerms: ""
+      uncommittedTerms: "",
     };
   },
 
@@ -45,8 +45,8 @@ export default Vue.extend({
           return this.uncommittedTerms;
         }
         return routeGetters.getRouteTerms(this.$store);
-      }
-    }
+      },
+    },
   },
 
   mounted() {
@@ -78,7 +78,7 @@ export default Vue.extend({
           feature: Feature.SEARCH_DATASETS,
           activity: Activity.DATA_PREPARATION,
           subActivity: SubActivity.DATA_TRANSFORMATION,
-          details: { terms: this.terms }
+          details: { terms: this.terms },
         });
       }
     },
@@ -86,18 +86,18 @@ export default Vue.extend({
       const path = routeGetters.getRoutePath(this.$store);
       if (path !== SEARCH_ROUTE) {
         const routeEntry = createRouteEntry(SEARCH_ROUTE, {
-          terms: this.terms
+          terms: this.terms,
         });
         this.$router.push(routeEntry);
       } else {
         const routeEntry = overlayRouteEntry(this.$route, {
-          terms: this.terms
+          terms: this.terms,
         });
         this.$router.push(routeEntry);
       }
       this.uncommittedInput = false;
-    }
-  }
+    },
+  },
 });
 </script>
 

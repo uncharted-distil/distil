@@ -43,7 +43,7 @@ import Vue from "vue";
 import { actions as datasetActions } from "../store/dataset/module";
 import {
   actions as requestActions,
-  getters as requestGetters
+  getters as requestGetters,
 } from "../store/requests/module";
 import { actions as appActions } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -51,7 +51,7 @@ import { filterSummariesByDataset } from "../util/data";
 import {
   getBase64,
   generateUniqueDatasetName,
-  removeExtension
+  removeExtension,
 } from "../util/uploads";
 import moment from "moment";
 import { getPredictionsById } from "../util/predictions";
@@ -68,20 +68,20 @@ export default Vue.extend({
       importDataName: "",
       uploadData: {},
       uploadStatus: "",
-      isWaiting: false
+      isWaiting: false,
     };
   },
 
   props: {
     fittedSolutionId: String as () => string,
     target: String as () => string,
-    targetType: String as () => string
+    targetType: String as () => string,
   },
 
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
-    }
+    },
   },
 
   methods: {
@@ -111,7 +111,7 @@ export default Vue.extend({
       this.uploadStart({
         file: this.file,
         filename: this.file.name,
-        datasetID: deconflictedName
+        datasetID: deconflictedName,
       });
 
       // Apply model to a new prediction set.  The selected file's contents will be uploaded and
@@ -123,7 +123,7 @@ export default Vue.extend({
           dataset: dataset,
           fittedSolutionId: this.fittedSolutionId,
           target: this.target,
-          targetType: this.targetType
+          targetType: this.targetType,
         };
         const response = await requestActions.createPredictRequest(
           this.$store,
@@ -143,8 +143,8 @@ export default Vue.extend({
         activity: Activity.MODEL_SELECTION,
         subActivity: SubActivity.IMPORT_INFERENCE,
         details: {
-          activeSolution: this.fittedSolutionId
-        }
+          activeSolution: this.fittedSolutionId,
+        },
       });
     },
 
@@ -169,12 +169,12 @@ export default Vue.extend({
           predictionDataset: predictionDataset,
           dataset: this.dataset,
           varModes: varModes,
-          applyModel: true.toString()
+          applyModel: true.toString(),
         };
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
         this.$router.push(entry);
       }
-    }
-  }
+    },
+  },
 });
 </script>

@@ -19,13 +19,13 @@ export default Vue.extend({
   name: "recent-datasets",
 
   components: {
-    DatasetPreview
+    DatasetPreview,
   },
   props: {
     maxDatasets: {
       default: 5,
-      type: Number as () => number
-    }
+      type: Number as () => number,
+    },
   },
 
   computed: {
@@ -36,7 +36,7 @@ export default Vue.extend({
         datasets,
         datasetGetters.getDatasets(this.$store)
       );
-    }
+    },
   },
 
   methods: {
@@ -45,9 +45,9 @@ export default Vue.extend({
         return datasets;
       }
       const idSet = new Set(ids);
-      return _.filter(datasets, d => idSet.has(d.id));
-    }
-  }
+      return _.filter(datasets, (d) => idSet.has(d.id));
+    },
+  },
 });
 </script>
 

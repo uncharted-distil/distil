@@ -99,13 +99,13 @@ import {
   TableData,
   TableColumn,
   TableRow,
-  Dataset
+  Dataset,
 } from "../store/dataset/index";
 import {
   filterSummariesByDataset,
   NUM_PER_PAGE,
   getTableDataItems,
-  getTableDataFields
+  getTableDataFields,
 } from "../util/data";
 import { JOINED_VARS_INSTANCE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
@@ -119,7 +119,7 @@ export default Vue.extend({
     JoinDatasetsForm,
     JoinDataSlot,
     VariableFacets,
-    vueSlider
+    vueSlider,
   },
 
   computed: {
@@ -156,7 +156,7 @@ export default Vue.extend({
     },
     topDatasetItem(): Dataset {
       const datasets = datasetGetters.getDatasets(this.$store);
-      return datasets.find(item => item.id === this.topDataset);
+      return datasets.find((item) => item.id === this.topDataset);
     },
     topDatasetName(): string {
       return this.topDatasetItem ? this.topDatasetItem.name.toUpperCase() : "";
@@ -187,7 +187,7 @@ export default Vue.extend({
     },
     bottomDatasetItem(): Dataset {
       const datasets = datasetGetters.getDatasets(this.$store);
-      return datasets.find(item => item.id === this.bottomDataset);
+      return datasets.find((item) => item.id === this.bottomDataset);
     },
     bottomDatasetName(): string {
       return this.bottomDatasetItem
@@ -212,7 +212,7 @@ export default Vue.extend({
     },
     bottomDatasetHasData(): boolean {
       return !!this.bottomDatasetTableData;
-    }
+    },
   },
 
   watch: {
@@ -221,7 +221,7 @@ export default Vue.extend({
     },
     joinedVarsPage() {
       viewActions.updateJoinDatasetsData(this.$store);
-    }
+    },
   },
 
   beforeMount() {
@@ -238,7 +238,7 @@ export default Vue.extend({
       const route = {
         // clear top and bottom column
         joinColumnA: null,
-        joinColumnB: null
+        joinColumnB: null,
       };
       if (column) {
         route.joinColumnA = column.key;
@@ -251,17 +251,17 @@ export default Vue.extend({
         return;
       }
       const entry = overlayRouteEntry(this.$route, {
-        joinColumnB: column ? column.key : null
+        joinColumnB: column ? column.key : null,
       });
       this.$router.push(entry);
     },
     onJoinAccuracyChanged(value: number) {
       const entry = overlayRouteEntry(this.$route, {
-        joinAccuracy: value.toString()
+        joinAccuracy: value.toString(),
       });
       this.$router.push(entry);
-    }
-  }
+    },
+  },
 });
 </script>
 

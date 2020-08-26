@@ -19,7 +19,7 @@ import { getters as resultsGetters } from "../store/results/module";
 import {
   getNumericalFacetValue,
   getCategoricalFacetValue,
-  TOP_RANGE_HIGHLIGHT
+  TOP_RANGE_HIGHLIGHT,
 } from "../util/facets";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import { RESULT_TARGET_VAR_INSTANCE } from "../store/route/index";
@@ -27,7 +27,7 @@ import {
   Variable,
   VariableSummary,
   Highlight,
-  RowSelection
+  RowSelection,
 } from "../store/dataset/index";
 import { isNumericType, TIMESERIES_TYPE } from "../util/types";
 import { Activity } from "../util/userEvents";
@@ -36,7 +36,7 @@ export default Vue.extend({
   name: "result-target-variable",
 
   components: {
-    VariableFacets
+    VariableFacets,
   },
 
   computed: {
@@ -74,13 +74,13 @@ export default Vue.extend({
 
     defaultHighlightType(): string {
       return TOP_RANGE_HIGHLIGHT;
-    }
+    },
   },
 
   data() {
     return {
       hasDefaultedAlready: false,
-      logActivity: Activity.MODEL_SELECTION
+      logActivity: Activity.MODEL_SELECTION,
     };
   },
 
@@ -90,7 +90,7 @@ export default Vue.extend({
     },
     targetVariable() {
       this.defaultTargetHighlight();
-    }
+    },
   },
 
   mounted() {
@@ -135,7 +135,7 @@ export default Vue.extend({
         value: getNumericalFacetValue(
           this.resultTargetSummary,
           this.defaultHighlightType
-        )
+        ),
       });
     },
 
@@ -144,10 +144,10 @@ export default Vue.extend({
         context: this.instanceName,
         dataset: this.dataset,
         key: this.target,
-        value: getCategoricalFacetValue(this.resultTargetSummary)
+        value: getCategoricalFacetValue(this.resultTargetSummary),
       });
-    }
-  }
+    },
+  },
 });
 </script>
 

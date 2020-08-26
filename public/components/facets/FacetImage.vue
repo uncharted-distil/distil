@@ -21,9 +21,7 @@
       </type-change-menu>
     </div>
     <facet-template target="facet-terms-value" class="facet-content-container">
-      <div slot="header" class="facet-image-preview-display">
-        ${metadata}
-      </div>
+      <div slot="header" class="facet-image-preview-display">${metadata}</div>
       <div slot="label" class="facet-image-label" title="${value} ${label}">
         ${value} ${label}
       </div>
@@ -67,7 +65,7 @@ import {
   hasBaseline,
   viewMoreData,
   viewLessData,
-  facetTypeChangeState
+  facetTypeChangeState,
 } from "../../util/facets";
 import _ from "lodash";
 import { IMAGE_TYPE } from "../../util/types";
@@ -77,7 +75,7 @@ export default Vue.extend({
 
   components: {
     TypeChangeMenu,
-    ImagePreview
+    ImagePreview,
   },
 
   directives: {
@@ -86,7 +84,7 @@ export default Vue.extend({
       if (binding.value) {
         el.appendChild(binding.value);
       }
-    }
+    },
   },
 
   props: {
@@ -95,19 +93,19 @@ export default Vue.extend({
     html: [
       String as () => string,
       Object as () => any,
-      Function as () => Function
+      Function as () => Function,
     ],
     expandCollapse: Function as () => Function,
     highlight: Object as () => Highlight,
     enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
-    rowSelection: Object as () => RowSelection
+    rowSelection: Object as () => RowSelection,
   },
 
   data() {
     return {
       baseNumToDisplay: getCategoricalChunkSize(this.summary.type),
-      moreNumToDisplay: 0
+      moreNumToDisplay: 0,
     };
   },
 
@@ -119,7 +117,7 @@ export default Vue.extend({
       }
       return {
         label: this.summary.label.toUpperCase(),
-        values
+        values,
       };
     },
     facetEnableTypeChanges(): boolean {
@@ -186,7 +184,7 @@ export default Vue.extend({
     },
     hasLess(): boolean {
       return this.moreNumToDisplay > 0;
-    }
+    },
   },
 
   methods: {
@@ -207,7 +205,7 @@ export default Vue.extend({
           ratio: buckets[i].count / this.max,
           label: buckets[i].key,
           value: buckets[i].count,
-          metadata: this.getImagePreview(imageUrl)
+          metadata: this.getImagePreview(imageUrl),
         });
       }
       return facetData;
@@ -221,8 +219,8 @@ export default Vue.extend({
           // when injecting this way. Cancel the visibility flagging for facets.
           preventHiding: true,
           imageUrl,
-          type: this.summary.varType
-        }
+          type: this.summary.varType,
+        },
       });
       ip.$mount();
       return ip.$el;
@@ -268,7 +266,7 @@ export default Vue.extend({
             const oldKey = Object.keys(this.selection)[0];
             const incomingKeys = Object.keys(facet.selection);
             const newKey = incomingKeys.filter(
-              iKey => oldKey.indexOf(iKey) < 0
+              (iKey) => oldKey.indexOf(iKey) < 0
             )[0];
             value = this.facetData.values[newKey].label;
           } else {
@@ -295,14 +293,14 @@ export default Vue.extend({
       if (this.html) {
         return _.isFunction(this.html)
           ? this.html({
-              colName: this.summary.key
+              colName: this.summary.key,
             })
           : this.html;
       }
       return null;
     },
-    getGroupIcon
-  }
+    getGroupIcon,
+  },
 });
 </script>
 

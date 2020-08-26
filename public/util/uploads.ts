@@ -14,16 +14,13 @@ export function getBase64(file: File): Promise<string> {
       }
       resolve(encoded);
     };
-    reader.onerror = error => reject(error);
+    reader.onerror = (error) => reject(error);
   });
 }
 
 // Removes the extension from a filename
 export function removeExtension(filename: string): string {
-  return filename
-    .split(".")
-    .slice(0, -1)
-    .join(".");
+  return filename.split(".").slice(0, -1).join(".");
 }
 
 // Given a potential dataset name, will compare against those already stored
@@ -31,7 +28,7 @@ export function removeExtension(filename: string): string {
 // We make the comparison case insensitive.
 export function generateUniqueDatasetName(datasetName: string): string {
   const datasetNames = new Set(
-    datasetGetters.getDatasets(store).map(d => _.toLower(d.id))
+    datasetGetters.getDatasets(store).map((d) => _.toLower(d.id))
   );
   let newName = datasetName;
   let count = 1;

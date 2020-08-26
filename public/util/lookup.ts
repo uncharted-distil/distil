@@ -2,7 +2,7 @@ import { Dictionary } from "./dict";
 
 export function buildLookup(strs: any[]): Dictionary<boolean> {
   const lookup = {};
-  strs.forEach(str => {
+  strs.forEach((str) => {
     if (str) {
       lookup[str] = true;
       lookup[str.toLowerCase()] = true;

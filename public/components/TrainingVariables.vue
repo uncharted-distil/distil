@@ -44,7 +44,7 @@ import { Variable, VariableSummary, Highlight } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import { TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
@@ -58,12 +58,12 @@ export default Vue.extend({
   name: "training-variables",
 
   components: {
-    VariableFacets
+    VariableFacets,
   },
 
   data() {
     return {
-      logActivity: Activity.DATA_PREPARATION
+      logActivity: Activity.DATA_PREPARATION,
     };
   },
 
@@ -100,7 +100,7 @@ export default Vue.extend({
       // Filter them out of the available training variables.
       const trainingVariables = Array.from(
         this.trainingVariableSummaries
-      ).filter(variable => !timeseriesGrouping.includes(variable.key));
+      ).filter((variable) => !timeseriesGrouping.includes(variable.key));
 
       // The variables can be removed.
       return trainingVariables.length > 0;
@@ -121,14 +121,14 @@ export default Vue.extend({
         // exclude remove button if the var is an id / sub-id of the
         // timeseries grouping.
 
-        const targetVar = this.variables.find(v => {
+        const targetVar = this.variables.find((v) => {
           return v.colName === this.target;
         });
 
         if (targetVar?.grouping) {
           let isGroupingID = false;
           if (targetVar.grouping.subIds.length > 0) {
-            isGroupingID = !!targetVar.grouping.subIds.find(v => {
+            isGroupingID = !!targetVar.grouping.subIds.find((v) => {
               return v === group.colName;
             });
           } else {
@@ -149,7 +149,7 @@ export default Vue.extend({
             feature: Feature.REMOVE_FEATURE,
             activity: Activity.DATA_PREPARATION,
             subActivity: SubActivity.DATA_TRANSFORMATION,
-            details: { feature: group.colName }
+            details: { feature: group.colName },
           });
 
           const training = routeGetters.getDecodedTrainingVariableNames(
@@ -161,12 +161,12 @@ export default Vue.extend({
           const taskResponse = await datasetActions.fetchTask(this.$store, {
             dataset: routeGetters.getRouteDataset(this.$store),
             targetName: routeGetters.getRouteTargetVariable(this.$store),
-            variableNames: training
+            variableNames: training,
           });
 
           const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
             training: training.join(","),
-            task: taskResponse.data.task.join(",")
+            task: taskResponse.data.task.join(","),
           });
           this.$router.push(entry);
           removeFiltersByName(this.$router, group.colName);
@@ -174,7 +174,7 @@ export default Vue.extend({
         container.appendChild(remove);
         return container;
       };
-    }
+    },
   },
 
   methods: {
@@ -183,22 +183,22 @@ export default Vue.extend({
         feature: Feature.REMOVE_ALL_FEATURES,
         activity: Activity.DATA_PREPARATION,
         subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: {}
+        details: {},
       });
 
       const facets = this.$refs.facets as any;
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
       );
-      facets.availableVariables().forEach(variable => {
+      facets.availableVariables().forEach((variable) => {
         training.splice(training.indexOf(variable), 1);
       });
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        training: training.join(",")
+        training: training.join(","),
       });
       this.$router.push(entry);
-    }
-  }
+    },
+  },
 });
 </script>
 

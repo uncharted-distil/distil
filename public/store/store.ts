@@ -39,9 +39,9 @@ const store = new Store<DistilState>({
     predictionsModule,
     modelModule,
     viewModule,
-    appModule
+    appModule,
   },
-  strict: true
+  strict: true,
 });
 
 export default store;

@@ -3,7 +3,7 @@ import {
   VariableSummary,
   Extrema,
   TableData,
-  TimeSeriesValue
+  TimeSeriesValue,
 } from "../dataset/index";
 
 export interface TimeSeries {
@@ -63,5 +63,5 @@ export const state: ResultsState = {
   fittedSolutionId: null,
   produceRequestId: null,
   // variable rankings
-  variableRankings: {}
+  variableRankings: {},
 };
