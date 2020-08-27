@@ -257,7 +257,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(5, "coordinates", "coordinates", "coordinates", model.RealVectorType,
-			model.GeoBoundsType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
+			model.RealVectorType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(6, "label", "label", "label", model.CategoricalType,
@@ -265,7 +265,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(7, "__geo_coordinates", "coordinates", "coordinates", model.GeoBoundsType,
-			model.StringType, "postgis structure for the bounding box coordinates of the tile", []string{"suggestedTarget"},
+			model.GeoBoundsType, "postgis structure for the bounding box coordinates of the tile", []string{"attribute"},
 			model.VarDistilRoleMetadata, nil, dr.Variables, false))
 
 	// create the data resource for the referenced images
