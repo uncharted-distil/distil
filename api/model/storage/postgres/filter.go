@@ -178,7 +178,7 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 
 	case model.GeoBoundsFilter:
 		// geo bounds
-		where := fmt.Sprintf("ST_WITHIN(%s, %d)", name, len(params)+1)
+		where := fmt.Sprintf("ST_WITHIN(%s, $%d)", name, len(params)+1)
 		params = append(params, buildBoundsGeometryString(filter.Bounds))
 		wheres = append(wheres, where)
 
@@ -305,7 +305,7 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 
 	case model.GeoBoundsFilter:
 		// geo bounds
-		where := fmt.Sprintf("!ST_WITHIN(%s, %d)", name, len(params)+1)
+		where := fmt.Sprintf("!ST_WITHIN(%s, $%d)", name, len(params)+1)
 		params = append(params, buildBoundsGeometryString(filter.Bounds))
 		wheres = append(wheres, where)
 
@@ -390,8 +390,14 @@ func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVar
 			distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Name))
 		}
 
-		fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
-		if variable.Name == model.D3MIndexFieldName {
+		// derived metadata variables (ex: postgis geometry) should use the original variables
+		varName := variable.Name
+		if variable.DistilRole == model.VarDistilRoleMetadata && variable.OriginalVariable != variable.Name {
+			varName = variable.OriginalVariable
+		}
+
+		fields = append(fields, fmt.Sprintf("\"%s\"", varName))
+		if varName == model.D3MIndexFieldName {
 			indexIncluded = true
 		}
 
