@@ -134,7 +134,7 @@
       </div>
     </div>
     <div
-      v-if="hasPages"
+      v-if="pagination"
       class="col-12 row align-items-center variable-page-nav"
     >
       <div class="col-12 flex-column">
@@ -334,12 +334,8 @@ export default Vue.extend({
       return typeChangeStatus;
     },
 
-    hasPages(): boolean {
-      return this.numSummaries > this.rowsPerPage;
-    },
-
     variableFacetListClass(): string {
-      return this.hasPages
+      return this.pagination
         ? "variable-facets-list-with-footer"
         : "variable-facets-list";
     },

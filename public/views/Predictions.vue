@@ -20,6 +20,7 @@
             instance-name="resultTrainingVars"
             :summaries="trainingSummaries"
             :log-activity="logActivity"
+            :pagination="trainingSummaries.length > NUM_PER_PAGE"
           >
           </variable-facets>
         </div>
@@ -52,6 +53,7 @@ import {
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as predictionGetters } from "../store/predictions/module";
+import { NUM_PER_PAGE } from "../util/data";
 import { Feature, Activity } from "../util/userEvents";
 
 export default Vue.extend({
@@ -86,6 +88,9 @@ export default Vue.extend({
     },
     highlightString(): string {
       return routeGetters.getRouteHighlight(this.$store);
+    },
+    pagination(): boolean {
+      return this.trainingSummaries.length > NUM_PER_PAGE;
     },
   },
 
