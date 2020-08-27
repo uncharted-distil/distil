@@ -207,23 +207,6 @@ export default Vue.extend({
           this.$router.push(varRankedEntry);
 
           this.clearData();
-
-          /* 
-          
-          
-          
-          
-          
-          
-          refetch 
-          
-          
-          
-          
-          
-          
-          */
-
           break;
         case DatasetPendingRequestType.GEOCODING:
           const geoRequest = <GeocodingPendingRequest>this.requestData;

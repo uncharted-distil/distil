@@ -69,11 +69,14 @@ export default Vue.extend({
       const summaries = routeGetters.getAvailableVariableSummaries(this.$store);
       return filterSummariesByDataset(summaries, this.dataset);
     },
+    availableVariables(): Variable[] {
+      return routeGetters.getAvailableVariables(this.$store);
+    },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
     subtitle(): string {
-      return `${this.availableVariableSummaries.length} features available`;
+      return `${this.availableVariables.length} features available`;
     },
     numRowsPerPage(): number {
       return NUM_PER_PAGE;
