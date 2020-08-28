@@ -288,12 +288,25 @@ export const mutations = {
       });
       return;
     }
+
     const x = state.timeseriesExtrema[args.dataset].x;
     const y = state.timeseriesExtrema[args.dataset].y;
     Vue.set(x, "min", Math.min(x.min, minX));
     Vue.set(x, "max", Math.max(x.max, maxX));
     Vue.set(y, "min", Math.min(y.min, minY));
     Vue.set(y, "max", Math.max(y.max, maxY));
+
+    // Calculate the min/max/mean for each timeseries data
+    const data = state.timeseries[args.dataset].timeseriesData;
+    Object.keys(data).forEach((key) => {
+      const timeserie = data[key];
+      const info = {
+        min: _.minBy(timeserie, (d) => d.value).value,
+        max: _.maxBy(timeserie, (d) => d.value).value,
+        mean: _.meanBy(timeserie, (d) => d.value),
+      };
+      Vue.set(state.timeseriesExtrema[args.dataset], key, info);
+    });
   },
 
   setJoinDatasetsTableData(

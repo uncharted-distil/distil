@@ -125,6 +125,7 @@ export interface DatasetOrigin {
 export interface Extrema {
   min: number;
   max: number;
+  mean?: number;
 }
 
 export interface Bucket {

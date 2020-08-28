@@ -13,11 +13,12 @@
         v-for="computedField in computedFields"
         v-slot:[cellSlot(computedField)]="data"
       >
-        <span :key="computedField" :title="data.value.value"
-          >{{ data.value.value }}
+        <span :key="computedField" :title="data.value.value">
+          {{ data.value.value }}
           <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
-            <icon-fork /></icon-base
-        ></span>
+            <icon-fork />
+          </icon-base>
+        </span>
       </template>
 
       <template
@@ -28,7 +29,7 @@
           :key="imageField.key"
           :type="imageField.type"
           :image-url="data.item[imageField.key].value"
-        ></image-preview>
+        />
       </template>
 
       <template
@@ -43,21 +44,25 @@
               :y-col="timeseriesGrouping.yCol"
               :timeseries-col="timeseriesGrouping.idCol"
               :timeseries-id="data.item[timeseriesGrouping.idCol].value"
-            >
-            </sparkline-preview>
+            />
           </div>
         </div>
       </template>
 
       <template
-        v-for="listField in listFields"
+        v-for="(listField, index) in listFields"
         v-slot:[cellSlot(listField.key)]="data"
       >
-        <span :title="formatList(data)">{{ formatList(data) }}</span>
+        <span :key="index" :title="formatList(data)">
+          {{ formatList(data) }}
+        </span>
       </template>
 
       <template v-slot:cell()="data">
-        <span :title="data.value.value">{{ data.value.value }}</span>
+        <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
+          {{ data.value | cleanNumber }}
+        </template>
+        <span v-else :title="data.value.value">{{ data.value.value }}</span>
       </template>
     </b-table>
   </fixed-header-table>
@@ -66,15 +71,16 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import IconBase from "./icons/IconBase";
-import IconFork from "./icons/IconFork";
-import FixedHeaderTable from "./FixedHeaderTable";
-import SparklinePreview from "./SparklinePreview";
-import ImagePreview from "./ImagePreview";
+import IconBase from "./icons/IconBase.vue";
+import IconFork from "./icons/IconFork.vue";
+import FixedHeaderTable from "./FixedHeaderTable.vue";
+import SparklinePreview from "./SparklinePreview.vue";
+import ImagePreview from "./ImagePreview.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
 import { Filter } from "../util/filters";
 import {
+  Extrema,
   TableColumn,
   TableRow,
   Grouping,
@@ -119,6 +125,13 @@ export default Vue.extend({
     includedActive: Boolean as () => boolean,
   },
 
+  filters: {
+    /* Display number with only two decimal. */
+    cleanNumber(value) {
+      return parseFloat(value).toFixed(2);
+    },
+  },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
@@ -129,9 +142,19 @@ export default Vue.extend({
     },
 
     items(): TableRow[] {
-      const items = this.includedActive
+      let items = this.includedActive
         ? datasetGetters.getIncludedTableDataItems(this.$store)
         : datasetGetters.getExcludedTableDataItems(this.$store);
+
+      // In the case of timeseries, we add their Min/Max/Mean.
+      if (this.isTimeseries) {
+        items = items?.map((item) => {
+          const timeserieId = item[this.timeseriesGroupings[0].idCol].value;
+          const minMaxMean = this.timeserieExtremas(timeserieId);
+          return { ...item, ...minMaxMean };
+        });
+      }
+
       return updateTableRowSelection(
         items,
         this.rowSelection,
@@ -146,7 +169,25 @@ export default Vue.extend({
     },
 
     tableFields(): TableColumn[] {
-      return formatFieldsAsArray(this.fields);
+      const tableFields = formatFieldsAsArray(this.fields);
+
+      if (!this.isTimeseries) return tableFields;
+
+      // For Timeseries we want to display the Min/Max/Mean
+      return tableFields.concat([
+        {
+          key: "min",
+          sortable: true,
+        },
+        {
+          key: "max",
+          sortable: true,
+        },
+        {
+          key: "mean",
+          sortable: true,
+        },
+      ] as TableColumn[]);
     },
 
     imageFields(): { key: string; type: string }[] {
@@ -175,12 +216,25 @@ export default Vue.extend({
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
+
+    isTimeseries(): boolean {
+      return routeGetters.isTimeseries(this.$store);
+    },
   },
+
   updated() {
     const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
     fixedHeaderTable.resizeTableCells();
   },
+
   methods: {
+    timeserieExtremas(id: string): Extrema {
+      const extremas = datasetGetters.getTimeseriesExtrema(this.$store);
+      return extremas[this.dataset] && extremas[this.dataset][id]
+        ? { ...extremas[this.dataset][id] }
+        : { min: null, max: null, mean: null };
+    },
+
     onSortChanged() {
       // need a `nextTick` otherwise the cells get immediately overwritten
       const currentScrollLeft = this.$el.querySelector("tbody").scrollLeft;
@@ -190,6 +244,7 @@ export default Vue.extend({
         fixedHeaderTable.setScrollLeft(currentScrollLeft);
       });
     },
+
     onRowClick(row: TableRow) {
       if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
         appActions.logUserEvent(this.$store, {
@@ -198,6 +253,7 @@ export default Vue.extend({
           subActivity: SubActivity.DATA_TRANSFORMATION,
           details: { select: row[D3M_INDEX_FIELD] },
         });
+
         addRowSelection(
           this.$router,
           this.instanceName,
@@ -211,6 +267,7 @@ export default Vue.extend({
           subActivity: SubActivity.DATA_TRANSFORMATION,
           details: { deselect: row[D3M_INDEX_FIELD] },
         });
+
         removeRowSelection(
           this.$router,
           this.instanceName,
@@ -219,9 +276,11 @@ export default Vue.extend({
         );
       }
     },
+
     cellSlot(key: string): string {
       return formatSlot(key, "cell");
     },
+
     formatList(value: TableValue) {
       const listData = value.value.value.Elements as {
         Float: number;
