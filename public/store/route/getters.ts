@@ -209,10 +209,13 @@ export const getters = {
 
   getAllRoutePages(state: Route, getters: any): Object {
     const pages = {};
-    pages[JOIN_DATASETS_ROUTE] = getters.getRouteJoinDatasetsVarsPage;
-    pages[SELECT_TARGET_ROUTE] = getters.getRouteAvailableTargetVarsPage;
-    pages[SELECT_TRAINING_ROUTE] = getters.getRouteAvailableTrainingVarsPage;
-    pages[RESULTS_ROUTE] = getters.getRouteResultTrainingVarsPage;
+    pages[JOIN_DATASETS_ROUTE] = [getters.getRouteJoinDatasetsVarsPage];
+    pages[SELECT_TARGET_ROUTE] = [getters.getRouteAvailableTargetVarsPage];
+    pages[SELECT_TRAINING_ROUTE] = [
+      getters.getRouteAvailableTrainingVarsPage,
+      getters.getRouteTrainingVarsPage,
+    ];
+    pages[RESULTS_ROUTE] = [getters.getRouteResultTrainingVarsPage];
     return pages;
   },
 

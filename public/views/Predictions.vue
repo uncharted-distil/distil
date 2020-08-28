@@ -16,11 +16,13 @@
             class="h-100"
             enable-search
             enable-highlighting
-            model-selection
+            :facetCount="trainingSummaries.length"
             instance-name="resultTrainingVars"
-            :summaries="trainingSummaries"
+            is-result-features
             :log-activity="logActivity"
-            :pagination="trainingSummaries.length > NUM_PER_PAGE"
+            model-selection
+            :pagination="trainingSummaries.length > rowsPerPage"
+            :summaries="trainingSummaries"
           >
           </variable-facets>
         </div>
@@ -89,8 +91,8 @@ export default Vue.extend({
     highlightString(): string {
       return routeGetters.getRouteHighlight(this.$store);
     },
-    pagination(): boolean {
-      return this.trainingSummaries.length > NUM_PER_PAGE;
+    rowsPerPage(): number {
+      return NUM_PER_PAGE;
     },
   },
 

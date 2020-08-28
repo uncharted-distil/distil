@@ -38,6 +38,7 @@ import {
   NUM_PER_PAGE,
   NUM_PER_TARGET_PAGE,
   sortVariablesByImportance,
+  filterArrayByPage,
 } from "../../util/data";
 import { SELECT_TARGET_ROUTE } from "../route";
 
@@ -105,13 +106,26 @@ const fetchVariableSummaries = async (context, args) => {
   const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
   const pages = routeGetters.getAllRoutePages(store);
   const targetVariable = routeGetters.getTargetVariable(store);
-  const trainingVariables = routeGetters.getTrainingVariables(store);
 
-  const starterVariables = targetVariable
-    ? [targetVariable, ...trainingVariables]
+  const currentPageIndexes = pages[currentRoute];
+  const trainingIndex = currentPageIndexes?.[1];
+
+  const pageLength =
+    currentRoute === SELECT_TARGET_ROUTE ? NUM_PER_TARGET_PAGE : NUM_PER_PAGE;
+
+  const allTrainingVariables = routeGetters.getTrainingVariables(store);
+  const activeTrainingVariables = trainingIndex
+    ? filterArrayByPage(trainingIndex, pageLength, allTrainingVariables)
     : [];
 
-  const starterVariableNames = starterVariables.map((sv) =>
+  const allTargetTrainingVariables = targetVariable
+    ? [targetVariable, ...allTrainingVariables]
+    : [];
+  const activeTargetTrainingVariables = targetVariable
+    ? [targetVariable, ...activeTrainingVariables]
+    : [];
+
+  const allTargetTrainingVariableNames = allTargetTrainingVariables.map((sv) =>
     sv.colDisplayName.toLowerCase()
   );
 
@@ -119,15 +133,21 @@ const fetchVariableSummaries = async (context, args) => {
     ? sortVariablesByImportance(variables.slice())
     : variables;
 
-  const currentPageIndex = pages[currentRoute];
-  const pageLength =
-    currentRoute === SELECT_TARGET_ROUTE ? NUM_PER_TARGET_PAGE : NUM_PER_PAGE;
-  const currentPageVariables = presortedVariables
+  const pageVariables = presortedVariables
     .filter(
-      (v) => starterVariableNames.indexOf(v.colDisplayName.toLowerCase()) < 0
+      (v) =>
+        allTargetTrainingVariableNames.indexOf(v.colDisplayName.toLowerCase()) <
+        0
     )
-    .slice((currentPageIndex - 1) * pageLength, currentPageIndex * pageLength);
-  const allActiveVariables = [...starterVariables, ...currentPageVariables];
+    .slice(
+      (currentPageIndexes[0] - 1) * pageLength,
+      currentPageIndexes[0] * pageLength
+    );
+
+  const allActiveVariables = [
+    ...activeTargetTrainingVariables,
+    ...pageVariables,
+  ];
 
   return Promise.all([
     datasetActions.fetchIncludedVariableSummaries(store, {

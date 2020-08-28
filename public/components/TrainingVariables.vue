@@ -123,7 +123,7 @@ export default Vue.extend({
       return datasetGetters.getVariables(this.$store);
     },
     subtitle(): string {
-      return `${this.trainingVariableSummaries.length} features selected`;
+      return `${this.trainingVariables.length} features selected`;
     },
     instanceName(): string {
       return TRAINING_VARS_INSTANCE;
@@ -203,11 +203,8 @@ export default Vue.extend({
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
       );
-      facets.availableVariables().forEach((variable) => {
-        training.splice(training.indexOf(variable), 1);
-      });
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        training: training.join(","),
+        training: "",
       });
       this.$router.push(entry);
     },

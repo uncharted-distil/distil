@@ -17,6 +17,11 @@ export interface Forecast {
   isDateTime: Dictionary<boolean>;
 }
 
+export interface WorkingSet {
+  variableSummaries: VariableSummary[];
+  variableSummariesByKey?: Dictionary<Dictionary<VariableSummary>>;
+}
+
 export interface ResultsState {
   // table data
   includedResultTableData: TableData;

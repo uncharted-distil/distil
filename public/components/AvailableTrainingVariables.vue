@@ -79,7 +79,6 @@ export default Vue.extend({
         this.numRowsPerPage,
         this.availableVariables
       );
-      console.log(currentSummaries);
 
       return currentSummaries;
     },
@@ -147,13 +146,11 @@ export default Vue.extend({
         subActivity: SubActivity.DATA_TRANSFORMATION,
         details: {},
       });
-
-      const facets = this.$refs.facets as any;
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
       );
-      facets.availableVariables().forEach((variable) => {
-        training.push(variable);
+      this.availableVariables.forEach((variable) => {
+        training.push(variable.colName);
       });
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         training: training.join(","),
