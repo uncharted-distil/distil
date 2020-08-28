@@ -92,6 +92,24 @@ export const getters = {
     return state.excludedSet.variableSummaries;
   },
 
+  getVariableSummariesDictionary(
+    state: DatasetState
+  ): Dictionary<Dictionary<VariableSummary>> {
+    return state.includedSet.variableSummariesByKey;
+  },
+
+  getIncludedVariableSummariesDictionary(
+    state: DatasetState
+  ): Dictionary<Dictionary<VariableSummary>> {
+    return state.includedSet.variableSummariesByKey;
+  },
+
+  getExcludedVariableSummariesDictionary(
+    state: DatasetState
+  ): Dictionary<Dictionary<VariableSummary>> {
+    return state.excludedSet.variableSummariesByKey;
+  },
+
   getFiles(state: DatasetState): Dictionary<any> {
     return state.files;
   },

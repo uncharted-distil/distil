@@ -73,29 +73,6 @@ function createCacheable(
   };
 }
 
-function createDeepCacheable(
-  key: ParamCacheKey,
-  func: (context: ViewContext, args: Dictionary<string>) => any
-) {
-  return (context: ViewContext, args: Dictionary<string>) => {
-    // execute provided function if params are not cached already or changed
-    const params = JSON.stringify(args);
-    const deepKey = key + params;
-    const cachedParams = viewGetters.getFetchParamsCache(store)[deepKey];
-    console.log("deep cache \n", params, "\n", cachedParams);
-    if (cachedParams !== params) {
-      viewMutations.setFetchParamsCache(context, {
-        key: deepKey,
-        value: params,
-      });
-      console.log("not cached");
-      return Promise.resolve(func(context, args));
-    }
-    console.log("cached");
-    return Promise.resolve();
-  };
-}
-
 const fetchJoinSuggestions = createCacheable(
   ParamCacheKey.JOIN_SUGGESTIONS,
   (context, args) => {

@@ -12,14 +12,15 @@
       enable-highlighting
       enable-search
       enable-type-change
-      :log-activity="logActivity"
-      :instance-name="instanceName"
-      :rows-per-page="numRowsPerPage"
-      :summaries="trainingVariableSummaries"
+      :facetCount="trainingVariables.length"
       :html="html"
       :isAvailableFeatures="false"
       :isFeaturesToModel="true"
-      :pagination="trainingVariableSummaries.length > numRowsPerPage"
+      :log-activity="logActivity"
+      :instance-name="instanceName"
+      :pagination="trainingVariables.length > numRowsPerPage"
+      :rows-per-page="numRowsPerPage"
+      :summaries="trainingVariableSummaries"
     >
       <div class="available-variables-menu">
         <div>
@@ -49,7 +50,7 @@ import {
 } from "../store/dataset/module";
 import { TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
-import { NUM_PER_PAGE } from "../util/data";
+import { NUM_PER_PAGE, getVariableSummariesByState } from "../util/data";
 import { overlayRouteEntry } from "../util/routes";
 import { removeFiltersByName } from "../util/filters";
 import { actions as appActions } from "../store/app/module";
@@ -84,8 +85,19 @@ export default Vue.extend({
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
     },
+    trainingVariables(): Variable[] {
+      return routeGetters.getTrainingVariables(this.$store);
+    },
     trainingVariableSummaries(): VariableSummary[] {
-      return routeGetters.getTrainingVariableSummaries(this.$store);
+      const pageIndex = routeGetters.getRouteTrainingVarsPage(this.$store);
+
+      const currentSummaries = getVariableSummariesByState(
+        pageIndex,
+        this.numRowsPerPage,
+        this.trainingVariables
+      );
+
+      return currentSummaries;
     },
 
     /**

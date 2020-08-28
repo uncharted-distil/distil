@@ -691,7 +691,7 @@ export const actions = {
       varModes: Map<string, SummaryMode>;
       pages: Object;
     }
-  ): Promise<void> {
+  ): Promise<void[]> {
     return actions.fetchVariableSummaries(context, {
       dataset: args.dataset,
       variables: args.variables,
@@ -715,7 +715,7 @@ export const actions = {
       varModes: Map<string, SummaryMode>;
       pages: Object;
     }
-  ): Promise<void> {
+  ): Promise<void[]> {
     return actions.fetchVariableSummaries(context, {
       dataset: args.dataset,
       variables: args.variables,
@@ -740,11 +740,10 @@ export const actions = {
       varModes: Map<string, SummaryMode>;
       pages: object;
     }
-  ): Promise<void> {
+  ): Promise<void[]> {
     if (!validateArgs(args, ["dataset", "variables"])) {
       return null;
     }
-    console.log("fetching summaries");
     const mutator = args.include
       ? mutations.updateIncludedVariableSummaries
       : mutations.updateExcludedVariableSummaries;
@@ -799,13 +798,7 @@ export const actions = {
       }
     });
     // fill them in asynchronously
-    return Promise.all(promises).then(() => {
-      const variables = getters.getVariables(context);
-      console.log("sort time", variables, ranked);
-      args.include
-        ? mutations.sortIncludedSummaries(context, { variables, ranked })
-        : mutations.sortExcludedSummaries(context, { variables, ranked });
-    });
+    return Promise.all(promises);
   },
 
   async setVariableSummary(

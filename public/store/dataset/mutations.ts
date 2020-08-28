@@ -16,7 +16,6 @@ import {
   updateSummaries,
   updateSummariesPerVariable,
   isDatamartProvenance,
-  sortSummaries,
 } from "../../util/data";
 import {
   GEOCOORDINATE_TYPE,
@@ -336,27 +335,5 @@ export const mutations = {
 
   updateBands(state: DatasetState, bands: BandCombination[]) {
     state.bands = bands;
-  },
-
-  sortIncludedSummaries(
-    state: DatasetState,
-    args: { variables: Variable[]; ranked: boolean }
-  ) {
-    sortSummaries(
-      state.includedSet.variableSummaries,
-      args.variables,
-      args.ranked
-    );
-  },
-
-  sortExcludedSummaries(
-    state: DatasetState,
-    args: { variables: Variable[]; ranked: boolean }
-  ) {
-    sortSummaries(
-      state.includedSet.variableSummaries,
-      args.variables,
-      args.ranked
-    );
   },
 };

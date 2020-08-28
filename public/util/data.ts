@@ -327,16 +327,6 @@ export function sortSummariesByVariables(
   });
 }
 
-export function sortSummaries(
-  summaries: VariableSummary[],
-  variables: Variable[],
-  ranked: boolean
-) {
-  ranked
-    ? sortSummariesByImportance(summaries, variables)
-    : sortSummariesByVariables(summaries, variables);
-}
-
 export function removeSummary(
   summary: VariableSummary,
   summaries: VariableSummary[]
@@ -524,6 +514,49 @@ export function filterVariablesByPage(
     return variables.slice(firstIndex, lastIndex);
   }
   return variables;
+}
+
+export function filterArrayByPage(
+  pageIndex: number,
+  numPerPage: number,
+  items: any[]
+): any[] {
+  if (items.length > numPerPage) {
+    const firstIndex = numPerPage * (pageIndex - 1);
+    const lastIndex = Math.min(firstIndex + numPerPage, items.length);
+    return items.slice(firstIndex, lastIndex);
+  }
+  return items;
+}
+
+export function getVariableSummariesByState(
+  pageIndex: number,
+  numPerPage: number,
+  variables: Variable[]
+) {
+  const include = routeGetters.getRouteInclude(store);
+  const summaryDictionaries = include
+    ? datasetGetters.getIncludedVariableSummariesDictionary(store)
+    : datasetGetters.getExcludedVariableSummariesDictionary(store);
+  const routeKey = minimumRouteKey();
+  const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
+  let currentSummaries = [];
+
+  if (Object.keys(summaryDictionaries).length > 0 && variables.length > 0) {
+    const sortedVariables = ranked
+      ? sortVariablesByImportance(variables)
+      : variables;
+    let variableNames = sortedVariables.map((v) => v.colName);
+
+    // select only the current variables on the page
+    variableNames = filterArrayByPage(pageIndex, numPerPage, variableNames);
+
+    // map them back to the variable summary dictionary for the current route key
+    currentSummaries = variableNames.map(
+      (vn) => summaryDictionaries?.[vn]?.[routeKey]
+    );
+  }
+  return currentSummaries;
 }
 
 export function getVariableImportance(v: Variable): number {

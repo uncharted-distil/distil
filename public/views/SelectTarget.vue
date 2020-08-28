@@ -42,14 +42,15 @@
         <variable-facets
           enable-search
           enable-type-change
-          ignore-highlights
-          enable-typefiltering
-          :instance-name="instanceName"
-          :rows-per-page="numRowsPerPage"
-          :summaries="summaries"
+          enable-type-filtering
+          :facetCount="variables.length"
           :html="html"
+          ignore-highlights
+          :instance-name="instanceName"
           :logActivity="problemDefinition"
           :pagination="variables.length > numRowsPerPage"
+          :rows-per-page="numRowsPerPage"
+          :summaries="summaries"
         />
       </div>
     </section>
@@ -72,7 +73,11 @@ import {
   SELECT_TRAINING_ROUTE,
 } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
-import { filterSummariesByDataset, NUM_PER_TARGET_PAGE } from "../util/data";
+import {
+  NUM_PER_TARGET_PAGE,
+  filterSummariesByDataset,
+  getVariableSummariesByState,
+} from "../util/data";
 import { Group } from "../util/facets";
 import { createRouteEntry, varModesToString } from "../util/routes";
 import {
@@ -81,6 +86,8 @@ import {
   TIMESERIES_TYPE,
 } from "../util/types";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { get } from "store";
+import { includes } from "lodash";
 
 export default Vue.extend({
   name: "select-target-view",
@@ -214,22 +221,32 @@ export default Vue.extend({
     },
 
     summaries(): VariableSummary[] {
-      let summaries = datasetGetters.getVariableSummaries(this.$store);
-      summaries = filterSummariesByDataset(summaries, this.dataset);
+      const pageIndex = routeGetters.getRouteAvailableTargetVarsPage(
+        this.$store
+      );
 
+      // remove variables used in groupedFeature;
+      const activeVariables = this.variables.filter(
+        (v) => !this.groupedFeatures.includes(v.colName)
+      );
+
+      const currentSummaries = getVariableSummariesByState(
+        pageIndex,
+        this.numRowsPerPage,
+        activeVariables
+      );
+
+      return currentSummaries;
+    },
+
+    groupedFeatures(): string[] {
       // Fetch the grouped features.
       const groupedFeatures = datasetGetters
         .getGroupings(this.$store)
         .filter((group) => Array.isArray(group.grouping.subIds))
         .map((group) => group.grouping.subIds)
         .flat();
-
-      // Remove summaries of features used in a grouping.
-      summaries = summaries.filter(
-        (summary) => !groupedFeatures.includes(summary.key)
-      );
-
-      return summaries;
+      return groupedFeatures;
     },
 
     unsupportedTargets(): Set<string> {

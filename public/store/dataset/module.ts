@@ -41,6 +41,15 @@ export const getters = {
   getExcludedVariableSummaries: read(
     moduleGetters.getExcludedVariableSummaries
   ),
+  getVariableSummariesDictionary: read(
+    moduleGetters.getVariableSummariesDictionary
+  ),
+  getIncludedVariableSummariesDictionary: read(
+    moduleGetters.getIncludedVariableSummariesDictionary
+  ),
+  getExcludedVariableSummariesDictionary: read(
+    moduleGetters.getExcludedVariableSummariesDictionary
+  ),
   getVariableRankings: read(moduleGetters.getVariableRankings),
 
   // files
@@ -166,6 +175,4 @@ export const mutations = {
   setIncludedTableData: commit(moduleMutations.setIncludedTableData),
   setExcludedTableData: commit(moduleMutations.setExcludedTableData),
   updateBands: commit(moduleMutations.updateBands),
-  sortIncludedSummaries: commit(moduleMutations.sortIncludedSummaries),
-  sortExcludedSummaries: commit(moduleMutations.sortExcludedSummaries),
 };
