@@ -13,7 +13,13 @@ export const getters = {
   // results
 
   getTrainingSummaries(state: ResultsState): VariableSummary[] {
-    return state.trainingSummaries;
+    return state.trainingSummaries.variableSummaries;
+  },
+
+  getTrainingSummariesDictionary(
+    state: ResultsState
+  ): Dictionary<Dictionary<VariableSummary>> {
+    return state.trainingSummaries.variableSummariesByKey;
   },
 
   getTargetSummary(state: ResultsState): VariableSummary {

@@ -16,12 +16,12 @@
           class="h-100"
           enable-search
           enable-highlighting
-          :facetCount="trainingSummaries.length"
+          :facetCount="trainingVariables.length"
           instance-name="resultTrainingVars"
           is-result-features
           :log-activity="logActivity"
           model-selection
-          :pagination="trainingSummaries.length > rowsPerPage"
+          :pagination="trainingVariables.length > rowsPerPage"
           :summaries="trainingSummaries"
         >
         </variable-facets>
@@ -43,12 +43,13 @@ import VariableFacets from "../components/facets/VariableFacets.vue";
 import ResultsComparison from "../components/ResultsComparison";
 import ResultSummaries from "../components/ResultSummaries";
 import ResultTargetVariable from "../components/ResultTargetVariable";
-import { VariableSummary } from "../store/dataset/index";
+import { Variable, VariableSummary } from "../store/dataset/index";
 import { actions as viewActions } from "../store/view/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
-import { NUM_PER_PAGE } from "../util/data";
+import { getters as requestGetters } from "../store/requests/module";
+import { NUM_PER_PAGE, getVariableSummariesByState } from "../util/data";
 import { Feature, Activity } from "../util/userEvents";
 
 export default Vue.extend({
@@ -90,8 +91,20 @@ export default Vue.extend({
       }
       return "";
     },
+    trainingVariables(): Variable[] {
+      return requestGetters.getActiveSolutionTrainingVariables(this.$store);
+    },
     trainingSummaries(): VariableSummary[] {
-      return resultGetters.getTrainingSummaries(this.$store);
+      const summaryDictionary = resultGetters.getTrainingSummariesDictionary(
+        this.$store
+      );
+
+      return getVariableSummariesByState(
+        this.resultTrainingVarsPage,
+        this.rowsPerPage,
+        this.trainingVariables,
+        summaryDictionary
+      );
     },
     solutionId(): string {
       return routeGetters.getRouteSolutionId(this.$store);

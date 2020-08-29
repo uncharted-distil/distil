@@ -505,12 +505,12 @@ export async function fetchPredictionResultSummary(
 
 export function filterVariablesByPage(
   pageIndex: number,
-  numPerPage: number,
+  pageSize: number,
   variables: VariableSummary[]
 ): VariableSummary[] {
-  if (variables.length > numPerPage) {
-    const firstIndex = numPerPage * (pageIndex - 1);
-    const lastIndex = Math.min(firstIndex + numPerPage, variables.length);
+  if (variables.length > pageSize) {
+    const firstIndex = pageSize * (pageIndex - 1);
+    const lastIndex = Math.min(firstIndex + pageSize, variables.length);
     return variables.slice(firstIndex, lastIndex);
   }
   return variables;
@@ -518,12 +518,12 @@ export function filterVariablesByPage(
 
 export function filterArrayByPage(
   pageIndex: number,
-  numPerPage: number,
+  pageSize: number,
   items: any[]
 ): any[] {
-  if (items.length > numPerPage) {
-    const firstIndex = numPerPage * (pageIndex - 1);
-    const lastIndex = Math.min(firstIndex + numPerPage, items.length);
+  if (items.length > pageSize) {
+    const firstIndex = pageSize * (pageIndex - 1);
+    const lastIndex = Math.min(firstIndex + pageSize, items.length);
     return items.slice(firstIndex, lastIndex);
   }
   return items;
@@ -531,29 +531,26 @@ export function filterArrayByPage(
 
 export function getVariableSummariesByState(
   pageIndex: number,
-  numPerPage: number,
-  variables: Variable[]
+  pageSize: number,
+  variables: Variable[],
+  summaryDictionary: Dictionary<Dictionary<VariableSummary>>
 ) {
-  const include = routeGetters.getRouteInclude(store);
-  const summaryDictionaries = include
-    ? datasetGetters.getIncludedVariableSummariesDictionary(store)
-    : datasetGetters.getExcludedVariableSummariesDictionary(store);
   const routeKey = minimumRouteKey();
   const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
   let currentSummaries = [];
 
-  if (Object.keys(summaryDictionaries).length > 0 && variables.length > 0) {
+  if (Object.keys(summaryDictionary).length > 0 && variables.length > 0) {
     const sortedVariables = ranked
       ? sortVariablesByImportance(variables)
       : variables;
     let variableNames = sortedVariables.map((v) => v.colName);
 
     // select only the current variables on the page
-    variableNames = filterArrayByPage(pageIndex, numPerPage, variableNames);
+    variableNames = filterArrayByPage(pageIndex, pageSize, variableNames);
 
     // map them back to the variable summary dictionary for the current route key
     currentSummaries = variableNames.map(
-      (vn) => summaryDictionaries?.[vn]?.[routeKey]
+      (vn) => summaryDictionary?.[vn]?.[routeKey]
     );
   }
   return currentSummaries;

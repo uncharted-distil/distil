@@ -22,6 +22,9 @@ const { commit, read, dispatch } = getStoreAccessors<ResultsState, DistilState>(
 export const getters = {
   // training / target
   getTrainingSummaries: read(moduleGetters.getTrainingSummaries),
+  getTrainingSummariesDictionary: read(
+    moduleGetters.getTrainingSummariesDictionary
+  ),
   getTargetSummary: read(moduleGetters.getTargetSummary),
   // result
   getFittedSolutionId: read(moduleGetters.getFittedSolutionId),

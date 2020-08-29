@@ -500,6 +500,15 @@ export const actions = {
       store
     );
     const size = routeGetters.getRouteDataSize(store);
+    const page = routeGetters.getRouteResultTrainingVarsPage(store);
+    const pageSize = NUM_PER_PAGE;
+    const activeTrainingVariables = filterArrayByPage(
+      page,
+      pageSize,
+      trainingVariables
+    );
+
+    // before fetching narrow
 
     resultActions.fetchResultTableData(store, {
       dataset: dataset,
@@ -520,7 +529,7 @@ export const actions = {
     });
     resultActions.fetchTrainingSummaries(store, {
       dataset: dataset,
-      training: trainingVariables,
+      training: activeTrainingVariables,
       solutionId: solutionId,
       highlight: highlight,
       dataMode: dataMode,

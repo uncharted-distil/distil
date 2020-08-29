@@ -74,10 +74,16 @@ export default Vue.extend({
       const pageIndex = routeGetters.getRouteAvailableTrainingVarsPage(
         this.$store
       );
+      const include = routeGetters.getRouteInclude(this.$store);
+      const summaryDictionary = include
+        ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
+        : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
+
       const currentSummaries = getVariableSummariesByState(
         pageIndex,
         this.numRowsPerPage,
-        this.availableVariables
+        this.availableVariables,
+        summaryDictionary
       );
 
       return currentSummaries;

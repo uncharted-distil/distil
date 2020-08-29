@@ -225,6 +225,9 @@ export default Vue.extend({
         this.$store
       );
 
+      const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
+        this.$store
+      );
       // remove variables used in groupedFeature;
       const activeVariables = this.variables.filter(
         (v) => !this.groupedFeatures.includes(v.colName)
@@ -233,7 +236,8 @@ export default Vue.extend({
       const currentSummaries = getVariableSummariesByState(
         pageIndex,
         this.numRowsPerPage,
-        activeVariables
+        activeVariables,
+        summaryDictionary
       );
 
       return currentSummaries;
