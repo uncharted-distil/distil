@@ -480,6 +480,35 @@ export const actions = {
     return actions.updateResultsSolution(context);
   },
 
+  updateResultsSummaries(context: ViewContext) {
+    const dataset = routeGetters.getRouteDataset(store);
+    const trainingVariables = requestGetters.getActiveSolutionTrainingVariables(
+      store
+    );
+    const highlight = routeGetters.getDecodedHighlight(store);
+    const dataMode = context.getters.getDataMode;
+    const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
+      store
+    );
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    const page = routeGetters.getRouteResultTrainingVarsPage(store);
+    const pageSize = NUM_PER_PAGE;
+    const activeTrainingVariables = filterArrayByPage(
+      page,
+      pageSize,
+      trainingVariables
+    );
+
+    resultActions.fetchTrainingSummaries(store, {
+      dataset: dataset,
+      training: activeTrainingVariables,
+      solutionId: solutionId,
+      highlight: highlight,
+      dataMode: dataMode,
+      varModes: varModes,
+    });
+  },
+
   updateResultsSolution(context: ViewContext) {
     // clear previous state
     resultMutations.clearResidualsExtrema(store);
@@ -491,22 +520,12 @@ export const actions = {
     const target = routeGetters.getRouteTargetVariable(store);
     const requestIds = requestGetters.getRelevantSolutionRequestIds(store);
     const solutionId = routeGetters.getRouteSolutionId(store);
-    const trainingVariables = requestGetters.getActiveSolutionTrainingVariables(
-      store
-    );
     const highlight = routeGetters.getDecodedHighlight(store);
     const dataMode = context.getters.getDataMode;
     const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
       store
     );
     const size = routeGetters.getRouteDataSize(store);
-    const page = routeGetters.getRouteResultTrainingVarsPage(store);
-    const pageSize = NUM_PER_PAGE;
-    const activeTrainingVariables = filterArrayByPage(
-      page,
-      pageSize,
-      trainingVariables
-    );
 
     // before fetching narrow
 
@@ -527,14 +546,9 @@ export const actions = {
         ? varModes.get(target)
         : SummaryMode.Default,
     });
-    resultActions.fetchTrainingSummaries(store, {
-      dataset: dataset,
-      training: activeTrainingVariables,
-      solutionId: solutionId,
-      highlight: highlight,
-      dataMode: dataMode,
-      varModes: varModes,
-    });
+
+    actions.updateResultsSummaries(context);
+
     resultActions.fetchPredictedSummaries(store, {
       dataset: dataset,
       target: target,

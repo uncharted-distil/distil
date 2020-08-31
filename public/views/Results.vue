@@ -132,7 +132,7 @@ export default Vue.extend({
       viewActions.updateResultsSolution(this.$store);
     },
     resultTrainingVarsPage() {
-      viewActions.updateResultsSolution(this.$store);
+      viewActions.updateResultsSummaries(this.$store);
     },
   },
 });

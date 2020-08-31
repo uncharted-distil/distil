@@ -1,6 +1,7 @@
 import _ from "lodash";
 import axios from "axios";
 import Vue from "vue";
+import sha1 from "crypto-js/sha1";
 import {
   Variable,
   VariableSummary,
@@ -273,15 +274,17 @@ export function fetchResultExemplars(
 }
 
 export function minimumRouteKey(): string {
-  return btoa(
+  const routeKeys =
     JSON.stringify(routeGetters.getRouteDataset(store)) +
-      JSON.stringify(routeGetters.getRouteHighlight(store)) +
-      JSON.stringify(routeGetters.getRouteFilters(store)) +
-      JSON.stringify(routeGetters.getDataMode(store)) +
-      JSON.stringify(routeGetters.getDecodedVarModes(store)) +
-      +"ranked" +
-      JSON.stringify(routeGetters.getRouteIsTrainingVariablesRanked)
-  );
+    JSON.stringify(routeGetters.getRouteSolutionId(store)) +
+    JSON.stringify(routeGetters.getRouteHighlight(store)) +
+    JSON.stringify(routeGetters.getRouteFilters(store)) +
+    JSON.stringify(routeGetters.getDataMode(store)) +
+    JSON.stringify(routeGetters.getDecodedVarModes(store)) +
+    +"ranked" +
+    JSON.stringify(routeGetters.getRouteIsTrainingVariablesRanked);
+  const sha1rk = sha1(routeKeys);
+  return sha1rk;
 }
 
 export function updateSummaries(
@@ -547,11 +550,13 @@ export function getVariableSummariesByState(
 
     // select only the current variables on the page
     variableNames = filterArrayByPage(pageIndex, pageSize, variableNames);
-
     // map them back to the variable summary dictionary for the current route key
-    currentSummaries = variableNames.map(
-      (vn) => summaryDictionary?.[vn]?.[routeKey]
-    );
+    currentSummaries = variableNames.reduce((cs, vn) => {
+      if (summaryDictionary[vn] && summaryDictionary[vn][routeKey]) {
+        cs.push(summaryDictionary[vn][routeKey]);
+      }
+      return cs;
+    }, []);
   }
   return currentSummaries;
 }
