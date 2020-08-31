@@ -37,3 +37,5 @@ require (
 	google.golang.org/grpc v1.25.1
 	gopkg.in/yaml.v2 v2.2.4 // indirect
 )
+
+replace github.com/uncharted-distil/distil-compute => ../distil-compute
