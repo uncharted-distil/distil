@@ -116,9 +116,9 @@ export default Vue.extend({
       );
 
       // Filter them out of the available training variables.
-      const trainingVariables = Array.from(
-        this.trainingVariableSummaries
-      ).filter((variable) => !timeseriesGrouping.includes(variable.key));
+      const trainingVariables = Array.from(this.trainingVariables).filter(
+        (variable) => !timeseriesGrouping.includes(variable.colName)
+      );
 
       // The variables can be removed.
       return trainingVariables.length > 0;
@@ -204,12 +204,15 @@ export default Vue.extend({
         details: {},
       });
 
-      const facets = this.$refs.facets as any;
-      const training = routeGetters.getDecodedTrainingVariableNames(
+      // Fetch the variables in the timeseries grouping.
+      const timeseriesGrouping = datasetGetters.getTimeseriesGroupingVariables(
         this.$store
       );
+
+      // Retain only variables used in group on remove all since they can't
+      // be actually be removed without ungrouping
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        training: "",
+        training: timeseriesGrouping.join(","),
       });
       this.$router.push(entry);
     },
