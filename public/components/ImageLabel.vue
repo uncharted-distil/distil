@@ -21,6 +21,7 @@ import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as resultGetters } from "../store/results/module";
 import _ from "lodash";
+import { minimumRouteKey } from "../util/data";
 
 interface Label {
   status: string;
@@ -137,9 +138,10 @@ export default Vue.extend({
       if (this.showError) {
         summary = resultGetters.getTargetSummary(this.$store);
       } else {
-        summary = datasetGetters
-          .getVariableSummaries(this.$store)
-          .find((v) => v.key === this.targetField);
+        const minKey = minimumRouteKey();
+        summary = datasetGetters.getVariableSummariesDictionary(this.$store)[
+          this.targetField
+        ][minKey];
       }
       const bucketNames = summary.baseline.buckets.map((b) => b.key);
       // If this isn't categorical, don't generate the table.
