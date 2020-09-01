@@ -61,10 +61,7 @@ export const actions = {
       console.warn("`varModes` argument is missing");
       return null;
     }
-    if (!args.dataMode) {
-      console.warn("`dataMode` argument is missing");
-      return null;
-    }
+
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
       args.solutionId
@@ -74,9 +71,7 @@ export const actions = {
       return;
     }
 
-    const dataset = args.dataset;
-    const solutionId = args.solutionId;
-    const varModes = args.varModes;
+    const dataMode = args.dataMode ? args.dataMode : DataMode.Default;
 
     const promises = [];
 
@@ -106,19 +101,19 @@ export const actions = {
         // add placeholder if it doesn't exist
         mutations.updateTrainingSummary(
           context,
-          createPendingSummary(key, label, description, dataset)
+          createPendingSummary(key, label, description, args.dataset)
         );
 
         // fetch summary
         promises.push(
           actions.fetchTrainingSummary(context, {
-            dataset: dataset,
+            dataset: args.dataset,
             variable: variable,
             resultID: solution.resultId,
             highlight: args.highlight,
-            dataMode: args.dataMode,
-            varMode: varModes.has(variable.colName)
-              ? varModes.get(variable.colName)
+            dataMode: dataMode,
+            varMode: args.varModes.has(variable.colName)
+              ? args.varModes.get(variable.colName)
               : SummaryMode.Default,
           })
         );
