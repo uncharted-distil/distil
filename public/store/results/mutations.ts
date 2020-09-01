@@ -85,27 +85,42 @@ export const mutations = {
       id: string;
       timeseries: number[][];
       isDateTime: boolean;
+      min: number;
+      max: number;
+      mean: number;
     }
   ) {
     if (!state.timeseries[args.solutionId]) {
       Vue.set(state.timeseries, args.solutionId, {});
     }
+
     if (!state.timeseries[args.solutionId].timeseriesData) {
       Vue.set(state.timeseries[args.solutionId], "timeseriesData", {});
-    }
-    if (!state.timeseries[args.solutionId].isDateTime) {
-      Vue.set(state.timeseries[args.solutionId], "isDateTime", {});
     }
     Vue.set(
       state.timeseries[args.solutionId].timeseriesData,
       args.id,
       Object.freeze(args.timeseries)
     );
+
+    if (!state.timeseries[args.solutionId].isDateTime) {
+      Vue.set(state.timeseries[args.solutionId], "isDateTime", {});
+    }
     Vue.set(
       state.timeseries[args.solutionId].isDateTime,
       args.id,
       args.isDateTime
     );
+
+    // Set the min/max/mean for each timeseries data
+    if (!state.timeseries[args.solutionId].info) {
+      Vue.set(state.timeseries[args.solutionId], "info", {});
+    }
+    Vue.set(state.timeseries[args.solutionId].info, args.id, {
+      min: args.min as number,
+      max: args.max as number,
+      mean: args.mean as number,
+    });
   },
 
   updatePredictedForecast(

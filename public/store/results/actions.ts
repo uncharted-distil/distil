@@ -763,6 +763,9 @@ export const actions = {
         id: args.timeseriesId,
         timeseries: response.data.timeseries,
         isDateTime: response.data.isDateTime,
+        min: response.data.min,
+        max: response.data.max,
+        mean: response.data.mean,
       });
       mutations.updatePredictedForecast(context, {
         solutionId: args.solutionId,

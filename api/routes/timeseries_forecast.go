@@ -31,6 +31,9 @@ type TimeseriesForecastResult struct {
 	Forecast          []*api.TimeseriesObservation `json:"forecast"`
 	ForecastTestRange []float64                    `json:"forecastTestRange"`
 	IsDateTime        bool                         `json:"isDateTime"`
+	Min               api.NullableFloat64          `json:"min"`
+	Max               api.NullableFloat64          `json:"max"`
+	Mean              api.NullableFloat64          `json:"mean"`
 }
 
 // TimeseriesForecastHandler returns timeseries data.
@@ -121,6 +124,9 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 			Forecast:          forecast.Timeseries,
 			ForecastTestRange: []float64{split.SplitValue, split.EndValue},
 			IsDateTime:        timeseries.IsDateTime,
+			Min:               forecast.Min,
+			Max:               forecast.Max,
+			Mean:              forecast.Mean,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
