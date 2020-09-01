@@ -128,7 +128,7 @@ export default Vue.extend({
   filters: {
     /* Display number with only two decimal. */
     cleanNumber(value) {
-      return parseFloat(value).toFixed(2);
+      return _.isNumber(value) ? value.toFixed(2) : "—";
     },
   },
 
@@ -150,7 +150,7 @@ export default Vue.extend({
       if (this.isTimeseries) {
         items = items?.map((item) => {
           const timeserieId = item[this.timeseriesGroupings[0].idCol].value;
-          const minMaxMean = this.timeserieExtremas(timeserieId);
+          const minMaxMean = this.timeserieInfo(timeserieId);
           return { ...item, ...minMaxMean };
         });
       }
@@ -228,11 +228,9 @@ export default Vue.extend({
   },
 
   methods: {
-    timeserieExtremas(id: string): Extrema {
-      const extremas = datasetGetters.getTimeseriesExtrema(this.$store);
-      return extremas[this.dataset] && extremas[this.dataset][id]
-        ? { ...extremas[this.dataset][id] }
-        : { min: null, max: null, mean: null };
+    timeserieInfo(id: string): Extrema {
+      const timeseries = datasetGetters.getTimeseries(this.$store);
+      return timeseries?.[this.dataset]?.info?.[id];
     },
 
     onSortChanged() {

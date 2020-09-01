@@ -247,27 +247,42 @@ export const mutations = {
       id: string;
       timeseries: TimeSeriesValue[];
       isDateTime: boolean;
+      min: number;
+      max: number;
+      mean: number;
     }
   ) {
     if (!state.timeseries[args.dataset]) {
       Vue.set(state.timeseries, args.dataset, {});
     }
+
     if (!state.timeseries[args.dataset].timeseriesData) {
       Vue.set(state.timeseries[args.dataset], "timeseriesData", {});
-    }
-    if (!state.timeseries[args.dataset].isDateTime) {
-      Vue.set(state.timeseries[args.dataset], "isDateTime", {});
     }
     Vue.set(
       state.timeseries[args.dataset].timeseriesData,
       args.id,
       Object.freeze(args.timeseries)
     );
+
+    if (!state.timeseries[args.dataset].isDateTime) {
+      Vue.set(state.timeseries[args.dataset], "isDateTime", {});
+    }
     Vue.set(
       state.timeseries[args.dataset].isDateTime,
       args.id,
       args.isDateTime
     );
+
+    // Set the min/max/mean for each timeseries data
+    if (!state.timeseries[args.dataset].info) {
+      Vue.set(state.timeseries[args.dataset], "info", {});
+    }
+    Vue.set(state.timeseries[args.dataset].info, args.id, {
+      min: args.min as number,
+      max: args.max as number,
+      mean: args.mean as number,
+    });
 
     const validTimeseries = args.timeseries.filter((t) => !_.isNil(t));
     const minX = _.minBy(validTimeseries, (d) => d.time).time;
@@ -295,18 +310,6 @@ export const mutations = {
     Vue.set(x, "max", Math.max(x.max, maxX));
     Vue.set(y, "min", Math.min(y.min, minY));
     Vue.set(y, "max", Math.max(y.max, maxY));
-
-    // Calculate the min/max/mean for each timeseries data
-    const data = state.timeseries[args.dataset].timeseriesData;
-    Object.keys(data).forEach((key) => {
-      const timeserie = data[key];
-      const info = {
-        min: _.minBy(timeserie, (d) => d.value).value,
-        max: _.maxBy(timeserie, (d) => d.value).value,
-        mean: _.meanBy(timeserie, (d) => d.value),
-      };
-      Vue.set(state.timeseriesExtrema[args.dataset], key, info);
-    });
   },
 
   setJoinDatasetsTableData(
