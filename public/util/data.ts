@@ -277,6 +277,8 @@ export function minimumRouteKey(): string {
   const routeKeys =
     JSON.stringify(routeGetters.getRouteDataset(store)) +
     JSON.stringify(routeGetters.getRouteSolutionId(store)) +
+    JSON.stringify(routeGetters.getRouteProduceRequestId(store)) +
+    JSON.stringify(routeGetters.getRouteFittedSolutionId(store)) +
     JSON.stringify(routeGetters.getRouteHighlight(store)) +
     JSON.stringify(routeGetters.getRouteFilters(store)) +
     JSON.stringify(routeGetters.getDataMode(store)) +

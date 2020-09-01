@@ -620,6 +620,37 @@ export const actions = {
     return actions.updatePredictions(context);
   },
 
+  updatePredictionTrainingSummaries(context: ViewContext) {
+    // fetch new state
+    const produceRequestId = <string>context.getters.getRouteProduceRequestId;
+    const inferenceDataset = getPredictionsById(
+      context.getters.getPredictions,
+      produceRequestId
+    ).dataset;
+    const highlight = <Highlight>context.getters.getDecodedHighlight;
+    const varModes = <Map<string, SummaryMode>>(
+      context.getters.getDecodedVarModes
+    );
+    const trainingVariables = <Variable[]>(
+      context.getters.getActivePredictionTrainingVariables
+    );
+    const page = routeGetters.getRouteResultTrainingVarsPage(store);
+    const pageSize = NUM_PER_PAGE;
+    const activeTrainingVariables = filterArrayByPage(
+      page,
+      pageSize,
+      trainingVariables
+    );
+
+    predictionActions.fetchTrainingSummaries(store, {
+      dataset: inferenceDataset,
+      training: activeTrainingVariables,
+      highlight: highlight,
+      varModes: varModes,
+      produceRequestId: produceRequestId,
+    });
+  },
+
   updatePredictions(context: ViewContext) {
     // clear previous state
     predictionMutations.setIncludedPredictionTableData(store, null);
@@ -631,13 +662,7 @@ export const actions = {
       context.getters.getPredictions,
       produceRequestId
     ).dataset;
-    const trainingVariables = <Variable[]>(
-      context.getters.getActivePredictionTrainingVariables
-    );
     const highlight = <Highlight>context.getters.getDecodedHighlight;
-    const varModes = <Map<string, SummaryMode>>(
-      context.getters.getDecodedVarModes
-    );
     const size = routeGetters.getRouteDataSize(store);
 
     predictionActions.fetchPredictionTableData(store, {
@@ -646,13 +671,9 @@ export const actions = {
       produceRequestId: produceRequestId,
       size,
     });
-    predictionActions.fetchTrainingSummaries(store, {
-      dataset: inferenceDataset,
-      training: trainingVariables,
-      highlight: highlight,
-      varModes: varModes,
-      produceRequestId: produceRequestId,
-    });
+
+    actions.updatePredictionTrainingSummaries(context);
+
     predictionActions.fetchPredictedSummaries(store, {
       highlight: highlight,
       fittedSolutionId: fittedSolutionId,

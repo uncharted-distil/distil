@@ -3,7 +3,12 @@ import _ from "lodash";
 import { ActionContext } from "vuex";
 import { DistilState } from "../store";
 import { FilterParams } from "../../util/filters";
-import { Variable, Highlight, SummaryMode } from "../dataset/index";
+import {
+  Variable,
+  Highlight,
+  SummaryMode,
+  VariableSummary,
+} from "../dataset/index";
 import { mutations } from "./module";
 import { PredictionState } from "./index";
 import { addHighlightToFilterParams } from "../../util/highlights";
@@ -12,6 +17,8 @@ import {
   createErrorSummary,
   createEmptyTableData,
   fetchSummaryExemplars,
+  minimumRouteKey,
+  createPendingSummary,
 } from "../../util/data";
 import {
   getters as predictionGetters,
@@ -59,38 +66,70 @@ export const actions = {
 
     const promises = [];
 
-    context.state.trainingSummaries
-      .filter(
-        (summary) =>
-          !args.training.find(
-            (variable) =>
-              variable.colName === summary.key &&
-              args.dataset === summary.dataset
-          )
-      )
-      .forEach((summary) =>
-        predictionMutations.removeTrainingSummary(context, summary)
-      );
+    const summariesByVariable =
+      context.state.trainingSummaries.variableSummariesByKey;
+    const routeKey = minimumRouteKey();
+    const existingSummaries = args.training.map(
+      (v) => summariesByVariable?.[v.colName]?.[routeKey]
+    );
 
     args.training.forEach((variable) => {
       const key = variable.colName;
       const label = variable.colDisplayName;
       const description = variable.colDescription;
+      const existingVariableSummary = _.find(existingSummaries, (v) => {
+        return v?.dataset === args.dataset && v?.key === variable.colName;
+      });
 
-      // fetch summary
-      promises.push(
-        actions.fetchTrainingSummary(context, {
-          dataset: dataset,
-          variable: variable,
-          resultID: resultId,
-          highlight: args.highlight,
-          varMode: args.varModes.has(variable.colName)
-            ? args.varModes.get(variable.colName)
-            : SummaryMode.Default,
-        })
-      );
+      if (existingVariableSummary) {
+        actions.setTrainingSummary(context, {
+          dataset: args.dataset,
+          summary: existingVariableSummary,
+          variable: variable.colName,
+        });
+        promises.push(existingVariableSummary);
+      } else {
+        // add placeholder if it doesn't exist
+        mutations.updateTrainingSummary(
+          context,
+          createPendingSummary(key, label, description, args.dataset)
+        );
+
+        // fetch summary
+        promises.push(
+          actions.fetchTrainingSummary(context, {
+            dataset: args.dataset,
+            variable: variable,
+            resultID: resultId,
+            highlight: args.highlight,
+            varMode: args.varModes.has(variable.colName)
+              ? args.varModes.get(variable.colName)
+              : SummaryMode.Default,
+          })
+        );
+      }
     });
     return Promise.all(promises);
+  },
+
+  async setTrainingSummary(
+    context: PredictionContext,
+    args: {
+      dataset: string;
+      summary: VariableSummary;
+      variable: string;
+    }
+  ) {
+    const mutator = mutations.updateTrainingSummary;
+    try {
+      mutator(context, args.summary);
+    } catch (error) {
+      console.error(error);
+      const key = args.variable;
+      const label = args.variable;
+      const dataset = args.dataset;
+      mutator(context, createErrorSummary(key, label, dataset, error));
+    }
   },
 
   async fetchTrainingSummary(

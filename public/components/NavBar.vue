@@ -152,7 +152,7 @@ export default Vue.extend({
        */
       return (
         routeGetters.isApplyModel(this.$store) ||
-        !!routeGetters.getRouteFittedSolutionID(this.$store)
+        !!routeGetters.getRouteFittedSolutionId(this.$store)
       );
     },
 

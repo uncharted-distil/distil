@@ -19,7 +19,7 @@ export interface Forecast {
 
 export interface WorkingSet {
   variableSummaries: VariableSummary[];
-  variableSummariesByKey?: Dictionary<Dictionary<VariableSummary>>;
+  variableSummariesByKey: Dictionary<Dictionary<VariableSummary>>;
 }
 
 export interface ResultsState {

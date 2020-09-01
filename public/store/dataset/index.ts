@@ -362,7 +362,7 @@ export interface DatasetState {
 export interface WorkingSet {
   variableSummaries: VariableSummary[];
   tableData: TableData;
-  variableSummariesByKey?: Dictionary<Dictionary<VariableSummary>>;
+  variableSummariesByKey: Dictionary<Dictionary<VariableSummary>>;
 }
 
 export interface BandCombination {

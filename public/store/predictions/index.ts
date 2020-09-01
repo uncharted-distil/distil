@@ -2,12 +2,17 @@ import { Dictionary } from "../../util/dict";
 import { VariableSummary, TableData, TimeSeries } from "../dataset/index";
 import { Forecast } from "../results";
 
+export interface WorkingSet {
+  variableSummaries: VariableSummary[];
+  variableSummariesByKey: Dictionary<Dictionary<VariableSummary>>;
+}
+
 export interface PredictionState {
   // table data
   includedPredictionTableData: TableData;
   excludedPredictionTableData: TableData;
   // training / target
-  trainingSummaries: VariableSummary[];
+  trainingSummaries: WorkingSet;
   targetSummary: VariableSummary;
   // predicted
   predictedSummaries: VariableSummary[];
@@ -23,7 +28,10 @@ export const state: PredictionState = {
   includedPredictionTableData: null,
   excludedPredictionTableData: null,
   // training / target
-  trainingSummaries: [],
+  trainingSummaries: {
+    variableSummaries: [],
+    variableSummariesByKey: {},
+  },
   targetSummary: null,
   // predicted
   predictedSummaries: [],

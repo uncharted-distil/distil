@@ -2,21 +2,29 @@ import Vue from "vue";
 import _ from "lodash";
 import { PredictionState } from "./index";
 import { VariableSummary, Extrema, TableData } from "../dataset/index";
-import { updateSummaries, removeSummary } from "../../util/data";
+import {
+  updateSummaries,
+  removeSummary,
+  updateSummariesPerVariable,
+} from "../../util/data";
 
 export const mutations = {
   // training / target
 
   clearTrainingSummaries(state: PredictionState) {
-    state.trainingSummaries = [];
+    state.trainingSummaries.variableSummaries = [];
   },
 
   updateTrainingSummary(state: PredictionState, summary: VariableSummary) {
-    updateSummaries(summary, state.trainingSummaries);
+    updateSummaries(summary, state.trainingSummaries.variableSummaries);
+    updateSummariesPerVariable(
+      summary,
+      state.trainingSummaries.variableSummariesByKey
+    );
   },
 
   removeTrainingSummary(state: PredictionState, summary: VariableSummary) {
-    removeSummary(summary, state.trainingSummaries);
+    removeSummary(summary, state.trainingSummaries.variableSummaries);
   },
 
   // sets the current Prediction data into the store
