@@ -13,7 +13,7 @@ import {
   Predictions,
   PREDICT_RUNNING,
   PREDICT_PENDING,
-  PREDICT_COMPLETED
+  PREDICT_COMPLETED,
 } from "./index";
 import { getVarType } from "../../util/types";
 
@@ -44,7 +44,7 @@ export const getters = {
   getRunningSolutions(state: RequestState): Solution[] {
     return state.solutions
       .filter(
-        result =>
+        (result) =>
           result.progress === SOLUTION_FITTING ||
           result.progress === SOLUTION_SCORING ||
           result.progress === SOLUTION_PRODUCING
@@ -55,7 +55,7 @@ export const getters = {
   // Returns completed search results.
   getCompletedSolutions(state: RequestState): Solution[] {
     return state.solutions
-      .filter(solution => solution.progress === SOLUTION_COMPLETED)
+      .filter((solution) => solution.progress === SOLUTION_COMPLETED)
       .sort(sortSolutionsByScore);
   },
 
@@ -69,7 +69,9 @@ export const getters = {
     const target = <string>getters.getRouteTargetVariable;
     const dataset = <string>getters.getRouteDataset;
     return state.solutions
-      .filter(result => result.dataset === dataset && result.feature === target)
+      .filter(
+        (result) => result.dataset === dataset && result.feature === target
+      )
       .sort(sortSolutionsByScore);
   },
 
@@ -83,7 +85,7 @@ export const getters = {
     // get only matching dataset / target
     return state.solutionRequests
       .filter(
-        request => request.dataset === dataset && request.feature === target
+        (request) => request.dataset === dataset && request.feature === target
       )
       .sort(sortRequestsByTimestamp);
   },
@@ -91,7 +93,7 @@ export const getters = {
   // Returns search requests IDs relevant to the current dataset and target.
   getRelevantSolutionRequestIds(state: RequestState, getters: any): string[] {
     return (<SolutionRequest[]>getters.getRelevantSolutionRequests).map(
-      request => request.requestId
+      (request) => request.requestId
     );
   },
 
@@ -99,7 +101,7 @@ export const getters = {
   getActiveSolution(state: RequestState, getters: any): Solution {
     const solutionId = <string>getters.getRouteSolutionId;
     const solutions = <Solution[]>getters.getSolutions;
-    return _.find(solutions, solution => solution.solutionId === solutionId);
+    return _.find(solutions, (solution) => solution.solutionId === solutionId);
   },
 
   // Returns training variables associated with the currently selected search result.
@@ -113,9 +115,9 @@ export const getters = {
     }
     const variables = <Variable[]>getters.getVariablesMap;
     return activeSolution.features
-      .filter(f => f.featureType === "train")
-      .map(f => variables[f.featureName])
-      .filter(v => !!v);
+      .filter((f) => f.featureType === "train")
+      .map((f) => variables[f.featureName])
+      .filter((v) => !!v);
   },
 
   // Returns target variable associated with the currently selected search result.
@@ -125,13 +127,13 @@ export const getters = {
   ): Variable[] {
     const target = <string>getters.getRouteTargetVariable;
     const variables = <Variable[]>getters.getVariables;
-    return variables.filter(variable => variable.colName === target);
+    return variables.filter((variable) => variable.colName === target);
   },
 
   // Returns in-progress predictions.
   getRunningPredictions(state: RequestState): Predictions[] {
     return state.predictions.filter(
-      result =>
+      (result) =>
         result.progress === PREDICT_RUNNING ||
         result.progress === PREDICT_PENDING
     );
@@ -140,7 +142,7 @@ export const getters = {
   // Returns completed predictions.
   getCompletedPredictions(state: RequestState): Predictions[] {
     return state.predictions.filter(
-      result => result.progress !== PREDICT_COMPLETED
+      (result) => result.progress !== PREDICT_COMPLETED
     );
   },
 
@@ -152,7 +154,7 @@ export const getters = {
   // Returns predictions relevant to the currently selected fitted solution id.
   getRelevantPredictions(state: RequestState, getters: any): Predictions[] {
     return state.predictions.filter(
-      result =>
+      (result) =>
         result.fittedSolutionId === <string>getters.getRouteFittedSolutionId
     );
   },
@@ -161,7 +163,7 @@ export const getters = {
   getActivePredictions(state: RequestState, getters: any): Predictions {
     const predictionsId = <string>getters.getRouteProduceRequestId;
     const predictions = <Predictions[]>getters.getPredictions;
-    return predictions.find(p => p.requestId === predictionsId);
+    return predictions.find((p) => p.requestId === predictionsId);
   },
 
   // Returns training variables associated with the currently selected fitted model
@@ -174,6 +176,6 @@ export const getters = {
       return [];
     }
     const variables = <Variable[]>getters.getVariablesMap;
-    return predictions.features.map(p => variables[p.featureName]);
-  }
+    return predictions.features.map((p) => variables[p.featureName]);
+  },
 };

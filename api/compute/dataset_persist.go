@@ -47,12 +47,6 @@ import (
 const (
 	trainFilenamePrefix = "train"
 	testFilenamePrefix  = "test"
-	// TrainTestSplitThreshold is the default train / test split percentage, with the value representating the desired
-	// amount of training data.
-	TrainTestSplitThreshold = 0.9
-	// TimeSeriesTrainTestSplitThreshold is the default train / test split percentage for timeseries data, with the value
-	// representating the desired amount of training data.
-	TimeSeriesTrainTestSplitThreshold = 0.9
 )
 
 // FilteredDataProvider defines a function that will fetch data from a back end source given
@@ -136,7 +130,7 @@ func splitTrainTestHeader(reader *csv.Reader, writerTrain *csv.Writer, writerTes
 	return nil
 }
 
-func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile string, hasHeader bool, timeseriesCol int) error {
+func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile string, hasHeader bool, timeseriesCol int, trainTestSplit float64) error {
 	// create the writers
 
 	// training data
@@ -186,7 +180,7 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 	sort.Slice(timestamps, func(i int, j int) bool {
 		return timestamps[i] <= timestamps[j]
 	})
-	timestampSplit := SplitTimeStamps(timestamps, TimeSeriesTrainTestSplitThreshold)
+	timestampSplit := SplitTimeStamps(timestamps, trainTestSplit)
 
 	// output the values based on if before threshold or after threshold
 	for _, line := range data {
@@ -237,7 +231,7 @@ func parseTimeColValue(timeColValue string) (float64, error) {
 }
 
 func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool, targetCol int, groupingCol int,
-	stratify bool, rowLimits rowLimits) error {
+	stratify bool, rowLimits rowLimits, trainTestSplit float64) error {
 	// create the writers
 	outputTrain := &bytes.Buffer{}
 	writerTrain := csv.NewWriter(outputTrain)
@@ -290,14 +284,14 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 		for _, data := range categoryRowData {
 			maxCategoryTrainingRows := int(math.Max(1, float64(len(data))/float64(len(rowData))*float64(numTrainingRows)))
 			maxCategoryTestRows := int(math.Max(1, float64(len(data))/float64(len(rowData))*float64(numTestRows)))
-			err := shuffleAndWrite(data, groupingCol, maxCategoryTrainingRows, maxCategoryTestRows, true, writerTrain, writerTest)
+			err := shuffleAndWrite(data, groupingCol, maxCategoryTrainingRows, maxCategoryTestRows, true, writerTrain, writerTest, trainTestSplit)
 			if err != nil {
 				return err
 			}
 		}
 	} else {
 		// randomly select from dataset based on row limits
-		err := shuffleAndWrite(rowData, groupingCol, numTrainingRows, numTestRows, true, writerTrain, writerTest)
+		err := shuffleAndWrite(rowData, groupingCol, numTrainingRows, numTestRows, true, writerTrain, writerTest, trainTestSplit)
 		if err != nil {
 			return err
 		}
@@ -330,7 +324,8 @@ func (s *shuffleTracker) lessThanMax() bool {
 }
 
 func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int,
-	maxTestCount int, adjustCount bool, writerTrain *csv.Writer, writerTest *csv.Writer) error {
+	maxTestCount int, adjustCount bool, writerTrain *csv.Writer, writerTest *csv.Writer,
+	trainTestSplit float64) error {
 	if maxTrainingCount <= 0 {
 		maxTrainingCount = math.MaxInt64
 	}
@@ -342,8 +337,8 @@ func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int,
 	numTrain := maxTrainingCount
 	numTest := maxTestCount
 	if adjustCount {
-		numTrain = min(maxTrainingCount, int(math.Floor(float64(len(rowData))*TrainTestSplitThreshold)))
-		numTest = min(maxTestCount, int(math.Ceil(float64(len(rowData))*(1.0-TrainTestSplitThreshold))))
+		numTrain = min(maxTrainingCount, int(math.Floor(float64(len(rowData))*trainTestSplit)))
+		numTest = min(maxTestCount, int(math.Ceil(float64(len(rowData))*(1.0-trainTestSplit))))
 	}
 
 	// structures for tracking test and train counts
@@ -424,13 +419,13 @@ func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int,
 // check if the data has already been split using the existing context
 type persistedDataParams struct {
 	DatasetName        string
+	GroupingFieldIndex int
 	SchemaFile         string
 	SourceDataFolder   string
-	TmpDataFolder      string
-	TaskType           []string
-	GroupingFieldIndex int
-	TargetFieldIndex   int
 	Stratify           bool
+	TargetFieldIndex   int
+	TaskType           []string
+	TmpDataFolder      string
 	Quality            string
 }
 
@@ -569,10 +564,11 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	}
 
 	if hasForecasting {
-		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true, params.GroupingFieldIndex)
+		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true,
+			params.GroupingFieldIndex, config.TrainTestSplitTimeSeries)
 	} else {
-		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex, params.GroupingFieldIndex,
-			params.Stratify, limits)
+		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex,
+			params.GroupingFieldIndex, params.Stratify, limits, config.TrainTestSplit)
 	}
 	if err != nil {
 		return "", "", err
@@ -672,7 +668,8 @@ func SampleDataset(rawData [][]string, maxRows int, hasHeader bool) ([]byte, err
 		rawData = rawData[1:]
 	}
 
-	err := shuffleAndWrite(rawData, -1, maxRows, 0, false, writer, nil)
+	trainTestSplit := float64(1) // See config.go file
+	err := shuffleAndWrite(rawData, -1, maxRows, 0, false, writer, nil, trainTestSplit)
 	if err != nil {
 		return nil, err
 	}

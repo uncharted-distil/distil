@@ -57,7 +57,7 @@ import {
   LONGITUDE_TYPE,
   LATITUDE_TYPE,
   GEOCOORDINATE_TYPE,
-  REMOTE_SENSING_TYPE
+  REMOTE_SENSING_TYPE,
 } from "../util/types";
 
 const TABLE_VIEW = "table";
@@ -74,8 +74,8 @@ export default Vue.extend({
     variables: Array as () => Variable[],
     hasTabs: {
       type: Boolean as () => boolean,
-      default: false
-    }
+      default: false,
+    },
   },
 
   data() {
@@ -85,7 +85,7 @@ export default Vue.extend({
       IMAGE_VIEW: IMAGE_VIEW,
       GRAPH_VIEW: GRAPH_VIEW,
       GEO_VIEW: GEO_VIEW,
-      TIMESERIES_VIEW: TIMESERIES_VIEW
+      TIMESERIES_VIEW: TIMESERIES_VIEW,
     };
   },
 
@@ -97,12 +97,12 @@ export default Vue.extend({
       set(value: string) {
         this.internalVal = value;
         this.$emit("input", this.internalVal);
-      }
+      },
     },
     hasImageVariables(): boolean {
       return (
         this.variables.filter(
-          v => v.colType === IMAGE_TYPE || v.colType === REMOTE_SENSING_TYPE
+          (v) => v.colType === IMAGE_TYPE || v.colType === REMOTE_SENSING_TYPE
         ).length > 0
       );
     },
@@ -113,14 +113,14 @@ export default Vue.extend({
     hasGeoVariables(): boolean {
       const hasGeocoord =
         this.variables.filter(
-          v =>
+          (v) =>
             v.grouping &&
             [GEOCOORDINATE_TYPE, REMOTE_SENSING_TYPE].includes(v.grouping.type)
         ).length > 0;
       const hasLat =
-        this.variables.filter(v => v.colType === LONGITUDE_TYPE).length > 0;
+        this.variables.filter((v) => v.colType === LONGITUDE_TYPE).length > 0;
       const hasLon =
-        this.variables.filter(v => v.colType === LATITUDE_TYPE).length > 0;
+        this.variables.filter((v) => v.colType === LATITUDE_TYPE).length > 0;
 
       return (hasLat && hasLon) || hasGeocoord;
     },
@@ -138,8 +138,8 @@ export default Vue.extend({
         ).length > 0
       );
       */
-    }
-  }
+    },
+  },
 });
 </script>
 

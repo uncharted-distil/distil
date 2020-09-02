@@ -30,5 +30,5 @@ export const actions = {
       console.error(error);
       mutations.setModels(context, []);
     }
-  }
+  },
 };

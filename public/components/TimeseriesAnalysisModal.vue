@@ -44,12 +44,12 @@ export default Vue.extend({
   name: "timeseries-analysis-model",
 
   props: {
-    show: Boolean as () => boolean
+    show: Boolean as () => boolean,
   },
 
   data() {
     return {
-      timeCol: null
+      timeCol: null,
     };
   },
 
@@ -60,8 +60,8 @@ export default Vue.extend({
     variableOptions(): Object[] {
       const def = [{ value: null, text: "Choose column", disabled: true }];
       const suggestions = this.variables
-        .filter(v => isTimeType(v.colType))
-        .map(v => {
+        .filter((v) => isTimeType(v.colType))
+        .map((v) => {
           return { value: v.colName, text: v.colDisplayName };
         });
 
@@ -71,14 +71,14 @@ export default Vue.extend({
       }
 
       return [].concat(def, suggestions);
-    }
+    },
   },
 
   methods: {
     onClose(arg: boolean) {
       this.$emit("close", arg ? { col: this.timeCol } : null);
-    }
-  }
+    },
+  },
 });
 </script>
 

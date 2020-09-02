@@ -16,7 +16,7 @@ import {
   PREDICT_COMPLETED,
   PREDICT_ERRORED,
   Predictions,
-  ModelQuality
+  ModelQuality,
 } from "./index";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
@@ -95,63 +95,72 @@ function updateCurrentSolutionResults(
   const isForecasting = routeGetters
     .getRouteTask(store)
     .includes(TaskTypes.FORECASTING);
+  const size = routeGetters.getRouteDataSize(store);
 
   const varModes: Map<string, SummaryMode> = context.getters.getDecodedVarModes;
+  const dataMode = context.getters.getDataMode;
 
   resultsActions.fetchResultTableData(store, {
     dataset: req.dataset,
     solutionId: res.solutionId,
-    highlight: context.getters.getDecodedHighlight
+    highlight: context.getters.getDecodedHighlight,
+    dataMode: dataMode,
+    size,
   });
   resultsActions.fetchPredictedSummary(store, {
     dataset: req.dataset,
     target: req.target,
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
+    dataMode: dataMode,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
-      : SummaryMode.Default
+      : SummaryMode.Default,
   });
   resultsActions.fetchTrainingSummaries(store, {
     dataset: req.dataset,
     training: context.getters.getActiveSolutionTrainingVariables,
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
-    varModes: varModes
+    dataMode: dataMode,
+    varModes: varModes,
   });
   resultsActions.fetchTargetSummary(store, {
     dataset: req.dataset,
     target: req.target,
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
+    dataMode: dataMode,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
-      : SummaryMode.Default
+      : SummaryMode.Default,
   });
 
   if (isRegression || isForecasting) {
     resultsActions.fetchResidualsExtrema(store, {
       dataset: req.dataset,
       target: req.target,
-      solutionId: res.solutionId
+      solutionId: res.solutionId,
     });
     resultsActions.fetchResidualsSummary(store, {
       dataset: req.dataset,
       target: req.target,
       solutionId: res.solutionId,
       highlight: context.getters.getDecodedHighlight,
+      dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
-        : SummaryMode.Default
+        : SummaryMode.Default,
     });
   } else if (isClassification) {
     resultsActions.fetchCorrectnessSummary(store, {
       dataset: req.dataset,
       solutionId: res.solutionId,
       highlight: context.getters.getDecodedHighlight,
+      dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
-        : SummaryMode.Default
+        : SummaryMode.Default,
     });
   }
 }
@@ -167,7 +176,7 @@ function updateCurrentPredictResults(
   predictActions.fetchPredictionTableData(store, {
     dataset: req.datasetId,
     highlight: context.getters.getDecodedHighlight,
-    produceRequestId: res.produceRequestId
+    produceRequestId: res.produceRequestId,
   });
 
   predictActions.fetchPredictedSummary(store, {
@@ -175,7 +184,7 @@ function updateCurrentPredictResults(
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
       : SummaryMode.Default,
-    produceRequestId: res.produceRequestId
+    produceRequestId: res.produceRequestId,
   });
 
   predictActions.fetchTrainingSummaries(store, {
@@ -183,7 +192,7 @@ function updateCurrentPredictResults(
     training: context.getters.getActiveSolutionTrainingVariables,
     highlight: context.getters.getDecodedHighlight,
     varModes: varModes,
-    produceRequestId: res.produceRequestId
+    produceRequestId: res.produceRequestId,
   });
 }
 
@@ -199,6 +208,7 @@ function updateSolutionResults(
   const isForecasting = taskArgs && taskArgs.includes(TaskTypes.FORECASTING);
 
   const varModes = context.getters.getDecodedVarModes;
+  const dataMode = context.getters.getDataMode;
 
   // if current solutionId, pull result summaries
   resultsActions.fetchPredictedSummary(store, {
@@ -206,34 +216,37 @@ function updateSolutionResults(
     target: req.target,
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
+    dataMode: dataMode,
     varMode: varModes.has(req.target)
       ? varModes.get(req.target)
-      : SummaryMode.Default
+      : SummaryMode.Default,
   });
 
   if (isRegression || isForecasting) {
     resultsActions.fetchResidualsExtrema(store, {
       dataset: req.dataset,
       target: req.target,
-      solutionId: res.solutionId
+      solutionId: res.solutionId,
     });
     resultsActions.fetchResidualsSummary(store, {
       dataset: req.dataset,
       target: req.target,
       solutionId: res.solutionId,
       highlight: context.getters.getDecodedHighlight,
+      dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
-        : SummaryMode.Default
+        : SummaryMode.Default,
     });
   } else if (isClassification) {
     resultsActions.fetchCorrectnessSummary(store, {
       dataset: req.dataset,
       solutionId: res.solutionId,
       highlight: context.getters.getDecodedHighlight,
+      dataMode: dataMode,
       varMode: varModes.has(req.target)
         ? varModes.get(req.target)
-        : SummaryMode.Default
+        : SummaryMode.Default,
     });
   }
 }
@@ -299,7 +312,7 @@ async function handleProgress(
       `Progress for request ${response.requestId} updated to ${response.progress}`
     );
     await actions.fetchSolutionRequest(context, {
-      requestId: response.requestId
+      requestId: response.requestId,
     });
     handleRequestProgress(context, request, response);
   } else if (isSolutionResponse(response)) {
@@ -308,7 +321,7 @@ async function handleProgress(
       `Progress for solution ${response.solutionId} updated to ${response.progress}`
     );
     await actions.fetchSolution(context, {
-      solutionId: response.solutionId
+      solutionId: response.solutionId,
     });
     handleSolutionProgress(context, request, response);
   }
@@ -328,7 +341,7 @@ async function handlePredictProgress(
     case PREDICT_ERRORED:
       // no waiting for data here - we get single response back when the prediction is complete
       await actions.fetchPrediction(context, {
-        requestId: response.produceRequestId
+        requestId: response.produceRequestId,
       });
       updateCurrentPredictResults(context, request, response);
       break;
@@ -432,7 +445,7 @@ export const actions = {
 
       let receivedFirstSolution = false;
 
-      const stream = conn.stream(response => {
+      const stream = conn.stream((response) => {
         // log any error
         if (response.error) {
           console.error(response.error);
@@ -472,7 +485,7 @@ export const actions = {
         maxSolutions: request.maxSolutions,
         maxTime: request.maxTime,
         quality: request.quality,
-        filters: request.filters
+        filters: request.filters,
       });
     });
   },
@@ -485,7 +498,7 @@ export const actions = {
     }
     stream.send({
       type: STOP_SOLUTIONS,
-      requestId: args.requestId
+      requestId: args.requestId,
     });
   },
 
@@ -496,7 +509,7 @@ export const actions = {
 
     return new Promise((resolve, reject) => {
       const conn = getWebSocketConnection();
-      const stream = conn.stream(response => {
+      const stream = conn.stream((response) => {
         // log any error
         if (response.error) {
           console.error(response.error);
@@ -537,7 +550,7 @@ export const actions = {
         dataset: request.dataset,
         targetType: request.targetType,
         intervalCount: request.intervalCount ?? null,
-        intervalLength: request.intervalLength ?? null
+        intervalLength: request.intervalLength ?? null,
       });
     });
   },
@@ -551,7 +564,7 @@ export const actions = {
     }
     stream.send({
       type: STOP_PREDICTIONS,
-      requestId: args.requestId
+      requestId: args.requestId,
     });
   },
 
@@ -590,5 +603,5 @@ export const actions = {
     } catch (error) {
       console.error(error);
     }
-  }
+  },
 };

@@ -6,7 +6,7 @@ import { local } from "d3";
 export function saveView(args: { view: string; key: string; route: Location }) {
   const value = {
     path: args.route.path,
-    query: args.route.query
+    query: args.route.query,
   };
   // store under dataset
   if (args.key) {

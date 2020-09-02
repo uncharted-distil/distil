@@ -30,12 +30,12 @@ export default Vue.extend({
   name: "facet-error",
 
   components: {
-    TypeChangeMenu
+    TypeChangeMenu,
   },
 
   props: {
     summary: Object as () => VariableSummary,
-    enabledTypeChanges: Array as () => string[]
+    enabledTypeChanges: Array as () => string[],
   },
 
   computed: {
@@ -45,8 +45,8 @@ export default Vue.extend({
         this.summary.key,
         this.enabledTypeChanges
       );
-    }
-  }
+    },
+  },
 });
 </script>
 

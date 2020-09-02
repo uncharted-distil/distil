@@ -5,7 +5,7 @@ import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
 
 export const routeModule: Module<Route, DistilState> = {
-  getters: moduleGetters
+  getters: moduleGetters,
 };
 
 const { read } = getStoreAccessors<Route, DistilState>(null);
@@ -51,6 +51,7 @@ export const getters = {
   getRouteResultTrainingVarsPage: read(
     moduleGetters.getRouteResultTrainingVarsPage
   ),
+  getRouteDataSize: read(moduleGetters.getRouteDataSize),
   getRouteTargetVariable: read(moduleGetters.getRouteTargetVariable),
   getRouteSolutionId: read(moduleGetters.getRouteSolutionId),
   getRouteFilters: read(moduleGetters.getRouteFilters),
@@ -79,6 +80,7 @@ export const getters = {
   ),
   getDecodedHighlight: read(moduleGetters.getDecodedHighlight),
   getDecodedRowSelection: read(moduleGetters.getDecodedRowSelection),
+  getDataMode: read(moduleGetters.getDataMode),
   getDecodedVarModes: read(moduleGetters.getDecodedVarModes),
   getActiveSolutionIndex: read(moduleGetters.getActiveSolutionIndex),
   getGeoCenter: read(moduleGetters.getGeoCenter),
@@ -96,5 +98,5 @@ export const getters = {
   getModelTimeLimit: read(moduleGetters.getModelTimeLimit),
   getModelQuality: read(moduleGetters.getModelQuality),
   isPageSelectTarget: read(moduleGetters.isPageSelectTarget),
-  isPageSelectTraining: read(moduleGetters.isPageSelectTraining)
+  isPageSelectTraining: read(moduleGetters.isPageSelectTraining),
 };

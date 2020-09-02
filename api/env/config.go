@@ -95,12 +95,13 @@ type Config struct {
 	SummaryMachinePath                 string  `env:"SUMMARY_MACHINE_PATH" envDefault:"summary-machine.json"`
 	SummaryEnabled                     bool    `env:"SUMMARY_ENABLED" envDefault:"true"`
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
+	TrainTestSplit                     float64 `env:"TRAIN_TEST_SPLIT" envDefault:"0.9"`
+	TrainTestSplitTimeSeries           float64 `env:"TRAIN_TEST_SPLIT_TIMESERIES" envDefault:"0.9"`
 	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"outputs/problems"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
 }
 
-// LoadConfig loads the config from the environment if necessary and returns a
-// copy.
+// LoadConfig loads the config from the environment if necessary and returns a copy.
 func LoadConfig() (Config, error) {
 	var err error
 	once.Do(func() {

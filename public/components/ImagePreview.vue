@@ -37,7 +37,7 @@ import Vue from "vue";
 import ImageDrilldown from "./ImageDrilldown.vue";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { circleSpinnerHTML } from "../util/spinner";
@@ -47,7 +47,7 @@ import {
   RowSelection,
   BandID,
   BandCombination,
-  TaskTypes
+  TaskTypes,
 } from "../store/dataset/index";
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
@@ -58,7 +58,7 @@ export default Vue.extend({
   name: "image-preview",
 
   components: {
-    ImageDrilldown
+    ImageDrilldown,
   },
 
   props: {
@@ -67,17 +67,17 @@ export default Vue.extend({
     type: String as () => string,
     width: {
       default: 64,
-      type: Number as () => number
+      type: Number as () => number,
     },
     height: {
       default: 64,
-      type: Number as () => number
+      type: Number as () => number,
     },
     preventHiding: {
       default: false,
-      type: Boolean as () => boolean
+      type: Boolean as () => boolean,
     },
-    onClick: Function
+    onClick: Function,
   },
 
   watch: {
@@ -104,7 +104,7 @@ export default Vue.extend({
           this.requestImage();
         }
       }
-    }
+    },
   },
 
   data() {
@@ -115,7 +115,7 @@ export default Vue.extend({
       zoomedHeight: 400,
       isVisible: false,
       hasRendered: false,
-      hasRequested: false
+      hasRequested: false,
     };
   },
 
@@ -155,7 +155,7 @@ export default Vue.extend({
     },
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
-    }
+    },
   },
 
   methods: {
@@ -175,7 +175,7 @@ export default Vue.extend({
         this.onClick({
           row: this.row,
           imageUrl: this.imageUrl,
-          image: this.image
+          image: this.image,
         });
       }
     },
@@ -221,7 +221,7 @@ export default Vue.extend({
       if (this.type === IMAGE_TYPE) {
         await datasetActions.fetchImage(this.$store, {
           dataset: this.dataset,
-          url: this.imageUrl
+          url: this.imageUrl,
         });
         if (this.isVisible) {
           this.injectImage();
@@ -230,7 +230,7 @@ export default Vue.extend({
         await datasetActions.fetchMultiBandImage(this.$store, {
           dataset: this.dataset,
           imageId: this.imageId,
-          bandCombination: routeGetters.getBandCombinationId(this.$store)
+          bandCombination: routeGetters.getBandCombinationId(this.$store),
         });
         if (this.isVisible) {
           this.injectImage();
@@ -238,7 +238,7 @@ export default Vue.extend({
       } else {
         console.warn(`Image Data Type ${this.type} is not supported`);
       }
-    }
+    },
   },
 
   async beforeMount() {
@@ -248,10 +248,10 @@ export default Vue.extend({
       _.isEmpty(datasetGetters.getMultiBandCombinations(this.$store))
     ) {
       await datasetActions.fetchMultiBandCombinations(this.$store, {
-        dataset: this.dataset
+        dataset: this.dataset,
       });
     }
-  }
+  },
 });
 </script>
 

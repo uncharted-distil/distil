@@ -55,12 +55,12 @@ import {
   RowSelection,
   Row,
   NUMERICAL_SUMMARY,
-  TimeseriesGrouping
+  TimeseriesGrouping,
 } from "../../store/dataset";
 import {
   INTEGER_TYPE,
   EXPAND_ACTION_TYPE,
-  COLLAPSE_ACTION_TYPE
+  COLLAPSE_ACTION_TYPE,
 } from "../../util/types";
 
 /**
@@ -73,7 +73,7 @@ export default Vue.extend({
   components: {
     FacetSparklines,
     FacetDateTime,
-    FacetNumerical
+    FacetNumerical,
   },
 
   props: {
@@ -87,16 +87,16 @@ export default Vue.extend({
     html: [
       String as () => string,
       Object as () => any,
-      Function as () => Function
+      Function as () => Function,
     ],
-    expanded: { type: Boolean, default: false }
+    expanded: { type: Boolean, default: false },
   },
 
   data() {
     return {
       customHtml: this.html,
       footerHtml: undefined,
-      expand: this.expanded
+      expand: this.expanded,
     };
   },
 
@@ -106,7 +106,7 @@ export default Vue.extend({
     },
 
     variable(): Variable {
-      return this.variables.find(v => v.colName === this.summary.key);
+      return this.variables.find((v) => v.colName === this.summary.key);
     },
 
     grouping(): TimeseriesGrouping {
@@ -122,7 +122,7 @@ export default Vue.extend({
       }
 
       const summaryVar = this.variables.find(
-        v => v.colName === this.summary.key
+        (v) => v.colName === this.summary.key
       );
 
       if (!summaryVar || !this.grouping || !this.variable) {
@@ -136,7 +136,7 @@ export default Vue.extend({
         type: NUMERICAL_SUMMARY,
         varType: this.summary.timelineType,
         baseline: this.summary.timelineBaseline,
-        filtered: this.summary.timeline
+        filtered: this.summary.timeline,
       };
     },
     facetType(): string {
@@ -145,7 +145,7 @@ export default Vue.extend({
       } else {
         return "facet-numerical";
       }
-    }
+    },
   },
 
   methods: {
@@ -181,15 +181,15 @@ export default Vue.extend({
       // Once html is rendered in top facets, move the element to the bottom facets
       // So that custom html are rendered at the bottom of the coumpound facets
       this.footerHtml = () => html;
-    }
+    },
   },
   watch: {
     expand() {
       if (!this.expand) {
         this.customHtml = () => this.footerHtml;
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

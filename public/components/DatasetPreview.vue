@@ -6,14 +6,17 @@
       @click.stop="setActiveDataset()"
       v-bind:class="{
         collapsed: !expanded,
-        disabled: isImportReady || importPending
+        disabled: isImportReady || importPending,
       }"
     >
       <a class="nav-link">
         <i class="fa fa-table"></i> <b>Dateset Name:</b>
         {{ dataset.name }}
       </a>
-      <a class="nav-link"><b>Features:</b> {{ dataset.variables.length }}</a>
+      <a class="nav-link"
+        ><b>Features:</b>
+        {{ filterVariablesByFeature(dataset.variables).length }}</a
+      >
       <a class="nav-link"><b>Rows:</b> {{ dataset.numRows }}</a>
       <a class="nav-link"><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</a>
       <a v-if="isImportReady">
@@ -98,7 +101,11 @@ import Vue from "vue";
 import ErrorModal from "../components/ErrorModal";
 import { createRouteEntry } from "../util/routes";
 import { formatBytes } from "../util/bytes";
-import { sortVariablesByImportance, isDatamartProvenance } from "../util/data";
+import {
+  sortVariablesByImportance,
+  isDatamartProvenance,
+  filterVariablesByFeature,
+} from "../util/data";
 import { getters as routeGetters } from "../store/route/module";
 import { Dataset, Variable } from "../store/dataset/index";
 import { actions as datasetActions } from "../store/dataset/module";
@@ -113,12 +120,12 @@ export default Vue.extend({
   name: "dataset-preview",
 
   components: {
-    ErrorModal
+    ErrorModal,
   },
 
   props: {
     dataset: Object as () => Dataset,
-    allowImport: Boolean as () => boolean
+    allowImport: Boolean as () => boolean,
   },
 
   computed: {
@@ -133,21 +140,20 @@ export default Vue.extend({
       );
     },
     topVariables(): Variable[] {
-      return sortVariablesByImportance(this.dataset.variables.slice(0)).slice(
-        0,
-        NUM_TOP_FEATURES
-      );
+      return sortVariablesByImportance(
+        filterVariablesByFeature(this.dataset.variables).slice(0)
+      ).slice(0, NUM_TOP_FEATURES);
     },
     percentComplete(): number {
       return 100;
-    }
+    },
   },
 
   data() {
     return {
       expanded: false,
       importPending: false,
-      showImportFailure: false
+      showImportFailure: false,
     };
   },
 
@@ -155,12 +161,15 @@ export default Vue.extend({
     formatBytes(n: number): string {
       return formatBytes(n);
     },
+    filterVariablesByFeature(variables: Variable[]): Variable[] {
+      return filterVariablesByFeature(variables);
+    },
     setActiveDataset() {
       if (this.isImportReady || this.importPending) {
         return;
       }
       const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
-        dataset: this.dataset.id
+        dataset: this.dataset.id,
       });
       this.$router.push(entry);
       this.addRecentDataset(this.dataset.id);
@@ -168,7 +177,7 @@ export default Vue.extend({
         feature: Feature.SELECT_DATASET,
         activity: Activity.DATA_PREPARATION,
         subActivity: SubActivity.DATA_OPEN,
-        details: { dataset: this.dataset.id }
+        details: { dataset: this.dataset.id },
       });
     },
     toggleExpansion() {
@@ -204,7 +213,7 @@ export default Vue.extend({
           provenance: this.dataset.provenance,
           originalDataset: null,
           joinedDataset: null,
-          path: ""
+          path: "",
         })
         .then(() => {
           this.importPending = false;
@@ -216,8 +225,8 @@ export default Vue.extend({
     },
     datamartProvenance(provenance: string): boolean {
       return isDatamartProvenance(provenance);
-    }
-  }
+    },
+  },
 });
 </script>
 

@@ -43,14 +43,14 @@
 import Vue from "vue";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import { actions as requestActions } from "../store/requests/module";
 import { filterSummariesByDataset } from "../util/data";
 import {
   getBase64,
   removeExtension,
-  generateUniqueDatasetName
+  generateUniqueDatasetName,
 } from "../util/uploads";
 import _ from "lodash";
 
@@ -61,13 +61,13 @@ export default Vue.extend({
     return {
       file: null as File,
       importDataName: "",
-      importDataNameState: null as Boolean
+      importDataNameState: null as Boolean,
     };
   },
 
   props: {
     target: String as () => string,
-    targetType: String as () => string
+    targetType: String as () => string,
   },
 
   methods: {
@@ -86,19 +86,19 @@ export default Vue.extend({
       this.$emit("uploadstart", {
         file: this.file,
         filename: this.file.name,
-        datasetID: deconflictedName
+        datasetID: deconflictedName,
       });
       try {
         // Upload the file and notify when complete
         const response = await datasetActions.uploadDataFile(this.$store, {
           datasetID: deconflictedName,
-          file: this.file
+          file: this.file,
         });
         this.$emit("uploadfinish", null, response);
       } catch (err) {
         this.$emit("uploadfinish", err, null);
       }
-    }
+    },
   },
 
   watch: {
@@ -120,8 +120,8 @@ export default Vue.extend({
       } else if (this.importDataNameState !== null) {
         this.importDataNameState = !!this.importDataName;
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

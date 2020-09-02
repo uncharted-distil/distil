@@ -87,6 +87,7 @@ export interface Variable {
   min: number;
   max: number;
   role: string[];
+  distilRole: string;
 }
 
 export interface Dataset {
@@ -165,7 +166,15 @@ export enum SummaryMode {
   Default = "default",
   Cluster = "cluster",
   Timeseries = "timeseries",
-  RemoteSensing = "remoteSensing"
+  RemoteSensing = "remoteSensing",
+}
+
+// Flags the display mode for filtering.  Generally Default is correct,
+// but in the case where a cluster has been applied, then filtering needs to be
+// done on the cluster column.
+export enum DataMode {
+  Default = "default",
+  Cluster = "cluster",
 }
 
 export interface TableValue {
@@ -176,6 +185,7 @@ export interface TableValue {
 
 export interface TableData {
   numRows: number;
+  numRowsFiltered?: number;
   columns: TableColumn[];
   values: TableValue[][];
   fittedSolutionId: string;
@@ -239,7 +249,7 @@ export enum TaskTypes {
   GROUPED = "grouped",
   GEOSPATIAL = "geospatial",
   REMOTE_SENSING = "remoteSensing",
-  LUPI = "lupi"
+  LUPI = "lupi",
 }
 
 export enum BandID {
@@ -252,7 +262,7 @@ export enum BandID {
   LAND_WATER = "land_water",
   ATMOSPHERIC_REMOVAL = "atmospheric_removal",
   SHORTWAVE_INFRARED = "shortwave_infrared",
-  VEGETATION_ANALYSIS = "vegetation_analysis"
+  VEGETATION_ANALYSIS = "vegetation_analysis",
 }
 
 export interface Task {
@@ -264,7 +274,7 @@ export enum DatasetPendingRequestType {
   GEOCODING = "GEOCODING",
   JOIN_SUGGESTION = "JOIN_SUGGESTION",
   JOIN_DATASET_IMPORT = "JOIN_DATASET_IMPORT",
-  CLUSTERING = "CLUSTERING"
+  CLUSTERING = "CLUSTERING",
 }
 
 export enum DatasetPendingRequestStatus {
@@ -272,7 +282,7 @@ export enum DatasetPendingRequestStatus {
   RESOLVED = "RESOLVED",
   ERROR = "ERROR",
   REVIEWED = "REVIEWED",
-  ERROR_REVIEWED = "ERROR_REVIEWED"
+  ERROR_REVIEWED = "ERROR_REVIEWED",
 }
 
 export interface VariableRankingPendingRequest {
@@ -375,11 +385,11 @@ export const state: DatasetState = {
   // working set of data
   includedSet: {
     variableSummaries: [],
-    tableData: null
+    tableData: null,
   },
   excludedSet: {
     variableSummaries: [],
-    tableData: null
+    tableData: null,
   },
 
   // linked files / representation data
@@ -395,9 +405,9 @@ export const state: DatasetState = {
 
   // task information
   task: {
-    task: [TaskTypes.CLASSIFICATION, TaskTypes.MULTICLASS]
+    task: [TaskTypes.CLASSIFICATION, TaskTypes.MULTICLASS],
   },
 
   // bands
-  bands: []
+  bands: [],
 };

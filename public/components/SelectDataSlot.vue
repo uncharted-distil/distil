@@ -17,24 +17,35 @@
 
     <div class="fake-search-input">
       <div>
-        <filter-badge v-if="activeFilter" active-filter :filter="activeFilter">
-        </filter-badge>
+        <filter-badge
+          v-if="activeFilter"
+          active-filter
+          :filter="activeFilter"
+        />
         <filter-badge
           v-if="filter.type !== 'row'"
           v-for="filter in filters"
           :key="filterHash(filter)"
           :filter="filter"
-        >
-        </filter-badge>
+        />
       </div>
     </div>
 
     <div class="table-title-container">
-      <small class="row-number-label" v-html="tableTitle"></small>
-      <layer-selection
-        v-if="isRemoteSensing"
-        class="layer-select-dropdown"
-      ></layer-selection>
+      <p class="selection-data-slot-summary">
+        <data-size
+          :currentSize="numItems"
+          :total="numRows"
+          @submit="onDataSizeSubmit"
+        />
+        <strong class="matching-color">matching</strong> samples of
+        {{ numRows }} to model<template v-if="selectionNumRows > 0"
+          >, {{ selectionNumRows }}
+          <strong class="selected-color">selected</strong>
+        </template>
+      </p>
+
+      <layer-selection v-if="isRemoteSensing" class="layer-select-dropdown" />
       <b-button
         class="select-data-action-exclude"
         v-if="includedActive"
@@ -44,12 +55,12 @@
       >
         <i
           class="fa fa-minus-circle pr-1"
-          v-bind:class="{
+          :class="{
             'exclude-highlight': isFilteringHighlights,
-            'exclude-selection': isFilteringSelection
+            'exclude-selection': isFilteringSelection,
           }"
-        ></i
-        >Exclude
+        ></i>
+        Exclude
       </b-button>
       <b-button
         v-if="!includedActive"
@@ -59,43 +70,21 @@
       >
         <i
           class="fa fa-plus-circle pr-1"
-          v-bind:class="{ 'include-selection': isFilteringSelection }"
-        ></i
-        >Reinclude
+          :class="{ 'include-selection': isFilteringSelection }"
+        ></i>
+        Reinclude
       </b-button>
     </div>
 
-    <div class="select-data-container" v-bind:class="{ pending: !hasData }">
+    <div class="select-data-container" :class="{ pending: !hasData }">
       <div class="select-data-no-results" v-if="!hasData">
         <div v-html="spinnerHTML"></div>
       </div>
-      <template>
-        <select-data-table
-          v-if="viewType === TABLE_VIEW"
-          :included-active="includedActive"
-          :instance-name="instanceName"
-        ></select-data-table>
-        <image-mosaic
-          v-if="viewType === IMAGE_VIEW"
-          :included-active="includedActive"
-          :instance-name="instanceName"
-        ></image-mosaic>
-        <select-graph-view
-          v-if="viewType === GRAPH_VIEW"
-          :included-active="includedActive"
-          :instance-name="instanceName"
-        ></select-graph-view>
-        <select-geo-plot
-          v-if="viewType === GEO_VIEW"
-          :included-active="includedActive"
-          :instance-name="instanceName"
-        ></select-geo-plot>
-        <select-timeseries-view
-          v-if="viewType === TIMESERIES_VIEW"
-          :included-active="includedActive"
-          :instance-name="instanceName"
-        ></select-timeseries-view>
-      </template>
+      <component
+        :is="viewComponent"
+        :included-active="includedActive"
+        :instance-name="instanceName"
+      />
     </div>
   </div>
 </template>
@@ -103,6 +92,7 @@
 <script lang="ts">
 import Vue from "vue";
 import { spinnerHTML } from "../util/spinner";
+import DataSize from "../components/buttons/DataSize";
 import SelectDataTable from "./SelectDataTable";
 import ImageMosaic from "./ImageMosaic";
 import SelectTimeseriesView from "./SelectTimeseriesView";
@@ -114,21 +104,22 @@ import LayerSelection from "./LayerSelection";
 import { overlayRouteEntry } from "../util/routes";
 import {
   actions as datasetActions,
-  getters as datasetGetters
+  getters as datasetGetters,
 } from "../store/dataset/module";
 import {
   TableRow,
   D3M_INDEX_FIELD,
   Variable,
   Highlight,
-  RowSelection
+  RowSelection,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
 import {
   Filter,
+  FilterParams,
   addFilterToRoute,
   EXCLUDE_FILTER,
-  INCLUDE_FILTER
+  INCLUDE_FILTER,
 } from "../util/filters";
 import { clearHighlight, createFilterFromHighlight } from "../util/highlights";
 import {
@@ -138,45 +129,43 @@ import {
   isRowSelected,
   getNumIncludedRows,
   getNumExcludedRows,
-  createFilterFromRowSelection
+  createFilterFromRowSelection,
 } from "../util/row";
 import { actions as appActions } from "../store/app/module";
+import { actions as viewActions } from "../store/view/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
-const TABLE_VIEW = "table";
-const IMAGE_VIEW = "image";
-const GRAPH_VIEW = "graph";
 const GEO_VIEW = "geo";
+const GRAPH_VIEW = "graph";
+const IMAGE_VIEW = "image";
+const TABLE_VIEW = "table";
 const TIMESERIES_VIEW = "timeseries";
 
 export default Vue.extend({
   name: "select-data-slot",
 
   components: {
+    DataSize,
     FilterBadge,
-    SelectDataTable,
     ImageMosaic,
-    SelectGraphView,
+    LayerSelection,
+    SelectDataTable,
     SelectGeoPlot,
+    SelectGraphView,
     SelectTimeseriesView,
     ViewTypeToggle,
-    LayerSelection
   },
 
   data() {
     return {
       instanceName: "select-data",
-      viewTypeModel: null,
-      TABLE_VIEW: TABLE_VIEW,
-      IMAGE_VIEW: IMAGE_VIEW,
-      GRAPH_VIEW: GRAPH_VIEW,
+      viewTypeModel: TABLE_VIEW,
       GEO_VIEW: GEO_VIEW,
-      TIMESERIES_VIEW: TIMESERIES_VIEW
+      GRAPH_VIEW: GRAPH_VIEW,
+      IMAGE_VIEW: IMAGE_VIEW,
+      TABLE_VIEW: TABLE_VIEW,
+      TIMESERIES_VIEW: TIMESERIES_VIEW,
     };
-  },
-
-  created() {
-    this.viewTypeModel = TABLE_VIEW;
   },
 
   computed: {
@@ -241,10 +230,7 @@ export default Vue.extend({
       return createFilterFromHighlight(this.highlight, EXCLUDE_FILTER);
     },
 
-    /**
-     * Check if the Active Filter is from an available feature.
-     * @returns {Boolean}
-     */
+    /* Check if the Active Filter is from an available feature. */
     isActiveFilterFromAnAvailableFeature(): Boolean {
       if (!this.activeFilter) {
         return false;
@@ -252,16 +238,13 @@ export default Vue.extend({
 
       const activeFilterName = this.activeFilter.key;
       const availableVariablesNames = this.availableVariables.map(
-        v => v.colName
+        (v) => v.colName
       );
 
       return availableVariablesNames.includes(activeFilterName);
     },
 
-    /**
-     * Disable the Exclude filter button.
-     * @returns {Boolean}
-     */
+    /* Disable the Exclude filter button. */
     isExcludeDisabled(): Boolean {
       return (
         (!this.isFilteringHighlights && !this.isFilteringSelection) ||
@@ -277,21 +260,11 @@ export default Vue.extend({
       return routeGetters.getDecodedRowSelection(this.$store);
     },
 
-    tableTitle(): string {
+    selectionNumRows(): number {
       if (this.includedActive) {
-        const included = getNumIncludedRows(this.rowSelection);
-        if (included > 0) {
-          return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${included} <b class="selected-color">selected</b>`;
-        } else {
-          return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
-        }
+        return getNumIncludedRows(this.rowSelection);
       } else {
-        const excluded = getNumExcludedRows(this.rowSelection);
-        if (excluded > 0) {
-          return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model, ${excluded} <b class="selected-color">selected</b>`;
-        } else {
-          return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} to model`;
-        }
+        return getNumExcludedRows(this.rowSelection);
       }
     },
 
@@ -307,9 +280,14 @@ export default Vue.extend({
       return routeGetters.isRemoteSensing(this.$store);
     },
 
-    viewType(): string {
-      return this.viewTypeModel;
-    }
+    /* Select which component to display the data. */
+    viewComponent() {
+      if (this.viewTypeModel === GEO_VIEW) return "SelectGeoPlot";
+      if (this.viewTypeModel === GRAPH_VIEW) return "SelectGraphView";
+      if (this.viewTypeModel === IMAGE_VIEW) return "ImageMosaic";
+      if (this.viewTypeModel === TABLE_VIEW) return "SelectDataTable";
+      if (this.viewTypeModel === TIMESERIES_VIEW) return "SelectTimeseriesView";
+    },
   },
 
   methods: {
@@ -338,14 +316,14 @@ export default Vue.extend({
 
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
-        target: this.target
+        target: this.target,
       });
 
       appActions.logUserEvent(this.$store, {
         feature: Feature.FILTER_DATA,
         activity: Activity.DATA_PREPARATION,
         subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: { filter: filter }
+        details: { filter: filter },
       });
     },
 
@@ -370,40 +348,48 @@ export default Vue.extend({
 
       datasetActions.fetchVariableRankings(this.$store, {
         dataset: this.dataset,
-        target: this.target
+        target: this.target,
       });
 
       appActions.logUserEvent(this.$store, {
         feature: Feature.UNFILTER_DATA,
         activity: Activity.DATA_PREPARATION,
         subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: { filter: filter }
+        details: { filter: filter },
       });
     },
 
     setIncludedActive() {
       const entry = overlayRouteEntry(this.$route, {
-        include: "true"
+        include: "true",
       });
       this.$router.push(entry);
 
       clearRowSelection(this.$router);
     },
+
     setExcludedActive() {
       const entry = overlayRouteEntry(this.$route, {
-        include: "false"
+        include: "false",
       });
       this.$router.push(entry);
 
       clearRowSelection(this.$router);
-    }
-  }
+    },
+
+    /* When the user request to fetch a different size of data. */
+    onDataSizeSubmit(dataSize: number) {
+      const entry = overlayRouteEntry(this.$route, { dataSize });
+      this.$router.push(entry);
+      viewActions.updateSelectTrainingData(this.$store);
+    },
+  },
 });
 </script>
 
 <style scoped>
 .select-data-container {
-  background-color: white;
+  background-color: var(--white);
   display: flex;
   flex-flow: wrap;
   height: 100%;
@@ -440,16 +426,19 @@ table tr {
 
 .select-data-action-exclude:not([disabled]) .include-highlight,
 .select-data-action-exclude:not([disabled]) .exclude-highlight {
-  color: #255dcc;
+  color: var(--blue); /* #255dcc; */
 }
 
 .select-data-action-exclude:not([disabled]) .include-selection,
 .select-data-action-exclude:not([disabled]) .exclude-selection {
-  color: #ff0067;
+  color: var(--red); /* #ff0067; */
 }
 
 .matching-color {
-  color: #255dcc;
+  color: var(--blue);
+}
+.selected-color {
+  color: var(--red);
 }
 
 .fake-search-input {
@@ -457,8 +446,8 @@ table tr {
   flex-direction: column;
   flex-shrink: 0;
   flex-grow: 1;
-  background-color: #eee;
-  border: 1px solid #ccc;
+  background-color: var(--gray-300);
+  border: 1px solid var(--gray-500); /* #ccc */
   border-radius: 0.2rem;
   padding: 3px;
   height: 38px;
@@ -466,10 +455,6 @@ table tr {
 
 .pending {
   opacity: 0.5;
-}
-
-.selected-color {
-  color: #ff0067;
 }
 
 .table-title-container {
@@ -485,12 +470,11 @@ table tr {
   margin-right: 6px;
 }
 
-.row-number-label {
-  margin-right: auto;
-  margin-top: auto;
-  vertical-align: baseline;
-  margin-bottom: -3px;
+.selection-data-slot-summary {
+  font-size: 90%;
+  margin: auto auto -3px 0; /* Display against the table */
 }
+
 .select-data-slot .nav-link.active {
   border-top: 1px solid #ccc;
   border-right: 1px solid #ccc;
@@ -502,9 +486,11 @@ table tr {
   border-top-right-radius: 0.125rem;
   color: rgba(0, 0, 0, 1);
 }
+
 .select-data-slot .nav-item > a {
   color: rgba(0, 0, 0, 0.5);
 }
+
 .select-data-slot .nav-tabs .nav-link {
   padding: 0.5rem 0.75rem 1rem;
 }

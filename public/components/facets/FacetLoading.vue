@@ -16,7 +16,7 @@ export default Vue.extend({
   name: "facet-loading",
 
   props: {
-    summary: Object as () => VariableSummary
+    summary: Object as () => VariableSummary,
   },
 
   computed: {
@@ -39,11 +39,11 @@ export default Vue.extend({
           null,
           null,
           null,
-          null
-        ]
+          null,
+        ],
       };
-    }
-  }
+    },
+  },
 });
 </script>
 

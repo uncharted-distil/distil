@@ -20,7 +20,7 @@ export const actions = {
     try {
       await axios.post(`/distil/save/${args.fittedSolutionId}/true`, {
         modelName: args.modelName,
-        modelDescription: args.modelDescription
+        modelDescription: args.modelDescription,
       });
       console.warn(`User saved model for ${args.fittedSolutionId}`);
     } catch (error) {
@@ -80,7 +80,7 @@ export const actions = {
     }
     return axios.post(`/distil/discovery/${args.dataset}/${args.target}`, {
       filterParams: args.filterParams,
-      meaningful: args.meaningful
+      meaningful: args.meaningful,
     });
   },
 
@@ -121,5 +121,5 @@ export const actions = {
     }
   ) {
     return axios.post(`distil/event`, args);
-  }
+  },
 };

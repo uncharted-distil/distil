@@ -17,7 +17,7 @@ import { colorByWeight } from "../util/data";
 
 export default Vue.extend({
   name: "legend-weight",
-  methods: { colorByWeight }
+  methods: { colorByWeight },
 });
 </script>
 

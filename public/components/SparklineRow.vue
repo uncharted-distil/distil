@@ -19,7 +19,7 @@
       class="timeseries-prediction-col"
       v-bind:class="{
         'correct-prediction': prediction.isCorrect,
-        'incorrect-prediction': !prediction.isCorrect
+        'incorrect-prediction': !prediction.isCorrect,
       }"
     >
       {{ prediction.value }}
@@ -36,39 +36,39 @@ import { getters as routeGetters } from "../store/route/module";
 import { TimeseriesExtrema, TimeSeriesValue } from "../store/dataset/index";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import {
   getters as resultsGetters,
-  actions as resultsActions
+  actions as resultsActions,
 } from "../store/results/module";
 
 export default Vue.extend({
   name: "sparkline-row",
 
   components: {
-    SparklineSvg
+    SparklineSvg,
   },
 
   props: {
     highlightPixelX: {
-      type: Number as () => number
+      type: Number as () => number,
     },
     xCol: String as () => string,
     yCol: String as () => string,
     timeseriesCol: String as () => string,
     timeseriesId: String as () => string,
     timeseriesExtrema: {
-      type: Object as () => TimeseriesExtrema
+      type: Object as () => TimeseriesExtrema,
     },
     solutionId: String as () => string,
     prediction: Object as () => any,
-    includeForecast: Boolean as () => boolean
+    includeForecast: Boolean as () => boolean,
   },
   data() {
     return {
       isVisible: false,
-      hasRequested: false
+      hasRequested: false,
     };
   },
   computed: {
@@ -111,10 +111,10 @@ export default Vue.extend({
       }
     },
     min(): number {
-      return this.timeseries ? d3.min(this.timeseries, d => d.value) : 0;
+      return this.timeseries ? d3.min(this.timeseries, (d) => d.value) : 0;
     },
     max(): number {
-      return this.timeseries ? d3.max(this.timeseries, d => d.value) : 0;
+      return this.timeseries ? d3.max(this.timeseries, (d) => d.value) : 0;
     },
     isDateTime(): boolean {
       if (this.solutionId) {
@@ -132,7 +132,7 @@ export default Vue.extend({
         }
         return datasets.isDateTime[this.timeseriesId];
       }
-    }
+    },
   },
 
   methods: {
@@ -152,7 +152,7 @@ export default Vue.extend({
           yColName: this.yCol,
           timeseriesColName: this.timeseriesCol,
           timeseriesId: this.timeseriesId,
-          solutionId: this.solutionId
+          solutionId: this.solutionId,
         });
       } else {
         datasetActions.fetchTimeseries(this.$store, {
@@ -160,11 +160,11 @@ export default Vue.extend({
           xColName: this.xCol,
           yColName: this.yCol,
           timeseriesColName: this.timeseriesCol,
-          timeseriesId: this.timeseriesId
+          timeseriesId: this.timeseriesId,
         });
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

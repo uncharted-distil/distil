@@ -1,8 +1,6 @@
 <template>
   <div class="prediction-summaries">
-    <p class="nav-link font-weight-bold">
-      Predictions for Dataset
-    </p>
+    <p class="nav-link font-weight-bold">Predictions for Dataset</p>
     <div v-for="summary in summaries" :key="summary.key">
       <div :class="active(summary.key)" @click="onClick(summary.key)">
         <header class="prediction-group-title" :title="summary.dataset">
@@ -61,20 +59,20 @@ import { getters as requestGetters } from "../store/requests/module";
 import { getters as predictionsGetters } from "../store/predictions/module";
 import {
   actions as appActions,
-  getters as appGetters
+  getters as appGetters,
 } from "../store/app/module";
 import store from "../store/store";
 import {
   EXPORT_SUCCESS_ROUTE,
   ROOT_ROUTE,
-  PREDICTION_ROUTE
+  PREDICTION_ROUTE,
 } from "../store/route/index";
 import {
   Variable,
   TaskTypes,
   VariableSummary,
   Highlight,
-  RowSelection
+  RowSelection,
 } from "../store/dataset/index";
 import { Solution } from "../store/requests/index";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
@@ -90,7 +88,7 @@ export default Vue.extend({
   components: {
     FacetNumerical,
     FacetCategorical,
-    FileUploader
+    FileUploader,
   },
 
   computed: {
@@ -106,8 +104,8 @@ export default Vue.extend({
       // get the list of variable summaries, sorting by timestamp
       return requestGetters
         .getRelevantPredictions(this.$store)
-        .map(p => getPredictionResultSummary(p.requestId))
-        .filter(p => !!p);
+        .map((p) => getPredictionResultSummary(p.requestId))
+        .filter((p) => !!p);
     },
 
     highlight(): Highlight {
@@ -116,7 +114,7 @@ export default Vue.extend({
 
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
-    }
+    },
   },
 
   methods: {
@@ -130,7 +128,7 @@ export default Vue.extend({
           feature: Feature.SELECT_PREDICTIONS,
           activity: Activity.PREDICTION_ANALYSIS,
           subActivity: SubActivity.MODEL_PREDICTIONS,
-          details: { requestId: key }
+          details: { requestId: key },
         });
         const dataset = getPredictionsById(
           requestGetters.getPredictions(this.$store),
@@ -139,7 +137,7 @@ export default Vue.extend({
         const routeEntry = overlayRouteEntry(this.$route, {
           produceRequestId: requestId,
           highlights: null,
-          predictionsDataset: dataset
+          predictionsDataset: dataset,
         });
         this.$router.push(routeEntry);
       }
@@ -164,7 +162,7 @@ export default Vue.extend({
           context: context,
           dataset: dataset,
           key: key,
-          value: value
+          value: value,
         });
       } else {
         clearHighlight(this.$router);
@@ -173,7 +171,7 @@ export default Vue.extend({
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.PREDICTION_ANALYSIS,
         subActivity: SubActivity.MODEL_PREDICTIONS,
-        details: { key: key, value: value }
+        details: { key: key, value: value },
       });
     },
 
@@ -194,13 +192,13 @@ export default Vue.extend({
           context: context,
           dataset: dataset,
           key: key,
-          value: value
+          value: value,
         });
         appActions.logUserEvent(this.$store, {
           feature: Feature.CHANGE_HIGHLIGHT,
           activity: Activity.PREDICTION_ANALYSIS,
           subActivity: SubActivity.MODEL_EXPLANATION,
-          details: { key: key, value: value }
+          details: { key: key, value: value },
         });
       }
     },
@@ -215,13 +213,13 @@ export default Vue.extend({
         context: context,
         dataset: dataset,
         key: key,
-        value: value
+        value: value,
       });
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: Activity.PREDICTION_ANALYSIS,
         subActivity: SubActivity.MODEL_EXPLANATION,
-        details: { key: key, value: value }
+        details: { key: key, value: value },
       });
       this.$emit("range-change", key, value);
     },
@@ -241,8 +239,8 @@ export default Vue.extend({
         requestGetters.getRelevantPredictions(this.$store),
         requestId
       ).dataset;
-    }
-  }
+    },
+  },
 });
 </script>
 

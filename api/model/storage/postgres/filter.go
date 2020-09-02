@@ -465,18 +465,18 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 	return wheres, params, nil
 }
 
-func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
+func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, alias string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
 	// handle the general category case
 
 	filterParams := &api.FilterParams{
 		Filters: []*model.Filter{resultFilter},
 	}
 
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, filterParams, false)
 	return wheres, params, nil
 }
 
-func (s *Storage) buildResultQueryFilters(dataset string, storageName string, resultURI string, filterParams *api.FilterParams) ([]string, []interface{}, error) {
+func (s *Storage) buildResultQueryFilters(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, alias string) ([]string, []interface{}, error) {
 	// pull filters generated against the result facet out for special handling
 	filters := splitFilters(filterParams)
 
@@ -487,12 +487,12 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 	// create the filter for the query
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", genericFilterParams, false)
+	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, genericFilterParams, false)
 
 	// assemble split filters
 	var err error
 	if filters.predictedFilter != nil {
-		wheres, params, err = s.buildPredictedResultWhere(dataset, wheres, params, resultURI, filters.predictedFilter)
+		wheres, params, err = s.buildPredictedResultWhere(dataset, wheres, params, alias, resultURI, filters.predictedFilter)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -566,13 +566,19 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 }
 
 // FetchNumRows pulls the number of rows in the table.
-func (s *Storage) FetchNumRows(storageName string, variables []*model.Variable, filters map[string]interface{}) (int, error) {
+func (s *Storage) FetchNumRows(storageName string, variables []*model.Variable) (int, error) {
 
-	return s.fetchNumRowsJoined(storageName, variables, filters, nil)
+	return s.fetchNumRowsJoined(storageName, variables, nil, nil, nil)
 }
 
-// FetchNumRows pulls the number of rows in the table.
-func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Variable, filters map[string]interface{}, join *joinDefinition) (int, error) {
+// FetchNumRowsFiltered pulls the number of filtered rows in the table.
+func (s *Storage) FetchNumRowsFiltered(storageName string, variables []*model.Variable, filters []string, params []interface{}) (int, error) {
+
+	return s.fetchNumRowsJoined(storageName, variables, filters, params, nil)
+}
+
+// fetchNumRowsJoined pulls the number of rows in the table.
+func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Variable, filters []string, params []interface{}, join *joinDefinition) (int, error) {
 
 	countTarget := "*"
 
@@ -595,20 +601,15 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 	}
 
 	joinSQL := ""
+	tableAlias := "base_data"
 	if join != nil {
-		join.baseAlias = "base_data"
+		tableAlias = join.baseAlias
 		joinSQL = getJoinSQL(join, true)
 	}
 
-	query := fmt.Sprintf("SELECT count(%s) FROM %s AS base_data %s", countTarget, storageName, joinSQL)
-	params := make([]interface{}, 0)
+	query := fmt.Sprintf("SELECT count(%s) FROM %s AS %s %s", countTarget, storageName, tableAlias, joinSQL)
 	if len(filters) > 0 {
-		clauses := make([]string, 0)
-		for field, value := range filters {
-			clauses = append(clauses, fmt.Sprintf("%s = $%d", field, len(clauses)+1))
-			params = append(params, value)
-		}
-		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(clauses, " AND "))
+		query = fmt.Sprintf("%s WHERE %s", query, strings.Join(filters, " AND "))
 	}
 	var numRows int
 	err := s.client.QueryRow(query, params...).Scan(&numRows)
@@ -637,7 +638,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
 
-	numRows, err := s.FetchNumRows(storageName, variables, nil)
+	numRows, err := s.FetchNumRows(storageName, variables)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull num rows")
 	}
@@ -704,5 +705,17 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	}
 
 	// parse the result
-	return s.parseFilteredData(dataset, variables, numRows, res)
+	filteredData, err := s.parseFilteredData(dataset, variables, numRows, res)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the num filtered rows
+	numRowsFiltered, err := s.FetchNumRowsFiltered(storageName, variables, wheres, params)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not pull filtered num rows")
+	}
+	filteredData.NumRowsFiltered = numRowsFiltered
+
+	return filteredData, nil
 }

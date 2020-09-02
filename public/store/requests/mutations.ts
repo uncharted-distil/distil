@@ -5,7 +5,7 @@ import { RequestState, SolutionRequest, Solution, Predictions } from "./index";
 export const mutations = {
   updateSolutions(state: RequestState, solution: Solution) {
     const index = state.solutions.findIndex(
-      r => r.solutionId === solution.solutionId
+      (r) => r.solutionId === solution.solutionId
     );
     if (index === -1) {
       state.solutions.push(solution);
@@ -16,7 +16,7 @@ export const mutations = {
 
   updateSolutionRequests(state: RequestState, request: SolutionRequest) {
     const index = state.solutionRequests.findIndex(
-      r => r.requestId === request.requestId
+      (r) => r.requestId === request.requestId
     );
     if (index === -1) {
       state.solutionRequests.push(request);
@@ -35,7 +35,7 @@ export const mutations = {
 
   updatePredictions(state: RequestState, predictions: Predictions) {
     const index = state.predictions.findIndex(
-      r => r.requestId === predictions.requestId
+      (r) => r.requestId === predictions.requestId
     );
     if (index === -1) {
       state.predictions.push(predictions);
@@ -46,5 +46,5 @@ export const mutations = {
 
   clearPredictions(state: RequestState) {
     state.predictions = [];
-  }
+  },
 };

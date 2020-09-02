@@ -2,12 +2,12 @@ import axios from "axios";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import store, { DistilState } from "../store";
-import { EXCLUDE_FILTER } from "../../util/filters";
+import { EXCLUDE_FILTER, FilterParams } from "../../util/filters";
 import {
   getSolutionById,
-  getSolutionsBySolutionRequestIds
+  getSolutionsBySolutionRequestIds,
 } from "../../util/solutions";
-import { Variable, Highlight, SummaryMode } from "../dataset/index";
+import { Variable, Highlight, SummaryMode, DataMode } from "../dataset/index";
 import { mutations } from "./module";
 import { ResultsState } from "./index";
 import { addHighlightToFilterParams } from "../../util/highlights";
@@ -17,7 +17,7 @@ import {
   createErrorSummary,
   createEmptyTableData,
   fetchSummaryExemplars,
-  validateArgs
+  validateArgs,
 } from "../../util/data";
 import { getters as resultGetters } from "../results/module";
 import { getters as dataGetters } from "../dataset/module";
@@ -34,6 +34,7 @@ export const actions = {
       training: Variable[];
       solutionId: string;
       highlight: Highlight;
+      dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
   ) {
@@ -53,6 +54,10 @@ export const actions = {
       console.warn("`varModes` argument is missing");
       return null;
     }
+    if (!args.dataMode) {
+      console.warn("`dataMode` argument is missing");
+      return null;
+    }
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
       args.solutionId
@@ -69,7 +74,7 @@ export const actions = {
     const promises = [];
 
     // remove summaries not used to predict the newly selected model
-    context.state.trainingSummaries.forEach(v => {
+    context.state.trainingSummaries.forEach((v) => {
       const isTrainingArg = args.training.reduce((isTrain, variable) => {
         if (!isTrain) {
           isTrain = variable.colName === v.key;
@@ -81,11 +86,11 @@ export const actions = {
       }
     });
 
-    args.training.forEach(variable => {
+    args.training.forEach((variable) => {
       const key = variable.colName;
       const label = variable.colDisplayName;
       const description = variable.colDescription;
-      const exists = _.find(context.state.trainingSummaries, v => {
+      const exists = _.find(context.state.trainingSummaries, (v) => {
         return v.dataset === args.dataset && v.key === variable.colName;
       });
       if (!exists) {
@@ -102,9 +107,10 @@ export const actions = {
           variable: variable,
           resultID: solution.resultId,
           highlight: args.highlight,
+          dataMode: args.dataMode,
           varMode: varModes.has(variable.colName)
             ? varModes.get(variable.colName)
-            : SummaryMode.Default
+            : SummaryMode.Default,
         })
       );
     });
@@ -118,6 +124,7 @@ export const actions = {
       variable: Variable;
       resultID: string;
       highlight: Highlight;
+      dataMode: DataMode;
       varMode: SummaryMode;
     }
   ): Promise<void> {
@@ -134,12 +141,19 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
+
     try {
       const response = await axios.post(
         `/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}/${args.varMode}`,
@@ -169,6 +183,7 @@ export const actions = {
       target: string;
       solutionId: string;
       highlight: Highlight;
+      dataMode: DataMode;
       varMode: SummaryMode;
     }
   ) {
@@ -210,12 +225,19 @@ export const actions = {
       );
     }
 
-    let filterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
+
     try {
       const response = await axios.post(
         `/distil/target-summary/${args.dataset}/${args.target}/${solution.resultId}/${args.varMode}`,
@@ -235,7 +257,13 @@ export const actions = {
 
   async fetchIncludedResultTableData(
     context: ResultsContext,
-    args: { solutionId: string; dataset: string; highlight: Highlight }
+    args: {
+      solutionId: string;
+      dataset: string;
+      highlight: Highlight;
+      dataMode: DataMode;
+      size?: number;
+    }
   ) {
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
@@ -246,12 +274,21 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault; // Add the size limit to results if provided.
+    if (_.isInteger(args.size)) {
+      filterParams.size = args.size;
+    }
 
     try {
       const response = await axios.post(
@@ -271,7 +308,13 @@ export const actions = {
 
   async fetchExcludedResultTableData(
     context: ResultsContext,
-    args: { solutionId: string; dataset: string; highlight: Highlight }
+    args: {
+      solutionId: string;
+      dataset: string;
+      highlight: Highlight;
+      dataMode: DataMode;
+      size?: number;
+    }
   ) {
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
@@ -282,16 +325,23 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
-    filterParams = addHighlightToFilterParams(
-      filterParams,
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
       args.highlight,
       EXCLUDE_FILTER
     );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
+    // Add the size limit to results if provided.
+    if (_.isInteger(args.size)) {
+      filterParams.size = args.size;
+    }
 
     try {
       const response = await axios.post(
@@ -311,19 +361,17 @@ export const actions = {
 
   fetchResultTableData(
     context: ResultsContext,
-    args: { solutionId: string; dataset: string; highlight: Highlight }
+    args: {
+      solutionId: string;
+      dataset: string;
+      highlight: Highlight;
+      dataMode: DataMode;
+      size?: number;
+    }
   ) {
     return Promise.all([
-      actions.fetchIncludedResultTableData(context, {
-        dataset: args.dataset,
-        solutionId: args.solutionId,
-        highlight: args.highlight
-      }),
-      actions.fetchExcludedResultTableData(context, {
-        dataset: args.dataset,
-        solutionId: args.solutionId,
-        highlight: args.highlight
-      })
+      actions.fetchIncludedResultTableData(context, args),
+      actions.fetchExcludedResultTableData(context, args),
     ]);
   },
 
@@ -367,6 +415,7 @@ export const actions = {
       target: string;
       solutionId: string;
       highlight: Highlight;
+      dataMode: DataMode;
       varMode: SummaryMode;
     }
   ) {
@@ -396,12 +445,19 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
+
     const endpoint = `/distil/solution-result-summary`;
     const key = solution.predictedKey;
     const label = "Predicted";
@@ -426,6 +482,7 @@ export const actions = {
       target: string;
       requestIds: string[];
       highlight: Highlight;
+      dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
   ) {
@@ -438,15 +495,16 @@ export const actions = {
       args.requestIds
     );
     return Promise.all(
-      solutions.map(solution => {
+      solutions.map((solution) => {
         return actions.fetchPredictedSummary(context, {
           dataset: args.dataset,
           target: args.target,
           solutionId: solution.solutionId,
           highlight: args.highlight,
+          dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
-            : SummaryMode.Default
+            : SummaryMode.Default,
         });
       })
     );
@@ -460,6 +518,7 @@ export const actions = {
       target: string;
       solutionId: string;
       highlight: Highlight;
+      dataMode: DataMode;
       varMode: SummaryMode;
     }
   ) {
@@ -489,12 +548,18 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
 
     const endPoint = `/distil/residuals-summary/${args.dataset}/${args.target}`;
     const key = solution.errorKey;
@@ -520,6 +585,7 @@ export const actions = {
       target: string;
       requestIds: string[];
       highlight: Highlight;
+      dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
   ) {
@@ -532,15 +598,16 @@ export const actions = {
       args.requestIds
     );
     return Promise.all(
-      solutions.map(solution => {
+      solutions.map((solution) => {
         return actions.fetchResidualsSummary(context, {
           dataset: args.dataset,
           target: args.target,
           solutionId: solution.solutionId,
           highlight: args.highlight,
+          dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
-            : SummaryMode.Default
+            : SummaryMode.Default,
         });
       })
     );
@@ -553,6 +620,7 @@ export const actions = {
       dataset: string;
       solutionId: string;
       highlight: Highlight;
+      dataMode: DataMode;
       varMode: SummaryMode;
     }
   ) {
@@ -569,12 +637,18 @@ export const actions = {
       return null;
     }
 
-    let filterParams = {
+    const filterParamsBlank = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
-    filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
 
     const endPoint = `/distil/correctness-summary/${args.dataset}`;
     const key = solution.errorKey;
@@ -600,6 +674,7 @@ export const actions = {
       target: string;
       requestIds: string[];
       highlight: Highlight;
+      dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
     }
   ) {
@@ -612,14 +687,15 @@ export const actions = {
       args.requestIds
     );
     return Promise.all(
-      solutions.map(solution => {
+      solutions.map((solution) => {
         return actions.fetchCorrectnessSummary(context, {
           dataset: args.dataset,
           solutionId: solution.solutionId,
           highlight: args.highlight,
+          dataMode: args.dataMode,
           varMode: args.varModes.has(args.target)
             ? args.varModes.get(args.target)
-            : SummaryMode.Default
+            : SummaryMode.Default,
         });
       })
     );
@@ -686,14 +762,14 @@ export const actions = {
         solutionId: args.solutionId,
         id: args.timeseriesId,
         timeseries: response.data.timeseries,
-        isDateTime: response.data.isDateTime
+        isDateTime: response.data.isDateTime,
       });
       mutations.updatePredictedForecast(context, {
         solutionId: args.solutionId,
         id: args.timeseriesId,
         forecast: response.data.forecast,
         forecastTestRange: response.data.forecastTestRange,
-        isDateTime: response.data.isDateTime
+        isDateTime: response.data.isDateTime,
       });
     } catch (error) {
       console.error(error);
@@ -712,7 +788,7 @@ export const actions = {
     const rankings = <Dictionary<number>>response.data;
     mutations.setVariableRankings(store, {
       solutionID: args.solutionID,
-      rankings: _.pickBy(rankings, ranking => ranking !== null)
+      rankings: _.pickBy(rankings, (ranking) => ranking !== null),
     });
-  }
+  },
 };

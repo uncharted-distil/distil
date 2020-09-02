@@ -111,13 +111,9 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 
 // SetGroups updates the dataset metadata (as stored) to capture group information.
 func SetGroups(datasetID string, rawGrouping map[string]interface{}, meta api.MetadataStorage, config *IngestTaskConfig) error {
-	ds, err := meta.FetchDataset(datasetID, true, true)
-	if err != nil {
-		return err
-	}
-	if isRemoteSensingDataset(ds) {
+	if isRemoteSensingGrouping(rawGrouping) {
 		rsg := &model.RemoteSensingGrouping{}
-		err = json.MapToStruct(rsg, rawGrouping)
+		err := json.MapToStruct(rsg, rawGrouping)
 		if err != nil {
 			return err
 		}
@@ -131,6 +127,10 @@ func SetGroups(datasetID string, rawGrouping map[string]interface{}, meta api.Me
 	}
 
 	return nil
+}
+
+func isRemoteSensingGrouping(rawGrouping map[string]interface{}) bool {
+	return rawGrouping["type"] != nil && rawGrouping["type"].(string) == model.RemoteSensingType
 }
 
 func isRemoteSensingDataset(ds *api.Dataset) bool {

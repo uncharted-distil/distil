@@ -36,23 +36,23 @@ export default Vue.extend({
     // Feature importance value, assumed to be [0,1]
     importance: {
       type: Number as () => number,
-      required: true
+      required: true,
     },
     // Number of bars in the display
     numBars: {
       type: Number as () => number,
-      default: 5
+      default: 5,
     },
     // Width of bars in pixels
     barWidth: {
       type: Number as () => number,
-      default: 3
+      default: 3,
     },
     // Bar height step in pixels
     barHeightIncrement: {
       type: Number as () => number,
-      default: 3
-    }
+      default: 3,
+    },
   },
 
   computed: {
@@ -69,7 +69,7 @@ export default Vue.extend({
         const entry = {
           height: i * this.barHeightIncrement,
           colorClass:
-            i <= numActive ? "importance-active" : "importance-inactive"
+            i <= numActive ? "importance-active" : "importance-inactive",
         };
         entries.push(entry);
       }
@@ -86,8 +86,8 @@ export default Vue.extend({
           )
         ];
       return label;
-    }
-  }
+    },
+  },
 });
 </script>
 

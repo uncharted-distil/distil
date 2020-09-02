@@ -33,7 +33,7 @@ export function createFilterFromRowSelection(
   return {
     type: ROW_FILTER,
     mode: mode,
-    d3mIndices: selection.d3mIndices.map(num => _.toString(num))
+    d3mIndices: selection.d3mIndices.map((num) => _.toString(num)),
   };
 }
 
@@ -46,10 +46,11 @@ export function getNumIncludedRows(selection: RowSelection): number {
     return 0;
   }
   const d3mIndices = {};
-  selection.d3mIndices.forEach(index => {
+  selection.d3mIndices.forEach((index) => {
     d3mIndices[index] = true;
   });
-  return includedData.filter(data => d3mIndices[data[D3M_INDEX_FIELD]]).length;
+  return includedData.filter((data) => d3mIndices[data[D3M_INDEX_FIELD]])
+    .length;
 }
 
 export function getNumExcludedRows(selection: RowSelection): number {
@@ -58,10 +59,11 @@ export function getNumExcludedRows(selection: RowSelection): number {
   }
   const excludedData = dataGetters.getExcludedTableDataItems(store);
   const d3mIndices = {};
-  selection.d3mIndices.forEach(index => {
+  selection.d3mIndices.forEach((index) => {
     d3mIndices[index] = true;
   });
-  return excludedData.filter(data => d3mIndices[data[D3M_INDEX_FIELD]]).length;
+  return excludedData.filter((data) => d3mIndices[data[D3M_INDEX_FIELD]])
+    .length;
 }
 
 export function isRowSelected(
@@ -89,7 +91,7 @@ export function updateTableRowSelection(
   }
 
   // clear selections
-  _.forEach(items, row => {
+  _.forEach(items, (row) => {
     row._rowVariant = null;
   });
 
@@ -103,7 +105,7 @@ export function updateTableRowSelection(
   }
   // add selections
   const d3mIndices = {};
-  selection.d3mIndices.forEach(index => {
+  selection.d3mIndices.forEach((index) => {
     d3mIndices[index] = true;
   });
   items.forEach((item: any) => {
@@ -137,7 +139,7 @@ export function getSelectedRows(selection: RowSelection): Row[] {
   }
 
   const d3mIndices = {};
-  selection.d3mIndices.forEach(index => {
+  selection.d3mIndices.forEach((index) => {
     d3mIndices[index] = true;
   });
 
@@ -150,9 +152,9 @@ export function getSelectedRows(selection: RowSelection): Row[] {
         cols: _.map(data, (value, key) => {
           return {
             key: key,
-            value: value
+            value: value,
           };
-        })
+        }),
       });
     }
   });
@@ -164,9 +166,9 @@ export function getSelectedRows(selection: RowSelection): Row[] {
         cols: _.map(data, (value, key) => {
           return {
             key: key,
-            value: value
+            value: value,
           };
-        })
+        }),
       });
     }
   });
@@ -183,12 +185,12 @@ export function addRowSelection(
   if (!selection || selection.context !== context) {
     selection = {
       context: context,
-      d3mIndices: []
+      d3mIndices: [],
     };
   }
   selection.d3mIndices.push(d3mIndex);
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
-    row: encodeRowSelection(selection)
+    row: encodeRowSelection(selection),
   });
   router.push(entry);
 }
@@ -202,21 +204,21 @@ export function removeRowSelection(
   if (!selection) {
     return;
   }
-  _.remove(selection.d3mIndices, r => {
+  _.remove(selection.d3mIndices, (r) => {
     return r === d3mIndex;
   });
   if (selection.d3mIndices.length === 0) {
     selection = null;
   }
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
-    row: encodeRowSelection(selection)
+    row: encodeRowSelection(selection),
   });
   router.push(entry);
 }
 
 export function clearRowSelection(router: VueRouter) {
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
-    row: null
+    row: null,
   });
   router.push(entry);
 }

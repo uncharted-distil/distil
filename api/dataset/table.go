@@ -61,6 +61,18 @@ func (t *Table) CreateDataset(rootDataPath string, datasetName string, config *e
 	dr.ResPath = dataFilePath
 	meta.DataResources = []*model.DataResource{dr}
 
+	// find the d3m index (if present) and add the variable to the metadata
+	header := t.CSVData[0]
+	for i, c := range header {
+		if c == model.D3MIndexFieldName {
+			d3mIndexVar := model.NewVariable(i, model.D3MIndexFieldName, model.D3MIndexFieldName,
+				model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
+				[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, nil, false)
+			dr.Variables = []*model.Variable{d3mIndexVar}
+			dr.ResType = model.ResTypeTable
+		}
+	}
+
 	return &api.RawDataset{
 		ID:       datasetID,
 		Name:     datasetName,

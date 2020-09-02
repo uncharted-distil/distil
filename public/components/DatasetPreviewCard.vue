@@ -13,7 +13,10 @@
     <div class="card-body">
       <div class="row align-items-center justify-content-center">
         <div class="col-6">
-          <div><b>Features:</b> {{ dataset.variables.length }}</div>
+          <div>
+            <b>Features:</b>
+            {{ filterVariablesByFeature(dataset.variables).length }}
+          </div>
           <div><b>Rows:</b> {{ dataset.numRows }}</div>
           <div><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</div>
         </div>
@@ -33,7 +36,10 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import { sortVariablesByImportance } from "../util/data";
+import {
+  sortVariablesByImportance,
+  filterVariablesByFeature,
+} from "../util/data";
 import { formatBytes } from "../util/bytes";
 import { Dataset, Variable } from "../store/dataset/index";
 
@@ -43,7 +49,7 @@ export default Vue.extend({
   name: "dataset-preview-card",
 
   props: {
-    dataset: Object as () => Dataset
+    dataset: Object as () => Dataset,
   },
 
   computed: {
@@ -52,17 +58,20 @@ export default Vue.extend({
         0,
         NUM_TOP_FEATURES
       );
-    }
+    },
   },
 
   methods: {
     formatBytes(n: number): string {
       return formatBytes(n);
     },
+    filterVariablesByFeature(variables: Variable[]): Variable[] {
+      return filterVariablesByFeature(variables);
+    },
     removeFromJoin(arg) {
       this.$emit("remove-from-join", arg);
-    }
-  }
+    },
+  },
 });
 </script>
 

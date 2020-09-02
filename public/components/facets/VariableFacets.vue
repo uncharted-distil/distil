@@ -168,17 +168,17 @@ import {
   filterVariablesByPage,
   getVariableRanking,
   getSolutionVariableRanking,
-  sortSolutionSummariesByImportance
+  sortSolutionSummariesByImportance,
 } from "../../util/data";
 import {
   Highlight,
   RowSelection,
   Variable,
-  VariableSummary
+  VariableSummary,
 } from "../../store/dataset";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
 import { ROUTE_PAGE_SUFFIX } from "../../store/route/index";
@@ -188,7 +188,7 @@ import {
   LONGITUDE_TYPE,
   isLocationType,
   isGeoLocatedType,
-  isImageType
+  isImageType,
 } from "../../util/types";
 import { actions as appActions } from "../../store/app/module";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
@@ -207,7 +207,7 @@ export default Vue.extend({
     FacetCategorical,
     FacetNumerical,
     FacetLoading,
-    FacetError
+    FacetError,
   },
 
   props: {
@@ -225,19 +225,19 @@ export default Vue.extend({
     html: [
       String as () => string,
       Object as () => any,
-      Function as () => Function
+      Function as () => Function,
     ],
     instanceName: { type: String as () => string, default: "variableFacets" },
     rowsPerPage: { type: Number as () => number, default: 10 },
     logActivity: {
       type: String as () => Activity,
-      default: Activity.DATA_PREPARATION
-    }
+      default: Activity.DATA_PREPARATION,
+    },
   },
 
   data() {
     return {
-      filter: ""
+      filter: "",
     };
   },
 
@@ -245,13 +245,13 @@ export default Vue.extend({
     currentPage: {
       set(page: number) {
         const entry = overlayRouteEntry(this.$route, {
-          [this.routePageKey()]: page
+          [this.routePageKey()]: page,
         });
         this.$router.push(entry);
       },
       get(): number {
         return getRouteFacetPage(this.routePageKey(), this.$route);
-      }
+      },
     },
 
     variables(): Variable[] {
@@ -259,7 +259,7 @@ export default Vue.extend({
     },
 
     filteredSummaries(): VariableSummary[] {
-      return this.summaries.filter(summary => {
+      return this.summaries.filter((summary) => {
         return (
           this.filter === "" ||
           summary.key.toLowerCase().includes(this.filter.toLowerCase())
@@ -309,7 +309,7 @@ export default Vue.extend({
         return {};
       }
       const ranking: Dictionary<number> = {};
-      this.variables.forEach(variable => {
+      this.variables.forEach((variable) => {
         ranking[variable.colName] = this.isResultFeatures
           ? getSolutionVariableRanking(
               variable,
@@ -322,7 +322,7 @@ export default Vue.extend({
 
     enabledTypeChanges(): string[] {
       const typeChangeStatus: string[] = [];
-      this.variables.forEach(variable => {
+      this.variables.forEach((variable) => {
         if (this.enableTypeChange && !this.isSeriesID(variable.colName)) {
           const datasetName = routeGetters.getRouteDataset(this.$store);
           typeChangeStatus.push(`${variable.datasetName}:${variable.colName}`);
@@ -344,7 +344,7 @@ export default Vue.extend({
     expandGeoAndTimeseriesFacets(): Boolean {
       // The Geocoordinates and Timeseries Facets are expanded on SELECT_TARGET_ROUTE
       return routeGetters.isPageSelectTarget(this.$store);
-    }
+    },
   },
 
   methods: {
@@ -364,14 +364,14 @@ export default Vue.extend({
         context: context,
         dataset: dataset,
         key: key,
-        value: value
+        value: value,
       });
       this.$emit("range-change", key, value);
       appActions.logUserEvent(this.$store, {
         feature: Feature.CHANGE_HIGHLIGHT,
         activity: this.logActivity,
         subActivity: SubActivity.DATA_TRANSFORMATION,
-        details: { key: key, value: value }
+        details: { key: key, value: value },
       });
     },
 
@@ -382,7 +382,7 @@ export default Vue.extend({
             context: context,
             dataset: dataset,
             key: key,
-            value: value
+            value: value,
           });
         } else {
           clearHighlight(this.$router);
@@ -391,7 +391,7 @@ export default Vue.extend({
           feature: Feature.CHANGE_HIGHLIGHT,
           activity: this.logActivity,
           subActivity: SubActivity.DATA_TRANSFORMATION,
-          details: { key: key, value: value }
+          details: { key: key, value: value },
         });
       }
       this.$emit("facet-click", context, key, value);
@@ -413,7 +413,7 @@ export default Vue.extend({
             context: this.instanceName,
             dataset: dataset,
             key: key,
-            value: value
+            value: value,
           });
         }
       }
@@ -423,13 +423,13 @@ export default Vue.extend({
     availableVariables(): string[] {
       // NOTE: used externally, not internally by the component
       // filter by search
-      const searchFiltered = this.summaries.filter(summary => {
+      const searchFiltered = this.summaries.filter((summary) => {
         return (
           this.filter === "" ||
           summary.key.toLowerCase().includes(this.filter.toLowerCase())
         );
       });
-      return searchFiltered.map(v => v.key);
+      return searchFiltered.map((v) => v.key);
     },
 
     isSeriesID(colName: string): boolean {
@@ -437,7 +437,7 @@ export default Vue.extend({
       const targetVar = routeGetters.getTargetVariable(this.$store);
       if (targetVar && targetVar.grouping) {
         if (targetVar.grouping.subIds.length > 0) {
-          return !!targetVar.grouping.subIds.find(v => v === colName);
+          return !!targetVar.grouping.subIds.find((v) => v === colName);
         }
       }
       return false;
@@ -449,8 +449,8 @@ export default Vue.extend({
 
     isImage(type: string): boolean {
       return isImageType(type);
-    }
-  }
+    },
+  },
 });
 </script>
 

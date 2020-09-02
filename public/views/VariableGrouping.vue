@@ -29,10 +29,10 @@
     <b-row class="flex-0-nav"></b-row>
 
     <b-row class="flex-shrink-0 align-items-center bg-white">
-      <b-col v-if="isTimeseries" cols="4" class=" offset-md-1">
+      <b-col v-if="isTimeseries" cols="4" class="offset-md-1">
         <h5 class="header-label">Configure Time Series</h5>
       </b-col>
-      <b-col v-if="isGeocoordinate" cols="4" class=" offset-md-1">
+      <b-col v-if="isGeocoordinate" cols="4" class="offset-md-1">
         <h5 class="header-label">Configure Geocoordinate</h5>
       </b-col>
     </b-row>
@@ -216,11 +216,11 @@ import {
   Variable,
   Grouping,
   TimeseriesGrouping,
-  GeoCoordinateGrouping
+  GeoCoordinateGrouping,
 } from "../store/dataset/index";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
@@ -239,13 +239,13 @@ import {
   isLongitudeGroupType,
   isTimeGroupType,
   isLatitudeGroupType,
-  isValueGroupType
+  isValueGroupType,
 } from "../util/types";
 import {
   filterSummariesByDataset,
   getComposedVariableKey,
   hasTimeseriesFeatures,
-  hasGeoordinateFeatures
+  hasGeoordinateFeatures,
 } from "../util/data";
 import { getFacetByType } from "../util/facets";
 import { SELECT_TARGET_ROUTE } from "../store/route/index";
@@ -260,7 +260,7 @@ export default Vue.extend({
   components: {
     FacetLoading,
     FacetTimeseries,
-    GeocoordinateFacet
+    GeocoordinateFacet,
   },
 
   data() {
@@ -276,7 +276,7 @@ export default Vue.extend({
       other: [],
       isPending: false,
       percentComplete: 100,
-      isUpdating: false
+      isUpdating: false,
     };
   },
   computed: {
@@ -306,7 +306,7 @@ export default Vue.extend({
       const def = {
         value: null,
         text: "",
-        disabled: true
+        disabled: true,
       };
       let xFilterFunction = null;
 
@@ -319,10 +319,10 @@ export default Vue.extend({
       }
 
       const suggestions = this.variables
-        .filter(v => xFilterFunction(v.colType))
-        .filter(v => !this.isIDCol(v.colName))
-        .filter(v => !this.isYCol(v.colName))
-        .map(v => {
+        .filter((v) => xFilterFunction(v.colType))
+        .filter((v) => !this.isIDCol(v.colName))
+        .filter((v) => !this.isYCol(v.colName))
+        .map((v) => {
           return { value: v.colName, text: v.colDisplayName };
         });
       return [].concat([def], suggestions);
@@ -336,7 +336,7 @@ export default Vue.extend({
       const def = {
         value: null,
         text: "",
-        disabled: true
+        disabled: true,
       };
       let yFilterFunction = null;
 
@@ -349,10 +349,10 @@ export default Vue.extend({
       }
 
       const suggestions = this.variables
-        .filter(v => yFilterFunction(v.colType))
-        .filter(v => !this.isIDCol(v.colName))
-        .filter(v => !this.isXCol(v.colName))
-        .map(v => {
+        .filter((v) => yFilterFunction(v.colType))
+        .filter((v) => !this.isIDCol(v.colName))
+        .filter((v) => !this.isXCol(v.colName))
+        .map((v) => {
           return { value: v.colName, text: v.colDisplayName };
         });
       return [].concat(def, suggestions);
@@ -369,19 +369,19 @@ export default Vue.extend({
       // Fetch the grouped features.
       const groupedFeatures = datasetGetters
         .getGroupings(this.$store)
-        .filter(group => Array.isArray(group.grouping.subIds))
-        .map(group => group.grouping.subIds)
+        .filter((group) => Array.isArray(group.grouping.subIds))
+        .map((group) => group.grouping.subIds)
         .flat();
 
       // Remove summaries of features used in a grouping.
       summaries = summaries.filter(
-        summary => !groupedFeatures.includes(summary.key)
+        (summary) => !groupedFeatures.includes(summary.key)
       );
       return summaries;
     },
     previewSummary(): VariableSummary {
       const pv = this.summaries.filter(
-        v => v.key.indexOf(this.xCol) > -1 && v.key.indexOf(this.yCol) > -1
+        (v) => v.key.indexOf(this.xCol) > -1 && v.key.indexOf(this.yCol) > -1
       )[0];
       return pv;
     },
@@ -396,7 +396,7 @@ export default Vue.extend({
       },
       set: () => {
         console.info("insufficient geocoordinate variables");
-      }
+      },
     },
     showTimeModal: {
       get(): boolean {
@@ -409,8 +409,8 @@ export default Vue.extend({
       },
       set: () => {
         console.info("insufficient timeseries variables");
-      }
-    }
+      },
+    },
   },
 
   beforeMount() {
@@ -422,7 +422,7 @@ export default Vue.extend({
       if (this.previewSummary) {
         await datasetActions.removeGrouping(this.$store, {
           dataset: this.dataset,
-          variable: this.previewSummary.key
+          variable: this.previewSummary.key,
         });
       }
     },
@@ -430,12 +430,12 @@ export default Vue.extend({
       const ID_COL_TYPES = {
         [TEXT_TYPE]: true,
         [ORDINAL_TYPE]: true,
-        [CATEGORICAL_TYPE]: true
+        [CATEGORICAL_TYPE]: true,
       };
       const suggestions = this.variables
-        .filter(v => ID_COL_TYPES[v.colType])
-        .filter(v => v.colName === idCol || !this.isIDCol(v.colName))
-        .map(v => {
+        .filter((v) => ID_COL_TYPES[v.colType])
+        .filter((v) => v.colName === idCol || !this.isIDCol(v.colName))
+        .map((v) => {
           return { value: v.colName, text: v.colDisplayName };
         });
 
@@ -446,7 +446,7 @@ export default Vue.extend({
       return [];
     },
     onIdChange(arg) {
-      const values = this.idCols.map(c => c.value).filter(v => v);
+      const values = this.idCols.map((c) => c.value).filter((v) => v);
       if (values.length === this.prevIdCols) {
         return;
       }
@@ -456,7 +456,7 @@ export default Vue.extend({
       this.onChange();
     },
     removeIdCol(value) {
-      this.idCols = this.idCols.filter(idCol => idCol.value !== value);
+      this.idCols = this.idCols.filter((idCol) => idCol.value !== value);
       this.prevIdCols--;
       if (this.isReady) {
         this.submitGrouping(false);
@@ -465,7 +465,7 @@ export default Vue.extend({
       }
     },
     isIDCol(arg): boolean {
-      return !!this.idCols.find(id => id.value === arg);
+      return !!this.idCols.find((id) => id.value === arg);
     },
     isXCol(arg): boolean {
       return arg === this.xCol;
@@ -495,7 +495,7 @@ export default Vue.extend({
       await this.clearGrouping();
       this.isUpdating = true;
       // Create a list of id values, filtering out the empty entry
-      const ids = this.idCols.map(c => c.value).filter(v => v);
+      const ids = this.idCols.map((c) => c.value).filter((v) => v);
 
       // generate the grouping structure that describes how the vars will be grouped
       const idCol = this.isTimeseries ? getComposedVariableKey(ids) : null;
@@ -507,7 +507,7 @@ export default Vue.extend({
         dataset: this.dataset,
         idCol: idCol,
         subIds: ids,
-        hidden: hiddenCols
+        hidden: hiddenCols,
       };
 
       if (this.isTimeseries) {
@@ -523,13 +523,13 @@ export default Vue.extend({
 
       await datasetActions.setGrouping(this.$store, {
         dataset: this.dataset,
-        grouping: grouping
+        grouping: grouping,
       });
 
       // If this dataset contains multiple timeseries, then we need to request clustering be run on it
       if (this.isTimeseries && ids.length > 0) {
         await datasetActions.fetchClusters(this.$store, {
-          dataset: this.dataset
+          dataset: this.dataset,
         });
       }
 
@@ -545,8 +545,8 @@ export default Vue.extend({
     },
     gotoTargetSelection() {
       this.$router.go(-1);
-    }
-  }
+    },
+  },
 });
 </script>
 

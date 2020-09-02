@@ -30,7 +30,7 @@ export default Vue.extend({
 
   components: {
     FilterBadge,
-    JoinDataPreviewTable
+    JoinDataPreviewTable,
   },
 
   props: {
@@ -38,14 +38,14 @@ export default Vue.extend({
     fields: Object as () => Dictionary<TableColumn>,
     numRows: Number as () => number,
     hasData: Boolean as () => boolean,
-    instanceName: String as () => string
+    instanceName: String as () => string,
   },
 
   computed: {
     spinnerHTML(): string {
       return spinnerHTML();
-    }
-  }
+    },
+  },
 });
 </script>
 

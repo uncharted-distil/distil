@@ -6,54 +6,35 @@
       :variables="variables"
     >
       <p class="font-weight-bold mr-auto">Samples Predicted</p>
-      <layer-selection
-        v-if="isRemoteSensing"
-        class="layer-button"
-      ></layer-selection>
+      <layer-selection v-if="isRemoteSensing" class="layer-button" />
     </view-type-toggle>
 
     <p class="predictions-data-slot-summary" v-if="hasResults">
-      <small v-html="title"></small>
+      <data-size
+        :currentSize="numItems"
+        :total="numRows"
+        @updated="$refs.size.hide()"
+        @submit="onDataSizeSubmit"
+      />
+      <strong class="matching-color">matching</strong> samples of
+      {{ numRows }} processed by model<template v-if="numIncludedRows > 0"
+        >, {{ numIncludedRows }}
+        <strong class="selected-color">selected</strong>
+      </template>
     </p>
 
-    <div
-      class="predictions-data-slot-container"
-      v-bind:class="{ pending: !hasData }"
-    >
-      <div class="predictions-data-no-results" v-if="isPending">
-        <div v-html="spinnerHTML"></div>
-      </div>
-      <div class="predictions-data-no-results" v-if="hasNoResults">
-        No results available
+    <div class="predictions-data-slot-container" :class="{ pending: !hasData }">
+      <div class="predictions-data-no-results" v-if="isPending || hasNoResults">
+        <div v-if="isPending" v-html="spinnerHTML"></div>
+        <p v-if="hasNoResults">No results available</p>
       </div>
 
-      <template>
-        <predictions-data-table
-          v-if="viewType === TABLE_VIEW"
-          :data-fields="dataFields"
-          :data-items="dataItems"
-          :instance-name="instanceName"
-        ></predictions-data-table>
-        <results-timeseries-view
-          v-if="viewType === TIMESERIES_VIEW"
-          :fields="dataFields"
-          :items="dataItems"
-          :instance-name="instanceName"
-        ></results-timeseries-view>
-        <results-geo-plot
-          v-if="viewType === GEO_VIEW"
-          :data-fields="dataFields"
-          :data-items="dataItems"
-          :instance-name="instanceName"
-        ></results-geo-plot>
-        <image-mosaic
-          v-if="viewType === IMAGE_VIEW"
-          :included-active="includedActive"
-          :instance-name="instanceName"
-          :data-fields="dataFields"
-          :data-items="dataItems"
-        ></image-mosaic>
-      </template>
+      <component
+        :is="viewComponent"
+        :data-fields="dataFields"
+        :data-items="dataItems"
+        :instance-name="instanceName"
+      />
     </div>
   </div>
 </template>
@@ -61,25 +42,30 @@
 <script lang="ts">
 import Vue from "vue";
 import _ from "lodash";
+import DataSize from "../components/buttons/DataSize";
 import PredictionsDataTable from "./PredictionsDataTable";
 import ImageMosaic from "./ImageMosaic";
 import ResultsTimeseriesView from "./ResultsTimeseriesView";
-import ResultsGeoPlot from "./ResultsGeoPlot";
+import GeoPlot from "./GeoPlot";
 import { spinnerHTML } from "../util/spinner";
 import {
+  Highlight,
   TableRow,
   TableColumn,
   Variable,
-  RowSelection
+  RowSelection,
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getters as predictionsGetters } from "../store/predictions/module";
+import {
+  actions as predictionsActions,
+  getters as predictionsGetters,
+} from "../store/predictions/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import {
   Solution,
   SOLUTION_ERRORED,
-  PREDICT_ERRORED
+  PREDICT_ERRORED,
 } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
 import { updateTableRowSelection, getNumIncludedRows } from "../util/row";
@@ -95,11 +81,12 @@ export default Vue.extend({
   name: "predictions-data-slot",
 
   components: {
+    DataSize,
+    GeoPlot,
+    ImageMosaic,
     PredictionsDataTable,
     ResultsTimeseriesView,
-    ResultsGeoPlot,
-    ImageMosaic,
-    ViewTypeToggle
+    ViewTypeToggle,
   },
 
   data() {
@@ -110,7 +97,7 @@ export default Vue.extend({
       IMAGE_VIEW: IMAGE_VIEW,
       GRAPH_VIEW: GRAPH_VIEW,
       GEO_VIEW: GEO_VIEW,
-      TIMESERIES_VIEW: TIMESERIES_VIEW
+      TIMESERIES_VIEW: TIMESERIES_VIEW,
     };
   },
 
@@ -119,6 +106,18 @@ export default Vue.extend({
   },
 
   computed: {
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
+
+    highlight(): Highlight {
+      return routeGetters.getDecodedHighlight(this.$store);
+    },
+
+    produceRequestId(): string {
+      return routeGetters.getRouteProduceRequestId(this.$store);
+    },
+
     dataItems(): TableRow[] {
       return predictionsGetters.getIncludedPredictionTableDataItems(
         this.$store
@@ -184,26 +183,42 @@ export default Vue.extend({
       return spinnerHTML();
     },
 
-    title(): string {
-      const included = getNumIncludedRows(this.rowSelection);
-      if (included > 0) {
-        return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} processed by model, ${included} <b class="selected-color">selected</b>`;
-      } else {
-        return `${this.numItems} <b class="matching-color">matching</b> samples of ${this.numRows} processed by model`;
-      }
+    numIncludedRows(): number {
+      return getNumIncludedRows(this.rowSelection);
     },
 
     isRemoteSensing(): boolean {
       return routeGetters.isRemoteSensing(this.$store);
-    }
-  }
+    },
+
+    /* Select which component to display the data. */
+    viewComponent() {
+      if (this.viewType === GEO_VIEW) return "GeoPlot";
+      if (this.viewType === IMAGE_VIEW) return "ImageMosaic";
+      if (this.viewType === TABLE_VIEW) return "PredictionsDataTable";
+      if (this.viewType === TIMESERIES_VIEW) return "ResultsTimeseriesView";
+    },
+  },
+
+  methods: {
+    /* When the user request to fetch a different size of data. */
+    onDataSizeSubmit(dataSize: number) {
+      predictionsActions.fetchPredictionTableData(this.$store, {
+        dataset: this.dataset,
+        highlight: this.highlight,
+        produceRequestId: this.produceRequestId,
+        size: dataSize,
+      });
+    },
+  },
 });
 </script>
 
-<style>
+<style scoped>
 .predictions-data-slot-summary {
-  margin: 10px, 0, 0, 0;
   flex-shrink: 0;
+  font-size: 90%;
+  margin: 0;
 }
 
 .predictions-data-slot {
@@ -247,6 +262,7 @@ export default Vue.extend({
 .view-toggle >>> .form-group {
   margin-bottom: 0px;
 }
+
 .view-toggle {
   flex-shrink: 0;
 }

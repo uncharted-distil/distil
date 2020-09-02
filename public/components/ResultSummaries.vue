@@ -1,20 +1,25 @@
 <template>
   <div class="result-panel">
-    <p class="nav-link font-weight-bold flex-shrink-0">Ground Truth</p>
+    <h6 class="sidebar-title">Ground Truth</h6>
     <result-target-variable class="result-target-variable" />
 
-    <p class="nav-link font-weight-bold flex-shrink-0">Results</p>
-    <div class="result-summaries">
-      <div v-if="showResiduals && !isTimeseries" class="result-summaries-error">
-        <error-threshold-slider />
-      </div>
+    <!-- Searchs results -->
+    <h6 class="sidebar-title">Results</h6>
+    <section class="result-options">
+      <error-threshold-slider v-if="showResiduals && !isTimeseries" />
+    </section>
+    <section class="result-summaries">
       <result-facets
         :showResiduals="showResiduals"
         :single-solution="isSingleSolution"
       />
-    </div>
+    </section>
 
-    <template v-if="isActiveSolutionCompleted">
+    <!-- Action buttons -->
+    <aside
+      class="d-flex flex-row flex-shrink-0 justify-content-end"
+      v-if="isActiveSolutionCompleted"
+    >
       <!-- Modal boxes to apply new data to models. -->
       <forecast-horizon
         v-if="isTimeseries"
@@ -29,40 +34,37 @@
         :target="target"
         :target-type="targetType"
       />
-
-      <div class="d-flex flex-row flex-shrink-0 justify-content-end">
-        <template v-if="isSingleSolution || isActiveSolutionSaved">
-          <b-button
-            v-if="isTimeseries"
-            variant="primary"
-            class="apply-button"
-            @click="$bvModal.show('forecast-horizon-modal')"
-            >Forecast
-          </b-button>
-          <b-button
-            v-else
-            variant="primary"
-            class="apply-button"
-            @click="$bvModal.show('predictions-data-upload-modal')"
-            >Apply Model
-          </b-button>
-        </template>
-        <template v-else>
-          <save-model
-            :solutionId="solutionId"
-            :fittedSolutionId="fittedSolutionId"
-          ></save-model>
-          <b-button
-            variant="success"
-            class="save-button"
-            @click="$bvModal.show('save-model-modal')"
-          >
-            <i class="fa fa-floppy-o"></i>
-            Save Model
-          </b-button>
-        </template>
-      </div>
-    </template>
+      <template v-if="isSingleSolution || isActiveSolutionSaved">
+        <b-button
+          v-if="isTimeseries"
+          variant="primary"
+          class="apply-button"
+          @click="$bvModal.show('forecast-horizon-modal')"
+          >Forecast
+        </b-button>
+        <b-button
+          v-else
+          variant="primary"
+          class="apply-button"
+          @click="$bvModal.show('predictions-data-upload-modal')"
+          >Apply Model
+        </b-button>
+      </template>
+      <template v-else>
+        <save-model
+          :solutionId="solutionId"
+          :fittedSolutionId="fittedSolutionId"
+        />
+        <b-button
+          variant="success"
+          class="save-button"
+          @click="$bvModal.show('save-model-modal')"
+        >
+          <i class="fa fa-floppy-o"></i>
+          Save Model
+        </b-button>
+      </template>
+    </aside>
   </div>
 </template>
 
@@ -80,13 +82,13 @@ import { getters as requestGetters } from "../store/requests/module";
 import { getters as resultGetters } from "../store/results/module";
 import {
   actions as appActions,
-  getters as appGetters
+  getters as appGetters,
 } from "../store/app/module";
 import store from "../store/store";
 import {
   EXPORT_SUCCESS_ROUTE,
   ROOT_ROUTE,
-  PREDICTION_ROUTE
+  PREDICTION_ROUTE,
 } from "../store/route/index";
 import { Variable, TaskTypes } from "../store/dataset/index";
 import vueSlider from "vue-slider-component";
@@ -101,13 +103,13 @@ export default Vue.extend({
   name: "result-summaries",
 
   components: {
-    ResultFacets,
-    PredictionsDataUploader,
     ErrorThresholdSlider,
     ForecastHorizon,
-    vueSlider,
+    PredictionsDataUploader,
+    ResultFacets,
+    ResultTargetVariable,
     SaveModel,
-    ResultTargetVariable
+    vueSlider,
   },
 
   data() {
@@ -115,12 +117,12 @@ export default Vue.extend({
       formatter(arg) {
         return arg ? arg.toFixed(2) : "";
       },
-      symmetricSlider: true
+      symmetricSlider: true,
     };
   },
 
   methods: {
-    isFittedSolutionIdSavedAsModel
+    isFittedSolutionIdSavedAsModel,
   },
 
   computed: {
@@ -135,7 +137,7 @@ export default Vue.extend({
     targetType(): string {
       const targetName = this.target;
       const variables = this.variables;
-      return variables.find(v => v.colName === targetName)?.colType;
+      return variables.find((v) => v.colName === targetName)?.colType;
     },
 
     variables(): Variable[] {
@@ -150,7 +152,7 @@ export default Vue.extend({
       return (
         this.taskArgs &&
         !!this.taskArgs.find(
-          t => t === TaskTypes.REGRESSION || t === TaskTypes.FORECASTING
+          (t) => t === TaskTypes.REGRESSION || t === TaskTypes.FORECASTING
         )
       );
     },
@@ -178,7 +180,6 @@ export default Vue.extend({
     /**
      * Check that the active solution is completed.
      * This is used to display possible actions on the selected model.
-     * @returns {Boolean}
      */
     isActiveSolutionCompleted(): boolean {
       return !!(
@@ -190,7 +191,6 @@ export default Vue.extend({
     /**
      * Check that the active solution is saved as a model.
      * This is used to display possible actions on the selected model.
-     * @returns {Boolean}
      */
     isActiveSolutionSaved(): boolean {
       return this.isFittedSolutionIdSavedAsModel(this.fittedSolutionId);
@@ -206,12 +206,22 @@ export default Vue.extend({
 
     isTimeseries(): boolean {
       return routeGetters.isTimeseries(this.$store);
-    }
-  }
+    },
+  },
 });
 </script>
 
 <style>
+.result-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.result-options {
+  flex-shrink: 0;
+}
+
 .result-summaries {
   overflow-x: hidden;
   overflow-y: auto;
@@ -221,15 +231,8 @@ export default Vue.extend({
   overflow: visible;
 }
 
-.result-summaries-error {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  margin-bottom: 30px;
-}
-
 .facets-facet-vertical.select-highlight .facet-bar-selected {
-  box-shadow: inset 0 0 0 1000px #007bff;
+  box-shadow: inset 0 0 0 1000px var(--blue);
 }
 
 .check-message-container {
@@ -272,12 +275,6 @@ export default Vue.extend({
   margin-top: 15px;
   margin-bottom: 0px;
   margin-right: 8px;
-}
-
-.result-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
 }
 
 .result-target-variable .variable-facets-item {

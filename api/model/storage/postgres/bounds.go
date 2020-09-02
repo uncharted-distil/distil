@@ -246,7 +246,7 @@ func (f *BoundsField) parseExtrema(rows pgx.Rows) (*api.Extrema, *api.Extrema, e
 
 func (f *BoundsField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, numBuckets int) (*api.Histogram, error) {
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {
 		return nil, err
 	}

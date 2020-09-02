@@ -11,7 +11,7 @@ export const datasetModule: Module<DatasetState, DistilState> = {
   getters: moduleGetters,
   actions: moduleActions,
   mutations: moduleMutations,
-  state: state
+  state: state,
 };
 
 const { commit, read, dispatch } = getStoreAccessors<DatasetState, DistilState>(
@@ -66,7 +66,7 @@ export const getters = {
   getExcludedTableDataFields: read(moduleGetters.getExcludedTableDataFields),
 
   // Remote sensing image band combinatinos
-  getMultiBandCombinations: read(moduleGetters.getMultiBandCombinations)
+  getMultiBandCombinations: read(moduleGetters.getMultiBandCombinations),
 };
 
 // Typed actions
@@ -128,7 +128,9 @@ export const actions = {
   // task info
   fetchTask: dispatch(moduleActions.fetchTask),
   // multiband image band combinations
-  fetchMultiBandCombinations: dispatch(moduleActions.fetchMultiBandCombinations)
+  fetchMultiBandCombinations: dispatch(
+    moduleActions.fetchMultiBandCombinations
+  ),
 };
 
 // Typed mutations
@@ -163,5 +165,5 @@ export const mutations = {
   ),
   setIncludedTableData: commit(moduleMutations.setIncludedTableData),
   setExcludedTableData: commit(moduleMutations.setExcludedTableData),
-  updateBands: commit(moduleMutations.updateBands)
+  updateBands: commit(moduleMutations.updateBands),
 };

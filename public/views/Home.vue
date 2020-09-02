@@ -61,12 +61,12 @@ export default Vue.extend({
     RunningSolutions,
     SearchBar,
     FileUploader,
-    FileUploaderStatus
+    FileUploaderStatus,
   },
   data() {
     return {
       uploadData: {},
-      uploadStatus: ""
+      uploadStatus: "",
     };
   },
 
@@ -75,7 +75,7 @@ export default Vue.extend({
       return `version: ${appGetters.getVersionNumber(
         this.$store
       )} at ${appGetters.getVersionTimestamp(this.$store)}`;
-    }
+    },
   },
 
   beforeMount() {
@@ -88,8 +88,8 @@ export default Vue.extend({
     },
     onUploadFinish(err) {
       this.uploadStatus = err ? "error" : "success";
-    }
-  }
+    },
+  },
 });
 </script>
 

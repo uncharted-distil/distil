@@ -2,7 +2,7 @@ import {
   VariableSummary,
   TableData,
   TableRow,
-  TableColumn
+  TableColumn,
 } from "../dataset/index";
 import { PredictionState } from "./index";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
@@ -65,5 +65,5 @@ export const getters = {
 
   getPredictionForecasts(state: PredictionState): Dictionary<Forecast> {
     return state.forecasts;
-  }
+  },
 };

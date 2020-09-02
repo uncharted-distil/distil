@@ -74,11 +74,11 @@ import {
   Dataset,
   TableData,
   TableColumn,
-  TableRow
+  TableRow,
 } from "../store/dataset/index";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import { getTableDataItems, getTableDataFields } from "../util/data";
 import { SELECT_TRAINING_ROUTE } from "../store/route";
@@ -89,7 +89,7 @@ export default Vue.extend({
 
   components: {
     JoinDatasetsPreview,
-    ErrorModal
+    ErrorModal,
   },
 
   props: {
@@ -97,7 +97,7 @@ export default Vue.extend({
     datasetB: String as () => string,
     datasetAColumn: Object as () => TableColumn,
     datasetBColumn: Object as () => TableColumn,
-    joinAccuracy: Number as () => number
+    joinAccuracy: Number as () => number,
   },
 
   data() {
@@ -107,7 +107,7 @@ export default Vue.extend({
       showJoinSuccess: false,
       showJoinFailure: false,
       joinErrorMessage: null,
-      previewTableData: null
+      previewTableData: null,
     };
   },
 
@@ -164,7 +164,7 @@ export default Vue.extend({
       const b = this.datasetBColumn ? this.datasetBColumn.key : "";
       // Note: It looks like joined column name is set to same as left column (a) name
       return a;
-    }
+    },
   },
 
   methods: {
@@ -179,11 +179,11 @@ export default Vue.extend({
       // flag as pending
       this.pending = true;
 
-      const a = _.find(this.datasets, d => {
+      const a = _.find(this.datasets, (d) => {
         return d.id === this.datasetA;
       });
 
-      const b = _.find(this.datasets, d => {
+      const b = _.find(this.datasets, (d) => {
         return d.id === this.datasetB;
       });
 
@@ -193,14 +193,14 @@ export default Vue.extend({
           datasetA: a,
           datasetB: b,
           joinAccuracy: this.joinAccuracy,
-          joinSuggestionIndex: 0
+          joinSuggestionIndex: 0,
         })
-        .then(tableData => {
+        .then((tableData) => {
           this.pending = false;
           this.showJoinSuccess = true;
           this.previewTableData = tableData;
         })
-        .catch(err => {
+        .catch((err) => {
           // display error modal
           this.pending = false;
           this.showJoinFailure = true;
@@ -211,7 +211,7 @@ export default Vue.extend({
       const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
         dataset: datasetID,
         target: this.target,
-        task: routeGetters.getRouteTask(this.$store)
+        task: routeGetters.getRouteTask(this.$store),
       });
       this.$router.push(entry);
       this.addRecentDataset(datasetID);
@@ -223,8 +223,8 @@ export default Vue.extend({
       // trigger window resize event to notify modal content dimension has changed
       // (fixed-header-table component will listen to this event to resize itself)
       window.dispatchEvent(new Event("resize"));
-    }
-  }
+    },
+  },
 });
 </script>
 

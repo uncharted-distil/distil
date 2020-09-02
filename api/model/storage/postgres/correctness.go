@@ -66,7 +66,7 @@ func (s *Storage) fetchHistogram(dataset string, storageName string, variable *m
 	storageNameResult := s.getResultTable(storageName)
 
 	// get filter where / params
-	wheres, params, err := s.buildResultQueryFilters(dataset, storageName, resultURI, filterParams)
+	wheres, params, err := s.buildResultQueryFilters(dataset, storageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {
 		return nil, err
 	}

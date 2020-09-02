@@ -15,7 +15,7 @@ export function createIcon(
   props?: IconBaseProps
 ) {
   const iconBase = new IconBase({
-    propsData: props
+    propsData: props,
   });
   const icon = new IconComponentConstructor();
   iconBase.$slots.default = [iconBase.$createElement("icon-placeholder")];

@@ -20,5 +20,5 @@ export interface ModelState {
 
 export const state: ModelState = {
   models: {},
-  filteredModelIds: []
+  filteredModelIds: [],
 };

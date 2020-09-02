@@ -11,7 +11,7 @@ import { getters as modelGetters } from "../store/model/module";
 function getModelByFittedSolutionId(fittedSolutionId: string | null): Model {
   return modelGetters
     .getModels(store)
-    .find(model => model.fittedSolutionId === fittedSolutionId);
+    .find((model) => model.fittedSolutionId === fittedSolutionId);
 }
 
 /**

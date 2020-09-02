@@ -39,5 +39,5 @@ export const mutations = {
 
   closeStatusPanel(state: AppState) {
     Vue.set(state.statusPanelState, "isOpen", false);
-  }
+  },
 };

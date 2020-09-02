@@ -199,3 +199,14 @@ html {
   line-height: unset; /* Reset to page rules. */
   margin: 0;
 }
+
+/* Sidebar */
+.sidebar-title {
+  color: var(--color-text-base);
+  border-bottom: 1px solid var(--gray-400);
+  font-size: 1em; /* Reset to page rules. */
+  font-weight: 600;
+  line-height: unset; /* Reset to page rules. */
+  margin: 1em 0;
+  padding-bottom: 0.25rem;
+}

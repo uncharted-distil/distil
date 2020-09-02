@@ -62,7 +62,7 @@ import {
   hasBaseline,
   viewMoreData,
   viewLessData,
-  facetTypeChangeState
+  facetTypeChangeState,
 } from "../../util/facets";
 import _ from "lodash";
 import { getVariableImportance } from "../../util/data";
@@ -72,7 +72,7 @@ export default Vue.extend({
 
   components: {
     TypeChangeMenu,
-    ImportanceBars
+    ImportanceBars,
   },
 
   directives: {
@@ -81,7 +81,7 @@ export default Vue.extend({
       if (binding.value) {
         el.appendChild(binding.value);
       }
-    }
+    },
   },
 
   props: {
@@ -90,20 +90,20 @@ export default Vue.extend({
     html: [
       String as () => string,
       Object as () => any,
-      Function as () => Function
+      Function as () => Function,
     ],
     expandCollapse: Function as () => Function,
     highlight: Object as () => Highlight,
     enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
-    importance: Number as () => number
+    importance: Number as () => number,
   },
 
   data() {
     return {
       baseNumToDisplay: getCategoricalChunkSize(this.summary.type),
-      moreNumToDisplay: 0
+      moreNumToDisplay: 0,
     };
   },
 
@@ -119,7 +119,7 @@ export default Vue.extend({
       }
       return {
         label: summary.label.toUpperCase(),
-        values
+        values,
       };
     },
     facetEnableTypeChanges(): boolean {
@@ -184,7 +184,7 @@ export default Vue.extend({
     },
     hasLess(): boolean {
       return this.moreNumToDisplay > 0;
-    }
+    },
   },
 
   methods: {
@@ -192,7 +192,7 @@ export default Vue.extend({
       return {
         ratio: bucket.count / this.max,
         label: bucket.key,
-        value: bucket.count
+        value: bucket.count,
       };
     },
     viewMore() {
@@ -236,7 +236,7 @@ export default Vue.extend({
             const oldKey = Object.keys(this.selection)[0];
             const incomingKeys = Object.keys(facet.selection);
             const newKey = incomingKeys.filter(
-              iKey => oldKey.indexOf(iKey) < 0
+              (iKey) => oldKey.indexOf(iKey) < 0
             )[0];
             value = this.facetData.values[newKey].label;
           } else {
@@ -263,14 +263,14 @@ export default Vue.extend({
       if (this.html) {
         return _.isFunction(this.html)
           ? this.html({
-              colName: this.summary.key
+              colName: this.summary.key,
             })
           : this.html;
       }
       return null;
     },
-    getGroupIcon
-  }
+    getGroupIcon,
+  },
 });
 </script>
 

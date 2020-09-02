@@ -2,22 +2,20 @@ import axios from "axios";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import { DistilState } from "../store";
-import { EXCLUDE_FILTER } from "../../util/filters";
-import { getSolutionById } from "../../util/solutions";
+import { FilterParams } from "../../util/filters";
 import { Variable, Highlight, SummaryMode } from "../dataset/index";
 import { mutations } from "./module";
 import { PredictionState } from "./index";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import {
   fetchPredictionResultSummary,
-  createPendingSummary,
   createErrorSummary,
   createEmptyTableData,
-  fetchSummaryExemplars
+  fetchSummaryExemplars,
 } from "../../util/data";
 import {
   getters as predictionGetters,
-  mutations as predictionMutations
+  mutations as predictionMutations,
 } from "../predictions/module";
 import { getPredictionsById } from "../../util/predictions";
 
@@ -63,18 +61,18 @@ export const actions = {
 
     context.state.trainingSummaries
       .filter(
-        summary =>
+        (summary) =>
           !args.training.find(
-            variable =>
+            (variable) =>
               variable.colName === summary.key &&
               args.dataset === summary.dataset
           )
       )
-      .forEach(summary =>
+      .forEach((summary) =>
         predictionMutations.removeTrainingSummary(context, summary)
       );
 
-    args.training.forEach(variable => {
+    args.training.forEach((variable) => {
       const key = variable.colName;
       const label = variable.colDisplayName;
       const description = variable.colDescription;
@@ -88,7 +86,7 @@ export const actions = {
           highlight: args.highlight,
           varMode: args.varModes.has(variable.colName)
             ? args.varModes.get(variable.colName)
-            : SummaryMode.Default
+            : SummaryMode.Default,
         })
       );
     });
@@ -125,7 +123,7 @@ export const actions = {
     let filterParams = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
     try {
@@ -157,14 +155,20 @@ export const actions = {
       dataset: string;
       highlight: Highlight;
       produceRequestId: string;
+      size?: number;
     }
   ) {
-    let filterParams = {
+    let filterParams: FilterParams = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
+
+    // Add the size limit to results if provided.
+    if (_.isInteger(args.size)) {
+      filterParams.size = args.size;
+    }
 
     try {
       const response = await axios.post(
@@ -188,14 +192,11 @@ export const actions = {
       dataset: string;
       highlight: Highlight;
       produceRequestId: string;
+      size?: number;
     }
   ) {
     return Promise.all([
-      actions.fetchIncludedPredictionTableData(context, {
-        dataset: args.dataset,
-        highlight: args.highlight,
-        produceRequestId: args.produceRequestId
-      })
+      actions.fetchIncludedPredictionTableData(context, args),
     ]);
   },
 
@@ -223,7 +224,7 @@ export const actions = {
     let filterParams = {
       highlight: null,
       variables: [],
-      filters: []
+      filters: [],
     };
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
 
@@ -252,14 +253,14 @@ export const actions = {
     }
   ) {
     const predictions = context.rootState.requestsModule.predictions.filter(
-      p => p.fittedSolutionId === args.fittedSolutionId
+      (p) => p.fittedSolutionId === args.fittedSolutionId
     );
     return Promise.all(
-      predictions.map(p =>
+      predictions.map((p) =>
         actions.fetchPredictionSummary(context, {
           highlight: args.highlight,
           varMode: SummaryMode.Default,
-          produceRequestId: p.requestId
+          produceRequestId: p.requestId,
         })
       )
     );
@@ -326,17 +327,17 @@ export const actions = {
         predictionsId: args.predictionsId,
         id: args.timeseriesId,
         timeseries: response.data.timeseries,
-        isDateTime: response.data.isDateTime
+        isDateTime: response.data.isDateTime,
       });
       mutations.updatePredictedForecast(context, {
         predictionsId: args.predictionsId,
         id: args.timeseriesId,
         forecast: response.data.forecast,
         forecastTestRange: response.data.forecastRange,
-        isDateTime: response.data.isDateTime
+        isDateTime: response.data.isDateTime,
       });
     } catch (error) {
       console.error(error);
     }
-  }
+  },
 };

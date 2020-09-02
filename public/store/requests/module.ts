@@ -10,7 +10,7 @@ export const requestsModule: Module<RequestState, DistilState> = {
   state: state,
   getters: moduleGetters,
   actions: moduleActions,
-  mutations: moduleMutations
+  mutations: moduleMutations,
 };
 
 const { commit, read, dispatch } = getStoreAccessors<RequestState, DistilState>(
@@ -40,7 +40,7 @@ export const getters = {
   getActivePredictions: read(moduleGetters.getActivePredictions),
   getActivePredictionTrainingVariables: read(
     moduleGetters.getActivePredictionTrainingVariables
-  )
+  ),
 };
 
 export const actions = {
@@ -54,7 +54,7 @@ export const actions = {
   createPredictRequest: dispatch(moduleActions.createPredictRequest),
   stopPredictRequest: dispatch(moduleActions.stopPredictRequest),
   fetchPredictions: dispatch(moduleActions.fetchPredictions),
-  fetchPrediction: dispatch(moduleActions.fetchPrediction)
+  fetchPrediction: dispatch(moduleActions.fetchPrediction),
 };
 
 export const mutations = {
@@ -63,5 +63,5 @@ export const mutations = {
   clearSolutionRequests: commit(moduleMutations.clearSolutionRequests),
   clearSolutions: commit(moduleMutations.clearSolutions),
   updatePredictions: commit(moduleMutations.updatePredictions),
-  clearPredictions: commit(moduleMutations.clearPredictions)
+  clearPredictions: commit(moduleMutations.clearPredictions),
 };

@@ -157,17 +157,17 @@ import {
   DatasetPendingRequestStatus,
   JoinSuggestionPendingRequest,
   JoinDatasetImportPendingRequest,
-  JOIN_DATASET_MAX_SIZE
+  JOIN_DATASET_MAX_SIZE,
 } from "../store/dataset/index";
 import JoinDatasetsPreview from "../components/JoinDatasetsPreview";
 import ErrorModal from "../components/ErrorModal";
 import {
   actions as datasetActions,
-  getters as datasetGetters
+  getters as datasetGetters,
 } from "../store/dataset/module";
 import {
   actions as appActions,
-  getters as appGetters
+  getters as appGetters,
 } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
@@ -225,12 +225,12 @@ export default Vue.extend({
       datasetAColumn: "",
       datasetBColumn: "",
       searchQuery: "",
-      searchResultIndex: null
+      searchResultIndex: null,
     };
   },
   components: {
     JoinDatasetsPreview,
-    ErrorModal
+    ErrorModal,
   },
   computed: {
     dataset(): string {
@@ -246,7 +246,7 @@ export default Vue.extend({
       const request = datasetGetters
         .getPendingRequests(this.$store)
         .find(
-          request =>
+          (request) =>
             request.dataset === this.dataset &&
             request.type === DatasetPendingRequestType.JOIN_SUGGESTION
         );
@@ -256,7 +256,7 @@ export default Vue.extend({
       const joinSuggestions = (
         this.joinSuggestionRequestData &&
         this.joinSuggestionRequestData.suggestions
-      ).filter(s => s.numRows <= 100000);
+      ).filter((s) => s.numRows <= 100000);
       return joinSuggestions || [];
     },
     joinedColumn(): string {
@@ -269,7 +269,7 @@ export default Vue.extend({
       const filteredItems =
         this.filterString.length > 0 && this.suggestionDatasets.length > 0
           ? this.suggestionDatasets.filter(
-              item =>
+              (item) =>
                 item.dataset.name
                   .toLowerCase()
                   .indexOf(this.filterString.toLowerCase()) > -1 ||
@@ -285,12 +285,12 @@ export default Vue.extend({
       const request = datasetGetters
         .getPendingRequests(this.$store)
         .find(
-          request =>
+          (request) =>
             request.type === DatasetPendingRequestType.JOIN_DATASET_IMPORT
         );
       const isInSuggestionList = Boolean(
         this.joinSuggestions.find(
-          item => item.id === (request && request.dataset)
+          (item) => item.id === (request && request.dataset)
         )
       );
       return isInSuggestionList
@@ -305,7 +305,7 @@ export default Vue.extend({
     },
     importedItem(): JoinSuggestionDatasetItem {
       return this.suggestionDatasets.find(
-        item => item.dataset.id === this.joinDatasetImportRequestData.dataset
+        (item) => item.dataset.id === this.joinDatasetImportRequestData.dataset
       );
     },
     importedDataset(): Dataset {
@@ -326,14 +326,14 @@ export default Vue.extend({
       );
     },
     selectedItem(): JoinSuggestionDatasetItem {
-      return this.suggestionDatasets.find(item => item.selected);
+      return this.suggestionDatasets.find((item) => item.selected);
     },
     selectedSuggestion(): JoinSuggestionItem {
       const dataset = this.suggestionDatasets.find(
-        item => !!item.suggestionItems.find(js => js.selected)
+        (item) => !!item.suggestionItems.find((js) => js.selected)
       );
       if (dataset) {
-        return dataset.suggestionItems.find(js => js.selected);
+        return dataset.suggestionItems.find((js) => js.selected);
       }
       return undefined;
     },
@@ -350,7 +350,7 @@ export default Vue.extend({
     },
     spinnerHTML(): string {
       return circleSpinnerHTML();
-    }
+    },
   },
   methods: {
     addRecentDataset(dataset: string) {
@@ -364,7 +364,7 @@ export default Vue.extend({
       const items = this.joinSuggestions || [];
       // resolve join availablity of the importing dataset
       const isImporting = this.isImporting || this.isImportRequestResolved;
-      this.suggestionDatasets = items.map(suggestion => {
+      this.suggestionDatasets = items.map((suggestion) => {
         const isImportingDataset =
           suggestion.id ===
           (this.joinDatasetImportRequestData &&
@@ -373,10 +373,10 @@ export default Vue.extend({
           ? this.isImportRequestResolved
           : !isDatamartProvenance(suggestion.provenance);
         const selected = isImporting && isImportingDataset;
-        const joinSuggestions = suggestion.joinSuggestion.map(js => {
+        const joinSuggestions = suggestion.joinSuggestion.map((js) => {
           return {
             joinSuggestion: js,
-            selected: false
+            selected: false,
           };
         });
         return {
@@ -392,14 +392,14 @@ export default Vue.extend({
               : ""),
           isAvailable,
           selected,
-          suggestionItems: joinSuggestions
+          suggestionItems: joinSuggestions,
         };
       });
     },
     refineSuggestedItems() {
       datasetActions.fetchJoinSuggestions(this.$store, {
         dataset: this.dataset,
-        searchQuery: this.searchQuery
+        searchQuery: this.searchQuery,
       });
     },
     selectItem(item) {
@@ -424,7 +424,7 @@ export default Vue.extend({
     },
     join() {
       const selected = this.selectedItem;
-      const currentDataset = _.find(this.datasets, d => {
+      const currentDataset = _.find(this.datasets, (d) => {
         return d.id === this.dataset;
       });
       this.previewJoin(
@@ -439,13 +439,13 @@ export default Vue.extend({
         datasetA,
         datasetB,
         joinAccuracy: 1,
-        joinSuggestionIndex: joinSuggestionIndex
+        joinSuggestionIndex: joinSuggestionIndex,
       };
 
       // dispatch action that triggers request send to server
       datasetActions
         .joinDatasetsPreview(this.$store, datasetJoinInfo)
-        .then(tableData => {
+        .then((tableData) => {
           // display join preview modal
           this.previewTableData = tableData;
           this.isAttemptingJoin = false;
@@ -454,7 +454,7 @@ export default Vue.extend({
           this.datasetB = datasetB;
           this.searchResultIndex = joinSuggestionIndex;
         })
-        .catch(err => {
+        .catch((err) => {
           // display error modal
           this.previewTableData = null;
           this.isAttemptingJoin = false;
@@ -467,7 +467,7 @@ export default Vue.extend({
       provenance: string;
     }) {
       const { id, provenance, joinSuggestion } = this.selectedDataset;
-      const searchResults = joinSuggestion.map(j => j.datasetOrigin);
+      const searchResults = joinSuggestion.map((j) => j.datasetOrigin);
       this.showStatusMessage = true;
       if (!this.isImporting) {
         datasetActions
@@ -475,9 +475,9 @@ export default Vue.extend({
             datasetID: id,
             source: "contrib",
             provenance,
-            searchResults
+            searchResults,
           })
-          .then(res => {
+          .then((res) => {
             if (res && res.result === "ingested") {
               this.importedItem.isAvailable = true;
               this.importedDataset.source = "contrib";
@@ -511,7 +511,7 @@ export default Vue.extend({
           status:
             importRequest.status === DatasetPendingRequestStatus.ERROR
               ? DatasetPendingRequestStatus.ERROR_REVIEWED
-              : DatasetPendingRequestStatus.REVIEWED
+              : DatasetPendingRequestStatus.REVIEWED,
         });
       }
     },
@@ -523,7 +523,7 @@ export default Vue.extend({
       const entry = createRouteEntry(SELECT_TRAINING_ROUTE, {
         dataset: datasetID,
         target: this.target,
-        task: routeGetters.getRouteTask(this.$store)
+        task: routeGetters.getRouteTask(this.$store),
       });
       this.$router.push(entry);
       this.addRecentDataset(datasetID);
@@ -532,14 +532,14 @@ export default Vue.extend({
       // trigger window resize event to notify modal content dimension has changed
       // (fixed-header-table component will listen to this event to resize itself)
       window.dispatchEvent(new Event("resize"));
-    }
+    },
   },
   created() {
     this.initSuggestionItems();
   },
   beforeDestroy() {
     this.reviewImportingRequest();
-  }
+  },
 });
 </script>
 

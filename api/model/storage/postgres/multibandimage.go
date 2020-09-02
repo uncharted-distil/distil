@@ -191,7 +191,7 @@ func (f *MultiBandImageField) fetchHistogram(filterParams *api.FilterParams, inv
 func (f *MultiBandImageField) fetchHistogramByResult(resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {
 		return nil, err
 	}
@@ -210,8 +210,8 @@ func (f *MultiBandImageField) fetchHistogramByResult(resultURI string, filterPar
 		`SELECT data."%s", COUNT(%s) AS count
 	 FROM %s data INNER JOIN %s result ON data."%s" = result.index
 	 WHERE result.result_id = $%d %s
-	 GROUP BY "%s"
-	 ORDER BY count desc, "%s" LIMIT %d;`,
+	 GROUP BY data."%s"
+	 ORDER BY count desc, data."%s" LIMIT %d;`,
 		prefixedVarName, f.Count, f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName),
 		model.D3MIndexFieldName, len(params), where, prefixedVarName,
 		prefixedVarName, catResultLimit)
@@ -319,7 +319,7 @@ func (f *MultiBandImageField) fetchPredictedSummaryData(resultURI string, datase
 	targetName := f.featureVarName(mode)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {
 		return nil, err
 	}

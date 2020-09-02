@@ -3,7 +3,7 @@ import {
   Extrema,
   TableData,
   TableRow,
-  TableColumn
+  TableColumn,
 } from "../dataset/index";
 import { ResultsState, Forecast, TimeSeries } from "./index";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
@@ -55,6 +55,12 @@ export const getters = {
     return getTableDataFields(state.includedResultTableData);
   },
 
+  getIncludedResultTableDataCount(state: ResultsState): number {
+    return state.includedResultTableData.numRowsFiltered
+      ? state.includedResultTableData.numRowsFiltered
+      : 0;
+  },
+
   hasExcludedResultTableData(state: ResultsState): boolean {
     return !!state.excludedResultTableData;
   },
@@ -74,6 +80,22 @@ export const getters = {
     state: ResultsState
   ): Dictionary<TableColumn> {
     return getTableDataFields(state.excludedResultTableData);
+  },
+
+  getExcludedResultTableDataCount(state: ResultsState): number {
+    return state.excludedResultTableData.numRowsFiltered
+      ? state.excludedResultTableData.numRowsFiltered
+      : 0;
+  },
+
+  /* Check if any items have a weight property */
+  hasResultTableDataItemsWeight(state: ResultsState): boolean {
+    const data = getTableDataItems(state.includedResultTableData) ?? [];
+    return data.some((item) =>
+      Object.keys(item).some((variable) =>
+        item[variable].hasOwnProperty("weight")
+      )
+    );
   },
 
   // predicted
@@ -112,5 +134,5 @@ export const getters = {
 
   getVariableRankings(state: ResultsState): Dictionary<Dictionary<number>> {
     return state.variableRankings;
-  }
+  },
 };

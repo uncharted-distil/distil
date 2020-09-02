@@ -27,7 +27,7 @@ import ImageLabel from "./ImageLabel";
 import { BandCombination, TableColumn, TableRow } from "../store/dataset/index";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
@@ -35,7 +35,7 @@ import { Dictionary } from "../util/dict";
 const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drilldown in pixels.
 const IMAGE_MAX_ZOOM = 3; // We don't want an image to be too magnified to avoid blurriness.
 
-const imageId = imageUrl => imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
+const imageId = (imageUrl) => imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
 
 /**
  * Display a modal with drilldowned information about an image.
@@ -50,7 +50,7 @@ export default Vue.extend({
   name: "image-drilldown",
 
   components: {
-    ImageLabel
+    ImageLabel,
   },
 
   props: {
@@ -58,12 +58,12 @@ export default Vue.extend({
     imageUrl: String,
     item: Object as () => TableRow,
     title: String,
-    visible: Boolean
+    visible: Boolean,
   },
 
   data() {
     return {
-      IMAGE_MAX_SIZE: IMAGE_MAX_SIZE
+      IMAGE_MAX_SIZE: IMAGE_MAX_SIZE,
     };
   },
 
@@ -100,7 +100,7 @@ export default Vue.extend({
 
     visibleTitle(): string {
       return this.title ?? this.imageUrl ?? "Image Drilldown";
-    }
+    },
   },
 
   methods: {
@@ -135,17 +135,17 @@ export default Vue.extend({
         await datasetActions.fetchMultiBandImage(this.$store, {
           dataset: this.dataset,
           imageId: imageId(this.imageUrl),
-          bandCombination: this.band
+          bandCombination: this.band,
         });
       } else {
         await datasetActions.fetchImage(this.$store, {
           dataset: this.dataset,
-          url: this.imageUrl
+          url: this.imageUrl,
         });
       }
       this.injectImage();
-    }
-  }
+    },
+  },
 });
 </script>
 

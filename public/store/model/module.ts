@@ -11,7 +11,7 @@ export const modelModule: Module<ModelState, DistilState> = {
   getters: moduleGetters,
   actions: moduleActions,
   mutations: moduleMutations,
-  state: state
+  state: state,
 };
 
 const { commit, read, dispatch } = getStoreAccessors<ModelState, DistilState>(
@@ -21,15 +21,15 @@ const { commit, read, dispatch } = getStoreAccessors<ModelState, DistilState>(
 export const getters = {
   getFilteredModels: read(moduleGetters.getFilteredModels),
   getModels: read(moduleGetters.getModels),
-  getCountOfModels: read(moduleGetters.getCountOfModels)
+  getCountOfModels: read(moduleGetters.getCountOfModels),
 };
 
 export const actions = {
   searchModels: dispatch(moduleActions.searchModels),
-  fetchModels: dispatch(moduleActions.fetchModels)
+  fetchModels: dispatch(moduleActions.fetchModels),
 };
 
 export const mutations = {
   setModels: commit(moduleMutations.setModels),
-  setFilteredModels: commit(moduleMutations.setFilteredModels)
+  setFilteredModels: commit(moduleMutations.setFilteredModels),
 };

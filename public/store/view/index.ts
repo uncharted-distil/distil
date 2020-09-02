@@ -6,5 +6,5 @@ export interface ViewState {
 }
 
 export const state: ViewState = {
-  fetchParamsCache: {}
+  fetchParamsCache: {},
 };

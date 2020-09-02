@@ -54,7 +54,7 @@ import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getSubSelectionValues,
   hasBaseline,
-  facetTypeChangeState
+  facetTypeChangeState,
 } from "../../util/facets";
 import _ from "lodash";
 
@@ -63,7 +63,7 @@ export default Vue.extend({
 
   components: {
     TypeChangeMenu,
-    ImportanceBars
+    ImportanceBars,
   },
 
   directives: {
@@ -72,7 +72,7 @@ export default Vue.extend({
       if (binding.value) {
         el.appendChild(binding.value);
       }
-    }
+    },
   },
 
   props: {
@@ -81,14 +81,14 @@ export default Vue.extend({
     html: [
       String as () => string,
       Object as () => any,
-      Function as () => Function
+      Function as () => Function,
     ],
     expandCollapse: Function as () => Function,
     highlight: Object as () => Highlight,
     enableHighlighting: Boolean as () => boolean,
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
-    importance: Number as () => number
+    importance: Number as () => number,
   },
 
   computed: {
@@ -115,14 +115,15 @@ export default Vue.extend({
           values.push({
             ratio: count / this.max,
             label: key,
-            tooltip: `Range:\t\t${key}-${key +
-              bucketSize}\nTotal Count:\t${count}`
+            tooltip: `Range:\t\t${key}-${
+              key + bucketSize
+            }\nTotal Count:\t${count}`,
           });
         }
       }
       return {
         label: summary.label.toUpperCase(),
-        values
+        values,
       };
     },
     facetEnableTypeChanges(): boolean {
@@ -170,7 +171,7 @@ export default Vue.extend({
         highlightAsSelection.push(buckets.length);
       }
       return highlightAsSelection.length > 0 ? highlightAsSelection : null;
-    }
+    },
   },
 
   methods: {
@@ -212,7 +213,7 @@ export default Vue.extend({
       return {
         from: lowerBound,
         to: upperBound,
-        type: this.summary.type
+        type: this.summary.type,
       };
     },
     updateSelection(event) {
@@ -241,13 +242,13 @@ export default Vue.extend({
       if (this.html) {
         return _.isFunction(this.html)
           ? this.html({
-              colName: this.summary.key
+              colName: this.summary.key,
             })
           : this.html;
       }
       return null;
-    }
-  }
+    },
+  },
 });
 </script>
 

@@ -7,7 +7,7 @@ const SUFFIXES = {
   3: "GB",
   4: "TB",
   5: "PB",
-  6: "EB"
+  6: "EB",
 };
 
 export function formatBytes(n: number): string {

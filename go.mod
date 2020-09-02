@@ -13,6 +13,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jackc/pgconn v1.6.1
 	github.com/jackc/pgx/v4 v4.7.1
+	github.com/lucasb-eyer/go-colorful v1.0.3
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/microcosm-cc/bluemonday v1.0.1
@@ -25,7 +26,7 @@ require (
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.5.1
-	github.com/uncharted-distil/distil-compute v0.0.0-20200730112314-4b3621e84cca
+	github.com/uncharted-distil/distil-compute v0.0.0-20200811232819-63d8d72a2603
 	github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a
 	github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48

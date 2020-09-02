@@ -143,7 +143,7 @@ func (f *NumericalField) fetchHistogramWithJoins(filterParams *api.FilterParams,
 
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema, numBuckets)
+	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema, numBuckets, "")
 
 	where := ""
 	if len(wheres) > 0 {
@@ -184,7 +184,7 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func (f *NumericalField) fetchHistogramByResult(resultURI string, filterParams *
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema, numBuckets)
+	histogramName, bucketQuery, histogramQuery := f.getHistogramAggQuery(extrema, numBuckets, baseTableAlias)
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
@@ -269,7 +269,7 @@ func (f *NumericalField) fetchExtrema() (*api.Extrema, error) {
 	return f.parseExtrema(res)
 }
 
-func (f *NumericalField) getHistogramAggQuery(extrema *api.Extrema, numBuckets int) (string, string, string) {
+func (f *NumericalField) getHistogramAggQuery(extrema *api.Extrema, numBuckets int, alias string) (string, string, string) {
 	interval := extrema.GetBucketInterval(numBuckets)
 
 	// get histogram agg name & query string.
@@ -277,13 +277,16 @@ func (f *NumericalField) getHistogramAggQuery(extrema *api.Extrema, numBuckets i
 	rounded := extrema.GetBucketMinMax(numBuckets)
 
 	bucketQueryString := ""
+	if alias != "" {
+		alias = alias + "."
+	}
 	// if only a single value, then return a simple count.
 	if rounded.Max == rounded.Min {
 		// want to return the count under bucket 0.
-		bucketQueryString = fmt.Sprintf("(\"%s\" - \"%s\")", extrema.Key, extrema.Key)
+		bucketQueryString = fmt.Sprintf("(%s\"%s\" - %s\"%s\")", alias, extrema.Key, alias, extrema.Key)
 	} else {
-		bucketQueryString = fmt.Sprintf("width_bucket(\"%s\", %g, %g, %d) - 1",
-			extrema.Key, rounded.Min, rounded.Max, extrema.GetBucketCount(numBuckets))
+		bucketQueryString = fmt.Sprintf("width_bucket(%s\"%s\", %g, %g, %d) - 1",
+			alias, extrema.Key, rounded.Min, rounded.Max, extrema.GetBucketCount(numBuckets))
 	}
 
 	histogramQueryString := fmt.Sprintf("(%s) * %g + %g", bucketQueryString, interval, rounded.Min)
@@ -467,7 +470,7 @@ func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResu
 	histogramName, bucketQuery, histogramQuery := f.getResultHistogramAggQuery(extrema, resultVariable, numBuckets)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {
 		return nil, err
 	}
@@ -588,7 +591,7 @@ func (f *NumericalField) FetchNumericalStatsByResult(resultURI string, filterPar
 	fromClause := f.getFromClause(false)
 
 	// get filter where / params
-	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams)
+	wheres, params, err := f.Storage.buildResultQueryFilters(f.GetDatasetName(), f.DatasetStorageName, resultURI, filterParams, baseTableAlias)
 	if err != nil {
 		return nil, err
 	}

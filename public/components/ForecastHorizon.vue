@@ -59,7 +59,7 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
   actions as requestActions,
-  getters as requestGetters
+  getters as requestGetters,
 } from "../store/requests/module";
 import { getPredictionsById } from "../util/predictions";
 import { varModesToString, createRouteEntry } from "../util/routes";
@@ -83,11 +83,11 @@ export default Vue.extend({
         { caption: "Weeks", value: 604800 },
         { caption: "Months", value: 2629800 },
         { caption: "Years", value: 31557600 },
-        { caption: "Decades", value: 315576000 }
+        { caption: "Decades", value: 315576000 },
       ],
       intervalScaleSelected: 0,
       showError: false,
-      isWaiting: false
+      isWaiting: false,
     };
   },
 
@@ -95,7 +95,7 @@ export default Vue.extend({
     dataset: String,
     fittedSolutionId: String,
     target: String,
-    targetType: String
+    targetType: String,
   },
 
   computed: {
@@ -130,8 +130,8 @@ export default Vue.extend({
       if (!timeseries[this.dataset]) return false;
 
       const values = Object.values(timeseries[this.dataset].isDateTime);
-      return values.every(value => value);
-    }
+      return values.every((value) => value);
+    },
   },
 
   methods: {
@@ -151,7 +151,7 @@ export default Vue.extend({
         target: this.target,
         targetType: this.targetType,
         intervalCount: this.intervalCount,
-        intervalLength: this.intervalLengthFormatted
+        intervalLength: this.intervalLengthFormatted,
       };
 
       try {
@@ -187,12 +187,12 @@ export default Vue.extend({
         predictionDataset: predictionDataset,
         produceRequestId: response.produceRequestId,
         target: this.target,
-        varModes: varModes
+        varModes: varModes,
       };
 
       const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
       this.$router.push(entry);
-    }
-  }
+    },
+  },
 });
 </script>

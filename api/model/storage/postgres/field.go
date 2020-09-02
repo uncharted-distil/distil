@@ -18,6 +18,7 @@ package postgres
 import (
 	"fmt"
 
+	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -98,35 +99,46 @@ func createJoinStatements(joins []*joinDefinition) string {
 // Checks to see if the highlighted variable has cluster data.  If so, the highlight key will be switched to the
 // cluster column ID to ensure that it is used in downstream queries.  This necessary when dealing with the timerseries
 // compound facet, which will display cluster info when available.
-func updateClusterHighlight(metadataStorage api.MetadataStorage, dataset string, filterParams *api.FilterParams, mode api.SummaryMode) error {
-	if filterParams != nil && !filterParams.Empty() && filterParams.Highlight != nil {
-		varExists, err := metadataStorage.DoesVariableExist(dataset, filterParams.Highlight.Key)
-		if err != nil {
-			return err
+func updateClusterFilters(metadataStorage api.MetadataStorage, dataset string, filterParams *api.FilterParams, mode api.SummaryMode) error {
+	if filterParams != nil && !filterParams.Empty() {
+		if filterParams.Highlight != nil {
+			updateClusterFilter(metadataStorage, dataset, filterParams.DataMode, filterParams.Highlight)
 		}
-		if !varExists {
-			return nil
-		}
-
-		variable, err := metadataStorage.FetchVariable(dataset, filterParams.Highlight.Key)
-		if err != nil {
-			return err
-		}
-
-		if variable.IsGrouping() {
-			clusterCol, ok := api.GetClusterColFromGrouping(variable.Grouping)
-			if ok && api.HasClusterData(dataset, clusterCol, metadataStorage) {
-				filterParams.Highlight.Key = clusterCol
-				return nil
-			}
-			filterParams.Highlight.Key = variable.Grouping.GetIDCol()
+		for _, f := range filterParams.Filters {
+			updateClusterFilter(metadataStorage, dataset, filterParams.DataMode, f)
 		}
 	}
 	return nil
 }
 
+func updateClusterFilter(metadataStorage api.MetadataStorage, dataset string, dataMode api.DataMode, filter *model.Filter) error {
+	varExists, err := metadataStorage.DoesVariableExist(dataset, filter.Key)
+	if err != nil {
+		return err
+	}
+	if !varExists {
+		return nil
+	}
+
+	variable, err := metadataStorage.FetchVariable(dataset, filter.Key)
+	if err != nil {
+		return err
+	}
+
+	if variable.IsGrouping() {
+		clusterCol, ok := api.GetClusterColFromGrouping(variable.Grouping)
+		if ok && dataMode == api.ClusterDataMode && api.HasClusterData(dataset, clusterCol, metadataStorage) {
+			filter.Key = clusterCol
+		} else {
+			filter.Key = variable.Grouping.GetIDCol()
+		}
+	}
+
+	return nil
+}
+
 func (b BasicField) updateClusterHighlight(filterParams *api.FilterParams, mode api.SummaryMode) error {
-	return updateClusterHighlight(b.GetStorage().metadata, b.GetDatasetName(), filterParams, mode)
+	return updateClusterFilters(b.GetStorage().metadata, b.GetDatasetName(), filterParams, mode)
 }
 
 func getCountSQL(count string) string {

@@ -5,7 +5,7 @@ import {
   VariableSummary,
   Extrema,
   TableData,
-  TimeSeriesValue
+  TimeSeriesValue,
 } from "../dataset/index";
 import { updateSummaries, removeSummary } from "../../util/data";
 import { Dictionary } from "vue-router/types/router";
@@ -66,7 +66,7 @@ export const mutations = {
   clearResidualsExtrema(state: ResultsState) {
     state.residualsExtrema = {
       min: null,
-      max: null
+      max: null,
     };
   },
 
@@ -152,5 +152,5 @@ export const mutations = {
     args: { solutionID: string; rankings: Dictionary<number> }
   ) {
     Vue.set(state.variableRankings, args.solutionID, args.rankings);
-  }
+  },
 };

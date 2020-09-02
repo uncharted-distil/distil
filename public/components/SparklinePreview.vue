@@ -52,15 +52,15 @@ import { Dictionary } from "../util/dict";
 import { TimeseriesExtrema, TimeSeriesValue } from "../store/dataset/index";
 import {
   getters as datasetGetters,
-  actions as datasetActions
+  actions as datasetActions,
 } from "../store/dataset/module";
 import {
   getters as resultsGetters,
-  actions as resultsActions
+  actions as resultsActions,
 } from "../store/results/module";
 import {
   getters as predictionsGetters,
-  actions as predictionsActions
+  actions as predictionsActions,
 } from "../store/predictions/module";
 import * as types from "../util/types";
 
@@ -69,7 +69,7 @@ export default Vue.extend({
 
   components: {
     SparklineSvg,
-    SparklineChart
+    SparklineChart,
   },
 
   props: {
@@ -82,13 +82,13 @@ export default Vue.extend({
     timeseriesId: String as () => string,
     solutionId: String as () => string,
     predictionsId: String as () => string,
-    includeForecast: Boolean as () => boolean
+    includeForecast: Boolean as () => boolean,
   },
   data() {
     return {
       zoomSparkline: false,
       isVisible: false,
-      hasRequested: false
+      hasRequested: false,
     };
   },
   computed: {
@@ -166,13 +166,13 @@ export default Vue.extend({
       }
       return {
         x: {
-          min: d3.min(this.timeseries, d => d.time),
-          max: d3.max(this.timeseries, d => d.time)
+          min: d3.min(this.timeseries, (d) => d.time),
+          max: d3.max(this.timeseries, (d) => d.time),
         },
         y: {
-          min: d3.min(this.timeseries, d => d.value),
-          max: d3.max(this.timeseries, d => d.value)
-        }
+          min: d3.min(this.timeseries, (d) => d.value),
+          max: d3.max(this.timeseries, (d) => d.value),
+        },
       };
     },
     forecastExtrema(): TimeseriesExtrema {
@@ -181,15 +181,15 @@ export default Vue.extend({
       }
       return {
         x: {
-          min: d3.min(this.forecast, d => d.time),
-          max: d3.max(this.forecast, d => d.time)
+          min: d3.min(this.forecast, (d) => d.time),
+          max: d3.max(this.forecast, (d) => d.time),
         },
         y: {
-          min: d3.min(this.forecast, d => d.value),
-          max: d3.max(this.forecast, d => d.value)
-        }
+          min: d3.min(this.forecast, (d) => d.value),
+          max: d3.max(this.forecast, (d) => d.value),
+        },
       };
-    }
+    },
   },
   methods: {
     isDateTime(): boolean {
@@ -242,7 +242,7 @@ export default Vue.extend({
           yColName: this.yCol,
           timeseriesColName: this.timeseriesCol,
           timeseriesId: this.timeseriesId,
-          solutionId: this.solutionId
+          solutionId: this.solutionId,
         });
       } else if (this.predictionsId) {
         predictionsActions.fetchForecastedTimeseries(this.$store, {
@@ -252,7 +252,7 @@ export default Vue.extend({
           yColName: this.yCol,
           timeseriesColName: this.timeseriesCol,
           timeseriesId: this.timeseriesId,
-          predictionsId: this.predictionsId
+          predictionsId: this.predictionsId,
         });
       } else {
         datasetActions.fetchTimeseries(this.$store, {
@@ -260,11 +260,11 @@ export default Vue.extend({
           xColName: this.xCol,
           yColName: this.yCol,
           timeseriesColName: this.timeseriesCol,
-          timeseriesId: this.timeseriesId
+          timeseriesId: this.timeseriesId,
         });
       }
-    }
-  }
+    },
+  },
 });
 </script>
 
