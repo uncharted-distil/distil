@@ -168,7 +168,7 @@ func InferenceHandler(outputPath string, dataStorageCtor api.DataStorageCtor, so
 			return
 		}
 
-		ds, err := dataset.NewTableDataset(datasetName, data)
+		ds, err := dataset.NewTableDataset(datasetName, data, false)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to create inference dataset"))
 			return

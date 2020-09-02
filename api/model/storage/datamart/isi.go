@@ -272,7 +272,7 @@ func materializeISIDataset(datamart *Storage, id string, uri string) (string, er
 	}
 
 	// create the dataset meeting the d3m spec
-	ds, err := dataset.NewTableDataset(id, []byte(datasetRaw.Data))
+	ds, err := dataset.NewTableDataset(id, []byte(datasetRaw.Data), true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to create raw dataset from ISI datamart materialized dataset")
 	}
