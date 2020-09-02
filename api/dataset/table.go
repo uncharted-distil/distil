@@ -30,20 +30,22 @@ import (
 
 // Table represents a basic table dataset.
 type Table struct {
-	Dataset string     `json:"dataset"`
-	CSVData [][]string `json:"csvData"`
+	Dataset   string     `json:"dataset"`
+	CSVData   [][]string `json:"csvData"`
+	flagIndex bool
 }
 
 // NewTableDataset creates a new table dataset from raw byte data, assuming csv.
-func NewTableDataset(dataset string, rawData []byte) (*Table, error) {
+func NewTableDataset(dataset string, rawData []byte, flagD3MIndex bool) (*Table, error) {
 	reader := csv.NewReader(bytes.NewReader(rawData))
 	csvData, err := reader.ReadAll()
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to read csv data")
 	}
 	return &Table{
-		Dataset: dataset,
-		CSVData: csvData,
+		Dataset:   dataset,
+		CSVData:   csvData,
+		flagIndex: flagD3MIndex,
 	}, nil
 }
 
@@ -62,14 +64,16 @@ func (t *Table) CreateDataset(rootDataPath string, datasetName string, config *e
 	meta.DataResources = []*model.DataResource{dr}
 
 	// find the d3m index (if present) and add the variable to the metadata
-	header := t.CSVData[0]
-	for i, c := range header {
-		if c == model.D3MIndexFieldName {
-			d3mIndexVar := model.NewVariable(i, model.D3MIndexFieldName, model.D3MIndexFieldName,
-				model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
-				[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, nil, false)
-			dr.Variables = []*model.Variable{d3mIndexVar}
-			dr.ResType = model.ResTypeTable
+	if t.flagIndex {
+		header := t.CSVData[0]
+		for i, c := range header {
+			if c == model.D3MIndexFieldName {
+				d3mIndexVar := model.NewVariable(i, model.D3MIndexFieldName, model.D3MIndexFieldName,
+					model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
+					[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, nil, false)
+				dr.Variables = []*model.Variable{d3mIndexVar}
+				dr.ResType = model.ResTypeTable
+			}
 		}
 	}
 

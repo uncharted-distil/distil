@@ -405,7 +405,7 @@ func createPredictionDataset(requestTask *api.Task, rawData string,
 	} else if api.HasTaskType(requestTask, compute.TimeSeriesTask) && api.HasTaskType(requestTask, compute.ForecastingTask) {
 		ds, err = task.NewPredictionTimeseriesDataset(predictParams, request.IntervalLength, request.IntervalCount)
 	} else {
-		ds, err = dataset.NewTableDataset(datasetID, []byte(data))
+		ds, err = dataset.NewTableDataset(datasetID, []byte(data), false)
 	}
 
 	if err != nil {
