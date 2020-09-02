@@ -7,7 +7,7 @@
     <span v-if="filter.type === DATETIME_FILTER">
       {{ formatDate(filter.min * 1000) }} : {{ formatDate(filter.max * 1000) }}
     </span>
-    <span v-if="filter.type === BIVARIATE_FILTER">
+    <span v-if="filter.type === GEOBOUNDS_FILTER">
       [{{ filter.minX.toFixed(2) }}, {{ filter.minY.toFixed(2) }}] to [{{
         filter.maxX.toFixed(2)
       }}, {{ filter.maxY.toFixed(2) }}]
@@ -36,7 +36,7 @@ import {
   Filter,
   NUMERICAL_FILTER,
   DATETIME_FILTER,
-  BIVARIATE_FILTER,
+  GEOBOUNDS_FILTER,
   CATEGORICAL_FILTER,
   CLUSTER_FILTER,
   TEXT_FILTER,
@@ -75,8 +75,8 @@ export default Vue.extend({
     CLUSTER_FILTER(): string {
       return CLUSTER_FILTER;
     },
-    BIVARIATE_FILTER(): string {
-      return BIVARIATE_FILTER;
+    GEOBOUNDS_FILTER(): string {
+      return GEOBOUNDS_FILTER;
     },
   },
 

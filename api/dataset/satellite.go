@@ -82,20 +82,32 @@ type Point struct {
 // ToString writes out the bounding box to a string.
 func (b *BoundingBox) ToString() string {
 	coords := []string{
-		b.pointToString(b.LowerLeft),
-		b.pointToString(b.UpperLeft),
-		b.pointToString(b.UpperRight),
-		b.pointToString(b.LowerRight),
+		b.pointToString(b.LowerLeft, ","),
+		b.pointToString(b.UpperLeft, ","),
+		b.pointToString(b.UpperRight, ","),
+		b.pointToString(b.LowerRight, ","),
 	}
 	return fmt.Sprintf("{%s}", strings.Join(coords, ","))
 }
 
-func (b *BoundingBox) pointToString(point *Point) string {
+// ToGeometryString writes out the bounding box to a geometry string (POSTGIS).
+func (b *BoundingBox) ToGeometryString() string {
+	coords := []string{
+		b.pointToString(b.LowerLeft, " "),
+		b.pointToString(b.UpperLeft, " "),
+		b.pointToString(b.UpperRight, " "),
+		b.pointToString(b.LowerRight, " "),
+		b.pointToString(b.LowerLeft, " "),
+	}
+	return fmt.Sprintf("POLYGON((%s))", strings.Join(coords, ","))
+}
+
+func (b *BoundingBox) pointToString(point *Point, separator string) string {
 	if point != nil {
-		return fmt.Sprintf("%f,%f", point.X, point.Y)
+		return fmt.Sprintf("%f%s%f", point.X, separator, point.Y)
 	}
 
-	return ","
+	return separator
 }
 
 // NewSatelliteDataset creates a new satelitte dataset from geotiff files
@@ -143,7 +155,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	}
 
 	csvData := make([][]string, 0)
-	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", "label"})
+	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", "label", "__geo_coordinates"})
 	mediaFolder := util.GetUniqueFolder(path.Join(outputDatasetPath, "media"))
 
 	// need to keep track of d3m Index values since they are shared for a whole group
@@ -211,7 +223,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 					d3mIDs[groupID] = d3mID
 				}
 
-				csvData = append(csvData, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.ToString(), label})
+				csvData = append(csvData, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.ToString(), label, coordinates.ToGeometryString()})
 			}
 		}
 	}
@@ -244,13 +256,17 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.StringType, "Image timestamp", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(5, "coordinates", "coordinates", "coordinates", model.GeoBoundsType,
-			model.GeoBoundsType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
+		model.NewVariable(5, "coordinates", "coordinates", "coordinates", model.RealVectorType,
+			model.RealVectorType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
 		model.NewVariable(6, "label", "label", "label", model.CategoricalType,
 			model.StringType, "Label of the image", []string{"suggestedTarget"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
+	dr.Variables = append(dr.Variables,
+		model.NewVariable(7, "__geo_coordinates", "coordinates", "coordinates", model.GeoBoundsType,
+			model.GeoBoundsType, "postgis structure for the bounding box coordinates of the tile", []string{"attribute"},
+			model.VarDistilRoleMetadata, nil, dr.Variables, false))
 
 	// create the data resource for the referenced images
 	imageTypeLookup := satTypeMap[s.ImageType]
@@ -429,7 +445,8 @@ func CreateSatelliteGrouping() map[string]interface{} {
 	grouping["idCol"] = "group_id"
 	grouping["imageCol"] = "image_file"
 	grouping["type"] = "remote_sensing"
-	grouping["hidden"] = []string{"image_file", "band", "group_id"}
+	grouping["coordinate"] = "__geo_coordinates"
+	grouping["hidden"] = []string{"image_file", "band", "group_id", "coordinates"}
 
 	return grouping
 }

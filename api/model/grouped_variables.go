@@ -138,6 +138,9 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 				if varMap[clusterField] != nil {
 					updatedFilterParams.AddVariable(varMap[clusterField].Name)
 				}
+			} else if variable.DistilRole == model.VarDistilRoleMetadata && model.IsGeoBounds(variable.Type) {
+				// add the original field name instead of this one
+				updatedFilterParams.AddVariable(variable.OriginalVariable)
 			} else {
 				updatedFilterParams.AddVariable(variable.Name)
 			}

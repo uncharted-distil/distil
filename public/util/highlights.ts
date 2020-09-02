@@ -3,7 +3,7 @@ import {
   Filter,
   FilterParams,
   CATEGORICAL_FILTER,
-  BIVARIATE_FILTER,
+  GEOBOUNDS_FILTER,
   CLUSTER_FILTER,
   VECTOR_FILTER,
   INCLUDE_FILTER,
@@ -119,7 +119,7 @@ export function createFilterFromHighlight(
   ) {
     return {
       key: key,
-      type: BIVARIATE_FILTER,
+      type: GEOBOUNDS_FILTER,
       mode: mode,
       minX: highlight.value.minX,
       maxX: highlight.value.maxX,

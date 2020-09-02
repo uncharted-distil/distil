@@ -307,7 +307,7 @@ func createTableDataset(datasetPath string, datasetName string) (task.DatasetCon
 		return nil, errors.Wrapf(err, "unable to read raw tabular data")
 	}
 
-	ds, err := dataset.NewTableDataset(datasetName, data)
+	ds, err := dataset.NewTableDataset(datasetName, data, true)
 	if err != nil {
 		return nil, err
 	}
