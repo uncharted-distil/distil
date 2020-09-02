@@ -265,7 +265,7 @@ export default Vue.extend({
   methods: {
     timeserieInfo(id: string): Extrema {
       const timeseries = predictionsGetters.getPredictedTimeseries(this.$store);
-      return timeseries?.[this.fittedSolutionId]?.info?.[id];
+      return timeseries?.[this.predictions.requestId]?.info?.[id];
     },
 
     onRowClick(row: TableRow) {

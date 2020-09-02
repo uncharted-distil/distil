@@ -54,7 +54,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { Extrema } from "../store/dataset/index";
+import { Extrema, TaskTypes } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -150,6 +150,7 @@ export default Vue.extend({
         fittedSolutionId: this.fittedSolutionId,
         target: this.target,
         targetType: this.targetType,
+        task: TaskTypes.TIME_SERIES,
         intervalCount: this.intervalCount,
         intervalLength: this.intervalLengthFormatted,
       };
