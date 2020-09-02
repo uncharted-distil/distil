@@ -33,6 +33,13 @@ export const DATETIME_FILTER = "datetime";
 export const BIVARIATE_FILTER = "bivariate";
 
 /**
+ * GeoBounds filter, omitting documents that do not fall within the provided
+ * variable range.
+ * @constant {string}
+ */
+export const GEOBOUNDS_FILTER = "geobounds";
+
+/**
  * Timeseries filter, omitting documents that do not fall within the provided
  * timeseries range.
  * @constant {string}

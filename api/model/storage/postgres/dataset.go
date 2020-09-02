@@ -79,7 +79,7 @@ func (s *Storage) getExistingFields(dataset string) (map[string]*model.Variable,
 
 	fields := make(map[string]*model.Variable)
 	for _, v := range vars {
-		fields[v.OriginalVariable] = v
+		fields[v.Name] = v
 	}
 
 	return fields, nil
@@ -93,7 +93,7 @@ func (s *Storage) createView(storageName string, fields map[string]*model.Variab
 	fieldList := make([]string, 0)
 	for _, v := range fields {
 		fieldList = append(fieldList, s.getViewField(model.PostgresValueForFieldType(v.Type, v.Name),
-			v.OriginalVariable, model.MapD3MTypeToPostgresType(v.Type), model.DefaultPostgresValueFromD3MType(v.Type)))
+			v.Name, model.MapD3MTypeToPostgresType(v.Type), model.DefaultPostgresValueFromD3MType(v.Type)))
 	}
 	sql = fmt.Sprintf(sql, storageName, strings.Join(fieldList, ","), storageName)
 

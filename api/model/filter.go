@@ -285,6 +285,31 @@ func parseFilter(filter map[string]interface{}) (*model.Filter, error) {
 		return model.NewBivariateFilter(key, mode, minX, maxX, minY, maxY), nil
 	}
 
+	// geobounds
+	if typ == model.GeoBoundsFilter {
+		key, ok := json.String(filter, "key")
+		if !ok {
+			return nil, errors.Errorf("no `key` provided for filter")
+		}
+		minX, ok := json.Float(filter, "minX")
+		if !ok {
+			return nil, errors.Errorf("no `minX` provided for filter")
+		}
+		maxX, ok := json.Float(filter, "maxX")
+		if !ok {
+			return nil, errors.Errorf("no `maxX` provided for filter")
+		}
+		minY, ok := json.Float(filter, "minY")
+		if !ok {
+			return nil, errors.Errorf("no `minY` provided for filter")
+		}
+		maxY, ok := json.Float(filter, "maxY")
+		if !ok {
+			return nil, errors.Errorf("no `maxY` provided for filter")
+		}
+		return model.NewGeoBoundsFilter(key, mode, minX, maxX, minY, maxY), nil
+	}
+
 	// categorical
 	if typ == model.CategoricalFilter {
 		key, ok := json.String(filter, "key")
