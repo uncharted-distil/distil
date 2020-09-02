@@ -177,7 +177,6 @@ export const mutations = {
     state: DatasetState,
     summary: VariableSummary
   ) {
-    updateSummaries(summary, state.includedSet.variableSummaries);
     updateSummariesPerVariable(
       summary,
       state.includedSet.variableSummariesByKey
@@ -188,7 +187,6 @@ export const mutations = {
     state: DatasetState,
     summary: VariableSummary
   ) {
-    updateSummaries(summary, state.excludedSet.variableSummaries);
     updateSummariesPerVariable(
       summary,
       state.excludedSet.variableSummariesByKey
@@ -196,8 +194,8 @@ export const mutations = {
   },
 
   clearVariableSummaries(state: DatasetState) {
-    state.includedSet.variableSummaries = [];
-    state.excludedSet.variableSummaries = [];
+    state.includedSet.variableSummariesByKey = {};
+    state.excludedSet.variableSummariesByKey = {};
   },
 
   setVariableRankings(

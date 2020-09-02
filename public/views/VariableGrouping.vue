@@ -246,6 +246,7 @@ import {
   getComposedVariableKey,
   hasTimeseriesFeatures,
   hasGeoordinateFeatures,
+  minimumRouteKey,
 } from "../util/data";
 import { getFacetByType } from "../util/facets";
 import { SELECT_TARGET_ROUTE } from "../store/route/index";
@@ -362,27 +363,16 @@ export default Vue.extend({
         this.xCol !== null && this.yCol !== null && this.groupingType !== null;
       return hasBasicFields;
     },
-    summaries(): VariableSummary[] {
-      let summaries = datasetGetters.getVariableSummaries(this.$store);
-      summaries = filterSummariesByDataset(summaries, this.dataset);
-
-      // Fetch the grouped features.
-      const groupedFeatures = datasetGetters
-        .getGroupings(this.$store)
-        .filter((group) => Array.isArray(group.grouping.subIds))
-        .map((group) => group.grouping.subIds)
-        .flat();
-
-      // Remove summaries of features used in a grouping.
-      summaries = summaries.filter(
-        (summary) => !groupedFeatures.includes(summary.key)
-      );
-      return summaries;
-    },
     previewSummary(): VariableSummary {
-      const pv = this.summaries.filter(
-        (v) => v.key.indexOf(this.xCol) > -1 && v.key.indexOf(this.yCol) > -1
+      const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
+        this.$store
+      );
+      const summaryKeys = Object.keys(summaryDictionary);
+      const previewKey = summaryKeys.filter(
+        (v) => v.indexOf(this.xCol) > -1 && v.indexOf(this.yCol) > -1
       )[0];
+      const minKey = minimumRouteKey();
+      const pv = summaryDictionary?.[previewKey]?.[minKey];
       return pv;
     },
     showGeoModal: {
@@ -414,7 +404,8 @@ export default Vue.extend({
   },
 
   beforeMount() {
-    viewActions.fetchSelectTargetData(this.$store, false);
+    console.log("hmm");
+    datasetActions.fetchVariables(this.$store, { dataset: this.dataset });
   },
   methods: {
     getFacetByType: getFacetByType,

@@ -80,18 +80,6 @@ export const getters = {
     return state.variableRankings;
   },
 
-  getVariableSummaries(state: DatasetState): VariableSummary[] {
-    return state.includedSet.variableSummaries;
-  },
-
-  getIncludedVariableSummaries(state: DatasetState): VariableSummary[] {
-    return state.includedSet.variableSummaries;
-  },
-
-  getExcludedVariableSummaries(state: DatasetState): VariableSummary[] {
-    return state.excludedSet.variableSummaries;
-  },
-
   getVariableSummariesDictionary(
     state: DatasetState
   ): Dictionary<Dictionary<VariableSummary>> {

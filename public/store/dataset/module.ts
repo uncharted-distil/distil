@@ -34,13 +34,6 @@ export const getters = {
   ),
   getVariablesMap: read(moduleGetters.getVariablesMap),
   getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
-  getVariableSummaries: read(moduleGetters.getVariableSummaries),
-  getIncludedVariableSummaries: read(
-    moduleGetters.getIncludedVariableSummaries
-  ),
-  getExcludedVariableSummaries: read(
-    moduleGetters.getExcludedVariableSummaries
-  ),
   getVariableSummariesDictionary: read(
     moduleGetters.getVariableSummariesDictionary
   ),

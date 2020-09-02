@@ -31,6 +31,7 @@ import { buildLookup } from "../../util/lookup";
 import { Route } from "vue-router";
 import _ from "lodash";
 import { $enum } from "ts-enum-util";
+import { minimumRouteKey } from "../../util/data";
 
 export const getters = {
   getRoute(state: Route): Route {
@@ -325,11 +326,18 @@ export const getters = {
   getTrainingVariableSummaries(state: Route, getters: any): VariableSummary[] {
     const training = getters.getDecodedTrainingVariableNames;
     const include = getters.getRouteInclude;
+    const minKey = minimumRouteKey();
     const summaries = include
-      ? getters.getIncludedVariableSummaries
-      : getters.getExcludedVariableSummaries;
-    const lookup = buildLookup(training);
-    return summaries.filter((summary) => lookup[summary.key.toLowerCase()]);
+      ? getters.getIncludedVariableSummariesDictionary
+      : getters.getExcludedVariableSummariesDictionary;
+    const trainingVariableSummaries = training.reduce((acc, variableName) => {
+      const variableSummary = summaries?.[variableName]?.[minKey];
+      if (variableSummary) {
+        acc.push(variableSummary);
+      }
+      return acc;
+    }, []);
+    return trainingVariableSummaries;
   },
 
   getTargetVariable(state: Route, getters: any): Variable {
@@ -348,16 +356,13 @@ export const getters = {
 
   getTargetVariableSummaries(state: Route, getters: any): VariableSummary[] {
     const target = getters.getRouteTargetVariable;
-    if (target) {
-      const include = getters.getRouteInclude;
-      const summaries = include
-        ? getters.getIncludedVariableSummaries
-        : getters.getExcludedVariableSummaries;
-      return summaries.filter(
-        (summary) => target.toLowerCase() === summary.key.toLowerCase()
-      );
-    }
-    return [];
+    const include = getters.getRouteInclude;
+    const minKey = minimumRouteKey();
+    const summaries = include
+      ? getters.getIncludedVariableSummariesDictionary
+      : getters.getExcludedVariableSummariesDictionary;
+    const targetVariableSummary = summaries?.[target]?.[minKey];
+    return targetVariableSummary ? [targetVariableSummary] : [];
   },
 
   getAvailableVariables(state: Route, getters: any): Variable[] {
@@ -369,18 +374,6 @@ export const getters = {
     return variables.filter(
       (variable) => !lookup[variable.colName.toLowerCase()]
     );
-  },
-
-  getAvailableVariableSummaries(state: Route, getters: any): VariableSummary[] {
-    const training = getters.getDecodedTrainingVariableNames;
-    const target = getters.getRouteTargetVariable;
-    const include = getters.getRouteInclude;
-    const lookup =
-      training && target ? buildLookup(training.concat([target])) : null;
-    const summaries = include
-      ? getters.getIncludedVariableSummaries
-      : getters.getExcludedVariableSummaries;
-    return summaries.filter((summary) => !lookup[summary.key.toLowerCase()]);
   },
 
   getActiveSolutionIndex(state: Route, getters: any): number {

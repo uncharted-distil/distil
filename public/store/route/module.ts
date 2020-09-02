@@ -76,9 +76,6 @@ export const getters = {
   getTargetVariable: read(moduleGetters.getTargetVariable),
   getTargetVariableSummaries: read(moduleGetters.getTargetVariableSummaries),
   getAvailableVariables: read(moduleGetters.getAvailableVariables),
-  getAvailableVariableSummaries: read(
-    moduleGetters.getAvailableVariableSummaries
-  ),
   getDecodedHighlight: read(moduleGetters.getDecodedHighlight),
   getDecodedRowSelection: read(moduleGetters.getDecodedRowSelection),
   getDataMode: read(moduleGetters.getDataMode),
