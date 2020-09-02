@@ -123,7 +123,7 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 		storageName := ds.StorageName
 
 		// get row count for export
-		rowCount, err := data.FetchNumRows(storageName, ds.Variables, nil)
+		rowCount, err := data.FetchNumRows(storageName, ds.Variables)
 		if err != nil {
 			handleError(w, err)
 			return
