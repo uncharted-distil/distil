@@ -188,6 +188,7 @@ export default Vue.extend({
         predictionDataset: predictionDataset,
         produceRequestId: response.produceRequestId,
         target: this.target,
+        task: TaskTypes.TIME_SERIES,
         varModes: varModes,
       };
 

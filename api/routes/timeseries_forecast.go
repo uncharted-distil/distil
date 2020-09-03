@@ -124,9 +124,9 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 			Forecast:          forecast.Timeseries,
 			ForecastTestRange: []float64{split.SplitValue, split.EndValue},
 			IsDateTime:        timeseries.IsDateTime,
-			Min:               forecast.Min,
-			Max:               forecast.Max,
-			Mean:              forecast.Mean,
+			Min:               api.NullableFloat64(forecast.Min),
+			Max:               api.NullableFloat64(forecast.Max),
+			Mean:              api.NullableFloat64(forecast.Mean),
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))

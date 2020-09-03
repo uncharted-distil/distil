@@ -171,7 +171,7 @@ export default Vue.extend({
     tableFields(): TableColumn[] {
       const tableFields = formatFieldsAsArray(this.fields);
 
-      if (!this.isTimeseries) return tableFields;
+      if (!this.isTimeseries || _.isEmpty(tableFields)) return tableFields;
 
       // For Timeseries we want to display the Min/Max/Mean
       return tableFields.concat([

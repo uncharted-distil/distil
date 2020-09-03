@@ -89,9 +89,9 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 		err = handleJSON(w, TimeseriesResult{
 			Timeseries: timeseries.Timeseries,
 			IsDateTime: timeseries.IsDateTime,
-			Min:        timeseries.Min,
-			Max:        timeseries.Max,
-			Mean:       timeseries.Mean,
+			Min:        api.NullableFloat64(timeseries.Min),
+			Max:        api.NullableFloat64(timeseries.Max),
+			Mean:       api.NullableFloat64(timeseries.Mean),
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))

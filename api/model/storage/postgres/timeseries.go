@@ -172,7 +172,7 @@ func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) ([]*api.Timeser
 }
 
 // Calculate the Min, Max, and Mean of a list of TimerseriesObservation
-func getMinMaxMean(timeseries []*api.TimeseriesObservation) (api.NullableFloat64, api.NullableFloat64, api.NullableFloat64) {
+func getMinMaxMean(timeseries []*api.TimeseriesObservation) (float64, float64, float64) {
 	min := math.Inf(1)
 	max := math.Inf(-1)
 	sum := float64(0)
@@ -196,11 +196,11 @@ func getMinMaxMean(timeseries []*api.TimeseriesObservation) (api.NullableFloat64
 		mean := sum / float64(len(timeseries))
 
 		// Send them back as NullableFloat64
-		return api.NullableFloat64(min), api.NullableFloat64(max), api.NullableFloat64(mean)
+		return min, max, mean
 	}
 
 	// Otherwise, send a NaN
-	var null = api.NullableFloat64(math.NaN())
+	var null = math.NaN()
 	return null, null, null
 }
 
