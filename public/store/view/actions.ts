@@ -357,12 +357,11 @@ export const actions = {
 
     // fetch new state
     const dataset = context.getters.getRouteDataset;
-    await fetchVariables(context, {
+    const args = {
       dataset: dataset,
-    });
-    return fetchVariableSummaries(context, {
-      dataset: dataset,
-    });
+    };
+    await fetchVariables(context, args);
+    return fetchVariableSummaries(context, args);
   },
 
   clearJoinDatasetsData(context) {
