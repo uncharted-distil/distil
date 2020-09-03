@@ -463,7 +463,6 @@ export const actions = {
         string,
         SummaryMode
       >;
-      const pages = context.getters.getAllRoutePages;
       return Promise.all([
         actions.fetchIncludedVariableSummaries(context, {
           dataset: args.dataset,
@@ -472,7 +471,6 @@ export const actions = {
           highlight: highlight,
           dataMode: dataMode,
           varModes: varModes,
-          pages: pages,
         }),
         actions.fetchExcludedVariableSummaries(context, {
           dataset: args.dataset,
@@ -481,7 +479,6 @@ export const actions = {
           highlight: highlight,
           dataMode: dataMode,
           varModes: varModes,
-          pages: pages,
         }),
       ]);
     } catch (error) {
@@ -548,7 +545,6 @@ export const actions = {
         string,
         SummaryMode
       >;
-      const pages = context.getters.getAllRoutePages;
       return Promise.all([
         actions.fetchIncludedVariableSummaries(context, {
           dataset: args.dataset,
@@ -557,7 +553,6 @@ export const actions = {
           highlight: highlight,
           dataMode: dataMode,
           varModes: varModes,
-          pages: pages,
         }),
         actions.fetchExcludedVariableSummaries(context, {
           dataset: args.dataset,
@@ -566,7 +561,6 @@ export const actions = {
           highlight: highlight,
           dataMode: dataMode,
           varModes: varModes,
-          pages: pages,
         }),
       ]);
     } catch (error) {
@@ -604,7 +598,6 @@ export const actions = {
         string,
         SummaryMode
       >;
-      const pages = context.getters.getAllRoutePages;
       return Promise.all([
         actions.fetchIncludedVariableSummaries(context, {
           dataset: args.dataset,
@@ -613,7 +606,6 @@ export const actions = {
           highlight: highlight,
           dataMode: dataMode,
           varModes: varModes,
-          pages: pages,
         }),
         actions.fetchExcludedVariableSummaries(context, {
           dataset: args.dataset,
@@ -622,7 +614,6 @@ export const actions = {
           highlight: highlight,
           dataMode: dataMode,
           varModes: varModes,
-          pages: pages,
         }),
       ]);
     } catch (error) {
@@ -689,7 +680,6 @@ export const actions = {
       filterParams: FilterParams;
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
-      pages: Object;
     }
   ): Promise<void[]> {
     return actions.fetchVariableSummaries(context, {
@@ -700,7 +690,6 @@ export const actions = {
       include: true,
       dataMode: args.dataMode,
       varModes: args.varModes,
-      pages: args.pages,
     });
   },
 
@@ -713,7 +702,6 @@ export const actions = {
       filterParams: FilterParams;
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
-      pages: Object;
     }
   ): Promise<void[]> {
     return actions.fetchVariableSummaries(context, {
@@ -724,7 +712,6 @@ export const actions = {
       include: false,
       dataMode: args.dataMode,
       varModes: args.varModes,
-      pages: args.pages,
     });
   },
 
@@ -738,7 +725,6 @@ export const actions = {
       include: boolean;
       dataMode: DataMode;
       varModes: Map<string, SummaryMode>;
-      pages: object;
     }
   ): Promise<void[]> {
     if (!validateArgs(args, ["dataset", "variables"])) {
@@ -755,7 +741,6 @@ export const actions = {
     const existingSummaries = args.variables.map(
       (v) => summariesByVariable?.[v.colName]?.[routeKey]
     );
-    const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
     const promises = [];
 
     args.variables.forEach((variable) => {

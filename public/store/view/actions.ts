@@ -157,7 +157,6 @@ const fetchVariableSummaries = async (context, args) => {
       highlight: highlight,
       dataMode: dataMode,
       varModes: varModes,
-      pages: pages,
     }),
     datasetActions.fetchExcludedVariableSummaries(store, {
       dataset: dataset,
@@ -166,7 +165,6 @@ const fetchVariableSummaries = async (context, args) => {
       highlight: highlight,
       dataMode: dataMode,
       varModes: varModes,
-      pages: pages,
     }),
   ]);
 };
@@ -315,7 +313,6 @@ export const actions = {
     const datasets = context.getters.getDatasets;
     const dataMode = context.getters.getDataMode as DataMode;
     const varModes = context.getters.getDecodedVarModes;
-    const pages = context.getters.getAllRoutePages;
     const datasetIDA = datasetIDs[0];
     const datasetIDB = datasetIDs[1];
 
@@ -335,7 +332,6 @@ export const actions = {
         highlight: highlight,
         dataMode: dataMode,
         varModes: varModes,
-        pages: pages,
       }),
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset: datasetB.id,
@@ -344,7 +340,6 @@ export const actions = {
         highlight: highlight,
         dataMode: dataMode,
         varModes: varModes,
-        pages: pages,
       }),
       datasetActions.fetchJoinDatasetsTableData(store, {
         datasets: datasetIDs,
@@ -362,13 +357,11 @@ export const actions = {
 
     // fetch new state
     const dataset = context.getters.getRouteDataset;
-    const pages = JSON.stringify(routeGetters.getAllRoutePages(store));
     await fetchVariables(context, {
       dataset: dataset,
     });
     return fetchVariableSummaries(context, {
       dataset: dataset,
-      pages: pages,
     });
   },
 
@@ -414,7 +407,6 @@ export const actions = {
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
     const dataMode = context.getters.getDataMode;
     const varModes = context.getters.getDecodedVarModes;
-    const pages = JSON.stringify(routeGetters.getAllRoutePages(store));
 
     return Promise.all([
       fetchVariableSummaries(context, {
@@ -422,7 +414,6 @@ export const actions = {
         filterParams: filterParams,
         highlight: highlight,
         varModes: varModes,
-        pages: pages,
       }),
       datasetActions.fetchIncludedTableData(store, {
         dataset: dataset,
