@@ -2,11 +2,7 @@ import Vue from "vue";
 import _ from "lodash";
 import { PredictionState } from "./index";
 import { VariableSummary, Extrema, TableData } from "../dataset/index";
-import {
-  updateSummaries,
-  removeSummary,
-  updateSummariesPerVariable,
-} from "../../util/data";
+import { updateSummaries, updateSummariesPerVariable } from "../../util/data";
 
 export const mutations = {
   // training / target

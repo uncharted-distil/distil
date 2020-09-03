@@ -13,7 +13,6 @@ import {
   TimeSeriesValue,
 } from "./index";
 import {
-  updateSummaries,
   updateSummariesPerVariable,
   isDatamartProvenance,
 } from "../../util/data";

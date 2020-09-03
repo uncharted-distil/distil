@@ -7,11 +7,7 @@ import {
   TableData,
   TimeSeriesValue,
 } from "../dataset/index";
-import {
-  updateSummaries,
-  removeSummary,
-  updateSummariesPerVariable,
-} from "../../util/data";
+import { updateSummaries, updateSummariesPerVariable } from "../../util/data";
 import { Dictionary } from "vue-router/types/router";
 
 export const mutations = {
