@@ -66,8 +66,7 @@ export const actions = {
 
     const promises = [];
 
-    const summariesByVariable =
-      context.state.trainingSummaries.variableSummariesByKey;
+    const summariesByVariable = context.state.trainingSummaries;
     const routeKey = minimumRouteKey();
     const existingSummaries = args.training.map(
       (v) => summariesByVariable?.[v.colName]?.[routeKey]

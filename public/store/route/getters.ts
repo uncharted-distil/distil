@@ -9,7 +9,6 @@ import {
   BandID,
 } from "../dataset/index";
 import {
-  PREDICTION_ROUTE,
   JOIN_DATASETS_ROUTE,
   RESULTS_ROUTE,
   SELECT_TARGET_ROUTE,

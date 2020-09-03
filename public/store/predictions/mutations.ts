@@ -12,19 +12,11 @@ export const mutations = {
   // training / target
 
   clearTrainingSummaries(state: PredictionState) {
-    state.trainingSummaries.variableSummaries = [];
+    state.trainingSummaries = {};
   },
 
   updateTrainingSummary(state: PredictionState, summary: VariableSummary) {
-    updateSummaries(summary, state.trainingSummaries.variableSummaries);
-    updateSummariesPerVariable(
-      summary,
-      state.trainingSummaries.variableSummariesByKey
-    );
-  },
-
-  removeTrainingSummary(state: PredictionState, summary: VariableSummary) {
-    removeSummary(summary, state.trainingSummaries.variableSummaries);
+    updateSummariesPerVariable(summary, state.trainingSummaries);
   },
 
   // sets the current Prediction data into the store

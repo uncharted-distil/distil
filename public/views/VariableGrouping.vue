@@ -404,7 +404,6 @@ export default Vue.extend({
   },
 
   beforeMount() {
-    console.log("hmm");
     datasetActions.fetchVariables(this.$store, { dataset: this.dataset });
   },
   methods: {

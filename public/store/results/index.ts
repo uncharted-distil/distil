@@ -17,17 +17,12 @@ export interface Forecast {
   isDateTime: Dictionary<boolean>;
 }
 
-export interface WorkingSet {
-  variableSummaries: VariableSummary[];
-  variableSummariesByKey: Dictionary<Dictionary<VariableSummary>>;
-}
-
 export interface ResultsState {
   // table data
   includedResultTableData: TableData;
   excludedResultTableData: TableData;
   // training / target
-  trainingSummaries: WorkingSet;
+  trainingSummaries: Dictionary<Dictionary<VariableSummary>>;
   targetSummary: VariableSummary;
   // predicted
   predictedSummaries: VariableSummary[];
@@ -52,10 +47,7 @@ export const state: ResultsState = {
   includedResultTableData: null,
   excludedResultTableData: null,
   // training / target
-  trainingSummaries: {
-    variableSummaries: [],
-    variableSummariesByKey: {},
-  },
+  trainingSummaries: {},
   targetSummary: null,
   // predicted
   predictedSummaries: [],

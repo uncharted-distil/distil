@@ -53,14 +53,10 @@ export const getters = {
     return state.predictedSummaries;
   },
 
-  getTrainingSummaries(state: PredictionState): VariableSummary[] {
-    return state.trainingSummaries.variableSummaries;
-  },
-
   getTrainingSummariesDictionary(
     state: PredictionState
   ): Dictionary<Dictionary<VariableSummary>> {
-    return state.trainingSummaries.variableSummariesByKey;
+    return state.trainingSummaries;
   },
 
   // forecasts

@@ -18,7 +18,7 @@ export const mutations = {
   // training / target
 
   clearTrainingSummaries(state: ResultsState) {
-    state.trainingSummaries.variableSummaries = [];
+    state.trainingSummaries = {};
   },
 
   clearCorrectnessSummaries(state: ResultsState) {
@@ -30,15 +30,7 @@ export const mutations = {
   },
 
   updateTrainingSummary(state: ResultsState, summary: VariableSummary) {
-    updateSummaries(summary, state.trainingSummaries.variableSummaries);
-    updateSummariesPerVariable(
-      summary,
-      state.trainingSummaries.variableSummariesByKey
-    );
-  },
-
-  removeTrainingSummary(state: ResultsState, summary: VariableSummary) {
-    removeSummary(summary, state.trainingSummaries.variableSummaries);
+    updateSummariesPerVariable(summary, state.trainingSummaries);
   },
 
   updateTargetSummary(state: ResultsState, summary: VariableSummary) {

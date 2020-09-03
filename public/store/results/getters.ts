@@ -6,20 +6,37 @@ import {
   TableColumn,
 } from "../dataset/index";
 import { ResultsState, Forecast, TimeSeries } from "./index";
-import { getTableDataItems, getTableDataFields } from "../../util/data";
+import {
+  getTableDataItems,
+  getTableDataFields,
+  minimumRouteKey,
+} from "../../util/data";
 import { Dictionary } from "../../util/dict";
 
 export const getters = {
   // results
 
   getTrainingSummaries(state: ResultsState): VariableSummary[] {
-    return state.trainingSummaries.variableSummaries;
+    const minKey = minimumRouteKey();
+    const summaries = getters.getTrainingSummariesDictionary;
+    const variableNames = Object.keys(summaries);
+    const trainingVariableSummaries = variableNames.reduce(
+      (acc, variableName) => {
+        const variableSummary = summaries?.[variableName]?.[minKey];
+        if (variableSummary) {
+          acc.push(variableSummary);
+        }
+        return acc;
+      },
+      []
+    );
+    return trainingVariableSummaries;
   },
 
   getTrainingSummariesDictionary(
     state: ResultsState
   ): Dictionary<Dictionary<VariableSummary>> {
-    return state.trainingSummaries.variableSummariesByKey;
+    return state.trainingSummaries;
   },
 
   getTargetSummary(state: ResultsState): VariableSummary {
