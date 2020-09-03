@@ -21,7 +21,7 @@ export SOLUTION_COMPUTE_PULL_MAX=900000
 export SOLUTION_COMPUTE_PULL_TIMEOUT=60000
 export DATAMART_URL_NYU=https://auctus.vida-nyu.org
 export FEATURIZATION_ENABLED=false # re-enable when column parser is optimized
-export CLUSTERING_KMEANS=false
+export CLUSTERING_KMEANS=true
 # export MAX_TRAINING_ROWS=500
 # export MAX_TEST_ROWS=500
 
