@@ -90,11 +90,6 @@ export const actions = {
       });
 
       if (existingVariableSummary) {
-        actions.setTrainingSummary(context, {
-          dataset: args.dataset,
-          summary: existingVariableSummary,
-          variable: variable.colName,
-        });
         promises.push(existingVariableSummary);
       } else {
         // add placeholder if it doesn't exist
@@ -119,26 +114,6 @@ export const actions = {
       }
     });
     return Promise.all(promises);
-  },
-
-  async setTrainingSummary(
-    context: ResultsContext,
-    args: {
-      dataset: string;
-      summary: VariableSummary;
-      variable: string;
-    }
-  ) {
-    const mutator = mutations.updateTrainingSummary;
-    try {
-      mutator(context, args.summary);
-    } catch (error) {
-      console.error(error);
-      const key = args.variable;
-      const label = args.variable;
-      const dataset = args.dataset;
-      mutator(context, createErrorSummary(key, label, dataset, error));
-    }
   },
 
   async fetchTrainingSummary(
