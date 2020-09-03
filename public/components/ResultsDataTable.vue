@@ -53,15 +53,16 @@
           :timeseries-id="data.item[timeseriesGrouping.idCol].value"
           :solution-id="solutionId"
           :include-forecast="isTargetTimeseries"
-        >
-        </sparkline-preview>
+        />
       </template>
 
       <template
-        v-for="listField in listFields"
+        v-for="(listField, index) in listFields"
         v-slot:[cellSlot(listField.key)]="data"
       >
-        <span :title="formatList(data)">{{ formatList(data) }}</span>
+        <span :key="index" :title="formatList(data)">
+          {{ formatList(data) }}
+        </span>
       </template>
 
       <template v-slot:[cellSlot(errorCol)]="data">
@@ -96,7 +97,11 @@
       </template>
 
       <template v-slot:cell()="data">
+        <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
+          {{ data.value | cleanNumber }}
+        </template>
         <div
+          v-else
           :title="data.value.value"
           :style="cellColor(data.value.weight, data)"
         >
@@ -110,11 +115,11 @@
 <script lang="ts">
 import Vue from "vue";
 import _ from "lodash";
-import IconBase from "./icons/IconBase";
-import IconFork from "./icons/IconFork";
-import FixedHeaderTable from "./FixedHeaderTable";
-import SparklinePreview from "./SparklinePreview";
-import ImagePreview from "./ImagePreview";
+import IconBase from "./icons/IconBase.vue";
+import IconFork from "./icons/IconFork.vue";
+import FixedHeaderTable from "./FixedHeaderTable.vue";
+import SparklinePreview from "./SparklinePreview.vue";
+import ImagePreview from "./ImagePreview.vue";
 import {
   Extrema,
   TableRow,
@@ -175,6 +180,13 @@ export default Vue.extend({
     instanceName: String as () => string,
   },
 
+  filters: {
+    /* Display number with only two decimal. */
+    cleanNumber(value) {
+      return _.isNumber(value) ? value.toFixed(2) : "—";
+    },
+  },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
@@ -233,8 +245,19 @@ export default Vue.extend({
     },
 
     items(): TableRow[] {
+      let items = this.dataItems;
+
+      // In the case of timeseries, we add their Min/Max/Mean.
+      if (this.isTimeseries) {
+        items = items?.map((item) => {
+          const timeserieId = item[this.timeseriesGroupings[0].idCol].value;
+          const minMaxMean = this.timeserieInfo(timeserieId);
+          return { ...item, ...minMaxMean };
+        });
+      }
+
       return updateTableRowSelection(
-        this.dataItems,
+        items,
         this.rowSelection,
         this.instanceName
       );
@@ -257,7 +280,25 @@ export default Vue.extend({
     },
 
     tableFields(): TableColumn[] {
-      return formatFieldsAsArray(this.fields);
+      const tableFields = formatFieldsAsArray(this.fields);
+
+      if (!this.isTimeseries || _.isEmpty(tableFields)) return tableFields;
+
+      // For Timeseries we want to display the Min/Max/Mean
+      return tableFields.concat([
+        {
+          key: "min",
+          sortable: true,
+        },
+        {
+          key: "max",
+          sortable: true,
+        },
+        {
+          key: "mean",
+          sortable: true,
+        },
+      ] as TableColumn[]);
     },
 
     computedFields(): string[] {
@@ -292,6 +333,10 @@ export default Vue.extend({
     sortFunction(): any {
       return this.sortingByResidualError ? this.sortingByErrorFunction : null;
     },
+
+    isTimeseries(): boolean {
+      return routeGetters.isTimeseries(this.$store);
+    },
   },
 
   updated() {
@@ -302,6 +347,11 @@ export default Vue.extend({
   },
 
   methods: {
+    timeserieInfo(id: string): Extrema {
+      const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
+      return timeseries?.[this.solutionId]?.info?.[id];
+    },
+
     onRowClick(row: TableRow) {
       if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
         addRowSelection(

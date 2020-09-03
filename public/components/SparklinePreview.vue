@@ -46,8 +46,8 @@
 <script lang="ts">
 import * as d3 from "d3";
 import Vue from "vue";
-import SparklineChart from "../components/SparklineChart";
-import SparklineSvg from "../components/SparklineSvg";
+import SparklineChart from "../components/SparklineChart.vue";
+import SparklineSvg from "../components/SparklineSvg.vue";
 import { Dictionary } from "../util/dict";
 import { TimeseriesExtrema, TimeSeriesValue } from "../store/dataset/index";
 import {
@@ -97,6 +97,7 @@ export default Vue.extend({
         ? "facet-sparkline-preview-container"
         : "sparkline-preview-container";
     },
+
     timeseries(): TimeSeriesValue[] {
       if (this.solutionId) {
         const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
