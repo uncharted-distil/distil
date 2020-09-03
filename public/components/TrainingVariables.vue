@@ -213,6 +213,7 @@ export default Vue.extend({
       // be actually be removed without ungrouping
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         training: timeseriesGrouping.join(","),
+        trainingVarsPage: 1,
       });
       this.$router.push(entry);
     },

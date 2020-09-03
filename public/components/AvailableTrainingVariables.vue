@@ -160,6 +160,7 @@ export default Vue.extend({
       });
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         training: training.join(","),
+        availableTrainingVarsPage: 1,
       });
       this.$router.push(entry);
     },

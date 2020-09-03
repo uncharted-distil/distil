@@ -749,12 +749,6 @@ export const actions = {
       });
 
       if (existingVariableSummary) {
-        actions.setVariableSummary(context, {
-          dataset: args.dataset,
-          include: args.include,
-          summary: existingVariableSummary,
-          variable: variable.colName,
-        });
         promises.push(existingVariableSummary);
       } else {
         // add placeholder if it doesn't exist
@@ -784,29 +778,6 @@ export const actions = {
     });
     // fill them in asynchronously
     return Promise.all(promises);
-  },
-
-  async setVariableSummary(
-    context: DatasetContext,
-    args: {
-      include: boolean;
-      dataset: string;
-      summary: VariableSummary;
-      variable: string;
-    }
-  ) {
-    const mutator = args.include
-      ? mutations.updateIncludedVariableSummaries
-      : mutations.updateExcludedVariableSummaries;
-    try {
-      mutator(context, args.summary);
-    } catch (error) {
-      console.error(error);
-      const key = args.variable;
-      const label = args.variable;
-      const dataset = args.dataset;
-      mutator(context, createErrorSummary(key, label, dataset, error));
-    }
   },
 
   async fetchVariableSummary(
