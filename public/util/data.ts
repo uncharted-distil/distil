@@ -320,18 +320,6 @@ export function updateSummariesPerVariable(
   );
 }
 
-export function sortSummariesByVariables(
-  summaries: VariableSummary[],
-  variables: Variable[]
-) {
-  summaries.sort((a, b) => {
-    return (
-      variables.findIndex((v) => v.colName === a.key) -
-      variables.findIndex((v) => v.colName === b.key)
-    );
-  });
-}
-
 export function removeSummary(
   summary: VariableSummary,
   summaries: VariableSummary[]
