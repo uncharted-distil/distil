@@ -697,19 +697,19 @@ export default Vue.extend({
         // Create a layer group to contain all the POIS to be displayed.
         this.poiLayer = leaflet.layerGroup();
         this.poiLayer.addTo(this.map);
-      }
 
-      // Extend the bounds of the map to include all coordinates.
-      const bounds = leaflet.latLngBounds(null);
-      pois.forEach((poi) => {
-        if (poi.coordinates) {
-          poi.coordinates.forEach((coordinate) => bounds.extend(coordinate));
-        } else {
-          bounds.extend([poi.lat, poi.lng]);
+        // Extend the bounds of the map to include all coordinates.
+        const bounds = leaflet.latLngBounds(null);
+        pois.forEach((poi) => {
+          if (poi.coordinates) {
+            poi.coordinates.forEach((coordinate) => bounds.extend(coordinate));
+          } else {
+            bounds.extend([poi.lat, poi.lng]);
+          }
+        });
+        if (bounds.isValid()) {
+          this.map.fitBounds(bounds);
         }
-      });
-      if (bounds.isValid()) {
-        this.map.fitBounds(bounds);
       }
     },
 
@@ -763,7 +763,7 @@ export default Vue.extend({
 
     /* Display point as circleMarker on the map. */
     displayPoints() {
-      this.createPoiLayer(this.pointGroups[0].points);
+      this.createPoiLayer(this.pointGroups?.[0].points);
 
       this.pointGroups.forEach((group) => {
         const hash = this.fieldHash(group.field);
