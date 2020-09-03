@@ -122,7 +122,7 @@ func (ds *Dataset) GetInsertSourceLength() int {
 func (ds *Dataset) createTableSQL(tableName string, temp bool) string {
 	fieldsSQL := []string{}
 	for _, v := range ds.Variables {
-		fieldsSQL = append(fieldsSQL, fmt.Sprintf("\"%s\" %s", v.Name, model.MapD3MTypeToPostgresType(v.Type)))
+		fieldsSQL = append(fieldsSQL, fmt.Sprintf("\"%s\" %s", v.Name, MapD3MTypeToPostgresType(v.Type)))
 	}
 
 	tempString := ""
