@@ -273,6 +273,17 @@ export function fetchResultExemplars(
   return new Promise((res) => res());
 }
 
+/*
+  minimumRouteKey - Makes a unique key given route state to support 
+  saving to and retrieving from a variable summary dictionary cache
+  using some of the route's query options (IE: not grabbing all
+  options as that's too narrow in focus.) It SHA1 hashes a string 
+  of datasetId, solutionId, requestId, fittedSolutionId, highlight, 
+  filters, dataMode, varModes and ranking as that's unique enough 
+  without being over specific and causing duplicate calls. The SHA1 
+  hash of those fields is fast to calculate, maintains uniqueness, 
+  and keeps the store keys a consistent length, unlike base64. 
+*/
 export function minimumRouteKey(): string {
   const routeKeys =
     JSON.stringify(routeGetters.getRouteDataset(store)) +
