@@ -20,14 +20,13 @@ import (
 	"path/filepath"
 	"strconv"
 
-	log "github.com/unchartedsoftware/plog"
-
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 	"github.com/uncharted-distil/distil/api/env"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // TargetRank will rank the dataset relative to a target variable using
