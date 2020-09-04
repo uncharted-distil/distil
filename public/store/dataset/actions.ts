@@ -738,25 +738,37 @@ export const actions = {
       ? context.state.includedSet.variableSummariesByKey
       : context.state.excludedSet.variableSummariesByKey;
     const routeKey = minimumRouteKey();
-    const existingSummaries = args.variables.map(
-      (v) => summariesByVariable?.[v.colName]?.[routeKey]
-    );
     const promises = [];
 
     args.variables.forEach((variable) => {
-      const existingVariableSummary = _.find(existingSummaries, (v) => {
-        return v?.dataset === args.dataset && v?.key === variable.colName;
-      });
+      const existingVariableSummary =
+        summariesByVariable?.[variable.colName]?.[routeKey];
 
       if (existingVariableSummary) {
         promises.push(existingVariableSummary);
       } else {
-        // add placeholder if it doesn't exist
-        const key = variable.colName;
-        const label = variable.colDisplayName;
-        const dataset = args.dataset;
-        const desciption = variable.colDescription;
-        mutator(context, createPendingSummary(key, label, desciption, dataset));
+        if (summariesByVariable[variable.colName]) {
+          // if we have any saved state for that variable
+          // use that as placeholder due to vue lifecycle
+          const tempVariableSummaryKey = Object.keys(
+            summariesByVariable[variable.colName]
+          )[0];
+          promises.push(
+            summariesByVariable[variable.colName][tempVariableSummaryKey]
+          );
+        } else {
+          // add a loading placeholder if nothing exists for that variable
+          mutator(
+            context,
+            createPendingSummary(
+              variable.colName,
+              variable.colDisplayName,
+              variable.colDescription,
+              args.dataset
+            )
+          );
+        }
+
         // Get the mode or default
         const mode = args.varModes.has(variable.colName)
           ? args.varModes.get(variable.colName)

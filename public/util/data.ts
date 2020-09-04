@@ -544,17 +544,31 @@ export function getVariableSummariesByState(
   let currentSummaries = [];
 
   if (Object.keys(summaryDictionary).length > 0 && variables.length > 0) {
-    const sortedVariables = ranked
+    let sortedVariables = ranked
       ? sortVariablesByImportance(variables)
       : variables;
-    let variableNames = sortedVariables.map((v) => v.colName);
 
     // select only the current variables on the page
-    variableNames = filterArrayByPage(pageIndex, pageSize, variableNames);
+    sortedVariables = filterArrayByPage(pageIndex, pageSize, sortedVariables);
     // map them back to the variable summary dictionary for the current route key
-    currentSummaries = variableNames.reduce((cs, vn) => {
-      if (summaryDictionary[vn] && summaryDictionary[vn][routeKey]) {
-        cs.push(summaryDictionary[vn][routeKey]);
+    currentSummaries = sortedVariables.reduce((cs, vn) => {
+      if (!summaryDictionary[vn.colName]) {
+        const placeholder = createPendingSummary(
+          vn.colName,
+          vn.colDisplayName,
+          vn.colDescription,
+          vn.datasetName
+        );
+        cs.push(placeholder);
+      } else {
+        if (summaryDictionary[vn.colName][routeKey]) {
+          cs.push(summaryDictionary[vn.colName][routeKey]);
+        } else {
+          const tempVariableSummaryKey = Object.keys(
+            summaryDictionary[vn.colName]
+          )[0];
+          cs.push(summaryDictionary[vn.colName][tempVariableSummaryKey]);
+        }
       }
       return cs;
     }, []);

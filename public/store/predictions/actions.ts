@@ -68,26 +68,35 @@ export const actions = {
 
     const summariesByVariable = context.state.trainingSummaries;
     const routeKey = minimumRouteKey();
-    const existingSummaries = args.training.map(
-      (v) => summariesByVariable?.[v.colName]?.[routeKey]
-    );
 
     args.training.forEach((variable) => {
       const key = variable.colName;
       const label = variable.colDisplayName;
       const description = variable.colDescription;
-      const existingVariableSummary = _.find(existingSummaries, (v) => {
-        return v?.dataset === args.dataset && v?.key === variable.colName;
-      });
+      const existingVariableSummary =
+        summariesByVariable?.[variable.colName]?.[routeKey];
 
       if (existingVariableSummary) {
         promises.push(existingVariableSummary);
       } else {
-        // add placeholder if it doesn't exist
-        mutations.updateTrainingSummary(
-          context,
-          createPendingSummary(key, label, description, args.dataset)
-        );
+        if (summariesByVariable[variable.colName]) {
+          // if we have any saved state for that variable
+          // use that as placeholder due to vue lifecycle
+          const tempVariableSummaryKey = Object.keys(
+            summariesByVariable[variable.colName]
+          )[0];
+          promises.push(
+            summariesByVariable[variable.colName][tempVariableSummaryKey]
+          );
+        } else {
+          // add a loading placeholder if nothing exists for that variable
+          createPendingSummary(
+            variable.colName,
+            variable.colDisplayName,
+            variable.colDescription,
+            args.dataset
+          );
+        }
 
         // fetch summary
         promises.push(
