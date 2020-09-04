@@ -23,6 +23,10 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 )
 
+// CopyFromSource represents a function that can use the CopyFrom operation to
+// bulk load the data to SQL.
+type CopyFromSource func(*Database, string, *Dataset) error
+
 // Dataset is a struct containing the metadata of a dataset being processed.
 type Dataset struct {
 	ID              string
@@ -35,16 +39,17 @@ type Dataset struct {
 	insertValues    [][]interface{}
 	uniqueValues    bool
 	primaryKey      string
+	tableName       string
+	insertFunction  CopyFromSource
 }
 
 // NewDataset creates a new dataset instance.
-func NewDataset(id, name, description string, variables []*model.Variable, uniqueValues bool, primaryKey string) *Dataset {
+func NewDataset(id, name, description string, variables []*model.Variable, primaryKey string) *Dataset {
 	ds := &Dataset{
 		ID:              id,
 		Name:            name,
 		Description:     description,
 		variablesLookup: make(map[string]bool),
-		uniqueValues:    uniqueValues,
 		primaryKey:      primaryKey,
 	}
 	// NOTE: Can only support data in a single data resource for now.
@@ -119,10 +124,14 @@ func (ds *Dataset) GetInsertSourceLength() int {
 	return len(ds.insertValues)
 }
 
-func (ds *Dataset) createTableSQL(tableName string, temp bool) string {
+func (ds *Dataset) createTableSQL(tableName string, temp bool, typeAll bool, typeMap map[string]bool) string {
 	fieldsSQL := []string{}
 	for _, v := range ds.Variables {
-		fieldsSQL = append(fieldsSQL, fmt.Sprintf("\"%s\" %s", v.Name, MapD3MTypeToPostgresType(v.Type)))
+		typ := "TEXT"
+		if typeAll || (typeMap != nil && typeMap[v.Name]) {
+			typ = MapD3MTypeToPostgresType(v.Type)
+		}
+		fieldsSQL = append(fieldsSQL, fmt.Sprintf("\"%s\" %s", v.Name, typ))
 	}
 
 	tempString := ""
