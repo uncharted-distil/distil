@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/postgres"
 )
 
 const (
@@ -39,7 +40,7 @@ type joinDefinition struct {
 
 func (s *Storage) getViewField(fieldSelect string, displayName string, typ string, defaultValue interface{}) string {
 	viewField := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v)", fieldSelect, typ, defaultValue)
-	if model.IsDatabaseFloatingPoint(typ) {
+	if postgres.IsDatabaseFloatingPoint(typ) {
 		// handle missing values
 		viewField = fmt.Sprintf("CASE WHEN %s = '' THEN %v ELSE %s END", fieldSelect, defaultValue, viewField)
 	}
@@ -92,8 +93,8 @@ func (s *Storage) createView(storageName string, fields map[string]*model.Variab
 	// Build the select statement of the query.
 	fieldList := make([]string, 0)
 	for _, v := range fields {
-		fieldList = append(fieldList, s.getViewField(model.PostgresValueForFieldType(v.Type, v.Name),
-			v.Name, model.MapD3MTypeToPostgresType(v.Type), model.DefaultPostgresValueFromD3MType(v.Type)))
+		fieldList = append(fieldList, s.getViewField(postgres.ValueForFieldType(v.Type, v.Name),
+			v.Name, postgres.MapD3MTypeToPostgresType(v.Type), postgres.DefaultPostgresValueFromD3MType(v.Type)))
 	}
 	sql = fmt.Sprintf(sql, storageName, strings.Join(fieldList, ","), storageName)
 

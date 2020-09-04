@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -27,6 +28,16 @@ import (
 )
 
 const (
+	// Database data types
+	dataTypeText     = "TEXT"
+	dataTypeDouble   = "double precision"
+	dataTypeFloat    = "FLOAT8"
+	dataTypeVector   = "FLOAT8[]"
+	dataTypeGeometry = "geometry"
+	dataTypeInteger  = "INTEGER"
+	dataTypeDate     = "TIMESTAMP"
+	dateFormat       = "2006-01-02T15:04:05Z"
+
 	metadataTableCreationSQL = `CREATE TABLE %s (
 			name	text	NOT NULL,
 			role	varchar(100),
@@ -199,7 +210,8 @@ func NewDatabase(config *Config, batch bool) (*Database, error) {
 	}
 
 	database.Tables[WordStemTableName] = NewDataset(WordStemTableName, WordStemTableName, "",
-		[]*model.Variable{{Name: "stem"}, {Name: "word"}}, true, "stem")
+		[]*model.Variable{{Name: "stem"}, {Name: "word"}}, "stem")
+	database.Tables[WordStemTableName].insertFunction = insertFromSourceUnique
 
 	return database, nil
 }
@@ -271,43 +283,95 @@ func (d *Database) CreateSolutionMetadataTables() error {
 	return nil
 }
 
+// insertFromSourceUnique function only inserting unique rows.
+func insertFromSourceUnique(d *Database, tableName string, ds *Dataset) error {
+	// first ingest to a temporary table
+	tmpTableName := fmt.Sprintf("tmp_%s", tableName)
+	createSQL := ds.createTableSQL(tmpTableName, true, true, nil)
+	_, err := d.Client.Exec(createSQL)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create tmp table for inserts")
+	}
+	// drop the temp table
+	defer d.DropTable(tmpTableName)
+
+	tmpInsertCount, err := d.Client.CopyFrom(tmpTableName, ds.GetColumns(), ds.GetInsertSource())
+	if err != nil {
+		return errors.Wrapf(err, "unable to insert batch to postgres")
+	}
+	if tmpInsertCount != int64(ds.GetInsertSourceLength()) {
+		return errors.Errorf("batch insert only copied %d rows from source out of %d", tmpInsertCount, ds.GetInsertSourceLength())
+	}
+
+	// then copy from the temp table to the real table all new rows
+	updateSQL := fmt.Sprintf("INSERT INTO \"%s\" SELECT d.* FROM \"%s\" AS d WHERE NOT EXISTS (SELECT 1 FROM \"%s\" AS d2 WHERE d.\"%s\" = d2.\"%s\");",
+		tableName, tmpTableName, tableName, ds.GetPrimaryKey(), ds.GetPrimaryKey())
+	_, err = d.Client.Exec(updateSQL)
+	if err != nil {
+		return errors.Wrapf(err, "unable to insert from tmp table to base table")
+	}
+
+	return nil
+}
+
+// insertFromSourceBase function implementing a basic approach to using copy from.
+func insertFromSourceBase(d *Database, tableName string, ds *Dataset) error {
+	insertCount, err := d.Client.CopyFrom(fmt.Sprintf("%s_base", tableName), ds.GetColumns(), ds.GetInsertSource())
+	if err != nil {
+		return errors.Wrapf(err, "unable to insert batch to postgres")
+	}
+	if insertCount != int64(ds.GetInsertSourceLength()) {
+		return errors.Errorf("batch insert only copied %d rows from source out of %d", insertCount, ds.GetInsertSourceLength())
+	}
+
+	return nil
+}
+
+// insertFromSourceGeometry function for inserting geometries using copy from.
+func insertFromSourceGeometry(d *Database, tableName string, ds *Dataset) error {
+	// first ingest to a temporary table
+	tmpTableName := fmt.Sprintf("tmp_%s", tableName)
+	createSQL := ds.createTableSQL(tmpTableName, true, false, nil)
+	_, err := d.Client.Exec(createSQL)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create tmp table for inserts")
+	}
+	// drop the temp table
+	defer d.DropTable(tmpTableName)
+
+	tmpInsertCount, err := d.Client.CopyFrom(tmpTableName, ds.GetColumns(), ds.GetInsertSource())
+	if err != nil {
+		return errors.Wrapf(err, "unable to insert batch to postgres")
+	}
+	if tmpInsertCount != int64(ds.GetInsertSourceLength()) {
+		return errors.Errorf("batch insert only copied %d rows from source out of %d", tmpInsertCount, ds.GetInsertSourceLength())
+	}
+
+	// then copy from the temp table to the real table, casting geometry fields
+	fields := []string{}
+	for _, v := range ds.Variables {
+		typ := dataTypeText
+		if v.Name == model.D3MIndexFieldName || v.Type == model.GeoBoundsType {
+			typ = MapD3MTypeToPostgresType(v.Type)
+		}
+		fields = append(fields, fmt.Sprintf("\"%s\"::%s", v.Name, typ))
+	}
+	fieldSQL := fmt.Sprintf("%s", strings.Join(fields, ","))
+	updateSQL := fmt.Sprintf("INSERT INTO \"%s_base\" SELECT %s FROM \"%s\";", tableName, fieldSQL, tmpTableName)
+	_, err = d.Client.Exec(updateSQL)
+	if err != nil {
+		return errors.Wrapf(err, "unable to copy geometry data from temp table")
+	}
+
+	return nil
+}
+
 func (d *Database) executeInserts(tableName string) error {
 	ds := d.Tables[tableName]
 	if ds.GetInsertSourceLength() > 0 {
-		if ds.uniqueValues {
-			// first ingest to a temporary table
-			tmpTableName := fmt.Sprintf("tmp_%s", tableName)
-			createSQL := ds.createTableSQL(tmpTableName, true)
-			_, err := d.Client.Exec(createSQL)
-			if err != nil {
-				return errors.Wrapf(err, "unable to create tmp table for inserts")
-			}
-			// drop the temp table
-			defer d.DropTable(tmpTableName)
-
-			tmpInsertCount, err := d.Client.CopyFrom(tmpTableName, ds.GetColumns(), ds.GetInsertSource())
-			if err != nil {
-				return errors.Wrapf(err, "unable to insert batch to postgres")
-			}
-			if tmpInsertCount != int64(ds.GetInsertSourceLength()) {
-				return errors.Errorf("batch insert only copied %d rows from source out of %d", tmpInsertCount, ds.GetInsertSourceLength())
-			}
-
-			// then copy from the temp table to the real table all new rows
-			updateSQL := fmt.Sprintf("INSERT INTO \"%s\" SELECT d.* FROM \"%s\" AS d WHERE NOT EXISTS (SELECT 1 FROM \"%s\" AS d2 WHERE d.\"%s\" = d2.\"%s\");",
-				tableName, tmpTableName, tableName, ds.GetPrimaryKey(), ds.GetPrimaryKey())
-			_, err = d.Client.Exec(updateSQL)
-			if err != nil {
-				return errors.Wrapf(err, "unable to create tmp table for inserts")
-			}
-		} else {
-			insertCount, err := d.Client.CopyFrom(fmt.Sprintf("%s_base", tableName), ds.GetColumns(), ds.GetInsertSource())
-			if err != nil {
-				return errors.Wrapf(err, "unable to insert batch to postgres")
-			}
-			if insertCount != int64(ds.GetInsertSourceLength()) {
-				return errors.Errorf("batch insert only copied %d rows from source out of %d", insertCount, ds.GetInsertSourceLength())
-			}
+		err := ds.insertFunction(d, tableName, ds)
+		if err != nil {
+			return errors.Wrapf(err, "unable to copy from source to postgres")
 		}
 	}
 
@@ -411,6 +475,8 @@ func (d *Database) IngestRow(tableName string, data []string) error {
 			val = nil
 		} else if d.isArray(variables[i].Type) && !d.dataIsArray(data[i]) {
 			val = fmt.Sprintf("{%s}", data[i])
+		} else if variables[i].Type == model.GeoBoundsType+"s" {
+			val = fmt.Sprintf("%s:geometry", data[i])
 		} else {
 			val = data[i]
 		}
@@ -510,7 +576,7 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 	d.Tables[tableName] = ds
 
 	// Create the view and table statements as well as the feature weight table.
-	// The table has everything stored as a string.
+	// The table has almost everything stored as a string.
 	// The view uses casting to set the types.
 	createStatementTable := `CREATE TABLE %s_base (%s);`
 	createStatementView := `CREATE VIEW %s AS SELECT %s FROM %s_base;`
@@ -518,11 +584,16 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 	varsView := ""
 	varsExplain := ""
 	for _, variable := range ds.Variables {
-		varsTable = fmt.Sprintf("%s\n\"%s\" TEXT,", varsTable, variable.Name)
+		tableType := dataTypeText
+		viewVar := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v) AS \"%s\"", ValueForFieldType(variable.Type, variable.Name),
+			MapD3MTypeToPostgresType(variable.Type), DefaultPostgresValueFromD3MType(variable.Type), variable.Name)
+		if variable.Type == model.GeoBoundsType {
+			tableType = "geometry"
+			viewVar = fmt.Sprintf("\"%s\"", variable.Name)
+		}
+		varsTable = fmt.Sprintf("%s\n\"%s\" %s,", varsTable, variable.Name, tableType)
 		varsExplain = fmt.Sprintf("%s\n\"%s\" DOUBLE PRECISION,", varsExplain, variable.Name)
-		varsView = fmt.Sprintf("%s\nCOALESCE(CAST(%s AS %s), %v) AS \"%s\",",
-			varsView, model.PostgresValueForFieldType(variable.Type, variable.Name),
-			model.MapD3MTypeToPostgresType(variable.Type), model.DefaultPostgresValueFromD3MType(variable.Type), variable.Name)
+		varsView = fmt.Sprintf("%s\n%s,", varsView, viewVar)
 	}
 	if len(varsTable) > 0 {
 		varsTable = varsTable[:len(varsTable)-1]
@@ -562,7 +633,16 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 
 // InitializeDataset initializes the dataset with the provided metadata.
 func (d *Database) InitializeDataset(meta *model.Metadata) (*Dataset, error) {
-	ds := NewDataset(meta.ID, meta.Name, meta.Description, meta.GetMainDataResource().Variables, false, "")
+	// geobounds data not batched using copy from due to issues with loading of the data
+	loadFunction := insertFromSourceBase
+	for _, v := range meta.GetMainDataResource().Variables {
+		if v.Type == model.GeoBoundsType {
+			loadFunction = insertFromSourceGeometry
+			break
+		}
+	}
+	ds := NewDataset(meta.ID, meta.Name, meta.Description, meta.GetMainDataResource().Variables, "")
+	ds.insertFunction = loadFunction
 
 	return ds, nil
 }
@@ -582,4 +662,66 @@ func (d *Database) dataIsArray(data string) bool {
 	}
 
 	return data[0] == '{' && data[dataLength-1] == '}'
+}
+
+// MapD3MTypeToPostgresType generates a postgres type from a d3m type.
+func MapD3MTypeToPostgresType(typ string) string {
+	// Integer types can be returned as floats.
+	switch typ {
+	case model.IndexType:
+		return dataTypeInteger
+	case model.IntegerType, model.LongitudeType, model.LatitudeType, model.RealType, model.TimestampType:
+		return dataTypeFloat
+	case model.OrdinalType, model.CategoricalType, model.StringType:
+		return dataTypeText
+	case model.DateTimeType:
+		return dataTypeDate
+	case model.GeoBoundsType:
+		return dataTypeGeometry
+	case model.RealVectorType, model.RealListType:
+		return dataTypeVector
+	default:
+		return dataTypeText
+	}
+}
+
+// DefaultPostgresValueFromD3MType generates a default postgres value from a d3m type.
+func DefaultPostgresValueFromD3MType(typ string) interface{} {
+	switch typ {
+	case model.IndexType:
+		return float64(0)
+	case model.LongitudeType, model.LatitudeType, model.RealType:
+		return "'NaN'::double precision"
+	case model.IntegerType, model.TimestampType:
+		return int(0)
+	case model.DateTimeType:
+		return fmt.Sprintf("'%s'", time.Time{}.Format(dateFormat))
+	case model.GeoBoundsType:
+		return "'POLYGON EMPTY'"
+	case model.RealVectorType, model.RealListType:
+		return "'{}'"
+	default:
+		return "''"
+	}
+}
+
+// IsDatabaseFloatingPoint indicates whether or not a database type is a floating point
+// value.
+func IsDatabaseFloatingPoint(typ string) bool {
+	return typ == dataTypeFloat
+}
+
+// ValueForFieldType generates the select field value for a given variable type.
+func ValueForFieldType(typ string, field string) string {
+	fieldQuote := fmt.Sprintf("\"%s\"", field)
+	switch typ {
+	case model.RealListType:
+		return fmt.Sprintf("string_to_array(%s, ',')", fieldQuote)
+	case model.DateTimeType:
+		// datetime may be only time so need to support both cases
+		// times can have first value missing a 0 so want to first get a time value then add it to epoch time 0
+		return fmt.Sprintf("CASE WHEN length(%[1]s) IN (4, 5) AND position(':' in %[1]s) > 0 THEN CONCAT('1970-01-01 ', to_char(to_timestamp(%[1]s, 'MI:SS'), 'HH24:MI:SS')) ELSE %[1]s END", fieldQuote)
+	default:
+		return fmt.Sprintf("\"%s\"", field)
+	}
 }
