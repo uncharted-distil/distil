@@ -361,7 +361,17 @@ export const getters = {
       ? getters.getIncludedVariableSummariesDictionary
       : getters.getExcludedVariableSummariesDictionary;
     const targetVariableSummary = summaries?.[target]?.[minKey];
-    return targetVariableSummary ? [targetVariableSummary] : [];
+    if (targetVariableSummary) {
+      return [targetVariableSummary];
+    } else {
+      const currentVariable = summaries?.[target];
+      if (currentVariable) {
+        const placeholderKey = Object.keys(currentVariable)[0];
+        return [currentVariable[placeholderKey]];
+      } else {
+        return [];
+      }
+    }
   },
 
   getAvailableVariables(state: Route, getters: any): Variable[] {
