@@ -44,7 +44,9 @@ export const getters = {
 
   // predicted
   getPredictionSummaries: read(moduleGetters.getPredictionSummaries),
-  getTrainingSummaries: read(moduleGetters.getTrainingSummaries),
+  getTrainingSummariesDictionary: read(
+    moduleGetters.getTrainingSummariesDictionary
+  ),
 
   // result table data
   getPredictionDataNumRows: read(moduleGetters.getPredictionDataNumRows),
@@ -78,7 +80,6 @@ export const mutations = {
   // training
   clearTrainingSummaries: commit(moduleMutations.clearTrainingSummaries),
   updateTrainingSummary: commit(moduleMutations.updateTrainingSummary),
-  removeTrainingSummary: commit(moduleMutations.removeTrainingSummary),
   // result
   setIncludedPredictionTableData: commit(
     moduleMutations.setIncludedPredictionTableData

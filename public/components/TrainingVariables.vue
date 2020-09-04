@@ -12,13 +12,15 @@
       enable-highlighting
       enable-search
       enable-type-change
-      :log-activity="logActivity"
-      :instance-name="instanceName"
-      :rows-per-page="numRowsPerPage"
-      :summaries="trainingVariableSummaries"
+      :facetCount="trainingVariables.length"
       :html="html"
       :isAvailableFeatures="false"
       :isFeaturesToModel="true"
+      :log-activity="logActivity"
+      :instance-name="instanceName"
+      :pagination="trainingVariables.length > numRowsPerPage"
+      :rows-per-page="numRowsPerPage"
+      :summaries="trainingVariableSummaries"
     >
       <div class="available-variables-menu">
         <div>
@@ -48,7 +50,7 @@ import {
 } from "../store/dataset/module";
 import { TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
-import { NUM_PER_PAGE } from "../util/data";
+import { NUM_PER_PAGE, getVariableSummariesByState } from "../util/data";
 import { overlayRouteEntry } from "../util/routes";
 import { removeFiltersByName } from "../util/filters";
 import { actions as appActions } from "../store/app/module";
@@ -83,8 +85,24 @@ export default Vue.extend({
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
     },
+    trainingVariables(): Variable[] {
+      return routeGetters.getTrainingVariables(this.$store);
+    },
     trainingVariableSummaries(): VariableSummary[] {
-      return routeGetters.getTrainingVariableSummaries(this.$store);
+      const pageIndex = routeGetters.getRouteTrainingVarsPage(this.$store);
+      const include = routeGetters.getRouteInclude(this.$store);
+      const summaryDictionary = include
+        ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
+        : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
+
+      const currentSummaries = getVariableSummariesByState(
+        pageIndex,
+        this.numRowsPerPage,
+        this.trainingVariables,
+        summaryDictionary
+      );
+
+      return currentSummaries;
     },
 
     /**
@@ -98,9 +116,9 @@ export default Vue.extend({
       );
 
       // Filter them out of the available training variables.
-      const trainingVariables = Array.from(
-        this.trainingVariableSummaries
-      ).filter((variable) => !timeseriesGrouping.includes(variable.key));
+      const trainingVariables = Array.from(this.trainingVariables).filter(
+        (variable) => !timeseriesGrouping.includes(variable.colName)
+      );
 
       // The variables can be removed.
       return trainingVariables.length > 0;
@@ -110,7 +128,7 @@ export default Vue.extend({
       return datasetGetters.getVariables(this.$store);
     },
     subtitle(): string {
-      return `${this.trainingVariableSummaries.length} features selected`;
+      return `${this.trainingVariables.length} features selected`;
     },
     instanceName(): string {
       return TRAINING_VARS_INSTANCE;
@@ -186,15 +204,16 @@ export default Vue.extend({
         details: {},
       });
 
-      const facets = this.$refs.facets as any;
-      const training = routeGetters.getDecodedTrainingVariableNames(
+      // Fetch the variables in the timeseries grouping.
+      const timeseriesGrouping = datasetGetters.getTimeseriesGroupingVariables(
         this.$store
       );
-      facets.availableVariables().forEach((variable) => {
-        training.splice(training.indexOf(variable), 1);
-      });
+
+      // Retain only variables used in group on remove all since they can't
+      // be actually be removed without ungrouping
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        training: training.join(","),
+        training: timeseriesGrouping.join(","),
+        trainingVarsPage: 1,
       });
       this.$router.push(entry);
     },

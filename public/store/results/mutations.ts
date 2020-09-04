@@ -7,14 +7,14 @@ import {
   TableData,
   TimeSeriesValue,
 } from "../dataset/index";
-import { updateSummaries, removeSummary } from "../../util/data";
+import { updateSummaries, updateSummariesPerVariable } from "../../util/data";
 import { Dictionary } from "vue-router/types/router";
 
 export const mutations = {
   // training / target
 
   clearTrainingSummaries(state: ResultsState) {
-    state.trainingSummaries = [];
+    state.trainingSummaries = {};
   },
 
   clearCorrectnessSummaries(state: ResultsState) {
@@ -26,11 +26,7 @@ export const mutations = {
   },
 
   updateTrainingSummary(state: ResultsState, summary: VariableSummary) {
-    updateSummaries(summary, state.trainingSummaries);
-  },
-
-  removeTrainingSummary(state: ResultsState, summary: VariableSummary) {
-    removeSummary(summary, state.trainingSummaries);
+    updateSummariesPerVariable(summary, state.trainingSummaries);
   },
 
   updateTargetSummary(state: ResultsState, summary: VariableSummary) {

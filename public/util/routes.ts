@@ -31,7 +31,12 @@ export interface RouteArgs {
   baseColumnSuggestions?: string; // suggested base join columns
   joinColumnSuggestions?: string; // suggested target join columns
   groupingType?: string;
+  // added page args directly since we can't use the consts as names
   availableTargetVarsPage?: number;
+  availableTrainingVarsPage?: number;
+  joinedVarsPage?: number;
+  resultTrainingVarsPage?: number;
+  trainingVarsPage?: number;
   task?: string;
   dataMode?: string;
   varModes?: string;
@@ -45,14 +50,6 @@ export interface RouteArgs {
   modelLimit?: number;
   modelQuality?: string;
   dataSize?: number;
-
-  // we currently don't have a way to add these to the interface
-  //
-  // JOINED_VARS_INSTANCE_PAGE?: string;
-  // AVAILABLE_TARGET_VARS_INSTANCE_PAGE?: string;
-  // AVAILABLE_TRAINING_VARS_INSTANCE_PAGE?: string;
-  // TRAINING_VARS_INSTANCE_PAGE?: string;
-  // RESULT_TRAINING_VARS_INSTANCE_PAGE?: string;
 }
 
 /**

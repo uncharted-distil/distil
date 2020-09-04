@@ -12,12 +12,14 @@
       enable-highlighting
       enable-search
       enable-type-change
-      :instance-name="instanceName"
-      :rows-per-page="numRowsPerPage"
-      :summaries="availableVariableSummaries"
+      :facetCount="availableVariables.length"
       :html="html"
       :isAvailableFeatures="true"
       :isFeaturesToModel="false"
+      :instance-name="instanceName"
+      :pagination="availableVariables.length > numRowsPerPage"
+      :rows-per-page="numRowsPerPage"
+      :summaries="availableVariableSummaries"
     >
       <div class="available-variables-menu">
         <div>
@@ -42,7 +44,11 @@ import {
   getters as datasetGetters,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
-import { filterSummariesByDataset, NUM_PER_PAGE } from "../util/data";
+import {
+  filterSummariesByDataset,
+  getVariableSummariesByState,
+  NUM_PER_PAGE,
+} from "../util/data";
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
 import VariableFacets from "./facets/VariableFacets.vue";
@@ -65,14 +71,31 @@ export default Vue.extend({
       return routeGetters.getRouteInclude(this.$store);
     },
     availableVariableSummaries(): VariableSummary[] {
-      const summaries = routeGetters.getAvailableVariableSummaries(this.$store);
-      return filterSummariesByDataset(summaries, this.dataset);
+      const pageIndex = routeGetters.getRouteAvailableTrainingVarsPage(
+        this.$store
+      );
+      const include = routeGetters.getRouteInclude(this.$store);
+      const summaryDictionary = include
+        ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
+        : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
+
+      const currentSummaries = getVariableSummariesByState(
+        pageIndex,
+        this.numRowsPerPage,
+        this.availableVariables,
+        summaryDictionary
+      );
+
+      return currentSummaries;
+    },
+    availableVariables(): Variable[] {
+      return routeGetters.getAvailableVariables(this.$store);
     },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
     subtitle(): string {
-      return `${this.availableVariableSummaries.length} features available`;
+      return `${this.availableVariables.length} features available`;
     },
     numRowsPerPage(): number {
       return NUM_PER_PAGE;
@@ -129,16 +152,15 @@ export default Vue.extend({
         subActivity: SubActivity.DATA_TRANSFORMATION,
         details: {},
       });
-
-      const facets = this.$refs.facets as any;
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
       );
-      facets.availableVariables().forEach((variable) => {
-        training.push(variable);
+      this.availableVariables.forEach((variable) => {
+        training.push(variable.colName);
       });
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         training: training.join(","),
+        availableTrainingVarsPage: 1,
       });
       this.$router.push(entry);
     },

@@ -108,6 +108,9 @@ export default Vue.extend({
     highlightString(): string {
       return routeGetters.getRouteHighlight(this.$store);
     },
+    ranking(): boolean {
+      return routeGetters.getRouteIsTrainingVariablesRanked(this.$store);
+    },
     targetSampleValues(): any[] {
       const summaries = routeGetters.getTargetVariableSummaries(this.$store);
       if (summaries.length > 0) {
@@ -144,6 +147,9 @@ export default Vue.extend({
     },
     dataset() {
       viewActions.fetchSelectTrainingData(this.$store, true);
+    },
+    ranking() {
+      viewActions.updateSelectTrainingData(this.$store);
     },
   },
   beforeMount() {

@@ -9,7 +9,8 @@ import {
   BandID,
 } from "../dataset/index";
 import {
-  PREDICTION_ROUTE,
+  JOIN_DATASETS_ROUTE,
+  RESULTS_ROUTE,
   SELECT_TARGET_ROUTE,
   SELECT_TRAINING_ROUTE,
   JOINED_VARS_INSTANCE_PAGE,
@@ -29,6 +30,7 @@ import { buildLookup } from "../../util/lookup";
 import { Route } from "vue-router";
 import _ from "lodash";
 import { $enum } from "ts-enum-util";
+import { minimumRouteKey } from "../../util/data";
 
 export const getters = {
   getRoute(state: Route): Route {
@@ -180,7 +182,7 @@ export const getters = {
     return state.query.clustering && state.query.clustering === "1"; // Use "1" for truth.
   },
 
-  getRouteJoinDatasetsVarsParge(state: Route): number {
+  getRouteJoinDatasetsVarsPage(state: Route): number {
     const pageVar = JOINED_VARS_INSTANCE_PAGE;
     return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
   },
@@ -203,6 +205,18 @@ export const getters = {
   getRouteResultTrainingVarsPage(state: Route): number {
     const pageVar = RESULT_TRAINING_VARS_INSTANCE_PAGE;
     return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
+  },
+
+  getAllRoutePages(state: Route, getters: any): Object {
+    const pages = {};
+    pages[JOIN_DATASETS_ROUTE] = [getters.getRouteJoinDatasetsVarsPage];
+    pages[SELECT_TARGET_ROUTE] = [getters.getRouteAvailableTargetVarsPage];
+    pages[SELECT_TRAINING_ROUTE] = [
+      getters.getRouteAvailableTrainingVarsPage,
+      getters.getRouteTrainingVarsPage,
+    ];
+    pages[RESULTS_ROUTE] = [getters.getRouteResultTrainingVarsPage];
+    return pages;
   },
 
   getRouteTargetVariable(state: Route): string {
@@ -311,11 +325,18 @@ export const getters = {
   getTrainingVariableSummaries(state: Route, getters: any): VariableSummary[] {
     const training = getters.getDecodedTrainingVariableNames;
     const include = getters.getRouteInclude;
+    const minKey = minimumRouteKey();
     const summaries = include
-      ? getters.getIncludedVariableSummaries
-      : getters.getExcludedVariableSummaries;
-    const lookup = buildLookup(training);
-    return summaries.filter((summary) => lookup[summary.key.toLowerCase()]);
+      ? getters.getIncludedVariableSummariesDictionary
+      : getters.getExcludedVariableSummariesDictionary;
+    const trainingVariableSummaries = training.reduce((acc, variableName) => {
+      const variableSummary = summaries?.[variableName]?.[minKey];
+      if (variableSummary) {
+        acc.push(variableSummary);
+      }
+      return acc;
+    }, []);
+    return trainingVariableSummaries;
   },
 
   getTargetVariable(state: Route, getters: any): Variable {
@@ -334,16 +355,23 @@ export const getters = {
 
   getTargetVariableSummaries(state: Route, getters: any): VariableSummary[] {
     const target = getters.getRouteTargetVariable;
-    if (target) {
-      const include = getters.getRouteInclude;
-      const summaries = include
-        ? getters.getIncludedVariableSummaries
-        : getters.getExcludedVariableSummaries;
-      return summaries.filter(
-        (summary) => target.toLowerCase() === summary.key.toLowerCase()
-      );
+    const include = getters.getRouteInclude;
+    const minKey = minimumRouteKey();
+    const summaries = include
+      ? getters.getIncludedVariableSummariesDictionary
+      : getters.getExcludedVariableSummariesDictionary;
+    const targetVariableSummary = summaries?.[target]?.[minKey];
+    if (targetVariableSummary) {
+      return [targetVariableSummary];
+    } else {
+      const currentVariable = summaries?.[target];
+      if (currentVariable) {
+        const placeholderKey = Object.keys(currentVariable)[0];
+        return [currentVariable[placeholderKey]];
+      } else {
+        return [];
+      }
     }
-    return [];
   },
 
   getAvailableVariables(state: Route, getters: any): Variable[] {
@@ -355,18 +383,6 @@ export const getters = {
     return variables.filter(
       (variable) => !lookup[variable.colName.toLowerCase()]
     );
-  },
-
-  getAvailableVariableSummaries(state: Route, getters: any): VariableSummary[] {
-    const training = getters.getDecodedTrainingVariableNames;
-    const target = getters.getRouteTargetVariable;
-    const include = getters.getRouteInclude;
-    const lookup =
-      training && target ? buildLookup(training.concat([target])) : null;
-    const summaries = include
-      ? getters.getIncludedVariableSummaries
-      : getters.getExcludedVariableSummaries;
-    return summaries.filter((summary) => !lookup[summary.key.toLowerCase()]);
   },
 
   getActiveSolutionIndex(state: Route, getters: any): number {

@@ -35,7 +35,11 @@ export const actions = {
   fetchSelectTrainingData: dispatch(moduleActions.fetchSelectTrainingData),
   updateSelectTrainingData: dispatch(moduleActions.updateSelectTrainingData),
   fetchResultsData: dispatch(moduleActions.fetchResultsData),
+  updateResultsSummaries: dispatch(moduleActions.updateResultsSummaries),
   updateResultsSolution: dispatch(moduleActions.updateResultsSolution),
   fetchPredictionsData: dispatch(moduleActions.fetchPredictionsData),
+  updatePredictionTrainingSummaries: dispatch(
+    moduleActions.updatePredictionTrainingSummaries
+  ),
   updatePrediction: dispatch(moduleActions.updatePredictions),
 };

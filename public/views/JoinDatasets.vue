@@ -139,7 +139,7 @@ export default Vue.extend({
       return routeGetters.getRouteHighlight(this.$store);
     },
     joinedVarsPage(): number {
-      return routeGetters.getRouteJoinDatasetsVarsParge(this.$store);
+      return routeGetters.getRouteJoinDatasetsVarsPage(this.$store);
     },
     joinDatasetsTableData(): Dictionary<TableData> {
       return datasetGetters.getJoinDatasetsTableData(this.$store);

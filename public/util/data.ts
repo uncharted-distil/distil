@@ -1,6 +1,7 @@
 import _ from "lodash";
 import axios from "axios";
 import Vue from "vue";
+import sha1 from "crypto-js/sha1";
 import {
   Variable,
   VariableSummary,
@@ -52,6 +53,7 @@ export const PREDICTED_SUFFIX = "_predicted";
 export const ERROR_SUFFIX = "_error";
 
 export const NUM_PER_PAGE = 10;
+export const NUM_PER_TARGET_PAGE = 9;
 
 export const DATAMART_PROVENANCE_NYU = "NYU";
 export const DATAMART_PROVENANCE_ISI = "ISI";
@@ -271,6 +273,33 @@ export function fetchResultExemplars(
   return new Promise((res) => res());
 }
 
+/*
+  minimumRouteKey - Makes a unique key given route state to support 
+  saving to and retrieving from a variable summary dictionary cache
+  using some of the route's query options (IE: not grabbing all
+  options as that's too narrow in focus.) It SHA1 hashes a string 
+  of datasetId, solutionId, requestId, fittedSolutionId, highlight, 
+  filters, dataMode, varModes and ranking as that's unique enough 
+  without being over specific and causing duplicate calls. The SHA1 
+  hash of those fields is fast to calculate, maintains uniqueness, 
+  and keeps the store keys a consistent length, unlike base64. 
+*/
+export function minimumRouteKey(): string {
+  const routeKeys =
+    JSON.stringify(routeGetters.getRouteDataset(store)) +
+    JSON.stringify(routeGetters.getRouteSolutionId(store)) +
+    JSON.stringify(routeGetters.getRouteProduceRequestId(store)) +
+    JSON.stringify(routeGetters.getRouteFittedSolutionId(store)) +
+    JSON.stringify(routeGetters.getRouteHighlight(store)) +
+    JSON.stringify(routeGetters.getRouteFilters(store)) +
+    JSON.stringify(routeGetters.getDataMode(store)) +
+    JSON.stringify(routeGetters.getDecodedVarModes(store)) +
+    +"ranked" +
+    JSON.stringify(routeGetters.getRouteIsTrainingVariablesRanked);
+  const sha1rk = sha1(routeKeys);
+  return sha1rk;
+}
+
 export function updateSummaries(
   summary: VariableSummary,
   summaries: VariableSummary[]
@@ -283,6 +312,23 @@ export function updateSummaries(
   } else {
     summaries.push(Object.freeze(summary));
   }
+}
+
+export function updateSummariesPerVariable(
+  summary: VariableSummary,
+  variableSummaryDictionary: Dictionary<Dictionary<VariableSummary>>
+) {
+  const routeKey = minimumRouteKey();
+  const summaryKey = summary.key;
+  // check for existing summaries for that variable, if not, instantiate
+  if (!variableSummaryDictionary[summaryKey]) {
+    Vue.set(variableSummaryDictionary, summaryKey, {});
+  }
+  Vue.set(
+    variableSummaryDictionary[summaryKey],
+    routeKey,
+    Object.freeze(summary)
+  );
 }
 
 export function removeSummary(
@@ -463,15 +509,71 @@ export async function fetchPredictionResultSummary(
 
 export function filterVariablesByPage(
   pageIndex: number,
-  numPerPage: number,
+  pageSize: number,
   variables: VariableSummary[]
 ): VariableSummary[] {
-  if (variables.length > numPerPage) {
-    const firstIndex = numPerPage * (pageIndex - 1);
-    const lastIndex = Math.min(firstIndex + numPerPage, variables.length);
+  if (variables.length > pageSize) {
+    const firstIndex = pageSize * (pageIndex - 1);
+    const lastIndex = Math.min(firstIndex + pageSize, variables.length);
     return variables.slice(firstIndex, lastIndex);
   }
   return variables;
+}
+
+export function filterArrayByPage(
+  pageIndex: number,
+  pageSize: number,
+  items: any[]
+): any[] {
+  if (items.length > pageSize) {
+    const firstIndex = pageSize * (pageIndex - 1);
+    const lastIndex = Math.min(firstIndex + pageSize, items.length);
+    return items.slice(firstIndex, lastIndex);
+  }
+  return items;
+}
+
+export function getVariableSummariesByState(
+  pageIndex: number,
+  pageSize: number,
+  variables: Variable[],
+  summaryDictionary: Dictionary<Dictionary<VariableSummary>>
+) {
+  const routeKey = minimumRouteKey();
+  const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
+  let currentSummaries = [];
+
+  if (Object.keys(summaryDictionary).length > 0 && variables.length > 0) {
+    let sortedVariables = ranked
+      ? sortVariablesByImportance(variables)
+      : variables;
+
+    // select only the current variables on the page
+    sortedVariables = filterArrayByPage(pageIndex, pageSize, sortedVariables);
+    // map them back to the variable summary dictionary for the current route key
+    currentSummaries = sortedVariables.reduce((cs, vn) => {
+      if (!summaryDictionary[vn.colName]) {
+        const placeholder = createPendingSummary(
+          vn.colName,
+          vn.colDisplayName,
+          vn.colDescription,
+          vn.datasetName
+        );
+        cs.push(placeholder);
+      } else {
+        if (summaryDictionary[vn.colName][routeKey]) {
+          cs.push(summaryDictionary[vn.colName][routeKey]);
+        } else {
+          const tempVariableSummaryKey = Object.keys(
+            summaryDictionary[vn.colName]
+          )[0];
+          cs.push(summaryDictionary[vn.colName][tempVariableSummaryKey]);
+        }
+      }
+      return cs;
+    }, []);
+  }
+  return currentSummaries;
 }
 
 export function getVariableImportance(v: Variable): number {

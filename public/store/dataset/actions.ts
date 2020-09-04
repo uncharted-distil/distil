@@ -22,6 +22,7 @@ import {
   BandID,
   isClusteredGrouping,
   TimeSeriesValue,
+  VariableSummary,
 } from "./index";
 import { mutations, getters } from "./module";
 import store, { DistilState } from "../store";
@@ -33,6 +34,7 @@ import {
   createEmptyTableData,
   fetchSummaryExemplars,
   validateArgs,
+  minimumRouteKey,
 } from "../../util/data";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import { loadImage } from "../../util/image";
@@ -658,17 +660,6 @@ export const actions = {
         }),
       ]);
     } catch (error) {
-      // const key = args.field;
-      // const label = args.field;
-      // const dataset = args.dataset;
-      // mutations.updateIncludedVariableSummaries(
-      //   context,
-      //   createErrorSummary(key, label, dataset, error)
-      // );
-      // mutations.updateExcludedVariableSummaries(
-      //   context,
-      //   createErrorSummary(key, label, dataset, error)
-      // );
       mutations.updateVariableType(context, { ...args, type: UNKNOWN_TYPE });
     }
   },
@@ -739,47 +730,63 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "variables"])) {
       return null;
     }
-
     const mutator = args.include
       ? mutations.updateIncludedVariableSummaries
       : mutations.updateExcludedVariableSummaries;
-    const existingSummaries = args.include
-      ? context.state.includedSet.variableSummaries
-      : context.state.excludedSet.variableSummaries;
 
-    // commit empty place holders, if there is no data
+    const summariesByVariable = args.include
+      ? context.state.includedSet.variableSummariesByKey
+      : context.state.excludedSet.variableSummariesByKey;
+    const routeKey = minimumRouteKey();
     const promises = [];
+
     args.variables.forEach((variable) => {
-      const exists = _.find(existingSummaries, (v) => {
-        return v.dataset === args.dataset && v.key === variable.colName;
-      });
+      const existingVariableSummary =
+        summariesByVariable?.[variable.colName]?.[routeKey];
 
-      if (!exists) {
-        // add placeholder if it doesn't exist
-        const key = variable.colName;
-        const label = variable.colDisplayName;
-        const dataset = args.dataset;
-        const desciption = variable.colDescription;
-        mutator(context, createPendingSummary(key, label, desciption, dataset));
+      if (existingVariableSummary) {
+        promises.push(existingVariableSummary);
+      } else {
+        if (summariesByVariable[variable.colName]) {
+          // if we have any saved state for that variable
+          // use that as placeholder due to vue lifecycle
+          const tempVariableSummaryKey = Object.keys(
+            summariesByVariable[variable.colName]
+          )[0];
+          promises.push(
+            summariesByVariable[variable.colName][tempVariableSummaryKey]
+          );
+        } else {
+          // add a loading placeholder if nothing exists for that variable
+          mutator(
+            context,
+            createPendingSummary(
+              variable.colName,
+              variable.colDisplayName,
+              variable.colDescription,
+              args.dataset
+            )
+          );
+        }
+
+        // Get the mode or default
+        const mode = args.varModes.has(variable.colName)
+          ? args.varModes.get(variable.colName)
+          : SummaryMode.Default;
+
+        // fetch summary
+        promises.push(
+          actions.fetchVariableSummary(context, {
+            dataset: args.dataset,
+            variable: variable.colName,
+            filterParams: args.filterParams,
+            highlight: args.highlight,
+            include: args.include,
+            dataMode: args.dataMode,
+            mode: mode,
+          })
+        );
       }
-
-      // Get the mode or default
-      const mode = args.varModes.has(variable.colName)
-        ? args.varModes.get(variable.colName)
-        : SummaryMode.Default;
-
-      // fetch summary
-      promises.push(
-        actions.fetchVariableSummary(context, {
-          dataset: args.dataset,
-          variable: variable.colName,
-          filterParams: args.filterParams,
-          highlight: args.highlight,
-          include: args.include,
-          dataMode: args.dataMode,
-          mode: mode,
-        })
-      );
     });
     // fill them in asynchronously
     return Promise.all(promises);
@@ -811,6 +818,7 @@ export const actions = {
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;
+
     try {
       const response = await axios.post(
         `/distil/variable-summary/${args.dataset}/${

@@ -34,6 +34,13 @@ import {
   Highlight,
 } from "../dataset";
 import { getPredictionsById } from "../../util/predictions";
+import {
+  NUM_PER_PAGE,
+  NUM_PER_TARGET_PAGE,
+  sortVariablesByImportance,
+  filterArrayByPage,
+} from "../../util/data";
+import { SELECT_TARGET_ROUTE } from "../route";
 
 enum ParamCacheKey {
   VARIABLES = "VARIABLES",
@@ -86,36 +93,81 @@ const fetchVariables = createCacheable(
   }
 );
 
-const fetchVariableSummaries = createCacheable(
-  ParamCacheKey.VARIABLE_SUMMARIES,
-  async (context, args) => {
-    await fetchVariables(context, args);
-    const dataset = args.dataset as string;
-    const variables = context.getters.getVariables;
-    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
-    const highlight = context.getters.getDecodedHighlight;
-    const varModes = context.getters.getDecodedVarModes;
-    const dataMode = context.getters.getDataMode;
-    return Promise.all([
-      datasetActions.fetchIncludedVariableSummaries(store, {
-        dataset: dataset,
-        variables: variables,
-        filterParams: filterParams,
-        highlight: highlight,
-        dataMode: dataMode,
-        varModes: varModes,
-      }),
-      datasetActions.fetchExcludedVariableSummaries(store, {
-        dataset: dataset,
-        variables: variables,
-        filterParams: filterParams,
-        highlight: highlight,
-        dataMode: dataMode,
-        varModes: varModes,
-      }),
-    ]);
-  }
-);
+const fetchVariableSummaries = async (context, args) => {
+  await fetchVariables(context, args);
+  const dataset = args.dataset as string;
+  const variables = context.getters.getVariables as Variable[];
+  const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+  const highlight = context.getters.getDecodedHighlight;
+  const varModes = context.getters.getDecodedVarModes;
+  const dataMode = context.getters.getDataMode;
+
+  const currentRoute = routeGetters.getRoutePath(store);
+  const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
+  const pages = routeGetters.getAllRoutePages(store);
+  const targetVariable = routeGetters.getTargetVariable(store);
+
+  const currentPageIndexes = pages[currentRoute];
+  const trainingIndex = currentPageIndexes?.[1];
+
+  const pageLength =
+    currentRoute === SELECT_TARGET_ROUTE ? NUM_PER_TARGET_PAGE : NUM_PER_PAGE;
+
+  const allTrainingVariables = routeGetters.getTrainingVariables(store);
+  const activeTrainingVariables = trainingIndex
+    ? filterArrayByPage(trainingIndex, pageLength, allTrainingVariables)
+    : [];
+
+  const allTargetTrainingVariables = targetVariable
+    ? [targetVariable, ...allTrainingVariables]
+    : [];
+  const activeTargetTrainingVariables = targetVariable
+    ? [targetVariable, ...activeTrainingVariables]
+    : [];
+
+  const allTargetTrainingVariableNames = allTargetTrainingVariables.map((sv) =>
+    sv.colDisplayName.toLowerCase()
+  );
+
+  const presortedVariables = ranked
+    ? sortVariablesByImportance(variables.slice())
+    : variables;
+
+  const pageVariables = presortedVariables
+    .filter(
+      (v) =>
+        allTargetTrainingVariableNames.indexOf(v.colDisplayName.toLowerCase()) <
+        0
+    )
+    .slice(
+      (currentPageIndexes[0] - 1) * pageLength,
+      currentPageIndexes[0] * pageLength
+    );
+
+  const allActiveVariables = [
+    ...activeTargetTrainingVariables,
+    ...pageVariables,
+  ];
+
+  return Promise.all([
+    datasetActions.fetchIncludedVariableSummaries(store, {
+      dataset: dataset,
+      variables: allActiveVariables,
+      filterParams: filterParams,
+      highlight: highlight,
+      dataMode: dataMode,
+      varModes: varModes,
+    }),
+    datasetActions.fetchExcludedVariableSummaries(store, {
+      dataset: dataset,
+      variables: allActiveVariables,
+      filterParams: filterParams,
+      highlight: highlight,
+      dataMode: dataMode,
+      varModes: varModes,
+    }),
+  ]);
+};
 
 const fetchVariableRankings = createCacheable(
   ParamCacheKey.VARIABLE_RANKINGS,
@@ -418,6 +470,35 @@ export const actions = {
     return actions.updateResultsSolution(context);
   },
 
+  updateResultsSummaries(context: ViewContext) {
+    const dataset = routeGetters.getRouteDataset(store);
+    const trainingVariables = requestGetters.getActiveSolutionTrainingVariables(
+      store
+    );
+    const highlight = routeGetters.getDecodedHighlight(store);
+    const dataMode = context.getters.getDataMode;
+    const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
+      store
+    );
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    const page = routeGetters.getRouteResultTrainingVarsPage(store);
+    const pageSize = NUM_PER_PAGE;
+    const activeTrainingVariables = filterArrayByPage(
+      page,
+      pageSize,
+      trainingVariables
+    );
+
+    resultActions.fetchTrainingSummaries(store, {
+      dataset: dataset,
+      training: activeTrainingVariables,
+      solutionId: solutionId,
+      highlight: highlight,
+      dataMode: dataMode,
+      varModes: varModes,
+    });
+  },
+
   updateResultsSolution(context: ViewContext) {
     // clear previous state
     resultMutations.clearResidualsExtrema(store);
@@ -429,15 +510,14 @@ export const actions = {
     const target = routeGetters.getRouteTargetVariable(store);
     const requestIds = requestGetters.getRelevantSolutionRequestIds(store);
     const solutionId = routeGetters.getRouteSolutionId(store);
-    const trainingVariables = requestGetters.getActiveSolutionTrainingVariables(
-      store
-    );
     const highlight = routeGetters.getDecodedHighlight(store);
     const dataMode = context.getters.getDataMode;
     const varModes: Map<string, SummaryMode> = routeGetters.getDecodedVarModes(
       store
     );
     const size = routeGetters.getRouteDataSize(store);
+
+    // before fetching narrow
 
     resultActions.fetchResultTableData(store, {
       dataset: dataset,
@@ -456,14 +536,9 @@ export const actions = {
         ? varModes.get(target)
         : SummaryMode.Default,
     });
-    resultActions.fetchTrainingSummaries(store, {
-      dataset: dataset,
-      training: trainingVariables,
-      solutionId: solutionId,
-      highlight: highlight,
-      dataMode: dataMode,
-      varModes: varModes,
-    });
+
+    actions.updateResultsSummaries(context);
+
     resultActions.fetchPredictedSummaries(store, {
       dataset: dataset,
       target: target,
@@ -535,6 +610,37 @@ export const actions = {
     return actions.updatePredictions(context);
   },
 
+  updatePredictionTrainingSummaries(context: ViewContext) {
+    // fetch new state
+    const produceRequestId = <string>context.getters.getRouteProduceRequestId;
+    const inferenceDataset = getPredictionsById(
+      context.getters.getPredictions,
+      produceRequestId
+    ).dataset;
+    const highlight = <Highlight>context.getters.getDecodedHighlight;
+    const varModes = <Map<string, SummaryMode>>(
+      context.getters.getDecodedVarModes
+    );
+    const trainingVariables = <Variable[]>(
+      context.getters.getActivePredictionTrainingVariables
+    );
+    const page = routeGetters.getRouteResultTrainingVarsPage(store);
+    const pageSize = NUM_PER_PAGE;
+    const activeTrainingVariables = filterArrayByPage(
+      page,
+      pageSize,
+      trainingVariables
+    );
+
+    predictionActions.fetchTrainingSummaries(store, {
+      dataset: inferenceDataset,
+      training: activeTrainingVariables,
+      highlight: highlight,
+      varModes: varModes,
+      produceRequestId: produceRequestId,
+    });
+  },
+
   updatePredictions(context: ViewContext) {
     // clear previous state
     predictionMutations.setIncludedPredictionTableData(store, null);
@@ -546,13 +652,7 @@ export const actions = {
       context.getters.getPredictions,
       produceRequestId
     ).dataset;
-    const trainingVariables = <Variable[]>(
-      context.getters.getActivePredictionTrainingVariables
-    );
     const highlight = <Highlight>context.getters.getDecodedHighlight;
-    const varModes = <Map<string, SummaryMode>>(
-      context.getters.getDecodedVarModes
-    );
     const size = routeGetters.getRouteDataSize(store);
 
     predictionActions.fetchPredictionTableData(store, {
@@ -561,13 +661,9 @@ export const actions = {
       produceRequestId: produceRequestId,
       size,
     });
-    predictionActions.fetchTrainingSummaries(store, {
-      dataset: inferenceDataset,
-      training: trainingVariables,
-      highlight: highlight,
-      varModes: varModes,
-      produceRequestId: produceRequestId,
-    });
+
+    actions.updatePredictionTrainingSummaries(context);
+
     predictionActions.fetchPredictedSummaries(store, {
       highlight: highlight,
       fittedSolutionId: fittedSolutionId,

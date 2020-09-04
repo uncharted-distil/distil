@@ -26,8 +26,8 @@ export const getters = {
     moduleGetters.getDecodedJoinDatasetsFilterParams
   ),
   getRouteJoinDatasetsHash: read(moduleGetters.getRouteJoinDatasetsHash),
-  getRouteJoinDatasetsVarsParge: read(
-    moduleGetters.getRouteJoinDatasetsVarsParge
+  getRouteJoinDatasetsVarsPage: read(
+    moduleGetters.getRouteJoinDatasetsVarsPage
   ),
   getJoinDatasetsVariables: read(moduleGetters.getJoinDatasetsVariables),
   getJoinDatasetsVariableSummaries: read(
@@ -48,6 +48,7 @@ export const getters = {
     moduleGetters.getRouteAvailableTrainingVarsPage
   ),
   getRouteTrainingVarsPage: read(moduleGetters.getRouteTrainingVarsPage),
+  getAllRoutePages: read(moduleGetters.getAllRoutePages),
   getRouteResultTrainingVarsPage: read(
     moduleGetters.getRouteResultTrainingVarsPage
   ),
@@ -75,9 +76,6 @@ export const getters = {
   getTargetVariable: read(moduleGetters.getTargetVariable),
   getTargetVariableSummaries: read(moduleGetters.getTargetVariableSummaries),
   getAvailableVariables: read(moduleGetters.getAvailableVariables),
-  getAvailableVariableSummaries: read(
-    moduleGetters.getAvailableVariableSummaries
-  ),
   getDecodedHighlight: read(moduleGetters.getDecodedHighlight),
   getDecodedRowSelection: read(moduleGetters.getDecodedRowSelection),
   getDataMode: read(moduleGetters.getDataMode),
@@ -87,7 +85,7 @@ export const getters = {
   getGeoZoom: read(moduleGetters.getGeoZoom),
   getGroupingType: read(moduleGetters.getGroupingType),
   getRouteTask: read(moduleGetters.getRouteTask),
-  getRouteFittedSolutionID: read(moduleGetters.getRouteFittedSolutionId),
+  getRouteFittedSolutionId: read(moduleGetters.getRouteFittedSolutionId),
   getRoutePredictionsDataset: read(moduleGetters.getRoutePredictionsDataset),
   isSingleSolution: read(moduleGetters.isSingleSolution),
   isApplyModel: read(moduleGetters.isApplyModel),

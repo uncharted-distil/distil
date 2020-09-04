@@ -16,10 +16,13 @@
             class="h-100"
             enable-search
             enable-highlighting
-            model-selection
+            :facetCount="trainingVariables.length"
             instance-name="resultTrainingVars"
-            :summaries="trainingSummaries"
+            is-result-features
             :log-activity="logActivity"
+            model-selection
+            :pagination="trainingVariables.length > rowsPerPage"
+            :summaries="trainingSummaries"
           >
           </variable-facets>
         </div>
@@ -43,15 +46,17 @@ import PredictionsDataSlot from "../components/PredictionsDataSlot";
 import PredictionSummaries from "../components/PredictionSummaries";
 import StatusPanel from "../components/StatusPanel";
 import StatusSidebar from "../components/StatusSidebar";
-import { VariableSummary } from "../store/dataset/index";
+import { VariableSummary, Variable } from "../store/dataset/index";
 import { actions as viewActions } from "../store/view/module";
 import {
   getters as datasetGetters,
   actions as datasetActions,
 } from "../store/dataset/module";
+import { getters as predictionGetters } from "../store/predictions/module";
+import { getters as requestGetters } from "../store/requests/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as predictionGetters } from "../store/predictions/module";
+import { NUM_PER_PAGE, getVariableSummariesByState } from "../util/data";
 import { Feature, Activity } from "../util/userEvents";
 
 export default Vue.extend({
@@ -75,8 +80,21 @@ export default Vue.extend({
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+    trainingVariables(): Variable[] {
+      return requestGetters.getActivePredictionTrainingVariables(this.$store);
+    },
+
     trainingSummaries(): VariableSummary[] {
-      return predictionGetters.getTrainingSummaries(this.$store);
+      const summaryDictionary = predictionGetters.getTrainingSummariesDictionary(
+        this.$store
+      );
+
+      return getVariableSummariesByState(
+        this.trainingVarsPage,
+        this.rowsPerPage,
+        this.trainingVariables,
+        summaryDictionary
+      );
     },
     solutionId(): string {
       return routeGetters.getRouteSolutionId(this.$store);
@@ -86,6 +104,12 @@ export default Vue.extend({
     },
     highlightString(): string {
       return routeGetters.getRouteHighlight(this.$store);
+    },
+    trainingVarsPage(): number {
+      return routeGetters.getRouteResultTrainingVarsPage(this.$store);
+    },
+    rowsPerPage(): number {
+      return NUM_PER_PAGE;
     },
   },
 
@@ -102,7 +126,7 @@ export default Vue.extend({
       viewActions.updatePrediction(this.$store);
     },
     trainingVarsPage() {
-      viewActions.updatePrediction(this.$store);
+      viewActions.updatePredictionTrainingSummaries(this.$store);
     },
   },
 });

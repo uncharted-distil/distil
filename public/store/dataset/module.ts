@@ -34,12 +34,14 @@ export const getters = {
   ),
   getVariablesMap: read(moduleGetters.getVariablesMap),
   getVariableTypesMap: read(moduleGetters.getVariableTypesMap),
-  getVariableSummaries: read(moduleGetters.getVariableSummaries),
-  getIncludedVariableSummaries: read(
-    moduleGetters.getIncludedVariableSummaries
+  getVariableSummariesDictionary: read(
+    moduleGetters.getVariableSummariesDictionary
   ),
-  getExcludedVariableSummaries: read(
-    moduleGetters.getExcludedVariableSummaries
+  getIncludedVariableSummariesDictionary: read(
+    moduleGetters.getIncludedVariableSummariesDictionary
+  ),
+  getExcludedVariableSummariesDictionary: read(
+    moduleGetters.getExcludedVariableSummariesDictionary
   ),
   getVariableRankings: read(moduleGetters.getVariableRankings),
 

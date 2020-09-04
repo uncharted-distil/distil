@@ -16,11 +16,13 @@
           class="h-100"
           enable-search
           enable-highlighting
-          model-selection
-          is-result-features
+          :facetCount="trainingVariables.length"
           instance-name="resultTrainingVars"
-          :summaries="trainingSummaries"
+          is-result-features
           :log-activity="logActivity"
+          model-selection
+          :pagination="trainingVariables.length > rowsPerPage"
+          :summaries="trainingSummaries"
         >
         </variable-facets>
       </div>
@@ -41,11 +43,13 @@ import VariableFacets from "../components/facets/VariableFacets.vue";
 import ResultsComparison from "../components/ResultsComparison";
 import ResultSummaries from "../components/ResultSummaries";
 import ResultTargetVariable from "../components/ResultTargetVariable";
-import { VariableSummary } from "../store/dataset/index";
+import { Variable, VariableSummary } from "../store/dataset/index";
 import { actions as viewActions } from "../store/view/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as requestGetters } from "../store/requests/module";
+import { NUM_PER_PAGE, getVariableSummariesByState } from "../util/data";
 import { Feature, Activity } from "../util/userEvents";
 
 export default Vue.extend({
@@ -87,8 +91,20 @@ export default Vue.extend({
       }
       return "";
     },
+    trainingVariables(): Variable[] {
+      return requestGetters.getActiveSolutionTrainingVariables(this.$store);
+    },
     trainingSummaries(): VariableSummary[] {
-      return resultGetters.getTrainingSummaries(this.$store);
+      const summaryDictionary = resultGetters.getTrainingSummariesDictionary(
+        this.$store
+      );
+
+      return getVariableSummariesByState(
+        this.resultTrainingVarsPage,
+        this.rowsPerPage,
+        this.trainingVariables,
+        summaryDictionary
+      );
     },
     solutionId(): string {
       return routeGetters.getRouteSolutionId(this.$store);
@@ -98,6 +114,9 @@ export default Vue.extend({
     },
     resultTrainingVarsPage(): number {
       return routeGetters.getRouteResultTrainingVarsPage(this.$store);
+    },
+    rowsPerPage(): number {
+      return NUM_PER_PAGE;
     },
   },
 
@@ -113,7 +132,7 @@ export default Vue.extend({
       viewActions.updateResultsSolution(this.$store);
     },
     resultTrainingVarsPage() {
-      viewActions.updateResultsSolution(this.$store);
+      viewActions.updateResultsSummaries(this.$store);
     },
   },
 });

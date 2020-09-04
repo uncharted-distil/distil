@@ -80,16 +80,22 @@ export const getters = {
     return state.variableRankings;
   },
 
-  getVariableSummaries(state: DatasetState): VariableSummary[] {
-    return state.includedSet.variableSummaries;
+  getVariableSummariesDictionary(
+    state: DatasetState
+  ): Dictionary<Dictionary<VariableSummary>> {
+    return state.includedSet.variableSummariesByKey;
   },
 
-  getIncludedVariableSummaries(state: DatasetState): VariableSummary[] {
-    return state.includedSet.variableSummaries;
+  getIncludedVariableSummariesDictionary(
+    state: DatasetState
+  ): Dictionary<Dictionary<VariableSummary>> {
+    return state.includedSet.variableSummariesByKey;
   },
 
-  getExcludedVariableSummaries(state: DatasetState): VariableSummary[] {
-    return state.excludedSet.variableSummaries;
+  getExcludedVariableSummariesDictionary(
+    state: DatasetState
+  ): Dictionary<Dictionary<VariableSummary>> {
+    return state.excludedSet.variableSummariesByKey;
   },
 
   getFiles(state: DatasetState): Dictionary<any> {

@@ -12,7 +12,10 @@ import {
   BandCombination,
   TimeSeriesValue,
 } from "./index";
-import { updateSummaries, isDatamartProvenance } from "../../util/data";
+import {
+  updateSummariesPerVariable,
+  isDatamartProvenance,
+} from "../../util/data";
 import {
   GEOCOORDINATE_TYPE,
   LONGITUDE_TYPE,
@@ -173,19 +176,25 @@ export const mutations = {
     state: DatasetState,
     summary: VariableSummary
   ) {
-    updateSummaries(summary, state.includedSet.variableSummaries);
+    updateSummariesPerVariable(
+      summary,
+      state.includedSet.variableSummariesByKey
+    );
   },
 
   updateExcludedVariableSummaries(
     state: DatasetState,
     summary: VariableSummary
   ) {
-    updateSummaries(summary, state.excludedSet.variableSummaries);
+    updateSummariesPerVariable(
+      summary,
+      state.excludedSet.variableSummariesByKey
+    );
   },
 
   clearVariableSummaries(state: DatasetState) {
-    state.includedSet.variableSummaries = [];
-    state.excludedSet.variableSummaries = [];
+    state.includedSet.variableSummariesByKey = {};
+    state.excludedSet.variableSummariesByKey = {};
   },
 
   setVariableRankings(

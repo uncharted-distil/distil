@@ -7,8 +7,8 @@
     "build": "prettier --check public/**/*.{vue,ts} && webpack",
     "watch": "webpack --progress --watch",
     "tslint-check": "tslint-config-prettier-check ./tslint.json",
-    "prettier-check": "prettier --check public/**/*.{vue,ts}",
-    "prettier-fix": "prettier --write public/**/*.{vue,ts}"
+    "prettier-check": "prettier --check public/**/**{vue,ts}",
+    "prettier-fix": "prettier --write public/**/**{vue,ts}"
   },
   "dependencies": {
     "@turf/bbox": "^6.0.1",
@@ -24,6 +24,7 @@
     "axios": "^0.19.0",
     "bootstrap": ">=4.5.0 <5.0.0",
     "bootstrap-vue": "^2.15.0",
+    "crypto-js": "^4.0.0",
     "d3": "^5.9.1",
     "font-awesome": "^4.7.0",
     "jquery": "^3.5.0",

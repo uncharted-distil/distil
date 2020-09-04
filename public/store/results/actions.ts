@@ -7,7 +7,13 @@ import {
   getSolutionById,
   getSolutionsBySolutionRequestIds,
 } from "../../util/solutions";
-import { Variable, Highlight, SummaryMode, DataMode } from "../dataset/index";
+import {
+  Variable,
+  Highlight,
+  SummaryMode,
+  DataMode,
+  VariableSummary,
+} from "../dataset/index";
 import { mutations } from "./module";
 import { ResultsState } from "./index";
 import { addHighlightToFilterParams } from "../../util/highlights";
@@ -18,6 +24,7 @@ import {
   createEmptyTableData,
   fetchSummaryExemplars,
   validateArgs,
+  minimumRouteKey,
 } from "../../util/data";
 import { getters as resultGetters } from "../results/module";
 import { getters as dataGetters } from "../dataset/module";
@@ -54,10 +61,7 @@ export const actions = {
       console.warn("`varModes` argument is missing");
       return null;
     }
-    if (!args.dataMode) {
-      console.warn("`dataMode` argument is missing");
-      return null;
-    }
+
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
       args.solutionId
@@ -67,52 +71,53 @@ export const actions = {
       return;
     }
 
-    const dataset = args.dataset;
-    const solutionId = args.solutionId;
-    const varModes = args.varModes;
+    const dataMode = args.dataMode ? args.dataMode : DataMode.Default;
 
     const promises = [];
 
-    // remove summaries not used to predict the newly selected model
-    context.state.trainingSummaries.forEach((v) => {
-      const isTrainingArg = args.training.reduce((isTrain, variable) => {
-        if (!isTrain) {
-          isTrain = variable.colName === v.key;
-        }
-        return isTrain;
-      }, false);
-      if (v.dataset !== args.dataset || !isTrainingArg) {
-        mutations.removeTrainingSummary(context, v);
-      }
-    });
+    const summariesByVariable = context.state.trainingSummaries;
+    const routeKey = minimumRouteKey();
 
     args.training.forEach((variable) => {
-      const key = variable.colName;
-      const label = variable.colDisplayName;
-      const description = variable.colDescription;
-      const exists = _.find(context.state.trainingSummaries, (v) => {
-        return v.dataset === args.dataset && v.key === variable.colName;
-      });
-      if (!exists) {
-        // add placeholder
-        mutations.updateTrainingSummary(
-          context,
-          createPendingSummary(key, label, description, dataset)
+      const existingVariableSummary =
+        summariesByVariable?.[variable.colName]?.[routeKey];
+
+      if (existingVariableSummary) {
+        promises.push(existingVariableSummary);
+      } else {
+        if (summariesByVariable[variable.colName]) {
+          // if we have any saved state for that variable
+          // use that as placeholder due to vue lifecycle
+          const tempVariableSummaryKey = Object.keys(
+            summariesByVariable[variable.colName]
+          )[0];
+          promises.push(
+            summariesByVariable[variable.colName][tempVariableSummaryKey]
+          );
+        } else {
+          // add a loading placeholder if nothing exists for that variable
+          createPendingSummary(
+            variable.colName,
+            variable.colDisplayName,
+            variable.colDescription,
+            args.dataset
+          );
+        }
+
+        // fetch summary
+        promises.push(
+          actions.fetchTrainingSummary(context, {
+            dataset: args.dataset,
+            variable: variable,
+            resultID: solution.resultId,
+            highlight: args.highlight,
+            dataMode: dataMode,
+            varMode: args.varModes.has(variable.colName)
+              ? args.varModes.get(variable.colName)
+              : SummaryMode.Default,
+          })
         );
       }
-      // fetch summary
-      promises.push(
-        actions.fetchTrainingSummary(context, {
-          dataset: dataset,
-          variable: variable,
-          resultID: solution.resultId,
-          highlight: args.highlight,
-          dataMode: args.dataMode,
-          varMode: varModes.has(variable.colName)
-            ? varModes.get(variable.colName)
-            : SummaryMode.Default,
-        })
-      );
     });
     return Promise.all(promises);
   },

@@ -23,7 +23,7 @@ export interface ResultsState {
   includedResultTableData: TableData;
   excludedResultTableData: TableData;
   // training / target
-  trainingSummaries: VariableSummary[];
+  trainingSummaries: Dictionary<Dictionary<VariableSummary>>;
   targetSummary: VariableSummary;
   // predicted
   predictedSummaries: VariableSummary[];
@@ -48,7 +48,7 @@ export const state: ResultsState = {
   includedResultTableData: null,
   excludedResultTableData: null,
   // training / target
-  trainingSummaries: [],
+  trainingSummaries: {},
   targetSummary: null,
   // predicted
   predictedSummaries: [],

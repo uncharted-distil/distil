@@ -22,6 +22,9 @@ const { commit, read, dispatch } = getStoreAccessors<ResultsState, DistilState>(
 export const getters = {
   // training / target
   getTrainingSummaries: read(moduleGetters.getTrainingSummaries),
+  getTrainingSummariesDictionary: read(
+    moduleGetters.getTrainingSummariesDictionary
+  ),
   getTargetSummary: read(moduleGetters.getTargetSummary),
   // result
   getFittedSolutionId: read(moduleGetters.getFittedSolutionId),
@@ -104,7 +107,6 @@ export const mutations = {
   clearTargetSummary: commit(moduleMutations.clearTargetSummary),
   updateTrainingSummary: commit(moduleMutations.updateTrainingSummary),
   updateTargetSummary: commit(moduleMutations.updateTargetSummary),
-  removeTrainingSummary: commit(moduleMutations.removeTrainingSummary),
   // result
   setIncludedResultTableData: commit(
     moduleMutations.setIncludedResultTableData

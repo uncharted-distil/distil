@@ -24,7 +24,7 @@
         <div class="col-12 flex-column variable-facets-container">
           <div
             class="variable-facets-item"
-            v-for="summary in paginatedSummaries"
+            v-for="summary in summaries"
             :key="summary.key"
           >
             <template v-if="summary.pending">
@@ -134,14 +134,15 @@
       </div>
     </div>
     <div
-      v-if="hasPages"
+      v-if="pagination"
       class="col-12 row align-items-center variable-page-nav"
     >
       <div class="col-12 flex-column">
         <b-pagination
+          v-if="pagination"
           size="sm"
           align="center"
-          :total-rows="numSummaries"
+          :total-rows="facetCount"
           :per-page="rowsPerPage"
           v-model="currentPage"
           class="mb-0"
@@ -169,6 +170,8 @@ import {
   getVariableRanking,
   getSolutionVariableRanking,
   sortSolutionSummariesByImportance,
+  sortVariablesByImportance,
+  NUM_PER_PAGE,
 } from "../../util/data";
 import {
   Highlight,
@@ -211,28 +214,30 @@ export default Vue.extend({
   },
 
   props: {
+    enableHighlighting: Boolean as () => boolean,
     enableSearch: Boolean as () => boolean,
     enableTitle: Boolean as () => boolean,
     enableTypeChange: Boolean as () => boolean,
-    enableHighlighting: Boolean as () => boolean,
-    enableTypefiltering: Boolean as () => boolean,
-    isAvailableFeatures: Boolean as () => boolean,
-    isFeaturesToModel: Boolean as () => boolean,
-    isResultFeatures: Boolean as () => boolean,
-    ignoreHighlights: Boolean as () => boolean,
-    summaries: Array as () => VariableSummary[],
-    subtitle: String as () => string,
+    enableTypeFiltering: Boolean as () => boolean,
+    facetCount: Number as () => number,
     html: [
       String as () => string,
       Object as () => any,
       Function as () => Function,
     ],
     instanceName: { type: String as () => string, default: "variableFacets" },
-    rowsPerPage: { type: Number as () => number, default: 10 },
+    isAvailableFeatures: Boolean as () => boolean,
+    isFeaturesToModel: Boolean as () => boolean,
+    isResultFeatures: Boolean as () => boolean,
+    ignoreHighlights: Boolean as () => boolean,
     logActivity: {
       type: String as () => Activity,
       default: Activity.DATA_PREPARATION,
     },
+    pagination: Boolean as () => boolean,
+    summaries: Array as () => VariableSummary[],
+    subtitle: String as () => string,
+    rowsPerPage: { type: Number as () => number, default: NUM_PER_PAGE },
   },
 
   data() {
@@ -256,39 +261,6 @@ export default Vue.extend({
 
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
-    },
-
-    filteredSummaries(): VariableSummary[] {
-      return this.summaries.filter((summary) => {
-        return (
-          this.filter === "" ||
-          summary.key.toLowerCase().includes(this.filter.toLowerCase())
-        );
-      });
-    },
-
-    sortedFilteredSummaries(): VariableSummary[] {
-      if (this.isResultFeatures) {
-        return sortSolutionSummariesByImportance(
-          this.filteredSummaries,
-          this.variables,
-          routeGetters.getRouteSolutionId(this.$store)
-        );
-      }
-      return sortSummariesByImportance(this.filteredSummaries, this.variables);
-    },
-
-    paginatedSummaries(): VariableSummary[] {
-      const filteredVariables = filterVariablesByPage(
-        this.currentPage,
-        this.rowsPerPage,
-        this.sortedFilteredSummaries
-      );
-      return filteredVariables;
-    },
-
-    numSummaries(): number {
-      return this.filteredSummaries.length;
     },
 
     highlight(): Highlight {
@@ -331,12 +303,8 @@ export default Vue.extend({
       return typeChangeStatus;
     },
 
-    hasPages(): boolean {
-      return this.numSummaries > this.rowsPerPage;
-    },
-
     variableFacetListClass(): string {
-      return this.hasPages
+      return this.pagination
         ? "variable-facets-list-with-footer"
         : "variable-facets-list";
     },
