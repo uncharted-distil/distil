@@ -247,27 +247,42 @@ export const mutations = {
       id: string;
       timeseries: TimeSeriesValue[];
       isDateTime: boolean;
+      min: number;
+      max: number;
+      mean: number;
     }
   ) {
     if (!state.timeseries[args.dataset]) {
       Vue.set(state.timeseries, args.dataset, {});
     }
+
     if (!state.timeseries[args.dataset].timeseriesData) {
       Vue.set(state.timeseries[args.dataset], "timeseriesData", {});
-    }
-    if (!state.timeseries[args.dataset].isDateTime) {
-      Vue.set(state.timeseries[args.dataset], "isDateTime", {});
     }
     Vue.set(
       state.timeseries[args.dataset].timeseriesData,
       args.id,
       Object.freeze(args.timeseries)
     );
+
+    if (!state.timeseries[args.dataset].isDateTime) {
+      Vue.set(state.timeseries[args.dataset], "isDateTime", {});
+    }
     Vue.set(
       state.timeseries[args.dataset].isDateTime,
       args.id,
       args.isDateTime
     );
+
+    // Set the min/max/mean for each timeseries data
+    if (!state.timeseries[args.dataset].info) {
+      Vue.set(state.timeseries[args.dataset], "info", {});
+    }
+    Vue.set(state.timeseries[args.dataset].info, args.id, {
+      min: args.min as number,
+      max: args.max as number,
+      mean: args.mean as number,
+    });
 
     const validTimeseries = args.timeseries.filter((t) => !_.isNil(t));
     const minX = _.minBy(validTimeseries, (d) => d.time).time;
@@ -288,6 +303,7 @@ export const mutations = {
       });
       return;
     }
+
     const x = state.timeseriesExtrema[args.dataset].x;
     const y = state.timeseriesExtrema[args.dataset].y;
     Vue.set(x, "min", Math.min(x.min, minX));

@@ -49,6 +49,9 @@ type TimeseriesObservation struct {
 type TimeseriesData struct {
 	Timeseries []*TimeseriesObservation
 	IsDateTime bool
+	Min        float64
+	Max        float64
+	Mean       float64
 }
 
 // DataStorageCtor represents a client constructor to instantiate a data

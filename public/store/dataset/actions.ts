@@ -1022,6 +1022,9 @@ export const actions = {
         id: args.timeseriesId,
         timeseries: <TimeSeriesValue[]>response.data.timeseries,
         isDateTime: <boolean>response.data.isDateTime,
+        min: <number>response.data.min,
+        max: <number>response.data.max,
+        mean: <number>response.data.mean,
       });
     } catch (error) {
       console.error(error);

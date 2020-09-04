@@ -28,6 +28,9 @@ import (
 type TimeseriesResult struct {
 	Timeseries []*api.TimeseriesObservation `json:"timeseries"`
 	IsDateTime bool                         `json:"isDateTime"`
+	Min        api.NullableFloat64          `json:"min"`
+	Max        api.NullableFloat64          `json:"max"`
+	Mean       api.NullableFloat64          `json:"mean"`
 }
 
 // TimeseriesHandler returns timeseries data.
@@ -86,6 +89,9 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 		err = handleJSON(w, TimeseriesResult{
 			Timeseries: timeseries.Timeseries,
 			IsDateTime: timeseries.IsDateTime,
+			Min:        api.NullableFloat64(timeseries.Min),
+			Max:        api.NullableFloat64(timeseries.Max),
+			Mean:       api.NullableFloat64(timeseries.Mean),
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))

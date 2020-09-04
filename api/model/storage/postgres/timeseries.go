@@ -171,6 +171,39 @@ func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) ([]*api.Timeser
 	return points, nil
 }
 
+// Calculate the Min, Max, and Mean of a list of TimerseriesObservation
+func getMinMaxMean(timeseries []*api.TimeseriesObservation) (float64, float64, float64) {
+	min := math.Inf(1)
+	max := math.Inf(-1)
+	sum := float64(0)
+
+	var value float64
+	for _, timeserie := range timeseries {
+		value = float64(timeserie.Value)
+		if !math.IsNaN(value) {
+			min = math.Min(value, min)
+			max = math.Max(value, max)
+			sum += value
+		}
+	}
+
+	// Check that the values have been updated
+	minOk := !math.IsInf(min, 0)
+	maxOk := !math.IsInf(max, 0)
+	if minOk && maxOk {
+
+		// Calculate the mean
+		mean := sum / float64(len(timeseries))
+
+		// Send them back as NullableFloat64
+		return min, max, mean
+	}
+
+	// Otherwise, send a NaN
+	var null = math.NaN()
+	return null, null, null
+}
+
 func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.Bucket, mode api.SummaryMode) ([]string, error) {
 
 	var timeseriesExemplars []string
@@ -286,9 +319,15 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	// sum duplicate timestamps
 	response = removeDuplicates(response)
 
+	// Calculate Min/Max/Mean
+	var min, max, mean = getMinMaxMean(response)
+
 	return &api.TimeseriesData{
 		Timeseries: response,
 		IsDateTime: dateTime,
+		Min:        min,
+		Max:        max,
+		Mean:       mean,
 	}, nil
 }
 
@@ -350,9 +389,16 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 	}
 	// Sum duplicate timestamps
 	response = removeDuplicates(response)
+
+	// Calculate Min/Max/Mean
+	var min, max, mean = getMinMaxMean(response)
+
 	return &api.TimeseriesData{
 		Timeseries: response,
 		IsDateTime: dateTime,
+		Min:        min,
+		Max:        max,
+		Mean:       mean,
 	}, nil
 }
 

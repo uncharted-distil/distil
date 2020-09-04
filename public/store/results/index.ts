@@ -9,6 +9,7 @@ import {
 export interface TimeSeries {
   timeseriesData: Dictionary<TimeSeriesValue[]>;
   isDateTime: Dictionary<boolean>;
+  info: Dictionary<Extrema>;
 }
 
 export interface Forecast {

@@ -77,7 +77,6 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 			handleError(w, err)
 			return
 		}
-		sourceFolder := env.ResolvePath(datasetMeta.Source, datasetMeta.Folder)
 
 		// create the new metadata and database variables
 		if !clusterVarExist {
@@ -95,7 +94,7 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 			}
 
 			// cluster data
-			addMeta, clustered, err := task.Cluster(sourceFolder, dataset, variable, datasetMeta.Variables, config.ClusteringKMeans)
+			addMeta, clustered, err := task.Cluster(datasetMeta, variable, config.ClusteringKMeans)
 			if err != nil {
 				handleError(w, err)
 				return
