@@ -12,12 +12,14 @@
       enable-highlighting
       enable-search
       enable-type-change
-      :facetCount="availableVariables.length"
+      :facetCount="availableVariables && availableVariables.length"
       :html="html"
       :isAvailableFeatures="true"
       :isFeaturesToModel="false"
       :instance-name="instanceName"
-      :pagination="availableVariables.length > numRowsPerPage"
+      :pagination="
+        availableVariables && availableVariables.length > numRowsPerPage
+      "
       :rows-per-page="numRowsPerPage"
       :summaries="availableVariableSummaries"
     >
@@ -48,6 +50,7 @@ import {
   filterSummariesByDataset,
   getVariableSummariesByState,
   NUM_PER_PAGE,
+  searchVariables,
 } from "../util/data";
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
@@ -70,6 +73,9 @@ export default Vue.extend({
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
     },
+    availableTrainingVarsSearch(): string {
+      return routeGetters.getRouteTrainingVarsSearch(this.$store);
+    },
     availableVariableSummaries(): VariableSummary[] {
       const pageIndex = routeGetters.getRouteAvailableTrainingVarsPage(
         this.$store
@@ -89,7 +95,11 @@ export default Vue.extend({
       return currentSummaries;
     },
     availableVariables(): Variable[] {
-      return routeGetters.getAvailableVariables(this.$store);
+      const av = searchVariables(
+        routeGetters.getAvailableVariables(this.$store),
+        this.availableTrainingVarsSearch
+      );
+      return av;
     },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);

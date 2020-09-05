@@ -127,6 +127,12 @@ export default Vue.extend({
     trainingVarsPage(): number {
       return routeGetters.getRouteTrainingVarsPage(this.$store);
     },
+    availableTrainingVarsSearch(): string {
+      return routeGetters.getRouteAvailableTrainingVarsSearch(this.$store);
+    },
+    trainingVarsSearch(): string {
+      return routeGetters.getRouteTrainingVarsSearch(this.$store);
+    },
   },
 
   watch: {
@@ -143,6 +149,12 @@ export default Vue.extend({
       viewActions.updateSelectTrainingData(this.$store);
     },
     trainingVarsPage() {
+      viewActions.updateSelectTrainingData(this.$store);
+    },
+    availableTrainingVarsSearch() {
+      viewActions.updateSelectTrainingData(this.$store);
+    },
+    trainingVarsSearch() {
       viewActions.updateSelectTrainingData(this.$store);
     },
     dataset() {

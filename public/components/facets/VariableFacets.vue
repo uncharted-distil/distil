@@ -3,7 +3,7 @@
     <div :class="variableFacetListClass + ' col-12 flex-column d-flex'">
       <div v-if="enableSearch" class="row align-items-center facet-filters">
         <div class="col-12 flex-column d-flex">
-          <b-form-input size="sm" v-model="filter" placeholder="Search" />
+          <b-form-input size="sm" v-model="search" placeholder="Search" />
         </div>
       </div>
       <!-- TODO: this should be passed in as title HTML -->
@@ -165,12 +165,8 @@ import GeocoordinateFacet from "./GeocoordinateFacet.vue";
 import { overlayRouteEntry, getRouteFacetPage } from "../../util/routes";
 import { Dictionary } from "../../util/dict";
 import {
-  sortSummariesByImportance,
-  filterVariablesByPage,
   getVariableRanking,
   getSolutionVariableRanking,
-  sortSolutionSummariesByImportance,
-  sortVariablesByImportance,
   NUM_PER_PAGE,
 } from "../../util/data";
 import {
@@ -184,7 +180,10 @@ import {
   actions as datasetActions,
 } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
-import { ROUTE_PAGE_SUFFIX } from "../../store/route/index";
+import {
+  ROUTE_PAGE_SUFFIX,
+  ROUTE_SEARCH_SUFFIX,
+} from "../../store/route/index";
 import { Group } from "../../util/facets";
 import {
   LATITUDE_TYPE,
@@ -242,7 +241,7 @@ export default Vue.extend({
 
   data() {
     return {
-      filter: "",
+      search: "",
     };
   },
 
@@ -321,6 +320,9 @@ export default Vue.extend({
     routePageKey(): string {
       return `${this.instanceName}${ROUTE_PAGE_SUFFIX}`;
     },
+    routeSearchKey(): string {
+      return `${this.instanceName}${ROUTE_SEARCH_SUFFIX}`;
+    },
 
     onRangeChange(
       context: string,
@@ -388,18 +390,6 @@ export default Vue.extend({
       this.$emit("numerical-click", key);
     },
 
-    availableVariables(): string[] {
-      // NOTE: used externally, not internally by the component
-      // filter by search
-      const searchFiltered = this.summaries.filter((summary) => {
-        return (
-          this.filter === "" ||
-          summary.key.toLowerCase().includes(this.filter.toLowerCase())
-        );
-      });
-      return searchFiltered.map((v) => v.key);
-    },
-
     isSeriesID(colName: string): boolean {
       // Check to see if this facet is being used as a series ID
       const targetVar = routeGetters.getTargetVariable(this.$store);
@@ -417,6 +407,15 @@ export default Vue.extend({
 
     isImage(type: string): boolean {
       return isImageType(type);
+    },
+  },
+
+  watch: {
+    search() {
+      const entry = overlayRouteEntry(this.$route, {
+        [this.routeSearchKey()]: this.search,
+      });
+      this.$router.push(entry);
     },
   },
 });

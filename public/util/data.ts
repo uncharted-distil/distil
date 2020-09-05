@@ -294,8 +294,8 @@ export function minimumRouteKey(): string {
     JSON.stringify(routeGetters.getRouteFilters(store)) +
     JSON.stringify(routeGetters.getDataMode(store)) +
     JSON.stringify(routeGetters.getDecodedVarModes(store)) +
-    +"ranked" +
-    JSON.stringify(routeGetters.getRouteIsTrainingVariablesRanked);
+    "ranked" +
+    JSON.stringify(routeGetters.getRouteIsTrainingVariablesRanked(store));
   const sha1rk = sha1(routeKeys);
   return sha1rk;
 }
@@ -507,19 +507,6 @@ export async function fetchPredictionResultSummary(
   }
 }
 
-export function filterVariablesByPage(
-  pageIndex: number,
-  pageSize: number,
-  variables: VariableSummary[]
-): VariableSummary[] {
-  if (variables.length > pageSize) {
-    const firstIndex = pageSize * (pageIndex - 1);
-    const lastIndex = Math.min(firstIndex + pageSize, variables.length);
-    return variables.slice(firstIndex, lastIndex);
-  }
-  return variables;
-}
-
 export function filterArrayByPage(
   pageIndex: number,
   pageSize: number,
@@ -531,6 +518,19 @@ export function filterArrayByPage(
     return items.slice(firstIndex, lastIndex);
   }
   return items;
+}
+
+export function searchVariables(
+  variables: Variable[],
+  searchQuery: string
+): Variable[] {
+  return variables.filter((v) => {
+    return (
+      searchQuery === undefined ||
+      searchQuery === "" ||
+      v.colName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
 }
 
 export function getVariableSummariesByState(

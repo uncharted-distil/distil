@@ -20,6 +20,11 @@ import {
   RESULT_TRAINING_VARS_INSTANCE_PAGE,
   DATA_SIZE_DEFAULT,
   DATA_SIZE_REMOTE_SENSING_DEFAULT,
+  AVAILABLE_TARGET_VARS_INSTANCE_SEARCH,
+  JOINED_VARS_INSTANCE_SEARCH,
+  AVAILABLE_TRAINING_VARS_INSTANCE_SEARCH,
+  TRAINING_VARS_INSTANCE_SEARCH,
+  RESULT_TRAINING_VARS_INSTANCE_SEARCH,
 } from "../route/index";
 import { ModelQuality } from "../requests/index";
 import { decodeFilters, Filter, FilterParams } from "../../util/filters";
@@ -217,6 +222,43 @@ export const getters = {
     ];
     pages[RESULTS_ROUTE] = [getters.getRouteResultTrainingVarsPage];
     return pages;
+  },
+
+  getRouteJoinDatasetsVarsSearch(state: Route): string {
+    const searchVar = JOINED_VARS_INSTANCE_SEARCH;
+    return state.query[searchVar] ? _.toString(state.query[searchVar]) : "";
+  },
+
+  getRouteAvailableTargetVarsSearch(state: Route): string {
+    const searchVar = AVAILABLE_TARGET_VARS_INSTANCE_SEARCH;
+    return state.query[searchVar] ? _.toString(state.query[searchVar]) : "";
+  },
+
+  getRouteAvailableTrainingVarsSearch(state: Route): string {
+    const searchVar = AVAILABLE_TRAINING_VARS_INSTANCE_SEARCH;
+    return state.query[searchVar] ? _.toString(state.query[searchVar]) : "";
+  },
+
+  getRouteTrainingVarsSearch(state: Route): string {
+    const searchVar = TRAINING_VARS_INSTANCE_SEARCH;
+    return state.query[searchVar] ? _.toString(state.query[searchVar]) : "";
+  },
+
+  getRouteResultTrainingVarsSearch(state: Route): string {
+    const searchVar = RESULT_TRAINING_VARS_INSTANCE_SEARCH;
+    return state.query[searchVar] ? _.toString(state.query[searchVar]) : "";
+  },
+
+  getAllRouteSearches(state: Route, getters: any): Object {
+    const searches = {};
+    searches[JOIN_DATASETS_ROUTE] = [getters.getRouteJoinDatasetsVarsSearch];
+    searches[SELECT_TARGET_ROUTE] = [getters.getRouteAvailableTargetVarsSearch];
+    searches[SELECT_TRAINING_ROUTE] = [
+      getters.getRouteAvailableTrainingVarsSearch,
+      getters.getRouteTrainingVarsSearch,
+    ];
+    searches[RESULTS_ROUTE] = [getters.getRouteResultTrainingVarsSearch];
+    return searches;
   },
 
   getRouteTargetVariable(state: Route): string {
