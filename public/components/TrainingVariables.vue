@@ -50,7 +50,11 @@ import {
 } from "../store/dataset/module";
 import { TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
-import { NUM_PER_PAGE, getVariableSummariesByState } from "../util/data";
+import {
+  NUM_PER_PAGE,
+  getVariableSummariesByState,
+  searchVariables,
+} from "../util/data";
 import { overlayRouteEntry } from "../util/routes";
 import { removeFiltersByName } from "../util/filters";
 import { actions as appActions } from "../store/app/module";
@@ -85,8 +89,14 @@ export default Vue.extend({
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
     },
+    trainingVarsSearch(): string {
+      return routeGetters.getRouteTrainingVarsSearch(this.$store);
+    },
     trainingVariables(): Variable[] {
-      return routeGetters.getTrainingVariables(this.$store);
+      return searchVariables(
+        routeGetters.getTrainingVariables(this.$store),
+        this.trainingVarsSearch
+      );
     },
     trainingVariableSummaries(): VariableSummary[] {
       const pageIndex = routeGetters.getRouteTrainingVarsPage(this.$store);

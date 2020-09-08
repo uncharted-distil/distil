@@ -115,7 +115,7 @@ const fetchVariableSummaries = async (context, args) => {
   const pageLength =
     currentRoute === SELECT_TARGET_ROUTE ? NUM_PER_TARGET_PAGE : NUM_PER_PAGE;
 
-  const searches = routeGetters.getAllRouteSearches(store);
+  const searches = routeGetters.getAllSearchesByRoute(store);
   const currentPageSearches = searches[currentRoute];
   const currentSearch = currentPageSearches[0];
   const trainingSearch = currentPageSearches[1];

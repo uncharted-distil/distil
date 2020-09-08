@@ -249,7 +249,7 @@ export const getters = {
     return state.query[searchVar] ? _.toString(state.query[searchVar]) : "";
   },
 
-  getAllRouteSearches(state: Route, getters: any): Object {
+  getAllSearchesByRoute(state: Route, getters: any): Object {
     const searches = {};
     searches[JOIN_DATASETS_ROUTE] = [getters.getRouteJoinDatasetsVarsSearch];
     searches[SELECT_TARGET_ROUTE] = [getters.getRouteAvailableTargetVarsSearch];
@@ -258,6 +258,21 @@ export const getters = {
       getters.getRouteTrainingVarsSearch,
     ];
     searches[RESULTS_ROUTE] = [getters.getRouteResultTrainingVarsSearch];
+    return searches;
+  },
+
+  getAllSearchesByQueryString(state: Route, getters: any): Object {
+    const searches = {};
+    searches[JOINED_VARS_INSTANCE_SEARCH] =
+      getters.getRouteJoinDatasetsVarsSearch;
+    searches[AVAILABLE_TARGET_VARS_INSTANCE_SEARCH] =
+      getters.getRouteAvailableTargetVarsSearch;
+    searches[AVAILABLE_TRAINING_VARS_INSTANCE_SEARCH] =
+      getters.getRouteAvailableTrainingVarsSearch;
+    searches[TRAINING_VARS_INSTANCE_SEARCH] =
+      getters.getRouteTrainingVarsSearch;
+    searches[RESULT_TRAINING_VARS_INSTANCE_SEARCH] =
+      getters.getRouteResultTrainingVarsSearch;
     return searches;
   },
 

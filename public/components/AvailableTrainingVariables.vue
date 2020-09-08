@@ -74,7 +74,7 @@ export default Vue.extend({
       return routeGetters.getRouteInclude(this.$store);
     },
     availableTrainingVarsSearch(): string {
-      return routeGetters.getRouteTrainingVarsSearch(this.$store);
+      return routeGetters.getRouteAvailableTrainingVarsSearch(this.$store);
     },
     availableVariableSummaries(): VariableSummary[] {
       const pageIndex = routeGetters.getRouteAvailableTrainingVarsPage(
@@ -95,11 +95,10 @@ export default Vue.extend({
       return currentSummaries;
     },
     availableVariables(): Variable[] {
-      const av = searchVariables(
+      return searchVariables(
         routeGetters.getAvailableVariables(this.$store),
         this.availableTrainingVarsSearch
       );
-      return av;
     },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);

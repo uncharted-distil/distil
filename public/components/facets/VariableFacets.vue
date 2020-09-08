@@ -409,6 +409,11 @@ export default Vue.extend({
       return isImageType(type);
     },
   },
+  beforeMount() {
+    this.search = routeGetters.getAllSearchesByQueryString(this.$store)[
+      this.routeSearchKey()
+    ];
+  },
 
   watch: {
     search() {
