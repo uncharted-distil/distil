@@ -97,7 +97,7 @@ func Clean(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = metadata.WriteSchema(meta, outputPath.outputSchema, true)
+	err = datasetStorage.WriteMetadata(outputPath.outputSchema, meta, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to store cluster schema")
 	}
