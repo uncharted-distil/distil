@@ -16,9 +16,6 @@
 package task
 
 import (
-	"bytes"
-	"encoding/csv"
-	"os"
 	"path"
 
 	"github.com/pkg/errors"
@@ -55,19 +52,13 @@ func Clean(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 		return "", errors.Wrap(err, "unable to run format pipeline")
 	}
 
-	// initialize csv writer
-	output := &bytes.Buffer{}
-	writer := csv.NewWriter(output)
-
 	// output the header
+	output := [][]string{}
 	header := make([]string, len(mainDR.Variables))
 	for _, v := range mainDR.Variables {
 		header[v.Index] = v.Name
 	}
-	err = writer.Write(header)
-	if err != nil {
-		return "", errors.Wrap(err, "error storing clean header")
-	}
+	output = append(output, header)
 
 	// parse primitive response (raw data from the input dataset)
 	// first row of the data is the header
@@ -76,19 +67,10 @@ func Clean(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	if err != nil {
 		return "", errors.Wrap(err, "unable to parse clean result")
 	}
+	output = append(output, csvData...)
 
 	// output the data
-	for _, res := range csvData {
-		err = writer.Write(res)
-		if err != nil {
-			return "", errors.Wrap(err, "error storing clean data")
-		}
-	}
-
-	// output the data with the new feature
-	writer.Flush()
-
-	err = util.WriteFileWithDirs(outputPath.outputData, output.Bytes(), os.ModePerm)
+	err = datasetStorage.WriteData(outputPath.outputData, output)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing clustered output")
 	}

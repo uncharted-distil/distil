@@ -16,9 +16,6 @@
 package task
 
 import (
-	"bytes"
-	"encoding/csv"
-	"os"
 	"path"
 
 	"github.com/pkg/errors"
@@ -85,31 +82,16 @@ func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig)
 		}
 	}
 
-	// initialize csv writer
-	output := &bytes.Buffer{}
-	writer := csv.NewWriter(output)
-
 	// output the header
+	output := [][]string{}
 	header := make([]string, len(mainDR.Variables))
 	for _, v := range mainDR.Variables {
 		header[v.Index] = v.Name
 	}
-	err = writer.Write(header)
-	if err != nil {
-		return "", errors.Wrap(err, "error storing clustered header")
-	}
+	output = append(output, header)
+	output = append(output, lines...)
 
-	for _, line := range lines {
-		err = writer.Write(line)
-		if err != nil {
-			return "", errors.Wrap(err, "error storing clustered output")
-		}
-	}
-
-	// output the data with the new feature
-	writer.Flush()
-
-	err = util.WriteFileWithDirs(outputPath.outputData, output.Bytes(), os.ModePerm)
+	err = datasetStorage.WriteData(outputPath.outputData, output)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing clustered output")
 	}

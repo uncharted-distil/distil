@@ -16,9 +16,6 @@
 package task
 
 import (
-	"bytes"
-	"encoding/csv"
-	"os"
 	"path"
 
 	"github.com/pkg/errors"
@@ -91,26 +88,16 @@ func Merge(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 		outputMeta.DataResources[0].Variables = append(outputMeta.DataResources[0].Variables, v)
 	}
 
-	// initialize csv writer
-	output := &bytes.Buffer{}
-	writer := csv.NewWriter(output)
-
 	// returned header doesnt match expected header so use metadata header
 	headerMetadata, err := outputMeta.GenerateHeaders()
 	if err != nil {
 		return "", errors.Wrapf(err, "unable to generate header")
 	}
-	writer.Write(headerMetadata[0])
-
-	// rewrite the output
-	csvData = csvData[1:]
-	for _, line := range csvData {
-		writer.Write(line)
-	}
+	output := [][]string{headerMetadata[0]}
+	output = append(output, csvData[1:]...)
 
 	// output the data
-	writer.Flush()
-	err = util.WriteFileWithDirs(outputPath.outputData, output.Bytes(), os.ModePerm)
+	err = datasetStorage.WriteData(outputPath.outputData, output)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing merged output")
 	}

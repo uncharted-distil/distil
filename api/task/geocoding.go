@@ -16,10 +16,7 @@
 package task
 
 import (
-	"bytes"
-	"encoding/csv"
 	"fmt"
-	"os"
 	"path"
 
 	"github.com/pkg/errors"
@@ -113,30 +110,16 @@ func GeocodeForwardDataset(schemaFile string, dataset string, config *IngestTask
 		lines[i] = line
 	}
 
-	// initialize csv writer
-	output := &bytes.Buffer{}
-	writer := csv.NewWriter(output)
-
 	// output the header
 	header := make([]string, len(mainDR.Variables))
 	for _, v := range mainDR.Variables {
 		header[v.Index] = v.Name
 	}
-	err = writer.Write(header)
-	if err != nil {
-		return "", errors.Wrap(err, "error storing feature header")
-	}
-
-	for _, line := range lines {
-		err = writer.Write(line)
-		if err != nil {
-			return "", errors.Wrap(err, "error storing geocoded output")
-		}
-	}
+	output := [][]string{header}
+	output = append(output, lines...)
 
 	// output the data with the new feature
-	writer.Flush()
-	err = util.WriteFileWithDirs(outputPath.outputData, output.Bytes(), os.ModePerm)
+	err = datasetStorage.WriteData(outputPath.outputData, output)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing feature output")
 	}
