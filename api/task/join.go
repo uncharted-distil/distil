@@ -162,6 +162,7 @@ func createDatasetFromCSV(config *env.Config, csvFile string, datasetName string
 		return nil, errors.Wrap(err, "failed to read data")
 	}
 	fields := inputData[0]
+	inputData = inputData[1:]
 
 	metadata := model.NewMetadata(datasetName, datasetName, datasetName, storageName)
 	dataResource := model.NewDataResource(compute.DefaultResourceID, compute.D3MResourceType, map[string][]string{compute.D3MResourceFormat: {"csv"}})
@@ -235,7 +236,7 @@ func createFilteredData(csvFile string, variables []*model.Variable, lineCount i
 
 	errorCount := 0
 	discardCount := 0
-	for i := 0; i < lineCount; i++ {
+	for i := 0; i < lineCount && i < len(inputData); i++ {
 		row := inputData[i]
 
 		// convert row values to schema type
