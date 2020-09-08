@@ -16,11 +16,8 @@
 package compute
 
 import (
-	"bytes"
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"math"
 	"math/rand"
@@ -40,6 +37,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
 )
@@ -47,6 +45,10 @@ import (
 const (
 	trainFilenamePrefix = "train"
 	testFilenamePrefix  = "test"
+)
+
+var (
+	datasetStorage serialization.Storage
 )
 
 // FilteredDataProvider defines a function that will fetch data from a back end source given
@@ -110,62 +112,40 @@ func getFilteredDatasetHash(dataset string, target string, filterParams *api.Fil
 	return hash, nil
 }
 
-func splitTrainTestHeader(reader *csv.Reader, writerTrain *csv.Writer, writerTest *csv.Writer, hasHeader bool) error {
+func splitTrainTestHeader(data [][]string, outputTrain [][]string, outputTest [][]string, hasHeader bool) ([][]string, [][]string, [][]string) {
 	// write header to both outputs
 	if hasHeader {
-		header, err := reader.Read()
-		if err != nil {
-			return errors.Wrap(err, "unable to read header row")
-		}
-		err = writerTrain.Write(header)
-		if err != nil {
-			return errors.Wrap(err, "unable to write header to train output")
-		}
-		err = writerTest.Write(header)
-		if err != nil {
-			return errors.Wrap(err, "unable to write header to test output")
-		}
+		header := data[0]
+		data = data[1:]
+		outputTrain = append(outputTrain, header)
+		outputTest = append(outputTest, header)
 	}
 
-	return nil
+	return data, outputTrain, outputTest
 }
 
 func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile string, hasHeader bool, timeseriesCol int, trainTestSplit float64) error {
-	// create the writers
+	// create the output containers
 
 	// training data
-	outputTrain := &bytes.Buffer{}
-	writerTrain := csv.NewWriter(outputTrain)
+	outputTrain := [][]string{}
 
 	// test data
-	outputTest := &bytes.Buffer{}
-	writerTest := csv.NewWriter(outputTest)
+	outputTest := [][]string{}
 
-	// open the file
-	file, err := os.Open(sourceFile)
+	// read the data
+	inputData, err := datasetStorage.ReadData(sourceFile)
 	if err != nil {
 		return errors.Wrap(err, "failed to open source file")
 	}
-	reader := csv.NewReader(file)
 
 	// handle the header
-	err = splitTrainTestHeader(reader, writerTrain, writerTest, hasHeader)
-	if err != nil {
-		return errors.Wrap(err, "failed to open source file")
-	}
+	inputData, outputTrain, outputTest = splitTrainTestHeader(inputData, outputTrain, outputTest, hasHeader)
 
 	// find the desired timeseries threshold
 	// load the parsed timestamp into a list and read all raw data in memory
 	timestamps := make([]float64, 0)
-	data := make([][]string, 0)
-	for {
-		line, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return errors.Wrap(err, "failed to read line from file")
-		}
-		data = append(data, line)
+	for _, line := range inputData {
 		// attempt to parse as float
 		t, err := parseTimeColValue(line[timeseriesCol])
 		if err != nil {
@@ -183,7 +163,7 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 	timestampSplit := SplitTimeStamps(timestamps, trainTestSplit)
 
 	// output the values based on if before threshold or after threshold
-	for _, line := range data {
+	for _, line := range inputData {
 		// since we parsed it above, then the parsing here should succeed
 		// TODO: the timestamps list is already sorted but we really should
 		// reuse it to not double parse things
@@ -191,26 +171,18 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 
 		// !After == Before || Equal
 		if t <= timestampSplit.SplitValue {
-			err = writerTrain.Write(line)
-			if err != nil {
-				return errors.Wrap(err, "unable to write data to train output")
-			}
+			outputTrain = append(outputTrain, line)
 		} else {
-			err = writerTest.Write(line)
-			if err != nil {
-				return errors.Wrap(err, "unable to write data to test output")
-			}
+			outputTest = append(outputTest, line)
 		}
 	}
-	writerTrain.Flush()
-	writerTest.Flush()
 
-	err = util.WriteFileWithDirs(trainFile, outputTrain.Bytes(), os.ModePerm)
+	err = datasetStorage.WriteData(trainFile, outputTrain)
 	if err != nil {
 		return errors.Wrap(err, "unable to output train data")
 	}
 
-	err = util.WriteFileWithDirs(testFile, outputTest.Bytes(), os.ModePerm)
+	err = datasetStorage.WriteData(testFile, outputTest)
 	if err != nil {
 		return errors.Wrap(err, "unable to output test data")
 	}
@@ -232,38 +204,20 @@ func parseTimeColValue(timeColValue string) (float64, error) {
 
 func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool, targetCol int, groupingCol int,
 	stratify bool, rowLimits rowLimits, trainTestSplit float64) error {
-	// create the writers
-	outputTrain := &bytes.Buffer{}
-	writerTrain := csv.NewWriter(outputTrain)
-	outputTest := &bytes.Buffer{}
-	writerTest := csv.NewWriter(outputTest)
+	// create the output
+	outputTrain := [][]string{}
+	outputTest := [][]string{}
 
-	// open the file
-	file, err := os.Open(sourceFile)
+	// read the data
+	inputData, err := datasetStorage.ReadData(sourceFile)
 	if err != nil {
-		return errors.Wrap(err, "failed to open source file")
+		return errors.Wrap(err, "failed to read source file")
 	}
-	reader := csv.NewReader(file)
 
 	// handle the header
-	err = splitTrainTestHeader(reader, writerTrain, writerTest, hasHeader)
-	if err != nil {
-		return errors.Wrap(err, "failed to open source file")
-	}
+	inputData, outputTrain, outputTest = splitTrainTestHeader(inputData, outputTrain, outputTest, hasHeader)
 
-	// load train test
-	rowData := [][]string{}
-	for {
-		line, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return errors.Wrap(err, "failed to read line from file")
-		}
-		rowData = append(rowData, line)
-	}
-
-	numDatasetRows := len(rowData)
+	numDatasetRows := len(inputData)
 	numTrainingRows := rowLimits.trainingRows(numDatasetRows)
 	numTestRows := rowLimits.testRows(numDatasetRows)
 	if stratify {
@@ -272,7 +226,7 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 
 		// first pass - create subsets by category
 		categoryRowData := map[string][][]string{}
-		for _, row := range rowData {
+		for _, row := range inputData {
 			key := row[targetCol]
 			if _, ok := categoryRowData[key]; !ok {
 				categoryRowData[key] = [][]string{}
@@ -282,30 +236,21 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 
 		// second pass - randomly sample each category to generate train/test split
 		for _, data := range categoryRowData {
-			maxCategoryTrainingRows := int(math.Max(1, float64(len(data))/float64(len(rowData))*float64(numTrainingRows)))
-			maxCategoryTestRows := int(math.Max(1, float64(len(data))/float64(len(rowData))*float64(numTestRows)))
-			err := shuffleAndWrite(data, groupingCol, maxCategoryTrainingRows, maxCategoryTestRows, true, writerTrain, writerTest, trainTestSplit)
-			if err != nil {
-				return err
-			}
+			maxCategoryTrainingRows := int(math.Max(1, float64(len(data))/float64(len(inputData))*float64(numTrainingRows)))
+			maxCategoryTestRows := int(math.Max(1, float64(len(data))/float64(len(inputData))*float64(numTestRows)))
+			outputTrain, outputTest = shuffleAndWrite(data, groupingCol, maxCategoryTrainingRows, maxCategoryTestRows, true, outputTrain, outputTest, trainTestSplit)
 		}
 	} else {
 		// randomly select from dataset based on row limits
-		err := shuffleAndWrite(rowData, groupingCol, numTrainingRows, numTestRows, true, writerTrain, writerTest, trainTestSplit)
-		if err != nil {
-			return err
-		}
+		outputTrain, outputTest = shuffleAndWrite(inputData, groupingCol, numTrainingRows, numTestRows, true, outputTrain, outputTest, trainTestSplit)
 	}
 
-	writerTrain.Flush()
-	writerTest.Flush()
-
-	err = util.WriteFileWithDirs(trainFile, outputTrain.Bytes(), os.ModePerm)
+	err = datasetStorage.WriteData(trainFile, outputTrain)
 	if err != nil {
 		return errors.Wrap(err, "unable to output train data")
 	}
 
-	err = util.WriteFileWithDirs(testFile, outputTest.Bytes(), os.ModePerm)
+	err = datasetStorage.WriteData(testFile, outputTest)
 	if err != nil {
 		return errors.Wrap(err, "unable to output test data")
 	}
@@ -314,7 +259,7 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 }
 
 type shuffleTracker struct {
-	writer *csv.Writer
+	output [][]string
 	count  int
 	max    int
 }
@@ -324,8 +269,8 @@ func (s *shuffleTracker) lessThanMax() bool {
 }
 
 func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int,
-	maxTestCount int, adjustCount bool, writerTrain *csv.Writer, writerTest *csv.Writer,
-	trainTestSplit float64) error {
+	maxTestCount int, adjustCount bool, outputTrain [][]string, outputTest [][]string,
+	trainTestSplit float64) ([][]string, [][]string) {
 	if maxTrainingCount <= 0 {
 		maxTrainingCount = math.MaxInt64
 	}
@@ -343,12 +288,12 @@ func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int,
 
 	// structures for tracking test and train counts
 	shuffleTest := &shuffleTracker{
-		writer: writerTest,
+		output: outputTest,
 		count:  0,
 		max:    numTest,
 	}
 	shuffleTrain := &shuffleTracker{
-		writer: writerTrain,
+		output: outputTrain,
 		count:  0,
 		max:    numTrain,
 	}
@@ -369,10 +314,7 @@ func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int,
 					break
 				}
 			}
-			err := tracker.writer.Write(data)
-			if err != nil {
-				return errors.Wrap(err, "unable to write data to train/test output")
-			}
+			tracker.output = append(tracker.output, data)
 			tracker.count++
 
 		}
@@ -398,10 +340,7 @@ func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int,
 		tracker := shuffleTest
 		for _, groupKey := range groupKeys {
 			for _, row := range groupData[groupKey] {
-				err := tracker.writer.Write(row)
-				if err != nil {
-					return errors.Wrap(err, "unable to write data to train/test output")
-				}
+				tracker.output = append(tracker.output, row)
 				tracker.count++
 			}
 			if !tracker.lessThanMax() {
@@ -413,7 +352,7 @@ func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int,
 			}
 		}
 	}
-	return nil
+	return shuffleTrain.output, shuffleTest.output
 }
 
 // check if the data has already been split using the existing context
@@ -655,25 +594,17 @@ func SplitTimeSeries(timeseries []*api.TimeseriesObservation, trainPercentage fl
 
 // SampleDataset shuffles a dataset's rows and takes a subsample, returning
 // the raw byte data of the sampled dataset.
-func SampleDataset(rawData [][]string, maxRows int, hasHeader bool) ([]byte, error) {
+func SampleDataset(rawData [][]string, maxRows int, hasHeader bool) [][]string {
 	// initialize csv writer
-	output := &bytes.Buffer{}
-	writer := csv.NewWriter(output)
+	output := [][]string{}
 
 	if hasHeader {
-		err := writer.Write(rawData[0])
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to write header to sampled data")
-		}
+		output = append(output, rawData[0])
 		rawData = rawData[1:]
 	}
 
-	trainTestSplit := float64(1) // See config.go file
-	err := shuffleAndWrite(rawData, -1, maxRows, 0, false, writer, nil, trainTestSplit)
-	if err != nil {
-		return nil, err
-	}
-	writer.Flush()
+	trainTestSplit := float64(1) // keep all rows in train
+	output, _ = shuffleAndWrite(rawData, -1, maxRows, 0, false, output, nil, trainTestSplit)
 
-	return output.Bytes(), nil
+	return output
 }

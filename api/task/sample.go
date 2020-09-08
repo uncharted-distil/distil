@@ -17,7 +17,6 @@ package task
 
 import (
 	"math"
-	"os"
 	"path"
 
 	"github.com/pkg/errors"
@@ -51,10 +50,7 @@ func Sample(originalSchemaFile string, schemaFile string, dataset string, config
 		return schemaFile, false, len(csvData), nil
 	}
 
-	sampledData, err := compute.SampleDataset(csvData, config.SampleRowLimit, true)
-	if err != nil {
-		return "", false, 0, err
-	}
+	sampledData := compute.SampleDataset(csvData, config.SampleRowLimit, true)
 
 	// copy the full csv to keep it if needed
 	err = util.CopyFile(originalCSVFilePath, path.Join(path.Dir(originalCSVFilePath), "learningData-full.csv"))
@@ -63,7 +59,7 @@ func Sample(originalSchemaFile string, schemaFile string, dataset string, config
 	}
 
 	// output to the expected location (learningData.csv)
-	err = util.WriteFileWithDirs(csvFilePath, sampledData, os.ModePerm)
+	err = datasetStorage.WriteData(csvFilePath, sampledData)
 	if err != nil {
 		return "", false, 0, err
 	}
@@ -74,7 +70,7 @@ func Sample(originalSchemaFile string, schemaFile string, dataset string, config
 
 	// if csv data > max sample count, then assume max sample count is the count of
 	// rows sampled in the output.
-	rowCount := int(math.Min(float64(len(csvData)-1), float64(config.SampleRowLimit)))
+	rowCount := int(math.Min(float64(len(csvData)), float64(len(sampledData)))) - 1
 
 	return schemaFile, rowCount < (len(csvData) - 1), rowCount, nil
 }
