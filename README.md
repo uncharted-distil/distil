@@ -11,7 +11,7 @@
 - [NodeJS](http://nodejs.org/) JavaScript runtime.
 - [Docker](https://www.docker.com/) platform.
 - [Docker Compose](https://docs.docker.com/compose/) (optional) for managing multi-container dev environments.
-- [GDAL](https://gdal.org/) v2.4.2 or better for geospatial data access.  Available as a package for most Linux distributions, and  OSX through Homebrew.
+- [GDAL](https://gdal.org/) v2.4.2 or better for geospatial data access. Available as a package for most Linux distributions, and OSX through Homebrew.
 
 ## Development
 
@@ -75,7 +75,6 @@ sudo docker login docker.uncharted.software
 ##### Update `docker-compose.yml`
 
 ```yaml
-
 ---
 distil-auto-ml:
   image: docker.uncharted.software/distil-auto-ml
@@ -129,7 +128,14 @@ The location of the dataset directory can be changed by setting the `D3MINPUTDIR
 - **Cause**: Dependencies are out of date or have not been installed
 - **Solution**: Run `make install` to install latest dependencies.
 
-#### "# pkg-config --cflags  -- gdal gdal gdal gdal gdal gdal Package gdal was not found in the pkg-config search path."
+#### "# pkg-config --cflags -- gdal gdal gdal gdal gdal gdal Package gdal was not found in the pkg-config search path."
 
 - **Cause**: GDAL has not been installed
 - **Solution**: Install GDAL using a package for your environment or download and build from source.
+
+### Mac
+
+#### runtime error while training "joblib.externals.loky.process_executor.TerminatedWorkerError: A worker process managed by the executor was unexpectedly terminated. This could be caused by a segmentation fault while calling the function or by an excessive memory usage causing the Operating System to kill the worker."
+
+- **Cause**: Not enough Docker resources
+- **Solution**: change Docker resources to recommended "CPU:10, RAM:10 gigs, Swap:2.5 gigs, Disk Image Size: 64 gigs"
