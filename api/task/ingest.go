@@ -16,10 +16,7 @@
 package task
 
 import (
-	"encoding/csv"
 	"fmt"
-	"io"
-	"os"
 	"path"
 	"time"
 
@@ -478,24 +475,15 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 
 	// Load the data.
 	log.Infof("inserting rows into database based on data found in %s", dataDir)
-	csvFile, err := os.Open(dataDir)
+	data, err := datasetStorage.ReadData(dataDir)
 	if err != nil {
-		return errors.Wrap(err, "unable to open input data")
+		return errors.Wrap(err, "unable to read input data")
 	}
-	defer csvFile.Close()
-	reader := csv.NewReader(csvFile)
 
 	// skip header
-	reader.Read()
+	data = data[1:]
 	count := 0
-	for {
-		line, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return errors.Wrap(err, "unable to read input line")
-		}
-
+	for _, line := range data {
 		err = pg.AddWordStems(line)
 		if err != nil {
 			log.Warn(fmt.Sprintf("%v", err))

@@ -16,11 +16,8 @@
 package postgres
 
 import (
-	"bufio"
-	"encoding/csv"
 	"fmt"
 	"math"
-	"os"
 	"strconv"
 	"strings"
 
@@ -28,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -36,6 +34,10 @@ const (
 	featureWeightTableSuffix = "_explain"
 	dataTableAlias           = "data"
 	confidenceName           = "confidence"
+)
+
+var (
+	datasetStorage serialization.Storage
 )
 
 func (s *Storage) getResultTable(storageName string) string {
@@ -85,27 +87,6 @@ func (s *Storage) getResultTargetVariable(dataset string, targetName string) (*m
 		return s.metadata.FetchVariable(dataset, tsg.YCol)
 	}
 	return variable, nil
-}
-
-func (s *Storage) readCSVFile(uri string) ([][]string, error) {
-	// open the file
-	file, err := os.Open(uri)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable open solution result file")
-	}
-	csvReader := csv.NewReader(bufio.NewReader(file))
-	csvReader.TrimLeadingSpace = true
-
-	// read the contents of the file
-	records, err := csvReader.ReadAll()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable load solution result as csv")
-	}
-	if len(records) <= 0 || len(records[0]) <= 0 {
-		return nil, errors.Wrap(err, "solution csv empty")
-	}
-
-	return records, nil
 }
 
 // PersistSolutionFeatureWeight persists the solution feature weight to Postgres.
@@ -167,7 +148,7 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 // PersistResult stores the solution result to Postgres.
 func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string, confidenceValues *api.SolutionExplainResult) error {
 	// Read the results file.
-	records, err := s.readCSVFile(resultURI)
+	records, err := datasetStorage.ReadData(resultURI)
 	if err != nil {
 		return err
 	}
