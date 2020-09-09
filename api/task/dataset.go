@@ -47,6 +47,11 @@ var (
 	datasetStorage serialization.Storage
 )
 
+// SetDatasetStorage sets the storage interface to use for accessing datasets.
+func SetDatasetStorage(ds serialization.Storage) {
+	datasetStorage = ds
+}
+
 // DatasetConstructor is used to build a dataset.
 type DatasetConstructor interface {
 	CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error)

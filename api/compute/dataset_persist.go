@@ -103,6 +103,11 @@ type DataReference struct {
 	ResObject string `json:"resObject"`
 }
 
+// SetDatasetStorage sets the storage interface to use for accessing datasets.
+func SetDatasetStorage(ds serialization.Storage) {
+	datasetStorage = ds
+}
+
 // Hash the filter set
 func getFilteredDatasetHash(dataset string, target string, filterParams *api.FilterParams, isTrain bool) (uint64, error) {
 	hash, err := hashstructure.Hash([]interface{}{dataset, target, *filterParams, isTrain}, nil)

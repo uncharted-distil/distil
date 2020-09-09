@@ -40,6 +40,11 @@ var (
 	datasetStorage serialization.Storage
 )
 
+// SetDatasetStorage sets the storage interface to use for accessing datasets.
+func SetDatasetStorage(ds serialization.Storage) {
+	datasetStorage = ds
+}
+
 func (s *Storage) getResultTable(storageName string) string {
 	return fmt.Sprintf("%s%s", storageName, resultTableSuffix)
 }
