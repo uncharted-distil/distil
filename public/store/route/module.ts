@@ -26,9 +26,6 @@ export const getters = {
     moduleGetters.getDecodedJoinDatasetsFilterParams
   ),
   getRouteJoinDatasetsHash: read(moduleGetters.getRouteJoinDatasetsHash),
-  getRouteJoinDatasetsVarsPage: read(
-    moduleGetters.getRouteJoinDatasetsVarsPage
-  ),
   getJoinDatasetsVariables: read(moduleGetters.getJoinDatasetsVariables),
   getJoinDatasetsVariableSummaries: read(
     moduleGetters.getJoinDatasetsVariableSummaries
@@ -41,6 +38,10 @@ export const getters = {
   getDecodedTrainingVariableNames: read(
     moduleGetters.getDecodedTrainingVariableNames
   ),
+
+  getRouteJoinDatasetsVarsPage: read(
+    moduleGetters.getRouteJoinDatasetsVarsPage
+  ),
   getRouteAvailableTargetVarsPage: read(
     moduleGetters.getRouteAvailableTargetVarsPage
   ),
@@ -48,10 +49,25 @@ export const getters = {
     moduleGetters.getRouteAvailableTrainingVarsPage
   ),
   getRouteTrainingVarsPage: read(moduleGetters.getRouteTrainingVarsPage),
-  getAllRoutePages: read(moduleGetters.getAllRoutePages),
   getRouteResultTrainingVarsPage: read(
     moduleGetters.getRouteResultTrainingVarsPage
   ),
+  getAllRoutePages: read(moduleGetters.getAllRoutePages),
+  getRouteJoinDatasetsVarsSearch: read(
+    moduleGetters.getRouteJoinDatasetsVarsSearch
+  ),
+  getRouteAvailableTargetVarsSearch: read(
+    moduleGetters.getRouteAvailableTargetVarsSearch
+  ),
+  getRouteAvailableTrainingVarsSearch: read(
+    moduleGetters.getRouteAvailableTrainingVarsSearch
+  ),
+  getRouteTrainingVarsSearch: read(moduleGetters.getRouteTrainingVarsSearch),
+  getRouteResultTrainingVarsSearch: read(
+    moduleGetters.getRouteResultTrainingVarsSearch
+  ),
+  getAllSearchesByRoute: read(moduleGetters.getAllSearchesByRoute),
+  getAllSearchesByQueryString: read(moduleGetters.getAllSearchesByQueryString),
   getRouteDataSize: read(moduleGetters.getRouteDataSize),
   getRouteTargetVariable: read(moduleGetters.getRouteTargetVariable),
   getRouteSolutionId: read(moduleGetters.getRouteSolutionId),

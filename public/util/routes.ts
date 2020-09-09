@@ -31,12 +31,17 @@ export interface RouteArgs {
   baseColumnSuggestions?: string; // suggested base join columns
   joinColumnSuggestions?: string; // suggested target join columns
   groupingType?: string;
-  // added page args directly since we can't use the consts as names
+  // added page & search args directly since we can't use the consts as names
   availableTargetVarsPage?: number;
   availableTrainingVarsPage?: number;
   joinedVarsPage?: number;
   resultTrainingVarsPage?: number;
   trainingVarsPage?: number;
+  availableTargetVarsSearch?: string;
+  availableTrainingVarsSearch?: string;
+  joinedVarsSearch?: string;
+  resultTrainingVarsSearch?: string;
+  trainingVarsSearch?: string;
   task?: string;
   dataMode?: string;
   varModes?: string;
@@ -81,6 +86,11 @@ export function overlayRouteEntry(route: Route, args: RouteArgs): Location {
 export function getRouteFacetPage(key: string, route: Route): number {
   const page = route.query[key] as string;
   return page ? parseInt(page) : 1;
+}
+
+export function getRouteFacetSearch(key: string, route: Route): string {
+  const searchQuery = route.query[key] as string;
+  return searchQuery ? searchQuery : "";
 }
 
 function validateQueryArgs(args: RouteArgs): RouteArgs {

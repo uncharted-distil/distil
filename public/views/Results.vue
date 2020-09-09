@@ -49,7 +49,11 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
-import { NUM_PER_PAGE, getVariableSummariesByState } from "../util/data";
+import {
+  NUM_PER_PAGE,
+  getVariableSummariesByState,
+  searchVariables,
+} from "../util/data";
 import { Feature, Activity } from "../util/userEvents";
 
 export default Vue.extend({
@@ -91,8 +95,14 @@ export default Vue.extend({
       }
       return "";
     },
+    resultTrainingVarsSearch(): string {
+      return routeGetters.getRouteResultTrainingVarsSearch(this.$store);
+    },
     trainingVariables(): Variable[] {
-      return requestGetters.getActiveSolutionTrainingVariables(this.$store);
+      return searchVariables(
+        requestGetters.getActiveSolutionTrainingVariables(this.$store),
+        this.resultTrainingVarsSearch
+      );
     },
     trainingSummaries(): VariableSummary[] {
       const summaryDictionary = resultGetters.getTrainingSummariesDictionary(
@@ -132,6 +142,9 @@ export default Vue.extend({
       viewActions.updateResultsSolution(this.$store);
     },
     resultTrainingVarsPage() {
+      viewActions.updateResultsSummaries(this.$store);
+    },
+    resultTrainingVarsSearch() {
       viewActions.updateResultsSummaries(this.$store);
     },
   },

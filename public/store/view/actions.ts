@@ -39,6 +39,7 @@ import {
   NUM_PER_TARGET_PAGE,
   sortVariablesByImportance,
   filterArrayByPage,
+  searchVariables,
 } from "../../util/data";
 import { SELECT_TARGET_ROUTE } from "../route";
 
@@ -108,18 +109,30 @@ const fetchVariableSummaries = async (context, args) => {
   const targetVariable = routeGetters.getTargetVariable(store);
 
   const currentPageIndexes = pages[currentRoute];
+  const mainPageIndex = currentPageIndexes[0];
   const trainingIndex = currentPageIndexes?.[1];
 
   const pageLength =
     currentRoute === SELECT_TARGET_ROUTE ? NUM_PER_TARGET_PAGE : NUM_PER_PAGE;
 
+  const searches = routeGetters.getAllSearchesByRoute(store);
+  const currentPageSearches = searches[currentRoute];
+  const currentSearch = currentPageSearches[0];
+  const trainingSearch = currentPageSearches[1];
+
   const allTrainingVariables = routeGetters.getTrainingVariables(store);
+
+  const searchedTrainingVariables = searchVariables(
+    allTrainingVariables,
+    trainingSearch
+  );
+
   const activeTrainingVariables = trainingIndex
-    ? filterArrayByPage(trainingIndex, pageLength, allTrainingVariables)
+    ? filterArrayByPage(trainingIndex, pageLength, searchedTrainingVariables)
     : [];
 
   const allTargetTrainingVariables = targetVariable
-    ? [targetVariable, ...allTrainingVariables]
+    ? [targetVariable, ...searchedTrainingVariables]
     : [];
   const activeTargetTrainingVariables = targetVariable
     ? [targetVariable, ...activeTrainingVariables]
@@ -133,21 +146,25 @@ const fetchVariableSummaries = async (context, args) => {
     ? sortVariablesByImportance(variables.slice())
     : variables;
 
-  const pageVariables = presortedVariables
+  const searchedPresortedVariables = searchVariables(
+    presortedVariables,
+    currentSearch
+  );
+
+  const mainPageVariables = searchedPresortedVariables
     .filter(
       (v) =>
         allTargetTrainingVariableNames.indexOf(v.colDisplayName.toLowerCase()) <
         0
     )
-    .slice(
-      (currentPageIndexes[0] - 1) * pageLength,
-      currentPageIndexes[0] * pageLength
-    );
+    .slice((mainPageIndex - 1) * pageLength, mainPageIndex * pageLength);
 
   const allActiveVariables = [
     ...activeTargetTrainingVariables,
-    ...pageVariables,
+    ...mainPageVariables,
   ];
+
+  console.log(searchedPresortedVariables, allActiveVariables);
 
   return Promise.all([
     datasetActions.fetchIncludedVariableSummaries(store, {
@@ -621,8 +638,14 @@ export const actions = {
     const varModes = <Map<string, SummaryMode>>(
       context.getters.getDecodedVarModes
     );
+    const currentSearch = <string>(
+      context.getters.getRouteResultTrainingVarsSearch
+    );
     const trainingVariables = <Variable[]>(
-      context.getters.getActivePredictionTrainingVariables
+      searchVariables(
+        context.getters.getActivePredictionTrainingVariables,
+        currentSearch
+      )
     );
     const page = routeGetters.getRouteResultTrainingVarsPage(store);
     const pageSize = NUM_PER_PAGE;

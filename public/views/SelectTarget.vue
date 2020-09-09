@@ -43,12 +43,12 @@
           enable-search
           enable-type-change
           enable-type-filtering
-          :facetCount="variables.length"
+          :facetCount="searchedActiveVariables.length"
           :html="html"
           ignore-highlights
           :instance-name="instanceName"
           :logActivity="problemDefinition"
-          :pagination="variables.length > numRowsPerPage"
+          :pagination="searchedActiveVariables.length > numRowsPerPage"
           :rows-per-page="numRowsPerPage"
           :summaries="summaries"
         />
@@ -77,6 +77,7 @@ import {
   NUM_PER_TARGET_PAGE,
   filterSummariesByDataset,
   getVariableSummariesByState,
+  searchVariables,
 } from "../util/data";
 import { Group } from "../util/facets";
 import { createRouteEntry, varModesToString } from "../util/routes";
@@ -99,6 +100,9 @@ export default Vue.extend({
   computed: {
     availableTargetVarsPage(): number {
       return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
+    },
+    availableTargetVarsSearch(): string {
+      return routeGetters.getRouteAvailableTargetVarsSearch(this.$store);
     },
 
     dataset(): string {
@@ -228,15 +232,11 @@ export default Vue.extend({
       const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
         this.$store
       );
-      // remove variables used in groupedFeature;
-      const activeVariables = this.variables.filter(
-        (v) => !this.groupedFeatures.includes(v.colName)
-      );
 
       const currentSummaries = getVariableSummariesByState(
         pageIndex,
         this.numRowsPerPage,
-        activeVariables,
+        this.searchedActiveVariables,
         summaryDictionary
       );
 
@@ -264,10 +264,22 @@ export default Vue.extend({
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
+
+    searchedActiveVariables(): Variable[] {
+      // remove variables used in groupedFeature;
+      const activeVariables = this.variables.filter(
+        (v) => !this.groupedFeatures.includes(v.colName)
+      );
+
+      return searchVariables(activeVariables, this.availableTargetVarsSearch);
+    },
   },
 
   watch: {
     availableTargetVarsPage() {
+      viewActions.fetchSelectTargetData(this.$store, false);
+    },
+    availableTargetVarsSearch() {
       viewActions.fetchSelectTargetData(this.$store, false);
     },
   },
