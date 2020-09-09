@@ -26,14 +26,12 @@ require (
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.5.1
-	github.com/uncharted-distil/distil-compute v0.0.0-20200904161403-fc8da15b6886
+	github.com/uncharted-distil/distil-compute v0.0.0-20200909155738-39c3281e4a53
 	github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a
 	github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48
 	github.com/zenazn/goji v0.9.0
 	goji.io/v3 v3.0.0
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
-	google.golang.org/genproto v0.0.0-20191115221424-83cc0476cb11 // indirect
 	google.golang.org/grpc v1.25.1
-	gopkg.in/yaml.v2 v2.2.4 // indirect
 )

@@ -221,7 +221,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		meta.StorageName = model.NormalizeDatasetID(datasetName)
 		meta.DatasetFolder = path.Base(datasetPath)
 		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
-		err = metadata.WriteSchema(meta, schemaPath, true)
+		err = datasetStorage.WriteMetadata(schemaPath, meta, true)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update dataset doc")
 		}
@@ -277,7 +277,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, errors.Wrap(err, "unable to read latest dataset doc")
 	}
 	meta.ID = sourceDatasetID
-	err = metadata.WriteSchema(meta, schemaPath, true)
+	err = datasetStorage.WriteMetadata(schemaPath, meta, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to update dataset doc")
 	}

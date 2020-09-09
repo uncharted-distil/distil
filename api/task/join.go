@@ -16,8 +16,6 @@
 package task
 
 import (
-	"encoding/csv"
-	"io"
 	"os"
 	"path"
 	"strconv"
@@ -86,24 +84,19 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 		return nil, errors.Wrap(err, "unable to run join pipeline")
 	}
 
-	csvFile, err := os.Open(strings.TrimPrefix(resultURI, "file://"))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to open raw data file")
-	}
-	defer csvFile.Close()
-
 	// create a new dataset from the merged CSV file
+	csvFilename := strings.TrimPrefix(resultURI, "file://")
 	leftName := joinLeft.DatasetID
 	rightName := joinRight.DatasetID
 	datasetName := strings.Join([]string{leftName, rightName}, "-")
 	storageName := model.NormalizeDatasetID(datasetName)
-	mergedVariables, err := createDatasetFromCSV(config, csvFile, datasetName, storageName, leftVarsMap, rightVarsMap)
+	mergedVariables, err := createDatasetFromCSV(config, csvFilename, datasetName, storageName, leftVarsMap, rightVarsMap)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create dataset from result CSV")
 	}
 
 	// return some of the data for the client to preview
-	data, err := createFilteredData(csvFile, mergedVariables, lineCount)
+	data, err := createFilteredData(csvFilename, mergedVariables, lineCount)
 	if err != nil {
 		return nil, err
 	}
@@ -161,14 +154,15 @@ func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Vari
 	return mergedVariables, nil
 }
 
-func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName string, storageName string,
+func createDatasetFromCSV(config *env.Config, csvFile string, datasetName string, storageName string,
 	leftVarsMap map[string]*model.Variable, rightVarsMap map[string]*model.Variable) ([]*model.Variable, error) {
 
-	reader := csv.NewReader(csvFile)
-	fields, err := reader.Read()
+	inputData, err := datasetStorage.ReadData(csvFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to read header line")
+		return nil, errors.Wrap(err, "failed to read data")
 	}
+	fields := inputData[0]
+	inputData = inputData[1:]
 
 	metadata := model.NewMetadata(datasetName, datasetName, datasetName, storageName)
 	dataResource := model.NewDataResource(compute.DefaultResourceID, compute.D3MResourceType, map[string][]string{compute.D3MResourceFormat: {"csv"}})
@@ -190,11 +184,6 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 		return nil, errors.Wrapf(err, "unabled to created dir %s", csvDestFolder)
 	}
 	csvDestPath := path.Join(csvDestFolder, compute.D3MLearningData)
-	out, err := os.Create(csvDestPath)
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to open destination %s", csvDestPath)
-	}
-	defer out.Close()
 
 	// save the metadata to the output dataset path
 	err = os.MkdirAll(outputPath, os.ModePerm)
@@ -206,36 +195,29 @@ func createDatasetFromCSV(config *env.Config, csvFile *os.File, datasetName stri
 	metadataDestPath := path.Join(outputPath, compute.D3MDataSchema)
 	relativePath := getRelativePath(path.Dir(metadataDestPath), csvDestPath)
 	dataResource.ResPath = relativePath
-	err = ingestMetadata.WriteSchema(metadata, metadataDestPath, true)
+	err = datasetStorage.WriteMetadata(metadataDestPath, metadata, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to write schema")
 	}
 
 	// write out csv rows, ignoring the first column (contains dataframe index)
-	writer := csv.NewWriter(out)
-	defer writer.Flush()
+	output := [][]string{fields} // header row
+	output = append(output, inputData...)
 
-	err = writer.Write(fields) // header row
+	err = datasetStorage.WriteData(csvDestPath, output)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to write header row")
-	}
-
-	for {
-		row, err := reader.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			// skip malformed input for now
-			continue
-		}
-		writer.Write(row)
+		return nil, errors.Wrap(err, "error writing joined output")
 	}
 
 	return mergedVariables, nil
 }
 
-func createFilteredData(csvFile *os.File, variables []*model.Variable, lineCount int) (*apiModel.FilteredData, error) {
+func createFilteredData(csvFile string, variables []*model.Variable, lineCount int) (*apiModel.FilteredData, error) {
+	inputData, err := datasetStorage.ReadData(csvFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read joined data")
+	}
+
 	data := &apiModel.FilteredData{}
 
 	data.Columns = []*apiModel.Column{}
@@ -249,32 +231,13 @@ func createFilteredData(csvFile *os.File, variables []*model.Variable, lineCount
 
 	data.Values = [][]*apiModel.FilteredDataValue{}
 
-	_, err := csvFile.Seek(0, 0)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to reset file on read")
-	}
-
-	// write the header
-	reader := csv.NewReader(csvFile)
-
 	// discard header
-	_, err = reader.Read()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to read header line")
-	}
+	inputData = inputData[1:]
 
 	errorCount := 0
 	discardCount := 0
-	for i := 0; i < lineCount; i++ {
-		row, err := reader.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			// skip malformed input for now
-			errors.Wrap(err, "failed to parse joined csv row")
-			continue
-		}
+	for i := 0; i < lineCount && i < len(inputData); i++ {
+		row := inputData[i]
 
 		// convert row values to schema type
 		// rows that are malformed are discarded

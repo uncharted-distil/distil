@@ -16,10 +16,7 @@
 package task
 
 import (
-	"encoding/csv"
 	"fmt"
-	"io"
-	"os"
 	"path"
 	"time"
 
@@ -326,7 +323,7 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 			log.Infof("storing (extended: %v) metadata with new name to %s (new: '%s', old: '%s')", extendedOutput, originalSchemaFile, uniqueName, meta.Name)
 			meta.Name = uniqueName
 			meta.ID = model.NormalizeDatasetID(uniqueName)
-			err = metadata.WriteSchema(meta, originalSchemaFile, extendedOutput)
+			err = datasetStorage.WriteMetadata(originalSchemaFile, meta, extendedOutput)
 			if err != nil {
 				return "", errors.Wrap(err, "unable to store updated metadata")
 			}
@@ -398,7 +395,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 		if meta.StorageName != storageName {
 			log.Infof("updating storage name in metadata from %s to %s", meta.StorageName, storageName)
 			meta.StorageName = storageName
-			err = metadata.WriteSchema(meta, schemaFile, true)
+			err = datasetStorage.WriteMetadata(schemaFile, meta, true)
 			if err != nil {
 				return "", err
 			}
@@ -478,24 +475,15 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 
 	// Load the data.
 	log.Infof("inserting rows into database based on data found in %s", dataDir)
-	csvFile, err := os.Open(dataDir)
+	data, err := datasetStorage.ReadData(dataDir)
 	if err != nil {
-		return errors.Wrap(err, "unable to open input data")
+		return errors.Wrap(err, "unable to read input data")
 	}
-	defer csvFile.Close()
-	reader := csv.NewReader(csvFile)
 
 	// skip header
-	reader.Read()
+	data = data[1:]
 	count := 0
-	for {
-		line, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return errors.Wrap(err, "unable to read input line")
-		}
-
+	for _, line := range data {
 		err = pg.AddWordStems(line)
 		if err != nil {
 			log.Warn(fmt.Sprintf("%v", err))
@@ -552,7 +540,7 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 		if updated {
 			extendedOutput := source == metadata.Augmented
 			log.Infof("storing updated (extended: %v) metadata to %s", extendedOutput, originalSchemaFile)
-			err = metadata.WriteSchema(meta, originalSchemaFile, extendedOutput)
+			err = datasetStorage.WriteMetadata(originalSchemaFile, meta, extendedOutput)
 			if err != nil {
 				return "", nil, errors.Wrap(err, "unable to store updated metadata")
 			}

@@ -16,8 +16,6 @@
 package task
 
 import (
-	"bytes"
-	"encoding/csv"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -31,6 +29,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -44,7 +43,14 @@ var (
 		"jpeg": "jpeg",
 		"jpg":  "jpeg",
 	}
+
+	datasetStorage serialization.Storage
 )
+
+// SetDatasetStorage sets the storage interface to use for accessing datasets.
+func SetDatasetStorage(ds serialization.Storage) {
+	datasetStorage = ds
+}
 
 // DatasetConstructor is used to build a dataset.
 type DatasetConstructor interface {
@@ -76,21 +82,13 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 		return "", "", err
 	}
 
-	var outputBuffer bytes.Buffer
-	csvWriter := csv.NewWriter(&outputBuffer)
-	err = csvWriter.WriteAll(ds.Data)
-	if err != nil {
-		return "", "", errors.Wrap(err, "unable to write csv data to buffer")
-	}
-	csvWriter.Flush()
-
-	err = util.WriteFileWithDirs(dataPath, outputBuffer.Bytes(), os.ModePerm)
+	err = datasetStorage.WriteData(dataPath, ds.Data)
 	if err != nil {
 		return "", "", err
 	}
 
 	schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
-	err = metadata.WriteSchema(ds.Metadata, schemaPath, true)
+	err = datasetStorage.WriteMetadata(schemaPath, ds.Metadata, true)
 	if err != nil {
 		return "", "", err
 	}
@@ -140,7 +138,7 @@ func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, confi
 	}
 
 	schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
-	err = metadata.WriteSchema(meta, schemaPath, true)
+	err = datasetStorage.WriteMetadata(schemaPath, meta, true)
 	if err != nil {
 		return "", err
 	}

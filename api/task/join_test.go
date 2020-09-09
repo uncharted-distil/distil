@@ -26,6 +26,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil/api/env"
 	apiModel "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 )
 
 type testSubmitter struct{}
@@ -35,6 +36,8 @@ func (testSubmitter) submit(datasetURIs []string, pipelineDesc *description.Full
 }
 
 func TestJoin(t *testing.T) {
+
+	datasetStorage = serialization.NewCSV()
 
 	varsLeft := []*model.Variable{
 		{

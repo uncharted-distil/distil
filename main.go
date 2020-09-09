@@ -43,6 +43,7 @@ import (
 	"github.com/uncharted-distil/distil/api/postgres"
 	"github.com/uncharted-distil/distil/api/rest"
 	"github.com/uncharted-distil/distil/api/routes"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/service"
 	"github.com/uncharted-distil/distil/api/task"
 	"github.com/uncharted-distil/distil/api/util"
@@ -195,6 +196,12 @@ func main() {
 	}
 	datamartCtors[es.Provenance] = esMetadataStorageCtor
 
+	// set the data reader and writer
+	datasetStorage := serialization.NewCSV()
+	task.SetDatasetStorage(datasetStorage)
+	pg.SetDatasetStorage(datasetStorage)
+	api.SetDatasetStorage(datasetStorage)
+
 	// set extremas
 	//esStorage, err := esMetadataStorageCtor()
 	//if err != nil {
@@ -281,7 +288,6 @@ func main() {
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/cluster/:dataset/:variable", routes.ClusteringHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(&config))
-	registerRoutePost(mux, "/distil/predict/:dataset/:target-type/:fitted-solution-id", routes.InferenceHandler(path.Join(config.D3MOutputDir, config.AugmentedSubFolder), pgDataStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor, &config))
 	registerRoutePost(mux, "/distil/join", routes.JoinHandler(esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:invert", routes.TimeseriesHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries-forecast/:truthDataset/:forecastDataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:result-uuid", routes.TimeseriesForecastHandler(esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, config.TrainTestSplitTimeSeries))

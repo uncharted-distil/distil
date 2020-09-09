@@ -16,10 +16,7 @@
 package task
 
 import (
-	"bytes"
-	"encoding/csv"
 	"fmt"
-	"os"
 	"path"
 
 	"github.com/pkg/errors"
@@ -70,30 +67,16 @@ func Format(schemaFile string, dataset string, config *IngestTaskConfig) (string
 func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]string) error {
 	dr := getMainDataResource(meta)
 
-	// append the row count as d3m index
-	// initialize csv writer
-	output := &bytes.Buffer{}
-	writer := csv.NewWriter(output)
-
 	// output the header
 	header := make([]string, len(dr.Variables))
 	for _, v := range dr.Variables {
 		header[v.Index] = v.Name
 	}
-	err := writer.Write(header)
-	if err != nil {
-		return errors.Wrap(err, "error storing header")
-	}
-
-	// output the formatted data
-	err = writer.WriteAll(lines)
-	if err != nil {
-		return errors.Wrap(err, "error storing data")
-	}
+	output := [][]string{header}
+	output = append(output, lines...)
 
 	// output the data with the new feature
-	writer.Flush()
-	err = util.WriteFileWithDirs(paths.outputData, output.Bytes(), os.ModePerm)
+	err := datasetStorage.WriteData(paths.outputData, output)
 	if err != nil {
 		return errors.Wrap(err, "error writing output")
 	}
@@ -103,7 +86,7 @@ func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]strin
 	dr.ResType = model.ResTypeTable
 
 	// write the new schema to file
-	err = metadata.WriteSchema(meta, paths.outputSchema, true)
+	err = datasetStorage.WriteMetadata(paths.outputSchema, meta, true)
 	if err != nil {
 		return errors.Wrap(err, "unable to store schema")
 	}
