@@ -56,7 +56,11 @@ import { getters as predictionGetters } from "../store/predictions/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
-import { NUM_PER_PAGE, getVariableSummariesByState } from "../util/data";
+import {
+  NUM_PER_PAGE,
+  getVariableSummariesByState,
+  searchVariables,
+} from "../util/data";
 import { Feature, Activity } from "../util/userEvents";
 
 export default Vue.extend({
@@ -80,10 +84,15 @@ export default Vue.extend({
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
-    trainingVariables(): Variable[] {
-      return requestGetters.getActivePredictionTrainingVariables(this.$store);
+    resultTrainingVarsSearch(): string {
+      return routeGetters.getRouteResultTrainingVarsSearch(this.$store);
     },
-
+    trainingVariables(): Variable[] {
+      return searchVariables(
+        requestGetters.getActivePredictionTrainingVariables(this.$store),
+        this.resultTrainingVarsSearch
+      );
+    },
     trainingSummaries(): VariableSummary[] {
       const summaryDictionary = predictionGetters.getTrainingSummariesDictionary(
         this.$store
@@ -128,6 +137,9 @@ export default Vue.extend({
     trainingVarsPage() {
       viewActions.updatePredictionTrainingSummaries(this.$store);
     },
+    resultTrainingVarsSearch() {
+      viewActions.updatePredictionTrainingSummaries(this.$store);
+    },
   },
 });
 </script>
@@ -167,7 +179,8 @@ export default Vue.extend({
 
 .predictions-variable-summaries,
 .predictions-predictions-data,
-.predictions-predictions-summaries {
+.predictions-predictions-summaries,
+.predictions-variable-summaries /deep/ .variable-facets-wrapper {
   height: 100%;
 }
 @media (max-width: 767px) {

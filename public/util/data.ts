@@ -528,7 +528,7 @@ export function searchVariables(
     return (
       searchQuery === undefined ||
       searchQuery === "" ||
-      v.colName.toLowerCase().includes(searchQuery.toLowerCase())
+      (v && v.colName.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   });
 }

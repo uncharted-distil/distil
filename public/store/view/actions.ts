@@ -638,8 +638,14 @@ export const actions = {
     const varModes = <Map<string, SummaryMode>>(
       context.getters.getDecodedVarModes
     );
+    const currentSearch = <string>(
+      context.getters.getRouteResultTrainingVarsSearch
+    );
     const trainingVariables = <Variable[]>(
-      context.getters.getActivePredictionTrainingVariables
+      searchVariables(
+        context.getters.getActivePredictionTrainingVariables,
+        currentSearch
+      )
     );
     const page = routeGetters.getRouteResultTrainingVarsPage(store);
     const pageSize = NUM_PER_PAGE;
