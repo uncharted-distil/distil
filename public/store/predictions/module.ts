@@ -73,6 +73,8 @@ export const actions = {
 
   // time series forecast data
   fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries),
+  // csv export data
+  fetchExportData: dispatch(moduleActions.fetchExportData),
 };
 
 // Typed mutations
