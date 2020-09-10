@@ -250,12 +250,25 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 		outputTrain, outputTest = shuffleAndWrite(inputData, groupingCol, numTrainingRows, numTestRows, true, outputTrain, outputTest, trainTestSplit)
 	}
 
-	err = datasetStorage.WriteData(trainFile, outputTrain)
+	parquetStorage := serialization.GetStorage(trainFile + ".parquet")
+	csvStorage := serialization.GetStorage(trainFile)
+
+	err = csvStorage.WriteData(trainFile, outputTrain)
 	if err != nil {
 		return errors.Wrap(err, "unable to output train data")
 	}
 
-	err = datasetStorage.WriteData(testFile, outputTest)
+	err = parquetStorage.WriteData(trainFile+".parquet", outputTrain)
+	if err != nil {
+		return errors.Wrap(err, "unable to output train data")
+	}
+
+	err = csvStorage.WriteData(testFile, outputTest)
+	if err != nil {
+		return errors.Wrap(err, "unable to output test data")
+	}
+
+	err = parquetStorage.WriteData(testFile+".parquet", outputTest)
 	if err != nil {
 		return errors.Wrap(err, "unable to output test data")
 	}

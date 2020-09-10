@@ -16,6 +16,8 @@
 package serialization
 
 import (
+	"path"
+
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
@@ -23,6 +25,11 @@ import (
 const (
 	schemaVersion = "4.0.0"
 	license       = "Unknown"
+)
+
+var (
+	csvStorage     = NewCSV()
+	parquetStorage = NewParquet()
 )
 
 // Storage defines the base functions needed to store datasets to a backing
@@ -34,4 +41,13 @@ type Storage interface {
 	WriteData(uri string, data [][]string) error
 	ReadMetadata(uri string) (*model.Metadata, error)
 	WriteMetadata(uri string, metadata *model.Metadata, extended bool) error
+}
+
+// GetStorage returns the storage to use based on URI.
+func GetStorage(uri string) Storage {
+	if path.Ext(uri) == ".parquet" {
+		return parquetStorage
+	}
+
+	return csvStorage
 }
