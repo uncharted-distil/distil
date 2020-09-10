@@ -164,8 +164,6 @@ const fetchVariableSummaries = async (context, args) => {
     ...mainPageVariables,
   ];
 
-  console.log(searchedPresortedVariables, allActiveVariables);
-
   return Promise.all([
     datasetActions.fetchIncludedVariableSummaries(store, {
       dataset: dataset,

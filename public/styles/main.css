@@ -125,31 +125,57 @@ body {
 }
 
 html {
-  --facet-terms-bar-2-normal: #999999;
-  --facet-terms-bar-2-normal-contrast: #999999;
-  --facet-terms-bar-2-normal-contrast-hover: #bbbbbb;
-  --facet-terms-bar-2-selected: #999999;
-  --facet-terms-bar-2-selected-contrast: #999999;
-  --facet-terms-bar-2-selected-contrast-hover: #bbbbbb;
-  --facet-terms-bar-2-unselected: #999999;
-  --facet-terms-bar-2-unselected-contrast: #999999;
-  --facet-terms-bar-2-unselected-contrast-hover: #bbbbbb;
-  --facet-terms-bar-2-muted: #999999;
-  --facet-terms-bar-2-muted-contrast: #999999;
-  --facet-terms-bar-2-muted-contrast-hover: #bbbbbb;
+  --facet-terms-bar-3-normal: #999999;
+  --facet-terms-bar-3-normal-contrast: #999999;
+  --facet-terms-bar-3-normal-contrast-hover: #bbbbbb;
+  --facet-terms-bar-3-selected: #999999;
+  --facet-terms-bar-3-selected-contrast: #999999;
+  --facet-terms-bar-3-selected-contrast-hover: #bbbbbb;
+  --facet-terms-bar-3-unselected: #999999;
+  --facet-terms-bar-3-unselected-contrast: #999999;
+  --facet-terms-bar-3-unselected-contrast-hover: #bbbbbb;
+  --facet-terms-bar-3-muted: #999999;
+  --facet-terms-bar-3-muted-contrast: #999999;
+  --facet-terms-bar-3-muted-contrast-hover: #bbbbbb;
 
-  --facet-bars-2-normal: #999999;
-  --facet-bars-2-normal-contrast: #999999;
-  --facet-bars-2-normal-contrast-hover: #bbbbbb;
-  --facet-bars-2-selected: #999999;
-  --facet-bars-2-selected-contrast: #999999;
-  --facet-bars-2-selected-contrast-hover: #bbbbbb;
-  --facet-bars-2-unselected: #999999;
-  --facet-bars-2-unselected-contrast: #999999;
-  --facet-bars-2-unselected-contrast-hover: #bbbbbb;
-  --facet-bars-2-muted: #999999;
-  --facet-bars-2-muted-contrast: #999999;
-  --facet-bars-2-muted-contrast-hover: #bbbbbb;
+  --facet-bars-3-normal: #999999;
+  --facet-bars-3-normal-contrast: #999999;
+  --facet-bars-3-normal-contrast-hover: #bbbbbb;
+  --facet-bars-3-selected: #999999;
+  --facet-bars-3-selected-contrast: #999999;
+  --facet-bars-3-selected-contrast-hover: #bbbbbb;
+  --facet-bars-3-unselected: #999999;
+  --facet-bars-3-unselected-contrast: #999999;
+  --facet-bars-3-unselected-contrast-hover: #bbbbbb;
+  --facet-bars-3-muted: #999999;
+  --facet-bars-3-muted-contrast: #999999;
+  --facet-bars-3-muted-contrast-hover: #bbbbbb;
+
+  --facet-terms-bar-2-normal: #000000;
+  --facet-terms-bar-2-normal-contrast: #000000;
+  --facet-terms-bar-2-normal-contrast-hover: #333333;
+  --facet-terms-bar-2-selected: #000000;
+  --facet-terms-bar-2-selected-contrast: #000000;
+  --facet-terms-bar-2-selected-contrast-hover: #333333;
+  --facet-terms-bar-2-unselected: #000000;
+  --facet-terms-bar-2-unselected-contrast: #000000;
+  --facet-terms-bar-2-unselected-contrast-hover: #333333;
+  --facet-terms-bar-2-muted: #000000;
+  --facet-terms-bar-2-muted-contrast: #000000;
+  --facet-terms-bar-2-muted-contrast-hover: #333333;
+
+  --facet-bars-2-normal: #000000;
+  --facet-bars-2-normal-contrast: #000000;
+  --facet-bars-2-normal-contrast-hover: #333333;
+  --facet-bars-2-selected: #000000;
+  --facet-bars-2-selected-contrast: #000000;
+  --facet-bars-2-selected-contrast-hover: #333333;
+  --facet-bars-2-unselected: #000000;
+  --facet-bars-2-unselected-contrast: #000000;
+  --facet-bars-2-unselected-contrast-hover: #333333;
+  --facet-bars-2-muted: #000000;
+  --facet-bars-2-muted-contrast: #000000;
+  --facet-bars-2-muted-contrast-hover: #333333;
 
   --facet-terms-bar-1-normal: #ff0067;
   --facet-terms-bar-1-normal-contrast: #ff0067;

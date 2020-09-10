@@ -17,6 +17,8 @@ import {
   GEOCOORDINATE_TYPE,
   TIMESERIES_TYPE,
 } from "../util/types";
+import store from "../store/store";
+import { getters as routeGetters } from "../store/route/module";
 import { getTimeseriesSummaryTopCategories } from "../util/data";
 import { getSelectedRows } from "../util/row";
 import {
@@ -288,6 +290,7 @@ export function getSubSelectionValues(
   rowSelection: RowSelection,
   max: number
 ): number[][] {
+  const include = routeGetters.getRouteInclude(store);
   const hasFilterBuckets = hasFiltered(summary);
   if (!hasFilterBuckets && !rowSelection) {
     return summary.baseline?.buckets?.map((b) => [null, b.count / max]);
@@ -317,14 +320,16 @@ export function getSubSelectionValues(
         ? filteredKeys[b.key]
         : 0;
       return hasRowLabels
-        ? [bucketCount / max, null]
-        : [null, bucketCount / max];
+        ? [null, bucketCount / max, null]
+        : include
+        ? [null, null, bucketCount / max]
+        : [bucketCount / max, null, null];
     });
   } else {
     subSelectionValues = summary.baseline.buckets.map((b) =>
       rowLabelMatches(rowLabels, b.key, isNumeric)
-        ? [b.count / max, null]
-        : [null, b.count / max]
+        ? [null, b.count / max, null]
+        : [null, null, b.count / max]
     );
   }
   return subSelectionValues;
