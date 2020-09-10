@@ -24,23 +24,22 @@
         </div>
       </div>
     </div>
-
-    <!-- TODO: For show right now.-->
-    <!-- 
-    <b-button variant="primary" class="float-right mt-2">
+    <b-button variant="primary" class="float-right mt-2" v-b-modal.export>
       Export Predictions
     </b-button>
 
-    <b-modal id="export" title="Export">
-      <div class="check-message-container">
-        <i class="fa fa-check-circle fa-3x check-icon"></i>
+    <b-modal id="export" title="Export" @ok="savePredictions">
+      <div class="check-message-container d-flex justify-content-around">
+        <i class="fa fa-file-text-o fa-3x" aria-hidden="true"></i>
         <div>
-          This action will export predictions and return to the application
-          start screen.
+          <b-form-input
+            v-model="text"
+            placeholder="Enter name to save as"
+            @change="updateFileName"
+          ></b-form-input>
         </div>
       </div>
     </b-modal>
-    -->
   </div>
 </template>
 
@@ -56,7 +55,10 @@ import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
-import { getters as predictionsGetters } from "../store/predictions/module";
+import {
+  getters as predictionsGetters,
+  actions as predictionActions,
+} from "../store/predictions/module";
 import {
   actions as appActions,
   getters as appGetters,
@@ -89,6 +91,9 @@ export default Vue.extend({
     FacetNumerical,
     FacetCategorical,
     FileUploader,
+  },
+  data: {
+    saveFileName: "",
   },
 
   computed: {
@@ -239,6 +244,27 @@ export default Vue.extend({
         requestGetters.getRelevantPredictions(this.$store),
         requestId
       ).dataset;
+    },
+
+    updateFileName(val: string) {
+      this.saveFileName = val;
+    },
+
+    async savePredictions() {
+      const csvStr = await predictionActions.fetchExportData(this.$store, {
+        produceRequestId: this.produceRequestId,
+      });
+      if (!csvStr) {
+        console.error("No CSV Data");
+        return;
+      }
+      const hiddenElement = document.createElement("a");
+      const fileName =
+        this.saveFileName === "" ? "predictions" : this.saveFileName;
+      hiddenElement.href = "data:text/csv;charset=utf-8," + encodeURI(csvStr);
+      hiddenElement.target = "_blank";
+      hiddenElement.download = `${fileName}.csv`;
+      hiddenElement.click();
     },
   },
 });

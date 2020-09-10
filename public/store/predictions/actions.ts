@@ -365,4 +365,21 @@ export const actions = {
       console.error(error);
     }
   },
+
+  async fetchExportData(
+    context: PredictionContext,
+    args: {
+      produceRequestId: string;
+    }
+  ): Promise<string> {
+    try {
+      const endPoint = "/distil/export-results/";
+      const params = `${args.produceRequestId}`;
+      const response = await axios.get(endPoint + params);
+      return response.data;
+    } catch (error) {
+      console.error(error);
+    }
+    return null;
+  },
 };
