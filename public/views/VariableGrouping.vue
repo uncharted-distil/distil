@@ -516,14 +516,15 @@ export default Vue.extend({
         grouping: grouping,
       });
 
-      // If this dataset contains multiple timeseries, then we need to request clustering be run on it
-      if (this.isTimeseries && ids.length > 0) {
-        await datasetActions.fetchClusters(this.$store, {
-          dataset: this.dataset,
-        });
-      }
-
       if (gotoTarget) {
+        // If this dataset contains multiple timeseries,
+        // and we're doing the final submit,
+        // then we need to request clustering be run on it.
+        if (this.isTimeseries && ids.length > 0) {
+          await datasetActions.fetchClusters(this.$store, {
+            dataset: this.dataset,
+          });
+        }
         this.gotoTargetSelection();
       }
 
