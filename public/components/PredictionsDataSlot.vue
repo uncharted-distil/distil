@@ -229,7 +229,6 @@ export default Vue.extend({
 .predictions-data-slot-container {
   position: relative;
   display: flex;
-  background-color: white;
   flex-flow: wrap;
   height: 100%;
   width: 100%;

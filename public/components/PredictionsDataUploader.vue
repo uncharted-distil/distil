@@ -172,7 +172,7 @@ export default Vue.extend({
           applyModel: true.toString(),
         };
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
-        this.$router.push(entry);
+        this.$router.push(entry).catch((err) => console.warn(err));
       }
     },
   },

@@ -277,7 +277,7 @@ export default Vue.extend({
         varModes: varModesStr,
         dataMode: DataMode.Cluster,
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
 
       // update variables
       // pull the updated dataset, vars, and summaries

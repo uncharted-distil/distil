@@ -286,7 +286,7 @@ export default Vue.extend({
           dataset: routeGetters.getRouteDataset(this.$store),
           groupingType: type,
         });
-        this.$router.push(entry);
+        this.$router.push(entry).catch((err) => console.warn(err));
       } else if (
         this.expandCollapse &&
         (type === COLLAPSE_ACTION_TYPE || type === EXPAND_ACTION_TYPE)

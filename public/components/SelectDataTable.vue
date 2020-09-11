@@ -1,71 +1,70 @@
 <template>
-  <fixed-header-table ref="fixedHeaderTable">
-    <b-table
-      bordered
-      hover
-      small
-      :items="items"
-      :fields="tableFields"
-      @sort-changed="onSortChanged"
-      @row-clicked="onRowClick"
+  <b-table
+    bordered
+    hover
+    small
+    :items="items"
+    :fields="tableFields"
+    @row-clicked="onRowClick"
+    sticky-header="100%"
+    class="distil-table"
+  >
+    <template
+      v-for="computedField in computedFields"
+      v-slot:[cellSlot(computedField)]="data"
     >
-      <template
-        v-for="computedField in computedFields"
-        v-slot:[cellSlot(computedField)]="data"
-      >
-        <span :key="computedField" :title="data.value.value">
-          {{ data.value.value }}
-          <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
-            <icon-fork />
-          </icon-base>
-        </span>
-      </template>
+      <span :key="computedField" :title="data.value.value">
+        {{ data.value.value }}
+        <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
+          <icon-fork />
+        </icon-base>
+      </span>
+    </template>
 
-      <template
-        v-for="imageField in imageFields"
-        v-slot:[cellSlot(imageField.key)]="data"
-      >
-        <image-preview
-          :key="imageField.key"
-          :type="imageField.type"
-          :image-url="data.item[imageField.key].value"
-        />
-      </template>
+    <template
+      v-for="imageField in imageFields"
+      v-slot:[cellSlot(imageField.key)]="data"
+    >
+      <image-preview
+        :key="imageField.key"
+        :type="imageField.type"
+        :image-url="data.item[imageField.key].value"
+      />
+    </template>
 
-      <template
-        v-for="timeseriesGrouping in timeseriesGroupings"
-        v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
-      >
-        <div class="container" :key="data.item[timeseriesGrouping.idCol].value">
-          <div class="row">
-            <sparkline-preview
-              :truth-dataset="dataset"
-              :x-col="timeseriesGrouping.xCol"
-              :y-col="timeseriesGrouping.yCol"
-              :timeseries-col="timeseriesGrouping.idCol"
-              :timeseries-id="data.item[timeseriesGrouping.idCol].value"
-            />
-          </div>
+    <template
+      v-for="timeseriesGrouping in timeseriesGroupings"
+      v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
+    >
+      <div class="container" :key="data.item[timeseriesGrouping.idCol].value">
+        <div class="row">
+          <sparkline-preview
+            :truth-dataset="dataset"
+            :x-col="timeseriesGrouping.xCol"
+            :y-col="timeseriesGrouping.yCol"
+            :timeseries-col="timeseriesGrouping.idCol"
+            :timeseries-id="data.item[timeseriesGrouping.idCol].value"
+          />
         </div>
-      </template>
+      </div>
+    </template>
 
-      <template
-        v-for="(listField, index) in listFields"
-        v-slot:[cellSlot(listField.key)]="data"
-      >
-        <span :key="index" :title="formatList(data)">
-          {{ formatList(data) }}
-        </span>
-      </template>
+    <template
+      v-for="(listField, index) in listFields"
+      v-slot:[cellSlot(listField.key)]="data"
+    >
+      <span :key="index" :title="formatList(data)">
+        {{ formatList(data) }}
+      </span>
+    </template>
 
-      <template v-slot:cell()="data">
-        <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
-          {{ data.value | cleanNumber }}
-        </template>
-        <span v-else :title="data.value.value">{{ data.value.value }}</span>
+    <template v-slot:cell()="data">
+      <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
+        {{ data.value | cleanNumber }}
       </template>
-    </b-table>
-  </fixed-header-table>
+      <span v-else :title="data.value.value">{{ data.value.value }}</span>
+    </template>
+  </b-table>
 </template>
 
 <script lang="ts">
@@ -73,7 +72,6 @@ import _ from "lodash";
 import Vue from "vue";
 import IconBase from "./icons/IconBase.vue";
 import IconFork from "./icons/IconFork.vue";
-import FixedHeaderTable from "./FixedHeaderTable.vue";
 import SparklinePreview from "./SparklinePreview.vue";
 import ImagePreview from "./ImagePreview.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -115,7 +113,6 @@ export default Vue.extend({
   components: {
     ImagePreview,
     SparklinePreview,
-    FixedHeaderTable,
     IconBase,
     IconFork,
   },
@@ -222,25 +219,10 @@ export default Vue.extend({
     },
   },
 
-  updated() {
-    const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
-    fixedHeaderTable.resizeTableCells();
-  },
-
   methods: {
     timeserieInfo(id: string): Extrema {
       const timeseries = datasetGetters.getTimeseries(this.$store);
       return timeseries?.[this.dataset]?.info?.[id];
-    },
-
-    onSortChanged() {
-      // need a `nextTick` otherwise the cells get immediately overwritten
-      const currentScrollLeft = this.$el.querySelector("tbody").scrollLeft;
-      Vue.nextTick(() => {
-        const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
-        fixedHeaderTable.resizeTableCells();
-        fixedHeaderTable.setScrollLeft(currentScrollLeft);
-      });
     },
 
     onRowClick(row: TableRow) {
@@ -291,13 +273,6 @@ export default Vue.extend({
 </script>
 
 <style>
-table.b-table > tfoot > tr > th.sorting:before,
-table.b-table > thead > tr > th.sorting:before,
-table.b-table > tfoot > tr > th.sorting:after,
-table.b-table > thead > tr > th.sorting:after {
-  top: 0;
-}
-
 table tr {
   cursor: pointer;
 }

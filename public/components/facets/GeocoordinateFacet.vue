@@ -698,7 +698,7 @@ export default Vue.extend({
         varModes: varModesStr,
       });
 
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
 
     async removeFeature() {
@@ -719,7 +719,7 @@ export default Vue.extend({
         task: taskResponse.data.task.join(","),
       });
 
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
 
       removeFiltersByName(this.$router, this.summary.key);
     },

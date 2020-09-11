@@ -236,3 +236,29 @@ html {
   margin: 1em 0;
   padding-bottom: 0.25rem;
 }
+
+/* Tables */
+.distil-table {
+  width: 100%;
+  background-color: #fff;
+}
+.distil-table > .table.b-table > thead > tr > th {
+  color: rgba(0, 0, 0, 0.54);
+  top: -1px !important;
+  border-bottom: 2px solid rgb(222, 222, 222);
+}
+
+.distil-table > .table.b-table > tbody > tr > td > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+  display: block;
+}
+
+.distil-table > .table.b-table > tfoot > tr > th.sorting:before,
+.distil-table > .table.b-table > thead > tr > th.sorting:before,
+.distil-table > .table.b-table > tfoot > tr > th.sorting:after,
+.distil-table > .table.b-table > thead > tr > th.sorting:after {
+  top: 0;
+}

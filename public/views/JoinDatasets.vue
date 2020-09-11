@@ -244,7 +244,7 @@ export default Vue.extend({
         route.joinColumnA = column.key;
       }
       const entry = overlayRouteEntry(this.$route, route);
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
     onBottomColumnClicked(column) {
       if (!this.topColumn) {
@@ -253,13 +253,13 @@ export default Vue.extend({
       const entry = overlayRouteEntry(this.$route, {
         joinColumnB: column ? column.key : null,
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
     onJoinAccuracyChanged(value: number) {
       const entry = overlayRouteEntry(this.$route, {
         joinAccuracy: value.toString(),
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });

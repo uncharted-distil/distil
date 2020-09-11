@@ -193,7 +193,7 @@ export default Vue.extend({
       };
 
       const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });

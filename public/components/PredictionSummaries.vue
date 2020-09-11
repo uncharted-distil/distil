@@ -33,9 +33,8 @@
         <i class="fa fa-file-text-o fa-3x" aria-hidden="true"></i>
         <div>
           <b-form-input
-            v-model="text"
+            v-model="saveFileName"
             placeholder="Enter name to save as"
-            @change="updateFileName"
           ></b-form-input>
         </div>
       </div>
@@ -92,8 +91,11 @@ export default Vue.extend({
     FacetCategorical,
     FileUploader,
   },
-  data: {
-    saveFileName: "",
+
+  data() {
+    return {
+      saveFileName: "",
+    };
   },
 
   computed: {
@@ -139,12 +141,12 @@ export default Vue.extend({
           requestGetters.getPredictions(this.$store),
           requestId
         ).dataset;
-        const routeEntry = overlayRouteEntry(this.$route, {
+        const entry = overlayRouteEntry(this.$route, {
           produceRequestId: requestId,
           highlights: null,
           predictionsDataset: dataset,
         });
-        this.$router.push(routeEntry);
+        this.$router.push(entry).catch((err) => console.warn(err));
       }
     },
 
@@ -244,10 +246,6 @@ export default Vue.extend({
         requestGetters.getRelevantPredictions(this.$store),
         requestId
       ).dataset;
-    },
-
-    updateFileName(val: string) {
-      this.saveFileName = val;
     },
 
     async savePredictions() {

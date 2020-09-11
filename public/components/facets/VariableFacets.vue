@@ -251,7 +251,7 @@ export default Vue.extend({
         const entry = overlayRouteEntry(this.$route, {
           [this.routePageKey()]: page,
         });
-        this.$router.push(entry);
+        this.$router.push(entry).catch((err) => console.warn(err));
       },
       get(): number {
         return getRouteFacetPage(this.routePageKey(), this.$route);
@@ -420,7 +420,7 @@ export default Vue.extend({
       const entry = overlayRouteEntry(this.$route, {
         [this.routeSearchKey()]: this.search,
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });

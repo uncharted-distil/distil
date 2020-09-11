@@ -163,7 +163,7 @@ export default Vue.extend({
             modelTimeLimit: routeGetters.getModelTimeLimit(this.$store),
             modelQuality: routeGetters.getModelQuality(this.$store),
           });
-          this.$router.push(entry);
+          this.$router.push(entry).catch((err) => console.warn(err));
         })
         .catch((err) => {
           // display error modal

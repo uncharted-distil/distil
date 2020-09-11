@@ -458,11 +458,11 @@ export default Vue.extend({
           subActivity: SubActivity.MODEL_EXPLANATION,
           details: { solutionId: this.solutionId },
         });
-        const routeEntry = overlayRouteEntry(this.$route, {
+        const entry = overlayRouteEntry(this.$route, {
           solutionId: this.solutionId,
           highlights: null,
         });
-        this.$router.push(routeEntry);
+        this.$router.push(entry).catch((err) => console.warn(err));
       }
     },
 

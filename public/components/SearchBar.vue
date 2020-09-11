@@ -84,17 +84,17 @@ export default Vue.extend({
     },
     submitSearch() {
       const path = routeGetters.getRoutePath(this.$store);
+      let entry;
       if (path !== SEARCH_ROUTE) {
-        const routeEntry = createRouteEntry(SEARCH_ROUTE, {
+        entry = createRouteEntry(SEARCH_ROUTE, {
           terms: this.terms,
         });
-        this.$router.push(routeEntry);
       } else {
-        const routeEntry = overlayRouteEntry(this.$route, {
+        entry = overlayRouteEntry(this.$route, {
           terms: this.terms,
         });
-        this.$router.push(routeEntry);
       }
+      this.$router.push(entry).catch((err) => console.warn(err));
       this.uncommittedInput = false;
     },
   },

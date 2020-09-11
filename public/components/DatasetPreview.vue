@@ -171,7 +171,7 @@ export default Vue.extend({
       const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
         dataset: this.dataset.id,
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
       this.addRecentDataset(this.dataset.id);
       appActions.logUserEvent(this.$store, {
         feature: Feature.SELECT_DATASET,
