@@ -258,20 +258,22 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 		return errors.Wrap(err, "unable to output train data")
 	}
 
-	err = parquetStorage.WriteData(trainFile+".parquet", outputTrain)
-	if err != nil {
-		return errors.Wrap(err, "unable to output train data")
-	}
-
 	err = csvStorage.WriteData(testFile, outputTest)
 	if err != nil {
 		return errors.Wrap(err, "unable to output test data")
 	}
 
-	err = parquetStorage.WriteData(testFile+".parquet", outputTest)
+	testParquetFile := fmt.Sprintf("%s.parquet", testFile)
+	err = parquetStorage.WriteData(testParquetFile, outputTest)
 	if err != nil {
 		return errors.Wrap(err, "unable to output test data")
 	}
+
+	pData, err := parquetStorage.ReadData(testParquetFile)
+	if err != nil {
+		return err
+	}
+	log.Infof("DATA: %v", pData)
 
 	return nil
 }

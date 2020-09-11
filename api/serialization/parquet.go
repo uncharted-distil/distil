@@ -33,8 +33,8 @@ import (
 type Parquet struct {
 }
 
-type parquetRow struct {
-	data []string `parquet:"name=data, type=SLICE, valuetype=UTF8"`
+type ParquetRow struct {
+	Info []string `parquet:"name=info, type=SLICE, valuetype=UTF8"`
 }
 
 // NewParquet creates a new parquet backed storage.
@@ -42,7 +42,7 @@ func NewParquet() *Parquet {
 	return &Parquet{}
 }
 
-// ReadDataset reads a raw dataset from the file system, loading the csv
+// ReadDataset reads a raw dataset from the file system, loading the parquet
 // data into memory.
 func (d *Parquet) ReadDataset(uri string) (*api.RawDataset, error) {
 	data, err := d.ReadData(uri)
@@ -62,7 +62,7 @@ func (d *Parquet) ReadDataset(uri string) (*api.RawDataset, error) {
 }
 
 // WriteDataset writes the raw dataset to the file system, writing out
-// the data to a csv file.
+// the data to a parquet file.
 func (d *Parquet) WriteDataset(uri string, data *api.RawDataset) error {
 	err := d.WriteData(uri, data.Data)
 	if err != nil {
@@ -77,52 +77,49 @@ func (d *Parquet) WriteDataset(uri string, data *api.RawDataset) error {
 	return nil
 }
 
-// ReadData reads the data from a csv file.
+// ReadData reads the data from a parquet file.
 func (d *Parquet) ReadData(uri string) ([][]string, error) {
 	fr, err := local.NewLocalFileReader(uri)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open parquet file")
 	}
 
-	pr, err := reader.NewParquetReader(fr, new(parquetRow), 1)
+	pr, err := reader.NewParquetReader(fr, new(ParquetRow), 1)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open parquet file reader")
 	}
 
 	num := int(pr.GetNumRows())
-	rows := make([]parquetRow, num)
-	err = pr.Read(&rows)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to read parquet data")
+	output := make([][]string, num)
+	for i := 0; i < num; i++ {
+		row := make([]ParquetRow, 1)
+		err = pr.Read(&row)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to read parquet data")
+		}
+		output[i] = row[0].Info
 	}
 	pr.ReadStop()
 	fr.Close()
 
-	output := make([][]string, len(rows))
-	for i, row := range rows {
-		output[i] = row.data
-	}
-
 	return output, nil
 }
 
-// WriteData writes data to a csv file.
+// WriteData writes data to a parquet file.
 func (d *Parquet) WriteData(uri string, data [][]string) error {
 	fw, err := local.NewLocalFileWriter(uri)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create parquet file '%s'", uri)
 	}
 
-	//write
-	pw, err := writer.NewParquetWriter(fw, new(parquetRow), 1)
+	pw, err := writer.NewParquetWriter(fw, new(ParquetRow), 1)
 	if err != nil {
 		return errors.Wrap(err, "unable to create parquet writer")
 	}
-	defer fw.Close()
 
 	for i := 0; i < len(data); i++ {
-		row := &parquetRow{
-			data: data[i],
+		row := ParquetRow{
+			Info: data[i],
 		}
 		err = pw.Write(row)
 		if err != nil {
@@ -133,6 +130,8 @@ func (d *Parquet) WriteData(uri string, data [][]string) error {
 	if err != nil {
 		return errors.Wrap(err, "error ending parquet write")
 	}
+
+	defer fw.Close()
 
 	return nil
 }
