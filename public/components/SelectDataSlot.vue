@@ -238,7 +238,7 @@ export default Vue.extend({
 
       const activeFilterName = this.activeFilter.key;
       const availableVariablesNames = this.availableVariables.map(
-        (v) => v.colName
+        (v) => v.colDisplayName
       );
 
       return availableVariablesNames.includes(activeFilterName);
