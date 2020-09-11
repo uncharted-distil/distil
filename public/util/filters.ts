@@ -91,6 +91,7 @@ export const EXCLUDE_FILTER = "exclude";
 export interface Filter {
   type: string;
   mode: string;
+  displayName?: string;
   key?: string;
   min?: number;
   max?: number;

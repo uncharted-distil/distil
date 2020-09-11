@@ -58,7 +58,7 @@ export default Vue.extend({
       if (isClusterType(type)) {
         return removeClusterPrefix(this.filter.key);
       }
-      return this.filter.key;
+      return this.filter.displayName;
     },
     NUMERICAL_FILTER(): string {
       return NUMERICAL_FILTER;

@@ -57,13 +57,14 @@ export function createFilterFromHighlight(
   }
 
   const type = getVarType(key);
-
+  const displayName = variable.colDisplayName;
   if (type === IMAGE_TYPE) {
     return {
       key: key,
       type: CLUSTER_FILTER,
       mode: mode,
       categories: [highlight.value],
+      displayName: displayName,
     };
   }
 
@@ -73,6 +74,7 @@ export function createFilterFromHighlight(
       type: TEXT_FILTER,
       mode: mode,
       categories: [highlight.value],
+      displayName: displayName,
     };
   }
 
@@ -82,6 +84,7 @@ export function createFilterFromHighlight(
       type: CATEGORICAL_FILTER,
       mode: mode,
       categories: [highlight.value],
+      displayName: displayName,
     };
   }
 
@@ -100,6 +103,7 @@ export function createFilterFromHighlight(
         mode: mode,
         min: highlight.value.from,
         max: highlight.value.to,
+        displayName: displayName,
       };
     }
 
@@ -109,6 +113,7 @@ export function createFilterFromHighlight(
       mode: mode,
       min: highlight.value.from,
       max: highlight.value.to,
+      displayName: displayName,
     };
   }
   if (
@@ -125,6 +130,7 @@ export function createFilterFromHighlight(
       maxX: highlight.value.maxX,
       minY: highlight.value.minY,
       maxY: highlight.value.maxY,
+      displayName: displayName,
     };
   }
   return null;
