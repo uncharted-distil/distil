@@ -35,17 +35,34 @@ export default Vue.extend({
       }
 
       const headTargetCells = [];
+      const bodyTargetCells = [];
       const minCellWidth = 200;
       const evenCellWidth = Math.ceil(
         this.tbody.clientWidth / theadCells.length
       );
       const maxCellWidth =
         minCellWidth > evenCellWidth ? minCellWidth : evenCellWidth;
-
+      const setCellWidth = (cell) => {
+        cell.elem.style["max-width"] = cell.width + "px";
+        cell.elem.style["min-width"] = cell.width + "px";
+      };
       // reset element style so that table renders with initial layout set by css
       for (let i = 0; i < theadCells.length; i++) {
         tbodyCells[i].removeAttribute("style");
         theadCells[i].removeAttribute("style");
+      }
+      // set all cells to even number
+      for (let i = 0; i < theadCells.length; i++) {
+        const theadWidth = Math.ceil(
+          theadCells[i].getBoundingClientRect().width
+        );
+        const tbodyWidth = Math.ceil(
+          theadCells[i].getBoundingClientRect().width
+        );
+        theadCells[i].style["max-width"] = theadWidth + "px";
+        theadCells[i].style["min-width"] = theadWidth + "px";
+        tbodyCells[i].style["max-width"] = tbodyWidth + "px";
+        tbodyCells[i].style["min-width"] = tbodyWidth + "px";
       }
       // get new adjusted header cell width based on the corresponding data cell width
       for (let i = 0; i < theadCells.length; i++) {
@@ -55,43 +72,35 @@ export default Vue.extend({
           headTargetCells.push({ elem: theadCells[i], width: bodyCellWidth });
         }
       }
-      const setCellWidth = (cell) => {
-        cell.elem.style["max-width"] = cell.width + "px";
-        cell.elem.style["min-width"] = cell.width + "px";
-      };
       headTargetCells.forEach(setCellWidth);
-
-      // get body and header cell width again from computed table header cells
-      const bodyCells = [];
-      const headCells = [];
-      const allRows = this.tbody && this.tbody.querySelectorAll("tr");
-      const allBodyCellsAsRows = [];
-
-      allRows.forEach((row) => {
-        const rowCells = row.querySelectorAll("td");
-        allBodyCellsAsRows.push(rowCells);
-      });
-      let remainingCellWidth = this.tbody.clientWidth;
+      // adjust body to fit head
       for (let i = 0; i < theadCells.length; i++) {
-        const cellOffsetWidth = theadCells[i].offsetWidth;
-        const headCellWidth =
-          i + 1 === theadCells.length
-            ? cellOffsetWidth > remainingCellWidth
-              ? cellOffsetWidth
-              : remainingCellWidth
-            : cellOffsetWidth < maxCellWidth ||
-              !!tbodyCells[i].querySelector("div.container")
-            ? cellOffsetWidth
-            : maxCellWidth;
-        remainingCellWidth = remainingCellWidth - headCellWidth;
-        headCells.push({ elem: theadCells[i], width: headCellWidth });
-        allBodyCellsAsRows.forEach((row) => {
-          bodyCells.push({ elem: row[i], width: headCellWidth });
-        });
+        const headCellWidth = theadCells[i].offsetWidth;
+        const bodyCellWidth = tbodyCells[i].offsetWidth;
+        if (bodyCellWidth < headCellWidth) {
+          bodyTargetCells.push({ elem: tbodyCells[i], width: headCellWidth });
+        }
       }
-      // set new cell width
-      headCells.forEach(setCellWidth);
-      bodyCells.forEach(setCellWidth);
+      bodyTargetCells.forEach(setCellWidth);
+      let sum = 0;
+      // check for remainder width and redistribute it evenly among the cells
+      for (let i = 0; i < theadCells.length; ++i) {
+        sum += theadCells[i].offsetWidth;
+      }
+      if (sum < this.tbody.clientWidth) {
+        const residualSpace =
+          (this.tbody.clientWidth - sum) / theadCells.length;
+        for (let i = 0; i < theadCells.length; ++i) {
+          theadCells[i].style["max-width"] =
+            (theadCells[i].offsetWidth + residualSpace).toString() + "px";
+          theadCells[i].style["min-width"] =
+            (theadCells[i].offsetWidth + residualSpace).toString() + "px";
+          tbodyCells[i].style["max-width"] =
+            (tbodyCells[i].offsetWidth + residualSpace).toString() + "px";
+          tbodyCells[i].style["min-width"] =
+            (tbodyCells[i].offsetWidth + residualSpace).toString() + "px";
+        }
+      }
     },
 
     onScroll() {
