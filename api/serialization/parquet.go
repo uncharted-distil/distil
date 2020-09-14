@@ -135,7 +135,7 @@ func (d *Parquet) WriteData(uri string, data [][]string) error {
 		return errors.Wrapf(err, "unable to create parquet file '%s'", uri)
 	}
 
-	pw, err := writer.NewCSVWriter(md, fw, 4)
+	pw, err := writer.NewCSVWriter(md, fw, 1)
 	if err != nil {
 		return errors.Wrap(err, "unable to create parquet writer")
 	}
