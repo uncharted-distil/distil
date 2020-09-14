@@ -17,9 +17,12 @@ package serialization
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"strconv"
 
 	"github.com/xitongsys/parquet-go-source/local"
+	"github.com/xitongsys/parquet-go/parquet"
 	"github.com/xitongsys/parquet-go/reader"
 	"github.com/xitongsys/parquet-go/writer"
 
@@ -33,9 +36,7 @@ import (
 type Parquet struct {
 }
 
-type ParquetRow struct {
-	Info []string `parquet:"name=info, type=SLICE, valuetype=UTF8"`
-}
+type converter func(val interface{}) string
 
 // NewParquet creates a new parquet backed storage.
 func NewParquet() *Parquet {
@@ -83,43 +84,79 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open parquet file")
 	}
+	defer fr.Close()
 
-	pr, err := reader.NewParquetReader(fr, new(ParquetRow), 1)
+	pr, err := reader.NewParquetColumnReader(fr, 1)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open parquet file reader")
 	}
+	defer pr.ReadStop()
 
-	num := int(pr.GetNumRows())
-	output := make([][]string, num)
-	for i := 0; i < num; i++ {
-		row := make([]ParquetRow, 1)
-		err = pr.Read(&row)
+	colCount := pr.SchemaHandler.GetColumnNum()
+	rowCount := pr.GetNumRows()
+	dataByCol := make([][]string, colCount)
+	for i := int64(0); i < colCount; i++ {
+		colRaw, err := d.readColumn(pr, i, rowCount)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to read parquet data")
+			return nil, err
 		}
-		output[i] = row[0].Info
+		dataByCol[i] = d.columnToString(colRaw, *pr.SchemaHandler.SchemaElements[i+1].Type)
 	}
-	pr.ReadStop()
-	fr.Close()
+
+	output := make([][]string, rowCount)
+	for rowIndex := 0; rowIndex < int(rowCount); rowIndex++ {
+		output[rowIndex] = make([]string, colCount)
+		for colIndex := 0; colIndex < int(colCount); colIndex++ {
+			output[rowIndex][colIndex] = dataByCol[colIndex][rowIndex]
+		}
+	}
 
 	return output, nil
 }
 
+func (d *Parquet) readColumn(pr *reader.ParquetReader, index int64, rows int64) ([]interface{}, error) {
+	data, _, _, err := pr.ReadColumnByIndex(index, rows)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to read parquet file column index %d", index)
+	}
+
+	return data, nil
+}
+
 // WriteData writes data to a parquet file.
 func (d *Parquet) WriteData(uri string, data [][]string) error {
+	md := make([]string, len(data[0]))
+	for i, c := range data[0] {
+		md[i] = fmt.Sprintf("name=%s, type=UTF8", c)
+	}
+
 	fw, err := local.NewLocalFileWriter(uri)
 	if err != nil {
 		return errors.Wrapf(err, "unable to create parquet file '%s'", uri)
 	}
 
-	pw, err := writer.NewParquetWriter(fw, new(ParquetRow), 1)
+	pw, err := writer.NewCSVWriter(md, fw, 4)
 	if err != nil {
 		return errors.Wrap(err, "unable to create parquet writer")
 	}
 
+	//pw, err := writer.NewParquetWriter(fw, nil, 1)
+	//pw.SchemaHandler = schema.NewSchemaHandlerFromMetadata(md)
+	//pw.Footer.Schema = pw.SchemaHandler.SchemaElements
+	//log.Infof("SCHEMA: %v", pw.SchemaHandler)
+	//for i, se := range pw.SchemaHandler.SchemaElements {
+	//	log.Infof("SCHEMA ELEMENT %d: %v", i, se)
+	//}
+
+	//if err != nil {
+	//	return errors.Wrap(err, "unable to create parquet writer")
+	//}
+
 	for i := 0; i < len(data); i++ {
-		row := ParquetRow{
-			Info: data[i],
+		rowData := data[i]
+		row := make([]interface{}, len(rowData))
+		for ic, c := range rowData {
+			row[ic] = c
 		}
 		err = pw.Write(row)
 		if err != nil {
@@ -238,4 +275,47 @@ func (d *Parquet) writeVariable(variable *model.Variable, extended bool) interfa
 	}
 
 	return output
+}
+
+func (d *Parquet) columnToString(colData []interface{}, colType parquet.Type) []string {
+	var converterFunc converter
+	switch colType {
+	case parquet.Type_FLOAT, parquet.Type_INT96, parquet.Type_DOUBLE:
+		converterFunc = floatToString
+	case parquet.Type_BOOLEAN:
+		converterFunc = boolToString
+	case parquet.Type_INT64:
+		converterFunc = int64ToString
+	case parquet.Type_INT32:
+		converterFunc = int32ToString
+	case parquet.Type_BYTE_ARRAY, parquet.Type_FIXED_LEN_BYTE_ARRAY:
+		converterFunc = stringToString
+	}
+
+	output := make([]string, len(colData))
+	for i, c := range colData {
+		output[i] = converterFunc(c)
+	}
+
+	return output
+}
+
+func floatToString(val interface{}) string {
+	return fmt.Sprintf("%f", val)
+}
+
+func stringToString(val interface{}) string {
+	return val.(string)
+}
+
+func boolToString(val interface{}) string {
+	return strconv.FormatBool(val.(bool))
+}
+
+func int32ToString(val interface{}) string {
+	return strconv.Itoa(int(val.(int32)))
+}
+
+func int64ToString(val interface{}) string {
+	return strconv.Itoa(int(val.(int64)))
 }
