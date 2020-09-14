@@ -5,7 +5,6 @@
     small
     :items="items"
     :fields="emphasizedFields"
-    @sort-changed="onSortChanged"
     @head-clicked="onColumnClicked"
   >
     <template v-slot:cell()="data">

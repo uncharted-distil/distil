@@ -6,7 +6,6 @@
     :items="items"
     :fields="tableFields"
     @row-clicked="onRowClick"
-    @sort-changed="onSortChanged"
     sticky-header="100%"
     class="distil-table"
   >
@@ -134,12 +133,6 @@ export default Vue.extend({
     SparklinePreview,
     IconBase,
     IconFork,
-  },
-
-  data() {
-    return {
-      sortingBy: undefined,
-    };
   },
 
   props: {
@@ -289,10 +282,6 @@ export default Vue.extend({
           details: { deselected: row[D3M_INDEX_FIELD] },
         });
       }
-    },
-
-    onSortChanged(event) {
-      this.sortingBy = event.sortBy;
     },
 
     cellSlot(key: string): string {
