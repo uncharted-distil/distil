@@ -297,7 +297,6 @@ export default Vue.extend({
       if (!this.dataItems) {
         return [];
       }
-
       // Array to store the longitude width (degrees) of each areas.
       const longitudes = [];
 
@@ -755,11 +754,11 @@ export default Vue.extend({
         }).$mount();
 
         // Add interactivity to the layer.
-        layer.bindTooltip(tooltip.$el as HTMLElement).on("click", () => {
-          if (this.isRemoteSensing) {
+        if (this.isRemoteSensing) {
+          layer.bindTooltip(tooltip.$el as HTMLElement).on("click", () => {
             this.showImageDrilldown(imageUrl, item);
-          }
-        });
+          });
+        }
 
         // Add the rectangle to the layer group.
         this.poiLayer.addLayer(layer);

@@ -42,7 +42,7 @@ import {
   TEXT_FILTER,
 } from "../util/filters";
 import { clearHighlight } from "../util/highlights";
-import { getVarType, isClusterType, removeClusterPrefix } from "../util/types";
+import { removeClusterPrefix } from "../util/types";
 
 export default Vue.extend({
   name: "filter-badge",
@@ -54,7 +54,6 @@ export default Vue.extend({
 
   computed: {
     filterName(): string {
-      const type = getVarType(this.filter.key);
       return this.filter.displayName;
     },
     NUMERICAL_FILTER(): string {

@@ -79,7 +79,10 @@ export default Vue.extend({
       type: Boolean as () => boolean,
       default: false,
     },
-    trainingVariables: Array as () => Variable[],
+    trainingVariables: {
+      type: Array as () => Variable[],
+      default: [] as Variable[],
+    },
   },
 
   data() {
@@ -122,34 +125,29 @@ export default Vue.extend({
       return false;
     },
     hasGeoVariables(): boolean {
-      const hasGeocoord =
-        this.variables.filter(
-          (v) =>
-            v.grouping &&
-            [GEOCOORDINATE_TYPE, REMOTE_SENSING_TYPE].includes(v.grouping.type)
-        ).length > 0;
-      const hasLat =
-        this.variables.filter((v) => v.colType === LONGITUDE_TYPE).length > 0;
-      const hasLon =
-        this.variables.filter((v) => v.colType === LATITUDE_TYPE).length > 0;
+      const hasGeocoord = this.variables.some(
+        (v) =>
+          v.grouping &&
+          [GEOCOORDINATE_TYPE, REMOTE_SENSING_TYPE].includes(v.grouping.type)
+      );
+      const hasLat = this.variables.some((v) => v.colType === LONGITUDE_TYPE);
+      const hasLon = this.variables.some((v) => v.colType === LATITUDE_TYPE);
 
       return (hasLat && hasLon) || hasGeocoord;
     },
     hasTrainingGeoVariables(): boolean {
-      const hasGeocoord =
-        this.trainingVariables.filter(
-          (v) =>
-            (v.grouping &&
-              [GEOCOORDINATE_TYPE, GEOBOUNDS_TYPE].includes(v.grouping.type)) ||
-            v.colType === GEOBOUNDS_TYPE
-        ).length > 0;
-      const hasLat =
-        this.trainingVariables.filter((v) => v.colType === LONGITUDE_TYPE)
-          .length > 0;
-      const hasLon =
-        this.trainingVariables.filter((v) => v.colType === LATITUDE_TYPE)
-          .length > 0;
-
+      const hasGeocoord = this.trainingVariables.some(
+        (v) =>
+          (v.grouping &&
+            [GEOCOORDINATE_TYPE, GEOBOUNDS_TYPE].includes(v.grouping.type)) ||
+          v.colType === GEOBOUNDS_TYPE
+      );
+      const hasLat = this.trainingVariables.some(
+        (v) => v.colType === LONGITUDE_TYPE
+      );
+      const hasLon = this.trainingVariables.some(
+        (v) => v.colType === LATITUDE_TYPE
+      );
       return (hasLat && hasLon) || hasGeocoord;
     },
 
