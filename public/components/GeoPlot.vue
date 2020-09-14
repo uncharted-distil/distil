@@ -754,8 +754,9 @@ export default Vue.extend({
         }).$mount();
 
         // Add interactivity to the layer.
+        layer.bindTooltip(tooltip.$el as HTMLElement);
         if (this.isRemoteSensing) {
-          layer.bindTooltip(tooltip.$el as HTMLElement).on("click", () => {
+          layer.on("click", () => {
             this.showImageDrilldown(imageUrl, item);
           });
         }
