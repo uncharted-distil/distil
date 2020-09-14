@@ -548,7 +548,6 @@ export const getters = {
   },
 
   isGeoSpatial(state: Route, getters: any): boolean {
-    // return if geospatial reside in the route hardcoded for now I dont believe there is an enum for it
     return getters.getTrainingVariables.some(
       (v) => v.colType === GEOBOUNDS_TYPE || v.colType === GEOCOORDINATE_TYPE
     );
