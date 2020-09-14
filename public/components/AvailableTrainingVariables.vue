@@ -144,7 +144,7 @@ export default Vue.extend({
             training: training.join(","),
             task: taskResponse.data.task.join(","),
           });
-          this.$router.push(entry);
+          this.$router.push(entry).catch((err) => console.warn(err));
         });
         container.appendChild(trainingElem);
         return container;
@@ -171,7 +171,7 @@ export default Vue.extend({
         training: training.join(","),
         availableTrainingVarsPage: 1,
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });

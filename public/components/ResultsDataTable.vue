@@ -1,115 +1,115 @@
 <template>
-  <fixed-header-table ref="fixedHeaderTable">
-    <b-table
-      bordered
-      hover
-      small
-      :items="items"
-      :fields="tableFields"
-      :sort-by="errorCol"
-      :sort-compare="sortFunction"
-      @row-clicked="onRowClick"
-      @sort-changed="onSortChanged"
+  <b-table
+    bordered
+    hover
+    small
+    :items="items"
+    :fields="tableFields"
+    :sort-by="errorCol"
+    :sort-compare="sortFunction"
+    @row-clicked="onRowClick"
+    @sort-changed="onSortChanged"
+    sticky-header="100%"
+    class="distil-table"
+  >
+    <template
+      v-for="computedField in computedFields"
+      v-slot:[cellSlot(computedField)]="data"
     >
-      <template
-        v-for="computedField in computedFields"
-        v-slot:[cellSlot(computedField)]="data"
+      <div :key="computedField" :title="data.value.value">
+        {{ data.value.value }}
+        <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
+          <icon-fork />
+        </icon-base>
+      </div>
+    </template>
+
+    <template v-slot:[headSlot(predictedCol)]="data">
+      <span
+        >{{ data.label }}<sup>{{ solutionIndex }}</sup></span
       >
-        <div :key="computedField" :title="data.value.value">
-          {{ data.value.value }}
-          <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
-            <icon-fork />
-          </icon-base>
-        </div>
-      </template>
+    </template>
 
-      <template v-slot:[headSlot(predictedCol)]="data">
-        <span
-          >{{ data.label }}<sup>{{ solutionIndex }}</sup></span
-        >
-      </template>
+    <template
+      v-for="imageField in imageFields"
+      v-slot:[cellSlot(imageField.key)]="data"
+    >
+      <image-preview
+        :key="imageField.key"
+        :type="imageField.type"
+        :image-url="data.item[imageField.key].value"
+      ></image-preview>
+    </template>
 
-      <template
-        v-for="imageField in imageFields"
-        v-slot:[cellSlot(imageField.key)]="data"
-      >
-        <image-preview
-          :key="imageField.key"
-          :type="imageField.type"
-          :image-url="data.item[imageField.key].value"
-        ></image-preview>
-      </template>
+    <template
+      v-for="timeseriesGrouping in timeseriesGroupings"
+      v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
+    >
+      <sparkline-preview
+        :key="data.item[timeseriesGrouping.idCol].value"
+        :truth-dataset="dataset"
+        :x-col="timeseriesGrouping.xCol"
+        :y-col="timeseriesGrouping.yCol"
+        :timeseries-col="timeseriesGrouping.idCol"
+        :timeseries-id="data.item[timeseriesGrouping.idCol].value"
+        :solution-id="solutionId"
+        :include-forecast="isTargetTimeseries"
+      />
+    </template>
 
-      <template
-        v-for="timeseriesGrouping in timeseriesGroupings"
-        v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
-      >
-        <sparkline-preview
-          :key="data.item[timeseriesGrouping.idCol].value"
-          :truth-dataset="dataset"
-          :x-col="timeseriesGrouping.xCol"
-          :y-col="timeseriesGrouping.yCol"
-          :timeseries-col="timeseriesGrouping.idCol"
-          :timeseries-id="data.item[timeseriesGrouping.idCol].value"
-          :solution-id="solutionId"
-          :include-forecast="isTargetTimeseries"
-        />
-      </template>
+    <template
+      v-for="(listField, index) in listFields"
+      v-slot:[cellSlot(listField.key)]="data"
+    >
+      <span :key="index" :title="formatList(data)">
+        {{ formatList(data) }}
+      </span>
+    </template>
 
-      <template
-        v-for="(listField, index) in listFields"
-        v-slot:[cellSlot(listField.key)]="data"
-      >
-        <span :key="index" :title="formatList(data)">
-          {{ formatList(data) }}
-        </span>
-      </template>
-
-      <template v-slot:[cellSlot(errorCol)]="data">
-        <!-- residual error -->
-        <div>
-          <div
-            class="error-bar-container"
-            v-if="isTargetNumerical"
-            :title="data.value.value"
-          >
-            <div
-              class="error-bar"
-              v-bind:style="{
-                'background-color': errorBarColor(data.value.value),
-                width: errorBarWidth(data.value.value),
-                left: errorBarLeft(data.value.value),
-              }"
-            ></div>
-            <div class="error-bar-center"></div>
-          </div>
-
-          <!-- correctness error -->
-          <div v-if="isTargetCategorical">
-            <div v-if="data.item[predictedCol].value == data.value.value">
-              Correct
-            </div>
-            <div v-if="data.item[predictedCol].value != data.value.value">
-              Incorrect
-            </div>
-          </div>
-        </div>
-      </template>
-
-      <template v-slot:cell()="data">
-        <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
-          {{ data.value | cleanNumber }}
-        </template>
+    <template v-slot:[cellSlot(errorCol)]="data">
+      <!-- residual error -->
+      <div>
         <div
-          v-else
+          class="error-bar-container"
+          v-if="isTargetNumerical"
           :title="data.value.value"
-          :style="cellColor(data.value.weight, data)"
         >
-          {{ data.value.value }}
+          <div
+            class="error-bar"
+            v-bind:style="{
+              'background-color': errorBarColor(data.value.value),
+              width: errorBarWidth(data.value.value),
+              left: errorBarLeft(data.value.value),
+            }"
+          ></div>
+          <div class="error-bar-center"></div>
         </div>
+
+        <!-- correctness error -->
+        <div v-if="isTargetCategorical">
+          <div v-if="data.item[predictedCol].value == data.value.value">
+            Correct
+          </div>
+          <div v-if="data.item[predictedCol].value != data.value.value">
+            Incorrect
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template v-slot:cell()="data">
+      <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
+        {{ data.value | cleanNumber }}
       </template>
-    </b-table>
-  </fixed-header-table>
+      <div
+        v-else
+        :title="data.value.value"
+        :style="cellColor(data.value.weight, data)"
+      >
+        {{ data.value.value }}
+      </div>
+    </template>
+  </b-table>
 </template>
 
 <script lang="ts">
@@ -117,7 +117,6 @@ import Vue from "vue";
 import _ from "lodash";
 import IconBase from "./icons/IconBase.vue";
 import IconFork from "./icons/IconFork.vue";
-import FixedHeaderTable from "./FixedHeaderTable.vue";
 import SparklinePreview from "./SparklinePreview.vue";
 import ImagePreview from "./ImagePreview.vue";
 import {
@@ -163,7 +162,6 @@ export default Vue.extend({
   components: {
     ImagePreview,
     SparklinePreview,
-    FixedHeaderTable,
     IconBase,
     IconFork,
   },
@@ -339,13 +337,6 @@ export default Vue.extend({
     },
   },
 
-  updated() {
-    if (this.hasResults) {
-      const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
-      fixedHeaderTable.resizeTableCells();
-    }
-  },
-
   methods: {
     timeserieInfo(id: string): Extrema {
       const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
@@ -422,13 +413,6 @@ export default Vue.extend({
 
     onSortChanged(event) {
       this.sortingBy = event.sortBy;
-      // need a `nextTick` otherwise the cells get immediately overwritten
-      const currentScrollLeft = this.$el.querySelector("tbody").scrollLeft;
-      Vue.nextTick(() => {
-        const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
-        fixedHeaderTable.resizeTableCells();
-        fixedHeaderTable.setScrollLeft(currentScrollLeft);
-      });
     },
 
     cellSlot(key: string): string {

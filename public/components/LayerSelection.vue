@@ -50,7 +50,7 @@ export default Vue.extend({
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         bandCombinationId: bandID,
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });

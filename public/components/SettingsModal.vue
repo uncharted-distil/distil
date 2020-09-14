@@ -82,7 +82,7 @@ export default Vue.extend({
         modelTimeLimit: this.timeLimit,
         modelQuality: this.speedQuality,
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });

@@ -105,6 +105,7 @@
     </div>
     <b-modal
       v-if="selectedDataset"
+      modal-class="join-import-modal"
       id="join-import-modal"
       ref="import-ask-modal"
       title="JoinSuggestionImport"
@@ -119,7 +120,6 @@
     <b-modal
       v-model="showJoinSuccess"
       modal-class="join-preview-modal"
-      @shown="onSuccessModalShown"
       cancel-disabled
       hide-header
       hide-footer
@@ -525,13 +525,8 @@ export default Vue.extend({
         target: this.target,
         task: routeGetters.getRouteTask(this.$store),
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
       this.addRecentDataset(datasetID);
-    },
-    onSuccessModalShown() {
-      // trigger window resize event to notify modal content dimension has changed
-      // (fixed-header-table component will listen to this event to resize itself)
-      window.dispatchEvent(new Event("resize"));
     },
   },
   created() {

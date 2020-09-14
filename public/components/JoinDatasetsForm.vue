@@ -213,16 +213,11 @@ export default Vue.extend({
         target: this.target,
         task: routeGetters.getRouteTask(this.$store),
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
       this.addRecentDataset(datasetID);
     },
     onJoinCommitFailure() {
       this.showJoinFailure = true;
-    },
-    onSuccessModalShwon() {
-      // trigger window resize event to notify modal content dimension has changed
-      // (fixed-header-table component will listen to this event to resize itself)
-      window.dispatchEvent(new Event("resize"));
     },
   },
 });

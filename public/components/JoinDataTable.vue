@@ -1,51 +1,47 @@
 <template>
-  <fixed-header-table ref="fixedHeaderTable">
-    <b-table
-      bordered
-      hover
-      small
-      :items="items"
-      :fields="emphasizedFields"
-      @sort-changed="onSortChanged"
-      @head-clicked="onColumnClicked"
+  <b-table
+    bordered
+    hover
+    small
+    :items="items"
+    :fields="emphasizedFields"
+    @head-clicked="onColumnClicked"
+  >
+    <template v-slot:cell()="data">
+      {{ data.value.value }}
+    </template>
+
+    <template
+      v-for="imageField in imageFields"
+      v-slot:[cellSlot(imageField.key)]="data"
     >
-      <template v-slot:cell()="data">
-        {{ data.value.value }}
-      </template>
+      <image-preview
+        :key="imageField.key"
+        :type="imageField.type"
+        :image-url="data.item[imageField.key].value"
+      ></image-preview>
+    </template>
 
-      <template
-        v-for="imageField in imageFields"
-        v-slot:[cellSlot(imageField.key)]="data"
+    <template
+      v-for="timeseriesGrouping in timeseriesGroupings"
+      v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
+    >
+      <sparkline-preview
+        :key="timeseriesGrouping.idCol"
+        :dataset="dataset"
+        :x-col="timeseriesGrouping.xCol"
+        :y-col="timeseriesGrouping.yCol"
+        :timeseries-col="timeseriesGrouping.idCol"
+        :timeseries-id="data.item[timeseriesGrouping.idCol]"
       >
-        <image-preview
-          :key="imageField.key"
-          :type="imageField.type"
-          :image-url="data.item[imageField.key].value"
-        ></image-preview>
-      </template>
-
-      <template
-        v-for="timeseriesGrouping in timeseriesGroupings"
-        v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
-      >
-        <sparkline-preview
-          :key="timeseriesGrouping.idCol"
-          :dataset="dataset"
-          :x-col="timeseriesGrouping.xCol"
-          :y-col="timeseriesGrouping.yCol"
-          :timeseries-col="timeseriesGrouping.idCol"
-          :timeseries-id="data.item[timeseriesGrouping.idCol]"
-        >
-        </sparkline-preview>
-      </template>
-    </b-table>
-  </fixed-header-table>
+      </sparkline-preview>
+    </template>
+  </b-table>
 </template>
 
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import FixedHeaderTable from "./FixedHeaderTable";
 import SparklinePreview from "./SparklinePreview";
 import ImagePreview from "./ImagePreview";
 import { Dictionary } from "../util/dict";
@@ -84,7 +80,6 @@ export default Vue.extend({
   components: {
     ImagePreview,
     SparklinePreview,
-    FixedHeaderTable,
   },
 
   props: {
@@ -223,15 +218,6 @@ export default Vue.extend({
   },
 
   methods: {
-    onSortChanged() {
-      // need a `nextTick` otherwise the cells get immediately overwritten
-      const currentScrollLeft = this.$el.querySelector("tbody").scrollLeft;
-      Vue.nextTick(() => {
-        const fixedHeaderTable = this.$refs.fixedHeaderTable as any;
-        fixedHeaderTable.resizeTableCells();
-        fixedHeaderTable.setScrollLeft(currentScrollLeft);
-      });
-    },
     onColumnClicked(key, field) {
       if (this.selectedColumn && this.selectedColumn.key === key) {
         this.$emit("col-clicked", null);
@@ -247,13 +233,6 @@ export default Vue.extend({
 </script>
 
 <style>
-table.b-table > tfoot > tr > th.sorting:before,
-table.b-table > thead > tr > th.sorting:before,
-table.b-table > tfoot > tr > th.sorting:after,
-table.b-table > thead > tr > th.sorting:after {
-  top: 0;
-}
-
 table tr {
   cursor: pointer;
 }

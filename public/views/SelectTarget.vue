@@ -200,7 +200,7 @@ export default Vue.extend({
                   SELECT_TRAINING_ROUTE,
                   routeArgs
                 );
-                this.$router.push(entry);
+                this.$router.push(entry).catch((err) => console.warn(err));
               })
               .catch((error) => {
                 console.error(error);
@@ -294,7 +294,7 @@ export default Vue.extend({
         dataset: routeGetters.getRouteDataset(this.$store),
         groupingType: type,
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
 
     onMapClick() {

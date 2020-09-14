@@ -196,7 +196,7 @@ export default Vue.extend({
             training: training.join(","),
             task: taskResponse.data.task.join(","),
           });
-          this.$router.push(entry);
+          this.$router.push(entry).catch((err) => console.warn(err));
           removeFiltersByName(this.$router, group.colName);
         });
         container.appendChild(remove);
@@ -225,7 +225,7 @@ export default Vue.extend({
         training: timeseriesGrouping.join(","),
         trainingVarsPage: 1,
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });

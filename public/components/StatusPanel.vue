@@ -277,7 +277,7 @@ export default Vue.extend({
         varModes: varModesStr,
         dataMode: DataMode.Cluster,
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
 
       // update variables
       // pull the updated dataset, vars, and summaries
@@ -310,7 +310,7 @@ export default Vue.extend({
   right: 0;
   top: 0;
   bottom: 0;
-  z-index: 1100; /* To go above the NavBar */
+  z-index: 1040; /* To go above the NavBar */
   width: 300px;
   height: 100%;
   background: #fff;

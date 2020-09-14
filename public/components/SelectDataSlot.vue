@@ -363,7 +363,7 @@ export default Vue.extend({
       const entry = overlayRouteEntry(this.$route, {
         include: "true",
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
 
       clearRowSelection(this.$router);
     },
@@ -372,7 +372,7 @@ export default Vue.extend({
       const entry = overlayRouteEntry(this.$route, {
         include: "false",
       });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
 
       clearRowSelection(this.$router);
     },
@@ -380,7 +380,7 @@ export default Vue.extend({
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       const entry = overlayRouteEntry(this.$route, { dataSize });
-      this.$router.push(entry);
+      this.$router.push(entry).catch((err) => console.warn(err));
       viewActions.updateSelectTrainingData(this.$store);
     },
   },
@@ -407,13 +407,6 @@ export default Vue.extend({
   text-align: center;
   opacity: 1;
   z-index: 1;
-}
-
-table.b-table > tfoot > tr > th.sorting:before,
-table.b-table > thead > tr > th.sorting:before,
-table.b-table > tfoot > tr > th.sorting:after,
-table.b-table > thead > tr > th.sorting:after {
-  top: 0;
 }
 
 table tr {

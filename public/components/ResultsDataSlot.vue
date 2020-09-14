@@ -278,7 +278,6 @@ export default Vue.extend({
   position: relative;
   display: flex;
   flex-grow: 1;
-  background-color: white;
 }
 
 .results-data-no-results {
