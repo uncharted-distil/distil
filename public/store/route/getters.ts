@@ -546,6 +546,13 @@ export const getters = {
     return task.includes(TaskTypes.REMOTE_SENSING);
   },
 
+  isGeoSpatial(state:Route): boolean {
+    // get tasks in route
+    const task = state.query.training as string;
+    // return if geospatial reside in the route hardcoded for now I dont believe there is an enum for it
+    return !!task && task.includes("__geo_coordinates");
+  },
+
   /* Check if the current task includes Timeseries. */
   isTimeseries(state: Route): boolean {
     // Get the list of task of the route.

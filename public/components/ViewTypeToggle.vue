@@ -15,6 +15,7 @@
             <b-form-radio
               :value="IMAGE_VIEW"
               v-if="hasImageVariables"
+              :disabled="!hasTrainingImageVariables"
               class="view-button"
             >
               <i class="fa fa-image"></i>
@@ -29,6 +30,7 @@
             <b-form-radio
               :value="GEO_VIEW"
               v-if="hasGeoVariables"
+              :disabled="!hasTrainingGeoVariables"
               class="view-button"
             >
               <i class="fa fa-globe"></i>
@@ -58,6 +60,7 @@ import {
   LATITUDE_TYPE,
   GEOCOORDINATE_TYPE,
   REMOTE_SENSING_TYPE,
+  GEOBOUNDS_TYPE,
 } from "../util/types";
 
 const TABLE_VIEW = "table";
@@ -76,6 +79,7 @@ export default Vue.extend({
       type: Boolean as () => boolean,
       default: false,
     },
+    trainingVariables: Array as () => Variable[],
   },
 
   data() {
@@ -106,6 +110,13 @@ export default Vue.extend({
         ).length > 0
       );
     },
+    hasTrainingImageVariables(): boolean {
+      return (
+        this.trainingVariables.filter(
+          (v) => v.colType === IMAGE_TYPE || v.colType === REMOTE_SENSING_TYPE
+        ).length > 0
+      );
+    },
     hasGraphVariables(): boolean {
       // TODO: add this in
       return false;
@@ -121,6 +132,23 @@ export default Vue.extend({
         this.variables.filter((v) => v.colType === LONGITUDE_TYPE).length > 0;
       const hasLon =
         this.variables.filter((v) => v.colType === LATITUDE_TYPE).length > 0;
+
+      return (hasLat && hasLon) || hasGeocoord;
+    },
+    hasTrainingGeoVariables(): boolean {
+      const hasGeocoord =
+        this.trainingVariables.filter(
+          (v) =>
+            (v.grouping &&
+              [GEOCOORDINATE_TYPE, GEOBOUNDS_TYPE].includes(v.grouping.type)) ||
+            v.colType === GEOBOUNDS_TYPE
+        ).length > 0;
+      const hasLat =
+        this.trainingVariables.filter((v) => v.colType === LONGITUDE_TYPE)
+          .length > 0;
+      const hasLon =
+        this.trainingVariables.filter((v) => v.colType === LATITUDE_TYPE)
+          .length > 0;
 
       return (hasLat && hasLon) || hasGeocoord;
     },

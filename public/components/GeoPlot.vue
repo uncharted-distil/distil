@@ -302,7 +302,7 @@ export default Vue.extend({
       const longitudes = [];
 
       const areas = this.dataItems.map((item) => {
-        const imageUrl = item.group_id.value;
+        const imageUrl = this.isRemoteSensing ? item.group_id.value : null;
         const fullCoordinates = item.coordinates.value.Elements;
         if (fullCoordinates.some((x) => x === undefined)) return;
 
@@ -354,6 +354,9 @@ export default Vue.extend({
 
     isRemoteSensing(): boolean {
       return routeGetters.isRemoteSensing(this.$store);
+    },
+    isGeoSpatial(): boolean {
+      return routeGetters.isGeoSpatial(this.$store);
     },
 
     /* Base layer for the map. */
@@ -752,9 +755,11 @@ export default Vue.extend({
         }).$mount();
 
         // Add interactivity to the layer.
-        layer
-          .bindTooltip(tooltip.$el as HTMLElement)
-          .on("click", () => this.showImageDrilldown(imageUrl, item));
+        layer.bindTooltip(tooltip.$el as HTMLElement).on("click", () => {
+          if (this.isRemoteSensing) {
+            this.showImageDrilldown(imageUrl, item);
+          }
+        });
 
         // Add the rectangle to the layer group.
         this.poiLayer.addLayer(layer);
@@ -817,7 +822,7 @@ export default Vue.extend({
       this.createMap();
       this.clear();
 
-      if (this.isRemoteSensing) {
+      if (this.isGeoSpatial) {
         // Display areas and update them on zoom to be sure they are selectable.
         this.displayAreas();
         this.map.on("zoomend", () => this.displayAreas());
