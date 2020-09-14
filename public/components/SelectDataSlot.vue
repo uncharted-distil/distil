@@ -1,6 +1,11 @@
 <template>
   <div class="select-data-slot">
-    <view-type-toggle has-tabs v-model="viewTypeModel" :variables="variables">
+    <view-type-toggle
+      has-tabs
+      v-model="viewTypeModel"
+      :variables="variables"
+      :trainingVariables="trainingVariables"
+    >
       <b-nav-item
         class="font-weight-bold"
         @click="setIncludedActive"
@@ -184,7 +189,9 @@ export default Vue.extend({
     availableVariables(): Variable[] {
       return routeGetters.getAvailableVariables(this.$store);
     },
-
+    trainingVariables(): Variable[] {
+      return routeGetters.getTrainingVariables(this.$store);
+    },
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
     },

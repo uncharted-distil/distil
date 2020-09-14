@@ -36,6 +36,7 @@ import { Route } from "vue-router";
 import _ from "lodash";
 import { $enum } from "ts-enum-util";
 import { minimumRouteKey } from "../../util/data";
+import { GEOBOUNDS_TYPE, GEOCOORDINATE_TYPE } from "../../util/types";
 
 export const getters = {
   getRoute(state: Route): Route {
@@ -546,7 +547,14 @@ export const getters = {
     return task.includes(TaskTypes.REMOTE_SENSING);
   },
 
+  isGeoSpatial(state: Route, getters: any): boolean {
+    return getters.getTrainingVariables.some(
+      (v) => v.colType === GEOBOUNDS_TYPE || v.colType === GEOCOORDINATE_TYPE
+    );
+  },
+
   /* Check if the current task includes Timeseries. */
+
   isTimeseries(state: Route): boolean {
     // Get the list of task of the route.
     const task = state.query.task as string;

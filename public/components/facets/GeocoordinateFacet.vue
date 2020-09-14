@@ -85,6 +85,7 @@ import {
   NUMERICAL_SUMMARY,
   RowSelection,
   SummaryMode,
+  TaskTypes,
 } from "../../store/dataset";
 import TypeChangeMenu from "../TypeChangeMenu.vue";
 import FacetNumerical from "./FacetNumerical.vue";
