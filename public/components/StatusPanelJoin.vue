@@ -539,15 +539,6 @@ export default Vue.extend({
 </script>
 
 <style>
-.modal-backdrop {
-  z-index: 1150 !important; /* to float above the panel */
-}
-
-.join-preview-modal,
-.join-import-modal {
-  z-index: 1200 !important; /* to float above the backdrop */
-}
-
 .status-panel-join {
   height: 100%;
   display: flex;
