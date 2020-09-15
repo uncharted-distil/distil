@@ -1,0 +1,14 @@
+{
+  "env": {
+    "node": true
+  },
+  "extends": ["plugin:vue/recommended", "@vue/typescript/recommended"],
+  "rules": {
+    "no-explicit-any": 1
+  },
+  "parserOptions": {
+    "parser": "@typescript-eslint/parser",
+    "sourceType": "module",
+    "ecmaVersion": 6
+  }
+}

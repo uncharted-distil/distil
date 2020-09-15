@@ -10,7 +10,7 @@
             button-variant="outline-secondary"
           >
             <b-form-radio :value="TABLE_VIEW" class="view-button">
-              <i class="fa fa-columns"></i>
+              <i class="fa fa-columns" />
             </b-form-radio>
             <b-form-radio
               :value="IMAGE_VIEW"
