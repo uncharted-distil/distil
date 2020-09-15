@@ -24,7 +24,7 @@
           v-model="importDataName"
           :state="importDataNameState"
           required
-        ></b-form-input>
+        />
       </b-form-group>
 
       <p>Source File (csv, zip)</p>
@@ -79,6 +79,7 @@ export default Vue.extend({
       this.importDataName = "";
       this.importDataNameState = null;
     },
+
     async handleOk() {
       const deconflictedName = generateUniqueDatasetName(this.importDataName);
 
@@ -88,6 +89,7 @@ export default Vue.extend({
         filename: this.file.name,
         datasetID: deconflictedName,
       });
+
       try {
         // Upload the file and notify when complete
         const response = await datasetActions.uploadDataFile(this.$store, {
@@ -103,7 +105,7 @@ export default Vue.extend({
 
   watch: {
     // Watches for file name changes, setting a dataset import name value if the user
-    // hans't done so.
+    // hasn't done so.
     file() {
       if (!this.importDataName && this.file?.name) {
         // use the filname without the extension
@@ -124,5 +126,3 @@ export default Vue.extend({
   },
 });
 </script>
-
-<style></style>

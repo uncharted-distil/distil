@@ -17,8 +17,10 @@
       <file-uploader-status
         class="file-uploader-status col-12"
         :status="uploadStatus"
+        :importResponse="importResponse"
         :filename="uploadData.filename"
         :datasetID="uploadData.datasetID"
+        @importfull="onReImportFullDataset"
       />
     </div>
 
@@ -90,7 +92,7 @@
             class="file-uploader"
             @uploadstart="onUploadStart"
             @uploadfinish="onUploadFinish"
-          ></file-uploader>
+          />
         </nav>
       </div>
     </section>
@@ -114,14 +116,12 @@
               :dataset="result.dataset"
               allow-join
               allow-import
-            >
-            </dataset-preview>
+            />
             <model-preview
               v-if="result.type === 'model'"
               :key="result.model.fittedSolutionId"
               :model="result.model"
-            >
-            </model-preview>
+            />
           </template>
         </div>
       </div>
@@ -132,11 +132,11 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import DatasetPreview from "../components/DatasetPreview";
-import FileUploader from "../components/FileUploader";
-import FileUploaderStatus from "../components/FileUploaderStatus";
-import ModelPreview from "../components/ModelPreview";
-import SearchBar from "../components/SearchBar";
+import DatasetPreview from "../components/DatasetPreview.vue";
+import FileUploader from "../components/FileUploader.vue";
+import FileUploaderStatus from "../components/FileUploaderStatus.vue";
+import ModelPreview from "../components/ModelPreview.vue";
+import SearchBar from "../components/SearchBar.vue";
 import { Dataset } from "../store/dataset/index";
 import {
   getters as datasetGetters,
@@ -169,8 +169,14 @@ export default Vue.extend({
         type: "name",
       },
       tab: "datasets",
-      uploadData: {},
+      uploadData: {
+        datasetID: "",
+      },
       uploadStatus: "",
+      importResponse: {
+        dataset: "",
+        location: "",
+      },
     };
   },
 
@@ -201,9 +207,7 @@ export default Vue.extend({
       return this.filteredModels.length ?? 0;
     },
 
-    /**
-     * List of search results to be displayed.
-     */
+    /* List of search results to be displayed. */
     searchResults(): any[] {
       const results = [] as any[];
 
@@ -226,9 +230,7 @@ export default Vue.extend({
       return results;
     },
 
-    /**
-     * Sort the results based on the sorting selected.
-     */
+    /* Sort the results based on the sorting selected. */
     sortedResults(): any[] {
       return this.searchResults.slice().sort((a, b) => {
         // Sort by recent activity
@@ -276,6 +278,7 @@ export default Vue.extend({
       const asc = this.sorting.asc ? "asc" : "desc";
       return `fa fa-sort-${type}-${asc}`;
     },
+
     /* Dropdown name to be displayed. */
     sortingDisplayName(): string {
       if (this.sorting.type !== "recent") {
@@ -308,8 +311,39 @@ export default Vue.extend({
       this.uploadStatus = "started";
     },
 
-    onUploadFinish(err) {
+    onUploadFinish(err, response) {
       this.uploadStatus = err ? "error" : "success";
+      this.importResponse = response;
+    },
+
+    // The dataset will be reimported without sampling.
+    async onReImportFullDataset() {
+      const path = this.importResponse.location;
+      const datasetID = this.uploadData.datasetID;
+
+      // Test that we have the dataset ID and location of the raw file.
+      if (_.isEmpty(datasetID) && _.isEmpty(path)) {
+        return;
+      }
+
+      try {
+        this.uploadStatus = "started";
+        this.uploadData.datasetID = "";
+
+        this.importResponse = await datasetActions.importFullDataset(
+          this.$store,
+          {
+            datasetID,
+            path,
+          }
+        );
+        this.uploadStatus = "success";
+
+        // The dataset as been imported as a new dataset.
+        this.uploadData.datasetID = this.importResponse.dataset ?? datasetID;
+      } catch (error) {
+        this.uploadStatus = "error";
+      }
     },
 
     getNameFromResult(result: any) {
