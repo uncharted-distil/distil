@@ -28,6 +28,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil/api/env"
 	apiModel "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -157,6 +158,7 @@ func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Vari
 func createDatasetFromCSV(config *env.Config, csvFile string, datasetName string, storageName string,
 	leftVarsMap map[string]*model.Variable, rightVarsMap map[string]*model.Variable) ([]*model.Variable, error) {
 
+	datasetStorage := serialization.GetStorage(csvFile)
 	inputData, err := datasetStorage.ReadData(csvFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read data")
@@ -213,6 +215,7 @@ func createDatasetFromCSV(config *env.Config, csvFile string, datasetName string
 }
 
 func createFilteredData(csvFile string, variables []*model.Variable, lineCount int) (*apiModel.FilteredData, error) {
+	datasetStorage := serialization.GetStorage(csvFile)
 	inputData, err := datasetStorage.ReadData(csvFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read joined data")

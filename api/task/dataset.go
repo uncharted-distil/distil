@@ -43,14 +43,7 @@ var (
 		"jpeg": "jpeg",
 		"jpg":  "jpeg",
 	}
-
-	datasetStorage serialization.Storage
 )
-
-// SetDatasetStorage sets the storage interface to use for accessing datasets.
-func SetDatasetStorage(ds serialization.Storage) {
-	datasetStorage = ds
-}
 
 // DatasetConstructor is used to build a dataset.
 type DatasetConstructor interface {
@@ -82,6 +75,7 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 		return "", "", err
 	}
 
+	datasetStorage := serialization.GetStorage(dataPath)
 	err = datasetStorage.WriteData(dataPath, ds.Data)
 	if err != nil {
 		return "", "", err
@@ -138,6 +132,7 @@ func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, confi
 	}
 
 	schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
+	datasetStorage := serialization.GetStorage(dataPath)
 	err = datasetStorage.WriteMetadata(schemaPath, meta, true)
 	if err != nil {
 		return "", err
