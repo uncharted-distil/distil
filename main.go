@@ -54,6 +54,7 @@ var (
 	timestamp      = "unset"
 	problemPath    = ""
 	datasetDocPath = ""
+	ta2Version     = ""
 )
 
 func registerRoute(mux *goji.Mux, pattern string, handler func(http.ResponseWriter, *http.Request)) {
@@ -152,8 +153,9 @@ func main() {
 		return err == nil
 	}
 	servicesToWait["ta2"] = func() bool {
-		err := solutionClient.Hello()
-		return err == nil
+		versionNumber := solutionClient.Hello()
+		ta2Version = versionNumber
+		return versionNumber.(string)
 	}
 
 	// make sure a connection can be made to postgres - doesn't appear to be thread safe and
@@ -253,7 +255,7 @@ func main() {
 	registerRoute(mux, "/distil/variable-rankings/:dataset/:target", routes.VariableRankingHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/residuals-extrema/:dataset/:target", routes.ResidualsExtremaHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoute(mux, "/distil/export/:solution-id", routes.ExportHandler(solutionClient, config.D3MOutputDir, discoveryLogger))
-	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath, datasetDocPath))
+	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp, problemPath, datasetDocPath, ta2Version))
 	registerRoute(mux, "/distil/task/:dataset/:target/:variables", routes.TaskHandler(pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/distil/multiband-image/:dataset/:image-id/:band-combination", routes.MultiBandImageHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/distil/multiband-combinations/:dataset", routes.MultiBandCombinationsHandler(esMetadataStorageCtor))
