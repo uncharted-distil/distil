@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
@@ -98,6 +99,11 @@ func (d *CSV) WriteData(uri string, data [][]string) error {
 	return nil
 }
 
+// ReadRawVariables reads the csv header file to get a list of variables in the file.
+func (d *CSV) ReadRawVariables(uri string) ([]string, error) {
+	return util.ReadCSVHeader(uri)
+}
+
 // ReadMetadata reads the dataset doc from disk.
 func (d *CSV) ReadMetadata(uri string) (*model.Metadata, error) {
 	meta, err := metadata.LoadMetadataFromOriginalSchema(uri, true)
@@ -160,7 +166,7 @@ func (d *CSV) writeDataResource(resource *model.DataResource, extended bool) map
 		"resID":        resource.ResID,
 		"resPath":      resource.ResPath,
 		"resType":      resource.ResType,
-		"resFormat":    resource.ResFormat,
+		"resFormat":    map[string][]string{compute.D3MResourceFormat: {"csv"}},
 		"isCollection": resource.IsCollection,
 	}
 

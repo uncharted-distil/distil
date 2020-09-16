@@ -28,6 +28,7 @@ import (
 	comp "github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
 )
@@ -221,6 +222,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		meta.StorageName = model.NormalizeDatasetID(datasetName)
 		meta.DatasetFolder = path.Base(datasetPath)
 		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
+		datasetStorage := serialization.GetStorage(rawDataPath)
 		err = datasetStorage.WriteMetadata(schemaPath, meta, true)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update dataset doc")
@@ -277,6 +279,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, errors.Wrap(err, "unable to read latest dataset doc")
 	}
 	meta.ID = sourceDatasetID
+	datasetStorage := serialization.GetStorage(schemaPath)
 	err = datasetStorage.WriteMetadata(schemaPath, meta, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to update dataset doc")

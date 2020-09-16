@@ -24,6 +24,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -97,6 +98,7 @@ func Merge(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	output = append(output, csvData[1:]...)
 
 	// output the data
+	datasetStorage := serialization.GetStorage(outputPath.outputData)
 	err = datasetStorage.WriteData(outputPath.outputData, output)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing merged output")

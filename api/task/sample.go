@@ -25,6 +25,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil/api/compute"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -59,6 +60,7 @@ func Sample(originalSchemaFile string, schemaFile string, dataset string, config
 	}
 
 	// output to the expected location (learningData.csv)
+	datasetStorage := serialization.GetStorage(csvFilePath)
 	err = datasetStorage.WriteData(csvFilePath, sampledData)
 	if err != nil {
 		return "", false, 0, err

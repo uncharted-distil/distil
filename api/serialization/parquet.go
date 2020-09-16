@@ -103,11 +103,19 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 		dataByCol[i] = d.columnToString(colRaw, *pr.SchemaHandler.SchemaElements[i+1].Type)
 	}
 
-	output := make([][]string, rowCount)
+	// header is the expected first row of the output
+	header, err := d.ReadRawVariables(uri)
+	if err != nil {
+		return nil, err
+	}
+
+	output := make([][]string, rowCount+1)
+	output[0] = header
 	for rowIndex := 0; rowIndex < int(rowCount); rowIndex++ {
-		output[rowIndex] = make([]string, colCount)
+		outputRowIndex := rowIndex + 1
+		output[outputRowIndex] = make([]string, colCount)
 		for colIndex := 0; colIndex < int(colCount); colIndex++ {
-			output[rowIndex][colIndex] = dataByCol[colIndex][rowIndex]
+			output[outputRowIndex][colIndex] = dataByCol[colIndex][rowIndex]
 		}
 	}
 
@@ -152,7 +160,7 @@ func (d *Parquet) WriteData(uri string, data [][]string) error {
 	//	return errors.Wrap(err, "unable to create parquet writer")
 	//}
 
-	for i := 0; i < len(data); i++ {
+	for i := 1; i < len(data); i++ {
 		rowData := data[i]
 		row := make([]interface{}, len(rowData))
 		for ic, c := range rowData {
@@ -171,6 +179,29 @@ func (d *Parquet) WriteData(uri string, data [][]string) error {
 	defer fw.Close()
 
 	return nil
+}
+
+// ReadRawVariables reads the metadata and extracts the field names.
+func (d *Parquet) ReadRawVariables(uri string) ([]string, error) {
+	fr, err := local.NewLocalFileReader(uri)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to open parquet file")
+	}
+	defer fr.Close()
+
+	pr, err := reader.NewParquetColumnReader(fr, 1)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to open parquet file reader")
+	}
+	defer pr.ReadStop()
+
+	// the first field info is the root field which is not a part of the dataset
+	fields := make([]string, len(pr.SchemaHandler.Infos)-1)
+	for i := 1; i < len(pr.SchemaHandler.Infos); i++ {
+		fields[i-1] = pr.SchemaHandler.Infos[i].ExName
+	}
+
+	return fields, nil
 }
 
 // ReadMetadata reads the dataset doc from disk.
@@ -235,7 +266,7 @@ func (d *Parquet) writeDataResource(resource *model.DataResource, extended bool)
 		"resID":        resource.ResID,
 		"resPath":      resource.ResPath,
 		"resType":      resource.ResType,
-		"resFormat":    resource.ResFormat,
+		"resFormat":    map[string][]string{"application/parquet": {"parquet"}},
 		"isCollection": resource.IsCollection,
 	}
 

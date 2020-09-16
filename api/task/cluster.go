@@ -27,6 +27,7 @@ import (
 
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -91,6 +92,7 @@ func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig)
 	output = append(output, header)
 	output = append(output, lines...)
 
+	datasetStorage := serialization.GetStorage(outputPath.outputData)
 	err = datasetStorage.WriteData(outputPath.outputData, output)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing clustered output")

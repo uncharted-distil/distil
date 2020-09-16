@@ -43,7 +43,6 @@ import (
 	"github.com/uncharted-distil/distil/api/postgres"
 	"github.com/uncharted-distil/distil/api/rest"
 	"github.com/uncharted-distil/distil/api/routes"
-	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/service"
 	"github.com/uncharted-distil/distil/api/task"
 	"github.com/uncharted-distil/distil/api/util"
@@ -195,12 +194,6 @@ func main() {
 		datamartCtors[dm.ProvenanceISI] = dm.NewISIMetadataStorage(config.DatamartImportFolder, &config, ingestConfig, isiDatamartClientCtor)
 	}
 	datamartCtors[es.Provenance] = esMetadataStorageCtor
-
-	// set the data reader and writer
-	datasetStorage := serialization.NewCSV()
-	task.SetDatasetStorage(datasetStorage)
-	pg.SetDatasetStorage(datasetStorage)
-	api.SetDatasetStorage(datasetStorage)
 
 	// set extremas
 	//esStorage, err := esMetadataStorageCtor()
