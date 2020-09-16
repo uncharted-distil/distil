@@ -108,7 +108,7 @@ func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, dataset
 	var timestampPredictionValues []string
 	if model.IsDateTime(p.timestampVariable.Type) {
 		timestampPredictionValues = generateTimestampValues(p.interval, p.start, p.count)
-	} else if model.IsNumerical(p.timestampVariable.Type) {
+	} else if model.IsNumerical(p.timestampVariable.Type) || model.IsTimestamp(p.timestampVariable.Type) {
 		timestampPredictionValues = generateIntValues(p.interval, p.start, p.count)
 	} else {
 		return nil, errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", p.timestampVariable.Name, p.timestampVariable.Type)

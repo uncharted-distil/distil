@@ -116,6 +116,28 @@ make watch
 
 The location of the dataset directory can be changed by setting the `D3MINPUTDIR` environment variable, and the location of the temporary data written out during model building can be set using the `D3MOUTPUTDIR` environment variable. These are used by the other Distil services that are launched via the `run_services.sh` script, and are typically set as global environment variables in `.bashrc` or similar.
 
+### Linter Setup
+
+#### VSCODE
+
+For the VsCode editor download and install the eslint extension.
+Once installed go to the editor settings (hot key ⌘⇧p -- type settings)
+Add the following to your settings file:
+
+```json
+  "eslint.lintTask.enable": true, // enable eslint to run
+  "eslint.validate": [
+    "vue", // tell eslint to read vue files
+    "html", // tell eslint to read html files
+    "javascript", // tell eslint to read javascript files
+    "typescript" // tell eslint to read typescript files
+  ],
+  "eslint.workingDirectories": [{ "mode": "auto" }], // eslint will try its best to figure out the working directory of the project
+```
+
+At this point save your settings file and restart VsCode.
+If upon restarting and the linter is not working check the output (^⇧` -- OUTPUT tab -- dropdown -- ESlint)
+
 ## Common Issues:
 
 #### "dep: command not found":

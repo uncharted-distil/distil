@@ -18,6 +18,7 @@ package routes
 import (
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"path"
 
@@ -43,6 +44,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		datasetID := pat.Param(r, "datasetID")
 		source := metadata.DatasetSource(pat.Param(r, "source"))
 		provenance := pat.Param(r, "provenance")
+		isSampling := true // Flag to sample imported dataset
 
 		var origins []*model.DatasetOrigin
 		var rawGrouping map[string]interface{}
@@ -57,6 +59,11 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			if params == nil {
 				missingParamErr(w, "parameters")
 				return
+			}
+
+			// Check if we want to sample the dataset
+			if params["nosample"] != nil {
+				isSampling = false
 			}
 
 			if params["joinedDataset"] != nil {
@@ -116,6 +123,12 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		// ingest the imported dataset
 		ingestSteps := &task.IngestSteps{ClassificationOverwrite: false, RawGrouping: rawGrouping}
 		ingestConfig := task.NewConfig(*config)
+
+		// Check if the imported dataset should be sampled
+		if !isSampling {
+			ingestConfig.SampleRowLimit = math.MaxInt32 // Maximum int value.
+		}
+
 		ingestResult, err := task.IngestDataset(source, dataCtor, esMetaCtor, datasetID, origins, api.DatasetTypeModelling, ingestConfig, ingestSteps)
 		if err != nil {
 			handleError(w, err)

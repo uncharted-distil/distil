@@ -11,7 +11,6 @@ import {
   DatasetPendingRequestType,
   DatasetPendingRequestStatus,
   VariableRankingPendingRequest,
-  GeocodingPendingRequest,
   JoinSuggestionPendingRequest,
   JoinDatasetImportPendingRequest,
   Task,
@@ -22,7 +21,6 @@ import {
   BandID,
   isClusteredGrouping,
   TimeSeriesValue,
-  VariableSummary,
 } from "./index";
 import { mutations, getters } from "./module";
 import store, { DistilState } from "../store";
@@ -324,7 +322,7 @@ export const actions = {
       datasetID: string;
       file: File;
     }
-  ): Promise<void> {
+  ): Promise<any> {
     if (!validateArgs(args, ["datasetID", "file"])) {
       return null;
     }
@@ -349,7 +347,7 @@ export const actions = {
         headers: { "Content-Type": "multipart/form-data" },
       }
     );
-    return actions.importDataset(context, {
+    const response = await actions.importDataset(context, {
       datasetID: args.datasetID,
       source: "augmented",
       provenance: "local",
@@ -357,6 +355,27 @@ export const actions = {
       originalDataset: null,
       joinedDataset: null,
       path: uploadResponse.data.location,
+    });
+
+    // Add the location for potential reimport of the dataset.
+    response.location = uploadResponse.data.location;
+    return response;
+  },
+
+  // Re import a dataset without sampling
+  async importFullDataset(
+    context: DatasetContext,
+    args: { datasetID: string; path: string }
+  ) {
+    return actions.importDataset(context, {
+      datasetID: args.datasetID,
+      source: "augmented",
+      provenance: "local",
+      terms: args.datasetID,
+      originalDataset: null,
+      joinedDataset: null,
+      path: args.path,
+      nosample: true,
     });
   },
 
@@ -370,8 +389,9 @@ export const actions = {
       originalDataset: Dataset;
       joinedDataset: Dataset;
       path: string;
+      nosample?: boolean;
     }
-  ): Promise<void> {
+  ): Promise<any> {
     if (!validateArgs(args, ["datasetID", "source"])) {
       return null;
     }
@@ -385,13 +405,15 @@ export const actions = {
     } else if (args.path !== "") {
       postParams = {
         path: args.path,
+        nosample: args.nosample,
       };
     }
-    await axios.post(
+    const response = await axios.post(
       `/distil/import/${args.datasetID}/${args.source}/${args.provenance}`,
       postParams
     );
-    return actions.searchDatasets(context, args.terms);
+    await actions.searchDatasets(context, args.terms);
+    return response.data;
   },
 
   async importJoinDataset(
