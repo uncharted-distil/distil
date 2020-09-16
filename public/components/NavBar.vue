@@ -69,12 +69,14 @@
 
     <!-- Right side -->
     <b-navbar-nav class="ml-auto">
+      <b-nav-item>{{ version }}</b-nav-item>
       <b-nav-item :href="helpURL">Help</b-nav-item>
     </b-navbar-nav>
   </b-navbar>
 </template>
 
 <script lang="ts">
+import { isEmpty, isString } from "lodash";
 import "../assets/images/uncharted.svg";
 import {
   gotoApplyModel,
@@ -166,6 +168,16 @@ export default Vue.extend({
 
     hasNoDatasetAndTarget(): boolean {
       return !(!!this.dataset && !!this.target);
+    },
+
+    version(): string {
+      const ta2Version = appGetters.getTA2VersionNumber(this.$store);
+      console.debug(ta2Version);
+      // const timestamp = appGetters.getVersionTimestamp(this.$store);
+
+      if (isString(ta2Version) && !isEmpty(ta2Version)) {
+        return `v${ta2Version}`;
+      }
     },
   },
 

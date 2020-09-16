@@ -39,7 +39,7 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 			"target":     target,
 			"metrics":    metrics,
 			"help":       config.HelpURL,
-			"ta2Version": ta2Version,
+			"ta2version": ta2Version,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))

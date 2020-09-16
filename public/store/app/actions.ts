@@ -93,6 +93,7 @@ export const actions = {
       mutations.setProblemDataset(context, response.data.dataset);
       mutations.setProblemTarget(context, response.data.target);
       mutations.setProblemMetrics(context, response.data.metrics);
+      mutations.setTA2VersionNumber(context, response.data.ta2version);
     } catch (err) {
       console.warn(err);
     }

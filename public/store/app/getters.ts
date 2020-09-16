@@ -28,4 +28,8 @@ export const getters = {
   getStatusPanelState(state: AppState): StatusPanelState {
     return state.statusPanelState;
   },
+
+  getTA2VersionNumber(state: AppState): string {
+    return state.ta2Version;
+  },
 };

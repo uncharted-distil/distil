@@ -1,7 +1,7 @@
 <template>
   <div id="distil-app">
     <nav-bar />
-    <router-view class="view"></router-view>
+    <router-view class="view" />
   </div>
 </template>
 
@@ -10,7 +10,7 @@ import Vue from "vue";
 import VueRouterSync from "vuex-router-sync";
 import VueObserveVisibility from "vue-observe-visibility";
 import BootstrapVue from "bootstrap-vue";
-import NavBar from "./components/NavBar";
+import NavBar from "./components/NavBar.vue";
 import store from "./store/store";
 import {
   getters as appGetters,
