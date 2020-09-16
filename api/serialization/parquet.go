@@ -31,7 +31,6 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/model"
-	log "github.com/unchartedsoftware/plog"
 )
 
 // Parquet represents a dataset storage backed with parquet data and json schema doc.
@@ -105,11 +104,19 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 		dataByCol[i] = d.columnToString(colRaw, *pr.SchemaHandler.SchemaElements[i+1].Type)
 	}
 
-	output := make([][]string, rowCount)
+	// header is the expected first row of the output
+	header, err := d.ReadRawVariables(uri)
+	if err != nil {
+		return nil, err
+	}
+
+	output := make([][]string, rowCount+1)
+	output[0] = header
 	for rowIndex := 0; rowIndex < int(rowCount); rowIndex++ {
-		output[rowIndex] = make([]string, colCount)
+		outputRowIndex := rowIndex + 1
+		output[outputRowIndex] = make([]string, colCount)
 		for colIndex := 0; colIndex < int(colCount); colIndex++ {
-			output[rowIndex][colIndex] = dataByCol[colIndex][rowIndex]
+			output[outputRowIndex][colIndex] = dataByCol[colIndex][rowIndex]
 		}
 	}
 
@@ -189,9 +196,13 @@ func (d *Parquet) ReadRawVariables(uri string) ([]string, error) {
 	}
 	defer pr.ReadStop()
 
-	log.Infof("SCHEMA HANDLER INFO: %v", pr.SchemaHandler.Infos)
+	// the first field info is the root field which is not a part of the dataset
+	fields := make([]string, len(pr.SchemaHandler.Infos)-1)
+	for i := 1; i < len(pr.SchemaHandler.Infos); i++ {
+		fields[i-1] = pr.SchemaHandler.Infos[i].ExName
+	}
 
-	return nil, nil
+	return fields, nil
 }
 
 // ReadMetadata reads the dataset doc from disk.
