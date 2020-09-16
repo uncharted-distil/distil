@@ -52,6 +52,11 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	if err != nil {
 		return "", "", err
 	}
+	featurizedDataReader := serialization.GetStorage(datasetURI)
+	featurizedData, err := featurizedDataReader.ReadData(datasetURI)
+	if err != nil {
+		return "", "", err
+	}
 
 	// create the dataset folder
 	featurizedDatasetID := fmt.Sprintf("%s-featurized", dataset)
@@ -62,8 +67,9 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	featurizedOutputPath := path.Join(env.GetAugmentedPath(), featurizedDatasetID)
 
 	// copy the output to the folder as the data
-	dataOutputPath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
-	err = util.Copy(datasetURI, path.Join(featurizedOutputPath, dataOutputPath))
+	dataOutputPath := path.Join(featurizedOutputPath, path.Join(compute.D3MDataFolder, "learningData.parquet"))
+	featurizedDataWriter := serialization.GetStorage(dataOutputPath)
+	err = featurizedDataWriter.WriteData(dataOutputPath, featurizedData)
 	if err != nil {
 		return "", "", err
 	}
@@ -102,8 +108,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	mainDR.Variables = vars
 
 	schemaOutputPath := path.Join(featurizedOutputPath, compute.D3MDataSchema)
-	datasetStorage := serialization.GetStorage(dataOutputPath)
-	err = datasetStorage.WriteMetadata(schemaOutputPath, meta, true)
+	err = featurizedDataWriter.WriteMetadata(schemaOutputPath, meta, true)
 	if err != nil {
 		return "", "", err
 	}
