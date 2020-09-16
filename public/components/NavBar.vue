@@ -172,9 +172,6 @@ export default Vue.extend({
 
     version(): string {
       const ta2Version = appGetters.getTA2VersionNumber(this.$store);
-      console.debug(ta2Version);
-      // const timestamp = appGetters.getVersionTimestamp(this.$store);
-
       if (isString(ta2Version) && !isEmpty(ta2Version)) {
         return `v${ta2Version}`;
       }
