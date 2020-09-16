@@ -29,7 +29,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
-	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -267,7 +266,7 @@ func (d *Parquet) writeDataResource(resource *model.DataResource, extended bool)
 		"resID":        resource.ResID,
 		"resPath":      resource.ResPath,
 		"resType":      resource.ResType,
-		"resFormat":    map[string][]string{compute.D3MResourceFormat: {"csv"}},
+		"resFormat":    map[string][]string{"application/parquet": {"parquet"}},
 		"isCollection": resource.IsCollection,
 	}
 
