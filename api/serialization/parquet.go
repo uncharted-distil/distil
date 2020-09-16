@@ -29,7 +29,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/model"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // Parquet represents a dataset storage backed with parquet data and json schema doc.
@@ -152,7 +154,7 @@ func (d *Parquet) WriteData(uri string, data [][]string) error {
 	//	return errors.Wrap(err, "unable to create parquet writer")
 	//}
 
-	for i := 0; i < len(data); i++ {
+	for i := 1; i < len(data); i++ {
 		rowData := data[i]
 		row := make([]interface{}, len(rowData))
 		for ic, c := range rowData {
@@ -171,6 +173,25 @@ func (d *Parquet) WriteData(uri string, data [][]string) error {
 	defer fw.Close()
 
 	return nil
+}
+
+// ReadRawVariables reads the metadata and extracts the field names.
+func (d *Parquet) ReadRawVariables(uri string) ([]string, error) {
+	fr, err := local.NewLocalFileReader(uri)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to open parquet file")
+	}
+	defer fr.Close()
+
+	pr, err := reader.NewParquetColumnReader(fr, 1)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to open parquet file reader")
+	}
+	defer pr.ReadStop()
+
+	log.Infof("SCHEMA HANDLER INFO: %v", pr.SchemaHandler.Infos)
+
+	return nil, nil
 }
 
 // ReadMetadata reads the dataset doc from disk.
@@ -235,7 +256,7 @@ func (d *Parquet) writeDataResource(resource *model.DataResource, extended bool)
 		"resID":        resource.ResID,
 		"resPath":      resource.ResPath,
 		"resType":      resource.ResType,
-		"resFormat":    resource.ResFormat,
+		"resFormat":    map[string][]string{compute.D3MResourceFormat: {"csv"}},
 		"isCollection": resource.IsCollection,
 	}
 
