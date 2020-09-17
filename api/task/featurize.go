@@ -108,7 +108,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	mainDR.Variables = vars
 
 	schemaOutputPath := path.Join(featurizedOutputPath, compute.D3MDataSchema)
-	err = featurizedDataWriter.WriteMetadata(schemaOutputPath, meta, true)
+	err = featurizedDataWriter.WriteMetadata(schemaOutputPath, meta, true, true)
 	if err != nil {
 		return "", "", err
 	}

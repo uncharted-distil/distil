@@ -19,7 +19,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path"
 	"strconv"
+	"strings"
 
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/parquet"
@@ -70,7 +73,7 @@ func (d *Parquet) WriteDataset(uri string, data *api.RawDataset) error {
 		return err
 	}
 
-	err = d.WriteMetadata(uri, data.Metadata, true)
+	err = d.WriteMetadata(uri, data.Metadata, true, true)
 	if err != nil {
 		return err
 	}
@@ -133,6 +136,11 @@ func (d *Parquet) readColumn(pr *reader.ParquetReader, index int64, rows int64) 
 
 // WriteData writes data to a parquet file.
 func (d *Parquet) WriteData(uri string, data [][]string) error {
+	// create the containing folder
+	// (ignore the error since the write failure will pick it up regardless)
+	folder := path.Dir(uri)
+	os.MkdirAll(folder, os.ModePerm)
+
 	md := make([]string, len(data[0]))
 	for i, c := range data[0] {
 		md[i] = fmt.Sprintf("name=%s, type=UTF8", c)
@@ -215,11 +223,21 @@ func (d *Parquet) ReadMetadata(uri string) (*model.Metadata, error) {
 }
 
 // WriteMetadata writes the dataset doc to disk.
-func (d *Parquet) WriteMetadata(uri string, meta *model.Metadata, extended bool) error {
+func (d *Parquet) WriteMetadata(uri string, meta *model.Metadata, extended bool, update bool) error {
 	dataResources := make([]interface{}, 0)
-	mainID := meta.GetMainDataResource().ResID
+
+	// make sure the resource format and path match expected parquet types
+	mainDR := meta.GetMainDataResource()
+	if mainDR.ResFormat["application/parquet"] == nil && !update {
+		if !update {
+			return errors.Errorf("main data resource not set to parquet format")
+		} else {
+			mainDR.ResFormat = map[string][]string{"application/parquet": {"parquet"}}
+			mainDR.ResPath = fmt.Sprintf("%s.parquet", strings.TrimSuffix(path.Base(mainDR.ResPath), path.Ext(mainDR.ResPath)))
+		}
+	}
 	for _, dr := range meta.DataResources {
-		dataResources = append(dataResources, d.writeDataResource(dr, extended, mainID))
+		dataResources = append(dataResources, d.writeDataResource(dr, extended))
 	}
 
 	about := map[string]interface{}{
@@ -256,23 +274,18 @@ func (d *Parquet) WriteMetadata(uri string, meta *model.Metadata, extended bool)
 	return nil
 }
 
-func (d *Parquet) writeDataResource(resource *model.DataResource, extended bool, mainDRID string) map[string]interface{} {
+func (d *Parquet) writeDataResource(resource *model.DataResource, extended bool) map[string]interface{} {
 	vars := make([]interface{}, 0)
 
 	for _, v := range resource.Variables {
 		vars = append(vars, d.writeVariable(v, extended))
 	}
 
-	resFormat := resource.ResFormat
-	if resource.ResID == mainDRID {
-		resFormat = map[string][]string{"application/parquet": {"parquet"}}
-	}
-
 	output := map[string]interface{}{
 		"resID":        resource.ResID,
 		"resPath":      resource.ResPath,
 		"resType":      resource.ResType,
-		"resFormat":    resFormat,
+		"resFormat":    resource.ResFormat,
 		"isCollection": resource.IsCollection,
 	}
 

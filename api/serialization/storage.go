@@ -40,7 +40,7 @@ type Storage interface {
 	ReadData(uri string) ([][]string, error)
 	WriteData(uri string, data [][]string) error
 	ReadMetadata(uri string) (*model.Metadata, error)
-	WriteMetadata(uri string, metadata *model.Metadata, extended bool) error
+	WriteMetadata(uri string, metadata *model.Metadata, extended bool, update bool) error
 	ReadRawVariables(uri string) ([]string, error)
 }
 
