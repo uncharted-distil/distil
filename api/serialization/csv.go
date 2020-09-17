@@ -117,8 +117,9 @@ func (d *CSV) ReadMetadata(uri string) (*model.Metadata, error) {
 // WriteMetadata writes the dataset doc to disk.
 func (d *CSV) WriteMetadata(uri string, meta *model.Metadata, extended bool) error {
 	dataResources := make([]interface{}, 0)
+	mainID := meta.GetMainDataResource().ResID
 	for _, dr := range meta.DataResources {
-		dataResources = append(dataResources, d.writeDataResource(dr, extended))
+		dataResources = append(dataResources, d.writeDataResource(dr, extended, mainID))
 	}
 
 	about := map[string]interface{}{
@@ -155,18 +156,23 @@ func (d *CSV) WriteMetadata(uri string, meta *model.Metadata, extended bool) err
 	return nil
 }
 
-func (d *CSV) writeDataResource(resource *model.DataResource, extended bool) map[string]interface{} {
+func (d *CSV) writeDataResource(resource *model.DataResource, extended bool, mainDRID string) map[string]interface{} {
 	vars := make([]interface{}, 0)
 
 	for _, v := range resource.Variables {
 		vars = append(vars, d.writeVariable(v, extended))
 	}
 
+	resFormat := resource.ResFormat
+	if resource.ResID == mainDRID {
+		resFormat = map[string][]string{compute.D3MResourceFormat: {"csv"}}
+	}
+
 	output := map[string]interface{}{
 		"resID":        resource.ResID,
 		"resPath":      resource.ResPath,
 		"resType":      resource.ResType,
-		"resFormat":    map[string][]string{compute.D3MResourceFormat: {"csv"}},
+		"resFormat":    resFormat,
 		"isCollection": resource.IsCollection,
 	}
 
