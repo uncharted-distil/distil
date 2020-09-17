@@ -81,7 +81,6 @@
 </template>
 
 <script lang="ts">
-import { isEmpty, isString } from "lodash";
 import "../assets/images/uncharted.svg";
 import {
   gotoApplyModel,
