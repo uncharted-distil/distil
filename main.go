@@ -153,9 +153,9 @@ func main() {
 		return err == nil
 	}
 	servicesToWait["ta2"] = func() bool {
-		versionNumber := solutionClient.Hello()
+		versionNumber, err := solutionClient.Hello()
 		ta2Version = versionNumber
-		return versionNumber.(string)
+		return err == nil
 	}
 
 	// make sure a connection can be made to postgres - doesn't appear to be thread safe and
