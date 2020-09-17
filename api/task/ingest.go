@@ -505,7 +505,8 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest last rows")
 	}
-
+	// verfiy the data type for the columns
+	verifyData(pg, ds, dbTable)
 	log.Infof("all data ingested")
 
 	return nil
@@ -634,4 +635,40 @@ func getUniqueDatasetName(meta *model.Metadata, storage api.MetadataStorage) (st
 	}
 
 	return getUniqueString(meta.Name, datasetNames), nil
+}
+
+func verifyData(pg *postgres.Database, ds *postgres.Dataset, tableName string) {
+	validTypes := postgres.GetValidTypes()
+	//removing double and geometry for now
+	double:="double precision"
+	geometry:="geometry"
+	mainValidTypes := []string{}
+	provenance:="postgres-valid"
+	for i := range validTypes{
+		if validTypes[i] != double && validTypes[i] != geometry{
+			mainValidTypes = append(mainValidTypes, validTypes[i])
+		}
+	}
+	//if view can succeed on column add potential type to column
+	for i := range ds.Variables{
+		for j := range mainValidTypes{
+			isValid, err := pg.IsColumnType(tableName, ds.Variables[i], mainValidTypes[j])
+			if err != nil{
+				continue
+			}
+			if isValid {
+				d3mTypes,err:=postgres.MapPostgresTypeToD3MType(mainValidTypes[j])
+				if err != nil{
+					continue
+				}
+				for k := range d3mTypes{
+					suggestedType := model.SuggestedType{Probability:0, Type:d3mTypes[k], Provenance:provenance}
+					ds.Variables[i].SuggestedTypes = append(ds.Variables[i].SuggestedTypes, &suggestedType)
+				}
+			}
+		}
+	}
+	//return composite object
+	
+	return
 }

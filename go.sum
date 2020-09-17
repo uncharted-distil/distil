@@ -202,6 +202,8 @@ github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/uncharted-distil/distil-compute v0.0.0-20200909155738-39c3281e4a53 h1:tdIpEDNPkJ9niKn/yw+dlKsJtSiILEbvtjPO/Q4O1eo=
 github.com/uncharted-distil/distil-compute v0.0.0-20200909155738-39c3281e4a53/go.mod h1:8ki5yjJDKCJQvLHD3p7TLL1gsXu95hD/JaF9jqvnHps=
+github.com/uncharted-distil/distil-compute v0.0.0-20200916194546-94773ea8ffcd h1:z3/sNc6FwfCvaf80+CupXFue4ksmn92oq0XobV9Qg8Y=
+github.com/uncharted-distil/distil-compute v0.0.0-20200917145207-f4b488934399 h1:PFEdztdZUuVma74PQZ/eLTIiQPreZ0YYtHlI06o5j1E=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a h1:BPJrlnjdhxMBrJWiU4/Gl3PVdCUlY9JspWFTJ9UVO0Y=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a/go.mod h1:L8AZAnu0MT3E5I3WPNTo5BZaT5b3q21TrX1U9R9+/9E=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9 h1:P1B7OAnmyIdSN9UGhDvIU3s8K3/2rQcvntYV5WPi+qY=
@@ -216,6 +218,7 @@ github.com/xitongsys/parquet-go v1.5.3 h1:v5X025+wj4FbhA4QdspRKhlUcQjMShsGSVns4b
 github.com/xitongsys/parquet-go v1.5.3/go.mod h1:Tewz0PmVEQyY6iLAoocllGHaKFLnbfkSgj3hVLTwFP0=
 github.com/xitongsys/parquet-go-source v0.0.0-20190524061010-2b72cbee77d5 h1:XmN4NA9133N6OvDEAR6TVVhFq5NgetYTyeKl1EMNazs=
 github.com/xitongsys/parquet-go-source v0.0.0-20190524061010-2b72cbee77d5/go.mod h1:xxCx7Wpym/3QCo6JhujJX51dzSXrwmb0oH6FQb39SEA=
+github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/zenazn/goji v0.9.0 h1:RSQQAbXGArQ0dIDEq+PI6WqN6if+5KHu6x2Cx/GXLTQ=
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=
 go.opencensus.io v0.22.3/go.mod h1:yxeiOL68Rb0Xd1ddK5vPZ/oVn4vY4Ynel7k9FzqtOIw=
