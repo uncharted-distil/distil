@@ -3,7 +3,13 @@
     <b-nav-toggle target="nav-collapse"></b-nav-toggle>
 
     <!-- Branding -->
-    <img src="/images/uncharted.svg" class="app-icon" height="36" width="36" />
+    <img
+      src="/images/uncharted.svg"
+      class="app-icon"
+      height="36"
+      width="36"
+      :title="version"
+    />
     <b-navbar-brand>Distil</b-navbar-brand>
 
     <!-- Left Side -->
@@ -69,7 +75,6 @@
 
     <!-- Right side -->
     <b-navbar-nav class="ml-auto">
-      <b-nav-item>{{ version }}</b-nav-item>
       <b-nav-item :href="helpURL">Help</b-nav-item>
     </b-navbar-nav>
   </b-navbar>
@@ -171,10 +176,7 @@ export default Vue.extend({
     },
 
     version(): string {
-      const ta2Version = appGetters.getTA2VersionNumber(this.$store);
-      if (isString(ta2Version) && !isEmpty(ta2Version)) {
-        return `v${ta2Version}`;
-      }
+      return appGetters.getAllSystemVersions(this.$store);
     },
   },
 

@@ -27,6 +27,7 @@ export const getters = {
   getProblemMetrics: read(moduleGetters.getProblemMetrics),
   getStatusPanelState: read(moduleGetters.getStatusPanelState),
   getTA2VersionNumber: read(moduleGetters.getTA2VersionNumber),
+  getAllSystemVersions: read(moduleGetters.getAllSystemVersions),
 };
 
 // typed actions
