@@ -19,5 +19,5 @@ fi
 if [[ -z "${DATAMART_URL_NYU}" ]]; then
   export DATAMART_URL_NYU="https://auctus.vida-nyu.org"
 fi
-export SUMMARY_ENABLED="false"
+
 docker-compose up

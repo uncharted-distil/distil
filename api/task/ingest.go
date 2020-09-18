@@ -370,8 +370,8 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 	}
 
 	// ingest the data
-	err = IngestPostgres(originalSchemaFile, schemaFile, source, config, verifyMetadata, false, fallbackMerged, storage)
-	
+	err = IngestPostgres(originalSchemaFile, schemaFile, source, config, verifyMetadata, false, fallbackMerged, data)
+
 	if err != nil {
 		return "", err
 	}
@@ -416,7 +416,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 
 // IngestPostgres ingests a dataset to PG storage.
 func IngestPostgres(originalSchemaFile string, schemaFile string, source metadata.DatasetSource,
-	config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool, fallbackMerged bool, storage api.MetadataStorage) error {
+	config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool, fallbackMerged bool, dataStorage api.DataStorage) error {
 	datasetDir, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return err
@@ -477,10 +477,10 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 	// Load the data.
 	log.Infof("inserting rows into database based on data found in %s", dataDir)
 	data, err := datasetStorage.ReadData(dataDir)
+
 	if err != nil {
 		return errors.Wrap(err, "unable to read input data")
 	}
-
 	// skip header
 	data = data[1:]
 	count := 0
@@ -507,7 +507,10 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 		return errors.Wrap(err, "unable to ingest last rows")
 	}
 	// verfiy the data type for the columns
-	verifyData(pg, meta, storage, dbTable)
+	err = dataStorage.VerifyData(meta.ID, dbTable)
+	if err != nil {
+		return err
+	}
 	log.Infof("all data ingested")
 
 	return nil
@@ -636,53 +639,4 @@ func getUniqueDatasetName(meta *model.Metadata, storage api.MetadataStorage) (st
 	}
 
 	return getUniqueString(meta.Name, datasetNames), nil
-}
-
-func verifyData(pg *postgres.Database, meta *model.Metadata, storage api.MetadataStorage, tableName string) {
-	validTypes := postgres.GetValidTypes()
-	ds, err:=storage.FetchDataset(meta.Name, false, true)
-	if err != nil{
-		return
-	}
-	//removing double and geometry for now
-	double:="double precision"
-	geometry:="geometry"
-	mainValidTypes := []string{}
-	provenance:="postgres-valid"
-	for i := range validTypes{
-		if validTypes[i] != double && validTypes[i] != geometry{
-			mainValidTypes = append(mainValidTypes, validTypes[i])
-		}
-	}
-	// if view can succeed on column add potential type to column
-	for i := range ds.Variables{
-		suggestedMap := make(map[string]bool)
-		for t:=range ds.Variables[i].SuggestedTypes{
-			suggestedMap[ds.Variables[i].SuggestedTypes[t].Type]=true
-		}
-		for j := range mainValidTypes{
-			isValid, err := pg.IsColumnType(tableName, ds.Variables[i], mainValidTypes[j])
-			if err != nil{
-				continue
-			}
-			if isValid {
-				d3mTypes,err:=postgres.MapPostgresTypeToD3MType(mainValidTypes[j])
-				if err != nil{
-					continue
-				}
-				for k := range d3mTypes{
-					// this could be moved up to an exit case above but a lot of the upconversion from pg to d3m types involves multiple results
-					if suggestedMap[d3mTypes[k]] {
-						continue
-					}
-					suggestedType := model.SuggestedType{Probability:0, Type:d3mTypes[k], Provenance:provenance}
-					ds.Variables[i].SuggestedTypes = append(ds.Variables[i].SuggestedTypes, &suggestedType)
-				}
-			}
-		}
-	}
-	// save changes
-	storage.UpdateDataset(ds)
-	
-	return
 }

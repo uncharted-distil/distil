@@ -146,4 +146,3 @@ func (ds *Dataset) createTableSQL(tableName string, temp bool, typeAll bool, typ
 func (ds *Dataset) GetPrimaryKey() string {
 	return ds.primaryKey
 }
-

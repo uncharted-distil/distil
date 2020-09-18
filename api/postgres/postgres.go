@@ -17,12 +17,11 @@ package postgres
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 	"regexp"
 	"strings"
 	"time"
-	"context"
-	"github.com/pkg/errors"
-	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/model"
 )
@@ -684,25 +683,26 @@ func MapD3MTypeToPostgresType(typ string) string {
 		return dataTypeText
 	}
 }
+
 // MapPostgresTypeToD3MType converts postgres types to D3M types
-func MapPostgresTypeToD3MType(pType string) ([]string, error){
-	switch pType{
-		case dataTypeDate:
-			return []string{model.DateTimeType}, nil
-		case dataTypeDouble:
-			return []string{model.IntegerType, model.LongitudeType, model.LatitudeType, model.RealType, model.TimestampType}, nil
-		case dataTypeFloat:
-			return []string{model.IntegerType, model.LongitudeType, model.LatitudeType, model.RealType, model.TimestampType}, nil
-		case dataTypeInteger:
-			return []string{model.IndexType}, nil
-		case dataTypeVector:
-			return []string{model.RealVectorType, model.RealListType}, nil
-		case dataTypeText:
-			return []string{model.OrdinalType, model.CategoricalType, model.StringType}, nil
-		case dataTypeGeometry:
-			return []string{model.GeoBoundsType}, nil
-		default:
-			return []string{}, errors.New("pType is not a supported type")
+func MapPostgresTypeToD3MType(pType string) ([]string, error) {
+	switch pType {
+	case dataTypeDate:
+		return []string{model.DateTimeType}, nil
+	case dataTypeDouble:
+		return []string{model.IntegerType, model.LongitudeType, model.LatitudeType, model.RealType, model.TimestampType}, nil
+	case dataTypeFloat:
+		return []string{model.IntegerType, model.LongitudeType, model.LatitudeType, model.RealType, model.TimestampType}, nil
+	case dataTypeInteger:
+		return []string{model.IndexType}, nil
+	case dataTypeVector:
+		return []string{model.RealVectorType, model.RealListType}, nil
+	case dataTypeText:
+		return []string{model.OrdinalType, model.CategoricalType, model.StringType}, nil
+	case dataTypeGeometry:
+		return []string{model.GeoBoundsType}, nil
+	default:
+		return []string{}, errors.New("pType is not a supported type")
 	}
 }
 
@@ -746,65 +746,36 @@ func ValueForFieldType(typ string, field string) string {
 		return fmt.Sprintf("\"%s\"", field)
 	}
 }
+
 // IsValidType validates the string to make sure it is a valid supported type
 func IsValidType(pType string) bool {
 	switch pType {
-		case dataTypeText:
-			return true    
-		case dataTypeDouble:  
-			return true 
-		case dataTypeFloat:   
-			return true 
-		case dataTypeVector:  
-			return true 
-		case dataTypeGeometry:
-			return true 
-		case dataTypeInteger: 
-			return true 
-		case dataTypeDate:   
-			return true  
-		default:
-			return false 
+	case dataTypeText:
+		return true
+	case dataTypeDouble:
+		return true
+	case dataTypeFloat:
+		return true
+	case dataTypeVector:
+		return true
+	case dataTypeGeometry:
+		return true
+	case dataTypeInteger:
+		return true
+	case dataTypeDate:
+		return true
+	default:
+		return false
 	}
-}
-// IsColumnType can be use to check columns potential types
-func (d *Database)IsColumnType(tableName string, variable *model.Variable, colType string) (bool, error) {
-	// check colType is valid
-	if !IsValidType(colType){
-		return false, errors.New("colType is not a supported type")
-	}
-	
-	// generate view query
-	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT \"%[1]s\"::%[3]s FROM %[2]s", variable.Name, tableName, colType)
-	// test query 
-	testQuery := fmt.Sprintf("SELECT COUNT(\"%[1]s\") FROM temp_view_%[1]s", variable.Name)
-
-	// create transaction
-	tx, err := d.Client.Begin()
-	if err != nil{
-		return false, err
-	}
-	// create temp view
-	_, err = tx.Exec(context.Background(), viewQuery)
-	if err != nil{
-		return false, err
-	}
-	// test to see if the data can fit into the type
-	_,err=tx.Exec(context.Background(), testQuery)
-	// rollback any changes to db
-	tx.Rollback(context.Background())
-	tx.Commit(context.Background())
-return err == nil, err
 }
 
 // GetValidTypes returns all of the supported types in the DB
-func GetValidTypes() [7]string{
-	return [...]string{dataTypeText,    
-		dataTypeDouble,  
-		dataTypeFloat,   
-		dataTypeVector,  
+func GetValidTypes() [7]string {
+	return [...]string{dataTypeText,
+		dataTypeDouble,
+		dataTypeFloat,
+		dataTypeVector,
 		dataTypeGeometry,
-		dataTypeInteger, 
-		dataTypeDate}      
+		dataTypeInteger,
+		dataTypeDate}
 }
-

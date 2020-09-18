@@ -18,13 +18,18 @@ package postgres
 import (
 	"fmt"
 
+	"context"
 	"github.com/pkg/errors"
-	log "github.com/unchartedsoftware/plog"
-
 	"github.com/uncharted-distil/distil-compute/model"
+	log "github.com/unchartedsoftware/plog"
 
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/postgres"
+)
+
+const (
+	// ProvenanceStorage label for storage valid types
+	ProvenanceStorage = "storage-valid"
 )
 
 // Storage accesses the underlying postgres database.
@@ -112,4 +117,85 @@ func (s *Storage) updateStats(storageName string) {
 	if err != nil {
 		log.Warnf("error updating postgres stats for %s: %+v", storageName, err)
 	}
+}
+
+// IsColumnType can be use to check columns potential types
+func (s *Storage) isColumnType(tableName string, variable *model.Variable, colType string) (bool, error) {
+	// check colType is valid
+	if !postgres.IsValidType(colType) {
+		return false, errors.New("colType is not a supported type")
+	}
+	// generate view query
+	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT \"%[1]s\"::%[3]s FROM %[2]s", variable.Name, tableName, colType)
+	// test query
+	testQuery := fmt.Sprintf("SELECT COUNT(\"%[1]s\") FROM temp_view_%[1]s", variable.Name)
+
+	// create transaction
+	tx, err := s.client.Begin()
+	if err != nil {
+		return false, err
+	}
+	// create temp view
+	_, err = tx.Exec(context.Background(), viewQuery)
+	if err != nil {
+		return false, err
+	}
+	// test to see if the data can fit into the type
+	_, err = tx.Exec(context.Background(), testQuery)
+	// rollback any changes to db
+	tx.Rollback(context.Background())
+	tx.Commit(context.Background())
+	return err == nil, err
+}
+
+// VerifyData checks each column in the table against every supported type, then updates what types are valid in the SuggestedType
+func (s *Storage) VerifyData(datasetID string, tableName string) error {
+	validTypes := postgres.GetValidTypes()
+	ds, err := s.metadata.FetchDataset(datasetID, false, true)
+	if err != nil {
+		return err
+	}
+	//removing double and geometry for now
+	double := "double precision"
+	geometry := "geometry"
+	mainValidTypes := []string{}
+	for i := range validTypes {
+		if validTypes[i] != double && validTypes[i] != geometry {
+			mainValidTypes = append(mainValidTypes, validTypes[i])
+		}
+	}
+
+	// if view can succeed on column add potential type to column
+	for i := range ds.Variables {
+		suggestedMap := make(map[string]bool)
+		for t := range ds.Variables[i].SuggestedTypes {
+			suggestedMap[ds.Variables[i].SuggestedTypes[t].Type] = true
+		}
+		for j := range mainValidTypes {
+			isValid, err := s.isColumnType(tableName, ds.Variables[i], mainValidTypes[j])
+			if err != nil {
+				continue
+			}
+			if isValid {
+				d3mTypes, err := postgres.MapPostgresTypeToD3MType(mainValidTypes[j])
+				if err != nil {
+					continue
+				}
+				for k := range d3mTypes {
+					// this could be moved up to an exit case above but a lot of the upconversion from pg to d3m types involves multiple results
+					if suggestedMap[d3mTypes[k]] {
+						continue
+					}
+					suggestedType := model.SuggestedType{Probability: 0, Type: d3mTypes[k], Provenance: ProvenanceStorage}
+					ds.Variables[i].SuggestedTypes = append(ds.Variables[i].SuggestedTypes, &suggestedType)
+				}
+			}
+		}
+	}
+	// save changes err convert
+	err = s.metadata.UpdateDataset(ds)
+	if err != nil {
+		return err
+	}
+	return nil
 }
