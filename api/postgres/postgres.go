@@ -788,6 +788,7 @@ func (d *Database)IsColumnType(tableName string, variable *model.Variable, colTy
 	}
 	rows.Close()
 	err=rows.Err()
+	tx.Commit(context.Background())
 return err == nil, err
 }
 
