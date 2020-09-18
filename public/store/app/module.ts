@@ -26,6 +26,8 @@ export const getters = {
   getProblemTarget: read(moduleGetters.getProblemTarget),
   getProblemMetrics: read(moduleGetters.getProblemMetrics),
   getStatusPanelState: read(moduleGetters.getStatusPanelState),
+  getTA2VersionNumber: read(moduleGetters.getTA2VersionNumber),
+  getAllSystemVersions: read(moduleGetters.getAllSystemVersions),
 };
 
 // typed actions
@@ -50,6 +52,7 @@ export const mutations = {
   setProblemTarget: commit(moduleMutations.setProblemTarget),
   setProblemMetrics: commit(moduleMutations.setProblemMetrics),
   setStatusPanelContentType: commit(moduleMutations.setStatusPanelContentType),
+  setTA2VersionNumber: commit(moduleMutations.setTA2VersionNumber),
   openStatusPanel: commit(moduleMutations.openStatusPanel),
   closeStatusPanel: commit(moduleMutations.closeStatusPanel),
 };

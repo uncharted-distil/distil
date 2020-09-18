@@ -126,6 +126,9 @@
         </div>
       </div>
     </section>
+
+    <!-- Version of TA2 and TA3 -->
+    <footer class="version" v-html="version" />
   </div>
 </template>
 
@@ -143,6 +146,7 @@ import {
   actions as datasetActions,
 } from "../store/dataset/module";
 import { Model } from "../store/model/index";
+import { getters as appGetters } from "../store/app/module";
 import { getters as modelGetters } from "../store/model/module";
 import { getters as routeGetters } from "../store/route/module";
 import { SEARCH_ROUTE, JOIN_DATASETS_ROUTE } from "../store/route/index";
@@ -285,6 +289,13 @@ export default Vue.extend({
         return _.capitalize(this.sorting.type);
       }
       return "Recent Activity";
+    },
+
+    // Display the version numer of the app.
+    version(): string {
+      return appGetters
+        .getAllSystemVersions(this.$store)
+        .replace(/\n/gi, "<br>");
     },
   },
 
@@ -453,5 +464,14 @@ export default Vue.extend({
   font-size: 1.2em;
   font-weight: bold;
   line-height: 1.2;
+}
+
+/* Version */
+.version {
+  bottom: 1em;
+  color: var(--gray-500);
+  font-size: 0.75rem;
+  position: absolute;
+  right: 1em;
 }
 </style>
