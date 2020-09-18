@@ -81,7 +81,7 @@ export default Vue.extend({
     },
     trainingVariables: {
       type: Array as () => Variable[],
-      default: [] as Variable[],
+      default: () => [] as Variable[],
     },
   },
 

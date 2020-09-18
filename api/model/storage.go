@@ -87,7 +87,7 @@ type DataStorage interface {
 	UpdateVariable(storageName string, varName string, d3mIndex string, value string) error
 	UpdateVariableBatch(storageName string, varName string, updates map[string]string) error
 	DoesVariableExist(dataset string, storageName string, varName string) (bool, error)
-
+	VerifyData(datasetID string, tableName string) error
 	// Raw data queries
 	FetchRawDistinctValues(dataset string, storageName string, varNames []string) ([][]string, error)
 
