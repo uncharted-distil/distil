@@ -776,19 +776,22 @@ func (d *Database)IsColumnType(tableName string, variable *model.Variable, colTy
 	
 	// generate view query
 	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT \"%[1]s\"::%[3]s FROM %[2]s", variable.Name, tableName, colType)
+	// test query 
 	testQuery := fmt.Sprintf("SELECT COUNT(\"%[1]s\") FROM temp_view_%[1]s", variable.Name)
-	// dropViewQuery := fmt.Sprintf("DROP VIEW temp_view_%[1]s", variable.Name)
+
 	// create transaction
 	tx, err := d.Client.Begin()
 	if err != nil{
 		return false, err
 	}
-	// query
+	// create temp view
 	_, err = tx.Exec(context.Background(), viewQuery)
 	if err != nil{
 		return false, err
 	}
+	// test to see if the data can fit into the type
 	_,err=tx.Exec(context.Background(), testQuery)
+	// rollback any changes to db
 	tx.Rollback(context.Background())
 	tx.Commit(context.Background())
 return err == nil, err
