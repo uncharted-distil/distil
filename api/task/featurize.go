@@ -27,6 +27,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 	"github.com/uncharted-distil/distil/api/util/json"
 )
@@ -101,6 +102,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	mainDR.Variables = vars
 
 	schemaOutputPath := path.Join(featurizedOutputPath, compute.D3MDataSchema)
+	datasetStorage := serialization.GetStorage(dataOutputPath)
 	err = datasetStorage.WriteMetadata(schemaOutputPath, meta, true)
 	if err != nil {
 		return "", "", err

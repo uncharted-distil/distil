@@ -23,6 +23,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -76,6 +77,7 @@ func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]strin
 	output = append(output, lines...)
 
 	// output the data with the new feature
+	datasetStorage := serialization.GetStorage(paths.outputData)
 	err := datasetStorage.WriteData(paths.outputData, output)
 	if err != nil {
 		return errors.Wrap(err, "error writing output")

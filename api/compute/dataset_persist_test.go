@@ -25,7 +25,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
-	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -153,7 +152,6 @@ func TestLimitChange(t *testing.T) {
 }
 
 func createTestParams(stratify bool, quality string) *persistedDataParams {
-	datasetStorage = serialization.NewCSV()
 	return &persistedDataParams{
 		DatasetName:        "test_dataset",
 		SchemaFile:         compute.D3MDataSchema,

@@ -47,10 +47,6 @@ const (
 	testFilenamePrefix  = "test"
 )
 
-var (
-	datasetStorage serialization.Storage
-)
-
 // FilteredDataProvider defines a function that will fetch data from a back end source given
 // a set of filter parameters.
 type FilteredDataProvider func(dataset string, index string, filters *api.FilterParams) (*api.FilteredData, error)
@@ -103,11 +99,6 @@ type DataReference struct {
 	ResObject string `json:"resObject"`
 }
 
-// SetDatasetStorage sets the storage interface to use for accessing datasets.
-func SetDatasetStorage(ds serialization.Storage) {
-	datasetStorage = ds
-}
-
 // Hash the filter set
 func getFilteredDatasetHash(dataset string, target string, filterParams *api.FilterParams, isTrain bool) (uint64, error) {
 	hash, err := hashstructure.Hash([]interface{}{dataset, target, *filterParams, isTrain}, nil)
@@ -139,6 +130,7 @@ func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile stri
 	outputTest := [][]string{}
 
 	// read the data
+	datasetStorage := serialization.GetStorage(sourceFile)
 	inputData, err := datasetStorage.ReadData(sourceFile)
 	if err != nil {
 		return errors.Wrap(err, "failed to open source file")
@@ -214,6 +206,7 @@ func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHea
 	outputTest := [][]string{}
 
 	// read the data
+	datasetStorage := serialization.GetStorage(sourceFile)
 	inputData, err := datasetStorage.ReadData(sourceFile)
 	if err != nil {
 		return errors.Wrap(err, "failed to read source file")

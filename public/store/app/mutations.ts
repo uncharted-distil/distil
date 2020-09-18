@@ -33,6 +33,10 @@ export const mutations = {
     Vue.set(state.statusPanelState, "contentType", contentType);
   },
 
+  setTA2VersionNumber(state: AppState, ta2Version: string) {
+    state.ta2Version = ta2Version;
+  },
+
   openStatusPanel(state: AppState) {
     Vue.set(state.statusPanelState, "isOpen", true);
   },

@@ -30,6 +30,7 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/postgres"
+	"github.com/uncharted-distil/distil/api/serialization"
 )
 
 const (
@@ -323,6 +324,7 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 			log.Infof("storing (extended: %v) metadata with new name to %s (new: '%s', old: '%s')", extendedOutput, originalSchemaFile, uniqueName, meta.Name)
 			meta.Name = uniqueName
 			meta.ID = model.NormalizeDatasetID(uniqueName)
+			datasetStorage := serialization.GetStorage(originalSchemaFile)
 			err = datasetStorage.WriteMetadata(originalSchemaFile, meta, extendedOutput)
 			if err != nil {
 				return "", errors.Wrap(err, "unable to store updated metadata")
@@ -396,6 +398,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 		if meta.StorageName != storageName {
 			log.Infof("updating storage name in metadata from %s to %s", meta.StorageName, storageName)
 			meta.StorageName = storageName
+			datasetStorage := serialization.GetStorage(schemaFile)
 			err = datasetStorage.WriteMetadata(schemaFile, meta, true)
 			if err != nil {
 				return "", err
@@ -476,6 +479,7 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 
 	// Load the data.
 	log.Infof("inserting rows into database based on data found in %s", dataDir)
+	datasetStorage := serialization.GetStorage(dataDir)
 	data, err := datasetStorage.ReadData(dataDir)
 
 	if err != nil {
@@ -545,6 +549,7 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 		if updated {
 			extendedOutput := source == metadata.Augmented
 			log.Infof("storing updated (extended: %v) metadata to %s", extendedOutput, originalSchemaFile)
+			datasetStorage := serialization.GetStorage(originalSchemaFile)
 			err = datasetStorage.WriteMetadata(originalSchemaFile, meta, extendedOutput)
 			if err != nil {
 				return "", nil, errors.Wrap(err, "unable to store updated metadata")

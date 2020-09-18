@@ -27,6 +27,7 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -119,6 +120,7 @@ func GeocodeForwardDataset(schemaFile string, dataset string, config *IngestTask
 	output = append(output, lines...)
 
 	// output the data with the new feature
+	datasetStorage := serialization.GetStorage(outputPath.outputData)
 	err = datasetStorage.WriteData(outputPath.outputData, output)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing feature output")

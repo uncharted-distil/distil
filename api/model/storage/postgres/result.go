@@ -36,15 +36,6 @@ const (
 	confidenceName           = "confidence"
 )
 
-var (
-	datasetStorage serialization.Storage
-)
-
-// SetDatasetStorage sets the storage interface to use for accessing datasets.
-func SetDatasetStorage(ds serialization.Storage) {
-	datasetStorage = ds
-}
-
 func (s *Storage) getResultTable(storageName string) string {
 	return fmt.Sprintf("%s%s", storageName, resultTableSuffix)
 }
@@ -153,6 +144,7 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 // PersistResult stores the solution result to Postgres.
 func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string, confidenceValues *api.SolutionExplainResult) error {
 	// Read the results file.
+	datasetStorage := serialization.GetStorage(resultURI)
 	records, err := datasetStorage.ReadData(resultURI)
 	if err != nil {
 		return err

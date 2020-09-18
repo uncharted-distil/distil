@@ -8,6 +8,7 @@ export interface AppState {
   problemTarget: string;
   problemMetrics: string[];
   statusPanelState: StatusPanelState;
+  ta2Version: string;
 }
 
 export interface StatusPanelState {
@@ -27,6 +28,7 @@ export const state: AppState = {
     contentType: undefined,
     isOpen: false,
   },
+  ta2Version: "unknown",
 };
 
 export type StatusPanelContentType = DatasetPendingRequestType;
