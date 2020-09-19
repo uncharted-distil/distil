@@ -35,12 +35,12 @@ export const mutations = {
 
   // sets the current result data into the store
   setIncludedResultTableData(state: ResultsState, resultData: TableData) {
-    state.includedResultTableData = resultData;
+    state.includedResultTableData = Object.freeze(resultData);
   },
 
   // sets the current result data into the store
   setExcludedResultTableData(state: ResultsState, resultData: TableData) {
-    state.excludedResultTableData = resultData;
+    state.excludedResultTableData = Object.freeze(resultData);
   },
 
   // predicted

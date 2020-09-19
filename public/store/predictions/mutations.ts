@@ -20,7 +20,7 @@ export const mutations = {
     state: PredictionState,
     predictionData: TableData
   ) {
-    state.includedPredictionTableData = predictionData;
+    state.includedPredictionTableData = Object.freeze(predictionData);
   },
 
   // predicted

@@ -21,6 +21,7 @@ import {
   LONGITUDE_TYPE,
   LATITUDE_TYPE,
 } from "../../util/types";
+import { getSelectedRows } from "../../util/row";
 
 function sortDatasets(a: Dataset, b: Dataset) {
   if (
@@ -334,12 +335,22 @@ export const mutations = {
 
   // sets the current selected data into the store
   setIncludedTableData(state: DatasetState, tableData: TableData) {
-    state.includedSet.tableData = tableData;
+    console.log(tableData);
+    state.includedSet.tableData = Object.freeze(tableData);
+    state.includedSet.rowSelectionData = getSelectedRows();
+    // add selected row data to state
   },
 
   // sets the current excluded data into the store
   setExcludedTableData(state: DatasetState, tableData: TableData) {
-    state.excludedSet.tableData = tableData;
+    state.excludedSet.tableData = Object.freeze(tableData);
+    state.excludedSet.rowSelectionData = getSelectedRows();
+    // add selected row data to state
+  },
+
+  updateRowSelectionData(state) {
+    state.includedSet.rowSelectionData = getSelectedRows();
+    state.excludedSet.rowSelectionData = getSelectedRows();
   },
 
   updateTask(state: DatasetState, task: Task) {

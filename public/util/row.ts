@@ -1,6 +1,14 @@
-import { RowSelection, Row, D3M_INDEX_FIELD } from "../store/dataset/index";
+import {
+  RowSelection,
+  Row,
+  D3M_INDEX_FIELD,
+  state,
+} from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as dataGetters } from "../store/dataset/module";
+import {
+  getters as dataGetters,
+  actions as dataActions,
+} from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
 import { overlayRouteEntry } from "../util/routes";
 import { Filter, ROW_FILTER } from "../util/filters";
@@ -116,25 +124,32 @@ export function updateTableRowSelection(
   return items;
 }
 
-export function getSelectedRows(selection: RowSelection): Row[] {
+export function getSelectedRows(): Row[] {
+  const selection = routeGetters.getDecodedRowSelection(store);
+  const include = routeGetters.getRouteInclude(store);
+  const timeId = "rowSelect" + Date.now();
+  console.time(timeId);
   if (!selection || selection.d3mIndices.length === 0) {
+    console.timeEnd(timeId);
     return [];
   }
 
   const path = routeGetters.getRoutePath(store);
 
-  let includedData = [];
-  let excludedData = [];
+  let tableData = [];
 
   if (path === SELECT_TRAINING_ROUTE) {
-    includedData = dataGetters.getIncludedTableDataItems(store);
-    excludedData = dataGetters.getExcludedTableDataItems(store);
+    tableData = include
+      ? dataGetters.getIncludedTableDataItems(store)
+      : dataGetters.getExcludedTableDataItems(store);
   } else if (path === RESULTS_ROUTE) {
-    includedData = resultsGetters.getIncludedResultTableDataItems(store);
-    excludedData = resultsGetters.getExcludedResultTableDataItems(store);
+    tableData = include
+      ? resultsGetters.getIncludedResultTableDataItems(store)
+      : resultsGetters.getExcludedResultTableDataItems(store);
   }
 
-  if (!includedData) {
+  if (!tableData) {
+    console.timeEnd(timeId);
     return [];
   }
 
@@ -144,11 +159,11 @@ export function getSelectedRows(selection: RowSelection): Row[] {
   });
 
   const rows = [];
-  includedData.forEach((data, index) => {
+  tableData.forEach((data, index) => {
     if (d3mIndices[data[D3M_INDEX_FIELD]]) {
       rows.push({
         index: index,
-        included: true,
+        included: include,
         cols: _.map(data, (value, key) => {
           return {
             key: key,
@@ -158,21 +173,7 @@ export function getSelectedRows(selection: RowSelection): Row[] {
       });
     }
   });
-  excludedData.forEach((data, index) => {
-    if (d3mIndices[data[D3M_INDEX_FIELD]]) {
-      rows.push({
-        index: index,
-        included: false,
-        cols: _.map(data, (value, key) => {
-          return {
-            key: key,
-            value: value,
-          };
-        }),
-      });
-    }
-  });
-
+  console.timeEnd(timeId);
   return rows;
 }
 
@@ -182,6 +183,8 @@ export function addRowSelection(
   selection: RowSelection,
   d3mIndex: number
 ) {
+  const timeId = "addRow" + Date.now();
+  console.time(timeId);
   if (!selection || selection.context !== context) {
     selection = {
       context: context,
@@ -192,7 +195,9 @@ export function addRowSelection(
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
     row: encodeRowSelection(selection),
   });
-  router.push(entry);
+  router.push(entry).catch((err) => console.warn(err));
+  dataActions.updateRowSelectionData(store);
+  console.timeEnd(timeId);
 }
 
 export function removeRowSelection(
@@ -201,6 +206,8 @@ export function removeRowSelection(
   selection: RowSelection,
   d3mIndex: number
 ) {
+  const timeId = "removeRow" + Date.now();
+  console.time(timeId);
   if (!selection) {
     return;
   }
@@ -213,12 +220,15 @@ export function removeRowSelection(
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
     row: encodeRowSelection(selection),
   });
-  router.push(entry);
+  router.push(entry).catch((err) => console.warn(err));
+  dataActions.updateRowSelectionData(store);
+  console.timeEnd(timeId);
 }
 
 export function clearRowSelection(router: VueRouter) {
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
     row: null,
   });
-  router.push(entry);
+  router.push(entry).catch((err) => console.warn(err));
+  dataActions.updateRowSelectionData(store);
 }

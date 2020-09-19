@@ -8,7 +8,7 @@
     >
     </error-modal>
     <settings-modal></settings-modal>
-    <div class="row justify-content-center">
+    <div class="row justify-content-end mr-0 mt-2">
       <b-button-group>
         <b-button
           :variant="createVariant"

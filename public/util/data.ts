@@ -653,7 +653,10 @@ export function validateData(data: TableData) {
 export function getTableDataItems(data: TableData): TableRow[] {
   if (validateData(data)) {
     // convert fetched result data rows into table data rows
-    return data.values.map((resultRow, rowIndex) => {
+    const timeId = "table" + Date.now();
+    console.time(timeId);
+
+    const formattedTable = data.values.map((resultRow, rowIndex) => {
       const row = {} as TableRow;
       resultRow.forEach((colValue, colIndex) => {
         const colName = data.columns[colIndex].key;
@@ -669,8 +672,12 @@ export function getTableDataItems(data: TableData): TableRow[] {
         }
       });
       row._key = rowIndex;
-      return row;
+      row._rowVariant = null;
+      return Object.seal(row);
     });
+
+    console.timeEnd(timeId);
+    return formattedTable;
   }
   return !_.isEmpty(data) ? [] : null;
 }

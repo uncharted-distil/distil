@@ -262,3 +262,7 @@ html {
 .distil-table > .table.b-table > thead > tr > th.sorting:after {
   top: 0;
 }
+.distil-table-container {
+  height: 100%;
+  width: 100%;
+}

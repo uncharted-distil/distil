@@ -19,8 +19,8 @@ import {
 } from "../util/types";
 import store from "../store/store";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as datasetGetters } from "../store/dataset/module";
 import { getTimeseriesSummaryTopCategories } from "../util/data";
-import { getSelectedRows } from "../util/row";
 import {
   VariableSummary,
   CATEGORICAL_SUMMARY,
@@ -296,7 +296,7 @@ export function getSubSelectionValues(
     return summary.baseline?.buckets?.map((b) => [null, b.count / max]);
   }
   const isNumeric = summary.type === NUMERICAL_SUMMARY;
-  const rowLabels = getRowSelectionLabels(rowSelection, summary);
+  const rowLabels = getRowSelectionLabels(summary);
   let subSelectionValues = null;
 
   if (hasFilterBuckets) {
@@ -358,11 +358,11 @@ export function rowLabelMatches(
   }
 }
 
-export function getRowSelectionLabels(
-  rowSelection: RowSelection,
-  summary: VariableSummary
-): string[] {
-  const selectedRows = getSelectedRows(rowSelection);
+export function getRowSelectionLabels(summary: VariableSummary): string[] {
+  const include = routeGetters.getRouteInclude(store);
+  const selectedRows = include
+    ? datasetGetters.getIncludedSelectedRowData(store)
+    : datasetGetters.getExcludedSelectedRowData(store);
   if (selectedRows.length === 0) return [];
   let rowKeys = [];
   let rowLabels = [];

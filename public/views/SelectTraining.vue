@@ -39,7 +39,7 @@
         <training-variables class="col-12 col-md-3 nopadding d-flex h-100" />
 
         <div class="col-12 col-md-6 d-flex flex-column h-100">
-          <select-data-slot class="flex-1 d-flex flex-column pb-3 pt-2" />
+          <select-data-slot class="flex-1 d-flex flex-column pb-1 pt-2" />
           <create-solutions-form class="select-create-solutions" />
         </div>
       </div>
