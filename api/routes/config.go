@@ -24,7 +24,7 @@ import (
 )
 
 // ConfigHandler returns the compiled version number, timestamp and initial config.
-func ConfigHandler(config env.Config, version string, timestamp string, problemPath string, datasetDocPath string) func(http.ResponseWriter, *http.Request) {
+func ConfigHandler(config env.Config, version string, timestamp string, problemPath string, datasetDocPath string, ta2Version string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		target := "unknown"
@@ -33,12 +33,13 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 
 		// marshal version
 		err := handleJSON(w, map[string]interface{}{
-			"version":   version,
-			"timestamp": timestamp,
-			"dataset":   dataset,
-			"target":    target,
-			"metrics":   metrics,
-			"help":      config.HelpURL,
+			"version":    version,
+			"timestamp":  timestamp,
+			"dataset":    dataset,
+			"target":     target,
+			"metrics":    metrics,
+			"help":       config.HelpURL,
+			"ta2version": ta2Version,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))

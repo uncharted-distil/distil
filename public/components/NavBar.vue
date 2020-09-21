@@ -3,7 +3,13 @@
     <b-nav-toggle target="nav-collapse"></b-nav-toggle>
 
     <!-- Branding -->
-    <img src="/images/uncharted.svg" class="app-icon" height="36" width="36" />
+    <img
+      src="/images/uncharted.svg"
+      class="app-icon"
+      height="36"
+      width="36"
+      :title="version"
+    />
     <b-navbar-brand>Distil</b-navbar-brand>
 
     <!-- Left Side -->
@@ -166,6 +172,10 @@ export default Vue.extend({
 
     hasNoDatasetAndTarget(): boolean {
       return !(!!this.dataset && !!this.target);
+    },
+
+    version(): string {
+      return appGetters.getAllSystemVersions(this.$store);
     },
   },
 

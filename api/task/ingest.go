@@ -372,7 +372,8 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 	}
 
 	// ingest the data
-	err = IngestPostgres(originalSchemaFile, schemaFile, source, config, verifyMetadata, false, fallbackMerged)
+	err = IngestPostgres(originalSchemaFile, schemaFile, source, config, verifyMetadata, false, fallbackMerged, data)
+
 	if err != nil {
 		return "", err
 	}
@@ -418,7 +419,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 
 // IngestPostgres ingests a dataset to PG storage.
 func IngestPostgres(originalSchemaFile string, schemaFile string, source metadata.DatasetSource,
-	config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool, fallbackMerged bool) error {
+	config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool, fallbackMerged bool, dataStorage api.DataStorage) error {
 	datasetDir, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return err
@@ -480,10 +481,10 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 	log.Infof("inserting rows into database based on data found in %s", dataDir)
 	datasetStorage := serialization.GetStorage(dataDir)
 	data, err := datasetStorage.ReadData(dataDir)
+
 	if err != nil {
 		return errors.Wrap(err, "unable to read input data")
 	}
-
 	// skip header
 	data = data[1:]
 	count := 0
@@ -509,7 +510,11 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest last rows")
 	}
-
+	// verfiy the data type for the columns
+	err = dataStorage.VerifyData(meta.ID, dbTable)
+	if err != nil {
+		return err
+	}
 	log.Infof("all data ingested")
 
 	return nil

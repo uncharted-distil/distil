@@ -44,10 +44,10 @@
 <script lang="ts">
 import FileUploader from "../components/FileUploader.vue";
 import FileUploaderStatus from "../components/FileUploaderStatus.vue";
-import RecentDatasets from "../components/RecentDatasets";
-import RecentSolutions from "../components/RecentSolutions";
-import RunningSolutions from "../components/RunningSolutions";
-import SearchBar from "../components/SearchBar";
+import RecentDatasets from "../components/RecentDatasets.vue";
+import RecentSolutions from "../components/RecentSolutions.vue";
+import RunningSolutions from "../components/RunningSolutions.vue";
+import SearchBar from "../components/SearchBar.vue";
 import { getters as appGetters } from "../store/app/module";
 import { actions as viewActions } from "../store/view/module";
 import Vue from "vue";
@@ -56,13 +56,14 @@ export default Vue.extend({
   name: "home-view",
 
   components: {
+    FileUploader,
+    FileUploaderStatus,
     RecentDatasets,
     RecentSolutions,
     RunningSolutions,
     SearchBar,
-    FileUploader,
-    FileUploaderStatus,
   },
+
   data() {
     return {
       uploadData: {},
@@ -81,11 +82,13 @@ export default Vue.extend({
   beforeMount() {
     viewActions.fetchHomeData(this.$store);
   },
+
   methods: {
     onUploadStart(uploadData) {
       this.uploadData = uploadData;
       this.uploadStatus = "started";
     },
+
     onUploadFinish(err) {
       this.uploadStatus = err ? "error" : "success";
     },
@@ -98,28 +101,35 @@ export default Vue.extend({
   padding: 1rem 0 0.5rem 0;
   font-weight: bold;
 }
+
 .home-search-bar {
   width: 100%;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
 }
+
 .home-items {
   width: 100%;
   overflow: auto;
 }
+
 .home-items .card {
   margin-bottom: 1rem;
 }
+
 .home-version-text {
   margin: 0 auto;
   font-size: 0.8rem;
 }
+
 .home-view .file-uploader {
   flex-shrink: 0;
   margin-left: 20px;
 }
+
 .home-view .file-uploader-status {
   padding: 0;
 }
+
 .home-item-container {
   overflow: scroll;
 }

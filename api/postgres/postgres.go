@@ -17,12 +17,11 @@ package postgres
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
-	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/model"
 )
@@ -685,6 +684,28 @@ func MapD3MTypeToPostgresType(typ string) string {
 	}
 }
 
+// MapPostgresTypeToD3MType converts postgres types to D3M types
+func MapPostgresTypeToD3MType(pType string) ([]string, error) {
+	switch pType {
+	case dataTypeDate:
+		return []string{model.DateTimeType}, nil
+	case dataTypeDouble:
+		return []string{model.IntegerType, model.LongitudeType, model.LatitudeType, model.RealType, model.TimestampType}, nil
+	case dataTypeFloat:
+		return []string{model.IntegerType, model.LongitudeType, model.LatitudeType, model.RealType, model.TimestampType}, nil
+	case dataTypeInteger:
+		return []string{model.IndexType}, nil
+	case dataTypeVector:
+		return []string{model.RealVectorType, model.RealListType}, nil
+	case dataTypeText:
+		return []string{model.OrdinalType, model.CategoricalType, model.StringType}, nil
+	case dataTypeGeometry:
+		return []string{model.GeoBoundsType}, nil
+	default:
+		return []string{}, errors.New("pType is not a supported type")
+	}
+}
+
 // DefaultPostgresValueFromD3MType generates a default postgres value from a d3m type.
 func DefaultPostgresValueFromD3MType(typ string) interface{} {
 	switch typ {
@@ -724,4 +745,37 @@ func ValueForFieldType(typ string, field string) string {
 	default:
 		return fmt.Sprintf("\"%s\"", field)
 	}
+}
+
+// IsValidType validates the string to make sure it is a valid supported type
+func IsValidType(pType string) bool {
+	switch pType {
+	case dataTypeText:
+		return true
+	case dataTypeDouble:
+		return true
+	case dataTypeFloat:
+		return true
+	case dataTypeVector:
+		return true
+	case dataTypeGeometry:
+		return true
+	case dataTypeInteger:
+		return true
+	case dataTypeDate:
+		return true
+	default:
+		return false
+	}
+}
+
+// GetValidTypes returns all of the supported types in the DB
+func GetValidTypes() [7]string {
+	return [...]string{dataTypeText,
+		dataTypeDouble,
+		dataTypeFloat,
+		dataTypeVector,
+		dataTypeGeometry,
+		dataTypeInteger,
+		dataTypeDate}
 }
