@@ -1,8 +1,8 @@
 import _ from "lodash";
+import { D3M_INDEX_FIELD } from "../store/dataset/index";
+import { getters as datasetGetters } from "../store/dataset/module";
 import store from "../store/store";
 import { Dictionary } from "./dict";
-import { getters as datasetGetters } from "../store/dataset/module";
-import { D3M_INDEX_FIELD } from "../store/dataset/index";
 
 // TODO: Convert these to enums.
 export const CLUSTER_PREFIX = "_cluster_";
