@@ -223,7 +223,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		meta.DatasetFolder = path.Base(datasetPath)
 		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
 		datasetStorage := serialization.GetStorage(rawDataPath)
-		err = datasetStorage.WriteMetadata(schemaPath, meta, true)
+		err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to update dataset doc")
 		}
@@ -280,7 +280,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	}
 	meta.ID = sourceDatasetID
 	datasetStorage := serialization.GetStorage(schemaPath)
-	err = datasetStorage.WriteMetadata(schemaPath, meta, true)
+	err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to update dataset doc")
 	}

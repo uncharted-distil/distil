@@ -19,8 +19,11 @@ import (
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
@@ -67,7 +70,7 @@ func (d *CSV) WriteDataset(uri string, data *api.RawDataset) error {
 		return err
 	}
 
-	err = d.WriteMetadata(uri, data.Metadata, true)
+	err = d.WriteMetadata(uri, data.Metadata, true, true)
 	if err != nil {
 		return err
 	}
@@ -115,8 +118,19 @@ func (d *CSV) ReadMetadata(uri string) (*model.Metadata, error) {
 }
 
 // WriteMetadata writes the dataset doc to disk.
-func (d *CSV) WriteMetadata(uri string, meta *model.Metadata, extended bool) error {
+func (d *CSV) WriteMetadata(uri string, meta *model.Metadata, extended bool, update bool) error {
 	dataResources := make([]interface{}, 0)
+
+	// make sure the resource format and path match expected csv types
+	mainDR := meta.GetMainDataResource()
+	if mainDR.ResFormat[compute.D3MResourceFormat] == nil {
+		if !update {
+			return errors.Errorf("main data resource not set to parquet format")
+		} else {
+			mainDR.ResFormat = map[string][]string{compute.D3MResourceFormat: {"csv"}}
+			mainDR.ResPath = fmt.Sprintf("%s.csv", strings.TrimSuffix(mainDR.ResPath, path.Ext(mainDR.ResPath)))
+		}
+	}
 	for _, dr := range meta.DataResources {
 		dataResources = append(dataResources, d.writeDataResource(dr, extended))
 	}
@@ -166,7 +180,7 @@ func (d *CSV) writeDataResource(resource *model.DataResource, extended bool) map
 		"resID":        resource.ResID,
 		"resPath":      resource.ResPath,
 		"resType":      resource.ResType,
-		"resFormat":    map[string][]string{compute.D3MResourceFormat: {"csv"}},
+		"resFormat":    resource.ResFormat,
 		"isCollection": resource.IsCollection,
 	}
 

@@ -82,7 +82,7 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 	}
 
 	schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
-	err = datasetStorage.WriteMetadata(schemaPath, ds.Metadata, true)
+	err = datasetStorage.WriteMetadata(schemaPath, ds.Metadata, true, false)
 	if err != nil {
 		return "", "", err
 	}
@@ -133,7 +133,7 @@ func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, confi
 
 	schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
 	datasetStorage := serialization.GetStorage(dataPath)
-	err = datasetStorage.WriteMetadata(schemaPath, meta, true)
+	err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
 	if err != nil {
 		return "", err
 	}

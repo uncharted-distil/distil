@@ -325,7 +325,7 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 			meta.Name = uniqueName
 			meta.ID = model.NormalizeDatasetID(uniqueName)
 			datasetStorage := serialization.GetStorage(originalSchemaFile)
-			err = datasetStorage.WriteMetadata(originalSchemaFile, meta, extendedOutput)
+			err = datasetStorage.WriteMetadata(originalSchemaFile, meta, extendedOutput, false)
 			if err != nil {
 				return "", errors.Wrap(err, "unable to store updated metadata")
 			}
@@ -399,7 +399,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 			log.Infof("updating storage name in metadata from %s to %s", meta.StorageName, storageName)
 			meta.StorageName = storageName
 			datasetStorage := serialization.GetStorage(schemaFile)
-			err = datasetStorage.WriteMetadata(schemaFile, meta, true)
+			err = datasetStorage.WriteMetadata(schemaFile, meta, true, false)
 			if err != nil {
 				return "", err
 			}
@@ -550,7 +550,7 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 			extendedOutput := source == metadata.Augmented
 			log.Infof("storing updated (extended: %v) metadata to %s", extendedOutput, originalSchemaFile)
 			datasetStorage := serialization.GetStorage(originalSchemaFile)
-			err = datasetStorage.WriteMetadata(originalSchemaFile, meta, extendedOutput)
+			err = datasetStorage.WriteMetadata(originalSchemaFile, meta, extendedOutput, false)
 			if err != nil {
 				return "", nil, errors.Wrap(err, "unable to store updated metadata")
 			}

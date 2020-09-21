@@ -108,7 +108,7 @@ func Merge(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	outputMeta.DataResources[0].ResPath = relativePath
 
 	// write the new schema to file
-	err = datasetStorage.WriteMetadata(outputPath.outputSchema, outputMeta, true)
+	err = datasetStorage.WriteMetadata(outputPath.outputSchema, outputMeta, true, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to store merged schema")
 	}
