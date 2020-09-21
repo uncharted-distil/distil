@@ -228,12 +228,12 @@ func (d *Parquet) WriteMetadata(uri string, meta *model.Metadata, extended bool,
 
 	// make sure the resource format and path match expected parquet types
 	mainDR := meta.GetMainDataResource()
-	if mainDR.ResFormat["application/parquet"] == nil && !update {
+	if mainDR.ResFormat["application/parquet"] == nil {
 		if !update {
 			return errors.Errorf("main data resource not set to parquet format")
 		} else {
 			mainDR.ResFormat = map[string][]string{"application/parquet": {"parquet"}}
-			mainDR.ResPath = fmt.Sprintf("%s.parquet", strings.TrimSuffix(path.Base(mainDR.ResPath), path.Ext(mainDR.ResPath)))
+			mainDR.ResPath = fmt.Sprintf("%s.parquet", strings.TrimSuffix(mainDR.ResPath, path.Ext(mainDR.ResPath)))
 		}
 	}
 	for _, dr := range meta.DataResources {

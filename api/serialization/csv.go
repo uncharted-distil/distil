@@ -123,12 +123,12 @@ func (d *CSV) WriteMetadata(uri string, meta *model.Metadata, extended bool, upd
 
 	// make sure the resource format and path match expected csv types
 	mainDR := meta.GetMainDataResource()
-	if mainDR.ResFormat[compute.D3MResourceFormat] == nil && !update {
+	if mainDR.ResFormat[compute.D3MResourceFormat] == nil {
 		if !update {
 			return errors.Errorf("main data resource not set to parquet format")
 		} else {
 			mainDR.ResFormat = map[string][]string{compute.D3MResourceFormat: {"csv"}}
-			mainDR.ResPath = fmt.Sprintf("%s.csv", strings.TrimSuffix(path.Base(mainDR.ResPath), path.Ext(mainDR.ResPath)))
+			mainDR.ResPath = fmt.Sprintf("%s.csv", strings.TrimSuffix(mainDR.ResPath, path.Ext(mainDR.ResPath)))
 		}
 	}
 	for _, dr := range meta.DataResources {
