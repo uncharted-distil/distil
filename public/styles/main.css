@@ -265,4 +265,10 @@ html {
 .distil-table-container {
   height: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.distil-table-container > .pagination {
+  flex: 0 1 auto;
 }

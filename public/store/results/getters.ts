@@ -115,8 +115,11 @@ export const getters = {
   hasResultTableDataItemsWeight(state: ResultsState): boolean {
     const data = getTableDataItems(state.includedResultTableData) ?? [];
     return data.some((item) =>
-      Object.keys(item).some((variable) =>
-        item[variable].hasOwnProperty("weight")
+      Object.keys(item).some(
+        (variable) =>
+          item[variable] &&
+          typeof item[variable] === "object" &&
+          item[variable].hasOwnProperty("weight")
       )
     );
   },

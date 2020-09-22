@@ -128,9 +128,7 @@ export function getSelectedRows(): Row[] {
   const selection = routeGetters.getDecodedRowSelection(store);
   const include = routeGetters.getRouteInclude(store);
   const timeId = "rowSelect" + Date.now();
-  console.time(timeId);
   if (!selection || selection.d3mIndices.length === 0) {
-    console.timeEnd(timeId);
     return [];
   }
 
@@ -149,7 +147,6 @@ export function getSelectedRows(): Row[] {
   }
 
   if (!tableData) {
-    console.timeEnd(timeId);
     return [];
   }
 
@@ -173,7 +170,6 @@ export function getSelectedRows(): Row[] {
       });
     }
   });
-  console.timeEnd(timeId);
   return rows;
 }
 
@@ -184,7 +180,6 @@ export function addRowSelection(
   d3mIndex: number
 ) {
   const timeId = "addRow" + Date.now();
-  console.time(timeId);
   if (!selection || selection.context !== context) {
     selection = {
       context: context,
@@ -197,7 +192,6 @@ export function addRowSelection(
   });
   router.push(entry).catch((err) => console.warn(err));
   dataActions.updateRowSelectionData(store);
-  console.timeEnd(timeId);
 }
 
 export function removeRowSelection(
@@ -207,7 +201,6 @@ export function removeRowSelection(
   d3mIndex: number
 ) {
   const timeId = "removeRow" + Date.now();
-  console.time(timeId);
   if (!selection) {
     return;
   }
@@ -222,7 +215,6 @@ export function removeRowSelection(
   });
   router.push(entry).catch((err) => console.warn(err));
   dataActions.updateRowSelectionData(store);
-  console.timeEnd(timeId);
 }
 
 export function clearRowSelection(router: VueRouter) {

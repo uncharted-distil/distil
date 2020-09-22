@@ -654,7 +654,6 @@ export function getTableDataItems(data: TableData): TableRow[] {
   if (validateData(data)) {
     // convert fetched result data rows into table data rows
     const timeId = "table" + Date.now();
-    console.time(timeId);
 
     const formattedTable = data.values.map((resultRow, rowIndex) => {
       const row = {} as TableRow;
@@ -676,7 +675,6 @@ export function getTableDataItems(data: TableData): TableRow[] {
       return Object.seal(row);
     });
 
-    console.timeEnd(timeId);
     return formattedTable;
   }
   return !_.isEmpty(data) ? [] : null;

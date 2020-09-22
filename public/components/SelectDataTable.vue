@@ -4,8 +4,8 @@
       bordered
       hover
       small
-      :items="items"
       :current-page="currentPage"
+      :items="items"
       :fields="tableFields"
       :per-page="perPage"
       :total-rows="itemCount"

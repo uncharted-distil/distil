@@ -57,7 +57,7 @@ export function createFilterFromHighlight(
   }
 
   const type = getVarType(key);
-  const displayName = variable.colDisplayName;
+  const displayName = variable?.colDisplayName;
   if (type === IMAGE_TYPE) {
     return {
       key: key,

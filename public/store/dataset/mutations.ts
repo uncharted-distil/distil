@@ -335,7 +335,6 @@ export const mutations = {
 
   // sets the current selected data into the store
   setIncludedTableData(state: DatasetState, tableData: TableData) {
-    console.log(tableData);
     state.includedSet.tableData = Object.freeze(tableData);
     state.includedSet.rowSelectionData = getSelectedRows();
     // add selected row data to state
