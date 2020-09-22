@@ -695,11 +695,11 @@ func MapPostgresTypeToD3MType(pType string) ([]string, error) {
 	case dataTypeDate:
 		return []string{model.DateTimeType}, nil
 	case dataTypeDouble:
-		return []string{model.IntegerType, model.RealType, model.TimestampType}, nil
+		return []string{model.RealType, model.TimestampType}, nil
 	case dataTypeFloat:
-		return []string{model.IntegerType, model.RealType, model.TimestampType}, nil
+		return []string{model.RealType, model.TimestampType}, nil
 	case dataTypeInteger:
-		return []string{model.IndexType, model.TimestampType, model.NumericalType}, nil
+		return []string{model.TimestampType, model.IntegerType}, nil
 	case dataTypeVector:
 		return []string{model.RealVectorType, model.RealListType}, nil
 	case dataTypeText:
