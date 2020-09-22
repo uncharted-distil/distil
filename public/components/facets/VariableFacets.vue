@@ -24,7 +24,7 @@
         <div class="col-12 flex-column variable-facets-container">
           <div
             class="variable-facets-item"
-            v-for="summary in summaries"
+            v-for="summary in sortedVariableSummaries()"
             :key="summary.key"
           >
             <template v-if="summary.pending">
@@ -175,28 +175,17 @@ import {
   Variable,
   VariableSummary,
 } from "../../store/dataset";
-import {
-  getters as datasetGetters,
-  actions as datasetActions,
-} from "../../store/dataset/module";
+import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
 import {
   ROUTE_PAGE_SUFFIX,
   ROUTE_SEARCH_SUFFIX,
 } from "../../store/route/index";
-import { Group } from "../../util/facets";
-import {
-  LATITUDE_TYPE,
-  LONGITUDE_TYPE,
-  isLocationType,
-  isGeoLocatedType,
-  isImageType,
-} from "../../util/types";
+import { isGeoLocatedType, isImageType } from "../../util/types";
 import { actions as appActions } from "../../store/app/module";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
 import { updateHighlight, clearHighlight } from "../../util/highlights";
 import Vue from "vue";
-import { randomNormal } from "d3";
 
 export default Vue.extend({
   name: "variable-facets",
@@ -269,7 +258,6 @@ export default Vue.extend({
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
-
     ranking(): Dictionary<number> {
       // Only show ranks for available feature, model features and result features
       if (
@@ -295,7 +283,6 @@ export default Vue.extend({
       const typeChangeStatus: string[] = [];
       this.variables.forEach((variable) => {
         if (this.enableTypeChange && !this.isSeriesID(variable.colName)) {
-          const datasetName = routeGetters.getRouteDataset(this.$store);
           typeChangeStatus.push(`${variable.datasetName}:${variable.colName}`);
         }
       });
@@ -408,13 +395,23 @@ export default Vue.extend({
     isImage(type: string): boolean {
       return isImageType(type);
     },
+    sortedVariableSummaries(): VariableSummary[] {
+      const ranking = this.ranking;
+      if (ranking === {}) {
+        return this.summaries;
+      }
+      this.summaries.sort((a, b) => {
+        return ranking[b.key] - ranking[a.key];
+      });
+
+      return this.summaries;
+    },
   },
   beforeMount() {
     this.search = routeGetters.getAllSearchesByQueryString(this.$store)[
       this.routeSearchKey()
     ];
   },
-
   watch: {
     search() {
       const entry = overlayRouteEntry(this.$route, {
