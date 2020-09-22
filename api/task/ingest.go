@@ -373,12 +373,33 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 
 	// ingest the data
 	err = IngestPostgres(originalSchemaFile, schemaFile, source, config, verifyMetadata, false, fallbackMerged, data)
+	if err != nil {
+		return "", err
+	}
 
+	// expand the suggested types to be the exhaustive list of types it can be
+	err = VerifySuggestedTypes(dataset, data, storage)
 	if err != nil {
 		return "", err
 	}
 
 	return meta.ID, nil
+}
+
+// VerifySuggestedTypes checks expands the suggested types to include all valid
+// types the database storage can support.
+func VerifySuggestedTypes(dataset string, dataStorage api.DataStorage, metaStorage api.MetadataStorage) error {
+	meta, err := metaStorage.FetchDataset(dataset, false, false)
+	if err != nil {
+		return err
+	}
+
+	err = dataStorage.VerifyData(meta.ID, meta.StorageName)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // IngestMetadata ingests the data to ES.
@@ -510,11 +531,7 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest last rows")
 	}
-	// verfiy the data type for the columns
-	err = dataStorage.VerifyData(meta.ID, dbTable)
-	if err != nil {
-		return err
-	}
+
 	log.Infof("all data ingested")
 
 	return nil
