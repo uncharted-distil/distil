@@ -372,7 +372,7 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 	}
 
 	// ingest the data
-	err = IngestPostgres(originalSchemaFile, schemaFile, source, config, verifyMetadata, false, fallbackMerged, data)
+	err = IngestPostgres(originalSchemaFile, schemaFile, source, config, verifyMetadata, false, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
@@ -440,7 +440,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 
 // IngestPostgres ingests a dataset to PG storage.
 func IngestPostgres(originalSchemaFile string, schemaFile string, source metadata.DatasetSource,
-	config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool, fallbackMerged bool, dataStorage api.DataStorage) error {
+	config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool, fallbackMerged bool) error {
 	datasetDir, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return err
