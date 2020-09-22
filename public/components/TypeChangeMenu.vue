@@ -65,12 +65,7 @@ import _ from "lodash";
 import Vue from "vue";
 import IconBase from "./icons/IconBase";
 import IconBookmark from "./icons/IconBookmark";
-import {
-  SuggestedType,
-  Variable,
-  Highlight,
-  RemoteSensingGrouping,
-} from "../store/dataset/index";
+import { SuggestedType, Variable, Highlight } from "../store/dataset/index";
 import {
   actions as datasetActions,
   getters as datasetGetters,
@@ -81,14 +76,9 @@ import {
   getLabelFromType,
   TIMESERIES_TYPE,
   isClusterType,
-  getTypeFromLabel,
   isEquivalentType,
-  isLocationType,
   normalizedEquivalentType,
-  BASIC_SUGGESTIONS,
   GEOCOORDINATE_TYPE,
-  LATITUDE_TYPE,
-  LONGITUDE_TYPE,
   hasComputedVarPrefix,
   COLLAPSE_ACTION_TYPE,
   EXPAND_ACTION_TYPE,
@@ -101,7 +91,6 @@ import {
   PREDICTION_ROUTE,
   RESULTS_ROUTE,
 } from "../store/route";
-import { getComposedVariableKey } from "../util/data";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
