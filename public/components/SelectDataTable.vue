@@ -292,6 +292,15 @@ export default Vue.extend({
       return listData.map((l) => l.Float);
     },
   },
+  watch: {
+    items() {
+      // if the itemCount changes such that it's less than page
+      // we were on, reset to page 1.
+      if (this.itemCount < this.perPage * this.currentPage) {
+        this.currentPage = 1;
+      }
+    },
+  },
 });
 </script>
 
