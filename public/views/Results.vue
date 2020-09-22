@@ -49,11 +49,11 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
-import { sortResultSummariesByImportance } from "../util/data";
 import {
   NUM_PER_PAGE,
   getVariableSummariesByState,
   searchVariables,
+  sortSolutionSummariesByImportance,
 } from "../util/data";
 import { Feature, Activity } from "../util/userEvents";
 
@@ -118,7 +118,7 @@ export default Vue.extend({
       );
     },
     trainingSummariesByImportance(): VariableSummary[] {
-      return sortResultSummariesByImportance(
+      return sortSolutionSummariesByImportance(
         this.trainingSummaries,
         this.trainingVariables,
         this.solutionId

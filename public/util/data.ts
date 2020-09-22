@@ -618,7 +618,7 @@ export function sortSummariesByImportance(
   return summaries;
 }
 
-export function sortResultSummariesByImportance(
+export function sortSolutionSummariesByImportance(
   summaries: VariableSummary[],
   variables: Variable[],
   solutionID: string
