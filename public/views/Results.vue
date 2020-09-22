@@ -22,7 +22,7 @@
           :log-activity="logActivity"
           model-selection
           :pagination="trainingVariables.length > rowsPerPage"
-          :summaries="trainingSummaries"
+          :summaries="trainingSummariesByImportance"
         >
         </variable-facets>
       </div>
@@ -53,6 +53,7 @@ import {
   NUM_PER_PAGE,
   getVariableSummariesByState,
   searchVariables,
+  sortSolutionSummariesByImportance,
 } from "../util/data";
 import { Feature, Activity } from "../util/userEvents";
 
@@ -114,6 +115,13 @@ export default Vue.extend({
         this.rowsPerPage,
         this.trainingVariables,
         summaryDictionary
+      );
+    },
+    trainingSummariesByImportance(): VariableSummary[] {
+      return sortSolutionSummariesByImportance(
+        this.trainingSummaries,
+        this.trainingVariables,
+        this.solutionId
       );
     },
     solutionId(): string {
