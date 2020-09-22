@@ -24,7 +24,7 @@
         <div class="col-12 flex-column variable-facets-container">
           <div
             class="variable-facets-item"
-            v-for="summary in sortedVariableSummaries()"
+            v-for="summary in summaries"
             :key="summary.key"
           >
             <template v-if="summary.pending">
@@ -166,7 +166,7 @@ import { overlayRouteEntry, getRouteFacetPage } from "../../util/routes";
 import { Dictionary } from "../../util/dict";
 import {
   getVariableRanking,
-  getSolutionVariableRanking,
+  getResultVariableRanking,
   NUM_PER_PAGE,
 } from "../../util/data";
 import {
@@ -270,7 +270,7 @@ export default Vue.extend({
       const ranking: Dictionary<number> = {};
       this.variables.forEach((variable) => {
         ranking[variable.colName] = this.isResultFeatures
-          ? getSolutionVariableRanking(
+          ? getResultVariableRanking(
               variable,
               routeGetters.getRouteSolutionId(this.$store)
             )
@@ -394,17 +394,6 @@ export default Vue.extend({
 
     isImage(type: string): boolean {
       return isImageType(type);
-    },
-    sortedVariableSummaries(): VariableSummary[] {
-      const ranking = this.ranking;
-      if (ranking === {}) {
-        return this.summaries;
-      }
-      this.summaries.sort((a, b) => {
-        return ranking[b.key] - ranking[a.key];
-      });
-
-      return this.summaries;
     },
   },
   beforeMount() {
