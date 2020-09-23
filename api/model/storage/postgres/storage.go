@@ -121,10 +121,10 @@ func (s *Storage) updateStats(storageName string) {
 }
 
 // IsColumnType can be use to check columns potential types
-func (s *Storage) isColumnType(tableName string, variable *model.Variable, colType string) (bool, error) {
+func (s *Storage) isColumnType(tableName string, variable *model.Variable, colType string) bool {
 	// check colType is valid
 	if !postgres.IsValidType(colType) {
-		return false, errors.New("colType is not a supported type")
+		return false
 	}
 	// generate view query
 	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT \"%[1]s\"::%[3]s FROM %[2]s", variable.Name, tableName, colType)
@@ -134,19 +134,21 @@ func (s *Storage) isColumnType(tableName string, variable *model.Variable, colTy
 	// create transaction
 	tx, err := s.client.Begin()
 	if err != nil {
-		return false, err
+		tx.Rollback(context.Background())
+		return false
 	}
+	defer tx.Rollback(context.Background())
 	// create temp view
 	_, err = tx.Exec(context.Background(), viewQuery)
 	if err != nil {
-		return false, err
+		return false
 	}
 	// test to see if the data can fit into the type
 	_, err = tx.Exec(context.Background(), testQuery)
-	// rollback any changes to db
-	tx.Rollback(context.Background())
-	tx.Commit(context.Background())
-	return err == nil, err
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // VerifyData checks each column in the table against every supported type, then updates what types are valid in the SuggestedType
@@ -175,11 +177,7 @@ func (s *Storage) VerifyData(datasetID string, tableName string) error {
 			suggestedMap[ds.Variables[i].SuggestedTypes[t].Type] = true
 		}
 		for j := range mainValidTypes {
-			isValid, err := s.isColumnType(tableName, ds.Variables[i], mainValidTypes[j])
-			if err != nil {
-				continue
-			}
-			if isValid {
+			if s.isColumnType(tableName, ds.Variables[i], mainValidTypes[j]) {
 				d3mTypes, err := postgres.MapPostgresTypeToD3MType(mainValidTypes[j])
 				if err != nil {
 					continue
