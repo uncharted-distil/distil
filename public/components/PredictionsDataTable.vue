@@ -81,6 +81,7 @@
     </b-table>
     <b-pagination
       v-if="items && items.length > perPage"
+      align="center"
       size="sm"
       v-model="currentPage"
       :per-page="perPage"
