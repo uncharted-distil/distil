@@ -1,5 +1,5 @@
 <template>
-  <div class="create-solutions-form">
+  <div class="create-solutions-form mt-2">
     <error-modal
       :show="showCreateFailure"
       title="Model Failed"
@@ -8,7 +8,7 @@
     >
     </error-modal>
     <settings-modal></settings-modal>
-    <div class="row justify-content-center mt-1">
+    <div class="row justify-content-center">
       <b-button-group>
         <b-button
           :variant="createVariant"

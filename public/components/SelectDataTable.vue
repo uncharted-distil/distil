@@ -11,7 +11,7 @@
       :total-rows="itemCount"
       @row-clicked="onRowClick"
       sticky-header="100%"
-      class="distil-table"
+      class="distil-table mb-1"
     >
       <template
         v-for="computedField in computedFields"
