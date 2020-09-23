@@ -35,6 +35,11 @@ const (
 	dataTypeGeometry = "geometry"
 	dataTypeInteger  = "INTEGER"
 	dataTypeDate     = "TIMESTAMP"
+	dataTypeBool     = "BOOLEAN"
+	dataTypeImageExt = "IMAGE_EXT"
+	dataTypeEmail    = "EMAIL"
+	dataTypeLat      = "LATITUDE"
+	dataTypeLon      = "LONGITUDE"
 	dateFormat       = "2006-01-02T15:04:05Z"
 
 	metadataTableCreationSQL = `CREATE TABLE %s (
@@ -690,17 +695,27 @@ func MapPostgresTypeToD3MType(pType string) ([]string, error) {
 	case dataTypeDate:
 		return []string{model.DateTimeType}, nil
 	case dataTypeDouble:
-		return []string{model.IntegerType, model.LongitudeType, model.LatitudeType, model.RealType, model.TimestampType}, nil
+		return []string{model.RealType, model.TimestampType}, nil
 	case dataTypeFloat:
-		return []string{model.IntegerType, model.LongitudeType, model.LatitudeType, model.RealType, model.TimestampType}, nil
+		return []string{model.RealType, model.TimestampType}, nil
 	case dataTypeInteger:
-		return []string{model.IndexType}, nil
+		return []string{model.TimestampType, model.IntegerType}, nil
 	case dataTypeVector:
 		return []string{model.RealVectorType, model.RealListType}, nil
 	case dataTypeText:
-		return []string{model.OrdinalType, model.CategoricalType, model.StringType}, nil
+		return []string{model.OrdinalType, model.CategoricalType, model.StringType, model.AddressType, model.CityType, model.CountryType, model.PostalCodeType, model.StateType, model.URIType, model.PhoneType}, nil
 	case dataTypeGeometry:
 		return []string{model.GeoBoundsType}, nil
+	case dataTypeBool:
+		return []string{model.BoolType}, nil
+	case dataTypeEmail:
+		return []string{model.EmailType}, nil
+	case dataTypeLat:
+		return []string{model.LatitudeType}, nil
+	case dataTypeLon:
+		return []string{model.LongitudeType}, nil
+	case dataTypeImageExt:
+		return []string{model.ImageType, model.MultiBandImageType}, nil
 	default:
 		return []string{}, errors.New("pType is not a supported type")
 	}
@@ -764,18 +779,33 @@ func IsValidType(pType string) bool {
 		return true
 	case dataTypeDate:
 		return true
+	case dataTypeLat:
+		return true
+	case dataTypeLon:
+		return true
+	case dataTypeImageExt:
+		return true
+	case dataTypeBool:
+		return true
+	case dataTypeEmail:
+		return true
 	default:
 		return false
 	}
 }
 
 // GetValidTypes returns all of the supported types in the DB
-func GetValidTypes() [7]string {
-	return [...]string{dataTypeText,
+func GetValidTypes() []string {
+	return []string{dataTypeText,
 		dataTypeDouble,
 		dataTypeFloat,
 		dataTypeVector,
 		dataTypeGeometry,
 		dataTypeInteger,
-		dataTypeDate}
+		dataTypeDate,
+		dataTypeBool,
+		dataTypeEmail,
+		dataTypeLat,
+		dataTypeLon,
+		dataTypeImageExt}
 }

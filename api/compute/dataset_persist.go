@@ -16,9 +16,7 @@
 package compute
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"math/rand"
 	"os"
@@ -536,21 +534,6 @@ func pathExists(path string) bool {
 		return false
 	}
 	return true
-}
-
-// LoadDatasetSchemaFromFile loads the dataset schema from file.
-func LoadDatasetSchemaFromFile(filename string) (*DataSchema, error) {
-	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	dataDoc := &DataSchema{}
-	err = json.Unmarshal(b, dataDoc)
-	if err != nil {
-		return nil, err
-	}
-	return dataDoc, nil
 }
 
 func min(a, b int) int {

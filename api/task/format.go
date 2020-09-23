@@ -88,7 +88,7 @@ func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]strin
 	dr.ResType = model.ResTypeTable
 
 	// write the new schema to file
-	err = datasetStorage.WriteMetadata(paths.outputSchema, meta, true)
+	err = datasetStorage.WriteMetadata(paths.outputSchema, meta, true, false)
 	if err != nil {
 		return errors.Wrap(err, "unable to store schema")
 	}

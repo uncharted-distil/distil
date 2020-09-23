@@ -1,52 +1,52 @@
-import _ from "lodash";
 import axios from "axios";
-import Vue from "vue";
 import sha1 from "crypto-js/sha1";
+import _ from "lodash";
+import Vue from "vue";
 import {
-  Variable,
-  VariableSummary,
-  TableData,
-  TableRow,
-  TableColumn,
-  TimeseriesGrouping,
   D3M_INDEX_FIELD,
   SummaryMode,
+  TableColumn,
+  TableData,
+  TableRow,
+  TimeseriesGrouping,
+  Variable,
+  VariableSummary,
 } from "../store/dataset/index";
 import {
-  Solution,
-  SOLUTION_COMPLETED,
+  actions as datasetActions,
+  getters as datasetGetters,
+} from "../store/dataset/module";
+import { PredictionContext } from "../store/predictions/actions";
+import {
   Predictions,
   PREDICT_COMPLETED,
+  Solution,
+  SOLUTION_COMPLETED,
 } from "../store/requests/index";
-import { Dictionary } from "./dict";
-import { FilterParams } from "./filters";
-import store from "../store/store";
+import { getters as requestGetters } from "../store/requests/module";
+import { ResultsContext } from "../store/results/actions";
 import {
   actions as resultsActions,
   getters as resultsGetters,
 } from "../store/results/module";
-import { ResultsContext } from "../store/results/actions";
-import { PredictionContext } from "../store/predictions/actions";
-import {
-  getters as datasetGetters,
-  actions as datasetActions,
-} from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as requestGetters } from "../store/requests/module";
+import store from "../store/store";
 import {
   formatValue,
-  isIntegerType,
-  isTimeType,
-  isListType,
   hasComputedVarPrefix,
   IMAGE_TYPE,
+  isIntegerType,
+  isLatitudeGroupType,
+  isListType,
+  isLongitudeGroupType,
+  isTimeGroupType,
+  isTimeType,
+  isValueGroupType,
   REMOTE_SENSING_TYPE,
   TIMESERIES_TYPE,
-  isLatitudeGroupType,
-  isLongitudeGroupType,
-  isValueGroupType,
-  isTimeGroupType,
 } from "../util/types";
+import { Dictionary } from "./dict";
+import { FilterParams } from "./filters";
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";

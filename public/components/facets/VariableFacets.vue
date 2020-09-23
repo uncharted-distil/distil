@@ -175,28 +175,17 @@ import {
   Variable,
   VariableSummary,
 } from "../../store/dataset";
-import {
-  getters as datasetGetters,
-  actions as datasetActions,
-} from "../../store/dataset/module";
+import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
 import {
   ROUTE_PAGE_SUFFIX,
   ROUTE_SEARCH_SUFFIX,
 } from "../../store/route/index";
-import { Group } from "../../util/facets";
-import {
-  LATITUDE_TYPE,
-  LONGITUDE_TYPE,
-  isLocationType,
-  isGeoLocatedType,
-  isImageType,
-} from "../../util/types";
+import { isGeoLocatedType, isImageType } from "../../util/types";
 import { actions as appActions } from "../../store/app/module";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
 import { updateHighlight, clearHighlight } from "../../util/highlights";
 import Vue from "vue";
-import { randomNormal } from "d3";
 
 export default Vue.extend({
   name: "variable-facets",
@@ -269,7 +258,6 @@ export default Vue.extend({
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
-
     ranking(): Dictionary<number> {
       // Only show ranks for available feature, model features and result features
       if (
@@ -295,7 +283,6 @@ export default Vue.extend({
       const typeChangeStatus: string[] = [];
       this.variables.forEach((variable) => {
         if (this.enableTypeChange && !this.isSeriesID(variable.colName)) {
-          const datasetName = routeGetters.getRouteDataset(this.$store);
           typeChangeStatus.push(`${variable.datasetName}:${variable.colName}`);
         }
       });
@@ -414,7 +401,6 @@ export default Vue.extend({
       this.routeSearchKey()
     ];
   },
-
   watch: {
     search() {
       const entry = overlayRouteEntry(this.$route, {

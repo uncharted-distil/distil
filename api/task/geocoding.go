@@ -130,7 +130,7 @@ func GeocodeForwardDataset(schemaFile string, dataset string, config *IngestTask
 	mainDR.ResPath = relativePath
 
 	// write the new schema to file
-	err = datasetStorage.WriteMetadata(outputPath.outputSchema, meta, true)
+	err = datasetStorage.WriteMetadata(outputPath.outputSchema, meta, true, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to store feature schema")
 	}

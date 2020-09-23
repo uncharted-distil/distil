@@ -22,7 +22,7 @@
             :log-activity="logActivity"
             model-selection
             :pagination="trainingVariables.length > rowsPerPage"
-            :summaries="trainingSummaries"
+            :summaries="trainingSummariesByImportance"
           >
           </variable-facets>
         </div>
@@ -48,20 +48,17 @@ import StatusPanel from "../components/StatusPanel";
 import StatusSidebar from "../components/StatusSidebar";
 import { VariableSummary, Variable } from "../store/dataset/index";
 import { actions as viewActions } from "../store/view/module";
-import {
-  getters as datasetGetters,
-  actions as datasetActions,
-} from "../store/dataset/module";
+import { actions as datasetActions } from "../store/dataset/module";
 import { getters as predictionGetters } from "../store/predictions/module";
 import { getters as requestGetters } from "../store/requests/module";
-import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
   NUM_PER_PAGE,
   getVariableSummariesByState,
   searchVariables,
+  sortSolutionSummariesByImportance,
 } from "../util/data";
-import { Feature, Activity } from "../util/userEvents";
+import { Activity } from "../util/userEvents";
 
 export default Vue.extend({
   name: "predictions-view",
@@ -103,6 +100,13 @@ export default Vue.extend({
         this.rowsPerPage,
         this.trainingVariables,
         summaryDictionary
+      );
+    },
+    trainingSummariesByImportance(): VariableSummary[] {
+      return sortSolutionSummariesByImportance(
+        this.trainingSummaries,
+        this.trainingVariables,
+        this.solutionId
       );
     },
     solutionId(): string {
