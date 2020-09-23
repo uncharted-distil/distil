@@ -154,7 +154,7 @@ func (s *Storage) isColumnType(tableName string, variable *model.Variable, colTy
 // VerifyData checks each column in the table against every supported type, then updates what types are valid in the SuggestedType
 func (s *Storage) VerifyData(datasetID string, tableName string) error {
 	validTypes := postgres.GetValidTypes()
-	ds, err := s.metadata.FetchDataset(datasetID, false, true)
+	ds, err := s.metadata.FetchDataset(datasetID, true, true)
 	if err != nil {
 		return err
 	}
@@ -162,33 +162,35 @@ func (s *Storage) VerifyData(datasetID string, tableName string) error {
 	double := "double precision"
 	geometry := "geometry"
 	mainValidTypes := []string{}
-	for i := range validTypes {
-		if validTypes[i] != double && validTypes[i] != geometry {
-			mainValidTypes = append(mainValidTypes, validTypes[i])
+	for _, i := range validTypes {
+		if i != double && i != geometry {
+			mainValidTypes = append(mainValidTypes, i)
 		}
 	}
 
 	// if view can succeed on column add potential type to column
-	log.Infof("%d variables to verify", len(ds.Variables))
-	for i := range ds.Variables {
-		log.Infof("checking var %d", i)
-		suggestedMap := make(map[string]bool)
-		for t := range ds.Variables[i].SuggestedTypes {
-			suggestedMap[ds.Variables[i].SuggestedTypes[t].Type] = true
+	for _, v := range ds.Variables {
+		// ignore index columns
+		if model.IsIndexRole(v.SelectedRole) {
+			continue
 		}
-		for j := range mainValidTypes {
-			if s.isColumnType(tableName, ds.Variables[i], mainValidTypes[j]) {
-				d3mTypes, err := postgres.MapPostgresTypeToD3MType(mainValidTypes[j])
+		suggestedMap := make(map[string]bool)
+		for _, t := range v.SuggestedTypes {
+			suggestedMap[t.Type] = true
+		}
+		for _, j := range mainValidTypes {
+			if s.isColumnType(tableName, v, j) {
+				d3mTypes, err := postgres.MapPostgresTypeToD3MType(j)
 				if err != nil {
 					continue
 				}
-				for k := range d3mTypes {
+				for _, k := range d3mTypes {
 					// this could be moved up to an exit case above but a lot of the upconversion from pg to d3m types involves multiple results
-					if suggestedMap[d3mTypes[k]] {
+					if suggestedMap[k] {
 						continue
 					}
-					suggestedType := model.SuggestedType{Probability: 0, Type: d3mTypes[k], Provenance: ProvenanceStorage}
-					ds.Variables[i].SuggestedTypes = append(ds.Variables[i].SuggestedTypes, &suggestedType)
+					suggestedType := model.SuggestedType{Probability: 0, Type: k, Provenance: ProvenanceStorage}
+					v.SuggestedTypes = append(v.SuggestedTypes, &suggestedType)
 				}
 			}
 		}
