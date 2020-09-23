@@ -198,7 +198,7 @@ export default Vue.extend({
         .then((tableData) => {
           this.pending = false;
           this.showJoinSuccess = true;
-          this.previewTableData = tableData;
+          this.previewTableData = Object.seal(tableData);
         })
         .catch((err) => {
           // display error modal
