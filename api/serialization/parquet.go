@@ -155,6 +155,7 @@ func (d *Parquet) WriteData(uri string, data [][]string) error {
 	if err != nil {
 		return errors.Wrap(err, "unable to create parquet writer")
 	}
+	pw.CompressionType = parquet.CompressionCodec_UNCOMPRESSED
 
 	//pw, err := writer.NewParquetWriter(fw, nil, 1)
 	//pw.SchemaHandler = schema.NewSchemaHandlerFromMetadata(md)
