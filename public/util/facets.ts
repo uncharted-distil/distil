@@ -1,32 +1,32 @@
 import _ from "lodash";
 import {
-  CATEGORICAL_TYPE,
-  ORDINAL_TYPE,
-  BOOL_TYPE,
-  ADDRESS_TYPE,
-  CITY_TYPE,
-  STATE_TYPE,
-  COUNTRY_TYPE,
-  EMAIL_TYPE,
-  POSTAL_CODE_TYPE,
-  PHONE_TYPE,
-  URI_TYPE,
-  DATE_TIME_TYPE,
-  IMAGE_TYPE,
-  DATE_TIME_LOWER_TYPE,
-  GEOCOORDINATE_TYPE,
-  TIMESERIES_TYPE,
-} from "../util/types";
-import store from "../store/store";
-import { getters as routeGetters } from "../store/route/module";
-import { getTimeseriesSummaryTopCategories } from "../util/data";
-import { getSelectedRows } from "../util/row";
-import {
-  VariableSummary,
   CATEGORICAL_SUMMARY,
   NUMERICAL_SUMMARY,
   RowSelection,
+  VariableSummary,
 } from "../store/dataset/index";
+import { getters as routeGetters } from "../store/route/module";
+import store from "../store/store";
+import { getTimeseriesSummaryTopCategories } from "../util/data";
+import { getSelectedRows } from "../util/row";
+import {
+  ADDRESS_TYPE,
+  BOOL_TYPE,
+  CATEGORICAL_TYPE,
+  CITY_TYPE,
+  COUNTRY_TYPE,
+  DATE_TIME_LOWER_TYPE,
+  DATE_TIME_TYPE,
+  EMAIL_TYPE,
+  GEOCOORDINATE_TYPE,
+  IMAGE_TYPE,
+  ORDINAL_TYPE,
+  PHONE_TYPE,
+  POSTAL_CODE_TYPE,
+  STATE_TYPE,
+  TIMESERIES_TYPE,
+  URI_TYPE,
+} from "../util/types";
 
 export const CATEGORICAL_CHUNK_SIZE = 5;
 export const IMAGE_CHUNK_SIZE = 5;
@@ -46,7 +46,10 @@ export interface Segment {
   color: string;
   count: number;
 }
-
+export interface FacetColor {
+  color: string;
+  colorHover: string;
+}
 export interface SelectedSegments {
   selected: number;
   segments: Segment[];
@@ -284,7 +287,25 @@ export function hasFiltered(summary: VariableSummary) {
     summary.filtered.buckets.length > 0
   );
 }
-
+// applyColor generates the string to change the facet dynamic css variables
+export function applyColor(colors: FacetColor[]): string {
+  let result = "";
+  colors.forEach((c, i) => {
+    result += `--facet-bars-${i}-normal: ${c.color};
+    --facet-bars-${i}-normal-contrast: ${c.colorHover};
+    --facet-bars-${i}-normal-contrast-hover: ${c.color};
+    --facet-bars-${i}-selected: ${c.color};
+    --facet-bars-${i}-selected-contrast: ${c.colorHover};
+    --facet-bars-${i}-selected-contrast-hover: ${c.color};
+    --facet-bars-${i}-unselected: ${c.colorHover};
+    --facet-bars-${i}-unselected-contrast: ${c.colorHover};
+    --facet-bars-${i}-unselected-contrast-hover: ${c.color};
+    --facet-bars-${i}-muted: ${c.color};
+    --facet-bars-${i}-muted-contrast: ${c.color};
+    --facet-bars-${i}-muted-contrast-hover: ${c.colorHover};`;
+  });
+  return result;
+}
 export function getSubSelectionValues(
   summary: VariableSummary,
   rowSelection: RowSelection,
