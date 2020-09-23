@@ -55,7 +55,11 @@
 
     <div class="result-group-body" v-if="isMaximized">
       <template v-if="isCompleted">
-        <div v-for="summary in predictedSummaries" :key="summary.key">
+        <div
+          v-for="summary in predictedSummaries"
+          :key="summary.key"
+          ref="predicted-summaries"
+        >
           <component
             :is="getFacetByType(summary.type)"
             enable-highlighting
@@ -88,6 +92,7 @@
             @numerical-click="onResidualNumericalClick"
             @range-change="onResidualRangeChange"
             @facet-click="onResultCategoricalClick"
+            :style="errorColor"
           >
           </component>
         </div>
@@ -122,13 +127,10 @@ import {
   VariableSummary,
   RowSelection,
   Highlight,
-  CATEGORICAL_SUMMARY,
-  NUMERICAL_SUMMARY,
 } from "../store/dataset/index";
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from "../store/requests/index";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as requestGetters } from "../store/requests/module";
-import { getFacetByType } from "../util/facets";
+import { getFacetByType, applyColor } from "../util/facets";
 import {
   getSolutionIndex,
   getSolutionById,
@@ -142,7 +144,6 @@ import { updateHighlight, clearHighlight } from "../util/highlights";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import _ from "lodash";
-import { descending } from "d3";
 import store from "../store/store";
 
 export default Vue.extend({
@@ -177,7 +178,9 @@ export default Vue.extend({
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
-
+    errorColor(): string {
+      return applyColor([{ color: "#ff0067", colorHover: "#ffaaaa" }]);
+    },
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
     },
