@@ -20,9 +20,13 @@ export SOLUTION_SEARCH_MAX_TIME=30000
 export SOLUTION_COMPUTE_PULL_MAX=900000
 export SOLUTION_COMPUTE_PULL_TIMEOUT=60000
 export DATAMART_URL_NYU=https://auctus.vida-nyu.org
-export FEATURIZATION_ENABLED=false # re-enable when column parser is optimized
-export CLUSTERING_KMEANS=true
+export CLUSTERING_ENABLED=false # no image clustering on ingest
+export SUMMARY_ENABLED=false # no duke summarization on ingest
+export FEATURIZATION_ENABLED=true # featurize rs imagery on ingest
+export CLUSTERING_KMEANS=true # 'true' if kmeans should be used for clustering 'false' if we should use hdbscan
 # export MAX_TRAINING_ROWS=500
 # export MAX_TEST_ROWS=500
+
+ulimit -n 4096
 
 witch --cmd="make compile && make fmt && go run main.go" --watch="main.go,api/**/*.go" --ignore=""
