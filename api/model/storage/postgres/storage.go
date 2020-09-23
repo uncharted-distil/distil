@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"context"
+
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	log "github.com/unchartedsoftware/plog"
@@ -120,10 +121,10 @@ func (s *Storage) updateStats(storageName string) {
 }
 
 // IsColumnType can be use to check columns potential types
-func (s *Storage) isColumnType(tableName string, variable *model.Variable, colType string) (bool, error) {
+func (s *Storage) isColumnType(tableName string, variable *model.Variable, colType string) bool {
 	// check colType is valid
 	if !postgres.IsValidType(colType) {
-		return false, errors.New("colType is not a supported type")
+		return false
 	}
 	// generate view query
 	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT \"%[1]s\"::%[3]s FROM %[2]s", variable.Name, tableName, colType)
@@ -133,25 +134,27 @@ func (s *Storage) isColumnType(tableName string, variable *model.Variable, colTy
 	// create transaction
 	tx, err := s.client.Begin()
 	if err != nil {
-		return false, err
+		tx.Rollback(context.Background())
+		return false
 	}
+	defer tx.Rollback(context.Background())
 	// create temp view
 	_, err = tx.Exec(context.Background(), viewQuery)
 	if err != nil {
-		return false, err
+		return false
 	}
 	// test to see if the data can fit into the type
 	_, err = tx.Exec(context.Background(), testQuery)
-	// rollback any changes to db
-	tx.Rollback(context.Background())
-	tx.Commit(context.Background())
-	return err == nil, err
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // VerifyData checks each column in the table against every supported type, then updates what types are valid in the SuggestedType
 func (s *Storage) VerifyData(datasetID string, tableName string) error {
 	validTypes := postgres.GetValidTypes()
-	ds, err := s.metadata.FetchDataset(datasetID, false, true)
+	ds, err := s.metadata.FetchDataset(datasetID, true, true)
 	if err != nil {
 		return err
 	}
@@ -159,40 +162,41 @@ func (s *Storage) VerifyData(datasetID string, tableName string) error {
 	double := "double precision"
 	geometry := "geometry"
 	mainValidTypes := []string{}
-	for i := range validTypes {
-		if validTypes[i] != double && validTypes[i] != geometry {
-			mainValidTypes = append(mainValidTypes, validTypes[i])
+	for _, i := range validTypes {
+		if i != double && i != geometry {
+			mainValidTypes = append(mainValidTypes, i)
 		}
 	}
 
 	// if view can succeed on column add potential type to column
-	for i := range ds.Variables {
-		suggestedMap := make(map[string]bool)
-		for t := range ds.Variables[i].SuggestedTypes {
-			suggestedMap[ds.Variables[i].SuggestedTypes[t].Type] = true
+	for _, v := range ds.Variables {
+		// ignore index columns
+		if model.IsIndexRole(v.SelectedRole) {
+			continue
 		}
-		for j := range mainValidTypes {
-			isValid, err := s.isColumnType(tableName, ds.Variables[i], mainValidTypes[j])
-			if err != nil {
-				continue
-			}
-			if isValid {
-				d3mTypes, err := postgres.MapPostgresTypeToD3MType(mainValidTypes[j])
+		suggestedMap := make(map[string]bool)
+		for _, t := range v.SuggestedTypes {
+			suggestedMap[t.Type] = true
+		}
+		for _, j := range mainValidTypes {
+			if s.isColumnType(tableName, v, j) {
+				d3mTypes, err := postgres.MapPostgresTypeToD3MType(j)
 				if err != nil {
 					continue
 				}
-				for k := range d3mTypes {
+				for _, k := range d3mTypes {
 					// this could be moved up to an exit case above but a lot of the upconversion from pg to d3m types involves multiple results
-					if suggestedMap[d3mTypes[k]] {
+					if suggestedMap[k] {
 						continue
 					}
-					suggestedType := model.SuggestedType{Probability: 0, Type: d3mTypes[k], Provenance: ProvenanceStorage}
-					ds.Variables[i].SuggestedTypes = append(ds.Variables[i].SuggestedTypes, &suggestedType)
+					suggestedType := model.SuggestedType{Probability: 0, Type: k, Provenance: ProvenanceStorage}
+					v.SuggestedTypes = append(v.SuggestedTypes, &suggestedType)
 				}
 			}
 		}
 	}
 	// save changes err convert
+	log.Infof("update metadata with complete list of suggested types")
 	err = s.metadata.UpdateDataset(ds)
 	if err != nil {
 		return err
