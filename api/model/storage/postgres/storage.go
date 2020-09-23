@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"context"
+
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	log "github.com/unchartedsoftware/plog"
@@ -166,7 +167,9 @@ func (s *Storage) VerifyData(datasetID string, tableName string) error {
 	}
 
 	// if view can succeed on column add potential type to column
+	log.Infof("%d variables to verify", len(ds.Variables))
 	for i := range ds.Variables {
+		log.Infof("checking var %d", i)
 		suggestedMap := make(map[string]bool)
 		for t := range ds.Variables[i].SuggestedTypes {
 			suggestedMap[ds.Variables[i].SuggestedTypes[t].Type] = true
@@ -193,6 +196,7 @@ func (s *Storage) VerifyData(datasetID string, tableName string) error {
 		}
 	}
 	// save changes err convert
+	log.Infof("update metadata with complete list of suggested types")
 	err = s.metadata.UpdateDataset(ds)
 	if err != nil {
 		return err
