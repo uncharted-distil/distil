@@ -1,34 +1,33 @@
 import axios from "axios";
+import { ActionContext } from "vuex";
+import { validateArgs } from "../../util/data";
+import { FilterParams } from "../../util/filters";
+import { getStreamById, getWebSocketConnection } from "../../util/ws";
+import { SummaryMode, TaskTypes } from "../dataset";
+import { actions as predictActions } from "../predictions/module";
+import { actions as resultsActions } from "../results/module";
+import { getters as routeGetters } from "../route/module";
+import store, { DistilState } from "../store";
 import {
-  RequestState,
-  SOLUTION_PENDING,
-  SOLUTION_COMPLETED,
-  SOLUTION_ERRORED,
-  SOLUTION_REQUEST_PENDING,
-  SOLUTION_REQUEST_RUNNING,
-  SOLUTION_REQUEST_COMPLETED,
-  SOLUTION_REQUEST_ERRORED,
-  SOLUTION_FITTING,
-  SOLUTION_PRODUCING,
-  SOLUTION_SCORING,
-  SolutionRequest,
-  Solution,
+  ModelQuality,
+  Predictions,
   PREDICT_COMPLETED,
   PREDICT_ERRORED,
-  Predictions,
-  ModelQuality,
+  RequestState,
+  Solution,
+  SolutionRequest,
+  SOLUTION_COMPLETED,
+  SOLUTION_ERRORED,
+  SOLUTION_FITTING,
+  SOLUTION_PENDING,
+  SOLUTION_PRODUCING,
+  SOLUTION_REQUEST_COMPLETED,
+  SOLUTION_REQUEST_ERRORED,
+  SOLUTION_REQUEST_PENDING,
+  SOLUTION_REQUEST_RUNNING,
+  SOLUTION_SCORING,
 } from "./index";
-import { ActionContext } from "vuex";
-import store, { DistilState } from "../store";
 import { mutations } from "./module";
-import { getWebSocketConnection, getStreamById } from "../../util/ws";
-import { FilterParams } from "../../util/filters";
-import { actions as resultsActions } from "../results/module";
-import { actions as predictActions } from "../predictions/module";
-import { getters as routeGetters } from "../route/module";
-import { TaskTypes, SummaryMode } from "../dataset";
-import { validateArgs } from "../../util/data";
-import { Model } from "../model";
 
 const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
@@ -106,6 +105,9 @@ function updateCurrentSolutionResults(
     highlight: context.getters.getDecodedHighlight,
     dataMode: dataMode,
     size,
+  });
+  resultsActions.fetchFeatureImportanceRanking(store, {
+    solutionID: res.solutionId,
   });
   resultsActions.fetchPredictedSummary(store, {
     dataset: req.dataset,

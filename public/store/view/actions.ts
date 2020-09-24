@@ -1,47 +1,47 @@
 import _ from "lodash";
-import { ViewState } from "./index";
 import { ActionContext } from "vuex";
-import store, { DistilState } from "../store";
-import { mutations as viewMutations, getters as viewGetters } from "./module";
+import {
+  filterArrayByPage,
+  NUM_PER_PAGE,
+  NUM_PER_TARGET_PAGE,
+  searchVariables,
+  sortVariablesByImportance,
+} from "../../util/data";
 import { Dictionary } from "../../util/dict";
+import { getPredictionsById } from "../../util/predictions";
+import {
+  DataMode,
+  Highlight,
+  SummaryMode,
+  TaskTypes,
+  Variable,
+} from "../dataset";
 import {
   actions as datasetActions,
   mutations as datasetMutations,
 } from "../dataset/module";
 import {
-  actions as requestActions,
-  mutations as requestMutations,
-  getters as requestGetters,
-} from "../requests/module";
-import {
-  actions as resultActions,
-  mutations as resultMutations,
-} from "../results/module";
+  actions as modelActions,
+  mutations as modelMutations,
+} from "../model/module";
 import {
   actions as predictionActions,
   mutations as predictionMutations,
 } from "../predictions/module";
 import {
-  actions as modelActions,
-  mutations as modelMutations,
-} from "../model/module";
-import { getters as routeGetters } from "../route/module";
+  actions as requestActions,
+  getters as requestGetters,
+  mutations as requestMutations,
+} from "../requests/module";
 import {
-  TaskTypes,
-  SummaryMode,
-  DataMode,
-  Variable,
-  Highlight,
-} from "../dataset";
-import { getPredictionsById } from "../../util/predictions";
-import {
-  NUM_PER_PAGE,
-  NUM_PER_TARGET_PAGE,
-  sortVariablesByImportance,
-  filterArrayByPage,
-  searchVariables,
-} from "../../util/data";
+  actions as resultActions,
+  mutations as resultMutations,
+} from "../results/module";
 import { SELECT_TARGET_ROUTE } from "../route";
+import { getters as routeGetters } from "../route/module";
+import store, { DistilState } from "../store";
+import { ViewState } from "./index";
+import { getters as viewGetters, mutations as viewMutations } from "./module";
 
 enum ParamCacheKey {
   VARIABLES = "VARIABLES",
@@ -203,7 +203,9 @@ const fetchVariableRankings = createCacheable(
 const fetchSolutionVariableRankings = createCacheable(
   ParamCacheKey.SOLUTION_VARIABLE_RANKINGS,
   (context, args) => {
-    resultActions.fetchVariableRankings(store, { solutionID: args.solutionID });
+    resultActions.fetchFeatureImportanceRanking(store, {
+      solutionID: args.solutionID,
+    });
   }
 );
 
@@ -562,7 +564,9 @@ export const actions = {
       dataMode: dataMode,
       varModes: varModes,
     });
-    resultActions.fetchVariableRankings(store, { solutionID: solutionId });
+    resultActions.fetchFeatureImportanceRanking(store, {
+      solutionID: solutionId,
+    });
 
     const task = routeGetters.getRouteTask(store);
 

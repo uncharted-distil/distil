@@ -780,7 +780,7 @@ export const actions = {
 
   // Fetch variable rankings associated with a computed solution.  If the solution results are
   // available, then the rankings will have been computed.
-  async fetchVariableRankings(
+  async fetchFeatureImportanceRanking(
     context: ResultsContext,
     args: { solutionID: string }
   ) {

@@ -97,7 +97,9 @@ export const actions = {
   // forecast
   fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries),
   // variable rankings
-  fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
+  fetchFeatureImportanceRanking: dispatch(
+    moduleActions.fetchFeatureImportanceRanking
+  ),
 };
 
 // Typed mutations
