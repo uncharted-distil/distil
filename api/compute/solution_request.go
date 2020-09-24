@@ -685,7 +685,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		}
 		exposeType := []string{}
 		if s.useParquet {
-			exposeType = append(exposeType, "PARQUET_URI")
+			exposeType = append(exposeType, compute.ParquetURIValueType)
 		}
 		produceSolutionRequest := createProduceSolutionRequest(produceDatasetURI, fittedSolutionID, outputKeys, exposeType)
 
