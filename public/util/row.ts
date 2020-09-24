@@ -127,7 +127,6 @@ export function updateTableRowSelection(
 export function getSelectedRows(): Row[] {
   const selection = routeGetters.getDecodedRowSelection(store);
   const include = routeGetters.getRouteInclude(store);
-  const timeId = "rowSelect" + Date.now();
   if (!selection || selection.d3mIndices.length === 0) {
     return [];
   }
@@ -179,7 +178,6 @@ export function addRowSelection(
   selection: RowSelection,
   d3mIndex: number
 ) {
-  const timeId = "addRow" + Date.now();
   if (!selection || selection.context !== context) {
     selection = {
       context: context,
@@ -200,7 +198,6 @@ export function removeRowSelection(
   selection: RowSelection,
   d3mIndex: number
 ) {
-  const timeId = "removeRow" + Date.now();
   if (!selection) {
     return;
   }

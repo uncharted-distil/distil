@@ -655,8 +655,6 @@ export function validateData(data: TableData) {
 export function getTableDataItems(data: TableData): TableRow[] {
   if (validateData(data)) {
     // convert fetched result data rows into table data rows
-    const timeId = "table" + Date.now();
-
     const formattedTable = data.values.map((resultRow, rowIndex) => {
       const row = {} as TableRow;
       resultRow.forEach((colValue, colIndex) => {
