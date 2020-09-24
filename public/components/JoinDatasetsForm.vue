@@ -198,6 +198,7 @@ export default Vue.extend({
         .then((tableData) => {
           this.pending = false;
           this.showJoinSuccess = true;
+          // sealing the return to prevent slow, unnecessary deep reactivity.
           this.previewTableData = Object.seal(tableData);
         })
         .catch((err) => {

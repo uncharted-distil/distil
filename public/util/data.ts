@@ -308,6 +308,7 @@ export function updateSummaries(
     return s.dataset === summary.dataset && s.key === summary.key;
   });
   if (index >= 0) {
+    // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(summaries, index, Object.freeze(summary));
   } else {
     summaries.push(Object.freeze(summary));
@@ -324,6 +325,7 @@ export function updateSummariesPerVariable(
   if (!variableSummaryDictionary[summaryKey]) {
     Vue.set(variableSummaryDictionary, summaryKey, {});
   }
+  // freezing the return to prevent slow, unnecessary deep reactivity.
   Vue.set(
     variableSummaryDictionary[summaryKey],
     routeKey,

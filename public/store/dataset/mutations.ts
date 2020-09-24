@@ -269,6 +269,8 @@ export const mutations = {
     if (!state.timeseries[args.dataset].timeseriesData) {
       Vue.set(state.timeseries[args.dataset], "timeseriesData", {});
     }
+
+    // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(
       state.timeseries[args.dataset].timeseriesData,
       args.id,
@@ -335,16 +337,18 @@ export const mutations = {
 
   // sets the current selected data into the store
   setIncludedTableData(state: DatasetState, tableData: TableData) {
+    // freezing the return to prevent slow, unnecessary deep reactivity.
     state.includedSet.tableData = Object.freeze(tableData);
-    state.includedSet.rowSelectionData = getSelectedRows();
     // add selected row data to state
+    state.includedSet.rowSelectionData = getSelectedRows();
   },
 
   // sets the current excluded data into the store
   setExcludedTableData(state: DatasetState, tableData: TableData) {
+    // freezing the return to prevent slow, unnecessary deep reactivity.
     state.excludedSet.tableData = Object.freeze(tableData);
-    state.excludedSet.rowSelectionData = getSelectedRows();
     // add selected row data to state
+    state.excludedSet.rowSelectionData = getSelectedRows();
   },
 
   updateRowSelectionData(state) {
