@@ -166,7 +166,7 @@ import { overlayRouteEntry, getRouteFacetPage } from "../../util/routes";
 import { Dictionary } from "../../util/dict";
 import {
   getVariableRanking,
-  getSolutionVariableRanking,
+  getSolutionFeatureImportance,
   NUM_PER_PAGE,
 } from "../../util/data";
 import {
@@ -270,7 +270,7 @@ export default Vue.extend({
       const ranking: Dictionary<number> = {};
       this.variables.forEach((variable) => {
         ranking[variable.colName] = this.isResultFeatures
-          ? getSolutionVariableRanking(
+          ? getSolutionFeatureImportance(
               variable,
               routeGetters.getRouteSolutionId(this.$store)
             )

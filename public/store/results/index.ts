@@ -1,9 +1,9 @@
 import { Dictionary } from "../../util/dict";
 import {
-  VariableSummary,
   Extrema,
   TableData,
   TimeSeriesValue,
+  VariableSummary,
 } from "../dataset/index";
 
 export interface TimeSeries {
@@ -40,7 +40,7 @@ export interface ResultsState {
   fittedSolutionId: string;
   produceRequestId: string;
   // variable rankings - maps {solutionID, {featureName: rank value}}
-  variableRankings: Dictionary<Dictionary<number>>;
+  featureImportanceRanking: Dictionary<Dictionary<number>>;
 }
 
 export const state: ResultsState = {
@@ -64,5 +64,5 @@ export const state: ResultsState = {
   fittedSolutionId: null,
   produceRequestId: null,
   // variable rankings
-  variableRankings: {},
+  featureImportanceRanking: {},
 };

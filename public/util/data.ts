@@ -584,11 +584,13 @@ export function getVariableRanking(v: Variable): number {
   return v.ranking !== undefined ? v.ranking : 0;
 }
 
-export function getSolutionVariableRanking(
+export function getSolutionFeatureImportance(
   v: Variable,
   solutionID: string
 ): number {
-  const solutionRanks = resultsGetters.getVariableRankings(store)[solutionID];
+  const solutionRanks = resultsGetters.getFeatureImportanceRanking(store)[
+    solutionID
+  ];
   if (solutionRanks) {
     return solutionRanks[v.colName];
   }
@@ -626,7 +628,7 @@ export function sortSolutionSummariesByImportance(
   // create importance lookup map
   const importance: Dictionary<number> = {};
   variables.forEach((variable) => {
-    importance[variable.colName] = getSolutionVariableRanking(
+    importance[variable.colName] = getSolutionFeatureImportance(
       variable,
       solutionID
     );
