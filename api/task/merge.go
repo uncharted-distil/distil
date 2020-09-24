@@ -30,10 +30,7 @@ import (
 
 // Merge will merge data resources into a single data resource.
 func Merge(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
-	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.MergedOutputSchemaPathRelative, config.MergedOutputPathRelative)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to copy source data folder")
-	}
+	outputPath := createDatasetPaths(schemaFile, dataset, config.MergedOutputSchemaPathRelative, config.MergedOutputPathRelative)
 
 	// need to manually build the metadata and output it.
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)

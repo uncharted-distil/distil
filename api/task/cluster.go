@@ -45,10 +45,7 @@ type ClusterPoint struct {
 
 // ClusterDataset will cluster the dataset fields using a primitive.
 func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
-	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to copy source data folder")
-	}
+	outputPath := createDatasetPaths(schemaFile, dataset, config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative)
 
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)

@@ -42,10 +42,7 @@ type GeocodedPoint struct {
 // GeocodeForwardDataset geocodes fields that are types of locations.
 // The results are append to the dataset and the whole is output to disk.
 func GeocodeForwardDataset(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
-	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.GeocodingOutputSchemaRelative, config.GeocodingOutputDataRelative)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to copy source data folder")
-	}
+	outputPath := createDatasetPaths(schemaFile, dataset, config.GeocodingOutputSchemaRelative, config.GeocodingOutputDataRelative)
 
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(path.Dir(schemaFile), config.ClassificationOutputPathRelative), false, true)

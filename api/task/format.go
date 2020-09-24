@@ -36,10 +36,7 @@ func Format(schemaFile string, dataset string, config *IngestTaskConfig) (string
 	dr := getMainDataResource(meta)
 
 	// copy the data to a new directory
-	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.FormatOutputSchemaRelative, config.FormatOutputDataRelative)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to copy source data folder")
-	}
+	outputPath := createDatasetPaths(schemaFile, dataset, config.FormatOutputSchemaRelative, config.FormatOutputDataRelative)
 
 	// read the raw data
 	dataPath := path.Join(path.Dir(schemaFile), dr.ResPath)
