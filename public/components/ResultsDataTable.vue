@@ -1,115 +1,130 @@
 <template>
-  <b-table
-    bordered
-    hover
-    small
-    :items="items"
-    :fields="tableFields"
-    :sort-by="errorCol"
-    :sort-compare="sortFunction"
-    @row-clicked="onRowClick"
-    @sort-changed="onSortChanged"
-    sticky-header="100%"
-    class="distil-table"
-  >
-    <template
-      v-for="computedField in computedFields"
-      v-slot:[cellSlot(computedField)]="data"
+  <div class="distil-table-container">
+    <b-table
+      bordered
+      hover
+      small
+      :current-page="currentPage"
+      :items="items"
+      :fields="tableFields"
+      :sort-by="errorCol"
+      :sort-compare="sortFunction"
+      :per-page="perPage"
+      :total-rows="itemCount"
+      @row-clicked="onRowClick"
+      @sort-changed="onSortChanged"
+      sticky-header="100%"
+      class="distil-table mb-1"
     >
-      <div :key="computedField" :title="data.value.value">
-        {{ data.value.value }}
-        <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
-          <icon-fork />
-        </icon-base>
-      </div>
-    </template>
-
-    <template v-slot:[headSlot(predictedCol)]="data">
-      <span
-        >{{ data.label }}<sup>{{ solutionIndex }}</sup></span
+      <template
+        v-for="computedField in computedFields"
+        v-slot:[cellSlot(computedField)]="data"
       >
-    </template>
-
-    <template
-      v-for="imageField in imageFields"
-      v-slot:[cellSlot(imageField.key)]="data"
-    >
-      <image-preview
-        :key="imageField.key"
-        :type="imageField.type"
-        :image-url="data.item[imageField.key].value"
-      ></image-preview>
-    </template>
-
-    <template
-      v-for="timeseriesGrouping in timeseriesGroupings"
-      v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
-    >
-      <sparkline-preview
-        :key="data.item[timeseriesGrouping.idCol].value"
-        :truth-dataset="dataset"
-        :x-col="timeseriesGrouping.xCol"
-        :y-col="timeseriesGrouping.yCol"
-        :timeseries-col="timeseriesGrouping.idCol"
-        :timeseries-id="data.item[timeseriesGrouping.idCol].value"
-        :solution-id="solutionId"
-        :include-forecast="isTargetTimeseries"
-      />
-    </template>
-
-    <template
-      v-for="(listField, index) in listFields"
-      v-slot:[cellSlot(listField.key)]="data"
-    >
-      <span :key="index" :title="formatList(data)">
-        {{ formatList(data) }}
-      </span>
-    </template>
-
-    <template v-slot:[cellSlot(errorCol)]="data">
-      <!-- residual error -->
-      <div>
-        <div
-          class="error-bar-container"
-          v-if="isTargetNumerical"
-          :title="data.value.value"
-        >
-          <div
-            class="error-bar"
-            v-bind:style="{
-              'background-color': errorBarColor(data.value.value),
-              width: errorBarWidth(data.value.value),
-              left: errorBarLeft(data.value.value),
-            }"
-          ></div>
-          <div class="error-bar-center"></div>
+        <div :key="computedField" :title="data.value.value">
+          {{ data.value.value }}
+          <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
+            <icon-fork />
+          </icon-base>
         </div>
-
-        <!-- correctness error -->
-        <div v-if="isTargetCategorical">
-          <div v-if="data.item[predictedCol].value == data.value.value">
-            Correct
-          </div>
-          <div v-if="data.item[predictedCol].value != data.value.value">
-            Incorrect
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <template v-slot:cell()="data">
-      <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
-        {{ data.value | cleanNumber }}
       </template>
-      <div
-        v-else
-        :title="data.value.value"
-        :style="cellColor(data.value.weight, data)"
+
+      <template v-slot:[headSlot(predictedCol)]="data">
+        <span
+          >{{ data.label }}<sup>{{ solutionIndex }}</sup></span
+        >
+      </template>
+
+      <template
+        v-for="imageField in imageFields"
+        v-slot:[cellSlot(imageField.key)]="data"
       >
-        {{ data.value.value }}
-      </div>
-    </template>
-  </b-table>
+        <image-preview
+          :key="imageField.key"
+          :type="imageField.type"
+          :image-url="data.item[imageField.key].value"
+        ></image-preview>
+      </template>
+
+      <template
+        v-for="timeseriesGrouping in timeseriesGroupings"
+        v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
+      >
+        <sparkline-preview
+          :key="data.item[timeseriesGrouping.idCol].value"
+          :truth-dataset="dataset"
+          :x-col="timeseriesGrouping.xCol"
+          :y-col="timeseriesGrouping.yCol"
+          :timeseries-col="timeseriesGrouping.idCol"
+          :timeseries-id="data.item[timeseriesGrouping.idCol].value"
+          :solution-id="solutionId"
+          :include-forecast="isTargetTimeseries"
+        />
+      </template>
+
+      <template
+        v-for="(listField, index) in listFields"
+        v-slot:[cellSlot(listField.key)]="data"
+      >
+        <span :key="index" :title="formatList(data)">
+          {{ formatList(data) }}
+        </span>
+      </template>
+
+      <template v-slot:[cellSlot(errorCol)]="data">
+        <!-- residual error -->
+        <div>
+          <div
+            class="error-bar-container"
+            v-if="isTargetNumerical"
+            :title="data.value.value"
+          >
+            <div
+              class="error-bar"
+              v-bind:style="{
+                'background-color': errorBarColor(data.value.value),
+                width: errorBarWidth(data.value.value),
+                left: errorBarLeft(data.value.value),
+              }"
+            ></div>
+            <div class="error-bar-center"></div>
+          </div>
+
+          <!-- correctness error -->
+          <div v-if="isTargetCategorical">
+            <div v-if="data.item[predictedCol].value == data.value.value">
+              Correct
+            </div>
+            <div v-if="data.item[predictedCol].value != data.value.value">
+              Incorrect
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template v-slot:cell()="data">
+        <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
+          {{ data.value | cleanNumber }}
+        </template>
+        <div
+          v-else
+          :title="data.value.value"
+          :style="cellColor(data.value.weight, data)"
+        >
+          {{ data.value.value }}
+        </div>
+      </template>
+    </b-table>
+    <b-pagination
+      v-if="items && items.length > perPage"
+      align="center"
+      first-number
+      last-number
+      size="sm"
+      v-model="currentPage"
+      :per-page="perPage"
+      :total-rows="itemCount"
+    ></b-pagination>
+  </div>
 </template>
 
 <script lang="ts">
@@ -169,6 +184,8 @@ export default Vue.extend({
   data() {
     return {
       sortingBy: undefined,
+      currentPage: 1,
+      perPage: 100,
     };
   },
 
@@ -243,22 +260,30 @@ export default Vue.extend({
     },
 
     items(): TableRow[] {
-      let items = this.dataItems;
+      if (this.hasData) {
+        let items = this.dataItems;
 
-      // In the case of timeseries, we add their Min/Max/Mean.
-      if (this.isTimeseries) {
-        items = items?.map((item) => {
-          const timeserieId = item[this.timeseriesGroupings[0].idCol].value;
-          const minMaxMean = this.timeserieInfo(timeserieId);
-          return { ...item, ...minMaxMean };
-        });
+        // In the case of timeseries, we add their Min/Max/Mean.
+        if (this.isTimeseries) {
+          items = items?.map((item) => {
+            const timeserieId = item[this.timeseriesGroupings[0].idCol].value;
+            const minMaxMean = this.timeserieInfo(timeserieId);
+            return { ...item, ...minMaxMean };
+          });
+        }
+
+        return updateTableRowSelection(
+          items,
+          this.rowSelection,
+          this.instanceName
+        );
+      } else {
+        return [];
       }
+    },
 
-      return updateTableRowSelection(
-        items,
-        this.rowSelection,
-        this.instanceName
-      );
+    itemCount(): number {
+      return this.hasData ? this.dataItems.length : 0;
     },
 
     fields(): Dictionary<TableColumn> {
@@ -434,6 +459,15 @@ export default Vue.extend({
         Status: number;
       }[];
       return listData.map((l) => l.Float);
+    },
+  },
+  watch: {
+    items() {
+      // if the itemCount changes such that it's less than page
+      // we were on, reset to page 1.
+      if (this.itemCount < this.perPage * this.currentPage) {
+        this.currentPage = 1;
+      }
     },
   },
 });

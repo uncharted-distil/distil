@@ -1286,4 +1286,8 @@ export const actions = {
       console.error(error);
     }
   },
+
+  updateRowSelectionData(context: DatasetContext): void {
+    mutations.updateRowSelectionData(context);
+  },
 };

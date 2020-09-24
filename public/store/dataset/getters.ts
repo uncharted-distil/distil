@@ -9,6 +9,7 @@ import {
   TableColumn,
   TimeSeries,
   BandCombination,
+  Row,
 } from "./index";
 import { Dictionary } from "../../util/dict";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
@@ -122,6 +123,10 @@ export const getters = {
     return state.includedSet.tableData;
   },
 
+  getIncludedTableDataLength(state: DatasetState): number {
+    return state.includedSet.tableData?.values?.length;
+  },
+
   getIncludedTableDataNumRows(state: DatasetState): number {
     return state.includedSet.tableData
       ? state.includedSet.tableData.numRowsFiltered
@@ -136,12 +141,20 @@ export const getters = {
     return getTableDataFields(state.includedSet.tableData);
   },
 
+  getIncludedSelectedRowData(state: DatasetState): Row[] {
+    return state.includedSet.rowSelectionData;
+  },
+
   hasExcludedTableData(state: DatasetState): boolean {
     return !!state.excludedSet.tableData;
   },
 
   getExcludedTableData(state: DatasetState): TableData {
     return state.excludedSet.tableData;
+  },
+
+  getExcludedTableDataLength(state: DatasetState): number {
+    return state.excludedSet.tableData?.values?.length;
   },
 
   getExcludedTableDataNumRows(state: DatasetState): number {
@@ -156,6 +169,10 @@ export const getters = {
 
   getExcludedTableDataFields(state: DatasetState): Dictionary<TableColumn> {
     return getTableDataFields(state.excludedSet.tableData);
+  },
+
+  getExcludedSelectedRowData(state: DatasetState): Row[] {
+    return state.excludedSet.rowSelectionData;
   },
 
   getMultiBandCombinations(state: DatasetState): BandCombination[] {

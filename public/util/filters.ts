@@ -244,7 +244,7 @@ export function addFilterToRoute(router: VueRouter, filter: Filter) {
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
     filters: updated,
   });
-  router.push(entry);
+  router.push(entry).catch((err) => console.warn(err));
 }
 
 export function removeFilterFromRoute(router: VueRouter, filter: Filter) {
@@ -255,7 +255,7 @@ export function removeFilterFromRoute(router: VueRouter, filter: Filter) {
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
     filters: updated,
   });
-  router.push(entry);
+  router.push(entry).catch((err) => console.warn(err));
 }
 
 export function removeFiltersByName(router: VueRouter, key: string) {
@@ -269,5 +269,5 @@ export function removeFiltersByName(router: VueRouter, key: string) {
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
     filters: encoded,
   });
-  router.push(entry);
+  router.push(entry).catch((err) => console.warn(err));
 }

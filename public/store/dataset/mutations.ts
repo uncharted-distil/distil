@@ -21,6 +21,7 @@ import {
   LONGITUDE_TYPE,
   LATITUDE_TYPE,
 } from "../../util/types";
+import { getSelectedRows } from "../../util/row";
 
 function sortDatasets(a: Dataset, b: Dataset) {
   if (
@@ -268,6 +269,8 @@ export const mutations = {
     if (!state.timeseries[args.dataset].timeseriesData) {
       Vue.set(state.timeseries[args.dataset], "timeseriesData", {});
     }
+
+    // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(
       state.timeseries[args.dataset].timeseriesData,
       args.id,
@@ -334,12 +337,23 @@ export const mutations = {
 
   // sets the current selected data into the store
   setIncludedTableData(state: DatasetState, tableData: TableData) {
-    state.includedSet.tableData = tableData;
+    // freezing the return to prevent slow, unnecessary deep reactivity.
+    state.includedSet.tableData = Object.freeze(tableData);
+    // add selected row data to state
+    state.includedSet.rowSelectionData = getSelectedRows();
   },
 
   // sets the current excluded data into the store
   setExcludedTableData(state: DatasetState, tableData: TableData) {
-    state.excludedSet.tableData = tableData;
+    // freezing the return to prevent slow, unnecessary deep reactivity.
+    state.excludedSet.tableData = Object.freeze(tableData);
+    // add selected row data to state
+    state.excludedSet.rowSelectionData = getSelectedRows();
+  },
+
+  updateRowSelectionData(state) {
+    state.includedSet.rowSelectionData = getSelectedRows();
+    state.excludedSet.rowSelectionData = getSelectedRows();
   },
 
   updateTask(state: DatasetState, task: Task) {

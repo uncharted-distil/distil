@@ -47,6 +47,10 @@
         >
           {{ score.label }}: {{ score.value.toFixed(2) }}
         </b-badge>
+        &nbsp;
+      </template>
+      <template v-if="hasExplanations">
+        <b-badge variant="info"> Explanations </b-badge>
       </template>
       <template v-if="isErrored">
         <b-badge variant="danger"> ERROR </b-badge>
@@ -324,6 +328,11 @@ export default Vue.extend({
         this.solutionId,
         3
       );
+    },
+
+    hasExplanations(): boolean {
+      // waiting for explanation enum to be added to results summaries
+      return false;
     },
   },
 

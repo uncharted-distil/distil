@@ -35,12 +35,14 @@ export const mutations = {
 
   // sets the current result data into the store
   setIncludedResultTableData(state: ResultsState, resultData: TableData) {
-    state.includedResultTableData = resultData;
+    // freezing the return to prevent slow, unnecessary deep reactivity.
+    state.includedResultTableData = Object.freeze(resultData);
   },
 
   // sets the current result data into the store
   setExcludedResultTableData(state: ResultsState, resultData: TableData) {
-    state.excludedResultTableData = resultData;
+    // freezing the return to prevent slow, unnecessary deep reactivity.
+    state.excludedResultTableData = Object.freeze(resultData);
   },
 
   // predicted
@@ -93,6 +95,7 @@ export const mutations = {
     if (!state.timeseries[args.solutionId].timeseriesData) {
       Vue.set(state.timeseries[args.solutionId], "timeseriesData", {});
     }
+    // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(
       state.timeseries[args.solutionId].timeseriesData,
       args.id,
@@ -141,6 +144,7 @@ export const mutations = {
     if (!state.forecasts[args.solutionId].isDateTime) {
       Vue.set(state.forecasts[args.solutionId], "isDateTime", {});
     }
+    // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(
       state.forecasts[args.solutionId].forecastData,
       args.id,

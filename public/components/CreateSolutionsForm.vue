@@ -1,5 +1,5 @@
 <template>
-  <div class="create-solutions-form">
+  <div class="create-solutions-form mt-2">
     <error-modal
       :show="showCreateFailure"
       title="Model Failed"

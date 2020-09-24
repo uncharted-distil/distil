@@ -5,7 +5,6 @@ import { actions as moduleActions } from "./actions";
 import { mutations as moduleMutations } from "./mutations";
 import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
-import { radialArea } from "d3";
 
 export const datasetModule: Module<DatasetState, DistilState> = {
   getters: moduleGetters,
@@ -56,16 +55,20 @@ export const getters = {
   // included data
   hasIncludedTableData: read(moduleGetters.hasIncludedTableData),
   getIncludedTableData: read(moduleGetters.getIncludedTableData),
+  getIncludedTableDataLength: read(moduleGetters.getIncludedTableDataLength),
   getIncludedTableDataNumRows: read(moduleGetters.getIncludedTableDataNumRows),
   getIncludedTableDataItems: read(moduleGetters.getIncludedTableDataItems),
   getIncludedTableDataFields: read(moduleGetters.getIncludedTableDataFields),
+  getIncludedSelectedRowData: read(moduleGetters.getIncludedSelectedRowData),
 
   // excluded data
   hasExcludedTableData: read(moduleGetters.hasExcludedTableData),
   getExcludedTableData: read(moduleGetters.getExcludedTableData),
+  getExcludedTableDataLength: read(moduleGetters.getExcludedTableDataLength),
   getExcludedTableDataNumRows: read(moduleGetters.getExcludedTableDataNumRows),
   getExcludedTableDataItems: read(moduleGetters.getExcludedTableDataItems),
   getExcludedTableDataFields: read(moduleGetters.getExcludedTableDataFields),
+  getExcludedSelectedRowData: read(moduleGetters.getExcludedSelectedRowData),
 
   // Remote sensing image band combinatinos
   getMultiBandCombinations: read(moduleGetters.getMultiBandCombinations),
@@ -134,6 +137,7 @@ export const actions = {
   fetchMultiBandCombinations: dispatch(
     moduleActions.fetchMultiBandCombinations
   ),
+  updateRowSelectionData: dispatch(moduleActions.updateRowSelectionData),
 };
 
 // Typed mutations
@@ -169,4 +173,5 @@ export const mutations = {
   setIncludedTableData: commit(moduleMutations.setIncludedTableData),
   setExcludedTableData: commit(moduleMutations.setExcludedTableData),
   updateBands: commit(moduleMutations.updateBands),
+  updateRowSelectionData: commit(moduleMutations.updateRowSelectionData),
 };

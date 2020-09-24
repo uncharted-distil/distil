@@ -1,80 +1,95 @@
 <template>
-  <b-table
-    bordered
-    hover
-    small
-    :items="items"
-    :fields="tableFields"
-    @row-clicked="onRowClick"
-    sticky-header="100%"
-    class="distil-table"
-  >
-    <template
-      v-for="computedField in computedFields"
-      v-slot:[cellSlot(computedField)]="data"
+  <div class="distil-table-container">
+    <b-table
+      bordered
+      hover
+      small
+      :current-page="currentPage"
+      :items="items"
+      :fields="tableFields"
+      :per-page="perPage"
+      :total-rows="itemCount"
+      @row-clicked="onRowClick"
+      sticky-header="100%"
+      class="distil-table mb-1"
     >
-      <div :key="computedField" :title="data.value.value">
-        {{ data.value.value }}
-        <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
-          <icon-fork />
-        </icon-base>
-      </div>
-    </template>
-
-    <template v-slot:[headSlot(predictedCol)]="data">
-      <span>{{ data.label }}</span>
-    </template>
-
-    <template
-      v-for="imageField in imageFields"
-      v-slot:[cellSlot(imageField.key)]="data"
-    >
-      <image-preview
-        :key="imageField.key"
-        :type="imageField.type"
-        :image-url="data.item[imageField.key].value"
-      />
-    </template>
-
-    <template
-      v-for="(listField, index) in listFields"
-      v-slot:[cellSlot(listField.key)]="data"
-    >
-      <span :key="index" :title="formatList(data)">
-        {{ formatList(data) }}
-      </span>
-    </template>
-
-    <template v-slot:cell()="data">
-      <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
-        {{ data.value | cleanNumber }}
-      </template>
-      <div
-        v-else
-        :title="data.value.value"
-        :style="cellColor(data.value.weight, data)"
+      <template
+        v-for="computedField in computedFields"
+        v-slot:[cellSlot(computedField)]="data"
       >
-        {{ data.value.value }}
-      </div>
-    </template>
+        <div :key="computedField" :title="data.value.value">
+          {{ data.value.value }}
+          <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
+            <icon-fork />
+          </icon-base>
+        </div>
+      </template>
 
-    <template
-      v-for="timeseriesGrouping in timeseriesGroupings"
-      v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
-    >
-      <sparkline-preview
-        :key="data.item[timeseriesGrouping.idCol].value"
-        :truth-dataset="truthDataset"
-        :forecast-dataset="predictions.dataset"
-        :x-col="timeseriesGrouping.xCol"
-        :y-col="timeseriesGrouping.yCol"
-        :timeseries-col="timeseriesGrouping.idCol"
-        :timeseries-id="data.item[timeseriesGrouping.idCol].value"
-        :predictions-id="predictions.requestId"
-        :include-forecast="true"
-      />
-    </template>
-  </b-table>
+      <template v-slot:[headSlot(predictedCol)]="data">
+        <span>{{ data.label }}</span>
+      </template>
+
+      <template
+        v-for="imageField in imageFields"
+        v-slot:[cellSlot(imageField.key)]="data"
+      >
+        <image-preview
+          :key="imageField.key"
+          :type="imageField.type"
+          :image-url="data.item[imageField.key].value"
+        />
+      </template>
+
+      <template
+        v-for="(listField, index) in listFields"
+        v-slot:[cellSlot(listField.key)]="data"
+      >
+        <span :key="index" :title="formatList(data)">
+          {{ formatList(data) }}
+        </span>
+      </template>
+
+      <template v-slot:cell()="data">
+        <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
+          {{ data.value | cleanNumber }}
+        </template>
+        <div
+          v-else
+          :title="data.value.value"
+          :style="cellColor(data.value.weight, data)"
+        >
+          {{ data.value.value }}
+        </div>
+      </template>
+
+      <template
+        v-for="timeseriesGrouping in timeseriesGroupings"
+        v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
+      >
+        <sparkline-preview
+          :key="data.item[timeseriesGrouping.idCol].value"
+          :truth-dataset="truthDataset"
+          :forecast-dataset="predictions.dataset"
+          :x-col="timeseriesGrouping.xCol"
+          :y-col="timeseriesGrouping.yCol"
+          :timeseries-col="timeseriesGrouping.idCol"
+          :timeseries-id="data.item[timeseriesGrouping.idCol].value"
+          :predictions-id="predictions.requestId"
+          :include-forecast="true"
+        />
+      </template>
+    </b-table>
+    <b-pagination
+      v-if="items && items.length > perPage"
+      align="center"
+      first-number
+      last-number
+      size="sm"
+      v-model="currentPage"
+      :per-page="perPage"
+      :total-rows="itemCount"
+    ></b-pagination>
+  </div>
 </template>
 
 <script lang="ts">
@@ -135,6 +150,13 @@ export default Vue.extend({
     IconFork,
   },
 
+  data() {
+    return {
+      currentPage: 1,
+      perPage: 100,
+    };
+  },
+
   props: {
     instanceName: String as () => string,
   },
@@ -188,6 +210,10 @@ export default Vue.extend({
         this.rowSelection,
         this.instanceName
       );
+    },
+
+    itemCount(): number {
+      return this.hasData ? this.items.length : 0;
     },
 
     fields(): Dictionary<TableColumn> {
@@ -306,6 +332,15 @@ export default Vue.extend({
         Status: number;
       }[];
       return listData.map((l) => l.Float);
+    },
+  },
+  watch: {
+    items() {
+      // if the itemCount changes such that it's less than page
+      // we were on, reset to page 1.
+      if (this.itemCount < this.perPage * this.currentPage) {
+        this.currentPage = 1;
+      }
     },
   },
 });

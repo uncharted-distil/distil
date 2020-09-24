@@ -308,6 +308,7 @@ export function updateSummaries(
     return s.dataset === summary.dataset && s.key === summary.key;
   });
   if (index >= 0) {
+    // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(summaries, index, Object.freeze(summary));
   } else {
     summaries.push(Object.freeze(summary));
@@ -324,6 +325,7 @@ export function updateSummariesPerVariable(
   if (!variableSummaryDictionary[summaryKey]) {
     Vue.set(variableSummaryDictionary, summaryKey, {});
   }
+  // freezing the return to prevent slow, unnecessary deep reactivity.
   Vue.set(
     variableSummaryDictionary[summaryKey],
     routeKey,
@@ -653,7 +655,7 @@ export function validateData(data: TableData) {
 export function getTableDataItems(data: TableData): TableRow[] {
   if (validateData(data)) {
     // convert fetched result data rows into table data rows
-    return data.values.map((resultRow, rowIndex) => {
+    const formattedTable = data.values.map((resultRow, rowIndex) => {
       const row = {} as TableRow;
       resultRow.forEach((colValue, colIndex) => {
         const colName = data.columns[colIndex].key;
@@ -669,8 +671,11 @@ export function getTableDataItems(data: TableData): TableRow[] {
         }
       });
       row._key = rowIndex;
-      return row;
+      row._rowVariant = null;
+      return Object.seal(row);
     });
+
+    return formattedTable;
   }
   return !_.isEmpty(data) ? [] : null;
 }

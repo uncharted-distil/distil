@@ -140,8 +140,10 @@
       <div class="col-12 flex-column">
         <b-pagination
           v-if="pagination"
-          size="sm"
           align="center"
+          first-number
+          last-number
+          size="sm"
           :total-rows="facetCount"
           :per-page="rowsPerPage"
           v-model="currentPage"
