@@ -119,6 +119,7 @@ type SolutionRequest struct {
 	solutionChannels []chan SolutionStatus
 	listener         SolutionStatusListener
 	finished         chan error
+	useParquet       bool
 }
 
 // NewSolutionRequest instantiates a new SolutionRequest.
@@ -355,7 +356,7 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 	keys := []string{defaultExposedOutputKey}
 	keys = append(keys, extractOutputKeys(outputs)...)
 
-	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, keys)
+	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, keys, nil)
 	produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceRequest)
 	if err != nil {
 		return nil, err
@@ -412,7 +413,10 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 	return nil, errors.Errorf("no results retrieved")
 }
 
-func createProduceSolutionRequest(datasetURI string, fittedSolutionID string, outputs []string) *pipeline.ProduceSolutionRequest {
+func createProduceSolutionRequest(datasetURI string, fittedSolutionID string, outputs []string, exposeValueTypes []string) *pipeline.ProduceSolutionRequest {
+	evt := []string{}
+	evt = append(evt, exposeValueTypes...)
+	evt = append(evt, compute.CSVURIValueType)
 	return &pipeline.ProduceSolutionRequest{
 		FittedSolutionId: fittedSolutionID,
 		Inputs: []*pipeline.Value{
@@ -422,10 +426,8 @@ func createProduceSolutionRequest(datasetURI string, fittedSolutionID string, ou
 				},
 			},
 		},
-		ExposeOutputs: outputs,
-		ExposeValueTypes: []string{
-			compute.CSVURIValueType,
-		},
+		ExposeOutputs:    outputs,
+		ExposeValueTypes: evt,
 	}
 }
 
@@ -681,7 +683,11 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 				break
 			}
 		}
-		produceSolutionRequest := createProduceSolutionRequest(produceDatasetURI, fittedSolutionID, outputKeys)
+		exposeType := []string{}
+		if s.useParquet {
+			exposeType = append(exposeType, compute.ParquetURIValueType)
+		}
+		produceSolutionRequest := createProduceSolutionRequest(produceDatasetURI, fittedSolutionID, outputKeys, exposeType)
 
 		// generate predictions
 		produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
@@ -901,6 +907,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		datasetInputDir = env.ResolvePath(datasetInput.Source, datasetInputDir)
 		targetIndex = targetVariable.Index
 	} else {
+		s.useParquet = true
 		datasetInputDir = datasetInput.LearningDataset
 		groupingVariableIndex = -1
 
