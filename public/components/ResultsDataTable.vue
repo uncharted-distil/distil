@@ -117,6 +117,8 @@
     <b-pagination
       v-if="items && items.length > perPage"
       align="center"
+      first-number
+      last-number
       size="sm"
       v-model="currentPage"
       :per-page="perPage"
