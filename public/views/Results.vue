@@ -131,11 +131,7 @@ export default Vue.extend({
       return filterArrayByPage(
         this.resultTrainingVarsPage,
         this.rowsPerPage,
-        sortSolutionSummariesByImportance(
-          trainingSummaries,
-          this.trainingVariables,
-          this.solutionId
-        )
+        sortSolutionSummariesByImportance(trainingSummaries, this.solutionId)
       );
     },
     solutionId(): string {

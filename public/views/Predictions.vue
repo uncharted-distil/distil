@@ -105,7 +105,6 @@ export default Vue.extend({
     trainingSummariesByImportance(): VariableSummary[] {
       return sortSolutionSummariesByImportance(
         this.trainingSummaries,
-        this.trainingVariables,
         this.solutionId
       );
     },

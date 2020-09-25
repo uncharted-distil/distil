@@ -541,12 +541,24 @@ export function getVariableSummariesByState(
 ) {
   const routeKey = minimumRouteKey();
   const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
+
   let currentSummaries = [];
 
   if (Object.keys(summaryDictionary).length > 0 && variables.length > 0) {
-    let sortedVariables = ranked
-      ? sortVariablesByImportance(variables)
-      : variables;
+    let sortedVariables = variables;
+    if (ranked) {
+      // prioritize FI over MI
+      const datasetName = routeGetters.getRouteDataset(store);
+      const solutionId = routeGetters.getRouteSolutionId(store);
+
+      const rankMap =
+        solutionId === null
+          ? datasetGetters.getVariableRankings(store)[datasetName]
+          : resultsGetters.getFeatureImportanceRanking(store)[solutionId];
+      sortedVariables.sort((a, b) => {
+        return rankMap[b.colName] - rankMap[a.colName];
+      });
+    }
 
     // select only the current variables on the page
     sortedVariables = filterArrayByPage(pageIndex, pageSize, sortedVariables);
@@ -597,13 +609,6 @@ export function getSolutionFeatureImportance(
   return null;
 }
 
-export function sortVariablesByImportance(variables: Variable[]): Variable[] {
-  variables.sort((a, b) => {
-    return getVariableImportance(b) - getVariableImportance(a);
-  });
-  return variables;
-}
-
 export function sortSummariesByImportance(
   summaries: VariableSummary[],
   variables: Variable[]
@@ -622,17 +627,13 @@ export function sortSummariesByImportance(
 
 export function sortSolutionSummariesByImportance(
   summaries: VariableSummary[],
-  variables: Variable[],
   solutionID: string
 ): VariableSummary[] {
   // create importance lookup map
-  const importance: Dictionary<number> = {};
-  variables.forEach((variable) => {
-    importance[variable.colName] = getSolutionFeatureImportance(
-      variable,
-      solutionID
-    );
-  });
+  const importance: Dictionary<number> = resultsGetters.getFeatureImportanceRanking(
+    store
+  )[solutionID];
+
   // sort by importance
   summaries.sort((a, b) => {
     if (!importance[b.key]) {
