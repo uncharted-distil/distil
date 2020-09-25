@@ -30,7 +30,7 @@ import (
 
 // Merge will merge data resources into a single data resource.
 func Merge(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
-	outputPath := createDatasetPaths(schemaFile, dataset, config.MergedOutputSchemaPathRelative, config.MergedOutputPathRelative)
+	outputPath := createDatasetPaths(schemaFile, dataset, compute.D3MLearningData)
 
 	// need to manually build the metadata and output it.
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)

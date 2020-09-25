@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 
@@ -42,7 +43,7 @@ type GeocodedPoint struct {
 // GeocodeForwardDataset geocodes fields that are types of locations.
 // The results are append to the dataset and the whole is output to disk.
 func GeocodeForwardDataset(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
-	outputPath := createDatasetPaths(schemaFile, dataset, config.GeocodingOutputSchemaRelative, config.GeocodingOutputDataRelative)
+	outputPath := createDatasetPaths(schemaFile, dataset, compute.D3MLearningData)
 
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromClassification(schemaFile, path.Join(path.Dir(schemaFile), config.ClassificationOutputPathRelative), false, true)

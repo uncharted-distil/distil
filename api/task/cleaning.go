@@ -20,6 +20,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 
 	"github.com/uncharted-distil/distil/api/serialization"
@@ -29,7 +30,7 @@ import (
 // Clean will clean bad data for further processing.
 func Clean(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
 	// copy the data to a new directory
-	outputPath := createDatasetPaths(schemaFile, dataset, config.CleanOutputSchemaRelative, config.CleanOutputDataRelative)
+	outputPath := createDatasetPaths(schemaFile, dataset, compute.D3MLearningData)
 
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)

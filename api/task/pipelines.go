@@ -27,7 +27,6 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 
 	sr "github.com/uncharted-distil/distil/api/compute"
-	"github.com/uncharted-distil/distil/api/env"
 )
 
 const (
@@ -245,12 +244,11 @@ func getRelativePath(rootPath string, filePath string) string {
 	return relativePath
 }
 
-func createDatasetPaths(schemaFile string, dataset string, schemaPathRelative string, dataPathRelative string) *datasetCopyPath {
-	basePath := path.Join(env.GetTmpPath(), dataset)
+func createDatasetPaths(schemaFile string, dataset string, dataPathRelative string) *datasetCopyPath {
 	sourceFolder := path.Dir(schemaFile)
-	outputSchemaPath := path.Join(basePath, schemaPathRelative)
-	outputDataPath := path.Join(basePath, dataPathRelative)
-	outputFolder := path.Dir(outputSchemaPath)
+	outputSchemaPath := schemaFile
+	outputDataPath := path.Join(sourceFolder, dataPathRelative)
+	outputFolder := sourceFolder
 
 	return &datasetCopyPath{
 		sourceFolder: sourceFolder,

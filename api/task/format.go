@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
@@ -36,7 +37,7 @@ func Format(schemaFile string, dataset string, config *IngestTaskConfig) (string
 	dr := getMainDataResource(meta)
 
 	// copy the data to a new directory
-	outputPath := createDatasetPaths(schemaFile, dataset, config.FormatOutputSchemaRelative, config.FormatOutputDataRelative)
+	outputPath := createDatasetPaths(schemaFile, dataset, compute.D3MLearningData)
 
 	// read the raw data
 	dataPath := path.Join(path.Dir(schemaFile), dr.ResPath)
