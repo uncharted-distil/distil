@@ -76,7 +76,7 @@ func Rank(schemaPath string, dataset string, config *IngestTaskConfig) (string, 
 		Features: ranks,
 	}
 
-	// output the classification in the expected JSON format
+	// output the importance in the expected JSON format
 	bytes, err := json.MarshalIndent(importance, "", "    ")
 	if err != nil {
 		return "", errors.Wrap(err, "unable to serialize ranking result")

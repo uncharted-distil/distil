@@ -247,7 +247,7 @@ func getRelativePath(rootPath string, filePath string) string {
 func createDatasetPaths(schemaFile string, dataset string, dataPathRelative string) *datasetCopyPath {
 	sourceFolder := path.Dir(schemaFile)
 	outputSchemaPath := schemaFile
-	outputDataPath := path.Join(sourceFolder, dataPathRelative)
+	outputDataPath := path.Join(sourceFolder, compute.D3MDataFolder, dataPathRelative)
 	outputFolder := sourceFolder
 
 	return &datasetCopyPath{
