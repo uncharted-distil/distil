@@ -532,6 +532,26 @@ export function searchVariables(
     );
   });
 }
+export function sortVariablesByPCARanking(variables: Variable[]): Variable[] {
+  variables.sort((a, b) => {
+    return b.importance - a.importance;
+  });
+  return variables;
+}
+export function sortVariablesByImportance(variables: Variable[]): Variable[] {
+  // prioritize FI over MI
+  const datasetName = routeGetters.getRouteDataset(store);
+  const solutionId = routeGetters.getRouteSolutionId(store);
+
+  const rankMap =
+    solutionId === null
+      ? datasetGetters.getVariableRankings(store)[datasetName]
+      : resultsGetters.getFeatureImportanceRanking(store)[solutionId];
+  variables.sort((a, b) => {
+    return rankMap[b.colName] - rankMap[a.colName];
+  });
+  return variables;
+}
 
 export function getVariableSummariesByState(
   pageIndex: number,
@@ -548,16 +568,7 @@ export function getVariableSummariesByState(
     let sortedVariables = variables;
     if (ranked) {
       // prioritize FI over MI
-      const datasetName = routeGetters.getRouteDataset(store);
-      const solutionId = routeGetters.getRouteSolutionId(store);
-
-      const rankMap =
-        solutionId === null
-          ? datasetGetters.getVariableRankings(store)[datasetName]
-          : resultsGetters.getFeatureImportanceRanking(store)[solutionId];
-      sortedVariables.sort((a, b) => {
-        return rankMap[b.colName] - rankMap[a.colName];
-      });
+      sortedVariables = sortVariablesByImportance(sortedVariables);
     }
 
     // select only the current variables on the page
@@ -589,11 +600,15 @@ export function getVariableSummariesByState(
 }
 
 export function getVariableImportance(v: Variable): number {
-  return v.ranking !== undefined ? v.ranking : v.importance;
+  const solutionID = routeGetters.getRouteSolutionId(store);
+  const map = resultsGetters.getFeatureImportanceRanking(store)[solutionID];
+  return map[v.colName];
 }
 
 export function getVariableRanking(v: Variable): number {
-  return v.ranking !== undefined ? v.ranking : 0;
+  const datasetName = routeGetters.getRouteDataset(store);
+  const map = datasetGetters.getVariableRankings(store)[datasetName];
+  return map[v.colName];
 }
 
 export function getSolutionFeatureImportance(
@@ -607,29 +622,6 @@ export function getSolutionFeatureImportance(
     return solutionRanks[v.colName];
   }
   return null;
-}
-
-export function sortVariablesByImportance(variables: Variable[]): Variable[] {
-  variables.sort((a, b) => {
-    return getVariableImportance(b) - getVariableImportance(a);
-  });
-  return variables;
-}
-
-export function sortSummariesByImportance(
-  summaries: VariableSummary[],
-  variables: Variable[]
-): VariableSummary[] {
-  // create importance lookup map
-  const importance: Dictionary<number> = {};
-  variables.forEach((variable) => {
-    importance[variable.colName] = getVariableImportance(variable);
-  });
-  // sort by importance
-  summaries.sort((a, b) => {
-    return importance[b.key] - importance[a.key];
-  });
-  return summaries;
 }
 
 export function sortSolutionSummariesByImportance(

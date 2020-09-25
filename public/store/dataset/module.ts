@@ -5,7 +5,6 @@ import { actions as moduleActions } from "./actions";
 import { mutations as moduleMutations } from "./mutations";
 import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
-import { radialArea } from "d3";
 
 export const datasetModule: Module<DatasetState, DistilState> = {
   getters: moduleGetters,
