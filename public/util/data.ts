@@ -609,6 +609,13 @@ export function getSolutionFeatureImportance(
   return null;
 }
 
+export function sortVariablesByImportance(variables: Variable[]): Variable[] {
+  variables.sort((a, b) => {
+    return getVariableImportance(b) - getVariableImportance(a);
+  });
+  return variables;
+}
+
 export function sortSummariesByImportance(
   summaries: VariableSummary[],
   variables: Variable[]
