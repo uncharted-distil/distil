@@ -100,9 +100,14 @@ func Merge(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	if err != nil {
 		return "", errors.Wrap(err, "error writing merged output")
 	}
+	outputMeta.DataResources[0].ResPath = path.Dir(outputPath.outputData)
 
-	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
-	outputMeta.DataResources[0].ResPath = relativePath
+	// add every source data resource that isnt the main data resource to not lose them
+	for _, dr := range meta.DataResources {
+		if dr != mainDR {
+			outputMeta.DataResources = append(outputMeta.DataResources, dr)
+		}
+	}
 
 	// write the new schema to file
 	err = datasetStorage.WriteMetadata(outputPath.outputSchema, outputMeta, true, false)

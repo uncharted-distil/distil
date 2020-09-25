@@ -195,8 +195,7 @@ func createDatasetFromCSV(config *env.Config, csvFile string, datasetName string
 
 	// write out the metadata
 	metadataDestPath := path.Join(outputPath, compute.D3MDataSchema)
-	relativePath := getRelativePath(path.Dir(metadataDestPath), csvDestPath)
-	dataResource.ResPath = relativePath
+	dataResource.ResPath = path.Dir(csvDestPath)
 	err = datasetStorage.WriteMetadata(metadataDestPath, metadata, true, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to write schema")

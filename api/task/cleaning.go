@@ -74,9 +74,7 @@ func Clean(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	if err != nil {
 		return "", errors.Wrap(err, "error writing clustered output")
 	}
-
-	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
-	mainDR.ResPath = relativePath
+	mainDR.ResPath = path.Dir(outputPath.outputData)
 
 	// write the new schema to file
 	err = datasetStorage.WriteMetadata(outputPath.outputSchema, meta, true, false)

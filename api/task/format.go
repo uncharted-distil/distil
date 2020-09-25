@@ -80,9 +80,7 @@ func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]strin
 	if err != nil {
 		return errors.Wrap(err, "error writing output")
 	}
-
-	relativePath := getRelativePath(path.Dir(paths.outputSchema), paths.outputData)
-	dr.ResPath = relativePath
+	dr.ResPath = path.Dir(paths.outputData)
 	dr.ResType = model.ResTypeTable
 
 	// write the new schema to file
