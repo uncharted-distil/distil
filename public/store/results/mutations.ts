@@ -1,14 +1,13 @@
 import Vue from "vue";
-import _ from "lodash";
-import { ResultsState } from "./index";
+import { Dictionary } from "vue-router/types/router";
+import { updateSummaries, updateSummariesPerVariable } from "../../util/data";
 import {
-  VariableSummary,
   Extrema,
   TableData,
   TimeSeriesValue,
+  VariableSummary,
 } from "../dataset/index";
-import { updateSummaries, updateSummariesPerVariable } from "../../util/data";
-import { Dictionary } from "vue-router/types/router";
+import { ResultsState } from "./index";
 
 export const mutations = {
   // training / target
@@ -162,10 +161,10 @@ export const mutations = {
     );
   },
 
-  setVariableRankings(
+  setFeatureImportanceRanking(
     state: ResultsState,
     args: { solutionID: string; rankings: Dictionary<number> }
   ) {
-    Vue.set(state.variableRankings, args.solutionID, args.rankings);
+    Vue.set(state.featureImportanceRanking, args.solutionID, args.rankings);
   },
 };

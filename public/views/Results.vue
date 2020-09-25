@@ -54,6 +54,7 @@ import {
   getVariableSummariesByState,
   searchVariables,
   sortSolutionSummariesByImportance,
+  filterArrayByPage,
 } from "../util/data";
 import { Feature, Activity } from "../util/userEvents";
 
@@ -118,10 +119,19 @@ export default Vue.extend({
       );
     },
     trainingSummariesByImportance(): VariableSummary[] {
-      return sortSolutionSummariesByImportance(
-        this.trainingSummaries,
+      const summaryDictionary = resultGetters.getTrainingSummariesDictionary(
+        this.$store
+      );
+      const trainingSummaries = getVariableSummariesByState(
+        this.resultTrainingVarsPage,
+        this.trainingVariables.length,
         this.trainingVariables,
-        this.solutionId
+        summaryDictionary
+      );
+      return filterArrayByPage(
+        this.resultTrainingVarsPage,
+        this.rowsPerPage,
+        sortSolutionSummariesByImportance(trainingSummaries, this.solutionId)
       );
     },
     solutionId(): string {

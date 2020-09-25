@@ -1,17 +1,17 @@
 import {
-  VariableSummary,
-  Extrema,
-  TableData,
-  TableRow,
-  TableColumn,
-} from "../dataset/index";
-import { ResultsState, Forecast, TimeSeries } from "./index";
-import {
-  getTableDataItems,
   getTableDataFields,
+  getTableDataItems,
   minimumRouteKey,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
+import {
+  Extrema,
+  TableColumn,
+  TableData,
+  TableRow,
+  VariableSummary,
+} from "../dataset/index";
+import { Forecast, ResultsState, TimeSeries } from "./index";
 
 export const getters = {
   // results
@@ -158,7 +158,9 @@ export const getters = {
 
   // variable rankings
 
-  getVariableRankings(state: ResultsState): Dictionary<Dictionary<number>> {
-    return state.variableRankings;
+  getFeatureImportanceRanking(
+    state: ResultsState
+  ): Dictionary<Dictionary<number>> {
+    return state.featureImportanceRanking;
   },
 };

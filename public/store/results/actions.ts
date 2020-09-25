@@ -1,34 +1,28 @@
 import axios from "axios";
 import _ from "lodash";
+import { Dictionary } from "vue-router/types/router";
 import { ActionContext } from "vuex";
-import store, { DistilState } from "../store";
-import { EXCLUDE_FILTER, FilterParams } from "../../util/filters";
+import {
+  createEmptyTableData,
+  createErrorSummary,
+  createPendingSummary,
+  fetchSolutionResultSummary,
+  fetchSummaryExemplars,
+  minimumRouteKey,
+  validateArgs,
+} from "../../util/data";
+import { EXCLUDE_FILTER } from "../../util/filters";
+import { addHighlightToFilterParams } from "../../util/highlights";
 import {
   getSolutionById,
   getSolutionsBySolutionRequestIds,
 } from "../../util/solutions";
-import {
-  Variable,
-  Highlight,
-  SummaryMode,
-  DataMode,
-  VariableSummary,
-} from "../dataset/index";
-import { mutations } from "./module";
-import { ResultsState } from "./index";
-import { addHighlightToFilterParams } from "../../util/highlights";
-import {
-  fetchSolutionResultSummary,
-  createPendingSummary,
-  createErrorSummary,
-  createEmptyTableData,
-  fetchSummaryExemplars,
-  validateArgs,
-  minimumRouteKey,
-} from "../../util/data";
-import { getters as resultGetters } from "../results/module";
+import { DataMode, Highlight, SummaryMode, Variable } from "../dataset/index";
 import { getters as dataGetters } from "../dataset/module";
-import { Dictionary } from "vue-router/types/router";
+import { getters as resultGetters } from "../results/module";
+import store, { DistilState } from "../store";
+import { ResultsState } from "./index";
+import { mutations } from "./module";
 
 export type ResultsContext = ActionContext<ResultsState, DistilState>;
 
@@ -786,7 +780,7 @@ export const actions = {
 
   // Fetch variable rankings associated with a computed solution.  If the solution results are
   // available, then the rankings will have been computed.
-  async fetchVariableRankings(
+  async fetchFeatureImportanceRanking(
     context: ResultsContext,
     args: { solutionID: string }
   ) {
@@ -794,7 +788,7 @@ export const actions = {
       `/distil/solution-variable-rankings/${args.solutionID}`
     );
     const rankings = <Dictionary<number>>response.data;
-    mutations.setVariableRankings(store, {
+    mutations.setFeatureImportanceRanking(store, {
       solutionID: args.solutionID,
       rankings: _.pickBy(rankings, (ranking) => ranking !== null),
     });
