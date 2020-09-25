@@ -40,7 +40,7 @@ func Format(schemaFile string, dataset string, config *IngestTaskConfig) (string
 	outputPath := createDatasetPaths(schemaFile, dataset, compute.D3MLearningData)
 
 	// read the raw data
-	dataPath := path.Join(path.Dir(schemaFile), dr.ResPath)
+	dataPath := getDataPath(schemaFile, dr)
 	lines, err := util.ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return "", errors.Wrap(err, "error reading raw data")
@@ -129,4 +129,15 @@ func getMainDataResource(meta *model.Metadata) *model.DataResource {
 	}
 
 	return dr
+}
+
+func getDataPath(schemaFile string, dataResource *model.DataResource) string {
+	drPath := dataResource.ResPath
+
+	// path can be relative to schema file
+	if len(drPath) > 0 && drPath[0] != '/' {
+		drPath = path.Join(path.Dir(schemaFile), drPath)
+	}
+
+	return drPath
 }

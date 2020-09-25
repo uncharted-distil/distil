@@ -102,7 +102,7 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 		datasetName = m.Dataset
 	}
 	outputDatasetPath := rootDataPath
-	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
+	dataFilePath := path.Join(outputDatasetPath, compute.D3MDataFolder, compute.D3MLearningData)
 
 	labelFolders, err := getLabelFolders(m.ExtractedFilePath)
 	if err != nil {
