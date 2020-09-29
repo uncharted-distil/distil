@@ -192,6 +192,8 @@ github.com/uncharted-distil/distil-compute v0.0.0-20200924154433-5b93533570f9 h1
 github.com/uncharted-distil/distil-compute v0.0.0-20200924154433-5b93533570f9/go.mod h1:8ki5yjJDKCJQvLHD3p7TLL1gsXu95hD/JaF9jqvnHps=
 github.com/uncharted-distil/distil-compute v0.0.0-20200929184457-3c6f1818fb91 h1:+iPreUC+F3m5prpbk/BvVRb0Hx3802EQLfm8Ve4aP6o=
 github.com/uncharted-distil/distil-compute v0.0.0-20200929184457-3c6f1818fb91/go.mod h1:8ki5yjJDKCJQvLHD3p7TLL1gsXu95hD/JaF9jqvnHps=
+github.com/uncharted-distil/distil-compute v0.0.0-20200929213410-95d175aaca02 h1:W7+Q8Xme0Gci08oFg7eU35zHnRx6hswfuHpbNkWht0Q=
+github.com/uncharted-distil/distil-compute v0.0.0-20200929213410-95d175aaca02/go.mod h1:8ki5yjJDKCJQvLHD3p7TLL1gsXu95hD/JaF9jqvnHps=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a h1:BPJrlnjdhxMBrJWiU4/Gl3PVdCUlY9JspWFTJ9UVO0Y=
 github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a/go.mod h1:L8AZAnu0MT3E5I3WPNTo5BZaT5b3q21TrX1U9R9+/9E=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9 h1:P1B7OAnmyIdSN9UGhDvIU3s8K3/2rQcvntYV5WPi+qY=
