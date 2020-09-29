@@ -431,6 +431,19 @@ func createProduceSolutionRequest(datasetURI string, fittedSolutionID string, ou
 	}
 }
 
+func createFitSolutionRequest(datasetURI string, fittedSolutionID string) *pipeline.FitSolutionRequest {
+	return &pipeline.FitSolutionRequest{
+		SolutionId: fittedSolutionID,
+		Inputs: []*pipeline.Value{
+			{
+				Value: &pipeline.Value_DatasetUri{
+					DatasetUri: compute.BuildSchemaFileURI(datasetURI),
+				},
+			},
+		},
+	}
+}
+
 func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, err error) {
 	// persist the updated state
 	// NOTE: ignoring error
@@ -618,7 +631,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		}
 
 		// fit solution
-		fitResults, err := client.GenerateSolutionFit(context.Background(), solutionID, []string{datasetURITrain})
+		fitRequest := createFitSolutionRequest(datasetURITrain, solutionID)
+		fitResults, err := client.GenerateSolutionFit(context.Background(), fitRequest)
 		if err != nil {
 			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 			return

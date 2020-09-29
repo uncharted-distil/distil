@@ -139,7 +139,10 @@ func (d *Parquet) WriteData(uri string, data [][]string) error {
 	// create the containing folder
 	// (ignore the error since the write failure will pick it up regardless)
 	folder := path.Dir(uri)
-	os.MkdirAll(folder, os.ModePerm)
+	err := os.MkdirAll(folder, os.ModePerm)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create directory '%s'", folder)
+	}
 
 	md := make([]string, len(data[0]))
 	for i, c := range data[0] {
@@ -232,10 +235,9 @@ func (d *Parquet) WriteMetadata(uri string, meta *model.Metadata, extended bool,
 	if mainDR.ResFormat["application/parquet"] == nil {
 		if !update {
 			return errors.Errorf("main data resource not set to parquet format")
-		} else {
-			mainDR.ResFormat = map[string][]string{"application/parquet": {"parquet"}}
-			mainDR.ResPath = fmt.Sprintf("%s.parquet", strings.TrimSuffix(mainDR.ResPath, path.Ext(mainDR.ResPath)))
 		}
+		mainDR.ResFormat = map[string][]string{"application/parquet": {"parquet"}}
+		mainDR.ResPath = fmt.Sprintf("%s.parquet", strings.TrimSuffix(mainDR.ResPath, path.Ext(mainDR.ResPath)))
 	}
 	for _, dr := range meta.DataResources {
 		dataResources = append(dataResources, d.writeDataResource(dr, extended))
