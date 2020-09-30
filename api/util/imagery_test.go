@@ -118,7 +118,7 @@ func TestImageFromBandsMissing(t *testing.T) {
 	// Tests handling the case where one of the bands contains bad data.  The missing
 	// band will be mapped to grey.
 	composedImage, err := ImageFromBands([]string{
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B120.tif",
+		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
 	}, nil, nil, ImageScale{})
@@ -127,7 +127,7 @@ func TestImageFromBandsMissing(t *testing.T) {
 	assert.True(t, len(composedImage.Pix) > 0)
 
 	// compare to gold standard image
-	testImage, err := LoadPNGImage("test/120_8_4.png")
+	testImage, err := LoadPNGImage("test/12_8_4.png")
 	if err != nil {
 		log.Error(err)
 	}
