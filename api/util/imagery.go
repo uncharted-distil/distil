@@ -390,7 +390,7 @@ func SavePNGImage(image *image.RGBA, filename string) error {
 
 // ImageToJPEG encodes an RGBA image as a JPEG byte array for further processing or
 // network transmission.
-func ImageToJPEG(image image.Image) ([]byte, error) {
+func ImageToJPEG(image *image.RGBA) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	if err := jpeg.Encode(buf, image, nil); err != nil {
 		return nil, errors.Wrap(err, "failed so encode png file")
