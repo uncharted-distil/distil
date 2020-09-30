@@ -231,6 +231,7 @@ export default Vue.extend({
           dataset: this.dataset,
           imageId: this.imageId,
           bandCombination: routeGetters.getBandCombinationId(this.$store),
+          isThumbnail: true,
         });
         if (this.isVisible) {
           this.injectImage();
