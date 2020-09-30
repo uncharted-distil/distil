@@ -332,7 +332,7 @@ export default Vue.extend({
 
     hasExplanations(): boolean {
       // waiting for explanation enum to be added to results summaries
-      return this.predictedSummary?.weighted;
+      return !!this.predictedSummary?.weighted;
     },
   },
 
