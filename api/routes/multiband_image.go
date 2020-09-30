@@ -16,10 +16,9 @@
 package routes
 
 import (
+	"strconv"
 	"net/http"
 	"path"
-
-	"github.com/disintegration/imaging"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -33,7 +32,14 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 		dataset := pat.Param(r, "dataset")
 		imageID := pat.Param(r, "image-id")
 		bandCombo := pat.Param(r, "band-combination")
-
+		isThumbnail, err := strconv.ParseBool(pat.Param(r, "is-thumbnail"))
+		//assuming square
+		thumbnailDimension:=125
+		imageScale := util.ImageScale{}
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 		// get metadata client
 		storage, err := ctor()
 		if err != nil {
@@ -48,14 +54,16 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 		}
 		sourcePath := env.ResolvePath(res.Source, res.Folder)
 		sourcePath = path.Join(sourcePath, imageFolder)
-
-		img, err := util.ImageFromCombination(sourcePath, imageID, util.BandCombinationID(bandCombo))
+		if isThumbnail{
+			imageScale = util.ImageScale{Width:thumbnailDimension, Height:thumbnailDimension}
+		}
+		img, err := util.ImageFromCombination(sourcePath, imageID, util.BandCombinationID(bandCombo), imageScale)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		thumbnailImg := imaging.Resize(img, 125, 0, imaging.Lanczos)
-		imageBytes, err := util.ImageToJPEG(thumbnailImg)
+
+		imageBytes, err := util.ImageToJPEG(img)
 		if err != nil {
 			handleError(w, err)
 			return

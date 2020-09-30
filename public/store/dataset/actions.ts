@@ -1074,7 +1074,7 @@ export const actions = {
 
     try {
       const response = await loadImage(
-        `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}`
+        `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}/true`
       );
       mutations.updateFile(context, { url: args.imageId, file: response });
     } catch (error) {
