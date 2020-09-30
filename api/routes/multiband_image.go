@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"path"
 
+	"github.com/disintegration/imaging"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -48,12 +49,13 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 		sourcePath := env.ResolvePath(res.Source, res.Folder)
 		sourcePath = path.Join(sourcePath, imageFolder)
 
-		image, err := util.ImageFromCombination(sourcePath, imageID, util.BandCombinationID(bandCombo))
+		img, err := util.ImageFromCombination(sourcePath, imageID, util.BandCombinationID(bandCombo))
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		imageBytes, err := util.ImageToJPEG(image)
+		thumbnailImg := imaging.Resize(img, 125, 0, imaging.Lanczos)
+		imageBytes, err := util.ImageToJPEG(thumbnailImg)
 		if err != nil {
 			handleError(w, err)
 			return
