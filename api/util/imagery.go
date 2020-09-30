@@ -200,7 +200,7 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 		maxXSize = imageScale.Width
 		maxYSize = imageScale.Height
 		width, height := getMaxDimensions(&bandImages)
-		aspectRatio := float64(height)/float64(width)
+		aspectRatio := float64(height) / float64(width)
 		maxYSize = int(float64(maxXSize) * aspectRatio)
 	} else {
 		maxXSize, maxYSize = getMaxDimensions(&bandImages)
@@ -221,10 +221,11 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 	}
 	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, transform, ramp), nil
 }
+
 // getMaxDimensions return max from array. Return order width, height
-func getMaxDimensions(bandImages *[]*image.Gray16) (int,int) {
-	width:=0
-	height:=0
+func getMaxDimensions(bandImages *[]*image.Gray16) (int, int) {
+	width := 0
+	height := 0
 	for _, bandImage := range *bandImages {
 		// extract input raster size and update max x,y
 		xSize := bandImage.Bounds().Dx()
@@ -236,7 +237,7 @@ func getMaxDimensions(bandImages *[]*image.Gray16) (int,int) {
 			height = ySize
 		}
 	}
-return width, height
+	return width, height
 }
 
 func loadAsGray16(filePath string) (*image.Gray16, error) {
