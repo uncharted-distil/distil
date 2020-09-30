@@ -826,6 +826,7 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, storageName string, r
 // results table.
 func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	storageNameResult := s.getResultTable(storageName)
+	weightTableName := s.getSolutionFeatureWeightTable(storageName)
 	targetName, err := s.getResultTargetName(storageNameResult, resultURI)
 	if err != nil {
 		return nil, err
@@ -861,7 +862,30 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 	// add dataset
 	summary.Dataset = dataset
 
+	weighted, err := s.getIsWeighted(resultURI, weightTableName)
+	if err != nil {
+		return nil, err
+	}
+	summary.Weighted = weighted
 	return summary, nil
+}
+
+func (s *Storage) getIsWeighted(resultURI string, weightTableName string) (bool, error) {
+	sql := fmt.Sprintf("SELECT EXISTS (SELECT * FROM %s WHERE result_id = $1 limit 1);", weightTableName)
+
+	rows, err := s.client.Query(sql, resultURI)
+	defer rows.Close()
+	if err != nil {
+		return false, errors.Wrap(err, "Unable to query weight state")
+	}
+
+	rows.Next()
+	values, err := rows.Values()
+	if err != nil {
+		return false, errors.Wrap(err, "Unable to extract weight from query")
+	}
+
+	return bool(values[0].(bool)), nil
 }
 
 func (s *Storage) getDisplayName(dataset string, columnName string) (string, error) {

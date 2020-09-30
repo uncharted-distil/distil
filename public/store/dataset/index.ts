@@ -157,6 +157,7 @@ export interface VariableSummary {
   timelineType?: string;
   selected?: Histogram;
   err?: string;
+  weighted?: boolean;
   pending?: boolean;
 }
 
