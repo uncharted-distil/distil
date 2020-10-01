@@ -16,23 +16,31 @@
 package routes
 
 import (
-	"net/http"
-	"path"
-
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
 	"goji.io/v3/pat"
+	"net/http"
+	"path"
+	"strconv"
 )
-
+const (
+	// ThumbnailDimensions is hard coded thumbnail dimension -- could be refactored to be default if we want client to dictate size.
+	ThumbnailDimensions = 125
+)
 // MultiBandImageHandler fetches individual band images and combines them into a single RGB image using the supplied mapping.
 func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		imageID := pat.Param(r, "image-id")
 		bandCombo := pat.Param(r, "band-combination")
-
+		isThumbnail, err := strconv.ParseBool(pat.Param(r, "is-thumbnail"))
+		imageScale := util.ImageScale{}
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 		// get metadata client
 		storage, err := ctor()
 		if err != nil {
@@ -47,13 +55,16 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 		}
 		sourcePath := env.ResolvePath(res.Source, res.Folder)
 		sourcePath = path.Join(sourcePath, imageFolder)
-
-		image, err := util.ImageFromCombination(sourcePath, imageID, util.BandCombinationID(bandCombo))
+		if isThumbnail {
+			imageScale = util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
+		}
+		img, err := util.ImageFromCombination(sourcePath, imageID, util.BandCombinationID(bandCombo), imageScale)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		imageBytes, err := util.ImageToJPEG(image)
+
+		imageBytes, err := util.ImageToJPEG(img)
 		if err != nil {
 			handleError(w, err)
 			return

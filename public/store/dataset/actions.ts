@@ -980,6 +980,7 @@ export const actions = {
             dataset: args.dataset,
             imageId: url,
             bandCombination: BandID.NATURAL_COLORS,
+            isThumbnail: true,
           });
         }
         if (type === "graph") {
@@ -1066,6 +1067,7 @@ export const actions = {
       dataset: string;
       imageId: string;
       bandCombination: string;
+      isThumbnail: boolean;
     }
   ) {
     if (!validateArgs(args, ["dataset", "imageId", "bandCombination"])) {
@@ -1074,7 +1076,7 @@ export const actions = {
 
     try {
       const response = await loadImage(
-        `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}`
+        `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}/${args.isThumbnail}`
       );
       mutations.updateFile(context, { url: args.imageId, file: response });
     } catch (error) {

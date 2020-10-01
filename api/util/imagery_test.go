@@ -24,7 +24,7 @@ import (
 )
 
 func TestImageFromCombination(t *testing.T) {
-	composedImage, err := ImageFromCombination("test/bigearthnet", "S2A_MSIL2A_20171121T112351_79_21", NaturalColors)
+	composedImage, err := ImageFromCombination("test/bigearthnet", "S2A_MSIL2A_20171121T112351_79_21", NaturalColors, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -43,7 +43,7 @@ func TestImageFromBandsTrueColor(t *testing.T) {
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B03.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B02.tif",
-	}, nil, nil)
+	}, nil, nil, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -63,7 +63,7 @@ func TestImageFromBandsResize(t *testing.T) {
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-	}, nil, nil)
+	}, nil, nil,ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -82,7 +82,7 @@ func TestImageFromRamp(t *testing.T) {
 	composedImage, err := ImageFromBands([]string{
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B11.tif",
-	}, BlueYellowBrownRamp, NormalizingTransform)
+	}, BlueYellowBrownRamp, NormalizingTransform, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -101,7 +101,7 @@ func TestImageFromRampClamped(t *testing.T) {
 	composedImage, err := ImageFromBands([]string{
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-	}, RedYellowGreenRamp, ClampedNormalizingTransform)
+	}, RedYellowGreenRamp, ClampedNormalizingTransform, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
@@ -118,16 +118,16 @@ func TestImageFromBandsMissing(t *testing.T) {
 	// Tests handling the case where one of the bands contains bad data.  The missing
 	// band will be mapped to grey.
 	composedImage, err := ImageFromBands([]string{
-		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B120.tif",
+		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-	}, nil, nil)
+	}, nil, nil, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
 
 	// compare to gold standard image
-	testImage, err := LoadPNGImage("test/120_8_4.png")
+	testImage, err := LoadPNGImage("test/12_8_4.png")
 	if err != nil {
 		log.Error(err)
 	}
