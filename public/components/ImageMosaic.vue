@@ -1,32 +1,44 @@
 <template>
-  <div class="image-mosaic">
-    <template v-for="imageField in imageFields">
-      <template v-for="item in items">
-        <div class="image-tile">
-          <template v-for="(fieldInfo, fieldKey) in fields">
-            <image-preview
-              v-if="fieldKey === imageField.key"
-              class="image-preview"
-              :row="item"
-              :image-url="item[fieldKey].value"
-              :width="imageWidth"
-              :height="imageHeight"
-              :on-click="onImageClick"
-              :type="imageField.type"
-              :key="fieldKey"
-            ></image-preview>
-          </template>
-          <image-label
-            class="image-label"
-            :dataFields="dataFields"
-            includedActive
-            shortenLabels
-            alignHorizontal
-            :item="item"
-          />
-        </div>
+  <div class="mosaic-container">
+    <div class="image-mosaic">
+      <template v-for="imageField in imageFields">
+        <template v-for="item in paginatedItems">
+          <div class="image-tile">
+            <template v-for="(fieldInfo, fieldKey) in fields">
+              <image-preview
+                v-if="fieldKey === imageField.key"
+                class="image-preview"
+                :row="item"
+                :image-url="item[fieldKey].value"
+                :width="imageWidth"
+                :height="imageHeight"
+                :on-click="onImageClick"
+                :type="imageField.type"
+                :key="fieldKey"
+              ></image-preview>
+            </template>
+            <image-label
+              class="image-label"
+              :dataFields="dataFields"
+              includedActive
+              shortenLabels
+              alignHorizontal
+              :item="item"
+            />
+          </div>
+        </template>
       </template>
-    </template>
+    </div>
+    <b-pagination
+      v-if="items && items.length > perPage"
+      align="center"
+      first-number
+      last-number
+      size="sm"
+      v-model="currentPage"
+      :per-page="perPage"
+      :total-rows="itemCount"
+    ></b-pagination>
   </div>
 </template>
 
@@ -39,14 +51,9 @@ import {
   TableColumn,
   TableRow,
   D3M_INDEX_FIELD,
-  Row,
-  Variable,
-  VariableSummary,
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as resultGetters } from "../store/results/module";
-import { getters as requestGetters } from "../store/requests/module";
 import { Dictionary } from "../util/dict";
 import {
   addRowSelection,
@@ -55,9 +62,6 @@ import {
   updateTableRowSelection,
 } from "../util/row";
 import { getImageFields } from "../util/data";
-import { Solution } from "../store/requests/index";
-import { keys } from "d3";
-import { min } from "moment";
 
 export default Vue.extend({
   name: "image-mosaic",
@@ -77,6 +81,8 @@ export default Vue.extend({
     return {
       imageWidth: 128,
       imageHeight: 128,
+      currentPage: 1,
+      perPage: 100,
     };
   },
 
@@ -94,7 +100,18 @@ export default Vue.extend({
         this.instanceName
       );
     },
+    paginatedItems(): TableRow[] {
+      const page = this.currentPage - 1; // currentPage starts at 1
+      const start = page * this.perPage;
+      const end = start + this.perPage;
 
+      return this.items.slice(start, end);
+    },
+    itemCount(): number {
+      return this.includedActive
+        ? datasetGetters.getIncludedTableDataLength(this.$store)
+        : datasetGetters.getExcludedTableDataLength(this.$store);
+    },
     fields(): Dictionary<TableColumn> {
       const currentFields = this.dataFields
         ? this.dataFields
@@ -146,8 +163,17 @@ export default Vue.extend({
   padding-bottom: 0.5rem; /* To add some spacing on overflow. */
   height: 100%;
   width: 100%;
+  margin-bottom: 0.25rem;
 }
-
+.mosaic-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+}
 .image-tile {
   display: inline-block;
   position: relative;
