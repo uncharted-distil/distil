@@ -25,10 +25,12 @@ import (
 	"path"
 	"strconv"
 )
+
 const (
 	// ThumbnailDimensions is hard coded thumbnail dimension -- could be refactored to be default if we want client to dictate size.
 	ThumbnailDimensions = 125
 )
+
 // MultiBandImageHandler fetches individual band images and combines them into a single RGB image using the supplied mapping.
 func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -63,7 +63,7 @@ func TestImageFromBandsResize(t *testing.T) {
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B12.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B08.tif",
 		"test/bigearthnet/S2A_MSIL2A_20171121T112351_79_21_B04.tif",
-	}, nil, nil,ImageScale{})
+	}, nil, nil, ImageScale{})
 	assert.NoError(t, err)
 	assert.NotNil(t, composedImage)
 	assert.True(t, len(composedImage.Pix) > 0)
