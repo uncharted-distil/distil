@@ -4,7 +4,7 @@
       has-tabs
       v-model="viewTypeModel"
       :variables="variables"
-      :trainingVariables="trainingVariables"
+      :available-variables="trainingVariables"
     >
       <b-nav-item
         class="font-weight-bold"

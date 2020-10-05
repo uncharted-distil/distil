@@ -7,6 +7,7 @@
       v-model="viewType"
       :variables="variables"
       class="view-toggle"
+      :available-variables="variables"
     >
       <p class="font-weight-bold" :class="{ 'mr-auto': !hasWeight }">Samples</p>
       <legend-weight v-if="hasWeight" class="ml-5 mr-auto" />

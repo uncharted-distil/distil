@@ -15,7 +15,7 @@
             <b-form-radio
               :value="IMAGE_VIEW"
               v-if="hasImageVariables"
-              :disabled="!hasTrainingImageVariables"
+              :disabled="!hasAvailableImageVariables"
               class="view-button"
             >
               <i class="fa fa-image"></i>
@@ -30,7 +30,7 @@
             <b-form-radio
               :value="GEO_VIEW"
               v-if="hasGeoVariables"
-              :disabled="!hasTrainingGeoVariables"
+              :disabled="!hasAvailableGeoVariables"
               class="view-button"
             >
               <i class="fa fa-globe"></i>
@@ -79,7 +79,7 @@ export default Vue.extend({
       type: Boolean as () => boolean,
       default: false,
     },
-    trainingVariables: {
+    availableVariables: {
       type: Array as () => Variable[],
       default: () => [] as Variable[],
     },
@@ -113,9 +113,9 @@ export default Vue.extend({
         ).length > 0
       );
     },
-    hasTrainingImageVariables(): boolean {
+    hasAvailableImageVariables(): boolean {
       return (
-        this.trainingVariables.filter(
+        this.availableVariables.filter(
           (v) => v.colType === IMAGE_TYPE || v.colType === REMOTE_SENSING_TYPE
         ).length > 0
       );
@@ -135,17 +135,17 @@ export default Vue.extend({
 
       return (hasLat && hasLon) || hasGeocoord;
     },
-    hasTrainingGeoVariables(): boolean {
-      const hasGeocoord = this.trainingVariables.some(
+    hasAvailableGeoVariables(): boolean {
+      const hasGeocoord = this.availableVariables.some(
         (v) =>
           (v.grouping &&
             [GEOCOORDINATE_TYPE, GEOBOUNDS_TYPE].includes(v.grouping.type)) ||
           v.colType === GEOBOUNDS_TYPE
       );
-      const hasLat = this.trainingVariables.some(
+      const hasLat = this.availableVariables.some(
         (v) => v.colType === LONGITUDE_TYPE
       );
-      const hasLon = this.trainingVariables.some(
+      const hasLon = this.availableVariables.some(
         (v) => v.colType === LATITUDE_TYPE
       );
       return (hasLat && hasLon) || hasGeocoord;
