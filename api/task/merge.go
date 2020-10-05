@@ -16,8 +16,6 @@
 package task
 
 import (
-	"path"
-
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 
@@ -100,7 +98,7 @@ func Merge(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	if err != nil {
 		return "", errors.Wrap(err, "error writing merged output")
 	}
-	outputMeta.DataResources[0].ResPath = path.Dir(outputPath.outputData)
+	outputMeta.DataResources[0].ResPath = outputPath.outputData
 
 	// add every source data resource that isnt the main data resource to not lose them
 	for _, dr := range meta.DataResources {

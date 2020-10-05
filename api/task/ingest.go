@@ -441,12 +441,12 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 // IngestPostgres ingests a dataset to PG storage.
 func IngestPostgres(originalSchemaFile string, schemaFile string, source metadata.DatasetSource,
 	config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool, fallbackMerged bool) error {
-	datasetDir, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, verifyMetadata, fallbackMerged)
+	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return err
 	}
 	mainDR := meta.GetMainDataResource()
-	dataDir := path.Join(datasetDir, mainDR.ResPath)
+	dataDir := model.GetResourcePath(schemaFile, mainDR)
 
 	// Connect to the database.
 	postgresConfig := &postgres.Config{
@@ -552,7 +552,7 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 	}
 
 	mainDR := meta.GetMainDataResource()
-	dataDir := path.Join(datasetDir, mainDR.ResPath)
+	dataDir := model.GetResourcePath(schemaFile, mainDR)
 	log.Infof("using %s as data directory (built from %s and %s)", dataDir, datasetDir, mainDR.ResPath)
 
 	// check and fix metadata issues

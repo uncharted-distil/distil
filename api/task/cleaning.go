@@ -16,8 +16,6 @@
 package task
 
 import (
-	"path"
-
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -29,7 +27,6 @@ import (
 
 // Clean will clean bad data for further processing.
 func Clean(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
-	// copy the data to a new directory
 	outputPath := createDatasetPaths(schemaFile, dataset, compute.D3MLearningData)
 
 	// load metadata from original schema
@@ -74,7 +71,7 @@ func Clean(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	if err != nil {
 		return "", errors.Wrap(err, "error writing clustered output")
 	}
-	mainDR.ResPath = path.Dir(outputPath.outputData)
+	mainDR.ResPath = outputPath.outputData
 
 	// write the new schema to file
 	err = datasetStorage.WriteMetadata(outputPath.outputSchema, meta, true, false)
