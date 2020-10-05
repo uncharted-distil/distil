@@ -1,6 +1,6 @@
 import axios from "axios";
 import sha1 from "crypto-js/sha1";
-import _ from "lodash";
+import _, { result } from "lodash";
 import Vue from "vue";
 import {
   D3M_INDEX_FIELD,
@@ -544,11 +544,20 @@ export function sortVariablesByImportance(variables: Variable[]): Variable[] {
   // prioritize FI over MI
   const datasetName = routeGetters.getRouteDataset(store);
   const solutionId = routeGetters.getRouteSolutionId(store);
-
-  const rankMap =
-    solutionId === null
-      ? datasetGetters.getVariableRankings(store)[datasetName]
-      : resultsGetters.getFeatureImportanceRanking(store)[solutionId];
+  // set rankMap for MI
+  let rankMap = datasetGetters.getVariableRankings(store)[datasetName];
+  // check if FI
+  if (solutionId !== null) {
+    if (resultsGetters.getFeatureImportanceRanking(store)[solutionId]) {
+      rankMap = resultsGetters.getFeatureImportanceRanking(store)[solutionId];
+    }
+  }
+  // Fallback to PCA if none of the above is available
+  if (!rankMap) {
+    return variables.sort((a, b) => {
+      return b.importance - a.importance;
+    });
+  }
   variables.sort((a, b) => {
     return rankMap[b.colName] - rankMap[a.colName];
   });
@@ -559,10 +568,12 @@ export function getVariableSummariesByState(
   pageIndex: number,
   pageSize: number,
   variables: Variable[],
-  summaryDictionary: Dictionary<Dictionary<VariableSummary>>
+  summaryDictionary: Dictionary<Dictionary<VariableSummary>>,
+  isSorted = false
 ) {
   const routeKey = minimumRouteKey();
-  const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
+  const ranked =
+    routeGetters.getRouteIsTrainingVariablesRanked(store) || isSorted;
 
   let currentSummaries = [];
 
@@ -634,7 +645,9 @@ export function sortSolutionSummariesByImportance(
   const importance: Dictionary<number> = resultsGetters.getFeatureImportanceRanking(
     store
   )[solutionID];
-
+  if (!importance) {
+    return null;
+  }
   // sort by importance
   summaries.sort((a, b) => {
     if (!importance[b.key]) {
