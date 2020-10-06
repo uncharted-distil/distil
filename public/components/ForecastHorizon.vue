@@ -190,6 +190,7 @@ export default Vue.extend({
         target: this.target,
         task: TaskTypes.TIME_SERIES,
         varModes: varModes,
+        solutionId: routeGetters.getRouteSolutionId(this.$store),
       };
 
       const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
