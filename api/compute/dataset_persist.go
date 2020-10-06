@@ -484,8 +484,7 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	mainDR := meta.GetMainDataResource()
 
 	// split the source data into train & test
-
-	dataPath := path.Join(params.SourceDataFolder, mainDR.ResPath)
+	dataPath := model.GetResourcePath(schemaFilename, mainDR)
 	trainDataFile := path.Join(trainFolder, mainDR.ResPath)
 	testDataFile := path.Join(testFolder, mainDR.ResPath)
 

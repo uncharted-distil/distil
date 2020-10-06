@@ -88,6 +88,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	mainDR := meta.GetMainDataResource()
 
 	// keep only the fields in the output (including the new fields as floats)
+	schemaOutputPath := path.Join(featurizedOutputPath, compute.D3MDataSchema)
 	vars := []*model.Variable{}
 	metadataVariables := map[string]*model.Variable{}
 	for _, v := range mainDR.Variables {
@@ -106,8 +107,8 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 		vars = append(vars, v)
 	}
 	mainDR.Variables = vars
+	mainDR.ResPath = dataOutputPath
 
-	schemaOutputPath := path.Join(featurizedOutputPath, compute.D3MDataSchema)
 	err = featurizedDataWriter.WriteMetadata(schemaOutputPath, meta, true, true)
 	if err != nil {
 		return "", "", err

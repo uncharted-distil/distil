@@ -40,8 +40,8 @@ func Sample(originalSchemaFile string, schemaFile string, dataset string, config
 	mainDR := meta.GetMainDataResource()
 
 	// extract a sample by simply reading the main CSV file and selecting a subset
-	csvFilePath := path.Join(path.Dir(schemaFile), mainDR.ResPath)
-	originalCSVFilePath := path.Join(path.Dir(originalSchemaFile), mainDR.ResPath)
+	csvFilePath := model.GetResourcePath(schemaFile, mainDR)
+	originalCSVFilePath := model.GetResourcePath(originalSchemaFile, mainDR)
 	csvData, err := util.ReadCSVFile(csvFilePath, false)
 	if err != nil {
 		return "", false, 0, errors.Wrap(err, "unable to parse complete csv dataset")
