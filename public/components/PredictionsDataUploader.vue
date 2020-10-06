@@ -170,6 +170,7 @@ export default Vue.extend({
           dataset: this.dataset,
           varModes: varModes,
           applyModel: true.toString(),
+          solutionId: routeGetters.getRouteSolutionId(this.$store),
         };
         const entry = createRouteEntry(PREDICTION_ROUTE, routeArgs);
         this.$router.push(entry).catch((err) => console.warn(err));
