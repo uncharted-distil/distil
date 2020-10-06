@@ -57,7 +57,7 @@ export function createFilterFromHighlight(
   }
 
   const type = getVarType(key);
-  const displayName = variable.colDisplayName;
+  const displayName = variable?.colDisplayName;
   if (type === IMAGE_TYPE) {
     return {
       key: key,
@@ -154,7 +154,7 @@ export function updateHighlight(router: VueRouter, highlight: Highlight) {
     highlights: encodeHighlights(highlight),
     row: null, // clear row
   });
-  router.push(entry);
+  router.push(entry).catch((err) => console.warn(err));
 }
 
 export function clearHighlight(router: VueRouter) {
@@ -162,5 +162,5 @@ export function clearHighlight(router: VueRouter) {
     highlights: null,
     row: null, // clear row
   });
-  router.push(entry);
+  router.push(entry).catch((err) => console.warn(err));
 }

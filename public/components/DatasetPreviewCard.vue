@@ -37,7 +37,7 @@
 import _ from "lodash";
 import Vue from "vue";
 import {
-  sortVariablesByImportance,
+  sortVariablesByPCARanking,
   filterVariablesByFeature,
 } from "../util/data";
 import { formatBytes } from "../util/bytes";
@@ -54,13 +54,12 @@ export default Vue.extend({
 
   computed: {
     topVariables(): Variable[] {
-      return sortVariablesByImportance(this.dataset.variables.slice(0)).slice(
+      return sortVariablesByPCARanking(this.dataset.variables.slice(0)).slice(
         0,
         NUM_TOP_FEATURES
       );
     },
   },
-
   methods: {
     formatBytes(n: number): string {
       return formatBytes(n);

@@ -140,8 +140,10 @@
       <div class="col-12 flex-column">
         <b-pagination
           v-if="pagination"
-          size="sm"
           align="center"
+          first-number
+          last-number
+          size="sm"
           :total-rows="facetCount"
           :per-page="rowsPerPage"
           v-model="currentPage"
@@ -166,7 +168,7 @@ import { overlayRouteEntry, getRouteFacetPage } from "../../util/routes";
 import { Dictionary } from "../../util/dict";
 import {
   getVariableRanking,
-  getSolutionVariableRanking,
+  getSolutionFeatureImportance,
   NUM_PER_PAGE,
 } from "../../util/data";
 import {
@@ -270,7 +272,7 @@ export default Vue.extend({
       const ranking: Dictionary<number> = {};
       this.variables.forEach((variable) => {
         ranking[variable.colName] = this.isResultFeatures
-          ? getSolutionVariableRanking(
+          ? getSolutionFeatureImportance(
               variable,
               routeGetters.getRouteSolutionId(this.$store)
             )

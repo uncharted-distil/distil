@@ -1,6 +1,6 @@
 import axios from "axios";
 import sha1 from "crypto-js/sha1";
-import _ from "lodash";
+import _, { result } from "lodash";
 import Vue from "vue";
 import {
   D3M_INDEX_FIELD,
@@ -308,6 +308,7 @@ export function updateSummaries(
     return s.dataset === summary.dataset && s.key === summary.key;
   });
   if (index >= 0) {
+    // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(summaries, index, Object.freeze(summary));
   } else {
     summaries.push(Object.freeze(summary));
@@ -324,6 +325,7 @@ export function updateSummariesPerVariable(
   if (!variableSummaryDictionary[summaryKey]) {
     Vue.set(variableSummaryDictionary, summaryKey, {});
   }
+  // freezing the return to prevent slow, unnecessary deep reactivity.
   Vue.set(
     variableSummaryDictionary[summaryKey],
     routeKey,
@@ -532,21 +534,55 @@ export function searchVariables(
     );
   });
 }
+export function sortVariablesByPCARanking(variables: Variable[]): Variable[] {
+  variables.sort((a, b) => {
+    return b.importance - a.importance;
+  });
+  return variables;
+}
+export function sortVariablesByImportance(variables: Variable[]): Variable[] {
+  // prioritize FI over MI
+  const datasetName = routeGetters.getRouteDataset(store);
+  const solutionId = routeGetters.getRouteSolutionId(store);
+  // set rankMap for MI
+  let rankMap = datasetGetters.getVariableRankings(store)[datasetName];
+  // check if FI
+  if (solutionId !== null) {
+    if (resultsGetters.getFeatureImportanceRanking(store)[solutionId]) {
+      rankMap = resultsGetters.getFeatureImportanceRanking(store)[solutionId];
+    }
+  }
+  // Fallback to PCA if none of the above is available
+  if (!rankMap) {
+    return variables.sort((a, b) => {
+      return b.importance - a.importance;
+    });
+  }
+  variables.sort((a, b) => {
+    return rankMap[b.colName] - rankMap[a.colName];
+  });
+  return variables;
+}
 
 export function getVariableSummariesByState(
   pageIndex: number,
   pageSize: number,
   variables: Variable[],
-  summaryDictionary: Dictionary<Dictionary<VariableSummary>>
+  summaryDictionary: Dictionary<Dictionary<VariableSummary>>,
+  isSorted = false
 ) {
   const routeKey = minimumRouteKey();
-  const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
+  const ranked =
+    routeGetters.getRouteIsTrainingVariablesRanked(store) || isSorted;
+
   let currentSummaries = [];
 
   if (Object.keys(summaryDictionary).length > 0 && variables.length > 0) {
-    let sortedVariables = ranked
-      ? sortVariablesByImportance(variables)
-      : variables;
+    let sortedVariables = variables;
+    if (ranked) {
+      // prioritize FI over MI
+      sortedVariables = sortVariablesByImportance(sortedVariables);
+    }
 
     // select only the current variables on the page
     sortedVariables = filterArrayByPage(pageIndex, pageSize, sortedVariables);
@@ -577,60 +613,41 @@ export function getVariableSummariesByState(
 }
 
 export function getVariableImportance(v: Variable): number {
-  return v.ranking !== undefined ? v.ranking : v.importance;
+  const solutionID = routeGetters.getRouteSolutionId(store);
+  const map = resultsGetters.getFeatureImportanceRanking(store)[solutionID];
+  return map[v.colName];
 }
 
 export function getVariableRanking(v: Variable): number {
-  return v.ranking !== undefined ? v.ranking : 0;
+  const datasetName = routeGetters.getRouteDataset(store);
+  const map = datasetGetters.getVariableRankings(store)[datasetName];
+  return map[v.colName];
 }
 
-export function getSolutionVariableRanking(
+export function getSolutionFeatureImportance(
   v: Variable,
   solutionID: string
 ): number {
-  const solutionRanks = resultsGetters.getVariableRankings(store)[solutionID];
+  const solutionRanks = resultsGetters.getFeatureImportanceRanking(store)[
+    solutionID
+  ];
   if (solutionRanks) {
     return solutionRanks[v.colName];
   }
   return null;
 }
 
-export function sortVariablesByImportance(variables: Variable[]): Variable[] {
-  variables.sort((a, b) => {
-    return getVariableImportance(b) - getVariableImportance(a);
-  });
-  return variables;
-}
-
-export function sortSummariesByImportance(
-  summaries: VariableSummary[],
-  variables: Variable[]
-): VariableSummary[] {
-  // create importance lookup map
-  const importance: Dictionary<number> = {};
-  variables.forEach((variable) => {
-    importance[variable.colName] = getVariableImportance(variable);
-  });
-  // sort by importance
-  summaries.sort((a, b) => {
-    return importance[b.key] - importance[a.key];
-  });
-  return summaries;
-}
-
 export function sortSolutionSummariesByImportance(
   summaries: VariableSummary[],
-  variables: Variable[],
   solutionID: string
 ): VariableSummary[] {
   // create importance lookup map
-  const importance: Dictionary<number> = {};
-  variables.forEach((variable) => {
-    importance[variable.colName] = getSolutionVariableRanking(
-      variable,
-      solutionID
-    );
-  });
+  const importance: Dictionary<number> = resultsGetters.getFeatureImportanceRanking(
+    store
+  )[solutionID];
+  if (!importance) {
+    return null;
+  }
   // sort by importance
   summaries.sort((a, b) => {
     if (!importance[b.key]) {
@@ -653,7 +670,7 @@ export function validateData(data: TableData) {
 export function getTableDataItems(data: TableData): TableRow[] {
   if (validateData(data)) {
     // convert fetched result data rows into table data rows
-    return data.values.map((resultRow, rowIndex) => {
+    const formattedTable = data.values.map((resultRow, rowIndex) => {
       const row = {} as TableRow;
       resultRow.forEach((colValue, colIndex) => {
         const colName = data.columns[colIndex].key;
@@ -669,8 +686,11 @@ export function getTableDataItems(data: TableData): TableRow[] {
         }
       });
       row._key = rowIndex;
-      return row;
+      row._rowVariant = null;
+      return Object.seal(row);
     });
+
+    return formattedTable;
   }
   return !_.isEmpty(data) ? [] : null;
 }

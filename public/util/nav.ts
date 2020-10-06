@@ -22,7 +22,7 @@ export function gotoView(router: VueRouter, view: string) {
   const prev = restoreView(view, key);
   console.log(`Restoring view: ${view} for key ${key}`);
   const entry = createRouteEntry(view, prev ? prev.query : {});
-  router.push(entry);
+  router.push(entry).catch((err) => console.warn(err));
 }
 
 // export function gotoHome(router: VueRouter) {

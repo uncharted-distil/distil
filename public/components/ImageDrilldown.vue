@@ -24,7 +24,7 @@
 <script lang="ts">
 import Vue from "vue";
 import ImageLabel from "./ImageLabel";
-import { BandCombination, TableColumn, TableRow } from "../store/dataset/index";
+import { TableColumn, TableRow } from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions,
@@ -136,6 +136,7 @@ export default Vue.extend({
           dataset: this.dataset,
           imageId: imageId(this.imageUrl),
           bandCombination: this.band,
+          isThumbnail: false,
         });
       } else {
         await datasetActions.fetchImage(this.$store, {

@@ -1,52 +1,52 @@
-import _ from "lodash";
 import axios, { AxiosResponse } from "axios";
-import { Dictionary } from "../../util/dict";
+import _ from "lodash";
 import { ActionContext } from "vuex";
 import {
-  Dataset,
-  DatasetOrigin,
-  DatasetState,
-  Variable,
-  Grouping,
-  DatasetPendingRequestType,
-  DatasetPendingRequestStatus,
-  VariableRankingPendingRequest,
-  JoinSuggestionPendingRequest,
-  JoinDatasetImportPendingRequest,
-  Task,
-  ClusteringPendingRequest,
-  SummaryMode,
-  DataMode,
-  BandCombinations,
-  BandID,
-  isClusteredGrouping,
-  TimeSeriesValue,
-} from "./index";
-import { mutations, getters } from "./module";
-import store, { DistilState } from "../store";
-import { Highlight } from "../dataset/index";
-import { FilterParams } from "../../util/filters";
-import {
-  createPendingSummary,
-  createErrorSummary,
   createEmptyTableData,
+  createErrorSummary,
+  createPendingSummary,
   fetchSummaryExemplars,
-  validateArgs,
   minimumRouteKey,
+  validateArgs,
 } from "../../util/data";
+import { Dictionary } from "../../util/dict";
+import { FilterParams } from "../../util/filters";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import { loadImage } from "../../util/image";
 import {
+  GEOCODED_LAT_PREFIX,
+  GEOCODED_LON_PREFIX,
   getVarType,
   IMAGE_TYPE,
-  GEOCODED_LON_PREFIX,
-  GEOCODED_LAT_PREFIX,
+  isImageType,
   isRankableVariableType,
   REMOTE_SENSING_TYPE,
-  isImageType,
   UNKNOWN_TYPE,
 } from "../../util/types";
+import { Highlight } from "../dataset/index";
 import { getters as routeGetters } from "../route/module";
+import store, { DistilState } from "../store";
+import {
+  BandCombinations,
+  BandID,
+  ClusteringPendingRequest,
+  DataMode,
+  Dataset,
+  DatasetOrigin,
+  DatasetPendingRequestStatus,
+  DatasetPendingRequestType,
+  DatasetState,
+  Grouping,
+  isClusteredGrouping,
+  JoinDatasetImportPendingRequest,
+  JoinSuggestionPendingRequest,
+  SummaryMode,
+  Task,
+  TimeSeriesValue,
+  Variable,
+  VariableRankingPendingRequest,
+} from "./index";
+import { getters, mutations } from "./module";
 
 // fetches variables and add dataset name to each variable
 async function getVariables(dataset: string): Promise<Variable[]> {
@@ -912,7 +912,6 @@ export const actions = {
         // If the request has already been reviewed, we apply the rankings.
         if (routeGetters.getRouteIsTrainingVariablesRanked(store)) {
           mutations.setVariableRankings(context, { dataset, rankings });
-          mutations.updateVariableRankings(context, rankings);
         } else {
           status = DatasetPendingRequestStatus.RESOLVED;
         }
@@ -981,6 +980,7 @@ export const actions = {
             dataset: args.dataset,
             imageId: url,
             bandCombination: BandID.NATURAL_COLORS,
+            isThumbnail: true,
           });
         }
         if (type === "graph") {
@@ -1067,6 +1067,7 @@ export const actions = {
       dataset: string;
       imageId: string;
       bandCombination: string;
+      isThumbnail: boolean;
     }
   ) {
     if (!validateArgs(args, ["dataset", "imageId", "bandCombination"])) {
@@ -1075,7 +1076,7 @@ export const actions = {
 
     try {
       const response = await loadImage(
-        `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}`
+        `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}/${args.isThumbnail}`
       );
       mutations.updateFile(context, { url: args.imageId, file: response });
     } catch (error) {
@@ -1285,5 +1286,9 @@ export const actions = {
     } catch (error) {
       console.error(error);
     }
+  },
+
+  updateRowSelectionData(context: DatasetContext): void {
+    mutations.updateRowSelectionData(context);
   },
 };

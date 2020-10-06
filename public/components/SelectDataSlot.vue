@@ -4,7 +4,7 @@
       has-tabs
       v-model="viewTypeModel"
       :variables="variables"
-      :trainingVariables="trainingVariables"
+      :available-variables="trainingVariables"
     >
       <b-nav-item
         class="font-weight-bold"
@@ -205,9 +205,11 @@ export default Vue.extend({
     },
 
     numRows(): number {
-      return this.includedActive
-        ? datasetGetters.getIncludedTableDataNumRows(this.$store)
-        : datasetGetters.getExcludedTableDataNumRows(this.$store);
+      return this.hasData
+        ? this.includedActive
+          ? datasetGetters.getIncludedTableDataNumRows(this.$store)
+          : datasetGetters.getExcludedTableDataNumRows(this.$store)
+        : 0;
     },
 
     hasData(): boolean {
@@ -218,13 +220,19 @@ export default Vue.extend({
 
     // extracts the table data from the store
     items(): TableRow[] {
-      return this.includedActive
-        ? datasetGetters.getIncludedTableDataItems(this.$store)
-        : datasetGetters.getExcludedTableDataItems(this.$store);
+      return this.hasData
+        ? this.includedActive
+          ? datasetGetters.getIncludedTableDataItems(this.$store)
+          : datasetGetters.getExcludedTableDataItems(this.$store)
+        : [];
     },
 
     numItems(): number {
-      return this.items ? this.items.length : 0;
+      return this.hasData
+        ? this.includedActive
+          ? datasetGetters.getIncludedTableDataLength(this.$store)
+          : datasetGetters.getExcludedTableDataLength(this.$store)
+        : 0;
     },
 
     activeFilter(): Filter {
@@ -396,7 +404,6 @@ export default Vue.extend({
 
 <style scoped>
 .select-data-container {
-  background-color: var(--white);
   display: flex;
   flex-flow: wrap;
   height: 100%;

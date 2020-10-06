@@ -20,7 +20,8 @@ export const mutations = {
     state: PredictionState,
     predictionData: TableData
   ) {
-    state.includedPredictionTableData = predictionData;
+    // freezing the return to prevent slow, unnecessary deep reactivity.
+    state.includedPredictionTableData = Object.freeze(predictionData);
   },
 
   // predicted

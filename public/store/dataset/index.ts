@@ -157,6 +157,7 @@ export interface VariableSummary {
   timelineType?: string;
   selected?: Histogram;
   err?: string;
+  weighted?: boolean;
   pending?: boolean;
 }
 
@@ -364,6 +365,7 @@ export interface DatasetState {
 export interface WorkingSet {
   tableData: TableData;
   variableSummariesByKey: Dictionary<Dictionary<VariableSummary>>;
+  rowSelectionData?: Row[];
 }
 
 export interface BandCombination {
@@ -388,10 +390,12 @@ export const state: DatasetState = {
   includedSet: {
     tableData: null,
     variableSummariesByKey: {},
+    rowSelectionData: [],
   },
   excludedSet: {
     tableData: null,
     variableSummariesByKey: {},
+    rowSelectionData: [],
   },
 
   // linked files / representation data

@@ -1,14 +1,13 @@
 import Vue from "vue";
-import _ from "lodash";
-import { ResultsState } from "./index";
+import { Dictionary } from "vue-router/types/router";
+import { updateSummaries, updateSummariesPerVariable } from "../../util/data";
 import {
-  VariableSummary,
   Extrema,
   TableData,
   TimeSeriesValue,
+  VariableSummary,
 } from "../dataset/index";
-import { updateSummaries, updateSummariesPerVariable } from "../../util/data";
-import { Dictionary } from "vue-router/types/router";
+import { ResultsState } from "./index";
 
 export const mutations = {
   // training / target
@@ -35,12 +34,14 @@ export const mutations = {
 
   // sets the current result data into the store
   setIncludedResultTableData(state: ResultsState, resultData: TableData) {
-    state.includedResultTableData = resultData;
+    // freezing the return to prevent slow, unnecessary deep reactivity.
+    state.includedResultTableData = Object.freeze(resultData);
   },
 
   // sets the current result data into the store
   setExcludedResultTableData(state: ResultsState, resultData: TableData) {
-    state.excludedResultTableData = resultData;
+    // freezing the return to prevent slow, unnecessary deep reactivity.
+    state.excludedResultTableData = Object.freeze(resultData);
   },
 
   // predicted
@@ -93,6 +94,7 @@ export const mutations = {
     if (!state.timeseries[args.solutionId].timeseriesData) {
       Vue.set(state.timeseries[args.solutionId], "timeseriesData", {});
     }
+    // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(
       state.timeseries[args.solutionId].timeseriesData,
       args.id,
@@ -141,6 +143,7 @@ export const mutations = {
     if (!state.forecasts[args.solutionId].isDateTime) {
       Vue.set(state.forecasts[args.solutionId], "isDateTime", {});
     }
+    // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(
       state.forecasts[args.solutionId].forecastData,
       args.id,
@@ -158,10 +161,10 @@ export const mutations = {
     );
   },
 
-  setVariableRankings(
+  setFeatureImportanceRanking(
     state: ResultsState,
     args: { solutionID: string; rankings: Dictionary<number> }
   ) {
-    Vue.set(state.variableRankings, args.solutionID, args.rankings);
+    Vue.set(state.featureImportanceRanking, args.solutionID, args.rankings);
   },
 };

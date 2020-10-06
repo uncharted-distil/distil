@@ -62,6 +62,7 @@ type VariableSummary struct {
 	Timeline         *Histogram `json:"timeline"`
 	TimelineBaseline *Histogram `json:"timelineBaseline"`
 	TimelineType     string     `json:"timelineType"`
+	Weighted         bool       `json:"weighted"`
 }
 
 // SummaryMode defines the summary display modes.

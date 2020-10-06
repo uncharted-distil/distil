@@ -18,6 +18,11 @@ package util
 import (
 	"bytes"
 	"fmt"
+	lru "github.com/hashicorp/golang-lru"
+	"github.com/nfnt/resize"
+	"github.com/pkg/errors"
+	"github.com/uncharted-distil/gdal"
+	log "github.com/unchartedsoftware/plog"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -26,12 +31,6 @@ import (
 	"os"
 	"path"
 	"strings"
-
-	lru "github.com/hashicorp/golang-lru"
-	"github.com/nfnt/resize"
-	"github.com/pkg/errors"
-	"github.com/uncharted-distil/gdal"
-	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -95,6 +94,16 @@ type BandCombination struct {
 	Transform   func(...uint16) float64
 }
 
+// ImageScale defines what to scale the image size to. If one property is defined aspect ratio will be kept. If nil for both the func will determine the size.
+type ImageScale struct {
+	Width  int
+	Height int
+}
+
+func (imageScale *ImageScale) shouldScale() bool {
+	return imageScale.Width != 0 && imageScale.Height != 0
+}
+
 // ClampedNormalizingTransform transforms to a range of (-1, 1) and then clamps to (0, 1)
 func ClampedNormalizingTransform(bandValues ...uint16) float64 {
 	return math.Max(0, float64(int32(bandValues[0])-int32(bandValues[1]))/float64(int32(bandValues[0])+int32(bandValues[1])))
@@ -141,7 +150,7 @@ func init() {
 
 // ImageFromCombination takes a base datsaet directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for sentinel-2 data.
-func ImageFromCombination(datasetDir string, fileID string, bandCombination BandCombinationID) (*image.RGBA, error) {
+func ImageFromCombination(datasetDir string, fileID string, bandCombination BandCombinationID, imageScale ImageScale) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
 	var fileType string
@@ -164,7 +173,7 @@ func ImageFromCombination(datasetDir string, fileID string, bandCombination Band
 			filePath := getFilePath(datasetDir, fileID, bandLabel, fileType)
 			filePaths = append(filePaths, filePath)
 		}
-		return ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform)
+		return ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale)
 	}
 
 	return nil, errors.Errorf("unhandled band combination %s", bandCombination)
@@ -174,12 +183,11 @@ func ImageFromCombination(datasetDir string, fileID string, bandCombination Band
 // where the file names map to R,G,B in order.  The results are returned as a JPEG
 // encoded byte stream. If errors are encountered processing a band an attempt will
 // be made to create the image from the remaining bands, while logging an error.
-func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) float64) (*image.RGBA, error) {
+func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) float64, imageScale ImageScale) (*image.RGBA, error) {
 	bandImages := []*image.Gray16{}
 	maxXSize := 0
 	maxYSize := 0
 
-	// Load each of the datasets as a Gray16 image
 	for _, filePath := range paths {
 		bandImage, err := loadAsGray16(filePath)
 		bandImages = append(bandImages, bandImage)
@@ -187,21 +195,19 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 			log.Error(err, "band file not loaded")
 			continue
 		}
-
-		// extract input raster size and update max x,y
-		xSize := bandImage.Bounds().Dx()
-		ySize := bandImage.Bounds().Dy()
-		if xSize > maxXSize {
-			maxXSize = xSize
-		}
-		if ySize > maxYSize {
-			maxYSize = ySize
-		}
 	}
-
+	if imageScale.shouldScale() {
+		maxXSize = imageScale.Width
+		maxYSize = imageScale.Height
+		width, height := getMaxDimensions(&bandImages)
+		aspectRatio := float64(height) / float64(width)
+		maxYSize = int(float64(maxXSize) * aspectRatio)
+	} else {
+		maxXSize, maxYSize = getMaxDimensions(&bandImages)
+	}
 	// Resize any images that are below the max size
 	for i, bandImage := range bandImages {
-		if bandImage != nil && (bandImage.Bounds().Dx() < maxXSize || bandImage.Bounds().Dy() < maxYSize) {
+		if bandImage != nil && (imageScale.shouldScale() || bandImage.Bounds().Dx() < maxXSize || bandImage.Bounds().Dy() < maxYSize) {
 			// no need to check type assertion - guaranteed to be what as passed in by api
 			bandImages[i] = resize.Resize(uint(maxXSize), uint(maxYSize), bandImage, resize.NearestNeighbor).(*image.Gray16)
 		}
@@ -214,6 +220,24 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 		return createRGBAFromBands(maxXSize, maxYSize, bandImages), nil
 	}
 	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, transform, ramp), nil
+}
+
+// getMaxDimensions return max from array. Return order width, height
+func getMaxDimensions(bandImages *[]*image.Gray16) (int, int) {
+	width := 0
+	height := 0
+	for _, bandImage := range *bandImages {
+		// extract input raster size and update max x,y
+		xSize := bandImage.Bounds().Dx()
+		ySize := bandImage.Bounds().Dy()
+		if xSize > width {
+			width = xSize
+		}
+		if ySize > height {
+			height = ySize
+		}
+	}
+	return width, height
 }
 
 func loadAsGray16(filePath string) (*image.Gray16, error) {

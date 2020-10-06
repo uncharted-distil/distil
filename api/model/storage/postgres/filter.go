@@ -171,7 +171,11 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 		offset := len(params) + 1
 		for i, category := range filter.Categories {
 			categories = append(categories, fmt.Sprintf("$%d", offset+i))
-			params = append(params, category)
+			if category != "<none>" {
+				params = append(params, category)
+			} else {
+				params = append(params, "")
+			}
 		}
 		where := fmt.Sprintf("%s IN (%s)", name, strings.Join(categories, ", "))
 		wheres = append(wheres, where)

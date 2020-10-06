@@ -1,70 +1,85 @@
 <template>
-  <b-table
-    bordered
-    hover
-    small
-    :items="items"
-    :fields="tableFields"
-    @row-clicked="onRowClick"
-    sticky-header="100%"
-    class="distil-table"
-  >
-    <template
-      v-for="computedField in computedFields"
-      v-slot:[cellSlot(computedField)]="data"
+  <div class="distil-table-container">
+    <b-table
+      bordered
+      hover
+      small
+      :current-page="currentPage"
+      :items="items"
+      :fields="tableFields"
+      :per-page="perPage"
+      :total-rows="itemCount"
+      @row-clicked="onRowClick"
+      sticky-header="100%"
+      class="distil-table mb-1"
     >
-      <span :key="computedField" :title="data.value.value">
-        {{ data.value.value }}
-        <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
-          <icon-fork />
-        </icon-base>
-      </span>
-    </template>
-
-    <template
-      v-for="imageField in imageFields"
-      v-slot:[cellSlot(imageField.key)]="data"
-    >
-      <image-preview
-        :key="imageField.key"
-        :type="imageField.type"
-        :image-url="data.item[imageField.key].value"
-      />
-    </template>
-
-    <template
-      v-for="timeseriesGrouping in timeseriesGroupings"
-      v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
-    >
-      <div class="container" :key="data.item[timeseriesGrouping.idCol].value">
-        <div class="row">
-          <sparkline-preview
-            :truth-dataset="dataset"
-            :x-col="timeseriesGrouping.xCol"
-            :y-col="timeseriesGrouping.yCol"
-            :timeseries-col="timeseriesGrouping.idCol"
-            :timeseries-id="data.item[timeseriesGrouping.idCol].value"
-          />
-        </div>
-      </div>
-    </template>
-
-    <template
-      v-for="(listField, index) in listFields"
-      v-slot:[cellSlot(listField.key)]="data"
-    >
-      <span :key="index" :title="formatList(data)">
-        {{ formatList(data) }}
-      </span>
-    </template>
-
-    <template v-slot:cell()="data">
-      <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
-        {{ data.value | cleanNumber }}
+      <template
+        v-for="computedField in computedFields"
+        v-slot:[cellSlot(computedField)]="data"
+      >
+        <span :key="computedField" :title="data.value.value">
+          {{ data.value.value }}
+          <icon-base icon-name="fork" class="icon-fork" width="14" height="14">
+            <icon-fork />
+          </icon-base>
+        </span>
       </template>
-      <span v-else :title="data.value.value">{{ data.value.value }}</span>
-    </template>
-  </b-table>
+
+      <template
+        v-for="imageField in imageFields"
+        v-slot:[cellSlot(imageField.key)]="data"
+      >
+        <image-preview
+          :key="imageField.key"
+          :type="imageField.type"
+          :image-url="data.item[imageField.key].value"
+        />
+      </template>
+
+      <template
+        v-for="timeseriesGrouping in timeseriesGroupings"
+        v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
+      >
+        <div class="container" :key="data.item[timeseriesGrouping.idCol].value">
+          <div class="row">
+            <sparkline-preview
+              :truth-dataset="dataset"
+              :x-col="timeseriesGrouping.xCol"
+              :y-col="timeseriesGrouping.yCol"
+              :timeseries-col="timeseriesGrouping.idCol"
+              :timeseries-id="data.item[timeseriesGrouping.idCol].value"
+            />
+          </div>
+        </div>
+      </template>
+
+      <template
+        v-for="(listField, index) in listFields"
+        v-slot:[cellSlot(listField.key)]="data"
+      >
+        <span :key="index" :title="formatList(data)">
+          {{ formatList(data) }}
+        </span>
+      </template>
+
+      <template v-slot:cell()="data">
+        <template v-if="['min', 'max', 'mean'].includes(data.field.key)">
+          {{ data.value | cleanNumber }}
+        </template>
+        <span v-else :title="data.value.value">{{ data.value.value }}</span>
+      </template>
+    </b-table>
+    <b-pagination
+      v-if="items && items.length > perPage"
+      align="center"
+      first-number
+      last-number
+      size="sm"
+      v-model="currentPage"
+      :per-page="perPage"
+      :total-rows="itemCount"
+    ></b-pagination>
+  </div>
 </template>
 
 <script lang="ts">
@@ -122,6 +137,13 @@ export default Vue.extend({
     includedActive: Boolean as () => boolean,
   },
 
+  data() {
+    return {
+      currentPage: 1,
+      perPage: 100,
+    };
+  },
+
   filters: {
     /* Display number with only two decimal. */
     cleanNumber(value) {
@@ -147,16 +169,21 @@ export default Vue.extend({
       if (this.isTimeseries) {
         items = items?.map((item) => {
           const timeserieId = item[this.timeseriesGroupings[0].idCol].value;
-          const minMaxMean = this.timeserieInfo(timeserieId);
+          const minMaxMean = this.timeseriesInfo(timeserieId);
           return { ...item, ...minMaxMean };
         });
       }
-
       return updateTableRowSelection(
         items,
         this.rowSelection,
         this.instanceName
       );
+    },
+
+    itemCount(): number {
+      return this.includedActive
+        ? datasetGetters.getIncludedTableDataLength(this.$store)
+        : datasetGetters.getExcludedTableDataLength(this.$store);
     },
 
     fields(): Dictionary<TableColumn> {
@@ -169,7 +196,6 @@ export default Vue.extend({
       const tableFields = formatFieldsAsArray(this.fields);
 
       if (!this.isTimeseries || _.isEmpty(tableFields)) return tableFields;
-
       // For Timeseries we want to display the Min/Max/Mean
       return tableFields.concat([
         {
@@ -220,7 +246,7 @@ export default Vue.extend({
   },
 
   methods: {
-    timeserieInfo(id: string): Extrema {
+    timeseriesInfo(id: string): Extrema {
       const timeseries = datasetGetters.getTimeseries(this.$store);
       return timeseries?.[this.dataset]?.info?.[id];
     },
@@ -267,6 +293,15 @@ export default Vue.extend({
         Status: number;
       }[];
       return listData.map((l) => l.Float);
+    },
+  },
+  watch: {
+    items() {
+      // if the itemCount changes such that it's less than page
+      // we were on, reset to page 1.
+      if (this.itemCount < this.perPage * this.currentPage) {
+        this.currentPage = 1;
+      }
     },
   },
 });

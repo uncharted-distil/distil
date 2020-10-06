@@ -47,7 +47,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	if !ok {
 		description = ""
 	}
-	importance, ok := json.Int(child, model.VarImportanceField)
+	importance, ok := json.Float(child, model.VarImportanceField)
 	if !ok {
 		importance = 0
 	}

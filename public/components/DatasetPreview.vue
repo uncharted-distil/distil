@@ -102,7 +102,7 @@ import ErrorModal from "../components/ErrorModal";
 import { createRouteEntry } from "../util/routes";
 import { formatBytes } from "../util/bytes";
 import {
-  sortVariablesByImportance,
+  sortVariablesByPCARanking,
   isDatamartProvenance,
   filterVariablesByFeature,
 } from "../util/data";
@@ -140,7 +140,7 @@ export default Vue.extend({
       );
     },
     topVariables(): Variable[] {
-      return sortVariablesByImportance(
+      return sortVariablesByPCARanking(
         filterVariablesByFeature(this.dataset.variables).slice(0)
       ).slice(0, NUM_TOP_FEATURES);
     },

@@ -1,10 +1,10 @@
 import { Module } from "vuex";
-import { state, ResultsState } from "./index";
-import { getters as moduleGetters } from "./getters";
-import { actions as moduleActions } from "./actions";
-import { mutations as moduleMutations } from "./mutations";
-import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
+import { DistilState } from "../store";
+import { actions as moduleActions } from "./actions";
+import { getters as moduleGetters } from "./getters";
+import { ResultsState, state } from "./index";
+import { mutations as moduleMutations } from "./mutations";
 
 export const resultsModule: Module<ResultsState, DistilState> = {
   getters: moduleGetters,
@@ -68,7 +68,7 @@ export const getters = {
   getPredictedTimeseries: read(moduleGetters.getPredictedTimeseries),
   getPredictedForecasts: read(moduleGetters.getPredictedForecasts),
   // rankings
-  getVariableRankings: read(moduleGetters.getVariableRankings),
+  getFeatureImportanceRanking: read(moduleGetters.getFeatureImportanceRanking),
 };
 
 // Typed actions
@@ -97,7 +97,9 @@ export const actions = {
   // forecast
   fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries),
   // variable rankings
-  fetchVariableRankings: dispatch(moduleActions.fetchVariableRankings),
+  fetchFeatureImportanceRanking: dispatch(
+    moduleActions.fetchFeatureImportanceRanking
+  ),
 };
 
 // Typed mutations
@@ -129,5 +131,7 @@ export const mutations = {
   updatePredictedTimeseries: commit(moduleMutations.updatePredictedTimeseries),
   updatePredictedForecast: commit(moduleMutations.updatePredictedForecast),
   // variable rankings
-  setVariableRankings: commit(moduleMutations.setVariableRankings),
+  setFeatureImportanceRanking: commit(
+    moduleMutations.setFeatureImportanceRanking
+  ),
 };
