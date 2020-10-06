@@ -56,7 +56,7 @@ import {
   NUM_PER_PAGE,
   getVariableSummariesByState,
   searchVariables,
-  sortSolutionSummariesByImportance,
+  filterArrayByPage,
 } from "../util/data";
 import { Activity } from "../util/userEvents";
 
@@ -103,9 +103,22 @@ export default Vue.extend({
       );
     },
     trainingSummariesByImportance(): VariableSummary[] {
-      return sortSolutionSummariesByImportance(
-        this.trainingSummaries,
-        this.solutionId
+      const summaryDictionary = predictionGetters.getTrainingSummariesDictionary(
+        this.$store
+      );
+
+      const trainingSummaries = getVariableSummariesByState(
+        this.trainingVarsPage,
+        this.trainingVariables.length,
+        this.trainingVariables,
+        summaryDictionary,
+        true
+      );
+
+      return filterArrayByPage(
+        this.trainingVarsPage,
+        this.rowsPerPage,
+        trainingSummaries
       );
     },
     solutionId(): string {
