@@ -913,6 +913,6 @@ export function shouldRunMi(dataset: string): boolean {
   if (size) {
     return false;
   }
-  //default to true if all the above does not return
+  // default to true if all the above does not return
   return true;
 }
