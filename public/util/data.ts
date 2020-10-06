@@ -4,6 +4,7 @@ import _, { result } from "lodash";
 import Vue from "vue";
 import {
   D3M_INDEX_FIELD,
+  DatasetPendingRequestType,
   SummaryMode,
   TableColumn,
   TableData,
@@ -890,4 +891,28 @@ export function hasGeoordinateFeatures(variables: Variable[]): boolean {
   }
 
   return false;
+}
+
+export function shouldRunMi(dataset: string): boolean {
+  // check if data exists
+  if (datasetGetters.getVariableRankings(store)[dataset]) {
+    return false;
+  }
+  // check previous requests
+  const updates = datasetGetters
+    .getPendingRequests(store)
+    .filter((update) => update.dataset === dataset);
+  // if none, ranking should be called
+  if (!updates.length) {
+    return true;
+  }
+  const size = updates.filter((u) => {
+    return u.type === DatasetPendingRequestType.VARIABLE_RANKING;
+  }).length;
+  // if no previous variable ranking request
+  if (size) {
+    return false;
+  }
+  //default to true if all the above does not return
+  return true;
 }

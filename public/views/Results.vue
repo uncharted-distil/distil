@@ -45,7 +45,10 @@ import ResultSummaries from "../components/ResultSummaries";
 import ResultTargetVariable from "../components/ResultTargetVariable";
 import { Variable, VariableSummary } from "../store/dataset/index";
 import { actions as viewActions } from "../store/view/module";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {
+  getters as datasetGetters,
+  actions as datasetActions,
+} from "../store/dataset/module";
 import { getters as resultGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
@@ -53,8 +56,8 @@ import {
   NUM_PER_PAGE,
   getVariableSummariesByState,
   searchVariables,
-  sortSolutionSummariesByImportance,
   filterArrayByPage,
+  shouldRunMi,
 } from "../util/data";
 import { Feature, Activity } from "../util/userEvents";
 
@@ -153,7 +156,23 @@ export default Vue.extend({
   beforeMount() {
     viewActions.fetchResultsData(this.$store);
   },
-
+  mounted() {
+    this.runMi();
+  },
+  methods: {
+    // checks if MI should be available, if it should and isnt run MI
+    async runMi() {
+      if (shouldRunMi(this.dataset)) {
+        await datasetActions.fetchVariables(this.$store, {
+          dataset: this.dataset,
+        });
+        await datasetActions.fetchVariableRankings(this.$store, {
+          dataset: this.dataset,
+          target: this.target,
+        });
+      }
+    },
+  },
   watch: {
     highlightString() {
       viewActions.updateResultsSolution(this.$store);
