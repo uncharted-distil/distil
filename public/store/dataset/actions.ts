@@ -829,23 +829,25 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "variable"])) {
       return null;
     }
-
     const filterParams = addHighlightToFilterParams(
       args.filterParams,
       args.highlight
     );
+    const decodedVarModes = routeGetters.getDecodedVarModes(store);
     const mutator = args.include
       ? mutations.updateIncludedVariableSummaries
       : mutations.updateExcludedVariableSummaries;
-
-    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    const varMode = decodedVarModes.get(args.variable)
+      ? decodedVarModes.get(args.variable)
+      : args.mode;
+    const dataModeDefault = routeGetters.getDataMode(store);
     filterParams.dataMode = dataModeDefault;
 
     try {
       const response = await axios.post(
         `/distil/variable-summary/${args.dataset}/${
           args.variable
-        }/${!args.include}/${args.mode}`,
+        }/${!args.include}/${varMode}`,
         filterParams
       );
       const summary = response.data.summary;

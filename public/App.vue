@@ -12,10 +12,7 @@ import VueObserveVisibility from "vue-observe-visibility";
 import BootstrapVue from "bootstrap-vue";
 import NavBar from "./components/NavBar.vue";
 import store from "./store/store";
-import {
-  getters as appGetters,
-  actions as appActions,
-} from "./store/app/module";
+import { actions as appActions } from "./store/app/module";
 import router from "./router/router";
 
 import "font-awesome/css/font-awesome.css";
@@ -25,7 +22,6 @@ import "./styles/main.css";
 
 // DEBUG: this is a mocked graph until we support actual graph data
 import "./assets/graphs/G1.gml";
-import { TaskTypes } from "./store/dataset";
 
 Vue.use(BootstrapVue);
 Vue.use(VueObserveVisibility);

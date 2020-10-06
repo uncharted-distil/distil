@@ -57,12 +57,11 @@ import AvailableTrainingVariables from "../components/AvailableTrainingVariables
 import TrainingVariables from "../components/TrainingVariables";
 import TargetVariable from "../components/TargetVariable";
 import TypeChangeMenu from "../components/TypeChangeMenu";
-import { overlayRouteEntry } from "../util/routes";
 import { actions as viewActions } from "../store/view/module";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as datasetGetters } from "../store/dataset/module";
-import { Variable } from "../store/dataset/index";
-
+import { DataMode } from "../store/dataset";
+import { overlayRouteEntry } from "../util/routes";
+import { Route } from "vue-router";
 export default Vue.extend({
   name: "select-training-view",
   components: {
@@ -162,6 +161,19 @@ export default Vue.extend({
     },
     ranking() {
       viewActions.updateSelectTrainingData(this.$store);
+    },
+    $route(to: Route, from: Route) {
+      const dataModeOld = from.query.dataMode as string;
+      if (
+        routeGetters.getDataMode(this.$store) === DataMode.Cluster &&
+        dataModeOld !== DataMode.Cluster
+      ) {
+        const clusterEntry = overlayRouteEntry(this.$route, {
+          clustering: "1",
+        });
+        viewActions.updateSelectTrainingData(this.$store);
+        this.$router.push(clusterEntry);
+      }
     },
   },
   beforeMount() {
