@@ -33,7 +33,7 @@
       <div class="status-icon-wrapper" @click="onStatusIconClick(2)">
         <i class="status-icon fa fa-2x fa-share-alt" aria-hidden="true"></i>
         <i
-          v-if="isNew(clusterStatus)"
+          v-if="isNew(clusterStatus) && !isClustered"
           class="new-update-notification fa fa-circle"
         ></i>
         <i
@@ -83,6 +83,7 @@ import {
   JoinSuggestionPendingRequest,
   JoinDatasetImportPendingRequest,
   ClusteringPendingRequest,
+  DataMode,
 } from "../store/dataset/index";
 import { Feature, Activity } from "../util/userEvents";
 import { Dictionary } from "vue-router/types/router";
@@ -108,7 +109,9 @@ export default Vue.extend({
         .filter((update) => update.dataset === this.dataset);
       return updates;
     },
-
+    isClustered(): boolean {
+      return routeGetters.getDataMode(this.$store) === DataMode.Cluster;
+    },
     variableRankingRequestData(): VariableRankingPendingRequest {
       return <VariableRankingPendingRequest>(
         this.pendingRequests.find(
