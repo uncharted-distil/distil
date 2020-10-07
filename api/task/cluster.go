@@ -45,10 +45,7 @@ type ClusterPoint struct {
 
 // ClusterDataset will cluster the dataset fields using a primitive.
 func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
-	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.ClusteringOutputSchemaRelative, config.ClusteringOutputDataRelative)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to copy source data folder")
-	}
+	outputPath := createDatasetPaths(schemaFile, dataset, compute.D3MLearningData)
 
 	// load metadata from original schema
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
@@ -97,9 +94,7 @@ func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing clustered output")
 	}
-
-	relativePath := getRelativePath(path.Dir(outputPath.outputSchema), outputPath.outputData)
-	mainDR.ResPath = relativePath
+	mainDR.ResPath = path.Dir(outputPath.outputData)
 
 	// write the new schema to file
 	err = datasetStorage.WriteMetadata(outputPath.outputSchema, meta, true, false)

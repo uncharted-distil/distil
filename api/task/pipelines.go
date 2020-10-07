@@ -25,11 +25,8 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
-	log "github.com/unchartedsoftware/plog"
 
 	sr "github.com/uncharted-distil/distil/api/compute"
-	"github.com/uncharted-distil/distil/api/env"
-	"github.com/uncharted-distil/distil/api/util"
 )
 
 const (
@@ -247,27 +244,18 @@ func getRelativePath(rootPath string, filePath string) string {
 	return relativePath
 }
 
-func initializeDatasetCopy(schemaFile string, dataset string, schemaPathRelative string, dataPathRelative string) (*datasetCopyPath, error) {
-	// all work done in the temp folder
-	basePath := path.Join(env.GetTmpPath(), dataset)
+func createDatasetPaths(schemaFile string, dataset string, dataPathRelative string) *datasetCopyPath {
 	sourceFolder := path.Dir(schemaFile)
-	outputSchemaPath := path.Join(basePath, schemaPathRelative)
-	outputDataPath := path.Join(basePath, dataPathRelative)
-	outputFolder := path.Dir(outputSchemaPath)
-
-	// copy the source folder to have all the linked files for merging
-	log.Infof("COPYING FROM %s to %s", sourceFolder, outputFolder)
-	err := util.Copy(sourceFolder, outputFolder)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to copy source data")
-	}
+	outputSchemaPath := schemaFile
+	outputDataPath := path.Join(sourceFolder, compute.D3MDataFolder, dataPathRelative)
+	outputFolder := sourceFolder
 
 	return &datasetCopyPath{
 		sourceFolder: sourceFolder,
 		outputFolder: outputFolder,
 		outputSchema: outputSchemaPath,
 		outputData:   outputDataPath,
-	}, nil
+	}
 }
 
 func createFriendlyLabel(label string) string {

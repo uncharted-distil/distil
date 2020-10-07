@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
@@ -33,16 +34,13 @@ func Format(schemaFile string, dataset string, config *IngestTaskConfig) (string
 	if err != nil {
 		return "", errors.Wrap(err, "unable to load original schema file")
 	}
-	dr := getMainDataResource(meta)
+	dr := meta.GetMainDataResource()
 
 	// copy the data to a new directory
-	outputPath, err := initializeDatasetCopy(schemaFile, dataset, config.FormatOutputSchemaRelative, config.FormatOutputDataRelative)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to copy source data folder")
-	}
+	outputPath := createDatasetPaths(schemaFile, dataset, compute.D3MLearningData)
 
 	// read the raw data
-	dataPath := path.Join(path.Dir(schemaFile), dr.ResPath)
+	dataPath := model.GetResourcePath(schemaFile, dr)
 	lines, err := util.ReadCSVFile(dataPath, config.HasHeader)
 	if err != nil {
 		return "", errors.Wrap(err, "error reading raw data")
@@ -66,7 +64,7 @@ func Format(schemaFile string, dataset string, config *IngestTaskConfig) (string
 }
 
 func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]string) error {
-	dr := getMainDataResource(meta)
+	dr := meta.GetMainDataResource()
 
 	// output the header
 	header := make([]string, len(dr.Variables))
@@ -82,9 +80,7 @@ func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]strin
 	if err != nil {
 		return errors.Wrap(err, "error writing output")
 	}
-
-	relativePath := getRelativePath(path.Dir(paths.outputSchema), paths.outputData)
-	dr.ResPath = relativePath
+	dr.ResPath = paths.outputData
 	dr.ResType = model.ResTypeTable
 
 	// write the new schema to file
@@ -98,7 +94,7 @@ func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]strin
 
 func addD3MIndex(schemaFile string, meta *model.Metadata, data [][]string) (*model.Metadata, [][]string, error) {
 	// add the d3m index variable to the metadata
-	dr := getMainDataResource(meta)
+	dr := meta.GetMainDataResource()
 	name := model.D3MIndexFieldName
 	v := model.NewVariable(len(dr.Variables), name, name, name, model.IntegerType, model.IntegerType,
 		"required index field", []string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false)
@@ -124,13 +120,4 @@ func checkD3MIndexExists(meta *model.Metadata) bool {
 	}
 
 	return false
-}
-
-func getMainDataResource(meta *model.Metadata) *model.DataResource {
-	dr := meta.GetMainDataResource()
-	if dr == nil {
-		dr = meta.DataResources[0]
-	}
-
-	return dr
 }

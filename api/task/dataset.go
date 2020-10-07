@@ -107,11 +107,7 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 
 	// copy to the original output location for consistency
 	if formattedPath != outputDatasetPath {
-		err = os.RemoveAll(outputDatasetPath)
-		if err != nil {
-			return "", "", err
-		}
-
+		// copy the data file and the metadata doc
 		err = util.Copy(formattedPath, path.Dir(schemaPath))
 		if err != nil {
 			return "", "", err

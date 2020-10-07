@@ -6,7 +6,6 @@ require (
 	github.com/araddon/dateparse v0.0.0-20190622164848-0fb0a474d195
 	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/davecgh/go-spew v1.1.1
-	github.com/disintegration/imaging v1.6.2
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/golang/protobuf v1.3.2
 	github.com/gorilla/websocket v1.4.0
@@ -28,7 +27,7 @@ require (
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.5.1
-	github.com/uncharted-distil/distil-compute v0.0.0-20200929213410-95d175aaca02
+	github.com/uncharted-distil/distil-compute v0.0.0-20201007042553-ed119f8342c4
 	github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a
 	github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48

@@ -54,7 +54,7 @@ func (t *Table) CreateDataset(rootDataPath string, datasetName string, config *e
 	if datasetName == "" {
 		datasetName = t.Dataset
 	}
-	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
+	dataFilePath := path.Join(rootDataPath, compute.D3MDataFolder, compute.D3MLearningData)
 
 	// create the raw dataset schema doc
 	datasetID := model.NormalizeDatasetID(datasetName)
