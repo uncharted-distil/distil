@@ -142,7 +142,9 @@ func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName strin
 
 	// update the data resources to match those from the created dataset - they may have changed file types
 	for i, dataResource := range ds.Metadata.DataResources {
+		log.Infof("PREDICTIONS RES PATH: %s", dataResource.ResPath)
 		p.params.Meta.DataResources[i].ResFormat = dataResource.ResFormat
+		p.params.Meta.DataResources[i].ResPath = dataResource.ResPath
 	}
 
 	return &api.RawDataset{
@@ -207,10 +209,11 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 			return nil, errors.Wrap(err, "unable to parse header result")
 		}
 		rawHeader := rawCSVData[0]
+		mainDR := meta.GetMainDataResource()
 		for i, f := range rawHeader {
 			// TODO: col index not necessarily the same as index and thats what needs checking
 			// We check both name and display name as the pre-ingested datasets are keyed of display name
-			if meta.GetMainDataResource().Variables[i].Name != f && meta.GetMainDataResource().Variables[i].DisplayName != f {
+			if mainDR.Variables[i].Name != f && mainDR.Variables[i].DisplayName != f {
 				return nil, errors.Errorf("variables in new prediction file do not match variables in original dataset")
 			}
 		}

@@ -485,8 +485,11 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 
 	// split the source data into train & test
 	dataPath := model.GetResourcePath(schemaFilename, mainDR)
-	trainDataFile := path.Join(trainFolder, mainDR.ResPath)
-	testDataFile := path.Join(testFolder, mainDR.ResPath)
+
+	// set the data file paths
+	// paths in main data resource can be absolute OR relative
+	trainDataFile := path.Join(trainFolder, path.Base(path.Dir(mainDR.ResPath)), path.Base(mainDR.ResPath))
+	testDataFile := path.Join(testFolder, path.Base(path.Dir(mainDR.ResPath)), path.Base(mainDR.ResPath))
 
 	// Check to see if the task keyword list contains forecasting
 	hasForecasting := false
@@ -504,6 +507,19 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex,
 			params.GroupingFieldIndex, params.Stratify, limits, config.TrainTestSplit)
 	}
+	if err != nil {
+		return "", "", err
+	}
+
+	// update metadata to point to correct data for train & test
+	dataSerialization := serialization.GetStorage(trainDataFile)
+	mainDR.ResPath = trainDataFile
+	err = dataSerialization.WriteMetadata(trainSchemaFile, meta, true, true)
+	if err != nil {
+		return "", "", err
+	}
+	mainDR.ResPath = testDataFile
+	err = dataSerialization.WriteMetadata(testSchemaFile, meta, true, true)
 	if err != nil {
 		return "", "", err
 	}
