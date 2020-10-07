@@ -33,6 +33,7 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import store from "../store/store";
 import {
+  CLUSTER_PREFIX,
   formatValue,
   hasComputedVarPrefix,
   IMAGE_TYPE,
@@ -584,7 +585,10 @@ export function getVariableSummariesByState(
       // prioritize FI over MI
       sortedVariables = sortVariablesByImportance(sortedVariables);
     }
-
+    // remove any pattern cluster variables
+    sortedVariables = sortedVariables.filter((sv) => {
+      return sv.colName.indexOf(CLUSTER_PREFIX) < 0;
+    });
     // select only the current variables on the page
     sortedVariables = filterArrayByPage(pageIndex, pageSize, sortedVariables);
     // map them back to the variable summary dictionary for the current route key
