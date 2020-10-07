@@ -142,7 +142,6 @@ func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName strin
 
 	// update the data resources to match those from the created dataset - they may have changed file types
 	for i, dataResource := range ds.Metadata.DataResources {
-		log.Infof("PREDICTIONS RES PATH: %s", dataResource.ResPath)
 		p.params.Meta.DataResources[i].ResFormat = dataResource.ResFormat
 		p.params.Meta.DataResources[i].ResPath = dataResource.ResPath
 	}
