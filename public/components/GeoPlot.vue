@@ -1,5 +1,6 @@
 <template>
   <div
+    id="geo-test"
     class="geo-plot-container"
     :class="{ 'selection-mode': isSelectionMode }"
   >
@@ -55,6 +56,7 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
+import lumo from "lumo";
 import {
   TableColumn,
   TableRow,
@@ -366,6 +368,59 @@ export default Vue.extend({
   },
 
   methods: {
+    createLumoMap() {
+      this.map = new lumo.Plot(`#map-select-data`, {
+        continuousZoom: true,
+        inertia: true,
+        wraparound: true,
+        zoom: 3,
+      });
+
+      // WebGL CARTO Image Layer
+      const base = new lumo.TileLayer({
+        renderer: new lumo.ImageTileRenderer(),
+      });
+
+      base.requestTile = (coord, done) => {
+        const SUBDOMAINS = ["a", "b", "c"];
+        const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
+        const url = `https:/${s}.tile.openstreetmap.org/${coord.xyz()}.png`;
+        lumo.loadImage(url, done);
+      };
+
+      this.map.add(base);
+      const overlay = new lumo.PolylineOverlay();
+      const renderer = new lumo.PolylineOverlayRenderer();
+      overlay.setRenderer(renderer);
+      this.areas.forEach((area) => {
+        const p1 = this.latlngToNormalized(area.coordinates[0]);
+        const p2 = this.latlngToNormalized(area.coordinates[1]);
+        overlay.addPolyline(area.imageUrl, [
+          p1,
+          { x: p2.x, y: p1.y },
+          p2,
+          { x: p1.x, y: p2.y },
+          p1,
+        ]);
+      });
+      this.map.add(overlay);
+    },
+    latlngToNormalized(latlng): { x: number; y: number } {
+      const minLon = -180.0;
+      const maxLon = 180.0;
+      const minLat = -85.0511287798066;
+      const maxLat = 85.0511287798066;
+      const degreesToRadians = Math.PI / 180.0; // Factor for changing degrees to radians
+      const radiansToDegrees = 180.0 / Math.PI; // Factor for changing radians to degrees
+      const latRadians = latlng[0] * degreesToRadians;
+      const x = (latlng[1] + maxLon) / (maxLon * 2);
+      const y =
+        (1 -
+          Math.log(Math.tan(latRadians) + 1 / Math.cos(latRadians)) / Math.PI) /
+        2;
+
+      return { x, y: 1 - y };
+    },
     clearSelectionRect() {
       if (this.selectedRect) {
         this.selectedRect.remove();
@@ -849,7 +904,8 @@ export default Vue.extend({
   },
 
   mounted() {
-    this.paint();
+    this.createLumoMap();
+    //this.paint();
   },
 });
 </script>
