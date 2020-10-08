@@ -96,6 +96,7 @@
                 :ignore-highlights="ignoreHighlights"
                 :instanceName="instanceName"
                 @facet-click="onFacetClick"
+                @range-change="onRangeChange"
               />
             </template>
             <template v-else-if="summary.type === 'categorical'">

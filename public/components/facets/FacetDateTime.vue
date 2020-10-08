@@ -210,9 +210,9 @@ export default Vue.extend({
       } else {
         const maxBasis = this.dateToNum(values[maxIndex - 1].label);
         const offset = maxBasis - this.dateToNum(values[maxIndex - 2].label);
-        upperBound = maxBasis + offset;
+        // increase filter upperbound to definitely include the last date bucket
+        upperBound = maxBasis + offset * 2;
       }
-
       return {
         from: lowerBound,
         to: upperBound,
