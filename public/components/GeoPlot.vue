@@ -421,12 +421,13 @@ export default Vue.extend({
       this.areas.forEach((area) => {
         const p1 = this.latlngToNormalized(area.coordinates[0]);
         const p2 = this.latlngToNormalized(area.coordinates[1]);
-        singleBuffer.push(p1);
-        singleBuffer.push({ x: p2.x, y: p1.y });
-        singleBuffer.push(p2);
-        singleBuffer.push(p1);
-        singleBuffer.push({ x: p1.x, y: p2.y });
-        singleBuffer.push(p2);
+        const color = { r: 1.0, g: 0.0, b: 0.0, a: 1.0 };
+        singleBuffer.push({ ...p1, ...color });
+        singleBuffer.push({ x: p2.x, y: p1.y, ...color });
+        singleBuffer.push({ ...p2, ...color });
+        singleBuffer.push({ ...p1, ...color });
+        singleBuffer.push({ x: p1.x, y: p2.y, ...color });
+        singleBuffer.push({ ...p2, ...color });
       });
       return singleBuffer;
     },

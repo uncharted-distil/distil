@@ -15,37 +15,48 @@ import WebGLOverlayRenderer from "lumo/src/renderer/overlay/WebGLOverlayRenderer
 const SHADER_GLSL = {
   vert: `
 		precision highp float;
-		attribute vec2 aPosition;
+    attribute vec2 aPosition;
+    attribute vec4 aColor;
 		uniform vec2 uViewOffset;
 		uniform float uScale;
-		uniform mat4 uProjectionMatrix;
+    uniform mat4 uProjectionMatrix;
+    varying vec4 oColor;
 		void main() {
 			vec2 wPosition = (aPosition * uScale) - uViewOffset;
-			gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
+      gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
+      oColor = aColor;
 		}
 		`,
   frag: `
-		precision highp float;
-		uniform vec4 uPolygonColor;
+    precision highp float;
+    varying vec4 oColor;
+	  uniform vec4 uPolygonColor;
 		uniform float uOpacity;
 		void main() {
-			gl_FragColor = vec4(uPolygonColor.rgb, uPolygonColor.a * uOpacity);
+			gl_FragColor = vec4(oColor.rgb, oColor.a * uOpacity);
 		}
 		`,
 };
 
 // Private Methods
 const getVertexArray = function (points) {
-  const vertices = new Float32Array(points.length * 2);
+  const numOfAttrs = 6;
+  const vertices = new Float32Array(points.length * numOfAttrs);
   for (let i = 0; i < points.length; i++) {
-    vertices[i * 2] = points[i].x;
-    vertices[i * 2 + 1] = points[i].y;
+    vertices[i * numOfAttrs] = points[i].x;
+    vertices[i * numOfAttrs + 1] = points[i].y;
+    vertices[i * numOfAttrs + 2] = points[i].r;
+    vertices[i * numOfAttrs + 3] = points[i].g;
+    vertices[i * numOfAttrs + 4] = points[i].b;
+    vertices[i * numOfAttrs + 5] = points[i].a;
   }
   return vertices;
 };
 
 const createBuffers = function (overlay, points) {
   const vertices = getVertexArray(points);
+  const floatByteSize = 4;
+  const vertSize = 2; // x,y
   const vertexBuffer = new VertexBuffer(
     overlay.gl,
     vertices,
@@ -53,11 +64,17 @@ const createBuffers = function (overlay, points) {
       0: {
         size: 2,
         type: "FLOAT",
+        byteOffset: 0,
+      },
+      1: {
+        size: 4,
+        type: "FLOAT",
+        byteOffset: vertSize * floatByteSize,
       },
     },
     {
       mode: "TRIANGLES",
-      count: vertices.length / 2, // number of vertices to draw vertices has x,y therefore /2
+      count: vertices.length / 6, // number of vertices to draw vertices has x,y therefore /2
     }
   );
 
@@ -159,7 +176,7 @@ export default class BatchPolygonOverlayRenderer extends WebGLOverlayRenderer {
     shader.setUniform("uProjectionMatrix", proj);
     shader.setUniform("uViewOffset", [offset.x, offset.y]);
     shader.setUniform("uScale", scale);
-    shader.setUniform("uPolygonColor", this.polygonColor);
+    // shader.setUniform("uPolygonColor", this.polygonColor);
     shader.setUniform("uOpacity", opacity);
 
     // for each polyline buffer

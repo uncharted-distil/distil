@@ -9,7 +9,15 @@ const clipPolygons = function (cell, polygons) {
   polygons.forEach((polygon) => {
     const result = new Array(polygon.length);
     for (let i = 0; i < polygon.length; i++) {
-      result[i] = cell.project(polygon[i]);
+      const projected = cell.project(polygon[i]);
+      result[i] = {
+        x: projected.x,
+        y: projected.y,
+        r: polygon[i].r,
+        g: polygon[i].g,
+        b: polygon[i].b,
+        a: polygon[i].a,
+      };
     }
     clipped.push(result);
   });
