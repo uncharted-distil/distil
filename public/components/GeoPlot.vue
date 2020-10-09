@@ -57,6 +57,8 @@ import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import lumo from "lumo";
+import BatchPolygonOverlay from "../util/rendering/BatchPolygonOverlay";
+import BatchPolygonOverlayRenderer from "../util/rendering/BatchPolygonOverlayRenderer";
 import {
   TableColumn,
   TableRow,
@@ -139,6 +141,8 @@ export default Vue.extend({
     return {
       poiLayer: null,
       map: null,
+      overlay: null,
+      renderer: null,
       markers: null,
       areasMeanLng: 0,
       closeButton: null,
@@ -149,6 +153,7 @@ export default Vue.extend({
       isImageDrilldown: false,
       imageUrl: null,
       item: null,
+      polygonLayerId: "polygon-layer",
     };
   },
 
@@ -384,26 +389,16 @@ export default Vue.extend({
       base.requestTile = (coord, done) => {
         const SUBDOMAINS = ["a", "b", "c"];
         const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
-        const url = `https:/${s}.tile.openstreetmap.org/${coord.xyz()}.png`;
+        const url = `https:/${s}.basemaps.cartocdn.com/light_all/${coord.xyz()}.png`;
         lumo.loadImage(url, done);
       };
 
       this.map.add(base);
-      const overlay = new lumo.PolylineOverlay();
-      const renderer = new lumo.PolylineOverlayRenderer();
-      overlay.setRenderer(renderer);
-      this.areas.forEach((area) => {
-        const p1 = this.latlngToNormalized(area.coordinates[0]);
-        const p2 = this.latlngToNormalized(area.coordinates[1]);
-        overlay.addPolyline(area.imageUrl, [
-          p1,
-          { x: p2.x, y: p1.y },
-          p2,
-          { x: p1.x, y: p2.y },
-          p1,
-        ]);
-      });
-      this.map.add(overlay);
+      this.overlay = new BatchPolygonOverlay();
+      this.renderer = new BatchPolygonOverlayRenderer();
+      this.overlay.setRenderer(this.renderer);
+      this.overlay.addPolygon(this.polygonLayerId, this.areaToQuads());
+      this.map.add(this.overlay);
     },
     latlngToNormalized(latlng): { x: number; y: number } {
       const minLon = -180.0;
@@ -420,6 +415,20 @@ export default Vue.extend({
         2;
 
       return { x, y: 1 - y };
+    },
+    areaToQuads() {
+      const singleBuffer = [];
+      this.areas.forEach((area) => {
+        const p1 = this.latlngToNormalized(area.coordinates[0]);
+        const p2 = this.latlngToNormalized(area.coordinates[1]);
+        singleBuffer.push(p1);
+        singleBuffer.push({ x: p2.x, y: p1.y });
+        singleBuffer.push(p2);
+        singleBuffer.push(p1);
+        singleBuffer.push({ x: p1.x, y: p2.y });
+        singleBuffer.push(p2);
+      });
+      return singleBuffer;
     },
     clearSelectionRect() {
       if (this.selectedRect) {
@@ -631,30 +640,30 @@ export default Vue.extend({
     },
 
     clear() {
-      if (this.selectedRect) {
-        this.selectedRect.remove();
-        this.selectedRect = null;
-      }
-
-      if (this.currentRect) {
-        this.currentRect.remove();
-        this.currentRect = null;
-      }
-
-      if (this.closeButton) {
-        this.closeButton.remove();
-        this.closeButton = null;
-      }
-
-      _.forIn(this.markers, (markerLayer) => {
-        markerLayer.removeFrom(this.map);
-      });
-
-      if (this.map.hasLayer(this.poiLayer)) {
-        this.map.removeLayer(this.poiLayer);
-      }
-
-      this.markers = {};
+      // if (this.selectedRect) {
+      //   this.selectedRect.remove();
+      //   this.selectedRect = null;
+      // }
+      //
+      // if (this.currentRect) {
+      //   this.currentRect.remove();
+      //   this.currentRect = null;
+      // }
+      //
+      // if (this.closeButton) {
+      //   this.closeButton.remove();
+      //   this.closeButton = null;
+      // }
+      //
+      // _.forIn(this.markers, (markerLayer) => {
+      //   markerLayer.removeFrom(this.map);
+      // });
+      //
+      // if (this.map.hasLayer(this.poiLayer)) {
+      //   this.map.removeLayer(this.poiLayer);
+      // }
+      //
+      // this.markers = {};
       this.startingLatLng = null;
     },
 
@@ -888,11 +897,16 @@ export default Vue.extend({
       this.drawHighlight();
       this.drawFilters();
     },
+    onNewData() {
+      // clear polygons
+      this.overlay.clearPolygons();
+      this.overlay.addPolygon(this.polygonLayerId, this.areaToQuads());
+    },
   },
 
   watch: {
     dataItems() {
-      this.paint();
+      this.onNewData();
     },
 
     rowSelection() {
@@ -905,7 +919,6 @@ export default Vue.extend({
 
   mounted() {
     this.createLumoMap();
-    //this.paint();
   },
 });
 </script>
