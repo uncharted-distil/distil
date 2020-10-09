@@ -375,6 +375,11 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 		if err != nil {
 			return nil, err
 		}
+		resultURI, err = reformatResult(resultURI)
+		if err != nil {
+			return nil, err
+		}
+
 		var explainFeatureURI string
 		if outputs[explainableTypeStep] != nil {
 			explainFeatureURI, err = getFileFromOutput(response, outputs[explainableTypeStep].key)
