@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -31,6 +32,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 	"github.com/uncharted-distil/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
@@ -732,6 +734,14 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			resultID := ""
 			resultURI, ok := outputKeyURIs[defaultExposedOutputKey]
 			if ok {
+				// reformat result to have one row per d3m index since confidences
+				// can produce one row / class
+				resultURI, err = reformatResult(resultURI)
+				if err != nil {
+					s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
+					return
+				}
+
 				resultID, err = util.Hash(resultURI)
 				if err != nil {
 					s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -1088,4 +1098,67 @@ func getFileFromOutput(response *pipeline.GetProduceSolutionResultsResponse, out
 	}
 
 	return strings.Replace(csvURI.CsvUri, "file://", "", 1), nil
+}
+
+type confidenceValue struct {
+	d3mIndex   string
+	confidence float64
+	row        int
+}
+
+func reformatResult(resultURI string) (string, error) {
+	// read data from original file
+	dataReader := serialization.GetStorage(resultURI)
+	data, err := dataReader.ReadData(resultURI)
+	if err != nil {
+		return "", err
+	}
+
+	// only need to reformat if confidences are there (column count >= 3)
+	if len(data[0]) < 3 {
+		return resultURI, nil
+	}
+	log.Infof("reformatting '%s' to only have 1 row per d3m index", resultURI)
+
+	// TODO: CAN WE ASSUME THESE INDICES???
+	d3mIndexIndex := 0
+	confidenceIndex := 2
+	confidences := map[string]*confidenceValue{}
+	output := [][]string{data[0]}
+	for _, r := range data[1:] {
+		// only keep the row with the highest confidence for each d3m index
+		d3mIndex := r[d3mIndexIndex]
+		confidenceParsed, err := strconv.ParseFloat(r[confidenceIndex], 64)
+		if err != nil {
+			return "", errors.Wrapf(err, "unable to parse confidence value '%s'", r[confidenceIndex])
+		}
+		confidence := confidences[d3mIndex]
+		if confidence == nil || confidence.confidence < confidenceParsed {
+			row := len(output)
+			if confidence != nil {
+				// new top confidence so overwrite existing entry in output
+				row = confidence.row
+				output[row] = r
+			} else {
+				// new d3m index so append to output
+				output = append(output, r)
+			}
+			confidence := &confidenceValue{
+				d3mIndex:   d3mIndex,
+				confidence: confidenceParsed,
+				row:        row,
+			}
+			confidences[d3mIndex] = confidence
+		}
+	}
+
+	// output filtered data
+	filteredURI := path.Join(path.Dir(resultURI), fmt.Sprintf("filtered-%s", path.Base(resultURI)))
+	err = dataReader.WriteData(filteredURI, output)
+	if err != nil {
+		return "", err
+	}
+	log.Infof("'%s' filtered to highest confidence row per d3m index and written to '%s'", resultURI, filteredURI)
+
+	return filteredURI, nil
 }
