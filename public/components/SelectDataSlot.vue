@@ -50,7 +50,7 @@
         </template>
       </p>
 
-      <layer-selection v-if="isRemoteSensing" class="layer-select-dropdown" />
+      <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" />
       <b-button
         class="select-data-action-exclude"
         v-if="includedActive"
@@ -291,8 +291,8 @@ export default Vue.extend({
       return !!this.rowSelection;
     },
 
-    isRemoteSensing(): boolean {
-      return routeGetters.isRemoteSensing(this.$store);
+    isMultiBandImage(): boolean {
+      return routeGetters.isMultiBandImage(this.$store);
     },
 
     /* Select which component to display the data. */

@@ -94,8 +94,8 @@ export default Vue.extend({
       );
     },
 
-    isRemoteSensing(): boolean {
-      return routeGetters.isRemoteSensing(this.$store);
+    isMultiBandImage(): boolean {
+      return routeGetters.isMultiBandImage(this.$store);
     },
 
     visibleTitle(): string {
@@ -131,7 +131,7 @@ export default Vue.extend({
     },
 
     async requestImage() {
-      if (this.isRemoteSensing) {
+      if (this.isMultiBandImage) {
         await datasetActions.fetchMultiBandImage(this.$store, {
           dataset: this.dataset,
           imageId: imageId(this.imageUrl),

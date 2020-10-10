@@ -6,7 +6,7 @@
       :variables="variables"
     >
       <p class="font-weight-bold mr-auto">Samples Predicted</p>
-      <layer-selection v-if="isRemoteSensing" class="layer-button" />
+      <layer-selection v-if="isMultiBandImage" class="layer-button" />
     </view-type-toggle>
 
     <p class="predictions-data-slot-summary" v-if="hasResults">
@@ -187,8 +187,8 @@ export default Vue.extend({
       return getNumIncludedRows(this.rowSelection);
     },
 
-    isRemoteSensing(): boolean {
-      return routeGetters.isRemoteSensing(this.$store);
+    isMultiBandImage(): boolean {
+      return routeGetters.isMultiBandImage(this.$store);
     },
 
     /* Select which component to display the data. */

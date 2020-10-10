@@ -20,7 +20,7 @@ import {
   IMAGE_TYPE,
   isImageType,
   isRankableVariableType,
-  REMOTE_SENSING_TYPE,
+  MULTIBAND_IMAGE_TYPE,
   UNKNOWN_TYPE,
 } from "../../util/types";
 import { Highlight } from "../dataset/index";
@@ -977,7 +977,7 @@ export const actions = {
             url: url,
           });
         }
-        if (type === REMOTE_SENSING_TYPE) {
+        if (type === MULTIBAND_IMAGE_TYPE) {
           return actions.fetchMultiBandImage(context, {
             dataset: args.dataset,
             imageId: url,

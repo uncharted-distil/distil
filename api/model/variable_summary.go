@@ -86,7 +86,7 @@ func SummaryModeFromString(s string) (SummaryMode, error) {
 		return ClusterMode, nil
 	case "timeseries":
 		return TimeseriesMode, nil
-	case "multiBandImage":
+	case "multiband_image":
 		return MultiBandImageMode, nil
 	case "default":
 		return DefaultMode, nil
