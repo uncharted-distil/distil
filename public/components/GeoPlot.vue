@@ -57,8 +57,8 @@ import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import lumo from "lumo";
-import BatchPolygonOverlay from "../util/rendering/BatchPolygonOverlay";
-import BatchPolygonOverlayRenderer from "../util/rendering/BatchPolygonOverlayRenderer";
+import BatchQuadOverlay from "../util/rendering/BatchQuadOverlay";
+import BatchQuadOverlayRenderer from "../util/rendering/BatchQuadOverlayRenderer";
 import {
   TableColumn,
   TableRow,
@@ -79,7 +79,7 @@ import {
   REAL_VECTOR_TYPE,
   GEOCOORDINATE_TYPE,
 } from "../util/types";
-
+import Color from "color";
 import "leaflet/dist/leaflet.css";
 import "leaflet/dist/images/marker-icon.png";
 import "leaflet/dist/images/marker-icon-2x.png";
@@ -394,10 +394,10 @@ export default Vue.extend({
       };
 
       this.map.add(base);
-      this.overlay = new BatchPolygonOverlay();
-      this.renderer = new BatchPolygonOverlayRenderer();
+      this.overlay = new BatchQuadOverlay();
+      this.renderer = new BatchQuadOverlayRenderer();
       this.overlay.setRenderer(this.renderer);
-      this.overlay.addPolygon(this.polygonLayerId, this.areaToQuads());
+      this.overlay.addQuad(this.polygonLayerId, this.areaToQuads());
       this.map.add(this.overlay);
     },
     latlngToNormalized(latlng): { x: number; y: number } {
@@ -418,16 +418,23 @@ export default Vue.extend({
     },
     areaToQuads() {
       const singleBuffer = [];
-      this.areas.forEach((area) => {
+      this.areas.forEach((area, idx) => {
         const p1 = this.latlngToNormalized(area.coordinates[0]);
         const p2 = this.latlngToNormalized(area.coordinates[1]);
-        const color = { r: 1.0, g: 0.0, b: 0.0, a: 1.0 };
-        singleBuffer.push({ ...p1, ...color });
-        singleBuffer.push({ x: p2.x, y: p1.y, ...color });
-        singleBuffer.push({ ...p2, ...color });
-        singleBuffer.push({ ...p1, ...color });
-        singleBuffer.push({ x: p1.x, y: p2.y, ...color });
-        singleBuffer.push({ ...p2, ...color });
+        const color = Color(area.color).rgb().object();
+        const maxVal = 255;
+        color.a = 1.0;
+        color.r /= maxVal;
+        color.g /= maxVal;
+        color.b /= maxVal;
+        const id = this.renderer.idToRGBA(idx);
+        // need to get rid of spread operators super slow
+        singleBuffer.push({ ...p1, ...color, ...id });
+        singleBuffer.push({ x: p2.x, y: p1.y, ...color, ...id });
+        singleBuffer.push({ ...p2, ...color, ...id });
+        singleBuffer.push({ ...p1, ...color, ...id });
+        singleBuffer.push({ x: p1.x, y: p2.y, ...color, ...id });
+        singleBuffer.push({ ...p2, ...color, ...id });
       });
       return singleBuffer;
     },
