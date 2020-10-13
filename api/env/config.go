@@ -58,39 +58,37 @@ type Config struct {
 	InitialDataset                     string  `env:"INITIAL_DATASET" envDefault:""`
 	MaxTrainingRows                    int     `env:"MAX_TRAINING_ROWS" envDefault:"100000"`
 	MaxTestRows                        int     `env:"MAX_TEST_ROWS" envDefault:"100000"`
-	//	MergedOutputDataPath               string  `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"merged/tables/learningData.csv"`
-	//	MergedOutputSchemaPath             string  `env:"MERGED_OUTPUT_SCHEMA_PATH" envDefault:"merged/datasetDoc.json"`
-	MinTrainingRows             int     `env:"MIN_TRAINING_ROWS" envDefault:"100"`
-	MinTestRows                 int     `env:"MIN_TEST_ROWS" envDefault:"100"`
-	PipelineCacheFilename       string  `env:"PIPELINE_CACHE_FILENAME" envDefault:"cache.bin"`
-	PipelineQueueSize           int     `env:"PIPELINE_QUEUE_SIZE" envDefault:"10"`
-	PostgresBatchSize           int     `env:"PG_BATCH_SIZE" envDefault:"1000"`
-	PostgresDatabase            string  `env:"PG_DATABASE" envDefault:"distil"`
-	PostgresHost                string  `env:"PG_HOST" envDefault:"localhost"`
-	PostgresLogLevel            string  `env:"PG_LOG_LEVEL" envDefault:"none"`
-	PostgresPassword            string  `env:"PG_PASSWORD" envDefault:""`
-	PostgresPort                int     `env:"PG_PORT" envDefault:"5432"`
-	PostgresRandomSeed          float64 `env:"PG_RANDOM_SEED" envDefault:"0.2"`
-	PostgresUser                string  `env:"PG_USER" envDefault:"distil"`
-	RankingOutputPath           string  `env:"RANKING_OUTPUT_PATH" envDefault:"importance.json"`
-	RankingRowLimit             int     `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
-	SchemaPath                  string  `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`
-	SkipIngest                  bool    `env:"SKIP_INGEST" envDefault:"false"`
-	SkipPreprocessing           bool    `env:"SKIP_PREPROCESSING" envDefault:"false"`
-	SolutionComputeEndpoint     string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
-	SolutionComputeMockEndpoint string  `env:"SOLUTION_COMPUTE_MOCK_ENDPOINT" envDefault:"localhost:50051"`
-	SolutionComputePullTimeout  int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`
-	SolutionComputePullMax      int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
-	SolutionSearchMaxTime       int     `env:"SOLUTION_SEARCH_MAX_TIME" envDefault:"10"`
-	SolutionComputeTrace        bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
-	SummaryPath                 string  `env:"SUMMARY_PATH" envDefault:"summary.txt"`
-	SummaryMachinePath          string  `env:"SUMMARY_MACHINE_PATH" envDefault:"summary-machine.json"`
-	SummaryEnabled              bool    `env:"SUMMARY_ENABLED" envDefault:"true"`
-	ServiceRetryCount           int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
-	TrainTestSplit              float64 `env:"TRAIN_TEST_SPLIT" envDefault:"0.9"`
-	TrainTestSplitTimeSeries    float64 `env:"TRAIN_TEST_SPLIT_TIMESERIES" envDefault:"0.9"`
-	UserProblemPath             string  `env:"USER_PROBLEM_PATH" envDefault:"outputs/problems"`
-	VerboseError                bool    `env:"VERBOSE_ERROR" envDefault:"false"`
+	MinTrainingRows                    int     `env:"MIN_TRAINING_ROWS" envDefault:"100"`
+	MinTestRows                        int     `env:"MIN_TEST_ROWS" envDefault:"100"`
+	PipelineCacheFilename              string  `env:"PIPELINE_CACHE_FILENAME" envDefault:"cache.bin"`
+	PipelineQueueSize                  int     `env:"PIPELINE_QUEUE_SIZE" envDefault:"10"`
+	PostgresBatchSize                  int     `env:"PG_BATCH_SIZE" envDefault:"1000"`
+	PostgresDatabase                   string  `env:"PG_DATABASE" envDefault:"distil"`
+	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`
+	PostgresLogLevel                   string  `env:"PG_LOG_LEVEL" envDefault:"none"`
+	PostgresPassword                   string  `env:"PG_PASSWORD" envDefault:""`
+	PostgresPort                       int     `env:"PG_PORT" envDefault:"5432"`
+	PostgresRandomSeed                 float64 `env:"PG_RANDOM_SEED" envDefault:"0.2"`
+	PostgresUser                       string  `env:"PG_USER" envDefault:"distil"`
+	RankingOutputPath                  string  `env:"RANKING_OUTPUT_PATH" envDefault:"importance.json"`
+	RankingRowLimit                    int     `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
+	SchemaPath                         string  `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`
+	SkipIngest                         bool    `env:"SKIP_INGEST" envDefault:"false"`
+	SkipPreprocessing                  bool    `env:"SKIP_PREPROCESSING" envDefault:"false"`
+	SolutionComputeEndpoint            string  `env:"SOLUTION_COMPUTE_ENDPOINT" envDefault:"localhost:50051"`
+	SolutionComputeMockEndpoint        string  `env:"SOLUTION_COMPUTE_MOCK_ENDPOINT" envDefault:"localhost:50051"`
+	SolutionComputePullTimeout         int     `env:"SOLUTION_COMPUTE_PULL_TIMEOUT" envDefault:"60"`
+	SolutionComputePullMax             int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
+	SolutionSearchMaxTime              int     `env:"SOLUTION_SEARCH_MAX_TIME" envDefault:"10"`
+	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
+	SummaryPath                        string  `env:"SUMMARY_PATH" envDefault:"summary.txt"`
+	SummaryMachinePath                 string  `env:"SUMMARY_MACHINE_PATH" envDefault:"summary-machine.json"`
+	SummaryEnabled                     bool    `env:"SUMMARY_ENABLED" envDefault:"true"`
+	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
+	TrainTestSplit                     float64 `env:"TRAIN_TEST_SPLIT" envDefault:"0.9"`
+	TrainTestSplitTimeSeries           float64 `env:"TRAIN_TEST_SPLIT_TIMESERIES" envDefault:"0.9"`
+	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"outputs/problems"`
+	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a copy.
