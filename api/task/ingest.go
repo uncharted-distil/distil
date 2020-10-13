@@ -41,20 +41,10 @@ const (
 // IngestTaskConfig captures the necessary configuration for an data ingest.
 type IngestTaskConfig struct {
 	HasHeader                          bool
-	ClusteringOutputDataRelative       string
-	ClusteringOutputSchemaRelative     string
 	ClusteringEnabled                  bool
 	ClusteringKMeans                   bool
 	FeaturizationEnabled               bool
-	FormatOutputDataRelative           string
-	FormatOutputSchemaRelative         string
-	CleanOutputDataRelative            string
-	CleanOutputSchemaRelative          string
-	GeocodingOutputDataRelative        string
-	GeocodingOutputSchemaRelative      string
 	GeocodingEnabled                   bool
-	MergedOutputPathRelative           string
-	MergedOutputSchemaPathRelative     string
 	SchemaPathRelative                 string
 	ClassificationOutputPathRelative   string
 	ClassificationProbabilityThreshold float64
@@ -102,20 +92,10 @@ func NewDefaultClient(config env.Config, userAgent string, discoveryLogger middl
 func NewConfig(config env.Config) *IngestTaskConfig {
 	return &IngestTaskConfig{
 		HasHeader:                          true,
-		ClusteringOutputDataRelative:       config.ClusteringOutputDataRelative,
-		ClusteringOutputSchemaRelative:     config.ClusteringOutputSchemaRelative,
 		ClusteringEnabled:                  config.ClusteringEnabled,
 		ClusteringKMeans:                   config.ClusteringKMeans,
 		FeaturizationEnabled:               config.FeaturizationEnabled,
-		FormatOutputDataRelative:           config.FormatOutputDataRelative,
-		FormatOutputSchemaRelative:         config.FormatOutputSchemaRelative,
-		CleanOutputDataRelative:            config.CleanOutputDataRelative,
-		CleanOutputSchemaRelative:          config.CleanOutputSchemaRelative,
-		GeocodingOutputDataRelative:        config.GeocodingOutputDataRelative,
-		GeocodingOutputSchemaRelative:      config.GeocodingOutputSchemaRelative,
 		GeocodingEnabled:                   config.GeocodingEnabled,
-		MergedOutputPathRelative:           config.MergedOutputDataPath,
-		MergedOutputSchemaPathRelative:     config.MergedOutputSchemaPath,
 		SchemaPathRelative:                 config.SchemaPath,
 		ClassificationOutputPathRelative:   config.ClassificationOutputPath,
 		ClassificationProbabilityThreshold: config.ClassificationProbabilityThreshold,
