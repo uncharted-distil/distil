@@ -278,6 +278,7 @@ func main() {
 	registerRoutePost(mux, "/distil/target-summary/:dataset/:target/:results-uuid/:mode", routes.TargetSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/residuals-summary/:dataset/:target/:results-uuid/:mode", routes.ResidualsSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/correctness-summary/:dataset/:results-uuid/:mode", routes.CorrectnessSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
+	registerRoutePost(mux, "/distil/confidence-summary/:dataset/:results-uuid/:mode", routes.ConfidenceSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/prediction-result-summary/:results-uuid/:mode", routes.PredictionResultSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/solution-result-summary/:results-uuid/:mode", routes.SolutionResultSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor))
