@@ -33,11 +33,7 @@ type Config struct {
 	ClassificationOutputPath           string  `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"classification.json"`
 	ClassificationProbabilityThreshold float64 `env:"CLASSIFICATION_PROBABILITY_THRESHOLD" envDefault:"0.8"`
 	ClassificationEnabled              bool    `env:"CLASSIFICATION_ENABLED" envDefault:"true"`
-	CleanOutputDataRelative            string  `env:"CLEAN_OUTPUT_DATA" envDefault:"clean/tables/learningData.csv"`
-	CleanOutputSchemaRelative          string  `env:"CLEAN_OUTPUT_SCHEMA" envDefault:"clean/datasetDoc.json"`
 	ClusteringEnabled                  bool    `env:"CLUSTERING_ENABLED" envDefault:"true"`
-	ClusteringOutputDataRelative       string  `env:"CLUSTERING_OUTPUT_DATA" envDefault:"clusters/tables/learningData.csv"`
-	ClusteringOutputSchemaRelative     string  `env:"CLUSTERING_OUTPUT_SCHEMA" envDefault:"clusters/datasetDoc.json"`
 	ClusteringKMeans                   bool    `env:"CLUSTERING_KMEANS" envDefault:"true"`
 	D3MInputDir                        string  `env:"D3MINPUTDIR" envDefault:"datasets"`
 	D3MOutputDir                       string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
@@ -53,10 +49,6 @@ type Config struct {
 	ESModelsIndex                      string  `env:"ES_DATASETS_INDEX" envDefault:"models"`
 	FastDataPercentage                 float64 `env:"FAST_DATA_PERCENTAGE" envDefault:"0.2"`
 	FeaturizationEnabled               bool    `env:"FEATURIZATION_ENABLED" envDefault:"false"`
-	FormatOutputDataRelative           string  `env:"FORMAT_OUTPUT_DATA" envDefault:"format/tables/learningData.csv"`
-	FormatOutputSchemaRelative         string  `env:"FORMAT_OUTPUT_SCHEMA" envDefault:"format/datasetDoc.json"`
-	GeocodingOutputDataRelative        string  `env:"GEOCODING_OUTPUT_DATA" envDefault:"geocoded/tables/learningData.csv"`
-	GeocodingOutputSchemaRelative      string  `env:"GEOCODING_OUTPUT_SCHEMA" envDefault:"geocoded/datasetDoc.json"`
 	GeocodingEnabled                   bool    `env:"GEOCODING_ENABLED" envDefault:"false"`
 	HelpURL                            string  `env:"HELP_URL" envDefault:"https://d3m.uncharted.software/"`
 	ImportErrorThreshold               float64 `env:"IMPORT_ERROR_THRESHOLD" envDefault:"0.1"`
@@ -66,8 +58,6 @@ type Config struct {
 	InitialDataset                     string  `env:"INITIAL_DATASET" envDefault:""`
 	MaxTrainingRows                    int     `env:"MAX_TRAINING_ROWS" envDefault:"100000"`
 	MaxTestRows                        int     `env:"MAX_TEST_ROWS" envDefault:"100000"`
-	MergedOutputDataPath               string  `env:"MERGED_OUTPUT_DATA_PATH" envDefault:"merged/tables/learningData.csv"`
-	MergedOutputSchemaPath             string  `env:"MERGED_OUTPUT_SCHEMA_PATH" envDefault:"merged/datasetDoc.json"`
 	MinTrainingRows                    int     `env:"MIN_TRAINING_ROWS" envDefault:"100"`
 	MinTestRows                        int     `env:"MIN_TEST_ROWS" envDefault:"100"`
 	PipelineCacheFilename              string  `env:"PIPELINE_CACHE_FILENAME" envDefault:"cache.bin"`
