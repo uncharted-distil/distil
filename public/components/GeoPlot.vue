@@ -35,6 +35,15 @@
         <icon-base width="100%" height="100%"> <icon-crop-free /> </icon-base>
       </a>
     </div>
+    <b-toast
+      id="geo-notifications"
+      title="BootstrapVue"
+      style="position: absolute; top: 0px; right: 0px"
+      static
+      no-auto-hide
+    >
+      Hello, world! This is a toast message.
+    </b-toast>
   </div>
 </template>
 
@@ -58,7 +67,10 @@ import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import lumo from "lumo";
 import BatchQuadOverlay from "../util/rendering/BatchQuadOverlay";
-import BatchQuadOverlayRenderer from "../util/rendering/BatchQuadOverlayRenderer";
+import {
+  BatchQuadOverlayRenderer,
+  EVENT_TYPES,
+} from "../util/rendering/BatchQuadOverlayRenderer";
 import {
   TableColumn,
   TableRow,
@@ -119,6 +131,19 @@ interface Area {
   item: TableRow;
 }
 
+interface Quad {
+  x: number; // vertex x
+  y: number; // vertex y
+  r: number; // color r channel
+  g: number; // color g channel
+  b: number; // color b channel
+  a: number; // color alpha channel
+  // id's bytes is broken down into 4 channels
+  iR: number; // id smallest byte
+  iG: number; // id second smallest byte
+  iB: number; // id second largest byte
+  iA: number; // id largest byte
+}
 // Minimum pixels size of clickable target displayed on the map.
 const TARGETSIZE = 6;
 
@@ -135,6 +160,7 @@ export default Vue.extend({
     instanceName: String as () => string,
     dataItems: Array as () => any[],
     dataFields: Object as () => Dictionary<TableColumn>,
+    quadOpacity: { type: Number, default: 0.8 },
   },
 
   data() {
@@ -374,6 +400,7 @@ export default Vue.extend({
 
   methods: {
     createLumoMap() {
+      // create map
       this.map = new lumo.Plot(`#map-select-data`, {
         continuousZoom: true,
         inertia: true,
@@ -385,22 +412,59 @@ export default Vue.extend({
       const base = new lumo.TileLayer({
         renderer: new lumo.ImageTileRenderer(),
       });
-
+      // tile request function
       base.requestTile = (coord, done) => {
         const SUBDOMAINS = ["a", "b", "c"];
         const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
         const url = `https:/${s}.basemaps.cartocdn.com/light_all/${coord.xyz()}.png`;
         lumo.loadImage(url, done);
       };
-
       this.map.add(base);
+      // Quad layer
       this.overlay = new BatchQuadOverlay();
       this.renderer = new BatchQuadOverlayRenderer();
       this.overlay.setRenderer(this.renderer);
+      // convert this.areas to quads in normalized space and add to overlay layer
       this.overlay.addQuad(this.polygonLayerId, this.areaToQuads());
       this.map.add(this.overlay);
+      // add listener for clicks on quads
+      this.renderer.addListener(EVENT_TYPES.MOUSE_CLICK, (id) => {
+        this.onTileClick(id);
+      });
+      this.renderer.addListener(EVENT_TYPES.MOUSE_HOVER, (id) => {
+        this.onTileHover(id);
+      });
     },
-    latlngToNormalized(latlng): { x: number; y: number } {
+    onTileClick(id: number) {
+      if (id > this.areas.length || id < 0) {
+        console.error(
+          `id retrieved from buffer picker ${id} not within index bounds of areas.`
+        );
+        return;
+      }
+      this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
+    },
+    onTileHover(id: number) {
+      console.log(`hovering over ${id}`);
+      if (id > this.areas.length) {
+        console.error(`id: ${id} is outside of this.areas bounds`);
+        return; // id outside of bounds
+      }
+      this.$bvToast.show("example-toast");
+      //const ImageLabelComponent = Vue.extend(ImageLabel);
+      //const tooltip = new ImageLabelComponent({
+      //  parent: this,
+      //  propsData: {
+      //    dataFields: this.dataFields,
+      //    includeActive: true,
+      //    item: this.areas[id].item,
+      //  },
+      //  store: this.$store,
+      //}).$mount();
+      // this.
+    },
+    // used to convert latlng to normalized space coordinates (used in lumo)
+    latlngToNormalized(latlng: number[]): { x: number; y: number } {
       const minLon = -180.0;
       const maxLon = 180.0;
       const minLat = -85.0511287798066;
@@ -414,20 +478,21 @@ export default Vue.extend({
           Math.log(Math.tan(latRadians) + 1 / Math.cos(latRadians)) / Math.PI) /
         2;
 
-      return { x, y: 1 - y };
+      return { x, y: 1 - y }; // have to invert y
     },
-    areaToQuads() {
+    areaToQuads(): Quad[] {
       const singleBuffer = [];
       this.areas.forEach((area, idx) => {
         const p1 = this.latlngToNormalized(area.coordinates[0]);
         const p2 = this.latlngToNormalized(area.coordinates[1]);
-        const color = Color(area.color).rgb().object();
+        const color = Color(area.color).rgb().object(); //convert hex color to rgb
         const maxVal = 255;
-        color.a = 1.0;
+        //normalize color values
+        color.a = this.quadOpacity;
         color.r /= maxVal;
         color.g /= maxVal;
         color.b /= maxVal;
-        const id = this.renderer.idToRGBA(idx);
+        const id = this.renderer.idToRGBA(idx); //separate index bytes into 4 channels iR,iG,iB,iA. Used to render the index of the object into webgl FBO
         // need to get rid of spread operators super slow
         singleBuffer.push({ ...p1, ...color, ...id });
         singleBuffer.push({ x: p2.x, y: p1.y, ...color, ...id });
@@ -907,8 +972,8 @@ export default Vue.extend({
     },
     onNewData() {
       // clear polygons
-      this.overlay.clearPolygons();
-      this.overlay.addPolygon(this.polygonLayerId, this.areaToQuads());
+      this.overlay.clearQuads();
+      this.overlay.addQuad(this.polygonLayerId, this.areaToQuads());
     },
   },
 
@@ -1020,5 +1085,10 @@ path.selected {
 
 .geo-close-button:hover {
   background-color: #f4f4f4;
+}
+.geo-toast {
+  position: absolute;
+  top: 0px;
+  right: 0px;
 }
 </style>

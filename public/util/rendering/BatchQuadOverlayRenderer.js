@@ -8,7 +8,7 @@ import WebGLOverlayRenderer from "lumo/src/renderer/overlay/WebGLOverlayRenderer
 
 /**
  * Shader GLSL source.
- *
+ * //normal rendering program
  * @private
  * @constant {object}
  */
@@ -37,7 +37,7 @@ const SHADER_GLSL = {
 		}
 		`,
 };
-
+// picking shader, used to render the quad's id to screen
 const PICKING_SHADER = {
   vert: `
   precision highp float;
@@ -94,17 +94,17 @@ const createBuffers = function (overlay, points) {
         size: 2,
         type: "FLOAT",
         byteOffset: 0,
-      },
+      }, // vertex pointer
       1: {
         size: 4,
         type: "FLOAT",
         byteOffset: vertSize * floatByteSize,
-      },
+      }, // color pointer
       2: {
         size: 4,
         type: "FLOAT",
         byteOffset: (colorSize + vertSize) * floatByteSize,
-      },
+      }, // id pointer
     },
     {
       mode: "TRIANGLES",
@@ -116,11 +116,14 @@ const createBuffers = function (overlay, points) {
     vertex: vertexBuffer,
   };
 };
-
+export const EVENT_TYPES = {
+  MOUSE_HOVER: "mousehover",
+  MOUSE_CLICK: "mouseclick",
+};
 /**
  * Class representing a Batchquad Renderer.
  */
-export default class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
+export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
   /**
    * Instantiates a new quadOverlayRenderer object.
    *
@@ -138,9 +141,14 @@ export default class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.depthBuffer = null;
     this.fbo = null;
     this.fboDimensions = { width: 0, height: 0 };
-    this.hoverCallbacks = [];
-    this.leftClickCallbacks = [];
-    this.rightClickCallbacks = [];
+    this.callbacks = { mousehover: [], mouseclick: [] };
+    const secondsToMillis = 1000;
+    this.hoverThreshold = defaultTo(
+      options.hoverThreshold,
+      2 * secondsToMillis
+    ); // two seconds hover threshold
+    this.BACKGROUND_ID = -1;
+    this.hoverTimeoutId = null;
   }
   /**
    * Executed when the overlay is attached to a plot.
@@ -156,7 +164,10 @@ export default class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.gl.canvas.addEventListener("mouseup", (e) => {
       this.onClick(e);
     });
-    this.buildFBO();
+    this.gl.canvas.addEventListener("mousemove", (e) => {
+      this.onMove(e);
+    });
+    this.createFBO();
     return this;
   }
 
@@ -190,16 +201,7 @@ export default class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       this.quads = null;
     }
   }
-
-  /**
-   * The draw function that is executed per frame.
-   *
-   * @returns {BatchquadOverlayRenderer} The overlay object, for chaining.
-   */
-  draw() {
-    if (!this.quads) {
-      return this;
-    }
+  renderColor() {
     const gl = this.gl;
     const shader = this.shader;
     const quads = this.quads;
@@ -208,7 +210,6 @@ export default class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     const proj = this.getOrthoMatrix();
     const scale = Math.pow(2, plot.zoom - cell.zoom);
     const opacity = this.overlay.opacity;
-
     // get view offset in cell space
     const offset = cell.project(plot.viewport, plot.zoom);
 
@@ -232,15 +233,24 @@ export default class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       buffer.vertex.bind();
       buffer.vertex.draw();
     });
-    if (this.canvasResize(gl.canvas)) {
+  }
+  renderIds() {
+    const gl = this.gl;
+    const quads = this.quads;
+    const plot = this.overlay.plot;
+    const cell = plot.cell;
+    const proj = this.getOrthoMatrix();
+    const scale = Math.pow(2, plot.zoom - cell.zoom);
+    // get view offset in cell space
+    const offset = cell.project(plot.viewport, plot.zoom);
+    if (this.didCanvasResize(gl.canvas)) {
       // the canvas was resized, make the framebuffer attachments match
       this.setFramebufferAttachmentSizes(gl.canvas.width, gl.canvas.height);
     }
     this.pickingShader.use();
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    //gl.enable(gl.CULL_FACE);
-    gl.disable(gl.BLEND);
+    gl.disable(gl.BLEND); // !important
     gl.enable(gl.DEPTH_TEST);
 
     // Clear the canvas AND the depth buffer.
@@ -253,27 +263,56 @@ export default class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       buffer.vertex.bind();
       buffer.vertex.draw();
     });
-    if (this.clicked) {
-      const pixelX = (this.x * gl.canvas.width) / gl.canvas.clientWidth;
-      const pixelY =
-        gl.canvas.height -
-        (this.y * gl.canvas.height) / gl.canvas.clientHeight -
-        1;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.disable(gl.DEPTH_TEST);
+  }
 
-      this.readPixels(pixelX, pixelY);
+  handleEvents() {
+    const gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+    // convert position to pixel space -- only applies if client width is different than the cavas size
+    const pixelX = (this.x * gl.canvas.width) / gl.canvas.clientWidth;
+    const pixelY =
+      gl.canvas.height -
+      (this.y * gl.canvas.height) / gl.canvas.clientHeight -
+      1;
+    if (this.clicked) {
+      const id = this.readPixels(pixelX, pixelY);
+      // check if clicked on anything
+      if (id === this.BACKGROUND_ID) {
+        // clean up
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        this.clicked = false;
+        return;
+      }
+      this.callbacks[EVENT_TYPES.MOUSE_CLICK].forEach((cb) => {
+        cb(id);
+      });
       this.clicked = false;
     }
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.disable(gl.DEPTH_TEST);
+  }
+  /**
+   * The draw function that is executed per frame.
+   *
+   * @returns {BatchquadOverlayRenderer} The overlay object, for chaining.
+   */
+  draw() {
+    if (!this.quads) {
+      return this;
+    }
+    this.renderColor(); // render color fbo (for users to see)
+    this.renderIds(); // render IDS to fb (offscreen)
+    this.handleEvents(); // handle mouse events
     return this;
   }
-  canvasResize(canvas) {
+  didCanvasResize(canvas) {
     return (
       canvas.width !== this.fboDimensions.width ||
       canvas.height !== this.fboDimensions.height
     );
   }
-  buildFBO() {
+  createFBO() {
     const gl = this.gl;
     this.targetTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.targetTexture);
@@ -311,8 +350,6 @@ export default class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
   readPixels(x, y) {
     const gl = this.gl;
     gl.flush();
-
-    //gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
     const data = new Uint8Array(4);
     gl.readPixels(
       x, // x
@@ -328,12 +365,49 @@ export default class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       id,
       `background-color: rgb(${data[0]}, ${data[1]}, ${data[2]})`
     );
+    return id - 1; // ids start at 1 -- 0 is reserved for background
   }
+  // adds listeners to callback map -- please see EVENT_TYPES
+  addListener(event, callback) {
+    this.callbacks[event].push(callback);
+  }
+
   onClick(event) {
     this.clicked = true;
     this.x = event.layerX;
     this.y = event.layerY;
+    clearTimeout(this.hoverTimeoutId); // clear hover
   }
+  onMove(event) {
+    this.x = event.layerX;
+    this.y = event.layerY;
+    //clear existing timeout, if mouse does not move for hoverThreshold time then we are hovering on something.
+    clearTimeout(this.hoverTimeoutId);
+    this.hoverTimeoutId = setTimeout(() => {
+      this.onHover();
+    }, this.hoverThreshold);
+  }
+  onHover() {
+    const gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+    // convert position to pixel space -- only applies if client width is different than the cavas size
+    const pixelX = (this.x * gl.canvas.width) / gl.canvas.clientWidth;
+    const pixelY =
+      gl.canvas.height -
+      (this.y * gl.canvas.height) / gl.canvas.clientHeight -
+      1;
+    const id = this.readPixels(pixelX, pixelY);
+    if (id === this.BACKGROUND_ID) {
+      // clean up
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      return;
+    }
+    this.callbacks[EVENT_TYPES.MOUSE_HOVER].forEach((cb) => {
+      cb(id);
+    });
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+  // used to resize framebuffer when canvas has resized
   setFramebufferAttachmentSizes(width, height) {
     const gl = this.gl;
     gl.bindTexture(gl.TEXTURE_2D, this.targetTexture);
