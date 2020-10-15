@@ -21,8 +21,8 @@
       :item="item"
       :visible="isImageDrilldown"
     />
-
-    <div
+    <!--Commented out until feature is working again-->
+    <!--<div
       class="selection-toggle"
       :class="{ active: isSelectionMode }"
       @click="isSelectionMode = !isSelectionMode"
@@ -34,7 +34,7 @@
       >
         <icon-base width="100%" height="100%"> <icon-crop-free /> </icon-base>
       </a>
-    </div>
+    </div> -->
     <b-toast
       :id="toastId"
       :title="toastTitle"
