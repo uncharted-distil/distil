@@ -36,13 +36,30 @@
       </a>
     </div>
     <b-toast
-      id="geo-notifications"
-      title="BootstrapVue"
+      :id="toastId"
+      :title="toastTitle"
       style="position: absolute; top: 0px; right: 0px"
       static
       no-auto-hide
     >
-      Hello, world! This is a toast message.
+      <div class="geo-plot">
+        <image-label
+          class="image-label"
+          :dataFields="dataFields"
+          includedActive
+          shortenLabels
+          alignHorizontal
+          :item="hoverItem"
+        />
+        <image-preview
+          class="image-preview"
+          :row="hoverItem"
+          :image-url="hoverUrl"
+          :width="imageWidth"
+          :height="imageHeight"
+          type="remote_sensing"
+        ></image-preview>
+      </div>
     </b-toast>
   </div>
 </template>
@@ -85,6 +102,7 @@ import {
   removeRowSelection,
   isRowSelected,
 } from "../util/row";
+import ImagePreview from "../components/ImagePreview";
 import {
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
@@ -154,6 +172,8 @@ export default Vue.extend({
     IconBase,
     IconCropFree,
     ImageDrilldown,
+    ImageLabel,
+    ImagePreview,
   },
 
   props: {
@@ -180,6 +200,13 @@ export default Vue.extend({
       imageUrl: null,
       item: null,
       polygonLayerId: "polygon-layer",
+      toastId: "geo-notifications",
+      toastTitle: "",
+      hoverItem: null,
+      toastImg: "",
+      hoverUrl: "",
+      imageWidth: 128,
+      imageHeight: 128,
     };
   },
 
@@ -396,6 +423,10 @@ export default Vue.extend({
       const URL = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
       return leaflet.tileLayer(URL);
     },
+
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
   },
 
   methods: {
@@ -425,7 +456,10 @@ export default Vue.extend({
       this.renderer = new BatchQuadOverlayRenderer();
       this.overlay.setRenderer(this.renderer);
       // convert this.areas to quads in normalized space and add to overlay layer
-      this.overlay.addQuad(this.polygonLayerId, this.areaToQuads());
+      const normalizedQuads = this.areaToQuads();
+      // get quad set bounds
+      const mapBounds = this.getBounds(normalizedQuads);
+      this.overlay.addQuad(this.polygonLayerId, normalizedQuads);
       this.map.add(this.overlay);
       // add listener for clicks on quads
       this.renderer.addListener(EVENT_TYPES.MOUSE_CLICK, (id) => {
@@ -434,7 +468,23 @@ export default Vue.extend({
       this.renderer.addListener(EVENT_TYPES.MOUSE_HOVER, (id) => {
         this.onTileHover(id);
       });
+      this.map.fitToBounds(mapBounds);
     },
+    getBounds(quads: Quad[]) {
+      // set mapBounds to a single tile to start
+      const mapBounds = new lumo.Bounds(
+        quads[0].x,
+        quads[1].x,
+        quads[0].y,
+        quads[1].y
+      );
+      // extend bounds to fit the entire quad set
+      quads.forEach((q) => {
+        mapBounds.extend(q);
+      });
+      return mapBounds;
+    },
+    // callback when tile is being clicked and generates drilldown.
     onTileClick(id: number) {
       if (id > this.areas.length || id < 0) {
         console.error(
@@ -444,55 +494,36 @@ export default Vue.extend({
       }
       this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
     },
-    onTileHover(id: number) {
-      console.log(`hovering over ${id}`);
+    // callback when tile is being hovered on and generates a toast notification
+    async onTileHover(id: number) {
       if (id > this.areas.length) {
         console.error(`id: ${id} is outside of this.areas bounds`);
         return; // id outside of bounds
       }
-      this.$bvToast.show("example-toast");
-      //const ImageLabelComponent = Vue.extend(ImageLabel);
-      //const tooltip = new ImageLabelComponent({
-      //  parent: this,
-      //  propsData: {
-      //    dataFields: this.dataFields,
-      //    includeActive: true,
-      //    item: this.areas[id].item,
-      //  },
-      //  store: this.$store,
-      //}).$mount();
-      // this.
+      this.toastTitle = this.areas[id].imageUrl;
+      this.hoverItem = this.areas[id].item;
+      this.hoverUrl = this.areas[id].imageUrl;
+      this.$bvToast.show(this.toastId);
+      window.addEventListener("mousemove", this.fadeToast);
     },
-    // used to convert latlng to normalized space coordinates (used in lumo)
-    latlngToNormalized(latlng: number[]): { x: number; y: number } {
-      const minLon = -180.0;
-      const maxLon = 180.0;
-      const minLat = -85.0511287798066;
-      const maxLat = 85.0511287798066;
-      const degreesToRadians = Math.PI / 180.0; // Factor for changing degrees to radians
-      const radiansToDegrees = 180.0 / Math.PI; // Factor for changing radians to degrees
-      const latRadians = latlng[0] * degreesToRadians;
-      const x = (latlng[1] + maxLon) / (maxLon * 2);
-      const y =
-        (1 -
-          Math.log(Math.tan(latRadians) + 1 / Math.cos(latRadians)) / Math.PI) /
-        2;
-
-      return { x, y: 1 - y }; // have to invert y
+    // fades toast after mouse is moved
+    fadeToast() {
+      this.$bvToast.hide(this.toastId);
+      window.removeEventListener("mousemove", this.fadeToast); // remove event listener because toast is now faded
     },
     areaToQuads(): Quad[] {
       const singleBuffer = [];
       this.areas.forEach((area, idx) => {
-        const p1 = this.latlngToNormalized(area.coordinates[0]);
-        const p2 = this.latlngToNormalized(area.coordinates[1]);
-        const color = Color(area.color).rgb().object(); //convert hex color to rgb
+        const p1 = this.renderer.latlngToNormalized(area.coordinates[0]);
+        const p2 = this.renderer.latlngToNormalized(area.coordinates[1]);
+        const color = Color(area.color).rgb().object(); // convert hex color to rgb
         const maxVal = 255;
-        //normalize color values
+        // normalize color values
         color.a = this.quadOpacity;
         color.r /= maxVal;
         color.g /= maxVal;
         color.b /= maxVal;
-        const id = this.renderer.idToRGBA(idx); //separate index bytes into 4 channels iR,iG,iB,iA. Used to render the index of the object into webgl FBO
+        const id = this.renderer.idToRGBA(idx); // separate index bytes into 4 channels iR,iG,iB,iA. Used to render the index of the object into webgl FBO
         // need to get rid of spread operators super slow
         singleBuffer.push({ ...p1, ...color, ...id });
         singleBuffer.push({ x: p2.x, y: p1.y, ...color, ...id });
@@ -712,34 +743,6 @@ export default Vue.extend({
       return fieldSpec.lngField + ":" + fieldSpec.latField;
     },
 
-    clear() {
-      // if (this.selectedRect) {
-      //   this.selectedRect.remove();
-      //   this.selectedRect = null;
-      // }
-      //
-      // if (this.currentRect) {
-      //   this.currentRect.remove();
-      //   this.currentRect = null;
-      // }
-      //
-      // if (this.closeButton) {
-      //   this.closeButton.remove();
-      //   this.closeButton = null;
-      // }
-      //
-      // _.forIn(this.markers, (markerLayer) => {
-      //   markerLayer.removeFrom(this.map);
-      // });
-      //
-      // if (this.map.hasLayer(this.poiLayer)) {
-      //   this.map.removeLayer(this.poiLayer);
-      // }
-      //
-      // this.markers = {};
-      this.startingLatLng = null;
-    },
-
     toggleSelection(event) {
       const marker = event.target;
       const row = marker.options.row;
@@ -957,7 +960,6 @@ export default Vue.extend({
 
     paint() {
       this.createMap();
-      this.clear();
 
       if (this.isGeoSpatial) {
         // Display areas and update them on zoom to be sure they are selectable.
@@ -973,7 +975,14 @@ export default Vue.extend({
     onNewData() {
       // clear polygons
       this.overlay.clearQuads();
+      // create quads from latlng
+      const normalizedQuads = this.areaToQuads();
+      // get bounds of quad set
+      const mapBounds = this.getBounds(normalizedQuads);
+      // add the batched quads to a single layer on the overlay
       this.overlay.addQuad(this.polygonLayerId, this.areaToQuads());
+      // fit map to the quad set
+      this.map.fitToBounds(mapBounds);
     },
   },
 
@@ -1090,5 +1099,11 @@ path.selected {
   position: absolute;
   top: 0px;
   right: 0px;
+}
+.image-label {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  z-index: 1;
 }
 </style>

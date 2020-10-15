@@ -167,6 +167,10 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.gl.canvas.addEventListener("mousemove", (e) => {
       this.onMove(e);
     });
+    this.gl.canvas,
+      addEventListener("mouseleave", () => {
+        clearTimeout(this.hoverTimeoutId);
+      });
     this.createFBO();
     return this;
   }
@@ -267,31 +271,6 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     gl.disable(gl.DEPTH_TEST);
   }
 
-  handleEvents() {
-    const gl = this.gl;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
-    // convert position to pixel space -- only applies if client width is different than the cavas size
-    const pixelX = (this.x * gl.canvas.width) / gl.canvas.clientWidth;
-    const pixelY =
-      gl.canvas.height -
-      (this.y * gl.canvas.height) / gl.canvas.clientHeight -
-      1;
-    if (this.clicked) {
-      const id = this.readPixels(pixelX, pixelY);
-      // check if clicked on anything
-      if (id === this.BACKGROUND_ID) {
-        // clean up
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        this.clicked = false;
-        return;
-      }
-      this.callbacks[EVENT_TYPES.MOUSE_CLICK].forEach((cb) => {
-        cb(id);
-      });
-      this.clicked = false;
-    }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  }
   /**
    * The draw function that is executed per frame.
    *
@@ -303,7 +282,6 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     }
     this.renderColor(); // render color fbo (for users to see)
     this.renderIds(); // render IDS to fb (offscreen)
-    this.handleEvents(); // handle mouse events
     return this;
   }
   didCanvasResize(canvas) {
@@ -373,11 +351,29 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
   }
 
   onClick(event) {
-    this.clicked = true;
     this.x = event.layerX;
     this.y = event.layerY;
     clearTimeout(this.hoverTimeoutId); // clear hover
+    const gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+    // convert position to pixel space -- only applies if client width is different than the cavas size
+    const pixelX = (this.x * gl.canvas.width) / gl.canvas.clientWidth;
+    const pixelY =
+      gl.canvas.height -
+      (this.y * gl.canvas.height) / gl.canvas.clientHeight -
+      1;
+    const id = this.readPixels(pixelX, pixelY);
+    // check if clicked on anything
+    if (id === this.BACKGROUND_ID) {
+      // clean up
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      return;
+    }
+    this.callbacks[EVENT_TYPES.MOUSE_CLICK].forEach((cb) => {
+      cb(id);
+    });
   }
+
   onMove(event) {
     this.x = event.layerX;
     this.y = event.layerY;
@@ -387,6 +383,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       this.onHover();
     }, this.hoverThreshold);
   }
+
   onHover() {
     const gl = this.gl;
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
@@ -452,5 +449,22 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
   }
   RGBAToId(pixels) {
     return pixels[0] + (pixels[1] << 8) + (pixels[2] << 16) + (pixels[3] << 24);
+  }
+  /**
+   *
+   * @param {Array.<number>} latlng
+   * @returns {{x:number, y:number}}
+   */
+  latlngToNormalized(latlng) {
+    const maxLon = 180.0;
+    const degreesToRadians = Math.PI / 180.0; // Factor for changing degrees to radians
+    const latRadians = latlng[0] * degreesToRadians;
+    const x = (latlng[1] + maxLon) / (maxLon * 2);
+    const y =
+      (1 -
+        Math.log(Math.tan(latRadians) + 1 / Math.cos(latRadians)) / Math.PI) /
+      2;
+
+    return { x, y: 1 - y }; // have to invert y
   }
 }
