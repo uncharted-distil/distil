@@ -94,7 +94,8 @@ import {
   D3M_INDEX_FIELD,
   Highlight,
   RowSelection,
-  GeoCoordinateGrouping,, VariableSummary
+  GeoCoordinateGrouping,
+  VariableSummary,
 } from "../store/dataset/index";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import {
@@ -180,7 +181,7 @@ export default Vue.extend({
     instanceName: String as () => string,
     dataItems: Array as () => any[],
     dataFields: Object as () => Dictionary<TableColumn>,
-    summaries: Array as ()=>VariableSummary[],
+    summaries: Array as () => VariableSummary[],
     quadOpacity: { type: Number, default: 0.8 },
   },
 
@@ -302,38 +303,39 @@ export default Vue.extend({
       return fields;
     },
     bucketFeatures(): any[] {
-      if(!this.summaries)
-      {
+      if (!this.summaries) {
         return [];
       }
       const features = [];
-      this.summaries.forEach((summary)=>{
-      // compute the bucket size in degrees
-      const buckets = summary.filtered ? summary.filtered.buckets : summary.baseline.buckets;
-      const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
-      const ySize =
-        _.toNumber(buckets[0].buckets[1].key) -
-        _.toNumber(buckets[0].buckets[0].key);
+      this.summaries.forEach((summary) => {
+        // compute the bucket size in degrees
+        const buckets = summary.filtered
+          ? summary.filtered.buckets
+          : summary.baseline.buckets;
+        const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
+        const ySize =
+          _.toNumber(buckets[0].buckets[1].key) -
+          _.toNumber(buckets[0].buckets[0].key);
 
-      // create a feature collection from the server-supplied bucket data
-     buckets.forEach((lonBucket) => {
-        lonBucket.buckets.forEach((latBucket) => {
-          // Don't include features with a count of 0.
-          if (latBucket.count > 0) {
-            const xCoord = _.toNumber(lonBucket.key);
-            const yCoord = _.toNumber(latBucket.key);
-            const feature = {
-              coordinates: [
-                [xCoord, yCoord],
-                [xCoord + xSize, yCoord + ySize],
-              ],
-              meta: { selected: false, count: latBucket.count },
-            };
+        // create a feature collection from the server-supplied bucket data
+        buckets.forEach((lonBucket) => {
+          lonBucket.buckets.forEach((latBucket) => {
+            // Don't include features with a count of 0.
+            if (latBucket.count > 0) {
+              const xCoord = _.toNumber(lonBucket.key);
+              const yCoord = _.toNumber(latBucket.key);
+              const feature = {
+                coordinates: [
+                  [xCoord, yCoord],
+                  [xCoord + xSize, yCoord + ySize],
+                ],
+                meta: { selected: false, count: latBucket.count },
+              };
 
-            features.push(feature);
-          }
+              features.push(feature);
+            }
+          });
         });
-      });
       });
       return features;
     },
