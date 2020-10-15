@@ -81,6 +81,7 @@ func (s *Storage) fetchConfidenceHistogram(dataset string, storageName string, v
 		countCol = fmt.Sprintf("DISTINCT \"%s\"", countCol)
 	}
 
+	wheres = append(wheres, "confidence is not null")
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, targetName)
 
@@ -119,6 +120,10 @@ func (s *Storage) parseConfidenceHistogram(rows pgx.Rows, variable *model.Variab
 		if err != nil {
 			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
+	}
+
+	if len(countMap) == 0 {
+		return nil, nil
 	}
 
 	// create buckets from 0 to 50
