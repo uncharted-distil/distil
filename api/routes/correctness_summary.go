@@ -95,6 +95,16 @@ func CorrectnessSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor ap
 			return
 		}
 
+		if res == nil {
+			err = handleJSON(w, CorrectnessSummary{
+				CorrectnessSummary: nil,
+			})
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable marshal nil histogram into JSON"))
+			}
+			return
+		}
+
 		// fetch summary histogram
 		summary, err := data.FetchCorrectnessSummary(dataset, storageName, res.ResultURI, filterParams, api.SummaryMode(mode))
 		if err != nil {

@@ -89,6 +89,13 @@ func ConfidenceSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api
 			handleError(w, err)
 			return
 		}
+		if res == nil {
+			err = handleJSON(w, SummaryResult{})
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable marshal nil histogram into JSON"))
+			}
+			return
+		}
 
 		// fetch summary histogram
 		summary, err := data.FetchConfidenceSummary(dataset, storageName, res.ResultURI, filterParams, api.SummaryMode(mode))
