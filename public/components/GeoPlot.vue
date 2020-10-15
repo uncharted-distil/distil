@@ -1,5 +1,6 @@
 <template>
   <div
+    id="geo-test"
     class="geo-plot-container"
     :class="{ 'selection-mode': isSelectionMode }"
   >
@@ -20,8 +21,8 @@
       :item="item"
       :visible="isImageDrilldown"
     />
-
-    <div
+    <!--Commented out until feature is working again-->
+    <!--<div
       class="selection-toggle"
       :class="{ active: isSelectionMode }"
       @click="isSelectionMode = !isSelectionMode"
@@ -33,7 +34,33 @@
       >
         <icon-base width="100%" height="100%"> <icon-crop-free /> </icon-base>
       </a>
-    </div>
+    </div> -->
+    <b-toast
+      :id="toastId"
+      :title="toastTitle"
+      style="position: absolute; top: 0px; right: 0px"
+      static
+      no-auto-hide
+    >
+      <div class="geo-plot">
+        <image-label
+          class="image-label"
+          :dataFields="dataFields"
+          includedActive
+          shortenLabels
+          alignHorizontal
+          :item="hoverItem"
+        />
+        <image-preview
+          class="image-preview"
+          :row="hoverItem"
+          :image-url="hoverUrl"
+          :width="imageWidth"
+          :height="imageHeight"
+          type="remote_sensing"
+        ></image-preview>
+      </div>
+    </b-toast>
   </div>
 </template>
 
@@ -55,6 +82,12 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
+import lumo from "lumo";
+import BatchQuadOverlay from "../util/rendering/BatchQuadOverlay";
+import {
+  BatchQuadOverlayRenderer,
+  EVENT_TYPES,
+} from "../util/rendering/BatchQuadOverlayRenderer";
 import {
   TableColumn,
   TableRow,
@@ -69,13 +102,14 @@ import {
   removeRowSelection,
   isRowSelected,
 } from "../util/row";
+import ImagePreview from "../components/ImagePreview";
 import {
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
   REAL_VECTOR_TYPE,
   GEOCOORDINATE_TYPE,
 } from "../util/types";
-
+import Color from "color";
 import "leaflet/dist/leaflet.css";
 import "leaflet/dist/images/marker-icon.png";
 import "leaflet/dist/images/marker-icon-2x.png";
@@ -115,6 +149,19 @@ interface Area {
   item: TableRow;
 }
 
+interface Quad {
+  x: number; // vertex x
+  y: number; // vertex y
+  r: number; // color r channel
+  g: number; // color g channel
+  b: number; // color b channel
+  a: number; // color alpha channel
+  // id's bytes is broken down into 4 channels
+  iR: number; // id smallest byte
+  iG: number; // id second smallest byte
+  iB: number; // id second largest byte
+  iA: number; // id largest byte
+}
 // Minimum pixels size of clickable target displayed on the map.
 const TARGETSIZE = 6;
 
@@ -125,18 +172,23 @@ export default Vue.extend({
     IconBase,
     IconCropFree,
     ImageDrilldown,
+    ImageLabel,
+    ImagePreview,
   },
 
   props: {
     instanceName: String as () => string,
     dataItems: Array as () => any[],
     dataFields: Object as () => Dictionary<TableColumn>,
+    quadOpacity: { type: Number, default: 0.8 },
   },
 
   data() {
     return {
       poiLayer: null,
       map: null,
+      overlay: null,
+      renderer: null,
       markers: null,
       areasMeanLng: 0,
       closeButton: null,
@@ -147,6 +199,14 @@ export default Vue.extend({
       isImageDrilldown: false,
       imageUrl: null,
       item: null,
+      polygonLayerId: "polygon-layer",
+      toastId: "geo-notifications",
+      toastTitle: "",
+      hoverItem: null,
+      toastImg: "",
+      hoverUrl: "",
+      imageWidth: 128,
+      imageHeight: 128,
     };
   },
 
@@ -363,9 +423,117 @@ export default Vue.extend({
       const URL = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
       return leaflet.tileLayer(URL);
     },
+
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
   },
 
   methods: {
+    createLumoMap() {
+      // create map
+      this.map = new lumo.Plot(`#map-select-data`, {
+        continuousZoom: true,
+        inertia: true,
+        wraparound: true,
+        zoom: 3,
+      });
+
+      // WebGL CARTO Image Layer
+      const base = new lumo.TileLayer({
+        renderer: new lumo.ImageTileRenderer(),
+      });
+      // tile request function
+      base.requestTile = (coord, done) => {
+        const SUBDOMAINS = ["a", "b", "c"];
+        const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
+        const url = `https:/${s}.basemaps.cartocdn.com/light_all/${coord.xyz()}.png`;
+        lumo.loadImage(url, done);
+      };
+      this.map.add(base);
+      // Quad layer
+      this.overlay = new BatchQuadOverlay();
+      this.renderer = new BatchQuadOverlayRenderer();
+      this.overlay.setRenderer(this.renderer);
+      // convert this.areas to quads in normalized space and add to overlay layer
+      const normalizedQuads = this.areaToQuads();
+      // get quad set bounds
+      const mapBounds = this.getBounds(normalizedQuads);
+      this.overlay.addQuad(this.polygonLayerId, normalizedQuads);
+      this.map.add(this.overlay);
+      // add listener for clicks on quads
+      this.renderer.addListener(EVENT_TYPES.MOUSE_CLICK, (id) => {
+        this.onTileClick(id);
+      });
+      this.renderer.addListener(EVENT_TYPES.MOUSE_HOVER, (id) => {
+        this.onTileHover(id);
+      });
+      this.map.fitToBounds(mapBounds);
+    },
+    getBounds(quads: Quad[]) {
+      // set mapBounds to a single tile to start
+      const mapBounds = new lumo.Bounds(
+        quads[0].x,
+        quads[1].x,
+        quads[0].y,
+        quads[1].y
+      );
+      // extend bounds to fit the entire quad set
+      quads.forEach((q) => {
+        mapBounds.extend(q);
+      });
+      return mapBounds;
+    },
+    // callback when tile is being clicked and generates drilldown.
+    onTileClick(id: number) {
+      if (id > this.areas.length || id < 0) {
+        console.error(
+          `id retrieved from buffer picker ${id} not within index bounds of areas.`
+        );
+        return;
+      }
+      this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
+    },
+    // callback when tile is being hovered on and generates a toast notification
+    async onTileHover(id: number) {
+      if (id > this.areas.length) {
+        console.error(`id: ${id} is outside of this.areas bounds`);
+        return; // id outside of bounds
+      }
+      this.toastTitle = this.areas[id].imageUrl;
+      this.hoverItem = this.areas[id].item;
+      this.hoverUrl = this.areas[id].imageUrl;
+      this.$bvToast.show(this.toastId);
+      window.addEventListener("mousemove", this.fadeToast);
+    },
+    // fades toast after mouse is moved
+    fadeToast() {
+      this.$bvToast.hide(this.toastId);
+      window.removeEventListener("mousemove", this.fadeToast); // remove event listener because toast is now faded
+    },
+    areaToQuads(): Quad[] {
+      const singleBuffer = [];
+      this.areas.forEach((area, idx) => {
+        const p1 = this.renderer.latlngToNormalized(area.coordinates[0]);
+        const p2 = this.renderer.latlngToNormalized(area.coordinates[1]);
+        const color = Color(area.color).rgb().object(); // convert hex color to rgb
+        const maxVal = 255;
+        // normalize color values
+        color.a = this.quadOpacity;
+        color.r /= maxVal;
+        color.g /= maxVal;
+        color.b /= maxVal;
+        const id = this.renderer.idToRGBA(idx); // separate index bytes into 4 channels iR,iG,iB,iA. Used to render the index of the object into webgl FBO
+        // need to get rid of spread operators super slow
+        singleBuffer.push({ ...p1, ...color, ...id });
+        singleBuffer.push({ x: p2.x, y: p1.y, ...color, ...id });
+        singleBuffer.push({ ...p2, ...color, ...id });
+        singleBuffer.push({ ...p1, ...color, ...id });
+        singleBuffer.push({ x: p1.x, y: p2.y, ...color, ...id });
+        singleBuffer.push({ ...p2, ...color, ...id });
+      });
+      return singleBuffer;
+    },
     clearSelectionRect() {
       if (this.selectedRect) {
         this.selectedRect.remove();
@@ -573,34 +741,6 @@ export default Vue.extend({
         return fieldSpec.field;
       }
       return fieldSpec.lngField + ":" + fieldSpec.latField;
-    },
-
-    clear() {
-      if (this.selectedRect) {
-        this.selectedRect.remove();
-        this.selectedRect = null;
-      }
-
-      if (this.currentRect) {
-        this.currentRect.remove();
-        this.currentRect = null;
-      }
-
-      if (this.closeButton) {
-        this.closeButton.remove();
-        this.closeButton = null;
-      }
-
-      _.forIn(this.markers, (markerLayer) => {
-        markerLayer.removeFrom(this.map);
-      });
-
-      if (this.map.hasLayer(this.poiLayer)) {
-        this.map.removeLayer(this.poiLayer);
-      }
-
-      this.markers = {};
-      this.startingLatLng = null;
     },
 
     toggleSelection(event) {
@@ -820,7 +960,6 @@ export default Vue.extend({
 
     paint() {
       this.createMap();
-      this.clear();
 
       if (this.isGeoSpatial) {
         // Display areas and update them on zoom to be sure they are selectable.
@@ -833,11 +972,23 @@ export default Vue.extend({
       this.drawHighlight();
       this.drawFilters();
     },
+    onNewData() {
+      // clear polygons
+      this.overlay.clearQuads();
+      // create quads from latlng
+      const normalizedQuads = this.areaToQuads();
+      // get bounds of quad set
+      const mapBounds = this.getBounds(normalizedQuads);
+      // add the batched quads to a single layer on the overlay
+      this.overlay.addQuad(this.polygonLayerId, this.areaToQuads());
+      // fit map to the quad set
+      this.map.fitToBounds(mapBounds);
+    },
   },
 
   watch: {
     dataItems() {
-      this.paint();
+      this.onNewData();
     },
 
     rowSelection() {
@@ -849,7 +1000,7 @@ export default Vue.extend({
   },
 
   mounted() {
-    this.paint();
+    this.createLumoMap();
   },
 });
 </script>
@@ -943,5 +1094,16 @@ path.selected {
 
 .geo-close-button:hover {
   background-color: #f4f4f4;
+}
+.geo-toast {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+}
+.image-label {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  z-index: 1;
 }
 </style>
