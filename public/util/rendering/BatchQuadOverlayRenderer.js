@@ -62,7 +62,7 @@ const PICKING_SHADER = {
 		`,
 };
 
-// Private Methods
+// create inline float array of all the vertex data: position, color, id
 const getVertexArray = function (points) {
   const numOfAttrs = 10;
   const vertices = new Float32Array(points.length * numOfAttrs);
@@ -80,7 +80,7 @@ const getVertexArray = function (points) {
   }
   return vertices;
 };
-
+// creates the gl buffers and creates the attrib pointers
 const createBuffers = function (overlay, points) {
   const vertices = getVertexArray(points);
   const floatByteSize = 4;
@@ -170,7 +170,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.gl.canvas,
       addEventListener("mouseleave", () => {
         clearTimeout(this.hoverTimeoutId);
-      });
+      }); // if mouse leaves canvas remove hover timer so it doesn't trigger
     this.createFBO();
     return this;
   }
@@ -205,6 +205,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       this.quads = null;
     }
   }
+  // normal render for human viewing
   renderColor() {
     const gl = this.gl;
     const shader = this.shader;
@@ -228,7 +229,6 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     shader.setUniform("uProjectionMatrix", proj);
     shader.setUniform("uViewOffset", [offset.x, offset.y]);
     shader.setUniform("uScale", scale);
-    // shader.setUniform("uquadColor", this.quadColor);
     shader.setUniform("uOpacity", opacity);
 
     // for each quad buffer
@@ -238,6 +238,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       buffer.vertex.draw();
     });
   }
+  // renders IDs of the quads to a separate FBO
   renderIds() {
     const gl = this.gl;
     const quads = this.quads;
@@ -284,12 +285,14 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.renderIds(); // render IDS to fb (offscreen)
     return this;
   }
+  // checks if the canvas has resized by checking the fboDimensions
   didCanvasResize(canvas) {
     return (
       canvas.width !== this.fboDimensions.width ||
       canvas.height !== this.fboDimensions.height
     );
   }
+  // createFBO creates the ID FBO. Should only be called once.
   createFBO() {
     const gl = this.gl;
     this.targetTexture = gl.createTexture();
@@ -325,6 +328,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     );
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
+  // readPixels reads the current bound FBO at the specified pixel location x,y
   readPixels(x, y) {
     const gl = this.gl;
     gl.flush();
@@ -339,17 +343,13 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       data
     );
     const id = this.RGBAToId(data);
-    console.log(
-      id,
-      `background-color: rgb(${data[0]}, ${data[1]}, ${data[2]})`
-    );
     return id - 1; // ids start at 1 -- 0 is reserved for background
   }
   // adds listeners to callback map -- please see EVENT_TYPES
   addListener(event, callback) {
     this.callbacks[event].push(callback);
   }
-
+  // onClick read ID FBO at the pixel the mouse clicked on and extract the ID.
   onClick(event) {
     this.x = event.layerX;
     this.y = event.layerY;
@@ -363,7 +363,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       (this.y * gl.canvas.height) / gl.canvas.clientHeight -
       1;
     const id = this.readPixels(pixelX, pixelY);
-    // check if clicked on anything
+    // if id is the background id it means the user clicked on nothing -- do a clean up and dont invoke the listener's callbacks
     if (id === this.BACKGROUND_ID) {
       // clean up
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -373,7 +373,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       cb(id);
     });
   }
-
+  // onMove register a callback that will invoke onHover if the mouse is not moved after the defined hoverThreshold time
   onMove(event) {
     this.x = event.layerX;
     this.y = event.layerY;
@@ -383,7 +383,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       this.onHover();
     }, this.hoverThreshold);
   }
-
+  // onHover read ID FBO at the pixel the mouse is on and extract the ID. Then call all of the listeners for OnHover
   onHover() {
     const gl = this.gl;
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
