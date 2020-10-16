@@ -72,7 +72,7 @@ type IngestTaskConfig struct {
 // IngestSteps is a collection of parameters that specify ingest behaviour.
 type IngestSteps struct {
 	ClassificationOverwrite bool
-	RawGrouping             map[string]interface{}
+	RawGroupings            []map[string]interface{}
 }
 
 // NewDefaultClient creates a new client to use when submitting pipelines.
@@ -243,9 +243,9 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	log.Infof("finished ingesting the dataset")
 
 	// set the known grouping information
-	if steps.RawGrouping != nil {
+	if steps.RawGroupings != nil {
 		log.Infof("creating groupings in metadata")
-		err = SetGroups(datasetID, steps.RawGrouping, metaStorage, config)
+		err = SetGroups(datasetID, steps.RawGroupings, metaStorage, config)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to set grouping")
 		}

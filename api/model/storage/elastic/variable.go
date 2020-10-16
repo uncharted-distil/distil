@@ -243,10 +243,15 @@ func (s *Storage) parseGrouping(variable map[string]interface{}) (model.BaseGrou
 		if !ok {
 			return nil, errors.New("unable to parse remote sensing grouping")
 		}
+	} else if model.IsGeoBounds(groupingType) {
+		grouping = &model.GeoBoundsGrouping{}
+		ok = json.Struct(variable, grouping, model.VarGroupingField)
+		if !ok {
+			return nil, errors.New("unable to parse geobounds sensing grouping")
+		}
 	} else {
 		return nil, errors.Errorf("unrecognized grouping type '%s'", groupingType)
 	}
-
 	return grouping, nil
 }
 
