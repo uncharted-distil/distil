@@ -282,7 +282,6 @@ export default Vue.extend({
     },
 
     confidenceSummaries(): VariableSummary[] {
-      console.log(this.confidenceSummary);
       return this.confidenceSummary ? [this.confidenceSummary] : [];
     },
 
