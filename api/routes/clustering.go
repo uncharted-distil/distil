@@ -132,3 +132,62 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 		}
 	}
 }
+
+// ClusteringExplainHandler creates a route handler that will cluster an explained
+// result output, treating it as a tabular dataset.
+func ClusteringExplainHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// get dataset name
+		resultID := pat.Param(r, "result-id")
+
+		// get storage clients
+		solutionStorage, err := solutionCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// get target from solution data
+		result, err := solutionStorage.FetchSolutionResultByUUID(resultID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		request, err := solutionStorage.FetchRequestBySolutionID(result.SolutionID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		target := ""
+		for _, f := range request.Features {
+			if f.FeatureType == model.FeatureTypeTarget {
+				target = f.FeatureName
+				break
+			}
+		}
+
+		explainURI := ""
+		for _, e := range result.ExplainOutput {
+			if e.Type == "step" {
+				explainURI = e.URI
+			}
+		}
+
+		clusterVarName := fmt.Sprintf("%s%s", model.ClusterVarPrefix, target)
+		// cluster data
+		err = task.ClusterExplainOutput(target, resultID, explainURI, &config)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// marshal output into JSON
+		err = handleJSON(w, ClusteringResult{
+			ClusterField: clusterVarName,
+		})
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal clustering result into JSON"))
+			return
+		}
+	}
+}
