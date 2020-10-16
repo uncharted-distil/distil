@@ -71,11 +71,22 @@ func (s *Storage) PersistSolutionState(solutionID string, progress string, creat
 }
 
 // PersistSolutionResult persists the solution result metadata to Postgres.
-func (s *Storage) PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string,
-	resultType string, resultUUID string, resultURI string, progress string, createdTime time.Time) error {
+func (s *Storage) PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string, resultType string,
+	resultUUID string, resultURI string, progress string, explainOutput map[string]*api.SolutionExplainResult, createdTime time.Time) error {
 	sql := fmt.Sprintf("INSERT INTO %s (solution_id, fitted_solution_id, produce_request_id, result_type, result_uuid, result_uri, progress, created_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);", postgres.SolutionResultTableName)
 
 	_, err := s.client.Exec(sql, solutionID, fittedSolutionID, produceRequestID, resultType, resultUUID, resultURI, progress, createdTime)
+	if err != nil {
+		return errors.Wrap(err, "unable to persist solution result")
+	}
+
+	for typ, uri := range explainOutput {
+		sql = fmt.Sprintf("INSERT INTO %s (solution_id, explain_uri, explain_type) VALUES ($1, $2, $3)", postgres.SolutionResultExplainOutputTableName)
+		_, err = s.client.Exec(sql, solutionID, uri, typ)
+		if err != nil {
+			return errors.Wrap(err, "unable to persist solution result explain output")
+		}
+	}
 
 	return err
 }

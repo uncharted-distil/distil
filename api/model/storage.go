@@ -110,7 +110,7 @@ type SolutionStorage interface {
 	PersistSolution(requestID string, solutionID string, explainedSolutionID string, createdTime time.Time) error
 	PersistSolutionWeight(solutionID string, featureName string, featureIndex int64, weight float64) error
 	PersistSolutionState(solutionID string, progress string, createdTime time.Time) error
-	PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string, resultType string, resultUUID string, resultURI string, progress string, createdTime time.Time) error
+	PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string, resultType string, resultUUID string, resultURI string, progress string, explainOutput map[string]*SolutionExplainResult, createdTime time.Time) error
 	PersistSolutionScore(solutionID string, metric string, score float64) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
 	UpdateSolution(solutionID string, explainedSolutionID string) error

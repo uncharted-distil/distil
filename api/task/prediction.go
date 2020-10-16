@@ -344,7 +344,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, predictionResult.ProduceRequestID, api.SolutionResultTypeInference, resultID, predictionResult.ResultURI, "PREDICT_COMPLETED", createdTime)
+	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, predictionResult.ProduceRequestID, api.SolutionResultTypeInference, resultID, predictionResult.ResultURI, "PREDICT_COMPLETED", nil, createdTime)
 	if err != nil {
 		return nil, err
 	}
