@@ -321,6 +321,7 @@ export default Vue.extend({
         return [];
       }
       const features = [];
+      const duplicateCheck = {};
       this.summaries.forEach((summary) => {
         // compute the bucket size in degrees
         const buckets = summary.filtered
@@ -345,12 +346,17 @@ export default Vue.extend({
                 ],
                 meta: { selected: false, count: latBucket.count },
               };
-
-              features.push(feature);
+              if (!duplicateCheck[feature.coordinates.toString()]) {
+                features.push(feature);
+              } else {
+                console.log("duplicate");
+              }
+              duplicateCheck[feature.coordinates.toString()] = true;
             }
           });
         });
       });
+      // console.log(duplicateCheck);
       return features;
     },
     minBucketCount(): number {
@@ -654,7 +660,7 @@ export default Vue.extend({
       const scaleColors = scaleThreshold()
         .range(BLUE_PALETTE as any)
         .domain(domain);
-      const result = [];
+      const result = []; // packing array with
       this.bucketFeatures.forEach((bucket, idx) => {
         const p1 = this.renderer.latlngToNormalized(bucket.coordinates[0]);
         const p2 = this.renderer.latlngToNormalized(bucket.coordinates[1]);
@@ -662,9 +668,9 @@ export default Vue.extend({
         const color = Color(scaleColors(bucket.meta.count).toString(16))
           .rgb()
           .object(); // convert hex color to rgb
-        const maxColorVal = 255;
+        const maxColorVal = 256;
         // normalize color values
-        color.a = 1;
+        color.a = 0.9;
         color.r /= maxColorVal;
         color.g /= maxColorVal;
         color.b /= maxColorVal;
@@ -719,17 +725,17 @@ export default Vue.extend({
       // check if map should be rendering clustered tiles
       if (wasClustered) {
         this.currentState = this.tileState;
-        this.updateMap();
+        this.updateMapState();
         return;
       }
       if (wasTiled) {
         this.currentState = this.clusterState;
-        this.updateMap();
+        this.updateMapState();
         return;
       }
     },
     // called after state changes and map needs to update
-    updateMap() {
+    updateMapState() {
       this.overlay.clearQuads();
       this.renderer.clearListeners();
       this.overlay.addQuad(this.polygonLayerId, this.currentState.quads());
@@ -1204,7 +1210,7 @@ export default Vue.extend({
         this.map.on(lumo.ZOOM_END, this.onZoom);
         if (this.map.getZoom() < this.zoomThreshold) {
           this.currentState = this.clusterState;
-          this.updateMap();
+          this.updateMapState();
         }
       }
     },
