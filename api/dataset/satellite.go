@@ -444,7 +444,7 @@ func CreateSatelliteGrouping() map[string]interface{} {
 	grouping["bandCol"] = "band"
 	grouping["idCol"] = "group_id"
 	grouping["imageCol"] = "image_file"
-	grouping["type"] = "remote_sensing"
+	grouping["type"] = model.MultiBandImageType
 	grouping["coordinate"] = "__geo_coordinates"
 	grouping["hidden"] = []string{"image_file", "band", "group_id", "coordinates"}
 

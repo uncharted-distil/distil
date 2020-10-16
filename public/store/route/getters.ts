@@ -311,8 +311,8 @@ export const getters = {
       return _.toInteger(dataSize);
     }
 
-    const isRemoteSensing = getters.isRemoteSensing;
-    return isRemoteSensing
+    const isMultiBandImage = getters.isMultiBandImage;
+    return isMultiBandImage
       ? DATA_SIZE_REMOTE_SENSING_DEFAULT
       : DATA_SIZE_DEFAULT;
   },
@@ -536,7 +536,7 @@ export const getters = {
   },
 
   /* Check if the current task includes Remote Sensing. */
-  isRemoteSensing(state: Route): boolean {
+  isMultiBandImage(state: Route): boolean {
     // Get the list of task of the route.
     const task = state.query.task as string;
     if (!task) {

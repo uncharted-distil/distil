@@ -119,8 +119,8 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 
 // SetGroups updates the dataset metadata (as stored) to capture group information.
 func SetGroups(datasetID string, rawGrouping map[string]interface{}, meta api.MetadataStorage, config *IngestTaskConfig) error {
-	if isRemoteSensingGrouping(rawGrouping) {
-		rsg := &model.RemoteSensingGrouping{}
+	if isMultiBandImageGrouping(rawGrouping) {
+		rsg := &model.MultiBandImageGrouping{}
 		err := json.MapToStruct(rsg, rawGrouping)
 		if err != nil {
 			return err
@@ -128,7 +128,7 @@ func SetGroups(datasetID string, rawGrouping map[string]interface{}, meta api.Me
 		// Set the name of the expected cluster column - it doesn't necessarily exist.
 		varName := rsg.IDCol + "_group"
 		rsg.ClusterCol = model.ClusterVarPrefix + rsg.IDCol
-		err = meta.AddGroupedVariable(datasetID, varName, "Tile", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
+		err = meta.AddGroupedVariable(datasetID, varName, "Tile", model.MultiBandImageType, model.VarDistilRoleGrouping, rsg)
 		if err != nil {
 			return err
 		}
@@ -137,8 +137,8 @@ func SetGroups(datasetID string, rawGrouping map[string]interface{}, meta api.Me
 	return nil
 }
 
-func isRemoteSensingGrouping(rawGrouping map[string]interface{}) bool {
-	return rawGrouping["type"] != nil && rawGrouping["type"].(string) == model.RemoteSensingType
+func isMultiBandImageGrouping(rawGrouping map[string]interface{}) bool {
+	return rawGrouping["type"] != nil && rawGrouping["type"].(string) == model.MultiBandImageType
 }
 
 func isRemoteSensingDataset(ds *api.Dataset) bool {

@@ -14,7 +14,7 @@
     ></div>
 
     <image-drilldown
-      v-if="isRemoteSensing"
+      v-if="isMultiBandImage"
       @hide="hideImageDrilldown"
       :dataFields="dataFields"
       :imageUrl="imageUrl"
@@ -361,13 +361,13 @@ export default Vue.extend({
       const longitudes = [];
 
       const areas = this.dataItems.map((item) => {
-        const imageUrl = this.isRemoteSensing ? item.group_id.value : null;
+        const imageUrl = this.isMultiBandImage ? item.group_id.value : null;
         const fullCoordinates = item.coordinates.value.Elements;
         if (fullCoordinates.some((x) => x === undefined)) return;
 
         /*
           Item store the coordinates as a list of 8 values being four pairs of [Lng, Lat],
-          one for each corner of the remote-sensing image.
+          one for each corner of the isMultiBandImage-sensing image.
 
           [0,1]     [2,3]
             A-------B
@@ -411,8 +411,8 @@ export default Vue.extend({
       return routeGetters.getDecodedRowSelection(this.$store);
     },
 
-    isRemoteSensing(): boolean {
-      return routeGetters.isRemoteSensing(this.$store);
+    isMultiBandImage(): boolean {
+      return routeGetters.isMultiBandImage(this.$store);
     },
     isGeoSpatial(): boolean {
       return routeGetters.isGeoSpatial(this.$store);
@@ -895,7 +895,7 @@ export default Vue.extend({
 
         // Add interactivity to the layer.
         layer.bindTooltip(tooltip.$el as HTMLElement);
-        if (this.isRemoteSensing) {
+        if (this.isMultiBandImage) {
           layer.on("click", () => {
             this.showImageDrilldown(imageUrl, item);
           });

@@ -86,7 +86,7 @@ func canSample(schemaFile string, config *IngestTaskConfig) bool {
 
 	for _, dr := range meta.DataResources {
 		for _, v := range dr.Variables {
-			if model.IsRemoteSensing(v.Type) || model.IsTimeSeries(v.Type) || model.IsGeoBounds(v.Type) {
+			if model.IsMultiBandImage(v.Type) || model.IsTimeSeries(v.Type) || model.IsGeoBounds(v.Type) {
 				return false
 			}
 		}

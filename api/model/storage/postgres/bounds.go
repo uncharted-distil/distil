@@ -98,7 +98,7 @@ func (f *BoundsField) FetchSummaryData(resultURI string, filterParams *api.Filte
 	return &api.VariableSummary{
 		Key:      f.Key,
 		Label:    f.Label,
-		Type:     model.RemoteSensingType,
+		Type:     model.MultiBandImageType,
 		VarType:  f.Type,
 		Baseline: baseline,
 		Filtered: filtered,

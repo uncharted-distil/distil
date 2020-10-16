@@ -675,20 +675,20 @@ export default Vue.extend({
       const task = taskResponse.data.task.join(",");
       const varModesMap = routeGetters.getDecodedVarModes(this.$store);
 
-      if (task.includes("remoteSensing")) {
+      if (task.includes(TaskTypes.REMOTE_SENSING)) {
         const available = routeGetters.getAvailableVariables(this.$store);
 
         training.forEach((v) => {
-          varModesMap.set(v, SummaryMode.RemoteSensing);
+          varModesMap.set(v, SummaryMode.MultiBandImage);
         });
 
         available.forEach((v) => {
-          varModesMap.set(v.colName, SummaryMode.RemoteSensing);
+          varModesMap.set(v.colName, SummaryMode.MultiBandImage);
         });
 
         varModesMap.set(
           routeGetters.getRouteTargetVariable(this.$store),
-          SummaryMode.RemoteSensing
+          SummaryMode.MultiBandImage
         );
       }
       const varModesStr = varModesToString(varModesMap);
