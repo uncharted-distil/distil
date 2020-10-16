@@ -155,7 +155,7 @@ const (
 			created_time		timestamp
 		);`
 	solutionResultExplainTableCreationSQL = `CREATE TABLE %s (
-			solution_id	text,
+			result_id	text,
 			explain_uri	text,
 			explain_type	text
 		);`

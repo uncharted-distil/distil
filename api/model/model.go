@@ -112,6 +112,13 @@ type SolutionExplainResult struct {
 	ParsingParams []interface{}
 }
 
+// SolutionResultExplainOutput captures the explainable output from a produce call.
+type SolutionResultExplainOutput struct {
+	ResultID string
+	URI      string
+	Type     string
+}
+
 // SolutionFeatureWeight captures the weights for a given d3m index and result.
 type SolutionFeatureWeight struct {
 	ResultURI string
@@ -129,16 +136,17 @@ type SolutionWeight struct {
 
 // SolutionResult represents the solution result metadata.
 type SolutionResult struct {
-	FittedSolutionID string    `json:"fittedSolutionId"`
-	ProduceRequestID string    `json:"produceRequestId"`
-	SolutionID       string    `json:"solutionId"`
-	Dataset          string    `json:"dataset"`
-	ResultType       string    `json:"result_type"`
-	ResultURI        string    `json:"requestUri"`
-	ResultUUID       string    `json:"resultId"`
-	Progress         string    `json:"progress"`
-	OutputType       string    `json:"outputType"`
-	CreatedTime      time.Time `json:"timestamp"`
+	FittedSolutionID string                         `json:"fittedSolutionId"`
+	ProduceRequestID string                         `json:"produceRequestId"`
+	SolutionID       string                         `json:"solutionId"`
+	Dataset          string                         `json:"dataset"`
+	ResultType       string                         `json:"result_type"`
+	ResultURI        string                         `json:"requestUri"`
+	ResultUUID       string                         `json:"resultId"`
+	Progress         string                         `json:"progress"`
+	OutputType       string                         `json:"outputType"`
+	CreatedTime      time.Time                      `json:"timestamp"`
+	ExplainOutput    []*SolutionResultExplainOutput `json:"-"`
 }
 
 // SolutionScore represents the result score data.
