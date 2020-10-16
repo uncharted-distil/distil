@@ -284,7 +284,7 @@ export default Vue.extend({
                   [yCoord + ySize, xCoord + xSize],
                   [yCoord, xCoord + xSize],
                   [yCoord, xCoord],
-                ],
+                ], // leaflet and most map frameworks use latlng which is y,x
               ],
               { selected: false, count: latBucket.count }
             );

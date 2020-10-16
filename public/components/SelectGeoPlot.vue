@@ -13,9 +13,13 @@ import Vue from "vue";
 import GeoPlot from "./GeoPlot";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
-import { TableColumn, TableRow } from "../store/dataset/index";
+import {
+  TableColumn,
+  TableRow,
+  Variable,
+  VariableSummary,
+} from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import { Variable, VariableSummary } from "../store/dataset/index";
 import { getVariableSummariesByState, searchVariables } from "../util/data";
 import { isGeoLocatedType } from "../util/types";
 

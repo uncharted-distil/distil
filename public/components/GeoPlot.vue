@@ -151,9 +151,10 @@ interface Area {
   imageUrl: string;
   item: TableRow;
 }
+// Bucket contains the clustered tile data
 interface Bucket {
-  coordinates: number[][];
-  meta: { selected: boolean; count: number };
+  coordinates: number[][]; // should be two points each with x,y expect -> number[2][2]
+  meta: { selected: boolean; count: number }; // count num of tiles in bucket
 }
 interface Quad {
   x: number; // vertex x
@@ -168,6 +169,8 @@ interface Quad {
   iB: number; // id second largest byte
   iA: number; // id largest byte
 }
+// contains the state of the map for things such as event callbacks and the quads to render
+// currently there is two states tiled and clustered
 interface MapState {
   onHover(id: number);
   onClick(id: number);
@@ -519,7 +522,9 @@ export default Vue.extend({
     },
     clusterState(): MapState {
       return {
-        onHover: (id: number) => {}, // onHover empty for cluster state
+        onHover: (id: number) => {
+          return;
+        }, // onHover empty for cluster state
         onClick: (id: number) => {
           if (id > this.bucketFeatures.length || id < 0) {
             console.error(
@@ -572,6 +577,7 @@ export default Vue.extend({
       this.overlay = new BatchQuadOverlay();
       this.renderer = new BatchQuadOverlayRenderer();
       this.overlay.setRenderer(this.renderer);
+      this.map.add(this.overlay);
       // convert this.areas to quads in normalized space and add to overlay layer
       if (!this.bucketFeatures.length) {
         this.currentState = this.tileState;
@@ -580,14 +586,12 @@ export default Vue.extend({
         this.map.on(lumo.ZOOM_END, this.onZoom);
       }
       if (!this.bucketFeatures.length && !this.areas.length) {
-        this.map.add(this.overlay);
         return; // no data
       }
       const quads = this.currentState.quads();
       // get quad set bounds
       const mapBounds = this.getBounds(quads);
       this.overlay.addQuad(this.polygonLayerId, quads);
-      this.map.add(this.overlay);
 
       // add listener for clicks on quads
       this.renderer.addListener(
@@ -650,7 +654,7 @@ export default Vue.extend({
       const scaleColors = scaleThreshold()
         .range(BLUE_PALETTE as any)
         .domain(domain);
-      const singleBuffer = [];
+      const result = [];
       this.bucketFeatures.forEach((bucket, idx) => {
         const p1 = this.renderer.latlngToNormalized(bucket.coordinates[0]);
         const p2 = this.renderer.latlngToNormalized(bucket.coordinates[1]);
@@ -666,17 +670,17 @@ export default Vue.extend({
         color.b /= maxColorVal;
         const id = this.renderer.idToRGBA(idx); // separate index bytes into 4 channels iR,iG,iB,iA. Used to render the index of the object into webgl FBO
         // need to get rid of spread operators super slow
-        singleBuffer.push({ ...p1, ...color, ...id });
-        singleBuffer.push({ x: p2.x, y: p1.y, ...color, ...id });
-        singleBuffer.push({ ...p2, ...color, ...id });
-        singleBuffer.push({ ...p1, ...color, ...id });
-        singleBuffer.push({ x: p1.x, y: p2.y, ...color, ...id });
-        singleBuffer.push({ ...p2, ...color, ...id });
+        result.push({ ...p1, ...color, ...id });
+        result.push({ x: p2.x, y: p1.y, ...color, ...id });
+        result.push({ ...p2, ...color, ...id });
+        result.push({ ...p1, ...color, ...id });
+        result.push({ x: p1.x, y: p2.y, ...color, ...id });
+        result.push({ ...p2, ...color, ...id });
       });
-      return singleBuffer;
+      return result;
     },
     areaToQuads(): Quad[] {
-      const singleBuffer = [];
+      const result = [];
       this.areas.forEach((area, idx) => {
         const p1 = this.renderer.latlngToNormalized([
           area.coordinates[0][1],
@@ -695,15 +699,16 @@ export default Vue.extend({
         color.b /= maxVal;
         const id = this.renderer.idToRGBA(idx); // separate index bytes into 4 channels iR,iG,iB,iA. Used to render the index of the object into webgl FBO
         // need to get rid of spread operators super slow
-        singleBuffer.push({ ...p1, ...color, ...id });
-        singleBuffer.push({ x: p2.x, y: p1.y, ...color, ...id });
-        singleBuffer.push({ ...p2, ...color, ...id });
-        singleBuffer.push({ ...p1, ...color, ...id });
-        singleBuffer.push({ x: p1.x, y: p2.y, ...color, ...id });
-        singleBuffer.push({ ...p2, ...color, ...id });
+        result.push({ ...p1, ...color, ...id });
+        result.push({ x: p2.x, y: p1.y, ...color, ...id });
+        result.push({ ...p2, ...color, ...id });
+        result.push({ ...p1, ...color, ...id });
+        result.push({ x: p1.x, y: p2.y, ...color, ...id });
+        result.push({ ...p2, ...color, ...id });
       });
-      return singleBuffer;
+      return result;
     },
+    // callback when zooming on map
     onZoom() {
       const zoom = this.map.getZoom();
       const wasClustered =
@@ -723,6 +728,7 @@ export default Vue.extend({
         return;
       }
     },
+    // called after state changes and map needs to update
     updateMap() {
       this.overlay.clearQuads();
       this.renderer.clearListeners();
@@ -1194,7 +1200,7 @@ export default Vue.extend({
     },
     summaries(cur, prev) {
       if (!prev.length) {
-        //if prev undefined update state and add zoom
+        // if prev undefined update state and add zoom
         this.map.on(lumo.ZOOM_END, this.onZoom);
         if (this.map.getZoom() < this.zoomThreshold) {
           this.currentState = this.clusterState;
