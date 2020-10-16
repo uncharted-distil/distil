@@ -36,5 +36,3 @@ require (
 	golang.org/x/net v0.0.0-20200822124328-c89045814202
 	google.golang.org/grpc v1.25.1
 )
-
-replace github.com/uncharted-distil/distil-compute => ../distil-compute
