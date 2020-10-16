@@ -62,6 +62,8 @@ export const getters = {
   getResidualsExtrema: read(moduleGetters.getResidualsExtrema),
   // correctness
   getCorrectnessSummaries: read(moduleGetters.getCorrectnessSummaries),
+  // confidence
+  getConfidenceSummaries: read(moduleGetters.getConfidenceSummaries),
   // result table data
   getResultDataNumRows: read(moduleGetters.getResultDataNumRows),
   // forecasts
@@ -94,6 +96,9 @@ export const actions = {
   // correctness
   fetchCorrectnessSummary: dispatch(moduleActions.fetchCorrectnessSummary),
   fetchCorrectnessSummaries: dispatch(moduleActions.fetchCorrectnessSummaries),
+  // correctness
+  fetchConfidenceSummary: dispatch(moduleActions.fetchConfidenceSummary),
+  fetchConfidenceSummaries: dispatch(moduleActions.fetchConfidenceSummaries),
   // forecast
   fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries),
   // variable rankings
@@ -127,6 +132,8 @@ export const mutations = {
   updateCorrectnessSummaries: commit(
     moduleMutations.updateCorrectnessSummaries
   ),
+  // predicted
+  updateConfidenceSummaries: commit(moduleMutations.updateConfidenceSummaries),
   // forecasts
   updatePredictedTimeseries: commit(moduleMutations.updatePredictedTimeseries),
   updatePredictedForecast: commit(moduleMutations.updatePredictedForecast),

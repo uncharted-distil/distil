@@ -700,6 +700,103 @@ export const actions = {
     );
   },
 
+  // fetches result summary for a given solution id.
+  fetchConfidenceSummary(
+    context: ResultsContext,
+    args: {
+      dataset: string;
+      solutionId: string;
+      highlight: Highlight;
+      dataMode: DataMode;
+      varMode: SummaryMode;
+    }
+  ) {
+    if (!args.dataset) {
+      console.warn("`dataset` argument is missing");
+      return null;
+    }
+    if (!args.solutionId) {
+      console.warn("`solutionId` argument is missing");
+      return null;
+    }
+    if (!args.varMode) {
+      console.warn("`varMode` argument is missing");
+      return null;
+    }
+
+    const solution = getSolutionById(
+      context.rootState.requestsModule.solutions,
+      args.solutionId
+    );
+    if (!solution || !solution.resultId) {
+      // no results ready to pull
+      return null;
+    }
+
+    const filterParamsBlank = {
+      highlight: null,
+      variables: [],
+      filters: [],
+    };
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
+
+    const endpoint = `/distil/confidence-summary/${args.dataset}`;
+    const key = solution.confidenceKey;
+    const label = "Confidence";
+    return fetchSolutionResultSummary(
+      context,
+      endpoint,
+      solution,
+      key,
+      label,
+      resultGetters.getConfidenceSummaries(context),
+      mutations.updateConfidenceSummaries,
+      filterParams,
+      args.varMode
+    );
+  },
+
+  // fetches result summaries for a given solution create request
+  fetchConfidenceSummaries(
+    context: ResultsContext,
+    args: {
+      dataset: string;
+      target: string;
+      requestIds: string[];
+      highlight: Highlight;
+      dataMode: DataMode;
+      varModes: Map<string, SummaryMode>;
+    }
+  ) {
+    if (!args.requestIds) {
+      console.warn("`requestIds` argument is missing");
+      return null;
+    }
+    const solutions = getSolutionsBySolutionRequestIds(
+      context.rootState.requestsModule.solutions,
+      args.requestIds
+    );
+    return Promise.all(
+      solutions.map((solution) => {
+        return actions.fetchConfidenceSummary(context, {
+          dataset: args.dataset,
+          solutionId: solution.solutionId,
+          highlight: args.highlight,
+          dataMode: args.dataMode,
+          varMode: args.varModes.has(args.target)
+            ? args.varModes.get(args.target)
+            : SummaryMode.Default,
+        });
+      })
+    );
+  },
+
   async fetchForecastedTimeseries(
     context: ResultsContext,
     args: {

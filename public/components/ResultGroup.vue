@@ -112,6 +112,22 @@
           :row-selection="rowSelection"
           :instanceName="correctnessInstanceName"
           @facet-click="onCorrectnessCategoricalClick"
+          :style="errorColor"
+        >
+        </component>
+
+        <component
+          v-for="summary in confidenceSummaries"
+          :key="summary.key"
+          :is="getFacetByType(summary.type)"
+          enable-highlighting
+          :summary="summary"
+          :highlight="highlight"
+          :enabled-type-changes="[]"
+          :row-selection="rowSelection"
+          :instanceName="confidenceInstanceName"
+          @range-change="onConfidenceRangeChange"
+          @facet-click="onConfidenceClick"
         >
         </component>
       </template>
@@ -169,6 +185,7 @@ export default Vue.extend({
     predictedSummary: Object as () => VariableSummary,
     residualsSummary: Object as () => VariableSummary,
     correctnessSummary: Object as () => VariableSummary,
+    confidenceSummary: Object as () => VariableSummary,
   },
 
   data() {
@@ -221,6 +238,9 @@ export default Vue.extend({
     correctnessInstanceName(): string {
       return `correctness-result-facet-${this.solutionId}`;
     },
+    confidenceInstanceName(): string {
+      return `confidence-result-facet-${this.solutionId}`;
+    },
 
     routeSolutionId(): string {
       return routeGetters.getRouteSolutionId(store);
@@ -259,6 +279,11 @@ export default Vue.extend({
 
     correctnessSummaries(): VariableSummary[] {
       return this.correctnessSummary ? [this.correctnessSummary] : [];
+    },
+
+    confidenceSummaries(): VariableSummary[] {
+      console.log(this.confidenceSummary);
+      return this.confidenceSummary ? [this.confidenceSummary] : [];
     },
 
     residualSummaries(): VariableSummary[] {
@@ -442,6 +467,43 @@ export default Vue.extend({
     },
 
     onResidualRangeChange(
+      context: string,
+      key: string,
+      value: { from: number; to: number },
+      dataset: string
+    ) {
+      updateHighlight(this.$router, {
+        context: context,
+        dataset: dataset,
+        key: key,
+        value: value,
+      });
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.CHANGE_HIGHLIGHT,
+        activity: Activity.MODEL_SELECTION,
+        subActivity: SubActivity.MODEL_EXPLANATION,
+        details: { key: key, value: value },
+      });
+      this.$emit("range-change", key, value);
+    },
+
+    onConfidenceClick(
+      context: string,
+      key: string,
+      value: { from: number; to: number },
+      dataset: string
+    ) {
+      if (!this.highlight || this.highlight.key !== key) {
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value,
+        });
+      }
+    },
+
+    onConfidenceRangeChange(
       context: string,
       key: string,
       value: { from: number; to: number },

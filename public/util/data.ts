@@ -237,11 +237,8 @@ export function fetchResultExemplars(
   const variables = datasetGetters.getVariables(store);
   const variable = variables.find((v) => v.colName === variableName);
 
-  const baselineExemplars = summary.baseline.exemplars;
-  const filteredExemplars =
-    summary.filtered && summary.filtered.exemplars
-      ? summary.filtered.exemplars
-      : null;
+  const baselineExemplars = summary.baseline?.exemplars;
+  const filteredExemplars = summary.filtered?.exemplars;
   const exemplars = filteredExemplars ? filteredExemplars : baselineExemplars;
 
   if (exemplars) {
@@ -685,6 +682,11 @@ export function getTableDataItems(data: TableData): TableRow[] {
           if (colValue.weight !== null && colValue.weight !== undefined) {
             row[colName].weight = colValue.weight;
           }
+          if (colValue.confidence !== undefined) {
+            const conKey = colName + "confidence";
+            row[conKey] = {};
+            row[conKey].value = colValue.confidence;
+          }
         } else {
           row[colName] = formatValue(colValue.value, colType);
         }
@@ -726,6 +728,15 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
         variable = requestGetters.getActiveSolutionTargetVariable(store)[0]; // always a single value
         label = variable.colDisplayName;
         description = `Model predicted value for ${variable.colName}`;
+
+        result[col.key + "confidence"] = {
+          label: label + "_Confidence",
+          key: col.key + "confidence",
+          type: "numeric",
+          weight: null,
+          headerTitle: `Prediction confidence ${variable.colName}`,
+          sortable: true,
+        };
       } else if (isErrorCol(col.key)) {
         variable = requestGetters.getActiveSolutionTargetVariable(store)[0];
         label = "Error";

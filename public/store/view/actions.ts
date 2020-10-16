@@ -568,6 +568,15 @@ export const actions = {
       solutionID: solutionId,
     });
 
+    resultActions.fetchConfidenceSummaries(store, {
+      dataset: dataset,
+      target: target,
+      requestIds: requestIds,
+      highlight: highlight,
+      dataMode: dataMode,
+      varModes: varModes,
+    });
+
     const task = routeGetters.getRouteTask(store);
 
     if (!task) {
