@@ -32,6 +32,8 @@ export interface ResultsState {
   residualsExtrema: Extrema;
   // correctness summary (correct vs. incorrect) for predicted categorical data
   correctnessSummaries: VariableSummary[];
+  // confidence summary (how sure the system is of it's predictions) for any predicted data
+  confidenceSummaries: VariableSummary[];
   // timeseries by solutionID, timeseriesID
   timeseries: Dictionary<TimeSeries>;
   // forecasts by solution ID
@@ -57,6 +59,8 @@ export const state: ResultsState = {
   residualsExtrema: { min: null, max: null },
   // correctness summary (correct vs. incorrect) for predicted categorical data
   correctnessSummaries: [],
+  // confidence summary (how sure the system is of it's predictions) for any predicted data
+  confidenceSummaries: [],
   // forecasts
   timeseries: {},
   forecasts: {},

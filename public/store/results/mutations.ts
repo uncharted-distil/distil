@@ -73,6 +73,12 @@ export const mutations = {
     updateSummaries(summary, state.correctnessSummaries);
   },
 
+  // confidence
+
+  updateConfidenceSummaries(state: ResultsState, summary: VariableSummary) {
+    updateSummaries(summary, state.confidenceSummaries);
+  },
+
   // forecast
 
   updatePredictedTimeseries(

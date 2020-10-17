@@ -40,6 +40,7 @@ type SolutionResponse struct {
 	Timestamp        time.Time              `json:"timestamp"`
 	PredictedKey     string                 `json:"predictedKey"`
 	ErrorKey         string                 `json:"errorKey"`
+	ConfidenceKey    string                 `json:"confidenceKey"`
 }
 
 // SolutionsHandler fetches solutions associated with a given dataset and target.
@@ -83,8 +84,9 @@ func SolutionsHandler(solutionCtor model.SolutionStorageCtor) func(http.Response
 					Timestamp:  sol.CreatedTime,
 					Progress:   sol.State.Progress,
 					// keys
-					PredictedKey: model.GetPredictedKey(sol.SolutionID),
-					ErrorKey:     model.GetErrorKey(sol.SolutionID),
+					PredictedKey:  model.GetPredictedKey(sol.SolutionID),
+					ErrorKey:      model.GetErrorKey(sol.SolutionID),
+					ConfidenceKey: model.GetConfidenceKey(sol.SolutionID),
 				}
 				if len(sol.Results) > 0 {
 					// result
@@ -150,8 +152,9 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			ResultID:         resultID,
 			FittedSolutionID: fittedSolutionID,
 			// keys
-			PredictedKey: model.GetPredictedKey(sol.SolutionID),
-			ErrorKey:     model.GetErrorKey(sol.SolutionID),
+			PredictedKey:  model.GetPredictedKey(sol.SolutionID),
+			ErrorKey:      model.GetErrorKey(sol.SolutionID),
+			ConfidenceKey: model.GetConfidenceKey(sol.SolutionID),
 		}
 
 		// marshal data and sent the response back

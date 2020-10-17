@@ -40,6 +40,7 @@
         :predicted-summary="group.predictedSummary"
         :residuals-summary="group.residualsSummary"
         :correctness-summary="group.correctnessSummary"
+        :confidence-summary="group.confidenceSummary"
       />
     </div>
   </div>
@@ -74,6 +75,7 @@ import {
   getSolutionResultSummary,
   getResidualSummary,
   getCorrectnessSummary,
+  getConfidenceSummary,
 } from "../util/summaries";
 
 interface SummaryGroup {
@@ -83,6 +85,7 @@ interface SummaryGroup {
   predictedSummary: VariableSummary;
   residualsSummary: VariableSummary;
   correctnessSummary: VariableSummary;
+  confidenceSummary: VariableSummary;
   targetSummary: VariableSummary;
   scores: Score[];
 }
@@ -157,6 +160,9 @@ export default Vue.extend({
         const correctnessSummary = !this.showResiduals
           ? getCorrectnessSummary(solutionId)
           : null;
+        const confidenceSummary = !this.showResiduals
+          ? getConfidenceSummary(solutionId)
+          : null;
         const scores = solution.scores;
 
         return {
@@ -166,6 +172,7 @@ export default Vue.extend({
           predictedSummary: predictedSummary,
           residualsSummary: residualSummary,
           correctnessSummary: correctnessSummary,
+          confidenceSummary: confidenceSummary,
           targetSummary: this.resultTargetSummary,
           scores: scores,
         };

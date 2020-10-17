@@ -22,10 +22,20 @@
       </type-change-menu>
     </div>
 
-    <facet-template target="facet-bars-value" title="${tooltip}">
+    <facet-template
+      target="facet-bars-value"
+      title="${tooltip}"
+      v-if="facetData.values.length > 0"
+    >
     </facet-template>
 
-    <div slot="footer" class="facet-footer-container">
+    <div slot="content" v-else></div>
+
+    <div
+      slot="footer"
+      class="facet-footer-container"
+      v-if="facetData.values.length > 0"
+    >
       <facet-plugin-zoom-bar
         min-bar-width="8"
         auto-hide="true"
@@ -37,6 +47,9 @@
         v-child="computeCustomHTML()"
         class="facet-footer-custom-html"
       ></div>
+    </div>
+    <div slot="footer" class="facet-footer-container" v-else>
+      No Data Avialable
     </div>
   </facet-bars>
 </template>

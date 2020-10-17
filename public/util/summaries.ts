@@ -31,3 +31,10 @@ export function getPredictionResultSummary(requestId: string): VariableSummary {
     .getPredictionSummaries(store)
     .find((s) => getIDFromKey(s.key) === requestId);
 }
+
+export function getConfidenceSummary(solutionID: string): VariableSummary {
+  return resultGetters
+    .getConfidenceSummaries(store)
+    .find((s) => getIDFromKey(s.key) === solutionID);
+  return null;
+}
