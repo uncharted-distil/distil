@@ -30,10 +30,9 @@ const SHADER_GLSL = {
   frag: `
     precision highp float;
     varying vec4 oColor;
-	  uniform vec4 uquadColor;
-		uniform float uOpacity;
 		void main() {
-			gl_FragColor = vec4(oColor.rgb, oColor.a * uOpacity);
+      gl_FragColor = oColor;
+      gl_FragColor.rgb *= gl_FragColor.a;
 		}
 		`,
 };
@@ -214,7 +213,6 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     const cell = plot.cell;
     const proj = this.getOrthoMatrix();
     const scale = Math.pow(2, plot.zoom - cell.zoom);
-    const opacity = this.overlay.opacity;
     // get view offset in cell space
     const offset = cell.project(plot.viewport, plot.zoom);
 
@@ -229,7 +227,6 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     shader.setUniform("uProjectionMatrix", proj);
     shader.setUniform("uViewOffset", [offset.x, offset.y]);
     shader.setUniform("uScale", scale);
-    shader.setUniform("uOpacity", opacity);
 
     // for each quad buffer
     quads.forEach((buffer) => {
@@ -348,6 +345,13 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
   // adds listeners to callback map -- please see EVENT_TYPES
   addListener(event, callback) {
     this.callbacks[event].push(callback);
+  }
+  // clears all listeners across all event types
+  clearListeners() {
+    const vals = Object.values(EVENT_TYPES);
+    vals.forEach((val) => {
+      this.callbacks[val] = [];
+    });
   }
   // onClick read ID FBO at the pixel the mouse clicked on and extract the ID.
   onClick(event) {
