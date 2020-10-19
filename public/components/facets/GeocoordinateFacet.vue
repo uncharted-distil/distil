@@ -107,7 +107,7 @@ import "leaflet/dist/leaflet.css";
 import helpers, { polygon, featureCollection, point } from "@turf/helpers";
 import bbox from "@turf/bbox";
 import booleanContains from "@turf/boolean-contains";
-
+import { BLUE_PALETTE, BLACK_PALETTE } from "../../util/color";
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
 const CLOSE_BUTTON_CLASS = "geo-close-button";
@@ -132,47 +132,6 @@ interface BucketData {
 }
 
 const GEOCOORDINATE_LABEL = "longitude";
-
-const BLUE_PALETTE = [
-  "#D8EAFA",
-  "#CCE1F8",
-  "#C0D9F6",
-  "#B4D0F4",
-  "#A8C8F2",
-  "#9CBEEF",
-  "#90B5EB",
-  "#84ABE8",
-  "#78A1E4",
-  "#6C97E1",
-  "#618EDD",
-  "#5584DA",
-  "#497AD6",
-  "#3D70D3",
-  "#3167CF",
-  "#255DCC",
-];
-
-const BLACK_PALETTE = [
-  "#7F7F7F",
-  "#777777",
-  "#707070",
-  "#696969",
-  "#626262",
-  "#5B5B5B",
-  "#545454",
-  "#4D4D4D",
-  "#464646",
-  "#3F3F3F",
-  "#383838",
-  "#313131",
-  "#2A2A2A",
-  "#232323",
-  "#1C1C1C",
-  "#151515",
-  "#0E0E0E",
-  "#070707",
-  "#000000",
-];
 
 /**
  * Geocoordinate Facet.
@@ -320,12 +279,12 @@ export default Vue.extend({
             const feature = polygon(
               [
                 [
-                  [xCoord, yCoord],
-                  [xCoord, yCoord + ySize],
-                  [xCoord + xSize, yCoord + ySize],
-                  [xCoord + xSize, yCoord],
-                  [xCoord, yCoord],
-                ],
+                  [yCoord, xCoord],
+                  [yCoord + ySize, xCoord],
+                  [yCoord + ySize, xCoord + xSize],
+                  [yCoord, xCoord + xSize],
+                  [yCoord, xCoord],
+                ], // leaflet and most map frameworks use latlng which is y,x
               ],
               { selected: false, count: latBucket.count }
             );
@@ -675,20 +634,20 @@ export default Vue.extend({
       const task = taskResponse.data.task.join(",");
       const varModesMap = routeGetters.getDecodedVarModes(this.$store);
 
-      if (task.includes("remoteSensing")) {
+      if (task.includes(TaskTypes.REMOTE_SENSING)) {
         const available = routeGetters.getAvailableVariables(this.$store);
 
         training.forEach((v) => {
-          varModesMap.set(v, SummaryMode.RemoteSensing);
+          varModesMap.set(v, SummaryMode.MultiBandImage);
         });
 
         available.forEach((v) => {
-          varModesMap.set(v.colName, SummaryMode.RemoteSensing);
+          varModesMap.set(v.colName, SummaryMode.MultiBandImage);
         });
 
         varModesMap.set(
           routeGetters.getRouteTargetVariable(this.$store),
-          SummaryMode.RemoteSensing
+          SummaryMode.MultiBandImage
         );
       }
       const varModesStr = varModesToString(varModesMap);

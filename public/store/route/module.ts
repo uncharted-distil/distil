@@ -105,7 +105,7 @@ export const getters = {
   getRoutePredictionsDataset: read(moduleGetters.getRoutePredictionsDataset),
   isSingleSolution: read(moduleGetters.isSingleSolution),
   isApplyModel: read(moduleGetters.isApplyModel),
-  isRemoteSensing: read(moduleGetters.isRemoteSensing),
+  isMultiBandImage: read(moduleGetters.isMultiBandImage),
   isGeoSpatial: read(moduleGetters.isGeoSpatial),
   isTimeseries: read(moduleGetters.isTimeseries),
   getBandCombinationId: read(moduleGetters.getBandCombinationId),

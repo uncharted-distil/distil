@@ -11,7 +11,7 @@
     >
       <p class="font-weight-bold" :class="{ 'mr-auto': !hasWeight }">Samples</p>
       <legend-weight v-if="hasWeight" class="ml-5 mr-auto" />
-      <layer-selection v-if="isRemoteSensing" class="layer-button" />
+      <layer-selection v-if="isMultiBandImage" class="layer-button" />
     </view-type-toggle>
 
     <div v-if="hasHighlights" class="flex-grow-1">
@@ -78,8 +78,8 @@ export default Vue.extend({
       return highlight && highlight.value;
     },
 
-    isRemoteSensing(): boolean {
-      return routeGetters.isRemoteSensing(this.$store);
+    isMultiBandImage(): boolean {
+      return routeGetters.isMultiBandImage(this.$store);
     },
   },
 });

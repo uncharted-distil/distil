@@ -1,5 +1,6 @@
 <template>
   <div
+    id="geo-test"
     class="geo-plot-container"
     :class="{ 'selection-mode': isSelectionMode }"
   >
@@ -13,15 +14,15 @@
     ></div>
 
     <image-drilldown
-      v-if="isRemoteSensing"
+      v-if="isMultiBandImage"
       @hide="hideImageDrilldown"
       :dataFields="dataFields"
       :imageUrl="imageUrl"
       :item="item"
       :visible="isImageDrilldown"
     />
-
-    <div
+    <!--Commented out until feature is working again-->
+    <!--<div
       class="selection-toggle"
       :class="{ active: isSelectionMode }"
       @click="isSelectionMode = !isSelectionMode"
@@ -33,7 +34,33 @@
       >
         <icon-base width="100%" height="100%"> <icon-crop-free /> </icon-base>
       </a>
-    </div>
+    </div> -->
+    <b-toast
+      :id="toastId"
+      :title="toastTitle"
+      style="position: absolute; top: 0px; right: 0px"
+      static
+      no-auto-hide
+    >
+      <div class="geo-plot">
+        <image-label
+          class="image-label"
+          :dataFields="dataFields"
+          includedActive
+          shortenLabels
+          alignHorizontal
+          :item="hoverItem"
+        />
+        <image-preview
+          class="image-preview"
+          :row="hoverItem"
+          :image-url="hoverUrl"
+          :width="imageWidth"
+          :height="imageHeight"
+          type="remote_sensing"
+        ></image-preview>
+      </div>
+    </b-toast>
   </div>
 </template>
 
@@ -55,6 +82,12 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
+import lumo from "lumo";
+import BatchQuadOverlay from "../util/rendering/BatchQuadOverlay";
+import {
+  BatchQuadOverlayRenderer,
+  EVENT_TYPES,
+} from "../util/rendering/BatchQuadOverlayRenderer";
 import {
   TableColumn,
   TableRow,
@@ -62,6 +95,7 @@ import {
   Highlight,
   RowSelection,
   GeoCoordinateGrouping,
+  VariableSummary,
 } from "../store/dataset/index";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import {
@@ -69,17 +103,20 @@ import {
   removeRowSelection,
   isRowSelected,
 } from "../util/row";
+import ImagePreview from "../components/ImagePreview";
 import {
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
   REAL_VECTOR_TYPE,
   GEOCOORDINATE_TYPE,
 } from "../util/types";
-
+import { scaleThreshold } from "d3";
+import Color from "color";
 import "leaflet/dist/leaflet.css";
 import "leaflet/dist/images/marker-icon.png";
 import "leaflet/dist/images/marker-icon-2x.png";
 import "leaflet/dist/images/marker-shadow.png";
+import { BLUE_PALETTE } from "../util/color";
 
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
@@ -114,7 +151,31 @@ interface Area {
   imageUrl: string;
   item: TableRow;
 }
-
+// Bucket contains the clustered tile data
+interface Bucket {
+  coordinates: number[][]; // should be two points each with x,y expect -> number[2][2]
+  meta: { selected: boolean; count: number }; // count num of tiles in bucket
+}
+interface Quad {
+  x: number; // vertex x
+  y: number; // vertex y
+  r: number; // color r channel
+  g: number; // color g channel
+  b: number; // color b channel
+  a: number; // color alpha channel
+  // id's bytes is broken down into 4 channels
+  iR: number; // id smallest byte
+  iG: number; // id second smallest byte
+  iB: number; // id second largest byte
+  iA: number; // id largest byte
+}
+// contains the state of the map for things such as event callbacks and the quads to render
+// currently there is two states tiled and clustered
+interface MapState {
+  onHover(id: number);
+  onClick(id: number);
+  quads(): Quad[];
+}
 // Minimum pixels size of clickable target displayed on the map.
 const TARGETSIZE = 6;
 
@@ -125,18 +186,25 @@ export default Vue.extend({
     IconBase,
     IconCropFree,
     ImageDrilldown,
+    ImageLabel,
+    ImagePreview,
   },
 
   props: {
     instanceName: String as () => string,
     dataItems: Array as () => any[],
     dataFields: Object as () => Dictionary<TableColumn>,
+    summaries: Array as () => VariableSummary[],
+    quadOpacity: { type: Number, default: 0.8 },
+    zoomThreshold: { type: Number, default: 8 },
   },
 
   data() {
     return {
       poiLayer: null,
       map: null,
+      overlay: null,
+      renderer: null,
       markers: null,
       areasMeanLng: 0,
       closeButton: null,
@@ -147,6 +215,16 @@ export default Vue.extend({
       isImageDrilldown: false,
       imageUrl: null,
       item: null,
+      polygonLayerId: "polygon-layer",
+      toastId: "geo-notifications",
+      toastTitle: "",
+      hoverItem: null,
+      toastImg: "",
+      hoverUrl: "",
+      imageWidth: 128,
+      imageHeight: 128,
+      previousZoom: 0,
+      currentState: null,
     };
   },
 
@@ -184,11 +262,9 @@ export default Vue.extend({
         .sort((a, b) => b.order - a.order)
         .map((r) => r.variable);
     },
-
     mapID(): string {
       return `map-${this.instanceName}`;
     },
-
     fieldSpecs(): GeoField[] {
       const variables = datasetGetters.getVariables(this.$store);
 
@@ -240,7 +316,63 @@ export default Vue.extend({
 
       return fields;
     },
+    bucketFeatures(): Bucket[] {
+      if (!this.summaries.length) {
+        return [];
+      }
+      const features = [];
+      const duplicateCheck = {};
+      this.summaries.forEach((summary) => {
+        // compute the bucket size in degrees
+        const buckets = summary.filtered
+          ? summary.filtered.buckets
+          : summary.baseline.buckets;
+        const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
+        const ySize =
+          _.toNumber(buckets[0].buckets[1].key) -
+          _.toNumber(buckets[0].buckets[0].key);
 
+        // create a feature collection from the server-supplied bucket data
+        buckets.forEach((lonBucket) => {
+          lonBucket.buckets.forEach((latBucket) => {
+            // Don't include features with a count of 0.
+            if (latBucket.count > 0) {
+              const xCoord = _.toNumber(lonBucket.key);
+              const yCoord = _.toNumber(latBucket.key);
+              const feature = {
+                coordinates: [
+                  [xCoord, yCoord],
+                  [xCoord + xSize, yCoord + ySize],
+                ],
+                meta: { selected: false, count: latBucket.count },
+              };
+              if (!duplicateCheck[feature.coordinates.toString()]) {
+                features.push(feature);
+              } else {
+                console.log("duplicate");
+              }
+              duplicateCheck[feature.coordinates.toString()] = true;
+            }
+          });
+        });
+      });
+      // console.log(duplicateCheck);
+      return features;
+    },
+    minBucketCount(): number {
+      return Math.min(
+        ...this.bucketFeatures.map((bf) => {
+          return bf.meta.count;
+        })
+      );
+    },
+    maxBucketCount(): number {
+      return Math.max(
+        ...this.bucketFeatures.map((bf) => {
+          return bf.meta.count;
+        })
+      );
+    },
     pointGroups(): PointGroup[] {
       const groups = [];
 
@@ -301,13 +433,13 @@ export default Vue.extend({
       const longitudes = [];
 
       const areas = this.dataItems.map((item) => {
-        const imageUrl = this.isRemoteSensing ? item.group_id.value : null;
+        const imageUrl = this.isMultiBandImage ? item.group_id.value : null;
         const fullCoordinates = item.coordinates.value.Elements;
         if (fullCoordinates.some((x) => x === undefined)) return;
 
         /*
           Item store the coordinates as a list of 8 values being four pairs of [Lng, Lat],
-          one for each corner of the remote-sensing image.
+          one for each corner of the isMultiBandImage-sensing image.
 
           [0,1]     [2,3]
             A-------B
@@ -351,8 +483,8 @@ export default Vue.extend({
       return routeGetters.getDecodedRowSelection(this.$store);
     },
 
-    isRemoteSensing(): boolean {
-      return routeGetters.isRemoteSensing(this.$store);
+    isMultiBandImage(): boolean {
+      return routeGetters.isMultiBandImage(this.$store);
     },
     isGeoSpatial(): boolean {
       return routeGetters.isGeoSpatial(this.$store);
@@ -363,9 +495,259 @@ export default Vue.extend({
       const URL = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
       return leaflet.tileLayer(URL);
     },
-  },
 
+    band(): string {
+      return routeGetters.getBandCombinationId(this.$store);
+    },
+    tileState(): MapState {
+      return {
+        onHover: (id: number) => {
+          if (id > this.areas.length) {
+            console.error(`id: ${id} is outside of this.areas bounds`);
+            return; // id outside of bounds
+          }
+          this.toastTitle = this.areas[id].imageUrl;
+          this.hoverItem = this.areas[id].item;
+          this.hoverUrl = this.areas[id].imageUrl;
+          this.$bvToast.show(this.toastId);
+          window.addEventListener("mousemove", this.fadeToast);
+        },
+        onClick: (id: number) => {
+          if (id > this.areas.length || id < 0) {
+            console.error(
+              `id retrieved from buffer picker ${id} not within index bounds of areas.`
+            );
+            return;
+          }
+          this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
+        },
+        quads: () => {
+          return this.areaToQuads();
+        },
+      };
+    },
+    clusterState(): MapState {
+      return {
+        onHover: (id: number) => {
+          return;
+        }, // onHover empty for cluster state
+        onClick: (id: number) => {
+          if (id > this.bucketFeatures.length || id < 0) {
+            console.error(
+              `id retrieved from buffer picker ${id} not within index bounds of areas.`
+            );
+            return;
+          }
+          const bucket = this.bucketFeatures[id];
+          const point1 = this.renderer.latlngToNormalized(
+            bucket.coordinates[0]
+          );
+          const point2 = this.renderer.latlngToNormalized(
+            bucket.coordinates[1]
+          );
+          const center = {
+            x: (point1.x + point2.x) / 2,
+            y: (point1.y + point2.y) / 2,
+          };
+          this.map.zoomToPosition(this.zoomThreshold, center); // zoom to the center of the cluster clicked. Zoom to the point where the state switches
+        },
+        quads: () => {
+          return this.bucketsToQuads();
+        },
+      };
+    },
+  },
   methods: {
+    createLumoMap() {
+      // create map
+      this.map = new lumo.Plot(`#map-select-data`, {
+        continuousZoom: true,
+        inertia: true,
+        wraparound: true,
+        zoom: 3,
+        maxZoom: 11,
+      });
+      // WebGL CARTO Image Layer
+      const base = new lumo.TileLayer({
+        renderer: new lumo.ImageTileRenderer(),
+      });
+      // tile request function
+      base.requestTile = (coord, done) => {
+        const SUBDOMAINS = ["a", "b", "c"];
+        const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
+        const url = `https:/${s}.basemaps.cartocdn.com/light_all/${coord.xyz()}.png`;
+        lumo.loadImage(url, done);
+      };
+      this.map.add(base);
+      // Quad layer
+      this.overlay = new BatchQuadOverlay();
+      this.renderer = new BatchQuadOverlayRenderer();
+      this.overlay.setRenderer(this.renderer);
+      this.map.add(this.overlay);
+      // convert this.areas to quads in normalized space and add to overlay layer
+      if (!this.bucketFeatures.length) {
+        this.currentState = this.tileState;
+      } else {
+        this.currentState = this.clusterState;
+        this.map.on(lumo.ZOOM_END, this.onZoom);
+      }
+      if (!this.bucketFeatures.length && !this.areas.length) {
+        return; // no data
+      }
+      const quads = this.currentState.quads();
+      // get quad set bounds
+      const mapBounds = this.getBounds(quads);
+      this.overlay.addQuad(this.polygonLayerId, quads);
+
+      // add listener for clicks on quads
+      this.renderer.addListener(
+        EVENT_TYPES.MOUSE_CLICK,
+        this.currentState.onClick
+      );
+      this.renderer.addListener(
+        EVENT_TYPES.MOUSE_HOVER,
+        this.currentState.onHover
+      );
+      this.map.fitToBounds(mapBounds);
+    },
+    getBounds(quads: Quad[]) {
+      // set mapBounds to a single tile to start
+      const mapBounds = new lumo.Bounds(
+        quads[0].x,
+        quads[1].x,
+        quads[0].y,
+        quads[1].y
+      );
+      // extend bounds to fit the entire quad set
+      quads.forEach((q) => {
+        mapBounds.extend(q);
+      });
+      return mapBounds;
+    },
+
+    // callback when tile is being clicked and generates drilldown.
+    onTileClick(id: number) {
+      if (id > this.areas.length || id < 0) {
+        console.error(
+          `id retrieved from buffer picker ${id} not within index bounds of areas.`
+        );
+        return;
+      }
+      this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
+    },
+    // callback when tile is being hovered on and generates a toast notification
+    async onTileHover(id: number) {
+      if (id > this.areas.length) {
+        console.error(`id: ${id} is outside of this.areas bounds`);
+        return; // id outside of bounds
+      }
+      this.toastTitle = this.areas[id].imageUrl;
+      this.hoverItem = this.areas[id].item;
+      this.hoverUrl = this.areas[id].imageUrl;
+      this.$bvToast.show(this.toastId);
+      window.addEventListener("mousemove", this.fadeToast);
+    },
+    // fades toast after mouse is moved
+    fadeToast() {
+      this.$bvToast.hide(this.toastId);
+      window.removeEventListener("mousemove", this.fadeToast); // remove event listener because toast is now faded
+    },
+    bucketsToQuads(): Quad[] {
+      const maxVal = this.maxBucketCount;
+      const minVal = this.minBucketCount;
+      const d = (maxVal - minVal) / BLUE_PALETTE.length;
+      const domain = BLUE_PALETTE.map((val, index) => minVal + d * (index + 1));
+      const scaleColors = scaleThreshold()
+        .range(BLUE_PALETTE as any)
+        .domain(domain);
+      const result = []; // packing array with
+      this.bucketFeatures.forEach((bucket, idx) => {
+        const p1 = this.renderer.latlngToNormalized(bucket.coordinates[0]);
+        const p2 = this.renderer.latlngToNormalized(bucket.coordinates[1]);
+        const val = scaleColors(bucket.meta.count).toString(16);
+        const color = Color(scaleColors(bucket.meta.count).toString(16))
+          .rgb()
+          .object(); // convert hex color to rgb
+        const maxColorVal = 256;
+        // normalize color values
+        color.a = 0.9;
+        color.r /= maxColorVal;
+        color.g /= maxColorVal;
+        color.b /= maxColorVal;
+        const id = this.renderer.idToRGBA(idx); // separate index bytes into 4 channels iR,iG,iB,iA. Used to render the index of the object into webgl FBO
+        // need to get rid of spread operators super slow
+        result.push({ ...p1, ...color, ...id });
+        result.push({ x: p2.x, y: p1.y, ...color, ...id });
+        result.push({ ...p2, ...color, ...id });
+        result.push({ ...p1, ...color, ...id });
+        result.push({ x: p1.x, y: p2.y, ...color, ...id });
+        result.push({ ...p2, ...color, ...id });
+      });
+      return result;
+    },
+    areaToQuads(): Quad[] {
+      const result = [];
+      this.areas.forEach((area, idx) => {
+        const p1 = this.renderer.latlngToNormalized([
+          area.coordinates[0][1],
+          area.coordinates[0][0],
+        ]); // lat,lng ->lng,lat
+        const p2 = this.renderer.latlngToNormalized([
+          area.coordinates[1][1],
+          area.coordinates[1][0],
+        ]); // lat,lng ->lng,lat
+        const color = Color(area.color).rgb().object(); // convert hex color to rgb
+        const maxVal = 255;
+        // normalize color values
+        color.a = this.quadOpacity;
+        color.r /= maxVal;
+        color.g /= maxVal;
+        color.b /= maxVal;
+        const id = this.renderer.idToRGBA(idx); // separate index bytes into 4 channels iR,iG,iB,iA. Used to render the index of the object into webgl FBO
+        // need to get rid of spread operators super slow
+        result.push({ ...p1, ...color, ...id });
+        result.push({ x: p2.x, y: p1.y, ...color, ...id });
+        result.push({ ...p2, ...color, ...id });
+        result.push({ ...p1, ...color, ...id });
+        result.push({ x: p1.x, y: p2.y, ...color, ...id });
+        result.push({ ...p2, ...color, ...id });
+      });
+      return result;
+    },
+    // callback when zooming on map
+    onZoom() {
+      const zoom = this.map.getZoom();
+      const wasClustered =
+        zoom >= this.zoomThreshold && this.previousZoom < this.zoomThreshold;
+      const wasTiled =
+        zoom < this.zoomThreshold && this.previousZoom >= this.zoomThreshold;
+      this.previousZoom = this.map.getZoom();
+      // check if map should be rendering clustered tiles
+      if (wasClustered) {
+        this.currentState = this.tileState;
+        this.updateMapState();
+        return;
+      }
+      if (wasTiled) {
+        this.currentState = this.clusterState;
+        this.updateMapState();
+        return;
+      }
+    },
+    // called after state changes and map needs to update
+    updateMapState() {
+      this.overlay.clearQuads();
+      this.renderer.clearListeners();
+      this.overlay.addQuad(this.polygonLayerId, this.currentState.quads());
+      this.renderer.addListener(
+        EVENT_TYPES.MOUSE_CLICK,
+        this.currentState.onClick
+      );
+      this.renderer.addListener(
+        EVENT_TYPES.MOUSE_HOVER,
+        this.currentState.onHover
+      );
+    },
     clearSelectionRect() {
       if (this.selectedRect) {
         this.selectedRect.remove();
@@ -575,34 +957,6 @@ export default Vue.extend({
       return fieldSpec.lngField + ":" + fieldSpec.latField;
     },
 
-    clear() {
-      if (this.selectedRect) {
-        this.selectedRect.remove();
-        this.selectedRect = null;
-      }
-
-      if (this.currentRect) {
-        this.currentRect.remove();
-        this.currentRect = null;
-      }
-
-      if (this.closeButton) {
-        this.closeButton.remove();
-        this.closeButton = null;
-      }
-
-      _.forIn(this.markers, (markerLayer) => {
-        markerLayer.removeFrom(this.map);
-      });
-
-      if (this.map.hasLayer(this.poiLayer)) {
-        this.map.removeLayer(this.poiLayer);
-      }
-
-      this.markers = {};
-      this.startingLatLng = null;
-    },
-
     toggleSelection(event) {
       const marker = event.target;
       const row = marker.options.row;
@@ -755,7 +1109,7 @@ export default Vue.extend({
 
         // Add interactivity to the layer.
         layer.bindTooltip(tooltip.$el as HTMLElement);
-        if (this.isRemoteSensing) {
+        if (this.isMultiBandImage) {
           layer.on("click", () => {
             this.showImageDrilldown(imageUrl, item);
           });
@@ -820,7 +1174,6 @@ export default Vue.extend({
 
     paint() {
       this.createMap();
-      this.clear();
 
       if (this.isGeoSpatial) {
         // Display areas and update them on zoom to be sure they are selectable.
@@ -833,11 +1186,33 @@ export default Vue.extend({
       this.drawHighlight();
       this.drawFilters();
     },
+    onNewData() {
+      // clear polygons
+      this.overlay.clearQuads();
+      // create quads from latlng
+      const quads = this.currentState.quads();
+      // get bounds of quad set
+      const mapBounds = this.getBounds(quads);
+      // add the batched quads to a single layer on the overlay
+      this.overlay.addQuad(this.polygonLayerId, quads);
+      // fit map to the quad set
+      this.map.fitToBounds(mapBounds);
+    },
   },
 
   watch: {
     dataItems() {
-      this.paint();
+      this.onNewData();
+    },
+    summaries(cur, prev) {
+      if (!prev.length) {
+        // if prev undefined update state and add zoom
+        this.map.on(lumo.ZOOM_END, this.onZoom);
+        if (this.map.getZoom() < this.zoomThreshold) {
+          this.currentState = this.clusterState;
+          this.updateMapState();
+        }
+      }
     },
 
     rowSelection() {
@@ -849,7 +1224,7 @@ export default Vue.extend({
   },
 
   mounted() {
-    this.paint();
+    this.createLumoMap();
   },
 });
 </script>
@@ -943,5 +1318,16 @@ path.selected {
 
 .geo-close-button:hover {
   background-color: #f4f4f4;
+}
+.geo-toast {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+}
+.image-label {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  z-index: 1;
 }
 </style>

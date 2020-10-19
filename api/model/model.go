@@ -31,7 +31,7 @@ const (
 )
 
 var (
-	suffixReg = regexp.MustCompile(`:error|:predicted$`)
+	suffixReg = regexp.MustCompile(`:error|:predicted|:confidence$`)
 )
 
 // ExportedModel represents a description of an exported model.
@@ -175,6 +175,11 @@ func GetErrorKey(solutionID string) string {
 	return solutionID + ":error"
 }
 
+// GetConfidenceKey returns a solutions error col key.
+func GetConfidenceKey(solutionID string) string {
+	return solutionID + ":confidence"
+}
+
 // IsPredictedKey returns true if the key matches a predicted key.
 func IsPredictedKey(key string) bool {
 	return strings.HasSuffix(key, ":predicted")
@@ -183,6 +188,11 @@ func IsPredictedKey(key string) bool {
 // IsErrorKey returns true if the key matches an error key.
 func IsErrorKey(key string) bool {
 	return strings.HasSuffix(key, ":error")
+}
+
+// IsConfidenceKey returns true if the key matches an error key.
+func IsConfidenceKey(key string) bool {
+	return strings.HasSuffix(key, ":confidence")
 }
 
 // IsResultKey returns true if the key matches an predicted or error key.

@@ -65,7 +65,7 @@ export interface GeoCoordinateGrouping extends Grouping {
   yCol: string;
 }
 
-export interface RemoteSensingGrouping extends ClusteredGrouping {
+export interface MultiBandImageGrouping extends ClusteredGrouping {
   imageCol: string;
   bandCol: string;
 }
@@ -168,7 +168,7 @@ export enum SummaryMode {
   Default = "default",
   Cluster = "cluster",
   Timeseries = "timeseries",
-  RemoteSensing = "remoteSensing",
+  MultiBandImage = "multiband_image",
 }
 
 // Flags the display mode for filtering.  Generally Default is correct,

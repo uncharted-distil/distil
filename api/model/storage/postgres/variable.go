@@ -202,8 +202,8 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 		} else if model.IsGeoCoordinate(variable.Grouping.GetType()) {
 			gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
 			field = NewCoordinateField(variable.Name, s, dataset, storageName, gcg.XCol, gcg.YCol, variable.DisplayName, variable.Grouping.GetType(), "")
-		} else if model.IsRemoteSensing(variable.Grouping.GetType()) {
-			rsg := variable.Grouping.(*model.RemoteSensingGrouping)
+		} else if model.IsMultiBandImage(variable.Grouping.GetType()) {
+			rsg := variable.Grouping.(*model.MultiBandImageGrouping)
 			field = NewMultiBandImageField(s, dataset, storageName, rsg.ClusterCol, variable.Name, variable.DisplayName, variable.Grouping.GetType(), rsg.IDCol, rsg.BandCol)
 		} else {
 			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.GetIDCol(), variable.Grouping.GetType())
@@ -213,7 +213,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 		// if timeseries mode, get the grouping field and use that for counts
 		countCol := ""
-		if mode == api.TimeseriesMode || mode == api.RemoteSensingMode {
+		if mode == api.TimeseriesMode || mode == api.MultiBandImageMode {
 			vars, err := s.metadata.FetchVariables(dataset, false, true)
 			if err != nil {
 				return nil, err

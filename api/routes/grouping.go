@@ -186,8 +186,8 @@ func parseGeoCoordinateGrouping(rawGrouping map[string]interface{}) (*model.GeoC
 	return grouping, nil
 }
 
-func parseRemoteSensingGrouping(rawGrouping map[string]interface{}) (*model.RemoteSensingGrouping, error) {
-	grouping := &model.RemoteSensingGrouping{}
+func parseMultiBandImageGrouping(rawGrouping map[string]interface{}) (*model.MultiBandImageGrouping, error) {
+	grouping := &model.MultiBandImageGrouping{}
 	err := json.MapToStruct(grouping, rawGrouping)
 	if err != nil {
 		return nil, err
@@ -231,8 +231,8 @@ func createGrouping(dataset string, storageName string, groupingType string, raw
 		if err != nil {
 			return err
 		}
-	} else if model.IsRemoteSensing(groupingType) {
-		rsg, err := parseRemoteSensingGrouping(rawGrouping)
+	} else if model.IsMultiBandImage(groupingType) {
+		rsg, err := parseMultiBandImageGrouping(rawGrouping)
 		if err != nil {
 			return err
 		}
@@ -240,7 +240,7 @@ func createGrouping(dataset string, storageName string, groupingType string, raw
 		// Set the name of the expected cluster column - it doesn't necessarily exist.
 		varName := rsg.IDCol + "_group"
 		rsg.ClusterCol = model.ClusterVarPrefix + rsg.IDCol
-		err = meta.AddGroupedVariable(dataset, varName, "Tile", model.RemoteSensingType, model.VarDistilRoleGrouping, rsg)
+		err = meta.AddGroupedVariable(dataset, varName, "Tile", model.MultiBandImageType, model.VarDistilRoleGrouping, rsg)
 		if err != nil {
 			return err
 		}

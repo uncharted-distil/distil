@@ -585,8 +585,8 @@ func getComponentVariables(variable *model.Variable) []string {
 				// include the grouping ID if present and there were no sub IDs
 				componentVars = append(componentVars, variable.Grouping.GetIDCol())
 			}
-		} else if model.IsRemoteSensing(variable.Grouping.GetType()) {
-			rsg := variable.Grouping.(*model.RemoteSensingGrouping)
+		} else if model.IsMultiBandImage(variable.Grouping.GetType()) {
+			rsg := variable.Grouping.(*model.MultiBandImageGrouping)
 			componentVars = append(componentVars, rsg.BandCol, rsg.IDCol, rsg.ImageCol)
 		} else if model.IsTimeSeries(variable.Grouping.GetType()) {
 			tsg := variable.Grouping.(*model.TimeseriesGrouping)
@@ -622,8 +622,8 @@ func copyFeatureGroups(fittedSolutionID string, datasetName string, solutionStor
 	for _, feature := range solutionRequest.Features {
 		if feature.FeatureType == "train" && variablePredictionMap[feature.FeatureName] == nil {
 			sf := variableMap[feature.FeatureName]
-			if sf.IsGrouping() && model.IsRemoteSensing(sf.Grouping.GetType()) {
-				rsg := sf.Grouping.(*model.RemoteSensingGrouping)
+			if sf.IsGrouping() && model.IsMultiBandImage(sf.Grouping.GetType()) {
+				rsg := sf.Grouping.(*model.MultiBandImageGrouping)
 				rsg.Dataset = datasetName
 				err = metaStorage.AddGroupedVariable(datasetName, sf.Name, sf.DisplayName, sf.Type, sf.DistilRole, rsg)
 				if err != nil {

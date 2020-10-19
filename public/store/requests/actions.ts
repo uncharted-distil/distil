@@ -250,6 +250,15 @@ function updateSolutionResults(
         ? varModes.get(req.target)
         : SummaryMode.Default,
     });
+    resultsActions.fetchConfidenceSummary(store, {
+      dataset: req.dataset,
+      solutionId: res.solutionId,
+      highlight: context.getters.getDecodedHighlight,
+      dataMode: dataMode,
+      varMode: varModes.has(req.target)
+        ? varModes.get(req.target)
+        : SummaryMode.Default,
+    });
   }
 }
 

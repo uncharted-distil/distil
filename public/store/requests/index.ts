@@ -40,6 +40,7 @@ export interface Solution extends SolutionRequest {
   scores: Score[];
   predictedKey: string;
   errorKey: string;
+  confidenceKey: string;
   isBad: boolean;
 }
 

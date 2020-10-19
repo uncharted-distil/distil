@@ -146,6 +146,12 @@ export const getters = {
     return state.correctnessSummaries;
   },
 
+  // confidence
+
+  getConfidenceSummaries(state: ResultsState): VariableSummary[] {
+    return state.confidenceSummaries;
+  },
+
   // forecasts
 
   getPredictedTimeseries(state: ResultsState): Dictionary<TimeSeries> {

@@ -104,7 +104,7 @@ func (s *Storage) fetchHistogram(dataset string, storageName string, variable *m
 
 func (s *Storage) getCountCol(dataset string, mode api.SummaryMode) (string, error) {
 	countCol := ""
-	if mode == api.RemoteSensingMode {
+	if mode == api.MultiBandImageMode {
 		// remote sensing group should be distinct by group id
 		vars, err := s.metadata.FetchVariables(dataset, false, true)
 		if err != nil {

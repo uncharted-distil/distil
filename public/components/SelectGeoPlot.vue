@@ -3,6 +3,7 @@
     :instance-name="instanceName"
     :data-fields="fields"
     :data-items="items"
+    :summaries="summaries"
   >
   </geo-plot>
 </template>
@@ -12,7 +13,15 @@ import Vue from "vue";
 import GeoPlot from "./GeoPlot";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
-import { TableColumn, TableRow } from "../store/dataset/index";
+import {
+  TableColumn,
+  TableRow,
+  Variable,
+  VariableSummary,
+} from "../store/dataset/index";
+import { getters as routeGetters } from "../store/route/module";
+import { getVariableSummariesByState, searchVariables } from "../util/data";
+import { isGeoLocatedType } from "../util/types";
 
 export default Vue.extend({
   name: "select-geo-plot",
@@ -37,6 +46,33 @@ export default Vue.extend({
       return this.includedActive
         ? datasetGetters.getIncludedTableDataItems(this.$store)
         : datasetGetters.getExcludedTableDataItems(this.$store);
+    },
+    trainingVarsSearch(): string {
+      return routeGetters.getRouteTrainingVarsSearch(this.$store);
+    },
+    trainingVariables(): Variable[] {
+      return searchVariables(
+        routeGetters.getTrainingVariables(this.$store),
+        this.trainingVarsSearch
+      );
+    },
+    summaries(): VariableSummary[] {
+      const pageIndex = routeGetters.getRouteTrainingVarsPage(this.$store);
+      const include = routeGetters.getRouteInclude(this.$store);
+      const summaryDictionary = include
+        ? datasetGetters.getIncludedVariableSummariesDictionary(this.$store)
+        : datasetGetters.getExcludedVariableSummariesDictionary(this.$store);
+
+      const currentSummaries = getVariableSummariesByState(
+        pageIndex,
+        this.trainingVariables.length,
+        this.trainingVariables,
+        summaryDictionary
+      ) as VariableSummary[];
+
+      return currentSummaries.filter((cs) => {
+        return isGeoLocatedType(cs.varType);
+      });
     },
   },
 });

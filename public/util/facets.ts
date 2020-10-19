@@ -302,7 +302,19 @@ export function applyColor(colors: FacetColor[]): string {
     --facet-bars-${i}-unselected-contrast-hover: ${c.color};
     --facet-bars-${i}-muted: ${c.color};
     --facet-bars-${i}-muted-contrast: ${c.color};
-    --facet-bars-${i}-muted-contrast-hover: ${c.colorHover};`;
+    --facet-bars-${i}-muted-contrast-hover: ${c.colorHover};
+    --facet-terms-bar-${i}-normal: ${c.color};
+    --facet-terms-bar-${i}-normal-contrast: ${c.colorHover};
+    --facet-terms-bar-${i}-normal-contrast-hover: ${c.color};
+    --facet-terms-bar-${i}-selected: ${c.color};
+    --facet-terms-bar-${i}-selected-contrast: ${c.colorHover};
+    --facet-terms-bar-${i}-selected-contrast-hover: ${c.color};
+    --facet-terms-bar-${i}-unselected: ${c.colorHover};
+    --facet-terms-bar-${i}-unselected-contrast: ${c.colorHover};
+    --facet-terms-bar-${i}-unselected-contrast-hover: ${c.color};
+    --facet-terms-bar-${i}-muted: ${c.color};
+    --facet-terms-bar-${i}-muted-contrast: ${c.color};
+    --facet-terms-bar-${i}-muted-contrast-hover: ${c.colorHover};`;
   });
   return result;
 }
@@ -311,6 +323,9 @@ export function getSubSelectionValues(
   rowSelection: RowSelection,
   max: number
 ): number[][] {
+  if (!summary.baseline?.buckets) {
+    return [];
+  }
   const include = routeGetters.getRouteInclude(store);
   const hasFilterBuckets = hasFiltered(summary);
   if (!hasFilterBuckets && !rowSelection) {
@@ -380,6 +395,9 @@ export function rowLabelMatches(
 }
 
 export function getRowSelectionLabels(summary: VariableSummary): string[] {
+  if (!summary.baseline?.buckets) {
+    return [];
+  }
   const include = routeGetters.getRouteInclude(store);
   const selectedRows = include
     ? datasetGetters.getIncludedSelectedRowData(store)

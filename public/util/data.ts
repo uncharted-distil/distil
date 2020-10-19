@@ -44,7 +44,7 @@ import {
   isTimeGroupType,
   isTimeType,
   isValueGroupType,
-  REMOTE_SENSING_TYPE,
+  MULTIBAND_IMAGE_TYPE,
   TIMESERIES_TYPE,
 } from "../util/types";
 import { Dictionary } from "./dict";
@@ -237,11 +237,8 @@ export function fetchResultExemplars(
   const variables = datasetGetters.getVariables(store);
   const variable = variables.find((v) => v.colName === variableName);
 
-  const baselineExemplars = summary.baseline.exemplars;
-  const filteredExemplars =
-    summary.filtered && summary.filtered.exemplars
-      ? summary.filtered.exemplars
-      : null;
+  const baselineExemplars = summary.baseline?.exemplars;
+  const filteredExemplars = summary.filtered?.exemplars;
   const exemplars = filteredExemplars ? filteredExemplars : baselineExemplars;
 
   if (exemplars) {
@@ -276,15 +273,15 @@ export function fetchResultExemplars(
 }
 
 /*
-  minimumRouteKey - Makes a unique key given route state to support 
+  minimumRouteKey - Makes a unique key given route state to support
   saving to and retrieving from a variable summary dictionary cache
   using some of the route's query options (IE: not grabbing all
-  options as that's too narrow in focus.) It SHA1 hashes a string 
-  of datasetId, solutionId, requestId, fittedSolutionId, highlight, 
-  filters, dataMode, varModes and ranking as that's unique enough 
-  without being over specific and causing duplicate calls. The SHA1 
-  hash of those fields is fast to calculate, maintains uniqueness, 
-  and keeps the store keys a consistent length, unlike base64. 
+  options as that's too narrow in focus.) It SHA1 hashes a string
+  of datasetId, solutionId, requestId, fittedSolutionId, highlight,
+  filters, dataMode, varModes and ranking as that's unique enough
+  without being over specific and causing duplicate calls. The SHA1
+  hash of those fields is fast to calculate, maintains uniqueness,
+  and keeps the store keys a consistent length, unlike base64.
 */
 export function minimumRouteKey(): string {
   const routeKeys =
@@ -685,6 +682,15 @@ export function getTableDataItems(data: TableData): TableRow[] {
           if (colValue.weight !== null && colValue.weight !== undefined) {
             row[colName].weight = colValue.weight;
           }
+
+          // confidence code, draft pending UX feedback
+          /*
+          if (colValue.confidence !== undefined) {
+            const conKey = colName + "confidence";
+            row[conKey] = {};
+            row[conKey].value = colValue.confidence;
+          }
+          */
         } else {
           row[colName] = formatValue(colValue.value, colType);
         }
@@ -726,6 +732,18 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
         variable = requestGetters.getActiveSolutionTargetVariable(store)[0]; // always a single value
         label = variable.colDisplayName;
         description = `Model predicted value for ${variable.colName}`;
+
+        // confidence code, draft pending UX feedback
+        /*
+        result[col.key + "confidence"] = {
+          label: label + "_Confidence",
+          key: col.key + "confidence",
+          type: "numeric",
+          weight: null,
+          headerTitle: `Prediction confidence ${variable.colName}`,
+          sortable: true,
+        };
+        */
       } else if (isErrorCol(col.key)) {
         variable = requestGetters.getActiveSolutionTargetVariable(store)[0];
         label = "Error";
@@ -839,19 +857,19 @@ export function getImageFields(
 
   // find remote senings image fields
   const fieldKeys = _.map(fields, (_, key) => key);
-  const remoteSensingFields = datasetGetters
+  const MultiBandImageFields = datasetGetters
     .getVariables(store)
     .filter(
       (v) =>
         v.grouping &&
         v.grouping.idCol &&
-        v.colType === REMOTE_SENSING_TYPE &&
+        v.colType === MULTIBAND_IMAGE_TYPE &&
         _.includes(fieldKeys, v.grouping.idCol)
     )
     .map((v) => ({ key: v.grouping.idCol, type: v.colType }));
 
   // the two are probably mutually exclusive, but it doesn't hurt anything to allow for both
-  return imageFields.concat(remoteSensingFields);
+  return imageFields.concat(MultiBandImageFields);
 }
 
 export function getListFields(

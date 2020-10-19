@@ -51,7 +51,7 @@ import {
 } from "../store/dataset/index";
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
-import { REMOTE_SENSING_TYPE, IMAGE_TYPE } from "../util/types";
+import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
 import { createRouteEntry } from "../util/routes";
 
 export default Vue.extend({
@@ -226,7 +226,7 @@ export default Vue.extend({
         if (this.isVisible) {
           this.injectImage();
         }
-      } else if (this.type === REMOTE_SENSING_TYPE) {
+      } else if (this.type === MULTIBAND_IMAGE_TYPE) {
         await datasetActions.fetchMultiBandImage(this.$store, {
           dataset: this.dataset,
           imageId: this.imageId,
@@ -245,7 +245,7 @@ export default Vue.extend({
   async beforeMount() {
     // lazy fetch available band types
     if (
-      this.type === REMOTE_SENSING_TYPE &&
+      this.type === MULTIBAND_IMAGE_TYPE &&
       _.isEmpty(datasetGetters.getMultiBandCombinations(this.$store))
     ) {
       await datasetActions.fetchMultiBandCombinations(this.$store, {

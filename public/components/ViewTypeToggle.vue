@@ -59,7 +59,7 @@ import {
   LONGITUDE_TYPE,
   LATITUDE_TYPE,
   GEOCOORDINATE_TYPE,
-  REMOTE_SENSING_TYPE,
+  MULTIBAND_IMAGE_TYPE,
   GEOBOUNDS_TYPE,
 } from "../util/types";
 
@@ -109,14 +109,14 @@ export default Vue.extend({
     hasImageVariables(): boolean {
       return (
         this.variables.filter(
-          (v) => v.colType === IMAGE_TYPE || v.colType === REMOTE_SENSING_TYPE
+          (v) => v.colType === IMAGE_TYPE || v.colType === MULTIBAND_IMAGE_TYPE
         ).length > 0
       );
     },
     hasAvailableImageVariables(): boolean {
       return (
         this.availableVariables.filter(
-          (v) => v.colType === IMAGE_TYPE || v.colType === REMOTE_SENSING_TYPE
+          (v) => v.colType === IMAGE_TYPE || v.colType === MULTIBAND_IMAGE_TYPE
         ).length > 0
       );
     },
@@ -128,7 +128,7 @@ export default Vue.extend({
       const hasGeocoord = this.variables.some(
         (v) =>
           v.grouping &&
-          [GEOCOORDINATE_TYPE, REMOTE_SENSING_TYPE].includes(v.grouping.type)
+          [GEOCOORDINATE_TYPE, MULTIBAND_IMAGE_TYPE].includes(v.grouping.type)
       );
       const hasLat = this.variables.some((v) => v.colType === LONGITUDE_TYPE);
       const hasLon = this.variables.some((v) => v.colType === LATITUDE_TYPE);
@@ -151,8 +151,8 @@ export default Vue.extend({
       return (hasLat && hasLon) || hasGeocoord;
     },
 
-    /* 
-      TODO - Reimplement test once the Timeseries view works again. 
+    /*
+      TODO - Reimplement test once the Timeseries view works again.
       See https://github.com/uncharted-distil/distil/issues/1690
     */
     hasTimeseriesVariables(): boolean {

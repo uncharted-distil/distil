@@ -125,7 +125,7 @@ func Cluster(dataset *api.Dataset, variable string, useKMeans bool) (bool, []*Cl
 	clusterGroup := getClusterGroup(clusteringVar.Name, features)
 	if model.IsImage(clusteringVar.Type) {
 		step, err = description.CreateImageClusteringPipeline("image_cluster", "basic image clustering", []*model.Variable{clusteringVar}, useKMeans)
-	} else if clusterGroup != nil && model.IsRemoteSensing(clusterGroup.GetType()) {
+	} else if clusterGroup != nil && model.IsMultiBandImage(clusterGroup.GetType()) {
 		// Check to see if this dataset redirects to a different dataset for actual learning / analytic tasks.
 		if dataset.LearningDataset != "" {
 			// get the pre-featurized dataset location and its metadata
@@ -141,7 +141,7 @@ func Cluster(dataset *api.Dataset, variable string, useKMeans bool) (bool, []*Cl
 					"remote_sensing_cluster", "k-means pre-featurized remote sensing clustering", variables, useKMeans)
 			}
 		} else {
-			rsg := clusterGroup.(*model.RemoteSensingGrouping)
+			rsg := clusterGroup.(*model.MultiBandImageGrouping)
 			step, err = description.CreateMultiBandImageClusteringPipeline("remote_sensing_cluster", "multiband image clustering", rsg, features, useKMeans)
 		}
 	} else if clusteringVar.DistilRole == model.VarDistilRoleGrouping {
