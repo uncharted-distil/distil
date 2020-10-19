@@ -321,7 +321,6 @@ export default Vue.extend({
         return [];
       }
       const features = [];
-      const duplicateCheck = {};
       this.summaries.forEach((summary) => {
         // compute the bucket size in degrees
         const buckets = summary.filtered
@@ -346,12 +345,7 @@ export default Vue.extend({
                 ],
                 meta: { selected: false, count: latBucket.count },
               };
-              if (!duplicateCheck[feature.coordinates.toString()]) {
-                features.push(feature);
-              } else {
-                console.log("duplicate");
-              }
-              duplicateCheck[feature.coordinates.toString()] = true;
+              features.push(feature);
             }
           });
         });
