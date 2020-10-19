@@ -16,12 +16,14 @@
 package task
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	apicomp "github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
@@ -29,13 +31,14 @@ import (
 
 type explainDataset struct {
 	explainURI string
+	resultURI  string
 	target     string
 }
 
 // CreateDataset creates the raw dataset structure for the SHAP dataset.
 func (e explainDataset) CreateDataset(rootDataPath string, datasetName string, config *env.Config) (*api.RawDataset, error) {
 	explainStorage := serialization.GetStorage(e.explainURI)
-	explainedOutput, err := explainStorage.ReadData(e.explainURI)
+	explainedOutput, err := apicomp.ExplainFeatureOutput(e.resultURI, e.explainURI)
 	if err != nil {
 		return nil, err
 	}
@@ -44,13 +47,16 @@ func (e explainDataset) CreateDataset(rootDataPath string, datasetName string, c
 	outputDataURI = path.Join(rootDataPath, compute.D3MDataFolder, outputDataURI)
 
 	// add the target variable placeholder
-	explainedOutput[0] = append(explainedOutput[0], e.target)
-	for i := 1; i < len(explainedOutput); i++ {
-		explainedOutput[i] = append(explainedOutput[i], "")
+	explainedData := explainedOutput.Values
+	explainedData[0] = append(explainedData[0], e.target)
+	for i := 1; i < len(explainedData); i++ {
+		// need multiple classes for it to work
+		// TODO: GET TARGETS FROM INPUT DATA!
+		explainedData[i] = append(explainedData[i], fmt.Sprintf("placeholder_%d", i%5))
 	}
 
 	// write out the data to the dataset folder
-	err = explainStorage.WriteData(outputDataURI, explainedOutput)
+	err = explainStorage.WriteData(outputDataURI, explainedData)
 	if err != nil {
 		return nil, err
 	}
@@ -60,26 +66,35 @@ func (e explainDataset) CreateDataset(rootDataPath string, datasetName string, c
 	meta := model.NewMetadata(datasetName, datasetName, "", datasetID)
 	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = outputDataURI
-	for i, field := range explainedOutput[0] {
+	for i, field := range explainedData[0] {
+		typ := model.RealType
+		role := model.RoleAttribute
+		if field == e.target {
+			typ = model.StringType
+		} else if field == model.D3MIndexFieldName {
+			typ = model.IndexType
+			role = model.RoleIndex
+		}
 		dr.Variables = append(dr.Variables,
-			model.NewVariable(i, field, field, field, model.RealType, model.RealType,
-				"", []string{model.RoleAttribute}, model.VarDistilRoleData, nil, dr.Variables, true))
+			model.NewVariable(i, field, field, field, typ, typ,
+				"", []string{role}, model.VarDistilRoleData, nil, dr.Variables, true))
 	}
 
 	meta.DataResources = []*model.DataResource{dr}
 	return &api.RawDataset{
 		ID:       e.explainURI,
 		Name:     e.explainURI,
-		Data:     explainedOutput,
+		Data:     explainedData,
 		Metadata: meta,
 	}, nil
 }
 
 // ClusterExplainOutput clusters the explained output from a model.
-func ClusterExplainOutput(variable string, resultID string, explainURI string, config *env.Config) error {
+func ClusterExplainOutput(variable string, resultURI string, explainURI string, config *env.Config) error {
 	// create the SHAP values dataset
 	ds := explainDataset{
 		explainURI: explainURI,
+		resultURI:  resultURI,
 		target:     variable,
 	}
 	outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)

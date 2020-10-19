@@ -175,7 +175,7 @@ func ClusteringExplainHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 
 		clusterVarName := fmt.Sprintf("%s%s", model.ClusterVarPrefix, target)
 		// cluster data
-		err = task.ClusterExplainOutput(target, resultID, explainURI, &config)
+		err = task.ClusterExplainOutput(target, result.ResultURI, explainURI, &config)
 		if err != nil {
 			handleError(w, err)
 			return
