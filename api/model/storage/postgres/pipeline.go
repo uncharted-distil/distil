@@ -82,7 +82,7 @@ func (s *Storage) PersistSolutionResult(solutionID string, fittedSolutionID stri
 
 	for typ, uri := range explainOutput {
 		sql = fmt.Sprintf("INSERT INTO %s (result_id, explain_uri, explain_type) VALUES ($1, $2, $3)", postgres.SolutionResultExplainOutputTableName)
-		_, err = s.client.Exec(sql, resultUUID, uri, typ)
+		_, err = s.client.Exec(sql, resultUUID, uri.ResultURI, typ)
 		if err != nil {
 			return errors.Wrap(err, "unable to persist solution result explain output")
 		}

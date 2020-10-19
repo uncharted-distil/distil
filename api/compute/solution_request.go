@@ -755,6 +755,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			}
 
 			// explain features per-record if the explanation is available
+			produceOutputs := map[string]*api.SolutionExplainResult{}
 			explainedResults := make(map[string]*api.SolutionExplainResult)
 			for _, explain := range outputKeysExplain {
 				if explain.typ == explainableTypeStep || explain.typ == explainableTypeConfidence {
@@ -768,6 +769,9 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 					}
 					parsedExplainResult.ParsingParams = explain.parsingParams
 					explainedResults[explain.typ] = parsedExplainResult
+				}
+				produceOutputs[explain.typ] = &api.SolutionExplainResult{
+					ResultURI: outputKeyURIs[explain.key],
 				}
 			}
 
@@ -803,7 +807,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			log.Infof("persisting results in URI '%s'", resultURI)
 			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
 				initialSearchID, dataset, storageName, solutionID, initialSearchSolutionID, fittedSolutionID,
-				produceRequestID, resultID, resultURI, explainedResults[explainableTypeConfidence], explainedResults)
+				produceRequestID, resultID, resultURI, explainedResults[explainableTypeConfidence], produceOutputs)
 		}
 	})
 	if err != nil {

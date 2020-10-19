@@ -29,6 +29,7 @@ import (
 
 type explainDataset struct {
 	explainURI string
+	target     string
 }
 
 // CreateDataset creates the raw dataset structure for the SHAP dataset.
@@ -42,6 +43,12 @@ func (e explainDataset) CreateDataset(rootDataPath string, datasetName string, c
 	outputDataURI := strings.Replace(compute.D3MLearningData, path.Ext(compute.D3MLearningData), path.Ext(e.explainURI), 1)
 	outputDataURI = path.Join(rootDataPath, compute.D3MDataFolder, outputDataURI)
 
+	// add the target variable placeholder
+	explainedOutput[0] = append(explainedOutput[0], e.target)
+	for i := 1; i < len(explainedOutput); i++ {
+		explainedOutput[i] = append(explainedOutput[i], "")
+	}
+
 	// write out the data to the dataset folder
 	err = explainStorage.WriteData(outputDataURI, explainedOutput)
 	if err != nil {
@@ -51,7 +58,7 @@ func (e explainDataset) CreateDataset(rootDataPath string, datasetName string, c
 	// every field except d3m index is a float
 	datasetID := model.NormalizeDatasetID(datasetName)
 	meta := model.NewMetadata(datasetName, datasetName, "", datasetID)
-	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeRaw, map[string][]string{compute.D3MResourceFormat: {"csv"}})
+	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = outputDataURI
 	for i, field := range explainedOutput[0] {
 		dr.Variables = append(dr.Variables,
@@ -73,15 +80,18 @@ func ClusterExplainOutput(variable string, resultID string, explainURI string, c
 	// create the SHAP values dataset
 	ds := explainDataset{
 		explainURI: explainURI,
+		target:     variable,
 	}
-	_, dsPath, err := CreateDataset(explainURI, ds, "", config)
+	outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
+	datasetName := strings.TrimSuffix(path.Base(explainURI), path.Ext(explainURI))
+	_, dsPath, err := CreateDataset(datasetName, ds, outputPath, config)
 	if err != nil {
 		return err
 	}
 
 	// read the metadata from the just created dataset
 	explainStorage := serialization.GetStorage(explainURI)
-	meta, err := explainStorage.ReadMetadata(dsPath)
+	meta, err := explainStorage.ReadMetadata(path.Join(dsPath, compute.D3MDataSchema))
 	if err != nil {
 		return err
 	}
@@ -91,7 +101,7 @@ func ClusterExplainOutput(variable string, resultID string, explainURI string, c
 		ID:              meta.ID,
 		Name:            meta.Name,
 		StorageName:     meta.StorageName,
-		Folder:          meta.DatasetFolder,
+		Folder:          meta.ID,
 		Description:     meta.Description,
 		Summary:         meta.Summary,
 		SummaryML:       meta.SummaryMachine,
@@ -99,7 +109,7 @@ func ClusterExplainOutput(variable string, resultID string, explainURI string, c
 		NumRows:         meta.NumRows,
 		NumBytes:        meta.NumBytes,
 		Provenance:      meta.SearchProvenance,
-		Source:          metadata.DatasetSource(meta.SourceDataset),
+		Source:          metadata.Augmented,
 		Type:            api.DatasetType(meta.Type),
 		LearningDataset: meta.LearningDataset,
 	}
