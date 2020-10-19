@@ -652,6 +652,7 @@ export default Vue.extend({
       this.$bvToast.hide(this.toastId);
       window.removeEventListener("mousemove", this.fadeToast); // remove event listener because toast is now faded
     },
+    // packs all data into single aligned memory array
     bucketsToQuads(): Quad[] {
       const maxVal = this.maxBucketCount;
       const minVal = this.minBucketCount;
@@ -685,6 +686,7 @@ export default Vue.extend({
       });
       return result;
     },
+    // packs all data into single aligned memory array
     areaToQuads(): Quad[] {
       const result = [];
       this.areas.forEach((area, idx) => {

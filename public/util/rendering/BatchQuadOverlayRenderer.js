@@ -32,7 +32,7 @@ const SHADER_GLSL = {
     varying vec4 oColor;
 		void main() {
       gl_FragColor = oColor;
-      gl_FragColor.rgb *= gl_FragColor.a;
+      gl_FragColor.rgb *= gl_FragColor.a; // premultiplied alpha
 		}
 		`,
 };
