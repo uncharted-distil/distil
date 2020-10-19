@@ -4,14 +4,7 @@
     class="geo-plot-container"
     :class="{ 'selection-mode': isSelectionMode }"
   >
-    <div
-      class="geo-plot"
-      :id="mapID"
-      @mousedown="onMouseDown"
-      @mouseup="onMouseUp"
-      @mousemove="onMouseMove"
-      @keydown.esc="onEsc"
-    ></div>
+    <div ref="geoPlot" class="geo-plot" :id="mapID" @keydown.esc="onEsc"></div>
 
     <image-drilldown
       v-if="isMultiBandImage"
@@ -21,11 +14,10 @@
       :item="item"
       :visible="isImageDrilldown"
     />
-    <!--Commented out until feature is working again-->
-    <!--<div
+    <div
       class="selection-toggle"
       :class="{ active: isSelectionMode }"
-      @click="isSelectionMode = !isSelectionMode"
+      @click="toggleSelectionTool"
     >
       <a
         class="selection-toggle-control"
@@ -34,7 +26,7 @@
       >
         <icon-base width="100%" height="100%"> <icon-crop-free /> </icon-base>
       </a>
-    </div> -->
+    </div>
     <b-toast
       :id="toastId"
       :title="toastTitle"
@@ -61,6 +53,15 @@
         ></image-preview>
       </div>
     </b-toast>
+    <button
+      type="button"
+      class="close selection-exit"
+      aria-label="Close"
+      v-show="showExit"
+      :style="exitStyle"
+    >
+      <span aria-hidden="true">&times;</span>
+    </button>
   </div>
 </template>
 
@@ -176,6 +177,10 @@ interface MapState {
   onClick(id: number);
   quads(): Quad[];
 }
+interface LumoPoint {
+  x: number;
+  y: number;
+}
 // Minimum pixels size of clickable target displayed on the map.
 const TARGETSIZE = 6;
 
@@ -225,6 +230,14 @@ export default Vue.extend({
       imageHeight: 128,
       previousZoom: 0,
       currentState: null,
+      selectionToolData: {
+        startPoint: null,
+        currentPoint: null,
+        startPointClient: null,
+        exit: { top: 0, right: 0 },
+      },
+      selectionToolId: "selection-tool-layer",
+      showExit: false,
     };
   },
 
@@ -493,6 +506,7 @@ export default Vue.extend({
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
+
     tileState(): MapState {
       return {
         onHover: (id: number) => {
@@ -550,6 +564,9 @@ export default Vue.extend({
         },
       };
     },
+    exitStyle(): string {
+      return `top:${this.selectionToolData.exit.top}px; right:${this.selectionToolData.exit.right}px;`;
+    },
   },
   methods: {
     createLumoMap() {
@@ -604,6 +621,63 @@ export default Vue.extend({
       );
       this.map.fitToBounds(mapBounds);
     },
+    /**
+     * on selection tool toggle disable or enable the quad interactions such as click or hover
+     */
+    toggleSelectionTool() {
+      this.isSelectionMode = !this.isSelectionMode;
+      if (this.isSelectionMode) {
+        this.renderer.disableInteractions();
+        this.map.on("mousedown", this.selectionToolDown);
+        this.map.disablePanning();
+        this.map.disableZooming();
+        return;
+      }
+      this.overlay.removeQuad(this.selectionToolId);
+      this.map.removeListener("mousedown", this.selectionToolDown);
+      this.showExit = false;
+      this.renderer.enableInteractions();
+      this.map.enablePanning();
+      this.map.enableZooming();
+    },
+    // mouse move clear and redraw quad with new point
+    selectionToolDraw(e) {
+      this.selectionToolData.currentPoint = e.pos;
+      // draw current selection
+      this.overlay.removeQuad(this.selectionToolId);
+      this.overlay.addQuad(
+        this.selectionToolId,
+        this.pointsToQuad(
+          this.selectionToolData.startPoint,
+          this.selectionToolData.currentPoint
+        )
+      );
+    },
+    selectionToolDown(e) {
+      this.selectionToolData.startPoint = e.pos;
+      this.selectionToolData.startPointClient = e.originalEvent;
+      this.showExit = false;
+      this.overlay.removeQuad(this.selectionToolId);
+      this.map.on("mousemove", this.selectionToolDraw);
+      this.map.on("mouseup", this.selectionToolUp);
+    },
+    // add exit button and send selection
+    selectionToolUp(e) {
+      this.selectionToolData.currentPoint = e.pos;
+      this.map.removeListener("mousemove", this.selectionToolDraw);
+      this.map.removeListener("mouseup", this.selectionToolUp);
+      this.selectionToolData.exit.top = Math.min(
+        e.originalEvent.layerY,
+        this.selectionToolData.startPointClient.layerY
+      );
+      const right = Math.max(
+        e.originalEvent.layerX,
+        this.selectionToolData.startPointClient.layerX
+      );
+      this.selectionToolData.exit.right = e.target.canvas.clientWidth - right;
+
+      this.showExit = true;
+    },
     getBounds(quads: Quad[]) {
       // set mapBounds to a single tile to start
       const mapBounds = new lumo.Bounds(
@@ -646,6 +720,25 @@ export default Vue.extend({
       this.$bvToast.hide(this.toastId);
       window.removeEventListener("mousemove", this.fadeToast); // remove event listener because toast is now faded
     },
+    // assumes x and y are normalized points this function is for the selection tool
+    pointsToQuad(p1: LumoPoint, p2: LumoPoint): Quad[] {
+      const result = [];
+      const id = this.renderer.idToRGBA(0); // pass in 0 as the id, currently there is only ever one selection at a time.
+      const color = Color(BLUE_PALETTE[0]).rgb().object();
+      const maxColorVal = 256;
+      // normalize color values
+      color.a = 0.7;
+      color.r /= maxColorVal;
+      color.g /= maxColorVal;
+      color.b /= maxColorVal;
+      result.push({ ...p1, ...color, ...id });
+      result.push({ x: p2.x, y: p1.y, ...color, ...id });
+      result.push({ ...p2, ...color, ...id });
+      result.push({ ...p1, ...color, ...id });
+      result.push({ x: p1.x, y: p2.y, ...color, ...id });
+      result.push({ ...p2, ...color, ...id });
+      return result;
+    },
     // packs all data into single aligned memory array
     bucketsToQuads(): Quad[] {
       const maxVal = this.maxBucketCount;
@@ -665,7 +758,7 @@ export default Vue.extend({
           .object(); // convert hex color to rgb
         const maxColorVal = 256;
         // normalize color values
-        color.a = 0.9;
+        color.a = 0.7;
         color.r /= maxColorVal;
         color.g /= maxColorVal;
         color.b /= maxColorVal;
@@ -761,7 +854,7 @@ export default Vue.extend({
 
     onMouseDown(event: MouseEvent) {
       const mapEventTarget = event.target as HTMLElement;
-
+      return;
       // check if mapEventTarget is the close button or icon
       if (
         mapEventTarget.classList.contains(CLOSE_BUTTON_CLASS) ||
@@ -1325,5 +1418,8 @@ path.selected {
   left: 2px;
   top: 2px;
   z-index: 1;
+}
+.selection-exit {
+  position: absolute;
 }
 </style>

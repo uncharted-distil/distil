@@ -148,6 +148,8 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     ); // two seconds hover threshold
     this.BACKGROUND_ID = -1;
     this.hoverTimeoutId = null;
+    this.boundOnMove = this.onMove.bind(this);
+    this.boundOnClick = this.onClick.bind(this);
   }
   /**
    * Executed when the overlay is attached to a plot.
@@ -160,12 +162,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     super.onAdd(plot);
     this.shader = this.createShader(SHADER_GLSL);
     this.pickingShader = this.createShader(PICKING_SHADER);
-    this.gl.canvas.addEventListener("mouseup", (e) => {
-      this.onClick(e);
-    });
-    this.gl.canvas.addEventListener("mousemove", (e) => {
-      this.onMove(e);
-    });
+    this.enableInteractions();
     this.gl.canvas,
       addEventListener("mouseleave", () => {
         clearTimeout(this.hoverTimeoutId);
@@ -187,7 +184,21 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.pickingShader = null;
     return this;
   }
-
+  /**
+   * disables quad interactions such as click and hover
+   */
+  disableInteractions() {
+    clearTimeout(this.hoverTimeoutId); // cleanup
+    this.gl.canvas.removeEventListener("mouseup", this.boundOnClick);
+    this.gl.canvas.removeEventListener("mousemove", this.boundOnMove);
+  }
+  /**
+   * enables quad interactions such as click and hover
+   */
+  enableInteractions() {
+    this.gl.canvas.addEventListener("mouseup", this.boundOnClick);
+    this.gl.canvas.addEventListener("mousemove", this.boundOnMove);
+  }
   /**
    * Generate any underlying buffers.
    *
