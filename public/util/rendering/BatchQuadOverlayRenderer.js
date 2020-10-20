@@ -144,7 +144,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     const secondsToMillis = 1000;
     this.hoverThreshold = defaultTo(
       options.hoverThreshold,
-      2 * secondsToMillis
+      1 * secondsToMillis
     ); // two seconds hover threshold
     this.BACKGROUND_ID = -1;
     this.hoverTimeoutId = null;
@@ -489,8 +489,8 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
    * source https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
    */
   normalizedPointToLatLng(point) {
-    const y = 1 - point.y; // invert y because the normalized functions inverts it
+    const y = point.y; // invert y because the normalized functions inverts it
     const latRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * y)));
-    return { lat: latRad * (180 / Math.PI), lng: point.x * 360 - 180 };
+    return { lat: -(latRad * (180 / Math.PI)), lng: point.x * 360 - 180 };
   }
 }

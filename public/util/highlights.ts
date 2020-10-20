@@ -164,3 +164,9 @@ export function clearHighlight(router: VueRouter) {
   });
   router.push(entry).catch((err) => console.warn(err));
 }
+
+export function highlightsExist(router: VueRouter) {
+  const route = routeGetters.getRoute(store);
+  const highlights = "highlights";
+  return route.query[highlights] != null;
+}

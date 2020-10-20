@@ -96,7 +96,7 @@ import {
   GeoCoordinateGrouping,
   VariableSummary,
 } from "../store/dataset/index";
-import { updateHighlight } from "../util/highlights";
+import { updateHighlight, highlightsExist } from "../util/highlights";
 import ImagePreview from "../components/ImagePreview";
 import {
   LATITUDE_TYPE,
@@ -329,9 +329,10 @@ export default Vue.extend({
       const features = [];
       this.summaries.forEach((summary) => {
         // compute the bucket size in degrees
-        const buckets = summary.filtered
-          ? summary.filtered.buckets
-          : summary.baseline.buckets;
+        const buckets =
+          summary.filtered && highlightsExist(this.$router)
+            ? summary.filtered.buckets
+            : summary.baseline.buckets;
         const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
         const ySize =
           _.toNumber(buckets[0].buckets[1].key) -
@@ -954,6 +955,10 @@ export default Vue.extend({
   },
 
   watch: {
+    dataItems() {
+      // regular update
+      // this.onNewData();
+    },
     summaries(cur, prev) {
       if (!prev.length) {
         // if prev undefined update state and add zoom
@@ -963,7 +968,6 @@ export default Vue.extend({
           this.updateMapState();
         }
       } else {
-        // regular update
         this.onNewData();
       }
     },
