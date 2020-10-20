@@ -469,6 +469,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
    *
    * @param {Array.<number>} latlng
    * @returns {{x:number, y:number}}
+   * source https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
    */
   latlngToNormalized(latlng) {
     const maxLon = 180.0;
@@ -481,5 +482,14 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       2;
 
     return { x, y: 1 - y }; // have to invert y
+  }
+  /**
+   *
+   * @param {{x:number, y:number}} point
+   * source https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+   */
+  normalizedPointToLatLng(point) {
+    const latRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * point.y)));
+    return { lat: (latRad * 180) / Math.PI, lng: point.x * 360 - 180 };
   }
 }

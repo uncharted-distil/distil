@@ -4,7 +4,13 @@
     class="geo-plot-container"
     :class="{ 'selection-mode': isSelectionMode }"
   >
-    <div ref="geoPlot" class="geo-plot" :id="mapID" @keydown.esc="onEsc"></div>
+    <div
+      ref="geoPlot"
+      class="geo-plot"
+      :id="mapID"
+      @keydown.esc="onEsc"
+      tabindex="0"
+    ></div>
 
     <image-drilldown
       v-if="isMultiBandImage"
@@ -220,7 +226,7 @@ export default Vue.extend({
       isImageDrilldown: false,
       imageUrl: null,
       item: null,
-      polygonLayerId: "polygon-layer",
+      quadLayerId: "quad-layer",
       toastId: "geo-notifications",
       toastTitle: "",
       hoverItem: null,
@@ -608,7 +614,7 @@ export default Vue.extend({
       const quads = this.currentState.quads();
       // get quad set bounds
       const mapBounds = this.getBounds(quads);
-      this.overlay.addQuad(this.polygonLayerId, quads);
+      this.overlay.addQuad(this.quadLayerId, quads);
 
       // add listener for clicks on quads
       this.renderer.addListener(
@@ -669,14 +675,26 @@ export default Vue.extend({
       this.selectionToolData.exit.top = Math.min(
         e.originalEvent.layerY,
         this.selectionToolData.startPointClient.layerY
-      );
+      ); // get top most y value
       const right = Math.max(
         e.originalEvent.layerX,
         this.selectionToolData.startPointClient.layerX
-      );
-      this.selectionToolData.exit.right = e.target.canvas.clientWidth - right;
-
+      ); // get right most x value
+      this.selectionToolData.exit.right = e.target.canvas.clientWidth - right; // had to subtract width for some reason x is reversed in lumo
       this.showExit = true;
+      // convert from normalized coordinate system to lat lng
+      const p1 = this.renderer.normalizedPointToLatLng(
+        this.selectionToolData.startPoint
+      );
+      const p2 = this.renderer.normalizedPointToLatLng(
+        this.selectionToolData.currentPoint
+      );
+      const minX = Math.min(p1.lng, p2.lng);
+      const maxX = Math.max(p1.lng, p2.lng);
+      const minY = Math.min(p1.lat, p2.lat);
+      const maxY = Math.max(p1.lat, p2.lat);
+      // send selection to PostGis
+      this.createHighlight({ minX, minY, maxX, maxY });
     },
     getBounds(quads: Quad[]) {
       // set mapBounds to a single tile to start
@@ -827,7 +845,7 @@ export default Vue.extend({
     updateMapState() {
       this.overlay.clearQuads();
       this.renderer.clearListeners();
-      this.overlay.addQuad(this.polygonLayerId, this.currentState.quads());
+      this.overlay.addQuad(this.quadLayerId, this.currentState.quads());
       this.renderer.addListener(
         EVENT_TYPES.MOUSE_CLICK,
         this.currentState.onClick
@@ -918,10 +936,8 @@ export default Vue.extend({
     },
 
     onEsc() {
-      if (this.currentRect) {
-        this.clearSelectionRect();
-        // disable drawing mode
-        this.map.dragging.enable();
+      if (this.isSelectionMode) {
+        this.toggleSelectionTool();
       }
     },
 
@@ -980,10 +996,18 @@ export default Vue.extend({
 
       // TODO: support filtering multiple vars?
       const fieldSpec = this.fieldSpecs[0];
-      const key =
-        fieldSpec.type === SINGLE_FIELD
-          ? fieldSpec.field
-          : this.fieldHash(fieldSpec);
+      let key = "";
+      if (!!fieldSpec) {
+        key =
+          fieldSpec.type === SINGLE_FIELD
+            ? fieldSpec.field
+            : this.fieldHash(fieldSpec);
+      } else if (!!this.summaries[0].key) {
+        key = this.summaries[0].key;
+      } else {
+        console.error("Error createHighlight no available key");
+        return;
+      }
 
       updateHighlight(this.$router, {
         context: this.instanceName,
@@ -1276,14 +1300,19 @@ export default Vue.extend({
       this.drawFilters();
     },
     onNewData() {
-      // clear polygons
+      // clear quads
       this.overlay.clearQuads();
+      // remove exit button for selection quad
+      this.showExit = false;
       // create quads from latlng
       const quads = this.currentState.quads();
+      if (!quads.length) {
+        return;
+      }
       // get bounds of quad set
       const mapBounds = this.getBounds(quads);
       // add the batched quads to a single layer on the overlay
-      this.overlay.addQuad(this.polygonLayerId, quads);
+      this.overlay.addQuad(this.quadLayerId, quads);
       // fit map to the quad set
       this.map.fitToBounds(mapBounds);
     },
@@ -1301,6 +1330,9 @@ export default Vue.extend({
           this.currentState = this.clusterState;
           this.updateMapState();
         }
+      } else {
+        // regular update
+        this.onNewData();
       }
     },
 
