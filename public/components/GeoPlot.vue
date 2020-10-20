@@ -5,12 +5,11 @@
     :class="{ 'selection-mode': isSelectionMode }"
   >
     <div
+      ref="geoPlot"
       class="geo-plot"
       :id="mapID"
-      @mousedown="onMouseDown"
-      @mouseup="onMouseUp"
-      @mousemove="onMouseMove"
       @keydown.esc="onEsc"
+      tabindex="0"
     ></div>
 
     <image-drilldown
@@ -21,11 +20,10 @@
       :item="item"
       :visible="isImageDrilldown"
     />
-    <!--Commented out until feature is working again-->
-    <!--<div
+    <div
       class="selection-toggle"
       :class="{ active: isSelectionMode }"
-      @click="isSelectionMode = !isSelectionMode"
+      @click="toggleSelectionTool"
     >
       <a
         class="selection-toggle-control"
@@ -34,7 +32,7 @@
       >
         <icon-base width="100%" height="100%"> <icon-crop-free /> </icon-base>
       </a>
-    </div> -->
+    </div>
     <b-toast
       :id="toastId"
       :title="toastTitle"
@@ -57,22 +55,24 @@
           :image-url="hoverUrl"
           :width="imageWidth"
           :height="imageHeight"
-          type="remote_sensing"
+          :type="imageType"
         ></image-preview>
       </div>
     </b-toast>
+    <button
+      type="button"
+      class="close selection-exit"
+      aria-label="Close"
+      v-show="showExit"
+      :style="exitStyle"
+    >
+      <span aria-hidden="true">&times;</span>
+    </button>
   </div>
 </template>
 
 <script lang="ts">
 import _ from "lodash";
-import $ from "jquery";
-import leaflet, {
-  MarkerOptions,
-  LatLngTuple,
-  LatLngBounds,
-  CircleMarkerOptions,
-} from "leaflet";
 import Vue from "vue";
 import IconBase from "./icons/IconBase.vue";
 import IconCropFree from "./icons/IconCropFree.vue";
@@ -91,24 +91,19 @@ import {
 import {
   TableColumn,
   TableRow,
-  D3M_INDEX_FIELD,
   Highlight,
   RowSelection,
   GeoCoordinateGrouping,
   VariableSummary,
 } from "../store/dataset/index";
-import { updateHighlight, clearHighlight } from "../util/highlights";
-import {
-  addRowSelection,
-  removeRowSelection,
-  isRowSelected,
-} from "../util/row";
+import { updateHighlight, highlightsExist } from "../util/highlights";
 import ImagePreview from "../components/ImagePreview";
 import {
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
   REAL_VECTOR_TYPE,
   GEOCOORDINATE_TYPE,
+  MULTIBAND_IMAGE_TYPE,
 } from "../util/types";
 import { scaleThreshold } from "d3";
 import Color from "color";
@@ -117,11 +112,8 @@ import "leaflet/dist/images/marker-icon.png";
 import "leaflet/dist/images/marker-icon-2x.png";
 import "leaflet/dist/images/marker-shadow.png";
 import { BLUE_PALETTE } from "../util/color";
-
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
-const CLOSE_BUTTON_CLASS = "geo-close-button";
-const CLOSE_ICON_CLASS = "fa-times";
 
 interface GeoField {
   type: number;
@@ -176,6 +168,10 @@ interface MapState {
   onClick(id: number);
   quads(): Quad[];
 }
+interface LumoPoint {
+  x: number;
+  y: number;
+}
 // Minimum pixels size of clickable target displayed on the map.
 const TARGETSIZE = 6;
 
@@ -215,7 +211,7 @@ export default Vue.extend({
       isImageDrilldown: false,
       imageUrl: null,
       item: null,
-      polygonLayerId: "polygon-layer",
+      quadLayerId: "quad-layer",
       toastId: "geo-notifications",
       toastTitle: "",
       hoverItem: null,
@@ -225,6 +221,14 @@ export default Vue.extend({
       imageHeight: 128,
       previousZoom: 0,
       currentState: null,
+      selectionToolData: {
+        startPoint: null,
+        currentPoint: null,
+        startPointClient: null,
+        exit: { top: 0, right: 0 },
+      },
+      selectionToolId: "selection-tool-layer",
+      showExit: false,
     };
   },
 
@@ -232,7 +236,9 @@ export default Vue.extend({
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
-
+    imageType(): string {
+      return MULTIBAND_IMAGE_TYPE;
+    },
     /*
      Flag to decide if we display accurate areas based on coordinates, or if they are physically
      too small, we present a circle big enough for the user to interact with them.
@@ -321,12 +327,12 @@ export default Vue.extend({
         return [];
       }
       const features = [];
-      const duplicateCheck = {};
       this.summaries.forEach((summary) => {
         // compute the bucket size in degrees
-        const buckets = summary.filtered
-          ? summary.filtered.buckets
-          : summary.baseline.buckets;
+        const buckets =
+          summary.filtered && highlightsExist(this.$router)
+            ? summary.filtered.buckets
+            : summary.baseline.buckets;
         const xSize = _.toNumber(buckets[1].key) - _.toNumber(buckets[0].key);
         const ySize =
           _.toNumber(buckets[0].buckets[1].key) -
@@ -346,12 +352,7 @@ export default Vue.extend({
                 ],
                 meta: { selected: false, count: latBucket.count },
               };
-              if (!duplicateCheck[feature.coordinates.toString()]) {
-                features.push(feature);
-              } else {
-                console.log("duplicate");
-              }
-              duplicateCheck[feature.coordinates.toString()] = true;
+              features.push(feature);
             }
           });
         });
@@ -490,15 +491,10 @@ export default Vue.extend({
       return routeGetters.isGeoSpatial(this.$store);
     },
 
-    /* Base layer for the map. */
-    baseLayer(): TileLayer {
-      const URL = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png";
-      return leaflet.tileLayer(URL);
-    },
-
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
+
     tileState(): MapState {
       return {
         onHover: (id: number) => {
@@ -556,6 +552,9 @@ export default Vue.extend({
         },
       };
     },
+    exitStyle(): string {
+      return `top:${this.selectionToolData.exit.top}px; right:${this.selectionToolData.exit.right}px;`;
+    },
   },
   methods: {
     createLumoMap() {
@@ -597,7 +596,7 @@ export default Vue.extend({
       const quads = this.currentState.quads();
       // get quad set bounds
       const mapBounds = this.getBounds(quads);
-      this.overlay.addQuad(this.polygonLayerId, quads);
+      this.overlay.addQuad(this.quadLayerId, quads);
 
       // add listener for clicks on quads
       this.renderer.addListener(
@@ -609,6 +608,79 @@ export default Vue.extend({
         this.currentState.onHover
       );
       this.map.fitToBounds(mapBounds);
+    },
+    /**
+     * on selection tool toggle disable or enable the quad interactions such as click or hover
+     */
+    toggleSelectionTool() {
+      this.isSelectionMode = !this.isSelectionMode;
+      if (this.isSelectionMode) {
+        // disable interactions so the selection tool can interact without triggering the other interactions
+        this.renderer.disableInteractions();
+        this.map.on("mousedown", this.selectionToolDown);
+        this.map.disablePanning();
+        this.map.disableZooming();
+        return;
+      }
+      this.overlay.removeQuad(this.selectionToolId);
+      this.map.removeListener("mousedown", this.selectionToolDown);
+      this.showExit = false;
+      // enable interactions
+      this.renderer.enableInteractions();
+      this.map.enablePanning();
+      this.map.enableZooming();
+    },
+    // mouse move clear and redraw quad with new point
+    selectionToolDraw(e) {
+      this.selectionToolData.currentPoint = e.pos;
+      // draw current selection
+      this.overlay.removeQuad(this.selectionToolId);
+      this.overlay.addQuad(
+        this.selectionToolId,
+        this.pointsToQuad(
+          this.selectionToolData.startPoint,
+          this.selectionToolData.currentPoint
+        )
+      );
+    },
+    // register mousemouve and up callbacks to draw the selection quad
+    selectionToolDown(e) {
+      this.selectionToolData.startPoint = e.pos;
+      this.selectionToolData.startPointClient = e.originalEvent;
+      this.showExit = false;
+      this.overlay.removeQuad(this.selectionToolId);
+      this.map.on("mousemove", this.selectionToolDraw);
+      this.map.on("mouseup", this.selectionToolUp);
+    },
+    // add exit button and send selection to postgis to update data
+    selectionToolUp(e) {
+      this.selectionToolData.currentPoint = e.pos;
+      this.map.removeListener("mousemove", this.selectionToolDraw);
+      this.map.removeListener("mouseup", this.selectionToolUp);
+      this.selectionToolData.exit.top = Math.min(
+        e.originalEvent.layerY,
+        this.selectionToolData.startPointClient.layerY
+      ); // get top most y value
+      const right = Math.max(
+        e.originalEvent.layerX,
+        this.selectionToolData.startPointClient.layerX
+      ); // get right most x value
+      this.selectionToolData.exit.right = e.target.canvas.clientWidth - right; // had to subtract width for some reason x is reversed in lumo
+      this.showExit = true;
+      // convert from normalized coordinate system to lat lng
+      const p1 = this.renderer.normalizedPointToLatLng(
+        this.selectionToolData.startPoint
+      );
+      const p2 = this.renderer.normalizedPointToLatLng(
+        this.selectionToolData.currentPoint
+      );
+      /** INVERTED LAT LNG FOR NOW -- POSSIBLE ROUTE OR DB ISSUE **/
+      const minY = Math.min(p1.lng, p2.lng);
+      const maxY = Math.max(p1.lng, p2.lng);
+      const minX = Math.min(p1.lat, p2.lat);
+      const maxX = Math.max(p1.lat, p2.lat);
+      // send selection to PostGis
+      this.createHighlight({ minX, minY, maxX, maxY });
     },
     getBounds(quads: Quad[]) {
       // set mapBounds to a single tile to start
@@ -652,6 +724,26 @@ export default Vue.extend({
       this.$bvToast.hide(this.toastId);
       window.removeEventListener("mousemove", this.fadeToast); // remove event listener because toast is now faded
     },
+    // assumes x and y are normalized points this function is for the selection tool
+    pointsToQuad(p1: LumoPoint, p2: LumoPoint): Quad[] {
+      const result = [];
+      const id = this.renderer.idToRGBA(0); // pass in 0 as the id, currently there is only ever one selection at a time.
+      const color = Color(BLUE_PALETTE[0]).rgb().object();
+      const maxColorVal = 256;
+      // normalize color values
+      color.a = 0.7;
+      color.r /= maxColorVal;
+      color.g /= maxColorVal;
+      color.b /= maxColorVal;
+      result.push({ ...p1, ...color, ...id });
+      result.push({ x: p2.x, y: p1.y, ...color, ...id });
+      result.push({ ...p2, ...color, ...id });
+      result.push({ ...p1, ...color, ...id });
+      result.push({ x: p1.x, y: p2.y, ...color, ...id });
+      result.push({ ...p2, ...color, ...id });
+      return result;
+    },
+    // packs all data into single aligned memory array
     bucketsToQuads(): Quad[] {
       const maxVal = this.maxBucketCount;
       const minVal = this.minBucketCount;
@@ -670,7 +762,7 @@ export default Vue.extend({
           .object(); // convert hex color to rgb
         const maxColorVal = 256;
         // normalize color values
-        color.a = 0.9;
+        color.a = this.quadOpacity;
         color.r /= maxColorVal;
         color.g /= maxColorVal;
         color.b /= maxColorVal;
@@ -685,6 +777,7 @@ export default Vue.extend({
       });
       return result;
     },
+    // packs all data into single aligned memory array
     areaToQuads(): Quad[] {
       const result = [];
       this.areas.forEach((area, idx) => {
@@ -738,7 +831,7 @@ export default Vue.extend({
     updateMapState() {
       this.overlay.clearQuads();
       this.renderer.clearListeners();
-      this.overlay.addQuad(this.polygonLayerId, this.currentState.quads());
+      this.overlay.addQuad(this.quadLayerId, this.currentState.quads());
       this.renderer.addListener(
         EVENT_TYPES.MOUSE_CLICK,
         this.currentState.onClick
@@ -748,127 +841,10 @@ export default Vue.extend({
         this.currentState.onHover
       );
     },
-    clearSelectionRect() {
-      if (this.selectedRect) {
-        this.selectedRect.remove();
-        this.selectedRect = null;
-      }
-      if (this.currentRect) {
-        this.currentRect.remove();
-        this.currentRect = null;
-      }
-      if (this.closeButton) {
-        this.closeButton.remove();
-        this.closeButton = null;
-      }
-    },
-
-    onMouseDown(event: MouseEvent) {
-      const mapEventTarget = event.target as HTMLElement;
-
-      // check if mapEventTarget is the close button or icon
-      if (
-        mapEventTarget.classList.contains(CLOSE_BUTTON_CLASS) ||
-        mapEventTarget.classList.contains(CLOSE_ICON_CLASS)
-      ) {
-        this.clearSelection();
-        this.selectedRect.remove();
-        this.selectedRect = null;
-        this.closeButton.remove();
-        this.closeButton = null;
-        return;
-      }
-
-      if (this.isSelectionMode) {
-        this.clearSelectionRect();
-
-        const offset = $(this.map.getContainer()).offset();
-        this.startingLatLng = this.map.containerPointToLatLng({
-          x: event.pageX - offset.left,
-          y: event.pageY - offset.top,
-        });
-
-        const bounds = [this.startingLatLng, this.startingLatLng];
-        this.currentRect = leaflet.rectangle(bounds, {
-          color: "#255DCC",
-          weight: 1,
-          bubblingMouseEvents: false,
-        });
-        this.currentRect.on("click", (e) => {
-          this.setSelection(e.target);
-        });
-        this.currentRect.addTo(this.map);
-
-        // enable drawing mode
-        // this.map.off('click', this.clearSelection);
-        this.map.dragging.disable();
-      }
-    },
-
-    onMouseUp(event: MouseEvent) {
-      if (this.currentRect) {
-        this.setSelection(this.currentRect);
-        this.currentRect = null;
-
-        // disable drawing mode
-        this.map.dragging.enable();
-        // this.map.on('click', this.clearSelection);
-      }
-    },
-
-    onMouseMove(event: MouseEvent) {
-      if (this.currentRect) {
-        const offset = $(this.map.getContainer()).offset();
-        const latLng = this.map.containerPointToLatLng({
-          x: event.pageX - offset.left,
-          y: event.pageY - offset.top,
-        });
-        const bounds = [this.startingLatLng, latLng];
-        this.currentRect.setBounds(bounds);
-      }
-    },
 
     onEsc() {
-      if (this.currentRect) {
-        this.clearSelectionRect();
-        // disable drawing mode
-        this.map.dragging.enable();
-      }
-    },
-
-    setSelection(rect) {
-      this.clearSelection();
-
-      this.selectedRect = rect;
-      const $selected = $(this.selectedRect._path);
-      $selected.addClass("selected");
-
-      const ne = rect.getBounds().getNorthEast();
-      const sw = rect.getBounds().getSouthWest();
-      const icon = leaflet.divIcon({
-        className: CLOSE_BUTTON_CLASS,
-        iconSize: null,
-        html: `<i class="fa ${CLOSE_ICON_CLASS}"></i>`,
-      });
-      this.closeButton = leaflet.marker([ne.lat, ne.lng], {
-        icon: icon,
-      });
-      this.closeButton.addTo(this.map);
-      this.createHighlight({
-        minX: sw.lng,
-        maxX: ne.lng,
-        minY: sw.lat,
-        maxY: ne.lat,
-      });
-    },
-
-    clearSelection() {
-      if (this.selectedRect) {
-        $(this.selectedRect._path).removeClass("selected");
-        clearHighlight(this.$router);
-      }
-      if (this.closeButton) {
-        this.closeButton.remove();
+      if (this.isSelectionMode) {
+        this.toggleSelectionTool();
       }
     },
 
@@ -891,10 +867,18 @@ export default Vue.extend({
 
       // TODO: support filtering multiple vars?
       const fieldSpec = this.fieldSpecs[0];
-      const key =
-        fieldSpec.type === SINGLE_FIELD
-          ? fieldSpec.field
-          : this.fieldHash(fieldSpec);
+      let key = "";
+      if (!!fieldSpec) {
+        key =
+          fieldSpec.type === SINGLE_FIELD
+            ? fieldSpec.field
+            : this.fieldHash(fieldSpec);
+      } else if (!!this.summaries[0].key) {
+        key = this.summaries[0].key;
+      } else {
+        console.error("Error createHighlight no available key");
+        return;
+      }
 
       updateHighlight(this.$router, {
         context: this.instanceName,
@@ -902,34 +886,6 @@ export default Vue.extend({
         key: key,
         value: value,
       });
-    },
-
-    drawHighlight() {
-      if (
-        this.highlight &&
-        this.highlight.value.minX !== undefined &&
-        this.highlight.value.maxX !== undefined &&
-        this.highlight.value.minY !== undefined &&
-        this.highlight.value.maxY !== undefined
-      ) {
-        const rect = leaflet.rectangle(
-          [
-            [this.highlight.value.minY, this.highlight.value.minX],
-            [this.highlight.value.maxY, this.highlight.value.maxX],
-          ],
-          {
-            color: "#255DCC",
-            weight: 1,
-            bubblingMouseEvents: false,
-          }
-        );
-        rect.on("click", (e) => {
-          this.setSelection(e.target);
-        });
-        rect.addTo(this.map);
-
-        this.setSelection(rect);
-      }
     },
 
     drawFilters() {
@@ -957,38 +913,6 @@ export default Vue.extend({
       return fieldSpec.lngField + ":" + fieldSpec.latField;
     },
 
-    toggleSelection(event) {
-      const marker = event.target;
-      const row = marker.options.row;
-      if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
-        addRowSelection(
-          this.$router,
-          this.instanceName,
-          this.rowSelection,
-          row[D3M_INDEX_FIELD]
-        );
-      } else {
-        removeRowSelection(
-          this.$router,
-          this.instanceName,
-          this.rowSelection,
-          row[D3M_INDEX_FIELD]
-        );
-      }
-    },
-
-    updateMarkerSelection(markers) {
-      markers.forEach((marker) => {
-        const row = marker.options.row;
-        const markerElem = marker.getElement();
-        const isSelected = isRowSelected(
-          this.rowSelection,
-          row[D3M_INDEX_FIELD]
-        );
-        markerElem.classList.toggle("selected", isSelected);
-      });
-    },
-
     showImageDrilldown(imageUrl: string, item: TableRow) {
       this.imageUrl = imageUrl ?? null;
       this.item = item ?? null;
@@ -1011,190 +935,20 @@ export default Vue.extend({
 
       return color;
     },
-
-    /* Create a Leaflet map, if it doesn't exist already, with basic defaults. */
-    createMap() {
-      if (this.map) {
-        return;
-      }
-
-      // NOTE: this component re-mounts on any change, so do everything in here
-      this.map = leaflet.map(this.mapID, {
-        center: [30, 0],
-        zoom: 2,
-      });
-
-      if (this.mapZoom) {
-        this.map.setZoom(this.mapZoom, { animate: true });
-      }
-
-      if (this.mapCenter) {
-        this.map.panTo(
-          {
-            lat: this.mapCenter[1],
-            lng: this.mapCenter[0],
-          },
-          { animate: true }
-        );
-      }
-
-      this.baseLayer.addTo(this.map);
-
-      // this.map.on('click', this.clearSelection);
-    },
-
-    /* Create a Leaflet Group to contains the Point Of Interest (POI) if it doesn't exist already. */
-    createPoiLayer(pois) {
-      // Test if the area Layer is already on the map.
-      if (this.map.hasLayer(this.poiLayer)) {
-        // Let's clear all of it before adding new ones.
-        this.poiLayer.clearLayers();
-      } else {
-        // Create a layer group to contain all the POIS to be displayed.
-        this.poiLayer = leaflet.layerGroup();
-        this.poiLayer.addTo(this.map);
-
-        // Extend the bounds of the map to include all coordinates.
-        const bounds = leaflet.latLngBounds(null);
-        pois.forEach((poi) => {
-          if (poi.coordinates) {
-            poi.coordinates.forEach((coordinate) => bounds.extend(coordinate));
-          } else {
-            bounds.extend([poi.lat, poi.lng]);
-          }
-        });
-        if (bounds.isValid()) {
-          this.map.fitBounds(bounds);
-        }
-      }
-    },
-
-    /* Display areas as circleMarker or rectangle layers on the map. */
-    displayAreas() {
-      this.createPoiLayer(this.areas);
-
-      // Add each area to the layer group.
-      this.areas.forEach((area) => {
-        const { color, coordinates, imageUrl, item } = area;
-
-        // Create the layer (circleMarker or rectangle) for the user to interact.
-        let layer: any;
-        if (this.displayCircleMarker) {
-          const centerOfCoordinates = [
-            coordinates[0][0] + (coordinates[1][0] - coordinates[0][0]), // Lat
-            coordinates[0][1] + (coordinates[1][1] - coordinates[0][1]), // Lng
-          ] as LatLngTuple;
-          const displayOptions = {
-            color: color,
-            radius: TARGETSIZE / 2,
-            stroke: false,
-            fillOpacity: 1.0,
-          };
-          layer = leaflet.circleMarker(centerOfCoordinates, displayOptions);
-        } else {
-          layer = leaflet.rectangle(coordinates, { color });
-        }
-
-        // Create a Vue tooltip for the area with the label for the image.
-        const ImageLabelComponent = Vue.extend(ImageLabel);
-        const tooltip = new ImageLabelComponent({
-          parent: this,
-          propsData: {
-            dataFields: this.dataFields,
-            includeActive: true,
-            item: item,
-          },
-          store: this.$store,
-        }).$mount();
-
-        // Add interactivity to the layer.
-        layer.bindTooltip(tooltip.$el as HTMLElement);
-        if (this.isMultiBandImage) {
-          layer.on("click", () => {
-            this.showImageDrilldown(imageUrl, item);
-          });
-        }
-
-        // Add the rectangle to the layer group.
-        this.poiLayer.addLayer(layer);
-      });
-    },
-
-    /* Display point as circleMarker on the map. */
-    displayPoints() {
-      this.createPoiLayer(this.pointGroups?.[0].points);
-
-      this.pointGroups.forEach((group) => {
-        const hash = this.fieldHash(group.field);
-        const layerGroup = leaflet.layerGroup([]);
-
-        group.points.forEach((point) => {
-          const coordinate = [point.lat, point.lng] as LatLngTuple;
-          const displayOptions = {
-            className: "markerPoint",
-            fillColor: point.color,
-            fillOpacity: 1.0,
-            radius: TARGETSIZE / 2,
-            row: (<any>point).row,
-            stroke: false,
-          } as CircleMarkerOptions;
-          const layer = leaflet.circleMarker(coordinate, displayOptions);
-
-          layer.bindTooltip(() => {
-            const target = point.row[this.target].value;
-            const values = [];
-            const MAX_VALUES = 5;
-
-            this.getTopVariables.forEach((v) => {
-              if (point.row[v] && values.length <= MAX_VALUES) {
-                values.push(`<b>${_.capitalize(v)}:</b> ${point.row[v].value}`);
-              }
-            });
-
-            return [`<b>${_.capitalize(target)}</b>`]
-              .concat(values)
-              .join("<br>");
-          });
-
-          layer.on("click", this.toggleSelection);
-
-          // Add the point to the layer group.
-          layerGroup.addLayer(layer);
-        });
-
-        this.markers[hash] = layerGroup;
-        layerGroup.on("add", () =>
-          this.updateMarkerSelection(layerGroup.getLayers())
-        );
-
-        // Add the point to the layer group.
-        this.poiLayer.addLayer(layerGroup);
-      });
-    },
-
-    paint() {
-      this.createMap();
-
-      if (this.isGeoSpatial) {
-        // Display areas and update them on zoom to be sure they are selectable.
-        this.displayAreas();
-        this.map.on("zoomend", () => this.displayAreas());
-      } else {
-        this.displayPoints();
-      }
-
-      this.drawHighlight();
-      this.drawFilters();
-    },
     onNewData() {
-      // clear polygons
+      // clear quads
       this.overlay.clearQuads();
+      // remove exit button for selection quad
+      this.showExit = false;
       // create quads from latlng
       const quads = this.currentState.quads();
+      if (!quads.length) {
+        return;
+      }
       // get bounds of quad set
       const mapBounds = this.getBounds(quads);
       // add the batched quads to a single layer on the overlay
-      this.overlay.addQuad(this.polygonLayerId, quads);
+      this.overlay.addQuad(this.quadLayerId, quads);
       // fit map to the quad set
       this.map.fitToBounds(mapBounds);
     },
@@ -1202,7 +956,8 @@ export default Vue.extend({
 
   watch: {
     dataItems() {
-      this.onNewData();
+      // regular update
+      // this.onNewData();
     },
     summaries(cur, prev) {
       if (!prev.length) {
@@ -1212,14 +967,9 @@ export default Vue.extend({
           this.currentState = this.clusterState;
           this.updateMapState();
         }
+      } else {
+        this.onNewData();
       }
-    },
-
-    rowSelection() {
-      const markers = _.map(this.markers, (markerLayer) =>
-        markerLayer.getLayers()
-      ).reduce((prev, cur) => [...prev, ...cur], []);
-      this.updateMarkerSelection(markers);
     },
   },
 
@@ -1329,5 +1079,8 @@ path.selected {
   left: 2px;
   top: 2px;
   z-index: 1;
+}
+.selection-exit {
+  position: absolute;
 }
 </style>

@@ -32,7 +32,7 @@ const SHADER_GLSL = {
     varying vec4 oColor;
 		void main() {
       gl_FragColor = oColor;
-      gl_FragColor.rgb *= gl_FragColor.a;
+      gl_FragColor.rgb *= gl_FragColor.a; // premultiplied alpha
 		}
 		`,
 };
@@ -144,10 +144,12 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     const secondsToMillis = 1000;
     this.hoverThreshold = defaultTo(
       options.hoverThreshold,
-      2 * secondsToMillis
+      1 * secondsToMillis
     ); // two seconds hover threshold
     this.BACKGROUND_ID = -1;
     this.hoverTimeoutId = null;
+    this.boundOnMove = this.onMove.bind(this);
+    this.boundOnClick = this.onClick.bind(this);
   }
   /**
    * Executed when the overlay is attached to a plot.
@@ -160,12 +162,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     super.onAdd(plot);
     this.shader = this.createShader(SHADER_GLSL);
     this.pickingShader = this.createShader(PICKING_SHADER);
-    this.gl.canvas.addEventListener("mouseup", (e) => {
-      this.onClick(e);
-    });
-    this.gl.canvas.addEventListener("mousemove", (e) => {
-      this.onMove(e);
-    });
+    this.enableInteractions();
     this.gl.canvas,
       addEventListener("mouseleave", () => {
         clearTimeout(this.hoverTimeoutId);
@@ -187,7 +184,21 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.pickingShader = null;
     return this;
   }
-
+  /**
+   * disables quad interactions such as click and hover
+   */
+  disableInteractions() {
+    clearTimeout(this.hoverTimeoutId); // cleanup
+    this.gl.canvas.removeEventListener("mouseup", this.boundOnClick);
+    this.gl.canvas.removeEventListener("mousemove", this.boundOnMove);
+  }
+  /**
+   * enables quad interactions such as click and hover
+   */
+  enableInteractions() {
+    this.gl.canvas.addEventListener("mouseup", this.boundOnClick);
+    this.gl.canvas.addEventListener("mousemove", this.boundOnMove);
+  }
   /**
    * Generate any underlying buffers.
    *
@@ -458,6 +469,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
    *
    * @param {Array.<number>} latlng
    * @returns {{x:number, y:number}}
+   * source https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
    */
   latlngToNormalized(latlng) {
     const maxLon = 180.0;
@@ -470,5 +482,15 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       2;
 
     return { x, y: 1 - y }; // have to invert y
+  }
+  /**
+   *
+   * @param {{x:number, y:number}} point
+   * source https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+   */
+  normalizedPointToLatLng(point) {
+    const y = point.y; // invert y because the normalized functions inverts it
+    const latRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * y)));
+    return { lat: -(latRad * (180 / Math.PI)), lng: point.x * 360 - 180 };
   }
 }
