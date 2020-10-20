@@ -33,6 +33,15 @@
         <icon-base width="100%" height="100%"> <icon-crop-free /> </icon-base>
       </a>
     </div>
+    <div
+      class="cluster-toggle"
+      :class="{ active: isSelectionMode }"
+      @click="isClustering = !isClustering"
+    >
+      <a class="cluster-icon" title="Cluster" aria-label="Cluster Tiles">
+        <i class="fa fa-object-group fa-lg" aria-hidden="true" />
+      </a>
+    </div>
     <b-toast
       :id="toastId"
       :title="toastTitle"
@@ -87,6 +96,7 @@ import BatchQuadOverlay from "../util/rendering/BatchQuadOverlay";
 import {
   BatchQuadOverlayRenderer,
   EVENT_TYPES,
+  DRAW_MODES,
 } from "../util/rendering/BatchQuadOverlayRenderer";
 import {
   TableColumn,
@@ -164,9 +174,10 @@ interface Quad {
 // contains the state of the map for things such as event callbacks and the quads to render
 // currently there is two states tiled and clustered
 interface MapState {
-  onHover(id: number);
-  onClick(id: number);
-  quads(): Quad[];
+  onHover(id: number); // onhover callback
+  onClick(id: number); // onclick callback
+  quads(): Quad[]; // get quads for rendering
+  init(): void; // called when state becomes current state -- essentially put any inits stuff here
 }
 interface LumoPoint {
   x: number;
@@ -174,7 +185,7 @@ interface LumoPoint {
 }
 // Minimum pixels size of clickable target displayed on the map.
 const TARGETSIZE = 6;
-
+const clusterIcon = "fas fa-layer-group";
 export default Vue.extend({
   name: "geo-plot",
 
@@ -192,6 +203,7 @@ export default Vue.extend({
     dataFields: Object as () => Dictionary<TableColumn>,
     summaries: Array as () => VariableSummary[],
     quadOpacity: { type: Number, default: 0.8 },
+    pointOpacity: { type: Number, default: 0.1 },
     zoomThreshold: { type: Number, default: 8 },
   },
 
@@ -229,6 +241,8 @@ export default Vue.extend({
       },
       selectionToolId: "selection-tool-layer",
       showExit: false,
+      pointSize: 3,
+      isClustering: false,
     };
   },
 
@@ -520,6 +534,10 @@ export default Vue.extend({
         quads: () => {
           return this.areaToQuads();
         },
+        init: () => {
+          this.renderer.setPointSize(1); // default
+          this.renderer.setDrawMode(DRAW_MODES.TRIANGLES); // default
+        },
       };
     },
     clusterState(): MapState {
@@ -549,6 +567,41 @@ export default Vue.extend({
         },
         quads: () => {
           return this.bucketsToQuads();
+        },
+        init: () => {
+          this.renderer.setPointSize(1); // default
+          this.renderer.setDrawMode(DRAW_MODES.TRIANGLES); // default
+        },
+      };
+    },
+    pointState(): MapState {
+      return {
+        onHover: (id: number) => {
+          if (id > this.areas.length) {
+            console.error(`id: ${id} is outside of this.areas bounds`);
+            return; // id outside of bounds
+          }
+          this.toastTitle = this.areas[id].imageUrl;
+          this.hoverItem = this.areas[id].item;
+          this.hoverUrl = this.areas[id].imageUrl;
+          this.$bvToast.show(this.toastId);
+          window.addEventListener("mousemove", this.fadeToast);
+        },
+        onClick: (id: number) => {
+          if (id > this.areas.length || id < 0) {
+            console.error(
+              `id retrieved from buffer picker ${id} not within index bounds of areas.`
+            );
+            return;
+          }
+          this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
+        },
+        quads: () => {
+          return this.areaToPoints();
+        },
+        init: () => {
+          this.renderer.setPointSize(this.pointSize);
+          this.renderer.setDrawMode(DRAW_MODES.POINTS);
         },
       };
     },
@@ -584,12 +637,9 @@ export default Vue.extend({
       this.overlay.setRenderer(this.renderer);
       this.map.add(this.overlay);
       // convert this.areas to quads in normalized space and add to overlay layer
-      if (!this.bucketFeatures.length) {
-        this.currentState = this.tileState;
-      } else {
-        this.currentState = this.clusterState;
-        this.map.on(lumo.ZOOM_END, this.onZoom);
-      }
+      this.currentState = this.pointState;
+      this.map.on(lumo.ZOOM_END, this.onZoom);
+      this.currentState.init();
       if (!this.bucketFeatures.length && !this.areas.length) {
         return; // no data
       }
@@ -674,7 +724,7 @@ export default Vue.extend({
       const p2 = this.renderer.normalizedPointToLatLng(
         this.selectionToolData.currentPoint
       );
-      /** INVERTED LAT LNG FOR NOW -- POSSIBLE ROUTE OR DB ISSUE **/
+      // INVERTED LAT LNG FOR NOW -- POSSIBLE ROUTE OR DB ISSUE
       const minY = Math.min(p1.lng, p2.lng);
       const maxY = Math.max(p1.lng, p2.lng);
       const minX = Math.min(p1.lat, p2.lat);
@@ -731,7 +781,7 @@ export default Vue.extend({
       const color = Color(BLUE_PALETTE[0]).rgb().object();
       const maxColorVal = 256;
       // normalize color values
-      color.a = 0.7;
+      color.a = this.pointOpacity;
       color.r /= maxColorVal;
       color.g /= maxColorVal;
       color.b /= maxColorVal;
@@ -743,6 +793,7 @@ export default Vue.extend({
       result.push({ ...p2, ...color, ...id });
       return result;
     },
+
     // packs all data into single aligned memory array
     bucketsToQuads(): Quad[] {
       const maxVal = this.maxBucketCount;
@@ -774,6 +825,31 @@ export default Vue.extend({
         result.push({ ...p1, ...color, ...id });
         result.push({ x: p1.x, y: p2.y, ...color, ...id });
         result.push({ ...p2, ...color, ...id });
+      });
+      return result;
+    },
+    areaToPoints(): Quad[] {
+      const result = [];
+      this.areas.forEach((area, idx) => {
+        const p1 = this.renderer.latlngToNormalized([
+          area.coordinates[0][1],
+          area.coordinates[0][0],
+        ]); // lat,lng ->lng,lat
+        const p2 = this.renderer.latlngToNormalized([
+          area.coordinates[1][1],
+          area.coordinates[1][0],
+        ]); // lat,lng ->lng,lat
+        const centerPoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+        const color = Color(area.color).rgb().object(); // convert hex color to rgb
+        const maxVal = 255;
+        // normalize color values
+        color.a = this.quadOpacity;
+        color.r /= maxVal;
+        color.g /= maxVal;
+        color.b /= maxVal;
+        const id = this.renderer.idToRGBA(idx); // separate index bytes into 4 channels iR,iG,iB,iA. Used to render the index of the object into webgl FBO
+        // need to get rid of spread operators super slow
+        result.push({ ...centerPoint, ...color, ...id });
       });
       return result;
     },
@@ -810,19 +886,21 @@ export default Vue.extend({
     // callback when zooming on map
     onZoom() {
       const zoom = this.map.getZoom();
-      const wasClustered =
+      const wasPoints =
         zoom >= this.zoomThreshold && this.previousZoom < this.zoomThreshold;
       const wasTiled =
         zoom < this.zoomThreshold && this.previousZoom >= this.zoomThreshold;
       this.previousZoom = this.map.getZoom();
       // check if map should be rendering clustered tiles
-      if (wasClustered) {
+      if (wasPoints) {
         this.currentState = this.tileState;
         this.updateMapState();
         return;
       }
       if (wasTiled) {
-        this.currentState = this.clusterState;
+        this.currentState = this.isClustering
+          ? this.clusterState
+          : this.pointState;
         this.updateMapState();
         return;
       }
@@ -831,6 +909,7 @@ export default Vue.extend({
     updateMapState() {
       this.overlay.clearQuads();
       this.renderer.clearListeners();
+      this.currentState.init();
       this.overlay.addQuad(this.quadLayerId, this.currentState.quads());
       this.renderer.addListener(
         EVENT_TYPES.MOUSE_CLICK,
@@ -955,14 +1034,8 @@ export default Vue.extend({
   },
 
   watch: {
-    dataItems() {
-      // regular update
-      // this.onNewData();
-    },
     summaries(cur, prev) {
-      if (!prev.length) {
-        // if prev undefined update state and add zoom
-        this.map.on(lumo.ZOOM_END, this.onZoom);
+      if (!prev.length && this.isClustering) {
         if (this.map.getZoom() < this.zoomThreshold) {
           this.currentState = this.clusterState;
           this.updateMapState();
@@ -1003,6 +1076,26 @@ export default Vue.extend({
   border-radius: 4px;
 }
 
+.cluster-toggle {
+  position: absolute;
+  z-index: 999;
+  top: 40px;
+  left: 10px;
+  width: 34px;
+  height: 34px;
+  background-color: #fff;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  background-clip: padding-box;
+  text-align: center;
+  border-radius: 4px;
+}
+.cluster-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .geo-plot-container .selection-toggle:hover {
   background-color: #f4f4f4;
 }
