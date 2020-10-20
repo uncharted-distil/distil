@@ -489,7 +489,8 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
    * source https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
    */
   normalizedPointToLatLng(point) {
-    const latRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * point.y)));
-    return { lat: latRad * (180 / Math.PI) + 1, lng: point.x * 360 - 180 };
+    const y = 1 - point.y; // invert y because the normalized functions inverts it
+    const latRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * y)));
+    return { lat: latRad * (180 / Math.PI), lng: point.x * 360 - 180 };
   }
 }
