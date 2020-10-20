@@ -185,7 +185,7 @@ interface LumoPoint {
 }
 // Minimum pixels size of clickable target displayed on the map.
 const TARGETSIZE = 6;
-const clusterIcon = "fas fa-layer-group";
+
 export default Vue.extend({
   name: "geo-plot",
 
@@ -660,6 +660,15 @@ export default Vue.extend({
       this.map.fitToBounds(mapBounds);
     },
     /**
+     * toggle clustering
+     */
+    toggleClustering() {
+      this.isClustering = !this.isClustering;
+      if (this.isClustering && this.map.getZoom() < this.zoomThreshold) {
+        this.currentState = this.clusterState;
+      }
+    },
+    /**
      * on selection tool toggle disable or enable the quad interactions such as click or hover
      */
     toggleSelectionTool() {
@@ -1096,7 +1105,7 @@ export default Vue.extend({
   justify-content: center;
   align-items: center;
 }
-.geo-plot-container .selection-toggle:hover {
+.geo-plot-container .selection-toggle:hover .cluster-icon:hover {
   background-color: #f4f4f4;
 }
 
@@ -1115,7 +1124,10 @@ export default Vue.extend({
   position: absolute;
 }
 
-.geo-plot-container .selection-toggle.active .selection-toggle-control {
+.geo-plot-container
+  .selection-toggle.active
+  .selection-toggle-control
+  .cluster-icon:hover {
   color: #26b8d1;
 }
 
