@@ -794,10 +794,10 @@ export default Vue.extend({
       });
       this.closeButton.addTo(this.map);
       this.createHighlight({
-        minX: sw.lng,
-        maxX: ne.lng,
-        minY: sw.lat,
-        maxY: ne.lat,
+        minY: sw.lng,
+        maxY: ne.lng,
+        minX: sw.lat,
+        maxX: ne.lat,
       });
     },
 

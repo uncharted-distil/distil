@@ -490,6 +490,6 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
    */
   normalizedPointToLatLng(point) {
     const latRad = Math.atan(Math.sinh(Math.PI * (1 - 2 * point.y)));
-    return { lat: (latRad * 180) / Math.PI, lng: point.x * 360 - 180 };
+    return { lat: latRad * (180 / Math.PI) + 1, lng: point.x * 360 - 180 };
   }
 }
