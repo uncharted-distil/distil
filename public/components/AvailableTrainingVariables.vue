@@ -1,11 +1,11 @@
 <template>
   <div
     class="available-training-variables"
-    v-bind:class="{ included: includedActive, excluded: !includedActive }"
+    :class="{ included: includedActive, excluded: !includedActive }"
   >
     <p class="nav-link font-weight-bold">
       Available Features
-      <i class="float-right fa fa-angle-right fa-lg"></i>
+      <i class="float-right fa fa-angle-right fa-lg" />
     </p>
     <variable-facets
       ref="facets"
@@ -28,9 +28,9 @@
           {{ subtitle }}
         </div>
         <div v-if="availableVariableSummaries.length > 0">
-          <b-button size="sm" variant="outline-secondary" @click="addAll"
-            >Add All</b-button
-          >
+          <b-button size="sm" variant="outline-secondary" @click="addAll">
+            Add All
+          </b-button>
         </div>
       </div>
     </variable-facets>
@@ -70,12 +70,15 @@ export default Vue.extend({
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
     },
+
     availableTrainingVarsSearch(): string {
       return routeGetters.getRouteAvailableTrainingVarsSearch(this.$store);
     },
+
     availableVariableSummaries(): VariableSummary[] {
       const pageIndex = routeGetters.getRouteAvailableTrainingVarsPage(
         this.$store
@@ -94,27 +97,32 @@ export default Vue.extend({
 
       return currentSummaries;
     },
+
     availableVariables(): Variable[] {
       return searchVariables(
         routeGetters.getAvailableVariables(this.$store),
         this.availableTrainingVarsSearch
       );
     },
+
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
+
     subtitle(): string {
       return `${this.availableVariables.length} features available`;
     },
+
     numRowsPerPage(): number {
       return NUM_PER_PAGE;
     },
+
     instanceName(): string {
       return AVAILABLE_TRAINING_VARS_INSTANCE;
     },
-    html(): (group: Group) => HTMLDivElement {
+
+    html(): (group: Group) => HTMLElement {
       return (group: Group) => {
-        const container = document.createElement("div");
         const trainingElem = document.createElement("button");
         trainingElem.className += "btn btn-sm btn-outline-secondary mb-2";
         trainingElem.innerHTML = "Add";
@@ -146,8 +154,8 @@ export default Vue.extend({
           });
           this.$router.push(entry).catch((err) => console.warn(err));
         });
-        container.appendChild(trainingElem);
-        return container;
+
+        return trainingElem;
       };
     },
   },
@@ -177,7 +185,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .available-training-variables {
   display: flex;
   flex-direction: column;
