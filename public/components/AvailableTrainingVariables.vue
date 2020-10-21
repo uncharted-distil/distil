@@ -151,13 +151,13 @@ export default Vue.extend({
             details: { feature: group.colName },
           });
 
+          const dataset = routeGetters.getRouteDataset(this.$store);
+          const targetName = routeGetters.getRouteTargetVariable(this.$store);
+
           // get an updated view of the training data list
           const training = routeGetters
             .getDecodedTrainingVariableNames(this.$store)
             .concat([group.colName]);
-
-          const dataset = routeGetters.getRouteDataset(this.$store);
-          const targetName = routeGetters.getRouteTargetVariable(this.$store);
 
           // update task based on the current training data
           const taskResponse = await datasetActions.fetchTask(this.$store, {
