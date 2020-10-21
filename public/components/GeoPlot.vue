@@ -178,6 +178,7 @@ interface MapState {
   onClick(id: number); // onclick callback
   quads(): Quad[]; // get quads for rendering
   init(): void; // called when state becomes current state -- essentially put any inits stuff here
+  drawMode(): any; // returns DRAW_MODES
 }
 interface LumoPoint {
   x: number;
@@ -536,7 +537,9 @@ export default Vue.extend({
         },
         init: () => {
           this.renderer.setPointSize(1); // default
-          this.renderer.setDrawMode(DRAW_MODES.TRIANGLES); // default
+        },
+        drawMode: () => {
+          return DRAW_MODES.TRIANGLES;
         },
       };
     },
@@ -570,7 +573,9 @@ export default Vue.extend({
         },
         init: () => {
           this.renderer.setPointSize(1); // default
-          this.renderer.setDrawMode(DRAW_MODES.TRIANGLES); // default
+        },
+        drawMode: () => {
+          return DRAW_MODES.TRIANGLES;
         },
       };
     },
@@ -601,7 +606,9 @@ export default Vue.extend({
         },
         init: () => {
           this.renderer.setPointSize(this.pointSize);
-          this.renderer.setDrawMode(DRAW_MODES.POINTS);
+        },
+        drawMode: () => {
+          return DRAW_MODES.POINTS;
         },
       };
     },
@@ -646,7 +653,11 @@ export default Vue.extend({
       const quads = this.currentState.quads();
       // get quad set bounds
       const mapBounds = this.getBounds(quads);
-      this.overlay.addQuad(this.quadLayerId, quads);
+      this.overlay.addQuad(
+        this.quadLayerId,
+        quads,
+        this.currentState.drawMode()
+      );
 
       // add listener for clicks on quads
       this.renderer.addListener(
@@ -705,7 +716,8 @@ export default Vue.extend({
         this.pointsToQuad(
           this.selectionToolData.startPoint,
           this.selectionToolData.currentPoint
-        )
+        ),
+        DRAW_MODES.TRIANGLES
       );
     },
     // register mousemouve and up callbacks to draw the selection quad
@@ -871,14 +883,8 @@ export default Vue.extend({
     areaToQuads(): Quad[] {
       const result = [];
       this.areas.forEach((area, idx) => {
-        const p1 = this.renderer.latlngToNormalized([
-          area.coordinates[0][1],
-          area.coordinates[0][0],
-        ]); // lat,lng ->lng,lat
-        const p2 = this.renderer.latlngToNormalized([
-          area.coordinates[1][1],
-          area.coordinates[1][0],
-        ]); // lat,lng ->lng,lat
+        const p1 = this.renderer.latlngToNormalized(area.coordinates[0]);
+        const p2 = this.renderer.latlngToNormalized(area.coordinates[1]);
         const color = Color(area.color).rgb().object(); // convert hex color to rgb
         const maxVal = 255;
         // normalize color values
@@ -924,7 +930,11 @@ export default Vue.extend({
       this.overlay.clearQuads();
       this.renderer.clearListeners();
       this.currentState.init();
-      this.overlay.addQuad(this.quadLayerId, this.currentState.quads());
+      this.overlay.addQuad(
+        this.quadLayerId,
+        this.currentState.quads(),
+        this.currentState.drawMode()
+      );
       this.renderer.addListener(
         EVENT_TYPES.MOUSE_CLICK,
         this.currentState.onClick
@@ -1041,7 +1051,11 @@ export default Vue.extend({
       // get bounds of quad set
       const mapBounds = this.getBounds(quads);
       // add the batched quads to a single layer on the overlay
-      this.overlay.addQuad(this.quadLayerId, quads);
+      this.overlay.addQuad(
+        this.quadLayerId,
+        quads,
+        this.currentState.drawMode()
+      );
       // fit map to the quad set
       this.map.fitToBounds(mapBounds);
     },
