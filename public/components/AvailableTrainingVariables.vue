@@ -47,6 +47,7 @@ import {
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
+  getComposedVariableKey,
   getVariableSummariesByState,
   NUM_PER_PAGE,
   searchVariables,
@@ -119,13 +120,27 @@ export default Vue.extend({
       return AVAILABLE_TRAINING_VARS_INSTANCE;
     },
 
+    isTimeseries(): boolean {
+      return routeGetters.isTimeseries(this.$store);
+    },
+
+    targetVariable(): Variable {
+      return routeGetters.getTargetVariable(this.$store);
+    },
+
     html(): (group: Group) => HTMLElement {
       return (group: Group) => {
+        const variable = group.colName;
         const trainingElem = document.createElement("button");
         trainingElem.className += "btn btn-sm btn-outline-secondary mb-2";
         trainingElem.textContent = "Add";
 
         // In the case of a categorical variable with a timeserie selected.
+        const isCategorical: boolean = group.type === "categorical";
+        if (this.isTimeseries && isCategorical) {
+          // Change the meaning of the button as this action is different than the default one.
+          trainingElem.textContent = "Add to Timeserie";
+        }
 
         trainingElem.addEventListener("click", async () => {
           // log UI event on server
@@ -141,10 +156,13 @@ export default Vue.extend({
             .getDecodedTrainingVariableNames(this.$store)
             .concat([group.colName]);
 
+          const dataset = routeGetters.getRouteDataset(this.$store);
+          const targetName = routeGetters.getRouteTargetVariable(this.$store);
+
           // update task based on the current training data
           const taskResponse = await datasetActions.fetchTask(this.$store, {
-            dataset: routeGetters.getRouteDataset(this.$store),
-            targetName: routeGetters.getRouteTargetVariable(this.$store),
+            dataset,
+            targetName,
             variableNames: training,
           });
 
@@ -153,6 +171,25 @@ export default Vue.extend({
             training: training.join(","),
             task: taskResponse.data.task.join(","),
           });
+
+          if (this.isTimeseries && isCategorical) {
+            // Fetch the grouping of timeserie
+            const currentGrouping = datasetGetters
+              .getGroupings(this.$store)
+              .find((v) => v.colName === targetName)?.grouping;
+
+            // Simply duplicate its grouping information and add the new variable
+            const grouping = JSON.parse(JSON.stringify(currentGrouping));
+            grouping.subIds.push(variable);
+            grouping.idCol = getComposedVariableKey(grouping.subIds);
+
+            // Request to update the timeserie grouping
+            await datasetActions.updateGrouping(this.$store, {
+              variable: targetName,
+              grouping,
+            });
+          }
+
           this.$router.push(entry).catch((err) => console.warn(err));
         });
 

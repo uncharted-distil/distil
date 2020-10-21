@@ -24,6 +24,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/russross/blackfriday v2.0.0+incompatible
+	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.5.1
 	github.com/uncharted-distil/distil-compute v0.0.0-20201016205609-a9feaf54f763
 	github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a
