@@ -16,6 +16,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -247,6 +248,36 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 	return nil
 }
 
+// AddField adds a new field to the data storage. This only adds a new column.
+// It does not add the column to other tables nor does it rebuild a view.
+func (s *Storage) AddField(dataset string, storageName string, varName string, varType string) error {
+	// check to make sure the column doesnt exist already
+	dbFields, err := s.getDatabaseFields(storageName)
+	if err != nil {
+		return errors.Wrap(err, "unable to read database fields")
+	}
+
+	found := false
+	for _, v := range dbFields {
+		if v == varName {
+			found = true
+			break
+		}
+	}
+
+	if found {
+		return nil
+	}
+
+	sql := fmt.Sprintf("ALTER TABLE %s ADD COLUMN \"%s\" %s;", storageName, varName, postgres.MapD3MTypeToPostgresType(varType))
+	_, err = s.client.Exec(sql)
+	if err != nil {
+		return errors.Wrap(err, "unable to add new column to database explain table")
+	}
+
+	return nil
+}
+
 // DeleteVariable flags a variable as deleted.
 func (s *Storage) DeleteVariable(dataset string, storageName string, varName string) error {
 	// check if the variable is in the view
@@ -296,6 +327,20 @@ func (s *Storage) insertBulkCopy(storageName string, varNames []string, inserts 
 
 	// update the stats to make sure postgres runs the best queries possible
 	s.updateStats(storageName)
+
+	return nil
+}
+
+func (s *Storage) insertBulkCopyTransaction(tx pgx.Tx, storageName string, varNames []string, inserts [][]interface{}) error {
+	sourceValues := pgx.CopyFromRows(inserts)
+	rowsCopied, err := tx.CopyFrom(context.Background(), pgx.Identifier{storageName}, varNames, sourceValues)
+	if err != nil {
+		return errors.Wrapf(err, "unable to bulk copy data to postgres")
+	}
+
+	if rowsCopied != int64(len(inserts)) {
+		return errors.Errorf("only bulk copied %d of %d rows to postgres", rowsCopied, len(inserts))
+	}
 
 	return nil
 }
@@ -425,6 +470,59 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 		return errors.Wrap(err, "unable to update base data")
 	}
 	s.batchClient.Exec(fmt.Sprintf("DROP TABLE \"%s\"", tableNameTmp))
+
+	return nil
+}
+
+// UpdateData updates data stored using the d3m index as key, but also allows
+// for filtering in cases where the d3m index is not unique.
+func (s *Storage) UpdateData(dataset string, storageName string, varName string, updates map[string]string, filterParams *api.FilterParams) error {
+	// build params
+	params := make([][]interface{}, 0)
+	for i, v := range updates {
+		params = append(params, []interface{}{i, v})
+	}
+
+	// loop through the updates, building batches to minimize overhead
+	tx, err := s.batchClient.Begin()
+	if err != nil {
+		tx.Rollback(context.Background())
+		return errors.Wrap(err, "unable to create transaction")
+	}
+
+	tableNameTmp := fmt.Sprintf("%s_utmp", storageName)
+	dataSQL := fmt.Sprintf("CREATE TEMP TABLE \"%s\" (\"%s\" TEXT NOT NULL, \"%s\" TEXT);",
+		tableNameTmp, model.D3MIndexName, varName)
+	_, err = tx.Exec(context.Background(), dataSQL)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return errors.Wrap(err, "unable to create temp table")
+	}
+
+	err = s.insertBulkCopyTransaction(tx, tableNameTmp, []string{model.D3MIndexName, varName}, params)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return errors.Wrap(err, "unable to insert into temp table")
+	}
+
+	// build the filter structure
+	wheres := []string{fmt.Sprintf("t.\"%s\" = b.\"%s\"::text", model.D3MIndexName, model.D3MIndexName)}
+	paramsFilter := make([]interface{}, 0)
+	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "b", filterParams, false)
+
+	// run the update
+	updateSQL := fmt.Sprintf("UPDATE %s.%s.\"%s\" AS b SET \"%s\" = t.\"%s\" FROM \"%s\" AS t WHERE %s",
+		"distil", "public", storageName, varName, varName, tableNameTmp, strings.Join(wheres, " AND "))
+	_, err = tx.Exec(context.Background(), updateSQL, paramsFilter...)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return errors.Wrap(err, "unable to update base data")
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "unable to commit bulk update")
+	}
 
 	return nil
 }

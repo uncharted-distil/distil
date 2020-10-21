@@ -17,11 +17,12 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
-	log "github.com/unchartedsoftware/plog"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/model"
 )
@@ -70,6 +71,8 @@ const (
 	SolutionStateTableName = "solution_state"
 	// SolutionResultTableName is the name of the table for the result.
 	SolutionResultTableName = "solution_result"
+	// SolutionResultExplainOutputTableName is the name of the table for the result explain output.
+	SolutionResultExplainOutputTableName = "solution_result_explain"
 	// SolutionScoreTableName is the name of the table for the score.
 	SolutionScoreTableName = "solution_score"
 	// RequestFeatureTableName is the name of the table for the request features.
@@ -150,6 +153,11 @@ const (
 			result_uri			text,
 			progress			varchar(40),
 			created_time		timestamp
+		);`
+	solutionResultExplainTableCreationSQL = `CREATE TABLE %s (
+			result_id	text,
+			explain_uri	text,
+			explain_type	text
 		);`
 	wordStemsTableCreationSQL = `CREATE TABLE %s (
 			stem		text PRIMARY KEY,
@@ -269,6 +277,12 @@ func (d *Database) CreateSolutionMetadataTables() error {
 
 	_ = d.DropTable(SolutionResultTableName)
 	_, err = d.Client.Exec(fmt.Sprintf(solutionResultTableCreationSQL, SolutionResultTableName))
+	if err != nil {
+		return errors.Wrap(err, "failed to drop table")
+	}
+
+	_ = d.DropTable(SolutionResultExplainOutputTableName)
+	_, err = d.Client.Exec(fmt.Sprintf(solutionResultExplainTableCreationSQL, SolutionResultExplainOutputTableName))
 	if err != nil {
 		return errors.Wrap(err, "failed to drop table")
 	}

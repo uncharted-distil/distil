@@ -84,9 +84,11 @@ type DataStorage interface {
 	IsValidDataType(dataset string, storageName string, varName string, varType string) (bool, error)
 	SetDataType(dataset string, storageName string, varName string, varType string) error
 	AddVariable(dataset string, storageName string, varName string, varType string) error
+	AddField(dataset string, storageName string, varName string, varType string) error
 	DeleteVariable(dataset string, storageName string, varName string) error
 	UpdateVariable(storageName string, varName string, d3mIndex string, value string) error
 	UpdateVariableBatch(storageName string, varName string, updates map[string]string) error
+	UpdateData(dataset string, storageName string, varName string, updates map[string]string, filterParams *FilterParams) error
 	DoesVariableExist(dataset string, storageName string, varName string) (bool, error)
 	VerifyData(datasetID string, tableName string) error
 	// Raw data queries
@@ -110,7 +112,7 @@ type SolutionStorage interface {
 	PersistSolution(requestID string, solutionID string, explainedSolutionID string, createdTime time.Time) error
 	PersistSolutionWeight(solutionID string, featureName string, featureIndex int64, weight float64) error
 	PersistSolutionState(solutionID string, progress string, createdTime time.Time) error
-	PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string, resultType string, resultUUID string, resultURI string, progress string, createdTime time.Time) error
+	PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string, resultType string, resultUUID string, resultURI string, progress string, explainOutput map[string]*SolutionExplainResult, createdTime time.Time) error
 	PersistSolutionScore(solutionID string, metric string, score float64) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
 	UpdateSolution(solutionID string, explainedSolutionID string) error
