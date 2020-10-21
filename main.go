@@ -283,7 +283,7 @@ func main() {
 	registerRoutePost(mux, "/distil/solution-result-summary/:results-uuid/:mode", routes.SolutionResultSummaryHandler(esMetadataStorageCtor, pgSolutionStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/geocode/:dataset/:variable", routes.GeocodingHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/cluster/:dataset/:variable", routes.ClusteringHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
-	registerRoutePost(mux, "/distil/cluster/:result-id", routes.ClusteringExplainHandler(pgSolutionStorageCtor, pgDataStorageCtor, config))
+	registerRoutePost(mux, "/distil/cluster/:result-id", routes.ClusteringExplainHandler(pgSolutionStorageCtor, esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(&config))
 	registerRoutePost(mux, "/distil/join", routes.JoinHandler(esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:invert", routes.TimeseriesHandler(esMetadataStorageCtor, pgDataStorageCtor))

@@ -135,13 +135,24 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 
 // ClusteringExplainHandler creates a route handler that will cluster an explained
 // result output, treating it as a tabular dataset.
-func ClusteringExplainHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
+func ClusteringExplainHandler(solutionCtor api.SolutionStorageCtor, metaCtor api.MetadataStorageCtor,
+	dataCtor api.DataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		resultID := pat.Param(r, "result-id")
 
 		// get storage clients
 		solutionStorage, err := solutionCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		dataStorage, err := dataCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		metaStorage, err := metaCtor()
 		if err != nil {
 			handleError(w, err)
 			return
@@ -173,9 +184,43 @@ func ClusteringExplainHandler(solutionCtor api.SolutionStorageCtor, dataCtor api
 			}
 		}
 
-		clusterVarName := fmt.Sprintf("%s%s", model.ClusterVarPrefix, target)
+		clusterVarName := fmt.Sprintf("%s%s_shap", model.ClusterVarPrefix, target)
+		datasetMeta, err := metaStorage.FetchDataset(result.Dataset, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		err = dataStorage.AddField(result.Dataset, fmt.Sprintf("%s_explain", datasetMeta.StorageName), clusterVarName, model.StringType)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		// cluster data
-		err = task.ClusterExplainOutput(target, result.ResultURI, explainURI, &config)
+		_, clustered, err := task.ClusterExplainOutput(target, result.ResultURI, explainURI, &config)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// build the data for batching
+		clusteredData := make(map[string]string)
+		for _, cluster := range clustered {
+			clusteredData[cluster.D3MIndex] = cluster.Label
+		}
+
+		// update the batches
+		// TODO: THIS HAS WAY TOO MUCH KNOWLEDGE OF THE DATABASE BAKED INTO IT
+		filters := &api.FilterParams{
+			Filters: []*model.Filter{
+				{Key: "result_id",
+					Type:       model.CategoricalFilter,
+					Categories: []string{result.ResultURI},
+					Mode:       model.IncludeFilter,
+				},
+			},
+		}
+		err = dataStorage.UpdateData(result.Dataset, fmt.Sprintf("%s_explain", datasetMeta.StorageName), clusterVarName, clusteredData, filters)
 		if err != nil {
 			handleError(w, err)
 			return

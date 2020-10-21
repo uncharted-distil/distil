@@ -90,7 +90,7 @@ func (e explainDataset) CreateDataset(rootDataPath string, datasetName string, c
 }
 
 // ClusterExplainOutput clusters the explained output from a model.
-func ClusterExplainOutput(variable string, resultURI string, explainURI string, config *env.Config) error {
+func ClusterExplainOutput(variable string, resultURI string, explainURI string, config *env.Config) (bool, []*ClusterPoint, error) {
 	// create the SHAP values dataset
 	ds := explainDataset{
 		explainURI: explainURI,
@@ -101,14 +101,14 @@ func ClusterExplainOutput(variable string, resultURI string, explainURI string, 
 	datasetName := strings.TrimSuffix(path.Base(explainURI), path.Ext(explainURI))
 	_, dsPath, err := CreateDataset(datasetName, ds, outputPath, config)
 	if err != nil {
-		return err
+		return false, nil, err
 	}
 
 	// read the metadata from the just created dataset
 	explainStorage := serialization.GetStorage(explainURI)
 	meta, err := explainStorage.ReadMetadata(path.Join(dsPath, compute.D3MDataSchema))
 	if err != nil {
-		return err
+		return false, nil, err
 	}
 
 	// cluster the SHAP values dataset as any other dataset
@@ -129,10 +129,10 @@ func ClusterExplainOutput(variable string, resultURI string, explainURI string, 
 		LearningDataset: meta.LearningDataset,
 	}
 
-	_, _, err = Cluster(dsCreated, variable, true)
+	addMeta, clustered, err := Cluster(dsCreated, variable, true)
 	if err != nil {
-		return err
+		return false, nil, err
 	}
 
-	return nil
+	return addMeta, clustered, nil
 }
