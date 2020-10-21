@@ -35,8 +35,8 @@
     </div>
     <div
       class="cluster-toggle"
-      :class="{ active: isSelectionMode }"
-      @click="isClustering = !isClustering"
+      :class="{ active: isClustering }"
+      @click="toggleClustering"
     >
       <a class="cluster-icon" title="Cluster" aria-label="Cluster Tiles">
         <i class="fa fa-object-group fa-lg" aria-hidden="true" />
@@ -203,7 +203,7 @@ export default Vue.extend({
     dataFields: Object as () => Dictionary<TableColumn>,
     summaries: Array as () => VariableSummary[],
     quadOpacity: { type: Number, default: 0.8 },
-    pointOpacity: { type: Number, default: 0.1 },
+    pointOpacity: { type: Number, default: 0.5 },
     zoomThreshold: { type: Number, default: 8 },
   },
 
@@ -241,7 +241,7 @@ export default Vue.extend({
       },
       selectionToolId: "selection-tool-layer",
       showExit: false,
-      pointSize: 3,
+      pointSize: 1,
       isClustering: false,
     };
   },
@@ -666,6 +666,12 @@ export default Vue.extend({
       this.isClustering = !this.isClustering;
       if (this.isClustering && this.map.getZoom() < this.zoomThreshold) {
         this.currentState = this.clusterState;
+        this.updateMapState();
+        return;
+      }
+      if (!this.isClustering && this.map.getZoom() < this.zoomThreshold) {
+        this.currentState = this.pointState;
+        this.updateMapState();
       }
     },
     /**
@@ -852,7 +858,7 @@ export default Vue.extend({
         const color = Color(area.color).rgb().object(); // convert hex color to rgb
         const maxVal = 255;
         // normalize color values
-        color.a = this.quadOpacity;
+        color.a = this.pointOpacity;
         color.r /= maxVal;
         color.g /= maxVal;
         color.b /= maxVal;
@@ -1104,8 +1110,15 @@ export default Vue.extend({
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 }
-.geo-plot-container .selection-toggle:hover .cluster-icon:hover {
+.cluster-toggle:hover {
+  background-color: #f4f4f4;
+}
+.cluster-toggle.active {
+  color: #26b8d1;
+}
+.geo-plot-container .selection-toggle:hover {
   background-color: #f4f4f4;
 }
 
@@ -1124,10 +1137,7 @@ export default Vue.extend({
   position: absolute;
 }
 
-.geo-plot-container
-  .selection-toggle.active
-  .selection-toggle-control
-  .cluster-icon:hover {
+.geo-plot-container .selection-toggle.active .selection-toggle-control {
   color: #26b8d1;
 }
 
