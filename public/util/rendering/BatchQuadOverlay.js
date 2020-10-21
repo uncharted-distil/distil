@@ -6,7 +6,7 @@ import Overlay from "lumo/src/layer/overlay/Overlay";
 
 const clipQuads = function (cell, quads) {
   const clipped = [];
-  quads.forEach((quad) => {
+  quads.forEach((quad, key) => {
     const result = new Array(quad.length);
     for (let i = 0; i < quad.length; i++) {
       const projected = cell.project(quad[i]);
@@ -23,7 +23,7 @@ const clipQuads = function (cell, quads) {
         iA: quad[i].iA,
       };
     }
-    clipped.push(result);
+    clipped.push({ points: result, key });
   });
   return clipped;
 };
@@ -43,6 +43,7 @@ export default class BatchQuadOverlay extends Overlay {
   constructor(options = {}) {
     super(options);
     this.quads = new Map();
+    this.drawModeMap = new Map();
   }
 
   /**
@@ -53,8 +54,9 @@ export default class BatchQuadOverlay extends Overlay {
    *
    * @returns {quadOverlay} The overlay object, for chaining.
    */
-  addQuad(id, points) {
+  addQuad(id, points, drawMode) {
     this.quads.set(id, points);
+    this.drawModeMap.set(id, drawMode);
     if (this.plot) {
       this.refresh();
     }
@@ -70,6 +72,7 @@ export default class BatchQuadOverlay extends Overlay {
    */
   removeQuad(id) {
     this.quads.delete(id);
+    this.drawModeMap.delete(id);
     if (this.plot) {
       this.refresh();
     }
@@ -84,6 +87,7 @@ export default class BatchQuadOverlay extends Overlay {
   clearQuads() {
     this.clear();
     this.quads = new Map();
+    this.drawModeMap = new Map();
     if (this.plot) {
       this.refresh();
     }

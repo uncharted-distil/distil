@@ -147,13 +147,14 @@ const getVertexArray = function (points) {
   return vertices;
 };
 // creates the gl buffers and creates the attrib pointers
-const createBuffers = function (overlay, points) {
+const createBuffers = function (renderer, points, key) {
   const vertices = getVertexArray(points);
   const floatByteSize = 4;
   const vertSize = 2; // x,y
   const colorSize = 4;
+  const idSize = 4;
   const vertexBuffer = new VertexBuffer(
-    overlay.gl,
+    renderer.gl,
     vertices,
     {
       0: {
@@ -173,8 +174,8 @@ const createBuffers = function (overlay, points) {
       }, // id pointer
     },
     {
-      mode: overlay.drawMode,
-      count: vertices.length / 10, // number of vertices to draw vertices has x,y therefore /2
+      mode: renderer.overlay.drawModeMap.get(key),
+      count: vertices.length / (vertSize + colorSize + idSize), // number of vertices to draw vertices has x,y therefore /2
     }
   );
 
@@ -284,9 +285,9 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
   refreshBuffers() {
     const clipped = this.overlay.getClippedGeometry();
     if (clipped) {
-      this.quads = clipped.map((points) => {
+      this.quads = clipped.map((clip) => {
         // generate the buffer
-        return createBuffers(this, points);
+        return createBuffers(this, clip.points, clip.key);
       });
     } else {
       this.quads = null;
@@ -295,8 +296,6 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
   // normal render for human viewing
   renderColor() {
     const gl = this.gl;
-    const shader =
-      this.drawMode === DRAW_MODES.TRIANGLES ? this.shader : this.pointShader;
     const quads = this.quads;
     const plot = this.overlay.plot;
     const cell = plot.cell;
@@ -309,20 +308,23 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-    // bind shader
-    shader.use();
-
-    // set global uniforms
-    shader.setUniform("uProjectionMatrix", proj);
-    shader.setUniform("uViewOffset", [offset.x, offset.y]);
-    shader.setUniform("uScale", scale);
-    shader.setUniform(
-      "uPointSize",
-      this.pointSize * (plot.zoom + 1) * (plot.zoom + 1)
-    );
-
     // for each quad buffer
     quads.forEach((buffer) => {
+      const shader =
+        buffer.vertex.mode === DRAW_MODES.TRIANGLES
+          ? this.shader
+          : this.pointShader;
+      // bind shader
+      shader.use();
+
+      // set global uniforms
+      shader.setUniform("uProjectionMatrix", proj);
+      shader.setUniform("uViewOffset", [offset.x, offset.y]);
+      shader.setUniform("uScale", scale);
+      shader.setUniform(
+        "uPointSize",
+        this.pointSize * (plot.zoom + 1) * (plot.zoom + 1)
+      );
       // draw the points
       buffer.vertex.bind();
       buffer.vertex.draw();
@@ -331,10 +333,6 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
   // renders IDs of the quads to a separate FBO
   renderIds() {
     const gl = this.gl;
-    const shader =
-      this.drawMode === DRAW_MODES.TRIANGLES
-        ? this.pickingShader
-        : this.pointPickingShader;
     const quads = this.quads;
     const plot = this.overlay.plot;
     const cell = plot.cell;
@@ -346,24 +344,26 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       // the canvas was resized, make the framebuffer attachments match
       this.setFramebufferAttachmentSizes(gl.canvas.width, gl.canvas.height);
     }
-    shader.use();
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.disable(gl.BLEND); // !important
     gl.enable(gl.DEPTH_TEST);
-
     // Clear the canvas AND the depth buffer.
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    // uniforms
-    shader.setUniform("uProjectionMatrix", proj);
-    shader.setUniform("uViewOffset", [offset.x, offset.y]);
-    shader.setUniform("uScale", scale);
-    shader.setUniform(
-      "uPointSize",
-      this.pointSize * (plot.zoom + 1) * (plot.zoom + 1)
-    );
-
     quads.forEach((buffer) => {
+      const shader =
+        buffer.vertex.mode === DRAW_MODES.TRIANGLES
+          ? this.pickingShader
+          : this.pointPickingShader;
+      shader.use();
+      // uniforms
+      shader.setUniform("uProjectionMatrix", proj);
+      shader.setUniform("uViewOffset", [offset.x, offset.y]);
+      shader.setUniform("uScale", scale);
+      shader.setUniform(
+        "uPointSize",
+        this.pointSize * (plot.zoom + 1) * (plot.zoom + 1)
+      );
       buffer.vertex.bind();
       buffer.vertex.draw();
     });
