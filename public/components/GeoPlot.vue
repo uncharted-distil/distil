@@ -740,10 +740,10 @@ export default Vue.extend({
         this.selectionToolData.currentPoint
       );
       // INVERTED LAT LNG FOR NOW -- POSSIBLE ROUTE OR DB ISSUE
-      const minY = Math.min(p1.lng, p2.lng);
-      const maxY = Math.max(p1.lng, p2.lng);
-      const minX = Math.min(p1.lat, p2.lat);
-      const maxX = Math.max(p1.lat, p2.lat);
+      const minX = Math.min(p1.lng, p2.lng);
+      const maxX = Math.max(p1.lng, p2.lng);
+      const minY = Math.min(p1.lat, p2.lat);
+      const maxY = Math.max(p1.lat, p2.lat);
       // send selection to PostGis
       this.createHighlight({ minX, minY, maxX, maxY });
     },
@@ -820,9 +820,14 @@ export default Vue.extend({
         .domain(domain);
       const result = []; // packing array with
       this.bucketFeatures.forEach((bucket, idx) => {
-        const p1 = this.renderer.latlngToNormalized(bucket.coordinates[0]);
-        const p2 = this.renderer.latlngToNormalized(bucket.coordinates[1]);
-        const val = scaleColors(bucket.meta.count).toString(16);
+        const p1 = this.renderer.latlngToNormalized([
+          bucket.coordinates[0][1],
+          bucket.coordinates[0][0],
+        ]);
+        const p2 = this.renderer.latlngToNormalized([
+          bucket.coordinates[1][1],
+          bucket.coordinates[1][0],
+        ]);
         const color = Color(scaleColors(bucket.meta.count).toString(16))
           .rgb()
           .object(); // convert hex color to rgb
@@ -846,14 +851,8 @@ export default Vue.extend({
     areaToPoints(): Quad[] {
       const result = [];
       this.areas.forEach((area, idx) => {
-        const p1 = this.renderer.latlngToNormalized([
-          area.coordinates[0][1],
-          area.coordinates[0][0],
-        ]); // lat,lng ->lng,lat
-        const p2 = this.renderer.latlngToNormalized([
-          area.coordinates[1][1],
-          area.coordinates[1][0],
-        ]); // lat,lng ->lng,lat
+        const p1 = this.renderer.latlngToNormalized(area.coordinates[0]);
+        const p2 = this.renderer.latlngToNormalized(area.coordinates[1]);
         const centerPoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
         const color = Color(area.color).rgb().object(); // convert hex color to rgb
         const maxVal = 255;
