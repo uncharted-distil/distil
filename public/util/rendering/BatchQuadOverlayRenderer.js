@@ -77,9 +77,10 @@ const POINT_SHADER = {
   varying vec4 oColor;
   void main() {
     vec2 wPosition = (aPosition * uScale) - uViewOffset; 
-    gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
+    vec4 zoomedPosition = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
+    gl_Position = zoomedPosition;
     oColor = aColor;
-    gl_PointSize = uPointSize;
+    gl_PointSize = uPointSize / uProjectionMatrix[1][1];
   }
   `,
   frag: `
@@ -112,7 +113,7 @@ const POINT_PICKING_SHADER = {
     vec2 wPosition = (aPosition * uScale) - uViewOffset;
     gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
     oId = id;
-    gl_PointSize = uPointSize;
+    gl_PointSize = uPointSize / uProjectionMatrix[1][1];
   }`,
   frag: `
     precision highp float;
@@ -307,7 +308,6 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     // set blending func
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
     // for each quad buffer
     quads.forEach((buffer) => {
       const shader =
@@ -321,10 +321,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       shader.setUniform("uProjectionMatrix", proj);
       shader.setUniform("uViewOffset", [offset.x, offset.y]);
       shader.setUniform("uScale", scale);
-      shader.setUniform(
-        "uPointSize",
-        this.pointSize * (plot.zoom + 1) * (plot.zoom + 1)
-      );
+      shader.setUniform("uPointSize", this.pointSize);
       // draw the points
       buffer.vertex.bind();
       buffer.vertex.draw();
@@ -360,10 +357,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       shader.setUniform("uProjectionMatrix", proj);
       shader.setUniform("uViewOffset", [offset.x, offset.y]);
       shader.setUniform("uScale", scale);
-      shader.setUniform(
-        "uPointSize",
-        this.pointSize * (plot.zoom + 1) * (plot.zoom + 1)
-      );
+      shader.setUniform("uPointSize", this.pointSize);
       buffer.vertex.bind();
       buffer.vertex.draw();
     });

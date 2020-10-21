@@ -242,7 +242,7 @@ export default Vue.extend({
       },
       selectionToolId: "selection-tool-layer",
       showExit: false,
-      pointSize: 1,
+      pointSize: 0.1,
       isClustering: false,
     };
   },
@@ -763,9 +763,9 @@ export default Vue.extend({
       // set mapBounds to a single tile to start
       const mapBounds = new lumo.Bounds(
         quads[0].x,
-        quads[1].x,
+        quads[0].x,
         quads[0].y,
-        quads[1].y
+        quads[0].y
       );
       // extend bounds to fit the entire quad set
       quads.forEach((q) => {
