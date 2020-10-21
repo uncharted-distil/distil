@@ -279,12 +279,12 @@ export default Vue.extend({
             const feature = polygon(
               [
                 [
-                  [yCoord, xCoord],
-                  [yCoord + ySize, xCoord],
-                  [yCoord + ySize, xCoord + xSize],
-                  [yCoord, xCoord + xSize],
-                  [yCoord, xCoord],
-                ], // leaflet and most map frameworks use latlng which is y,x
+                  [xCoord, yCoord],
+                  [xCoord, yCoord + ySize],
+                  [xCoord + xSize, yCoord + ySize],
+                  [xCoord + xSize, yCoord],
+                  [xCoord, yCoord],
+                ],
               ],
               { selected: false, count: latBucket.count }
             );
@@ -794,10 +794,10 @@ export default Vue.extend({
       });
       this.closeButton.addTo(this.map);
       this.createHighlight({
-        minX: sw.lng,
-        maxX: ne.lng,
         minY: sw.lat,
         maxY: ne.lat,
+        minX: sw.lng,
+        maxX: ne.lng,
       });
     },
 

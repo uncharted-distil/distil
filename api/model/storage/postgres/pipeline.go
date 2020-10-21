@@ -71,11 +71,22 @@ func (s *Storage) PersistSolutionState(solutionID string, progress string, creat
 }
 
 // PersistSolutionResult persists the solution result metadata to Postgres.
-func (s *Storage) PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string,
-	resultType string, resultUUID string, resultURI string, progress string, createdTime time.Time) error {
+func (s *Storage) PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string, resultType string,
+	resultUUID string, resultURI string, progress string, explainOutput map[string]*api.SolutionExplainResult, createdTime time.Time) error {
 	sql := fmt.Sprintf("INSERT INTO %s (solution_id, fitted_solution_id, produce_request_id, result_type, result_uuid, result_uri, progress, created_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);", postgres.SolutionResultTableName)
 
 	_, err := s.client.Exec(sql, solutionID, fittedSolutionID, produceRequestID, resultType, resultUUID, resultURI, progress, createdTime)
+	if err != nil {
+		return errors.Wrap(err, "unable to persist solution result")
+	}
+
+	for typ, uri := range explainOutput {
+		sql = fmt.Sprintf("INSERT INTO %s (result_id, explain_uri, explain_type) VALUES ($1, $2, $3)", postgres.SolutionResultExplainOutputTableName)
+		_, err = s.client.Exec(sql, resultUUID, uri.ResultURI, typ)
+		if err != nil {
+			return errors.Wrap(err, "unable to persist solution result explain output")
+		}
+	}
 
 	return err
 }
@@ -423,12 +434,59 @@ func (s *Storage) FetchSolutionResultByUUID(resultUUID string) (*api.SolutionRes
 		return nil, errors.Wrap(err, "Unable to parse solution results from Postgres")
 	}
 
+	// load the solution result explain output
+	explained, err := s.fetchSolutionResultOutputExplain(resultUUID)
+	if err != nil {
+		return nil, err
+	}
+
 	var res *api.SolutionResult
 	if len(results) > 0 {
 		res = results[0]
+		res.ExplainOutput = explained
 	}
 
 	return res, nil
+}
+
+func (s *Storage) fetchSolutionResultOutputExplain(resultID string) ([]*api.SolutionResultExplainOutput, error) {
+	sql := fmt.Sprintf("SELECT result_id, explain_uri, explain_type FROM %s WHERE result_id = $1", postgres.SolutionResultExplainOutputTableName)
+
+	rows, err := s.client.Query(sql, resultID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to pull solution results from Postgres")
+	}
+	if rows != nil {
+		defer rows.Close()
+	}
+
+	return s.parseSolutionResultOutputExplain(rows)
+}
+
+func (s *Storage) parseSolutionResultOutputExplain(rows pgx.Rows) ([]*api.SolutionResultExplainOutput, error) {
+	results := []*api.SolutionResultExplainOutput{}
+	for rows.Next() {
+		var resultID string
+		var explainURI string
+		var explainType string
+
+		err := rows.Scan(&resultID, &explainURI, &explainType)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse solution results explain output from Postgres")
+		}
+
+		results = append(results, &api.SolutionResultExplainOutput{
+			ResultID: resultID,
+			URI:      explainURI,
+			Type:     explainType,
+		})
+	}
+	err := rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
+
+	return results, nil
 }
 
 // FetchSolutionResultByProduceRequestID pulls solution result information from Postgres.

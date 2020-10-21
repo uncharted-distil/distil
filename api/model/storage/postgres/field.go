@@ -125,14 +125,7 @@ func updateClusterFilter(metadataStorage api.MetadataStorage, dataset string, da
 		return err
 	}
 
-	if variable.IsGrouping() {
-		clusterCol, ok := api.GetClusterColFromGrouping(variable.Grouping)
-		if ok && dataMode == api.ClusterDataMode && api.HasClusterData(dataset, clusterCol, metadataStorage) {
-			filter.Key = clusterCol
-		} else {
-			filter.Key = variable.Grouping.GetIDCol()
-		}
-	}
+	api.UpdateFilterKey(metadataStorage, dataset, dataMode, filter, variable)
 
 	return nil
 }

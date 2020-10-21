@@ -47,7 +47,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		isSampling := true // Flag to sample imported dataset
 
 		var origins []*model.DatasetOrigin
-		var rawGrouping map[string]interface{}
+		var rawGroupings []map[string]interface{}
 		if source == metadata.Augmented && provenance == "local" {
 			// parse POST params
 			params, err := getPostParameters(r)
@@ -101,7 +101,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 					return
 				}
 				datasetID = creationResult.name
-				rawGrouping = creationResult.group
+				rawGroupings = creationResult.groups
 				log.Infof("create dataset '%s' from local source '%s'", datasetID, datasetPath)
 			}
 		}
@@ -121,7 +121,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 		}
 
 		// ingest the imported dataset
-		ingestSteps := &task.IngestSteps{ClassificationOverwrite: false, RawGrouping: rawGrouping}
+		ingestSteps := &task.IngestSteps{ClassificationOverwrite: false, RawGroupings: rawGroupings}
 		ingestConfig := task.NewConfig(*config)
 
 		// Check if the imported dataset should be sampled
@@ -226,9 +226,9 @@ func isRemoteSensingDataset(datasetID string, metaStorage api.MetadataStorage) b
 }
 
 type datasetCreationResult struct {
-	name  string
-	path  string
-	group map[string]interface{}
+	name   string
+	path   string
+	groups []map[string]interface{}
 }
 
 func createDataset(datasetPath string, datasetName string, config *env.Config) (*datasetCreationResult, error) {
@@ -241,7 +241,7 @@ func createDataset(datasetPath string, datasetName string, config *env.Config) (
 	}
 
 	// create the raw dataset
-	ds, group, err := createRawDataset(datasetPath, datasetName)
+	ds, groups, err := createRawDataset(datasetPath, datasetName)
 	if err != nil {
 		return nil, err
 	}
@@ -254,13 +254,13 @@ func createDataset(datasetPath string, datasetName string, config *env.Config) (
 	}
 
 	return &datasetCreationResult{
-		name:  datasetName,
-		path:  formattedPath,
-		group: group,
+		name:   datasetName,
+		path:   formattedPath,
+		groups: groups,
 	}, nil
 }
 
-func createRawDataset(datasetPath string, datasetName string) (task.DatasetConstructor, map[string]interface{}, error) {
+func createRawDataset(datasetPath string, datasetName string) (task.DatasetConstructor, []map[string]interface{}, error) {
 	if util.IsArchiveFile(datasetPath) {
 		// expand the archive
 		expandedInfo, err := dataset.ExpandZipDataset(datasetPath, datasetName)
@@ -274,7 +274,8 @@ func createRawDataset(datasetPath string, datasetName string) (task.DatasetConst
 	// create the dataset constructors for downstream processing
 	var ds task.DatasetConstructor
 	var err error
-	var group map[string]interface{}
+	var multiBandImageGroup map[string]interface{}
+	var geoBoundsGroup map[string]interface{}
 	if util.IsDatasetDir(datasetPath) {
 		ds, err = dataset.NewD3MDataset(datasetName, datasetPath)
 	} else if rawDatasetIsTabular(datasetPath) {
@@ -290,7 +291,8 @@ func createRawDataset(datasetPath string, datasetName string) (task.DatasetConst
 			ds, err = createMediaDataset(datasetName, fileType, datasetPath)
 		} else if fileType == "tif" {
 			ds, err = createRemoteSensingDataset(datasetName, fileType, datasetPath)
-			group = dataset.CreateSatelliteGrouping()
+			multiBandImageGroup = dataset.CreateSatelliteGrouping()
+			geoBoundsGroup = dataset.CreateGeoBoundsGrouping()
 		} else if fileType == "txt" {
 			ds, err = createTextDataset(datasetName, datasetPath)
 		} else {
@@ -301,7 +303,7 @@ func createRawDataset(datasetPath string, datasetName string) (task.DatasetConst
 		return nil, nil, err
 	}
 
-	return ds, group, nil
+	return ds, []map[string]interface{}{multiBandImageGroup, geoBoundsGroup}, nil
 }
 
 func rawDatasetIsTabular(datasetPath string) bool {

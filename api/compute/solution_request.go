@@ -530,7 +530,7 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
 	dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string, storageName string,
 	explainedSolutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string,
-	resultURI string, confidenceValues *api.SolutionExplainResult) {
+	resultURI string, confidenceValues *api.SolutionExplainResult, explainOutput map[string]*api.SolutionExplainResult) {
 	// persist the completed state
 	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -539,7 +539,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist result metadata
-	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, produceRequestID, "test", resultID, resultURI, SolutionCompletedStatus, time.Now())
+	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, produceRequestID, "test", resultID, resultURI, SolutionCompletedStatus, explainOutput, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -755,6 +755,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			}
 
 			// explain features per-record if the explanation is available
+			produceOutputs := map[string]*api.SolutionExplainResult{}
 			explainedResults := make(map[string]*api.SolutionExplainResult)
 			for _, explain := range outputKeysExplain {
 				if explain.typ == explainableTypeStep || explain.typ == explainableTypeConfidence {
@@ -768,6 +769,9 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 					}
 					parsedExplainResult.ParsingParams = explain.parsingParams
 					explainedResults[explain.typ] = parsedExplainResult
+				}
+				produceOutputs[explain.typ] = &api.SolutionExplainResult{
+					ResultURI: outputKeyURIs[explain.key],
 				}
 			}
 
@@ -803,7 +807,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			log.Infof("persisting results in URI '%s'", resultURI)
 			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
 				initialSearchID, dataset, storageName, solutionID, initialSearchSolutionID, fittedSolutionID,
-				produceRequestID, resultID, resultURI, explainedResults[explainableTypeConfidence])
+				produceRequestID, resultID, resultURI, explainedResults[explainableTypeConfidence], produceOutputs)
 		}
 	})
 	if err != nil {
@@ -884,14 +888,12 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		}
 		if variable.DistilRole == model.VarDistilRoleGrouping {
 			// if this is a group var, find the grouping ID col and use that
-			if variable.Grouping != nil {
+			if variable.Grouping != nil && variable.Grouping.GetIDCol() != "" {
 				groupVariable, err := findVariable(variable.Grouping.GetIDCol(), variables)
 				if err != nil {
 					return err
 				}
 				groupingVariableIndex = groupVariable.Index
-			} else {
-				groupingVariableIndex = variable.Index
 			}
 		}
 	}
@@ -1067,16 +1069,12 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 func findVariable(variableName string, variables []*model.Variable) (*model.Variable, error) {
 	// extract the variable instance from its name
-	var variable *model.Variable
 	for _, v := range variables {
 		if v.Name == variableName {
-			variable = v
+			return v, nil
 		}
 	}
-	if variable == nil {
-		return nil, errors.Errorf("can't find target variable instance %s", variableName)
-	}
-	return variable, nil
+	return nil, errors.Errorf("can't find target variable instance %s", variableName)
 }
 
 func findVariables(variableNames []string, variables []*model.Variable) ([]*model.Variable, error) {

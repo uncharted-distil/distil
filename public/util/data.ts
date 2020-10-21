@@ -621,7 +621,10 @@ export function getVariableImportance(v: Variable): number {
 
 export function getVariableRanking(v: Variable): number {
   const datasetName = routeGetters.getRouteDataset(store);
-  const map = datasetGetters.getVariableRankings(store)[datasetName];
+  const map = datasetGetters.getVariableRankings(store)[datasetName]; // get MI ranking map
+  if (!map) {
+    return v.importance; // if MI ranking does not exist default to PCA
+  }
   return map[v.colName];
 }
 

@@ -198,19 +198,19 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 
 			field = NewTimeSeriesField(s, dataset, storageName, tsg.ClusterCol, variable.Name, variable.DisplayName, variable.Type,
 				variable.Grouping.GetIDCol(), timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
-
 		} else if model.IsGeoCoordinate(variable.Grouping.GetType()) {
 			gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
 			field = NewCoordinateField(variable.Name, s, dataset, storageName, gcg.XCol, gcg.YCol, variable.DisplayName, variable.Grouping.GetType(), "")
 		} else if model.IsMultiBandImage(variable.Grouping.GetType()) {
 			rsg := variable.Grouping.(*model.MultiBandImageGrouping)
 			field = NewMultiBandImageField(s, dataset, storageName, rsg.ClusterCol, variable.Name, variable.DisplayName, variable.Grouping.GetType(), rsg.IDCol, rsg.BandCol)
+		} else if model.IsGeoBounds(variable.Type) {
+			gbg := variable.Grouping.(*model.GeoBoundsGrouping)
+			field = NewBoundsField(s, dataset, storageName, gbg.CoordinatesCol, gbg.PolygonCol, variable.Name, variable.DisplayName, variable.Grouping.GetType(), "")
 		} else {
 			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.GetIDCol(), variable.Grouping.GetType())
 		}
-
 	} else {
-
 		// if timeseries mode, get the grouping field and use that for counts
 		countCol := ""
 		if mode == api.TimeseriesMode || mode == api.MultiBandImageMode {
@@ -237,8 +237,6 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 			field = NewImageField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsDateTime(variable.Type) {
 			field = NewDateTimeField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
-		} else if model.IsGeoBounds(variable.Type) {
-			field = NewBoundsField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
 		} else {
 			return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
 		}
