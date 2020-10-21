@@ -40,14 +40,13 @@
 <script lang="ts">
 import Vue from "vue";
 import { overlayRouteEntry } from "../util/routes";
-import { Variable, VariableSummary, Task } from "../store/dataset/index";
+import { Variable, VariableSummary } from "../store/dataset/index";
 import {
   actions as datasetActions,
   getters as datasetGetters,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
-  filterSummariesByDataset,
   getVariableSummariesByState,
   NUM_PER_PAGE,
   searchVariables,
@@ -55,7 +54,6 @@ import {
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
 import VariableFacets from "./facets/VariableFacets.vue";
-import { Dictionary } from "vue-router/types/router";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
@@ -125,7 +123,10 @@ export default Vue.extend({
       return (group: Group) => {
         const trainingElem = document.createElement("button");
         trainingElem.className += "btn btn-sm btn-outline-secondary mb-2";
-        trainingElem.innerHTML = "Add";
+        trainingElem.textContent = "Add";
+
+        // In the case of a categorical variable with a timeserie selected.
+
         trainingElem.addEventListener("click", async () => {
           // log UI event on server
           appActions.logUserEvent(this.$store, {
@@ -169,16 +170,20 @@ export default Vue.extend({
         subActivity: SubActivity.DATA_TRANSFORMATION,
         details: {},
       });
+
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
       );
+
       this.availableVariables.forEach((variable) => {
         training.push(variable.colName);
       });
+
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         training: training.join(","),
         availableTrainingVarsPage: 1,
       });
+
       this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
@@ -190,6 +195,7 @@ export default Vue.extend({
   display: flex;
   flex-direction: column;
 }
+
 .available-variables-menu {
   display: flex;
   justify-content: space-between;
