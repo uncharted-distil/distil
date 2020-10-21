@@ -445,8 +445,19 @@ func CreateSatelliteGrouping() map[string]interface{} {
 	grouping["idCol"] = "group_id"
 	grouping["imageCol"] = "image_file"
 	grouping["type"] = model.MultiBandImageType
-	grouping["coordinate"] = "__geo_coordinates"
-	grouping["hidden"] = []string{"image_file", "band", "group_id", "coordinates"}
+	grouping["hidden"] = []string{"image_file", "band", "group_id"}
+
+	return grouping
+}
+
+// CreateGeoBoundsGrouping dumps the geobounds grouping structure into a map.
+// It assumes that the dataset has the same structure as during upload.
+func CreateGeoBoundsGrouping() map[string]interface{} {
+	grouping := map[string]interface{}{}
+	grouping["type"] = model.GeoBoundsType
+	grouping["coordinatesCol"] = "coordinates"
+	grouping["polygonCol"] = "__geo_coordinates"
+	grouping["hidden"] = []string{"coordinates", "__geo_coordinates"}
 
 	return grouping
 }

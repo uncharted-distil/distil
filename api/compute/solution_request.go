@@ -888,14 +888,12 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		}
 		if variable.DistilRole == model.VarDistilRoleGrouping {
 			// if this is a group var, find the grouping ID col and use that
-			if variable.Grouping != nil {
+			if variable.Grouping != nil && variable.Grouping.GetIDCol() != "" {
 				groupVariable, err := findVariable(variable.Grouping.GetIDCol(), variables)
 				if err != nil {
 					return err
 				}
 				groupingVariableIndex = groupVariable.Index
-			} else {
-				groupingVariableIndex = variable.Index
 			}
 		}
 	}
@@ -1071,16 +1069,12 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 func findVariable(variableName string, variables []*model.Variable) (*model.Variable, error) {
 	// extract the variable instance from its name
-	var variable *model.Variable
 	for _, v := range variables {
 		if v.Name == variableName {
-			variable = v
+			return v, nil
 		}
 	}
-	if variable == nil {
-		return nil, errors.Errorf("can't find target variable instance %s", variableName)
-	}
-	return variable, nil
+	return nil, errors.Errorf("can't find target variable instance %s", variableName)
 }
 
 func findVariables(variableNames []string, variables []*model.Variable) ([]*model.Variable, error) {

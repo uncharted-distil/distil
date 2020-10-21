@@ -118,10 +118,11 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 }
 
 // SetGroups updates the dataset metadata (as stored) to capture group information.
-func SetGroups(datasetID string, rawGrouping map[string]interface{}, meta api.MetadataStorage, config *IngestTaskConfig) error {
-	if isMultiBandImageGrouping(rawGrouping) {
+func SetGroups(datasetID string, rawGroupings []map[string]interface{}, meta api.MetadataStorage, config *IngestTaskConfig) error {
+	multiBandImageGrouping := getMultiBandImageGrouping(rawGroupings)
+	if multiBandImageGrouping != nil {
 		rsg := &model.MultiBandImageGrouping{}
-		err := json.MapToStruct(rsg, rawGrouping)
+		err := json.MapToStruct(rsg, multiBandImageGrouping)
 		if err != nil {
 			return err
 		}
@@ -134,11 +135,40 @@ func SetGroups(datasetID string, rawGrouping map[string]interface{}, meta api.Me
 		}
 	}
 
+	geoBoundsGrouping := getGeoBoundsGrouping(rawGroupings)
+	if geoBoundsGrouping != nil {
+		grouping := &model.GeoBoundsGrouping{}
+		err := json.MapToStruct(grouping, geoBoundsGrouping)
+		if err != nil {
+			return err
+		}
+		// Set the name of the expected cluster column - it doesn't necessarily exist.
+		varName := grouping.CoordinatesCol + "_group"
+		err = meta.AddGroupedVariable(datasetID, varName, "coordinates", model.GeoBoundsType, model.VarDistilRoleGrouping, grouping)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func isMultiBandImageGrouping(rawGrouping map[string]interface{}) bool {
-	return rawGrouping["type"] != nil && rawGrouping["type"].(string) == model.MultiBandImageType
+func getMultiBandImageGrouping(rawGroupings []map[string]interface{}) map[string]interface{} {
+	for _, rawGrouping := range rawGroupings {
+		if rawGrouping["type"] != nil && rawGrouping["type"].(string) == model.MultiBandImageType {
+			return rawGrouping
+		}
+	}
+	return nil
+}
+
+func getGeoBoundsGrouping(rawGroupings []map[string]interface{}) map[string]interface{} {
+	for _, rawGrouping := range rawGroupings {
+		if rawGrouping["type"] != nil && rawGrouping["type"].(string) == model.GeoBoundsType {
+			return rawGrouping
+		}
+	}
+	return nil
 }
 
 func isRemoteSensingDataset(ds *api.Dataset) bool {

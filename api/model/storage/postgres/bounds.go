@@ -29,6 +29,8 @@ import (
 // BoundsField defines behaviour for the remote sensing field type.
 type BoundsField struct {
 	BasicField
+	CoordinatesCol string
+	PolygonCol     string
 }
 
 type geometryBucket struct {
@@ -42,7 +44,8 @@ func (g *geometryBucket) toGeometryString() string {
 }
 
 // NewBoundsField creates a new field for remote sensing types.
-func NewBoundsField(storage *Storage, datasetName string, datasetStorageName string, key string, label string, typ string, count string) *BoundsField {
+func NewBoundsField(storage *Storage, datasetName string, datasetStorageName string,
+	coordinatesCol string, polygonCol string, key string, label string, typ string, count string) *BoundsField {
 	count = getCountSQL(count)
 
 	field := &BoundsField{
@@ -55,6 +58,8 @@ func NewBoundsField(storage *Storage, datasetName string, datasetStorageName str
 			Type:               typ,
 			Count:              count,
 		},
+		CoordinatesCol: coordinatesCol,
+		PolygonCol:     polygonCol,
 	}
 
 	return field
@@ -98,7 +103,7 @@ func (f *BoundsField) FetchSummaryData(resultURI string, filterParams *api.Filte
 	return &api.VariableSummary{
 		Key:      f.Key,
 		Label:    f.Label,
-		Type:     model.MultiBandImageType,
+		Type:     model.GeoBoundsType,
 		VarType:  f.Type,
 		Baseline: baseline,
 		Filtered: filtered,
@@ -145,7 +150,7 @@ func (f *BoundsField) fetchHistogram(filterParams *api.FilterParams, invert bool
 		SELECT b.xbuckets, b.xcoord, b.ybuckets, b.ycoord, COUNT(%s)
 		FROM %s AS d inner join %s AS b ON ST_WITHIN(d."%s", b.coordinates) %s
 		GROUP BY b.xbuckets, b.xcoord, b.ybuckets, b.ycoord
-		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, f.DatasetStorageName, tmpTableName, f.Key, where)
+		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, f.DatasetStorageName, tmpTableName, f.PolygonCol, where)
 	res, err := tx.Query(context.Background(), query, params...)
 	if err != nil {
 		tx.Rollback(context.Background())
@@ -196,8 +201,8 @@ func (f *BoundsField) prepareBucketsForQuery(tx pgx.Tx, tmpTableName string, buc
 
 func (f *BoundsField) fetchExtrema() (*api.Extrema, *api.Extrema, error) {
 	// add min / max aggregation
-	aggQueryX := f.getMinMaxAggsQuery(f.Key, "x", "X")
-	aggQueryY := f.getMinMaxAggsQuery(f.Key, "y", "Y")
+	aggQueryX := f.getMinMaxAggsQuery(f.PolygonCol, "x", "X")
+	aggQueryY := f.getMinMaxAggsQuery(f.PolygonCol, "y", "Y")
 
 	// create a query that does min and max aggregations for each variable
 	queryString := fmt.Sprintf("SELECT %s, %s FROM %s;", aggQueryX, aggQueryY, f.DatasetStorageName)
@@ -304,7 +309,7 @@ func (f *BoundsField) fetchHistogramByResult(resultURI string, filterParams *api
 		INNER JOIN %s result ON data."%s" = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY b.xbuckets, b.xcoord, b.ybuckets, b.ycoord
-		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, f.DatasetStorageName, tmpTableName, f.Key,
+		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, f.DatasetStorageName, tmpTableName, f.PolygonCol,
 		f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where)
 	res, err := tx.Query(context.Background(), query, params...)
 	if err != nil {
