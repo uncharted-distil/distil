@@ -20,11 +20,13 @@ const SHADER_GLSL = {
 		uniform vec2 uViewOffset;
 		uniform float uScale;
     uniform mat4 uProjectionMatrix;
+    uniform float uPointSize;
     varying vec4 oColor;
 		void main() {
 			vec2 wPosition = (aPosition * uScale) - uViewOffset;
       gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
       oColor = aColor;
+      gl_PointSize = uPointSize;
 		}
 		`,
   frag: `
@@ -46,11 +48,13 @@ const PICKING_SHADER = {
   uniform vec2 uViewOffset;
   uniform float uScale;
   uniform mat4 uProjectionMatrix;
+  uniform float uPointSize;
   varying vec4 oId;
   void main() {
     vec2 wPosition = (aPosition * uScale) - uViewOffset;
     gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
     oId = id;
+    gl_PointSize = uPointSize;
   }`,
   frag: `
     precision highp float;
@@ -61,6 +65,69 @@ const PICKING_SHADER = {
 		`,
 };
 
+const POINT_SHADER = {
+  vert: `
+  precision highp float;
+  attribute vec2 aPosition;
+  attribute vec4 aColor;
+  uniform vec2 uViewOffset;
+  uniform float uScale;
+  uniform mat4 uProjectionMatrix;
+  uniform float uPointSize;
+  varying vec4 oColor;
+  void main() {
+    vec2 wPosition = (aPosition * uScale) - uViewOffset; 
+    gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
+    oColor = aColor;
+    gl_PointSize = uPointSize;
+  }
+  `,
+  frag: `
+  precision highp float;
+  varying vec4 oColor;
+  void main() {
+    float r = 0.0;
+    vec2 cxy = 2.0 * gl_PointCoord - 1.0;
+    r = dot(cxy, cxy);
+    if (r > 1.0) {
+        discard;
+    }
+    gl_FragColor = oColor;
+    gl_FragColor.rgb *= gl_FragColor.a; // premultiplied alpha
+  }
+  `,
+};
+const POINT_PICKING_SHADER = {
+  vert: `
+  precision highp float;
+  attribute vec2 aPosition;
+  attribute vec4 aColor;
+  attribute vec4 id;
+  uniform vec2 uViewOffset;
+  uniform float uScale;
+  uniform mat4 uProjectionMatrix;
+  uniform float uPointSize;
+  varying vec4 oId;
+  void main() {
+    vec2 wPosition = (aPosition * uScale) - uViewOffset;
+    gl_Position = uProjectionMatrix * vec4(wPosition, 0.0, 1.0);
+    oId = id;
+    gl_PointSize = uPointSize;
+  }`,
+  frag: `
+    precision highp float;
+    varying vec4 oId;
+		void main() {
+      float r = 0.0;
+      vec2 cxy = 2.0 * gl_PointCoord - 1.0;
+      r = dot(cxy, cxy);
+      if (r > 1.0) {
+          discard;
+      }
+			gl_FragColor = oId;
+		}
+		`,
+};
 // create inline float array of all the vertex data: position, color, id
 const getVertexArray = function (points) {
   const numOfAttrs = 10;
@@ -106,7 +173,7 @@ const createBuffers = function (overlay, points) {
       }, // id pointer
     },
     {
-      mode: "TRIANGLES",
+      mode: overlay.drawMode,
       count: vertices.length / 10, // number of vertices to draw vertices has x,y therefore /2
     }
   );
@@ -114,6 +181,10 @@ const createBuffers = function (overlay, points) {
   return {
     vertex: vertexBuffer,
   };
+};
+export const DRAW_MODES = {
+  TRIANGLES: "TRIANGLES",
+  POINTS: "POINTS",
 };
 export const EVENT_TYPES = {
   MOUSE_HOVER: "mousehover",
@@ -133,6 +204,8 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     super(options);
     this.quadColor = defaultTo(options.quadColor, [1.0, 0.4, 0.1, 0.8]);
     this.shader = null;
+    this.pointShader = null;
+    this.pointPickingShader = null;
     this.quads = null;
     this.pickingShader = null;
     //framebuffer
@@ -150,6 +223,8 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.hoverTimeoutId = null;
     this.boundOnMove = this.onMove.bind(this);
     this.boundOnClick = this.onClick.bind(this);
+    this.drawMode = defaultTo(options.drawMode, DRAW_MODES.TRIANGLES);
+    this.pointSize = defaultTo(options.pointSize, 1);
   }
   /**
    * Executed when the overlay is attached to a plot.
@@ -162,6 +237,8 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     super.onAdd(plot);
     this.shader = this.createShader(SHADER_GLSL);
     this.pickingShader = this.createShader(PICKING_SHADER);
+    this.pointShader = this.createShader(POINT_SHADER);
+    this.pointPickingShader = this.createShader(POINT_PICKING_SHADER);
     this.enableInteractions();
     this.gl.canvas,
       addEventListener("mouseleave", () => {
@@ -218,7 +295,8 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
   // normal render for human viewing
   renderColor() {
     const gl = this.gl;
-    const shader = this.shader;
+    const shader =
+      this.drawMode === DRAW_MODES.TRIANGLES ? this.shader : this.pointShader;
     const quads = this.quads;
     const plot = this.overlay.plot;
     const cell = plot.cell;
@@ -238,6 +316,10 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     shader.setUniform("uProjectionMatrix", proj);
     shader.setUniform("uViewOffset", [offset.x, offset.y]);
     shader.setUniform("uScale", scale);
+    shader.setUniform(
+      "uPointSize",
+      this.pointSize * (plot.zoom + 1) * (plot.zoom + 1)
+    );
 
     // for each quad buffer
     quads.forEach((buffer) => {
@@ -249,6 +331,10 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
   // renders IDs of the quads to a separate FBO
   renderIds() {
     const gl = this.gl;
+    const shader =
+      this.drawMode === DRAW_MODES.TRIANGLES
+        ? this.pickingShader
+        : this.pointPickingShader;
     const quads = this.quads;
     const plot = this.overlay.plot;
     const cell = plot.cell;
@@ -260,7 +346,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       // the canvas was resized, make the framebuffer attachments match
       this.setFramebufferAttachmentSizes(gl.canvas.width, gl.canvas.height);
     }
-    this.pickingShader.use();
+    shader.use();
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.disable(gl.BLEND); // !important
@@ -268,10 +354,15 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
 
     // Clear the canvas AND the depth buffer.
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    //uniforms
-    this.pickingShader.setUniform("uProjectionMatrix", proj);
-    this.pickingShader.setUniform("uViewOffset", [offset.x, offset.y]);
-    this.pickingShader.setUniform("uScale", scale);
+    // uniforms
+    shader.setUniform("uProjectionMatrix", proj);
+    shader.setUniform("uViewOffset", [offset.x, offset.y]);
+    shader.setUniform("uScale", scale);
+    shader.setUniform(
+      "uPointSize",
+      this.pointSize * (plot.zoom + 1) * (plot.zoom + 1)
+    );
+
     quads.forEach((buffer) => {
       buffer.vertex.bind();
       buffer.vertex.draw();
@@ -418,6 +509,20 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
       cb(id);
     });
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+  /**
+   *
+   * @param {DRAW_MODES} drawMode
+   */
+  setDrawMode(drawMode) {
+    this.drawMode = drawMode;
+  }
+  /**
+   *
+   * @param {number} size
+   */
+  setPointSize(size) {
+    this.pointSize = size;
   }
   // used to resize framebuffer when canvas has resized
   setFramebufferAttachmentSizes(width, height) {
