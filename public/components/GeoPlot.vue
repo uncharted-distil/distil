@@ -204,7 +204,7 @@ export default Vue.extend({
     dataFields: Object as () => Dictionary<TableColumn>,
     summaries: Array as () => VariableSummary[],
     quadOpacity: { type: Number, default: 0.8 },
-    pointOpacity: { type: Number, default: 0.5 },
+    pointOpacity: { type: Number, default: 0.8 },
     zoomThreshold: { type: Number, default: 8 },
   },
 
@@ -242,7 +242,7 @@ export default Vue.extend({
       },
       selectionToolId: "selection-tool-layer",
       showExit: false,
-      pointSize: 0.1,
+      pointSize: 0.025,
       isClustering: false,
     };
   },
