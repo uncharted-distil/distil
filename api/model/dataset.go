@@ -45,19 +45,19 @@ type RawDataset struct {
 
 // Dataset represents a decsription of a dataset.
 type Dataset struct {
-	ID              string                 `json:"id"`
-	Name            string                 `json:"name"`
+	ID              string                 `json:"datasetID"`
+	Name            string                 `json:"datasetName"`
 	StorageName     string                 `json:"storageName"`
 	Folder          string                 `json:"datasetFolder"`
 	Description     string                 `json:"description"`
 	Summary         string                 `json:"summary"`
-	SummaryML       string                 `json:"summaryML"`
+	SummaryML       string                 `json:"summaryMachine"`
 	Variables       []*model.Variable      `json:"variables"`
 	NumRows         int64                  `json:"numRows"`
 	NumBytes        int64                  `json:"numBytes"`
 	Provenance      string                 `json:"provenance"`
 	Source          metadata.DatasetSource `json:"source"`
-	JoinSuggestions []*JoinSuggestion      `json:"joinSuggestion"`
+	JoinSuggestions []*JoinSuggestion      `json:"datasetOrigins"`
 	JoinScore       float64                `json:"joinScore"`
 	Type            DatasetType            `json:"type"`
 	LearningDataset string                 `json:"learningDataset"`
