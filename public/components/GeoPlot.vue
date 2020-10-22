@@ -637,7 +637,12 @@ export default Vue.extend({
       base.requestTile = (coord, done) => {
         // const SUBDOMAINS = ["a", "b", "c"];
         // const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
-        const url = this.tileHandler.requestTile(coord.x, coord.y, coord.z);
+        const dim = Math.pow(2, coord.z);
+        const url = this.tileHandler.requestTile(
+          coord.x,
+          -(dim - 1 - coord.y),
+          coord.z
+        );
         lumo.loadImage(url, done);
       };
       this.map.add(base);

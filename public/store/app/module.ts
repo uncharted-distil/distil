@@ -60,4 +60,7 @@ export const mutations = {
   openStatusPanel: commit(moduleMutations.openStatusPanel),
   closeStatusPanel: commit(moduleMutations.closeStatusPanel),
   setSessionToken: commit(moduleMutations.setSessionToken),
+  setTileRequestURL: commit(moduleMutations.setTileRequestURL),
+  setMapAPIKey: commit(moduleMutations.setMapAPIKey),
+  setSubdomains: commit(moduleMutations.setSubdomains),
 };

@@ -37,12 +37,11 @@ export function getTileHandler(): TileHandler {
         replaceMap[symbolTokens.x] = x.toString();
         replaceMap[symbolTokens.y] = y.toString();
         replaceMap[symbolTokens.z] = z.toString();
-        return tileRequestURL.replace(
-          `/${Object.keys(replaceMap).join("|")}/gi`,
-          (matched) => {
-            return replaceMap[matched];
-          }
-        );
+        let url = tileRequestURL;
+        Object.keys(replaceMap).forEach((key) => {
+          url = url.replace(key, replaceMap[key]);
+        });
+        return url;
       },
     };
   }
@@ -52,12 +51,11 @@ export function getTileHandler(): TileHandler {
       replaceMap[symbolTokens.x] = x.toString();
       replaceMap[symbolTokens.y] = y.toString();
       replaceMap[symbolTokens.z] = z.toString();
-      return tileRequestURL.replace(
-        `/${Object.keys(replaceMap).join("|")}/gi`,
-        (matched) => {
-          return replaceMap[matched];
-        }
-      );
+      let url = tileRequestURL;
+      Object.keys(replaceMap).forEach((key) => {
+        url = url.replace(key, replaceMap[key]);
+      });
+      return url;
     },
   };
 }
