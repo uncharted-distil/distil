@@ -9,6 +9,10 @@ export interface AppState {
   problemMetrics: string[];
   statusPanelState: StatusPanelState;
   ta2Version: string;
+  sessionToken: string;
+  mapAPIKey: string;
+  tileRequestURL: string;
+  subdomains: string;
 }
 
 export interface StatusPanelState {
@@ -29,6 +33,10 @@ export const state: AppState = {
     isOpen: false,
   },
   ta2Version: "unknown",
+  sessionToken: "",
+  mapAPIKey: "",
+  tileRequestURL: "",
+  subdomains: "",
 };
 
 export type StatusPanelContentType = DatasetPendingRequestType;

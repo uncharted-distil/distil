@@ -123,4 +123,16 @@ export const actions = {
   ) {
     return axios.post(`distil/event`, args);
   },
+  async fetchSessionToken(
+    context: AppContext,
+    args: { key: string; requestBody: any }
+  ) {
+    const result = await axios.post(
+      `https://www.googleapis.com/tile/v1/createSession?key=${args.key}`,
+      args.requestBody
+    );
+    if (result.data.session) {
+      mutations.setSessionToken(context, result.data.session);
+    }
+  },
 };

@@ -44,4 +44,7 @@ export const mutations = {
   closeStatusPanel(state: AppState) {
     Vue.set(state.statusPanelState, "isOpen", false);
   },
+  setSessionToken(state: AppState, sessionToken: string) {
+    state.sessionToken = sessionToken;
+  },
 };

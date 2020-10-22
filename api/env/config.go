@@ -89,6 +89,9 @@ type Config struct {
 	TrainTestSplitTimeSeries           float64 `env:"TRAIN_TEST_SPLIT_TIMESERIES" envDefault:"0.9"`
 	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"outputs/problems"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
+	MapAPIKey						   string  `env:"MAP_API_KEY" envDefault:""` // can be empty
+	TileRequestURL     				   string  `env:"TILE_REQUEST_URL" envDefault:"https:/{s}.basemaps.cartocdn.com/light_all/{z}/{y}/{x}.png"` // s is subdomain does not have to be there, x,y is position z is zoom level. {t} is token The url must have the brackets around the data required. 
+	Subdomains						   string  `env:"SUBDOMAINS" envDefault:"a,b,c"` // comma delimited array -- can be empty
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a copy.

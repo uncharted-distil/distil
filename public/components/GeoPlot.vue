@@ -122,6 +122,7 @@ import "leaflet/dist/images/marker-icon.png";
 import "leaflet/dist/images/marker-icon-2x.png";
 import "leaflet/dist/images/marker-shadow.png";
 import { BLUE_PALETTE } from "../util/color";
+import { getTileHandler } from "../util/app";
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
 
@@ -509,7 +510,9 @@ export default Vue.extend({
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
-
+    tileHandler() {
+      return getTileHandler();
+    },
     tileState(): MapState {
       return {
         onHover: (id: number) => {
@@ -632,9 +635,9 @@ export default Vue.extend({
       });
       // tile request function
       base.requestTile = (coord, done) => {
-        const SUBDOMAINS = ["a", "b", "c"];
-        const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
-        const url = `https:/${s}.basemaps.cartocdn.com/light_all/${coord.xyz()}.png`;
+        // const SUBDOMAINS = ["a", "b", "c"];
+        // const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
+        const url = this.tileHandler.requestTile(coord.x, coord.y, coord.z);
         lumo.loadImage(url, done);
       };
       this.map.add(base);
