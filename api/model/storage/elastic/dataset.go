@@ -40,7 +40,24 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 
 // UpdateDataset updates a dataset already stored in ES.
 func (s *Storage) UpdateDataset(dataset *api.Dataset) error {
-	bytes, err := json.Marshal(dataset)
+	source := map[string]interface{}{
+		"datasetName":     dataset.Name,
+		"datasetID":       dataset.ID,
+		"storageName":     dataset.StorageName,
+		"description":     dataset.Description,
+		"summary":         dataset.Summary,
+		"summaryMachine":  dataset.SummaryML,
+		"numRows":         dataset.NumRows,
+		"numBytes":        dataset.NumBytes,
+		"variables":       dataset.Variables,
+		"datasetFolder":   dataset.Folder,
+		"source":          dataset.Source,
+		"datasetOrigins":  dataset.JoinSuggestions,
+		"type":            dataset.Type,
+		"learningDataset": dataset.LearningDataset,
+	}
+
+	bytes, err := json.Marshal(source)
 	if err != nil {
 		return errors.Wrapf(err, "failed to marshal document source")
 	}
