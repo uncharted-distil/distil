@@ -139,19 +139,19 @@ type Metric struct {
 var (
 	// AllModelMetrics defines a list of model scoring metrics
 	AllModelMetrics = map[string]Metric{
-		Accuracy:                    {Accuracy, "Accuracy", "Accuracy scores the result based on nearness to the original result."},
-		F1:                          {F1, "F1", "F1 scoring balances precision and recall etc."},
-		F1Macro:                     {F1Macro, "F1 Macro", "F1 scoring balances precision and recall etc."},
-		F1Micro:                     {F1Micro, "F1 Micro", "F1 scoring balances precision and recall etc."},
-		RocAuc:                      {RocAuc, "RocAuc", "RocAuc scoring compares relationship between inputs on result."},
-		RocAucMacro:                 {RocAucMacro, "RocAuc Macro", "RocAuc scoring compares relationship between inputs on result."},
-		RocAucMicro:                 {RocAucMicro, "RocAuc Micro", "RocAuc scoring compares relationship between inputs on result."},
-		MeanAbsoluteError:           {MeanAbsoluteError, "MAE", "The mean absolute error is a measure of the quality of an estimator—it is always non-negative, and values closer to 0 are better."},
-		MeanSquaredError:            {MeanSquaredError, "MSE", "The mean squared error is a measure of the quality of an estimator—it is always non-negative, and values closer to 0 are better."},
-		NormalizedMutualInformation: {NormalizedMutualInformation, "NMI", "Normalized Mutual Information scores the relationship between variables on a scale of 0 to 1."},
-		RootMeanSquaredError:        {RootMeanSquaredError, "RMSE", "The root mean squared error is a measure of the quality of an estimator—it is always non-negative, and values closer to 0 are better."},
-		RootMeanSquaredErrorAvg:     {RootMeanSquaredErrorAvg, "RMSEA", "The root mean squared error average is a measure of the quality of an estimator—it is always non-negative, and values closer to 0 are better."},
-		RSquared:                    {RSquared, "RQ", "The root squared is a measure of the quality of an estimator—it is always non-negative, and values closer to 0 are better."},
+		Accuracy:                    {Accuracy, "Accuracy", "Accuracy scores the result based only on the percentage of correct predictions."},
+		F1:                          {F1, "F1", "F1 scoring averages true positives, false negatives and false positives for binary classifications, balancing precision and recall."},
+		F1Macro:                     {F1Macro, "F1 Macro", "F1 Macro scoring averages true positives, false negatives and false positives for all multi-class classification options, balancing precision and recall."},
+		F1Micro:                     {F1Micro, "F1 Micro", "F1 Micro scoring averages true positives, false negatives and false positives for each multi-class classification options for multi-class problems, balancing precision and recall."},
+		RocAuc:                      {RocAuc, "RocAuc", "RocAuc scoring compares relationship between inputs on result for binary classifications."},
+		RocAucMacro:                 {RocAucMacro, "RocAuc Macro", "RocAuc scoring compares the relationship between inputs and the result for all multi-class classification options."},
+		RocAucMicro:                 {RocAucMicro, "RocAuc Micro", "RocAuc scoring compares hte relationship between inputs and the result for each multi-class classification options."},
+		MeanAbsoluteError:           {MeanAbsoluteError, "MAE", "The mean absolute error (MAE) measures the average magnitude of errors in a set of predictions."},
+		MeanSquaredError:            {MeanSquaredError, "MSE", "The mean squared error measures the quality of an estimator where values closer to 0 are better."},
+		NormalizedMutualInformation: {NormalizedMutualInformation, "NMI", "Normalized Mutual Information scores the relationship / lack of entropy between variables where 0 is no relationship and 1 is a strong relationship."},
+		RootMeanSquaredError:        {RootMeanSquaredError, "RMSE", "The root mean squared error measures the quality of an estimator and the average magnitude of the error."},
+		RootMeanSquaredErrorAvg:     {RootMeanSquaredErrorAvg, "RMSEA", "The root mean squared error average measures the quality of an estimator and the average magnitude of the error averaged across classifcations options."},
+		RSquared:                    {RSquared, "RQ", "The root squared measures the relationship between predictions and their inputs where values closer to 1 suggest a strong correlation."},
 	}
 
 	//TaskMetricMap maps tasks to metrics
