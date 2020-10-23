@@ -173,7 +173,7 @@ export default Vue.extend({
           });
 
           if (this.isTimeseries && isCategorical) {
-            // Fetch the grouping of timeserie
+            // Fetch the information of the timeseries grouping
             const currentGrouping = datasetGetters
               .getGroupings(this.$store)
               .find((v) => v.colName === targetName)?.grouping;
