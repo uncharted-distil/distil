@@ -45,7 +45,13 @@ func ModelMetricsHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter,
 		taskMetrics := make(map[string]util.Metric)
 
 		if strings.Contains(task, util.ClassificationTask) {
-			taskMetrics = util.TaskMetricMap[util.ClassificationTask]
+			if strings.Contains(task, util.MultiClassTask) {
+				taskMetrics = util.TaskMetricMap[util.MultiClassTask]
+			} else if strings.Contains(task, util.BinaryTask) {
+				taskMetrics = util.TaskMetricMap[util.BinaryTask]
+			} else {
+				taskMetrics = util.TaskMetricMap[util.ClassificationTask]
+			}
 		} else if strings.Contains(task, util.RegressionTask) || strings.Contains(task, util.ForecastingTask) {
 			taskMetrics = util.TaskMetricMap[util.RegressionTask]
 		} else {

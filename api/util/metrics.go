@@ -156,6 +156,18 @@ var (
 
 	//TaskMetricMap maps tasks to metrics
 	TaskMetricMap = map[string]map[string]Metric{
+		BinaryTask: {
+			Accuracy: AllModelMetrics[Accuracy],
+			F1:       AllModelMetrics[F1],
+			RocAuc:   AllModelMetrics[RocAuc],
+		},
+		MultiClassTask: {
+			Accuracy:    AllModelMetrics[Accuracy],
+			F1Macro:     AllModelMetrics[F1Micro],
+			F1Micro:     AllModelMetrics[F1Macro],
+			RocAucMacro: AllModelMetrics[RocAucMacro],
+			RocAucMicro: AllModelMetrics[RocAucMicro],
+		},
 		ClassificationTask: {
 			Accuracy:    AllModelMetrics[Accuracy],
 			F1:          AllModelMetrics[F1],
