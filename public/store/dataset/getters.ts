@@ -10,6 +10,7 @@ import {
   TimeSeries,
   BandCombination,
   Row,
+  Metric,
 } from "./index";
 import { Dictionary } from "../../util/dict";
 import { getTableDataItems, getTableDataFields } from "../../util/data";
@@ -177,5 +178,9 @@ export const getters = {
 
   getMultiBandCombinations(state: DatasetState): BandCombination[] {
     return state.bands;
+  },
+
+  getModelingMetrics(state: DatasetState): Metric[] {
+    return state.metrics;
   },
 };

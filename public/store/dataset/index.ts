@@ -360,6 +360,7 @@ export interface DatasetState {
   pendingRequests: DatasetPendingRequest[];
   task: Task;
   bands: BandCombination[];
+  metrics: Metric[];
 }
 
 export interface WorkingSet {
@@ -375,6 +376,24 @@ export interface BandCombination {
 
 export interface BandCombinations {
   combinations: BandCombination[];
+}
+
+export interface Metric {
+  id: BandID;
+  displayName: string;
+  description: string;
+}
+
+export interface Metrics {
+  metrics: Metric[];
+}
+
+export interface MetricDropdownItem {
+  value: {
+    id: string;
+    description: string;
+  };
+  text: string;
 }
 
 export const state: DatasetState = {
@@ -416,4 +435,7 @@ export const state: DatasetState = {
 
   // bands
   bands: [],
+
+  // metrics
+  metrics: [],
 };
