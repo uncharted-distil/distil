@@ -156,13 +156,13 @@ export default Vue.extend({
         // the target variable contains grouping information (Timeseries/Geocoordinate)
         if (!!targetVar?.grouping) {
           let hideRemoveButton = false;
-          const seriesId = targetVar.grouping.subIds;
+          const seriesIds = targetVar.grouping.subIds;
 
-          // Check their is any series IDs
-          if (seriesId.length > 0) {
+          // Check there is any series IDs
+          if (seriesIds.length > 0) {
             // Make sure to show the button for all of them.
-            if (seriesId.length !== 1) {
-              hideRemoveButton = !seriesId.some((v) => v === group.colName);
+            if (seriesIds.length !== 1) {
+              hideRemoveButton = !seriesIds.some((v) => v === group.colName);
             }
             // unless there is only one series ID, then we hide the remove button.
             else {
@@ -179,9 +179,9 @@ export default Vue.extend({
         // Create the remove button
         const removeBtn = document.createElement("button");
         removeBtn.className += "btn btn-sm btn-outline-secondary mr-1 mb-2";
-        removeBtn.innerHTML = "Remove";
+        removeBtn.textContent = "Remove";
 
-        // In the case of a categorical variable with a timeserie selected.
+        // Is the variable of categorical type
         const isCategorical: boolean = group.type === "categorical";
 
         if (this.isTimeseries && isCategorical) {
