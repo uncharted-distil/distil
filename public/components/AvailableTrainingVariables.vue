@@ -1,11 +1,11 @@
 <template>
   <div
     class="available-training-variables"
-    v-bind:class="{ included: includedActive, excluded: !includedActive }"
+    :class="{ included: includedActive, excluded: !includedActive }"
   >
     <p class="nav-link font-weight-bold">
       Available Features
-      <i class="float-right fa fa-angle-right fa-lg"></i>
+      <i class="float-right fa fa-angle-right fa-lg" />
     </p>
     <variable-facets
       ref="facets"
@@ -28,9 +28,9 @@
           {{ subtitle }}
         </div>
         <div v-if="availableVariableSummaries.length > 0">
-          <b-button size="sm" variant="outline-secondary" @click="addAll"
-            >Add All</b-button
-          >
+          <b-button size="sm" variant="outline-secondary" @click="addAll">
+            Add All
+          </b-button>
         </div>
       </div>
     </variable-facets>
@@ -40,14 +40,14 @@
 <script lang="ts">
 import Vue from "vue";
 import { overlayRouteEntry } from "../util/routes";
-import { Variable, VariableSummary, Task } from "../store/dataset/index";
+import { Variable, VariableSummary } from "../store/dataset/index";
 import {
   actions as datasetActions,
   getters as datasetGetters,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
-  filterSummariesByDataset,
+  getComposedVariableKey,
   getVariableSummariesByState,
   NUM_PER_PAGE,
   searchVariables,
@@ -55,7 +55,6 @@ import {
 import { AVAILABLE_TRAINING_VARS_INSTANCE } from "../store/route/index";
 import { Group } from "../util/facets";
 import VariableFacets from "./facets/VariableFacets.vue";
-import { Dictionary } from "vue-router/types/router";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
@@ -70,12 +69,15 @@ export default Vue.extend({
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
     },
+
     availableTrainingVarsSearch(): string {
       return routeGetters.getRouteAvailableTrainingVarsSearch(this.$store);
     },
+
     availableVariableSummaries(): VariableSummary[] {
       const pageIndex = routeGetters.getRouteAvailableTrainingVarsPage(
         this.$store
@@ -94,30 +96,52 @@ export default Vue.extend({
 
       return currentSummaries;
     },
+
     availableVariables(): Variable[] {
       return searchVariables(
         routeGetters.getAvailableVariables(this.$store),
         this.availableTrainingVarsSearch
       );
     },
+
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
+
     subtitle(): string {
       return `${this.availableVariables.length} features available`;
     },
+
     numRowsPerPage(): number {
       return NUM_PER_PAGE;
     },
+
     instanceName(): string {
       return AVAILABLE_TRAINING_VARS_INSTANCE;
     },
-    html(): (group: Group) => HTMLDivElement {
+
+    isTimeseries(): boolean {
+      return routeGetters.isTimeseries(this.$store);
+    },
+
+    targetVariable(): Variable {
+      return routeGetters.getTargetVariable(this.$store);
+    },
+
+    html(): (group: Group) => HTMLElement {
       return (group: Group) => {
-        const container = document.createElement("div");
+        const variable = group.colName;
         const trainingElem = document.createElement("button");
         trainingElem.className += "btn btn-sm btn-outline-secondary mb-2";
-        trainingElem.innerHTML = "Add";
+        trainingElem.textContent = "Add";
+
+        // In the case of a categorical variable with a timeserie selected.
+        const isCategorical: boolean = group.type === "categorical";
+        if (this.isTimeseries && isCategorical) {
+          // Change the meaning of the button as this action is different than the default one.
+          trainingElem.textContent = "Add to Timeseries";
+        }
+
         trainingElem.addEventListener("click", async () => {
           // log UI event on server
           appActions.logUserEvent(this.$store, {
@@ -127,6 +151,9 @@ export default Vue.extend({
             details: { feature: group.colName },
           });
 
+          const dataset = routeGetters.getRouteDataset(this.$store);
+          const targetName = routeGetters.getRouteTargetVariable(this.$store);
+
           // get an updated view of the training data list
           const training = routeGetters
             .getDecodedTrainingVariableNames(this.$store)
@@ -134,8 +161,8 @@ export default Vue.extend({
 
           // update task based on the current training data
           const taskResponse = await datasetActions.fetchTask(this.$store, {
-            dataset: routeGetters.getRouteDataset(this.$store),
-            targetName: routeGetters.getRouteTargetVariable(this.$store),
+            dataset,
+            targetName,
             variableNames: training,
           });
 
@@ -144,10 +171,29 @@ export default Vue.extend({
             training: training.join(","),
             task: taskResponse.data.task.join(","),
           });
+
+          if (this.isTimeseries && isCategorical) {
+            // Fetch the information of the timeseries grouping
+            const currentGrouping = datasetGetters
+              .getGroupings(this.$store)
+              .find((v) => v.colName === targetName)?.grouping;
+
+            // Simply duplicate its grouping information and add the new variable
+            const grouping = JSON.parse(JSON.stringify(currentGrouping));
+            grouping.subIds.push(variable);
+            grouping.idCol = getComposedVariableKey(grouping.subIds);
+
+            // Request to update the timeserie grouping
+            await datasetActions.updateGrouping(this.$store, {
+              variable: targetName,
+              grouping,
+            });
+          }
+
           this.$router.push(entry).catch((err) => console.warn(err));
         });
-        container.appendChild(trainingElem);
-        return container;
+
+        return trainingElem;
       };
     },
   },
@@ -161,27 +207,32 @@ export default Vue.extend({
         subActivity: SubActivity.DATA_TRANSFORMATION,
         details: {},
       });
+
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
       );
+
       this.availableVariables.forEach((variable) => {
         training.push(variable.colName);
       });
+
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         training: training.join(","),
         availableTrainingVarsPage: 1,
       });
+
       this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });
 </script>
 
-<style>
+<style scoped>
 .available-training-variables {
   display: flex;
   flex-direction: column;
 }
+
 .available-variables-menu {
   display: flex;
   justify-content: space-between;

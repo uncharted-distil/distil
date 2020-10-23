@@ -643,6 +643,29 @@ export const actions = {
     }
   },
 
+  async updateGrouping(
+    context: DatasetContext,
+    args: { variable: string; grouping: Grouping }
+  ): Promise<any> {
+    if (!validateArgs(args, ["variable", "grouping"])) {
+      return null;
+    }
+
+    const variable = args.variable;
+    const grouping = args.grouping;
+    const dataset = grouping.dataset;
+
+    try {
+      // Remove the existing grouping
+      await axios.post(`/distil/remove-grouping/${dataset}/${variable}`, {});
+
+      // Recreate it with an extra idCol
+      await actions.setGrouping(context, { dataset, grouping });
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
   async setVariableType(
     context: DatasetContext,
     args: { dataset: string; field: string; type: string }
