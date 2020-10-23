@@ -139,7 +139,7 @@ export default Vue.extend({
         const isCategorical: boolean = group.type === "categorical";
         if (this.isTimeseries && isCategorical) {
           // Change the meaning of the button as this action is different than the default one.
-          trainingElem.textContent = "Add to Timeserie";
+          trainingElem.textContent = "Add to Timeseries";
         }
 
         trainingElem.addEventListener("click", async () => {
