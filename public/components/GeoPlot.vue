@@ -106,7 +106,11 @@ import {
   GeoCoordinateGrouping,
   VariableSummary,
 } from "../store/dataset/index";
-import { updateHighlight, highlightsExist } from "../util/highlights";
+import {
+  updateHighlight,
+  highlightsExist,
+  clearHighlight,
+} from "../util/highlights";
 import ImagePreview from "../components/ImagePreview";
 import {
   LATITUDE_TYPE,
@@ -202,7 +206,10 @@ export default Vue.extend({
     instanceName: String as () => string,
     dataItems: Array as () => any[],
     dataFields: Object as () => Dictionary<TableColumn>,
-    summaries: Array as () => VariableSummary[],
+    summaries: {
+      type: Array as () => VariableSummary[],
+      default: Array as () => VariableSummary[],
+    },
     quadOpacity: { type: Number, default: 0.8 },
     pointOpacity: { type: Number, default: 0.8 },
     zoomThreshold: { type: Number, default: 8 },
@@ -225,7 +232,6 @@ export default Vue.extend({
       imageUrl: null,
       item: null,
       quadLayerId: "quad-layer",
-      toastId: "geo-notifications",
       toastTitle: "",
       hoverItem: null,
       toastImg: "",
@@ -285,6 +291,9 @@ export default Vue.extend({
     },
     mapID(): string {
       return `map-${this.instanceName}`;
+    },
+    toastId(): string {
+      return `notifications-${this.instanceName}`;
     },
     fieldSpecs(): GeoField[] {
       const variables = datasetGetters.getVariables(this.$store);
@@ -619,7 +628,7 @@ export default Vue.extend({
   methods: {
     createLumoMap() {
       // create map
-      this.map = new lumo.Plot(`#map-select-data`, {
+      this.map = new lumo.Plot("#" + this.mapID, {
         continuousZoom: true,
         inertia: true,
         wraparound: true,
@@ -647,7 +656,7 @@ export default Vue.extend({
       this.currentState = this.pointState;
       this.map.on(lumo.ZOOM_END, this.onZoom);
       this.currentState.init();
-      if (!this.bucketFeatures.length && !this.areas.length) {
+      if (!this.areas.length) {
         return; // no data
       }
       const quads = this.currentState.quads();
@@ -695,7 +704,6 @@ export default Vue.extend({
         this.renderer.disableInteractions();
         this.map.on("mousedown", this.selectionToolDown);
         this.map.disablePanning();
-        this.map.disableZooming();
         return;
       }
       this.overlay.removeQuad(this.selectionToolId);
@@ -751,7 +759,7 @@ export default Vue.extend({
       const p2 = this.renderer.normalizedPointToLatLng(
         this.selectionToolData.currentPoint
       );
-      // INVERTED LAT LNG FOR NOW -- POSSIBLE ROUTE OR DB ISSUE
+
       const minX = Math.min(p1.lng, p2.lng);
       const maxX = Math.max(p1.lng, p2.lng);
       const minY = Math.min(p1.lat, p2.lat);
@@ -927,7 +935,7 @@ export default Vue.extend({
     },
     // called after state changes and map needs to update
     updateMapState() {
-      this.overlay.clearQuads();
+      this.overlay.removeQuad(this.quadLayerId);
       this.renderer.clearListeners();
       this.currentState.init();
       this.overlay.addQuad(
@@ -1041,7 +1049,7 @@ export default Vue.extend({
     onNewData() {
       // clear quads
       this.overlay.clearQuads();
-      // remove exit button for selection quad
+      // don't show exit button
       this.showExit = false;
       // create quads from latlng
       const quads = this.currentState.quads();
@@ -1062,6 +1070,9 @@ export default Vue.extend({
   },
 
   watch: {
+    dataItems() {
+      this.onNewData();
+    },
     summaries(cur, prev) {
       if (!prev.length && this.isClustering) {
         if (this.map.getZoom() < this.zoomThreshold) {
