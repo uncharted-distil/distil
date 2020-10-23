@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-button block variant="primary" v-b-modal.upload-modal>
-      <i class="fa fa-plus-circle"></i> Import File
+      <i class="fa fa-plus-circle" /> New Dataset
     </b-button>
 
     <!-- Modal Component -->
@@ -41,6 +41,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+import _ from "lodash";
 import {
   getters as datasetGetters,
   actions as datasetActions,
@@ -52,7 +53,6 @@ import {
   removeExtension,
   generateUniqueDatasetName,
 } from "../util/uploads";
-import _ from "lodash";
 
 export default Vue.extend({
   name: "file-uploader",
@@ -104,8 +104,8 @@ export default Vue.extend({
   },
 
   watch: {
-    // Watches for file name changes, setting a dataset import name value if the user
-    // hasn't done so.
+    // Watches for file name changes, setting a dataset import name value
+    // if the user hasn't done so.
     file() {
       if (!this.importDataName && this.file?.name) {
         // use the filname without the extension
@@ -114,9 +114,9 @@ export default Vue.extend({
       }
     },
 
-    // Watches the import data name so that the valid/invalid state can be updated
+    // Watches the import data name to update the valid/invalid state.
     importDataName() {
-      // allowed transitions are null -> true, true -> false, false -> true
+      // allowed transitions are: null -> true, true -> false, false -> true
       if (this.importDataNameState === null && !!this.importDataName) {
         this.importDataNameState = true;
       } else if (this.importDataNameState !== null) {
