@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
 	"goji.io/v3/pat"
@@ -44,16 +45,16 @@ func ModelMetricsHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter,
 		task := pat.Param(r, "task")
 		taskMetrics := make(map[string]util.Metric)
 
-		if strings.Contains(task, util.ClassificationTask) {
-			if strings.Contains(task, util.MultiClassTask) {
-				taskMetrics = util.TaskMetricMap[util.MultiClassTask]
-			} else if strings.Contains(task, util.BinaryTask) {
-				taskMetrics = util.TaskMetricMap[util.BinaryTask]
+		if strings.Contains(task, compute.ClassificationTask) {
+			if strings.Contains(task, compute.MultiClassTask) {
+				taskMetrics = util.TaskMetricMap[compute.MultiClassTask]
+			} else if strings.Contains(task, compute.BinaryTask) {
+				taskMetrics = util.TaskMetricMap[compute.BinaryTask]
 			} else {
-				taskMetrics = util.TaskMetricMap[util.ClassificationTask]
+				taskMetrics = util.TaskMetricMap[compute.ClassificationTask]
 			}
-		} else if strings.Contains(task, util.RegressionTask) || strings.Contains(task, util.ForecastingTask) {
-			taskMetrics = util.TaskMetricMap[util.RegressionTask]
+		} else if strings.Contains(task, compute.RegressionTask) || strings.Contains(task, compute.ForecastingTask) {
+			taskMetrics = util.TaskMetricMap[compute.RegressionTask]
 		} else {
 			taskMetrics = util.AllModelMetrics
 		}
