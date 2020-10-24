@@ -72,6 +72,9 @@ export const getters = {
 
   // Remote sensing image band combinatinos
   getMultiBandCombinations: read(moduleGetters.getMultiBandCombinations),
+
+  // Modeling metric methologies
+  getModelingMetrics: read(moduleGetters.getModelingMetrics),
 };
 
 // Typed actions
@@ -138,6 +141,8 @@ export const actions = {
   fetchMultiBandCombinations: dispatch(
     moduleActions.fetchMultiBandCombinations
   ),
+  // modeling metric methodologies
+  fetchModelingMetrics: dispatch(moduleActions.fetchModelingMetrics),
   updateRowSelectionData: dispatch(moduleActions.updateRowSelectionData),
 };
 
@@ -175,4 +180,5 @@ export const mutations = {
   setExcludedTableData: commit(moduleMutations.setExcludedTableData),
   updateBands: commit(moduleMutations.updateBands),
   updateRowSelectionData: commit(moduleMutations.updateRowSelectionData),
+  updateMetrics: commit(moduleMutations.updateMetrics),
 };

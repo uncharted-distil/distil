@@ -598,6 +598,13 @@ export const getters = {
     );
   },
 
+  getModelMetrics(state: Route): string[] {
+    const metrics = <string>state.query.metrics;
+    if (!metrics) {
+      return null;
+    }
+    return metrics.split(",");
+  },
   /* Check if the current page is SELECT_TARGET_ROUTE. */
   isPageSelectTarget(state: Route): Boolean {
     return state.path === SELECT_TARGET_ROUTE;

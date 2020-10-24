@@ -8,8 +8,8 @@
     >
       <b-form-spinbutton
         id="model-limit-spinner"
-        inline
         v-model="modelLimit"
+        inline
         min="1"
         max="100"
       />
@@ -22,8 +22,8 @@
     >
       <b-form-spinbutton
         id="time-limit-spinner"
-        inline
         v-model="timeLimit"
+        inline
         min="1"
         max="240"
       />
@@ -37,23 +37,53 @@
         v-model="speedQuality"
         name="model-training-radios"
         value="speed"
-        >Faster
+      >
+        Faster
       </b-form-radio>
       <b-form-radio
         v-model="speedQuality"
         name="model-training-radios"
         value="quality"
-        >Higher Quality
+      >
+        Higher Quality
       </b-form-radio>
+    </b-form-group>
+    <b-form-group
+      label="Model Scoring:"
+      label-for="model-scoring"
+      description="Selects model accuracy scoring method."
+    >
+      <b-form-select
+        v-model="selectedMetric"
+        name="model-scoring"
+        size="sm"
+        :options="metrics"
+      >
+        <template #first>
+          <b-form-select-option :value="null" disabled>
+            Please select a method
+          </b-form-select-option>
+        </template>
+      </b-form-select>
+      <p>
+        <small>
+          {{ description }}
+        </small>
+      </p>
     </b-form-group>
   </b-modal>
 </template>
 
 <script lang="ts">
-import _ from "lodash";
 import Vue from "vue";
+import _ from "lodash";
 import { ModelQuality } from "../store/requests";
+import {
+  getters as datasetGetters,
+  actions as datasetActions,
+} from "../store/dataset/module";
 import { overlayRouteEntry } from "../util/routes";
+import { MetricDropdownItem } from "../store/dataset";
 import { getters as routeGetters } from "../store/route/module";
 
 // Dialog for setting model creation preferences.  The results are saved to the route to ensure
@@ -68,12 +98,35 @@ export default Vue.extend({
       speedQuality:
         routeGetters.getModelQuality(this.$store) ||
         ModelQuality.HIGHER_QUALITY,
+      // fill this from the API later, first posting back the target's type
+      // then getting a list of allowed scoring methods with keys, description
+      selectedMetric: null,
     };
   },
 
-  computed: {},
+  computed: {
+    description(): string {
+      return this.selectedMetric?.description;
+    },
+    metrics(): MetricDropdownItem[] {
+      const baseMetrics = datasetGetters.getModelingMetrics(this.$store);
+      return baseMetrics.map((m) => {
+        return {
+          value: {
+            id: m.id,
+            description: m.description,
+          },
+          text: m.displayName,
+        };
+      });
+    },
+  },
 
-  props: {},
+  async beforeMount() {
+    await datasetActions.fetchModelingMetrics(this.$store, {
+      task: routeGetters.getRouteTask(this.$store),
+    });
+  },
 
   methods: {
     handleOk() {
@@ -81,6 +134,7 @@ export default Vue.extend({
         modelLimit: this.modelLimit,
         modelTimeLimit: this.timeLimit,
         modelQuality: this.speedQuality,
+        metrics: this.selectedMetric?.id,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
     },

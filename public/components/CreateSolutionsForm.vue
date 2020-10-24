@@ -89,7 +89,7 @@ export default Vue.extend({
       return routeGetters.getDecodedSolutionRequestFilterParams(this.$store);
     },
     metrics(): string[] {
-      return null;
+      return routeGetters.getModelMetrics(this.$store);
     },
     trainingSelected(): boolean {
       return !_.isEmpty(this.training);

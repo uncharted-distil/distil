@@ -23,7 +23,6 @@ import {
   MULTIBAND_IMAGE_TYPE,
   UNKNOWN_TYPE,
 } from "../../util/types";
-import { Highlight } from "../dataset/index";
 import { getters as routeGetters } from "../route/module";
 import store, { DistilState } from "../store";
 import {
@@ -37,9 +36,11 @@ import {
   DatasetPendingRequestType,
   DatasetState,
   Grouping,
+  Highlight,
   isClusteredGrouping,
   JoinDatasetImportPendingRequest,
   JoinSuggestionPendingRequest,
+  Metrics,
   SummaryMode,
   Task,
   TimeSeriesValue,
@@ -1308,6 +1309,22 @@ export const actions = {
       );
       const bands = repsonse.data.combinations;
       mutations.updateBands(context, bands);
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
+  async fetchModelingMetrics(context: DatasetContext, args: { task: string }) {
+    if (!validateArgs(args, ["task"])) {
+      return null;
+    }
+
+    try {
+      const repsonse = await axios.get<Metrics>(
+        `distil/model-metrics/${args.task}`
+      );
+      const metrics = repsonse.data.metrics;
+      mutations.updateMetrics(context, metrics);
     } catch (error) {
       console.error(error);
     }
