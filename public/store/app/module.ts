@@ -28,6 +28,10 @@ export const getters = {
   getStatusPanelState: read(moduleGetters.getStatusPanelState),
   getTA2VersionNumber: read(moduleGetters.getTA2VersionNumber),
   getAllSystemVersions: read(moduleGetters.getAllSystemVersions),
+  getSessionToken: read(moduleGetters.getSessionToken),
+  getMapAPIKey: read(moduleGetters.getMapAPIKey),
+  getTileRequestURL: read(moduleGetters.getTileRequestURL),
+  getSubdomains: read(moduleGetters.getSubdomains),
 };
 
 // typed actions
@@ -55,4 +59,8 @@ export const mutations = {
   setTA2VersionNumber: commit(moduleMutations.setTA2VersionNumber),
   openStatusPanel: commit(moduleMutations.openStatusPanel),
   closeStatusPanel: commit(moduleMutations.closeStatusPanel),
+  setSessionToken: commit(moduleMutations.setSessionToken),
+  setTileRequestURL: commit(moduleMutations.setTileRequestURL),
+  setMapAPIKey: commit(moduleMutations.setMapAPIKey),
+  setSubdomains: commit(moduleMutations.setSubdomains),
 };

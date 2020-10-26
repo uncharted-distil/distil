@@ -122,6 +122,7 @@ import "leaflet/dist/images/marker-icon.png";
 import "leaflet/dist/images/marker-icon-2x.png";
 import "leaflet/dist/images/marker-shadow.png";
 import { BLUE_PALETTE } from "../util/color";
+import { getTileHandler } from "../util/app";
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
 
@@ -509,7 +510,9 @@ export default Vue.extend({
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
-
+    tileHandler() {
+      return getTileHandler();
+    },
     tileState(): MapState {
       return {
         onHover: (id: number) => {
@@ -632,10 +635,13 @@ export default Vue.extend({
       });
       // tile request function
       base.requestTile = (coord, done) => {
-        const SUBDOMAINS = ["a", "b", "c"];
-        const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
-        const url = `https:/${s}.basemaps.cartocdn.com/light_all/${coord.xyz()}.png`;
-        lumo.loadImage(url, done);
+        const dim = Math.pow(2, coord.z); // this is done in lumo however there is no get function to get the correct y coordinate for requesting tiles
+        const url = this.tileHandler.requestTile(
+          coord.x,
+          dim - 1 - coord.y,
+          coord.z
+        ); // get the url and embed the tile coordinates
+        lumo.loadImage(url, done); // load the image to the map
       };
       this.map.add(base);
       // Quad layer
