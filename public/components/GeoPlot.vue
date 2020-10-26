@@ -635,15 +635,13 @@ export default Vue.extend({
       });
       // tile request function
       base.requestTile = (coord, done) => {
-        // const SUBDOMAINS = ["a", "b", "c"];
-        // const s = SUBDOMAINS[(coord.x + coord.y + coord.z) % SUBDOMAINS.length];
-        const dim = Math.pow(2, coord.z);
+        const dim = Math.pow(2, coord.z); // this is done in lumo however there is no get function to get the correct y coordinate for requesting tiles
         const url = this.tileHandler.requestTile(
           coord.x,
-          -(dim - 1 - coord.y),
+          dim - 1 - coord.y,
           coord.z
-        );
-        lumo.loadImage(url, done);
+        ); // get the url and embed the tile coordinates
+        lumo.loadImage(url, done); // load the image to the map
       };
       this.map.add(base);
       // Quad layer
