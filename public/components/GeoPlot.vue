@@ -565,12 +565,14 @@ export default Vue.extend({
             return;
           }
           const bucket = this.bucketFeatures[id];
-          const point1 = this.renderer.latlngToNormalized(
-            bucket.coordinates[0]
-          );
-          const point2 = this.renderer.latlngToNormalized(
-            bucket.coordinates[1]
-          );
+          const point1 = this.renderer.latlngToNormalized([
+            bucket.coordinates[0][1],
+            bucket.coordinates[0][0],
+          ]);
+          const point2 = this.renderer.latlngToNormalized([
+            bucket.coordinates[1][1],
+            bucket.coordinates[1][0],
+          ]);
           const center = {
             x: (point1.x + point2.x) / 2,
             y: (point1.y + point2.y) / 2,
@@ -780,29 +782,6 @@ export default Vue.extend({
         mapBounds.extend(q);
       });
       return mapBounds;
-    },
-
-    // callback when tile is being clicked and generates drilldown.
-    onTileClick(id: number) {
-      if (id > this.areas.length || id < 0) {
-        console.error(
-          `id retrieved from buffer picker ${id} not within index bounds of areas.`
-        );
-        return;
-      }
-      this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
-    },
-    // callback when tile is being hovered on and generates a toast notification
-    async onTileHover(id: number) {
-      if (id > this.areas.length) {
-        console.error(`id: ${id} is outside of this.areas bounds`);
-        return; // id outside of bounds
-      }
-      this.toastTitle = this.areas[id].imageUrl;
-      this.hoverItem = this.areas[id].item;
-      this.hoverUrl = this.areas[id].imageUrl;
-      this.$bvToast.show(this.toastId);
-      window.addEventListener("mousemove", this.fadeToast);
     },
     // fades toast after mouse is moved
     fadeToast() {
