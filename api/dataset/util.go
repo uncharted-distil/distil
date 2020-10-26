@@ -18,6 +18,7 @@ package dataset
 import (
 	"fmt"
 	"io/ioutil"
+	"mime/multipart"
 	"os"
 	"path"
 
@@ -39,17 +40,33 @@ type ExpandedDatasetPaths struct {
 	ExtractedFilePath string
 }
 
-// StoreZipDataset writes the archive file to temporary storage
+// StoreZipDataset writes the archive file to temporary storage, where data is supplied as
+// a byte array.
 func StoreZipDataset(dataset string, rawData []byte) (string, error) {
-	tmpPath := env.GetTmpPath()
-	zipFilename := path.Join(tmpPath, fmt.Sprintf("%s_raw.zip", dataset))
-	zipFilename = util.GetUniqueName(zipFilename)
-	err := util.WriteFileWithDirs(zipFilename, rawData, os.ModePerm)
+	fileName := generateZipPath(dataset)
+	err := util.WriteFileWithDirs(fileName, rawData, os.ModePerm)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to write raw image data archive")
 	}
+	return fileName, nil
+}
 
-	return zipFilename, nil
+// StoreZipDatasetFromFormFile writes the archive file to temporary storage, where data is supplied as
+// a form multipart file.
+func StoreZipDatasetFromFormFile(dataset string, formFile multipart.File) (string, error) {
+	fileName := generateZipPath(dataset)
+	err := util.WriteFormFileWithDirs(fileName, formFile, os.ModePerm)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to write raw image data archive")
+	}
+	return fileName, nil
+}
+
+func generateZipPath(dataset string) string {
+	tmpPath := env.GetTmpPath()
+	zipFileName := path.Join(tmpPath, fmt.Sprintf("%s_raw.zip", dataset))
+	zipFileName = util.GetUniqueName(zipFileName)
+	return zipFileName
 }
 
 // ExpandZipDataset decompresses a zipped dataset for further downstream processing.

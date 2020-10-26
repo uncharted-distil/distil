@@ -95,6 +95,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				}
 
 				datasetPath := params["path"].(string)
+				log.Infof("Creating dataset '%s' from '%s'", datasetID, datasetPath)
 				creationResult, err := createDataset(datasetPath, datasetID, config)
 				if err != nil {
 					handleError(w, errors.Wrap(err, "unable to create raw dataset"))
@@ -102,7 +103,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				}
 				datasetID = creationResult.name
 				rawGroupings = creationResult.groups
-				log.Infof("create dataset '%s' from local source '%s'", datasetID, datasetPath)
+				log.Infof("Created dataset '%s' from local source '%s'", datasetID, datasetPath)
 			}
 		}
 
@@ -114,6 +115,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 
 		// import the dataset to the local filesystem.
 		uri := env.ResolvePath(source, datasetID)
+		log.Infof("Importing dataset '%s' from '%s'", datasetID, uri)
 		_, err = meta.ImportDataset(datasetID, uri)
 		if err != nil {
 			handleError(w, err)
@@ -129,6 +131,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 			ingestConfig.SampleRowLimit = math.MaxInt32 // Maximum int value.
 		}
 
+		log.Infof("Ingesting dataset '%s'", uri)
 		ingestResult, err := task.IngestDataset(source, dataCtor, esMetaCtor, datasetID, origins, api.DatasetTypeModelling, ingestConfig, ingestSteps)
 		if err != nil {
 			handleError(w, err)
@@ -172,28 +175,6 @@ func getOriginsFromMaps(originalDataset map[string]interface{}, joinedDataset ma
 	return origins, nil
 }
 
-func getDatasetOrigins(esStorage api.MetadataStorage, dataset string) ([]*model.DatasetOrigin, error) {
-	ds, err := esStorage.FetchDataset(dataset, true, true)
-	if err != nil {
-		return nil, err
-	}
-
-	if ds.JoinSuggestions == nil {
-		return make([]*model.DatasetOrigin, 0), nil
-	}
-
-	origins := make([]*model.DatasetOrigin, len(ds.JoinSuggestions))
-	for i, js := range ds.JoinSuggestions {
-		origins[i] = &model.DatasetOrigin{
-			SearchResult:  js.DatasetOrigin.SearchResult,
-			Provenance:    js.DatasetOrigin.Provenance,
-			SourceDataset: dataset,
-		}
-	}
-
-	return origins, nil
-}
-
 func createMetadataStorageForSource(datasetSource metadata.DatasetSource, provenance string,
 	datamartCtors map[string]api.MetadataStorageCtor,
 	fileMetaCtor api.MetadataStorageCtor, esMetaCtor api.MetadataStorageCtor) (api.MetadataStorage, error) {
@@ -207,22 +188,6 @@ func createMetadataStorageForSource(datasetSource metadata.DatasetSource, proven
 		return fileMetaCtor()
 	}
 	return nil, fmt.Errorf("unrecognized source `%v`", datasetSource)
-}
-
-func isRemoteSensingDataset(datasetID string, metaStorage api.MetadataStorage) bool {
-	variables, err := metaStorage.FetchVariables(datasetID, false, false)
-	if err != nil {
-		log.Warnf("unable to fetch variables from metadata storage so assuming dataset is not remote sensing")
-		return false
-	}
-
-	for _, v := range variables {
-		if model.IsMultiBandImage(v.Type) {
-			return true
-		}
-	}
-
-	return false
 }
 
 type datasetCreationResult struct {
@@ -241,6 +206,7 @@ func createDataset(datasetPath string, datasetName string, config *env.Config) (
 	}
 
 	// create the raw dataset
+	log.Infof("Creating raw dataset '%s' from '%s'", datasetName, datasetPath)
 	ds, groups, err := createRawDataset(datasetPath, datasetName)
 	if err != nil {
 		return nil, err
@@ -248,6 +214,7 @@ func createDataset(datasetPath string, datasetName string, config *env.Config) (
 
 	// create the formatted d3m dataset
 	outputPath := path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
+	log.Infof("Creating final dataset '%s' from '%s'", datasetName, outputPath)
 	datasetName, formattedPath, err := task.CreateDataset(datasetName, ds, outputPath, config)
 	if err != nil {
 		return nil, err
