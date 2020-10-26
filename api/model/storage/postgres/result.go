@@ -16,8 +16,8 @@
 package postgres
 
 import (
+	"encoding/json"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 
@@ -142,7 +142,7 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 }
 
 // PersistResult stores the solution result to Postgres.
-func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string, confidenceValues *api.SolutionExplainResult) error {
+func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string, explainResult *api.SolutionExplainResult) error {
 	// Read the results file.
 	datasetStorage := serialization.GetStorage(resultURI)
 	records, err := datasetStorage.ReadData(resultURI)
@@ -151,28 +151,15 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	}
 
 	// read the confidence file
-	confidences := make(map[string][]float64)
-	if confidenceValues != nil {
-		lowIndex := confidenceValues.ParsingParams[0].(int)
-		highIndex := confidenceValues.ParsingParams[1].(int)
-
+	explainValues := make(map[string]*api.SolutionExplainValues)
+	if explainResult != nil {
 		// build the confidence lookup
-		missingConfidences := 0
-		for _, row := range confidenceValues.Values {
-			low, err := strconv.ParseFloat(row[lowIndex], 64)
+		for _, row := range explainResult.Values {
+			parsedExplainValues, err := explainResult.ParsingFunction(row)
 			if err != nil {
-				low = math.NaN()
-				missingConfidences++
+				return err
 			}
-			high, err := strconv.ParseFloat(row[highIndex], 64)
-			if err != nil {
-				high = math.NaN()
-				missingConfidences++
-			}
-			confidences[row[confidenceValues.D3MIndexIndex]] = []float64{low, high}
-		}
-		if missingConfidences > 0 {
-			log.Warnf("%d invalid values for confidence intervals replaced with NaN", missingConfidences)
+			explainValues[row[explainResult.D3MIndexIndex]] = parsedExplainValues
 		}
 	}
 
@@ -242,9 +229,13 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			}
 			dataForInsert = append(dataForInsert, cfs)
 		}
-		if confidences[records[i][d3mIndexIndex]] != nil {
-			cf := confidences[records[i][d3mIndexIndex]]
-			dataForInsert = append(dataForInsert, cf[0], cf[1])
+		if explainValues[records[i][d3mIndexIndex]] != nil {
+			parsedExplain := explainValues[records[i][d3mIndexIndex]]
+			parsedExplainJSON, err := json.Marshal(parsedExplain)
+			if err != nil {
+				return errors.Wrapf(err, "unable to marshal explain output")
+			}
+			dataForInsert = append(dataForInsert, string(parsedExplainJSON))
 		}
 
 		insertData = append(insertData, dataForInsert)
@@ -254,8 +245,8 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	if confidenceIndex >= 0 {
 		fields = append(fields, "confidence")
 	}
-	if len(confidences) > 0 {
-		fields = append(fields, "confidence_low", "confidence_high")
+	if len(explainValues) > 0 {
+		fields = append(fields, "explain_values")
 	}
 
 	// store all results to the storage

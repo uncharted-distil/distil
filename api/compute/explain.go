@@ -34,9 +34,12 @@ import (
 )
 
 const (
-	explainableTypeSolution   = "solution"
-	explainableTypeStep       = "step"
-	explainableTypeConfidence = "confidence"
+	// ExplainableTypeSolution represents output that explains the solution as a whole.
+	ExplainableTypeSolution = "solution"
+	// ExplainableTypeStep represents output that explains a specific row.
+	ExplainableTypeStep = "step"
+	// ExplainableTypeConfidence represents confidence output.
+	ExplainableTypeConfidence = "confidence"
 )
 
 var (
@@ -45,12 +48,12 @@ var (
 			{
 				primitiveID:     "e0ad06ce-b484-46b0-a478-c567e1ea7e02",
 				produceFunction: "produce_shap_values",
-				explainableType: explainableTypeStep,
+				explainableType: ExplainableTypeStep,
 			},
 			{
 				primitiveID:     "e0ad06ce-b484-46b0-a478-c567e1ea7e02",
 				produceFunction: "produce_feature_importances",
-				explainableType: explainableTypeSolution,
+				explainableType: ExplainableTypeSolution,
 			},
 		},
 		"fe0841b7-6e70-4bc3-a56c-0670a95ebc6a": {
@@ -63,35 +66,35 @@ var (
 			{
 				primitiveID:     "fe0841b7-6e70-4bc3-a56c-0670a95ebc6a",
 				produceFunction: "produce_feature_importances",
-				explainableType: explainableTypeSolution,
+				explainableType: ExplainableTypeSolution,
 			},
 		},
 		"cdbb80e4-e9de-4caa-a710-16b5d727b959": {
 			{
 				primitiveID:     "cdbb80e4-e9de-4caa-a710-16b5d727b959",
 				produceFunction: "produce_shap_values",
-				explainableType: explainableTypeStep,
+				explainableType: ExplainableTypeStep,
 			},
 			{
 				primitiveID:     "cdbb80e4-e9de-4caa-a710-16b5d727b959",
 				produceFunction: "produce_feature_importances",
-				explainableType: explainableTypeSolution,
+				explainableType: ExplainableTypeSolution,
 			},
 		},
 		"3410d709-0a13-4187-a1cb-159dd24b584b": {
 			{
 				primitiveID:     "3410d709-0a13-4187-a1cb-159dd24b584b",
 				produceFunction: "produce_confidence_intervals",
-				explainableType: explainableTypeConfidence,
-				parsingParams:   []interface{}{0: 1, 1: 2},
+				explainableType: ExplainableTypeConfidence,
+				parsingFunction: parseConfidencesWrapper([]int{1, 2}),
 			},
 		},
 		"76b5a479-c209-4d94-92b5-7eba7a4d4499": {
 			{
 				primitiveID:     "76b5a479-c209-4d94-92b5-7eba7a4d4499",
 				produceFunction: "produce_confidence_intervals",
-				explainableType: explainableTypeConfidence,
-				parsingParams:   []interface{}{0: 1, 1: 2},
+				explainableType: ExplainableTypeConfidence,
+				parsingFunction: parseConfidencesWrapper([]int{1, 2}),
 			},
 		},
 	}
@@ -106,13 +109,30 @@ type explainableOutput struct {
 	primitiveID     string
 	produceFunction string
 	explainableType string
-	parsingParams   []interface{}
+	parsingFunction func([]string) (*api.SolutionExplainValues, error)
 }
 
 type pipelineOutput struct {
-	key           string
-	typ           string
-	parsingParams []interface{}
+	key             string
+	typ             string
+	parsingFunction func([]string) (*api.SolutionExplainValues, error)
+}
+
+func parseConfidencesWrapper(params []int) func([]string) (*api.SolutionExplainValues, error) {
+	return func(data []string) (*api.SolutionExplainValues, error) {
+		low, err := strconv.ParseFloat(data[params[0]], 64)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to parse low confidence")
+		}
+		high, err := strconv.ParseFloat(data[params[1]], 64)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to parse high confidence")
+		}
+		return &api.SolutionExplainValues{
+			LowConfidence:  low,
+			HighConfidence: high,
+		}, nil
+	}
 }
 
 func (s *SolutionRequest) createExplainPipeline(desc *pipeline.DescribeSolutionResponse,
@@ -249,9 +269,9 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 
 				// output 0 is the produce call
 				outputs[ef.explainableType] = &pipelineOutput{
-					typ:           ef.explainableType,
-					key:           outputName,
-					parsingParams: ef.parsingParams,
+					typ:             ef.explainableType,
+					key:             outputName,
+					parsingFunction: ef.parsingFunction,
 				}
 			}
 		}
@@ -308,7 +328,7 @@ func getPipelineOutputs(solutionDesc *pipeline.DescribeSolutionResponse) (map[st
 			explainOutputs := explainableOutputPrimitives[outputPrimitive.Primitive.Id]
 			for _, eo := range explainOutputs {
 				if eo.explainableType == output.typ {
-					output.parsingParams = eo.parsingParams
+					output.parsingFunction = eo.parsingFunction
 				}
 			}
 			outputs[output.typ] = output
@@ -323,17 +343,17 @@ func createPipelineOutputFromDescription(output *pipeline.PipelineDescriptionOut
 	produceFunction := output.Data
 	if strings.Contains(produceFunction, "confidence") {
 		explainedOutput = &pipelineOutput{
-			typ: explainableTypeConfidence,
+			typ: ExplainableTypeConfidence,
 			key: output.Name,
 		}
 	} else if strings.Contains(produceFunction, "feature") {
 		explainedOutput = &pipelineOutput{
-			typ: explainableTypeSolution,
+			typ: ExplainableTypeSolution,
 			key: output.Name,
 		}
 	} else if strings.Contains(produceFunction, "shap") {
 		explainedOutput = &pipelineOutput{
-			typ: explainableTypeStep,
+			typ: ExplainableTypeStep,
 			key: output.Name,
 		}
 	}

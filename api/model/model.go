@@ -106,10 +106,17 @@ type SolutionState struct {
 
 // SolutionExplainResult captures the explainable output by row.
 type SolutionExplainResult struct {
-	ResultURI     string
-	Values        [][]string
-	D3MIndexIndex int
-	ParsingParams []interface{}
+	ResultURI       string
+	Values          [][]string
+	D3MIndexIndex   int
+	ParsingFunction func([]string) (*SolutionExplainValues, error)
+}
+
+// SolutionExplainValues represent use case specific explain output by row.
+type SolutionExplainValues struct {
+	LowConfidence  float64     `json:"lowConfidence"`
+	HighConfidence float64     `json:"highConfidence"`
+	GradCAM        [][]float64 `json:"gradCAM"`
 }
 
 // SolutionResultExplainOutput captures the explainable output from a produce call.
