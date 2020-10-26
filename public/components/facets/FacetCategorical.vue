@@ -264,6 +264,7 @@ export default Vue.extend({
         return _.isFunction(this.html)
           ? this.html({
               colName: this.summary.key,
+              type: "categorical",
             })
           : this.html;
       }

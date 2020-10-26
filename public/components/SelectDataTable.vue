@@ -168,7 +168,7 @@ export default Vue.extend({
       // In the case of timeseries, we add their Min/Max/Mean.
       if (this.isTimeseries) {
         items = items?.map((item) => {
-          const timeserieId = item[this.timeseriesGroupings[0].idCol].value;
+          const timeserieId = item[this.timeseriesGroupings?.[0]?.idCol]?.value;
           const minMaxMean = this.timeseriesInfo(timeserieId);
           return { ...item, ...minMaxMean };
         });

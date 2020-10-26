@@ -16,10 +16,9 @@
 package routes
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -63,22 +62,27 @@ func UploadHandler(config *env.Config) func(http.ResponseWriter, *http.Request) 
 			}
 		} else {
 			// read the file from the request
-			var data []byte
-			data, err = receiveFile(r)
+			log.Infof("Reading byte stream from http request")
+
+			// Create a form file reader.  It will be combined with a file writer in a subsequent step.
+			var formFile multipart.File
+			formFile, _, err = r.FormFile("file")
 			if err != nil {
 				handleError(w, errors.Wrap(err, "unable to receive file from request"))
-				return
 			}
+			defer formFile.Close()
 
 			// Figure out what type of dataset we've got
 			if typ == "table" {
+				log.Infof("Uploaded table dataset '%s'", datasetName)
 				tmpPath := env.GetTmpPath()
 				csvFilename := path.Join(tmpPath, fmt.Sprintf("%s_raw.csv", datasetName))
 				outputPath = util.GetUniqueName(csvFilename)
-				err = util.WriteFileWithDirs(outputPath, data, os.ModePerm)
+				err = util.WriteFormFileWithDirs(outputPath, formFile, os.ModePerm)
 			} else if typ == "media" {
 				// Expand the data into temp storage
-				outputPath, err = dataset.StoreZipDataset(datasetName, data)
+				log.Infof("Uploaded zipped media dataset '%s'", datasetName)
+				outputPath, err = dataset.StoreZipDatasetFromFormFile(datasetName, formFile)
 			} else if typ == "" {
 				err = errors.Errorf("upload type parameter not specified")
 			} else {
@@ -91,7 +95,7 @@ func UploadHandler(config *env.Config) func(http.ResponseWriter, *http.Request) 
 			return
 		}
 
-		log.Infof("uploaded new dataset %s at %s", datasetName, outputPath)
+		log.Infof("Uploaded new dataset %s at %s", datasetName, outputPath)
 		// marshal data and sent the response back
 		err = handleJSON(w, map[string]interface{}{"dataset": datasetName, "location": outputPath, "result": "uploaded"})
 		if err != nil {
@@ -140,21 +144,4 @@ func downloadFile(datasetName string, urlString string, config *env.Config) (str
 	}
 
 	return outputPath, nil
-}
-
-func receiveFile(r *http.Request) ([]byte, error) {
-	file, _, err := r.FormFile("file")
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to get file from request")
-	}
-	defer file.Close()
-
-	// Copy the file data to the buffer
-	var buf bytes.Buffer
-	_, err = io.Copy(&buf, file)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to copy file")
-	}
-
-	return buf.Bytes(), nil
 }

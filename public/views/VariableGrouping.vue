@@ -26,45 +26,80 @@
         Integer, Date/Time or Decimal Type.
       </p>
     </b-modal>
-    <b-row class="flex-0-nav"></b-row>
 
-    <b-row class="flex-shrink-0 align-items-center bg-white">
-      <b-col v-if="isTimeseries" cols="4" class="offset-md-1">
-        <h5 class="header-label">Configure Time Series</h5>
-      </b-col>
-      <b-col v-if="isGeocoordinate" cols="4" class="offset-md-1">
-        <h5 class="header-label">Configure Geocoordinate</h5>
-      </b-col>
-    </b-row>
+    <!-- Spacer for the App.vue <navigation> component -->
+    <div class="row flex-0-nav" />
 
-    <b-container class="mt-3 h-100">
+    <!-- Title of the page -->
+    <header class="header row justify-content-center">
+      <b-col cols="12" md="10">
+        <h5 class="header-title">
+          Configure
+          <span v-if="isTimeseries">Time Series</span>
+          <span v-else>Geocoordinate</span>
+        </h5>
+      </b-col>
+    </header>
+
+    <!-- Information -->
+    <section class="sub-header row justify-content-center">
+      <b-col cols="12" md="10">
+        <template v-if="isTimeseries">
+          To predict a value over time <strong>(forecasting)</strong> your
+          target should be a <strong>timeseries.</strong><br />
+          Select a <strong>time</strong> column, a <strong>value</strong> column
+          and if available, optionally add one or more
+          <strong>series id</strong> column(s) to create multiple timeseries.
+        </template>
+        <template v-else>
+          If your data contains geocoordinate data (<strong
+            >latitude, longitude</strong
+          >) in separate columns, select those to display the location data on a
+          map.
+        </template>
+      </b-col>
+    </section>
+
+    <!-- Form -->
+    <section class="mt-3 container">
       <b-row>
-        <b-col v-if="isTimeseries" cols="12">
-          <p>
-            To predict a value over time <strong>(forecasting)</strong> your
-            target should be a <strong>timeseries.</strong><br />
-            Select a <strong>time</strong> column, a
-            <strong>value</strong> column and if available, optionally add one
-            or more <strong>series id</strong> column(s) to create multiple
-            timeseries.
-          </p>
-        </b-col>
-        <b-col v-if="isGeocoordinate" cols="12">
-          <p>
-            If your data contains geocoordinate data (<strong
-              >latitude, longitude</strong
-            >) in separate columns, select those to display the location data on
-            a map.
-          </p>
-        </b-col>
-      </b-row>
-      <b-row>
-        <b-col cols="6" v-if="isTimeseries">
-          <template v-if="idCols.length > 0">
+        <b-col cols="6">
+          <!-- X column -->
+          <b-row class="mt-1 mb-1">
+            <b-col cols="5">
+              <b v-if="isTimeseries">Time Column:</b>
+              <b v-else>Longitude Column:</b>
+            </b-col>
+            <b-col cols="7">
+              <b-form-select
+                v-model="xCol"
+                :options="xColOptions"
+                @input="onChange"
+              />
+            </b-col>
+          </b-row>
+
+          <!-- Y column -->
+          <b-row class="mt-1 mb-1">
+            <b-col cols="5">
+              <b v-if="isTimeseries">Value Column:</b>
+              <b v-else>Latitude Column:</b>
+            </b-col>
+            <b-col cols="7">
+              <b-form-select
+                v-model="yCol"
+                :options="yColOptions"
+                @input="onChange"
+              />
+            </b-col>
+          </b-row>
+
+          <!-- ID columns -->
+          <template v-if="isTimeseries && idCols.length > 0">
             <b-row
-              class="mt-1 mb-1"
               v-for="(idCol, index) in idCols"
               :key="idCol.value"
+              class="mt-1 mb-1"
             >
               <b-col cols="5">
                 <template
@@ -75,126 +110,69 @@
               </b-col>
 
               <b-col
+                v-if="idOptions(idCol.value).length !== 0"
                 cols="7"
                 class="d-flex align-content-center"
-                v-if="idOptions(idCol.value).length !== 0"
               >
                 <b-form-select
-                  class="mr-auto"
                   v-model="idCol.value"
+                  class="mr-auto"
                   :options="idOptions(idCol.value)"
                   @input="onIdChange"
                 />
                 <b-button
+                  v-if="idCol.value"
                   class="ml-1"
                   variant="outline-danger"
-                  v-if="idCol.value"
                   title="Clear Selection"
                   @click="removeIdCol(idCol.value)"
                 >
-                  <i class="fa fa-times-circle"></i>
+                  <i class="fa fa-times-circle" />
                 </b-button>
               </b-col>
             </b-row>
           </template>
-
-          <b-row class="mt-1 mb-1">
-            <b-col cols="5">
-              <b>Time Column:</b>
-            </b-col>
-
-            <b-col cols="7">
-              <b-form-select
-                v-model="xCol"
-                :options="xColOptions"
-                @input="onChange"
-              />
-            </b-col>
-          </b-row>
-
-          <b-row class="mt-1 mb-1">
-            <b-col cols="5">
-              <b>Value Column:</b>
-            </b-col>
-
-            <b-col cols="7">
-              <b-form-select
-                v-model="yCol"
-                :options="yColOptions"
-                @input="onChange"
-              />
-            </b-col>
-          </b-row>
-        </b-col>
-        <b-col cols="6" v-if="isGeocoordinate">
-          <b-row class="mt-1 mb-1">
-            <b-col cols="5">
-              <b>Longitude Column:</b>
-            </b-col>
-
-            <b-col cols="7">
-              <b-form-select
-                v-model="xCol"
-                :options="xColOptions"
-                @input="onChange"
-              />
-            </b-col>
-          </b-row>
-
-          <b-row class="mt-1 mb-1">
-            <b-col cols="5">
-              <b>Latitude Column:</b>
-            </b-col>
-
-            <b-col cols="7">
-              <b-form-select
-                v-model="yCol"
-                :options="yColOptions"
-                @input="onChange"
-              />
-            </b-col>
-          </b-row>
         </b-col>
 
+        <!-- Facet Preview -->
         <b-col cols="6">
           <div v-if="isReady && previewSummary && previewSummary.baseline">
             <component
-              :summary="previewSummary"
               :is="getFacetByType(groupingType)"
-            >
-            </component>
+              :summary="previewSummary"
+            />
           </div>
           <div v-else>
-            <facet-loading :summary="{ label: 'pending' }"> </facet-loading>
+            <facet-loading :summary="{ label: 'pending' }" />
           </div>
         </b-col>
       </b-row>
 
+      <!-- Buttons -->
       <b-row align-h="center">
         <b-btn
-          class="mt-3 var-grouping-button"
+          class="mt-3 grouping-button"
           variant="outline-secondary"
           :disabled="isPending"
           @click="onClose"
         >
           <div class="row justify-content-center">
-            <i class="fa fa-times-circle fa-2x mr-2"></i>
+            <i class="fa fa-times-circle fa-2x mr-2" />
             <b>Cancel</b>
           </div>
         </b-btn>
         <b-btn
-          class="mt-3 var-grouping-button"
+          class="mt-3 grouping-button"
           variant="primary"
           :disabled="isPending || !isReady"
           @click="onGroup"
         >
           <div class="row justify-content-center">
-            <i class="fa fa-check-circle fa-2x mr-2"></i>
+            <i class="fa fa-check-circle fa-2x mr-2" />
             <b>Submit</b>
           </div>
         </b-btn>
       </b-row>
-
       <b-row class="grouping-progress">
         <b-progress
           v-if="isPending"
@@ -202,9 +180,9 @@
           variant="secondary"
           striped
           :animated="true"
-        ></b-progress>
+        />
       </b-row>
-    </b-container>
+    </section>
   </div>
 </template>
 
@@ -280,22 +258,28 @@ export default Vue.extend({
       isUpdating: false,
     };
   },
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
+
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
     },
+
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
+
     groupingType(): string {
       return routeGetters.getGroupingType(this.$store);
     },
+
     isGeocoordinate(): boolean {
       return this.groupingType === GEOCOORDINATE_TYPE;
     },
+
     isTimeseries(): boolean {
       return this.groupingType === TIMESERIES_TYPE;
     },
@@ -372,9 +356,9 @@ export default Vue.extend({
         (v) => v.indexOf(this.xCol) > -1 && v.indexOf(this.yCol) > -1
       )[0];
       const minKey = minimumRouteKey();
-      const pv = summaryDictionary?.[previewKey]?.[minKey];
-      return pv;
+      return summaryDictionary?.[previewKey]?.[minKey];
     },
+
     showGeoModal: {
       get(): boolean {
         return (
@@ -388,6 +372,7 @@ export default Vue.extend({
         console.info("insufficient geocoordinate variables");
       },
     },
+
     showTimeModal: {
       get(): boolean {
         return (
@@ -435,7 +420,8 @@ export default Vue.extend({
       }
       return [];
     },
-    onIdChange(arg) {
+
+    onIdChange() {
       const values = this.idCols.map((c) => c.value).filter((v) => v);
       if (values.length === this.prevIdCols) {
         return;
@@ -445,6 +431,7 @@ export default Vue.extend({
       this.prevIdCols++;
       this.onChange();
     },
+
     removeIdCol(value) {
       this.idCols = this.idCols.filter((idCol) => idCol.value !== value);
       this.prevIdCols--;
@@ -454,26 +441,33 @@ export default Vue.extend({
         this.clearGrouping();
       }
     },
+
     isIDCol(arg): boolean {
       return !!this.idCols.find((id) => id.value === arg);
     },
+
     isXCol(arg): boolean {
       return arg === this.xCol;
     },
+
     isYCol(arg): boolean {
       return arg === this.yCol;
     },
+
     isOtherCol(arg): boolean {
       return this.other.indexOf(arg) !== -1;
     },
+
     onChange() {
       if (this.isReady) {
         this.submitGrouping(false);
       }
     },
+
     onGroup() {
       this.submitGrouping(true);
     },
+
     getHiddenCols(idCol) {
       const hiddenCols = [this.xCol, this.yCol];
       if (idCol !== null) {
@@ -481,9 +475,11 @@ export default Vue.extend({
       }
       return hiddenCols;
     },
+
     async submitGrouping(gotoTarget: boolean) {
       await this.clearGrouping();
       this.isUpdating = true;
+
       // Create a list of id values, filtering out the empty entry
       const ids = this.idCols.map((c) => c.value).filter((v) => v);
 
@@ -541,12 +537,13 @@ export default Vue.extend({
 });
 </script>
 
-<style>
-.var-grouping-button {
+<style scoped>
+.grouping-button {
   margin: 0 8px;
   width: 25% !important;
   line-height: 32px !important;
 }
+
 .grouping-progress {
   margin: 6px 10%;
 }
