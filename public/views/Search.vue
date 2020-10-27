@@ -12,14 +12,42 @@
       </div>
     </header>
 
+    <!-- Add new dataset modals. -->
+    <b-modal
+      id="add-new-dataset"
+      title="Add New Dataset"
+      no-stacking
+      ok-title="Add Selected Dataset"
+      @ok="handleAddNewDataset"
+    >
+      <b-button variant="primary" v-b-modal.upload-modal>
+        <i class="fa fa-upload" /> Upload a file
+      </b-button>
+      <hr />
+      <strong>Select an available dataset</strong>
+      <i
+        class="fa fa-question-circle-o"
+        title="Lookup datasets already available in $D3MOUTPUTDIR/augmented."
+      />
+      <b-form-select
+        v-model="availableDatasetSelected"
+        :options="availableDatasets"
+        :select-size="Math.min(availableDatasets.length, 10)"
+      />
+    </b-modal>
+    <file-uploader
+      @uploadstart="onUploadStart"
+      @uploadfinish="onUploadFinish"
+    />
+
     <!-- Placeholder for the file uploader component status. -->
     <div class="row justify-content-center">
-      <file-uploader-status
+      <import-status
         class="file-uploader-status col-12"
         :status="uploadStatus"
-        :importResponse="importResponse"
+        :import-response="importResponse"
         :filename="uploadData.filename"
-        :datasetID="uploadData.datasetID"
+        :dataset-id="uploadData.datasetID"
         @importfull="onReImportFullDataset"
       />
     </div>
@@ -38,7 +66,7 @@
           <button
             class="search-nav-tab"
             @click="tab = 'all'"
-            :class="[tab === 'all' ? 'active' : '']"
+            :class="{ active: tab === 'all' }"
           >
             All
             <span class="badge badge-pill badge-danger">{{
@@ -48,7 +76,7 @@
           <button
             class="search-nav-tab"
             @click="tab = 'models'"
-            :class="[tab === 'models' ? 'active' : '']"
+            :class="{ active: tab === 'models' }"
           >
             <i class="fa fa-connectdevelop"></i> Models
             <span class="badge badge-pill badge-danger">{{
@@ -58,7 +86,7 @@
           <button
             class="search-nav-tab"
             @click="tab = 'datasets'"
-            :class="[tab === 'datasets' ? 'active' : '']"
+            :class="{ active: tab === 'datasets' }"
           >
             <i class="fa fa-table"></i> Datasets
             <span class="badge badge-pill badge-danger">{{
@@ -88,11 +116,13 @@
               <i class="fa fa-sort-numeric-desc"></i> Features
             </b-dropdown-item-button>
           </b-dropdown>
-          <file-uploader
-            class="file-uploader"
-            @uploadstart="onUploadStart"
-            @uploadfinish="onUploadFinish"
-          />
+          <b-button
+            class="add-new-datasets"
+            variant="primary"
+            v-b-modal.add-new-dataset
+          >
+            <i class="fa fa-plus-circle" /> Add New Dataset
+          </b-button>
         </nav>
       </div>
     </section>
@@ -135,9 +165,10 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
+// import AddNewDataset from "../components/AddNewDataset.vue";
 import DatasetPreview from "../components/DatasetPreview.vue";
 import FileUploader from "../components/FileUploader.vue";
-import FileUploaderStatus from "../components/FileUploaderStatus.vue";
+import ImportStatus from "../components/ImportStatus.vue";
 import ModelPreview from "../components/ModelPreview.vue";
 import SearchBar from "../components/SearchBar.vue";
 import { Dataset } from "../store/dataset/index";
@@ -149,18 +180,18 @@ import { Model } from "../store/model/index";
 import { getters as appGetters } from "../store/app/module";
 import { getters as modelGetters } from "../store/model/module";
 import { getters as routeGetters } from "../store/route/module";
-import { SEARCH_ROUTE, JOIN_DATASETS_ROUTE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
-import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 import { spinnerHTML } from "../util/spinner";
+import { getAvailableDatasets } from "../util/uploads";
 
 export default Vue.extend({
-  name: "search-view",
+  name: "SearchView",
 
   components: {
+    // AddNewDataset,
     DatasetPreview,
     FileUploader,
-    FileUploaderStatus,
+    ImportStatus,
     ModelPreview,
     SearchBar,
   },
@@ -181,6 +212,8 @@ export default Vue.extend({
         dataset: "",
         location: "",
       },
+      availableDatasets: [],
+      availableDatasetSelected: null,
     };
   },
 
@@ -299,17 +332,36 @@ export default Vue.extend({
     },
   },
 
-  beforeMount() {
-    this.fetch();
-  },
-
   watch: {
     terms() {
       this.fetch();
     },
   },
 
+  beforeMount() {
+    this.fetch();
+    this.getAvailableDatasets();
+  },
+
   methods: {
+    // Fetch the list of available dataset in the $D3MOUTPUTDIR/augmented folder.
+    async getAvailableDatasets() {
+      this.availableDatasets = [];
+      try {
+        const response = await getAvailableDatasets();
+
+        // Format the response to fit the <b-form-select> options format {value, text}
+        this.availableDatasets = response.map((dataset) => {
+          return {
+            value: dataset,
+            text: dataset.name,
+          };
+        });
+      } catch (error) {
+        console.error("Error fetching available datasets.");
+      }
+    },
+
     fetch() {
       this.isPending = true;
       viewActions.fetchSearchData(this.$store).then(() => {
@@ -325,6 +377,19 @@ export default Vue.extend({
     onUploadFinish(err, response) {
       this.uploadStatus = err ? "error" : "success";
       this.importResponse = response;
+    },
+
+    async handleAddNewDataset() {
+      // Make sure that the arguments are sound.
+      const { name, path } = this.availableDatasetSelected;
+      const location = path + "/" + name;
+      const datasetID = name.split(".")[0];
+      if (!location || !datasetID) return;
+
+      this.importResponse = await datasetActions.importAvailableDataset(
+        this.$store,
+        { datasetID, path: location }
+      );
     },
 
     // The dataset will be reimported without sampling.
@@ -436,7 +501,7 @@ export default Vue.extend({
   border-bottom-color: var(--blue);
 }
 
-.search-nav .file-uploader {
+.search-nav .add-new-datasets {
   margin-left: auto; /* Align to the right of the navigation. */
 }
 

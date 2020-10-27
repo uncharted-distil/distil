@@ -82,6 +82,7 @@ export const actions = {
   geocodeVariable: dispatch(moduleActions.geocodeVariable),
   importDataset: dispatch(moduleActions.importDataset),
   importFullDataset: dispatch(moduleActions.importFullDataset),
+  importAvailableDataset: dispatch(moduleActions.importAvailableDataset),
   deleteVariable: dispatch(moduleActions.deleteVariable),
   setGrouping: dispatch(moduleActions.setGrouping),
   removeGrouping: dispatch(moduleActions.removeGrouping),

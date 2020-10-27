@@ -1,6 +1,7 @@
 import store from "../store/store";
 import { getters as datasetGetters } from "../store/dataset/module";
 import _ from "lodash";
+import axios from "axios";
 
 // Converts a file into a Base64 string.
 export function getBase64(file: File): Promise<string> {
@@ -39,4 +40,10 @@ export function generateUniqueDatasetName(datasetName: string): string {
     newName = `${datasetName}_${count}`;
     count++;
   }
+}
+
+// Lookup datasets already available in the $D3MOUTPUTDIR/augmented folder.
+export async function getAvailableDatasets() {
+  const response = await axios.get("/distil/available");
+  return response?.data?.availableDatasets;
 }
