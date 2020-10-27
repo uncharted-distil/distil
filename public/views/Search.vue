@@ -12,35 +12,12 @@
       </div>
     </header>
 
-    <!-- Add new dataset modals. -->
-    <b-modal
-      id="add-new-dataset"
-      title="Add New Dataset"
-      no-stacking
-      ok-title="Add Selected Dataset"
-      @ok="handleAddNewDataset"
-    >
-      <b-button variant="primary" v-b-modal.upload-modal>
-        <i class="fa fa-upload" /> Upload a file
-      </b-button>
-      <hr />
-      <strong>Select an available dataset</strong>
-      <i
-        class="fa fa-question-circle-o"
-        title="Lookup datasets already available in $D3MOUTPUTDIR/augmented."
-      />
-      <b-form-select
-        v-model="availableDatasetSelected"
-        :options="availableDatasets"
-        :select-size="Math.min(availableDatasets.length, 10)"
-      />
-    </b-modal>
+    <!-- Add dataset modal -->
+    <add-dataset id="add-dataset" />
     <file-uploader
       @uploadstart="onUploadStart"
       @uploadfinish="onUploadFinish"
     />
-
-    <!-- Placeholder for the file uploader component status. -->
     <div class="row justify-content-center">
       <import-status
         class="file-uploader-status col-12"
@@ -119,9 +96,9 @@
           <b-button
             class="add-new-datasets"
             variant="primary"
-            v-b-modal.add-new-dataset
+            v-b-modal.add-dataset
           >
-            <i class="fa fa-plus-circle" /> Add New Dataset
+            <i class="fa fa-plus-circle" /> Add Dataset
           </b-button>
         </nav>
       </div>
@@ -165,7 +142,7 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-// import AddNewDataset from "../components/AddNewDataset.vue";
+import AddDataset from "../components/AddDataset.vue";
 import DatasetPreview from "../components/DatasetPreview.vue";
 import FileUploader from "../components/FileUploader.vue";
 import ImportStatus from "../components/ImportStatus.vue";
@@ -182,13 +159,12 @@ import { getters as modelGetters } from "../store/model/module";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
 import { spinnerHTML } from "../util/spinner";
-import { getAvailableDatasets } from "../util/uploads";
 
 export default Vue.extend({
   name: "SearchView",
 
   components: {
-    // AddNewDataset,
+    AddDataset,
     DatasetPreview,
     FileUploader,
     ImportStatus,
@@ -212,8 +188,6 @@ export default Vue.extend({
         dataset: "",
         location: "",
       },
-      availableDatasets: [],
-      availableDatasetSelected: null,
     };
   },
 
@@ -291,7 +265,7 @@ export default Vue.extend({
       });
     },
 
-    isSearchResultsEmpty(): Boolean {
+    isSearchResultsEmpty(): boolean {
       return _.isEmpty(this.searchResults);
     },
 
@@ -340,28 +314,9 @@ export default Vue.extend({
 
   beforeMount() {
     this.fetch();
-    this.getAvailableDatasets();
   },
 
   methods: {
-    // Fetch the list of available dataset in the $D3MOUTPUTDIR/augmented folder.
-    async getAvailableDatasets() {
-      this.availableDatasets = [];
-      try {
-        const response = await getAvailableDatasets();
-
-        // Format the response to fit the <b-form-select> options format {value, text}
-        this.availableDatasets = response.map((dataset) => {
-          return {
-            value: dataset,
-            text: dataset.name,
-          };
-        });
-      } catch (error) {
-        console.error("Error fetching available datasets.");
-      }
-    },
-
     fetch() {
       this.isPending = true;
       viewActions.fetchSearchData(this.$store).then(() => {
@@ -377,19 +332,6 @@ export default Vue.extend({
     onUploadFinish(err, response) {
       this.uploadStatus = err ? "error" : "success";
       this.importResponse = response;
-    },
-
-    async handleAddNewDataset() {
-      // Make sure that the arguments are sound.
-      const { name, path } = this.availableDatasetSelected;
-      const location = path + "/" + name;
-      const datasetID = name.split(".")[0];
-      if (!location || !datasetID) return;
-
-      this.importResponse = await datasetActions.importAvailableDataset(
-        this.$store,
-        { datasetID, path: location }
-      );
     },
 
     // The dataset will be reimported without sampling.
