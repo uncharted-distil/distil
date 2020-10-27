@@ -667,7 +667,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	// if there are no filters, and we are returning the exclude set, we expect
 	// no results in the filtered set
-	isFiltered := filterParams.Filters != nil || filterParams.Highlight != nil 
+	isFiltered := filterParams.Filters != nil || filterParams.Highlight != nil
 	if invert && !isFiltered {
 		return &api.FilteredData{
 			NumRows: numRows,
@@ -710,7 +710,6 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
 	}
 	query = query + ";"
-
 	// execute the postgres query
 	batch.Queue(query, params...)
 	resBatch := s.client.SendBatch(batch)

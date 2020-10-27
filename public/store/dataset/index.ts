@@ -12,6 +12,7 @@ export interface Highlight {
   dataset: string;
   key: string;
   value: any;
+  include?: string;
 }
 
 export interface Column {
@@ -358,6 +359,7 @@ export interface DatasetState {
   joinTableData: Dictionary<TableData>;
   includedSet: WorkingSet;
   excludedSet: WorkingSet;
+  highlightedSet: WorkingSet;
   pendingRequests: DatasetPendingRequest[];
   task: Task;
   bands: BandCombination[];
@@ -417,7 +419,11 @@ export const state: DatasetState = {
     variableSummariesByKey: {},
     rowSelectionData: [],
   },
-
+  highlightedSet: {
+    tableData: null,
+    variableSummariesByKey: {},
+    rowSelectionData: [],
+  },
   // linked files / representation data
   files: {},
   timeseries: {},

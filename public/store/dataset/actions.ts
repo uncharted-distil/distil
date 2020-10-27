@@ -1249,6 +1249,24 @@ export const actions = {
       dataMode: args.dataMode,
     });
   },
+  fetchHighlightedTableData(
+    context: DatasetContext,
+    args: {
+      dataset: string;
+      filterParams: FilterParams;
+      highlight: Highlight;
+      dataMode: DataMode;
+    }
+  ) {
+    return actions.fetchTableData(context, {
+      dataset: args.dataset,
+      filterParams: args.filterParams,
+      highlight: { ...args.highlight, include: EXCLUDE_FILTER },
+      include: false,
+      dataMode: args.dataMode,
+      isHighlight: true,
+    });
+  },
 
   async fetchTableData(
     context: DatasetContext,
@@ -1258,21 +1276,24 @@ export const actions = {
       highlight: Highlight;
       include: boolean;
       dataMode: DataMode;
+      isHighlight?: boolean;
     }
   ) {
     if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
 
-    const mutator = args.include
+    let mutator = args.include
       ? mutations.setIncludedTableData
       : mutations.setExcludedTableData;
-
-    const filterParams = addHighlightToFilterParams(
+    let filterParams = addHighlightToFilterParams(
       args.filterParams,
-      args.highlight,
-      args.include ? INCLUDE_FILTER : EXCLUDE_FILTER
+      args.highlight
     );
+    if (!!args.isHighlight) {
+      mutator = mutations.setHighlightedTableData; // set mutator for highlight
+      filterParams = { ...filterParams, isHighlight: true }; // add extra param
+    }
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;

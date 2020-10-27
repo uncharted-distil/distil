@@ -8,6 +8,7 @@ import {
   sortVariablesByImportance,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
+import { EXCLUDE_FILTER } from "../../util/filters";
 import { getPredictionsById } from "../../util/predictions";
 import {
   DataMode,
@@ -445,7 +446,21 @@ export const actions = {
       }),
     ]);
   },
-
+  updateHighlight(context: ViewContext) {
+    const dataset = context.getters.getRouteDataset;
+    const highlight = context.getters.getDecodedHighlight;
+    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+    const dataMode = context.getters.getDataMode;
+    return datasetActions.fetchHighlightedTableData(store, {
+      dataset: dataset,
+      filterParams: filterParams,
+      highlight: highlight,
+      dataMode: dataMode,
+    });
+  },
+  clearHighlight(context: ViewContext) {
+    datasetMutations.setHighlightedTableData(store, null);
+  },
   async fetchResultsData(context: ViewContext) {
     // clear previous state
     resultMutations.clearTargetSummary(store);

@@ -103,7 +103,6 @@ export const getters = {
   getFiles(state: DatasetState): Dictionary<any> {
     return state.files;
   },
-
   getTimeseriesExtrema(state: DatasetState): Dictionary<TimeseriesExtrema> {
     return state.timeseriesExtrema;
   },
@@ -119,7 +118,9 @@ export const getters = {
   hasIncludedTableData(state: DatasetState): boolean {
     return !!state.includedSet.tableData;
   },
-
+  getHighlightedSet(state: DatasetState): TableData {
+    return state.highlightedSet.tableData;
+  },
   getIncludedTableData(state: DatasetState): TableData {
     return state.includedSet.tableData;
   },
@@ -133,7 +134,9 @@ export const getters = {
       ? state.includedSet.tableData.numRowsFiltered
       : 0;
   },
-
+  getHighlightedTableDataItems(state: DatasetState) {
+    return getTableDataItems(state.highlightedSet.tableData);
+  },
   getIncludedTableDataItems(state: DatasetState, getters: any): TableRow[] {
     return getTableDataItems(state.includedSet.tableData);
   },

@@ -110,6 +110,7 @@ export interface FilterParams {
   variables: string[];
   size?: number;
   dataMode?: string;
+  isHighlight?: boolean;
 }
 
 /**
