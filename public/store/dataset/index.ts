@@ -209,6 +209,7 @@ export interface TableRow {
   _rowVariant: string;
   _cellVariants: Dictionary<string>;
   d3mIndex?: number;
+  isExcluded?: boolean;
 }
 
 export interface TimeseriesExtrema {

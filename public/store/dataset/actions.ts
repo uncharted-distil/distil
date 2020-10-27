@@ -10,7 +10,11 @@ import {
   validateArgs,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import { FilterParams } from "../../util/filters";
+import {
+  EXCLUDE_FILTER,
+  FilterParams,
+  INCLUDE_FILTER,
+} from "../../util/filters";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import { loadImage } from "../../util/image";
 import {
@@ -1266,7 +1270,8 @@ export const actions = {
 
     const filterParams = addHighlightToFilterParams(
       args.filterParams,
-      args.highlight
+      args.highlight,
+      args.include ? INCLUDE_FILTER : EXCLUDE_FILTER
     );
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
