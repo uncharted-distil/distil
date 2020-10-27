@@ -122,8 +122,12 @@ const fetchVariableSummaries = async (context, args) => {
 
   const allTrainingVariables = routeGetters.getTrainingVariables(store);
 
+  const sortedAllTrainingVariables = ranked
+    ? sortVariablesByImportance(allTrainingVariables.slice())
+    : allTrainingVariables;
+
   const searchedTrainingVariables = searchVariables(
-    allTrainingVariables,
+    sortedAllTrainingVariables,
     trainingSearch
   );
 
