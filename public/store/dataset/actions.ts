@@ -1262,7 +1262,7 @@ export const actions = {
       dataset: args.dataset,
       filterParams: args.filterParams,
       highlight: { ...args.highlight, include: EXCLUDE_FILTER },
-      include: false,
+      include: true,
       dataMode: args.dataMode,
       isHighlight: true,
     });
