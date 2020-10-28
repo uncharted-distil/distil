@@ -171,9 +171,9 @@ export default Vue.extend({
 
     async importAvailableDataset() {
       // Make sure that the arguments are sound.
-      const { name, path } = this.availableDatasetSelected;
-      const location = path + "/" + name;
-      if (!location) return;
+      const { selectedName, selectedPath } = this.availableDatasetSelected;
+      const path = selectedPath + "/" + selectedName;
+      if (!path) return;
 
       // Notify external listeners that the file upload is starting
       this.$emit("uploadstart", {
@@ -184,10 +184,9 @@ export default Vue.extend({
       try {
         const response = await datasetActions.importAvailableDataset(
           this.$store,
-          { datasetID: this.deconflictedName, path: location }
+          { datasetID: this.deconflictedName, path }
         );
 
-        console.debug(response);
         this.$emit("uploadfinish", null, response);
       } catch (error) {
         this.$emit("uploadfinish", error, null);
