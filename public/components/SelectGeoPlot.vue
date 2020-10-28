@@ -55,7 +55,9 @@ export default Vue.extend({
         ? datasetGetters
             .getIncludedTableDataItems(this.$store)
             .concat(highlighted)
-        : datasetGetters.getExcludedTableDataItems(this.$store);
+        : datasetGetters
+            .getExcludedTableDataItems(this.$store)
+            .concat(highlighted);
     },
     trainingVarsSearch(): string {
       return routeGetters.getRouteTrainingVarsSearch(this.$store);
