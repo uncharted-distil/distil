@@ -2,12 +2,12 @@
   <div>
     <!-- Waiting -->
     <b-alert :show="status === 'started'" variant="info">
-      Importing <b>{{ filename }}</b> as <b>{{ datasetId }}</b>
+      Importing <b>{{ name }}</b> as <b>{{ datasetId }}</b>
     </b-alert>
 
     <!-- Success -->
     <b-alert :show="status === 'success'" dismissible variant="success">
-      <i class="fa fa-check-circle-o" /> Imported <b>{{ filename }}</b> as
+      <i class="fa fa-check-circle-o" /> Imported <b>{{ name }}</b> as
       <b>{{ datasetId }}</b>
       <template v-if="isSampling">
         &mdash; Because of its size, the dataset has been sampled to
@@ -22,7 +22,7 @@
     <!-- Error -->
     <b-alert :show="status === 'error'" dismissible variant="danger">
       <i class="fa fa-times-circle-o" /> An unexpected error has happened while
-      importing <b>{{ filename }}</b>
+      importing <b>{{ name }}</b>
     </b-alert>
   </div>
 </template>
@@ -35,7 +35,7 @@ export default Vue.extend({
 
   props: {
     datasetId: { type: String, required: true },
-    filename: { type: String, default: null },
+    name: { type: String, default: null },
     importResponse: { type: Object, default: null },
     numRows: { type: Number, default: null },
     status: { type: String, required: true },

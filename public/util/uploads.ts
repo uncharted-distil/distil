@@ -21,7 +21,9 @@ export function getBase64(file: File): Promise<string> {
 
 // Removes the extension from a filename
 export function removeExtension(filename: string): string {
-  return filename.split(".").slice(0, -1).join(".");
+  const name = filename.split(".");
+  if (name.length === 1) return name[0];
+  return name.slice(0, -1).join(".");
 }
 
 // Given a potential dataset name, will compare against those already stored

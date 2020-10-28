@@ -13,8 +13,8 @@
     </header>
 
     <!-- Add dataset modal -->
-    <add-dataset id="add-dataset" />
-    <file-uploader
+    <add-dataset
+      id="add-dataset"
       @uploadstart="onUploadStart"
       @uploadfinish="onUploadFinish"
     />
@@ -23,7 +23,7 @@
         class="file-uploader-status col-12"
         :status="uploadStatus"
         :import-response="importResponse"
-        :filename="uploadData.filename"
+        :name="uploadData.name"
         :dataset-id="uploadData.datasetID"
         @importfull="onReImportFullDataset"
       />
@@ -144,7 +144,6 @@ import _ from "lodash";
 import Vue from "vue";
 import AddDataset from "../components/AddDataset.vue";
 import DatasetPreview from "../components/DatasetPreview.vue";
-import FileUploader from "../components/FileUploader.vue";
 import ImportStatus from "../components/ImportStatus.vue";
 import ModelPreview from "../components/ModelPreview.vue";
 import SearchBar from "../components/SearchBar.vue";
@@ -166,7 +165,6 @@ export default Vue.extend({
   components: {
     AddDataset,
     DatasetPreview,
-    FileUploader,
     ImportStatus,
     ModelPreview,
     SearchBar,
