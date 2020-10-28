@@ -381,22 +381,22 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 		}
 
 		var explainFeatureURI string
-		if outputs[explainableTypeStep] != nil {
-			explainFeatureURI, err = getFileFromOutput(response, outputs[explainableTypeStep].key)
+		if outputs[ExplainableTypeStep] != nil {
+			explainFeatureURI, err = getFileFromOutput(response, outputs[ExplainableTypeStep].key)
 			if err != nil {
 				return nil, err
 			}
 		}
 		var explainSolutionURI string
-		if outputs[explainableTypeSolution] != nil {
-			explainSolutionURI, err = getFileFromOutput(response, outputs[explainableTypeSolution].key)
+		if outputs[ExplainableTypeSolution] != nil {
+			explainSolutionURI, err = getFileFromOutput(response, outputs[ExplainableTypeSolution].key)
 			if err != nil {
 				return nil, err
 			}
 		}
 		var confidenceResult *api.SolutionExplainResult
-		if outputs[explainableTypeConfidence] != nil {
-			confidenceURI, err := getFileFromOutput(response, outputs[explainableTypeConfidence].key)
+		if outputs[ExplainableTypeConfidence] != nil {
+			confidenceURI, err := getFileFromOutput(response, outputs[ExplainableTypeConfidence].key)
 			if err != nil {
 				return nil, err
 			}
@@ -404,7 +404,7 @@ func GeneratePredictions(datasetURI string, explainedSolutionID string,
 			if err != nil {
 				return nil, err
 			}
-			confidenceResult.ParsingParams = outputs[explainableTypeConfidence].parsingParams
+			confidenceResult.ParsingFunction = outputs[ExplainableTypeConfidence].parsingFunction
 		}
 
 		return &PredictionResult{
@@ -758,7 +758,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			produceOutputs := map[string]*api.SolutionExplainResult{}
 			explainedResults := make(map[string]*api.SolutionExplainResult)
 			for _, explain := range outputKeysExplain {
-				if explain.typ == explainableTypeStep || explain.typ == explainableTypeConfidence {
+				if explain.typ == ExplainableTypeStep || explain.typ == ExplainableTypeConfidence {
 					explainURI := outputKeyURIs[explain.key]
 					log.Infof("explaining feature output from URI '%s'", explainURI)
 					produceDatasetURI = compute.BuildSchemaFileURI(produceDatasetURI)
@@ -767,7 +767,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 						log.Warnf("failed to fetch output explanation - %v", err)
 						continue
 					}
-					parsedExplainResult.ParsingParams = explain.parsingParams
+					parsedExplainResult.ParsingFunction = explain.parsingFunction
 					explainedResults[explain.typ] = parsedExplainResult
 				}
 				produceOutputs[explain.typ] = &api.SolutionExplainResult{
@@ -775,7 +775,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 				}
 			}
 
-			featureWeights := explainedResults[explainableTypeStep]
+			featureWeights := explainedResults[ExplainableTypeStep]
 			if featureWeights != nil {
 				log.Infof("persisting feature weights")
 				err = dataStorage.PersistSolutionFeatureWeight(dataset, storageName, featureWeights.ResultURI, featureWeights.Values)
@@ -786,7 +786,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			}
 
 			// explain the features at the model level if the explanation is available
-			explainSolutionOutput := outputKeysExplain[explainableTypeSolution]
+			explainSolutionOutput := outputKeysExplain[ExplainableTypeSolution]
 			if explainSolutionOutput != nil {
 				explainSolutionURI := outputKeyURIs[explainSolutionOutput.key]
 				log.Infof("explaining solution output from URI '%s'", explainSolutionURI)
@@ -807,7 +807,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			log.Infof("persisting results in URI '%s'", resultURI)
 			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
 				initialSearchID, dataset, storageName, solutionID, initialSearchSolutionID, fittedSolutionID,
-				produceRequestID, resultID, resultURI, explainedResults[explainableTypeConfidence], produceOutputs)
+				produceRequestID, resultID, resultURI, explainedResults[ExplainableTypeConfidence], produceOutputs)
 		}
 	})
 	if err != nil {

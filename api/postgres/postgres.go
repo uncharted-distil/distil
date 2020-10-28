@@ -54,8 +54,7 @@ const (
 			target		text,
 			value		text,
 			confidence double precision,
-			confidence_low double precision,
-			confidence_high double precision
+			explain_values jsonb
 		);`
 
 	// PredictionTableName is the name of the table for prediction requests.

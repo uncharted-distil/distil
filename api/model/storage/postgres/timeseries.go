@@ -119,17 +119,16 @@ func (s *Storage) parseTimeseriesForecast(rows pgx.Rows) ([]*api.TimeseriesObser
 		for rows.Next() {
 			var time float64
 			var value float64
-			var confidenceLow float64
-			var confidenceHigh float64
-			err := rows.Scan(&time, &value, &confidenceLow, &confidenceHigh)
+			var explainValues api.SolutionExplainValues
+			err := rows.Scan(&time, &value, &explainValues)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
 			points = append(points, &api.TimeseriesObservation{
 				Value:          api.NullableFloat64(value),
 				Time:           time,
-				ConfidenceLow:  api.NullableFloat64(confidenceLow),
-				ConfidenceHigh: api.NullableFloat64(confidenceHigh),
+				ConfidenceLow:  api.NullableFloat64(explainValues.LowConfidence),
+				ConfidenceHigh: api.NullableFloat64(explainValues.HighConfidence),
 			})
 		}
 		err := rows.Err()
@@ -147,10 +146,9 @@ func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) ([]*api.Timeser
 		for rows.Next() {
 			var time time.Time
 			var value float64
-			var confidenceLow float64
-			var confidenceHigh float64
+			var explainValues api.SolutionExplainValues
 
-			err := rows.Scan(&time, &value, &confidenceLow, &confidenceHigh)
+			err := rows.Scan(&time, &value, &explainValues)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
@@ -158,8 +156,8 @@ func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) ([]*api.Timeser
 			points = append(points, &api.TimeseriesObservation{
 				Value:          api.NullableFloat64(value),
 				Time:           float64(time.Unix() * 1000),
-				ConfidenceLow:  api.NullableFloat64(confidenceLow),
-				ConfidenceHigh: api.NullableFloat64(confidenceHigh),
+				ConfidenceLow:  api.NullableFloat64(explainValues.LowConfidence),
+				ConfidenceHigh: api.NullableFloat64(explainValues.HighConfidence),
 			})
 		}
 		err := rows.Err()
@@ -351,8 +349,8 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 	// Get count by category.
 	query := fmt.Sprintf(`
 		SELECT "%s", CAST(CASE WHEN result.value = '' THEN 'NaN' ELSE result.value END as double precision),
-		coalesce(result.confidence_low, 'NaN') AS confidence_low, coalesce(result.confidence_high, 'NaN') AS confidence_high
-		FROM %s data INNER JOIN  %s result ON data."%s" = result.index
+		coalesce(result.explain_values, '{}') AS explain_values
+		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		%s
 		ORDER BY %s`,
 		xColName, storageName, s.getResultTable(storageName),
