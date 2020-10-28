@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"os"
 	"path"
 	"path/filepath"
@@ -46,6 +47,30 @@ func WriteFileWithDirs(filename string, data []byte, perm os.FileMode) error {
 
 	// write the file
 	return ioutil.WriteFile(filename, data, perm)
+}
+
+// WriteFormFileWithDirs writes the form multipart file and creates any missing directories along
+// the way.
+func WriteFormFileWithDirs(filename string, formFile multipart.File, perm os.FileMode) error {
+
+	dir, _ := filepath.Split(filename)
+
+	// make all dirs up to the destination
+	err := os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, perm)
+	if err != nil {
+		return errors.Wrap(err, "failed to open file")
+	}
+	defer file.Close()
+	_, err = io.Copy(file, formFile)
+	if err != nil {
+		return errors.Wrap(err, "failed to write form file")
+	}
+	return nil
 }
 
 // Unzip extracts an archive to the given location.

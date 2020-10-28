@@ -122,11 +122,33 @@ func (s *SolutionRequest) createPreFeaturizedPipeline(learningDataset string,
 	name := fmt.Sprintf("prefeaturized-%s-%s-%s", s.Dataset, learningDataset, uuid.String())
 	desc := fmt.Sprintf("Prefeaturized pipeline capturing user feature selection and type information. Dataset: `%s` ID: `%s`", s.Dataset, uuid.String())
 
-	// replace any grouped variables in filter params with the group's
 	expandedFilters, err := api.ExpandFilterParams(s.Dataset, s.Filters, true, metaStorage)
 	if err != nil {
 		return nil, err
 	}
+
+	// Ensure we remove multiband image data (replaced by feature vectors) and geo coordinates polygon
+	// string.  These are in the pre-featurized learning data but are not needed.
+	toRemove := map[string]bool{}
+	for _, variable := range sourceVariables {
+		switch v := variable.Grouping.(type) {
+		case *model.MultiBandImageGrouping:
+			toRemove[v.BandCol] = true
+			toRemove[v.ImageCol] = true
+			toRemove[v.IDCol] = true
+		case *model.GeoBoundsGrouping:
+			toRemove[v.PolygonCol] = true
+		default:
+			continue
+		}
+	}
+	selectedVariables := []string{}
+	for _, v := range expandedFilters.Variables {
+		if _, ok := toRemove[v]; !ok {
+			selectedVariables = append(selectedVariables, v)
+		}
+	}
+	expandedFilters.Variables = selectedVariables
 
 	prefeaturizedPipeline, err := description.CreatePreFeaturizedDatasetPipeline(name, desc,
 		&description.UserDatasetDescription{

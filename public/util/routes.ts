@@ -55,6 +55,7 @@ export interface RouteArgs {
   modelLimit?: number;
   modelQuality?: string;
   dataSize?: number;
+  metrics?: string;
 }
 
 /**

@@ -11,6 +11,7 @@ import {
   Task,
   BandCombination,
   TimeSeriesValue,
+  Metric,
 } from "./index";
 import {
   updateSummariesPerVariable,
@@ -362,5 +363,9 @@ export const mutations = {
 
   updateBands(state: DatasetState, bands: BandCombination[]) {
     state.bands = bands;
+  },
+
+  updateMetrics(state: DatasetState, metrics: Metric[]) {
+    state.metrics = metrics;
   },
 };
