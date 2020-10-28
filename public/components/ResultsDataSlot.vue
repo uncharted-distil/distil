@@ -25,6 +25,7 @@
         :data-fields="dataFields"
         :data-items="dataItems"
         :instance-name="instanceName"
+        :summaries="trainingSummaries"
       />
     </div>
   </div>
@@ -45,6 +46,7 @@ import {
   TaskTypes,
   Variable,
   RowSelection,
+  VariableSummary,
 } from "../store/dataset/index";
 import { Solution, SOLUTION_ERRORED } from "../store/requests/index";
 import { getters as datasetGetters } from "../store/dataset/module";
@@ -57,6 +59,8 @@ import { getters as requestsGetters } from "../store/requests/module";
 import { Dictionary } from "../util/dict";
 import { updateTableRowSelection } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
+import { getVariableSummariesByState, searchVariables } from "../util/data";
+import { isGeoLocatedType } from "../util/types";
 
 const GEO_VIEW = "geo";
 const GRAPH_VIEW = "graph";
@@ -218,6 +222,32 @@ export default Vue.extend({
 
     residualThresholdMax(): number {
       return _.toNumber(routeGetters.getRouteResidualThresholdMax(this.$store));
+    },
+    resultTrainingVarsSearch(): string {
+      return routeGetters.getRouteResultTrainingVarsSearch(this.$store);
+    },
+    trainingVariables(): Variable[] {
+      return searchVariables(
+        requestsGetters.getActiveSolutionTrainingVariables(this.$store),
+        this.resultTrainingVarsSearch
+      );
+    },
+    trainingSummaries(): VariableSummary[] {
+      const summaryDictionary = resultsGetters.getTrainingSummariesDictionary(
+        this.$store
+      );
+      const pageIndex = routeGetters.getRouteResultTrainingVarsPage(
+        this.$store
+      );
+      const currentSummaries = getVariableSummariesByState(
+        pageIndex,
+        this.trainingVariables.length,
+        this.trainingVariables,
+        summaryDictionary
+      );
+      return currentSummaries.filter((cs) => {
+        return isGeoLocatedType(cs.varType);
+      });
     },
   },
 
