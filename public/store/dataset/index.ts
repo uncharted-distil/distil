@@ -359,7 +359,8 @@ export interface DatasetState {
   joinTableData: Dictionary<TableData>;
   includedSet: WorkingSet;
   excludedSet: WorkingSet;
-  highlightedSet: WorkingSet;
+  highlightedIncludeSet: WorkingSet;
+  highlightedExcludeSet: WorkingSet;
   pendingRequests: DatasetPendingRequest[];
   task: Task;
   bands: BandCombination[];
@@ -419,7 +420,12 @@ export const state: DatasetState = {
     variableSummariesByKey: {},
     rowSelectionData: [],
   },
-  highlightedSet: {
+  highlightedIncludeSet: {
+    tableData: null,
+    variableSummariesByKey: {},
+    rowSelectionData: [],
+  },
+  highlightedExcludeSet: {
     tableData: null,
     variableSummariesByKey: {},
     rowSelectionData: [],

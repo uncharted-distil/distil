@@ -118,8 +118,11 @@ export const getters = {
   hasIncludedTableData(state: DatasetState): boolean {
     return !!state.includedSet.tableData;
   },
-  getHighlightedSet(state: DatasetState): TableData {
-    return state.highlightedSet.tableData;
+  getHighlightedIncludeSet(state: DatasetState): TableData {
+    return state.highlightedIncludeSet.tableData;
+  },
+  getHighlightedExcludeSet(state: DatasetState): TableData {
+    return state.highlightedExcludeSet.tableData;
   },
   getIncludedTableData(state: DatasetState): TableData {
     return state.includedSet.tableData;
@@ -134,8 +137,11 @@ export const getters = {
       ? state.includedSet.tableData.numRowsFiltered
       : 0;
   },
-  getHighlightedTableDataItems(state: DatasetState) {
-    return getTableDataItems(state.highlightedSet.tableData);
+  getHighlightedIncludeTableDataItems(state: DatasetState) {
+    return getTableDataItems(state.highlightedIncludeSet.tableData);
+  },
+  getHighlightedExcludeTableDataItems(state: DatasetState) {
+    return getTableDataItems(state.highlightedExcludeSet.tableData);
   },
   getIncludedTableDataItems(state: DatasetState, getters: any): TableRow[] {
     return getTableDataItems(state.includedSet.tableData);

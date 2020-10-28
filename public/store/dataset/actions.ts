@@ -1256,13 +1256,14 @@ export const actions = {
       filterParams: FilterParams;
       highlight: Highlight;
       dataMode: DataMode;
+      include: boolean;
     }
   ) {
     return actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
       highlight: { ...args.highlight, include: EXCLUDE_FILTER },
-      include: true,
+      include: args.include,
       dataMode: args.dataMode,
       isHighlight: true,
     });
@@ -1291,7 +1292,9 @@ export const actions = {
       args.highlight
     );
     if (!!args.isHighlight) {
-      mutator = mutations.setHighlightedTableData; // set mutator for highlight
+      mutator = args.include
+        ? mutations.setHighlightedIncludeTableData
+        : mutations.setHighlightedExcludeTableData; // set mutator for highlight
       filterParams = { ...filterParams, isHighlight: true }; // add extra param
     }
 

@@ -451,15 +451,26 @@ export const actions = {
     const highlight = context.getters.getDecodedHighlight;
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
     const dataMode = context.getters.getDataMode;
-    return datasetActions.fetchHighlightedTableData(store, {
-      dataset: dataset,
-      filterParams: filterParams,
-      highlight: highlight,
-      dataMode: dataMode,
-    });
+    return Promise.all([
+      datasetActions.fetchHighlightedTableData(store, {
+        dataset: dataset,
+        filterParams: filterParams,
+        highlight: highlight,
+        dataMode: dataMode,
+        include: true,
+      }), // include
+      datasetActions.fetchHighlightedTableData(store, {
+        dataset: dataset,
+        filterParams: filterParams,
+        highlight: highlight,
+        dataMode: dataMode,
+        include: false,
+      }), // exclude
+    ]);
   },
   clearHighlight(context: ViewContext) {
-    datasetMutations.setHighlightedTableData(store, null);
+    datasetMutations.setHighlightedIncludeTableData(store, null);
+    datasetMutations.setHighlightedExcludeTableData(store, null);
   },
   async fetchResultsData(context: ViewContext) {
     // clear previous state

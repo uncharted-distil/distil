@@ -52,8 +52,11 @@ export const getters = {
   // join data
   getJoinDatasetsTableData: read(moduleGetters.getJoinDatasetsTableData),
   // highlighted data
-  getHighlightedTableDataItems: read(
-    moduleGetters.getHighlightedTableDataItems
+  getHighlightedIncludeTableDataItems: read(
+    moduleGetters.getHighlightedIncludeTableDataItems
+  ),
+  getHighlightedExcludeTableDataItems: read(
+    moduleGetters.getHighlightedExcludeTableDataItems
   ),
   // included data
   hasIncludedTableData: read(moduleGetters.hasIncludedTableData),
@@ -180,7 +183,12 @@ export const mutations = {
   clearJoinDatasetsTableData: commit(
     moduleMutations.clearJoinDatasetsTableData
   ),
-  setHighlightedTableData: commit(moduleMutations.setHighlightedTableData),
+  setHighlightedIncludeTableData: commit(
+    moduleMutations.setHighlightedIncludeTableData
+  ),
+  setHighlightedExcludeTableData: commit(
+    moduleMutations.setHighlightedExcludeTableData
+  ),
   setIncludedTableData: commit(moduleMutations.setIncludedTableData),
   setExcludedTableData: commit(moduleMutations.setExcludedTableData),
   updateBands: commit(moduleMutations.updateBands),
