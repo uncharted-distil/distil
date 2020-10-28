@@ -1,37 +1,42 @@
 <template>
-  <b-modal
-    id="upload-modal"
-    title="Import Local File"
-    :ok-disabled="!Boolean(file) || this.importDataName.length <= 0"
-    ok-title="Upload Local File"
-    @ok="handleOk()"
-    @show="clearForm()"
-  >
-    <b-form-group label="Source File (csv, zip)">
-      <b-form-file
-        ref="fileinput"
-        v-model="file"
-        :state="Boolean(file)"
-        accept=".csv, .zip"
-        plain
-      />
-    </b-form-group>
-
-    <b-form-group
-      label="Dataset Name"
-      label-for="import-name-input"
-      invalid-feedback="Dataset name required"
-      :state="importDataNameState"
+  <div>
+    <b-button block variant="primary" v-b-modal.upload-modal>
+      <i class="fa fa-plus-circle"></i> Import File
+    </b-button>
+    <b-modal
+      id="upload-modal"
+      title="Import Local File"
+      :ok-disabled="!Boolean(file) || this.importDataName.length <= 0"
+      ok-title="Upload Local File"
+      @ok="handleOk()"
+      @show="clearForm()"
     >
-      <b-form-input
-        ref="importnameinput"
-        id="import-name-input"
-        v-model="importDataName"
+      <b-form-group label="Source File (csv, zip)">
+        <b-form-file
+          ref="fileinput"
+          v-model="file"
+          :state="Boolean(file)"
+          accept=".csv, .zip"
+          plain
+        />
+      </b-form-group>
+
+      <b-form-group
+        label="Dataset Name"
+        label-for="import-name-input"
+        invalid-feedback="Dataset name required"
         :state="importDataNameState"
-        required
-      />
-    </b-form-group>
-  </b-modal>
+      >
+        <b-form-input
+          ref="importnameinput"
+          id="import-name-input"
+          v-model="importDataName"
+          :state="importDataNameState"
+          required
+        />
+      </b-form-group>
+    </b-modal>
+  </div>
 </template>
 
 <script lang="ts">
