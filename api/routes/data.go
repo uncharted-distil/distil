@@ -72,7 +72,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 			return
 		}
 		// isHighlight added for querying data the highlighted data for data tables
-		if params["isHighlight"] == nil && expandedFilterParams.Filters == nil{
+		if params["isHighlight"] == nil && expandedFilterParams.Filters == nil {
 			expandedFilterParams.Highlight = nil
 		}
 		// fetch filtered data based on the supplied search parameters
