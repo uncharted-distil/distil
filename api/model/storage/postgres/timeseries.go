@@ -16,7 +16,6 @@
 package postgres
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"sort"
@@ -147,16 +146,11 @@ func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) ([]*api.Timeser
 		for rows.Next() {
 			var time time.Time
 			var value float64
-			var explainValuesJSON string
+			var explainValues api.SolutionExplainValues
 
-			err := rows.Scan(&time, &value, &explainValuesJSON)
+			err := rows.Scan(&time, &value, &explainValues)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
-			}
-			var explainValues *api.SolutionExplainValues
-			err = json.Unmarshal([]byte(explainValuesJSON), explainValues)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to unmarshal explained values")
 			}
 
 			points = append(points, &api.TimeseriesObservation{
