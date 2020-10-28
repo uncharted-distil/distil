@@ -120,17 +120,16 @@ func (s *Storage) parseTimeseriesForecast(rows pgx.Rows) ([]*api.TimeseriesObser
 		for rows.Next() {
 			var time float64
 			var value float64
-			var confidenceLow float64
-			var confidenceHigh float64
-			err := rows.Scan(&time, &value, &confidenceLow, &confidenceHigh)
+			var explainValues api.SolutionExplainValues
+			err := rows.Scan(&time, &value, &explainValues)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
 			points = append(points, &api.TimeseriesObservation{
 				Value:          api.NullableFloat64(value),
 				Time:           time,
-				ConfidenceLow:  api.NullableFloat64(confidenceLow),
-				ConfidenceHigh: api.NullableFloat64(confidenceHigh),
+				ConfidenceLow:  api.NullableFloat64(explainValues.LowConfidence),
+				ConfidenceHigh: api.NullableFloat64(explainValues.HighConfidence),
 			})
 		}
 		err := rows.Err()

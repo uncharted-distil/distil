@@ -114,9 +114,9 @@ type SolutionExplainResult struct {
 
 // SolutionExplainValues represent use case specific explain output by row.
 type SolutionExplainValues struct {
-	LowConfidence  float64     `json:"lowConfidence"`
-	HighConfidence float64     `json:"highConfidence"`
-	GradCAM        [][]float64 `json:"gradCAM"`
+	LowConfidence  float64     `json:"lowConfidence,omitempty"`
+	HighConfidence float64     `json:"highConfidence,omitempty"`
+	GradCAM        [][]float64 `json:"gradCAM,omitempty"`
 }
 
 // SolutionResultExplainOutput captures the explainable output from a produce call.

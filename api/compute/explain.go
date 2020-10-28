@@ -119,19 +119,27 @@ type pipelineOutput struct {
 }
 
 func parseConfidencesWrapper(params []int) func([]string) (*api.SolutionExplainValues, error) {
+	lowIndex := params[0]
+	highIndex := params[1]
 	return func(data []string) (*api.SolutionExplainValues, error) {
-		low, err := strconv.ParseFloat(data[params[0]], 64)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to parse low confidence")
+		result := &api.SolutionExplainValues{}
+		if data[lowIndex] != "" {
+			low, err := strconv.ParseFloat(data[lowIndex], 64)
+			if err != nil {
+				return nil, errors.Wrapf(err, "unable to parse low confidence")
+			}
+			result.LowConfidence = low
 		}
-		high, err := strconv.ParseFloat(data[params[1]], 64)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to parse high confidence")
+		if data[highIndex] != "" {
+
+			high, err := strconv.ParseFloat(data[highIndex], 64)
+			if err != nil {
+				return nil, errors.Wrapf(err, "unable to parse high confidence")
+			}
+			result.HighConfidence = high
 		}
-		return &api.SolutionExplainValues{
-			LowConfidence:  low,
-			HighConfidence: high,
-		}, nil
+
+		return result, nil
 	}
 }
 

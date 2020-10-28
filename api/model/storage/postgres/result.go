@@ -16,7 +16,6 @@
 package postgres
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -154,7 +153,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	explainValues := make(map[string]*api.SolutionExplainValues)
 	if explainResult != nil {
 		// build the confidence lookup
-		for _, row := range explainResult.Values {
+		for _, row := range explainResult.Values[1:] {
 			parsedExplainValues, err := explainResult.ParsingFunction(row)
 			if err != nil {
 				return err
@@ -230,12 +229,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			dataForInsert = append(dataForInsert, cfs)
 		}
 		if explainValues[records[i][d3mIndexIndex]] != nil {
-			parsedExplain := explainValues[records[i][d3mIndexIndex]]
-			parsedExplainJSON, err := json.Marshal(parsedExplain)
-			if err != nil {
-				return errors.Wrapf(err, "unable to marshal explain output")
-			}
-			dataForInsert = append(dataForInsert, string(parsedExplainJSON))
+			dataForInsert = append(dataForInsert, explainValues[records[i][d3mIndexIndex]])
 		}
 
 		insertData = append(insertData, dataForInsert)
