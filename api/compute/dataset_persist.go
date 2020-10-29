@@ -604,3 +604,48 @@ func SampleDataset(rawData [][]string, maxRows int, hasHeader bool) [][]string {
 
 	return output
 }
+
+// CreateBatches splits the dataset into batches of at most maxBatchSize rows,
+// returning paths to the schema files for all resulting batches.
+func CreateBatches(schemaFile string, maxBatchSize int) ([]string, error) {
+	// load the metadata of the source dataset
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, false)
+	if err != nil {
+		return nil, err
+	}
+	rootPath := env.ResolvePath(metadata.Batch, meta.ID)
+
+	// load the main data
+	dataStorage := serialization.GetStorage(meta.GetMainDataResource().ResPath)
+	data, err := dataStorage.ReadData(meta.GetMainDataResource().ResPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// iteratively take subsets of the data and write it to output
+	outputURIs := []string{}
+	for i, min := 1, 1; min < len(data); i++ {
+		max := min + maxBatchSize
+		if max > len(data) {
+			max = len(data)
+		}
+		subset := data[min:max]
+
+		batchURI := path.Join(rootPath, fmt.Sprintf("batch-%d", i))
+		err := dataStorage.WriteData(path.Join(batchURI, compute.D3MDataFolder, compute.D3MLearningData), subset)
+		if err != nil {
+			return nil, err
+		}
+
+		// write out the metadata as well (updating the dataset id to reflect the batch nature)
+		meta.GetMainDataResource().ResPath = batchURI
+		meta.ID = fmt.Sprintf("%s-batch-%d", meta.ID, i)
+		err = dataStorage.WriteMetadata(path.Join(batchURI, compute.D3MDataSchema), meta, true, false)
+		if err != nil {
+			return nil, err
+		}
+		outputURIs = append(outputURIs, batchURI)
+	}
+
+	return outputURIs, nil
+}
