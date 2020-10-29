@@ -43,9 +43,21 @@ export default Vue.extend({
     },
 
     items(): TableRow[] {
+      const tableData = this.includedActive
+        ? datasetGetters.getHighlightedIncludeTableDataItems(this.$store)
+        : datasetGetters.getHighlightedExcludeTableDataItems(this.$store);
+      const highlighted = tableData
+        ? tableData.map((h) => {
+            return { ...h, isExcluded: true };
+          })
+        : [];
       return this.includedActive
-        ? datasetGetters.getIncludedTableDataItems(this.$store)
-        : datasetGetters.getExcludedTableDataItems(this.$store);
+        ? datasetGetters
+            .getIncludedTableDataItems(this.$store)
+            .concat(highlighted)
+        : datasetGetters
+            .getExcludedTableDataItems(this.$store)
+            .concat(highlighted);
     },
     trainingVarsSearch(): string {
       return routeGetters.getRouteTrainingVarsSearch(this.$store);

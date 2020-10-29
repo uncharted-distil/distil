@@ -422,7 +422,7 @@ export default Vue.extend({
                 lng: lng,
                 lat: lat,
                 row: item,
-                color: this.colorPrediction(item),
+                color: this.tileColor(item),
               };
             }
 
@@ -479,7 +479,7 @@ export default Vue.extend({
           [fullCoordinates[5].Float, fullCoordinates[4].Float], // Corner C as [Lat, Lng]
         ] as LatLngBoundsLiteral;
 
-        const color = this.colorPrediction(item);
+        const color = this.tileColor(item);
 
         longitudes.push(fullCoordinates[4].Float - fullCoordinates[0].Float); // Corner C Lng - Corner A Lng
 
@@ -975,7 +975,6 @@ export default Vue.extend({
         console.error("Error createHighlight no available key");
         return;
       }
-
       updateHighlight(this.$router, {
         context: this.instanceName,
         dataset: this.dataset,
@@ -1019,7 +1018,7 @@ export default Vue.extend({
       this.isImageDrilldown = false;
     },
 
-    colorPrediction(item: any) {
+    tileColor(item: any) {
       let color = "#255DCC"; // Default
 
       if (item[this.targetField] && item[this.predictedField]) {
@@ -1027,6 +1026,9 @@ export default Vue.extend({
           item[this.targetField].value === item[this.predictedField].value
             ? "#03c003" // Correct: green.
             : "#be0000"; // Incorrect: red.
+      }
+      if (item.isExcluded) {
+        return "#999999";
       }
 
       return color;

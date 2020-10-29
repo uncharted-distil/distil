@@ -335,7 +335,12 @@ export const mutations = {
   clearJoinDatasetsTableData(state: DatasetState) {
     state.joinTableData = {};
   },
-
+  setHighlightedIncludeTableData(state: DatasetState, tableData: TableData) {
+    state.highlightedIncludeSet.tableData = Object.freeze(tableData);
+  },
+  setHighlightedExcludeTableData(state: DatasetState, tableData: TableData) {
+    state.highlightedExcludeSet.tableData = Object.freeze(tableData);
+  },
   // sets the current selected data into the store
   setIncludedTableData(state: DatasetState, tableData: TableData) {
     // freezing the return to prevent slow, unnecessary deep reactivity.

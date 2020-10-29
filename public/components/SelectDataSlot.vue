@@ -39,7 +39,7 @@
     <div class="table-title-container">
       <p class="selection-data-slot-summary">
         <data-size
-          :currentSize="numItems"
+          :currentSize="numRows"
           :total="numRows"
           @submit="onDataSizeSubmit"
         />

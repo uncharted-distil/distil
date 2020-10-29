@@ -137,6 +137,11 @@ export default Vue.extend({
   watch: {
     highlightString() {
       viewActions.updateSelectTrainingData(this.$store);
+      if (!this.highlightString) {
+        viewActions.clearHighlight(this.$store);
+        return;
+      }
+      viewActions.updateHighlight(this.$store);
     },
     trainingStr() {
       viewActions.updateSelectTrainingData(this.$store);
