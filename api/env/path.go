@@ -60,7 +60,7 @@ func Initialize(config *Config) error {
 
 	contribPath = config.DatamartImportFolder
 	augmentedPath = path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
-	augmentedPath = path.Join(config.D3MOutputDir, config.BatchSubFolder)
+	batchPath = path.Join(config.D3MOutputDir, config.BatchSubFolder)
 
 	log.Infof("using '%s' as seed path", seedPath)
 	log.Infof("using '%s' as seed sub path", seedSubPath)

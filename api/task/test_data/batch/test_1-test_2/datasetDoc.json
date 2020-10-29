@@ -1,0 +1,86 @@
+{
+	"about": {
+		"datasetID": "test_1-test_2",
+		"datasetName": "test_1-test_2",
+		"datasetSchemaVersion": "4.0.0",
+		"description": "test_1-test_2",
+		"license": "Unknown",
+		"mergedSchema": "false",
+		"parentDatasetIDs": null,
+		"rawData": false,
+		"redacted": false,
+		"storageName": "d_test_1_test_2"
+	},
+	"dataResources": [
+		{
+			"columns": [
+				{
+					"colDescription": "",
+					"colDisplayName": "D3M Index",
+					"colIndex": 0,
+					"colName": "d3mIndex",
+					"colOriginalName": "",
+					"colOriginalType": "",
+					"colType": "integer",
+					"deleted": false,
+					"distilRole": "data",
+					"grouping": null,
+					"importance": 0,
+					"max": 0,
+					"min": 0,
+					"refersTo": null,
+					"role": null,
+					"selectedRole": "",
+					"suggestedTypes": null
+				},
+				{
+					"colDescription": "",
+					"colDisplayName": "Alpha",
+					"colIndex": 1,
+					"colName": "alpha",
+					"colOriginalName": "",
+					"colOriginalType": "",
+					"colType": "real",
+					"deleted": false,
+					"distilRole": "data",
+					"grouping": null,
+					"importance": 0,
+					"max": 0,
+					"min": 0,
+					"refersTo": null,
+					"role": null,
+					"selectedRole": "",
+					"suggestedTypes": null
+				},
+				{
+					"colDescription": "",
+					"colDisplayName": "Charlie",
+					"colIndex": 2,
+					"colName": "Charlie",
+					"colOriginalName": "Charlie",
+					"colOriginalType": "categorical",
+					"colType": "categorical",
+					"deleted": false,
+					"distilRole": "data",
+					"grouping": null,
+					"importance": 0,
+					"max": 0,
+					"min": 0,
+					"refersTo": null,
+					"role": null,
+					"selectedRole": "",
+					"suggestedTypes": null
+				}
+			],
+			"isCollection": false,
+			"resFormat": {
+				"text/csv": [
+					"csv"
+				]
+			},
+			"resID": "learningData",
+			"resPath": "test_data/batch/test_1-test_2/tables",
+			"resType": "table"
+		}
+	]
+}
