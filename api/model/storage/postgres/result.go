@@ -569,7 +569,7 @@ func addIncludeConfidenceResultToWhere(wheres []string, params []interface{}, co
 }
 
 func addExcludeConfidenceResultToWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter) ([]string, []interface{}, error) {
-	where := fmt.Sprintf("(confidence < $%d AND confidence > $%d)", len(params)+1, len(params)+2)
+	where := fmt.Sprintf("(confidence < $%d OR confidence > $%d)", len(params)+1, len(params)+2)
 	params = append(params, *confidenceFilter.Min)
 	params = append(params, *confidenceFilter.Max)
 
