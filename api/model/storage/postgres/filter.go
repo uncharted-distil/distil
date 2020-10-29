@@ -488,7 +488,7 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 }
 
 func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter) ([]string, []interface{}, error) {
-	// Add a clause to filter residuals to the existing where
+	// Add a clause to filter confidence to the existing where
 	where := fmt.Sprintf("(result.confidence >= $%d AND result.confidence <= $%d)", len(params)+1, len(params)+2)
 	params = append(params, *confidenceFilter.Min)
 	params = append(params, *confidenceFilter.Max)
