@@ -141,6 +141,10 @@ export function addHighlightToFilterParams(
   highlight: Highlight,
   mode: string = INCLUDE_FILTER
 ): FilterParams {
+  if (highlight && highlight.include) {
+    // added the potential for tweaking the mode outside of the immediate store code
+    mode = highlight.include;
+  }
   const params = _.cloneDeep(filterParams);
   const highlightFilter = createFilterFromHighlight(highlight, mode);
   if (highlightFilter) {

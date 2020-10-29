@@ -10,7 +10,11 @@ import {
   validateArgs,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import { FilterParams } from "../../util/filters";
+import {
+  EXCLUDE_FILTER,
+  FilterParams,
+  INCLUDE_FILTER,
+} from "../../util/filters";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import { loadImage } from "../../util/image";
 import {
@@ -1265,6 +1269,25 @@ export const actions = {
       dataMode: args.dataMode,
     });
   },
+  fetchHighlightedTableData(
+    context: DatasetContext,
+    args: {
+      dataset: string;
+      filterParams: FilterParams;
+      highlight: Highlight;
+      dataMode: DataMode;
+      include: boolean;
+    }
+  ) {
+    return actions.fetchTableData(context, {
+      dataset: args.dataset,
+      filterParams: args.filterParams,
+      highlight: { ...args.highlight, include: EXCLUDE_FILTER },
+      include: args.include,
+      dataMode: args.dataMode,
+      isHighlight: true,
+    });
+  },
 
   async fetchTableData(
     context: DatasetContext,
@@ -1274,20 +1297,26 @@ export const actions = {
       highlight: Highlight;
       include: boolean;
       dataMode: DataMode;
+      isHighlight?: boolean;
     }
   ) {
     if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
 
-    const mutator = args.include
+    let mutator = args.include
       ? mutations.setIncludedTableData
       : mutations.setExcludedTableData;
-
-    const filterParams = addHighlightToFilterParams(
+    let filterParams = addHighlightToFilterParams(
       args.filterParams,
       args.highlight
     );
+    if (!!args.isHighlight) {
+      mutator = args.include
+        ? mutations.setHighlightedIncludeTableData
+        : mutations.setHighlightedExcludeTableData; // set mutator for highlight
+      filterParams = { ...filterParams, isHighlight: true }; // add extra param
+    }
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;
