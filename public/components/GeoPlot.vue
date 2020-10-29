@@ -21,13 +21,12 @@
       :visible="isImageDrilldown"
     /> -->
     <drill-down
-      v-if="isMultiBandImage"
+      v-if="showDrillDown"
       :dataFields="dataFields"
       :imageType="imageType"
       :tiles="drillDownState.tiles"
       :centerTile="drillDownState.centerTile"
       :bounds="drillDownState.bounds"
-      :visible="isImageDrilldown"
     />
     <div
       class="selection-toggle"
@@ -276,16 +275,6 @@ export default Vue.extend({
     imageType(): string {
       return MULTIBAND_IMAGE_TYPE;
     },
-    /*
-     Flag to decide if we display accurate areas based on coordinates, or if they are physically
-     too small, we present a circle big enough for the user to interact with them.
-    */
-    displayCircleMarker(): boolean {
-      const pointA = this.map.latLngToContainerPoint([0, 0]);
-      const pointB = this.map.latLngToContainerPoint([0, this.areasMeanLng]);
-      const distanceInPixel = Math.abs(pointB.x - pointA.x);
-      return distanceInPixel < TARGETSIZE;
-    },
 
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
@@ -310,6 +299,9 @@ export default Vue.extend({
     },
     toastId(): string {
       return `notifications-${this.instanceName}`;
+    },
+    showDrillDown(): boolean {
+      return this.isImageDrilldown;
     },
     fieldSpecs(): GeoField[] {
       const variables = datasetGetters.getVariables(this.$store);
@@ -470,42 +462,7 @@ export default Vue.extend({
       if (!this.dataItems) {
         return [];
       }
-      // Array to store the longitude width (degrees) of each areas.
-      const longitudes = [];
-
-      const areas = this.dataItems.map((item) => {
-        const imageUrl = this.isMultiBandImage ? item.group_id.value : null;
-        const fullCoordinates = item.coordinates.value.Elements;
-        if (fullCoordinates.some((x) => x === undefined)) return;
-
-        /*
-          Item store the coordinates as a list of 8 values being four pairs of [Lng, Lat],
-          one for each corner of the isMultiBandImage-sensing image.
-
-          [0,1]     [2,3]
-            A-------B
-            |       |
-            |       |
-            D-------C
-          [6,7]     [4,5]
-        */
-        const coordinates = [
-          [fullCoordinates[1].Float, fullCoordinates[0].Float], // Corner A as [Lat, Lng]
-          [fullCoordinates[5].Float, fullCoordinates[4].Float], // Corner C as [Lat, Lng]
-        ] as LatLngBoundsLiteral;
-
-        const color = this.tileColor(item);
-
-        longitudes.push(fullCoordinates[4].Float - fullCoordinates[0].Float); // Corner C Lng - Corner A Lng
-
-        return { item, imageUrl, coordinates, color } as Area;
-      });
-
-      // Calculate the mean longitude of the areas.
-      this.areasMeanLng =
-        longitudes.reduce((acc, val) => acc + val, 0) / longitudes.length;
-
-      return areas;
+      return this.tableDataToAreas(this.dataItems);
     },
 
     highlight(): Highlight {
@@ -562,7 +519,11 @@ export default Vue.extend({
           this.$emit("tileClicked", {
             bounds: this.drillDownState.bounds,
             callback: () => {
-              this.isImageDrilldown;
+              this.drillDownState.tiles = this.tableDataToAreas(
+                datasetGetters.getAreaOfInterestIncludeItems(this.$store)
+              );
+              console.log(this.drillDownState.tiles);
+              this.isImageDrilldown = true;
             },
           });
         },
@@ -640,7 +601,11 @@ export default Vue.extend({
           this.$emit("tileClicked", {
             bounds: this.drillDownState.bounds,
             callback: () => {
-              this.isImageDrilldown;
+              this.drillDownState.tiles = this.tableDataToAreas(
+                datasetGetters.getAreaOfInterestIncludeItems(this.$store)
+              );
+              console.log(this.drillDownState.tiles);
+              this.isImageDrilldown = true;
             },
           });
           // this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
@@ -940,6 +905,35 @@ export default Vue.extend({
         result.push({ ...p2, ...color, ...id });
       });
       return result;
+    },
+    tableDataToAreas(tableData: any[]): Area[] {
+      const areas = tableData.map((item) => {
+        const imageUrl = this.isMultiBandImage ? item.group_id.value : null;
+        const fullCoordinates = item.coordinates.value.Elements;
+        if (fullCoordinates.some((x) => x === undefined)) return;
+
+        /*
+          Item store the coordinates as a list of 8 values being four pairs of [Lng, Lat],
+          one for each corner of the isMultiBandImage-sensing image.
+
+          [0,1]     [2,3]
+            A-------B
+            |       |
+            |       |
+            D-------C
+          [6,7]     [4,5]
+        */
+        const coordinates = [
+          [fullCoordinates[1].Float, fullCoordinates[0].Float], // Corner A as [Lat, Lng]
+          [fullCoordinates[5].Float, fullCoordinates[4].Float], // Corner C as [Lat, Lng]
+        ] as LatLngBoundsLiteral;
+
+        const color = this.tileColor(item);
+
+        return { item, imageUrl, coordinates, color } as Area;
+      });
+
+      return areas;
     },
     // callback when zooming on map
     onZoom() {

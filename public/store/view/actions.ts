@@ -475,7 +475,11 @@ export const actions = {
     const dataMode = context.getters.getDataMode;
     // artificially add filter but dont add it to the url
     // this is a hack to avoid adding an extra field just for the area of interest
-    filterParams.filters.push(filter);
+    if (!filterParams.filters.length) {
+      filterParams.filters.push(filter);
+    } else {
+      filterParams.filters[0] = filter;
+    }
     return Promise.all([
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
