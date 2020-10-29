@@ -1,0 +1,121 @@
+<template>
+  <div class="drill-down-container">
+    <b-container>
+      <b-row v-for="r in rows" :key="r">
+        <b-col v-for="c in cols" :key="c">
+          <image-label
+            class="image-label"
+            :dataFields="dataFields"
+            includedActive
+            shortenLabels
+            alignHorizontal
+            :item="tilesToRender[r * c + c].item"
+          />
+          <image-preview
+            class="image-preview"
+            :row="tilesToRender[r * c].item"
+            :image-url="tilesToRender[r * c + c].url"
+            :width="imageWidth"
+            :height="imageHeight"
+            :type="imageType"
+          ></image-preview>
+        </b-col>
+      </b-row>
+    </b-container>
+  </div>
+</template>
+
+<script lang="ts">
+import Vue from "vue";
+import ImagePreview from "./ImagePreview.vue";
+import ImageLabel from "./ImageLabel.vue";
+import { TableRow, TableColumn } from "../store/dataset/index";
+import { Dictionary } from "../util/dict";
+
+interface Tile {
+  url: string;
+  item: TableRow;
+  coordinates: number[][];
+}
+interface SpatialIndex {
+  x: number;
+  y: number;
+}
+interface Dimensions {
+  width: number;
+  height: number;
+}
+export default Vue.extend({
+  name: "drill-down",
+
+  components: {
+    ImagePreview,
+    ImageLabel,
+  },
+
+  props: {
+    tiles: { type: Array as () => Tile[], default: [] },
+    rows: { type: Number, default: 5 },
+    cols: { type: Number, default: 7 },
+    imageWidth: { type: Number, default: 128 },
+    imageHeight: { type: Number, default: 128 },
+    imageType: { type: String },
+    dataFields: Object as () => Dictionary<TableColumn>,
+    bounds: { type: Array as () => number[][] },
+    centerTile: {
+      type: Object as () => Tile,
+      default: { url: null, item: null, coordinates: null },
+    },
+  },
+
+  computed: {
+    tileDims(): Dimensions {
+      return {
+        width:
+          this.centerTile.coordinates[0][0] - this.centerTile.coordinates[1][0],
+        height:
+          this.centerTile.coordinates[0][1] - this.centerTile.coordinates[1][1],
+      };
+    },
+    tilesToRender(): Tile[] {
+      return this.spatialSort();
+    },
+  },
+  methods: {
+    getIndex(x: number, y: number): SpatialIndex {
+      const minX = this.bounds[0][1];
+      const minY = this.bounds[0][0];
+      return {
+        x: Math.floor(x - minX / this.tileDims.width),
+        y: Math.floor(y - minY / this.tileDims.height),
+      };
+    },
+    spatialSort(): Tile[] {
+      const result = Array(this.rows * this.cols).fill({
+        url: null,
+        item: null,
+        coordinates: null,
+      });
+      // loop through and build spatial array
+      this.tiles.forEach((t) => {
+        const indices = this.getIndex(t.coordinates[0][1], t.coordinates[0][0]);
+        result[indices.y * indices.x + indices.x] = t;
+      });
+      // normalize coordinates
+      return result;
+    },
+  },
+});
+</script>
+
+<style scoped>
+.drill-down-container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  flex-direction: column;
+}
+</style>

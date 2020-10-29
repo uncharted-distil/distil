@@ -12,12 +12,21 @@
       tabindex="0"
     ></div>
 
-    <image-drilldown
+    <!-- <image-drilldown
       v-if="isMultiBandImage"
       @hide="hideImageDrilldown"
       :dataFields="dataFields"
       :imageUrl="imageUrl"
       :item="item"
+      :visible="isImageDrilldown"
+    /> -->
+    <drill-down
+      v-if="isMultiBandImage"
+      :dataFields="dataFields"
+      :imageType="imageType"
+      :tiles="drillDownState.tiles"
+      :centerTile="drillDownState.centerTile"
+      :bounds="drillDownState.bounds"
       :visible="isImageDrilldown"
     />
     <div
@@ -106,12 +115,8 @@ import {
   GeoCoordinateGrouping,
   VariableSummary,
 } from "../store/dataset/index";
-import {
-  updateHighlight,
-  highlightsExist,
-  clearHighlight,
-} from "../util/highlights";
-import ImagePreview from "../components/ImagePreview";
+import { updateHighlight, highlightsExist } from "../util/highlights";
+import ImagePreview from "../components/ImagePreview.vue";
 import {
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
@@ -127,6 +132,8 @@ import "leaflet/dist/images/marker-icon-2x.png";
 import "leaflet/dist/images/marker-shadow.png";
 import { BLUE_PALETTE } from "../util/color";
 import { getTileHandler } from "../util/app";
+import DrillDown from "./DrillDown.vue";
+
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
 
@@ -201,6 +208,7 @@ export default Vue.extend({
     ImageDrilldown,
     ImageLabel,
     ImagePreview,
+    DrillDown,
   },
 
   props: {
@@ -241,6 +249,11 @@ export default Vue.extend({
       imageHeight: 128,
       previousZoom: 0,
       currentState: null,
+      drillDownState: {
+        tiles: null,
+        bounds: null,
+        centerTile: null,
+      },
       selectionToolData: {
         startPoint: null,
         currentPoint: null,
