@@ -89,7 +89,7 @@ export default Vue.extend({
     },
   },
   methods: {
-    onTileClick(args: { bounds: number[][]; callback: () => void }) {
+    async onTileClick(args: { bounds: number[][]; callback: () => void }) {
       const filter = {
         displayName: "coordinates",
         key: "coordinates_group",
@@ -97,10 +97,10 @@ export default Vue.extend({
         maxY: args.bounds[0][0],
         minX: args.bounds[0][1],
         minY: args.bounds[1][0],
-        mode: "exclude",
+        mode: "include",
         type: "geobounds",
       };
-      viewActions.updateAreaOfInterest(this.$store, filter);
+      await viewActions.updateAreaOfInterest(this.$store, filter);
       args.callback();
     },
   },

@@ -14,7 +14,7 @@
           <image-preview
             class="image-preview"
             :row="tilesToRender[r * c].item"
-            :image-url="tilesToRender[r * c + c].url"
+            :image-url="tilesToRender[r * c + c].imageUrl"
             :width="imageWidth"
             :height="imageHeight"
             :type="imageType"
@@ -33,7 +33,7 @@ import { TableRow, TableColumn } from "../store/dataset/index";
 import { Dictionary } from "../util/dict";
 
 interface Tile {
-  url: string;
+  imageUrl: string;
   item: TableRow;
   coordinates: number[][];
 }
@@ -64,7 +64,7 @@ export default Vue.extend({
     bounds: { type: Array as () => number[][] },
     centerTile: {
       type: Object as () => Tile,
-      default: { url: null, item: null, coordinates: null },
+      default: { imageUrl: "", item: null, coordinates: null },
     },
   },
 
@@ -72,9 +72,9 @@ export default Vue.extend({
     tileDims(): Dimensions {
       return {
         width:
-          this.centerTile.coordinates[0][0] - this.centerTile.coordinates[1][0],
+          this.centerTile.coordinates[1][1] - this.centerTile.coordinates[0][1],
         height:
-          this.centerTile.coordinates[0][1] - this.centerTile.coordinates[1][1],
+          this.centerTile.coordinates[1][0] - this.centerTile.coordinates[0][0],
       };
     },
     tilesToRender(): Tile[] {
@@ -84,19 +84,19 @@ export default Vue.extend({
   methods: {
     getIndex(x: number, y: number): SpatialIndex {
       const minX = this.bounds[0][1];
-      const minY = this.bounds[0][0];
+      const minY = this.bounds[1][0];
       return {
-        x: Math.floor(x - minX / this.tileDims.width),
-        y: Math.floor(y - minY / this.tileDims.height),
+        x: Math.floor((x - minX) / this.tileDims.width),
+        y: Math.floor((y - minY) / this.tileDims.height),
       };
     },
     spatialSort(): Tile[] {
-      if (this.tiles.length) {
+      if (!this.tiles.length) {
         return [];
       }
       const result = Array(this.rows * this.cols).fill({
-        url: "null",
-        item: null,
+        imageUrl: "null",
+        item: { isExcluded: true },
         coordinates: null,
       });
       // loop through and build spatial array
@@ -113,9 +113,12 @@ export default Vue.extend({
 
 <style scoped>
 .drill-down-container {
+  position: absolute;
   display: flex;
   height: 100%;
   width: 100%;
+  top: 0;
+  right: 0;
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-box-direction: normal;
