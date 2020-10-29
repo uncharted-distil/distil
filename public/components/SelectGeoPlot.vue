@@ -4,13 +4,14 @@
     :data-fields="fields"
     :data-items="items"
     :summaries="summaries"
+    @tileClicked="onTileClick"
   >
   </geo-plot>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import GeoPlot from "./GeoPlot";
+import GeoPlot from "./GeoPlot.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
 import {
@@ -22,7 +23,7 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { getVariableSummariesByState, searchVariables } from "../util/data";
 import { isGeoLocatedType } from "../util/types";
-
+import { actions as viewActions } from "../store/view/module";
 export default Vue.extend({
   name: "select-geo-plot",
 
@@ -85,6 +86,22 @@ export default Vue.extend({
       return currentSummaries.filter((cs) => {
         return isGeoLocatedType(cs.varType);
       });
+    },
+  },
+  methods: {
+    onTileClick(args: { bounds: number[][]; callback: () => void }) {
+      const filter = {
+        displayName: "coordinates",
+        key: "coordinates_group",
+        maxX: args.bounds[1][1],
+        maxY: args.bounds[0][0],
+        minX: args.bounds[0][1],
+        minY: args.bounds[1][0],
+        mode: "exclude",
+        type: "geobounds",
+      };
+      viewActions.updateAreaOfInterest(this.$store, filter);
+      args.callback();
     },
   },
 });

@@ -66,6 +66,12 @@ export const getters = {
   getIncludedTableDataItems: read(moduleGetters.getIncludedTableDataItems),
   getIncludedTableDataFields: read(moduleGetters.getIncludedTableDataFields),
   getIncludedSelectedRowData: read(moduleGetters.getIncludedSelectedRowData),
+  getAreaOfInterestIncludeItems: read(
+    moduleGetters.getAreaOfInterestIncludeItems
+  ),
+  getAreaOfInterestExcludeItems: read(
+    moduleGetters.getAreaOfInterestExcludeItems
+  ),
 
   // excluded data
   hasExcludedTableData: read(moduleGetters.hasExcludedTableData),
@@ -143,6 +149,7 @@ export const actions = {
   fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),
   fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
   fetchHighlightedTableData: dispatch(moduleActions.fetchHighlightedTableData),
+  fetchAreaOfInterestData: dispatch(moduleActions.fetchAreaOfInterestData),
   // task info
   fetchTask: dispatch(moduleActions.fetchTask),
   // multiband image band combinations
@@ -190,6 +197,8 @@ export const mutations = {
   setHighlightedExcludeTableData: commit(
     moduleMutations.setHighlightedExcludeTableData
   ),
+  setAreaOfInterestInclude: commit(moduleMutations.setAreaOfInterestInclude),
+  setAreaOfInterestExclude: commit(moduleMutations.setAreaOfInterestExclude),
   setIncludedTableData: commit(moduleMutations.setIncludedTableData),
   setExcludedTableData: commit(moduleMutations.setExcludedTableData),
   updateBands: commit(moduleMutations.updateBands),

@@ -1,6 +1,6 @@
 <template>
   <div class="drill-down-container">
-    <b-container>
+    <b-container v-if="rows * cols == tilesToRender.length">
       <b-row v-for="r in rows" :key="r">
         <b-col v-for="c in cols" :key="c">
           <image-label
@@ -18,7 +18,7 @@
             :width="imageWidth"
             :height="imageHeight"
             :type="imageType"
-          ></image-preview>
+          />
         </b-col>
       </b-row>
     </b-container>
@@ -91,8 +91,11 @@ export default Vue.extend({
       };
     },
     spatialSort(): Tile[] {
+      if (this.tiles.length) {
+        return [];
+      }
       const result = Array(this.rows * this.cols).fill({
-        url: null,
+        url: "null",
         item: null,
         coordinates: null,
       });

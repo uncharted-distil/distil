@@ -44,4 +44,5 @@ export const actions = {
     moduleActions.updatePredictionTrainingSummaries
   ),
   updatePrediction: dispatch(moduleActions.updatePredictions),
+  updateAreaOfInterest: dispatch(moduleActions.updateAreaOfInterest),
 };
