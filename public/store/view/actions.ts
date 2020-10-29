@@ -8,7 +8,7 @@ import {
   sortVariablesByImportance,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import { EXCLUDE_FILTER } from "../../util/filters";
+import { EXCLUDE_FILTER, Filter } from "../../util/filters";
 import { getPredictionsById } from "../../util/predictions";
 import {
   DataMode,
@@ -460,6 +460,31 @@ export const actions = {
         include: true,
       }), // include
       datasetActions.fetchHighlightedTableData(store, {
+        dataset: dataset,
+        filterParams: filterParams,
+        highlight: highlight,
+        dataMode: dataMode,
+        include: false,
+      }), // exclude
+    ]);
+  },
+  updateAreaOfInterest(context: ViewContext, filter: Filter) {
+    const dataset = context.getters.getRouteDataset;
+    const highlight = context.getters.getDecodedHighlight;
+    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+    const dataMode = context.getters.getDataMode;
+    // artificially add filter but dont add it to the url
+    // this is a hack to avoid adding an extra field just for the area of interest
+    filterParams.filters.push(filter);
+    return Promise.all([
+      datasetActions.fetchAreaOfInterestData(store, {
+        dataset: dataset,
+        filterParams: filterParams,
+        highlight: highlight,
+        dataMode: dataMode,
+        include: true,
+      }), // include
+      datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
         filterParams: filterParams,
         highlight: highlight,

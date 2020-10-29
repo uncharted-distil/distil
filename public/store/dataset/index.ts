@@ -359,8 +359,10 @@ export interface DatasetState {
   joinTableData: Dictionary<TableData>;
   includedSet: WorkingSet;
   excludedSet: WorkingSet;
-  highlightedIncludeSet: WorkingSet;
-  highlightedExcludeSet: WorkingSet;
+  highlightedIncludeSet: TableData;
+  highlightedExcludeSet: TableData;
+  areaOfInterestInclude: TableData;
+  areaOfInterestExclude: TableData;
   pendingRequests: DatasetPendingRequest[];
   task: Task;
   bands: BandCombination[];
@@ -420,16 +422,12 @@ export const state: DatasetState = {
     variableSummariesByKey: {},
     rowSelectionData: [],
   },
-  highlightedIncludeSet: {
-    tableData: null,
-    variableSummariesByKey: {},
-    rowSelectionData: [],
-  },
-  highlightedExcludeSet: {
-    tableData: null,
-    variableSummariesByKey: {},
-    rowSelectionData: [],
-  },
+  // highlight set
+  highlightedIncludeSet: null,
+  highlightedExcludeSet: null,
+  // tiles surrounding tile that was clicked
+  areaOfInterestExclude: null,
+  areaOfInterestInclude: null,
   // linked files / representation data
   files: {},
   timeseries: {},

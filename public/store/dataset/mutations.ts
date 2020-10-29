@@ -336,10 +336,16 @@ export const mutations = {
     state.joinTableData = {};
   },
   setHighlightedIncludeTableData(state: DatasetState, tableData: TableData) {
-    state.highlightedIncludeSet.tableData = Object.freeze(tableData);
+    state.highlightedIncludeSet = Object.freeze(tableData);
   },
   setHighlightedExcludeTableData(state: DatasetState, tableData: TableData) {
-    state.highlightedExcludeSet.tableData = Object.freeze(tableData);
+    state.highlightedExcludeSet = Object.freeze(tableData);
+  },
+  setAreaOfInterestInclude(state: DatasetState, tableData: TableData) {
+    state.areaOfInterestInclude = Object.freeze(tableData);
+  },
+  setAreaOfInterestExclude(state: DatasetState, tableData: TableData) {
+    state.areaOfInterestExclude = Object.freeze(tableData);
   },
   // sets the current selected data into the store
   setIncludedTableData(state: DatasetState, tableData: TableData) {

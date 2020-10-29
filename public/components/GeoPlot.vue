@@ -205,7 +205,7 @@ export default Vue.extend({
   components: {
     IconBase,
     IconCropFree,
-    ImageDrilldown,
+    // ImageDrilldown,
     ImageLabel,
     ImagePreview,
     DrillDown,
@@ -250,9 +250,11 @@ export default Vue.extend({
       previousZoom: 0,
       currentState: null,
       drillDownState: {
-        tiles: null,
+        tiles: [],
         bounds: null,
         centerTile: null,
+        numCols: 7, // should be odd
+        numRows: 5, // should be odd
       },
       selectionToolData: {
         startPoint: null,
@@ -555,7 +557,14 @@ export default Vue.extend({
             );
             return;
           }
-          this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
+          this.drillDownState.centerTile = this.areas[id];
+          this.drillDownState.bounds = this.getInterestBounds(this.areas[id]);
+          this.$emit("tileClicked", {
+            bounds: this.drillDownState.bounds,
+            callback: () => {
+              this.isImageDrilldown;
+            },
+          });
         },
         quads: () => {
           return this.areaToQuads();
@@ -626,7 +635,15 @@ export default Vue.extend({
             );
             return;
           }
-          this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
+          this.drillDownState.centerTile = this.areas[id];
+          this.drillDownState.bounds = this.getInterestBounds(this.areas[id]);
+          this.$emit("tileClicked", {
+            bounds: this.drillDownState.bounds,
+            callback: () => {
+              this.isImageDrilldown;
+            },
+          });
+          // this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
         },
         quads: () => {
           return this.areaToPoints();
@@ -699,6 +716,21 @@ export default Vue.extend({
         this.currentState.onHover
       );
       this.map.fitToBounds(mapBounds);
+    },
+    getInterestBounds(area: Area): LatLngBoundsLiteral {
+      const xDistance = (this.drillDownState.numCols - 1) / 2;
+      const yDistance = (this.drillDownState.numRows - 1) / 2;
+      const tileWidth = area.coordinates[1][1] - area.coordinates[0][1];
+      const tileHeight = area.coordinates[1][0] - area.coordinates[0][0];
+      const result = [
+        [0, 0],
+        [0, 0],
+      ];
+      result[0][0] = area.coordinates[0][0] + yDistance * tileHeight; // top
+      result[0][1] = area.coordinates[0][1] - xDistance * tileWidth; // left
+      result[1][0] = area.coordinates[1][0] - yDistance * tileHeight; // bottom
+      result[1][1] = area.coordinates[1][1] + xDistance * tileWidth; // right
+      return result as LatLngBoundsLiteral;
     },
     /**
      * toggle clustering
