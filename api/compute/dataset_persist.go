@@ -608,6 +608,7 @@ func SampleDataset(rawData [][]string, maxRows int, hasHeader bool) [][]string {
 // CreateBatches splits the dataset into batches of at most maxBatchSize rows,
 // returning paths to the schema files for all resulting batches.
 func CreateBatches(schemaFile string, maxBatchSize int) ([]string, error) {
+	log.Infof("splitting dataset '%s' into batches of %d rows", schemaFile, maxBatchSize)
 	// load the metadata of the source dataset
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, false)
 	if err != nil {
@@ -646,6 +647,8 @@ func CreateBatches(schemaFile string, maxBatchSize int) ([]string, error) {
 		}
 		outputURIs = append(outputURIs, batchURI)
 	}
+
+	log.Infof("dataset '%s' split into %d batches", schemaFile, len(outputURIs))
 
 	return outputURIs, nil
 }

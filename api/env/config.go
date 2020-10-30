@@ -31,6 +31,7 @@ type Config struct {
 	AppPort                            string  `env:"PORT" envDefault:"8080"`
 	AugmentedSubFolder                 string  `env:"AUGMENTED_SUBFOLDER" envDefault:"augmented"`
 	BatchSubFolder                     string  `env:"BATCH_SUBFOLDER" envDefault:"batch"`
+	BatchSize                          int     `env:"BATCH_SIZE" envDefault:"10000"`
 	ClassificationOutputPath           string  `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"classification.json"`
 	ClassificationProbabilityThreshold float64 `env:"CLASSIFICATION_PROBABILITY_THRESHOLD" envDefault:"0.8"`
 	ClassificationEnabled              bool    `env:"CLASSIFICATION_ENABLED" envDefault:"true"`

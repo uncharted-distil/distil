@@ -222,7 +222,7 @@ func buildClassificationFromMetadata(meta *model.Metadata) *model.Classification
 	return classification
 }
 
-func batchSubmitDataset(originalSchemaFile string, schemaFile string, dataset string, submitFunc func(string) (string, error)) (string, error) {
+func batchSubmitDataset(schemaFile string, dataset string, size int, submitFunc func(string) (string, error)) (string, error) {
 	// get the storage to use
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, false)
 	if err != nil {
@@ -231,7 +231,7 @@ func batchSubmitDataset(originalSchemaFile string, schemaFile string, dataset st
 	dataStorage := serialization.GetStorage(meta.GetMainDataResource().ResPath)
 
 	// split the source dataset into batches
-	schemaFiles, err := apicompute.CreateBatches(schemaFile, 10000)
+	schemaFiles, err := apicompute.CreateBatches(schemaFile, size)
 	if err != nil {
 		return "", err
 	}
@@ -268,7 +268,7 @@ func batchSubmitDataset(originalSchemaFile string, schemaFile string, dataset st
 	}
 
 	// store the complete data
-	hash, err := hashstructure.Hash([]interface{}{originalSchemaFile, schemaFile, dataset, submitFunc}, nil)
+	hash, err := hashstructure.Hash([]interface{}{size, schemaFile, dataset, submitFunc}, nil)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to generate hashcode for %s", dataset)
 	}
