@@ -12,14 +12,19 @@
       </div>
     </header>
 
-    <!-- Placeholder for the file uploader component status. -->
+    <!-- Add dataset modal -->
+    <add-dataset
+      id="add-dataset"
+      @uploadstart="onUploadStart"
+      @uploadfinish="onUploadFinish"
+    />
     <div class="row justify-content-center">
-      <file-uploader-status
+      <import-status
         class="file-uploader-status col-12"
         :status="uploadStatus"
-        :importResponse="importResponse"
-        :filename="uploadData.filename"
-        :datasetID="uploadData.datasetID"
+        :import-response="importResponse"
+        :name="uploadData.name"
+        :dataset-id="uploadData.datasetID"
         @importfull="onReImportFullDataset"
       />
     </div>
@@ -38,7 +43,7 @@
           <button
             class="search-nav-tab"
             @click="tab = 'all'"
-            :class="[tab === 'all' ? 'active' : '']"
+            :class="{ active: tab === 'all' }"
           >
             All
             <span class="badge badge-pill badge-danger">{{
@@ -48,7 +53,7 @@
           <button
             class="search-nav-tab"
             @click="tab = 'models'"
-            :class="[tab === 'models' ? 'active' : '']"
+            :class="{ active: tab === 'models' }"
           >
             <i class="fa fa-connectdevelop"></i> Models
             <span class="badge badge-pill badge-danger">{{
@@ -58,7 +63,7 @@
           <button
             class="search-nav-tab"
             @click="tab = 'datasets'"
-            :class="[tab === 'datasets' ? 'active' : '']"
+            :class="{ active: tab === 'datasets' }"
           >
             <i class="fa fa-table"></i> Datasets
             <span class="badge badge-pill badge-danger">{{
@@ -88,11 +93,13 @@
               <i class="fa fa-sort-numeric-desc"></i> Features
             </b-dropdown-item-button>
           </b-dropdown>
-          <file-uploader
-            class="file-uploader"
-            @uploadstart="onUploadStart"
-            @uploadfinish="onUploadFinish"
-          />
+          <b-button
+            class="add-new-datasets"
+            variant="primary"
+            v-b-modal.add-dataset
+          >
+            <i class="fa fa-plus-circle" /> Add Dataset
+          </b-button>
         </nav>
       </div>
     </section>
@@ -135,9 +142,9 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
+import AddDataset from "../components/AddDataset.vue";
 import DatasetPreview from "../components/DatasetPreview.vue";
-import FileUploader from "../components/FileUploader.vue";
-import FileUploaderStatus from "../components/FileUploaderStatus.vue";
+import ImportStatus from "../components/ImportStatus.vue";
 import ModelPreview from "../components/ModelPreview.vue";
 import SearchBar from "../components/SearchBar.vue";
 import { Dataset } from "../store/dataset/index";
@@ -149,18 +156,16 @@ import { Model } from "../store/model/index";
 import { getters as appGetters } from "../store/app/module";
 import { getters as modelGetters } from "../store/model/module";
 import { getters as routeGetters } from "../store/route/module";
-import { SEARCH_ROUTE, JOIN_DATASETS_ROUTE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
-import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 import { spinnerHTML } from "../util/spinner";
 
 export default Vue.extend({
-  name: "search-view",
+  name: "SearchView",
 
   components: {
+    AddDataset,
     DatasetPreview,
-    FileUploader,
-    FileUploaderStatus,
+    ImportStatus,
     ModelPreview,
     SearchBar,
   },
@@ -258,7 +263,7 @@ export default Vue.extend({
       });
     },
 
-    isSearchResultsEmpty(): Boolean {
+    isSearchResultsEmpty(): boolean {
       return _.isEmpty(this.searchResults);
     },
 
@@ -299,14 +304,14 @@ export default Vue.extend({
     },
   },
 
-  beforeMount() {
-    this.fetch();
-  },
-
   watch: {
     terms() {
       this.fetch();
     },
+  },
+
+  beforeMount() {
+    this.fetch();
   },
 
   methods: {
@@ -436,7 +441,7 @@ export default Vue.extend({
   border-bottom-color: var(--blue);
 }
 
-.search-nav .file-uploader {
+.search-nav .add-new-datasets {
   margin-left: auto; /* Align to the right of the navigation. */
 }
 

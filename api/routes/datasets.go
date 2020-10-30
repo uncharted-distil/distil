@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/microcosm-cc/bluemonday"
@@ -190,20 +191,28 @@ func AvailableDatasetsHandler(metaCtor model.MetadataStorageCtor) func(http.Resp
 			existingFolders = append(existingFolders, ds.Folder)
 		}
 
+		// return the path with the name of the available file.
+		type AvailableFile struct {
+			Name string `json:"name"`
+			Path string `json:"path"` // TODO: this is a security issue.
+		}
+
 		// folders could be datasets that are already imported
-		available := []string{}
+		available := []AvailableFile{}
 		for _, f := range files {
 			if f.IsDir() {
 				if isAvailableForImport(path.Join(rootFolder, f.Name()), existingFolders) {
-					available = append(available, f.Name())
+					available = append(available, AvailableFile{f.Name(), rootFolder})
 				}
 			} else {
-				available = append(available, f.Name())
+				if !strings.HasPrefix(f.Name(), ".") { // Hide dot files
+					available = append(available, AvailableFile{f.Name(), rootFolder})
+				}
 			}
 		}
 
 		// marshal data
-		err = handleJSON(w, map[string][]string{
+		err = handleJSON(w, map[string][]AvailableFile{
 			"availableDatasets": available,
 		})
 		if err != nil {

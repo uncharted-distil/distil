@@ -2,19 +2,18 @@
   <div>
     <!-- Waiting -->
     <b-alert :show="status === 'started'" variant="info">
-      Importing <b>{{ filename }}</b> as <b>{{ datasetID }}</b
-      >...
+      Importing <b>{{ name }}</b> as <b>{{ datasetId }}</b>
     </b-alert>
 
     <!-- Success -->
     <b-alert :show="status === 'success'" dismissible variant="success">
-      <i class="fa fa-check-circle-o" aria-hidden="true"></i> Imported
-      <b>{{ filename }}</b> as <b>{{ datasetID }}</b>
+      <i class="fa fa-check-circle-o" /> Imported <b>{{ name }}</b> as
+      <b>{{ datasetId }}</b>
       <template v-if="isSampling">
         &mdash; Because of its size, the dataset has been sampled to
         {{ rowCount }} rows.
         <b-button @click="onClick" variant="success" size="sm">
-          <i class="fa fa-download" aria-hidden="true"></i>
+          <i class="fa fa-download" />
           Import the full dataset
         </b-button>
       </template>
@@ -22,8 +21,8 @@
 
     <!-- Error -->
     <b-alert :show="status === 'error'" dismissible variant="danger">
-      <i class="fa fa-times-circle-o" aria-hidden="true"></i> An unexpected
-      error has happened while importing <b>{{ filename }}</b>
+      <i class="fa fa-times-circle-o" /> An unexpected error has happened while
+      importing <b>{{ name }}</b>
     </b-alert>
   </div>
 </template>
@@ -32,17 +31,14 @@
 import Vue from "vue";
 
 export default Vue.extend({
-  name: "file-uploader-status",
+  name: "ImportStatus",
 
   props: {
-    datasetID: String,
-    filename: String,
-    importResponse: Object,
-    numRows: Number,
-    status: {
-      type: String,
-      required: true,
-    },
+    datasetId: { type: String, required: true },
+    name: { type: String, default: null },
+    importResponse: { type: Object, default: null },
+    numRows: { type: Number, default: null },
+    status: { type: String, required: true },
   },
 
   computed: {

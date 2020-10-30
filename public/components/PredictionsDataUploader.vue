@@ -5,18 +5,19 @@
     @ok="handleOk"
     @show="clearForm"
   >
-    <p>Select a csv or zip file to import</p>
-    <b-form-file
-      ref="fileinput"
-      v-model="file"
-      :state="Boolean(file)"
-      accept=".csv, .zip"
-      plain
-    />
-    <div class="mt-3">Selected file: {{ file ? file.name : "" }}</div>
+    <b-form-group label="Select a Source File (csv, zip)">
+      <b-form-file
+        ref="fileinput"
+        v-model="file"
+        :state="Boolean(file)"
+        accept=".csv, .zip"
+        plain
+      />
+    </b-form-group>
+    <!-- <div class="mt-3">Selected file: {{ file ? file.name : "" }}</div> -->
 
     <template v-slot:modal-footer="{ ok, cancel }">
-      <b-button @click="cancel()" :disabled="isWaiting">Cancel</b-button>
+      <b-button :disabled="isWaiting" @click="cancel()">Cancel</b-button>
 
       <b-overlay
         :show="isWaiting"
@@ -28,10 +29,10 @@
       >
         <b-button
           variant="primary"
-          @click="ok()"
           :disabled="isWaiting || !Boolean(file)"
+          @click="ok()"
         >
-          Apply Model
+          Apply Model to Input Data
         </b-button>
       </b-overlay>
     </template>
@@ -40,42 +41,38 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { actions as datasetActions } from "../store/dataset/module";
 import {
   actions as requestActions,
   getters as requestGetters,
 } from "../store/requests/module";
 import { actions as appActions } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
-import { filterSummariesByDataset } from "../util/data";
 import {
   getBase64,
   generateUniqueDatasetName,
   removeExtension,
 } from "../util/uploads";
-import moment from "moment";
 import { getPredictionsById } from "../util/predictions";
 import { varModesToString, createRouteEntry } from "../util/routes";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { PREDICTION_ROUTE } from "../store/route";
 
 export default Vue.extend({
-  name: "predictions-uploader",
-
-  data() {
-    return {
-      file: null as File,
-      importDataName: "",
-      uploadData: {},
-      uploadStatus: "",
-      isWaiting: false,
-    };
-  },
+  name: "PredictionsUploader",
 
   props: {
     fittedSolutionId: String as () => string,
     target: String as () => string,
     targetType: String as () => string,
+  },
+
+  data() {
+    return {
+      file: null as File,
+      uploadData: {},
+      uploadStatus: "",
+      isWaiting: false,
+    };
   },
 
   computed: {

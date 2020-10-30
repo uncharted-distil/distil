@@ -1,6 +1,7 @@
 import store from "../store/store";
 import { getters as datasetGetters } from "../store/dataset/module";
 import _ from "lodash";
+import axios from "axios";
 
 // Converts a file into a Base64 string.
 export function getBase64(file: File): Promise<string> {
@@ -20,7 +21,9 @@ export function getBase64(file: File): Promise<string> {
 
 // Removes the extension from a filename
 export function removeExtension(filename: string): string {
-  return filename.split(".").slice(0, -1).join(".");
+  const name = filename.split(".");
+  if (name.length === 1) return name[0];
+  return name.slice(0, -1).join(".");
 }
 
 // Given a potential dataset name, will compare against those already stored
@@ -39,4 +42,10 @@ export function generateUniqueDatasetName(datasetName: string): string {
     newName = `${datasetName}_${count}`;
     count++;
   }
+}
+
+// Lookup datasets already available in the $D3MOUTPUTDIR/augmented folder.
+export async function getAvailableDatasets() {
+  const response = await axios.get("/distil/available");
+  return response?.data?.availableDatasets;
 }

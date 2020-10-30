@@ -384,6 +384,26 @@ export const actions = {
     });
   },
 
+  // Import a Dataset that is available in $D3MOUTPUTDIR/augmented folder
+  async importAvailableDataset(
+    context: DatasetContext,
+    args: { datasetID: string; path: string }
+  ) {
+    const response = await actions.importDataset(context, {
+      datasetID: args.datasetID,
+      source: "augmented",
+      provenance: "local",
+      terms: args.datasetID,
+      originalDataset: null,
+      joinedDataset: null,
+      path: args.path,
+    });
+
+    // Add the location for potential reimport of the dataset.
+    response.location = args.path;
+    return response;
+  },
+
   async importDataset(
     context: DatasetContext,
     args: {

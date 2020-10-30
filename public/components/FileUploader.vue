@@ -3,15 +3,24 @@
     <b-button block variant="primary" v-b-modal.upload-modal>
       <i class="fa fa-plus-circle"></i> Import File
     </b-button>
-
-    <!-- Modal Component -->
     <b-modal
       id="upload-modal"
-      title="Import local file"
+      title="Import Local File"
       :ok-disabled="!Boolean(file) || this.importDataName.length <= 0"
+      ok-title="Upload Local File"
       @ok="handleOk()"
       @show="clearForm()"
     >
+      <b-form-group label="Source File (csv, zip)">
+        <b-form-file
+          ref="fileinput"
+          v-model="file"
+          :state="Boolean(file)"
+          accept=".csv, .zip"
+          plain
+        />
+      </b-form-group>
+
       <b-form-group
         label="Dataset Name"
         label-for="import-name-input"
@@ -26,48 +35,51 @@
           required
         />
       </b-form-group>
-
-      <p>Source File (csv, zip)</p>
-      <b-form-file
-        ref="fileinput"
-        v-model="file"
-        :state="Boolean(file)"
-        accept=".csv, .zip"
-        plain
-      />
     </b-modal>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import {
-  getters as datasetGetters,
-  actions as datasetActions,
-} from "../store/dataset/module";
-import { actions as requestActions } from "../store/requests/module";
-import { filterSummariesByDataset } from "../util/data";
-import {
-  getBase64,
-  removeExtension,
-  generateUniqueDatasetName,
-} from "../util/uploads";
-import _ from "lodash";
+import { actions as datasetActions } from "../store/dataset/module";
+import { removeExtension, generateUniqueDatasetName } from "../util/uploads";
 
 export default Vue.extend({
   name: "file-uploader",
+
+  props: {
+    target: String as () => string,
+    targetType: String as () => string,
+  },
 
   data() {
     return {
       file: null as File,
       importDataName: "",
-      importDataNameState: null as Boolean,
+      importDataNameState: null as boolean,
     };
   },
 
-  props: {
-    target: String as () => string,
-    targetType: String as () => string,
+  watch: {
+    // Watches for file name changes, setting a dataset import name value
+    // if the user hasn't done so.
+    file() {
+      if (!this.importDataName && this.file?.name) {
+        // use the filname without the extension
+        this.importDataName = removeExtension(this.file.name);
+        this.importDataNameState = true;
+      }
+    },
+
+    // Watches the import data name to update the valid/invalid state.
+    importDataName() {
+      // allowed transitions are: null -> true, true -> false, false -> true
+      if (this.importDataNameState === null && !!this.importDataName) {
+        this.importDataNameState = true;
+      } else if (this.importDataNameState !== null) {
+        this.importDataNameState = !!this.importDataName;
+      }
+    },
   },
 
   methods: {
@@ -99,28 +111,6 @@ export default Vue.extend({
         this.$emit("uploadfinish", null, response);
       } catch (err) {
         this.$emit("uploadfinish", err, null);
-      }
-    },
-  },
-
-  watch: {
-    // Watches for file name changes, setting a dataset import name value if the user
-    // hasn't done so.
-    file() {
-      if (!this.importDataName && this.file?.name) {
-        // use the filname without the extension
-        this.importDataName = removeExtension(this.file.name);
-        this.importDataNameState = true;
-      }
-    },
-
-    // Watches the import data name so that the valid/invalid state can be updated
-    importDataName() {
-      // allowed transitions are null -> true, true -> false, false -> true
-      if (this.importDataNameState === null && !!this.importDataName) {
-        this.importDataNameState = true;
-      } else if (this.importDataNameState !== null) {
-        this.importDataNameState = !!this.importDataName;
       }
     },
   },

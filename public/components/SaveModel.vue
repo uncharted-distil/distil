@@ -2,8 +2,8 @@
   <div>
     <!-- Modal to save the model. -->
     <b-modal
-      title="Save Model"
       id="save-model-modal"
+      title="Save Model"
       no-stacking
       @ok="handleSaveOk"
       @cancel="resetModal"
@@ -22,7 +22,7 @@
             v-model="saveName"
             :state="saveNameState"
             required
-          ></b-form-input>
+          />
         </b-form-group>
         <b-form-group
           label="Model Description"
@@ -33,7 +33,7 @@
             id="model-desc-input"
             v-model="saveDescription"
             :state="saveDescriptionState"
-          ></b-form-input>
+          />
         </b-form-group>
       </form>
     </b-modal>
@@ -71,11 +71,11 @@ import { Feature, Activity, SubActivity } from "../util/userEvents";
 import router from "../router/router";
 
 export default Vue.extend({
-  name: "save-model",
+  name: "SaveModel",
 
   props: {
-    solutionId: String as () => string,
-    fittedSolutionId: String as () => string,
+    solutionId: { type: String as () => string, default: "" },
+    fittedSolutionId: { type: String as () => string, default: "" },
   },
 
   data() {
@@ -93,11 +93,24 @@ export default Vue.extend({
     },
 
     successTitle(): string {
-      return `<i class="fa fa-check-circle header-icon"></i> Model ${this.saveName.toUpperCase()} was successfully saved`;
+      return `<i class="fa fa-check-circle header-icon"/> Model ${this.saveName.toUpperCase()} was successfully saved`;
     },
 
     isTimeseries(): boolean {
       return routeGetters.isTimeseries(this.$store);
+    },
+  },
+
+  watch: {
+    // Watches the dataset save name so that the valid/invalid state can
+    // be updated in response to user action.
+    saveName() {
+      // allowed transitions are null -> true, true -> false, false -> true
+      if (this.saveNameState === null && !!this.saveName) {
+        this.saveNameState = true;
+      } else if (this.saveNameState !== null) {
+        this.saveNameState = !!this.saveName;
+      }
     },
   },
 
@@ -173,26 +186,14 @@ export default Vue.extend({
       return valid;
     },
   },
-
-  watch: {
-    // Watches the dataset save name so that the valid/invalid state can
-    // be updated in response to user action.
-    saveName() {
-      // allowed transitions are null -> true, true -> false, false -> true
-      if (this.saveNameState === null && !!this.saveName) {
-        this.saveNameState = true;
-      } else if (this.saveNameState !== null) {
-        this.saveNameState = !!this.saveName;
-      }
-    },
-  },
 });
 </script>
 
-<style>
+<style scoped>
 .success-modal-header {
   background: #d5ecdb;
 }
+
 .header-icon {
   color: #35a54c;
   margin-right: 5px;
