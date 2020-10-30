@@ -543,6 +543,26 @@ func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, alias s
 	return wheres, params, nil
 }
 
+func addIncludeConfidenceResultToWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter) ([]string, []interface{}, error) {
+	where := fmt.Sprintf("(confidence >= $%d AND confidence <= $%d)", len(params)+1, len(params)+2)
+	params = append(params, *confidenceFilter.Min)
+	params = append(params, *confidenceFilter.Max)
+
+	// Append the AND clause
+	wheres = append(wheres, where)
+	return wheres, params, nil
+}
+
+func addExcludeConfidenceResultToWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter) ([]string, []interface{}, error) {
+	where := fmt.Sprintf("(confidence < $%d OR confidence > $%d)", len(params)+1, len(params)+2)
+	params = append(params, *confidenceFilter.Min)
+	params = append(params, *confidenceFilter.Max)
+
+	// Append the AND clause
+	wheres = append(wheres, where)
+	return wheres, params, nil
+}
+
 func addTableAlias(prefix string, fields []string, addToColumn bool) []string {
 	fieldsPrepended := make([]string, len(fields))
 	for i, f := range fields {
@@ -640,6 +660,21 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			wheres, params, err = addExcludeErrorFilterToWhere(wheres, params, dataTableAlias, targetName, filters.residualFilter)
 			if err != nil {
 				return nil, errors.Wrap(err, "Could not add error to where clause")
+			}
+		}
+	}
+
+	// Add the error filter into the where clause if it was included in the filter set
+	if filters.confidenceFilter != nil {
+		if filters.confidenceFilter.Mode == model.IncludeFilter {
+			wheres, params, err = addIncludeConfidenceResultToWhere(wheres, params, filters.confidenceFilter)
+			if err != nil {
+				return nil, errors.Wrap(err, "Could not add confidence to where clause")
+			}
+		} else {
+			wheres, params, err = addExcludeConfidenceResultToWhere(wheres, params, filters.confidenceFilter)
+			if err != nil {
+				return nil, errors.Wrap(err, "Could not add confidence to where clause")
 			}
 		}
 	}

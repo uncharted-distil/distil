@@ -51,7 +51,13 @@ export const getters = {
 
   // join data
   getJoinDatasetsTableData: read(moduleGetters.getJoinDatasetsTableData),
-
+  // highlighted data
+  getHighlightedIncludeTableDataItems: read(
+    moduleGetters.getHighlightedIncludeTableDataItems
+  ),
+  getHighlightedExcludeTableDataItems: read(
+    moduleGetters.getHighlightedExcludeTableDataItems
+  ),
   // included data
   hasIncludedTableData: read(moduleGetters.hasIncludedTableData),
   getIncludedTableData: read(moduleGetters.getIncludedTableData),
@@ -135,6 +141,7 @@ export const actions = {
   // included / excluded table data
   fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),
   fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
+  fetchHighlightedTableData: dispatch(moduleActions.fetchHighlightedTableData),
   // task info
   fetchTask: dispatch(moduleActions.fetchTask),
   // multiband image band combinations
@@ -175,6 +182,12 @@ export const mutations = {
   setJoinDatasetsTableData: commit(moduleMutations.setJoinDatasetsTableData),
   clearJoinDatasetsTableData: commit(
     moduleMutations.clearJoinDatasetsTableData
+  ),
+  setHighlightedIncludeTableData: commit(
+    moduleMutations.setHighlightedIncludeTableData
+  ),
+  setHighlightedExcludeTableData: commit(
+    moduleMutations.setHighlightedExcludeTableData
   ),
   setIncludedTableData: commit(moduleMutations.setIncludedTableData),
   setExcludedTableData: commit(moduleMutations.setExcludedTableData),

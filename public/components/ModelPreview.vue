@@ -1,8 +1,12 @@
 <template>
-  <div class="card card-result" @click="onResult()">
-    <div class="model-header hover card-header" variant="dark">
+  <div class="card card-result">
+    <div
+      class="model-header hover card-header"
+      variant="dark"
+      @click="onResult()"
+    >
       <a class="nav-link">
-        <i class="fa fa-connectdevelop"></i> <b>Model Name:</b>
+        <i class="fa fa-connectdevelop" /> <b>Model Name:</b>
         {{ model.modelName }}
       </a>
       <a class="nav-link"><b>Dateset Name:</b> {{ model.datasetName }}</a>
@@ -14,7 +18,7 @@
         <div class="col-4">
           <span><b>Features:</b></span>
           <ul>
-            <li :key="variable.name" v-for="variable in model.variables">
+            <li v-for="variable in topVariables" :key="variable">
               {{ variable }}
             </li>
           </ul>
@@ -24,6 +28,33 @@
           <p class="small-text">
             {{ model.modelDescription || "n/a" }}
           </p>
+        </div>
+      </div>
+
+      <div class="row mt-1">
+        <div v-if="!expanded" class="col-12">
+          <b-button
+            class="full-width hover"
+            variant="outline-secondary"
+            @click="toggleExpansion()"
+          >
+            More Details...
+          </b-button>
+        </div>
+        <div v-if="expanded" class="col-12">
+          <span><b>All Variables:</b></span>
+          <p>
+            <span v-for="(variable, i) in model.variables" :key="variable">
+              {{ variable + (i !== model.variables.length - 1 ? ", " : ".") }}
+            </span>
+          </p>
+          <b-button
+            class="full-width hover"
+            variant="outline-secondary"
+            @click="toggleExpansion()"
+          >
+            Less Details...
+          </b-button>
         </div>
       </div>
     </div>
@@ -36,11 +67,25 @@ import Vue from "vue";
 import { Model } from "../store/model/index";
 import { openModelSolution } from "../util/solutions";
 
+const NUM_TOP_FEATURES = 5;
+
 export default Vue.extend({
   name: "model-preview",
 
   props: {
     model: Object as () => Model,
+  },
+
+  data() {
+    return {
+      expanded: false,
+    };
+  },
+
+  computed: {
+    topVariables(): string[] {
+      return this.model.variables.slice(0, NUM_TOP_FEATURES);
+    },
   },
 
   methods: {
@@ -51,6 +96,9 @@ export default Vue.extend({
         fittedSolutionId: this.model.fittedSolutionId,
         variableFeatures: this.model.variables,
       });
+    },
+    toggleExpansion() {
+      this.expanded = !this.expanded;
     },
   },
 });
