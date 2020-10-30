@@ -623,35 +623,70 @@ func CreateBatches(schemaFile string, maxBatchSize int) ([]string, error) {
 		return nil, err
 	}
 
-	// iteratively take subsets of the data and write it to output
+	// get grouping column, defaulting to d3m index
+	groupColIndex := -1
+	for _, v := range meta.GetMainDataResource().Variables {
+		if v.DistilRole == model.VarDistilRoleGrouping {
+			groupColIndex = v.Index
+		} else if v.Name == model.D3MIndexFieldName && groupColIndex == -1 {
+			groupColIndex = v.Index
+		}
+	}
+
+	// group the data to prepare for batching
+	groups := map[string][][]string{}
+	for _, row := range data[1:] {
+		key := row[groupColIndex]
+		if groups[key] == nil {
+			groups[key] = [][]string{}
+		}
+		groups[key] = append(groups[key], row)
+	}
+
+	// iterate over the groups to build batches, allowing for overflow to put a group together
+	batch := [][]string{data[0]}
 	outputURIs := []string{}
-	header := [][]string{data[0]}
-	for i, min := 1, 1; min < len(data); i++ {
-		max := min + maxBatchSize
-		if max > len(data) {
-			max = len(data)
+	for _, g := range groups {
+		batch = append(batch, g...)
+		if len(batch) >= maxBatchSize {
+			batchURI, err := processBatch(batch, rootPath, len(outputURIs)+1, meta, dataStorage)
+			if err != nil {
+				return nil, err
+			}
+			outputURIs = append(outputURIs, batchURI)
+			batch = [][]string{data[0]}
 		}
-		subset := append(header, data[min:max]...)
+	}
 
-		batchURI := path.Join(rootPath, fmt.Sprintf("batch-%d", i))
-		batchDataURI := path.Join(batchURI, compute.D3MDataFolder, compute.D3MLearningData)
-		err := dataStorage.WriteData(batchDataURI, subset)
-		if err != nil {
-			return nil, err
-		}
-
-		// write out the metadata as well (updating the dataset id to reflect the batch nature)
-		meta.GetMainDataResource().ResPath = batchDataURI
-		meta.ID = fmt.Sprintf("%s-batch-%d", meta.ID, i)
-		err = dataStorage.WriteMetadata(path.Join(batchURI, compute.D3MDataSchema), meta, true, false)
+	if len(batch) > 0 {
+		batchURI, err := processBatch(batch, rootPath, len(outputURIs)+1, meta, dataStorage)
 		if err != nil {
 			return nil, err
 		}
 		outputURIs = append(outputURIs, batchURI)
-		min = max
 	}
 
 	log.Infof("dataset '%s' split into %d batches", schemaFile, len(outputURIs))
 
 	return outputURIs, nil
+}
+
+func processBatch(batch [][]string, rootPath string, batchIndex int,
+	meta *model.Metadata, dataStorage serialization.Storage) (string, error) {
+	batchURI := path.Join(rootPath, fmt.Sprintf("batch-%d", batchIndex))
+	batchDataURI := path.Join(batchURI, compute.D3MDataFolder, compute.D3MLearningData)
+	err := dataStorage.WriteData(batchDataURI, batch)
+	if err != nil {
+		return "", err
+	}
+
+	// write out the metadata as well (updating the dataset id to reflect the batch nature)
+	meta.GetMainDataResource().ResPath = batchDataURI
+	meta.ID = fmt.Sprintf("%s-batch-%d", meta.ID, batchIndex)
+	err = dataStorage.WriteMetadata(path.Join(batchURI, compute.D3MDataSchema), meta, true, false)
+	if err != nil {
+		return "", err
+	}
+
+	return batchURI, nil
 }
