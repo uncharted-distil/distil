@@ -1,20 +1,20 @@
 <template>
   <div class="drill-down-container">
-    <b-container v-if="rows * cols == tilesToRender.length">
-      <b-row v-for="r in rows" :key="r">
-        <b-col v-for="c in cols" :key="c">
+    <b-container>
+      <b-row v-for="(r, i) in rows" :key="r">
+        <b-col v-for="(c, j) in cols" :key="c">
           <image-label
             class="image-label"
             :dataFields="dataFields"
             includedActive
             shortenLabels
             alignHorizontal
-            :item="tilesToRender[r * c + c].item"
+            :item="tilesToRender[i][j].item"
           />
           <image-preview
             class="image-preview"
-            :row="tilesToRender[r * c].item"
-            :image-url="tilesToRender[r * c + c].imageUrl"
+            :row="tilesToRender[i][j].item"
+            :image-url="tilesToRender[i][j].imageUrl"
             :width="imageWidth"
             :height="imageHeight"
             :type="imageType"
@@ -57,8 +57,8 @@ export default Vue.extend({
     tiles: { type: Array as () => Tile[], default: [] },
     rows: { type: Number, default: 5 },
     cols: { type: Number, default: 7 },
-    imageWidth: { type: Number, default: 128 },
-    imageHeight: { type: Number, default: 128 },
+    imageWidth: { type: Number, default: 124 },
+    imageHeight: { type: Number, default: 124 },
     imageType: { type: String },
     dataFields: Object as () => Dictionary<TableColumn>,
     bounds: { type: Array as () => number[][] },
@@ -77,7 +77,7 @@ export default Vue.extend({
           this.centerTile.coordinates[1][0] - this.centerTile.coordinates[0][0],
       };
     },
-    tilesToRender(): Tile[] {
+    tilesToRender(): Tile[][] {
       return this.spatialSort();
     },
   },
@@ -90,19 +90,21 @@ export default Vue.extend({
         y: Math.floor((y - minY) / this.tileDims.height),
       };
     },
-    spatialSort(): Tile[] {
+    spatialSort(): Tile[][] {
       if (!this.tiles.length) {
         return [];
       }
-      const result = Array(this.rows * this.cols).fill({
-        imageUrl: "null",
-        item: { isExcluded: true },
-        coordinates: null,
-      });
+      const result = Array.from({ length: this.rows }, (e) =>
+        Array(this.cols).fill({
+          imageUrl: null,
+          item: { isExcluded: true },
+          coordinates: null,
+        })
+      );
       // loop through and build spatial array
       this.tiles.forEach((t) => {
         const indices = this.getIndex(t.coordinates[0][1], t.coordinates[0][0]);
-        result[indices.y * indices.x + indices.x] = t;
+        result[indices.y][indices.x] = t;
       });
       // normalize coordinates
       return result;
