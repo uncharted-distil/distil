@@ -40,7 +40,7 @@ const (
 
 // IngestTaskConfig captures the necessary configuration for an data ingest.
 type IngestTaskConfig struct {
-	BatchSize                          int
+	DatasetBatchSize                   int
 	HasHeader                          bool
 	ClusteringEnabled                  bool
 	ClusteringKMeans                   bool
@@ -92,7 +92,7 @@ func NewDefaultClient(config env.Config, userAgent string, discoveryLogger middl
 // NewConfig creates an ingest config based on a distil config.
 func NewConfig(config env.Config) *IngestTaskConfig {
 	return &IngestTaskConfig{
-		BatchSize:                          config.BatchSize,
+		DatasetBatchSize:                   config.DatasetBatchSize,
 		HasHeader:                          true,
 		ClusteringEnabled:                  config.ClusteringEnabled,
 		ClusteringKMeans:                   config.ClusteringKMeans,

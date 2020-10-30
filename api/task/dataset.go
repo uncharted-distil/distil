@@ -249,13 +249,8 @@ func batchSubmitDataset(schemaFile string, dataset string, size int, submitFunc 
 
 	// join the results together
 	completeData := [][]string{}
-	for _, schema := range batchedResultSchemaFiles {
-		meta, err := dataStorage.ReadMetadata(schema)
-		if err != nil {
-			return "", err
-		}
-
-		data, err := dataStorage.ReadData(meta.GetMainDataResource().ResPath)
+	for _, resultFile := range batchedResultSchemaFiles {
+		data, err := dataStorage.ReadData(resultFile)
 		if err != nil {
 			return "", err
 		}
@@ -268,12 +263,13 @@ func batchSubmitDataset(schemaFile string, dataset string, size int, submitFunc 
 	}
 
 	// store the complete data
-	hash, err := hashstructure.Hash([]interface{}{size, schemaFile, dataset, submitFunc}, nil)
+	hash, err := hashstructure.Hash([]interface{}{size, schemaFile, dataset}, nil)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to generate hashcode for %s", dataset)
 	}
 	hashFileName := fmt.Sprintf("%s-%0x", dataset, hash)
 	outputURI := path.Join(env.GetTmpPath(), fmt.Sprintf("%s%s", hashFileName, path.Ext(meta.GetMainDataResource().ResPath)))
+	outputURI = util.GetUniqueName(outputURI)
 	err = dataStorage.WriteData(outputURI, completeData)
 	if err != nil {
 		return "", err

@@ -54,7 +54,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	}
 
 	// pipeline execution assumes datasetDoc.json as schema file
-	datasetURI, err := batchSubmitDataset(schemaFile, dataset, config.BatchSize, submitForBatch(pip))
+	datasetURI, err := batchSubmitDataset(schemaFile, dataset, config.DatasetBatchSize, submitForBatch(pip))
 	if err != nil {
 		return "", "", err
 	}

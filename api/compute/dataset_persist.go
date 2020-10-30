@@ -625,27 +625,30 @@ func CreateBatches(schemaFile string, maxBatchSize int) ([]string, error) {
 
 	// iteratively take subsets of the data and write it to output
 	outputURIs := []string{}
+	header := [][]string{data[0]}
 	for i, min := 1, 1; min < len(data); i++ {
 		max := min + maxBatchSize
 		if max > len(data) {
 			max = len(data)
 		}
-		subset := data[min:max]
+		subset := append(header, data[min:max]...)
 
 		batchURI := path.Join(rootPath, fmt.Sprintf("batch-%d", i))
-		err := dataStorage.WriteData(path.Join(batchURI, compute.D3MDataFolder, compute.D3MLearningData), subset)
+		batchDataURI := path.Join(batchURI, compute.D3MDataFolder, compute.D3MLearningData)
+		err := dataStorage.WriteData(batchDataURI, subset)
 		if err != nil {
 			return nil, err
 		}
 
 		// write out the metadata as well (updating the dataset id to reflect the batch nature)
-		meta.GetMainDataResource().ResPath = batchURI
+		meta.GetMainDataResource().ResPath = batchDataURI
 		meta.ID = fmt.Sprintf("%s-batch-%d", meta.ID, i)
 		err = dataStorage.WriteMetadata(path.Join(batchURI, compute.D3MDataSchema), meta, true, false)
 		if err != nil {
 			return nil, err
 		}
 		outputURIs = append(outputURIs, batchURI)
+		min = max
 	}
 
 	log.Infof("dataset '%s' split into %d batches", schemaFile, len(outputURIs))
