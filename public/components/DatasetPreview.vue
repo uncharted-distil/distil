@@ -64,34 +64,34 @@
         </div>
       </div>
 
-      <div v-if="!expanded" class="card-expanded">
-        <b-button
-          class="full-width hover"
-          variant="outline-secondary"
-          v-on:click="toggleExpansion()"
-        >
-          More Details...
-        </b-button>
-      </div>
-
-      <div v-if="expanded" class="card-expanded">
-        <span><b>Full Description:</b></span>
-        <p v-html="highlightedDescription()"></p>
-        <b-button
-          class="full-width hover"
-          variant="outline-secondary"
-          v-on:click="toggleExpansion()"
-        >
-          Less Details...
-        </b-button>
+      <div class="row mt-1">
+        <div v-if="!expanded" class="col-12">
+          <b-button
+            class="full-width hover"
+            variant="outline-secondary"
+            @click="toggleExpansion()"
+          >
+            More Details...
+          </b-button>
+        </div>
+        <div v-if="expanded" class="col-12">
+          <span><b>Full Description:</b></span>
+          <p v-html="highlightedDescription()" />
+          <b-button
+            class="full-width hover"
+            variant="outline-secondary"
+            @click="toggleExpansion()"
+          >
+            Less Details...
+          </b-button>
+        </div>
       </div>
     </div>
     <error-modal
       :show="showImportFailure"
       title="Import Failed"
       @close="showImportFailure = !showImportFailure"
-    >
-    </error-modal>
+    />
   </div>
 </template>
 
@@ -128,6 +128,14 @@ export default Vue.extend({
     allowImport: Boolean as () => boolean,
   },
 
+  data() {
+    return {
+      expanded: false,
+      importPending: false,
+      showImportFailure: false,
+    };
+  },
+
   computed: {
     terms(): string {
       return routeGetters.getRouteTerms(this.$store);
@@ -147,14 +155,6 @@ export default Vue.extend({
     percentComplete(): number {
       return 100;
     },
-  },
-
-  data() {
-    return {
-      expanded: false,
-      importPending: false,
-      showImportFailure: false,
-    };
   },
 
   methods: {
@@ -257,9 +257,6 @@ export default Vue.extend({
 }
 .full-width {
   width: 100%;
-}
-.card-expanded {
-  padding-top: 15px;
 }
 .import-progress-bar {
   position: relative;

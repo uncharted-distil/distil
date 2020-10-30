@@ -487,6 +487,17 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 	return wheres, params, nil
 }
 
+func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter) ([]string, []interface{}, error) {
+	// Add a clause to filter confidence to the existing where
+	where := fmt.Sprintf("(result.confidence >= $%d AND result.confidence <= $%d)", len(params)+1, len(params)+2)
+	params = append(params, *confidenceFilter.Min)
+	params = append(params, *confidenceFilter.Max)
+
+	// Append the AND clause
+	wheres = append(wheres, where)
+	return wheres, params, nil
+}
+
 func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, alias string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
 	// handle the general category case
 
@@ -528,6 +539,11 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 		if err != nil {
 			return nil, nil, err
 		}
+	} else if filters.confidenceFilter != nil {
+		wheres, params, err = s.buildConfidenceResultWhere(wheres, params, filters.confidenceFilter)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 	return wheres, params, nil
 }
@@ -537,6 +553,7 @@ type filters struct {
 	predictedFilter   *model.Filter
 	residualFilter    *model.Filter
 	correctnessFilter *model.Filter
+	confidenceFilter  *model.Filter
 }
 
 func splitFilters(filterParams *api.FilterParams) *filters {
@@ -544,6 +561,7 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 	var predictedFilter *model.Filter
 	var residualFilter *model.Filter
 	var correctnessFilter *model.Filter
+	var confidenceFilter *model.Filter
 	var remaining []*model.Filter
 
 	if filterParams == nil {
@@ -560,6 +578,8 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 			} else if highlight.Type == model.CategoricalFilter {
 				correctnessFilter = highlight
 			}
+		} else if api.IsConfidenceKey(highlight.Key) {
+			confidenceFilter = highlight
 		} else {
 			remaining = append(remaining, highlight)
 		}
@@ -574,6 +594,8 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 			} else if filter.Type == model.CategoricalFilter {
 				correctnessFilter = filter
 			}
+		} else if api.IsConfidenceKey(filter.Key) {
+			confidenceFilter = filter
 		} else {
 			remaining = append(remaining, filter)
 		}
@@ -584,6 +606,7 @@ func splitFilters(filterParams *api.FilterParams) *filters {
 		predictedFilter:   predictedFilter,
 		residualFilter:    residualFilter,
 		correctnessFilter: correctnessFilter,
+		confidenceFilter:  confidenceFilter,
 	}
 }
 
