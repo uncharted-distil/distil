@@ -21,12 +21,14 @@ import (
 	"os"
 	"path"
 
+	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	log "github.com/unchartedsoftware/plog"
 
-	"github.com/uncharted-distil/distil-compute/metadata"
+	apicompute "github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
@@ -218,4 +220,60 @@ func buildClassificationFromMetadata(meta *model.Metadata) *model.Classification
 	}
 
 	return classification
+}
+
+func batchSubmitDataset(schemaFile string, dataset string, size int, submitFunc func(string) (string, error)) (string, error) {
+	// get the storage to use
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, false)
+	if err != nil {
+		return "", err
+	}
+	dataStorage := serialization.GetStorage(meta.GetMainDataResource().ResPath)
+
+	// split the source dataset into batches
+	schemaFiles, err := apicompute.CreateBatches(schemaFile, size)
+	if err != nil {
+		return "", err
+	}
+
+	// submit each batch
+	batchedResultSchemaFiles := []string{}
+	for _, b := range schemaFiles {
+		newFile, err := submitFunc(b)
+		if err != nil {
+			return "", err
+		}
+
+		batchedResultSchemaFiles = append(batchedResultSchemaFiles, newFile)
+	}
+
+	// join the results together
+	completeData := [][]string{}
+	for _, resultFile := range batchedResultSchemaFiles {
+		data, err := dataStorage.ReadData(resultFile)
+		if err != nil {
+			return "", err
+		}
+
+		// grab the header off first batch read
+		if len(completeData) == 0 {
+			completeData = append(completeData, data[0])
+		}
+		completeData = append(completeData, data[1:]...)
+	}
+
+	// store the complete data
+	hash, err := hashstructure.Hash([]interface{}{size, schemaFile, dataset}, nil)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to generate hashcode for %s", dataset)
+	}
+	hashFileName := fmt.Sprintf("%s-%0x", dataset, hash)
+	outputURI := path.Join(env.GetTmpPath(), fmt.Sprintf("%s%s", hashFileName, path.Ext(meta.GetMainDataResource().ResPath)))
+	outputURI = util.GetUniqueName(outputURI)
+	err = dataStorage.WriteData(outputURI, completeData)
+	if err != nil {
+		return "", err
+	}
+
+	return outputURI, nil
 }

@@ -30,6 +30,7 @@ var (
 type Config struct {
 	AppPort                            string  `env:"PORT" envDefault:"8080"`
 	AugmentedSubFolder                 string  `env:"AUGMENTED_SUBFOLDER" envDefault:"augmented"`
+	BatchSubFolder                     string  `env:"BATCH_SUBFOLDER" envDefault:"batch"`
 	ClassificationOutputPath           string  `env:"CLASSIFICATION_OUTPUT_PATH" envDefault:"classification.json"`
 	ClassificationProbabilityThreshold float64 `env:"CLASSIFICATION_PROBABILITY_THRESHOLD" envDefault:"0.8"`
 	ClassificationEnabled              bool    `env:"CLASSIFICATION_ENABLED" envDefault:"true"`
@@ -42,6 +43,7 @@ type Config struct {
 	DatamartISIEnabled                 bool    `env:"DATAMART_ISI_ENABLED" envDefault:"false"`
 	DatamartNYUEnabled                 bool    `env:"DATAMART_NYU_ENABLED" envDefault:"true"`
 	DatamartImportFolder               string  `env:"DATAMART_IMPORT_FOLDER" envDefault:"datamart"`
+	DatasetBatchSize                   int     `env:"DATASET_BATCH_SIZE" envDefault:"10000"`
 	ElasticDatasetPrefix               string  `env:"ES_DATASET_PREFIX" envDefault:"d_"`
 	ElasticEndpoint                    string  `env:"ES_ENDPOINT" envDefault:"http://localhost:9200"`
 	ElasticTimeout                     int     `env:"ES_TIMEOUT" envDefault:"300"`

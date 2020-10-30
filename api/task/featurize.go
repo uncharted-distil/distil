@@ -32,6 +32,12 @@ import (
 	"github.com/uncharted-distil/distil/api/util/json"
 )
 
+func submitForBatch(pip *description.FullySpecifiedPipeline) func(string) (string, error) {
+	return func(schemaFile string) (string, error) {
+		return submitPipeline([]string{schemaFile}, pip)
+	}
+}
+
 // FeaturizeDataset creates a featurized output of the data that can be used
 // in simplified pipelines.
 func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset string, metaStorage api.MetadataStorage, config *IngestTaskConfig) (string, string, error) {
@@ -48,7 +54,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	}
 
 	// pipeline execution assumes datasetDoc.json as schema file
-	datasetURI, err := submitPipeline([]string{originalSchemaFile}, pip)
+	datasetURI, err := batchSubmitDataset(schemaFile, dataset, config.DatasetBatchSize, submitForBatch(pip))
 	if err != nil {
 		return "", "", err
 	}

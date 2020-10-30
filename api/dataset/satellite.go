@@ -271,7 +271,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	// create the data resource for the referenced images
 	imageTypeLookup := satTypeMap[s.ImageType]
 	refDR := model.NewDataResource("0", model.ResTypeImage, map[string][]string{fmt.Sprintf("image/%s", imageTypeLookup): satTypeContentMap[imageTypeLookup]})
-	refDR.ResPath = path.Base(mediaFolder)
+	refDR.ResPath = mediaFolder
 	refDR.IsCollection = true
 
 	meta.DataResources = []*model.DataResource{refDR, dr}
