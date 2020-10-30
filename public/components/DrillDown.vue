@@ -3,22 +3,24 @@
     <b-container>
       <b-row v-for="(r, i) in rows" :key="r">
         <b-col v-for="(c, j) in cols" :key="c">
-          <image-label
-            class="image-label"
-            :dataFields="dataFields"
-            includedActive
-            shortenLabels
-            alignHorizontal
-            :item="tilesToRender[i][j].item"
-          />
-          <image-preview
-            class="image-preview"
-            :row="tilesToRender[i][j].item"
-            :image-url="tilesToRender[i][j].imageUrl"
-            :width="imageWidth"
-            :height="imageHeight"
-            :type="imageType"
-          />
+          <div class="image-container">
+            <image-label
+              class="image-label"
+              :dataFields="dataFields"
+              includedActive
+              shortenLabels
+              alignHorizontal
+              :item="tilesToRender[i][j].item"
+            />
+            <image-preview
+              class="image-preview"
+              :row="tilesToRender[i][j].item"
+              :image-url="tilesToRender[i][j].imageUrl"
+              :width="imageWidth"
+              :height="imageHeight"
+              :type="imageType"
+            />
+          </div>
         </b-col>
       </b-row>
     </b-container>
@@ -125,5 +127,11 @@ export default Vue.extend({
   -webkit-box-orient: vertical;
   -webkit-box-direction: normal;
   flex-direction: column;
+}
+.image-container {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
 }
 </style>
