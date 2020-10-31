@@ -70,6 +70,7 @@ type DataSchemaAbout struct {
 	ApproximateSize string `json:"approximateSize"`
 	Redacted        bool   `json:"redacted"`
 	SchemaVersion   string `json:"datasetSchemaVersion"`
+	Digest          string `json:"digest"`
 }
 
 // DataResource represents a set of variables.

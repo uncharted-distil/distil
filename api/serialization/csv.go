@@ -141,6 +141,7 @@ func (d *CSV) WriteMetadata(uri string, meta *model.Metadata, extended bool, upd
 		"datasetSchemaVersion": schemaVersion,
 		"license":              license,
 		"redacted":             meta.Redacted,
+		"digest":               meta.Digest,
 	}
 
 	if extended {
