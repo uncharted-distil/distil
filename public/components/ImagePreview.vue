@@ -38,6 +38,7 @@ import ImageDrilldown from "./ImageDrilldown.vue";
 import {
   getters as datasetGetters,
   actions as datasetActions,
+  mutations as datasetMutations,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { circleSpinnerHTML } from "../util/spinner";
@@ -64,6 +65,7 @@ export default Vue.extend({
   props: {
     row: Object as () => TableRow,
     imageUrl: String as () => string,
+    uniqueTrail: { type: String as () => string, default: "" },
     type: String as () => string,
     width: {
       default: 64,
@@ -83,6 +85,7 @@ export default Vue.extend({
   watch: {
     imageUrl(newUrl: string, oldUrl: string) {
       if (newUrl !== oldUrl) {
+        this.cleanUp();
         this.hasRendered = false;
         this.hasRequested = false;
         if (!this.image) {
@@ -97,6 +100,7 @@ export default Vue.extend({
     // Refresh image on band change
     band(newBand: string, oldBand: string) {
       if (newBand !== oldBand) {
+        this.cleanUp();
         this.hasRendered = false;
         this.hasRequested = false;
         if (this.isVisible) {
@@ -240,6 +244,15 @@ export default Vue.extend({
         console.warn(`Image Data Type ${this.type} is not supported`);
       }
     },
+    cleanUp() {
+      const empty = "";
+      if (this.uniqueTrail !== empty) {
+        datasetMutations.removeFile(
+          this.$store,
+          `${this.imageId}/${this.uniqueTrail}`
+        );
+      }
+    },
   },
 
   async beforeMount() {
@@ -252,6 +265,9 @@ export default Vue.extend({
         dataset: this.dataset,
       });
     }
+  },
+  destroyed() {
+    this.cleanUp();
   },
 });
 </script>
