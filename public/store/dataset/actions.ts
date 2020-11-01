@@ -1284,18 +1284,19 @@ export const actions = {
       highlight: Highlight;
       dataMode: DataMode;
       include: boolean;
+      mutatorIsInclude: boolean;
     }
   ) {
-    const mutator = args.include
+    const mutator = args.mutatorIsInclude
       ? mutations.setAreaOfInterestInclude
       : mutations.setAreaOfInterestExclude;
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
-      highlight: { ...args.highlight, include: EXCLUDE_FILTER },
+      highlight: args.highlight,
       include: args.include,
       dataMode: args.dataMode,
-      isHighlight: true,
+      //    isHighlight: true,
     });
     mutator(context, data);
   },

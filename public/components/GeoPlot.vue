@@ -27,6 +27,7 @@
       :tiles="drillDownState.tiles"
       :centerTile="drillDownState.centerTile"
       :bounds="drillDownState.bounds"
+      @close="onFocusOut"
     />
     <div
       class="selection-toggle"
@@ -519,10 +520,19 @@ export default Vue.extend({
           this.$emit("tileClicked", {
             bounds: this.drillDownState.bounds,
             callback: () => {
-              this.drillDownState.tiles = this.tableDataToAreas(
+              const included = this.tableDataToAreas(
                 datasetGetters.getAreaOfInterestIncludeItems(this.$store)
-              );
-              console.log(this.drillDownState.tiles);
+              ) as any[];
+              included.forEach((i) => {
+                i.gray = 0;
+              });
+              const excluded = this.tableDataToAreas(
+                datasetGetters.getAreaOfInterestExcludeItems(this.$store)
+              ) as any[];
+              excluded.forEach((i) => {
+                i.gray = 100;
+              });
+              this.drillDownState.tiles = included.concat(excluded);
               this.isImageDrilldown = true;
             },
           });
@@ -691,11 +701,14 @@ export default Vue.extend({
         [0, 0],
         [0, 0],
       ];
-      result[0][0] = area.coordinates[0][0] + yDistance * tileHeight; // top
+      result[0][0] = area.coordinates[1][0] + yDistance * tileHeight; // top
       result[0][1] = area.coordinates[0][1] - xDistance * tileWidth; // left
-      result[1][0] = area.coordinates[1][0] - yDistance * tileHeight; // bottom
+      result[1][0] = area.coordinates[0][0] - yDistance * tileHeight; // bottom
       result[1][1] = area.coordinates[1][1] + xDistance * tileWidth; // right
       return result as LatLngBoundsLiteral;
+    },
+    onFocusOut() {
+      this.isImageDrilldown = false;
     },
     /**
      * toggle clustering

@@ -1,7 +1,7 @@
 <template>
   <div class="drill-down-container">
-    <b-container>
-      <b-row v-for="(r, i) in rows" :key="r">
+    <b-container class="grid-container">
+      <b-row v-for="(r, i) in rows" :key="r" :no-gutters="true">
         <b-col v-for="(c, j) in cols" :key="c">
           <div class="image-container">
             <image-label
@@ -19,6 +19,7 @@
               :width="imageWidth"
               :height="imageHeight"
               :type="imageType"
+              :gray="tilesToRender[i][j].gray"
             />
           </div>
         </b-col>
@@ -33,6 +34,7 @@ import ImagePreview from "./ImagePreview.vue";
 import ImageLabel from "./ImageLabel.vue";
 import { TableRow, TableColumn } from "../store/dataset/index";
 import { Dictionary } from "../util/dict";
+import { LatLngBounds, LatLngBoundsLiteral } from "leaflet";
 
 interface Tile {
   imageUrl: string;
@@ -99,18 +101,32 @@ export default Vue.extend({
       const result = Array.from({ length: this.rows }, (e) =>
         Array(this.cols).fill({
           imageUrl: null,
-          item: { isExcluded: true },
+          item: null,
           coordinates: null,
+          gray: 0,
         })
       );
       // loop through and build spatial array
       this.tiles.forEach((t) => {
-        const indices = this.getIndex(t.coordinates[0][1], t.coordinates[0][0]);
-        result[indices.y][indices.x] = t;
+        const center = new LatLngBounds(
+          t.coordinates as LatLngBoundsLiteral
+        ).getCenter();
+        const indices = this.getIndex(center.lng, center.lat);
+        const invertY = this.rows - 1 - indices.y;
+        result[invertY][indices.x] = t;
       });
       // normalize coordinates
       return result;
     },
+    emitCloseEvent(event) {
+      if (!this.$el.contains(event.target)) {
+        window.removeEventListener("mousedown", this.emitCloseEvent);
+        this.$emit("close");
+      }
+    },
+  },
+  mounted() {
+    window.addEventListener("mousedown", this.emitCloseEvent);
   },
 });
 </script>
@@ -127,11 +143,19 @@ export default Vue.extend({
   -webkit-box-orient: vertical;
   -webkit-box-direction: normal;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.54);
 }
 .image-container {
   position: relative;
   z-index: 0;
   width: 100%;
   height: 100%;
+}
+.grid-container {
+  background: rgba(255, 255, 255, 0.7);
+}
+.col {
 }
 </style>

@@ -468,32 +468,31 @@ export const actions = {
       }), // exclude
     ]);
   },
-  updateAreaOfInterest(context: ViewContext, filter: Filter) {
+  async updateAreaOfInterest(context: ViewContext, filter: Filter) {
     const dataset = context.getters.getRouteDataset;
     const highlight = context.getters.getDecodedHighlight;
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
     const dataMode = context.getters.getDataMode;
     // artificially add filter but dont add it to the url
     // this is a hack to avoid adding an extra field just for the area of interest
-    if (!filterParams.filters.length) {
-      filterParams.filters.push(filter);
-    } else {
-      filterParams.filters[0] = filter;
-    }
+    const clonedFilterParms = _.cloneDeep(filterParams);
+    clonedFilterParms.filters.push(filter);
     return Promise.all([
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
-        filterParams: filterParams,
+        filterParams: clonedFilterParms,
         highlight: highlight,
         dataMode: dataMode,
         include: true,
+        mutatorIsInclude: true,
       }), // include
       datasetActions.fetchAreaOfInterestData(store, {
         dataset: dataset,
-        filterParams: filterParams,
-        highlight: highlight,
+        filterParams: clonedFilterParms,
+        highlight: { ...highlight, include: EXCLUDE_FILTER },
         dataMode: dataMode,
-        include: false,
+        include: true,
+        mutatorIsInclude: false,
       }), // exclude
     ]);
   },
