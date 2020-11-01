@@ -16,6 +16,7 @@
                 :type="imageField.type"
                 :key="fieldKey"
                 uniqueTrail="mosaic"
+                :debounce="true"
               ></image-preview>
             </template>
             <image-label

@@ -80,6 +80,8 @@ export default Vue.extend({
       type: Boolean as () => boolean,
     },
     onClick: Function,
+    debounce: { type: Boolean as () => boolean, default: false },
+    debounceWaitTime: { type: Number as () => number, default: 500 },
   },
 
   watch: {
@@ -90,7 +92,7 @@ export default Vue.extend({
         this.hasRequested = false;
         if (!this.image) {
           this.clearImage();
-          this.requestImage();
+          this.getImage();
         } else {
           this.injectImage();
         }
@@ -105,9 +107,16 @@ export default Vue.extend({
         this.hasRequested = false;
         if (this.isVisible) {
           this.clearImage();
-          this.requestImage();
+          this.getImage();
         }
       }
+    },
+    debounce(newVal: boolean) {
+      if (newVal) {
+        this.getImage = this.debouncedRequestImage;
+        return;
+      }
+      this.getImage = this.requestImage;
     },
   },
 
@@ -120,6 +129,8 @@ export default Vue.extend({
       isVisible: false,
       hasRendered: false,
       hasRequested: false,
+      debouncedRequestImage: null,
+      getImage: null,
     };
   },
 
@@ -166,7 +177,7 @@ export default Vue.extend({
     visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRequested) {
-        this.requestImage();
+        this.getImage();
         return;
       }
       if (this.isVisible && this.hasRequested && !this.hasRendered) {
@@ -264,6 +275,17 @@ export default Vue.extend({
       await datasetActions.fetchMultiBandCombinations(this.$store, {
         dataset: this.dataset,
       });
+    }
+  },
+  created() {
+    this.debouncedRequestImage = _.debounce(
+      this.requestImage,
+      this.debounceWaitTime
+    );
+    if (this.debounce) {
+      this.getImage = this.debouncedRequestImage;
+    } else {
+      this.getImage = this.requestImage;
     }
   },
   destroyed() {
