@@ -67,7 +67,9 @@ export default Vue.extend({
     labels(): Label[] {
       const labels: Label[] = [];
       let status: string;
-
+      if (!this.item) {
+        return [];
+      }
       for (const key in this.fields) {
         status = null;
 
