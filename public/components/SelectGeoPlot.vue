@@ -54,12 +54,14 @@ export default Vue.extend({
           })
         : [];
       return this.includedActive
-        ? datasetGetters
-            .getIncludedTableDataItems(this.$store)
-            .concat(highlighted)
-        : datasetGetters
-            .getExcludedTableDataItems(this.$store)
-            .concat(highlighted);
+        ? [
+            ...highlighted,
+            ...datasetGetters.getIncludedTableDataItems(this.$store),
+          ]
+        : [
+            ...highlighted,
+            ...datasetGetters.getExcludedTableDataItems(this.$store),
+          ];
     },
     trainingVarsSearch(): string {
       return routeGetters.getRouteTrainingVarsSearch(this.$store);
