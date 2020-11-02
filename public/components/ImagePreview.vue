@@ -90,12 +90,8 @@ export default Vue.extend({
         this.cleanUp();
         this.hasRendered = false;
         this.hasRequested = false;
-        if (!this.image) {
-          this.clearImage();
-          this.getImage();
-        } else {
-          this.injectImage();
-        }
+        this.clearImage();
+        this.getImage();
       }
     },
 
@@ -279,7 +275,7 @@ export default Vue.extend({
   },
   created() {
     this.debouncedRequestImage = _.debounce(
-      this.requestImage,
+      this.requestImage.bind(this),
       this.debounceWaitTime
     );
     if (this.debounce) {
@@ -290,6 +286,9 @@ export default Vue.extend({
   },
   destroyed() {
     this.cleanUp();
+    if (this.debounce) {
+      this.getImage.cancel();
+    }
   },
 });
 </script>
