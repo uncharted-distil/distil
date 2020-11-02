@@ -1,6 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 import _ from "lodash";
 import { ActionContext } from "vuex";
+import { CommitAccessorWithPayload } from "vuex-typescript";
 import {
   createEmptyTableData,
   createErrorSummary,
@@ -42,6 +43,7 @@ import {
   JoinSuggestionPendingRequest,
   Metrics,
   SummaryMode,
+  TableData,
   Task,
   TimeSeriesValue,
   Variable,
@@ -1234,7 +1236,7 @@ export const actions = {
     );
   },
 
-  fetchIncludedTableData(
+  async fetchIncludedTableData(
     context: DatasetContext,
     args: {
       dataset: string;
@@ -1243,16 +1245,17 @@ export const actions = {
       dataMode: DataMode;
     }
   ) {
-    return actions.fetchTableData(context, {
+    const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
       highlight: args.highlight,
       include: true,
       dataMode: args.dataMode,
     });
+    mutations.setIncludedTableData(context, data);
   },
 
-  fetchExcludedTableData(
+  async fetchExcludedTableData(
     context: DatasetContext,
     args: {
       dataset: string;
@@ -1261,15 +1264,16 @@ export const actions = {
       dataMode: DataMode;
     }
   ) {
-    return actions.fetchTableData(context, {
+    const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
       highlight: args.highlight,
       include: false,
       dataMode: args.dataMode,
     });
+    mutations.setExcludedTableData(context, data);
   },
-  fetchHighlightedTableData(
+  async fetchHighlightedTableData(
     context: DatasetContext,
     args: {
       dataset: string;
@@ -1279,14 +1283,53 @@ export const actions = {
       include: boolean;
     }
   ) {
-    return actions.fetchTableData(context, {
+    const mutator = args.include
+      ? mutations.setHighlightedIncludeTableData
+      : mutations.setHighlightedExcludeTableData;
+    const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
       highlight: { ...args.highlight, include: EXCLUDE_FILTER },
       include: args.include,
       dataMode: args.dataMode,
-      isHighlight: true,
     });
+    mutator(context, data);
+  },
+  async fetchAreaOfInterestData(
+    context: DatasetContext,
+    args: {
+      dataset: string;
+      filterParams: FilterParams;
+      highlight: Highlight;
+      dataMode: DataMode;
+      include: boolean;
+      mutatorIsInclude: boolean;
+      isExclude: boolean;
+    }
+  ) {
+    let mutator = null;
+    if (!args.isExclude) {
+      mutator = args.mutatorIsInclude
+        ? mutations.setAreaOfInterestIncludeInner
+        : mutations.setAreaOfInterestIncludeOuter;
+    } else {
+      mutator = args.mutatorIsInclude
+        ? mutations.setAreaOfInterestExcludeInner
+        : mutations.setAreaOfInterestExcludeOuter;
+    }
+    // if is exclude and highlight is null there is nothing to invert
+    if (!args.mutatorIsInclude && args.highlight === null) {
+      mutator(context, { values: [] });
+      return;
+    }
+    const data = await actions.fetchTableData(context, {
+      dataset: args.dataset,
+      filterParams: args.filterParams,
+      highlight: args.highlight,
+      include: args.include,
+      dataMode: args.dataMode,
+    });
+    mutator(context, data);
   },
 
   async fetchTableData(
@@ -1297,26 +1340,15 @@ export const actions = {
       highlight: Highlight;
       include: boolean;
       dataMode: DataMode;
-      isHighlight?: boolean;
     }
-  ) {
+  ): Promise<TableData> {
     if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
-
-    let mutator = args.include
-      ? mutations.setIncludedTableData
-      : mutations.setExcludedTableData;
-    let filterParams = addHighlightToFilterParams(
+    const filterParams = addHighlightToFilterParams(
       args.filterParams,
       args.highlight
     );
-    if (!!args.isHighlight) {
-      mutator = args.include
-        ? mutations.setHighlightedIncludeTableData
-        : mutations.setHighlightedExcludeTableData; // set mutator for highlight
-      filterParams = { ...filterParams, isHighlight: true }; // add extra param
-    }
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;
@@ -1326,10 +1358,10 @@ export const actions = {
         `distil/data/${args.dataset}/${!args.include}`,
         filterParams
       );
-      mutator(context, response.data);
+      return response.data;
     } catch (error) {
       console.error(error);
-      mutator(context, createEmptyTableData());
+      return createEmptyTableData();
     }
   },
 

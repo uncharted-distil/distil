@@ -8,7 +8,7 @@ import {
   sortVariablesByImportance,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import { EXCLUDE_FILTER } from "../../util/filters";
+import { EXCLUDE_FILTER, Filter, invertFilter } from "../../util/filters";
 import { getPredictionsById } from "../../util/predictions";
 import {
   DataMode,
@@ -470,6 +470,65 @@ export const actions = {
         dataMode: dataMode,
         include: false,
       }), // exclude
+    ]);
+  },
+  async updateAreaOfInterest(context: ViewContext, filter: Filter) {
+    const dataset = context.getters.getRouteDataset;
+    const highlight = context.getters.getDecodedHighlight;
+    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+    const dataMode = context.getters.getDataMode;
+    // artificially add filter but dont add it to the url
+    // this is a hack to avoid adding an extra field just for the area of interest
+    const clonedFilterParams = _.cloneDeep(filterParams);
+    clonedFilterParams.filters.push(filter);
+    const clonedExcludeFilter = _.cloneDeep(filter);
+    // the exclude has to invert all the filters -- the route does a collective NOT() and
+    // for areaOfInterest we need compounded ands so therefore we invert client side pass in
+    // as an include and that removes the collective NOT
+    const clonedFilterParamsExclude = _.cloneDeep(filterParams);
+    clonedFilterParamsExclude.filters.forEach((f) => {
+      f.mode = invertFilter(f.mode);
+    });
+    clonedFilterParamsExclude.filters.push(clonedExcludeFilter);
+    const invertedHighlight =
+      highlight === null ? null : { ...highlight, include: EXCLUDE_FILTER };
+    return Promise.all([
+      datasetActions.fetchAreaOfInterestData(store, {
+        dataset: dataset,
+        filterParams: clonedFilterParams,
+        highlight: highlight,
+        dataMode: dataMode,
+        include: true,
+        mutatorIsInclude: true,
+        isExclude: false,
+      }), // include inner tiles
+      datasetActions.fetchAreaOfInterestData(store, {
+        dataset: dataset,
+        filterParams: clonedFilterParams,
+        highlight: invertedHighlight,
+        dataMode: dataMode,
+        include: true,
+        mutatorIsInclude: false,
+        isExclude: false,
+      }), // include outer tiles
+      datasetActions.fetchAreaOfInterestData(store, {
+        dataset: dataset,
+        filterParams: clonedFilterParamsExclude,
+        highlight: highlight,
+        dataMode: dataMode,
+        include: true,
+        mutatorIsInclude: true,
+        isExclude: true,
+      }), // exclude inner tiles
+      datasetActions.fetchAreaOfInterestData(store, {
+        dataset: dataset,
+        filterParams: clonedFilterParamsExclude,
+        highlight: invertedHighlight,
+        dataMode: dataMode,
+        include: true,
+        mutatorIsInclude: false,
+        isExclude: true,
+      }), // include outer tiles
     ]);
   },
   clearHighlight(context: ViewContext) {

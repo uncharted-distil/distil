@@ -4,13 +4,14 @@
     :data-fields="fields"
     :data-items="items"
     :summaries="summaries"
+    @tileClicked="onTileClick"
   >
   </geo-plot>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import GeoPlot from "./GeoPlot";
+import GeoPlot from "./GeoPlot.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
 import {
@@ -22,7 +23,8 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { getVariableSummariesByState, searchVariables } from "../util/data";
 import { isGeoLocatedType } from "../util/types";
-
+import { actions as viewActions } from "../store/view/module";
+import { INCLUDE_FILTER } from "../util/filters";
 export default Vue.extend({
   name: "select-geo-plot",
 
@@ -52,12 +54,14 @@ export default Vue.extend({
           })
         : [];
       return this.includedActive
-        ? datasetGetters
-            .getIncludedTableDataItems(this.$store)
-            .concat(highlighted)
-        : datasetGetters
-            .getExcludedTableDataItems(this.$store)
-            .concat(highlighted);
+        ? [
+            ...highlighted,
+            ...datasetGetters.getIncludedTableDataItems(this.$store),
+          ]
+        : [
+            ...highlighted,
+            ...datasetGetters.getExcludedTableDataItems(this.$store),
+          ];
     },
     trainingVarsSearch(): string {
       return routeGetters.getRouteTrainingVarsSearch(this.$store);
@@ -85,6 +89,28 @@ export default Vue.extend({
       return currentSummaries.filter((cs) => {
         return isGeoLocatedType(cs.varType);
       });
+    },
+  },
+  methods: {
+    async onTileClick(args: {
+      bounds: number[][];
+      key: string;
+      displayName: string;
+      type: string;
+      callback: (boolean) => void;
+    }) {
+      const filter = {
+        displayName: args.displayName,
+        key: args.key,
+        maxX: args.bounds[1][1],
+        maxY: args.bounds[0][0],
+        minX: args.bounds[0][1],
+        minY: args.bounds[1][0],
+        mode: INCLUDE_FILTER,
+        type: args.type,
+      };
+      await viewActions.updateAreaOfInterest(this.$store, filter);
+      args.callback(this.includedActive);
     },
   },
 });

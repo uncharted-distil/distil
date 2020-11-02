@@ -66,6 +66,12 @@ export const getters = {
   getIncludedTableDataItems: read(moduleGetters.getIncludedTableDataItems),
   getIncludedTableDataFields: read(moduleGetters.getIncludedTableDataFields),
   getIncludedSelectedRowData: read(moduleGetters.getIncludedSelectedRowData),
+  getAreaOfInterestIncludeInnerItems: read(
+    moduleGetters.getAreaOfInterestIncludeInnerItems
+  ),
+  getAreaOfInterestIncludeOuterItems: read(
+    moduleGetters.getAreaOfInterestIncludeOuterItems
+  ),
 
   // excluded data
   hasExcludedTableData: read(moduleGetters.hasExcludedTableData),
@@ -75,7 +81,12 @@ export const getters = {
   getExcludedTableDataItems: read(moduleGetters.getExcludedTableDataItems),
   getExcludedTableDataFields: read(moduleGetters.getExcludedTableDataFields),
   getExcludedSelectedRowData: read(moduleGetters.getExcludedSelectedRowData),
-
+  getAreaOfInterestExcludeInnerItems: read(
+    moduleGetters.getAreaOfInterestExcludeInnerItems
+  ),
+  getAreaOfInterestExcludeOuterItems: read(
+    moduleGetters.getAreaOfInterestExcludeOuterItems
+  ),
   // Remote sensing image band combinatinos
   getMultiBandCombinations: read(moduleGetters.getMultiBandCombinations),
 
@@ -143,6 +154,7 @@ export const actions = {
   fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),
   fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),
   fetchHighlightedTableData: dispatch(moduleActions.fetchHighlightedTableData),
+  fetchAreaOfInterestData: dispatch(moduleActions.fetchAreaOfInterestData),
   // task info
   fetchTask: dispatch(moduleActions.fetchTask),
   // multiband image band combinations
@@ -190,6 +202,18 @@ export const mutations = {
   ),
   setHighlightedExcludeTableData: commit(
     moduleMutations.setHighlightedExcludeTableData
+  ),
+  setAreaOfInterestIncludeInner: commit(
+    moduleMutations.setAreaOfInterestIncludeInner
+  ),
+  setAreaOfInterestIncludeOuter: commit(
+    moduleMutations.setAreaOfInterestIncludeOuter
+  ),
+  setAreaOfInterestExcludeInner: commit(
+    moduleMutations.setAreaOfInterestExcludeInner
+  ),
+  setAreaOfInterestExcludeOuter: commit(
+    moduleMutations.setAreaOfInterestExcludeOuter
   ),
   setIncludedTableData: commit(moduleMutations.setIncludedTableData),
   setExcludedTableData: commit(moduleMutations.setExcludedTableData),

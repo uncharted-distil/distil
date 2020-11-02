@@ -12,13 +12,14 @@
       tabindex="0"
     ></div>
 
-    <image-drilldown
-      v-if="isMultiBandImage"
-      @hide="hideImageDrilldown"
+    <drill-down
+      v-if="showDrillDown"
       :dataFields="dataFields"
-      :imageUrl="imageUrl"
-      :item="item"
-      :visible="isImageDrilldown"
+      :imageType="imageType"
+      :tiles="drillDownState.tiles"
+      :centerTile="drillDownState.centerTile"
+      :bounds="drillDownState.bounds"
+      @close="onFocusOut"
     />
     <div
       class="selection-toggle"
@@ -85,7 +86,6 @@ import _ from "lodash";
 import Vue from "vue";
 import IconBase from "./icons/IconBase.vue";
 import IconCropFree from "./icons/IconCropFree.vue";
-import ImageDrilldown from "./ImageDrilldown.vue";
 import ImageLabel from "./ImageLabel.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
@@ -106,12 +106,8 @@ import {
   GeoCoordinateGrouping,
   VariableSummary,
 } from "../store/dataset/index";
-import {
-  updateHighlight,
-  highlightsExist,
-  clearHighlight,
-} from "../util/highlights";
-import ImagePreview from "../components/ImagePreview";
+import { updateHighlight, highlightsExist } from "../util/highlights";
+import ImagePreview from "../components/ImagePreview.vue";
 import {
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
@@ -127,6 +123,8 @@ import "leaflet/dist/images/marker-icon-2x.png";
 import "leaflet/dist/images/marker-shadow.png";
 import { BLUE_PALETTE } from "../util/color";
 import { getTileHandler } from "../util/app";
+import DrillDown from "./DrillDown.vue";
+
 const SINGLE_FIELD = 1;
 const SPLIT_FIELD = 2;
 
@@ -198,9 +196,10 @@ export default Vue.extend({
   components: {
     IconBase,
     IconCropFree,
-    ImageDrilldown,
+    // ImageDrilldown,
     ImageLabel,
     ImagePreview,
+    DrillDown,
   },
 
   props: {
@@ -241,6 +240,13 @@ export default Vue.extend({
       imageHeight: 128,
       previousZoom: 0,
       currentState: null,
+      drillDownState: {
+        tiles: [],
+        bounds: null,
+        centerTile: null,
+        numCols: 7, // should be odd
+        numRows: 5, // should be odd
+      },
       selectionToolData: {
         startPoint: null,
         currentPoint: null,
@@ -260,16 +266,6 @@ export default Vue.extend({
     },
     imageType(): string {
       return MULTIBAND_IMAGE_TYPE;
-    },
-    /*
-     Flag to decide if we display accurate areas based on coordinates, or if they are physically
-     too small, we present a circle big enough for the user to interact with them.
-    */
-    displayCircleMarker(): boolean {
-      const pointA = this.map.latLngToContainerPoint([0, 0]);
-      const pointB = this.map.latLngToContainerPoint([0, this.areasMeanLng]);
-      const distanceInPixel = Math.abs(pointB.x - pointA.x);
-      return distanceInPixel < TARGETSIZE;
     },
 
     target(): string {
@@ -295,6 +291,9 @@ export default Vue.extend({
     },
     toastId(): string {
       return `notifications-${this.instanceName}`;
+    },
+    showDrillDown(): boolean {
+      return this.isImageDrilldown;
     },
     fieldSpecs(): GeoField[] {
       const variables = datasetGetters.getVariables(this.$store);
@@ -455,42 +454,7 @@ export default Vue.extend({
       if (!this.dataItems) {
         return [];
       }
-      // Array to store the longitude width (degrees) of each areas.
-      const longitudes = [];
-
-      const areas = this.dataItems.map((item) => {
-        const imageUrl = this.isMultiBandImage ? item.group_id.value : null;
-        const fullCoordinates = item.coordinates.value.Elements;
-        if (fullCoordinates.some((x) => x === undefined)) return;
-
-        /*
-          Item store the coordinates as a list of 8 values being four pairs of [Lng, Lat],
-          one for each corner of the isMultiBandImage-sensing image.
-
-          [0,1]     [2,3]
-            A-------B
-            |       |
-            |       |
-            D-------C
-          [6,7]     [4,5]
-        */
-        const coordinates = [
-          [fullCoordinates[1].Float, fullCoordinates[0].Float], // Corner A as [Lat, Lng]
-          [fullCoordinates[5].Float, fullCoordinates[4].Float], // Corner C as [Lat, Lng]
-        ] as LatLngBoundsLiteral;
-
-        const color = this.tileColor(item);
-
-        longitudes.push(fullCoordinates[4].Float - fullCoordinates[0].Float); // Corner C Lng - Corner A Lng
-
-        return { item, imageUrl, coordinates, color } as Area;
-      });
-
-      // Calculate the mean longitude of the areas.
-      this.areasMeanLng =
-        longitudes.reduce((acc, val) => acc + val, 0) / longitudes.length;
-
-      return areas;
+      return this.tableDataToAreas(this.dataItems);
     },
 
     highlight(): Highlight {
@@ -536,13 +500,7 @@ export default Vue.extend({
           window.addEventListener("mousemove", this.fadeToast);
         },
         onClick: (id: number) => {
-          if (id > this.areas.length || id < 0) {
-            console.error(
-              `id retrieved from buffer picker ${id} not within index bounds of areas.`
-            );
-            return;
-          }
-          this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
+          this.onTileClick(id);
         },
         quads: () => {
           return this.areaToQuads();
@@ -607,13 +565,7 @@ export default Vue.extend({
           window.addEventListener("mousemove", this.fadeToast);
         },
         onClick: (id: number) => {
-          if (id > this.areas.length || id < 0) {
-            console.error(
-              `id retrieved from buffer picker ${id} not within index bounds of areas.`
-            );
-            return;
-          }
-          this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
+          this.onTileClick(id);
         },
         quads: () => {
           return this.areaToPoints();
@@ -686,6 +638,24 @@ export default Vue.extend({
         this.currentState.onHover
       );
       this.map.fitToBounds(mapBounds);
+    },
+    getInterestBounds(area: Area): LatLngBoundsLiteral {
+      const xDistance = (this.drillDownState.numCols - 1) / 2;
+      const yDistance = (this.drillDownState.numRows - 1) / 2;
+      const tileWidth = area.coordinates[1][1] - area.coordinates[0][1];
+      const tileHeight = area.coordinates[1][0] - area.coordinates[0][0];
+      const result = [
+        [0, 0],
+        [0, 0],
+      ];
+      result[0][0] = area.coordinates[1][0] + yDistance * tileHeight; // top
+      result[0][1] = area.coordinates[0][1] - xDistance * tileWidth; // left
+      result[1][0] = area.coordinates[0][0] - yDistance * tileHeight; // bottom
+      result[1][1] = area.coordinates[1][1] + xDistance * tileWidth; // right
+      return result as LatLngBoundsLiteral;
+    },
+    onFocusOut() {
+      this.isImageDrilldown = false;
     },
     /**
      * toggle clustering
@@ -794,6 +764,42 @@ export default Vue.extend({
       this.$bvToast.hide(this.toastId);
       window.removeEventListener("mousemove", this.fadeToast); // remove event listener because toast is now faded
     },
+    onTileClick(id: number) {
+      if (id > this.areas.length || id < 0) {
+        console.error(
+          `id retrieved from buffer picker ${id} not within index bounds of areas.`
+        );
+        return;
+      }
+      this.drillDownState.centerTile = this.areas[id];
+      this.drillDownState.bounds = this.getInterestBounds(this.areas[id]);
+      this.$emit("tileClicked", {
+        bounds: this.drillDownState.bounds,
+        key: this.summaries[0].key,
+        displayName: this.summaries[0].label,
+        type: this.summaries[0].type,
+        callback: (isIncluded: boolean) => {
+          const innerGetter = isIncluded
+            ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)
+            : datasetGetters.getAreaOfInterestExcludeInnerItems(this.$store);
+          const inner = this.tableDataToAreas(innerGetter) as any[];
+          inner.forEach((i) => {
+            i.gray = 0;
+          });
+          const outerGetter = isIncluded
+            ? datasetGetters.getAreaOfInterestIncludeOuterItems(this.$store)
+            : datasetGetters.getAreaOfInterestExcludeOuterItems(this.$store);
+
+          const outer = this.tableDataToAreas(outerGetter) as any[];
+          outer.forEach((i) => {
+            i.gray = 100;
+          });
+          console.table([innerGetter, outerGetter]);
+          this.drillDownState.tiles = inner.concat(outer);
+          this.isImageDrilldown = true;
+        },
+      });
+    },
     // assumes x and y are normalized points this function is for the selection tool
     pointsToQuad(p1: LumoPoint, p2: LumoPoint): Quad[] {
       const result = [];
@@ -895,6 +901,35 @@ export default Vue.extend({
         result.push({ ...p2, ...color, ...id });
       });
       return result;
+    },
+    tableDataToAreas(tableData: any[]): Area[] {
+      const areas = tableData.map((item) => {
+        const imageUrl = this.isMultiBandImage ? item.group_id.value : null;
+        const fullCoordinates = item.coordinates.value.Elements;
+        if (fullCoordinates.some((x) => x === undefined)) return;
+
+        /*
+          Item store the coordinates as a list of 8 values being four pairs of [Lng, Lat],
+          one for each corner of the isMultiBandImage-sensing image.
+
+          [0,1]     [2,3]
+            A-------B
+            |       |
+            |       |
+            D-------C
+          [6,7]     [4,5]
+        */
+        const coordinates = [
+          [fullCoordinates[1].Float, fullCoordinates[0].Float], // Corner A as [Lat, Lng]
+          [fullCoordinates[5].Float, fullCoordinates[4].Float], // Corner C as [Lat, Lng]
+        ] as LatLngBoundsLiteral;
+
+        const color = this.tileColor(item);
+
+        return { item, imageUrl, coordinates, color } as Area;
+      });
+
+      return areas;
     },
     // callback when zooming on map
     onZoom() {

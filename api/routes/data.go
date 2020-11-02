@@ -71,10 +71,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 			handleError(w, errors.Wrap(err, "unable to expand filter params"))
 			return
 		}
-		// isHighlight added for querying data the highlighted data for data tables
-		if params["isHighlight"] == nil && expandedFilterParams.Filters == nil {
-			expandedFilterParams.Highlight = nil
-		}
+
 		// fetch filtered data based on the supplied search parameters
 		data, err := storage.FetchData(dataset, storageName, expandedFilterParams, invertBool)
 		if err != nil {

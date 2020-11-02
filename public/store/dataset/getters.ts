@@ -119,10 +119,10 @@ export const getters = {
     return !!state.includedSet.tableData;
   },
   getHighlightedIncludeSet(state: DatasetState): TableData {
-    return state.highlightedIncludeSet.tableData;
+    return state.highlightedIncludeSet;
   },
   getHighlightedExcludeSet(state: DatasetState): TableData {
-    return state.highlightedExcludeSet.tableData;
+    return state.highlightedExcludeSet;
   },
   getIncludedTableData(state: DatasetState): TableData {
     return state.includedSet.tableData;
@@ -137,11 +137,23 @@ export const getters = {
       ? state.includedSet.tableData.numRowsFiltered
       : 0;
   },
+  getAreaOfInterestIncludeInnerItems(state: DatasetState) {
+    return getTableDataItems(state.areaOfInterestIncludeInner);
+  },
+  getAreaOfInterestIncludeOuterItems(state: DatasetState) {
+    return getTableDataItems(state.areaOfInterestIncludeOuter);
+  },
+  getAreaOfInterestExcludeInnerItems(state: DatasetState) {
+    return getTableDataItems(state.areaOfInterestExcludeInner);
+  },
+  getAreaOfInterestExcludeOuterItems(state: DatasetState) {
+    return getTableDataItems(state.areaOfInterestExcludeOuter);
+  },
   getHighlightedIncludeTableDataItems(state: DatasetState) {
-    return getTableDataItems(state.highlightedIncludeSet.tableData);
+    return getTableDataItems(state.highlightedIncludeSet);
   },
   getHighlightedExcludeTableDataItems(state: DatasetState) {
-    return getTableDataItems(state.highlightedExcludeSet.tableData);
+    return getTableDataItems(state.highlightedExcludeSet);
   },
   getIncludedTableDataItems(state: DatasetState, getters: any): TableRow[] {
     return getTableDataItems(state.includedSet.tableData);

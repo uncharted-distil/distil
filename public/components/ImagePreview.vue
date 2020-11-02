@@ -2,13 +2,17 @@
   <div
     v-observe-visibility="visibilityChanged"
     :class="{ 'is-hidden': !isVisible && !preventHiding }"
-    :style="{ width: `${width}px`, height: `${height}px` }"
+    :style="{
+      width: `${width}px`,
+      height: `${height}px`,
+      filter: `grayscale(${gray}%)`,
+    }"
   >
     <div class="image-container" :class="{ selected: isSelected && isLoaded }">
       <template v-if="!isLoaded">
         <div v-html="spinnerHTML"></div>
       </template>
-      <template v-else>
+      <template v-else-if="!stopSpinner">
         <div
           class="image-elem"
           :class="{ clickable: hasClick }"
@@ -80,12 +84,17 @@ export default Vue.extend({
       type: Boolean as () => boolean,
     },
     onClick: Function,
+
+    gray: { type: Number, default: 0 }, // support for graying images.
     debounce: { type: Boolean as () => boolean, default: false },
     debounceWaitTime: { type: Number as () => number, default: 500 },
   },
 
   watch: {
     imageUrl(newUrl: string, oldUrl: string) {
+      if (newUrl === null) {
+        return;
+      }
       if (newUrl !== oldUrl) {
         this.cleanUp();
         this.hasRendered = false;
@@ -125,6 +134,7 @@ export default Vue.extend({
       isVisible: false,
       hasRendered: false,
       hasRequested: false,
+      stopSpinner: false,
       debouncedRequestImage: null,
       getImage: null,
     };
@@ -132,13 +142,16 @@ export default Vue.extend({
 
   computed: {
     imageId(): string {
-      return this.imageUrl.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
+      return this.imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
     },
     files(): Dictionary<any> {
       return datasetGetters.getFiles(this.$store);
     },
     isLoaded(): boolean {
-      return !!this.files[this.imageUrl] && !!this.files[this.imageId];
+      return (
+        (!!this.files[this.imageUrl] && !!this.files[this.imageId]) ||
+        this.stopSpinner
+      );
     },
     image(): HTMLImageElement {
       return this.files[this.imageUrl] ?? this.files[this.imageId] ?? null;
@@ -228,6 +241,10 @@ export default Vue.extend({
     },
 
     async requestImage() {
+      if (this.imageUrl === null) {
+        this.stopSpinner = true; // imageUrl is null stop spinner
+        return;
+      }
       this.hasRequested = true;
       if (this.type === IMAGE_TYPE) {
         await datasetActions.fetchImage(this.$store, {
