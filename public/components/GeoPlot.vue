@@ -86,7 +86,6 @@ import _ from "lodash";
 import Vue from "vue";
 import IconBase from "./icons/IconBase.vue";
 import IconCropFree from "./icons/IconCropFree.vue";
-import ImageDrilldown from "./ImageDrilldown.vue";
 import ImageLabel from "./ImageLabel.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
