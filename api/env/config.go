@@ -58,6 +58,7 @@ type Config struct {
 	IngestOverwrite                    bool    `env:"INGEST_OVERWRITE" envDefault:"false"`
 	IngestSampleRowLimit               int     `env:"INGEST_SAMPLE_ROW_LIMIT" envDefault:"25000"`
 	InitialDataset                     string  `env:"INITIAL_DATASET" envDefault:""`
+	MapAPIKey                          string  `env:"MAP_API_KEY" envDefault:""` // can be empty
 	MaxTrainingRows                    int     `env:"MAX_TRAINING_ROWS" envDefault:"100000"`
 	MaxTestRows                        int     `env:"MAX_TEST_ROWS" envDefault:"100000"`
 	MinTrainingRows                    int     `env:"MIN_TRAINING_ROWS" envDefault:"100"`
@@ -74,6 +75,8 @@ type Config struct {
 	PostgresUser                       string  `env:"PG_USER" envDefault:"distil"`
 	RankingOutputPath                  string  `env:"RANKING_OUTPUT_PATH" envDefault:"importance.json"`
 	RankingRowLimit                    int     `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
+	RemoteSensingGPUBatchSize          int     `env:"REMOTE_SENSING_GPU_BATCH_SIZE" envDefault:"32"`
+	RemoteSensingNumJobs               int     `env:"REMOTE_SENSING_NUM_JOBS" envDefault:"-1"` // -1 sets num jobs = num cpus
 	SchemaPath                         string  `env:"SCHEMA_PATH" envDefault:"datasetDoc.json"`
 	SkipIngest                         bool    `env:"SKIP_INGEST" envDefault:"false"`
 	SkipPreprocessing                  bool    `env:"SKIP_PREPROCESSING" envDefault:"false"`
@@ -83,17 +86,16 @@ type Config struct {
 	SolutionComputePullMax             int     `env:"SOLUTION_COMPUTE_PULL_MAX" envDefault:"10"`
 	SolutionSearchMaxTime              int     `env:"SOLUTION_SEARCH_MAX_TIME" envDefault:"10"`
 	SolutionComputeTrace               bool    `env:"SOLUTION_COMPUTE_TRACE" envDefault:"false"`
+	Subdomains                         string  `env:"SUBDOMAINS" envDefault:"a,b,c"` // comma delimited array -- can be empty
 	SummaryPath                        string  `env:"SUMMARY_PATH" envDefault:"summary.txt"`
 	SummaryMachinePath                 string  `env:"SUMMARY_MACHINE_PATH" envDefault:"summary-machine.json"`
 	SummaryEnabled                     bool    `env:"SUMMARY_ENABLED" envDefault:"true"`
 	ServiceRetryCount                  int     `env:"SERVICE_RETRY_COUNT" envDefault:"10"`
+	TileRequestURL                     string  `env:"TILE_REQUEST_URL" envDefault:"https:/{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"` // s is subdomain does not have to be there, x,y is position z is zoom level. {t} is token The url must have the brackets around the data required.
 	TrainTestSplit                     float64 `env:"TRAIN_TEST_SPLIT" envDefault:"0.9"`
 	TrainTestSplitTimeSeries           float64 `env:"TRAIN_TEST_SPLIT_TIMESERIES" envDefault:"0.9"`
 	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"outputs/problems"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
-	MapAPIKey                          string  `env:"MAP_API_KEY" envDefault:""`                                                                // can be empty
-	TileRequestURL                     string  `env:"TILE_REQUEST_URL" envDefault:"https:/{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"` // s is subdomain does not have to be there, x,y is position z is zoom level. {t} is token The url must have the brackets around the data required.
-	Subdomains                         string  `env:"SUBDOMAINS" envDefault:"a,b,c"`                                                            // comma delimited array -- can be empty
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a copy.

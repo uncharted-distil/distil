@@ -141,8 +141,13 @@ func Cluster(dataset *api.Dataset, variable string, useKMeans bool) (bool, []*Cl
 					"remote_sensing_cluster", "k-means pre-featurized remote sensing clustering", variables, useKMeans)
 			}
 		} else {
-			rsg := clusterGroup.(*model.MultiBandImageGrouping)
-			step, err = description.CreateMultiBandImageClusteringPipeline("remote_sensing_cluster", "multiband image clustering", rsg, features, useKMeans)
+			var envConfig env.Config
+			envConfig, err = env.LoadConfig()
+			if err == nil {
+				rsg := clusterGroup.(*model.MultiBandImageGrouping)
+				step, err = description.CreateMultiBandImageClusteringPipeline("remote_sensing_cluster", "multiband image clustering",
+					rsg, features, useKMeans, envConfig.RemoteSensingGPUBatchSize, envConfig.RemoteSensingNumJobs)
+			}
 		}
 	} else if clusteringVar.DistilRole == model.VarDistilRoleGrouping {
 		// assume timeseries for now if distil role is grouping
