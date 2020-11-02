@@ -1,10 +1,10 @@
 import { Module } from "vuex";
-import { state, DatasetState } from "./index";
-import { getters as moduleGetters } from "./getters";
-import { actions as moduleActions } from "./actions";
-import { mutations as moduleMutations } from "./mutations";
-import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
+import { DistilState } from "../store";
+import { actions as moduleActions } from "./actions";
+import { getters as moduleGetters } from "./getters";
+import { DatasetState, state } from "./index";
+import { mutations as moduleMutations } from "./mutations";
 
 export const datasetModule: Module<DatasetState, DistilState> = {
   getters: moduleGetters,
@@ -190,6 +190,7 @@ export const mutations = {
   removePendingRequest: commit(moduleMutations.removePendingRequest),
   // files
   updateFile: commit(moduleMutations.updateFile),
+  removeFile: commit(moduleMutations.removeFile),
   updateTimeseries: commit(moduleMutations.updateTimeseries),
   // included / excluded table data
   setJoinDatasetsTableData: commit(moduleMutations.setJoinDatasetsTableData),

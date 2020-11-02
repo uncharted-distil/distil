@@ -11,11 +11,7 @@ import {
   validateArgs,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
-import {
-  EXCLUDE_FILTER,
-  FilterParams,
-  INCLUDE_FILTER,
-} from "../../util/filters";
+import { EXCLUDE_FILTER, FilterParams } from "../../util/filters";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import { loadImage } from "../../util/image";
 import {
@@ -1120,6 +1116,7 @@ export const actions = {
       imageId: string;
       bandCombination: string;
       isThumbnail: boolean;
+      uniqueTrail?: string;
     }
   ) {
     if (!validateArgs(args, ["dataset", "imageId", "bandCombination"])) {
@@ -1130,7 +1127,10 @@ export const actions = {
       const response = await loadImage(
         `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}/${args.isThumbnail}`
       );
-      mutations.updateFile(context, { url: args.imageId, file: response });
+      const imageUrl = !!args.uniqueTrail
+        ? `${args.imageId}/${args.uniqueTrail}`
+        : args.imageId;
+      mutations.updateFile(context, { url: imageUrl, file: response });
     } catch (error) {
       console.error(error);
     }

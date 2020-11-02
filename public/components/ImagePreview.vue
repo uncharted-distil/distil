@@ -42,6 +42,7 @@ import ImageDrilldown from "./ImageDrilldown.vue";
 import {
   getters as datasetGetters,
   actions as datasetActions,
+  mutations as datasetMutations,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { circleSpinnerHTML } from "../util/spinner";
@@ -68,6 +69,7 @@ export default Vue.extend({
   props: {
     row: Object as () => TableRow,
     imageUrl: String as () => string,
+    uniqueTrail: { type: String as () => string, default: "" },
     type: String as () => string,
     width: {
       default: 64,
@@ -82,7 +84,11 @@ export default Vue.extend({
       type: Boolean as () => boolean,
     },
     onClick: Function,
+
     gray: { type: Number, default: 0 }, // support for graying images.
+    debounce: { type: Boolean as () => boolean, default: false },
+    debounceWaitTime: { type: Number as () => number, default: 500 },
+
   },
 
   watch: {
@@ -91,27 +97,32 @@ export default Vue.extend({
         return;
       }
       if (newUrl !== oldUrl) {
+        this.cleanUp();
         this.hasRendered = false;
         this.hasRequested = false;
-        if (!this.image) {
-          this.clearImage();
-          this.requestImage();
-        } else {
-          this.injectImage();
-        }
+        this.clearImage();
+        this.getImage();
       }
     },
 
     // Refresh image on band change
     band(newBand: string, oldBand: string) {
       if (newBand !== oldBand) {
+        this.cleanUp();
         this.hasRendered = false;
         this.hasRequested = false;
         if (this.isVisible) {
           this.clearImage();
-          this.requestImage();
+          this.getImage();
         }
       }
+    },
+    debounce(newVal: boolean) {
+      if (newVal) {
+        this.getImage = this.debouncedRequestImage;
+        return;
+      }
+      this.getImage = this.requestImage;
     },
   },
 
@@ -125,6 +136,8 @@ export default Vue.extend({
       hasRendered: false,
       hasRequested: false,
       stopSpinner: false,
+      debouncedRequestImage: null,
+      getImage: null,
     };
   },
 
@@ -174,7 +187,7 @@ export default Vue.extend({
     visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRequested) {
-        this.requestImage();
+        this.getImage();
         return;
       }
       if (this.isVisible && this.hasRequested && !this.hasRendered) {
@@ -256,6 +269,15 @@ export default Vue.extend({
         console.warn(`Image Data Type ${this.type} is not supported`);
       }
     },
+    cleanUp() {
+      const empty = "";
+      if (this.uniqueTrail !== empty) {
+        datasetMutations.removeFile(
+          this.$store,
+          `${this.imageId}/${this.uniqueTrail}`
+        );
+      }
+    },
   },
 
   async beforeMount() {
@@ -267,6 +289,23 @@ export default Vue.extend({
       await datasetActions.fetchMultiBandCombinations(this.$store, {
         dataset: this.dataset,
       });
+    }
+  },
+  created() {
+    this.debouncedRequestImage = _.debounce(
+      this.requestImage.bind(this),
+      this.debounceWaitTime
+    );
+    if (this.debounce) {
+      this.getImage = this.debouncedRequestImage;
+    } else {
+      this.getImage = this.requestImage;
+    }
+  },
+  destroyed() {
+    this.cleanUp();
+    if (this.debounce) {
+      this.getImage.cancel();
     }
   },
 });

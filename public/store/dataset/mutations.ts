@@ -1,28 +1,28 @@
 import _ from "lodash";
 import Vue from "vue";
-import { Dictionary } from "../../util/dict";
 import {
-  DatasetState,
-  Variable,
-  Dataset,
-  VariableSummary,
-  TableData,
-  DatasetPendingRequest,
-  Task,
-  BandCombination,
-  TimeSeriesValue,
-  Metric,
-} from "./index";
-import {
-  updateSummariesPerVariable,
   isDatamartProvenance,
+  updateSummariesPerVariable,
 } from "../../util/data";
+import { Dictionary } from "../../util/dict";
+import { getSelectedRows } from "../../util/row";
 import {
   GEOCOORDINATE_TYPE,
-  LONGITUDE_TYPE,
   LATITUDE_TYPE,
+  LONGITUDE_TYPE,
 } from "../../util/types";
-import { getSelectedRows } from "../../util/row";
+import {
+  BandCombination,
+  Dataset,
+  DatasetPendingRequest,
+  DatasetState,
+  Metric,
+  TableData,
+  Task,
+  TimeSeriesValue,
+  Variable,
+  VariableSummary,
+} from "./index";
 
 function sortDatasets(a: Dataset, b: Dataset) {
   if (
@@ -250,7 +250,9 @@ export const mutations = {
   updateFile(state: DatasetState, args: { url: string; file: any }) {
     Vue.set(state.files, args.url, args.file);
   },
-
+  removeFile(state: DatasetState, url: string) {
+    Vue.delete(state.files, url);
+  },
   updateTimeseries(
     state: DatasetState,
     args: {
