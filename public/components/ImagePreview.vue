@@ -88,7 +88,6 @@ export default Vue.extend({
     gray: { type: Number, default: 0 }, // support for graying images.
     debounce: { type: Boolean as () => boolean, default: false },
     debounceWaitTime: { type: Number as () => number, default: 500 },
-
   },
 
   watch: {
