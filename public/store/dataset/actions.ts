@@ -1272,7 +1272,6 @@ export const actions = {
       highlight: { ...args.highlight, include: EXCLUDE_FILTER },
       include: args.include,
       dataMode: args.dataMode,
-      isHighlight: true,
     });
     mutator(context, data);
   },
@@ -1285,18 +1284,30 @@ export const actions = {
       dataMode: DataMode;
       include: boolean;
       mutatorIsInclude: boolean;
+      isExclude: boolean;
     }
   ) {
-    const mutator = args.mutatorIsInclude
-      ? mutations.setAreaOfInterestInclude
-      : mutations.setAreaOfInterestExclude;
+    let mutator = null;
+    if (!args.isExclude) {
+      mutator = args.mutatorIsInclude
+        ? mutations.setAreaOfInterestIncludeInner
+        : mutations.setAreaOfInterestIncludeOuter;
+    } else {
+      mutator = args.mutatorIsInclude
+        ? mutations.setAreaOfInterestExcludeInner
+        : mutations.setAreaOfInterestExcludeOuter;
+    }
+    // if is exclude and highlight is null there is nothing to invert
+    if (!args.mutatorIsInclude && args.highlight === null) {
+      mutator(context, { values: [] });
+      return;
+    }
     const data = await actions.fetchTableData(context, {
       dataset: args.dataset,
       filterParams: args.filterParams,
       highlight: args.highlight,
       include: args.include,
       dataMode: args.dataMode,
-      //    isHighlight: true,
     });
     mutator(context, data);
   },
@@ -1309,19 +1320,15 @@ export const actions = {
       highlight: Highlight;
       include: boolean;
       dataMode: DataMode;
-      isHighlight?: boolean;
     }
   ): Promise<TableData> {
     if (!validateArgs(args, ["dataset", "filterParams"])) {
       return null;
     }
-    let filterParams = addHighlightToFilterParams(
+    const filterParams = addHighlightToFilterParams(
       args.filterParams,
       args.highlight
     );
-    if (!!args.isHighlight) {
-      filterParams = { ...filterParams, isHighlight: true }; // add extra param
-    }
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;

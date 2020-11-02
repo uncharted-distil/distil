@@ -509,33 +509,7 @@ export default Vue.extend({
           window.addEventListener("mousemove", this.fadeToast);
         },
         onClick: (id: number) => {
-          if (id > this.areas.length || id < 0) {
-            console.error(
-              `id retrieved from buffer picker ${id} not within index bounds of areas.`
-            );
-            return;
-          }
-          this.drillDownState.centerTile = this.areas[id];
-          this.drillDownState.bounds = this.getInterestBounds(this.areas[id]);
-          this.$emit("tileClicked", {
-            bounds: this.drillDownState.bounds,
-            callback: () => {
-              const included = this.tableDataToAreas(
-                datasetGetters.getAreaOfInterestIncludeItems(this.$store)
-              ) as any[];
-              included.forEach((i) => {
-                i.gray = 0;
-              });
-              const excluded = this.tableDataToAreas(
-                datasetGetters.getAreaOfInterestExcludeItems(this.$store)
-              ) as any[];
-              excluded.forEach((i) => {
-                i.gray = 100;
-              });
-              this.drillDownState.tiles = included.concat(excluded);
-              this.isImageDrilldown = true;
-            },
-          });
+          this.onTileClick(id);
         },
         quads: () => {
           return this.areaToQuads();
@@ -600,25 +574,7 @@ export default Vue.extend({
           window.addEventListener("mousemove", this.fadeToast);
         },
         onClick: (id: number) => {
-          if (id > this.areas.length || id < 0) {
-            console.error(
-              `id retrieved from buffer picker ${id} not within index bounds of areas.`
-            );
-            return;
-          }
-          this.drillDownState.centerTile = this.areas[id];
-          this.drillDownState.bounds = this.getInterestBounds(this.areas[id]);
-          this.$emit("tileClicked", {
-            bounds: this.drillDownState.bounds,
-            callback: () => {
-              this.drillDownState.tiles = this.tableDataToAreas(
-                datasetGetters.getAreaOfInterestIncludeItems(this.$store)
-              );
-              console.log(this.drillDownState.tiles);
-              this.isImageDrilldown = true;
-            },
-          });
-          // this.showImageDrilldown(this.areas[id].imageUrl, this.areas[id].item);
+          this.onTileClick(id);
         },
         quads: () => {
           return this.areaToPoints();
@@ -816,6 +772,42 @@ export default Vue.extend({
     fadeToast() {
       this.$bvToast.hide(this.toastId);
       window.removeEventListener("mousemove", this.fadeToast); // remove event listener because toast is now faded
+    },
+    onTileClick(id: number) {
+      if (id > this.areas.length || id < 0) {
+        console.error(
+          `id retrieved from buffer picker ${id} not within index bounds of areas.`
+        );
+        return;
+      }
+      this.drillDownState.centerTile = this.areas[id];
+      this.drillDownState.bounds = this.getInterestBounds(this.areas[id]);
+      this.$emit("tileClicked", {
+        bounds: this.drillDownState.bounds,
+        key: this.summaries[0].key,
+        displayName: this.summaries[0].label,
+        type: this.summaries[0].type,
+        callback: (isIncluded: boolean) => {
+          const innerGetter = isIncluded
+            ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)
+            : datasetGetters.getAreaOfInterestExcludeInnerItems(this.$store);
+          const inner = this.tableDataToAreas(innerGetter) as any[];
+          inner.forEach((i) => {
+            i.gray = 0;
+          });
+          const outerGetter = isIncluded
+            ? datasetGetters.getAreaOfInterestIncludeOuterItems(this.$store)
+            : datasetGetters.getAreaOfInterestExcludeOuterItems(this.$store);
+
+          const outer = this.tableDataToAreas(outerGetter) as any[];
+          outer.forEach((i) => {
+            i.gray = 100;
+          });
+          console.table([innerGetter, outerGetter]);
+          this.drillDownState.tiles = inner.concat(outer);
+          this.isImageDrilldown = true;
+        },
+      });
     },
     // assumes x and y are normalized points this function is for the selection tool
     pointsToQuad(p1: LumoPoint, p2: LumoPoint): Quad[] {

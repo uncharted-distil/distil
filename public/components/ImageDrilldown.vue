@@ -23,7 +23,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import ImageLabel from "./ImageLabel";
+import ImageLabel from "./ImageLabel.vue";
 import { TableColumn, TableRow } from "../store/dataset/index";
 import {
   getters as datasetGetters,

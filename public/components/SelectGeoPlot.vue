@@ -24,6 +24,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { getVariableSummariesByState, searchVariables } from "../util/data";
 import { isGeoLocatedType } from "../util/types";
 import { actions as viewActions } from "../store/view/module";
+import { INCLUDE_FILTER } from "../util/filters";
 export default Vue.extend({
   name: "select-geo-plot",
 
@@ -89,19 +90,25 @@ export default Vue.extend({
     },
   },
   methods: {
-    async onTileClick(args: { bounds: number[][]; callback: () => void }) {
+    async onTileClick(args: {
+      bounds: number[][];
+      key: string;
+      displayName: string;
+      type: string;
+      callback: (boolean) => void;
+    }) {
       const filter = {
-        displayName: "coordinates",
-        key: "coordinates_group",
+        displayName: args.displayName,
+        key: args.key,
         maxX: args.bounds[1][1],
         maxY: args.bounds[0][0],
         minX: args.bounds[0][1],
         minY: args.bounds[1][0],
-        mode: "include",
-        type: "geobounds",
+        mode: INCLUDE_FILTER,
+        type: args.type,
       };
       await viewActions.updateAreaOfInterest(this.$store, filter);
-      args.callback();
+      args.callback(this.includedActive);
     },
   },
 });
