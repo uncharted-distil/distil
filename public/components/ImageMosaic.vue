@@ -15,6 +15,8 @@
                 :on-click="onImageClick"
                 :type="imageField.type"
                 :key="fieldKey"
+                uniqueTrail="mosaic"
+                :debounce="true"
               ></image-preview>
             </template>
             <image-label
@@ -44,8 +46,9 @@
 
 <script lang="ts">
 import Vue from "vue";
-import ImageLabel from "./ImageLabel";
-import ImagePreview from "./ImagePreview";
+import _ from "lodash";
+import ImageLabel from "./ImageLabel.vue";
+import ImagePreview from "./ImagePreview.vue";
 import {
   RowSelection,
   TableColumn,
@@ -107,6 +110,7 @@ export default Vue.extend({
 
       return this.items.slice(start, end);
     },
+
     itemCount(): number {
       return this.includedActive
         ? datasetGetters.getIncludedTableDataLength(this.$store)
