@@ -1,8 +1,8 @@
 <template>
   <div class="drill-down-container">
-    <b-container class="grid-container">
-      <b-row v-for="(r, i) in rows" :key="r" :no-gutters="true">
-        <b-col v-for="(c, j) in cols" :key="c">
+    <div class="grid-container" :style="gridColStyle">
+      <template v-for="(r, i) in rows">
+        <template v-for="(c, j) in cols">
           <div class="image-container">
             <image-label
               class="image-label"
@@ -22,9 +22,9 @@
               :gray="tilesToRender[i][j].gray"
             />
           </div>
-        </b-col>
-      </b-row>
-    </b-container>
+        </template>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -83,6 +83,9 @@ export default Vue.extend({
     },
     tilesToRender(): Tile[][] {
       return this.spatialSort();
+    },
+    gridColStyle(): string {
+      return `grid-template-columns: repeat(${this.cols}, ${this.imageWidth}px); grid-template-rows: repeat(${this.rows}, ${this.imageHeight}px);`;
     },
   },
   methods: {
@@ -155,7 +158,8 @@ export default Vue.extend({
 }
 .grid-container {
   background: rgba(255, 255, 255, 0.7);
-}
-.col {
+  display: grid;
+  grid-gap: 2px;
+  padding-bottom: 4px;
 }
 </style>

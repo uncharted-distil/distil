@@ -690,8 +690,7 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	// if there are no filters, and we are returning the exclude set, we expect
 	// no results in the filtered set
-	isFiltered := filterParams.Filters != nil || filterParams.Highlight != nil
-	if invert && !isFiltered {
+	if invert && filterParams.Filters == nil {
 		return &api.FilteredData{
 			NumRows: numRows,
 			Columns: make([]*api.Column, 0),

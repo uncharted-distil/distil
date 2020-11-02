@@ -88,6 +88,10 @@ export const INCLUDE_FILTER = "include";
  */
 export const EXCLUDE_FILTER = "exclude";
 
+export function invertFilter(filter: string): string {
+  return filter === INCLUDE_FILTER ? EXCLUDE_FILTER : INCLUDE_FILTER;
+}
+
 export interface Filter {
   type: string;
   mode: string;

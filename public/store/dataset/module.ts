@@ -66,11 +66,11 @@ export const getters = {
   getIncludedTableDataItems: read(moduleGetters.getIncludedTableDataItems),
   getIncludedTableDataFields: read(moduleGetters.getIncludedTableDataFields),
   getIncludedSelectedRowData: read(moduleGetters.getIncludedSelectedRowData),
-  getAreaOfInterestIncludeItems: read(
-    moduleGetters.getAreaOfInterestIncludeItems
+  getAreaOfInterestIncludeInnerItems: read(
+    moduleGetters.getAreaOfInterestIncludeInnerItems
   ),
-  getAreaOfInterestExcludeItems: read(
-    moduleGetters.getAreaOfInterestExcludeItems
+  getAreaOfInterestIncludeOuterItems: read(
+    moduleGetters.getAreaOfInterestIncludeOuterItems
   ),
 
   // excluded data
@@ -81,7 +81,12 @@ export const getters = {
   getExcludedTableDataItems: read(moduleGetters.getExcludedTableDataItems),
   getExcludedTableDataFields: read(moduleGetters.getExcludedTableDataFields),
   getExcludedSelectedRowData: read(moduleGetters.getExcludedSelectedRowData),
-
+  getAreaOfInterestExcludeInnerItems: read(
+    moduleGetters.getAreaOfInterestExcludeInnerItems
+  ),
+  getAreaOfInterestExcludeOuterItems: read(
+    moduleGetters.getAreaOfInterestExcludeOuterItems
+  ),
   // Remote sensing image band combinatinos
   getMultiBandCombinations: read(moduleGetters.getMultiBandCombinations),
 
@@ -197,8 +202,18 @@ export const mutations = {
   setHighlightedExcludeTableData: commit(
     moduleMutations.setHighlightedExcludeTableData
   ),
-  setAreaOfInterestInclude: commit(moduleMutations.setAreaOfInterestInclude),
-  setAreaOfInterestExclude: commit(moduleMutations.setAreaOfInterestExclude),
+  setAreaOfInterestIncludeInner: commit(
+    moduleMutations.setAreaOfInterestIncludeInner
+  ),
+  setAreaOfInterestIncludeOuter: commit(
+    moduleMutations.setAreaOfInterestIncludeOuter
+  ),
+  setAreaOfInterestExcludeInner: commit(
+    moduleMutations.setAreaOfInterestExcludeInner
+  ),
+  setAreaOfInterestExcludeOuter: commit(
+    moduleMutations.setAreaOfInterestExcludeOuter
+  ),
   setIncludedTableData: commit(moduleMutations.setIncludedTableData),
   setExcludedTableData: commit(moduleMutations.setExcludedTableData),
   updateBands: commit(moduleMutations.updateBands),

@@ -361,8 +361,10 @@ export interface DatasetState {
   excludedSet: WorkingSet;
   highlightedIncludeSet: TableData;
   highlightedExcludeSet: TableData;
-  areaOfInterestInclude: TableData;
-  areaOfInterestExclude: TableData;
+  areaOfInterestIncludeInner: TableData;
+  areaOfInterestIncludeOuter: TableData;
+  areaOfInterestExcludeInner: TableData;
+  areaOfInterestExcludeOuter: TableData;
   pendingRequests: DatasetPendingRequest[];
   task: Task;
   bands: BandCombination[];
@@ -426,8 +428,12 @@ export const state: DatasetState = {
   highlightedIncludeSet: null,
   highlightedExcludeSet: null,
   // tiles surrounding tile that was clicked
-  areaOfInterestExclude: null,
-  areaOfInterestInclude: null,
+  // include area of interest
+  areaOfInterestIncludeInner: null,
+  areaOfInterestIncludeOuter: null,
+  // exclude area of interest
+  areaOfInterestExcludeInner: null,
+  areaOfInterestExcludeOuter: null,
   // linked files / representation data
   files: {},
   timeseries: {},
