@@ -12,14 +12,6 @@
       tabindex="0"
     ></div>
 
-    <!-- <image-drilldown
-      v-if="isMultiBandImage"
-      @hide="hideImageDrilldown"
-      :dataFields="dataFields"
-      :imageUrl="imageUrl"
-      :item="item"
-      :visible="isImageDrilldown"
-    /> -->
     <drill-down
       v-if="showDrillDown"
       :dataFields="dataFields"
