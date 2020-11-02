@@ -21,19 +21,12 @@
     </view-type-toggle>
 
     <div class="fake-search-input">
-      <div>
-        <filter-badge
-          v-if="activeFilter"
-          active-filter
-          :filter="activeFilter"
-        />
-        <filter-badge
-          v-if="filter.type !== 'row'"
-          v-for="filter in filters"
-          :key="filterHash(filter)"
-          :filter="filter"
-        />
-      </div>
+      <filter-badge v-if="activeFilter" active-filter :filter="activeFilter" />
+      <filter-badge
+        v-for="(filter, index) in filters"
+        :key="index"
+        :filter="filter"
+      />
     </div>
 
     <div class="table-title-container">
@@ -97,15 +90,15 @@
 <script lang="ts">
 import Vue from "vue";
 import { spinnerHTML } from "../util/spinner";
-import DataSize from "../components/buttons/DataSize";
-import SelectDataTable from "./SelectDataTable";
-import ImageMosaic from "./ImageMosaic";
-import SelectTimeseriesView from "./SelectTimeseriesView";
-import SelectGeoPlot from "./SelectGeoPlot";
-import SelectGraphView from "./SelectGraphView";
-import FilterBadge from "./FilterBadge";
-import ViewTypeToggle from "./ViewTypeToggle";
-import LayerSelection from "./LayerSelection";
+import DataSize from "../components/buttons/DataSize.vue";
+import SelectDataTable from "./SelectDataTable.vue";
+import ImageMosaic from "./ImageMosaic.vue";
+import SelectTimeseriesView from "./SelectTimeseriesView.vue";
+import SelectGeoPlot from "./SelectGeoPlot.vue";
+import SelectGraphView from "./SelectGraphView.vue";
+import FilterBadge from "./FilterBadge.vue";
+import ViewTypeToggle from "./ViewTypeToggle.vue";
+import LayerSelection from "./LayerSelection.vue";
 import { overlayRouteEntry } from "../util/routes";
 import {
   actions as datasetActions,
@@ -268,7 +261,9 @@ export default Vue.extend({
     },
 
     filters(): Filter[] {
-      return routeGetters.getDecodedFilters(this.$store);
+      return routeGetters
+        .getDecodedFilters(this.$store)
+        .filter((f) => f.type !== "row");
     },
 
     rowSelection(): RowSelection {
@@ -306,10 +301,6 @@ export default Vue.extend({
   },
 
   methods: {
-    filterHash(filter: Filter) {
-      return JSON.stringify(filter);
-    },
-
     onExcludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {
@@ -449,15 +440,17 @@ table tr {
 }
 
 .fake-search-input {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  flex-grow: 1;
   background-color: var(--gray-300);
-  border: 1px solid var(--gray-500); /* #ccc */
+  border: 1px solid var(--gray-500);
   border-radius: 0.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 2.5rem;
   padding: 3px;
-  height: 38px;
+}
+
+.fake-search-input > .filter-badge {
+  margin: 2px;
 }
 
 .pending {
@@ -475,6 +468,11 @@ table tr {
 
 .layer-select-dropdown {
   margin-right: 6px;
+}
+
+/* Make firsts element of this component unsquishable. */
+.select-data-slot > *:not(:last-child) {
+  flex-shrink: 0;
 }
 
 .selection-data-slot-summary {

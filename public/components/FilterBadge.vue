@@ -1,29 +1,8 @@
 <template>
-  <div class="filter-badge" v-bind:class="{ active: activeFilter }">
-    {{ filterName }}
-    <span v-if="filter.type === NUMERICAL_FILTER">
-      {{ filter.min.toFixed(2) }} : {{ filter.max.toFixed(2) }}
-    </span>
-    <span v-if="filter.type === DATETIME_FILTER">
-      {{ formatDate(filter.min * 1000) }} : {{ formatDate(filter.max * 1000) }}
-    </span>
-    <span v-if="filter.type === GEOBOUNDS_FILTER">
-      [{{ filter.minX.toFixed(2) }}, {{ filter.minY.toFixed(2) }}] to [{{
-        filter.maxX.toFixed(2)
-      }}, {{ filter.maxY.toFixed(2) }}]
-    </span>
-    <span
-      v-if="
-        filter.type === CATEGORICAL_FILTER ||
-        filter.type === CLUSTER_FILTER ||
-        filter.type === TEXT_FILTER
-      "
-    >
-      {{ filter.categories.join(",") }}
-    </span>
-
+  <div class="filter-badge" :class="{ active: activeFilter }">
+    {{ name }} {{ content }}
     <b-button class="remove-button" size="sm" @click="onClick">
-      <i class="fa fa-times"></i>
+      <i class="fa fa-times" />
     </b-button>
   </div>
 </template>
@@ -53,26 +32,32 @@ export default Vue.extend({
   },
 
   computed: {
-    filterName(): string {
+    name(): string {
       return this.filter.displayName;
     },
-    NUMERICAL_FILTER(): string {
-      return NUMERICAL_FILTER;
-    },
-    DATETIME_FILTER(): string {
-      return DATETIME_FILTER;
-    },
-    CATEGORICAL_FILTER(): string {
-      return CATEGORICAL_FILTER;
-    },
-    TEXT_FILTER(): string {
-      return TEXT_FILTER;
-    },
-    CLUSTER_FILTER(): string {
-      return CLUSTER_FILTER;
-    },
-    GEOBOUNDS_FILTER(): string {
-      return GEOBOUNDS_FILTER;
+
+    content(): string {
+      if (this.filter.type === NUMERICAL_FILTER) {
+        const min = this.filter.min.toFixed(2);
+        const max = this.filter.max.toFixed(2);
+        return `${min} : ${max}`;
+      } else if (this.filter.type === DATETIME_FILTER) {
+        const min = this.formatDate(this.filter.min * 1000);
+        const max = this.formatDate(this.filter.max * 1000);
+        return `${min} : ${max}`;
+      } else if (this.filter.type === GEOBOUNDS_FILTER) {
+        const minX = this.filter.minX.toFixed(2);
+        const minY = this.filter.minY.toFixed(2);
+        const maxX = this.filter.maxX.toFixed(2);
+        const maxY = this.filter.maxY.toFixed(2);
+        return `[${minX}, ${minY}] to [${maxX}, ${maxY}]`;
+      } else if (
+        [CATEGORICAL_FILTER, CLUSTER_FILTER, TEXT_FILTER].includes(
+          this.filter.type
+        )
+      ) {
+        return this.filter.categories.join(",");
+      }
     },
   },
 
@@ -92,7 +77,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .filter-badge {
   position: relative;
   height: 28px;
@@ -107,7 +92,7 @@ export default Vue.extend({
   background-color: #255dcc;
 }
 
-button.remove-button {
+.remove-button {
   color: #fff;
   margin-left: 8px;
   background: none;
@@ -117,14 +102,15 @@ button.remove-button {
   border: none;
   border-left: 1px solid #fff;
 }
-button.remove-button:hover {
+
+.remove-button:hover {
   color: #fff;
   background-color: #3d70d3;
   border: none;
   border-left: 1px solid #fff;
 }
 
-.active button.remove-button:hover {
+.active .remove-button:hover {
   background-color: #3d70d3;
 }
 </style>
