@@ -78,7 +78,7 @@
       v-model="currentPage"
       :per-page="perPage"
       :total-rows="itemCount"
-    ></b-pagination>
+    />
   </div>
 </template>
 
@@ -320,5 +320,14 @@ table tr {
 .table-hover tbody .table-selected-row:hover {
   border-left: 4px solid #ff0067;
   background-color: rgba(255, 0, 103, 0.4);
+}
+
+/* 
+  This keep the pagination from being squished by the table. 
+  The double _.distil-table-container is to increase 
+  specificity over the <b-pagination> component style.
+*/
+.distil-table-container.distil-table-container > .pagination {
+  flex-shrink: 0;
 }
 </style>
