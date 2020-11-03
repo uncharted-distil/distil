@@ -18,13 +18,17 @@ package routes
 import (
 	"fmt"
 	"net/http"
+	"path"
 
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
+	"github.com/uncharted-distil/distil/api/task"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -51,8 +55,11 @@ func CloningHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 			return
 		}
 
-		// TODO: MAKE SURE CLONE NAME IS UNIQUE
-		datasetClone := fmt.Sprintf("%s_clone", dataset)
+		datasetClone, err := task.GetUniqueOutputFolder(fmt.Sprintf("%s_clone", dataset), env.GetAugmentedPath())
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 		folderExisting := env.ResolvePath(ds.Source, ds.Folder)
 		folderClone := env.ResolvePath(metadata.Augmented, datasetClone)
 		storageNameClone, err := dataStorage.GetStorageName(datasetClone)
@@ -61,7 +68,7 @@ func CloningHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 			return
 		}
 
-		err = metaStorage.CloneDataset(dataset, datasetClone, storageNameClone, folderClone)
+		err = metaStorage.CloneDataset(dataset, datasetClone, storageNameClone, datasetClone)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -73,8 +80,21 @@ func CloningHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 			return
 		}
 
-		// TEMP FIX: COPY EXISTING DATASET FOLDER FOR NEW DATASET
+		// TEMP FIX: COPY EXISTING DATASET FOLDER FOR NEW DATASET AND UPDATE THE ID
 		err = util.Copy(folderExisting, folderClone)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		schemaPath := path.Join(folderClone, compute.D3MDataSchema)
+		meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		meta.ID = datasetClone
+		writer := serialization.GetStorage(meta.GetMainDataResource().ResPath)
+		err = writer.WriteMetadata(schemaPath, meta, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

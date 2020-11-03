@@ -66,7 +66,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 
 	// create the dataset folder
 	featurizedDatasetID := fmt.Sprintf("%s-featurized", dataset)
-	featurizedDatasetID, err = getUniqueOutputFolder(featurizedDatasetID, env.GetAugmentedPath())
+	featurizedDatasetID, err = GetUniqueOutputFolder(featurizedDatasetID, env.GetAugmentedPath())
 	if err != nil {
 		return "", "", err
 	}

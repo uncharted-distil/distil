@@ -49,6 +49,7 @@ func (s *Storage) CloneDataset(dataset string, datasetNew string, storageNameNew
 	ds.ID = datasetNew
 	ds.StorageName = storageNameNew
 	ds.Folder = folderNew
+	ds.Source = metadata.Augmented
 
 	return s.UpdateDataset(ds)
 }
