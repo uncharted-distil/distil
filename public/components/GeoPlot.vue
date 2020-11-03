@@ -220,6 +220,7 @@ export default Vue.extend({
     quadOpacity: { type: Number, default: 0.8 },
     pointOpacity: { type: Number, default: 0.8 },
     zoomThreshold: { type: Number, default: 8 },
+    maxZoom: { type: Number, default: 18 },
   },
 
   data() {
@@ -596,7 +597,7 @@ export default Vue.extend({
         continuousZoom: true,
         inertia: true,
         wraparound: true,
-        zoom: 3,
+        zoom: this.maxZoom,
         maxZoom: 11,
       });
       // WebGL CARTO Image Layer
