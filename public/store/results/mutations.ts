@@ -43,7 +43,12 @@ export const mutations = {
     // freezing the return to prevent slow, unnecessary deep reactivity.
     state.excludedResultTableData = Object.freeze(resultData);
   },
-
+  setAreaOfInterestInner(state: ResultsState, resultData: TableData) {
+    state.areaOfInterestInner = Object.freeze(resultData);
+  },
+  setAreaOfInterestOuter(state: ResultsState, resultData: TableData) {
+    state.areaOfInterestOuter = Object.freeze(resultData);
+  },
   // predicted
 
   updatePredictedSummaries(state: ResultsState, summary: VariableSummary) {

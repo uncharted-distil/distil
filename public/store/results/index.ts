@@ -22,6 +22,9 @@ export interface ResultsState {
   // table data
   includedResultTableData: TableData;
   excludedResultTableData: TableData;
+  // areaOfInteres
+  areaOfInterestInner: TableData;
+  areaOfInterestOuter: TableData;
   // training / target
   trainingSummaries: Dictionary<Dictionary<VariableSummary>>;
   targetSummary: VariableSummary;
@@ -49,6 +52,9 @@ export const state: ResultsState = {
   // table data
   includedResultTableData: null,
   excludedResultTableData: null,
+  // area of interest for tiles clicks in geo map
+  areaOfInterestInner: null,
+  areaOfInterestOuter: null,
   // training / target
   trainingSummaries: {},
   targetSummary: null,

@@ -187,6 +187,13 @@ interface LumoPoint {
   x: number;
   y: number;
 }
+export interface TileClickData {
+  bounds: number[][];
+  key: string;
+  displayName: string;
+  type: string;
+  callback: (inner: TableRow[], outer: TableRow[]) => void;
+}
 // Minimum pixels size of clickable target displayed on the map.
 const TARGETSIZE = 6;
 
@@ -778,24 +785,16 @@ export default Vue.extend({
         key: this.summaries[0].key,
         displayName: this.summaries[0].label,
         type: this.summaries[0].type,
-        callback: (isIncluded: boolean) => {
-          const innerGetter = isIncluded
-            ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)
-            : datasetGetters.getAreaOfInterestExcludeInnerItems(this.$store);
-          const inner = this.tableDataToAreas(innerGetter) as any[];
-          inner.forEach((i) => {
+        callback: (inner: TableRow[], outer: TableRow[]) => {
+          const innerArea = this.tableDataToAreas(inner) as any[];
+          innerArea.forEach((i) => {
             i.gray = 0;
           });
-          const outerGetter = isIncluded
-            ? datasetGetters.getAreaOfInterestIncludeOuterItems(this.$store)
-            : datasetGetters.getAreaOfInterestExcludeOuterItems(this.$store);
-
-          const outer = this.tableDataToAreas(outerGetter) as any[];
-          outer.forEach((i) => {
+          const outerArea = this.tableDataToAreas(outer) as any[];
+          outerArea.forEach((i) => {
             i.gray = 100;
           });
-          console.table([innerGetter, outerGetter]);
-          this.drillDownState.tiles = inner.concat(outer);
+          this.drillDownState.tiles = innerArea.concat(outerArea);
           this.isImageDrilldown = true;
         },
       });
