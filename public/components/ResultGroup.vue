@@ -200,7 +200,7 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
     errorColor(): string {
-      return applyColor([{ color: "#ff0067", colorHover: "#ffaaaa" }]);
+      return applyColor([{ color: "#e05353", colorHover: "#e0aaaa" }]);
     },
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
