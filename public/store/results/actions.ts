@@ -449,6 +449,11 @@ export const actions = {
       filterParams.size = args.size;
     }
     filterParams.filters.push(args.filter);
+    // if highlight is null there is nothing to invert so return null
+    if (filterParams.highlight === null) {
+      mutations.setAreaOfInterestOuter(context, createEmptyTableData());
+      return;
+    }
     try {
       const response = await axios.post(
         `/distil/results/${args.dataset}/${encodeURIComponent(
