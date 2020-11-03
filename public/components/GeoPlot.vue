@@ -777,7 +777,7 @@ export default Vue.extend({
         bounds: this.drillDownState.bounds,
         key: this.summaries[0].key,
         displayName: this.summaries[0].label,
-        type: this.summaries[0].type,
+        dataType: this.summaries[0].type,
         callback: (isIncluded: boolean) => {
           const innerGetter = isIncluded
             ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)

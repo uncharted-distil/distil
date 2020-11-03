@@ -37,6 +37,8 @@
           :key="imageField.key"
           :type="imageField.type"
           :image-url="data.item[imageField.key].value"
+          :debounce="true"
+          uniqueTrail="predictions-table"
         />
       </template>
 
