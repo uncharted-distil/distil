@@ -40,6 +40,9 @@ export const actions = {
   updateResultsSummaries: dispatch(moduleActions.updateResultsSummaries),
   updateResultsSolution: dispatch(moduleActions.updateResultsSolution),
   fetchPredictionsData: dispatch(moduleActions.fetchPredictionsData),
+  updateResultAreaOfInterest: dispatch(
+    moduleActions.updateResultAreaOfInterest
+  ),
   updatePredictionTrainingSummaries: dispatch(
     moduleActions.updatePredictionTrainingSummaries
   ),

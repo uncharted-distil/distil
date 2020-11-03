@@ -575,7 +575,33 @@ export const actions = {
 
     return actions.updateResultsSolution(context);
   },
+  async updateResultAreaOfInterest(context: ViewContext, filter: Filter) {
+    // fetch new state
+    const dataset = routeGetters.getRouteDataset(store);
+    const solutionId = routeGetters.getRouteSolutionId(store);
+    const highlight = routeGetters.getDecodedHighlight(store);
+    const dataMode = context.getters.getDataMode;
+    const size = routeGetters.getRouteDataSize(store);
 
+    return Promise.all([
+      resultActions.fetchAreaOfInterestInner(store, {
+        dataset: dataset,
+        solutionId: solutionId,
+        highlight: highlight,
+        dataMode: dataMode,
+        size,
+        filter: filter,
+      }),
+      resultActions.fetchAreaOfInterestOuter(store, {
+        dataset: dataset,
+        solutionId: solutionId,
+        highlight: highlight,
+        dataMode: dataMode,
+        size,
+        filter: filter,
+      }),
+    ]);
+  },
   updateResultsSummaries(context: ViewContext) {
     const dataset = routeGetters.getRouteDataset(store);
     const trainingVariables = requestGetters.getActiveSolutionTrainingVariables(
