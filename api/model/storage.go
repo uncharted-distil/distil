@@ -170,7 +170,7 @@ type MetadataStorage interface {
 	UpdateDataset(dataset *Dataset) error
 
 	// CloneDataset creates a copy of an existing dataset
-	CloneDataset(dataset string, datasetNew string, storageNameNew string) error
+	CloneDataset(dataset string, datasetNew string, storageNameNew string, folderNew string) error
 }
 
 // ExportedModelStorageCtor represents a client constructor to instantiate a

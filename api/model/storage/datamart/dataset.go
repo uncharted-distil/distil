@@ -54,7 +54,7 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 }
 
 // CloneDataset is not supported (ES datasets are already ingested).
-func (s *Storage) CloneDataset(dataset string, datasetNew string, storageNameNew string) error {
+func (s *Storage) CloneDataset(dataset string, datasetNew string, storageNameNew string, folderNew string) error {
 	return errors.Errorf("Not implemented")
 }
 

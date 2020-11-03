@@ -22,8 +22,10 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 // CloningHandler generates a route handler that enables cloning
@@ -51,19 +53,28 @@ func CloningHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 
 		// TODO: MAKE SURE CLONE NAME IS UNIQUE
 		datasetClone := fmt.Sprintf("%s_clone", dataset)
+		folderExisting := env.ResolvePath(ds.Source, ds.Folder)
+		folderClone := env.ResolvePath(metadata.Augmented, datasetClone)
 		storageNameClone, err := dataStorage.GetStorageName(datasetClone)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		err = metaStorage.CloneDataset(dataset, datasetClone, storageNameClone)
+		err = metaStorage.CloneDataset(dataset, datasetClone, storageNameClone, folderClone)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		err = dataStorage.CloneDataset(dataset, ds.StorageName, datasetClone, storageNameClone)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// TEMP FIX: COPY EXISTING DATASET FOLDER FOR NEW DATASET
+		err = util.Copy(folderExisting, folderClone)
 		if err != nil {
 			handleError(w, err)
 			return

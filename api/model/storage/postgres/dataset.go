@@ -43,10 +43,19 @@ func getBaseTableName(storageName string) string {
 	return fmt.Sprintf("%s_base", storageName)
 }
 
+func getVariableTableName(storageName string) string {
+	return fmt.Sprintf("%s_variable", storageName)
+}
+
 // CloneDataset clones an existing dataset.
 func (s *Storage) CloneDataset(dataset string, storageName string, datasetNew string, storageNameNew string) error {
-	// need to clone base, result, and weight tables
+	// need to clone base, variable, result, and weight tables
 	err := s.cloneTable(getBaseTableName(storageName), getBaseTableName(storageNameNew), true)
+	if err != nil {
+		return err
+	}
+
+	err = s.cloneTable(getVariableTableName(storageName), getVariableTableName(storageNameNew), true)
 	if err != nil {
 		return err
 	}
@@ -158,7 +167,7 @@ func (s *Storage) createView(storageName string, fields map[string]*model.Variab
 
 	if overwrite {
 		// Drop the existing view.
-		_, err = s.client.Exec(fmt.Sprintf("DROP VIEW %s;", storageName))
+		_, err = s.client.Exec(fmt.Sprintf("DROP VIEW IF EXISTS %s;", storageName))
 		if err != nil {
 			return errors.Wrap(err, "Unable to drop existing view")
 		}

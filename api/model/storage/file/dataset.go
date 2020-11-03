@@ -45,7 +45,7 @@ func (s *Storage) IngestDataset(datasetSource metadata.DatasetSource, meta *mode
 }
 
 // CloneDataset is not supported (ES datasets are already ingested).
-func (s *Storage) CloneDataset(dataset string, datasetNew string, storageNameNew string) error {
+func (s *Storage) CloneDataset(dataset string, datasetNew string, storageNameNew string, folderNew string) error {
 	return errors.Errorf("Not implemented")
 }
 

@@ -39,7 +39,7 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 }
 
 // CloneDataset is not supported (ES datasets are already ingested).
-func (s *Storage) CloneDataset(dataset string, datasetNew string, storageNameNew string) error {
+func (s *Storage) CloneDataset(dataset string, datasetNew string, storageNameNew string, folderNew string) error {
 	ds, err := s.FetchDataset(dataset, true, true)
 	if err != nil {
 		return err
@@ -48,6 +48,7 @@ func (s *Storage) CloneDataset(dataset string, datasetNew string, storageNameNew
 	// update the id to match the new info
 	ds.ID = datasetNew
 	ds.StorageName = storageNameNew
+	ds.Folder = folderNew
 
 	return s.UpdateDataset(ds)
 }
