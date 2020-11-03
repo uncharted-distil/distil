@@ -96,6 +96,9 @@ type DataStorage interface {
 
 	// Property queries
 	GetStorageName(dataset string) (string, error)
+
+	// CloneDataset creates a copy of an existing dataset
+	CloneDataset(dataset string, storageName string, datasetNew string, storageNameNew string) error
 }
 
 // SolutionStorageCtor represents a client constructor to instantiate a
@@ -165,6 +168,9 @@ type MetadataStorage interface {
 	DeleteDataset(dataset string) error
 	IngestDataset(datasetSource metadata.DatasetSource, meta *model.Metadata) error
 	UpdateDataset(dataset *Dataset) error
+
+	// CloneDataset creates a copy of an existing dataset
+	CloneDataset(dataset string, datasetNew string, storageNameNew string, folderNew string) error
 }
 
 // ExportedModelStorageCtor represents a client constructor to instantiate a

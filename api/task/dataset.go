@@ -58,7 +58,7 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 
 	// save the csv file in the file system datasets folder
 	if !config.IngestOverwrite {
-		datasetUnique, err := getUniqueOutputFolder(dataset, outputPath)
+		datasetUnique, err := GetUniqueOutputFolder(dataset, outputPath)
 		if err != nil {
 			return "", "", err
 		}
@@ -175,7 +175,8 @@ func UpdateExtremas(dataset string, metaStorage api.MetadataStorage, dataStorage
 	return nil
 }
 
-func getUniqueOutputFolder(dataset string, outputPath string) (string, error) {
+// GetUniqueOutputFolder produces a unique name for a dataset in a folder.
+func GetUniqueOutputFolder(dataset string, outputPath string) (string, error) {
 	// read the folders in the output path
 	files, err := ioutil.ReadDir(outputPath)
 	if err != nil {

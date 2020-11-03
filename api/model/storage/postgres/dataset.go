@@ -39,6 +39,66 @@ type joinDefinition struct {
 	joinColumn    string
 }
 
+func getBaseTableName(storageName string) string {
+	return fmt.Sprintf("%s_base", storageName)
+}
+
+func getVariableTableName(storageName string) string {
+	return fmt.Sprintf("%s_variable", storageName)
+}
+
+// CloneDataset clones an existing dataset.
+func (s *Storage) CloneDataset(dataset string, storageName string, datasetNew string, storageNameNew string) error {
+	// need to clone base, variable, result, and weight tables
+	err := s.cloneTable(getBaseTableName(storageName), getBaseTableName(storageNameNew), true)
+	if err != nil {
+		return err
+	}
+
+	err = s.cloneTable(getVariableTableName(storageName), getVariableTableName(storageNameNew), true)
+	if err != nil {
+		return err
+	}
+
+	err = s.cloneTable(s.getResultTable(storageName), s.getResultTable(storageNameNew), false)
+	if err != nil {
+		return err
+	}
+
+	err = s.cloneTable(s.getSolutionFeatureWeightTable(storageName), s.getSolutionFeatureWeightTable(storageNameNew), false)
+	if err != nil {
+		return err
+	}
+
+	// need to create the view for the cloned dataset
+	fields, err := s.getExistingFields(dataset)
+	if err != nil {
+		return err
+	}
+
+	err = s.createView(storageNameNew, fields, true)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Storage) cloneTable(existingTable string, newTable string, copyData bool) error {
+	sql := fmt.Sprintf("CREATE TABLE %s AS TABLE %s", newTable, existingTable)
+	if !copyData {
+		sql = fmt.Sprintf("%s WITH NO DATA", sql)
+	}
+	sql = fmt.Sprintf("%s;", sql)
+
+	_, err := s.client.Exec(sql)
+	if err != nil {
+		return errors.Wrapf(err, "unable to clone table")
+	}
+
+	return nil
+}
+
 func (s *Storage) getViewField(fieldSelect string, displayName string, typ string, defaultValue interface{}) string {
 	viewField := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v)", fieldSelect, typ, defaultValue)
 	if postgres.IsDatabaseFloatingPoint(typ) {
@@ -107,7 +167,7 @@ func (s *Storage) createView(storageName string, fields map[string]*model.Variab
 
 	if overwrite {
 		// Drop the existing view.
-		_, err = s.client.Exec(fmt.Sprintf("DROP VIEW %s;", storageName))
+		_, err = s.client.Exec(fmt.Sprintf("DROP VIEW IF EXISTS %s;", storageName))
 		if err != nil {
 			return errors.Wrap(err, "Unable to drop existing view")
 		}
