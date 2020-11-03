@@ -1,7 +1,10 @@
 <template>
   <div
     class="results-slots"
-    :class="{ 'one-slot': !hasHighlights, 'two-slots': hasHighlights }"
+    :class="{
+      'one-slot': !hasHighlights || isGeoView,
+      'two-slots': hasHighlights && !isGeoView,
+    }"
   >
     <view-type-toggle
       v-model="viewType"
@@ -14,7 +17,7 @@
       <layer-selection v-if="isMultiBandImage" class="layer-button" />
     </view-type-toggle>
 
-    <div v-if="hasHighlights" class="flex-grow-1">
+    <div v-if="hasHighlights && !isGeoView" class="flex-grow-1">
       <results-data-slot
         instance-name="results-slot-top"
         :view-type="viewType"
@@ -36,15 +39,16 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import LayerSelection from "../components/LayerSelection";
-import LegendWeight from "../components/LegendWeight";
-import ResultsDataSlot from "../components/ResultsDataSlot";
-import ViewTypeToggle from "../components/ViewTypeToggle";
+import LayerSelection from "../components/LayerSelection.vue";
+import LegendWeight from "../components/LegendWeight.vue";
+import ResultsDataSlot from "../components/ResultsDataSlot.vue";
+import ViewTypeToggle from "../components/ViewTypeToggle.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Variable } from "../store/dataset/index";
 
+const GEO_VIEW = "geo";
 const TABLE_VIEW = "table";
 
 export default Vue.extend({
@@ -80,6 +84,9 @@ export default Vue.extend({
 
     isMultiBandImage(): boolean {
       return routeGetters.isMultiBandImage(this.$store);
+    },
+    isGeoView(): boolean {
+      return this.viewType === GEO_VIEW;
     },
   },
 });

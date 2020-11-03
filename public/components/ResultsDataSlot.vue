@@ -165,6 +165,17 @@ export default Vue.extend({
     },
 
     dataItems(): TableRow[] {
+      if (this.isGeoView) {
+        const excluded = resultsGetters
+          .getExcludedResultTableDataItems(this.$store)
+          .map((i) => {
+            return { ...i, isExcluded: true };
+          });
+        const included = resultsGetters.getIncludedResultTableDataItems(
+          this.$store
+        );
+        return [...excluded, ...included];
+      }
       if (this.excluded) {
         return resultsGetters.getExcludedResultTableDataItems(this.$store);
       }
@@ -189,13 +200,17 @@ export default Vue.extend({
     },
 
     /* Select which component to display the data. */
-    viewComponent() {
+    viewComponent(): string {
       if (this.viewType === GEO_VIEW) return "GeoPlot";
       if (this.viewType === IMAGE_VIEW) return "ImageMosaic";
       if (this.viewType === TABLE_VIEW) return "ResultsDataTable";
       if (this.viewType === TIMESERIES_VIEW) return "ResultsTimeseriesView";
+      console.error(`viewType ${this.viewType} invalid`);
+      return "";
     },
-
+    isGeoView(): boolean {
+      return this.viewType === GEO_VIEW;
+    },
     /* Count the number of items */
     numItems(): number {
       return this.dataItems ? this.dataItems.length : 0;
