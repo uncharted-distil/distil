@@ -41,6 +41,11 @@ func submitForBatch(pip *description.FullySpecifiedPipeline) func(string) (strin
 // FeaturizeDataset creates a featurized output of the data that can be used
 // in simplified pipelines.
 func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset string, metaStorage api.MetadataStorage, config *IngestTaskConfig) (string, string, error) {
+	envConfig, err := env.LoadConfig()
+	if err != nil {
+		return "", "", err
+	}
+
 	// load the metadata from the metadata storage
 	ds, err := metaStorage.FetchDataset(dataset, true, true)
 	if err != nil {
@@ -48,7 +53,8 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	}
 
 	// create & submit the featurize pipeline
-	pip, err := description.CreateMultiBandImageFeaturizationPipeline("Euler", "", ds.Variables)
+	pip, err := description.CreateMultiBandImageFeaturizationPipeline("Multiband image featurization", "", ds.Variables,
+		envConfig.RemoteSensingNumJobs, envConfig.RemoteSensingGPUBatchSize)
 	if err != nil {
 		return "", "", err
 	}
