@@ -42,6 +42,8 @@
           :key="imageField.key"
           :type="imageField.type"
           :image-url="data.item[imageField.key].value"
+          :debounce="true"
+          uniqueTrail="result-table"
         ></image-preview>
       </template>
 
