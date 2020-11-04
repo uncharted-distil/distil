@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import {
+  createEmptyTableData,
   filterArrayByPage,
   NUM_PER_PAGE,
   NUM_PER_TARGET_PAGE,
@@ -634,8 +635,8 @@ export const actions = {
   updateResultsSolution(context: ViewContext) {
     // clear previous state
     resultMutations.clearResidualsExtrema(store);
-    resultMutations.setIncludedResultTableData(store, null);
-    resultMutations.setExcludedResultTableData(store, null);
+    resultMutations.setIncludedResultTableData(store, createEmptyTableData());
+    resultMutations.setExcludedResultTableData(store, createEmptyTableData());
 
     // fetch new state
     const dataset = routeGetters.getRouteDataset(store);
