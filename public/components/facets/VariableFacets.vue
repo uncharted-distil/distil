@@ -172,7 +172,12 @@ import FacetError from "./FacetError.vue";
 import GeocoordinateFacet from "./GeocoordinateFacet.vue";
 import { overlayRouteEntry, getRouteFacetPage } from "../../util/routes";
 import { Dictionary } from "../../util/dict";
-import { applyColor } from "../../util/facets";
+import {
+  applyColor,
+  FACET_COLOR_SELECT,
+  FACET_COLOR_EXCLUDE,
+  FACET_COLOR_FILTERED,
+} from "../../util/facets";
 import {
   getVariableRanking,
   getSolutionFeatureImportance,
@@ -317,11 +322,9 @@ export default Vue.extend({
     facetColors(): string {
       return applyColor([
         null,
-        !!this.rowSelection
-          ? { color: "#ff0067", colorHover: "#ffaaaa" }
-          : null,
-        !this.include ? { color: "#000000", colorHover: "#333333" } : null,
-        { color: "#999999", colorHover: "#bbbbbb" },
+        !!this.rowSelection ? FACET_COLOR_SELECT : null,
+        !this.include ? FACET_COLOR_EXCLUDE : null,
+        FACET_COLOR_FILTERED,
       ]);
     },
   },

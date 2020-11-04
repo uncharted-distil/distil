@@ -36,6 +36,11 @@ export const TOP_RANGE_HIGHLIGHT = "top";
 export const BOTTOM_RANGE_HIGHLIGHT = "bottom";
 export const DEFAULT_HIGHLIGHT_PERCENTILE = 0.75;
 
+export const FACET_COLOR_SELECT = { color: "#ff0067", colorHover: "#ffaaaa" };
+export const FACET_COLOR_EXCLUDE = { color: "#000000", colorHover: "#333333" };
+export const FACET_COLOR_FILTERED = { color: "#999999", colorHover: "#bbbbbb" };
+export const FACET_COLOR_ERROR = { color: "#e05353", colorHover: "#e0aaaa" };
+
 export interface PlaceHolderFacet {
   placeholder: boolean;
   html: string;
@@ -288,7 +293,7 @@ export function hasFiltered(summary: VariableSummary) {
   );
 }
 // applyColor generates the string to change the facet dynamic css variables
-export function applyColor(colors: FacetColor[]): string {
+export function applyColor(colors: FacetColor[] | null): string {
   let result = "";
   colors.forEach((c, i) => {
     if (!!c?.color && !!c?.colorHover) {

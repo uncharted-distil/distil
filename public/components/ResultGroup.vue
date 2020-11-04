@@ -152,7 +152,13 @@ import {
 } from "../store/dataset/index";
 import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from "../store/requests/index";
 import { getters as routeGetters } from "../store/route/module";
-import { getFacetByType, applyColor } from "../util/facets";
+import {
+  getFacetByType,
+  applyColor,
+  FACET_COLOR_SELECT,
+  FACET_COLOR_FILTERED,
+  FACET_COLOR_ERROR,
+} from "../util/facets";
 import {
   getSolutionIndex,
   getSolutionById,
@@ -202,16 +208,14 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
     errorColor(): string {
-      return applyColor([{ color: "#e05353", colorHover: "#e0aaaa" }]);
+      return applyColor([FACET_COLOR_ERROR]);
     },
     facetColors(): string {
       return applyColor([
         null,
-        !!this.rowSelection
-          ? { color: "#ff0067", colorHover: "#ffaaaa" }
-          : null,
+        !!this.rowSelection ? FACET_COLOR_SELECT : null,
         null,
-        { color: "#999999", colorHover: "#bbbbbb" },
+        FACET_COLOR_FILTERED,
       ]);
     },
     target(): string {
