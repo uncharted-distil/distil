@@ -1,6 +1,7 @@
 import axios from "axios";
 import _ from "lodash";
 import { Dictionary } from "vue-router/types/router";
+import { filter } from "vue/types/umd";
 import { ActionContext } from "vuex";
 import {
   createEmptyTableData,
@@ -11,7 +12,7 @@ import {
   minimumRouteKey,
   validateArgs,
 } from "../../util/data";
-import { EXCLUDE_FILTER } from "../../util/filters";
+import { EXCLUDE_FILTER, Filter } from "../../util/filters";
 import { addHighlightToFilterParams } from "../../util/highlights";
 import {
   getSolutionById,
@@ -357,7 +358,117 @@ export const actions = {
       mutations.setExcludedResultTableData(context, createEmptyTableData());
     }
   },
+  // fetches
+  async fetchAreaOfInterestInner(
+    context: ResultsContext,
+    args: {
+      solutionId: string;
+      dataset: string;
+      highlight: Highlight;
+      dataMode: DataMode;
+      size?: number;
+      filter: Filter; // the area of interest
+    }
+  ) {
+    const solution = getSolutionById(
+      context.rootState.requestsModule.solutions,
+      args.solutionId
+    );
+    if (!solution || !solution.resultId) {
+      // no results ready to pull
+      return null;
+    }
 
+    const filterParamsBlank = {
+      highlight: null,
+      variables: [],
+      filters: [],
+    };
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault; // Add the size limit to results if provided.
+    if (_.isInteger(args.size)) {
+      filterParams.size = args.size;
+    }
+    filterParams.filters.push(args.filter);
+    try {
+      const response = await axios.post(
+        `/distil/results/${args.dataset}/${encodeURIComponent(
+          args.solutionId
+        )}`,
+        filterParams
+      );
+      mutations.setAreaOfInterestInner(context, response.data);
+    } catch (error) {
+      console.error(
+        `Failed to fetch results from ${args.solutionId} with error ${error}`
+      );
+      mutations.setAreaOfInterestInner(context, createEmptyTableData());
+    }
+  },
+  // fetches the tiles that are within the bounds but are filtered by another highlight
+  async fetchAreaOfInterestOuter(
+    context: ResultsContext,
+    args: {
+      solutionId: string;
+      dataset: string;
+      highlight: Highlight;
+      dataMode: DataMode;
+      size?: number;
+      filter: Filter;
+    }
+  ) {
+    const solution = getSolutionById(
+      context.rootState.requestsModule.solutions,
+      args.solutionId
+    );
+    if (!solution || !solution.resultId) {
+      // no results ready to pull
+      return null;
+    }
+
+    const filterParamsBlank = {
+      highlight: null,
+      variables: [],
+      filters: [],
+    };
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight,
+      EXCLUDE_FILTER
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
+    // Add the size limit to results if provided.
+    if (_.isInteger(args.size)) {
+      filterParams.size = args.size;
+    }
+    filterParams.filters.push(args.filter);
+    // if highlight is null there is nothing to invert so return null
+    if (filterParams.highlight === null) {
+      mutations.setAreaOfInterestOuter(context, createEmptyTableData());
+      return;
+    }
+    try {
+      const response = await axios.post(
+        `/distil/results/${args.dataset}/${encodeURIComponent(
+          args.solutionId
+        )}`,
+        filterParams
+      );
+      mutations.setAreaOfInterestOuter(context, response.data);
+    } catch (error) {
+      console.error(
+        `Failed to fetch results from ${args.solutionId} with error ${error}`
+      );
+      mutations.setAreaOfInterestOuter(context, createEmptyTableData());
+    }
+  },
   fetchResultTableData(
     context: ResultsContext,
     args: {

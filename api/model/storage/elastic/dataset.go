@@ -38,6 +38,22 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	return "", errors.Errorf("Not Supported")
 }
 
+// CloneDataset is not supported (ES datasets are already ingested).
+func (s *Storage) CloneDataset(dataset string, datasetNew string, storageNameNew string, folderNew string) error {
+	ds, err := s.FetchDataset(dataset, true, true)
+	if err != nil {
+		return err
+	}
+
+	// update the id to match the new info
+	ds.ID = datasetNew
+	ds.StorageName = storageNameNew
+	ds.Folder = folderNew
+	ds.Source = metadata.Augmented
+
+	return s.UpdateDataset(ds)
+}
+
 // UpdateDataset updates a dataset already stored in ES.
 func (s *Storage) UpdateDataset(dataset *api.Dataset) error {
 	source := map[string]interface{}{

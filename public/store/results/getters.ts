@@ -65,6 +65,12 @@ export const getters = {
     return state.includedResultTableData;
   },
 
+  getAreaOfInterestInnerDataItems(state: ResultsState): TableRow[] {
+    return getTableDataItems(state.areaOfInterestInner);
+  },
+  getAreaOfInterestOuterDataItems(state: ResultsState): TableRow[] {
+    return getTableDataItems(state.areaOfInterestOuter);
+  },
   getIncludedResultTableDataItems(
     state: ResultsState,
     getters: any

@@ -53,6 +53,11 @@ func (s *Storage) ImportDataset(id string, uri string) (string, error) {
 	return s.download(s, id, uri)
 }
 
+// CloneDataset is not supported (ES datasets are already ingested).
+func (s *Storage) CloneDataset(dataset string, datasetNew string, storageNameNew string, folderNew string) error {
+	return errors.Errorf("Not implemented")
+}
+
 // UpdateDataset updates a document consisting of the metadata to the datamart.
 func (s *Storage) UpdateDataset(dataset *api.Dataset) error {
 	return errors.Errorf("Not implemented")

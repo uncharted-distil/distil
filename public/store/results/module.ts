@@ -54,7 +54,12 @@ export const getters = {
   hasResultTableDataItemsWeight: read(
     moduleGetters.hasResultTableDataItemsWeight
   ),
-
+  getAreaOfInterestInnerDataItems: read(
+    moduleGetters.getAreaOfInterestInnerDataItems
+  ),
+  getAreaOfInterestOuterDataItems: read(
+    moduleGetters.getAreaOfInterestOuterDataItems
+  ),
   // predicted
   getPredictedSummaries: read(moduleGetters.getPredictedSummaries),
   // residual
@@ -105,6 +110,9 @@ export const actions = {
   fetchFeatureImportanceRanking: dispatch(
     moduleActions.fetchFeatureImportanceRanking
   ),
+  // area of interest for tile clicks
+  fetchAreaOfInterestInner: dispatch(moduleActions.fetchAreaOfInterestInner),
+  fetchAreaOfInterestOuter: dispatch(moduleActions.fetchAreaOfInterestOuter),
 };
 
 // Typed mutations
@@ -121,6 +129,8 @@ export const mutations = {
   setExcludedResultTableData: commit(
     moduleMutations.setExcludedResultTableData
   ),
+  setAreaOfInterestInner: commit(moduleMutations.setAreaOfInterestInner),
+  setAreaOfInterestOuter: commit(moduleMutations.setAreaOfInterestOuter),
   // predicted
   updatePredictedSummaries: commit(moduleMutations.updatePredictedSummaries),
   // residuals

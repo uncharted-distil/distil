@@ -187,6 +187,13 @@ interface LumoPoint {
   x: number;
   y: number;
 }
+export interface TileClickData {
+  bounds: number[][];
+  key: string;
+  displayName: string;
+  type: string;
+  callback: (inner: TableRow[], outer: TableRow[]) => void;
+}
 // Minimum pixels size of clickable target displayed on the map.
 const TARGETSIZE = 6;
 
@@ -213,6 +220,7 @@ export default Vue.extend({
     quadOpacity: { type: Number, default: 0.8 },
     pointOpacity: { type: Number, default: 0.8 },
     zoomThreshold: { type: Number, default: 8 },
+    maxZoom: { type: Number, default: 18 },
   },
 
   data() {
@@ -589,7 +597,7 @@ export default Vue.extend({
         continuousZoom: true,
         inertia: true,
         wraparound: true,
-        zoom: 3,
+        zoom: this.maxZoom,
         maxZoom: 11,
       });
       // WebGL CARTO Image Layer
@@ -777,25 +785,17 @@ export default Vue.extend({
         bounds: this.drillDownState.bounds,
         key: this.summaries[0].key,
         displayName: this.summaries[0].label,
-        dataType: this.summaries[0].type,
-        callback: (isIncluded: boolean) => {
-          const innerGetter = isIncluded
-            ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)
-            : datasetGetters.getAreaOfInterestExcludeInnerItems(this.$store);
-          const inner = this.tableDataToAreas(innerGetter) as any[];
-          inner.forEach((i) => {
+        type: this.summaries[0].type,
+        callback: (inner: TableRow[], outer: TableRow[]) => {
+          const innerArea = this.tableDataToAreas(inner) as any[];
+          innerArea.forEach((i) => {
             i.gray = 0;
           });
-          const outerGetter = isIncluded
-            ? datasetGetters.getAreaOfInterestIncludeOuterItems(this.$store)
-            : datasetGetters.getAreaOfInterestExcludeOuterItems(this.$store);
-
-          const outer = this.tableDataToAreas(outerGetter) as any[];
-          outer.forEach((i) => {
+          const outerArea = this.tableDataToAreas(outer) as any[];
+          outerArea.forEach((i) => {
             i.gray = 100;
           });
-          console.table([innerGetter, outerGetter]);
-          this.drillDownState.tiles = inner.concat(outer);
+          this.drillDownState.tiles = innerArea.concat(outerArea);
           this.isImageDrilldown = true;
         },
       });

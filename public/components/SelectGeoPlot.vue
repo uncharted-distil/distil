@@ -11,7 +11,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import GeoPlot from "./GeoPlot.vue";
+import GeoPlot, { TileClickData } from "./GeoPlot.vue";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
 import {
@@ -92,25 +92,29 @@ export default Vue.extend({
     },
   },
   methods: {
-    async onTileClick(args: {
-      bounds: number[][];
-      key: string;
-      displayName: string;
-      dataType: string;
-      callback: (boolean) => void;
-    }) {
+    async onTileClick(data: TileClickData) {
+      // filter for area of interests
       const filter: Filter = {
-        displayName: args.displayName,
-        key: args.key,
-        maxX: args.bounds[1][1],
-        maxY: args.bounds[0][0],
-        minX: args.bounds[0][1],
-        minY: args.bounds[1][0],
+        displayName: data.displayName,
+        key: data.key,
+        maxX: data.bounds[1][1],
+        maxY: data.bounds[0][0],
+        minX: data.bounds[0][1],
+        minY: data.bounds[1][0],
         mode: INCLUDE_FILTER,
-        type: args.dataType,
+        type: data.type,
       };
+      // fetch area of interests
       await viewActions.updateAreaOfInterest(this.$store, filter);
-      args.callback(this.includedActive);
+      // get area of interests
+      const inner = this.includedActive
+        ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)
+        : datasetGetters.getAreaOfInterestExcludeInnerItems(this.$store);
+      const outer = this.includedActive
+        ? datasetGetters.getAreaOfInterestIncludeOuterItems(this.$store)
+        : datasetGetters.getAreaOfInterestExcludeOuterItems(this.$store);
+      // send data back to geoplot
+      data.callback(inner, outer);
     },
   },
 });

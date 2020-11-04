@@ -26,6 +26,7 @@
         :data-items="dataItems"
         :instance-name="instanceName"
         :summaries="trainingSummaries"
+        @tileClicked="onTileClick"
       />
     </div>
   </div>
@@ -34,11 +35,11 @@
 <script lang="ts">
 import Vue from "vue";
 import _ from "lodash";
-import DataSize from "../components/buttons/DataSize";
-import GeoPlot from "./GeoPlot";
-import ImageMosaic from "./ImageMosaic";
-import ResultsDataTable from "./ResultsDataTable";
-import ResultsTimeseriesView from "./ResultsTimeseriesView";
+import DataSize from "../components/buttons/DataSize.vue";
+import GeoPlot, { TileClickData } from "./GeoPlot.vue";
+import ImageMosaic from "./ImageMosaic.vue";
+import ResultsDataTable from "./ResultsDataTable.vue";
+import ResultsTimeseriesView from "./ResultsTimeseriesView.vue";
 import {
   Highlight,
   TableRow,
@@ -55,12 +56,14 @@ import {
   actions as resultsActions,
   getters as resultsGetters,
 } from "../store/results/module";
+import { actions as viewActions } from "../store/view/module";
 import { getters as requestsGetters } from "../store/requests/module";
 import { Dictionary } from "../util/dict";
 import { updateTableRowSelection } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
 import { getVariableSummariesByState, searchVariables } from "../util/data";
 import { isGeoLocatedType } from "../util/types";
+import { Filter, INCLUDE_FILTER } from "../util/filters";
 
 const GEO_VIEW = "geo";
 const GRAPH_VIEW = "graph";
@@ -287,6 +290,27 @@ export default Vue.extend({
       } else {
         resultsActions.fetchIncludedResultTableData(this.$store, args);
       }
+    },
+    async onTileClick(data: TileClickData) {
+      // build filter
+      const filter: Filter = {
+        displayName: data.displayName,
+        key: data.key,
+        maxX: data.bounds[1][1],
+        maxY: data.bounds[0][0],
+        minX: data.bounds[0][1],
+        minY: data.bounds[1][0],
+        mode: INCLUDE_FILTER,
+        type: data.type,
+      };
+      // fetch surrounding tiles
+      await viewActions.updateResultAreaOfInterest(this.$store, filter);
+      // get area of interest
+      const inner = resultsGetters.getAreaOfInterestInnerDataItems(this.$store);
+      const outer = resultsGetters.getAreaOfInterestOuterDataItems(this.$store);
+      // callback after fetch
+      data.callback(inner, outer);
+      return;
     },
   },
 });
