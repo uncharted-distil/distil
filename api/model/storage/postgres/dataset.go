@@ -228,7 +228,7 @@ func (s *Storage) FetchDataset(dataset string, storageName string) ([][]string, 
 		varNames = append(varNames, fmt.Sprintf("\"%s\"", v.Name))
 	}
 
-	sql := fmt.Sprintf("SELECT %s FROM %s;", strings.Join(varNames, ", "), "a")
+	sql := fmt.Sprintf("SELECT %s FROM %s;", strings.Join(varNames, ", "), getBaseTableName(storageName))
 
 	res, err := s.client.Query(sql)
 	if err != nil {
