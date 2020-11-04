@@ -307,18 +307,27 @@ func createRGBAFromBands(xSize int, ySize int, bandImages []*image.Gray16) *imag
 	// Copy the 16 bit band images into the 8 bit target image.  If a band image couldn't be processed
 	// earlier, we set to grey.
 	outputIdx := 0
+	bandBuffer := [3]float64{0,0,0}
 	for i := 0; i < (xSize * ySize * 2); i += 2 {
-		for _, bandImage := range bandImages {
+		for j, bandImage := range bandImages {
 			if bandImage != nil {
 				grayValue16 := uint16(bandImage.Pix[i])<<8 | uint16(bandImage.Pix[i+1])
-				outputImage.Pix[outputIdx] = uint8(math.Pow(float64(grayValue16)/Sentinel2Max, Exponent) * 255)
+				// outputImage.Pix[outputIdx] = uint8(math.Pow(float64(grayValue16)/Sentinel2Max, Exponent) * 255)
+				res := float64(grayValue16)/Sentinel2Max
+				bandBuffer[j] = res
 			} else {
-				outputImage.Pix[outputIdx] = uint8(math.MaxInt8 / 2)
+				// outputImage.Pix[outputIdx] = uint8(math.MaxInt8 / 2)
+				bandBuffer[j] = 0.5
 			}
-			outputIdx++
+			// outputIdx++
 		}
-		outputImage.Pix[outputIdx] = 0xFF // max out the A channel
-		outputIdx++
+		rgb := ConvertS2ToRgb(bandBuffer)
+		outputImage.Pix[outputIdx] = uint8(rgb[0]*255)
+		outputImage.Pix[outputIdx+1] = uint8(rgb[1]*255)
+		outputImage.Pix[outputIdx+2] = uint8(rgb[2]*255)
+		outputImage.Pix[outputIdx+3] = 0xFF // max out the A channel
+		// outputIdx++
+		outputIdx += len(bandImages) + 1 // +1 for alpha channel
 	}
 	return outputImage
 }
@@ -434,3 +443,4 @@ func getFilePath(datasetDir string, fileID string, bandLabel string, fileType st
 	fileName := fmt.Sprintf("%s_%s.%s", fileID, strings.ToUpper(bandLabel), fileType)
 	return path.Join(datasetDir, fileName)
 }
+
