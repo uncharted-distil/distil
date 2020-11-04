@@ -1,14 +1,16 @@
 <template>
   <div
     class="result-group"
-    v-bind:class="{ 'result-group-selected': isSelected }"
+    :class="{ 'result-group-selected': isSelected }"
     @click="onClick()"
   >
     <header class="result-group-title">
-      <h5 v-if="modelName">{{ modelName }}</h5>
-      <b
-        >{{ name }} <sup>{{ solutionIndex }}</sup></b
-      >
+      <h5 v-if="modelName">
+        {{ modelName }}
+      </h5>
+      <b>
+        {{ name }} <sup>{{ solutionIndex }}</sup>
+      </b>
 
       <template v-if="!isErrored && !isSelected">
         <div
@@ -17,11 +19,11 @@
         >
           <i
             class="fa"
-            v-bind:class="{
+            :class="{
               'fa-angle-down': !isMaximized,
               'fa-angle-up': isMaximized,
             }"
-          ></i>
+          />
         </div>
         <!--
         <div class="pull-right">|</div>
@@ -31,19 +33,21 @@
       <div class="pull-right pr-2 solution-button" @click.stop="onDelete"><i class="fa fa-trash"></i></div>
       -->
       <template v-if="isPending">
-        <b-badge variant="info">{{ progressLabel }}</b-badge>
+        <b-badge variant="info">
+          {{ progressLabel }}
+        </b-badge>
         <b-progress
           :value="percentComplete"
           variant="outline-secondary"
           striped
           :animated="true"
-        ></b-progress>
+        />
       </template>
       <template v-if="isCompleted">
         <b-badge
-          variant="info"
-          v-bind:key="`${score.metric}-${solutionId}`"
           v-for="score in scores"
+          :key="`${score.metric}-${solutionId}`"
+          variant="info"
         >
           {{ score.label }}: {{ score.value.toFixed(2) }}
         </b-badge>
@@ -57,7 +61,7 @@
       </template>
     </header>
 
-    <div class="result-group-body" v-if="isMaximized">
+    <div v-if="isMaximized" class="result-group-body">
       <template v-if="isCompleted">
         <div
           v-for="summary in predictedSummaries"
@@ -71,19 +75,19 @@
             :highlight="highlight"
             :enabled-type-changes="[]"
             :row-selection="rowSelection"
-            :instanceName="predictedInstanceName"
+            :instance-name="predictedInstanceName"
+            :style="facetColors"
             @numerical-click="onResultNumericalClick"
             @range-change="onResultRangeChange"
             @facet-click="onResultCategoricalClick"
-          >
-          </component>
+          />
         </div>
 
         <div class="residual-group-container">
           <component
+            :is="getFacetByType(summary.type)"
             v-for="summary in residualSummaries"
             :key="summary.key"
-            :is="getFacetByType(summary.type)"
             class="residual-container"
             show-origin
             enable-highlighting
@@ -91,45 +95,43 @@
             :highlight="highlight"
             :enabled-type-changes="[]"
             :row-selection="rowSelection"
-            :instanceName="residualInstanceName"
+            :instance-name="residualInstanceName"
             :deemphasis="residualThreshold"
+            :style="errorColor"
             @numerical-click="onResidualNumericalClick"
             @range-change="onResidualRangeChange"
             @facet-click="onResultCategoricalClick"
-            :style="errorColor"
-          >
-          </component>
+          />
         </div>
 
         <component
+          :is="getFacetByType(summary.type)"
           v-for="summary in correctnessSummaries"
           :key="summary.key"
-          :is="getFacetByType(summary.type)"
           enable-highlighting
           :summary="summary"
           :highlight="highlight"
           :enabled-type-changes="[]"
           :row-selection="rowSelection"
-          :instanceName="correctnessInstanceName"
-          @facet-click="onCorrectnessCategoricalClick"
+          :instance-name="correctnessInstanceName"
           :style="errorColor"
-        >
-        </component>
+          @facet-click="onCorrectnessCategoricalClick"
+        />
 
         <component
+          :is="getFacetByType(summary.type)"
           v-for="summary in confidenceSummaries"
           :key="summary.key"
-          :is="getFacetByType(summary.type)"
           enable-highlighting
           :summary="summary"
           :highlight="highlight"
           :enabled-type-changes="[]"
           :row-selection="rowSelection"
-          :instanceName="confidenceInstanceName"
+          :instance-name="confidenceInstanceName"
+          :style="facetColors"
           @range-change="onConfidenceRangeChange"
           @facet-click="onConfidenceClick"
-        >
-        </component>
+        />
       </template>
     </div>
   </div>
@@ -167,7 +169,7 @@ import _ from "lodash";
 import store from "../store/store";
 
 export default Vue.extend({
-  name: "result-group",
+  name: "ResultGroup",
 
   components: {
     FacetNumerical,
@@ -201,6 +203,16 @@ export default Vue.extend({
     },
     errorColor(): string {
       return applyColor([{ color: "#e05353", colorHover: "#e0aaaa" }]);
+    },
+    facetColors(): string {
+      return applyColor([
+        null,
+        !!this.rowSelection
+          ? { color: "#ff0067", colorHover: "#ffaaaa" }
+          : null,
+        null,
+        { color: "#999999", colorHover: "#bbbbbb" },
+      ]);
     },
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);

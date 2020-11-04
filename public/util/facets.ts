@@ -291,30 +291,32 @@ export function hasFiltered(summary: VariableSummary) {
 export function applyColor(colors: FacetColor[]): string {
   let result = "";
   colors.forEach((c, i) => {
-    result += `--facet-bars-${i}-normal: ${c.color};
-    --facet-bars-${i}-normal-contrast: ${c.colorHover};
-    --facet-bars-${i}-normal-contrast-hover: ${c.color};
-    --facet-bars-${i}-selected: ${c.color};
-    --facet-bars-${i}-selected-contrast: ${c.colorHover};
-    --facet-bars-${i}-selected-contrast-hover: ${c.color};
-    --facet-bars-${i}-unselected: ${c.colorHover};
-    --facet-bars-${i}-unselected-contrast: ${c.colorHover};
-    --facet-bars-${i}-unselected-contrast-hover: ${c.color};
-    --facet-bars-${i}-muted: ${c.color};
-    --facet-bars-${i}-muted-contrast: ${c.color};
-    --facet-bars-${i}-muted-contrast-hover: ${c.colorHover};
-    --facet-terms-bar-${i}-normal: ${c.color};
-    --facet-terms-bar-${i}-normal-contrast: ${c.colorHover};
-    --facet-terms-bar-${i}-normal-contrast-hover: ${c.color};
-    --facet-terms-bar-${i}-selected: ${c.color};
-    --facet-terms-bar-${i}-selected-contrast: ${c.colorHover};
-    --facet-terms-bar-${i}-selected-contrast-hover: ${c.color};
-    --facet-terms-bar-${i}-unselected: ${c.colorHover};
-    --facet-terms-bar-${i}-unselected-contrast: ${c.colorHover};
-    --facet-terms-bar-${i}-unselected-contrast-hover: ${c.color};
-    --facet-terms-bar-${i}-muted: ${c.color};
-    --facet-terms-bar-${i}-muted-contrast: ${c.color};
-    --facet-terms-bar-${i}-muted-contrast-hover: ${c.colorHover};`;
+    if (!!c?.color && !!c?.colorHover) {
+      result += `--facet-bars-${i}-normal: ${c.color};
+      --facet-bars-${i}-normal-contrast: ${c.colorHover};
+      --facet-bars-${i}-normal-contrast-hover: ${c.color};
+      --facet-bars-${i}-selected: ${c.color};
+      --facet-bars-${i}-selected-contrast: ${c.colorHover};
+      --facet-bars-${i}-selected-contrast-hover: ${c.color};
+      --facet-bars-${i}-unselected: ${c.colorHover};
+      --facet-bars-${i}-unselected-contrast: ${c.colorHover};
+      --facet-bars-${i}-unselected-contrast-hover: ${c.color};
+      --facet-bars-${i}-muted: ${c.color};
+      --facet-bars-${i}-muted-contrast: ${c.color};
+      --facet-bars-${i}-muted-contrast-hover: ${c.colorHover};
+      --facet-terms-bar-${i}-normal: ${c.color};
+      --facet-terms-bar-${i}-normal-contrast: ${c.colorHover};
+      --facet-terms-bar-${i}-normal-contrast-hover: ${c.color};
+      --facet-terms-bar-${i}-selected: ${c.color};
+      --facet-terms-bar-${i}-selected-contrast: ${c.colorHover};
+      --facet-terms-bar-${i}-selected-contrast-hover: ${c.color};
+      --facet-terms-bar-${i}-unselected: ${c.colorHover};
+      --facet-terms-bar-${i}-unselected-contrast: ${c.colorHover};
+      --facet-terms-bar-${i}-unselected-contrast-hover: ${c.color};
+      --facet-terms-bar-${i}-muted: ${c.color};
+      --facet-terms-bar-${i}-muted-contrast: ${c.color};
+      --facet-terms-bar-${i}-muted-contrast-hover: ${c.colorHover};`;
+    }
   });
   return result;
 }
