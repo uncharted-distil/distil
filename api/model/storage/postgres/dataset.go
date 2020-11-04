@@ -119,6 +119,65 @@ func (s *Storage) createView(storageName string, fields map[string]*model.Variab
 	return err
 }
 
+func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
+	output := [][]string{}
+	if rows != nil {
+		// fields not populated until at least one row has been pulled
+		for rows.Next() {
+			columnValues, err := rows.Values()
+			if err != nil {
+				return nil, err
+			}
+			if len(output) == 0 {
+				// parse columns
+				fields := rows.FieldDescriptions()
+				columns := make([]string, len(fields))
+				for i := 0; i < len(fields); i++ {
+					columns[i] = string(fields[i].Name)
+				}
+				output = append(output, columns)
+			}
+
+			// read data
+			row := make([]string, len(columnValues))
+			for i, cv := range columnValues {
+				row[i] = cv.(string)
+			}
+
+			output = append(output, row)
+		}
+		err := rows.Err()
+		if err != nil {
+			return nil, errors.Wrapf(err, "error reading data from postgres")
+		}
+	}
+
+	return output, nil
+}
+
+// FetchDataset extracts the complete raw data from the database.
+func (s *Storage) FetchDataset(dataset string, storageName string) ([][]string, error) {
+	// get data variables (to exclude metadata variables)
+	vars, err := s.metadata.FetchVariables(dataset, true, false)
+	if err != nil {
+		return nil, err
+	}
+
+	varNames := []string{}
+	for _, v := range vars {
+		varNames = append(varNames, fmt.Sprintf("\"%s\"", v.Name))
+	}
+
+	sql := fmt.Sprintf("SELECT %s FROM %s;", strings.Join(varNames, ", "), "a")
+
+	res, err := s.client.Query(sql)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable execute query to extract dataset")
+	}
+
+	return s.parseData(res)
+}
+
 // IsValidDataType checks to see if a specified type is valid for a variable.
 // Multiple simultaneous calls to the function can result in inaccurate.
 func (s *Storage) IsValidDataType(dataset string, storageName string, varName string, varType string) (bool, error) {
