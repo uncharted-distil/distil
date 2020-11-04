@@ -390,6 +390,13 @@ export default Vue.extend({
       viewActions.updateSelectTrainingData(this.$store);
     },
   },
+  watch: {
+    numRows(newVal: number) {
+      const entry = overlayRouteEntry(this.$route, { dataSize: newVal });
+      this.$router.push(entry).catch((err) => console.warn(err));
+      viewActions.updateSelectTrainingData(this.$store);
+    },
+  },
 });
 </script>
 
