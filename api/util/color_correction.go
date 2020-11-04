@@ -21,7 +21,7 @@ func ConvertS2ToRgb(bands [3]float64, options ...Options) [3]float64 {
 	}
 	// defaults found here:
 	// https://github.com/sentinel-hub/custom-scripts/blob/e16f0d4f52fc2f9aaf612e582865d17b0b5c3457/sentinel-2/natural_color/script.js#L92
-	gain := 2.5 // looks like color scalar
+	gain := 2.5  // looks like color scalar
 	gamma := 2.2 // increases lightness by exponential
 	gainL := 1.0 // increases lightness by factor
 	return s2ToRGB(getSolarIrr(bands[2], bands[1], bands[0]), t, gain, gamma, gainL)
@@ -97,10 +97,10 @@ func labToXYZ(Lab [3]float64) [3]float64 {
 		invLabF(YL - Lab[2]/2.0)}
 }
 func adj(C float64) float64 {
-	if C < 0.0031308 {
+	if C <= 0.0031308 {
 		return 12.92 * C
 	}
-	return 1.055 * math.Pow(C, 1.0/2.4) - 0.055
+	return 1.055*math.Pow(C, 1.0/2.4) - 0.055
 }
 func xyzToRGBlin(xyz [3]float64) [3]float64 {
 	return dotMV([3][3]float64{{3.2404542, -1.5371385, -0.4985314}, {-0.9692660, 1.8760108, 0.0415560}, {0.0556434, -0.2040259, 1.0572252}}, xyz)
@@ -109,7 +109,7 @@ func xyzToRGBlin(xyz [3]float64) [3]float64 {
 func xyzToRGB(xyz [3]float64) [3]float64 {
 	sRGB := xyzToRGBlin(xyz)
 	for i, v := range sRGB {
-		sRGB[i] = adj(v)
+		sRGB[i] = math.Max(math.Min(adj(v), 1.0), 0)
 	}
 	return sRGB
 }
