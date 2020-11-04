@@ -37,6 +37,7 @@ var (
 	seedSubPath   = ""
 	augmentedPath = ""
 	batchPath     = ""
+	publicPath    = ""
 
 	initialized = false
 	isTask      = false
@@ -61,6 +62,7 @@ func Initialize(config *Config) error {
 	contribPath = config.DatamartImportFolder
 	augmentedPath = path.Join(config.D3MOutputDir, config.AugmentedSubFolder)
 	batchPath = path.Join(config.D3MOutputDir, config.BatchSubFolder)
+	publicPath = path.Join(config.D3MOutputDir, config.PublicSubFolder)
 
 	log.Infof("using '%s' as seed path", seedPath)
 	log.Infof("using '%s' as seed sub path", seedSubPath)
@@ -68,6 +70,7 @@ func Initialize(config *Config) error {
 	log.Infof("using '%s' as contrib path", contribPath)
 	log.Infof("using '%s' as augmented path", augmentedPath)
 	log.Infof("using '%s' as batch path", batchPath)
+	log.Infof("using '%s' as public path", publicPath)
 
 	initialized = true
 
@@ -146,6 +149,11 @@ func GetBatchPath() string {
 	return batchPath
 }
 
+// GetPublicPath returns the batch path as initialized.
+func GetPublicPath() string {
+	return publicPath
+}
+
 // ResolvePath returns an absolute path based on the dataset source.
 func ResolvePath(datasetSource metadata.DatasetSource, relativePath string) string {
 	switch datasetSource {
@@ -157,6 +165,8 @@ func ResolvePath(datasetSource metadata.DatasetSource, relativePath string) stri
 		return resolveAugmentedPath(relativePath)
 	case metadata.Batch:
 		return resolveBatchPath(relativePath)
+	case metadata.Public:
+		return resolvePublicPath(relativePath)
 	}
 	return resolveTmpPath(relativePath)
 }
@@ -179,6 +189,10 @@ func resolveAugmentedPath(relativePath string) string {
 
 func resolveBatchPath(relativePath string) string {
 	return path.Join(batchPath, relativePath)
+}
+
+func resolvePublicPath(relativePath string) string {
+	return path.Join(publicPath, relativePath)
 }
 
 func resolveTmpPath(relativePath string) string {

@@ -48,7 +48,7 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 
 		var origins []*model.DatasetOrigin
 		var rawGroupings []map[string]interface{}
-		if source == metadata.Augmented && provenance == "local" {
+		if (source == metadata.Augmented || source == metadata.Public) && provenance == "local" {
 			// parse POST params
 			params, err := getPostParameters(r)
 			if err != nil {
@@ -105,6 +105,12 @@ func ImportHandler(dataCtor api.DataStorageCtor, datamartCtors map[string]api.Me
 				rawGroupings = creationResult.groups
 				log.Infof("Created dataset '%s' from local source '%s'", datasetID, datasetPath)
 			}
+		}
+
+		// If the source is Public, the dataset has been imported in the augmented folder,
+		// from now on, the ES and database ingestion are done from the augmented folder files.
+		if source == metadata.Public {
+			source = metadata.Augmented
 		}
 
 		meta, err := createMetadataStorageForSource(source, provenance, datamartCtors, fileMetaCtor, esMetaCtor)

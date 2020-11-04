@@ -165,11 +165,11 @@ func DatasetsHandler(metaCtors map[string]model.MetadataStorageCtor) func(http.R
 // files & folders that can be imported.
 func AvailableDatasetsHandler(metaCtor model.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// restrict to augmented folder
-		rootFolder := env.GetAugmentedPath()
+		// restrict to the public folder
+		rootFolder := env.GetPublicPath()
 		files, err := ioutil.ReadDir(rootFolder)
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to read augmented folder contents"))
+			handleError(w, errors.Wrap(err, "unable to read public folder contents"))
 			return
 		}
 
