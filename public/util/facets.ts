@@ -36,6 +36,11 @@ export const TOP_RANGE_HIGHLIGHT = "top";
 export const BOTTOM_RANGE_HIGHLIGHT = "bottom";
 export const DEFAULT_HIGHLIGHT_PERCENTILE = 0.75;
 
+export const FACET_COLOR_SELECT = { color: "#ff0067", colorHover: "#ffaaaa" };
+export const FACET_COLOR_EXCLUDE = { color: "#000000", colorHover: "#333333" };
+export const FACET_COLOR_FILTERED = { color: "#999999", colorHover: "#bbbbbb" };
+export const FACET_COLOR_ERROR = { color: "#e05353", colorHover: "#e0aaaa" };
+
 export interface PlaceHolderFacet {
   placeholder: boolean;
   html: string;
@@ -288,33 +293,35 @@ export function hasFiltered(summary: VariableSummary) {
   );
 }
 // applyColor generates the string to change the facet dynamic css variables
-export function applyColor(colors: FacetColor[]): string {
+export function applyColor(colors: FacetColor[] | null): string {
   let result = "";
   colors.forEach((c, i) => {
-    result += `--facet-bars-${i}-normal: ${c.color};
-    --facet-bars-${i}-normal-contrast: ${c.colorHover};
-    --facet-bars-${i}-normal-contrast-hover: ${c.color};
-    --facet-bars-${i}-selected: ${c.color};
-    --facet-bars-${i}-selected-contrast: ${c.colorHover};
-    --facet-bars-${i}-selected-contrast-hover: ${c.color};
-    --facet-bars-${i}-unselected: ${c.colorHover};
-    --facet-bars-${i}-unselected-contrast: ${c.colorHover};
-    --facet-bars-${i}-unselected-contrast-hover: ${c.color};
-    --facet-bars-${i}-muted: ${c.color};
-    --facet-bars-${i}-muted-contrast: ${c.color};
-    --facet-bars-${i}-muted-contrast-hover: ${c.colorHover};
-    --facet-terms-bar-${i}-normal: ${c.color};
-    --facet-terms-bar-${i}-normal-contrast: ${c.colorHover};
-    --facet-terms-bar-${i}-normal-contrast-hover: ${c.color};
-    --facet-terms-bar-${i}-selected: ${c.color};
-    --facet-terms-bar-${i}-selected-contrast: ${c.colorHover};
-    --facet-terms-bar-${i}-selected-contrast-hover: ${c.color};
-    --facet-terms-bar-${i}-unselected: ${c.colorHover};
-    --facet-terms-bar-${i}-unselected-contrast: ${c.colorHover};
-    --facet-terms-bar-${i}-unselected-contrast-hover: ${c.color};
-    --facet-terms-bar-${i}-muted: ${c.color};
-    --facet-terms-bar-${i}-muted-contrast: ${c.color};
-    --facet-terms-bar-${i}-muted-contrast-hover: ${c.colorHover};`;
+    if (!!c?.color && !!c?.colorHover) {
+      result += `--facet-bars-${i}-normal: ${c.color};
+      --facet-bars-${i}-normal-contrast: ${c.colorHover};
+      --facet-bars-${i}-normal-contrast-hover: ${c.color};
+      --facet-bars-${i}-selected: ${c.color};
+      --facet-bars-${i}-selected-contrast: ${c.colorHover};
+      --facet-bars-${i}-selected-contrast-hover: ${c.color};
+      --facet-bars-${i}-unselected: ${c.colorHover};
+      --facet-bars-${i}-unselected-contrast: ${c.colorHover};
+      --facet-bars-${i}-unselected-contrast-hover: ${c.color};
+      --facet-bars-${i}-muted: ${c.color};
+      --facet-bars-${i}-muted-contrast: ${c.color};
+      --facet-bars-${i}-muted-contrast-hover: ${c.colorHover};
+      --facet-terms-bar-${i}-normal: ${c.color};
+      --facet-terms-bar-${i}-normal-contrast: ${c.colorHover};
+      --facet-terms-bar-${i}-normal-contrast-hover: ${c.color};
+      --facet-terms-bar-${i}-selected: ${c.color};
+      --facet-terms-bar-${i}-selected-contrast: ${c.colorHover};
+      --facet-terms-bar-${i}-selected-contrast-hover: ${c.color};
+      --facet-terms-bar-${i}-unselected: ${c.colorHover};
+      --facet-terms-bar-${i}-unselected-contrast: ${c.colorHover};
+      --facet-terms-bar-${i}-unselected-contrast-hover: ${c.color};
+      --facet-terms-bar-${i}-muted: ${c.color};
+      --facet-terms-bar-${i}-muted-contrast: ${c.color};
+      --facet-terms-bar-${i}-muted-contrast-hover: ${c.colorHover};`;
+    }
   });
   return result;
 }

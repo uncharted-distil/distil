@@ -3,7 +3,7 @@
     <div :class="variableFacetListClass + ' col-12 flex-column d-flex'">
       <div v-if="enableSearch" class="row align-items-center facet-filters">
         <div class="col-12 flex-column d-flex">
-          <b-form-input size="sm" v-model="search" placeholder="Search" />
+          <b-form-input v-model="search" size="sm" placeholder="Search" />
         </div>
       </div>
       <!-- TODO: this should be passed in as title HTML -->
@@ -18,14 +18,14 @@
       </div>
       <div class="pl-1 pr-1">
         <!-- injectable slot -->
-        <slot></slot>
+        <slot />
       </div>
       <div class="row flex-1 variable-facets-wrapper">
         <div class="col-12 flex-column variable-facets-container">
           <div
-            class="variable-facets-item"
             v-for="summary in summaries"
             :key="summary.key"
+            class="variable-facets-item"
           >
             <template v-if="summary.pending">
               <facet-loading :summary="summary" />
@@ -38,6 +38,7 @@
             </template>
             <template v-else-if="summary.varType === 'timeseries'">
               <facet-timeseries
+                :style="facetColors"
                 :summary="summary"
                 :highlight="highlight"
                 :row-selection="rowSelection"
@@ -45,7 +46,7 @@
                 :enabled-type-changes="enabledTypeChanges"
                 :enable-highlighting="[enableHighlighting, enableHighlighting]"
                 :ignore-highlights="[ignoreHighlights, ignoreHighlights]"
-                :instanceName="instanceName"
+                :instance-name="instanceName"
                 :expanded="expandGeoAndTimeseriesFacets"
                 @numerical-click="onNumericalClick"
                 @categorical-click="onCategoricalClick"
@@ -61,8 +62,8 @@
                 :summary="summary"
                 :enable-highlighting="enableHighlighting"
                 :ignore-highlights="ignoreHighlights"
-                :isAvailableFeatures="isAvailableFeatures"
-                :isFeaturesToModel="isFeaturesToModel"
+                :is-available-features="isAvailableFeatures"
+                :is-features-to-model="isFeaturesToModel"
                 :log-activity="logActivity"
                 :expanded="expandGeoAndTimeseriesFacets"
                 @histogram-numerical-click="onNumericalClick"
@@ -71,6 +72,7 @@
             </template>
             <template v-else-if="isImage(summary.varType)">
               <facet-image
+                :style="facetColors"
                 :summary="summary"
                 :highlight="highlight"
                 :row-selection="rowSelection"
@@ -79,12 +81,13 @@
                 :enabled-type-changes="enabledTypeChanges"
                 :enable-highlighting="enableHighlighting"
                 :ignore-highlights="ignoreHighlights"
-                :instanceName="instanceName"
+                :instance-name="instanceName"
                 @facet-click="onFacetClick"
               />
             </template>
             <template v-else-if="summary.varType === 'dateTime'">
               <facet-date-time
+                :style="facetColors"
                 :summary="summary"
                 :highlight="highlight"
                 :row-selection="rowSelection"
@@ -94,13 +97,14 @@
                 :enabled-type-changes="enabledTypeChanges"
                 :enable-highlighting="enableHighlighting"
                 :ignore-highlights="ignoreHighlights"
-                :instanceName="instanceName"
+                :instance-name="instanceName"
                 @facet-click="onFacetClick"
                 @range-change="onRangeChange"
               />
             </template>
             <template v-else-if="summary.type === 'categorical'">
               <facet-categorical
+                :style="facetColors"
                 :summary="summary"
                 :highlight="highlight"
                 :row-selection="rowSelection"
@@ -109,12 +113,13 @@
                 :enabled-type-changes="enabledTypeChanges"
                 :enable-highlighting="enableHighlighting"
                 :ignore-highlights="ignoreHighlights"
-                :instanceName="instanceName"
+                :instance-name="instanceName"
                 @facet-click="onFacetClick"
               />
             </template>
             <template v-else-if="summary.type === 'numerical'">
               <facet-numerical
+                :style="facetColors"
                 :summary="summary"
                 :highlight="highlight"
                 :row-selection="rowSelection"
@@ -123,7 +128,7 @@
                 :enabled-type-changes="enabledTypeChanges"
                 :enable-highlighting="enableHighlighting"
                 :ignore-highlights="ignoreHighlights"
-                :instanceName="instanceName"
+                :instance-name="instanceName"
                 @numerical-click="onNumericalClick"
                 @categorical-click="onCategoricalClick"
                 @range-change="onRangeChange"
@@ -141,13 +146,13 @@
       <div class="col-12 flex-column">
         <b-pagination
           v-if="pagination"
+          v-model="currentPage"
           align="center"
           first-number
           last-number
           size="sm"
           :total-rows="facetCount"
           :per-page="rowsPerPage"
-          v-model="currentPage"
           class="mb-0"
         />
       </div>
@@ -167,6 +172,12 @@ import FacetError from "./FacetError.vue";
 import GeocoordinateFacet from "./GeocoordinateFacet.vue";
 import { overlayRouteEntry, getRouteFacetPage } from "../../util/routes";
 import { Dictionary } from "../../util/dict";
+import {
+  applyColor,
+  FACET_COLOR_SELECT,
+  FACET_COLOR_EXCLUDE,
+  FACET_COLOR_FILTERED,
+} from "../../util/facets";
 import {
   getVariableRanking,
   getSolutionFeatureImportance,
@@ -191,7 +202,7 @@ import { updateHighlight, clearHighlight } from "../../util/highlights";
 import Vue from "vue";
 
 export default Vue.extend({
-  name: "variable-facets",
+  name: "VariableFacets",
 
   components: {
     FacetImage,
@@ -261,6 +272,11 @@ export default Vue.extend({
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
+
+    include(): boolean {
+      return routeGetters.getRouteInclude(this.$store);
+    },
+
     ranking(): Dictionary<number> {
       // Only show ranks for available feature, model features and result features
       if (
@@ -302,6 +318,28 @@ export default Vue.extend({
       // The Geocoordinates and Timeseries Facets are expanded on SELECT_TARGET_ROUTE
       return routeGetters.isPageSelectTarget(this.$store);
     },
+
+    facetColors(): string {
+      return applyColor([
+        null,
+        !!this.rowSelection ? FACET_COLOR_SELECT : null,
+        !this.include ? FACET_COLOR_EXCLUDE : null,
+        FACET_COLOR_FILTERED,
+      ]);
+    },
+  },
+  watch: {
+    search() {
+      const entry = overlayRouteEntry(this.$route, {
+        [this.routeSearchKey()]: this.search,
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
+  },
+  beforeMount() {
+    this.search = routeGetters.getAllSearchesByQueryString(this.$store)[
+      this.routeSearchKey()
+    ];
   },
 
   methods: {
@@ -397,19 +435,6 @@ export default Vue.extend({
 
     isImage(type: string): boolean {
       return isImageType(type);
-    },
-  },
-  beforeMount() {
-    this.search = routeGetters.getAllSearchesByQueryString(this.$store)[
-      this.routeSearchKey()
-    ];
-  },
-  watch: {
-    search() {
-      const entry = overlayRouteEntry(this.$route, {
-        [this.routeSearchKey()]: this.search,
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });
