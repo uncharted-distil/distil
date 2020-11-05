@@ -225,7 +225,7 @@ func (s *Storage) FetchDataset(dataset string, storageName string) ([][]string, 
 
 	varNames := []string{}
 	for _, v := range vars {
-		varNames = append(varNames, fmt.Sprintf("\"%s\"", v.Name))
+		varNames = append(varNames, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v.Name, v.Name))
 	}
 
 	sql := fmt.Sprintf("SELECT %s FROM %s;", strings.Join(varNames, ", "), getBaseTableName(storageName))

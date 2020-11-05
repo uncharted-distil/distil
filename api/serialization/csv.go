@@ -65,12 +65,16 @@ func (d *CSV) ReadDataset(uri string) (*api.RawDataset, error) {
 // WriteDataset writes the raw dataset to the file system, writing out
 // the data to a csv file.
 func (d *CSV) WriteDataset(uri string, data *api.RawDataset) error {
-	err := d.WriteData(uri, data.Data)
+
+	dataFilename := path.Join(uri, compute.D3MDataFolder, compute.D3MLearningData)
+	err := d.WriteData(dataFilename, data.Data)
 	if err != nil {
 		return err
 	}
 
-	err = d.WriteMetadata(uri, data.Metadata, true, true)
+	data.Metadata.GetMainDataResource().ResPath = dataFilename
+	metaFilename := path.Join(uri, compute.D3MDataSchema)
+	err = d.WriteMetadata(metaFilename, data.Metadata, true, true)
 	if err != nil {
 		return err
 	}
