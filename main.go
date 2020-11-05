@@ -341,4 +341,10 @@ func createOutputFolders(config *env.Config) {
 	if err := os.MkdirAll(augmentPath, os.ModePerm); err != nil {
 		log.Error(errors.Wrap(err, "failed to created output folder"))
 	}
+
+	// create the public data folder
+	publicPath := env.GetPublicPath()
+	if err := os.MkdirAll(publicPath, os.ModePerm); err != nil {
+		log.Error(errors.Wrap(err, "failed to created public folder"))
+	}
 }

@@ -382,14 +382,14 @@ export const actions = {
     });
   },
 
-  // Import a Dataset that is available in $D3MOUTPUTDIR/augmented folder
+  // Import a Dataset that is available in $D3MOUTPUTDIR/PUBLIC_SUBFOLDER folder
   async importAvailableDataset(
     context: DatasetContext,
     args: { datasetID: string; path: string }
   ) {
     const response = await actions.importDataset(context, {
       datasetID: args.datasetID,
-      source: "augmented",
+      source: "public",
       provenance: "local",
       terms: args.datasetID,
       originalDataset: null,

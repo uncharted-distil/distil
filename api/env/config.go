@@ -73,6 +73,7 @@ type Config struct {
 	PostgresPort                       int     `env:"PG_PORT" envDefault:"5432"`
 	PostgresRandomSeed                 float64 `env:"PG_RANDOM_SEED" envDefault:"0.2"`
 	PostgresUser                       string  `env:"PG_USER" envDefault:"distil"`
+	PublicSubFolder                    string  `env:"PUBLIC_SUBFOLDER" envDefault:"public"`
 	RankingOutputPath                  string  `env:"RANKING_OUTPUT_PATH" envDefault:"importance.json"`
 	RankingRowLimit                    int     `env:"RANKING_ROW_LIMIT" envDefault:"1000"`
 	RemoteSensingGPUBatchSize          int     `env:"REMOTE_SENSING_GPU_BATCH_SIZE" envDefault:"32"`

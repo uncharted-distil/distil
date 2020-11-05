@@ -19,23 +19,25 @@
       />
     </b-form-group>
 
-    <strong>OR</strong>
+    <template v-if="isAvailableDatasets">
+      <strong>OR</strong>
 
-    <!-- Available Datasets -->
-    <b-form-group label="Select an available dataset">
-      <b-form-select
-        v-model="availableDatasetSelected"
-        :options="availableDatasets"
-        :select-size="Math.min(availableDatasets.length, 10)"
-      />
-      <i
-        slot="description"
-        class="fa fa-question-circle-o"
-        title="Lookup datasets already available in $D3MOUTPUTDIR/augmented."
-      />
-    </b-form-group>
+      <!-- Available Datasets -->
+      <b-form-group label="Select an available dataset">
+        <b-form-select
+          v-model="availableDatasetSelected"
+          :options="availableDatasets"
+          :select-size="Math.min(availableDatasets.length, 10)"
+        />
+        <i
+          slot="description"
+          class="fa fa-question-circle-o"
+          title="Lookup datasets available in $D3MOUTPUTDIR/PUBLIC_SUBFOLDER."
+        />
+      </b-form-group>
 
-    <hr />
+      <hr />
+    </template>
 
     <!-- Dataset Name -->
     <b-form-group
@@ -63,6 +65,7 @@ import {
   generateUniqueDatasetName,
 } from "../util/uploads";
 import { actions as datasetActions } from "../store/dataset/module";
+import { isEmpty } from "lodash";
 
 export default Vue.extend({
   name: "AddDataset",
@@ -95,6 +98,11 @@ export default Vue.extend({
         : !this.availableDatasetSelected;
       return noDataset || this.name?.length <= 0;
     },
+
+    // Check if we have any available datasets in the public folder
+    isAvailableDatasets(): boolean {
+      return !isEmpty(this.availableDatasets);
+    },
   },
 
   watch: {
@@ -124,10 +132,6 @@ export default Vue.extend({
         this.nameState = !!this.name;
       }
     },
-  },
-
-  beforeMount() {
-    this.getAvailableDatasets();
   },
 
   methods: {
@@ -171,8 +175,10 @@ export default Vue.extend({
 
     async importAvailableDataset() {
       // Make sure that the arguments are sound.
-      const { selectedName, selectedPath } = this.availableDatasetSelected;
-      const path = selectedPath + "/" + selectedName;
+      const path =
+        this.availableDatasetSelected.path +
+        "/" +
+        this.availableDatasetSelected.name;
       if (!path) return;
 
       // Notify external listeners that the file upload is starting
