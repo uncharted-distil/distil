@@ -20,6 +20,7 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/util/json"
 )
 
@@ -110,6 +111,36 @@ func (d *Dataset) GetD3MIndexVariable() *model.Variable {
 	}
 
 	return nil
+}
+
+// ToMetadata capture the dataset metadata in a d3m metadata struct.
+func (d *Dataset) ToMetadata() *model.Metadata {
+	// create the data resource
+	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
+	dr.Variables = d.Variables
+
+	// create the necessary data structures for the mapping
+	origins := make([]*model.DatasetOrigin, len(d.JoinSuggestions))
+	for i, js := range d.JoinSuggestions {
+		origins[i] = js.DatasetOrigin
+	}
+
+	// create the metadata
+	meta := model.NewMetadata(d.ID, d.Name, d.Description, d.StorageName)
+	meta.DatasetFolder = d.Folder
+	meta.DatasetOrigins = origins
+	meta.LearningDataset = d.LearningDataset
+	meta.NumBytes = d.NumBytes
+	meta.NumRows = d.NumRows
+	meta.SchemaSource = string(d.Source)
+	meta.SearchProvenance = d.Provenance
+	meta.Summary = d.Summary
+	meta.SummaryMachine = d.SummaryML
+	meta.Redacted = false
+	meta.Raw = false
+	meta.DataResources = []*model.DataResource{dr}
+
+	return meta
 }
 
 // UpdateExtremas updates the variable extremas based on the data stored.

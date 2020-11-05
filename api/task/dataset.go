@@ -119,6 +119,37 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 	return dataset, formattedPath, nil
 }
 
+// ExportDataset extracts a dataset from the database and metadata storage, writing
+// it to disk in D3M dataset format.
+func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage) (string, string, error) {
+	metaDataset, err := metaStorage.FetchDataset(dataset, true, false)
+	if err != nil {
+		return "", "", err
+	}
+	meta := metaDataset.ToMetadata()
+
+	data, err := dataStorage.FetchDataset(dataset, meta.StorageName)
+	if err != nil {
+		return "", "", err
+	}
+	dataRaw := &api.RawDataset{
+		Name:     meta.Name,
+		ID:       meta.ID,
+		Data:     data,
+		Metadata: meta,
+	}
+
+	// TODO: most likely need to either get a unique folder name for output or error if already exists
+	outputFolder := env.ResolvePath(metadata.Augmented, dataset)
+	storage := serialization.GetCSVStorage()
+	err = storage.WriteDataset(outputFolder, dataRaw)
+	if err != nil {
+		return "", "", err
+	}
+
+	return dataset, outputFolder, err
+}
+
 func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, config *IngestTaskConfig) (string, error) {
 	// save the csv file in the file system datasets folder
 	outputDatasetPath := path.Join(outputPath, meta.Name)

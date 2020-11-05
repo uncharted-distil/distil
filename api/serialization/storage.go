@@ -52,3 +52,13 @@ func GetStorage(uri string) Storage {
 
 	return csvStorage
 }
+
+// GetCSVStorage returns the instantiated csv storage.
+func GetCSVStorage() Storage {
+	return csvStorage
+}
+
+// GetParquetStorage returns the instantiated parquet storage.
+func GetParquetStorage() Storage {
+	return parquetStorage
+}
