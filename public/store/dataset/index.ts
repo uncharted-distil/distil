@@ -234,7 +234,7 @@ export enum TaskTypes {
   OBJECT_DETECTION = "objectDetection",
   SEMISUPERVISED = "semiSupervised",
   BINARY = "binary",
-  MULTICLASS = "multiclass",
+  MULTICLASS = "multiClass",
   MULTILABEL = "multilabel",
   UNIVARIATE = "univariate",
   MULTIVARIATE = "multivariate",
