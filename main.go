@@ -286,6 +286,7 @@ func main() {
 	registerRoutePost(mux, "/distil/cluster/:dataset/:variable", routes.ClusteringHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/cluster/:result-id", routes.ClusteringExplainHandler(pgSolutionStorageCtor, esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(&config))
+	registerRoutePost(mux, "/distil/update/:dataset", routes.UpdateHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/clone/:dataset", routes.CloningHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/join", routes.JoinHandler(esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:invert", routes.TimeseriesHandler(esMetadataStorageCtor, pgDataStorageCtor))
