@@ -14,23 +14,27 @@
       </template>
       <template v-else-if="!stopSpinner">
         <div
+          ref="imageElem"
           class="image-elem"
           :class="{ clickable: hasClick }"
           @click.stop="handleClick"
-          ref="imageElem"
-        ></div>
-        <i
-          class="fa fa-search-plus zoom-icon"
-          @click.stop="showZoomedImage"
-        ></i>
+        />
+        <i class="fa fa-search-plus zoom-icon" @click.stop="showZoomedImage" />
+        <div
+          v-if="filterSupplied"
+          ref="filterElem"
+          class="image-elem"
+          :class="{ clickable: hasClick }"
+          @click.stop="handleClick"
+        />
       </template>
     </div>
     <image-drilldown
-      @hide="hideZoomImage"
       :imageUrl="imageUrl"
       :title="imageUrl"
       :visible="!!zoomImage"
-    ></image-drilldown>
+      @hide="hideZoomImage"
+    />
   </div>
 </template>
 
@@ -69,6 +73,7 @@ export default Vue.extend({
   props: {
     row: Object as () => TableRow,
     imageUrl: String as () => string,
+    filterUrl: { type: String as () => string, default: null },
     uniqueTrail: { type: String as () => string, default: "" },
     type: String as () => string,
     width: {
@@ -188,9 +193,13 @@ export default Vue.extend({
       if (this.row) {
         return isRowSelected(this.rowSelection, this.row[D3M_INDEX_FIELD]);
       }
+      return false;
     },
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
+    },
+    filterSupplied(): boolean {
+      return this.filterUrl !== null;
     },
   },
 

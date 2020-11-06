@@ -39,7 +39,7 @@ func getOptions(requestURI string) string {
 }
 
 // MultiBandImageHandler fetches individual band images and combines them into a single RGB image using the supplied mapping.
-func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func MultiBandImageHandler(ctor api.MetadataStorageCtor, pCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		imageID := pat.Param(r, "image-id")
