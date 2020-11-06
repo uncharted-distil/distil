@@ -222,6 +222,69 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, transform, ramp), nil
 }
 
+// ScaleConfidenceMatrix scales confidence matrix to desired size using linear scaling
+func ScaleConfidenceMatrix(width int, height int, confidence *[][]float32) [][]float32 {
+	resultMatrix := make([][]float32, height)
+	confWidth := len((*confidence)[0]) - 1
+	adjustedWidth := width - 1 //adjust width to work with arrays
+	// create 2d matrix
+	for i := range resultMatrix {
+		resultMatrix[i] = make([]float32, width)
+	}
+	// first lerp columns, then using the column data lerp the rows
+	columns := getConfidenceColumns(height, confidence)
+	for y := 0; y < len(columns); y++ {
+		for x := 0; x < confWidth; x++ {
+			next := x + 1
+			xStartPos := int(lerp(0.0, float32(adjustedWidth), float32(x)/float32(confWidth)))
+			xEndPos := int(lerp(0.0, float32(adjustedWidth), float32(next)/float32(confWidth)))
+			chunk := getConfidenceChunk(xEndPos-xStartPos, columns[y][x], columns[y][next])
+			for k, v := range chunk {
+				resultMatrix[y][xStartPos+k] = v
+			}
+		}
+	}
+	return resultMatrix
+}
+
+func getConfidenceColumns(height int, confidence *[][]float32) [][]float32 {
+	result := make([][]float32, height)
+	xSize := len((*confidence)[0])
+	arrEnd := len(*confidence) - 1
+	adjustedHeight := height - 1 // adjusts height to work with arrays
+	// init array
+	for i := range result {
+		result[i] = make([]float32, xSize)
+	}
+	for i := 0; i < arrEnd; i++ {
+		for j := 0; j < xSize; j++ {
+			next := i + 1
+			start := (*confidence)[i][j]                                                      // get start confidence value for chunk
+			end := (*confidence)[next][j]                                                     // get end confidence value for chunk
+			yStartPos := int(lerp(0.0, float32(adjustedHeight), float32(i)/float32(arrEnd)))  // lerp indices to get start index
+			yEndPos := int(lerp(0.0, float32(adjustedHeight), float32(next)/float32(arrEnd))) // lerp indices to get end index
+			numElements := yEndPos - yStartPos                                                // calculate number of elements for chunk
+			chunk := getConfidenceChunk(numElements, start, end)
+			for k, v := range chunk {
+				result[yStartPos+k][j] = v
+			}
+		}
+	}
+	return result
+
+}
+func getConfidenceChunk(numElements int, start float32, end float32) []float32 {
+	result := make([]float32, numElements+1) // adds one to buffer because there is overlap in the scaling of the matrix for example
+	// first chunk could be from idx 0-2 (inclusive) the next chunk would start from 2-4 (also inclusive), thus overlap
+	for i := 0; i <= numElements; i++ {
+		result[i] = lerp(start, end, float32(i)/float32(numElements))
+	}
+	return result
+}
+func lerp(val1 float32, val2 float32, delta float32) float32 {
+	return (1-delta)*val1 + delta*val2
+}
+
 // getMaxDimensions return max from array. Return order width, height
 func getMaxDimensions(bandImages *[]*image.Gray16) (int, int) {
 	width := 0
