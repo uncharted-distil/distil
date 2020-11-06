@@ -53,17 +53,14 @@
       label-for="model-scoring"
       description="Selects model accuracy scoring method."
     >
-      <b-form-select
-        v-model="selectedMetric"
-        name="model-scoring"
-        size="sm"
-        :options="metrics"
-      >
-        <template #first>
-          <b-form-select-option :value="null" disabled>
-            Please select a method
-          </b-form-select-option>
-        </template>
+      <b-form-select v-model="selectedMetric" name="model-scoring" size="sm">
+        <b-form-select-option
+          v-for="metric in metrics"
+          :key="metric.value.id"
+          :value="metric.value.id"
+        >
+          {{ metric.text }}
+        </b-form-select-option>
       </b-form-select>
       <p>
         <small>
@@ -83,7 +80,7 @@ import {
   actions as datasetActions,
 } from "../store/dataset/module";
 import { overlayRouteEntry } from "../util/routes";
-import { MetricDropdownItem } from "../store/dataset";
+import { MetricDropdownItem, TaskTypes } from "../store/dataset";
 import { getters as routeGetters } from "../store/route/module";
 
 // Dialog for setting model creation preferences.  The results are saved to the route to ensure
@@ -106,7 +103,8 @@ export default Vue.extend({
 
   computed: {
     description(): string {
-      return this.selectedMetric?.description;
+      return this.metrics.filter((m) => m.value.id === this.selectedMetric)[0]
+        ?.value?.description;
     },
     metrics(): MetricDropdownItem[] {
       const baseMetrics = datasetGetters.getModelingMetrics(this.$store);
@@ -123,9 +121,21 @@ export default Vue.extend({
   },
 
   async beforeMount() {
+    const task = routeGetters.getRouteTask(this.$store);
     await datasetActions.fetchModelingMetrics(this.$store, {
-      task: routeGetters.getRouteTask(this.$store),
+      task: task,
     });
+    if (task.includes(TaskTypes.CLASSIFICATION)) {
+      if (task.includes(TaskTypes.MULTICLASS)) {
+        this.selectedMetric = "f1Macro";
+      } else {
+        this.selectedMetric = "f1";
+      }
+    } else if (task.includes(TaskTypes.REGRESSION)) {
+      this.selectedMetric = "meanAbsoluteError";
+    } else {
+      this.selectedMetric = null;
+    }
   },
 
   methods: {
@@ -134,7 +144,7 @@ export default Vue.extend({
         modelLimit: this.modelLimit,
         modelTimeLimit: this.timeLimit,
         modelQuality: this.speedQuality,
-        metrics: this.selectedMetric?.id,
+        metrics: this.selectedMetric,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
     },
