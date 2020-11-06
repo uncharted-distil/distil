@@ -32,13 +32,14 @@ const (
 )
 
 // MultiBandImageHandler fetches individual band images and combines them into a single RGB image using the supplied mapping.
-func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func MultiBandImageHandler(ctor api.MetadataStorageCtor, pCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		imageID := pat.Param(r, "image-id")
 		bandCombo := pat.Param(r, "band-combination")
 		isThumbnail, err := strconv.ParseBool(pat.Param(r, "is-thumbnail"))
 		imageScale := util.ImageScale{}
+
 		if err != nil {
 			handleError(w, err)
 			return
@@ -59,6 +60,19 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 		sourcePath = path.Join(sourcePath, imageFolder)
 		if isThumbnail {
 			imageScale = util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
+		}
+		if bandCombo == util.ImageAttention {
+			// pStorage, err:= pCtor()
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			// fetch confidence
+
+			// scale
+
+			// get attention image
+
 		}
 		img, err := util.ImageFromCombination(sourcePath, imageID, util.BandCombinationID(bandCombo), imageScale)
 		if err != nil {

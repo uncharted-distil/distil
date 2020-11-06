@@ -72,6 +72,8 @@ const (
 	// VegetationAnalysis identifies a band mapping that displays an image in in false color for analyzing vegetation.
 	VegetationAnalysis = "vegetation_analysis"
 
+	// ImageAttention identifies what the model is paying attention to in the image
+	ImageAttention = "image_attention"
 	// NDVI identifies a band mapping that displays Normalized Difference Vegetation Index mapped using an RGB ramp.
 	NDVI = "ndvi"
 
@@ -280,6 +282,24 @@ func getConfidenceChunk(numElements int, start float32, end float32) []float32 {
 		result[i] = lerp(start, end, float32(i)/float32(numElements))
 	}
 	return result
+}
+func confidenceMatrixToImage(confidence [][]float32, colorScale func(float32) []uint8, opacity uint8) *image.RGBA {
+	height := len(confidence)
+	width := len(confidence[0])
+	resultImage := image.NewRGBA(image.Rect(0, 0, width, height))
+	outputIdx := 0
+	step := 4
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			color := colorScale(confidence[y][x])
+			resultImage.Pix[outputIdx] = color[0]   // r
+			resultImage.Pix[outputIdx+1] = color[1] // g
+			resultImage.Pix[outputIdx+2] = color[2] // b
+			resultImage.Pix[outputIdx+3] = opacity
+			outputIdx += step
+		}
+	}
+	return resultImage
 }
 func lerp(val1 float32, val2 float32, delta float32) float32 {
 	return (1-delta)*val1 + delta*val2
