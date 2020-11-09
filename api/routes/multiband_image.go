@@ -21,9 +21,11 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil-compute/model"
 	"goji.io/v3/pat"
 	"net/http"
 	"path"
+	"image/color"
 	"strconv"
 	"strings"
 )

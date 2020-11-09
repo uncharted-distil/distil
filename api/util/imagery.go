@@ -22,6 +22,7 @@ import (
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/gdal"
+	"image/color"
 	log "github.com/unchartedsoftware/plog"
 	"image"
 	"image/jpeg"
@@ -155,6 +156,7 @@ func init() {
 func ImageFromCombination(datasetDir string, fileID string, bandCombination BandCombinationID, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
+	bandCombination := BandCombinationID(bandCombo)
 	var fileType string
 	cacheValue, ok := folderTypeCache.Get(datasetDir)
 	if !ok {
@@ -283,7 +285,8 @@ func getConfidenceChunk(numElements int, start float32, end float32) []float32 {
 	}
 	return result
 }
-func confidenceMatrixToImage(confidence [][]float32, colorScale func(float32) []uint8, opacity uint8) *image.RGBA {
+// ConfidenceMatrixToImage takes the confidences matrix and a supplied colorScale function and returns an image.
+func ConfidenceMatrixToImage(confidence [][]float32, colorScale func(float64) *color.RGBA, opacity uint8) *image.RGBA {
 	height := len(confidence)
 	width := len(confidence[0])
 	resultImage := image.NewRGBA(image.Rect(0, 0, width, height))
@@ -291,18 +294,15 @@ func confidenceMatrixToImage(confidence [][]float32, colorScale func(float32) []
 	step := 4
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			color := colorScale(confidence[y][x])
-			resultImage.Pix[outputIdx] = color[0]   // r
-			resultImage.Pix[outputIdx+1] = color[1] // g
-			resultImage.Pix[outputIdx+2] = color[2] // b
+			color := colorScale(float64(confidence[y][x]))
+			resultImage.Pix[outputIdx] = color.R   // r
+			resultImage.Pix[outputIdx+1] = color.G // g
+			resultImage.Pix[outputIdx+2] = color.B // b
 			resultImage.Pix[outputIdx+3] = opacity
 			outputIdx += step
 		}
 	}
 	return resultImage
-}
-func lerp(val1 float32, val2 float32, delta float32) float32 {
-	return (1-delta)*val1 + delta*val2
 }
 
 // getMaxDimensions return max from array. Return order width, height
