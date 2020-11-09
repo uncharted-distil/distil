@@ -43,6 +43,20 @@
         <i class="fa fa-object-group fa-lg" aria-hidden="true" />
       </a>
     </div>
+    <div
+      v-if="dataHasConfidence"
+      class="confidence-toggle"
+      :class="{ active: isColoringByConfidence }"
+      @click="toggleConfidenceColoring"
+    >
+      <a
+        :class="confidenceClass"
+        title="confidence"
+        aria-label="Color by Confidence"
+      >
+        C
+      </a>
+    </div>
     <b-toast
       :id="toastId"
       :title="toastTitle"
@@ -203,7 +217,6 @@ export default Vue.extend({
   components: {
     IconBase,
     IconCropFree,
-    // ImageDrilldown,
     ImageLabel,
     ImagePreview,
     DrillDown,
@@ -265,6 +278,8 @@ export default Vue.extend({
       showExit: false,
       pointSize: 0.025,
       isClustering: false,
+      isColoringByConfidence: false,
+      confidenceIconClass: "confidence-icon",
     };
   },
 
@@ -279,7 +294,9 @@ export default Vue.extend({
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
     },
-
+    dataHasConfidence(): boolean {
+      return "confidence" in this.dataItems[0];
+    },
     getTopVariables(): string[] {
       const variables = datasetGetters
         .getVariables(this.$store)
@@ -586,6 +603,9 @@ export default Vue.extend({
         },
       };
     },
+    confidenceClass(): string {
+      return this.confidenceIconClass;
+    },
     exitStyle(): string {
       return `top:${this.selectionToolData.exit.top}px; right:${this.selectionToolData.exit.right}px;`;
     },
@@ -679,6 +699,17 @@ export default Vue.extend({
         this.currentState = this.pointState;
         this.updateMapState();
       }
+    },
+    /**
+     * toggles coloring tiles by confidence (only available in result screen)
+     */
+    toggleConfidenceColoring() {
+      this.isColoringByConfidence = !this.isColoringByConfidence;
+      if (this.isColoringByConfidence) {
+        this.confidenceIconClass = "toggled-confidence-icon";
+        return;
+      }
+      this.confidenceIconClass = "confidence-icon";
     },
     /**
      * on selection tool toggle disable or enable the quad interactions such as click or hover
@@ -1150,6 +1181,19 @@ export default Vue.extend({
   text-align: center;
   border-radius: 4px;
 }
+.confidence-toggle {
+  position: absolute;
+  z-index: 999;
+  top: 120px;
+  left: 10px;
+  width: 34px;
+  height: 34px;
+  background-color: #fff;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  background-clip: padding-box;
+  text-align: center;
+  border-radius: 4px;
+}
 .cluster-icon {
   width: 30px;
   height: 30px;
@@ -1158,7 +1202,43 @@ export default Vue.extend({
   align-items: center;
   cursor: pointer;
 }
+.confidence-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-weight: bolder;
+  font-size: xx-large;
+}
+.toggled-confidence-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-weight: bolder;
+  font-size: xx-large;
+  background-size: 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -moz-background-clip: text;
+  background-image: linear-gradient(0deg, #f3ec78, #af4261);
+  -webkit-text-fill-color: transparent;
+  -moz-text-fill-color: transparent;
+}
+.toggled-confidence-icon:hover::after {
+  content: "----Less Confidence";
+}
+.toggled-confidence-icon:hover::before {
+  content: "----More Confidence";
+}
 .cluster-toggle:hover {
+  background-color: #f4f4f4;
+}
+.confidence-toggle:hover {
   background-color: #f4f4f4;
 }
 .cluster-toggle.active {
