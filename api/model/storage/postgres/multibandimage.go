@@ -368,3 +368,39 @@ func getEqualBivariateBuckets(numBuckets int, xExtrema *api.Extrema, yExtrema *a
 	}
 	return xNumBuckets, yNumBuckets
 }
+// FetchExplainValues : fetches multiband confidences (image attention) 4x4 matrix of floats ranging from 0-1
+func (s *Storage) FetchExplainValues(dataset string, storageName string, selectCol string, groupIDColName string, groupIDVal string, resultUUID string, filterParams ...*api.FilterParams) ([]interface{},error) {
+		// create the filter for the query.
+		wheres := make([]string, 0)
+		params := make([]interface{}, 0)
+
+		wheres = append(wheres, fmt.Sprintf("\"%s\" = $1", groupIDColName))
+		params = append(params, groupIDVal)
+		if filterParams[0] != nil{ // check if filterParams exist
+		wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams[0], false)
+		}
+		params = append(params, resultUUID)
+		wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))
+		wheres = append(wheres, "result.value != ''")
+
+		where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+
+		query := fmt.Sprintf(`
+		SELECT "%s", CAST(CASE WHEN result.value = '' THEN 'NaN' ELSE result.value END as double precision),
+		coalesce(result.explain_values, '{}') AS explain_values
+		FROM %s data INNER JOIN %s result ON data."%s" = result.index
+		%s
+		ORDER BY %s`,
+		model.ExplainValues, storageName, s.getResultTable(storageName),
+		model.D3MIndexFieldName, where, model.ExplainValues)
+
+		res, err := s.client.Query(query, params...)
+		if err != nil {
+			return nil,errors.Wrap(err, "failed to fetch explaination values from postgres")
+		}
+		if res != nil {
+			defer res.Close()
+		}
+
+	return res.Values()
+}

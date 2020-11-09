@@ -51,8 +51,11 @@ var (
 	// RedYellowGreenRamp defines an evenly spaced ramp suitable for visualizing vegetation
 	RedYellowGreenRamp = []uint8{}
 
-	// BlueYellowBrownRamp defines an evently spaced ramp suitable for visualizing moisture
+	// BlueYellowBrownRamp defines an evenly spaced ramp suitable for visualizing moisture
 	BlueYellowBrownRamp = []uint8{}
+
+	// ImageAttentionFilter is the ramp for generating imageAttention filters
+	ImageAttentionFilter= []RampEntry{}
 )
 
 func init() {
@@ -142,7 +145,32 @@ func GenerateRamp(colors []RampEntry, steps int, blendMode BlendMode) []uint8 {
 	}
 	return result
 }
+// GetColor is a color scale function for normalized values
+func GetColor(normalizedVal float64, ramp[]RampEntry) *color.RGBA{
+	for i := 0; i < len(ramp)-1; i++ {
+		c1 := ramp[i]
+		c2 := ramp[i+1]
+		if c1.ColourPoint <= normalizedVal && normalizedVal <= c2.ColourPoint {
+			// We are in between c1 and c2. Go blend them!
+			delta := (normalizedVal - c1.ColourPoint) / (c2.ColourPoint - c1.ColourPoint)
+			col1:=colorful.Color{
+				R: float64(c1.Colour.R) / 255,
+				G: float64(c1.Colour.G) / 255,
+				B: float64(c1.Colour.B) / 255,
+			}
+			col2:=colorful.Color{
+				R: float64(c2.Colour.R) / 255,
+				G: float64(c2.Colour.G) / 255,
+				B: float64(c2.Colour.B) / 255,
+			}
+			result:=col1.BlendHcl(col2, delta).Clamped()
+			return &color.RGBA{uint8(result.R*255), uint8(result.G*255), uint8(result.B*255), 255}
+		}
+	}
 
+	// Nothing found? Means we're at (or past) the last gradient keypoint.
+	return &ramp[len(ramp)-1].Colour
+}
 // RampToImage converts a color ramp to an image for debugging purposes
 func RampToImage(height int, ramp []uint8) *image.RGBA {
 	blocks := len(ramp) / 3

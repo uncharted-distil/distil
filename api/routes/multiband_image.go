@@ -20,9 +20,11 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
+	"github.com/uncharted-distil/distil-compute/model"
 	"goji.io/v3/pat"
 	"net/http"
 	"path"
+	"image/color"
 	"strconv"
 )
 
@@ -62,19 +64,30 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, pCtor api.DataStorageCt
 			imageScale = util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 		}
 		if bandCombo == util.ImageAttention {
-			// pStorage, err:= pCtor()
+			pStorage, err:= pCtor()
 			if err != nil {
 				handleError(w, err)
 				return
 			}
+			solutionID := pat.Param(r, "solution-id")
 			// fetch confidence
-
+			confidence, err:=pStorage.FetchExplainValues(dataset, res.StorageName, api.ExplainValues, "group_id", imageID, solutionID)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 			// scale
-
+			scaledConfidenceMatrix:=util.ScaleConfidenceMatrix(ThumbnailDimensions, ThumbnailDimensions, confidence)
 			// get attention image
-
+			img:=util.ConfidenceMatrixToImage(scaledConfidenceMatrix, func(val float64)*color.RGBA{return util.GetColor(val, util.ImageAttentionFilter)},uint8(0.4 * 255))
+			imageBytes, err := util.ImageToJPEG(img)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			_, err = w.Write(imageBytes)
 		}
-		img, err := util.ImageFromCombination(sourcePath, imageID, util.BandCombinationID(bandCombo), imageScale)
+		img, err := util.ImageFromCombination(sourcePath, imageID, bandCombo, imageScale)
 		if err != nil {
 			handleError(w, err)
 			return

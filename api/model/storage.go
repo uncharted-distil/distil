@@ -54,6 +54,7 @@ type TimeseriesData struct {
 	Mean       float64
 }
 
+
 // DataStorageCtor represents a client constructor to instantiate a data
 // storage client.
 type DataStorageCtor func() (DataStorage, error)
@@ -77,6 +78,7 @@ type DataStorage interface {
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
 	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams, invert bool) (*TimeseriesData, error)
 	FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultUUID string, filterParams *FilterParams) (*TimeseriesData, error)
+	FetchExplainValues(dataset string, storageName string, selectCol string, whereCol string, whereVal string, resultUUID string, filterParams ...*FilterParams) ([]interface{},error)
 	FetchCategoryCounts(storageName string, variable *model.Variable) (map[string]int, error)
 	FetchSolutionFeatureWeights(dataset string, storageName string, resultURI string, d3mIndex int64) (*SolutionFeatureWeight, error)
 
