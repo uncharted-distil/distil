@@ -528,7 +528,7 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 }
 
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string, storageName string,
+	dataStorage api.DataStorage, initialSearchID string, dataset string, storageName string,
 	explainedSolutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string,
 	resultURI string, confidenceValues *api.SolutionExplainResult, explainOutput map[string]*api.SolutionExplainResult) {
 	// persist the completed state
@@ -805,7 +805,7 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 
 			// persist results
 			log.Infof("persisting results in URI '%s'", resultURI)
-			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
+			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage,
 				initialSearchID, dataset, storageName, solutionID, initialSearchSolutionID, fittedSolutionID,
 				produceRequestID, resultID, resultURI, explainedResults[ExplainableTypeConfidence], produceOutputs)
 		}
@@ -839,7 +839,14 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		s.persistSolution(c, solutionStorage, searchID, solution.SolutionId, "")
 		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
 		// dispatch it
-		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID,
+		fittedSolutionID, err := s.dispatchSolutionSearchPipeline(c, client, solutionStorage, dataStorage, searchID,
+			solution.SolutionId, dataset, storageName, searchRequest, datasetURI, datasetURITrain, datasetURITest, variables)
+		if err != nil {
+			s.persistSolutionError(c, solutionStorage, searchID, solution.SolutionId, err)
+			return
+		}
+
+		s.dispatchSolutionExplainPipeline(c, client, solutionStorage, dataStorage, fittedSolutionID, searchID,
 			solution.SolutionId, dataset, storageName, searchRequest, datasetURI, datasetURITrain, datasetURITest, variables)
 		// once done, mark as complete
 		s.completeSolution()

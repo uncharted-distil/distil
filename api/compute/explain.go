@@ -115,6 +115,7 @@ type explainableOutput struct {
 type pipelineOutput struct {
 	key             string
 	typ             string
+	output          string
 	parsingFunction func([]string) (*api.SolutionExplainValues, error)
 }
 
@@ -253,6 +254,32 @@ func (s *SolutionRequest) parseSolutionWeight(solutionID string, outputURI strin
 	}
 
 	return weights, nil
+}
+
+func (s *SolutionRequest) explainableOutputs(solutionDesc *pipeline.DescribeSolutionResponse) map[string]*pipelineOutput {
+	pipelineDesc := solutionDesc.Pipeline
+	outputs := make(map[string]*pipelineOutput)
+	for si, ps := range pipelineDesc.Steps {
+		// get the step outputs
+		primitive := ps.GetPrimitive()
+		if primitive != nil {
+			explainFunctions := explainablePrimitiveFunctions(primitive.Primitive.Id)
+			for _, ef := range explainFunctions {
+				// output 0 is the produce call
+				outputName := fmt.Sprintf("outputs.%d", len(outputs)+1)
+				output := fmt.Sprintf("steps.%d.%s", si, ef.produceFunction)
+
+				outputs[ef.explainableType] = &pipelineOutput{
+					typ:             ef.explainableType,
+					key:             outputName,
+					output:          output,
+					parsingFunction: ef.parsingFunction,
+				}
+			}
+		}
+	}
+
+	return outputs
 }
 
 func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) (bool, *pipeline.PipelineDescription, map[string]*pipelineOutput) {
