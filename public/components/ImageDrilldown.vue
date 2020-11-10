@@ -19,8 +19,8 @@
         ref="imageContainer"
         :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
       ></div>
-      <div>
-        <label>0.0</label>
+      <div class="slider-container">
+        <label class="slider-label">0.0</label>
         <input
           v-if="isMultiBandImage"
           type="range"
@@ -31,9 +31,12 @@
           step="1"
           @change="onSliderChanged"
         />
-        <label>1.0</label>
+        <label class="slider-label">1.0</label>
       </div>
-      <i class="fa fa-adjust" aria-hidden="true" />
+      <div>
+        <i class="fa fa-adjust" aria-hidden="true" />
+        <label class="slider-label">{{ sliderVal }}</label>
+      </div>
     </div>
   </b-modal>
 </template>
@@ -45,6 +48,7 @@ import { TableColumn, TableRow } from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions,
+  mutations as datasetMutations,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
@@ -81,17 +85,9 @@ export default Vue.extend({
   data() {
     return {
       IMAGE_MAX_SIZE: IMAGE_MAX_SIZE,
+      currentVal: 0.5,
     };
   },
-
-  mounted() {
-    this.injectImage();
-  },
-
-  updated() {
-    this.requestImage();
-  },
-
   computed: {
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
@@ -118,6 +114,9 @@ export default Vue.extend({
     visibleTitle(): string {
       return this.title ?? this.imageUrl ?? "Image Drilldown";
     },
+    sliderVal(): string {
+      return this.currentVal.toFixed(2);
+    },
   },
 
   methods: {
@@ -126,7 +125,15 @@ export default Vue.extend({
     },
     onSliderChanged(e) {
       const gainL = (e.target.value / 100) * 2.0;
+      this.currentVal = e.target.value / 100;
+      console.log(gainL);
       this.requestImage({ gainL, gamma: 2.2, gain: 2.5 });
+    },
+    cleanUp() {
+      if (this.isMultiBandImage) {
+        datasetMutations.removeFile(this.$store, imageId(this.imageUrl));
+        return;
+      }
     },
     injectImage() {
       const container = this.$refs.imageContainer as any;
@@ -172,6 +179,13 @@ export default Vue.extend({
       this.injectImage();
     },
   },
+  watch: {
+    visible() {
+      if (this.visible) {
+        this.requestImage();
+      }
+    },
+  },
 });
 </script>
 
@@ -193,5 +207,14 @@ export default Vue.extend({
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+.slider-container {
+  display: flex;
+  align-items: center;
+}
+.slider-label {
+  margin-bottom: 0px;
+  margin-left: 5px;
+  margin-right: 5px;
 }
 </style>

@@ -1122,7 +1122,7 @@ export const actions = {
     if (!validateArgs(args, ["dataset", "imageId", "bandCombination"])) {
       return null;
     }
-    const options = !!args.options ? "" : `${JSON.stringify(args.options)}`;
+    const options = !!args.options ? `${JSON.stringify(args.options)}` : "";
     try {
       const response = await loadImage(
         `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}/${args.isThumbnail}/${options}`
