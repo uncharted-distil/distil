@@ -43,6 +43,21 @@
         <i class="fa fa-object-group fa-lg" aria-hidden="true" />
       </a>
     </div>
+    <div
+      v-if="dataHasConfidence"
+      class="confidence-toggle"
+      :class="{ active: isColoringByConfidence }"
+      @click="toggleConfidenceColoring"
+    >
+      <a
+        :class="confidenceClass"
+        title="confidence"
+        aria-label="Color by Confidence"
+        :style="colorGradient"
+      >
+        C
+      </a>
+    </div>
     <b-toast
       :id="toastId"
       :title="toastTitle"
@@ -91,6 +106,7 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
+import viridisScale from "scale-color-perceptual/viridis";
 import lumo from "lumo";
 import BatchQuadOverlay from "../util/rendering/BatchQuadOverlay";
 import {
@@ -187,6 +203,7 @@ interface LumoPoint {
   x: number;
   y: number;
 }
+
 export interface TileClickData {
   bounds: number[][];
   key: string;
@@ -203,7 +220,6 @@ export default Vue.extend({
   components: {
     IconBase,
     IconCropFree,
-    // ImageDrilldown,
     ImageLabel,
     ImagePreview,
     DrillDown,
@@ -221,6 +237,7 @@ export default Vue.extend({
     pointOpacity: { type: Number, default: 0.8 },
     zoomThreshold: { type: Number, default: 8 },
     maxZoom: { type: Number, default: 18 },
+    colorScale: { type: Function, default: viridisScale },
   },
 
   data() {
@@ -265,6 +282,8 @@ export default Vue.extend({
       showExit: false,
       pointSize: 0.025,
       isClustering: false,
+      isColoringByConfidence: false,
+      confidenceIconClass: "confidence-icon",
     };
   },
 
@@ -279,7 +298,9 @@ export default Vue.extend({
     target(): string {
       return routeGetters.getRouteTargetVariable(this.$store);
     },
-
+    dataHasConfidence(): boolean {
+      return "confidence" in this.dataItems[0];
+    },
     getTopVariables(): string[] {
       const variables = datasetGetters
         .getVariables(this.$store)
@@ -302,6 +323,29 @@ export default Vue.extend({
     },
     showDrillDown(): boolean {
       return this.isImageDrilldown;
+    },
+    colorGradient(): string {
+      return this.isColoringByConfidence
+        ? `background-image:linear-gradient(${[
+            0.0, // padding
+            0.0, // padding
+            1.0,
+            0.9,
+            0.8,
+            0.7,
+            0.6,
+            0.5,
+            0.4,
+            0.3,
+            0.2,
+            0.1,
+            0.0,
+            0.0, // padding
+            0.0, // padding
+          ]
+            .map(this.colorScale)
+            .join(",")})`
+        : "";
     },
     fieldSpecs(): GeoField[] {
       const variables = datasetGetters.getVariables(this.$store);
@@ -586,6 +630,9 @@ export default Vue.extend({
         },
       };
     },
+    confidenceClass(): string {
+      return this.confidenceIconClass;
+    },
     exitStyle(): string {
       return `top:${this.selectionToolData.exit.top}px; right:${this.selectionToolData.exit.right}px;`;
     },
@@ -679,6 +726,19 @@ export default Vue.extend({
         this.currentState = this.pointState;
         this.updateMapState();
       }
+    },
+    /**
+     * toggles coloring tiles by confidence (only available in result screen)
+     */
+    toggleConfidenceColoring() {
+      this.isColoringByConfidence = !this.isColoringByConfidence;
+      if (this.isColoringByConfidence) {
+        this.confidenceIconClass = "toggled-confidence-icon";
+        this.updateMapState();
+        return;
+      }
+      this.confidenceIconClass = "confidence-icon";
+      this.updateMapState();
     },
     /**
      * on selection tool toggle disable or enable the quad interactions such as click or hover
@@ -1055,7 +1115,9 @@ export default Vue.extend({
 
     tileColor(item: any) {
       let color = "#255DCC"; // Default
-
+      if (this.isColoringByConfidence) {
+        return this.colorScale(item.confidence.value);
+      }
       if (item[this.targetField] && item[this.predictedField]) {
         color =
           item[this.targetField].value === item[this.predictedField].value
@@ -1150,6 +1212,19 @@ export default Vue.extend({
   text-align: center;
   border-radius: 4px;
 }
+.confidence-toggle {
+  position: absolute;
+  z-index: 999;
+  top: 120px;
+  left: 10px;
+  width: 34px;
+  height: 34px;
+  background-color: #fff;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  background-clip: padding-box;
+  text-align: center;
+  border-radius: 4px;
+}
 .cluster-icon {
   width: 30px;
   height: 30px;
@@ -1158,7 +1233,54 @@ export default Vue.extend({
   align-items: center;
   cursor: pointer;
 }
+.confidence-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-weight: bolder;
+  font-size: xx-large;
+}
+.toggled-confidence-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-weight: bolder;
+  font-size: xx-large;
+  background-size: 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -moz-background-clip: text;
+  background-image: linear-gradient(0deg, #f3ec78, #af4261);
+  -webkit-text-fill-color: transparent;
+  -moz-text-fill-color: transparent;
+}
+.confidence-toggle.active:hover::after {
+  content: "----Less Confidence";
+  position: absolute;
+  white-space: nowrap;
+  left: 30px;
+  top: 15px; /*works out to 4 pixels from bottom (this is based off the font size)*/
+  display: inline;
+  position: absolute;
+}
+.confidence-toggle.active:hover::before {
+  content: "----More Confidence";
+  white-space: nowrap;
+  left: 30px;
+  top: -7px; /*works out to 4 pixels from top (this is based off the font size)*/
+  display: inline;
+  position: absolute;
+}
 .cluster-toggle:hover {
+  background-color: #f4f4f4;
+}
+.confidence-toggle:hover {
   background-color: #f4f4f4;
 }
 .cluster-toggle.active {

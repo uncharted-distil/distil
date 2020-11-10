@@ -122,7 +122,11 @@ export default Vue.extend({
     solutionId(): string {
       return this.solution?.solutionId;
     },
-
+    confidenceSummaries(): VariableSummary {
+      return resultsGetters.getConfidenceSummaries(this.$store).filter((cf) => {
+        return cf.solutionId === this.solutionId;
+      })[0];
+    },
     solutionHasErrored(): boolean {
       return this.solution
         ? this.solution.progress === SOLUTION_ERRORED

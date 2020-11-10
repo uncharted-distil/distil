@@ -69,12 +69,12 @@
 </template>
 
 <script lang="ts">
-import ResultFacets from "../components/ResultFacets";
-import PredictionsDataUploader from "../components/PredictionsDataUploader";
-import ForecastHorizon from "../components/ForecastHorizon";
-import ErrorThresholdSlider from "../components/ErrorThresholdSlider";
-import SaveModel from "../components/SaveModel";
-import ResultTargetVariable from "../components/ResultTargetVariable";
+import ResultFacets from "../components/ResultFacets.vue";
+import PredictionsDataUploader from "../components/PredictionsDataUploader.vue";
+import ForecastHorizon from "../components/ForecastHorizon.vue";
+import ErrorThresholdSlider from "../components/ErrorThresholdSlider.vue";
+import SaveModel from "../components/SaveModel.vue";
+import ResultTargetVariable from "../components/ResultTargetVariable.vue";
 import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
