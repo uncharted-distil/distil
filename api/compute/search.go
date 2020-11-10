@@ -30,18 +30,9 @@ import (
 )
 
 func (s *SolutionRequest) dispatchSolutionExplainPipeline(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, fitSolutionID string, searchID string, searchSolutionID string, dataset string, storageName string,
+	dataStorage api.DataStorage, fitSolutionID string, searchID string, searchSolutionID string, dataset string, storageName string, explainOutputs map[string]*pipelineOutput,
 	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
-	// get solution description
-	desc, err := describeSolution(client, searchSolutionID)
-	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, searchID, searchSolutionID, err)
-		return
-	}
-
-	// get the explainable produce calls which we want to expose
-	explainOutputs := s.explainableOutputs(desc)
 	exposedOutputs := []string{}
 	for _, eo := range explainOutputs {
 		exposedOutputs = append(exposedOutputs, eo.output)
@@ -73,11 +64,11 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(statusChan chan Soluti
 
 func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
 	dataStorage api.DataStorage, initialSearchID string, initialSearchSolutionID string, dataset string, storageName string,
-	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) (string, error) {
+	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) (string, map[string]*pipelineOutput, error) {
 	// get solution description
 	desc, err := describeSolution(client, initialSearchSolutionID)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	// Need to create a new solution that has the explain output. This is the solution
@@ -90,10 +81,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 		keywords = searchRequest.Problem.Problem.TaskKeywords
 	}
 
-	explainDesc, _, err := s.createExplainPipeline(desc, keywords)
-	if err != nil {
-		return "", err
-	}
+	explainDesc, explainOutputs := s.createExplainPipeline(desc, keywords)
 
 	// Use the updated explain pipeline if it exists, otherwise use the baseline pipeline
 	if explainDesc != nil {
@@ -104,7 +92,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 
 	searchID, err := client.StartSearch(context.Background(), searchRequest)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	wg := &sync.WaitGroup{}
 	var fittedSolutionID string
@@ -246,13 +234,13 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 		}
 	})
 	if errSearch != nil {
-		return "", errSearch
+		return "", nil, errSearch
 	}
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	wg.Wait()
 
-	return fittedSolutionID, nil
+	return fittedSolutionID, explainOutputs, nil
 }

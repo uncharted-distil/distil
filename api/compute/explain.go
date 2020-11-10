@@ -145,20 +145,21 @@ func parseConfidencesWrapper(params []int) func([]string) (*api.SolutionExplainV
 }
 
 func (s *SolutionRequest) createExplainPipeline(desc *pipeline.DescribeSolutionResponse,
-	keywords []string) (*pipeline.PipelineDescription, map[string]*pipelineOutput, error) {
+	keywords []string) (*pipeline.PipelineDescription, map[string]*pipelineOutput) {
 	// remote sensing and images are not explainable
 	// TODO: we may want to look into folding this filtering functionality into
 	// the function that builds the explainable pipeline (explainablePipeline).
 	for _, kw := range keywords {
 		if unexplainableTask[kw] {
-			return nil, nil, nil
+			return nil, nil
 		}
 	}
-
-	if ok, pipExplain, outputs := s.explainablePipeline(desc); ok {
-		return pipExplain, outputs, nil
+	ok, pipExplain, explainOutputs := s.explainablePipeline(desc)
+	if !ok {
+		return nil, nil
 	}
-	return nil, nil, nil
+
+	return pipExplain, explainOutputs
 }
 
 // ExplainFeatureOutput parses the explain feature output.
@@ -256,37 +257,11 @@ func (s *SolutionRequest) parseSolutionWeight(solutionID string, outputURI strin
 	return weights, nil
 }
 
-func (s *SolutionRequest) explainableOutputs(solutionDesc *pipeline.DescribeSolutionResponse) map[string]*pipelineOutput {
-	pipelineDesc := solutionDesc.Pipeline
-	outputs := make(map[string]*pipelineOutput)
-	for si, ps := range pipelineDesc.Steps {
-		// get the step outputs
-		primitive := ps.GetPrimitive()
-		if primitive != nil {
-			explainFunctions := explainablePrimitiveFunctions(primitive.Primitive.Id)
-			for _, ef := range explainFunctions {
-				// output 0 is the produce call
-				outputName := fmt.Sprintf("outputs.%d", len(outputs)+1)
-				output := fmt.Sprintf("steps.%d.%s", si, ef.produceFunction)
-
-				outputs[ef.explainableType] = &pipelineOutput{
-					typ:             ef.explainableType,
-					key:             outputName,
-					output:          output,
-					parsingFunction: ef.parsingFunction,
-				}
-			}
-		}
-	}
-
-	return outputs
-}
-
 func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) (bool, *pipeline.PipelineDescription, map[string]*pipelineOutput) {
 	pipelineDesc := solutionDesc.Pipeline
 	explainable := false
 	outputs := make(map[string]*pipelineOutput)
-	for _, ps := range pipelineDesc.Steps {
+	for si, ps := range pipelineDesc.Steps {
 		// get the step outputs
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
@@ -296,12 +271,14 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 				primitive.Outputs = append(primitive.Outputs, &pipeline.StepOutput{
 					Id: ef.produceFunction,
 				})
+				output := fmt.Sprintf("steps.%d.%s", si, ef.produceFunction)
 				explainable = true
 
 				// output 0 is the produce call
 				outputs[ef.explainableType] = &pipelineOutput{
 					typ:             ef.explainableType,
 					key:             outputName,
+					output:          output,
 					parsingFunction: ef.parsingFunction,
 				}
 			}
