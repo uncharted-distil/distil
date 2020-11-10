@@ -16,6 +16,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -24,6 +25,7 @@ import (
 	"net/http"
 	"path"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -31,14 +33,25 @@ const (
 	ThumbnailDimensions = 125
 )
 
+func getOptions(requestURI string) string {
+	idx := strings.LastIndex(requestURI, "/") + 1 // exclusive
+	return requestURI[idx:]
+}
+
 // MultiBandImageHandler fetches individual band images and combines them into a single RGB image using the supplied mapping.
 func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		imageID := pat.Param(r, "image-id")
 		bandCombo := pat.Param(r, "band-combination")
+		paramOption := getOptions(r.URL.Path)
 		isThumbnail, err := strconv.ParseBool(pat.Param(r, "is-thumbnail"))
 		imageScale := util.ImageScale{}
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
 		if err != nil {
 			handleError(w, err)
 			return
@@ -60,7 +73,15 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 		if isThumbnail {
 			imageScale = util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 		}
-		img, err := util.ImageFromCombination(sourcePath, imageID, util.BandCombinationID(bandCombo), imageScale)
+		options := util.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0} // default options for color correction
+		if paramOption != "" {
+			err := json.Unmarshal([]byte(paramOption), &options)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+		}
+		img, err := util.ImageFromCombination(sourcePath, imageID, util.BandCombinationID(bandCombo), imageScale, options)
 		if err != nil {
 			handleError(w, err)
 			return

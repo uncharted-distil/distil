@@ -6,18 +6,35 @@
     :title="visibleTitle"
     :visible="visible"
   >
-    <image-label
-      v-if="item && dataFields"
-      class="image-label"
-      :dataFields="dataFields"
-      includedActive
-      :item="item"
-    />
-    <div
-      class="image-container"
-      ref="imageContainer"
-      :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
-    ></div>
+    <div class="drill-down">
+      <image-label
+        v-if="item && dataFields"
+        class="image-label"
+        :dataFields="dataFields"
+        includedActive
+        :item="item"
+      />
+      <div
+        class="image-container"
+        ref="imageContainer"
+        :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
+      ></div>
+      <div>
+        <label>0.0</label>
+        <input
+          v-if="isMultiBandImage"
+          type="range"
+          name="brightness"
+          id="drill-down-slider"
+          min="0"
+          max="100"
+          step="1"
+          @change="onSliderChanged"
+        />
+        <label>1.0</label>
+      </div>
+      <i class="fa fa-adjust" aria-hidden="true" />
+    </div>
   </b-modal>
 </template>
 
@@ -107,7 +124,10 @@ export default Vue.extend({
     hide() {
       this.$emit("hide");
     },
-
+    onSliderChanged(e) {
+      const gainL = (e.target.value / 100) * 2.0;
+      this.requestImage({ gainL, gamma: 2.2, gain: 2.5 });
+    },
     injectImage() {
       const container = this.$refs.imageContainer as any;
 
@@ -130,13 +150,18 @@ export default Vue.extend({
       }
     },
 
-    async requestImage() {
+    async requestImage(imageOptions?: {
+      gamma: number;
+      gain: number;
+      gainL: number;
+    }) {
       if (this.isMultiBandImage) {
         await datasetActions.fetchMultiBandImage(this.$store, {
           dataset: this.dataset,
           imageId: imageId(this.imageUrl),
           bandCombination: this.band,
           isThumbnail: false,
+          options: imageOptions,
         });
       } else {
         await datasetActions.fetchImage(this.$store, {
@@ -163,5 +188,10 @@ export default Vue.extend({
   max-height: var(--IMAGE_MAX_SIZE);
   max-width: var(--IMAGE_MAX_SIZE);
   position: relative;
+}
+.drill-down {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 </style>

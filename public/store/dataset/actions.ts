@@ -1,7 +1,6 @@
 import axios, { AxiosResponse } from "axios";
 import _ from "lodash";
 import { ActionContext } from "vuex";
-import { CommitAccessorWithPayload } from "vuex-typescript";
 import {
   createEmptyTableData,
   createErrorSummary,
@@ -1117,15 +1116,16 @@ export const actions = {
       bandCombination: string;
       isThumbnail: boolean;
       uniqueTrail?: string;
+      options?: { gamma: number; gain: number; gainL: number };
     }
   ) {
     if (!validateArgs(args, ["dataset", "imageId", "bandCombination"])) {
       return null;
     }
-
+    const options = !!args.options ? "" : `${JSON.stringify(args.options)}`;
     try {
       const response = await loadImage(
-        `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}/${args.isThumbnail}`
+        `distil/multiband-image/${args.dataset}/${args.imageId}/${args.bandCombination}/${args.isThumbnail}/${options}`
       );
       const imageUrl = !!args.uniqueTrail
         ? `${args.imageId}/${args.uniqueTrail}`
