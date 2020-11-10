@@ -286,7 +286,7 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 	pipelineDesc := solutionDesc.Pipeline
 	explainable := false
 	outputs := make(map[string]*pipelineOutput)
-	for si, ps := range pipelineDesc.Steps {
+	for _, ps := range pipelineDesc.Steps {
 		// get the step outputs
 		primitive := ps.GetPrimitive()
 		if primitive != nil {
@@ -295,10 +295,6 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 				outputName := fmt.Sprintf("outputs.%d", len(outputs)+1)
 				primitive.Outputs = append(primitive.Outputs, &pipeline.StepOutput{
 					Id: ef.produceFunction,
-				})
-				pipelineDesc.Outputs = append(pipelineDesc.Outputs, &pipeline.PipelineDescriptionOutput{
-					Name: outputName,
-					Data: fmt.Sprintf("steps.%d.%s", si, ef.produceFunction),
 				})
 				explainable = true
 
