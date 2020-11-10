@@ -686,7 +686,6 @@ export function getTableDataItems(data: TableData): TableRow[] {
             row[colName].weight = colValue.weight;
           }
           if (colValue.confidence !== undefined) {
-            delete row[colName];
             const conKey = "confidence";
             row[conKey] = {};
             row[conKey].value = colValue.confidence;

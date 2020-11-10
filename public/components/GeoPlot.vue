@@ -53,6 +53,7 @@
         :class="confidenceClass"
         title="confidence"
         aria-label="Color by Confidence"
+        :style="colorGradient"
       >
         C
       </a>
@@ -322,6 +323,29 @@ export default Vue.extend({
     },
     showDrillDown(): boolean {
       return this.isImageDrilldown;
+    },
+    colorGradient(): string {
+      return this.isColoringByConfidence
+        ? `background-image:linear-gradient(${[
+            0.0, // padding
+            0.0, // padding
+            1.0,
+            0.9,
+            0.8,
+            0.7,
+            0.6,
+            0.5,
+            0.4,
+            0.3,
+            0.2,
+            0.1,
+            0.0,
+            0.0, // padding
+            0.0, // padding
+          ]
+            .map(this.colorScale)
+            .join(",")})`
+        : "";
     },
     fieldSpecs(): GeoField[] {
       const variables = datasetGetters.getVariables(this.$store);
@@ -1092,7 +1116,7 @@ export default Vue.extend({
     tileColor(item: any) {
       let color = "#255DCC"; // Default
       if (this.isColoringByConfidence) {
-        return this.colorScale(item.confidence);
+        return this.colorScale(item.confidence.value);
       }
       if (item[this.targetField] && item[this.predictedField]) {
         color =
@@ -1241,7 +1265,7 @@ export default Vue.extend({
   position: absolute;
   white-space: nowrap;
   left: 30px;
-  top: 15px;
+  top: 15px; /*works out to 4 pixels from bottom (this is based off the font size)*/
   display: inline;
   position: absolute;
 }
@@ -1249,7 +1273,7 @@ export default Vue.extend({
   content: "----More Confidence";
   white-space: nowrap;
   left: 30px;
-  top: -10px;
+  top: -7px; /*works out to 4 pixels from top (this is based off the font size)*/
   display: inline;
   position: absolute;
 }
