@@ -147,14 +147,26 @@ export default Vue.extend({
     files(): Dictionary<any> {
       return datasetGetters.getFiles(this.$store);
     },
+    imageParamUrl(): string {
+      return this.uniqueTrail.length
+        ? `${this.imageUrl}/${this.uniqueTrail}`
+        : this.imageUrl;
+    },
+    imageParamId(): string {
+      return this.uniqueTrail.length
+        ? `${this.imageId}/${this.uniqueTrail}`
+        : this.imageId;
+    },
     isLoaded(): boolean {
       return (
-        (!!this.files[this.imageUrl] && !!this.files[this.imageId]) ||
+        (!!this.files[this.imageParamUrl] && !!this.files[this.imageParamId]) ||
         this.stopSpinner
       );
     },
     image(): HTMLImageElement {
-      return this.files[this.imageUrl] ?? this.files[this.imageId] ?? null;
+      return (
+        this.files[this.imageParamUrl] ?? this.files[this.imageParamId] ?? null
+      );
     },
     spinnerHTML(): string {
       return circleSpinnerHTML();
@@ -260,6 +272,7 @@ export default Vue.extend({
           imageId: this.imageId,
           bandCombination: routeGetters.getBandCombinationId(this.$store),
           isThumbnail: true,
+          uniqueTrail: this.uniqueTrail,
         });
         if (this.isVisible) {
           this.injectImage();
@@ -271,10 +284,7 @@ export default Vue.extend({
     cleanUp() {
       const empty = "";
       if (this.uniqueTrail !== empty) {
-        datasetMutations.removeFile(
-          this.$store,
-          `${this.imageId}/${this.uniqueTrail}`
-        );
+        datasetMutations.removeFile(this.$store, this.imageParamId);
       }
     },
   },

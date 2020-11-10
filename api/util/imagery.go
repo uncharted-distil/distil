@@ -150,7 +150,7 @@ func init() {
 
 // ImageFromCombination takes a base datsaet directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for sentinel-2 data.
-func ImageFromCombination(datasetDir string, fileID string, bandCombination BandCombinationID, imageScale ImageScale) (*image.RGBA, error) {
+func ImageFromCombination(datasetDir string, fileID string, bandCombination BandCombinationID, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
 	var fileType string
@@ -173,7 +173,7 @@ func ImageFromCombination(datasetDir string, fileID string, bandCombination Band
 			filePath := getFilePath(datasetDir, fileID, bandLabel, fileType)
 			filePaths = append(filePaths, filePath)
 		}
-		return ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale)
+		return ImageFromBands(filePaths, bandCombo.Ramp, bandCombo.Transform, imageScale, options...)
 	}
 
 	return nil, errors.Errorf("unhandled band combination %s", bandCombination)
@@ -183,7 +183,7 @@ func ImageFromCombination(datasetDir string, fileID string, bandCombination Band
 // where the file names map to R,G,B in order.  The results are returned as a JPEG
 // encoded byte stream. If errors are encountered processing a band an attempt will
 // be made to create the image from the remaining bands, while logging an error.
-func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) float64, imageScale ImageScale) (*image.RGBA, error) {
+func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) float64, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
 	bandImages := []*image.Gray16{}
 	maxXSize := 0
 	maxYSize := 0
@@ -217,7 +217,7 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 	// a transform and color lookup
 	if ramp == nil || transform == nil {
 		// Create an RGBA image from the resized bands
-		return createRGBAFromBands(maxXSize, maxYSize, bandImages), nil
+		return createRGBAFromBands(maxXSize, maxYSize, bandImages, options...), nil
 	}
 	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, transform, ramp), nil
 }
@@ -300,7 +300,7 @@ func loadAsGray16(filePath string) (*image.Gray16, error) {
 	return bandImage, nil
 }
 
-func createRGBAFromBands(xSize int, ySize int, bandImages []*image.Gray16) *image.RGBA {
+func createRGBAFromBands(xSize int, ySize int, bandImages []*image.Gray16, options ...Options) *image.RGBA {
 	// Create a new RGBA image to hold the collected bands
 	outputImage := image.NewRGBA(image.Rect(0, 0, xSize, ySize))
 
@@ -317,7 +317,7 @@ func createRGBAFromBands(xSize int, ySize int, bandImages []*image.Gray16) *imag
 				bandBuffer[j] = 0.5
 			}
 		}
-		rgb := ConvertS2ToRgb(bandBuffer)
+		rgb := ConvertS2ToRgb(bandBuffer, options...)
 		outputImage.Pix[outputIdx] = uint8(rgb[0] * 255)   // r
 		outputImage.Pix[outputIdx+1] = uint8(rgb[1] * 255) // g
 		outputImage.Pix[outputIdx+2] = uint8(rgb[2] * 255) // b

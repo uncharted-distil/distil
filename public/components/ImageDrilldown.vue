@@ -6,18 +6,38 @@
     :title="visibleTitle"
     :visible="visible"
   >
-    <image-label
-      v-if="item && dataFields"
-      class="image-label"
-      :dataFields="dataFields"
-      includedActive
-      :item="item"
-    />
-    <div
-      class="image-container"
-      ref="imageContainer"
-      :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
-    ></div>
+    <div class="drill-down">
+      <image-label
+        v-if="item && dataFields"
+        class="image-label"
+        :dataFields="dataFields"
+        includedActive
+        :item="item"
+      />
+      <div
+        class="image-container"
+        ref="imageContainer"
+        :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
+      ></div>
+      <div class="slider-container">
+        <label class="slider-label">0.0 </label>
+        <b-form-input
+          v-if="isMultiBandImage"
+          type="range"
+          name="brightness"
+          :min="min"
+          :max="max"
+          step="1"
+          class="slider"
+          @change="onSliderChanged"
+        />
+        <label class="slider-label">1.0</label>
+      </div>
+      <div>
+        <i class="fa fa-adjust" aria-hidden="true" />
+        <label class="slider-label">{{ sliderVal }}</label>
+      </div>
+    </div>
   </b-modal>
 </template>
 
@@ -28,6 +48,7 @@ import { TableColumn, TableRow } from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions,
+  mutations as datasetMutations,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
@@ -64,17 +85,9 @@ export default Vue.extend({
   data() {
     return {
       IMAGE_MAX_SIZE: IMAGE_MAX_SIZE,
+      currentVal: 0.5,
     };
   },
-
-  mounted() {
-    this.injectImage();
-  },
-
-  updated() {
-    this.requestImage();
-  },
-
   computed: {
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
@@ -101,13 +114,34 @@ export default Vue.extend({
     visibleTitle(): string {
       return this.title ?? this.imageUrl ?? "Image Drilldown";
     },
+    sliderVal(): string {
+      return this.currentVal.toFixed(2);
+    },
+    max(): number {
+      return 100;
+    },
+    min(): number {
+      return 0;
+    },
   },
 
   methods: {
     hide() {
       this.$emit("hide");
     },
-
+    onSliderChanged(e) {
+      const MAX_GAINL = 2.0;
+      const val = Number(e) / this.max;
+      const gainL = val * MAX_GAINL;
+      this.currentVal = val;
+      this.requestImage({ gainL, gamma: 2.2, gain: 2.5 }); // gamma, gain, are default. They are here if we need to edit them later down the road
+    },
+    cleanUp() {
+      if (this.isMultiBandImage) {
+        datasetMutations.removeFile(this.$store, imageId(this.imageUrl));
+        return;
+      }
+    },
     injectImage() {
       const container = this.$refs.imageContainer as any;
 
@@ -130,13 +164,18 @@ export default Vue.extend({
       }
     },
 
-    async requestImage() {
+    async requestImage(imageOptions?: {
+      gamma: number;
+      gain: number;
+      gainL: number;
+    }) {
       if (this.isMultiBandImage) {
         await datasetActions.fetchMultiBandImage(this.$store, {
           dataset: this.dataset,
           imageId: imageId(this.imageUrl),
           bandCombination: this.band,
           isThumbnail: false,
+          options: imageOptions,
         });
       } else {
         await datasetActions.fetchImage(this.$store, {
@@ -145,6 +184,13 @@ export default Vue.extend({
         });
       }
       this.injectImage();
+    },
+  },
+  watch: {
+    visible() {
+      if (this.visible) {
+        this.requestImage();
+      }
     },
   },
 });
@@ -163,5 +209,23 @@ export default Vue.extend({
   max-height: var(--IMAGE_MAX_SIZE);
   max-width: var(--IMAGE_MAX_SIZE);
   position: relative;
+}
+.drill-down {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.slider-container {
+  display: flex;
+  align-items: center;
+}
+.slider-label {
+  margin-bottom: 0px;
+  padding-left: 5px;
+  padding-right: 5px;
+  display: inline-block;
+}
+.slider {
+  width: 70%;
 }
 </style>
