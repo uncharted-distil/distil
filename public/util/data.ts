@@ -732,7 +732,7 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
         label = variable.colDisplayName;
         description = `Model predicted value for ${variable.colName}`;
 
-        result["confidence"] = {
+        result.confidence = {
           label: "Confidence",
           key: "confidence",
           type: "numeric",
