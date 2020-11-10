@@ -46,16 +46,11 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 		bandCombo := pat.Param(r, "band-combination")
 		paramOption := getOptions(r.URL.Path)
 		isThumbnail, err := strconv.ParseBool(pat.Param(r, "is-thumbnail"))
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 		imageScale := util.ImageScale{}
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		if err != nil {
-			handleError(w, err)
-			return
-		}
 		// get metadata client
 		storage, err := ctor()
 		if err != nil {

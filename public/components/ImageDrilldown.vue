@@ -20,15 +20,15 @@
         :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
       ></div>
       <div class="slider-container">
-        <label class="slider-label">0.0</label>
-        <input
+        <label class="slider-label">0.0 </label>
+        <b-form-input
           v-if="isMultiBandImage"
           type="range"
           name="brightness"
-          id="drill-down-slider"
-          min="0"
-          max="100"
+          :min="min"
+          :max="max"
           step="1"
+          class="slider"
           @change="onSliderChanged"
         />
         <label class="slider-label">1.0</label>
@@ -117,6 +117,12 @@ export default Vue.extend({
     sliderVal(): string {
       return this.currentVal.toFixed(2);
     },
+    max(): number {
+      return 100;
+    },
+    min(): number {
+      return 0;
+    },
   },
 
   methods: {
@@ -124,10 +130,11 @@ export default Vue.extend({
       this.$emit("hide");
     },
     onSliderChanged(e) {
-      const gainL = (e.target.value / 100) * 2.0;
-      this.currentVal = e.target.value / 100;
-      console.log(gainL);
-      this.requestImage({ gainL, gamma: 2.2, gain: 2.5 });
+      const MAX_GAINL = 2.0;
+      const val = Number(e) / this.max;
+      const gainL = val * MAX_GAINL;
+      this.currentVal = val;
+      this.requestImage({ gainL, gamma: 2.2, gain: 2.5 }); // gamma, gain, are default. They are here if we need to edit them later down the road
     },
     cleanUp() {
       if (this.isMultiBandImage) {
@@ -214,7 +221,11 @@ export default Vue.extend({
 }
 .slider-label {
   margin-bottom: 0px;
-  margin-left: 5px;
-  margin-right: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  display: inline-block;
+}
+.slider {
+  width: 70%;
 }
 </style>
