@@ -105,6 +105,7 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
+import viridisScale from "scale-color-perceptual/viridis";
 import lumo from "lumo";
 import BatchQuadOverlay from "../util/rendering/BatchQuadOverlay";
 import {
@@ -201,6 +202,7 @@ interface LumoPoint {
   x: number;
   y: number;
 }
+
 export interface TileClickData {
   bounds: number[][];
   key: string;
@@ -234,6 +236,7 @@ export default Vue.extend({
     pointOpacity: { type: Number, default: 0.8 },
     zoomThreshold: { type: Number, default: 8 },
     maxZoom: { type: Number, default: 18 },
+    colorScale: { type: Function, default: viridisScale },
   },
 
   data() {
@@ -707,9 +710,11 @@ export default Vue.extend({
       this.isColoringByConfidence = !this.isColoringByConfidence;
       if (this.isColoringByConfidence) {
         this.confidenceIconClass = "toggled-confidence-icon";
+        this.updateMapState();
         return;
       }
       this.confidenceIconClass = "confidence-icon";
+      this.updateMapState();
     },
     /**
      * on selection tool toggle disable or enable the quad interactions such as click or hover
@@ -1086,7 +1091,9 @@ export default Vue.extend({
 
     tileColor(item: any) {
       let color = "#255DCC"; // Default
-
+      if (this.isColoringByConfidence) {
+        return this.colorScale(item.confidence);
+      }
       if (item[this.targetField] && item[this.predictedField]) {
         color =
           item[this.targetField].value === item[this.predictedField].value
@@ -1229,11 +1236,22 @@ export default Vue.extend({
   -webkit-text-fill-color: transparent;
   -moz-text-fill-color: transparent;
 }
-.toggled-confidence-icon:hover::after {
+.confidence-toggle.active:hover::after {
   content: "----Less Confidence";
+  position: absolute;
+  white-space: nowrap;
+  left: 30px;
+  top: 15px;
+  display: inline;
+  position: absolute;
 }
-.toggled-confidence-icon:hover::before {
+.confidence-toggle.active:hover::before {
   content: "----More Confidence";
+  white-space: nowrap;
+  left: 30px;
+  top: -10px;
+  display: inline;
+  position: absolute;
 }
 .cluster-toggle:hover {
   background-color: #f4f4f4;
