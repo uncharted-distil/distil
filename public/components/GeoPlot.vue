@@ -63,7 +63,7 @@
       :class="{ active: isSatelliteView }"
       @click="mapToggle"
     >
-      <a class="cluster-icon" title="Cluster" aria-label="Cluster Tiles">
+      <a class="cluster-icon" title="Change Map" aria-label="Change Map">
         <i class="fa fa-globe" aria-hidden="true" />
       </a>
     </div>
