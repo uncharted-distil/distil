@@ -14,6 +14,24 @@
  * limitations under the License.
  */
 
+/* Variables */
+
+html {
+  --navbar-outer-height: 62px;
+  --content-full-height: calc(100vh - var(--navbar-outer-height));
+
+  --border-color: var(--gray-500);
+
+  /* Buttons */
+  --bg-color-button-hover: var(--gray-500);
+
+  /* Side Panels */
+  --bg-color-side-panel: var(--gray-400);
+  --z-index-left-side-panel: 500;
+}
+
+/* Reset */
+
 * {
   min-height: 0;
   min-width: 0;
@@ -58,7 +76,7 @@ body {
 }
 .flex-0-nav {
   flex: 0;
-  padding: 31px;
+  padding-bottom: var(--navbar-outer-height);
 }
 .flex-0 {
   flex: 0;

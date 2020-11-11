@@ -110,17 +110,17 @@ const fetchVariableSummaries = async (context, args) => {
   const pages = routeGetters.getAllRoutePages(store);
   const targetVariable = routeGetters.getTargetVariable(store);
 
-  const currentPageIndexes = pages[currentRoute];
-  const mainPageIndex = currentPageIndexes[0];
+  const currentPageIndexes = pages[currentRoute] ?? [];
+  const mainPageIndex = currentPageIndexes?.[0];
   const trainingIndex = currentPageIndexes?.[1];
 
   const pageLength =
     currentRoute === SELECT_TARGET_ROUTE ? NUM_PER_TARGET_PAGE : NUM_PER_PAGE;
 
   const searches = routeGetters.getAllSearchesByRoute(store);
-  const currentPageSearches = searches[currentRoute];
-  const currentSearch = currentPageSearches[0];
-  const trainingSearch = currentPageSearches[1];
+  const currentPageSearches = searches[currentRoute] ?? [];
+  const currentSearch = currentPageSearches?.[0];
+  const trainingSearch = currentPageSearches?.[1];
 
   const allTrainingVariables = routeGetters.getTrainingVariables(store);
 

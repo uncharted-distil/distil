@@ -5,7 +5,6 @@ import { ActionContext } from "vuex";
 import { mutations } from "./module";
 import { FilterParams } from "../../util/filters";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
-import { resultsModule } from "../results/module";
 
 export type AppContext = ActionContext<AppState, DistilState>;
 
@@ -152,5 +151,9 @@ export const actions = {
     } catch (err) {
       console.log(err.response);
     }
+  },
+
+  togglePrototype(context: AppContext) {
+    mutations.togglePrototype(context);
   },
 };

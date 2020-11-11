@@ -9,6 +9,7 @@ export const RESULTS_ROUTE = "/results";
 export const APPLY_MODEL_ROUTE = "/results";
 export const PREDICTION_ROUTE = "/prediction";
 export const EXPORT_SUCCESS_ROUTE = "/export-success";
+export const DATAEXPLORER_ROUTE = "/data-explorer";
 
 export const JOINED_VARS_INSTANCE = "joinedVars";
 export const AVAILABLE_TRAINING_VARS_INSTANCE = "availableTrainingVars";

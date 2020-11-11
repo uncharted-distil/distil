@@ -3,20 +3,20 @@
     <div
       class="dataset-header hover card-header"
       variant="dark"
-      @click.stop="setActiveDataset()"
-      v-bind:class="{
+      :class="{
         collapsed: !expanded,
         disabled: isImportReady || importPending,
       }"
+      @click.stop="setActiveDataset()"
     >
       <a class="nav-link">
-        <i class="fa fa-table"></i> <b>Dateset Name:</b>
+        <i class="fa fa-table" /> <b>Dateset Name:</b>
         {{ dataset.name }}
       </a>
-      <a class="nav-link"
-        ><b>Features:</b>
-        {{ filterVariablesByFeature(dataset.variables).length }}</a
-      >
+      <a class="nav-link">
+        <b>Features:</b>
+        {{ filterVariablesByFeature(dataset.variables).length }}
+      </a>
       <a class="nav-link"><b>Rows:</b> {{ dataset.numRows }}</a>
       <a class="nav-link"><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</a>
       <a v-if="isImportReady">
@@ -26,18 +26,18 @@
           @click.stop="importDataset()"
         >
           <div class="row justify-content-center pl-3 pr-3">
-            <i class="fa fa-cloud-download mr-2"></i>
+            <i class="fa fa-cloud-download mr-2" />
             <b>Import</b>
           </div>
-        </b-button></a
-      >
-      <a class="nav-link import-progress-bar" v-if="importPending">
+        </b-button>
+      </a>
+      <a v-if="importPending" class="nav-link import-progress-bar">
         <b-progress
           :value="percentComplete"
           variant="outline-secondary"
           striped
           :animated="true"
-        ></b-progress>
+        />
       </a>
     </div>
     <div class="card-body">
@@ -45,7 +45,7 @@
         <div class="col-4">
           <span><b>Top features:</b></span>
           <ul>
-            <li :key="variable.name" v-for="variable in topVariables">
+            <li v-for="variable in topVariables" :key="variable.name">
               {{ variable.colDisplayName }}
             </li>
           </ul>
@@ -76,7 +76,7 @@
         </div>
         <div v-if="expanded" class="col-12">
           <span><b>Full Description:</b></span>
-          <p v-html="highlightedDescription()" />
+          <p v-html="highlightedDescription" />
           <b-button
             class="full-width hover"
             variant="outline-secondary"
@@ -98,7 +98,7 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import ErrorModal from "../components/ErrorModal";
+import ErrorModal from "../components/ErrorModal.vue";
 import { createRouteEntry } from "../util/routes";
 import { formatBytes } from "../util/bytes";
 import {
@@ -109,9 +109,12 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { Dataset, Variable } from "../store/dataset/index";
 import { actions as datasetActions } from "../store/dataset/module";
-import { SELECT_TARGET_ROUTE } from "../store/route/index";
+import { DATAEXPLORER_ROUTE, SELECT_TARGET_ROUTE } from "../store/route/index";
 import localStorage from "store";
-import { actions as appActions } from "../store/app/module";
+import {
+  actions as appActions,
+  getters as appGetters,
+} from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
 const NUM_TOP_FEATURES = 5;
@@ -168,7 +171,13 @@ export default Vue.extend({
       if (this.isImportReady || this.importPending) {
         return;
       }
-      const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
+
+      // Change the route to data-explorer during the prototype phase.
+      const route = appGetters.isPrototype(this.$store)
+        ? DATAEXPLORER_ROUTE
+        : SELECT_TARGET_ROUTE;
+
+      const entry = createRouteEntry(route, {
         dataset: this.dataset.id,
       });
       this.$router.push(entry).catch((err) => console.warn(err));

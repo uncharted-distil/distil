@@ -52,4 +52,8 @@ export const getters = {
   getSubdomains(state: AppState): string {
     return state.subdomains;
   },
+
+  isPrototype(state: AppState) {
+    return state.prototype;
+  },
 };

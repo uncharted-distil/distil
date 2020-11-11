@@ -13,6 +13,7 @@ export interface AppState {
   mapAPIKey: string;
   tileRequestURL: string;
   subdomains: string;
+  prototype: boolean;
 }
 
 export interface StatusPanelState {
@@ -37,6 +38,7 @@ export const state: AppState = {
   mapAPIKey: "",
   tileRequestURL: "",
   subdomains: "",
+  prototype: false,
 };
 
 export type StatusPanelContentType = DatasetPendingRequestType;

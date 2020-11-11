@@ -32,6 +32,7 @@ export const getters = {
   getMapAPIKey: read(moduleGetters.getMapAPIKey),
   getTileRequestURL: read(moduleGetters.getTileRequestURL),
   getSubdomains: read(moduleGetters.getSubdomains),
+  isPrototype: read(moduleGetters.isPrototype),
 };
 
 // typed actions
@@ -45,6 +46,7 @@ export const actions = {
   ),
   closeStatusPanel: dispatch(moduleActions.closeStatusPanel),
   logUserEvent: dispatch(moduleActions.logUserEvent),
+  togglePrototype: dispatch(moduleActions.togglePrototype),
 };
 
 // type mutators
@@ -63,4 +65,5 @@ export const mutations = {
   setTileRequestURL: commit(moduleMutations.setTileRequestURL),
   setMapAPIKey: commit(moduleMutations.setMapAPIKey),
   setSubdomains: commit(moduleMutations.setSubdomains),
+  togglePrototype: commit(moduleMutations.togglePrototype),
 };

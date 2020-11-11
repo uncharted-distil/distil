@@ -56,4 +56,8 @@ export const mutations = {
   setSubdomains(state: AppState, subdomains: string) {
     state.subdomains = subdomains;
   },
+
+  togglePrototype(state: AppState) {
+    state.prototype = !state.prototype;
+  },
 };

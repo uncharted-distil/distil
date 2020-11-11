@@ -1,71 +1,52 @@
 <template>
-  <div class="container-fluid d-flex flex-column h-100">
-    <!-- Spacer for the App.vue <navigation> component -->
-    <div class="row flex-0-nav"></div>
-
-    <!-- Title of the page -->
-    <header class="header row justify-content-center">
-      <b-col cols="12" md="10">
-        <h5 class="header-title">
-          Dataset Overview: Select Feature to Predict
-        </h5>
-      </b-col>
-    </header>
-
-    <!-- Information -->
-    <section class="sub-header row justify-content-center">
-      <b-col cols="12" md="10">
-        <b-row no-gutters>
-          <b-col cols="12" md="7" class="mr-auto">
-            <h6 class="sub-header-title">
-              Select feature to infer below (target).
-            </h6>
-            If you want to predict a value over time, create
-            a&nbsp;<strong>Timeseries</strong>. If you have geospatial data, you
-            can plot it on a&nbsp;<strong>Map</strong>.
-          </b-col>
-          <span class="sub-header-action">
-            <b-button @click="onTimeseriesClick" variant="dark">
-              <i class="fa fa-area-chart"></i> Timeseries
-            </b-button>
-            <b-button @click="onMapClick" variant="dark">
-              <i class="fa fa-globe"></i> Map
-            </b-button>
-          </span>
-        </b-row>
-      </b-col>
-    </section>
-
-    <!-- List of features -->
-    <section class="available-target row justify-content-center">
-      <div class="available-target-variables col-12 col-md-10">
+  <div class="view-container">
+    <left-side-panel panel-title="Select feature to infer below (target)">
+      <template slot="content">
+        <aside class="sub-header-action">
+          <b-button @click="onTimeseriesClick" variant="dark">
+            <i class="fa fa-area-chart" /> Timeseries
+          </b-button>
+          <b-button @click="onMapClick" variant="dark">
+            <i class="fa fa-globe" /> Map
+          </b-button>
+        </aside>
         <variable-facets
           enable-search
           enable-type-change
           enable-type-filtering
-          :facetCount="searchedActiveVariables.length"
+          :facet-count="searchedActiveVariables.length"
           :html="html"
           ignore-highlights
           :instance-name="instanceName"
-          :logActivity="problemDefinition"
+          :log-activity="problemDefinition"
           :pagination="searchedActiveVariables.length > numRowsPerPage"
           :rows-per-page="numRowsPerPage"
           :summaries="summaries"
         />
-      </div>
-    </section>
+      </template>
+    </left-side-panel>
+    <div class="content">
+      <create-solutions-form />
+      <select-data-slot />
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
+
+// Components
+import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
+import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
+import SelectDataSlot from "../components/SelectDataSlot.vue";
 import VariableFacets from "../components/facets/VariableFacets.vue";
-import { actions as viewActions } from "../store/view/module";
+
+// Store
 import { actions as appActions } from "../store/app/module";
-import { Variable, VariableSummary, SummaryMode } from "../store/dataset/index";
+import { SummaryMode, Variable, VariableSummary } from "../store/dataset/index";
 import {
-  getters as datasetGetters,
   actions as datasetActions,
+  getters as datasetGetters,
 } from "../store/dataset/module";
 import {
   AVAILABLE_TARGET_VARS_INSTANCE,
@@ -73,37 +54,53 @@ import {
   SELECT_TRAINING_ROUTE,
 } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
+import { actions as viewActions } from "../store/view/module";
+
+// Util
 import {
-  NUM_PER_TARGET_PAGE,
   getVariableSummariesByState,
+  NUM_PER_TARGET_PAGE,
   searchVariables,
 } from "../util/data";
 import { Group } from "../util/facets";
 import { createRouteEntry, varModesToString } from "../util/routes";
 import {
-  isUnsupportedTargetVar,
   GEOCOORDINATE_TYPE,
+  isUnsupportedTargetVar,
   TIMESERIES_TYPE,
 } from "../util/types";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
 export default Vue.extend({
-  name: "select-target-view",
+  name: "DataExplorer",
 
   components: {
+    CreateSolutionsForm,
+    LeftSidePanel,
+    SelectDataSlot,
     VariableFacets,
   },
 
+  data() {
+    return {
+      instanceName: AVAILABLE_TARGET_VARS_INSTANCE,
+      numRowsPerPage: NUM_PER_TARGET_PAGE,
+    };
+  },
+
   computed: {
-    availableTargetVarsPage(): number {
-      return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
-    },
     availableTargetVarsSearch(): string {
       return routeGetters.getRouteAvailableTargetVarsSearch(this.$store);
     },
 
-    dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
+    groupedFeatures(): string[] {
+      // Fetch the grouped features.
+      const groupedFeatures = datasetGetters
+        .getGroupings(this.$store)
+        .filter((group) => Array.isArray(group.grouping.subIds))
+        .map((group) => group.grouping.subIds)
+        .flat();
+      return groupedFeatures;
     },
 
     html(): (group: Group) => HTMLDivElement {
@@ -209,16 +206,17 @@ export default Vue.extend({
       };
     },
 
-    instanceName(): string {
-      return AVAILABLE_TARGET_VARS_INSTANCE;
-    },
-
-    numRowsPerPage(): number {
-      return NUM_PER_TARGET_PAGE;
-    },
-
     problemDefinition(): string {
       return Activity.PROBLEM_DEFINITION;
+    },
+
+    searchedActiveVariables(): Variable[] {
+      // remove variables used in groupedFeature;
+      const activeVariables = this.variables.filter(
+        (v) => !this.groupedFeatures.includes(v.colName)
+      );
+
+      return searchVariables(activeVariables, this.availableTargetVarsSearch);
     },
 
     summaries(): VariableSummary[] {
@@ -240,16 +238,6 @@ export default Vue.extend({
       return currentSummaries;
     },
 
-    groupedFeatures(): string[] {
-      // Fetch the grouped features.
-      const groupedFeatures = datasetGetters
-        .getGroupings(this.$store)
-        .filter((group) => Array.isArray(group.grouping.subIds))
-        .map((group) => group.grouping.subIds)
-        .flat();
-      return groupedFeatures;
-    },
-
     unsupportedTargets(): Set<string> {
       return new Set(
         this.variables
@@ -260,24 +248,6 @@ export default Vue.extend({
 
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
-    },
-
-    searchedActiveVariables(): Variable[] {
-      // remove variables used in groupedFeature;
-      const activeVariables = this.variables.filter(
-        (v) => !this.groupedFeatures.includes(v.colName)
-      );
-
-      return searchVariables(activeVariables, this.availableTargetVarsSearch);
-    },
-  },
-
-  watch: {
-    availableTargetVarsPage() {
-      viewActions.fetchSelectTargetData(this.$store, false);
-    },
-    availableTargetVarsSearch() {
-      viewActions.fetchSelectTargetData(this.$store, false);
     },
   },
 
@@ -306,61 +276,18 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.sub-header-action {
-  align-self: end;
-  margin-top: 1em;
+.view-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  flex-grow: 1;
+  height: var(--content-full-height);
+  margin-top: var(--navbar-outer-height);
+  overflow: hidden;
 }
 
-.sub-header-action /deep/ .btn {
-  font-weight: bold;
-}
-
-.sub-header-action /deep/ .btn + .btn {
-  margin-left: 0.5em;
-}
-
-.sub-header-action /deep/ .fa {
-  margin-right: 0.5em;
-}
-
-/* List of targets */
-.available-target {
-  padding-bottom: 1rem;
-}
-
-/* Make all those elements full-height to fit the non-scrollable page design. */
-.available-target,
-.available-target-variables,
-.available-target-variables /deep/ .variable-facets {
-  height: 100%;
-}
-
-/* Render items as columns */
-.available-target-variables /deep/ .variable-facets-container {
-  column-count: 3;
-  column-gap: 1rem;
-}
-
-.available-target-variables /deep/ .variable-facets-item {
-  break-inside: avoid;
-  display: inline-block;
-  margin-left: 0.5rem;
-  margin-right: 0.5rem;
-  page-break-inside: avoid;
-  width: 100%;
-  -webkit-backface-visibility: hidden;
-  -webkit-column-break-inside: avoid;
-}
-
-.available-target-variables
-  /deep/
-  .facets-group
-  .facets-facet-horizontal
-  .facet-range {
-  cursor: pointer !important;
-}
-
-.available-target-variables /deep/ .facet-filters {
-  padding: 1rem 0;
+.view-container .content {
+  flex-grow: 1;
+  padding: 1rem;
 }
 </style>
