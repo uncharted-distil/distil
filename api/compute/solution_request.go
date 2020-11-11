@@ -669,7 +669,9 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 		}
 
 		// persist the scores
+		scored := false
 		for _, response := range solutionScoreResponses {
+
 			// only persist scores from COMPLETED responses
 			if response.Progress.State == pipeline.ProgressState_COMPLETED {
 				for _, score := range response.Scores {
@@ -685,7 +687,13 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 						return
 					}
 				}
+				scored = true
 			}
+		}
+		// handle as error state if no successful scores returned
+		if !scored {
+			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, errors.New("all scores errored"))
+			return
 		}
 
 		// persist solution running status
