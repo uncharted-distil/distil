@@ -58,6 +58,15 @@
         C
       </a>
     </div>
+    <div
+      class="map-toggle"
+      :class="{ active: isSatelliteView }"
+      @click="mapToggle"
+    >
+      <a class="cluster-icon" title="Cluster" aria-label="Cluster Tiles">
+        <i class="fa fa-globe" aria-hidden="true" />
+      </a>
+    </div>
     <b-toast
       :id="toastId"
       :title="toastTitle"
@@ -244,6 +253,7 @@ export default Vue.extend({
     return {
       poiLayer: null,
       map: null,
+      tileRenderer: null,
       overlay: null,
       renderer: null,
       markers: null,
@@ -284,6 +294,7 @@ export default Vue.extend({
       isClustering: false,
       isColoringByConfidence: false,
       confidenceIconClass: "confidence-icon",
+      isSatelliteView: false,
     };
   },
 
@@ -535,6 +546,17 @@ export default Vue.extend({
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
+    tileRequest(): (x: number, y: number, z: number) => string {
+      return this.isSatelliteView
+        ? (x: number, y: number, z: number) => {
+            return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}.png`;
+          }
+        : (x: number, y: number, z: number) => {
+            const SUBDOMAINS = ["a", "b", "c", "d"];
+            const s = SUBDOMAINS[(x + y + z) % SUBDOMAINS.length];
+            return `https:/${s}.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`;
+          };
+    },
     tileHandler() {
       return getTileHandler();
     },
@@ -648,20 +670,16 @@ export default Vue.extend({
         maxZoom: 11,
       });
       // WebGL CARTO Image Layer
-      const base = new lumo.TileLayer({
+      this.tileRenderer = new lumo.TileLayer({
         renderer: new lumo.ImageTileRenderer(),
       });
       // tile request function
-      base.requestTile = (coord, done) => {
+      this.tileRenderer.requestTile = (coord, done) => {
         const dim = Math.pow(2, coord.z); // this is done in lumo however there is no get function to get the correct y coordinate for requesting tiles
-        const url = this.tileHandler.requestTile(
-          coord.x,
-          dim - 1 - coord.y,
-          coord.z
-        ); // get the url and embed the tile coordinates
+        const url = this.tileRequest(coord.x, dim - 1 - coord.y, coord.z);
         lumo.loadImage(url, done); // load the image to the map
       };
-      this.map.add(base);
+      this.map.add(this.tileRenderer);
       // Quad layer
       this.overlay = new BatchQuadOverlay();
       this.renderer = new BatchQuadOverlayRenderer();
@@ -711,6 +729,28 @@ export default Vue.extend({
     },
     onFocusOut() {
       this.isImageDrilldown = false;
+    },
+    mapToggle() {
+      this.isSatelliteView = !this.isSatelliteView;
+      this.map.remove(this.tileRenderer); // remove old tile renderer to destroy the buffers hold the previous tile set
+      this.tileRenderer = new lumo.TileLayer({
+        renderer: new lumo.ImageTileRenderer(),
+      }); // create new tile renderer to hold the new tile set
+      // tile request function
+      this.tileRenderer.requestTile = (coord, done) => {
+        const dim = Math.pow(2, coord.z); // this is done in lumo however there is no get function to get the correct y coordinate for requesting tiles
+        const url = this.tileRequest(coord.x, dim - 1 - coord.y, coord.z);
+        lumo.loadImage(url, done); // load the image to the map
+      };
+      /*
+        Lumo apparently renders in sequential order. So order of additions matter,
+        Therefore, the overlay has to be removed and added again in order for it to appear
+        after the tile renderer. Otherwise, the points will render behind the tile.
+       */
+      this.map.add(this.tileRenderer); // add new tile renderer
+      this.map.remove(this.overlay);
+      this.map.add(this.overlay);
+      this.updateMapState(); // trigger a tile render
     },
     /**
      * toggle clustering
@@ -1212,10 +1252,23 @@ export default Vue.extend({
   text-align: center;
   border-radius: 4px;
 }
-.confidence-toggle {
+.map-toggle {
   position: absolute;
   z-index: 999;
   top: 120px;
+  left: 10px;
+  width: 34px;
+  height: 34px;
+  background-color: #fff;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  background-clip: padding-box;
+  text-align: center;
+  border-radius: 4px;
+}
+.confidence-toggle {
+  position: absolute;
+  z-index: 999;
+  top: 160px;
   left: 10px;
   width: 34px;
   height: 34px;
@@ -1277,11 +1330,17 @@ export default Vue.extend({
   display: inline;
   position: absolute;
 }
+.map-toggle:hover {
+  background-color: #f4f4f4;
+}
 .cluster-toggle:hover {
   background-color: #f4f4f4;
 }
 .confidence-toggle:hover {
   background-color: #f4f4f4;
+}
+.map-toggle.active {
+  color: #26b8d1;
 }
 .cluster-toggle.active {
   color: #26b8d1;
