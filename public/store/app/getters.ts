@@ -40,16 +40,4 @@ export const getters = {
       state.versionTimestamp !== "unset" ? state.versionTimestamp : "";
     return `TA2 version ${ta2Version}\nTA3 version ${ta3Version} ${ta3Timestamp}`.trim();
   },
-  getSessionToken(state: AppState): string {
-    return state.sessionToken;
-  },
-  getMapAPIKey(state: AppState): string {
-    return state.mapAPIKey;
-  },
-  getTileRequestURL(state: AppState): string {
-    return state.tileRequestURL;
-  },
-  getSubdomains(state: AppState): string {
-    return state.subdomains;
-  },
 };

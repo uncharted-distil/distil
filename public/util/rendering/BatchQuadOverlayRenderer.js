@@ -225,6 +225,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.hoverTimeoutId = null;
     this.boundOnMove = this.onMove.bind(this);
     this.boundOnClick = this.onClick.bind(this);
+    this.boundOnMouseLeave = this.onMouseLeave.bind(this);
     this.drawMode = defaultTo(options.drawMode, DRAW_MODES.TRIANGLES);
     this.pointSize = defaultTo(options.pointSize, 1);
   }
@@ -242,10 +243,6 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     this.pointShader = this.createShader(POINT_SHADER);
     this.pointPickingShader = this.createShader(POINT_PICKING_SHADER);
     this.enableInteractions();
-    this.gl.canvas,
-      addEventListener("mouseleave", () => {
-        clearTimeout(this.hoverTimeoutId);
-      }); // if mouse leaves canvas remove hover timer so it doesn't trigger
     this.createFBO();
     return this;
   }
@@ -258,9 +255,18 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
    * @returns {BatchquadOverlayRenderer} The overlay object, for chaining.
    */
   onRemove(plot) {
+    this.disableInteractions();
+    this.gl.deleteFramebuffer(this.fbo);
+    this.gl.deleteRenderbuffer(this.depthBuffer);
+    this.gl.deleteTexture(this.targetTexture);
     super.onRemove(plot);
     this.shader = null;
     this.pickingShader = null;
+    this.pointShader = null;
+    this.pointPickingShader = null;
+    this.fbo = null;
+    this.depthBuffer = null;
+    this.targetTexture = null;
     return this;
   }
   /**
@@ -270,6 +276,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     clearTimeout(this.hoverTimeoutId); // cleanup
     this.gl.canvas.removeEventListener("mouseup", this.boundOnClick);
     this.gl.canvas.removeEventListener("mousemove", this.boundOnMove);
+    this.gl.canvas.removeEventListener("mouseleave", this.boundOnMouseLeave);
   }
   /**
    * enables quad interactions such as click and hover
@@ -277,6 +284,7 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
   enableInteractions() {
     this.gl.canvas.addEventListener("mouseup", this.boundOnClick);
     this.gl.canvas.addEventListener("mousemove", this.boundOnMove);
+    this.gl.canvas.addEventListener("mouseleave", this.boundOnMouseLeave);
   }
   /**
    * Generate any underlying buffers.
@@ -448,6 +456,9 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     vals.forEach((val) => {
       this.callbacks[val] = [];
     });
+  }
+  onMouseLeave() {
+    clearInterval(this.hoverTimeoutId);
   }
   // onClick read ID FBO at the pixel the mouse clicked on and extract the ID.
   onClick(event) {

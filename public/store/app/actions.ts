@@ -95,15 +95,6 @@ export const actions = {
       mutations.setProblemTarget(context, response.data.target);
       mutations.setProblemMetrics(context, response.data.metrics);
       mutations.setTA2VersionNumber(context, response.data.ta2version);
-      mutations.setSubdomains(context, response.data.subdomains);
-      mutations.setTileRequestURL(context, response.data.tileRequestURL);
-      mutations.setMapAPIKey(context, response.data.mapAPIKey);
-      if (response.data.mapAPIKey.length) {
-        // if api key need to generate session token.
-        await actions.fetchSessionToken(context, {
-          key: response.data.mapAPIKey,
-        });
-      }
     } catch (err) {
       console.warn(err);
     }
@@ -132,25 +123,5 @@ export const actions = {
     }
   ) {
     return axios.post(`distil/event`, args);
-  },
-  async fetchSessionToken(context: AppContext, args: { key: string }) {
-    try {
-      const result = await axios.post(
-        `https://www.googleapis.com/tile/v1/createSession?key=${args.key}`,
-        {
-          mapType: "satellite",
-          language: "ja-JP",
-          region: "jp",
-          layerTypes: ["layerRoadmap", "layerStreetview"],
-          overlay: true,
-          scale: "scaleFactor1x",
-        }
-      );
-      if (result.data.session) {
-        mutations.setSessionToken(context, result.data.session);
-      }
-    } catch (err) {
-      console.log(err.response);
-    }
   },
 };
