@@ -835,7 +835,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		s.persistSolution(c, solutionStorage, searchID, solution.SolutionId, "")
 		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
 		// dispatch it
-		fittedSolutionID, explainOutputs, err := s.dispatchSolutionSearchPipeline(c, client, solutionStorage, dataStorage, searchID,
+		fittedSolutionID, err := s.dispatchSolutionSearchPipeline(c, client, solutionStorage, dataStorage, searchID,
 			solution.SolutionId, dataset, storageName, searchRequest, datasetURI, datasetURITrain, datasetURITest, variables)
 		if err != nil {
 			s.persistSolutionError(c, solutionStorage, searchID, solution.SolutionId, err)
@@ -843,7 +843,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		}
 
 		s.dispatchSolutionExplainPipeline(c, client, solutionStorage, dataStorage, fittedSolutionID, searchID,
-			solution.SolutionId, dataset, storageName, explainOutputs, searchRequest, datasetURI, datasetURITrain, datasetURITest, variables)
+			solution.SolutionId, dataset, storageName, searchRequest, datasetURI, datasetURITrain, datasetURITest, variables)
 		// once done, mark as complete
 		s.completeSolution()
 		close(c)
