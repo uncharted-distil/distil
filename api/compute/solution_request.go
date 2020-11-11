@@ -528,9 +528,8 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 }
 
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, initialSearchID string, dataset string, storageName string,
-	explainedSolutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string,
-	resultURI string, confidenceValues *api.SolutionExplainResult, explainOutput map[string]*api.SolutionExplainResult) {
+	dataStorage api.DataStorage, initialSearchID string, dataset string, storageName string, initialSearchSolutionID string,
+	fittedSolutionID string, produceRequestID string, resultID string, resultURI string) {
 	// persist the completed state
 	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -539,14 +538,14 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist result metadata
-	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, produceRequestID, "test", resultID, resultURI, SolutionCompletedStatus, explainOutput, time.Now())
+	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, produceRequestID, "test", resultID, resultURI, SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
 	}
 	// persist results
-	err = dataStorage.PersistResult(dataset, storageName, resultURI, s.TargetFeature.Name, confidenceValues)
+	err = dataStorage.PersistResult(dataset, storageName, resultURI, s.TargetFeature.Name)
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -802,8 +801,8 @@ func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, clien
 			// persist results
 			log.Infof("persisting results in URI '%s'", resultURI)
 			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage,
-				initialSearchID, dataset, storageName, solutionID, initialSearchSolutionID, fittedSolutionID,
-				produceRequestID, resultID, resultURI, explainedResults[ExplainableTypeConfidence], produceOutputs)
+				initialSearchID, dataset, storageName, initialSearchSolutionID, fittedSolutionID,
+				produceRequestID, resultID, resultURI)
 		}
 	})
 	if err != nil {
@@ -825,6 +824,16 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		return
 	}
 
+	// generate predictions -  for timeseries we want to use the entire source dataset, for anything else
+	// we only want the test data predictions.
+	produceDatasetURI := datasetURITest
+	for _, task := range s.Task {
+		if task == compute.ForecastingTask {
+			produceDatasetURI = datasetURI
+			break
+		}
+	}
+
 	// search for solutions, this wont return until the search finishes or it times out
 	err = client.SearchSolutions(context.Background(), searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
 		// create a new status channel for the solution
@@ -835,15 +844,19 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		s.persistSolution(c, solutionStorage, searchID, solution.SolutionId, "")
 		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
 		// dispatch it
-		fittedSolutionID, err := s.dispatchSolutionSearchPipeline(c, client, solutionStorage, dataStorage, searchID,
-			solution.SolutionId, dataset, storageName, searchRequest, datasetURI, datasetURITrain, datasetURITest, variables)
+		searchResult, err := s.dispatchSolutionSearchPipeline(c, client, solutionStorage, dataStorage, searchID,
+			solution.SolutionId, dataset, storageName, produceDatasetURI, datasetURITrain, datasetURITest)
 		if err != nil {
 			s.persistSolutionError(c, solutionStorage, searchID, solution.SolutionId, err)
 			return
 		}
 
-		s.dispatchSolutionExplainPipeline(c, client, solutionStorage, dataStorage, fittedSolutionID, searchID,
-			solution.SolutionId, dataset, storageName, searchRequest, datasetURI, datasetURITrain, datasetURITest, variables)
+		err = s.dispatchSolutionExplainPipeline(c, client, solutionStorage, dataStorage, searchResult, searchID,
+			solution.SolutionId, dataset, storageName, searchRequest, produceDatasetURI, variables)
+		if err != nil {
+			s.persistSolutionError(c, solutionStorage, searchID, solution.SolutionId, err)
+			return
+		}
 		// once done, mark as complete
 		s.completeSolution()
 		close(c)

@@ -28,15 +28,20 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
+type searchResult struct {
+	fittedSolutionID string
+	resultID         string
+	resultURI        string
+}
+
 func (s *SolutionRequest) dispatchSolutionExplainPipeline(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, fitSolutionID string, searchID string, searchSolutionID string, dataset string, storageName string,
-	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
+	dataStorage api.DataStorage, searchResult *searchResult, searchID string, searchSolutionID string, dataset string, storageName string,
+	searchRequest *pipeline.SearchSolutionsRequest, produceDatasetURI string, variables []*model.Variable) error {
 
 	// get solution description
 	desc, err := describeSolution(client, searchSolutionID)
 	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, searchID, searchSolutionID, err)
-		return
+		return err
 	}
 
 	keywords := make([]string, 0)
@@ -55,13 +60,12 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(statusChan chan Soluti
 	if s.useParquet {
 		exposeType = append(exposeType, compute.ParquetURIValueType)
 	}
-	produceSolutionRequest := createProduceSolutionRequest(datasetURI, fitSolutionID, exposedOutputs, exposeType)
+	produceSolutionRequest := createProduceSolutionRequest(produceDatasetURI, searchResult.fittedSolutionID, exposedOutputs, exposeType)
 
 	// generate predictions
 	_, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
 	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, searchID, searchSolutionID, err)
-		return
+		return err
 	}
 
 	for _, response := range predictionResponses {
@@ -70,16 +74,87 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(statusChan chan Soluti
 			// only persist completed responses
 			continue
 		}
+		// Generate a path for each output key that has been exposed
+		outputKeyURIs := map[string]string{}
+		for _, exposedOutput := range explainOutputs {
+			outputURI, err := getFileFromOutput(response, exposedOutput.key)
+			if err != nil {
+				return err
+			}
+			outputKeyURIs[exposedOutput.key] = outputURI
+		}
 
-		log.Infof("processing response %v", response)
+		// explain features per-record if the explanation is available
+		produceOutputs := map[string]*api.SolutionExplainResult{}
+		explainedResults := make(map[string]*api.SolutionExplainResult)
+		for _, explain := range explainOutputs {
+			if explain.typ == ExplainableTypeStep || explain.typ == ExplainableTypeConfidence {
+				explainURI := outputKeyURIs[explain.key]
+				log.Infof("explaining feature output from URI '%s'", explainURI)
+				produceDatasetURI = compute.BuildSchemaFileURI(produceDatasetURI)
+				parsedExplainResult, err := ExplainFeatureOutput(searchResult.resultURI, explainURI)
+				if err != nil {
+					log.Warnf("failed to fetch output explanation - %v", err)
+					continue
+				}
+				parsedExplainResult.ParsingFunction = explain.parsingFunction
+				explainedResults[explain.typ] = parsedExplainResult
+			}
+			produceOutputs[explain.typ] = &api.SolutionExplainResult{
+				ResultURI: outputKeyURIs[explain.key],
+			}
+		}
+
+		featureWeights := explainedResults[ExplainableTypeStep]
+		if featureWeights != nil {
+			log.Infof("persisting feature weights")
+			err = dataStorage.PersistSolutionFeatureWeight(dataset, storageName, featureWeights.ResultURI, featureWeights.Values)
+			if err != nil {
+				return err
+			}
+		}
+
+		// explain the features at the model level if the explanation is available
+		explainSolutionOutput := explainOutputs[ExplainableTypeSolution]
+		if explainSolutionOutput != nil {
+			explainSolutionURI := outputKeyURIs[explainSolutionOutput.key]
+			log.Infof("explaining solution output from URI '%s'", explainSolutionURI)
+			solutionWeights, err := s.explainSolutionOutput(searchResult.resultURI, explainSolutionURI, searchSolutionID, variables)
+			if err != nil {
+				log.Warnf("failed to fetch output explanantion - %v", err)
+			}
+			for _, fw := range solutionWeights {
+				err = solutionStorage.PersistSolutionWeight(fw.SolutionID, fw.FeatureName, fw.FeatureIndex, fw.Weight)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		// store the explain URIs
+		err = solutionStorage.PersistSolutionExplainedOutput(searchResult.resultID, produceOutputs)
+		if err != nil {
+			return err
+		}
+
+		// update results to store additional confidence / explain information
+		if produceOutputs[ExplainableTypeConfidence] != nil {
+			err = dataStorage.PersistExplainedResult(dataset, storageName, searchResult.resultURI, produceOutputs[ExplainableTypeConfidence])
+			if err != nil {
+				return err
+			}
+		}
 	}
+
+	return nil
 }
 
 func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
 	dataStorage api.DataStorage, searchID string, solutionID string, dataset string, storageName string,
-	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) (string, error) {
-	// get the pipeline description
+	produceDatasetURI string, datasetURITrain string, datasetURITest string) (*searchResult, error) {
 	var fittedSolutionID string
+	var resultURI string
+	var resultID string
 
 	// persist the solution info
 	s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionFittingStatus)
@@ -88,7 +163,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 	fitRequest := createFitSolutionRequest(datasetURITrain, solutionID)
 	fitResults, err := client.GenerateSolutionFit(context.Background(), fitRequest)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// find the completed result and get the fitted solution ID out
@@ -99,7 +174,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 		}
 	}
 	if fittedSolutionID == "" {
-		return "", errors.Errorf("no fitted solution ID for solution `%s` ('%s')", solutionID, solutionID)
+		return nil, errors.Errorf("no fitted solution ID for solution `%s` ('%s')", solutionID, solutionID)
 	}
 
 	s.persistSolutionStatus(statusChan, solutionStorage, searchID, solutionID, SolutionScoringStatus)
@@ -107,7 +182,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 	// score solution
 	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID, datasetURITest, s.Metrics)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// persist the scores
@@ -123,7 +198,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 				}
 				err := solutionStorage.PersistSolutionScore(solutionID, metric, score.Value.GetRaw().GetDouble())
 				if err != nil {
-					return "", err
+					return nil, err
 				}
 			}
 		}
@@ -134,16 +209,6 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 
 	// generate output keys, adding one extra for explanation output if we expect it to exist
 	outputKeys := []string{defaultExposedOutputKey}
-
-	// generate predictions -  for timeseries we want to use the entire source dataset, for anything else
-	// we only want the test data predictions.
-	produceDatasetURI := datasetURITest
-	for _, task := range s.Task {
-		if task == compute.ForecastingTask {
-			produceDatasetURI = datasetURI
-			break
-		}
-	}
 	exposeType := []string{}
 	if s.useParquet {
 		exposeType = append(exposeType, compute.ParquetURIValueType)
@@ -153,7 +218,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 	// generate predictions
 	produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	for _, response := range predictionResponses {
@@ -168,37 +233,41 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 		for _, exposedOutputKey := range outputKeys {
 			outputURI, err := getFileFromOutput(response, exposedOutputKey)
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 			outputKeyURIs[exposedOutputKey] = outputURI
 		}
 
 		// get the result UUID. NOTE: Doing sha1 for now.
-		resultID := ""
-		resultURI, ok := outputKeyURIs[defaultExposedOutputKey]
+
+		var ok bool
+		resultURI, ok = outputKeyURIs[defaultExposedOutputKey]
 		if ok {
 			// reformat result to have one row per d3m index since confidences
 			// can produce one row / class
 			resultURI, err = reformatResult(resultURI)
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 
 			resultID, err = util.Hash(resultURI)
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 		}
 
 		// persist results
 		log.Infof("persisting results in URI '%s'", resultURI)
-		s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage,
-			searchID, dataset, storageName, solutionID, solutionID, fittedSolutionID,
-			produceRequestID, resultID, resultURI, nil, nil)
+		s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
+			dataset, storageName, solutionID, fittedSolutionID, produceRequestID, resultID, resultURI)
 	}
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return fittedSolutionID, nil
+	return &searchResult{
+		resultID:         resultID,
+		resultURI:        resultURI,
+		fittedSolutionID: fittedSolutionID,
+	}, nil
 }
