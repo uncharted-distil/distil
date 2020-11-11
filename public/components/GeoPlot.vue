@@ -22,7 +22,7 @@
       @close="onFocusOut"
     />
     <div
-      class="selection-toggle"
+      class="selection-toggle toggle"
       :class="{ active: isSelectionMode }"
       @click="toggleSelectionTool"
     >
@@ -35,7 +35,7 @@
       </a>
     </div>
     <div
-      class="cluster-toggle"
+      class="cluster-toggle toggle"
       :class="{ active: isClustering }"
       @click="toggleClustering"
     >
@@ -45,7 +45,7 @@
     </div>
     <div
       v-if="dataHasConfidence"
-      class="confidence-toggle"
+      class="confidence-toggle toggle"
       :class="{ active: isColoringByConfidence }"
       @click="toggleConfidenceColoring"
     >
@@ -56,6 +56,15 @@
         :style="colorGradient"
       >
         C
+      </a>
+    </div>
+    <div
+      class="map-toggle toggle"
+      :class="{ active: isSatelliteView }"
+      @click="mapToggle"
+    >
+      <a class="cluster-icon" title="Change Map" aria-label="Change Map">
+        <i class="fa fa-globe" aria-hidden="true" />
       </a>
     </div>
     <b-toast
@@ -138,7 +147,6 @@ import "leaflet/dist/images/marker-icon.png";
 import "leaflet/dist/images/marker-icon-2x.png";
 import "leaflet/dist/images/marker-shadow.png";
 import { BLUE_PALETTE } from "../util/color";
-import { getTileHandler } from "../util/app";
 import DrillDown from "./DrillDown.vue";
 
 const SINGLE_FIELD = 1;
@@ -244,6 +252,7 @@ export default Vue.extend({
     return {
       poiLayer: null,
       map: null,
+      tileRenderer: null,
       overlay: null,
       renderer: null,
       markers: null,
@@ -284,6 +293,7 @@ export default Vue.extend({
       isClustering: false,
       isColoringByConfidence: false,
       confidenceIconClass: "confidence-icon",
+      isSatelliteView: false,
     };
   },
 
@@ -535,8 +545,16 @@ export default Vue.extend({
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
-    tileHandler() {
-      return getTileHandler();
+    tileRequest(): (x: number, y: number, z: number) => string {
+      return this.isSatelliteView
+        ? (x: number, y: number, z: number) => {
+            return `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}.png`;
+          }
+        : (x: number, y: number, z: number) => {
+            const SUBDOMAINS = ["a", "b", "c", "d"];
+            const s = SUBDOMAINS[(x + y + z) % SUBDOMAINS.length];
+            return `https:/${s}.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`;
+          };
     },
     tileState(): MapState {
       return {
@@ -647,26 +665,7 @@ export default Vue.extend({
         zoom: this.maxZoom,
         maxZoom: 11,
       });
-      // WebGL CARTO Image Layer
-      const base = new lumo.TileLayer({
-        renderer: new lumo.ImageTileRenderer(),
-      });
-      // tile request function
-      base.requestTile = (coord, done) => {
-        const dim = Math.pow(2, coord.z); // this is done in lumo however there is no get function to get the correct y coordinate for requesting tiles
-        const url = this.tileHandler.requestTile(
-          coord.x,
-          dim - 1 - coord.y,
-          coord.z
-        ); // get the url and embed the tile coordinates
-        lumo.loadImage(url, done); // load the image to the map
-      };
-      this.map.add(base);
-      // Quad layer
-      this.overlay = new BatchQuadOverlay();
-      this.renderer = new BatchQuadOverlayRenderer();
-      this.overlay.setRenderer(this.renderer);
-      this.map.add(this.overlay);
+      this.createMapLayers();
       // convert this.areas to quads in normalized space and add to overlay layer
       this.currentState = this.pointState;
       this.map.on(lumo.ZOOM_END, this.onZoom);
@@ -694,6 +693,24 @@ export default Vue.extend({
       );
       this.map.fitToBounds(mapBounds);
     },
+    createMapLayers() {
+      // WebGL CARTO Image Layer
+      this.tileRenderer = new lumo.TileLayer({
+        renderer: new lumo.ImageTileRenderer(),
+      });
+      // tile request function
+      this.tileRenderer.requestTile = (coord, done) => {
+        const dim = Math.pow(2, coord.z); // this is done in lumo however there is no get function to get the correct y coordinate for requesting tiles
+        const url = this.tileRequest(coord.x, dim - 1 - coord.y, coord.z);
+        lumo.loadImage(url, done); // load the image to the map
+      };
+      this.map.add(this.tileRenderer);
+      // Quad layer
+      this.overlay = new BatchQuadOverlay();
+      this.renderer = new BatchQuadOverlayRenderer();
+      this.overlay.setRenderer(this.renderer);
+      this.map.add(this.overlay);
+    },
     getInterestBounds(area: Area): LatLngBoundsLiteral {
       const xDistance = (this.drillDownState.numCols - 1) / 2;
       const yDistance = (this.drillDownState.numRows - 1) / 2;
@@ -711,6 +728,13 @@ export default Vue.extend({
     },
     onFocusOut() {
       this.isImageDrilldown = false;
+    },
+    mapToggle() {
+      this.isSatelliteView = !this.isSatelliteView;
+      this.map.remove(this.tileRenderer); // remove old tile renderer to destroy the buffers hold the previous tile set
+      this.map.remove(this.overlay);
+      this.createMapLayers();
+      this.updateMapState(); // trigger a tile render
     },
     /**
      * toggle clustering
@@ -1212,10 +1236,23 @@ export default Vue.extend({
   text-align: center;
   border-radius: 4px;
 }
-.confidence-toggle {
+.map-toggle {
   position: absolute;
   z-index: 999;
   top: 120px;
+  left: 10px;
+  width: 34px;
+  height: 34px;
+  background-color: #fff;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  background-clip: padding-box;
+  text-align: center;
+  border-radius: 4px;
+}
+.confidence-toggle {
+  position: absolute;
+  z-index: 999;
+  top: 160px;
   left: 10px;
   width: 34px;
   height: 34px;
@@ -1277,17 +1314,14 @@ export default Vue.extend({
   display: inline;
   position: absolute;
 }
-.cluster-toggle:hover {
+.toggle {
+}
+.toggle:hover {
   background-color: #f4f4f4;
 }
-.confidence-toggle:hover {
-  background-color: #f4f4f4;
-}
-.cluster-toggle.active {
+
+.toggle.active {
   color: #26b8d1;
-}
-.geo-plot-container .selection-toggle:hover {
-  background-color: #f4f4f4;
 }
 
 .geo-plot-container .selection-toggle-control {
