@@ -143,7 +143,6 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 
 // PersistExplainedResult stores the additional explained output.
 func (s *Storage) PersistExplainedResult(dataset string, storageName string, resultURI string, explainResult *api.SolutionExplainResult) error {
-	// read the confidence file
 	fieldName := "explain_values"
 	params := make([][]interface{}, 0)
 	if explainResult != nil {
@@ -181,7 +180,7 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 
 	// build the filter structure
 	wheres := []string{
-		fmt.Sprintf("t.\"%s\" = b.\"%s\"::text", model.D3MIndexName, model.D3MIndexName),
+		fmt.Sprintf("t.\"%s\" = b.index::text", model.D3MIndexName),
 		"b.\"result_id\" = $1",
 	}
 	paramsFilter := []interface{}{resultURI}

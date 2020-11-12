@@ -34,7 +34,7 @@ type searchResult struct {
 	resultURI        string
 }
 
-func (s *SolutionRequest) dispatchSolutionExplainPipeline(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
+func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client, solutionStorage api.SolutionStorage,
 	dataStorage api.DataStorage, searchResult *searchResult, searchID string, searchSolutionID string, dataset string, storageName string,
 	searchRequest *pipeline.SearchSolutionsRequest, produceDatasetURI string, variables []*model.Variable) error {
 
@@ -77,7 +77,7 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(statusChan chan Soluti
 		// Generate a path for each output key that has been exposed
 		outputKeyURIs := map[string]string{}
 		for _, exposedOutput := range explainOutputs {
-			outputURI, err := getFileFromOutput(response, exposedOutput.key)
+			outputURI, err := getFileFromOutput(response, exposedOutput.output)
 			if err != nil {
 				return err
 			}
@@ -139,7 +139,7 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(statusChan chan Soluti
 
 		// update results to store additional confidence / explain information
 		if produceOutputs[ExplainableTypeConfidence] != nil {
-			err = dataStorage.PersistExplainedResult(dataset, storageName, searchResult.resultURI, produceOutputs[ExplainableTypeConfidence])
+			err = dataStorage.PersistExplainedResult(dataset, storageName, searchResult.resultURI, explainedResults[ExplainableTypeConfidence])
 			if err != nil {
 				return err
 			}
