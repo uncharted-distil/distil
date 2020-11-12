@@ -34,7 +34,7 @@
         <label class="slider-label">1.0</label>
       </div>
       <div>
-        <i class="fa fa-adjust" aria-hidden="true" />
+        <i class="fa fa-adjust fa-rotate-180" aria-hidden="true" />
         <label class="slider-label">{{ sliderVal }}</label>
       </div>
     </div>
