@@ -40,7 +40,7 @@ export default Vue.extend({
   overflow: hidden;
   padding: 1rem;
   position: relative;
-  width: var(--width-left-side-panel, 33%);
+  width: var(--width-left-side-panel);
   z-index: var(--z-index-left-side-panel);
 }
 

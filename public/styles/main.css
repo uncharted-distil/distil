@@ -25,8 +25,13 @@ html {
   /* Buttons */
   --bg-color-button-hover: var(--gray-500);
 
+  /* Action Column */
+  --bg-color-action-column: var(--gray-400);
+  --width-action-column: 3rem;
+
   /* Side Panels */
-  --bg-color-side-panel: var(--gray-400);
+  --bg-color-side-panel: var(--gray-100);
+  --width-left-side-panel: 25%;
   --z-index-left-side-panel: 500;
 }
 

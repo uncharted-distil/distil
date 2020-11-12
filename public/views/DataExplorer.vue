@@ -1,34 +1,42 @@
 <template>
   <div class="view-container">
-    <left-side-panel panel-title="Select feature to infer below (target)">
-      <template slot="content">
-        <aside class="sub-header-action">
-          <b-button @click="onTimeseriesClick" variant="dark">
-            <i class="fa fa-area-chart" /> Timeseries
-          </b-button>
-          <b-button @click="onMapClick" variant="dark">
-            <i class="fa fa-globe" /> Map
-          </b-button>
-        </aside>
-        <variable-facets
-          enable-search
-          enable-type-change
-          enable-type-filtering
-          :facet-count="searchedActiveVariables.length"
-          :html="html"
-          ignore-highlights
-          :instance-name="instanceName"
-          :log-activity="problemDefinition"
-          :pagination="searchedActiveVariables.length > numRowsPerPage"
-          :rows-per-page="numRowsPerPage"
-          :summaries="summaries"
-        />
+    <action-column>
+      <template slot="actions">
+        <b-button
+          variant="light"
+          title="Create a Timeseries variable"
+          @click="onTimeseriesClick"
+        >
+          <i class="fa fa-area-chart" />
+        </b-button>
+        <b-button
+          variant="light"
+          title="Create a Geocoordinate variable"
+          @click="onMapClick"
+        >
+          <i class="fa fa-globe" />
+        </b-button>
       </template>
+    </action-column>
+    <left-side-panel panel-title="Select feature to infer below (target)">
+      <variable-facets
+        enable-search
+        enable-type-change
+        enable-type-filtering
+        :facet-count="searchedActiveVariables.length"
+        :html="html"
+        ignore-highlights
+        :instance-name="instanceName"
+        :log-activity="problemDefinition"
+        :pagination="searchedActiveVariables.length > numRowsPerPage"
+        :rows-per-page="numRowsPerPage"
+        :summaries="summaries"
+      />
     </left-side-panel>
-    <div class="content">
+    <main class="content">
       <create-solutions-form />
       <select-data-slot />
-    </div>
+    </main>
   </div>
 </template>
 
@@ -36,6 +44,7 @@
 import Vue from "vue";
 
 // Components
+import ActionColumn from "../components/layout/ActionColumn.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import SelectDataSlot from "../components/SelectDataSlot.vue";
@@ -75,6 +84,7 @@ export default Vue.extend({
   name: "DataExplorer",
 
   components: {
+    ActionColumn,
     CreateSolutionsForm,
     LeftSidePanel,
     SelectDataSlot,
