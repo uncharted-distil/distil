@@ -51,6 +51,11 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 
 	_, explainOutputs := s.createExplainPipeline(desc, keywords)
 
+	// if nothing to explain, then exit
+	if len(explainOutputs) == 0 {
+		return nil
+	}
+
 	exposedOutputs := []string{}
 	for _, eo := range explainOutputs {
 		exposedOutputs = append(exposedOutputs, eo.output)
