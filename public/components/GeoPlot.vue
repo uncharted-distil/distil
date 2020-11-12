@@ -219,8 +219,6 @@ export interface TileClickData {
   type: string;
   callback: (inner: TableRow[], outer: TableRow[]) => void;
 }
-// Minimum pixels size of clickable target displayed on the map.
-const TARGETSIZE = 6;
 
 export default Vue.extend({
   name: "geo-plot",
@@ -244,7 +242,7 @@ export default Vue.extend({
     quadOpacity: { type: Number, default: 0.8 },
     pointOpacity: { type: Number, default: 0.8 },
     zoomThreshold: { type: Number, default: 8 },
-    maxZoom: { type: Number, default: 18 },
+    maxZoom: { type: Number, default: 17 }, // defaults to max zoom
     colorScale: { type: Function, default: viridisScale },
   },
 
@@ -272,7 +270,7 @@ export default Vue.extend({
       hoverUrl: "",
       imageWidth: 128,
       imageHeight: 128,
-      previousZoom: 0,
+      previousStateTiled: false,
       currentState: null,
       drillDownState: {
         tiles: [],
@@ -294,6 +292,7 @@ export default Vue.extend({
       isColoringByConfidence: false,
       confidenceIconClass: "confidence-icon",
       isSatelliteView: false,
+      tileAreaThreshold: 170, // area in pixels
     };
   },
 
@@ -309,7 +308,7 @@ export default Vue.extend({
       return routeGetters.getRouteTargetVariable(this.$store);
     },
     dataHasConfidence(): boolean {
-      return "confidence" in this.dataItems[0];
+      return this.dataItems.length ? "confidence" in this.dataItems[0] : false;
     },
     getTopVariables(): string[] {
       const variables = datasetGetters
@@ -443,7 +442,6 @@ export default Vue.extend({
           });
         });
       });
-      // console.log(duplicateCheck);
       return features;
     },
     minBucketCount(): number {
@@ -663,7 +661,7 @@ export default Vue.extend({
         inertia: true,
         wraparound: true,
         zoom: this.maxZoom,
-        maxZoom: 11,
+        maxZoom: this.maxZoom,
       });
       this.createMapLayers();
       // convert this.areas to quads in normalized space and add to overlay layer
@@ -1015,14 +1013,26 @@ export default Vue.extend({
 
       return areas;
     },
+    shouldTilesRender(): boolean {
+      if (!this.areas.length) {
+        return false;
+      }
+      const p1 = this.renderer.latlngToNormalized(this.areas[0].coordinates[0]);
+      const p2 = this.renderer.latlngToNormalized(this.areas[0].coordinates[1]);
+      const extent = this.map.getPixelExtent();
+      const pixelPos1 = { x: p1.x * extent, y: p1.y * extent };
+      const pixelPos2 = { x: p2.x * extent, y: p2.y * extent };
+      const width = pixelPos2.x - pixelPos1.x;
+      const height = pixelPos2.y - pixelPos1.y;
+      return width * height > this.tileAreaThreshold;
+    },
     // callback when zooming on map
     onZoom() {
-      const zoom = this.map.getZoom();
-      const wasPoints =
-        zoom >= this.zoomThreshold && this.previousZoom < this.zoomThreshold;
-      const wasTiled =
-        zoom < this.zoomThreshold && this.previousZoom >= this.zoomThreshold;
-      this.previousZoom = this.map.getZoom();
+      console.log(this.map.getZoom());
+      const shouldBeTiles = this.shouldTilesRender();
+      const wasPoints = shouldBeTiles && !this.previousStateTiled;
+      const wasTiled = !shouldBeTiles && this.previousStateTiled;
+      this.previousStateTiled = shouldBeTiles;
       // check if map should be rendering clustered tiles
       if (wasPoints) {
         this.currentState = this.tileState;
@@ -1102,10 +1112,6 @@ export default Vue.extend({
       });
     },
 
-    drawFilters() {
-      // TODO: impl this
-    },
-
     lngValue(fieldSpec: GeoField, row: TableRow): number {
       if (fieldSpec.type === SINGLE_FIELD) {
         return row[fieldSpec.field].Elements[0].Float;
@@ -1139,6 +1145,9 @@ export default Vue.extend({
 
     tileColor(item: any) {
       let color = "#255DCC"; // Default
+      if (item.isExcluded) {
+        return "#999999";
+      }
       if (this.isColoringByConfidence) {
         return this.colorScale(item.confidence.value);
       }
@@ -1147,9 +1156,6 @@ export default Vue.extend({
           item[this.targetField].value === item[this.predictedField].value
             ? "#03c003" // Correct: green.
             : "#be0000"; // Incorrect: red.
-      }
-      if (item.isExcluded) {
-        return "#999999";
       }
 
       return color;
@@ -1164,16 +1170,12 @@ export default Vue.extend({
       if (!quads.length) {
         return;
       }
-      // get bounds of quad set
-      const mapBounds = this.getBounds(quads);
       // add the batched quads to a single layer on the overlay
       this.overlay.addQuad(
         this.quadLayerId,
         quads,
         this.currentState.drawMode()
       );
-      // fit map to the quad set
-      this.map.fitToBounds(mapBounds);
     },
   },
 
