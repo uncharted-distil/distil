@@ -9,6 +9,8 @@ export interface AppState {
   problemMetrics: string[];
   statusPanelState: StatusPanelState;
   ta2Version: string;
+  trainTestSplit: number;
+  trainTestSplitTimeSeries: number;
 }
 
 export interface StatusPanelState {
@@ -29,6 +31,8 @@ export const state: AppState = {
     isOpen: false,
   },
   ta2Version: "unknown",
+  trainTestSplit: null,
+  trainTestSplitTimeSeries: null,
 };
 
 export type StatusPanelContentType = DatasetPendingRequestType;

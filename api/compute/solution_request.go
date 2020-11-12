@@ -113,6 +113,7 @@ type SolutionRequest struct {
 	Metrics              []string
 	Filters              *api.FilterParams
 	DatasetAugmentations []*model.DatasetOrigin
+	MLSplit              float64
 
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
@@ -161,6 +162,7 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 	req.Quality = json.StringDefault(j, defaultQuality, "quality")
 	req.ProblemType = json.StringDefault(j, "", "problemType")
 	req.Metrics, _ = json.StringArray(j, "metrics")
+	req.MLSplit = json.FloatDefault(j, 0.9, "mlSplit")
 
 	filters, ok := json.Get(j, "filters")
 	if ok {

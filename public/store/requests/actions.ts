@@ -46,6 +46,7 @@ interface SolutionRequestMsg {
   maxTime: number;
   quality: ModelQuality;
   filters: FilterParams;
+  mlSplit: number;
 }
 
 // Solution status message used in web socket context
@@ -497,6 +498,7 @@ export const actions = {
         maxTime: request.maxTime,
         quality: request.quality,
         filters: request.filters,
+        mlSplit: request.mlSplit,
       });
     });
   },

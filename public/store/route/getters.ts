@@ -605,6 +605,15 @@ export const getters = {
     }
     return metrics.split(",");
   },
+
+  getModelDataSplit(state: Route): number {
+    const mlSplit = <string>state.query.mlSplit;
+    if (!mlSplit) {
+      return 0.9;
+    }
+    return parseFloat(mlSplit);
+  },
+
   /* Check if the current page is SELECT_TARGET_ROUTE. */
   isPageSelectTarget(state: Route): Boolean {
     return state.path === SELECT_TARGET_ROUTE;

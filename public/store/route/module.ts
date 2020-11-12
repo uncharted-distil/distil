@@ -113,6 +113,7 @@ export const getters = {
   getModelTimeLimit: read(moduleGetters.getModelTimeLimit),
   getModelQuality: read(moduleGetters.getModelQuality),
   getModelMetrics: read(moduleGetters.getModelMetrics),
+  getModelDataSplit: read(moduleGetters.getModelDataSplit),
   isPageSelectTarget: read(moduleGetters.isPageSelectTarget),
   isPageSelectTraining: read(moduleGetters.isPageSelectTraining),
 };
