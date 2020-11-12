@@ -17,6 +17,7 @@ package model
 
 import (
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -81,6 +82,45 @@ type JoinSuggestion struct {
 	JoinScore     float64              `json:"joinScore"`
 	DatasetOrigin *model.DatasetOrigin `json:"datasetOrigin"`
 	Index         int                  `json:"index"`
+}
+
+// VariableUpdate captures the information to update the dataset data.
+type VariableUpdate struct {
+	Index string `json:"index"`
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+// ParseVariableUpdateList returns a list of parsed variable updates.
+func ParseVariableUpdateList(data map[string]interface{}) ([]*VariableUpdate, error) {
+	updatesRaw, ok := json.Array(data, "updates")
+	if !ok {
+		log.Infof("no variable updates to parse")
+		return nil, nil
+	}
+
+	updatesParsed := make([]*VariableUpdate, len(updatesRaw))
+	for i, update := range updatesRaw {
+		index, ok := json.String(update, "index")
+		if !ok {
+			return nil, errors.Errorf("no index provided for variable update")
+		}
+		name, ok := json.String(update, "name")
+		if !ok {
+			return nil, errors.Errorf("no feature name provided for variable update")
+		}
+		value, ok := json.String(update, "value")
+		if !ok {
+			return nil, errors.Errorf("no feature value provided for variable update")
+		}
+		updatesParsed[i] = &VariableUpdate{
+			Index: index,
+			Name:  name,
+			Value: value,
+		}
+	}
+
+	return updatesParsed, nil
 }
 
 // FetchDataset builds a QueriedDataset from the needed parameters.

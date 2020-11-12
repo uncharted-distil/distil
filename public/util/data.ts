@@ -685,15 +685,11 @@ export function getTableDataItems(data: TableData): TableRow[] {
           if (colValue.weight !== null && colValue.weight !== undefined) {
             row[colName].weight = colValue.weight;
           }
-
-          // confidence code, draft pending UX feedback
-          /*
           if (colValue.confidence !== undefined) {
-            const conKey = colName + "confidence";
+            const conKey = "confidence";
             row[conKey] = {};
             row[conKey].value = colValue.confidence;
           }
-          */
         } else {
           row[colName] = formatValue(colValue.value, colType);
         }
@@ -736,17 +732,14 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
         label = variable.colDisplayName;
         description = `Model predicted value for ${variable.colName}`;
 
-        // confidence code, draft pending UX feedback
-        /*
-        result[col.key + "confidence"] = {
-          label: label + "_Confidence",
-          key: col.key + "confidence",
+        result.confidence = {
+          label: "Confidence",
+          key: "confidence",
           type: "numeric",
           weight: null,
           headerTitle: `Prediction confidence ${variable.colName}`,
           sortable: true,
         };
-        */
       } else if (isErrorCol(col.key)) {
         variable = requestGetters.getActiveSolutionTargetVariable(store)[0];
         label = "Error";

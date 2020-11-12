@@ -160,6 +160,7 @@ export interface VariableSummary {
   err?: string;
   weighted?: boolean;
   pending?: boolean;
+  solutionId?: string;
 }
 
 // Flags the display mode for a variable summary.  Generally Default is correct,
@@ -234,7 +235,7 @@ export enum TaskTypes {
   OBJECT_DETECTION = "objectDetection",
   SEMISUPERVISED = "semiSupervised",
   BINARY = "binary",
-  MULTICLASS = "multiclass",
+  MULTICLASS = "multiClass",
   MULTILABEL = "multilabel",
   UNIVARIATE = "univariate",
   MULTIVARIATE = "multivariate",

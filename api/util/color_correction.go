@@ -4,9 +4,9 @@ import "math"
 
 // Options for ConvertS2ToRgb
 type Options struct {
-	gain  float64
-	gamma float64
-	gainL float64
+	Gain  float64 `json:"gain"`
+	Gamma float64 `json:"gamma"`
+	GainL float64 `json:"gainL"`
 }
 
 // ConvertS2ToRgb bands: [b02, b03, b04], Options gain amount, gamma correction amount, gainL light gain
@@ -17,7 +17,7 @@ func ConvertS2ToRgb(bands [3]float64, options ...Options) [3]float64 {
 		{1.463, -0.427, -0.043}} // magic matrix
 	if len(options) != 0 { // if options
 		opt := options[0]
-		return s2ToRGB(getSolarIrr(bands[2], bands[1], bands[0]), t, opt.gain, opt.gamma, opt.gainL)
+		return s2ToRGB(getSolarIrr(bands[2], bands[1], bands[0]), t, opt.Gain, opt.Gamma, opt.GainL)
 	}
 	// defaults found here:
 	// https://github.com/sentinel-hub/custom-scripts/blob/e16f0d4f52fc2f9aaf612e582865d17b0b5c3457/sentinel-2/natural_color/script.js#L92

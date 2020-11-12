@@ -567,28 +567,41 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 		params = append(params, []interface{}{i, v})
 	}
 
+	tx, err := s.batchClient.Begin()
+	if err != nil {
+		tx.Rollback(context.Background())
+		return errors.Wrap(err, "unable to create transaction")
+	}
+
 	// loop through the updates, building batches to minimize overhead
 	tableNameTmp := fmt.Sprintf("%s_utmp", storageName)
-	dataSQL := fmt.Sprintf("CREATE TEMP TABLE \"%s\" (\"%s\" TEXT NOT NULL, \"%s\" TEXT);",
+	dataSQL := fmt.Sprintf("CREATE TEMP TABLE \"%s\" (\"%s\" TEXT NOT NULL, \"%s\" TEXT) ON COMMIT DROP;",
 		tableNameTmp, model.D3MIndexName, varName)
-	_, err := s.batchClient.Exec(dataSQL)
+	_, err = tx.Exec(context.Background(), dataSQL)
 	if err != nil {
+		tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to create temp table")
 	}
 
-	err = s.insertBulkCopy(tableNameTmp, []string{model.D3MIndexName, varName}, params)
+	err = s.insertBulkCopyTransaction(tx, tableNameTmp, []string{model.D3MIndexName, varName}, params)
 	if err != nil {
+		tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to insert into temp table")
 	}
 
 	// run the update
 	updateSQL := fmt.Sprintf("UPDATE %s.%s.\"%s_base\" AS b SET \"%s\" = t.\"%s\" FROM \"%s\" AS t WHERE t.\"%s\" = b.\"%s\";",
 		"distil", "public", storageName, varName, varName, tableNameTmp, model.D3MIndexName, model.D3MIndexName)
-	_, err = s.batchClient.Exec(updateSQL)
+	_, err = tx.Exec(context.Background(), updateSQL)
 	if err != nil {
+		tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to update base data")
 	}
-	s.batchClient.Exec(fmt.Sprintf("DROP TABLE \"%s\"", tableNameTmp))
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "unable to commit bulk update")
+	}
 
 	return nil
 }
@@ -610,7 +623,7 @@ func (s *Storage) UpdateData(dataset string, storageName string, varName string,
 	}
 
 	tableNameTmp := fmt.Sprintf("%s_utmp", storageName)
-	dataSQL := fmt.Sprintf("CREATE TEMP TABLE \"%s\" (\"%s\" TEXT NOT NULL, \"%s\" TEXT);",
+	dataSQL := fmt.Sprintf("CREATE TEMP TABLE \"%s\" (\"%s\" TEXT NOT NULL, \"%s\" TEXT) ON COMMIT DROP;",
 		tableNameTmp, model.D3MIndexName, varName)
 	_, err = tx.Exec(context.Background(), dataSQL)
 	if err != nil {
