@@ -24,7 +24,7 @@ import {
   RESULTS_ROUTE,
   EXPORT_SUCCESS_ROUTE,
   PREDICTION_ROUTE,
-  DATAEXPLORER_ROUTE,
+  DATA_EXPLORER_ROUTE,
 } from "../store/route";
 
 Vue.use(VueRouter);
@@ -41,7 +41,7 @@ const router = new VueRouter({
     { path: RESULTS_ROUTE, component: Results },
     { path: EXPORT_SUCCESS_ROUTE, component: ExportSuccess },
     { path: PREDICTION_ROUTE, component: Predictions },
-    { path: DATAEXPLORER_ROUTE, component: DataExplorer },
+    { path: DATA_EXPLORER_ROUTE, component: DataExplorer },
   ],
 });
 

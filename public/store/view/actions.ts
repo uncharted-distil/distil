@@ -5,6 +5,7 @@ import {
   filterArrayByPage,
   NUM_PER_PAGE,
   NUM_PER_TARGET_PAGE,
+  NUM_PER_DATA_EXPLORER_PAGE,
   searchVariables,
   sortVariablesByImportance,
 } from "../../util/data";
@@ -39,7 +40,7 @@ import {
   actions as resultActions,
   mutations as resultMutations,
 } from "../results/module";
-import { SELECT_TARGET_ROUTE } from "../route";
+import { DATA_EXPLORER_ROUTE, SELECT_TARGET_ROUTE } from "../route";
 import { getters as routeGetters } from "../route/module";
 import store, { DistilState } from "../store";
 import { ViewState } from "./index";
@@ -114,8 +115,12 @@ const fetchVariableSummaries = async (context, args) => {
   const mainPageIndex = currentPageIndexes?.[0];
   const trainingIndex = currentPageIndexes?.[1];
 
-  const pageLength =
-    currentRoute === SELECT_TARGET_ROUTE ? NUM_PER_TARGET_PAGE : NUM_PER_PAGE;
+  let pageLength = NUM_PER_PAGE;
+  if (currentRoute === SELECT_TARGET_ROUTE) {
+    pageLength = NUM_PER_TARGET_PAGE;
+  } else if (currentRoute === DATA_EXPLORER_ROUTE) {
+    pageLength = NUM_PER_DATA_EXPLORER_PAGE;
+  }
 
   const searches = routeGetters.getAllSearchesByRoute(store);
   const currentPageSearches = searches[currentRoute] ?? [];
@@ -170,23 +175,18 @@ const fetchVariableSummaries = async (context, args) => {
     ...mainPageVariables,
   ];
 
+  const fetchArgs = {
+    dataset: dataset,
+    variables: allActiveVariables,
+    filterParams: filterParams,
+    highlight: highlight,
+    dataMode: dataMode,
+    varModes: varModes,
+  };
+
   return Promise.all([
-    datasetActions.fetchIncludedVariableSummaries(store, {
-      dataset: dataset,
-      variables: allActiveVariables,
-      filterParams: filterParams,
-      highlight: highlight,
-      dataMode: dataMode,
-      varModes: varModes,
-    }),
-    datasetActions.fetchExcludedVariableSummaries(store, {
-      dataset: dataset,
-      variables: allActiveVariables,
-      filterParams: filterParams,
-      highlight: highlight,
-      dataMode: dataMode,
-      varModes: varModes,
-    }),
+    datasetActions.fetchIncludedVariableSummaries(store, fetchArgs),
+    datasetActions.fetchExcludedVariableSummaries(store, fetchArgs),
   ]);
 };
 
@@ -380,11 +380,16 @@ export const actions = {
 
     // fetch new state
     const dataset = context.getters.getRouteDataset;
-    const args = {
-      dataset: dataset,
-    };
-    await fetchVariables(context, args);
-    return fetchVariableSummaries(context, args);
+    return fetchVariableSummaries(context, { dataset });
+  },
+
+  async fetchDataExplorerData(context: ViewContext) {
+    // clear previous state
+    clearVariableSummaries(context);
+
+    // fetch new state
+    const dataset = context.getters.getRouteDataset;
+    return fetchVariableSummaries(context, { dataset });
   },
 
   clearJoinDatasetsData(context) {

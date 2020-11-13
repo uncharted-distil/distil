@@ -20,15 +20,14 @@
     </action-column>
     <left-side-panel panel-title="Select feature to infer below (target)">
       <variable-facets
+        slot="content"
         enable-search
         enable-type-change
         enable-type-filtering
-        :facet-count="searchedActiveVariables.length"
-        :html="html"
         ignore-highlights
+        :facet-count="searchedActiveVariables.length"
         :instance-name="instanceName"
         :log-activity="problemDefinition"
-        :pagination="searchedActiveVariables.length > numRowsPerPage"
         :rows-per-page="numRowsPerPage"
         :summaries="summaries"
       />
@@ -68,7 +67,7 @@ import { actions as viewActions } from "../store/view/module";
 // Util
 import {
   getVariableSummariesByState,
-  NUM_PER_TARGET_PAGE,
+  NUM_PER_DATA_EXPLORER_PAGE,
   searchVariables,
 } from "../util/data";
 import { Group } from "../util/facets";
@@ -94,11 +93,15 @@ export default Vue.extend({
   data() {
     return {
       instanceName: AVAILABLE_TARGET_VARS_INSTANCE,
-      numRowsPerPage: NUM_PER_TARGET_PAGE,
+      numRowsPerPage: NUM_PER_DATA_EXPLORER_PAGE,
     };
   },
 
   computed: {
+    availableTargetVarsPage(): number {
+      return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
+    },
+
     availableTargetVarsSearch(): string {
       return routeGetters.getRouteAvailableTargetVarsSearch(this.$store);
     },
@@ -261,8 +264,18 @@ export default Vue.extend({
     },
   },
 
+  watch: {
+    availableTargetVarsPage() {
+      viewActions.fetchDataExplorerData(this.$store);
+    },
+
+    availableTargetVarsSearch() {
+      viewActions.fetchDataExplorerData(this.$store);
+    },
+  },
+
   beforeMount() {
-    viewActions.fetchSelectTargetData(this.$store, true);
+    viewActions.fetchDataExplorerData(this.$store);
   },
 
   methods: {

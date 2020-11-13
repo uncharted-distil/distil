@@ -1,6 +1,9 @@
 <template>
   <div class="variable-facets row h-100">
-    <div :class="variableFacetListClass + ' col-12 flex-column d-flex'">
+    <div
+      class="variable-facets-list col-12 flex-column d-flex"
+      :class="{ pagination: pagination }"
+    >
       <div v-if="enableSearch" class="row align-items-center facet-filters">
         <div class="col-12 flex-column d-flex">
           <b-form-input v-model="search" size="sm" placeholder="Search" />
@@ -161,7 +164,6 @@
 </template>
 
 <script lang="ts">
-import _ from "lodash";
 import FacetImage from "./FacetImage.vue";
 import FacetDateTime from "./FacetDateTime.vue";
 import FacetTimeseries from "./FacetTimeseries.vue";
@@ -216,30 +218,25 @@ export default Vue.extend({
   },
 
   props: {
-    enableHighlighting: Boolean as () => boolean,
-    enableSearch: Boolean as () => boolean,
-    enableTitle: Boolean as () => boolean,
-    enableTypeChange: Boolean as () => boolean,
-    enableTypeFiltering: Boolean as () => boolean,
-    facetCount: Number as () => number,
-    html: [
-      String as () => string,
-      Object as () => any,
-      Function as () => Function,
-    ],
-    instanceName: { type: String as () => string, default: "variableFacets" },
-    isAvailableFeatures: Boolean as () => boolean,
-    isFeaturesToModel: Boolean as () => boolean,
-    isResultFeatures: Boolean as () => boolean,
-    ignoreHighlights: Boolean as () => boolean,
+    enableHighlighting: Boolean,
+    enableSearch: Boolean,
+    enableTitle: Boolean,
+    enableTypeChange: Boolean,
+    enableTypeFiltering: Boolean,
+    facetCount: { type: Number, default: 0 },
+    html: { type: [String, Object, Function], default: null },
+    instanceName: { type: String, default: "variableFacets" },
+    isAvailableFeatures: Boolean,
+    isFeaturesToModel: Boolean,
+    isResultFeatures: Boolean,
+    ignoreHighlights: Boolean,
     logActivity: {
       type: String as () => Activity,
       default: Activity.DATA_PREPARATION,
     },
-    pagination: Boolean as () => boolean,
-    summaries: Array as () => VariableSummary[],
-    subtitle: String as () => string,
-    rowsPerPage: { type: Number as () => number, default: NUM_PER_PAGE },
+    summaries: { type: Array as () => VariableSummary[], default: [] },
+    subtitle: { type: String, default: null },
+    rowsPerPage: { type: Number, default: NUM_PER_PAGE },
   },
 
   data() {
@@ -308,15 +305,9 @@ export default Vue.extend({
       return typeChangeStatus;
     },
 
-    variableFacetListClass(): string {
-      return this.pagination
-        ? "variable-facets-list-with-footer"
-        : "variable-facets-list";
-    },
-
-    expandGeoAndTimeseriesFacets(): Boolean {
+    expandGeoAndTimeseriesFacets(): boolean {
       // The Geocoordinates and Timeseries Facets are expanded on SELECT_TARGET_ROUTE
-      return routeGetters.isPageSelectTarget(this.$store);
+      return !!routeGetters.isPageSelectTarget(this.$store);
     },
 
     facetColors(): string {
@@ -327,7 +318,12 @@ export default Vue.extend({
         FACET_COLOR_FILTERED,
       ]);
     },
+
+    pagination(): boolean {
+      return this.facetCount > this.rowsPerPage;
+    },
   },
+
   watch: {
     search() {
       const entry = overlayRouteEntry(this.$route, {
@@ -336,6 +332,7 @@ export default Vue.extend({
       this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
+
   beforeMount() {
     this.search = routeGetters.getAllSearchesByQueryString(this.$store)[
       this.routeSearchKey()
@@ -440,7 +437,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 button {
   cursor: pointer;
 }
@@ -574,11 +571,10 @@ button {
   overflow-y: auto;
 }
 
-.variable-facets-list-with-footer {
-  max-height: calc(100% - 45px);
-}
-
 .variable-facets-list {
   max-height: 100%;
+}
+.variable-facets-list.pagination {
+  max-height: calc(100% - 45px);
 }
 </style>

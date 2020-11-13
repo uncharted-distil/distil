@@ -9,6 +9,7 @@ import {
   BandID,
 } from "../dataset/index";
 import {
+  DATA_EXPLORER_ROUTE,
   JOIN_DATASETS_ROUTE,
   RESULTS_ROUTE,
   SELECT_TARGET_ROUTE,
@@ -217,6 +218,7 @@ export const getters = {
     const pages = {};
     pages[JOIN_DATASETS_ROUTE] = [getters.getRouteJoinDatasetsVarsPage];
     pages[SELECT_TARGET_ROUTE] = [getters.getRouteAvailableTargetVarsPage];
+    pages[DATA_EXPLORER_ROUTE] = [getters.getRouteAvailableTargetVarsPage];
     pages[SELECT_TRAINING_ROUTE] = [
       getters.getRouteAvailableTrainingVarsPage,
       getters.getRouteTrainingVarsPage,
@@ -254,6 +256,7 @@ export const getters = {
     const searches = {};
     searches[JOIN_DATASETS_ROUTE] = [getters.getRouteJoinDatasetsVarsSearch];
     searches[SELECT_TARGET_ROUTE] = [getters.getRouteAvailableTargetVarsSearch];
+    searches[DATA_EXPLORER_ROUTE] = [getters.getRouteAvailableTargetVarsSearch];
     searches[SELECT_TRAINING_ROUTE] = [
       getters.getRouteAvailableTrainingVarsSearch,
       getters.getRouteTrainingVarsSearch,

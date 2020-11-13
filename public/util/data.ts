@@ -56,6 +56,7 @@ export const ERROR_SUFFIX = "_error";
 
 export const NUM_PER_PAGE = 10;
 export const NUM_PER_TARGET_PAGE = 9;
+export const NUM_PER_DATA_EXPLORER_PAGE = 4;
 
 export const DATAMART_PROVENANCE_NYU = "NYU";
 export const DATAMART_PROVENANCE_ISI = "ISI";
@@ -574,42 +575,46 @@ export function getVariableSummariesByState(
   const ranked =
     routeGetters.getRouteIsTrainingVariablesRanked(store) || isSorted;
 
-  let currentSummaries = [];
-
-  if (Object.keys(summaryDictionary).length > 0 && variables.length > 0) {
-    // remove any pattern cluster variables
-    let sortedVariables = variables.filter((sv) => {
-      return sv.colName.indexOf(CLUSTER_PREFIX) < 0;
-    });
-    if (ranked) {
-      // prioritize FI over MI
-      sortedVariables = sortVariablesByImportance(sortedVariables);
-    }
-    // select only the current variables on the page
-    sortedVariables = filterArrayByPage(pageIndex, pageSize, sortedVariables);
-    // map them back to the variable summary dictionary for the current route key
-    currentSummaries = sortedVariables.reduce((cs, vn) => {
-      if (!summaryDictionary[vn.colName]) {
-        const placeholder = createPendingSummary(
-          vn.colName,
-          vn.colDisplayName,
-          vn.colDescription,
-          vn.datasetName
-        );
-        cs.push(placeholder);
-      } else {
-        if (summaryDictionary[vn.colName][routeKey]) {
-          cs.push(summaryDictionary[vn.colName][routeKey]);
-        } else {
-          const tempVariableSummaryKey = Object.keys(
-            summaryDictionary[vn.colName]
-          )[0];
-          cs.push(summaryDictionary[vn.colName][tempVariableSummaryKey]);
-        }
-      }
-      return cs;
-    }, []);
+  if (!(Object.keys(summaryDictionary).length > 0 && variables.length > 0)) {
+    return [];
   }
+
+  // remove any pattern cluster variables
+  let sortedVariables = variables.filter((sv) => {
+    return sv.colName.indexOf(CLUSTER_PREFIX) < 0;
+  });
+
+  if (ranked) {
+    // prioritize FI over MI
+    sortedVariables = sortVariablesByImportance(sortedVariables);
+  }
+
+  // select only the current variables on the page
+  sortedVariables = filterArrayByPage(pageIndex, pageSize, sortedVariables);
+
+  // map them back to the variable summary dictionary for the current route key
+  const currentSummaries = sortedVariables.reduce((cs, vn) => {
+    if (!summaryDictionary[vn.colName]) {
+      const placeholder = createPendingSummary(
+        vn.colName,
+        vn.colDisplayName,
+        vn.colDescription,
+        vn.datasetName
+      );
+      cs.push(placeholder);
+    } else {
+      if (summaryDictionary[vn.colName][routeKey]) {
+        cs.push(summaryDictionary[vn.colName][routeKey]);
+      } else {
+        const tempVariableSummaryKey = Object.keys(
+          summaryDictionary[vn.colName]
+        )[0];
+        cs.push(summaryDictionary[vn.colName][tempVariableSummaryKey]);
+      }
+    }
+    return cs;
+  }, []);
+
   return currentSummaries;
 }
 

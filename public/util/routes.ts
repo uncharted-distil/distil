@@ -1,13 +1,6 @@
 import _ from "lodash";
-import { Route, Location, RouteRecord } from "vue-router";
+import { Route, Location } from "vue-router";
 import { Dictionary } from "./dict";
-import {
-  JOINED_VARS_INSTANCE_PAGE,
-  AVAILABLE_TARGET_VARS_INSTANCE_PAGE,
-  AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
-  TRAINING_VARS_INSTANCE_PAGE,
-  RESULT_TRAINING_VARS_INSTANCE_PAGE,
-} from "../store/route/index";
 import { SummaryMode } from "../store/dataset";
 
 // TODO: should really have a separate definintion for each route
@@ -58,6 +51,19 @@ export interface RouteArgs {
   metrics?: string;
 }
 
+function validateQueryArgs(args: RouteArgs): RouteArgs {
+  return _.reduce(
+    args,
+    (query, value, arg) => {
+      if (!_.isUndefined(value)) {
+        query[arg] = value;
+      }
+      return query;
+    },
+    {} as RouteArgs
+  );
+}
+
 /**
  * Builds a route entry object that can be directly pushed onto the stack
  * via  call to route.push(). This holds all the app view state to support
@@ -94,25 +100,12 @@ export function getRouteFacetSearch(key: string, route: Route): string {
   return searchQuery ? searchQuery : "";
 }
 
-function validateQueryArgs(args: RouteArgs): RouteArgs {
-  return _.reduce(
-    args,
-    (query, value, arg) => {
-      if (!_.isUndefined(value)) {
-        query[arg] = value;
-      }
-      return query;
-    },
-    {} as RouteArgs
-  );
-}
-
 export function varModesToString(varModes: Map<string, SummaryMode>): string {
   // serialize the modes map into a string and add to the route
   return Array.from(varModes)
     .reduce((acc, curr) => {
       acc.push(`${curr[0]}:${curr[1]}`);
       return acc;
-    }, [] as String[])
+    }, [] as string[])
     .join(",");
 }

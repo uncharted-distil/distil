@@ -109,7 +109,7 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { Dataset, Variable } from "../store/dataset/index";
 import { actions as datasetActions } from "../store/dataset/module";
-import { DATAEXPLORER_ROUTE, SELECT_TARGET_ROUTE } from "../store/route/index";
+import { DATA_EXPLORER_ROUTE, SELECT_TARGET_ROUTE } from "../store/route/index";
 import localStorage from "store";
 import {
   actions as appActions,
@@ -174,7 +174,7 @@ export default Vue.extend({
 
       // Change the route to data-explorer during the prototype phase.
       const route = appGetters.isPrototype(this.$store)
-        ? DATAEXPLORER_ROUTE
+        ? DATA_EXPLORER_ROUTE
         : SELECT_TARGET_ROUTE;
 
       const entry = createRouteEntry(route, {
