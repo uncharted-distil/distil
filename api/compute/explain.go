@@ -128,11 +128,29 @@ type pipelineOutput struct {
 }
 
 func parseGradCam(params []int) func([]string) (*api.SolutionExplainValues, error) {
+	// instantiate the parser
+	field := &result.ComplexField{}
+	field.Init()
 	return func(data []string) (*api.SolutionExplainValues, error) {
-		result := &api.SolutionExplainValues{}
-		result.GradCAM = [][]float64{{12}}
+		parsed := &api.SolutionExplainValues{}
+		parsed.GradCAM = [][]float64{{12}}
 
-		return result, nil
+		gradCamParsed := result.ParseVal(data[0], field).([][]string)
+
+		// parse as floats
+		parsed.GradCAM = make([][]float64, len(gradCamParsed))
+		for i, outer := range gradCamParsed {
+			parsed.GradCAM[i] = make([]float64, len(outer))
+			for j, inner := range outer {
+				parsedVal, err := strconv.ParseFloat(inner, 64)
+				if err != nil {
+					return nil, errors.Wrapf(err, "unable to parse grad cam value")
+				}
+				parsed.GradCAM[i][j] = parsedVal
+			}
+		}
+
+		return parsed, nil
 	}
 }
 
