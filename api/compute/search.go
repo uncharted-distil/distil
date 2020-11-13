@@ -35,8 +35,8 @@ type searchResult struct {
 }
 
 func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, searchResult *searchResult, searchID string, searchSolutionID string, dataset string, storageName string,
-	searchRequest *pipeline.SearchSolutionsRequest, produceDatasetURI string, variables []*model.Variable) error {
+	dataStorage api.DataStorage, searchResult *searchResult, searchID string, searchSolutionID string, dataset string,
+	storageName string, produceDatasetURI string, variables []*model.Variable) error {
 
 	// get solution description
 	desc, err := describeSolution(client, searchSolutionID)
@@ -44,12 +44,7 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 		return err
 	}
 
-	keywords := make([]string, 0)
-	if searchRequest.Problem != nil && searchRequest.Problem.Problem != nil {
-		keywords = searchRequest.Problem.Problem.TaskKeywords
-	}
-
-	_, explainOutputs := s.createExplainPipeline(desc, keywords)
+	_, explainOutputs := s.createExplainPipeline(desc)
 
 	// if nothing to explain, then exit
 	if len(explainOutputs) == 0 {

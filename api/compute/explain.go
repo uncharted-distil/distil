@@ -161,16 +161,14 @@ func parseConfidencesWrapper(params []int) func([]string) (*api.SolutionExplainV
 	}
 }
 
-func (s *SolutionRequest) createExplainPipeline(desc *pipeline.DescribeSolutionResponse,
-	keywords []string) (*pipeline.PipelineDescription, map[string]*pipelineOutput) {
-	// remote sensing and images are not explainable
+func (s *SolutionRequest) createExplainPipeline(desc *pipeline.DescribeSolutionResponse) (*pipeline.PipelineDescription, map[string]*pipelineOutput) {
+	// pre featurized datasets are not explainable
 	// TODO: we may want to look into folding this filtering functionality into
 	// the function that builds the explainable pipeline (explainablePipeline).
-	for _, kw := range keywords {
-		if unexplainableTask[kw] {
-			return nil, nil
-		}
+	if s.DatasetMetadata != nil && s.DatasetMetadata.LearningDataset != "" {
+		return nil, nil
 	}
+
 	ok, pipExplain, explainOutputs := s.explainablePipeline(desc)
 	if !ok {
 		return nil, nil
