@@ -363,6 +363,7 @@ type persistedDataParams struct {
 	TaskType           []string
 	TmpDataFolder      string
 	Quality            string
+	TrainTestSplit     float64
 }
 
 type rowLimits struct {
@@ -503,10 +504,10 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 
 	if hasForecasting {
 		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true,
-			params.GroupingFieldIndex, config.TrainTestSplitTimeSeries)
+			params.GroupingFieldIndex, params.TrainTestSplit)
 	} else {
 		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex,
-			params.GroupingFieldIndex, params.Stratify, limits, config.TrainTestSplit)
+			params.GroupingFieldIndex, params.Stratify, limits, params.TrainTestSplit)
 	}
 	if err != nil {
 		return "", "", err

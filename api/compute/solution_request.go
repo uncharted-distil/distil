@@ -766,6 +766,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		TargetFieldIndex:   targetIndex,
 		Stratify:           stratify,
 		Quality:            s.Quality,
+		TrainTestSplit:     s.TrainTestSplit,
 	}
 	datasetPathTrain, datasetPathTest, err := persistOriginalData(params)
 	if err != nil {
