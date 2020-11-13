@@ -56,7 +56,7 @@ export interface RouteArgs {
   modelQuality?: string;
   dataSize?: number;
   metrics?: string;
-  mlSplit?: number;
+  trainTestSplit?: number;
 }
 
 /**

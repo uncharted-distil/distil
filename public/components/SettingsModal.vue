@@ -204,7 +204,7 @@ export default Vue.extend({
         modelTimeLimit: this.timeLimit,
         modelQuality: this.speedQuality,
         metrics: this.selectedMetric,
-        mlSplit: this.trainingRatio,
+        trainTestSplit: this.trainingRatio,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
     },

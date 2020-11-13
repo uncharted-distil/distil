@@ -143,7 +143,7 @@ export default Vue.extend({
           maxSolutions: routeGetters.getModelLimit(this.$store),
           maxTime: routeGetters.getModelTimeLimit(this.$store),
           quality: routeGetters.getModelQuality(this.$store),
-          mlSplit: routeGetters.getModelDataSplit(this.$store),
+          trainTestSplit: routeGetters.getModelDataSplit(this.$store),
         })
         .then((res: Solution) => {
           this.pending = false;

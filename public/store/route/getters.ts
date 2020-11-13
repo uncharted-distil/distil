@@ -607,11 +607,11 @@ export const getters = {
   },
 
   getModelDataSplit(state: Route): number {
-    const mlSplit = <string>state.query.mlSplit;
-    if (!mlSplit) {
+    const trainTestSplit = <string>state.query.trainTestSplit;
+    if (!trainTestSplit) {
       return 0.9;
     }
-    return parseFloat(mlSplit);
+    return parseFloat(trainTestSplit);
   },
 
   /* Check if the current page is SELECT_TARGET_ROUTE. */
