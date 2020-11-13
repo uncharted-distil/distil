@@ -33,16 +33,13 @@ func ConfigHandler(config env.Config, version string, timestamp string, problemP
 
 		// marshal version
 		err := handleJSON(w, map[string]interface{}{
-			"version":        version,
-			"timestamp":      timestamp,
-			"dataset":        dataset,
-			"target":         target,
-			"metrics":        metrics,
-			"help":           config.HelpURL,
-			"ta2version":     ta2Version,
-			"subdomains":     config.Subdomains,
-			"mapAPIKey":      config.MapAPIKey,
-			"tileRequestURL": config.TileRequestURL,
+			"version":    version,
+			"timestamp":  timestamp,
+			"dataset":    dataset,
+			"target":     target,
+			"metrics":    metrics,
+			"help":       config.HelpURL,
+			"ta2version": ta2Version,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal version into JSON and write response"))

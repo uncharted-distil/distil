@@ -33,7 +33,6 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 	"github.com/uncharted-distil/distil/api/serialization"
-	"github.com/uncharted-distil/distil/api/util"
 	"github.com/uncharted-distil/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
 
@@ -528,9 +527,8 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 }
 
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, searchID string, initialSearchID string, dataset string, storageName string,
-	explainedSolutionID string, initialSearchSolutionID string, fittedSolutionID string, produceRequestID string, resultID string,
-	resultURI string, confidenceValues *api.SolutionExplainResult, explainOutput map[string]*api.SolutionExplainResult) {
+	dataStorage api.DataStorage, initialSearchID string, dataset string, storageName string, initialSearchSolutionID string,
+	fittedSolutionID string, produceRequestID string, resultID string, resultURI string) {
 	// persist the completed state
 	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, SolutionCompletedStatus, time.Now())
 	if err != nil {
@@ -539,27 +537,18 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist result metadata
-	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, produceRequestID, "test", resultID, resultURI, SolutionCompletedStatus, explainOutput, time.Now())
+	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, produceRequestID, "test", resultID, resultURI, SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
 	}
 	// persist results
-	err = dataStorage.PersistResult(dataset, storageName, resultURI, s.TargetFeature.Name, confidenceValues)
+	err = dataStorage.PersistResult(dataset, storageName, resultURI, s.TargetFeature.Name)
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
-	}
-
-	// notify client of update
-	statusChan <- SolutionStatus{
-		RequestID:  initialSearchID,
-		SolutionID: initialSearchSolutionID,
-		ResultID:   resultID,
-		Progress:   SolutionCompletedStatus,
-		Timestamp:  time.Now(),
 	}
 }
 
@@ -581,243 +570,6 @@ func describeSolution(client *compute.Client, initialSearchSolutionID string) (*
 	return desc, nil
 }
 
-func (s *SolutionRequest) dispatchSolution(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, initialSearchID string, initialSearchSolutionID string, dataset string, storageName string,
-	searchRequest *pipeline.SearchSolutionsRequest, datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
-
-	// get solution description
-	desc, err := describeSolution(client, initialSearchSolutionID)
-	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-		return
-	}
-
-	// Need to create a new solution that has the explain output. This is the solution
-	// that will be used throughout distil except for the export (which will use the original solution).
-	// The client API will also reference things by the initial IDs.
-
-	// get the pipeline description
-	keywords := make([]string, 0)
-	if searchRequest.Problem != nil && searchRequest.Problem.Problem != nil {
-		keywords = searchRequest.Problem.Problem.TaskKeywords
-	}
-
-	explainDesc, outputKeysExplain, err := s.createExplainPipeline(desc, keywords)
-	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-		return
-	}
-
-	// Use the updated explain pipeline if it exists, otherwise use the baseline pipeline
-	if explainDesc != nil {
-		searchRequest.Template = explainDesc
-	} else {
-		searchRequest.Template = desc.GetPipeline()
-	}
-
-	searchID, err := client.StartSearch(context.Background(), searchRequest)
-	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-		return
-	}
-	wg := &sync.WaitGroup{}
-
-	err = client.SearchSolutions(context.Background(), searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
-		wg.Add(1)
-		defer wg.Done() // make sure wg is flagged on any return
-
-		solutionID := solution.SolutionId
-
-		// persist the solution info
-		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionFittingStatus)
-
-		err = solutionStorage.UpdateSolution(initialSearchSolutionID, solutionID)
-		if err != nil {
-			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-			return
-		}
-
-		// fit solution
-		fitRequest := createFitSolutionRequest(datasetURITrain, solutionID)
-		fitResults, err := client.GenerateSolutionFit(context.Background(), fitRequest)
-		if err != nil {
-			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-			return
-		}
-
-		// find the completed result and get the fitted solution ID out
-		var fittedSolutionID string
-		for _, result := range fitResults {
-			if result.GetFittedSolutionId() != "" {
-				fittedSolutionID = result.GetFittedSolutionId()
-				break
-			}
-		}
-		if fittedSolutionID == "" {
-			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID,
-				errors.Errorf("no fitted solution ID for solution `%s` ('%s')", solutionID, initialSearchSolutionID))
-			return
-		}
-
-		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionScoringStatus)
-
-		// score solution
-		solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), solutionID, datasetURITest, s.Metrics)
-		if err != nil {
-			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-			return
-		}
-
-		// persist the scores
-		for _, response := range solutionScoreResponses {
-			// only persist scores from COMPLETED responses
-			if response.Progress.State == pipeline.ProgressState_COMPLETED {
-				for _, score := range response.Scores {
-					metric := ""
-					if score.GetMetric() == nil {
-						metric = compute.ConvertMetricsFromTA3ToTA2(s.Metrics)[0].GetMetric()
-					} else {
-						metric = score.Metric.Metric
-					}
-					err := solutionStorage.PersistSolutionScore(initialSearchSolutionID, metric, score.Value.GetRaw().GetDouble())
-					if err != nil {
-						s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-						return
-					}
-				}
-			}
-		}
-
-		// persist solution running status
-		s.persistSolutionStatus(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, SolutionProducingStatus)
-
-		// generate output keys, adding one extra for explanation output if we expect it to exist
-		outputKeys := []string{defaultExposedOutputKey}
-		outputKeys = append(outputKeys, extractOutputKeys(outputKeysExplain)...)
-
-		// generate predictions -  for timeseries we want to use the entire source dataset, for anything else
-		// we only want the test data predictions.
-		produceDatasetURI := datasetURITest
-		for _, task := range s.Task {
-			if task == compute.ForecastingTask {
-				produceDatasetURI = datasetURI
-				break
-			}
-		}
-		exposeType := []string{}
-		if s.useParquet {
-			exposeType = append(exposeType, compute.ParquetURIValueType)
-		}
-		produceSolutionRequest := createProduceSolutionRequest(produceDatasetURI, fittedSolutionID, outputKeys, exposeType)
-
-		// generate predictions
-		produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
-		if err != nil {
-			s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-			return
-		}
-
-		for _, response := range predictionResponses {
-
-			if response.Progress.State != pipeline.ProgressState_COMPLETED {
-				// only persist completed responses
-				continue
-			}
-
-			// Generate a path for each output key that has been exposed
-			outputKeyURIs := map[string]string{}
-			for _, exposedOutputKey := range outputKeys {
-				outputURI, err := getFileFromOutput(response, exposedOutputKey)
-				if err != nil {
-					s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-					return
-				}
-				outputKeyURIs[exposedOutputKey] = outputURI
-			}
-
-			// get the result UUID. NOTE: Doing sha1 for now.
-			resultID := ""
-			resultURI, ok := outputKeyURIs[defaultExposedOutputKey]
-			if ok {
-				// reformat result to have one row per d3m index since confidences
-				// can produce one row / class
-				resultURI, err = reformatResult(resultURI)
-				if err != nil {
-					s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-					return
-				}
-
-				resultID, err = util.Hash(resultURI)
-				if err != nil {
-					s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-					return
-				}
-			}
-
-			// explain features per-record if the explanation is available
-			produceOutputs := map[string]*api.SolutionExplainResult{}
-			explainedResults := make(map[string]*api.SolutionExplainResult)
-			for _, explain := range outputKeysExplain {
-				if explain.typ == ExplainableTypeStep || explain.typ == ExplainableTypeConfidence {
-					explainURI := outputKeyURIs[explain.key]
-					log.Infof("explaining feature output from URI '%s'", explainURI)
-					produceDatasetURI = compute.BuildSchemaFileURI(produceDatasetURI)
-					parsedExplainResult, err := ExplainFeatureOutput(resultURI, explainURI)
-					if err != nil {
-						log.Warnf("failed to fetch output explanation - %v", err)
-						continue
-					}
-					parsedExplainResult.ParsingFunction = explain.parsingFunction
-					explainedResults[explain.typ] = parsedExplainResult
-				}
-				produceOutputs[explain.typ] = &api.SolutionExplainResult{
-					ResultURI: outputKeyURIs[explain.key],
-				}
-			}
-
-			featureWeights := explainedResults[ExplainableTypeStep]
-			if featureWeights != nil {
-				log.Infof("persisting feature weights")
-				err = dataStorage.PersistSolutionFeatureWeight(dataset, storageName, featureWeights.ResultURI, featureWeights.Values)
-				if err != nil {
-					s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-					return
-				}
-			}
-
-			// explain the features at the model level if the explanation is available
-			explainSolutionOutput := outputKeysExplain[ExplainableTypeSolution]
-			if explainSolutionOutput != nil {
-				explainSolutionURI := outputKeyURIs[explainSolutionOutput.key]
-				log.Infof("explaining solution output from URI '%s'", explainSolutionURI)
-				solutionWeights, err := s.explainSolutionOutput(resultURI, explainSolutionURI, initialSearchSolutionID, variables)
-				if err != nil {
-					log.Warnf("failed to fetch output explanantion - %v", err)
-				}
-				for _, fw := range solutionWeights {
-					err = solutionStorage.PersistSolutionWeight(fw.SolutionID, fw.FeatureName, fw.FeatureIndex, fw.Weight)
-					if err != nil {
-						s.persistSolutionError(statusChan, solutionStorage, searchID, initialSearchSolutionID, err)
-						return
-					}
-				}
-			}
-
-			// persist results
-			log.Infof("persisting results in URI '%s'", resultURI)
-			s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchID,
-				initialSearchID, dataset, storageName, solutionID, initialSearchSolutionID, fittedSolutionID,
-				produceRequestID, resultID, resultURI, explainedResults[ExplainableTypeConfidence], produceOutputs)
-		}
-	})
-	if err != nil {
-		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-		return
-	}
-
-	wg.Wait()
-}
-
 func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage,
 	searchID string, dataset string, storageName string, searchRequest *pipeline.SearchSolutionsRequest,
 	datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
@@ -827,6 +579,16 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 	if err != nil {
 		s.finished <- err
 		return
+	}
+
+	// generate predictions -  for timeseries we want to use the entire source dataset, for anything else
+	// we only want the test data predictions.
+	produceDatasetURI := datasetURITest
+	for _, task := range s.Task {
+		if task == compute.ForecastingTask {
+			produceDatasetURI = datasetURI
+			break
+		}
 	}
 
 	// search for solutions, this wont return until the search finishes or it times out
@@ -839,8 +601,28 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		s.persistSolution(c, solutionStorage, searchID, solution.SolutionId, "")
 		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
 		// dispatch it
-		s.dispatchSolution(c, client, solutionStorage, dataStorage, searchID,
-			solution.SolutionId, dataset, storageName, searchRequest, datasetURI, datasetURITrain, datasetURITest, variables)
+		searchResult, err := s.dispatchSolutionSearchPipeline(c, client, solutionStorage, dataStorage, searchID,
+			solution.SolutionId, dataset, storageName, produceDatasetURI, datasetURITrain, datasetURITest)
+		if err != nil {
+			s.persistSolutionError(c, solutionStorage, searchID, solution.SolutionId, err)
+			return
+		}
+
+		err = s.dispatchSolutionExplainPipeline(client, solutionStorage, dataStorage, searchResult, searchID,
+			solution.SolutionId, dataset, storageName, searchRequest, produceDatasetURI, variables)
+		if err != nil {
+			s.persistSolutionError(c, solutionStorage, searchID, solution.SolutionId, err)
+			return
+		}
+
+		// notify client of update
+		c <- SolutionStatus{
+			RequestID:  searchID,
+			SolutionID: solution.SolutionId,
+			ResultID:   searchResult.resultID,
+			Progress:   SolutionCompletedStatus,
+			Timestamp:  time.Now(),
+		}
 		// once done, mark as complete
 		s.completeSolution()
 		close(c)

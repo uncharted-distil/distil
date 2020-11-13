@@ -142,8 +142,8 @@
 // of prediction-truth residuals, and scoring information.
 
 import Vue from "vue";
-import FacetNumerical from "../components/facets/FacetNumerical";
-import FacetCategorical from "../components/facets/FacetCategorical";
+import FacetNumerical from "../components/facets/FacetNumerical.vue";
+import FacetCategorical from "../components/facets/FacetCategorical.vue";
 import {
   Extrema,
   VariableSummary,

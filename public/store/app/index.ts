@@ -9,10 +9,6 @@ export interface AppState {
   problemMetrics: string[];
   statusPanelState: StatusPanelState;
   ta2Version: string;
-  sessionToken: string;
-  mapAPIKey: string;
-  tileRequestURL: string;
-  subdomains: string;
   prototype: boolean;
 }
 
@@ -34,10 +30,6 @@ export const state: AppState = {
     isOpen: false,
   },
   ta2Version: "unknown",
-  sessionToken: "",
-  mapAPIKey: "",
-  tileRequestURL: "",
-  subdomains: "",
   prototype: false,
 };
 

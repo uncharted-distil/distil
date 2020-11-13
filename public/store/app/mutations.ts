@@ -44,18 +44,6 @@ export const mutations = {
   closeStatusPanel(state: AppState) {
     Vue.set(state.statusPanelState, "isOpen", false);
   },
-  setSessionToken(state: AppState, sessionToken: string) {
-    state.sessionToken = sessionToken;
-  },
-  setMapAPIKey(state: AppState, mapAPIKey: string) {
-    state.mapAPIKey = mapAPIKey;
-  },
-  setTileRequestURL(state: AppState, tileRequestURL: string) {
-    state.tileRequestURL = tileRequestURL;
-  },
-  setSubdomains(state: AppState, subdomains: string) {
-    state.subdomains = subdomains;
-  },
 
   togglePrototype(state: AppState) {
     state.prototype = !state.prototype;

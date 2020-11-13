@@ -1,29 +1,35 @@
 <template>
   <div class="drill-down-container">
-    <div class="grid-container" :style="gridColStyle">
-      <template v-for="(r, i) in rows">
-        <template v-for="(c, j) in cols">
-          <div class="image-container">
-            <image-label
-              class="image-label"
-              :dataFields="dataFields"
-              includedActive
-              shortenLabels
-              alignHorizontal
-              :item="tilesToRender[i][j].item"
-            />
-            <image-preview
-              class="image-preview"
-              :row="tilesToRender[i][j].item"
-              :image-url="tilesToRender[i][j].imageUrl"
-              :width="imageWidth"
-              :height="imageHeight"
-              :type="imageType"
-              :gray="tilesToRender[i][j].gray"
-            />
-          </div>
+    <div>
+      <div class="toolbar">
+        <div class="title">{{ title }}</div>
+        <b-button class="exit-button" @click="onExitClicked">x</b-button>
+      </div>
+      <div class="grid-container" :style="gridColStyle">
+        <template v-for="(r, i) in rows">
+          <template v-for="(c, j) in cols">
+            <div class="image-container">
+              <image-label
+                class="image-label"
+                :dataFields="dataFields"
+                includedActive
+                shortenLabels
+                alignHorizontal
+                :item="tilesToRender[i][j].item"
+              />
+              <image-preview
+                class="image-preview"
+                :row="tilesToRender[i][j].item"
+                :image-url="tilesToRender[i][j].imageUrl"
+                :width="imageWidth"
+                :height="imageHeight"
+                :type="imageType"
+                :gray="tilesToRender[i][j].gray"
+              />
+            </div>
+          </template>
         </template>
-      </template>
+      </div>
     </div>
   </div>
 </template>
@@ -87,6 +93,13 @@ export default Vue.extend({
     gridColStyle(): string {
       return `grid-template-columns: repeat(${this.cols}, ${this.imageWidth}px); grid-template-rows: repeat(${this.rows}, ${this.imageHeight}px);`;
     },
+    title(): string {
+      return `coordinates [${this.bounds[0][1].toFixed(
+        2
+      )}, ${this.bounds[0][0].toFixed(2)}] to [${this.bounds[1][1].toFixed(
+        2
+      )}, ${this.bounds[1][0].toFixed(2)}]`;
+    },
   },
   methods: {
     getIndex(x: number, y: number): SpatialIndex {
@@ -121,15 +134,9 @@ export default Vue.extend({
       // normalize coordinates
       return result;
     },
-    emitCloseEvent(event) {
-      if (!this.$el.contains(event.target)) {
-        window.removeEventListener("mousedown", this.emitCloseEvent);
-        this.$emit("close");
-      }
+    onExitClicked() {
+      this.$emit("close");
     },
-  },
-  mounted() {
-    window.addEventListener("mousedown", this.emitCloseEvent);
   },
 });
 </script>
@@ -161,5 +168,35 @@ export default Vue.extend({
   display: grid;
   grid-gap: 2px;
   padding-bottom: 4px;
+}
+.exit-button {
+  width: 30px;
+  height: 30px;
+  z-index: 999;
+  text-align: center;
+  float: right;
+  background: none;
+  border: none;
+  color: #8b8b8b;
+  border-top-right-radius: 0px;
+  font-size: 1.407rem;
+  font-weight: 600;
+  line-height: 0;
+}
+.toolbar {
+  background: rgba(255, 255, 255, 0.7);
+  height: 30px;
+  border-bottom: 1px solid #8b8b8b;
+}
+.title {
+  background-color: #255dcc;
+  display: inline;
+  color: #fff;
+  padding-left: 8px;
+  border-radius: 4px;
+  margin: 2px;
+  height: 26px;
+  position: absolute;
+  padding-right: 8px;
 }
 </style>

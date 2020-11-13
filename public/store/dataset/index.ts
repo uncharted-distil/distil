@@ -160,6 +160,7 @@ export interface VariableSummary {
   err?: string;
   weighted?: boolean;
   pending?: boolean;
+  solutionId?: string;
 }
 
 // Flags the display mode for a variable summary.  Generally Default is correct,

@@ -16,6 +16,7 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -140,17 +141,10 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 	return nil
 }
 
-// PersistResult stores the solution result to Postgres.
-func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string, explainResult *api.SolutionExplainResult) error {
-	// Read the results file.
-	datasetStorage := serialization.GetStorage(resultURI)
-	records, err := datasetStorage.ReadData(resultURI)
-	if err != nil {
-		return err
-	}
-
-	// read the confidence file
-	explainValues := make(map[string]*api.SolutionExplainValues)
+// PersistExplainedResult stores the additional explained output.
+func (s *Storage) PersistExplainedResult(dataset string, storageName string, resultURI string, explainResult *api.SolutionExplainResult) error {
+	fieldName := "explain_values"
+	params := make([][]interface{}, 0)
 	if explainResult != nil {
 		// build the confidence lookup
 		for _, row := range explainResult.Values[1:] {
@@ -158,8 +152,63 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			if err != nil {
 				return err
 			}
-			explainValues[row[explainResult.D3MIndexIndex]] = parsedExplainValues
+			params = append(params, []interface{}{row[explainResult.D3MIndexIndex], parsedExplainValues})
 		}
+	}
+
+	// do a bulk update by creating the temp table, then doing an insert, then an update
+	tx, err := s.batchClient.Begin()
+	if err != nil {
+		tx.Rollback(context.Background())
+		return errors.Wrap(err, "unable to create transaction")
+	}
+
+	tableNameTmp := fmt.Sprintf("%s_utmp", storageName)
+	dataSQL := fmt.Sprintf("CREATE TEMP TABLE \"%s\" (\"%s\" TEXT NOT NULL, \"%s\" JSONB) ON COMMIT DROP;",
+		tableNameTmp, model.D3MIndexName, fieldName)
+	_, err = tx.Exec(context.Background(), dataSQL)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return errors.Wrap(err, "unable to create temp table")
+	}
+
+	err = s.insertBulkCopyTransaction(tx, tableNameTmp, []string{model.D3MIndexName, fieldName}, params)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return errors.Wrap(err, "unable to insert into temp table")
+	}
+
+	// build the filter structure
+	wheres := []string{
+		fmt.Sprintf("t.\"%s\" = b.index::text", model.D3MIndexName),
+		"b.\"result_id\" = $1",
+	}
+	paramsFilter := []interface{}{resultURI}
+
+	// run the update
+	updateSQL := fmt.Sprintf("UPDATE %s.%s.\"%s\" AS b SET \"%s\" = t.\"%s\" FROM \"%s\" AS t WHERE %s",
+		"distil", "public", s.getResultTable(storageName), fieldName, fieldName, tableNameTmp, strings.Join(wheres, " AND "))
+	_, err = tx.Exec(context.Background(), updateSQL, paramsFilter...)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return errors.Wrap(err, "unable to update base data")
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "unable to commit bulk update")
+	}
+
+	return nil
+}
+
+// PersistResult stores the solution result to Postgres.
+func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string) error {
+	// Read the results file.
+	datasetStorage := serialization.GetStorage(resultURI)
+	records, err := datasetStorage.ReadData(resultURI)
+	if err != nil {
+		return err
 	}
 
 	// currently only support a single result column.
@@ -228,9 +277,6 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			}
 			dataForInsert = append(dataForInsert, cfs)
 		}
-		if explainValues[records[i][d3mIndexIndex]] != nil {
-			dataForInsert = append(dataForInsert, explainValues[records[i][d3mIndexIndex]])
-		}
 
 		insertData = append(insertData, dataForInsert)
 	}
@@ -238,9 +284,6 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	fields := []string{"result_id", "index", "target", "value"}
 	if confidenceIndex >= 0 {
 		fields = append(fields, "confidence")
-	}
-	if len(explainValues) > 0 {
-		fields = append(fields, "explain_values")
 	}
 
 	// store all results to the storage

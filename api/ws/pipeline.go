@@ -190,15 +190,10 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	requestFinished := make(chan api.SolutionStatus, 1)
 	defer close(requestFinished)
 	err = request.Listen(func(status api.SolutionStatus) {
-		// check for error from ta2
-		if status.Progress == api.SolutionErroredStatus {
-			handleErr(conn, msg, errors.Wrap(status.Error, "received error from TA2 system"))
-			return
-		}
-		// send status to client
+		// send status to client - this includes any error status we encountered
 		handleSuccess(conn, msg, jutil.StructToMap(status))
 
-		// flag request as finished
+		// flag request as finished if it completed normally, or an error occurred
 		if status.Progress == api.RequestCompletedStatus || status.Progress == api.RequestErroredStatus {
 			requestFinished <- status
 		}
