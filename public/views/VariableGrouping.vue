@@ -68,7 +68,7 @@
         </template>
       </b-col>
     </section>
-    <section v-if="isLabeling">
+    <section v-if="isLabeling" class="h-100">
       <labeling-view />
     </section>
     <!-- Form -->
