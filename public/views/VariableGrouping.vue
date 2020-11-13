@@ -36,6 +36,7 @@
         <h5 class="header-title">
           Configure
           <span v-if="isTimeseries">Time Series</span>
+          <span v-else-if="isLabeling">Labeling</span>
           <span v-else>Geocoordinate</span>
         </h5>
       </b-col>
@@ -51,6 +52,14 @@
           and if available, optionally add one or more
           <strong>series id</strong> column(s) to create multiple timeseries.
         </template>
+        <template v-if="isLabeling">
+          To create labels for your data please annotate images with the
+          following criteria: if an image is your label give it a
+          <strong>positive</strong> annotation, if the image is not your label
+          give it a <strong>negative</strong> annotation. For the best results
+          make sure to include <strong>positive</strong> and
+          <strong>negative</strong> annotations.
+        </template>
         <template v-else>
           If your data contains geocoordinate data (<strong
             >latitude, longitude</strong
@@ -59,9 +68,11 @@
         </template>
       </b-col>
     </section>
-
+    <section v-if="isLabeling">
+      <labeling-view />
+    </section>
     <!-- Form -->
-    <section class="mt-3 container">
+    <section v-if="!isLabeling" class="mt-3 container">
       <b-row>
         <b-col cols="6">
           <!-- X column -->
@@ -212,6 +223,7 @@ import {
   REAL_TYPE,
   GEOCOORDINATE_TYPE,
   TIMESERIES_TYPE,
+  LABELING_TYPE,
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
   isLongitudeGroupType,
@@ -232,6 +244,7 @@ import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 import FacetLoading from "../components/facets/FacetLoading.vue";
 import FacetTimeseries from "../components/facets/FacetTimeseries.vue";
 import GeocoordinateFacet from "../components/facets/GeocoordinateFacet.vue";
+import LabelingView from "../views/Labeling.vue";
 
 export default Vue.extend({
   name: "variable-grouping",
@@ -240,6 +253,7 @@ export default Vue.extend({
     FacetLoading,
     FacetTimeseries,
     GeocoordinateFacet,
+    LabelingView,
   },
 
   data() {
@@ -282,6 +296,9 @@ export default Vue.extend({
 
     isTimeseries(): boolean {
       return this.groupingType === TIMESERIES_TYPE;
+    },
+    isLabeling(): boolean {
+      return this.groupingType === LABELING_TYPE;
     },
     xColOptions(): Object[] {
       if (!this.isGeocoordinate && !this.isTimeseries) {

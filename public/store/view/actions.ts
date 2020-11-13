@@ -21,6 +21,7 @@ import {
 import {
   actions as datasetActions,
   mutations as datasetMutations,
+  getters as datasetGetters,
 } from "../dataset/module";
 import {
   actions as modelActions,
@@ -444,6 +445,26 @@ export const actions = {
         dataMode: dataMode,
       }),
       datasetActions.fetchExcludedTableData(store, {
+        dataset: dataset,
+        filterParams: filterParams,
+        highlight: highlight,
+        dataMode: dataMode,
+      }),
+    ]);
+  },
+  updateLabelData(context: ViewContext) {
+    // clear any previous state
+
+    const dataset = context.getters.getRouteDataset;
+    const highlight = context.getters.getDecodedHighlight;
+    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+    const dataMode = context.getters.getDataMode;
+    const variables = datasetGetters.getVariables(store);
+    variables.forEach((v) => {
+      filterParams.variables.push(v.colName);
+    });
+    return Promise.all([
+      datasetActions.fetchIncludedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,
         highlight: highlight,
