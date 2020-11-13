@@ -97,6 +97,14 @@ var (
 				parsingFunction: parseConfidencesWrapper([]int{1, 2}),
 			},
 		},
+		"dce5255d-b63c-4601-8ace-d63b42d6d03e": {
+			{
+				primitiveID:     "dce5255d-b63c-4601-8ace-d63b42d6d03e",
+				produceFunction: "produce_explanations",
+				explainableType: ExplainableTypeConfidence,
+				parsingFunction: parseGradCam([]int{1}),
+			},
+		},
 	}
 
 	unexplainableTask = map[string]bool{
@@ -117,6 +125,15 @@ type pipelineOutput struct {
 	typ             string
 	output          string
 	parsingFunction func([]string) (*api.SolutionExplainValues, error)
+}
+
+func parseGradCam(params []int) func([]string) (*api.SolutionExplainValues, error) {
+	return func(data []string) (*api.SolutionExplainValues, error) {
+		result := &api.SolutionExplainValues{}
+		result.GradCAM = [][]float64{{12}}
+
+		return result, nil
+	}
 }
 
 func parseConfidencesWrapper(params []int) func([]string) (*api.SolutionExplainValues, error) {
