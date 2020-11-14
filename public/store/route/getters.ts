@@ -606,7 +606,7 @@ export const getters = {
     return metrics.split(",");
   },
 
-  getModelDataSplit(state: Route): number {
+  getRouteTrainTestSplit(state: Route): number {
     const trainTestSplit = <string>state.query.trainTestSplit;
     if (!trainTestSplit) {
       return 0.9;

@@ -163,7 +163,10 @@ export default Vue.extend({
       return this.trainingCount / this.totalDataCount;
     },
     baseSplit(): number {
-      return this.task.includes(TaskTypes.TIME_SERIES)
+      const routeSplit = routeGetters.getRouteTrainTestSplit(this.$store);
+      return !!routeSplit
+        ? routeSplit
+        : this.task.includes(TaskTypes.TIME_SERIES)
         ? this.trainTestSplit
         : this.trainTestSplitTimeSeries;
     },
@@ -195,6 +198,7 @@ export default Vue.extend({
     } else {
       this.selectedMetric = null;
     }
+    this.trainingCount = Math.floor(this.totalDataCount * this.baseSplit) || 1;
   },
 
   methods: {
