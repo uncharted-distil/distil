@@ -609,7 +609,7 @@ export const getters = {
   getRouteTrainTestSplit(state: Route): number {
     const trainTestSplit = <string>state.query.trainTestSplit;
     if (!trainTestSplit) {
-      return 0.9;
+      return null;
     }
     return parseFloat(trainTestSplit);
   },

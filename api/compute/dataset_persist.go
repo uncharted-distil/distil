@@ -502,12 +502,24 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 		}
 	}
 
+	var trainTestSplit float64
+
+	if params.TrainTestSplit != 0 {
+		trainTestSplit = params.TrainTestSplit
+	} else {
+		if hasForecasting {
+			trainTestSplit = config.TrainTestSplitTimeSeries
+		} else {
+			trainTestSplit = config.TrainTestSplit
+		}
+	}
+
 	if hasForecasting {
 		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true,
-			params.GroupingFieldIndex, params.TrainTestSplit)
+			params.GroupingFieldIndex, trainTestSplit)
 	} else {
 		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex,
-			params.GroupingFieldIndex, params.Stratify, limits, params.TrainTestSplit)
+			params.GroupingFieldIndex, params.Stratify, limits, trainTestSplit)
 	}
 	if err != nil {
 		return "", "", err

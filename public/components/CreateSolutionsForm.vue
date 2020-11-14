@@ -134,6 +134,8 @@ export default Vue.extend({
       // flag as pending
       this.pending = true;
       // dispatch action that triggers request send to server
+      const routeSplit = routeGetters.getRouteTrainTestSplit(this.$store);
+      const defaultSplit = appGetters.getTrainTestSplit(this.$store);
       requestActions
         .createSolutionRequest(this.$store, {
           dataset: this.dataset,
@@ -143,7 +145,7 @@ export default Vue.extend({
           maxSolutions: routeGetters.getModelLimit(this.$store),
           maxTime: routeGetters.getModelTimeLimit(this.$store),
           quality: routeGetters.getModelQuality(this.$store),
-          trainTestSplit: routeGetters.getRouteTrainTestSplit(this.$store),
+          trainTestSplit: !!routeSplit ? routeSplit : defaultSplit,
         })
         .then((res: Solution) => {
           this.pending = false;
