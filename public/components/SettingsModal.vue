@@ -29,6 +29,27 @@
       />
     </b-form-group>
     <b-form-group
+      label="Training/Testing Data Split:"
+      label-for="model-train-test-split"
+      description="Modify the ratio of data used to train the model vs. the amount of data saved to verify the model for later."
+    >
+      <div class="d-flex justify-content-between mt-1">
+        <div>Training: {{ trainingCount }}</div>
+        <div>Testing: {{ testingCount }}</div>
+      </div>
+      <b-form-input
+        v-model="trainingCount"
+        type="range"
+        min="1"
+        :max="totalDataCount"
+        class="mt-1"
+      />
+      <div class="d-flex justify-content-between mt-1">
+        <div>{{ parseFloat(trainingRatio).toFixed(2) }}%</div>
+        <div>{{ parseFloat(testingRatio).toFixed(2) }}%</div>
+      </div>
+    </b-form-group>
+    <b-form-group
       label="Model Training:"
       label-for="model-training-ratios"
       description="Selects faster model training or higher quality models."
@@ -82,6 +103,7 @@ import {
 import { overlayRouteEntry } from "../util/routes";
 import { MetricDropdownItem, TaskTypes } from "../store/dataset";
 import { getters as routeGetters } from "../store/route/module";
+import { getters as appGetters } from "../store/app/module";
 
 // Dialog for setting model creation preferences.  The results are saved to the route to ensure
 // that users don't have to set them for each run.
@@ -98,6 +120,7 @@ export default Vue.extend({
       // fill this from the API later, first posting back the target's type
       // then getting a list of allowed scoring methods with keys, description
       selectedMetric: null,
+      trainingCount: 1,
     };
   },
 
@@ -118,24 +141,64 @@ export default Vue.extend({
         };
       });
     },
+    task(): string {
+      return routeGetters.getRouteTask(this.$store);
+    },
+    totalDataCount(): number {
+      return routeGetters.getRouteDataSize(this.$store);
+    },
+    trainTestSplit(): number {
+      return appGetters.getTrainTestSplit(this.$store);
+    },
+    trainTestSplitTimeSeries(): number {
+      return appGetters.getTrainTestSplitTimeSeries(this.$store);
+    },
+    testingCount(): number {
+      return this.totalDataCount - this.trainingCount;
+    },
+    testingRatio(): number {
+      return 1 - this.trainingRatio;
+    },
+    trainingRatio(): number {
+      return this.trainingCount / this.totalDataCount;
+    },
+    baseSplit(): number {
+      const routeSplit = routeGetters.getRouteTrainTestSplit(this.$store);
+      return !!routeSplit
+        ? routeSplit
+        : this.task.includes(TaskTypes.TIME_SERIES)
+        ? this.trainTestSplit
+        : this.trainTestSplitTimeSeries;
+    },
+  },
+
+  watch: {
+    baseSplit() {
+      this.trainingCount =
+        Math.floor(this.totalDataCount * this.baseSplit) || 1;
+    },
+    totalDataCount() {
+      this.trainingCount =
+        Math.floor(this.totalDataCount * this.baseSplit) || 1;
+    },
   },
 
   async beforeMount() {
-    const task = routeGetters.getRouteTask(this.$store);
     await datasetActions.fetchModelingMetrics(this.$store, {
-      task: task,
+      task: this.task,
     });
-    if (task.includes(TaskTypes.CLASSIFICATION)) {
-      if (task.includes(TaskTypes.MULTICLASS)) {
+    if (this.task.includes(TaskTypes.CLASSIFICATION)) {
+      if (this.task.includes(TaskTypes.MULTICLASS)) {
         this.selectedMetric = "f1Macro";
       } else {
         this.selectedMetric = "f1";
       }
-    } else if (task.includes(TaskTypes.REGRESSION)) {
+    } else if (this.task.includes(TaskTypes.REGRESSION)) {
       this.selectedMetric = "meanAbsoluteError";
     } else {
       this.selectedMetric = null;
     }
+    this.trainingCount = Math.floor(this.totalDataCount * this.baseSplit) || 1;
   },
 
   methods: {
@@ -145,6 +208,7 @@ export default Vue.extend({
         modelTimeLimit: this.timeLimit,
         modelQuality: this.speedQuality,
         metrics: this.selectedMetric,
+        trainTestSplit: this.trainingRatio,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
     },

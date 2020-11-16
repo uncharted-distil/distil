@@ -113,6 +113,7 @@ type SolutionRequest struct {
 	Metrics              []string
 	Filters              *api.FilterParams
 	DatasetAugmentations []*model.DatasetOrigin
+	TrainTestSplit       float64
 
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
@@ -161,6 +162,7 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 	req.Quality = json.StringDefault(j, defaultQuality, "quality")
 	req.ProblemType = json.StringDefault(j, "", "problemType")
 	req.Metrics, _ = json.StringArray(j, "metrics")
+	req.TrainTestSplit = json.FloatDefault(j, 0.9, "trainTestSplit")
 
 	filters, ok := json.Get(j, "filters")
 	if ok {
@@ -764,6 +766,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		TargetFieldIndex:   targetIndex,
 		Stratify:           stratify,
 		Quality:            s.Quality,
+		TrainTestSplit:     s.TrainTestSplit,
 	}
 	datasetPathTrain, datasetPathTest, err := persistOriginalData(params)
 	if err != nil {

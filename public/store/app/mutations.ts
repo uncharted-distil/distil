@@ -37,6 +37,17 @@ export const mutations = {
     state.ta2Version = ta2Version;
   },
 
+  setTrainTestSplit(state: AppState, trainTestSplit: string) {
+    state.trainTestSplit = parseFloat(trainTestSplit);
+  },
+
+  setTrainTestSplitTimeSeries(
+    state: AppState,
+    trainTestSplitTimeSeries: string
+  ) {
+    state.trainTestSplitTimeSeries = parseFloat(trainTestSplitTimeSeries);
+  },
+
   openStatusPanel(state: AppState) {
     Vue.set(state.statusPanelState, "isOpen", true);
   },

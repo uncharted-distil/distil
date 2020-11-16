@@ -28,6 +28,8 @@ export const getters = {
   getStatusPanelState: read(moduleGetters.getStatusPanelState),
   getTA2VersionNumber: read(moduleGetters.getTA2VersionNumber),
   getAllSystemVersions: read(moduleGetters.getAllSystemVersions),
+  getTrainTestSplit: read(moduleGetters.getTrainTestSplit),
+  getTrainTestSplitTimeSeries: read(moduleGetters.getTrainTestSplitTimeSeries),
 };
 
 // typed actions
@@ -55,4 +57,8 @@ export const mutations = {
   setTA2VersionNumber: commit(moduleMutations.setTA2VersionNumber),
   openStatusPanel: commit(moduleMutations.openStatusPanel),
   closeStatusPanel: commit(moduleMutations.closeStatusPanel),
+  setTrainTestSplit: commit(moduleMutations.setTrainTestSplit),
+  setTrainTestSplitTimeSeries: commit(
+    moduleMutations.setTrainTestSplitTimeSeries
+  ),
 };

@@ -5,7 +5,6 @@ import { ActionContext } from "vuex";
 import { mutations } from "./module";
 import { FilterParams } from "../../util/filters";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
-import { resultsModule } from "../results/module";
 
 export type AppContext = ActionContext<AppState, DistilState>;
 
@@ -95,6 +94,11 @@ export const actions = {
       mutations.setProblemTarget(context, response.data.target);
       mutations.setProblemMetrics(context, response.data.metrics);
       mutations.setTA2VersionNumber(context, response.data.ta2version);
+      mutations.setTrainTestSplit(context, response.data.trainTestSplit);
+      mutations.setTrainTestSplitTimeSeries(
+        context,
+        response.data.trainTestSplitTimeSeries
+      );
     } catch (err) {
       console.warn(err);
     }
