@@ -73,6 +73,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { isEmpty } from "lodash";
 
 // Components
 import ActionColumn from "../components/layout/ActionColumn.vue";
@@ -187,8 +188,11 @@ export default Vue.extend({
 
         // create a button
         const button = document.createElement("button");
-        button.className = "btn btn-sm btn-outline-secondary";
-        button.textContent = isInTraining ? "Remove" : "Add";
+        button.className = "btn btn-sm";
+        button.className += isInTraining
+          ? " btn-outline-secondary"
+          : " btn-primary";
+        button.textContent = isInTraining ? "Hide" : "Display";
 
         const onClick = async () => {
           const route = routeGetters.getRoute(this.$store);
@@ -196,18 +200,11 @@ export default Vue.extend({
           const training = routeGetters.getDecodedTrainingVariableNames(
             this.$store
           );
-          let updatedTraining;
-
-          // Remove the variable from the exploration
-          if (isInTraining) {
-            button.textContent = "Remove";
-            updatedTraining = training.filter((v) => v !== variable);
-
-            // Add the variable to the exploration
-          } else {
-            button.textContent = "Add";
-            updatedTraining = training.concat([variable]);
-          }
+          const updatedTraining = isInTraining
+            ? // Remove the variable from the exploration
+              training.filter((v) => v !== variable)
+            : // Add the variable to the exploration
+              training.concat([variable]);
 
           // update route with training data
           const entry = overlayRouteEntry(route, {
@@ -290,8 +287,20 @@ export default Vue.extend({
     },
   },
 
-  beforeMount() {
-    viewActions.fetchDataExplorerData(this.$store);
+  async beforeMount() {
+    // Fill up the store
+    await viewActions.fetchDataExplorerData(this.$store);
+
+    // If there is no training selected, display the first summary key
+    const currentTraining = routeGetters.getTrainingVariables(this.$store);
+    const firstSummary = this.summaries?.[0]?.key;
+    if (isEmpty(currentTraining) && !!firstSummary) {
+      const args = { training: firstSummary };
+      const currentRoute = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(currentRoute, args);
+      this.$router.push(entry).catch((err) => console.warn(err));
+    }
+
     viewActions.updateSelectTrainingData(this.$store);
   },
 
