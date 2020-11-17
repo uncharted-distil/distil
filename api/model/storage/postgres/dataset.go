@@ -369,7 +369,7 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 
 // AddField adds a new field to the data storage. This only adds a new column.
 // It does not add the column to other tables nor does it rebuild a view.
-func (s *Storage) AddField(dataset string, storageName string, varName string, varType string) error {
+func (s *Storage) AddField(dataset string, storageName string, varName string, varType string, defaultVal ...string) error {
 	// check to make sure the column doesnt exist already
 	dbFields, err := s.getDatabaseFields(storageName)
 	if err != nil {
@@ -389,6 +389,10 @@ func (s *Storage) AddField(dataset string, storageName string, varName string, v
 	}
 
 	sql := fmt.Sprintf("ALTER TABLE %s ADD COLUMN \"%s\" %s;", storageName, varName, postgres.MapD3MTypeToPostgresType(varType))
+	if len(defaultVal) > 0{
+		sql = fmt.Sprintf("ALTER TABLE %s ADD COLUMN \"%s\" %s DEFAULT '%s';", storageName, varName, postgres.MapD3MTypeToPostgresType(varType), defaultVal[0])
+	}
+	fmt.Println(sql)
 	_, err = s.client.Exec(sql)
 	if err != nil {
 		return errors.Wrap(err, "unable to add new column to database explain table")

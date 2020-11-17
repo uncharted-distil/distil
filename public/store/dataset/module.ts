@@ -164,6 +164,9 @@ export const actions = {
   // modeling metric methodologies
   fetchModelingMetrics: dispatch(moduleActions.fetchModelingMetrics),
   updateRowSelectionData: dispatch(moduleActions.updateRowSelectionData),
+  cloneDataset: dispatch(moduleActions.cloneDataset),
+  addField: dispatch(moduleActions.addField),
+  updateDataset: dispatch(moduleActions.updateDataset),
 };
 
 // Typed mutations

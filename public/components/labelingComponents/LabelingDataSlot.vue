@@ -2,11 +2,11 @@
   <div class="dataslot-container">
     <div class="label-headers">
       <div>
-        <b-button>
+        <b-button @click="onPositiveClicked">
           <i class="fa fa-check" aria-hidden="true"></i>
           Positive
         </b-button>
-        <b-button>
+        <b-button @click="onNegativeClicked">
           <i class="fa fa-times" aria-hidden="true"></i>
           Negative</b-button
         >
@@ -45,7 +45,13 @@ import {
   TableRow,
   TableColumn,
 } from "../../store/dataset/index";
-import { getters as datasetGetters } from "../../store/dataset/module";
+import {
+  getters as datasetGetters,
+  actions as datasetActions,
+} from "../../store/dataset/module";
+import { getters as routeGetters } from "../../store/route/module";
+import { clearRowSelection } from "../../util/row";
+import { LowShotLabels } from "../../util/data";
 const GEO_VIEW = "geo";
 const IMAGE_VIEW = "image";
 const TABLE_VIEW = "table";
@@ -68,6 +74,7 @@ export default Vue.extend({
   data() {
     return {
       viewTypeModel: TABLE_VIEW,
+      eventLabel: "DataChanged",
     };
   },
   computed: {
@@ -83,6 +90,30 @@ export default Vue.extend({
     },
     dataFields(): Dictionary<TableColumn> {
       return datasetGetters.getIncludedTableDataFields(this.$store);
+    },
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
+  },
+  methods: {
+    onPositiveClicked() {
+      this.updateData(LowShotLabels.positive);
+      this.$emit(this.eventLabel);
+    },
+    onNegativeClicked() {
+      this.updateData(LowShotLabels.negative);
+      this.$emit(this.eventLabel);
+    },
+    updateData(label: LowShotLabels) {
+      const rowSelection = routeGetters.getDecodedRowSelection(this.$store);
+      const updateData = rowSelection.d3mIndices.map((i) => {
+        return { index: i.toString(), name: "LowShotLabel", value: label };
+      });
+      datasetActions.updateDataset(this.$store, {
+        dataset: this.dataset,
+        updateData,
+      });
+      clearRowSelection(this.$router);
     },
   },
 });

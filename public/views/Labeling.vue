@@ -10,7 +10,11 @@
     </div>
     <div class="col-12 col-md-6 d-flex flex-column h-100">
       <div class="label-data-slot flex-1 d-flex flex-column pb-1 pt-2">
-        <labeling-data-slot :summaries="summaries" :variables="variables" />
+        <labeling-data-slot
+          :summaries="summaries"
+          :variables="variables"
+          @DataChanged="onDataChanged"
+        />
         <create-labeling-form />
       </div>
     </div>
@@ -20,12 +24,17 @@
 <script lang="ts">
 import Vue from "vue";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {
+  getters as datasetGetters,
+  actions as datasetActions,
+} from "../store/dataset/module";
 import { actions as viewActions } from "../store/view/module";
 import {
   getVariableSummariesByState,
   searchVariables,
   NUM_PER_TARGET_PAGE,
+  cloneDatasetUpdateRoute,
+  LowShotLabels,
 } from "../util/data";
 import { Variable, VariableSummary } from "../store/dataset/index";
 import VariableFacets from "../components/facets/VariableFacets.vue";
@@ -75,7 +84,12 @@ export default Vue.extend({
       return NUM_PER_TARGET_PAGE;
     },
     labelSummary(): VariableSummary {
-      return this.getDefaultLabelFacet();
+      const lowShotLabel = this.summaries.filter((s) => {
+        return s.key === "LowShotLabel";
+      });
+      return lowShotLabel.length
+        ? lowShotLabel[0]
+        : this.getDefaultLabelFacet();
     },
     numOfMultiBands(): number {
       const multiBandSummary = this.summaries.filter((s) => {
@@ -114,16 +128,38 @@ export default Vue.extend({
         description: "Generated labels.",
         baseline: {
           buckets: [
-            { key: "positive", count: 0 },
-            { key: "negative", count: 0 },
-            { key: "unlabeled", count: this.numOfMultiBands },
+            { key: LowShotLabels.positive, count: 0 },
+            { key: LowShotLabels.negative, count: 0 },
+            { key: LowShotLabels.unlabeled, count: this.numOfMultiBands },
           ],
           extrema: { min: 0, max: this.numOfMultiBands },
         },
       };
     },
+    async onDataChanged() {
+      await datasetActions.fetchVariables(this.$store, {
+        dataset: this.dataset,
+      });
+      await viewActions.updateLabelData(this.$store);
+    },
   },
-  created() {
+  async created() {
+    const entry = await cloneDatasetUpdateRoute();
+    if (entry === null) {
+      return;
+    }
+    this.$router.push(entry).catch((err) => console.warn(err));
+    // add new field
+    await datasetActions.addField<string>(this.$store, {
+      dataset: this.dataset,
+      name: "LowShotLabel",
+      fieldType: "string",
+      defaultValue: LowShotLabels.unlabeled,
+    });
+    await datasetActions.fetchVariables(this.$store, {
+      dataset: this.dataset,
+    });
+    // pull the cloned data
     viewActions.updateLabelData(this.$store);
   },
 });

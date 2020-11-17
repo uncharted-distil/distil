@@ -11,6 +11,7 @@ import {
 import { Dictionary } from "../../util/dict";
 import { EXCLUDE_FILTER, Filter, invertFilter } from "../../util/filters";
 import { getPredictionsById } from "../../util/predictions";
+import { overlayRouteEntry } from "../../util/routes";
 import {
   DataMode,
   Highlight,
@@ -326,7 +327,6 @@ export const actions = {
       return actions.updateJoinDatasetsData(context);
     });
   },
-
   updateJoinDatasetsData(context: ViewContext) {
     // clear any previous state
     datasetMutations.clearJoinDatasetsTableData(store);
@@ -460,10 +460,20 @@ export const actions = {
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
     const dataMode = context.getters.getDataMode;
     const variables = datasetGetters.getVariables(store);
+    const varModes = context.getters.getDecodedVarModes;
     variables.forEach((v) => {
       filterParams.variables.push(v.colName);
     });
+    clearVariableSummaries(context);
     return Promise.all([
+      datasetActions.fetchIncludedVariableSummaries(store, {
+        dataset: dataset,
+        variables: variables,
+        filterParams: filterParams,
+        highlight: highlight,
+        dataMode: dataMode,
+        varModes: varModes,
+      }),
       datasetActions.fetchIncludedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,

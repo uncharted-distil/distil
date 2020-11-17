@@ -243,7 +243,6 @@ export default Vue.extend({
         this.searchedActiveVariables,
         summaryDictionary
       );
-
       return currentSummaries;
     },
 
