@@ -18,6 +18,7 @@
         </b-button>
       </template>
     </action-column>
+
     <left-side-panel panel-title="Select feature to infer below (target)">
       <variable-facets
         slot="content"
@@ -26,15 +27,46 @@
         enable-type-filtering
         ignore-highlights
         :facet-count="searchedActiveVariables.length"
+        :html="button"
         :instance-name="instanceName"
         :log-activity="problemDefinition"
         :rows-per-page="numRowsPerPage"
         :summaries="summaries"
       />
     </left-side-panel>
+
     <main class="content">
       <create-solutions-form />
-      <select-data-slot />
+      <!-- <div class="fake-search-input">
+        <filter-badge
+          v-if="activeFilter"
+          active-filter
+          :filter="activeFilter"
+        />
+        <filter-badge
+          v-for="(filter, index) in filters"
+          :key="index"
+          :filter="filter"
+        />
+      </div> -->
+      <!-- <p class="selection-data-slot-summary">
+        <data-size
+          :currentSize="numRows"
+          :total="numRows"
+          @submit="onDataSizeSubmit"
+        />
+        <strong class="matching-color">matching</strong> samples of
+        {{ numRows }} to model<template v-if="selectionNumRows > 0"
+          >, {{ selectionNumRows }}
+          <strong class="selected-color">selected</strong>
+        </template>
+      </p> -->
+      <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
+
+      <section class="data-container">
+        <div v-if="!hasData" v-html="spinnerHTML"></div>
+        <component :is="viewComponent" :instance-name="instanceName" />
+      </section>
     </main>
   </div>
 </template>
@@ -46,12 +78,21 @@ import Vue from "vue";
 import ActionColumn from "../components/layout/ActionColumn.vue";
 import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
-import SelectDataSlot from "../components/SelectDataSlot.vue";
+import ImageMosaic from "../components/ImageMosaic.vue";
+import SelectDataTable from "../components/SelectDataTable.vue";
+import SelectGeoPlot from "../components/SelectGeoPlot.vue";
+import SelectGraphView from "../components/SelectGraphView.vue";
+import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 import VariableFacets from "../components/facets/VariableFacets.vue";
 
 // Store
 import { actions as appActions } from "../store/app/module";
-import { SummaryMode, Variable, VariableSummary } from "../store/dataset/index";
+import {
+  SummaryMode,
+  TableRow,
+  Variable,
+  VariableSummary,
+} from "../store/dataset/index";
 import {
   actions as datasetActions,
   getters as datasetGetters,
@@ -71,13 +112,24 @@ import {
   searchVariables,
 } from "../util/data";
 import { Group } from "../util/facets";
-import { createRouteEntry, varModesToString } from "../util/routes";
+import {
+  createRouteEntry,
+  overlayRouteEntry,
+  varModesToString,
+} from "../util/routes";
+import { spinnerHTML } from "../util/spinner";
 import {
   GEOCOORDINATE_TYPE,
   isUnsupportedTargetVar,
   TIMESERIES_TYPE,
 } from "../util/types";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+
+const GEO_VIEW = "geo";
+const GRAPH_VIEW = "graph";
+const IMAGE_VIEW = "image";
+const TABLE_VIEW = "table";
+const TIMESERIES_VIEW = "timeseries";
 
 export default Vue.extend({
   name: "DataExplorer",
@@ -86,7 +138,11 @@ export default Vue.extend({
     ActionColumn,
     CreateSolutionsForm,
     LeftSidePanel,
-    SelectDataSlot,
+    ImageMosaic,
+    SelectDataTable,
+    SelectGeoPlot,
+    SelectGraphView,
+    SelectTimeseriesView,
     VariableFacets,
   },
 
@@ -94,6 +150,7 @@ export default Vue.extend({
     return {
       instanceName: AVAILABLE_TARGET_VARS_INSTANCE,
       numRowsPerPage: NUM_PER_DATA_EXPLORER_PAGE,
+      viewTypeModel: TABLE_VIEW,
     };
   },
 
@@ -116,106 +173,56 @@ export default Vue.extend({
       return groupedFeatures;
     },
 
-    html(): (group: Group) => HTMLDivElement {
+    hasData(): boolean {
+      return datasetGetters.hasIncludedTableData(this.$store);
+    },
+
+    button(): (group: Group) => HTMLElement {
       return (group: Group) => {
-        const container = document.createElement("div");
-        const targetElem = document.createElement("button");
+        const variable = group.colName;
+        const training = routeGetters.getDecodedTrainingVariableNames(
+          this.$store
+        );
+        const isInTraining = training.includes(variable);
 
-        const unsupported = this.unsupportedTargets.has(group.colName);
-        targetElem.className += "btn btn-sm btn-success mb-2";
-        if (unsupported) {
-          targetElem.className += " disabled";
-        }
+        // create a button
+        const button = document.createElement("button");
+        button.className = "btn btn-sm btn-outline-secondary";
+        button.textContent = isInTraining ? "Remove" : "Add";
 
-        targetElem.innerHTML = "Select Target";
-        if (!unsupported) {
-          // only add listener on supported target types
-          targetElem.addEventListener("click", () => {
-            const target = group.colName;
-            // remove from training
-            const training = routeGetters.getDecodedTrainingVariableNames(
-              this.$store
-            );
-            const index = training.indexOf(target);
-            if (index !== -1) {
-              training.splice(index, 1);
-            }
+        const onClick = async () => {
+          const route = routeGetters.getRoute(this.$store);
+          const task = routeGetters.getRouteTask(this.$store);
+          const training = routeGetters.getDecodedTrainingVariableNames(
+            this.$store
+          );
+          let updatedTraining;
 
-            const v = this.variables.find((v) => {
-              return v.colName === group.colName;
-            });
-            if (v && v.grouping) {
-              if (v.grouping.subIds.length > 0) {
-                v.grouping.subIds.forEach((subId) => {
-                  const exists = training.find((t) => {
-                    return t === subId;
-                  });
-                  if (!exists) {
-                    training.push(subId);
-                  }
-                });
-              } else {
-                const exists = training.find((t) => {
-                  return t === v.grouping.idCol;
-                });
-                if (!exists) {
-                  training.push(v.grouping.idCol);
-                }
-              }
-            }
+          // Remove the variable from the exploration
+          if (isInTraining) {
+            button.textContent = "Remove";
+            updatedTraining = training.filter((v) => v !== variable);
 
-            // kick off the fetch task and wait for the result - when we've got it, update the route with info
-            const dataset = routeGetters.getRouteDataset(this.$store);
-            datasetActions
-              .fetchTask(this.$store, {
-                dataset: dataset,
-                targetName: group.colName,
-                variableNames: [],
-              })
-              .then((response) => {
-                const task = response.data.task.join(",");
+            // Add the variable to the exploration
+          } else {
+            button.textContent = "Add";
+            updatedTraining = training.concat([variable]);
+          }
 
-                const varModesMap = routeGetters.getDecodedVarModes(
-                  this.$store
-                );
-                if (task.includes("timeseries")) {
-                  training.forEach((v) => {
-                    if (v !== group.colName) {
-                      varModesMap.set(v, SummaryMode.Timeseries);
-                    }
-                  });
-                }
-                const varModesStr = varModesToString(varModesMap);
-
-                const routeArgs = {
-                  target: group.colName,
-                  dataset: dataset,
-                  filters: routeGetters.getRouteFilters(this.$store),
-                  training: training.join(","),
-                  task: task,
-                  varModes: varModesStr,
-                };
-
-                appActions.logUserEvent(this.$store, {
-                  feature: Feature.SELECT_TARGET,
-                  activity: Activity.PROBLEM_DEFINITION,
-                  subActivity: SubActivity.PROBLEM_SPECIFICATION,
-                  details: { target: group.colName },
-                });
-
-                const entry = createRouteEntry(
-                  SELECT_TRAINING_ROUTE,
-                  routeArgs
-                );
-                this.$router.push(entry).catch((err) => console.warn(err));
-              })
-              .catch((error) => {
-                console.error(error);
-              });
+          // update route with training data
+          const entry = overlayRouteEntry(route, {
+            training: updatedTraining.join(","),
+            task,
           });
-        }
-        container.appendChild(targetElem);
-        return container;
+          this.$router.push(entry).catch((err) => console.warn(err));
+
+          // update store
+          viewActions.updateSelectTrainingData(this.$store);
+        };
+
+        // create a button
+        button.addEventListener("click", onClick);
+        return button;
       };
     },
 
@@ -262,6 +269,15 @@ export default Vue.extend({
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
+
+    /* Select which component to display the data. */
+    viewComponent() {
+      if (this.viewTypeModel === GEO_VIEW) return "SelectGeoPlot";
+      if (this.viewTypeModel === GRAPH_VIEW) return "SelectGraphView";
+      if (this.viewTypeModel === IMAGE_VIEW) return "ImageMosaic";
+      if (this.viewTypeModel === TABLE_VIEW) return "SelectDataTable";
+      if (this.viewTypeModel === TIMESERIES_VIEW) return "SelectTimeseriesView";
+    },
   },
 
   watch: {
@@ -276,6 +292,7 @@ export default Vue.extend({
 
   beforeMount() {
     viewActions.fetchDataExplorerData(this.$store);
+    viewActions.updateSelectTrainingData(this.$store);
   },
 
   methods: {
@@ -294,6 +311,8 @@ export default Vue.extend({
     onTimeseriesClick() {
       this.groupingClick(TIMESERIES_TYPE);
     },
+
+    spinnerHTML,
   },
 });
 </script>
@@ -312,5 +331,13 @@ export default Vue.extend({
 .view-container .content {
   flex-grow: 1;
   padding: 1rem;
+}
+
+.data-container {
+  display: flex;
+  flex-flow: wrap;
+  height: 100%;
+  position: relative;
+  width: 100%;
 }
 </style>

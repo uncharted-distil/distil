@@ -35,7 +35,9 @@ export default Vue.extend({
 <style scoped>
 .left-side-panel-container {
   background-color: var(--bg-color-side-panel);
-  border: 1px solid var(--border-color);
+  border-color: var(--border-color);
+  border-style: solid;
+  border-width: 0 1px;
   height: 100%;
   overflow: hidden;
   padding: 1rem;

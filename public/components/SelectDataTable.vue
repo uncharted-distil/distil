@@ -136,7 +136,7 @@ export default Vue.extend({
 
   props: {
     instanceName: String as () => string,
-    includedActive: Boolean as () => boolean,
+    includedActive: { type: Boolean, default: true },
   },
 
   data() {

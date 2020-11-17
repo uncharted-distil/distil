@@ -108,10 +108,19 @@ const fetchVariableSummaries = async (context, args) => {
 
   const currentRoute = routeGetters.getRoutePath(store);
   const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
-  const pages = routeGetters.getAllRoutePages(store);
   const targetVariable = routeGetters.getTargetVariable(store);
 
-  const currentPageIndexes = pages[currentRoute] ?? [];
+  const pages = routeGetters.getAllRoutePages(store);
+  let currentPageIndexes = [];
+  if (pages[currentRoute]) {
+    currentPageIndexes = pages[currentRoute];
+  } else {
+    const errorMessage = `
+      The store/route/getters getAllRoutePages() method does not have
+      a definition for the ${currentRoute} route.`;
+    console.error(errorMessage);
+  }
+
   const mainPageIndex = currentPageIndexes?.[0];
   const trainingIndex = currentPageIndexes?.[1];
 
@@ -123,7 +132,16 @@ const fetchVariableSummaries = async (context, args) => {
   }
 
   const searches = routeGetters.getAllSearchesByRoute(store);
-  const currentPageSearches = searches[currentRoute] ?? [];
+  let currentPageSearches = [];
+  if (searches[currentRoute]) {
+    currentPageSearches = searches[currentRoute];
+  } else {
+    const errorMessage = `
+      The store/route/getters getAllSearchesByRoute() method does not have
+      a definition for the ${currentRoute} route.`;
+    console.error(errorMessage);
+  }
+
   const currentSearch = currentPageSearches?.[0];
   const trainingSearch = currentPageSearches?.[1];
 
@@ -427,33 +445,24 @@ export const actions = {
   },
 
   updateSelectTrainingData(context: ViewContext) {
-    // clear any previous state
-
-    const dataset = context.getters.getRouteDataset;
-    const highlight = context.getters.getDecodedHighlight;
-    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
-    const dataMode = context.getters.getDataMode;
-    const varModes = context.getters.getDecodedVarModes;
+    const args = {
+      dataset: context.getters.getRouteDataset,
+      filterParams: context.getters.getDecodedSolutionRequestFilterParams,
+      highlight: context.getters.getDecodedHighlight,
+    };
+    const variableArgs = {
+      ...args,
+      varModes: context.getters.getDecodedVarModes,
+    };
+    const tableDataArgs = {
+      ...args,
+      dataMode: context.getters.getDataMode,
+    };
 
     return Promise.all([
-      fetchVariableSummaries(context, {
-        dataset: dataset,
-        filterParams: filterParams,
-        highlight: highlight,
-        varModes: varModes,
-      }),
-      datasetActions.fetchIncludedTableData(store, {
-        dataset: dataset,
-        filterParams: filterParams,
-        highlight: highlight,
-        dataMode: dataMode,
-      }),
-      datasetActions.fetchExcludedTableData(store, {
-        dataset: dataset,
-        filterParams: filterParams,
-        highlight: highlight,
-        dataMode: dataMode,
-      }),
+      fetchVariableSummaries(context, variableArgs),
+      datasetActions.fetchIncludedTableData(store, tableDataArgs),
+      datasetActions.fetchExcludedTableData(store, tableDataArgs),
     ]);
   },
   updateHighlight(context: ViewContext) {
