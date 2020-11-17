@@ -5,7 +5,8 @@
   "extends": ["plugin:vue/recommended", "@vue/typescript/recommended"], // the vue recommended will suggest proper coding for the templates
   "rules": {
     // add rules here
-    "no-explicit-any": 1 // changed any to a warning rather than an error
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-use-before-define": "off"
   },
   "parserOptions": {
     "parser": "@typescript-eslint/parser", // essential for parsing the typescript
