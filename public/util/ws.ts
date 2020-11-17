@@ -8,15 +8,9 @@ const MESSAGE = Symbol();
 const STREAM = Symbol();
 
 let _trackedID = 1;
-const _streamsById = new Map<string, Stream>();
-
-// Fetches a stream given an ID.
-export function getStreamById(id: string): Stream {
-  return _streamsById.get(id);
-}
 
 // Creates a new web socket Connection object
-export function getWebSocketConnection() {
+export function getWebSocketConnection(): Connection {
   const conn = new Connection("/ws", (err) => {
     if (err) {
       console.warn(err);
@@ -155,7 +149,7 @@ export class Stream {
     this.fn = fn;
   }
 
-  send(type: string, body: unknown) {
+  send(type: string, body: unknown): void {
     const streamMessage = new StreamMessage(this.id, type, body);
     if (this.conn.isOpen) {
       this.conn.socket.send(JSON.stringify(streamMessage));
@@ -164,10 +158,9 @@ export class Stream {
     }
   }
 
-  close() {
+  close(): void {
     this.conn.streams.delete(this.id);
     this.conn.tracking.delete(this.id);
-    _streamsById.delete(this.id);
   }
 }
 
@@ -214,15 +207,14 @@ export default class Connection {
     establishConnection(this, callback);
   }
 
-  stream(fn: (x: unknown) => void) {
+  stream(fn: (x: unknown) => void): Stream {
     const stream = new Stream(this, fn);
     this.streams.set(stream.id, stream);
     this.tracking.set(stream.id, STREAM);
-    _streamsById.set(stream.id, stream);
     return stream;
   }
 
-  send(type: string, body: unknown) {
+  send(type: string, body: unknown): Promise<unknown> {
     const message = new Message(type, body);
     this.messages.set(message.id, message);
     this.tracking.set(message.id, MESSAGE);
@@ -234,16 +226,10 @@ export default class Connection {
     return message.promise;
   }
 
-  close() {
+  close(): void {
     this.socket.onclose = null;
     this.socket.close();
     this.socket = null;
-
-    // remove the streams associated with this connection from the global list
-    // if they are open
-    for (const [id] of this.streams) {
-      _streamsById.delete(id);
-    }
 
     console.info(`WebSocket conn on /${this.url} closed`);
   }
