@@ -84,7 +84,7 @@ type DataStorage interface {
 	// Dataset manipulation
 	IsValidDataType(dataset string, storageName string, varName string, varType string) (bool, error)
 	SetDataType(dataset string, storageName string, varName string, varType string) error
-	AddVariable(dataset string, storageName string, varName string, varType string) error
+	AddVariable(dataset string, storageName string, varName string, varType string, defaultVal ...string) error
 	AddField(dataset string, storageName string, varName string, varType string, defaultVal ...string) error
 	DeleteVariable(dataset string, storageName string, varName string) error
 	UpdateVariable(storageName string, varName string, d3mIndex string, value string) error

@@ -35,6 +35,7 @@ import {
   NUM_PER_TARGET_PAGE,
   cloneDatasetUpdateRoute,
   LowShotLabels,
+  LOW_SHOT_LABEL_COLUMN_NAME,
 } from "../util/data";
 import { Variable, VariableSummary } from "../store/dataset/index";
 import VariableFacets from "../components/facets/VariableFacets.vue";
@@ -85,7 +86,7 @@ export default Vue.extend({
     },
     labelSummary(): VariableSummary {
       const lowShotLabel = this.summaries.filter((s) => {
-        return s.key === "LowShotLabel";
+        return s.key === LOW_SHOT_LABEL_COLUMN_NAME;
       });
       return lowShotLabel.length
         ? lowShotLabel[0]
@@ -152,8 +153,8 @@ export default Vue.extend({
     // add new field
     await datasetActions.addField<string>(this.$store, {
       dataset: this.dataset,
-      name: "LowShotLabel",
-      fieldType: "string",
+      name: LOW_SHOT_LABEL_COLUMN_NAME,
+      fieldType: typeof LowShotLabels.unlabeled,
       defaultValue: LowShotLabels.unlabeled,
     });
     await datasetActions.fetchVariables(this.$store, {

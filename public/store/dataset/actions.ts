@@ -1450,6 +1450,7 @@ export const actions = {
       name: string;
       fieldType: string;
       defaultValue?: T;
+      displayName?: string;
     }
   ) {
     // check for valid dataset
@@ -1461,6 +1462,7 @@ export const actions = {
         name: args.name,
         fieldType: args.fieldType,
         defaultValue: args.defaultValue.toString(),
+        displayName: args.displayName,
       });
       console.log(response);
       return response.data;

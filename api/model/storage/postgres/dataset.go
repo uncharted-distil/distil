@@ -316,7 +316,7 @@ func (s *Storage) createViewFromMetadataFields(storageName string, fields map[st
 }
 
 // AddVariable adds a new variable to the dataset.
-func (s *Storage) AddVariable(dataset string, storageName string, varName string, varType string) error {
+func (s *Storage) AddVariable(dataset string, storageName string, varName string, varType string, defaultVal ...string) error {
 	// check to make sure the column doesnt exist already
 	dbFields, err := s.getDatabaseFields(fmt.Sprintf("%s_base", storageName))
 	if err != nil {
@@ -334,6 +334,9 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 	if !found {
 		// add the empty column to the base table and the explain table
 		sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT;", storageName, varName)
+		if len(defaultVal) > 0 {
+			sql = fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT DEFAULT '%s';", storageName, varName, defaultVal[0])
+		}
 		_, err = s.client.Exec(sql)
 		if err != nil {
 			return errors.Wrap(err, "unable to add new column to database table")
@@ -389,7 +392,7 @@ func (s *Storage) AddField(dataset string, storageName string, varName string, v
 	}
 
 	sql := fmt.Sprintf("ALTER TABLE %s ADD COLUMN \"%s\" %s;", storageName, varName, postgres.MapD3MTypeToPostgresType(varType))
-	if len(defaultVal) > 0{
+	if len(defaultVal) > 0 {
 		sql = fmt.Sprintf("ALTER TABLE %s ADD COLUMN \"%s\" %s DEFAULT '%s';", storageName, varName, postgres.MapD3MTypeToPostgresType(varType), defaultVal[0])
 	}
 	fmt.Println(sql)

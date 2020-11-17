@@ -65,15 +65,19 @@ export const ELASTIC_PROVENANCE = "elastic";
 export const FILE_PROVENANCE = "file";
 
 export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
+
+export const LOW_SHOT_LABEL_COLUMN_NAME = "LowShotLabel";
+// LowShotLabels enum for labeling data in a binary classification
 export enum LowShotLabels {
   positive = "positive",
   negative = "negative",
   unlabeled = "unlabeled",
 }
+// DatasetUpdate is an interface that contains the data to update existing data
 export interface DatasetUpdate {
-  index: string;
-  name: string;
-  value: string;
+  index: string; // d3mIndex
+  name: string; // colName
+  value: string; // new value to replace old value
 }
 export function getTimeseriesSummaryTopCategories(
   summary: VariableSummary

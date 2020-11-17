@@ -12,20 +12,20 @@
 //   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
-// 
- package routes
- 
- import (
- 	"net/http"
- 
- 	"github.com/pkg/errors"
- 	"goji.io/v3/pat"
-	 api "github.com/uncharted-distil/distil/api/model"
-	 "github.com/uncharted-distil/distil-compute/model"
+//
+package routes
+
+import (
+	"net/http"
+
+	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/model"
+	api "github.com/uncharted-distil/distil/api/model"
+	"goji.io/v3/pat"
 )
 
- // AddFieldHandler generates a route handler that adds columns to datasets
- // expects at least two parameters "name" of the field and "fieldType" type of the field. Optional parameter is "defaultValue"
+// AddFieldHandler generates a route handler that adds columns to datasets
+// expects at least two parameters "name" of the field and "fieldType" type of the field. Optional parameter is "defaultValue"
 func AddFieldHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
@@ -38,7 +38,7 @@ func AddFieldHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageC
 			return
 		}
 
-		if params["name"] == nil || params["fieldType"] == nil{
+		if params["name"] == nil || params["fieldType"] == nil {
 			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
 			return
 		}
@@ -60,44 +60,50 @@ func AddFieldHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageC
 			handleError(w, err)
 			return
 		}
-		errorMsg:="Error casting param "
+		errorMsg := "Error casting param "
 		storageName := ds.StorageName
-		name,ok := params["name"].(string)
-		if !ok{
-			handleError(w, errors.New(errorMsg + "name"))
+		name, ok := params["name"].(string)
+		if !ok {
+			handleError(w, errors.New(errorMsg+"name"))
 			return
 		}
-		fieldType, ok:= params["fieldType"].(string)
-		if !ok{
-			handleError(w, errors.New(errorMsg + "fieldType"))
+		fieldType, ok := params["fieldType"].(string)
+		if !ok {
+			handleError(w, errors.New(errorMsg+"fieldType"))
 			return
 		}
 		// update postgres
-		if params["defaultValue"] != nil{
-			defaultValue, ok:= params["defaultValue"].(string)
-			if !ok{
-				handleError(w, errors.New(errorMsg + "defaultValue"))
+		if params["defaultValue"] != nil {
+			defaultValue, ok := params["defaultValue"].(string)
+			if !ok {
+				handleError(w, errors.New(errorMsg+"defaultValue"))
 				return
 			}
-			err:= dataStorage.AddField(dataset, storageName+"_base", name, fieldType, defaultValue)
-			if err != nil{
-			handleError(w, err)
-			return
-			}
-		}else{
-			err:=dataStorage.AddVariable(dataset, storageName+"_base", name, fieldType)
-			if err != nil{
+			err := dataStorage.AddVariable(dataset, storageName, name, fieldType, defaultValue)
+			if err != nil {
 				handleError(w, err)
 				return
-				}
-			dataStorage.AddVariable(dataset, storageName+"_variable", name, fieldType)
+			}
+		} else {
+			err := dataStorage.AddVariable(dataset, storageName, name, fieldType)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+		}
+		displayName := name
+		if params["displayName"] != nil {
+			displayName, ok = params["defaultValue"].(string)
+			if !ok {
+				displayName = name
+			}
 		}
 		// update elasticsearch
-		err=metaStorage.AddVariable(dataset, name,"myLabel", fieldType, model.VarDistilRoleData)
-		if err != nil{
+		err = metaStorage.AddVariable(dataset, name, displayName, fieldType, model.VarDistilRoleData)
+		if err != nil {
 			handleError(w, err)
 			return
-			}
+		}
 		// marshal output into JSON
 		err = handleJSON(w, map[string]interface{}{
 			"result": "success",
