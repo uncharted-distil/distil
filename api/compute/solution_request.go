@@ -103,6 +103,7 @@ type PredictionResult struct {
 type SolutionRequest struct {
 	Dataset              string
 	DatasetInput         string
+	DatasetMetadata      *api.Dataset
 	TargetFeature        *model.Variable
 	Task                 []string
 	TimestampField       string
@@ -573,8 +574,7 @@ func describeSolution(client *compute.Client, initialSearchSolutionID string) (*
 }
 
 func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage,
-	searchID string, dataset string, storageName string, searchRequest *pipeline.SearchSolutionsRequest,
-	datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
+	searchID string, dataset string, storageName string, datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
 
 	// update request status
 	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestRunningStatus)
@@ -611,7 +611,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		}
 
 		err = s.dispatchSolutionExplainPipeline(client, solutionStorage, dataStorage, searchResult, searchID,
-			solution.SolutionId, dataset, storageName, searchRequest, produceDatasetURI, variables)
+			solution.SolutionId, dataset, storageName, produceDatasetURI, variables)
 		if err != nil {
 			s.persistSolutionError(c, solutionStorage, searchID, solution.SolutionId, err)
 			return
@@ -693,6 +693,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	if err != nil {
 		return err
 	}
+	s.DatasetMetadata = datasetInput
 
 	// timeseries specific handling - the target needs to be set to the timeseries Y field, and we need to
 	// save timestamp variable index for data splitting
@@ -847,7 +848,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	// dispatch search request
 	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.ID,
-		datasetInput.StorageName, searchRequest, datasetInputDir, datasetPathTrain, datasetPathTest, dataVariables)
+		datasetInput.StorageName, datasetInputDir, datasetPathTrain, datasetPathTest, dataVariables)
 
 	return nil
 }

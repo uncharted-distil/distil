@@ -97,6 +97,14 @@ var (
 				parsingFunction: parseConfidencesWrapper([]int{1, 2}),
 			},
 		},
+		"dce5255d-b63c-4601-8ace-d63b42d6d03e": {
+			{
+				primitiveID:     "dce5255d-b63c-4601-8ace-d63b42d6d03e",
+				produceFunction: "produce_explanations",
+				explainableType: ExplainableTypeConfidence,
+				parsingFunction: parseGradCam([]int{1}),
+			},
+		},
 	}
 
 	unexplainableTask = map[string]bool{
@@ -117,6 +125,36 @@ type pipelineOutput struct {
 	typ             string
 	output          string
 	parsingFunction func([]string) (*api.SolutionExplainValues, error)
+}
+
+func parseGradCam(params []int) func([]string) (*api.SolutionExplainValues, error) {
+	// instantiate the parser
+	field := &result.ComplexField{}
+	field.Init()
+	return func(data []string) (*api.SolutionExplainValues, error) {
+		gradCamParsed := result.ParseVal(data[0], field).([]interface{})
+
+		// parse as floats
+		parsed := &api.SolutionExplainValues{}
+		parsed.GradCAM = make([][]float64, len(gradCamParsed))
+		for i, outerRaw := range gradCamParsed {
+			outer := outerRaw.([]interface{})
+			parsed.GradCAM[i] = make([]float64, len(outer))
+			for j, inner := range outer {
+				parsedString := inner.(string)
+				if parsedString == "nan" {
+					continue
+				}
+				parsedVal, err := strconv.ParseFloat(parsedString, 64)
+				if err != nil {
+					return nil, errors.Wrapf(err, "unable to parse grad cam value")
+				}
+				parsed.GradCAM[i][j] = parsedVal
+			}
+		}
+
+		return parsed, nil
+	}
 }
 
 func parseConfidencesWrapper(params []int) func([]string) (*api.SolutionExplainValues, error) {
@@ -144,16 +182,14 @@ func parseConfidencesWrapper(params []int) func([]string) (*api.SolutionExplainV
 	}
 }
 
-func (s *SolutionRequest) createExplainPipeline(desc *pipeline.DescribeSolutionResponse,
-	keywords []string) (*pipeline.PipelineDescription, map[string]*pipelineOutput) {
-	// remote sensing and images are not explainable
+func (s *SolutionRequest) createExplainPipeline(desc *pipeline.DescribeSolutionResponse) (*pipeline.PipelineDescription, map[string]*pipelineOutput) {
+	// pre featurized datasets are not explainable
 	// TODO: we may want to look into folding this filtering functionality into
 	// the function that builds the explainable pipeline (explainablePipeline).
-	for _, kw := range keywords {
-		if unexplainableTask[kw] {
-			return nil, nil
-		}
+	if s.DatasetMetadata != nil && s.DatasetMetadata.LearningDataset != "" {
+		return nil, nil
 	}
+
 	ok, pipExplain, explainOutputs := s.explainablePipeline(desc)
 	if !ok {
 		return nil, nil
