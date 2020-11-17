@@ -132,17 +132,20 @@ func parseGradCam(params []int) func([]string) (*api.SolutionExplainValues, erro
 	field := &result.ComplexField{}
 	field.Init()
 	return func(data []string) (*api.SolutionExplainValues, error) {
-		parsed := &api.SolutionExplainValues{}
-		parsed.GradCAM = [][]float64{{12}}
-
-		gradCamParsed := result.ParseVal(data[0], field).([][]string)
+		gradCamParsed := result.ParseVal(data[0], field).([]interface{})
 
 		// parse as floats
+		parsed := &api.SolutionExplainValues{}
 		parsed.GradCAM = make([][]float64, len(gradCamParsed))
-		for i, outer := range gradCamParsed {
+		for i, outerRaw := range gradCamParsed {
+			outer := outerRaw.([]interface{})
 			parsed.GradCAM[i] = make([]float64, len(outer))
 			for j, inner := range outer {
-				parsedVal, err := strconv.ParseFloat(inner, 64)
+				parsedString := inner.(string)
+				if parsedString == "nan" {
+					continue
+				}
+				parsedVal, err := strconv.ParseFloat(parsedString, 64)
 				if err != nil {
 					return nil, errors.Wrapf(err, "unable to parse grad cam value")
 				}
