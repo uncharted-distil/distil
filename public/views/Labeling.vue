@@ -1,8 +1,8 @@
 <template>
   <div class="row flex-1 pb-3 h-100">
-    <div class="col-12 col-md-3 d-flex h-100 flex-direction-down">
+    <div class="col-12 col-md-3 d-flex h-100 flex-column">
       <h5 class="header-title">Labels</h5>
-      <div class="facet-wrapper">
+      <div class="mb-5">
         <facet-categorical :summary="labelSummary" />
       </div>
       <h5 class="header-title">Features</h5>
@@ -13,7 +13,7 @@
       />
     </div>
     <div class="col-12 col-md-6 d-flex flex-column h-100">
-      <div class="label-data-slot flex-1 d-flex flex-column pb-1 pt-2">
+      <div class="h-80 flex-1 d-flex flex-column pb-1 pt-2">
         <labeling-data-slot
           :summaries="summaries"
           :variables="variables"
@@ -198,15 +198,3 @@ export default Vue.extend({
   },
 });
 </script>
-
-<style scoped>
-.flex-direction-down {
-  flex-direction: column;
-}
-.label-data-slot {
-  height: 80%;
-}
-.facet-wrapper {
-  margin-bottom: 3rem;
-}
-</style>
