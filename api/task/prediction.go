@@ -344,12 +344,17 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, predictionResult.ProduceRequestID, api.SolutionResultTypeInference, resultID, predictionResult.ResultURI, "PREDICT_COMPLETED", nil, createdTime)
+	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, predictionResult.ProduceRequestID, api.SolutionResultTypeInference, resultID, predictionResult.ResultURI, "PREDICT_COMPLETED", createdTime)
 	if err != nil {
 		return nil, err
 	}
 
-	err = params.DataStorage.PersistResult(datasetName, meta.StorageName, predictionResult.ResultURI, target.Name, predictionResult.Confidences)
+	err = params.DataStorage.PersistResult(datasetName, meta.StorageName, predictionResult.ResultURI, target.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	err = params.DataStorage.PersistExplainedResult(datasetName, meta.StorageName, predictionResult.ResultURI, predictionResult.Confidences)
 	if err != nil {
 		return nil, err
 	}

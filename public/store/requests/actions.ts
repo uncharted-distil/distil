@@ -46,6 +46,7 @@ interface SolutionRequestMsg {
   maxTime: number;
   quality: ModelQuality;
   filters: FilterParams;
+  trainTestSplit: number;
 }
 
 // Solution status message used in web socket context
@@ -156,6 +157,15 @@ function updateCurrentSolutionResults(
     });
   } else if (isClassification) {
     resultsActions.fetchCorrectnessSummary(store, {
+      dataset: req.dataset,
+      solutionId: res.solutionId,
+      highlight: context.getters.getDecodedHighlight,
+      dataMode: dataMode,
+      varMode: varModes.has(req.target)
+        ? varModes.get(req.target)
+        : SummaryMode.Default,
+    });
+    resultsActions.fetchConfidenceSummary(store, {
       dataset: req.dataset,
       solutionId: res.solutionId,
       highlight: context.getters.getDecodedHighlight,
@@ -497,6 +507,7 @@ export const actions = {
         maxTime: request.maxTime,
         quality: request.quality,
         filters: request.filters,
+        trainTestSplit: request.trainTestSplit,
       });
     });
   },
