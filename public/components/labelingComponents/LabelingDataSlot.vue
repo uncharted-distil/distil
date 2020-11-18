@@ -51,7 +51,7 @@ import {
 } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
 import { clearRowSelection } from "../../util/row";
-import { LowShotLabels } from "../../util/data";
+import { LowShotLabels, LOW_SHOT_LABEL_COLUMN_NAME } from "../../util/data";
 const GEO_VIEW = "geo";
 const IMAGE_VIEW = "image";
 const TABLE_VIEW = "table";
@@ -107,7 +107,11 @@ export default Vue.extend({
     updateData(label: LowShotLabels) {
       const rowSelection = routeGetters.getDecodedRowSelection(this.$store);
       const updateData = rowSelection.d3mIndices.map((i) => {
-        return { index: i.toString(), name: "LowShotLabel", value: label };
+        return {
+          index: i.toString(),
+          name: LOW_SHOT_LABEL_COLUMN_NAME,
+          value: label,
+        };
       });
       datasetActions.updateDataset(this.$store, {
         dataset: this.dataset,

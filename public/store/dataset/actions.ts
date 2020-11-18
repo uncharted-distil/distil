@@ -1464,7 +1464,6 @@ export const actions = {
         defaultValue: args.defaultValue.toString(),
         displayName: args.displayName,
       });
-      console.log(response);
       return response.data;
     } catch (error) {
       console.error(error);
