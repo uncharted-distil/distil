@@ -8,14 +8,7 @@
 
     <left-side-panel :panel-title="currentAction">
       <template slot="content">
-        <template v-if="activePane === 'grouping'">
-          <b-button @click="onTimeseriesClick" variant="dark">
-            <i class="fa fa-area-chart" /> Timeseries
-          </b-button>
-          <b-button @click="onMapClick" variant="dark">
-            <i class="fa fa-globe" /> Map
-          </b-button>
-        </template>
+        <add-variable-pane v-if="activePane === 'add'" />
         <facet-list-pane v-else />
       </template>
     </left-side-panel>
@@ -60,6 +53,7 @@ import Vue from "vue";
 
 // Components
 import ActionColumn, { Action } from "../components/layout/ActionColumn.vue";
+import AddVariablePane from "../components/layout/AddVariablePane.vue";
 import DataSize from "../components/buttons/DataSize.vue";
 import FacetListPane from "../components/layout/FacetListPane.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
@@ -72,18 +66,14 @@ import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 // Store
 import { RowSelection } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
-import {
-  DATA_EXPLORER_VAR_INSTANCE,
-  GROUPING_ROUTE,
-} from "../store/route/index";
+import { DATA_EXPLORER_VAR_INSTANCE } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
 
 // Util
-import { createRouteEntry, overlayRouteEntry } from "../util/routes";
+import { overlayRouteEntry } from "../util/routes";
 import { getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
-import { GEOCOORDINATE_TYPE, TIMESERIES_TYPE } from "../util/types";
 
 const GEO_VIEW = "geo";
 const GRAPH_VIEW = "graph";
@@ -93,7 +83,7 @@ const TIMESERIES_VIEW = "timeseries";
 
 const ACTIONS = [
   { name: "Selected Variables", icon: "eye", paneId: "selected" },
-  { name: "Create Variable", icon: "plus", paneId: "grouping" },
+  { name: "Create Variable", icon: "plus", paneId: "add" },
 ] as Action[];
 
 export default Vue.extend({
@@ -101,6 +91,7 @@ export default Vue.extend({
 
   components: {
     ActionColumn,
+    AddVariablePane,
     DataSize,
     FacetListPane,
     LeftSidePanel,
@@ -172,25 +163,9 @@ export default Vue.extend({
   },
 
   methods: {
-    groupingClick(type) {
-      const entry = createRouteEntry(GROUPING_ROUTE, {
-        dataset: routeGetters.getRouteDataset(this.$store),
-        groupingType: type,
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
-    },
-
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
-    },
-
-    onMapClick() {
-      this.groupingClick(GEOCOORDINATE_TYPE);
-    },
-
-    onTimeseriesClick() {
-      this.groupingClick(TIMESERIES_TYPE);
     },
 
     onSetActive(actionName: string): void {
