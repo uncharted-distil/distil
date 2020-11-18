@@ -19,7 +19,7 @@
           :variables="variables"
           @DataChanged="onDataChanged"
         />
-        <create-labeling-form />
+        <create-labeling-form @export="onExport" />
       </div>
     </div>
   </div>
@@ -47,7 +47,7 @@ import FacetCategorical from "../components/facets/FacetCategorical.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
 import { MULTIBAND_IMAGE_TYPE } from "../util/types";
 import LabelingDataSlot from "../components/labelingComponents/LabelingDataSlot.vue";
-
+import { EXCLUDE_FILTER } from "../util/filters";
 const LABEL_KEY = "label";
 
 export default Vue.extend({
@@ -149,6 +149,27 @@ export default Vue.extend({
         dataset: this.dataset,
       });
       await viewActions.updateLabelData(this.$store);
+    },
+    async onExport() {
+      const highlight = {
+        context: "VariableFacets",
+        dataset: this.dataset,
+        key: LOW_SHOT_LABEL_COLUMN_NAME,
+        value: LowShotLabels.unlabeled,
+      }; // exclude unlabled from data export
+      const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+        this.$store
+      );
+      const dataMode = routeGetters.getDataMode(this.$store);
+      const response = await datasetActions.extractDataset(this.$store, {
+        dataset: this.dataset,
+        filterParams,
+        highlight,
+        include: true,
+        mode: EXCLUDE_FILTER,
+        dataMode,
+      });
+      // TODO download csv from response
     },
   },
   watch: {

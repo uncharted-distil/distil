@@ -289,7 +289,7 @@ func main() {
 	registerRoutePost(mux, "/distil/update/:dataset", routes.UpdateHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/clone/:dataset", routes.CloningHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/add-field/:dataset", routes.AddFieldHandler(esMetadataStorageCtor, pgDataStorageCtor))
-	registerRoutePost(mux, "/distil/extract/:dataset", routes.ExtractHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
+	registerRoutePost(mux, "/distil/extract/:dataset/:invert", routes.ExtractHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/join", routes.JoinHandler(esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries/:dataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:invert", routes.TimeseriesHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	registerRoutePost(mux, "/distil/timeseries-forecast/:truthDataset/:forecastDataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:result-uuid", routes.TimeseriesForecastHandler(esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, config.TrainTestSplitTimeSeries))

@@ -216,20 +216,40 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 }
 
 // FetchDataset extracts the complete raw data from the database.
-func (s *Storage) FetchDataset(dataset string, storageName string) ([][]string, error) {
+func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, filterParams ...*api.FilterParams) ([][]string, error) {
 	// get data variables (to exclude metadata variables)
 	vars, err := s.metadata.FetchVariables(dataset, true, false)
 	if err != nil {
 		return nil, err
 	}
-
-	varNames := []string{}
+	filteredVars := []*model.Variable{}
+	// only include data with distilrole data and index
 	for _, v := range vars {
+		check := v.DistilRole == model.VarDistilRoleIndex || v.DistilRole == model.VarDistilRoleData
+		if check {
+			filteredVars = append(filteredVars, v)
+		}
+	}
+	varNames := []string{}
+	for _, v := range filteredVars {
 		varNames = append(varNames, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v.Name, v.Name))
 	}
 
-	sql := fmt.Sprintf("SELECT %s FROM %s;", strings.Join(varNames, ", "), getBaseTableName(storageName))
+	if len(filterParams) > 0 {
+		wheres := []string{}
+		paramsFilter := make([]interface{}, 0)
+		wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "", filterParams[0], invert)
+		if len(wheres) > 0 {
+			sql := fmt.Sprintf("SELECT %s FROM %s WHERE %s;", strings.Join(varNames, ", "), getBaseTableName(storageName), strings.Join(wheres, " AND "))
+			res, err := s.client.Query(sql, paramsFilter...)
+			if err != nil {
+				return nil, errors.Wrapf(err, "unable execute query to extract dataset")
+			}
 
+			return s.parseData(res)
+		}
+	}
+	sql := fmt.Sprintf("SELECT %s FROM %s;", strings.Join(varNames, ", "), getBaseTableName(storageName))
 	res, err := s.client.Query(sql)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable execute query to extract dataset")

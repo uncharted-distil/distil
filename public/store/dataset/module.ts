@@ -167,6 +167,7 @@ export const actions = {
   cloneDataset: dispatch(moduleActions.cloneDataset),
   addField: dispatch(moduleActions.addField),
   updateDataset: dispatch(moduleActions.updateDataset),
+  extractDataset: dispatch(moduleActions.extractDataset),
 };
 
 // Typed mutations
