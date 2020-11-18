@@ -1,31 +1,48 @@
-<script lang="ts">
-import Vue from "vue";
-export default Vue.extend({
-  name: "ActionColumn",
-});
-</script>
-
 <template>
   <div class="action-column-container">
-    <!-- <ul class="action-column-nav-bar" role="tablist">
-      <li
-        v-for="(action, idx) in actions"
-        :key="idx"
-        :class="{ active: action.name === currentAction }"
-      >
-        <button
-          class="btn"
+    <ul class="action-column-nav-bar" role="tablist">
+      <li v-for="(action, index) in actions" :key="index">
+        <b-button
           role="tab"
           data-toggle="tab"
+          :variant="action.name === currentAction ? 'primary' : 'light'"
           @click.stop.prevent="setActive(action.name)"
         >
-          <font-awesome-icon :icon="['fas', action.icon]" />
-        </button>
+          <i :class="'fa fa-' + action.icon" />
+        </b-button>
       </li>
-    </ul> -->
-    <slot name="actions" />
+    </ul>
   </div>
 </template>
+
+<script lang="ts">
+import Vue from "vue";
+
+export interface Action {
+  name: string;
+  icon: string;
+  paneId: string;
+}
+
+export default Vue.extend({
+  name: "ActionColumn",
+
+  props: {
+    actions: { type: Array as () => Action[], default: () => [] },
+    currentAction: { type: String, default: "" },
+  },
+
+  methods: {
+    setActive(actionName: string): void {
+      // If the action is currently selected, pass ''
+      // to signify it should be unselected.  Otherwise, pass
+      // the action's name to select it.
+      const name = actionName === this.currentAction ? "" : actionName;
+      this.$emit("set-active-pane", name);
+    },
+  },
+});
+</script>
 
 <style scoped>
 .action-column-container {
@@ -46,7 +63,6 @@ export default Vue.extend({
   top: 0;
   left: 0;
   bottom: 0;
-  /* background-color: $secondary-bar-bg; */
   border: 1px solid rgba(207, 216, 220, 0.5);
 }
 
@@ -58,12 +74,5 @@ export default Vue.extend({
 .action-column-nav-bar button {
   width: var(--width);
   height: var(--width);
-  background-color: transparent;
-  /* color: $icon-color; */
 }
-
-/* .action-column-nav-bar.active button {
-  border-left: 5px solid $selection;
-  color: $selection;
-  } */
 </style>

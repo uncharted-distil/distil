@@ -18,6 +18,7 @@ export const TRAINING_VARS_INSTANCE = "trainingVars";
 export const TARGET_VAR_INSTANCE = "targetVar";
 export const RESULT_TRAINING_VARS_INSTANCE = "resultTrainingVars";
 export const RESULT_TARGET_VAR_INSTANCE = "resultTargetVar";
+export const DATA_EXPLORER_VAR_INSTANCE = "dataExplorerVar";
 export const VAR_MODES_INSTANCE = "varModes";
 export const ROUTE_PAGE_SUFFIX = "Page";
 export const ROUTE_SEARCH_SUFFIX = "Search";

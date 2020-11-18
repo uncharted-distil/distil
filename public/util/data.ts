@@ -56,7 +56,7 @@ export const ERROR_SUFFIX = "_error";
 
 export const NUM_PER_PAGE = 10;
 export const NUM_PER_TARGET_PAGE = 9;
-export const NUM_PER_DATA_EXPLORER_PAGE = 2;
+export const NUM_PER_DATA_EXPLORER_PAGE = 3;
 
 export const DATAMART_PROVENANCE_NYU = "NYU";
 export const DATAMART_PROVENANCE_ISI = "ISI";

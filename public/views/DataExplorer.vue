@@ -1,42 +1,26 @@
 <template>
   <div class="view-container">
-    <action-column>
-      <template slot="actions">
-        <b-button
-          variant="light"
-          title="Create a Timeseries variable"
-          @click="onTimeseriesClick"
-        >
-          <i class="fa fa-area-chart" />
-        </b-button>
-        <b-button
-          variant="light"
-          title="Create a Geocoordinate variable"
-          @click="onMapClick"
-        >
-          <i class="fa fa-globe" />
-        </b-button>
-      </template>
-    </action-column>
+    <action-column
+      :actions="actions"
+      :currentAction="currentAction"
+      @set-active-pane="onSetActive"
+    />
 
-    <left-side-panel panel-title="Select feature to infer below (target)">
-      <variable-facets
-        slot="content"
-        enable-search
-        enable-type-change
-        enable-type-filtering
-        ignore-highlights
-        :facet-count="searchedActiveVariables.length"
-        :html="button"
-        :instance-name="instanceName"
-        :log-activity="problemDefinition"
-        :rows-per-page="numRowsPerPage"
-        :summaries="summaries"
-      />
+    <left-side-panel :panel-title="currentAction">
+      <template slot="content">
+        <template v-if="activePane === 'grouping'">
+          <b-button @click="onTimeseriesClick" variant="dark">
+            <i class="fa fa-area-chart" /> Timeseries
+          </b-button>
+          <b-button @click="onMapClick" variant="dark">
+            <i class="fa fa-globe" /> Map
+          </b-button>
+        </template>
+        <facet-list-pane v-else />
+      </template>
     </left-side-panel>
 
     <main class="content">
-      <create-solutions-form />
       <!-- <div class="fake-search-input">
         <filter-badge
           v-if="activeFilter"
@@ -49,18 +33,18 @@
           :filter="filter"
         />
       </div> -->
-      <!-- <p class="selection-data-slot-summary">
+      <p class="selection-data-size">
         <data-size
           :currentSize="numRows"
-          :total="numRows"
+          :total="totalNumRows"
           @submit="onDataSizeSubmit"
         />
         <strong class="matching-color">matching</strong> samples of
-        {{ numRows }} to model<template v-if="selectionNumRows > 0"
+        {{ totalNumRows }} to model<template v-if="selectionNumRows > 0"
           >, {{ selectionNumRows }}
           <strong class="selected-color">selected</strong>
         </template>
-      </p> -->
+      </p>
       <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
 
       <section class="data-container">
@@ -73,58 +57,33 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { isEmpty } from "lodash";
 
 // Components
-import ActionColumn from "../components/layout/ActionColumn.vue";
-import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
+import ActionColumn, { Action } from "../components/layout/ActionColumn.vue";
+import DataSize from "../components/buttons/DataSize.vue";
+import FacetListPane from "../components/layout/FacetListPane.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
 import SelectGeoPlot from "../components/SelectGeoPlot.vue";
 import SelectGraphView from "../components/SelectGraphView.vue";
 import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
-import VariableFacets from "../components/facets/VariableFacets.vue";
 
 // Store
-import { actions as appActions } from "../store/app/module";
+import { RowSelection } from "../store/dataset/index";
+import { getters as datasetGetters } from "../store/dataset/module";
 import {
-  SummaryMode,
-  TableRow,
-  Variable,
-  VariableSummary,
-} from "../store/dataset/index";
-import {
-  actions as datasetActions,
-  getters as datasetGetters,
-} from "../store/dataset/module";
-import {
-  AVAILABLE_TARGET_VARS_INSTANCE,
+  DATA_EXPLORER_VAR_INSTANCE,
   GROUPING_ROUTE,
-  SELECT_TRAINING_ROUTE,
 } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
 
 // Util
-import {
-  getVariableSummariesByState,
-  NUM_PER_DATA_EXPLORER_PAGE,
-  searchVariables,
-} from "../util/data";
-import { Group } from "../util/facets";
-import {
-  createRouteEntry,
-  overlayRouteEntry,
-  varModesToString,
-} from "../util/routes";
+import { createRouteEntry, overlayRouteEntry } from "../util/routes";
+import { getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
-import {
-  GEOCOORDINATE_TYPE,
-  isUnsupportedTargetVar,
-  TIMESERIES_TYPE,
-} from "../util/types";
-import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { GEOCOORDINATE_TYPE, TIMESERIES_TYPE } from "../util/types";
 
 const GEO_VIEW = "geo";
 const GRAPH_VIEW = "graph";
@@ -132,142 +91,69 @@ const IMAGE_VIEW = "image";
 const TABLE_VIEW = "table";
 const TIMESERIES_VIEW = "timeseries";
 
+const ACTIONS = [
+  { name: "Selected Variables", icon: "eye", paneId: "selected" },
+  { name: "Create Variable", icon: "plus", paneId: "grouping" },
+] as Action[];
+
 export default Vue.extend({
   name: "DataExplorer",
 
   components: {
     ActionColumn,
-    CreateSolutionsForm,
+    DataSize,
+    FacetListPane,
     LeftSidePanel,
     ImageMosaic,
     SelectDataTable,
     SelectGeoPlot,
     SelectGraphView,
     SelectTimeseriesView,
-    VariableFacets,
   },
 
   data() {
     return {
-      instanceName: AVAILABLE_TARGET_VARS_INSTANCE,
-      numRowsPerPage: NUM_PER_DATA_EXPLORER_PAGE,
+      actions: ACTIONS,
+      activePane: ACTIONS[0].paneId,
+      instanceName: DATA_EXPLORER_VAR_INSTANCE,
       viewTypeModel: TABLE_VIEW,
     };
   },
 
   computed: {
-    availableTargetVarsPage(): number {
-      return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
-    },
-
-    availableTargetVarsSearch(): string {
-      return routeGetters.getRouteAvailableTargetVarsSearch(this.$store);
-    },
-
-    groupedFeatures(): string[] {
-      // Fetch the grouped features.
-      const groupedFeatures = datasetGetters
-        .getGroupings(this.$store)
-        .filter((group) => Array.isArray(group.grouping.subIds))
-        .map((group) => group.grouping.subIds)
-        .flat();
-      return groupedFeatures;
+    currentAction(): string {
+      return (
+        this.activePane &&
+        this.actions.find((a) => a.paneId === this.activePane).name
+      );
     },
 
     hasData(): boolean {
       return datasetGetters.hasIncludedTableData(this.$store);
     },
 
-    button(): (group: Group) => HTMLElement {
-      return (group: Group) => {
-        const variable = group.colName;
-        const training = routeGetters.getDecodedTrainingVariableNames(
-          this.$store
-        );
-        const isInTraining = training.includes(variable);
-
-        // create a button
-        const button = document.createElement("button");
-        button.className = "btn btn-sm";
-        button.className += isInTraining
-          ? " btn-outline-secondary"
-          : " btn-primary";
-        button.textContent = isInTraining ? "Hide" : "Display";
-
-        const onClick = async () => {
-          const route = routeGetters.getRoute(this.$store);
-          const task = routeGetters.getRouteTask(this.$store);
-          const training = routeGetters.getDecodedTrainingVariableNames(
-            this.$store
-          );
-          const updatedTraining = isInTraining
-            ? // Remove the variable from the exploration
-              training.filter((v) => v !== variable)
-            : // Add the variable to the exploration
-              training.concat([variable]);
-
-          // update route with training data
-          const entry = overlayRouteEntry(route, {
-            training: updatedTraining.join(","),
-            task,
-          });
-          this.$router.push(entry).catch((err) => console.warn(err));
-
-          // update store
-          viewActions.updateSelectTrainingData(this.$store);
-        };
-
-        // create a button
-        button.addEventListener("click", onClick);
-        return button;
-      };
+    numRows(): number {
+      return this.hasData
+        ? datasetGetters.getIncludedTableDataLength(this.$store)
+        : 0;
     },
 
-    problemDefinition(): string {
-      return Activity.PROBLEM_DEFINITION;
+    rowSelection(): RowSelection {
+      return routeGetters.getDecodedRowSelection(this.$store);
     },
 
-    searchedActiveVariables(): Variable[] {
-      // remove variables used in groupedFeature;
-      const activeVariables = this.variables.filter(
-        (v) => !this.groupedFeatures.includes(v.colName)
-      );
-
-      return searchVariables(activeVariables, this.availableTargetVarsSearch);
+    selectionNumRows(): number {
+      return getNumIncludedRows(this.rowSelection);
     },
 
-    summaries(): VariableSummary[] {
-      const pageIndex = routeGetters.getRouteAvailableTargetVarsPage(
-        this.$store
-      );
+    spinnerHTML,
 
-      const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
-        this.$store
-      );
-
-      const currentSummaries = getVariableSummariesByState(
-        pageIndex,
-        this.numRowsPerPage,
-        this.searchedActiveVariables,
-        summaryDictionary
-      );
-
-      return currentSummaries;
+    totalNumRows(): number {
+      return this.hasData
+        ? datasetGetters.getIncludedTableDataNumRows(this.$store)
+        : 0;
     },
 
-    unsupportedTargets(): Set<string> {
-      return new Set(
-        this.variables
-          .filter((v) => isUnsupportedTargetVar(v.colName, v.colType))
-          .map((v) => v.colName)
-      );
-    },
-
-    variables(): Variable[] {
-      return datasetGetters.getVariables(this.$store);
-    },
-
-    /* Select which component to display the data. */
     viewComponent() {
       if (this.viewTypeModel === GEO_VIEW) return "SelectGeoPlot";
       if (this.viewTypeModel === GRAPH_VIEW) return "SelectGraphView";
@@ -277,30 +163,11 @@ export default Vue.extend({
     },
   },
 
-  watch: {
-    availableTargetVarsPage() {
-      viewActions.fetchDataExplorerData(this.$store);
-    },
-
-    availableTargetVarsSearch() {
-      viewActions.fetchDataExplorerData(this.$store);
-    },
-  },
-
   async beforeMount() {
     // Fill up the store
     await viewActions.fetchDataExplorerData(this.$store);
 
-    // If there is no training selected, display the first summary key
-    const currentTraining = routeGetters.getTrainingVariables(this.$store);
-    const firstSummary = this.summaries?.[0]?.key;
-    if (isEmpty(currentTraining) && !!firstSummary) {
-      const args = { training: firstSummary };
-      const currentRoute = routeGetters.getRoute(this.$store);
-      const entry = overlayRouteEntry(currentRoute, args);
-      this.$router.push(entry).catch((err) => console.warn(err));
-    }
-
+    // Update the training data
     viewActions.updateSelectTrainingData(this.$store);
   },
 
@@ -313,6 +180,11 @@ export default Vue.extend({
       this.$router.push(entry).catch((err) => console.warn(err));
     },
 
+    /* When the user request to fetch a different size of data. */
+    onDataSizeSubmit(dataSize: number) {
+      this.updateRoute({ dataSize });
+    },
+
     onMapClick() {
       this.groupingClick(GEOCOORDINATE_TYPE);
     },
@@ -321,7 +193,19 @@ export default Vue.extend({
       this.groupingClick(TIMESERIES_TYPE);
     },
 
-    spinnerHTML,
+    onSetActive(actionName: string): void {
+      let activePane = "";
+      if (actionName !== "") {
+        activePane = this.actions.find((a) => a.name === actionName).paneId;
+      }
+      this.activePane = activePane;
+    },
+
+    updateRoute(args) {
+      const entry = overlayRouteEntry(this.$route, args);
+      this.$router.push(entry).catch((err) => console.warn(err));
+      viewActions.updateSelectTrainingData(this.$store);
+    },
   },
 });
 </script>
@@ -348,5 +232,12 @@ export default Vue.extend({
   height: 100%;
   position: relative;
   width: 100%;
+}
+
+.matching-color {
+  color: var(--blue);
+}
+.selected-color {
+  color: var(--red);
 }
 </style>
