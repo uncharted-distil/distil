@@ -431,7 +431,13 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	}
 
 	// generate a unique dataset name from the params and the limit values
-	splitDatasetName, err := generateSplitDatasetName(params, &limits)
+	splitDatasetName, err := generateSplitDatasetName(params.DatasetName, params.SourceDataFolder, &basicSplitter{
+		stratify:       params.Stratify,
+		rowLimits:      limits,
+		targetCol:      params.TargetFieldIndex,
+		groupingCol:    params.GroupingFieldIndex,
+		trainTestSplit: params.TrainTestSplit,
+	})
 	if err != nil {
 		return "", "", err
 	}
@@ -541,20 +547,12 @@ func persistOriginalData(params *persistedDataParams) (string, string, error) {
 	return trainSchemaFile, testSchemaFile, nil
 }
 
-func generateSplitDatasetName(params *persistedDataParams, limits *rowLimits) (string, error) {
-	// generate the hash from the params
-	hashStruct := struct {
-		Params    *persistedDataParams
-		RowLimits *rowLimits
-	}{
-		Params:    params,
-		RowLimits: limits,
-	}
-	hash, err := hashstructure.Hash(hashStruct, nil)
+func generateSplitDatasetName(datasetName string, schemaFilename string, splitter datasetSplitter) (string, error) {
+	hash, err := splitter.hash(schemaFilename)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate persisted data hash")
 	}
-	hashFileName := fmt.Sprintf("%s-%0x", params.DatasetName, hash)
+	hashFileName := fmt.Sprintf("%s-%0x", datasetName, hash)
 	return hashFileName, nil
 }
 

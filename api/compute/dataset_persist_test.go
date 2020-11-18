@@ -18,6 +18,7 @@ package compute
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -30,16 +31,16 @@ import (
 
 func TestPersistOriginalDataUnstratified(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
-	params := createTestParams(false, ModelQualityHigh)
-	limits, err := createLimits(ModelQualityHigh)
-	assert.NoError(t, err)
+	params := createTestParams(false, ModelQualityHigh, "test_data")
+	splitter := createTestSplitter(false, ModelQualityHigh)
+	initializeTestConfig()
 
-	splitDatasetName, err := generateSplitDatasetName(params, limits)
+	splitDatasetName, err := generateSplitDatasetName("test_data", path.Join("./test/test_dataset", "datasetDoc.json"), splitter)
 	assert.NoError(t, err)
 	trainPath := fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName)
 	testPath := fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName)
 
-	trainFolder, testFolder, err := persistOriginalData(params)
+	trainFolder, testFolder, err := SplitDataset(path.Join(params.SourceDataFolder, params.SchemaFile), splitter)
 	assert.NoError(t, err)
 	assert.Equal(t, trainPath, trainFolder)
 	assert.Equal(t, testPath, testFolder)
@@ -57,16 +58,16 @@ func TestPersistOriginalDataUnstratified(t *testing.T) {
 
 func TestPersistOriginalDataStratified(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
-	params := createTestParams(true, ModelQualityHigh)
-	limits, err := createLimits(ModelQualityHigh)
-	assert.NoError(t, err)
+	params := createTestParams(true, ModelQualityHigh, "test_data")
+	splitter := createTestSplitter(true, ModelQualityHigh)
+	initializeTestConfig()
 
-	splitDatasetName, err := generateSplitDatasetName(params, limits)
+	splitDatasetName, err := generateSplitDatasetName("test_data", path.Join("./test/test_dataset", "datasetDoc.json"), splitter)
 	assert.NoError(t, err)
 	trainPath := fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName)
 	testPath := fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName)
 
-	trainFolder, testFolder, err := persistOriginalData(params)
+	trainFolder, testFolder, err := SplitDataset(path.Join(params.SourceDataFolder, params.SchemaFile), splitter)
 	assert.NoError(t, err)
 	assert.Equal(t, trainPath, trainFolder)
 	assert.Equal(t, testPath, testFolder)
@@ -91,59 +92,29 @@ func TestPersistOriginalDataStratified(t *testing.T) {
 	assert.Equal(t, 1, categoricalValues["d"])
 }
 
-func TestParamChange(t *testing.T) {
-	assert.NoError(t, removeTestFiles())
-
-	params := createTestParams(false, ModelQualityHigh)
-	limits, err := createLimits(ModelQualityHigh)
-	assert.NoError(t, err)
-	splitDatasetName0, err := generateSplitDatasetName(params, limits)
-	assert.NoError(t, err)
-
-	_, _, err = persistOriginalData(params)
-	assert.NoError(t, err)
-	trainPath := fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName0)
-	assert.FileExists(t, trainPath)
-	testPath := fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName0)
-	assert.FileExists(t, testPath)
-
-	params = createTestParams(true, ModelQualityHigh)
-	splitDatasetName1, err := generateSplitDatasetName(params, limits)
-	assert.NoError(t, err)
-	assert.NotEqual(t, splitDatasetName0, splitDatasetName1)
-
-	_, _, err = persistOriginalData(params)
-	assert.NoError(t, err)
-	trainPath = fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName1)
-	assert.FileExists(t, trainPath)
-	testPath = fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName1)
-	assert.FileExists(t, testPath)
-}
-
 func TestLimitChange(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
+	params := createTestParams(false, ModelQualityHigh, "test_data")
+	splitter := createTestSplitter(false, ModelQualityHigh)
+	initializeTestConfig()
 
-	params := createTestParams(false, ModelQualityHigh)
-	limits, err := createLimits(ModelQualityHigh)
-	assert.NoError(t, err)
-	splitDatasetName0, err := generateSplitDatasetName(params, limits)
+	splitDatasetName0, err := generateSplitDatasetName("test_data", path.Join("./test/test_dataset", "datasetDoc.json"), splitter)
 	assert.NoError(t, err)
 
-	_, _, err = persistOriginalData(params)
+	_, _, err = SplitDataset(path.Join(params.SourceDataFolder, params.SchemaFile), splitter)
 	assert.NoError(t, err)
 	trainPath := fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName0)
 	assert.FileExists(t, trainPath)
 	testPath := fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName0)
 	assert.FileExists(t, testPath)
 
-	params = createTestParams(false, ModelQualityFast)
-	limits, err = createLimits(ModelQualityFast)
-	assert.NoError(t, err)
-	splitDatasetName1, err := generateSplitDatasetName(params, limits)
+	params = createTestParams(true, ModelQualityFast, "test_data")
+	splitter = createTestSplitter(true, ModelQualityFast)
+	splitDatasetName1, err := generateSplitDatasetName("test_data", path.Join("./test/test_dataset", "datasetDoc.json"), splitter)
 	assert.NoError(t, err)
 	assert.NotEqual(t, splitDatasetName0, splitDatasetName1)
 
-	_, _, err = persistOriginalData(params)
+	_, _, err = SplitDataset(path.Join(params.SourceDataFolder, params.SchemaFile), splitter)
 	assert.NoError(t, err)
 	trainPath = fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName1)
 	assert.FileExists(t, trainPath)
@@ -151,9 +122,9 @@ func TestLimitChange(t *testing.T) {
 	assert.FileExists(t, testPath)
 }
 
-func createTestParams(stratify bool, quality string) *persistedDataParams {
+func createTestParams(stratify bool, quality string, name string) *persistedDataParams {
 	return &persistedDataParams{
-		DatasetName:        "test_dataset",
+		DatasetName:        name,
 		SchemaFile:         compute.D3MDataSchema,
 		SourceDataFolder:   "./test/test_dataset",
 		TmpDataFolder:      "./test/tmp_data",
@@ -165,20 +136,31 @@ func createTestParams(stratify bool, quality string) *persistedDataParams {
 	}
 }
 
-func createLimits(quality string) (*rowLimits, error) {
-	var config env.Config
-	config, err := env.LoadConfig()
-	if err != nil {
-		return nil, err
-	}
-	return &rowLimits{
-		MinTrainingRows: config.MinTrainingRows,
-		MinTestRows:     config.MinTestRows,
-		MaxTrainingRows: config.MaxTestRows,
-		MaxTestRows:     config.MaxTestRows,
-		Sample:          config.FastDataPercentage,
+func createTestSplitter(stratify bool, quality string) datasetSplitter {
+	limits := rowLimits{
+		MinTrainingRows: 100,
+		MinTestRows:     100,
+		MaxTrainingRows: 100000,
+		MaxTestRows:     100000,
+		Sample:          0.2,
 		Quality:         quality,
-	}, nil
+	}
+	return &basicSplitter{
+		stratify:       stratify,
+		rowLimits:      limits,
+		targetCol:      2,
+		groupingCol:    -1,
+		trainTestSplit: 0.9,
+	}
+}
+
+func initializeTestConfig() {
+	config := &env.Config{
+		D3MOutputDir: "./test/tmp_data",
+		D3MInputDir:  "./test/test_dataset",
+	}
+
+	env.Initialize(config)
 }
 
 func removeTestFiles() error {
