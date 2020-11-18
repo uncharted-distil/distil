@@ -49,6 +49,8 @@ import {
 } from "../util/types";
 import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
+import { overlayRouteEntry } from "./routes";
+import { Location } from "vue-router";
 
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
@@ -64,6 +66,19 @@ export const FILE_PROVENANCE = "file";
 
 export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
 
+export const LOW_SHOT_LABEL_COLUMN_NAME = "LowShotLabel";
+// LowShotLabels enum for labeling data in a binary classification
+export enum LowShotLabels {
+  positive = "positive",
+  negative = "negative",
+  unlabeled = "unlabeled",
+}
+// DatasetUpdate is an interface that contains the data to update existing data
+export interface DatasetUpdate {
+  index: string; // d3mIndex
+  name: string; // colName
+  value: string; // new value to replace old value
+}
 export function getTimeseriesSummaryTopCategories(
   summary: VariableSummary
 ): string[] {
@@ -313,7 +328,22 @@ export function updateSummaries(
     summaries.push(Object.freeze(summary));
   }
 }
-
+export async function cloneDatasetUpdateRoute(): Promise<Location> {
+  const dataset = routeGetters.getRouteDataset(store);
+  // clone the current dataset
+  const clonedInfo = await datasetActions.cloneDataset(store, {
+    dataset,
+  });
+  // if null there was an error, if success is false there was a backend issue
+  if (clonedInfo === null || !clonedInfo.success) {
+    return null;
+  }
+  // update route to new cloned dataset name
+  const entry = overlayRouteEntry(routeGetters.getRoute(store), {
+    dataset: clonedInfo.clonedDatasetName,
+  });
+  return entry;
+}
 export function updateSummariesPerVariable(
   summary: VariableSummary,
   variableSummaryDictionary: Dictionary<Dictionary<VariableSummary>>

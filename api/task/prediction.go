@@ -467,7 +467,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 			return err
 		}
 
-		err = dataStorage.AddVariable(dataset, storageName, composedVarName, model.StringType)
+		err = dataStorage.AddVariable(dataset, storageName, composedVarName, model.StringType, "")
 		if err != nil {
 			return err
 		}

@@ -8,6 +8,7 @@ import {
   fetchSummaryExemplars,
   minimumRouteKey,
   validateArgs,
+  DatasetUpdate,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
 import { EXCLUDE_FILTER, FilterParams } from "../../util/filters";
@@ -28,6 +29,7 @@ import store, { DistilState } from "../store";
 import {
   BandCombinations,
   BandID,
+  ClonedInfo,
   ClusteringPendingRequest,
   DataMode,
   Dataset,
@@ -363,7 +365,18 @@ export const actions = {
     response.location = uploadResponse.data.location;
     return response;
   },
-
+  async updateDataset(
+    context: DatasetContext,
+    args: { dataset: string; updateData: DatasetUpdate[] }
+  ) {
+    try {
+      const response = await axios.post(`/distil/update/${args.dataset}`, {
+        updates: args.updateData,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  },
   // Re import a dataset without sampling
   async importFullDataset(
     context: DatasetContext,
@@ -1394,7 +1407,22 @@ export const actions = {
       console.error(error);
     }
   },
-
+  async cloneDataset(
+    context: DatasetContext,
+    args: { dataset: string }
+  ): Promise<ClonedInfo> {
+    // check for valid dataset
+    if (!validateArgs(args, ["dataset"])) {
+      return null;
+    }
+    try {
+      const response = await axios.post(`distil/clone/${args.dataset}`);
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  },
   async fetchModelingMetrics(context: DatasetContext, args: { task: string }) {
     if (!validateArgs(args, ["task"])) {
       return null;
@@ -1413,5 +1441,66 @@ export const actions = {
 
   updateRowSelectionData(context: DatasetContext): void {
     mutations.updateRowSelectionData(context);
+  },
+  async addField<T>(
+    context: DatasetContext,
+    args: {
+      dataset: string;
+      name: string;
+      fieldType: string;
+      defaultValue?: T;
+      displayName?: string;
+    }
+  ) {
+    // check for valid dataset
+    if (!validateArgs(args, ["dataset"])) {
+      return null;
+    }
+    try {
+      const response = await axios.post(`distil/add-field/${args.dataset}`, {
+        name: args.name,
+        fieldType: args.fieldType,
+        defaultValue: args.defaultValue.toString(),
+        displayName: args.displayName,
+      });
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  },
+  async extractDataset(
+    context: DatasetContext,
+    args: {
+      dataset: string;
+      filterParams: FilterParams;
+      highlight: Highlight;
+      include: boolean;
+      dataMode: DataMode;
+      mode?: string;
+    }
+  ) {
+    if (!validateArgs(args, ["dataset", "filterParams"])) {
+      return null;
+    }
+    const filterParams = addHighlightToFilterParams(
+      args.filterParams,
+      args.highlight,
+      args.mode
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
+
+    try {
+      const response = await axios.post(
+        `distil/extract/${args.dataset}/${!args.include}`,
+        filterParams
+      );
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
   },
 };

@@ -52,8 +52,8 @@ import Vue from "vue";
 import "@uncharted.software/facets-core";
 import { FacetTermsData } from "@uncharted.software/facets-core/dist/types/facet-terms/FacetTerms";
 
-import TypeChangeMenu from "../TypeChangeMenu";
-import ImportanceBars from "../ImportanceBars";
+import TypeChangeMenu from "../TypeChangeMenu.vue";
+import ImportanceBars from "../ImportanceBars.vue";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getCategoricalChunkSize,

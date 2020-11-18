@@ -289,7 +289,10 @@ export enum DatasetPendingRequestStatus {
   REVIEWED = "REVIEWED",
   ERROR_REVIEWED = "ERROR_REVIEWED",
 }
-
+export interface ClonedInfo {
+  success: boolean;
+  clonedDatasetName: string;
+}
 export interface VariableRankingPendingRequest {
   id: string;
   status: DatasetPendingRequestStatus;

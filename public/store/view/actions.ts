@@ -11,6 +11,7 @@ import {
 import { Dictionary } from "../../util/dict";
 import { EXCLUDE_FILTER, Filter, invertFilter } from "../../util/filters";
 import { getPredictionsById } from "../../util/predictions";
+import { overlayRouteEntry } from "../../util/routes";
 import {
   DataMode,
   Highlight,
@@ -21,6 +22,7 @@ import {
 import {
   actions as datasetActions,
   mutations as datasetMutations,
+  getters as datasetGetters,
 } from "../dataset/module";
 import {
   actions as modelActions,
@@ -325,7 +327,6 @@ export const actions = {
       return actions.updateJoinDatasetsData(context);
     });
   },
-
   updateJoinDatasetsData(context: ViewContext) {
     // clear any previous state
     datasetMutations.clearJoinDatasetsTableData(store);
@@ -444,6 +445,36 @@ export const actions = {
         dataMode: dataMode,
       }),
       datasetActions.fetchExcludedTableData(store, {
+        dataset: dataset,
+        filterParams: filterParams,
+        highlight: highlight,
+        dataMode: dataMode,
+      }),
+    ]);
+  },
+  updateLabelData(context: ViewContext) {
+    // clear any previous state
+
+    const dataset = context.getters.getRouteDataset;
+    const highlight = context.getters.getDecodedHighlight;
+    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
+    const dataMode = context.getters.getDataMode;
+    const variables = datasetGetters.getVariables(store);
+    const varModes = context.getters.getDecodedVarModes;
+    variables.forEach((v) => {
+      filterParams.variables.push(v.colName);
+    });
+    clearVariableSummaries(context);
+    return Promise.all([
+      datasetActions.fetchIncludedVariableSummaries(store, {
+        dataset: dataset,
+        variables: variables,
+        filterParams: filterParams,
+        highlight: highlight,
+        dataMode: dataMode,
+        varModes: varModes,
+      }),
+      datasetActions.fetchIncludedTableData(store, {
         dataset: dataset,
         filterParams: filterParams,
         highlight: highlight,
