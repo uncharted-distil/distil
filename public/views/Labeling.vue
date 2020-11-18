@@ -6,7 +6,11 @@
         <facet-categorical :summary="labelSummary" />
       </div>
       <h5 class="header-title">Features</h5>
-      <variable-facets enable-type-filtering :summaries="summaries" />
+      <variable-facets
+        enable-highlighting
+        enable-type-filtering
+        :summaries="summaries"
+      />
     </div>
     <div class="col-12 col-md-6 d-flex flex-column h-100">
       <div class="label-data-slot flex-1 d-flex flex-column pb-1 pt-2">
@@ -118,6 +122,9 @@ export default Vue.extend({
 
       return currentSummaries;
     },
+    highlight(): string {
+      return routeGetters.getRouteHighlight(this.$store);
+    },
   },
   methods: {
     // used for generating default labels in the instance where labels do not exist in the dataset
@@ -142,6 +149,11 @@ export default Vue.extend({
         dataset: this.dataset,
       });
       await viewActions.updateLabelData(this.$store);
+    },
+  },
+  watch: {
+    highlight() {
+      this.onDataChanged();
     },
   },
   async created() {
