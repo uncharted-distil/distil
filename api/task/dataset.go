@@ -121,14 +121,14 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 
 // ExportDataset extracts a dataset from the database and metadata storage, writing
 // it to disk in D3M dataset format.
-func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, invert bool, filterParams ...*api.FilterParams) (string, string, error) {
+func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, invert bool, filterParams *api.FilterParams) (string, string, error) {
 	metaDataset, err := metaStorage.FetchDataset(dataset, true, false)
 	if err != nil {
 		return "", "", err
 	}
 	meta := metaDataset.ToMetadata()
 
-	data, err := dataStorage.FetchDataset(dataset, meta.StorageName, invert, filterParams...)
+	data, err := dataStorage.FetchDataset(dataset, meta.StorageName, invert, filterParams)
 	if err != nil {
 		return "", "", err
 	}

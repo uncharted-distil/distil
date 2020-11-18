@@ -1,5 +1,4 @@
 import axios, { AxiosResponse } from "axios";
-import { data } from "jquery";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import {

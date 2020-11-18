@@ -72,28 +72,23 @@ func AddFieldHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageC
 			handleError(w, errors.New(errorMsg+"fieldType"))
 			return
 		}
+		defaultValue := ""
 		// update postgres
 		if params["defaultValue"] != nil {
-			defaultValue, ok := params["defaultValue"].(string)
+			defaultValue, ok = params["defaultValue"].(string)
 			if !ok {
 				handleError(w, errors.New(errorMsg+"defaultValue"))
 				return
 			}
-			err := dataStorage.AddVariable(dataset, storageName, name, fieldType, defaultValue)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-		} else {
-			err := dataStorage.AddVariable(dataset, storageName, name, fieldType)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
+		}
+		err = dataStorage.AddVariable(dataset, storageName, name, fieldType, defaultValue)
+		if err != nil {
+			handleError(w, err)
+			return
 		}
 		displayName := name
 		if params["displayName"] != nil {
-			displayName, ok = params["defaultValue"].(string)
+			displayName, ok = params["displayName"].(string)
 			if !ok {
 				displayName = name
 			}

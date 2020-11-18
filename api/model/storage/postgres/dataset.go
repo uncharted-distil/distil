@@ -216,7 +216,7 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 }
 
 // FetchDataset extracts the complete raw data from the database.
-func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, filterParams ...*api.FilterParams) ([][]string, error) {
+func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, filterParams *api.FilterParams) ([][]string, error) {
 	// get data variables (to exclude metadata variables)
 	vars, err := s.metadata.FetchVariables(dataset, true, false)
 	if err != nil {
@@ -225,8 +225,7 @@ func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, 
 	filteredVars := []*model.Variable{}
 	// only include data with distilrole data and index
 	for _, v := range vars {
-		check := v.DistilRole == model.VarDistilRoleIndex || v.DistilRole == model.VarDistilRoleData
-		if check {
+		if model.IsTA2Field(v.DistilRole, v.SelectedRole) {
 			filteredVars = append(filteredVars, v)
 		}
 	}
@@ -234,23 +233,15 @@ func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, 
 	for _, v := range filteredVars {
 		varNames = append(varNames, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v.Name, v.Name))
 	}
-
-	if len(filterParams) > 0 {
-		wheres := []string{}
-		paramsFilter := make([]interface{}, 0)
-		wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "", filterParams[0], invert)
-		if len(wheres) > 0 {
-			sql := fmt.Sprintf("SELECT %s FROM %s WHERE %s;", strings.Join(varNames, ", "), getBaseTableName(storageName), strings.Join(wheres, " AND "))
-			res, err := s.client.Query(sql, paramsFilter...)
-			if err != nil {
-				return nil, errors.Wrapf(err, "unable execute query to extract dataset")
-			}
-
-			return s.parseData(res)
-		}
+	wheres := []string{}
+	paramsFilter := make([]interface{}, 0)
+	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "", filterParams, invert)
+	where := ""
+	if len(wheres) > 0 {
+		where = "WHERE" + strings.Join(wheres, " AND ")
 	}
-	sql := fmt.Sprintf("SELECT %s FROM %s;", strings.Join(varNames, ", "), getBaseTableName(storageName))
-	res, err := s.client.Query(sql)
+	sql := fmt.Sprintf("SELECT %s FROM %s %s;", strings.Join(varNames, ", "), getBaseTableName(storageName), where)
+	res, err := s.client.Query(sql, paramsFilter...)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable execute query to extract dataset")
 	}
@@ -336,7 +327,7 @@ func (s *Storage) createViewFromMetadataFields(storageName string, fields map[st
 }
 
 // AddVariable adds a new variable to the dataset.
-func (s *Storage) AddVariable(dataset string, storageName string, varName string, varType string, defaultVal ...string) error {
+func (s *Storage) AddVariable(dataset string, storageName string, varName string, varType string, defaultVal string) error {
 	// check to make sure the column doesnt exist already
 	dbFields, err := s.getDatabaseFields(fmt.Sprintf("%s_base", storageName))
 	if err != nil {
@@ -352,11 +343,13 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 	}
 
 	if !found {
-		// add the empty column to the base table and the explain table
-		sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT;", storageName, varName)
+		defaultClause := ""
 		if len(defaultVal) > 0 {
-			sql = fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT DEFAULT '%s';", storageName, varName, defaultVal[0])
+			defaultClause = fmt.Sprintf(" Default '%s'", defaultVal)
 		}
+		// add the empty column to the base table and the explain table
+		sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT%s;", storageName, varName, defaultClause)
+
 		_, err = s.client.Exec(sql)
 		if err != nil {
 			return errors.Wrap(err, "unable to add new column to database table")
@@ -392,7 +385,7 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 
 // AddField adds a new field to the data storage. This only adds a new column.
 // It does not add the column to other tables nor does it rebuild a view.
-func (s *Storage) AddField(dataset string, storageName string, varName string, varType string, defaultVal ...string) error {
+func (s *Storage) AddField(dataset string, storageName string, varName string, varType string, defaultVal string) error {
 	// check to make sure the column doesnt exist already
 	dbFields, err := s.getDatabaseFields(storageName)
 	if err != nil {
@@ -411,11 +404,11 @@ func (s *Storage) AddField(dataset string, storageName string, varName string, v
 		return nil
 	}
 
-	sql := fmt.Sprintf("ALTER TABLE %s ADD COLUMN \"%s\" %s;", storageName, varName, postgres.MapD3MTypeToPostgresType(varType))
+	defaultClause := ""
 	if len(defaultVal) > 0 {
-		sql = fmt.Sprintf("ALTER TABLE %s ADD COLUMN \"%s\" %s DEFAULT '%s';", storageName, varName, postgres.MapD3MTypeToPostgresType(varType), defaultVal[0])
+		defaultClause = " DEFAULT" + defaultVal
 	}
-	fmt.Println(sql)
+	sql := fmt.Sprintf("ALTER TABLE %s ADD COLUMN \"%s\" %s%s;", storageName, varName, postgres.MapD3MTypeToPostgresType(varType), defaultClause)
 	_, err = s.client.Exec(sql)
 	if err != nil {
 		return errors.Wrap(err, "unable to add new column to database explain table")

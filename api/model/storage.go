@@ -62,7 +62,7 @@ type DataStorageCtor func() (DataStorage, error)
 type DataStorage interface {
 	FetchNumRows(storageName string, variables []*model.Variable) (int, error)
 	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool) (*FilteredData, error)
-	FetchDataset(dataset string, storageName string, invert bool, filterParams ...*FilterParams) ([][]string, error)
+	FetchDataset(dataset string, storageName string, invert bool, filterParams *FilterParams) ([][]string, error)
 	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams, invert bool, mode SummaryMode) (*VariableSummary, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
 	PersistResult(dataset string, storageName string, resultURI string, target string, confidenceValues *SolutionExplainResult) error
@@ -84,8 +84,8 @@ type DataStorage interface {
 	// Dataset manipulation
 	IsValidDataType(dataset string, storageName string, varName string, varType string) (bool, error)
 	SetDataType(dataset string, storageName string, varName string, varType string) error
-	AddVariable(dataset string, storageName string, varName string, varType string, defaultVal ...string) error
-	AddField(dataset string, storageName string, varName string, varType string, defaultVal ...string) error
+	AddVariable(dataset string, storageName string, varName string, varType string, defaultVal string) error
+	AddField(dataset string, storageName string, varName string, varType string, defaultVal string) error
 	DeleteVariable(dataset string, storageName string, varName string) error
 	UpdateVariable(storageName string, varName string, d3mIndex string, value string) error
 	UpdateVariableBatch(storageName string, varName string, updates map[string]string) error
