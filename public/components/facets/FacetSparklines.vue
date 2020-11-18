@@ -8,20 +8,24 @@
     @facet-element-updated="updateSelection"
   >
     <div slot="header-label" :class="headerClass">
-      <i :class="getGroupIcon(summary) + ' facet-header-icon'"></i>
+      <i :class="getGroupIcon(summary) + ' facet-header-icon'" />
       <span>{{ summary.label.toUpperCase() }}</span>
       <type-change-menu
         v-if="facetEnableTypeChanges"
         class="facet-header-dropdown"
         :dataset="summary.dataset"
         :field="summary.key"
-        :expandCollapse="expandCollapse"
+        :expand-collapse="expandCollapse"
         :expand="expand"
-      >
-      </type-change-menu>
+      />
     </div>
     <facet-template target="facet-terms-value">
-      <div slot="header" class="facet-sparkline-display">${metadata}</div>
+      <div slot="content" class="w-100 pl-2">
+        <div slot="bar" class="facet-sparkline-display">${metadata}</div>
+      </div>
+      <div slot="footer" class="w-100 pl-2 facet-sparkline-axis-footer">
+        ${label}
+      </div>
     </facet-template>
     <div slot="footer" class="facet-footer-container">
       <div v-if="facetDisplayMore" class="facet-footer-more">
@@ -39,7 +43,7 @@
         v-if="this.html"
         v-child="computeCustomHTML()"
         class="facet-footer-custom-html"
-      ></div>
+      />
     </div>
   </facet-terms>
 </template>
@@ -304,9 +308,17 @@ export default Vue.extend({
 
 <style scoped>
 .facet-sparkline-display {
-  padding-left: 12px;
   width: 100%;
   height: 40px;
+}
+
+.facet-sparkline-axis-footer {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+  color: rgb(26, 27, 28);
+  padding-left: 0.25rem;
 }
 
 .facet-header-icon {
