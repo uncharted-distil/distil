@@ -65,7 +65,8 @@ type DataStorage interface {
 	FetchDataset(dataset string, storageName string, invert bool, filterParams *FilterParams) ([][]string, error)
 	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams, invert bool, mode SummaryMode) (*VariableSummary, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
-	PersistResult(dataset string, storageName string, resultURI string, target string, confidenceValues *SolutionExplainResult) error
+	PersistResult(dataset string, storageName string, resultURI string, target string) error
+	PersistExplainedResult(dataset string, storageName string, resultURI string, explainResult *SolutionExplainResult) error
 	PersistSolutionFeatureWeight(dataset string, storageName string, solutionID string, weights [][]string) error
 	FetchResults(dataset string, storageName string, resultURI string, solutionID string, filterParams *FilterParams, removeTargetColumn bool) (*FilteredData, error)
 	FetchPredictedSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
@@ -116,7 +117,8 @@ type SolutionStorage interface {
 	PersistSolution(requestID string, solutionID string, explainedSolutionID string, createdTime time.Time) error
 	PersistSolutionWeight(solutionID string, featureName string, featureIndex int64, weight float64) error
 	PersistSolutionState(solutionID string, progress string, createdTime time.Time) error
-	PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string, resultType string, resultUUID string, resultURI string, progress string, explainOutput map[string]*SolutionExplainResult, createdTime time.Time) error
+	PersistSolutionResult(solutionID string, fittedSolutionID string, produceRequestID string, resultType string, resultUUID string, resultURI string, progress string, createdTime time.Time) error
+	PersistSolutionExplainedOutput(resultUUID string, explainOutput map[string]*SolutionExplainResult) error
 	PersistSolutionScore(solutionID string, metric string, score float64) error
 	UpdateRequest(requestID string, progress string, updatedTime time.Time) error
 	UpdateSolution(solutionID string, explainedSolutionID string) error
