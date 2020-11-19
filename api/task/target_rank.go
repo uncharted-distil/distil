@@ -29,11 +29,36 @@ import (
 	log "github.com/unchartedsoftware/plog"
 )
 
+var exclusions = map[string]bool{
+	model.MultiBandImageType: true,
+	model.ImageType:          true,
+	model.TimeSeriesType:     true,
+	model.RealVectorType:     true,
+	model.GeoBoundsType:      true,
+	model.GeoCoordinateType:  true,
+}
+
 // TargetRank will rank the dataset relative to a target variable using
 // a primitive.
 func TargetRank(dataset string, target string, features []*model.Variable, source metadata.DatasetSource) (map[string]float64, error) {
+	// Some feature types cannot be / should not be ranked.  We remove them from the feature list, and completely skip ranking if there
+	// isn't at least 3 valid (target + 2 features)
+	filteredFeatures := []*model.Variable{}
+	var targetFeature *model.Variable
+	for _, feature := range features {
+		if feature.Name == target {
+			targetFeature = feature
+		}
+		if !exclusions[feature.Type] {
+			filteredFeatures = append(filteredFeatures, feature)
+		}
+	}
+	if len(filteredFeatures) <= 2 || exclusions[targetFeature.Type] {
+		return map[string]float64{}, nil
+	}
+
 	// create & submit the solution request
-	pip, err := description.CreateTargetRankingPipeline("roger", "", target, features)
+	pip, err := description.CreateTargetRankingPipeline("target_rank", "feature ranking relative to the target", target, filteredFeatures)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to create ranking pipeline")
 	}
