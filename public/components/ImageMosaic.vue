@@ -65,6 +65,7 @@ import {
   updateTableRowSelection,
 } from "../util/row";
 import { getImageFields } from "../util/data";
+import LabelAnnotation from "../components/labelingComponents/LabelAnnotation.vue";
 
 export default Vue.extend({
   name: "image-mosaic",
@@ -72,6 +73,7 @@ export default Vue.extend({
   components: {
     ImageLabel,
     ImagePreview,
+    LabelAnnotation,
   },
 
   props: {
