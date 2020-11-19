@@ -2,15 +2,13 @@
   <div class="view-container">
     <action-column
       :actions="actions"
-      :currentAction="currentAction"
+      :current-action="currentAction"
       @set-active-pane="onSetActive"
     />
 
     <left-side-panel :panel-title="currentAction">
-      <template slot="content">
-        <add-variable-pane v-if="activePane === 'add'" />
-        <facet-list-pane v-else />
-      </template>
+      <add-variable-pane v-if="activePane === 'add'" />
+      <facet-list-pane v-else :variables="activeVariables" />
     </left-side-panel>
 
     <main class="content">
@@ -28,7 +26,7 @@
       </div> -->
       <p class="selection-data-size">
         <data-size
-          :currentSize="numRows"
+          :current-size="numRows"
           :total="totalNumRows"
           @submit="onDataSizeSubmit"
         />
@@ -41,7 +39,7 @@
       <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
 
       <section class="data-container">
-        <div v-if="!hasData" v-html="spinnerHTML"></div>
+        <div v-if="!hasData" v-html="spinnerHTML" />
         <component :is="viewComponent" :instance-name="instanceName" />
       </section>
     </main>
@@ -50,6 +48,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { isEmpty } from "lodash";
 
 // Components
 import ActionColumn, { Action } from "../components/layout/ActionColumn.vue";
@@ -64,7 +63,7 @@ import SelectGraphView from "../components/SelectGraphView.vue";
 import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 
 // Store
-import { RowSelection } from "../store/dataset/index";
+import { RowSelection, Variable } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { DATA_EXPLORER_VAR_INSTANCE } from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
@@ -82,6 +81,7 @@ const TABLE_VIEW = "table";
 const TIMESERIES_VIEW = "timeseries";
 
 const ACTIONS = [
+  { name: "All Variables", icon: "database", paneId: "available" },
   { name: "Selected Variables", icon: "eye", paneId: "selected" },
   { name: "Create Variable", icon: "plus", paneId: "add" },
 ] as Action[];
@@ -112,6 +112,24 @@ export default Vue.extend({
   },
 
   computed: {
+    activeVariables(): Variable[] {
+      const cleanTraining = this.trainingVariables.map((t) => t.toLowerCase());
+
+      // All variables that are not selected
+      if (this.activePane === "available") {
+        return this.variables.filter(
+          (variable) => !cleanTraining.includes(variable.colName.toLowerCase())
+        );
+      }
+
+      // Selected variables
+      if (this.activePane === "selected") {
+        return this.variables.filter((variable) =>
+          cleanTraining.includes(variable.colName.toLowerCase())
+        );
+      }
+    },
+
     currentAction(): string {
       return (
         this.activePane &&
@@ -143,6 +161,14 @@ export default Vue.extend({
       return this.hasData
         ? datasetGetters.getIncludedTableDataNumRows(this.$store)
         : 0;
+    },
+
+    trainingVariables(): string[] {
+      return routeGetters.getDecodedTrainingVariableNames(this.$store);
+    },
+
+    variables(): Variable[] {
+      return datasetGetters.getVariables(this.$store);
     },
 
     viewComponent() {

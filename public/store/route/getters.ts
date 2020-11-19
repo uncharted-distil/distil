@@ -557,7 +557,6 @@ export const getters = {
   },
 
   /* Check if the current task includes Timeseries. */
-
   isTimeseries(state: Route): boolean {
     // Get the list of task of the route.
     const task = state.query.task as string;
@@ -608,6 +607,7 @@ export const getters = {
     }
     return metrics.split(",");
   },
+
   /* Check if the current page is SELECT_TARGET_ROUTE. */
   isPageSelectTarget(state: Route): Boolean {
     return state.path === SELECT_TARGET_ROUTE;

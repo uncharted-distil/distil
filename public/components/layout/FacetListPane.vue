@@ -10,6 +10,7 @@
     :log-activity="problemDefinition"
     :rows-per-page="numRowsPerPage"
     :summaries="summaries"
+    @search="onSearch"
   />
 </template>
 
@@ -35,6 +36,10 @@ import { Activity } from "../../util/userEvents";
 export default Vue.extend({
   name: "FacetListPane",
 
+  props: {
+    variables: { type: Array as () => Variable[], default: () => [] },
+  },
+
   components: {
     VariableFacets,
   },
@@ -43,6 +48,7 @@ export default Vue.extend({
     return {
       instanceName: DATA_EXPLORER_VAR_INSTANCE,
       numRowsPerPage: NUM_PER_DATA_EXPLORER_PAGE,
+      search: "",
     };
   },
 
@@ -118,7 +124,7 @@ export default Vue.extend({
         (v) => !this.groupedFeatures.includes(v.colName)
       );
 
-      return searchVariables(activeVariables, this.availableTargetVarsSearch);
+      return searchVariables(activeVariables, this.search);
     },
 
     summaries(): VariableSummary[] {
@@ -139,10 +145,6 @@ export default Vue.extend({
 
       return currentSummaries;
     },
-
-    variables(): Variable[] {
-      return datasetGetters.getVariables(this.$store);
-    },
   },
 
   watch: {
@@ -152,6 +154,12 @@ export default Vue.extend({
 
     availableTargetVarsSearch() {
       viewActions.fetchDataExplorerData(this.$store);
+    },
+  },
+
+  methods: {
+    onSearch(term): void {
+      this.search = term;
     },
   },
 });

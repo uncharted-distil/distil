@@ -252,6 +252,7 @@ export default Vue.extend({
           [this.routePageKey()]: page,
         });
         this.$router.push(entry).catch((err) => console.warn(err));
+        this.$emit("page", page);
       },
       get(): number {
         return getRouteFacetPage(this.routePageKey(), this.$route);
@@ -325,11 +326,14 @@ export default Vue.extend({
   },
 
   watch: {
-    search() {
+    search(oldTerm, newTerm) {
       const entry = overlayRouteEntry(this.$route, {
         [this.routeSearchKey()]: this.search,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
+
+      // If the term searched has been updated, we emit an event.
+      if (oldTerm !== newTerm) this.$emit("search", this.search);
     },
   },
 

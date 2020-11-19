@@ -5,7 +5,7 @@
       <!-- <close-button @close="onClose" /> -->
     </header>
     <div class="panel-body">
-      <slot name="content" />
+      <slot />
     </div>
   </aside>
 </template>
