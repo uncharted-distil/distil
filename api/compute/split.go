@@ -17,11 +17,13 @@ package compute
 
 import (
 	"math"
+	"os"
 	"path"
 	"sort"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -29,6 +31,7 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 var (
@@ -192,6 +195,30 @@ func SplitDataset(schemaFile string, splitter datasetSplitter) (string, string, 
 		return "", "", err
 	}
 
+	// check if already split
+	splitDatasetName, err := generateSplitDatasetName(meta.Name, schemaFile, splitter)
+	if err != nil {
+		return "", "", err
+	}
+	trainFolder := path.Join(env.GetTmpPath(), splitDatasetName, trainFilenamePrefix)
+	testFolder := path.Join(env.GetTmpPath(), splitDatasetName, testFilenamePrefix)
+	trainSchemaFile := path.Join(trainFolder, compute.D3MDataSchema)
+	testSchemaFile := path.Join(testFolder, compute.D3MDataSchema)
+
+	if alreadySplit(meta.Name, trainSchemaFile, testSchemaFile) {
+		return trainSchemaFile, testSchemaFile, nil
+	}
+
+	// delete existing folders
+	err = deleteIfExists(trainFolder)
+	if err != nil {
+		return "", "", nil
+	}
+	err = deleteIfExists(testFolder)
+	if err != nil {
+		return "", "", nil
+	}
+
 	// load data to split
 	data, err := loadData(path.Dir(schemaFile), meta)
 	if err != nil {
@@ -205,14 +232,7 @@ func SplitDataset(schemaFile string, splitter datasetSplitter) (string, string, 
 	}
 
 	// determine output location
-	splitDatasetName, err := generateSplitDatasetName(meta.Name, schemaFile, splitter)
-	if err != nil {
-		return "", "", err
-	}
-	trainFolder := path.Join(env.GetTmpPath(), splitDatasetName, trainFilenamePrefix)
-	testFolder := path.Join(env.GetTmpPath(), splitDatasetName, testFilenamePrefix)
 	outputFilename := path.Base(meta.GetMainDataResource().ResPath)
-
 	trainOutput := path.Join(trainFolder, compute.D3MDataFolder, outputFilename)
 	testOutput := path.Join(testFolder, compute.D3MDataFolder, outputFilename)
 
@@ -243,7 +263,7 @@ func SplitDataset(schemaFile string, splitter datasetSplitter) (string, string, 
 		return "", "", err
 	}
 
-	return path.Join(trainFolder, compute.D3MDataSchema), path.Join(testFolder, compute.D3MDataSchema), nil
+	return trainSchemaFile, testSchemaFile, nil
 }
 
 func loadData(sourceFolder string, meta *model.Metadata) ([][]string, error) {
@@ -260,11 +280,54 @@ func loadData(sourceFolder string, meta *model.Metadata) ([][]string, error) {
 	return data, nil
 }
 
-func getSplitter(taskType []string, targetIndex int) datasetSplitter {
+func createSplitter(taskType []string, targetFieldIndex int, groupingFieldIndex int, stratify bool, quality string, trainTestSplit float64) datasetSplitter {
+	// build row limits
+	config, _ := env.LoadConfig()
+	limits := rowLimits{
+		MinTrainingRows: config.MinTrainingRows,
+		MinTestRows:     config.MinTestRows,
+		MaxTrainingRows: config.MaxTrainingRows,
+		MaxTestRows:     config.MaxTestRows,
+		Sample:          config.FastDataPercentage,
+		Quality:         quality,
+	}
+
 	for _, task := range taskType {
 		if task == compute.ForecastingTask {
-			return splitterTimeseries
+			return &timeseriesSplitter{
+				timeseriesCol:  groupingFieldIndex,
+				trainTestSplit: trainTestSplit,
+			}
 		}
 	}
-	return splitterBasic
+
+	return &basicSplitter{
+		stratify:       stratify,
+		rowLimits:      limits,
+		targetCol:      targetFieldIndex,
+		groupingCol:    groupingFieldIndex,
+		trainTestSplit: trainTestSplit,
+	}
+}
+
+func alreadySplit(name string, trainFilename string, testFilename string) bool {
+	exists := false
+	log.Infof("checking folders `%s` & `%s` to see if the dataset has been previously split", trainFilename, testFilename)
+	if util.FileExists(trainFilename) && util.FileExists(testFilename) {
+		log.Infof("dataset '%s' already split", name)
+		exists = true
+	}
+
+	return exists
+}
+
+func deleteIfExists(folderName string) error {
+	if pathExists(folderName) {
+		err := os.RemoveAll(folderName)
+		if err != nil {
+			return errors.Wrapf(err, "unable to remove folder '%s' from previous split attempt", folderName)
+		}
+	}
+
+	return nil
 }

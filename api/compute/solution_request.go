@@ -755,21 +755,9 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	// when dealing with categorical data we want to stratify
 	stratify := model.IsCategorical(s.TargetFeature.Type)
-
-	// perist the datasets and get URI
-	params := &persistedDataParams{
-		DatasetName:        s.DatasetInput,
-		SchemaFile:         compute.D3MDataSchema,
-		SourceDataFolder:   datasetInputDir,
-		TmpDataFolder:      datasetDir,
-		TaskType:           s.Task,
-		GroupingFieldIndex: groupingVariableIndex,
-		TargetFieldIndex:   targetIndex,
-		Stratify:           stratify,
-		Quality:            s.Quality,
-		TrainTestSplit:     s.TrainTestSplit,
-	}
-	datasetPathTrain, datasetPathTest, err := persistOriginalData(params)
+	// create the splitter to use for the train / test split
+	splitter := createSplitter(s.Task, targetIndex, groupingVariableIndex, stratify, s.Quality, s.TrainTestSplit)
+	datasetPathTrain, datasetPathTest, err := SplitDataset(path.Join(datasetInputDir, compute.D3MDataSchema), splitter)
 	if err != nil {
 		return err
 	}
