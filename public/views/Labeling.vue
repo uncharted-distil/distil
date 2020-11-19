@@ -24,7 +24,7 @@
       />
     </div>
     <div class="col-12 col-md-6 d-flex flex-column h-100">
-      <div class="h-80 flex-1 d-flex flex-column pb-1 pt-2">
+      <div class="flex-1 d-flex flex-column pb-1 pt-2">
         <labeling-data-slot
           :summaries="summaries"
           :variables="variables"
@@ -33,6 +33,21 @@
         <create-labeling-form @export="onExport" />
       </div>
     </div>
+    <b-modal :id="modalId" title="Label Creation" @hide="onLabelSubmit">
+      <b-form-group
+        id="input-group-1"
+        label="Label name:"
+        label-for="label-input-field"
+        description="Enter the name of label."
+      >
+        <b-form-input
+          id="label-input-field"
+          v-model="labelName"
+          required
+          :placeholder="labelName"
+        />
+      </b-form-group>
+    </b-modal>
   </div>
 </template>
 
@@ -81,6 +96,12 @@ export default Vue.extend({
       type: String as () => Activity,
       default: Activity.DATA_PREPARATION,
     },
+  },
+  data() {
+    return {
+      labelName: LOW_SHOT_LABEL_COLUMN_NAME,
+      modalId: "label-input-form",
+    };
   },
   computed: {
     dataset(): string {
@@ -198,7 +219,6 @@ export default Vue.extend({
         mode: EXCLUDE_FILTER,
         dataMode,
       });
-      // TODO download csv from response
     },
     onFacetClick(context: string, key: string, value: string, dataset: string) {
       if (key && value) {
@@ -218,41 +238,45 @@ export default Vue.extend({
         details: { key: key, value: value },
       });
     },
+    async onLabelSubmit() {
+      // add new field
+      await datasetActions.addField<string>(this.$store, {
+        dataset: this.dataset,
+        name: LOW_SHOT_LABEL_COLUMN_NAME,
+        fieldType: CATEGORICAL_TYPE,
+        defaultValue: LowShotLabels.unlabeled,
+        displayName: this.labelName,
+      });
+      await datasetActions.fetchVariables(this.$store, {
+        dataset: this.dataset,
+      });
+      // pull the cloned data
+      viewActions.updateLabelData(this.$store);
+      // update task based on the current training data
+      const taskResponse = await datasetActions.fetchTask(this.$store, {
+        dataset: this.dataset,
+        targetName: LOW_SHOT_LABEL_COLUMN_NAME,
+        variableNames: this.variables.map((v) => v.colName),
+      });
+
+      // update route with training data
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        task: taskResponse.data.task.join(","),
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
   },
   watch: {
     highlight() {
       this.onDataChanged();
     },
   },
-  async created() {
-    let entry = await cloneDatasetUpdateRoute();
+  async mounted() {
+    this.$bvModal.show(this.modalId);
+    const entry = await cloneDatasetUpdateRoute();
     if (entry === null) {
       return;
     }
-    this.$router.push(entry).catch((err) => console.warn(err));
-    // add new field
-    await datasetActions.addField<string>(this.$store, {
-      dataset: this.dataset,
-      name: LOW_SHOT_LABEL_COLUMN_NAME,
-      fieldType: CATEGORICAL_TYPE,
-      defaultValue: LowShotLabels.unlabeled,
-    });
-    await datasetActions.fetchVariables(this.$store, {
-      dataset: this.dataset,
-    });
-    // pull the cloned data
-    viewActions.updateLabelData(this.$store);
-    // update task based on the current training data
-    const taskResponse = await datasetActions.fetchTask(this.$store, {
-      dataset: this.dataset,
-      targetName: LOW_SHOT_LABEL_COLUMN_NAME,
-      variableNames: this.variables.map((v) => v.colName),
-    });
-
-    // update route with training data
-    entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-      task: taskResponse.data.task.join(","),
-    });
     this.$router.push(entry).catch((err) => console.warn(err));
   },
 });
