@@ -41,7 +41,12 @@ var (
 
 type datasetSplitter interface {
 	split(data [][]string) ([][]string, [][]string, error)
-	hash(schemaFile string) (uint64, error)
+	hash(schemaFile string, params ...interface{}) (uint64, error)
+}
+
+type datasetSampler interface {
+	sample(data [][]string, maxRows int) ([][]string, error)
+	hash(schemaFile string, params ...interface{}) (uint64, error)
 }
 
 type timeseriesSplitter struct {
@@ -50,23 +55,31 @@ type timeseriesSplitter struct {
 }
 
 type basicSplitter struct {
-	stratify       bool
 	rowLimits      rowLimits
 	targetCol      int
 	groupingCol    int
 	trainTestSplit float64
 }
 
-func (t *timeseriesSplitter) hash(schemaFile string) (uint64, error) {
+type stratifiedSplitter struct {
+	rowLimits      rowLimits
+	targetCol      int
+	groupingCol    int
+	trainTestSplit float64
+}
+
+func (t *timeseriesSplitter) hash(schemaFile string, params ...interface{}) (uint64, error) {
 	// generate the hash from the params
 	hashStruct := struct {
 		Schema         string
 		TimeseriesCol  int
 		TrainTestSplit float64
+		Params         []interface{}
 	}{
 		Schema:         schemaFile,
 		TimeseriesCol:  t.timeseriesCol,
 		TrainTestSplit: t.trainTestSplit,
+		Params:         params,
 	}
 	hash, err := hashstructure.Hash(hashStruct, nil)
 	if err != nil {
@@ -123,22 +136,24 @@ func (t *timeseriesSplitter) split(data [][]string) ([][]string, [][]string, err
 	return outputTrain, outputTest, nil
 }
 
-func (b *basicSplitter) hash(schemaFile string) (uint64, error) {
+func (b *basicSplitter) hash(schemaFile string, params ...interface{}) (uint64, error) {
 	// generate the hash from the params
 	hashStruct := struct {
 		Schema         string
-		Stratify       bool
+		Basic          bool
 		RowLimits      rowLimits
 		TargetCol      int
 		GroupingCol    int
 		TrainTestSplit float64
+		Params         []interface{}
 	}{
 		Schema:         schemaFile,
-		Stratify:       b.stratify,
+		Basic:          true,
 		RowLimits:      b.rowLimits,
 		TargetCol:      b.targetCol,
 		GroupingCol:    b.groupingCol,
 		TrainTestSplit: b.trainTestSplit,
+		Params:         params,
 	}
 	hash, err := hashstructure.Hash(hashStruct, nil)
 	if err != nil {
@@ -158,29 +173,104 @@ func (b *basicSplitter) split(data [][]string) ([][]string, [][]string, error) {
 	numDatasetRows := len(inputData)
 	numTrainingRows := b.rowLimits.trainingRows(numDatasetRows)
 	numTestRows := b.rowLimits.testRows(numDatasetRows)
-	if b.stratify {
-		// For statification we use a proportionate allocation strategy, dividing the dataset up into
-		// subsets by category, and then sampling the subsets using the supplied train/test ratio.
 
-		// first pass - create subsets by category
-		categoryRowData := map[string][][]string{}
-		for _, row := range inputData {
-			key := row[b.targetCol]
-			if _, ok := categoryRowData[key]; !ok {
-				categoryRowData[key] = [][]string{}
-			}
-			categoryRowData[key] = append(categoryRowData[key], row)
-		}
+	// randomly select from dataset based on row limits
+	outputTrain, outputTest = shuffleAndWrite(inputData, b.groupingCol, numTrainingRows, numTestRows, true, outputTrain, outputTest, b.trainTestSplit)
 
-		// second pass - randomly sample each category to generate train/test split
-		for _, data := range categoryRowData {
-			maxCategoryTrainingRows := int(math.Max(1, float64(len(data))/float64(len(inputData))*float64(numTrainingRows)))
-			maxCategoryTestRows := int(math.Max(1, float64(len(data))/float64(len(inputData))*float64(numTestRows)))
-			outputTrain, outputTest = shuffleAndWrite(data, b.groupingCol, maxCategoryTrainingRows, maxCategoryTestRows, true, outputTrain, outputTest, b.trainTestSplit)
+	return outputTrain, outputTest, nil
+}
+
+func (b *basicSplitter) sample(data [][]string, maxRows int) ([][]string, error) {
+	output := [][]string{}
+	output, _ = shuffleAndWrite(data[1:], -1, maxRows, 0, false, output, nil, float64(1))
+
+	return output, nil
+}
+
+func (s *stratifiedSplitter) hash(schemaFile string, params ...interface{}) (uint64, error) {
+	// generate the hash from the params
+	hashStruct := struct {
+		Schema         string
+		Stratify       bool
+		RowLimits      rowLimits
+		TargetCol      int
+		GroupingCol    int
+		TrainTestSplit float64
+		Params         []interface{}
+	}{
+		Schema:         schemaFile,
+		Stratify:       true,
+		RowLimits:      s.rowLimits,
+		TargetCol:      s.targetCol,
+		GroupingCol:    s.groupingCol,
+		TrainTestSplit: s.trainTestSplit,
+		Params:         params,
+	}
+	hash, err := hashstructure.Hash(hashStruct, nil)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to generate persisted data hash")
+	}
+	return hash, nil
+}
+
+func (s *stratifiedSplitter) sample(data [][]string, maxRows int) ([][]string, error) {
+	// create the output
+	output := [][]string{data[0]}
+
+	// For statification we use a proportionate allocation strategy, dividing the dataset up into
+	// subsets by category, and then sampling the subsets using the supplied ratio.
+
+	// first pass - create subsets by category
+	categoryRowData := s.splitCategories(s.targetCol, data[1:])
+
+	// second pass - randomly sample each category to generate train/test split
+	totalRows := len(data) - 1
+	for _, catData := range categoryRowData {
+		// split max rows by category
+		maxRowsCat := int(math.Max(1, float64(len(catData))/float64(totalRows)*float64(maxRows)))
+		outputCat, _ := shuffleAndWrite(catData, -1, maxRowsCat, 0, false, catData, nil, 1.0)
+		output = append(output, outputCat...)
+
+	}
+
+	return output, nil
+}
+
+func (s *stratifiedSplitter) splitCategories(colIndex int, data [][]string) map[string][][]string {
+	categoryRowData := map[string][][]string{}
+	for _, row := range data {
+		key := row[colIndex]
+		if _, ok := categoryRowData[key]; !ok {
+			categoryRowData[key] = [][]string{}
 		}
-	} else {
-		// randomly select from dataset based on row limits
-		outputTrain, outputTest = shuffleAndWrite(inputData, b.groupingCol, numTrainingRows, numTestRows, true, outputTrain, outputTest, b.trainTestSplit)
+		categoryRowData[key] = append(categoryRowData[key], row)
+	}
+
+	return categoryRowData
+}
+
+func (s *stratifiedSplitter) split(data [][]string) ([][]string, [][]string, error) {
+	// create the output
+	outputTrain := [][]string{}
+	outputTest := [][]string{}
+
+	// handle the header
+	inputData, outputTrain, outputTest := splitTrainTestHeader(data, outputTrain, outputTest, true)
+
+	numDatasetRows := len(inputData)
+	numTrainingRows := s.rowLimits.trainingRows(numDatasetRows)
+	numTestRows := s.rowLimits.testRows(numDatasetRows)
+	// For statification we use a proportionate allocation strategy, dividing the dataset up into
+	// subsets by category, and then sampling the subsets using the supplied train/test ratio.
+
+	// first pass - create subsets by category
+	categoryRowData := s.splitCategories(s.targetCol, data)
+
+	// second pass - randomly sample each category to generate train/test split
+	for _, data := range categoryRowData {
+		maxCategoryTrainingRows := int(math.Max(1, float64(len(data))/float64(len(inputData))*float64(numTrainingRows)))
+		maxCategoryTestRows := int(math.Max(1, float64(len(data))/float64(len(inputData))*float64(numTestRows)))
+		outputTrain, outputTest = shuffleAndWrite(data, s.groupingCol, maxCategoryTrainingRows, maxCategoryTestRows, true, outputTrain, outputTest, s.trainTestSplit)
 	}
 
 	return outputTrain, outputTest, nil
@@ -281,6 +371,16 @@ func loadData(sourceFolder string, meta *model.Metadata) ([][]string, error) {
 }
 
 func createSplitter(taskType []string, targetFieldIndex int, groupingFieldIndex int, stratify bool, quality string, trainTestSplit float64) datasetSplitter {
+
+	for _, task := range taskType {
+		if task == compute.ForecastingTask {
+			return &timeseriesSplitter{
+				timeseriesCol:  groupingFieldIndex,
+				trainTestSplit: trainTestSplit,
+			}
+		}
+	}
+
 	// build row limits
 	config, _ := env.LoadConfig()
 	limits := rowLimits{
@@ -292,22 +392,29 @@ func createSplitter(taskType []string, targetFieldIndex int, groupingFieldIndex 
 		Quality:         quality,
 	}
 
-	for _, task := range taskType {
-		if task == compute.ForecastingTask {
-			return &timeseriesSplitter{
-				timeseriesCol:  groupingFieldIndex,
-				trainTestSplit: trainTestSplit,
-			}
+	if stratify {
+		return &stratifiedSplitter{
+			rowLimits:      limits,
+			targetCol:      targetFieldIndex,
+			groupingCol:    groupingFieldIndex,
+			trainTestSplit: trainTestSplit,
 		}
 	}
 
 	return &basicSplitter{
-		stratify:       stratify,
 		rowLimits:      limits,
 		targetCol:      targetFieldIndex,
 		groupingCol:    groupingFieldIndex,
 		trainTestSplit: trainTestSplit,
 	}
+}
+
+func createSampler(stratify bool) datasetSampler {
+	if stratify {
+		return &stratifiedSplitter{}
+	}
+
+	return &basicSplitter{}
 }
 
 func alreadySplit(name string, trainFilename string, testFilename string) bool {

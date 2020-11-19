@@ -145,8 +145,16 @@ func createTestSplitter(stratify bool, quality string) datasetSplitter {
 		Sample:          0.2,
 		Quality:         quality,
 	}
+
+	if stratify {
+		return &stratifiedSplitter{
+			rowLimits:      limits,
+			targetCol:      2,
+			groupingCol:    -1,
+			trainTestSplit: 0.9,
+		}
+	}
 	return &basicSplitter{
-		stratify:       stratify,
 		rowLimits:      limits,
 		targetCol:      2,
 		groupingCol:    -1,
