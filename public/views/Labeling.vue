@@ -65,6 +65,7 @@ import { Dictionary } from "vue-router/types/router";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import { overlayRouteEntry } from "../util/routes";
 const LABEL_KEY = "label";
 
 export default Vue.extend({
@@ -224,7 +225,7 @@ export default Vue.extend({
     },
   },
   async created() {
-    const entry = await cloneDatasetUpdateRoute();
+    let entry = await cloneDatasetUpdateRoute();
     if (entry === null) {
       return;
     }
@@ -241,6 +242,18 @@ export default Vue.extend({
     });
     // pull the cloned data
     viewActions.updateLabelData(this.$store);
+    // update task based on the current training data
+    const taskResponse = await datasetActions.fetchTask(this.$store, {
+      dataset: this.dataset,
+      targetName: LOW_SHOT_LABEL_COLUMN_NAME,
+      variableNames: this.variables.map((v) => v.colName),
+    });
+
+    // update route with training data
+    entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+      task: taskResponse.data.task.join(","),
+    });
+    this.$router.push(entry).catch((err) => console.warn(err));
   },
 });
 </script>
