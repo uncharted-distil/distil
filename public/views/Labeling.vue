@@ -3,13 +3,24 @@
     <div class="col-12 col-md-3 d-flex h-100 flex-column">
       <h5 class="header-title">Labels</h5>
       <div class="mb-5">
-        <facet-categorical :summary="labelSummary" />
+        <facet-categorical
+          enable-highlighting
+          enable-type-filtering
+          :summary="labelSummary"
+          @facet-click="onFacetClick"
+        />
       </div>
       <h5 class="header-title">Features</h5>
       <variable-facets
         enable-highlighting
         enable-type-filtering
         :summaries="summaries"
+        :pagination="
+          summaries && searchedActiveVariables.length > numRowsPerPage
+        "
+        :facetCount="summaries && searchedActiveVariables.length"
+        :rows-per-page="numRowsPerPage"
+        :instanceName="instance"
       />
     </div>
     <div class="col-12 col-md-6 d-flex flex-column h-100">
@@ -32,6 +43,7 @@ import {
   getters as datasetGetters,
   actions as datasetActions,
 } from "../store/dataset/module";
+import { LABEL_FEATURE_INSTANCE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
 import {
   getVariableSummariesByState,
@@ -40,14 +52,19 @@ import {
   cloneDatasetUpdateRoute,
   LowShotLabels,
   LOW_SHOT_LABEL_COLUMN_NAME,
+  minimumRouteKey,
 } from "../util/data";
 import { Variable, VariableSummary } from "../store/dataset/index";
+import { CATEGORICAL_TYPE } from "../util/types";
 import VariableFacets from "../components/facets/VariableFacets.vue";
 import FacetCategorical from "../components/facets/FacetCategorical.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
-import { MULTIBAND_IMAGE_TYPE } from "../util/types";
 import LabelingDataSlot from "../components/labelingComponents/LabelingDataSlot.vue";
 import { EXCLUDE_FILTER } from "../util/filters";
+import { Dictionary } from "vue-router/types/router";
+import { updateHighlight, clearHighlight } from "../util/highlights";
+import { actions as appActions } from "../store/app/module";
+import { Feature, Activity, SubActivity } from "../util/userEvents";
 const LABEL_KEY = "label";
 
 export default Vue.extend({
@@ -57,6 +74,12 @@ export default Vue.extend({
     LabelingDataSlot,
     CreateLabelingForm,
     FacetCategorical,
+  },
+  props: {
+    logActivity: {
+      type: String as () => Activity,
+      default: Activity.DATA_PREPARATION,
+    },
   },
   computed: {
     dataset(): string {
@@ -88,26 +111,28 @@ export default Vue.extend({
     numRowsPerPage(): number {
       return NUM_PER_TARGET_PAGE;
     },
-    labelSummary(): VariableSummary {
-      const lowShotLabel = this.summaries.filter((s) => {
-        return s.key === LOW_SHOT_LABEL_COLUMN_NAME;
-      });
-      return lowShotLabel.length
-        ? lowShotLabel[0]
-        : this.getDefaultLabelFacet();
-    },
-    numOfMultiBands(): number {
-      const multiBandSummary = this.summaries.filter((s) => {
-        return s.varType === MULTIBAND_IMAGE_TYPE;
-      });
-      return multiBandSummary.length
-        ? multiBandSummary[0].baseline.buckets.length
-        : 0;
-    },
-    summaries(): VariableSummary[] {
-      const pageIndex = routeGetters.getRouteAvailableTargetVarsPage(
+    lowShotSummary(): Dictionary<VariableSummary> {
+      const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
         this.$store
       );
+      return summaryDictionary
+        ? summaryDictionary[LOW_SHOT_LABEL_COLUMN_NAME]
+        : null;
+    },
+    labelSummary(): VariableSummary {
+      if (!this.lowShotSummary) {
+        return this.getDefaultLabelFacet();
+      }
+      const routeKey = minimumRouteKey();
+      const lowShotLabel = this.lowShotSummary[routeKey];
+      return !!lowShotLabel ? lowShotLabel : this.getDefaultLabelFacet();
+    },
+    numData(): number {
+      const tableData = datasetGetters.getIncludedTableDataItems(this.$store);
+      return tableData ? tableData.length : 0;
+    },
+    summaries(): VariableSummary[] {
+      const pageIndex = routeGetters.getLabelFeaturesVarsPage(this.$store);
 
       const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
         this.$store
@@ -125,6 +150,9 @@ export default Vue.extend({
     highlight(): string {
       return routeGetters.getRouteHighlight(this.$store);
     },
+    instance(): string {
+      return LABEL_FEATURE_INSTANCE;
+    },
   },
   methods: {
     // used for generating default labels in the instance where labels do not exist in the dataset
@@ -138,9 +166,9 @@ export default Vue.extend({
           buckets: [
             { key: LowShotLabels.positive, count: 0 },
             { key: LowShotLabels.negative, count: 0 },
-            { key: LowShotLabels.unlabeled, count: this.numOfMultiBands },
+            { key: LowShotLabels.unlabeled, count: this.numData },
           ],
-          extrema: { min: 0, max: this.numOfMultiBands },
+          extrema: { min: 0, max: this.numData },
         },
       };
     },
@@ -171,6 +199,24 @@ export default Vue.extend({
       });
       // TODO download csv from response
     },
+    onFacetClick(context: string, key: string, value: string, dataset: string) {
+      if (key && value) {
+        updateHighlight(this.$router, {
+          context: context,
+          dataset: dataset,
+          key: key,
+          value: value,
+        });
+      } else {
+        clearHighlight(this.$router);
+      }
+      appActions.logUserEvent(this.$store, {
+        feature: Feature.CHANGE_HIGHLIGHT,
+        activity: this.logActivity,
+        subActivity: SubActivity.DATA_TRANSFORMATION,
+        details: { key: key, value: value },
+      });
+    },
   },
   watch: {
     highlight() {
@@ -187,7 +233,7 @@ export default Vue.extend({
     await datasetActions.addField<string>(this.$store, {
       dataset: this.dataset,
       name: LOW_SHOT_LABEL_COLUMN_NAME,
-      fieldType: typeof LowShotLabels.unlabeled,
+      fieldType: CATEGORICAL_TYPE,
       defaultValue: LowShotLabels.unlabeled,
     });
     await datasetActions.fetchVariables(this.$store, {

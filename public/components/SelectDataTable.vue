@@ -29,13 +29,23 @@
         v-for="imageField in imageFields"
         v-slot:[cellSlot(imageField.key)]="data"
       >
-        <image-preview
-          :key="imageField.key"
-          :type="imageField.type"
-          :image-url="data.item[imageField.key].value"
-          :debounce="true"
-          uniqueTrail="select-table"
-        />
+        <div class="position-relative">
+          <image-preview
+            :key="imageField.key"
+            :type="imageField.type"
+            :image-url="data.item[imageField.key].value"
+            :debounce="true"
+            uniqueTrail="select-table"
+          />
+          <image-label
+            class="image-label"
+            :dataFields="fields"
+            includedActive
+            shortenLabels
+            alignHorizontal
+            :item="data.item"
+          />
+        </div>
       </template>
 
       <template
@@ -123,6 +133,7 @@ import {
 } from "../util/data";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
+import ImageLabel from "./ImageLabel.vue";
 
 export default Vue.extend({
   name: "selected-data-table",
@@ -132,6 +143,7 @@ export default Vue.extend({
     SparklinePreview,
     IconBase,
     IconFork,
+    ImageLabel,
   },
 
   props: {
@@ -161,7 +173,6 @@ export default Vue.extend({
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
-
     items(): TableRow[] {
       let items = this.includedActive
         ? datasetGetters.getIncludedTableDataItems(this.$store)
