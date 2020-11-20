@@ -10,6 +10,7 @@
           <i class="fa fa-times red" aria-hidden="true"></i>
           Negative</b-button
         >
+        <b-button @click="onAnnotationClicked(unlabeled)">Unlabeled</b-button>
         <layer-selection v-if="isRemoteSensing" />
       </div>
       <view-type-toggle
@@ -36,7 +37,7 @@
 import Vue from "vue";
 import ViewTypeToggle from "../ViewTypeToggle.vue";
 import { Dictionary } from "../../util/dict";
-import SelectGeoPlot from "../SelectGeoPlot.vue";
+import LabelGeoPlot from "./LabelGeoplot.vue";
 import ImageMosaic from "../ImageMosaic.vue";
 import SelectDataTable from "../SelectDataTable.vue";
 import LayerSelection from "../LayerSelection.vue";
@@ -63,7 +64,7 @@ export default Vue.extend({
   name: "labeling-data-slot",
   components: {
     ViewTypeToggle,
-    SelectGeoPlot,
+    LabelGeoPlot,
     ImageMosaic,
     SelectDataTable,
     LayerSelection,
@@ -81,7 +82,7 @@ export default Vue.extend({
   },
   computed: {
     viewComponent(): string {
-      if (this.viewTypeModel === GEO_VIEW) return "SelectGeoPlot";
+      if (this.viewTypeModel === GEO_VIEW) return "LabelGeoPlot";
       if (this.viewTypeModel === IMAGE_VIEW) return "ImageMosaic";
       if (this.viewTypeModel === TABLE_VIEW) return "SelectDataTable";
       console.error(`viewType ${this.viewTypeModel} invalid`);
@@ -109,6 +110,9 @@ export default Vue.extend({
     },
     positive(): string {
       return LowShotLabels.positive;
+    },
+    unlabeled(): string {
+      return LowShotLabels.unlabeled;
     },
   },
   methods: {

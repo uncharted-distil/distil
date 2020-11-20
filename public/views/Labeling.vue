@@ -2,14 +2,13 @@
   <div class="row flex-1 pb-3 h-100">
     <div class="col-12 col-md-3 d-flex h-100 flex-column">
       <h5 class="header-title">Labels</h5>
-      <div class="mb-5">
-        <facet-categorical
-          enable-highlighting
-          enable-type-filtering
-          :summary="labelSummary"
-          @facet-click="onFacetClick"
-        />
-      </div>
+      <variable-facets
+        enable-highlighting
+        enable-type-filtering
+        :summaries="[labelSummary]"
+        :instanceName="instance"
+        class="h-10"
+      />
       <h5 class="header-title">Features</h5>
       <variable-facets
         enable-highlighting
@@ -43,6 +42,7 @@
         <b-form-input
           id="label-input-field"
           v-model="labelName"
+          type="text"
           required
           :placeholder="labelName"
         />
@@ -81,6 +81,7 @@ import { updateHighlight, clearHighlight } from "../util/highlights";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry } from "../util/routes";
+
 const LABEL_KEY = "label";
 
 export default Vue.extend({
@@ -112,6 +113,9 @@ export default Vue.extend({
     },
     availableTargetVarsSearch(): string {
       return routeGetters.getRouteAvailableTargetVarsSearch(this.$store);
+    },
+    isRemoteSensing(): boolean {
+      return routeGetters.isMultiBandImage(this.$store);
     },
     searchedActiveVariables(): Variable[] {
       // remove variables used in groupedFeature;
@@ -175,6 +179,11 @@ export default Vue.extend({
     instance(): string {
       return LABEL_FEATURE_INSTANCE;
     },
+    isClone(): boolean {
+      return this.variables.some((v) => {
+        return v.colName === LOW_SHOT_LABEL_COLUMN_NAME;
+      });
+    },
   },
   methods: {
     // used for generating default labels in the instance where labels do not exist in the dataset
@@ -195,23 +204,23 @@ export default Vue.extend({
       };
     },
     async onDataChanged() {
-      await datasetActions.fetchVariables(this.$store, {
-        dataset: this.dataset,
-      });
-      await viewActions.updateLabelData(this.$store);
+      await this.fetchData();
+      if (this.isRemoteSensing) {
+        await viewActions.updateHighlight(this.$store);
+      }
     },
-    async onExport() {
+    onExport() {
       const highlight = {
-        context: "VariableFacets",
+        context: this.instance,
         dataset: this.dataset,
         key: LOW_SHOT_LABEL_COLUMN_NAME,
         value: LowShotLabels.unlabeled,
-      }; // exclude unlabled from data export
+      }; // exclude unlabeled from data export
       const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
         this.$store
       );
       const dataMode = routeGetters.getDataMode(this.$store);
-      const response = await datasetActions.extractDataset(this.$store, {
+      datasetActions.extractDataset(this.$store, {
         dataset: this.dataset,
         filterParams,
         highlight,
@@ -223,7 +232,7 @@ export default Vue.extend({
     onFacetClick(context: string, key: string, value: string, dataset: string) {
       if (key && value) {
         updateHighlight(this.$router, {
-          context: context,
+          context: this.instance,
           dataset: dataset,
           key: key,
           value: value,
@@ -247,11 +256,8 @@ export default Vue.extend({
         defaultValue: LowShotLabels.unlabeled,
         displayName: this.labelName,
       });
-      await datasetActions.fetchVariables(this.$store, {
-        dataset: this.dataset,
-      });
-      // pull the cloned data
-      viewActions.updateLabelData(this.$store);
+      // fetch new dataset with the newly added field
+      await this.fetchData();
       // update task based on the current training data
       const taskResponse = await datasetActions.fetchTask(this.$store, {
         dataset: this.dataset,
@@ -265,6 +271,12 @@ export default Vue.extend({
       });
       this.$router.push(entry).catch((err) => console.warn(err));
     },
+    async fetchData() {
+      await datasetActions.fetchVariables(this.$store, {
+        dataset: this.dataset,
+      });
+      await viewActions.updateLabelData(this.$store);
+    },
   },
   watch: {
     highlight() {
@@ -272,6 +284,11 @@ export default Vue.extend({
     },
   },
   async mounted() {
+    await this.fetchData();
+    if (this.isClone) {
+      // dataset is already a clone don't clone again. (used for testing. might add button for cloning later.)
+      return;
+    }
     this.$bvModal.show(this.modalId);
     const entry = await cloneDatasetUpdateRoute();
     if (entry === null) {
@@ -281,3 +298,8 @@ export default Vue.extend({
   },
 });
 </script>
+<style scoped>
+.h-10 {
+  height: 10% !important;
+}
+</style>

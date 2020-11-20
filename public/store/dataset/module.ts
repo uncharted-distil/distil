@@ -58,6 +58,7 @@ export const getters = {
   getHighlightedExcludeTableDataItems: read(
     moduleGetters.getHighlightedExcludeTableDataItems
   ),
+  getNumberOfRecords: read(moduleGetters.getNumberOfRecords),
   // included data
   hasIncludedTableData: read(moduleGetters.hasIncludedTableData),
   getIncludedTableData: read(moduleGetters.getIncludedTableData),

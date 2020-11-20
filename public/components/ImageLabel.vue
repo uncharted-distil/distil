@@ -184,6 +184,9 @@ export default Vue.extend({
       return imageLabelLengths;
     },
     containsUserAnnotation(): boolean {
+      if (!this.item) {
+        return false;
+      }
       return this.item[LOW_SHOT_LABEL_COLUMN_NAME] !== undefined;
     },
   },
