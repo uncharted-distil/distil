@@ -1,7 +1,12 @@
 <template>
   <div class="action-column-container">
     <ul class="action-column-nav-bar" role="tablist">
-      <li v-for="(action, index) in actions" :key="index">
+      <li
+        v-for="(action, index) in actions"
+        :key="index"
+        :title="action.name"
+        :style="{ '--count': action.count }"
+      >
         <b-button
           role="tab"
           data-toggle="tab"
@@ -22,6 +27,7 @@ export interface Action {
   name: string;
   icon: string;
   paneId: string;
+  count?: number;
 }
 
 export default Vue.extend({

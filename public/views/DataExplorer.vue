@@ -1,14 +1,20 @@
 <template>
   <div class="view-container">
     <action-column
-      :actions="actions"
+      :actions="activeActions"
       :current-action="currentAction"
       @set-active-pane="onSetActive"
     />
 
     <left-side-panel :panel-title="currentAction">
       <add-variable-pane v-if="activePane === 'add'" />
-      <facet-list-pane v-else :variables="activeVariables" />
+      <template v-else>
+        <template v-if="hasNoVariables">
+          <p v-if="activePane === 'selected'">Select a variable to explore.</p>
+          <p v-else>All the variables of that type are selected.</p>
+        </template>
+        <facet-list-pane v-else :variables="activeVariables" />
+      </template>
     </left-side-panel>
 
     <main class="content">
@@ -73,6 +79,7 @@ import { actions as viewActions } from "../store/view/module";
 import { overlayRouteEntry } from "../util/routes";
 import { getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
+import { META_TYPES } from "../util/types";
 
 const GEO_VIEW = "geo";
 const GRAPH_VIEW = "graph";
@@ -82,8 +89,15 @@ const TIMESERIES_VIEW = "timeseries";
 
 const ACTIONS = [
   { name: "All Variables", icon: "database", paneId: "available" },
-  { name: "Selected Variables", icon: "eye", paneId: "selected" },
-  { name: "Create Variable", icon: "plus", paneId: "add" },
+  { name: "Text Variables", icon: "font", paneId: "text" },
+  { name: "Categorical Variables", icon: "align-left", paneId: "categorical" },
+  { name: "Number Variables", icon: "bar-chart", paneId: "number" },
+  { name: "Time Variables", icon: "clock-o", paneId: "time" },
+  { name: "Location Variables", icon: "map-o", paneId: "location" },
+  { name: "Image Variables", icon: "image", paneId: "image" },
+  { name: "Unknown Variables", icon: "question", paneId: "unknown" },
+  { name: "Selected Variables", icon: "check", paneId: "selected" },
+  { name: "Create New Variable", icon: "plus", paneId: "add" },
 ] as Action[];
 
 export default Vue.extend({
@@ -105,29 +119,52 @@ export default Vue.extend({
   data() {
     return {
       actions: ACTIONS,
-      activePane: ACTIONS[0].paneId,
+      activePane: "selected",
       instanceName: DATA_EXPLORER_VAR_INSTANCE,
+      metaTypes: Object.keys(META_TYPES),
       viewTypeModel: TABLE_VIEW,
     };
   },
 
   computed: {
+    /* Variables displayed on the Facet Panel */
     activeVariables(): Variable[] {
-      const cleanTraining = this.trainingVariables.map((t) => t.toLowerCase());
+      return this.availableVariables[this.activePane];
+    },
 
-      // All variables that are not selected
-      if (this.activePane === "available") {
-        return this.variables.filter(
-          (variable) => !cleanTraining.includes(variable.colName.toLowerCase())
-        );
-      }
+    availableVariables(): any {
+      const cleanTraining = this.training.map((t) => t.toLowerCase());
 
-      // Selected variables
-      if (this.activePane === "selected") {
-        return this.variables.filter((variable) =>
-          cleanTraining.includes(variable.colName.toLowerCase())
-        );
-      }
+      const selectedVariables = this.variables.filter((v) =>
+        cleanTraining.includes(v.colName.toLowerCase())
+      );
+      const nonSelectedVariables = this.variables.filter(
+        (v) => !cleanTraining.includes(v.colName.toLowerCase())
+      );
+
+      const variables = {};
+      this.activeActions.forEach((action) => {
+        if (action.paneId === "add") variables[action.paneId] = null;
+        else if (action.paneId === "selected") {
+          variables[action.paneId] = selectedVariables;
+        } else if (action.paneId === "available") {
+          variables[action.paneId] = nonSelectedVariables;
+        } else {
+          variables[action.paneId] = nonSelectedVariables.filter((variable) =>
+            META_TYPES[action.paneId].includes(variable.colType)
+          );
+        }
+      });
+
+      return variables;
+    },
+
+    /* Actions displayed on the Action column */
+    activeActions(): Action[] {
+      // Remove the inactive MetaTypes
+      return this.actions.filter(
+        (action) => !this.inactiveMetaTypes.includes(action.paneId)
+      );
     },
 
     currentAction(): string {
@@ -139,6 +176,22 @@ export default Vue.extend({
 
     hasData(): boolean {
       return datasetGetters.hasIncludedTableData(this.$store);
+    },
+
+    hasNoVariables(): boolean {
+      return isEmpty(this.activeVariables);
+    },
+
+    inactiveMetaTypes(): string[] {
+      // Go trough each meta type
+      return this.metaTypes.map((metaType) => {
+        // test if some variables types...
+        const typeNotInMetaTypes = !this.variablesTypes.some((t) =>
+          // ...is in that meta type
+          META_TYPES[metaType].includes(t)
+        );
+        if (typeNotInMetaTypes) return metaType;
+      });
     },
 
     numRows(): number {
@@ -163,8 +216,12 @@ export default Vue.extend({
         : 0;
     },
 
-    trainingVariables(): string[] {
+    training(): string[] {
       return routeGetters.getDecodedTrainingVariableNames(this.$store);
+    },
+
+    variablesTypes(): string[] {
+      return [...new Set(this.variables.map((v) => v.colType))];
     },
 
     variables(): Variable[] {

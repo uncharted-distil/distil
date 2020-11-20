@@ -52,6 +52,28 @@ export const UNKNOWN_TYPE = "unknown";
 export const GEOCOORDINATE_TYPE = "geocoordinate";
 export const GEOBOUNDS_TYPE = "geobounds";
 
+// Group types per meta-types to categorize them on the Data Explorer view.
+export const META_TYPES = {
+  text: [TEXT_TYPE, EMAIL_TYPE, PHONE_TYPE, URI_TYPE],
+  number: [INTEGER_TYPE, REAL_TYPE, REAL_LIST_TYPE, REAL_VECTOR_TYPE],
+  categorical: [INDEX_TYPE, BOOL_TYPE, ORDINAL_TYPE, CATEGORICAL_TYPE],
+  time: [DATE_TIME_TYPE, DATE_TIME_LOWER_TYPE, TIMESTAMP_TYPE, TIMESERIES_TYPE],
+  location: [
+    ADDRESS_TYPE,
+    CITY_TYPE,
+    STATE_TYPE,
+    COUNTRY_TYPE,
+    COUNTRY_CODE_TYPE,
+    LATITUDE_TYPE,
+    LONGITUDE_TYPE,
+    POSTAL_CODE_TYPE,
+    GEOCOORDINATE_TYPE,
+    GEOBOUNDS_TYPE,
+  ],
+  image: [IMAGE_TYPE, MULTIBAND_IMAGE_TYPE],
+  unknown: [UNKNOWN_TYPE],
+};
+
 const TYPES_TO_LABELS: Dictionary<string> = {
   [INTEGER_TYPE]: "Integer",
   [REAL_TYPE]: "Decimal",

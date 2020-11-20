@@ -8,14 +8,15 @@
     :html="button"
     :instance-name="instanceName"
     :log-activity="problemDefinition"
-    :rows-per-page="numRowsPerPage"
     :summaries="summaries"
     @search="onSearch"
   />
+  <!-- :rows-per-page="numRowsPerPage" -->
 </template>
 
 <script lang="ts">
 import Vue from "vue";
+
 import VariableFacets from "../../components/facets/VariableFacets.vue";
 
 import { Variable, VariableSummary } from "../../store/dataset/index";
