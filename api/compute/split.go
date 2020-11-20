@@ -45,7 +45,7 @@ type datasetSplitter interface {
 }
 
 type datasetSampler interface {
-	sample(data [][]string, maxRows int) ([][]string, error)
+	sample(data [][]string, maxRows int) [][]string
 	hash(schemaFile string, params ...interface{}) (uint64, error)
 }
 
@@ -180,11 +180,11 @@ func (b *basicSplitter) split(data [][]string) ([][]string, [][]string, error) {
 	return outputTrain, outputTest, nil
 }
 
-func (b *basicSplitter) sample(data [][]string, maxRows int) ([][]string, error) {
+func (b *basicSplitter) sample(data [][]string, maxRows int) [][]string {
 	output := [][]string{}
 	output, _ = shuffleAndWrite(data[1:], -1, maxRows, 0, false, output, nil, float64(1))
 
-	return output, nil
+	return output
 }
 
 func (s *stratifiedSplitter) hash(schemaFile string, params ...interface{}) (uint64, error) {
@@ -213,7 +213,7 @@ func (s *stratifiedSplitter) hash(schemaFile string, params ...interface{}) (uin
 	return hash, nil
 }
 
-func (s *stratifiedSplitter) sample(data [][]string, maxRows int) ([][]string, error) {
+func (s *stratifiedSplitter) sample(data [][]string, maxRows int) [][]string {
 	// create the output
 	output := [][]string{data[0]}
 
@@ -230,10 +230,9 @@ func (s *stratifiedSplitter) sample(data [][]string, maxRows int) ([][]string, e
 		maxRowsCat := int(math.Max(1, float64(len(catData))/float64(totalRows)*float64(maxRows)))
 		outputCat, _ := shuffleAndWrite(catData, -1, maxRowsCat, 0, false, catData, nil, 1.0)
 		output = append(output, outputCat...)
-
 	}
 
-	return output, nil
+	return output
 }
 
 func (s *stratifiedSplitter) splitCategories(colIndex int, data [][]string) map[string][][]string {

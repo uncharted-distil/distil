@@ -34,6 +34,7 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
+	"github.com/uncharted-distil/distil/api/util"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -337,21 +338,61 @@ func SplitTimeSeries(timeseries []*api.TimeseriesObservation, trainPercentage fl
 	return SplitTimeStamps(timestamps, trainPercentage)
 }
 
-// SampleDataset shuffles a dataset's rows and takes a subsample, returning
+// SampleData shuffles a dataset's rows and takes a subsample, returning
 // the raw byte data of the sampled dataset.
-func SampleDataset(rawData [][]string, maxRows int, hasHeader bool) [][]string {
-	// initialize csv writer
-	output := [][]string{}
+func SampleData(rawData [][]string, maxRows int, stratify bool) [][]string {
 
-	if hasHeader {
-		output = append(output, rawData[0])
-		rawData = rawData[1:]
+	sampler := createSampler(stratify)
+	return sampler.sample(rawData, maxRows)
+}
+
+// SampleDataset shuffles a dataset's rows and stores a subsample, the schema doc URI.
+func SampleDataset(schemaFile string, maxRows int, stratify bool) (string, error) {
+	// read metadata
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, false)
+	if err != nil {
+		return "", err
+	}
+	sourceFilename := meta.GetMainDataResource().ResPath
+	sampler := createSampler(stratify)
+
+	// check if already sampled (write in the same parent folder as the schema file!)
+	hash, err := sampler.hash(schemaFile, maxRows)
+	if err != nil {
+		return "", err
+	}
+	sampledFolder := path.Join(path.Dir(path.Dir(schemaFile)), fmt.Sprintf("%s-sample-%0x", meta.Name, hash))
+	sampledSchema := path.Join(sampledFolder, compute.D3MDataSchema)
+	if util.FileExists(sampledFolder) {
+		log.Infof("dataset '%s' already sampled with %d rows (stratified=%v)", schemaFile, maxRows, stratify)
+		return sampledSchema, nil
+	}
+	sampledDataFilename := path.Join(sampledFolder, compute.D3MDataFolder, compute.D3MLearningData)
+
+	// read the raw data from source
+	storage := serialization.GetStorage(sourceFilename)
+	data, err := storage.ReadData(sourceFilename)
+	if err != nil {
+		return "", err
 	}
 
-	trainTestSplit := float64(1) // keep all rows in train
-	output, _ = shuffleAndWrite(rawData, -1, maxRows, 0, false, output, nil, trainTestSplit)
+	// sample the loaded data
+	dataSampled := sampler.sample(data, maxRows)
 
-	return output
+	// store the sampled data
+	meta.GetMainDataResource().ResPath = sampledDataFilename
+	outputSampled := &api.RawDataset{
+		ID:       meta.ID,
+		Name:     meta.Name,
+		Metadata: meta,
+		Data:     dataSampled,
+	}
+	err = storage.WriteDataset(sampledFolder, outputSampled)
+	if err != nil {
+		return "", nil
+	}
+
+	return sampledSchema, nil
 }
 
 // CreateBatches splits the dataset into batches of at most maxBatchSize rows,

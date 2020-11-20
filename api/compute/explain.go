@@ -228,8 +228,7 @@ func ExplainFeatureOutput(resultURI string, outputURI string) (*api.SolutionExpl
 	return parsed, nil
 }
 
-func (s *SolutionRequest) explainSolutionOutput(resultURI string, outputURI string,
-	solutionID string, variables []*model.Variable) ([]*api.SolutionWeight, error) {
+func (s *SolutionRequest) explainSolutionOutput(outputURI string, solutionID string, variables []*model.Variable) ([]*api.SolutionWeight, error) {
 
 	// parse the output for the explanations
 	parsed, err := s.parseSolutionWeight(solutionID, outputURI)
@@ -472,4 +471,9 @@ func extractOutputKeys(outputs map[string]*pipelineOutput) []string {
 	}
 
 	return keys
+}
+
+func getExplainDatasetMaxRows(variables []*model.Variable) int {
+	// TODO: we probably want a better way to get this value
+	return 15000 / len(variables)
 }

@@ -51,6 +51,13 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 		return nil
 	}
 
+	// create a subset of the dataset for the explain call
+	maxRows := getExplainDatasetMaxRows(variables)
+	explainDatasetURI, err := SampleDataset(produceDatasetURI, maxRows, true)
+	if err != nil {
+		return err
+	}
+
 	exposedOutputs := []string{}
 	for _, eo := range explainOutputs {
 		exposedOutputs = append(exposedOutputs, eo.output)
@@ -60,7 +67,7 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 	if s.useParquet {
 		exposeType = append(exposeType, compute.ParquetURIValueType)
 	}
-	produceSolutionRequest := createProduceSolutionRequest(produceDatasetURI, searchResult.fittedSolutionID, exposedOutputs, exposeType)
+	produceSolutionRequest := createProduceSolutionRequest(explainDatasetURI, searchResult.fittedSolutionID, exposedOutputs, exposeType)
 
 	// generate predictions
 	_, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
@@ -91,8 +98,8 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 			if explain.typ == ExplainableTypeStep || explain.typ == ExplainableTypeConfidence {
 				explainURI := outputKeyURIs[explain.key]
 				log.Infof("explaining feature output from URI '%s'", explainURI)
-				produceDatasetURI = compute.BuildSchemaFileURI(produceDatasetURI)
-				parsedExplainResult, err := ExplainFeatureOutput(searchResult.resultURI, explainURI)
+				explainDatasetURI = compute.BuildSchemaFileURI(explainDatasetURI)
+				parsedExplainResult, err := ExplainFeatureOutput(explainDatasetURI, explainURI)
 				if err != nil {
 					log.Warnf("failed to fetch output explanation - %v", err)
 					continue
@@ -119,7 +126,7 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 		if explainSolutionOutput != nil {
 			explainSolutionURI := outputKeyURIs[explainSolutionOutput.key]
 			log.Infof("explaining solution output from URI '%s'", explainSolutionURI)
-			solutionWeights, err := s.explainSolutionOutput(searchResult.resultURI, explainSolutionURI, searchSolutionID, variables)
+			solutionWeights, err := s.explainSolutionOutput(explainSolutionURI, searchSolutionID, variables)
 			if err != nil {
 				log.Warnf("failed to fetch output explanantion - %v", err)
 			}
