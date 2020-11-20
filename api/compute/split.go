@@ -264,7 +264,7 @@ func (s *stratifiedSplitter) split(data [][]string) ([][]string, [][]string, err
 	// subsets by category, and then sampling the subsets using the supplied train/test ratio.
 
 	// first pass - create subsets by category
-	categoryRowData := s.splitCategories(s.targetCol, data)
+	categoryRowData := s.splitCategories(s.targetCol, inputData)
 
 	// second pass - randomly sample each category to generate train/test split
 	for _, data := range categoryRowData {
