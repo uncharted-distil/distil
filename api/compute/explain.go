@@ -30,6 +30,7 @@ import (
 	log "github.com/unchartedsoftware/plog"
 
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -456,7 +457,8 @@ func readDatasetData(uri string) ([][]string, error) {
 		dataPath = path.Join(path.Dir(uriRaw), mainDR.ResPath)
 	}
 
-	res, err := util.ReadCSVFile(dataPath, false)
+	storage := serialization.GetStorage(dataPath)
+	res, err := storage.ReadData(dataPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read raw input data")
 	}

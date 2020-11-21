@@ -228,8 +228,7 @@ func (s *stratifiedSplitter) sample(data [][]string, maxRows int) [][]string {
 	for _, catData := range categoryRowData {
 		// split max rows by category
 		maxRowsCat := int(math.Max(1, float64(len(catData))/float64(totalRows)*float64(maxRows)))
-		outputCat, _ := shuffleAndWrite(catData, -1, maxRowsCat, 0, false, catData, nil, 1.0)
-		output = append(output, outputCat...)
+		output, _ = shuffleAndWrite(catData, -1, maxRowsCat, 0, false, output, nil, 1.0)
 	}
 
 	return output
@@ -285,7 +284,7 @@ func SplitDataset(schemaFile string, splitter datasetSplitter) (string, string, 
 	}
 
 	// check if already split
-	splitDatasetName, err := generateSplitDatasetName(meta.Name, schemaFile, splitter)
+	splitDatasetName, err := generateSplitDatasetName(meta.ID, schemaFile, splitter)
 	if err != nil {
 		return "", "", err
 	}
@@ -294,7 +293,7 @@ func SplitDataset(schemaFile string, splitter datasetSplitter) (string, string, 
 	trainSchemaFile := path.Join(trainFolder, compute.D3MDataSchema)
 	testSchemaFile := path.Join(testFolder, compute.D3MDataSchema)
 
-	if alreadySplit(meta.Name, trainSchemaFile, testSchemaFile) {
+	if alreadySplit(meta.ID, trainSchemaFile, testSchemaFile) {
 		return trainSchemaFile, testSchemaFile, nil
 	}
 
@@ -408,12 +407,18 @@ func createSplitter(taskType []string, targetFieldIndex int, groupingFieldIndex 
 	}
 }
 
-func createSampler(stratify bool) datasetSampler {
+func createSampler(stratify bool, targetCol int) datasetSampler {
 	if stratify {
-		return &stratifiedSplitter{}
+		return &stratifiedSplitter{
+			targetCol:   targetCol,
+			groupingCol: -1,
+		}
 	}
 
-	return &basicSplitter{}
+	return &basicSplitter{
+		targetCol:   targetCol,
+		groupingCol: -1,
+	}
 }
 
 func alreadySplit(name string, trainFilename string, testFilename string) bool {

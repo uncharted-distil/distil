@@ -573,8 +573,9 @@ func describeSolution(client *compute.Client, initialSearchSolutionID string) (*
 	return desc, nil
 }
 
-func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage,
-	searchID string, dataset string, storageName string, datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
+func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage,
+	dataStorage api.DataStorage, searchID string, dataset string, storageName string, datasetURI string,
+	datasetURITrain string, datasetURITest string, variables []*model.Variable, targetCol int) {
 
 	// update request status
 	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestRunningStatus)
@@ -611,7 +612,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		}
 
 		err = s.dispatchSolutionExplainPipeline(client, solutionStorage, dataStorage, searchResult, searchID,
-			solution.SolutionId, dataset, storageName, produceDatasetURI, variables)
+			solution.SolutionId, dataset, storageName, produceDatasetURI, variables, targetCol)
 		if err != nil {
 			s.persistSolutionError(c, solutionStorage, searchID, solution.SolutionId, err)
 			return
@@ -835,8 +836,8 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// dispatch search request
-	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.ID,
-		datasetInput.StorageName, datasetInputDir, datasetPathTrain, datasetPathTest, dataVariables)
+	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.ID, datasetInput.StorageName,
+		datasetInputDir, datasetPathTrain, datasetPathTest, dataVariables, s.TargetFeature.Index)
 
 	return nil
 }

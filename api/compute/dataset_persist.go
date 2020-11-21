@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/araddon/dateparse"
@@ -187,7 +188,6 @@ func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int,
 			}
 			tracker.output = append(tracker.output, data)
 			tracker.count++
-
 		}
 	} else {
 		groupData := map[string][][]string{}
@@ -342,29 +342,31 @@ func SplitTimeSeries(timeseries []*api.TimeseriesObservation, trainPercentage fl
 // the raw byte data of the sampled dataset.
 func SampleData(rawData [][]string, maxRows int, stratify bool) [][]string {
 
-	sampler := createSampler(stratify)
+	sampler := createSampler(stratify, -1)
 	return sampler.sample(rawData, maxRows)
 }
 
 // SampleDataset shuffles a dataset's rows and stores a subsample, the schema doc URI.
-func SampleDataset(schemaFile string, maxRows int, stratify bool) (string, error) {
+func SampleDataset(schemaFile string, outputFolder string, maxRows int, stratify bool, targetCol int) (string, error) {
+	schemaFile = strings.TrimPrefix(schemaFile, "file://")
+	log.Infof("sampling a maximum row count of %d from '%s' (stratify=%v)", maxRows, schemaFile, stratify)
 	// read metadata
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, false)
 	if err != nil {
 		return "", err
 	}
-	sourceFilename := meta.GetMainDataResource().ResPath
-	sampler := createSampler(stratify)
+	sourceFilename := model.GetResourcePathFromFolder(path.Dir(schemaFile), meta.GetMainDataResource())
+	sampler := createSampler(stratify, targetCol)
 
 	// check if already sampled (write in the same parent folder as the schema file!)
 	hash, err := sampler.hash(schemaFile, maxRows)
 	if err != nil {
 		return "", err
 	}
-	sampledFolder := path.Join(path.Dir(path.Dir(schemaFile)), fmt.Sprintf("%s-sample-%0x", meta.Name, hash))
+	sampledFolder := path.Join(outputFolder, fmt.Sprintf("sample-%0x", hash))
 	sampledSchema := path.Join(sampledFolder, compute.D3MDataSchema)
 	if util.FileExists(sampledFolder) {
-		log.Infof("dataset '%s' already sampled with %d rows (stratified=%v)", schemaFile, maxRows, stratify)
+		log.Infof("dataset '%s' already sampled with %d rows (stratified=%v) and exists at '%s'", schemaFile, maxRows, stratify, sampledSchema)
 		return sampledSchema, nil
 	}
 	sampledDataFilename := path.Join(sampledFolder, compute.D3MDataFolder, compute.D3MLearningData)

@@ -17,6 +17,8 @@ package compute
 
 import (
 	"context"
+	"path"
+	"strings"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -36,7 +38,7 @@ type searchResult struct {
 
 func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client, solutionStorage api.SolutionStorage,
 	dataStorage api.DataStorage, searchResult *searchResult, searchID string, searchSolutionID string, dataset string,
-	storageName string, produceDatasetURI string, variables []*model.Variable) error {
+	storageName string, produceDatasetURI string, variables []*model.Variable, targetCol int) error {
 
 	// get solution description
 	desc, err := describeSolution(client, searchSolutionID)
@@ -52,8 +54,9 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 	}
 
 	// create a subset of the dataset for the explain call
+	outputFolder := path.Dir(path.Dir(strings.TrimPrefix(produceDatasetURI, "file://")))
 	maxRows := getExplainDatasetMaxRows(variables)
-	explainDatasetURI, err := SampleDataset(produceDatasetURI, maxRows, true)
+	explainDatasetURI, err := SampleDataset(produceDatasetURI, outputFolder, maxRows, true, targetCol)
 	if err != nil {
 		return err
 	}
