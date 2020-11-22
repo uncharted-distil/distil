@@ -320,7 +320,7 @@ export const actions = {
       });
   },
 
-  async uploadDataFile(
+  async importDataFile(
     context: DatasetContext,
     args: {
       datasetID: string;

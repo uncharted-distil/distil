@@ -209,7 +209,7 @@ export default Vue.extend({
 
       try {
         // Upload the file and notify when complete
-        const response = await datasetActions.uploadDataFile(this.$store, {
+        const response = await datasetActions.importDataFile(this.$store, {
           datasetID: this.deconflictedName,
           file: this.file,
         });
