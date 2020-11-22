@@ -320,7 +320,7 @@ export const actions = {
       });
   },
 
-  async importDataFile(
+  async uploadDataFile(
     context: DatasetContext,
     args: {
       datasetID: string;
@@ -351,6 +351,23 @@ export const actions = {
         headers: { "Content-Type": "multipart/form-data" },
       }
     );
+    return uploadResponse;
+  },
+
+  async importDataFile(
+    context: DatasetContext,
+    args: {
+      datasetID: string;
+      file: File;
+    }
+  ): Promise<any> {
+    if (!validateArgs(args, ["datasetID", "file"])) {
+      return null;
+    }
+    const uploadResponse = await actions.uploadDataFile(context, {
+      datasetID: args.datasetID,
+      file: args.file,
+    });
     const response = await actions.importDataset(context, {
       datasetID: args.datasetID,
       source: "augmented",
@@ -365,12 +382,13 @@ export const actions = {
     response.location = uploadResponse.data.location;
     return response;
   },
+
   async updateDataset(
     context: DatasetContext,
     args: { dataset: string; updateData: DatasetUpdate[] }
   ) {
     try {
-      const response = await axios.post(`/distil/update/${args.dataset}`, {
+      await axios.post(`/distil/update/${args.dataset}`, {
         updates: args.updateData,
       });
     } catch (error) {
