@@ -61,7 +61,7 @@ interface SolutionStatusMsg {
 
 interface PredictRequestMsg {
   datasetId: string;
-  dataset?: string; // base64 encoded version of dataset
+  datasetPath?: string; // path to previously uploaded dataset
   fittedSolutionId: string;
   target: string;
   targetType: string;
@@ -570,7 +570,7 @@ export const actions = {
         type: CREATE_PREDICTIONS,
         fittedSolutionId: request.fittedSolutionId,
         datasetId: request.datasetId,
-        dataset: request.dataset,
+        datasetPath: request.datasetPath,
         targetType: request.targetType,
         intervalCount: request.intervalCount ?? null,
         intervalLength: request.intervalLength ?? null,

@@ -314,7 +314,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	// submit the new dataset for predictions
 	log.Infof("generating predictions using data found at '%s'", datasetPath)
-	predictionResult, err := comp.GeneratePredictions(datasetPath, solution.ExplainedSolutionID, params.FittedSolutionID, client)
+	predictionResult, err := comp.GeneratePredictions(datasetPath, solution.SolutionID, params.FittedSolutionID, client)
 	if err != nil {
 		return nil, err
 	}

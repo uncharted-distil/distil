@@ -1,7 +1,6 @@
 package compute
 
 import (
-	"encoding/base64"
 	"time"
 
 	"github.com/pkg/errors"
@@ -11,7 +10,7 @@ import (
 // PredictRequest defines a request to generate new predictions from a fitted model and input data.
 type PredictRequest struct {
 	DatasetID        string
-	Dataset          string
+	DatasetPath      string
 	FittedSolutionID string
 	TimestampField   string
 	MaxTime          int
@@ -58,9 +57,9 @@ func NewPredictRequest(data []byte) (*PredictRequest, error) {
 	}
 
 	// the dataset contents as a base 64 encded string
-	req.Dataset, ok = json.String(jsonMap, "dataset")
+	req.DatasetPath, ok = json.String(jsonMap, "datasetPath")
 	if !ok {
-		req.Dataset = ""
+		req.DatasetPath = ""
 	}
 
 	// timeseries prediction fields
@@ -75,26 +74,4 @@ func NewPredictRequest(data []byte) (*PredictRequest, error) {
 	}
 
 	return req, nil
-}
-
-// ExtractDatasetEncodedFromRawRequest extracts the dataset name from the raw message.
-func ExtractDatasetEncodedFromRawRequest(data []byte) (string, error) {
-	jsonMap, err := json.Unmarshal(data)
-	if err != nil {
-		return "", err
-	}
-
-	var ok bool
-
-	encoded, ok := json.String(jsonMap, "dataset")
-	if !ok {
-		return "", errors.New("no `dataset` in predict request")
-	}
-
-	decoded, err := base64.StdEncoding.DecodeString(encoded)
-	if err != nil {
-		return "", errors.Wrap(err, "could not decoded `dataset`")
-	}
-
-	return string(decoded), nil
 }

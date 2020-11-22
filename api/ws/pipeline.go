@@ -17,6 +17,7 @@ package ws
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"path"
 	"strings"
@@ -286,16 +287,6 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		return
 	}
 
-	// read the raw data out of the request for non timeseries datasets
-	var data string
-	if request.IntervalCount <= 0 {
-		data, err = api.ExtractDatasetEncodedFromRawRequest(msg.Raw)
-		if err != nil {
-			handleErr(conn, msg, errors.Wrap(err, "unable to pull dataset from request"))
-			return
-		}
-	}
-
 	// get the source dataset from the fitted solution ID
 	req, err := solutionStorage.FetchRequestByFittedSolutionID(sr.FittedSolutionID)
 	if err != nil {
@@ -355,7 +346,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		IngestConfig:     ingestConfig,
 	}
 
-	ds, err := createPredictionDataset(requestTask, data, request, predictParams)
+	ds, err := createPredictionDataset(requestTask, request, predictParams)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to create raw dataset"))
 		return
@@ -387,22 +378,26 @@ func getTarget(request *apiModel.Request) string {
 	return ""
 }
 
-func createPredictionDataset(requestTask *api.Task, rawData string,
-	request *api.PredictRequest, predictParams *task.PredictParams) (task.DatasetConstructor, error) {
-	data := []byte(rawData)
+func createPredictionDataset(requestTask *api.Task, request *api.PredictRequest,
+	predictParams *task.PredictParams) (task.DatasetConstructor, error) {
 	datasetID := request.DatasetID
+	datasetPath := request.DatasetPath
 	var ds task.DatasetConstructor
 	var err error
 	if api.HasTaskType(requestTask, compute.RemoteSensingTask) {
-		ds, err = dataset.NewSatelliteDataset(datasetID, "tif", data)
+		ds, err = dataset.NewSatelliteDatasetFromExpanded(datasetID, "tif", "", datasetPath)
 	} else if api.HasTaskType(requestTask, compute.ImageTask) {
-		ds, err = dataset.NewMediaDataset(datasetID, "png", "jpeg", []byte(data))
+		ds, err = dataset.NewMediaDatasetFromExpanded(datasetID, "png", "jpeg", "", datasetPath)
 	} else if api.HasTaskType(requestTask, compute.TimeSeriesTask) && api.HasTaskType(requestTask, compute.ForecastingTask) {
 		ds, err = task.NewPredictionTimeseriesDataset(predictParams, request.IntervalLength, request.IntervalCount)
 	} else {
-		ds, err = dataset.NewTableDataset(datasetID, []byte(data), false)
+		var data []byte
+		data, err = ioutil.ReadFile(datasetPath)
+		if err != nil {
+			return nil, errors.Wrapf(err, "unable to read raw tabular data")
+		}
+		ds, err = dataset.NewTableDataset(datasetID, data, false)
 	}
-
 	if err != nil {
 		return nil, err
 	}

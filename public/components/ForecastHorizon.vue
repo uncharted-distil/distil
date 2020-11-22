@@ -111,7 +111,7 @@ export default Vue.extend({
       }
     },
 
-    intervalScaleTitle(): String {
+    intervalScaleTitle(): string {
       return this.intervalScale[this.intervalScaleSelected].caption;
     },
 
@@ -125,7 +125,7 @@ export default Vue.extend({
     */
 
     /* Test if all the current timeseries variables are DateTime. */
-    isDateTime(): Boolean {
+    isDateTime(): boolean {
       const timeseries = datasetGetters.getTimeseries(this.$store);
       if (!timeseries[this.dataset]) return false;
 
