@@ -239,7 +239,7 @@ export default Vue.extend({
       type: Array as () => VariableSummary[],
       default: Array as () => VariableSummary[],
     },
-    quadOpacity: { type: Number, default: 0.8 },
+    quadOpacity: { type: Number, default: 0.7 },
     pointOpacity: { type: Number, default: 0.8 },
     zoomThreshold: { type: Number, default: 8 },
     maxZoom: { type: Number, default: 17 }, // defaults to max zoom
@@ -1149,7 +1149,15 @@ export default Vue.extend({
         return "#999999";
       }
       if (this.isColoringByConfidence) {
-        return this.colorScale(item.confidence.value);
+        let confidenceValue = item.confidence ? item.confidence.value : 0;
+        if (confidenceValue < 0.0) {
+          console.error(`Confidence value clamped from ${confidenceValue}`);
+          confidenceValue = 0.0;
+        } else if (confidenceValue > 1.0) {
+          console.error(`Confidence value clamped from ${confidenceValue}`);
+          confidenceValue = 1.0;
+        }
+        return this.colorScale(confidenceValue);
       }
       if (item[this.targetField] && item[this.predictedField]) {
         color =
