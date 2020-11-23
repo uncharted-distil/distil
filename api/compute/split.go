@@ -407,7 +407,15 @@ func createSplitter(taskType []string, targetFieldIndex int, groupingFieldIndex 
 	}
 }
 
-func createSampler(stratify bool, targetCol int) datasetSampler {
+func createSampler(stratify bool, targetCol int, groupingCol int) datasetSampler {
+	// if grouped, stratified splitter works but on the group rather than the label
+	if groupingCol >= 0 {
+		return &stratifiedSplitter{
+			targetCol:   groupingCol,
+			groupingCol: groupingCol,
+		}
+	}
+
 	if stratify {
 		return &stratifiedSplitter{
 			targetCol:   targetCol,

@@ -575,7 +575,7 @@ func describeSolution(client *compute.Client, initialSearchSolutionID string) (*
 
 func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage,
 	dataStorage api.DataStorage, searchID string, dataset string, storageName string, datasetURI string,
-	datasetURITrain string, datasetURITest string, variables []*model.Variable, targetCol int) {
+	datasetURITrain string, datasetURITest string, variables []*model.Variable, targetCol int, groupingCol int) {
 
 	// update request status
 	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestRunningStatus)
@@ -589,7 +589,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 	produceDatasetURI := datasetURITest
 	for _, task := range s.Task {
 		if task == compute.ForecastingTask {
-			produceDatasetURI = datasetURI
+			produceDatasetURI = compute.BuildSchemaFileURI(datasetURI)
 			break
 		}
 	}
@@ -612,7 +612,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		}
 
 		err = s.dispatchSolutionExplainPipeline(client, solutionStorage, dataStorage, searchResult, searchID,
-			solution.SolutionId, dataset, storageName, produceDatasetURI, variables, targetCol)
+			solution.SolutionId, dataset, storageName, produceDatasetURI, variables, targetCol, groupingCol)
 		if err != nil {
 			s.persistSolutionError(c, solutionStorage, searchID, solution.SolutionId, err)
 			return
@@ -837,7 +837,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	// dispatch search request
 	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.ID, datasetInput.StorageName,
-		datasetInputDir, datasetPathTrain, datasetPathTest, dataVariables, s.TargetFeature.Index)
+		datasetInputDir, datasetPathTrain, datasetPathTest, dataVariables, s.TargetFeature.Index, groupingVariableIndex)
 
 	return nil
 }

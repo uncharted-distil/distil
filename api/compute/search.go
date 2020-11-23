@@ -38,7 +38,7 @@ type searchResult struct {
 
 func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client, solutionStorage api.SolutionStorage,
 	dataStorage api.DataStorage, searchResult *searchResult, searchID string, searchSolutionID string, dataset string,
-	storageName string, produceDatasetURI string, variables []*model.Variable, targetCol int) error {
+	storageName string, produceDatasetURI string, variables []*model.Variable, targetCol int, groupingCol int) error {
 
 	// get solution description
 	desc, err := describeSolution(client, searchSolutionID)
@@ -56,7 +56,7 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 	// create a subset of the dataset for the explain call
 	outputFolder := path.Dir(path.Dir(strings.TrimPrefix(produceDatasetURI, "file://")))
 	maxRows := getExplainDatasetMaxRows(variables)
-	explainDatasetURI, err := SampleDataset(produceDatasetURI, outputFolder, maxRows, true, targetCol)
+	explainDatasetURI, err := SampleDataset(produceDatasetURI, outputFolder, maxRows, true, targetCol, groupingCol)
 	if err != nil {
 		return err
 	}
@@ -103,6 +103,7 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 				log.Infof("explaining feature output from URI '%s'", explainURI)
 				explainDatasetURI = compute.BuildSchemaFileURI(explainDatasetURI)
 				parsedExplainResult, err := ExplainFeatureOutput(explainDatasetURI, explainURI)
+				parsedExplainResult.ResultURI = searchResult.resultURI
 				if err != nil {
 					log.Warnf("failed to fetch output explanation - %v", err)
 					continue

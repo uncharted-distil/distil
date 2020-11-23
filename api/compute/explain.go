@@ -454,7 +454,7 @@ func readDatasetData(uri string) ([][]string, error) {
 		}
 		mainDR := meta.GetMainDataResource()
 
-		dataPath = path.Join(path.Dir(uriRaw), mainDR.ResPath)
+		dataPath = model.GetResourcePathFromFolder(path.Dir(dataPath), mainDR)
 	}
 
 	storage := serialization.GetStorage(dataPath)

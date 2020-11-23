@@ -30,7 +30,7 @@ func TestSampleStratified(t *testing.T) {
 	initializeTestConfig()
 	expectedSamplePath := fmt.Sprintf("test/tmp_data/sample-6f5d2a90aff56355/datasetDoc.json")
 
-	sampleURI, err := SampleDataset(path.Join(params.SourceDataFolder, params.SchemaFile), "./test/tmp_data", 10, true, 2)
+	sampleURI, err := SampleDataset(path.Join(params.SourceDataFolder, params.SchemaFile), "./test/tmp_data", 10, true, 2, -1)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedSamplePath, sampleURI)
 

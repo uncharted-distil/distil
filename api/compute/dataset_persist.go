@@ -342,12 +342,12 @@ func SplitTimeSeries(timeseries []*api.TimeseriesObservation, trainPercentage fl
 // the raw byte data of the sampled dataset.
 func SampleData(rawData [][]string, maxRows int, stratify bool) [][]string {
 
-	sampler := createSampler(stratify, -1)
+	sampler := createSampler(stratify, -1, -1)
 	return sampler.sample(rawData, maxRows)
 }
 
 // SampleDataset shuffles a dataset's rows and stores a subsample, the schema doc URI.
-func SampleDataset(schemaFile string, outputFolder string, maxRows int, stratify bool, targetCol int) (string, error) {
+func SampleDataset(schemaFile string, outputFolder string, maxRows int, stratify bool, targetCol int, groupingCol int) (string, error) {
 	schemaFile = strings.TrimPrefix(schemaFile, "file://")
 	log.Infof("sampling a maximum row count of %d from '%s' (stratify=%v)", maxRows, schemaFile, stratify)
 	// read metadata
@@ -356,7 +356,7 @@ func SampleDataset(schemaFile string, outputFolder string, maxRows int, stratify
 		return "", err
 	}
 	sourceFilename := model.GetResourcePathFromFolder(path.Dir(schemaFile), meta.GetMainDataResource())
-	sampler := createSampler(stratify, targetCol)
+	sampler := createSampler(stratify, targetCol, groupingCol)
 
 	// check if already sampled (write in the same parent folder as the schema file!)
 	hash, err := sampler.hash(schemaFile, maxRows)
