@@ -156,6 +156,7 @@ type FilteredDataValue struct {
 	Value      interface{}     `json:"value"`
 	Weight     float64         `json:"weight,omitempty"`
 	Confidence NullableFloat64 `json:"confidence,omitempty"`
+	Rank       NullableFloat64 `json:"rank,omitempty"`
 }
 
 // FilteredData provides the metadata and raw data values that match a supplied

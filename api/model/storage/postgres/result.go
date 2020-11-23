@@ -34,6 +34,7 @@ const (
 	featureWeightTableSuffix = "_explain"
 	dataTableAlias           = "data"
 	confidenceName           = "confidence"
+	rankName                 = "rank"
 )
 
 func (s *Storage) getResultTable(storageName string) string {
@@ -233,6 +234,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	targetIndex := -1
 	d3mIndexIndex := -1
 	confidenceIndex := -1
+	rankIndex := -1
 	for i, v := range records[0] {
 		if v == targetDisplayName {
 			targetIndex = i
@@ -240,6 +242,8 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			d3mIndexIndex = i
 		} else if v == confidenceName {
 			confidenceIndex = i
+		} else if v == rankName {
+			rankIndex = i
 		}
 	}
 	// result is not in valid format - d3mIndex and target col need to have correct name
@@ -277,6 +281,14 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			}
 			dataForInsert = append(dataForInsert, cfs)
 		}
+		if rankIndex >= 0 {
+			rs, err := strconv.ParseFloat(records[i][rankIndex], 64)
+			if err != nil {
+				return errors.Wrap(err, "failed rank value parsing")
+			}
+
+			dataForInsert = append(dataForInsert, &api.SolutionExplainValues{Rank: rs})
+		}
 
 		insertData = append(insertData, dataForInsert)
 	}
@@ -284,6 +296,9 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	fields := []string{"result_id", "index", "target", "value"}
 	if confidenceIndex >= 0 {
 		fields = append(fields, "confidence")
+	}
+	if rankIndex >= 0 {
+		fields = append(fields, "explain_values")
 	}
 
 	// store all results to the storage
@@ -314,6 +329,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 		weightCount := 0
 		confidenceCol := -1
 		predictedCol := -1
+		explainCol := -1
 		// Parse the row data.
 		for rows.Next() {
 			if columns == nil {
@@ -335,6 +351,9 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 						continue
 					} else if key == "__predicted_confidence" {
 						confidenceCol = i
+						continue
+					} else if key == "__predicted_explain" {
+						explainCol = i
 						continue
 					} else {
 						if key == target.Name {
@@ -366,9 +385,9 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 			weightedValues := make([]*api.FilteredDataValue, len(columns))
 			varIndex := 0
 			for i := 0; i < len(columnValues); i++ {
-				if i == confidenceCol {
+				if i == confidenceCol || i == predictedCol {
 					if i < weightCount {
-						// confidence column IS NOT a variable and so indices need to be adjusted
+						// confidence & explain columns ARE NOT variables and so indices need to be adjusted
 						varIndex--
 					}
 				} else if varIndex < len(weightedValues) {
@@ -384,6 +403,11 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 			if confidenceCol >= 0 {
 				weightedValues[predictedCol].Confidence = api.NullableFloat64(columnValues[confidenceCol].(float64))
 			}
+			if explainCol >= 0 {
+				explainValues := columnValues[explainCol].(*api.SolutionExplainValues)
+				weightedValues[predictedCol].Rank = api.NullableFloat64(explainValues.Rank)
+			}
+
 			result.Values = append(result.Values, weightedValues)
 		}
 		err := rows.Err()
@@ -743,7 +767,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			targetColumnQuery = fmt.Sprintf("data.\"%s\" as \"%s\", ", targetName, targetName)
 		}
 
-		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", COALESCE(predicted.confidence, 'NaN') as \"__predicted_confidence\", %s %s %s, %s ",
+		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", COALESCE(predicted.confidence, 'NaN') as \"__predicted_confidence\", predicted.explained_values as \"__predicted_explain\", %s %s %s, %s ",
 			distincts, predictedCol, targetColumnQuery, errorExpr, strings.Join(fieldsData, ", "), strings.Join(fieldsExplain, ", "))
 	}
 
