@@ -240,6 +240,11 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 			return nil, errors.Wrap(err, "unable to ingest prediction data")
 		}
 		log.Infof("finished ingesting dataset '%s'", datasetName)
+
+		// we still may need to featurize
+		if err = Featurize(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, datasetName, params.IngestConfig); err != nil {
+			return nil, errors.Wrap(err, "unabled to featurize prediction data")
+		}
 	}
 
 	// Apply the var types associated with the fitted solution to the inference data - the model types and input types should
@@ -430,7 +435,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 	outputData := [][]string{headerSource}
 	for _, line := range csvData[1:] {
 		// write the columns in the same order as the source dataset
-		output := make([]string, len(sourceVariableMap))
+		output := make([]string, len(predictionVariables))
 		for i, f := range line {
 			sourceIndex := predictVariablesMap[i]
 			if sourceIndex >= 0 {
