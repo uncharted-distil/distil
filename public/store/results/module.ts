@@ -51,6 +51,12 @@ export const getters = {
   getExcludedResultTableDataCount: read(
     moduleGetters.getExcludedResultTableDataCount
   ),
+  getFullExcludedResultTableDataItems: read(
+    moduleGetters.getFullExcludedResultTableDataItems
+  ),
+  getFullIncludedResultTableDataItems: read(
+    moduleGetters.getFullIncludedResultTableDataItems
+  ),
   hasResultTableDataItemsWeight: read(
     moduleGetters.hasResultTableDataItemsWeight
   ),
@@ -76,6 +82,8 @@ export const getters = {
   getPredictedForecasts: read(moduleGetters.getPredictedForecasts),
   // rankings
   getFeatureImportanceRanking: read(moduleGetters.getFeatureImportanceRanking),
+  // gets the number of records in db
+  getNumOfRecords: read(moduleGetters.getNumOfRecords),
 };
 
 // Typed actions
@@ -128,6 +136,12 @@ export const mutations = {
   ),
   setExcludedResultTableData: commit(
     moduleMutations.setExcludedResultTableData
+  ),
+  setFullExcludedResultTableData: commit(
+    moduleMutations.setFullExcludeResultTableData
+  ),
+  setFullIncludedResultTableData: commit(
+    moduleMutations.setFullIncludeResultTableData
   ),
   setAreaOfInterestInner: commit(moduleMutations.setAreaOfInterestInner),
   setAreaOfInterestOuter: commit(moduleMutations.setAreaOfInterestOuter),

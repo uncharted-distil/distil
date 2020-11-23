@@ -64,7 +64,17 @@ export const getters = {
   getIncludedResultTableData(state: ResultsState): TableData {
     return state.includedResultTableData;
   },
-
+  getFullIncludedResultTableDataItems(state: ResultsState): TableRow[] {
+    return getTableDataItems(state.fullIncludedResultTableData);
+  },
+  getFullExcludedResultTableDataItems(state: ResultsState): TableRow[] {
+    return getTableDataItems(state.fullExcludedResultTableData);
+  },
+  getNumOfRecords(state: ResultsState) {
+    const table = state.includedResultTableData ??
+      state.excludedResultTableData ?? { numRows: 0 };
+    return table.numRows;
+  },
   getAreaOfInterestInnerDataItems(state: ResultsState): TableRow[] {
     return getTableDataItems(state.areaOfInterestInner);
   },

@@ -11,7 +11,6 @@ import {
 import { Dictionary } from "../../util/dict";
 import { EXCLUDE_FILTER, Filter, invertFilter } from "../../util/filters";
 import { getPredictionsById } from "../../util/predictions";
-import { overlayRouteEntry } from "../../util/routes";
 import {
   DataMode,
   Highlight,
@@ -40,6 +39,7 @@ import {
 import {
   actions as resultActions,
   mutations as resultMutations,
+  getters as resultGetters,
 } from "../results/module";
 import { SELECT_TARGET_ROUTE } from "../route";
 import { getters as routeGetters } from "../route/module";
@@ -489,6 +489,7 @@ export const actions = {
     const highlight = context.getters.getDecodedHighlight;
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
     const dataMode = context.getters.getDataMode;
+    filterParams.size = datasetGetters.getNumberOfRecords(store);
     return Promise.all([
       datasetActions.fetchHighlightedTableData(store, {
         dataset: dataset,
@@ -665,12 +666,19 @@ export const actions = {
     });
   },
 
-  updateResultsSolution(context: ViewContext) {
+  async updateResultsSolution(context: ViewContext) {
     // clear previous state
     resultMutations.clearResidualsExtrema(store);
     resultMutations.setIncludedResultTableData(store, createEmptyTableData());
     resultMutations.setExcludedResultTableData(store, createEmptyTableData());
-
+    resultMutations.setFullIncludedResultTableData(
+      store,
+      createEmptyTableData()
+    );
+    resultMutations.setFullExcludedResultTableData(
+      store,
+      createEmptyTableData()
+    );
     // fetch new state
     const dataset = routeGetters.getRouteDataset(store);
     const target = routeGetters.getRouteTargetVariable(store);
@@ -682,15 +690,24 @@ export const actions = {
       store
     );
     const size = routeGetters.getRouteDataSize(store);
-
-    // before fetching narrow
-
+    // needs the await call to get the dataset size from the DB
+    await resultActions.fetchResultTableData(store, {
+      dataset: dataset,
+      solutionId: solutionId,
+      highlight: highlight,
+      dataMode: dataMode,
+      isMapData: false,
+      size,
+    });
+    // fetch datasize has to be called before the clear
+    const allData = resultGetters.getNumOfRecords(store);
     resultActions.fetchResultTableData(store, {
       dataset: dataset,
       solutionId: solutionId,
       highlight: highlight,
       dataMode: dataMode,
-      size,
+      isMapData: true,
+      size: allData,
     });
     resultActions.fetchTargetSummary(store, {
       dataset: dataset,
