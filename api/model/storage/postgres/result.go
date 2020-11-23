@@ -26,6 +26,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
+	jsonu "github.com/uncharted-distil/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -385,7 +386,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 			weightedValues := make([]*api.FilteredDataValue, len(columns))
 			varIndex := 0
 			for i := 0; i < len(columnValues); i++ {
-				if i == confidenceCol || i == predictedCol {
+				if i == confidenceCol || i == explainCol {
 					if i < weightCount {
 						// confidence & explain columns ARE NOT variables and so indices need to be adjusted
 						varIndex--
@@ -404,8 +405,13 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 				weightedValues[predictedCol].Confidence = api.NullableFloat64(columnValues[confidenceCol].(float64))
 			}
 			if explainCol >= 0 {
-				explainValues := columnValues[explainCol].(*api.SolutionExplainValues)
-				weightedValues[predictedCol].Rank = api.NullableFloat64(explainValues.Rank)
+				explainValuesRaw := columnValues[explainCol].(map[string]interface{})
+				explainValuesParsed := &api.SolutionExplainValues{}
+				err = jsonu.MapToStruct(explainValuesParsed, explainValuesRaw)
+				if err != nil {
+					return nil, err
+				}
+				weightedValues[predictedCol].Rank = api.NullableFloat64(explainValuesParsed.Rank)
 			}
 
 			result.Values = append(result.Values, weightedValues)
@@ -767,7 +773,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			targetColumnQuery = fmt.Sprintf("data.\"%s\" as \"%s\", ", targetName, targetName)
 		}
 
-		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", COALESCE(predicted.confidence, 'NaN') as \"__predicted_confidence\", predicted.explained_values as \"__predicted_explain\", %s %s %s, %s ",
+		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", COALESCE(predicted.confidence, 'NaN') as \"__predicted_confidence\", predicted.explain_values as \"__predicted_explain\", %s %s %s, %s ",
 			distincts, predictedCol, targetColumnQuery, errorExpr, strings.Join(fieldsData, ", "), strings.Join(fieldsExplain, ", "))
 	}
 
