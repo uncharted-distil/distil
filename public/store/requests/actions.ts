@@ -105,6 +105,7 @@ function updateCurrentSolutionResults(
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
     dataMode: dataMode,
+    isMapData: false,
     size,
   });
   resultsActions.fetchFeatureImportanceRanking(store, {

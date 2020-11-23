@@ -262,6 +262,7 @@ export const actions = {
       dataset: string;
       highlight: Highlight;
       dataMode: DataMode;
+      isMapData: boolean;
       size?: number;
     }
   ) {
@@ -283,7 +284,9 @@ export const actions = {
       filterParamsBlank,
       args.highlight
     );
-
+    const mutator = args.isMapData
+      ? mutations.setFullIncludedResultTableData
+      : mutations.setIncludedResultTableData;
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault; // Add the size limit to results if provided.
     if (_.isInteger(args.size)) {
@@ -297,12 +300,12 @@ export const actions = {
         )}`,
         filterParams
       );
-      mutations.setIncludedResultTableData(context, response.data);
+      mutator(context, response.data);
     } catch (error) {
       console.error(
         `Failed to fetch results from ${args.solutionId} with error ${error}`
       );
-      mutations.setIncludedResultTableData(context, createEmptyTableData());
+      mutator(context, createEmptyTableData());
     }
   },
 
@@ -313,6 +316,7 @@ export const actions = {
       dataset: string;
       highlight: Highlight;
       dataMode: DataMode;
+      isMapData: boolean;
       size?: number;
     }
   ) {
@@ -338,6 +342,9 @@ export const actions = {
 
     const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
     filterParams.dataMode = dataModeDefault;
+    const mutator = args.isMapData
+      ? mutations.setFullExcludedResultTableData
+      : mutations.setExcludedResultTableData;
     // Add the size limit to results if provided.
     if (_.isInteger(args.size)) {
       filterParams.size = args.size;
@@ -350,12 +357,12 @@ export const actions = {
         )}`,
         filterParams
       );
-      mutations.setExcludedResultTableData(context, response.data);
+      mutator(context, response.data);
     } catch (error) {
       console.error(
         `Failed to fetch results from ${args.solutionId} with error ${error}`
       );
-      mutations.setExcludedResultTableData(context, createEmptyTableData());
+      mutator(context, createEmptyTableData());
     }
   },
   // fetches
@@ -476,6 +483,7 @@ export const actions = {
       dataset: string;
       highlight: Highlight;
       dataMode: DataMode;
+      isMapData: boolean;
       size?: number;
     }
   ) {

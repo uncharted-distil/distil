@@ -171,11 +171,11 @@ export default Vue.extend({
     dataItems(): TableRow[] {
       if (this.isGeoView) {
         const excluded = resultsGetters
-          .getExcludedResultTableDataItems(this.$store)
+          .getFullExcludedResultTableDataItems(this.$store)
           .map((i) => {
             return { ...i, isExcluded: true };
           });
-        const included = resultsGetters.getIncludedResultTableDataItems(
+        const included = resultsGetters.getFullIncludedResultTableDataItems(
           this.$store
         );
         return [...excluded, ...included];
