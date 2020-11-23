@@ -25,6 +25,7 @@ import {
   AVAILABLE_TRAINING_VARS_INSTANCE_SEARCH,
   TRAINING_VARS_INSTANCE_SEARCH,
   RESULT_TRAINING_VARS_INSTANCE_SEARCH,
+  LABEL_FEATURE_VARS_INSTANCE_PAGE,
 } from "../route/index";
 import { ModelQuality } from "../requests/index";
 import { decodeFilters, Filter, FilterParams } from "../../util/filters";
@@ -202,7 +203,10 @@ export const getters = {
     const pageVar = AVAILABLE_TRAINING_VARS_INSTANCE_PAGE;
     return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
   },
-
+  getLabelFeaturesVarsPage(state: Route): number {
+    const pageVar = LABEL_FEATURE_VARS_INSTANCE_PAGE;
+    return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
+  },
   getRouteTrainingVarsPage(state: Route): number {
     const pageVar = TRAINING_VARS_INSTANCE_PAGE;
     return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;

@@ -45,6 +45,7 @@ export const getters = {
   getRouteAvailableTargetVarsPage: read(
     moduleGetters.getRouteAvailableTargetVarsPage
   ),
+  getLabelFeaturesVarsPage: read(moduleGetters.getLabelFeaturesVarsPage),
   getRouteAvailableTrainingVarsPage: read(
     moduleGetters.getRouteAvailableTrainingVarsPage
   ),

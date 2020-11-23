@@ -1,6 +1,7 @@
 <template>
   <ol class="labels" :class="alignment">
     <li
+      v-if="!containsUserAnnotation"
       v-for="(label, index) in labels"
       :key="index"
       :title="label.title"
@@ -9,6 +10,7 @@
     >
       {{ label.value }}
     </li>
+    <label-annotation v-if="containsUserAnnotation" :item="item" />
   </ol>
 </template>
 
@@ -20,8 +22,9 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as resultGetters } from "../store/results/module";
+import LabelAnnotation from "./labelingComponents/LabelAnnotation.vue";
 import _ from "lodash";
-import { minimumRouteKey } from "../util/data";
+import { minimumRouteKey, LOW_SHOT_LABEL_COLUMN_NAME } from "../util/data";
 
 interface Label {
   status: string;
@@ -35,7 +38,9 @@ interface Label {
 export default Vue.extend({
   name: "image-label",
 
-  components: {},
+  components: {
+    LabelAnnotation,
+  },
 
   data() {
     return {};
@@ -177,6 +182,12 @@ export default Vue.extend({
         }
       }
       return imageLabelLengths;
+    },
+    containsUserAnnotation(): boolean {
+      if (!this.item) {
+        return false;
+      }
+      return this.item[LOW_SHOT_LABEL_COLUMN_NAME] !== undefined;
     },
   },
 
