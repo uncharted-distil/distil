@@ -153,7 +153,7 @@ func init() {
 
 // ImageFromCombination takes a base datsaet directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for sentinel-2 data.
-func ImageFromCombination(datasetDir string, fileID string, bandCombination BandCombinationID, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
+func ImageFromCombination(datasetDir string, fileID string, bandCombo string, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
 	bandCombination := BandCombinationID(bandCombo)
@@ -521,3 +521,7 @@ func getFilePath(datasetDir string, fileID string, bandLabel string, fileType st
 	fileName := fmt.Sprintf("%s_%s.%s", fileID, strings.ToUpper(bandLabel), fileType)
 	return path.Join(datasetDir, fileName)
 }
+
+func lerp(v0 float32, v1 float32, t float32) float32 {
+	return (1.0 - t) * v0 + t * v1;
+  }

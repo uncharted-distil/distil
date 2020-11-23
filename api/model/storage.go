@@ -22,6 +22,7 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 // NullableFloat64 is float64 with custom JSON marshalling to allow for NaN values
@@ -53,8 +54,15 @@ type TimeseriesData struct {
 	Max        float64
 	Mean       float64
 }
-
-
+// ExplainValuesResponse is a struct for the result table
+type ExplainValuesResponse struct{
+	ResultID string
+	Index int
+	Target string
+	Value string
+	Confidence float64
+	ExplainValues api.SolutionExplainValues
+}
 // DataStorageCtor represents a client constructor to instantiate a data
 // storage client.
 type DataStorageCtor func() (DataStorage, error)
@@ -80,7 +88,7 @@ type DataStorage interface {
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
 	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *FilterParams, invert bool) (*TimeseriesData, error)
 	FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultUUID string, filterParams *FilterParams) (*TimeseriesData, error)
-	FetchExplainValues(dataset string, storageName string, selectCol string, whereCol string, whereVal string, resultUUID string, filterParams ...*FilterParams) ([]interface{},error)
+	FetchExplainValues(dataset string, storageName string, d3mIndex int, resultUUID string, filterParams *FilterParams) ([]ExplainValuesResponse,error)
 	FetchCategoryCounts(storageName string, variable *model.Variable) (map[string]int, error)
 	FetchSolutionFeatureWeights(dataset string, storageName string, resultURI string, d3mIndex int64) (*SolutionFeatureWeight, error)
 

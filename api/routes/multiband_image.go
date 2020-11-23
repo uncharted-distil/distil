@@ -21,13 +21,14 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
-	"github.com/uncharted-distil/distil-compute/model"
+	// "github.com/uncharted-distil/distil-compute/model"
 	"goji.io/v3/pat"
 	"net/http"
 	"path"
-	"image/color"
+	// "image/color"
 	"strconv"
 	"strings"
+	"fmt"
 )
 
 const (
@@ -59,7 +60,11 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, pCtor api.DataStorageCt
 			handleError(w, err)
 			return
 		}
-
+		pStorage, err := pCtor()
+		if err != nil{
+			handleError(w, err)
+			return
+		}
 		res, err := storage.FetchDataset(dataset, false, false)
 		if err != nil {
 			handleError(w, err)
@@ -70,6 +75,15 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, pCtor api.DataStorageCt
 		if isThumbnail {
 			imageScale = util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 		}
+		if bandCombo == util.ImageAttention {
+			storageName, err:=pStorage.GetStorageName(dataset)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			fmt.Println(storageName)
+			// pStorage.FetchExplainValues(dataset, storageName, )
+		}
 		options := util.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0} // default options for color correction
 		if paramOption != "" {
 			err := json.Unmarshal([]byte(paramOption), &options)
@@ -78,7 +92,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, pCtor api.DataStorageCt
 				return
 			}
 		}
-		img, err := util.ImageFromCombination(sourcePath, imageID, util.BandCombinationID(bandCombo), imageScale, options)
+		img, err := util.ImageFromCombination(sourcePath, imageID, bandCombo, imageScale, options)
 		if err != nil {
 			handleError(w, err)
 			return
