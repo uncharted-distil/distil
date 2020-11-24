@@ -51,7 +51,7 @@ func ImageAttentionHandler(solutionCtor api.SolutionStorageCtor, metaCtor api.Me
 		for _, v := range data {
 			scaledMatrix := util.ScaleConfidenceMatrix(ThumbnailDimensions, ThumbnailDimensions, &v.GradCAM)
 			filter := util.ConfidenceMatrixToImage(scaledMatrix, util.ViridisColorScale, 100)
-			imageBytes, err := util.ImageToJPEG(filter)
+			imageBytes, err := util.ImageToPNG(filter)
 			if err != nil {
 				handleError(w, err)
 				return

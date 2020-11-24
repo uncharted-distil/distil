@@ -19,14 +19,13 @@
           :class="{ clickable: hasClick }"
           @click.stop="handleClick"
         />
-        <i class="fa fa-search-plus zoom-icon" @click.stop="showZoomedImage" />
         <div
-          v-if="filterSupplied"
-          ref="filterElem"
-          class="image-elem"
+          ref="imageAttentionElem"
+          class="filter-elem"
           :class="{ clickable: hasClick }"
           @click.stop="handleClick"
         />
+        <i class="fa fa-search-plus zoom-icon" @click.stop="showZoomedImage" />
       </template>
     </div>
     <image-drilldown
@@ -73,7 +72,6 @@ export default Vue.extend({
   props: {
     row: Object as () => TableRow,
     imageUrl: String as () => string,
-    filterUrl: { type: String as () => string, default: null },
     uniqueTrail: { type: String as () => string, default: "" },
     type: String as () => string,
     width: {
@@ -89,13 +87,38 @@ export default Vue.extend({
       type: Boolean as () => boolean,
     },
     onClick: Function,
-
     gray: { type: Number, default: 0 }, // support for graying images.
     debounce: { type: Boolean as () => boolean, default: false },
     debounceWaitTime: { type: Number as () => number, default: 500 },
   },
 
   watch: {
+    isLoaded() {
+      this.$nextTick(async () => {
+        if (!this.isLoaded) {
+          return;
+        }
+        this.hasRendered = false;
+        if (
+          this.hasImageAttention &&
+          !this.imageAttentionIsLoaded &&
+          !!this.row
+        ) {
+          await datasetActions.fetchImageAttention(this.$store, {
+            dataset: this.dataset,
+            resultId: this.solutionId,
+            d3mIndex: this.row.d3mIndex,
+          });
+        }
+        if (this.hasImageAttention && this.imageAttentionIsLoaded) {
+          this.injectFilter();
+        }
+        if (!this.hasImageAttention && this.imageAttentionHasRendered) {
+          this.clearImage(this.$refs.imageAttentionElem as any);
+          this.imageAttentionHasRendered = false;
+        }
+      });
+    },
     imageUrl(newUrl: string, oldUrl: string) {
       if (newUrl === null) {
         return;
@@ -108,13 +131,47 @@ export default Vue.extend({
         this.getImage();
       }
     },
-    hasImageAttention() {
-      if (this.hasImageAttention && !this.imageAttentionIsLoaded) {
-        datasetActions.fetchImageAttention(this.$store, {
+    async hasImageAttention() {
+      this.hasRendered = false;
+      if (
+        this.hasImageAttention &&
+        !this.imageAttentionIsLoaded &&
+        !!this.row
+      ) {
+        await datasetActions.fetchImageAttention(this.$store, {
           dataset: this.dataset,
           resultId: this.solutionId,
           d3mIndex: this.row.d3mIndex,
         });
+      }
+      if (this.hasImageAttention && this.imageAttentionIsLoaded) {
+        this.injectFilter();
+      }
+      if (!this.hasImageAttention && this.imageAttentionHasRendered) {
+        this.clearImage(this.$refs.imageAttentionElem as any);
+        this.imageAttentionHasRendered = false;
+      }
+    },
+    async row() {
+      this.hasRendered = false;
+      this.clearImage(this.$refs.imageAttentionElem as any);
+      if (
+        this.hasImageAttention &&
+        !this.imageAttentionIsLoaded &&
+        !!this.row
+      ) {
+        await datasetActions.fetchImageAttention(this.$store, {
+          dataset: this.dataset,
+          resultId: this.solutionId,
+          d3mIndex: this.row.d3mIndex,
+        });
+      }
+      if (this.hasImageAttention && this.imageAttentionIsLoaded) {
+        this.injectFilter();
+      }
+      if (!this.hasImageAttention && this.imageAttentionHasRendered) {
+        this.clearImage(this.$refs.imageAttentionElem as any);
+        this.imageAttentionHasRendered = false;
       }
     },
     // Refresh image on band change
@@ -150,6 +207,7 @@ export default Vue.extend({
       stopSpinner: false,
       debouncedRequestImage: null,
       getImage: null,
+      imageAttentionHasRendered: false,
     };
   },
 
@@ -178,7 +236,8 @@ export default Vue.extend({
     },
     imageAttentionIsLoaded(): boolean {
       return (
-        this.hasImageAttention &&
+        !!this.solutionId &&
+        !!this.row &&
         !!this.files[this.solutionId + this.row.d3mIndex]
       );
     },
@@ -186,6 +245,9 @@ export default Vue.extend({
       return (
         this.files[this.imageParamUrl] ?? this.files[this.imageParamId] ?? null
       );
+    },
+    imageAttention(): HTMLImageElement {
+      return this.files[this.solutionId + this.row.d3mIndex] ?? null;
     },
     spinnerHTML(): string {
       return circleSpinnerHTML();
@@ -211,9 +273,6 @@ export default Vue.extend({
     },
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
-    },
-    filterSupplied(): boolean {
-      return this.filterUrl !== null;
     },
     hasImageAttention(): boolean {
       return routeGetters.getImageAttention(this.$store);
@@ -278,6 +337,27 @@ export default Vue.extend({
           elem.children[0].style.height = elem.children[0].width + "px";
         }
         this.hasRendered = true;
+      }
+    },
+    injectFilter() {
+      if (!this.imageAttention) {
+        return;
+      }
+
+      const elem = this.$refs.imageAttentionElem as any;
+      if (elem) {
+        this.clearImage(elem);
+        const image = this.imageAttention.cloneNode() as HTMLImageElement;
+        elem.appendChild(image);
+
+        // fit image preview to available area with no overflows
+        if (
+          this.width === this.height &&
+          elem.children[0].height > elem.children[0].width
+        ) {
+          elem.children[0].style.height = elem.children[0].width + "px";
+        }
+        this.imageAttentionHasRendered = true;
       }
     },
 
@@ -380,6 +460,13 @@ export default Vue.extend({
   max-height: 100%;
   max-width: 100%;
   position: relative;
+}
+
+.filter-elem {
+  position: absolute;
+  top: 0px;
+  max-height: 100%;
+  max-width: 100%;
 }
 
 /* Zoom icon */

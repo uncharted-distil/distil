@@ -296,9 +296,14 @@ func ConfidenceMatrixToImage(confidence [][]float64, colorScale func(float64) *c
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			color := colorScale(float64(confidence[y][x]))
-			resultImage.Pix[outputIdx] = color.R   // r
-			resultImage.Pix[outputIdx+1] = color.G // g
-			resultImage.Pix[outputIdx+2] = color.B // b
+			// premultiplied alpha
+			alpha := float64(opacity) / 255.0
+			r := uint8(float64(color.R) * alpha)
+			b := uint8(float64(color.B) * alpha)
+			g := uint8(float64(color.G) * alpha)
+			resultImage.Pix[outputIdx] = r   // r
+			resultImage.Pix[outputIdx+1] = g // g
+			resultImage.Pix[outputIdx+2] = b // b
 			resultImage.Pix[outputIdx+3] = opacity
 			outputIdx += step
 		}
@@ -481,6 +486,15 @@ func SavePNGImage(image *image.RGBA, filename string) error {
 func ImageToJPEG(image *image.RGBA) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	if err := jpeg.Encode(buf, image, nil); err != nil {
+		return nil, errors.Wrap(err, "failed so encode png file")
+	}
+	return buf.Bytes(), nil
+}
+
+// ImageToPNG encodes RGBA image as PNG byte array
+func ImageToPNG(image *image.RGBA) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	if err := png.Encode(buf, image); err != nil {
 		return nil, errors.Wrap(err, "failed so encode png file")
 	}
 	return buf.Bytes(), nil
