@@ -9,6 +9,7 @@ export interface Model {
   datasetName: string;
   target: string;
   variables: string[];
+  variableDetails: VariableDetail[];
 }
 
 export interface ModelState {
@@ -16,6 +17,12 @@ export interface ModelState {
   models: Dictionary<Model>;
   // fitted solution id of models that are currently being filtered
   filteredModelIds: string[];
+}
+
+export interface VariableDetail {
+  name: string;
+  rank: number;
+  type: string;
 }
 
 export const state: ModelState = {

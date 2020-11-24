@@ -36,14 +36,15 @@ var (
 
 // ExportedModel represents a description of an exported model.
 type ExportedModel struct {
-	ModelName        string   `json:"modelName"`
-	ModelDescription string   `json:"modelDescription"`
-	FilePath         string   `json:"filePath"`
-	FittedSolutionID string   `json:"fittedSolutionId"`
-	DatasetID        string   `json:"datasetId"`
-	DatasetName      string   `json:"datasetName"`
-	Target           string   `json:"target"`
-	Variables        []string `json:"variables"`
+	ModelName        string              `json:"modelName"`
+	ModelDescription string              `json:"modelDescription"`
+	FilePath         string              `json:"filePath"`
+	FittedSolutionID string              `json:"fittedSolutionId"`
+	DatasetID        string              `json:"datasetId"`
+	DatasetName      string              `json:"datasetName"`
+	Target           string              `json:"target"`
+	Variables        []string            `json:"variables"`
+	VariableDetails  []*SolutionVariable `json:"variableDetails"`
 }
 
 // Request represents the request metadata.
@@ -163,6 +164,13 @@ type SolutionScore struct {
 	Label          string  `json:"label"`
 	Score          float64 `json:"value"`
 	SortMultiplier float64 `json:"sortMultiplier"`
+}
+
+// SolutionVariable represents the basic variable data for a solution
+type SolutionVariable struct {
+	Name string  `json:"name"`
+	Rank float64 `json:"rank"`
+	Type string  `json:"type"`
 }
 
 // PredictionResult represents the output from a model prediction.
