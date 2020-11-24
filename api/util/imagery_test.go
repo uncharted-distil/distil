@@ -153,12 +153,7 @@ func TestImageToJPEG(t *testing.T) {
 	assert.NoError(t, err)
 	assert.GreaterOrEqual(t, len(jpegBytes), 1)
 }
-func TestScaleConfidenceMatrix(t *testing.T) {
-	expectedOutput := [][]float64{{0, 0.5, 1, 0.625, 0.25, 0.3, 0.35000002, 0.4}, {0.5, 0.685, 0.87, 0.58000004, 0.29000002, 0.27666667, 0.26333335, 0.25}, {1, 0.87, 0.74, 0.535, 0.33, 0.25333333, 0.17666668, 0.1}, {0.9, 0.7475, 0.595, 0.51750004, 0.44, 0.41, 0.38, 0.35000002}, {0.8, 0.625, 0.45, 0.5, 0.55, 0.56666666, 0.5833334, 0.6}, {0.86333334, 0.71166664, 0.55999994, 0.56833327, 0.57666665, 0.59555554, 0.61444443, 0.6333333}, {0.9266667, 0.7983333, 0.66999996, 0.63666666, 0.60333335, 0.6244445, 0.6455556, 0.6666667}, {0.99, 0.885, 0.78, 0.705, 0.63, 0.6533333, 0.6766666, 0.7}}
-	input := [][]float64{{0.0, 1.0, 0.25, 0.4}, {1.0, 0.74, 0.33, 0.1}, {0.8, 0.45, 0.55, 0.60}, {0.99, 0.78, 0.63, 0.7}}
-	res := ScaleConfidenceMatrix(8, 8, &input)
-	assert.Equal(t, true, reflect.DeepEqual(expectedOutput, res))
-}
+
 func generateTestImage(xSize int, ySize int) *image.RGBA {
 	image := image.NewRGBA(image.Rect(0, 0, xSize, ySize))
 	offset := 0
