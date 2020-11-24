@@ -75,6 +75,10 @@ func init() {
 		{0.666, color.RGBA{42, 198, 223, 255}},
 		{1.0, color.RGBA{5, 29, 148, 255}},
 	}, 255, Lab)
+	ImageAttentionFilter = []RampEntry{
+		{0.0, color.RGBA{253,231,37, 255}},
+		{0.5, color.RGBA{31,150,139,255}},
+		{1.0, color.RGBA{68,1,84, 255}}}
 }
 
 // GenerateRamp creaets a a color ramp stored as a flat array of byte values.
@@ -170,6 +174,10 @@ func GetColor(normalizedVal float64, ramp[]RampEntry) *color.RGBA{
 
 	// Nothing found? Means we're at (or past) the last gradient keypoint.
 	return &ramp[len(ramp)-1].Colour
+}
+// ViridisColorScale returns a functions used to return a color from the viridis color scale given a normalized value
+func ViridisColorScale(normalizedVal float64)*color.RGBA{
+	return GetColor(normalizedVal, ImageAttentionFilter)
 }
 // RampToImage converts a color ramp to an image for debugging purposes
 func RampToImage(height int, ramp []uint8) *image.RGBA {

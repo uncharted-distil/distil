@@ -147,30 +147,26 @@ func (s *Storage) parseConfidenceHistogram(rows pgx.Rows, variable *model.Variab
 }
 
 // FetchExplainValues : fetches fetches explain values
-func (s *Storage) FetchExplainValues(dataset string, storageName string, groupIDColName string, groupIDVal string, resultUUID string, filterParams *api.FilterParams) ([]api.ExplainValuesResponse,error) {
+func (s *Storage) FetchExplainValues(dataset string, storageName string, d3mIndex []int, resultUUID string) ([]api.SolutionExplainValues, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 
-	wheres = append(wheres, fmt.Sprintf("\"%s\" = $1", groupIDColName))
-	params = append(params, groupIDVal)
-	if filterParams != nil{ // check if filterParams exist
-	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, false)
-	}
 	params = append(params, resultUUID)
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d", len(params)))
-	wheres = append(wheres, "result.value != ''")
+	params = append(params, d3mIndex)
+	wheres = append(wheres, fmt.Sprintf("index=Any($%d::int[])", len(params)))
 
 	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 
 	query := fmt.Sprintf(`
-	SELECT "%s", CAST(CASE WHEN result.value = '' THEN 'NaN' ELSE result.value END as double precision),
-	coalesce(result.explain_values, '{}') AS explain_values
-	FROM %s data INNER JOIN %s result ON data."%s" = result.index
+	SELECT "%s", CAST(CASE WHEN value = '' THEN 'NaN' ELSE value END as double precision),
+	coalesce(explain_values, '{}') AS explain_values
+	FROM %s 
 	%s
-	ORDER BY %s`,
-	model.ExplainValues, storageName, s.getResultTable(storageName),
-	model.D3MIndexFieldName, where, model.ExplainValues)
+	LIMIT %d`,
+	model.ExplainValues, s.getResultTable(storageName),
+	where, len(d3mIndex))
 
 	res, err := s.client.Query(query, params...)
 	if err != nil {
@@ -179,10 +175,13 @@ func (s *Storage) FetchExplainValues(dataset string, storageName string, groupID
 	if res != nil {
 		defer res.Close()
 	}
-	result:= make([]api.ExplainValuesResponse, 0)
+	result:= make([]api.SolutionExplainValues, 0)
 	for res.Next() {
-		buffer:=api.ExplainValues{}
-		res.Scan(&buffer.ResultID, &buffer.Index, &buffer.Target, &buffer.Value, &buffer.Confidence, &buffer.ExplainValues);
+		buffer:=api.SolutionExplainValues{}
+		err:=res.Scan(&buffer.LowConfidence, &buffer.HighConfidence, &buffer.GradCAM)
+		if err != nil{
+			return nil,errors.Wrap(err, "failed to scan explaination values from postgres")
+		}
 		result = append(result, buffer)
 	}
 return result, nil
