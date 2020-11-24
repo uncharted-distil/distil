@@ -585,7 +585,6 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 
 	// search for solutions, this wont return until the search finishes or it times out
 	err = client.SearchSolutions(context.Background(), searchContext.searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
-		searchContext.searchSolutionID = solution.SolutionId
 		// create a new status channel for the solution
 		c := newStatusChannel()
 		// add the solution to the request
@@ -594,13 +593,13 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		s.persistSolution(c, solutionStorage, searchContext.searchID, solution.SolutionId, "")
 		s.persistSolutionStatus(c, solutionStorage, searchContext.searchID, solution.SolutionId, SolutionPendingStatus)
 		// dispatch it
-		searchContext.searchResult, err = s.dispatchSolutionSearchPipeline(c, client, solutionStorage, dataStorage, searchContext)
+		searchResult, err := s.dispatchSolutionSearchPipeline(c, client, solutionStorage, dataStorage, solution.SolutionId, searchContext)
 		if err != nil {
 			s.persistSolutionError(c, solutionStorage, searchContext.searchID, solution.SolutionId, err)
 			return
 		}
 
-		err = s.dispatchSolutionExplainPipeline(client, solutionStorage, dataStorage, searchContext)
+		err = s.dispatchSolutionExplainPipeline(client, solutionStorage, dataStorage, solution.SolutionId, searchContext, searchResult)
 		if err != nil {
 			s.persistSolutionError(c, solutionStorage, searchContext.searchID, solution.SolutionId, err)
 			return
@@ -610,7 +609,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		c <- SolutionStatus{
 			RequestID:  searchContext.searchID,
 			SolutionID: solution.SolutionId,
-			ResultID:   searchContext.searchResult.resultID,
+			ResultID:   searchResult.resultID,
 			Progress:   SolutionCompletedStatus,
 			Timestamp:  time.Now(),
 		}

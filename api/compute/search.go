@@ -37,9 +37,7 @@ type searchResult struct {
 }
 
 type pipelineSearchContext struct {
-	searchResult      *searchResult
 	searchID          string
-	searchSolutionID  string
 	dataset           string
 	storageName       string
 	sourceDatasetURI  string
@@ -54,10 +52,10 @@ type pipelineSearchContext struct {
 }
 
 func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client, solutionStorage api.SolutionStorage,
-	dataStorage api.DataStorage, searchContext pipelineSearchContext) error {
+	dataStorage api.DataStorage, searchSolutionID string, searchContext pipelineSearchContext, searchResult *searchResult) error {
 
 	// get solution description
-	desc, err := describeSolution(client, searchContext.searchSolutionID)
+	desc, err := describeSolution(client, searchSolutionID)
 	if err != nil {
 		return err
 	}
@@ -70,15 +68,14 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 	}
 
 	// create a subset of the test dataset for the explain call if sampling
+	explainDatasetURI := searchContext.produceDatasetURI
 	if searchContext.sample {
 		outputFolder := path.Dir(path.Dir(strings.TrimPrefix(searchContext.produceDatasetURI, "file://")))
 		maxRows := getExplainDatasetMaxRows(searchContext.variables)
-		searchContext.explainDatasetURI, err = SampleDataset(searchContext.produceDatasetURI, outputFolder, maxRows, true, searchContext.targetCol, searchContext.groupingCol)
+		explainDatasetURI, err = SampleDataset(searchContext.produceDatasetURI, outputFolder, maxRows, true, searchContext.targetCol, searchContext.groupingCol)
 		if err != nil {
 			return err
 		}
-	} else {
-		searchContext.explainDatasetURI = searchContext.produceDatasetURI
 	}
 
 	exposedOutputs := []string{}
@@ -90,7 +87,7 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 	if s.useParquet {
 		exposeType = append(exposeType, compute.ParquetURIValueType)
 	}
-	produceSolutionRequest := createProduceSolutionRequest(searchContext.explainDatasetURI, searchContext.searchResult.fittedSolutionID, exposedOutputs, exposeType)
+	produceSolutionRequest := createProduceSolutionRequest(explainDatasetURI, searchResult.fittedSolutionID, exposedOutputs, exposeType)
 
 	// generate predictions
 	_, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
@@ -121,9 +118,9 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 			if explain.typ == ExplainableTypeStep || explain.typ == ExplainableTypeConfidence {
 				explainURI := outputKeyURIs[explain.key]
 				log.Infof("explaining feature output from URI '%s'", explainURI)
-				searchContext.explainDatasetURI = compute.BuildSchemaFileURI(searchContext.explainDatasetURI)
-				parsedExplainResult, err := ExplainFeatureOutput(searchContext.explainDatasetURI, explainURI)
-				parsedExplainResult.ResultURI = searchContext.searchResult.resultURI
+				explainDatasetURI = compute.BuildSchemaFileURI(explainDatasetURI)
+				parsedExplainResult, err := ExplainFeatureOutput(explainDatasetURI, explainURI)
+				parsedExplainResult.ResultURI = searchResult.resultURI
 				if err != nil {
 					log.Warnf("failed to fetch output explanation - %v", err)
 					continue
@@ -150,7 +147,7 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 		if explainSolutionOutput != nil {
 			explainSolutionURI := outputKeyURIs[explainSolutionOutput.key]
 			log.Infof("explaining solution output from URI '%s'", explainSolutionURI)
-			solutionWeights, err := s.explainSolutionOutput(explainSolutionURI, searchContext.searchSolutionID, searchContext.variables)
+			solutionWeights, err := s.explainSolutionOutput(explainSolutionURI, searchSolutionID, searchContext.variables)
 			if err != nil {
 				log.Warnf("failed to fetch output explanantion - %v", err)
 			}
@@ -163,14 +160,14 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 		}
 
 		// store the explain URIs
-		err = solutionStorage.PersistSolutionExplainedOutput(searchContext.searchResult.resultID, produceOutputs)
+		err = solutionStorage.PersistSolutionExplainedOutput(searchResult.resultID, produceOutputs)
 		if err != nil {
 			return err
 		}
 
 		// update results to store additional confidence / explain information
 		if produceOutputs[ExplainableTypeConfidence] != nil {
-			err = dataStorage.PersistExplainedResult(searchContext.dataset, searchContext.storageName, searchContext.searchResult.resultURI, explainedResults[ExplainableTypeConfidence])
+			err = dataStorage.PersistExplainedResult(searchContext.dataset, searchContext.storageName, searchResult.resultURI, explainedResults[ExplainableTypeConfidence])
 			if err != nil {
 				return err
 			}
@@ -181,16 +178,16 @@ func (s *SolutionRequest) dispatchSolutionExplainPipeline(client *compute.Client
 }
 
 func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan SolutionStatus, client *compute.Client,
-	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchContext pipelineSearchContext) (*searchResult, error) {
+	solutionStorage api.SolutionStorage, dataStorage api.DataStorage, searchSolutionID string, searchContext pipelineSearchContext) (*searchResult, error) {
 	var fittedSolutionID string
 	var resultURI string
 	var resultID string
 
 	// persist the solution info
-	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchContext.searchSolutionID, SolutionFittingStatus)
+	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchSolutionID, SolutionFittingStatus)
 
 	// fit solution
-	fitRequest := createFitSolutionRequest(searchContext.trainDatasetURI, searchContext.searchSolutionID)
+	fitRequest := createFitSolutionRequest(searchContext.trainDatasetURI, searchSolutionID)
 	fitResults, err := client.GenerateSolutionFit(context.Background(), fitRequest)
 	if err != nil {
 		return nil, err
@@ -204,13 +201,13 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 		}
 	}
 	if fittedSolutionID == "" {
-		return nil, errors.Errorf("no fitted solution ID for solution `%s`", searchContext.searchSolutionID)
+		return nil, errors.Errorf("no fitted solution ID for solution `%s`", searchSolutionID)
 	}
 
-	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchContext.searchSolutionID, SolutionScoringStatus)
+	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchSolutionID, SolutionScoringStatus)
 
 	// score solution
-	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), searchContext.searchSolutionID, searchContext.testDatasetURI, s.Metrics)
+	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), searchSolutionID, searchContext.testDatasetURI, s.Metrics)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +223,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 				} else {
 					metric = score.Metric.Metric
 				}
-				err := solutionStorage.PersistSolutionScore(searchContext.searchSolutionID, metric, score.Value.GetRaw().GetDouble())
+				err := solutionStorage.PersistSolutionScore(searchSolutionID, metric, score.Value.GetRaw().GetDouble())
 				if err != nil {
 					return nil, err
 				}
@@ -235,7 +232,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 	}
 
 	// persist solution running status
-	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchContext.searchSolutionID, SolutionProducingStatus)
+	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchSolutionID, SolutionProducingStatus)
 
 	// generate output keys, adding one extra for explanation output if we expect it to exist
 	outputKeys := []string{defaultExposedOutputKey}
@@ -289,7 +286,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 		// persist results
 		log.Infof("persisting results in URI '%s'", resultURI)
 		s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchContext.searchID,
-			searchContext.dataset, searchContext.storageName, searchContext.searchSolutionID, fittedSolutionID, produceRequestID, resultID, resultURI)
+			searchContext.dataset, searchContext.storageName, searchSolutionID, fittedSolutionID, produceRequestID, resultID, resultURI)
 	}
 	if err != nil {
 		return nil, err
