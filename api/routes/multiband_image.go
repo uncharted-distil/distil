@@ -21,11 +21,9 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util"
-	// "github.com/uncharted-distil/distil-compute/model"
 	"goji.io/v3/pat"
 	"net/http"
 	"path"
-	// "image/color"
 	"fmt"
 	"strconv"
 	"strings"
@@ -42,7 +40,7 @@ func getOptions(requestURI string) string {
 }
 
 // MultiBandImageHandler fetches individual band images and combines them into a single RGB image using the supplied mapping.
-func MultiBandImageHandler(ctor api.MetadataStorageCtor, pCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		imageID := pat.Param(r, "image-id")
@@ -60,11 +58,6 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, pCtor api.DataStorageCt
 			handleError(w, err)
 			return
 		}
-		pStorage, err := pCtor()
-		if err != nil {
-			handleError(w, err)
-			return
-		}
 		res, err := storage.FetchDataset(dataset, false, false)
 		if err != nil {
 			handleError(w, err)
@@ -74,15 +67,6 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, pCtor api.DataStorageCt
 		sourcePath = path.Join(sourcePath, imageFolder)
 		if isThumbnail {
 			imageScale = util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
-		}
-		if bandCombo == util.ImageAttention {
-			storageName, err := pStorage.GetStorageName(dataset)
-			if err != nil {
-				handleError(w, err)
-				return
-			}
-			fmt.Println(storageName)
-			// pStorage.FetchExplainValues(dataset, storageName, )
 		}
 		options := util.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0} // default options for color correction
 		if paramOption != "" {
