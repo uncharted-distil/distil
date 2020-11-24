@@ -221,7 +221,6 @@ func (s *Storage) FetchExplainValues(dataset string, storageName string, d3mInde
 	LIMIT %d`,
 		model.ExplainValues, s.getResultTable(storageName),
 		where, len(d3mIndex))
-	fmt.Println(query)
 	res, err := s.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch explanation values from postgres")

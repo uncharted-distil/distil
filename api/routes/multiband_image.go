@@ -24,7 +24,6 @@ import (
 	"goji.io/v3/pat"
 	"net/http"
 	"path"
-	"fmt"
 	"strconv"
 	"strings"
 )
