@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // NumericalField defines behaviour for the numerical field type.
@@ -139,6 +140,10 @@ func (f *NumericalField) fetchHistogramWithJoins(filterParams *api.FilterParams,
 	extrema, err := f.fetchExtrema()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch variable extrema for summary")
+	}
+	if extrema == nil {
+		log.Warnf("no extrema retrieved for variable summary")
+		return nil, nil
 	}
 
 	// for each returned aggregation, create a histogram aggregation. Bucket
@@ -369,7 +374,8 @@ func (f *NumericalField) parseExtrema(rows pgx.Rows) (*api.Extrema, error) {
 	}
 	// check values exist
 	if minValue == nil || maxValue == nil {
-		return nil, errors.Errorf("no min / max aggregation values found")
+		log.Warnf("no min / max aggregation values found")
+		return nil, nil
 	}
 	// assign attributes
 	return &api.Extrema{

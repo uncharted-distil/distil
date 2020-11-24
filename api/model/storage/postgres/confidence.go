@@ -48,6 +48,10 @@ func (s *Storage) FetchConfidenceSummary(dataset string, storageName string, res
 		if err != nil {
 			return nil, err
 		}
+		// if the field does not exist, then no baseline will be returned
+		if baseline == nil {
+			continue
+		}
 		if !filterParams.Empty() {
 			filtered, err = s.fetchExplainHistogram(dataset, storageName, targetName, explainName, resultURI, filterParams, mode)
 			if err != nil {
@@ -200,11 +204,15 @@ func (s *Storage) parseConfidenceHistogram(rows pgx.Rows, variable *model.Variab
 }
 
 func (s *Storage) listExplainFields() []string {
-	v := reflect.TypeOf(api.SolutionExplainValues{}).Elem()
+	v := reflect.TypeOf(&api.SolutionExplainValues{}).Elem()
 	jsonNames := []string{}
 	for j := 0; j < v.NumField(); j++ {
 		f := v.Field(j)
-		jsonNames = append(jsonNames, f.Tag.Get("json"))
+		if f.Type.Kind() == reflect.Float64 {
+			tag := f.Tag.Get("json")
+			tag = strings.Split(tag, ",")[0]
+			jsonNames = append(jsonNames, tag)
+		}
 	}
 
 	return jsonNames
@@ -212,6 +220,7 @@ func (s *Storage) listExplainFields() []string {
 
 func (s *Storage) explainSubSelect(storageName string, fieldName string) func() string {
 	return func() string {
-		return fmt.Sprintf("(SELECT (explain_values ->> '%s')::double precision, index::text as \"%s\" from %s)", fieldName, model.D3MIndexFieldName, storageName)
+		return fmt.Sprintf("(SELECT (explain_values ->> '%s')::double precision as \"%s\", index as \"%s\" from %s)",
+			fieldName, fieldName, model.D3MIndexFieldName, s.getResultTable(storageName))
 	}
 }
