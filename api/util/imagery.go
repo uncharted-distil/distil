@@ -24,6 +24,7 @@ import (
 	"github.com/uncharted-distil/gdal"
 	log "github.com/unchartedsoftware/plog"
 	"image"
+	"image/color"
 	"image/jpeg"
 	"image/png"
 	"io/ioutil"
@@ -72,6 +73,8 @@ const (
 	// VegetationAnalysis identifies a band mapping that displays an image in in false color for analyzing vegetation.
 	VegetationAnalysis = "vegetation_analysis"
 
+	// ImageAttention identifies what the model is paying attention to in the image
+	ImageAttention = "image_attention"
 	// NDVI identifies a band mapping that displays Normalized Difference Vegetation Index mapped using an RGB ramp.
 	NDVI = "ndvi"
 
@@ -150,9 +153,10 @@ func init() {
 
 // ImageFromCombination takes a base datsaet directory, fileID and a band combination label and
 // returns a composed image.  NOTE: Currently a bit hardcoded for sentinel-2 data.
-func ImageFromCombination(datasetDir string, fileID string, bandCombination BandCombinationID, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
+func ImageFromCombination(datasetDir string, fileID string, bandCombo string, imageScale ImageScale, options ...Options) (*image.RGBA, error) {
 	// attempt to get the folder file type for the supplied dataset dir from the cache, if
 	// not do the look up
+	bandCombination := BandCombinationID(bandCombo)
 	var fileType string
 	cacheValue, ok := folderTypeCache.Get(datasetDir)
 	if !ok {
@@ -220,6 +224,91 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 		return createRGBAFromBands(maxXSize, maxYSize, bandImages, options...), nil
 	}
 	return createRGBAFromRamp(maxXSize, maxYSize, bandImages, transform, ramp), nil
+}
+
+// ScaleConfidenceMatrix scales confidence matrix to desired size using linear scaling
+func ScaleConfidenceMatrix(width int, height int, confidence *[][]float64) [][]float64 {
+	resultMatrix := make([][]float64, height)
+	confWidth := len((*confidence)[0]) - 1
+	adjustedWidth := width - 1 //adjust width to work with arrays
+	// create 2d matrix
+	for i := range resultMatrix {
+		resultMatrix[i] = make([]float64, width)
+	}
+	// first lerp columns, then using the column data lerp the rows
+	columns := getConfidenceColumns(height, confidence)
+	for y := 0; y < len(columns); y++ {
+		for x := 0; x < confWidth; x++ {
+			next := x + 1
+			xStartPos := int(lerp(0.0, float64(adjustedWidth), float64(x)/float64(confWidth)))
+			xEndPos := int(lerp(0.0, float64(adjustedWidth), float64(next)/float64(confWidth)))
+			chunk := getConfidenceChunk(xEndPos-xStartPos, columns[y][x], columns[y][next])
+			for k, v := range chunk {
+				resultMatrix[y][xStartPos+k] = v
+			}
+		}
+	}
+	return resultMatrix
+}
+
+func getConfidenceColumns(height int, confidence *[][]float64) [][]float64 {
+	result := make([][]float64, height)
+	xSize := len((*confidence)[0])
+	arrEnd := len(*confidence) - 1
+	adjustedHeight := height - 1 // adjusts height to work with arrays
+	// init array
+	for i := range result {
+		result[i] = make([]float64, xSize)
+	}
+	for i := 0; i < arrEnd; i++ {
+		for j := 0; j < xSize; j++ {
+			next := i + 1
+			start := (*confidence)[i][j]                                                      // get start confidence value for chunk
+			end := (*confidence)[next][j]                                                     // get end confidence value for chunk
+			yStartPos := int(lerp(0.0, float64(adjustedHeight), float64(i)/float64(arrEnd)))  // lerp indices to get start index
+			yEndPos := int(lerp(0.0, float64(adjustedHeight), float64(next)/float64(arrEnd))) // lerp indices to get end index
+			numElements := yEndPos - yStartPos                                                // calculate number of elements for chunk
+			chunk := getConfidenceChunk(numElements, start, end)
+			for k, v := range chunk {
+				result[yStartPos+k][j] = v
+			}
+		}
+	}
+	return result
+
+}
+func getConfidenceChunk(numElements int, start float64, end float64) []float64 {
+	result := make([]float64, numElements+1) // adds one to buffer because there is overlap in the scaling of the matrix for example
+	// first chunk could be from idx 0-2 (inclusive) the next chunk would start from 2-4 (also inclusive), thus overlap
+	for i := 0; i <= numElements; i++ {
+		result[i] = lerp(start, end, float64(i)/float64(numElements))
+	}
+	return result
+}
+
+// ConfidenceMatrixToImage takes the confidences matrix and a supplied colorScale function and returns an image.
+func ConfidenceMatrixToImage(confidence [][]float64, colorScale func(float64) *color.RGBA, opacity uint8) *image.RGBA {
+	height := len(confidence)
+	width := len(confidence[0])
+	resultImage := image.NewRGBA(image.Rect(0, 0, width, height))
+	outputIdx := 0
+	step := 4
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			color := colorScale(float64(confidence[y][x]))
+			// premultiplied alpha
+			alpha := float64(opacity) / 255.0
+			r := uint8(float64(color.R) * alpha)
+			b := uint8(float64(color.B) * alpha)
+			g := uint8(float64(color.G) * alpha)
+			resultImage.Pix[outputIdx] = r   
+			resultImage.Pix[outputIdx+1] = g 
+			resultImage.Pix[outputIdx+2] = b 
+			resultImage.Pix[outputIdx+3] = opacity
+			outputIdx += step
+		}
+	}
+	return resultImage
 }
 
 // getMaxDimensions return max from array. Return order width, height
@@ -402,6 +491,15 @@ func ImageToJPEG(image *image.RGBA) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// ImageToPNG encodes RGBA image as PNG byte array
+func ImageToPNG(image *image.RGBA) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	if err := png.Encode(buf, image); err != nil {
+		return nil, errors.Wrap(err, "failed so encode png file")
+	}
+	return buf.Bytes(), nil
+}
+
 // SplitMultiBandImage splits a multiband image into separate images, each
 // being for a single band. Bands can be mapped and dropped.
 func SplitMultiBandImage(dataset gdal.Dataset, outputFolder string, bandMapping map[int]string) ([]string, error) {
@@ -437,4 +535,8 @@ func SplitMultiBandImage(dataset gdal.Dataset, outputFolder string, bandMapping 
 func getFilePath(datasetDir string, fileID string, bandLabel string, fileType string) string {
 	fileName := fmt.Sprintf("%s_%s.%s", fileID, strings.ToUpper(bandLabel), fileType)
 	return path.Join(datasetDir, fileName)
+}
+
+func lerp(v0 float64, v1 float64, t float64) float64 {
+	return (1.0-t)*v0 + t*v1
 }

@@ -114,6 +114,7 @@ export const getters = {
   getModelTimeLimit: read(moduleGetters.getModelTimeLimit),
   getModelQuality: read(moduleGetters.getModelQuality),
   getModelMetrics: read(moduleGetters.getModelMetrics),
+  getImageAttention: read(moduleGetters.getImageAttention),
   getRouteTrainTestSplit: read(moduleGetters.getRouteTrainTestSplit),
   isPageSelectTarget: read(moduleGetters.isPageSelectTarget),
   isPageSelectTraining: read(moduleGetters.isPageSelectTraining),

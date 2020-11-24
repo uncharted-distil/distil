@@ -202,6 +202,44 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 	return nil
 }
 
+// FetchExplainValues : fetches fetches explain values
+func (s *Storage) FetchExplainValues(dataset string, storageName string, d3mIndex []int, resultUUID string) ([]api.SolutionExplainValues, error) {
+	// create the filter for the query.
+	wheres := make([]string, 0)
+	params := make([]interface{}, 0)
+	params = append(params, resultUUID)
+	wheres = append(wheres, fmt.Sprintf("s.solution_id = $%d", len(params)))
+	params = append(params, d3mIndex)
+	wheres = append(wheres, fmt.Sprintf("r.index=ANY($%d)", len(params)))
+
+	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+
+	query := fmt.Sprintf(`
+	SELECT %s
+	FROM %s AS r INNER JOIN solution_result AS s ON r.result_id=s.result_uri
+	%s
+	LIMIT %d`,
+		model.ExplainValues, s.getResultTable(storageName),
+		where, len(d3mIndex))
+	res, err := s.client.Query(query, params...)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch explanation values from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+	result := make([]api.SolutionExplainValues, 0)
+	for res.Next() {
+		buffer := api.SolutionExplainValues{GradCAM: [][]float64{{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}}
+		err := res.Scan(&buffer)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to scan explanation values from postgres")
+		}
+		result = append(result, buffer)
+	}
+	return result, nil
+}
+
 // PersistResult stores the solution result to Postgres.
 func (s *Storage) PersistResult(dataset string, storageName string, resultURI string, target string) error {
 	// Read the results file.

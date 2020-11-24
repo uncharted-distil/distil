@@ -16,11 +16,10 @@
 package util
 
 import (
-	"image"
-	"testing"
-
 	"github.com/stretchr/testify/assert"
 	log "github.com/unchartedsoftware/plog"
+	"image"
+	"testing"
 )
 
 func TestImageFromCombination(t *testing.T) {
