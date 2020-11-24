@@ -264,8 +264,8 @@ func main() {
 	registerRoute(mux, "/distil/export-results/:produce-request-id", routes.ExportResultHandler(pgSolutionStorageCtor, pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/distil/model-metrics/:task", routes.ModelMetricsHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, esExportedModelStorageCtor))
-	registerRoute(mux, "/distil/image-attention/:dataset/:resultId/:index", routes.ImageAttentionHandler(pgDataStorageCtor))
-	
+	registerRoute(mux, "/distil/image-attention/:dataset/:resultId/:index", routes.ImageAttentionHandler(pgSolutionStorageCtor, esMetadataStorageCtor))
+
 	// POST
 	registerRoutePost(mux, "/distil/grouping/:dataset", routes.GroupingHandler(pgDataStorageCtor, esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/remove-grouping/:dataset/:variable", routes.RemoveGroupingHandler(pgDataStorageCtor, esMetadataStorageCtor))

@@ -22,9 +22,9 @@ import (
 	"github.com/nfnt/resize"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/gdal"
-	"image/color"
 	log "github.com/unchartedsoftware/plog"
 	"image"
+	"image/color"
 	"image/jpeg"
 	"image/png"
 	"io/ioutil"
@@ -285,6 +285,7 @@ func getConfidenceChunk(numElements int, start float64, end float64) []float64 {
 	}
 	return result
 }
+
 // ConfidenceMatrixToImage takes the confidences matrix and a supplied colorScale function and returns an image.
 func ConfidenceMatrixToImage(confidence [][]float64, colorScale func(float64) *color.RGBA, opacity uint8) *image.RGBA {
 	height := len(confidence)
@@ -523,5 +524,5 @@ func getFilePath(datasetDir string, fileID string, bandLabel string, fileType st
 }
 
 func lerp(v0 float64, v1 float64, t float64) float64 {
-	return (1.0 - t) * v0 + t * v1;
-  }
+	return (1.0-t)*v0 + t*v1
+}

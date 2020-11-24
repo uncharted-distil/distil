@@ -26,9 +26,9 @@ import (
 	"net/http"
 	"path"
 	// "image/color"
+	"fmt"
 	"strconv"
 	"strings"
-	"fmt"
 )
 
 const (
@@ -61,7 +61,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, pCtor api.DataStorageCt
 			return
 		}
 		pStorage, err := pCtor()
-		if err != nil{
+		if err != nil {
 			handleError(w, err)
 			return
 		}
@@ -76,7 +76,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, pCtor api.DataStorageCt
 			imageScale = util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 		}
 		if bandCombo == util.ImageAttention {
-			storageName, err:=pStorage.GetStorageName(dataset)
+			storageName, err := pStorage.GetStorageName(dataset)
 			if err != nil {
 				handleError(w, err)
 				return

@@ -492,7 +492,10 @@ export const getters = {
     }
     return $enum(DataMode).asValueOrDefault(mode, DataMode.Default);
   },
-
+  getImageAttention(state: Route, getters: any): boolean {
+    const imageAttention = state.query.imageAttention === "true";
+    return imageAttention;
+  },
   // Returns a map of (variable ID, summary mode) tuples that indicated the mode args that should be
   // applied to a given variable when fetched from the server.
   getDecodedVarModes(state: Route, getters: any): Map<string, SummaryMode> {

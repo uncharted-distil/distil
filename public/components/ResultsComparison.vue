@@ -14,7 +14,11 @@
     >
       <p class="font-weight-bold" :class="{ 'mr-auto': !hasWeight }">Samples</p>
       <legend-weight v-if="hasWeight" class="ml-5 mr-auto" />
-      <layer-selection v-if="isMultiBandImage" class="layer-button" />
+      <layer-selection
+        :hasImageAttention="true"
+        v-if="isMultiBandImage"
+        class="layer-button"
+      />
     </view-type-toggle>
 
     <div v-if="hasHighlights && !isGeoView" class="flex-grow-1">

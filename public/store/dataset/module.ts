@@ -143,6 +143,7 @@ export const actions = {
   fetchFiles: dispatch(moduleActions.fetchFiles),
   fetchImage: dispatch(moduleActions.fetchImage),
   fetchMultiBandImage: dispatch(moduleActions.fetchMultiBandImage),
+  fetchImageAttention: dispatch(moduleActions.fetchImageAttention),
   fetchTimeseries: dispatch(moduleActions.fetchTimeseries),
   fetchGraph: dispatch(moduleActions.fetchGraph),
   fetchFile: dispatch(moduleActions.fetchFile),

@@ -51,6 +51,7 @@ export interface RouteArgs {
   singleSolution?: string;
   predictionsDataset?: string;
   bandCombinationId?: string;
+  imageAttention?: boolean;
   modelTimeLimit?: number;
   modelLimit?: number;
   modelQuality?: string;

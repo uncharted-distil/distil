@@ -108,7 +108,15 @@ export default Vue.extend({
         this.getImage();
       }
     },
-
+    hasImageAttention() {
+      if (this.hasImageAttention && !this.imageAttentionIsLoaded) {
+        datasetActions.fetchImageAttention(this.$store, {
+          dataset: this.dataset,
+          resultId: this.solutionId,
+          d3mIndex: this.row.d3mIndex,
+        });
+      }
+    },
     // Refresh image on band change
     band(newBand: string, oldBand: string) {
       if (newBand !== oldBand) {
@@ -168,6 +176,12 @@ export default Vue.extend({
         this.stopSpinner
       );
     },
+    imageAttentionIsLoaded(): boolean {
+      return (
+        this.hasImageAttention &&
+        !!this.files[this.solutionId + this.row.d3mIndex]
+      );
+    },
     image(): HTMLImageElement {
       return (
         this.files[this.imageParamUrl] ?? this.files[this.imageParamId] ?? null
@@ -200,6 +214,12 @@ export default Vue.extend({
     },
     filterSupplied(): boolean {
       return this.filterUrl !== null;
+    },
+    hasImageAttention(): boolean {
+      return routeGetters.getImageAttention(this.$store);
+    },
+    solutionId(): string {
+      return routeGetters.getRouteSolutionId(this.$store);
     },
   },
 

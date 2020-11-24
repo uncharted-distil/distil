@@ -1148,7 +1148,22 @@ export const actions = {
       console.error(error);
     }
   },
-
+  async fetchImageAttention(
+    context: DatasetContext,
+    args: { dataset: string; resultId: string; d3mIndex: number }
+  ) {
+    try {
+      const response = await loadImage(
+        `distil/image-attention/${args.dataset}/${args.resultId}/${args.d3mIndex}`
+      );
+      mutations.updateFile(context, {
+        url: args.resultId + args.d3mIndex,
+        file: response,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  },
   async fetchGraph(
     context: DatasetContext,
     args: { dataset: string; url: string }
