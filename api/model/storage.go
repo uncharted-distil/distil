@@ -22,7 +22,6 @@ import (
 
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
-	// api "github.com/uncharted-distil/distil/api/model"
 )
 
 // NullableFloat64 is float64 with custom JSON marshalling to allow for NaN values
