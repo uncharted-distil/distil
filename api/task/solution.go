@@ -60,6 +60,12 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 		}
 	}
 
+	types := make(map[string]string)
+
+	for _, vt := range dataset.Variables {
+		types[vt.Name] = vt.Type
+	}
+
 	vars := make([]string, len(request.Features)-1)
 	varDetails := make([]*api.SolutionVariable, len(request.Features)-1)
 	target := ""
@@ -72,7 +78,7 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 			varDetails[c] = &api.SolutionVariable{
 				Name: v.FeatureName,
 				Rank: ranks[v.FeatureName],
-				Type: v.FeatureType,
+				Type: types[v.FeatureName],
 			}
 			c = c + 1
 		}
