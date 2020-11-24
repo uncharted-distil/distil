@@ -324,8 +324,15 @@ func SplitDataset(schemaFile string, splitter datasetSplitter) (string, string, 
 	trainOutput := path.Join(trainFolder, compute.D3MDataFolder, outputFilename)
 	testOutput := path.Join(testFolder, compute.D3MDataFolder, outputFilename)
 
-	// output the train and test data
+	// update the referenced data resource paths
 	mainDR := meta.GetMainDataResource()
+	for _, dr := range meta.DataResources {
+		if dr != mainDR {
+			dr.ResPath = model.GetResourcePath(schemaFile, dr)
+		}
+	}
+
+	// output the train and test data
 	outputStore := serialization.GetStorage(mainDR.ResPath)
 	mainDR.ResPath = trainOutput
 	outputTrain := &api.RawDataset{
