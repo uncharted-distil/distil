@@ -632,30 +632,9 @@ export default Vue.extend({
       });
 
       const task = taskResponse.data.task.join(",");
-      const varModesMap = routeGetters.getDecodedVarModes(this.$store);
-
-      if (task.includes(TaskTypes.REMOTE_SENSING)) {
-        const available = routeGetters.getAvailableVariables(this.$store);
-
-        training.forEach((v) => {
-          varModesMap.set(v, SummaryMode.MultiBandImage);
-        });
-
-        available.forEach((v) => {
-          varModesMap.set(v.colName, SummaryMode.MultiBandImage);
-        });
-
-        varModesMap.set(
-          routeGetters.getRouteTargetVariable(this.$store),
-          SummaryMode.MultiBandImage
-        );
-      }
-      const varModesStr = varModesToString(varModesMap);
-
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         training: training.join(","),
         task: task,
-        varModes: varModesStr,
       });
 
       this.$router.push(entry).catch((err) => console.warn(err));

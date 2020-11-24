@@ -39,8 +39,13 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { overlayRouteEntry } from "../util/routes";
-import { Variable, VariableSummary } from "../store/dataset/index";
+import { overlayRouteEntry, varModesToString } from "../util/routes";
+import {
+  SummaryMode,
+  TaskTypes,
+  Variable,
+  VariableSummary,
+} from "../store/dataset/index";
 import {
   actions as datasetActions,
   getters as datasetGetters,
@@ -165,11 +170,29 @@ export default Vue.extend({
             targetName,
             variableNames: training,
           });
+          const task = taskResponse.data.task.join(",");
+
+          // Update var modes
+          const varModesMap = routeGetters.getDecodedVarModes(this.$store);
+          if (task.includes(TaskTypes.REMOTE_SENSING)) {
+            const available = routeGetters.getAvailableVariables(this.$store);
+            training.forEach((v) => {
+              varModesMap.set(v, SummaryMode.MultiBandImage);
+            });
+            available.forEach((v) => {
+              varModesMap.set(v.colName, SummaryMode.MultiBandImage);
+            });
+            varModesMap.set(
+              routeGetters.getRouteTargetVariable(this.$store),
+              SummaryMode.MultiBandImage
+            );
+          }
 
           // update route with training data
           const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
             training: training.join(","),
-            task: taskResponse.data.task.join(","),
+            task: task,
+            varModes: varModesToString(varModesMap),
           });
 
           if (this.isTimeseries && isCategorical) {

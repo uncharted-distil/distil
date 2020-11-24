@@ -112,8 +112,9 @@ func (s *Storage) getCountCol(dataset string, mode api.SummaryMode) (string, err
 		}
 
 		for _, v := range vars {
-			if v.IsGrouping() {
+			if v.IsGrouping() && v.Grouping.GetType() == model.MultiBandImageType {
 				countCol = v.Grouping.GetIDCol()
+				break
 			}
 		}
 

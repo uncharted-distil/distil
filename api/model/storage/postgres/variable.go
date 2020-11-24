@@ -219,8 +219,9 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 				return nil, err
 			}
 			for _, v := range vars {
-				if v.IsGrouping() {
+				if v.IsGrouping() && (mode != api.MultiBandImageMode || v.Grouping.GetType() == model.MultiBandImageType) {
 					countCol = v.Grouping.GetIDCol()
+					break
 				}
 			}
 		}
