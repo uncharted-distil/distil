@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	log "github.com/unchartedsoftware/plog"
 	"image"
-	"reflect"
 	"testing"
 )
 
