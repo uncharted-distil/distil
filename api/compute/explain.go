@@ -30,6 +30,7 @@ import (
 	log "github.com/unchartedsoftware/plog"
 
 	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
 )
 
@@ -228,8 +229,7 @@ func ExplainFeatureOutput(resultURI string, outputURI string) (*api.SolutionExpl
 	return parsed, nil
 }
 
-func (s *SolutionRequest) explainSolutionOutput(resultURI string, outputURI string,
-	solutionID string, variables []*model.Variable) ([]*api.SolutionWeight, error) {
+func (s *SolutionRequest) explainSolutionOutput(outputURI string, solutionID string, variables []*model.Variable) ([]*api.SolutionWeight, error) {
 
 	// parse the output for the explanations
 	parsed, err := s.parseSolutionWeight(solutionID, outputURI)
@@ -454,10 +454,11 @@ func readDatasetData(uri string) ([][]string, error) {
 		}
 		mainDR := meta.GetMainDataResource()
 
-		dataPath = path.Join(path.Dir(uriRaw), mainDR.ResPath)
+		dataPath = model.GetResourcePathFromFolder(path.Dir(dataPath), mainDR)
 	}
 
-	res, err := util.ReadCSVFile(dataPath, false)
+	storage := serialization.GetStorage(dataPath)
+	res, err := storage.ReadData(dataPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read raw input data")
 	}
@@ -472,4 +473,9 @@ func extractOutputKeys(outputs map[string]*pipelineOutput) []string {
 	}
 
 	return keys
+}
+
+func getExplainDatasetMaxRows(variables []*model.Variable) int {
+	// TODO: we probably want a better way to get this value
+	return 15000 / len(variables)
 }

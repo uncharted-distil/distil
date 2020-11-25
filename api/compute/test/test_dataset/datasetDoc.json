@@ -1,45 +1,40 @@
 {
-    "about": {
-        "datasetID": "test_data",
-        "datasetName": "test_data",
-        "license": "CC-BY license",
-        "approximateSize": "",
-        "datasetSchemaVersion": "3.0",
-        "redacted": true,
-        "datasetVersion": "1.0"
-    },
-    "dataResources": [{
-        "resID": "learningData",
-        "resPath": "tables/learningData.csv",
-        "resType": "table",
-        "resFormat": [
-            "text/csv"
-        ],
-        "isCollection": false,
-        "columns": [{
-                "colIndex": 0,
-                "colName": "d3mIndex",
-                "colType": "integer",
-                "role": [
-                    "index"
-                ]
-            },
-            {
-                "colIndex": 1,
-                "colName": "alpha",
-                "colType": "real",
-                "role": [
-                    "attribute"
-                ]
-            },
-            {
-                "colIndex": 2,
-                "colName": "bravo",
-                "colType": "categorical",
-                "role": [
-                    "attribute"
-                ]
-            }
-        ]
-    }]
+  "about": {
+    "datasetID": "test_data",
+    "datasetName": "test_data",
+    "license": "CC-BY license",
+    "approximateSize": "",
+    "datasetSchemaVersion": "3.0",
+    "redacted": true,
+    "datasetVersion": "1.0"
+  },
+  "dataResources": [
+    {
+      "resID": "learningData",
+      "resPath": "tables/learningData.csv",
+      "resType": "table",
+      "resFormat": ["text/csv"],
+      "isCollection": false,
+      "columns": [
+        {
+          "colIndex": 0,
+          "colName": "d3mIndex",
+          "colType": "integer",
+          "role": ["index"]
+        },
+        {
+          "colIndex": 1,
+          "colName": "alpha",
+          "colType": "real",
+          "role": ["attribute"]
+        },
+        {
+          "colIndex": 2,
+          "colName": "bravo",
+          "colType": "categorical",
+          "role": ["attribute"]
+        }
+      ]
+    }
+  ]
 }
