@@ -25,6 +25,8 @@ import (
 	"sync"
 	"time"
 
+	encjson "encoding/json"
+
 	uuid "github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
@@ -179,7 +181,7 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 }
 
 // ExtractDatasetFromRawRequest extracts the dataset name from the raw message.
-func ExtractDatasetFromRawRequest(data []byte) (string, error) {
+func ExtractDatasetFromRawRequest(data encjson.RawMessage) (string, error) {
 	j, err := json.Unmarshal(data)
 	if err != nil {
 		return "", err

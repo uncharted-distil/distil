@@ -22,10 +22,10 @@ import (
 
 // Message represents a websocket message.
 type Message struct {
-	Type      string    `json:"type"`
-	ID        string    `json:"id"`
-	Timestamp time.Time `json:"-"`
-	Raw       []byte    `json:"-"`
+	Type      string          `json:"type"`
+	ID        string          `json:"id"`
+	Timestamp time.Time       `json:"-"`
+	Body      json.RawMessage `json:"body"`
 }
 
 // NewMessage parses and instantiates a new message struct.
@@ -36,6 +36,5 @@ func NewMessage(bytes []byte) (*Message, error) {
 		return nil, err
 	}
 	msg.Timestamp = time.Now()
-	msg.Raw = bytes
 	return msg, nil
 }

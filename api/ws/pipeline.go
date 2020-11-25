@@ -114,7 +114,7 @@ func handleMessage(conn *Connection, client *compute.Client, metadataCtor apiMod
 
 func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
 	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor, msg *Message) {
-	dataset, err := api.ExtractDatasetFromRawRequest(msg.Raw)
+	dataset, err := api.ExtractDatasetFromRawRequest(msg.Body)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to pull dataset from request"))
 		return
@@ -148,7 +148,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	}
 
 	// unmarshal request
-	request, err := api.NewSolutionRequest(vars, msg.Raw)
+	request, err := api.NewSolutionRequest(vars, msg.Body)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to unmarshal create solutions request"))
 		return
@@ -218,7 +218,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 
 func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message) {
 	// unmarshal request
-	request, err := api.NewStopSolutionSearchRequest(msg.Raw)
+	request, err := api.NewStopSolutionSearchRequest(msg.Body)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to unmarshal stop solutions request"))
 		return
@@ -302,7 +302,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	}
 
 	// unmarshal request
-	request, err := api.NewPredictRequest(msg.Raw)
+	request, err := api.NewPredictRequest(msg.Body)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to unmarshal create solutions request"))
 		return

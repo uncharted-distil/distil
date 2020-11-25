@@ -40,6 +40,13 @@ const STOP_PREDICTIONS = "STOP_PREDICTIONS";
 // Message definitions for the websocket.  These are only for communication with the
 // server while the requests are running, and are not stored in the index.
 
+interface StatusMessage {
+  progress: string;
+  error: string;
+  timestamp: number;
+  complete: boolean;
+}
+
 // Search request message used in web socket context
 interface SolutionRequestMsg {
   dataset: string;
@@ -53,13 +60,10 @@ interface SolutionRequestMsg {
 }
 
 // Solution status message used in web socket context
-interface SolutionStatusMsg {
+interface SolutionStatusMsg extends StatusMessage {
   requestId: string;
   solutionId?: string;
   resultId?: string;
-  progress: string;
-  error: string;
-  timestamp: number;
 }
 
 interface PredictRequestMsg {
@@ -73,13 +77,10 @@ interface PredictRequestMsg {
 }
 
 // Prediction status.
-interface PredictStatusMsg {
+interface PredictStatusMsg extends StatusMessage {
   solutionId: string;
   resultId: string;
   produceRequestId: string;
-  progress: string;
-  error: string;
-  timestamp: number;
 }
 
 interface QueryRequestMsg {
@@ -504,7 +505,7 @@ export const actions = {
 
       let receivedFirstSolution = false;
 
-      const stream = conn.stream((response) => {
+      const stream = conn.stream((response: SolutionStatusMsg) => {
         // log any error
         if (response.error) {
           console.error(response.error);
@@ -536,8 +537,7 @@ export const actions = {
       console.log("Sending create solutions request:", request);
 
       // send create solutions request
-      stream.send({
-        type: CREATE_SOLUTIONS,
+      stream.send(CREATE_SOLUTIONS, {
         dataset: request.dataset,
         target: request.target,
         metrics: request.metrics,
@@ -550,14 +550,13 @@ export const actions = {
     });
   },
 
-  stopSolutionRequest(context: any, args: { requestId: string }) {
+  stopSolutionRequest(context: RequestContext, args: { requestId: string }) {
     const stream = getStreamById(args.requestId);
     if (!stream) {
       console.warn(`No request stream found for requestId: ${args.requestId}`);
       return;
     }
-    stream.send({
-      type: STOP_SOLUTIONS,
+    stream.send(STOP_SOLUTIONS, {
       requestId: args.requestId,
     });
   },
@@ -567,9 +566,9 @@ export const actions = {
   createPredictRequest(context: RequestContext, request: PredictRequestMsg) {
     let receivedUpdate = false;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const conn = getWebSocketConnection();
-      const stream = conn.stream((response) => {
+      const stream = conn.stream((response: PredictStatusMsg) => {
         // log any error
         if (response.error) {
           console.error(response.error);
@@ -603,8 +602,7 @@ export const actions = {
       console.log("Sending predict request:", request);
 
       // send create solutions request
-      stream.send({
-        type: CREATE_PREDICTIONS,
+      stream.send(CREATE_PREDICTIONS, {
         fittedSolutionId: request.fittedSolutionId,
         datasetId: request.datasetId,
         datasetPath: request.datasetPath,
@@ -622,8 +620,7 @@ export const actions = {
       console.warn(`No request stream found for requestId: ${args.requestId}`);
       return;
     }
-    stream.send({
-      type: STOP_PREDICTIONS,
+    stream.send(STOP_PREDICTIONS, {
       requestId: args.requestId,
     });
   },
