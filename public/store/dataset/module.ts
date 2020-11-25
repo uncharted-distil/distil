@@ -108,6 +108,7 @@ export const actions = {
   setGrouping: dispatch(moduleActions.setGrouping),
   removeGrouping: dispatch(moduleActions.removeGrouping),
   updateGrouping: dispatch(moduleActions.updateGrouping),
+  importDataFile: dispatch(moduleActions.importDataFile),
   uploadDataFile: dispatch(moduleActions.uploadDataFile),
   // variables
   fetchVariables: dispatch(moduleActions.fetchVariables),

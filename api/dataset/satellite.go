@@ -111,14 +111,8 @@ func (b *BoundingBox) pointToString(point *Point, separator string) string {
 }
 
 // NewSatelliteDataset creates a new satelitte dataset from geotiff files
-func NewSatelliteDataset(dataset string, imageType string, rawData []byte) (*Satellite, error) {
-	// store and expand raw data
-	zipPath, err := StoreZipDataset(dataset, rawData)
-	if err != nil {
-		return nil, err
-	}
-
-	expandedInfo, err := ExpandZipDataset(dataset, zipPath)
+func NewSatelliteDataset(dataset string, imageType string, rawFilePath string) (*Satellite, error) {
+	expandedInfo, err := ExpandZipDataset(rawFilePath, dataset)
 	if err != nil {
 		return nil, err
 	}

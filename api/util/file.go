@@ -77,7 +77,7 @@ func WriteFormFileWithDirs(filename string, formFile multipart.File, perm os.Fil
 func Unzip(zipFile string, destination string) error {
 	r, err := zip.OpenReader(zipFile)
 	if err != nil {
-		return errors.Wrap(err, "unable to open archive")
+		return errors.Wrapf(err, "unable to open archive %s", zipFile)
 	}
 	defer func() {
 		if err := r.Close(); err != nil {

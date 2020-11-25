@@ -344,10 +344,9 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 }
 
 // GeneratePredictions produces predictions using the specified.
-func GeneratePredictions(datasetURI string, explainedSolutionID string,
-	fittedSolutionID string, client *compute.Client) (*PredictionResult, error) {
+func GeneratePredictions(datasetURI string, solutionID string, fittedSolutionID string, client *compute.Client) (*PredictionResult, error) {
 	// check if the solution can be explained
-	desc, err := client.GetSolutionDescription(context.Background(), explainedSolutionID)
+	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
 	if err != nil {
 		return nil, err
 	}

@@ -47,6 +47,7 @@ import {
 } from "../store/requests/module";
 import { actions as appActions } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
+import { actions as datasetActions } from "../store/dataset/module";
 import {
   getBase64,
   generateUniqueDatasetName,
@@ -112,21 +113,30 @@ export default Vue.extend({
       });
 
       // Apply model to a new prediction set.  The selected file's contents will be uploaded and
-      // fed into a fitted solution.  The prediction request goes through a websocket similar to
+      // ingeested.  The request then applies to the uploaded file.
       try {
-        const dataset = await getBase64(this.file);
+        // upload and ingest the dataset
+        const uploadResponse = await datasetActions.uploadDataFile(
+          this.$store,
+          {
+            file: this.file,
+            datasetID: deconflictedName,
+          }
+        );
+
         const requestMsg = {
           datasetId: deconflictedName,
-          dataset: dataset,
           fittedSolutionId: this.fittedSolutionId,
           target: this.target,
           targetType: this.targetType,
+          datasetPath: uploadResponse.data.location,
         };
-        const response = await requestActions.createPredictRequest(
+        const predictResponse = await requestActions.createPredictRequest(
           this.$store,
           requestMsg
         );
-        this.uploadFinish(null, response);
+
+        this.uploadFinish(null, predictResponse);
       } catch (err) {
         this.uploadFinish(err, null);
       }
