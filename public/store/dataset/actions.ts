@@ -1150,11 +1150,19 @@ export const actions = {
   },
   async fetchImageAttention(
     context: DatasetContext,
-    args: { dataset: string; resultId: string; d3mIndex: number }
+    args: {
+      dataset: string;
+      resultId: string;
+      d3mIndex: number;
+      opacity?: number;
+    }
   ) {
     try {
+      const colorScale = routeGetters.getColorScale(store);
       const response = await loadImage(
-        `distil/image-attention/${args.dataset}/${args.resultId}/${args.d3mIndex}`
+        `distil/image-attention/${args.dataset}/${args.resultId}/${
+          args.d3mIndex
+        }/${args.opacity ?? 100}/${colorScale}`
       );
       mutations.updateFile(context, {
         url: args.resultId + args.d3mIndex,

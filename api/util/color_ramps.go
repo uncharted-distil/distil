@@ -54,8 +54,14 @@ var (
 	// BlueYellowBrownRamp defines an evenly spaced ramp suitable for visualizing moisture
 	BlueYellowBrownRamp = []uint8{}
 
-	// ImageAttentionFilter is the ramp for generating imageAttention filters
-	ImageAttentionFilter = []RampEntry{}
+	// ViridisColorRamp color scale
+	ViridisColorRamp = []RampEntry{}
+	// MagmaColorRamp color scale
+	MagmaColorRamp = []RampEntry{}
+	// PlasmaColorRamp color scale
+	PlasmaColorRamp = []RampEntry{}
+	// InfernoColorRamp color scale
+	InfernoColorRamp = []RampEntry{}
 )
 
 func init() {
@@ -75,10 +81,25 @@ func init() {
 		{0.666, color.RGBA{42, 198, 223, 255}},
 		{1.0, color.RGBA{5, 29, 148, 255}},
 	}, 255, Lab)
-	ImageAttentionFilter = []RampEntry{
+	ViridisColorRamp = []RampEntry{
 		{0.0, color.RGBA{253, 231, 37, 255}},
 		{0.5, color.RGBA{31, 150, 139, 255}},
 		{1.0, color.RGBA{68, 1, 84, 255}}}
+	MagmaColorRamp = []RampEntry{
+		{0.0, color.RGBA{252, 253, 202, 255}},
+		{0.5, color.RGBA{180, 54, 122, 255}},
+		{1.0, color.RGBA{0, 0, 3, 255}},
+	}
+	PlasmaColorRamp = []RampEntry{
+		{0.0, color.RGBA{240, 249, 32, 255}},
+		{0.5, color.RGBA{204, 72, 120, 255}},
+		{1.0, color.RGBA{13, 22, 135, 255}},
+	}
+	InfernoColorRamp = []RampEntry{
+		{0.0, color.RGBA{252, 253, 164, 255}},
+		{0.5, color.RGBA{189, 56, 83, 255}},
+		{1.0, color.RGBA{0, 0, 3, 255}},
+	}
 }
 
 // GenerateRamp creaets a a color ramp stored as a flat array of byte values.
@@ -179,7 +200,38 @@ func GetColor(normalizedVal float64, ramp []RampEntry) *color.RGBA {
 
 // ViridisColorScale returns a functions used to return a color from the viridis color scale given a normalized value
 func ViridisColorScale(normalizedVal float64) *color.RGBA {
-	return GetColor(normalizedVal, ImageAttentionFilter)
+	return GetColor(normalizedVal, ViridisColorRamp)
+}
+
+// MagmaColorScale returns a functions used to return a color from the magma color scale given a normalized value
+func MagmaColorScale(normalizedVal float64) *color.RGBA {
+	return GetColor(normalizedVal, MagmaColorRamp)
+}
+
+// PlasmaColorScale returns a functions used to return a color from the plasma color scale given a normalized value
+func PlasmaColorScale(normalizedVal float64) *color.RGBA {
+	return GetColor(normalizedVal, PlasmaColorRamp)
+}
+
+// InfernoColorScale returns a functions used to return a color from the inferno color scale given a normalized value
+func InfernoColorScale(normalizedVal float64) *color.RGBA {
+	return GetColor(normalizedVal, InfernoColorRamp)
+}
+
+// GetColorScale returns the color scale function based the supplied name. if name is incorrect defaults to viridis function
+func GetColorScale(colorScaleName string) func(float64) *color.RGBA {
+	switch colorScaleName {
+	case "viridis":
+		return ViridisColorScale
+	case "magma":
+		return MagmaColorScale
+	case "plasma":
+		return PlasmaColorScale
+	case "inferno":
+		return InfernoColorScale
+	default:
+		return ViridisColorScale
+	}
 }
 
 // RampToImage converts a color ramp to an image for debugging purposes

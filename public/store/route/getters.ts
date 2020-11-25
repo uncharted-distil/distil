@@ -36,7 +36,7 @@ import { buildLookup } from "../../util/lookup";
 import { Route } from "vue-router";
 import _ from "lodash";
 import { $enum } from "ts-enum-util";
-import { minimumRouteKey } from "../../util/data";
+import { ColorScaleNames, minimumRouteKey } from "../../util/data";
 import { GEOBOUNDS_TYPE, GEOCOORDINATE_TYPE } from "../../util/types";
 
 export const getters = {
@@ -454,7 +454,10 @@ export const getters = {
       return solution.solutionId === solutionId;
     });
   },
-
+  getColorScale(state: Route, getters: any): ColorScaleNames {
+    const colorScale = state.query.colorScale as ColorScaleNames;
+    return colorScale ?? ColorScaleNames.viridis; // default to viridis
+  },
   getGeoCenter(state: Route, getters: any): number[] {
     const geo = state.query.geo as string;
     if (!geo) {

@@ -10,12 +10,22 @@ import (
 	"strconv"
 )
 
+const (
+	//DefaultOpacity used for the image attention filters
+	DefaultOpacity = 100
+)
+
 // ImageAttentionHandler provides an image filter for the supplied index
 func ImageAttentionHandler(solutionCtor api.SolutionStorageCtor, metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		d3mIndex := pat.Param(r, "index")
-		resultID, err := url.PathUnescape(pat.Param(r, "resultId"))
+		colorScale := pat.Param(r, "color-scale")
+		opacity, err := strconv.Atoi(pat.Param(r, "opacity"))
+		if err != nil {
+			opacity = DefaultOpacity // default
+		}
+		resultID, err := url.PathUnescape(pat.Param(r, "result-id"))
 		if err != nil {
 			handleError(w, err)
 			return
@@ -50,7 +60,7 @@ func ImageAttentionHandler(solutionCtor api.SolutionStorageCtor, metaCtor api.Me
 		}
 		for _, v := range data {
 			scaledMatrix := util.ScaleConfidenceMatrix(ThumbnailDimensions, ThumbnailDimensions, &v.GradCAM)
-			filter := util.ConfidenceMatrixToImage(scaledMatrix, util.ViridisColorScale, 100)
+			filter := util.ConfidenceMatrixToImage(scaledMatrix, util.GetColorScale(colorScale), uint8(opacity))
 			imageBytes, err := util.ImageToPNG(filter)
 			if err != nil {
 				handleError(w, err)

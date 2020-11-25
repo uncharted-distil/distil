@@ -1,0 +1,68 @@
+<template>
+  <b-dropdown variant="outline-secondary" no-flip>
+    <template v-slot:button-content>
+      <div class="selected-bar" :style="selectedColorScale.gradient" />
+    </template>
+    <b-dropdown-item
+      v-for="item in colorScales"
+      :key="item.name"
+      @click="onScaleClick(item.name)"
+    >
+      {{ item.name[0].toUpperCase() + item.name.slice(1) }}
+      <div class="w-100 bar" :style="item.gradient" />
+    </b-dropdown-item>
+  </b-dropdown>
+</template>
+<script lang="ts">
+import Vue from "vue";
+import { ColorScaleNames, COLOR_SCALES } from "../util/data";
+import { getters as routeGetters } from "../store/route/module";
+import { overlayRouteEntry } from "../util/routes";
+
+interface ColorScaleItem {
+  name: string; // name of color scale
+  gradient: string; // css linear-gradient string
+}
+
+export default Vue.extend({
+  name: "color-scale-drop-down",
+  computed: {
+    colorScales(): ColorScaleItem[] {
+      const result = [];
+      for (const [key] of COLOR_SCALES) {
+        const name = key;
+        const gradient = this.getGradient(key);
+        result.push({ name, gradient });
+      }
+      return result;
+    },
+    selectedColorScale(): ColorScaleItem {
+      const selected = routeGetters.getColorScale(this.$store);
+      return { name: selected, gradient: this.getGradient(selected) };
+    },
+  },
+  methods: {
+    getGradient(colorScaleName: ColorScaleNames): string {
+      const vals = [0.0, 0.5, 1.0]; // array to get the values to generate linear gradient
+      const colors = vals.map(COLOR_SCALES.get(colorScaleName));
+      return `background: linear-gradient(to right, ${colors.join(", ")});`;
+    },
+    onScaleClick(colorScaleName: ColorScaleNames) {
+      const route = routeGetters.getRoute(this.$store);
+      const entry = overlayRouteEntry(route, { colorScale: colorScaleName });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
+  },
+});
+</script>
+
+<style scoped>
+.bar {
+  height: 30px;
+}
+.selected-bar {
+  width: 100px;
+  height: 18px;
+  display: inline-block;
+}
+</style>
