@@ -37,7 +37,9 @@ import {
   formatValue,
   hasComputedVarPrefix,
   IMAGE_TYPE,
+  isGeoLocatedType,
   isIntegerType,
+  isImageType,
   isLatitudeGroupType,
   isListType,
   isLongitudeGroupType,
@@ -882,39 +884,6 @@ export function getListFields(
   }));
 }
 
-export function hasTimeseriesFeatures(variables: Variable[]): boolean {
-  const valueColumns = variables.filter((v) => isValueGroupType(v.colType));
-  const timeColumns = variables.filter((v) => isTimeGroupType(v.colType));
-
-  if (
-    (valueColumns.length === 1 &&
-      timeColumns.length === 1 &&
-      valueColumns[0].colName !== timeColumns[0].colName) ||
-    (valueColumns.length > 1 && timeColumns.length > 0) ||
-    (valueColumns.length > 0 && timeColumns.length > 1)
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
-export function hasGeoordinateFeatures(variables: Variable[]): boolean {
-  const latColumns = variables.filter((v) => isLatitudeGroupType(v.colType));
-  const lonColumns = variables.filter((v) => isLongitudeGroupType(v.colType));
-  if (
-    (latColumns.length === 1 &&
-      lonColumns.length === 1 &&
-      latColumns[0].colName !== lonColumns[0].colName) ||
-    (latColumns.length > 1 && lonColumns.length > 0) ||
-    (latColumns.length > 0 && lonColumns.length > 1)
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
 export function shouldRunMi(dataset: string): boolean {
   // check if data exists
   if (datasetGetters.getVariableRankings(store)[dataset]) {
@@ -937,4 +906,50 @@ export function shouldRunMi(dataset: string): boolean {
   }
   // default to true if all the above does not return
   return true;
+}
+
+export function hasTimeseriesFeatures(variables: Variable[]): boolean {
+  const valueColumns = variables.filter((v) => isValueGroupType(v.colType));
+  const timeColumns = variables.filter((v) => isTimeGroupType(v.colType));
+
+  if (
+    (valueColumns.length === 1 &&
+      timeColumns.length === 1 &&
+      valueColumns[0].colName !== timeColumns[0].colName) ||
+    (valueColumns.length > 1 && timeColumns.length > 0) ||
+    (valueColumns.length > 0 && timeColumns.length > 1)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+// export function hasGeoordinateFeatures(variables: Variable[]): boolean {
+//   const latColumns = variables.filter((v) => isLatitudeGroupType(v.colType));
+//   const lonColumns = variables.filter((v) => isLongitudeGroupType(v.colType));
+//   if (
+//     (latColumns.length === 1 &&
+//       lonColumns.length === 1 &&
+//       latColumns[0].colName !== lonColumns[0].colName) ||
+//     (latColumns.length > 1 && lonColumns.length > 0) ||
+//     (latColumns.length > 0 && lonColumns.length > 1)
+//   ) {
+//     return true;
+//   }
+//
+//   return false;
+// }
+
+export function hasGeoordinateFeatures(variables: Variable[]): boolean {
+  const hasLat = variables.some((v) => isLatitudeGroupType(v.colType));
+  const hasLon = variables.some((v) => isLongitudeGroupType(v.colType));
+  const hasGeocoord = variables.some(
+    (v) => v.grouping && isGeoLocatedType(v.grouping.type)
+  );
+  return (hasLat && hasLon) || hasGeocoord;
+}
+
+export function hasImageFeatures(variables: Variable[]): boolean {
+  return variables.some((v) => isImageType(v.colType));
 }

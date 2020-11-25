@@ -19,18 +19,35 @@
 
     <main class="content">
       <!-- <div class="fake-search-input">
-        <filter-badge
-          v-if="activeFilter"
-          active-filter
-          :filter="activeFilter"
-        />
-        <filter-badge
-          v-for="(filter, index) in filters"
+      <filter-badge
+        v-if="activeFilter"
+        active-filter
+        :filter="activeFilter"
+      />
+      <filter-badge
+        v-for="(filter, index) in filters"
+        :key="index"
+        :filter="filter"
+      />
+    </div> -->
+
+      <!-- Tabs to switch views -->
+      <b-tabs pills v-model="activeView" class="mb-2">
+        <b-tab
+          v-for="(view, index) in activeViews"
           :key="index"
-          :filter="filter"
+          :active="view === activeViews[activeView]"
+          :title="view | capitalize"
         />
-      </div> -->
-      <p class="selection-data-size">
+      </b-tabs>
+
+      <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
+      <section class="data-container">
+        <div v-if="!hasData" v-html="spinnerHTML" />
+        <component :is="viewComponent" :instance-name="instanceName" />
+      </section>
+
+      <p class="selection-data-size mt-2 mb-0">
         <data-size
           :current-size="numRows"
           :total="totalNumRows"
@@ -42,19 +59,13 @@
           <strong class="selected-color">selected</strong>
         </template>
       </p>
-      <!-- <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" /> -->
-
-      <section class="data-container">
-        <div v-if="!hasData" v-html="spinnerHTML" />
-        <component :is="viewComponent" :instance-name="instanceName" />
-      </section>
     </main>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import { isEmpty } from "lodash";
+import { capitalize, isEmpty } from "lodash";
 
 // Components
 import ActionColumn, { Action } from "../components/layout/ActionColumn.vue";
@@ -65,8 +76,8 @@ import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
 import SelectGeoPlot from "../components/SelectGeoPlot.vue";
-import SelectGraphView from "../components/SelectGraphView.vue";
-import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
+// import SelectGraphView from "../components/SelectGraphView.vue";
+// import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 
 // Store
 import { RowSelection, Variable } from "../store/dataset/index";
@@ -80,12 +91,14 @@ import { overlayRouteEntry } from "../util/routes";
 import { getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
 import { META_TYPES } from "../util/types";
-
-const GEO_VIEW = "geo";
-const GRAPH_VIEW = "graph";
-const IMAGE_VIEW = "image";
-const TABLE_VIEW = "table";
-const TIMESERIES_VIEW = "timeseries";
+import {
+  GEO_VIEW,
+  GRAPH_VIEW,
+  IMAGE_VIEW,
+  TABLE_VIEW,
+  TIMESERIES_VIEW,
+  filterViews,
+} from "../util/view";
 
 const ACTIONS = [
   { name: "All Variables", icon: "database", paneId: "available" },
@@ -112,24 +125,40 @@ export default Vue.extend({
     ImageMosaic,
     SelectDataTable,
     SelectGeoPlot,
-    SelectGraphView,
-    SelectTimeseriesView,
+    // SelectGraphView,
+    // SelectTimeseriesView,
+  },
+
+  filters: {
+    capitalize,
   },
 
   data() {
     return {
       actions: ACTIONS,
       activePane: "selected",
+      activeView: 0, // TABLE_VIEW
       instanceName: DATA_EXPLORER_VAR_INSTANCE,
       metaTypes: Object.keys(META_TYPES),
-      viewTypeModel: TABLE_VIEW,
     };
   },
 
   computed: {
     /* Variables displayed on the Facet Panel */
     activeVariables(): Variable[] {
-      return this.availableVariables[this.activePane];
+      return this.availableVariables[this.activePane] ?? [];
+    },
+
+    /* Actions displayed on the Action column */
+    activeActions(): Action[] {
+      // Remove the inactive MetaTypes
+      return this.actions.filter(
+        (action) => !this.inactiveMetaTypes.includes(action.paneId)
+      );
+    },
+
+    activeViews(): string[] {
+      return filterViews(this.activeVariables);
     },
 
     availableVariables(): any {
@@ -157,14 +186,6 @@ export default Vue.extend({
       });
 
       return variables;
-    },
-
-    /* Actions displayed on the Action column */
-    activeActions(): Action[] {
-      // Remove the inactive MetaTypes
-      return this.actions.filter(
-        (action) => !this.inactiveMetaTypes.includes(action.paneId)
-      );
     },
 
     currentAction(): string {
@@ -229,11 +250,12 @@ export default Vue.extend({
     },
 
     viewComponent() {
-      if (this.viewTypeModel === GEO_VIEW) return "SelectGeoPlot";
-      if (this.viewTypeModel === GRAPH_VIEW) return "SelectGraphView";
-      if (this.viewTypeModel === IMAGE_VIEW) return "ImageMosaic";
-      if (this.viewTypeModel === TABLE_VIEW) return "SelectDataTable";
-      if (this.viewTypeModel === TIMESERIES_VIEW) return "SelectTimeseriesView";
+      const viewType = this.activeViews[this.activeView] as string;
+      if (viewType === GEO_VIEW) return "SelectGeoPlot";
+      // if (viewType === GRAPH_VIEW) return "SelectGraphView";
+      if (viewType === IMAGE_VIEW) return "ImageMosaic";
+      if (viewType === TABLE_VIEW) return "SelectDataTable";
+      // if (viewType === TIMESERIES_VIEW) return "SelectTimeseriesView";
     },
   },
 
@@ -280,6 +302,8 @@ export default Vue.extend({
 }
 
 .view-container .content {
+  display: flex;
+  flex-direction: column;
   flex-grow: 1;
   padding: 1rem;
 }

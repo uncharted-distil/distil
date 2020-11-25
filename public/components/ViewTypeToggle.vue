@@ -169,7 +169,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .view-button {
   cursor: pointer;
 }
