@@ -286,7 +286,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	}, nil
 }
 
-// IngestAndFeaturize is a temporary hack until I can decide what we should do here.
+// Featurize provides a separate step for featurzing data so that it can be called independently of the ingest step.
 func Featurize(originalSchemaFile string, schemaFile string, data api.DataStorage, storage api.MetadataStorage, dataset string, config *IngestTaskConfig) error {
 
 	// featurize dataset for downstream efficiencies
