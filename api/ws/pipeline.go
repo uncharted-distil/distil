@@ -394,9 +394,9 @@ func createPredictionDataset(requestTask *api.Task, rawData string,
 	var ds task.DatasetConstructor
 	var err error
 	if api.HasTaskType(requestTask, compute.RemoteSensingTask) {
-		ds, err = dataset.NewSatelliteDataset(datasetID, "tif", data)
+		ds, err = dataset.NewSatelliteDataset(datasetID, "tif", datasetPath)
 	} else if api.HasTaskType(requestTask, compute.ImageTask) {
-		ds, err = dataset.NewMediaDataset(datasetID, "png", "jpeg", []byte(data))
+		ds, err = dataset.NewMediaDataset(datasetID, "png", "jpeg", datasetPath)
 	} else if api.HasTaskType(requestTask, compute.TimeSeriesTask) && api.HasTaskType(requestTask, compute.ForecastingTask) {
 		ds, err = task.NewPredictionTimeseriesDataset(predictParams, request.IntervalLength, request.IntervalCount)
 	} else {
