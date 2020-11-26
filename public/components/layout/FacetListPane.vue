@@ -65,10 +65,6 @@ export default Vue.extend({
       return routeGetters.getRouteDataExplorerVarsSearch(this.$store);
     },
 
-    activePane(): string {
-      return routeGetters.getRoutePane(this.$store) ?? "available";
-    },
-
     button(): (group: Group) => HTMLElement {
       return (group: Group) => {
         const variable = group.colName;
@@ -102,7 +98,7 @@ export default Vue.extend({
             task,
           };
           const entry = overlayRouteEntry(this.$route, args);
-          this.$router.push(entry).catch((err) => console.warn(err));
+          this.$router.push(entry).catch((err) => console.debug(err));
           viewActions.updateSelectTrainingData(this.$store);
         };
 
@@ -152,26 +148,18 @@ export default Vue.extend({
   },
 
   watch: {
-    activePane() {
-      this.updateSummaries();
-    },
-
     varsPage() {
-      this.updateSummaries();
+      viewActions.fetchDataExplorerData(this.$store, this.variables);
     },
 
     varsSearch() {
-      this.updateSummaries();
+      viewActions.fetchDataExplorerData(this.$store, this.variables);
     },
   },
 
   methods: {
     onSearch(term): void {
       this.search = term;
-    },
-
-    updateSummaries(): void {
-      viewActions.fetchDataExplorerData(this.$store, this.variables);
     },
   },
 });

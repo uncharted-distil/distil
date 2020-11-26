@@ -282,6 +282,12 @@ export default Vue.extend({
     // Update the route an fetch the new summaries based on the updated route
     activePane(newPane, oldPane) {
       if (oldPane === newPane) return;
+      viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
+    },
+
+    training(newTraining, oldTraining) {
+      if (oldTraining === newTraining) return;
+      viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
     },
   },
 
