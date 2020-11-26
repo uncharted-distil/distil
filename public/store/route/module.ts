@@ -52,6 +52,9 @@ export const getters = {
   getRouteResultTrainingVarsPage: read(
     moduleGetters.getRouteResultTrainingVarsPage
   ),
+  getRouteDataExplorerVarsPage: read(
+    moduleGetters.getRouteDataExplorerVarsPage
+  ),
   getAllRoutePages: read(moduleGetters.getAllRoutePages),
   getRouteJoinDatasetsVarsSearch: read(
     moduleGetters.getRouteJoinDatasetsVarsSearch
@@ -65,6 +68,9 @@ export const getters = {
   getRouteTrainingVarsSearch: read(moduleGetters.getRouteTrainingVarsSearch),
   getRouteResultTrainingVarsSearch: read(
     moduleGetters.getRouteResultTrainingVarsSearch
+  ),
+  getRouteDataExplorerVarsSearch: read(
+    moduleGetters.getRouteDataExplorerVarsSearch
   ),
   getAllSearchesByRoute: read(moduleGetters.getAllSearchesByRoute),
   getAllSearchesByQueryString: read(moduleGetters.getAllSearchesByQueryString),

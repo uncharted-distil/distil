@@ -8,10 +8,10 @@
     :html="button"
     :instance-name="instanceName"
     :log-activity="problemDefinition"
+    :rows-per-page="numRowsPerPage"
     :summaries="summaries"
     @search="onSearch"
   />
-  <!-- :rows-per-page="numRowsPerPage" -->
 </template>
 
 <script lang="ts">
@@ -54,12 +54,12 @@ export default Vue.extend({
   },
 
   computed: {
-    availableTargetVarsPage(): number {
-      return routeGetters.getRouteAvailableTargetVarsPage(this.$store);
+    varsPage(): number {
+      return routeGetters.getRouteDataExplorerVarsPage(this.$store);
     },
 
-    availableTargetVarsSearch(): string {
-      return routeGetters.getRouteAvailableTargetVarsSearch(this.$store);
+    varsSearch(): string {
+      return routeGetters.getRouteDataExplorerVarsSearch(this.$store);
     },
 
     button(): (group: Group) => HTMLElement {
@@ -129,16 +129,12 @@ export default Vue.extend({
     },
 
     summaries(): VariableSummary[] {
-      const pageIndex = routeGetters.getRouteAvailableTargetVarsPage(
-        this.$store
-      );
-
       const summaryDictionary = datasetGetters.getVariableSummariesDictionary(
         this.$store
       );
 
       const currentSummaries = getVariableSummariesByState(
-        pageIndex,
+        this.varsPage,
         this.numRowsPerPage,
         this.searchedActiveVariables,
         summaryDictionary
@@ -149,11 +145,11 @@ export default Vue.extend({
   },
 
   watch: {
-    availableTargetVarsPage() {
+    varsPage() {
       viewActions.fetchDataExplorerData(this.$store);
     },
 
-    availableTargetVarsSearch() {
+    varsSearch() {
       viewActions.fetchDataExplorerData(this.$store);
     },
   },

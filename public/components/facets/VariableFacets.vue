@@ -307,7 +307,7 @@ export default Vue.extend({
     },
 
     expandGeoAndTimeseriesFacets(): boolean {
-      // The Geocoordinates and Timeseries Facets are expanded on SELECT_TARGET_ROUTE
+      // The Geocoordinate and Timeseries Facets are expanded on SELECT_TARGET_ROUTE
       return !!routeGetters.isPageSelectTarget(this.$store);
     },
 
@@ -345,7 +345,6 @@ export default Vue.extend({
 
   methods: {
     // creates a facet key for the route from the instance-name component arg
-    // or uses a default if unset
     routePageKey(): string {
       return `${this.instanceName}${ROUTE_PAGE_SUFFIX}`;
     },

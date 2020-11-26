@@ -402,9 +402,6 @@ export const actions = {
   },
 
   async fetchDataExplorerData(context: ViewContext) {
-    // clear previous state
-    clearVariableSummaries(context);
-
     // fetch new state
     const dataset = context.getters.getRouteDataset;
     return fetchVariableSummaries(context, { dataset });

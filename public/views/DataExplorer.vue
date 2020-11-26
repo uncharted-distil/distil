@@ -82,7 +82,10 @@ import SelectGeoPlot from "../components/SelectGeoPlot.vue";
 // Store
 import { RowSelection, Variable } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { DATA_EXPLORER_VAR_INSTANCE } from "../store/route/index";
+import {
+  DATA_EXPLORER_VAR_INSTANCE,
+  ROUTE_PAGE_SUFFIX,
+} from "../store/route/index";
 import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
 
@@ -136,7 +139,7 @@ export default Vue.extend({
   data() {
     return {
       actions: ACTIONS,
-      activePane: "selected",
+      activePane: "available",
       activeView: 0, // TABLE_VIEW
       instanceName: DATA_EXPLORER_VAR_INSTANCE,
       metaTypes: Object.keys(META_TYPES),
@@ -146,13 +149,13 @@ export default Vue.extend({
   computed: {
     /* Variables displayed on the Facet Panel */
     activeVariables(): Variable[] {
-      return this.availableVariables[this.activePane] ?? [];
+      return this.variablesPerActions[this.activePane] ?? [];
     },
 
     /* Actions displayed on the Action column */
     activeActions(): Action[] {
       return this.availableActions.map((action) => {
-        const count = this.availableVariables[action.paneId]?.length;
+        const count = this.variablesPerActions[action.paneId]?.length;
         return count ? { ...action, count } : action;
       });
     },
@@ -169,7 +172,7 @@ export default Vue.extend({
       return filterViews(this.activeVariables);
     },
 
-    availableVariables(): any {
+    variablesPerActions(): any {
       const cleanTraining = this.training.map((t) => t.toLowerCase());
 
       const selectedVariables = this.variables.filter((v) =>
@@ -268,21 +271,37 @@ export default Vue.extend({
   },
 
   async beforeMount() {
-    // Fill up the store
+    // First get the dataset informations
     await viewActions.fetchDataExplorerData(this.$store);
 
     // Update the training data
     viewActions.updateSelectTrainingData(this.$store);
   },
 
+  watch: {
+    // Update the route an fetch the new summaries based on the updated route
+    activePane(newPane, oldPane) {
+      if (oldPane === newPane) return;
+
+      // update the selected pane, and reset the page var to 1
+      this.updateRoute({
+        pane: newPane,
+        [`${DATA_EXPLORER_VAR_INSTANCE}${ROUTE_PAGE_SUFFIX}`]: 1,
+      });
+
+      viewActions.fetchDataExplorerData(this.$store);
+    },
+  },
+
   methods: {
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
+      viewActions.updateSelectTrainingData(this.$store);
     },
 
     onSetActive(actionName: string): void {
-      let activePane = "";
+      let activePane = "available"; // default
       if (actionName !== "") {
         activePane = this.actions.find((a) => a.name === actionName).paneId;
       }
@@ -291,8 +310,7 @@ export default Vue.extend({
 
     updateRoute(args) {
       const entry = overlayRouteEntry(this.$route, args);
-      this.$router.push(entry).catch((err) => console.warn(err));
-      viewActions.updateSelectTrainingData(this.$store);
+      this.$router.push(entry).catch((err) => console.debug(err));
     },
   },
 });
