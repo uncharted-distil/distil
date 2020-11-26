@@ -14,7 +14,7 @@
     >
       <p class="font-weight-bold" :class="{ 'mr-auto': !hasWeight }">Samples</p>
       <legend-weight v-if="hasWeight" class="ml-5 mr-auto" />
-      <color-scale-drop-down />
+      <color-scale-drop-down v-if="isMultiBandImage" />
       <layer-selection
         :hasImageAttention="true"
         v-if="isMultiBandImage"

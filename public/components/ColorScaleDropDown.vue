@@ -43,7 +43,7 @@ export default Vue.extend({
   },
   methods: {
     getGradient(colorScaleName: ColorScaleNames): string {
-      const vals = [0.0, 0.5, 1.0]; // array to get the values to generate linear gradient
+      const vals = [0.0, 0.25, 0.5, 0.75, 1.0]; // array to get the values to generate linear gradient
       const colors = vals.map(COLOR_SCALES.get(colorScaleName));
       return `background: linear-gradient(to right, ${colors.join(", ")});`;
     },
