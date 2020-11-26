@@ -151,6 +151,14 @@ export default Vue.extend({
 
     /* Actions displayed on the Action column */
     activeActions(): Action[] {
+      return this.availableActions.map((action) => {
+        const count = this.availableVariables[action.paneId]?.length;
+        return count ? { ...action, count } : action;
+      });
+    },
+
+    /* Actions available based on the variables meta types */
+    availableActions(): Action[] {
       // Remove the inactive MetaTypes
       return this.actions.filter(
         (action) => !this.inactiveMetaTypes.includes(action.paneId)
@@ -172,7 +180,7 @@ export default Vue.extend({
       );
 
       const variables = {};
-      this.activeActions.forEach((action) => {
+      this.availableActions.forEach((action) => {
         if (action.paneId === "add") variables[action.paneId] = null;
         else if (action.paneId === "selected") {
           variables[action.paneId] = selectedVariables;

@@ -1,11 +1,11 @@
 <template>
-  <div class="action-column-container">
+  <nav class="action-column-container">
     <ul class="action-column-nav-bar" role="tablist">
       <li
         v-for="(action, index) in actions"
         :key="index"
         :title="action.name"
-        :style="{ '--count': action.count }"
+        :data-count="action.count"
       >
         <b-button
           role="tab"
@@ -17,7 +17,7 @@
         </b-button>
       </li>
     </ul>
-  </div>
+  </nav>
 </template>
 
 <script lang="ts">
@@ -75,6 +75,23 @@ export default Vue.extend({
 .action-column-nav-bar li {
   position: relative;
   display: block;
+}
+
+/* Display a count to know the number of variables. */
+.action-column-nav-bar li[data-count]::after {
+  background-color: var(--color-text-disable);
+  border-radius: 50%;
+  color: var(--white);
+  content: attr(data-count);
+  display: block;
+  font-size: 0.5rem;
+  height: 2em;
+  line-height: 2em;
+  position: absolute;
+  right: 0.5em;
+  top: 0.5em;
+  text-align: center;
+  width: 2em;
 }
 
 .action-column-nav-bar button {
