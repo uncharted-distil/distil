@@ -13,6 +13,8 @@ import {
   Predictions,
   PREDICT_COMPLETED,
   PREDICT_ERRORED,
+  QUERY_COMPLETED,
+  QUERY_ERRORED,
   RequestState,
   Solution,
   SolutionRequest,
