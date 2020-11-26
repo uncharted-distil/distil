@@ -65,24 +65,33 @@
       </div>
 
       <div class="row mt-1">
-        <div v-if="!expanded" class="col-12">
+        <div class="col-12 d-flex justify-content-center">
           <b-button
-            class="full-width hover"
+            v-if="!expanded"
+            class="flex-grow-1 hover"
             variant="outline-secondary"
             @click="toggleExpansion()"
           >
             More Details...
           </b-button>
-        </div>
-        <div v-if="expanded" class="col-12">
-          <span><b>Full Description:</b></span>
-          <p v-html="highlightedDescription" />
+          <template v-else>
+            <span><b>Full Description:</b></span>
+            <p v-html="highlightedDescription" />
+            <b-button
+              class="flex-grow-1 hover"
+              variant="outline-secondary"
+              @click="toggleExpansion()"
+            >
+              Less Details...
+            </b-button>
+          </template>
           <b-button
-            class="full-width hover"
+            v-if="isPrototype"
             variant="outline-secondary"
-            @click="toggleExpansion()"
+            class="ml-2"
+            @click="exploreDataset"
           >
-            Less Details...
+            Explore Dataset
           </b-button>
         </div>
       </div>
@@ -150,6 +159,11 @@ export default Vue.extend({
         this.datamartProvenance(this.dataset.provenance)
       );
     },
+
+    isPrototype(): boolean {
+      return appGetters.isPrototype(this.$store);
+    },
+
     topVariables(): Variable[] {
       return sortVariablesByPCARanking(
         filterVariablesByFeature(this.dataset.variables).slice(0)
@@ -167,17 +181,20 @@ export default Vue.extend({
     filterVariablesByFeature(variables: Variable[]): Variable[] {
       return filterVariablesByFeature(variables);
     },
+
+    exploreDataset(): void {
+      const dataset = this.dataset.id;
+      const route = DATA_EXPLORER_ROUTE;
+      const entry = createRouteEntry(route, { dataset });
+      this.$router.push(entry).catch((err) => console.debug(err));
+    },
+
     setActiveDataset() {
       if (this.isImportReady || this.importPending) {
         return;
       }
 
-      // Change the route to data-explorer during the prototype phase.
-      const route = appGetters.isPrototype(this.$store)
-        ? DATA_EXPLORER_ROUTE
-        : SELECT_TARGET_ROUTE;
-
-      const entry = createRouteEntry(route, {
+      const entry = createRouteEntry(SELECT_TARGET_ROUTE, {
         dataset: this.dataset.id,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
@@ -239,10 +256,11 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .highlight {
   background-color: #87cefa;
 }
+
 .dataset-header {
   display: flex;
   padding: 4px 8px;
@@ -251,26 +269,29 @@ export default Vue.extend({
   border: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.125);
 }
+
 .card-result .card-header {
   background-color: #424242;
 }
+
 .card-result .card-header:hover {
   color: #fff;
   background-color: #535353;
 }
+
 .dataset-preview-button {
   line-height: 14px !important;
 }
+
 .dataset-header:hover {
   text-decoration: underline;
 }
-.full-width {
-  width: 100%;
-}
+
 .import-progress-bar {
   position: relative;
   width: 128px;
 }
+
 .import-progress-bar .progress {
   height: 22px;
 }
