@@ -57,7 +57,6 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 			handleError(w, err)
 			return
 		}
-
 		res, err := storage.FetchDataset(dataset, false, false)
 		if err != nil {
 			handleError(w, err)
@@ -76,7 +75,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 				return
 			}
 		}
-		img, err := util.ImageFromCombination(sourcePath, imageID, util.BandCombinationID(bandCombo), imageScale, options)
+		img, err := util.ImageFromCombination(sourcePath, imageID, bandCombo, imageScale, options)
 		if err != nil {
 			handleError(w, err)
 			return

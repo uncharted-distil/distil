@@ -240,6 +240,11 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 			return nil, errors.Wrap(err, "unable to ingest prediction data")
 		}
 		log.Infof("finished ingesting dataset '%s'", datasetName)
+
+		// we still may need to featurize
+		if err = Featurize(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, datasetName, params.IngestConfig); err != nil {
+			return nil, errors.Wrap(err, "unabled to featurize prediction data")
+		}
 	}
 
 	// Apply the var types associated with the fitted solution to the inference data - the model types and input types should
@@ -314,7 +319,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	// submit the new dataset for predictions
 	log.Infof("generating predictions using data found at '%s'", datasetPath)
-	predictionResult, err := comp.GeneratePredictions(datasetPath, solution.ExplainedSolutionID, params.FittedSolutionID, client)
+	predictionResult, err := comp.GeneratePredictions(datasetPath, solution.SolutionID, params.FittedSolutionID, client)
 	if err != nil {
 		return nil, err
 	}
@@ -430,7 +435,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 	outputData := [][]string{headerSource}
 	for _, line := range csvData[1:] {
 		// write the columns in the same order as the source dataset
-		output := make([]string, len(sourceVariableMap))
+		output := make([]string, len(predictionVariables))
 		for i, f := range line {
 			sourceIndex := predictVariablesMap[i]
 			if sourceIndex >= 0 {
@@ -467,7 +472,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 			return err
 		}
 
-		err = dataStorage.AddVariable(dataset, storageName, composedVarName, model.StringType)
+		err = dataStorage.AddVariable(dataset, storageName, composedVarName, model.StringType, "")
 		if err != nil {
 			return err
 		}

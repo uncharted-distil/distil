@@ -51,7 +51,15 @@ import {
 } from "../util/types";
 import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
-
+import { overlayRouteEntry } from "./routes";
+import { Location } from "vue-router";
+import {
+  interpolateTurbo,
+  interpolateViridis,
+  interpolateInferno,
+  interpolateMagma,
+  interpolatePlasma,
+} from "d3-scale-chromatic";
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
 export const ERROR_SUFFIX = "_error";
@@ -67,6 +75,38 @@ export const FILE_PROVENANCE = "file";
 
 export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
 
+export const LOW_SHOT_LABEL_COLUMN_NAME = "LowShotLabel";
+// LowShotLabels enum for labeling data in a binary classification
+export enum LowShotLabels {
+  positive = "positive",
+  negative = "negative",
+  unlabeled = "unlabeled",
+}
+// DatasetUpdate is an interface that contains the data to update existing data
+export interface DatasetUpdate {
+  index: string; // d3mIndex
+  name: string; // colName
+  value: string; // new value to replace old value
+}
+// ColorScaleNames is an enum that contains all the supported color scale names. Can be used to access COLOR_SCALES functions
+export enum ColorScaleNames {
+  viridis = "viridis",
+  magma = "magma",
+  inferno = "inferno",
+  plasma = "plasma",
+  turbo = "turbo",
+}
+// COLOR_SCALES contains the color scalefunctions that are js. This is for wrapping it in typescript.
+export const COLOR_SCALES: Map<
+  ColorScaleNames,
+  (t: number) => string
+> = new Map([
+  [ColorScaleNames.viridis, interpolateViridis],
+  [ColorScaleNames.magma, interpolateMagma],
+  [ColorScaleNames.inferno, interpolateInferno],
+  [ColorScaleNames.plasma, interpolatePlasma],
+  [ColorScaleNames.turbo, interpolateTurbo],
+]);
 export function getTimeseriesSummaryTopCategories(
   summary: VariableSummary
 ): string[] {
@@ -318,7 +358,22 @@ export function updateSummaries(
     summaries.push(Object.freeze(summary));
   }
 }
-
+export async function cloneDatasetUpdateRoute(): Promise<Location> {
+  const dataset = routeGetters.getRouteDataset(store);
+  // clone the current dataset
+  const clonedInfo = await datasetActions.cloneDataset(store, {
+    dataset,
+  });
+  // if null there was an error, if success is false there was a backend issue
+  if (clonedInfo === null || !clonedInfo.success) {
+    return null;
+  }
+  // update route to new cloned dataset name
+  const entry = overlayRouteEntry(routeGetters.getRoute(store), {
+    dataset: clonedInfo.clonedDatasetName,
+  });
+  return entry;
+}
 export function updateSummariesPerVariable(
   summary: VariableSummary,
   variableSummaryDictionary: Dictionary<Dictionary<VariableSummary>>

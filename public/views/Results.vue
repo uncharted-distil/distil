@@ -40,9 +40,9 @@
 <script lang="ts">
 import Vue from "vue";
 import VariableFacets from "../components/facets/VariableFacets.vue";
-import ResultsComparison from "../components/ResultsComparison";
-import ResultSummaries from "../components/ResultSummaries";
-import ResultTargetVariable from "../components/ResultTargetVariable";
+import ResultsComparison from "../components/ResultsComparison.vue";
+import ResultSummaries from "../components/ResultSummaries.vue";
+import ResultTargetVariable from "../components/ResultTargetVariable.vue";
 import { Variable, VariableSummary } from "../store/dataset/index";
 import { actions as viewActions } from "../store/view/module";
 import {

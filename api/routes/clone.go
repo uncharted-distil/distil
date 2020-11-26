@@ -101,7 +101,7 @@ func CloningHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 		}
 
 		// marshal output into JSON
-		err = handleJSON(w, map[string]interface{}{"success": true})
+		err = handleJSON(w, map[string]interface{}{"success": true, "clonedDatasetName": meta.ID})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal clustering result into JSON"))
 			return

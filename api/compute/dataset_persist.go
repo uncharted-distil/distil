@@ -21,13 +21,12 @@ import (
 	"math/rand"
 	"os"
 	"path"
-	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/araddon/dateparse"
 	"github.com/mitchellh/hashstructure"
-	"github.com/otiai10/copy"
 	"github.com/pkg/errors"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
@@ -119,73 +118,6 @@ func splitTrainTestHeader(data [][]string, outputTrain [][]string, outputTest []
 	return data, outputTrain, outputTest
 }
 
-func splitTrainTestTimeseries(sourceFile string, trainFile string, testFile string, hasHeader bool, timeseriesCol int, trainTestSplit float64) error {
-	// create the output containers
-
-	// training data
-	outputTrain := [][]string{}
-
-	// test data
-	outputTest := [][]string{}
-
-	// read the data
-	datasetStorage := serialization.GetStorage(sourceFile)
-	inputData, err := datasetStorage.ReadData(sourceFile)
-	if err != nil {
-		return errors.Wrap(err, "failed to open source file")
-	}
-
-	// handle the header
-	inputData, outputTrain, outputTest = splitTrainTestHeader(inputData, outputTrain, outputTest, hasHeader)
-
-	// find the desired timeseries threshold
-	// load the parsed timestamp into a list and read all raw data in memory
-	timestamps := make([]float64, 0)
-	for _, line := range inputData {
-		// attempt to parse as float
-		t, err := parseTimeColValue(line[timeseriesCol])
-		if err != nil {
-			return err
-		}
-		timestamps = append(timestamps, t)
-	}
-
-	// find the time threshold by sorting and taking the value that gives
-	// the right split (ie value where we would send roughly 90% of
-	// the data to train and 10% to test)
-	sort.Slice(timestamps, func(i int, j int) bool {
-		return timestamps[i] <= timestamps[j]
-	})
-	timestampSplit := SplitTimeStamps(timestamps, trainTestSplit)
-
-	// output the values based on if before threshold or after threshold
-	for _, line := range inputData {
-		// since we parsed it above, then the parsing here should succeed
-		// TODO: the timestamps list is already sorted but we really should
-		// reuse it to not double parse things
-		t, _ := parseTimeColValue(line[timeseriesCol])
-
-		// !After == Before || Equal
-		if t <= timestampSplit.SplitValue {
-			outputTrain = append(outputTrain, line)
-		} else {
-			outputTest = append(outputTest, line)
-		}
-	}
-
-	err = datasetStorage.WriteData(trainFile, outputTrain)
-	if err != nil {
-		return errors.Wrap(err, "unable to output train data")
-	}
-
-	err = datasetStorage.WriteData(testFile, outputTest)
-	if err != nil {
-		return errors.Wrap(err, "unable to output test data")
-	}
-
-	return nil
-}
-
 func parseTimeColValue(timeColValue string) (float64, error) {
 	f, err := strconv.ParseFloat(timeColValue, 64)
 	if err != nil {
@@ -196,63 +128,6 @@ func parseTimeColValue(timeColValue string) (float64, error) {
 		return float64(t.Unix()), nil
 	}
 	return f, nil
-}
-
-func splitTrainTest(sourceFile string, trainFile string, testFile string, hasHeader bool, targetCol int, groupingCol int,
-	stratify bool, rowLimits rowLimits, trainTestSplit float64) error {
-	// create the output
-	outputTrain := [][]string{}
-	outputTest := [][]string{}
-
-	// read the data
-	datasetStorage := serialization.GetStorage(sourceFile)
-	inputData, err := datasetStorage.ReadData(sourceFile)
-	if err != nil {
-		return errors.Wrap(err, "failed to read source file")
-	}
-
-	// handle the header
-	inputData, outputTrain, outputTest = splitTrainTestHeader(inputData, outputTrain, outputTest, hasHeader)
-
-	numDatasetRows := len(inputData)
-	numTrainingRows := rowLimits.trainingRows(numDatasetRows)
-	numTestRows := rowLimits.testRows(numDatasetRows)
-	if stratify {
-		// For statification we use a proportionate allocation strategy, dividing the dataset up into
-		// subsets by category, and then sampling the subsets using the supplied train/test ratio.
-
-		// first pass - create subsets by category
-		categoryRowData := map[string][][]string{}
-		for _, row := range inputData {
-			key := row[targetCol]
-			if _, ok := categoryRowData[key]; !ok {
-				categoryRowData[key] = [][]string{}
-			}
-			categoryRowData[key] = append(categoryRowData[key], row)
-		}
-
-		// second pass - randomly sample each category to generate train/test split
-		for _, data := range categoryRowData {
-			maxCategoryTrainingRows := int(math.Max(1, float64(len(data))/float64(len(inputData))*float64(numTrainingRows)))
-			maxCategoryTestRows := int(math.Max(1, float64(len(data))/float64(len(inputData))*float64(numTestRows)))
-			outputTrain, outputTest = shuffleAndWrite(data, groupingCol, maxCategoryTrainingRows, maxCategoryTestRows, true, outputTrain, outputTest, trainTestSplit)
-		}
-	} else {
-		// randomly select from dataset based on row limits
-		outputTrain, outputTest = shuffleAndWrite(inputData, groupingCol, numTrainingRows, numTestRows, true, outputTrain, outputTest, trainTestSplit)
-	}
-
-	err = datasetStorage.WriteData(trainFile, outputTrain)
-	if err != nil {
-		return errors.Wrap(err, "unable to output train data")
-	}
-
-	err = datasetStorage.WriteData(testFile, outputTest)
-	if err != nil {
-		return errors.Wrap(err, "unable to output test data")
-	}
-
-	return nil
 }
 
 type shuffleTracker struct {
@@ -313,7 +188,6 @@ func shuffleAndWrite(rowData [][]string, groupCol int, maxTrainingCount int,
 			}
 			tracker.output = append(tracker.output, data)
 			tracker.count++
-
 		}
 	} else {
 		groupData := map[string][][]string{}
@@ -363,6 +237,7 @@ type persistedDataParams struct {
 	TaskType           []string
 	TmpDataFolder      string
 	Quality            string
+	TrainTestSplit     float64
 }
 
 type rowLimits struct {
@@ -410,138 +285,12 @@ func (s rowLimits) testRows(rows int) int {
 	return sampledRows
 }
 
-// persistOriginalData copies the original data and splits it into a train &
-// test subset to be used as needed.
-func persistOriginalData(params *persistedDataParams) (string, string, error) {
-	var config env.Config
-	config, err := env.LoadConfig()
-	if err != nil {
-		return "", "", errors.Wrap(err, "unable to load config")
-	}
-
-	// configure a struct to help calculate row limits based on quality during the train / test split
-	limits := rowLimits{
-		MinTrainingRows: config.MinTrainingRows,
-		MinTestRows:     config.MinTestRows,
-		MaxTrainingRows: config.MaxTrainingRows,
-		MaxTestRows:     config.MaxTestRows,
-		Sample:          config.FastDataPercentage,
-		Quality:         params.Quality,
-	}
-
-	// generate a unique dataset name from the params and the limit values
-	splitDatasetName, err := generateSplitDatasetName(params, &limits)
-	if err != nil {
-		return "", "", err
-	}
-
-	// The complete data is copied into separate train & test folders.
-	// The main data is then split randomly.
-	trainFolder := path.Join(params.TmpDataFolder, splitDatasetName, trainFilenamePrefix)
-	testFolder := path.Join(params.TmpDataFolder, splitDatasetName, testFilenamePrefix)
-	trainSchemaFile := path.Join(trainFolder, params.SchemaFile)
-	testSchemaFile := path.Join(testFolder, params.SchemaFile)
-
-	log.Infof("checking folders `%s` & `%s` to see if the dataset has been previously split", trainFolder, testFolder)
-	if util.FileExists(trainSchemaFile) && util.FileExists(testSchemaFile) {
-		log.Infof("dataset '%s' already split", params.DatasetName)
-		return trainSchemaFile, testSchemaFile, nil
-	}
-
-	// clean out existing data
-	if pathExists(trainFolder) {
-		err := os.RemoveAll(trainFolder)
-		if err != nil {
-			return "", "", errors.Wrap(err, "unable to remove train folder from previous split attempt")
-		}
-	}
-
-	if pathExists(testFolder) {
-		err := os.RemoveAll(testFolder)
-		if err != nil {
-			return "", "", errors.Wrap(err, "unable to remove test folder from previous split attempt")
-		}
-	}
-
-	// copy the data over
-	err = copy.Copy(params.SourceDataFolder, trainFolder)
-	if err != nil {
-		return "", "", errors.Wrap(err, "unable to copy dataset folder to train")
-	}
-
-	err = copy.Copy(params.SourceDataFolder, testFolder)
-	if err != nil {
-		return "", "", errors.Wrap(err, "unable to copy dataset folder to test")
-	}
-
-	// read the dataset document
-	schemaFilename := path.Join(params.SourceDataFolder, params.SchemaFile)
-	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFilename, true)
-	if err != nil {
-		return "", "", err
-	}
-
-	// determine where the d3m index would be
-	mainDR := meta.GetMainDataResource()
-
-	// split the source data into train & test
-	dataPath := model.GetResourcePath(schemaFilename, mainDR)
-
-	// set the data file paths
-	// paths in main data resource can be absolute OR relative
-	trainDataFile := path.Join(trainFolder, path.Base(path.Dir(mainDR.ResPath)), path.Base(mainDR.ResPath))
-	testDataFile := path.Join(testFolder, path.Base(path.Dir(mainDR.ResPath)), path.Base(mainDR.ResPath))
-
-	// Check to see if the task keyword list contains forecasting
-	hasForecasting := false
-	for _, task := range params.TaskType {
-		if task == compute.ForecastingTask {
-			hasForecasting = true
-			break
-		}
-	}
-
-	if hasForecasting {
-		err = splitTrainTestTimeseries(dataPath, trainDataFile, testDataFile, true,
-			params.GroupingFieldIndex, config.TrainTestSplitTimeSeries)
-	} else {
-		err = splitTrainTest(dataPath, trainDataFile, testDataFile, true, params.TargetFieldIndex,
-			params.GroupingFieldIndex, params.Stratify, limits, config.TrainTestSplit)
-	}
-	if err != nil {
-		return "", "", err
-	}
-
-	// update metadata to point to correct data for train & test
-	dataSerialization := serialization.GetStorage(trainDataFile)
-	mainDR.ResPath = trainDataFile
-	err = dataSerialization.WriteMetadata(trainSchemaFile, meta, true, true)
-	if err != nil {
-		return "", "", err
-	}
-	mainDR.ResPath = testDataFile
-	err = dataSerialization.WriteMetadata(testSchemaFile, meta, true, true)
-	if err != nil {
-		return "", "", err
-	}
-
-	return trainSchemaFile, testSchemaFile, nil
-}
-
-func generateSplitDatasetName(params *persistedDataParams, limits *rowLimits) (string, error) {
-	// generate the hash from the params
-	hashStruct := struct {
-		Params    *persistedDataParams
-		RowLimits *rowLimits
-	}{
-		Params:    params,
-		RowLimits: limits,
-	}
-	hash, err := hashstructure.Hash(hashStruct, nil)
+func generateSplitDatasetName(datasetName string, schemaFilename string, splitter datasetSplitter) (string, error) {
+	hash, err := splitter.hash(schemaFilename)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate persisted data hash")
 	}
-	hashFileName := fmt.Sprintf("%s-%0x", params.DatasetName, hash)
+	hashFileName := fmt.Sprintf("%s-%0x", datasetName, hash)
 	return hashFileName, nil
 }
 
@@ -589,21 +338,63 @@ func SplitTimeSeries(timeseries []*api.TimeseriesObservation, trainPercentage fl
 	return SplitTimeStamps(timestamps, trainPercentage)
 }
 
-// SampleDataset shuffles a dataset's rows and takes a subsample, returning
+// SampleData shuffles a dataset's rows and takes a subsample, returning
 // the raw byte data of the sampled dataset.
-func SampleDataset(rawData [][]string, maxRows int, hasHeader bool) [][]string {
-	// initialize csv writer
-	output := [][]string{}
+func SampleData(rawData [][]string, maxRows int, stratify bool) [][]string {
 
-	if hasHeader {
-		output = append(output, rawData[0])
-		rawData = rawData[1:]
+	sampler := createSampler(stratify, -1, -1)
+	return sampler.sample(rawData, maxRows)
+}
+
+// SampleDataset shuffles a dataset's rows and stores a subsample, the schema doc URI.
+func SampleDataset(schemaFile string, outputFolder string, maxRows int, stratify bool, targetCol int, groupingCol int) (string, error) {
+	schemaFile = strings.TrimPrefix(schemaFile, "file://")
+	log.Infof("sampling a maximum row count of %d from '%s' (stratify=%v)", maxRows, schemaFile, stratify)
+	// read metadata
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, false)
+	if err != nil {
+		return "", err
+	}
+	sourceFilename := model.GetResourcePathFromFolder(path.Dir(schemaFile), meta.GetMainDataResource())
+	sampler := createSampler(stratify, targetCol, groupingCol)
+
+	// check if already sampled (write in the same parent folder as the schema file!)
+	hash, err := sampler.hash(schemaFile, maxRows)
+	if err != nil {
+		return "", err
+	}
+	sampledFolder := path.Join(outputFolder, fmt.Sprintf("sample-%0x", hash))
+	sampledSchema := path.Join(sampledFolder, compute.D3MDataSchema)
+	if util.FileExists(sampledFolder) {
+		log.Infof("dataset '%s' already sampled with %d rows (stratified=%v) and exists at '%s'", schemaFile, maxRows, stratify, sampledSchema)
+		return sampledSchema, nil
+	}
+	sampledDataFilename := path.Join(sampledFolder, compute.D3MDataFolder, compute.D3MLearningData)
+
+	// read the raw data from source
+	storage := serialization.GetStorage(sourceFilename)
+	data, err := storage.ReadData(sourceFilename)
+	if err != nil {
+		return "", err
 	}
 
-	trainTestSplit := float64(1) // keep all rows in train
-	output, _ = shuffleAndWrite(rawData, -1, maxRows, 0, false, output, nil, trainTestSplit)
+	// sample the loaded data
+	dataSampled := sampler.sample(data, maxRows)
 
-	return output
+	// store the sampled data
+	meta.GetMainDataResource().ResPath = sampledDataFilename
+	outputSampled := &api.RawDataset{
+		ID:       meta.ID,
+		Name:     meta.Name,
+		Metadata: meta,
+		Data:     dataSampled,
+	}
+	err = storage.WriteDataset(sampledFolder, outputSampled)
+	if err != nil {
+		return "", nil
+	}
+
+	return sampledSchema, nil
 }
 
 // CreateBatches splits the dataset into batches of at most maxBatchSize rows,

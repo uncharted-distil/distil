@@ -58,6 +58,7 @@ export const getters = {
   getHighlightedExcludeTableDataItems: read(
     moduleGetters.getHighlightedExcludeTableDataItems
   ),
+  getNumberOfRecords: read(moduleGetters.getNumberOfRecords),
   // included data
   hasIncludedTableData: read(moduleGetters.hasIncludedTableData),
   getIncludedTableData: read(moduleGetters.getIncludedTableData),
@@ -107,6 +108,7 @@ export const actions = {
   setGrouping: dispatch(moduleActions.setGrouping),
   removeGrouping: dispatch(moduleActions.removeGrouping),
   updateGrouping: dispatch(moduleActions.updateGrouping),
+  importDataFile: dispatch(moduleActions.importDataFile),
   uploadDataFile: dispatch(moduleActions.uploadDataFile),
   // variables
   fetchVariables: dispatch(moduleActions.fetchVariables),
@@ -142,6 +144,7 @@ export const actions = {
   fetchFiles: dispatch(moduleActions.fetchFiles),
   fetchImage: dispatch(moduleActions.fetchImage),
   fetchMultiBandImage: dispatch(moduleActions.fetchMultiBandImage),
+  fetchImageAttention: dispatch(moduleActions.fetchImageAttention),
   fetchTimeseries: dispatch(moduleActions.fetchTimeseries),
   fetchGraph: dispatch(moduleActions.fetchGraph),
   fetchFile: dispatch(moduleActions.fetchFile),
@@ -164,6 +167,10 @@ export const actions = {
   // modeling metric methodologies
   fetchModelingMetrics: dispatch(moduleActions.fetchModelingMetrics),
   updateRowSelectionData: dispatch(moduleActions.updateRowSelectionData),
+  cloneDataset: dispatch(moduleActions.cloneDataset),
+  addField: dispatch(moduleActions.addField),
+  updateDataset: dispatch(moduleActions.updateDataset),
+  extractDataset: dispatch(moduleActions.extractDataset),
 };
 
 // Typed mutations

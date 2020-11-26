@@ -14,7 +14,12 @@
     >
       <p class="font-weight-bold" :class="{ 'mr-auto': !hasWeight }">Samples</p>
       <legend-weight v-if="hasWeight" class="ml-5 mr-auto" />
-      <layer-selection v-if="isMultiBandImage" class="layer-button" />
+      <color-scale-drop-down v-if="isMultiBandImage" />
+      <layer-selection
+        :hasImageAttention="true"
+        v-if="isMultiBandImage"
+        class="layer-button"
+      />
     </view-type-toggle>
 
     <div v-if="hasHighlights && !isGeoView" class="flex-grow-1">
@@ -47,6 +52,7 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Variable } from "../store/dataset/index";
+import ColorScaleDropDown from "./ColorScaleDropDown.vue";
 
 const GEO_VIEW = "geo";
 const TABLE_VIEW = "table";
@@ -59,6 +65,7 @@ export default Vue.extend({
     LegendWeight,
     ResultsDataSlot,
     ViewTypeToggle,
+    ColorScaleDropDown,
   },
 
   data() {
@@ -110,7 +117,7 @@ export default Vue.extend({
   flex-direction: column;
   flex-grow: 0;
   margin-right: 10px;
-  margin-left: auto;
+  margin-left: 10px;
 }
 .view-toggle >>> .form-group {
   margin-bottom: 0px;

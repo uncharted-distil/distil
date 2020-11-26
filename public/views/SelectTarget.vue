@@ -31,6 +31,9 @@
             <b-button @click="onMapClick" variant="dark">
               <i class="fa fa-globe"></i> Map
             </b-button>
+            <b-button @click="onLabelingClick" variant="dark">
+              <i class="fa fa-tag"></i> Label
+            </b-button>
           </span>
         </b-row>
       </b-col>
@@ -84,6 +87,7 @@ import {
   isUnsupportedTargetVar,
   GEOCOORDINATE_TYPE,
   TIMESERIES_TYPE,
+  LABELING_TYPE,
 } from "../util/types";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
@@ -236,7 +240,6 @@ export default Vue.extend({
         this.searchedActiveVariables,
         summaryDictionary
       );
-
       return currentSummaries;
     },
 
@@ -300,6 +303,9 @@ export default Vue.extend({
 
     onTimeseriesClick() {
       this.groupingClick(TIMESERIES_TYPE);
+    },
+    onLabelingClick() {
+      this.groupingClick(LABELING_TYPE);
     },
   },
 });

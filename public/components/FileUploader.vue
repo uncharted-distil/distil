@@ -103,8 +103,8 @@ export default Vue.extend({
       });
 
       try {
-        // Upload the file and notify when complete
-        const response = await datasetActions.uploadDataFile(this.$store, {
+        // Upload and import the data file and notify when complete
+        const response = await datasetActions.importDataFile(this.$store, {
           datasetID: deconflictedName,
           file: this.file,
         });
@@ -116,3 +116,4 @@ export default Vue.extend({
   },
 });
 </script>
+``

@@ -94,6 +94,11 @@ export const actions = {
       mutations.setProblemTarget(context, response.data.target);
       mutations.setProblemMetrics(context, response.data.metrics);
       mutations.setTA2VersionNumber(context, response.data.ta2version);
+      mutations.setTrainTestSplit(context, response.data.trainTestSplit);
+      mutations.setTrainTestSplitTimeSeries(
+        context,
+        response.data.trainTestSplitTimeSeries
+      );
     } catch (err) {
       console.warn(err);
     }

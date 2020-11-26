@@ -35,6 +35,7 @@ export const actions = {
   fetchSelectTargetData: dispatch(moduleActions.fetchSelectTargetData),
   fetchSelectTrainingData: dispatch(moduleActions.fetchSelectTrainingData),
   updateSelectTrainingData: dispatch(moduleActions.updateSelectTrainingData),
+  updateLabelData: dispatch(moduleActions.updateLabelData),
   updateHighlight: dispatch(moduleActions.updateHighlight),
   clearHighlight: dispatch(moduleActions.clearHighlight),
   fetchResultsData: dispatch(moduleActions.fetchResultsData),

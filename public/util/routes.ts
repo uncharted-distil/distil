@@ -2,7 +2,7 @@ import _ from "lodash";
 import { Route, Location } from "vue-router";
 import { Dictionary } from "./dict";
 import { SummaryMode } from "../store/dataset";
-
+import { ColorScaleNames } from "./data";
 // TODO: should really have a separate definintion for each route
 export interface RouteArgs {
   clustering?: string;
@@ -42,13 +42,16 @@ export interface RouteArgs {
   produceRequestId?: string;
   fittedSolutionId?: string;
   singleSolution?: string;
+  colorScale?: ColorScaleNames;
   predictionsDataset?: string;
   bandCombinationId?: string;
+  imageAttention?: boolean;
   modelTimeLimit?: number;
   modelLimit?: number;
   modelQuality?: string;
   dataSize?: number;
   metrics?: string;
+  trainTestSplit?: number;
 }
 
 function validateQueryArgs(args: RouteArgs): RouteArgs {

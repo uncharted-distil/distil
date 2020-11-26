@@ -86,7 +86,7 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 				log.Warnf("unable to check if cluster variable already exists: %v", err)
 			}
 			if !clusterVarInStorage {
-				err = dataStorage.AddVariable(dataset, storageName, clusterVarName, model.CategoricalType)
+				err = dataStorage.AddVariable(dataset, storageName, clusterVarName, model.CategoricalType, "")
 				if err != nil {
 					handleError(w, err)
 					return
@@ -190,7 +190,7 @@ func ClusteringExplainHandler(solutionCtor api.SolutionStorageCtor, metaCtor api
 			handleError(w, err)
 			return
 		}
-		err = dataStorage.AddField(result.Dataset, fmt.Sprintf("%s_explain", datasetMeta.StorageName), clusterVarName, model.StringType)
+		err = dataStorage.AddField(result.Dataset, fmt.Sprintf("%s_explain", datasetMeta.StorageName), clusterVarName, model.StringType, "")
 		if err != nil {
 			handleError(w, err)
 			return

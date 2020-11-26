@@ -28,6 +28,7 @@ import {
   TRAINING_VARS_INSTANCE_SEARCH,
   RESULT_TRAINING_VARS_INSTANCE_SEARCH,
   DATA_EXPLORER_VARS_INSTANCE_SEARCH,
+  LABEL_FEATURE_VARS_INSTANCE_PAGE,
 } from "../route/index";
 import { ModelQuality } from "../requests/index";
 import { decodeFilters, Filter, FilterParams } from "../../util/filters";
@@ -38,7 +39,7 @@ import { buildLookup } from "../../util/lookup";
 import { Route } from "vue-router";
 import _ from "lodash";
 import { $enum } from "ts-enum-util";
-import { minimumRouteKey } from "../../util/data";
+import { ColorScaleNames, minimumRouteKey } from "../../util/data";
 import { GEOBOUNDS_TYPE, GEOCOORDINATE_TYPE } from "../../util/types";
 
 export const getters = {
@@ -205,7 +206,10 @@ export const getters = {
     const pageVar = AVAILABLE_TRAINING_VARS_INSTANCE_PAGE;
     return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
   },
-
+  getLabelFeaturesVarsPage(state: Route): number {
+    const pageVar = LABEL_FEATURE_VARS_INSTANCE_PAGE;
+    return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
+  },
   getRouteTrainingVarsPage(state: Route): number {
     const pageVar = TRAINING_VARS_INSTANCE_PAGE;
     return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
@@ -468,7 +472,10 @@ export const getters = {
       return solution.solutionId === solutionId;
     });
   },
-
+  getColorScale(state: Route, getters: any): ColorScaleNames {
+    const colorScale = state.query.colorScale as ColorScaleNames;
+    return colorScale ?? ColorScaleNames.viridis; // default to viridis
+  },
   getGeoCenter(state: Route, getters: any): number[] {
     const geo = state.query.geo as string;
     if (!geo) {
@@ -506,7 +513,10 @@ export const getters = {
     }
     return $enum(DataMode).asValueOrDefault(mode, DataMode.Default);
   },
-
+  getImageAttention(state: Route, getters: any): boolean {
+    const imageAttention = state.query.imageAttention === "true";
+    return imageAttention;
+  },
   // Returns a map of (variable ID, summary mode) tuples that indicated the mode args that should be
   // applied to a given variable when fetched from the server.
   getDecodedVarModes(state: Route, getters: any): Map<string, SummaryMode> {
@@ -621,6 +631,14 @@ export const getters = {
       return null;
     }
     return metrics.split(",");
+  },
+
+  getRouteTrainTestSplit(state: Route): number {
+    const trainTestSplit = <string>state.query.trainTestSplit;
+    if (!trainTestSplit) {
+      return null;
+    }
+    return parseFloat(trainTestSplit);
   },
 
   /* Check if the current page is SELECT_TARGET_ROUTE. */

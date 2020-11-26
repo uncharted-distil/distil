@@ -45,6 +45,7 @@ export const getters = {
   getRouteAvailableTargetVarsPage: read(
     moduleGetters.getRouteAvailableTargetVarsPage
   ),
+  getLabelFeaturesVarsPage: read(moduleGetters.getLabelFeaturesVarsPage),
   getRouteAvailableTrainingVarsPage: read(
     moduleGetters.getRouteAvailableTrainingVarsPage
   ),
@@ -107,6 +108,7 @@ export const getters = {
   getGeoZoom: read(moduleGetters.getGeoZoom),
   getGroupingType: read(moduleGetters.getGroupingType),
   getRouteTask: read(moduleGetters.getRouteTask),
+  getColorScale: read(moduleGetters.getColorScale),
   getRouteFittedSolutionId: read(moduleGetters.getRouteFittedSolutionId),
   getRoutePredictionsDataset: read(moduleGetters.getRoutePredictionsDataset),
   isSingleSolution: read(moduleGetters.isSingleSolution),
@@ -119,6 +121,8 @@ export const getters = {
   getModelTimeLimit: read(moduleGetters.getModelTimeLimit),
   getModelQuality: read(moduleGetters.getModelQuality),
   getModelMetrics: read(moduleGetters.getModelMetrics),
+  getImageAttention: read(moduleGetters.getImageAttention),
+  getRouteTrainTestSplit: read(moduleGetters.getRouteTrainTestSplit),
   isPageSelectTarget: read(moduleGetters.isPageSelectTarget),
   isPageSelectTraining: read(moduleGetters.isPageSelectTraining),
   getRoutePane: read(moduleGetters.getRoutePane),

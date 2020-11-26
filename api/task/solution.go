@@ -34,12 +34,40 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 		return nil, err
 	}
 
-	metadata, err := metadataStorage.FetchDataset(request.Dataset, false, false)
+	dataset, err := metadataStorage.FetchDataset(request.Dataset, false, false)
 	if err != nil {
 		return nil, err
 	}
 
+	weights, err := solutionStorage.FetchSolutionWeights(fittedSolutionID)
+	if err != nil {
+		return nil, err
+	}
+
+	ranks := make(map[string]float64)
+	for _, fw := range weights {
+		ranks[fw.FeatureName] = fw.Weight
+	}
+
+	if len(ranks) == 0 {
+		summaryVariables, err := api.FetchSummaryVariables(dataset.ID, metadataStorage)
+		if err != nil {
+			return nil, err
+		}
+		ranks, err = TargetRank(dataset.Folder, request.TargetFeature(), summaryVariables, dataset.Source)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	types := make(map[string]string)
+
+	for _, vt := range dataset.Variables {
+		types[vt.Name] = vt.Type
+	}
+
 	vars := make([]string, len(request.Features)-1)
+	varDetails := make([]*api.SolutionVariable, len(request.Features)-1)
 	target := ""
 	c := 0
 	for _, v := range request.Features {
@@ -47,6 +75,11 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 			target = v.FeatureName
 		} else {
 			vars[c] = v.FeatureName
+			varDetails[c] = &api.SolutionVariable{
+				Name: v.FeatureName,
+				Rank: ranks[v.FeatureName],
+				Type: types[v.FeatureName],
+			}
 			c = c + 1
 		}
 	}
@@ -55,8 +88,9 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 		FilePath:         uri,
 		FittedSolutionID: fittedSolutionID,
 		DatasetID:        request.Dataset,
-		DatasetName:      metadata.Name,
+		DatasetName:      dataset.Name,
 		Variables:        vars,
+		VariableDetails:  varDetails,
 		Target:           target,
 		ModelName:        modelName,
 		ModelDescription: modelDescription,

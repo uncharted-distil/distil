@@ -51,6 +51,7 @@ export const TIMESERIES_TYPE = "timeseries";
 export const UNKNOWN_TYPE = "unknown";
 export const GEOCOORDINATE_TYPE = "geocoordinate";
 export const GEOBOUNDS_TYPE = "geobounds";
+export const LABELING_TYPE = "labeling"; // strictly used for labeling view
 
 // Group types per meta-types to categorize them on the Data Explorer view.
 export const META_TYPES = {

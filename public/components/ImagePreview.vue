@@ -14,23 +14,26 @@
       </template>
       <template v-else-if="!stopSpinner">
         <div
+          ref="imageElem"
           class="image-elem"
           :class="{ clickable: hasClick }"
           @click.stop="handleClick"
-          ref="imageElem"
-        ></div>
-        <i
-          class="fa fa-search-plus zoom-icon"
-          @click.stop="showZoomedImage"
-        ></i>
+        />
+        <div
+          ref="imageAttentionElem"
+          class="filter-elem"
+          :class="{ clickable: hasClick }"
+          @click.stop="handleClick"
+        />
+        <i class="fa fa-search-plus zoom-icon" @click.stop="showZoomedImage" />
       </template>
     </div>
     <image-drilldown
-      @hide="hideZoomImage"
       :imageUrl="imageUrl"
       :title="imageUrl"
       :visible="!!zoomImage"
-    ></image-drilldown>
+      @hide="hideZoomImage"
+    />
   </div>
 </template>
 
@@ -58,6 +61,7 @@ import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
 import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
 import { createRouteEntry } from "../util/routes";
+import { ColorScaleNames } from "../util/data";
 
 export default Vue.extend({
   name: "image-preview",
@@ -84,13 +88,20 @@ export default Vue.extend({
       type: Boolean as () => boolean,
     },
     onClick: Function,
-
     gray: { type: Number, default: 0 }, // support for graying images.
     debounce: { type: Boolean as () => boolean, default: false },
     debounceWaitTime: { type: Number as () => number, default: 500 },
   },
 
   watch: {
+    isLoaded() {
+      this.$nextTick(async () => {
+        if (!this.isLoaded) {
+          return;
+        }
+        await this.handleImageAttention();
+      });
+    },
     imageUrl(newUrl: string, oldUrl: string) {
       if (newUrl === null) {
         return;
@@ -103,7 +114,22 @@ export default Vue.extend({
         this.getImage();
       }
     },
-
+    async hasImageAttention() {
+      await this.handleImageAttention();
+    },
+    async row(newRow: TableRow, oldRow: TableRow) {
+      await this.handleImageAttention();
+    },
+    async colorScale() {
+      if (!!this.solutionId && !!this.row) {
+        await datasetActions.fetchImageAttention(this.$store, {
+          dataset: this.dataset,
+          resultId: this.solutionId,
+          d3mIndex: this.row.d3mIndex,
+        });
+        this.injectFilter();
+      }
+    },
     // Refresh image on band change
     band(newBand: string, oldBand: string) {
       if (newBand !== oldBand) {
@@ -137,10 +163,14 @@ export default Vue.extend({
       stopSpinner: false,
       debouncedRequestImage: null,
       getImage: null,
+      imageAttentionHasRendered: false,
     };
   },
 
   computed: {
+    colorScale(): ColorScaleNames {
+      return routeGetters.getColorScale(this.$store);
+    },
     imageId(): string {
       return this.imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
     },
@@ -163,10 +193,23 @@ export default Vue.extend({
         this.stopSpinner
       );
     },
+    imageAttentionIsLoaded(): boolean {
+      return (
+        !!this.solutionId &&
+        !!this.row &&
+        !!this.files[this.solutionId + this.row.d3mIndex]
+      );
+    },
     image(): HTMLImageElement {
       return (
         this.files[this.imageParamUrl] ?? this.files[this.imageParamId] ?? null
       );
+    },
+    imageAttentionId(): string {
+      return this.solutionId + this.row.d3mIndex;
+    },
+    imageAttention(): HTMLImageElement {
+      return this.files[this.solutionId + this.row.d3mIndex] ?? null;
     },
     spinnerHTML(): string {
       return circleSpinnerHTML();
@@ -188,24 +231,57 @@ export default Vue.extend({
       if (this.row) {
         return isRowSelected(this.rowSelection, this.row[D3M_INDEX_FIELD]);
       }
+      return false;
     },
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
+    hasImageAttention(): boolean {
+      return routeGetters.getImageAttention(this.$store);
+    },
+    solutionId(): string {
+      return routeGetters.getRouteSolutionId(this.$store);
+    },
   },
 
   methods: {
-    visibilityChanged(isVisible: boolean) {
+    async visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRequested) {
         this.getImage();
+        await this.handleImageAttention();
         return;
       }
       if (this.isVisible && this.hasRequested && !this.hasRendered) {
         this.injectImage();
       }
     },
-
+    async handleImageAttention() {
+      this.hasRendered = false;
+      this.clearImage(this.$refs.imageAttentionElem as any);
+      if (
+        this.hasImageAttention &&
+        !this.imageAttentionIsLoaded &&
+        !!this.row
+      ) {
+        await datasetActions.fetchImageAttention(this.$store, {
+          dataset: this.dataset,
+          resultId: this.solutionId,
+          d3mIndex: this.row.d3mIndex,
+        });
+      }
+      if (this.hasImageAttention && this.imageAttentionIsLoaded) {
+        this.injectFilter();
+      }
+      if (!this.hasImageAttention && this.imageAttentionHasRendered) {
+        this.clearImage(this.$refs.imageAttentionElem as any);
+        this.imageAttentionHasRendered = false;
+      }
+      if (!this.hasImageAttention && this.imageAttentionHasRendered) {
+        this.clearImage(this.$refs.imageAttentionElem as any);
+        this.imageAttentionHasRendered = false;
+      }
+    },
     handleClick() {
       if (this.onClick) {
         this.onClick({
@@ -251,6 +327,27 @@ export default Vue.extend({
         this.hasRendered = true;
       }
     },
+    injectFilter() {
+      if (!this.imageAttention) {
+        return;
+      }
+
+      const elem = this.$refs.imageAttentionElem as any;
+      if (elem) {
+        this.clearImage(elem);
+        const image = this.imageAttention.cloneNode() as HTMLImageElement;
+        elem.appendChild(image);
+
+        // fit image preview to available area with no overflows
+        if (
+          this.width === this.height &&
+          elem.children[0].height > elem.children[0].width
+        ) {
+          elem.children[0].style.height = elem.children[0].width + "px";
+        }
+        this.imageAttentionHasRendered = true;
+      }
+    },
 
     async requestImage() {
       if (this.imageUrl === null) {
@@ -285,6 +382,9 @@ export default Vue.extend({
       const empty = "";
       if (this.uniqueTrail !== empty) {
         datasetMutations.removeFile(this.$store, this.imageParamId);
+        if (!!this.imageAttention) {
+          datasetMutations.removeFile(this.$store, this.imageAttentionId);
+        }
       }
     },
   },
@@ -351,6 +451,13 @@ export default Vue.extend({
   max-height: 100%;
   max-width: 100%;
   position: relative;
+}
+
+.filter-elem img {
+  position: absolute;
+  top: 0px;
+  max-height: 100%;
+  max-width: 100%;
 }
 
 /* Zoom icon */

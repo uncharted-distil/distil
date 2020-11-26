@@ -10,6 +10,8 @@ export interface AppState {
   statusPanelState: StatusPanelState;
   ta2Version: string;
   prototype: boolean;
+  trainTestSplit: number;
+  trainTestSplitTimeSeries: number;
 }
 
 export interface StatusPanelState {
@@ -31,6 +33,8 @@ export const state: AppState = {
   },
   ta2Version: "unknown",
   prototype: false,
+  trainTestSplit: null,
+  trainTestSplitTimeSeries: null,
 };
 
 export type StatusPanelContentType = DatasetPendingRequestType;

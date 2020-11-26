@@ -84,7 +84,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 				handleError(w, err)
 				return
 			}
-			err = dataStorage.AddVariable(dataset, storageName, latVarName, model.LatitudeType)
+			err = dataStorage.AddVariable(dataset, storageName, latVarName, model.LatitudeType, "")
 			if err != nil {
 				handleError(w, err)
 				return
@@ -96,7 +96,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 				handleError(w, err)
 				return
 			}
-			err = dataStorage.AddVariable(dataset, storageName, lonVarName, model.LongitudeType)
+			err = dataStorage.AddVariable(dataset, storageName, lonVarName, model.LongitudeType, "")
 			if err != nil {
 				handleError(w, err)
 				return

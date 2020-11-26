@@ -137,6 +137,11 @@ export const getters = {
       ? state.includedSet.tableData.numRowsFiltered
       : 0;
   },
+  getNumberOfRecords(state: DatasetState): number {
+    return state.includedSet.tableData
+      ? state.includedSet.tableData.numRows
+      : 0;
+  },
   getAreaOfInterestIncludeInnerItems(state: DatasetState) {
     return getTableDataItems(state.areaOfInterestIncludeInner);
   },

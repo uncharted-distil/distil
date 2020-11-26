@@ -44,8 +44,10 @@
         <div v-if="expanded" class="col-12">
           <span><b>All Variables:</b></span>
           <p>
-            <span v-for="(variable, i) in model.variables" :key="variable">
-              {{ variable + (i !== model.variables.length - 1 ? ", " : ".") }}
+            <span v-for="(variable, i) in sortedVariables" :key="variable.name">
+              {{
+                variable.name + (i !== model.variables.length - 1 ? ", " : ".")
+              }}
             </span>
           </p>
           <b-button
@@ -64,7 +66,7 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import { Model } from "../store/model/index";
+import { Model, VariableDetail } from "../store/model/index";
 import { openModelSolution } from "../util/solutions";
 
 const NUM_TOP_FEATURES = 5;
@@ -83,8 +85,11 @@ export default Vue.extend({
   },
 
   computed: {
+    sortedVariables(): VariableDetail[] {
+      return this.model.variableDetails.slice().sort((a, b) => b.rank - a.rank);
+    },
     topVariables(): string[] {
-      return this.model.variables.slice(0, NUM_TOP_FEATURES);
+      return this.sortedVariables.slice(0, NUM_TOP_FEATURES).map((a) => a.name);
     },
   },
 

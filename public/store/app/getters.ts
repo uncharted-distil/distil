@@ -44,4 +44,11 @@ export const getters = {
   isPrototype(state: AppState) {
     return state.prototype;
   },
+
+  getTrainTestSplit(state: AppState): number {
+    return state.trainTestSplit;
+  },
+  getTrainTestSplitTimeSeries(state: AppState): number {
+    return state.trainTestSplitTimeSeries;
+  },
 };

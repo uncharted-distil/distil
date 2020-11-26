@@ -46,6 +46,7 @@ interface SolutionRequestMsg {
   maxTime: number;
   quality: ModelQuality;
   filters: FilterParams;
+  trainTestSplit: number;
 }
 
 // Solution status message used in web socket context
@@ -60,7 +61,7 @@ interface SolutionStatusMsg {
 
 interface PredictRequestMsg {
   datasetId: string;
-  dataset?: string; // base64 encoded version of dataset
+  datasetPath?: string; // path to previously uploaded dataset
   fittedSolutionId: string;
   target: string;
   targetType: string;
@@ -104,6 +105,7 @@ function updateCurrentSolutionResults(
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
     dataMode: dataMode,
+    isMapData: false,
     size,
   });
   resultsActions.fetchFeatureImportanceRanking(store, {
@@ -156,6 +158,15 @@ function updateCurrentSolutionResults(
     });
   } else if (isClassification) {
     resultsActions.fetchCorrectnessSummary(store, {
+      dataset: req.dataset,
+      solutionId: res.solutionId,
+      highlight: context.getters.getDecodedHighlight,
+      dataMode: dataMode,
+      varMode: varModes.has(req.target)
+        ? varModes.get(req.target)
+        : SummaryMode.Default,
+    });
+    resultsActions.fetchConfidenceSummary(store, {
       dataset: req.dataset,
       solutionId: res.solutionId,
       highlight: context.getters.getDecodedHighlight,
@@ -497,6 +508,7 @@ export const actions = {
         maxTime: request.maxTime,
         quality: request.quality,
         filters: request.filters,
+        trainTestSplit: request.trainTestSplit,
       });
     });
   },
@@ -558,7 +570,7 @@ export const actions = {
         type: CREATE_PREDICTIONS,
         fittedSolutionId: request.fittedSolutionId,
         datasetId: request.datasetId,
-        dataset: request.dataset,
+        datasetPath: request.datasetPath,
         targetType: request.targetType,
         intervalCount: request.intervalCount ?? null,
         intervalLength: request.intervalLength ?? null,
