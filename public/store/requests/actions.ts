@@ -32,6 +32,7 @@ import { mutations } from "./module";
 const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
 const STOP_SOLUTIONS = "STOP_SOLUTIONS";
 const CREATE_PREDICTIONS = "PREDICT";
+const CREATE_QUERY = "QUERY";
 const STOP_PREDICTIONS = "STOP_PREDICTIONS";
 
 // Message definitions for the websocket.  These are only for communication with the
@@ -71,6 +72,23 @@ interface PredictRequestMsg {
 
 // Prediction status.
 interface PredictStatusMsg {
+  solutionId: string;
+  resultId: string;
+  produceRequestId: string;
+  progress: string;
+  error: string;
+  timestamp: number;
+}
+
+interface QueryRequestMsg {
+  datasetId: string;
+  dataset?: string; // base64 encoded version of dataset
+  target: string;
+  filters: FilterParams;
+}
+
+// Prediction status.
+interface QueryStatusMsg {
   solutionId: string;
   resultId: string;
   produceRequestId: string;
@@ -370,6 +388,23 @@ async function handlePredictProgress(
   }
 }
 
+async function handleQueryProgress(
+  context: RequestContext,
+  request: QueryRequestMsg,
+  response: QueryStatusMsg
+) {
+  // request
+  console.log(
+    `Progress for request ${response.resultId} updated to ${response.progress}`
+  );
+  switch (response.progress) {
+    case QUERY_COMPLETED:
+    case QUERY_ERRORED:
+      console.log(`Done query`);
+      break;
+  }
+}
+
 export const actions = {
   async fetchSolutionRequests(
     context: RequestContext,
@@ -626,5 +661,56 @@ export const actions = {
     } catch (error) {
       console.error(error);
     }
+  },
+
+  // Opens up a websocket and initiates a query request.  Updates are returned until
+  // the query finishes.
+  createQueryRequest(context: RequestContext, request: QueryRequestMsg) {
+    let receivedUpdate = false;
+
+    return new Promise((resolve, reject) => {
+      const conn = getWebSocketConnection();
+      const stream = conn.stream((response) => {
+        // log any error
+        if (response.error) {
+          console.error(response.error);
+          resolve(response);
+        }
+
+        // handle query request progress - this is currently a one-shot operation, rather than
+        // one that streams in progress updates like solution processing.  We need to have the query
+        // data ready in order to move on, so we don't flag the resolve until handling of the query complete
+        // message is finished
+        if (response.progress) {
+          handleQueryProgress(context, request, response).then(() => {
+            // resolve the promise on the first update
+            if (!receivedUpdate) {
+              receivedUpdate = true;
+              resolve(response);
+            }
+          });
+        }
+
+        // close stream on complete
+        if (response.complete) {
+          console.log("Query request has completed, closing stream");
+          // close stream
+          stream.close();
+          // close the socket
+          conn.close();
+        }
+      });
+
+      console.log("Sending query request:", request);
+
+      // send create solutions request
+      stream.send({
+        type: CREATE_QUERY,
+        datasetId: request.datasetId,
+        dataset: request.dataset,
+        filters: request.filters,
+        target: request.target,
+      });
+    });
   },
 };
