@@ -9,7 +9,7 @@ import {
   RESULT_TRAINING_VARS_INSTANCE_PAGE,
 } from "../store/route/index";
 import { SummaryMode } from "../store/dataset";
-
+import { ColorScaleNames } from "./data";
 // TODO: should really have a separate definintion for each route
 export interface RouteArgs {
   clustering?: string;
@@ -49,6 +49,7 @@ export interface RouteArgs {
   produceRequestId?: string;
   fittedSolutionId?: string;
   singleSolution?: string;
+  colorScale?: ColorScaleNames;
   predictionsDataset?: string;
   bandCombinationId?: string;
   imageAttention?: boolean;

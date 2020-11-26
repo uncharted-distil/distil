@@ -302,9 +302,9 @@ func ConfidenceMatrixToImage(confidence [][]float64, colorScale func(float64) *c
 			r := uint8(float64(color.R) * alpha)
 			b := uint8(float64(color.B) * alpha)
 			g := uint8(float64(color.G) * alpha)
-			resultImage.Pix[outputIdx] = r   
-			resultImage.Pix[outputIdx+1] = g 
-			resultImage.Pix[outputIdx+2] = b 
+			resultImage.Pix[outputIdx] = r
+			resultImage.Pix[outputIdx+1] = g
+			resultImage.Pix[outputIdx+2] = b
 			resultImage.Pix[outputIdx+3] = opacity
 			outputIdx += step
 		}

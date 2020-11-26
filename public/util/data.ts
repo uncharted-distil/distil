@@ -51,7 +51,7 @@ import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
 import { overlayRouteEntry } from "./routes";
 import { Location } from "vue-router";
-
+import colorScales from "scale-color-perceptual";
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
 export const ERROR_SUFFIX = "_error";
@@ -79,6 +79,23 @@ export interface DatasetUpdate {
   name: string; // colName
   value: string; // new value to replace old value
 }
+// ColorScaleNames is an enum that contains all the supported color scale names. Can be used to access COLOR_SCALES functions
+export enum ColorScaleNames {
+  viridis = "viridis",
+  magma = "magma",
+  inferno = "inferno",
+  plasma = "plasma",
+}
+// COLOR_SCALES contains the color scalefunctions that are js. This is for wrapping it in typescript.
+export const COLOR_SCALES: Map<
+  ColorScaleNames,
+  (t: number) => string
+> = new Map([
+  [ColorScaleNames.viridis, colorScales.viridis],
+  [ColorScaleNames.magma, colorScales.magma],
+  [ColorScaleNames.inferno, colorScales.inferno],
+  [ColorScaleNames.plasma, colorScales.plasma],
+]);
 export function getTimeseriesSummaryTopCategories(
   summary: VariableSummary
 ): string[] {
