@@ -31,7 +31,7 @@ type PredictStatus struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// NewPredictRequest instantiates a predict request from a raw byte stream, as would
+// NewPredictRequest instantiates a predict request from a raw byte stream.
 func NewPredictRequest(data []byte) (*PredictRequest, error) {
 	req := &PredictRequest{
 		finished:       make(chan error),

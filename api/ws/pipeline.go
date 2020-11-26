@@ -39,6 +39,7 @@ const (
 	createSolutions = "CREATE_SOLUTIONS"
 	stopSolutions   = "STOP_SOLUTIONS"
 	predict         = "PREDICT"
+	query           = "QUERY"
 )
 
 var (
@@ -101,6 +102,8 @@ func handleMessage(conn *Connection, client *compute.Client, metadataCtor apiMod
 		return
 	case predict:
 		handlePredict(conn, client, metadataCtor, dataCtor, solutionCtor, modelCtor, msg)
+	case query:
+		handleQuery(conn, client, metadataCtor, dataCtor, solutionCtor, msg)
 	default:
 		// unrecognized type
 		handleErr(conn, msg, errors.New("unrecognized message type"))
@@ -224,6 +227,43 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 	err = request.Dispatch(client)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "received error from TA2 system"))
+		return
+	}
+}
+
+func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
+	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor, msg *Message) {
+	// create the storage instances
+	dataStorage, err := dataCtor()
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to initialize data storage"))
+		return
+	}
+
+	// initialize metadata storage
+	metaStorage, err := metadataCtor()
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to initialize meta storage"))
+		return
+	}
+
+	// parse parameters from the message
+	req, err := api.NewQueryRequest(msg.Raw)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to parse query request"))
+		return
+	}
+
+	params := task.QueryParams{
+		DataStorage: dataStorage,
+		MetaStorage: metaStorage,
+		Dataset:     req.Dataset,
+		TargetName:  req.Target,
+		Filters:     req.Filters,
+	}
+	_, err = task.Query(params)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to execute query request"))
 		return
 	}
 }
