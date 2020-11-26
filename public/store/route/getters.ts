@@ -632,4 +632,9 @@ export const getters = {
   isPageSelectTraining(state: Route): Boolean {
     return state.path === SELECT_TRAINING_ROUTE;
   },
+
+  /* Get the active pane on the route */
+  getRoutePane(state: Route): string {
+    return state.query.pane as string;
+  },
 };

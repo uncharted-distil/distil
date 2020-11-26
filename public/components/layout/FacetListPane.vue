@@ -38,7 +38,10 @@ export default Vue.extend({
   name: "FacetListPane",
 
   props: {
-    variables: { type: Array as () => Variable[], default: () => [] },
+    variables: {
+      type: Array as () => Variable[],
+      default: () => [] as Variable[],
+    },
   },
 
   components: {
@@ -60,6 +63,10 @@ export default Vue.extend({
 
     varsSearch(): string {
       return routeGetters.getRouteDataExplorerVarsSearch(this.$store);
+    },
+
+    activePane(): string {
+      return routeGetters.getRoutePane(this.$store) ?? "available";
     },
 
     button(): (group: Group) => HTMLElement {
@@ -145,18 +152,26 @@ export default Vue.extend({
   },
 
   watch: {
+    activePane() {
+      this.updateSummaries();
+    },
+
     varsPage() {
-      viewActions.fetchDataExplorerData(this.$store);
+      this.updateSummaries();
     },
 
     varsSearch() {
-      viewActions.fetchDataExplorerData(this.$store);
+      this.updateSummaries();
     },
   },
 
   methods: {
     onSearch(term): void {
       this.search = term;
+    },
+
+    updateSummaries(): void {
+      viewActions.fetchDataExplorerData(this.$store, this.variables);
     },
   },
 });

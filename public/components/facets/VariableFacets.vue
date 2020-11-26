@@ -251,7 +251,7 @@ export default Vue.extend({
         const entry = overlayRouteEntry(this.$route, {
           [this.routePageKey()]: page,
         });
-        this.$router.push(entry).catch((err) => console.warn(err));
+        this.$router.push(entry).catch((err) => console.debug(err));
         this.$emit("page", page);
       },
       get(): number {

@@ -100,7 +100,8 @@ const fetchVariables = createCacheable(
 const fetchVariableSummaries = async (context, args) => {
   await fetchVariables(context, args);
   const dataset = args.dataset as string;
-  const variables = context.getters.getVariables as Variable[];
+  const variables =
+    args.variables ?? (context.getters.getVariables as Variable[]);
   const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
   const highlight = context.getters.getDecodedHighlight;
   const varModes = context.getters.getDecodedVarModes;
@@ -401,10 +402,10 @@ export const actions = {
     return fetchVariableSummaries(context, { dataset });
   },
 
-  async fetchDataExplorerData(context: ViewContext) {
+  async fetchDataExplorerData(context: ViewContext, variables: Variable[]) {
     // fetch new state
     const dataset = context.getters.getRouteDataset;
-    return fetchVariableSummaries(context, { dataset });
+    return fetchVariableSummaries(context, { dataset, variables });
   },
 
   clearJoinDatasetsData(context) {

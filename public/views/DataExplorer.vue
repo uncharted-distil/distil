@@ -272,7 +272,7 @@ export default Vue.extend({
 
   async beforeMount() {
     // First get the dataset informations
-    await viewActions.fetchDataExplorerData(this.$store);
+    await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);
 
     // Update the training data
     viewActions.updateSelectTrainingData(this.$store);
@@ -282,14 +282,6 @@ export default Vue.extend({
     // Update the route an fetch the new summaries based on the updated route
     activePane(newPane, oldPane) {
       if (oldPane === newPane) return;
-
-      // update the selected pane, and reset the page var to 1
-      this.updateRoute({
-        pane: newPane,
-        [`${DATA_EXPLORER_VAR_INSTANCE}${ROUTE_PAGE_SUFFIX}`]: 1,
-      });
-
-      viewActions.fetchDataExplorerData(this.$store);
     },
   },
 
@@ -301,11 +293,19 @@ export default Vue.extend({
     },
 
     onSetActive(actionName: string): void {
+      if (actionName === this.activePane) return;
+
       let activePane = "available"; // default
       if (actionName !== "") {
         activePane = this.actions.find((a) => a.name === actionName).paneId;
       }
       this.activePane = activePane;
+
+      // update the selected pane, and reset the page var to 1
+      this.updateRoute({
+        pane: activePane,
+        [`${DATA_EXPLORER_VAR_INSTANCE}${ROUTE_PAGE_SUFFIX}`]: 1,
+      });
     },
 
     updateRoute(args) {

@@ -121,4 +121,5 @@ export const getters = {
   getModelMetrics: read(moduleGetters.getModelMetrics),
   isPageSelectTarget: read(moduleGetters.isPageSelectTarget),
   isPageSelectTraining: read(moduleGetters.isPageSelectTraining),
+  getRoutePane: read(moduleGetters.getRoutePane),
 };

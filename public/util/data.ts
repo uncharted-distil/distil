@@ -281,9 +281,9 @@ export function fetchResultExemplars(
   using some of the route's query options (IE: not grabbing all
   options as that's too narrow in focus.) It SHA1 hashes a string
   of datasetId, solutionId, requestId, fittedSolutionId, highlight,
-  filters, dataMode, varModes and ranking as that's unique enough
-  without being over specific and causing duplicate calls. The SHA1
-  hash of those fields is fast to calculate, maintains uniqueness,
+  filters, dataMode, varModes, active pane, and ranking as that's unique 
+  enough without being over specific and causing duplicate calls.  
+  The SHA1 hash of those fields is fast to calculate, maintains uniqueness,
   and keeps the store keys a consistent length, unlike base64.
 */
 export function minimumRouteKey(): string {
@@ -296,6 +296,8 @@ export function minimumRouteKey(): string {
     JSON.stringify(routeGetters.getRouteFilters(store)) +
     JSON.stringify(routeGetters.getDataMode(store)) +
     JSON.stringify(routeGetters.getDecodedVarModes(store)) +
+    "pane" +
+    routeGetters.getRoutePane(store) +
     "ranked" +
     JSON.stringify(routeGetters.getRouteIsTrainingVariablesRanked(store));
   const sha1rk = sha1(routeKeys);
