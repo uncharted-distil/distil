@@ -51,7 +51,13 @@ import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
 import { overlayRouteEntry } from "./routes";
 import { Location } from "vue-router";
-import colorScales from "scale-color-perceptual";
+import {
+  interpolateTurbo,
+  interpolateViridis,
+  interpolateInferno,
+  interpolateMagma,
+  interpolatePlasma,
+} from "d3-scale-chromatic";
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
 export const ERROR_SUFFIX = "_error";
@@ -85,16 +91,18 @@ export enum ColorScaleNames {
   magma = "magma",
   inferno = "inferno",
   plasma = "plasma",
+  turbo = "turbo",
 }
 // COLOR_SCALES contains the color scalefunctions that are js. This is for wrapping it in typescript.
 export const COLOR_SCALES: Map<
   ColorScaleNames,
   (t: number) => string
 > = new Map([
-  [ColorScaleNames.viridis, colorScales.viridis],
-  [ColorScaleNames.magma, colorScales.magma],
-  [ColorScaleNames.inferno, colorScales.inferno],
-  [ColorScaleNames.plasma, colorScales.plasma],
+  [ColorScaleNames.viridis, interpolateViridis],
+  [ColorScaleNames.magma, interpolateMagma],
+  [ColorScaleNames.inferno, interpolateInferno],
+  [ColorScaleNames.plasma, interpolatePlasma],
+  [ColorScaleNames.turbo, interpolateTurbo],
 ]);
 export function getTimeseriesSummaryTopCategories(
   summary: VariableSummary
