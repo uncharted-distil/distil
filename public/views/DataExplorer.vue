@@ -18,21 +18,10 @@
     </left-side-panel>
 
     <main class="content">
-      <!-- <div class="fake-search-input">
-      <filter-badge
-        v-if="activeFilter"
-        active-filter
-        :filter="activeFilter"
-      />
-      <filter-badge
-        v-for="(filter, index) in filters"
-        :key="index"
-        :filter="filter"
-      />
-    </div> -->
+      <search-input class="mb-3" />
 
       <!-- Tabs to switch views -->
-      <b-tabs pills v-model="activeView" class="mb-2">
+      <b-tabs pills v-model="activeView" class="mb-3">
         <b-tab
           v-for="(view, index) in activeViews"
           :key="index"
@@ -72,15 +61,17 @@ import ActionColumn, { Action } from "../components/layout/ActionColumn.vue";
 import AddVariablePane from "../components/layout/AddVariablePane.vue";
 import DataSize from "../components/buttons/DataSize.vue";
 import FacetListPane from "../components/layout/FacetListPane.vue";
+import FilterBadge from "../components/FilterBadge.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
+import SearchInput from "../components/layout/SearchInput.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
 import SelectGeoPlot from "../components/SelectGeoPlot.vue";
 // import SelectGraphView from "../components/SelectGraphView.vue";
 // import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 
 // Store
-import { RowSelection, Variable } from "../store/dataset/index";
+import { Highlight, RowSelection, Variable } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import {
   DATA_EXPLORER_VAR_INSTANCE,
@@ -126,6 +117,7 @@ export default Vue.extend({
     FacetListPane,
     LeftSidePanel,
     ImageMosaic,
+    SearchInput,
     SelectDataTable,
     SelectGeoPlot,
     // SelectGraphView,
@@ -333,7 +325,12 @@ export default Vue.extend({
   overflow: hidden;
 }
 
-.view-container .content {
+/* Make firsts element of this component unsquishable. */
+.view-container > *:not(:last-child) {
+  flex-shrink: 0;
+}
+
+.content {
   display: flex;
   flex-direction: column;
   flex-grow: 1;

@@ -1,5 +1,6 @@
 <template>
   <variable-facets
+    enable-highlighting
     enable-search
     enable-type-change
     enable-type-filtering
