@@ -209,7 +209,7 @@ export default Vue.extend({
       return this.solutionId + this.row.d3mIndex;
     },
     imageAttention(): HTMLImageElement {
-      return this.files[this.solutionId + this.row.d3mIndex] ?? null;
+      return this.files[this.solutionId + this.row?.d3mIndex] ?? null;
     },
     spinnerHTML(): string {
       return circleSpinnerHTML();

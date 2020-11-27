@@ -156,7 +156,7 @@ export default Vue.extend({
     },
 
     activeViews(): string[] {
-      return filterViews(this.activeVariables);
+      return filterViews(this.selectedVariables);
     },
 
     /* Actions available based on the variables meta types */
@@ -216,6 +216,12 @@ export default Vue.extend({
       return getNumIncludedRows(this.rowSelection);
     },
 
+    selectedVariables(): Variable[] {
+      return this.variables.filter((v) =>
+        this.cleanTraining.includes(v.colName.toLowerCase())
+      );
+    },
+
     spinnerHTML,
 
     totalNumRows(): number {
@@ -228,25 +234,24 @@ export default Vue.extend({
       return routeGetters.getDecodedTrainingVariableNames(this.$store);
     },
 
+    cleanTraining(): string[] {
+      return this.training.map((t) => t.toLowerCase());
+    },
+
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
 
     variablesPerActions(): any {
-      const cleanTraining = this.training.map((t) => t.toLowerCase());
-
-      const selectedVariables = this.variables.filter((v) =>
-        cleanTraining.includes(v.colName.toLowerCase())
-      );
       const nonSelectedVariables = this.variables.filter(
-        (v) => !cleanTraining.includes(v.colName.toLowerCase())
+        (v) => !this.cleanTraining.includes(v.colName.toLowerCase())
       );
 
       const variables = {};
       this.availableActions.forEach((action) => {
         if (action.paneId === "add") variables[action.paneId] = null;
         else if (action.paneId === "selected") {
-          variables[action.paneId] = selectedVariables;
+          variables[action.paneId] = this.selectedVariables;
         } else if (action.paneId === "available") {
           variables[action.paneId] = nonSelectedVariables;
         } else {
@@ -349,7 +354,7 @@ export default Vue.extend({
 }
 
 /* Make some elements of a container unsquishable. */
-.view-container > *:not(:last-child),
+.view-container > *:not(.content),
 .content > *:not(.data-container) {
   flex-shrink: 0;
 }
