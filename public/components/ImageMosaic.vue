@@ -112,9 +112,7 @@ export default Vue.extend({
     },
 
     itemCount(): number {
-      return this.includedActive
-        ? datasetGetters.getIncludedTableDataLength(this.$store)
-        : datasetGetters.getExcludedTableDataLength(this.$store);
+      return this.items.length;
     },
     fields(): Dictionary<TableColumn> {
       const currentFields = this.dataFields
