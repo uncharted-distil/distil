@@ -1,25 +1,28 @@
 <template>
   <div class="search-input">
-    <filter-badge
-      v-for="(filter, index) in filters"
-      :key="index"
-      :filter="filter"
-    />
-    <filter-badge
-      v-if="highlightAsAFilter"
-      is-highlight
-      :filter="highlightAsAFilter"
-    />
+    <header>Filters</header>
+    <main>
+      <filter-badge
+        v-for="(filter, index) in filters"
+        :key="index"
+        :filter="filter"
+      />
+      <filter-badge
+        v-if="highlightAsAFilter"
+        is-highlight
+        :filter="highlightAsAFilter"
+      />
+    </main>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import FilterBadge from "../../components/FilterBadge.vue";
-import { Highlight } from "../../store/dataset/index";
-import { getters as routeGetters } from "../../store/route/module";
-import { Filter, INCLUDE_FILTER } from "../../util/filters";
-import { createFilterFromHighlight } from "../../util/highlights";
+import FilterBadge from "../components/FilterBadge.vue";
+import { Highlight } from "../store/dataset/index";
+import { getters as routeGetters } from "../store/route/module";
+import { Filter, INCLUDE_FILTER } from "../util/filters";
+import { createFilterFromHighlight } from "../util/highlights";
 
 export default Vue.extend({
   name: "SearchInput",
@@ -48,7 +51,11 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-.search-input {
+header {
+  font-weight: bold;
+}
+
+main {
   background-color: var(--gray-300);
   border: 1px solid var(--gray-500);
   border-radius: 0.2rem;

@@ -215,3 +215,10 @@ body {
 .distil-table-container > .pagination {
   flex: 0 1 auto;
 }
+
+.matching-color {
+  color: var(--blue);
+}
+.selected-color {
+  color: var(--red);
+}

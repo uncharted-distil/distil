@@ -3,9 +3,9 @@ import { LAST_STATE } from "../store/view/index";
 import localStorage from "store";
 
 import {
-  hasGeoordinateFeatures,
+  hasGeoFeatures,
   hasImageFeatures,
-  hasTimeseriesFeatures,
+  // hasTimeseriesFeatures,
 } from "../util/data";
 import { Variable } from "../store/dataset/index";
 
@@ -19,7 +19,7 @@ export const TIMESERIES_VIEW = "timeseries" as string;
 // Return a list of views available for the variables
 export function filterViews(variables: Variable[]): string[] {
   const views = [TABLE_VIEW];
-  if (hasGeoordinateFeatures(variables)) views.push(GEO_VIEW);
+  if (hasGeoFeatures(variables)) views.push(GEO_VIEW);
   if (hasImageFeatures(variables)) views.push(IMAGE_VIEW);
   // if (hasTimeseriesFeatures(variables)) views.push(TIMESERIES_VIEW); Disabled for now
   return views;

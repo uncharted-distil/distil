@@ -26,7 +26,7 @@
           v-for="(view, index) in activeViews"
           :key="index"
           :active="view === activeViews[activeView]"
-          :title="view | capitalize"
+          :title="capitalize(view)"
         />
       </b-tabs>
 
@@ -58,13 +58,13 @@ import { capitalize, isEmpty } from "lodash";
 
 // Components
 import ActionColumn, { Action } from "../components/layout/ActionColumn.vue";
-import AddVariablePane from "../components/layout/AddVariablePane.vue";
+import AddVariablePane from "../components/panel/AddVariablePane.vue";
 import DataSize from "../components/buttons/DataSize.vue";
-import FacetListPane from "../components/layout/FacetListPane.vue";
+import FacetListPane from "../components/panel/FacetListPane.vue";
 import FilterBadge from "../components/FilterBadge.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
-import SearchInput from "../components/layout/SearchInput.vue";
+import SearchInput from "../components/SearchInput.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
 import SelectGeoPlot from "../components/SelectGeoPlot.vue";
 // import SelectGraphView from "../components/SelectGraphView.vue";
@@ -124,10 +124,6 @@ export default Vue.extend({
     // SelectTimeseriesView,
   },
 
-  filters: {
-    capitalize,
-  },
-
   data() {
     return {
       actions: ACTIONS,
@@ -139,17 +135,21 @@ export default Vue.extend({
   },
 
   computed: {
-    /* Variables displayed on the Facet Panel */
-    activeVariables(): Variable[] {
-      return this.variablesPerActions[this.activePane] ?? [];
-    },
-
     /* Actions displayed on the Action column */
     activeActions(): Action[] {
       return this.availableActions.map((action) => {
         const count = this.variablesPerActions[action.paneId]?.length;
         return count ? { ...action, count } : action;
       });
+    },
+
+    /* Variables displayed on the Facet Panel */
+    activeVariables(): Variable[] {
+      return this.variablesPerActions[this.activePane] ?? [];
+    },
+
+    activeViews(): string[] {
+      return filterViews(this.activeVariables);
     },
 
     /* Actions available based on the variables meta types */
@@ -160,42 +160,15 @@ export default Vue.extend({
       );
     },
 
-    activeViews(): string[] {
-      return filterViews(this.activeVariables);
-    },
-
-    variablesPerActions(): any {
-      const cleanTraining = this.training.map((t) => t.toLowerCase());
-
-      const selectedVariables = this.variables.filter((v) =>
-        cleanTraining.includes(v.colName.toLowerCase())
-      );
-      const nonSelectedVariables = this.variables.filter(
-        (v) => !cleanTraining.includes(v.colName.toLowerCase())
-      );
-
-      const variables = {};
-      this.availableActions.forEach((action) => {
-        if (action.paneId === "add") variables[action.paneId] = null;
-        else if (action.paneId === "selected") {
-          variables[action.paneId] = selectedVariables;
-        } else if (action.paneId === "available") {
-          variables[action.paneId] = nonSelectedVariables;
-        } else {
-          variables[action.paneId] = nonSelectedVariables.filter((variable) =>
-            META_TYPES[action.paneId].includes(variable.colType)
-          );
-        }
-      });
-
-      return variables;
-    },
-
     currentAction(): string {
       return (
         this.activePane &&
         this.actions.find((a) => a.paneId === this.activePane).name
       );
+    },
+
+    filters(): string {
+      return routeGetters.getRouteFilters(this.$store);
     },
 
     hasData(): boolean {
@@ -204,6 +177,10 @@ export default Vue.extend({
 
     hasNoVariables(): boolean {
       return isEmpty(this.activeVariables);
+    },
+
+    highlight(): Highlight {
+      return routeGetters.getDecodedHighlight(this.$store);
     },
 
     inactiveMetaTypes(): string[] {
@@ -244,12 +221,39 @@ export default Vue.extend({
       return routeGetters.getDecodedTrainingVariableNames(this.$store);
     },
 
-    variablesTypes(): string[] {
-      return [...new Set(this.variables.map((v) => v.colType))];
-    },
-
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
+    },
+
+    variablesPerActions(): any {
+      const cleanTraining = this.training.map((t) => t.toLowerCase());
+
+      const selectedVariables = this.variables.filter((v) =>
+        cleanTraining.includes(v.colName.toLowerCase())
+      );
+      const nonSelectedVariables = this.variables.filter(
+        (v) => !cleanTraining.includes(v.colName.toLowerCase())
+      );
+
+      const variables = {};
+      this.availableActions.forEach((action) => {
+        if (action.paneId === "add") variables[action.paneId] = null;
+        else if (action.paneId === "selected") {
+          variables[action.paneId] = selectedVariables;
+        } else if (action.paneId === "available") {
+          variables[action.paneId] = nonSelectedVariables;
+        } else {
+          variables[action.paneId] = nonSelectedVariables.filter((variable) =>
+            META_TYPES[action.paneId].includes(variable.colType)
+          );
+        }
+      });
+
+      return variables;
+    },
+
+    variablesTypes(): string[] {
+      return [...new Set(this.variables.map((v) => v.colType))];
     },
 
     viewComponent() {
@@ -270,11 +274,21 @@ export default Vue.extend({
     viewActions.updateSelectTrainingData(this.$store);
   },
 
+  // Update either the summaries or training data on user interaction.
   watch: {
-    // Update the route an fetch the new summaries based on the updated route
-    activePane(newPane, oldPane) {
-      if (oldPane === newPane) return;
+    activeVariables(newVariables, oldVariables) {
+      if (oldVariables === newVariables) return;
       viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
+    },
+
+    filters(newFilters, oldFilters) {
+      if (oldFilters === newFilters) return;
+      viewActions.updateSelectTrainingData(this.$store);
+    },
+
+    highlight(newHighlight, oldHighlight) {
+      if (oldHighlight === newHighlight) return;
+      viewActions.updateSelectTrainingData(this.$store);
     },
 
     training(newTraining, oldTraining) {
@@ -284,6 +298,8 @@ export default Vue.extend({
   },
 
   methods: {
+    capitalize,
+
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
@@ -325,8 +341,9 @@ export default Vue.extend({
   overflow: hidden;
 }
 
-/* Make firsts element of this component unsquishable. */
-.view-container > *:not(:last-child) {
+/* Make some elements of a container unsquishable. */
+.view-container > *:not(:last-child),
+.content > *:not(.data-container) {
   flex-shrink: 0;
 }
 
@@ -343,12 +360,5 @@ export default Vue.extend({
   height: 100%;
   position: relative;
   width: 100%;
-}
-
-.matching-color {
-  color: var(--blue);
-}
-.selected-color {
-  color: var(--red);
 }
 </style>

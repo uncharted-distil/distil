@@ -46,6 +46,8 @@ import {
   isTimeGroupType,
   isTimeType,
   isValueGroupType,
+  LATITUDE_TYPE,
+  LONGITUDE_TYPE,
   MULTIBAND_IMAGE_TYPE,
   TIMESERIES_TYPE,
 } from "../util/types";
@@ -982,25 +984,25 @@ export function hasTimeseriesFeatures(variables: Variable[]): boolean {
   return false;
 }
 
-// export function hasGeoordinateFeatures(variables: Variable[]): boolean {
-//   const latColumns = variables.filter((v) => isLatitudeGroupType(v.colType));
-//   const lonColumns = variables.filter((v) => isLongitudeGroupType(v.colType));
-//   if (
-//     (latColumns.length === 1 &&
-//       lonColumns.length === 1 &&
-//       latColumns[0].colName !== lonColumns[0].colName) ||
-//     (latColumns.length > 1 && lonColumns.length > 0) ||
-//     (latColumns.length > 0 && lonColumns.length > 1)
-//   ) {
-//     return true;
-//   }
-//
-//   return false;
-// }
-
 export function hasGeoordinateFeatures(variables: Variable[]): boolean {
-  const hasLat = variables.some((v) => isLatitudeGroupType(v.colType));
-  const hasLon = variables.some((v) => isLongitudeGroupType(v.colType));
+  const latColumns = variables.filter((v) => isLatitudeGroupType(v.colType));
+  const lonColumns = variables.filter((v) => isLongitudeGroupType(v.colType));
+  if (
+    (latColumns.length === 1 &&
+      lonColumns.length === 1 &&
+      latColumns[0].colName !== lonColumns[0].colName) ||
+    (latColumns.length > 1 && lonColumns.length > 0) ||
+    (latColumns.length > 0 && lonColumns.length > 1)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+export function hasGeoFeatures(variables: Variable[]): boolean {
+  const hasLat = variables.some((v) => v.colType === LONGITUDE_TYPE);
+  const hasLon = variables.some((v) => v.colType === LATITUDE_TYPE);
   const hasGeocoord = variables.some(
     (v) => v.grouping && isGeoLocatedType(v.grouping.type)
   );
