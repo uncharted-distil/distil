@@ -28,7 +28,6 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
-	"github.com/uncharted-distil/distil/api/util"
 )
 
 const (
@@ -63,11 +62,13 @@ func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig)
 	d3mIndexField := getD3MIndexField(mainDR)
 
 	// open the input file
-	dataPath := path.Join(outputPath.sourceFolder, mainDR.ResPath)
-	lines, err := util.ReadCSVFile(dataPath, config.HasHeader)
+	dataPath := model.GetResourcePath(schemaFile, mainDR)
+	storage := serialization.GetStorage(dataPath)
+	lines, err := storage.ReadData(dataPath)
 	if err != nil {
 		return "", errors.Wrap(err, "error reading raw data")
 	}
+	lines = lines[1:]
 
 	// add the cluster data to the raw data
 	for _, f := range features {
@@ -94,7 +95,7 @@ func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing clustered output")
 	}
-	mainDR.ResPath = path.Dir(outputPath.outputData)
+	mainDR.ResPath = outputPath.outputData
 
 	// write the new schema to file
 	err = datasetStorage.WriteMetadata(outputPath.outputSchema, meta, true, false)

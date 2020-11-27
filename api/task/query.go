@@ -28,6 +28,7 @@ import (
 	"github.com/uncharted-distil/distil/api/serialization"
 )
 
+// QueryParams helper struct to simplify query task calling.
 type QueryParams struct {
 	Dataset     string
 	TargetName  string
@@ -71,7 +72,7 @@ func Query(params QueryParams) (string, error) {
 	}
 
 	// submit the pipeline
-	resultURI, err := submitPipeline([]string{params.Dataset, datasetPath}, desc)
+	resultURI, err := submitPipeline([]string{env.ResolvePath(ds.Source, ds.Folder), datasetPath}, desc)
 	if err != nil {
 		return "", err
 	}
@@ -106,7 +107,7 @@ func extractQueryDataset(targetName string, data [][]string) [][]string {
 
 	// need to reduce to 1 row / d3m index (labels should match across the whole group)
 	reducedData := map[string]string{}
-	dataToStore := [][]string{[]string{model.D3MIndexFieldName, targetName}}
+	dataToStore := [][]string{{model.D3MIndexFieldName, targetName}}
 	for i := 1; i < len(data); i++ {
 		key := data[i][d3mIndex]
 		_, ok := reducedData[key]
@@ -139,7 +140,7 @@ func writeQueryDataset(ds *api.Dataset, data [][]string) (string, error) {
 		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName,
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
 			[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
-		model.NewVariable(2, "label", "label", "label", model.StringType,
+		model.NewVariable(1, "label", "label", "label", model.StringType,
 			model.StringType, "Label for the query", []string{"suggestedTarget"},
 			model.VarDistilRoleData, nil, dr.Variables, false),
 	}
