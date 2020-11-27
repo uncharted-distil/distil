@@ -49,6 +49,9 @@
         </template>
       </p>
     </main>
+
+    <status-sidebar />
+    <status-panel />
   </div>
 </template>
 
@@ -69,6 +72,8 @@ import SelectDataTable from "../components/SelectDataTable.vue";
 import SelectGeoPlot from "../components/SelectGeoPlot.vue";
 // import SelectGraphView from "../components/SelectGraphView.vue";
 // import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
+import StatusPanel from "../components/StatusPanel.vue";
+import StatusSidebar from "../components/StatusSidebar.vue";
 
 // Store
 import { Highlight, RowSelection, Variable } from "../store/dataset/index";
@@ -122,6 +127,8 @@ export default Vue.extend({
     SelectGeoPlot,
     // SelectGraphView,
     // SelectTimeseriesView,
+    StatusPanel,
+    StatusSidebar,
   },
 
   data() {
