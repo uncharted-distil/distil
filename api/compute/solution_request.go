@@ -152,7 +152,7 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 		return nil, fmt.Errorf("no `target` in solution request")
 	}
 	for _, v := range variables {
-		if v.Name == targetName {
+		if v.StorageName == targetName {
 			req.TargetFeature = v
 		}
 	}
@@ -263,7 +263,7 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 			Inputs: []*pipeline.ProblemInput{
 				{
 					DatasetId: compute.ConvertDatasetTA3ToTA2(dataset),
-					Targets:   compute.ConvertTargetFeaturesTA3ToTA2(targetFeature.Name, columnIndex),
+					Targets:   compute.ConvertTargetFeaturesTA3ToTA2(targetFeature.StorageName, columnIndex),
 				},
 			},
 		},
@@ -547,7 +547,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist results
-	err = dataStorage.PersistResult(dataset, storageName, resultURI, s.TargetFeature.Name)
+	err = dataStorage.PersistResult(dataset, storageName, resultURI, s.TargetFeature.StorageName)
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -735,7 +735,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		featurizedVariables = meta.GetMainDataResource().Variables
 
 		for _, v := range featurizedVariables {
-			if v.Name == targetVariable.Name {
+			if v.StorageName == targetVariable.StorageName {
 				targetIndex = v.Index
 				break
 			}
@@ -827,7 +827,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			continue
 		}
 
-		if v == s.TargetFeature.Name {
+		if v == s.TargetFeature.StorageName {
 			// store target feature
 			typ = model.FeatureTypeTarget
 		} else {
@@ -856,7 +856,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 func findVariable(variableName string, variables []*model.Variable) (*model.Variable, error) {
 	// extract the variable instance from its name
 	for _, v := range variables {
-		if v.Name == variableName {
+		if v.StorageName == variableName {
 			return v, nil
 		}
 	}

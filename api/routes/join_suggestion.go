@@ -171,7 +171,7 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 func getColNameByDisplayName(dataset model.Dataset, colDisplayName string) string {
 	for _, variable := range dataset.Variables {
 		if variable.DisplayName == colDisplayName {
-			return variable.Name
+			return variable.StorageName
 		}
 	}
 	return compute.NormalizeVariableName(colDisplayName) // fallback

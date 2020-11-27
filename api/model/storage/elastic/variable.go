@@ -27,9 +27,13 @@ import (
 )
 
 func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variable, error) {
-	name, ok := json.String(child, model.VarNameField)
+	headerName, ok := json.String(child, model.VarNameField)
 	if !ok {
-		return nil, errors.New("unable to parse name from variable data")
+		return nil, errors.New("unable to parse header name from variable data")
+	}
+	storageName, ok := json.String(child, model.VarStorageNameField)
+	if !ok {
+		return nil, errors.New("unable to parse storage name from variable data")
 	}
 	index, ok := json.Int(child, model.VarIndexField)
 	if !ok {
@@ -61,7 +65,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	}
 	originalVariable, ok := json.String(child, model.VarOriginalVariableField)
 	if !ok {
-		originalVariable = name
+		originalVariable = storageName
 	}
 	displayVariable, ok := json.String(child, model.VarDisplayVariableField)
 	if !ok {
@@ -104,11 +108,12 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 
 	// default the display name to the normalized name
 	if displayVariable == "" {
-		displayVariable = name
+		displayVariable = headerName
 	}
 
 	return &model.Variable{
-		Name:             name,
+		StorageName:      storageName,
+		HeaderName:       headerName,
 		Index:            index,
 		Type:             typ,
 		OriginalType:     originalType,
@@ -166,7 +171,7 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 			return nil, errors.Wrap(err, "unable to parse variable")
 		}
 		if variable != nil {
-			if variable.Name == varName {
+			if variable.StorageName == varName {
 				return variable, nil
 			}
 		}
@@ -374,7 +379,7 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 	// create a lookup for the variables.
 	varsLookup := make(map[string]*model.Variable)
 	for _, v := range vars {
-		varsLookup[v.Name] = v
+		varsLookup[v.StorageName] = v
 	}
 
 	// build the slice by cycling through the variables and using the lookup
@@ -382,7 +387,7 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 	resultIncludes := make(map[string]bool)
 	result := make([]*model.Variable, 0)
 	for _, v := range vars {
-		name := v.Name
+		name := v.StorageName
 		if !resultIncludes[name] {
 			result = append(result, varsLookup[name])
 			resultIncludes[name] = true
@@ -408,7 +413,7 @@ func (s *Storage) FetchVariablesByName(dataset string, varNames []string, includ
 	// filter the returned variables to match our input list
 	filteredVariables := []*model.Variable{}
 	for _, variable := range fetchedVariables {
-		if varNameSet[variable.Name] {
+		if varNameSet[variable.StorageName] {
 			filteredVariables = append(filteredVariables, variable)
 		}
 	}

@@ -69,7 +69,7 @@ func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]strin
 	// output the header
 	header := make([]string, len(dr.Variables))
 	for _, v := range dr.Variables {
-		header[v.Index] = v.Name
+		header[v.Index] = v.HeaderName
 	}
 	output := [][]string{header}
 	output = append(output, lines...)
@@ -96,7 +96,7 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, data [][]string) (*mod
 	// add the d3m index variable to the metadata
 	dr := meta.GetMainDataResource()
 	name := model.D3MIndexFieldName
-	v := model.NewVariable(len(dr.Variables), name, name, name, model.IntegerType, model.IntegerType,
+	v := model.NewVariable(len(dr.Variables), name, name, name, name, model.IntegerType, model.IntegerType,
 		"required index field", []string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false)
 	dr.Variables = append(dr.Variables, v)
 
@@ -113,7 +113,7 @@ func checkD3MIndexExists(meta *model.Metadata) bool {
 	// check all variables for a d3m index
 	for _, dr := range meta.DataResources {
 		for _, v := range dr.Variables {
-			if v.Name == model.D3MIndexFieldName {
+			if v.StorageName == model.D3MIndexFieldName {
 				return true
 			}
 		}

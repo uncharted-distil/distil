@@ -172,7 +172,7 @@ func GetFilterVariables(filterVariables []string, variables []*model.Variable) [
 
 	variableLookup := make(map[string]*model.Variable)
 	for _, v := range variables {
-		variableLookup[v.Name] = v
+		variableLookup[v.StorageName] = v
 	}
 
 	filtered := make([]*model.Variable, 0)

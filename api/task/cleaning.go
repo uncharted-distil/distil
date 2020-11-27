@@ -52,7 +52,7 @@ func Clean(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	output := [][]string{}
 	header := make([]string, len(mainDR.Variables))
 	for _, v := range mainDR.Variables {
-		header[v.Index] = v.Name
+		header[v.Index] = v.StorageName
 	}
 	output = append(output, header)
 

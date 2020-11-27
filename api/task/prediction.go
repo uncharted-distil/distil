@@ -73,7 +73,7 @@ func NewPredictionTimeseriesDataset(params *PredictParams, interval float64, cou
 	tsg := groupingVar.Grouping.(*model.TimeseriesGrouping)
 	var timestampVar *model.Variable
 	for _, v := range variables {
-		if v.Name == tsg.XCol {
+		if v.StorageName == tsg.XCol {
 			timestampVar = v
 			break
 		}
@@ -112,10 +112,10 @@ func (p *PredictionTimeseriesDataset) CreateDataset(rootDataPath string, dataset
 	} else if model.IsNumerical(p.timestampVariable.Type) || model.IsTimestamp(p.timestampVariable.Type) {
 		timestampPredictionValues = generateIntValues(p.interval, p.start, p.count)
 	} else {
-		return nil, errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", p.timestampVariable.Name, p.timestampVariable.Type)
+		return nil, errors.Errorf("timestamp variable '%s' is type '%s' which is not supported for timeseries creation", p.timestampVariable.StorageName, p.timestampVariable.Type)
 	}
 
-	timeseriesData := createTimeseriesData(p.idKeys, p.idValues, p.timestampVariable.Name, timestampPredictionValues)
+	timeseriesData := createTimeseriesData(p.idKeys, p.idValues, p.timestampVariable.StorageName, timestampPredictionValues)
 
 	return &api.RawDataset{
 		ID:       p.params.Dataset,
@@ -212,7 +212,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		for i, f := range rawHeader {
 			// TODO: col index not necessarily the same as index and thats what needs checking
 			// We check both name and display name as the pre-ingested datasets are keyed of display name
-			if mainDR.Variables[i].Name != f && mainDR.Variables[i].DisplayName != f {
+			if mainDR.Variables[i].StorageName != f && mainDR.Variables[i].DisplayName != f {
 				return nil, errors.Errorf("variables in new prediction file do not match variables in original dataset")
 			}
 		}
@@ -266,7 +266,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 			return nil, err
 		}
 
-		err = params.MetaStorage.AddGroupedVariable(datasetName, params.Target.Name, params.Target.DisplayName,
+		err = params.MetaStorage.AddGroupedVariable(datasetName, params.Target.StorageName, params.Target.DisplayName,
 			params.Target.Type, params.Target.DistilRole, tsg)
 		if err != nil {
 			return nil, err
@@ -340,7 +340,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	// Persist the prediction request metadata
 	createdTime := time.Now()
-	err = params.SolutionStorage.PersistPrediction(predictionResult.ProduceRequestID, datasetName, params.Target.Name, params.FittedSolutionID, "PREDICT_COMPLETED", createdTime)
+	err = params.SolutionStorage.PersistPrediction(predictionResult.ProduceRequestID, datasetName, params.Target.StorageName, params.FittedSolutionID, "PREDICT_COMPLETED", createdTime)
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +349,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, err
 	}
 
-	err = params.DataStorage.PersistResult(datasetName, meta.StorageName, predictionResult.ResultURI, target.Name)
+	err = params.DataStorage.PersistResult(datasetName, meta.StorageName, predictionResult.ResultURI, target.StorageName)
 	if err != nil {
 		return nil, err
 	}
@@ -395,23 +395,23 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 		// Otherwise, we have the variables defined, and leverage the extra info provided to help map columns between model
 		// and prediction datasets.
 		for i, predictVariable := range predictionVariables {
-			if sourceVariableMap[predictVariable.Name] != nil {
-				predictVariablesMap[i] = sourceVariableMap[predictVariable.Name].Index
-				log.Infof("mapped '%s' to index %d", predictVariable.Name, predictVariablesMap[i])
+			if sourceVariableMap[predictVariable.StorageName] != nil {
+				predictVariablesMap[i] = sourceVariableMap[predictVariable.StorageName].Index
+				log.Infof("mapped '%s' to index %d", predictVariable.StorageName, predictVariablesMap[i])
 			} else if predictVariable.IsMediaReference() {
-				log.Warnf("media reference field '%s' not found in source dataset - attempting to match by type", predictVariable.Name)
+				log.Warnf("media reference field '%s' not found in source dataset - attempting to match by type", predictVariable.StorageName)
 				// loop back over the source vars utnil we find one that is also a media reference
 				for _, sourceVariable := range sourceVariables {
 					if sourceVariable.IsMediaReference() {
-						predictVariablesMap[i] = sourceVariableMap[sourceVariable.Name].Index
+						predictVariablesMap[i] = sourceVariableMap[sourceVariable.StorageName].Index
 						break
 					}
 				}
 			} else {
-				log.Warnf("field '%s' not found in source dataset - column will be empty", predictVariable.Name)
+				log.Warnf("field '%s' not found in source dataset - column will be empty", predictVariable.StorageName)
 				predictVariablesMap[i] = -1
 			}
-			if predictVariable.Name == model.D3MIndexName {
+			if predictVariable.StorageName == model.D3MIndexName {
 				addIndex = false
 			}
 		}
@@ -552,7 +552,7 @@ func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.Me
 	}
 	variableMap := map[string]*model.Variable{}
 	for _, variable := range variables {
-		variableMap[variable.Name] = variable
+		variableMap[variable.StorageName] = variable
 	}
 
 	for _, feature := range solutionRequest.Features {
@@ -562,10 +562,10 @@ func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.Me
 			for _, componentVarName := range componentVarNames {
 				if componentVar, ok := variableMap[componentVarName]; ok {
 					// update variable type
-					if err := metaStorage.SetDataType(dataset, componentVar.Name, componentVar.Type); err != nil {
+					if err := metaStorage.SetDataType(dataset, componentVar.StorageName, componentVar.Type); err != nil {
 						return err
 					}
-					if err := dataStorage.SetDataType(dataset, storageName, componentVar.Name, componentVar.Type); err != nil {
+					if err := dataStorage.SetDataType(dataset, storageName, componentVar.StorageName, componentVar.Type); err != nil {
 						return err
 					}
 				}
@@ -598,7 +598,7 @@ func getComponentVariables(variable *model.Variable) []string {
 			componentVars = append(componentVars, tsg.XCol, tsg.YCol)
 		}
 	} else {
-		componentVars = append(componentVars, variable.Name)
+		componentVars = append(componentVars, variable.StorageName)
 	}
 
 	return componentVars
@@ -630,7 +630,7 @@ func copyFeatureGroups(fittedSolutionID string, datasetName string, solutionStor
 			if sf.IsGrouping() && model.IsMultiBandImage(sf.Grouping.GetType()) {
 				rsg := sf.Grouping.(*model.MultiBandImageGrouping)
 				rsg.Dataset = datasetName
-				err = metaStorage.AddGroupedVariable(datasetName, sf.Name, sf.DisplayName, sf.Type, sf.DistilRole, rsg)
+				err = metaStorage.AddGroupedVariable(datasetName, sf.StorageName, sf.DisplayName, sf.Type, sf.DistilRole, rsg)
 				if err != nil {
 					return err
 				}

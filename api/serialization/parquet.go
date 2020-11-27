@@ -305,7 +305,7 @@ func (d *Parquet) writeVariable(variable *model.Variable, extended bool) interfa
 
 	output := map[string]interface{}{
 		model.VarIndexField: variable.Index,
-		model.VarNameField:  variable.DisplayName,
+		model.VarNameField:  variable.HeaderName,
 		model.VarTypeField:  colType,
 		model.VarRoleField:  variable.Role,
 		"refersTo":          variable.RefersTo,
@@ -317,7 +317,7 @@ func (d *Parquet) writeVariable(variable *model.Variable, extended bool) interfa
 		output[model.VarSelectedRoleField] = variable.SelectedRole
 		output[model.VarDistilRole] = variable.DistilRole
 		output[model.VarOriginalVariableField] = variable.OriginalVariable
-		output[model.VarNameField] = variable.Name
+		output[model.VarStorageNameField] = variable.StorageName
 		output[model.VarDisplayVariableField] = variable.DisplayName
 		output[model.VarImportanceField] = variable.Importance
 		output[model.VarSuggestedTypesField] = variable.SuggestedTypes

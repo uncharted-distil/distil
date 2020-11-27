@@ -64,11 +64,11 @@ func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 
 		res := make(map[string]interface{})
 		for _, variable := range d.Variables {
-			rank, ok := rankings[variable.Name]
+			rank, ok := rankings[variable.StorageName]
 			if ok {
-				res[variable.Name] = rank
+				res[variable.StorageName] = rank
 			} else {
-				res[variable.Name] = nil
+				res[variable.StorageName] = nil
 			}
 		}
 

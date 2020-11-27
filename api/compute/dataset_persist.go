@@ -642,7 +642,7 @@ func CreateBatches(schemaFile string, maxBatchSize int) ([]string, error) {
 	for _, v := range meta.GetMainDataResource().Variables {
 		if v.DistilRole == model.VarDistilRoleGrouping {
 			groupColIndex = v.Index
-		} else if v.Name == model.D3MIndexFieldName && groupColIndex == -1 {
+		} else if v.StorageName == model.D3MIndexFieldName && groupColIndex == -1 {
 			groupColIndex = v.Index
 		}
 	}

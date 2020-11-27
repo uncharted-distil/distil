@@ -171,7 +171,7 @@ func parseISISearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 		// for now, assume that a var has a selector with at least 2 elements.
 		for _, c := range res.Summary.Columns {
 			vars = append(vars, &model.Variable{
-				Name:        c,
+				StorageName: c,
 				DisplayName: c,
 			})
 		}

@@ -114,7 +114,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 		// get the variable to geocode
 		var variable *model.Variable
 		for _, v := range datasetMeta.Variables {
-			if v.Name == varName {
+			if v.StorageName == varName {
 				variable = v
 			}
 		}

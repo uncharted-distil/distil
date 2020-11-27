@@ -50,7 +50,7 @@ func (s *Storage) parseExtrema(row pgx.Rows, variable *model.Variable) (*api.Ext
 	}
 	// assign attributes
 	return &api.Extrema{
-		Key:  variable.Name,
+		Key:  variable.StorageName,
 		Type: variable.Type,
 		Min:  *minValue,
 		Max:  *maxValue,
@@ -77,7 +77,7 @@ func (s *Storage) parseDateExtrema(row pgx.Rows, variable *model.Variable) (*api
 	}
 	// assign attributes
 	return &api.Extrema{
-		Key:  variable.Name,
+		Key:  variable.StorageName,
 		Type: variable.Type,
 		Min:  float64(*minValue),
 		Max:  float64(*maxValue),
@@ -103,12 +103,12 @@ func (s *Storage) getMinMaxAggsQuery(variableName string, variableType string) s
 // FetchExtrema return extrema of a variable in a result set.
 func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*api.Extrema, error) {
 	// add min / max aggregation
-	aggQuery := s.getMinMaxAggsQuery(variable.Name, variable.Type)
+	aggQuery := s.getMinMaxAggsQuery(variable.StorageName, variable.Type)
 
 	// numerical columns need to filter NaN out
 	filter := ""
 	if model.IsNumerical(variable.Type) {
-		filter = fmt.Sprintf("WHERE \"%s\" != 'NaN'", variable.Name)
+		filter = fmt.Sprintf("WHERE \"%s\" != 'NaN'", variable.StorageName)
 	}
 
 	// create a query that does min and max aggregations for each variable
@@ -132,7 +132,7 @@ func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*a
 }
 
 func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variable *model.Variable) (*api.Extrema, error) {
-	varName := variable.Name
+	varName := variable.StorageName
 	if variable.IsGrouping() && model.IsTimeSeries(variable.Grouping.GetType()) {
 		tsg := variable.Grouping.(*model.TimeseriesGrouping)
 		varName = tsg.YCol
@@ -196,17 +196,17 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
 			}
 
-			field = NewTimeSeriesField(s, dataset, storageName, tsg.ClusterCol, variable.Name, variable.DisplayName, variable.Type,
-				variable.Grouping.GetIDCol(), timeColVar.Name, timeColVar.Type, valueColVar.Name, valueColVar.Type)
+			field = NewTimeSeriesField(s, dataset, storageName, tsg.ClusterCol, variable.StorageName, variable.DisplayName, variable.Type,
+				variable.Grouping.GetIDCol(), timeColVar.StorageName, timeColVar.Type, valueColVar.StorageName, valueColVar.Type)
 		} else if model.IsGeoCoordinate(variable.Grouping.GetType()) {
 			gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
-			field = NewCoordinateField(variable.Name, s, dataset, storageName, gcg.XCol, gcg.YCol, variable.DisplayName, variable.Grouping.GetType(), "")
+			field = NewCoordinateField(variable.StorageName, s, dataset, storageName, gcg.XCol, gcg.YCol, variable.DisplayName, variable.Grouping.GetType(), "")
 		} else if model.IsMultiBandImage(variable.Grouping.GetType()) {
 			rsg := variable.Grouping.(*model.MultiBandImageGrouping)
-			field = NewMultiBandImageField(s, dataset, storageName, rsg.ClusterCol, variable.Name, variable.DisplayName, variable.Grouping.GetType(), rsg.IDCol, rsg.BandCol)
+			field = NewMultiBandImageField(s, dataset, storageName, rsg.ClusterCol, variable.StorageName, variable.DisplayName, variable.Grouping.GetType(), rsg.IDCol, rsg.BandCol)
 		} else if model.IsGeoBounds(variable.Type) {
 			gbg := variable.Grouping.(*model.GeoBoundsGrouping)
-			field = NewBoundsField(s, dataset, storageName, gbg.CoordinatesCol, gbg.PolygonCol, variable.Name, variable.DisplayName, variable.Grouping.GetType(), "")
+			field = NewBoundsField(s, dataset, storageName, gbg.CoordinatesCol, gbg.PolygonCol, variable.StorageName, variable.DisplayName, variable.Grouping.GetType(), "")
 		} else {
 			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.GetIDCol(), variable.Grouping.GetType())
 		}
@@ -226,19 +226,19 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 		}
 
 		if model.IsNumerical(variable.Type) || model.IsTimestamp(variable.Type) {
-			field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
+			field = NewNumericalField(s, dataset, storageName, variable.StorageName, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsCategorical(variable.Type) {
-			field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
+			field = NewCategoricalField(s, dataset, storageName, variable.StorageName, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsVector(variable.Type) || model.IsList(variable.Type) {
-			field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
+			field = NewVectorField(s, dataset, storageName, variable.StorageName, variable.DisplayName, variable.Type)
 		} else if model.IsText(variable.Type) {
-			field = NewTextField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
+			field = NewTextField(s, dataset, storageName, variable.StorageName, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsImage(variable.Type) {
-			field = NewImageField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
+			field = NewImageField(s, dataset, storageName, variable.StorageName, variable.DisplayName, variable.Type, countCol)
 		} else if model.IsDateTime(variable.Type) {
-			field = NewDateTimeField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
+			field = NewDateTimeField(s, dataset, storageName, variable.StorageName, variable.DisplayName, variable.Type, countCol)
 		} else {
-			return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Name, variable.Type)
+			return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.StorageName, variable.Type)
 		}
 	}
 
@@ -276,14 +276,14 @@ func (s *Storage) FetchSummaryByResult(dataset string, storageName string, varNa
 // FetchCategoryCounts fetches the count of each label that occurs for the supplied categorical variable.
 func (s *Storage) FetchCategoryCounts(storageName string, variable *model.Variable) (map[string]int, error) {
 	if !model.IsCategorical(variable.Type) {
-		return nil, errors.Errorf("supplied variable %s is of type %s", variable.Name, variable.Type)
+		return nil, errors.Errorf("supplied variable %s is of type %s", variable.StorageName, variable.Type)
 	}
 
 	// Run a query to count the categories in the given row
-	query := fmt.Sprintf("SELECT \"%s\", COUNT(\"%s\") FROM %s GROUP BY \"%s\"", variable.Name, variable.Name, storageName, variable.Name)
+	query := fmt.Sprintf("SELECT \"%s\", COUNT(\"%s\") FROM %s GROUP BY \"%s\"", variable.StorageName, variable.StorageName, storageName, variable.StorageName)
 	rows, err := s.client.Query(query)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to count categories for %s", variable.Name)
+		return nil, errors.Wrapf(err, "failed to count categories for %s", variable.StorageName)
 	}
 
 	// Exract into a (category,count) map

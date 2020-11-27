@@ -137,10 +137,10 @@ func writeQueryDataset(ds *api.Dataset, data [][]string) (string, error) {
 	meta := model.NewMetadata(datasetIDTarget, datasetIDTarget, "query dataset", ds.StorageName)
 	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.Variables = []*model.Variable{
-		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName,
+		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName, model.D3MIndexFieldName,
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
 			[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
-		model.NewVariable(1, "label", "label", "label", model.StringType,
+		model.NewVariable(1, "label", "label", "label", "label", model.StringType,
 			model.StringType, "Label for the query", []string{"suggestedTarget"},
 			model.VarDistilRoleData, nil, dr.Variables, false),
 	}

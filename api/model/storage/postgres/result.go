@@ -105,7 +105,7 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 	fields := []string{"result_id"}
 	for _, dbField := range fieldsDatabase {
 		for i := 0; i < len(fieldsWeight); i++ {
-			if fieldsMetadataMap[dbField] != nil && fieldsMetadataMap[dbField].Name == fieldsWeight[i] {
+			if fieldsMetadataMap[dbField] != nil && fieldsMetadataMap[dbField].StorageName == fieldsWeight[i] {
 				// before we append the field, the length will give us the index for the field we will append
 				fieldsMap[i] = len(fields)
 				fields = append(fields, dbField)
@@ -261,7 +261,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	}
 
 	// Translate from display name to storage name.
-	targetDisplayName, err := s.getDisplayName(dataset, targetVariable.Name)
+	targetDisplayName, err := s.getDisplayName(dataset, targetVariable.StorageName)
 	if err != nil {
 		return errors.Wrap(err, "unable to map target name")
 	}
@@ -307,7 +307,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		}
 		indicesParsed[parsedVal] = true
 
-		dataForInsert := []interface{}{resultURI, parsedVal, targetVariable.Name, records[i][targetIndex]}
+		dataForInsert := []interface{}{resultURI, parsedVal, targetVariable.StorageName, records[i][targetIndex]}
 		if confidenceIndex >= 0 {
 			cfs, err := strconv.ParseFloat(records[i][confidenceIndex], 64)
 			if err != nil {
@@ -375,7 +375,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 						confidenceCol = i
 						continue
 					} else {
-						if key == target.Name {
+						if key == target.StorageName {
 							typ = target.Type
 						} else {
 							v := getVariableByKey(key, variables)
@@ -452,7 +452,7 @@ func addIncludeCorrectnessFilterToWhere(wheres []string, params []interface{}, c
 	} else if strings.EqualFold(correctnessFilter.Categories[0], IncorrectCategory) {
 		op = "!="
 	}
-	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Name)
+	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.StorageName)
 	wheres = append(wheres, where)
 	return wheres, params, nil
 }
@@ -469,7 +469,7 @@ func addExcludeCorrectnessFilterToWhere(wheres []string, params []interface{}, c
 	} else if strings.EqualFold(correctnessFilter.Categories[0], IncorrectCategory) {
 		op = "="
 	}
-	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.Name)
+	where = fmt.Sprintf("predicted.value %s data.\"%s\"", op, target.StorageName)
 	wheres = append(wheres, where)
 	return wheres, params, nil
 }
@@ -773,7 +773,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 		errorCol := api.GetErrorKey(id)
 		errorExpr := ""
 		if model.IsNumerical(variable.Type) && !predictionResultMode {
-			errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(dataTableAlias, variable.Name), errorCol)
+			errorExpr = fmt.Sprintf("%s as \"%s\",", getErrorTyped(dataTableAlias, variable.StorageName), errorCol)
 		}
 
 		targetColumnQuery := ""
@@ -850,7 +850,7 @@ func (s *Storage) getAverageWeights(dataset string, storageName string, storageN
 	variablesSQL := []string{}
 	for _, v := range variables {
 		if model.IsTA2Field(v.DistilRole, v.SelectedRole) {
-			variablesSQL = append(variablesSQL, fmt.Sprintf("AVG(weights.\"%s\") as \"%s\"", v.Name, v.Name))
+			variablesSQL = append(variablesSQL, fmt.Sprintf("AVG(weights.\"%s\") as \"%s\"", v.StorageName, v.StorageName))
 		}
 	}
 
@@ -874,11 +874,11 @@ func (s *Storage) getAverageWeights(dataset string, storageName string, storageN
 
 func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
 	// get min / max agg names
-	minAggName := api.MinAggPrefix + resultVariable.Name
-	maxAggName := api.MaxAggPrefix + resultVariable.Name
+	minAggName := api.MinAggPrefix + resultVariable.StorageName
+	maxAggName := api.MaxAggPrefix + resultVariable.StorageName
 
 	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
+	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.StorageName)
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", fieldTyped, minAggName, fieldTyped, maxAggName)
@@ -894,7 +894,7 @@ func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable
 	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, dataset)
 
 	// execute the postgres query
-	res, err := s.client.Query(queryString, resultURI, variable.Name)
+	res, err := s.client.Query(queryString, resultURI, variable.StorageName)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema for result from postgres")
 	}
@@ -915,11 +915,11 @@ func (s *Storage) FetchResultsExtremaByURI(dataset string, storageName string, r
 		return nil, err
 	}
 	resultVariable := &model.Variable{
-		Name: "value",
-		Type: model.StringType,
+		StorageName: "value",
+		Type:        model.StringType,
 	}
 
-	field := NewNumericalField(s, dataset, storageName, targetVariable.Name, targetVariable.DisplayName, targetVariable.Type, "")
+	field := NewNumericalField(s, dataset, storageName, targetVariable.StorageName, targetVariable.DisplayName, targetVariable.Type, "")
 	return field.fetchResultsExtrema(resultURI, storageNameResult, resultVariable)
 }
 
@@ -946,13 +946,13 @@ func (s *Storage) FetchPredictedSummary(dataset string, storageName string, resu
 	// use the variable type to guide the summary creation
 	var field Field
 	if model.IsNumerical(variable.Type) {
-		field = NewNumericalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
+		field = NewNumericalField(s, dataset, storageName, variable.StorageName, variable.DisplayName, variable.Type, countCol)
 	} else if model.IsCategorical(variable.Type) {
-		field = NewCategoricalField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type, countCol)
+		field = NewCategoricalField(s, dataset, storageName, variable.StorageName, variable.DisplayName, variable.Type, countCol)
 	} else if model.IsVector(variable.Type) {
-		field = NewVectorField(s, dataset, storageName, variable.Name, variable.DisplayName, variable.Type)
+		field = NewVectorField(s, dataset, storageName, variable.StorageName, variable.DisplayName, variable.Type)
 	} else {
-		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.Name, variable.Type)
+		return nil, errors.Errorf("variable %s of type %s does not support summary", variable.StorageName, variable.Type)
 	}
 
 	summary, err := field.FetchPredictedSummaryData(resultURI, storageNameResult, filterParams, extrema, mode)
@@ -997,7 +997,7 @@ func (s *Storage) getDisplayName(dataset string, columnName string) (string, err
 	}
 
 	for _, v := range variables {
-		if v.Name == columnName {
+		if v.StorageName == columnName {
 			displayName = v.DisplayName
 		}
 	}
@@ -1008,7 +1008,7 @@ func (s *Storage) getDisplayName(dataset string, columnName string) (string, err
 func mapFields(fields []*model.Variable) map[string]*model.Variable {
 	mapped := make(map[string]*model.Variable)
 	for _, f := range fields {
-		mapped[f.Name] = f
+		mapped[f.StorageName] = f
 	}
 
 	return mapped
@@ -1018,7 +1018,7 @@ func isTimeSeriesValue(variables []*model.Variable, targetVariable *model.Variab
 	for _, v := range variables {
 		if v.IsGrouping() && model.IsTimeSeries(v.Grouping.GetType()) {
 			tsg := v.Grouping.(*model.TimeseriesGrouping)
-			if tsg.YCol == targetVariable.Name {
+			if tsg.YCol == targetVariable.StorageName {
 				return true
 			}
 		}
