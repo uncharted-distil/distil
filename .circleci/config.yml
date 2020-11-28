@@ -33,6 +33,7 @@ jobs:
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
               TAG=dev-$CIRCLE_BUILD_NUM
               docker login docker.uncharted.software -u "$UNCHARTED_DOCKER_USERNAME" -p "$UNCHARTED_DOCKER_PW"
+              docker login docker-hub.uncharted.software -u "$UNCHARTED_DOCKER_USERNAME" -p "$UNCHARTED_DOCKER_PW"
               docker build -t docker.uncharted.software/distil:$TAG -t docker.uncharted.software/distil:latest .
               docker push docker.uncharted.software/distil:$TAG
               docker push docker.uncharted.software/distil:latest
