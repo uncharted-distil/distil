@@ -264,7 +264,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.StringType, "Label of the image", []string{"suggestedTarget"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(7, "__geo_coordinates", "coordinates", "__geo_coordinates", "coordinates", model.GeoBoundsType,
+		model.NewVariable(7, "__geo_coordinates", "coordinates", "geo coordinates", "__geo_coordinates", model.GeoBoundsType,
 			model.GeoBoundsType, "postgis structure for the bounding box coordinates of the tile", []string{},
 			model.VarDistilRoleMetadata, nil, dr.Variables, false))
 
