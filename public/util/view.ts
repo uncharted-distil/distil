@@ -1,7 +1,29 @@
 import { Location } from "vue-router";
 import { LAST_STATE } from "../store/view/index";
 import localStorage from "store";
-import { local } from "d3";
+
+import {
+  hasGeoFeatures,
+  hasImageFeatures,
+  // hasTimeseriesFeatures,
+} from "../util/data";
+import { Variable } from "../store/dataset/index";
+
+// Views used to display data
+export const GEO_VIEW = "geo" as string;
+export const GRAPH_VIEW = "graph" as string;
+export const IMAGE_VIEW = "image" as string;
+export const TABLE_VIEW = "table" as string;
+export const TIMESERIES_VIEW = "timeseries" as string;
+
+// Return a list of views available for the variables
+export function filterViews(variables: Variable[]): string[] {
+  const views = [TABLE_VIEW];
+  if (hasGeoFeatures(variables)) views.push(GEO_VIEW);
+  if (hasImageFeatures(variables)) views.push(IMAGE_VIEW);
+  // if (hasTimeseriesFeatures(variables)) views.push(TIMESERIES_VIEW); Disabled for now
+  return views;
+}
 
 export function saveView(args: { view: string; key: string; route: Location }) {
   const value = {

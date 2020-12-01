@@ -14,6 +14,29 @@
  * limitations under the License.
  */
 
+/* Variables */
+
+html {
+  --navbar-outer-height: 62px;
+  --content-full-height: calc(100vh - var(--navbar-outer-height));
+
+  --border-color: var(--gray-500);
+
+  /* Buttons */
+  --bg-color-button-hover: var(--gray-500);
+
+  /* Action Column */
+  --bg-color-action-column: var(--gray-400);
+  --width-action-column: 3rem;
+
+  /* Side Panels */
+  --bg-color-side-panel: var(--gray-100);
+  --width-left-side-panel: 25%;
+  --z-index-left-side-panel: 500;
+}
+
+/* Reset */
+
 * {
   min-height: 0;
   min-width: 0;
@@ -58,7 +81,7 @@ body {
 }
 .flex-0-nav {
   flex: 0;
-  padding: 31px;
+  padding-bottom: var(--navbar-outer-height);
 }
 .flex-0 {
   flex: 0;
@@ -191,4 +214,11 @@ body {
 
 .distil-table-container > .pagination {
   flex: 0 1 auto;
+}
+
+.matching-color {
+  color: var(--blue);
+}
+.selected-color {
+  color: var(--red);
 }

@@ -5,6 +5,7 @@ import {
   filterArrayByPage,
   NUM_PER_PAGE,
   NUM_PER_TARGET_PAGE,
+  NUM_PER_DATA_EXPLORER_PAGE,
   searchVariables,
   sortVariablesByImportance,
 } from "../../util/data";
@@ -41,7 +42,7 @@ import {
   mutations as resultMutations,
   getters as resultGetters,
 } from "../results/module";
-import { SELECT_TARGET_ROUTE } from "../route";
+import { DATA_EXPLORER_ROUTE, SELECT_TARGET_ROUTE } from "../route";
 import { getters as routeGetters } from "../route/module";
 import store, { DistilState } from "../store";
 import { ViewState } from "./index";
@@ -101,7 +102,8 @@ const fetchVariables = createCacheable(
 const fetchVariableSummaries = async (context, args) => {
   await fetchVariables(context, args);
   const dataset = args.dataset as string;
-  const variables = context.getters.getVariables as Variable[];
+  const variables =
+    args.variables ?? (context.getters.getVariables as Variable[]);
   const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
   const highlight = context.getters.getDecodedHighlight;
   const varModes = context.getters.getDecodedVarModes;
@@ -109,20 +111,42 @@ const fetchVariableSummaries = async (context, args) => {
 
   const currentRoute = routeGetters.getRoutePath(store);
   const ranked = routeGetters.getRouteIsTrainingVariablesRanked(store);
-  const pages = routeGetters.getAllRoutePages(store);
   const targetVariable = routeGetters.getTargetVariable(store);
 
-  const currentPageIndexes = pages[currentRoute];
-  const mainPageIndex = currentPageIndexes[0];
+  const pages = routeGetters.getAllRoutePages(store);
+  let currentPageIndexes = [];
+  if (pages[currentRoute]) {
+    currentPageIndexes = pages[currentRoute];
+  } else {
+    const errorMessage = `
+      The store/route/getters getAllRoutePages() method does not have
+      a definition for the ${currentRoute} route.`;
+    console.error(errorMessage);
+  }
+
+  const mainPageIndex = currentPageIndexes?.[0];
   const trainingIndex = currentPageIndexes?.[1];
 
-  const pageLength =
-    currentRoute === SELECT_TARGET_ROUTE ? NUM_PER_TARGET_PAGE : NUM_PER_PAGE;
+  let pageLength = NUM_PER_PAGE;
+  if (currentRoute === SELECT_TARGET_ROUTE) {
+    pageLength = NUM_PER_TARGET_PAGE;
+  } else if (currentRoute === DATA_EXPLORER_ROUTE) {
+    pageLength = NUM_PER_DATA_EXPLORER_PAGE;
+  }
 
   const searches = routeGetters.getAllSearchesByRoute(store);
-  const currentPageSearches = searches[currentRoute];
-  const currentSearch = currentPageSearches[0];
-  const trainingSearch = currentPageSearches[1];
+  let currentPageSearches = [];
+  if (searches[currentRoute]) {
+    currentPageSearches = searches[currentRoute];
+  } else {
+    const errorMessage = `
+      The store/route/getters getAllSearchesByRoute() method does not have
+      a definition for the ${currentRoute} route.`;
+    console.error(errorMessage);
+  }
+
+  const currentSearch = currentPageSearches?.[0];
+  const trainingSearch = currentPageSearches?.[1];
 
   const allTrainingVariables = routeGetters.getTrainingVariables(store);
 
@@ -172,23 +196,18 @@ const fetchVariableSummaries = async (context, args) => {
     ...mainPageVariables,
   ];
 
+  const fetchArgs = {
+    dataset: dataset,
+    variables: allActiveVariables,
+    filterParams: filterParams,
+    highlight: highlight,
+    dataMode: dataMode,
+    varModes: varModes,
+  };
+
   return Promise.all([
-    datasetActions.fetchIncludedVariableSummaries(store, {
-      dataset: dataset,
-      variables: allActiveVariables,
-      filterParams: filterParams,
-      highlight: highlight,
-      dataMode: dataMode,
-      varModes: varModes,
-    }),
-    datasetActions.fetchExcludedVariableSummaries(store, {
-      dataset: dataset,
-      variables: allActiveVariables,
-      filterParams: filterParams,
-      highlight: highlight,
-      dataMode: dataMode,
-      varModes: varModes,
-    }),
+    datasetActions.fetchIncludedVariableSummaries(store, fetchArgs),
+    datasetActions.fetchExcludedVariableSummaries(store, fetchArgs),
   ]);
 };
 
@@ -381,11 +400,13 @@ export const actions = {
 
     // fetch new state
     const dataset = context.getters.getRouteDataset;
-    const args = {
-      dataset: dataset,
-    };
-    await fetchVariables(context, args);
-    return fetchVariableSummaries(context, args);
+    return fetchVariableSummaries(context, { dataset });
+  },
+
+  async fetchDataExplorerData(context: ViewContext, variables: Variable[]) {
+    // fetch new state
+    const dataset = context.getters.getRouteDataset;
+    return fetchVariableSummaries(context, { dataset, variables });
   },
 
   clearJoinDatasetsData(context) {
@@ -423,33 +444,24 @@ export const actions = {
   },
 
   updateSelectTrainingData(context: ViewContext) {
-    // clear any previous state
-
-    const dataset = context.getters.getRouteDataset;
-    const highlight = context.getters.getDecodedHighlight;
-    const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
-    const dataMode = context.getters.getDataMode;
-    const varModes = context.getters.getDecodedVarModes;
+    const args = {
+      dataset: context.getters.getRouteDataset,
+      filterParams: context.getters.getDecodedSolutionRequestFilterParams,
+      highlight: context.getters.getDecodedHighlight,
+    };
+    const variableArgs = {
+      ...args,
+      varModes: context.getters.getDecodedVarModes,
+    };
+    const tableDataArgs = {
+      ...args,
+      dataMode: context.getters.getDataMode,
+    };
 
     return Promise.all([
-      fetchVariableSummaries(context, {
-        dataset: dataset,
-        filterParams: filterParams,
-        highlight: highlight,
-        varModes: varModes,
-      }),
-      datasetActions.fetchIncludedTableData(store, {
-        dataset: dataset,
-        filterParams: filterParams,
-        highlight: highlight,
-        dataMode: dataMode,
-      }),
-      datasetActions.fetchExcludedTableData(store, {
-        dataset: dataset,
-        filterParams: filterParams,
-        highlight: highlight,
-        dataMode: dataMode,
-      }),
+      fetchVariableSummaries(context, variableArgs),
+      datasetActions.fetchIncludedTableData(store, tableDataArgs),
+      datasetActions.fetchExcludedTableData(store, tableDataArgs),
     ]);
   },
   updateLabelData(context: ViewContext) {

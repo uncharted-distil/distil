@@ -9,6 +9,7 @@ import {
   BandID,
 } from "../dataset/index";
 import {
+  DATA_EXPLORER_ROUTE,
   JOIN_DATASETS_ROUTE,
   RESULTS_ROUTE,
   SELECT_TARGET_ROUTE,
@@ -18,6 +19,7 @@ import {
   AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
   TRAINING_VARS_INSTANCE_PAGE,
   RESULT_TRAINING_VARS_INSTANCE_PAGE,
+  DATA_EXPLORER_VARS_INSTANCE_PAGE,
   DATA_SIZE_DEFAULT,
   DATA_SIZE_REMOTE_SENSING_DEFAULT,
   AVAILABLE_TARGET_VARS_INSTANCE_SEARCH,
@@ -25,6 +27,7 @@ import {
   AVAILABLE_TRAINING_VARS_INSTANCE_SEARCH,
   TRAINING_VARS_INSTANCE_SEARCH,
   RESULT_TRAINING_VARS_INSTANCE_SEARCH,
+  DATA_EXPLORER_VARS_INSTANCE_SEARCH,
   LABEL_FEATURE_VARS_INSTANCE_PAGE,
 } from "../route/index";
 import { ModelQuality } from "../requests/index";
@@ -217,10 +220,17 @@ export const getters = {
     return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
   },
 
+  /* The Data Explorer uses a different page variables per action */
+  getRouteDataExplorerVarsPage(state: Route): any {
+    const pageVar = DATA_EXPLORER_VARS_INSTANCE_PAGE;
+    return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
+  },
+
   getAllRoutePages(state: Route, getters: any): Object {
     const pages = {};
     pages[JOIN_DATASETS_ROUTE] = [getters.getRouteJoinDatasetsVarsPage];
     pages[SELECT_TARGET_ROUTE] = [getters.getRouteAvailableTargetVarsPage];
+    pages[DATA_EXPLORER_ROUTE] = [getters.getRouteDataExplorerVarsPage];
     pages[SELECT_TRAINING_ROUTE] = [
       getters.getRouteAvailableTrainingVarsPage,
       getters.getRouteTrainingVarsPage,
@@ -254,10 +264,16 @@ export const getters = {
     return state.query[searchVar] ? _.toString(state.query[searchVar]) : "";
   },
 
+  getRouteDataExplorerVarsSearch(state: Route): string {
+    const searchVar = DATA_EXPLORER_VARS_INSTANCE_SEARCH;
+    return state.query[searchVar] ? _.toString(state.query[searchVar]) : "";
+  },
+
   getAllSearchesByRoute(state: Route, getters: any): Object {
     const searches = {};
     searches[JOIN_DATASETS_ROUTE] = [getters.getRouteJoinDatasetsVarsSearch];
     searches[SELECT_TARGET_ROUTE] = [getters.getRouteAvailableTargetVarsSearch];
+    searches[DATA_EXPLORER_ROUTE] = [getters.getRouteDataExplorerVarsSearch];
     searches[SELECT_TRAINING_ROUTE] = [
       getters.getRouteAvailableTrainingVarsSearch,
       getters.getRouteTrainingVarsSearch,
@@ -278,6 +294,8 @@ export const getters = {
       getters.getRouteTrainingVarsSearch;
     searches[RESULT_TRAINING_VARS_INSTANCE_SEARCH] =
       getters.getRouteResultTrainingVarsSearch;
+    searches[DATA_EXPLORER_VARS_INSTANCE_SEARCH] =
+      getters.getRouteDataExplorerVarsSearch;
     return searches;
   },
 
@@ -564,7 +582,6 @@ export const getters = {
   },
 
   /* Check if the current task includes Timeseries. */
-
   isTimeseries(state: Route): boolean {
     // Get the list of task of the route.
     const task = state.query.task as string;
@@ -632,5 +649,10 @@ export const getters = {
   /* Check if the current page is SELECT_TRAINING_ROUTE. */
   isPageSelectTraining(state: Route): Boolean {
     return state.path === SELECT_TRAINING_ROUTE;
+  },
+
+  /* Get the active pane on the route */
+  getRoutePane(state: Route): string {
+    return state.query.pane as string;
   },
 };

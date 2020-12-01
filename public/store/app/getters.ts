@@ -40,6 +40,11 @@ export const getters = {
       state.versionTimestamp !== "unset" ? state.versionTimestamp : "";
     return `TA2 version ${ta2Version}\nTA3 version ${ta3Version} ${ta3Timestamp}`.trim();
   },
+
+  isPrototype(state: AppState) {
+    return state.prototype;
+  },
+
   getTrainTestSplit(state: AppState): number {
     return state.trainTestSplit;
   },

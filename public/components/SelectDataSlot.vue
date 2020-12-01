@@ -456,10 +456,6 @@ table tr {
   padding: 3px;
 }
 
-.fake-search-input > .filter-badge {
-  margin: 2px;
-}
-
 .pending {
   opacity: 0.5;
 }

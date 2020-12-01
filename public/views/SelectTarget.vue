@@ -78,7 +78,6 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import {
   NUM_PER_TARGET_PAGE,
-  filterSummariesByDataset,
   getVariableSummariesByState,
   searchVariables,
 } from "../util/data";
@@ -91,8 +90,6 @@ import {
   LABELING_TYPE,
 } from "../util/types";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
-import { get } from "store";
-import { includes } from "lodash";
 
 export default Vue.extend({
   name: "select-target-view",
