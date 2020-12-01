@@ -174,7 +174,6 @@ func main() {
 
 	// NOTE: EVAL ONLY OVERRIDE SETUP FOR METRICS!
 	problemPath = path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", api.D3MProblem)
-	ws.SetProblemFile(problemPath)
 
 	// set the postgres random seed for data table reading
 	pg.SetRandomSeed(config.PostgresRandomSeed)

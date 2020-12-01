@@ -188,7 +188,13 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 
 	// fit solution
 	fitRequest := createFitSolutionRequest(searchContext.trainDatasetURI, searchSolutionID)
-	fitResults, err := client.GenerateSolutionFit(context.Background(), fitRequest)
+
+	// create a context that will let us cancel the streaming request from the client side.  We have to do this at the transport
+	// level rather than the ta3ta2 API level since the API only allows for stopping the search portion of the process
+	cancelContext, cancelFunc := context.WithCancel(context.Background())
+	s.CancelFuncs[searchSolutionID] = cancelFunc
+
+	fitResults, err := client.GenerateSolutionFit(cancelContext, fitRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +213,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchSolutionID, SolutionScoringStatus)
 
 	// score solution
-	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), searchSolutionID, searchContext.testDatasetURI, s.Metrics)
+	solutionScoreResponses, err := client.GenerateSolutionScores(cancelContext, searchSolutionID, searchContext.testDatasetURI, s.Metrics)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +249,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 	produceSolutionRequest := createProduceSolutionRequest(searchContext.produceDatasetURI, fittedSolutionID, outputKeys, exposeType)
 
 	// generate predictions
-	produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
+	produceRequestID, predictionResponses, err := client.GeneratePredictions(cancelContext, produceSolutionRequest)
 	if err != nil {
 		return nil, err
 	}

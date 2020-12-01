@@ -118,6 +118,7 @@ type SolutionRequest struct {
 	Filters              *api.FilterParams
 	DatasetAugmentations []*model.DatasetOrigin
 	TrainTestSplit       float64
+	CancelFuncs          map[string]context.CancelFunc
 
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
@@ -176,6 +177,8 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 			return nil, err
 		}
 	}
+
+	req.CancelFuncs = map[string]context.CancelFunc{}
 
 	return req, nil
 }
@@ -503,7 +506,7 @@ func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, 
 func (s *SolutionRequest) persistRequestError(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, dataset string, err error) {
 	// persist the updated state
 	// NOTE: ignoring error
-	solutionStorage.PersistRequest(searchID, dataset, RequestErroredStatus, time.Now())
+	_ = solutionStorage.PersistRequest(searchID, dataset, RequestErroredStatus, time.Now())
 
 	// notify of error
 	statusChan <- SolutionStatus{
@@ -595,6 +598,13 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		// persist the solution
 		s.persistSolution(c, solutionStorage, searchContext.searchID, solution.SolutionId, "")
 		s.persistSolutionStatus(c, solutionStorage, searchContext.searchID, solution.SolutionId, SolutionPendingStatus)
+
+		// once done, mark as complete and clean up the channel
+		defer func() {
+			s.completeSolution()
+			close(c)
+		}()
+
 		// dispatch it
 		searchResult, err := s.dispatchSolutionSearchPipeline(c, client, solutionStorage, dataStorage, solution.SolutionId, searchContext)
 		if err != nil {
@@ -616,9 +626,6 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 			Progress:   SolutionCompletedStatus,
 			Timestamp:  time.Now(),
 		}
-		// once done, mark as complete
-		s.completeSolution()
-		close(c)
 	})
 
 	// wait until all are complete and the search has finished / timed out

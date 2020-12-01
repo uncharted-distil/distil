@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -44,14 +45,15 @@ const (
 )
 
 var (
-	problemFile = ""
+	// shared map of running requests - accessed by message status handlers that are
+	// run under separate go routines so needs to be locked
+	requestMap = struct {
+		sync.RWMutex
+		m map[string]*api.SolutionRequest
+	}{
+		m: map[string]*api.SolutionRequest{},
+	}
 )
-
-// SetProblemFile sets the problem file containing the metrics to use
-// when submitting pipelines
-func SetProblemFile(file string) {
-	problemFile = file
-}
 
 // SolutionHandler represents a solution websocket handler.
 func SolutionHandler(client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
@@ -190,15 +192,33 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		return
 	}
 
-	// listen for solution updates
+	// listen for solution updates - handler runs under a separate go routine
 	requestFinished := make(chan api.SolutionStatus, 1)
 	defer close(requestFinished)
 	err = request.Listen(func(status api.SolutionStatus) {
+
+		// update the map of currently running requests - this is crappy because go's
+		// read/write locks are not upgradable or re-entrant
+		requestMap.RLock()
+		if _, ok := requestMap.m[status.RequestID]; !ok {
+			requestMap.RUnlock()
+			requestMap.Lock()
+			requestMap.m[status.RequestID] = request
+			requestMap.Unlock()
+		} else {
+			requestMap.RUnlock()
+		}
+
 		// send status to client - this includes any error status we encountered
 		handleSuccess(conn, msg, jutil.StructToMap(status))
 
 		// flag request as finished if it completed normally, or an error occurred
 		if status.Progress == api.RequestCompletedStatus || status.Progress == api.RequestErroredStatus {
+			// remove completed
+			requestMap.Lock()
+			delete(requestMap.m, status.RequestID)
+			requestMap.Unlock()
+
 			requestFinished <- status
 		}
 	})
@@ -224,12 +244,22 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 		return
 	}
 
-	// dispatch request
+	// dispatch request to ta2
 	err = request.Dispatch(client)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "received error from TA2 system"))
 		return
 	}
+
+	// cancel further requests from the client side
+	requestMap.RLock()
+	req, ok := requestMap.m[request.RequestID]
+	if ok {
+		for _, cancelFunc := range req.CancelFuncs {
+			cancelFunc()
+		}
+	}
+	requestMap.RUnlock()
 }
 
 func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
