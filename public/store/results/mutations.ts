@@ -89,7 +89,34 @@ export const mutations = {
   updateConfidenceSummaries(state: ResultsState, summary: VariableSummary) {
     updateSummaries(summary, state.confidenceSummaries);
   },
-
+  bulkUpdatePredictedTimeseries(
+    state: ResultsState,
+    args: {
+      map: Map<
+        string,
+        {
+          timeseries: number[][];
+          isDateTime: boolean;
+          min: number;
+          max: number;
+          mean: number;
+        }
+      >;
+      solutionId: string;
+    }
+  ) {
+    args.map.forEach((val, key) => {
+      mutations.updatePredictedTimeseries(state, {
+        solutionId: args.solutionId,
+        id: key,
+        timeseries: val.timeseries,
+        isDateTime: val.isDateTime,
+        min: val.min,
+        max: val.max,
+        mean: val.mean,
+      });
+    });
+  },
   // forecast
 
   updatePredictedTimeseries(
@@ -137,7 +164,30 @@ export const mutations = {
       mean: args.mean as number,
     });
   },
-
+  bulkUpdatePredictedForecast(
+    state: ResultsState,
+    args: {
+      solutionId: string;
+      map: Map<
+        string,
+        {
+          forecast: TimeSeriesValue[];
+          forecastTestRange: number[];
+          isDateTime: boolean;
+        }
+      >;
+    }
+  ) {
+    args.map.forEach((val, key) => {
+      mutations.updatePredictedForecast(state, {
+        solutionId: args.solutionId,
+        id: key,
+        forecast: val.forecast,
+        forecastTestRange: val.forecastTestRange,
+        isDateTime: val.isDateTime,
+      });
+    });
+  },
   updatePredictedForecast(
     state: ResultsState,
     args: {

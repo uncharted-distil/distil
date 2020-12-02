@@ -91,5 +91,11 @@ export const mutations = {
   updatePredictedSummary: commit(moduleMutations.updatePredictedSummary),
   // forecasts
   updatePredictedTimeseries: commit(moduleMutations.updatePredictedTimeseries),
+  bulkUpdatePredictedTimeseries: commit(
+    moduleMutations.bulkUpdatePredictedTimeseries
+  ),
   updatePredictedForecast: commit(moduleMutations.updatePredictedForecast),
+  bulkUpdatePredictedForecast: commit(
+    moduleMutations.bulkUpdatePredictedForecast
+  ),
 };

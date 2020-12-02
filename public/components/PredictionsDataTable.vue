@@ -90,6 +90,7 @@
       v-model="currentPage"
       :per-page="perPage"
       :total-rows="itemCount"
+      @change="onPagination"
     ></b-pagination>
   </div>
 </template>
@@ -107,23 +108,23 @@ import {
   TableRow,
   TableColumn,
   D3M_INDEX_FIELD,
-  Grouping,
-  Variable,
   RowSelection,
-  TaskTypes,
   TimeseriesGrouping,
   TableValue,
+  Highlight,
 } from "../store/dataset/index";
-import { getters as predictionsGetters } from "../store/predictions/module";
+import {
+  getters as predictionsGetters,
+  actions as predictionsActions,
+} from "../store/predictions/module";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
-import { Solution, Predictions } from "../store/requests/index";
+import { Predictions } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
-import { getVarType, isTextType, hasComputedVarPrefix } from "../util/types";
+import { hasComputedVarPrefix } from "../util/types";
 import {
   addRowSelection,
   removeRowSelection,
@@ -138,8 +139,6 @@ import {
   getImageFields,
   getListFields,
 } from "../util/data";
-import { getSolutionIndex } from "../util/solutions";
-import { getPredictionsIndex } from "../util/predictions";
 
 export default Vue.extend({
   name: "predictions-data-table",
@@ -156,6 +155,7 @@ export default Vue.extend({
     return {
       currentPage: 1,
       perPage: 100,
+      initialized: false,
     };
   },
 
@@ -192,7 +192,13 @@ export default Vue.extend({
         this.$store
       );
     },
-
+    pageItems(): TableRow[] {
+      const end =
+        this.currentPage * this.perPage > this.items.length
+          ? this.items.length
+          : this.currentPage * this.perPage;
+      return this.items.slice((this.currentPage - 1) * this.perPage, end);
+    },
     items(): TableRow[] {
       let items = predictionsGetters.getIncludedPredictionTableDataItems(
         this.$store
@@ -213,7 +219,9 @@ export default Vue.extend({
         this.instanceName
       );
     },
-
+    highlight(): Highlight {
+      return routeGetters.getDecodedHighlight(this.$store);
+    },
     itemCount(): number {
       return this.hasData ? this.items.length : 0;
     },
@@ -232,20 +240,23 @@ export default Vue.extend({
       const tableFields = formatFieldsAsArray(this.fields);
 
       if (!this.isTimeseries || _.isEmpty(tableFields)) return tableFields;
-
+      // disable sorting for timeseries tables
+      tableFields.forEach((tf) => {
+        tf.sortable = false;
+      });
       // For Timeseries we want to display the Min/Max/Mean
       return tableFields.concat([
         {
           key: "min",
-          sortable: true,
+          sortable: false,
         },
         {
           key: "max",
-          sortable: true,
+          sortable: false,
         },
         {
           key: "mean",
-          sortable: true,
+          sortable: false,
         },
       ] as TableColumn[]);
     },
@@ -335,9 +346,40 @@ export default Vue.extend({
       }[];
       return listData.map((l) => l.Float);
     },
+    onPagination(page: number) {
+      this.currentPage = page;
+      this.fetchTimeseries();
+    },
+    async fetchTimeseries() {
+      if (!this.isTimeseries) {
+        return;
+      }
+
+      this.timeseriesGroupings.forEach(async (tsg) => {
+        await predictionsActions.fetchForecastedTimeseries(this.$store, {
+          truthDataset: this.truthDataset,
+          forecastDataset: this.predictions.dataset,
+          xColName: tsg.xCol,
+          yColName: tsg.yCol,
+          timeseriesColName: tsg.idCol,
+          predictionsId: this.predictions.requestId,
+          // uniqueTrail: this.uniqueTrail,
+          timeseriesIds: this.pageItems.map((item) => {
+            return item[tsg.idCol].value as string;
+          }),
+        });
+      });
+    },
   },
   watch: {
+    highlight() {
+      this.initialized = false;
+    },
     items() {
+      if (!this.initialized && this.items.length) {
+        this.fetchTimeseries();
+        this.initialized = true;
+      }
       // if the itemCount changes such that it's less than page
       // we were on, reset to page 1.
       if (this.itemCount < this.perPage * this.currentPage) {

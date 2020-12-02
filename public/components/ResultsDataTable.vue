@@ -126,6 +126,7 @@
       v-model="currentPage"
       :per-page="perPage"
       :total-rows="itemCount"
+      @change="onPagination"
     ></b-pagination>
   </div>
 </template>
@@ -142,15 +143,18 @@ import {
   TableRow,
   TableColumn,
   D3M_INDEX_FIELD,
-  Grouping,
   Variable,
   RowSelection,
   TaskTypes,
   TimeseriesGrouping,
   TableValue,
+  Highlight,
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
-import { getters as resultsGetters } from "../store/results/module";
+import {
+  getters as resultsGetters,
+  actions as resultsActions,
+} from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { actions as appActions } from "../store/app/module";
@@ -189,6 +193,8 @@ export default Vue.extend({
       sortingBy: undefined,
       currentPage: 1,
       perPage: 100,
+      uniqueTrail: "result-table",
+      initialized: false,
     };
   },
 
@@ -261,7 +267,13 @@ export default Vue.extend({
     hasData(): boolean {
       return !!this.dataItems;
     },
-
+    pageItems(): TableRow[] {
+      const end =
+        this.currentPage * this.perPage > this.items.length
+          ? this.items.length
+          : this.currentPage * this.perPage;
+      return this.items.slice((this.currentPage - 1) * this.perPage, end);
+    },
     items(): TableRow[] {
       if (this.hasData) {
         let items = this.dataItems;
@@ -309,20 +321,23 @@ export default Vue.extend({
       const tableFields = formatFieldsAsArray(this.fields);
 
       if (!this.isTimeseries || _.isEmpty(tableFields)) return tableFields;
-
+      // disable sorting for timeseries tables
+      tableFields.forEach((tf) => {
+        tf.sortable = false;
+      });
       // For Timeseries we want to display the Min/Max/Mean
       return tableFields.concat([
         {
           key: "min",
-          sortable: true,
+          sortable: false,
         },
         {
           key: "max",
-          sortable: true,
+          sortable: false,
         },
         {
           key: "mean",
-          sortable: true,
+          sortable: false,
         },
       ] as TableColumn[]);
     },
@@ -413,7 +428,9 @@ export default Vue.extend({
     errorBarWidth(error: number): string {
       return `${Math.abs(this.normalizeError(error) * 50)}%`;
     },
-
+    highlight(): Highlight {
+      return routeGetters.getDecodedHighlight(this.$store);
+    },
     errorBarLeft(error: number): string {
       const nerr = this.normalizeError(error);
       if (nerr > 0) {
@@ -463,11 +480,40 @@ export default Vue.extend({
       }[];
       return listData.map((l) => l.Float);
     },
+    onPagination(page: number) {
+      this.currentPage = page;
+      this.fetchTimeseries();
+    },
+    fetchTimeseries() {
+      if (!this.isTimeseries) {
+        return;
+      }
+      this.timeseriesGroupings.forEach((tsg) => {
+        resultsActions.fetchForecastedTimeseries(this.$store, {
+          dataset: this.dataset,
+          xColName: tsg.xCol,
+          yColName: tsg.yCol,
+          timeseriesColName: tsg.idCol,
+          solutionId: this.solutionId,
+          // uniqueTrail: this.uniqueTrail,
+          timeseriesIds: this.pageItems.map((item) => {
+            return item[tsg.idCol].value as string;
+          }),
+        });
+      });
+    },
   },
   watch: {
+    highlight() {
+      this.initialized = false;
+    },
     items() {
       // if the itemCount changes such that it's less than page
       // we were on, reset to page 1.
+      if (!this.initialized && this.items.length) {
+        this.fetchTimeseries();
+        this.initialized = true;
+      }
       if (this.itemCount < this.perPage * this.currentPage) {
         this.currentPage = 1;
       }

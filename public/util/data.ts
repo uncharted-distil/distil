@@ -235,24 +235,21 @@ export function fetchSummaryExemplars(
         // if there a linked exemplars, fetch those before resolving
         const solutionId = routeGetters.getRouteSolutionId(store);
         const grouping = variable.grouping as TimeseriesGrouping;
-
-        return Promise.all(
-          exemplars.map((exemplar) => {
-            const args = {
-              dataset: datasetName,
-              timeseriesColName: grouping.idCol,
-              xColName: grouping.xCol,
-              yColName: grouping.yCol,
-              timeseriesId: exemplar,
-              solutionId: solutionId,
-            };
-            if (solutionId) {
-              return resultsActions.fetchForecastedTimeseries(store, args);
-            } else {
-              return datasetActions.fetchTimeseries(store, args);
-            }
-          })
-        );
+        const args = {
+          dataset: datasetName,
+          timeseriesColName: grouping.idCol,
+          xColName: grouping.xCol,
+          yColName: grouping.yCol,
+          timeseriesIds: exemplars,
+          solutionId: solutionId,
+        };
+        return () => {
+          if (solutionId) {
+            return resultsActions.fetchForecastedTimeseries(store, args);
+          } else {
+            return datasetActions.fetchTimeseries(store, args);
+          }
+        };
       }
     } else {
       // if there are linked files, fetch some of them before resolving
@@ -286,18 +283,14 @@ export function fetchResultExemplars(
       if (variable.grouping.type === TIMESERIES_TYPE) {
         const grouping = variable.grouping as TimeseriesGrouping;
         // if there a linked exemplars, fetch those before resolving
-        return Promise.all(
-          exemplars.map((exemplar) => {
-            return resultsActions.fetchForecastedTimeseries(store, {
-              dataset: datasetName,
-              timeseriesColName: grouping.idCol,
-              xColName: grouping.xCol,
-              yColName: grouping.yCol,
-              timeseriesId: exemplar,
-              solutionId: solutionId,
-            });
-          })
-        );
+        return resultsActions.fetchForecastedTimeseries(store, {
+          dataset: datasetName,
+          timeseriesColName: grouping.idCol,
+          xColName: grouping.xCol,
+          yColName: grouping.yCol,
+          timeseriesIds: exemplars,
+          solutionId: solutionId,
+        });
       }
     } else {
       // if there a linked files, fetch those before resolving

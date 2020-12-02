@@ -372,7 +372,10 @@ export const actions = {
       }),
     ]);
   },
-
+  clearDatasetTableData(context: ViewContext) {
+    datasetMutations.setIncludedTableData(store, createEmptyTableData());
+    datasetMutations.setExcludedTableData(store, createEmptyTableData());
+  },
   async fetchSelectTargetData(context: ViewContext, clearSummaries: boolean) {
     // clear previous state
     if (clearSummaries) {

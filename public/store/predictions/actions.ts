@@ -296,8 +296,8 @@ export const actions = {
       xColName: string;
       yColName: string;
       timeseriesColName: string;
-      timeseriesId: any;
       predictionsId: string;
+      timeseriesIds: string[];
     }
   ) {
     if (!args.truthDataset) {
@@ -306,6 +306,10 @@ export const actions = {
     }
     if (!args.forecastDataset) {
       console.warn("`forecastDataset` argument is missing");
+      return null;
+    }
+    if (!args.timeseriesIds) {
+      console.warn("`timeseriesIds` argument is missing");
       return null;
     }
     if (!args.xColName) {
@@ -318,10 +322,6 @@ export const actions = {
     }
     if (!args.timeseriesColName) {
       console.warn("`timeseriesColName` argument is missing");
-      return null;
-    }
-    if (!args.timeseriesId) {
-      console.warn("`timeseriesID` argument is missing");
       return null;
     }
     if (!args.predictionsId) {
@@ -341,25 +341,24 @@ export const actions = {
     try {
       const response = await axios.post(
         `distil/timeseries-forecast/${args.truthDataset}/${args.forecastDataset}` +
-          `/${args.timeseriesColName}/${args.xColName}/${args.yColName}/${args.timeseriesId}` +
+          `/${args.timeseriesColName}/${args.xColName}/${args.yColName}` +
           `/${predictions.resultId}`,
-        {}
+        {
+          timeseriesUris: args.timeseriesIds,
+        }
       );
-      mutations.updatePredictedTimeseries(context, {
+      const responseMap = new Map(
+        Object.keys(response.data).map((k) => {
+          return [k, response.data[k]];
+        })
+      );
+      mutations.bulkUpdatePredictedTimeseries(context, {
         predictionsId: args.predictionsId,
-        id: args.timeseriesId,
-        timeseries: response.data.timeseries,
-        isDateTime: response.data.isDateTime,
-        min: <number>response.data.min,
-        max: <number>response.data.max,
-        mean: <number>response.data.mean,
+        map: responseMap,
       });
-      mutations.updatePredictedForecast(context, {
+      mutations.bulkUpdatePredictedForecast(context, {
         predictionsId: args.predictionsId,
-        id: args.timeseriesId,
-        forecast: response.data.forecast,
-        forecastTestRange: response.data.forecastRange,
-        isDateTime: response.data.isDateTime,
+        map: responseMap,
       });
     } catch (error) {
       console.error(error);

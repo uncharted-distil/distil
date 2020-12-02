@@ -17,16 +17,14 @@ package postgres
 
 import (
 	"fmt"
-	"math"
-	"sort"
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	"math"
+	"strconv"
+	"strings"
+	"time"
 )
 
 // TimeSeriesField defines behaviour for the timeseries field type.
@@ -63,20 +61,24 @@ func NewTimeSeriesField(storage *Storage, datasetName string, datasetStorageName
 	return field
 }
 
-func (s *Storage) parseTimeseries(rows pgx.Rows) ([]*api.TimeseriesObservation, error) {
-	var points []*api.TimeseriesObservation
+func (s *Storage) parseTimeseries(rows pgx.Rows) (map[string][]*api.TimeseriesObservation, error) {
+	result := map[string][]*api.TimeseriesObservation{}
 	if rows != nil {
 		for rows.Next() {
-			var x float64
-			var y float64
-			err := rows.Scan(&x, &y)
+			arr := []*api.TimeseriesObservation{}
+			time := []float64{}
+			vals := []float64{}
+			var key string
+
+			err := rows.Scan(&time, &vals, &key)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
-			points = append(points, &api.TimeseriesObservation{
-				Value: api.NullableFloat64(y),
-				Time:  x,
-			})
+			result[key] = []*api.TimeseriesObservation{}
+			for i := range time {
+				arr = append(arr, &api.TimeseriesObservation{Value: api.NullableFloat64(vals[i]), Time: time[i]})
+			}
+			result[key] = arr
 		}
 		err := rows.Err()
 		if err != nil {
@@ -84,25 +86,27 @@ func (s *Storage) parseTimeseries(rows pgx.Rows) ([]*api.TimeseriesObservation, 
 		}
 	}
 
-	return points, nil
+	return result, nil
 }
 
-func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows) ([]*api.TimeseriesObservation, error) {
-	var points []*api.TimeseriesObservation
+func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows) (map[string][]*api.TimeseriesObservation, error) {
+	result := map[string][]*api.TimeseriesObservation{}
 	if rows != nil {
 		for rows.Next() {
-			var time time.Time
-			var value float64
+			arr := []*api.TimeseriesObservation{}
+			time := []time.Time{}
+			vals := []float64{}
+			var key string
 
-			err := rows.Scan(&time, &value)
+			err := rows.Scan(&time, &vals, &key)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
-
-			points = append(points, &api.TimeseriesObservation{
-				Value: api.NullableFloat64(value),
-				Time:  float64(time.Unix() * 1000),
-			})
+			result[key] = []*api.TimeseriesObservation{}
+			for i := range time {
+				arr = append(arr, &api.TimeseriesObservation{Value: api.NullableFloat64(vals[i]), Time: float64(time[i].Unix() * 1000)})
+			}
+			result[key] = arr
 		}
 		err := rows.Err()
 		if err != nil {
@@ -110,26 +114,35 @@ func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows) ([]*api.TimeseriesObser
 		}
 	}
 
-	return points, nil
+	return result, nil
 }
 
-func (s *Storage) parseTimeseriesForecast(rows pgx.Rows) ([]*api.TimeseriesObservation, error) {
-	var points []*api.TimeseriesObservation
+func (s *Storage) parseTimeseriesForecast(rows pgx.Rows) (map[string][]*api.TimeseriesObservation, error) {
+	result := map[string][]*api.TimeseriesObservation{}
 	if rows != nil {
 		for rows.Next() {
-			var time float64
-			var value float64
-			var explainValues api.SolutionExplainValues
-			err := rows.Scan(&time, &value, &explainValues)
+			arr := []*api.TimeseriesObservation{}
+			time := []float64{}
+			vals := []float64{}
+			explainValues := []api.SolutionExplainValues{}
+			var key string
+			err := rows.Scan(&time, &vals, &explainValues, &key)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
-			points = append(points, &api.TimeseriesObservation{
-				Value:          api.NullableFloat64(value),
-				Time:           time,
-				ConfidenceLow:  api.NullableFloat64(explainValues.LowConfidence),
-				ConfidenceHigh: api.NullableFloat64(explainValues.HighConfidence),
-			})
+			result[key] = []*api.TimeseriesObservation{}
+
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to parse row result")
+			}
+			for i := range time {
+				arr = append(arr, &api.TimeseriesObservation{Value: api.NullableFloat64(vals[i]),
+					Time:           time[i],
+					ConfidenceLow:  api.NullableFloat64(explainValues[i].LowConfidence),
+					ConfidenceHigh: api.NullableFloat64(explainValues[i].HighConfidence),
+				})
+			}
+			result[key] = arr
 		}
 		err := rows.Err()
 		if err != nil {
@@ -137,28 +150,31 @@ func (s *Storage) parseTimeseriesForecast(rows pgx.Rows) ([]*api.TimeseriesObser
 		}
 	}
 
-	return points, nil
+	return result, nil
 }
 
-func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) ([]*api.TimeseriesObservation, error) {
-	var points []*api.TimeseriesObservation
+func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) (map[string][]*api.TimeseriesObservation, error) {
+	result := map[string][]*api.TimeseriesObservation{}
 	if rows != nil {
 		for rows.Next() {
-			var time time.Time
-			var value float64
-			var explainValues api.SolutionExplainValues
-
-			err := rows.Scan(&time, &value, &explainValues)
+			arr := []*api.TimeseriesObservation{}
+			time := []time.Time{}
+			vals := []float64{}
+			var explainValues []api.SolutionExplainValues
+			var key string
+			err := rows.Scan(&time, &vals, &explainValues, &key)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
-
-			points = append(points, &api.TimeseriesObservation{
-				Value:          api.NullableFloat64(value),
-				Time:           float64(time.Unix() * 1000),
-				ConfidenceLow:  api.NullableFloat64(explainValues.LowConfidence),
-				ConfidenceHigh: api.NullableFloat64(explainValues.HighConfidence),
-			})
+			result[key] = []*api.TimeseriesObservation{}
+			for i := range time {
+				arr = append(arr, &api.TimeseriesObservation{
+					Value:          api.NullableFloat64(vals[i]),
+					Time:           float64(time[i].Unix() * 1000),
+					ConfidenceLow:  api.NullableFloat64(explainValues[i].LowConfidence),
+					ConfidenceHigh: api.NullableFloat64(explainValues[i].HighConfidence),
+				})
+			}
 		}
 		err := rows.Err()
 		if err != nil {
@@ -166,7 +182,7 @@ func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) ([]*api.Timeser
 		}
 	}
 
-	return points, nil
+	return result, nil
 }
 
 // Calculate the Min, Max, and Mean of a list of TimerseriesObservation
@@ -263,26 +279,32 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 }
 
 // FetchTimeseries fetches a timeseries.
-func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, filterParams *api.FilterParams, invert bool) (*api.TimeseriesData, error) {
+func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI []string, filterParams *api.FilterParams, invert bool) (*map[string]*api.TimeseriesData, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-
-	wheres = append(wheres, fmt.Sprintf("\"%s\" = $1", timeseriesColName))
-	params = append(params, timeseriesURI)
+	// build ANY ARRAY values
+	paramString := ""
+	if len(timeseriesURI) == 0 {
+		return nil, errors.New("No timeseriesURIs passed in")
+	}
+	for _, v := range timeseriesURI {
+		paramString += "'" + v + "',"
+	}
+	paramString = paramString[:len(paramString)-1] // remove end comma
+	wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", timeseriesColName, paramString))
 
 	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, invert)
 	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 
 	// Get count by category.
-	query := fmt.Sprintf("SELECT timeline.TimeStamps, COALESCE(filteredEvents.Counts, 'NaN') FROM "+
-		"(SELECT DISTINCT \"%s\" as TimeStamps FROM %s) timeline LEFT JOIN "+
-		"(SELECT \"%s\" as TimeStamps, \"%s\" as Counts FROM %s %s ) filteredEvents "+
-		"ON timeline.TimeStamps = filteredEvents.TimeStamps ORDER BY timeline.TimeStamps",
-		xColName, storageName, xColName, yColName, storageName, where)
+	query := fmt.Sprintf("SELECT ARRAY_AGG(filteredEvents.TimeStamps ORDER BY filteredEvents.TimeStamps), ARRAY_AGG(COALESCE(filteredEvents.Counts, 'NaN') ORDER BY filteredEvents.TimeStamps), filteredEvents.series_key FROM "+
+		"(SELECT \"%s\" as TimeStamps, \"%s\" as Counts, \"%s\" as series_key FROM %s %s ) filteredEvents "+
+		"GROUP BY filteredEvents.series_key",
+		xColName, yColName, timeseriesColName, storageName, where)
 
 	// execute the postgres query
-	res, err := s.client.Query(query, params...)
+	res, err := s.client.Query(query)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch timeseries from postgres")
 	}
@@ -294,7 +316,7 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	if err != nil {
 		return nil, err
 	}
-	var response []*api.TimeseriesObservation
+	var response map[string][]*api.TimeseriesObservation
 	var dateTime bool
 	if xColVariable.Type == model.DateTimeType {
 		response, err = s.parseDateTimeTimeseries(res)
@@ -308,35 +330,32 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 			return nil, err
 		}
 	}
-
-	// sort the timeseries
-	sort.Slice(response, func(i, j int) bool {
-		return response[i].Time < response[j].Time
-	})
-
-	// sum duplicate timestamps
-	response = removeDuplicates(response)
-
-	// Calculate Min/Max/Mean
-	var min, max, mean = getMinMaxMean(response)
-
-	return &api.TimeseriesData{
-		Timeseries: response,
-		IsDateTime: dateTime,
-		Min:        min,
-		Max:        max,
-		Mean:       mean,
-	}, nil
+	result := map[string]*api.TimeseriesData{}
+	for key, el := range response {
+		// Calculate Min/Max/Mean
+		var min, max, mean = getMinMaxMean(el)
+		result[key] = &api.TimeseriesData{
+			Timeseries: el,
+			IsDateTime: dateTime,
+			Min:        min,
+			Max:        max,
+			Mean:       mean,
+		}
+	}
+	return &result, nil
 }
 
 // FetchTimeseriesForecast fetches a timeseries.
-func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI string, resultURI string, filterParams *api.FilterParams) (*api.TimeseriesData, error) {
+func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURIs []string, resultURI string, filterParams *api.FilterParams) (*map[string]*api.TimeseriesData, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
-
-	wheres = append(wheres, fmt.Sprintf("\"%s\" = $1", timeseriesColName))
-	params = append(params, timeseriesURI)
+	paramString := ""
+	for _, v := range timeseriesURIs {
+		paramString += "'" + v + "',"
+	}
+	paramString = paramString[:len(paramString)-1]
+	wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", timeseriesColName, paramString))
 
 	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, false)
 
@@ -346,16 +365,17 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 
 	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 
-	// Get count by category.
+	// Note: JSONB_AGG conceptually does not make sense, however the parser for pgx does not treat array of jsons correctly. By making it a single object the string format aligns with a json array in string format
 	query := fmt.Sprintf(`
-		SELECT "%s", CAST(CASE WHEN result.value = '' THEN 'NaN' ELSE result.value END as double precision),
-		coalesce(result.explain_values, '{}') AS explain_values
+		SELECT ARRAY_AGG("%s"), ARRAY_AGG(CAST(CASE WHEN result.value = '' THEN 'NaN' ELSE result.value END as double precision)),
+		JSONB_AGG(coalesce(result.explain_values, '{}')), %s
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		%s
-		ORDER BY %s`,
-		xColName, storageName, s.getResultTable(storageName),
-		model.D3MIndexFieldName, where, xColName)
+		GROUP BY %s`,
+		xColName, timeseriesColName, storageName, s.getResultTable(storageName),
+		model.D3MIndexFieldName, where, timeseriesColName)
 
+	fmt.Println(query)
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
 	if err != nil {
@@ -371,7 +391,7 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 	if err != nil {
 		return nil, err
 	}
-	var response []*api.TimeseriesObservation
+	var response map[string][]*api.TimeseriesObservation
 	var dateTime bool
 	if xColVariable.Type == model.DateTimeType {
 		response, err = s.parseDateTimeTimeseriesForecast(res)
@@ -385,19 +405,20 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 			return nil, err
 		}
 	}
-	// Sum duplicate timestamps
-	response = removeDuplicates(response)
+	result := map[string]*api.TimeseriesData{}
 
-	// Calculate Min/Max/Mean
-	var min, max, mean = getMinMaxMean(response)
-
-	return &api.TimeseriesData{
-		Timeseries: response,
-		IsDateTime: dateTime,
-		Min:        min,
-		Max:        max,
-		Mean:       mean,
-	}, nil
+	for key, el := range response {
+		// Calculate Min/Max/Mean
+		var min, max, mean = getMinMaxMean(el)
+		result[key] = &api.TimeseriesData{
+			Timeseries: el,
+			IsDateTime: dateTime,
+			Min:        min,
+			Max:        max,
+			Mean:       mean,
+		}
+	}
+	return &result, nil
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
