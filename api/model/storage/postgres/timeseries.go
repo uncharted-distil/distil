@@ -61,7 +61,7 @@ func NewTimeSeriesField(storage *Storage, datasetName string, datasetStorageName
 	return field
 }
 
-func (s *Storage) parseTimeseries(rows pgx.Rows) (map[string][]*api.TimeseriesObservation, error) {
+func (s *Storage) parseTimeseries(rows pgx.Rows, timeSet *map[float64]float64, keys *[]float64) (map[string][]*api.TimeseriesObservation, error) {
 	result := map[string][]*api.TimeseriesObservation{}
 	if rows != nil {
 		for rows.Next() {
@@ -69,6 +69,10 @@ func (s *Storage) parseTimeseries(rows pgx.Rows) (map[string][]*api.TimeseriesOb
 			time := []float64{}
 			vals := []float64{}
 			var key string
+			cpyTimeSet := map[float64]float64{}
+			for k, v := range *timeSet {
+				cpyTimeSet[k] = v
+			}
 
 			err := rows.Scan(&time, &vals, &key)
 			if err != nil {
@@ -76,7 +80,10 @@ func (s *Storage) parseTimeseries(rows pgx.Rows) (map[string][]*api.TimeseriesOb
 			}
 			result[key] = []*api.TimeseriesObservation{}
 			for i := range time {
-				arr = append(arr, &api.TimeseriesObservation{Value: api.NullableFloat64(vals[i]), Time: time[i]})
+				cpyTimeSet[time[i]] = vals[i]
+			}
+			for _, k := range *keys {
+				arr = append(arr, &api.TimeseriesObservation{Value: api.NullableFloat64(cpyTimeSet[k]), Time: k})
 			}
 			result[key] = arr
 		}
@@ -89,22 +96,27 @@ func (s *Storage) parseTimeseries(rows pgx.Rows) (map[string][]*api.TimeseriesOb
 	return result, nil
 }
 
-func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows) (map[string][]*api.TimeseriesObservation, error) {
+func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows, timeSet *map[time.Time]float64, keys *[]time.Time) (map[string][]*api.TimeseriesObservation, error) {
 	result := map[string][]*api.TimeseriesObservation{}
 	if rows != nil {
 		for rows.Next() {
 			arr := []*api.TimeseriesObservation{}
-			time := []time.Time{}
+			t := []time.Time{}
 			vals := []float64{}
 			var key string
-
-			err := rows.Scan(&time, &vals, &key)
+			cpyTimeSet := map[time.Time]float64{}
+			for k, v := range *timeSet {
+				cpyTimeSet[k] = v
+			}
+			err := rows.Scan(&t, &vals, &key)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
-			result[key] = []*api.TimeseriesObservation{}
-			for i := range time {
-				arr = append(arr, &api.TimeseriesObservation{Value: api.NullableFloat64(vals[i]), Time: float64(time[i].Unix() * 1000)})
+			for i := range t {
+				cpyTimeSet[t[i]] = vals[i]
+			}
+			for _, k := range *keys {
+				arr = append(arr, &api.TimeseriesObservation{Value: api.NullableFloat64(cpyTimeSet[k]), Time: float64(k.Unix() * 1000)})
 			}
 			result[key] = arr
 		}
@@ -278,11 +290,59 @@ func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.B
 	return timeseriesExemplars, nil
 }
 
+func (s *Storage) fetchTimeSet(dataset string, storageName string, xColName string) (pgx.Rows, error) {
+	query := fmt.Sprintf("SELECT ARRAY_AGG( DISTINCT \"%s\" order by \"%s\") FROM %s", xColName, xColName, storageName)
+	res, err := s.client.Query(query)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch timeseries set from postgres")
+	}
+	return res, nil
+}
+
+func (s *Storage) parseDateTimeSet(rows pgx.Rows) (*map[time.Time]float64, *[]time.Time, error) {
+	result := map[time.Time]float64{}
+	if rows != nil {
+		defer rows.Close()
+	}
+	timeArr := []time.Time{}
+	for rows.Next() { // should only be 1 row
+		err := rows.Scan(&timeArr)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "failed to parse timeseries set from postgres")
+		}
+		for _, v := range timeArr {
+			result[v] = math.NaN()
+		}
+
+	}
+
+	return &result, &timeArr, nil
+}
+
+func (s *Storage) parseTimeSet(rows pgx.Rows) (*map[float64]float64, *[]float64, error) {
+	result := map[float64]float64{}
+	if rows != nil {
+		defer rows.Close()
+	}
+	timeArr := []float64{}
+	for rows.Next() { // should be only 1 row
+		err := rows.Scan(&timeArr)
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "failed to parse timeseries set from postgres")
+		}
+		for _, v := range timeArr {
+			result[v] = math.NaN()
+		}
+	}
+	return &result, &timeArr, nil
+}
+
 // FetchTimeseries fetches a timeseries.
 func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI []string, filterParams *api.FilterParams, invert bool) (*map[string]*api.TimeseriesData, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
+
 	// build ANY ARRAY values
 	paramString := ""
 	if len(timeseriesURI) == 0 {
@@ -316,16 +376,28 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	if err != nil {
 		return nil, err
 	}
+	timeSet, err := s.fetchTimeSet(dataset, storageName, xColName)
+	if err != nil {
+		return nil, err
+	}
 	var response map[string][]*api.TimeseriesObservation
 	var dateTime bool
 	if xColVariable.Type == model.DateTimeType {
-		response, err = s.parseDateTimeTimeseries(res)
+		uniqueMap, keys, err := s.parseDateTimeSet(timeSet)
+		if err != nil {
+			return nil, err
+		}
+		response, err = s.parseDateTimeTimeseries(res, uniqueMap, keys)
 		dateTime = true
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		response, err = s.parseTimeseries(res)
+		uniqueMap, keys, err := s.parseTimeSet(timeSet)
+		if err != nil {
+			return nil, err
+		}
+		response, err = s.parseTimeseries(res, uniqueMap, keys)
 		if err != nil {
 			return nil, err
 		}
