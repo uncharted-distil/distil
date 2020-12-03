@@ -213,7 +213,8 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		handleSuccess(conn, msg, jutil.StructToMap(status))
 
 		// flag request as finished if it completed normally, or an error occurred
-		if status.Progress == api.RequestCompletedStatus || status.Progress == api.RequestErroredStatus {
+		// note that normally can include a cancellation, as some pipelines may have completed successfully
+		if status.Progress == compute.RequestCompletedStatus || status.Progress == compute.RequestErroredStatus {
 			// remove completed
 			requestMap.Lock()
 			delete(requestMap.m, status.RequestID)
