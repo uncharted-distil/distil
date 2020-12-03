@@ -305,15 +305,13 @@ func (s *Storage) parseDateTimeSet(rows pgx.Rows) (*map[time.Time]float64, *[]ti
 		defer rows.Close()
 	}
 	timeArr := []time.Time{}
-	for rows.Next() { // should only be 1 row
-		err := rows.Scan(&timeArr)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "failed to parse timeseries set from postgres")
-		}
-		for _, v := range timeArr {
-			result[v] = math.NaN()
-		}
-
+	rows.Next() // should only be 1 row
+	err := rows.Scan(&timeArr)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to parse timeseries set from postgres")
+	}
+	for _, v := range timeArr {
+		result[v] = math.NaN()
 	}
 
 	return &result, &timeArr, nil
@@ -325,14 +323,13 @@ func (s *Storage) parseTimeSet(rows pgx.Rows) (*map[float64]float64, *[]float64,
 		defer rows.Close()
 	}
 	timeArr := []float64{}
-	for rows.Next() { // should be only 1 row
-		err := rows.Scan(&timeArr)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "failed to parse timeseries set from postgres")
-		}
-		for _, v := range timeArr {
-			result[v] = math.NaN()
-		}
+	rows.Next() // should be only 1 row
+	err := rows.Scan(&timeArr)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to parse timeseries set from postgres")
+	}
+	for _, v := range timeArr {
+		result[v] = math.NaN()
 	}
 	return &result, &timeArr, nil
 }
