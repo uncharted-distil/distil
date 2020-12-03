@@ -53,6 +53,12 @@ func GetStorage(uri string) Storage {
 	return csvStorage
 }
 
+// WriteData writes data to storage using the specified URI.
+func WriteData(uri string, data [][]string) error {
+	store := GetStorage(uri)
+	return store.WriteData(uri, data)
+}
+
 // GetCSVStorage returns the instantiated csv storage.
 func GetCSVStorage() Storage {
 	return csvStorage

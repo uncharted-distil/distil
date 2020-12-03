@@ -14,5 +14,5 @@
     "lib": ["es2019", "dom"]
   },
   "include": ["./public/**/*"],
-  "exclude": ["./public/static/**/*"]
+  "exclude": ["./public/static/**/*", ".public/.*/", ".public/styles/"]
 }

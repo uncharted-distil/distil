@@ -286,6 +286,29 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	}, nil
 }
 
+// Featurize provides a separate step for featurzing data so that it can be called independently of the ingest step.
+func Featurize(originalSchemaFile string, schemaFile string, data api.DataStorage, storage api.MetadataStorage, dataset string, config *IngestTaskConfig) error {
+
+	// featurize dataset for downstream efficiencies
+	if config.FeaturizationEnabled && canFeaturize(dataset, storage) {
+		_, featurizedDatasetPath, err := FeaturizeDataset(originalSchemaFile, schemaFile, dataset, storage, config)
+		if err != nil {
+			return errors.Wrap(err, "unable to featurize dataset")
+		}
+		log.Infof("finished featurizing the dataset")
+		ingestedDataset, err := storage.FetchDataset(dataset, true, true)
+		if err != nil {
+			return errors.Wrap(err, "unable to load metadata")
+		}
+		ingestedDataset.LearningDataset = featurizedDatasetPath
+		err = storage.UpdateDataset(ingestedDataset)
+		if err != nil {
+			return errors.Wrap(err, "unable to store updated metadata")
+		}
+	}
+	return nil
+}
+
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, storage api.MetadataStorage, dataset string, source metadata.DatasetSource,
 	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, checkMatch bool, verifyMetadata bool, fallbackMerged bool) (string, error) {

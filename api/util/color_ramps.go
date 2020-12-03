@@ -54,8 +54,16 @@ var (
 	// BlueYellowBrownRamp defines an evenly spaced ramp suitable for visualizing moisture
 	BlueYellowBrownRamp = []uint8{}
 
-	// ImageAttentionFilter is the ramp for generating imageAttention filters
-	ImageAttentionFilter = []RampEntry{}
+	// ViridisColorRamp color scale
+	ViridisColorRamp = []RampEntry{}
+	// MagmaColorRamp color scale
+	MagmaColorRamp = []RampEntry{}
+	// PlasmaColorRamp color scale
+	PlasmaColorRamp = []RampEntry{}
+	// InfernoColorRamp color scale
+	InfernoColorRamp = []RampEntry{}
+	// TurboColorRamp color scale
+	TurboColorRamp = []RampEntry{}
 )
 
 func init() {
@@ -75,10 +83,36 @@ func init() {
 		{0.666, color.RGBA{42, 198, 223, 255}},
 		{1.0, color.RGBA{5, 29, 148, 255}},
 	}, 255, Lab)
-	ImageAttentionFilter = []RampEntry{
-		{0.0, color.RGBA{253, 231, 37, 255}},
-		{0.5, color.RGBA{31, 150, 139, 255}},
-		{1.0, color.RGBA{68, 1, 84, 255}}}
+	ViridisColorRamp = []RampEntry{
+		{0.0, color.RGBA{68, 1, 84, 255}},
+		{0.25, color.RGBA{59, 82, 139, 255}},
+		{0.50, color.RGBA{33, 145, 140, 255}},
+		{0.75, color.RGBA{94, 201, 98, 255}},
+		{1.0, color.RGBA{253, 231, 37, 255}}}
+	MagmaColorRamp = []RampEntry{
+		{0.0, color.RGBA{0, 0, 4, 255}},
+		{0.25, color.RGBA{81, 18, 124, 255}},
+		{0.50, color.RGBA{183, 55, 121, 255}},
+		{0.75, color.RGBA{252, 137, 97, 255}},
+		{1.0, color.RGBA{252, 253, 191, 255}}}
+	PlasmaColorRamp = []RampEntry{
+		{0.0, color.RGBA{13, 8, 135, 255}},
+		{0.25, color.RGBA{126, 3, 168, 255}},
+		{0.50, color.RGBA{204, 71, 120, 255}},
+		{0.75, color.RGBA{248, 149, 64, 255}},
+		{1.0, color.RGBA{240, 249, 33, 255}}}
+	InfernoColorRamp = []RampEntry{
+		{0.0, color.RGBA{0, 0, 4, 255}},
+		{0.25, color.RGBA{87, 16, 110, 255}},
+		{0.50, color.RGBA{188, 55, 84, 255}},
+		{0.75, color.RGBA{249, 142, 9, 255}},
+		{1.0, color.RGBA{252, 255, 164, 255}}}
+	TurboColorRamp = []RampEntry{
+		{0.0, color.RGBA{35, 23, 27, 255}},
+		{0.25, color.RGBA{38, 188, 225, 255}},
+		{0.50, color.RGBA{149, 251, 81, 255}},
+		{0.75, color.RGBA{255, 130, 29, 255}},
+		{1.0, color.RGBA{144, 12, 0, 255}}}
 }
 
 // GenerateRamp creaets a a color ramp stored as a flat array of byte values.
@@ -179,7 +213,45 @@ func GetColor(normalizedVal float64, ramp []RampEntry) *color.RGBA {
 
 // ViridisColorScale returns a functions used to return a color from the viridis color scale given a normalized value
 func ViridisColorScale(normalizedVal float64) *color.RGBA {
-	return GetColor(normalizedVal, ImageAttentionFilter)
+	return GetColor(normalizedVal, ViridisColorRamp)
+}
+
+// MagmaColorScale returns a functions used to return a color from the magma color scale given a normalized value
+func MagmaColorScale(normalizedVal float64) *color.RGBA {
+	return GetColor(normalizedVal, MagmaColorRamp)
+}
+
+// PlasmaColorScale returns a functions used to return a color from the plasma color scale given a normalized value
+func PlasmaColorScale(normalizedVal float64) *color.RGBA {
+	return GetColor(normalizedVal, PlasmaColorRamp)
+}
+
+// InfernoColorScale returns a functions used to return a color from the inferno color scale given a normalized value
+func InfernoColorScale(normalizedVal float64) *color.RGBA {
+	return GetColor(normalizedVal, InfernoColorRamp)
+}
+
+// TurboColorScale returns a functions used to return a color from the inferno color scale given a normalized value
+func TurboColorScale(normalizedVal float64) *color.RGBA {
+	return GetColor(normalizedVal, TurboColorRamp)
+}
+
+// GetColorScale returns the color scale function based the supplied name. if name is incorrect defaults to viridis function
+func GetColorScale(colorScaleName string) func(float64) *color.RGBA {
+	switch colorScaleName {
+	case "viridis":
+		return ViridisColorScale
+	case "magma":
+		return MagmaColorScale
+	case "plasma":
+		return PlasmaColorScale
+	case "inferno":
+		return InfernoColorScale
+	case "turbo":
+		return TurboColorScale
+	default:
+		return ViridisColorScale
+	}
 }
 
 // RampToImage converts a color ramp to an image for debugging purposes

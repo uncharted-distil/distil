@@ -61,6 +61,7 @@ import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
 import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
 import { createRouteEntry } from "../util/routes";
+import { ColorScaleNames } from "../util/data";
 
 export default Vue.extend({
   name: "image-preview",
@@ -98,25 +99,7 @@ export default Vue.extend({
         if (!this.isLoaded) {
           return;
         }
-        this.hasRendered = false;
-        if (
-          this.hasImageAttention &&
-          !this.imageAttentionIsLoaded &&
-          !!this.row
-        ) {
-          await datasetActions.fetchImageAttention(this.$store, {
-            dataset: this.dataset,
-            resultId: this.solutionId,
-            d3mIndex: this.row.d3mIndex,
-          });
-        }
-        if (this.hasImageAttention && this.imageAttentionIsLoaded) {
-          this.injectFilter();
-        }
-        if (!this.hasImageAttention && this.imageAttentionHasRendered) {
-          this.clearImage(this.$refs.imageAttentionElem as any);
-          this.imageAttentionHasRendered = false;
-        }
+        await this.handleImageAttention();
       });
     },
     imageUrl(newUrl: string, oldUrl: string) {
@@ -132,46 +115,19 @@ export default Vue.extend({
       }
     },
     async hasImageAttention() {
-      this.hasRendered = false;
-      if (
-        this.hasImageAttention &&
-        !this.imageAttentionIsLoaded &&
-        !!this.row
-      ) {
-        await datasetActions.fetchImageAttention(this.$store, {
-          dataset: this.dataset,
-          resultId: this.solutionId,
-          d3mIndex: this.row.d3mIndex,
-        });
-      }
-      if (this.hasImageAttention && this.imageAttentionIsLoaded) {
-        this.injectFilter();
-      }
-      if (!this.hasImageAttention && this.imageAttentionHasRendered) {
-        this.clearImage(this.$refs.imageAttentionElem as any);
-        this.imageAttentionHasRendered = false;
-      }
+      await this.handleImageAttention();
     },
-    async row() {
-      this.hasRendered = false;
-      this.clearImage(this.$refs.imageAttentionElem as any);
-      if (
-        this.hasImageAttention &&
-        !this.imageAttentionIsLoaded &&
-        !!this.row
-      ) {
+    async row(newRow: TableRow, oldRow: TableRow) {
+      await this.handleImageAttention();
+    },
+    async colorScale() {
+      if (!!this.solutionId && !!this.row) {
         await datasetActions.fetchImageAttention(this.$store, {
           dataset: this.dataset,
           resultId: this.solutionId,
           d3mIndex: this.row.d3mIndex,
         });
-      }
-      if (this.hasImageAttention && this.imageAttentionIsLoaded) {
         this.injectFilter();
-      }
-      if (!this.hasImageAttention && this.imageAttentionHasRendered) {
-        this.clearImage(this.$refs.imageAttentionElem as any);
-        this.imageAttentionHasRendered = false;
       }
     },
     // Refresh image on band change
@@ -212,6 +168,9 @@ export default Vue.extend({
   },
 
   computed: {
+    colorScale(): ColorScaleNames {
+      return routeGetters.getColorScale(this.$store);
+    },
     imageId(): string {
       return this.imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
     },
@@ -246,8 +205,11 @@ export default Vue.extend({
         this.files[this.imageParamUrl] ?? this.files[this.imageParamId] ?? null
       );
     },
+    imageAttentionId(): string {
+      return this.solutionId + this.row.d3mIndex;
+    },
     imageAttention(): HTMLImageElement {
-      return this.files[this.solutionId + this.row.d3mIndex] ?? null;
+      return this.files[this.solutionId + this.row?.d3mIndex] ?? null;
     },
     spinnerHTML(): string {
       return circleSpinnerHTML();
@@ -283,17 +245,43 @@ export default Vue.extend({
   },
 
   methods: {
-    visibilityChanged(isVisible: boolean) {
+    async visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRequested) {
         this.getImage();
+        await this.handleImageAttention();
         return;
       }
       if (this.isVisible && this.hasRequested && !this.hasRendered) {
         this.injectImage();
       }
     },
-
+    async handleImageAttention() {
+      this.hasRendered = false;
+      this.clearImage(this.$refs.imageAttentionElem as any);
+      if (
+        this.hasImageAttention &&
+        !this.imageAttentionIsLoaded &&
+        !!this.row
+      ) {
+        await datasetActions.fetchImageAttention(this.$store, {
+          dataset: this.dataset,
+          resultId: this.solutionId,
+          d3mIndex: this.row.d3mIndex,
+        });
+      }
+      if (this.hasImageAttention && this.imageAttentionIsLoaded) {
+        this.injectFilter();
+      }
+      if (!this.hasImageAttention && this.imageAttentionHasRendered) {
+        this.clearImage(this.$refs.imageAttentionElem as any);
+        this.imageAttentionHasRendered = false;
+      }
+      if (!this.hasImageAttention && this.imageAttentionHasRendered) {
+        this.clearImage(this.$refs.imageAttentionElem as any);
+        this.imageAttentionHasRendered = false;
+      }
+    },
     handleClick() {
       if (this.onClick) {
         this.onClick({
@@ -394,6 +382,9 @@ export default Vue.extend({
       const empty = "";
       if (this.uniqueTrail !== empty) {
         datasetMutations.removeFile(this.$store, this.imageParamId);
+        if (!!this.imageAttention) {
+          datasetMutations.removeFile(this.$store, this.imageAttentionId);
+        }
       }
     },
   },
@@ -462,7 +453,7 @@ export default Vue.extend({
   position: relative;
 }
 
-.filter-elem {
+.filter-elem img {
   position: absolute;
   top: 0px;
   max-height: 100%;

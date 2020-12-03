@@ -1,7 +1,15 @@
 <template>
-  <div class="filter-badge" :class="{ active: activeFilter }">
-    {{ name }} {{ content }}
-    <b-button class="remove-button" size="sm" @click="onClick">
+  <div class="filter-badge" :class="{ active: isActive }">
+    <span :title="title">{{ name }} {{ content }}</span>
+    <b-button
+      v-if="isHighlight"
+      size="sm"
+      @click="onAdd"
+      title="Add highlight as a filter"
+    >
+      <i class="fa fa-plus" />
+    </b-button>
+    <b-button size="sm" @click="onRemove" title="Remove filter">
       <i class="fa fa-times" />
     </b-button>
   </div>
@@ -11,6 +19,7 @@
 import Vue from "vue";
 import moment from "moment";
 import {
+  addFilterToRoute,
   removeFilterFromRoute,
   Filter,
   NUMERICAL_FILTER,
@@ -21,19 +30,29 @@ import {
   TEXT_FILTER,
 } from "../util/filters";
 import { clearHighlight } from "../util/highlights";
-import { removeClusterPrefix } from "../util/types";
 
 export default Vue.extend({
   name: "filter-badge",
 
   props: {
     filter: Object as () => Filter,
-    activeFilter: Boolean as () => boolean,
+    activeFilter: Boolean,
+    isHighlight: Boolean,
   },
 
   computed: {
+    isActive(): boolean {
+      return this.activeFilter || this.isHighlight;
+    },
+
     name(): string {
       return this.filter.displayName;
+    },
+
+    title(): string {
+      return this.isActive
+        ? `Highlighted data filtered by ${this.name}`
+        : `Data filtered by ${this.name}`;
     },
 
     content(): string {
@@ -62,11 +81,16 @@ export default Vue.extend({
   },
 
   methods: {
-    onClick() {
-      if (!this.activeFilter) {
-        removeFilterFromRoute(this.$router, this.filter);
-      } else {
+    onAdd(): void {
+      addFilterToRoute(this.$router, this.filter);
+      clearHighlight(this.$router);
+    },
+
+    onRemove(): void {
+      if (this.isActive) {
         clearHighlight(this.$router);
+      } else {
+        removeFilterFromRoute(this.$router, this.filter);
       }
     },
 
@@ -79,38 +103,41 @@ export default Vue.extend({
 
 <style scoped>
 .filter-badge {
+  --height: 28px;
+  background-color: var(--gray-900);
+  border-radius: 2px;
+  color: var(--white);
+  display: inline-flex;
+  height: var(--height);
+  margin: 0.2rem;
+  overflow: hidden; /* hide issue with button:hover styling */
   position: relative;
-  height: 28px;
-  display: inline-block;
-  color: #fff;
-  padding-left: 8px;
-  border-radius: 4px;
-  background-color: #333;
 }
 
-.filter-badge.active {
-  background-color: #255dcc;
+.active {
+  background-color: var(--blue);
 }
 
-.remove-button {
+span {
+  line-height: var(--height);
+  padding: 0 0.5em;
+}
+
+.btn {
   color: #fff;
-  margin-left: 8px;
   background: none;
-  border-radius: 0px;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
   border: none;
-  border-left: 1px solid #fff;
+  border-left: 1px solid var(--white);
+  border-radius: 0;
 }
 
-.remove-button:hover {
-  color: #fff;
-  background-color: #3d70d3;
-  border: none;
-  border-left: 1px solid #fff;
+.btn:hover {
+  color: var(--white);
+  background-color: var(--blue);
+  border-left: 1px solid var(--white);
 }
 
-.active .remove-button:hover {
+.active .btn:hover {
   background-color: #3d70d3;
 }
 </style>

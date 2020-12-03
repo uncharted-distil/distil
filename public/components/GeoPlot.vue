@@ -115,7 +115,7 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
-import viridisScale from "scale-color-perceptual/viridis";
+import { COLOR_SCALES } from "../util/data";
 import lumo from "lumo";
 import BatchQuadOverlay from "../util/rendering/BatchQuadOverlay";
 import {
@@ -243,7 +243,6 @@ export default Vue.extend({
     pointOpacity: { type: Number, default: 0.8 },
     zoomThreshold: { type: Number, default: 8 },
     maxZoom: { type: Number, default: 17 }, // defaults to max zoom
-    colorScale: { type: Function, default: viridisScale },
   },
 
   data() {
@@ -332,6 +331,10 @@ export default Vue.extend({
     },
     showDrillDown(): boolean {
       return this.isImageDrilldown;
+    },
+    colorScale(): (t: number) => string {
+      const colorScale = routeGetters.getColorScale(this.$store);
+      return COLOR_SCALES.get(colorScale);
     },
     colorGradient(): string {
       return this.isColoringByConfidence

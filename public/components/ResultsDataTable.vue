@@ -39,6 +39,7 @@
         v-slot:[cellSlot(imageField.key)]="data"
       >
         <image-preview
+          :row="data.item"
           :key="imageField.key"
           :type="imageField.type"
           :image-url="data.item[imageField.key].value"

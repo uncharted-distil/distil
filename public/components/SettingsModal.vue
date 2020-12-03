@@ -94,7 +94,6 @@
 
 <script lang="ts">
 import Vue from "vue";
-import _ from "lodash";
 import { ModelQuality } from "../store/requests";
 import {
   getters as datasetGetters,
@@ -184,6 +183,9 @@ export default Vue.extend({
   },
 
   async beforeMount() {
+    const task = routeGetters.getRouteTask(this.$store);
+    if (!task) return;
+
     await datasetActions.fetchModelingMetrics(this.$store, {
       task: this.task,
     });

@@ -64,14 +64,8 @@ type Media struct {
 }
 
 // NewMediaDataset creates a new media dataset from raw byte data, assuming json.
-func NewMediaDataset(dataset string, mediaType string, targetMediaType string, rawData []byte) (*Media, error) {
-	// store and expand raw data
-	zipPath, err := StoreZipDataset(dataset, rawData)
-	if err != nil {
-		return nil, err
-	}
-
-	expandedInfo, err := ExpandZipDataset(zipPath, dataset)
+func NewMediaDataset(dataset string, mediaType string, targetMediaType string, rawFilePath string) (*Media, error) {
+	expandedInfo, err := ExpandZipDataset(rawFilePath, dataset)
 	if err != nil {
 		return nil, err
 	}

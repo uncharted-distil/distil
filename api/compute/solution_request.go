@@ -344,10 +344,9 @@ func (s *SolutionRequest) createPreprocessingPipeline(featureVariables []*model.
 }
 
 // GeneratePredictions produces predictions using the specified.
-func GeneratePredictions(datasetURI string, explainedSolutionID string,
-	fittedSolutionID string, client *compute.Client) (*PredictionResult, error) {
+func GeneratePredictions(datasetURI string, solutionID string, fittedSolutionID string, client *compute.Client) (*PredictionResult, error) {
 	// check if the solution can be explained
-	desc, err := client.GetSolutionDescription(context.Background(), explainedSolutionID)
+	desc, err := client.GetSolutionDescription(context.Background(), solutionID)
 	if err != nil {
 		return nil, err
 	}
@@ -573,53 +572,41 @@ func describeSolution(client *compute.Client, initialSearchSolutionID string) (*
 	return desc, nil
 }
 
-func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage, dataStorage api.DataStorage,
-	searchID string, dataset string, storageName string, datasetURI string, datasetURITrain string, datasetURITest string, variables []*model.Variable) {
+func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorage api.SolutionStorage,
+	dataStorage api.DataStorage, searchContext pipelineSearchContext) {
 
 	// update request status
-	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestRunningStatus)
+	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, RequestRunningStatus)
 	if err != nil {
 		s.finished <- err
 		return
 	}
 
-	// generate predictions -  for timeseries we want to use the entire source dataset, for anything else
-	// we only want the test data predictions.
-	produceDatasetURI := datasetURITest
-	for _, task := range s.Task {
-		if task == compute.ForecastingTask {
-			produceDatasetURI = datasetURI
-			break
-		}
-	}
-
 	// search for solutions, this wont return until the search finishes or it times out
-	err = client.SearchSolutions(context.Background(), searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
+	err = client.SearchSolutions(context.Background(), searchContext.searchID, func(solution *pipeline.GetSearchSolutionsResultsResponse) {
 		// create a new status channel for the solution
 		c := newStatusChannel()
 		// add the solution to the request
 		s.addSolution(c)
 		// persist the solution
-		s.persistSolution(c, solutionStorage, searchID, solution.SolutionId, "")
-		s.persistSolutionStatus(c, solutionStorage, searchID, solution.SolutionId, SolutionPendingStatus)
+		s.persistSolution(c, solutionStorage, searchContext.searchID, solution.SolutionId, "")
+		s.persistSolutionStatus(c, solutionStorage, searchContext.searchID, solution.SolutionId, SolutionPendingStatus)
 		// dispatch it
-		searchResult, err := s.dispatchSolutionSearchPipeline(c, client, solutionStorage, dataStorage, searchID,
-			solution.SolutionId, dataset, storageName, produceDatasetURI, datasetURITrain, datasetURITest)
+		searchResult, err := s.dispatchSolutionSearchPipeline(c, client, solutionStorage, dataStorage, solution.SolutionId, searchContext)
 		if err != nil {
-			s.persistSolutionError(c, solutionStorage, searchID, solution.SolutionId, err)
+			s.persistSolutionError(c, solutionStorage, searchContext.searchID, solution.SolutionId, err)
 			return
 		}
 
-		err = s.dispatchSolutionExplainPipeline(client, solutionStorage, dataStorage, searchResult, searchID,
-			solution.SolutionId, dataset, storageName, produceDatasetURI, variables)
+		err = s.dispatchSolutionExplainPipeline(client, solutionStorage, dataStorage, solution.SolutionId, searchContext, searchResult)
 		if err != nil {
-			s.persistSolutionError(c, solutionStorage, searchID, solution.SolutionId, err)
+			s.persistSolutionError(c, solutionStorage, searchContext.searchID, solution.SolutionId, err)
 			return
 		}
 
 		// notify client of update
 		c <- SolutionStatus{
-			RequestID:  searchID,
+			RequestID:  searchContext.searchID,
 			SolutionID: solution.SolutionId,
 			ResultID:   searchResult.resultID,
 			Progress:   SolutionCompletedStatus,
@@ -635,9 +622,9 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 
 	// update request status
 	if err != nil {
-		s.persistRequestError(s.requestChannel, solutionStorage, searchID, dataset, err)
+		s.persistRequestError(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, err)
 	} else {
-		s.persistRequestStatus(s.requestChannel, solutionStorage, searchID, dataset, RequestCompletedStatus)
+		s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, RequestCompletedStatus)
 	}
 	close(s.requestChannel)
 
@@ -755,21 +742,9 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 
 	// when dealing with categorical data we want to stratify
 	stratify := model.IsCategorical(s.TargetFeature.Type)
-
-	// perist the datasets and get URI
-	params := &persistedDataParams{
-		DatasetName:        s.DatasetInput,
-		SchemaFile:         compute.D3MDataSchema,
-		SourceDataFolder:   datasetInputDir,
-		TmpDataFolder:      datasetDir,
-		TaskType:           s.Task,
-		GroupingFieldIndex: groupingVariableIndex,
-		TargetFieldIndex:   targetIndex,
-		Stratify:           stratify,
-		Quality:            s.Quality,
-		TrainTestSplit:     s.TrainTestSplit,
-	}
-	datasetPathTrain, datasetPathTest, err := persistOriginalData(params)
+	// create the splitter to use for the train / test split
+	splitter := createSplitter(s.Task, targetIndex, groupingVariableIndex, stratify, s.Quality, s.TrainTestSplit)
+	datasetPathTrain, datasetPathTest, err := SplitDataset(path.Join(datasetInputDir, compute.D3MDataSchema), splitter)
 	if err != nil {
 		return err
 	}
@@ -847,8 +822,30 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// dispatch search request
-	go s.dispatchRequest(client, solutionStorage, dataStorage, requestID, dataset.ID,
-		datasetInput.StorageName, datasetInputDir, datasetPathTrain, datasetPathTest, dataVariables)
+	searchContext := pipelineSearchContext{
+		searchID:          requestID,
+		dataset:           dataset.ID,
+		storageName:       datasetInput.StorageName,
+		sourceDatasetURI:  datasetInputDir,
+		trainDatasetURI:   datasetPathTrain,
+		testDatasetURI:    datasetPathTest,
+		produceDatasetURI: datasetPathTest,
+		variables:         dataVariables,
+		targetCol:         s.TargetFeature.Index,
+		groupingCol:       groupingVariableIndex,
+		sample:            true,
+	}
+
+	// generate predictions -  for timeseries we want to use the entire source dataset, for anything else
+	// we only want the test data predictions.
+	for _, task := range s.Task {
+		if task == compute.ForecastingTask {
+			searchContext.produceDatasetURI = compute.BuildSchemaFileURI(searchContext.sourceDatasetURI)
+			searchContext.sample = false
+			break
+		}
+	}
+	go s.dispatchRequest(client, solutionStorage, dataStorage, searchContext)
 
 	return nil
 }

@@ -28,6 +28,47 @@ const (
 	modelsListSize = 1000
 )
 
+func (s *Storage) parseRawSolutionVariable(rsv map[string]interface{}) (*api.SolutionVariable, error) {
+	name, ok := json.String(rsv, "name")
+	if !ok {
+		return nil, errors.New("unable to parse name from variable data")
+	}
+
+	rank, ok := json.Float(rsv, "rank")
+	if !ok {
+		return nil, errors.New("unable to parse rank from variable data")
+	}
+
+	typ, ok := json.String(rsv, "type")
+	if !ok {
+		return nil, errors.New("unable to parse type from variable data")
+	}
+
+	return &api.SolutionVariable{
+		Name: name,
+		Rank: rank,
+		Type: typ,
+	}, nil
+}
+
+func (s *Storage) parseSolutionVariables(src map[string]interface{}) ([]*api.SolutionVariable, error) {
+	rawSolutionVariables, ok := json.Array(src, "variableDetails")
+	if !ok {
+		return nil, errors.New("failed to parse variable list")
+	}
+	var solutionVariables []*api.SolutionVariable
+	for _, rsv := range rawSolutionVariables {
+		sv, err := s.parseRawSolutionVariable(rsv)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to parse variable")
+		}
+		if sv != nil {
+			solutionVariables = append(solutionVariables, sv)
+		}
+	}
+	return solutionVariables, nil
+}
+
 func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, error) {
 	var models []*api.ExportedModel
 	for _, hit := range res.Hits.Hits {
@@ -74,7 +115,12 @@ func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, 
 
 		variables, _ := json.StringArray(src, "variables")
 
-		// write everythign out to result struct
+		variableDetails, err := s.parseSolutionVariables(src)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to parse solution variables")
+		}
+
+		// write everything out to result struct
 		models = append(models, &api.ExportedModel{
 			ModelName:        modelName,
 			ModelDescription: modelDescription,
@@ -84,6 +130,7 @@ func (s *Storage) parseModels(res *elastic.SearchResult) ([]*api.ExportedModel, 
 			DatasetName:      name,
 			Target:           target,
 			Variables:        variables,
+			VariableDetails:  variableDetails,
 		})
 	}
 	return models, nil

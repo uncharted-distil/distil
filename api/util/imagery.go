@@ -18,11 +18,6 @@ package util
 import (
 	"bytes"
 	"fmt"
-	lru "github.com/hashicorp/golang-lru"
-	"github.com/nfnt/resize"
-	"github.com/pkg/errors"
-	"github.com/uncharted-distil/gdal"
-	log "github.com/unchartedsoftware/plog"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -32,6 +27,12 @@ import (
 	"os"
 	"path"
 	"strings"
+
+	lru "github.com/hashicorp/golang-lru"
+	"github.com/nfnt/resize"
+	"github.com/pkg/errors"
+	"github.com/uncharted-distil/gdal"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -433,7 +434,7 @@ func createRGBAFromRamp(xSize int, ySize int, bandImages []*image.Gray16, transf
 		grayValue1 := uint16(bandImage1.Pix[i])<<8 | uint16(bandImage1.Pix[i+1])
 
 		// compute NDVI ratio
-		transformedValue := -1.0
+		transformedValue := 0.0
 		if grayValue0 != 0 || grayValue1 != 0 {
 			transformedValue = transform(grayValue0, grayValue1)
 		}

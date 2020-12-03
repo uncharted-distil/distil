@@ -53,6 +53,9 @@ export const getters = {
   getRouteResultTrainingVarsPage: read(
     moduleGetters.getRouteResultTrainingVarsPage
   ),
+  getRouteDataExplorerVarsPage: read(
+    moduleGetters.getRouteDataExplorerVarsPage
+  ),
   getAllRoutePages: read(moduleGetters.getAllRoutePages),
   getRouteJoinDatasetsVarsSearch: read(
     moduleGetters.getRouteJoinDatasetsVarsSearch
@@ -66,6 +69,9 @@ export const getters = {
   getRouteTrainingVarsSearch: read(moduleGetters.getRouteTrainingVarsSearch),
   getRouteResultTrainingVarsSearch: read(
     moduleGetters.getRouteResultTrainingVarsSearch
+  ),
+  getRouteDataExplorerVarsSearch: read(
+    moduleGetters.getRouteDataExplorerVarsSearch
   ),
   getAllSearchesByRoute: read(moduleGetters.getAllSearchesByRoute),
   getAllSearchesByQueryString: read(moduleGetters.getAllSearchesByQueryString),
@@ -102,6 +108,7 @@ export const getters = {
   getGeoZoom: read(moduleGetters.getGeoZoom),
   getGroupingType: read(moduleGetters.getGroupingType),
   getRouteTask: read(moduleGetters.getRouteTask),
+  getColorScale: read(moduleGetters.getColorScale),
   getRouteFittedSolutionId: read(moduleGetters.getRouteFittedSolutionId),
   getRoutePredictionsDataset: read(moduleGetters.getRoutePredictionsDataset),
   isSingleSolution: read(moduleGetters.isSingleSolution),
@@ -118,4 +125,5 @@ export const getters = {
   getRouteTrainTestSplit: read(moduleGetters.getRouteTrainTestSplit),
   isPageSelectTarget: read(moduleGetters.isPageSelectTarget),
   isPageSelectTraining: read(moduleGetters.isPageSelectTraining),
+  getRoutePane: read(moduleGetters.getRoutePane),
 };

@@ -1,15 +1,8 @@
 import _ from "lodash";
-import { Route, Location, RouteRecord } from "vue-router";
+import { Route, Location } from "vue-router";
 import { Dictionary } from "./dict";
-import {
-  JOINED_VARS_INSTANCE_PAGE,
-  AVAILABLE_TARGET_VARS_INSTANCE_PAGE,
-  AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
-  TRAINING_VARS_INSTANCE_PAGE,
-  RESULT_TRAINING_VARS_INSTANCE_PAGE,
-} from "../store/route/index";
 import { SummaryMode } from "../store/dataset";
-
+import { ColorScaleNames } from "./data";
 // TODO: should really have a separate definintion for each route
 export interface RouteArgs {
   clustering?: string;
@@ -49,6 +42,7 @@ export interface RouteArgs {
   produceRequestId?: string;
   fittedSolutionId?: string;
   singleSolution?: string;
+  colorScale?: ColorScaleNames;
   predictionsDataset?: string;
   bandCombinationId?: string;
   imageAttention?: boolean;
@@ -58,6 +52,19 @@ export interface RouteArgs {
   dataSize?: number;
   metrics?: string;
   trainTestSplit?: number;
+}
+
+function validateQueryArgs(args: RouteArgs): RouteArgs {
+  return _.reduce(
+    args,
+    (query, value, arg) => {
+      if (!_.isUndefined(value)) {
+        query[arg] = value;
+      }
+      return query;
+    },
+    {} as RouteArgs
+  );
 }
 
 /**
@@ -96,25 +103,12 @@ export function getRouteFacetSearch(key: string, route: Route): string {
   return searchQuery ? searchQuery : "";
 }
 
-function validateQueryArgs(args: RouteArgs): RouteArgs {
-  return _.reduce(
-    args,
-    (query, value, arg) => {
-      if (!_.isUndefined(value)) {
-        query[arg] = value;
-      }
-      return query;
-    },
-    {} as RouteArgs
-  );
-}
-
 export function varModesToString(varModes: Map<string, SummaryMode>): string {
   // serialize the modes map into a string and add to the route
   return Array.from(varModes)
     .reduce((acc, curr) => {
       acc.push(`${curr[0]}:${curr[1]}`);
       return acc;
-    }, [] as String[])
+    }, [] as string[])
     .join(",");
 }

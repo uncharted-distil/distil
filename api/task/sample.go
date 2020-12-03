@@ -51,7 +51,7 @@ func Sample(originalSchemaFile string, schemaFile string, dataset string, config
 		return schemaFile, false, len(csvData), nil
 	}
 
-	sampledData := compute.SampleDataset(csvData, config.SampleRowLimit, true)
+	sampledData := compute.SampleData(csvData, config.SampleRowLimit, true)
 
 	// copy the full csv to keep it if needed
 	err = util.CopyFile(originalCSVFilePath, path.Join(path.Dir(originalCSVFilePath), "learningData-full.csv"))

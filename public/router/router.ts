@@ -9,6 +9,7 @@ import Results from "../views/Results.vue";
 import Predictions from "../views/Predictions.vue";
 import ExportSuccess from "../views/ExportSuccess.vue";
 import VariableGrouping from "../views/VariableGrouping.vue";
+import DataExplorer from "../views/DataExplorer.vue";
 import store from "../store/store";
 import { getters as routeGetters } from "../store/route/module";
 import { saveView } from "../util/view";
@@ -23,6 +24,7 @@ import {
   RESULTS_ROUTE,
   EXPORT_SUCCESS_ROUTE,
   PREDICTION_ROUTE,
+  DATA_EXPLORER_ROUTE,
 } from "../store/route";
 
 Vue.use(VueRouter);
@@ -39,6 +41,7 @@ const router = new VueRouter({
     { path: RESULTS_ROUTE, component: Results },
     { path: EXPORT_SUCCESS_ROUTE, component: ExportSuccess },
     { path: PREDICTION_ROUTE, component: Predictions },
+    { path: DATA_EXPLORER_ROUTE, component: DataExplorer },
   ],
 });
 
