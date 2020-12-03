@@ -392,6 +392,7 @@ export function updateSummariesPerVariable(
     Object.freeze(summary)
   );
 }
+// removeTimeseries will not trigger a Vue update
 export function removeTimeseries(
   args: {
     solutionId?: string;

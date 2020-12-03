@@ -37,13 +37,13 @@ export const mutations = {
   ) {
     args.ids.forEach((id) => {
       // predicted data
-      Vue.delete(state.timeseries[args.predictionsId].timeseriesData, id);
-      Vue.delete(state.timeseries[args.predictionsId].isDateTime, id);
-      Vue.delete(state.timeseries[args.predictionsId].info, id);
+      delete state.timeseries[args.predictionsId].timeseriesData[id];
+      delete state.timeseries[args.predictionsId].isDateTime[id];
+      delete state.timeseries[args.predictionsId].info[id];
       // predicted forecast
-      Vue.delete(state.forecasts[args.predictionsId].forecastData, id);
-      Vue.delete(state.forecasts[args.predictionsId].forecastRange, id);
-      Vue.delete(state.forecasts[args.predictionsId].isDateTime, id);
+      delete state.forecasts[args.predictionsId].forecastData[id];
+      delete state.forecasts[args.predictionsId].forecastRange[id];
+      delete state.forecasts[args.predictionsId].isDateTime[id];
     });
   },
   // forecast

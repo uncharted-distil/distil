@@ -98,17 +98,17 @@ export const mutations = {
   ) {
     args.ids.forEach((id) => {
       // delete timeseries data
-      Vue.delete(state.timeseries[args.solutionId].timeseriesData, id);
+      delete state.timeseries[args.solutionId].timeseriesData[id];
       // delete is date time
-      Vue.delete(state.timeseries[args.solutionId].isDateTime, id);
+      delete state.timeseries[args.solutionId].isDateTime[id];
       // delete info
-      Vue.delete(state.timeseries[args.solutionId].info, id);
+      delete state.timeseries[args.solutionId].info[id];
       // remove predictedForecast data
-      Vue.delete(state.forecasts[args.solutionId].forecastData, id);
+      delete state.forecasts[args.solutionId].forecastData[id];
       // delete forecast range
-      Vue.delete(state.forecasts[args.solutionId].forecastRange, id);
+      delete state.forecasts[args.solutionId].forecastRange[id];
       // delete isDateTime
-      Vue.delete(state.forecasts[args.solutionId].isDateTime, id);
+      delete state.forecasts[args.solutionId].isDateTime[id];
     });
   },
   bulkUpdatePredictedTimeseries(
