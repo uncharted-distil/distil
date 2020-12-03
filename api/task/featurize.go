@@ -79,7 +79,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	featurizedOutputPath := path.Join(env.GetAugmentedPath(), featurizedDatasetID)
 
 	// copy the output to the folder as the data
-	dataOutputPath := path.Join(featurizedOutputPath, path.Join(compute.D3MDataFolder, "learningData.parquet"))
+	dataOutputPath := path.Join(featurizedOutputPath, path.Join(compute.D3MDataFolder, compute.DistilParquetLearningData))
 	featurizedDataWriter := serialization.GetStorage(dataOutputPath)
 	err = featurizedDataWriter.WriteData(dataOutputPath, featurizedData)
 	if err != nil {
