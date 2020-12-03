@@ -371,7 +371,7 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 		xColName, yColName, timeseriesColName, storageName, where)
 
 	// execute the postgres query
-	res, err := s.client.Query(query)
+	res, err := s.client.Query(query, params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch timeseries from postgres")
 	}
