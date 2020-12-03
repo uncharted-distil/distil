@@ -1,7 +1,6 @@
 import axios from "axios";
 import _ from "lodash";
 import { Dictionary } from "vue-router/types/router";
-import { filter } from "vue/types/umd";
 import { ActionContext } from "vuex";
 import {
   createEmptyTableData,
@@ -925,6 +924,7 @@ export const actions = {
       timeseriesColName: string;
       solutionId: string;
       timeseriesIds: string[];
+      uniqueTrail?: string;
     }
   ) {
     if (!args.dataset) {
@@ -976,7 +976,7 @@ export const actions = {
       );
       const responseMap = new Map(
         Object.keys(response.data).map((k) => {
-          return [k, response.data[k]];
+          return [k + (args.uniqueTrail ?? ""), response.data[k]];
         })
       );
       mutations.bulkUpdatePredictedTimeseries(context, {

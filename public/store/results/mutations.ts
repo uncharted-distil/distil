@@ -89,6 +89,28 @@ export const mutations = {
   updateConfidenceSummaries(state: ResultsState, summary: VariableSummary) {
     updateSummaries(summary, state.confidenceSummaries);
   },
+  removeTimeseries(
+    state: ResultsState,
+    args: {
+      solutionId: string;
+      ids: string[];
+    }
+  ) {
+    args.ids.forEach((id) => {
+      // delete timeseries data
+      Vue.delete(state.timeseries[args.solutionId].timeseriesData, id);
+      // delete is date time
+      Vue.delete(state.timeseries[args.solutionId].isDateTime, id);
+      // delete info
+      Vue.delete(state.timeseries[args.solutionId].info, id);
+      // remove predictedForecast data
+      Vue.delete(state.forecasts[args.solutionId].forecastData, id);
+      // delete forecast range
+      Vue.delete(state.forecasts[args.solutionId].forecastRange, id);
+      // delete isDateTime
+      Vue.delete(state.forecasts[args.solutionId].isDateTime, id);
+    });
+  },
   bulkUpdatePredictedTimeseries(
     state: ResultsState,
     args: {
@@ -103,12 +125,13 @@ export const mutations = {
         }
       >;
       solutionId: string;
+      uniqueTrail?: string;
     }
   ) {
     args.map.forEach((val, key) => {
       mutations.updatePredictedTimeseries(state, {
         solutionId: args.solutionId,
-        id: key,
+        id: key + (args.uniqueTrail ?? ""),
         timeseries: val.timeseries,
         isDateTime: val.isDateTime,
         min: val.min,
@@ -168,6 +191,7 @@ export const mutations = {
     state: ResultsState,
     args: {
       solutionId: string;
+      uniqueTrail?: string;
       map: Map<
         string,
         {
@@ -181,7 +205,7 @@ export const mutations = {
     args.map.forEach((val, key) => {
       mutations.updatePredictedForecast(state, {
         solutionId: args.solutionId,
-        id: key,
+        id: key + (args.uniqueTrail ?? ""),
         forecast: val.forecast,
         forecastTestRange: val.forecastTestRange,
         isDateTime: val.isDateTime,

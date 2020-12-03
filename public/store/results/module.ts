@@ -169,4 +169,5 @@ export const mutations = {
   setFeatureImportanceRanking: commit(
     moduleMutations.setFeatureImportanceRanking
   ),
+  removeTimeseries: commit(moduleMutations.removeTimeseries),
 };

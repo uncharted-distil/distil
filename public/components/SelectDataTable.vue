@@ -106,6 +106,7 @@ import ImagePreview from "./ImagePreview.vue";
 import {
   getters as datasetGetters,
   actions as datasetActions,
+  mutations as datasetMutations,
 } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
 import { Filter } from "../util/filters";
@@ -296,7 +297,17 @@ export default Vue.extend({
       });
     },
     onPagination(page: number) {
+      // remove old data from store
+      this.timeseriesGroupings.forEach((tsg) => {
+        datasetMutations.removeTimeseries(this.$store, {
+          dataset: this.dataset,
+          ids: this.pageItems.map((item) => {
+            return (item[tsg.idCol].value as string) + this.uniqueTrail;
+          }),
+        });
+      });
       this.currentPage = page;
+      // fetch new data
       this.fetchTimeSeries();
     },
     timeseriesInfo(id: string): Extrema {

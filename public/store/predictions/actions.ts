@@ -298,6 +298,7 @@ export const actions = {
       timeseriesColName: string;
       predictionsId: string;
       timeseriesIds: string[];
+      uniqueTrail?: string;
     }
   ) {
     if (!args.truthDataset) {
@@ -349,7 +350,7 @@ export const actions = {
       );
       const responseMap = new Map(
         Object.keys(response.data).map((k) => {
-          return [k, response.data[k]];
+          return [k + (args.uniqueTrail ?? ""), response.data[k]];
         })
       );
       mutations.bulkUpdatePredictedTimeseries(context, {

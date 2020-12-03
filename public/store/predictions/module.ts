@@ -98,4 +98,5 @@ export const mutations = {
   bulkUpdatePredictedForecast: commit(
     moduleMutations.bulkUpdatePredictedForecast
   ),
+  removeTimeseries: commit(moduleMutations.removeTimeseries),
 };

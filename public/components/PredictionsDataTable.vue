@@ -38,7 +38,7 @@
           :type="imageField.type"
           :image-url="data.item[imageField.key].value"
           :debounce="true"
-          uniqueTrail="predictions-table"
+          :uniqueTrail="uniqueTrail"
         />
       </template>
 
@@ -78,6 +78,7 @@
           :timeseries-id="data.item[timeseriesGrouping.idCol].value"
           :predictions-id="predictions.requestId"
           :include-forecast="true"
+          :uniqueTrail="uniqueTrail"
         />
       </template>
     </b-table>
@@ -116,6 +117,7 @@ import {
 import {
   getters as predictionsGetters,
   actions as predictionsActions,
+  mutations as predictionsMutations,
 } from "../store/predictions/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -156,6 +158,7 @@ export default Vue.extend({
       currentPage: 1,
       perPage: 100,
       initialized: false,
+      uniqueTrail: "predictions-table",
     };
   },
 
@@ -208,7 +211,7 @@ export default Vue.extend({
       if (this.isTimeseries) {
         items = items?.map((item) => {
           const timeserieId = item[this.timeseriesGroupings[0].idCol].value;
-          const minMaxMean = this.timeserieInfo(timeserieId);
+          const minMaxMean = this.timeserieInfo(timeserieId + this.uniqueTrail);
           return { ...item, ...minMaxMean };
         });
       }
@@ -347,6 +350,14 @@ export default Vue.extend({
       return listData.map((l) => l.Float);
     },
     onPagination(page: number) {
+      this.timeseriesGroupings.forEach((tsg) => {
+        predictionsMutations.removeTimeseries(this.$store, {
+          predictionsId: this.predictions.requestId,
+          ids: this.pageItems.map((item) => {
+            return (item[tsg.idCol].value as string) + this.uniqueTrail;
+          }),
+        });
+      });
       this.currentPage = page;
       this.fetchTimeseries();
     },
@@ -363,7 +374,7 @@ export default Vue.extend({
           yColName: tsg.yCol,
           timeseriesColName: tsg.idCol,
           predictionsId: this.predictions.requestId,
-          // uniqueTrail: this.uniqueTrail,
+          uniqueTrail: this.uniqueTrail,
           timeseriesIds: this.pageItems.map((item) => {
             return item[tsg.idCol].value as string;
           }),

@@ -61,6 +61,7 @@
           :timeseries-id="data.item[timeseriesGrouping.idCol].value"
           :solution-id="solutionId"
           :include-forecast="isTargetTimeseries"
+          :uniqueTrail="uniqueTrail"
         />
       </template>
 
@@ -154,6 +155,7 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import {
   getters as resultsGetters,
   actions as resultsActions,
+  mutations as resultsMutations,
 } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
@@ -282,7 +284,9 @@ export default Vue.extend({
         if (this.isTimeseries) {
           items = items?.map((item) => {
             const timeserieId = item[this.timeseriesGroupings[0].idCol].value;
-            const minMaxMean = this.timeserieInfo(timeserieId);
+            const minMaxMean = this.timeserieInfo(
+              timeserieId + this.uniqueTrail
+            );
             return { ...item, ...minMaxMean };
           });
         }
@@ -481,6 +485,14 @@ export default Vue.extend({
       return listData.map((l) => l.Float);
     },
     onPagination(page: number) {
+      this.timeseriesGroupings.forEach((tsg) => {
+        resultsMutations.removeTimeseries(this.$store, {
+          solutionId: this.solutionId,
+          ids: this.pageItems.map((item) => {
+            return (item[tsg.idCol].value as string) + this.uniqueTrail;
+          }),
+        });
+      });
       this.currentPage = page;
       this.fetchTimeseries();
     },
@@ -495,7 +507,7 @@ export default Vue.extend({
           yColName: tsg.yCol,
           timeseriesColName: tsg.idCol,
           solutionId: this.solutionId,
-          // uniqueTrail: this.uniqueTrail,
+          uniqueTrail: this.uniqueTrail,
           timeseriesIds: this.pageItems.map((item) => {
             return item[tsg.idCol].value as string;
           }),

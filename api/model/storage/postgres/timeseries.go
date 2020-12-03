@@ -447,7 +447,6 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 		xColName, timeseriesColName, storageName, s.getResultTable(storageName),
 		model.D3MIndexFieldName, where, timeseriesColName)
 
-	fmt.Println(query)
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
 	if err != nil {

@@ -355,7 +355,16 @@ export const mutations = {
     Vue.set(y, "min", Math.min(y.min, minY));
     Vue.set(y, "max", Math.max(y.max, maxY));
   },
-
+  removeTimeseries(
+    state: DatasetState,
+    args: { dataset: string; ids: string[] }
+  ) {
+    args.ids.forEach((id) => {
+      Vue.delete(state.timeseries[args.dataset].timeseriesData, id);
+      Vue.delete(state.timeseries[args.dataset].isDateTime, id);
+      Vue.delete(state.timeseries[args.dataset].info, id);
+    });
+  },
   setJoinDatasetsTableData(
     state: DatasetState,
     args: { dataset: string; data: TableData }
