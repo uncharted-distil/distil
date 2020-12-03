@@ -80,6 +80,9 @@ func (s *Storage) parseTimeseries(rows pgx.Rows, timeSet *map[float64]float64, k
 			}
 			result[key] = []*api.TimeseriesObservation{}
 			for i := range time {
+				if cpyTimeSet[time[i]] != math.NaN() {
+					cpyTimeSet[time[i]] += vals[i]
+				}
 				cpyTimeSet[time[i]] = vals[i]
 			}
 			for _, k := range *keys {
@@ -113,6 +116,10 @@ func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows, timeSet *map[time.Time]
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
 			for i := range t {
+				if cpyTimeSet[t[i]] != math.NaN() {
+					cpyTimeSet[t[i]] += vals[i]
+					continue
+				}
 				cpyTimeSet[t[i]] = vals[i]
 			}
 			for _, k := range *keys {

@@ -360,9 +360,9 @@ export const mutations = {
     args: { dataset: string; ids: string[] }
   ) {
     args.ids.forEach((id) => {
-      Vue.delete(state.timeseries[args.dataset].timeseriesData, id);
-      Vue.delete(state.timeseries[args.dataset].isDateTime, id);
-      Vue.delete(state.timeseries[args.dataset].info, id);
+      delete state.timeseries[args.dataset].timeseriesData[id];
+      delete state.timeseries[args.dataset].isDateTime[id];
+      delete state.timeseries[args.dataset].info[id];
     });
   },
   setJoinDatasetsTableData(

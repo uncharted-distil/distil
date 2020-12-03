@@ -31,7 +31,6 @@ type TimeseriesResult struct {
 	Mean       api.NullableFloat64          `json:"mean"`
 }
 
-
 // TimeseriesHandler returns timeseries data.
 func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -54,13 +53,13 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 			handleError(w, errors.New("Missing timeseriesUris from query"))
 			return
 		}
-		timeseriesUris := []string{}
+		timeseriesURIs := []string{}
 		for _, v := range t {
 			s, ok := v.(string)
 			if !ok {
 				return
 			}
-			timeseriesUris = append(timeseriesUris, s)
+			timeseriesURIs = append(timeseriesURIs, s)
 		}
 
 		// get variable names and ranges out of the params
@@ -91,7 +90,7 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 		storageName := ds.StorageName
 
 		// fetch timeseries
-		timeseries, err := storage.FetchTimeseries(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesUris, filterParams, invertBool)
+		timeseries, err := storage.FetchTimeseries(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURIs, filterParams, invertBool)
 		if err != nil {
 			handleError(w, err)
 			return
