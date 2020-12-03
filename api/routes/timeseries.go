@@ -31,10 +31,6 @@ type TimeseriesResult struct {
 	Mean       api.NullableFloat64          `json:"mean"`
 }
 
-// TimeseriesInput is used to parse input
-type TimeseriesInput struct {
-	data []interface{}
-}
 
 // TimeseriesHandler returns timeseries data.
 func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
