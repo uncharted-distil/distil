@@ -155,7 +155,6 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import {
   getters as resultsGetters,
   actions as resultsActions,
-  mutations as resultsMutations,
 } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
@@ -177,6 +176,7 @@ import {
   explainCellColor,
   getImageFields,
   getListFields,
+  removeTimeseries,
 } from "../util/data";
 import { getSolutionIndex } from "../util/solutions";
 
@@ -485,14 +485,11 @@ export default Vue.extend({
       return listData.map((l) => l.Float);
     },
     onPagination(page: number) {
-      this.timeseriesGroupings.forEach((tsg) => {
-        resultsMutations.removeTimeseries(this.$store, {
-          solutionId: this.solutionId,
-          ids: this.pageItems.map((item) => {
-            return (item[tsg.idCol].value as string) + this.uniqueTrail;
-          }),
-        });
-      });
+      removeTimeseries(
+        { solutionId: this.solutionId },
+        this.pageItems,
+        this.uniqueTrail
+      );
       this.currentPage = page;
       this.fetchTimeseries();
     },

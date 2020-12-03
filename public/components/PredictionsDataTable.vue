@@ -117,7 +117,6 @@ import {
 import {
   getters as predictionsGetters,
   actions as predictionsActions,
-  mutations as predictionsMutations,
 } from "../store/predictions/module";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
@@ -140,6 +139,7 @@ import {
   explainCellColor,
   getImageFields,
   getListFields,
+  removeTimeseries,
 } from "../util/data";
 
 export default Vue.extend({
@@ -350,14 +350,11 @@ export default Vue.extend({
       return listData.map((l) => l.Float);
     },
     onPagination(page: number) {
-      this.timeseriesGroupings.forEach((tsg) => {
-        predictionsMutations.removeTimeseries(this.$store, {
-          predictionsId: this.predictions.requestId,
-          ids: this.pageItems.map((item) => {
-            return (item[tsg.idCol].value as string) + this.uniqueTrail;
-          }),
-        });
-      });
+      removeTimeseries(
+        { predictionsId: this.predictions.requestId },
+        this.pageItems,
+        this.uniqueTrail
+      );
       this.currentPage = page;
       this.fetchTimeseries();
     },

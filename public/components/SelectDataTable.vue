@@ -106,7 +106,6 @@ import ImagePreview from "./ImagePreview.vue";
 import {
   getters as datasetGetters,
   actions as datasetActions,
-  mutations as datasetMutations,
 } from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
 import { Filter } from "../util/filters";
@@ -135,6 +134,7 @@ import {
   formatFieldsAsArray,
   getImageFields,
   getListFields,
+  removeTimeseries,
 } from "../util/data";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
@@ -298,14 +298,11 @@ export default Vue.extend({
     },
     onPagination(page: number) {
       // remove old data from store
-      this.timeseriesGroupings.forEach((tsg) => {
-        datasetMutations.removeTimeseries(this.$store, {
-          dataset: this.dataset,
-          ids: this.pageItems.map((item) => {
-            return (item[tsg.idCol].value as string) + this.uniqueTrail;
-          }),
-        });
-      });
+      removeTimeseries(
+        { dataset: this.dataset },
+        this.pageItems,
+        this.uniqueTrail
+      );
       this.currentPage = page;
       // fetch new data
       this.fetchTimeSeries();
