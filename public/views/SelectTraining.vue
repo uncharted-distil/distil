@@ -71,7 +71,6 @@ export default Vue.extend({
     AvailableTrainingVariables,
     TrainingVariables,
     TargetVariable,
-    TypeChangeMenu,
     StatusPanel,
     StatusSidebar,
   },

@@ -37,13 +37,17 @@ import {
   formatValue,
   hasComputedVarPrefix,
   IMAGE_TYPE,
+  isGeoLocatedType,
   isIntegerType,
+  isImageType,
   isLatitudeGroupType,
   isListType,
   isLongitudeGroupType,
   isTimeGroupType,
   isTimeType,
   isValueGroupType,
+  LATITUDE_TYPE,
+  LONGITUDE_TYPE,
   MULTIBAND_IMAGE_TYPE,
   TIMESERIES_TYPE,
 } from "../util/types";
@@ -64,6 +68,7 @@ export const ERROR_SUFFIX = "_error";
 
 export const NUM_PER_PAGE = 10;
 export const NUM_PER_TARGET_PAGE = 9;
+export const NUM_PER_DATA_EXPLORER_PAGE = 3;
 
 export const DATAMART_PROVENANCE_NYU = "NYU";
 export const DATAMART_PROVENANCE_ISI = "ISI";
@@ -311,9 +316,9 @@ export function fetchResultExemplars(
   using some of the route's query options (IE: not grabbing all
   options as that's too narrow in focus.) It SHA1 hashes a string
   of datasetId, solutionId, requestId, fittedSolutionId, highlight,
-  filters, dataMode, varModes and ranking as that's unique enough
-  without being over specific and causing duplicate calls. The SHA1
-  hash of those fields is fast to calculate, maintains uniqueness,
+  filters, dataMode, varModes, active pane, and ranking as that's unique 
+  enough without being over specific and causing duplicate calls.  
+  The SHA1 hash of those fields is fast to calculate, maintains uniqueness,
   and keeps the store keys a consistent length, unlike base64.
 */
 export function minimumRouteKey(): string {
@@ -326,6 +331,8 @@ export function minimumRouteKey(): string {
     JSON.stringify(routeGetters.getRouteFilters(store)) +
     JSON.stringify(routeGetters.getDataMode(store)) +
     JSON.stringify(routeGetters.getDecodedVarModes(store)) +
+    "pane" +
+    routeGetters.getRoutePane(store) +
     "ranked" +
     JSON.stringify(routeGetters.getRouteIsTrainingVariablesRanked(store));
   const sha1rk = sha1(routeKeys);
@@ -622,42 +629,46 @@ export function getVariableSummariesByState(
   const ranked =
     routeGetters.getRouteIsTrainingVariablesRanked(store) || isSorted;
 
-  let currentSummaries = [];
-
-  if (Object.keys(summaryDictionary).length > 0 && variables.length > 0) {
-    // remove any pattern cluster variables
-    let sortedVariables = variables.filter((sv) => {
-      return sv.colName.indexOf(CLUSTER_PREFIX) < 0;
-    });
-    if (ranked) {
-      // prioritize FI over MI
-      sortedVariables = sortVariablesByImportance(sortedVariables);
-    }
-    // select only the current variables on the page
-    sortedVariables = filterArrayByPage(pageIndex, pageSize, sortedVariables);
-    // map them back to the variable summary dictionary for the current route key
-    currentSummaries = sortedVariables.reduce((cs, vn) => {
-      if (!summaryDictionary[vn.colName]) {
-        const placeholder = createPendingSummary(
-          vn.colName,
-          vn.colDisplayName,
-          vn.colDescription,
-          vn.datasetName
-        );
-        cs.push(placeholder);
-      } else {
-        if (summaryDictionary[vn.colName][routeKey]) {
-          cs.push(summaryDictionary[vn.colName][routeKey]);
-        } else {
-          const tempVariableSummaryKey = Object.keys(
-            summaryDictionary[vn.colName]
-          )[0];
-          cs.push(summaryDictionary[vn.colName][tempVariableSummaryKey]);
-        }
-      }
-      return cs;
-    }, []);
+  if (!(Object.keys(summaryDictionary).length > 0 && variables.length > 0)) {
+    return [];
   }
+
+  // remove any pattern cluster variables
+  let sortedVariables = variables.filter((sv) => {
+    return sv.colName.indexOf(CLUSTER_PREFIX) < 0;
+  });
+
+  if (ranked) {
+    // prioritize FI over MI
+    sortedVariables = sortVariablesByImportance(sortedVariables);
+  }
+
+  // select only the current variables on the page
+  sortedVariables = filterArrayByPage(pageIndex, pageSize, sortedVariables);
+
+  // map them back to the variable summary dictionary for the current route key
+  const currentSummaries = sortedVariables.reduce((cs, vn) => {
+    if (!summaryDictionary[vn.colName]) {
+      const placeholder = createPendingSummary(
+        vn.colName,
+        vn.colDisplayName,
+        vn.colDescription,
+        vn.datasetName
+      );
+      cs.push(placeholder);
+    } else {
+      if (summaryDictionary[vn.colName][routeKey]) {
+        cs.push(summaryDictionary[vn.colName][routeKey]);
+      } else {
+        const tempVariableSummaryKey = Object.keys(
+          summaryDictionary[vn.colName]
+        )[0];
+        cs.push(summaryDictionary[vn.colName][tempVariableSummaryKey]);
+      }
+    }
+    return cs;
+  }, []);
+
   return currentSummaries;
 }
 
@@ -925,6 +936,30 @@ export function getListFields(
   }));
 }
 
+export function shouldRunMi(dataset: string): boolean {
+  // check if data exists
+  if (datasetGetters.getVariableRankings(store)[dataset]) {
+    return false;
+  }
+  // check previous requests
+  const updates = datasetGetters
+    .getPendingRequests(store)
+    .filter((update) => update.dataset === dataset);
+  // if none, ranking should be called
+  if (!updates.length) {
+    return true;
+  }
+  const size = updates.filter((u) => {
+    return u.type === DatasetPendingRequestType.VARIABLE_RANKING;
+  }).length;
+  // if no previous variable ranking request
+  if (size) {
+    return false;
+  }
+  // default to true if all the above does not return
+  return true;
+}
+
 export function hasTimeseriesFeatures(variables: Variable[]): boolean {
   const valueColumns = variables.filter((v) => isValueGroupType(v.colType));
   const timeColumns = variables.filter((v) => isTimeGroupType(v.colType));
@@ -958,26 +993,15 @@ export function hasGeoordinateFeatures(variables: Variable[]): boolean {
   return false;
 }
 
-export function shouldRunMi(dataset: string): boolean {
-  // check if data exists
-  if (datasetGetters.getVariableRankings(store)[dataset]) {
-    return false;
-  }
-  // check previous requests
-  const updates = datasetGetters
-    .getPendingRequests(store)
-    .filter((update) => update.dataset === dataset);
-  // if none, ranking should be called
-  if (!updates.length) {
-    return true;
-  }
-  const size = updates.filter((u) => {
-    return u.type === DatasetPendingRequestType.VARIABLE_RANKING;
-  }).length;
-  // if no previous variable ranking request
-  if (size) {
-    return false;
-  }
-  // default to true if all the above does not return
-  return true;
+export function hasGeoFeatures(variables: Variable[]): boolean {
+  const hasLat = variables.some((v) => v.colType === LONGITUDE_TYPE);
+  const hasLon = variables.some((v) => v.colType === LATITUDE_TYPE);
+  const hasGeocoord = variables.some(
+    (v) => v.grouping && isGeoLocatedType(v.grouping.type)
+  );
+  return (hasLat && hasLon) || hasGeocoord;
+}
+
+export function hasImageFeatures(variables: Variable[]): boolean {
+  return variables.some((v) => isImageType(v.colType));
 }

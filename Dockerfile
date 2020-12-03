@@ -1,4 +1,4 @@
-FROM alpine:3.11.6
+FROM docker-hub.uncharted.software/alpine:3.11.6
 
 # add bash + packages to support CGO
 RUN apk update && apk add bash git make build-base
