@@ -214,12 +214,12 @@ func getTimeValueCols(dr *model.DataResource) (*timeValueCols, bool) {
 	return nil, false
 }
 
-func mapFields(meta *model.Metadata) map[string]*model.Variable {
+func mapHeaderFields(meta *model.Metadata) map[string]*model.Variable {
 	// cycle through each data resource, mapping field names to variables.
 	fields := make(map[string]*model.Variable)
 	for _, dr := range meta.DataResources {
 		for _, v := range dr.Variables {
-			fields[v.StorageName] = v
+			fields[v.HeaderName] = v
 		}
 	}
 

@@ -28,6 +28,11 @@ import (
 	"github.com/uncharted-distil/distil/api/serialization"
 )
 
+const (
+	// image retrieval primitive has hardcoded field name
+	queryFieldName = "annotations"
+)
+
 // QueryParams helper struct to simplify query task calling.
 type QueryParams struct {
 	Dataset     string
@@ -72,7 +77,7 @@ func Query(params QueryParams) (string, error) {
 	}
 
 	// submit the pipeline
-	resultURI, err := submitPipeline([]string{env.ResolvePath(ds.Source, ds.Folder), datasetPath}, desc)
+	resultURI, err := submitPipeline([]string{ds.LearningDataset, datasetPath}, desc)
 	if err != nil {
 		return "", err
 	}
@@ -106,15 +111,16 @@ func extractQueryDataset(targetName string, data [][]string) [][]string {
 	}
 
 	// need to reduce to 1 row / d3m index (labels should match across the whole group)
+	valueMap := map[string]int{"unlabelled": -1, "negative": 0, "positive": 1}
 	reducedData := map[string]string{}
-	dataToStore := [][]string{{model.D3MIndexFieldName, targetName}}
+	dataToStore := [][]string{{model.D3MIndexFieldName, queryFieldName}}
 	for i := 1; i < len(data); i++ {
 		key := data[i][d3mIndex]
 		_, ok := reducedData[key]
 		if !ok {
 			label := data[i][targetIndex]
 			reducedData[key] = label
-			dataToStore = append(dataToStore, []string{key, label})
+			dataToStore = append(dataToStore, []string{key, fmt.Sprintf("%d", valueMap[label])})
 		}
 	}
 
@@ -139,8 +145,8 @@ func writeQueryDataset(ds *api.Dataset, data [][]string) (string, error) {
 	dr.Variables = []*model.Variable{
 		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName, model.D3MIndexFieldName,
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
-			[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
-		model.NewVariable(1, "label", "label", "label", "label", model.StringType,
+			[]string{model.RoleMultiIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
+		model.NewVariable(1, queryFieldName, queryFieldName, queryFieldName, queryFieldName, model.StringType,
 			model.StringType, "Label for the query", []string{"suggestedTarget"},
 			model.VarDistilRoleData, nil, dr.Variables, false),
 	}
@@ -167,7 +173,7 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 
 	if !exists {
 		// create the variable to hold the rank
-		err = params.DataStorage.AddField(params.Dataset, storageName, targetScore, model.RealType, "0")
+		err = params.DataStorage.AddVariable(params.Dataset, storageName, targetScore, model.RealType, "0")
 		if err != nil {
 			return err
 		}
@@ -180,7 +186,7 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 	}
 
 	// overwrite the stored ranking
-	err = params.DataStorage.UpdateData(params.Dataset, storageName, targetScore, updates, nil)
+	err = params.DataStorage.UpdateVariableBatch(storageName, targetScore, updates)
 	if err != nil {
 		return err
 	}

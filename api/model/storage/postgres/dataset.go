@@ -406,7 +406,7 @@ func (s *Storage) AddField(dataset string, storageName string, varName string, v
 
 	defaultClause := ""
 	if len(defaultVal) > 0 {
-		defaultClause = " DEFAULT" + defaultVal
+		defaultClause = fmt.Sprintf(" Default '%s'", defaultVal)
 	}
 	sql := fmt.Sprintf("ALTER TABLE %s ADD COLUMN \"%s\" %s%s;", storageName, varName, postgres.MapD3MTypeToPostgresType(varType), defaultClause)
 	_, err = s.client.Exec(sql)

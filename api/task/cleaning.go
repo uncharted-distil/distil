@@ -22,7 +22,6 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
 
 	"github.com/uncharted-distil/distil/api/serialization"
-	"github.com/uncharted-distil/distil/api/util"
 )
 
 // Clean will clean bad data for further processing.
@@ -52,18 +51,19 @@ func Clean(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	output := [][]string{}
 	header := make([]string, len(mainDR.Variables))
 	for _, v := range mainDR.Variables {
-		header[v.Index] = v.StorageName
+		header[v.Index] = v.HeaderName
 	}
 	output = append(output, header)
 
 	// parse primitive response (raw data from the input dataset)
 	// first row of the data is the header
 	// first column of the data is the dataframe index
-	csvData, err := util.ReadCSVFile(datasetURI, true)
+	readStorage := serialization.GetStorage(datasetURI)
+	csvData, err := readStorage.ReadData(datasetURI)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to parse clean result")
 	}
-	output = append(output, csvData...)
+	output = append(output, csvData[1:]...)
 
 	// output the data
 	datasetStorage := serialization.GetStorage(outputPath.outputData)

@@ -33,7 +33,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	}
 	storageName, ok := json.String(child, model.VarStorageNameField)
 	if !ok {
-		return nil, errors.New("unable to parse storage name from variable data")
+		storageName = headerName
 	}
 	index, ok := json.Int(child, model.VarIndexField)
 	if !ok {

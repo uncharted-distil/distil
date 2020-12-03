@@ -82,12 +82,7 @@ func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig)
 	}
 
 	// output the header
-	output := [][]string{}
-	header := make([]string, len(mainDR.Variables))
-	for _, v := range mainDR.Variables {
-		header[v.Index] = v.StorageName
-	}
-	output = append(output, header)
+	output := [][]string{mainDR.GenerateHeader()}
 	output = append(output, lines...)
 
 	datasetStorage := serialization.GetStorage(outputPath.outputData)

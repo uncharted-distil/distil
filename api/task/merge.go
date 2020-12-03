@@ -65,7 +65,7 @@ func Merge(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	}
 
 	mainDR := meta.GetMainDataResource()
-	vars := mapFields(meta)
+	vars := mapHeaderFields(meta)
 	varsDenorm := mapDenormFields(mainDR)
 	for k, v := range varsDenorm {
 		vars[k] = v

@@ -23,6 +23,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
@@ -30,6 +31,7 @@ import (
 
 // Format will format a dataset to have the required structures for D3M.
 func Format(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
+	log.Infof("formatting dataset %s found in file '%s'", dataset, schemaFile)
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to load original schema file")
@@ -64,6 +66,7 @@ func Format(schemaFile string, dataset string, config *IngestTaskConfig) (string
 }
 
 func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]string) error {
+	log.Infof("writing dataset %s to '%s'", meta.ID, paths.outputSchema)
 	dr := meta.GetMainDataResource()
 
 	// output the header

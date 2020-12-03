@@ -155,7 +155,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	}
 
 	csvData := make([][]string, 0)
-	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", "label", "__geo_coordinates"})
+	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", "label", "geo_coordinates"})
 	mediaFolder := util.GetUniqueFolder(path.Join(outputDatasetPath, "media"))
 
 	// need to keep track of d3m Index values since they are shared for a whole group
@@ -264,7 +264,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 			model.StringType, "Label of the image", []string{"suggestedTarget"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(7, "__geo_coordinates", "coordinates", "geo coordinates", "__geo_coordinates", model.GeoBoundsType,
+		model.NewVariable(7, "__geo_coordinates", "coordinates", "geo_coordinates", "__geo_coordinates", model.GeoBoundsType,
 			model.GeoBoundsType, "postgis structure for the bounding box coordinates of the tile", []string{},
 			model.VarDistilRoleMetadata, nil, dr.Variables, false))
 
