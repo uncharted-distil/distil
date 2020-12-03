@@ -35,7 +35,7 @@
             :type="imageField.type"
             :image-url="data.item[imageField.key].value"
             :debounce="true"
-            uniqueTrail="select-table"
+            :uniqueTrail="uniqueTrail"
           />
           <image-label
             class="image-label"
