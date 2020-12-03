@@ -82,6 +82,7 @@ func (s *Storage) parseTimeseries(rows pgx.Rows, timeSet *map[float64]float64, k
 			for i := range time {
 				if cpyTimeSet[time[i]] != math.NaN() {
 					cpyTimeSet[time[i]] += vals[i]
+					continue
 				}
 				cpyTimeSet[time[i]] = vals[i]
 			}
