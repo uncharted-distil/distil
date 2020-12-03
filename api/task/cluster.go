@@ -28,7 +28,6 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
-	"github.com/uncharted-distil/distil/api/util"
 )
 
 const (
@@ -63,11 +62,13 @@ func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig)
 	d3mIndexField := getD3MIndexField(mainDR)
 
 	// open the input file
-	dataPath := path.Join(outputPath.sourceFolder, mainDR.ResPath)
-	lines, err := util.ReadCSVFile(dataPath, config.HasHeader)
+	dataPath := model.GetResourcePath(schemaFile, mainDR)
+	storage := serialization.GetStorage(dataPath)
+	lines, err := storage.ReadData(dataPath)
 	if err != nil {
 		return "", errors.Wrap(err, "error reading raw data")
 	}
+	lines = lines[1:]
 
 	// add the cluster data to the raw data
 	for _, f := range features {
@@ -81,12 +82,7 @@ func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig)
 	}
 
 	// output the header
-	output := [][]string{}
-	header := make([]string, len(mainDR.Variables))
-	for _, v := range mainDR.Variables {
-		header[v.Index] = v.Name
-	}
-	output = append(output, header)
+	output := [][]string{mainDR.GenerateHeader()}
 	output = append(output, lines...)
 
 	datasetStorage := serialization.GetStorage(outputPath.outputData)
@@ -94,7 +90,7 @@ func ClusterDataset(schemaFile string, dataset string, config *IngestTaskConfig)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing clustered output")
 	}
-	mainDR.ResPath = path.Dir(outputPath.outputData)
+	mainDR.ResPath = outputPath.outputData
 
 	// write the new schema to file
 	err = datasetStorage.WriteMetadata(outputPath.outputSchema, meta, true, false)
@@ -115,14 +111,14 @@ func Cluster(dataset *api.Dataset, variable string, useKMeans bool) (bool, []*Cl
 	// needed for full set clustering
 	var clusteringVar *model.Variable
 	for _, v := range features {
-		if v.Name == variable {
+		if v.StorageName == variable {
 			clusteringVar = v
 		}
 	}
 
 	var step *description.FullySpecifiedPipeline
 	var err error
-	clusterGroup := getClusterGroup(clusteringVar.Name, features)
+	clusterGroup := getClusterGroup(clusteringVar.StorageName, features)
 	if model.IsImage(clusteringVar.Type) {
 		step, err = description.CreateImageClusteringPipeline("image_cluster", "basic image clustering", []*model.Variable{clusteringVar}, useKMeans)
 	} else if clusterGroup != nil && model.IsMultiBandImage(clusterGroup.GetType()) {
@@ -157,7 +153,7 @@ func Cluster(dataset *api.Dataset, variable string, useKMeans bool) (bool, []*Cl
 		// general clustering pipeline
 		selectedFeatures := make([]string, len(features))
 		for i, f := range features {
-			selectedFeatures[i] = f.Name
+			selectedFeatures[i] = f.StorageName
 		}
 		datasetDescription := &description.UserDatasetDescription{
 			AllFeatures:      features,

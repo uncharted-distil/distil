@@ -46,7 +46,7 @@ func TargetRank(dataset string, target string, features []*model.Variable, sourc
 	filteredFeatures := []*model.Variable{}
 	var targetFeature *model.Variable
 	for _, feature := range features {
-		if feature.Name == target {
+		if feature.StorageName == target {
 			targetFeature = feature
 		}
 		if !exclusions[feature.Type] {

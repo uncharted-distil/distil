@@ -104,7 +104,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	vars := []*model.Variable{}
 	metadataVariables := map[string]*model.Variable{}
 	for _, v := range mainDR.Variables {
-		metadataVariables[v.Name] = v
+		metadataVariables[v.HeaderName] = v
 	}
 	for index, field := range header {
 		var v *model.Variable
@@ -112,7 +112,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 			v = metadataVariables[field]
 			v.Index = index
 		} else {
-			v = model.NewVariable(index, field, field, field, model.RealType,
+			v = model.NewVariable(index, field, field, field, field, model.RealType,
 				model.RealType, "featurized value", []string{model.RoleAttribute},
 				model.VarDistilRoleMetadata, nil, mainDR.Variables, false)
 		}

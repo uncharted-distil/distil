@@ -97,12 +97,12 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterP
 
 func (f *TextField) getTimeMinMaxAggsQuery(timeVar *model.Variable) string {
 	// get min / max agg names
-	minAggName := api.MinAggPrefix + timeVar.Name
-	maxAggName := api.MaxAggPrefix + timeVar.Name
+	minAggName := api.MinAggPrefix + timeVar.StorageName
+	maxAggName := api.MaxAggPrefix + timeVar.StorageName
 
-	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER)", timeVar.Name)
+	timeSelect := fmt.Sprintf("CAST(\"%s\" AS INTEGER)", timeVar.StorageName)
 	if timeVar.Type == model.DateTimeType {
-		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", timeVar.Name)
+		timeSelect = fmt.Sprintf("CAST(extract(epoch from \"%s\") AS INTEGER)", timeVar.StorageName)
 	}
 
 	// create aggregations
@@ -178,7 +178,7 @@ func (f *TextField) parseTimeExtrema(timeVar *model.Variable, rows pgx.Rows) (*a
 	}
 	// assign attributes
 	return &api.Extrema{
-		Key:  timeVar.Name,
+		Key:  timeVar.StorageName,
 		Type: timeVar.Type,
 		Min:  float64(*minValue),
 		Max:  float64(*maxValue),

@@ -132,6 +132,8 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 	if err != nil {
 		return "", "", err
 	}
+	// update the header with the proper variable names
+	data[0] = meta.GetMainDataResource().GenerateHeader()
 	dataRaw := &api.RawDataset{
 		Name:     meta.Name,
 		ID:       meta.ID,
@@ -197,7 +199,7 @@ func UpdateExtremas(dataset string, metaStorage api.MetadataStorage, dataStorage
 	}
 
 	for _, v := range d.Variables {
-		err = api.UpdateExtremas(dataset, v.Name, metaStorage, dataStorage)
+		err = api.UpdateExtremas(dataset, v.StorageName, metaStorage, dataStorage)
 		if err != nil {
 			return err
 		}

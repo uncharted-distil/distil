@@ -117,7 +117,7 @@ func createVarMap(vars []*model.Variable, useDisplayName bool, keepOnlyDataVars 
 		if !model.IsTA2Field(v.DistilRole, v.SelectedRole) && keepOnlyDataVars {
 			continue
 		}
-		name := v.Name
+		name := v.StorageName
 		if useDisplayName {
 			name = v.DisplayName
 		}
@@ -136,7 +136,7 @@ func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Vari
 				// variable is probably an aggregation
 				// create a new variable and default type to string
 				// ingest process should be able to provide better info
-				v = model.NewVariable(i, varName, varName, varName, model.UnknownType,
+				v = model.NewVariable(i, varName, varName, varName, varName, model.UnknownType,
 					model.UnknownType, "", []string{"attribute"}, "data", nil, mergedVariables, false)
 			} else {
 				// map any distil types (country, city, etc.) back to LL schema types since we are
@@ -144,8 +144,9 @@ func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Vari
 				if v.OriginalType != "" {
 					v.Type = v.OriginalType
 				}
-				v.Name = v.DisplayName
+				v.StorageName = v.DisplayName
 				v.OriginalVariable = v.DisplayName
+				v.HeaderName = v.DisplayName
 			}
 		}
 
@@ -226,7 +227,7 @@ func createFilteredData(csvFile string, variables []*model.Variable, lineCount i
 	for _, variable := range variables {
 		data.Columns = append(data.Columns, &apiModel.Column{
 			Label: variable.DisplayName,
-			Key:   variable.Name,
+			Key:   variable.StorageName,
 			Type:  variable.Type,
 		})
 	}

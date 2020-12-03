@@ -166,16 +166,16 @@ func (m *Media) CreateDataset(rootDataPath string, datasetName string, config *e
 	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName,
+		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName, model.D3MIndexFieldName,
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
 			[]string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
 	)
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(1, "media_file", "media_file", "media_file", model.StringType,
+		model.NewVariable(1, "media_file", "media_file", "media_file", "media_file", model.StringType,
 			model.StringType, "Reference to media file", []string{"attribute"},
 			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(2, "label", "label", "label", model.StringType,
+		model.NewVariable(2, "label", "label", "label", "label", model.StringType,
 			model.StringType, "Label of the media", []string{"suggestedTarget"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 

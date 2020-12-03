@@ -45,7 +45,7 @@ func SetRandomSeed(seed float64) {
 
 func getVariableByKey(key string, variables []*model.Variable) *model.Variable {
 	for _, variable := range variables {
-		if variable.Name == key {
+		if variable.StorageName == key {
 			return variable
 		}
 	}
@@ -231,7 +231,7 @@ func (s *Storage) getBivariateFilterKeys(dataset string, key string, alias strin
 
 	if model.IsGeoBounds(g.Type) {
 		// only checking top left for now
-		name := s.formatFilterKey(alias, g.Name)
+		name := s.formatFilterKey(alias, g.StorageName)
 		fields[0] = fmt.Sprintf("%s[1]", name)
 		fields[1] = fmt.Sprintf("%s[2]", name)
 		return fields, nil
@@ -391,12 +391,12 @@ func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVar
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
 
 		if variable.DistilRole == model.VarDistilRoleGrouping {
-			distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Name))
+			distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.StorageName))
 		}
 
 		// derived metadata variables (ex: postgis geometry) should use the original variables
-		varName := variable.Name
-		if variable.DistilRole == model.VarDistilRoleMetadata && variable.OriginalVariable != variable.Name {
+		varName := variable.StorageName
+		if variable.DistilRole == model.VarDistilRoleMetadata && variable.OriginalVariable != variable.StorageName {
 			varName = variable.OriginalVariable
 		}
 
@@ -419,13 +419,13 @@ func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, tar
 	fields := make([]string, 0)
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
 
-		if strings.Compare(targetVariable.Name, variable.Name) != 0 {
+		if strings.Compare(targetVariable.StorageName, variable.StorageName) != 0 {
 
 			if variable.DistilRole == model.VarDistilRoleGrouping {
-				distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Name))
+				distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.StorageName))
 			}
 
-			fields = append(fields, fmt.Sprintf("\"%s\"", variable.Name))
+			fields = append(fields, fmt.Sprintf("\"%s\"", variable.StorageName))
 		}
 	}
 	fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
@@ -476,7 +476,7 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 		return nil, nil, err
 	}
 
-	typedError := getErrorTyped("", targetVariable.Name)
+	typedError := getErrorTyped("", targetVariable.StorageName)
 
 	where := fmt.Sprintf("(%s >= $%d AND %s <= $%d)", typedError, len(params)+1, typedError, len(params)+2)
 	params = append(params, *residualFilter.Min)

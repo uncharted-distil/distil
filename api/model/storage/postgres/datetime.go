@@ -425,8 +425,8 @@ func (f *DateTimeField) FetchPredictedSummaryData(resultURI string, datasetResul
 
 func (f *DateTimeField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
-		Name: "value",
-		Type: model.StringType,
+		StorageName: "value",
+		Type:        model.StringType,
 	}
 
 	// need the extrema to calculate the histogram interval
@@ -475,11 +475,11 @@ func (f *DateTimeField) fetchPredictedSummaryData(resultURI string, datasetResul
 
 func (f *DateTimeField) getResultMinMaxAggsQuery(resultVariable *model.Variable) string {
 	// get min / max agg names
-	minAggName := api.MinAggPrefix + resultVariable.Name
-	maxAggName := api.MaxAggPrefix + resultVariable.Name
+	minAggName := api.MinAggPrefix + resultVariable.StorageName
+	maxAggName := api.MaxAggPrefix + resultVariable.StorageName
 
 	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
+	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.StorageName)
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", fieldTyped, minAggName, fieldTyped, maxAggName)
@@ -492,7 +492,7 @@ func (f *DateTimeField) getResultHistogramAggQuery(extrema *api.Extrema, resultV
 	interval := extrema.GetBucketInterval(numBuckets)
 
 	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.Name)
+	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.StorageName)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)

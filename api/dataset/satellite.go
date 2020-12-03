@@ -149,7 +149,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	}
 
 	csvData := make([][]string, 0)
-	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", "label", "__geo_coordinates"})
+	csvData = append(csvData, []string{model.D3MIndexFieldName, "image_file", "group_id", "band", "timestamp", "coordinates", "label", "geo_coordinates"})
 	mediaFolder := util.GetUniqueFolder(path.Join(outputDatasetPath, "media"))
 
 	// need to keep track of d3m Index values since they are shared for a whole group
@@ -229,36 +229,36 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 	dr := model.NewDataResource(compute.DefaultResourceID, model.ResTypeTable, map[string][]string{compute.D3MResourceFormat: {"csv"}})
 	dr.ResPath = dataFilePath
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName,
+		model.NewVariable(0, model.D3MIndexFieldName, model.D3MIndexFieldName, model.D3MIndexFieldName,
 			model.D3MIndexFieldName, model.IntegerType, model.IntegerType, "D3M index",
 			[]string{model.RoleMultiIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false),
 	)
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(1, "image_file", "image_file", "image_file", model.MultiBandImageType,
+		model.NewVariable(1, "image_file", "image_file", "image_file", "image_file", model.MultiBandImageType,
 			model.StringType, "Reference to image file", []string{"attribute"},
 			model.VarDistilRoleData, map[string]interface{}{"resID": "0", "resObject": "item"}, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(2, "group_id", "group_id", "group_id", model.StringType,
+		model.NewVariable(2, "group_id", "group_id", "group_id", "group_id", model.StringType,
 			model.StringType, "ID linking all bands of a particular image set together", []string{"attribute", "suggestedGroupingKey"},
 			model.VarDistilRoleGrouping, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(3, "band", "band", "band", model.StringType,
+		model.NewVariable(3, "band", "band", "band", "band", model.StringType,
 			model.StringType, "Image band", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(4, "timestamp", "timestamp", "timestamp", timestampType,
+		model.NewVariable(4, "timestamp", "timestamp", "timestamp", "timestamp", timestampType,
 			model.StringType, "Image timestamp", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(5, "coordinates", "coordinates", "coordinates", model.RealVectorType,
+		model.NewVariable(5, "coordinates", "coordinates", "coordinates", "coordinates", model.RealVectorType,
 			model.RealVectorType, "Coordinates of the image defined by a bounding box", []string{"attribute"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(6, "label", "label", "label", model.CategoricalType,
+		model.NewVariable(6, "label", "label", "label", "label", model.CategoricalType,
 			model.StringType, "Label of the image", []string{"suggestedTarget"},
 			model.VarDistilRoleData, nil, dr.Variables, false))
 	dr.Variables = append(dr.Variables,
-		model.NewVariable(7, "__geo_coordinates", "coordinates", "coordinates", model.GeoBoundsType,
+		model.NewVariable(7, "__geo_coordinates", "coordinates", "geo_coordinates", "__geo_coordinates", model.GeoBoundsType,
 			model.GeoBoundsType, "postgis structure for the bounding box coordinates of the tile", []string{},
 			model.VarDistilRoleMetadata, nil, dr.Variables, false))
 

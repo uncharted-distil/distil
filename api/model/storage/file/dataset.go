@@ -180,7 +180,7 @@ func datasetMatches(meta *model.Metadata, terms []string) bool {
 
 	for _, dr := range meta.DataResources {
 		for _, f := range dr.Variables {
-			if matches(f.Name, terms) {
+			if matches(f.StorageName, terms) {
 				return true
 			}
 		}

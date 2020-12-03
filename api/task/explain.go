@@ -76,7 +76,7 @@ func (e explainDataset) CreateDataset(rootDataPath string, datasetName string, c
 			role = model.RoleIndex
 		}
 		dr.Variables = append(dr.Variables,
-			model.NewVariable(i, field, field, field, typ, typ,
+			model.NewVariable(i, field, field, field, field, typ, typ,
 				"", []string{role}, model.VarDistilRoleData, nil, dr.Variables, true))
 	}
 
