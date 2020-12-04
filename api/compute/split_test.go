@@ -49,6 +49,49 @@ func TestSampleStratified(t *testing.T) {
 	assert.Equal(t, 1, categoricalValues["d"])
 }
 
+func TestSplitTimestampValue(t *testing.T) {
+	assert.NoError(t, removeTestFiles())
+	params := createTestParams(false, ModelQualityHigh, "test_data")
+	splitter := createTestTimestampSplitter(100)
+	initializeTestConfig()
+
+	splitDatasetName, err := generateSplitDatasetName("test_data", path.Join("./test/test_dataset", "datasetDoc.json"), splitter)
+	assert.NoError(t, err)
+	trainPath := fmt.Sprintf("test/tmp_data/%s/train/datasetDoc.json", splitDatasetName)
+	testPath := fmt.Sprintf("test/tmp_data/%s/test/datasetDoc.json", splitDatasetName)
+
+	trainFolder, testFolder, err := SplitDataset(path.Join(params.SourceDataFolder, params.SchemaFile), splitter)
+	assert.NoError(t, err)
+	assert.Equal(t, trainPath, trainFolder)
+	assert.Equal(t, testPath, testFolder)
+
+	trainDataPath := fmt.Sprintf("test/tmp_data/%s/train/tables/learningData.csv", splitDatasetName)
+	testDataPath := fmt.Sprintf("test/tmp_data/%s/test/tables/learningData.csv", splitDatasetName)
+	lines, err := util.ReadCSVFile(trainDataPath, true)
+	assert.NoError(t, err)
+	assert.Equal(t, 15, len(lines))
+
+	lines, err = util.ReadCSVFile(testDataPath, true)
+	assert.NoError(t, err)
+	assert.Equal(t, 18, len(lines))
+
+	categoricalValues := map[string]int{}
+	for _, rowData := range lines {
+		categoricalValues[rowData[2]]++
+	}
+	assert.Equal(t, 10, categoricalValues["a"])
+	assert.Equal(t, 5, categoricalValues["b"])
+	assert.Equal(t, 2, categoricalValues["c"])
+	assert.Equal(t, 1, categoricalValues["d"])
+}
+
+func createTestTimestampSplitter(timestampValue float64) datasetSplitter {
+	return &timeseriesSplitter{
+		timeseriesCol:       1,
+		timestampValueSplit: timestampValue,
+	}
+}
+
 func createTestSampler(stratify bool) datasetSplitter {
 
 	if stratify {
