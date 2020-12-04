@@ -32,6 +32,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -68,12 +69,15 @@ func (d *Parquet) ReadDataset(uri string) (*api.RawDataset, error) {
 // WriteDataset writes the raw dataset to the file system, writing out
 // the data to a parquet file.
 func (d *Parquet) WriteDataset(uri string, data *api.RawDataset) error {
-	err := d.WriteData(uri, data.Data)
+	dataFilename := path.Join(uri, compute.D3MDataFolder, compute.DistilParquetLearningData)
+	err := d.WriteData(dataFilename, data.Data)
 	if err != nil {
 		return err
 	}
 
-	err = d.WriteMetadata(uri, data.Metadata, true, true)
+	data.Metadata.GetMainDataResource().ResPath = dataFilename
+	metaFilename := path.Join(uri, compute.D3MDataSchema)
+	err = d.WriteMetadata(metaFilename, data.Metadata, true, true)
 	if err != nil {
 		return err
 	}
@@ -232,11 +236,11 @@ func (d *Parquet) WriteMetadata(uri string, meta *model.Metadata, extended bool,
 
 	// make sure the resource format and path match expected parquet types
 	mainDR := meta.GetMainDataResource()
-	if mainDR.ResFormat["application/parquet"] == nil {
+	if mainDR.ResFormat[compute.DistilParquetLearningData] == nil {
 		if !update {
 			return errors.Errorf("main data resource not set to parquet format")
 		}
-		mainDR.ResFormat = map[string][]string{"application/parquet": {"parquet"}}
+		mainDR.ResFormat = map[string][]string{compute.DistilParquetResourceFormat: {"parquet"}}
 		mainDR.ResPath = fmt.Sprintf("%s.parquet", strings.TrimSuffix(mainDR.ResPath, path.Ext(mainDR.ResPath)))
 	}
 	for _, dr := range meta.DataResources {
@@ -305,7 +309,7 @@ func (d *Parquet) writeVariable(variable *model.Variable, extended bool) interfa
 
 	output := map[string]interface{}{
 		model.VarIndexField: variable.Index,
-		model.VarNameField:  variable.DisplayName,
+		model.VarNameField:  variable.HeaderName,
 		model.VarTypeField:  colType,
 		model.VarRoleField:  variable.Role,
 		"refersTo":          variable.RefersTo,
@@ -317,7 +321,7 @@ func (d *Parquet) writeVariable(variable *model.Variable, extended bool) interfa
 		output[model.VarSelectedRoleField] = variable.SelectedRole
 		output[model.VarDistilRole] = variable.DistilRole
 		output[model.VarOriginalVariableField] = variable.OriginalVariable
-		output[model.VarNameField] = variable.Name
+		output[model.VarStorageNameField] = variable.StorageName
 		output[model.VarDisplayVariableField] = variable.DisplayName
 		output[model.VarImportanceField] = variable.Importance
 		output[model.VarSuggestedTypesField] = variable.SuggestedTypes

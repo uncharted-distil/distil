@@ -198,7 +198,7 @@ export const mutations = {
   // files
   updateFile: commit(moduleMutations.updateFile),
   removeFile: commit(moduleMutations.removeFile),
-  updateTimeseries: commit(moduleMutations.updateTimeseries),
+  bulkUpdateTimeseries: commit(moduleMutations.bulkUpdateTimeseries),
   // included / excluded table data
   setJoinDatasetsTableData: commit(moduleMutations.setJoinDatasetsTableData),
   clearJoinDatasetsTableData: commit(
@@ -222,6 +222,7 @@ export const mutations = {
   setAreaOfInterestExcludeOuter: commit(
     moduleMutations.setAreaOfInterestExcludeOuter
   ),
+  removeTimeseries: commit(moduleMutations.removeTimeseries),
   setIncludedTableData: commit(moduleMutations.setIncludedTableData),
   setExcludedTableData: commit(moduleMutations.setExcludedTableData),
   updateBands: commit(moduleMutations.updateBands),

@@ -145,7 +145,7 @@ func FetchDataset(dataset string, includeIndex bool, includeMeta bool, filterPar
 // GetD3MIndexVariable returns the D3M index variable.
 func (d *Dataset) GetD3MIndexVariable() *model.Variable {
 	for _, v := range d.Variables {
-		if v.Name == model.D3MIndexName {
+		if v.StorageName == model.D3MIndexName {
 			return v
 		}
 	}
@@ -194,7 +194,7 @@ func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage,
 	// find the variable
 	var v *model.Variable
 	for _, variable := range d.Variables {
-		if variable.Name == varName {
+		if variable.StorageName == varName {
 			v = variable
 			break
 		}

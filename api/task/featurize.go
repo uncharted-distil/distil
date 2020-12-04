@@ -79,7 +79,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	featurizedOutputPath := path.Join(env.GetAugmentedPath(), featurizedDatasetID)
 
 	// copy the output to the folder as the data
-	dataOutputPath := path.Join(featurizedOutputPath, path.Join(compute.D3MDataFolder, "learningData.parquet"))
+	dataOutputPath := path.Join(featurizedOutputPath, path.Join(compute.D3MDataFolder, compute.DistilParquetLearningData))
 	featurizedDataWriter := serialization.GetStorage(dataOutputPath)
 	err = featurizedDataWriter.WriteData(dataOutputPath, featurizedData)
 	if err != nil {
@@ -104,7 +104,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	vars := []*model.Variable{}
 	metadataVariables := map[string]*model.Variable{}
 	for _, v := range mainDR.Variables {
-		metadataVariables[v.Name] = v
+		metadataVariables[v.HeaderName] = v
 	}
 	for index, field := range header {
 		var v *model.Variable
@@ -112,7 +112,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 			v = metadataVariables[field]
 			v.Index = index
 		} else {
-			v = model.NewVariable(index, field, field, field, model.RealType,
+			v = model.NewVariable(index, field, field, field, field, model.RealType,
 				model.RealType, "featurized value", []string{model.RoleAttribute},
 				model.VarDistilRoleMetadata, nil, mainDR.Variables, false)
 		}

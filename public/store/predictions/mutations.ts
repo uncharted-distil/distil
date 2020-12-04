@@ -1,7 +1,6 @@
 import Vue from "vue";
-import _ from "lodash";
 import { PredictionState } from "./index";
-import { VariableSummary, Extrema, TableData } from "../dataset/index";
+import { VariableSummary, TableData } from "../dataset/index";
 import { updateSummaries, updateSummariesPerVariable } from "../../util/data";
 
 export const mutations = {
@@ -32,9 +31,50 @@ export const mutations = {
   clearPredictedSummary(state: PredictionState) {
     state.predictedSummaries = [];
   },
-
+  removeTimeseries(
+    state: PredictionState,
+    args: { predictionsId: string; ids: string[] }
+  ) {
+    args.ids.forEach((id) => {
+      // predicted data
+      delete state.timeseries[args.predictionsId].timeseriesData[id];
+      delete state.timeseries[args.predictionsId].isDateTime[id];
+      delete state.timeseries[args.predictionsId].info[id];
+      // predicted forecast
+      delete state.forecasts[args.predictionsId].forecastData[id];
+      delete state.forecasts[args.predictionsId].forecastRange[id];
+      delete state.forecasts[args.predictionsId].isDateTime[id];
+    });
+  },
   // forecast
-
+  bulkUpdatePredictedTimeseries(
+    state: PredictionState,
+    args: {
+      predictionsId: string;
+      map: Map<
+        string,
+        {
+          timeseries: number[][];
+          isDateTime: boolean;
+          min: number;
+          max: number;
+          mean: number;
+        }
+      >;
+    }
+  ) {
+    args.map.forEach((val, key) => {
+      mutations.updatePredictedTimeseries(state, {
+        predictionsId: args.predictionsId,
+        id: key,
+        timeseries: val.timeseries,
+        isDateTime: val.isDateTime,
+        min: val.min,
+        max: val.max,
+        mean: val.mean,
+      });
+    });
+  },
   updatePredictedTimeseries(
     state: PredictionState,
     args: {
@@ -79,7 +119,30 @@ export const mutations = {
       mean: args.mean as number,
     });
   },
-
+  bulkUpdatePredictedForecast(
+    state: PredictionState,
+    args: {
+      predictionsId: string;
+      map: Map<
+        string,
+        {
+          forecast: number[][];
+          forecastTestRange: number[];
+          isDateTime: boolean;
+        }
+      >;
+    }
+  ) {
+    args.map.forEach((val, key) => {
+      mutations.updatePredictedForecast(state, {
+        predictionsId: args.predictionsId,
+        id: key,
+        forecast: val.forecast,
+        forecastTestRange: val.forecastTestRange,
+        isDateTime: val.isDateTime,
+      });
+    });
+  },
   updatePredictedForecast(
     state: PredictionState,
     args: {

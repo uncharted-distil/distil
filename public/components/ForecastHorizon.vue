@@ -185,7 +185,7 @@ export default Vue.extend({
         applyModel: true.toString(),
         dataset: this.dataset,
         fittedSolutionId: this.fittedSolutionId,
-        predictionDataset: predictionDataset,
+        predictionsDataset: predictionDataset,
         produceRequestId: response.produceRequestId,
         target: this.target,
         task: TaskTypes.TIME_SERIES,

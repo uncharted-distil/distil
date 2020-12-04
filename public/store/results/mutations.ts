@@ -89,7 +89,57 @@ export const mutations = {
   updateConfidenceSummaries(state: ResultsState, summary: VariableSummary) {
     updateSummaries(summary, state.confidenceSummaries);
   },
-
+  removeTimeseries(
+    state: ResultsState,
+    args: {
+      solutionId: string;
+      ids: string[];
+    }
+  ) {
+    args.ids.forEach((id) => {
+      // delete timeseries data
+      delete state.timeseries[args.solutionId].timeseriesData[id];
+      // delete is date time
+      delete state.timeseries[args.solutionId].isDateTime[id];
+      // delete info
+      delete state.timeseries[args.solutionId].info[id];
+      // remove predictedForecast data
+      delete state.forecasts[args.solutionId].forecastData[id];
+      // delete forecast range
+      delete state.forecasts[args.solutionId].forecastRange[id];
+      // delete isDateTime
+      delete state.forecasts[args.solutionId].isDateTime[id];
+    });
+  },
+  bulkUpdatePredictedTimeseries(
+    state: ResultsState,
+    args: {
+      map: Map<
+        string,
+        {
+          timeseries: number[][];
+          isDateTime: boolean;
+          min: number;
+          max: number;
+          mean: number;
+        }
+      >;
+      solutionId: string;
+      uniqueTrail?: string;
+    }
+  ) {
+    args.map.forEach((val, key) => {
+      mutations.updatePredictedTimeseries(state, {
+        solutionId: args.solutionId,
+        id: key + (args.uniqueTrail ?? ""),
+        timeseries: val.timeseries,
+        isDateTime: val.isDateTime,
+        min: val.min,
+        max: val.max,
+        mean: val.mean,
+      });
+    });
+  },
   // forecast
 
   updatePredictedTimeseries(
@@ -137,7 +187,31 @@ export const mutations = {
       mean: args.mean as number,
     });
   },
-
+  bulkUpdatePredictedForecast(
+    state: ResultsState,
+    args: {
+      solutionId: string;
+      uniqueTrail?: string;
+      map: Map<
+        string,
+        {
+          forecast: TimeSeriesValue[];
+          forecastTestRange: number[];
+          isDateTime: boolean;
+        }
+      >;
+    }
+  ) {
+    args.map.forEach((val, key) => {
+      mutations.updatePredictedForecast(state, {
+        solutionId: args.solutionId,
+        id: key + (args.uniqueTrail ?? ""),
+        forecast: val.forecast,
+        forecastTestRange: val.forecastTestRange,
+        isDateTime: val.isDateTime,
+      });
+    });
+  },
   updatePredictedForecast(
     state: ResultsState,
     args: {

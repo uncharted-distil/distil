@@ -253,6 +253,35 @@ export const mutations = {
   removeFile(state: DatasetState, url: string) {
     Vue.delete(state.files, url);
   },
+  bulkUpdateTimeseries(
+    state: DatasetState,
+    args: {
+      dataset: string;
+      map: Map<
+        string,
+        {
+          Timeseries: TimeSeriesValue[];
+          IsDateTime: boolean;
+          Min: number;
+          Max: number;
+          Mean: number;
+        }
+      >;
+      uniqueTrail?: string;
+    }
+  ) {
+    args.map.forEach((val, key) => {
+      mutations.updateTimeseries(state, {
+        dataset: args.dataset,
+        id: key + (args.uniqueTrail ?? ""),
+        timeseries: val.Timeseries,
+        isDateTime: val.IsDateTime,
+        min: val.Min,
+        max: val.Max,
+        mean: val.Mean,
+      });
+    });
+  },
   updateTimeseries(
     state: DatasetState,
     args: {
@@ -326,7 +355,16 @@ export const mutations = {
     Vue.set(y, "min", Math.min(y.min, minY));
     Vue.set(y, "max", Math.max(y.max, maxY));
   },
-
+  removeTimeseries(
+    state: DatasetState,
+    args: { dataset: string; ids: string[] }
+  ) {
+    args.ids.forEach((id) => {
+      delete state.timeseries[args.dataset].timeseriesData[id];
+      delete state.timeseries[args.dataset].isDateTime[id];
+      delete state.timeseries[args.dataset].info[id];
+    });
+  },
   setJoinDatasetsTableData(
     state: DatasetState,
     args: { dataset: string; data: TableData }

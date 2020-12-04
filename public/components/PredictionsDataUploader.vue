@@ -173,7 +173,7 @@ export default Vue.extend({
           fittedSolutionId: this.fittedSolutionId,
           produceRequestId: response.produceRequestId,
           target: this.target,
-          predictionDataset: predictionDataset,
+          predictionsDataset: predictionDataset,
           dataset: this.dataset,
           varModes: varModes,
           applyModel: true.toString(),

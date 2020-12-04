@@ -450,8 +450,8 @@ func (f *NumericalField) FetchPredictedSummaryData(resultURI string, datasetResu
 
 func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
-		Name: "value",
-		Type: model.StringType,
+		StorageName: "value",
+		Type:        model.StringType,
 	}
 
 	// need the extrema to calculate the histogram interval
@@ -477,7 +477,7 @@ func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResu
 
 	wheres = append(wheres, fmt.Sprintf("result.result_id = $%d AND result.target = $%d ", len(params)+1, len(params)+2))
 	params = append(params, resultURI, f.Key)
-	wheres = append(wheres, fmt.Sprintf("%s != ''", resultVariable.Name))
+	wheres = append(wheres, fmt.Sprintf("%s != ''", resultVariable.StorageName))
 
 	// Create the complete query string.
 	query := fmt.Sprintf(`
@@ -501,11 +501,11 @@ func (f *NumericalField) fetchPredictedSummaryData(resultURI string, datasetResu
 
 func (f *NumericalField) getResultMinMaxAggsQuery(resultVariable *model.Variable) string {
 	// get min / max agg names
-	minAggName := api.MinAggPrefix + resultVariable.Name
-	maxAggName := api.MaxAggPrefix + resultVariable.Name
+	minAggName := api.MinAggPrefix + resultVariable.StorageName
+	maxAggName := api.MaxAggPrefix + resultVariable.StorageName
 
 	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("CAST(CASE WHEN \"%s\" = '' THEN 'NaN' ELSE \"%s\" END as double precision)", resultVariable.Name, resultVariable.Name)
+	fieldTyped := fmt.Sprintf("CAST(CASE WHEN \"%s\" = '' THEN 'NaN' ELSE \"%s\" END as double precision)", resultVariable.StorageName, resultVariable.StorageName)
 
 	// create aggregations
 	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", fieldTyped, minAggName, fieldTyped, maxAggName)
@@ -519,7 +519,7 @@ func (f *NumericalField) getResultHistogramAggQuery(extrema *api.Extrema, result
 	interval := extrema.GetBucketInterval(numBuckets)
 
 	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("CAST(CASE WHEN \"%s\" = '' THEN 'NaN' ELSE \"%s\" END as double precision)", resultVariable.Name, resultVariable.Name)
+	fieldTyped := fmt.Sprintf("CAST(CASE WHEN \"%s\" = '' THEN 'NaN' ELSE \"%s\" END as double precision)", resultVariable.StorageName, resultVariable.StorageName)
 
 	// get histogram agg name & query string.
 	histogramAggName := fmt.Sprintf("\"%s%s\"", api.HistogramAggPrefix, extrema.Key)
@@ -544,7 +544,7 @@ func (f *NumericalField) fetchResultsExtrema(resultURI string, dataset string, r
 	aggQuery := f.getResultMinMaxAggsQuery(resultVariable)
 
 	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2 AND %s != '';", aggQuery, dataset, resultVariable.Name)
+	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2 AND %s != '';", aggQuery, dataset, resultVariable.StorageName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(queryString, resultURI, f.Key)

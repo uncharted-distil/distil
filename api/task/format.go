@@ -23,6 +23,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
@@ -30,6 +31,7 @@ import (
 
 // Format will format a dataset to have the required structures for D3M.
 func Format(schemaFile string, dataset string, config *IngestTaskConfig) (string, error) {
+	log.Infof("formatting dataset %s found in file '%s'", dataset, schemaFile)
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to load original schema file")
@@ -64,12 +66,13 @@ func Format(schemaFile string, dataset string, config *IngestTaskConfig) (string
 }
 
 func outputDataset(paths *datasetCopyPath, meta *model.Metadata, lines [][]string) error {
+	log.Infof("writing dataset %s to '%s'", meta.ID, paths.outputSchema)
 	dr := meta.GetMainDataResource()
 
 	// output the header
 	header := make([]string, len(dr.Variables))
 	for _, v := range dr.Variables {
-		header[v.Index] = v.Name
+		header[v.Index] = v.HeaderName
 	}
 	output := [][]string{header}
 	output = append(output, lines...)
@@ -96,7 +99,7 @@ func addD3MIndex(schemaFile string, meta *model.Metadata, data [][]string) (*mod
 	// add the d3m index variable to the metadata
 	dr := meta.GetMainDataResource()
 	name := model.D3MIndexFieldName
-	v := model.NewVariable(len(dr.Variables), name, name, name, model.IntegerType, model.IntegerType,
+	v := model.NewVariable(len(dr.Variables), name, name, name, name, model.IntegerType, model.IntegerType,
 		"required index field", []string{model.RoleIndex}, model.VarDistilRoleIndex, nil, dr.Variables, false)
 	dr.Variables = append(dr.Variables, v)
 
@@ -113,7 +116,7 @@ func checkD3MIndexExists(meta *model.Metadata) bool {
 	// check all variables for a d3m index
 	for _, dr := range meta.DataResources {
 		for _, v := range dr.Variables {
-			if v.Name == model.D3MIndexFieldName {
+			if v.StorageName == model.D3MIndexFieldName {
 				return true
 			}
 		}

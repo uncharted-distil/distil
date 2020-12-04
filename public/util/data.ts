@@ -1,6 +1,6 @@
 import axios from "axios";
 import sha1 from "crypto-js/sha1";
-import _, { result } from "lodash";
+import _ from "lodash";
 import Vue from "vue";
 import {
   D3M_INDEX_FIELD,
@@ -16,6 +16,7 @@ import {
 import {
   actions as datasetActions,
   getters as datasetGetters,
+  mutations as datasetMutations,
 } from "../store/dataset/module";
 import { PredictionContext } from "../store/predictions/actions";
 import {
@@ -24,11 +25,16 @@ import {
   Solution,
   SOLUTION_COMPLETED,
 } from "../store/requests/index";
+import {
+  getters as predictionsGetters,
+  mutations as predictionsMutations,
+} from "../store/predictions/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { ResultsContext } from "../store/results/actions";
 import {
   actions as resultsActions,
   getters as resultsGetters,
+  mutations as resultsMutations,
 } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import store from "../store/store";
@@ -240,24 +246,21 @@ export function fetchSummaryExemplars(
         // if there a linked exemplars, fetch those before resolving
         const solutionId = routeGetters.getRouteSolutionId(store);
         const grouping = variable.grouping as TimeseriesGrouping;
-
-        return Promise.all(
-          exemplars.map((exemplar) => {
-            const args = {
-              dataset: datasetName,
-              timeseriesColName: grouping.idCol,
-              xColName: grouping.xCol,
-              yColName: grouping.yCol,
-              timeseriesId: exemplar,
-              solutionId: solutionId,
-            };
-            if (solutionId) {
-              return resultsActions.fetchForecastedTimeseries(store, args);
-            } else {
-              return datasetActions.fetchTimeseries(store, args);
-            }
-          })
-        );
+        const args = {
+          dataset: datasetName,
+          timeseriesColName: grouping.idCol,
+          xColName: grouping.xCol,
+          yColName: grouping.yCol,
+          timeseriesIds: exemplars,
+          solutionId: solutionId,
+        };
+        return () => {
+          if (solutionId) {
+            return resultsActions.fetchForecastedTimeseries(store, args);
+          } else {
+            return datasetActions.fetchTimeseries(store, args);
+          }
+        };
       }
     } else {
       // if there are linked files, fetch some of them before resolving
@@ -291,18 +294,14 @@ export function fetchResultExemplars(
       if (variable.grouping.type === TIMESERIES_TYPE) {
         const grouping = variable.grouping as TimeseriesGrouping;
         // if there a linked exemplars, fetch those before resolving
-        return Promise.all(
-          exemplars.map((exemplar) => {
-            return resultsActions.fetchForecastedTimeseries(store, {
-              dataset: datasetName,
-              timeseriesColName: grouping.idCol,
-              xColName: grouping.xCol,
-              yColName: grouping.yCol,
-              timeseriesId: exemplar,
-              solutionId: solutionId,
-            });
-          })
-        );
+        return resultsActions.fetchForecastedTimeseries(store, {
+          dataset: datasetName,
+          timeseriesColName: grouping.idCol,
+          xColName: grouping.xCol,
+          yColName: grouping.yCol,
+          timeseriesIds: exemplars,
+          solutionId: solutionId,
+        });
       }
     } else {
       // if there a linked files, fetch those before resolving
@@ -393,7 +392,48 @@ export function updateSummariesPerVariable(
     Object.freeze(summary)
   );
 }
+// removeTimeseries will not trigger a Vue update
+export function removeTimeseries(
+  args: {
+    solutionId?: string;
+    predictionsId?: string;
+    dataset?: string;
+  },
+  items: TableRow[],
+  uniqueTrail?: string
+) {
+  let fields = null;
+  let mutator = null;
+  const predDataset = routeGetters.getRoutePredictionsDataset(store);
+  const solutionId = routeGetters.getRouteSolutionId(store);
 
+  if (predDataset !== null) {
+    // check if prediction view
+    fields = predictionsGetters.getIncludedPredictionTableDataFields(store);
+    mutator = predictionsMutations.removeTimeseries;
+  } else if (solutionId !== null) {
+    // check if result view
+    fields = resultsGetters.getIncludedResultTableDataFields(store);
+    mutator = resultsMutations.removeTimeseries;
+  } else {
+    // defaults to select view
+    fields = datasetGetters.getIncludedTableDataFields(store);
+    mutator = datasetMutations.removeTimeseries;
+  }
+  const variables = datasetGetters.getVariables(store);
+  const timeseriesGroupings = getTimeseriesGroupingsFromFields(
+    variables,
+    fields
+  );
+  timeseriesGroupings.forEach((tsg) => {
+    mutator(store, {
+      ...args,
+      ids: items.map((item) => {
+        return (item[tsg.idCol].value as string) + (uniqueTrail ?? "");
+      }),
+    });
+  });
+}
 export function removeSummary(
   summary: VariableSummary,
   summaries: VariableSummary[]

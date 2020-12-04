@@ -55,6 +55,8 @@ export const actions = {
   stopPredictRequest: dispatch(moduleActions.stopPredictRequest),
   fetchPredictions: dispatch(moduleActions.fetchPredictions),
   fetchPrediction: dispatch(moduleActions.fetchPrediction),
+
+  createQueryRequest: dispatch(moduleActions.createQueryRequest),
 };
 
 export const mutations = {

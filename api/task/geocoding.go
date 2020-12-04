@@ -87,8 +87,8 @@ func GeocodeForwardDataset(schemaFile string, dataset string, config *IngestTask
 		latDesc := fmt.Sprintf("latitude obtained from field %s", field[0].SourceField)
 		lonDesc := fmt.Sprintf("longitude obtained from field %s", field[0].SourceField)
 		fields[field[0].SourceField] = []*model.Variable{
-			model.NewVariable(len(mainDR.Variables), latName, "label", latName, model.LatitudeType, model.LatitudeType, latDesc, []string{"attribute"}, model.VarDistilRoleMetadata, nil, mainDR.Variables, false),
-			model.NewVariable(len(mainDR.Variables)+1, lonName, "label", lonName, model.LongitudeType, model.LongitudeType, lonDesc, []string{"attribute"}, model.VarDistilRoleMetadata, nil, mainDR.Variables, false),
+			model.NewVariable(len(mainDR.Variables), latName, "label", latName, latName, model.LatitudeType, model.LatitudeType, latDesc, []string{"attribute"}, model.VarDistilRoleMetadata, nil, mainDR.Variables, false),
+			model.NewVariable(len(mainDR.Variables)+1, lonName, "label", latName, lonName, model.LongitudeType, model.LongitudeType, lonDesc, []string{"attribute"}, model.VarDistilRoleMetadata, nil, mainDR.Variables, false),
 		}
 		mainDR.Variables = append(mainDR.Variables, fields[field[0].SourceField]...)
 		for _, gc := range field {
@@ -112,7 +112,7 @@ func GeocodeForwardDataset(schemaFile string, dataset string, config *IngestTask
 	// output the header
 	header := make([]string, len(mainDR.Variables))
 	for _, v := range mainDR.Variables {
-		header[v.Index] = v.Name
+		header[v.Index] = v.HeaderName
 	}
 	output := [][]string{header}
 	output = append(output, lines...)
@@ -164,8 +164,8 @@ func GeocodeForward(datasetInputDir string, dataset string, variable *model.Vari
 	res = res[1:]
 	geocodedData := make([]*GeocodedPoint, len(res))
 
-	latIndex := getFieldIndex(header, fmt.Sprintf("%s_latitude", variable.Name))
-	lonIndex := getFieldIndex(header, fmt.Sprintf("%s_longitude", variable.Name))
+	latIndex := getFieldIndex(header, fmt.Sprintf("%s_latitude", variable.HeaderName))
+	lonIndex := getFieldIndex(header, fmt.Sprintf("%s_longitude", variable.HeaderName))
 	d3mIndexIndex := getFieldIndex(header, model.D3MIndexName)
 	for i, v := range res {
 		lat := v[latIndex].(string)
@@ -175,7 +175,7 @@ func GeocodeForward(datasetInputDir string, dataset string, variable *model.Vari
 
 		geocodedData[i] = &GeocodedPoint{
 			D3MIndex:    d3mIndex,
-			SourceField: variable.Name,
+			SourceField: variable.StorageName,
 			Latitude:    lat,
 			Longitude:   lon,
 		}

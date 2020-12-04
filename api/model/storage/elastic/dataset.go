@@ -353,7 +353,8 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 	var serialized []map[string]interface{}
 	for _, v := range variables {
 		serialized = append(serialized, map[string]interface{}{
-			model.VarNameField:             v.Name,
+			model.VarNameField:             v.HeaderName,
+			model.VarStorageNameField:      v.StorageName,
 			model.VarIndexField:            v.Index,
 			model.VarRoleField:             v.Role,
 			model.VarSelectedRoleField:     v.SelectedRole,
@@ -400,7 +401,7 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 
 	// Update only the variable we care about
 	for _, v := range vars {
-		if v.Name == varName {
+		if v.StorageName == varName {
 			v.Type = varType
 		}
 	}
@@ -418,7 +419,7 @@ func (s *Storage) SetExtrema(dataset string, varName string, extrema *api.Extrem
 
 	// Update only the variable we care about
 	for _, v := range vars {
-		if v.Name == varName {
+		if v.StorageName == varName {
 			v.Min = extrema.Min
 			v.Max = extrema.Max
 		}
@@ -436,7 +437,8 @@ func (s *Storage) AddVariable(dataset string, varName string, varDisplayName str
 
 	// new variable definition
 	variable := &model.Variable{
-		Name:             varName,
+		StorageName:      varName,
+		HeaderName:       varName,
 		Type:             varType,
 		OriginalType:     varType,
 		OriginalVariable: varName,
@@ -455,7 +457,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varDisplayName str
 	// check if var already exists
 	found := false
 	for index, v := range vars {
-		if v.Name == varName {
+		if v.StorageName == varName {
 			// check if it has been deleted
 			if !v.Deleted {
 				return errors.Errorf("variable already exists under this key")
@@ -487,7 +489,7 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 
 	// soft delete the variable
 	for _, v := range vars {
-		if v.Name == varName {
+		if v.StorageName == varName {
 			v.Deleted = true
 		}
 	}
