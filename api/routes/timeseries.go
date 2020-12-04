@@ -54,7 +54,7 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 			return
 		}
 		operation, ok := params["duplicateOperation"].(string)
-		if !ok{
+		if !ok {
 			operation = "add" //default
 		}
 		timeseriesURIs := []string{}

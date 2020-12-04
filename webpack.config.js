@@ -29,16 +29,25 @@ module.exports = {
   resolve: {
     extensions: [".js", ".vue", ".json", ".ts"],
     symlinks: false,
+    alias: {
+      /** LexBar
+       * These two lines are needed to properly import lex.
+       * Without these webpack tries to load the "module" version of lex
+       * which is a jsx file that needs compilation.
+       */
+      "@uncharted.software/lex": path.resolve(
+        __dirname,
+        "node_modules/@uncharted.software/lex/dist/lex.js"
+      ),
+      // When we decide to use SCSS
+      // "~@uncharted/lex/src/style/lex.scss": path.resolve(
+      //   __dirname,
+      //   "node_modules/@uncharted/lex/src/style/lex.scss"
+      // ),
+    },
   },
   module: {
     rules: [
-      {
-        test: /\.jsx$/,
-        exclude: {
-          test: nodeModulesPath,
-          exclude: path.resolve(nodeModulesPath, "@uncharted.software/lex"),
-        },
-      },
       {
         test: /\.vue$/,
         loader: "vue-loader",

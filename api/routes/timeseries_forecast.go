@@ -57,7 +57,7 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 			return
 		}
 		operation, ok := params["duplicateOperation"].(string)
-		if !ok{
+		if !ok {
 			operation = "add" //default
 		}
 		timeseriesUris := []string{}

@@ -9,7 +9,14 @@
 import Vue from "vue";
 import _ from "lodash";
 import { h } from "preact";
-import { Lex, ValueState } from "@uncharted.software/lex";
+import {
+  Lex,
+  NumericEntryState,
+  TextEntryState,
+  TransitionFactory,
+  ValueState,
+  ValueStateValue,
+} from "@uncharted.software/lex";
 import "../../styles/lex.css";
 
 export default Vue.extend({
@@ -22,12 +29,22 @@ export default Vue.extend({
 
   mounted() {
     // Defines a list of searchable fields for LEX
-    this.suggestions = [];
+    this.suggestions = [
+      new ValueStateValue("Name", { type: "string" }),
+      new ValueStateValue("Age", { type: "numeric" }),
+    ];
 
     const language = Lex.from("field", ValueState, {
       name: "Choose a variable to filter",
       suggestions: this.suggestions,
-    });
+    }).branch(
+      Lex.from("value", TextEntryState, {
+        ...TransitionFactory.valueMetaCompare({ type: "string" }),
+      }),
+      Lex.from("value", NumericEntryState, {
+        ...TransitionFactory.valueMetaCompare({ type: "numeric" }),
+      })
+    );
 
     // Initialize lex instance
     this.lex = new Lex({
@@ -39,21 +56,20 @@ export default Vue.extend({
       ...args /* [newModel, oldModel, newUnboxedModel, oldUnboxedModel, nextTokenStarted] */
     ) => {
       console.debug("lex event `query changed`");
-      // this.setFilters(newFilters);
     });
 
     // Render our search bar into our desired element
     this.lex.render(this.$refs.lexContainer);
-    // this.setQuery();
+    this.setQuery();
   },
 
   methods: {
-    // setQuery(): void {
-    //   if (!this.lex) return;
-    //   const lexQuery = [];
-    //   // this.getFilters();
-    //   this.lex.setQuery(lexQuery, false);
-    // },
+    setQuery(): void {
+      if (!this.lex) return;
+      const lexQuery = [];
+      // this.getFilters();
+      this.lex.setQuery(lexQuery, false);
+    },
   },
 });
 </script>
