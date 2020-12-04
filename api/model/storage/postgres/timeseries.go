@@ -84,7 +84,7 @@ func (s *Storage) parseTimeseries(rows pgx.Rows, timeSet *map[float64]float64, k
 			for i := range time {
 				k := time[i]
 				duplicateMap[k]++
-				if !math.IsNaN(cpyTimeSet[k]){
+				if !math.IsNaN(cpyTimeSet[k]) {
 					cpyTimeSet[k] = duplicateOperation(cpyTimeSet[k], vals[i], duplicateMap[k])
 					continue
 				}
@@ -256,7 +256,7 @@ func maxDuplicates(first float64, second float64, count int64) float64 {
 	return math.Max(first, second)
 }
 func averageDuplicates(sum float64, val float64, count int64) float64 {
-	return (sum * float64((count - 1)) + val) / float64(count)
+	return (sum*float64((count-1)) + val) / float64(count)
 }
 func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.Bucket, mode api.SummaryMode) ([]string, error) {
 
