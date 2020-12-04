@@ -56,6 +56,10 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 			handleError(w, errors.New("Missing timeseriesUris from query"))
 			return
 		}
+		operation, ok := params["duplicateOperation"].(string)
+		if !ok{
+			operation = "add" //default
+		}
 		timeseriesUris := []string{}
 		for _, v := range t {
 			s, ok := v.(string)
@@ -105,7 +109,7 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 		predictedStorageName := dsf.StorageName
 
 		// fetch the ground truth timeseries
-		timeseries, err := data.FetchTimeseries(truthDataset, truthStorageName, timeseriesColName, xColName, yColName, timeseriesUris, filterParams, false)
+		timeseries, err := data.FetchTimeseries(truthDataset, truthStorageName, timeseriesColName, xColName, yColName, timeseriesUris, operation, filterParams, false)
 
 		if err != nil {
 			handleError(w, err)

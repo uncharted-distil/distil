@@ -53,6 +53,10 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 			handleError(w, errors.New("Missing timeseriesUris from query"))
 			return
 		}
+		operation, ok := params["duplicateOperation"].(string)
+		if !ok{
+			operation = "add" //default
+		}
 		timeseriesURIs := []string{}
 		for _, v := range t {
 			s, ok := v.(string)
@@ -90,7 +94,7 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 		storageName := ds.StorageName
 
 		// fetch timeseries
-		timeseries, err := storage.FetchTimeseries(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURIs, filterParams, invertBool)
+		timeseries, err := storage.FetchTimeseries(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURIs, operation, filterParams, invertBool)
 		if err != nil {
 			handleError(w, err)
 			return

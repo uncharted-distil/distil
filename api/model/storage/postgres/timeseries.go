@@ -61,7 +61,7 @@ func NewTimeSeriesField(storage *Storage, datasetName string, datasetStorageName
 	return field
 }
 
-func (s *Storage) parseTimeseries(rows pgx.Rows, timeSet *map[float64]float64, keys *[]float64) (map[string][]*api.TimeseriesObservation, error) {
+func (s *Storage) parseTimeseries(rows pgx.Rows, timeSet *map[float64]float64, keys *[]float64, duplicateOperation func(float64, float64, int64) float64) (map[string][]*api.TimeseriesObservation, error) {
 	result := map[string][]*api.TimeseriesObservation{}
 	if rows != nil {
 		for rows.Next() {
@@ -70,8 +70,10 @@ func (s *Storage) parseTimeseries(rows pgx.Rows, timeSet *map[float64]float64, k
 			vals := []float64{}
 			var key string
 			cpyTimeSet := map[float64]float64{}
+			duplicateMap := map[float64]int64{}
 			for k, v := range *timeSet {
 				cpyTimeSet[k] = v
+				duplicateMap[k] = 0
 			}
 
 			err := rows.Scan(&time, &vals, &key)
@@ -80,11 +82,13 @@ func (s *Storage) parseTimeseries(rows pgx.Rows, timeSet *map[float64]float64, k
 			}
 			result[key] = []*api.TimeseriesObservation{}
 			for i := range time {
-				if cpyTimeSet[time[i]] != math.NaN() {
-					cpyTimeSet[time[i]] += vals[i]
+				k := time[i]
+				duplicateMap[k]++
+				if cpyTimeSet[k] != math.NaN() {
+					cpyTimeSet[k] = duplicateOperation(cpyTimeSet[k], vals[i], duplicateMap[k])
 					continue
 				}
-				cpyTimeSet[time[i]] = vals[i]
+				cpyTimeSet[k] = vals[i]
 			}
 			for _, k := range *keys {
 				arr = append(arr, &api.TimeseriesObservation{Value: api.NullableFloat64(cpyTimeSet[k]), Time: k})
@@ -100,7 +104,7 @@ func (s *Storage) parseTimeseries(rows pgx.Rows, timeSet *map[float64]float64, k
 	return result, nil
 }
 
-func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows, timeSet *map[time.Time]float64, keys *[]time.Time) (map[string][]*api.TimeseriesObservation, error) {
+func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows, timeSet *map[time.Time]float64, keys *[]time.Time, duplicateOperation func(float64, float64, int64) float64) (map[string][]*api.TimeseriesObservation, error) {
 	result := map[string][]*api.TimeseriesObservation{}
 	if rows != nil {
 		for rows.Next() {
@@ -109,19 +113,24 @@ func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows, timeSet *map[time.Time]
 			vals := []float64{}
 			var key string
 			cpyTimeSet := map[time.Time]float64{}
+			duplicateMap := map[float64]int64{}
 			for k, v := range *timeSet {
 				cpyTimeSet[k] = v
+				duplicateMap[float64(k.Unix())] = 0
 			}
 			err := rows.Scan(&t, &vals, &key)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
 			for i := range t {
-				if cpyTimeSet[t[i]] != math.NaN() {
-					cpyTimeSet[t[i]] += vals[i]
+				idx := t[i]
+				unixTime := float64(idx.Unix())
+				duplicateMap[unixTime]++
+				if cpyTimeSet[idx] != math.NaN() {
+					cpyTimeSet[idx] = duplicateOperation(cpyTimeSet[idx], vals[i], duplicateMap[unixTime])
 					continue
 				}
-				cpyTimeSet[t[i]] = vals[i]
+				cpyTimeSet[idx] = vals[i]
 			}
 			for _, k := range *keys {
 				arr = append(arr, &api.TimeseriesObservation{Value: api.NullableFloat64(cpyTimeSet[k]), Time: float64(k.Unix() * 1000)})
@@ -237,7 +246,18 @@ func getMinMaxMean(timeseries []*api.TimeseriesObservation) (float64, float64, f
 	var null = math.NaN()
 	return null, null, null
 }
-
+func addDuplicates(first float64, second float64, count int64) float64 {
+	return first + second
+}
+func minDuplicates(first float64, second float64, count int64) float64 {
+	return math.Min(first, second)
+}
+func maxDuplicates(first float64, second float64, count int64) float64 {
+	return math.Max(first, second)
+}
+func averageDuplicates(sum float64, val float64, count int64) float64 {
+	return (sum + val) / float64(count)
+}
 func (f *TimeSeriesField) fetchRepresentationTimeSeries(categoryBuckets []*api.Bucket, mode api.SummaryMode) ([]string, error) {
 
 	var timeseriesExemplars []string
@@ -352,8 +372,22 @@ func (s *Storage) parseTimeSet(rows pgx.Rows) (*map[float64]float64, *[]float64,
 	return &result, &timeArr, nil
 }
 
+// GetTimeseriesOperations returns the supported operations to deal with duplicates in the timeseries
+func GetTimeseriesOperations(operation string) func(float64, float64, int64) float64 {
+	switch operation {
+	case "min":
+		return minDuplicates
+	case "max":
+		return maxDuplicates
+	case "mean":
+		return averageDuplicates
+	default:
+		return addDuplicates
+	}
+}
+
 // FetchTimeseries fetches a timeseries.
-func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI []string, filterParams *api.FilterParams, invert bool) (*map[string]*api.TimeseriesData, error) {
+func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI []string, duplicateOperation string, filterParams *api.FilterParams, invert bool) (*map[string]*api.TimeseriesData, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -397,12 +431,13 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	}
 	var response map[string][]*api.TimeseriesObservation
 	var dateTime bool
+	operation := GetTimeseriesOperations(duplicateOperation)
 	if xColVariable.Type == model.DateTimeType {
 		uniqueMap, keys, err := s.parseDateTimeSet(timeSet)
 		if err != nil {
 			return nil, err
 		}
-		response, err = s.parseDateTimeTimeseries(res, uniqueMap, keys)
+		response, err = s.parseDateTimeTimeseries(res, uniqueMap, keys, operation)
 		dateTime = true
 		if err != nil {
 			return nil, err
@@ -412,7 +447,7 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 		if err != nil {
 			return nil, err
 		}
-		response, err = s.parseTimeseries(res, uniqueMap, keys)
+		response, err = s.parseTimeseries(res, uniqueMap, keys, operation)
 		if err != nil {
 			return nil, err
 		}
