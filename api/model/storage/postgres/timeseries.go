@@ -84,7 +84,7 @@ func (s *Storage) parseTimeseries(rows pgx.Rows, timeSet *map[float64]float64, k
 			for i := range time {
 				k := time[i]
 				duplicateMap[k]++
-				if cpyTimeSet[k] != math.NaN() {
+				if math.IsNaN(cpyTimeSet[k]) == false {
 					cpyTimeSet[k] = duplicateOperation(cpyTimeSet[k], vals[i], duplicateMap[k])
 					continue
 				}
@@ -126,7 +126,7 @@ func (s *Storage) parseDateTimeTimeseries(rows pgx.Rows, timeSet *map[time.Time]
 				idx := t[i]
 				unixTime := float64(idx.Unix())
 				duplicateMap[unixTime]++
-				if cpyTimeSet[idx] != math.NaN() {
+				if math.IsNaN(cpyTimeSet[idx]) == false {
 					cpyTimeSet[idx] = duplicateOperation(cpyTimeSet[idx], vals[i], duplicateMap[unixTime])
 					continue
 				}
