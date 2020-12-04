@@ -278,7 +278,7 @@ func (s *stratifiedSplitter) split(data [][]string) ([][]string, [][]string, err
 // suitable to the task performed.
 func SplitDataset(schemaFile string, splitter datasetSplitter) (string, string, error) {
 	// load the metadata to get the data resource
-	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
+	meta, err := loadMetadataForSplit(schemaFile)
 	if err != nil {
 		return "", "", err
 	}
@@ -456,4 +456,16 @@ func deleteIfExists(folderName string) error {
 	}
 
 	return nil
+}
+
+func loadMetadataForSplit(schemaFile string) (*model.Metadata, error) {
+	// load the metadata with no augmentation
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, false)
+	if err != nil {
+		return nil, err
+	}
+
+	// use the main data resource to find the proper metadata loader
+	loader := serialization.GetStorage(meta.GetMainDataResource().ResPath)
+	return loader.ReadMetadata(schemaFile)
 }

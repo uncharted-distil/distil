@@ -222,7 +222,8 @@ func (d *Parquet) ReadRawVariables(uri string) ([]string, error) {
 
 // ReadMetadata reads the dataset doc from disk.
 func (d *Parquet) ReadMetadata(uri string) (*model.Metadata, error) {
-	meta, err := metadata.LoadMetadataFromOriginalSchema(uri, true)
+	// assume the metadata has all variables already so no need to augment
+	meta, err := metadata.LoadMetadataFromOriginalSchema(uri, false)
 	if err != nil {
 		return nil, err
 	}
