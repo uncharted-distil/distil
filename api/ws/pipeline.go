@@ -280,7 +280,7 @@ func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel
 	}
 
 	// parse parameters from the message
-	req, err := api.NewQueryRequest(msg.Raw)
+	req, err := api.NewQueryRequest(msg.Body)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to parse query request"))
 		return

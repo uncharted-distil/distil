@@ -1,4 +1,5 @@
 import axios from "axios";
+import _ from "lodash";
 import { ActionContext } from "vuex";
 import { validateArgs } from "../../util/data";
 import { FilterParams } from "../../util/filters";
@@ -18,6 +19,7 @@ import {
   RequestState,
   Solution,
   SolutionRequest,
+  SOLUTION_CANCELLED,
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED,
   SOLUTION_FITTING,
@@ -39,6 +41,8 @@ enum MessageType {
   STOP_SOLUTIONS = "STOP_SOLUTIONS",
   CREATE_PREDICTIONS = "PREDICT",
   STOP_PREDICTIONS = "STOP_PREDICTIONS",
+  CREATE_QUERY = "CREATE_QUERY",
+  STOP_QUERY = "STOP_QUERY",
 }
 
 interface StatusMessage {
@@ -86,19 +90,15 @@ interface PredictStatusMsg extends StatusMessage {
 
 interface QueryRequestMsg {
   datasetId: string;
-  dataset?: string; // base64 encoded version of dataset
   target: string;
   filters: FilterParams;
 }
 
-// Prediction status.
-interface QueryStatusMsg {
+// Query status.
+interface QueryStatusMsg extends StatusMessage {
   solutionId: string;
   resultId: string;
   produceRequestId: string;
-  progress: string;
-  error: string;
-  timestamp: number;
 }
 
 export type RequestContext = ActionContext<RequestState, DistilState>;
@@ -312,6 +312,7 @@ function handleSolutionProgress(
 ) {
   switch (response.progress) {
     case SOLUTION_COMPLETED:
+    case SOLUTION_CANCELLED:
     case SOLUTION_ERRORED:
       // if current solutionId, pull results
       if (response.solutionId === context.getters.getRouteSolutionId) {
@@ -343,7 +344,8 @@ function isSolutionResponse(response: SolutionStatusMsg) {
     progress === SOLUTION_SCORING ||
     progress === SOLUTION_PRODUCING ||
     progress === SOLUTION_COMPLETED ||
-    progress === SOLUTION_ERRORED
+    progress === SOLUTION_ERRORED ||
+    progress === SOLUTION_CANCELLED
   );
 }
 
@@ -510,7 +512,7 @@ export const actions = {
 
       const stream = conn.stream((response: SolutionStatusMsg) => {
         // log any error
-        if (response.error) {
+        if (!_.isEmpty(response.error)) {
           console.error(response.error);
         }
 
@@ -677,9 +679,9 @@ export const actions = {
   createQueryRequest(context: RequestContext, request: QueryRequestMsg) {
     let receivedUpdate = false;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const conn = getWebSocketConnection();
-      const stream = conn.stream((response) => {
+      const stream = conn.stream((response: QueryStatusMsg) => {
         // log any error
         if (response.error) {
           console.error(response.error);
@@ -712,11 +714,9 @@ export const actions = {
 
       console.log("Sending query request:", request);
 
-      // send create solutions request
-      stream.send({
-        type: CREATE_QUERY,
+      // send create query request
+      stream.send(MessageType.CREATE_QUERY, {
         datasetId: request.datasetId,
-        dataset: request.dataset,
         filters: request.filters,
         target: request.target,
       });

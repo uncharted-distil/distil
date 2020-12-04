@@ -10,15 +10,15 @@
     </section>
     <section class="result-summaries">
       <result-facets
-        :showResiduals="showResiduals"
+        :show-residuals="showResiduals"
         :single-solution="isSingleSolution"
       />
     </section>
 
     <!-- Action buttons -->
     <aside
-      class="d-flex flex-row flex-shrink-0 justify-content-end"
       v-if="isActiveSolutionCompleted"
+      class="d-flex flex-row flex-shrink-0 justify-content-end"
     >
       <!-- Modal boxes to apply new data to models. -->
       <forecast-horizon
@@ -40,27 +40,29 @@
           variant="primary"
           class="apply-button"
           @click="$bvModal.show('forecast-horizon-modal')"
-          >Forecast
+        >
+          Forecast
         </b-button>
         <b-button
           v-else
           variant="primary"
           class="apply-button"
           @click="$bvModal.show('predictions-data-upload-modal')"
-          >Apply Model
+        >
+          Apply Model
         </b-button>
       </template>
       <template v-else>
         <save-model
-          :solutionId="solutionId"
-          :fittedSolutionId="fittedSolutionId"
+          :solution-id="solutionId"
+          :fitted-solution-id="fittedSolutionId"
         />
         <b-button
           variant="success"
           class="save-button"
           @click="$bvModal.show('save-model-modal')"
         >
-          <i class="fa fa-floppy-o"></i>
+          <i class="fa fa-floppy-o" />
           Save Model
         </b-button>
       </template>
@@ -75,32 +77,16 @@ import ForecastHorizon from "../components/ForecastHorizon.vue";
 import ErrorThresholdSlider from "../components/ErrorThresholdSlider.vue";
 import SaveModel from "../components/SaveModel.vue";
 import ResultTargetVariable from "../components/ResultTargetVariable.vue";
-import { getSolutionById } from "../util/solutions";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
-import { getters as resultGetters } from "../store/results/module";
-import {
-  actions as appActions,
-  getters as appGetters,
-} from "../store/app/module";
-import store from "../store/store";
-import {
-  EXPORT_SUCCESS_ROUTE,
-  ROOT_ROUTE,
-  PREDICTION_ROUTE,
-} from "../store/route/index";
 import { Variable, TaskTypes } from "../store/dataset/index";
-import vueSlider from "vue-slider-component";
 import Vue from "vue";
 import { Solution, SOLUTION_COMPLETED } from "../store/requests/index";
-import { Feature, Activity, SubActivity } from "../util/userEvents";
-import { createRouteEntry, varModesToString } from "../util/routes";
-import { getPredictionsById } from "../util/predictions";
 import { isFittedSolutionIdSavedAsModel } from "../util/models";
 
 export default Vue.extend({
-  name: "result-summaries",
+  name: "ResultSummaries",
 
   components: {
     ErrorThresholdSlider,
@@ -109,7 +95,6 @@ export default Vue.extend({
     ResultFacets,
     ResultTargetVariable,
     SaveModel,
-    vueSlider,
   },
 
   data() {
@@ -119,10 +104,6 @@ export default Vue.extend({
       },
       symmetricSlider: true,
     };
-  },
-
-  methods: {
-    isFittedSolutionIdSavedAsModel,
   },
 
   computed: {
@@ -207,6 +188,10 @@ export default Vue.extend({
     isTimeseries(): boolean {
       return routeGetters.isTimeseries(this.$store);
     },
+  },
+
+  methods: {
+    isFittedSolutionIdSavedAsModel,
   },
 });
 </script>

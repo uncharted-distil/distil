@@ -1,35 +1,41 @@
 <template>
   <div class="result-facets">
     <div
-      class="request-group-container"
-      :key="request.requestId"
       v-for="request in requestGroups"
+      :key="request.requestId"
+      class="request-group-container"
     >
       <header v-if="!singleSolution" class="sidebar-title">
         Search <sup>{{ request.requestIndex }}</sup>
       </header>
 
       <aside class="request-group-status">
-        <template v-if="isPending(request.progress)">
-          <b-badge variant="info">{{ request.progress }}</b-badge>
+        <template v-if="isErrored(request)">
+          <b-badge variant="danger">ERROR</b-badge>
+        </template>
+        <template v-else-if="isStopping(request)">
+          <b-badge variant="info">STOPPING</b-badge>
+        </template>
+        <template v-else-if="!isCompleted(request)">
+          <b-badge variant="info">
+            {{ request.progress }}
+          </b-badge>
           <b-button
             variant="danger"
             size="sm"
             class="pull-right abort-search-button"
-            @click="stopRequest(request.requestId)"
-            >Stop</b-button
+            :disabled="isStopping(request)"
+            @click="stopRequest(request)"
           >
-        </template>
-
-        <template v-if="isErrored(request.progress)">
-          <b-badge variant="danger">ERROR</b-badge>
+            Stop
+          </b-button>
         </template>
       </aside>
 
       <result-group
-        class="result-group-container"
-        :key="group.solutionId"
         v-for="group in request.groups"
+        :key="group.solutionId"
+        class="result-group-container"
         :name="group.groupName"
         :timestamp="group.timestamp"
         :request-id="group.requestId"
@@ -49,23 +55,20 @@
 <script lang="ts">
 import Vue from "vue";
 import _ from "lodash";
-import moment from "moment";
-import ResultGroup from "../components/ResultGroup";
+import ResultGroup from "../components/ResultGroup.vue";
 import { VariableSummary } from "../store/dataset/index";
 import {
   SOLUTION_REQUEST_COMPLETED,
   SOLUTION_REQUEST_ERRORED,
-  Solution,
+  SOLUTION_REQUEST_PENDING,
   Score,
 } from "../store/requests/index";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
-import { getters as predictionsGetters } from "../store/predictions/module";
 import {
   getters as requestGetters,
   actions as requestActions,
 } from "../store/requests/module";
-import { getters as datasetGetters } from "../store/dataset/module";
 import {
   getSolutionRequestIndex,
   getSolutionById,
@@ -94,10 +97,11 @@ interface RequestGroup {
   requestId: string;
   progress: string;
   groups: SummaryGroup[];
+  stopRequested: boolean;
 }
 
 export default Vue.extend({
-  name: "result-facets",
+  name: "ResultFacets",
 
   components: {
     ResultGroup,
@@ -131,7 +135,7 @@ export default Vue.extend({
       if (this.singleSolution) {
         const solutionId = routeGetters.getRouteSolutionId(this.$store);
         const solution = getSolutionById(
-          <Solution[]>this.$store.state.requestsModule.solutions,
+          requestGetters.getSolutions(this.$store),
           solutionId
         );
         if (solution) {
@@ -188,29 +192,32 @@ export default Vue.extend({
         progress: requestsMap[requestId].progress,
         requestId: requestId,
         requestIndex: this.getRequestIndex(requestId),
+        stopRequested: false,
       })).sort(this.sortByRequestIndexDESC);
     },
   },
 
   methods: {
-    isPending(status: string): boolean {
-      return (
-        status !== SOLUTION_REQUEST_COMPLETED &&
-        status !== SOLUTION_REQUEST_ERRORED
-      );
+    isPending(requestGroup: RequestGroup): boolean {
+      return requestGroup.progress === SOLUTION_REQUEST_PENDING;
     },
 
-    isCompleted(status: string): boolean {
-      return status === SOLUTION_REQUEST_COMPLETED;
+    isCompleted(requestGroup: RequestGroup): boolean {
+      return requestGroup.progress === SOLUTION_REQUEST_COMPLETED;
     },
 
-    isErrored(status: string): boolean {
-      return status === SOLUTION_REQUEST_ERRORED;
+    isErrored(requestGroup: RequestGroup): boolean {
+      return requestGroup.progress === SOLUTION_REQUEST_ERRORED;
     },
 
-    stopRequest(requestId: string) {
+    isStopping(requestGroup: RequestGroup): boolean {
+      return requestGroup.stopRequested;
+    },
+
+    stopRequest(requestGroup: RequestGroup) {
+      requestGroup.stopRequested = true;
       requestActions.stopSolutionRequest(this.$store, {
-        requestId: requestId,
+        requestId: requestGroup.requestId,
       });
     },
 

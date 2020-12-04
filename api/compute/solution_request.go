@@ -34,6 +34,8 @@ import (
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil/api/env"
+	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
@@ -437,15 +439,23 @@ func createFitSolutionRequest(datasetURI string, fittedSolutionID string) *pipel
 }
 
 func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, err error) {
+	// Check to see if this is a cancellation error and use a specific code for it if so
+	progress := compute.SolutionErroredStatus
+	cause := errors.Cause(err)
+	st, ok := status.FromError(cause)
+	if ok && st.Code() == codes.Canceled {
+		progress = compute.SolutionCancelledStatus
+	}
+
 	// persist the updated state
 	// NOTE: ignoring error
-	solutionStorage.PersistSolutionState(solutionID, SolutionErroredStatus, time.Now())
+	_ = solutionStorage.PersistSolutionState(solutionID, progress, time.Now())
 
 	// notify of error
 	statusChan <- SolutionStatus{
 		RequestID:  searchID,
 		SolutionID: solutionID,
-		Progress:   SolutionErroredStatus,
+		Progress:   progress,
 		Error:      err,
 		Timestamp:  time.Now(),
 	}
