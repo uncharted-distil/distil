@@ -54,8 +54,8 @@ import Vue from "vue";
 import "@uncharted.software/facets-core";
 import { FacetTermsData } from "@uncharted.software/facets-core/dist/types/facet-terms/FacetTerms";
 
-import TypeChangeMenu from "../TypeChangeMenu";
-import SparklinePreview from "../SparklinePreview";
+import TypeChangeMenu from "../TypeChangeMenu.vue";
+import SparklinePreview from "../SparklinePreview.vue";
 import {
   Highlight,
   RowSelection,

@@ -1,5 +1,5 @@
 <template>
-  <div class="sparkline-row" v-observe-visibility="visibilityChanged">
+  <div class="sparkline-row">
     <div class="timeseries-var-col">{{ timeseriesId }}</div>
     <div class="timeseries-min-col">{{ min.toFixed(2) }}</div>
     <div class="timeseries-max-col">{{ max.toFixed(2) }}</div>
@@ -31,7 +31,7 @@
 import * as d3 from "d3";
 import $ from "jquery";
 import Vue from "vue";
-import SparklineSvg from "./SparklineSvg";
+import SparklineSvg from "./SparklineSvg.vue";
 import { getters as routeGetters } from "../store/route/module";
 import { TimeseriesExtrema, TimeSeriesValue } from "../store/dataset/index";
 import {
@@ -131,37 +131,6 @@ export default Vue.extend({
           return null;
         }
         return datasets.isDateTime[this.timeseriesId];
-      }
-    },
-  },
-
-  methods: {
-    visibilityChanged(isVisible: boolean) {
-      this.isVisible = isVisible;
-      if (this.isVisible && !this.hasRequested) {
-        this.requestTimeseries();
-        return;
-      }
-    },
-    requestTimeseries() {
-      this.hasRequested = true;
-      if (this.solutionId) {
-        resultsActions.fetchForecastedTimeseries(this.$store, {
-          dataset: this.dataset,
-          xColName: this.xCol,
-          yColName: this.yCol,
-          timeseriesColName: this.timeseriesCol,
-          timeseriesId: this.timeseriesId,
-          solutionId: this.solutionId,
-        });
-      } else {
-        datasetActions.fetchTimeseries(this.$store, {
-          dataset: this.dataset,
-          xColName: this.xCol,
-          yColName: this.yCol,
-          timeseriesColName: this.timeseriesCol,
-          timeseriesId: this.timeseriesId,
-        });
       }
     },
   },

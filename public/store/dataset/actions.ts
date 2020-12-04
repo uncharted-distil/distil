@@ -1099,7 +1099,8 @@ export const actions = {
       xColName: string;
       yColName: string;
       timeseriesColName: string;
-      timeseriesId: any;
+      timeseriesIds: string[];
+      uniqueTrail?: string;
     }
   ) {
     if (
@@ -1108,7 +1109,6 @@ export const actions = {
         "xColName",
         "yColName",
         "timeseriesColName",
-        "timeseriesId",
       ])
     ) {
       return null;
@@ -1120,19 +1120,15 @@ export const actions = {
           args.dataset
         )}/${encodeURIComponent(args.timeseriesColName)}/${encodeURIComponent(
           args.xColName
-        )}/${encodeURIComponent(args.yColName)}/${encodeURIComponent(
-          args.timeseriesId
-        )}/false`,
-        {}
+        )}/${encodeURIComponent(args.yColName)}/false`,
+        { timeseriesUris: args.timeseriesIds }
       );
-      mutations.updateTimeseries(context, {
+      mutations.bulkUpdateTimeseries(context, {
         dataset: args.dataset,
-        id: args.timeseriesId,
-        timeseries: <TimeSeriesValue[]>response.data.timeseries,
-        isDateTime: <boolean>response.data.isDateTime,
-        min: <number>response.data.min,
-        max: <number>response.data.max,
-        mean: <number>response.data.mean,
+        uniqueTrail: args.uniqueTrail,
+        map: new Map(
+          Object.keys(response.data).map((key) => [key, response.data[key]])
+        ),
       });
     } catch (error) {
       console.error(error);

@@ -188,16 +188,24 @@ import {
 import {
   Highlight,
   RowSelection,
+  TimeseriesGrouping,
   Variable,
   VariableSummary,
 } from "../../store/dataset";
-import { getters as datasetGetters } from "../../store/dataset/module";
+import {
+  getters as datasetGetters,
+  actions as datasetActions,
+} from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
 import {
   ROUTE_PAGE_SUFFIX,
   ROUTE_SEARCH_SUFFIX,
 } from "../../store/route/index";
-import { isGeoLocatedType, isImageType } from "../../util/types";
+import {
+  isGeoLocatedType,
+  isImageType,
+  TIMESERIES_TYPE,
+} from "../../util/types";
 import { actions as appActions } from "../../store/app/module";
 import { Feature, Activity, SubActivity } from "../../util/userEvents";
 import { updateHighlight, clearHighlight } from "../../util/highlights";
@@ -258,11 +266,27 @@ export default Vue.extend({
         return getRouteFacetPage(this.routePageKey(), this.$route);
       },
     },
-
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
     },
-
+    timeseriesSummaries(): VariableSummary[] {
+      return this.summaries.filter((s) => {
+        return s.varType === TIMESERIES_TYPE;
+      });
+    },
+    timeseriesVars(): Variable[] | null {
+      const checkMap = new Map(
+        this.timeseriesSummaries.map((ts) => {
+          return [ts.key, true];
+        })
+      );
+      return this.variables.filter((v) => {
+        return checkMap.has(v.colName);
+      });
+    },
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
     },
@@ -326,6 +350,24 @@ export default Vue.extend({
   },
 
   watch: {
+    async timeseriesSummaries() {
+      if (this.timeseriesSummaries.length) {
+        this.timeseriesSummaries.forEach(async (ts) => {
+          const ids = ts.baseline.exemplars;
+          const timeseriesVar = this.timeseriesVars.find((tsv) => {
+            return tsv.colName === ts.key;
+          });
+          const grouping = timeseriesVar.grouping as TimeseriesGrouping;
+          await datasetActions.fetchTimeseries(this.$store, {
+            dataset: this.dataset,
+            xColName: grouping.xCol,
+            yColName: grouping.yCol,
+            timeseriesColName: grouping.idCol,
+            timeseriesIds: ids,
+          });
+        });
+      }
+    },
     search(oldTerm, newTerm) {
       const entry = overlayRouteEntry(this.$route, {
         [this.routeSearchKey()]: this.search,

@@ -1,5 +1,5 @@
 <template>
-  <div :class="displayClass" v-observe-visibility="visibilityChanged">
+  <div :class="displayClass">
     <sparkline-svg
       :timeseries="timeseries"
       :timeseries-extrema="timeseriesExtrema"
@@ -48,21 +48,10 @@ import * as d3 from "d3";
 import Vue from "vue";
 import SparklineChart from "../components/SparklineChart.vue";
 import SparklineSvg from "../components/SparklineSvg.vue";
-import { Dictionary } from "../util/dict";
 import { TimeseriesExtrema, TimeSeriesValue } from "../store/dataset/index";
-import {
-  getters as datasetGetters,
-  actions as datasetActions,
-} from "../store/dataset/module";
-import {
-  getters as resultsGetters,
-  actions as resultsActions,
-} from "../store/results/module";
-import {
-  getters as predictionsGetters,
-  actions as predictionsActions,
-} from "../store/predictions/module";
-import * as types from "../util/types";
+import { getters as datasetGetters } from "../store/dataset/module";
+import { getters as resultsGetters } from "../store/results/module";
+import { getters as predictionsGetters } from "../store/predictions/module";
 
 export default Vue.extend({
   name: "sparkline-preview",
@@ -73,7 +62,7 @@ export default Vue.extend({
   },
 
   props: {
-    facetView: Boolean as () => Boolean,
+    facetView: Boolean as () => boolean,
     truthDataset: String as () => string,
     forecastDataset: String as () => string,
     xCol: String as () => string,
@@ -83,6 +72,7 @@ export default Vue.extend({
     solutionId: String as () => string,
     predictionsId: String as () => string,
     includeForecast: Boolean as () => boolean,
+    uniqueTrail: { type: String as () => string, default: "" },
   },
   data() {
     return {
@@ -97,7 +87,9 @@ export default Vue.extend({
         ? "facet-sparkline-preview-container"
         : "sparkline-preview-container";
     },
-
+    timeseriesUniqueId(): string {
+      return this.timeseriesId + this.uniqueTrail;
+    },
     timeseries(): TimeSeriesValue[] {
       if (this.solutionId) {
         const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
@@ -105,7 +97,7 @@ export default Vue.extend({
         if (!solutions) {
           return null;
         }
-        return solutions.timeseriesData[this.timeseriesId];
+        return solutions.timeseriesData[this.timeseriesUniqueId];
       }
 
       if (this.predictionsId) {
@@ -116,7 +108,7 @@ export default Vue.extend({
         if (!predictions) {
           return null;
         }
-        return predictions.timeseriesData[this.timeseriesId];
+        return predictions.timeseriesData[this.timeseriesUniqueId];
       }
 
       const timeseries = datasetGetters.getTimeseries(this.$store);
@@ -124,26 +116,29 @@ export default Vue.extend({
       if (!datasets) {
         return null;
       }
-      return datasets.timeseriesData[this.timeseriesId];
+      return datasets.timeseriesData[this.timeseriesUniqueId];
     },
 
     forecast(): TimeSeriesValue[] {
       if (this.solutionId && this.includeForecast) {
         const forecasts = resultsGetters.getPredictedForecasts(this.$store);
         const solutions = forecasts[this.solutionId];
-        if (!solutions || !solutions.forecastData[this.timeseriesId]) {
+        if (!solutions || !solutions.forecastData[this.timeseriesUniqueId]) {
           return null;
         }
-        return solutions.forecastData[this.timeseriesId];
+        return solutions.forecastData[this.timeseriesUniqueId];
       }
 
       if (this.predictionsId && this.includeForecast) {
         const forecasts = predictionsGetters.getPredictedForecasts(this.$store);
         const predictions = forecasts[this.predictionsId];
-        if (!predictions || !predictions.forecastData[this.timeseriesId]) {
+        if (
+          !predictions ||
+          !predictions.forecastData[this.timeseriesUniqueId]
+        ) {
           return null;
         }
-        return predictions.forecastData[this.timeseriesId];
+        return predictions.forecastData[this.timeseriesUniqueId];
       }
 
       return null;
@@ -153,10 +148,10 @@ export default Vue.extend({
       if (this.solutionId && this.includeForecast) {
         const forecasts = resultsGetters.getPredictedForecasts(this.$store);
         const solutions = forecasts[this.solutionId];
-        if (!solutions || !solutions.forecastRange[this.timeseriesId]) {
+        if (!solutions || !solutions.forecastRange[this.timeseriesUniqueId]) {
           return null;
         }
-        return solutions.forecastRange[this.timeseriesId];
+        return solutions.forecastRange[this.timeseriesUniqueId];
       }
       return null;
     },
@@ -200,7 +195,7 @@ export default Vue.extend({
         if (!solutions) {
           return null;
         }
-        return solutions.isDateTime[this.timeseriesId];
+        return solutions.isDateTime[this.timeseriesUniqueId];
       } else if (this.predictionsId) {
         const timeseries = predictionsGetters.getPredictedTimeseries(
           this.$store
@@ -209,22 +204,14 @@ export default Vue.extend({
         if (!datasets) {
           return null;
         }
-        return datasets.isDateTime[this.timeseriesId];
+        return datasets.isDateTime[this.timeseriesUniqueId];
       } else {
         const timeseries = datasetGetters.getTimeseries(this.$store);
         const datasets = timeseries[this.truthDataset];
         if (!datasets) {
           return null;
         }
-        return datasets.isDateTime[this.timeseriesId];
-      }
-    },
-
-    visibilityChanged(isVisible: boolean) {
-      this.isVisible = isVisible;
-      if (this.isVisible && !this.hasRequested) {
-        this.requestTimeseries();
-        return;
+        return datasets.isDateTime[this.timeseriesUniqueId];
       }
     },
     onClick() {
@@ -232,38 +219,6 @@ export default Vue.extend({
     },
     hideModal() {
       this.zoomSparkline = false;
-    },
-    requestTimeseries() {
-      this.hasRequested = true;
-
-      if (this.solutionId) {
-        resultsActions.fetchForecastedTimeseries(this.$store, {
-          dataset: this.truthDataset,
-          xColName: this.xCol,
-          yColName: this.yCol,
-          timeseriesColName: this.timeseriesCol,
-          timeseriesId: this.timeseriesId,
-          solutionId: this.solutionId,
-        });
-      } else if (this.predictionsId) {
-        predictionsActions.fetchForecastedTimeseries(this.$store, {
-          truthDataset: this.truthDataset,
-          forecastDataset: this.forecastDataset,
-          xColName: this.xCol,
-          yColName: this.yCol,
-          timeseriesColName: this.timeseriesCol,
-          timeseriesId: this.timeseriesId,
-          predictionsId: this.predictionsId,
-        });
-      } else {
-        datasetActions.fetchTimeseries(this.$store, {
-          dataset: this.truthDataset,
-          xColName: this.xCol,
-          yColName: this.yCol,
-          timeseriesColName: this.timeseriesCol,
-          timeseriesId: this.timeseriesId,
-        });
-      }
     },
   },
 });

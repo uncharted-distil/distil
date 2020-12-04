@@ -159,10 +159,15 @@ export const mutations = {
   // predicted
   updateConfidenceSummaries: commit(moduleMutations.updateConfidenceSummaries),
   // forecasts
-  updatePredictedTimeseries: commit(moduleMutations.updatePredictedTimeseries),
-  updatePredictedForecast: commit(moduleMutations.updatePredictedForecast),
+  bulkUpdatePredictedTimeseries: commit(
+    moduleMutations.bulkUpdatePredictedTimeseries
+  ),
+  bulkUpdatePredictedForecast: commit(
+    moduleMutations.bulkUpdatePredictedForecast
+  ),
   // variable rankings
   setFeatureImportanceRanking: commit(
     moduleMutations.setFeatureImportanceRanking
   ),
+  removeTimeseries: commit(moduleMutations.removeTimeseries),
 };

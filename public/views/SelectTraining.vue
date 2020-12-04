@@ -62,6 +62,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { DataMode } from "../store/dataset";
 import { overlayRouteEntry } from "../util/routes";
 import { Route } from "vue-router";
+import { Filter } from "../util/filters";
 export default Vue.extend({
   name: "select-training-view",
   components: {
@@ -100,8 +101,8 @@ export default Vue.extend({
       }
       return this.target;
     },
-    filtersStr(): string {
-      return routeGetters.getRouteFilters(this.$store);
+    filters(): Filter[] {
+      return routeGetters.getDecodedFilters(this.$store);
     },
     highlightString(): string {
       return routeGetters.getRouteHighlight(this.$store);
@@ -134,19 +135,17 @@ export default Vue.extend({
   },
 
   watch: {
-    highlightString() {
+    trainingStr() {
+      viewActions.updateSelectTrainingData(this.$store);
+    },
+    filters() {
+      viewActions.clearDatasetTableData(this.$store);
       viewActions.updateSelectTrainingData(this.$store);
       if (!this.highlightString) {
         viewActions.clearHighlight(this.$store);
         return;
       }
       viewActions.updateHighlight(this.$store);
-    },
-    trainingStr() {
-      viewActions.updateSelectTrainingData(this.$store);
-    },
-    filtersStr() {
-      viewActions.updateSelectTrainingData(this.$store);
     },
     availableTrainingVarsPage() {
       viewActions.updateSelectTrainingData(this.$store);

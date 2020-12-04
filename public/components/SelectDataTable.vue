@@ -35,7 +35,7 @@
             :type="imageField.type"
             :image-url="data.item[imageField.key].value"
             :debounce="true"
-            uniqueTrail="select-table"
+            :uniqueTrail="uniqueTrail"
           />
           <image-label
             class="image-label"
@@ -60,6 +60,7 @@
               :y-col="timeseriesGrouping.yCol"
               :timeseries-col="timeseriesGrouping.idCol"
               :timeseries-id="data.item[timeseriesGrouping.idCol].value"
+              :uniqueTrail="uniqueTrail"
             />
           </div>
         </div>
@@ -90,6 +91,7 @@
       v-model="currentPage"
       :per-page="perPage"
       :total-rows="itemCount"
+      @input="onPagination"
     />
   </div>
 </template>
@@ -101,23 +103,25 @@ import IconBase from "./icons/IconBase.vue";
 import IconFork from "./icons/IconFork.vue";
 import SparklinePreview from "./SparklinePreview.vue";
 import ImagePreview from "./ImagePreview.vue";
-import { getters as datasetGetters } from "../store/dataset/module";
+import {
+  getters as datasetGetters,
+  actions as datasetActions,
+} from "../store/dataset/module";
 import { Dictionary } from "../util/dict";
 import { Filter } from "../util/filters";
 import {
   Extrema,
   TableColumn,
   TableRow,
-  Grouping,
   Variable,
   D3M_INDEX_FIELD,
   RowSelection,
   TimeseriesGrouping,
-  TableData,
   TableValue,
+  Highlight,
 } from "../store/dataset/index";
 import { getters as routeGetters } from "../store/route/module";
-import { TIMESERIES_TYPE, hasComputedVarPrefix } from "../util/types";
+import { hasComputedVarPrefix } from "../util/types";
 import {
   addRowSelection,
   removeRowSelection,
@@ -130,6 +134,7 @@ import {
   formatFieldsAsArray,
   getImageFields,
   getListFields,
+  removeTimeseries,
 } from "../util/data";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
@@ -155,9 +160,10 @@ export default Vue.extend({
     return {
       currentPage: 1,
       perPage: 100,
+      uniqueTrail: "selected-table",
+      initialized: false,
     };
   },
-
   filters: {
     /* Display number with only two decimal. */
     cleanNumber(value) {
@@ -182,7 +188,9 @@ export default Vue.extend({
       if (this.isTimeseries) {
         items = items?.map((item) => {
           const timeserieId = item[this.timeseriesGroupings?.[0]?.idCol]?.value;
-          const minMaxMean = this.timeseriesInfo(timeserieId);
+          const minMaxMean = this.timeseriesInfo(
+            timeserieId + this.uniqueTrail
+          );
           return { ...item, ...minMaxMean };
         });
       }
@@ -192,7 +200,13 @@ export default Vue.extend({
         this.instanceName
       );
     },
-
+    pageItems(): TableRow[] {
+      const end =
+        this.currentPage * this.perPage > this.items.length
+          ? this.items.length
+          : this.currentPage * this.perPage;
+      return this.items.slice((this.currentPage - 1) * this.perPage, end);
+    },
     itemCount(): number {
       return this.includedActive
         ? datasetGetters.getIncludedTableDataLength(this.$store)
@@ -210,18 +224,22 @@ export default Vue.extend({
 
       if (!this.isTimeseries || _.isEmpty(tableFields)) return tableFields;
       // For Timeseries we want to display the Min/Max/Mean
+      // disable sorting for timeseries tables
+      tableFields.forEach((tf) => {
+        tf.sortable = false;
+      });
       return tableFields.concat([
         {
           key: "min",
-          sortable: true,
+          sortable: false,
         },
         {
           key: "max",
-          sortable: true,
+          sortable: false,
         },
         {
           key: "mean",
-          sortable: true,
+          sortable: false,
         },
       ] as TableColumn[]);
     },
@@ -248,7 +266,9 @@ export default Vue.extend({
     filters(): Filter[] {
       return routeGetters.getDecodedFilters(this.$store);
     },
-
+    highlight(): Highlight {
+      return routeGetters.getDecodedHighlight(this.$store);
+    },
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
@@ -259,6 +279,34 @@ export default Vue.extend({
   },
 
   methods: {
+    fetchTimeSeries() {
+      if (!this.isTimeseries) {
+        return;
+      }
+      this.timeseriesGroupings.forEach((tsg) => {
+        datasetActions.fetchTimeseries(this.$store, {
+          dataset: this.dataset,
+          xColName: tsg.xCol,
+          yColName: tsg.yCol,
+          timeseriesColName: tsg.idCol,
+          uniqueTrail: this.uniqueTrail,
+          timeseriesIds: this.pageItems.map((item) => {
+            return item[tsg.idCol].value as string;
+          }),
+        });
+      });
+    },
+    onPagination(page: number) {
+      // remove old data from store
+      removeTimeseries(
+        { dataset: this.dataset },
+        this.pageItems,
+        this.uniqueTrail
+      );
+      this.currentPage = page;
+      // fetch new data
+      this.fetchTimeSeries();
+    },
     timeseriesInfo(id: string): Extrema {
       const timeseries = datasetGetters.getTimeseries(this.$store);
       return timeseries?.[this.dataset]?.info?.[id];
@@ -309,7 +357,24 @@ export default Vue.extend({
     },
   },
   watch: {
-    items() {
+    includedActive() {
+      if (this.items.length) {
+        this.fetchTimeSeries();
+      }
+    },
+    filters() {
+      // new data will be coming through pipeline
+      this.initialized = false;
+    },
+    items(cur, prev) {
+      // checks to see if items exist and if the timeseries has been queried for the new data
+      if (!this.initialized && this.items.length) {
+        this.fetchTimeSeries();
+        this.initialized = true;
+      }
+      if (prev?.length !== this.items.length) {
+        this.fetchTimeSeries();
+      }
       // if the itemCount changes such that it's less than page
       // we were on, reset to page 1.
       if (this.itemCount < this.perPage * this.currentPage) {
