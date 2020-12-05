@@ -128,7 +128,7 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 
 	where := ""
 	if len(wheres) > 0 {
-		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 	}
 
 	// treat each axis as a separate field for the purposes of query generation
@@ -153,11 +153,12 @@ func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert 
 
 	// Get count by x & y
 	query := fmt.Sprintf(`SELECT %s as bucket, CAST(%s as double precision) AS %s, %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
-        FROM %s %s
+        FROM %s
+        WHERE "%s" != 'NaN' AND "%s" != 'NaN' %s
         GROUP BY %s, %s
         ORDER BY %s, %s;`,
 		xBucketQuery, xHistogramQuery, xHistogramName, yBucketQuery, yHistogramQuery, yHistogramName, f.Count,
-		f.DatasetStorageName, where, xBucketQuery, yBucketQuery, xHistogramName, yHistogramName)
+		f.DatasetStorageName, f.XCol, f.YCol, where, xBucketQuery, yBucketQuery, xHistogramName, yHistogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -215,12 +216,12 @@ func (f *CoordinateField) fetchHistogramByResult(resultURI string, filterParams 
 	query := fmt.Sprintf(`
 		SELECT %s as bucket, CAST(%s as double precision) AS %s, %s as bucket, CAST(%s as double precision) AS %s, COUNT(%s) AS count
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
-		WHERE result.result_id = $%d %s
+		WHERE result.result_id = $%d AND "%s" != 'NaN' AND "%s" != 'NaN' %s
 		GROUP BY %s, %s
 		ORDER BY %s, %s;`,
 		xBucketQuery, xHistogramQuery, xHistogramName, yBucketQuery, yHistogramQuery, yHistogramName, f.Count,
 		f.DatasetStorageName, f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName,
-		len(params), where, xBucketQuery, yBucketQuery, xHistogramName, yHistogramName)
+		len(params), f.XCol, f.YCol, where, xBucketQuery, yBucketQuery, xHistogramName, yHistogramName)
 
 	// execute the postgres query
 	res, err := f.Storage.client.Query(query, params...)
@@ -251,27 +252,27 @@ func (f *CoordinateField) parseHistogram(rows pgx.Rows, xExtrema *api.Extrema, y
 
 	xBucketCount := int64(xExtrema.GetBucketCount(xNumBuckets))
 	yBucketCount := int64(yExtrema.GetBucketCount(yNumBuckets))
-	xBuckets := make([]*api.Bucket, xBucketCount)
 
 	// initialize empty histogram structure
-	i := 0
-	for xVal := xRounded.Min; xVal < xRounded.Max; xVal += xInterval {
+	// float representation of the data could cause very slight deviation
+	// leading to boundaries not being perfectly aligned
+	xBuckets := make([]*api.Bucket, xBucketCount)
+	for i := int64(0); i < xBucketCount; i++ {
 		yBuckets := make([]*api.Bucket, yBucketCount)
-		j := 0
-		for yVal := yRounded.Min; yVal < yRounded.Max; yVal += yInterval {
+		for j := int64(0); j < yBucketCount; j++ {
+			yVal := yRounded.Min + float64(j)*yInterval
 			yBuckets[j] = &api.Bucket{
 				Key:     fmt.Sprintf("%f", yVal),
 				Count:   0,
 				Buckets: nil,
 			}
-			j++
 		}
+		xVal := xRounded.Min + float64(i)*xInterval
 		xBuckets[i] = &api.Bucket{
 			Key:     fmt.Sprintf("%f", xVal),
 			Count:   0,
 			Buckets: yBuckets,
 		}
-		i++
 	}
 
 	for rows.Next() {
