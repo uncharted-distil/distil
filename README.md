@@ -114,7 +114,9 @@ make watch
 
 #### Advanced Configuration
 
-The location of the dataset directory can be changed by setting the `D3MINPUTDIR` environment variable, and the location of the temporary data written out during model building can be set using the `D3MOUTPUTDIR` environment variable. These are used by the other Distil services that are launched via the `run_services.sh` script, and are typically set as global environment variables in `.bashrc` or similar.
+The location of the dataset directory can be changed by setting the `D3MINPUTDIR` environment variable, and the location of the temporary data written out during model building can be set using the `D3MOUTPUTDIR` environment variable.
+The host IP address of the docker containers if not _localhost_ can be set with `export DOCKER_HOST=192.168.0.10 && make watch`.
+These are used by the other Distil services that are launched via the `run_services.sh` script, and are typically set as global environment variables in `.bashrc` or similar.
 
 ### Linter Setup
 
