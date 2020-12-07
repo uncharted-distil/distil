@@ -108,9 +108,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// set dataset directory
-	api.SetDatasetDir(config.D3MOutputDir)
-
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
 

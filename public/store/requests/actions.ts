@@ -301,9 +301,7 @@ function handleRequestProgress(
   context: RequestContext,
   request: SolutionRequestMsg,
   response: SolutionStatusMsg
-) {
-  // no-op
-}
+) {}
 
 function handleSolutionProgress(
   context: RequestContext,

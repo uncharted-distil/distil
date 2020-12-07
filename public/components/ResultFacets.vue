@@ -13,7 +13,7 @@
         <template v-if="isErrored(request)">
           <b-badge variant="danger">ERROR</b-badge>
         </template>
-        <template v-else-if="isStopping(request)">
+        <template v-else-if="isStopRequested(request) && !isCompleted(request)">
           <b-badge variant="info">STOPPING</b-badge>
         </template>
         <template v-else-if="!isCompleted(request)">
@@ -24,7 +24,7 @@
             variant="danger"
             size="sm"
             class="pull-right abort-search-button"
-            :disabled="isStopping(request)"
+            :disabled="isStopRequested(request)"
             @click="stopRequest(request)"
           >
             Stop
@@ -97,7 +97,6 @@ interface RequestGroup {
   requestId: string;
   progress: string;
   groups: SummaryGroup[];
-  stopRequested: boolean;
 }
 
 export default Vue.extend({
@@ -111,6 +110,12 @@ export default Vue.extend({
     // display results in regression vs. classification mode
     showResiduals: { type: Boolean, default: false },
     singleSolution: { type: Boolean, default: false },
+  },
+
+  data() {
+    return {
+      stopRequested: new Set<string>(),
+    };
   },
 
   computed: {
@@ -192,7 +197,6 @@ export default Vue.extend({
         progress: requestsMap[requestId].progress,
         requestId: requestId,
         requestIndex: this.getRequestIndex(requestId),
-        stopRequested: false,
       })).sort(this.sortByRequestIndexDESC);
     },
   },
@@ -210,12 +214,12 @@ export default Vue.extend({
       return requestGroup.progress === SOLUTION_REQUEST_ERRORED;
     },
 
-    isStopping(requestGroup: RequestGroup): boolean {
-      return requestGroup.stopRequested;
+    isStopRequested(requestGroup: RequestGroup): boolean {
+      return this.stopRequested.has(requestGroup.requestId);
     },
 
     stopRequest(requestGroup: RequestGroup) {
-      requestGroup.stopRequested = true;
+      this.stopRequested.add(requestGroup.requestId);
       requestActions.stopSolutionRequest(this.$store, {
         requestId: requestGroup.requestId,
       });

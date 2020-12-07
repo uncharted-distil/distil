@@ -54,16 +54,6 @@ const (
 	ModelQualityHigh = "quality"
 )
 
-var (
-	// folder for dataset data exchanged with TA2
-	datasetDir string
-)
-
-// SetDatasetDir sets the output data dir
-func SetDatasetDir(dir string) {
-	datasetDir = dir
-}
-
 func newStatusChannel() chan SolutionStatus {
 	// NOTE: WE BUFFER THE CHANNEL TO A SIZE OF 1 HERE SO THAT THE INITIAL
 	// PERSIST DOES NOT DEADLOCK
@@ -228,6 +218,15 @@ func (s *SolutionRequest) Listen(listener SolutionStatusListener) error {
 	}
 	s.mu.Unlock()
 	return <-s.finished
+}
+
+// Inovkes the context cancel function calls associated with this request.  This stops any
+// further messaging between the ta3 and ta2 for each solution.
+func (s *SolutionRequest) Cancel() {
+	// Cancel all further work for each solution
+	for _, cancelFunc := range s.CancelFuncs {
+		cancelFunc()
+	}
 }
 
 func (s *SolutionRequest) createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,

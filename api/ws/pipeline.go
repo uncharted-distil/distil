@@ -245,22 +245,25 @@ func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message)
 		return
 	}
 
-	// dispatch request to ta2
-	err = request.Dispatch(client)
-	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "received error from TA2 system"))
-		return
-	}
-
-	// cancel further requests from the client side
+	// Cancel any pending fit, score or produce calls on each solution - this is done at
+	// the grpc level via the context cancel function since there isn't ta3ta2 api support for this.
 	requestMap.RLock()
 	req, ok := requestMap.m[request.RequestID]
-	if ok {
-		for _, cancelFunc := range req.CancelFuncs {
-			cancelFunc()
-		}
-	}
 	requestMap.RUnlock()
+	if ok {
+		req.Cancel()
+	}
+
+	// Dispatch stop search request to ta2.
+	// NOTE: This is intentionally disabled because we need to split the stop up into 2 discrete
+	// routes - one that stops the search process via the ta3ta2 call, and one that stops any queued fit/produce/score
+	// once solutions are produced.  Currently only the latter is supported.
+	//
+	// err = request.Dispatch(client)
+	// if err != nil {
+	// 	handleErr(conn, msg, errors.Wrap(err, "received error from TA2 system"))
+	// 	return
+	// }
 }
 
 func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
