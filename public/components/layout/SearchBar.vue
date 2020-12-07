@@ -17,7 +17,7 @@ import {
   ValueState,
   ValueStateValue,
 } from "@uncharted.software/lex";
-import "../../styles/lex.css";
+import "../../../node_modules/@uncharted.software/lex/dist/lex.css";
 
 export default Vue.extend({
   name: "SearchBar",
