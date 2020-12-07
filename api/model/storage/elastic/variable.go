@@ -79,6 +79,10 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	if !ok {
 		deleted = false
 	}
+	immutable, ok := json.Bool(child, model.VarImmutableField)
+	if !ok {
+		immutable = false
+	}
 	min, ok := json.Float(child, model.VarMinField)
 	if !ok {
 		min = 0
@@ -129,6 +133,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 		Grouping:         grouping,
 		Min:              min,
 		Max:              max,
+		Immutable:        immutable,
 	}, nil
 }
 

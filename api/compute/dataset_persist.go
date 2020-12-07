@@ -51,52 +51,6 @@ type FilteredDataProvider func(dataset string, index string, filters *api.Filter
 // VariablesProvider defines a function that will get the variables for a dataset.
 type VariablesProvider func(dataset string, index string) ([]*model.Variable, error)
 
-// DataSchema encapsulates the data schema json structure.
-type DataSchema struct {
-	About         *DataSchemaAbout `json:"about"`
-	DataResources []*DataResource  `json:"dataResources"`
-}
-
-// DataSchemaAbout contains the basic properties of a dataset.
-type DataSchemaAbout struct {
-	DatasetID       string `json:"datasetID"`
-	DatasetName     string `json:"datasetName"`
-	Description     string `json:"description"`
-	Citation        string `json:"citation"`
-	License         string `json:"license"`
-	Source          string `json:"source"`
-	SourceURI       string `json:"sourceURI"`
-	ApproximateSize string `json:"approximateSize"`
-	Redacted        bool   `json:"redacted"`
-	SchemaVersion   string `json:"datasetSchemaVersion"`
-	Digest          string `json:"digest"`
-}
-
-// DataResource represents a set of variables.
-type DataResource struct {
-	ResID        string          `json:"resID"`
-	ResPath      string          `json:"resPath"`
-	ResType      string          `json:"resType"`
-	ResFormat    []string        `json:"resFormat"`
-	IsCollection bool            `json:"isCollection"`
-	Variables    []*DataVariable `json:"columns,omitempty"`
-}
-
-// DataVariable captures the data schema representation of a variable.
-type DataVariable struct {
-	ColName  string         `json:"colName"`
-	Role     []string       `json:"role"`
-	ColType  string         `json:"colType"`
-	ColIndex int            `json:"colIndex"`
-	RefersTo *DataReference `json:"refersTo,omitempty"`
-}
-
-// DataReference captures the data schema representation of a resource reference.
-type DataReference struct {
-	ResID     string `json:"resID"`
-	ResObject string `json:"resObject"`
-}
-
 // Hash the filter set
 func getFilteredDatasetHash(dataset string, target string, filterParams *api.FilterParams, isTrain bool) (uint64, error) {
 	hash, err := hashstructure.Hash([]interface{}{dataset, target, *filterParams, isTrain}, nil)

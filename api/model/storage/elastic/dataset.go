@@ -71,6 +71,8 @@ func (s *Storage) UpdateDataset(dataset *api.Dataset) error {
 		"datasetOrigins":  dataset.JoinSuggestions,
 		"type":            dataset.Type,
 		"learningDataset": dataset.LearningDataset,
+		"clone":           dataset.Clone,
+		"immutable":       dataset.Immutable,
 	}
 
 	bytes, err := json.Marshal(source)
@@ -132,6 +134,8 @@ func (s *Storage) IngestDataset(datasetSource metadata.DatasetSource, meta *mode
 		"datasetOrigins":   origins,
 		"type":             meta.Type,
 		"learningDataset":  meta.LearningDataset,
+		"clone":            meta.Clone,
+		"immutable":        meta.Immutable,
 	}
 
 	bytes, err := json.Marshal(source)
@@ -223,6 +227,18 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		if !ok {
 			numBytes = 0
 		}
+
+		// extract the number of bytes
+		immutable, ok := json.Bool(src, "immutable")
+		if !ok {
+			immutable = false
+		}
+		// extract the number of bytes
+		clone, ok := json.Bool(src, "clone")
+		if !ok {
+			clone = false
+		}
+
 		// extract the variables list
 		variables, err := s.parseVariables(hit, includeIndex, includeMeta)
 		if err != nil {
@@ -282,6 +298,8 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			JoinSuggestions: datasetOrigins,
 			Type:            typ,
 			LearningDataset: learningDataset,
+			Immutable:       immutable,
+			Clone:           clone,
 		})
 	}
 	return datasets, nil
@@ -368,8 +386,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 			model.VarDistilRole:            v.DistilRole,
 			model.VarDeleted:               v.Deleted,
 			model.VarGroupingField:         v.Grouping,
-			//			model.VarMinField:              v.Min,
-			//			model.VarMaxField:              v.Max,
+			model.VarImmutableField:        v.Immutable,
 		})
 	}
 
@@ -445,6 +462,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varDisplayName str
 		DisplayName:      varDisplayName,
 		DistilRole:       varRole,
 		Deleted:          false,
+		Immutable:        false,
 		SuggestedTypes:   make([]*model.SuggestedType, 0),
 	}
 

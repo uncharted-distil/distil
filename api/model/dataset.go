@@ -63,6 +63,8 @@ type Dataset struct {
 	JoinScore       float64                `json:"joinScore"`
 	Type            DatasetType            `json:"type"`
 	LearningDataset string                 `json:"learningDataset"`
+	Clone           bool                   `json:"clone"`
+	Immutable       bool                   `json:"immutable"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.
@@ -178,6 +180,8 @@ func (d *Dataset) ToMetadata() *model.Metadata {
 	meta.SummaryMachine = d.SummaryML
 	meta.Redacted = false
 	meta.Raw = false
+	meta.Clone = d.Clone
+	meta.Immutable = d.Immutable
 	meta.DataResources = []*model.DataResource{dr}
 
 	return meta
