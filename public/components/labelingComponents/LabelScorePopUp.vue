@@ -3,20 +3,20 @@
     <label-header-buttons @button-event="passThrough" />
     <div class="row flex-1 pb-3 h-100">
       <div class="col-12 col-md-6 d-flex flex-column h-100">
-        <h5 class="header-title">Positive</h5>
+        <h5 class="header-title">Most Similar</h5>
         <select-data-table
           :instanceName="instanceName"
-          :data-items="items.positive"
+          :data-items="items"
           :data-fields="dataFields"
           :summaries="summaries"
           includedActive
         />
       </div>
       <div class="col-12 col-md-6 d-flex flex-column h-100">
-        <h5 class="header-title">Negative</h5>
+        <h5 class="header-title">Randomly Chosen</h5>
         <select-data-table
           :instanceName="instanceName"
-          :data-items="items.negative"
+          :data-items="randomItems"
           :data-fields="dataFields"
           :summaries="summaries"
           includedActive
@@ -43,7 +43,13 @@ import {
   VariableSummary,
   TableColumn,
 } from "../../store/dataset/index";
-import { BinarySets, ScoreInfo } from "../../util/data";
+import {
+  RankedSet,
+  ScoreInfo,
+  LOW_SHOT_LABEL_COLUMN_NAME,
+  LowShotLabels,
+  getRandomInt,
+} from "../../util/data";
 import SelectDataTable from "../SelectDataTable.vue";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
 import { circleSpinnerHTML } from "../../util/spinner";
@@ -55,11 +61,11 @@ export default Vue.extend({
     LabelHeaderButtons,
   },
   props: {
-    data: { type: Array as () => TableRow[], default: () => [] },
-    binarySets: {
-      type: Object as () => BinarySets,
+    data: { type: Array as () => TableRow[], default: () => [] as TableRow[] },
+    rankedSet: {
+      type: Object as () => RankedSet,
       default: () => {
-        return { positive: [] as ScoreInfo[], negative: [] as ScoreInfo[] };
+        return { data: [] as ScoreInfo[] };
       },
     },
     instanceName: {
@@ -78,50 +84,46 @@ export default Vue.extend({
     isLoading: { type: Boolean as () => boolean, default: false },
   },
   data() {
-    return { modalId: "score-modal" };
+    return { modalId: "score-modal", sampleSize: 10 };
   },
   watch: {
-    binarySets() {
+    rankedSet() {
       // on binarySets change show modal
       this.$bvModal.show(this.modalId);
     },
   },
   computed: {
-    positiveIds(): Map<number, number> {
+    rankedMap(): Map<number, number> {
       return new Map(
-        this.binarySets?.positive.map((p) => {
-          return [p.d3mIndex, p.score];
+        this.rankedSet?.data.map((d) => {
+          return [d.d3mIndex, d.score];
         })
       );
     },
-    negativeIds(): Map<number, number> {
-      return new Map(
-        this.binarySets?.negative.map((n) => {
-          return [n.d3mIndex, n.score];
-        })
-      );
-    },
-    items(): { positive: TableRow[]; negative: TableRow[] } {
-      const positive: TableRow[] = [];
-      const negative: TableRow[] = [];
+    items(): TableRow[] {
+      const ranked: TableRow[] = [];
       this.data?.forEach((d) => {
-        if (this.positiveIds.has(d.d3mIndex)) {
-          positive.push(d);
-        } else if (this.negativeIds.has(d.d3mIndex)) {
-          negative.push(d);
+        if (this.rankedMap.has(d.d3mIndex)) {
+          ranked.push(d);
         }
       });
-      positive.sort((a, b) => {
+      ranked.sort((a, b) => {
+        return this.rankedMap.get(a.d3mIndex) - this.rankedMap.get(b.d3mIndex);
+      });
+      return ranked;
+    },
+    randomItems(): TableRow[] {
+      const random = this.data?.filter((d) => {
         return (
-          this.positiveIds.get(a.d3mIndex) - this.positiveIds.get(b.d3mIndex)
+          !this.rankedMap.has(d.d3mIndex) &&
+          d[LOW_SHOT_LABEL_COLUMN_NAME]?.value === LowShotLabels.unlabeled
         );
       });
-      negative.sort((a, b) => {
-        return (
-          this.negativeIds.get(a.d3mIndex) + this.negativeIds.get(b.d3mIndex)
-        );
-      });
-      return { positive, negative };
+      if (!random) {
+        return null;
+      }
+      const randomIdx = getRandomInt(random.length - this.sampleSize);
+      return random.slice(randomIdx, randomIdx + this.sampleSize);
     },
     spinnerHTML(): string {
       return circleSpinnerHTML();

@@ -56,7 +56,7 @@
       :data="dataItems"
       :data-fields="dataFields"
       :summaries="summaries"
-      :binary-sets="binarySets"
+      :ranked-set="rankedSet"
       :is-loading="isLoadingData"
       @button-event="onAnnotationChanged"
       @apply="onApply"
@@ -126,7 +126,7 @@ export default Vue.extend({
     return {
       labelName: LOW_SHOT_LABEL_COLUMN_NAME,
       modalId: "label-input-form",
-      binarySets: null,
+      rankedSet: null,
       isLoadingData: false,
     };
   },
@@ -252,12 +252,12 @@ export default Vue.extend({
         target: LOW_SHOT_LABEL_COLUMN_NAME,
         filters: null,
       });
-      const binarySets = parseBinaryScoreResponse(res as BinaryScoreResponse);
-      if (!binarySets) {
+      const rankedSet = parseBinaryScoreResponse(res as BinaryScoreResponse);
+      if (!rankedSet) {
         console.error("Error parsing binary score response");
         return;
       }
-      this.binarySets = binarySets;
+      this.rankedSet = rankedSet;
       this.isLoadingData = false;
     },
     onExport() {
