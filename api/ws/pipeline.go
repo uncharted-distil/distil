@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -44,14 +45,15 @@ const (
 )
 
 var (
-	problemFile = ""
+	// shared map of running requests - accessed by message status handlers that are
+	// run under separate go routines so needs to be locked
+	requestMap = struct {
+		sync.RWMutex
+		m map[string]*api.SolutionRequest
+	}{
+		m: map[string]*api.SolutionRequest{},
+	}
 )
-
-// SetProblemFile sets the problem file containing the metrics to use
-// when submitting pipelines
-func SetProblemFile(file string) {
-	problemFile = file
-}
 
 // SolutionHandler represents a solution websocket handler.
 func SolutionHandler(client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
@@ -114,7 +116,7 @@ func handleMessage(conn *Connection, client *compute.Client, metadataCtor apiMod
 
 func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
 	dataCtor apiModel.DataStorageCtor, solutionCtor apiModel.SolutionStorageCtor, msg *Message) {
-	dataset, err := api.ExtractDatasetFromRawRequest(msg.Raw)
+	dataset, err := api.ExtractDatasetFromRawRequest(msg.Body)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to pull dataset from request"))
 		return
@@ -148,7 +150,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	}
 
 	// unmarshal request
-	request, err := api.NewSolutionRequest(vars, msg.Raw)
+	request, err := api.NewSolutionRequest(vars, msg.Body)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to unmarshal create solutions request"))
 		return
@@ -190,15 +192,34 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		return
 	}
 
-	// listen for solution updates
+	// listen for solution updates - handler runs under a separate go routine
 	requestFinished := make(chan api.SolutionStatus, 1)
 	defer close(requestFinished)
 	err = request.Listen(func(status api.SolutionStatus) {
+
+		// update the map of currently running requests - this is crappy because go's
+		// read/write locks are not upgradable or re-entrant
+		requestMap.RLock()
+		if _, ok := requestMap.m[status.RequestID]; !ok {
+			requestMap.RUnlock()
+			requestMap.Lock()
+			requestMap.m[status.RequestID] = request
+			requestMap.Unlock()
+		} else {
+			requestMap.RUnlock()
+		}
+
 		// send status to client - this includes any error status we encountered
 		handleSuccess(conn, msg, jutil.StructToMap(status))
 
 		// flag request as finished if it completed normally, or an error occurred
-		if status.Progress == api.RequestCompletedStatus || status.Progress == api.RequestErroredStatus {
+		// note that normally can include a cancellation, as some pipelines may have completed successfully
+		if status.Progress == compute.RequestCompletedStatus || status.Progress == compute.RequestErroredStatus {
+			// remove completed
+			requestMap.Lock()
+			delete(requestMap.m, status.RequestID)
+			requestMap.Unlock()
+
 			requestFinished <- status
 		}
 	})
@@ -218,18 +239,31 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 
 func handleStopSolutions(conn *Connection, client *compute.Client, msg *Message) {
 	// unmarshal request
-	request, err := api.NewStopSolutionSearchRequest(msg.Raw)
+	request, err := api.NewStopSolutionSearchRequest(msg.Body)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to unmarshal stop solutions request"))
 		return
 	}
 
-	// dispatch request
-	err = request.Dispatch(client)
-	if err != nil {
-		handleErr(conn, msg, errors.Wrap(err, "received error from TA2 system"))
-		return
+	// Cancel any pending fit, score or produce calls on each solution - this is done at
+	// the grpc level via the context cancel function since there isn't ta3ta2 api support for this.
+	requestMap.RLock()
+	req, ok := requestMap.m[request.RequestID]
+	requestMap.RUnlock()
+	if ok {
+		req.Cancel()
 	}
+
+	// Dispatch stop search request to ta2.
+	// NOTE: This is intentionally disabled because we need to split the stop up into 2 discrete
+	// routes - one that stops the search process via the ta3ta2 call, and one that stops any queued fit/produce/score
+	// once solutions are produced.  Currently only the latter is supported.
+	//
+	// err = request.Dispatch(client)
+	// if err != nil {
+	// 	handleErr(conn, msg, errors.Wrap(err, "received error from TA2 system"))
+	// 	return
+	// }
 }
 
 func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
@@ -249,7 +283,7 @@ func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel
 	}
 
 	// parse parameters from the message
-	req, err := api.NewQueryRequest(msg.Raw)
+	req, err := api.NewQueryRequest(msg.Body)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to parse query request"))
 		return
@@ -302,7 +336,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	}
 
 	// unmarshal request
-	request, err := api.NewPredictRequest(msg.Raw)
+	request, err := api.NewPredictRequest(msg.Body)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to unmarshal create solutions request"))
 		return

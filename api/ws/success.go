@@ -18,7 +18,7 @@ package ws
 import (
 	"time"
 
-	"github.com/unchartedsoftware/plog"
+	log "github.com/unchartedsoftware/plog"
 )
 
 func handleSuccess(conn *Connection, msg *Message, response map[string]interface{}) {
@@ -27,7 +27,7 @@ func handleSuccess(conn *Connection, msg *Message, response map[string]interface
 	// log the response
 	newMessageLogger().
 		messageType(msg.Type).
-		message(msg.Raw).
+		message(msg.Body).
 		duration(time.Since(msg.Timestamp)).
 		log(true)
 	// send response

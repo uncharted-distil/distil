@@ -342,7 +342,8 @@ func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string) ([]
 		params = append(params, dataset)
 	}
 	if target != "" {
-		sql = fmt.Sprintf("%s AND rf.feature_name = $%d AND rf.feature_type = $%d", sql, len(params)+1, len(params)+2)
+		sql = fmt.Sprintf("%s AND rf.feature_name = $%d AND rf.feature_type = $%d ORDER BY request.request_id, request.last_updated_time DESC",
+			sql, len(params)+1, len(params)+2)
 		params = append(params, target)
 		params = append(params, model.FeatureTypeTarget)
 	}

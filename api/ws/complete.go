@@ -18,7 +18,7 @@ package ws
 import (
 	"time"
 
-	"github.com/unchartedsoftware/plog"
+	log "github.com/unchartedsoftware/plog"
 )
 
 func handleComplete(conn *Connection, msg *Message) {
@@ -30,7 +30,7 @@ func handleComplete(conn *Connection, msg *Message) {
 	// log the response
 	newMessageLogger().
 		messageType(msg.Type).
-		message(msg.Raw).
+		message(msg.Body).
 		duration(time.Since(msg.Timestamp)).
 		log(true)
 	// send response

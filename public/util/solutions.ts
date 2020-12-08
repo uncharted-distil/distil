@@ -17,6 +17,7 @@ import {
   SOLUTION_PRODUCING,
   SOLUTION_COMPLETED,
   SOLUTION_ERRORED,
+  SOLUTION_CANCELLED,
 } from "../store/requests/index";
 import { APPLY_MODEL_ROUTE } from "../store/route/index";
 import store from "../store/store";
@@ -28,6 +29,7 @@ export const SOLUTION_LABELS: Dictionary<string> = {
   [SOLUTION_SCORING]: "SCORING",
   [SOLUTION_PRODUCING]: "PREDICTING",
   [SOLUTION_COMPLETED]: "COMPLETED",
+  [SOLUTION_CANCELLED]: "CANCELLED",
   [SOLUTION_ERRORED]: "ERRORED",
 };
 
