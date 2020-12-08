@@ -272,7 +272,7 @@ export function fetchSummaryExemplars(
     }
   }
 
-  return new Promise((res) => res());
+  return new Promise<void>((res) => res());
 }
 
 export function fetchResultExemplars(
@@ -313,7 +313,7 @@ export function fetchResultExemplars(
     }
   }
 
-  return new Promise((res) => res());
+  return new Promise<void>((res) => res());
 }
 
 /*
