@@ -33,6 +33,9 @@ html {
   --bg-color-side-panel: var(--gray-100);
   --width-left-side-panel: 25%;
   --z-index-left-side-panel: 500;
+
+  /* LexBar */
+  --z-index-lexbar-assistant: 100;
 }
 
 /* Reset */

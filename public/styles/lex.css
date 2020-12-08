@@ -1,0 +1,419 @@
+.assistant-header-progress {
+  position: absolute;
+  height: 5px;
+  overflow-x: hidden;
+}
+.assistant-header-progress .line {
+  position: absolute;
+  opacity: 0.4;
+  background: #0097a7;
+  width: 150%;
+  height: 5px;
+}
+.assistant-header-progress .subline {
+  position: absolute;
+  background: #0097a7;
+  height: 5px;
+}
+.assistant-header-progress .inc {
+  animation: increase 2s infinite;
+}
+.assistant-header-progress .dec {
+  animation: decrease 2s 0.5s infinite;
+}
+@keyframes increase {
+  from {
+    left: -5%;
+    width: 5%;
+  }
+  to {
+    left: 130%;
+    width: 100%;
+  }
+}
+@keyframes decrease {
+  from {
+    left: -80%;
+    width: 80%;
+  }
+  to {
+    left: 110%;
+    width: 10%;
+  }
+}
+div.lex-box {
+  min-height: 40px;
+  cursor: text;
+  height: auto;
+  background: revert;
+  border-color: revert;
+  line-height: 1.67;
+}
+div.lex-box.active,
+div.lex-box.focused,
+div.lex-box.disabled {
+  outline: 0;
+}
+div.lex-box.active {
+  border-color: #4ab7c3;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px #006974;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px #006974;
+}
+div.lex-box.focused {
+  border-color: #0097a7;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px #006974;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px #006974;
+}
+div.lex-box.disabled {
+  background-color: #eee;
+  pointer-events: none;
+}
+div.lex-box div.lex-placeholder {
+  user-select: none;
+  margin: 3px;
+  padding: 3px;
+}
+div.lex-box div.token-container {
+  display: inline-block;
+}
+div.lex-box div.token,
+ul.entered-values li.entered-value {
+  color: #555;
+  display: inline-block;
+  background: #ededed;
+  border-radius: 3px;
+  border: 1px solid #c7c7c7;
+  margin: 2px 9px 2px 0;
+  padding: 2px 18px 2px 4px;
+  position: relative;
+  white-space: nowrap;
+  cursor: default;
+  user-select: none;
+}
+div.lex-box div.token.active,
+ul.entered-values li.entered-value.active {
+  padding: 2px 18px 2px 4px;
+}
+div.lex-box div.token.active .token-input,
+ul.entered-values li.entered-value.active .token-input {
+  cursor: text;
+}
+div.lex-box div.token.editing,
+ul.entered-values li.entered-value.editing {
+  padding: 2px 4px 2px 4px;
+}
+div.lex-box div.token.suggestion,
+ul.entered-values li.entered-value.suggestion {
+  border: 1px solid #0097a7;
+  background: rgba(0, 151, 167, 0.15);
+}
+div.lex-box div.token .token-action,
+ul.entered-values li.entered-value .token-action,
+div.lex-box div.token .token-action-add-suggestion,
+ul.entered-values li.entered-value .token-action-add-suggestion {
+  font-size: 0.85em;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  opacity: 0.4;
+}
+div.lex-box div.token .token-action:hover,
+ul.entered-values li.entered-value .token-action:hover,
+div.lex-box div.token .token-action-add-suggestion:hover,
+ul.entered-values li.entered-value .token-action-add-suggestion:hover {
+  opacity: 1;
+}
+div.lex-box div.token .token-input,
+ul.entered-values li.entered-value .token-input,
+div.lex-box div.token .token-icon,
+ul.entered-values li.entered-value .token-icon {
+  display: inline-block;
+  background: transparent;
+  transition: background-color 0.25s linear;
+  border-radius: 3px;
+  border: solid 1px transparent;
+  width: auto;
+  padding: 0 0.3em 0 0;
+  margin: 0;
+  vertical-align: middle;
+  box-shadow: none;
+  outline: 0;
+}
+div.lex-box div.token .token-input.active,
+ul.entered-values li.entered-value .token-input.active,
+div.lex-box div.token .token-icon.active,
+ul.entered-values li.entered-value .token-icon.active {
+  background: #fff;
+  box-shadow: 0 0 0.5em #c7c7c7 inset;
+  border: solid 1px #ededed;
+}
+div.lex-box div.token .token-input.invalid,
+ul.entered-values li.entered-value .token-input.invalid,
+div.lex-box div.token .token-icon.invalid,
+ul.entered-values li.entered-value .token-icon.invalid {
+  background: #e2a4a4;
+}
+div.lex-box div.token .token-input.token-input-units,
+ul.entered-values li.entered-value .token-input.token-input-units,
+div.lex-box div.token .token-icon.token-input-units,
+ul.entered-values li.entered-value .token-icon.token-input-units {
+  padding-left: 0.3em;
+}
+div.lex-box div.token .token-input[disabled],
+ul.entered-values li.entered-value .token-input[disabled],
+div.lex-box div.token .token-icon[disabled],
+ul.entered-values li.entered-value .token-icon[disabled],
+div.lex-box div.token .token-input.multivalue-limit,
+ul.entered-values li.entered-value .token-input.multivalue-limit,
+div.lex-box div.token .token-icon.multivalue-limit,
+ul.entered-values li.entered-value .token-icon.multivalue-limit {
+  color: rgba(0, 0, 0, 0);
+  background: rgba(199, 199, 199, 0.3);
+}
+div.lex-box div.token.active .token-input.rewindable,
+ul.entered-values li.entered-value.active .token-input.rewindable {
+  cursor: text;
+  margin: 0 0.1em;
+  padding: 0 0.5em;
+  box-shadow: 0 0 0.5em #c7c7c7 inset;
+}
+div.lex-box div.token.active .token-input.rewindable:hover,
+ul.entered-values li.entered-value.active .token-input.rewindable:hover {
+  background: white;
+  border: solid 1px #ededed;
+}
+div.lex-box div.token.active .token-input.rewindable:hover.invalid,
+ul.entered-values
+  li.entered-value.active
+  .token-input.rewindable:hover.invalid {
+  background: #e2a4a4;
+}
+div.lex-box div.token.active .token-input.rewindable:hover[disabled],
+ul.entered-values
+  li.entered-value.active
+  .token-input.rewindable:hover[disabled],
+div.lex-box div.token.active .token-input.rewindable:hover.multivalue-limit,
+ul.entered-values
+  li.entered-value.active
+  .token-input.rewindable:hover.multivalue-limit {
+  color: rgba(0, 0, 0, 0);
+  background: rgba(199, 199, 199, 0.3);
+}
+div.lex-box div.token span.badge,
+ul.entered-values li.entered-value span.badge {
+  margin: 0 0.4em 0 0.25em;
+}
+div.lex-box div.token input.token-input,
+ul.entered-values li.entered-value input.token-input {
+  width: 150px;
+  min-width: 150px;
+  padding-left: 0.2em;
+  min-height: 26px;
+}
+div.lex-box div.token input.token-input::-ms-clear,
+ul.entered-values li.entered-value input.token-input::-ms-clear {
+  display: none;
+}
+div.lex-box div.token input.token-input.token-wide,
+ul.entered-values li.entered-value input.token-input.token-wide {
+  width: 250px;
+  min-width: 250px;
+}
+div.lex-box div.token input.token-input.has-preview,
+ul.entered-values li.entered-value input.token-input.has-preview {
+  color: transparent;
+  text-indent: -9999em;
+}
+div.lex-box div.token span.text-input,
+ul.entered-values li.entered-value span.text-input {
+  display: inline-block;
+  position: relative;
+}
+div.lex-box div.token span.text-input span.preview,
+ul.entered-values li.entered-value span.text-input span.preview {
+  position: absolute;
+  background: transparent;
+  top: 4px;
+  left: 3px;
+  line-height: 18px;
+  padding-right: 5px;
+  pointer-events: none;
+  user-select: none;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+div.lex-box div.token button.token-remove,
+ul.entered-values li.entered-value button.token-remove,
+div.lex-box div.token button.token-cancel,
+ul.entered-values li.entered-value button.token-cancel {
+  color: #c8c8c8;
+  padding: 0.2em 0.2em 0.2em 0;
+  display: inline-block;
+  top: 50%;
+  transform: translateY(-50%);
+  position: absolute;
+  height: 1.6em;
+}
+div.lex-box div.token button.token-remove:hover,
+ul.entered-values li.entered-value button.token-remove:hover,
+div.lex-box div.token button.token-cancel:hover,
+ul.entered-values li.entered-value button.token-cancel:hover {
+  color: #a2a2a2;
+}
+div.lex-box div.token button.token-remove span,
+ul.entered-values li.entered-value button.token-remove span,
+div.lex-box div.token button.token-cancel span,
+ul.entered-values li.entered-value button.token-cancel span {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  font-size: 1em;
+  line-height: 1em;
+}
+div.lex-box div.token button.token-next,
+ul.entered-values li.entered-value button.token-next {
+  margin: 0 0 0 2px;
+}
+div.lex-box div.token button.token-prev,
+ul.entered-values li.entered-value button.token-prev {
+  margin: 0 2px 0 0;
+}
+div.lex-box.disabled div.token button {
+  opacity: 0.5;
+}
+div.lex-box.focused div.token {
+  opacity: 0.6;
+}
+div.lex-box.focused div.token.active {
+  opacity: 1;
+}
+div.lex-assistant-box {
+  display: block;
+  margin: 0 auto;
+  min-width: 400px;
+  max-width: 600px;
+  background-color: #fff;
+  border: 1px solid #c7c7c7;
+  position: absolute;
+  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.2);
+  color: #333;
+}
+div.lex-assistant-box:empty {
+  display: none;
+}
+div.lex-assistant-box .assistant-header-progress {
+  top: 0;
+  display: block;
+  width: 100%;
+  z-index: 1;
+}
+div.lex-assistant-box div.assistant-header {
+  color: #8d8d8d;
+  background-color: #fff;
+  border-top: 1px solid #c7c7c7;
+  display: block;
+  padding: 0.5rem 1rem;
+  font-size: 0.9em;
+}
+div.lex-assistant-box ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  max-height: 290px;
+  overflow: auto;
+}
+div.lex-assistant-box ul li {
+  margin: 0;
+  padding: 0.5rem 1rem;
+}
+div.lex-assistant-box ul li em.pull-right {
+  color: #eee;
+  display: none;
+}
+div.lex-assistant-box ul li.selectable:hover em.pull-right,
+div.lex-assistant-box ul li.removable:hover em.pull-right {
+  display: inline-block;
+}
+div.lex-assistant-box ul li.selectable {
+  cursor: pointer;
+}
+div.lex-assistant-box ul li.selectable.active {
+  color: #fff;
+  background-color: #0097a7;
+}
+div.lex-assistant-box ul li.selectable.hoverable:hover {
+  color: #fff;
+  background-color: #0097a7;
+}
+div.lex-assistant-box ul li.removable {
+  cursor: pointer;
+}
+div.lex-assistant-box ul li.removable:hover,
+div.lex-assistant-box ul li.removable.active {
+  color: #fff;
+  background-color: #d9534f;
+}
+div.lex-assistant-box ul.entered-values {
+  padding: 10px;
+  padding-top: 0;
+}
+div.lex-assistant-box ul.entered-values li.entered-value {
+  display: inline-block;
+  cursor: text;
+}
+div.lex-assistant-box ul.entered-values li.entered-value:hover {
+  box-shadow: 0 0 5px #c7c7c7;
+}
+div.lex-assistant-box div.assistant-content-menu {
+  padding: 5px;
+}
+div.lex-assistant-box div.assistant-body {
+  position: relative;
+}
+div.lex-assistant-box div.assistant-body .lex-dp-container {
+  background-color: #f5f5f5;
+  padding: 5px;
+}
+div.lex-assistant-box div.assistant-body .lex-dp-container > * {
+  margin: 0 auto;
+  border-radius: 0;
+  top: 0;
+}
+div.lex-assistant-box div.assistant-body .lex-dp-input {
+  display: none;
+}
+div.lex-assistant-box div.assistant-body .dp-permanent {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+div.lex-box .anim-flash,
+div.lex-assistant-box .anim-flash {
+  -webkit-animation: flash linear 0.25s 3;
+  animation: flash linear 0.25s 3;
+}
+@-webkit-keyframes flash {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes flash {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
