@@ -262,11 +262,17 @@ func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel
 		TargetName:  req.Target,
 		Filters:     req.Filters,
 	}
-	_, err = task.Query(params)
+	res, err := task.Query(params)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to execute query request"))
 		return
 	}
+	response := map[string]interface{}{
+		"progress":res,
+		"id": msg.ID,
+		"type": msg.Type,
+	}
+	conn.SendResponse(response)
 }
 
 func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,

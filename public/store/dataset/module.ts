@@ -139,7 +139,6 @@ export const actions = {
   importJoinDataset: dispatch(moduleActions.importJoinDataset),
   // clusters variables in a dataset for which the operation is meaningful (ie. timeseries)
   fetchClusters: dispatch(moduleActions.fetchClusters),
-
   // files
   fetchFiles: dispatch(moduleActions.fetchFiles),
   fetchImage: dispatch(moduleActions.fetchImage),
@@ -153,6 +152,7 @@ export const actions = {
   fetchJoinDatasetsTableData: dispatch(
     moduleActions.fetchJoinDatasetsTableData
   ),
+  fetchTableData: dispatch(moduleActions.fetchTableData),
   // included / excluded table data
   fetchIncludedTableData: dispatch(moduleActions.fetchIncludedTableData),
   fetchExcludedTableData: dispatch(moduleActions.fetchExcludedTableData),

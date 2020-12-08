@@ -231,7 +231,7 @@ func InitializeQueue(config *env.Config) {
 
 // SubmitPipeline executes pipelines using the client and returns the result URI.
 func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce []string,
-	searchRequest *pipeline.SearchSolutionsRequest, fullySpecifiedStep *description.FullySpecifiedPipeline) (string, error) {
+	searchRequest *pipeline.SearchSolutionsRequest, fullySpecifiedStep *description.FullySpecifiedPipeline, shouldCache bool) (string, error) {
 
 	request := compute.NewExecPipelineRequest(datasets, datasetsProduce, fullySpecifiedStep.Pipeline)
 
@@ -243,9 +243,9 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 		datasets:        datasets,
 		datasetsProduce: datasetsProduce,
 	}
-
 	// check cache to see if results are already available
 	hashedPipelineUniqueKey, err := queueTask.hashUnique()
+	if shouldCache{
 	if err != nil {
 		return "", err
 	}
@@ -254,7 +254,7 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 		log.Infof("returning cached entry for pipeline")
 		return entry.(string), nil
 	}
-
+	}
 	// get equivalency key for enqueuing
 	hashedPipelineEquivKey, err := queueTask.hashEquivalent()
 	if err != nil {

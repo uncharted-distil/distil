@@ -115,6 +115,48 @@ export const COLOR_SCALES: Map<
   [ColorScaleNames.plasma, interpolatePlasma],
   [ColorScaleNames.turbo, interpolateTurbo],
 ]);
+export interface ScoreInfo {
+  d3mIndex: number;
+  score: number;
+}
+// BinarySets contains the ranked data for the LowShotLabel binary classification
+export interface BinarySets {
+  positive: ScoreInfo[];
+  negative: ScoreInfo[];
+}
+export interface BinaryScoreResponse {
+  progress: {
+    positive: string[][];
+    negative: string[][];
+    colInfo: { d3mIndex: string; score: string };
+  };
+}
+export function parseBinaryScoreResponse(res: BinaryScoreResponse): BinarySets {
+  // check for properties
+  if (!res.progress) {
+    return null;
+  }
+  const result = res.progress;
+  if (!result.positive || !result.negative || !result.colInfo) {
+    return null;
+  }
+  const d3mIndex = result.colInfo.d3mIndex;
+  const scoreIndex = parseInt(result.colInfo.score);
+  const binarySets: BinarySets = { positive: [], negative: [] };
+  result.positive.forEach((p) => {
+    binarySets.positive.push({
+      d3mIndex: p[d3mIndex],
+      score: parseFloat(p[scoreIndex]),
+    });
+  });
+  result.negative.forEach((p) => {
+    binarySets.negative.push({
+      d3mIndex: p[d3mIndex],
+      score: parseFloat(p[scoreIndex]),
+    });
+  });
+  return binarySets;
+}
 export function getTimeseriesSummaryTopCategories(
   summary: VariableSummary
 ): string[] {

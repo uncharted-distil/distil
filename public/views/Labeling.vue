@@ -27,9 +27,13 @@
         <labeling-data-slot
           :summaries="summaries"
           :variables="variables"
-          @DataChanged="onDataChanged"
+          @DataChanged="onAnnotationChanged"
         />
-        <create-labeling-form @export="onExport" />
+        <create-labeling-form
+          @export="onExport"
+          @apply="onApply"
+          :isLoading="isLoadingData"
+        />
       </div>
     </div>
     <b-modal :id="modalId" title="Label Creation" @hide="onLabelSubmit">
@@ -48,6 +52,13 @@
         />
       </b-form-group>
     </b-modal>
+    <label-score-pop-up
+      :data="dataItems"
+      :data-fields="dataFields"
+      :summaries="summaries"
+      :binary-sets="binarySets"
+      @button-event="onAnnotationChanged"
+    />
   </div>
 </template>
 
@@ -68,19 +79,29 @@ import {
   LowShotLabels,
   LOW_SHOT_LABEL_COLUMN_NAME,
   minimumRouteKey,
+  parseBinaryScoreResponse,
+  BinaryScoreResponse,
 } from "../util/data";
-import { Variable, VariableSummary } from "../store/dataset/index";
+import {
+  Variable,
+  VariableSummary,
+  TableRow,
+  TableColumn,
+} from "../store/dataset/index";
 import { CATEGORICAL_TYPE } from "../util/types";
 import VariableFacets from "../components/facets/VariableFacets.vue";
 import FacetCategorical from "../components/facets/FacetCategorical.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
 import LabelingDataSlot from "../components/labelingComponents/LabelingDataSlot.vue";
-import { EXCLUDE_FILTER } from "../util/filters";
+import { EXCLUDE_FILTER, Filter } from "../util/filters";
 import { Dictionary } from "vue-router/types/router";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry } from "../util/routes";
+import { actions as requestActions } from "../store/requests/module";
+import LabelScorePopUp from "../components/labelingComponents/LabelScorePopUp.vue";
+import { clearRowSelection } from "../util/row";
 
 const LABEL_KEY = "label";
 
@@ -91,6 +112,7 @@ export default Vue.extend({
     LabelingDataSlot,
     CreateLabelingForm,
     FacetCategorical,
+    LabelScorePopUp,
   },
   props: {
     logActivity: {
@@ -102,6 +124,8 @@ export default Vue.extend({
     return {
       labelName: LOW_SHOT_LABEL_COLUMN_NAME,
       modalId: "label-input-form",
+      binarySets: null,
+      isLoadingData: false,
     };
   },
   computed: {
@@ -145,6 +169,12 @@ export default Vue.extend({
         ? summaryDictionary[LOW_SHOT_LABEL_COLUMN_NAME]
         : null;
     },
+    dataItems(): TableRow[] {
+      return datasetGetters.getIncludedTableDataItems(this.$store);
+    },
+    dataFields(): Dictionary<TableColumn> {
+      return datasetGetters.getIncludedTableDataFields(this.$store);
+    },
     labelSummary(): VariableSummary {
       if (!this.lowShotSummary) {
         return this.getDefaultLabelFacet();
@@ -175,6 +205,9 @@ export default Vue.extend({
     },
     highlight(): string {
       return routeGetters.getRouteHighlight(this.$store);
+    },
+    filters(): Filter[] {
+      return routeGetters.getDecodedFilters(this.$store);
     },
     instance(): string {
       return LABEL_FEATURE_INSTANCE;
@@ -208,6 +241,22 @@ export default Vue.extend({
       if (this.isRemoteSensing) {
         await viewActions.updateHighlight(this.$store);
       }
+    },
+    async onApply() {
+      this.isLoadingData = true;
+      const res = await requestActions.createQueryRequest(this.$store, {
+        datasetId: "",
+        dataset: this.dataset,
+        target: LOW_SHOT_LABEL_COLUMN_NAME,
+        filters: null,
+      });
+      const binarySets = parseBinaryScoreResponse(res as BinaryScoreResponse);
+      if (!binarySets) {
+        console.error("Error parsing binary score response");
+        return;
+      }
+      this.binarySets = binarySets;
+      this.isLoadingData = false;
     },
     onExport() {
       const highlight = {
@@ -276,6 +325,22 @@ export default Vue.extend({
         dataset: this.dataset,
       });
       await viewActions.updateLabelData(this.$store);
+    },
+    onAnnotationChanged(label: LowShotLabels) {
+      const rowSelection = routeGetters.getDecodedRowSelection(this.$store);
+      const updateData = rowSelection.d3mIndices.map((i) => {
+        return {
+          index: i.toString(),
+          name: LOW_SHOT_LABEL_COLUMN_NAME,
+          value: label,
+        };
+      });
+      datasetActions.updateDataset(this.$store, {
+        dataset: this.dataset,
+        updateData,
+      });
+      clearRowSelection(this.$router);
+      this.onDataChanged();
     },
   },
   watch: {

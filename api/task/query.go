@@ -16,9 +16,10 @@
 package task
 
 import (
+	"strconv"
 	"fmt"
 	"path"
-
+	"sort"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -31,6 +32,7 @@ import (
 const (
 	// image retrieval primitive has hardcoded field name
 	queryFieldName = "annotations"
+	score = "score"
 )
 
 // QueryParams helper struct to simplify query task calling.
@@ -43,22 +45,22 @@ type QueryParams struct {
 }
 
 // Query uses a query pipeline to rank data by nearness to a target.
-func Query(params QueryParams) (string, error) {
+func Query(params QueryParams) (map[string]interface{}, error) {
 	// get the dataset metadata
 	ds, err := params.MetaStorage.FetchDataset(params.Dataset, true, true)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// only prefeaturized datasets can be queried
 	if ds.LearningDataset == "" {
-		return "", errors.Errorf("only prefeaturized datasets support querying")
+		return nil, errors.Errorf("only prefeaturized datasets support querying")
 	}
 
 	// extract the dataset from the database
 	data, err := params.DataStorage.FetchDataset(params.Dataset, ds.StorageName, false, params.Filters)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// keep only the d3m index and the target column (1 row / index)
@@ -67,39 +69,77 @@ func Query(params QueryParams) (string, error) {
 	// store it to disk
 	datasetPath, err := writeQueryDataset(ds, dataToStore)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// create the image retrieval pipeline
 	desc, err := description.CreateImageQueryPipeline("image query", "pipeline to retrieve pertinent images")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// submit the pipeline
 	resultURI, err := submitPipeline([]string{ds.LearningDataset, datasetPath}, desc)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	storageResult := serialization.GetStorage(resultURI)
 	resultData, err := storageResult.ReadData(resultURI)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
 	// update the database to have the results
 	// the results are the score for the search, between 0 and 1
 	// it is stored in a separate column from the label itself
 	err = persistQueryResults(params, ds.StorageName, resultData)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	return ds.ID, nil
+	pos,neg,colIndices,err := extractTopNResults(resultData, 5)
+	if err != nil {
+		return nil, err
+	}
+	result:=map[string]interface{}{
+	"positive": pos,
+	"negative": neg,
+	"colInfo": colIndices,
+	}
+	return result, nil
 }
-
-func extractQueryDataset(targetName string, data [][]string) [][]string {
-	// get the needed column indices
+func reverseArr(data []float64)([]float64){
+	end:=len(data)-1
+	result := []float64{}
+	for i:=end; i >=0; i--{
+		result = append(result, data[i])
+	}
+	return result
+}
+// extractTopNResults returns top N results for positive, negative scores
+func extractTopNResults(data [][]string, n int)([][]string, [][]string, map[string]int, error){
+	targetIndex, d3mIndex := getColumnIndices(score, data)
+	scores := []float64{}
+	bitSize := 64
+	// convert to proper type
+	for _,v:=range data[1:]{ // avoids header line
+		score, err := strconv.ParseFloat(v[targetIndex], bitSize) 
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		scores = append(scores, score)
+	}
+	scores = reverseArr(scores) // reversing to put in ascending order
+	centerIdx := sort.SearchFloat64s(scores, 0.0)
+	shifted := len(data) - centerIdx
+	positiveData := data[shifted-n:shifted]
+	negativeData := data[shifted:shifted+n]
+	columnIndices := map[string]int{
+		score: targetIndex,
+		model.D3MIndexFieldName: d3mIndex,
+	}
+	return positiveData, negativeData, columnIndices, nil
+}
+// getColumnIndices returns: target, d3mIndex
+func getColumnIndices(targetName string, data [][]string) (int, int){
 	targetIndex := -1
 	d3mIndex := -1
 	for i, c := range data[0] {
@@ -109,9 +149,14 @@ func extractQueryDataset(targetName string, data [][]string) [][]string {
 			d3mIndex = i
 		}
 	}
+	return targetIndex, d3mIndex
+}
+func extractQueryDataset(targetName string, data [][]string) [][]string {
+	// get the needed column indices
+	targetIndex, d3mIndex := getColumnIndices(targetName, data)
 
 	// need to reduce to 1 row / d3m index (labels should match across the whole group)
-	valueMap := map[string]int{"unlabelled": -1, "negative": 0, "positive": 1}
+	valueMap := map[string]int{"unlabeled": -1, "negative": 0, "positive": 1}
 	reducedData := map[string]string{}
 	dataToStore := [][]string{{model.D3MIndexFieldName, queryFieldName}}
 	for i := 1; i < len(data); i++ {
