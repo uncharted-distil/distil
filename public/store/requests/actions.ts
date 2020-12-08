@@ -1,8 +1,9 @@
 import axios from "axios";
+import _ from "lodash";
 import { ActionContext } from "vuex";
 import { validateArgs } from "../../util/data";
 import { FilterParams } from "../../util/filters";
-import { getStreamById, getWebSocketConnection } from "../../util/ws";
+import { getWebSocketConnection, Stream } from "../../util/ws";
 import { SummaryMode, TaskTypes } from "../dataset";
 import { actions as predictActions } from "../predictions/module";
 import { actions as resultsActions } from "../results/module";
@@ -11,34 +12,34 @@ import store, { DistilState } from "../store";
 import {
   ModelQuality,
   Predictions,
-  PREDICT_COMPLETED,
-  PREDICT_ERRORED,
-  QUERY_COMPLETED,
-  QUERY_ERRORED,
   RequestState,
   Solution,
   SolutionRequest,
-  SOLUTION_COMPLETED,
-  SOLUTION_ERRORED,
-  SOLUTION_FITTING,
-  SOLUTION_PENDING,
-  SOLUTION_PRODUCING,
-  SOLUTION_REQUEST_COMPLETED,
-  SOLUTION_REQUEST_ERRORED,
-  SOLUTION_REQUEST_PENDING,
-  SOLUTION_REQUEST_RUNNING,
-  SOLUTION_SCORING,
+  SolutionStatus,
+  PredictStatus,
+  SolutionRequestStatus,
+  QueryStatus,
 } from "./index";
 import { mutations } from "./module";
 
-const CREATE_SOLUTIONS = "CREATE_SOLUTIONS";
-const STOP_SOLUTIONS = "STOP_SOLUTIONS";
-const CREATE_PREDICTIONS = "PREDICT";
-const CREATE_QUERY = "QUERY";
-const STOP_PREDICTIONS = "STOP_PREDICTIONS";
-
 // Message definitions for the websocket.  These are only for communication with the
 // server while the requests are running, and are not stored in the index.
+
+enum MessageType {
+  CREATE_SOLUTIONS = "CREATE_SOLUTIONS",
+  STOP_SOLUTIONS = "STOP_SOLUTIONS",
+  CREATE_PREDICTIONS = "PREDICT",
+  STOP_PREDICTIONS = "STOP_PREDICTIONS",
+  CREATE_QUERY = "CREATE_QUERY",
+  STOP_QUERY = "STOP_QUERY",
+}
+
+interface StatusMessage {
+  progress: string;
+  error: string;
+  timestamp: number;
+  complete: boolean;
+}
 
 // Search request message used in web socket context
 interface SolutionRequestMsg {
@@ -53,13 +54,10 @@ interface SolutionRequestMsg {
 }
 
 // Solution status message used in web socket context
-interface SolutionStatusMsg {
+interface SolutionStatusMsg extends StatusMessage {
   requestId: string;
   solutionId?: string;
   resultId?: string;
-  progress: string;
-  error: string;
-  timestamp: number;
 }
 
 interface PredictRequestMsg {
@@ -73,33 +71,28 @@ interface PredictRequestMsg {
 }
 
 // Prediction status.
-interface PredictStatusMsg {
+interface PredictStatusMsg extends StatusMessage {
   solutionId: string;
   resultId: string;
   produceRequestId: string;
-  progress: string;
-  error: string;
-  timestamp: number;
 }
 
 interface QueryRequestMsg {
   datasetId: string;
-  dataset?: string; // base64 encoded version of dataset
   target: string;
   filters: FilterParams;
 }
 
-// Prediction status.
-interface QueryStatusMsg {
+// Query status.
+interface QueryStatusMsg extends StatusMessage {
   solutionId: string;
   resultId: string;
   produceRequestId: string;
-  progress: string;
-  error: string;
-  timestamp: number;
 }
 
 export type RequestContext = ActionContext<RequestState, DistilState>;
+
+const requestStreams = new Map<string, Stream>();
 
 function updateCurrentSolutionResults(
   context: RequestContext,
@@ -293,22 +286,15 @@ function updateSolutionResults(
   }
 }
 
-function handleRequestProgress(
-  context: RequestContext,
-  request: SolutionRequestMsg,
-  response: SolutionStatusMsg
-) {
-  // no-op
-}
-
 function handleSolutionProgress(
   context: RequestContext,
   request: SolutionRequestMsg,
   response: SolutionStatusMsg
 ) {
   switch (response.progress) {
-    case SOLUTION_COMPLETED:
-    case SOLUTION_ERRORED:
+    case SolutionStatus.SOLUTION_COMPLETED:
+    case SolutionStatus.SOLUTION_CANCELLED:
+    case SolutionStatus.SOLUTION_ERRORED:
       // if current solutionId, pull results
       if (response.solutionId === context.getters.getRouteSolutionId) {
         // current solutionId is selected
@@ -324,22 +310,23 @@ function handleSolutionProgress(
 function isSolutionRequestResponse(response: SolutionStatusMsg) {
   const progress = response.progress;
   return (
-    progress === SOLUTION_REQUEST_PENDING ||
-    progress === SOLUTION_REQUEST_RUNNING ||
-    progress === SOLUTION_REQUEST_COMPLETED ||
-    progress === SOLUTION_REQUEST_ERRORED
+    progress === SolutionRequestStatus.SOLUTION_REQUEST_PENDING ||
+    progress === SolutionRequestStatus.SOLUTION_REQUEST_RUNNING ||
+    progress === SolutionRequestStatus.SOLUTION_REQUEST_COMPLETED ||
+    progress === SolutionRequestStatus.SOLUTION_REQUEST_ERRORED
   );
 }
 
 function isSolutionResponse(response: SolutionStatusMsg) {
   const progress = response.progress;
   return (
-    progress === SOLUTION_PENDING ||
-    progress === SOLUTION_FITTING ||
-    progress === SOLUTION_SCORING ||
-    progress === SOLUTION_PRODUCING ||
-    progress === SOLUTION_COMPLETED ||
-    progress === SOLUTION_ERRORED
+    progress === SolutionStatus.SOLUTION_PENDING ||
+    progress === SolutionStatus.SOLUTION_FITTING ||
+    progress === SolutionStatus.SOLUTION_SCORING ||
+    progress === SolutionStatus.SOLUTION_PRODUCING ||
+    progress === SolutionStatus.SOLUTION_COMPLETED ||
+    progress === SolutionStatus.SOLUTION_ERRORED ||
+    progress === SolutionStatus.SOLUTION_CANCELLED
   );
 }
 
@@ -356,7 +343,6 @@ async function handleProgress(
     await actions.fetchSolutionRequest(context, {
       requestId: response.requestId,
     });
-    handleRequestProgress(context, request, response);
   } else if (isSolutionResponse(response)) {
     // solution
     console.log(
@@ -379,8 +365,8 @@ async function handlePredictProgress(
     `Progress for request ${response.resultId} updated to ${response.progress}`
   );
   switch (response.progress) {
-    case PREDICT_COMPLETED:
-    case PREDICT_ERRORED:
+    case PredictStatus.PREDICT_COMPLETED:
+    case PredictStatus.PREDICT_ERRORED:
       // no waiting for data here - we get single response back when the prediction is complete
       await actions.fetchPrediction(context, {
         requestId: response.produceRequestId,
@@ -400,8 +386,8 @@ async function handleQueryProgress(
     `Progress for request ${response.resultId} updated to ${response.progress}`
   );
   switch (response.progress) {
-    case QUERY_COMPLETED:
-    case QUERY_ERRORED:
+    case QueryStatus.QUERY_COMPLETED:
+    case QueryStatus.QUERY_ERRORED:
       console.log(`Done query`);
       break;
   }
@@ -504,9 +490,9 @@ export const actions = {
 
       let receivedFirstSolution = false;
 
-      const stream = conn.stream((response) => {
+      const stream = conn.stream((response: SolutionStatusMsg) => {
         // log any error
-        if (response.error) {
+        if (!_.isEmpty(response.error)) {
           console.error(response.error);
         }
 
@@ -519,6 +505,9 @@ export const actions = {
           receivedFirstSolution = true;
           // resolve
           resolve(response);
+
+          // map the request to the stream so we can issue a stop
+          requestStreams.set(response.requestId, stream);
         }
 
         // close stream on complete
@@ -530,14 +519,14 @@ export const actions = {
           }
           // close streampredict
           conn.close();
+          requestStreams.delete(response.requestId);
         }
       });
 
       console.log("Sending create solutions request:", request);
 
       // send create solutions request
-      stream.send({
-        type: CREATE_SOLUTIONS,
+      stream.send(MessageType.CREATE_SOLUTIONS, {
         dataset: request.dataset,
         target: request.target,
         metrics: request.metrics,
@@ -550,14 +539,13 @@ export const actions = {
     });
   },
 
-  stopSolutionRequest(context: any, args: { requestId: string }) {
-    const stream = getStreamById(args.requestId);
+  stopSolutionRequest(context: RequestContext, args: { requestId: string }) {
+    const stream = requestStreams.get(args.requestId);
     if (!stream) {
       console.warn(`No request stream found for requestId: ${args.requestId}`);
       return;
     }
-    stream.send({
-      type: STOP_SOLUTIONS,
+    stream.send(MessageType.STOP_SOLUTIONS, {
       requestId: args.requestId,
     });
   },
@@ -567,9 +555,9 @@ export const actions = {
   createPredictRequest(context: RequestContext, request: PredictRequestMsg) {
     let receivedUpdate = false;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const conn = getWebSocketConnection();
-      const stream = conn.stream((response) => {
+      const stream = conn.stream((response: PredictStatusMsg) => {
         // log any error
         if (response.error) {
           console.error(response.error);
@@ -584,6 +572,7 @@ export const actions = {
           handlePredictProgress(context, request, response).then(() => {
             // resolve the promise on the first update
             if (!receivedUpdate) {
+              requestStreams.set(response.produceRequestId, stream);
               receivedUpdate = true;
               resolve(response);
             }
@@ -597,14 +586,15 @@ export const actions = {
           stream.close();
           // close the socket
           conn.close();
+          // stop tracking the stream
+          requestStreams.delete(response.produceRequestId);
         }
       });
 
       console.log("Sending predict request:", request);
 
       // send create solutions request
-      stream.send({
-        type: CREATE_PREDICTIONS,
+      stream.send(MessageType.CREATE_PREDICTIONS, {
         fittedSolutionId: request.fittedSolutionId,
         datasetId: request.datasetId,
         datasetPath: request.datasetPath,
@@ -617,13 +607,12 @@ export const actions = {
 
   // notifies server that prediction request should be halted
   stopPredictRequest(context: RequestContext, args: { requestId: string }) {
-    const stream = getStreamById(args.requestId);
+    const stream = requestStreams.get(args.requestId);
     if (!stream) {
       console.warn(`No request stream found for requestId: ${args.requestId}`);
       return;
     }
-    stream.send({
-      type: STOP_PREDICTIONS,
+    stream.send(MessageType.STOP_PREDICTIONS, {
       requestId: args.requestId,
     });
   },
@@ -670,9 +659,9 @@ export const actions = {
   createQueryRequest(context: RequestContext, request: QueryRequestMsg) {
     let receivedUpdate = false;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const conn = getWebSocketConnection();
-      const stream = conn.stream((response) => {
+      const stream = conn.stream((response: QueryStatusMsg) => {
         // log any error
         if (response.error) {
           console.error(response.error);
@@ -705,11 +694,9 @@ export const actions = {
 
       console.log("Sending query request:", request);
 
-      // send create solutions request
-      stream.send({
-        type: CREATE_QUERY,
+      // send create query request
+      stream.send(MessageType.CREATE_QUERY, {
         datasetId: request.datasetId,
-        dataset: request.dataset,
         filters: request.filters,
         target: request.target,
       });

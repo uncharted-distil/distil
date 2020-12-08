@@ -49,7 +49,7 @@ import {
   RowSelection,
   VariableSummary,
 } from "../store/dataset/index";
-import { Solution, SOLUTION_ERRORED } from "../store/requests/index";
+import { Solution, SolutionStatus } from "../store/requests/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -129,7 +129,7 @@ export default Vue.extend({
     },
     solutionHasErrored(): boolean {
       return this.solution
-        ? this.solution.progress === SOLUTION_ERRORED
+        ? this.solution.progress === SolutionStatus.SOLUTION_ERRORED
         : false;
     },
 
