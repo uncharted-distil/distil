@@ -1,7 +1,7 @@
 <template>
   <div class="search-bar-container">
     <header>Search</header>
-    <main ref="lexcontainer" />
+    <main ref="lexcontainer" class="lex-container" />
   </div>
 </template>
 
@@ -116,7 +116,7 @@ header {
 </style>
 
 <style>
-#lexcontainer div.lex-box button.btn {
+.lex-container div.lex-box button.btn {
   line-height: 1em !important;
 }
 
