@@ -23,6 +23,15 @@
         />
       </div>
     </div>
+    <template #modal-footer="{}">
+      <!-- Emulate built in modal footer ok and cancel button actions -->
+      <b-button size="lg" variant="secondary" @click="onApply">
+        <template v-if="isLoading">
+          <div v-html="spinnerHTML"></div>
+        </template>
+        <template v-else> Apply </template>
+      </b-button>
+    </template>
   </b-modal>
 </template>
 
@@ -37,6 +46,7 @@ import {
 import { BinarySets, ScoreInfo } from "../../util/data";
 import SelectDataTable from "../SelectDataTable.vue";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
+import { circleSpinnerHTML } from "../../util/spinner";
 
 export default Vue.extend({
   name: "label-score-pop-up",
@@ -65,6 +75,7 @@ export default Vue.extend({
       default: {},
     },
     title: { type: String as () => string, default: "Scores" },
+    isLoading: { type: Boolean as () => boolean, default: false },
   },
   data() {
     return { modalId: "score-modal" };
@@ -112,10 +123,16 @@ export default Vue.extend({
       });
       return { positive, negative };
     },
+    spinnerHTML(): string {
+      return circleSpinnerHTML();
+    },
   },
   methods: {
     passThrough(event: string) {
       this.$emit("button-event", event);
+    },
+    onApply() {
+      this.$emit("apply");
     },
   },
 });

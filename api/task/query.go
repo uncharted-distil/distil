@@ -33,6 +33,7 @@ const (
 	// image retrieval primitive has hardcoded field name
 	queryFieldName = "annotations"
 	score          = "score"
+	numOfResults   = 5
 )
 
 // QueryParams helper struct to simplify query task calling.
@@ -95,7 +96,7 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	pos, neg, colIndices, err := extractTopNResults(resultData, 5)
+	pos, neg, colIndices, err := extractTopNResults(resultData, numOfResults)
 	if err != nil {
 		return nil, err
 	}

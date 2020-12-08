@@ -57,7 +57,9 @@
       :data-fields="dataFields"
       :summaries="summaries"
       :binary-sets="binarySets"
+      :is-loading="isLoadingData"
       @button-event="onAnnotationChanged"
+      @apply="onApply"
     />
   </div>
 </template>
