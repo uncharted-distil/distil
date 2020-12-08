@@ -21,6 +21,12 @@ import {
 import { Variable } from "../../store/dataset/index";
 import "../../../node_modules/@uncharted.software/lex/dist/lex.css";
 
+/** SearchBar component to display LexBar utility
+ *
+ * @param {string} [filters] - Accept filters to fill the LexBar with a query.
+ * @param {Variable[]} [variables] - list of Variable used to fill the LexBar suggestions.
+ * @event lexFilter - when the user interact with the search bar, this event fire with the new filters.
+ */
 export default Vue.extend({
   name: "SearchBar",
 
@@ -61,6 +67,12 @@ export default Vue.extend({
   },
 
   watch: {
+    filters(n, o) {
+      if (n !== o) {
+        this.setQuery();
+      }
+    },
+
     variables(n, o) {
       if (n !== o) {
         this.renderLex();
