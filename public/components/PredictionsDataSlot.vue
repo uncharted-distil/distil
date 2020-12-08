@@ -62,11 +62,7 @@ import {
 } from "../store/predictions/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
-import {
-  Solution,
-  SolutionStatus,
-  PredictStatus,
-} from "../store/requests/index";
+import { PredictStatus } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
 import { updateTableRowSelection, getNumIncludedRows } from "../util/row";
 import ViewTypeToggle from "../components/ViewTypeToggle.vue";
