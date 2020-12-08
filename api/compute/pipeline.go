@@ -245,15 +245,15 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 	}
 	// check cache to see if results are already available
 	hashedPipelineUniqueKey, err := queueTask.hashUnique()
-	if shouldCache{
-	if err != nil {
-		return "", err
-	}
-	entry, found := cache.cache.Get(hashedPipelineUniqueKey)
-	if found {
-		log.Infof("returning cached entry for pipeline")
-		return entry.(string), nil
-	}
+	if shouldCache {
+		if err != nil {
+			return "", err
+		}
+		entry, found := cache.cache.Get(hashedPipelineUniqueKey)
+		if found {
+			log.Infof("returning cached entry for pipeline")
+			return entry.(string), nil
+		}
 	}
 	// get equivalency key for enqueuing
 	hashedPipelineEquivKey, err := queueTask.hashEquivalent()

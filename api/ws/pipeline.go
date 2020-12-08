@@ -268,9 +268,9 @@ func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel
 		return
 	}
 	response := map[string]interface{}{
-		"progress":res,
-		"id": msg.ID,
-		"type": msg.Type,
+		"progress": res,
+		"id":       msg.ID,
+		"type":     msg.Type,
 	}
 	conn.SendResponse(response)
 }

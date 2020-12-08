@@ -16,10 +16,7 @@
 package task
 
 import (
-	"strconv"
 	"fmt"
-	"path"
-	"sort"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -27,12 +24,15 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
+	"path"
+	"sort"
+	"strconv"
 )
 
 const (
 	// image retrieval primitive has hardcoded field name
 	queryFieldName = "annotations"
-	score = "score"
+	score          = "score"
 )
 
 // QueryParams helper struct to simplify query task calling.
@@ -95,33 +95,34 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	pos,neg,colIndices,err := extractTopNResults(resultData, 5)
+	pos, neg, colIndices, err := extractTopNResults(resultData, 5)
 	if err != nil {
 		return nil, err
 	}
-	result:=map[string]interface{}{
-	"positive": pos,
-	"negative": neg,
-	"colInfo": colIndices,
+	result := map[string]interface{}{
+		"positive": pos,
+		"negative": neg,
+		"colInfo":  colIndices,
 	}
 	return result, nil
 }
-func reverseArr(data []float64)([]float64){
-	end:=len(data)-1
+func reverseArr(data []float64) []float64 {
+	end := len(data) - 1
 	result := []float64{}
-	for i:=end; i >=0; i--{
+	for i := end; i >= 0; i-- {
 		result = append(result, data[i])
 	}
 	return result
 }
+
 // extractTopNResults returns top N results for positive, negative scores
-func extractTopNResults(data [][]string, n int)([][]string, [][]string, map[string]int, error){
+func extractTopNResults(data [][]string, n int) ([][]string, [][]string, map[string]int, error) {
 	targetIndex, d3mIndex := getColumnIndices(score, data)
 	scores := []float64{}
 	bitSize := 64
 	// convert to proper type
-	for _,v:=range data[1:]{ // avoids header line
-		score, err := strconv.ParseFloat(v[targetIndex], bitSize) 
+	for _, v := range data[1:] { // avoids header line
+		score, err := strconv.ParseFloat(v[targetIndex], bitSize)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -130,16 +131,17 @@ func extractTopNResults(data [][]string, n int)([][]string, [][]string, map[stri
 	scores = reverseArr(scores) // reversing to put in ascending order
 	centerIdx := sort.SearchFloat64s(scores, 0.0)
 	shifted := len(data) - centerIdx
-	positiveData := data[shifted-n:shifted]
-	negativeData := data[shifted:shifted+n]
+	positiveData := data[shifted-n : shifted]
+	negativeData := data[shifted : shifted+n]
 	columnIndices := map[string]int{
-		score: targetIndex,
+		score:                   targetIndex,
 		model.D3MIndexFieldName: d3mIndex,
 	}
 	return positiveData, negativeData, columnIndices, nil
 }
+
 // getColumnIndices returns: target, d3mIndex
-func getColumnIndices(targetName string, data [][]string) (int, int){
+func getColumnIndices(targetName string, data [][]string) (int, int) {
 	targetIndex := -1
 	d3mIndex := -1
 	for i, c := range data[0] {
