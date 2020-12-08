@@ -153,11 +153,7 @@ import {
   RowSelection,
   Highlight,
 } from "../store/dataset/index";
-import {
-  SOLUTION_CANCELLED,
-  SOLUTION_COMPLETED,
-  SOLUTION_ERRORED,
-} from "../store/requests/index";
+import { SolutionStatus } from "../store/requests/index";
 import { getters as routeGetters } from "../store/route/module";
 import {
   getFacetByType,
@@ -325,22 +321,22 @@ export default Vue.extend({
 
     isPending(): boolean {
       return (
-        this.solutionStatus !== SOLUTION_COMPLETED &&
-        this.solutionStatus !== SOLUTION_ERRORED &&
-        this.solutionStatus !== SOLUTION_CANCELLED
+        this.solutionStatus !== SolutionStatus.SOLUTION_COMPLETED &&
+        this.solutionStatus !== SolutionStatus.SOLUTION_ERRORED &&
+        this.solutionStatus !== SolutionStatus.SOLUTION_CANCELLED
       );
     },
 
     isCompleted(): boolean {
-      return this.solutionStatus === SOLUTION_COMPLETED;
+      return this.solutionStatus === SolutionStatus.SOLUTION_COMPLETED;
     },
 
     isErrored(): boolean {
-      return this.solutionStatus === SOLUTION_ERRORED;
+      return this.solutionStatus === SolutionStatus.SOLUTION_ERRORED;
     },
 
     isCancelled(): boolean {
-      return this.solutionStatus === SOLUTION_CANCELLED;
+      return this.solutionStatus === SolutionStatus.SOLUTION_CANCELLED;
     },
 
     isBad(): boolean {

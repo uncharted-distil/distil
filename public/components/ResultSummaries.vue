@@ -82,7 +82,7 @@ import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
 import { Variable, TaskTypes } from "../store/dataset/index";
 import Vue from "vue";
-import { Solution, SOLUTION_COMPLETED } from "../store/requests/index";
+import { Solution, SolutionStatus } from "../store/requests/index";
 import { isFittedSolutionIdSavedAsModel } from "../util/models";
 
 export default Vue.extend({
@@ -165,7 +165,7 @@ export default Vue.extend({
     isActiveSolutionCompleted(): boolean {
       return !!(
         this.activeSolution &&
-        this.activeSolution.progress === SOLUTION_COMPLETED
+        this.activeSolution.progress === SolutionStatus.SOLUTION_COMPLETED
       );
     },
 

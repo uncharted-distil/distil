@@ -21,9 +21,9 @@ import {
 import { PredictionContext } from "../store/predictions/actions";
 import {
   Predictions,
-  PREDICT_COMPLETED,
+  PredictStatus,
   Solution,
-  SOLUTION_COMPLETED,
+  SolutionStatus,
 } from "../store/requests/index";
 import {
   getters as predictionsGetters,
@@ -96,6 +96,12 @@ export interface DatasetUpdate {
   name: string; // colName
   value: string; // new value to replace old value
 }
+
+export interface TimeIntervals {
+  value: number;
+  text: string;
+}
+
 // ColorScaleNames is an enum that contains all the supported color scale names. Can be used to access COLOR_SCALES functions
 export enum ColorScaleNames {
   viridis = "viridis",
@@ -152,7 +158,7 @@ export function getComposedVariableKey(keys: string[]): string {
 export function getTimeseriesAnalysisIntervals(
   timeVar: Variable,
   range: number
-): any[] {
+): TimeIntervals[] {
   const SECONDS_VALUE = 1;
   const MINUTES_VALUE = SECONDS_VALUE * 60;
   const HOURS_VALUE = MINUTES_VALUE * 60;
@@ -322,8 +328,8 @@ export function fetchResultExemplars(
   using some of the route's query options (IE: not grabbing all
   options as that's too narrow in focus.) It SHA1 hashes a string
   of datasetId, solutionId, requestId, fittedSolutionId, highlight,
-  filters, dataMode, varModes, active pane, and ranking as that's unique 
-  enough without being over specific and causing duplicate calls.  
+  filters, dataMode, varModes, active pane, and ranking as that's unique
+  enough without being over specific and causing duplicate calls.
   The SHA1 hash of those fields is fast to calculate, maintains uniqueness,
   and keeps the store keys a consistent length, unlike base64.
 */
@@ -539,7 +545,7 @@ export async function fetchSolutionResultSummary(
   }
 
   // fetch the results for each solution
-  if (solution.progress !== SOLUTION_COMPLETED) {
+  if (solution.progress !== SolutionStatus.SOLUTION_COMPLETED) {
     // skip
     return;
   }
@@ -590,7 +596,7 @@ export async function fetchPredictionResultSummary(
   }
 
   // fetch the results for each solution
-  if (predictions.progress !== PREDICT_COMPLETED) {
+  if (predictions.progress !== PredictStatus.PREDICT_COMPLETED) {
     // skip
     return;
   }

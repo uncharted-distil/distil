@@ -9,36 +9,27 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { actions as dataActions } from "../store/dataset/module";
 import { createRouteEntry } from "../util/routes";
-import {
-  Solution,
-  SOLUTION_PENDING,
-  SOLUTION_FITTING,
-  SOLUTION_SCORING,
-  SOLUTION_PRODUCING,
-  SOLUTION_COMPLETED,
-  SOLUTION_ERRORED,
-  SOLUTION_CANCELLED,
-} from "../store/requests/index";
+import { Solution, SolutionStatus } from "../store/requests/index";
 import { APPLY_MODEL_ROUTE } from "../store/route/index";
 import store from "../store/store";
 import VueRouter from "vue-router";
 
 export const SOLUTION_LABELS: Dictionary<string> = {
-  [SOLUTION_PENDING]: "PENDING",
-  [SOLUTION_FITTING]: "FITTING",
-  [SOLUTION_SCORING]: "SCORING",
-  [SOLUTION_PRODUCING]: "PREDICTING",
-  [SOLUTION_COMPLETED]: "COMPLETED",
-  [SOLUTION_CANCELLED]: "CANCELLED",
-  [SOLUTION_ERRORED]: "ERRORED",
+  [SolutionStatus.SOLUTION_PENDING]: "PENDING",
+  [SolutionStatus.SOLUTION_FITTING]: "FITTING",
+  [SolutionStatus.SOLUTION_SCORING]: "SCORING",
+  [SolutionStatus.SOLUTION_PRODUCING]: "PREDICTING",
+  [SolutionStatus.SOLUTION_COMPLETED]: "COMPLETED",
+  [SolutionStatus.SOLUTION_CANCELLED]: "CANCELLED",
+  [SolutionStatus.SOLUTION_ERRORED]: "ERRORED",
 };
 
 export const SOLUTION_PROGRESS: Dictionary<number> = {
-  [SOLUTION_PENDING]: 0,
-  [SOLUTION_FITTING]: 25,
-  [SOLUTION_SCORING]: 75,
-  [SOLUTION_PRODUCING]: 80,
-  [SOLUTION_COMPLETED]: 100,
+  [SolutionStatus.SOLUTION_PENDING]: 0,
+  [SolutionStatus.SOLUTION_FITTING]: 25,
+  [SolutionStatus.SOLUTION_SCORING]: 75,
+  [SolutionStatus.SOLUTION_PRODUCING]: 80,
+  [SolutionStatus.SOLUTION_COMPLETED]: 100,
 };
 
 export function getSolutionIndex(solutionId: string) {
