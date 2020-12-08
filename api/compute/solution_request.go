@@ -107,6 +107,7 @@ type SolutionRequest struct {
 	TargetFeature        *model.Variable
 	Task                 []string
 	TimestampField       string
+	TimestampSplitValue  float64
 	MaxSolutions         int
 	MaxTime              int
 	Quality              string
@@ -164,6 +165,7 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 	req.ProblemType = json.StringDefault(j, "", "problemType")
 	req.Metrics, _ = json.StringArray(j, "metrics")
 	req.TrainTestSplit = json.FloatDefault(j, 0.9, "trainTestSplit")
+	req.TimestampSplitValue = json.FloatDefault(j, 0.0, "timestampSplitValue")
 
 	filters, ok := json.Get(j, "filters")
 	if ok {
@@ -743,7 +745,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// when dealing with categorical data we want to stratify
 	stratify := model.IsCategorical(s.TargetFeature.Type)
 	// create the splitter to use for the train / test split
-	splitter := createSplitter(s.Task, targetIndex, groupingVariableIndex, stratify, s.Quality, s.TrainTestSplit)
+	splitter := createSplitter(s.Task, targetIndex, groupingVariableIndex, stratify, s.Quality, s.TrainTestSplit, s.TimestampSplitValue)
 	datasetPathTrain, datasetPathTest, err := SplitDataset(path.Join(datasetInputDir, compute.D3MDataSchema), splitter)
 	if err != nil {
 		return err

@@ -50,8 +50,9 @@ type datasetSampler interface {
 }
 
 type timeseriesSplitter struct {
-	timeseriesCol  int
-	trainTestSplit float64
+	timeseriesCol       int
+	trainTestSplit      float64
+	timestampValueSplit float64
 }
 
 type basicSplitter struct {
@@ -71,15 +72,17 @@ type stratifiedSplitter struct {
 func (t *timeseriesSplitter) hash(schemaFile string, params ...interface{}) (uint64, error) {
 	// generate the hash from the params
 	hashStruct := struct {
-		Schema         string
-		TimeseriesCol  int
-		TrainTestSplit float64
-		Params         []interface{}
+		Schema              string
+		TimeseriesCol       int
+		TrainTestSplit      float64
+		TimestampValueSplit float64
+		Params              []interface{}
 	}{
-		Schema:         schemaFile,
-		TimeseriesCol:  t.timeseriesCol,
-		TrainTestSplit: t.trainTestSplit,
-		Params:         params,
+		Schema:              schemaFile,
+		TimeseriesCol:       t.timeseriesCol,
+		TrainTestSplit:      t.trainTestSplit,
+		TimestampValueSplit: t.timestampValueSplit,
+		Params:              params,
 	}
 	hash, err := hashstructure.Hash(hashStruct, nil)
 	if err != nil {
@@ -88,24 +91,22 @@ func (t *timeseriesSplitter) hash(schemaFile string, params ...interface{}) (uin
 	return hash, nil
 }
 
-func (t *timeseriesSplitter) split(data [][]string) ([][]string, [][]string, error) {
-	// training data
-	outputTrain := [][]string{}
+func (t *timeseriesSplitter) getSplitTime(data [][]string) (float64, error) {
+	// split on specified timestamp
+	if t.timestampValueSplit > 0 {
+		return t.timestampValueSplit, nil
+	}
 
-	// test data
-	outputTest := [][]string{}
-
-	// handle the header
-	inputData, outputTrain, outputTest := splitTrainTestHeader(data, outputTrain, outputTest, true)
-
+	// no specific time split specified, so split on the timestamp to get
+	// the desired proportion between train and test
 	// find the desired timeseries threshold
 	// load the parsed timestamp into a list and read all raw data in memory
 	timestamps := make([]float64, 0)
-	for _, line := range inputData {
+	for _, line := range data {
 		// attempt to parse as float
 		t, err := parseTimeColValue(line[t.timeseriesCol])
 		if err != nil {
-			return nil, nil, err
+			return 0, err
 		}
 		timestamps = append(timestamps, t)
 	}
@@ -118,6 +119,24 @@ func (t *timeseriesSplitter) split(data [][]string) ([][]string, [][]string, err
 	})
 	timestampSplit := SplitTimeStamps(timestamps, t.trainTestSplit)
 
+	return timestampSplit.SplitValue, nil
+}
+
+func (t *timeseriesSplitter) split(data [][]string) ([][]string, [][]string, error) {
+	// training data
+	outputTrain := [][]string{}
+
+	// test data
+	outputTest := [][]string{}
+
+	// handle the header
+	inputData, outputTrain, outputTest := splitTrainTestHeader(data, outputTrain, outputTest, true)
+
+	timestampSplit, err := t.getSplitTime(inputData)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	// output the values based on if before threshold or after threshold
 	for _, line := range inputData {
 		// since we parsed it above, then the parsing here should succeed
@@ -126,7 +145,7 @@ func (t *timeseriesSplitter) split(data [][]string) ([][]string, [][]string, err
 		t, _ := parseTimeColValue(line[t.timeseriesCol])
 
 		// !After == Before || Equal
-		if t <= timestampSplit.SplitValue {
+		if t <= timestampSplit {
 			outputTrain = append(outputTrain, line)
 		} else {
 			outputTest = append(outputTest, line)
@@ -278,7 +297,7 @@ func (s *stratifiedSplitter) split(data [][]string) ([][]string, [][]string, err
 // suitable to the task performed.
 func SplitDataset(schemaFile string, splitter datasetSplitter) (string, string, error) {
 	// load the metadata to get the data resource
-	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, true)
+	meta, err := loadMetadataForSplit(schemaFile)
 	if err != nil {
 		return "", "", err
 	}
@@ -375,13 +394,14 @@ func loadData(sourceFolder string, meta *model.Metadata) ([][]string, error) {
 	return data, nil
 }
 
-func createSplitter(taskType []string, targetFieldIndex int, groupingFieldIndex int, stratify bool, quality string, trainTestSplit float64) datasetSplitter {
+func createSplitter(taskType []string, targetFieldIndex int, groupingFieldIndex int, stratify bool, quality string, trainTestSplit float64, timestampValueSplit float64) datasetSplitter {
 
 	for _, task := range taskType {
 		if task == compute.ForecastingTask {
 			return &timeseriesSplitter{
-				timeseriesCol:  groupingFieldIndex,
-				trainTestSplit: trainTestSplit,
+				timeseriesCol:       groupingFieldIndex,
+				trainTestSplit:      trainTestSplit,
+				timestampValueSplit: timestampValueSplit,
 			}
 		}
 	}
@@ -456,4 +476,16 @@ func deleteIfExists(folderName string) error {
 	}
 
 	return nil
+}
+
+func loadMetadataForSplit(schemaFile string) (*model.Metadata, error) {
+	// load the metadata with no augmentation
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, false)
+	if err != nil {
+		return nil, err
+	}
+
+	// use the main data resource to find the proper metadata loader
+	loader := serialization.GetStorage(meta.GetMainDataResource().ResPath)
+	return loader.ReadMetadata(schemaFile)
 }
