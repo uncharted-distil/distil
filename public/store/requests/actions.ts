@@ -12,24 +12,13 @@ import store, { DistilState } from "../store";
 import {
   ModelQuality,
   Predictions,
-  PREDICT_COMPLETED,
-  PREDICT_ERRORED,
-  QUERY_COMPLETED,
-  QUERY_ERRORED,
   RequestState,
   Solution,
   SolutionRequest,
-  SOLUTION_CANCELLED,
-  SOLUTION_COMPLETED,
-  SOLUTION_ERRORED,
-  SOLUTION_FITTING,
-  SOLUTION_PENDING,
-  SOLUTION_PRODUCING,
-  SOLUTION_REQUEST_COMPLETED,
-  SOLUTION_REQUEST_ERRORED,
-  SOLUTION_REQUEST_PENDING,
-  SOLUTION_REQUEST_RUNNING,
-  SOLUTION_SCORING,
+  SolutionStatus,
+  PredictStatus,
+  SolutionRequestStatus,
+  QueryStatus,
 } from "./index";
 import { mutations } from "./module";
 
@@ -297,21 +286,15 @@ function updateSolutionResults(
   }
 }
 
-function handleRequestProgress(
-  context: RequestContext,
-  request: SolutionRequestMsg,
-  response: SolutionStatusMsg
-) {}
-
 function handleSolutionProgress(
   context: RequestContext,
   request: SolutionRequestMsg,
   response: SolutionStatusMsg
 ) {
   switch (response.progress) {
-    case SOLUTION_COMPLETED:
-    case SOLUTION_CANCELLED:
-    case SOLUTION_ERRORED:
+    case SolutionStatus.SOLUTION_COMPLETED:
+    case SolutionStatus.SOLUTION_CANCELLED:
+    case SolutionStatus.SOLUTION_ERRORED:
       // if current solutionId, pull results
       if (response.solutionId === context.getters.getRouteSolutionId) {
         // current solutionId is selected
@@ -327,23 +310,23 @@ function handleSolutionProgress(
 function isSolutionRequestResponse(response: SolutionStatusMsg) {
   const progress = response.progress;
   return (
-    progress === SOLUTION_REQUEST_PENDING ||
-    progress === SOLUTION_REQUEST_RUNNING ||
-    progress === SOLUTION_REQUEST_COMPLETED ||
-    progress === SOLUTION_REQUEST_ERRORED
+    progress === SolutionRequestStatus.SOLUTION_REQUEST_PENDING ||
+    progress === SolutionRequestStatus.SOLUTION_REQUEST_RUNNING ||
+    progress === SolutionRequestStatus.SOLUTION_REQUEST_COMPLETED ||
+    progress === SolutionRequestStatus.SOLUTION_REQUEST_ERRORED
   );
 }
 
 function isSolutionResponse(response: SolutionStatusMsg) {
   const progress = response.progress;
   return (
-    progress === SOLUTION_PENDING ||
-    progress === SOLUTION_FITTING ||
-    progress === SOLUTION_SCORING ||
-    progress === SOLUTION_PRODUCING ||
-    progress === SOLUTION_COMPLETED ||
-    progress === SOLUTION_ERRORED ||
-    progress === SOLUTION_CANCELLED
+    progress === SolutionStatus.SOLUTION_PENDING ||
+    progress === SolutionStatus.SOLUTION_FITTING ||
+    progress === SolutionStatus.SOLUTION_SCORING ||
+    progress === SolutionStatus.SOLUTION_PRODUCING ||
+    progress === SolutionStatus.SOLUTION_COMPLETED ||
+    progress === SolutionStatus.SOLUTION_ERRORED ||
+    progress === SolutionStatus.SOLUTION_CANCELLED
   );
 }
 
@@ -360,7 +343,6 @@ async function handleProgress(
     await actions.fetchSolutionRequest(context, {
       requestId: response.requestId,
     });
-    handleRequestProgress(context, request, response);
   } else if (isSolutionResponse(response)) {
     // solution
     console.log(
@@ -383,8 +365,8 @@ async function handlePredictProgress(
     `Progress for request ${response.resultId} updated to ${response.progress}`
   );
   switch (response.progress) {
-    case PREDICT_COMPLETED:
-    case PREDICT_ERRORED:
+    case PredictStatus.PREDICT_COMPLETED:
+    case PredictStatus.PREDICT_ERRORED:
       // no waiting for data here - we get single response back when the prediction is complete
       await actions.fetchPrediction(context, {
         requestId: response.produceRequestId,
@@ -404,8 +386,8 @@ async function handleQueryProgress(
     `Progress for request ${response.resultId} updated to ${response.progress}`
   );
   switch (response.progress) {
-    case QUERY_COMPLETED:
-    case QUERY_ERRORED:
+    case QueryStatus.QUERY_COMPLETED:
+    case QueryStatus.QUERY_ERRORED:
       console.log(`Done query`);
       break;
   }

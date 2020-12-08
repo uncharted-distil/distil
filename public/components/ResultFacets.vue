@@ -57,12 +57,7 @@ import Vue from "vue";
 import _ from "lodash";
 import ResultGroup from "../components/ResultGroup.vue";
 import { VariableSummary } from "../store/dataset/index";
-import {
-  SOLUTION_REQUEST_COMPLETED,
-  SOLUTION_REQUEST_ERRORED,
-  SOLUTION_REQUEST_PENDING,
-  Score,
-} from "../store/requests/index";
+import { SolutionRequestStatus, Score } from "../store/requests/index";
 import { getters as resultsGetters } from "../store/results/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -203,15 +198,22 @@ export default Vue.extend({
 
   methods: {
     isPending(requestGroup: RequestGroup): boolean {
-      return requestGroup.progress === SOLUTION_REQUEST_PENDING;
+      return (
+        requestGroup.progress === SolutionRequestStatus.SOLUTION_REQUEST_PENDING
+      );
     },
 
     isCompleted(requestGroup: RequestGroup): boolean {
-      return requestGroup.progress === SOLUTION_REQUEST_COMPLETED;
+      return (
+        requestGroup.progress ===
+        SolutionRequestStatus.SOLUTION_REQUEST_COMPLETED
+      );
     },
 
     isErrored(requestGroup: RequestGroup): boolean {
-      return requestGroup.progress === SOLUTION_REQUEST_ERRORED;
+      return (
+        requestGroup.progress === SolutionRequestStatus.SOLUTION_REQUEST_ERRORED
+      );
     },
 
     isStopRequested(requestGroup: RequestGroup): boolean {
