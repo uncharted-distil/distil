@@ -39,7 +39,7 @@
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.32",
     "multimap": "^1.0.2",
-    "preact": "^10.5.7",
+    "preact": "8.5.3",
     "sigma": "^1.2.1",
     "store": "^2.0.12",
     "ts-enum-util": "^4.0.1",
