@@ -19,7 +19,7 @@
 
     <main class="content">
       <search-input class="mb-3" />
-      <search-bar class="mb-3" />
+      <search-bar class="mb-3" :variables="selectedVariables" />
 
       <!-- Tabs to switch views -->
       <b-tabs pills v-model="activeView" class="mb-3">

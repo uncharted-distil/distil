@@ -1,7 +1,7 @@
 <template>
   <div class="search-bar-container">
     <header>Search</header>
-    <main ref="lexContainer" />
+    <main id="lexcontainer" />
   </div>
 </template>
 
@@ -10,6 +10,7 @@ import Vue from "vue";
 import _ from "lodash";
 import { h } from "preact";
 import {
+  LabelState,
   Lex,
   NumericEntryState,
   TextEntryState,
@@ -17,6 +18,7 @@ import {
   ValueState,
   ValueStateValue,
 } from "@uncharted.software/lex";
+import { Variable } from "../../store/dataset/index";
 import "../../../node_modules/@uncharted.software/lex/dist/lex.css";
 
 export default Vue.extend({
@@ -24,50 +26,71 @@ export default Vue.extend({
 
   data: () => ({
     lex: null,
-    suggestions: [],
   }),
 
-  mounted() {
-    // Defines a list of searchable fields for LEX
-    this.suggestions = [
-      new ValueStateValue("Name", { type: "string" }),
-      new ValueStateValue("Age", { type: "numeric" }),
-    ];
+  props: {
+    filters: { type: String, default: "" }, // TODO - random type for now.
+    variables: { type: Array as () => Variable[], default: [] },
+  },
 
-    const language = Lex.from("field", ValueState, {
-      name: "Choose a variable to filter",
-      suggestions: this.suggestions,
-    }).branch(
-      Lex.from("value", TextEntryState, {
-        ...TransitionFactory.valueMetaCompare({ type: "string" }),
-      }),
-      Lex.from("value", NumericEntryState, {
-        ...TransitionFactory.valueMetaCompare({ type: "numeric" }),
-      })
-    );
+  computed: {
+    language(): any {
+      return Lex.from("field", ValueState, {
+        name: "Choose a variable to filter",
+        icon: '<i class="fa fa-filter" />',
+        suggestions: this.suggestions,
+      }).branch(
+        Lex.from(LabelState, {
+          label: "From",
+          ...TransitionFactory.valueMetaCompare({ type: "numeric" }),
+        })
+          .to("lower bound", NumericEntryState, { name: "Enter lower bound" })
+          .to(LabelState, { label: "To" })
+          .to("upper bound", NumericEntryState, { name: "Enter upper bound" })
+      );
+    },
 
-    // Initialize lex instance
-    this.lex = new Lex({
-      language: language,
-      tokenXIcon: '<i class="fa fa-times" />',
-    });
+    suggestions(): ValueStateValue[] {
+      if (_.isEmpty(this.variables)) return;
+      return this.variables.map((variable) => {
+        const name = _.capitalize(variable.colDisplayName);
+        const options = { type: "numeric" }; // variable.colType
+        return new ValueStateValue(name, options);
+      });
+    },
+  },
 
-    this.lex.on("query changed", (
-      ...args /* [newModel, oldModel, newUnboxedModel, oldUnboxedModel, nextTokenStarted] */
-    ) => {
-      console.debug("lex event `query changed`");
-    });
-
-    // Render our search bar into our desired element
-    this.lex.render(this.$refs.lexContainer);
-    this.setQuery();
+  watch: {
+    variables(n, o) {
+      if (n !== o) {
+        this.renderLex();
+      }
+    },
   },
 
   methods: {
+    renderLex(): void {
+      // Initialize lex instance
+      this.lex = new Lex({
+        language: this.language,
+        tokenXIcon: '<i class="fa fa-times" />',
+      });
+
+      this.lex.on("query changed", (
+        ...args /* [newModel, oldModel, newUnboxedModel, oldUnboxedModel, nextTokenStarted] */
+      ) => {
+        const filters = []; // TODO - lexModelToFilters(args[0]);
+        this.$emit("lex-filter", filters);
+      });
+
+      // Render our search bar into our desired element
+      this.lex.render(document.getElementById("lexcontainer"));
+      this.setQuery();
+    },
+
     setQuery(): void {
       if (!this.lex) return;
-      const lexQuery = [];
-      // this.getFilters();
+      const lexQuery = []; // TODO - filtersToLexQuery(this.filters);
       this.lex.setQuery(lexQuery, false);
     },
   },
@@ -77,5 +100,15 @@ export default Vue.extend({
 <style scoped>
 header {
   font-style: bold;
+}
+</style>
+
+<style>
+#lexcontainer div.lex-box button.btn {
+  line-height: 1em !important;
+}
+
+.lex-assistant-box {
+  z-index: var(--z-index-lexbar-assistant);
 }
 </style>
