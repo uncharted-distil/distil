@@ -1,7 +1,7 @@
 <template>
   <div class="search-bar-container">
     <header>Search</header>
-    <main id="lexcontainer" />
+    <main ref="lexcontainer" />
   </div>
 </template>
 
@@ -96,7 +96,7 @@ export default Vue.extend({
       });
 
       // Render our search bar into our desired element
-      this.lex.render(document.getElementById("lexcontainer"));
+      this.lex.render(this.$refs.lexcontainer);
       this.setQuery();
     },
 
