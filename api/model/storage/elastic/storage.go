@@ -383,9 +383,6 @@ func (s *Storage) InitializeModelStorage(overwrite bool) error {
 					"term_vector": "yes"
 				},
 				"variableDetails": {
-					"type": "text",
-					"analyzer": "search_analyzer",
-					"term_vector": "yes"
 					"properties": {
 						"name": {
 							"type": "text",
