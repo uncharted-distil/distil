@@ -170,7 +170,7 @@ type SolutionScore struct {
 type SolutionVariable struct {
 	Name string  `json:"name"`
 	Rank float64 `json:"rank"`
-	Type string  `json:"type"`
+	Type string  `json:"varType"`
 }
 
 // PredictionResult represents the output from a model prediction.
