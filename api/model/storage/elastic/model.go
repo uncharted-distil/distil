@@ -39,7 +39,7 @@ func (s *Storage) parseRawSolutionVariable(rsv map[string]interface{}) (*api.Sol
 		return nil, errors.New("unable to parse rank from variable data")
 	}
 
-	typ, ok := json.String(rsv, "type")
+	typ, ok := json.String(rsv, "varType")
 	if !ok {
 		return nil, errors.New("unable to parse type from variable data")
 	}
