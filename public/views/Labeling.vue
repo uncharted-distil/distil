@@ -7,7 +7,7 @@
         enable-type-filtering
         :summaries="[labelSummary]"
         :instanceName="instance"
-        class="h-10"
+        class="h-18"
       />
       <h5 class="header-title">Features</h5>
       <variable-facets
@@ -58,6 +58,7 @@
       :summaries="summaries"
       :ranked-set="rankedSet"
       :is-loading="isLoadingData"
+      :is-remote-sensing="isRemoteSensing"
       @button-event="onAnnotationChanged"
       @apply="onApply"
     />
@@ -310,17 +311,7 @@ export default Vue.extend({
       // fetch new dataset with the newly added field
       await this.fetchData();
       // update task based on the current training data
-      const taskResponse = await datasetActions.fetchTask(this.$store, {
-        dataset: this.dataset,
-        targetName: LOW_SHOT_LABEL_COLUMN_NAME,
-        variableNames: this.variables.map((v) => v.colName),
-      });
-
-      // update route with training data
-      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        task: taskResponse.data.task.join(","),
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
+      this.updateRoute();
     },
     async fetchData() {
       await datasetActions.fetchVariables(this.$store, {
@@ -344,6 +335,18 @@ export default Vue.extend({
       clearRowSelection(this.$router);
       this.onDataChanged();
     },
+    async updateRoute() {
+      const taskResponse = await datasetActions.fetchTask(this.$store, {
+        dataset: this.dataset,
+        targetName: LOW_SHOT_LABEL_COLUMN_NAME,
+        variableNames: this.variables.map((v) => v.colName),
+      });
+      // update route with training data
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        task: taskResponse.data.task.join(","),
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
   },
   watch: {
     highlight() {
@@ -354,6 +357,7 @@ export default Vue.extend({
     await this.fetchData();
     if (this.isClone) {
       // dataset is already a clone don't clone again. (used for testing. might add button for cloning later.)
+      this.updateRoute();
       return;
     }
     this.$bvModal.show(this.modalId);
@@ -366,7 +370,7 @@ export default Vue.extend({
 });
 </script>
 <style scoped>
-.h-10 {
-  height: 10% !important;
+.h-18 {
+  height: 18% !important;
 }
 </style>

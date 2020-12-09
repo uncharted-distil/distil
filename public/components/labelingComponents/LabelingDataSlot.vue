@@ -36,13 +36,9 @@ import {
   TableColumn,
   RowSelection,
 } from "../../store/dataset/index";
-import {
-  getters as datasetGetters,
-  actions as datasetActions,
-} from "../../store/dataset/module";
+import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
-import { clearRowSelection } from "../../util/row";
-import { LowShotLabels, LOW_SHOT_LABEL_COLUMN_NAME } from "../../util/data";
+import { LowShotLabels } from "../../util/data";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
 
 const GEO_VIEW = "geo";
@@ -117,7 +113,7 @@ export default Vue.extend({
   height: 90%;
   position: relative;
   width: 100%;
-  background: #e0e0e0;
+  background: #eee;
 }
 .label-headers {
   margin: 5px;

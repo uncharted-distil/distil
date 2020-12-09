@@ -4,7 +4,8 @@
     <div class="row flex-1 pb-3 h-100">
       <div class="col-12 col-md-6 d-flex flex-column h-100">
         <h5 class="header-title">Most Similar</h5>
-        <select-data-table
+        <component
+          :is="viewComponent"
           :instanceName="instanceName"
           :data-items="items"
           :data-fields="dataFields"
@@ -14,7 +15,8 @@
       </div>
       <div class="col-12 col-md-6 d-flex flex-column h-100">
         <h5 class="header-title">Randomly Chosen</h5>
-        <select-data-table
+        <component
+          :is="viewComponent"
           :instanceName="instanceName"
           :data-items="randomItems"
           :data-fields="dataFields"
@@ -51,6 +53,7 @@ import {
   getRandomInt,
 } from "../../util/data";
 import SelectDataTable from "../SelectDataTable.vue";
+import ImageMosaic from "../ImageMosaic.vue";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
 import { circleSpinnerHTML } from "../../util/spinner";
 
@@ -58,6 +61,7 @@ export default Vue.extend({
   name: "label-score-pop-up",
   components: {
     SelectDataTable,
+    ImageMosaic,
     LabelHeaderButtons,
   },
   props: {
@@ -82,6 +86,7 @@ export default Vue.extend({
     },
     title: { type: String as () => string, default: "Scores" },
     isLoading: { type: Boolean as () => boolean, default: false },
+    isRemoteSensing: { type: Boolean as () => boolean, default: false }, // default to false to support every dataset
   },
   data() {
     return { modalId: "score-modal", sampleSize: 10 };
@@ -110,6 +115,8 @@ export default Vue.extend({
       ranked.sort((a, b) => {
         return this.rankedMap.get(a.d3mIndex) - this.rankedMap.get(b.d3mIndex);
       });
+      console.log(this.rankedMap);
+      console.table(ranked);
       return ranked;
     },
     randomItems(): TableRow[] {
@@ -127,6 +134,12 @@ export default Vue.extend({
     },
     spinnerHTML(): string {
       return circleSpinnerHTML();
+    },
+    viewComponent(): string {
+      if (!this.isRemoteSensing) {
+        return "SelectDataTable";
+      }
+      return "ImageMosaic";
     },
   },
   methods: {
