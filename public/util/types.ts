@@ -52,6 +52,7 @@ export const UNKNOWN_TYPE = "unknown";
 export const GEOCOORDINATE_TYPE = "geocoordinate";
 export const GEOBOUNDS_TYPE = "geobounds";
 export const LABELING_TYPE = "labeling"; // strictly used for labeling view
+export const NUMERIC_TYPE = "numerical"; // strictly used for lex bar languages
 
 // Group types per meta-types to categorize them on the Data Explorer view.
 export const META_TYPES = {
