@@ -121,6 +121,40 @@ export const COLOR_SCALES: Map<
   [ColorScaleNames.plasma, interpolatePlasma],
   [ColorScaleNames.turbo, interpolateTurbo],
 ]);
+export interface ScoreInfo {
+  d3mIndex: number;
+  score: number;
+}
+// BinarySets contains the ranked data for the LowShotLabel binary classification
+export interface RankedSet {
+  data: ScoreInfo[];
+}
+export interface BinaryScoreResponse {
+  progress: {
+    ranked: string[][];
+    colInfo: { d3mIndex: string; score: string };
+  };
+}
+export function parseBinaryScoreResponse(res: BinaryScoreResponse): RankedSet {
+  // check for properties
+  if (!res.progress) {
+    return null;
+  }
+  const result = res.progress;
+  if (!result.ranked || !result.colInfo) {
+    return null;
+  }
+  const d3mIndex = result.colInfo.d3mIndex;
+  const scoreIndex = parseInt(result.colInfo.score);
+  const rankedSet: RankedSet = { data: [] };
+  result.ranked.forEach((p) => {
+    rankedSet.data.push({
+      d3mIndex: p[d3mIndex],
+      score: parseFloat(p[scoreIndex]),
+    });
+  });
+  return rankedSet;
+}
 export function getTimeseriesSummaryTopCategories(
   summary: VariableSummary
 ): string[] {
@@ -133,7 +167,9 @@ export function getTimeseriesSummaryTopCategories(
     .sort((a, b) => b.count - a.count)
     .map((c) => c.category);
 }
-
+export function getRandomInt(max: number): number {
+  return Math.floor(Math.random() * Math.floor(max));
+}
 export function getTimeseriesGroupingsFromFields(
   variables: Variable[],
   fields: Dictionary<TableColumn>

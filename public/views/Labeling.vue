@@ -7,7 +7,7 @@
         enable-type-filtering
         :summaries="[labelSummary]"
         :instanceName="instance"
-        class="h-10"
+        class="h-18"
       />
       <h5 class="header-title">Features</h5>
       <variable-facets
@@ -27,9 +27,14 @@
         <labeling-data-slot
           :summaries="summaries"
           :variables="variables"
-          @DataChanged="onDataChanged"
+          :ranked-set="rankedSet"
+          @DataChanged="onAnnotationChanged"
         />
-        <create-labeling-form @export="onExport" />
+        <create-labeling-form
+          @export="onExport"
+          @apply="onApply"
+          :isLoading="isLoadingData"
+        />
       </div>
     </div>
     <b-modal :id="modalId" title="Label Creation" @hide="onLabelSubmit">
@@ -48,6 +53,16 @@
         />
       </b-form-group>
     </b-modal>
+    <label-score-pop-up
+      :data="dataItems"
+      :data-fields="dataFields"
+      :summaries="summaries"
+      :ranked-set="rankedSet"
+      :is-loading="isLoadingData"
+      :is-remote-sensing="isRemoteSensing"
+      @button-event="onAnnotationChanged"
+      @apply="onApply"
+    />
   </div>
 </template>
 
@@ -68,19 +83,29 @@ import {
   LowShotLabels,
   LOW_SHOT_LABEL_COLUMN_NAME,
   minimumRouteKey,
+  parseBinaryScoreResponse,
+  BinaryScoreResponse,
 } from "../util/data";
-import { Variable, VariableSummary } from "../store/dataset/index";
+import {
+  Variable,
+  VariableSummary,
+  TableRow,
+  TableColumn,
+} from "../store/dataset/index";
 import { CATEGORICAL_TYPE } from "../util/types";
 import VariableFacets from "../components/facets/VariableFacets.vue";
 import FacetCategorical from "../components/facets/FacetCategorical.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
 import LabelingDataSlot from "../components/labelingComponents/LabelingDataSlot.vue";
-import { EXCLUDE_FILTER } from "../util/filters";
+import { EXCLUDE_FILTER, Filter } from "../util/filters";
 import { Dictionary } from "vue-router/types/router";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry } from "../util/routes";
+import { actions as requestActions } from "../store/requests/module";
+import LabelScorePopUp from "../components/labelingComponents/LabelScorePopUp.vue";
+import { clearRowSelection } from "../util/row";
 
 const LABEL_KEY = "label";
 
@@ -91,6 +116,7 @@ export default Vue.extend({
     LabelingDataSlot,
     CreateLabelingForm,
     FacetCategorical,
+    LabelScorePopUp,
   },
   props: {
     logActivity: {
@@ -102,6 +128,8 @@ export default Vue.extend({
     return {
       labelName: LOW_SHOT_LABEL_COLUMN_NAME,
       modalId: "label-input-form",
+      rankedSet: null,
+      isLoadingData: false,
     };
   },
   computed: {
@@ -145,6 +173,12 @@ export default Vue.extend({
         ? summaryDictionary[LOW_SHOT_LABEL_COLUMN_NAME]
         : null;
     },
+    dataItems(): TableRow[] {
+      return datasetGetters.getIncludedTableDataItems(this.$store);
+    },
+    dataFields(): Dictionary<TableColumn> {
+      return datasetGetters.getIncludedTableDataFields(this.$store);
+    },
     labelSummary(): VariableSummary {
       if (!this.lowShotSummary) {
         return this.getDefaultLabelFacet();
@@ -175,6 +209,9 @@ export default Vue.extend({
     },
     highlight(): string {
       return routeGetters.getRouteHighlight(this.$store);
+    },
+    filters(): Filter[] {
+      return routeGetters.getDecodedFilters(this.$store);
     },
     instance(): string {
       return LABEL_FEATURE_INSTANCE;
@@ -208,6 +245,22 @@ export default Vue.extend({
       if (this.isRemoteSensing) {
         await viewActions.updateHighlight(this.$store);
       }
+    },
+    async onApply() {
+      this.isLoadingData = true;
+      const res = await requestActions.createQueryRequest(this.$store, {
+        datasetId: "",
+        dataset: this.dataset,
+        target: LOW_SHOT_LABEL_COLUMN_NAME,
+        filters: null,
+      });
+      const rankedSet = parseBinaryScoreResponse(res as BinaryScoreResponse);
+      if (!rankedSet) {
+        console.error("Error parsing binary score response");
+        return;
+      }
+      this.rankedSet = rankedSet;
+      this.isLoadingData = false;
     },
     onExport() {
       const highlight = {
@@ -259,23 +312,41 @@ export default Vue.extend({
       // fetch new dataset with the newly added field
       await this.fetchData();
       // update task based on the current training data
-      const taskResponse = await datasetActions.fetchTask(this.$store, {
-        dataset: this.dataset,
-        targetName: LOW_SHOT_LABEL_COLUMN_NAME,
-        variableNames: this.variables.map((v) => v.colName),
-      });
-
-      // update route with training data
-      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        task: taskResponse.data.task.join(","),
-      });
-      this.$router.push(entry).catch((err) => console.warn(err));
+      this.updateRoute();
     },
     async fetchData() {
       await datasetActions.fetchVariables(this.$store, {
         dataset: this.dataset,
       });
       await viewActions.updateLabelData(this.$store);
+    },
+    onAnnotationChanged(label: LowShotLabels) {
+      const rowSelection = routeGetters.getDecodedRowSelection(this.$store);
+      const updateData = rowSelection.d3mIndices.map((i) => {
+        return {
+          index: i.toString(),
+          name: LOW_SHOT_LABEL_COLUMN_NAME,
+          value: label,
+        };
+      });
+      datasetActions.updateDataset(this.$store, {
+        dataset: this.dataset,
+        updateData,
+      });
+      clearRowSelection(this.$router);
+      this.onDataChanged();
+    },
+    async updateRoute() {
+      const taskResponse = await datasetActions.fetchTask(this.$store, {
+        dataset: this.dataset,
+        targetName: LOW_SHOT_LABEL_COLUMN_NAME,
+        variableNames: this.variables.map((v) => v.colName),
+      });
+      // update route with training data
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        task: taskResponse.data.task.join(","),
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
   watch: {
@@ -287,6 +358,7 @@ export default Vue.extend({
     await this.fetchData();
     if (this.isClone) {
       // dataset is already a clone don't clone again. (used for testing. might add button for cloning later.)
+      this.updateRoute();
       return;
     }
     this.$bvModal.show(this.modalId);
@@ -299,7 +371,7 @@ export default Vue.extend({
 });
 </script>
 <style scoped>
-.h-10 {
-  height: 10% !important;
+.h-18 {
+  height: 18% !important;
 }
 </style>

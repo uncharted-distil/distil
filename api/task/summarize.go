@@ -44,7 +44,7 @@ func Summarize(schemaPath string, dataset string, config *IngestTaskConfig) (str
 		return "", errors.Wrap(err, "unable to create Duke pipeline")
 	}
 
-	datasetURI, err := submitPipeline([]string{schemaDoc}, pip)
+	datasetURI, err := submitPipeline([]string{schemaDoc}, pip, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to run Duke pipeline")
 	}
