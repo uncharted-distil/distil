@@ -1,10 +1,17 @@
 import { Variable } from "../store/dataset";
-import { isNumericType, isTextType, TEXT_TYPE, NUMERIC_TYPE } from "./types";
+import {
+  isNumericType,
+  isTextType,
+  TEXT_TYPE,
+  NUMERIC_TYPE,
+  DATE_TIME_LOWER_TYPE,
+} from "./types";
 import {
   LabelState,
   Lex,
   NumericEntryState,
   TextEntryState,
+  DateTimeEntryState,
   TransitionFactory,
   ValueState,
   ValueStateValue,
@@ -27,7 +34,22 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
     })
       .to("lower bound", NumericEntryState, { name: "Enter lower bound" })
       .to(LabelState, { label: "To" })
-      .to("upper bound", NumericEntryState, { name: "Enter upper bound" })
+      .to("upper bound", NumericEntryState, { name: "Enter upper bound" }),
+    Lex.from(LabelState, {
+      label: "From",
+      ...TransitionFactory.valueMetaCompare({ type: DATE_TIME_LOWER_TYPE }),
+    })
+      .to("Start Date", DateTimeEntryState, {
+        enableTime: true,
+        enableCalendar: true,
+        timezone: "Greenwich",
+      })
+      .to(LabelState, { label: "To" })
+      .to("End Date", DateTimeEntryState, {
+        enableTime: true,
+        enableCalendar: true,
+        timezone: "Greenwich",
+      })
   );
 }
 
@@ -47,6 +69,8 @@ function colTypeToOptionType(colType: string): string {
     return NUMERIC_TYPE;
   } else if (isTextType(colType)) {
     return TEXT_TYPE;
+  } else if (colType.toLowerCase() === DATE_TIME_LOWER_TYPE) {
+    return DATE_TIME_LOWER_TYPE;
   } else {
     return TEXT_TYPE;
   }

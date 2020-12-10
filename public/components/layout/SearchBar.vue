@@ -11,8 +11,9 @@ import _ from "lodash";
 import { h } from "preact";
 import { Lex } from "@uncharted.software/lex";
 import { Variable } from "../../store/dataset/index";
-import "../../../node_modules/@uncharted.software/lex/dist/lex.css";
 import { variablesToLexLanguage } from "../../util/lex";
+import "../../../node_modules/@uncharted.software/lex/dist/lex.css";
+import "../../../node_modules/flatpickr/dist/flatpickr.min.css";
 
 /** SearchBar component to display LexBar utility
  *
