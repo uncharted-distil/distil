@@ -26,6 +26,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
+	jsonu "github.com/uncharted-distil/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -34,6 +35,7 @@ const (
 	featureWeightTableSuffix = "_explain"
 	dataTableAlias           = "data"
 	confidenceName           = "confidence"
+	rankName                 = "rank"
 )
 
 func (s *Storage) getResultTable(storageName string) string {
@@ -268,24 +270,25 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 
 	// We can't guarantee that the order of the variables in the returned result matches our
 	// locally stored indices, so we fetch by name from the source to be safe.
-	targetIndex := -1
-	d3mIndexIndex := -1
-	confidenceIndex := -1
+	fieldsHeader := map[string]int{}
 	for i, v := range records[0] {
-		if v == targetDisplayName {
-			targetIndex = i
-		} else if v == model.D3MIndexFieldName {
-			d3mIndexIndex = i
-		} else if v == confidenceName {
-			confidenceIndex = i
-		}
+		fieldsHeader[v] = i
 	}
-	// result is not in valid format - d3mIndex and target col need to have correct name
-	if targetIndex == -1 {
+	targetIndex, ok := fieldsHeader[targetDisplayName]
+	if !ok {
 		return errors.Wrapf(err, "unable to find target col '%s' in result header", targetDisplayName)
 	}
-	if d3mIndexIndex == -1 {
+	d3mIndexIndex, ok := fieldsHeader[model.D3MIndexFieldName]
+	if !ok {
 		return errors.Wrapf(err, "unabled to find d3m index col '%s' in result header", model.D3MIndexFieldName)
+	}
+	confidenceIndex, ok := fieldsHeader[confidenceName]
+	if !ok {
+		confidenceIndex = -1
+	}
+	rankIndex, ok := fieldsHeader[rankName]
+	if !ok {
+		rankIndex = -1
 	}
 
 	// build the batch data
@@ -315,11 +318,22 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 			}
 			dataForInsert = append(dataForInsert, cfs)
 		}
+		if rankIndex >= 0 {
+			rs, err := strconv.ParseFloat(records[i][rankIndex], 64)
+			if err != nil {
+				return errors.Wrap(err, "failed rank value parsing")
+			}
+
+			dataForInsert = append(dataForInsert, &api.SolutionExplainValues{Rank: rs})
+		}
 
 		insertData = append(insertData, dataForInsert)
 	}
 
 	fields := []string{"result_id", "index", "target", "value"}
+	if rankIndex >= 0 {
+		fields = append(fields, "explain_values")
+	}
 	if confidenceIndex >= 0 {
 		fields = append(fields, "confidence")
 	}
@@ -352,6 +366,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 		weightCount := 0
 		confidenceCol := -1
 		predictedCol := -1
+		explainCol := -1
 		// Parse the row data.
 		for rows.Next() {
 			if columns == nil {
@@ -373,6 +388,9 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 						continue
 					} else if key == "__predicted_confidence" {
 						confidenceCol = i
+						continue
+					} else if key == "__predicted_explain" {
+						explainCol = i
 						continue
 					} else {
 						if key == target.StorageName {
@@ -404,9 +422,9 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 			weightedValues := make([]*api.FilteredDataValue, len(columns))
 			varIndex := 0
 			for i := 0; i < len(columnValues); i++ {
-				if i == confidenceCol {
+				if i == confidenceCol || i == explainCol {
 					if i < weightCount {
-						// confidence column IS NOT a variable and so indices need to be adjusted
+						// confidence & explain columns ARE NOT variables and so indices need to be adjusted
 						varIndex--
 					}
 				} else if varIndex < len(weightedValues) {
@@ -421,6 +439,15 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 
 			if confidenceCol >= 0 {
 				weightedValues[predictedCol].Confidence = api.NullableFloat64(columnValues[confidenceCol].(float64))
+			}
+			if explainCol >= 0 {
+				explainValuesRaw := columnValues[explainCol].(map[string]interface{})
+				explainValuesParsed := &api.SolutionExplainValues{}
+				err = jsonu.MapToStruct(explainValuesParsed, explainValuesRaw)
+				if err != nil {
+					return nil, err
+				}
+				weightedValues[predictedCol].Rank = api.NullableFloat64(explainValuesParsed.Rank)
 			}
 			result.Values = append(result.Values, weightedValues)
 		}
@@ -781,7 +808,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			targetColumnQuery = fmt.Sprintf("data.\"%s\" as \"%s\", ", targetName, targetName)
 		}
 
-		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", COALESCE(predicted.confidence, 'NaN') as \"__predicted_confidence\", %s %s %s, %s ",
+		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", COALESCE(predicted.confidence, 'NaN') as \"__predicted_confidence\", predicted.explain_values as \"__predicted_explain\", %s %s %s, %s ",
 			distincts, predictedCol, targetColumnQuery, errorExpr, strings.Join(fieldsData, ", "), strings.Join(fieldsExplain, ", "))
 	}
 
