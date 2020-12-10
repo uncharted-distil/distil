@@ -77,7 +77,7 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 	}
 
 	// submit the pipeline
-	resultURI, err := submitPipeline([]string{ds.LearningDataset, datasetPath}, desc)
+	resultURI, err := submitPipeline([]string{ds.LearningDataset, datasetPath}, desc, true)
 	if err != nil {
 		return nil, err
 	}
@@ -103,8 +103,8 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 		model.D3MIndexFieldName: d3mIndex,
 	}
 	result := map[string]interface{}{
-		"ranked": resultData[1:], // avoids the header information
-		"colInfo":  columnIndices,
+		"ranked":  resultData[1:], // avoids the header information
+		"colInfo": columnIndices,
 	}
 	return result, nil
 }

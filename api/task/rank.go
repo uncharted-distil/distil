@@ -45,7 +45,7 @@ func Rank(schemaPath string, dataset string, config *IngestTaskConfig) (string, 
 		return "", errors.Wrap(err, "unable to create PCA pipeline")
 	}
 
-	datasetURI, err := submitPipeline([]string{schemaDoc}, pip)
+	datasetURI, err := submitPipeline([]string{schemaDoc}, pip, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to run PCA pipeline")
 	}

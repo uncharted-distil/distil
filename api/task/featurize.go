@@ -34,7 +34,7 @@ import (
 
 func submitForBatch(pip *description.FullySpecifiedPipeline) func(string) (string, error) {
 	return func(schemaFile string) (string, error) {
-		return submitPipeline([]string{schemaFile}, pip)
+		return submitPipeline([]string{schemaFile}, pip, true)
 	}
 }
 
