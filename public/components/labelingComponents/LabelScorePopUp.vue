@@ -113,11 +113,9 @@ export default Vue.extend({
         }
       });
       ranked.sort((a, b) => {
-        return this.rankedMap.get(a.d3mIndex) - this.rankedMap.get(b.d3mIndex);
+        return this.rankedMap.get(b.d3mIndex) - this.rankedMap.get(a.d3mIndex);
       });
-      console.log(this.rankedMap);
-      console.table(ranked);
-      return ranked;
+      return ranked.slice(0, this.sampleSize);
     },
     randomItems(): TableRow[] {
       const random = this.data?.filter((d) => {

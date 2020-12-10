@@ -31,7 +31,6 @@ const (
 	// image retrieval primitive has hardcoded field name
 	queryFieldName = "annotations"
 	score          = "score"
-	numOfResults   = 10
 )
 
 // QueryParams helper struct to simplify query task calling.
@@ -104,7 +103,7 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 		model.D3MIndexFieldName: d3mIndex,
 	}
 	result := map[string]interface{}{
-		"ranked": resultData[1:numOfResults+1], // avoids the header information
+		"ranked": resultData[1:], // avoids the header information
 		"colInfo":  columnIndices,
 	}
 	return result, nil

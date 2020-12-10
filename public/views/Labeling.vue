@@ -27,6 +27,7 @@
         <labeling-data-slot
           :summaries="summaries"
           :variables="variables"
+          :ranked-set="rankedSet"
           @DataChanged="onAnnotationChanged"
         />
         <create-labeling-form

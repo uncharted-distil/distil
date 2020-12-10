@@ -38,7 +38,7 @@ import {
 } from "../../store/dataset/index";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
-import { LowShotLabels } from "../../util/data";
+import { LowShotLabels, RankedSet, ScoreInfo } from "../../util/data";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
 
 const GEO_VIEW = "geo";
@@ -58,6 +58,12 @@ export default Vue.extend({
     variables: Array as () => Variable[],
     summaries: Array as () => VariableSummary[],
     instanceName: { type: String, default: "label" },
+    rankedSet: {
+      type: Object as () => RankedSet,
+      default: () => {
+        return { data: [] as ScoreInfo[] };
+      },
+    },
   },
   data() {
     return {
@@ -74,7 +80,25 @@ export default Vue.extend({
       return "";
     },
     dataItems(): TableRow[] {
-      return datasetGetters.getIncludedTableDataItems(this.$store);
+      const items = datasetGetters.getIncludedTableDataItems(this.$store);
+      if (this.rankedSet?.data.length) {
+        const unlabledItems = [];
+        const labeledItems = [];
+        items.map((item) => {
+          if (this.rankedMap.has(item.d3mIndex)) {
+            unlabledItems.push(item);
+          } else {
+            labeledItems.push(item);
+          }
+        });
+        unlabledItems.sort((a, b) => {
+          return (
+            this.rankedMap.get(b.d3mIndex) - this.rankedMap.get(a.d3mIndex)
+          );
+        });
+        return unlabledItems.concat(labeledItems);
+      }
+      return items;
     },
     dataFields(): Dictionary<TableColumn> {
       return datasetGetters.getIncludedTableDataFields(this.$store);
@@ -84,6 +108,13 @@ export default Vue.extend({
     },
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
+    },
+    rankedMap(): Map<number, number> {
+      return new Map(
+        this.rankedSet?.data.map((d) => {
+          return [d.d3mIndex, d.score];
+        })
+      );
     },
     negative(): string {
       return LowShotLabels.negative;
