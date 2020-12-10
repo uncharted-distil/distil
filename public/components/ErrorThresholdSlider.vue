@@ -202,7 +202,9 @@ export default Vue.extend({
   },
 
   watch: {
-    residualExtrema() {
+    residualExtrema(newR, oldR) {
+      if (!newR || newR === oldR) return;
+
       // update threshold if there isnt one, or if the user hasn't touched
       // the slider yet.
       if (!this.hasThreshold || !this.hasModified) {

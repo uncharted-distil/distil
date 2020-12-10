@@ -3,7 +3,7 @@ import { Route, Location } from "vue-router";
 import { Dictionary } from "./dict";
 import { SummaryMode } from "../store/dataset";
 import { ColorScaleNames } from "./data";
-// TODO: should really have a separate definintion for each route
+// TODO: should really have a separate definition for each route
 export interface RouteArgs {
   clustering?: string;
   dataset?: string;
@@ -76,21 +76,18 @@ function validateQueryArgs(args: RouteArgs): RouteArgs {
  * @param {RouteArgs} args - the arguments for the route.
  */
 export function createRouteEntry(path: string, args: RouteArgs = {}): Location {
-  const routeEntry: Location = {
-    path: path,
-    query: validateQueryArgs(args) as Dictionary<string>,
-  };
-
-  return routeEntry;
+  const query = validateQueryArgs(args) as Dictionary<string>;
+  return { path, query };
 }
 
-export function overlayRouteEntry(route: Route, args: RouteArgs): Location {
-  // initialize a new object from the supplied route
-  const routeEntry: Location = {
-    path: route.path,
-    query: _.merge({}, route.query, validateQueryArgs(args)),
-  };
-  return routeEntry;
+/* Initialize a new object from the supplied route. */
+export function overlayRouteEntry(
+  route: Route,
+  args: RouteArgs = {}
+): Location {
+  const path = route.path;
+  const query = _.merge({}, route.query, validateQueryArgs(args));
+  return { path, query };
 }
 
 export function getRouteFacetPage(key: string, route: Route): number {

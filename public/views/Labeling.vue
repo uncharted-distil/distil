@@ -291,9 +291,7 @@ export default Vue.extend({
     }
     this.$bvModal.show(this.modalId);
     const entry = await cloneDatasetUpdateRoute();
-    if (entry === null) {
-      return;
-    }
+    if (entry === null) return;
     this.$router.push(entry).catch((err) => console.warn(err));
   },
 });
