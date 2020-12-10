@@ -6,7 +6,7 @@
         enable-highlighting
         enable-type-filtering
         :summaries="[labelSummary]"
-        :instanceName="instance"
+        :instance-name="instance"
         class="h-18"
       />
       <h5 class="header-title">Features</h5>
@@ -17,9 +17,9 @@
         :pagination="
           summaries && searchedActiveVariables.length > numRowsPerPage
         "
-        :facetCount="summaries && searchedActiveVariables.length"
+        :facet-count="summaries && searchedActiveVariables.length"
         :rows-per-page="numRowsPerPage"
-        :instanceName="instance"
+        :instance-name="instance"
       />
     </div>
     <div class="col-12 col-md-6 d-flex flex-column h-100">
@@ -31,9 +31,9 @@
           @DataChanged="onAnnotationChanged"
         />
         <create-labeling-form
+          :is-loading="isLoadingData"
           @export="onExport"
           @apply="onApply"
-          :isLoading="isLoadingData"
         />
       </div>
     </div>
@@ -94,7 +94,6 @@ import {
 } from "../store/dataset/index";
 import { CATEGORICAL_TYPE } from "../util/types";
 import VariableFacets from "../components/facets/VariableFacets.vue";
-import FacetCategorical from "../components/facets/FacetCategorical.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
 import LabelingDataSlot from "../components/labelingComponents/LabelingDataSlot.vue";
 import { EXCLUDE_FILTER, Filter } from "../util/filters";
@@ -110,12 +109,11 @@ import { clearRowSelection } from "../util/row";
 const LABEL_KEY = "label";
 
 export default Vue.extend({
-  name: "labeling-view",
+  name: "LabelingView",
   components: {
     VariableFacets,
     LabelingDataSlot,
     CreateLabelingForm,
-    FacetCategorical,
     LabelScorePopUp,
   },
   props: {
@@ -222,6 +220,25 @@ export default Vue.extend({
       });
     },
   },
+  watch: {
+    highlight() {
+      this.onDataChanged();
+    },
+  },
+  async mounted() {
+    await this.fetchData();
+    if (this.isClone) {
+      // dataset is already a clone don't clone again. (used for testing. might add button for cloning later.)
+      this.updateRoute();
+      return;
+    }
+    this.$bvModal.show(this.modalId);
+    const entry = await cloneDatasetUpdateRoute();
+    if (entry === null) {
+      return;
+    }
+    this.$router.push(entry).catch((err) => console.warn(err));
+  },
   methods: {
     // used for generating default labels in the instance where labels do not exist in the dataset
     getDefaultLabelFacet(): VariableSummary {
@@ -249,8 +266,7 @@ export default Vue.extend({
     async onApply() {
       this.isLoadingData = true;
       const res = await requestActions.createQueryRequest(this.$store, {
-        datasetId: "",
-        dataset: this.dataset,
+        datasetId: this.dataset,
         target: LOW_SHOT_LABEL_COLUMN_NAME,
         filters: null,
       });
@@ -348,25 +364,6 @@ export default Vue.extend({
       });
       this.$router.push(entry).catch((err) => console.warn(err));
     },
-  },
-  watch: {
-    highlight() {
-      this.onDataChanged();
-    },
-  },
-  async mounted() {
-    await this.fetchData();
-    if (this.isClone) {
-      // dataset is already a clone don't clone again. (used for testing. might add button for cloning later.)
-      this.updateRoute();
-      return;
-    }
-    this.$bvModal.show(this.modalId);
-    const entry = await cloneDatasetUpdateRoute();
-    if (entry === null) {
-      return;
-    }
-    this.$router.push(entry).catch((err) => console.warn(err));
   },
 });
 </script>
