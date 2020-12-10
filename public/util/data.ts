@@ -453,7 +453,26 @@ export function removeSummary(
 }
 
 export function filterVariablesByFeature(variables: Variable[]): Variable[] {
-  return variables.filter((v) => v.distilRole === "data");
+  // need to exclude the hidden variables
+  const groupingVars = variables.filter(
+    (v) => v.distilRole === "grouping" && v.grouping !== null
+  );
+  const hiddenFlat = [].concat.apply(
+    [],
+    groupingVars.map((v) =>
+      [].concat(v.grouping.hidden).concat(v.grouping.subIds)
+    )
+  );
+  const hidden = new Map(hiddenFlat.map((v) => [v, v]));
+
+  // the groupings that hide variables are themselves variables to display
+  const groupingDisplayed = new Map(groupingVars.map((v) => [v.colName, v]));
+
+  return variables.filter(
+    (v) =>
+      (v.distilRole === "data" && !hidden.has(v.colName)) ||
+      groupingDisplayed.has(v.colName)
+  );
 }
 
 export function filterSummariesByDataset(
