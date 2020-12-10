@@ -220,7 +220,7 @@ func (s *SolutionRequest) Listen(listener SolutionStatusListener) error {
 	return <-s.finished
 }
 
-// Inovkes the context cancel function calls associated with this request.  This stops any
+// Cancel inovkes the context cancel function calls associated with this request.  This stops any
 // further messaging between the ta3 and ta2 for each solution.
 func (s *SolutionRequest) Cancel() {
 	// Cancel all further work for each solution
