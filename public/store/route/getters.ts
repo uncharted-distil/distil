@@ -116,7 +116,7 @@ export const getters = {
     const lookup = buildLookup(
       variables.map((v) => hashSummary(v.datasetName, v.colName))
     );
-    const summaries = getters.getVariableSummaries;
+    const summaries = getters.getVariableSummaries ?? ([] as VariableSummary[]);
     return summaries.filter(
       (summary) => lookup[hashSummary(summary.dataset, summary.key)]
     );
@@ -460,6 +460,7 @@ export const getters = {
     const variables = getters.getVariables;
     const lookup =
       training && target ? buildLookup(training.concat([target])) : null;
+    if (!lookup) return variables ?? ([] as Variable[]);
     return variables.filter(
       (variable) => !lookup[variable.colName.toLowerCase()]
     );

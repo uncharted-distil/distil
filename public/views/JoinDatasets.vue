@@ -88,10 +88,10 @@
 <script lang="ts">
 import Vue from "vue";
 import vueSlider from "vue-slider-component";
-import JoinDatasetsForm from "../components/JoinDatasetsForm";
-import JoinDataSlot from "../components/JoinDataSlot";
+import JoinDatasetsForm from "../components/JoinDatasetsForm.vue";
+import JoinDataSlot from "../components/JoinDataSlot.vue";
 import VariableFacets from "../components/facets/VariableFacets.vue";
-import TypeChangeMenu from "../components/TypeChangeMenu";
+import TypeChangeMenu from "../components/TypeChangeMenu.vue";
 import { overlayRouteEntry } from "../util/routes";
 import { Dictionary } from "../util/dict";
 import {
