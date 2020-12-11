@@ -103,14 +103,15 @@ export default Vue.extend({
             this.rankedMap.get(b.d3mIndex) - this.rankedMap.get(a.d3mIndex)
           );
         });
+        const confidence = "confidence";
         // hack for now until rank and confidence is changed in backend
         unlabledItems.forEach((item, i) => {
-          item["confidence"] = {
+          item[confidence] = {
             value: (unlabledItems.length - i) / unlabledItems.length,
           };
         });
         labeledItems.forEach((item) => {
-          item["confidence"] = {
+          item[confidence] = {
             value:
               item[LOW_SHOT_LABEL_COLUMN_NAME] === LowShotLabels.positive
                 ? 1.0
