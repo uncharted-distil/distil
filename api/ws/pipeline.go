@@ -292,7 +292,7 @@ func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel
 	params := task.QueryParams{
 		DataStorage: dataStorage,
 		MetaStorage: metaStorage,
-		Dataset:     req.Dataset,
+		Dataset:     req.DatasetID,
 		TargetName:  req.Target,
 		Filters:     req.Filters,
 	}
@@ -306,7 +306,12 @@ func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel
 		"id":       msg.ID,
 		"type":     msg.Type,
 	}
-	conn.SendResponse(response)
+
+	err = conn.SendResponse(response)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to send response"))
+		return
+	}
 }
 
 func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiModel.MetadataStorageCtor,
