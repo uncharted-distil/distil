@@ -11,9 +11,10 @@ import _ from "lodash";
 import { h } from "preact";
 import { Lex } from "@uncharted.software/lex";
 import { Variable } from "../../store/dataset/index";
-import { variablesToLexLanguage } from "../../util/lex";
+import { variablesToLexLanguage, filterParamsToLexQuery } from "../../util/lex";
 import "../../../node_modules/@uncharted.software/lex/dist/lex.css";
 import "../../../node_modules/flatpickr/dist/flatpickr.min.css";
+import { FilterParams } from "../../util/filters";
 
 /** SearchBar component to display LexBar utility
  *
@@ -64,8 +65,7 @@ export default Vue.extend({
       this.lex.on("query changed", (
         ...args /* [newModel, oldModel, newUnboxedModel, oldUnboxedModel, nextTokenStarted] */
       ) => {
-        const filters = []; // TODO - lexModelToFilters(args[0]);
-        this.$emit("lex-filter", filters);
+        this.$emit("lex-query", args);
       });
 
       // Render our search bar into our desired element
@@ -75,7 +75,7 @@ export default Vue.extend({
 
     setQuery(): void {
       if (!this.lex) return;
-      const lexQuery = []; // TODO - filtersToLexQuery(this.filters);
+      const lexQuery = filterParamsToLexQuery(this.filters, this.variables);
       this.lex.setQuery(lexQuery, false);
     },
   },

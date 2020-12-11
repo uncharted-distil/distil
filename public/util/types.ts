@@ -1,4 +1,5 @@
 import _ from "lodash";
+import moment from "moment";
 import { D3M_INDEX_FIELD } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import store from "../store/store";
@@ -51,8 +52,8 @@ export const TIMESERIES_TYPE = "timeseries";
 export const UNKNOWN_TYPE = "unknown";
 export const GEOCOORDINATE_TYPE = "geocoordinate";
 export const GEOBOUNDS_TYPE = "geobounds";
+export const NUMERIC_TYPE = "numerical";
 export const LABELING_TYPE = "labeling"; // strictly used for labeling view
-export const NUMERIC_TYPE = "numerical"; // strictly used for lex bar languages
 
 // Group types per meta-types to categorize them on the Data Explorer view.
 export const META_TYPES = {
@@ -123,6 +124,7 @@ const FLOATING_POINT_TYPES = [
   LATITUDE_TYPE,
   LONGITUDE_TYPE,
   GEOBOUNDS_TYPE,
+  NUMERIC_TYPE,
 ];
 
 const LIST_TYPES = [REAL_LIST_TYPE, REAL_VECTOR_TYPE, GEOBOUNDS_TYPE];
@@ -454,4 +456,12 @@ export function getTypeFromLabel(label: string) {
   }
   console.warn(`No type exists for label \`${label}\``);
   return label;
+}
+
+export function numToDate(key: any): string {
+  return moment.unix(_.toNumber(key)).utc().format("YYYY/MM/DD");
+}
+
+export function dateToNum(dateStr: string): number {
+  return Date.parse(dateStr) / DATETIME_UNIX_ADJUSTMENT;
 }
