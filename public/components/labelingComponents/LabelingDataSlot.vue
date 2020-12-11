@@ -87,7 +87,11 @@ export default Vue.extend({
       return "";
     },
     dataItems(): TableRow[] {
-      const items = _.cloneDeep(getAllDataItems(true));
+      const items = _.cloneDeep(
+        this.viewTypeModel === GEO_VIEW
+          ? getAllDataItems(true)
+          : datasetGetters.getIncludedTableDataItems(this.$store)
+      );
       if (this.rankedSet?.data.length) {
         const unlabledItems = [];
         const labeledItems = [];
