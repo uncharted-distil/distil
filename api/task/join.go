@@ -108,7 +108,7 @@ func join(joinLeft *JoinSpec, joinRight *JoinSpec, varsLeft []*model.Variable,
 type defaultSubmitter struct{}
 
 func (defaultSubmitter) submit(datasetURIs []string, pipelineDesc *description.FullySpecifiedPipeline) (string, error) {
-	return submitPipeline(datasetURIs, pipelineDesc)
+	return submitPipeline(datasetURIs, pipelineDesc, true)
 }
 
 func createVarMap(vars []*model.Variable, useDisplayName bool, keepOnlyDataVars bool) map[string]*model.Variable {

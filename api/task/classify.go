@@ -81,7 +81,7 @@ func Classify(schemaPath string, dataset string, config *IngestTaskConfig) (stri
 		return "", errors.Wrap(err, "unable to create Simon pipeline")
 	}
 
-	datasetURI, err := submitPipeline([]string{schemaDoc}, pip)
+	datasetURI, err := submitPipeline([]string{schemaDoc}, pip, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to run Simon pipeline")
 	}

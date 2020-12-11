@@ -22,7 +22,7 @@ export interface ModelState {
 export interface VariableDetail {
   name: string;
   rank: number;
-  type: string;
+  varType: string;
 }
 
 export const state: ModelState = {

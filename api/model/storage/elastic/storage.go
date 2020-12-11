@@ -207,6 +207,12 @@ func (s *Storage) InitializeMetadataStorage(overwrite bool) error {
 				"learningDataset": {
 					"type": "text"
 				},
+				"clone": {
+					"type": "boolean"
+				},
+				"immutable": {
+					"type": "boolean"
+				},
 				"variables": {
 					"properties": {
 						"varDescription": {
@@ -239,6 +245,9 @@ func (s *Storage) InitializeMetadataStorage(overwrite bool) error {
 						},
 						"importance": {
 							"type": "integer"
+						},
+						"immutable": {
+							"type": "boolean"
 						}
 					}
 				}
@@ -372,6 +381,21 @@ func (s *Storage) InitializeModelStorage(overwrite bool) error {
 					"type": "text",
 					"analyzer": "search_analyzer",
 					"term_vector": "yes"
+				},
+				"variableDetails": {
+					"properties": {
+						"name": {
+							"type": "text",
+							"analyzer": "search_analyzer",
+							"term_vector": "yes"
+						},
+						"rank": {
+							"type": "integer"
+						},
+						"varType": {
+							"type": "text"
+						}
+					}
 				}
 			}
 		}

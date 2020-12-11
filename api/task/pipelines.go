@@ -59,12 +59,12 @@ func SetClient(computeClient *compute.Client) {
 	client = computeClient
 }
 
-func submitPipeline(datasets []string, step *description.FullySpecifiedPipeline) (string, error) {
-	return sr.SubmitPipeline(client, datasets, nil, nil, step)
+func submitPipeline(datasets []string, step *description.FullySpecifiedPipeline, shouldCache bool) (string, error) {
+	return sr.SubmitPipeline(client, datasets, nil, nil, step, shouldCache)
 }
 
 func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *FeatureRequest, lines [][]string) ([][]string, error) {
-	datasetURI, err := submitPipeline([]string{dataset}, feature.Step)
+	datasetURI, err := submitPipeline([]string{dataset}, feature.Step, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run pipeline primitive")
 	}

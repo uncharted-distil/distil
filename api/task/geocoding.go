@@ -143,7 +143,7 @@ func GeocodeForward(datasetInputDir string, dataset string, variable *model.Vari
 		return nil, errors.Wrap(err, "unable to create Goat pipeline")
 	}
 
-	datasetURI, err := submitPipeline([]string{datasetInputDir}, pip)
+	datasetURI, err := submitPipeline([]string{datasetInputDir}, pip, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run Goat pipeline")
 	}

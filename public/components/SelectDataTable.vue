@@ -153,6 +153,7 @@ export default Vue.extend({
 
   props: {
     instanceName: String as () => string,
+    dataItems: { type: Array as () => TableRow[], default: null },
     includedActive: { type: Boolean, default: true },
   },
 
@@ -183,7 +184,7 @@ export default Vue.extend({
       let items = this.includedActive
         ? datasetGetters.getIncludedTableDataItems(this.$store)
         : datasetGetters.getExcludedTableDataItems(this.$store);
-
+      items = this.dataItems ? this.dataItems : items;
       // In the case of timeseries, we add their Min/Max/Mean.
       if (this.isTimeseries) {
         items = items?.map((item) => {
