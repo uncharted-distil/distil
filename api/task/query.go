@@ -77,7 +77,7 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 	}
 
 	// submit the pipeline
-	resultURI, err := submitPipeline([]string{ds.LearningDataset, datasetPath}, desc, true)
+	resultURI, err := submitPipeline([]string{ds.LearningDataset, datasetPath}, desc, false)
 	if err != nil {
 		return nil, err
 	}

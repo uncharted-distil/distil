@@ -21,7 +21,7 @@ import {
   VariableSummary,
 } from "../../store/dataset/index";
 import { getters as routeGetters } from "../../store/route/module";
-import { getVariableSummariesByState } from "../../util/data";
+import { getVariableSummariesByState, getAllDataItems } from "../../util/data";
 import { isGeoLocatedType } from "../../util/types";
 import { actions as viewActions } from "../../store/view/module";
 import { INCLUDE_FILTER, Filter } from "../../util/filters";
@@ -35,6 +35,7 @@ export default Vue.extend({
   props: {
     instanceName: String as () => string,
     includedActive: Boolean as () => boolean,
+    dataItems: { type: Array as () => TableRow[], default: null },
   },
 
   computed: {
@@ -45,23 +46,10 @@ export default Vue.extend({
     },
 
     items(): TableRow[] {
-      const tableData = this.includedActive
-        ? datasetGetters.getHighlightedIncludeTableDataItems(this.$store)
-        : datasetGetters.getHighlightedExcludeTableDataItems(this.$store);
-      const highlighted = tableData
-        ? tableData.map((h) => {
-            return { ...h, isExcluded: true };
-          })
-        : [];
-      return this.includedActive
-        ? [
-            ...highlighted,
-            ...datasetGetters.getIncludedTableDataItems(this.$store),
-          ]
-        : [
-            ...highlighted,
-            ...datasetGetters.getExcludedTableDataItems(this.$store),
-          ];
+      if (this.dataItems) {
+        return this.dataItems;
+      }
+      return getAllDataItems(this.includedActive);
     },
     availableTargetVarsSearch(): string {
       return routeGetters.getRouteAvailableTargetVarsSearch(this.$store);

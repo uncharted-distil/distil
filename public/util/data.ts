@@ -155,6 +155,20 @@ export function parseBinaryScoreResponse(res: BinaryScoreResponse): RankedSet {
   });
   return rankedSet;
 }
+// include the highlight
+export function getAllDataItems(includedActive: boolean): TableRow[] {
+  const tableData = includedActive
+    ? datasetGetters.getHighlightedIncludeTableDataItems(store)
+    : datasetGetters.getHighlightedExcludeTableDataItems(store);
+  const highlighted = tableData
+    ? tableData.map((h) => {
+        return { ...h, isExcluded: true };
+      })
+    : [];
+  return includedActive
+    ? [...highlighted, ...datasetGetters.getIncludedTableDataItems(store)]
+    : [...highlighted, ...datasetGetters.getExcludedTableDataItems(store)];
+}
 export function getTimeseriesSummaryTopCategories(
   summary: VariableSummary
 ): string[] {

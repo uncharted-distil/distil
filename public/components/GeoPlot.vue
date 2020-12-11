@@ -1152,7 +1152,7 @@ export default Vue.extend({
         return "#999999";
       }
       if (this.isColoringByConfidence) {
-        return this.colorScale(item.confidence.value);
+        return this.colorScale(item.confidence?.value);
       }
       if (item[this.targetField] && item[this.predictedField]) {
         color =

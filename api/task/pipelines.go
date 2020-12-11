@@ -64,7 +64,7 @@ func submitPipeline(datasets []string, step *description.FullySpecifiedPipeline,
 }
 
 func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *FeatureRequest, lines [][]string) ([][]string, error) {
-	datasetURI, err := submitPipeline([]string{dataset}, feature.Step, false)
+	datasetURI, err := submitPipeline([]string{dataset}, feature.Step, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run pipeline primitive")
 	}
