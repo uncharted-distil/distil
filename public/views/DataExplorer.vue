@@ -21,7 +21,7 @@
       <search-input class="mb-3" />
       <search-bar
         class="mb-3"
-        :variables="selectedVariables"
+        :variables="variables"
         :filters="filters"
         @lex-query="updateFilterFromLexQuery"
       />
