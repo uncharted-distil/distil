@@ -25,6 +25,7 @@
                 :height="imageHeight"
                 :type="imageType"
                 :gray="tilesToRender[i][j].gray"
+                :on-click="onImageClick"
               />
             </div>
           </template>
@@ -38,8 +39,20 @@
 import Vue from "vue";
 import ImagePreview from "./ImagePreview.vue";
 import ImageLabel from "./ImageLabel.vue";
-import { TableRow, TableColumn } from "../store/dataset/index";
+import {
+  TableRow,
+  TableColumn,
+  D3M_INDEX_FIELD,
+  RowSelection,
+} from "../store/dataset/index";
+import {
+  addRowSelection,
+  removeRowSelection,
+  isRowSelected,
+} from "../util/row";
+import { clearAreaOfInterest } from "../util/data";
 import { Dictionary } from "../util/dict";
+import { getters as routeGetters } from "../store/route/module";
 import { LatLngBounds, LatLngBoundsLiteral } from "leaflet";
 
 interface Tile {
@@ -76,6 +89,7 @@ export default Vue.extend({
       type: Object as () => Tile,
       default: { imageUrl: "", item: null, coordinates: null },
     },
+    instanceName: { type: String as () => string, default: "" },
   },
 
   computed: {
@@ -100,6 +114,9 @@ export default Vue.extend({
         2
       )}, ${this.bounds[1][0].toFixed(2)}]`;
     },
+    rowSelection(): RowSelection {
+      return routeGetters.getDecodedRowSelection(this.$store);
+    },
   },
   methods: {
     getIndex(x: number, y: number): SpatialIndex {
@@ -111,9 +128,6 @@ export default Vue.extend({
       };
     },
     spatialSort(): Tile[][] {
-      if (!this.tiles.length) {
-        return [];
-      }
       const result = Array.from({ length: this.rows }, (e) =>
         Array(this.cols).fill({
           imageUrl: null,
@@ -122,6 +136,9 @@ export default Vue.extend({
           gray: 0,
         })
       );
+      if (!this.tiles.length) {
+        return result;
+      }
       // loop through and build spatial array
       this.tiles.forEach((t) => {
         const center = new LatLngBounds(
@@ -136,6 +153,24 @@ export default Vue.extend({
     },
     onExitClicked() {
       this.$emit("close");
+      clearAreaOfInterest();
+    },
+    onImageClick(event: any) {
+      if (!isRowSelected(this.rowSelection, event.row[D3M_INDEX_FIELD])) {
+        addRowSelection(
+          this.$router,
+          this.instanceName,
+          this.rowSelection,
+          event.row[D3M_INDEX_FIELD]
+        );
+      } else {
+        removeRowSelection(
+          this.$router,
+          this.instanceName,
+          this.rowSelection,
+          event.row[D3M_INDEX_FIELD]
+        );
+      }
     },
   },
 });

@@ -49,11 +49,17 @@ export const mutations = {
   setFullIncludeResultTableData(state: ResultsState, resultData: TableData) {
     state.fullIncludedResultTableData = Object.freeze(resultData);
   },
+  clearAreaOfInterestInner(state: ResultsState) {
+    state.areaOfInterestInner = null;
+  },
+  clearAreaOfInterestOuter(state: ResultsState) {
+    state.areaOfInterestOuter = null;
+  },
   setAreaOfInterestInner(state: ResultsState, resultData: TableData) {
-    state.areaOfInterestInner = Object.freeze(resultData);
+    state.areaOfInterestInner = resultData;
   },
   setAreaOfInterestOuter(state: ResultsState, resultData: TableData) {
-    state.areaOfInterestOuter = Object.freeze(resultData);
+    state.areaOfInterestOuter = resultData;
   },
   // predicted
 

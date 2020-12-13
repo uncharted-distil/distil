@@ -1,6 +1,6 @@
 import axios from "axios";
 import sha1 from "crypto-js/sha1";
-import _ from "lodash";
+import _, { result } from "lodash";
 import Vue from "vue";
 import {
   D3M_INDEX_FIELD,
@@ -851,7 +851,41 @@ export function validateData(data: TableData) {
     !_.isEmpty(data) && !_.isEmpty(data.values) && !_.isEmpty(data.columns)
   );
 }
-
+export function clearAreaOfInterest() {
+  // select view store
+  datasetMutations.clearAreaOfInterestIncludeInner(store);
+  datasetMutations.clearAreaOfInterestIncludeOuter(store);
+  datasetMutations.clearAreaOfInterestExcludeInner(store);
+  datasetMutations.clearAreaOfInterestExcludeOuter(store);
+  // result view store
+  resultsMutations.clearAreaOfInterestInner(store);
+  resultsMutations.clearAreaOfInterestOuter(store);
+}
+export function updateTableDataItems(
+  data: TableData,
+  newVals: Map<number, unknown>
+) {
+  const colTypeMap = new Map(
+    data.columns.map((val, idx) => {
+      return [val.key, idx];
+    })
+  );
+  const d3mIdx = colTypeMap.get(D3M_INDEX_FIELD);
+  if (d3mIdx === undefined) {
+    console.error("Error updating table data items");
+    return;
+  }
+  data.values.forEach((resultRow) => {
+    const rowD3mIdx = resultRow[d3mIdx].value;
+    if (newVals.has(rowD3mIdx.toString())) {
+      const val = newVals.get(rowD3mIdx.toString());
+      Object.keys(val).forEach((key) => {
+        const idx = colTypeMap.get(key);
+        Vue.set(resultRow, idx, { value: val[key] });
+      });
+    }
+  });
+}
 export function getTableDataItems(data: TableData): TableRow[] {
   if (validateData(data)) {
     // convert fetched result data rows into table data rows

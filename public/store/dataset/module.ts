@@ -222,6 +222,21 @@ export const mutations = {
   setAreaOfInterestExcludeOuter: commit(
     moduleMutations.setAreaOfInterestExcludeOuter
   ),
+  clearAreaOfInterestIncludeInner: commit(
+    moduleMutations.clearAreaOfInterestIncludeInner
+  ),
+  clearAreaOfInterestIncludeOuter: commit(
+    moduleMutations.clearAreaOfInterestIncludeOuter
+  ),
+  clearAreaOfInterestExcludeInner: commit(
+    moduleMutations.clearAreaOfInterestExcludeInner
+  ),
+  clearAreaOfInterestExcludeOuter: commit(
+    moduleMutations.clearAreaOfInterestExcludeOuter
+  ),
+  updateAreaOfInterestIncludeInner: commit(
+    moduleMutations.updateAreaOfInterestIncludeInner
+  ),
   removeTimeseries: commit(moduleMutations.removeTimeseries),
   setIncludedTableData: commit(moduleMutations.setIncludedTableData),
   setExcludedTableData: commit(moduleMutations.setExcludedTableData),

@@ -4,6 +4,7 @@
     :data-fields="fields"
     :data-items="items"
     :summaries="summaries"
+    :areaOfInterestItems="{ inner: inner, outer: outer }"
     @tileClicked="onTileClick"
   >
   </geo-plot>
@@ -63,6 +64,16 @@ export default Vue.extend({
             ...datasetGetters.getExcludedTableDataItems(this.$store),
           ];
     },
+    inner(): TableRow[] {
+      return this.includedActive
+        ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)
+        : datasetGetters.getAreaOfInterestExcludeInnerItems(this.$store);
+    },
+    outer(): TableRow[] {
+      return this.includedActive
+        ? datasetGetters.getAreaOfInterestIncludeOuterItems(this.$store)
+        : datasetGetters.getAreaOfInterestExcludeOuterItems(this.$store);
+    },
     trainingVarsSearch(): string {
       return routeGetters.getRouteTrainingVarsSearch(this.$store);
     },
@@ -106,15 +117,6 @@ export default Vue.extend({
       };
       // fetch area of interests
       await viewActions.updateAreaOfInterest(this.$store, filter);
-      // get area of interests
-      const inner = this.includedActive
-        ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)
-        : datasetGetters.getAreaOfInterestExcludeInnerItems(this.$store);
-      const outer = this.includedActive
-        ? datasetGetters.getAreaOfInterestIncludeOuterItems(this.$store)
-        : datasetGetters.getAreaOfInterestExcludeOuterItems(this.$store);
-      // send data back to geoplot
-      data.callback(inner, outer);
     },
   },
 });
