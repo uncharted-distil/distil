@@ -11,7 +11,6 @@ import (
 // QueryRequest defines a request to query a dataset for similar images to labelled observations.
 type QueryRequest struct {
 	DatasetID string
-	Dataset   string
 	Target    string
 	Filters   *api.FilterParams
 
@@ -47,9 +46,6 @@ func NewQueryRequest(data []byte) (*QueryRequest, error) {
 	if !ok {
 		return nil, errors.Errorf("no `datasetId` in predict request")
 	}
-
-	// the dataset contents as a base 64 encded string
-	req.Dataset = json.StringDefault(jsonMap, "", "dataset")
 
 	// the target is the name of the label on which to base the query.
 	req.Target = json.StringDefault(jsonMap, "", "target")

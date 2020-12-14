@@ -32,7 +32,7 @@
     <div class="table-title-container">
       <p class="selection-data-slot-summary">
         <data-size
-          :currentSize="numRows"
+          :currentSize="numItems"
           :total="numRows"
           @submit="onDataSizeSubmit"
         />
@@ -386,13 +386,6 @@ export default Vue.extend({
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       const entry = overlayRouteEntry(this.$route, { dataSize });
-      this.$router.push(entry).catch((err) => console.warn(err));
-      viewActions.updateSelectTrainingData(this.$store);
-    },
-  },
-  watch: {
-    numRows(newVal: number) {
-      const entry = overlayRouteEntry(this.$route, { dataSize: newVal });
       this.$router.push(entry).catch((err) => console.warn(err));
       viewActions.updateSelectTrainingData(this.$store);
     },

@@ -292,13 +292,24 @@ func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel
 	params := task.QueryParams{
 		DataStorage: dataStorage,
 		MetaStorage: metaStorage,
-		Dataset:     req.Dataset,
+		Dataset:     req.DatasetID,
 		TargetName:  req.Target,
 		Filters:     req.Filters,
 	}
-	_, err = task.Query(params)
+	res, err := task.Query(params)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to execute query request"))
+		return
+	}
+	response := map[string]interface{}{
+		"progress": res,
+		"id":       msg.ID,
+		"type":     msg.Type,
+	}
+
+	err = conn.SendResponse(response)
+	if err != nil {
+		handleErr(conn, msg, errors.Wrap(err, "unable to send response"))
 		return
 	}
 }

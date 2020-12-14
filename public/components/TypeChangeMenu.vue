@@ -63,8 +63,8 @@
 <script lang="ts">
 import _ from "lodash";
 import Vue from "vue";
-import IconBase from "./icons/IconBase";
-import IconBookmark from "./icons/IconBookmark";
+import IconBase from "./icons/IconBase.vue";
+import IconBookmark from "./icons/IconBookmark.vue";
 import { SuggestedType, Variable, Highlight } from "../store/dataset/index";
 import {
   actions as datasetActions,

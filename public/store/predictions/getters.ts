@@ -13,17 +13,15 @@ export const getters = {
   // results
 
   getPredictionDataNumRows(state: PredictionState): number {
-    return state.includedPredictionTableData
-      ? state.includedPredictionTableData.numRows
-      : 0;
+    return state.includedPredictionTableData?.numRows ?? 0;
   },
 
   getFittedSolutionIdFromPrediction(state: PredictionState): string {
-    return state.includedPredictionTableData.fittedSolutionId;
+    return state.includedPredictionTableData?.fittedSolutionId;
   },
 
   getProduceRequestIdFromPrediction(state: PredictionState): string {
-    return state.includedPredictionTableData.produceRequestId;
+    return state.includedPredictionTableData?.produceRequestId;
   },
 
   hasIncludedPredictionTableData(state: PredictionState): boolean {

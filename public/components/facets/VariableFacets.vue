@@ -368,14 +368,16 @@ export default Vue.extend({
         });
       }
     },
-    search(oldTerm, newTerm) {
+    search(newTerm, oldTerm) {
+      if (!newTerm || newTerm === oldTerm) return;
+
       const entry = overlayRouteEntry(this.$route, {
         [this.routeSearchKey()]: this.search,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
 
       // If the term searched has been updated, we emit an event.
-      if (oldTerm !== newTerm) this.$emit("search", this.search);
+      this.$emit("search", this.search);
     },
   },
 

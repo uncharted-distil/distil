@@ -171,11 +171,11 @@ export default Vue.extend({
         routeGetters.getDataMode(this.$store) === DataMode.Cluster &&
         dataModeOld !== DataMode.Cluster
       ) {
+        viewActions.updateSelectTrainingData(this.$store);
         const clusterEntry = overlayRouteEntry(this.$route, {
           clustering: "1",
         });
-        viewActions.updateSelectTrainingData(this.$store);
-        this.$router.push(clusterEntry);
+        this.$router.push(clusterEntry).catch((err) => console.warn(err));
       }
     },
   },

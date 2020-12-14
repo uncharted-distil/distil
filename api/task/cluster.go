@@ -167,7 +167,7 @@ func Cluster(dataset *api.Dataset, variable string, useKMeans bool) (bool, []*Cl
 		return false, nil, err
 	}
 
-	datasetURI, err := submitPipeline([]string{datasetInputDir}, step)
+	datasetURI, err := submitPipeline([]string{datasetInputDir}, step, true)
 	if err != nil {
 		return false, nil, err
 	}

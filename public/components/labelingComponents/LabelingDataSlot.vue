@@ -1,18 +1,7 @@
 <template>
   <div class="h-75">
     <div class="d-flex justify-content-around m-1">
-      <div class="pt-2">
-        <b-button @click="onAnnotationClicked(positive)">
-          <i class="fa fa-check text-success" aria-hidden="true"></i>
-          Positive
-        </b-button>
-        <b-button @click="onAnnotationClicked(negative)">
-          <i class="fa fa-times red" aria-hidden="true"></i>
-          Negative</b-button
-        >
-        <b-button @click="onAnnotationClicked(unlabeled)">Unlabeled</b-button>
-        <layer-selection v-if="isRemoteSensing" />
-      </div>
+      <label-header-buttons @button-event="onAnnotationClicked" />
       <view-type-toggle
         v-model="viewTypeModel"
         :variables="variables"
@@ -40,7 +29,6 @@ import { Dictionary } from "../../util/dict";
 import LabelGeoPlot from "./LabelGeoplot.vue";
 import ImageMosaic from "../ImageMosaic.vue";
 import SelectDataTable from "../SelectDataTable.vue";
-import LayerSelection from "../LayerSelection.vue";
 import {
   Variable,
   VariableSummary,
@@ -48,14 +36,11 @@ import {
   TableColumn,
   RowSelection,
 } from "../../store/dataset/index";
-import {
-  getters as datasetGetters,
-  actions as datasetActions,
-} from "../../store/dataset/module";
+import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
-import { clearRowSelection } from "../../util/row";
-import { LowShotLabels, LOW_SHOT_LABEL_COLUMN_NAME } from "../../util/data";
-import { MULTIBAND_IMAGE_TYPE } from "../../util/types";
+import { LowShotLabels, RankedSet, ScoreInfo } from "../../util/data";
+import LabelHeaderButtons from "./LabelHeaderButtons.vue";
+
 const GEO_VIEW = "geo";
 const IMAGE_VIEW = "image";
 const TABLE_VIEW = "table";
@@ -67,12 +52,18 @@ export default Vue.extend({
     LabelGeoPlot,
     ImageMosaic,
     SelectDataTable,
-    LayerSelection,
+    LabelHeaderButtons,
   },
   props: {
     variables: Array as () => Variable[],
     summaries: Array as () => VariableSummary[],
     instanceName: { type: String, default: "label" },
+    rankedSet: {
+      type: Object as () => RankedSet,
+      default: () => {
+        return { data: [] as ScoreInfo[] };
+      },
+    },
   },
   data() {
     return {
@@ -89,7 +80,25 @@ export default Vue.extend({
       return "";
     },
     dataItems(): TableRow[] {
-      return datasetGetters.getIncludedTableDataItems(this.$store);
+      const items = datasetGetters.getIncludedTableDataItems(this.$store);
+      if (this.rankedSet?.data.length) {
+        const unlabledItems = [];
+        const labeledItems = [];
+        items.map((item) => {
+          if (this.rankedMap.has(item.d3mIndex)) {
+            unlabledItems.push(item);
+          } else {
+            labeledItems.push(item);
+          }
+        });
+        unlabledItems.sort((a, b) => {
+          return (
+            this.rankedMap.get(b.d3mIndex) - this.rankedMap.get(a.d3mIndex)
+          );
+        });
+        return unlabledItems.concat(labeledItems);
+      }
+      return items;
     },
     dataFields(): Dictionary<TableColumn> {
       return datasetGetters.getIncludedTableDataFields(this.$store);
@@ -100,10 +109,12 @@ export default Vue.extend({
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
-    isRemoteSensing(): boolean {
-      return this.summaries.some((s) => {
-        return s.varType === MULTIBAND_IMAGE_TYPE;
-      });
+    rankedMap(): Map<number, number> {
+      return new Map(
+        this.rankedSet?.data.map((d) => {
+          return [d.d3mIndex, d.score];
+        })
+      );
     },
     negative(): string {
       return LowShotLabels.negative;
@@ -120,22 +131,7 @@ export default Vue.extend({
       if (!this.rowSelection) {
         return;
       }
-      this.updateData(label);
-      this.$emit(this.eventLabel);
-    },
-    updateData(label: LowShotLabels) {
-      const updateData = this.rowSelection.d3mIndices.map((i) => {
-        return {
-          index: i.toString(),
-          name: LOW_SHOT_LABEL_COLUMN_NAME,
-          value: label,
-        };
-      });
-      datasetActions.updateDataset(this.$store, {
-        dataset: this.dataset,
-        updateData,
-      });
-      clearRowSelection(this.$router);
+      this.$emit(this.eventLabel, label);
     },
   },
 });
@@ -148,14 +144,11 @@ export default Vue.extend({
   height: 90%;
   position: relative;
   width: 100%;
-  background: #e0e0e0;
+  background: #eee;
 }
 .label-headers {
   margin: 5px;
   display: flex;
   justify-content: space-around;
-}
-.red {
-  color: var(--red);
 }
 </style>

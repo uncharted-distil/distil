@@ -339,7 +339,7 @@ export default Vue.extend({
 
     updateRoute(args) {
       const entry = overlayRouteEntry(this.$route, args);
-      this.$router.push(entry).catch((err) => console.debug(err));
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });

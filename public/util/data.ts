@@ -121,6 +121,40 @@ export const COLOR_SCALES: Map<
   [ColorScaleNames.plasma, interpolatePlasma],
   [ColorScaleNames.turbo, interpolateTurbo],
 ]);
+export interface ScoreInfo {
+  d3mIndex: number;
+  score: number;
+}
+// BinarySets contains the ranked data for the LowShotLabel binary classification
+export interface RankedSet {
+  data: ScoreInfo[];
+}
+export interface BinaryScoreResponse {
+  progress: {
+    ranked: string[][];
+    colInfo: { d3mIndex: string; score: string };
+  };
+}
+export function parseBinaryScoreResponse(res: BinaryScoreResponse): RankedSet {
+  // check for properties
+  if (!res.progress) {
+    return null;
+  }
+  const result = res.progress;
+  if (!result.ranked || !result.colInfo) {
+    return null;
+  }
+  const d3mIndex = result.colInfo.d3mIndex;
+  const scoreIndex = parseInt(result.colInfo.score);
+  const rankedSet: RankedSet = { data: [] };
+  result.ranked.forEach((p) => {
+    rankedSet.data.push({
+      d3mIndex: p[d3mIndex],
+      score: parseFloat(p[scoreIndex]),
+    });
+  });
+  return rankedSet;
+}
 export function getTimeseriesSummaryTopCategories(
   summary: VariableSummary
 ): string[] {
@@ -133,7 +167,9 @@ export function getTimeseriesSummaryTopCategories(
     .sort((a, b) => b.count - a.count)
     .map((c) => c.category);
 }
-
+export function getRandomInt(max: number): number {
+  return Math.floor(Math.random() * Math.floor(max));
+}
 export function getTimeseriesGroupingsFromFields(
   variables: Variable[],
   fields: Dictionary<TableColumn>
@@ -453,7 +489,26 @@ export function removeSummary(
 }
 
 export function filterVariablesByFeature(variables: Variable[]): Variable[] {
-  return variables.filter((v) => v.distilRole === "data");
+  // need to exclude the hidden variables
+  const groupingVars = variables.filter(
+    (v) => v.distilRole === "grouping" && v.grouping !== null
+  );
+  const hiddenFlat = [].concat.apply(
+    [],
+    groupingVars.map((v) =>
+      [].concat(v.grouping.hidden).concat(v.grouping.subIds)
+    )
+  );
+  const hidden = new Map(hiddenFlat.map((v) => [v, v]));
+
+  // the groupings that hide variables are themselves variables to display
+  const groupingDisplayed = new Map(groupingVars.map((v) => [v.colName, v]));
+
+  return variables.filter(
+    (v) =>
+      (v.distilRole === "data" && !hidden.has(v.colName)) ||
+      groupingDisplayed.has(v.colName)
+  );
 }
 
 export function filterSummariesByDataset(

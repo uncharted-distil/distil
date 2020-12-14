@@ -52,7 +52,7 @@ func Merge(schemaFile string, dataset string, config *IngestTaskConfig) (string,
 	}
 
 	// pipeline execution assumes datasetDoc.json as schema file
-	datasetURI, err := submitPipeline([]string{outputPath.sourceFolder}, pip)
+	datasetURI, err := submitPipeline([]string{outputPath.sourceFolder}, pip, true)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to run denormalize pipeline")
 	}
