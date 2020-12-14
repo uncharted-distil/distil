@@ -162,7 +162,7 @@ export function getAllDataItems(includedActive: boolean): TableRow[] {
     : datasetGetters.getHighlightedExcludeTableDataItems(store);
   const highlighted = tableData
     ? tableData.map((h) => {
-        return { ...h, isExcluded: true };
+        return { ...h, isExcluded: true }; // adding isExcluded for the geoplot to color it gray
       })
     : [];
   return includedActive
