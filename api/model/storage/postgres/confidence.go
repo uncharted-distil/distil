@@ -90,7 +90,7 @@ func (s *Storage) fetchHistograms(dataset string, storageName string, variable *
 func (s *Storage) fetchExplainHistogram(dataset string, storageName string, targetName string, explainFieldName string,
 	resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 	// use a numerical sub select
-	field := NewNumericalFieldSubSelect(s, dataset, storageName, explainFieldName, explainFieldName, model.IntegerType, "", s.explainSubSelect(storageName, explainFieldName))
+	field := NewNumericalFieldSubSelect(s, dataset, storageName, explainFieldName, explainFieldName, model.RealType, "", s.explainSubSelect(storageName, explainFieldName))
 	return field.fetchHistogram(filterParams, false, 20)
 }
 

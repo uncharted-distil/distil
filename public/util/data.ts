@@ -525,6 +525,7 @@ export async function fetchSolutionResultSummary(
   solution: Solution,
   key: string,
   label: string,
+  resultProperty: string,
   resultSummaries: VariableSummary[],
   updateFunction: (arg: ResultsContext, summary: VariableSummary) => void,
   filterParams: FilterParams,
@@ -561,7 +562,7 @@ export async function fetchSolutionResultSummary(
       filterParams ? filterParams : {}
     );
     // save the histogram data
-    const summary = response.data.summary;
+    const summary = response.data[resultProperty];
     await fetchResultExemplars(dataset, target, key, solutionId, summary);
     summary.solutionId = solutionId;
     summary.dataset = dataset;

@@ -336,7 +336,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	return nil
 }
 
-func (s *Storage) parseExplainValues(record []string, rankIndex int, confidenceIndex int) (*api.SolutionExplainValues, error) {
+func (s *Storage) parseExplainValues(record []string, confidenceIndex int, rankIndex int) (*api.SolutionExplainValues, error) {
 	// -1 + -1 = -2 => no confidence nor ranking
 	if confidenceIndex+rankIndex == -2 {
 		return nil, nil
@@ -447,7 +447,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 				}
 				varIndex++
 			}
-			if explainCol >= 0 {
+			if explainCol >= 0 && columnValues[explainCol] != nil {
 				explainValuesRaw := columnValues[explainCol].(map[string]interface{})
 				explainValuesParsed := &api.SolutionExplainValues{}
 				err = jsonu.MapToStruct(explainValuesParsed, explainValuesRaw)
