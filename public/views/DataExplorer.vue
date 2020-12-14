@@ -19,7 +19,12 @@
 
     <main class="content">
       <search-input class="mb-3" />
-      <search-bar class="mb-3" :variables="selectedVariables" />
+      <search-bar
+        class="mb-3"
+        :variables="variables"
+        :filters="filters"
+        @lex-query="updateFilterFromLexQuery"
+      />
 
       <!-- Tabs to switch views -->
       <b-tabs pills v-model="activeView" class="mb-3">
@@ -88,6 +93,8 @@ import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
 
 // Util
+import { deepUpdateFiltersInRoute } from "../util/filters";
+import { lexQueryToFilters } from "../util/lex";
 import { overlayRouteEntry } from "../util/routes";
 import { getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
@@ -314,6 +321,11 @@ export default Vue.extend({
 
   methods: {
     capitalize,
+
+    updateFilterFromLexQuery(lexQuery) {
+      const updatedFilter = lexQueryToFilters(lexQuery, this.variables);
+      deepUpdateFiltersInRoute(this.$router, updatedFilter);
+    },
 
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {

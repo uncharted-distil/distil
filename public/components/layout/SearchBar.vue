@@ -9,17 +9,12 @@
 import Vue from "vue";
 import _ from "lodash";
 import { h } from "preact";
-import {
-  LabelState,
-  Lex,
-  NumericEntryState,
-  TextEntryState,
-  TransitionFactory,
-  ValueState,
-  ValueStateValue,
-} from "@uncharted.software/lex";
+import { Lex } from "@uncharted.software/lex";
 import { Variable } from "../../store/dataset/index";
+import { variablesToLexLanguage, filterParamsToLexQuery } from "../../util/lex";
 import "../../../node_modules/@uncharted.software/lex/dist/lex.css";
+import "../../../node_modules/flatpickr/dist/flatpickr.min.css";
+import { FilterParams } from "../../util/filters";
 
 /** SearchBar component to display LexBar utility
  *
@@ -40,29 +35,8 @@ export default Vue.extend({
   },
 
   computed: {
-    language(): any {
-      return Lex.from("field", ValueState, {
-        name: "Choose a variable to filter",
-        icon: '<i class="fa fa-filter" />',
-        suggestions: this.suggestions,
-      }).branch(
-        Lex.from(LabelState, {
-          label: "From",
-          ...TransitionFactory.valueMetaCompare({ type: "numeric" }),
-        })
-          .to("lower bound", NumericEntryState, { name: "Enter lower bound" })
-          .to(LabelState, { label: "To" })
-          .to("upper bound", NumericEntryState, { name: "Enter upper bound" })
-      );
-    },
-
-    suggestions(): ValueStateValue[] {
-      if (_.isEmpty(this.variables)) return;
-      return this.variables.map((variable) => {
-        const name = _.capitalize(variable.colDisplayName);
-        const options = { type: "numeric" }; // variable.colType
-        return new ValueStateValue(name, options);
-      });
+    language(): Lex {
+      return variablesToLexLanguage(this.variables);
     },
   },
 
@@ -91,8 +65,7 @@ export default Vue.extend({
       this.lex.on("query changed", (
         ...args /* [newModel, oldModel, newUnboxedModel, oldUnboxedModel, nextTokenStarted] */
       ) => {
-        const filters = []; // TODO - lexModelToFilters(args[0]);
-        this.$emit("lex-filter", filters);
+        this.$emit("lex-query", args);
       });
 
       // Render our search bar into our desired element
@@ -102,7 +75,7 @@ export default Vue.extend({
 
     setQuery(): void {
       if (!this.lex) return;
-      const lexQuery = []; // TODO - filtersToLexQuery(this.filters);
+      const lexQuery = filterParamsToLexQuery(this.filters, this.variables);
       this.lex.setQuery(lexQuery, false);
     },
   },
