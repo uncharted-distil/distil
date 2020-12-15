@@ -98,24 +98,18 @@ export default Vue.extend({
     },
   },
   computed: {
-    rankedMap(): Map<number, number> {
+    itemMap(): Map<number, TableRow> {
       return new Map(
-        this.rankedSet?.data.map((d) => {
-          return [d.d3mIndex, d.score];
+        this.data?.map((d) => {
+          return [d.d3mIndex, d];
         })
       );
     },
     items(): TableRow[] {
-      const ranked: TableRow[] = [];
-      this.data?.forEach((d) => {
-        if (this.rankedMap.has(d.d3mIndex)) {
-          ranked.push(d);
-        }
+      const indices = this.rankedSet?.data.slice(0, this.sampleSize);
+      return indices?.map((d) => {
+        return this.itemMap.get(d.d3mIndex);
       });
-      ranked.sort((a, b) => {
-        return this.rankedMap.get(b.d3mIndex) - this.rankedMap.get(a.d3mIndex);
-      });
-      return ranked.slice(0, this.sampleSize);
     },
     randomItems(): TableRow[] {
       const random = this.data?.filter((d) => {
