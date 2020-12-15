@@ -93,34 +93,30 @@ export default Vue.extend({
           : datasetGetters.getIncludedTableDataItems(this.$store)
       );
       if (this.rankedSet?.data.length) {
+        const itemMap = new Map(
+          items.map((d) => {
+            return [d.d3mIndex, d];
+          })
+        );
         const unlabledItems = [];
         const labeledItems = [];
-        items.map((item) => {
-          if (this.rankedMap.has(item.d3mIndex)) {
-            unlabledItems.push(item);
-          } else {
-            labeledItems.push(item);
-          }
-        });
-        unlabledItems.sort((a, b) => {
-          return (
-            this.rankedMap.get(b.d3mIndex) - this.rankedMap.get(a.d3mIndex)
-          );
-        });
         const confidence = "confidence";
-        // hack for now until rank and confidence is changed in backend
-        unlabledItems.forEach((item, i) => {
-          item[confidence] = {
-            value: (unlabledItems.length - i) / unlabledItems.length,
+        this.rankedSet.data.forEach((item, i) => {
+          const updatedItem = itemMap.get(item.d3mIndex);
+          updatedItem[confidence] = {
+            value: 1.0 - i / this.rankedSet.data.length,
           };
+          itemMap.delete(item.d3mIndex);
+          unlabledItems.push(updatedItem);
         });
-        labeledItems.forEach((item) => {
+        itemMap.forEach((item) => {
           item[confidence] = {
             value:
               item[LOW_SHOT_LABEL_COLUMN_NAME] === LowShotLabels.positive
                 ? 1.0
                 : 0.0,
           };
+          labeledItems.push(item);
         });
         return unlabledItems.concat(labeledItems);
       }
@@ -134,13 +130,6 @@ export default Vue.extend({
     },
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
-    },
-    rankedMap(): Map<number, number> {
-      return new Map(
-        this.rankedSet?.data.map((d) => {
-          return [d.d3mIndex, d.score];
-        })
-      );
     },
     negative(): string {
       return LowShotLabels.negative;
