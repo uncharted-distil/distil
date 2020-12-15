@@ -24,6 +24,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+import _ from "lodash";
 import ViewTypeToggle from "../ViewTypeToggle.vue";
 import { Dictionary } from "../../util/dict";
 import LabelGeoPlot from "./LabelGeoplot.vue";
@@ -38,7 +39,13 @@ import {
 } from "../../store/dataset/index";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
-import { LowShotLabels, RankedSet, ScoreInfo } from "../../util/data";
+import {
+  LowShotLabels,
+  LOW_SHOT_LABEL_COLUMN_NAME,
+  RankedSet,
+  ScoreInfo,
+  getAllDataItems,
+} from "../../util/data";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
 
 const GEO_VIEW = "geo";
@@ -80,7 +87,11 @@ export default Vue.extend({
       return "";
     },
     dataItems(): TableRow[] {
-      const items = datasetGetters.getIncludedTableDataItems(this.$store);
+      const items = _.cloneDeep(
+        this.viewTypeModel === GEO_VIEW
+          ? getAllDataItems(true)
+          : datasetGetters.getIncludedTableDataItems(this.$store)
+      );
       if (this.rankedSet?.data.length) {
         const unlabledItems = [];
         const labeledItems = [];
@@ -95,6 +106,21 @@ export default Vue.extend({
           return (
             this.rankedMap.get(b.d3mIndex) - this.rankedMap.get(a.d3mIndex)
           );
+        });
+        const confidence = "confidence";
+        // hack for now until rank and confidence is changed in backend
+        unlabledItems.forEach((item, i) => {
+          item[confidence] = {
+            value: (unlabledItems.length - i) / unlabledItems.length,
+          };
+        });
+        labeledItems.forEach((item) => {
+          item[confidence] = {
+            value:
+              item[LOW_SHOT_LABEL_COLUMN_NAME] === LowShotLabels.positive
+                ? 1.0
+                : 0.0,
+          };
         });
         return unlabledItems.concat(labeledItems);
       }

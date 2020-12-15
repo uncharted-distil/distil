@@ -119,10 +119,7 @@ export default Vue.extend({
     },
     randomItems(): TableRow[] {
       const random = this.data?.filter((d) => {
-        return (
-          !this.rankedMap.has(d.d3mIndex) &&
-          d[LOW_SHOT_LABEL_COLUMN_NAME]?.value === LowShotLabels.unlabeled
-        );
+        return d[LOW_SHOT_LABEL_COLUMN_NAME]?.value === LowShotLabels.unlabeled;
       });
       if (!random) {
         return null;

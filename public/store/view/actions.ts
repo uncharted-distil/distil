@@ -469,7 +469,6 @@ export const actions = {
   },
   updateLabelData(context: ViewContext) {
     // clear any previous state
-
     const dataset = context.getters.getRouteDataset;
     const highlight = context.getters.getDecodedHighlight;
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
@@ -478,9 +477,6 @@ export const actions = {
     const dataMode = context.getters.getDataMode;
     const variables = datasetGetters.getVariables(store);
     const varModes = context.getters.getDecodedVarModes;
-    variables.forEach((v) => {
-      filterParams.variables.push(v.colName);
-    });
     clearVariableSummaries(context);
     return Promise.all([
       datasetActions.fetchIncludedVariableSummaries(store, {

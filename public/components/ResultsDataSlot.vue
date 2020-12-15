@@ -26,6 +26,7 @@
         :data-items="dataItems"
         :instance-name="instanceName"
         :summaries="trainingSummaries"
+        :areaOfInterestItems="{ inner: inner, outer: outer }"
         @tileClicked="onTileClick"
       />
     </div>
@@ -232,7 +233,12 @@ export default Vue.extend({
     numErrors(): number {
       return this.dataItems ? this.errorCount(this.dataItems) : 0;
     },
-
+    inner(): TableRow[] {
+      return resultsGetters.getAreaOfInterestInnerDataItems(this.$store);
+    },
+    outer(): TableRow[] {
+      return resultsGetters.getAreaOfInterestOuterDataItems(this.$store);
+    },
     regressionEnabled(): boolean {
       const routeArgs = routeGetters.getRouteTask(this.$store);
       return routeArgs && routeArgs.includes(TaskTypes.REGRESSION);
@@ -324,12 +330,6 @@ export default Vue.extend({
       };
       // fetch surrounding tiles
       await viewActions.updateResultAreaOfInterest(this.$store, filter);
-      // get area of interest
-      const inner = resultsGetters.getAreaOfInterestInnerDataItems(this.$store);
-      const outer = resultsGetters.getAreaOfInterestOuterDataItems(this.$store);
-      // callback after fetch
-      data.callback(inner, outer);
-      return;
     },
   },
 });

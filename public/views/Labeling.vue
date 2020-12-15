@@ -72,6 +72,7 @@ import { getters as routeGetters } from "../store/route/module";
 import {
   getters as datasetGetters,
   actions as datasetActions,
+  mutations as datasetMutations,
 } from "../store/dataset/module";
 import { LABEL_FEATURE_INSTANCE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
@@ -271,12 +272,12 @@ export default Vue.extend({
         filters: null,
       });
       const rankedSet = parseBinaryScoreResponse(res as BinaryScoreResponse);
+      this.isLoadingData = false;
       if (!rankedSet) {
         console.error("Error parsing binary score response");
         return;
       }
       this.rankedSet = rankedSet;
-      this.isLoadingData = false;
     },
     onExport() {
       const highlight = {
@@ -334,17 +335,33 @@ export default Vue.extend({
       await datasetActions.fetchVariables(this.$store, {
         dataset: this.dataset,
       });
+      const training = routeGetters.getDecodedTrainingVariableNames(
+        this.$store
+      );
+
+      this.variables.forEach((variable) => {
+        training.push(variable.colName);
+      });
+
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        training: training.join(","),
+      });
+
+      this.$router.push(entry).catch((err) => console.warn(err));
       await viewActions.updateLabelData(this.$store);
     },
     onAnnotationChanged(label: LowShotLabels) {
       const rowSelection = routeGetters.getDecodedRowSelection(this.$store);
+      const innerData = new Map<number, unknown>();
       const updateData = rowSelection.d3mIndices.map((i) => {
+        innerData.set(i, { LowShotLabel: label });
         return {
           index: i.toString(),
           name: LOW_SHOT_LABEL_COLUMN_NAME,
           value: label,
         };
       });
+      datasetMutations.updateAreaOfInterestIncludeInner(this.$store, innerData);
       datasetActions.updateDataset(this.$store, {
         dataset: this.dataset,
         updateData,

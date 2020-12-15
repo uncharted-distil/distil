@@ -143,6 +143,8 @@ export const mutations = {
   setFullIncludedResultTableData: commit(
     moduleMutations.setFullIncludeResultTableData
   ),
+  clearAreaOfInterestInner: commit(moduleMutations.clearAreaOfInterestInner),
+  clearAreaOfInterestOuter: commit(moduleMutations.clearAreaOfInterestOuter),
   setAreaOfInterestInner: commit(moduleMutations.setAreaOfInterestInner),
   setAreaOfInterestOuter: commit(moduleMutations.setAreaOfInterestOuter),
   // predicted
