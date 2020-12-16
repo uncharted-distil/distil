@@ -26,13 +26,14 @@
       </template>
 
       <template
-        v-for="imageField in imageFields"
+        v-for="(imageField, idx) in imageFields"
         v-slot:[cellSlot(imageField.key)]="data"
       >
-        <div class="position-relative">
+        <div class="position-relative" :key="idx">
           <image-preview
             :key="imageField.key"
             :type="imageField.type"
+            :row="data.item"
             :image-url="data.item[imageField.key].value"
             :debounce="true"
             :uniqueTrail="uniqueTrail"
