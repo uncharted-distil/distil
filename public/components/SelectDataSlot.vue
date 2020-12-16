@@ -29,6 +29,13 @@
       />
     </div>
 
+    <search-bar
+      class="mb-3"
+      :variables="variables"
+      :filters="routeFilters"
+      @lex-query="updateFilterFromLexQuery"
+    />
+
     <div class="table-title-container">
       <p class="selection-data-slot-summary">
         <data-size
@@ -93,6 +100,7 @@ import { spinnerHTML } from "../util/spinner";
 import DataSize from "../components/buttons/DataSize.vue";
 import SelectDataTable from "./SelectDataTable.vue";
 import ImageMosaic from "./ImageMosaic.vue";
+import SearchBar from "../components/layout/SearchBar.vue";
 import SelectTimeseriesView from "./SelectTimeseriesView.vue";
 import SelectGeoPlot from "./SelectGeoPlot.vue";
 import SelectGraphView from "./SelectGraphView.vue";
@@ -116,10 +124,12 @@ import {
   Filter,
   FilterParams,
   addFilterToRoute,
+  deepUpdateFiltersInRoute,
   EXCLUDE_FILTER,
   INCLUDE_FILTER,
 } from "../util/filters";
 import { clearHighlight, createFilterFromHighlight } from "../util/highlights";
+import { lexQueryToFilters } from "../util/lex";
 import {
   addRowSelection,
   removeRowSelection,
@@ -147,6 +157,7 @@ export default Vue.extend({
     FilterBadge,
     ImageMosaic,
     LayerSelection,
+    SearchBar,
     SelectDataTable,
     SelectGeoPlot,
     SelectGraphView,
@@ -266,6 +277,10 @@ export default Vue.extend({
         .filter((f) => f.type !== "row");
     },
 
+    routeFilters(): string {
+      return routeGetters.getRouteFilters(this.$store);
+    },
+
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
@@ -301,6 +316,11 @@ export default Vue.extend({
   },
 
   methods: {
+    updateFilterFromLexQuery(lexQuery) {
+      const updatedFilter = lexQueryToFilters(lexQuery, this.variables);
+      deepUpdateFiltersInRoute(this.$router, updatedFilter);
+    },
+
     onExcludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {

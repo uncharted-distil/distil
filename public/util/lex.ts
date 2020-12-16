@@ -10,6 +10,7 @@ import {
   decodeFilters,
   Filter,
   INCLUDE_FILTER,
+  EXCLUDE_FILTER,
   CATEGORICAL_FILTER,
   DATETIME_FILTER,
   NUMERICAL_FILTER,
@@ -24,7 +25,30 @@ import {
   TransitionFactory,
   ValueState,
   ValueStateValue,
+  RelationState,
 } from "@uncharted.software/lex";
+import { layerGroup } from "leaflet";
+
+const distilRelationOptions = [
+  [INCLUDE_FILTER, "="],
+  [EXCLUDE_FILTER, "≠"],
+].map((o) => new ValueStateValue(o[0], {}, { displayKey: o[1] }));
+
+class DistilRelationState extends RelationState {
+  static get INCLUDE() {
+    return distilRelationOptions[0];
+  }
+  static get EXCLUDE() {
+    return distilRelationOptions[1];
+  }
+  constructor(config) {
+    if (config.name === undefined) config.name = "Include or exclude";
+    config.options = function () {
+      return distilRelationOptions;
+    };
+    super(config);
+  }
+}
 
 export function variablesToLexLanguage(variables: Variable[]): Lex {
   const suggestions = variablesToLexSuggestions(variables);
@@ -33,34 +57,36 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
     icon: '<i class="fa fa-filter" />',
     suggestions: suggestions,
   }).branch(
-    Lex.from("value", TextEntryState, {
+    Lex.from("relation", DistilRelationState, {
       ...TransitionFactory.valueMetaCompare({ type: TEXT_FILTER }),
-    }),
-    Lex.from("value", TextEntryState, {
+    }).branch(Lex.from("value", TextEntryState)),
+    Lex.from("relation", DistilRelationState, {
       ...TransitionFactory.valueMetaCompare({ type: CATEGORICAL_FILTER }),
-    }),
-    Lex.from(LabelState, {
-      label: "From",
+    }).branch(Lex.from("value", TextEntryState)),
+    Lex.from("relation", DistilRelationState, {
       ...TransitionFactory.valueMetaCompare({ type: NUMERICAL_FILTER }),
-    })
-      .to("min", NumericEntryState, { name: "Enter lower bound" })
-      .to(LabelState, { label: "To" })
-      .to("max", NumericEntryState, { name: "Enter upper bound" }),
-    Lex.from(LabelState, {
-      label: "From",
+    }).branch(
+      Lex.from(LabelState, { label: "From" })
+        .to("min", NumericEntryState, { name: "Enter lower bound" })
+        .to(LabelState, { label: "To" })
+        .to("max", NumericEntryState, { name: "Enter upper bound" })
+    ),
+    Lex.from("relation", DistilRelationState, {
       ...TransitionFactory.valueMetaCompare({ type: DATETIME_FILTER }),
-    })
-      .to("min", DateTimeEntryState, {
-        enableTime: true,
-        enableCalendar: true,
-        timezone: "Greenwich",
-      })
-      .to(LabelState, { label: "To" })
-      .to("max", DateTimeEntryState, {
-        enableTime: true,
-        enableCalendar: true,
-        timezone: "Greenwich",
-      })
+    }).branch(
+      Lex.from(LabelState, { label: "From" })
+        .to("min", DateTimeEntryState, {
+          enableTime: true,
+          enableCalendar: true,
+          timezone: "Greenwich",
+        })
+        .to(LabelState, { label: "To" })
+        .to("max", DateTimeEntryState, {
+          enableTime: true,
+          enableCalendar: true,
+          timezone: "Greenwich",
+        })
+    )
   );
 }
 
@@ -84,17 +110,20 @@ export function filterParamsToLexQuery(
         field: suggestions[i],
         min: new ValueStateValue(f.min),
         max: new ValueStateValue(f.max),
+        relation: modeToRelation(f.mode),
       };
     } else if (f.type === DATETIME_FILTER) {
       return {
         field: suggestions[i],
         min: new Date(f.min * 1000),
         max: new Date(f.max * 1000),
+        relation: modeToRelation(f.mode),
       };
     } else {
       return {
         field: suggestions[i],
         value: new ValueStateValue(f.categories[0]),
+        relation: modeToRelation(f.mode),
       };
     }
   });
@@ -110,11 +139,12 @@ export function lexQueryToFilters(
     return a;
   }, {});
 
+  console.log(lexQuery);
   const filters = lexQuery[0].map((lq) => {
     const key = lq.field.key;
     const type = lq.field.meta.type;
     const filter: Filter = {
-      mode: INCLUDE_FILTER,
+      mode: lq.relation.key,
       displayName: key,
       type,
       key,
@@ -133,6 +163,14 @@ export function lexQueryToFilters(
     return filter;
   });
   return filters;
+}
+
+function modeToRelation(mode: string): ValueStateValue {
+  if (mode === INCLUDE_FILTER) {
+    return distilRelationOptions[0];
+  } else {
+    return distilRelationOptions[1];
+  }
 }
 
 function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
