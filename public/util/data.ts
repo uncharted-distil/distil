@@ -72,6 +72,10 @@ import {
 export const PREDICTED_SUFFIX = "_predicted";
 export const ERROR_SUFFIX = "_error";
 
+// constants for accessing variable summaries
+export const VARIABLE_SUMMARY_BASE = "summary";
+export const VARIABLE_SUMMARY_CONFIDENCE = "confidence";
+
 export const NUM_PER_PAGE = 10;
 export const NUM_PER_TARGET_PAGE = 9;
 export const NUM_PER_DATA_EXPLORER_PAGE = 3;
