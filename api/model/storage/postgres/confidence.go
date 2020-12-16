@@ -89,9 +89,22 @@ func (s *Storage) fetchHistograms(dataset string, storageName string, variable *
 
 func (s *Storage) fetchExplainHistogram(dataset string, storageName string, targetName string, explainFieldName string,
 	resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
+	explainFieldAlias := fmt.Sprintf("%s_nested", explainFieldName)
 	// use a numerical sub select
-	field := NewNumericalFieldSubSelect(s, dataset, storageName, explainFieldName, explainFieldName, model.RealType, "", s.explainSubSelect(storageName, explainFieldName))
-	return field.fetchHistogram(filterParams, false, 20)
+	field := NewNumericalFieldSubSelect(s, dataset, storageName, explainFieldAlias, explainFieldName, model.RealType, "", s.explainSubSelect(storageName, explainFieldName, explainFieldAlias))
+
+	// use predefined ranged of [0,1]
+	extrema, _ := api.NewExtrema(0.0, 1.0)
+
+	// filter for the single result confidences instead of having all result confidences
+	if filterParams == nil {
+		filterParams = &api.FilterParams{}
+	}
+
+	// filter info derived from the sub select function
+	filterParams.Filters = append(filterParams.Filters, model.NewCategoricalFilter("result_key", model.IncludeFilter, []string{resultURI}))
+
+	return field.fetchHistogramByResult(resultURI, filterParams, extrema, 20)
 }
 
 func (s *Storage) listExplainFields() []string {
@@ -109,9 +122,12 @@ func (s *Storage) listExplainFields() []string {
 	return jsonNames
 }
 
-func (s *Storage) explainSubSelect(storageName string, fieldName string) func() string {
+func (s *Storage) explainSubSelect(storageName string, fieldName string, aliasName string) func() string {
 	return func() string {
-		return fmt.Sprintf("(SELECT (explain_values ->> '%s')::double precision as \"%s\", index as \"%s\" from %s)",
-			fieldName, fieldName, model.D3MIndexFieldName, s.getResultTable(storageName))
+		return fmt.Sprintf(`(
+			SELECT (explain_values ->> '%s')::double precision as "%s", result_id as result_key, b.* from %s as d
+			inner join %s as b on b."d3mIndex" = d.index
+			) as data`,
+			fieldName, aliasName, s.getResultTable(storageName), storageName)
 	}
 }

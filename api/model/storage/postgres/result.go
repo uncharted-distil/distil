@@ -18,6 +18,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -456,6 +457,8 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 				}
 				weightedValues[predictedCol].Rank = api.NullableFloat64(explainValuesParsed.Rank)
 				weightedValues[predictedCol].Confidence = api.NullableFloat64(explainValuesParsed.Confidence)
+			} else {
+				weightedValues[predictedCol].Confidence = api.NullableFloat64(math.NaN())
 			}
 			result.Values = append(result.Values, weightedValues)
 		}
@@ -660,7 +663,7 @@ func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, alias s
 }
 
 func addExcludeConfidenceResultToWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter) ([]string, []interface{}) {
-	where := fmt.Sprintf("((explain_values -> 'confidence')::double precision < $%d AND (explain_values -> 'confidence')::double precision > $%d)", len(params)+1, len(params)+2)
+	where := fmt.Sprintf("((explain_values -> 'confidence')::double precision < $%d OR (explain_values -> 'confidence')::double precision > $%d)", len(params)+1, len(params)+2)
 	params = append(params, *confidenceFilter.Min)
 	params = append(params, *confidenceFilter.Max)
 
@@ -773,7 +776,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	// Add the error filter into the where clause if it was included in the filter set
 	if filters.confidenceFilter != nil {
 		if filters.confidenceFilter.Mode == model.IncludeFilter {
-			wheres, params = s.buildConfidenceResultWhere(wheres, params, filters.confidenceFilter, "result")
+			wheres, params = s.buildConfidenceResultWhere(wheres, params, filters.confidenceFilter, "predicted")
 		} else {
 			wheres, params = addExcludeConfidenceResultToWhere(wheres, params, filters.confidenceFilter)
 		}
