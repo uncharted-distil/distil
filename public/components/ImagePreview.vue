@@ -55,18 +55,14 @@ import {
   D3M_INDEX_FIELD,
   TableRow,
   RowSelection,
-  BandID,
-  BandCombination,
-  TaskTypes,
 } from "../store/dataset/index";
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
 import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
-import { createRouteEntry } from "../util/routes";
 import { ColorScaleNames } from "../util/data";
 
 export default Vue.extend({
-  name: "image-preview",
+  name: "ImagePreview",
 
   components: {
     ImageDrilldown,

@@ -47,7 +47,6 @@ export default Vue.extend({
   },
 
   props: {
-    dataFields: Object as () => Dictionary<TableColumn>,
     includedActive: Boolean as () => boolean,
     item: Object as () => TableRow,
     shortenLabels: {
@@ -62,9 +61,7 @@ export default Vue.extend({
 
   computed: {
     fields(): Dictionary<TableColumn> {
-      return this.dataFields
-        ? this.dataFields
-        : this.includedActive
+      return this.includedActive
         ? datasetGetters.getIncludedTableDataFields(this.$store)
         : datasetGetters.getExcludedTableDataFields(this.$store);
     },

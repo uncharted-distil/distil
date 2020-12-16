@@ -7,19 +7,18 @@
     @hide="hide"
   >
     <main class="drill-down">
-      <image-label
-        v-if="item && dataFields"
-        class="image-label"
-        :data-fields="dataFields"
-        included-active
-        :item="item"
-      />
-
       <section
         ref="imageContainer"
         class="image-container"
         :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
-      />
+      >
+        <image-label
+          v-if="item"
+          :item="item"
+          class="image-label"
+          included-active
+        />
+      </section>
 
       <ul class="information">
         <li v-if="bandName"><label>Band:</label> {{ bandName }}</li>
@@ -49,7 +48,7 @@
 <script lang="ts">
 import Vue from "vue";
 import ImageLabel from "./ImageLabel.vue";
-import { TableColumn, TableRow } from "../store/dataset/index";
+import { TableRow } from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions,
@@ -60,19 +59,19 @@ import { Dictionary } from "../util/dict";
 import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
 
 const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drill-down in pixels.
-const IMAGE_MAX_ZOOM = 3; // We don't want an image to be too magnified to avoid blurriness.
+const IMAGE_MAX_ZOOM = 2.5; // We don't want an image to be too magnified to avoid blurriness.
 
 const imageId = (imageUrl) => imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
 
 export interface DrillDownInfo {
   band?: string;
   title?: string;
+  confidence?: string;
 }
 
 /**
  * Display a modal with drill-downed information about an image.
  *
- * @param dataFields {Array<TableColumn>}
  * @param info {DrillDownInfo} List of information to be displayed.
  * @param url {String} URL of the image to be drill-down.
  * @param type {ImageType=} Type of the image, default to IMAGE_TYPE.
@@ -87,11 +86,10 @@ export default Vue.extend({
   },
 
   props: {
-    dataFields: Object as () => Dictionary<TableColumn>,
-    url: String,
-    type: { type: String, default: IMAGE_TYPE },
     info: Object as () => DrillDownInfo,
     item: Object as () => TableRow,
+    type: { type: String, default: IMAGE_TYPE },
+    url: String,
     visible: Boolean,
   },
 
@@ -138,7 +136,7 @@ export default Vue.extend({
 
       /*
         Item store the coordinates as a list of 8 values being four pairs of 
-        [Long, Lat], one for each corner of the isMultiBandImage-sensing image.
+        [Long, Lat], one for each corner of the remote-sensing image.
 
         [0,1]     [2,3]
           A-------B
@@ -203,8 +201,11 @@ export default Vue.extend({
         image.height = this.image.height * ratio;
         image.width = this.image.width * ratio;
 
+        // Remove previously injected image.
+        image.id = "injected-image";
+        container.querySelector("#" + image.id)?.remove();
+
         // Add the image to the container.
-        container.innerHTML = "";
         container.appendChild(image);
       }
     },
@@ -254,6 +255,12 @@ export default Vue.extend({
   max-height: var(--IMAGE_MAX_SIZE);
   max-width: var(--IMAGE_MAX_SIZE);
   position: relative;
+}
+
+.information {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0;
 }
 
 .information li label {
