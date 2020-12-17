@@ -261,7 +261,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 			return nil, errors.Wrap(err, "unable to featurize dataset")
 		}
 		log.Infof("finished featurizing the dataset")
-		ingestedDataset, err := metaStorage.FetchDataset(dataset, true, true)
+		ingestedDataset, err := metaStorage.FetchDataset(dataset, true, true, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to load metadata")
 		}
@@ -296,7 +296,7 @@ func Featurize(originalSchemaFile string, schemaFile string, data api.DataStorag
 			return errors.Wrap(err, "unable to featurize dataset")
 		}
 		log.Infof("finished featurizing the dataset")
-		ingestedDataset, err := storage.FetchDataset(dataset, true, true)
+		ingestedDataset, err := storage.FetchDataset(dataset, true, true, false)
 		if err != nil {
 			return errors.Wrap(err, "unable to load metadata")
 		}
@@ -394,7 +394,7 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 // VerifySuggestedTypes checks expands the suggested types to include all valid
 // types the database storage can support.
 func VerifySuggestedTypes(dataset string, dataStorage api.DataStorage, metaStorage api.MetadataStorage) error {
-	meta, err := metaStorage.FetchDataset(dataset, false, false)
+	meta, err := metaStorage.FetchDataset(dataset, false, false, false)
 	if err != nil {
 		return err
 	}
@@ -612,7 +612,7 @@ func loadMetadataForIngest(originalSchemaFile string, schemaFile string, source 
 
 func matchDataset(storage api.MetadataStorage, meta *model.Metadata) (string, error) {
 	// load the datasets from ES.
-	datasets, err := storage.FetchDatasets(true, true)
+	datasets, err := storage.FetchDatasets(true, true, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to fetch datasets for matching")
 	}
@@ -655,7 +655,7 @@ func deleteDataset(name string, pg *postgres.Database, meta api.MetadataStorage)
 
 func getUniqueDatasetName(meta *model.Metadata, storage api.MetadataStorage) (string, error) {
 	// create a unique name if the current name is already in use
-	datasets, err := storage.FetchDatasets(false, false)
+	datasets, err := storage.FetchDatasets(false, false, false)
 	if err != nil {
 		return "", err
 	}

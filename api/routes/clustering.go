@@ -55,7 +55,7 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 			return
 		}
 
-		ds, err := metaStorage.FetchDataset(dataset, false, false)
+		ds, err := metaStorage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -72,7 +72,7 @@ func ClusteringHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorag
 		}
 
 		// get the source dataset folder
-		datasetMeta, err := metaStorage.FetchDataset(dataset, false, false)
+		datasetMeta, err := metaStorage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -185,7 +185,7 @@ func ClusteringExplainHandler(solutionCtor api.SolutionStorageCtor, metaCtor api
 		}
 
 		clusterVarName := fmt.Sprintf("%s%s_shap", model.ClusterVarPrefix, target)
-		datasetMeta, err := metaStorage.FetchDataset(result.Dataset, false, false)
+		datasetMeta, err := metaStorage.FetchDataset(result.Dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

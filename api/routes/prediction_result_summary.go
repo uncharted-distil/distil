@@ -114,7 +114,7 @@ func PredictionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCt
 			return
 		}
 
-		ds, err := meta.FetchDataset(prediction.Dataset, false, false)
+		ds, err := meta.FetchDataset(prediction.Dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

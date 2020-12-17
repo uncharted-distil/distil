@@ -218,7 +218,7 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 // FetchDataset extracts the complete raw data from the database.
 func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, filterParams *api.FilterParams) ([][]string, error) {
 	// get data variables (to exclude metadata variables)
-	vars, err := s.metadata.FetchVariables(dataset, true, false)
+	vars, err := s.metadata.FetchVariables(dataset, true, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -420,7 +420,7 @@ func (s *Storage) AddField(dataset string, storageName string, varName string, v
 // DeleteVariable flags a variable as deleted.
 func (s *Storage) DeleteVariable(dataset string, storageName string, varName string) error {
 	// check if the variable is in the view
-	dbFields, err := s.getDatabaseFields(storageName)
+	dbFields, err := s.getDatabaseFields(fmt.Sprintf("%s_base", storageName))
 	if err != nil {
 		return errors.Wrap(err, "unable to read database fields")
 	}
@@ -445,7 +445,6 @@ func (s *Storage) DeleteVariable(dataset string, storageName string, varName str
 	if fields[varName] != nil {
 		delete(fields, varName)
 	}
-
 	err = s.createViewFromMetadataFields(storageName, fields)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create the new view")
@@ -558,6 +557,17 @@ func (s *Storage) insertBatchData(storageName string, varNames []string, inserts
 
 	// update the stats to make sure postgres runs the best queries possible
 	s.updateStats(storageName)
+
+	return nil
+}
+
+// SetVariableValue updates an entire column to specified value
+func (s *Storage) SetVariableValue(storageName string, varName string, value string) error {
+	sql := fmt.Sprintf("UPDATE %s_base SET \"%s\" = $1", storageName, varName)
+	_, err := s.client.Exec(sql, value)
+	if err != nil {
+		return errors.Wrap(err, "Unable to update value stored in the database")
+	}
 
 	return nil
 }

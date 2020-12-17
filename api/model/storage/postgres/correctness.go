@@ -106,7 +106,7 @@ func (s *Storage) getCountCol(dataset string, mode api.SummaryMode) (string, err
 	countCol := ""
 	if mode == api.MultiBandImageMode {
 		// remote sensing group should be distinct by group id
-		vars, err := s.metadata.FetchVariables(dataset, false, true)
+		vars, err := s.metadata.FetchVariables(dataset, false, true, false)
 		if err != nil {
 			return "", err
 		}

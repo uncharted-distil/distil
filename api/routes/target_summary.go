@@ -81,7 +81,7 @@ func TargetSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.Sol
 			return
 		}
 
-		ds, err := meta.FetchDataset(dataset, false, false)
+		ds, err := meta.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

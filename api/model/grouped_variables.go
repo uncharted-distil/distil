@@ -11,7 +11,7 @@ import (
 // those variables that should be displayed to a client.
 func FetchSummaryVariables(dataset string, metaStore MetadataStorage) ([]*model.Variable, error) {
 	// fetch all variables from the dataset
-	variables, err := metaStore.FetchVariables(dataset, false, true)
+	variables, err := metaStore.FetchVariables(dataset, false, true, false)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func FetchSummaryVariables(dataset string, metaStore MetadataStorage) ([]*model.
 // corresponding dataset values (grouped variables).
 func FetchDatasetVariables(dataset string, metaStore MetadataStorage) ([]*model.Variable, error) {
 	// fetch all variables from the dataset
-	variables, err := metaStore.FetchVariables(dataset, true, true)
+	variables, err := metaStore.FetchVariables(dataset, true, true, false)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 	}
 
 	// Fetch all variables from the dataset
-	variables, err := metaStore.FetchVariables(dataset, true, true)
+	variables, err := metaStore.FetchVariables(dataset, true, true, true)
 	if err != nil {
 		return nil, err
 	}

@@ -55,7 +55,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			return
 		}
 
-		ds, err := metaStorage.FetchDataset(dataset, false, false)
+		ds, err := metaStorage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -104,7 +104,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 		}
 
 		// get the source dataset folder
-		datasetMeta, err := metaStorage.FetchDataset(dataset, false, false)
+		datasetMeta, err := metaStorage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

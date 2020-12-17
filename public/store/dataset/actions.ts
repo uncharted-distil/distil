@@ -1293,6 +1293,7 @@ export const actions = {
       filterParams: FilterParams;
       highlight: Highlight;
       dataMode: DataMode;
+      orderBy?: string;
     }
   ) {
     const data = await actions.fetchTableData(context, {
@@ -1301,6 +1302,7 @@ export const actions = {
       highlight: args.highlight,
       include: true,
       dataMode: args.dataMode,
+      orderBy: args.orderBy,
     });
     mutations.setIncludedTableData(context, data);
   },
@@ -1390,6 +1392,7 @@ export const actions = {
       highlight: Highlight;
       include: boolean;
       dataMode: DataMode;
+      orderBy?: string;
     }
   ): Promise<TableData> {
     if (!validateArgs(args, ["dataset", "filterParams"])) {
@@ -1406,7 +1409,7 @@ export const actions = {
     try {
       const response = await axios.post(
         `distil/data/${args.dataset}/${!args.include}`,
-        filterParams
+        { ...filterParams, orderBy: args.orderBy }
       );
       return response.data;
     } catch (error) {

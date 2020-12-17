@@ -137,7 +137,7 @@ func SolutionResultSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor
 			return
 		}
 
-		ds, err := meta.FetchDataset(request.Dataset, false, false)
+		ds, err := meta.FetchDataset(request.Dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
