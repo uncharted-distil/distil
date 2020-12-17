@@ -380,7 +380,7 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 	headerSource := make([]string, len(sourceVariables))
 	sourceVariableMap := make(map[string]*model.Variable)
 	for _, v := range sourceVariables {
-		sourceVariableMap[v.DisplayName] = v
+		sourceVariableMap[strings.ToLower(v.DisplayName)] = v
 		headerSource[v.Index] = v.DisplayName
 	}
 
@@ -391,24 +391,26 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 	// header values as the list of variable names to build the map.
 	if len(predictionVariables) == 0 {
 		for i, pv := range csvData[0] {
-			if sourceVariableMap[pv] != nil {
-				predictVariablesMap[i] = sourceVariableMap[pv].Index
-				log.Infof("mapped '%s' to index %d", pv, predictVariablesMap[i])
+			varName := strings.ToLower(pv)
+			if sourceVariableMap[varName] != nil {
+				predictVariablesMap[i] = sourceVariableMap[varName].Index
+				log.Infof("mapped '%s' to index %d", varName, predictVariablesMap[i])
 			}
 		}
 	} else {
 		// Otherwise, we have the variables defined, and leverage the extra info provided to help map columns between model
 		// and prediction datasets.
 		for i, predictVariable := range predictionVariables {
-			if sourceVariableMap[predictVariable.StorageName] != nil {
-				predictVariablesMap[i] = sourceVariableMap[predictVariable.StorageName].Index
-				log.Infof("mapped '%s' to index %d", predictVariable.StorageName, predictVariablesMap[i])
+			varName := strings.ToLower(predictVariable.StorageName)
+			if sourceVariableMap[varName] != nil {
+				predictVariablesMap[i] = sourceVariableMap[varName].Index
+				log.Infof("mapped '%s' to index %d", varName, predictVariablesMap[i])
 			} else if predictVariable.IsMediaReference() {
 				log.Warnf("media reference field '%s' not found in source dataset - attempting to match by type", predictVariable.StorageName)
 				// loop back over the source vars utnil we find one that is also a media reference
 				for _, sourceVariable := range sourceVariables {
 					if sourceVariable.IsMediaReference() {
-						predictVariablesMap[i] = sourceVariableMap[sourceVariable.StorageName].Index
+						predictVariablesMap[i] = sourceVariableMap[strings.ToLower(sourceVariable.StorageName)].Index
 						break
 					}
 				}
@@ -422,20 +424,25 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 		}
 	}
 
+	// check if a variable the model needs is missing
+	if len(sourceVariables) > len(predictVariablesMap) {
+		return nil, errors.Errorf("missing some variables for model so unable to get predictions (missing column count: %d)", len(sourceVariables)-len(predictVariablesMap))
+	}
+
 	// read the rest of the data
 	log.Infof("rewriting prediction dataset to match source dataset structure")
 	count := 0
 
 	// read the d3m field index if present
 	d3mFieldIndex := -1
-	if variable, ok := sourceVariableMap[model.D3MIndexName]; ok {
+	if variable, ok := sourceVariableMap[strings.ToLower(model.D3MIndexName)]; ok {
 		d3mFieldIndex = variable.Index
 	}
 
 	outputData := [][]string{headerSource}
 	for _, line := range csvData[1:] {
 		// write the columns in the same order as the source dataset
-		output := make([]string, len(predictionVariables))
+		output := make([]string, len(predictVariablesMap))
 		for i, f := range line {
 			sourceIndex := predictVariablesMap[i]
 			if sourceIndex >= 0 {
