@@ -205,7 +205,7 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 			indices = append(indices, fmt.Sprintf("$%d", offset+i))
 			params = append(params, d3mIndex)
 		}
-		where := fmt.Sprintf("\"%s\" IN (%s)", model.D3MIndexFieldName, strings.Join(indices, ", "))
+		where := fmt.Sprintf("%s IN (%s)", name, strings.Join(indices, ", "))
 		wheres = append(wheres, where)
 	case model.TextFilter:
 		// text
@@ -332,7 +332,7 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 			indices = append(indices, fmt.Sprintf("$%d", offset+i))
 			params = append(params, d3mIndex)
 		}
-		where := fmt.Sprintf("\"%s\" NOT IN (%s)", model.D3MIndexFieldName, strings.Join(indices, ", "))
+		where := fmt.Sprintf("%s NOT IN (%s)", name, strings.Join(indices, ", "))
 		wheres = append(wheres, where)
 	case model.TextFilter:
 		// text
