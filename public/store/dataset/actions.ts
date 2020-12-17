@@ -1333,6 +1333,9 @@ export const actions = {
       include: boolean;
     }
   ) {
+    if (!args.highlight && !args.filterParams.filters.length) {
+      return;
+    }
     const mutator = args.include
       ? mutations.setHighlightedIncludeTableData
       : mutations.setHighlightedExcludeTableData;
