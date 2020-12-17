@@ -323,7 +323,7 @@ export default Vue.extend({
     capitalize,
 
     updateFilterFromLexQuery(lexQuery) {
-      const updatedFilter = lexQueryToFilters(lexQuery, this.variables);
+      const updatedFilter = lexQueryToFilters(lexQuery);
       deepUpdateFiltersInRoute(this.$router, updatedFilter);
     },
 

@@ -1,10 +1,16 @@
-import { Variable } from "../store/dataset";
+import {
+  GeoCoordinateGrouping,
+  TimeseriesGrouping,
+  Variable,
+} from "../store/dataset";
 import {
   isNumericType,
   isTextType,
   dateToNum,
   DATE_TIME_LOWER_TYPE,
   CATEGORICAL_TYPE,
+  TIMESERIES_TYPE,
+  GEOCOORDINATE_TYPE,
 } from "./types";
 import {
   decodeFilters,
@@ -95,10 +101,7 @@ export function filterParamsToLexQuery(
   allVariables: Variable[]
 ) {
   const filters = decodeFilters(filter);
-  const variableDict = allVariables.reduce((a, v) => {
-    a[v.colName] = v;
-    return a;
-  }, {});
+  const variableDict = buildVariableDictionary(allVariables);
   const filterVariables = filters.map((f) => {
     return variableDict[f.key];
   });
@@ -130,16 +133,7 @@ export function filterParamsToLexQuery(
   return lexQuery;
 }
 
-export function lexQueryToFilters(
-  lexQuery: any[][],
-  allVariables: Variable[]
-): Filter[] {
-  const variableDict = allVariables.reduce((a, v) => {
-    a[v.colName] = v;
-    return a;
-  }, {});
-
-  console.log(lexQuery);
+export function lexQueryToFilters(lexQuery: any[][]): Filter[] {
   const filters = lexQuery[0].map((lq) => {
     const key = lq.field.key;
     const type = lq.field.meta.type;
@@ -175,13 +169,29 @@ function modeToRelation(mode: string): ValueStateValue {
 
 function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
   if (!variables) return;
-  return variables.map((variable) => {
-    const name = variable.colDisplayName;
+
+  return variables.reduce((a, v) => {
+    const name = v.colDisplayName;
     const options = {
-      type: colTypeToOptionType(variable.colType.toLowerCase()),
+      type: colTypeToOptionType(v.colType.toLowerCase()),
     };
-    return new ValueStateValue(name, options);
-  });
+    a.push(new ValueStateValue(name, options));
+
+    if (v.distilRole === "grouping") {
+      switch (v.colType) {
+        case TIMESERIES_TYPE:
+          const grouping = v.grouping as TimeseriesGrouping;
+          a.push(new ValueStateValue(grouping.xCol, { type: DATETIME_FILTER }));
+          break;
+        case GEOCOORDINATE_TYPE:
+          break;
+        default:
+          console.log("unknown grouped type");
+      }
+    }
+
+    return a;
+  }, []);
 }
 
 function colTypeToOptionType(colType: string): string {
@@ -196,4 +206,40 @@ function colTypeToOptionType(colType: string): string {
   } else {
     return TEXT_FILTER;
   }
+}
+
+function buildVariableDictionary(variables: Variable[]) {
+  return variables.reduce((a, v) => {
+    a[v.colName] = v;
+    if (v.distilRole === "grouping") {
+      switch (v.colType) {
+        case TIMESERIES_TYPE:
+          const grouping = v.grouping as TimeseriesGrouping;
+          const xCol = grouping.xCol;
+          a[xCol] = {
+            colDisplayName: xCol,
+            colType: DATE_TIME_LOWER_TYPE,
+          } as Variable;
+          console.log(grouping, a[xCol]);
+          break;
+        case GEOCOORDINATE_TYPE:
+          const geoGrouping = v.grouping as GeoCoordinateGrouping;
+          const lat = geoGrouping.xCol;
+          const lon = geoGrouping.yCol;
+          a[lat] = {
+            colDisplayName: lat,
+            colType: NUMERICAL_FILTER,
+          } as Variable;
+          a[lon] = {
+            colDisplayName: lon,
+            colType: NUMERICAL_FILTER,
+          } as Variable;
+          break;
+        default:
+          console.warn("unknown grouped type");
+      }
+    }
+
+    return a;
+  }, {});
 }

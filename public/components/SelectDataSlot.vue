@@ -317,7 +317,7 @@ export default Vue.extend({
 
   methods: {
     updateFilterFromLexQuery(lexQuery) {
-      const updatedFilter = lexQueryToFilters(lexQuery, this.variables);
+      const updatedFilter = lexQueryToFilters(lexQuery);
       deepUpdateFiltersInRoute(this.$router, updatedFilter);
     },
 
