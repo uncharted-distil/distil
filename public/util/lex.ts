@@ -37,7 +37,6 @@ import {
   ValueStateValue,
   RelationState,
 } from "@uncharted.software/lex";
-import { layerGroup } from "leaflet";
 
 const distilRelationOptions = [
   [INCLUDE_FILTER, "="],
@@ -161,10 +160,11 @@ export function filterParamsToLexQuery(
 export function lexQueryToFilters(lexQuery: any[][]): Filter[] {
   const filters = lexQuery[0].map((lq) => {
     const key = lq.field.key;
+    const displayKey = lq.config.displayKey;
     const type = lq.field.meta.type;
     const filter: Filter = {
       mode: lq.relation.key,
-      displayName: key,
+      displayName: displayKey,
       type,
       key,
     };
@@ -202,9 +202,12 @@ function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
   if (!variables) return;
 
   return variables.reduce((a, v) => {
-    const name = v.colDisplayName;
+    const name = v.colName;
     const options = {
       type: colTypeToOptionType(v.colType.toLowerCase()),
+    };
+    const config = {
+      displayKey: v.colDisplayName,
     };
     a.push(new ValueStateValue(name, options));
 
@@ -212,7 +215,13 @@ function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
       switch (v.colType) {
         case TIMESERIES_TYPE:
           const grouping = v.grouping as TimeseriesGrouping;
-          a.push(new ValueStateValue(grouping.xCol, { type: DATETIME_FILTER }));
+          a.push(
+            new ValueStateValue(
+              grouping.xCol,
+              { type: DATETIME_FILTER },
+              { displayKey: grouping.xCol }
+            )
+          );
           break;
         case MULTIBAND_IMAGE_TYPE:
         case GEOBOUNDS_TYPE:
@@ -252,6 +261,7 @@ function buildVariableDictionary(variables: Variable[]) {
           const grouping = v.grouping as TimeseriesGrouping;
           const xCol = grouping.xCol;
           a[xCol] = {
+            colName: xCol,
             colDisplayName: xCol,
             colType: DATE_TIME_LOWER_TYPE,
           } as Variable;
@@ -261,10 +271,12 @@ function buildVariableDictionary(variables: Variable[]) {
           const lat = geoGrouping.xCol;
           const lon = geoGrouping.yCol;
           a[lat] = {
+            colName: lat,
             colDisplayName: lat,
             colType: NUMERICAL_FILTER,
           } as Variable;
           a[lon] = {
+            colName: lon,
             colDisplayName: lon,
             colType: NUMERICAL_FILTER,
           } as Variable;
