@@ -866,7 +866,7 @@ export function updateTableDataItems(
   newVals: Map<number, unknown>
 ) {
   const colTypeMap = new Map(
-    data.columns.map((val, idx) => {
+    data?.columns.map((val, idx) => {
       return [val.key, idx];
     })
   );
