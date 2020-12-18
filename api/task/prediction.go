@@ -234,16 +234,33 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 
 	if !params.DatasetIngested {
 		// ingest the dataset but without running simon, duke, etc.
-		datasetName, err = Ingest(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, datasetName,
-			metadata.Augmented, nil, api.DatasetTypeInference, params.IngestConfig, false, true, false)
+		err = IngestPostgres(schemaPath, schemaPath, metadata.Augmented, params.IngestConfig, true, false, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to ingest prediction data")
 		}
 		log.Infof("finished ingesting dataset '%s'", datasetName)
 
-		// we still may need to featurize
-		if err = Featurize(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, datasetName, params.IngestConfig); err != nil {
-			return nil, errors.Wrap(err, "unabled to featurize prediction data")
+		// copy the metadata from the source dataset as it should be an exact match
+		metaClone, err := params.MetaStorage.FetchDataset(sourceDatasetID, true, true)
+		if err != nil {
+			return nil, err
+		}
+		metaClone.ID = datasetName
+		metaClone.StorageName = meta.StorageName
+		metaClone.Folder = meta.DatasetFolder
+		metaClone.Source = metadata.Augmented
+		metaClone.Type = api.DatasetTypeInference
+
+		err = params.MetaStorage.UpdateDataset(metaClone)
+		if err != nil {
+			return nil, err
+		}
+
+		// only featurize if the source dataset was featurized
+		if meta.LearningDataset != "" {
+			if err = Featurize(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, datasetName, params.IngestConfig); err != nil {
+				return nil, errors.Wrap(err, "unabled to featurize prediction data")
+			}
 		}
 	}
 
@@ -379,9 +396,11 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 	// map fields to indices
 	headerSource := make([]string, len(sourceVariables))
 	sourceVariableMap := make(map[string]*model.Variable)
+	sourceVariableHeaderMap := make(map[string]*model.Variable)
 	for _, v := range sourceVariables {
-		sourceVariableMap[strings.ToLower(v.DisplayName)] = v
-		headerSource[v.Index] = v.DisplayName
+		sourceVariableMap[strings.ToLower(v.StorageName)] = v
+		sourceVariableHeaderMap[strings.ToLower(v.HeaderName)] = v
+		headerSource[v.Index] = v.HeaderName
 	}
 
 	addIndex := true
@@ -392,8 +411,8 @@ func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Varia
 	if len(predictionVariables) == 0 {
 		for i, pv := range csvData[0] {
 			varName := strings.ToLower(pv)
-			if sourceVariableMap[varName] != nil {
-				predictVariablesMap[i] = sourceVariableMap[varName].Index
+			if sourceVariableHeaderMap[varName] != nil {
+				predictVariablesMap[i] = sourceVariableHeaderMap[varName].Index
 				log.Infof("mapped '%s' to index %d", varName, predictVariablesMap[i])
 			}
 		}
@@ -574,9 +593,6 @@ func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.Me
 			for _, componentVarName := range componentVarNames {
 				if componentVar, ok := variableMap[componentVarName]; ok {
 					// update variable type
-					if err := metaStorage.SetDataType(dataset, componentVar.StorageName, componentVar.Type); err != nil {
-						return err
-					}
 					if err := dataStorage.SetDataType(dataset, storageName, componentVar.StorageName, componentVar.Type); err != nil {
 						return err
 					}
