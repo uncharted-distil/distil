@@ -382,7 +382,30 @@ func (s *Storage) buildFilteredQueryWhere(dataset string, wheres []string, param
 	}
 	return wheres, params
 }
+func (s *Storage) buildSelectStatement(variables []*model.Variable, filterVariables []string) (string, error) {
 
+	distincts := make([]string, 0)
+	fields := make([]string, 0)
+	indexIncluded := false
+	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
+		// derived metadata variables (ex: postgis geometry) should use the original variables
+		varName := variable.StorageName
+		if variable.DistilRole == model.VarDistilRoleMetadata && variable.OriginalVariable != variable.StorageName {
+			varName = variable.OriginalVariable
+		}
+
+		fields = append(fields, fmt.Sprintf("\"%s\"", varName))
+		if varName == model.D3MIndexFieldName {
+			indexIncluded = true
+		}
+
+	}
+	// if the index is not already in the field list, then append it
+	if !indexIncluded {
+		fields = append(fields, fmt.Sprintf("\"%s\"", model.D3MIndexFieldName))
+	}
+	return strings.Join(distincts, ",") + " " + strings.Join(fields, ","), nil
+}
 func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVariables []string) (string, error) {
 
 	distincts := make([]string, 0)
@@ -487,18 +510,21 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 	return wheres, params, nil
 }
 
-func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter) ([]string, []interface{}, error) {
+func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter, alias string) ([]string, []interface{}) {
 	// Add a clause to filter confidence to the existing where
-	where := fmt.Sprintf("(result.confidence >= $%d AND result.confidence <= $%d)", len(params)+1, len(params)+2)
+	if alias != "" {
+		alias = alias + "."
+	}
+	where := fmt.Sprintf("((%sexplain_values -> 'confidence')::double precision >= $%d AND (%sexplain_values -> 'confidence')::double precision <= $%d)", alias, len(params)+1, alias, len(params)+2)
 	params = append(params, *confidenceFilter.Min)
 	params = append(params, *confidenceFilter.Max)
 
 	// Append the AND clause
 	wheres = append(wheres, where)
-	return wheres, params, nil
+	return wheres, params
 }
 
-func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, alias string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
+func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, alias string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}) {
 	// handle the general category case
 
 	filterParams := &api.FilterParams{
@@ -506,7 +532,7 @@ func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, par
 	}
 
 	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, filterParams, false)
-	return wheres, params, nil
+	return wheres, params
 }
 
 func (s *Storage) buildResultQueryFilters(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, alias string) ([]string, []interface{}, error) {
@@ -525,10 +551,7 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 	// assemble split filters
 	var err error
 	if filters.predictedFilter != nil {
-		wheres, params, err = s.buildPredictedResultWhere(dataset, wheres, params, alias, resultURI, filters.predictedFilter)
-		if err != nil {
-			return nil, nil, err
-		}
+		wheres, params = s.buildPredictedResultWhere(dataset, wheres, params, alias, resultURI, filters.predictedFilter)
 	} else if filters.correctnessFilter != nil {
 		wheres, params, err = s.buildCorrectnessResultWhere(wheres, params, storageName, resultURI, filters.correctnessFilter)
 		if err != nil {
@@ -540,10 +563,7 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 			return nil, nil, err
 		}
 	} else if filters.confidenceFilter != nil {
-		wheres, params, err = s.buildConfidenceResultWhere(wheres, params, filters.confidenceFilter)
-		if err != nil {
-			return nil, nil, err
-		}
+		wheres, params = s.buildConfidenceResultWhere(wheres, params, filters.confidenceFilter, "result")
 	}
 	return wheres, params, nil
 }
@@ -677,8 +697,8 @@ func (s *Storage) filterIncludesIndex(filterParams *api.FilterParams) bool {
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
-func (s *Storage) FetchData(dataset string, storageName string, filterParams *api.FilterParams, invert bool) (*api.FilteredData, error) {
-	variables, err := s.metadata.FetchVariables(dataset, true, true)
+func (s *Storage) FetchData(dataset string, storageName string, filterParams *api.FilterParams, invert bool, orderByVar *model.Variable) (*api.FilteredData, error) {
+	variables, err := s.metadata.FetchVariables(dataset, true, true, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
@@ -697,7 +717,22 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 			Values:  make([][]*api.FilteredDataValue, 0),
 		}, nil
 	}
-
+	selectStatement, err := s.buildSelectStatement(variables, filterParams.Variables)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not build select statement")
+	}
+	// standard order by
+	orderByClause := "random()"
+	if orderByVar != nil {
+		// if exist change order by clause
+		orderByClause = "\"" + orderByVar.HeaderName + "\" DESC"
+		// check if the order by variable exists in the supplied list of vars
+		existInFilter := api.GetFilterVariables(filterParams.Variables, []*model.Variable{orderByVar})
+		if len(existInFilter) == 0 {
+			// if it does not exist add it for the inner query (in order to sort from the outer query)
+			filterParams.Variables = append(filterParams.Variables, orderByVar.HeaderName)
+		}
+	}
 	fields, err := s.buildFilteredQueryField(variables, filterParams.Variables)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not build field list")
@@ -725,9 +760,8 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 	}
 	groupings = append(groupings, "\""+model.D3MIndexFieldName+"\"")
 	orderBy := strings.Join(groupings, ",")
-
 	// order & limit the filtered data.
-	query = fmt.Sprintf("SELECT * FROM (%s ORDER BY %s) data ORDER BY random()", query, orderBy)
+	query = fmt.Sprintf("SELECT %s FROM (%s ORDER BY %s) data ORDER BY %s", selectStatement, query, orderBy, orderByClause)
 	if filterParams.Size > 0 {
 		query = fmt.Sprintf("%s LIMIT %d", query, filterParams.Size)
 	}

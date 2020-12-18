@@ -27,7 +27,6 @@
         <labeling-data-slot
           :summaries="summaries"
           :variables="variables"
-          :ranked-set="rankedSet"
           @DataChanged="onAnnotationChanged"
         />
         <create-labeling-form
@@ -57,9 +56,9 @@
       :data="dataItems"
       :data-fields="dataFields"
       :summaries="summaries"
-      :ranked-set="rankedSet"
       :is-loading="isLoadingData"
       :is-remote-sensing="isRemoteSensing"
+      :modal-id="scorePopUpId"
       @button-event="onAnnotationChanged"
       @apply="onApply"
     />
@@ -76,6 +75,7 @@ import {
 } from "../store/dataset/module";
 import { LABEL_FEATURE_INSTANCE } from "../store/route/index";
 import { actions as viewActions } from "../store/view/module";
+import { CATEGORICAL_TYPE, DISTIL_ROLES } from "../util/types";
 import {
   getVariableSummariesByState,
   searchVariables,
@@ -83,9 +83,9 @@ import {
   cloneDatasetUpdateRoute,
   LowShotLabels,
   LOW_SHOT_LABEL_COLUMN_NAME,
+  LOW_SHOT_SCORE_COLUMN_NAME,
   minimumRouteKey,
-  parseBinaryScoreResponse,
-  BinaryScoreResponse,
+  addOrderBy,
 } from "../util/data";
 import {
   Variable,
@@ -93,7 +93,6 @@ import {
   TableRow,
   TableColumn,
 } from "../store/dataset/index";
-import { CATEGORICAL_TYPE } from "../util/types";
 import VariableFacets from "../components/facets/VariableFacets.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
 import LabelingDataSlot from "../components/labelingComponents/LabelingDataSlot.vue";
@@ -127,8 +126,8 @@ export default Vue.extend({
     return {
       labelName: LOW_SHOT_LABEL_COLUMN_NAME,
       modalId: "label-input-form",
-      rankedSet: null,
       isLoadingData: false,
+      scorePopUpId: "modal-score-pop-up",
     };
   },
   computed: {
@@ -136,7 +135,9 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
     variables(): Variable[] {
-      return datasetGetters.getVariables(this.$store);
+      return datasetGetters.getVariables(this.$store).filter((v) => {
+        return v.distilRole !== DISTIL_ROLES.SystemData;
+      });
     },
     availableTargetVarsSearch(): string {
       return routeGetters.getRouteAvailableTargetVarsSearch(this.$store);
@@ -215,6 +216,9 @@ export default Vue.extend({
     instance(): string {
       return LABEL_FEATURE_INSTANCE;
     },
+    training(): string[] {
+      return routeGetters.getDecodedTrainingVariableNames(this.$store);
+    },
     isClone(): boolean {
       return this.variables.some((v) => {
         return v.colName === LOW_SHOT_LABEL_COLUMN_NAME;
@@ -224,6 +228,9 @@ export default Vue.extend({
   watch: {
     highlight() {
       this.onDataChanged();
+    },
+    training() {
+      this.fetchData();
     },
   },
   async mounted() {
@@ -266,18 +273,15 @@ export default Vue.extend({
     },
     async onApply() {
       this.isLoadingData = true;
-      const res = await requestActions.createQueryRequest(this.$store, {
+      await requestActions.createQueryRequest(this.$store, {
         datasetId: this.dataset,
         target: LOW_SHOT_LABEL_COLUMN_NAME,
         filters: null,
       });
-      const rankedSet = parseBinaryScoreResponse(res as BinaryScoreResponse);
+      addOrderBy(LOW_SHOT_SCORE_COLUMN_NAME);
       this.isLoadingData = false;
-      if (!rankedSet) {
-        console.error("Error parsing binary score response");
-        return;
-      }
-      this.rankedSet = rankedSet;
+      await this.fetchData();
+      this.$bvModal.show(this.scorePopUpId);
     },
     onExport() {
       const highlight = {
@@ -335,19 +339,6 @@ export default Vue.extend({
       await datasetActions.fetchVariables(this.$store, {
         dataset: this.dataset,
       });
-      const training = routeGetters.getDecodedTrainingVariableNames(
-        this.$store
-      );
-
-      this.variables.forEach((variable) => {
-        training.push(variable.colName);
-      });
-
-      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
-        training: training.join(","),
-      });
-
-      this.$router.push(entry).catch((err) => console.warn(err));
       await viewActions.updateLabelData(this.$store);
     },
     onAnnotationChanged(label: LowShotLabels) {
@@ -375,10 +366,29 @@ export default Vue.extend({
         targetName: LOW_SHOT_LABEL_COLUMN_NAME,
         variableNames: this.variables.map((v) => v.colName),
       });
+      const training = routeGetters.getDecodedTrainingVariableNames(
+        this.$store
+      );
+      const check = training.length;
+      const trainingMap = new Map(
+        training.map((t) => {
+          return [t, true];
+        })
+      );
+      this.variables.forEach((variable) => {
+        if (!trainingMap.has(variable.colName)) {
+          training.push(variable.colName);
+        }
+      });
+      if (check === training.length) {
+        return;
+      }
       // update route with training data
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         task: taskResponse.data.task.join(","),
+        training: training.join(","),
       });
+
       this.$router.push(entry).catch((err) => console.warn(err));
     },
   },

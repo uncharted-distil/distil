@@ -11,10 +11,10 @@
       :sort-compare="sortFunction"
       :per-page="perPage"
       :total-rows="itemCount"
-      @row-clicked="onRowClick"
-      @sort-changed="onSortChanged"
       sticky-header="100%"
       class="distil-table mb-1"
+      @row-clicked="onRowClick"
+      @sort-changed="onSortChanged"
     >
       <template
         v-for="computedField in computedFields"
@@ -29,9 +29,9 @@
       </template>
 
       <template v-slot:[headSlot(predictedCol)]="data">
-        <span
-          >{{ data.label }}<sup>{{ solutionIndex }}</sup></span
-        >
+        <span>
+          {{ data.label }}<sup>{{ solutionIndex }}</sup>
+        </span>
       </template>
 
       <template
@@ -39,13 +39,13 @@
         v-slot:[cellSlot(imageField.key)]="data"
       >
         <image-preview
-          :row="data.item"
           :key="imageField.key"
+          :row="data.item"
           :type="imageField.type"
           :image-url="data.item[imageField.key].value"
           :debounce="true"
-          :uniqueTrail="uniqueTrail"
-        ></image-preview>
+          :unique-trail="uniqueTrail"
+        />
       </template>
 
       <template
@@ -61,7 +61,7 @@
           :timeseries-id="data.item[timeseriesGrouping.idCol].value"
           :solution-id="solutionId"
           :include-forecast="isTargetTimeseries"
-          :uniqueTrail="uniqueTrail"
+          :unique-trail="uniqueTrail"
         />
       </template>
 
@@ -78,19 +78,19 @@
         <!-- residual error -->
         <div>
           <div
-            class="error-bar-container"
             v-if="isTargetNumerical"
+            class="error-bar-container"
             :title="data.value.value"
           >
             <div
               class="error-bar"
-              v-bind:style="{
+              :style="{
                 'background-color': errorBarColor(data.value.value),
                 width: errorBarWidth(data.value.value),
                 left: errorBarLeft(data.value.value),
               }"
-            ></div>
-            <div class="error-bar-center"></div>
+            />
+            <div class="error-bar-center" />
           </div>
 
           <!-- correctness error -->
@@ -120,15 +120,15 @@
     </b-table>
     <b-pagination
       v-if="items && items.length > perPage"
+      v-model="currentPage"
       align="center"
       first-number
       last-number
       size="sm"
-      v-model="currentPage"
       :per-page="perPage"
       :total-rows="itemCount"
       @change="onPagination"
-    ></b-pagination>
+    />
   </div>
 </template>
 
@@ -181,13 +181,20 @@ import {
 import { getSolutionIndex } from "../util/solutions";
 
 export default Vue.extend({
-  name: "results-data-table",
+  name: "ResultsDataTable",
 
   components: {
     ImagePreview,
     SparklinePreview,
     IconBase,
     IconFork,
+  },
+
+  filters: {
+    /* Display number with only two decimal. */
+    cleanNumber(value) {
+      return _.isNumber(value) ? value.toFixed(2) : "—";
+    },
   },
 
   data() {
@@ -204,13 +211,6 @@ export default Vue.extend({
     dataItems: Array as () => any[],
     dataFields: Object as () => Dictionary<TableColumn>,
     instanceName: String as () => string,
-  },
-
-  filters: {
-    /* Display number with only two decimal. */
-    cleanNumber(value) {
-      return _.isNumber(value) ? value.toFixed(2) : "—";
-    },
   },
 
   computed: {
@@ -512,6 +512,7 @@ export default Vue.extend({
       });
     },
   },
+
   watch: {
     highlight() {
       this.initialized = false;

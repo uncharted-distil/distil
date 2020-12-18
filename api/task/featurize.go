@@ -47,7 +47,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 	}
 
 	// load the metadata from the metadata storage
-	ds, err := metaStorage.FetchDataset(dataset, true, true)
+	ds, err := metaStorage.FetchDataset(dataset, true, true, false)
 	if err != nil {
 		return "", "", err
 	}
@@ -194,7 +194,7 @@ func isRemoteSensingDataset(ds *api.Dataset) bool {
 }
 
 func canFeaturize(datasetID string, meta api.MetadataStorage) bool {
-	dataset, err := meta.FetchDataset(datasetID, true, true)
+	dataset, err := meta.FetchDataset(datasetID, true, true, false)
 	if err != nil {
 		log.Warnf("error fetching dataset to determine if it can be featurized: %+v", err)
 		return false

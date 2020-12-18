@@ -53,7 +53,6 @@ const (
 			index		BIGINT,
 			target		text,
 			value		text,
-			confidence double precision,
 			explain_values jsonb
 		);`
 

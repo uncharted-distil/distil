@@ -9,9 +9,9 @@
       :fields="tableFields"
       :per-page="perPage"
       :total-rows="itemCount"
-      @row-clicked="onRowClick"
       sticky-header="100%"
       class="distil-table mb-1"
+      @row-clicked="onRowClick"
     >
       <template
         v-for="computedField in computedFields"
@@ -26,23 +26,23 @@
       </template>
 
       <template
-        v-for="imageField in imageFields"
+        v-for="(imageField, idx) in imageFields"
         v-slot:[cellSlot(imageField.key)]="data"
       >
-        <div class="position-relative">
+        <div :key="idx" class="position-relative">
           <image-preview
             :key="imageField.key"
             :type="imageField.type"
+            :row="data.item"
             :image-url="data.item[imageField.key].value"
             :debounce="true"
-            :uniqueTrail="uniqueTrail"
+            :unique-trail="uniqueTrail"
           />
           <image-label
             class="image-label"
-            :dataFields="fields"
-            includedActive
-            shortenLabels
-            alignHorizontal
+            included-active
+            shorten-labels
+            align-horizontal
             :item="data.item"
           />
         </div>
@@ -52,7 +52,7 @@
         v-for="timeseriesGrouping in timeseriesGroupings"
         v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
       >
-        <div class="container" :key="data.item[timeseriesGrouping.idCol].value">
+        <div :key="data.item[timeseriesGrouping.idCol].value" class="container">
           <div class="row">
             <sparkline-preview
               :truth-dataset="dataset"
@@ -60,7 +60,7 @@
               :y-col="timeseriesGrouping.yCol"
               :timeseries-col="timeseriesGrouping.idCol"
               :timeseries-id="data.item[timeseriesGrouping.idCol].value"
-              :uniqueTrail="uniqueTrail"
+              :unique-trail="uniqueTrail"
             />
           </div>
         </div>
@@ -84,11 +84,11 @@
     </b-table>
     <b-pagination
       v-if="items && items.length > perPage"
+      v-model="currentPage"
       align="center"
       first-number
       last-number
       size="sm"
-      v-model="currentPage"
       :per-page="perPage"
       :total-rows="itemCount"
       @input="onPagination"
@@ -141,7 +141,7 @@ import { Feature, Activity, SubActivity } from "../util/userEvents";
 import ImageLabel from "./ImageLabel.vue";
 
 export default Vue.extend({
-  name: "selected-data-table",
+  name: "SelectedDataTable",
 
   components: {
     ImagePreview,
@@ -149,6 +149,13 @@ export default Vue.extend({
     IconBase,
     IconFork,
     ImageLabel,
+  },
+
+  filters: {
+    /* Display number with only two decimal. */
+    cleanNumber(value) {
+      return _.isNumber(value) ? value.toFixed(2) : "—";
+    },
   },
 
   props: {
@@ -164,12 +171,6 @@ export default Vue.extend({
       uniqueTrail: "selected-table",
       initialized: false,
     };
-  },
-  filters: {
-    /* Display number with only two decimal. */
-    cleanNumber(value) {
-      return _.isNumber(value) ? value.toFixed(2) : "—";
-    },
   },
 
   computed: {
@@ -279,6 +280,33 @@ export default Vue.extend({
     },
   },
 
+  watch: {
+    includedActive() {
+      if (this.items.length) {
+        this.fetchTimeSeries();
+      }
+    },
+    filters() {
+      // new data will be coming through pipeline
+      this.initialized = false;
+    },
+    items(cur, prev) {
+      // checks to see if items exist and if the timeseries has been queried for the new data
+      if (!this.initialized && this.items.length) {
+        this.fetchTimeSeries();
+        this.initialized = true;
+      }
+      if (prev?.length !== this.items.length) {
+        this.fetchTimeSeries();
+      }
+      // if the itemCount changes such that it's less than page
+      // we were on, reset to page 1.
+      if (this.itemCount < this.perPage * this.currentPage) {
+        this.currentPage = 1;
+      }
+    },
+  },
+
   methods: {
     fetchTimeSeries() {
       if (!this.isTimeseries) {
@@ -355,32 +383,6 @@ export default Vue.extend({
         Status: number;
       }[];
       return listData.map((l) => l.Float);
-    },
-  },
-  watch: {
-    includedActive() {
-      if (this.items.length) {
-        this.fetchTimeSeries();
-      }
-    },
-    filters() {
-      // new data will be coming through pipeline
-      this.initialized = false;
-    },
-    items(cur, prev) {
-      // checks to see if items exist and if the timeseries has been queried for the new data
-      if (!this.initialized && this.items.length) {
-        this.fetchTimeSeries();
-        this.initialized = true;
-      }
-      if (prev?.length !== this.items.length) {
-        this.fetchTimeSeries();
-      }
-      // if the itemCount changes such that it's less than page
-      // we were on, reset to page 1.
-      if (this.itemCount < this.perPage * this.currentPage) {
-        this.currentPage = 1;
-      }
     },
   },
 });

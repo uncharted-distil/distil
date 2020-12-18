@@ -17,8 +17,7 @@
         :dataset="summary.dataset"
         :field="summary.key"
         :expandCollapse="expandCollapse"
-      >
-      </type-change-menu>
+      />
     </div>
     <facet-template target="facet-terms-value" class="facet-content-container">
       <div slot="header" class="facet-image-preview-display">${metadata}</div>
@@ -55,8 +54,8 @@ import Vue from "vue";
 import "@uncharted.software/facets-core";
 import { FacetTermsData } from "@uncharted.software/facets-core/dist/types/facet-terms/FacetTerms";
 
-import TypeChangeMenu from "../TypeChangeMenu";
-import ImagePreview from "../ImagePreview";
+import TypeChangeMenu from "../TypeChangeMenu.vue";
+import ImagePreview from "../ImagePreview.vue";
 import { Highlight, RowSelection, VariableSummary } from "../../store/dataset";
 import {
   getCategoricalChunkSize,

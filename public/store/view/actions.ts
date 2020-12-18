@@ -477,21 +477,23 @@ export const actions = {
     const dataMode = context.getters.getDataMode;
     const variables = datasetGetters.getVariables(store);
     const varModes = context.getters.getDecodedVarModes;
+    const orderBy = routeGetters.getOrderBy(store);
     clearVariableSummaries(context);
     return Promise.all([
       datasetActions.fetchIncludedVariableSummaries(store, {
-        dataset: dataset,
-        variables: variables,
-        filterParams: filterParams,
-        highlight: highlight,
-        dataMode: dataMode,
-        varModes: varModes,
+        dataset,
+        variables,
+        filterParams,
+        highlight,
+        dataMode,
+        varModes,
       }),
       datasetActions.fetchIncludedTableData(store, {
-        dataset: dataset,
-        filterParams: filterParams,
-        highlight: highlight,
-        dataMode: dataMode,
+        dataset,
+        filterParams,
+        highlight,
+        dataMode,
+        orderBy,
       }),
     ]);
   },

@@ -57,7 +57,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 			handleError(w, err)
 			return
 		}
-		res, err := storage.FetchDataset(dataset, false, false)
+		res, err := storage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

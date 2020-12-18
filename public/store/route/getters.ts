@@ -563,7 +563,17 @@ export const getters = {
     const isApplyModel = <string>state.query.applyModel;
     return !!isApplyModel;
   },
-
+  getOrderBy(state: Route): string {
+    const orderBy = state.query.orderBy as string;
+    if (!orderBy) {
+      return null;
+    }
+    return orderBy;
+  },
+  hasOrderBy(state: Route): boolean {
+    const orderBy = state.query.orderBy as string;
+    return !!orderBy;
+  },
   /* Check if the current task includes Remote Sensing. */
   isMultiBandImage(state: Route): boolean {
     // Get the list of task of the route.

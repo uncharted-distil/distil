@@ -65,7 +65,7 @@ func DatasetHandler(ctor model.MetadataStorageCtor) func(http.ResponseWriter, *h
 		}
 
 		// get dataset summary
-		res, err := storage.FetchDataset(dataset, false, false)
+		res, err := storage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -180,7 +180,7 @@ func AvailableDatasetsHandler(metaCtor model.MetadataStorageCtor) func(http.Resp
 			return
 		}
 
-		datasets, err := meta.FetchDatasets(false, false)
+		datasets, err := meta.FetchDatasets(false, false, false)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to fetch existing datasets"))
 			return
@@ -241,7 +241,7 @@ func loadDatasets(storage model.MetadataStorage, terms string, baseDataset *mode
 	var err error
 
 	if terms != "" || baseDataset != nil {
-		datasetsPart, err = storage.SearchDatasets(terms, baseDataset, false, false)
+		datasetsPart, err = storage.SearchDatasets(terms, baseDataset, false, false, false)
 
 		// combine the suggestions by dataset since the datamarts may break them up
 		joinedSuggestions := make(map[string]*model.Dataset)
@@ -267,7 +267,7 @@ func loadDatasets(storage model.MetadataStorage, terms string, baseDataset *mode
 			datasetsPart = append(datasetsPart, ds)
 		}
 	} else {
-		datasetsPart, err = storage.FetchDatasets(false, false)
+		datasetsPart, err = storage.FetchDatasets(false, false, false)
 	}
 
 	if err != nil {

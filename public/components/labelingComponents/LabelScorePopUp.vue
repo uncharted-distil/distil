@@ -46,8 +46,6 @@ import {
   TableColumn,
 } from "../../store/dataset/index";
 import {
-  RankedSet,
-  ScoreInfo,
   LOW_SHOT_LABEL_COLUMN_NAME,
   LowShotLabels,
   getRandomInt,
@@ -66,12 +64,6 @@ export default Vue.extend({
   },
   props: {
     data: { type: Array as () => TableRow[], default: () => [] as TableRow[] },
-    rankedSet: {
-      type: Object as () => RankedSet,
-      default: () => {
-        return { data: [] as ScoreInfo[] };
-      },
-    },
     instanceName: {
       type: String as () => string,
       default: "label-score-pop-up",
@@ -86,16 +78,11 @@ export default Vue.extend({
     },
     title: { type: String as () => string, default: "Scores" },
     isLoading: { type: Boolean as () => boolean, default: false },
+    modalId: { type: String as () => string, default: "score-popup" },
     isRemoteSensing: { type: Boolean as () => boolean, default: false }, // default to false to support every dataset
   },
   data() {
-    return { modalId: "score-modal", sampleSize: 10 };
-  },
-  watch: {
-    rankedSet() {
-      // on binarySets change show modal
-      this.$bvModal.show(this.modalId);
-    },
+    return { sampleSize: 10 };
   },
   computed: {
     itemMap(): Map<number, TableRow> {
@@ -106,10 +93,10 @@ export default Vue.extend({
       );
     },
     items(): TableRow[] {
-      const indices = this.rankedSet?.data.slice(0, this.sampleSize);
-      return indices?.map((d) => {
-        return this.itemMap.get(d.d3mIndex);
-      });
+      if (!this.data) {
+        return [];
+      }
+      return this.data.slice(0, this.sampleSize);
     },
     randomItems(): TableRow[] {
       const random = this.data?.filter((d) => {
