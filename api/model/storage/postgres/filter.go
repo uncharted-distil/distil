@@ -487,18 +487,21 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 	return wheres, params, nil
 }
 
-func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter) ([]string, []interface{}, error) {
+func (s *Storage) buildConfidenceResultWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter, alias string) ([]string, []interface{}) {
 	// Add a clause to filter confidence to the existing where
-	where := fmt.Sprintf("(result.confidence >= $%d AND result.confidence <= $%d)", len(params)+1, len(params)+2)
+	if alias != "" {
+		alias = alias + "."
+	}
+	where := fmt.Sprintf("((%sexplain_values -> 'confidence')::double precision >= $%d AND (%sexplain_values -> 'confidence')::double precision <= $%d)", alias, len(params)+1, alias, len(params)+2)
 	params = append(params, *confidenceFilter.Min)
 	params = append(params, *confidenceFilter.Max)
 
 	// Append the AND clause
 	wheres = append(wheres, where)
-	return wheres, params, nil
+	return wheres, params
 }
 
-func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, alias string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}, error) {
+func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, params []interface{}, alias string, resultURI string, resultFilter *model.Filter) ([]string, []interface{}) {
 	// handle the general category case
 
 	filterParams := &api.FilterParams{
@@ -506,7 +509,7 @@ func (s *Storage) buildPredictedResultWhere(dataset string, wheres []string, par
 	}
 
 	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, alias, filterParams, false)
-	return wheres, params, nil
+	return wheres, params
 }
 
 func (s *Storage) buildResultQueryFilters(dataset string, storageName string, resultURI string, filterParams *api.FilterParams, alias string) ([]string, []interface{}, error) {
@@ -525,10 +528,7 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 	// assemble split filters
 	var err error
 	if filters.predictedFilter != nil {
-		wheres, params, err = s.buildPredictedResultWhere(dataset, wheres, params, alias, resultURI, filters.predictedFilter)
-		if err != nil {
-			return nil, nil, err
-		}
+		wheres, params = s.buildPredictedResultWhere(dataset, wheres, params, alias, resultURI, filters.predictedFilter)
 	} else if filters.correctnessFilter != nil {
 		wheres, params, err = s.buildCorrectnessResultWhere(wheres, params, storageName, resultURI, filters.correctnessFilter)
 		if err != nil {
@@ -540,10 +540,7 @@ func (s *Storage) buildResultQueryFilters(dataset string, storageName string, re
 			return nil, nil, err
 		}
 	} else if filters.confidenceFilter != nil {
-		wheres, params, err = s.buildConfidenceResultWhere(wheres, params, filters.confidenceFilter)
-		if err != nil {
-			return nil, nil, err
-		}
+		wheres, params = s.buildConfidenceResultWhere(wheres, params, filters.confidenceFilter, "result")
 	}
 	return wheres, params, nil
 }

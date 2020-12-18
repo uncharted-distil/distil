@@ -104,13 +104,18 @@ func ConfidenceSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api
 			return
 		}
 
-		summary.Key = api.GetConfidenceKey(res.SolutionID)
-		summary.Label = "Confidence"
+		if summary["confidence"] != nil {
+			confSummary := summary["confidence"]
+			if confSummary.Baseline.IsEmpty() {
+				summary["confidence"] = nil
+			} else {
+				confSummary.Key = api.GetConfidenceKey(res.SolutionID)
+				confSummary.Label = "Confidence"
+			}
+		}
 
 		// marshal data and sent the response back
-		err = handleJSON(w, SummaryResult{
-			Summary: summary,
-		})
+		err = handleJSON(w, summary)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal result histogram into JSON"))
 			return

@@ -72,6 +72,10 @@ import {
 export const PREDICTED_SUFFIX = "_predicted";
 export const ERROR_SUFFIX = "_error";
 
+// constants for accessing variable summaries
+export const VARIABLE_SUMMARY_BASE = "summary";
+export const VARIABLE_SUMMARY_CONFIDENCE = "confidence";
+
 export const NUM_PER_PAGE = 10;
 export const NUM_PER_TARGET_PAGE = 9;
 export const NUM_PER_DATA_EXPLORER_PAGE = 3;
@@ -594,6 +598,7 @@ export async function fetchSolutionResultSummary(
   solution: Solution,
   key: string,
   label: string,
+  resultProperty: string,
   resultSummaries: VariableSummary[],
   updateFunction: (arg: ResultsContext, summary: VariableSummary) => void,
   filterParams: FilterParams,
@@ -630,7 +635,7 @@ export async function fetchSolutionResultSummary(
       filterParams ? filterParams : {}
     );
     // save the histogram data
-    const summary = response.data.summary;
+    const summary = response.data[resultProperty];
     await fetchResultExemplars(dataset, target, key, solutionId, summary);
     summary.solutionId = solutionId;
     summary.dataset = dataset;
