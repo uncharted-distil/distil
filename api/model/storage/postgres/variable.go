@@ -214,7 +214,7 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 		// if timeseries mode, get the grouping field and use that for counts
 		countCol := ""
 		if mode == api.TimeseriesMode || mode == api.MultiBandImageMode {
-			vars, err := s.metadata.FetchVariables(dataset, false, true)
+			vars, err := s.metadata.FetchVariables(dataset, false, true, false)
 			if err != nil {
 				return nil, err
 			}

@@ -96,7 +96,7 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 	if err != nil {
 		return err
 	}
-	fieldsMetadata, err := s.metadata.FetchVariables(dataset, true, true)
+	fieldsMetadata, err := s.metadata.FetchVariables(dataset, true, true, false)
 	if err != nil {
 		return err
 	}
@@ -703,7 +703,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// fetch variable metadata
-	variables, err := s.metadata.FetchVariables(dataset, false, true)
+	variables, err := s.metadata.FetchVariables(dataset, false, true, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
@@ -1013,7 +1013,7 @@ func (s *Storage) getIsWeighted(resultURI string, weightTableName string) (bool,
 
 func (s *Storage) getDisplayName(dataset string, columnName string) (string, error) {
 	displayName := ""
-	variables, err := s.metadata.FetchVariables(dataset, false, false)
+	variables, err := s.metadata.FetchVariables(dataset, false, false, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable fetch variables for name mapping")
 	}

@@ -60,19 +60,19 @@ func (s *Storage) DeleteDataset(dataset string) error {
 }
 
 // FetchDatasets returns all datasets in the provided index.
-func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
+func (s *Storage) FetchDatasets(includeIndex bool, includeMeta bool, includeSystemData bool) ([]*api.Dataset, error) {
 	// use default string in search to get complete list
-	return s.SearchDatasets("", nil, includeIndex, includeMeta)
+	return s.SearchDatasets("", nil, includeIndex, includeMeta, includeSystemData)
 }
 
 // FetchDataset returns a dataset in the provided index.
-func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMeta bool) (*api.Dataset, error) {
+func (s *Storage) FetchDataset(datasetName string, includeIndex bool, includeMeta bool, includeSystemData bool) (*api.Dataset, error) {
 	return nil, errors.Errorf("Not implemented")
 }
 
 // SearchDatasets returns the datasets that match the search criteria in the
 // provided index.
-func (s *Storage) SearchDatasets(terms string, baseDataset *api.Dataset, includeIndex bool, includeMeta bool) ([]*api.Dataset, error) {
+func (s *Storage) SearchDatasets(terms string, baseDataset *api.Dataset, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*api.Dataset, error) {
 	rawSets, err := s.searchFolders(strings.Fields(terms))
 	if err != nil {
 		return nil, err

@@ -122,7 +122,7 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 // ExportDataset extracts a dataset from the database and metadata storage, writing
 // it to disk in D3M dataset format.
 func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, invert bool, filterParams *api.FilterParams) (string, string, error) {
-	metaDataset, err := metaStorage.FetchDataset(dataset, true, false)
+	metaDataset, err := metaStorage.FetchDataset(dataset, true, false, false)
 	if err != nil {
 		return "", "", err
 	}
@@ -193,7 +193,7 @@ func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, confi
 
 // UpdateExtremas will update every field's extremas in the specified dataset.
 func UpdateExtremas(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
-	d, err := metaStorage.FetchDataset(dataset, false, false)
+	d, err := metaStorage.FetchDataset(dataset, false, false, false)
 	if err != nil {
 		return err
 	}

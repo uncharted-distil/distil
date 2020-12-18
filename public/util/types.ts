@@ -5,6 +5,14 @@ import { getters as datasetGetters } from "../store/dataset/module";
 import store from "../store/store";
 import { Dictionary } from "./dict";
 
+export enum DISTIL_ROLES {
+  Grouping = "grouping",
+  Index = "index",
+  Meta = "metadata",
+  Data = "data",
+  SystemData = "system-data",
+}
+
 // TODO: Convert these to enums.
 export const CLUSTER_PREFIX = "_cluster_";
 export const GEOCODED_LAT_PREFIX = "_lat_";

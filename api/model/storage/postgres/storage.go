@@ -154,7 +154,7 @@ func (s *Storage) isColumnType(tableName string, variable *model.Variable, colTy
 // VerifyData checks each column in the table against every supported type, then updates what types are valid in the SuggestedType
 func (s *Storage) VerifyData(datasetID string, tableName string) error {
 	validTypes := postgres.GetValidTypes()
-	ds, err := s.metadata.FetchDataset(datasetID, true, true)
+	ds, err := s.metadata.FetchDataset(datasetID, true, true, false)
 	if err != nil {
 		return err
 	}

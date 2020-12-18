@@ -42,8 +42,7 @@ import { getters as routeGetters } from "../../store/route/module";
 import {
   LowShotLabels,
   LOW_SHOT_LABEL_COLUMN_NAME,
-  RankedSet,
-  ScoreInfo,
+  LOW_SHOT_SCORE_COLUMN_NAME,
   getAllDataItems,
 } from "../../util/data";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
@@ -65,12 +64,6 @@ export default Vue.extend({
     variables: Array as () => Variable[],
     summaries: Array as () => VariableSummary[],
     instanceName: { type: String, default: "label" },
-    rankedSet: {
-      type: Object as () => RankedSet,
-      default: () => {
-        return { data: [] as ScoreInfo[] };
-      },
-    },
   },
   data() {
     return {
@@ -86,39 +79,30 @@ export default Vue.extend({
       console.error(`viewType ${this.viewTypeModel} invalid`);
       return "";
     },
+    hasLowShotScores(): boolean {
+      const orderBy = routeGetters.getOrderBy(this.$store);
+      return !orderBy ? false : orderBy.includes(LOW_SHOT_SCORE_COLUMN_NAME);
+    },
     dataItems(): TableRow[] {
       const items = _.cloneDeep(
         this.viewTypeModel === GEO_VIEW
           ? getAllDataItems(true)
           : datasetGetters.getIncludedTableDataItems(this.$store)
       );
-      if (this.rankedSet?.data.length) {
-        const itemMap = new Map(
-          items.map((d) => {
-            return [d.d3mIndex, d];
-          })
-        );
-        const unlabledItems = [];
-        const labeledItems = [];
+      if (this.hasLowShotScores) {
         const confidence = "confidence";
-        this.rankedSet.data.forEach((item, i) => {
-          const updatedItem = itemMap.get(item.d3mIndex);
-          updatedItem[confidence] = {
-            value: 1.0 - i / this.rankedSet.data.length,
-          };
-          itemMap.delete(item.d3mIndex);
-          unlabledItems.push(updatedItem);
+        items?.forEach((d, i) => {
+          if (d[LOW_SHOT_LABEL_COLUMN_NAME].value === LowShotLabels.unlabeled) {
+            d[confidence] = { value: 1.0 - i / items.length };
+          } else {
+            d[confidence] = {
+              value:
+                d[LOW_SHOT_LABEL_COLUMN_NAME].value === LowShotLabels.positive
+                  ? 1.0
+                  : 0.0,
+            };
+          }
         });
-        itemMap.forEach((item) => {
-          item[confidence] = {
-            value:
-              item[LOW_SHOT_LABEL_COLUMN_NAME] === LowShotLabels.positive
-                ? 1.0
-                : 0.0,
-          };
-          labeledItems.push(item);
-        });
-        return unlabledItems.concat(labeledItems);
       }
       return items;
     },

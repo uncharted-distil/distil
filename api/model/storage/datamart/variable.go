@@ -37,7 +37,7 @@ func (s *Storage) FetchVariableDisplay(dataset string, varName string) (*model.V
 }
 
 // FetchVariables returns all the variables for the provided dataset.
-func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
+func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*model.Variable, error) {
 	return nil, errors.Errorf("Not implemented")
 }
 
@@ -47,6 +47,6 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 }
 
 // FetchVariablesByName returns all the variables for the provided dataset and names.
-func (s *Storage) FetchVariablesByName(dataset string, variables []string, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
+func (s *Storage) FetchVariablesByName(dataset string, variables []string, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*model.Variable, error) {
 	return nil, errors.Errorf("Not implemented")
 }

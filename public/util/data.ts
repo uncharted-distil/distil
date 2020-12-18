@@ -1,6 +1,6 @@
 import axios from "axios";
 import sha1 from "crypto-js/sha1";
-import _, { result } from "lodash";
+import _ from "lodash";
 import Vue from "vue";
 import {
   D3M_INDEX_FIELD,
@@ -56,6 +56,7 @@ import {
   LONGITUDE_TYPE,
   MULTIBAND_IMAGE_TYPE,
   TIMESERIES_TYPE,
+  DISTIL_ROLES,
 } from "../util/types";
 import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
@@ -68,6 +69,7 @@ import {
   interpolateMagma,
   interpolatePlasma,
 } from "d3-scale-chromatic";
+import router from "../router/router";
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
 export const ERROR_SUFFIX = "_error";
@@ -86,8 +88,9 @@ export const ELASTIC_PROVENANCE = "elastic";
 export const FILE_PROVENANCE = "file";
 
 export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
-
 export const LOW_SHOT_LABEL_COLUMN_NAME = "LowShotLabel";
+export const LOW_SHOT_SCORE_COLUMN_NAME =
+  "__query_" + LOW_SHOT_LABEL_COLUMN_NAME;
 // LowShotLabels enum for labeling data in a binary classification
 export enum LowShotLabels {
   positive = "positive",
@@ -125,40 +128,7 @@ export const COLOR_SCALES: Map<
   [ColorScaleNames.plasma, interpolatePlasma],
   [ColorScaleNames.turbo, interpolateTurbo],
 ]);
-export interface ScoreInfo {
-  d3mIndex: number;
-  score: number;
-}
-// BinarySets contains the ranked data for the LowShotLabel binary classification
-export interface RankedSet {
-  data: ScoreInfo[];
-}
-export interface BinaryScoreResponse {
-  progress: {
-    ranked: string[][];
-    colInfo: { d3mIndex: string; score: string };
-  };
-}
-export function parseBinaryScoreResponse(res: BinaryScoreResponse): RankedSet {
-  // check for properties
-  if (!res.progress) {
-    return null;
-  }
-  const result = res.progress;
-  if (!result.ranked || !result.colInfo) {
-    return null;
-  }
-  const d3mIndex = result.colInfo.d3mIndex;
-  const scoreIndex = parseInt(result.colInfo.score);
-  const rankedSet: RankedSet = { data: [] };
-  result.ranked.forEach((p) => {
-    rankedSet.data.push({
-      d3mIndex: p[d3mIndex],
-      score: parseFloat(p[scoreIndex]),
-    });
-  });
-  return rankedSet;
-}
+
 // include the highlight
 export function getAllDataItems(includedActive: boolean): TableRow[] {
   const tableData = includedActive
@@ -509,7 +479,7 @@ export function removeSummary(
 export function filterVariablesByFeature(variables: Variable[]): Variable[] {
   // need to exclude the hidden variables
   const groupingVars = variables.filter(
-    (v) => v.distilRole === "grouping" && v.grouping !== null
+    (v) => v.distilRole === DISTIL_ROLES.Grouping && v.grouping !== null
   );
   const hiddenFlat = [].concat.apply(
     [],
@@ -889,6 +859,32 @@ export function updateTableDataItems(
         Vue.set(resultRow, idx, { value: val[key] });
       });
     }
+  });
+}
+export function addOrderBy(orderByName: string) {
+  if (routeGetters.getOrderBy(store) == orderByName) {
+    return;
+  }
+  const entry = overlayRouteEntry(routeGetters.getRoute(store), {
+    orderBy: orderByName,
+  });
+  router.push(entry).catch((err) => console.warn(err));
+}
+
+export function fetchLowShotScores() {
+  const highlight = routeGetters.getDecodedHighlight(store);
+  const filterParams = _.cloneDeep(
+    routeGetters.getDecodedSolutionRequestFilterParams(store)
+  );
+  const lowShotScore = "__query_LowShotLabel";
+  const dataset = routeGetters.getRouteDataset(store);
+  const dataMode = routeGetters.getDataMode(store);
+  datasetActions.fetchIncludedTableData(store, {
+    dataset,
+    filterParams,
+    highlight,
+    dataMode,
+    orderBy: lowShotScore,
   });
 }
 export function getTableDataItems(data: TableData): TableRow[] {

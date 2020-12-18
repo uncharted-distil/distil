@@ -42,7 +42,7 @@ func DeleteHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageC
 			return
 		}
 
-		ds, err := metaStorage.FetchDataset(dataset, false, false)
+		ds, err := metaStorage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

@@ -45,7 +45,7 @@ type QueryParams struct {
 // Query uses a query pipeline to rank data by nearness to a target.
 func Query(params QueryParams) (map[string]interface{}, error) {
 	// get the dataset metadata
-	ds, err := params.MetaStorage.FetchDataset(params.Dataset, true, true)
+	ds, err := params.MetaStorage.FetchDataset(params.Dataset, true, true, false)
 	if err != nil {
 		return nil, err
 	}
@@ -94,19 +94,7 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	if err != nil {
-		return nil, err
-	}
-	targetIndex, d3mIndex := getColumnIndices(score, resultData)
-	columnIndices := map[string]int{
-		score:                   targetIndex,
-		model.D3MIndexFieldName: d3mIndex,
-	}
-	result := map[string]interface{}{
-		"ranked":  resultData[1:], // avoids the header information
-		"colInfo": columnIndices,
-	}
-	return result, nil
+	return nil, nil
 }
 
 // getColumnIndices returns: target, d3mIndex
@@ -186,10 +174,18 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 	if err != nil {
 		return err
 	}
-
 	if !exists {
 		// create the variable to hold the rank
 		err = params.DataStorage.AddVariable(params.Dataset, storageName, targetScore, model.RealType, "0")
+		if err != nil {
+			return err
+		}
+		err = params.MetaStorage.AddVariable(params.Dataset, targetScore, targetScore, model.RealType, model.VarDistilRoleSystemData)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = params.DataStorage.SetVariableValue(storageName, targetScore, "0")
 		if err != nil {
 			return err
 		}

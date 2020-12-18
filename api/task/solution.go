@@ -34,7 +34,7 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 		return nil, err
 	}
 
-	dataset, err := metadataStorage.FetchDataset(request.Dataset, false, false)
+	dataset, err := metadataStorage.FetchDataset(request.Dataset, false, false, false)
 	if err != nil {
 		return nil, err
 	}

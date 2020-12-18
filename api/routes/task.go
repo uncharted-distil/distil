@@ -51,7 +51,7 @@ func TaskHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageCto
 			return
 		}
 
-		ds, err := metaStorage.FetchDataset(dataset, false, false)
+		ds, err := metaStorage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -59,7 +59,7 @@ func TaskHandler(dataCtor api.DataStorageCtor, esMetaCtor api.MetadataStorageCto
 		storageName := ds.StorageName
 
 		// look up the task variables
-		variables, err := metaStorage.FetchVariablesByName(dataset, variableNames, false, false)
+		variables, err := metaStorage.FetchVariablesByName(dataset, variableNames, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

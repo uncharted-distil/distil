@@ -73,7 +73,7 @@ func UpdateHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCto
 		}
 
 		// need the storage name
-		ds, err := metaStorage.FetchDataset(dataset, false, false)
+		ds, err := metaStorage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

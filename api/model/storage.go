@@ -61,7 +61,7 @@ type DataStorageCtor func() (DataStorage, error)
 // DataStorage defines the functions available to query the underlying data storage.
 type DataStorage interface {
 	FetchNumRows(storageName string, variables []*model.Variable) (int, error)
-	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool) (*FilteredData, error)
+	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool, orderByVar *model.Variable) (*FilteredData, error)
 	FetchDataset(dataset string, storageName string, invert bool, filterParams *FilterParams) ([][]string, error)
 	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams, invert bool, mode SummaryMode) (*VariableSummary, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
@@ -88,6 +88,7 @@ type DataStorage interface {
 	AddField(dataset string, storageName string, varName string, varType string, defaultVal string) error
 	DeleteVariable(dataset string, storageName string, varName string) error
 	UpdateVariable(storageName string, varName string, d3mIndex string, value string) error
+	SetVariableValue(storageName string, varName string, value string) error
 	UpdateVariableBatch(storageName string, varName string, updates map[string]string) error
 	UpdateData(dataset string, storageName string, varName string, updates map[string]string, filterParams *FilterParams) error
 	DoesVariableExist(dataset string, storageName string, varName string) (bool, error)
@@ -150,15 +151,15 @@ type MetadataStorageCtor func() (MetadataStorage, error)
 // MetadataStorage defines the functions available to query the underlying
 // metadata storage.
 type MetadataStorage interface {
-	FetchVariables(dataset string, includeIndex bool, includeMeta bool) ([]*model.Variable, error)
-	FetchVariablesByName(dataset string, varNames []string, includeIndex bool, includeMeta bool) ([]*model.Variable, error)
+	FetchVariables(dataset string, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*model.Variable, error)
+	FetchVariablesByName(dataset string, varNames []string, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*model.Variable, error)
 	FetchVariablesDisplay(dataset string) ([]*model.Variable, error)
 	DoesVariableExist(dataset string, varName string) (bool, error)
 	FetchVariable(dataset string, varName string) (*model.Variable, error)
 	FetchVariableDisplay(dataset string, varName string) (*model.Variable, error)
-	FetchDataset(dataset string, includeIndex bool, includeMeta bool) (*Dataset, error)
-	FetchDatasets(includeIndex bool, includeMeta bool) ([]*Dataset, error)
-	SearchDatasets(terms string, baseDataset *Dataset, includeIndex bool, includeMeta bool) ([]*Dataset, error)
+	FetchDataset(dataset string, includeIndex bool, includeMeta bool, includeSystemData bool) (*Dataset, error)
+	FetchDatasets(includeIndex bool, includeMeta bool, includeSystemData bool) ([]*Dataset, error)
+	SearchDatasets(terms string, baseDataset *Dataset, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*Dataset, error)
 	ImportDataset(id string, uri string) (string, error)
 
 	// Dataset manipulation

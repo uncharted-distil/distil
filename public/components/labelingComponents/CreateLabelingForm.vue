@@ -1,14 +1,14 @@
 <template>
   <div class="form-container">
     <div class="control-group">
-      <b-button @click="onApply" size="lg">
+      <b-button :disabled="isLoading" size="lg" @click="onApply">
         <template v-if="isLoading">
-          <div v-html="spinnerHTML"></div>
+          <div v-html="spinnerHTML" />
         </template>
         <template v-else> Apply </template>
       </b-button>
     </div>
-    <b-button @click="onExport" size="lg">Export</b-button>
+    <b-button size="lg" @click="onExport">Export</b-button>
   </div>
 </template>
 
