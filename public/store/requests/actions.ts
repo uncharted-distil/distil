@@ -6,7 +6,10 @@ import { FilterParams } from "../../util/filters";
 import { getWebSocketConnection, Stream } from "../../util/ws";
 import { SummaryMode, TaskTypes } from "../dataset";
 import { actions as predictActions } from "../predictions/module";
-import { actions as resultsActions } from "../results/module";
+import {
+  actions as resultsActions,
+  getters as resultsGetters,
+} from "../results/module";
 import { getters as routeGetters } from "../route/module";
 import store, { DistilState } from "../store";
 import {
@@ -94,7 +97,7 @@ export type RequestContext = ActionContext<RequestState, DistilState>;
 
 const requestStreams = new Map<string, Stream>();
 
-function updateCurrentSolutionResults(
+async function updateCurrentSolutionResults(
   context: RequestContext,
   req: SolutionRequestMsg,
   res: SolutionStatusMsg
@@ -113,13 +116,22 @@ function updateCurrentSolutionResults(
   const varModes: Map<string, SummaryMode> = context.getters.getDecodedVarModes;
   const dataMode = context.getters.getDataMode;
 
-  resultsActions.fetchResultTableData(store, {
+  await resultsActions.fetchResultTableData(store, {
     dataset: req.dataset,
     solutionId: res.solutionId,
     highlight: context.getters.getDecodedHighlight,
     dataMode: dataMode,
     isMapData: false,
     size,
+  });
+  const allData = resultsGetters.getNumOfRecords(store);
+  resultsActions.fetchResultTableData(store, {
+    dataset: req.dataset,
+    solutionId: res.solutionId,
+    highlight: context.getters.getDecodedHighlight,
+    dataMode: dataMode,
+    isMapData: true,
+    size: allData,
   });
   resultsActions.fetchFeatureImportanceRanking(store, {
     solutionID: res.solutionId,
