@@ -11,6 +11,8 @@ import {
   CATEGORICAL_TYPE,
   TIMESERIES_TYPE,
   GEOCOORDINATE_TYPE,
+  GEOBOUNDS_TYPE,
+  MULTIBAND_IMAGE_TYPE,
 } from "./types";
 import {
   decodeFilters,
@@ -21,6 +23,8 @@ import {
   DATETIME_FILTER,
   NUMERICAL_FILTER,
   TEXT_FILTER,
+  GEOBOUNDS_FILTER,
+  GEOCOORDINATE_FILTER,
 } from "./filters";
 import {
   LabelState,
@@ -92,6 +96,18 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
           enableCalendar: true,
           timezone: "Greenwich",
         })
+    ),
+    Lex.from("relation", DistilRelationState, {
+      ...TransitionFactory.valueMetaCompare({ type: GEOBOUNDS_FILTER }),
+    }).branch(
+      Lex.from(LabelState, { label: "From Latitude" })
+        .to("minX", NumericEntryState, { name: "Enter lower bound" })
+        .to(LabelState, { label: "To Latitude" })
+        .to("maxX", NumericEntryState, { name: "Enter upper bound" })
+        .to(LabelState, { label: "From Longitude" })
+        .to("minY", NumericEntryState, { name: "Enter lower bound" })
+        .to(LabelState, { label: "To Longitude" })
+        .to("maxY", NumericEntryState, { name: "Enter upper bound" })
     )
   );
 }
@@ -108,11 +124,13 @@ export function filterParamsToLexQuery(
   const suggestions = variablesToLexSuggestions(filterVariables);
 
   const lexQuery = filters.map((f, i) => {
-    if (isNumericType(f.type)) {
+    if (f.type === GEOBOUNDS_FILTER) {
       return {
         field: suggestions[i],
-        min: new ValueStateValue(f.min),
-        max: new ValueStateValue(f.max),
+        minX: new ValueStateValue(f.minX),
+        maxX: new ValueStateValue(f.maxX),
+        minY: new ValueStateValue(f.minY),
+        maxY: new ValueStateValue(f.maxY),
         relation: modeToRelation(f.mode),
       };
     } else if (f.type === DATETIME_FILTER) {
@@ -120,6 +138,13 @@ export function filterParamsToLexQuery(
         field: suggestions[i],
         min: new Date(f.min * 1000),
         max: new Date(f.max * 1000),
+        relation: modeToRelation(f.mode),
+      };
+    } else if (isNumericType(f.type)) {
+      return {
+        field: suggestions[i],
+        min: new ValueStateValue(f.min),
+        max: new ValueStateValue(f.max),
         relation: modeToRelation(f.mode),
       };
     } else {
@@ -144,12 +169,18 @@ export function lexQueryToFilters(lexQuery: any[][]): Filter[] {
       key,
     };
 
-    if (isNumericType(type)) {
-      filter.min = parseFloat(lq.min.key);
-      filter.max = parseFloat(lq.max.key);
+    if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
+      filter.key = filter.key + "_group";
+      filter.minX = parseFloat(lq.minX.key);
+      filter.maxX = parseFloat(lq.maxX.key);
+      filter.minY = parseFloat(lq.minY.key);
+      filter.maxY = parseFloat(lq.maxY.key);
     } else if (type === DATETIME_FILTER) {
       filter.min = dateToNum(lq.min);
       filter.max = dateToNum(lq.max);
+    } else if (isNumericType(type)) {
+      filter.min = parseFloat(lq.min.key);
+      filter.max = parseFloat(lq.max.key);
     } else {
       filter.categories = [lq.value.key];
     }
@@ -183,6 +214,8 @@ function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
           const grouping = v.grouping as TimeseriesGrouping;
           a.push(new ValueStateValue(grouping.xCol, { type: DATETIME_FILTER }));
           break;
+        case MULTIBAND_IMAGE_TYPE:
+        case GEOBOUNDS_TYPE:
         case GEOCOORDINATE_TYPE:
           break;
         default:
@@ -195,10 +228,12 @@ function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
 }
 
 function colTypeToOptionType(colType: string): string {
-  if (isNumericType(colType)) {
-    return NUMERICAL_FILTER;
+  if (colType.toLowerCase() === GEOBOUNDS_TYPE) {
+    return GEOBOUNDS_FILTER;
   } else if (colType.toLowerCase() === DATE_TIME_LOWER_TYPE) {
     return DATETIME_FILTER;
+  } else if (isNumericType(colType)) {
+    return NUMERICAL_FILTER;
   } else if (colType === CATEGORICAL_TYPE) {
     return CATEGORICAL_FILTER;
   } else if (isTextType(colType)) {
@@ -220,7 +255,6 @@ function buildVariableDictionary(variables: Variable[]) {
             colDisplayName: xCol,
             colType: DATE_TIME_LOWER_TYPE,
           } as Variable;
-          console.log(grouping, a[xCol]);
           break;
         case GEOCOORDINATE_TYPE:
           const geoGrouping = v.grouping as GeoCoordinateGrouping;
@@ -234,6 +268,9 @@ function buildVariableDictionary(variables: Variable[]) {
             colDisplayName: lon,
             colType: NUMERICAL_FILTER,
           } as Variable;
+          break;
+        case MULTIBAND_IMAGE_TYPE:
+        case GEOBOUNDS_TYPE:
           break;
         default:
           console.warn("unknown grouped type");
