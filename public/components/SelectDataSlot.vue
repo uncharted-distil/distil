@@ -1,23 +1,25 @@
 <template>
   <div class="select-data-slot">
     <view-type-toggle
-      has-tabs
       v-model="viewTypeModel"
+      has-tabs
       :variables="variables"
       :available-variables="trainingVariables"
     >
       <b-nav-item
         class="font-weight-bold"
-        @click="setIncludedActive"
         :active="includedActive"
-        >Samples to Model From</b-nav-item
+        @click="setIncludedActive"
       >
+        Samples to Model From
+      </b-nav-item>
       <b-nav-item
         class="font-weight-bold mr-auto"
-        @click="setExcludedActive"
         :active="!includedActive"
-        >Excluded Samples</b-nav-item
+        @click="setExcludedActive"
       >
+        Excluded Samples
+      </b-nav-item>
     </view-type-toggle>
 
     <div class="fake-search-input">
@@ -32,7 +34,7 @@
     <div class="table-title-container">
       <p class="selection-data-slot-summary">
         <data-size
-          :currentSize="numItems"
+          :current-size="numItems"
           :total="numRows"
           @submit="onDataSizeSubmit"
         />
@@ -45,8 +47,8 @@
 
       <layer-selection v-if="isMultiBandImage" class="layer-select-dropdown" />
       <b-button
-        class="select-data-action-exclude"
         v-if="includedActive"
+        class="select-data-action-exclude"
         variant="outline-secondary"
         :disabled="isExcludeDisabled"
         @click="onExcludeClick"
@@ -57,7 +59,7 @@
             'exclude-highlight': isFilteringHighlights,
             'exclude-selection': isFilteringSelection,
           }"
-        ></i>
+        />
         Exclude
       </b-button>
       <b-button
@@ -69,14 +71,14 @@
         <i
           class="fa fa-plus-circle pr-1"
           :class="{ 'include-selection': isFilteringSelection }"
-        ></i>
+        />
         Reinclude
       </b-button>
     </div>
 
     <div class="select-data-container" :class="{ pending: !hasData }">
-      <div class="select-data-no-results" v-if="!hasData">
-        <div v-html="spinnerHTML"></div>
+      <div v-if="!hasData" class="select-data-no-results">
+        <div v-html="spinnerHTML" />
       </div>
       <component
         :is="viewComponent"
@@ -106,7 +108,6 @@ import {
 } from "../store/dataset/module";
 import {
   TableRow,
-  D3M_INDEX_FIELD,
   Variable,
   Highlight,
   RowSelection,
@@ -114,17 +115,13 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import {
   Filter,
-  FilterParams,
   addFilterToRoute,
   EXCLUDE_FILTER,
   INCLUDE_FILTER,
 } from "../util/filters";
 import { clearHighlight, createFilterFromHighlight } from "../util/highlights";
 import {
-  addRowSelection,
-  removeRowSelection,
   clearRowSelection,
-  isRowSelected,
   getNumIncludedRows,
   getNumExcludedRows,
   createFilterFromRowSelection,
@@ -140,7 +137,7 @@ const TABLE_VIEW = "table";
 const TIMESERIES_VIEW = "timeseries";
 
 export default Vue.extend({
-  name: "select-data-slot",
+  name: "SelectDataSlot",
 
   components: {
     DataSize,
@@ -239,7 +236,7 @@ export default Vue.extend({
     },
 
     /* Check if the Active Filter is from an available feature. */
-    isActiveFilterFromAnAvailableFeature(): Boolean {
+    isActiveFilterFromAnAvailableFeature(): boolean {
       if (!this.activeFilter) {
         return false;
       }
@@ -253,7 +250,7 @@ export default Vue.extend({
     },
 
     /* Disable the Exclude filter button. */
-    isExcludeDisabled(): Boolean {
+    isExcludeDisabled(): boolean {
       return (
         (!this.isFilteringHighlights && !this.isFilteringSelection) ||
         this.isActiveFilterFromAnAvailableFeature
@@ -291,12 +288,13 @@ export default Vue.extend({
     },
 
     /* Select which component to display the data. */
-    viewComponent() {
+    viewComponent(): string {
       if (this.viewTypeModel === GEO_VIEW) return "SelectGeoPlot";
       if (this.viewTypeModel === GRAPH_VIEW) return "SelectGraphView";
       if (this.viewTypeModel === IMAGE_VIEW) return "ImageMosaic";
-      if (this.viewTypeModel === TABLE_VIEW) return "SelectDataTable";
       if (this.viewTypeModel === TIMESERIES_VIEW) return "SelectTimeseriesView";
+      // Default is TABLE_VIEW
+      return "SelectDataTable";
     },
   },
 

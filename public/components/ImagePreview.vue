@@ -28,9 +28,12 @@
         <i class="fa fa-search-plus zoom-icon" @click.stop="showZoomedImage" />
       </template>
     </div>
+
     <image-drilldown
-      :imageUrl="imageUrl"
-      :title="imageUrl"
+      :url="imageUrl"
+      :type="type"
+      :info="imageDrilldown"
+      :item="row"
       :visible="!!zoomImage"
       @hide="hideZoomImage"
     />
@@ -38,10 +41,9 @@
 </template>
 
 <script lang="ts">
-import $ from "jquery";
 import _ from "lodash";
 import Vue from "vue";
-import ImageDrilldown from "./ImageDrilldown.vue";
+import ImageDrilldown, { DrillDownInfo } from "./ImageDrilldown.vue";
 import {
   getters as datasetGetters,
   actions as datasetActions,
@@ -53,18 +55,14 @@ import {
   D3M_INDEX_FIELD,
   TableRow,
   RowSelection,
-  BandID,
-  BandCombination,
-  TaskTypes,
 } from "../store/dataset/index";
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
 import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
-import { createRouteEntry } from "../util/routes";
 import { ColorScaleNames } from "../util/data";
 
 export default Vue.extend({
-  name: "image-preview",
+  name: "ImagePreview",
 
   components: {
     ImageDrilldown,
@@ -153,17 +151,17 @@ export default Vue.extend({
 
   data() {
     return {
-      zoomImage: false,
+      debouncedRequestImage: null,
       entry: null,
-      zoomedWidth: 400,
-      zoomedHeight: 400,
-      isVisible: false,
+      getImage: null,
       hasRendered: false,
       hasRequested: false,
-      stopSpinner: false,
-      debouncedRequestImage: null,
-      getImage: null,
       imageAttentionHasRendered: false,
+      isVisible: false,
+      stopSpinner: false,
+      zoomedHeight: 400,
+      zoomImage: false,
+      zoomedWidth: 400,
     };
   },
 
@@ -171,9 +169,18 @@ export default Vue.extend({
     colorScale(): ColorScaleNames {
       return routeGetters.getColorScale(this.$store);
     },
+
     imageId(): string {
       return this.imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
     },
+
+    imageDrilldown(): DrillDownInfo {
+      return {
+        band: this.band,
+        title: this.imageUrl,
+      };
+    },
+
     files(): Dictionary<any> {
       return datasetGetters.getFiles(this.$store);
     },
@@ -233,9 +240,11 @@ export default Vue.extend({
       }
       return false;
     },
+
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
+
     hasImageAttention(): boolean {
       return routeGetters.getImageAttention(this.$store);
     },

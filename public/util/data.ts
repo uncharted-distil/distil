@@ -1066,9 +1066,9 @@ export function getImageFields(
     };
   }).filter((field) => field.type === IMAGE_TYPE);
 
-  // find remote senings image fields
+  // find remote sensing image fields
   const fieldKeys = _.map(fields, (_, key) => key);
-  const MultiBandImageFields = datasetGetters
+  const multiBandImageFields = datasetGetters
     .getVariables(store)
     .filter(
       (v) =>
@@ -1080,7 +1080,7 @@ export function getImageFields(
     .map((v) => ({ key: v.grouping.idCol, type: v.colType }));
 
   // the two are probably mutually exclusive, but it doesn't hurt anything to allow for both
-  return imageFields.concat(MultiBandImageFields);
+  return imageFields.concat(multiBandImageFields);
 }
 
 export function getListFields(

@@ -210,6 +210,7 @@ export interface TableRow {
   _key: number;
   _rowVariant: string;
   _cellVariants: Dictionary<string>;
+  coordinates: any;
   d3mIndex?: number;
   isExcluded?: boolean;
 }
