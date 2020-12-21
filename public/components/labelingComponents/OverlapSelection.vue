@@ -48,11 +48,15 @@ export default Vue.extend({
   },
   props: {
     items: { type: Array, default: () => [] },
+    indices: { type: Object as () => { x: number; y: number } },
     dataFields: Object as () => Dictionary<TableColumn>,
     instanceName: { type: String as () => string, default: "" },
     imageWidth: { type: Number, default: 124 },
     imageHeight: { type: Number, default: 124 },
     imageType: { type: String },
+  },
+  data() {
+    return { eventName: "item-selected" };
   },
   computed: {
     shouldDisplay(): boolean {
@@ -61,7 +65,7 @@ export default Vue.extend({
   },
   methods: {
     onClick(item) {
-      console.log(item);
+      this.$emit(this.eventName, { item, key: this.indices });
     },
   },
 });

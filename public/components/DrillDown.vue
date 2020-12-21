@@ -15,24 +15,26 @@
                 includedActive
                 shortenLabels
                 alignHorizontal
-                :item="tilesToRender[i][j].selected.item"
+                :item="renderTiles[i][j].selected.item"
               />
               <image-preview
                 class="image-preview"
-                :row="tilesToRender[i][j].selected.item"
-                :image-url="tilesToRender[i][j].selected.imageUrl"
+                :row="renderTiles[i][j].selected.item"
+                :image-url="renderTiles[i][j].selected.imageUrl"
                 :width="imageWidth"
                 :height="imageHeight"
                 :type="imageType"
-                :gray="tilesToRender[i][j].selected.gray"
+                :gray="renderTiles[i][j].selected.gray"
                 :on-click="onImageClick"
               />
               <overlap-selection
-                :items="tilesToRender[i][j].overlapped"
+                :items="renderTiles[i][j].overlapped"
+                :indices="{ y: i, x: j }"
                 :instanceName="`over-lap-${i}-${j}`"
                 :width="imageWidth"
                 :height="imageHeight"
                 :imageType="imageType"
+                @item-selected="onOverlapSelected"
               />
             </div>
           </template>
@@ -105,7 +107,16 @@ export default Vue.extend({
     },
     instanceName: { type: String as () => string, default: "" },
   },
-
+  data() {
+    return {
+      renderTiles: [] as RenderTile[][],
+    };
+  },
+  watch: {
+    tiles() {
+      this.renderTiles = this.spatialSort();
+    },
+  },
   computed: {
     tileDims(): Dimensions {
       return {
@@ -114,9 +125,6 @@ export default Vue.extend({
         height:
           this.centerTile.coordinates[1][0] - this.centerTile.coordinates[0][0],
       };
-    },
-    tilesToRender(): RenderTile[][] {
-      return this.spatialSort();
     },
     gridColStyle(): string {
       return `grid-template-columns: repeat(${this.cols}, ${this.imageWidth}px); grid-template-rows: repeat(${this.rows}, ${this.imageHeight}px);`;
@@ -193,6 +201,9 @@ export default Vue.extend({
           event.row[D3M_INDEX_FIELD]
         );
       }
+    },
+    onOverlapSelected(info: { item: Tile; key: { x: number; y: number } }) {
+      this.renderTiles[info.key.y][info.key.x].selected = info.item;
     },
   },
 });
