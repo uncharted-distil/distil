@@ -3,8 +3,8 @@
     v-observe-visibility="visibilityChanged"
     :class="{ 'is-hidden': !isVisible && !preventHiding }"
     :style="{
-      width: `${width}px`,
-      height: `${height}px`,
+      width: `${width}px`, // + 2 for boarder
+      height: `${height}px`, // boarder
       filter: `grayscale(${gray}%)`,
     }"
   >
@@ -38,7 +38,6 @@
 </template>
 
 <script lang="ts">
-import $ from "jquery";
 import _ from "lodash";
 import Vue from "vue";
 import ImageDrilldown from "./ImageDrilldown.vue";
@@ -53,14 +52,10 @@ import {
   D3M_INDEX_FIELD,
   TableRow,
   RowSelection,
-  BandID,
-  BandCombination,
-  TaskTypes,
 } from "../store/dataset/index";
 import { isRowSelected } from "../util/row";
 import { Dictionary } from "../util/dict";
 import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
-import { createRouteEntry } from "../util/routes";
 import { ColorScaleNames } from "../util/data";
 
 export default Vue.extend({
@@ -426,7 +421,6 @@ export default Vue.extend({
 }
 
 .image-container {
-  border: 2px solid rgba(0, 0, 0, 0);
   position: relative;
 }
 
@@ -450,6 +444,8 @@ export default Vue.extend({
 .image-elem img {
   max-height: 100%;
   max-width: 100%;
+  height: 100%;
+  width: 100%;
   position: relative;
 }
 

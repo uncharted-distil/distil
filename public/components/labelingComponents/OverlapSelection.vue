@@ -1,11 +1,13 @@
 <template>
-  <div v-if="shouldDisplay">
-    <i :id="instanceName" class="stack-button" aria-hidden="true">{{
-      items.length
-    }}</i>
-    <b-popover :target="instanceName" triggers="hover" placement="top">
+  <i
+    v-if="shouldDisplay"
+    :id="instanceName"
+    class="stack-button"
+    aria-hidden="true"
+    >{{ items.length }}
+    <b-popover :target="instanceName" triggers="hover" placement="left">
       <template #title>Overlapped Tiles</template>
-      <div class="image-list">
+      <div class="overflow-auto image-list">
         <template v-for="(r, i) in items.length">
           <div class="image-container">
             <image-label
@@ -31,7 +33,7 @@
         </template>
       </div>
     </b-popover>
-  </div>
+  </i>
 </template>
 
 <script lang="ts">
@@ -65,7 +67,11 @@ export default Vue.extend({
   },
   methods: {
     onClick(item) {
-      this.$emit(this.eventName, { item, key: this.indices });
+      const res = this.items.find((i) => i.imageUrl === item.imageUrl);
+      this.$emit(this.eventName, {
+        item: res,
+        key: this.indices,
+      });
     },
   },
 });
@@ -83,14 +89,14 @@ export default Vue.extend({
   display: block;
 }
 .image-list {
-  display: flex;
-  flex-direction: row;
-  overflow-x: auto;
+  max-height: 375px;
 }
 .image-container {
   position: relative;
   z-index: 0;
   width: 100%;
   height: 100%;
+  display: block;
+  margin: 2px;
 }
 </style>

@@ -189,8 +189,7 @@ export default Vue.extend({
 
 .image-label {
   position: absolute;
-  left: 2px;
-  top: 2px;
+  top: 0px;
   z-index: 1;
 }
 </style>

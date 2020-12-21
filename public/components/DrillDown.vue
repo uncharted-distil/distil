@@ -3,11 +3,13 @@
     <div>
       <div class="toolbar">
         <div class="title">{{ title }}</div>
-        <b-button class="exit-button" @click="onExitClicked">x</b-button>
+        <b-button class="exit-button" @click="onExitClicked"
+          ><span aria-hidden="true">&times;</span></b-button
+        >
       </div>
       <div class="grid-container" :style="gridColStyle">
-        <template v-for="(r, i) in rows">
-          <template v-for="(c, j) in cols">
+        <template v-for="(r, i) in renderTiles.length">
+          <template v-for="(c, j) in renderTiles[i].length">
             <div class="image-container">
               <image-label
                 class="image-label"
@@ -111,6 +113,9 @@ export default Vue.extend({
     return {
       renderTiles: [] as RenderTile[][],
     };
+  },
+  mounted() {
+    this.renderTiles = this.spatialSort();
   },
   watch: {
     tiles() {
