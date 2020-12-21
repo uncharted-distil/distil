@@ -225,7 +225,6 @@ export default Vue.extend({
   watch: {
     visible() {
       if (this.visible) {
-        console.log(this.initialPosition);
         this.carouselPosition = this.initialPosition;
         this.requestImage();
       }

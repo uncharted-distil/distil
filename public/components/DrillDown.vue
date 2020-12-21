@@ -69,7 +69,7 @@ import { clearAreaOfInterest } from "../util/data";
 import { Dictionary } from "../util/dict";
 import { getters as routeGetters } from "../store/route/module";
 import { LatLngBounds, LatLngBoundsLiteral } from "leaflet";
-import OverlapSelection from "./labelingComponents/OverlapSelection.vue";
+import OverlapSelection from "./OverlapSelection.vue";
 
 interface Tile {
   imageUrl: string;

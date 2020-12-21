@@ -30,6 +30,7 @@
               :onClick="onClick"
             />
           </div>
+          <label v-if="hasTimeStamp">{{ items[i].item.timestamp.value }}</label>
         </template>
       </div>
     </b-popover>
@@ -38,10 +39,10 @@
 
 <script lang="ts">
 import Vue from "vue";
-import ImagePreview from "../ImagePreview.vue";
-import ImageLabel from "../ImageLabel.vue";
-import { Dictionary } from "../../util/dict";
-import { TableColumn } from "../../store/dataset/index";
+import ImagePreview from "./ImagePreview.vue";
+import ImageLabel from "./ImageLabel.vue";
+import { Dictionary } from "../util/dict";
+import { TableColumn } from "../store/dataset/index";
 export default Vue.extend({
   name: "overlap-selection",
   components: {
@@ -63,6 +64,9 @@ export default Vue.extend({
   computed: {
     shouldDisplay(): boolean {
       return this.items.length > 1;
+    },
+    hasTimeStamp(): boolean {
+      return this.items[0]?.item?.timestamp !== null;
     },
   },
   methods: {
