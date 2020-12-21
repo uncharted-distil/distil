@@ -7,6 +7,20 @@
     :visible="visible"
   >
     <div class="drill-down">
+      <b-button
+        v-if="isCarousel"
+        class="position-absolute left"
+        @click="rotateSelection(-1)"
+        :disabled="carouselPosition === 0"
+        ><b>&lt</b></b-button
+      >
+      <b-button
+        v-if="isCarousel"
+        class="position-absolute right"
+        @click="rotateSelection(1)"
+        :disabled="carouselPosition === imageUrls.length - 1"
+        ><b>&gt</b></b-button
+      >
       <image-label
         v-if="item && dataFields"
         class="image-label"
@@ -80,12 +94,16 @@ export default Vue.extend({
     item: Object as () => TableRow,
     title: String,
     visible: Boolean,
+    imageUrls: { type: Array as () => string[], default: () => [] as string[] },
+    items: { type: Array as () => TableRow[], default: () => [] as TableRow[] },
+    initialPosition: { type: Number as () => number, default: 0 },
   },
 
   data() {
     return {
       IMAGE_MAX_SIZE: IMAGE_MAX_SIZE,
       currentVal: 0.5,
+      carouselPosition: this.initialPosition,
     };
   },
   computed: {
@@ -100,19 +118,27 @@ export default Vue.extend({
     files(): Dictionary<any> {
       return datasetGetters.getFiles(this.$store);
     },
-
+    isCarousel(): boolean {
+      return this.imageUrls.length > 0;
+    },
+    selectedImageUrl(): string {
+      return this.imageUrls.length
+        ? this.imageUrls[this.carouselPosition]
+        : this.imageUrl;
+    },
     image(): HTMLImageElement {
       return (
-        this.files[this.imageUrl] ?? this.files[imageId(this.imageUrl)] ?? null
+        this.files[this.selectedImageUrl] ??
+        this.files[imageId(this.selectedImageUrl)] ??
+        null
       );
     },
-
     isMultiBandImage(): boolean {
       return routeGetters.isMultiBandImage(this.$store);
     },
 
     visibleTitle(): string {
-      return this.title ?? this.imageUrl ?? "Image Drilldown";
+      return this.title ?? this.selectedImageUrl ?? "Image Drilldown";
     },
     sliderVal(): string {
       return this.currentVal.toFixed(2);
@@ -126,6 +152,13 @@ export default Vue.extend({
   },
 
   methods: {
+    rotateSelection(direction: number) {
+      this.carouselPosition = Math.min(
+        Math.max(0, this.carouselPosition + direction),
+        this.imageUrls.length - 1
+      );
+      this.requestImage();
+    },
     hide() {
       this.$emit("hide");
     },
@@ -138,7 +171,10 @@ export default Vue.extend({
     },
     cleanUp() {
       if (this.isMultiBandImage) {
-        datasetMutations.removeFile(this.$store, imageId(this.imageUrl));
+        datasetMutations.removeFile(
+          this.$store,
+          imageId(this.selectedImageUrl)
+        );
         return;
       }
     },
@@ -172,7 +208,7 @@ export default Vue.extend({
       if (this.isMultiBandImage) {
         await datasetActions.fetchMultiBandImage(this.$store, {
           dataset: this.dataset,
-          imageId: imageId(this.imageUrl),
+          imageId: imageId(this.selectedImageUrl),
           bandCombination: this.band,
           isThumbnail: false,
           options: imageOptions,
@@ -180,7 +216,7 @@ export default Vue.extend({
       } else {
         await datasetActions.fetchImage(this.$store, {
           dataset: this.dataset,
-          url: this.imageUrl,
+          url: this.selectedImageUrl,
         });
       }
       this.injectImage();
@@ -189,6 +225,8 @@ export default Vue.extend({
   watch: {
     visible() {
       if (this.visible) {
+        console.log(this.initialPosition);
+        this.carouselPosition = this.initialPosition;
         this.requestImage();
       }
     },
@@ -227,5 +265,13 @@ export default Vue.extend({
 }
 .slider {
   width: 70%;
+}
+.left {
+  left: 0px;
+  top: 50%;
+}
+.right {
+  right: 0px;
+  top: 50%;
 }
 </style>

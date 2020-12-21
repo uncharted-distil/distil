@@ -28,6 +28,9 @@
                 :type="imageType"
                 :gray="renderTiles[i][j].selected.gray"
                 :on-click="onImageClick"
+                :overlappedUrls="
+                  renderTiles[i][j].overlapped.map((o) => o.imageUrl)
+                "
               />
               <overlap-selection
                 :items="renderTiles[i][j].overlapped"

@@ -33,6 +33,10 @@
       :title="imageUrl"
       :visible="!!zoomImage"
       @hide="hideZoomImage"
+      :imageUrls="overlappedUrls"
+      :initialPosition="
+        overlappedUrls.length ? overlappedUrls.indexOf(imageUrl) : 0
+      "
     />
   </div>
 </template>
@@ -68,6 +72,10 @@ export default Vue.extend({
   props: {
     row: Object as () => TableRow,
     imageUrl: String as () => string,
+    overlappedUrls: {
+      type: Array as () => string[],
+      default: () => [] as string[],
+    },
     uniqueTrail: { type: String as () => string, default: "" },
     type: String as () => string,
     width: {
