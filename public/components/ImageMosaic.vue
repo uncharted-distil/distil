@@ -2,8 +2,8 @@
   <div class="mosaic-container">
     <div class="image-mosaic">
       <template v-for="imageField in imageFields">
-        <template v-for="item in paginatedItems">
-          <div class="image-tile">
+        <template v-for="(item, idx) in paginatedItems">
+          <div class="image-tile" :key="idx">
             <template v-for="(fieldInfo, fieldKey) in fields">
               <image-preview
                 v-if="fieldKey === imageField.key"
@@ -17,7 +17,7 @@
                 :key="fieldKey"
                 uniqueTrail="mosaic"
                 :debounce="true"
-              ></image-preview>
+              />
             </template>
             <image-label
               class="image-label"
@@ -40,7 +40,7 @@
       v-model="currentPage"
       :per-page="perPage"
       :total-rows="itemCount"
-    ></b-pagination>
+    />
   </div>
 </template>
 

@@ -58,7 +58,7 @@ type predictionDataset struct {
 // NewPredictionTimeseriesDataset creates prediction timeseries dataset.
 func NewPredictionTimeseriesDataset(params *PredictParams, interval float64, count int) (*PredictionTimeseriesDataset, error) {
 	// get the timestamp variable
-	variables, err := params.MetaStorage.FetchVariables(params.Dataset, true, true)
+	variables, err := params.MetaStorage.FetchVariables(params.Dataset, true, true, false)
 	if err != nil {
 		return nil, err
 	}
@@ -492,7 +492,7 @@ func CreateComposedVariable(metaStorage api.MetadataStorage, dataStorage api.Dat
 			Variables: []string{model.D3MIndexName},
 		}
 	}
-	rawData, err := dataStorage.FetchData(dataset, storageName, filter, false)
+	rawData, err := dataStorage.FetchData(dataset, storageName, filter, false, nil)
 	if err != nil {
 		return err
 	}
@@ -551,7 +551,7 @@ func updateVariableTypes(solutionStorage api.SolutionStorage, metaStorage api.Me
 	}
 
 	// get a variable map for quick look up
-	variables, err := metaStorage.FetchVariables(solutionRequest.Dataset, false, true)
+	variables, err := metaStorage.FetchVariables(solutionRequest.Dataset, false, true, false)
 	if err != nil {
 		return err
 	}
@@ -617,12 +617,12 @@ func copyFeatureGroups(fittedSolutionID string, datasetName string, solutionStor
 	}
 
 	// get a variable map for quick look up
-	variables, err := metaStorage.FetchVariables(solutionRequest.Dataset, false, true)
+	variables, err := metaStorage.FetchVariables(solutionRequest.Dataset, false, true, false)
 	if err != nil {
 		return err
 	}
 	variableMap := createVarMap(variables, false, false)
-	variablesPrediction, err := metaStorage.FetchVariables(datasetName, false, true)
+	variablesPrediction, err := metaStorage.FetchVariables(datasetName, false, true, false)
 	if err != nil {
 		return err
 	}

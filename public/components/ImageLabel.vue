@@ -47,7 +47,6 @@ export default Vue.extend({
   },
 
   props: {
-    dataFields: Object as () => Dictionary<TableColumn>,
     includedActive: Boolean as () => boolean,
     item: Object as () => TableRow,
     shortenLabels: {
@@ -62,9 +61,7 @@ export default Vue.extend({
 
   computed: {
     fields(): Dictionary<TableColumn> {
-      return this.dataFields
-        ? this.dataFields
-        : this.includedActive
+      return this.includedActive
         ? datasetGetters.getIncludedTableDataFields(this.$store)
         : datasetGetters.getExcludedTableDataFields(this.$store);
     },
@@ -137,7 +134,7 @@ export default Vue.extend({
 
     // Creates a dictionary of label lengths keyed by a label's first character.  This supports
     // the generation of a minimum ambiguous label by starting letter.  For the set [Airport, Agriculture, Forest],
-    // we will end up with [A=4, F=1], which at runtime will generate display lables of [Ai, Ag, F].  This is a computed
+    // we will end up with [A=4, F=1], which at runtime will generate display labels of [Ai, Ag, F].  This is a computed
     // property so it should only end up being updated when the underlying data changes.
     labelLengths(): Dictionary<number> {
       let summary: VariableSummary = null;
@@ -150,13 +147,13 @@ export default Vue.extend({
           this.targetField
         ][minKey];
       }
-      const bucketNames = summary.baseline.buckets.map((b) => b.key);
+      const bucketNames = summary?.baseline?.buckets.map((b) => b.key);
       // If this isn't categorical, don't generate the table.
       if (!bucketNames) {
         return {};
       }
 
-      // initailize label lengths with zeroes
+      // initialize label lengths with zeroes
       const imageLabelLengths: Dictionary<number> = {};
       bucketNames.forEach((b) => (imageLabelLengths[b[0]] = 0));
 

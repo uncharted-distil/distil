@@ -45,7 +45,7 @@ func ImageHandler(ctor model.MetadataStorageCtor, config *env.Config) func(http.
 			return
 		}
 
-		res, err := storage.FetchDataset(dataset, false, false)
+		res, err := storage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

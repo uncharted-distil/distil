@@ -10,6 +10,8 @@ import {
   fetchSummaryExemplars,
   minimumRouteKey,
   validateArgs,
+  VARIABLE_SUMMARY_BASE,
+  VARIABLE_SUMMARY_CONFIDENCE,
 } from "../../util/data";
 import { EXCLUDE_FILTER, Filter } from "../../util/filters";
 import { addHighlightToFilterParams } from "../../util/highlights";
@@ -584,6 +586,7 @@ export const actions = {
       solution,
       key,
       label,
+      VARIABLE_SUMMARY_BASE,
       resultGetters.getPredictedSummaries(context),
       mutations.updatePredictedSummaries,
       filterParams,
@@ -687,6 +690,7 @@ export const actions = {
       solution,
       key,
       label,
+      VARIABLE_SUMMARY_BASE,
       resultGetters.getResidualsSummaries(context),
       mutations.updateResidualsSummaries,
       filterParams,
@@ -776,6 +780,7 @@ export const actions = {
       solution,
       key,
       label,
+      VARIABLE_SUMMARY_BASE,
       resultGetters.getCorrectnessSummaries(context),
       mutations.updateCorrectnessSummaries,
       filterParams,
@@ -873,6 +878,7 @@ export const actions = {
       solution,
       key,
       label,
+      VARIABLE_SUMMARY_CONFIDENCE,
       resultGetters.getConfidenceSummaries(context),
       mutations.updateConfidenceSummaries,
       filterParams,

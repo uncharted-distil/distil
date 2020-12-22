@@ -49,7 +49,7 @@ func CloningHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 			return
 		}
 
-		ds, err := metaStorage.FetchDataset(dataset, false, false)
+		ds, err := metaStorage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

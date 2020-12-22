@@ -58,7 +58,7 @@ func GroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageC
 			return
 		}
 
-		ds, err := meta.FetchDataset(dataset, false, false)
+		ds, err := meta.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

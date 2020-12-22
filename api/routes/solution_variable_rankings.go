@@ -48,7 +48,7 @@ func SolutionVariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCt
 			handleError(w, errors.Wrap(err, "unable to fetch request"))
 		}
 
-		dataset, err := storage.FetchDataset(request.Dataset, false, false)
+		dataset, err := storage.FetchDataset(request.Dataset, false, false, false)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to fetch dataset"))
 			return

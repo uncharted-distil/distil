@@ -143,7 +143,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 		return
 	}
 
-	vars, err := metaStorage.FetchVariables(dataset, false, true)
+	vars, err := metaStorage.FetchVariables(dataset, false, true, false)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to pull variables from storage"))
 		return
@@ -172,7 +172,7 @@ func handleCreateSolutions(conn *Connection, client *compute.Client, metadataCto
 	}
 
 	// set augmentation info
-	requestDataset, err := metaStorage.FetchDataset(request.Dataset, true, true)
+	requestDataset, err := metaStorage.FetchDataset(request.Dataset, true, true, false)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to pull joined dataset"))
 		return
@@ -296,15 +296,14 @@ func handleQuery(conn *Connection, client *compute.Client, metadataCtor apiModel
 		TargetName:  req.Target,
 		Filters:     req.Filters,
 	}
-	res, err := task.Query(params)
+	_, err = task.Query(params)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to execute query request"))
 		return
 	}
 	response := map[string]interface{}{
-		"progress": res,
+		"progress": "done",
 		"id":       msg.ID,
-		"type":     msg.Type,
 	}
 
 	err = conn.SendResponse(response)
@@ -366,7 +365,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	sr := solutionResults[0]
 
 	// read the metadata of the original dataset
-	datasetES, err := metaStorage.FetchDataset(sr.Dataset, false, false)
+	datasetES, err := metaStorage.FetchDataset(sr.Dataset, false, false, false)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to fetch dataset from es"))
 		return
@@ -397,7 +396,7 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		return
 	}
 
-	variables, err := metaStorage.FetchVariablesByName(req.Dataset, req.Filters.Variables, false, false)
+	variables, err := metaStorage.FetchVariablesByName(req.Dataset, req.Filters.Variables, false, false, false)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return

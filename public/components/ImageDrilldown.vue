@@ -1,12 +1,12 @@
 <template>
   <b-modal
     size="lg"
-    @hide="hide"
     hide-footer
     :title="visibleTitle"
     :visible="visible"
+    @hide="hide"
   >
-    <div class="drill-down">
+    <main class="drill-down">
       <b-button
         v-if="isCarousel"
         class="position-absolute left"
@@ -21,44 +21,48 @@
         :disabled="carouselPosition === imageUrls.length - 1"
         ><b>&gt</b></b-button
       >
-      <image-label
-        v-if="item && dataFields"
-        class="image-label"
-        :dataFields="dataFields"
-        includedActive
-        :item="item"
-      />
-      <div
+      <section
         class="image-container"
         ref="imageContainer"
         :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
-      ></div>
-      <div class="slider-container">
-        <label class="slider-label">0.0 </label>
-        <b-form-input
-          v-if="isMultiBandImage"
-          type="range"
-          name="brightness"
-          :min="min"
-          :max="max"
-          step="1"
-          class="slider"
-          @change="onSliderChanged"
+      >
+        <image-label
+          v-if="item && dataFields"
+          class="image-label"
+          :dataFields="dataFields"
+          includedActive
+          :item="item"
         />
-        <label class="slider-label">1.0</label>
-      </div>
-      <div>
-        <i class="fa fa-adjust fa-rotate-180" aria-hidden="true" />
-        <label class="slider-label">{{ sliderVal }}</label>
-      </div>
-    </div>
+      </section>
+      <ul class="information">
+        <li v-if="bandName"><label>Band:</label> {{ bandName }}</li>
+        <li v-if="latLongValue"><label>Lat/Long:</label> {{ latLongValue }}</li>
+        <li v-if="isMultiBandImageType" class="information-brightness">
+          <b-input-group prepend="0" append="1.0" class="mt-3 mb-1" size="sm">
+            <b-form-input
+              type="range"
+              name="brightness"
+              :min="brightnessMin"
+              :max="brightnessMax"
+              step="1"
+              class="brightness-slider"
+              @change="onBrightnessChanged"
+            />
+          </b-input-group>
+          <label class="brightness-label">
+            <i class="fa fa-adjust fa-rotate-180" aria-hidden="true" />
+            {{ brightnessValue }}
+          </label>
+        </li>
+      </ul>
+    </main>
   </b-modal>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
 import ImageLabel from "./ImageLabel.vue";
-import { TableColumn, TableRow } from "../store/dataset/index";
+import { TableRow } from "../store/dataset/index";
 import {
   getters as datasetGetters,
   actions as datasetActions,
@@ -66,33 +70,40 @@ import {
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
+import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
 
-const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drilldown in pixels.
-const IMAGE_MAX_ZOOM = 3; // We don't want an image to be too magnified to avoid blurriness.
+const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drill-down in pixels.
+const IMAGE_MAX_ZOOM = 2.5; // We don't want an image to be too magnified to avoid blurriness.
 
 const imageId = (imageUrl) => imageUrl?.split(/_B[0-9][0-9a-zA-Z][.]/)[0];
 
+export interface DrillDownInfo {
+  band?: string;
+  title?: string;
+  confidence?: string;
+}
+
 /**
- * Display a modal with drilldowned information about an image.
+ * Display a modal with drill-downed information about an image.
  *
- * @param visible    {Boolean} Display or hide the modal.
- * @param imageUrl   {String}  URL of the image to be drilldown.
- * @param title      {String=} Title of the modal.
- * @param dataFields {Array<TableColumn>}
- * @param item       {TableRow} item being drilldown.
+ * @param info {DrillDownInfo} List of information to be displayed.
+ * @param url {String} URL of the image to be drill-down.
+ * @param type {ImageType=} Type of the image, default to IMAGE_TYPE.
+ * @param item {TableRow=} item being drill-down.
+ * @param visible {Boolean} Display or hide the modal.
  */
 export default Vue.extend({
-  name: "image-drilldown",
+  name: "ImageDrilldown",
 
   components: {
     ImageLabel,
   },
 
   props: {
-    dataFields: Object as () => Dictionary<TableColumn>,
-    imageUrl: String,
+    info: Object as () => DrillDownInfo,
     item: Object as () => TableRow,
-    title: String,
+    type: { type: String, default: IMAGE_TYPE },
+    url: String,
     visible: Boolean,
     imageUrls: { type: Array as () => string[], default: () => [] as string[] },
     items: { type: Array as () => TableRow[], default: () => [] as TableRow[] },
@@ -104,11 +115,21 @@ export default Vue.extend({
       IMAGE_MAX_SIZE: IMAGE_MAX_SIZE,
       currentVal: 0.5,
       carouselPosition: this.initialPosition,
+      currentBrightness: 0.5,
+      brightnessMin: 0,
+      brightnessMax: 100,
     };
   },
+
   computed: {
-    band(): string {
-      return routeGetters.getBandCombinationId(this.$store);
+    bandName(): string {
+      return datasetGetters
+        .getMultiBandCombinations(this.$store)
+        .find((band) => band.id === this.info.band)?.displayName;
+    },
+
+    brightnessValue(): string {
+      return this.currentBrightness.toFixed(2);
     },
 
     dataset(): string {
@@ -124,7 +145,7 @@ export default Vue.extend({
     selectedImageUrl(): string {
       return this.imageUrls.length
         ? this.imageUrls[this.carouselPosition]
-        : this.imageUrl;
+        : this.url;
     },
     image(): HTMLImageElement {
       return (
@@ -138,16 +159,19 @@ export default Vue.extend({
     },
 
     visibleTitle(): string {
-      return this.title ?? this.selectedImageUrl ?? "Image Drilldown";
+      return this.info.title ?? this.selectedImageUrl ?? "Image Drilldown";
     },
     sliderVal(): string {
       return this.currentVal.toFixed(2);
     },
-    max(): number {
-      return 100;
-    },
-    min(): number {
-      return 0;
+  },
+
+  watch: {
+    visible() {
+      if (this.visible) {
+        this.carouselPosition = this.initialPosition;
+        this.requestImage();
+      }
     },
   },
 
@@ -162,22 +186,24 @@ export default Vue.extend({
     hide() {
       this.$emit("hide");
     },
-    onSliderChanged(e) {
+
+    onBrightnessChanged(e) {
       const MAX_GAINL = 2.0;
-      const val = Number(e) / this.max;
+      const val = Number(e) / this.brightnessMax;
       const gainL = val * MAX_GAINL;
-      this.currentVal = val;
+      this.currentBrightness = val;
       this.requestImage({ gainL, gamma: 2.2, gain: 2.5 }); // gamma, gain, are default. They are here if we need to edit them later down the road
     },
+
     cleanUp() {
       if (this.isMultiBandImage) {
         datasetMutations.removeFile(
           this.$store,
           imageId(this.selectedImageUrl)
         );
-        return;
       }
     },
+
     injectImage() {
       const container = this.$refs.imageContainer as any;
 
@@ -194,8 +220,11 @@ export default Vue.extend({
         image.height = this.image.height * ratio;
         image.width = this.image.width * ratio;
 
+        // Remove previously injected image.
+        image.id = "injected-image";
+        container.querySelector("#" + image.id)?.remove();
+
         // Add the image to the container.
-        container.innerHTML = "";
         container.appendChild(image);
       }
     },
@@ -209,7 +238,7 @@ export default Vue.extend({
         await datasetActions.fetchMultiBandImage(this.$store, {
           dataset: this.dataset,
           imageId: imageId(this.selectedImageUrl),
-          bandCombination: this.band,
+          bandCombination: this.info.band,
           isThumbnail: false,
           options: imageOptions,
         });
@@ -219,21 +248,20 @@ export default Vue.extend({
           url: this.selectedImageUrl,
         });
       }
+
       this.injectImage();
-    },
-  },
-  watch: {
-    visible() {
-      if (this.visible) {
-        this.carouselPosition = this.initialPosition;
-        this.requestImage();
-      }
     },
   },
 });
 </script>
 
 <style scoped>
+.drill-down {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .image-container {
   max-height: 100%;
   max-width: 100%;
@@ -247,22 +275,31 @@ export default Vue.extend({
   max-width: var(--IMAGE_MAX_SIZE);
   position: relative;
 }
-.drill-down {
+
+.information {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0;
+}
+
+.information li label {
+  font-weight: bold;
+}
+
+.information-brightness {
+  align-items: center;
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
-.slider-container {
-  display: flex;
-  align-items: center;
-}
-.slider-label {
+
+.brightness-label {
   margin-bottom: 0px;
   padding-left: 5px;
   padding-right: 5px;
   display: inline-block;
 }
-.slider {
+
+.brightness-slider {
   width: 70%;
 }
 .left {

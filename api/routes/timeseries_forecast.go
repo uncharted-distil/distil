@@ -94,14 +94,14 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 			return
 		}
 
-		dst, err := meta.FetchDataset(truthDataset, false, false)
+		dst, err := meta.FetchDataset(truthDataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 		truthStorageName := dst.StorageName
 
-		dsf, err := meta.FetchDataset(forecastDataset, false, false)
+		dsf, err := meta.FetchDataset(forecastDataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

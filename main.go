@@ -316,7 +316,7 @@ func main() {
 //nolint
 func updateExtremas(metaStorage model.MetadataStorage, dataStorage model.DataStorage) error {
 	log.Infof("updating extremas on startup")
-	datasets, err := metaStorage.FetchDatasets(false, false)
+	datasets, err := metaStorage.FetchDatasets(false, false, false)
 	if err != nil {
 		return err
 	}

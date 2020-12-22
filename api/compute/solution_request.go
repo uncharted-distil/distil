@@ -640,7 +640,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	s.Filters.AddVariable(model.D3MIndexFieldName)
 
 	// fetch the dataset variables
-	variables, err := metaStorage.FetchVariables(s.Dataset, true, true)
+	variables, err := metaStorage.FetchVariables(s.Dataset, true, true, false)
 	if err != nil {
 		return err
 	}
@@ -667,13 +667,13 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// fetch the source dataset
-	dataset, err := metaStorage.FetchDataset(s.Dataset, true, true)
+	dataset, err := metaStorage.FetchDataset(s.Dataset, true, true, false)
 	if err != nil {
 		return nil
 	}
 
 	// fetch the input dataset (should only differ on augmented)
-	datasetInput, err := metaStorage.FetchDataset(s.DatasetInput, true, true)
+	datasetInput, err := metaStorage.FetchDataset(s.DatasetInput, true, true, false)
 	if err != nil {
 		return err
 	}

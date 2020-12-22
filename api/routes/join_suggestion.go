@@ -57,7 +57,7 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 			return
 		}
 
-		res, err := storage.FetchDataset(dataset, false, false)
+		res, err := storage.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

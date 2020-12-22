@@ -18,6 +18,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
+	jsonu "github.com/uncharted-distil/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
 )
 
@@ -34,6 +36,7 @@ const (
 	featureWeightTableSuffix = "_explain"
 	dataTableAlias           = "data"
 	confidenceName           = "confidence"
+	rankName                 = "rank"
 )
 
 func (s *Storage) getResultTable(storageName string) string {
@@ -93,7 +96,7 @@ func (s *Storage) PersistSolutionFeatureWeight(dataset string, storageName strin
 	if err != nil {
 		return err
 	}
-	fieldsMetadata, err := s.metadata.FetchVariables(dataset, true, true)
+	fieldsMetadata, err := s.metadata.FetchVariables(dataset, true, true, false)
 	if err != nil {
 		return err
 	}
@@ -146,7 +149,7 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 	fieldName := "explain_values"
 	params := make([][]interface{}, 0)
 	if explainResult != nil {
-		// build the confidence lookup
+		// build the explain lookup
 		for _, row := range explainResult.Values[1:] {
 			parsedExplainValues, err := explainResult.ParsingFunction(row)
 			if err != nil {
@@ -250,8 +253,8 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	}
 
 	// currently only support a single result column.
-	if len(records[0]) > 3 {
-		log.Warnf("Result contains %d columns, expected 2 or 3 (confidence).  Additional columns will be ignored.", len(records[0]))
+	if len(records[0]) > 4 {
+		log.Warnf("Result contains %d columns, expected 2, 3 or 4 (explanations).  Additional columns will be ignored.", len(records[0]))
 	}
 
 	// Fetch the actual target variable (this can be different than the requested target for grouped variables)
@@ -268,24 +271,25 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 
 	// We can't guarantee that the order of the variables in the returned result matches our
 	// locally stored indices, so we fetch by name from the source to be safe.
-	targetIndex := -1
-	d3mIndexIndex := -1
-	confidenceIndex := -1
+	fieldsHeader := map[string]int{}
 	for i, v := range records[0] {
-		if v == targetDisplayName {
-			targetIndex = i
-		} else if v == model.D3MIndexFieldName {
-			d3mIndexIndex = i
-		} else if v == confidenceName {
-			confidenceIndex = i
-		}
+		fieldsHeader[v] = i
 	}
-	// result is not in valid format - d3mIndex and target col need to have correct name
-	if targetIndex == -1 {
+	targetIndex, ok := fieldsHeader[targetDisplayName]
+	if !ok {
 		return errors.Wrapf(err, "unable to find target col '%s' in result header", targetDisplayName)
 	}
-	if d3mIndexIndex == -1 {
+	d3mIndexIndex, ok := fieldsHeader[model.D3MIndexFieldName]
+	if !ok {
 		return errors.Wrapf(err, "unabled to find d3m index col '%s' in result header", model.D3MIndexFieldName)
+	}
+	confidenceIndex, ok := fieldsHeader[confidenceName]
+	if !ok {
+		confidenceIndex = -1
+	}
+	rankIndex, ok := fieldsHeader[rankName]
+	if !ok {
+		rankIndex = -1
 	}
 
 	// build the batch data
@@ -308,20 +312,20 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		indicesParsed[parsedVal] = true
 
 		dataForInsert := []interface{}{resultURI, parsedVal, targetVariable.StorageName, records[i][targetIndex]}
-		if confidenceIndex >= 0 {
-			cfs, err := strconv.ParseFloat(records[i][confidenceIndex], 64)
-			if err != nil {
-				return errors.Wrap(err, "failed confidence value parsing")
-			}
-			dataForInsert = append(dataForInsert, cfs)
+		explainValues, err := s.parseExplainValues(records[i], confidenceIndex, rankIndex)
+		if err != nil {
+			return err
+		}
+		if explainValues != nil {
+			dataForInsert = append(dataForInsert, explainValues)
 		}
 
 		insertData = append(insertData, dataForInsert)
 	}
 
 	fields := []string{"result_id", "index", "target", "value"}
-	if confidenceIndex >= 0 {
-		fields = append(fields, "confidence")
+	if confidenceIndex+rankIndex > -2 {
+		fields = append(fields, "explain_values")
 	}
 
 	// store all results to the storage
@@ -331,6 +335,32 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	}
 
 	return nil
+}
+
+func (s *Storage) parseExplainValues(record []string, confidenceIndex int, rankIndex int) (*api.SolutionExplainValues, error) {
+	// -1 + -1 = -2 => no confidence nor ranking
+	if confidenceIndex+rankIndex == -2 {
+		return nil, nil
+	}
+
+	// can have ranking, confidence or both
+	explain := &api.SolutionExplainValues{}
+	if confidenceIndex >= 0 {
+		cfs, err := strconv.ParseFloat(record[confidenceIndex], 64)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed confidence value parsing")
+		}
+		explain.Confidence = cfs
+	}
+	if rankIndex >= 0 {
+		rs, err := strconv.ParseFloat(record[rankIndex], 64)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed rank value parsing")
+		}
+		explain.Rank = rs
+	}
+
+	return explain, nil
 }
 
 func (s *Storage) executeInsertResultStatement(storageName string, resultID string, index int64, target string, value string) error {
@@ -350,8 +380,8 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 	if rows != nil {
 		var columns []*api.Column
 		weightCount := 0
-		confidenceCol := -1
 		predictedCol := -1
+		explainCol := -1
 		// Parse the row data.
 		for rows.Next() {
 			if columns == nil {
@@ -371,8 +401,8 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 					} else if strings.HasPrefix(key, "__weights_") {
 						weightCount = weightCount + 1
 						continue
-					} else if key == "__predicted_confidence" {
-						confidenceCol = i
+					} else if key == "__predicted_explain" {
+						explainCol = i
 						continue
 					} else {
 						if key == target.StorageName {
@@ -404,9 +434,9 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 			weightedValues := make([]*api.FilteredDataValue, len(columns))
 			varIndex := 0
 			for i := 0; i < len(columnValues); i++ {
-				if i == confidenceCol {
+				if i == explainCol {
 					if i < weightCount {
-						// confidence column IS NOT a variable and so indices need to be adjusted
+						// explain column IS NOT variable and so indices need to be adjusted
 						varIndex--
 					}
 				} else if varIndex < len(weightedValues) {
@@ -418,9 +448,17 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 				}
 				varIndex++
 			}
-
-			if confidenceCol >= 0 {
-				weightedValues[predictedCol].Confidence = api.NullableFloat64(columnValues[confidenceCol].(float64))
+			if explainCol >= 0 && columnValues[explainCol] != nil {
+				explainValuesRaw := columnValues[explainCol].(map[string]interface{})
+				explainValuesParsed := &api.SolutionExplainValues{}
+				err = jsonu.MapToStruct(explainValuesParsed, explainValuesRaw)
+				if err != nil {
+					return nil, err
+				}
+				weightedValues[predictedCol].Rank = api.NullableFloat64(explainValuesParsed.Rank)
+				weightedValues[predictedCol].Confidence = api.NullableFloat64(explainValuesParsed.Confidence)
+			} else {
+				weightedValues[predictedCol].Confidence = api.NullableFloat64(math.NaN())
 			}
 			result.Values = append(result.Values, weightedValues)
 		}
@@ -624,24 +662,14 @@ func addExcludeErrorFilterToWhere(wheres []string, params []interface{}, alias s
 	return wheres, params, nil
 }
 
-func addIncludeConfidenceResultToWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter) ([]string, []interface{}, error) {
-	where := fmt.Sprintf("(confidence >= $%d AND confidence <= $%d)", len(params)+1, len(params)+2)
+func addExcludeConfidenceResultToWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter) ([]string, []interface{}) {
+	where := fmt.Sprintf("((explain_values -> 'confidence')::double precision < $%d OR (explain_values -> 'confidence')::double precision > $%d)", len(params)+1, len(params)+2)
 	params = append(params, *confidenceFilter.Min)
 	params = append(params, *confidenceFilter.Max)
 
 	// Append the AND clause
 	wheres = append(wheres, where)
-	return wheres, params, nil
-}
-
-func addExcludeConfidenceResultToWhere(wheres []string, params []interface{}, confidenceFilter *model.Filter) ([]string, []interface{}, error) {
-	where := fmt.Sprintf("(confidence < $%d OR confidence > $%d)", len(params)+1, len(params)+2)
-	params = append(params, *confidenceFilter.Min)
-	params = append(params, *confidenceFilter.Max)
-
-	// Append the AND clause
-	wheres = append(wheres, where)
-	return wheres, params, nil
+	return wheres, params
 }
 
 func addTableAlias(prefix string, fields []string, addToColumn bool) []string {
@@ -675,7 +703,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// fetch variable metadata
-	variables, err := s.metadata.FetchVariables(dataset, false, true)
+	variables, err := s.metadata.FetchVariables(dataset, false, true, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
@@ -748,15 +776,9 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	// Add the error filter into the where clause if it was included in the filter set
 	if filters.confidenceFilter != nil {
 		if filters.confidenceFilter.Mode == model.IncludeFilter {
-			wheres, params, err = addIncludeConfidenceResultToWhere(wheres, params, filters.confidenceFilter)
-			if err != nil {
-				return nil, errors.Wrap(err, "Could not add confidence to where clause")
-			}
+			wheres, params = s.buildConfidenceResultWhere(wheres, params, filters.confidenceFilter, "predicted")
 		} else {
-			wheres, params, err = addExcludeConfidenceResultToWhere(wheres, params, filters.confidenceFilter)
-			if err != nil {
-				return nil, errors.Wrap(err, "Could not add confidence to where clause")
-			}
+			wheres, params = addExcludeConfidenceResultToWhere(wheres, params, filters.confidenceFilter)
 		}
 	}
 
@@ -781,7 +803,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 			targetColumnQuery = fmt.Sprintf("data.\"%s\" as \"%s\", ", targetName, targetName)
 		}
 
-		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", COALESCE(predicted.confidence, 'NaN') as \"__predicted_confidence\", %s %s %s, %s ",
+		selectedVars = fmt.Sprintf("%s predicted.value as \"%s\", predicted.explain_values as \"__predicted_explain\", %s %s %s, %s ",
 			distincts, predictedCol, targetColumnQuery, errorExpr, strings.Join(fieldsData, ", "), strings.Join(fieldsExplain, ", "))
 	}
 
@@ -991,7 +1013,7 @@ func (s *Storage) getIsWeighted(resultURI string, weightTableName string) (bool,
 
 func (s *Storage) getDisplayName(dataset string, columnName string) (string, error) {
 	displayName := ""
-	variables, err := s.metadata.FetchVariables(dataset, false, false)
+	variables, err := s.metadata.FetchVariables(dataset, false, false, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable fetch variables for name mapping")
 	}
