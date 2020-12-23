@@ -23,7 +23,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/parquet"
@@ -92,7 +91,6 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open parquet file")
 	}
-	// defer fr.Close()
 
 	pr, err := reader.NewParquetColumnReader(fr, 1)
 	if err != nil {
@@ -103,14 +101,9 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 	colCount := pr.SchemaHandler.GetColumnNum()
 	rowCount := pr.GetNumRows()
 	dataByCol := make([][]string, colCount)
-	var rLimit syscall.Rlimit
-	syscErr := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-	if syscErr != nil {
-		return nil, errors.Wrap(syscErr, "unable to get ulimit -n")
-	}
-	// rLimit.Cur = 25000
 	for i := int64(0); i < colCount; i++ {
-		if i > 0 && i % (int64(rLimit.Cur) - 100) == 0 {
+		colRaw, err := d.readColumn(pr, i, rowCount)
+		if err != nil {
 			fr.Close()
 			pr.ReadStop()
 			fr, err = local.NewLocalFileReader(uri)
@@ -123,15 +116,15 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 				pr.ReadStop()
 				return nil, errors.Wrap(err, "unable to open parquet file reader")
 			}
-		}
-		colRaw, err := d.readColumn(pr, i, rowCount)
-		if err != nil {
-			return nil, err
+			colRaw, err = d.readColumn(pr, i, rowCount)
+			if err != nil {
+				return nil, err
+			}
 		}
 		dataByCol[i] = d.columnToString(colRaw, *pr.SchemaHandler.SchemaElements[i+1].Type)
 	}
-	defer fr.Close()
-	defer pr.ReadStop()
+	fr.Close()
+	pr.ReadStop()
 
 	// header is the expected first row of the output
 	header, err := d.ReadRawVariables(uri)
