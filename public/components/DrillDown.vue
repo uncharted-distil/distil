@@ -3,11 +3,13 @@
     <div>
       <div class="toolbar">
         <div class="title">{{ title }}</div>
-        <b-button class="exit-button" @click="onExitClicked">x</b-button>
+        <b-button class="exit-button" @click="onExitClicked"
+          ><span aria-hidden="true">&times;</span></b-button
+        >
       </div>
       <div class="grid-container" :style="gridColStyle">
-        <template v-for="(r, i) in rows">
-          <template v-for="(c, j) in cols">
+        <template v-for="(r, i) in renderTiles.length">
+          <template v-for="(c, j) in renderTiles[i].length">
             <div class="image-container">
               <image-label
                 class="image-label"
@@ -15,17 +17,29 @@
                 includedActive
                 shortenLabels
                 alignHorizontal
-                :item="tilesToRender[i][j].item"
+                :item="renderTiles[i][j].selected.item"
               />
               <image-preview
                 class="image-preview"
-                :row="tilesToRender[i][j].item"
-                :image-url="tilesToRender[i][j].imageUrl"
+                :row="renderTiles[i][j].selected.item"
+                :image-url="renderTiles[i][j].selected.imageUrl"
                 :width="imageWidth"
                 :height="imageHeight"
                 :type="imageType"
-                :gray="tilesToRender[i][j].gray"
+                :gray="renderTiles[i][j].selected.gray"
                 :on-click="onImageClick"
+                :overlappedUrls="
+                  renderTiles[i][j].overlapped.map((o) => o.imageUrl)
+                "
+              />
+              <overlap-selection
+                :items="renderTiles[i][j].overlapped"
+                :indices="{ y: i, x: j }"
+                :instanceName="`over-lap-${i}-${j}`"
+                :width="imageWidth"
+                :height="imageHeight"
+                :imageType="imageType"
+                @item-selected="onOverlapSelected"
               />
             </div>
           </template>
@@ -36,6 +50,7 @@
 </template>
 
 <script lang="ts">
+import _ from "lodash";
 import Vue from "vue";
 import ImagePreview from "./ImagePreview.vue";
 import ImageLabel from "./ImageLabel.vue";
@@ -54,11 +69,16 @@ import { clearAreaOfInterest } from "../util/data";
 import { Dictionary } from "../util/dict";
 import { getters as routeGetters } from "../store/route/module";
 import { LatLngBounds, LatLngBoundsLiteral } from "leaflet";
+import OverlapSelection from "./OverlapSelection.vue";
 
 interface Tile {
   imageUrl: string;
   item: TableRow;
   coordinates: number[][];
+}
+interface RenderTile {
+  selected: Tile;
+  overlapped: Tile[];
 }
 interface SpatialIndex {
   x: number;
@@ -74,6 +94,7 @@ export default Vue.extend({
   components: {
     ImagePreview,
     ImageLabel,
+    OverlapSelection,
   },
 
   props: {
@@ -91,7 +112,19 @@ export default Vue.extend({
     },
     instanceName: { type: String as () => string, default: "" },
   },
-
+  data() {
+    return {
+      renderTiles: [] as RenderTile[][],
+    };
+  },
+  mounted() {
+    this.renderTiles = this.spatialSort();
+  },
+  watch: {
+    tiles() {
+      this.renderTiles = this.spatialSort();
+    },
+  },
   computed: {
     tileDims(): Dimensions {
       return {
@@ -100,9 +133,6 @@ export default Vue.extend({
         height:
           this.centerTile.coordinates[1][0] - this.centerTile.coordinates[0][0],
       };
-    },
-    tilesToRender(): Tile[][] {
-      return this.spatialSort();
     },
     gridColStyle(): string {
       return `grid-template-columns: repeat(${this.cols}, ${this.imageWidth}px); grid-template-rows: repeat(${this.rows}, ${this.imageHeight}px);`;
@@ -127,15 +157,22 @@ export default Vue.extend({
         y: Math.floor((y - minY) / this.tileDims.height),
       };
     },
-    spatialSort(): Tile[][] {
-      const result = Array.from({ length: this.rows }, (e) =>
-        Array(this.cols).fill({
-          imageUrl: null,
-          item: null,
-          coordinates: null,
-          gray: 0,
-        })
-      );
+    spatialSort(): RenderTile[][] {
+      const result = [];
+      for (let i = 0; i < this.rows; ++i) {
+        result.push([]);
+        for (let j = 0; j < this.cols; ++j) {
+          result[i].push({
+            selected: {
+              imageUrl: null,
+              item: null,
+              coordinates: null,
+              gray: 0,
+            },
+            overlapped: [],
+          });
+        }
+      }
       if (!this.tiles.length) {
         return result;
       }
@@ -146,7 +183,8 @@ export default Vue.extend({
         ).getCenter();
         const indices = this.getIndex(center.lng, center.lat);
         const invertY = this.rows - 1 - indices.y;
-        result[invertY][indices.x] = t;
+        result[invertY][indices.x].selected = t;
+        result[invertY][indices.x].overlapped.push(t);
       });
       // normalize coordinates
       return result;
@@ -171,6 +209,9 @@ export default Vue.extend({
           event.row[D3M_INDEX_FIELD]
         );
       }
+    },
+    onOverlapSelected(info: { item: Tile; key: { x: number; y: number } }) {
+      this.renderTiles[info.key.y][info.key.x].selected = info.item;
     },
   },
 });
@@ -233,5 +274,10 @@ export default Vue.extend({
   height: 26px;
   position: absolute;
   padding-right: 8px;
+}
+.stack-button {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
 }
 </style>

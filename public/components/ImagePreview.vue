@@ -3,8 +3,8 @@
     v-observe-visibility="visibilityChanged"
     :class="{ 'is-hidden': !isVisible && !preventHiding }"
     :style="{
-      width: `${width}px`,
-      height: `${height}px`,
+      width: `${width}px`, // + 2 for boarder
+      height: `${height}px`, // boarder
       filter: `grayscale(${gray}%)`,
     }"
   >
@@ -36,6 +36,10 @@
       :item="row"
       :visible="!!zoomImage"
       @hide="hideZoomImage"
+      :imageUrls="overlappedUrls"
+      :initialPosition="
+        overlappedUrls.length ? overlappedUrls.indexOf(imageUrl) : 0
+      "
     />
   </div>
 </template>
@@ -71,6 +75,10 @@ export default Vue.extend({
   props: {
     row: Object as () => TableRow,
     imageUrl: String as () => string,
+    overlappedUrls: {
+      type: Array as () => string[],
+      default: () => [] as string[],
+    },
     uniqueTrail: { type: String as () => string, default: "" },
     type: String as () => string,
     width: {
@@ -435,7 +443,6 @@ export default Vue.extend({
 }
 
 .image-container {
-  border: 2px solid rgba(0, 0, 0, 0);
   position: relative;
 }
 
@@ -459,6 +466,8 @@ export default Vue.extend({
 .image-elem img {
   max-height: 100%;
   max-width: 100%;
+  height: 100%;
+  width: 100%;
   position: relative;
 }
 

@@ -7,19 +7,33 @@
     @hide="hide"
   >
     <main class="drill-down">
+      <b-button
+        v-if="isCarousel"
+        class="position-absolute left"
+        @click="rotateSelection(-1)"
+        :disabled="carouselPosition === 0"
+        ><b>&lt</b></b-button
+      >
+      <b-button
+        v-if="isCarousel"
+        class="position-absolute right"
+        @click="rotateSelection(1)"
+        :disabled="carouselPosition === imageUrls.length - 1"
+        ><b>&gt</b></b-button
+      >
       <section
-        ref="imageContainer"
         class="image-container"
+        ref="imageContainer"
         :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
       >
         <image-label
-          v-if="item"
-          :item="item"
+          v-if="item && dataFields"
           class="image-label"
-          included-active
+          :dataFields="dataFields"
+          includedActive
+          :item="item"
         />
       </section>
-
       <ul class="information">
         <li v-if="bandName"><label>Band:</label> {{ bandName }}</li>
         <li v-if="latLongValue"><label>Lat/Long:</label> {{ latLongValue }}</li>
@@ -91,11 +105,16 @@ export default Vue.extend({
     type: { type: String, default: IMAGE_TYPE },
     url: String,
     visible: Boolean,
+    imageUrls: { type: Array as () => string[], default: () => [] as string[] },
+    items: { type: Array as () => TableRow[], default: () => [] as TableRow[] },
+    initialPosition: { type: Number as () => number, default: 0 },
   },
 
   data() {
     return {
       IMAGE_MAX_SIZE: IMAGE_MAX_SIZE,
+      currentVal: 0.5,
+      carouselPosition: this.initialPosition,
       currentBrightness: 0.5,
       brightnessMin: 0,
       brightnessMax: 100,
@@ -120,54 +139,50 @@ export default Vue.extend({
     files(): Dictionary<any> {
       return datasetGetters.getFiles(this.$store);
     },
-
+    isCarousel(): boolean {
+      return this.imageUrls.length > 0;
+    },
+    selectedImageUrl(): string {
+      return this.imageUrls.length
+        ? this.imageUrls[this.carouselPosition]
+        : this.url;
+    },
     image(): HTMLImageElement {
-      return this.files[this.url] ?? this.files[imageId(this.url)] ?? null;
+      return (
+        this.files[this.selectedImageUrl] ??
+        this.files[imageId(this.selectedImageUrl)] ??
+        null
+      );
     },
-
-    isMultiBandImageType(): boolean {
-      return this.type === MULTIBAND_IMAGE_TYPE;
-    },
-
-    latLongValue(): string {
-      if (!this.item?.coordinates) return;
-      const coordinates = this.item.coordinates.value.Elements;
-      if (coordinates.some((x) => x === undefined)) return;
-
-      /*
-        Item store the coordinates as a list of 8 values being four pairs of 
-        [Long, Lat], one for each corner of the remote-sensing image.
-
-        [0,1]     [2,3]
-          A-------B
-          |       |
-          |       |
-          D-------C
-        [6,7]     [4,5]
-      */
-
-      // Corner A as [Lat, Long]
-      const cornerA = `[${coordinates[1].Float}, ${coordinates[0].Float}]`;
-      // Corner C as [Lat, Long]
-      const cornerC = `[${coordinates[5].Float}, ${coordinates[4].Float}]`;
-
-      return `From ${cornerA} to ${cornerC}`;
+    isMultiBandImage(): boolean {
+      return routeGetters.isMultiBandImage(this.$store);
     },
 
     visibleTitle(): string {
-      return this.info.title ?? this.url ?? "Image Drilldown";
+      return this.info.title ?? this.selectedImageUrl ?? "Image Drilldown";
+    },
+    sliderVal(): string {
+      return this.currentVal.toFixed(2);
     },
   },
 
   watch: {
     visible() {
       if (this.visible) {
+        this.carouselPosition = this.initialPosition;
         this.requestImage();
       }
     },
   },
 
   methods: {
+    rotateSelection(direction: number) {
+      this.carouselPosition = Math.min(
+        Math.max(0, this.carouselPosition + direction),
+        this.imageUrls.length - 1
+      );
+      this.requestImage();
+    },
     hide() {
       this.$emit("hide");
     },
@@ -181,8 +196,12 @@ export default Vue.extend({
     },
 
     cleanUp() {
-      if (!this.isMultiBandImageType) return;
-      datasetMutations.removeFile(this.$store, imageId(this.url));
+      if (this.isMultiBandImage) {
+        datasetMutations.removeFile(
+          this.$store,
+          imageId(this.selectedImageUrl)
+        );
+      }
     },
 
     injectImage() {
@@ -215,10 +234,10 @@ export default Vue.extend({
       gain: number;
       gainL: number;
     }) {
-      if (this.isMultiBandImageType) {
+      if (this.isMultiBandImage) {
         await datasetActions.fetchMultiBandImage(this.$store, {
           dataset: this.dataset,
-          imageId: imageId(this.url),
+          imageId: imageId(this.selectedImageUrl),
           bandCombination: this.info.band,
           isThumbnail: false,
           options: imageOptions,
@@ -226,7 +245,7 @@ export default Vue.extend({
       } else {
         await datasetActions.fetchImage(this.$store, {
           dataset: this.dataset,
-          url: this.url,
+          url: this.selectedImageUrl,
         });
       }
 
@@ -282,5 +301,13 @@ export default Vue.extend({
 
 .brightness-slider {
   width: 70%;
+}
+.left {
+  left: 0px;
+  top: 50%;
+}
+.right {
+  right: 0px;
+  top: 50%;
 }
 </style>
