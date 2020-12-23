@@ -36,8 +36,8 @@
       <b-form-datepicker
         v-if="timeRange !== null"
         v-model="timestampSplitValue"
-        :min="new Date(timeRange.min * secondsToMillis)"
-        :max="new Date(timeRange.max * secondsToMillis)"
+        :min="new Date(secondsToMillis(timeRange.min))"
+        :max="new Date(secondsToMillis(timeRange.max))"
         locale="en"
       />
       <div class="d-flex justify-content-between mt-1">
@@ -110,8 +110,6 @@ import { overlayRouteEntry } from "../util/routes";
 import { MetricDropdownItem, TaskTypes } from "../store/dataset";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as appGetters } from "../store/app/module";
-
-const secondsToMillis = 1000;
 // Dialog for setting model creation preferences.  The results are saved to the route to ensure
 // that users don't have to set them for each run.
 export default Vue.extend({
@@ -175,6 +173,9 @@ export default Vue.extend({
     trainingRatio(): number {
       return this.trainingCount / this.totalDataCount;
     },
+    hasTimeRange(): boolean {
+      return this.timeRange !== null;
+    },
     baseSplit(): number {
       const routeSplit = routeGetters.getRouteTrainTestSplit(this.$store);
       return !!routeSplit
@@ -195,9 +196,12 @@ export default Vue.extend({
         Math.floor(this.totalDataCount * this.baseSplit) || 1;
     },
     timeRange() {
+      if (!this.timeRange) {
+        return;
+      }
       const half = Math.floor((this.timeRange.max - this.timeRange.max) / 2);
       this.timestampSplitValue = new Date(
-        (this.timeRange.min + half) * secondsToMillis
+        this.secondsToMillis(this.timeRange.min + half)
       );
     },
   },
@@ -224,13 +228,20 @@ export default Vue.extend({
   },
 
   methods: {
+    secondsToMillis(seconds: number): number {
+      return seconds * 1000;
+    },
     handleOk() {
+      console.log(this.timestampSplitValue.getTime() / 1000);
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         modelLimit: this.modelLimit,
         modelTimeLimit: this.timeLimit,
         modelQuality: this.speedQuality,
         metrics: this.selectedMetric,
         trainTestSplit: this.trainingRatio,
+        timestampSplit: this.hasTimeRange
+          ? this.timestampSplitValue.getTime() / 1000
+          : null,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
     },

@@ -548,6 +548,7 @@ export const actions = {
         quality: request.quality,
         filters: request.filters,
         trainTestSplit: request.trainTestSplit,
+        timestampSplitValue: request.timestampSplitValue,
       });
     });
   },

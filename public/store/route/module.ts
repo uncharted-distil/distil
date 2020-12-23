@@ -123,6 +123,7 @@ export const getters = {
   getModelMetrics: read(moduleGetters.getModelMetrics),
   getImageAttention: read(moduleGetters.getImageAttention),
   getRouteTrainTestSplit: read(moduleGetters.getRouteTrainTestSplit),
+  getRouteTimestampSplit: read(moduleGetters.getRouteTimestampSplit),
   isPageSelectTarget: read(moduleGetters.isPageSelectTarget),
   isPageSelectTraining: read(moduleGetters.isPageSelectTraining),
   getRoutePane: read(moduleGetters.getRoutePane),
