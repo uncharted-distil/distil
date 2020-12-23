@@ -19,6 +19,12 @@
 
     <main class="content">
       <search-input class="mb-3" />
+      <search-bar
+        class="mb-3"
+        :variables="variables"
+        :filters="filters"
+        @lex-query="updateFilterFromLexQuery"
+      />
 
       <!-- Tabs to switch views -->
       <b-tabs pills v-model="activeView" class="mb-3">
@@ -67,6 +73,7 @@ import FacetListPane from "../components/panel/FacetListPane.vue";
 import FilterBadge from "../components/FilterBadge.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
+import SearchBar from "../components/layout/SearchBar.vue";
 import SearchInput from "../components/SearchInput.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
 import SelectGeoPlot from "../components/SelectGeoPlot.vue";
@@ -86,6 +93,8 @@ import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
 
 // Util
+import { deepUpdateFiltersInRoute } from "../util/filters";
+import { lexQueryToFilters } from "../util/lex";
 import { overlayRouteEntry } from "../util/routes";
 import { getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
@@ -122,6 +131,7 @@ export default Vue.extend({
     FacetListPane,
     LeftSidePanel,
     ImageMosaic,
+    SearchBar,
     SearchInput,
     SelectDataTable,
     SelectGeoPlot,
@@ -312,6 +322,11 @@ export default Vue.extend({
   methods: {
     capitalize,
 
+    updateFilterFromLexQuery(lexQuery) {
+      const updatedFilter = lexQueryToFilters(lexQuery, this.variables);
+      deepUpdateFiltersInRoute(this.$router, updatedFilter);
+    },
+
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
@@ -336,7 +351,7 @@ export default Vue.extend({
 
     updateRoute(args) {
       const entry = overlayRouteEntry(this.$route, args);
-      this.$router.push(entry).catch((err) => console.debug(err));
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
   },
 });

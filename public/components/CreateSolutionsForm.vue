@@ -41,8 +41,8 @@
 <script lang="ts">
 import _ from "lodash";
 import { createRouteEntry, varModesToString } from "../util/routes";
-import ErrorModal from "../components/ErrorModal";
-import SettingsModal from "../components/SettingsModal";
+import ErrorModal from "../components/ErrorModal.vue";
+import SettingsModal from "../components/SettingsModal.vue";
 import {
   actions as appActions,
   getters as appGetters,

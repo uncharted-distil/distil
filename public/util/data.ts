@@ -21,9 +21,9 @@ import {
 import { PredictionContext } from "../store/predictions/actions";
 import {
   Predictions,
-  PREDICT_COMPLETED,
+  PredictStatus,
   Solution,
-  SOLUTION_COMPLETED,
+  SolutionStatus,
 } from "../store/requests/index";
 import {
   getters as predictionsGetters,
@@ -56,6 +56,7 @@ import {
   LONGITUDE_TYPE,
   MULTIBAND_IMAGE_TYPE,
   TIMESERIES_TYPE,
+  DISTIL_ROLES,
 } from "../util/types";
 import { Dictionary } from "./dict";
 import { FilterParams } from "./filters";
@@ -68,9 +69,14 @@ import {
   interpolateMagma,
   interpolatePlasma,
 } from "d3-scale-chromatic";
+import router from "../router/router";
 // Postfixes for special variable names
 export const PREDICTED_SUFFIX = "_predicted";
 export const ERROR_SUFFIX = "_error";
+
+// constants for accessing variable summaries
+export const VARIABLE_SUMMARY_BASE = "summary";
+export const VARIABLE_SUMMARY_CONFIDENCE = "confidence";
 
 export const NUM_PER_PAGE = 10;
 export const NUM_PER_TARGET_PAGE = 9;
@@ -82,8 +88,9 @@ export const ELASTIC_PROVENANCE = "elastic";
 export const FILE_PROVENANCE = "file";
 
 export const IMPORTANT_VARIABLE_RANKING_THRESHOLD = 0.5;
-
 export const LOW_SHOT_LABEL_COLUMN_NAME = "LowShotLabel";
+export const LOW_SHOT_SCORE_COLUMN_NAME =
+  "__query_" + LOW_SHOT_LABEL_COLUMN_NAME;
 // LowShotLabels enum for labeling data in a binary classification
 export enum LowShotLabels {
   positive = "positive",
@@ -96,6 +103,12 @@ export interface DatasetUpdate {
   name: string; // colName
   value: string; // new value to replace old value
 }
+
+export interface TimeIntervals {
+  value: number;
+  text: string;
+}
+
 // ColorScaleNames is an enum that contains all the supported color scale names. Can be used to access COLOR_SCALES functions
 export enum ColorScaleNames {
   viridis = "viridis",
@@ -115,6 +128,21 @@ export const COLOR_SCALES: Map<
   [ColorScaleNames.plasma, interpolatePlasma],
   [ColorScaleNames.turbo, interpolateTurbo],
 ]);
+
+// include the highlight
+export function getAllDataItems(includedActive: boolean): TableRow[] {
+  const tableData = includedActive
+    ? datasetGetters.getHighlightedIncludeTableDataItems(store)
+    : datasetGetters.getHighlightedExcludeTableDataItems(store);
+  const highlighted = tableData
+    ? tableData.map((h) => {
+        return { ...h, isExcluded: true }; // adding isExcluded for the geoplot to color it gray
+      })
+    : [];
+  return includedActive
+    ? [...highlighted, ...datasetGetters.getIncludedTableDataItems(store)]
+    : [...highlighted, ...datasetGetters.getExcludedTableDataItems(store)];
+}
 export function getTimeseriesSummaryTopCategories(
   summary: VariableSummary
 ): string[] {
@@ -127,7 +155,9 @@ export function getTimeseriesSummaryTopCategories(
     .sort((a, b) => b.count - a.count)
     .map((c) => c.category);
 }
-
+export function getRandomInt(max: number): number {
+  return Math.floor(Math.random() * Math.floor(max));
+}
 export function getTimeseriesGroupingsFromFields(
   variables: Variable[],
   fields: Dictionary<TableColumn>
@@ -152,7 +182,7 @@ export function getComposedVariableKey(keys: string[]): string {
 export function getTimeseriesAnalysisIntervals(
   timeVar: Variable,
   range: number
-): any[] {
+): TimeIntervals[] {
   const SECONDS_VALUE = 1;
   const MINUTES_VALUE = SECONDS_VALUE * 60;
   const HOURS_VALUE = MINUTES_VALUE * 60;
@@ -272,7 +302,7 @@ export function fetchSummaryExemplars(
     }
   }
 
-  return new Promise((res) => res());
+  return new Promise<void>((res) => res());
 }
 
 export function fetchResultExemplars(
@@ -313,7 +343,7 @@ export function fetchResultExemplars(
     }
   }
 
-  return new Promise((res) => res());
+  return new Promise<void>((res) => res());
 }
 
 /*
@@ -322,8 +352,8 @@ export function fetchResultExemplars(
   using some of the route's query options (IE: not grabbing all
   options as that's too narrow in focus.) It SHA1 hashes a string
   of datasetId, solutionId, requestId, fittedSolutionId, highlight,
-  filters, dataMode, varModes, active pane, and ranking as that's unique 
-  enough without being over specific and causing duplicate calls.  
+  filters, dataMode, varModes, active pane, and ranking as that's unique
+  enough without being over specific and causing duplicate calls.
   The SHA1 hash of those fields is fast to calculate, maintains uniqueness,
   and keeps the store keys a consistent length, unlike base64.
 */
@@ -447,7 +477,26 @@ export function removeSummary(
 }
 
 export function filterVariablesByFeature(variables: Variable[]): Variable[] {
-  return variables.filter((v) => v.distilRole === "data");
+  // need to exclude the hidden variables
+  const groupingVars = variables.filter(
+    (v) => v.distilRole === DISTIL_ROLES.Grouping && v.grouping !== null
+  );
+  const hiddenFlat = [].concat.apply(
+    [],
+    groupingVars.map((v) =>
+      [].concat(v.grouping.hidden).concat(v.grouping.subIds)
+    )
+  );
+  const hidden = new Map(hiddenFlat.map((v) => [v, v]));
+
+  // the groupings that hide variables are themselves variables to display
+  const groupingDisplayed = new Map(groupingVars.map((v) => [v.colName, v]));
+
+  return variables.filter(
+    (v) =>
+      (v.distilRole === "data" && !hidden.has(v.colName)) ||
+      groupingDisplayed.has(v.colName)
+  );
 }
 
 export function filterSummariesByDataset(
@@ -519,6 +568,7 @@ export async function fetchSolutionResultSummary(
   solution: Solution,
   key: string,
   label: string,
+  resultProperty: string,
   resultSummaries: VariableSummary[],
   updateFunction: (arg: ResultsContext, summary: VariableSummary) => void,
   filterParams: FilterParams,
@@ -539,7 +589,7 @@ export async function fetchSolutionResultSummary(
   }
 
   // fetch the results for each solution
-  if (solution.progress !== SOLUTION_COMPLETED) {
+  if (solution.progress !== SolutionStatus.SOLUTION_COMPLETED) {
     // skip
     return;
   }
@@ -555,7 +605,7 @@ export async function fetchSolutionResultSummary(
       filterParams ? filterParams : {}
     );
     // save the histogram data
-    const summary = response.data.summary;
+    const summary = response.data[resultProperty];
     await fetchResultExemplars(dataset, target, key, solutionId, summary);
     summary.solutionId = solutionId;
     summary.dataset = dataset;
@@ -590,7 +640,7 @@ export async function fetchPredictionResultSummary(
   }
 
   // fetch the results for each solution
-  if (predictions.progress !== PREDICT_COMPLETED) {
+  if (predictions.progress !== PredictStatus.PREDICT_COMPLETED) {
     // skip
     return;
   }
@@ -776,7 +826,67 @@ export function validateData(data: TableData) {
     !_.isEmpty(data) && !_.isEmpty(data.values) && !_.isEmpty(data.columns)
   );
 }
+export function clearAreaOfInterest() {
+  // select view store
+  datasetMutations.clearAreaOfInterestIncludeInner(store);
+  datasetMutations.clearAreaOfInterestIncludeOuter(store);
+  datasetMutations.clearAreaOfInterestExcludeInner(store);
+  datasetMutations.clearAreaOfInterestExcludeOuter(store);
+  // result view store
+  resultsMutations.clearAreaOfInterestInner(store);
+  resultsMutations.clearAreaOfInterestOuter(store);
+}
+export function updateTableDataItems(
+  data: TableData,
+  newVals: Map<number, unknown>
+) {
+  const colTypeMap = new Map(
+    data?.columns.map((val, idx) => {
+      return [val.key, idx];
+    })
+  );
+  const d3mIdx = colTypeMap.get(D3M_INDEX_FIELD);
+  if (d3mIdx === undefined) {
+    console.error("Error updating table data items");
+    return;
+  }
+  data.values.forEach((resultRow) => {
+    const rowD3mIdx = resultRow[d3mIdx].value;
+    if (newVals.has(rowD3mIdx.toString())) {
+      const val = newVals.get(rowD3mIdx.toString());
+      Object.keys(val).forEach((key) => {
+        const idx = colTypeMap.get(key);
+        Vue.set(resultRow, idx, { value: val[key] });
+      });
+    }
+  });
+}
+export function addOrderBy(orderByName: string) {
+  if (routeGetters.getOrderBy(store) == orderByName) {
+    return;
+  }
+  const entry = overlayRouteEntry(routeGetters.getRoute(store), {
+    orderBy: orderByName,
+  });
+  router.push(entry).catch((err) => console.warn(err));
+}
 
+export function fetchLowShotScores() {
+  const highlight = routeGetters.getDecodedHighlight(store);
+  const filterParams = _.cloneDeep(
+    routeGetters.getDecodedSolutionRequestFilterParams(store)
+  );
+  const lowShotScore = "__query_LowShotLabel";
+  const dataset = routeGetters.getRouteDataset(store);
+  const dataMode = routeGetters.getDataMode(store);
+  datasetActions.fetchIncludedTableData(store, {
+    dataset,
+    filterParams,
+    highlight,
+    dataMode,
+    orderBy: lowShotScore,
+  });
+}
 export function getTableDataItems(data: TableData): TableRow[] {
   if (validateData(data)) {
     // convert fetched result data rows into table data rows
@@ -957,9 +1067,9 @@ export function getImageFields(
     };
   }).filter((field) => field.type === IMAGE_TYPE);
 
-  // find remote senings image fields
+  // find remote sensing image fields
   const fieldKeys = _.map(fields, (_, key) => key);
-  const MultiBandImageFields = datasetGetters
+  const multiBandImageFields = datasetGetters
     .getVariables(store)
     .filter(
       (v) =>
@@ -971,7 +1081,7 @@ export function getImageFields(
     .map((v) => ({ key: v.grouping.idCol, type: v.colType }));
 
   // the two are probably mutually exclusive, but it doesn't hurt anything to allow for both
-  return imageFields.concat(MultiBandImageFields);
+  return imageFields.concat(multiBandImageFields);
 }
 
 export function getListFields(

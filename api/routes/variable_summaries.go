@@ -73,7 +73,7 @@ func VariableSummaryHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.Da
 			return
 		}
 
-		ds, err := meta.FetchDataset(dataset, false, false)
+		ds, err := meta.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

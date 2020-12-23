@@ -1,32 +1,40 @@
 import { FilterParams } from "../../util/filters";
 
-export const SOLUTION_PENDING = "SOLUTION_PENDING";
-export const SOLUTION_FITTING = "SOLUTION_FITTING";
-export const SOLUTION_SCORING = "SOLUTION_SCORING";
-export const SOLUTION_PRODUCING = "SOLUTION_PRODUCING";
-export const SOLUTION_COMPLETED = "SOLUTION_COMPLETED";
-export const SOLUTION_ERRORED = "SOLUTION_ERRORED";
+export enum SolutionStatus {
+  SOLUTION_PENDING = "SOLUTION_PENDING",
+  SOLUTION_FITTING = "SOLUTION_FITTING",
+  SOLUTION_SCORING = "SOLUTION_SCORING",
+  SOLUTION_PRODUCING = "SOLUTION_PRODUCING",
+  SOLUTION_COMPLETED = "SOLUTION_COMPLETED",
+  SOLUTION_ERRORED = "SOLUTION_ERRORED",
+  SOLUTION_CANCELLED = "SOLUTION_CANCELLED",
+}
 
-export const PREDICT_PENDING = "PREDICT_PENDING";
-export const PREDICT_RUNNING = "PREDICT_RUNNING";
-export const PREDICT_COMPLETED = "PREDICT_COMPLETED";
-export const PREDICT_ERRORED = "PREDICT_ERRORED";
+export enum PredictStatus {
+  PREDICT_PENDING = "PREDICT_PENDING",
+  PREDICT_RUNNING = "PREDICT_RUNNING",
+  PREDICT_COMPLETED = "PREDICT_COMPLETED",
+  PREDICT_ERRORED = "PREDICT_ERRORED",
+}
 
-export const QUERY_PENDING = "QUERY_PENDING";
-export const QUERY_RUNNING = "QUERY_RUNNING";
-export const QUERY_COMPLETED = "QUERY_COMPLETED";
-export const QUERY_ERRORED = "QUERY_ERRORED";
+export enum QueryStatus {
+  QUERY_PENDING = "QUERY_PENDING",
+  QUERY_RUNNING = "QUERY_RUNNING",
+  QUERY_COMPLETED = "QUERY_COMPLETED",
+  QUERY_ERRORED = "QUERY_ERRORED",
+}
 
-export const SOLUTION_REQUEST_PENDING = "REQUEST_PENDING";
-export const SOLUTION_REQUEST_RUNNING = "REQUEST_RUNNING";
-export const SOLUTION_REQUEST_COMPLETED = "REQUEST_COMPLETED";
-export const SOLUTION_REQUEST_ERRORED = "REQUEST_ERRORED";
+export enum SolutionRequestStatus {
+  SOLUTION_REQUEST_PENDING = "REQUEST_PENDING",
+  SOLUTION_REQUEST_RUNNING = "REQUEST_RUNNING",
+  SOLUTION_REQUEST_COMPLETED = "REQUEST_COMPLETED",
+  SOLUTION_REQUEST_ERRORED = "REQUEST_ERRORED",
+}
 
 export const NUM_SOLUTIONS = 3;
 
 export interface Request {
   requestId: string;
-  progress: string;
   dataset: string;
   feature: string;
   features: Feature[];
@@ -35,6 +43,7 @@ export interface Request {
 
 // A request to start the process of training, fitting and scoring a model
 export interface SolutionRequest extends Request {
+  progress: SolutionStatus;
   filters: FilterParams;
 }
 
@@ -50,6 +59,7 @@ export interface Solution extends SolutionRequest {
 }
 
 export interface Predictions extends Request {
+  progress: PredictStatus;
   fittedSolutionId: string;
   resultId: string;
   predictedKey: string;

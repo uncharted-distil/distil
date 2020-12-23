@@ -1,31 +1,31 @@
 <template>
   <div class="predictions-data-slot">
     <view-type-toggle
-      class="view-toggle"
       v-model="viewTypeModel"
+      class="view-toggle"
       :variables="variables"
     >
       <p class="font-weight-bold mr-auto">Samples Predicted</p>
       <layer-selection v-if="isMultiBandImage" class="layer-button" />
     </view-type-toggle>
 
-    <p class="predictions-data-slot-summary" v-if="hasResults">
+    <p v-if="hasResults" class="predictions-data-slot-summary">
       <data-size
-        :currentSize="numItems"
+        :current-size="numItems"
         :total="numRows"
         @updated="$refs.size.hide()"
         @submit="onDataSizeSubmit"
       />
       <strong class="matching-color">matching</strong> samples of
-      {{ numRows }} processed by model<template v-if="numIncludedRows > 0"
-        >, {{ numIncludedRows }}
+      {{ numRows }} processed by model<template v-if="numIncludedRows > 0">
+        , {{ numIncludedRows }}
         <strong class="selected-color">selected</strong>
       </template>
     </p>
 
     <div class="predictions-data-slot-container" :class="{ pending: !hasData }">
-      <div class="predictions-data-no-results" v-if="isPending || hasNoResults">
-        <div v-if="isPending" v-html="spinnerHTML"></div>
+      <div v-if="isPending || hasNoResults" class="predictions-data-no-results">
+        <div v-if="isPending" v-html="spinnerHTML" />
         <p v-if="hasNoResults">No results available</p>
       </div>
 
@@ -42,11 +42,11 @@
 <script lang="ts">
 import Vue from "vue";
 import _ from "lodash";
-import DataSize from "../components/buttons/DataSize";
-import PredictionsDataTable from "./PredictionsDataTable";
-import ImageMosaic from "./ImageMosaic";
-import ResultsTimeseriesView from "./ResultsTimeseriesView";
-import GeoPlot from "./GeoPlot";
+import DataSize from "../components/buttons/DataSize.vue";
+import PredictionsDataTable from "./PredictionsDataTable.vue";
+import ImageMosaic from "./ImageMosaic.vue";
+import ResultsTimeseriesView from "./ResultsTimeseriesView.vue";
+import GeoPlot from "./GeoPlot.vue";
 import { spinnerHTML } from "../util/spinner";
 import {
   Highlight,
@@ -62,14 +62,10 @@ import {
 } from "../store/predictions/module";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as requestGetters } from "../store/requests/module";
-import {
-  Solution,
-  SOLUTION_ERRORED,
-  PREDICT_ERRORED,
-} from "../store/requests/index";
+import { PredictStatus } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
 import { updateTableRowSelection, getNumIncludedRows } from "../util/row";
-import ViewTypeToggle from "../components/ViewTypeToggle";
+import ViewTypeToggle from "../components/ViewTypeToggle.vue";
 
 const TABLE_VIEW = "table";
 const IMAGE_VIEW = "image";
@@ -78,7 +74,7 @@ const GEO_VIEW = "geo";
 const TIMESERIES_VIEW = "timeseries";
 
 export default Vue.extend({
-  name: "predictions-data-slot",
+  name: "PredictionsDataSlot",
 
   components: {
     DataSize,
@@ -99,10 +95,6 @@ export default Vue.extend({
       GEO_VIEW: GEO_VIEW,
       TIMESERIES_VIEW: TIMESERIES_VIEW,
     };
-  },
-
-  created() {
-    this.viewTypeModel = TABLE_VIEW;
   },
 
   computed: {
@@ -148,7 +140,9 @@ export default Vue.extend({
 
     hasErrored(): boolean {
       const predictions = requestGetters.getActivePredictions(this.$store);
-      return predictions ? predictions.progress === PREDICT_ERRORED : false;
+      return predictions
+        ? predictions.progress === PredictStatus.PREDICT_ERRORED
+        : false;
     },
 
     isPending(): boolean {
@@ -192,12 +186,17 @@ export default Vue.extend({
     },
 
     /* Select which component to display the data. */
-    viewComponent() {
+    viewComponent(): string {
       if (this.viewType === GEO_VIEW) return "GeoPlot";
       if (this.viewType === IMAGE_VIEW) return "ImageMosaic";
       if (this.viewType === TABLE_VIEW) return "PredictionsDataTable";
       if (this.viewType === TIMESERIES_VIEW) return "ResultsTimeseriesView";
+      return "";
     },
+  },
+
+  created() {
+    this.viewTypeModel = TABLE_VIEW;
   },
 
   methods: {

@@ -5,15 +5,9 @@ import {
   RequestState,
   Solution,
   SolutionRequest,
-  SOLUTION_ERRORED,
-  SOLUTION_COMPLETED,
-  SOLUTION_FITTING,
-  SOLUTION_SCORING,
-  SOLUTION_PRODUCING,
+  SolutionStatus,
   Predictions,
-  PREDICT_RUNNING,
-  PREDICT_PENDING,
-  PREDICT_COMPLETED,
+  PredictStatus,
 } from "./index";
 import { getVarType } from "../../util/types";
 
@@ -26,7 +20,7 @@ export function sortRequestsByTimestamp(
 }
 
 function getScoreValue(s: Solution): number {
-  if (s.progress === SOLUTION_ERRORED) {
+  if (s.progress === SolutionStatus.SOLUTION_ERRORED) {
     return -1;
   }
   return s.scores && s.scores.length > 0
@@ -45,9 +39,9 @@ export const getters = {
     return state.solutions
       .filter(
         (result) =>
-          result.progress === SOLUTION_FITTING ||
-          result.progress === SOLUTION_SCORING ||
-          result.progress === SOLUTION_PRODUCING
+          result.progress === SolutionStatus.SOLUTION_FITTING ||
+          result.progress === SolutionStatus.SOLUTION_SCORING ||
+          result.progress === SolutionStatus.SOLUTION_PRODUCING
       )
       .sort(sortSolutionsByScore);
   },
@@ -55,7 +49,9 @@ export const getters = {
   // Returns completed search results.
   getCompletedSolutions(state: RequestState): Solution[] {
     return state.solutions
-      .filter((solution) => solution.progress === SOLUTION_COMPLETED)
+      .filter(
+        (solution) => solution.progress === SolutionStatus.SOLUTION_COMPLETED
+      )
       .sort(sortSolutionsByScore);
   },
 
@@ -134,15 +130,15 @@ export const getters = {
   getRunningPredictions(state: RequestState): Predictions[] {
     return state.predictions.filter(
       (result) =>
-        result.progress === PREDICT_RUNNING ||
-        result.progress === PREDICT_PENDING
+        result.progress === PredictStatus.PREDICT_RUNNING ||
+        result.progress === PredictStatus.PREDICT_PENDING
     );
   },
 
   // Returns completed predictions.
   getCompletedPredictions(state: RequestState): Predictions[] {
     return state.predictions.filter(
-      (result) => result.progress !== PREDICT_COMPLETED
+      (result) => result.progress !== PredictStatus.PREDICT_COMPLETED
     );
   },
 

@@ -57,7 +57,7 @@ import {
   facetTypeChangeState,
 } from "../../util/facets";
 import { DATETIME_FILTER } from "../../util/filters";
-import { DATETIME_UNIX_ADJUSTMENT } from "../../util/types";
+import { numToDate, dateToNum } from "../../util/types";
 import _ from "lodash";
 import moment from "moment";
 
@@ -172,12 +172,8 @@ export default Vue.extend({
   },
 
   methods: {
-    numToDate(key: any): string {
-      return moment.unix(_.toNumber(key)).utc().format("YYYY/MM/DD");
-    },
-    dateToNum(dateStr: string): number {
-      return Date.parse(dateStr) / DATETIME_UNIX_ADJUSTMENT;
-    },
+    numToDate,
+    dateToNum,
     getHighlightValue(highlight: Highlight): any {
       if (highlight && highlight.value) {
         return highlight.value;

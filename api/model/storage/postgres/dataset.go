@@ -71,7 +71,7 @@ func (s *Storage) CloneDataset(dataset string, storageName string, datasetNew st
 	}
 
 	// need to create the view for the cloned dataset
-	fields, err := s.getExistingFields(dataset)
+	fields, err := s.getExistingFields(dataset, storageNameNew)
 	if err != nil {
 		return err
 	}
@@ -133,15 +133,19 @@ func (s *Storage) getDatabaseFields(tableName string) ([]string, error) {
 	return cols, nil
 }
 
-func (s *Storage) getExistingFields(dataset string) (map[string]*model.Variable, error) {
+func (s *Storage) getExistingFields(dataset string, storageName string) (map[string]*model.Variable, error) {
 	vars, err := api.FetchDatasetVariables(dataset, s.metadata)
 	if err != nil {
 		return nil, err
 	}
 
+	// make sure they exist in the underlying database already
 	fields := make(map[string]*model.Variable)
 	for _, v := range vars {
-		fields[v.StorageName] = v
+		exists, _ := s.DoesVariableExist(dataset, storageName, v.StorageName)
+		if exists {
+			fields[v.StorageName] = v
+		}
 	}
 
 	return fields, nil
@@ -218,7 +222,7 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 // FetchDataset extracts the complete raw data from the database.
 func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, filterParams *api.FilterParams) ([][]string, error) {
 	// get data variables (to exclude metadata variables)
-	vars, err := s.metadata.FetchVariables(dataset, true, false)
+	vars, err := s.metadata.FetchVariables(dataset, true, false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +257,7 @@ func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, 
 // Multiple simultaneous calls to the function can result in inaccurate.
 func (s *Storage) IsValidDataType(dataset string, storageName string, varName string, varType string) (bool, error) {
 	// get all existing fields to rebuild the view.
-	fields, err := s.getExistingFields(dataset)
+	fields, err := s.getExistingFields(dataset, storageName)
 	if err != nil {
 		return false, errors.Wrap(err, "Unable to read existing fields")
 	}
@@ -286,7 +290,7 @@ func (s *Storage) IsValidDataType(dataset string, storageName string, varName st
 // Multiple simultaneous calls to the function can result in discarded changes.
 func (s *Storage) SetDataType(dataset string, storageName string, varName string, varType string) error {
 	// get all existing fields to rebuild the view.
-	fields, err := s.getExistingFields(dataset)
+	fields, err := s.getExistingFields(dataset, storageName)
 	if err != nil {
 		return errors.Wrap(err, "Unable to read existing fields")
 	}
@@ -363,7 +367,7 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 	}
 
 	// recreate the view with the new column
-	fields, err := s.getExistingFields(dataset)
+	fields, err := s.getExistingFields(dataset, storageName)
 	if err != nil {
 		return errors.Wrap(err, "unable to read existing fields")
 	}
@@ -420,7 +424,7 @@ func (s *Storage) AddField(dataset string, storageName string, varName string, v
 // DeleteVariable flags a variable as deleted.
 func (s *Storage) DeleteVariable(dataset string, storageName string, varName string) error {
 	// check if the variable is in the view
-	dbFields, err := s.getDatabaseFields(storageName)
+	dbFields, err := s.getDatabaseFields(fmt.Sprintf("%s_base", storageName))
 	if err != nil {
 		return errors.Wrap(err, "unable to read database fields")
 	}
@@ -437,7 +441,7 @@ func (s *Storage) DeleteVariable(dataset string, storageName string, varName str
 	}
 
 	// recreate the view without the field if it is in it
-	fields, err := s.getExistingFields(dataset)
+	fields, err := s.getExistingFields(dataset, storageName)
 	if err != nil {
 		return errors.Wrap(err, "Unable to read existing fields")
 	}
@@ -445,7 +449,6 @@ func (s *Storage) DeleteVariable(dataset string, storageName string, varName str
 	if fields[varName] != nil {
 		delete(fields, varName)
 	}
-
 	err = s.createViewFromMetadataFields(storageName, fields)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create the new view")
@@ -558,6 +561,17 @@ func (s *Storage) insertBatchData(storageName string, varNames []string, inserts
 
 	// update the stats to make sure postgres runs the best queries possible
 	s.updateStats(storageName)
+
+	return nil
+}
+
+// SetVariableValue updates an entire column to specified value
+func (s *Storage) SetVariableValue(storageName string, varName string, value string) error {
+	sql := fmt.Sprintf("UPDATE %s_base SET \"%s\" = $1", storageName, varName)
+	_, err := s.client.Exec(sql, value)
+	if err != nil {
+		return errors.Wrap(err, "Unable to update value stored in the database")
+	}
 
 	return nil
 }

@@ -31,10 +31,13 @@ const SHADER_GLSL = {
 		`,
   frag: `
     precision highp float;
+    uniform float uZoomOpacity;
     varying vec4 oColor;
 		void main() {
+      
       gl_FragColor = oColor;
-      gl_FragColor.rgb *= gl_FragColor.a; // premultiplied alpha
+      gl_FragColor.rgb *= uZoomOpacity; // premultiplied alpha
+      gl_FragColor.a = uZoomOpacity;
 		}
 		`,
 };
@@ -310,9 +313,9 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
     const cell = plot.cell;
     const proj = this.getOrthoMatrix();
     const scale = Math.pow(2, plot.zoom - cell.zoom);
+    const minOpacity = 0.05;
     // get view offset in cell space
     const offset = cell.project(plot.viewport, plot.zoom);
-
     // set blending func
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -324,12 +327,18 @@ export class BatchQuadOverlayRenderer extends WebGLOverlayRenderer {
           : this.pointShader;
       // bind shader
       shader.use();
-
+      if (buffer.vertex.mode === DRAW_MODES.TRIANGLES) {
+        shader.setUniform(
+          "uZoomOpacity",
+          1.0 - plot.zoom / plot.maxZoom + minOpacity
+        );
+      }
       // set global uniforms
       shader.setUniform("uProjectionMatrix", proj);
       shader.setUniform("uViewOffset", [offset.x, offset.y]);
       shader.setUniform("uScale", scale);
       shader.setUniform("uPointSize", this.pointSize);
+
       // draw the points
       buffer.vertex.bind();
       buffer.vertex.draw();

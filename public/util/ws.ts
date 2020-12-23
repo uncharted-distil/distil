@@ -4,17 +4,14 @@ import _ from "lodash";
 
 const RETRY_INTERVAL_MS = 5000;
 
-let _trackedID = 1;
-const _streamsById = new Map<String, Stream>();
+const MESSAGE = Symbol();
+const STREAM = Symbol();
 
-// Fetches a stream given an ID.
-export function getStreamById(id: string): Stream {
-  return _streamsById.get(id);
-}
+let _trackedID = 1;
 
 // Creates a new web socket Connection object
-export function getWebSocketConnection() {
-  const conn = new Connection("/ws", (err: string) => {
+export function getWebSocketConnection(): Connection {
+  const conn = new Connection("/ws", (err) => {
     if (err) {
       console.warn(err);
       return;
@@ -31,7 +28,7 @@ function getHost() {
 
 function establishConnection(
   conn: Connection,
-  callback: (x: any, c: Connection) => void
+  callback: (err: Error, c: Connection) => void
 ) {
   conn.socket = new WebSocket(`${getHost()}${conn.url}`);
   // on open
@@ -40,13 +37,13 @@ function establishConnection(
     console.log(`WebSocket conn established on /${conn.url}`);
     // send pending messages
     conn.pending.forEach((message) => {
-      conn.socket.send(JSON.stringify(message.payload));
+      conn.socket.send(JSON.stringify(message));
     });
     conn.pending = [];
     // send pending stream messages
     conn.streams.forEach((stream) => {
-      stream.pending.forEach((msg) => {
-        conn.socket.send(JSON.stringify(msg));
+      stream.pending.forEach((streamMsg) => {
+        conn.socket.send(JSON.stringify(streamMsg));
       });
       stream.pending = [];
     });
@@ -117,64 +114,76 @@ function stripURL(url: string) {
   return url;
 }
 
+// message header - contains a  msg type identifier and an id that is generated
+// on send
+interface Header {
+  id: string;
+  type: string;
+}
+
+class StreamMessage implements Header {
+  id: string;
+  type: string;
+  body: unknown;
+
+  constructor(id: string, type: string, body: unknown) {
+    this.body = body;
+    this.id = id;
+    this.type = type;
+  }
+}
+
 // Works with an established Connection object to send/receive messages
 // over a websocket.  Received messages are handled by using a callback
 // function passed into the Stream at the time of construction.
 export class Stream {
   id: string;
   conn: Connection;
-  fn: (x: any) => void;
-  pending: Message[];
+  fn: (x: unknown) => void;
+  pending: StreamMessage[];
 
-  constructor(conn: Connection, fn: (x: any) => void) {
+  constructor(conn: Connection, fn: (x: unknown) => void) {
     this.id = `${_trackedID++}`;
     this.conn = conn;
     this.pending = [];
     this.fn = fn;
   }
 
-  send(msg: any) {
-    msg.id = this.id;
+  send(type: string, body: unknown): void {
+    const streamMessage = new StreamMessage(this.id, type, body);
     if (this.conn.isOpen) {
-      this.conn.socket.send(JSON.stringify(msg));
+      this.conn.socket.send(JSON.stringify(streamMessage));
     } else {
-      this.pending.push(msg);
+      this.pending.push(streamMessage);
     }
   }
 
-  close() {
+  close(): void {
     this.conn.streams.delete(this.id);
     this.conn.tracking.delete(this.id);
-    _streamsById.delete(this.id);
   }
 }
 
-interface Payload {
-  id: string;
-}
+type PromiseFunc = (t: unknown) => void;
 
-type PromiseFunc = (t: any) => void;
-
-class Message {
+class Message implements Header {
   id: string;
+  type: string;
   resolve: PromiseFunc;
   reject: PromiseFunc;
-  promise: Promise<any>;
-  payload: Payload;
+  promise: Promise<unknown>;
+  body: unknown; // amorphous body data
 
-  constructor(payload: any) {
+  constructor(type: string, body: unknown) {
     this.id = `${_trackedID++}`;
-    this.payload = payload;
-    this.payload.id = this.id;
+    this.type = type;
+    this.body = body;
     this.promise = new Promise((resolve, reject) => {
       this.resolve = resolve;
       this.reject = reject;
     });
   }
 }
-
-const MESSAGE = Symbol();
-const STREAM = Symbol();
 
 // Abstracts a web socket connection.  Once the connection object has been
 // created, Stream objects can be created to implement messaging over the
@@ -184,11 +193,11 @@ export default class Connection {
   streams: Map<string, Stream>;
   messages: Map<string, Message>;
   pending: Message[];
-  tracking: Map<string, Symbol>;
+  tracking: Map<string, symbol>;
   isOpen: boolean;
   socket: WebSocket | null;
 
-  constructor(url: string, callback: (x: any, c: Connection) => void) {
+  constructor(url: string, callback: (err: Error, c: Connection) => void) {
     this.url = stripURL(url);
     this.streams = new Map();
     this.messages = new Map();
@@ -198,36 +207,29 @@ export default class Connection {
     establishConnection(this, callback);
   }
 
-  stream(fn: (x: any) => void) {
+  stream(fn: (x: unknown) => void): Stream {
     const stream = new Stream(this, fn);
     this.streams.set(stream.id, stream);
     this.tracking.set(stream.id, STREAM);
-    _streamsById.set(stream.id, stream);
     return stream;
   }
 
-  send(payload: any) {
-    const message = new Message(payload);
+  send(type: string, body: unknown): Promise<unknown> {
+    const message = new Message(type, body);
     this.messages.set(message.id, message);
     this.tracking.set(message.id, MESSAGE);
     if (this.isOpen) {
-      this.socket.send(JSON.stringify(message.payload));
+      this.socket.send(JSON.stringify(message));
     } else {
       this.pending.push(message);
     }
     return message.promise;
   }
 
-  close() {
+  close(): void {
     this.socket.onclose = null;
     this.socket.close();
     this.socket = null;
-
-    // remove the streams associated with this connection from the global list
-    // if they are open
-    for (const [id] of this.streams) {
-      _streamsById.delete(id);
-    }
 
     console.info(`WebSocket conn on /${this.url} closed`);
   }

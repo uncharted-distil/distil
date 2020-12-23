@@ -44,17 +44,15 @@ export const getters = {
   },
 
   getResultDataNumRows(state: ResultsState): number {
-    return state.includedResultTableData
-      ? state.includedResultTableData.numRows
-      : 0;
+    return state.includedResultTableData?.numRows ?? 0;
   },
 
   getFittedSolutionId(state: ResultsState): string {
-    return state.includedResultTableData.fittedSolutionId;
+    return state.includedResultTableData?.fittedSolutionId;
   },
 
   getProduceRequestId(state: ResultsState): string {
-    return state.includedResultTableData.produceRequestId;
+    return state.includedResultTableData?.produceRequestId;
   },
 
   hasIncludedResultTableData(state: ResultsState): boolean {
@@ -95,9 +93,7 @@ export const getters = {
   },
 
   getIncludedResultTableDataCount(state: ResultsState): number {
-    return state.includedResultTableData.numRowsFiltered
-      ? state.includedResultTableData.numRowsFiltered
-      : 0;
+    return state.includedResultTableData?.numRowsFiltered ?? 0;
   },
 
   hasExcludedResultTableData(state: ResultsState): boolean {
@@ -122,9 +118,7 @@ export const getters = {
   },
 
   getExcludedResultTableDataCount(state: ResultsState): number {
-    return state.excludedResultTableData.numRowsFiltered
-      ? state.excludedResultTableData.numRowsFiltered
-      : 0;
+    return state.excludedResultTableData?.numRowsFiltered ?? 0;
   },
 
   /* Check if any items have a weight property */

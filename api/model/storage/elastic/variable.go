@@ -79,6 +79,10 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	if !ok {
 		deleted = false
 	}
+	immutable, ok := json.Bool(child, model.VarImmutableField)
+	if !ok {
+		immutable = false
+	}
 	min, ok := json.Float(child, model.VarMinField)
 	if !ok {
 		min = 0
@@ -129,6 +133,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 		Grouping:         grouping,
 		Min:              min,
 		Max:              max,
+		Immutable:        immutable,
 	}, nil
 }
 
@@ -179,7 +184,7 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 	return nil, errors.Errorf("unable to find variable `%s`", varName)
 }
 
-func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
+func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*model.Variable, error) {
 	// unmarshal the hit source
 	src, err := json.Unmarshal(searchHit.Source)
 	if err != nil {
@@ -202,6 +207,9 @@ func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool
 			continue
 		}
 		if !includeMeta && variable.DistilRole == model.VarDistilRoleMetadata {
+			continue
+		}
+		if !includeSystemData && variable.DistilRole == model.VarDistilRoleSystemData {
 			continue
 		}
 		if variable != nil {
@@ -342,7 +350,7 @@ func (s *Storage) FetchVariableDisplay(dataset string, varName string) (*model.V
 }
 
 // FetchVariables returns all the variables for the provided index and dataset.
-func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
+func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*model.Variable, error) {
 	// get dataset id
 	datasetID := dataset
 	// create match query
@@ -365,13 +373,13 @@ func (s *Storage) FetchVariables(dataset string, includeIndex bool, includeMeta 
 		return nil, errors.Errorf("elasticSearch variable fetch query len(hits) != 1 (len == %d) for dataset '%s'", len(res.Hits.Hits), datasetID)
 	}
 	// extract output into JSON ready structs
-	return s.parseVariables(res.Hits.Hits[0], includeIndex, includeMeta)
+	return s.parseVariables(res.Hits.Hits[0], includeIndex, includeMeta, includeSystemData)
 }
 
 // FetchVariablesDisplay returns all the display variables for the provided index and dataset.
 func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, error) {
 	// get all variables.
-	vars, err := s.FetchVariables(dataset, false, true)
+	vars, err := s.FetchVariables(dataset, false, true, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch dataset variables")
 	}
@@ -398,8 +406,8 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 }
 
 // FetchVariablesByName returns all the caller supplied variables.
-func (s *Storage) FetchVariablesByName(dataset string, varNames []string, includeIndex bool, includeMeta bool) ([]*model.Variable, error) {
-	fetchedVariables, err := s.FetchVariables(dataset, includeIndex, includeMeta)
+func (s *Storage) FetchVariablesByName(dataset string, varNames []string, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*model.Variable, error) {
+	fetchedVariables, err := s.FetchVariables(dataset, includeIndex, includeMeta, includeSystemData)
 	if err != nil {
 		return nil, err
 	}

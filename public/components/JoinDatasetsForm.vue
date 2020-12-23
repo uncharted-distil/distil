@@ -65,8 +65,8 @@
 import _ from "lodash";
 import Vue from "vue";
 import localStorage from "store";
-import JoinDatasetsPreview from "../components/JoinDatasetsPreview";
-import ErrorModal from "../components/ErrorModal";
+import JoinDatasetsPreview from "../components/JoinDatasetsPreview.vue";
+import ErrorModal from "../components/ErrorModal.vue";
 import { createRouteEntry } from "../util/routes";
 import { Dictionary } from "../util/dict";
 import { getters as routeGetters } from "../store/route/module";

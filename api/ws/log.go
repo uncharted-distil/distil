@@ -42,7 +42,7 @@ func newMessageLogger() *messageLogger {
 
 func (l *messageLogger) write(color string, format string, args ...interface{}) {
 	if l.colorTTY {
-		fmt.Fprintf(l.buf, color)
+		fmt.Fprint(l.buf, color)
 	}
 	fmt.Fprintf(l.buf, format, args...)
 	if l.colorTTY {

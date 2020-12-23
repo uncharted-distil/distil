@@ -270,7 +270,11 @@ export function removeFiltersByName(router: VueRouter, key: string) {
   decoded = decoded.filter((filter) => {
     return filter.key !== key;
   });
-  const encoded = encodeFilters(decoded);
+  deepUpdateFiltersInRoute(router, decoded);
+}
+
+export function deepUpdateFiltersInRoute(router: VueRouter, filters: Filter[]) {
+  const encoded = encodeFilters(filters);
   const entry = overlayRouteEntry(routeGetters.getRoute(store), {
     filters: encoded,
   });

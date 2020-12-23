@@ -159,8 +159,8 @@ import {
   JoinDatasetImportPendingRequest,
   JOIN_DATASET_MAX_SIZE,
 } from "../store/dataset/index";
-import JoinDatasetsPreview from "../components/JoinDatasetsPreview";
-import ErrorModal from "../components/ErrorModal";
+import JoinDatasetsPreview from "../components/JoinDatasetsPreview.vue";
+import ErrorModal from "../components/ErrorModal.vue";
 import {
   actions as datasetActions,
   getters as datasetGetters,

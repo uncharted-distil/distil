@@ -242,6 +242,10 @@ export default Vue.extend({
     quadOpacity: { type: Number, default: 0.8 },
     pointOpacity: { type: Number, default: 0.8 },
     zoomThreshold: { type: Number, default: 8 },
+    areaOfInterestItems: {
+      type: Object as () => { inner: TableRow[]; outer: TableRow[] },
+      default: null,
+    },
     maxZoom: { type: Number, default: 17 }, // defaults to max zoom
   },
 
@@ -871,18 +875,6 @@ export default Vue.extend({
         key: this.summaries[0].key,
         displayName: this.summaries[0].label,
         type: this.summaries[0].type,
-        callback: (inner: TableRow[], outer: TableRow[]) => {
-          const innerArea = this.tableDataToAreas(inner) as any[];
-          innerArea.forEach((i) => {
-            i.gray = 0;
-          });
-          const outerArea = this.tableDataToAreas(outer) as any[];
-          outerArea.forEach((i) => {
-            i.gray = 100;
-          });
-          this.drillDownState.tiles = innerArea.concat(outerArea);
-          this.isImageDrilldown = true;
-        },
       });
     },
     // assumes x and y are normalized points this function is for the selection tool
@@ -1031,7 +1023,6 @@ export default Vue.extend({
     },
     // callback when zooming on map
     onZoom() {
-      console.log(this.map.getZoom());
       const shouldBeTiles = this.shouldTilesRender();
       const wasPoints = shouldBeTiles && !this.previousStateTiled;
       const wasTiled = !shouldBeTiles && this.previousStateTiled;
@@ -1152,7 +1143,7 @@ export default Vue.extend({
         return "#999999";
       }
       if (this.isColoringByConfidence) {
-        return this.colorScale(item.confidence.value);
+        return this.colorScale(item.confidence?.value);
       }
       if (item[this.targetField] && item[this.predictedField]) {
         color =
@@ -1195,6 +1186,29 @@ export default Vue.extend({
       } else {
         this.onNewData();
       }
+    },
+    areaOfInterestItems() {
+      // if null return
+      if (
+        !this.areaOfInterestItems.inner?.length &&
+        !this.areaOfInterestItems.outer?.length
+      ) {
+        return;
+      }
+      const innerArea = this.tableDataToAreas(
+        this.areaOfInterestItems.inner
+      ) as any[];
+      innerArea.forEach((i) => {
+        i.gray = 0;
+      });
+      const outerArea = this.tableDataToAreas(
+        this.areaOfInterestItems.outer
+      ) as any[];
+      outerArea.forEach((i) => {
+        i.gray = 100;
+      });
+      this.drillDownState.tiles = innerArea.concat(outerArea);
+      this.isImageDrilldown = true;
     },
   },
 
@@ -1398,8 +1412,7 @@ path.selected {
 }
 .image-label {
   position: absolute;
-  left: 2px;
-  top: 2px;
+  top: 0px;
   z-index: 1;
 }
 .selection-exit {

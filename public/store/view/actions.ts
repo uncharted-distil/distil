@@ -469,7 +469,6 @@ export const actions = {
   },
   updateLabelData(context: ViewContext) {
     // clear any previous state
-
     const dataset = context.getters.getRouteDataset;
     const highlight = context.getters.getDecodedHighlight;
     const filterParams = context.getters.getDecodedSolutionRequestFilterParams;
@@ -478,24 +477,23 @@ export const actions = {
     const dataMode = context.getters.getDataMode;
     const variables = datasetGetters.getVariables(store);
     const varModes = context.getters.getDecodedVarModes;
-    variables.forEach((v) => {
-      filterParams.variables.push(v.colName);
-    });
+    const orderBy = routeGetters.getOrderBy(store);
     clearVariableSummaries(context);
     return Promise.all([
       datasetActions.fetchIncludedVariableSummaries(store, {
-        dataset: dataset,
-        variables: variables,
-        filterParams: filterParams,
-        highlight: highlight,
-        dataMode: dataMode,
-        varModes: varModes,
+        dataset,
+        variables,
+        filterParams,
+        highlight,
+        dataMode,
+        varModes,
       }),
       datasetActions.fetchIncludedTableData(store, {
-        dataset: dataset,
-        filterParams: filterParams,
-        highlight: highlight,
-        dataMode: dataMode,
+        dataset,
+        filterParams,
+        highlight,
+        dataMode,
+        orderBy,
       }),
     ]);
   },

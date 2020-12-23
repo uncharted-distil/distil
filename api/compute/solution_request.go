@@ -25,6 +25,8 @@ import (
 	"sync"
 	"time"
 
+	encjson "encoding/json"
+
 	uuid "github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
@@ -32,37 +34,16 @@ import (
 	"github.com/uncharted-distil/distil-compute/pipeline"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/description"
+	"github.com/uncharted-distil/distil/api/env"
+	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util/json"
 	log "github.com/unchartedsoftware/plog"
-
-	"github.com/uncharted-distil/distil/api/env"
-	api "github.com/uncharted-distil/distil/api/model"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
-	defaultExposedOutputKey = "outputs.0"
-	// SolutionPendingStatus represents that the solution request has been acknoledged by not yet sent to the API
-	SolutionPendingStatus = "SOLUTION_PENDING"
-	// SolutionFittingStatus represents that the solution request has been sent to the API.
-	SolutionFittingStatus = "SOLUTION_FITTING"
-	// SolutionScoringStatus represents that the solution request has been sent to the API.
-	SolutionScoringStatus = "SOLUTION_SCORING"
-	// SolutionProducingStatus represents that the solution request has been sent to the API.
-	SolutionProducingStatus = "SOLUTION_PRODUCING"
-	// SolutionErroredStatus represents that the solution request has terminated with an error.
-	SolutionErroredStatus = "SOLUTION_ERRORED"
-	// SolutionCompletedStatus represents that the solution request has completed successfully.
-	SolutionCompletedStatus = "SOLUTION_COMPLETED"
-	// RequestPendingStatus represents that the solution request has been acknoledged by not yet sent to the API
-	RequestPendingStatus = "REQUEST_PENDING"
-	// RequestRunningStatus represents that the solution request has been sent to the API.
-	RequestRunningStatus = "REQUEST_RUNNING"
-	// RequestErroredStatus represents that the solution request has terminated with an error.
-	RequestErroredStatus = "REQUEST_ERRORED"
-	// RequestCompletedStatus represents that the solution request has completed successfully.
-	RequestCompletedStatus = "REQUEST_COMPLETED"
-
 	defaultMaxSolution = 5
 	defaultMaxTime     = 5
 	defaultQuality     = "quality"
@@ -72,16 +53,6 @@ const (
 	// ModelQualityHigh indicates the the system should focus on higher quality models at the expense of speed
 	ModelQualityHigh = "quality"
 )
-
-var (
-	// folder for dataset data exchanged with TA2
-	datasetDir string
-)
-
-// SetDatasetDir sets the output data dir
-func SetDatasetDir(dir string) {
-	datasetDir = dir
-}
 
 func newStatusChannel() chan SolutionStatus {
 	// NOTE: WE BUFFER THE CHANNEL TO A SIZE OF 1 HERE SO THAT THE INITIAL
@@ -107,6 +78,7 @@ type SolutionRequest struct {
 	TargetFeature        *model.Variable
 	Task                 []string
 	TimestampField       string
+	TimestampSplitValue  float64
 	MaxSolutions         int
 	MaxTime              int
 	Quality              string
@@ -115,6 +87,7 @@ type SolutionRequest struct {
 	Filters              *api.FilterParams
 	DatasetAugmentations []*model.DatasetOrigin
 	TrainTestSplit       float64
+	CancelFuncs          map[string]context.CancelFunc
 
 	mu               *sync.Mutex
 	wg               *sync.WaitGroup
@@ -164,6 +137,7 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 	req.ProblemType = json.StringDefault(j, "", "problemType")
 	req.Metrics, _ = json.StringArray(j, "metrics")
 	req.TrainTestSplit = json.FloatDefault(j, 0.9, "trainTestSplit")
+	req.TimestampSplitValue = json.FloatDefault(j, 0.0, "timestampSplitValue")
 
 	filters, ok := json.Get(j, "filters")
 	if ok {
@@ -173,11 +147,13 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 		}
 	}
 
+	req.CancelFuncs = map[string]context.CancelFunc{}
+
 	return req, nil
 }
 
 // ExtractDatasetFromRawRequest extracts the dataset name from the raw message.
-func ExtractDatasetFromRawRequest(data []byte) (string, error) {
+func ExtractDatasetFromRawRequest(data encjson.RawMessage) (string, error) {
 	j, err := json.Unmarshal(data)
 	if err != nil {
 		return "", err
@@ -242,6 +218,15 @@ func (s *SolutionRequest) Listen(listener SolutionStatusListener) error {
 	}
 	s.mu.Unlock()
 	return <-s.finished
+}
+
+// Cancel inovkes the context cancel function calls associated with this request.  This stops any
+// further messaging between the ta3 and ta2 for each solution.
+func (s *SolutionRequest) Cancel() {
+	// Cancel all further work for each solution
+	for _, cancelFunc := range s.CancelFuncs {
+		cancelFunc()
+	}
 }
 
 func (s *SolutionRequest) createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
@@ -356,7 +341,7 @@ func GeneratePredictions(datasetURI string, solutionID string, fittedSolutionID 
 		return nil, err
 	}
 
-	keys := []string{defaultExposedOutputKey}
+	keys := []string{compute.DefaultExposedOutputKey}
 	keys = append(keys, extractOutputKeys(outputs)...)
 
 	produceRequest := createProduceSolutionRequest(datasetURI, fittedSolutionID, keys, nil)
@@ -372,7 +357,7 @@ func GeneratePredictions(datasetURI string, solutionID string, fittedSolutionID 
 			continue
 		}
 
-		resultURI, err := getFileFromOutput(response, defaultExposedOutputKey)
+		resultURI, err := getFileFromOutput(response, compute.DefaultExposedOutputKey)
 		if err != nil {
 			return nil, err
 		}
@@ -453,15 +438,23 @@ func createFitSolutionRequest(datasetURI string, fittedSolutionID string) *pipel
 }
 
 func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, err error) {
+	// Check to see if this is a cancellation error and use a specific code for it if so
+	progress := compute.SolutionErroredStatus
+	cause := errors.Cause(err)
+	st, ok := status.FromError(cause)
+	if ok && st.Code() == codes.Canceled {
+		progress = compute.SolutionCancelledStatus
+	}
+
 	// persist the updated state
 	// NOTE: ignoring error
-	solutionStorage.PersistSolutionState(solutionID, SolutionErroredStatus, time.Now())
+	_ = solutionStorage.PersistSolutionState(solutionID, progress, time.Now())
 
 	// notify of error
 	statusChan <- SolutionStatus{
 		RequestID:  searchID,
 		SolutionID: solutionID,
-		Progress:   SolutionErroredStatus,
+		Progress:   progress,
 		Error:      err,
 		Timestamp:  time.Now(),
 	}
@@ -499,12 +492,12 @@ func (s *SolutionRequest) persistSolutionStatus(statusChan chan SolutionStatus, 
 func (s *SolutionRequest) persistRequestError(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, dataset string, err error) {
 	// persist the updated state
 	// NOTE: ignoring error
-	solutionStorage.PersistRequest(searchID, dataset, RequestErroredStatus, time.Now())
+	_ = solutionStorage.PersistRequest(searchID, dataset, compute.RequestErroredStatus, time.Now())
 
 	// notify of error
 	statusChan <- SolutionStatus{
 		RequestID: searchID,
-		Progress:  RequestErroredStatus,
+		Progress:  compute.RequestErroredStatus,
 		Error:     err,
 		Timestamp: time.Now(),
 	}
@@ -532,14 +525,14 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 	dataStorage api.DataStorage, initialSearchID string, dataset string, storageName string, initialSearchSolutionID string,
 	fittedSolutionID string, produceRequestID string, resultID string, resultURI string) {
 	// persist the completed state
-	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, SolutionCompletedStatus, time.Now())
+	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, compute.SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
 		return
 	}
 	// persist result metadata
-	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, produceRequestID, "test", resultID, resultURI, SolutionCompletedStatus, time.Now())
+	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, produceRequestID, "test", resultID, resultURI, compute.SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -576,7 +569,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 	dataStorage api.DataStorage, searchContext pipelineSearchContext) {
 
 	// update request status
-	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, RequestRunningStatus)
+	err := s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, compute.RequestRunningStatus)
 	if err != nil {
 		s.finished <- err
 		return
@@ -590,7 +583,14 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 		s.addSolution(c)
 		// persist the solution
 		s.persistSolution(c, solutionStorage, searchContext.searchID, solution.SolutionId, "")
-		s.persistSolutionStatus(c, solutionStorage, searchContext.searchID, solution.SolutionId, SolutionPendingStatus)
+		s.persistSolutionStatus(c, solutionStorage, searchContext.searchID, solution.SolutionId, compute.SolutionPendingStatus)
+
+		// once done, mark as complete and clean up the channel
+		defer func() {
+			s.completeSolution()
+			close(c)
+		}()
+
 		// dispatch it
 		searchResult, err := s.dispatchSolutionSearchPipeline(c, client, solutionStorage, dataStorage, solution.SolutionId, searchContext)
 		if err != nil {
@@ -609,12 +609,9 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 			RequestID:  searchContext.searchID,
 			SolutionID: solution.SolutionId,
 			ResultID:   searchResult.resultID,
-			Progress:   SolutionCompletedStatus,
+			Progress:   compute.SolutionCompletedStatus,
 			Timestamp:  time.Now(),
 		}
-		// once done, mark as complete
-		s.completeSolution()
-		close(c)
 	})
 
 	// wait until all are complete and the search has finished / timed out
@@ -624,7 +621,7 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 	if err != nil {
 		s.persistRequestError(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, err)
 	} else {
-		s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, RequestCompletedStatus)
+		s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, compute.RequestCompletedStatus)
 	}
 	close(s.requestChannel)
 
@@ -643,7 +640,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	s.Filters.AddVariable(model.D3MIndexFieldName)
 
 	// fetch the dataset variables
-	variables, err := metaStorage.FetchVariables(s.Dataset, true, true)
+	variables, err := metaStorage.FetchVariables(s.Dataset, true, true, false)
 	if err != nil {
 		return err
 	}
@@ -670,13 +667,13 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// fetch the source dataset
-	dataset, err := metaStorage.FetchDataset(s.Dataset, true, true)
+	dataset, err := metaStorage.FetchDataset(s.Dataset, true, true, false)
 	if err != nil {
 		return nil
 	}
 
 	// fetch the input dataset (should only differ on augmented)
-	datasetInput, err := metaStorage.FetchDataset(s.DatasetInput, true, true)
+	datasetInput, err := metaStorage.FetchDataset(s.DatasetInput, true, true, false)
 	if err != nil {
 		return err
 	}
@@ -743,7 +740,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// when dealing with categorical data we want to stratify
 	stratify := model.IsCategorical(s.TargetFeature.Type)
 	// create the splitter to use for the train / test split
-	splitter := createSplitter(s.Task, targetIndex, groupingVariableIndex, stratify, s.Quality, s.TrainTestSplit)
+	splitter := createSplitter(s.Task, targetIndex, groupingVariableIndex, stratify, s.Quality, s.TrainTestSplit, s.TimestampSplitValue)
 	datasetPathTrain, datasetPathTest, err := SplitDataset(path.Join(datasetInputDir, compute.D3MDataSchema), splitter)
 	if err != nil {
 		return err
@@ -788,7 +785,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// persist the request
-	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.ID, RequestPendingStatus)
+	err = s.persistRequestStatus(s.requestChannel, solutionStorage, requestID, dataset.ID, compute.RequestPendingStatus)
 	if err != nil {
 		return err
 	}

@@ -42,7 +42,7 @@
 <script lang="ts">
 import Vue from "vue";
 import axios from "axios";
-import StatusPanelJoin from "../components/StatusPanelJoin";
+import StatusPanelJoin from "../components/StatusPanelJoin.vue";
 import {
   DatasetPendingRequest,
   DatasetPendingRequestType,
@@ -204,7 +204,7 @@ export default Vue.extend({
           const varRankedEntry = overlayRouteEntry(this.$route, {
             varRanked: "1",
           });
-          this.$router.push(varRankedEntry);
+          this.$router.push(varRankedEntry).catch((err) => console.warn(err));
 
           this.clearData();
           break;
@@ -228,7 +228,7 @@ export default Vue.extend({
           const clusterEntry = overlayRouteEntry(this.$route, {
             clustering: "1",
           });
-          this.$router.push(clusterEntry);
+          this.$router.push(clusterEntry).catch((err) => console.warn(err));
 
           this.clearData();
           break;

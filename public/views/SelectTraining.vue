@@ -101,8 +101,11 @@ export default Vue.extend({
       }
       return this.target;
     },
-    filters(): Filter[] {
-      return routeGetters.getDecodedFilters(this.$store);
+    filters(): string {
+      return (
+        routeGetters.getRouteHighlight(this.$store) +
+        routeGetters.getRouteFilters(this.$store)
+      );
     },
     highlightString(): string {
       return routeGetters.getRouteHighlight(this.$store);
@@ -141,10 +144,7 @@ export default Vue.extend({
     filters() {
       viewActions.clearDatasetTableData(this.$store);
       viewActions.updateSelectTrainingData(this.$store);
-      if (!this.highlightString) {
-        viewActions.clearHighlight(this.$store);
-        return;
-      }
+      viewActions.clearHighlight(this.$store);
       viewActions.updateHighlight(this.$store);
     },
     availableTrainingVarsPage() {
@@ -171,11 +171,11 @@ export default Vue.extend({
         routeGetters.getDataMode(this.$store) === DataMode.Cluster &&
         dataModeOld !== DataMode.Cluster
       ) {
+        viewActions.updateSelectTrainingData(this.$store);
         const clusterEntry = overlayRouteEntry(this.$route, {
           clustering: "1",
         });
-        viewActions.updateSelectTrainingData(this.$store);
-        this.$router.push(clusterEntry);
+        this.$router.push(clusterEntry).catch((err) => console.warn(err));
       }
     },
   },

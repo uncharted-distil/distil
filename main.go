@@ -108,9 +108,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// set dataset directory
-	api.SetDatasetDir(config.D3MOutputDir)
-
 	// instantiate elastic client constructor.
 	esClientCtor := elastic.NewClient(config.ElasticEndpoint, false)
 
@@ -174,7 +171,6 @@ func main() {
 
 	// NOTE: EVAL ONLY OVERRIDE SETUP FOR METRICS!
 	problemPath = path.Join(config.D3MInputDir, "TRAIN", "problem_TRAIN", api.D3MProblem)
-	ws.SetProblemFile(problemPath)
 
 	// set the postgres random seed for data table reading
 	pg.SetRandomSeed(config.PostgresRandomSeed)
@@ -320,7 +316,7 @@ func main() {
 //nolint
 func updateExtremas(metaStorage model.MetadataStorage, dataStorage model.DataStorage) error {
 	log.Infof("updating extremas on startup")
-	datasets, err := metaStorage.FetchDatasets(false, false)
+	datasets, err := metaStorage.FetchDatasets(false, false, false)
 	if err != nil {
 		return err
 	}

@@ -69,7 +69,7 @@ func TargetRank(dataset string, target string, features []*model.Variable, sourc
 		return nil, errors.Errorf("path \"%s\" cannot be made absolute", datasetInputDir)
 	}
 
-	datasetURI, err := submitPipeline([]string{datasetInputDir}, pip)
+	datasetURI, err := submitPipeline([]string{datasetInputDir}, pip, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to run ranking pipeline")
 	}

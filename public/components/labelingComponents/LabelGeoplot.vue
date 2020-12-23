@@ -4,6 +4,7 @@
     :data-fields="fields"
     :data-items="items"
     :summaries="summaries"
+    :areaOfInterestItems="{ inner: inner, outer: outer }"
     @tileClicked="onTileClick"
   >
   </geo-plot>
@@ -21,7 +22,7 @@ import {
   VariableSummary,
 } from "../../store/dataset/index";
 import { getters as routeGetters } from "../../store/route/module";
-import { getVariableSummariesByState } from "../../util/data";
+import { getVariableSummariesByState, getAllDataItems } from "../../util/data";
 import { isGeoLocatedType } from "../../util/types";
 import { actions as viewActions } from "../../store/view/module";
 import { INCLUDE_FILTER, Filter } from "../../util/filters";
@@ -35,6 +36,7 @@ export default Vue.extend({
   props: {
     instanceName: String as () => string,
     includedActive: Boolean as () => boolean,
+    dataItems: { type: Array as () => TableRow[], default: null },
   },
 
   computed: {
@@ -45,29 +47,26 @@ export default Vue.extend({
     },
 
     items(): TableRow[] {
-      const tableData = this.includedActive
-        ? datasetGetters.getHighlightedIncludeTableDataItems(this.$store)
-        : datasetGetters.getHighlightedExcludeTableDataItems(this.$store);
-      const highlighted = tableData
-        ? tableData.map((h) => {
-            return { ...h, isExcluded: true };
-          })
-        : [];
-      return this.includedActive
-        ? [
-            ...highlighted,
-            ...datasetGetters.getIncludedTableDataItems(this.$store),
-          ]
-        : [
-            ...highlighted,
-            ...datasetGetters.getExcludedTableDataItems(this.$store),
-          ];
+      if (this.dataItems) {
+        return this.dataItems;
+      }
+      return getAllDataItems(this.includedActive);
     },
     availableTargetVarsSearch(): string {
       return routeGetters.getRouteAvailableTargetVarsSearch(this.$store);
     },
     variables(): Variable[] {
       return datasetGetters.getVariables(this.$store);
+    },
+    inner(): TableRow[] {
+      return this.includedActive
+        ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)
+        : datasetGetters.getAreaOfInterestExcludeInnerItems(this.$store);
+    },
+    outer(): TableRow[] {
+      return this.includedActive
+        ? datasetGetters.getAreaOfInterestIncludeOuterItems(this.$store)
+        : datasetGetters.getAreaOfInterestExcludeOuterItems(this.$store);
     },
     summaries(): VariableSummary[] {
       const pageIndex = routeGetters.getRouteTrainingVarsPage(this.$store);
@@ -103,15 +102,6 @@ export default Vue.extend({
       };
       // fetch area of interests
       await viewActions.updateAreaOfInterest(this.$store, filter);
-      // get area of interests
-      const inner = this.includedActive
-        ? datasetGetters.getAreaOfInterestIncludeInnerItems(this.$store)
-        : datasetGetters.getAreaOfInterestExcludeInnerItems(this.$store);
-      const outer = this.includedActive
-        ? datasetGetters.getAreaOfInterestIncludeOuterItems(this.$store)
-        : datasetGetters.getAreaOfInterestExcludeOuterItems(this.$store);
-      // send data back to geoplot
-      data.callback(inner, outer);
     },
   },
 });

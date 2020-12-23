@@ -116,7 +116,7 @@ export const getters = {
     const lookup = buildLookup(
       variables.map((v) => hashSummary(v.datasetName, v.colName))
     );
-    const summaries = getters.getVariableSummaries;
+    const summaries = getters.getVariableSummaries ?? ([] as VariableSummary[]);
     return summaries.filter(
       (summary) => lookup[hashSummary(summary.dataset, summary.key)]
     );
@@ -460,6 +460,7 @@ export const getters = {
     const variables = getters.getVariables;
     const lookup =
       training && target ? buildLookup(training.concat([target])) : null;
+    if (!lookup) return variables ?? ([] as Variable[]);
     return variables.filter(
       (variable) => !lookup[variable.colName.toLowerCase()]
     );
@@ -562,7 +563,17 @@ export const getters = {
     const isApplyModel = <string>state.query.applyModel;
     return !!isApplyModel;
   },
-
+  getOrderBy(state: Route): string {
+    const orderBy = state.query.orderBy as string;
+    if (!orderBy) {
+      return null;
+    }
+    return orderBy;
+  },
+  hasOrderBy(state: Route): boolean {
+    const orderBy = state.query.orderBy as string;
+    return !!orderBy;
+  },
   /* Check if the current task includes Remote Sensing. */
   isMultiBandImage(state: Route): boolean {
     // Get the list of task of the route.

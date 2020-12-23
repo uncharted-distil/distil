@@ -3,6 +3,7 @@ import Vue from "vue";
 import {
   isDatamartProvenance,
   updateSummariesPerVariable,
+  updateTableDataItems,
 } from "../../util/data";
 import { Dictionary } from "../../util/dict";
 import { getSelectedRows } from "../../util/row";
@@ -22,6 +23,7 @@ import {
   TimeSeriesValue,
   Variable,
   VariableSummary,
+  TableRow,
 } from "./index";
 
 function sortDatasets(a: Dataset, b: Dataset) {
@@ -381,17 +383,35 @@ export const mutations = {
   setHighlightedExcludeTableData(state: DatasetState, tableData: TableData) {
     state.highlightedExcludeSet = Object.freeze(tableData);
   },
+  updateAreaOfInterestIncludeInner(
+    state: DatasetState,
+    tableData: Map<number, unknown>
+  ) {
+    updateTableDataItems(state.areaOfInterestIncludeInner, tableData);
+  },
   setAreaOfInterestIncludeInner(state: DatasetState, tableData: TableData) {
-    state.areaOfInterestIncludeInner = Object.freeze(tableData);
+    state.areaOfInterestIncludeInner = tableData;
   },
   setAreaOfInterestIncludeOuter(state: DatasetState, tableData: TableData) {
-    state.areaOfInterestIncludeOuter = Object.freeze(tableData);
+    state.areaOfInterestIncludeOuter = tableData;
   },
   setAreaOfInterestExcludeInner(state: DatasetState, tableData: TableData) {
-    state.areaOfInterestExcludeInner = Object.freeze(tableData);
+    state.areaOfInterestExcludeInner = tableData;
   },
   setAreaOfInterestExcludeOuter(state: DatasetState, tableData: TableData) {
-    state.areaOfInterestExcludeOuter = Object.freeze(tableData);
+    state.areaOfInterestExcludeOuter = tableData;
+  },
+  clearAreaOfInterestIncludeInner(state: DatasetState) {
+    state.areaOfInterestIncludeInner = null;
+  },
+  clearAreaOfInterestIncludeOuter(state: DatasetState) {
+    state.areaOfInterestIncludeOuter = null;
+  },
+  clearAreaOfInterestExcludeInner(state: DatasetState) {
+    state.areaOfInterestExcludeInner = null;
+  },
+  clearAreaOfInterestExcludeOuter(state: DatasetState) {
+    state.areaOfInterestExcludeOuter = null;
   },
   // sets the current selected data into the store
   setIncludedTableData(state: DatasetState, tableData: TableData) {

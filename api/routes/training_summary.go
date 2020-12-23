@@ -89,7 +89,7 @@ func TrainingSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 			return
 		}
 
-		ds, err := meta.FetchDataset(dataset, false, false)
+		ds, err := meta.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -103,7 +103,7 @@ func TrainingSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.S
 				return
 			}
 			dataset = pred.Dataset
-			ds, err = meta.FetchDataset(dataset, false, false)
+			ds, err = meta.FetchDataset(dataset, false, false, false)
 			if err != nil {
 				handleError(w, err)
 				return

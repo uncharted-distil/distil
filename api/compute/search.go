@@ -184,11 +184,17 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 	var resultID string
 
 	// persist the solution info
-	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchSolutionID, SolutionFittingStatus)
+	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchSolutionID, compute.SolutionFittingStatus)
 
 	// fit solution
 	fitRequest := createFitSolutionRequest(searchContext.trainDatasetURI, searchSolutionID)
-	fitResults, err := client.GenerateSolutionFit(context.Background(), fitRequest)
+
+	// create a context that will let us cancel the streaming request from the client side.  We have to do this at the transport
+	// level rather than the ta3ta2 API level since the API only allows for stopping the search portion of the process
+	cancelContext, cancelFunc := context.WithCancel(context.Background())
+	s.CancelFuncs[searchSolutionID] = cancelFunc
+
+	fitResults, err := client.GenerateSolutionFit(cancelContext, fitRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -204,10 +210,10 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 		return nil, errors.Errorf("no fitted solution ID for solution `%s`", searchSolutionID)
 	}
 
-	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchSolutionID, SolutionScoringStatus)
+	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchSolutionID, compute.SolutionScoringStatus)
 
 	// score solution
-	solutionScoreResponses, err := client.GenerateSolutionScores(context.Background(), searchSolutionID, searchContext.testDatasetURI, s.Metrics)
+	solutionScoreResponses, err := client.GenerateSolutionScores(cancelContext, searchSolutionID, searchContext.testDatasetURI, s.Metrics)
 	if err != nil {
 		return nil, err
 	}
@@ -232,10 +238,10 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 	}
 
 	// persist solution running status
-	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchSolutionID, SolutionProducingStatus)
+	s.persistSolutionStatus(statusChan, solutionStorage, searchContext.searchID, searchSolutionID, compute.SolutionProducingStatus)
 
 	// generate output keys, adding one extra for explanation output if we expect it to exist
-	outputKeys := []string{defaultExposedOutputKey}
+	outputKeys := []string{compute.DefaultExposedOutputKey}
 	exposeType := []string{}
 	if s.useParquet {
 		exposeType = append(exposeType, compute.ParquetURIValueType)
@@ -243,7 +249,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 	produceSolutionRequest := createProduceSolutionRequest(searchContext.produceDatasetURI, fittedSolutionID, outputKeys, exposeType)
 
 	// generate predictions
-	produceRequestID, predictionResponses, err := client.GeneratePredictions(context.Background(), produceSolutionRequest)
+	produceRequestID, predictionResponses, err := client.GeneratePredictions(cancelContext, produceSolutionRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +274,7 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 		// get the result UUID. NOTE: Doing sha1 for now.
 
 		var ok bool
-		resultURI, ok = outputKeyURIs[defaultExposedOutputKey]
+		resultURI, ok = outputKeyURIs[compute.DefaultExposedOutputKey]
 		if ok {
 			// reformat result to have one row per d3m index since confidences
 			// can produce one row / class

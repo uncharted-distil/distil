@@ -126,4 +126,6 @@ export const getters = {
   isPageSelectTarget: read(moduleGetters.isPageSelectTarget),
   isPageSelectTraining: read(moduleGetters.isPageSelectTraining),
   getRoutePane: read(moduleGetters.getRoutePane),
+  hasOrderBy: read(moduleGetters.hasOrderBy),
+  getOrderBy: read(moduleGetters.getOrderBy),
 };

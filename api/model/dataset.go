@@ -63,6 +63,8 @@ type Dataset struct {
 	JoinScore       float64                `json:"joinScore"`
 	Type            DatasetType            `json:"type"`
 	LearningDataset string                 `json:"learningDataset"`
+	Clone           bool                   `json:"clone"`
+	Immutable       bool                   `json:"immutable"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.
@@ -125,12 +127,12 @@ func ParseVariableUpdateList(data map[string]interface{}) ([]*VariableUpdate, er
 
 // FetchDataset builds a QueriedDataset from the needed parameters.
 func FetchDataset(dataset string, includeIndex bool, includeMeta bool, filterParams *FilterParams, storageMeta MetadataStorage, storageData DataStorage) (*QueriedDataset, error) {
-	metadata, err := storageMeta.FetchDataset(dataset, false, true)
+	metadata, err := storageMeta.FetchDataset(dataset, false, true, false)
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := storageData.FetchData(dataset, metadata.StorageName, filterParams, false)
+	data, err := storageData.FetchData(dataset, metadata.StorageName, filterParams, false, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to fetch data")
 	}
@@ -178,6 +180,8 @@ func (d *Dataset) ToMetadata() *model.Metadata {
 	meta.SummaryMachine = d.SummaryML
 	meta.Redacted = false
 	meta.Raw = false
+	meta.Clone = d.Clone
+	meta.Immutable = d.Immutable
 	meta.DataResources = []*model.DataResource{dr}
 
 	return meta
@@ -186,7 +190,7 @@ func (d *Dataset) ToMetadata() *model.Metadata {
 // UpdateExtremas updates the variable extremas based on the data stored.
 func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage, storageData DataStorage) error {
 	// get the metadata and then query the data storage for the latest values
-	d, err := storageMeta.FetchDataset(dataset, false, false)
+	d, err := storageMeta.FetchDataset(dataset, false, false, false)
 	if err != nil {
 		return err
 	}

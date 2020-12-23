@@ -128,3 +128,18 @@ func (s *VariableSummary) EmptyFilteredHistogram() {
 	}
 
 }
+
+// IsEmpty returns true if no data exists in the histogram (ie sum(buckets) == 0)
+func (h *Histogram) IsEmpty() bool {
+	return h.bucketsAreEmpty(h.Buckets)
+}
+
+func (h *Histogram) bucketsAreEmpty(buckets []*Bucket) bool {
+	for _, b := range buckets {
+		if b.Count > 0 || !h.bucketsAreEmpty(b.Buckets) {
+			return false
+		}
+	}
+
+	return true
+}

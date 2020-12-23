@@ -164,6 +164,11 @@
 </template>
 
 <script lang="ts">
+import {
+  getVariableRanking,
+  getSolutionFeatureImportance,
+  NUM_PER_PAGE,
+} from "../../util/data";
 import FacetImage from "./FacetImage.vue";
 import FacetDateTime from "./FacetDateTime.vue";
 import FacetTimeseries from "./FacetTimeseries.vue";
@@ -180,11 +185,6 @@ import {
   FACET_COLOR_EXCLUDE,
   FACET_COLOR_FILTERED,
 } from "../../util/facets";
-import {
-  getVariableRanking,
-  getSolutionFeatureImportance,
-  NUM_PER_PAGE,
-} from "../../util/data";
 import {
   Highlight,
   RowSelection,
@@ -244,7 +244,7 @@ export default Vue.extend({
     },
     summaries: { type: Array as () => VariableSummary[], default: [] },
     subtitle: { type: String, default: null },
-    rowsPerPage: { type: Number, default: NUM_PER_PAGE },
+    rowsPerPage: { type: Number, default: 0 },
   },
 
   data() {
@@ -343,9 +343,11 @@ export default Vue.extend({
         FACET_COLOR_FILTERED,
       ]);
     },
-
+    numFacetPerPage(): number {
+      return !this.rowsPerPage ? NUM_PER_PAGE : this.rowsPerPage;
+    },
     pagination(): boolean {
-      return this.facetCount > this.rowsPerPage;
+      return this.facetCount > this.numFacetPerPage;
     },
   },
 
@@ -368,14 +370,16 @@ export default Vue.extend({
         });
       }
     },
-    search(oldTerm, newTerm) {
+    search(newTerm, oldTerm) {
+      if (!newTerm || newTerm === oldTerm) return;
+
       const entry = overlayRouteEntry(this.$route, {
         [this.routeSearchKey()]: this.search,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
 
       // If the term searched has been updated, we emit an event.
-      if (oldTerm !== newTerm) this.$emit("search", this.search);
+      this.$emit("search", this.search);
     },
   },
 

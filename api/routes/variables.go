@@ -50,7 +50,7 @@ func VariablesHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			return
 		}
 
-		ds, err := meta.FetchDataset(dataset, false, false)
+		ds, err := meta.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return

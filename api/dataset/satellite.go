@@ -80,14 +80,14 @@ type Point struct {
 }
 
 // ToString writes out the bounding box to a string.
-func (b *BoundingBox) ToString() string {
+func (b *BoundingBox) String() string {
 	coords := []string{
 		b.pointToString(b.LowerLeft, ","),
 		b.pointToString(b.UpperLeft, ","),
 		b.pointToString(b.UpperRight, ","),
 		b.pointToString(b.LowerRight, ","),
 	}
-	return fmt.Sprintf("{%s}", strings.Join(coords, ","))
+	return strings.Join(coords, ",")
 }
 
 // ToGeometryString writes out the bounding box to a geometry string (POSTGIS).
@@ -217,7 +217,7 @@ func (s *Satellite) CreateDataset(rootDataPath string, datasetName string, confi
 					d3mIDs[groupID] = d3mID
 				}
 
-				csvData = append(csvData, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.ToString(), label, coordinates.ToGeometryString()})
+				csvData = append(csvData, []string{fmt.Sprintf("%d", d3mID), path.Base(targetImageFilename), groupID, band, timestamp, coordinates.String(), label, coordinates.ToGeometryString()})
 			}
 		}
 	}

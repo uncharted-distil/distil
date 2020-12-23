@@ -1,9 +1,9 @@
 <template>
   <div class="results-data-slot">
-    <p class="results-data-slot-summary" v-if="hasResults">
+    <p v-if="hasResults" class="results-data-slot-summary">
       Displaying
       <data-size
-        :currentSize="numItems"
+        :current-size="numItems"
         :total="numRows"
         @submit="onDataSizeSubmit"
       />
@@ -15,8 +15,8 @@
     </p>
 
     <div class="results-data-slot-container" :class="{ pending: !hasData }">
-      <div class="results-data-no-results" v-if="isPending || hasNoResults">
-        <div v-if="isPending" v-html="spinnerHTML"></div>
+      <div v-if="isPending || hasNoResults" class="results-data-no-results">
+        <div v-if="isPending" v-html="spinnerHTML" />
         <p v-if="hasNoResults">No results available</p>
       </div>
 
@@ -26,6 +26,7 @@
         :data-items="dataItems"
         :instance-name="instanceName"
         :summaries="trainingSummaries"
+        :areaOfInterestItems="{ inner: inner, outer: outer }"
         @tileClicked="onTileClick"
       />
     </div>
@@ -49,7 +50,7 @@ import {
   RowSelection,
   VariableSummary,
 } from "../store/dataset/index";
-import { Solution, SOLUTION_ERRORED } from "../store/requests/index";
+import { Solution, SolutionStatus } from "../store/requests/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -76,7 +77,7 @@ const TIMESERIES_VIEW = "timeseries";
  * @param {Boolean} excluded - display only excluded results
  */
 export default Vue.extend({
-  name: "results-data-slot",
+  name: "ResultsDataSlot",
 
   components: {
     DataSize,
@@ -122,14 +123,16 @@ export default Vue.extend({
     solutionId(): string {
       return this.solution?.solutionId;
     },
+
     confidenceSummaries(): VariableSummary {
       return resultsGetters.getConfidenceSummaries(this.$store).filter((cf) => {
         return cf.solutionId === this.solutionId;
       })[0];
     },
+
     solutionHasErrored(): boolean {
       return this.solution
-        ? this.solution.progress === SOLUTION_ERRORED
+        ? this.solution.progress === SolutionStatus.SOLUTION_ERRORED
         : false;
     },
 
@@ -232,7 +235,12 @@ export default Vue.extend({
     numErrors(): number {
       return this.dataItems ? this.errorCount(this.dataItems) : 0;
     },
-
+    inner(): TableRow[] {
+      return resultsGetters.getAreaOfInterestInnerDataItems(this.$store);
+    },
+    outer(): TableRow[] {
+      return resultsGetters.getAreaOfInterestOuterDataItems(this.$store);
+    },
     regressionEnabled(): boolean {
       const routeArgs = routeGetters.getRouteTask(this.$store);
       return routeArgs && routeArgs.includes(TaskTypes.REGRESSION);
@@ -324,12 +332,6 @@ export default Vue.extend({
       };
       // fetch surrounding tiles
       await viewActions.updateResultAreaOfInterest(this.$store, filter);
-      // get area of interest
-      const inner = resultsGetters.getAreaOfInterestInnerDataItems(this.$store);
-      const outer = resultsGetters.getAreaOfInterestOuterDataItems(this.$store);
-      // callback after fetch
-      data.callback(inner, outer);
-      return;
     },
   },
 });

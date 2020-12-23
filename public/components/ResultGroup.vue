@@ -54,10 +54,13 @@
         &nbsp;
       </template>
       <template v-if="hasExplanations">
-        <b-badge variant="info"> Explanations </b-badge>
+        <b-badge variant="info">Explanations</b-badge>
       </template>
       <template v-if="isErrored">
-        <b-badge variant="danger"> ERROR </b-badge>
+        <b-badge variant="danger">ERROR</b-badge>
+      </template>
+      <template v-if="isCancelled">
+        <b-badge variant="secondary">CANCELLED</b-badge>
       </template>
     </header>
 
@@ -150,7 +153,7 @@ import {
   RowSelection,
   Highlight,
 } from "../store/dataset/index";
-import { SOLUTION_COMPLETED, SOLUTION_ERRORED } from "../store/requests/index";
+import { SolutionStatus } from "../store/requests/index";
 import { getters as routeGetters } from "../store/route/module";
 import {
   getFacetByType,
@@ -318,17 +321,22 @@ export default Vue.extend({
 
     isPending(): boolean {
       return (
-        this.solutionStatus !== SOLUTION_COMPLETED &&
-        this.solutionStatus !== SOLUTION_ERRORED
+        this.solutionStatus !== SolutionStatus.SOLUTION_COMPLETED &&
+        this.solutionStatus !== SolutionStatus.SOLUTION_ERRORED &&
+        this.solutionStatus !== SolutionStatus.SOLUTION_CANCELLED
       );
     },
 
     isCompleted(): boolean {
-      return this.solutionStatus === SOLUTION_COMPLETED;
+      return this.solutionStatus === SolutionStatus.SOLUTION_COMPLETED;
     },
 
     isErrored(): boolean {
-      return this.solutionStatus === SOLUTION_ERRORED || this.isBad;
+      return this.solutionStatus === SolutionStatus.SOLUTION_ERRORED;
+    },
+
+    isCancelled(): boolean {
+      return this.solutionStatus === SolutionStatus.SOLUTION_CANCELLED;
     },
 
     isBad(): boolean {

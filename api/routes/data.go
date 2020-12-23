@@ -19,9 +19,14 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util/json"
 	"goji.io/v3/pat"
+)
+
+const (
+	orderBy = "orderBy"
 )
 
 // DataHandler creates a route that fetches filtered data from backing storage instance.
@@ -44,7 +49,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		dataset := pat.Param(r, "dataset")
 		invert := pat.Param(r, "invert")
 		invertBool := parseBoolParam(invert)
-
+		var orderByVar *model.Variable = nil
 		// get filter client
 		storage, err := storageCtor()
 		if err != nil {
@@ -57,8 +62,20 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 			handleError(w, err)
 			return
 		}
-
-		ds, err := metaStore.FetchDataset(dataset, false, false)
+		vars, err := metaStore.FetchVariables(dataset, true, false, true)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		if params[orderBy] != nil {
+			for _, v := range vars {
+				if v.HeaderName == params[orderBy] {
+					orderByVar = v
+					break
+				}
+			}
+		}
+		ds, err := metaStore.FetchDataset(dataset, false, false, false)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -73,7 +90,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 		}
 
 		// fetch filtered data based on the supplied search parameters
-		data, err := storage.FetchData(dataset, storageName, expandedFilterParams, invertBool)
+		data, err := storage.FetchData(dataset, storageName, expandedFilterParams, invertBool, orderByVar)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable fetch filtered data"))
 			return
