@@ -102,10 +102,14 @@ func createJoinStatements(joins []*joinDefinition) string {
 func updateClusterFilters(metadataStorage api.MetadataStorage, dataset string, filterParams *api.FilterParams, mode api.SummaryMode) error {
 	if filterParams != nil && !filterParams.Empty() {
 		if filterParams.Highlight != nil {
-			updateClusterFilter(metadataStorage, dataset, filterParams.DataMode, filterParams.Highlight)
+			if err := updateClusterFilter(metadataStorage, dataset, filterParams.DataMode, filterParams.Highlight); err != nil {
+				return err
+			}
 		}
 		for _, f := range filterParams.Filters {
-			updateClusterFilter(metadataStorage, dataset, filterParams.DataMode, f)
+			if err := updateClusterFilter(metadataStorage, dataset, filterParams.DataMode, f); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

@@ -27,8 +27,8 @@ import (
 func TestSampleStratified(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
 	params := createTestParams(false, ModelQualityHigh, "test_data")
-	initializeTestConfig()
-	expectedSamplePath := fmt.Sprintf("test/tmp_data/sample-6f5d2a90aff56355/datasetDoc.json")
+	initializeTestConfig(t)
+	expectedSamplePath := "test/tmp_data/sample-6f5d2a90aff56355/datasetDoc.json"
 
 	sampleURI, err := SampleDataset(path.Join(params.SourceDataFolder, params.SchemaFile), "./test/tmp_data", 10, true, 2, -1)
 	assert.NoError(t, err)
@@ -53,7 +53,7 @@ func TestSplitTimestampValue(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
 	params := createTestParams(false, ModelQualityHigh, "test_data")
 	splitter := createTestTimestampSplitter(100)
-	initializeTestConfig()
+	initializeTestConfig(t)
 
 	splitDatasetName, err := generateSplitDatasetName("test_data", path.Join("./test/test_dataset", "datasetDoc.json"), splitter)
 	assert.NoError(t, err)
@@ -89,19 +89,5 @@ func createTestTimestampSplitter(timestampValue float64) datasetSplitter {
 	return &timeseriesSplitter{
 		timeseriesCol:       1,
 		timestampValueSplit: timestampValue,
-	}
-}
-
-func createTestSampler(stratify bool) datasetSplitter {
-
-	if stratify {
-		return &stratifiedSplitter{
-			targetCol:   2,
-			groupingCol: -1,
-		}
-	}
-	return &basicSplitter{
-		targetCol:   2,
-		groupingCol: -1,
 	}
 }

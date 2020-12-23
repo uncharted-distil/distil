@@ -206,10 +206,9 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 		}
 	}
 	if imageScale.shouldScale() {
-		maxXSize = imageScale.Width
-		maxYSize = imageScale.Height
 		width, height := getMaxDimensions(&bandImages)
 		aspectRatio := float64(height) / float64(width)
+		maxXSize = imageScale.Width
 		maxYSize = int(float64(maxXSize) * aspectRatio)
 	} else {
 		maxXSize, maxYSize = getMaxDimensions(&bandImages)

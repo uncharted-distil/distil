@@ -208,13 +208,11 @@ func loadMedia(filename string, typ string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		break
 	case "txt":
 		data, err = ioutil.ReadFile(filename)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to read file")
 		}
-		break
 	}
 
 	return data, nil

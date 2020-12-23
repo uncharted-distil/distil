@@ -621,7 +621,9 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 	if err != nil {
 		s.persistRequestError(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, err)
 	} else {
-		s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, compute.RequestCompletedStatus)
+		if err = s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, compute.RequestCompletedStatus); err != nil {
+			log.Errorf("failed to persist status %s for search %s", compute.RequestCompletedStatus, searchContext.searchID)
+		}
 	}
 	close(s.requestChannel)
 

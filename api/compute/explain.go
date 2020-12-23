@@ -25,7 +25,6 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/pipeline"
-	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-compute/primitive/compute/result"
 	log "github.com/unchartedsoftware/plog"
 
@@ -47,12 +46,10 @@ var (
 	explainableOutputPrimitives = map[string][]*explainableOutput{
 		"e0ad06ce-b484-46b0-a478-c567e1ea7e02": {
 			{
-				primitiveID:     "e0ad06ce-b484-46b0-a478-c567e1ea7e02",
 				produceFunction: "produce_shap_values",
 				explainableType: ExplainableTypeStep,
 			},
 			{
-				primitiveID:     "e0ad06ce-b484-46b0-a478-c567e1ea7e02",
 				produceFunction: "produce_feature_importances",
 				explainableType: ExplainableTypeSolution,
 			},
@@ -65,26 +62,22 @@ var (
 			// 	explainableType: explainableTypeStep,
 			// },
 			{
-				primitiveID:     "fe0841b7-6e70-4bc3-a56c-0670a95ebc6a",
 				produceFunction: "produce_feature_importances",
 				explainableType: ExplainableTypeSolution,
 			},
 		},
 		"cdbb80e4-e9de-4caa-a710-16b5d727b959": {
 			{
-				primitiveID:     "cdbb80e4-e9de-4caa-a710-16b5d727b959",
 				produceFunction: "produce_shap_values",
 				explainableType: ExplainableTypeStep,
 			},
 			{
-				primitiveID:     "cdbb80e4-e9de-4caa-a710-16b5d727b959",
 				produceFunction: "produce_feature_importances",
 				explainableType: ExplainableTypeSolution,
 			},
 		},
 		"3410d709-0a13-4187-a1cb-159dd24b584b": {
 			{
-				primitiveID:     "3410d709-0a13-4187-a1cb-159dd24b584b",
 				produceFunction: "produce_confidence_intervals",
 				explainableType: ExplainableTypeConfidence,
 				parsingFunction: parseConfidencesWrapper([]int{1, 2}),
@@ -92,7 +85,6 @@ var (
 		},
 		"76b5a479-c209-4d94-92b5-7eba7a4d4499": {
 			{
-				primitiveID:     "76b5a479-c209-4d94-92b5-7eba7a4d4499",
 				produceFunction: "produce_confidence_intervals",
 				explainableType: ExplainableTypeConfidence,
 				parsingFunction: parseConfidencesWrapper([]int{1, 2}),
@@ -100,22 +92,15 @@ var (
 		},
 		"dce5255d-b63c-4601-8ace-d63b42d6d03e": {
 			{
-				primitiveID:     "dce5255d-b63c-4601-8ace-d63b42d6d03e",
 				produceFunction: "produce_explanations",
 				explainableType: ExplainableTypeConfidence,
 				parsingFunction: parseGradCam([]int{1}),
 			},
 		},
 	}
-
-	unexplainableTask = map[string]bool{
-		compute.ConvertProblemTaskToTA2(compute.RemoteSensingTask): true,
-		compute.ConvertProblemTaskToTA2(compute.ImageTask):         true,
-	}
 )
 
 type explainableOutput struct {
-	primitiveID     string
 	produceFunction string
 	explainableType string
 	parsingFunction func([]string) (*api.SolutionExplainValues, error)
@@ -131,7 +116,14 @@ type pipelineOutput struct {
 func parseGradCam(params []int) func([]string) (*api.SolutionExplainValues, error) {
 	// instantiate the parser
 	field := &result.ComplexField{}
-	field.Init()
+	err := field.Init()
+	if err != nil {
+		log.Error("failed to init parser for complex field")
+		return func(data []string) (*api.SolutionExplainValues, error) {
+			return nil, errors.New("parser undefined")
+		}
+	}
+
 	return func(data []string) (*api.SolutionExplainValues, error) {
 		gradCamParsed := result.ParseVal(data[0], field).([]interface{})
 
@@ -324,40 +316,8 @@ func (s *SolutionRequest) explainablePipeline(solutionDesc *pipeline.DescribeSol
 	return explainable, pipelineDesc, outputs
 }
 
-func isExplainablePipeline(solutionDesc *pipeline.DescribeSolutionResponse) bool {
-	pipelineDesc := solutionDesc.Pipeline
-	for _, ps := range pipelineDesc.Steps {
-		// get the step outputs
-		primitive := ps.GetPrimitive()
-		if primitive != nil {
-			if len(explainablePrimitiveFunctions(primitive.Primitive.Id)) > 0 {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
 func explainablePrimitiveFunctions(primitiveID string) []*explainableOutput {
 	return explainableOutputPrimitives[primitiveID]
-}
-
-func explainablePipelineFunctions(solutionDesc *pipeline.DescribeSolutionResponse) []*explainableOutput {
-	explainableCalls := make([]*explainableOutput, 0)
-	pipelineDesc := solutionDesc.Pipeline
-	for _, ps := range pipelineDesc.Steps {
-		// get the step outputs
-		primitive := ps.GetPrimitive()
-		if primitive != nil {
-			ep := explainablePrimitiveFunctions(primitive.Primitive.Id)
-			if len(ep) > 0 {
-				explainableCalls = append(explainableCalls, ep...)
-			}
-		}
-	}
-
-	return explainableCalls
 }
 
 func getPipelineOutputs(solutionDesc *pipeline.DescribeSolutionResponse) (map[string]*pipelineOutput, error) {

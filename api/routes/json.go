@@ -29,6 +29,9 @@ func handleJSON(w http.ResponseWriter, data interface{}) error {
 	}
 	// send response
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(bytes)
+	_, err = w.Write(bytes)
+	if err != nil {
+		return err
+	}
 	return nil
 }

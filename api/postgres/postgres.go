@@ -309,7 +309,9 @@ func insertFromSourceUnique(d *Database, tableName string, ds *Dataset) error {
 		return errors.Wrapf(err, "unable to create tmp table for inserts")
 	}
 	// drop the temp table
-	defer d.DropTable(tmpTableName)
+	defer func() {
+		_ = d.DropTable(tmpTableName)
+	}()
 
 	tmpInsertCount, err := d.Client.CopyFrom(tmpTableName, ds.GetColumns(), ds.GetInsertSource())
 	if err != nil {
@@ -353,7 +355,9 @@ func insertFromSourceGeometry(d *Database, tableName string, ds *Dataset) error 
 		return errors.Wrapf(err, "unable to create tmp table for inserts")
 	}
 	// drop the temp table
-	defer d.DropTable(tmpTableName)
+	defer func() {
+		_ = d.DropTable(tmpTableName)
+	}()
 
 	tmpInsertCount, err := d.Client.CopyFrom(tmpTableName, ds.GetColumns(), ds.GetInsertSource())
 	if err != nil {
@@ -372,7 +376,7 @@ func insertFromSourceGeometry(d *Database, tableName string, ds *Dataset) error 
 		}
 		fields = append(fields, fmt.Sprintf("\"%s\"::%s", v.StorageName, typ))
 	}
-	fieldSQL := fmt.Sprintf("%s", strings.Join(fields, ","))
+	fieldSQL := strings.Join(fields, ",")
 	updateSQL := fmt.Sprintf("INSERT INTO \"%s_base\" SELECT %s FROM \"%s\";", tableName, fieldSQL, tmpTableName)
 	_, err = d.Client.Exec(updateSQL)
 	if err != nil {

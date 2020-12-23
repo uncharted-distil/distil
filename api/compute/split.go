@@ -34,11 +34,6 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
-var (
-	splitterBasic      *basicSplitter
-	splitterTimeseries *timeseriesSplitter
-)
-
 type datasetSplitter interface {
 	split(data [][]string) ([][]string, [][]string, error)
 	hash(schemaFile string, params ...interface{}) (uint64, error)

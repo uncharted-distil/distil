@@ -162,7 +162,9 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 	// do a bulk update by creating the temp table, then doing an insert, then an update
 	tx, err := s.batchClient.Begin()
 	if err != nil {
-		tx.Rollback(context.Background())
+		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
+			log.Error("rollback failed")
+		}
 		return errors.Wrap(err, "unable to create transaction")
 	}
 
@@ -171,13 +173,17 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 		tableNameTmp, model.D3MIndexName, fieldName)
 	_, err = tx.Exec(context.Background(), dataSQL)
 	if err != nil {
-		tx.Rollback(context.Background())
+		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
+			log.Error("rollback failed")
+		}
 		return errors.Wrap(err, "unable to create temp table")
 	}
 
 	err = s.insertBulkCopyTransaction(tx, tableNameTmp, []string{model.D3MIndexName, fieldName}, params)
 	if err != nil {
-		tx.Rollback(context.Background())
+		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
+			log.Error("rollback failed")
+		}
 		return errors.Wrap(err, "unable to insert into temp table")
 	}
 
@@ -193,7 +199,9 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 		"distil", "public", s.getResultTable(storageName), fieldName, fieldName, tableNameTmp, strings.Join(wheres, " AND "))
 	_, err = tx.Exec(context.Background(), updateSQL, paramsFilter...)
 	if err != nil {
-		tx.Rollback(context.Background())
+		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
+			log.Error("rollback failed")
+		}
 		return errors.Wrap(err, "unable to update base data")
 	}
 
@@ -997,10 +1005,10 @@ func (s *Storage) getIsWeighted(resultURI string, weightTableName string) (bool,
 	sql := fmt.Sprintf("SELECT EXISTS (SELECT * FROM %s WHERE result_id = $1 limit 1);", weightTableName)
 
 	rows, err := s.client.Query(sql, resultURI)
-	defer rows.Close()
 	if err != nil {
 		return false, errors.Wrap(err, "Unable to query weight state")
 	}
+	defer rows.Close()
 
 	rows.Next()
 	values, err := rows.Values()

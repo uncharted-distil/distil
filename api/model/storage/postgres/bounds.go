@@ -153,13 +153,13 @@ func (f *BoundsField) fetchHistogram(filterParams *api.FilterParams, invert bool
 		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, f.DatasetStorageName, tmpTableName, f.PolygonCol, where)
 	res, err := tx.Query(context.Background(), query, params...)
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return nil, errors.Wrapf(err, "unable to query for histogram")
 	}
 
 	histogram, err := f.parseHistogram(res, xExtrema, yExtrema, xNumBuckets, yNumBuckets)
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return nil, err
 	}
 	err = tx.Commit(context.Background())
@@ -181,7 +181,7 @@ func (f *BoundsField) prepareBucketsForQuery(tx pgx.Tx, tmpTableName string, buc
 		) ON COMMIT DROP`, tmpTableName)
 	_, err := tx.Exec(context.Background(), tmpTableCreateSQL)
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return errors.Wrapf(err, "unable to create temp table")
 	}
 
@@ -192,7 +192,7 @@ func (f *BoundsField) prepareBucketsForQuery(tx pgx.Tx, tmpTableName string, buc
 	}
 	_, err = tx.Exec(context.Background(), strings.Join(insertSQLs, "; "))
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return errors.Wrapf(err, "unable to insert to temp table")
 	}
 
@@ -313,7 +313,7 @@ func (f *BoundsField) fetchHistogramByResult(resultURI string, filterParams *api
 		f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where)
 	res, err := tx.Query(context.Background(), query, params...)
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return nil, errors.Wrapf(err, "failed to fetch histograms for variable summaries from postgres")
 	}
 	if res != nil {
@@ -322,7 +322,7 @@ func (f *BoundsField) fetchHistogramByResult(resultURI string, filterParams *api
 
 	histogram, err := f.parseHistogram(res, xExtrema, yExtrema, xNumBuckets, yNumBuckets)
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return nil, err
 	}
 	err = tx.Commit(context.Background())
