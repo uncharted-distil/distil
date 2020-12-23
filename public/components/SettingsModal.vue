@@ -33,6 +33,13 @@
       label-for="model-train-test-split"
       description="Modify the ratio of data used to train the model vs. the amount of data saved to verify the model for later."
     >
+      <b-form-datepicker
+        v-if="timeRange !== null"
+        v-model="timestampSplitValue"
+        :min="new Date(timeRange.min * secondsToMillis)"
+        :max="new Date(timeRange.max * secondsToMillis)"
+        locale="en"
+      />
       <div class="d-flex justify-content-between mt-1">
         <div>Training: {{ trainingCount }}</div>
         <div>Testing: {{ testingCount }}</div>
@@ -104,11 +111,17 @@ import { MetricDropdownItem, TaskTypes } from "../store/dataset";
 import { getters as routeGetters } from "../store/route/module";
 import { getters as appGetters } from "../store/app/module";
 
+const secondsToMillis = 1000;
 // Dialog for setting model creation preferences.  The results are saved to the route to ensure
 // that users don't have to set them for each run.
 export default Vue.extend({
   name: "settings-modal",
-
+  props: {
+    timeRange: {
+      type: Object as () => { min: number; max: number },
+      default: null,
+    },
+  },
   data() {
     return {
       modelLimit: routeGetters.getModelLimit(this.$store) || 5,
@@ -120,6 +133,7 @@ export default Vue.extend({
       // then getting a list of allowed scoring methods with keys, description
       selectedMetric: null,
       trainingCount: 1,
+      timestampSplitValue: new Date(),
     };
   },
 
@@ -179,6 +193,12 @@ export default Vue.extend({
     totalDataCount() {
       this.trainingCount =
         Math.floor(this.totalDataCount * this.baseSplit) || 1;
+    },
+    timeRange() {
+      const half = Math.floor((this.timeRange.max - this.timeRange.max) / 2);
+      this.timestampSplitValue = new Date(
+        (this.timeRange.min + half) * secondsToMillis
+      );
     },
   },
 
