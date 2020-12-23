@@ -241,7 +241,7 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		log.Infof("finished ingesting dataset '%s'", datasetName)
 
 		// copy the metadata from the source dataset as it should be an exact match
-		metaClone, err := params.MetaStorage.FetchDataset(sourceDatasetID, true, true)
+		metaClone, err := params.MetaStorage.FetchDataset(sourceDatasetID, true, true, true)
 		if err != nil {
 			return nil, err
 		}
