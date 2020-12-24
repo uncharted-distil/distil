@@ -174,6 +174,93 @@ type PredictParams struct {
 	Config             *env.Config
 }
 
+// ImportPredictionDataset imports a dataset to be used for predictions.
+func ImportPredictionDataset(params *PredictParams) (string, string, error) {
+	meta := params.Meta
+	schemaPath := ""
+	datasetName := fmt.Sprintf("pred_%s", params.Dataset)
+
+	predictionDatasetCtor := &predictionDataset{
+		params: params,
+	}
+
+	// create the dataset to be used for predictions
+	datasetName, datasetPath, err := CreateDataset(datasetName, predictionDatasetCtor, params.OutputPath, params.Config)
+	if err != nil {
+		return "", "", err
+	}
+	log.Infof("created dataset for new data with id '%s' found at location '%s'", datasetName, datasetPath)
+
+	// read the header of the new dataset to get the field names
+	// if they dont match the original, then cant use the same pipeline
+	rawDataPath := path.Join(datasetPath, compute.D3MDataFolder, compute.D3MLearningData)
+	rawCSVData, err := util.ReadCSVFile(rawDataPath, false)
+	if err != nil {
+		return "", "", errors.Wrap(err, "unable to parse header result")
+	}
+	rawHeader := rawCSVData[0]
+	mainDR := meta.GetMainDataResource()
+	for i, f := range rawHeader {
+		// TODO: col index not necessarily the same as index and thats what needs checking
+		// We check both name and display name as the pre-ingested datasets are keyed of display name
+		if mainDR.Variables[i].StorageName != f && mainDR.Variables[i].DisplayName != f {
+			return "", "", errors.Errorf("variables in new prediction file do not match variables in original dataset")
+		}
+	}
+	log.Infof("dataset fields match original dataset fields")
+
+	// update the dataset doc to reflect original types
+	meta.ID = datasetName
+	meta.Name = datasetName
+	meta.StorageName = model.NormalizeDatasetID(datasetName)
+	meta.DatasetFolder = path.Base(datasetPath)
+	schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
+	datasetStorage := serialization.GetStorage(rawDataPath)
+	err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
+	if err != nil {
+		return "", "", errors.Wrap(err, "unable to update dataset doc")
+	}
+	log.Infof("wrote out schema doc for new dataset with id '%s' at location '%s'", meta.ID, schemaPath)
+
+	return datasetName, schemaPath, nil
+}
+
+// IngestPredictionDataset ingests a dataset to be used for predictions.
+func IngestPredictionDataset(schemaPath string, params *PredictParams) error {
+	// ingest the dataset but without running simon, duke, etc.
+	sourceDatasetID := params.Meta.ID
+	err := IngestPostgres(schemaPath, schemaPath, metadata.Augmented, params.IngestConfig, true, false, false)
+	if err != nil {
+		return errors.Wrap(err, "unable to ingest prediction data")
+	}
+	log.Infof("finished ingesting dataset '%s'", params.Dataset)
+
+	// copy the metadata from the source dataset as it should be an exact match
+	metaClone, err := params.MetaStorage.FetchDataset(sourceDatasetID, true, true, true)
+	if err != nil {
+		return err
+	}
+	metaClone.ID = params.Dataset
+	metaClone.StorageName = params.Meta.StorageName
+	metaClone.Folder = params.Meta.DatasetFolder
+	metaClone.Source = metadata.Augmented
+	metaClone.Type = api.DatasetTypeInference
+
+	err = params.MetaStorage.UpdateDataset(metaClone)
+	if err != nil {
+		return err
+	}
+
+	// only featurize if the source dataset was featurized
+	if params.Meta.LearningDataset != "" {
+		if err = Featurize(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, params.Dataset, params.IngestConfig); err != nil {
+			return errors.Wrap(err, "unabled to featurize prediction data")
+		}
+	}
+
+	return nil
+}
+
 // Predict processes input data to generate predictions.
 func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	log.Infof("generating predictions for fitted solution ID %s", params.FittedSolutionID)
@@ -183,86 +270,6 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	schemaPath := ""
 	datasetName := fmt.Sprintf("pred_%s", params.Dataset)
 	var err error
-
-	// if the dataset was already imported, then just produce on it
-	if params.DatasetImported {
-		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
-		log.Infof("dataset already imported at %s", datasetPath)
-	} else {
-		predictionDatasetCtor := &predictionDataset{
-			params: params,
-		}
-
-		// create the dataset to be used for predictions
-		datasetName, datasetPath, err = CreateDataset(datasetName, predictionDatasetCtor, params.OutputPath, params.Config)
-		if err != nil {
-			return nil, err
-		}
-		log.Infof("created dataset for new data with id '%s' found at location '%s'", datasetName, datasetPath)
-
-		// read the header of the new dataset to get the field names
-		// if they dont match the original, then cant use the same pipeline
-		rawDataPath := path.Join(datasetPath, compute.D3MDataFolder, compute.D3MLearningData)
-		rawCSVData, err := util.ReadCSVFile(rawDataPath, false)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to parse header result")
-		}
-		rawHeader := rawCSVData[0]
-		mainDR := meta.GetMainDataResource()
-		for i, f := range rawHeader {
-			// TODO: col index not necessarily the same as index and thats what needs checking
-			// We check both name and display name as the pre-ingested datasets are keyed of display name
-			if mainDR.Variables[i].StorageName != f && mainDR.Variables[i].DisplayName != f {
-				return nil, errors.Errorf("variables in new prediction file do not match variables in original dataset")
-			}
-		}
-		log.Infof("dataset fields match original dataset fields")
-
-		// update the dataset doc to reflect original types
-		meta.ID = datasetName
-		meta.Name = datasetName
-		meta.StorageName = model.NormalizeDatasetID(datasetName)
-		meta.DatasetFolder = path.Base(datasetPath)
-		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
-		datasetStorage := serialization.GetStorage(rawDataPath)
-		err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to update dataset doc")
-		}
-		log.Infof("wrote out schema doc for new dataset with id '%s' at location '%s'", meta.ID, schemaPath)
-	}
-
-	if !params.DatasetIngested {
-		// ingest the dataset but without running simon, duke, etc.
-		err = IngestPostgres(schemaPath, schemaPath, metadata.Augmented, params.IngestConfig, true, false, false)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to ingest prediction data")
-		}
-		log.Infof("finished ingesting dataset '%s'", datasetName)
-
-		// copy the metadata from the source dataset as it should be an exact match
-		metaClone, err := params.MetaStorage.FetchDataset(sourceDatasetID, true, true, true)
-		if err != nil {
-			return nil, err
-		}
-		metaClone.ID = datasetName
-		metaClone.StorageName = meta.StorageName
-		metaClone.Folder = meta.DatasetFolder
-		metaClone.Source = metadata.Augmented
-		metaClone.Type = api.DatasetTypeInference
-
-		err = params.MetaStorage.UpdateDataset(metaClone)
-		if err != nil {
-			return nil, err
-		}
-
-		// only featurize if the source dataset was featurized
-		if meta.LearningDataset != "" {
-			if err = Featurize(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, datasetName, params.IngestConfig); err != nil {
-				return nil, errors.Wrap(err, "unabled to featurize prediction data")
-			}
-		}
-	}
 
 	// Apply the var types associated with the fitted solution to the inference data - the model types and input types should
 	// should match.
