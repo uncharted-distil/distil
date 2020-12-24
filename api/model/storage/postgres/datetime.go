@@ -261,14 +261,6 @@ func (f *DateTimeField) getHistogramAggQuery(extrema *api.Extrema, numBuckets in
 	return histogramAggName, bucketQueryString, histogramQueryString
 }
 
-func (f *DateTimeField) parseValueToDateString(value string) (string, error) {
-	ival, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
-		return "", err
-	}
-	return time.Unix(ival, 0).Format(time.RFC3339), nil
-}
-
 func (f *DateTimeField) parseHistogram(rows pgx.Rows, extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	// get histogram agg name
 	histogramAggName := api.HistogramAggPrefix + extrema.Key

@@ -251,7 +251,7 @@ func toJPEG(img *image.Image) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func toPNG(img *image.Image) ([]byte, error) {
+func toPNG(img *image.Image) ([]byte, error) { //nolint
 	buf := new(bytes.Buffer)
 	if err := png.Encode(buf, *img); err != nil {
 		return nil, errors.Wrap(err, "unable to encode png")

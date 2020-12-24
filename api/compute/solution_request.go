@@ -229,12 +229,6 @@ func (s *SolutionRequest) Cancel() {
 	}
 }
 
-func (s *SolutionRequest) createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
-	datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
-	return createSearchSolutionsRequest(columnIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset,
-		s.Metrics, s.Task, int64(s.MaxTime), int64(s.MaxSolutions))
-}
-
 func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
 	datasetURI string, userAgent string, targetFeature *model.Variable, dataset string, metrics []string, task []string,
 	maxTime int64, maxSolutions int64) (*pipeline.SearchSolutionsRequest, error) {

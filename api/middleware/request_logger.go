@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint need to update to new protobuf api
 	"github.com/mattn/go-isatty"
 	"github.com/mgutz/ansi"
 	log "github.com/unchartedsoftware/plog"

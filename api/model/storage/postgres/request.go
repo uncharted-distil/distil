@@ -315,19 +315,6 @@ func (s *Storage) FetchRequestFilters(requestID string, features []*api.Feature)
 	return filters, nil
 }
 
-func (s *Storage) loadRequestFromSolutionID(solutionID string) (*api.Request, error) {
-	solution, err := s.FetchSolution(solutionID)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to fetch solution from Postgres")
-	}
-
-	request, err := s.FetchRequest(solution.RequestID)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to fetch request from Postgres")
-	}
-	return request, nil
-}
-
 // FetchRequestByDatasetTarget pulls requests associated with a given dataset and target from postgres.
 func (s *Storage) FetchRequestByDatasetTarget(dataset string, target string) ([]*api.Request, error) {
 	// get the solution ids

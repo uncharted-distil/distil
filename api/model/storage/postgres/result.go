@@ -371,14 +371,6 @@ func (s *Storage) parseExplainValues(record []string, confidenceIndex int, rankI
 	return explain, nil
 }
 
-func (s *Storage) executeInsertResultStatement(storageName string, resultID string, index int64, target string, value string) error {
-	statement := fmt.Sprintf("INSERT INTO %s (result_id, index, target, value) VALUES ($1, $2, $3, $4);", s.getResultTable(storageName))
-
-	_, err := s.client.Exec(statement, resultID, index, target, value)
-
-	return err
-}
-
 func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Rows, target *model.Variable) (*api.FilteredData, error) {
 	result := &api.FilteredData{
 		Values: make([][]*api.FilteredDataValue, 0),
@@ -900,37 +892,6 @@ func (s *Storage) getAverageWeights(dataset string, storageName string, storageN
 	}
 
 	return featureWeights.Weights, nil
-}
-
-func (s *Storage) getResultMinMaxAggsQuery(variable *model.Variable, resultVariable *model.Variable) string {
-	// get min / max agg names
-	minAggName := api.MinAggPrefix + resultVariable.StorageName
-	maxAggName := api.MaxAggPrefix + resultVariable.StorageName
-
-	// Only numeric types should occur.
-	fieldTyped := fmt.Sprintf("cast(\"%s\" as double precision)", resultVariable.StorageName)
-
-	// create aggregations
-	queryPart := fmt.Sprintf("MIN(%s) AS \"%s\", MAX(%s) AS \"%s\"", fieldTyped, minAggName, fieldTyped, maxAggName)
-	// add aggregations
-	return queryPart
-}
-
-func (s *Storage) fetchResultsExtrema(resultURI string, dataset string, variable *model.Variable, resultVariable *model.Variable) (*api.Extrema, error) {
-	// add min / max aggregation
-	aggQuery := s.getResultMinMaxAggsQuery(variable, resultVariable)
-
-	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s WHERE result_id = $1 AND target = $2;", aggQuery, dataset)
-
-	// execute the postgres query
-	res, err := s.client.Query(queryString, resultURI, variable.StorageName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch extrema for result from postgres")
-	}
-	defer res.Close()
-
-	return s.parseExtrema(res, variable)
 }
 
 // FetchResultsExtremaByURI fetches the results extrema by resultURI.
