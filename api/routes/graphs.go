@@ -18,16 +18,13 @@ package routes
 import (
 	"io/ioutil"
 	"net/http"
+
 	//"path"
 
 	"github.com/pkg/errors"
 	//"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil/api/util/graph"
-)
-
-const (
-	graphsFolder = "graphs"
 )
 
 // GraphsResult represents the result of a graphs request.

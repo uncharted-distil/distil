@@ -1,0 +1,20 @@
+linters:
+  disable-all: true
+  enable:
+    - deadcode
+    - errcheck
+    - gosimple
+    - govet
+    - golint
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+issues:
+  # golangci-lint includes its own set of defaults that disables some comment checks in golint
+  # (run golangci-lint run --help to see the list).  We force comment checks back on for consistency
+  # with default golint behavior.
+  include:
+    - EXC0002

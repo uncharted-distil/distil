@@ -144,7 +144,11 @@ func JoinHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *ht
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(bytes)
+		_, err = w.Write(bytes)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to write filtered data to response writer"))
+			return
+		}
 	}
 }
 

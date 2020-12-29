@@ -43,7 +43,7 @@ type ModelMetrics struct {
 func ModelMetricsHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		task := pat.Param(r, "task")
-		taskMetrics := make(map[string]util.Metric)
+		var taskMetrics map[string]util.Metric
 
 		if strings.Contains(task, compute.ClassificationTask) {
 			if strings.Contains(task, compute.MultiClassTask) {

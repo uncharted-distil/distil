@@ -229,12 +229,6 @@ func (s *SolutionRequest) Cancel() {
 	}
 }
 
-func (s *SolutionRequest) createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
-	datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
-	return createSearchSolutionsRequest(columnIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset,
-		s.Metrics, s.Task, int64(s.MaxTime), int64(s.MaxSolutions))
-}
-
 func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
 	datasetURI string, userAgent string, targetFeature *model.Variable, dataset string, metrics []string, task []string,
 	maxTime int64, maxSolutions int64) (*pipeline.SearchSolutionsRequest, error) {
@@ -621,7 +615,9 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 	if err != nil {
 		s.persistRequestError(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, err)
 	} else {
-		s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, compute.RequestCompletedStatus)
+		if err = s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, compute.RequestCompletedStatus); err != nil {
+			log.Errorf("failed to persist status %s for search %s", compute.RequestCompletedStatus, searchContext.searchID)
+		}
 	}
 	close(s.requestChannel)
 

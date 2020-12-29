@@ -16,8 +16,7 @@ all:
 	@echo "  install       - install dependencies"
 
 lint:
-	@go vet ./...
-	@go list ./... | grep -v /vendor/ | xargs -L1 golint
+	@golangci-lint run
 
 fmt:
 	@go fmt ./...
@@ -43,5 +42,5 @@ test: build
 install:
 	@npm install -g yarn
 	@yarn install
-	@go get -u golang.org/x/lint/golint
 	@go get -u github.com/unchartedsoftware/witch
+	@go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.33.0

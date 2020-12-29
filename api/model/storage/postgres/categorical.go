@@ -118,51 +118,6 @@ func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.
 	}, nil
 }
 
-func (f *CategoricalField) getTopCategories(filterParams *api.FilterParams, invert bool) ([]string, error) {
-
-	fromClause := f.getFromClause(true)
-
-	// create the filter for the query
-	wheres := make([]string, 0)
-	params := make([]interface{}, 0)
-	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
-
-	where := ""
-	if len(wheres) > 0 {
-		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
-	}
-
-	// get top N categories
-	query := fmt.Sprintf("SELECT \"%s\", COUNT(%s) AS count FROM %s %s GROUP BY \"%s\" ORDER BY count desc, \"%s\" LIMIT %d;",
-		f.Key, f.Count, fromClause, where, f.Key, f.Key, 5)
-
-	rows, err := f.Storage.client.Query(query, params...)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch histograms for variable summaries from postgres")
-	}
-	if rows != nil {
-		defer rows.Close()
-	}
-
-	var categories []string
-	if rows != nil {
-		for rows.Next() {
-			var category string
-			var count int64
-			err := rows.Scan(&category, &count)
-			if err != nil {
-				return nil, err
-			}
-			categories = append(categories, category)
-		}
-		err = rows.Err()
-		if err != nil {
-			return nil, errors.Wrapf(err, "error reading data from postgres")
-		}
-	}
-	return categories, nil
-}
-
 func (f *CategoricalField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 

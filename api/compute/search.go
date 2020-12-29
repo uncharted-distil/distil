@@ -43,7 +43,6 @@ type pipelineSearchContext struct {
 	sourceDatasetURI  string
 	trainDatasetURI   string
 	testDatasetURI    string
-	explainDatasetURI string
 	produceDatasetURI string
 	variables         []*model.Variable
 	targetCol         int

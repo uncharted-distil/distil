@@ -37,9 +37,7 @@ type Dataset struct {
 	insertBatch     *pgx.Batch
 	fieldSQL        string
 	insertValues    [][]interface{}
-	uniqueValues    bool
 	primaryKey      string
-	tableName       string
 	insertFunction  CopyFromSource
 }
 

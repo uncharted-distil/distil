@@ -18,7 +18,6 @@ package task
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -235,13 +234,6 @@ func mapDenormFields(mainDR *model.DataResource) map[string]*model.Variable {
 		}
 	}
 	return fields
-}
-
-func getRelativePath(rootPath string, filePath string) string {
-	relativePath := strings.TrimPrefix(filePath, rootPath)
-	relativePath = strings.TrimPrefix(relativePath, "/")
-
-	return relativePath
 }
 
 func createDatasetPaths(schemaFile string, dataset string, dataPathRelative string) *datasetCopyPath {

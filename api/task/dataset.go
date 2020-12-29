@@ -18,7 +18,6 @@ package task
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 
 	"github.com/mitchellh/hashstructure"
@@ -33,18 +32,6 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
 	"github.com/uncharted-distil/distil/api/util"
-)
-
-const (
-	baseMediaFolder = "media"
-)
-
-var (
-	imageTypeMap = map[string]string{
-		"png":  "png",
-		"jpeg": "jpeg",
-		"jpg":  "jpeg",
-	}
 )
 
 // DatasetConstructor is used to build a dataset.
@@ -150,45 +137,6 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 	}
 
 	return dataset, outputFolder, err
-}
-
-func writeDataset(meta *model.Metadata, csvData []byte, outputPath string, config *IngestTaskConfig) (string, error) {
-	// save the csv file in the file system datasets folder
-	outputDatasetPath := path.Join(outputPath, meta.Name)
-	dataFilePath := path.Join(compute.D3MDataFolder, compute.D3MLearningData)
-	dataPath := path.Join(outputDatasetPath, dataFilePath)
-	err := util.WriteFileWithDirs(dataPath, csvData, os.ModePerm)
-	if err != nil {
-		return "", err
-	}
-
-	schemaPath := path.Join(outputDatasetPath, compute.D3MDataSchema)
-	datasetStorage := serialization.GetStorage(dataPath)
-	err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
-	if err != nil {
-		return "", err
-	}
-
-	// format the dataset into a D3M format
-	formattedPath, err := Format(schemaPath, meta.Name, config)
-	if err != nil {
-		return "", err
-	}
-
-	// copy to the original output location for consistency
-	if formattedPath != outputDatasetPath {
-		err = os.RemoveAll(outputDatasetPath)
-		if err != nil {
-			return "", err
-		}
-
-		err = util.Copy(formattedPath, path.Dir(schemaPath))
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return formattedPath, nil
 }
 
 // UpdateExtremas will update every field's extremas in the specified dataset.

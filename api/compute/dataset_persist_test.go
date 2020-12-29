@@ -33,7 +33,7 @@ func TestPersistOriginalDataUnstratified(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
 	params := createTestParams(false, ModelQualityHigh, "test_data")
 	splitter := createTestSplitter(false, ModelQualityHigh)
-	initializeTestConfig()
+	initializeTestConfig(t)
 
 	splitDatasetName, err := generateSplitDatasetName("test_data", path.Join("./test/test_dataset", "datasetDoc.json"), splitter)
 	assert.NoError(t, err)
@@ -60,7 +60,7 @@ func TestPersistOriginalDataStratified(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
 	params := createTestParams(true, ModelQualityHigh, "test_data")
 	splitter := createTestSplitter(true, ModelQualityHigh)
-	initializeTestConfig()
+	initializeTestConfig(t)
 
 	splitDatasetName, err := generateSplitDatasetName("test_data", path.Join("./test/test_dataset", "datasetDoc.json"), splitter)
 	assert.NoError(t, err)
@@ -96,7 +96,7 @@ func TestLimitChange(t *testing.T) {
 	assert.NoError(t, removeTestFiles())
 	params := createTestParams(false, ModelQualityHigh, "test_data")
 	splitter := createTestSplitter(false, ModelQualityHigh)
-	initializeTestConfig()
+	initializeTestConfig(t)
 
 	splitDatasetName0, err := generateSplitDatasetName("test_data", path.Join("./test/test_dataset", "datasetDoc.json"), splitter)
 	assert.NoError(t, err)
@@ -162,13 +162,12 @@ func createTestSplitter(stratify bool, quality string) datasetSplitter {
 	}
 }
 
-func initializeTestConfig() {
+func initializeTestConfig(t *testing.T) {
 	config := &env.Config{
 		D3MOutputDir: "./test/tmp_data",
 		D3MInputDir:  "./test/test_dataset",
 	}
-
-	env.Initialize(config)
+	assert.NoError(t, env.Initialize(config))
 }
 
 func removeTestFiles() error {

@@ -16,17 +16,21 @@
 package elastic
 
 import (
+	"context"
 	"net/http"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
-	"github.com/unchartedsoftware/plog"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
-	defaultTimeout = time.Second * 30
+	defaultHTTPTimeoutSec = 30
+	defaultIntervalMs     = 5000
+	defaultRetries        = 50
 )
 
 var (
@@ -41,6 +45,38 @@ func init() {
 // ClientCtor repressents a client constructor to instantiate an elasticsearch
 // client.
 type ClientCtor func() (*elastic.Client, error)
+
+// Retrier defined a constant backoff retry strategy for the elastic connection.
+type Retrier struct {
+	backoff elastic.ConstantBackoff
+	retries int
+}
+
+// NewRetrier creates a the elastic client connection retries.  It will attempt to connect
+// every intervalMs milliseconds up to a maximum of retries attempts.
+func NewRetrier(retries int, intervalMs time.Duration) *Retrier {
+	return &Retrier{
+		backoff: *elastic.NewConstantBackoff(intervalMs * time.Millisecond),
+		retries: retries,
+	}
+}
+
+// Retry is called when an attempted connection to the elastic client has failed.
+func (r *Retrier) Retry(ctx context.Context, retry int, req *http.Request, resp *http.Response, err error) (time.Duration, bool, error) {
+	// Fail hard on a specific error
+	if err == syscall.ECONNREFUSED {
+		return 0, false, errors.New("elasticsearch or network down")
+	}
+
+	// Stop after allowed number of retries surpassed
+	if retry >= r.retries {
+		return 0, false, nil
+	}
+
+	// Let the backoff strategy decide how long to wait and whether to stop
+	wait, stop := r.backoff.Next(retry)
+	return wait, stop, nil
+}
 
 // NewClient instantiates and returns a new elasticsearch client constructor.
 func NewClient(endpoint string, debug bool) ClientCtor {
@@ -59,16 +95,16 @@ func NewClient(endpoint string, debug bool) ClientCtor {
 				// turn on trace logs if necessary
 				client, err = elastic.NewClient(
 					elastic.SetURL(endpoint),
-					elastic.SetHttpClient(&http.Client{Timeout: defaultTimeout}),
-					elastic.SetMaxRetries(10),
+					elastic.SetHttpClient(&http.Client{Timeout: defaultHTTPTimeoutSec * time.Second}),
+					elastic.SetRetrier(NewRetrier(defaultRetries, defaultIntervalMs*time.Millisecond)),
 					elastic.SetSniff(false),
 					elastic.SetGzip(false),
 					elastic.SetTraceLog(&elasticPlogAdapter{}))
 			} else {
 				client, err = elastic.NewClient(
 					elastic.SetURL(endpoint),
-					elastic.SetHttpClient(&http.Client{Timeout: defaultTimeout}),
-					elastic.SetMaxRetries(10),
+					elastic.SetHttpClient(&http.Client{Timeout: defaultHTTPTimeoutSec * time.Second}),
+					elastic.SetRetrier(NewRetrier(defaultRetries, defaultIntervalMs*time.Millisecond)),
 					elastic.SetSniff(false),
 					elastic.SetGzip(false))
 			}

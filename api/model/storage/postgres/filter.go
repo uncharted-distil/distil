@@ -684,16 +684,6 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 	return numRows, nil
 }
 
-func (s *Storage) filterIncludesIndex(filterParams *api.FilterParams) bool {
-	for _, v := range filterParams.Filters {
-		if v.Key == model.D3MIndexFieldName {
-			return true
-		}
-	}
-
-	return false
-}
-
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the
 // results to a user selected set of fields, with rows further filtered based on allowed ranges and
 // categories.
