@@ -2,7 +2,6 @@
 
 [![CircleCI](https://circleci.com/gh/uncharted-distil/distil/tree/master.svg?style=svg&&circle-token=ff61c235865dd699cc8b923035a80e6e8d39c63a)](https://circleci.com/gh/unchartedsoftware/distil/tree/master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/uncharted-distil/distil)](https://goreportcard.com/report/github.com/uncharted-distil/distil)
-[![GolangCI](https://golangci.com/badges/github.com/uncharted-distil/distil.svg)](https://golangci.com/r/github.com/uncharted-distil/distil)
 
 ## Dependencies
 
@@ -141,11 +140,6 @@ At this point save your settings file and restart VsCode.
 If upon restarting and the linter is not working check the output (^⇧` -- OUTPUT tab -- dropdown -- ESlint)
 
 ## Common Issues:
-
-#### "dep: command not found":
-
-- **Cause**: `$GOPATH/bin` has not been added to your `$PATH`.
-- **Solution**: Add `export PATH=$PATH:$GOPATH/bin` to your `.bash_profile` or `.bashrc`.
 
 #### "../repo/subpackage/file.go:10:2: cannot find package "github.com/company/package/subpackage" in any of":
 
