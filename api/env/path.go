@@ -18,7 +18,6 @@ package env
 import (
 	"path"
 
-	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/metadata"
 	log "github.com/unchartedsoftware/plog"
 
@@ -47,7 +46,8 @@ var (
 func Initialize(config *Config) error {
 	log.Infof("initializing path values")
 	if initialized {
-		return errors.Errorf("path resolution already initialized")
+		log.Warn("path resolution already initialized - ignoring")
+		return nil
 	}
 
 	updatedInputPath, err := determineSeedPath(config.D3MInputDir)

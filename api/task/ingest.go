@@ -133,9 +133,6 @@ type IngestResult struct {
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor,
 	dataset string, origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, steps *IngestSteps) (*IngestResult, error) {
-	// Set the probability threshold
-	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
-
 	metaStorage, err := metaCtor()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to initialize metadata storage")

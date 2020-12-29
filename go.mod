@@ -26,7 +26,7 @@ require (
 	github.com/russross/blackfriday v2.0.0+incompatible
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/testify v1.5.1
-	github.com/uncharted-distil/distil-compute v0.0.0-20201217171126-89e3f132ab7d
+	github.com/uncharted-distil/distil-compute v0.0.0-20201229173126-17cdf8c83994
 	github.com/uncharted-distil/gdal v0.0.0-20200504224203-25f2e6a0dc2a
 	github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9
 	github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48
@@ -34,6 +34,6 @@ require (
 	github.com/xitongsys/parquet-go-source v0.0.0-20190524061010-2b72cbee77d5
 	github.com/zenazn/goji v0.9.0
 	goji.io/v3 v3.0.0
-	golang.org/x/net v0.0.0-20200822124328-c89045814202
+	golang.org/x/net v0.0.0-20201021035429-f5854403a974
 	google.golang.org/grpc v1.25.1
 )
