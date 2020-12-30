@@ -159,6 +159,8 @@ type PredictParams struct {
 	Meta               *model.Metadata
 	SourceDataset      *api.Dataset
 	Dataset            string
+	SchemaPath         string
+	SourceDatasetID    string
 	SolutionID         string
 	FittedSolutionID   string
 	DatasetConstructor DatasetConstructor
@@ -168,8 +170,6 @@ type PredictParams struct {
 	DataStorage        api.DataStorage
 	SolutionStorage    api.SolutionStorage
 	ModelStorage       api.ExportedModelStorage
-	DatasetIngested    bool
-	DatasetImported    bool
 	IngestConfig       *IngestTaskConfig
 	Config             *env.Config
 }
@@ -226,9 +226,9 @@ func ImportPredictionDataset(params *PredictParams) (string, string, error) {
 }
 
 // IngestPredictionDataset ingests a dataset to be used for predictions.
-func IngestPredictionDataset(schemaPath string, params *PredictParams) error {
+func IngestPredictionDataset(params *PredictParams) error {
+	schemaPath := params.SchemaPath
 	// ingest the dataset but without running simon, duke, etc.
-	sourceDatasetID := params.Meta.ID
 	err := IngestPostgres(schemaPath, schemaPath, metadata.Augmented, params.IngestConfig, true, false, false)
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest prediction data")
@@ -236,7 +236,8 @@ func IngestPredictionDataset(schemaPath string, params *PredictParams) error {
 	log.Infof("finished ingesting dataset '%s'", params.Dataset)
 
 	// copy the metadata from the source dataset as it should be an exact match
-	metaClone, err := params.MetaStorage.FetchDataset(sourceDatasetID, true, true, true)
+	log.Infof("using datase '%s' as source for metadata", params.SourceDatasetID)
+	metaClone, err := params.MetaStorage.FetchDataset(params.SourceDatasetID, true, true, true)
 	if err != nil {
 		return err
 	}
@@ -265,10 +266,10 @@ func IngestPredictionDataset(schemaPath string, params *PredictParams) error {
 func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	log.Infof("generating predictions for fitted solution ID %s", params.FittedSolutionID)
 	meta := params.Meta
-	sourceDatasetID := meta.ID
+	sourceDatasetID := params.SourceDatasetID
 	datasetPath := path.Join(params.OutputPath, params.Dataset)
-	schemaPath := ""
-	datasetName := fmt.Sprintf("pred_%s", params.Dataset)
+	schemaPath := params.SchemaPath
+	datasetName := params.Dataset
 	var err error
 
 	// Apply the var types associated with the fitted solution to the inference data - the model types and input types should

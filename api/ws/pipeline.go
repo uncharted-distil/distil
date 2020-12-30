@@ -424,10 +424,9 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		DataStorage:      dataStorage,
 		SolutionStorage:  solutionStorage,
 		ModelStorage:     modelStorage,
-		DatasetIngested:  false,
-		DatasetImported:  false,
 		Config:           &config,
 		IngestConfig:     ingestConfig,
+		SourceDatasetID:  meta.ID,
 	}
 
 	ds, err := createPredictionDataset(requestTask, request, predictParams)
@@ -444,9 +443,10 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		return
 	}
 	predictParams.Dataset = datasetName
+	predictParams.SchemaPath = datasetPath
 
 	// ingest the dataset
-	err = task.IngestPredictionDataset(datasetPath, predictParams)
+	err = task.IngestPredictionDataset(predictParams)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
