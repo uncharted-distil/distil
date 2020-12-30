@@ -259,23 +259,10 @@ func IngestPredictionDataset(params *PredictParams) error {
 		}
 	}
 
-	return nil
-}
-
-// Predict processes input data to generate predictions.
-func Predict(params *PredictParams) (*api.SolutionResult, error) {
-	log.Infof("generating predictions for fitted solution ID %s", params.FittedSolutionID)
-	meta := params.Meta
-	sourceDatasetID := params.SourceDatasetID
-	datasetPath := path.Join(params.OutputPath, params.Dataset)
-	schemaPath := params.SchemaPath
-	datasetName := params.Dataset
-	var err error
-
 	// Apply the var types associated with the fitted solution to the inference data - the model types and input types should
 	// should match.
-	if err := updateVariableTypes(params.SolutionStorage, params.MetaStorage, params.DataStorage, params.FittedSolutionID, datasetName, meta.StorageName); err != nil {
-		return nil, err
+	if err := updateVariableTypes(params.SolutionStorage, params.MetaStorage, params.DataStorage, params.FittedSolutionID, params.Dataset, metaClone.StorageName); err != nil {
+		return err
 	}
 
 	// Handle grouped variables.
@@ -283,44 +270,59 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	if target.IsGrouping() && model.IsTimeSeries(target.Grouping.GetType()) {
 		tsg := target.Grouping.(*model.TimeseriesGrouping)
 		log.Infof("target is a timeseries so need to extract the prediction target from the grouping")
-		target, err = params.MetaStorage.FetchVariable(meta.ID, tsg.YCol)
+		target, err = params.MetaStorage.FetchVariable(metaClone.ID, tsg.YCol)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// need to run the grouping compose to create the needed ID column
-		log.Infof("creating composed variables on prediction dataset '%s'", datasetName)
-		err = CreateComposedVariable(params.MetaStorage, params.DataStorage, datasetName,
-			meta.StorageName, tsg.IDCol, target.DisplayName, tsg.SubIDs)
+		log.Infof("creating composed variables on prediction dataset '%s'", params.Dataset)
+		err = CreateComposedVariable(params.MetaStorage, params.DataStorage, params.Dataset,
+			metaClone.StorageName, tsg.IDCol, target.DisplayName, tsg.SubIDs)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		err = params.MetaStorage.AddGroupedVariable(datasetName, params.Target.StorageName, params.Target.DisplayName,
+		err = params.MetaStorage.AddGroupedVariable(params.Dataset, params.Target.StorageName, params.Target.DisplayName,
 			params.Target.Type, params.Target.DistilRole, tsg)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		log.Infof("done creating compose variables")
 	}
 
 	// the dataset id needs to match the original dataset id for TA2 to be able to use the model
 	// read from source in case any step has updated it along the way
-	meta, err = metadata.LoadMetadataFromOriginalSchema(schemaPath, false)
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath, false)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to read latest dataset doc")
+		return errors.Wrap(err, "unable to read latest dataset doc")
 	}
-	meta.ID = sourceDatasetID
+	meta.ID = params.SourceDatasetID
 	datasetStorage := serialization.GetStorage(schemaPath)
 	err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to update dataset doc")
+		return errors.Wrap(err, "unable to update dataset doc")
 	}
 
 	// add feature groups
-	err = copyFeatureGroups(params.FittedSolutionID, datasetName, params.SolutionStorage, params.MetaStorage)
+	err = copyFeatureGroups(params.FittedSolutionID, metaClone.ID, params.SolutionStorage, params.MetaStorage)
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	return nil
+}
+
+// Predict processes input data to generate predictions.
+func Predict(params *PredictParams) (*api.SolutionResult, error) {
+	log.Infof("generating predictions for fitted solution ID %s", params.FittedSolutionID)
+	datasetPath := path.Join(params.OutputPath, params.Dataset)
+	schemaPath := params.SchemaPath
+	datasetName := params.Dataset
+
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath, false)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to read latest dataset doc")
 	}
 
 	// get the explained solution id
@@ -375,6 +377,11 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 		return nil, err
 	}
 	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, predictionResult.ProduceRequestID, api.SolutionResultTypeInference, resultID, predictionResult.ResultURI, "PREDICT_COMPLETED", createdTime)
+	if err != nil {
+		return nil, err
+	}
+
+	target, err := resolveTarget(datasetName, params.Target, params.MetaStorage)
 	if err != nil {
 		return nil, err
 	}
@@ -725,4 +732,19 @@ func createTimeseriesData(idFields []string, idValues [][]string, timestampField
 	}
 
 	return generatedData
+}
+
+func resolveTarget(datasetID string, target *model.Variable, metaStorage api.MetadataStorage) (*model.Variable, error) {
+	trueTarget := target
+	if target.IsGrouping() && model.IsTimeSeries(target.Grouping.GetType()) {
+		tsg := target.Grouping.(*model.TimeseriesGrouping)
+		log.Infof("target is a timeseries so need to extract the prediction target from the grouping")
+		resolvedTarget, err := metaStorage.FetchVariable(datasetID, tsg.YCol)
+		if err != nil {
+			return nil, err
+		}
+		trueTarget = resolvedTarget
+	}
+
+	return trueTarget, nil
 }
