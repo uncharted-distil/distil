@@ -291,19 +291,6 @@ func IngestPredictionDataset(params *PredictParams) error {
 		log.Infof("done creating compose variables")
 	}
 
-	// the dataset id needs to match the original dataset id for TA2 to be able to use the model
-	// read from source in case any step has updated it along the way
-	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath, false)
-	if err != nil {
-		return errors.Wrap(err, "unable to read latest dataset doc")
-	}
-	meta.ID = params.SourceDatasetID
-	datasetStorage := serialization.GetStorage(schemaPath)
-	err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
-	if err != nil {
-		return errors.Wrap(err, "unable to update dataset doc")
-	}
-
 	// add feature groups
 	err = copyFeatureGroups(params.FittedSolutionID, metaClone.ID, params.SolutionStorage, params.MetaStorage)
 	if err != nil {
@@ -314,33 +301,41 @@ func IngestPredictionDataset(params *PredictParams) error {
 }
 
 // Predict processes input data to generate predictions.
-func Predict(params *PredictParams) (*api.SolutionResult, error) {
+func Predict(params *PredictParams) (string, error) {
 	log.Infof("generating predictions for fitted solution ID %s", params.FittedSolutionID)
 	datasetPath := path.Join(params.OutputPath, params.Dataset)
 	schemaPath := params.SchemaPath
 	datasetName := params.Dataset
 
+	// the dataset id needs to match the original dataset id for TA2 to be able to use the model
+	// read from source in case any step has updated it along the way
 	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath, false)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to read latest dataset doc")
+		return "", errors.Wrap(err, "unable to read latest dataset doc")
+	}
+	meta.ID = params.SourceDatasetID
+	datasetStorage := serialization.GetStorage(schemaPath)
+	err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to update dataset doc")
 	}
 
 	// get the explained solution id
 	solution, err := params.SolutionStorage.FetchSolution(params.SolutionID)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	// Ensure the ta2 has fitted solution loaded.  If the model wasn't saved, it should be available
 	// as part of the session.
 	exportedModel, err := params.ModelStorage.FetchModelByID(params.FittedSolutionID)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if exportedModel != nil {
 		_, err = LoadFittedSolution(exportedModel.FilePath, params.SolutionStorage, params.MetaStorage)
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 	}
 
@@ -348,61 +343,64 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	log.Infof("generating predictions using data found at '%s'", datasetPath)
 	predictionResult, err := comp.GeneratePredictions(datasetPath, solution.SolutionID, params.FittedSolutionID, client)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	log.Infof("generated predictions stored at %v", predictionResult.ResultURI)
-
-	if predictionResult.StepFeatureWeightURI != "" {
-		featureWeights, err := comp.ExplainFeatureOutput(predictionResult.ResultURI, predictionResult.StepFeatureWeightURI)
-		if err != nil {
-			return nil, err
-		}
-		err = params.DataStorage.PersistSolutionFeatureWeight(datasetName, meta.StorageName, featureWeights.ResultURI, featureWeights.Values)
-		if err != nil {
-			return nil, err
-		}
-	}
-	log.Infof("stored feature weights to the database")
 
 	// get the result UUID. NOTE: Doing sha1 for now.
 	resultID, err := util.Hash(predictionResult.ResultURI)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Persist the prediction request metadata
-	createdTime := time.Now()
-	err = params.SolutionStorage.PersistPrediction(predictionResult.ProduceRequestID, datasetName, params.Target.StorageName, params.FittedSolutionID, "PREDICT_COMPLETED", createdTime)
+	err = persistPredictionResults(datasetName, params, meta, resultID, predictionResult)
 	if err != nil {
-		return nil, err
+		return "", err
+	}
+
+	return predictionResult.ProduceRequestID, nil
+}
+
+func persistPredictionResults(datasetName string, params *PredictParams, meta *model.Metadata, resultID string, predictionResult *comp.PredictionResult) error {
+	if predictionResult.StepFeatureWeightURI != "" {
+		featureWeights, err := comp.ExplainFeatureOutput(predictionResult.ResultURI, predictionResult.StepFeatureWeightURI)
+		if err != nil {
+			return err
+		}
+		err = params.DataStorage.PersistSolutionFeatureWeight(datasetName, meta.StorageName, featureWeights.ResultURI, featureWeights.Values)
+		if err != nil {
+			return err
+		}
+	}
+	log.Infof("stored feature weights to the database")
+
+	createdTime := time.Now()
+	err := params.SolutionStorage.PersistPrediction(predictionResult.ProduceRequestID, datasetName, params.Target.StorageName, params.FittedSolutionID, "PREDICT_COMPLETED", createdTime)
+	if err != nil {
+		return err
 	}
 	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, predictionResult.ProduceRequestID, api.SolutionResultTypeInference, resultID, predictionResult.ResultURI, "PREDICT_COMPLETED", createdTime)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	target, err := resolveTarget(datasetName, params.Target, params.MetaStorage)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = params.DataStorage.PersistResult(datasetName, meta.StorageName, predictionResult.ResultURI, target.StorageName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = params.DataStorage.PersistExplainedResult(datasetName, meta.StorageName, predictionResult.ResultURI, predictionResult.Confidences)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	log.Infof("stored prediction results to the database")
+	log.Infof("stored prediction results for %s to the database", predictionResult.ProduceRequestID)
 
-	// set the dataset to the inference dataset
-	res, err := params.SolutionStorage.FetchPredictionResultByProduceRequestID(predictionResult.ProduceRequestID)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
+	return nil
 }
 
 func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Variable, predictionVariables []*model.Variable) ([][]string, error) {

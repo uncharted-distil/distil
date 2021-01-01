@@ -453,7 +453,14 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	}
 
 	// run predictions - synchronous call for now
-	result, err := task.Predict(predictParams)
+	resultID, err := task.Predict(predictParams)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// read the results from the database
+	result, err := solutionStorage.FetchPredictionResultByProduceRequestID(resultID)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return
