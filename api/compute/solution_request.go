@@ -743,15 +743,15 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			tempVars = featurizedVariables
 		}
 		// update groupingVariable to the dateTime variable
-		for _, variable := range tempVars{
-			if variable.Type == model.DateTimeType{
+		for _, variable := range tempVars {
+			if variable.Type == model.DateTimeType {
 				groupingVariableIndex = variable.Index
-				found=true
+				found = true
 				break
 			}
 		}
 		// if not found return error, dateTime type required for split
-		if !found{
+		if !found {
 			return errors.New("Timestamp value supplied but no dateTime type existing on dataset")
 		}
 	}
