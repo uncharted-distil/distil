@@ -159,6 +159,8 @@ type PredictParams struct {
 	Meta               *model.Metadata
 	SourceDataset      *api.Dataset
 	Dataset            string
+	SchemaPath         string
+	SourceDatasetID    string
 	SolutionID         string
 	FittedSolutionID   string
 	DatasetConstructor DatasetConstructor
@@ -168,106 +170,99 @@ type PredictParams struct {
 	DataStorage        api.DataStorage
 	SolutionStorage    api.SolutionStorage
 	ModelStorage       api.ExportedModelStorage
-	DatasetIngested    bool
-	DatasetImported    bool
 	IngestConfig       *IngestTaskConfig
 	Config             *env.Config
 }
 
-// Predict processes input data to generate predictions.
-func Predict(params *PredictParams) (*api.SolutionResult, error) {
-	log.Infof("generating predictions for fitted solution ID %s", params.FittedSolutionID)
+// ImportPredictionDataset imports a dataset to be used for predictions.
+func ImportPredictionDataset(params *PredictParams) (string, string, error) {
 	meta := params.Meta
-	sourceDatasetID := meta.ID
-	datasetPath := path.Join(params.OutputPath, params.Dataset)
 	schemaPath := ""
 	datasetName := fmt.Sprintf("pred_%s", params.Dataset)
-	var err error
 
-	// if the dataset was already imported, then just produce on it
-	if params.DatasetImported {
-		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
-		log.Infof("dataset already imported at %s", datasetPath)
-	} else {
-		predictionDatasetCtor := &predictionDataset{
-			params: params,
-		}
-
-		// create the dataset to be used for predictions
-		datasetName, datasetPath, err = CreateDataset(datasetName, predictionDatasetCtor, params.OutputPath, params.Config)
-		if err != nil {
-			return nil, err
-		}
-		log.Infof("created dataset for new data with id '%s' found at location '%s'", datasetName, datasetPath)
-
-		// read the header of the new dataset to get the field names
-		// if they dont match the original, then cant use the same pipeline
-		rawDataPath := path.Join(datasetPath, compute.D3MDataFolder, compute.D3MLearningData)
-		rawCSVData, err := util.ReadCSVFile(rawDataPath, false)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to parse header result")
-		}
-		rawHeader := rawCSVData[0]
-		mainDR := meta.GetMainDataResource()
-		for i, f := range rawHeader {
-			// TODO: col index not necessarily the same as index and thats what needs checking
-			// We check both name and display name as the pre-ingested datasets are keyed of display name
-			if mainDR.Variables[i].StorageName != f && mainDR.Variables[i].DisplayName != f {
-				return nil, errors.Errorf("variables in new prediction file do not match variables in original dataset")
-			}
-		}
-		log.Infof("dataset fields match original dataset fields")
-
-		// update the dataset doc to reflect original types
-		meta.ID = datasetName
-		meta.Name = datasetName
-		meta.StorageName = model.NormalizeDatasetID(datasetName)
-		meta.DatasetFolder = path.Base(datasetPath)
-		schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
-		datasetStorage := serialization.GetStorage(rawDataPath)
-		err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to update dataset doc")
-		}
-		log.Infof("wrote out schema doc for new dataset with id '%s' at location '%s'", meta.ID, schemaPath)
+	predictionDatasetCtor := &predictionDataset{
+		params: params,
 	}
 
-	if !params.DatasetIngested {
-		// ingest the dataset but without running simon, duke, etc.
-		err = IngestPostgres(schemaPath, schemaPath, metadata.Augmented, params.IngestConfig, true, false, false)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to ingest prediction data")
-		}
-		log.Infof("finished ingesting dataset '%s'", datasetName)
+	// create the dataset to be used for predictions
+	datasetName, datasetPath, err := CreateDataset(datasetName, predictionDatasetCtor, params.OutputPath, params.Config)
+	if err != nil {
+		return "", "", err
+	}
+	log.Infof("created dataset for new data with id '%s' found at location '%s'", datasetName, datasetPath)
 
-		// copy the metadata from the source dataset as it should be an exact match
-		metaClone, err := params.MetaStorage.FetchDataset(sourceDatasetID, true, true, true)
-		if err != nil {
-			return nil, err
+	// read the header of the new dataset to get the field names
+	// if they dont match the original, then cant use the same pipeline
+	rawDataPath := path.Join(datasetPath, compute.D3MDataFolder, compute.D3MLearningData)
+	rawCSVData, err := util.ReadCSVFile(rawDataPath, false)
+	if err != nil {
+		return "", "", errors.Wrap(err, "unable to parse header result")
+	}
+	rawHeader := rawCSVData[0]
+	mainDR := meta.GetMainDataResource()
+	for i, f := range rawHeader {
+		// TODO: col index not necessarily the same as index and thats what needs checking
+		// We check both name and display name as the pre-ingested datasets are keyed of display name
+		if mainDR.Variables[i].StorageName != f && mainDR.Variables[i].DisplayName != f {
+			return "", "", errors.Errorf("variables in new prediction file do not match variables in original dataset")
 		}
-		metaClone.ID = datasetName
-		metaClone.StorageName = meta.StorageName
-		metaClone.Folder = meta.DatasetFolder
-		metaClone.Source = metadata.Augmented
-		metaClone.Type = api.DatasetTypeInference
+	}
+	log.Infof("dataset fields match original dataset fields")
 
-		err = params.MetaStorage.UpdateDataset(metaClone)
-		if err != nil {
-			return nil, err
-		}
+	// update the dataset doc to reflect original types
+	meta.ID = datasetName
+	meta.Name = datasetName
+	meta.StorageName = model.NormalizeDatasetID(datasetName)
+	meta.DatasetFolder = path.Base(datasetPath)
+	schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
+	datasetStorage := serialization.GetStorage(rawDataPath)
+	err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
+	if err != nil {
+		return "", "", errors.Wrap(err, "unable to update dataset doc")
+	}
+	log.Infof("wrote out schema doc for new dataset with id '%s' at location '%s'", meta.ID, schemaPath)
 
-		// only featurize if the source dataset was featurized
-		if meta.LearningDataset != "" {
-			if err = Featurize(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, datasetName, params.IngestConfig); err != nil {
-				return nil, errors.Wrap(err, "unabled to featurize prediction data")
-			}
+	return datasetName, schemaPath, nil
+}
+
+// IngestPredictionDataset ingests a dataset to be used for predictions.
+func IngestPredictionDataset(params *PredictParams) error {
+	schemaPath := params.SchemaPath
+	// ingest the dataset but without running simon, duke, etc.
+	err := IngestPostgres(schemaPath, schemaPath, metadata.Augmented, params.IngestConfig, true, false, false)
+	if err != nil {
+		return errors.Wrap(err, "unable to ingest prediction data")
+	}
+	log.Infof("finished ingesting dataset '%s'", params.Dataset)
+
+	// copy the metadata from the source dataset as it should be an exact match
+	log.Infof("using datase '%s' as source for metadata", params.SourceDatasetID)
+	metaClone, err := params.MetaStorage.FetchDataset(params.SourceDatasetID, true, true, true)
+	if err != nil {
+		return err
+	}
+	metaClone.ID = params.Dataset
+	metaClone.StorageName = params.Meta.StorageName
+	metaClone.Folder = params.Meta.DatasetFolder
+	metaClone.Source = metadata.Augmented
+	metaClone.Type = api.DatasetTypeInference
+
+	err = params.MetaStorage.UpdateDataset(metaClone)
+	if err != nil {
+		return err
+	}
+
+	// only featurize if the source dataset was featurized
+	if params.Meta.LearningDataset != "" {
+		if err = Featurize(schemaPath, schemaPath, params.DataStorage, params.MetaStorage, params.Dataset, params.IngestConfig); err != nil {
+			return errors.Wrap(err, "unabled to featurize prediction data")
 		}
 	}
 
 	// Apply the var types associated with the fitted solution to the inference data - the model types and input types should
 	// should match.
-	if err := updateVariableTypes(params.SolutionStorage, params.MetaStorage, params.DataStorage, params.FittedSolutionID, datasetName, meta.StorageName); err != nil {
-		return nil, err
+	if err := updateVariableTypes(params.SolutionStorage, params.MetaStorage, params.DataStorage, params.FittedSolutionID, params.Dataset, metaClone.StorageName); err != nil {
+		return err
 	}
 
 	// Handle grouped variables.
@@ -275,62 +270,72 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	if target.IsGrouping() && model.IsTimeSeries(target.Grouping.GetType()) {
 		tsg := target.Grouping.(*model.TimeseriesGrouping)
 		log.Infof("target is a timeseries so need to extract the prediction target from the grouping")
-		target, err = params.MetaStorage.FetchVariable(meta.ID, tsg.YCol)
+		target, err = params.MetaStorage.FetchVariable(metaClone.ID, tsg.YCol)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		// need to run the grouping compose to create the needed ID column
-		log.Infof("creating composed variables on prediction dataset '%s'", datasetName)
-		err = CreateComposedVariable(params.MetaStorage, params.DataStorage, datasetName,
-			meta.StorageName, tsg.IDCol, target.DisplayName, tsg.SubIDs)
+		log.Infof("creating composed variables on prediction dataset '%s'", params.Dataset)
+		err = CreateComposedVariable(params.MetaStorage, params.DataStorage, params.Dataset,
+			metaClone.StorageName, tsg.IDCol, target.DisplayName, tsg.SubIDs)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		err = params.MetaStorage.AddGroupedVariable(datasetName, params.Target.StorageName, params.Target.DisplayName,
+		err = params.MetaStorage.AddGroupedVariable(params.Dataset, params.Target.StorageName, params.Target.DisplayName,
 			params.Target.Type, params.Target.DistilRole, tsg)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		log.Infof("done creating compose variables")
 	}
 
+	// add feature groups
+	err = copyFeatureGroups(params.FittedSolutionID, metaClone.ID, params.SolutionStorage, params.MetaStorage)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Predict processes input data to generate predictions.
+func Predict(params *PredictParams) (string, error) {
+	log.Infof("generating predictions for fitted solution ID %s", params.FittedSolutionID)
+	datasetPath := path.Join(params.OutputPath, params.Dataset)
+	schemaPath := params.SchemaPath
+	datasetName := params.Dataset
+
 	// the dataset id needs to match the original dataset id for TA2 to be able to use the model
 	// read from source in case any step has updated it along the way
-	meta, err = metadata.LoadMetadataFromOriginalSchema(schemaPath, false)
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaPath, false)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to read latest dataset doc")
+		return "", errors.Wrap(err, "unable to read latest dataset doc")
 	}
-	meta.ID = sourceDatasetID
+	meta.ID = params.SourceDatasetID
 	datasetStorage := serialization.GetStorage(schemaPath)
 	err = datasetStorage.WriteMetadata(schemaPath, meta, true, false)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to update dataset doc")
-	}
-
-	// add feature groups
-	err = copyFeatureGroups(params.FittedSolutionID, datasetName, params.SolutionStorage, params.MetaStorage)
-	if err != nil {
-		return nil, err
+		return "", errors.Wrap(err, "unable to update dataset doc")
 	}
 
 	// get the explained solution id
 	solution, err := params.SolutionStorage.FetchSolution(params.SolutionID)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	// Ensure the ta2 has fitted solution loaded.  If the model wasn't saved, it should be available
 	// as part of the session.
 	exportedModel, err := params.ModelStorage.FetchModelByID(params.FittedSolutionID)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	if exportedModel != nil {
 		_, err = LoadFittedSolution(exportedModel.FilePath, params.SolutionStorage, params.MetaStorage)
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 	}
 
@@ -338,56 +343,64 @@ func Predict(params *PredictParams) (*api.SolutionResult, error) {
 	log.Infof("generating predictions using data found at '%s'", datasetPath)
 	predictionResult, err := comp.GeneratePredictions(datasetPath, solution.SolutionID, params.FittedSolutionID, client)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	log.Infof("generated predictions stored at %v", predictionResult.ResultURI)
-
-	if predictionResult.StepFeatureWeightURI != "" {
-		featureWeights, err := comp.ExplainFeatureOutput(predictionResult.ResultURI, predictionResult.StepFeatureWeightURI)
-		if err != nil {
-			return nil, err
-		}
-		err = params.DataStorage.PersistSolutionFeatureWeight(datasetName, meta.StorageName, featureWeights.ResultURI, featureWeights.Values)
-		if err != nil {
-			return nil, err
-		}
-	}
-	log.Infof("stored feature weights to the database")
 
 	// get the result UUID. NOTE: Doing sha1 for now.
 	resultID, err := util.Hash(predictionResult.ResultURI)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	// Persist the prediction request metadata
-	createdTime := time.Now()
-	err = params.SolutionStorage.PersistPrediction(predictionResult.ProduceRequestID, datasetName, params.Target.StorageName, params.FittedSolutionID, "PREDICT_COMPLETED", createdTime)
+	err = persistPredictionResults(datasetName, params, meta, resultID, predictionResult)
 	if err != nil {
-		return nil, err
+		return "", err
+	}
+
+	return predictionResult.ProduceRequestID, nil
+}
+
+func persistPredictionResults(datasetName string, params *PredictParams, meta *model.Metadata, resultID string, predictionResult *comp.PredictionResult) error {
+	if predictionResult.StepFeatureWeightURI != "" {
+		featureWeights, err := comp.ExplainFeatureOutput(predictionResult.ResultURI, predictionResult.StepFeatureWeightURI)
+		if err != nil {
+			return err
+		}
+		err = params.DataStorage.PersistSolutionFeatureWeight(datasetName, meta.StorageName, featureWeights.ResultURI, featureWeights.Values)
+		if err != nil {
+			return err
+		}
+	}
+	log.Infof("stored feature weights to the database")
+
+	createdTime := time.Now()
+	err := params.SolutionStorage.PersistPrediction(predictionResult.ProduceRequestID, datasetName, params.Target.StorageName, params.FittedSolutionID, "PREDICT_COMPLETED", createdTime)
+	if err != nil {
+		return err
 	}
 	err = params.SolutionStorage.PersistSolutionResult(params.SolutionID, params.FittedSolutionID, predictionResult.ProduceRequestID, api.SolutionResultTypeInference, resultID, predictionResult.ResultURI, "PREDICT_COMPLETED", createdTime)
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	target, err := resolveTarget(datasetName, params.Target, params.MetaStorage)
+	if err != nil {
+		return err
 	}
 
 	err = params.DataStorage.PersistResult(datasetName, meta.StorageName, predictionResult.ResultURI, target.StorageName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = params.DataStorage.PersistExplainedResult(datasetName, meta.StorageName, predictionResult.ResultURI, predictionResult.Confidences)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	log.Infof("stored prediction results to the database")
+	log.Infof("stored prediction results for %s to the database", predictionResult.ProduceRequestID)
 
-	// set the dataset to the inference dataset
-	res, err := params.SolutionStorage.FetchPredictionResultByProduceRequestID(predictionResult.ProduceRequestID)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
+	return nil
 }
 
 func augmentPredictionDataset(csvData [][]string, sourceVariables []*model.Variable, predictionVariables []*model.Variable) ([][]string, error) {
@@ -717,4 +730,19 @@ func createTimeseriesData(idFields []string, idValues [][]string, timestampField
 	}
 
 	return generatedData
+}
+
+func resolveTarget(datasetID string, target *model.Variable, metaStorage api.MetadataStorage) (*model.Variable, error) {
+	trueTarget := target
+	if target.IsGrouping() && model.IsTimeSeries(target.Grouping.GetType()) {
+		tsg := target.Grouping.(*model.TimeseriesGrouping)
+		log.Infof("target is a timeseries so need to extract the prediction target from the grouping")
+		resolvedTarget, err := metaStorage.FetchVariable(datasetID, tsg.YCol)
+		if err != nil {
+			return nil, err
+		}
+		trueTarget = resolvedTarget
+	}
+
+	return trueTarget, nil
 }
