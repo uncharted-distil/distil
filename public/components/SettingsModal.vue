@@ -257,7 +257,6 @@ export default Vue.extend({
       this.hasSelectedSplitType = false;
     },
     handleOk() {
-      console.log(this.timestampSplitValue.getTime() / 1000);
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         modelLimit: this.modelLimit,
         modelTimeLimit: this.timeLimit,
