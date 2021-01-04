@@ -52,6 +52,7 @@ export interface RouteArgs {
   dataSize?: number;
   metrics?: string;
   trainTestSplit?: number;
+  timestampSplit?: number;
   // orderBy contains variable names that will order the dataset
   orderBy?: string;
 }
