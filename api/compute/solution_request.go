@@ -738,8 +738,12 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	// check if TimestampSplitValue is not 0
 	if s.TimestampSplitValue > 0 {
 		found := false
+		tempVars := variables
+		if len(featurizedVariables) > 0 {
+			tempVars = featurizedVariables
+		}
 		// update groupingVariable to the dateTime variable
-		for _, variable := range variables{
+		for _, variable := range tempVars{
 			if variable.Type == model.DateTimeType{
 				groupingVariableIndex = variable.Index
 				found=true
