@@ -91,7 +91,6 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to open parquet file")
 	}
-	defer fr.Close()
 
 	pr, err := reader.NewParquetColumnReader(fr, 1)
 	if err != nil {
@@ -105,10 +104,27 @@ func (d *Parquet) ReadData(uri string) ([][]string, error) {
 	for i := int64(0); i < colCount; i++ {
 		colRaw, err := d.readColumn(pr, i, rowCount)
 		if err != nil {
-			return nil, err
+			fr.Close()
+			pr.ReadStop()
+			fr, err = local.NewLocalFileReader(uri)
+			if err != nil {
+				fr.Close()
+				return nil, errors.Wrap(err, "unable to open parquet file")
+			}
+			pr, err = reader.NewParquetColumnReader(fr, 1)
+			if err != nil {
+				pr.ReadStop()
+				return nil, errors.Wrap(err, "unable to open parquet file reader")
+			}
+			colRaw, err = d.readColumn(pr, i, rowCount)
+			if err != nil {
+				return nil, err
+			}
 		}
 		dataByCol[i] = d.columnToString(colRaw, *pr.SchemaHandler.SchemaElements[i+1].Type)
 	}
+	fr.Close()
+	pr.ReadStop()
 
 	// header is the expected first row of the output
 	header, err := d.ReadRawVariables(uri)
