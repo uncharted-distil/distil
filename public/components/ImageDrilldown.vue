@@ -26,11 +26,27 @@
         :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
       >
         <div ref="imageContainer" />
-        <div ref="imageAttentionElem" class="filter-elem" />
+        <div
+          v-show="isFilteredToggled"
+          ref="imageAttentionElem"
+          class="filter-elem"
+        />
       </section>
       <ul class="information">
         <li v-if="bandName"><label>Band:</label> {{ bandName }}</li>
         <li v-if="latLongValue"><label>Lat/Long:</label> {{ latLongValue }}</li>
+        <li v-if="isResultScreen" class="d-flex justify-content-between">
+          <label> Enable image explanation: </label>
+          <div>
+            <input
+              class="form-check-input"
+              type="checkbox"
+              value=""
+              id="drill-down-filter-toggle"
+              v-model="isFilteredToggled"
+            />
+          </div>
+        </li>
         <li v-if="isMultiBandImage" class="information-brightness">
           <b-input-group prepend="0" append="1.0" class="mt-3 mb-1" size="sm">
             <b-form-input
@@ -63,7 +79,7 @@ import {
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
-import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
+import { IMAGE_TYPE, MULTIBAND_IMAGE_TYPE } from "../util/types";
 
 const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drill-down in pixels.
 const IMAGE_MAX_ZOOM = 2.5; // We don't want an image to be too magnified to avoid blurriness.
@@ -90,7 +106,6 @@ export default Vue.extend({
 
   props: {
     info: Object as () => DrillDownInfo,
-    item: Object as () => TableRow,
     type: { type: String, default: IMAGE_TYPE },
     url: String,
     visible: Boolean,
@@ -107,6 +122,7 @@ export default Vue.extend({
       currentBrightness: 0.5,
       brightnessMin: 0,
       brightnessMax: 100,
+      isFilteredToggled: true,
     };
   },
 
@@ -156,8 +172,11 @@ export default Vue.extend({
         ] ?? null
       );
     },
+    isResultScreen(): boolean {
+      return routeGetters.getRouteSolutionId(this.$store) != null;
+    },
     isMultiBandImage(): boolean {
-      return routeGetters.isMultiBandImage(this.$store);
+      return this.type === MULTIBAND_IMAGE_TYPE;
     },
     hasImageAttention(): boolean {
       return routeGetters.getImageAttention(this.$store);
@@ -176,6 +195,7 @@ export default Vue.extend({
   watch: {
     visible() {
       if (this.visible) {
+        this.isFilteredToggled = this.hasImageAttention;
         this.carouselPosition = this.initialPosition;
         this.requestImage();
         if (this.hasImageAttention) {
