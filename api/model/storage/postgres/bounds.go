@@ -117,10 +117,10 @@ func (f *BoundsField) fetchHistogram(filterParams *api.FilterParams, invert bool
 	params := make([]interface{}, 0)
 	wheres, params = f.Storage.buildFilteredQueryWhere(f.GetDatasetName(), wheres, params, "", filterParams, invert)
 
-	where := ""
-	if len(wheres) > 0 {
-		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
-	}
+	// add hardcoded band filter to reduce data to a single band
+	wheres = append(wheres, fmt.Sprintf("band = $%d", len(params)+1))
+	params = append(params, "01")
+	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
 
 	// get the extrema for each axis
 	xExtrema, yExtrema, err := f.fetchExtrema()
@@ -275,12 +275,12 @@ func (f *BoundsField) fetchHistogramByResult(resultURI string, filterParams *api
 		return nil, err
 	}
 
-	params = append(params, resultURI)
+	// add hardcoded band filter to reduce data to a single band
+	wheres = append(wheres, fmt.Sprintf("%s.band = $%d", baseTableAlias, len(params)+1))
+	params = append(params, "01")
 
-	where := ""
-	if len(wheres) > 0 {
-		where = fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
-	}
+	params = append(params, resultURI)
+	where := fmt.Sprintf("AND %s", strings.Join(wheres, " AND "))
 
 	// get the extrema for each axis
 	xExtrema, yExtrema, err := f.fetchExtrema()
