@@ -36,7 +36,7 @@
         <li v-if="bandName"><label>Band:</label> {{ bandName }}</li>
         <li v-if="latLongValue"><label>Lat/Long:</label> {{ latLongValue }}</li>
         <li v-if="isResultScreen" class="d-flex justify-content-between">
-          <label> Enable image explanation: </label>
+          <label> {{ toggleStateString }} image explanation: </label>
           <div>
             <input
               class="form-check-input"
@@ -171,6 +171,9 @@ export default Vue.extend({
           this.solutionId + this.items[this.carouselPosition]?.d3mIndex
         ] ?? null
       );
+    },
+    toggleStateString(): string {
+      return this.isFilteredToggled ? "Disable" : "Enable";
     },
     isResultScreen(): boolean {
       return routeGetters.getRouteSolutionId(this.$store) != null;
