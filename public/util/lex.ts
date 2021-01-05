@@ -161,6 +161,7 @@ export function lexQueryToFilters(lexQuery: any[][]): Filter[] {
   const filters = lexQuery[0].map((lq) => {
     const key = lq.field.key;
     const displayKey = lq.config.displayKey;
+    const displayKey = lq.field.displayKey;
     const type = lq.field.meta.type;
     const filter: Filter = {
       mode: lq.relation.key,
@@ -209,7 +210,7 @@ function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
     const config = {
       displayKey: v.colDisplayName,
     };
-    a.push(new ValueStateValue(name, options));
+    a.push(new ValueStateValue(name, options, config));
 
     if (v.distilRole === "grouping") {
       switch (v.colType) {
@@ -243,7 +244,7 @@ function colTypeToOptionType(colType: string): string {
     return DATETIME_FILTER;
   } else if (isNumericType(colType)) {
     return NUMERICAL_FILTER;
-  } else if (colType === CATEGORICAL_TYPE) {
+  } else if (colType === CATEGORICAL_TYPE || colType === TIMESERIES_TYPE) {
     return CATEGORICAL_FILTER;
   } else if (isTextType(colType)) {
     return TEXT_FILTER;
