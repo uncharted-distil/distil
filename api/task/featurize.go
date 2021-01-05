@@ -54,7 +54,7 @@ func FeaturizeDataset(originalSchemaFile string, schemaFile string, dataset stri
 
 	// create & submit the featurize pipeline
 	pip, err := description.CreateMultiBandImageFeaturizationPipeline("Multiband image featurization", "", ds.Variables,
-		envConfig.RemoteSensingNumJobs, envConfig.RemoteSensingGPUBatchSize)
+		envConfig.RemoteSensingNumJobs, envConfig.RemoteSensingGPUBatchSize, envConfig.PoolFeatures)
 	if err != nil {
 		return "", "", err
 	}

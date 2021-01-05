@@ -400,7 +400,14 @@ func createSplitter(taskType []string, targetFieldIndex int, groupingFieldIndex 
 			}
 		}
 	}
-
+	// if not null
+	if timestampValueSplit > 0 {
+		return &timeseriesSplitter{
+			timeseriesCol:       groupingFieldIndex,
+			trainTestSplit:      trainTestSplit,
+			timestampValueSplit: timestampValueSplit,
+		}
+	}
 	// build row limits
 	config, _ := env.LoadConfig()
 	limits := rowLimits{

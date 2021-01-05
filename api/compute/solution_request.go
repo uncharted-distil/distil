@@ -661,7 +661,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			}
 		}
 	}
-
 	// fetch the source dataset
 	dataset, err := metaStorage.FetchDataset(s.Dataset, true, true, false)
 	if err != nil {
@@ -732,7 +731,26 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		return err
 	}
 	s.Task = task.Task
-
+	// check if TimestampSplitValue is not 0
+	if s.TimestampSplitValue > 0 {
+		found := false
+		tempVars := variables
+		if len(featurizedVariables) > 0 {
+			tempVars = featurizedVariables
+		}
+		// update groupingVariable to the dateTime variable
+		for _, variable := range tempVars {
+			if variable.Type == model.DateTimeType {
+				groupingVariableIndex = variable.Index
+				found = true
+				break
+			}
+		}
+		// if not found return error, dateTime type required for split
+		if !found {
+			return errors.New("Timestamp value supplied but no dateTime type existing on dataset")
+		}
+	}
 	// when dealing with categorical data we want to stratify
 	stratify := model.IsCategorical(s.TargetFeature.Type)
 	// create the splitter to use for the train / test split

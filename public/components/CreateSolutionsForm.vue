@@ -7,7 +7,7 @@
       @close="showCreateFailure = !showCreateFailure"
     >
     </error-modal>
-    <settings-modal></settings-modal>
+    <settings-modal :timeRange="dateTimeExtrema"></settings-modal>
     <div class="row justify-content-center">
       <b-button-group>
         <b-button
@@ -54,7 +54,7 @@ import { RESULTS_ROUTE } from "../store/route/index";
 import { actions as requestActions } from "../store/requests/module";
 import { Solution, NUM_SOLUTIONS } from "../store/requests/index";
 import { Variable, TaskTypes, DataMode } from "../store/dataset/index";
-import { TIMESERIES_TYPE } from "../util/types";
+import { TIMESERIES_TYPE, DATE_TIME_TYPE } from "../util/types";
 import { FilterParams } from "../util/filters";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import Vue from "vue";
@@ -108,6 +108,15 @@ export default Vue.extend({
         return _.toLower(v.colName) === _.toLower(this.target);
       });
     },
+    dateTimeExtrema(): { min: number; max: number } {
+      const dateTimeVar = this.variables.find((v) => {
+        return v.colType === DATE_TIME_TYPE;
+      });
+      if (!dateTimeVar) {
+        return null;
+      }
+      return { min: dateTimeVar.min, max: dateTimeVar.max };
+    },
     isPending(): boolean {
       return this.pending;
     },
@@ -136,6 +145,7 @@ export default Vue.extend({
       // dispatch action that triggers request send to server
       const routeSplit = routeGetters.getRouteTrainTestSplit(this.$store);
       const defaultSplit = appGetters.getTrainTestSplit(this.$store);
+      const timestampSplit = routeGetters.getRouteTimestampSplit(this.$store);
       requestActions
         .createSolutionRequest(this.$store, {
           dataset: this.dataset,
@@ -146,6 +156,7 @@ export default Vue.extend({
           maxTime: routeGetters.getModelTimeLimit(this.$store),
           quality: routeGetters.getModelQuality(this.$store),
           trainTestSplit: !!routeSplit ? routeSplit : defaultSplit,
+          timestampSplitValue: timestampSplit,
         })
         .then((res: Solution) => {
           this.pending = false;

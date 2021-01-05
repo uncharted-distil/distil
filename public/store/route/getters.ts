@@ -643,7 +643,13 @@ export const getters = {
     }
     return metrics.split(",");
   },
-
+  getRouteTimestampSplit(state: Route): number | null {
+    const timestampSplit = <string>state.query.timestampSplit;
+    if (!timestampSplit) {
+      return null;
+    }
+    return parseInt(timestampSplit);
+  },
   getRouteTrainTestSplit(state: Route): number {
     const trainTestSplit = <string>state.query.trainTestSplit;
     if (!trainTestSplit) {
