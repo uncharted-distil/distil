@@ -33,7 +33,7 @@
       :url="imageUrl"
       :type="type"
       :info="imageDrilldown"
-      :item="row"
+      :items="[row]"
       :visible="!!zoomImage"
       @hide="hideZoomImage"
       :imageUrls="overlappedUrls"
@@ -289,10 +289,6 @@ export default Vue.extend({
       }
       if (this.hasImageAttention && this.imageAttentionIsLoaded) {
         this.injectFilter();
-      }
-      if (!this.hasImageAttention && this.imageAttentionHasRendered) {
-        this.clearImage(this.$refs.imageAttentionElem as any);
-        this.imageAttentionHasRendered = false;
       }
       if (!this.hasImageAttention && this.imageAttentionHasRendered) {
         this.clearImage(this.$refs.imageAttentionElem as any);

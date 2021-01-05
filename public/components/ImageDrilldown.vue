@@ -23,21 +23,31 @@
       >
       <section
         class="image-container"
-        ref="imageContainer"
         :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
       >
-        <image-label
-          v-if="item && dataFields"
-          class="image-label"
-          :dataFields="dataFields"
-          includedActive
-          :item="item"
+        <div ref="imageContainer" />
+        <div
+          v-show="isFilteredToggled"
+          ref="imageAttentionElem"
+          class="filter-elem"
         />
       </section>
       <ul class="information">
         <li v-if="bandName"><label>Band:</label> {{ bandName }}</li>
         <li v-if="latLongValue"><label>Lat/Long:</label> {{ latLongValue }}</li>
-        <li v-if="isMultiBandImageType" class="information-brightness">
+        <li v-if="isResultScreen" class="d-flex justify-content-between">
+          <label> {{ toggleStateString }} image explanation: </label>
+          <div>
+            <input
+              class="form-check-input"
+              type="checkbox"
+              value=""
+              id="drill-down-filter-toggle"
+              v-model="isFilteredToggled"
+            />
+          </div>
+        </li>
+        <li v-if="isMultiBandImage" class="information-brightness">
           <b-input-group prepend="0" append="1.0" class="mt-3 mb-1" size="sm">
             <b-form-input
               type="range"
@@ -61,7 +71,6 @@
 
 <script lang="ts">
 import Vue from "vue";
-import ImageLabel from "./ImageLabel.vue";
 import { TableRow } from "../store/dataset/index";
 import {
   getters as datasetGetters,
@@ -70,7 +79,7 @@ import {
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
-import { MULTIBAND_IMAGE_TYPE, IMAGE_TYPE } from "../util/types";
+import { IMAGE_TYPE, MULTIBAND_IMAGE_TYPE } from "../util/types";
 
 const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drill-down in pixels.
 const IMAGE_MAX_ZOOM = 2.5; // We don't want an image to be too magnified to avoid blurriness.
@@ -95,13 +104,8 @@ export interface DrillDownInfo {
 export default Vue.extend({
   name: "ImageDrilldown",
 
-  components: {
-    ImageLabel,
-  },
-
   props: {
     info: Object as () => DrillDownInfo,
-    item: Object as () => TableRow,
     type: { type: String, default: IMAGE_TYPE },
     url: String,
     visible: Boolean,
@@ -118,6 +122,7 @@ export default Vue.extend({
       currentBrightness: 0.5,
       brightnessMin: 0,
       brightnessMax: 100,
+      isFilteredToggled: true,
     };
   },
 
@@ -127,15 +132,21 @@ export default Vue.extend({
         .getMultiBandCombinations(this.$store)
         .find((band) => band.id === this.info.band)?.displayName;
     },
+    latLongValue(): string | null {
+      if (!this.items.length) {
+        return null;
+      }
 
+      return this.items[
+        this.carouselPosition
+      ]?.coordinates?.value.Elements.slice(0, 2).map((x) => x.Float);
+    },
     brightnessValue(): string {
       return this.currentBrightness.toFixed(2);
     },
-
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
-
     files(): Dictionary<any> {
       return datasetGetters.getFiles(this.$store);
     },
@@ -154,23 +165,45 @@ export default Vue.extend({
         null
       );
     },
-    isMultiBandImage(): boolean {
-      return routeGetters.isMultiBandImage(this.$store);
+    imageAttention(): HTMLImageElement {
+      return (
+        this.files[
+          this.solutionId + this.items[this.carouselPosition]?.d3mIndex
+        ] ?? null
+      );
     },
-
+    toggleStateString(): string {
+      return this.isFilteredToggled ? "Disable" : "Enable";
+    },
+    isResultScreen(): boolean {
+      return routeGetters.getRouteSolutionId(this.$store) != null;
+    },
+    isMultiBandImage(): boolean {
+      return this.type === MULTIBAND_IMAGE_TYPE;
+    },
+    hasImageAttention(): boolean {
+      return routeGetters.getImageAttention(this.$store);
+    },
     visibleTitle(): string {
       return this.info.title ?? this.selectedImageUrl ?? "Image Drilldown";
     },
     sliderVal(): string {
       return this.currentVal.toFixed(2);
     },
+    solutionId(): string {
+      return routeGetters.getRouteSolutionId(this.$store);
+    },
   },
 
   watch: {
     visible() {
       if (this.visible) {
+        this.isFilteredToggled = this.hasImageAttention;
         this.carouselPosition = this.initialPosition;
         this.requestImage();
+        if (this.hasImageAttention) {
+          this.requestFilter();
+        }
       }
     },
   },
@@ -182,6 +215,9 @@ export default Vue.extend({
         this.imageUrls.length - 1
       );
       this.requestImage();
+      if (this.hasImageAttention) {
+        this.requestFilter();
+      }
     },
     hide() {
       this.$emit("hide");
@@ -228,7 +264,39 @@ export default Vue.extend({
         container.appendChild(image);
       }
     },
-
+    async requestFilter() {
+      await datasetActions.fetchImageAttention(this.$store, {
+        dataset: this.dataset,
+        resultId: this.solutionId,
+        d3mIndex: this.items[this.carouselPosition].d3mIndex,
+      });
+      this.injectFilter();
+    },
+    clearImage(elem?: any) {
+      const $elem = elem || (this.$refs.imageElem as any);
+      if ($elem) {
+        $elem.innerHTML = "";
+      }
+    },
+    injectFilter() {
+      if (!this.hasImageAttention) {
+        return;
+      }
+      const elem = this.$refs.imageAttentionElem as any;
+      const container = this.$refs.imageContainer as any;
+      if (elem) {
+        this.clearImage(elem);
+        const image = this.imageAttention.cloneNode() as HTMLImageElement;
+        const width = container.querySelector("#injected-image" + image.id)
+          ?.width;
+        const height = container.querySelector("#injected-image" + image.id)
+          ?.height;
+        // Update the image to be bigger, but not bigger than the modal box.
+        image.height = height;
+        image.width = width;
+        elem.appendChild(image);
+      }
+    },
     async requestImage(imageOptions?: {
       gamma: number;
       gain: number;
@@ -298,7 +366,11 @@ export default Vue.extend({
   padding-right: 5px;
   display: inline-block;
 }
-
+.filter-elem {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
 .brightness-slider {
   width: 70%;
 }
