@@ -283,17 +283,17 @@ export default Vue.extend({
         return;
       }
       const elem = this.$refs.imageAttentionElem as any;
+      const container = this.$refs.imageContainer as any;
       if (elem) {
         this.clearImage(elem);
         const image = this.imageAttention.cloneNode() as HTMLImageElement;
-
-        const ratio = Math.min(
-          IMAGE_MAX_SIZE / Math.max(this.image.height, this.image.width),
-          IMAGE_MAX_ZOOM
-        );
+        const width = container.querySelector("#injected-image" + image.id)
+          ?.width;
+        const height = container.querySelector("#injected-image" + image.id)
+          ?.height;
         // Update the image to be bigger, but not bigger than the modal box.
-        image.height = this.image.height * ratio;
-        image.width = this.image.width * ratio;
+        image.height = height;
+        image.width = width;
         elem.appendChild(image);
       }
     },
