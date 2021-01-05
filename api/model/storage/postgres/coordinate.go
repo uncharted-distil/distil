@@ -17,7 +17,6 @@ package postgres
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/jackc/pgx/v4"
@@ -100,24 +99,6 @@ func (f *CoordinateField) FetchSummaryData(resultURI string, filterParams *api.F
 		Filtered: filtered,
 		Timeline: nil,
 	}, nil
-}
-
-func (f *CoordinateField) fetchFilter(fieldName string, filterParams *api.FilterParams) *model.Filter {
-	// cycle through the filters and find the one for the field
-	var filter *model.Filter
-	if filterParams != nil {
-		for _, p := range filterParams.Filters {
-			if p.Key == fieldName {
-				filter = p
-				break
-			}
-		}
-	}
-	if filter == nil {
-		filter = f.fetchDefaultFilter(fieldName)
-	}
-
-	return filter
 }
 
 func (f *CoordinateField) fetchHistogram(filterParams *api.FilterParams, invert bool, numBuckets int) (*api.Histogram, error) {
@@ -317,31 +298,4 @@ func (f *CoordinateField) parseHistogram(rows pgx.Rows, xExtrema *api.Extrema, y
 // the coordinate histogram for the field.
 func (f *CoordinateField) FetchPredictedSummaryData(resultURI string, datasetResult string, filterParams *api.FilterParams, extrema *api.Extrema, mode api.SummaryMode) (*api.VariableSummary, error) {
 	return nil, fmt.Errorf("not implemented")
-}
-
-func (f *CoordinateField) fetchDefaultFilter(fieldName string) *model.Filter {
-	// provide a useful default based on type
-	// geo can default to lat and lon max values
-	var filter *model.Filter
-	if model.IsGeoCoordinate(f.Type) {
-		filter = &model.Filter{
-			Key: f.Key,
-			Bounds: &model.Bounds{
-				MinX: float64(-180),
-				MaxX: float64(180),
-				MinY: float64(-90),
-				MaxY: float64(90),
-			},
-		}
-	} else {
-		min := -float64(math.MaxInt64)
-		max := float64(math.MaxInt64)
-		filter = &model.Filter{
-			Key: f.Key,
-			Min: &min,
-			Max: &max,
-		}
-	}
-
-	return filter
 }

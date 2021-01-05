@@ -70,23 +70,6 @@ func (s *Storage) FetchConfidenceSummary(dataset string, storageName string, res
 	return explainedSummaries, nil
 }
 
-func (s *Storage) fetchHistograms(dataset string, storageName string, variable *model.Variable, targetName string,
-	resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (map[string]*api.Histogram, error) {
-	explainFields := s.listExplainFields()
-
-	explainedSummaries := map[string]*api.Histogram{}
-	for _, explainName := range explainFields {
-		// get the histogram for that explaination field
-		histo, err := s.fetchExplainHistogram(dataset, storageName, targetName, explainName, resultURI, filterParams, mode)
-		if err != nil {
-			return nil, err
-		}
-		explainedSummaries[explainName] = histo
-	}
-
-	return explainedSummaries, nil
-}
-
 func (s *Storage) fetchExplainHistogram(dataset string, storageName string, targetName string, explainFieldName string,
 	resultURI string, filterParams *api.FilterParams, mode api.SummaryMode) (*api.Histogram, error) {
 	explainFieldAlias := fmt.Sprintf("%s_nested", explainFieldName)

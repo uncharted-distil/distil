@@ -205,7 +205,7 @@ func (s *Storage) buildIncludeFilter(dataset string, wheres []string, params []i
 			indices = append(indices, fmt.Sprintf("$%d", offset+i))
 			params = append(params, d3mIndex)
 		}
-		where := fmt.Sprintf("\"%s\" IN (%s)", model.D3MIndexFieldName, strings.Join(indices, ", "))
+		where := fmt.Sprintf("%s IN (%s)", name, strings.Join(indices, ", "))
 		wheres = append(wheres, where)
 	case model.TextFilter:
 		// text
@@ -332,7 +332,7 @@ func (s *Storage) buildExcludeFilter(dataset string, wheres []string, params []i
 			indices = append(indices, fmt.Sprintf("$%d", offset+i))
 			params = append(params, d3mIndex)
 		}
-		where := fmt.Sprintf("\"%s\" NOT IN (%s)", model.D3MIndexFieldName, strings.Join(indices, ", "))
+		where := fmt.Sprintf("%s NOT IN (%s)", name, strings.Join(indices, ", "))
 		wheres = append(wheres, where)
 	case model.TextFilter:
 		// text
@@ -682,16 +682,6 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 		return -1, errors.Wrap(err, "postgres row query failed")
 	}
 	return numRows, nil
-}
-
-func (s *Storage) filterIncludesIndex(filterParams *api.FilterParams) bool {
-	for _, v := range filterParams.Filters {
-		if v.Key == model.D3MIndexFieldName {
-			return true
-		}
-	}
-
-	return false
 }
 
 // FetchData creates a postgres query to fetch a set of rows.  Applies filters to restrict the

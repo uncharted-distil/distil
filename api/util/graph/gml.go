@@ -20,6 +20,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // Edge represents a graph edge.
@@ -92,13 +94,13 @@ func appendNodeField(n *Node, key string, value string) error {
 	case "id":
 		id, err := strconv.ParseInt(value, 10, 32)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "bad node format")
 		}
 		n.ID = int(id)
 	case "label":
 		label, err := strconv.Unquote(value)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "bad node label format")
 		}
 		n.Label = label
 	default:
@@ -119,13 +121,13 @@ func appendEdgeField(e *Edge, key string, value string) error {
 	case "target":
 		target, err := strconv.ParseInt(value, 10, 32)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "bad node id format")
 		}
 		e.Target = int(target)
 	case "label":
 		label, err := strconv.Unquote(value)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "bad label format")
 		}
 		e.Label = label
 	default:
@@ -181,7 +183,9 @@ func ParseGML(gml string) ([]*Graph, error) {
 				}
 				key := fields[0]
 				value := fields[1]
-				appendNodeField(n, key, value)
+				if err := appendNodeField(n, key, value); err != nil {
+					return nil, err
+				}
 			}
 			g.Nodes = append(g.Nodes, n)
 		}
@@ -211,7 +215,9 @@ func ParseGML(gml string) ([]*Graph, error) {
 				}
 				key := fields[0]
 				value := fields[1]
-				appendEdgeField(e, key, value)
+				if err := appendEdgeField(e, key, value); err != nil {
+					return nil, err
+				}
 			}
 
 			g.Edges = append(g.Edges, e)

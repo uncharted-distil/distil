@@ -229,12 +229,6 @@ func (s *SolutionRequest) Cancel() {
 	}
 }
 
-func (s *SolutionRequest) createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
-	datasetURI string, userAgent string) (*pipeline.SearchSolutionsRequest, error) {
-	return createSearchSolutionsRequest(columnIndex, preprocessing, datasetURI, userAgent, s.TargetFeature, s.Dataset,
-		s.Metrics, s.Task, int64(s.MaxTime), int64(s.MaxSolutions))
-}
-
 func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.PipelineDescription,
 	datasetURI string, userAgent string, targetFeature *model.Variable, dataset string, metrics []string, task []string,
 	maxTime int64, maxSolutions int64) (*pipeline.SearchSolutionsRequest, error) {
@@ -621,7 +615,9 @@ func (s *SolutionRequest) dispatchRequest(client *compute.Client, solutionStorag
 	if err != nil {
 		s.persistRequestError(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, err)
 	} else {
-		s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, compute.RequestCompletedStatus)
+		if err = s.persistRequestStatus(s.requestChannel, solutionStorage, searchContext.searchID, searchContext.dataset, compute.RequestCompletedStatus); err != nil {
+			log.Errorf("failed to persist status %s for search %s", compute.RequestCompletedStatus, searchContext.searchID)
+		}
 	}
 	close(s.requestChannel)
 
@@ -665,7 +661,6 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			}
 		}
 	}
-
 	// fetch the source dataset
 	dataset, err := metaStorage.FetchDataset(s.Dataset, true, true, false)
 	if err != nil {
@@ -736,7 +731,26 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		return err
 	}
 	s.Task = task.Task
-
+	// check if TimestampSplitValue is not 0
+	if s.TimestampSplitValue > 0 {
+		found := false
+		tempVars := variables
+		if len(featurizedVariables) > 0 {
+			tempVars = featurizedVariables
+		}
+		// update groupingVariable to the dateTime variable
+		for _, variable := range tempVars {
+			if variable.Type == model.DateTimeType {
+				groupingVariableIndex = variable.Index
+				found = true
+				break
+			}
+		}
+		// if not found return error, dateTime type required for split
+		if !found {
+			return errors.New("Timestamp value supplied but no dateTime type existing on dataset")
+		}
+	}
 	// when dealing with categorical data we want to stratify
 	stratify := model.IsCategorical(s.TargetFeature.Type)
 	// create the splitter to use for the train / test split

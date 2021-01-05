@@ -82,8 +82,11 @@ const (
 	// NDWI identifies a band mapping that displays Normalized Difference Water Index mapped using an RGB ramp.
 	NDWI = "ndwi"
 
-	// NDMI idenfifies a band mapping that display Normalized Difference Moisture Index mapped using an RGB ramp.
+	// NDMI identifies a band mapping that displays Normalized Difference Moisture Index mapped using an RGB ramp.
 	NDMI = "ndmi"
+
+	// NSMI identifies a band mapping that display Normalized Soil Moisture Index mapped using an RGB ramp.
+	NSMI = "nsmi"
 )
 
 // BandCombinationID uniquely identifies a band combination
@@ -149,6 +152,7 @@ func init() {
 		NDVI:                   {NDVI, "Normalized Difference Vegetation Index", []string{"b08", "b04"}, RedYellowGreenRamp, ClampedNormalizingTransform},
 		NDMI:                   {NDMI, "Normalized Difference Moisture Index ", []string{"b08", "b11"}, BlueYellowBrownRamp, NormalizingTransform},
 		NDWI:                   {NDWI, "Normalized Difference Water Index", []string{"b03", "b08"}, BlueYellowBrownRamp, NormalizingTransform},
+		NSMI:                   {NSMI, "Normalized Soil Moisture Index", []string{"b11", "b12"}, BlueYellowBrownRamp, NormalizingTransform},
 	}
 }
 
@@ -202,10 +206,9 @@ func ImageFromBands(paths []string, ramp []uint8, transform func(...uint16) floa
 		}
 	}
 	if imageScale.shouldScale() {
-		maxXSize = imageScale.Width
-		maxYSize = imageScale.Height
 		width, height := getMaxDimensions(&bandImages)
 		aspectRatio := float64(height) / float64(width)
+		maxXSize = imageScale.Width
 		maxYSize = int(float64(maxXSize) * aspectRatio)
 	} else {
 		maxXSize, maxYSize = getMaxDimensions(&bandImages)

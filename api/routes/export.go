@@ -103,9 +103,6 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 			return
 		}
 
-		// Expand any grouped variables defined in filters into their subcomponents
-		dataset := predictResult.Dataset
-
 		// if no result, return an empty map
 		if predictResult == nil {
 			err = handleJSON(w, make(map[string]interface{}))
@@ -114,6 +111,9 @@ func ExportResultHandler(solutionCtor api.SolutionStorageCtor, dataCtor api.Data
 			}
 			return
 		}
+
+		// Expand any grouped variables defined in filters into their subcomponents
+		dataset := predictResult.Dataset
 
 		ds, err := meta.FetchDataset(dataset, false, false, false)
 		if err != nil {

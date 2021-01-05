@@ -17,14 +17,15 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/jackc/pgx/v4"
-	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil-compute/model"
-	api "github.com/uncharted-distil/distil/api/model"
 	"math"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/jackc/pgx/v4"
+	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/model"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 // TimeSeriesField defines behaviour for the timeseries field type.
@@ -186,7 +187,6 @@ func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) (map[string][]*
 	result := map[string][]*api.TimeseriesObservation{}
 	if rows != nil {
 		for rows.Next() {
-			arr := []*api.TimeseriesObservation{}
 			time := []time.Time{}
 			vals := []float64{}
 			var explainValues []api.SolutionExplainValues
@@ -195,7 +195,7 @@ func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) (map[string][]*
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to parse row result")
 			}
-			result[key] = []*api.TimeseriesObservation{}
+			arr := []*api.TimeseriesObservation{}
 			for i := range time {
 				arr = append(arr, &api.TimeseriesObservation{
 					Value:          api.NullableFloat64(vals[i]),
@@ -204,6 +204,7 @@ func (s *Storage) parseDateTimeTimeseriesForecast(rows pgx.Rows) (map[string][]*
 					ConfidenceHigh: api.NullableFloat64(explainValues[i].HighConfidence),
 				})
 			}
+			result[key] = arr
 		}
 		err := rows.Err()
 		if err != nil {
@@ -332,7 +333,7 @@ func (s *Storage) parseDateTimeSet(rows pgx.Rows) (*map[time.Time]float64, *[]ti
 	if rows != nil {
 		defer rows.Close()
 	}
-	if rows.Next() == false {
+	if !rows.Next() {
 		return nil, nil, errors.New("no rows returned from database")
 	}
 	timeArr := []time.Time{}
@@ -356,7 +357,7 @@ func (s *Storage) parseTimeSet(rows pgx.Rows) (*map[float64]float64, *[]float64,
 		defer rows.Close()
 	}
 	timeArr := []float64{}
-	if rows.Next() == false {
+	if !rows.Next() {
 		return nil, nil, errors.New("no rows returned from database")
 	}
 	err := rows.Scan(&timeArr)
@@ -582,12 +583,6 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	joins := make([]*joinDefinition, 0)
 	wheres := []string{}
 	params := []interface{}{}
-	if filtersSplit.correctnessFilter != nil {
-
-	}
-	if filtersSplit.predictedFilter != nil {
-
-	}
 	if filtersSplit.residualFilter != nil {
 		wheres, params, err = f.Storage.buildErrorResultWhere(wheres, params, filtersSplit.residualFilter)
 		if err != nil {

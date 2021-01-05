@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint need to update to new protobuf api
 	"github.com/mattn/go-isatty"
 	"github.com/mgutz/ansi"
 	log "github.com/unchartedsoftware/plog"
@@ -44,11 +44,11 @@ func newRequestLogger() *requestLogger {
 
 func (r *requestLogger) write(color string, format string, args ...interface{}) {
 	if r.colorTTY {
-		fmt.Fprintf(r.buf, color)
+		fmt.Fprint(r.buf, color)
 	}
 	fmt.Fprintf(r.buf, format, args...)
 	if r.colorTTY {
-		fmt.Fprintf(r.buf, ansi.Reset)
+		fmt.Fprint(r.buf, ansi.Reset)
 	}
 }
 

@@ -34,11 +34,6 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
-var (
-	splitterBasic      *basicSplitter
-	splitterTimeseries *timeseriesSplitter
-)
-
 type datasetSplitter interface {
 	split(data [][]string) ([][]string, [][]string, error)
 	hash(schemaFile string, params ...interface{}) (uint64, error)
@@ -405,7 +400,14 @@ func createSplitter(taskType []string, targetFieldIndex int, groupingFieldIndex 
 			}
 		}
 	}
-
+	// if not null
+	if timestampValueSplit > 0 {
+		return &timeseriesSplitter{
+			timeseriesCol:       groupingFieldIndex,
+			trainTestSplit:      trainTestSplit,
+			timestampValueSplit: timestampValueSplit,
+		}
+	}
 	// build row limits
 	config, _ := env.LoadConfig()
 	limits := rowLimits{

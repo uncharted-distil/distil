@@ -134,10 +134,16 @@ func (s *Storage) isColumnType(tableName string, variable *model.Variable, colTy
 	// create transaction
 	tx, err := s.client.Begin()
 	if err != nil {
-		tx.Rollback(context.Background())
+		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
+			log.Error("rollback failed")
+		}
 		return false
 	}
-	defer tx.Rollback(context.Background())
+	defer func() {
+		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
+			log.Error("rollback failed")
+		}
+	}()
 	// create temp view
 	_, err = tx.Exec(context.Background(), viewQuery)
 	if err != nil {
@@ -145,10 +151,7 @@ func (s *Storage) isColumnType(tableName string, variable *model.Variable, colTy
 	}
 	// test to see if the data can fit into the type
 	_, err = tx.Exec(context.Background(), testQuery)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // VerifyData checks each column in the table against every supported type, then updates what types are valid in the SuggestedType

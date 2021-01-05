@@ -15,13 +15,13 @@ import store, { DistilState } from "../store";
 import {
   ModelQuality,
   Predictions,
+  PredictStatus,
+  QueryStatus,
   RequestState,
   Solution,
   SolutionRequest,
-  SolutionStatus,
-  PredictStatus,
   SolutionRequestStatus,
-  QueryStatus,
+  SolutionStatus,
 } from "./index";
 import { mutations } from "./module";
 
@@ -54,6 +54,7 @@ interface SolutionRequestMsg {
   quality: ModelQuality;
   filters: FilterParams;
   trainTestSplit: number;
+  timestampSplitValue?: number;
 }
 
 // Solution status message used in web socket context
@@ -547,6 +548,7 @@ export const actions = {
         quality: request.quality,
         filters: request.filters,
         trainTestSplit: request.trainTestSplit,
+        timestampSplitValue: request.timestampSplitValue,
       });
     });
   },

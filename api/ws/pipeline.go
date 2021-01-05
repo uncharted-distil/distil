@@ -424,10 +424,9 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		DataStorage:      dataStorage,
 		SolutionStorage:  solutionStorage,
 		ModelStorage:     modelStorage,
-		DatasetIngested:  false,
-		DatasetImported:  false,
 		Config:           &config,
 		IngestConfig:     ingestConfig,
+		SourceDatasetID:  meta.ID,
 	}
 
 	ds, err := createPredictionDataset(requestTask, request, predictParams)
@@ -437,8 +436,31 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 	}
 	predictParams.DatasetConstructor = ds
 
+	// import the dataset
+	datasetName, datasetPath, err := task.ImportPredictionDataset(predictParams)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+	predictParams.Dataset = datasetName
+	predictParams.SchemaPath = datasetPath
+
+	// ingest the dataset
+	err = task.IngestPredictionDataset(predictParams)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
 	// run predictions - synchronous call for now
-	result, err := task.Predict(predictParams)
+	resultID, err := task.Predict(predictParams)
+	if err != nil {
+		handleErr(conn, msg, err)
+		return
+	}
+
+	// read the results from the database
+	result, err := solutionStorage.FetchPredictionResultByProduceRequestID(resultID)
 	if err != nil {
 		handleErr(conn, msg, err)
 		return

@@ -17,6 +17,8 @@ package task
 
 import (
 	"fmt"
+	"path"
+
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -24,13 +26,11 @@ import (
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/serialization"
-	"path"
 )
 
 const (
 	// image retrieval primitive has hardcoded field name
 	queryFieldName = "annotations"
-	score          = "score"
 )
 
 // QueryParams helper struct to simplify query task calling.

@@ -133,9 +133,6 @@ type IngestResult struct {
 // IngestDataset executes the complete ingest process for the specified dataset.
 func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorageCtor, metaCtor api.MetadataStorageCtor,
 	dataset string, origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, steps *IngestSteps) (*IngestResult, error) {
-	// Set the probability threshold
-	metadata.SetTypeProbabilityThreshold(config.ClassificationProbabilityThreshold)
-
 	metaStorage, err := metaCtor()
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to initialize metadata storage")
@@ -151,7 +148,7 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 	originalSchemaFile := path.Join(sourceFolder, config.SchemaPathRelative)
 	latestSchemaOutput := originalSchemaFile
 
-	output := latestSchemaOutput
+	var output string
 	if config.ClusteringEnabled {
 		output, err = ClusterDataset(latestSchemaOutput, dataset, config)
 		if err != nil {
@@ -478,9 +475,9 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 
 	// Drop the current table if requested.
 	// Hardcoded the base table name for now.
-	pg.DropView(dbTable)
-	pg.DropTable(fmt.Sprintf("%s%s", dbTable, baseTableSuffix))
-	pg.DropTable(fmt.Sprintf("%s%s", dbTable, explainTableSuffix))
+	_ = pg.DropView(dbTable)
+	_ = pg.DropTable(fmt.Sprintf("%s%s", dbTable, baseTableSuffix))
+	_ = pg.DropTable(fmt.Sprintf("%s%s", dbTable, explainTableSuffix))
 
 	// Create the database table.
 	ds, err := pg.InitializeDataset(meta)

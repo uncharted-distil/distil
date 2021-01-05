@@ -64,6 +64,7 @@ type Config struct {
 	MinTestRows                        int     `env:"MIN_TEST_ROWS" envDefault:"100"`
 	PipelineCacheFilename              string  `env:"PIPELINE_CACHE_FILENAME" envDefault:"cache.bin"`
 	PipelineQueueSize                  int     `env:"PIPELINE_QUEUE_SIZE" envDefault:"10"`
+	PoolFeatures                       bool    `env:"POOL_FEATURES" envDefault:"true"`
 	PostgresBatchSize                  int     `env:"PG_BATCH_SIZE" envDefault:"1000"`
 	PostgresDatabase                   string  `env:"PG_DATABASE" envDefault:"distil"`
 	PostgresHost                       string  `env:"PG_HOST" envDefault:"localhost"`

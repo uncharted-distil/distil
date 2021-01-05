@@ -25,6 +25,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/postgres"
+	log "github.com/unchartedsoftware/plog"
 )
 
 const (
@@ -71,7 +72,7 @@ func (s *Storage) CloneDataset(dataset string, storageName string, datasetNew st
 	}
 
 	// need to create the view for the cloned dataset
-	fields, err := s.getExistingFields(dataset)
+	fields, err := s.getExistingFields(dataset, storageNameNew)
 	if err != nil {
 		return err
 	}
@@ -110,7 +111,7 @@ func (s *Storage) getViewField(fieldSelect string, displayName string, typ strin
 }
 
 func (s *Storage) getDatabaseFields(tableName string) ([]string, error) {
-	sql := fmt.Sprintf("SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1;")
+	sql := "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1;"
 
 	res, err := s.client.Query(sql, tableName)
 	if err != nil {
@@ -133,15 +134,19 @@ func (s *Storage) getDatabaseFields(tableName string) ([]string, error) {
 	return cols, nil
 }
 
-func (s *Storage) getExistingFields(dataset string) (map[string]*model.Variable, error) {
+func (s *Storage) getExistingFields(dataset string, storageName string) (map[string]*model.Variable, error) {
 	vars, err := api.FetchDatasetVariables(dataset, s.metadata)
 	if err != nil {
 		return nil, err
 	}
 
+	// make sure they exist in the underlying database already
 	fields := make(map[string]*model.Variable)
 	for _, v := range vars {
-		fields[v.StorageName] = v
+		exists, _ := s.DoesVariableExist(dataset, storageName, v.StorageName)
+		if exists {
+			fields[v.StorageName] = v
+		}
 	}
 
 	return fields, nil
@@ -253,7 +258,7 @@ func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, 
 // Multiple simultaneous calls to the function can result in inaccurate.
 func (s *Storage) IsValidDataType(dataset string, storageName string, varName string, varType string) (bool, error) {
 	// get all existing fields to rebuild the view.
-	fields, err := s.getExistingFields(dataset)
+	fields, err := s.getExistingFields(dataset, storageName)
 	if err != nil {
 		return false, errors.Wrap(err, "Unable to read existing fields")
 	}
@@ -286,7 +291,7 @@ func (s *Storage) IsValidDataType(dataset string, storageName string, varName st
 // Multiple simultaneous calls to the function can result in discarded changes.
 func (s *Storage) SetDataType(dataset string, storageName string, varName string, varType string) error {
 	// get all existing fields to rebuild the view.
-	fields, err := s.getExistingFields(dataset)
+	fields, err := s.getExistingFields(dataset, storageName)
 	if err != nil {
 		return errors.Wrap(err, "Unable to read existing fields")
 	}
@@ -363,7 +368,7 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 	}
 
 	// recreate the view with the new column
-	fields, err := s.getExistingFields(dataset)
+	fields, err := s.getExistingFields(dataset, storageName)
 	if err != nil {
 		return errors.Wrap(err, "unable to read existing fields")
 	}
@@ -437,7 +442,7 @@ func (s *Storage) DeleteVariable(dataset string, storageName string, varName str
 	}
 
 	// recreate the view without the field if it is in it
-	fields, err := s.getExistingFields(dataset)
+	fields, err := s.getExistingFields(dataset, storageName)
 	if err != nil {
 		return errors.Wrap(err, "Unable to read existing fields")
 	}
@@ -519,11 +524,6 @@ func (s *Storage) insertBatchData(storageName string, varNames []string, inserts
 		}
 		batch.Queue(batchSQL, params...)
 
-		// append nil for remaining fields
-		for j := len(inserts[i]); j < fieldCount; j++ {
-			params = append(params, nil)
-		}
-
 		if batch.Len() > maxBatchSize {
 			// submit the batch
 			resBatch := s.batchClient.SendBatch(batch)
@@ -599,7 +599,7 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 
 	tx, err := s.batchClient.Begin()
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to create transaction")
 	}
 
@@ -609,13 +609,13 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 		tableNameTmp, model.D3MIndexName, varName)
 	_, err = tx.Exec(context.Background(), dataSQL)
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to create temp table")
 	}
 
 	err = s.insertBulkCopyTransaction(tx, tableNameTmp, []string{model.D3MIndexName, varName}, params)
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to insert into temp table")
 	}
 
@@ -624,7 +624,7 @@ func (s *Storage) UpdateVariableBatch(storageName string, varName string, update
 		"distil", "public", storageName, varName, varName, tableNameTmp, model.D3MIndexName, model.D3MIndexName)
 	_, err = tx.Exec(context.Background(), updateSQL)
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to update base data")
 	}
 
@@ -648,7 +648,7 @@ func (s *Storage) UpdateData(dataset string, storageName string, varName string,
 	// loop through the updates, building batches to minimize overhead
 	tx, err := s.batchClient.Begin()
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to create transaction")
 	}
 
@@ -657,13 +657,13 @@ func (s *Storage) UpdateData(dataset string, storageName string, varName string,
 		tableNameTmp, model.D3MIndexName, varName)
 	_, err = tx.Exec(context.Background(), dataSQL)
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to create temp table")
 	}
 
 	err = s.insertBulkCopyTransaction(tx, tableNameTmp, []string{model.D3MIndexName, varName}, params)
 	if err != nil {
-		tx.Rollback(context.Background())
+		_ = tx.Rollback(context.Background())
 		return errors.Wrap(err, "unable to insert into temp table")
 	}
 
@@ -677,7 +677,9 @@ func (s *Storage) UpdateData(dataset string, storageName string, varName string,
 		"distil", "public", storageName, varName, varName, tableNameTmp, strings.Join(wheres, " AND "))
 	_, err = tx.Exec(context.Background(), updateSQL, paramsFilter...)
 	if err != nil {
-		tx.Rollback(context.Background())
+		if rbErr := tx.Rollback(context.Background()); rbErr != nil {
+			log.Error("rollback failed")
+		}
 		return errors.Wrap(err, "unable to update base data")
 	}
 

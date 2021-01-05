@@ -85,7 +85,7 @@ func TestJoin(t *testing.T) {
 	cfg.D3MOutputDir = "test_data"
 	cfg.D3MInputDir = "test_data"
 	cfg.DatamartImportFolder = "test_data"
-	env.Initialize(&cfg)
+	assert.NoError(t, env.Initialize(&cfg))
 
 	leftJoin := &JoinSpec{
 		DatasetID:     "test_1",

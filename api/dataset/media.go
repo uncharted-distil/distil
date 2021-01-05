@@ -208,13 +208,11 @@ func loadMedia(filename string, typ string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		break
 	case "txt":
 		data, err = ioutil.ReadFile(filename)
 		if err != nil {
 			return nil, errors.Wrap(err, "unable to read file")
 		}
-		break
 	}
 
 	return data, nil
@@ -253,7 +251,7 @@ func toJPEG(img *image.Image) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func toPNG(img *image.Image) ([]byte, error) {
+func toPNG(img *image.Image) ([]byte, error) { //nolint
 	buf := new(bytes.Buffer)
 	if err := png.Encode(buf, *img); err != nil {
 		return nil, errors.Wrap(err, "unable to encode png")
