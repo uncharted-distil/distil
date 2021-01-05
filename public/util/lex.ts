@@ -160,7 +160,6 @@ export function filterParamsToLexQuery(
 export function lexQueryToFilters(lexQuery: any[][]): Filter[] {
   const filters = lexQuery[0].map((lq) => {
     const key = lq.field.key;
-    const displayKey = lq.config.displayKey;
     const displayKey = lq.field.displayKey;
     const type = lq.field.meta.type;
     const filter: Filter = {
