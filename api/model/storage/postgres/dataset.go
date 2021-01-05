@@ -72,7 +72,7 @@ func (s *Storage) CloneDataset(dataset string, storageName string, datasetNew st
 	}
 
 	// need to create the view for the cloned dataset
-	fields, err := s.getExistingFields(dataset, storageNameNew)
+	fields, err := s.getExistingFields(dataset, getBaseTableName(storageNameNew))
 	if err != nil {
 		return err
 	}
