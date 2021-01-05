@@ -474,9 +474,9 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 	}
 
 	// Drop the current table if requested.
-	// Hardcoded the base table name for now.
+	dbTableBase := fmt.Sprintf("%s%s", dbTable, baseTableSuffix)
 	_ = pg.DropView(dbTable)
-	_ = pg.DropTable(fmt.Sprintf("%s%s", dbTable, baseTableSuffix))
+	_ = pg.DropTable(dbTableBase)
 	_ = pg.DropTable(fmt.Sprintf("%s%s", dbTable, explainTableSuffix))
 
 	// Create the database table.
@@ -532,6 +532,17 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 	err = pg.InsertRemainingRows()
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest last rows")
+	}
+
+	log.Infof("checking if indices are necessary")
+	for _, v := range mainDR.Variables {
+		if model.IsGeoBounds(v.Type) {
+			log.Infof("creating index on %s", v.StorageName)
+			err = pg.CreateIndex(dbTableBase, v.StorageName, v.Type)
+			if err != nil {
+				return nil
+			}
+		}
 	}
 
 	log.Infof("all data ingested")
