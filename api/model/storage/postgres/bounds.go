@@ -81,7 +81,7 @@ func (f *BoundsField) FetchSummaryData(resultURI string, filterParams *api.Filte
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogram(filterParams, invert, coordinateBuckets)
 			if err != nil {
 				return nil, err
@@ -92,7 +92,7 @@ func (f *BoundsField) FetchSummaryData(resultURI string, filterParams *api.Filte
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, coordinateBuckets)
 			if err != nil {
 				return nil, err

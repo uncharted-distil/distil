@@ -93,7 +93,9 @@ func VariableSummaryHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.Da
 			}
 		}
 		if hasBand && isGeobounds {
-			filterParams.Filters = append(filterParams.Filters, model.NewTextFilter("band", "default", []string{"01"}))
+			boundsFilter := model.NewCategoricalFilter("band", model.IncludeFilter, []string{"01"})
+			boundsFilter.IsBaselineFilter = true
+			filterParams.Filters = append(filterParams.Filters, boundsFilter)
 		}
 
 		// fetch summary histogram

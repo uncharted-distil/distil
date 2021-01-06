@@ -61,7 +61,7 @@ func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resu
 	if err != nil {
 		return nil, err
 	}
-	if !filterParams.Empty() {
+	if !filterParams.Empty(true) {
 		filtered, err = s.fetchResidualsSummary(dataset, storageName, variable, resultURI, filterParams, extrema, api.MaxNumBuckets, mode)
 		if err != nil {
 			return nil, err

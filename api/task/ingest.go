@@ -311,6 +311,7 @@ func Featurize(originalSchemaFile string, schemaFile string, data api.DataStorag
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, storage api.MetadataStorage, dataset string, source metadata.DatasetSource,
 	origins []*model.DatasetOrigin, datasetType api.DatasetType, indexFields []string, config *IngestTaskConfig, checkMatch bool, verifyMetadata bool, fallbackMerged bool) (string, error) {
+	// TODO: A LOT OF THIS CODE SHOULD BE IN THE STORAGE PACKAGES!!!
 	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return "", err
@@ -681,7 +682,7 @@ func createIndices(pg *postgres.Database, datasetID string, fields []string, met
 	for _, fieldName := range fields {
 		field := mappedVariables[fieldName]
 		log.Infof("creating index on %s", field.StorageName)
-		err := pg.CreateIndex(meta.StorageName, field.StorageName, field.Type)
+		err := pg.CreateIndex(fmt.Sprintf("%s%s", meta.StorageName, baseTableSuffix), field.StorageName, field.Type)
 		if err != nil {
 			return err
 		}

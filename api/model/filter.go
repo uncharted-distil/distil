@@ -59,8 +59,13 @@ type FilterParams struct {
 }
 
 // Empty returns if the filter set is empty.
-func (f *FilterParams) Empty() bool {
-	return f.Filters == nil && f.Highlight == nil
+func (f *FilterParams) Empty(ignoreBaselineFilters bool) bool {
+	for _, filter := range f.Filters {
+		if !filter.IsBaselineFilter || !ignoreBaselineFilters {
+			return false
+		}
+	}
+	return f.Highlight == nil
 }
 
 // Clone returns a deep copy of the filter params.

@@ -97,7 +97,7 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogram(filterParams, invert, api.MaxNumBuckets)
 			if err != nil {
 				return nil, err
@@ -108,7 +108,7 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, extrema, api.MaxNumBuckets)
 			if err != nil {
 				return nil, err
@@ -438,7 +438,7 @@ func (f *NumericalField) FetchPredictedSummaryData(resultURI string, datasetResu
 	if err != nil {
 		return nil, err
 	}
-	if !filterParams.Empty() {
+	if !filterParams.Empty(true) {
 		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema, api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
