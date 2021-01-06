@@ -101,6 +101,8 @@ type DataStorage interface {
 
 	// CloneDataset creates a copy of an existing dataset
 	CloneDataset(dataset string, storageName string, datasetNew string, storageNameNew string) error
+	// DeleteDataset drops all tables associated to storageName
+	DeleteDataset(storageName string) error
 }
 
 // SolutionStorageCtor represents a client constructor to instantiate a

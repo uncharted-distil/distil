@@ -105,6 +105,8 @@ export interface Dataset {
   source: string;
   joinSuggestion?: JoinSuggestion[];
   joinScore?: number;
+  storageName?: string;
+  clone?: boolean;
   type: string;
 }
 

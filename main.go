@@ -292,7 +292,7 @@ func main() {
 	registerRoutePost(mux, "/distil/timeseries-forecast/:truthDataset/:forecastDataset/:timeseriesColName/:xColName/:yColName/:timeseriesURI/:result-uuid", routes.TimeseriesForecastHandler(esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, config.TrainTestSplitTimeSeries))
 	registerRoutePost(mux, "/distil/event", routes.UserEventHandler(discoveryLogger))
 	registerRoutePost(mux, "/distil/save/:solution-id/:fitted", routes.SaveHandler(esExportedModelStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor))
-
+	registerRoutePost(mux, "/distil/delete-dataset/:dataset", routes.DeletingDatasetHandler(esMetadataStorageCtor, pgDataStorageCtor))
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:file", routes.ImageHandler(esMetadataStorageCtor, &config))
 	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.D3MInputDir))

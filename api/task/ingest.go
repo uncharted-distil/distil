@@ -313,7 +313,8 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 	if err != nil {
 		return "", err
 	}
-
+	// original datasets should NOT be changed
+	meta.Immutable = true
 	if !config.IngestOverwrite {
 		// get the unique name, and if it is different then write out the updated metadata
 		uniqueName, err := getUniqueDatasetName(meta, storage)
@@ -428,7 +429,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 			}
 		}
 	}
-
+	meta.Immutable = true
 	// Ingest the dataset info into the metadata storage
 	err = storage.IngestDataset(source, meta)
 	if err != nil {
