@@ -93,7 +93,12 @@ func VariableSummaryHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.Da
 			}
 		}
 		if hasBand && isGeobounds {
-			boundsFilter := model.NewCategoricalFilter("band", model.IncludeFilter, []string{"01"})
+			// if inverting the filter, then invert the mode
+			mode := model.IncludeFilter
+			if invertBool {
+				mode = model.ExcludeFilter
+			}
+			boundsFilter := model.NewCategoricalFilter("band", mode, []string{"01"})
 			boundsFilter.IsBaselineFilter = true
 			filterParams.Filters = append(filterParams.Filters, boundsFilter)
 		}
