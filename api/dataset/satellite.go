@@ -455,3 +455,8 @@ func CreateGeoBoundsGrouping() map[string]interface{} {
 
 	return grouping
 }
+
+// GetSatelliteIndexFields lists the fields to index for satellite datasets.
+func GetSatelliteIndexFields() []string {
+	return []string{"band", "__geo_coordinates"}
+}
