@@ -192,18 +192,19 @@ func RemoveContents(dir string, includeParent bool) error {
 		return err
 	}
 	defer d.Close()
+	if includeParent {
+		err = os.RemoveAll(dir)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 	names, err := d.Readdirnames(-1)
 	if err != nil {
 		return err
 	}
 	for _, name := range names {
 		err = os.RemoveAll(filepath.Join(dir, name))
-		if err != nil {
-			return err
-		}
-	}
-	if includeParent {
-		err = os.RemoveAll(dir)
 		if err != nil {
 			return err
 		}
