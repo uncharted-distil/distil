@@ -457,7 +457,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 				}
 				weightedValues[predictedCol].Rank = api.NullableFloat64(explainValuesParsed.Rank)
 				weightedValues[predictedCol].Confidence = api.NullableFloat64(explainValuesParsed.Confidence)
-			} else {
+			} else if predictedCol >= 0 {
 				weightedValues[predictedCol].Confidence = api.NullableFloat64(math.NaN())
 			}
 			result.Values = append(result.Values, weightedValues)
