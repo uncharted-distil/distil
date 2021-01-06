@@ -54,7 +54,10 @@ func CloningHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 			handleError(w, err)
 			return
 		}
-
+		if ds.Clone {
+			handleError(w, errors.New("Cannot make a clone of a clone"))
+			return
+		}
 		datasetClone, err := task.GetUniqueOutputFolder(fmt.Sprintf("%s_clone", dataset), env.GetAugmentedPath())
 		if err != nil {
 			handleError(w, err)

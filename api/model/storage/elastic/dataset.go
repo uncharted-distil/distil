@@ -48,8 +48,12 @@ func (s *Storage) CloneDataset(dataset string, datasetNew string, storageNameNew
 	// update the id to match the new info
 	ds.ID = datasetNew
 	ds.StorageName = storageNameNew
+	ds.Name = datasetNew
 	ds.Folder = folderNew
 	ds.Source = metadata.Augmented
+	// cloned datasets CAN be altered
+	ds.Immutable = false
+	ds.Clone = true
 
 	return s.UpdateDataset(ds)
 }
@@ -158,7 +162,7 @@ func (s *Storage) IngestDataset(datasetSource metadata.DatasetSource, meta *mode
 
 // DeleteDataset deletes a dataset from ES.
 func (s *Storage) DeleteDataset(dataset string) error {
-	_, err := s.client.Delete().Index(s.datasetIndex).Id(dataset).Do(context.Background())
+	_, err := s.client.Delete().Index(s.datasetIndex).Id(dataset).Refresh("true").Do(context.Background())
 
 	return err
 }

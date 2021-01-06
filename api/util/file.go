@@ -185,13 +185,20 @@ func CopyFile(sourceFile string, destinationFile string) error {
 	return nil
 }
 
-// RemoveContents removes the files and directories from the supplied parent.
-func RemoveContents(dir string) error {
+// RemoveContents removes the files and directories from the supplied parent. includeParent will remove the parent directory as well if true
+func RemoveContents(dir string, includeParent bool) error {
 	d, err := os.Open(dir)
 	if err != nil {
 		return err
 	}
 	defer d.Close()
+	if includeParent {
+		err = os.RemoveAll(dir)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 	names, err := d.Readdirnames(-1)
 	if err != nil {
 		return err

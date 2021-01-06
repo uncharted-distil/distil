@@ -84,7 +84,51 @@ func (s *Storage) CloneDataset(dataset string, storageName string, datasetNew st
 
 	return nil
 }
-
+// DeleteDataset drops all tables associated to the dataset
+func (s *Storage) DeleteDataset(storageName string) error {
+	// drop view
+	err := s.dropView(storageName)
+	if err != nil {
+		return err
+	}
+	// drop base table
+	err = s.dropTable(getBaseTableName(storageName))
+	if err != nil {
+		return err
+	}
+	// drop variable table
+	err = s.dropTable(getVariableTableName(storageName))
+	if err != nil {
+		return err
+	}
+	// drop result table
+	err = s.dropTable(s.getResultTable(storageName))
+	if err != nil {
+		return err
+	}
+	// drop explanation table
+	err = s.dropTable(s.getSolutionFeatureWeightTable(storageName))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (s *Storage) dropView(view string) error{
+	sql := fmt.Sprintf("DROP VIEW IF EXISTS %s", view)
+	_, err := s.client.Exec(sql)
+	if err != nil {
+		return errors.Wrapf(err, "unable to drop table")
+	}
+	return nil
+}
+func (s *Storage) dropTable(table string) error{
+	sql := fmt.Sprintf("DROP TABLE IF EXISTS %s", table)
+	_, err := s.client.Exec(sql)
+	if err != nil {
+		return errors.Wrapf(err, "unable to drop table")
+	}
+	return nil
+}
 func (s *Storage) cloneTable(existingTable string, newTable string, copyData bool) error {
 	sql := fmt.Sprintf("CREATE TABLE %s AS TABLE %s", newTable, existingTable)
 	if !copyData {

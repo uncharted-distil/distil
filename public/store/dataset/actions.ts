@@ -94,7 +94,24 @@ export const actions = {
       mutations.setDatasets(context, []);
     }
   },
-
+  async deleteDataset(
+    context: DatasetContext,
+    payload: { dataset: string; terms: string }
+  ): Promise<void> {
+    if (!payload.dataset) {
+      return;
+    }
+    try {
+      // delete dataset
+      const response = await axios.post(
+        `/distil/delete-dataset/${payload.dataset}`
+      );
+      // update current list of datasets
+      await actions.searchDatasets(context, payload.terms);
+    } catch (err) {
+      console.error(err);
+    }
+  },
   // fetches all variables for a single dataset.
   async fetchVariables(
     context: DatasetContext,

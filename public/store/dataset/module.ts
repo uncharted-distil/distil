@@ -99,6 +99,7 @@ export const getters = {
 export const actions = {
   // dataset
   fetchDataset: dispatch(moduleActions.fetchDataset),
+  deleteDataset: dispatch(moduleActions.deleteDataset),
   searchDatasets: dispatch(moduleActions.searchDatasets),
   geocodeVariable: dispatch(moduleActions.geocodeVariable),
   importDataset: dispatch(moduleActions.importDataset),

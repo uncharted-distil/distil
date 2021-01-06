@@ -220,9 +220,8 @@ export default Vue.extend({
       return routeGetters.getDecodedTrainingVariableNames(this.$store);
     },
     isClone(): boolean {
-      return this.variables.some((v) => {
-        return v.colName === LOW_SHOT_LABEL_COLUMN_NAME;
-      });
+      const datasets = datasetGetters.getDatasets(this.$store);
+      return datasets.find((d) => d.id === this.dataset).clone;
     },
   },
   watch: {
