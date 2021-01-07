@@ -20,13 +20,13 @@
       <a class="nav-link"><b>Rows:</b> {{ dataset.numRows }}</a>
       <a class="nav-link"><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</a>
       <b-button
-        v-if="!dataset.immutable"
-        class="delete-button"
+        v-if="!dataset.immutable && !isImportReady"
+        variant="danger"
         data-toggle="tooltip"
         title="Delete dataset"
         @click.stop="onDeleteClicked(dataset)"
       >
-        <i class="fa fa-times text-danger" aria-hidden="true" />
+        <i class="fa fa-trash" aria-hidden="true"></i>
       </b-button>
       <a v-if="isImportReady">
         <b-button
