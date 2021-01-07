@@ -1,5 +1,5 @@
 <template>
-  <div class="mosaic-container">
+  <div class="mosaic-container" @keyup="shiftRelease">
     <div class="image-mosaic">
       <template v-for="imageField in imageFields">
         <template v-for="(item, idx) in paginatedItems">
@@ -12,7 +12,8 @@
                 :image-url="item[fieldKey].value"
                 :width="imageWidth"
                 :height="imageHeight"
-                :on-click="onImageClick"
+                @click="onImageClick"
+                @shift-click="onImageShiftClick"
                 :type="imageField.type"
                 :key="fieldKey"
                 uniqueTrail="mosaic"
@@ -46,7 +47,6 @@
 
 <script lang="ts">
 import Vue from "vue";
-import _ from "lodash";
 import ImageLabel from "./ImageLabel.vue";
 import ImagePreview from "./ImagePreview.vue";
 import {
@@ -63,6 +63,7 @@ import {
   removeRowSelection,
   isRowSelected,
   updateTableRowSelection,
+  bulkRowSelectionUpdate,
 } from "../util/row";
 import { getImageFields } from "../util/data";
 
@@ -86,9 +87,15 @@ export default Vue.extend({
       imageHeight: 128,
       currentPage: 1,
       perPage: 100,
+      shiftClickInfo: { first: null, second: null },
     };
   },
-
+  destroyed() {
+    window.removeEventListener("keyup", this.shiftRelease);
+  },
+  mounted() {
+    window.addEventListener("keyup", this.shiftRelease);
+  },
   computed: {
     items(): TableRow[] {
       if (this.dataItems) {
@@ -137,6 +144,14 @@ export default Vue.extend({
   },
 
   methods: {
+    selectAll() {
+      bulkRowSelectionUpdate(
+        this.$router,
+        this.instanceName,
+        this.rowSelection,
+        this.paginatedItems.map((pi) => pi.d3mIndex)
+      );
+    },
     onImageClick(event: any) {
       if (!isRowSelected(this.rowSelection, event.row[D3M_INDEX_FIELD])) {
         addRowSelection(
@@ -153,6 +168,43 @@ export default Vue.extend({
           event.row[D3M_INDEX_FIELD]
         );
       }
+    },
+    onImageShiftClick(data: TableRow) {
+      if (this.shiftClickInfo.first !== null) {
+        this.shiftClickInfo.second = this.items.findIndex(
+          (x) => x.d3mIndex === data.d3mIndex
+        );
+        this.onShiftSelect();
+        return;
+      }
+      this.shiftClickInfo.first = this.items.findIndex(
+        (x) => x.d3mIndex === data.d3mIndex
+      );
+    },
+    onShiftSelect() {
+      const start = Math.min(
+        this.shiftClickInfo.second,
+        this.shiftClickInfo.first
+      );
+      const end =
+        Math.max(this.shiftClickInfo.second, this.shiftClickInfo.first) + 1; // +1 deals with slicing being exclusive
+      const subSet = this.items.slice(start, end).map((item) => item.d3mIndex);
+      this.resetShiftClickInfo();
+      bulkRowSelectionUpdate(
+        this.$router,
+        this.instanceName,
+        this.rowSelection,
+        subSet
+      );
+    },
+    shiftRelease(event) {
+      if (event.key === "Shift") {
+        this.resetShiftClickInfo();
+      }
+    },
+    resetShiftClickInfo() {
+      this.shiftClickInfo.first = null;
+      this.shiftClickInfo.second = null;
     },
   },
 });
