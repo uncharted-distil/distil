@@ -1,7 +1,10 @@
 <template>
   <div class="h-75">
     <div class="d-flex justify-content-around m-1">
-      <label-header-buttons @button-event="onAnnotationClicked" />
+      <label-header-buttons
+        @button-event="onAnnotationClicked"
+        @select-all="onSelectAll"
+      />
       <view-type-toggle
         v-model="viewTypeModel"
         :variables="variables"
@@ -11,6 +14,7 @@
     <div class="label-data-container">
       <component
         :is="viewComponent"
+        ref="dataView"
         :data-fields="dataFields"
         :data-items="dataItems"
         :instance-name="instanceName"
@@ -50,7 +54,9 @@ import LabelHeaderButtons from "./LabelHeaderButtons.vue";
 const GEO_VIEW = "geo";
 const IMAGE_VIEW = "image";
 const TABLE_VIEW = "table";
-
+interface DataView {
+  selectAll: () => void;
+}
 export default Vue.extend({
   name: "labeling-data-slot",
   components: {
@@ -131,6 +137,10 @@ export default Vue.extend({
         return;
       }
       this.$emit(this.eventLabel, label);
+    },
+    onSelectAll() {
+      const dataView = (this.$refs.dataView as unknown) as DataView;
+      dataView.selectAll();
     },
   },
 });
