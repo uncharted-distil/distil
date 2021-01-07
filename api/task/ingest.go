@@ -74,6 +74,7 @@ type IngestTaskConfig struct {
 type IngestSteps struct {
 	ClassificationOverwrite bool
 	RawGroupings            []map[string]interface{}
+	IndexFields             []string
 }
 
 // NewDefaultClient creates a new client to use when submitting pipelines.
@@ -235,7 +236,8 @@ func IngestDataset(datasetSource metadata.DatasetSource, dataCtor api.DataStorag
 		log.Infof("finished sampling dataset")
 	}
 
-	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, dataStorage, metaStorage, dataset, datasetSource, origins, datasetType, config, true, !definitiveClassification, true)
+	datasetID, err := Ingest(originalSchemaFile, latestSchemaOutput, dataStorage, metaStorage, dataset,
+		datasetSource, origins, datasetType, steps.IndexFields, config, true, !definitiveClassification, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to ingest ranked data")
 	}
@@ -308,7 +310,8 @@ func Featurize(originalSchemaFile string, schemaFile string, data api.DataStorag
 
 // Ingest the metadata to ES and the data to Postgres.
 func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, storage api.MetadataStorage, dataset string, source metadata.DatasetSource,
-	origins []*model.DatasetOrigin, datasetType api.DatasetType, config *IngestTaskConfig, checkMatch bool, verifyMetadata bool, fallbackMerged bool) (string, error) {
+	origins []*model.DatasetOrigin, datasetType api.DatasetType, indexFields []string, config *IngestTaskConfig, checkMatch bool, verifyMetadata bool, fallbackMerged bool) (string, error) {
+	// TODO: A LOT OF THIS CODE SHOULD BE IN THE STORAGE PACKAGES!!!
 	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, verifyMetadata, fallbackMerged)
 	if err != nil {
 		return "", err
@@ -375,7 +378,7 @@ func Ingest(originalSchemaFile string, schemaFile string, data api.DataStorage, 
 	}
 
 	// ingest the data
-	err = IngestPostgres(originalSchemaFile, schemaFile, source, config, verifyMetadata, false, fallbackMerged)
+	err = IngestPostgres(originalSchemaFile, schemaFile, source, indexFields, config, verifyMetadata, false, fallbackMerged)
 	if err != nil {
 		return "", err
 	}
@@ -442,7 +445,7 @@ func IngestMetadata(originalSchemaFile string, schemaFile string, data api.DataS
 }
 
 // IngestPostgres ingests a dataset to PG storage.
-func IngestPostgres(originalSchemaFile string, schemaFile string, source metadata.DatasetSource,
+func IngestPostgres(originalSchemaFile string, schemaFile string, source metadata.DatasetSource, indexFields []string,
 	config *IngestTaskConfig, verifyMetadata bool, createMetadataTables bool, fallbackMerged bool) error {
 	_, meta, err := loadMetadataForIngest(originalSchemaFile, schemaFile, source, nil, config, verifyMetadata, fallbackMerged)
 	if err != nil {
@@ -475,9 +478,9 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 	}
 
 	// Drop the current table if requested.
-	// Hardcoded the base table name for now.
+	dbTableBase := fmt.Sprintf("%s%s", dbTable, baseTableSuffix)
 	_ = pg.DropView(dbTable)
-	_ = pg.DropTable(fmt.Sprintf("%s%s", dbTable, baseTableSuffix))
+	_ = pg.DropTable(dbTableBase)
 	_ = pg.DropTable(fmt.Sprintf("%s%s", dbTable, explainTableSuffix))
 
 	// Create the database table.
@@ -533,6 +536,12 @@ func IngestPostgres(originalSchemaFile string, schemaFile string, source metadat
 	err = pg.InsertRemainingRows()
 	if err != nil {
 		return errors.Wrap(err, "unable to ingest last rows")
+	}
+
+	log.Infof("checking if indices are necessary")
+	err = createIndices(pg, meta.ID, indexFields, meta, config)
+	if err != nil {
+		return err
 	}
 
 	log.Infof("all data ingested")
@@ -664,4 +673,30 @@ func getUniqueDatasetName(meta *model.Metadata, storage api.MetadataStorage) (st
 	}
 
 	return getUniqueString(meta.Name, datasetNames), nil
+}
+
+func createIndices(pg *postgres.Database, datasetID string, fields []string, meta *model.Metadata, config *IngestTaskConfig) error {
+	// build variable lookup
+	mappedVariables := mapVariables(meta.GetMainDataResource().Variables, func(variable *model.Variable) string { return variable.StorageName })
+
+	// create indices for flagged fields
+	for _, fieldName := range fields {
+		field := mappedVariables[fieldName]
+		log.Infof("creating index on %s", field.StorageName)
+		err := pg.CreateIndex(fmt.Sprintf("%s%s", meta.StorageName, baseTableSuffix), field.StorageName, field.Type)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func mapVariables(variables []*model.Variable, mapper func(variable *model.Variable) string) map[string]*model.Variable {
+	mapped := map[string]*model.Variable{}
+	for _, d := range variables {
+		mapped[mapper(d)] = d
+	}
+
+	return mapped
 }

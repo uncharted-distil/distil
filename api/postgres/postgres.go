@@ -825,3 +825,28 @@ func GetValidTypes() []string {
 		dataTypeLon,
 		dataTypeImageExt}
 }
+
+// GetIndexStatement returns the index SQL statement for a field of the provided type.
+func GetIndexStatement(tableName string, fieldName string, typ string) string {
+	typeSQL := ""
+	switch typ {
+	case model.GeoBoundsType:
+		typeSQL = fmt.Sprintf("USING GIST(\"%s\")", fieldName)
+	default:
+		typeSQL = fmt.Sprintf("(\"%s\")", fieldName)
+	}
+
+	return fmt.Sprintf("CREATE INDEX \"%s_%s\" ON \"%s\" %s;", tableName, fieldName, tableName, typeSQL)
+}
+
+// CreateIndex will create an index in postgres on the specified field.
+func (d *Database) CreateIndex(tableName string, fieldName string, typ string) error {
+	sql := GetIndexStatement(tableName, fieldName, typ)
+
+	_, err := d.Client.Exec(sql)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create postgres index")
+	}
+
+	return nil
+}
