@@ -35,7 +35,8 @@
       class="mb-3"
       :variables="variables"
       :filters="routeFilters"
-      @lex-query="updateFilterFromLexQuery"
+      :highlight="routeHighlight"
+      @lex-query="updateFilterAndHighlightFromLexQuery"
     />
 
     <div class="table-title-container">
@@ -129,7 +130,7 @@ import {
   INCLUDE_FILTER,
 } from "../util/filters";
 import { clearHighlight, createFilterFromHighlight } from "../util/highlights";
-import { lexQueryToFilters } from "../util/lex";
+import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import {
   clearRowSelection,
   getNumIncludedRows,
@@ -278,6 +279,10 @@ export default Vue.extend({
       return routeGetters.getRouteFilters(this.$store);
     },
 
+    routeHighlight(): string {
+      return routeGetters.getRouteHighlight(this.$store);
+    },
+
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
@@ -314,9 +319,9 @@ export default Vue.extend({
   },
 
   methods: {
-    updateFilterFromLexQuery(lexQuery) {
-      const updatedFilter = lexQueryToFilters(lexQuery);
-      deepUpdateFiltersInRoute(this.$router, updatedFilter);
+    updateFilterAndHighlightFromLexQuery(lexQuery) {
+      const lqfh = lexQueryToFiltersAndHighlight(lexQuery);
+      deepUpdateFiltersInRoute(this.$router, lqfh.filters);
     },
 
     onExcludeClick() {

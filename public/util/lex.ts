@@ -1,5 +1,6 @@
 import {
   GeoCoordinateGrouping,
+  Highlight,
   TimeseriesGrouping,
   Variable,
 } from "../store/dataset";
@@ -37,10 +38,14 @@ import {
   ValueStateValue,
   RelationState,
 } from "@uncharted.software/lex";
+import { decodeHighlights, createFilterFromHighlight } from "./highlights";
+
+const HIGHLIGHT = "highlight";
 
 const distilRelationOptions = [
   [INCLUDE_FILTER, "="],
   [EXCLUDE_FILTER, "≠"],
+  [HIGHLIGHT, "☀"],
 ].map((o) => new ValueStateValue(o[0], {}, { displayKey: o[1] }));
 
 class DistilRelationState extends RelationState {
@@ -113,16 +118,30 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
 
 export function filterParamsToLexQuery(
   filter: string,
+  highlight: string,
   allVariables: Variable[]
 ) {
-  const filters = decodeFilters(filter);
+  const decodedFilters = decodeFilters(filter).filter((f) => f.type !== "row");
+  const decodedHighlight =
+    highlight &&
+    createFilterFromHighlight(decodeHighlights(highlight), HIGHLIGHT);
+
   const variableDict = buildVariableDictionary(allVariables);
-  const filterVariables = filters.map((f) => {
+  const filterVariables = decodedFilters.map((f) => {
     return variableDict[f.key];
   });
-  const suggestions = variablesToLexSuggestions(filterVariables);
+  const highlightVariable = highlight && variableDict[decodedHighlight.key];
 
-  const lexQuery = filters.map((f, i) => {
+  const activeVariables = highlight
+    ? [highlightVariable, ...filterVariables]
+    : filterVariables;
+  const lexableElements = highlight
+    ? [decodedHighlight, ...decodedFilters]
+    : decodedFilters;
+
+  const suggestions = variablesToLexSuggestions(activeVariables);
+
+  const lexQuery = lexableElements.map((f, i) => {
     if (f.type === GEOBOUNDS_FILTER) {
       return {
         field: suggestions[i],
@@ -149,7 +168,9 @@ export function filterParamsToLexQuery(
     } else {
       return {
         field: suggestions[i],
-        value: new ValueStateValue(f.categories[0]),
+        value: new ValueStateValue(f.categories[0], null, {
+          displayKey: f.categories[0],
+        }),
         relation: modeToRelation(f.mode),
       };
     }
@@ -157,44 +178,59 @@ export function filterParamsToLexQuery(
   return lexQuery;
 }
 
-export function lexQueryToFilters(lexQuery: any[][]): Filter[] {
-  const filters = lexQuery[0].map((lq) => {
-    const key = lq.field.key;
-    const displayKey = lq.field.displayKey;
-    const type = lq.field.meta.type;
-    const filter: Filter = {
-      mode: lq.relation.key,
-      displayName: displayKey,
-      type,
-      key,
-    };
+export function lexQueryToFiltersAndHighlight(
+  lexQuery: any[][]
+): { filters: Filter[]; highlight: Highlight } {
+  const filters = [];
+  let highlight = null; // to do: populate highlight
 
-    if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
-      filter.key = filter.key + "_group";
-      filter.minX = parseFloat(lq.minX.key);
-      filter.maxX = parseFloat(lq.maxX.key);
-      filter.minY = parseFloat(lq.minY.key);
-      filter.maxY = parseFloat(lq.maxY.key);
-    } else if (type === DATETIME_FILTER) {
-      filter.min = dateToNum(lq.min);
-      filter.max = dateToNum(lq.max);
-    } else if (isNumericType(type)) {
-      filter.min = parseFloat(lq.min.key);
-      filter.max = parseFloat(lq.max.key);
-    } else {
-      filter.categories = [lq.value.key];
+  lexQuery[0].forEach((lq) => {
+    if (lq.relation.key !== HIGHLIGHT) {
+      const key = lq.field.key;
+      const displayKey = lq.field.displayKey;
+      const type = lq.field.meta.type;
+      const filter: Filter = {
+        mode: lq.relation.key,
+        displayName: displayKey,
+        type,
+        key,
+      };
+
+      if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
+        filter.key = filter.key + "_group";
+        filter.minX = parseFloat(lq.minX.key);
+        filter.maxX = parseFloat(lq.maxX.key);
+        filter.minY = parseFloat(lq.minY.key);
+        filter.maxY = parseFloat(lq.maxY.key);
+      } else if (type === DATETIME_FILTER) {
+        filter.min = dateToNum(lq.min);
+        filter.max = dateToNum(lq.max);
+      } else if (isNumericType(type)) {
+        filter.min = parseFloat(lq.min.key);
+        filter.max = parseFloat(lq.max.key);
+      } else {
+        filter.categories = [lq.value.key];
+      }
+
+      filters.push(filter);
     }
-
-    return filter;
   });
-  return filters;
+  return {
+    filters: filters,
+    highlight: highlight,
+  };
 }
 
 function modeToRelation(mode: string): ValueStateValue {
-  if (mode === INCLUDE_FILTER) {
-    return distilRelationOptions[0];
-  } else {
-    return distilRelationOptions[1];
+  switch (mode) {
+    case INCLUDE_FILTER:
+      return distilRelationOptions[0];
+    case EXCLUDE_FILTER:
+      return distilRelationOptions[1];
+    case HIGHLIGHT:
+      return distilRelationOptions[2];
+    default:
+      return distilRelationOptions[1];
   }
 }
 

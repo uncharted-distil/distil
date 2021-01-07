@@ -94,7 +94,7 @@ import { actions as viewActions } from "../store/view/module";
 
 // Util
 import { deepUpdateFiltersInRoute } from "../util/filters";
-import { lexQueryToFilters } from "../util/lex";
+import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { overlayRouteEntry } from "../util/routes";
 import { getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
@@ -323,8 +323,8 @@ export default Vue.extend({
     capitalize,
 
     updateFilterFromLexQuery(lexQuery) {
-      const updatedFilter = lexQueryToFilters(lexQuery);
-      deepUpdateFiltersInRoute(this.$router, updatedFilter);
+      const lqfh = lexQueryToFiltersAndHighlight(lexQuery);
+      deepUpdateFiltersInRoute(this.$router, lqfh.filters);
     },
 
     /* When the user request to fetch a different size of data. */
