@@ -183,8 +183,10 @@ export default Vue.extend({
     isHighlightedInstance(highlight: Highlight): boolean {
       return highlight && highlight.context === this.instanceName;
     },
-    isHighlightedGroup(highlight: Highlight, colName: string): boolean {
-      return this.isHighlightedInstance(highlight) && highlight.key === colName;
+    isHighlightedGroup(highlight: Highlight, storageName: string): boolean {
+      return (
+        this.isHighlightedInstance(highlight) && highlight.key === storageName
+      );
     },
     getRange(facet): { from: number; to: number; type: string } {
       if (!facet.selection) {
@@ -241,7 +243,7 @@ export default Vue.extend({
       if (this.html) {
         return _.isFunction(this.html)
           ? this.html({
-              colName: this.summary.key,
+              storageName: this.summary.key,
             })
           : this.html;
       }

@@ -65,12 +65,12 @@ import {
 
 function findSuggestionIndex(
   columnSuggestions: string[],
-  colName: string
+  storageName: string
 ): number {
   return columnSuggestions.findIndex((col) => {
     // col can be something like "lat+lng" for multi column suggestions
-    const colNames = col.split("+");
-    return Boolean(colNames.find((c) => c === colName));
+    const storageNames = col.split("+");
+    return Boolean(storageNames.find((c) => c === storageName));
   });
 }
 

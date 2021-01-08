@@ -100,7 +100,7 @@ export enum LowShotLabels {
 // DatasetUpdate is an interface that contains the data to update existing data
 export interface DatasetUpdate {
   index: string; // d3mIndex
-  name: string; // colName
+  name: string; // storageName
   value: string; // new value to replace old value
 }
 
@@ -261,7 +261,7 @@ export function fetchSummaryExemplars(
   summary: VariableSummary
 ) {
   const variables = datasetGetters.getVariables(store);
-  const variable = variables.find((v) => v.colName === variableName);
+  const variable = variables.find((v) => v.storageName === variableName);
 
   const baselineExemplars = summary.baseline.exemplars;
   const filteredExemplars =
@@ -313,7 +313,7 @@ export function fetchResultExemplars(
   summary: VariableSummary
 ) {
   const variables = datasetGetters.getVariables(store);
-  const variable = variables.find((v) => v.colName === variableName);
+  const variable = variables.find((v) => v.storageName === variableName);
 
   const baselineExemplars = summary.baseline?.exemplars;
   const filteredExemplars = summary.filtered?.exemplars;
@@ -490,12 +490,14 @@ export function filterVariablesByFeature(variables: Variable[]): Variable[] {
   const hidden = new Map(hiddenFlat.map((v) => [v, v]));
 
   // the groupings that hide variables are themselves variables to display
-  const groupingDisplayed = new Map(groupingVars.map((v) => [v.colName, v]));
+  const groupingDisplayed = new Map(
+    groupingVars.map((v) => [v.storageName, v])
+  );
 
   return variables.filter(
     (v) =>
-      (v.distilRole === "data" && !hidden.has(v.colName)) ||
-      groupingDisplayed.has(v.colName)
+      (v.distilRole === "data" && !hidden.has(v.storageName)) ||
+      groupingDisplayed.has(v.storageName)
   );
 }
 
@@ -681,7 +683,7 @@ export function searchVariables(
     return (
       searchQuery === undefined ||
       searchQuery === "" ||
-      (v && v.colName.toLowerCase().includes(searchQuery.toLowerCase()))
+      (v && v.storageName.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   });
 }
@@ -710,7 +712,7 @@ export function sortVariablesByImportance(variables: Variable[]): Variable[] {
     });
   }
   variables.sort((a, b) => {
-    return rankMap[b.colName] - rankMap[a.colName];
+    return rankMap[b.storageName] - rankMap[a.storageName];
   });
   return variables;
 }
@@ -732,7 +734,7 @@ export function getVariableSummariesByState(
 
   // remove any pattern cluster variables
   let sortedVariables = variables.filter((sv) => {
-    return sv.colName.indexOf(CLUSTER_PREFIX) < 0;
+    return sv.storageName.indexOf(CLUSTER_PREFIX) < 0;
   });
 
   if (ranked) {
@@ -745,22 +747,22 @@ export function getVariableSummariesByState(
 
   // map them back to the variable summary dictionary for the current route key
   const currentSummaries = sortedVariables.reduce((cs, vn) => {
-    if (!summaryDictionary[vn.colName]) {
+    if (!summaryDictionary[vn.storageName]) {
       const placeholder = createPendingSummary(
-        vn.colName,
+        vn.storageName,
         vn.colDisplayName,
         vn.colDescription,
         vn.datasetName
       );
       cs.push(placeholder);
     } else {
-      if (summaryDictionary[vn.colName][routeKey]) {
-        cs.push(summaryDictionary[vn.colName][routeKey]);
+      if (summaryDictionary[vn.storageName][routeKey]) {
+        cs.push(summaryDictionary[vn.storageName][routeKey]);
       } else {
         const tempVariableSummaryKey = Object.keys(
-          summaryDictionary[vn.colName]
+          summaryDictionary[vn.storageName]
         )[0];
-        cs.push(summaryDictionary[vn.colName][tempVariableSummaryKey]);
+        cs.push(summaryDictionary[vn.storageName][tempVariableSummaryKey]);
       }
     }
     return cs;
@@ -772,7 +774,7 @@ export function getVariableSummariesByState(
 export function getVariableImportance(v: Variable): number {
   const solutionID = routeGetters.getRouteSolutionId(store);
   const map = resultsGetters.getFeatureImportanceRanking(store)[solutionID];
-  return map[v.colName];
+  return map[v.storageName];
 }
 
 export function getVariableRanking(v: Variable): number {
@@ -781,7 +783,7 @@ export function getVariableRanking(v: Variable): number {
   if (!map) {
     return v.importance; // if MI ranking does not exist default to PCA
   }
-  return map[v.colName];
+  return map[v.storageName];
 }
 
 export function getSolutionFeatureImportance(
@@ -792,7 +794,7 @@ export function getSolutionFeatureImportance(
     solutionID
   ];
   if (solutionRanks) {
-    return solutionRanks[v.colName];
+    return solutionRanks[v.storageName];
   }
   return null;
 }
@@ -893,13 +895,13 @@ export function getTableDataItems(data: TableData): TableRow[] {
     const formattedTable = data.values.map((resultRow, rowIndex) => {
       const row = {} as TableRow;
       resultRow.forEach((colValue, colIndex) => {
-        const colName = data.columns[colIndex].key;
+        const storageName = data.columns[colIndex].key;
         const colType = data.columns[colIndex].type;
-        if (colName !== "d3mIndex") {
-          row[colName] = {};
-          row[colName].value = formatValue(colValue.value, colType);
+        if (storageName !== "d3mIndex") {
+          row[storageName] = {};
+          row[storageName].value = formatValue(colValue.value, colType);
           if (colValue.weight !== null && colValue.weight !== undefined) {
-            row[colName].weight = colValue.weight;
+            row[storageName].weight = colValue.weight;
           }
           if (colValue.confidence !== undefined) {
             const conKey = "confidence";
@@ -907,7 +909,7 @@ export function getTableDataItems(data: TableData): TableRow[] {
             row[conKey].value = colValue.confidence;
           }
         } else {
-          row[colName] = formatValue(colValue.value, colType);
+          row[storageName] = formatValue(colValue.value, colType);
         }
       });
       row._key = rowIndex;
@@ -946,20 +948,20 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
       if (isPredictedCol(col.key)) {
         variable = requestGetters.getActiveSolutionTargetVariable(store)[0]; // always a single value
         label = variable.colDisplayName;
-        description = `Model predicted value for ${variable.colName}`;
+        description = `Model predicted value for ${variable.storageName}`;
 
         result.confidence = {
           label: "Confidence",
           key: "confidence",
           type: "numeric",
           weight: null,
-          headerTitle: `Prediction confidence ${variable.colName}`,
+          headerTitle: `Prediction confidence ${variable.storageName}`,
           sortable: true,
         };
       } else if (isErrorCol(col.key)) {
         variable = requestGetters.getActiveSolutionTargetVariable(store)[0];
         label = "Error";
-        description = `Difference between actual and predicted value for ${variable.colName}`;
+        description = `Difference between actual and predicted value for ${variable.storageName}`;
       } else {
         variable = variables[col.key];
         label = col.label;
@@ -1124,7 +1126,7 @@ export function hasTimeseriesFeatures(variables: Variable[]): boolean {
   if (
     (valueColumns.length === 1 &&
       timeColumns.length === 1 &&
-      valueColumns[0].colName !== timeColumns[0].colName) ||
+      valueColumns[0].storageName !== timeColumns[0].storageName) ||
     (valueColumns.length > 1 && timeColumns.length > 0) ||
     (valueColumns.length > 0 && timeColumns.length > 1)
   ) {
@@ -1140,7 +1142,7 @@ export function hasGeoordinateFeatures(variables: Variable[]): boolean {
   if (
     (latColumns.length === 1 &&
       lonColumns.length === 1 &&
-      latColumns[0].colName !== lonColumns[0].colName) ||
+      latColumns[0].storageName !== lonColumns[0].storageName) ||
     (latColumns.length > 1 && lonColumns.length > 0) ||
     (latColumns.length > 0 && lonColumns.length > 1)
   ) {

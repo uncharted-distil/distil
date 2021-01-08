@@ -68,7 +68,7 @@ export default Vue.extend({
 
     button(): (group: Group) => HTMLElement {
       return (group: Group) => {
-        const variable = group.colName;
+        const variable = group.storageName;
         const training = routeGetters.getDecodedTrainingVariableNames(
           this.$store
         );
@@ -126,7 +126,7 @@ export default Vue.extend({
     searchedActiveVariables(): Variable[] {
       // remove variables used in groupedFeature;
       const activeVariables = this.variables.filter(
-        (v) => !this.groupedFeatures.includes(v.colName)
+        (v) => !this.groupedFeatures.includes(v.storageName)
       );
 
       return searchVariables(activeVariables, this.search);

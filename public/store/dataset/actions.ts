@@ -317,7 +317,10 @@ export const actions = {
           {}
         );
       } else if (isImageType(v.colType)) {
-        return axios.post(`/distil/cluster/${args.dataset}/${v.colName}`, {});
+        return axios.post(
+          `/distil/cluster/${args.dataset}/${v.storageName}`,
+          {}
+        );
       }
       return null;
     });
@@ -857,26 +860,26 @@ export const actions = {
 
     args.variables.forEach((variable) => {
       const existingVariableSummary =
-        summariesByVariable?.[variable.colName]?.[routeKey];
+        summariesByVariable?.[variable.storageName]?.[routeKey];
 
       if (existingVariableSummary) {
         promises.push(existingVariableSummary);
       } else {
-        if (summariesByVariable[variable.colName]) {
+        if (summariesByVariable[variable.storageName]) {
           // if we have any saved state for that variable
           // use that as placeholder due to vue lifecycle
           const tempVariableSummaryKey = Object.keys(
-            summariesByVariable[variable.colName]
+            summariesByVariable[variable.storageName]
           )[0];
           promises.push(
-            summariesByVariable[variable.colName][tempVariableSummaryKey]
+            summariesByVariable[variable.storageName][tempVariableSummaryKey]
           );
         } else {
           // add a loading placeholder if nothing exists for that variable
           mutator(
             context,
             createPendingSummary(
-              variable.colName,
+              variable.storageName,
               variable.colDisplayName,
               variable.colDescription,
               args.dataset
@@ -885,15 +888,15 @@ export const actions = {
         }
 
         // Get the mode or default
-        const mode = args.varModes.has(variable.colName)
-          ? args.varModes.get(variable.colName)
+        const mode = args.varModes.has(variable.storageName)
+          ? args.varModes.get(variable.storageName)
           : SummaryMode.Default;
 
         // fetch summary
         promises.push(
           actions.fetchVariableSummary(context, {
             dataset: args.dataset,
-            variable: variable.colName,
+            variable: variable.storageName,
             filterParams: args.filterParams,
             highlight: args.highlight,
             include: args.include,
@@ -974,7 +977,9 @@ export const actions = {
     const rankableVariables = getters
       .getVariables(context)
       .filter(
-        (f) => f.colName !== target.colName && isRankableVariableType(f.colType)
+        (f) =>
+          f.storageName !== target.storageName &&
+          isRankableVariableType(f.colType)
       );
     if (
       !isRankableVariableType(target.colType) ||

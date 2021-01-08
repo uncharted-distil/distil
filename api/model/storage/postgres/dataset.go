@@ -84,6 +84,7 @@ func (s *Storage) CloneDataset(dataset string, storageName string, datasetNew st
 
 	return nil
 }
+
 // DeleteDataset drops all tables associated to the dataset
 func (s *Storage) DeleteDataset(storageName string) error {
 	// drop view
@@ -113,7 +114,7 @@ func (s *Storage) DeleteDataset(storageName string) error {
 	}
 	return nil
 }
-func (s *Storage) dropView(view string) error{
+func (s *Storage) dropView(view string) error {
 	sql := fmt.Sprintf("DROP VIEW IF EXISTS %s", view)
 	_, err := s.client.Exec(sql)
 	if err != nil {
@@ -121,7 +122,7 @@ func (s *Storage) dropView(view string) error{
 	}
 	return nil
 }
-func (s *Storage) dropTable(table string) error{
+func (s *Storage) dropTable(table string) error {
 	sql := fmt.Sprintf("DROP TABLE IF EXISTS %s", table)
 	_, err := s.client.Exec(sql)
 	if err != nil {

@@ -50,7 +50,7 @@ export function createFilterFromHighlight(
 
   const variables = datasetGetters.getVariables(store);
 
-  const variable = variables.find((v) => v.colName === key);
+  const variable = variables.find((v) => v.storageName === key);
   let grouping = null;
   if (variable && variable.grouping) {
     grouping = variable.grouping;

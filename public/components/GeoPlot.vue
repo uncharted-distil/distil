@@ -319,7 +319,7 @@ export default Vue.extend({
         .filter((v) => v.datasetName === this.dataset);
       return variables
         .map((variable) => ({
-          variable: variable.colName,
+          variable: variable.storageName,
           order: _.isNumber(variable.ranking)
             ? variable.ranking
             : variable.importance,
@@ -387,14 +387,14 @@ export default Vue.extend({
         } else if (match.colType === REAL_VECTOR_TYPE) {
           fields.push({
             type: SINGLE_FIELD,
-            field: match.colName,
+            field: match.storageName,
           });
         } else {
           if (match.colType === LONGITUDE_TYPE) {
-            lng = match.colName;
+            lng = match.storageName;
           }
           if (match.colType === LATITUDE_TYPE) {
-            lat = match.colName;
+            lat = match.storageName;
           }
         }
 

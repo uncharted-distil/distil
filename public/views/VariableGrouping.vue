@@ -322,10 +322,10 @@ export default Vue.extend({
 
       const suggestions = this.variables
         .filter((v) => xFilterFunction(v.colType))
-        .filter((v) => !this.isIDCol(v.colName))
-        .filter((v) => !this.isYCol(v.colName))
+        .filter((v) => !this.isIDCol(v.storageName))
+        .filter((v) => !this.isYCol(v.storageName))
         .map((v) => {
-          return { value: v.colName, text: v.colDisplayName };
+          return { value: v.storageName, text: v.colDisplayName };
         });
       return [].concat([def], suggestions);
     },
@@ -352,10 +352,10 @@ export default Vue.extend({
 
       const suggestions = this.variables
         .filter((v) => yFilterFunction(v.colType))
-        .filter((v) => !this.isIDCol(v.colName))
-        .filter((v) => !this.isXCol(v.colName))
+        .filter((v) => !this.isIDCol(v.storageName))
+        .filter((v) => !this.isXCol(v.storageName))
         .map((v) => {
-          return { value: v.colName, text: v.colDisplayName };
+          return { value: v.storageName, text: v.colDisplayName };
         });
       return [].concat(def, suggestions);
     },
@@ -426,9 +426,9 @@ export default Vue.extend({
       };
       const suggestions = this.variables
         .filter((v) => ID_COL_TYPES[v.colType])
-        .filter((v) => v.colName === idCol || !this.isIDCol(v.colName))
+        .filter((v) => v.storageName === idCol || !this.isIDCol(v.storageName))
         .map((v) => {
-          return { value: v.colName, text: v.colDisplayName };
+          return { value: v.storageName, text: v.colDisplayName };
         });
 
       if (suggestions.length > 0) {

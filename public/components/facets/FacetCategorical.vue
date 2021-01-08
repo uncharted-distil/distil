@@ -220,8 +220,10 @@ export default Vue.extend({
     isHighlightedInstance(highlight: Highlight): boolean {
       return highlight && highlight.context === this.instanceName;
     },
-    isHighlightedGroup(highlight: Highlight, colName: string): boolean {
-      return this.isHighlightedInstance(highlight) && highlight.key === colName;
+    isHighlightedGroup(highlight: Highlight, storageName: string): boolean {
+      return (
+        this.isHighlightedInstance(highlight) && highlight.key === storageName
+      );
     },
     updateSelection(event) {
       if (!this.enableHighlighting) return;
@@ -263,7 +265,7 @@ export default Vue.extend({
       if (this.html) {
         return _.isFunction(this.html)
           ? this.html({
-              colName: this.summary.key,
+              storageName: this.summary.key,
               type: "categorical",
             })
           : this.html;

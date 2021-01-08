@@ -95,7 +95,7 @@ export interface NumericalFacet {
 
 export interface Group {
   dataset: string;
-  colName: string;
+  storageName: string;
   label: string;
   description: string;
   key: string;

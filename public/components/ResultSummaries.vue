@@ -118,7 +118,7 @@ export default Vue.extend({
     targetType(): string {
       const targetName = this.target;
       const variables = this.variables;
-      return variables.find((v) => v.colName === targetName)?.colType;
+      return variables.find((v) => v.storageName === targetName)?.colType;
     },
 
     variables(): Variable[] {
