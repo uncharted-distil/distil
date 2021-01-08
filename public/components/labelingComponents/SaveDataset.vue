@@ -56,7 +56,6 @@
 <script lang="ts">
 import Vue from "vue";
 import { SEARCH_ROUTE, SELECT_TARGET_ROUTE } from "../../store/route";
-import { getters as routeGetters } from "../../store/route/module";
 import { createRouteEntry } from "../../util/routes";
 import router from "../../router/router";
 
@@ -94,7 +93,7 @@ export default Vue.extend({
   },
 
   methods: {
-    // process or reject model save based on form state
+    // process or reject dataset save based on form state
     handleSaveOk(bvModalEvt) {
       // Prevent modal from closing
       bvModalEvt.preventDefault();
@@ -105,8 +104,6 @@ export default Vue.extend({
       this.saveDataset();
     },
 
-    // CDB: Currently will open up the file upload dialog. Should transition to the
-    // apply model workflow.
     selectPage() {
       this.resetModal();
       const routeEntry = createRouteEntry(SELECT_TARGET_ROUTE, {
