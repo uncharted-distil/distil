@@ -1162,3 +1162,18 @@ export function hasGeoFeatures(variables: Variable[]): boolean {
 export function hasImageFeatures(variables: Variable[]): boolean {
   return variables.some((v) => isImageType(v.colType));
 }
+
+export function downloadFile(
+  fileContent: string,
+  fileName: string,
+  extension: string
+) {
+  const encodedUri = encodeURI(fileContent + extension);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link); // Required for FF
+
+  link.click(); // This will download the data file named "my_data.csv".
+  return;
+}

@@ -98,7 +98,8 @@ type DataStorage interface {
 
 	// Property queries
 	GetStorageName(dataset string) (string, error)
-
+	// SaveDataset is used to drop all the undesired values (only call for save dataset route)
+	SaveDataset(dataset string, storageName string, invert bool, filterParams *FilterParams) error
 	// CloneDataset creates a copy of an existing dataset
 	CloneDataset(dataset string, storageName string, datasetNew string, storageNameNew string) error
 	// DeleteDataset drops all tables associated to storageName
