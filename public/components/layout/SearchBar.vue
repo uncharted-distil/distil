@@ -87,7 +87,6 @@ export default Vue.extend({
         this.highlight,
         this.variables
       );
-      console.log(lexQuery);
       this.lex.setQuery(lexQuery, false);
     },
   },

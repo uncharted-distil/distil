@@ -55,8 +55,12 @@ class DistilRelationState extends RelationState {
   static get EXCLUDE() {
     return distilRelationOptions[1];
   }
+  static get HIGHLIGHT() {
+    return distilRelationOptions[2];
+  }
   constructor(config) {
-    if (config.name === undefined) config.name = "Include or exclude";
+    if (config.name === undefined)
+      config.name = "Include, exclude or highlight";
     config.options = function () {
       return distilRelationOptions;
     };
@@ -179,10 +183,11 @@ export function filterParamsToLexQuery(
 }
 
 export function lexQueryToFiltersAndHighlight(
-  lexQuery: any[][]
+  lexQuery: any[][],
+  dataset: string
 ): { filters: Filter[]; highlight: Highlight } {
   const filters = [];
-  let highlight = null; // to do: populate highlight
+  let highlight = null;
 
   lexQuery[0].forEach((lq) => {
     if (lq.relation.key !== HIGHLIGHT) {
@@ -213,6 +218,33 @@ export function lexQueryToFiltersAndHighlight(
       }
 
       filters.push(filter);
+    } else {
+      const key = lq.field.key;
+      const type = lq.field.meta.type;
+      highlight = {
+        dataset,
+        context: "lex-bar",
+        key,
+        value: {},
+      } as Highlight;
+
+      if (type === GEOBOUNDS_FILTER || type === GEOCOORDINATE_FILTER) {
+        highlight.key = highlight.key + "_group";
+        highlight.value.minX = parseFloat(lq.minX.key);
+        highlight.value.maxX = parseFloat(lq.maxX.key);
+        highlight.value.minY = parseFloat(lq.minY.key);
+        highlight.value.maxY = parseFloat(lq.maxY.key);
+      } else if (type === DATETIME_FILTER) {
+        highlight.value.min = dateToNum(lq.min);
+        highlight.value.max = dateToNum(lq.max);
+        highlight.type = DATETIME_FILTER;
+      } else if (isNumericType(type)) {
+        highlight.value.min = parseFloat(lq.min.key);
+        highlight.value.max = parseFloat(lq.max.key);
+        highlight.type = NUMERICAL_FILTER;
+      } else {
+        highlight.value = lq.value.key;
+      }
     }
   });
   return {

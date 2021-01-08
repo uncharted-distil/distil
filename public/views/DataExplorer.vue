@@ -23,6 +23,7 @@
         class="mb-3"
         :variables="variables"
         :filters="filters"
+        :highlight="routeHighlight"
         @lex-query="updateFilterFromLexQuery"
       />
 
@@ -184,6 +185,10 @@ export default Vue.extend({
       );
     },
 
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
+
     filters(): string {
       return routeGetters.getRouteFilters(this.$store);
     },
@@ -198,6 +203,10 @@ export default Vue.extend({
 
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
+    },
+
+    routeHighlight(): string {
+      return routeGetters.getRouteHighlight(this.$store);
     },
 
     inactiveMetaTypes(): string[] {
@@ -323,7 +332,7 @@ export default Vue.extend({
     capitalize,
 
     updateFilterFromLexQuery(lexQuery) {
-      const lqfh = lexQueryToFiltersAndHighlight(lexQuery);
+      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
       deepUpdateFiltersInRoute(this.$router, lqfh.filters);
     },
 

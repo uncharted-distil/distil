@@ -129,7 +129,11 @@ import {
   EXCLUDE_FILTER,
   INCLUDE_FILTER,
 } from "../util/filters";
-import { clearHighlight, createFilterFromHighlight } from "../util/highlights";
+import {
+  clearHighlight,
+  createFilterFromHighlight,
+  updateHighlight,
+} from "../util/highlights";
 import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import {
   clearRowSelection,
@@ -319,11 +323,6 @@ export default Vue.extend({
   },
 
   methods: {
-    updateFilterAndHighlightFromLexQuery(lexQuery) {
-      const lqfh = lexQueryToFiltersAndHighlight(lexQuery);
-      deepUpdateFiltersInRoute(this.$router, lqfh.filters);
-    },
-
     onExcludeClick() {
       let filter = null;
       if (this.isFilteringHighlights) {
@@ -411,6 +410,12 @@ export default Vue.extend({
       const entry = overlayRouteEntry(this.$route, { dataSize });
       this.$router.push(entry).catch((err) => console.warn(err));
       viewActions.updateSelectTrainingData(this.$store);
+    },
+
+    updateFilterAndHighlightFromLexQuery(lexQuery) {
+      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
+      deepUpdateFiltersInRoute(this.$router, lqfh.filters);
+      updateHighlight(this.$router, lqfh.highlight);
     },
   },
 });
