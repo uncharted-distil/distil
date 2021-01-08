@@ -134,7 +134,7 @@ export function filterParamsToLexQuery(
   const filterVariables = decodedFilters.map((f) => {
     return variableDict[f.key];
   });
-  const highlightVariable = highlight && variableDict[decodedHighlight.key];
+  const highlightVariable = variableDict[decodedHighlight?.key];
 
   const activeVariables = highlight
     ? [highlightVariable, ...filterVariables]
