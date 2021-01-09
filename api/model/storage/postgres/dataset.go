@@ -48,6 +48,43 @@ func getVariableTableName(storageName string) string {
 	return fmt.Sprintf("%s_variable", storageName)
 }
 
+// SaveDataset is used for dropping the unused values based on filter param. (Only used in save_dataset route)
+func (s *Storage) SaveDataset(dataset string, storageName string, invert bool, filterParams *api.FilterParams) error {
+	err := s.deleteRows(dataset, getBaseTableName(storageName), invert, filterParams)
+	if err != nil {
+		return err
+	}
+	// due to values being dropped from base table result table is invalid
+	err = s.deleteRows(dataset, s.getResultTable(storageName), false, nil)
+	if err != nil {
+		return err
+	}
+	// due to values being dropped from base table explanation table is invalid
+	err = s.deleteRows(dataset, s.getSolutionFeatureWeightTable(storageName), false, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// deleteRows deletes rows based on filterParams
+func (s *Storage) deleteRows(dataset string, storageName string, invert bool, filterParams *api.FilterParams) error {
+	wheres := []string{}
+	paramsFilter := make([]interface{}, 0)
+	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "", filterParams, invert)
+	where := ""
+	if len(wheres) > 0 {
+		where = "WHERE" + strings.Join(wheres, " AND ")
+	}
+	sql := fmt.Sprintf("DELETE FROM %s %s;", storageName, where)
+	_, err := s.client.Query(sql, paramsFilter...)
+	if err != nil {
+		return errors.Wrapf(err, "unable execute query to delete rows")
+	}
+	return nil
+}
+
 // CloneDataset clones an existing dataset.
 func (s *Storage) CloneDataset(dataset string, storageName string, datasetNew string, storageNameNew string) error {
 	// need to clone base, variable, result, and weight tables
@@ -84,6 +121,7 @@ func (s *Storage) CloneDataset(dataset string, storageName string, datasetNew st
 
 	return nil
 }
+
 // DeleteDataset drops all tables associated to the dataset
 func (s *Storage) DeleteDataset(storageName string) error {
 	// drop view
@@ -113,7 +151,7 @@ func (s *Storage) DeleteDataset(storageName string) error {
 	}
 	return nil
 }
-func (s *Storage) dropView(view string) error{
+func (s *Storage) dropView(view string) error {
 	sql := fmt.Sprintf("DROP VIEW IF EXISTS %s", view)
 	_, err := s.client.Exec(sql)
 	if err != nil {
@@ -121,7 +159,7 @@ func (s *Storage) dropView(view string) error{
 	}
 	return nil
 }
-func (s *Storage) dropTable(table string) error{
+func (s *Storage) dropTable(table string) error {
 	sql := fmt.Sprintf("DROP TABLE IF EXISTS %s", table)
 	_, err := s.client.Exec(sql)
 	if err != nil {
