@@ -13,11 +13,11 @@
       <variable-facets
         enable-highlighting
         enable-type-filtering
-        :summaries="summaries"
+        :summaries="featureSummaries"
         :pagination="
-          summaries && searchedActiveVariables.length > numRowsPerPage
+          featureSummaries && searchedActiveVariables.length > numRowsPerPage
         "
-        :facet-count="summaries && searchedActiveVariables.length"
+        :facet-count="featureSummaries && searchedActiveVariables.length"
         :rows-per-page="numRowsPerPage"
         :instance-name="instance"
       />
@@ -184,6 +184,12 @@ export default Vue.extend({
       const tableData = datasetGetters.getIncludedTableDataItems(this.$store);
       return tableData ? tableData.length : 0;
     },
+    // filters out the low shot labels
+    featureSummaries(): VariableSummary[] {
+      return this.summaries.filter((s) => {
+        return s.key !== LOW_SHOT_LABEL_COLUMN_NAME;
+      });
+    },
     summaries(): VariableSummary[] {
       const pageIndex = routeGetters.getLabelFeaturesVarsPage(this.$store);
 
@@ -221,8 +227,10 @@ export default Vue.extend({
     highlight() {
       this.onDataChanged();
     },
-    training() {
-      this.fetchData();
+    training(prev: string[], cur: string[]) {
+      if (prev.length !== cur.length) {
+        this.fetchData();
+      }
     },
   },
   async mounted() {

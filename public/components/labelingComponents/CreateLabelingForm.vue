@@ -1,6 +1,6 @@
 <template>
   <div class="form-container">
-    <div class="control-group">
+    <div>
       <b-button :disabled="isLoading" size="lg" @click="onEvent(applyEvent)">
         <template v-if="isLoading">
           <div v-html="spinnerHTML" />
@@ -44,6 +44,9 @@ export default Vue.extend({
     exportEvent(): string {
       return COMPONENT_EVENT.EXPORT;
     },
+    annotationHasChanged(): boolean {
+      return true;
+    },
   },
   methods: {
     onEvent(event: COMPONENT_EVENT) {
@@ -57,13 +60,9 @@ export default Vue.extend({
 .form-container {
   display: flex;
   justify-content: space-between;
+  height: 15%;
 }
 
-.control-group {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
 .check-box {
   margin-left: 16px;
 }
