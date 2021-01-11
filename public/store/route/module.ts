@@ -1,8 +1,8 @@
-import { Module } from "vuex";
 import { Route } from "vue-router";
-import { getters as moduleGetters } from "./getters";
-import { DistilState } from "../store";
+import { Module } from "vuex";
 import { getStoreAccessors } from "vuex-typescript";
+import { DistilState } from "../store";
+import { getters as moduleGetters } from "./getters";
 
 export const routeModule: Module<Route, DistilState> = {
   getters: moduleGetters,
@@ -25,6 +25,7 @@ export const getters = {
   getDecodedJoinDatasetsFilterParams: read(
     moduleGetters.getDecodedJoinDatasetsFilterParams
   ),
+  getAnnotationHasChanged: read(moduleGetters.getAnnotationHasChanged),
   getRouteJoinDatasetsHash: read(moduleGetters.getRouteJoinDatasetsHash),
   getJoinDatasetsVariables: read(moduleGetters.getJoinDatasetsVariables),
   getJoinDatasetsVariableSummaries: read(
