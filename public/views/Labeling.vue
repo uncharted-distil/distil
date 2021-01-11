@@ -31,6 +31,7 @@
         />
         <create-labeling-form
           :is-loading="isLoadingData"
+          :low-shot-summary="labelSummary"
           @export="onExport"
           @apply="onApply"
           @save="onSaveClick"
@@ -281,7 +282,10 @@ export default Vue.extend({
       addOrderBy(LOW_SHOT_SCORE_COLUMN_NAME);
       this.isLoadingData = false;
       await this.fetchData();
-      this.$bvModal.show(this.scorePopUpId);
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        annotationHasChanged: false,
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
     async onExport() {
       const highlight = {
@@ -378,12 +382,19 @@ export default Vue.extend({
           value: label,
         };
       });
+      if (!updateData.length) {
+        return;
+      }
       datasetMutations.updateAreaOfInterestIncludeInner(this.$store, innerData);
       datasetActions.updateDataset(this.$store, {
         dataset: this.dataset,
         updateData,
       });
       clearRowSelection(this.$router);
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        annotationHasChanged: true,
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
       this.onDataChanged();
     },
     async updateRoute() {
