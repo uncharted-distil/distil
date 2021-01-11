@@ -62,7 +62,7 @@ export default Vue.extend({
       const suggestions = this.variables
         .filter((v) => isTimeType(v.colType))
         .map((v) => {
-          return { value: v.storageName, text: v.colDisplayName };
+          return { value: v.key, text: v.colDisplayName };
         });
 
       if (suggestions.length === 1) {

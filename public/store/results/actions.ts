@@ -76,24 +76,24 @@ export const actions = {
 
     args.training.forEach((variable) => {
       const existingVariableSummary =
-        summariesByVariable?.[variable.storageName]?.[routeKey];
+        summariesByVariable?.[variable.key]?.[routeKey];
 
       if (existingVariableSummary) {
         promises.push(existingVariableSummary);
       } else {
-        if (summariesByVariable[variable.storageName]) {
+        if (summariesByVariable[variable.key]) {
           // if we have any saved state for that variable
           // use that as placeholder due to vue lifecycle
           const tempVariableSummaryKey = Object.keys(
-            summariesByVariable[variable.storageName]
+            summariesByVariable[variable.key]
           )[0];
           promises.push(
-            summariesByVariable[variable.storageName][tempVariableSummaryKey]
+            summariesByVariable[variable.key][tempVariableSummaryKey]
           );
         } else {
           // add a loading placeholder if nothing exists for that variable
           createPendingSummary(
-            variable.storageName,
+            variable.key,
             variable.colDisplayName,
             variable.colDescription,
             args.dataset
@@ -108,8 +108,8 @@ export const actions = {
             resultID: solution.resultId,
             highlight: args.highlight,
             dataMode: dataMode,
-            varMode: args.varModes.has(variable.storageName)
-              ? args.varModes.get(variable.storageName)
+            varMode: args.varModes.has(variable.key)
+              ? args.varModes.get(variable.key)
               : SummaryMode.Default,
           })
         );
@@ -157,22 +157,18 @@ export const actions = {
 
     try {
       const response = await axios.post(
-        `/distil/training-summary/${args.dataset}/${args.variable.storageName}/${args.resultID}/${args.varMode}`,
+        `/distil/training-summary/${args.dataset}/${args.variable.key}/${args.resultID}/${args.varMode}`,
         filterParams
       );
       const summary = response.data.summary;
-      await fetchSummaryExemplars(
-        args.dataset,
-        args.variable.storageName,
-        summary
-      );
+      await fetchSummaryExemplars(args.dataset, args.variable.key, summary);
       mutations.updateTrainingSummary(context, summary);
     } catch (error) {
       console.error(error);
       mutations.updateTrainingSummary(
         context,
         createErrorSummary(
-          args.variable.storageName,
+          args.variable.key,
           args.variable.colDisplayName,
           args.dataset,
           error

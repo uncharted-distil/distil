@@ -284,7 +284,7 @@ export default Vue.extend({
         })
       );
       return this.variables.filter((v) => {
-        return checkMap.has(v.storageName);
+        return checkMap.has(v.key);
       });
     },
     highlight(): Highlight {
@@ -310,7 +310,7 @@ export default Vue.extend({
       }
       const ranking: Dictionary<number> = {};
       this.variables.forEach((variable) => {
-        ranking[variable.storageName] = this.isResultFeatures
+        ranking[variable.key] = this.isResultFeatures
           ? getSolutionFeatureImportance(
               variable,
               routeGetters.getRouteSolutionId(this.$store)
@@ -323,10 +323,8 @@ export default Vue.extend({
     enabledTypeChanges(): string[] {
       const typeChangeStatus: string[] = [];
       this.variables.forEach((variable) => {
-        if (this.enableTypeChange && !this.isSeriesID(variable.storageName)) {
-          typeChangeStatus.push(
-            `${variable.datasetName}:${variable.storageName}`
-          );
+        if (this.enableTypeChange && !this.isSeriesID(variable.key)) {
+          typeChangeStatus.push(`${variable.datasetName}:${variable.key}`);
         }
       });
       return typeChangeStatus;
@@ -359,7 +357,7 @@ export default Vue.extend({
         this.timeseriesSummaries.forEach(async (ts) => {
           const ids = ts.baseline.exemplars;
           const timeseriesVar = this.timeseriesVars.find((tsv) => {
-            return tsv.storageName === ts.key;
+            return tsv.key === ts.key;
           });
           const grouping = timeseriesVar.grouping as TimeseriesGrouping;
           await datasetActions.fetchTimeseries(this.$store, {
@@ -466,12 +464,12 @@ export default Vue.extend({
       this.$emit("numerical-click", key);
     },
 
-    isSeriesID(storageName: string): boolean {
+    isSeriesID(key: string): boolean {
       // Check to see if this facet is being used as a series ID
       const targetVar = routeGetters.getTargetVariable(this.$store);
       if (targetVar && targetVar.grouping) {
         if (targetVar.grouping.subIds.length > 0) {
-          return !!targetVar.grouping.subIds.find((v) => v === storageName);
+          return !!targetVar.grouping.subIds.find((v) => v === key);
         }
       }
       return false;

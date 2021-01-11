@@ -123,7 +123,7 @@ export const getters = {
   ): Variable[] {
     const target = <string>getters.getRouteTargetVariable;
     const variables = <Variable[]>getters.getVariables;
-    return variables.filter((variable) => variable.storageName === target);
+    return variables.filter((variable) => variable.key === target);
   },
 
   // Returns in-progress predictions.

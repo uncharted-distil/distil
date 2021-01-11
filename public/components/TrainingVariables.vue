@@ -125,7 +125,7 @@ export default Vue.extend({
 
       // Filter them out of the available training variables.
       const trainingVariables = Array.from(this.trainingVariables).filter(
-        (variable) => !timeseriesGrouping.includes(variable.storageName)
+        (variable) => !timeseriesGrouping.includes(variable.key)
       );
 
       // The variables can be removed.
@@ -150,7 +150,7 @@ export default Vue.extend({
       return (group: Group) => {
         // get the target variable information
         const targetVar = this.variables.find((v) => {
-          return v.storageName === this.target;
+          return v.key === this.target;
         });
 
         // the target variable contains grouping information (Timeseries/Geocoordinate)
@@ -162,9 +162,7 @@ export default Vue.extend({
           if (seriesIds.length > 0) {
             // Make sure to show the button for all of them.
             if (seriesIds.length !== 1) {
-              hideRemoveButton = !seriesIds.some(
-                (v) => v === group.storageName
-              );
+              hideRemoveButton = !seriesIds.some((v) => v === group.key);
             }
             // unless there is only one series ID, then we hide the remove button.
             else {
@@ -197,7 +195,7 @@ export default Vue.extend({
             feature: Feature.REMOVE_FEATURE,
             activity: Activity.DATA_PREPARATION,
             subActivity: SubActivity.DATA_TRANSFORMATION,
-            details: { feature: group.storageName },
+            details: { feature: group.key },
           });
 
           const dataset = routeGetters.getRouteDataset(this.$store);
@@ -207,7 +205,7 @@ export default Vue.extend({
           const training = routeGetters.getDecodedTrainingVariableNames(
             this.$store
           );
-          training.splice(training.indexOf(group.storageName), 1);
+          training.splice(training.indexOf(group.key), 1);
 
           // update task based on the current training data
           const taskResponse = await datasetActions.fetchTask(this.$store, {
@@ -226,12 +224,12 @@ export default Vue.extend({
             // Fetch the information of the timeseries grouping
             const currentGrouping = datasetGetters
               .getGroupings(this.$store)
-              .find((v) => v.storageName === targetName)?.grouping;
+              .find((v) => v.key === targetName)?.grouping;
 
             // Simply duplicate its grouping information and remove the series ID
             const grouping = JSON.parse(JSON.stringify(currentGrouping));
             grouping.subIds = grouping.subIds.filter(
-              (subId) => subId !== group.storageName
+              (subId) => subId !== group.key
             );
             grouping.idCol = getComposedVariableKey(grouping.subIds);
 
@@ -243,7 +241,7 @@ export default Vue.extend({
           }
 
           this.$router.push(entry).catch((err) => console.warn(err));
-          removeFiltersByName(this.$router, group.storageName);
+          removeFiltersByName(this.$router, group.key);
         });
 
         return removeBtn;

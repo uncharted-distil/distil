@@ -141,7 +141,7 @@ export default Vue.extend({
     searchedActiveVariables(): Variable[] {
       // remove variables used in groupedFeature;
       const activeVariables = this.variables.filter(
-        (v) => !this.groupedFeatures.includes(v.storageName)
+        (v) => !this.groupedFeatures.includes(v.key)
       );
 
       return searchVariables(activeVariables, this.availableTargetVarsSearch);
@@ -382,7 +382,7 @@ export default Vue.extend({
       const taskResponse = await datasetActions.fetchTask(this.$store, {
         dataset: this.dataset,
         targetName: LOW_SHOT_LABEL_COLUMN_NAME,
-        variableNames: this.variables.map((v) => v.storageName),
+        variableNames: this.variables.map((v) => v.key),
       });
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
@@ -394,8 +394,8 @@ export default Vue.extend({
         })
       );
       this.variables.forEach((variable) => {
-        if (!trainingMap.has(variable.storageName)) {
-          training.push(variable.storageName);
+        if (!trainingMap.has(variable.key)) {
+          training.push(variable.key);
         }
       });
       if (check === training.length) {

@@ -260,7 +260,7 @@ export default Vue.extend({
         .getGroupings(this.$store)
         .filter((v) => isClusterType(v.colType))
         .forEach((v) => {
-          varModesMap.set(v.storageName, SummaryMode.Cluster);
+          varModesMap.set(v.key, SummaryMode.Cluster);
         });
 
       // find any image variables using this cluster data and update their mode
@@ -268,7 +268,7 @@ export default Vue.extend({
         .getVariables(this.$store)
         .filter((v) => v.colType === IMAGE_TYPE)
         .forEach((v) => {
-          varModesMap.set(v.storageName, SummaryMode.Cluster);
+          varModesMap.set(v.key, SummaryMode.Cluster);
         });
 
       // serialize the modes map into a string and add to the route

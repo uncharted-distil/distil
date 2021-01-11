@@ -138,7 +138,7 @@ export default Vue.extend({
           return;
         }
         return (
-          v.storageName.toLowerCase() === this.field.toLowerCase() &&
+          v.key.toLowerCase() === this.field.toLowerCase() &&
           v.datasetName === this.dataset
         );
       });
@@ -198,7 +198,7 @@ export default Vue.extend({
       );
     },
     isComputedFeature(): boolean {
-      return this.variable && hasComputedVarPrefix(this.variable.storageName);
+      return this.variable && hasComputedVarPrefix(this.variable.key);
     },
     hasSchemaType(): boolean {
       return !!this.schemaType;
@@ -284,7 +284,7 @@ export default Vue.extend({
       } else {
         datasetActions.removeGrouping(this.$store, {
           dataset: this.dataset,
-          variable: this.variable.storageName,
+          variable: this.variable.key,
         });
       }
     },

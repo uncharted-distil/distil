@@ -31,9 +31,9 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	if !ok {
 		return nil, errors.New("unable to parse header name from variable data")
 	}
-	storageName, ok := json.String(child, model.VarStorageNameField)
+	key, ok := json.String(child, model.VarKeyField)
 	if !ok {
-		storageName = headerName
+		key = headerName
 	}
 	index, ok := json.Int(child, model.VarIndexField)
 	if !ok {
@@ -65,7 +65,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	}
 	originalVariable, ok := json.String(child, model.VarOriginalVariableField)
 	if !ok {
-		originalVariable = storageName
+		originalVariable = key
 	}
 	displayVariable, ok := json.String(child, model.VarDisplayVariableField)
 	if !ok {
@@ -116,7 +116,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	}
 
 	return &model.Variable{
-		StorageName:      storageName,
+		Key:              key,
 		HeaderName:       headerName,
 		Index:            index,
 		Type:             typ,
@@ -158,7 +158,7 @@ func (s *Storage) parseSuggestedType(json map[string]interface{}) (*model.Sugges
 	}, nil
 }
 
-func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*model.Variable, error) {
+func (s *Storage) parseVariable(searchHit *elastic.SearchHit, key string) (*model.Variable, error) {
 	// unmarshal the hit source
 	src, err := json.Unmarshal(searchHit.Source)
 	if err != nil {
@@ -176,12 +176,12 @@ func (s *Storage) parseVariable(searchHit *elastic.SearchHit, varName string) (*
 			return nil, errors.Wrap(err, "unable to parse variable")
 		}
 		if variable != nil {
-			if variable.StorageName == varName {
+			if variable.Key == key {
 				return variable, nil
 			}
 		}
 	}
-	return nil, errors.Errorf("unable to find variable `%s`", varName)
+	return nil, errors.Errorf("unable to find variable `%s`", key)
 }
 
 func (s *Storage) parseVariables(searchHit *elastic.SearchHit, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*model.Variable, error) {
@@ -387,7 +387,7 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 	// create a lookup for the variables.
 	varsLookup := make(map[string]*model.Variable)
 	for _, v := range vars {
-		varsLookup[v.StorageName] = v
+		varsLookup[v.Key] = v
 	}
 
 	// build the slice by cycling through the variables and using the lookup
@@ -395,7 +395,7 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 	resultIncludes := make(map[string]bool)
 	result := make([]*model.Variable, 0)
 	for _, v := range vars {
-		name := v.StorageName
+		name := v.Key
 		if !resultIncludes[name] {
 			result = append(result, varsLookup[name])
 			resultIncludes[name] = true
@@ -406,22 +406,22 @@ func (s *Storage) FetchVariablesDisplay(dataset string) ([]*model.Variable, erro
 }
 
 // FetchVariablesByName returns all the caller supplied variables.
-func (s *Storage) FetchVariablesByName(dataset string, varNames []string, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*model.Variable, error) {
+func (s *Storage) FetchVariablesByName(dataset string, varKeys []string, includeIndex bool, includeMeta bool, includeSystemData bool) ([]*model.Variable, error) {
 	fetchedVariables, err := s.FetchVariables(dataset, includeIndex, includeMeta, includeSystemData)
 	if err != nil {
 		return nil, err
 	}
 
 	// put the var names into a set for quick lookup
-	varNameSet := map[string]bool{}
-	for _, varName := range varNames {
-		varNameSet[varName] = true
+	varKeySet := map[string]bool{}
+	for _, key := range varKeys {
+		varKeySet[key] = true
 	}
 
 	// filter the returned variables to match our input list
 	filteredVariables := []*model.Variable{}
 	for _, variable := range fetchedVariables {
-		if varNameSet[variable.StorageName] {
+		if varKeySet[variable.Key] {
 			filteredVariables = append(filteredVariables, variable)
 		}
 	}

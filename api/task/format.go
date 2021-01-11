@@ -116,7 +116,7 @@ func checkD3MIndexExists(meta *model.Metadata) bool {
 	// check all variables for a d3m index
 	for _, dr := range meta.DataResources {
 		for _, v := range dr.Variables {
-			if v.StorageName == model.D3MIndexFieldName {
+			if v.Key == model.D3MIndexFieldName {
 				return true
 			}
 		}

@@ -252,10 +252,8 @@ export default Vue.extend({
     isHighlightedInstance(highlight: Highlight): boolean {
       return highlight && highlight.context === this.instanceName;
     },
-    isHighlightedGroup(highlight: Highlight, storageName: string): boolean {
-      return (
-        this.isHighlightedInstance(highlight) && highlight.key === storageName
-      );
+    isHighlightedGroup(highlight: Highlight, key: string): boolean {
+      return this.isHighlightedInstance(highlight) && highlight.key === key;
     },
     updateSelection(event) {
       if (!this.enableHighlighting) return;
@@ -297,7 +295,7 @@ export default Vue.extend({
       if (this.html) {
         return _.isFunction(this.html)
           ? this.html({
-              storageName: this.summary.key,
+              key: this.summary.key,
             })
           : this.html;
       }

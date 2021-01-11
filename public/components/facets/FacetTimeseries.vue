@@ -106,7 +106,7 @@ export default Vue.extend({
     },
 
     variable(): Variable {
-      return this.variables.find((v) => v.storageName === this.summary.key);
+      return this.variables.find((v) => v.key === this.summary.key);
     },
 
     grouping(): TimeseriesGrouping {
@@ -121,9 +121,7 @@ export default Vue.extend({
         return null;
       }
 
-      const summaryVar = this.variables.find(
-        (v) => v.storageName === this.summary.key
-      );
+      const summaryVar = this.variables.find((v) => v.key === this.summary.key);
 
       if (!summaryVar || !this.grouping || !this.variable) {
         return null;

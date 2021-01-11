@@ -115,7 +115,7 @@ export default Vue.extend({
         const container = document.createElement("div");
         const targetElem = document.createElement("button");
 
-        const unsupported = this.unsupportedTargets.has(group.storageName);
+        const unsupported = this.unsupportedTargets.has(group.key);
         targetElem.className += "btn btn-sm btn-success mb-2";
         if (unsupported) {
           targetElem.className += " disabled";
@@ -125,7 +125,7 @@ export default Vue.extend({
         if (!unsupported) {
           // only add listener on supported target types
           targetElem.addEventListener("click", () => {
-            const target = group.storageName;
+            const target = group.key;
             // remove from training
             const training = routeGetters.getDecodedTrainingVariableNames(
               this.$store
@@ -136,7 +136,7 @@ export default Vue.extend({
             }
 
             const v = this.variables.find((v) => {
-              return v.storageName === group.storageName;
+              return v.key === group.key;
             });
             if (v && v.grouping) {
               if (v.grouping.subIds.length > 0) {
@@ -163,7 +163,7 @@ export default Vue.extend({
             datasetActions
               .fetchTask(this.$store, {
                 dataset: dataset,
-                targetName: group.storageName,
+                targetName: group.key,
                 variableNames: [],
               })
               .then((response) => {
@@ -174,7 +174,7 @@ export default Vue.extend({
                 );
                 if (task.includes("timeseries")) {
                   training.forEach((v) => {
-                    if (v !== group.storageName) {
+                    if (v !== group.key) {
                       varModesMap.set(v, SummaryMode.Timeseries);
                     }
                   });
@@ -182,7 +182,7 @@ export default Vue.extend({
                 const varModesStr = varModesToString(varModesMap);
 
                 const routeArgs = {
-                  target: group.storageName,
+                  target: group.key,
                   dataset: dataset,
                   filters: routeGetters.getRouteFilters(this.$store),
                   training: training.join(","),
@@ -194,7 +194,7 @@ export default Vue.extend({
                   feature: Feature.SELECT_TARGET,
                   activity: Activity.PROBLEM_DEFINITION,
                   subActivity: SubActivity.PROBLEM_SPECIFICATION,
-                  details: { target: group.storageName },
+                  details: { target: group.key },
                 });
 
                 const entry = createRouteEntry(
@@ -256,8 +256,8 @@ export default Vue.extend({
     unsupportedTargets(): Set<string> {
       return new Set(
         this.variables
-          .filter((v) => isUnsupportedTargetVar(v.storageName, v.colType))
-          .map((v) => v.storageName)
+          .filter((v) => isUnsupportedTargetVar(v.key, v.colType))
+          .map((v) => v.key)
       );
     },
 
@@ -268,7 +268,7 @@ export default Vue.extend({
     searchedActiveVariables(): Variable[] {
       // remove variables used in groupedFeature;
       const activeVariables = this.variables.filter(
-        (v) => !this.groupedFeatures.includes(v.storageName)
+        (v) => !this.groupedFeatures.includes(v.key)
       );
 
       return searchVariables(activeVariables, this.availableTargetVarsSearch);

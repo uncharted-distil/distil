@@ -108,13 +108,13 @@ export const getters = {
     state: Route,
     getters: any
   ): VariableSummary[] {
-    function hashSummary(datasetName: string, storageName: string) {
-      return `${datasetName}:${storageName}`.toLowerCase();
+    function hashSummary(datasetName: string, key: string) {
+      return `${datasetName}:${key}`.toLowerCase();
     }
 
     const variables = getters.getJoinDatasetsVariables;
     const lookup = buildLookup(
-      variables.map((v) => hashSummary(v.datasetName, v.storageName))
+      variables.map((v) => hashSummary(v.datasetName, v.key))
     );
     const summaries = getters.getVariableSummaries ?? ([] as VariableSummary[]);
     return summaries.filter(
@@ -163,14 +163,14 @@ export const getters = {
         const filters = getters.getDecodedFilters;
 
         // only include filters for this dataset
-        const lookup = buildLookup(dataset.variables.map((v) => v.storageName));
+        const lookup = buildLookup(dataset.variables.map((v) => v.key));
         const filtersForDataset = filters.filter((f) => {
           return lookup[f.key];
         });
 
         const filterParams = _.cloneDeep({
           filters: filtersForDataset,
-          variables: dataset.variables.map((v) => v.storageName),
+          variables: dataset.variables.map((v) => v.key),
         });
         res[datasetID] = filterParams;
       }
@@ -397,9 +397,7 @@ export const getters = {
     const training = getters.getDecodedTrainingVariableNames;
     const lookup = buildLookup(training);
     const variables = getters.getVariables;
-    return variables.filter(
-      (variable) => lookup[variable.storageName.toLowerCase()]
-    );
+    return variables.filter((variable) => lookup[variable.key.toLowerCase()]);
   },
 
   getTrainingVariableSummaries(state: Route, getters: any): VariableSummary[] {
@@ -424,7 +422,7 @@ export const getters = {
     if (target) {
       const variables = getters.getVariables;
       const found = variables.filter(
-        (summary) => target.toLowerCase() === summary.storageName.toLowerCase()
+        (summary) => target.toLowerCase() === summary.key.toLowerCase()
       );
       if (found) {
         return found[0];
@@ -461,9 +459,7 @@ export const getters = {
     const lookup =
       training && target ? buildLookup(training.concat([target])) : null;
     if (!lookup) return variables ?? ([] as Variable[]);
-    return variables.filter(
-      (variable) => !lookup[variable.storageName.toLowerCase()]
-    );
+    return variables.filter((variable) => !lookup[variable.key.toLowerCase()]);
   },
 
   getActiveSolutionIndex(state: Route, getters: any): number {

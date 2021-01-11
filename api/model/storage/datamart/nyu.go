@@ -180,7 +180,7 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 		vars := make([]*model.Variable, 0)
 		for _, c := range res.Metadata.Columns {
 			vars = append(vars, &model.Variable{
-				StorageName:  c.Name,
+				Key:          c.Name,
 				DisplayName:  c.Name,
 				OriginalType: mapNYUDataTypesToDistil(c.StructuralType),
 			})

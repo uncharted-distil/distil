@@ -130,7 +130,7 @@ export default Vue.extend({
 
     html(): (group: Group) => HTMLElement {
       return (group: Group) => {
-        const variable = group.storageName;
+        const variable = group.key;
         const trainingElem = document.createElement("button");
         trainingElem.className += "btn btn-sm btn-outline-secondary mb-2";
         trainingElem.textContent = "Add";
@@ -148,7 +148,7 @@ export default Vue.extend({
             feature: Feature.ADD_FEATURE,
             activity: Activity.DATA_PREPARATION,
             subActivity: SubActivity.DATA_TRANSFORMATION,
-            details: { feature: group.storageName },
+            details: { feature: group.key },
           });
 
           const dataset = routeGetters.getRouteDataset(this.$store);
@@ -157,7 +157,7 @@ export default Vue.extend({
           // get an updated view of the training data list
           const training = routeGetters
             .getDecodedTrainingVariableNames(this.$store)
-            .concat([group.storageName]);
+            .concat([group.key]);
 
           // update task based on the current training data
           const taskResponse = await datasetActions.fetchTask(this.$store, {
@@ -176,7 +176,7 @@ export default Vue.extend({
             // Fetch the information of the timeseries grouping
             const currentGrouping = datasetGetters
               .getGroupings(this.$store)
-              .find((v) => v.storageName === targetName)?.grouping;
+              .find((v) => v.key === targetName)?.grouping;
 
             // Simply duplicate its grouping information and add the new variable
             const grouping = JSON.parse(JSON.stringify(currentGrouping));
@@ -213,7 +213,7 @@ export default Vue.extend({
       );
 
       this.availableVariables.forEach((variable) => {
-        training.push(variable.storageName);
+        training.push(variable.key);
       });
 
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
