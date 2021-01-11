@@ -95,10 +95,10 @@ export interface NumericalFacet {
 
 export interface Group {
   dataset: string;
-  key: string;
   label: string;
   description: string;
   key: string;
+  groupKey: string;
   type: string;
   collapsible: boolean;
   collapsed: boolean;

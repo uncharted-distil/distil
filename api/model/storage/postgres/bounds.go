@@ -309,7 +309,7 @@ func (f *BoundsField) fetchHistogramByResult(resultURI string, filterParams *api
 	query := fmt.Sprintf(`
 		SELECT b.xbuckets, b.xcoord, b.ybuckets, b.ycoord, COUNT(%s)
 		FROM %s AS data inner join %s AS b ON ST_WITHIN(data."%s", b.coordinates)
-		INNER JOIN %s result ON data."%s" = result.index
+		INNER JOIN %s result ON cast(data."%s" as double precision) = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY b.xbuckets, b.xcoord, b.ybuckets, b.ycoord
 		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, queryTableName, tmpTableName, f.PolygonCol,

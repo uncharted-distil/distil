@@ -169,7 +169,7 @@ export default Vue.extend({
               hideRemoveButton = true;
             }
           } else {
-            hideRemoveButton = targetVar.grouping.idCol === group.key;
+            hideRemoveButton = targetVar.grouping.idCol === group.groupKey;
           }
 
           // Hide the remove button
