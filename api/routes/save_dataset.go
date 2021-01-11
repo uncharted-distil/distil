@@ -42,6 +42,16 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 			handleError(w, err)
 			return
 		}
+		shouldRename := false
+		datasetName, ok := params["datasetName"].(string)
+		if ok {
+			// check if the new name is not equal to previous
+			if datasetName != dataset {
+				// update meta info to new name
+				shouldRename = true
+			}
+		}
+
 		// get storage clients
 		metaStorage, err := metaCtor()
 		if err != nil {
@@ -64,7 +74,7 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 			handleError(w, err)
 			return
 		}
-		if ds.Immutable{
+		if ds.Immutable {
 			handleError(w, errors.New("can not mutate an immutable dataset"))
 			return
 		}
@@ -83,6 +93,9 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 		ds.Immutable = true
 		// is no longer a clone due to the dropping of the filterParams
 		ds.Clone = false
+		if shouldRename {
+			ds.Name = datasetName
+		}
 		err = metaStorage.UpdateDataset(ds)
 		if err != nil {
 			handleError(w, err)
