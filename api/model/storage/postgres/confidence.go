@@ -50,7 +50,7 @@ func (s *Storage) FetchConfidenceSummary(dataset string, storageName string, res
 		if baseline == nil {
 			continue
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = s.fetchExplainHistogram(dataset, storageName, targetName, explainName, resultURI, filterParams, mode)
 			if err != nil {
 				return nil, err

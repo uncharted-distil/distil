@@ -27,7 +27,7 @@
                 :height="imageHeight"
                 :type="imageType"
                 :gray="renderTiles[i][j].selected.gray"
-                :on-click="onImageClick"
+                @click="onImageClick"
                 :overlappedUrls="
                   renderTiles[i][j].overlapped.map((o) => o.imageUrl)
                 "

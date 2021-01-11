@@ -16,21 +16,17 @@
 package routes
 
 import (
-	"bytes"
 	"net/http"
 
 	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
 	"goji.io/v3/pat"
-	"io/ioutil"
-	"path"
 )
 
-// ExtractHandler extracts a dataset from storage and writes it to disk.
-func ExtractHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
+// SaveDatasetHandler extracts a dataset from storage and writes it to disk.
+func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
@@ -63,20 +59,31 @@ func ExtractHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 			handleError(w, errors.Wrap(err, "unable to expand filter params"))
 			return
 		}
-		_, datasetPath, err := task.ExportDataset(dataset, metaStorage, dataStorage, invert, expandedFilterParams)
+		ds, err := metaStorage.FetchDataset(dataset, true, true, true)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		streamCSV, err := ioutil.ReadFile(path.Join(datasetPath, compute.D3MDataFolder, compute.D3MLearningData))
+		if ds.Immutable {
+			handleError(w, errors.New("can not mutate an immutable dataset"))
+			return
+		}
+		_, _, err = task.ExportDataset(dataset, metaStorage, dataStorage, invert, expandedFilterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		buffer := bytes.NewBuffer(streamCSV)
-
-		w.Header().Set("Content-type", "application/csv")
-		_, err = buffer.WriteTo(w)
+		// delete rows based on filterParams
+		err = dataStorage.SaveDataset(dataset, ds.StorageName, invert, expandedFilterParams)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		// version dataset
+		ds.Immutable = true
+		// is no longer a clone due to the dropping of the filterParams
+		ds.Clone = false
+		err = metaStorage.UpdateDataset(ds)
 		if err != nil {
 			handleError(w, err)
 			return

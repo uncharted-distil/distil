@@ -27,7 +27,7 @@
               :height="imageHeight"
               :type="imageType"
               :gray="items[i].gray"
-              :onClick="onClick"
+              @click="onClick"
             />
           </div>
           <label v-if="hasTimeStamp">{{ items[i].item.timestamp.value }}</label>

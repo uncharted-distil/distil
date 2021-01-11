@@ -172,6 +172,7 @@ export const actions = {
   addField: dispatch(moduleActions.addField),
   updateDataset: dispatch(moduleActions.updateDataset),
   extractDataset: dispatch(moduleActions.extractDataset),
+  saveDataset: dispatch(moduleActions.saveDataset),
 };
 
 // Typed mutations

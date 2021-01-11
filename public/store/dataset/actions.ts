@@ -1534,6 +1534,41 @@ export const actions = {
       return null;
     }
   },
+  async saveDataset(
+    context: DatasetContext,
+    args: {
+      dataset: string;
+      datasetNewName: string;
+      filterParams: FilterParams;
+      highlight: Highlight;
+      include: boolean;
+      dataMode: DataMode;
+      mode?: string;
+    }
+  ) {
+    if (!validateArgs(args, ["dataset", "filterParams"])) {
+      return null;
+    }
+    const filterParams = addHighlightToFilterParams(
+      args.filterParams,
+      args.highlight,
+      args.mode
+    );
+
+    const dataModeDefault = args.dataMode ? args.dataMode : DataMode.Default;
+    filterParams.dataMode = dataModeDefault;
+
+    try {
+      const response = await axios.post(
+        `distil/save-dataset/${args.dataset}/${args.include}`,
+        { datasetName: args.datasetNewName, ...filterParams }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  },
   async extractDataset(
     context: DatasetContext,
     args: {

@@ -33,6 +33,7 @@
           :is-loading="isLoadingData"
           @export="onExport"
           @apply="onApply"
+          @save="onSaveClick"
         />
       </div>
     </div>
@@ -52,16 +53,7 @@
         />
       </b-form-group>
     </b-modal>
-    <label-score-pop-up
-      :data="dataItems"
-      :data-fields="dataFields"
-      :summaries="summaries"
-      :is-loading="isLoadingData"
-      :is-remote-sensing="isRemoteSensing"
-      :modal-id="scorePopUpId"
-      @button-event="onAnnotationChanged"
-      @apply="onApply"
-    />
+    <save-dataset :dataset-name="dataset" @save="onSaveValid" />
   </div>
 </template>
 
@@ -86,6 +78,7 @@ import {
   LOW_SHOT_SCORE_COLUMN_NAME,
   minimumRouteKey,
   addOrderBy,
+  downloadFile,
 } from "../util/data";
 import {
   Variable,
@@ -94,16 +87,16 @@ import {
   TableColumn,
 } from "../store/dataset/index";
 import VariableFacets from "../components/facets/VariableFacets.vue";
+import SaveDataset from "../components/labelingComponents/SaveDataset.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
 import LabelingDataSlot from "../components/labelingComponents/LabelingDataSlot.vue";
-import { EXCLUDE_FILTER, Filter } from "../util/filters";
+import { EXCLUDE_FILTER, Filter, INCLUDE_FILTER } from "../util/filters";
 import { Dictionary } from "vue-router/types/router";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry } from "../util/routes";
 import { actions as requestActions } from "../store/requests/module";
-import LabelScorePopUp from "../components/labelingComponents/LabelScorePopUp.vue";
 import { clearRowSelection } from "../util/row";
 
 const LABEL_KEY = "label";
@@ -114,7 +107,7 @@ export default Vue.extend({
     VariableFacets,
     LabelingDataSlot,
     CreateLabelingForm,
-    LabelScorePopUp,
+    SaveDataset,
   },
   props: {
     logActivity: {
@@ -282,7 +275,7 @@ export default Vue.extend({
       await this.fetchData();
       this.$bvModal.show(this.scorePopUpId);
     },
-    onExport() {
+    async onExport() {
       const highlight = {
         context: this.instance,
         dataset: this.dataset,
@@ -293,7 +286,7 @@ export default Vue.extend({
         this.$store
       );
       const dataMode = routeGetters.getDataMode(this.$store);
-      datasetActions.extractDataset(this.$store, {
+      const file = await datasetActions.extractDataset(this.$store, {
         dataset: this.dataset,
         filterParams,
         highlight,
@@ -301,6 +294,32 @@ export default Vue.extend({
         mode: EXCLUDE_FILTER,
         dataMode,
       });
+      downloadFile(file, this.dataset, ".csv");
+    },
+    onSaveClick() {
+      this.$bvModal.show("save-model-modal");
+    },
+    async onSaveValid(saveName: string) {
+      const highlight = {
+        context: this.instance,
+        dataset: this.dataset,
+        key: LOW_SHOT_LABEL_COLUMN_NAME,
+        value: LowShotLabels.unlabeled,
+      }; // exclude unlabeled from data export
+      const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+        this.$store
+      );
+      const dataMode = routeGetters.getDataMode(this.$store);
+      await datasetActions.saveDataset(this.$store, {
+        dataset: this.dataset,
+        datasetNewName: saveName,
+        filterParams,
+        highlight,
+        include: true,
+        mode: INCLUDE_FILTER,
+        dataMode,
+      });
+      this.$bvModal.show("save-success-dataset");
     },
     onFacetClick(context: string, key: string, value: string, dataset: string) {
       if (key && value) {
