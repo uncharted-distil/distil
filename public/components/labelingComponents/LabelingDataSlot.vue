@@ -1,6 +1,21 @@
 <template>
-  <div class="h-75">
-    <div class="d-flex justify-content-around m-1">
+  <div class="flex-1 d-flex flex-column pb-1 pt-2">
+    <div class="fake-search-input">
+      <filter-badge v-if="activeFilter" active-filter :filter="activeFilter" />
+      <filter-badge
+        v-for="(filter, index) in filters"
+        :key="index"
+        :filter="filter"
+      />
+    </div>
+    <div class="d-flex justify-content-between m-1">
+      <p class="selection-data-slot-summary">
+        <strong class="matching-color">matching</strong> samples of
+        {{ numRows }} to model<template v-if="selectionNumRows > 0">
+          , {{ selectionNumRows }}
+          <strong class="selected-color">selected</strong>
+        </template>
+      </p>
       <label-header-buttons
         @button-event="onAnnotationClicked"
         @select-all="onSelectAll"
@@ -40,6 +55,7 @@ import {
   TableRow,
   TableColumn,
   RowSelection,
+  Highlight,
 } from "../../store/dataset/index";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { getters as routeGetters } from "../../store/route/module";
@@ -49,7 +65,11 @@ import {
   LOW_SHOT_SCORE_COLUMN_NAME,
   getAllDataItems,
 } from "../../util/data";
+import { createFilterFromHighlight } from "../../util/highlights";
+import { Filter, INCLUDE_FILTER } from "../../util/filters";
 import LabelHeaderButtons from "./LabelHeaderButtons.vue";
+import FilterBadge from "../FilterBadge.vue";
+import { getNumIncludedRows } from "../../util/row";
 
 const GEO_VIEW = "geo";
 const IMAGE_VIEW = "image";
@@ -65,6 +85,7 @@ export default Vue.extend({
     ImageMosaic,
     SelectDataTable,
     LabelHeaderButtons,
+    FilterBadge,
   },
   props: {
     variables: Array as () => Variable[],
@@ -78,6 +99,26 @@ export default Vue.extend({
     };
   },
   computed: {
+    activeFilter(): Filter {
+      if (!this.highlight || !this.highlight.value) {
+        return null;
+      }
+      return createFilterFromHighlight(this.highlight, INCLUDE_FILTER);
+    },
+    highlight(): Highlight {
+      return routeGetters.getDecodedHighlight(this.$store);
+    },
+    filters(): Filter[] {
+      return routeGetters
+        .getDecodedFilters(this.$store)
+        .filter((f) => f.type !== "row");
+    },
+    numRows(): number {
+      return datasetGetters.getIncludedTableDataNumRows(this.$store);
+    },
+    selectionNumRows(): number {
+      return getNumIncludedRows(this.rowSelection);
+    },
     viewComponent(): string {
       if (this.viewTypeModel === GEO_VIEW) return "LabelGeoPlot";
       if (this.viewTypeModel === IMAGE_VIEW) return "ImageMosaic";
@@ -111,6 +152,9 @@ export default Vue.extend({
         });
       }
       return items;
+    },
+    numItems(): number {
+      return this.dataItems?.length;
     },
     dataFields(): Dictionary<TableColumn> {
       return datasetGetters.getIncludedTableDataFields(this.$store);
@@ -150,7 +194,7 @@ export default Vue.extend({
 .label-data-container {
   display: flex;
   flex-flow: wrap;
-  height: 90%;
+  height: 80%;
   position: relative;
   width: 100%;
   background: #eee;
@@ -159,5 +203,18 @@ export default Vue.extend({
   margin: 5px;
   display: flex;
   justify-content: space-around;
+}
+.fake-search-input {
+  background-color: var(--gray-300);
+  border: 1px solid var(--gray-500);
+  border-radius: 0.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 2.5rem;
+  padding: 3px;
+}
+.selection-data-slot-summary {
+  font-size: 90%;
+  margin: auto 5px -3px 0; /* Display against the table */
 }
 </style>
