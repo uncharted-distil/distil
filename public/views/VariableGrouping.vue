@@ -258,15 +258,15 @@ export default Vue.extend({
 
   data() {
     return {
-      idCols: [{ value: null }],
+      idCols: [{ value: null as string }],
       prevIdCols: 0,
-      xCol: null,
-      yCol: null,
+      xCol: null as string,
+      yCol: null as string,
       hideIdCol: [false],
       hideXCol: true,
       hideYCol: true,
       hideClusterCol: true,
-      other: [],
+      other: [] as string[],
       isPending: false,
       percentComplete: 100,
       isUpdating: false,
@@ -418,7 +418,7 @@ export default Vue.extend({
         });
       }
     },
-    idOptions(idCol): Object[] {
+    idOptions(idCol: string): Object[] {
       const ID_COL_TYPES = {
         [TEXT_TYPE]: true,
         [ORDINAL_TYPE]: true,
@@ -438,7 +438,7 @@ export default Vue.extend({
       return [];
     },
 
-    onIdChange() {
+    onIdChange(arg: string) {
       const values = this.idCols.map((c) => c.value).filter((v) => v);
       if (values.length === this.prevIdCols) {
         return;
@@ -449,7 +449,7 @@ export default Vue.extend({
       this.onChange();
     },
 
-    removeIdCol(value) {
+    removeIdCol(value: string) {
       this.idCols = this.idCols.filter((idCol) => idCol.value !== value);
       this.prevIdCols--;
       if (this.isReady) {
@@ -459,19 +459,19 @@ export default Vue.extend({
       }
     },
 
-    isIDCol(arg): boolean {
+    isIDCol(arg: string): boolean {
       return !!this.idCols.find((id) => id.value === arg);
     },
 
-    isXCol(arg): boolean {
+    isXCol(arg: string): boolean {
       return arg === this.xCol;
     },
 
-    isYCol(arg): boolean {
+    isYCol(arg: string): boolean {
       return arg === this.yCol;
     },
 
-    isOtherCol(arg): boolean {
+    isOtherCol(arg: string): boolean {
       return this.other.indexOf(arg) !== -1;
     },
 
@@ -485,8 +485,8 @@ export default Vue.extend({
       this.submitGrouping(true);
     },
 
-    getHiddenCols(idCol) {
-      const hiddenCols = [this.xCol, this.yCol];
+    getHiddenCols(idCol: string, xCol: string, yCol: string): string[] {
+      const hiddenCols = [xCol, yCol];
       if (idCol !== null) {
         hiddenCols.push(idCol);
       }
@@ -503,31 +503,69 @@ export default Vue.extend({
       // generate the grouping structure that describes how the vars will be grouped
       const idCol = this.isTimeseries ? getComposedVariableKey(ids) : null;
 
-      const hiddenCols = gotoTarget ? this.getHiddenCols(idCol) : [];
-
+      const hidden = gotoTarget
+        ? this.getHiddenCols(idCol, this.xCol, this.yCol)
+        : [];
       const grouping: Grouping = {
         type: this.groupingType,
         dataset: this.dataset,
         idCol: idCol,
         subIds: ids,
-        hidden: hiddenCols,
+        hidden: hidden,
       };
 
+      const groupings = [] as Grouping[];
+
       if (this.isTimeseries) {
-        const tsGrouping = grouping as TimeseriesGrouping;
+        const tsGrouping = _.cloneDeep(grouping) as TimeseriesGrouping;
         tsGrouping.xCol = this.xCol;
         tsGrouping.yCol = this.yCol;
         tsGrouping.clusterCol = null;
+        groupings.push(tsGrouping);
+
+        if (gotoTarget) {
+          // We want to take any other numeric values and create groups for them as well.
+          const Y_COL_TYPES = {
+            [INTEGER_TYPE]: true,
+            [REAL_TYPE]: true,
+          };
+          const yCols = this.variables
+            .filter((v) => Y_COL_TYPES[v.colType])
+            .filter((v) => !this.isIDCol(v.colName))
+            .filter((v) => !this.isXCol(v.colName))
+            .filter((v) => !this.isYCol(v.colName))
+            .map((v) => v.colName)
+            .forEach((v) => {
+              // create a new grouping entry for each value variable and add it to
+              // the list to create
+              const tsGrouping = _.cloneDeep(grouping) as TimeseriesGrouping;
+              tsGrouping.hidden = gotoTarget
+                ? this.getHiddenCols(idCol, this.xCol, v)
+                : [];
+              tsGrouping.xCol = this.xCol;
+              tsGrouping.yCol = v;
+              tsGrouping.clusterCol = null;
+              tsGrouping.hidden = this.getHiddenCols(idCol, this.xCol, v);
+              groupings.push(tsGrouping);
+            });
+        }
       } else if (this.isGeocoordinate) {
-        const tsGrouping = grouping as GeoCoordinateGrouping;
-        tsGrouping.xCol = this.xCol;
-        tsGrouping.yCol = this.yCol;
+        const geoGrouping = grouping as GeoCoordinateGrouping;
+        geoGrouping.xCol = this.xCol;
+        geoGrouping.yCol = this.yCol;
+
+        groupings.push(geoGrouping);
       }
 
-      await datasetActions.setGrouping(this.$store, {
-        dataset: this.dataset,
-        grouping: grouping,
-      });
+      // Create all of the necessary groupings
+      for (const grouping of groupings) {
+        // CDB: This needs to be converted into an API call that can handle creation of
+        // multiple groups because the UI goes spastic updating after each individual operation.
+        await datasetActions.setGrouping(this.$store, {
+          dataset: this.dataset,
+          grouping: grouping,
+        });
+      }
 
       if (gotoTarget) {
         // If this dataset contains multiple timeseries,

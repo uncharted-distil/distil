@@ -647,10 +647,12 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 
 	countTarget := "*"
 
-	// match order by for distinct
-	var groupings []string
+	// ensure distinct ordering matches order by
+	groupings := []string{}
+	groupingSet := map[string]bool{}
 	for _, v := range variables {
-		if v.IsGrouping() && v.Grouping.GetIDCol() != "" {
+		if v.IsGrouping() && v.Grouping.GetIDCol() != "" && !groupingSet[v.Grouping.GetIDCol()] {
+			groupingSet[v.Grouping.GetIDCol()] = true
 			groupings = append(groupings, v.Grouping.GetIDCol())
 		}
 	}

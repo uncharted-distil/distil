@@ -393,19 +393,24 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 
-	// build ANY ARRAY values
-	paramString := ""
-	if len(timeseriesURI) == 0 {
-		return nil, errors.New("No timeseriesURIs passed in")
+	if timeseriesColName != "null" && timeseriesColName != "" {
+		// build ANY ARRAY values
+		paramString := ""
+		if len(timeseriesURI) == 0 {
+			return nil, errors.New("No timeseriesURIs passed in")
+		}
+		for _, v := range timeseriesURI {
+			paramString += "'" + v + "',"
+		}
+		paramString = paramString[:len(paramString)-1] // remove end comma
+		wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", timeseriesColName, paramString))
 	}
-	for _, v := range timeseriesURI {
-		paramString += "'" + v + "',"
-	}
-	paramString = paramString[:len(paramString)-1] // remove end comma
-	wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", timeseriesColName, paramString))
 
 	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, invert)
-	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	}
 
 	// Get count by category.
 	query := fmt.Sprintf("SELECT ARRAY_AGG(filteredEvents.TimeStamps ORDER BY filteredEvents.TimeStamps), ARRAY_AGG(COALESCE(filteredEvents.Counts, 'NaN') ORDER BY filteredEvents.TimeStamps), filteredEvents.series_key FROM "+
@@ -649,6 +654,12 @@ func (f *TimeSeriesField) keyColName(mode api.SummaryMode) string {
 
 func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert bool, mode api.SummaryMode) (*api.Histogram, error) {
 
+	// When there's no grouping key we can
+	if f.IDCol == "" {
+		histogram := f.generateUngroupedData()
+		return histogram, nil
+	}
+
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -661,6 +672,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 
 	// Get count by category.
 	colName := f.keyColName(mode)
+
 	query := fmt.Sprintf("SELECT \"%s\", COUNT(DISTINCT \"%s\") AS __count__ FROM %s %s GROUP BY \"%s\" ORDER BY __count__ desc, \"%s\" LIMIT %d;",
 		colName, f.IDCol, f.DatasetStorageName, where, colName, colName, timeSeriesCatResultLimit)
 
@@ -779,6 +791,25 @@ func (f *TimeSeriesField) parseHistogram(rows pgx.Rows, mode api.SummaryMode) (*
 			Max: float64(max),
 		},
 	}, nil
+}
+
+// For timeseries that exists as a single series in a file (ie. each row is just (timestamp, value))
+// we don't need to do any aggregation queries.  A single category is returned in the histogram,
+// and the exemplar name is set to the timeseries key.
+func (f *TimeSeriesField) generateUngroupedData() *api.Histogram {
+	return &api.Histogram{
+		Buckets: []*api.Bucket{
+			{
+				Key:   f.Key,
+				Count: 1,
+			},
+		},
+		Extrema: &api.Extrema{
+			Min: float64(1),
+			Max: float64(1),
+		},
+		Exemplars: []string{f.Key},
+	}
 }
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds
