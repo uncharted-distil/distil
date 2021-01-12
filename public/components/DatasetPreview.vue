@@ -10,7 +10,7 @@
       @click.stop="setActiveDataset()"
     >
       <a class="nav-link">
-        <i class="fa fa-table" /> <b>Dateset Name:</b>
+        <i class="fa fa-table" /> <b>Dataset Name:</b>
         {{ dataset.name }}
       </a>
       <a class="nav-link">
@@ -19,6 +19,15 @@
       </a>
       <a class="nav-link"><b>Rows:</b> {{ dataset.numRows }}</a>
       <a class="nav-link"><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</a>
+      <b-button
+        v-if="!dataset.immutable && !isImportReady"
+        variant="danger"
+        data-toggle="tooltip"
+        title="Delete dataset"
+        @click.stop="onDeleteClicked(dataset)"
+      >
+        <i class="fa fa-trash" aria-hidden="true"></i>
+      </b-button>
       <a v-if="isImportReady">
         <b-button
           class="dataset-preview-button"
@@ -175,6 +184,9 @@ export default Vue.extend({
   },
 
   methods: {
+    onDeleteClicked(dataset: Dataset) {
+      this.$emit("dataset-delete", dataset);
+    },
     formatBytes(n: number): string {
       return formatBytes(n);
     },
@@ -260,7 +272,10 @@ export default Vue.extend({
 .highlight {
   background-color: #87cefa;
 }
-
+.delete-button {
+  background-color: transparent;
+  border: none;
+}
 .dataset-header {
   display: flex;
   padding: 4px 8px;

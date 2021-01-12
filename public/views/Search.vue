@@ -121,6 +121,7 @@
               v-if="result.type === 'dataset'"
               :key="result.dataset.id"
               :dataset="result.dataset"
+              @dataset-delete="onDeletionClicked"
               allow-join
               allow-import
             />
@@ -131,6 +132,10 @@
             />
           </template>
         </div>
+        <deletion-modal
+          :target="deletionTarget"
+          @ok="onDatasetDeletionConfirmed"
+        />
       </div>
     </section>
 
@@ -144,6 +149,7 @@ import _ from "lodash";
 import Vue from "vue";
 import AddDataset from "../components/AddDataset.vue";
 import DatasetPreview from "../components/DatasetPreview.vue";
+import DeletionModal from "../components/DeletionModal.vue";
 import ImportStatus from "../components/ImportStatus.vue";
 import ModelPreview from "../components/ModelPreview.vue";
 import SearchBar from "../components/SearchBar.vue";
@@ -168,6 +174,7 @@ export default Vue.extend({
     ImportStatus,
     ModelPreview,
     SearchBar,
+    DeletionModal,
   },
 
   data() {
@@ -186,6 +193,8 @@ export default Vue.extend({
         dataset: "",
         location: "",
       },
+      deletionTarget: "",
+      deletionInfo: null,
     };
   },
 
@@ -321,7 +330,17 @@ export default Vue.extend({
         this.isPending = false;
       });
     },
-
+    onDeletionClicked(dataset: Dataset) {
+      this.deletionTarget = dataset.name;
+      this.deletionInfo = dataset;
+    },
+    onDatasetDeletionConfirmed() {
+      const terms = routeGetters.getRouteTerms(this.$store);
+      datasetActions.deleteDataset(this.$store, {
+        dataset: this.deletionInfo.id,
+        terms: terms,
+      });
+    },
     onUploadStart(uploadData) {
       this.uploadData = uploadData;
       this.uploadStatus = "started";

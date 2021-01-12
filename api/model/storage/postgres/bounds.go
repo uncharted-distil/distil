@@ -77,22 +77,22 @@ func (f *BoundsField) FetchSummaryData(resultURI string, filterParams *api.Filte
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert, coordinateBuckets)
+		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), invert, coordinateBuckets)
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogram(filterParams, invert, coordinateBuckets)
 			if err != nil {
 				return nil, err
 			}
 		}
 	} else {
-		baseline, err = f.fetchHistogramByResult(resultURI, nil, coordinateBuckets)
+		baseline, err = f.fetchHistogramByResult(resultURI, api.GetBaselineFilter(filterParams), coordinateBuckets)
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, coordinateBuckets)
 			if err != nil {
 				return nil, err
@@ -142,7 +142,9 @@ func (f *BoundsField) fetchHistogram(filterParams *api.FilterParams, invert bool
 		return nil, err
 	}
 
-	// join the temp table to the main table to get bucketed data
+	// join the temp table to the main table to get bucketed data (use base table for index performance)
+	queryTableName := getBaseTableName(f.DatasetStorageName)
+
 	//TODO: TEST WITH ST_INTERSECTS
 	//	ST_WITHIN WILL UNDERCOUNT THOSE THAT CROSS BOUNDARIES
 	//	ST_INTERSECTS WILL OVERCOUNT THOSE THAT CROSS BOUNDARIES
@@ -150,7 +152,7 @@ func (f *BoundsField) fetchHistogram(filterParams *api.FilterParams, invert bool
 		SELECT b.xbuckets, b.xcoord, b.ybuckets, b.ycoord, COUNT(%s)
 		FROM %s AS d inner join %s AS b ON ST_WITHIN(d."%s", b.coordinates) %s
 		GROUP BY b.xbuckets, b.xcoord, b.ybuckets, b.ycoord
-		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, f.DatasetStorageName, tmpTableName, f.PolygonCol, where)
+		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, queryTableName, tmpTableName, f.PolygonCol, where)
 	res, err := tx.Query(context.Background(), query, params...)
 	if err != nil {
 		_ = tx.Rollback(context.Background())
@@ -302,14 +304,15 @@ func (f *BoundsField) fetchHistogramByResult(resultURI string, filterParams *api
 		return nil, err
 	}
 
-	// join the temp table to the main table to get bucketed data
+	// join the temp table to the main table to get bucketed data, using the base table for index performance.
+	queryTableName := getBaseTableName(f.DatasetStorageName)
 	query := fmt.Sprintf(`
 		SELECT b.xbuckets, b.xcoord, b.ybuckets, b.ycoord, COUNT(%s)
 		FROM %s AS data inner join %s AS b ON ST_WITHIN(data."%s", b.coordinates)
-		INNER JOIN %s result ON data."%s" = result.index
+		INNER JOIN %s result ON cast(data."%s" as double precision) = result.index
 		WHERE result.result_id = $%d %s
 		GROUP BY b.xbuckets, b.xcoord, b.ybuckets, b.ycoord
-		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, f.DatasetStorageName, tmpTableName, f.PolygonCol,
+		ORDER BY b.xbuckets, b.ybuckets;`, f.Count, queryTableName, tmpTableName, f.PolygonCol,
 		f.Storage.getResultTable(f.DatasetStorageName), model.D3MIndexFieldName, len(params), where)
 	res, err := tx.Query(context.Background(), query, params...)
 	if err != nil {

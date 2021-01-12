@@ -119,7 +119,7 @@ func DefaultTaskType(targetType string, problemType string) []string {
 // problem format.
 func CreateProblemSchema(datasetDir string, dataset string, targetVar *model.Variable, filters *api.FilterParams) (*ProblemPersist, string, error) {
 	// parse the dataset and its filter state and generate a hashcode from both
-	hash, err := getFilteredDatasetHash(dataset, targetVar.StorageName, filters, true)
+	hash, err := getFilteredDatasetHash(dataset, targetVar.Key, filters, true)
 	if err != nil {
 		return nil, "", errors.Wrap(err, "unable to build dataset filter hash")
 	}

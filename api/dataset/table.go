@@ -19,6 +19,8 @@ import (
 	"bytes"
 	"encoding/csv"
 	"path"
+	"strings"
+	"unicode"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -42,6 +44,14 @@ func NewTableDataset(dataset string, rawData []byte, flagD3MIndex bool) (*Table,
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to read csv data")
 	}
+
+	// remove invisible characters from the header
+	for i, c := range csvData[0] {
+		csvData[0][i] = strings.TrimFunc(c, func(r rune) bool {
+			return !unicode.IsGraphic(r)
+		})
+	}
+
 	return &Table{
 		Dataset:   dataset,
 		CSVData:   csvData,

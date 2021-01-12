@@ -89,7 +89,7 @@ func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogram(filterParams, invert)
 			if err != nil {
 				return nil, err
@@ -100,7 +100,7 @@ func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams)
 			if err != nil {
 				return nil, err
@@ -249,7 +249,7 @@ func (f *CategoricalField) FetchPredictedSummaryData(resultURI string, datasetRe
 	if err != nil {
 		return nil, err
 	}
-	if !filterParams.Empty() {
+	if !filterParams.Empty(true) {
 		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
 		if err != nil {
 			return nil, err

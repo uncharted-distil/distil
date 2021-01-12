@@ -66,7 +66,7 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.Filter
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogram(filterParams, invert, mode)
 			if err != nil {
 				return nil, err
@@ -77,7 +77,7 @@ func (f *ImageField) FetchSummaryData(resultURI string, filterParams *api.Filter
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, mode)
 			if err != nil {
 				return nil, err
@@ -295,7 +295,7 @@ func (f *ImageField) FetchPredictedSummaryData(resultURI string, datasetResult s
 	if err != nil {
 		return nil, err
 	}
-	if !filterParams.Empty() {
+	if !filterParams.Empty(true) {
 		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema, mode)
 		if err != nil {
 			return nil, err

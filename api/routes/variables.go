@@ -67,7 +67,7 @@ func VariablesHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			if model.IsNumerical(v.Type) || model.IsDateTime(v.Type) {
 				extrema, err := data.FetchExtrema(storageName, v)
 				if err != nil {
-					log.Warnf("defaulting extrema values due to error fetching extrema for '%s': %+v", v.StorageName, err)
+					log.Warnf("defaulting extrema values due to error fetching extrema for '%s': %+v", v.Key, err)
 					extrema = getDefaultExtrema(v)
 				}
 				v.Min = extrema.Min

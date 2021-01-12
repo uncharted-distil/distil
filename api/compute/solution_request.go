@@ -120,12 +120,12 @@ func NewSolutionRequest(variables []*model.Variable, data []byte) (*SolutionRequ
 	}
 	req.DatasetInput = req.Dataset
 
-	targetName, ok := json.String(j, "target")
+	targetKey, ok := json.String(j, "target")
 	if !ok {
 		return nil, fmt.Errorf("no `target` in solution request")
 	}
 	for _, v := range variables {
-		if v.StorageName == targetName {
+		if v.Key == targetKey {
 			req.TargetFeature = v
 		}
 	}
@@ -242,7 +242,7 @@ func createSearchSolutionsRequest(columnIndex int, preprocessing *pipeline.Pipel
 			Inputs: []*pipeline.ProblemInput{
 				{
 					DatasetId: compute.ConvertDatasetTA3ToTA2(dataset),
-					Targets:   compute.ConvertTargetFeaturesTA3ToTA2(targetFeature.StorageName, columnIndex),
+					Targets:   compute.ConvertTargetFeaturesTA3ToTA2(targetFeature.HeaderName, columnIndex),
 				},
 			},
 		},
@@ -533,7 +533,7 @@ func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus,
 		return
 	}
 	// persist results
-	err = dataStorage.PersistResult(dataset, storageName, resultURI, s.TargetFeature.StorageName)
+	err = dataStorage.PersistResult(dataset, storageName, resultURI, s.TargetFeature.Key)
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
@@ -714,7 +714,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 		featurizedVariables = meta.GetMainDataResource().Variables
 
 		for _, v := range featurizedVariables {
-			if v.StorageName == targetVariable.StorageName {
+			if v.Key == targetVariable.Key {
 				targetIndex = v.Index
 				break
 			}
@@ -813,7 +813,7 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			continue
 		}
 
-		if v == s.TargetFeature.StorageName {
+		if v == s.TargetFeature.Key {
 			// store target feature
 			typ = model.FeatureTypeTarget
 		} else {
@@ -861,14 +861,14 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	return nil
 }
 
-func findVariable(variableName string, variables []*model.Variable) (*model.Variable, error) {
+func findVariable(key string, variables []*model.Variable) (*model.Variable, error) {
 	// extract the variable instance from its name
 	for _, v := range variables {
-		if v.StorageName == variableName {
+		if v.Key == key {
 			return v, nil
 		}
 	}
-	return nil, errors.Errorf("can't find target variable instance %s", variableName)
+	return nil, errors.Errorf("can't find target variable instance %s", key)
 }
 
 func findVariables(variableNames []string, variables []*model.Variable) ([]*model.Variable, error) {

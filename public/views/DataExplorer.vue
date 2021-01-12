@@ -237,7 +237,7 @@ export default Vue.extend({
 
     selectedVariables(): Variable[] {
       return this.variables.filter((v) =>
-        this.cleanTraining.includes(v.colName.toLowerCase())
+        this.cleanTraining.includes(v.key.toLowerCase())
       );
     },
 
@@ -263,7 +263,7 @@ export default Vue.extend({
 
     variablesPerActions(): any {
       const nonSelectedVariables = this.variables.filter(
-        (v) => !this.cleanTraining.includes(v.colName.toLowerCase())
+        (v) => !this.cleanTraining.includes(v.key.toLowerCase())
       );
 
       const variables = {};

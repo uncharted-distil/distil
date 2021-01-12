@@ -1,14 +1,27 @@
 <template>
   <div class="pt-2">
-    <b-button @click="onButtonClick(positive)">
+    <b-button title="Select all items on page" @click="onSelectAll"
+      >Select All</b-button
+    >
+    <b-button
+      title="Annotate selected items to positive"
+      @click="onButtonClick(positive)"
+    >
       <i class="fa fa-check text-success" aria-hidden="true"></i>
       Positive
     </b-button>
-    <b-button @click="onButtonClick(negative)">
+    <b-button
+      title="Annotate selected items to negative"
+      @click="onButtonClick(negative)"
+    >
       <i class="fa fa-times red" aria-hidden="true"></i>
       Negative</b-button
     >
-    <b-button @click="onButtonClick(unlabeled)">Unlabeled</b-button>
+    <b-button
+      title="Annotate select items to negative"
+      @click="onButtonClick(unlabeled)"
+      >Unlabeled</b-button
+    >
     <layer-selection v-if="isRemoteSensing" />
   </div>
 </template>
@@ -37,6 +50,9 @@ export default Vue.extend({
   methods: {
     onButtonClick(event: string) {
       this.$emit("button-event", event);
+    },
+    onSelectAll() {
+      this.$emit("select-all");
     },
     isRemoteSensing(): boolean {
       return routeGetters.isMultiBandImage(this.$store);

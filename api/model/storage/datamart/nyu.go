@@ -180,7 +180,7 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 		vars := make([]*model.Variable, 0)
 		for _, c := range res.Metadata.Columns {
 			vars = append(vars, &model.Variable{
-				StorageName:  c.Name,
+				Key:          c.Name,
 				DisplayName:  c.Name,
 				OriginalType: mapNYUDataTypesToDistil(c.StructuralType),
 			})
@@ -244,7 +244,7 @@ func materializeNYUDataset(datamart *Storage, id string, uri string) (string, er
 	}
 
 	// copy the formatted output to the datamart output path (delete existing copy)
-	err = util.RemoveContents(extractedArchivePath)
+	err = util.RemoveContents(extractedArchivePath, false)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to delete raw datamart dataset")
 	}

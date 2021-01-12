@@ -479,6 +479,7 @@ export const actions = {
     const varModes = context.getters.getDecodedVarModes;
     const orderBy = routeGetters.getOrderBy(store);
     clearVariableSummaries(context);
+    filterParams.variables = variables.map((v) => v.key);
     return Promise.all([
       datasetActions.fetchIncludedVariableSummaries(store, {
         dataset,

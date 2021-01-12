@@ -1,5 +1,6 @@
 <template>
-  <div class="row flex-1 pb-3 h-100">
+  <loading-spinner v-if="loading" :state="loadingState" />
+  <div v-else class="row flex-1 pb-3 h-100">
     <div class="col-12 col-md-3 d-flex h-100 flex-column">
       <h5 class="header-title">Labels</h5>
       <variable-facets
@@ -13,11 +14,11 @@
       <variable-facets
         enable-highlighting
         enable-type-filtering
-        :summaries="summaries"
+        :summaries="featureSummaries"
         :pagination="
-          summaries && searchedActiveVariables.length > numRowsPerPage
+          featureSummaries && searchedActiveVariables.length > numRowsPerPage
         "
-        :facet-count="summaries && searchedActiveVariables.length"
+        :facet-count="featureSummaries && searchedActiveVariables.length"
         :rows-per-page="numRowsPerPage"
         :instance-name="instance"
       />
@@ -31,8 +32,10 @@
         />
         <create-labeling-form
           :is-loading="isLoadingData"
+          :low-shot-summary="labelSummary"
           @export="onExport"
           @apply="onApply"
+          @save="onSaveClick"
         />
       </div>
     </div>
@@ -52,16 +55,7 @@
         />
       </b-form-group>
     </b-modal>
-    <label-score-pop-up
-      :data="dataItems"
-      :data-fields="dataFields"
-      :summaries="summaries"
-      :is-loading="isLoadingData"
-      :is-remote-sensing="isRemoteSensing"
-      :modal-id="scorePopUpId"
-      @button-event="onAnnotationChanged"
-      @apply="onApply"
-    />
+    <save-dataset :dataset-name="dataset" @save="onSaveValid" />
   </div>
 </template>
 
@@ -86,6 +80,7 @@ import {
   LOW_SHOT_SCORE_COLUMN_NAME,
   minimumRouteKey,
   addOrderBy,
+  downloadFile,
 } from "../util/data";
 import {
   Variable,
@@ -94,17 +89,18 @@ import {
   TableColumn,
 } from "../store/dataset/index";
 import VariableFacets from "../components/facets/VariableFacets.vue";
+import SaveDataset from "../components/labelingComponents/SaveDataset.vue";
 import CreateLabelingForm from "../components/labelingComponents/CreateLabelingForm.vue";
 import LabelingDataSlot from "../components/labelingComponents/LabelingDataSlot.vue";
-import { EXCLUDE_FILTER, Filter } from "../util/filters";
+import { EXCLUDE_FILTER, Filter, INCLUDE_FILTER } from "../util/filters";
 import { Dictionary } from "vue-router/types/router";
 import { updateHighlight, clearHighlight } from "../util/highlights";
 import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry } from "../util/routes";
 import { actions as requestActions } from "../store/requests/module";
-import LabelScorePopUp from "../components/labelingComponents/LabelScorePopUp.vue";
 import { clearRowSelection } from "../util/row";
+import LoadingSpinner from "../components/labelingComponents/LoadingSpinner.vue";
 
 const LABEL_KEY = "label";
 
@@ -114,7 +110,8 @@ export default Vue.extend({
     VariableFacets,
     LabelingDataSlot,
     CreateLabelingForm,
-    LabelScorePopUp,
+    SaveDataset,
+    LoadingSpinner,
   },
   props: {
     logActivity: {
@@ -128,6 +125,8 @@ export default Vue.extend({
       modalId: "label-input-form",
       isLoadingData: false,
       scorePopUpId: "modal-score-pop-up",
+      loading: true,
+      loadingState: "",
     };
   },
   computed: {
@@ -148,7 +147,7 @@ export default Vue.extend({
     searchedActiveVariables(): Variable[] {
       // remove variables used in groupedFeature;
       const activeVariables = this.variables.filter(
-        (v) => !this.groupedFeatures.includes(v.colName)
+        (v) => !this.groupedFeatures.includes(v.key)
       );
 
       return searchVariables(activeVariables, this.availableTargetVarsSearch);
@@ -191,6 +190,12 @@ export default Vue.extend({
       const tableData = datasetGetters.getIncludedTableDataItems(this.$store);
       return tableData ? tableData.length : 0;
     },
+    // filters out the low shot labels
+    featureSummaries(): VariableSummary[] {
+      return this.summaries.filter((s) => {
+        return s.key !== LOW_SHOT_LABEL_COLUMN_NAME;
+      });
+    },
     summaries(): VariableSummary[] {
       const pageIndex = routeGetters.getLabelFeaturesVarsPage(this.$store);
 
@@ -219,35 +224,50 @@ export default Vue.extend({
     training(): string[] {
       return routeGetters.getDecodedTrainingVariableNames(this.$store);
     },
-    isClone(): boolean {
-      return this.variables.some((v) => {
-        return v.colName === LOW_SHOT_LABEL_COLUMN_NAME;
-      });
+    isClone(): boolean | null {
+      const datasets = datasetGetters.getDatasets(this.$store);
+      const dataset = datasets.find((d) => d.id === this.dataset);
+      if (!dataset) {
+        return null;
+      }
+      return dataset.clone === undefined ? false : dataset.clone;
     },
   },
   watch: {
     highlight() {
       this.onDataChanged();
     },
-    training() {
-      this.fetchData();
+    training(prev: string[], cur: string[]) {
+      if (prev.length !== cur.length) {
+        this.fetchData();
+      }
     },
   },
   async mounted() {
+    this.loadingState = "Fetching Data";
+    await datasetActions.fetchDataset(this.$store, { dataset: this.dataset });
     await this.fetchData();
-    if (this.isClone) {
-      // dataset is already a clone don't clone again. (used for testing. might add button for cloning later.)
-      this.updateRoute();
-      return;
-    }
-    this.$bvModal.show(this.modalId);
-    const entry = await cloneDatasetUpdateRoute();
-    if (entry === null) {
-      return;
-    }
-    this.$router.push(entry).catch((err) => console.warn(err));
+    this.loadingState = "Checking Clone";
+    this.checkClone();
   },
   methods: {
+    async checkClone() {
+      if (this.isClone) {
+        // dataset is already a clone don't clone again. (used for testing. might add button for cloning later.)
+        this.updateRoute();
+        this.loading = false;
+        return;
+      }
+      const entry = await cloneDatasetUpdateRoute();
+      if (entry === null) {
+        return;
+      }
+      await this.$router.push(entry).catch((err) => console.warn(err));
+      this.loading = false;
+      this.$nextTick(() => {
+        this.$bvModal.show(this.modalId);
+      });
+    },
     // used for generating default labels in the instance where labels do not exist in the dataset
     getDefaultLabelFacet(): VariableSummary {
       return {
@@ -273,17 +293,29 @@ export default Vue.extend({
     },
     async onApply() {
       this.isLoadingData = true;
-      await requestActions.createQueryRequest(this.$store, {
+      const res = (await requestActions.createQueryRequest(this.$store, {
         datasetId: this.dataset,
         target: LOW_SHOT_LABEL_COLUMN_NAME,
         filters: null,
-      });
+      })) as { success: boolean; error: string };
+      if (!res.success) {
+        this.$bvToast.toast(res.error, {
+          title: "Error",
+          autoHideDelay: 5000,
+          appendToast: true,
+          variant: "danger",
+          toaster: "b-toaster-bottom-right",
+        });
+      }
       addOrderBy(LOW_SHOT_SCORE_COLUMN_NAME);
       this.isLoadingData = false;
       await this.fetchData();
-      this.$bvModal.show(this.scorePopUpId);
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        annotationHasChanged: false,
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
-    onExport() {
+    async onExport() {
       const highlight = {
         context: this.instance,
         dataset: this.dataset,
@@ -294,7 +326,7 @@ export default Vue.extend({
         this.$store
       );
       const dataMode = routeGetters.getDataMode(this.$store);
-      datasetActions.extractDataset(this.$store, {
+      const file = await datasetActions.extractDataset(this.$store, {
         dataset: this.dataset,
         filterParams,
         highlight,
@@ -302,6 +334,32 @@ export default Vue.extend({
         mode: EXCLUDE_FILTER,
         dataMode,
       });
+      downloadFile(file, this.dataset, ".csv");
+    },
+    onSaveClick() {
+      this.$bvModal.show("save-model-modal");
+    },
+    async onSaveValid(saveName: string) {
+      const highlight = {
+        context: this.instance,
+        dataset: this.dataset,
+        key: LOW_SHOT_LABEL_COLUMN_NAME,
+        value: LowShotLabels.unlabeled,
+      }; // exclude unlabeled from data export
+      const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+        this.$store
+      );
+      const dataMode = routeGetters.getDataMode(this.$store);
+      await datasetActions.saveDataset(this.$store, {
+        dataset: this.dataset,
+        datasetNewName: saveName,
+        filterParams,
+        highlight,
+        include: true,
+        mode: INCLUDE_FILTER,
+        dataMode,
+      });
+      this.$bvModal.show("save-success-dataset");
     },
     onFacetClick(context: string, key: string, value: string, dataset: string) {
       if (key && value) {
@@ -352,19 +410,26 @@ export default Vue.extend({
           value: label,
         };
       });
+      if (!updateData.length) {
+        return;
+      }
       datasetMutations.updateAreaOfInterestIncludeInner(this.$store, innerData);
       datasetActions.updateDataset(this.$store, {
         dataset: this.dataset,
         updateData,
       });
       clearRowSelection(this.$router);
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        annotationHasChanged: true,
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
       this.onDataChanged();
     },
     async updateRoute() {
       const taskResponse = await datasetActions.fetchTask(this.$store, {
         dataset: this.dataset,
         targetName: LOW_SHOT_LABEL_COLUMN_NAME,
-        variableNames: this.variables.map((v) => v.colName),
+        variableNames: this.variables.map((v) => v.key),
       });
       const training = routeGetters.getDecodedTrainingVariableNames(
         this.$store
@@ -376,8 +441,8 @@ export default Vue.extend({
         })
       );
       this.variables.forEach((variable) => {
-        if (!trainingMap.has(variable.colName)) {
-          training.push(variable.colName);
+        if (!trainingMap.has(variable.key)) {
+          training.push(variable.key);
         }
       });
       if (check === training.length) {

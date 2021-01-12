@@ -15,15 +15,15 @@
       <template v-else-if="!stopSpinner">
         <div
           ref="imageElem"
-          class="image-elem"
-          :class="{ clickable: hasClick }"
-          @click.stop="handleClick"
+          class="image-elem clickable"
+          @click.stop.exact="handleClick"
+          @click.shift.exact.stop="handleShiftClick"
         />
         <div
           ref="imageAttentionElem"
-          class="filter-elem"
-          :class="{ clickable: hasClick }"
-          @click.stop="handleClick"
+          class="filter-elem clickable"
+          @click.stop.exact="handleClick"
+          @click.shift.exact.stop="handleShiftClick"
         />
         <i class="fa fa-search-plus zoom-icon" @click.stop="showZoomedImage" />
       </template>
@@ -33,7 +33,7 @@
       :url="imageUrl"
       :type="type"
       :info="imageDrilldown"
-      :item="row"
+      :items="[row]"
       :visible="!!zoomImage"
       @hide="hideZoomImage"
       :imageUrls="overlappedUrls"
@@ -93,7 +93,6 @@ export default Vue.extend({
       default: false,
       type: Boolean as () => boolean,
     },
-    onClick: Function,
     gray: { type: Number, default: 0 }, // support for graying images.
     debounce: { type: Boolean as () => boolean, default: false },
     debounceWaitTime: { type: Number as () => number, default: 500 },
@@ -236,9 +235,6 @@ export default Vue.extend({
       }
       return routeGetters.getRouteDataset(this.$store);
     },
-    hasClick(): boolean {
-      return !!this.onClick;
-    },
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
@@ -262,6 +258,9 @@ export default Vue.extend({
   },
 
   methods: {
+    handleShiftClick() {
+      this.$emit("shift-click", this.row);
+    },
     async visibilityChanged(isVisible: boolean) {
       this.isVisible = isVisible;
       if (this.isVisible && !this.hasRequested) {
@@ -294,19 +293,13 @@ export default Vue.extend({
         this.clearImage(this.$refs.imageAttentionElem as any);
         this.imageAttentionHasRendered = false;
       }
-      if (!this.hasImageAttention && this.imageAttentionHasRendered) {
-        this.clearImage(this.$refs.imageAttentionElem as any);
-        this.imageAttentionHasRendered = false;
-      }
     },
     handleClick() {
-      if (this.onClick) {
-        this.onClick({
-          row: this.row,
-          imageUrl: this.imageUrl,
-          image: this.image,
-        });
-      }
+      this.$emit("click", {
+        row: this.row,
+        imageUrl: this.imageUrl,
+        image: this.image,
+      });
     },
 
     showZoomedImage() {

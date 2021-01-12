@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
@@ -80,8 +81,30 @@ func VariableSummaryHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.Da
 		}
 		storageName := ds.StorageName
 
+		// if the variable is a geobounds and there is a band column, add a filter
+		// to only consider the first band.
+		hasBand := false
+		isGeobounds := false
+		for _, v := range ds.Variables {
+			if v.DisplayName == "band" {
+				hasBand = true
+			} else if model.IsGeoBounds(v.Type) {
+				isGeobounds = true
+			}
+		}
+		if hasBand && isGeobounds {
+			// if inverting the filter, then invert the mode
+			mode := model.IncludeFilter
+			if invertBool {
+				mode = model.ExcludeFilter
+			}
+			boundsFilter := model.NewCategoricalFilter("band", mode, []string{"01"})
+			boundsFilter.IsBaselineFilter = true
+			filterParams.Filters = append(filterParams.Filters, boundsFilter)
+		}
+
 		// fetch summary histogram
-		summary, err := storage.FetchSummary(dataset, storageName, variable, filterParams, invertBool, api.SummaryMode(mode))
+		summary, err := storage.FetchSummary(dataset, storageName, variable, filterParams, invertBool, mode)
 		if err != nil {
 			handleError(w, err)
 			return

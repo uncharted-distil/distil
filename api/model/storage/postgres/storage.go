@@ -127,9 +127,9 @@ func (s *Storage) isColumnType(tableName string, variable *model.Variable, colTy
 		return false
 	}
 	// generate view query
-	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT \"%[1]s\"::%[3]s FROM %[2]s", variable.StorageName, tableName, colType)
+	viewQuery := fmt.Sprintf("CREATE TEMPORARY VIEW temp_view_%[1]s AS SELECT \"%[1]s\"::%[3]s FROM %[2]s", variable.Key, tableName, colType)
 	// test query
-	testQuery := fmt.Sprintf("SELECT COUNT(\"%[1]s\") FROM temp_view_%[1]s", variable.StorageName)
+	testQuery := fmt.Sprintf("SELECT COUNT(\"%[1]s\") FROM temp_view_%[1]s", variable.Key)
 
 	// create transaction
 	tx, err := s.client.Begin()

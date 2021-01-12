@@ -263,9 +263,10 @@ export default Vue.extend({
         modelQuality: this.speedQuality,
         metrics: this.selectedMetric,
         trainTestSplit: this.trainingRatio,
-        timestampSplit: this.hasTimeRange
-          ? this.timestampSplitValue.getTime() / 1000
-          : null,
+        timestampSplit:
+          this.hasTimeRange && this.shouldSplitByTime
+            ? this.timestampSplitValue.getTime() / 1000
+            : null,
       });
       this.$router.push(entry).catch((err) => console.warn(err));
     },

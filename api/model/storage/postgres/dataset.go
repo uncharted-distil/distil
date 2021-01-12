@@ -48,6 +48,43 @@ func getVariableTableName(storageName string) string {
 	return fmt.Sprintf("%s_variable", storageName)
 }
 
+// SaveDataset is used for dropping the unused values based on filter param. (Only used in save_dataset route)
+func (s *Storage) SaveDataset(dataset string, storageName string, invert bool, filterParams *api.FilterParams) error {
+	err := s.deleteRows(dataset, getBaseTableName(storageName), invert, filterParams)
+	if err != nil {
+		return err
+	}
+	// due to values being dropped from base table result table is invalid
+	err = s.deleteRows(dataset, s.getResultTable(storageName), false, nil)
+	if err != nil {
+		return err
+	}
+	// due to values being dropped from base table explanation table is invalid
+	err = s.deleteRows(dataset, s.getSolutionFeatureWeightTable(storageName), false, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// deleteRows deletes rows based on filterParams
+func (s *Storage) deleteRows(dataset string, storageName string, invert bool, filterParams *api.FilterParams) error {
+	wheres := []string{}
+	paramsFilter := make([]interface{}, 0)
+	wheres, paramsFilter = s.buildFilteredQueryWhere(dataset, wheres, paramsFilter, "", filterParams, invert)
+	where := ""
+	if len(wheres) > 0 {
+		where = "WHERE" + strings.Join(wheres, " AND ")
+	}
+	sql := fmt.Sprintf("DELETE FROM %s %s;", storageName, where)
+	_, err := s.client.Query(sql, paramsFilter...)
+	if err != nil {
+		return errors.Wrapf(err, "unable execute query to delete rows")
+	}
+	return nil
+}
+
 // CloneDataset clones an existing dataset.
 func (s *Storage) CloneDataset(dataset string, storageName string, datasetNew string, storageNameNew string) error {
 	// need to clone base, variable, result, and weight tables
@@ -72,7 +109,7 @@ func (s *Storage) CloneDataset(dataset string, storageName string, datasetNew st
 	}
 
 	// need to create the view for the cloned dataset
-	fields, err := s.getExistingFields(dataset, storageNameNew)
+	fields, err := s.getExistingFields(dataset, getBaseTableName(storageNameNew))
 	if err != nil {
 		return err
 	}
@@ -85,6 +122,51 @@ func (s *Storage) CloneDataset(dataset string, storageName string, datasetNew st
 	return nil
 }
 
+// DeleteDataset drops all tables associated to the dataset
+func (s *Storage) DeleteDataset(storageName string) error {
+	// drop view
+	err := s.dropView(storageName)
+	if err != nil {
+		return err
+	}
+	// drop base table
+	err = s.dropTable(getBaseTableName(storageName))
+	if err != nil {
+		return err
+	}
+	// drop variable table
+	err = s.dropTable(getVariableTableName(storageName))
+	if err != nil {
+		return err
+	}
+	// drop result table
+	err = s.dropTable(s.getResultTable(storageName))
+	if err != nil {
+		return err
+	}
+	// drop explanation table
+	err = s.dropTable(s.getSolutionFeatureWeightTable(storageName))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (s *Storage) dropView(view string) error {
+	sql := fmt.Sprintf("DROP VIEW IF EXISTS %s", view)
+	_, err := s.client.Exec(sql)
+	if err != nil {
+		return errors.Wrapf(err, "unable to drop table")
+	}
+	return nil
+}
+func (s *Storage) dropTable(table string) error {
+	sql := fmt.Sprintf("DROP TABLE IF EXISTS %s", table)
+	_, err := s.client.Exec(sql)
+	if err != nil {
+		return errors.Wrapf(err, "unable to drop table")
+	}
+	return nil
+}
 func (s *Storage) cloneTable(existingTable string, newTable string, copyData bool) error {
 	sql := fmt.Sprintf("CREATE TABLE %s AS TABLE %s", newTable, existingTable)
 	if !copyData {
@@ -143,9 +225,9 @@ func (s *Storage) getExistingFields(dataset string, storageName string) (map[str
 	// make sure they exist in the underlying database already
 	fields := make(map[string]*model.Variable)
 	for _, v := range vars {
-		exists, _ := s.DoesVariableExist(dataset, storageName, v.StorageName)
+		exists, _ := s.DoesVariableExist(dataset, storageName, v.Key)
 		if exists {
-			fields[v.StorageName] = v
+			fields[v.Key] = v
 		}
 	}
 
@@ -159,8 +241,8 @@ func (s *Storage) createView(storageName string, fields map[string]*model.Variab
 	// Build the select statement of the query.
 	fieldList := make([]string, 0)
 	for _, v := range fields {
-		fieldList = append(fieldList, s.getViewField(postgres.ValueForFieldType(v.Type, v.StorageName),
-			v.StorageName, postgres.MapD3MTypeToPostgresType(v.Type), postgres.DefaultPostgresValueFromD3MType(v.Type)))
+		fieldList = append(fieldList, s.getViewField(postgres.ValueForFieldType(v.Type, v.Key),
+			v.Key, postgres.MapD3MTypeToPostgresType(v.Type), postgres.DefaultPostgresValueFromD3MType(v.Type)))
 	}
 	sql = fmt.Sprintf(sql, storageName, strings.Join(fieldList, ","), storageName)
 
@@ -236,7 +318,7 @@ func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, 
 	}
 	varNames := []string{}
 	for _, v := range filteredVars {
-		varNames = append(varNames, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v.StorageName, v.StorageName))
+		varNames = append(varNames, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v.Key, v.Key))
 	}
 	wheres := []string{}
 	paramsFilter := make([]interface{}, 0)
@@ -317,7 +399,7 @@ func (s *Storage) createViewFromMetadataFields(storageName string, fields map[st
 	// map the types to db types.
 	for field, v := range fields {
 		dbFields[field] = &model.Variable{
-			StorageName:      v.StorageName,
+			Key:              v.Key,
 			OriginalVariable: v.OriginalVariable,
 			Type:             v.Type,
 		}
@@ -332,7 +414,7 @@ func (s *Storage) createViewFromMetadataFields(storageName string, fields map[st
 }
 
 // AddVariable adds a new variable to the dataset.
-func (s *Storage) AddVariable(dataset string, storageName string, varName string, varType string, defaultVal string) error {
+func (s *Storage) AddVariable(dataset string, storageName string, key string, varType string, defaultVal string) error {
 	// check to make sure the column doesnt exist already
 	dbFields, err := s.getDatabaseFields(fmt.Sprintf("%s_base", storageName))
 	if err != nil {
@@ -341,7 +423,7 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 
 	found := false
 	for _, v := range dbFields {
-		if v == varName {
+		if v == key {
 			found = true
 			break
 		}
@@ -353,14 +435,14 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 			defaultClause = fmt.Sprintf(" Default '%s'", defaultVal)
 		}
 		// add the empty column to the base table and the explain table
-		sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT%s;", storageName, varName, defaultClause)
+		sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT%s;", storageName, key, defaultClause)
 
 		_, err = s.client.Exec(sql)
 		if err != nil {
 			return errors.Wrap(err, "unable to add new column to database table")
 		}
 
-		sql = fmt.Sprintf("ALTER TABLE %s_explain ADD COLUMN \"%s\" DOUBLE PRECISION;", storageName, varName)
+		sql = fmt.Sprintf("ALTER TABLE %s_explain ADD COLUMN \"%s\" DOUBLE PRECISION;", storageName, key)
 		_, err = s.client.Exec(sql)
 		if err != nil {
 			return errors.Wrap(err, "unable to add new column to database explain table")
@@ -374,9 +456,9 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 	}
 
 	// need to add the field to the view
-	fields[varName] = &model.Variable{
-		StorageName:      varName,
-		OriginalVariable: varName,
+	fields[key] = &model.Variable{
+		Key:              key,
+		OriginalVariable: key,
 		Type:             varType,
 	}
 

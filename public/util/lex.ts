@@ -270,7 +270,7 @@ function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
   if (!variables) return;
 
   return variables.reduce((a, v) => {
-    const name = v.colName;
+    const name = v.key;
     const options = {
       type: colTypeToOptionType(v.colType.toLowerCase()),
     };
@@ -322,14 +322,14 @@ function colTypeToOptionType(colType: string): string {
 
 function buildVariableDictionary(variables: Variable[]) {
   return variables.reduce((a, v) => {
-    a[v.colName] = v;
+    a[v.key] = v;
     if (v.distilRole === "grouping") {
       switch (v.colType) {
         case TIMESERIES_TYPE:
           const grouping = v.grouping as TimeseriesGrouping;
           const xCol = grouping.xCol;
           a[xCol] = {
-            colName: xCol,
+            key: xCol,
             colDisplayName: xCol,
             colType: DATE_TIME_LOWER_TYPE,
           } as Variable;
@@ -339,12 +339,12 @@ function buildVariableDictionary(variables: Variable[]) {
           const lat = geoGrouping.xCol;
           const lon = geoGrouping.yCol;
           a[lat] = {
-            colName: lat,
+            key: lat,
             colDisplayName: lat,
             colType: NUMERICAL_FILTER,
           } as Variable;
           a[lon] = {
-            colName: lon,
+            key: lon,
             colDisplayName: lon,
             colType: NUMERICAL_FILTER,
           } as Variable;

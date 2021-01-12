@@ -50,7 +50,7 @@ func (s *Storage) FetchConfidenceSummary(dataset string, storageName string, res
 		if baseline == nil {
 			continue
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = s.fetchExplainHistogram(dataset, storageName, targetName, explainName, resultURI, filterParams, mode)
 			if err != nil {
 				return nil, err
@@ -59,7 +59,7 @@ func (s *Storage) FetchConfidenceSummary(dataset string, storageName string, res
 
 		explainedSummaries[explainName] = &api.VariableSummary{
 			Label:    variable.DisplayName,
-			Key:      variable.StorageName,
+			Key:      variable.Key,
 			Type:     model.NumericalType,
 			VarType:  variable.Type,
 			Baseline: baseline,
