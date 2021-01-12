@@ -255,7 +255,7 @@ export function getTimeseriesAnalysisIntervals(
   ];
 }
 
-export function fetchSummaryExemplars(
+export async function fetchSummaryExemplars(
   datasetName: string,
   variableName: string,
   summary: VariableSummary
@@ -284,28 +284,24 @@ export function fetchSummaryExemplars(
           timeseriesIds: exemplars,
           solutionId: solutionId,
         };
-        return () => {
-          if (solutionId) {
-            return resultsActions.fetchForecastedTimeseries(store, args);
-          } else {
-            return datasetActions.fetchTimeseries(store, args);
-          }
-        };
+        if (solutionId) {
+          return await resultsActions.fetchForecastedTimeseries(store, args);
+        } else {
+          return await datasetActions.fetchTimeseries(store, args);
+        }
       }
     } else {
       // if there are linked files, fetch some of them before resolving
-      return datasetActions.fetchFiles(store, {
+      return await datasetActions.fetchFiles(store, {
         dataset: datasetName,
         variable: variableName,
         urls: exemplars.slice(0, 5),
       });
     }
   }
-
-  return new Promise<void>((res) => res());
 }
 
-export function fetchResultExemplars(
+export async function fetchResultExemplars(
   datasetName: string,
   variableName: string,
   key: string,
@@ -324,7 +320,7 @@ export function fetchResultExemplars(
       if (variable.grouping.type === TIMESERIES_TYPE) {
         const grouping = variable.grouping as TimeseriesGrouping;
         // if there a linked exemplars, fetch those before resolving
-        return resultsActions.fetchForecastedTimeseries(store, {
+        return await resultsActions.fetchForecastedTimeseries(store, {
           dataset: datasetName,
           timeseriesColName: grouping.idCol,
           xColName: grouping.xCol,
@@ -335,15 +331,13 @@ export function fetchResultExemplars(
       }
     } else {
       // if there a linked files, fetch those before resolving
-      return datasetActions.fetchFiles(store, {
+      return await datasetActions.fetchFiles(store, {
         dataset: datasetName,
         variable: variableName,
         urls: exemplars,
       });
     }
   }
-
-  return new Promise<void>((res) => res());
 }
 
 /*
