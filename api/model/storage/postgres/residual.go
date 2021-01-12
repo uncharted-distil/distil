@@ -36,8 +36,8 @@ func (s *Storage) FetchResidualsExtremaByURI(dataset string, storageName string,
 		return nil, err
 	}
 	resultVariable := &model.Variable{
-		StorageName: "value",
-		Type:        model.StringType,
+		Key:  "value",
+		Type: model.StringType,
 	}
 	return s.fetchResidualsExtrema(resultURI, storageName, targetVariable, resultVariable)
 }
@@ -70,7 +70,7 @@ func (s *Storage) FetchResidualsSummary(dataset string, storageName string, resu
 
 	return &api.VariableSummary{
 		Label:    variable.DisplayName,
-		Key:      variable.StorageName,
+		Key:      variable.Key,
 		Type:     model.NumericalType,
 		VarType:  variable.Type,
 		Baseline: baseline,
@@ -129,8 +129,8 @@ func getResultJoin(alias string, storageName string) string {
 
 func getResidualsMinMaxAggsQuery(variableName string, resultVariable *model.Variable) string {
 	// get min / max agg names
-	minAggName := api.MinAggPrefix + resultVariable.StorageName
-	maxAggName := api.MaxAggPrefix + resultVariable.StorageName
+	minAggName := api.MinAggPrefix + resultVariable.Key
+	maxAggName := api.MaxAggPrefix + resultVariable.Key
 
 	// Only numeric types should occur.
 	errorTyped := getErrorTyped("", variableName)
@@ -144,7 +144,7 @@ func getResidualsMinMaxAggsQuery(variableName string, resultVariable *model.Vari
 func (s *Storage) fetchResidualsExtrema(resultURI string, storageName string, variable *model.Variable,
 	resultVariable *model.Variable) (*api.Extrema, error) {
 
-	targetName := variable.StorageName
+	targetName := variable.Key
 
 	// add min / max aggregation
 	aggQuery := getResidualsMinMaxAggsQuery(targetName, resultVariable)
@@ -168,8 +168,8 @@ func (s *Storage) fetchResidualsExtrema(resultURI string, storageName string, va
 func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storageName string, variable *model.Variable, filterParams *api.FilterParams,
 	extrema *api.Extrema, numBuckets int) (*api.Histogram, error) {
 	resultVariable := &model.Variable{
-		StorageName: "value",
-		Type:        model.StringType,
+		Key:  "value",
+		Type: model.StringType,
 	}
 
 	// need the extrema to calculate the histogram interval
@@ -180,19 +180,19 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storage
 			return nil, errors.Wrap(err, "failed to fetch result variable extrema for summary")
 		}
 	} else {
-		extrema.Key = variable.StorageName
+		extrema.Key = variable.Key
 		extrema.Type = variable.Type
 	}
 	// for each returned aggregation, create a histogram aggregation. Bucket
 	// size is derived from the min/max and desired bucket count.
-	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, variable.StorageName, resultVariable, numBuckets, baseTableAlias)
+	histogramName, bucketQuery, histogramQuery := s.getResidualsHistogramAggQuery(extrema, variable.Key, resultVariable, numBuckets, baseTableAlias)
 
 	fromClause := getResultJoin("result", storageName)
 
 	// create the filter for the query
 	params := make([]interface{}, 0)
 	params = append(params, resultURI)
-	params = append(params, variable.StorageName)
+	params = append(params, variable.Key)
 
 	wheres := make([]string, 0)
 	wheres, params = s.buildFilteredQueryWhere(datasetName, wheres, params, "", filterParams, false)
@@ -208,7 +208,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storage
 		FROM %s
 		WHERE result.result_id = $1 AND result.target = $2 AND result.%s != '' %s
 		GROUP BY %s ORDER BY %s;`, bucketQuery, histogramQuery, histogramName,
-		fromClause, resultVariable.StorageName, where, bucketQuery, histogramName)
+		fromClause, resultVariable.Key, where, bucketQuery, histogramName)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
@@ -217,7 +217,7 @@ func (s *Storage) fetchResidualsHistogram(resultURI string, datasetName, storage
 	}
 	defer res.Close()
 
-	field := NewNumericalField(s, datasetName, storageName, variable.StorageName, variable.DisplayName, variable.Type, "")
+	field := NewNumericalField(s, datasetName, storageName, variable.Key, variable.DisplayName, variable.Type, "")
 
 	return field.parseHistogram(res, extrema, numBuckets)
 }

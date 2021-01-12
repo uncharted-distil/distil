@@ -75,6 +75,7 @@ export interface Variable {
   datasetName: string;
   colDisplayName: string;
   colName: string;
+  key: string;
   colType: string;
   importance: number;
   ranking?: number;

@@ -55,7 +55,7 @@ func NewDataset(id, name, description string, variables []*model.Variable, prima
 		ds.Variables = variables
 		fields := []string{}
 		for _, v := range ds.Variables {
-			fields = append(fields, v.StorageName)
+			fields = append(fields, v.Key)
 		}
 		ds.fieldSQL = fmt.Sprintf("\"%s\"", strings.Join(fields, "\",\""))
 	}
@@ -73,13 +73,13 @@ func (ds *Dataset) ResetBatch() {
 
 // HasVariable checks to see if a variable is already contained in the dataset.
 func (ds *Dataset) HasVariable(variable *model.Variable) bool {
-	return ds.variablesLookup[variable.StorageName]
+	return ds.variablesLookup[variable.Key]
 }
 
 // AddVariable adds a variable to the dataset.
 func (ds *Dataset) AddVariable(variable *model.Variable) {
 	ds.Variables = append(ds.Variables, variable)
-	ds.variablesLookup[variable.StorageName] = true
+	ds.variablesLookup[variable.Key] = true
 }
 
 // AddInsert adds an insert statement and parameters to the batch.
@@ -96,7 +96,7 @@ func (ds *Dataset) AddInsertFromSource(values []interface{}) {
 func (ds *Dataset) GetColumns() []string {
 	columns := make([]string, len(ds.Variables))
 	for i, v := range ds.Variables {
-		columns[i] = v.StorageName
+		columns[i] = v.Key
 	}
 
 	return columns
@@ -126,10 +126,10 @@ func (ds *Dataset) createTableSQL(tableName string, temp bool, typeAll bool, typ
 	fieldsSQL := []string{}
 	for _, v := range ds.Variables {
 		typ := "TEXT"
-		if typeAll || (typeMap != nil && typeMap[v.StorageName]) {
+		if typeAll || (typeMap != nil && typeMap[v.Key]) {
 			typ = MapD3MTypeToPostgresType(v.Type)
 		}
-		fieldsSQL = append(fieldsSQL, fmt.Sprintf("\"%s\" %s", v.StorageName, typ))
+		fieldsSQL = append(fieldsSQL, fmt.Sprintf("\"%s\" %s", v.Key, typ))
 	}
 
 	tempString := ""

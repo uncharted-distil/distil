@@ -63,14 +63,11 @@ import {
   getImageFields,
 } from "../util/data";
 
-function findSuggestionIndex(
-  columnSuggestions: string[],
-  colName: string
-): number {
+function findSuggestionIndex(columnSuggestions: string[], key: string): number {
   return columnSuggestions.findIndex((col) => {
     // col can be something like "lat+lng" for multi column suggestions
-    const colNames = col.split("+");
-    return Boolean(colNames.find((c) => c === colName));
+    const keys = col.split("+");
+    return Boolean(keys.find((c) => c === key));
   });
 }
 

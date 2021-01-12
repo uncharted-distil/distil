@@ -232,7 +232,7 @@ func (s *SolutionRequest) explainSolutionOutput(outputURI string, solutionID str
 	// map column name to get the feature index
 	varsMapped := make(map[string]*model.Variable)
 	for _, v := range variables {
-		varsMapped[v.StorageName] = v
+		varsMapped[v.Key] = v
 	}
 
 	output := make([]*api.SolutionWeight, 0)

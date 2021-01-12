@@ -59,7 +59,7 @@ func (s *Storage) FetchConfidenceSummary(dataset string, storageName string, res
 
 		explainedSummaries[explainName] = &api.VariableSummary{
 			Label:    variable.DisplayName,
-			Key:      variable.StorageName,
+			Key:      variable.Key,
 			Type:     model.NumericalType,
 			VarType:  variable.Type,
 			Baseline: baseline,

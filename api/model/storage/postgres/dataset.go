@@ -225,9 +225,9 @@ func (s *Storage) getExistingFields(dataset string, storageName string) (map[str
 	// make sure they exist in the underlying database already
 	fields := make(map[string]*model.Variable)
 	for _, v := range vars {
-		exists, _ := s.DoesVariableExist(dataset, storageName, v.StorageName)
+		exists, _ := s.DoesVariableExist(dataset, storageName, v.Key)
 		if exists {
-			fields[v.StorageName] = v
+			fields[v.Key] = v
 		}
 	}
 
@@ -241,8 +241,8 @@ func (s *Storage) createView(storageName string, fields map[string]*model.Variab
 	// Build the select statement of the query.
 	fieldList := make([]string, 0)
 	for _, v := range fields {
-		fieldList = append(fieldList, s.getViewField(postgres.ValueForFieldType(v.Type, v.StorageName),
-			v.StorageName, postgres.MapD3MTypeToPostgresType(v.Type), postgres.DefaultPostgresValueFromD3MType(v.Type)))
+		fieldList = append(fieldList, s.getViewField(postgres.ValueForFieldType(v.Type, v.Key),
+			v.Key, postgres.MapD3MTypeToPostgresType(v.Type), postgres.DefaultPostgresValueFromD3MType(v.Type)))
 	}
 	sql = fmt.Sprintf(sql, storageName, strings.Join(fieldList, ","), storageName)
 
@@ -318,7 +318,7 @@ func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, 
 	}
 	varNames := []string{}
 	for _, v := range filteredVars {
-		varNames = append(varNames, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v.StorageName, v.StorageName))
+		varNames = append(varNames, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v.Key, v.Key))
 	}
 	wheres := []string{}
 	paramsFilter := make([]interface{}, 0)
@@ -399,7 +399,7 @@ func (s *Storage) createViewFromMetadataFields(storageName string, fields map[st
 	// map the types to db types.
 	for field, v := range fields {
 		dbFields[field] = &model.Variable{
-			StorageName:      v.StorageName,
+			Key:              v.Key,
 			OriginalVariable: v.OriginalVariable,
 			Type:             v.Type,
 		}
@@ -414,7 +414,7 @@ func (s *Storage) createViewFromMetadataFields(storageName string, fields map[st
 }
 
 // AddVariable adds a new variable to the dataset.
-func (s *Storage) AddVariable(dataset string, storageName string, varName string, varType string, defaultVal string) error {
+func (s *Storage) AddVariable(dataset string, storageName string, key string, varType string, defaultVal string) error {
 	// check to make sure the column doesnt exist already
 	dbFields, err := s.getDatabaseFields(fmt.Sprintf("%s_base", storageName))
 	if err != nil {
@@ -423,7 +423,7 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 
 	found := false
 	for _, v := range dbFields {
-		if v == varName {
+		if v == key {
 			found = true
 			break
 		}
@@ -435,14 +435,14 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 			defaultClause = fmt.Sprintf(" Default '%s'", defaultVal)
 		}
 		// add the empty column to the base table and the explain table
-		sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT%s;", storageName, varName, defaultClause)
+		sql := fmt.Sprintf("ALTER TABLE %s_base ADD COLUMN \"%s\" TEXT%s;", storageName, key, defaultClause)
 
 		_, err = s.client.Exec(sql)
 		if err != nil {
 			return errors.Wrap(err, "unable to add new column to database table")
 		}
 
-		sql = fmt.Sprintf("ALTER TABLE %s_explain ADD COLUMN \"%s\" DOUBLE PRECISION;", storageName, varName)
+		sql = fmt.Sprintf("ALTER TABLE %s_explain ADD COLUMN \"%s\" DOUBLE PRECISION;", storageName, key)
 		_, err = s.client.Exec(sql)
 		if err != nil {
 			return errors.Wrap(err, "unable to add new column to database explain table")
@@ -456,9 +456,9 @@ func (s *Storage) AddVariable(dataset string, storageName string, varName string
 	}
 
 	// need to add the field to the view
-	fields[varName] = &model.Variable{
-		StorageName:      varName,
-		OriginalVariable: varName,
+	fields[key] = &model.Variable{
+		Key:              key,
+		OriginalVariable: key,
 		Type:             varType,
 	}
 

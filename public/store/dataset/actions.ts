@@ -317,7 +317,7 @@ export const actions = {
           {}
         );
       } else if (isImageType(v.colType)) {
-        return axios.post(`/distil/cluster/${args.dataset}/${v.colName}`, {});
+        return axios.post(`/distil/cluster/${args.dataset}/${v.key}`, {});
       }
       return null;
     });
@@ -857,26 +857,26 @@ export const actions = {
 
     args.variables.forEach((variable) => {
       const existingVariableSummary =
-        summariesByVariable?.[variable.colName]?.[routeKey];
+        summariesByVariable?.[variable.key]?.[routeKey];
 
       if (existingVariableSummary) {
         promises.push(existingVariableSummary);
       } else {
-        if (summariesByVariable[variable.colName]) {
+        if (summariesByVariable[variable.key]) {
           // if we have any saved state for that variable
           // use that as placeholder due to vue lifecycle
           const tempVariableSummaryKey = Object.keys(
-            summariesByVariable[variable.colName]
+            summariesByVariable[variable.key]
           )[0];
           promises.push(
-            summariesByVariable[variable.colName][tempVariableSummaryKey]
+            summariesByVariable[variable.key][tempVariableSummaryKey]
           );
         } else {
           // add a loading placeholder if nothing exists for that variable
           mutator(
             context,
             createPendingSummary(
-              variable.colName,
+              variable.key,
               variable.colDisplayName,
               variable.colDescription,
               args.dataset
@@ -885,15 +885,15 @@ export const actions = {
         }
 
         // Get the mode or default
-        const mode = args.varModes.has(variable.colName)
-          ? args.varModes.get(variable.colName)
+        const mode = args.varModes.has(variable.key)
+          ? args.varModes.get(variable.key)
           : SummaryMode.Default;
 
         // fetch summary
         promises.push(
           actions.fetchVariableSummary(context, {
             dataset: args.dataset,
-            variable: variable.colName,
+            variable: variable.key,
             filterParams: args.filterParams,
             highlight: args.highlight,
             include: args.include,
@@ -973,9 +973,7 @@ export const actions = {
     const target = getters.getVariablesMap(context)[args.target];
     const rankableVariables = getters
       .getVariables(context)
-      .filter(
-        (f) => f.colName !== target.colName && isRankableVariableType(f.colType)
-      );
+      .filter((f) => f.key !== target.key && isRankableVariableType(f.colType));
     if (
       !isRankableVariableType(target.colType) ||
       rankableVariables.length === 0
