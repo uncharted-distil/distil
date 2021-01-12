@@ -1,5 +1,6 @@
 <template>
-  <div class="row flex-1 pb-3 h-100">
+  <loading-spinner v-if="loading" :state="loadingState" />
+  <div v-else class="row flex-1 pb-3 h-100">
     <div class="col-12 col-md-3 d-flex h-100 flex-column">
       <h5 class="header-title">Labels</h5>
       <variable-facets
@@ -99,6 +100,7 @@ import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry } from "../util/routes";
 import { actions as requestActions } from "../store/requests/module";
 import { clearRowSelection } from "../util/row";
+import LoadingSpinner from "../components/labelingComponents/LoadingSpinner.vue";
 
 const LABEL_KEY = "label";
 
@@ -109,6 +111,7 @@ export default Vue.extend({
     LabelingDataSlot,
     CreateLabelingForm,
     SaveDataset,
+    LoadingSpinner,
   },
   props: {
     logActivity: {
@@ -122,6 +125,8 @@ export default Vue.extend({
       modalId: "label-input-form",
       isLoadingData: false,
       scorePopUpId: "modal-score-pop-up",
+      loading: true,
+      loadingState: "",
     };
   },
   computed: {
@@ -219,9 +224,13 @@ export default Vue.extend({
     training(): string[] {
       return routeGetters.getDecodedTrainingVariableNames(this.$store);
     },
-    isClone(): boolean {
+    isClone(): boolean | null {
       const datasets = datasetGetters.getDatasets(this.$store);
-      return datasets.find((d) => d.id === this.dataset).clone;
+      const dataset = datasets.find((d) => d.id === this.dataset);
+      if (!dataset) {
+        return null;
+      }
+      return dataset.clone === undefined ? false : dataset.clone;
     },
   },
   watch: {
@@ -235,20 +244,30 @@ export default Vue.extend({
     },
   },
   async mounted() {
+    this.loadingState = "Fetching Data";
+    await datasetActions.fetchDataset(this.$store, { dataset: this.dataset });
     await this.fetchData();
-    if (this.isClone) {
-      // dataset is already a clone don't clone again. (used for testing. might add button for cloning later.)
-      this.updateRoute();
-      return;
-    }
-    this.$bvModal.show(this.modalId);
-    const entry = await cloneDatasetUpdateRoute();
-    if (entry === null) {
-      return;
-    }
-    this.$router.push(entry).catch((err) => console.warn(err));
+    this.loadingState = "Checking Clone";
+    this.checkClone();
   },
   methods: {
+    async checkClone() {
+      if (this.isClone) {
+        // dataset is already a clone don't clone again. (used for testing. might add button for cloning later.)
+        this.updateRoute();
+        this.loading = false;
+        return;
+      }
+      const entry = await cloneDatasetUpdateRoute();
+      if (entry === null) {
+        return;
+      }
+      await this.$router.push(entry).catch((err) => console.warn(err));
+      this.loading = false;
+      this.$nextTick(() => {
+        this.$bvModal.show(this.modalId);
+      });
+    },
     // used for generating default labels in the instance where labels do not exist in the dataset
     getDefaultLabelFacet(): VariableSummary {
       return {
@@ -274,11 +293,20 @@ export default Vue.extend({
     },
     async onApply() {
       this.isLoadingData = true;
-      await requestActions.createQueryRequest(this.$store, {
+      const res = (await requestActions.createQueryRequest(this.$store, {
         datasetId: this.dataset,
         target: LOW_SHOT_LABEL_COLUMN_NAME,
         filters: null,
-      });
+      })) as { success: boolean; error: string };
+      if (!res.success) {
+        this.$bvToast.toast(res.error, {
+          title: "Error",
+          autoHideDelay: 5000,
+          appendToast: true,
+          variant: "danger",
+          toaster: "b-toaster-bottom-right",
+        });
+      }
       addOrderBy(LOW_SHOT_SCORE_COLUMN_NAME);
       this.isLoadingData = false;
       await this.fetchData();
