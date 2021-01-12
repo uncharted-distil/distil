@@ -38,19 +38,19 @@ func TestJoin(t *testing.T) {
 
 	varsLeft := []*model.Variable{
 		{
-			StorageName: "d3mIndex",
+			Key:         "d3mIndex",
 			DisplayName: "D3M Index",
 			Type:        model.IntegerType,
 			DistilRole:  "data",
 		},
 		{
-			StorageName: "alpha",
+			Key:         "alpha",
 			DisplayName: "Alpha",
 			Type:        model.RealType,
 			DistilRole:  "data",
 		},
 		{
-			StorageName: "bravo",
+			Key:         "bravo",
 			DisplayName: "Bravo",
 			Type:        model.IntegerType,
 			DistilRole:  "data",
@@ -59,20 +59,20 @@ func TestJoin(t *testing.T) {
 
 	varsRight := []*model.Variable{
 		{
-			StorageName: "d3mIndex",
+			Key:         "d3mIndex",
 			DisplayName: "D3M Index",
 			Type:        model.IntegerType,
 			DistilRole:  "data",
 		},
 		{
-			StorageName:  "charlie",
+			Key:          "charlie",
 			DisplayName:  "Charlie",
 			Type:         model.CountryType,
 			OriginalType: model.CategoricalFilter,
 			DistilRole:   "data",
 		},
 		{
-			StorageName: "delta",
+			Key:         "delta",
 			DisplayName: "Delta",
 			Type:        model.IntegerType,
 			DistilRole:  "data",

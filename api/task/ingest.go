@@ -631,7 +631,7 @@ func matchDataset(storage api.MetadataStorage, meta *model.Metadata) (string, er
 		}
 		variables := make([]string, 0)
 		for _, v := range dataset.Variables {
-			variables = append(variables, v.StorageName)
+			variables = append(variables, v.Key)
 		}
 		if metadata.DatasetMatches(meta, variables) {
 			return dataset.Name, nil
@@ -677,13 +677,13 @@ func getUniqueDatasetName(meta *model.Metadata, storage api.MetadataStorage) (st
 
 func createIndices(pg *postgres.Database, datasetID string, fields []string, meta *model.Metadata, config *IngestTaskConfig) error {
 	// build variable lookup
-	mappedVariables := mapVariables(meta.GetMainDataResource().Variables, func(variable *model.Variable) string { return variable.StorageName })
+	mappedVariables := mapVariables(meta.GetMainDataResource().Variables, func(variable *model.Variable) string { return variable.Key })
 
 	// create indices for flagged fields
 	for _, fieldName := range fields {
 		field := mappedVariables[fieldName]
-		log.Infof("creating index on %s", field.StorageName)
-		err := pg.CreateIndex(fmt.Sprintf("%s%s", meta.StorageName, baseTableSuffix), field.StorageName, field.Type)
+		log.Infof("creating index on %s", field.Key)
+		err := pg.CreateIndex(fmt.Sprintf("%s%s", meta.StorageName, baseTableSuffix), field.Key, field.Type)
 		if err != nil {
 			return err
 		}

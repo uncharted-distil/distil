@@ -213,7 +213,7 @@ func (d *CSV) writeVariable(variable *model.Variable, extended bool) interface{}
 		output[model.VarSelectedRoleField] = variable.SelectedRole
 		output[model.VarDistilRole] = variable.DistilRole
 		output[model.VarOriginalVariableField] = variable.OriginalVariable
-		output[model.VarStorageNameField] = variable.StorageName
+		output[model.VarKeyField] = variable.Key
 		output[model.VarDisplayVariableField] = variable.DisplayName
 		output[model.VarImportanceField] = variable.Importance
 		output[model.VarSuggestedTypesField] = variable.SuggestedTypes

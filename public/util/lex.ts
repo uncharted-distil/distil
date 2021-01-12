@@ -70,7 +70,7 @@ export function filterParamsToLexQuery(
 ) {
   const filters = decodeFilters(filter);
   const variableDict = allVariables.reduce((a, v) => {
-    a[v.colName] = v;
+    a[v.key] = v;
     return a;
   }, {});
   const filterVariables = filters.map((f) => {
@@ -106,7 +106,7 @@ export function lexQueryToFilters(
   allVariables: Variable[]
 ): Filter[] {
   const variableDict = allVariables.reduce((a, v) => {
-    a[v.colName] = v;
+    a[v.key] = v;
     return a;
   }, {});
 

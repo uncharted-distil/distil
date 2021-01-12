@@ -642,7 +642,7 @@ export default Vue.extend({
         });
 
         available.forEach((v) => {
-          varModesMap.set(v.colName, SummaryMode.MultiBandImage);
+          varModesMap.set(v.key, SummaryMode.MultiBandImage);
         });
 
         varModesMap.set(

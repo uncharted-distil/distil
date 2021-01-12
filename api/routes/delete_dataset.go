@@ -16,8 +16,9 @@
 package routes
 
 import (
-	"github.com/uncharted-distil/distil/api/util"
 	"net/http"
+
+	"github.com/uncharted-distil/distil/api/util"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil/api/env"

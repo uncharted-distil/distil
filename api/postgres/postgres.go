@@ -220,7 +220,7 @@ func NewDatabase(config *Config, batch bool) (*Database, error) {
 	}
 
 	database.Tables[WordStemTableName] = NewDataset(WordStemTableName, WordStemTableName, "",
-		[]*model.Variable{{StorageName: "stem"}, {StorageName: "word"}}, "stem")
+		[]*model.Variable{{Key: "stem"}, {Key: "word"}}, "stem")
 	database.Tables[WordStemTableName].insertFunction = insertFromSourceUnique
 
 	return database, nil
@@ -371,10 +371,10 @@ func insertFromSourceGeometry(d *Database, tableName string, ds *Dataset) error 
 	fields := []string{}
 	for _, v := range ds.Variables {
 		typ := dataTypeText
-		if v.StorageName == model.D3MIndexFieldName || v.Type == model.GeoBoundsType {
+		if v.Key == model.D3MIndexFieldName || v.Type == model.GeoBoundsType {
 			typ = MapD3MTypeToPostgresType(v.Type)
 		}
-		fields = append(fields, fmt.Sprintf("\"%s\"::%s", v.StorageName, typ))
+		fields = append(fields, fmt.Sprintf("\"%s\"::%s", v.Key, typ))
 	}
 	fieldSQL := strings.Join(fields, ",")
 	updateSQL := fmt.Sprintf("INSERT INTO \"%s_base\" SELECT %s FROM \"%s\";", tableName, fieldSQL, tmpTableName)
@@ -457,7 +457,7 @@ func (d *Database) StoreMetadata(tableName string) error {
 	// Insert the variable metadata into the new table.
 	for _, v := range d.Tables[tableName].Variables {
 		insertStatement := fmt.Sprintf("INSERT INTO %s (name, role, type) VALUES ($1, $2, $3);", variableTableName)
-		values := []interface{}{v.StorageName, v.DistilRole, v.Type}
+		values := []interface{}{v.Key, v.DistilRole, v.Type}
 		_, err = d.Client.Exec(insertStatement, values...)
 		if err != nil {
 			return errors.Wrapf(err, "unable to store variable in postgres")
@@ -605,14 +605,14 @@ func (d *Database) InitializeTable(tableName string, ds *Dataset) error {
 	varsExplain := ""
 	for _, variable := range ds.Variables {
 		tableType := dataTypeText
-		viewVar := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v) AS \"%s\"", ValueForFieldType(variable.Type, variable.StorageName),
-			MapD3MTypeToPostgresType(variable.Type), DefaultPostgresValueFromD3MType(variable.Type), variable.StorageName)
+		viewVar := fmt.Sprintf("COALESCE(CAST(%s AS %s), %v) AS \"%s\"", ValueForFieldType(variable.Type, variable.Key),
+			MapD3MTypeToPostgresType(variable.Type), DefaultPostgresValueFromD3MType(variable.Type), variable.Key)
 		if variable.Type == model.GeoBoundsType {
 			tableType = "geometry"
-			viewVar = fmt.Sprintf("\"%s\"", variable.StorageName)
+			viewVar = fmt.Sprintf("\"%s\"", variable.Key)
 		}
-		varsTable = fmt.Sprintf("%s\n\"%s\" %s,", varsTable, variable.StorageName, tableType)
-		varsExplain = fmt.Sprintf("%s\n\"%s\" DOUBLE PRECISION,", varsExplain, variable.StorageName)
+		varsTable = fmt.Sprintf("%s\n\"%s\" %s,", varsTable, variable.Key, tableType)
+		varsExplain = fmt.Sprintf("%s\n\"%s\" DOUBLE PRECISION,", varsExplain, variable.Key)
 		varsView = fmt.Sprintf("%s\n%s,", varsView, viewVar)
 	}
 	if len(varsTable) > 0 {

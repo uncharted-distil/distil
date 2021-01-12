@@ -376,7 +376,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 	for _, v := range variables {
 		serialized = append(serialized, map[string]interface{}{
 			model.VarNameField:             v.HeaderName,
-			model.VarStorageNameField:      v.StorageName,
+			model.VarKeyField:              v.Key,
 			model.VarIndexField:            v.Index,
 			model.VarRoleField:             v.Role,
 			model.VarSelectedRoleField:     v.SelectedRole,
@@ -422,7 +422,7 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 
 	// Update only the variable we care about
 	for _, v := range vars {
-		if v.StorageName == varName {
+		if v.Key == varName {
 			v.Type = varType
 		}
 	}
@@ -431,7 +431,7 @@ func (s *Storage) SetDataType(dataset string, varName string, varType string) er
 }
 
 // SetExtrema updates the min & max values of a field in ES.
-func (s *Storage) SetExtrema(dataset string, varName string, extrema *api.Extrema) error {
+func (s *Storage) SetExtrema(dataset string, key string, extrema *api.Extrema) error {
 	// Fetch all existing variables
 	vars, err := s.FetchVariables(dataset, true, true, false)
 	if err != nil {
@@ -440,7 +440,7 @@ func (s *Storage) SetExtrema(dataset string, varName string, extrema *api.Extrem
 
 	// Update only the variable we care about
 	for _, v := range vars {
-		if v.StorageName == varName {
+		if v.Key == key {
 			v.Min = extrema.Min
 			v.Max = extrema.Max
 		}
@@ -449,20 +449,20 @@ func (s *Storage) SetExtrema(dataset string, varName string, extrema *api.Extrem
 	return s.updateVariables(dataset, vars)
 }
 
-// AddVariable adds a new variable to the dataset.  If the varDisplayName is left blank it will be set to the varName value.
-func (s *Storage) AddVariable(dataset string, varName string, varDisplayName string, varType string, varRole string) error {
+// AddVariable adds a new variable to the dataset.  If the varDisplayName is left blank it will be set to the key value.
+func (s *Storage) AddVariable(dataset string, key string, varDisplayName string, varType string, varRole string) error {
 
 	if varDisplayName == "" {
-		varDisplayName = varName
+		varDisplayName = key
 	}
 
 	// new variable definition
 	variable := &model.Variable{
-		StorageName:      varName,
-		HeaderName:       varName,
+		Key:              key,
+		HeaderName:       key,
 		Type:             varType,
 		OriginalType:     varType,
-		OriginalVariable: varName,
+		OriginalVariable: key,
 		DisplayName:      varDisplayName,
 		DistilRole:       varRole,
 		Deleted:          false,
@@ -479,7 +479,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varDisplayName str
 	// check if var already exists
 	found := false
 	for index, v := range vars {
-		if v.StorageName == varName {
+		if v.Key == key {
 			// check if it has been deleted
 			if !v.Deleted {
 				return errors.Errorf("variable already exists under this key")
@@ -502,7 +502,7 @@ func (s *Storage) AddVariable(dataset string, varName string, varDisplayName str
 }
 
 // DeleteVariable flags a variable as deleted.
-func (s *Storage) DeleteVariable(dataset string, varName string) error {
+func (s *Storage) DeleteVariable(dataset string, key string) error {
 	// query for existing variables
 	vars, err := s.FetchVariables(dataset, true, true, true)
 	if err != nil {
@@ -511,7 +511,7 @@ func (s *Storage) DeleteVariable(dataset string, varName string) error {
 
 	// soft delete the variable
 	for _, v := range vars {
-		if v.StorageName == varName {
+		if v.Key == key {
 			v.Deleted = true
 		}
 	}

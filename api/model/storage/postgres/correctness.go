@@ -54,7 +54,7 @@ func (s *Storage) FetchCorrectnessSummary(dataset string, storageName string, re
 
 	return &api.VariableSummary{
 		Label:    variable.DisplayName,
-		Key:      variable.StorageName,
+		Key:      variable.Key,
 		Type:     model.CategoricalType,
 		VarType:  variable.Type,
 		Baseline: baseline,
@@ -124,7 +124,7 @@ func (s *Storage) getCountCol(dataset string, mode api.SummaryMode) (string, err
 
 func (s *Storage) parseHistogram(rows pgx.Rows, variable *model.Variable) (*api.Histogram, error) {
 
-	termsAggName := api.TermsAggPrefix + variable.StorageName
+	termsAggName := api.TermsAggPrefix + variable.Key
 
 	// extract the counts
 	countMap := map[string]map[string]int64{}

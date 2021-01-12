@@ -63,7 +63,7 @@ func SaveFittedSolution(fittedSolutionID string, modelName string, modelDescript
 	types := make(map[string]string)
 
 	for _, vt := range dataset.Variables {
-		types[vt.StorageName] = vt.Type
+		types[vt.Key] = vt.Type
 	}
 
 	vars := make([]string, len(request.Features)-1)

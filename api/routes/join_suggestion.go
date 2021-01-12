@@ -133,7 +133,7 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 						var localColNameTokens []string
 						for _, token := range colNameTokens {
 							// displayName holds the column name of the original datamart dataset
-							localColNameTokens = append(localColNameTokens, getColNameByDisplayName(localDataset, token))
+							localColNameTokens = append(localColNameTokens, getColKeyByDisplayName(localDataset, token))
 						}
 						localColName := strings.Join(localColNameTokens, ", ")
 						suggestion.JoinColumns[j] = localColName
@@ -168,10 +168,10 @@ func JoinSuggestionHandler(esCtor model.MetadataStorageCtor, metaCtors map[strin
 	}
 }
 
-func getColNameByDisplayName(dataset model.Dataset, colDisplayName string) string {
+func getColKeyByDisplayName(dataset model.Dataset, colDisplayName string) string {
 	for _, variable := range dataset.Variables {
 		if variable.DisplayName == colDisplayName {
-			return variable.StorageName
+			return variable.Key
 		}
 	}
 	return compute.NormalizeVariableName(colDisplayName) // fallback

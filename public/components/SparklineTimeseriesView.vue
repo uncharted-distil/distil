@@ -167,7 +167,7 @@ export default Vue.extend({
 
     isDateScale(): boolean {
       const grouping = this.timeseriesGrouping;
-      const timeVar = this.variables.find((v) => v.colName === grouping.xCol);
+      const timeVar = this.variables.find((v) => v.key === grouping.xCol);
       return timeVar && isTimeType(timeVar.colType);
     },
 

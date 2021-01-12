@@ -27,7 +27,7 @@ func FetchSummaryVariables(dataset string, metaStore MetadataStorage) ([]*model.
 	// loop through the var list and drop any that should be hidden
 	visibleVars := []*model.Variable{}
 	for _, variable := range variables {
-		if !isHidden(variable.StorageName, hidden) {
+		if !isHidden(variable.Key, hidden) {
 			visibleVars = append(visibleVars, variable)
 		}
 	}
@@ -82,7 +82,7 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 	// create variable lookup
 	varMap := make(map[string]*model.Variable)
 	for _, variable := range variables {
-		varMap[variable.StorageName] = variable
+		varMap[variable.Key] = variable
 	}
 
 	updatedFilterParams.Variables = []string{}
@@ -124,13 +124,13 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 				}
 			} else if model.IsImage(variable.Type) {
 				// add the variable, and if it exists the cluster{
-				updatedFilterParams.AddVariable(variable.StorageName)
-				clusterField := fmt.Sprintf("_cluster_%s", variable.StorageName)
+				updatedFilterParams.AddVariable(variable.Key)
+				clusterField := fmt.Sprintf("_cluster_%s", variable.Key)
 				if varMap[clusterField] != nil {
-					updatedFilterParams.AddVariable(varMap[clusterField].StorageName)
+					updatedFilterParams.AddVariable(varMap[clusterField].Key)
 				}
 			} else {
-				updatedFilterParams.AddVariable(variable.StorageName)
+				updatedFilterParams.AddVariable(variable.Key)
 			}
 		}
 	}
@@ -170,7 +170,7 @@ func GetClusterColFromGrouping(group model.BaseGrouping) (string, bool) {
 // UpdateFilterKey updates the supplied filter key to point to a group-specific column, rather than relying on the group variable
 // name.
 func UpdateFilterKey(metaStore MetadataStorage, dataset string, dataMode DataMode, filter *model.Filter, variable *model.Variable) {
-	if variable.StorageName == filter.Key && variable.IsGrouping() {
+	if variable.Key == filter.Key && variable.IsGrouping() {
 		clusterCol, ok := GetClusterColFromGrouping(variable.Grouping)
 		if ok && dataMode == ClusterDataMode && HasClusterData(dataset, clusterCol, metaStore) {
 			filter.Key = clusterCol
