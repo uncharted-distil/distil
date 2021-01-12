@@ -297,7 +297,10 @@ func SplitTimeSeries(timeseries []*api.TimeseriesObservation, trainPercentage fl
 func SampleData(rawData [][]string, maxRows int) [][]string {
 
 	sampler := createSampler(false, -1, -1)
-	return sampler.sample(rawData, maxRows)
+	sampled := sampler.sample(rawData, maxRows)
+	complete := [][]string{rawData[0]}
+	complete = append(complete, sampled...)
+	return complete
 }
 
 // SampleDataset shuffles a dataset's rows and stores a subsample, the schema doc URI.
