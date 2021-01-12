@@ -1,5 +1,6 @@
 <template>
-  <div class="row flex-1 pb-3 h-100">
+  <loading-spinner v-if="loading" :state="loadingState" />
+  <div v-else class="row flex-1 pb-3 h-100">
     <div class="col-12 col-md-3 d-flex h-100 flex-column">
       <h5 class="header-title">Labels</h5>
       <variable-facets
@@ -13,11 +14,11 @@
       <variable-facets
         enable-highlighting
         enable-type-filtering
-        :summaries="summaries"
+        :summaries="featureSummaries"
         :pagination="
-          summaries && searchedActiveVariables.length > numRowsPerPage
+          featureSummaries && searchedActiveVariables.length > numRowsPerPage
         "
-        :facet-count="summaries && searchedActiveVariables.length"
+        :facet-count="featureSummaries && searchedActiveVariables.length"
         :rows-per-page="numRowsPerPage"
         :instance-name="instance"
       />
@@ -31,6 +32,7 @@
         />
         <create-labeling-form
           :is-loading="isLoadingData"
+          :low-shot-summary="labelSummary"
           @export="onExport"
           @apply="onApply"
           @save="onSaveClick"
@@ -98,6 +100,7 @@ import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { overlayRouteEntry } from "../util/routes";
 import { actions as requestActions } from "../store/requests/module";
 import { clearRowSelection } from "../util/row";
+import LoadingSpinner from "../components/labelingComponents/LoadingSpinner.vue";
 
 const LABEL_KEY = "label";
 
@@ -108,6 +111,7 @@ export default Vue.extend({
     LabelingDataSlot,
     CreateLabelingForm,
     SaveDataset,
+    LoadingSpinner,
   },
   props: {
     logActivity: {
@@ -121,6 +125,8 @@ export default Vue.extend({
       modalId: "label-input-form",
       isLoadingData: false,
       scorePopUpId: "modal-score-pop-up",
+      loading: true,
+      loadingState: "",
     };
   },
   computed: {
@@ -184,6 +190,12 @@ export default Vue.extend({
       const tableData = datasetGetters.getIncludedTableDataItems(this.$store);
       return tableData ? tableData.length : 0;
     },
+    // filters out the low shot labels
+    featureSummaries(): VariableSummary[] {
+      return this.summaries.filter((s) => {
+        return s.key !== LOW_SHOT_LABEL_COLUMN_NAME;
+      });
+    },
     summaries(): VariableSummary[] {
       const pageIndex = routeGetters.getLabelFeaturesVarsPage(this.$store);
 
@@ -212,34 +224,50 @@ export default Vue.extend({
     training(): string[] {
       return routeGetters.getDecodedTrainingVariableNames(this.$store);
     },
-    isClone(): boolean {
+    isClone(): boolean | null {
       const datasets = datasetGetters.getDatasets(this.$store);
-      return datasets.find((d) => d.id === this.dataset).clone;
+      const dataset = datasets.find((d) => d.id === this.dataset);
+      if (!dataset) {
+        return null;
+      }
+      return dataset.clone === undefined ? false : dataset.clone;
     },
   },
   watch: {
     highlight() {
       this.onDataChanged();
     },
-    training() {
-      this.fetchData();
+    training(prev: string[], cur: string[]) {
+      if (prev.length !== cur.length) {
+        this.fetchData();
+      }
     },
   },
   async mounted() {
+    this.loadingState = "Fetching Data";
+    await datasetActions.fetchDataset(this.$store, { dataset: this.dataset });
     await this.fetchData();
-    if (this.isClone) {
-      // dataset is already a clone don't clone again. (used for testing. might add button for cloning later.)
-      this.updateRoute();
-      return;
-    }
-    this.$bvModal.show(this.modalId);
-    const entry = await cloneDatasetUpdateRoute();
-    if (entry === null) {
-      return;
-    }
-    this.$router.push(entry).catch((err) => console.warn(err));
+    this.loadingState = "Checking Clone";
+    this.checkClone();
   },
   methods: {
+    async checkClone() {
+      if (this.isClone) {
+        // dataset is already a clone don't clone again. (used for testing. might add button for cloning later.)
+        this.updateRoute();
+        this.loading = false;
+        return;
+      }
+      const entry = await cloneDatasetUpdateRoute();
+      if (entry === null) {
+        return;
+      }
+      await this.$router.push(entry).catch((err) => console.warn(err));
+      this.loading = false;
+      this.$nextTick(() => {
+        this.$bvModal.show(this.modalId);
+      });
+    },
     // used for generating default labels in the instance where labels do not exist in the dataset
     getDefaultLabelFacet(): VariableSummary {
       return {
@@ -265,15 +293,27 @@ export default Vue.extend({
     },
     async onApply() {
       this.isLoadingData = true;
-      await requestActions.createQueryRequest(this.$store, {
+      const res = (await requestActions.createQueryRequest(this.$store, {
         datasetId: this.dataset,
         target: LOW_SHOT_LABEL_COLUMN_NAME,
         filters: null,
-      });
+      })) as { success: boolean; error: string };
+      if (!res.success) {
+        this.$bvToast.toast(res.error, {
+          title: "Error",
+          autoHideDelay: 5000,
+          appendToast: true,
+          variant: "danger",
+          toaster: "b-toaster-bottom-right",
+        });
+      }
       addOrderBy(LOW_SHOT_SCORE_COLUMN_NAME);
       this.isLoadingData = false;
       await this.fetchData();
-      this.$bvModal.show(this.scorePopUpId);
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        annotationHasChanged: false,
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
     async onExport() {
       const highlight = {
@@ -370,12 +410,19 @@ export default Vue.extend({
           value: label,
         };
       });
+      if (!updateData.length) {
+        return;
+      }
       datasetMutations.updateAreaOfInterestIncludeInner(this.$store, innerData);
       datasetActions.updateDataset(this.$store, {
         dataset: this.dataset,
         updateData,
       });
       clearRowSelection(this.$router);
+      const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
+        annotationHasChanged: true,
+      });
+      this.$router.push(entry).catch((err) => console.warn(err));
       this.onDataChanged();
     },
     async updateRoute() {

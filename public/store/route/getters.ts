@@ -1,46 +1,46 @@
+import _ from "lodash";
+import { $enum } from "ts-enum-util";
+import { Route } from "vue-router";
+import { ColorScaleNames, minimumRouteKey } from "../../util/data";
+import { Dictionary } from "../../util/dict";
+import { decodeFilters, Filter, FilterParams } from "../../util/filters";
+import { decodeHighlights } from "../../util/highlights";
+import { buildLookup } from "../../util/lookup";
+import { decodeRowSelection } from "../../util/row";
+import { GEOBOUNDS_TYPE, GEOCOORDINATE_TYPE } from "../../util/types";
 import {
-  Variable,
-  VariableSummary,
+  BandID,
+  DataMode,
   Highlight,
   RowSelection,
   SummaryMode,
-  DataMode,
   TaskTypes,
-  BandID,
+  Variable,
+  VariableSummary,
 } from "../dataset/index";
+import { ModelQuality } from "../requests/index";
 import {
-  DATA_EXPLORER_ROUTE,
-  JOIN_DATASETS_ROUTE,
-  RESULTS_ROUTE,
-  SELECT_TARGET_ROUTE,
-  SELECT_TRAINING_ROUTE,
-  JOINED_VARS_INSTANCE_PAGE,
   AVAILABLE_TARGET_VARS_INSTANCE_PAGE,
+  AVAILABLE_TARGET_VARS_INSTANCE_SEARCH,
   AVAILABLE_TRAINING_VARS_INSTANCE_PAGE,
-  TRAINING_VARS_INSTANCE_PAGE,
-  RESULT_TRAINING_VARS_INSTANCE_PAGE,
+  AVAILABLE_TRAINING_VARS_INSTANCE_SEARCH,
+  DATA_EXPLORER_ROUTE,
   DATA_EXPLORER_VARS_INSTANCE_PAGE,
+  DATA_EXPLORER_VARS_INSTANCE_SEARCH,
   DATA_SIZE_DEFAULT,
   DATA_SIZE_REMOTE_SENSING_DEFAULT,
-  AVAILABLE_TARGET_VARS_INSTANCE_SEARCH,
+  JOINED_VARS_INSTANCE_PAGE,
   JOINED_VARS_INSTANCE_SEARCH,
-  AVAILABLE_TRAINING_VARS_INSTANCE_SEARCH,
-  TRAINING_VARS_INSTANCE_SEARCH,
-  RESULT_TRAINING_VARS_INSTANCE_SEARCH,
-  DATA_EXPLORER_VARS_INSTANCE_SEARCH,
+  JOIN_DATASETS_ROUTE,
   LABEL_FEATURE_VARS_INSTANCE_PAGE,
+  RESULTS_ROUTE,
+  RESULT_TRAINING_VARS_INSTANCE_PAGE,
+  RESULT_TRAINING_VARS_INSTANCE_SEARCH,
+  SELECT_TARGET_ROUTE,
+  SELECT_TRAINING_ROUTE,
+  TRAINING_VARS_INSTANCE_PAGE,
+  TRAINING_VARS_INSTANCE_SEARCH,
 } from "../route/index";
-import { ModelQuality } from "../requests/index";
-import { decodeFilters, Filter, FilterParams } from "../../util/filters";
-import { decodeHighlights } from "../../util/highlights";
-import { decodeRowSelection } from "../../util/row";
-import { Dictionary } from "../../util/dict";
-import { buildLookup } from "../../util/lookup";
-import { Route } from "vue-router";
-import _ from "lodash";
-import { $enum } from "ts-enum-util";
-import { ColorScaleNames, minimumRouteKey } from "../../util/data";
-import { GEOBOUNDS_TYPE, GEOCOORDINATE_TYPE } from "../../util/types";
 
 export const getters = {
   getRoute(state: Route): Route {
@@ -103,7 +103,12 @@ export const getters = {
     }
     return variables;
   },
-
+  getAnnotationHasChanged(state: Route) {
+    const hasChanged =
+      state.query.annotationHasChanged === "true" ||
+      !state.query.annotationHasChanged;
+    return hasChanged;
+  },
   getJoinDatasetsVariableSummaries(
     state: Route,
     getters: any
