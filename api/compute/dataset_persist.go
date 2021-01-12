@@ -294,9 +294,9 @@ func SplitTimeSeries(timeseries []*api.TimeseriesObservation, trainPercentage fl
 
 // SampleData shuffles a dataset's rows and takes a subsample, returning
 // the raw byte data of the sampled dataset.
-func SampleData(rawData [][]string, maxRows int, stratify bool) [][]string {
+func SampleData(rawData [][]string, maxRows int) [][]string {
 
-	sampler := createSampler(stratify, -1, -1)
+	sampler := createSampler(false, -1, -1)
 	return sampler.sample(rawData, maxRows)
 }
 
