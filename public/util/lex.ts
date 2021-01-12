@@ -110,11 +110,11 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
     }).branch(
       Lex.from(LabelState, { label: "From Latitude" })
         .to("minX", NumericEntryState, { name: "Enter lower bound" })
-        .to(LabelState, { label: "To Latitude" })
+        .to(LabelState, { label: "To" })
         .to("maxX", NumericEntryState, { name: "Enter upper bound" })
         .to(LabelState, { label: "From Longitude" })
         .to("minY", NumericEntryState, { name: "Enter lower bound" })
-        .to(LabelState, { label: "To Longitude" })
+        .to(LabelState, { label: "To" })
         .to("maxY", NumericEntryState, { name: "Enter upper bound" })
     )
   );
