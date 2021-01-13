@@ -93,7 +93,7 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert, api.MaxNumBuckets)
+		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), invert, api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
 		}
@@ -104,7 +104,7 @@ func (f *NumericalField) FetchSummaryData(resultURI string, filterParams *api.Fi
 			}
 		}
 	} else {
-		baseline, err = f.fetchHistogramByResult(resultURI, nil, extrema, api.MaxNumBuckets)
+		baseline, err = f.fetchHistogramByResult(resultURI, api.GetBaselineFilter(filterParams), extrema, api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
 		}

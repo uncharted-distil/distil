@@ -85,7 +85,7 @@ func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert)
+		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), invert)
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +96,7 @@ func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.
 			}
 		}
 	} else {
-		baseline, err = f.fetchHistogramByResult(resultURI, nil)
+		baseline, err = f.fetchHistogramByResult(resultURI, api.GetBaselineFilter(filterParams))
 		if err != nil {
 			return nil, err
 		}
