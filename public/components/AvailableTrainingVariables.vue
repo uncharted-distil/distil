@@ -199,7 +199,7 @@ export default Vue.extend({
   },
 
   methods: {
-    addAll() {
+    async addAll() {
       // log UI event on server
       appActions.logUserEvent(this.$store, {
         feature: Feature.ADD_ALL_FEATURES,
@@ -215,10 +215,18 @@ export default Vue.extend({
       this.availableVariables.forEach((variable) => {
         training.push(variable.key);
       });
-
+      const dataset = routeGetters.getRouteDataset(this.$store);
+      const targetName = routeGetters.getRouteTargetVariable(this.$store);
+      // update task based on the current training data
+      const taskResponse = await datasetActions.fetchTask(this.$store, {
+        dataset,
+        targetName,
+        variableNames: training,
+      });
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         training: training.join(","),
         availableTrainingVarsPage: 1,
+        task: taskResponse.data.task.join(","),
       });
 
       this.$router.push(entry).catch((err) => console.warn(err));

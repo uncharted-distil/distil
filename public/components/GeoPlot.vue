@@ -1143,6 +1143,9 @@ export default Vue.extend({
         return "#999999";
       }
       if (this.isColoringByConfidence) {
+        if (item.confidence === undefined) {
+          return undefined;
+        }
         return this.colorScale(item.confidence?.value);
       }
       if (item[this.targetField] && item[this.predictedField]) {
