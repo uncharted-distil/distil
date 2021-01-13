@@ -213,6 +213,40 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 	return nil
 }
 
+// FetchResultDataset extracts the complete results and base table data.
+func (s *Storage) FetchResultDataset(dataset string, storageName string, predictionName string, features []string, resultURI string) ([][]string, error) {
+
+	// get data variables (to exclude metadata variables)
+	vars, err := s.metadata.FetchVariables(dataset, true, false, false)
+	if err != nil {
+		return nil, err
+	}
+	filteredVars := []*model.Variable{}
+	// only include data with distilrole data and index
+	for _, v := range vars {
+		if model.IsTA2Field(v.DistilRole, v.SelectedRole) {
+			filteredVars = append(filteredVars, v)
+		}
+	}
+	fields := []string{}
+	for _, v := range features {
+		fields = append(fields, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v, v))
+	}
+	fields = append(fields, fmt.Sprintf("COALESCE(result.value) AS \"%s\"", predictionName))
+	sql := fmt.Sprintf(`
+		SELECT %s
+		FROM %s base
+		INNER JOIN %s result on CAST(base."d3mIndex" AS double precision) = result.index
+		WHERE result.result_id = $1;`,
+		strings.Join(fields, ", "), getBaseTableName(storageName), s.getResultTable(storageName))
+	res, err := s.client.Query(sql, resultURI)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable execute query to extract dataset")
+	}
+
+	return s.parseData(res)
+}
+
 // FetchExplainValues : fetches fetches explain values
 func (s *Storage) FetchExplainValues(dataset string, storageName string, d3mIndex []int, resultUUID string) ([]api.SolutionExplainValues, error) {
 	// create the filter for the query.
