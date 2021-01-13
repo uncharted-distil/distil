@@ -65,10 +65,6 @@ func Sample(originalSchemaFile string, schemaFile string, dataset string, config
 	if err != nil {
 		return "", false, 0, err
 	}
-	err = util.CopyFile(csvFilePath, originalCSVFilePath)
-	if err != nil {
-		return "", false, 0, err
-	}
 
 	// if csv data > max sample count, then assume max sample count is the count of
 	// rows sampled in the output.
