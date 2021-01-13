@@ -225,7 +225,7 @@ func createGrouping(dataset string, storageName string, groupingType string, raw
 
 		// Create a new grouped variable for the time series.
 		groupingVarName := strings.Join([]string{tsg.XCol, tsg.YCol}, task.DefaultSeparator)
-		err = meta.AddGroupedVariable(dataset, groupingVarName, tsg.YCol, model.TimeSeriesType, model.VarDistilRoleGrouping, tsg)
+		err = meta.AddGroupedVariable(dataset, groupingVarName, tsg.YCol, model.TimeSeriesType, model.VarDistilRoleData, tsg)
 		if err != nil {
 			return err
 		}

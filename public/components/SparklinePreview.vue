@@ -67,7 +67,7 @@ export default Vue.extend({
     forecastDataset: String as () => string,
     xCol: String as () => string,
     yCol: String as () => string,
-    timeseriesCol: String as () => string,
+    variableKey: String as () => string,
     timeseriesId: String as () => string,
     solutionId: String as () => string,
     predictionsId: String as () => string,
@@ -88,7 +88,7 @@ export default Vue.extend({
         : "sparkline-preview-container";
     },
     timeseriesUniqueId(): string {
-      return this.timeseriesId + this.uniqueTrail;
+      return this.variableKey + this.timeseriesId + this.uniqueTrail;
     },
     timeseries(): TimeSeriesValue[] {
       if (this.solutionId) {

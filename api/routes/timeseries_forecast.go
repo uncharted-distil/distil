@@ -16,11 +16,12 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil/api/compute"
 	api "github.com/uncharted-distil/distil/api/model"
 	"goji.io/v3/pat"
-	"net/http"
 )
 
 // TimeseriesForecastResult represents the result of a timeseries request.
@@ -109,7 +110,7 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 		predictedStorageName := dsf.StorageName
 
 		// fetch the ground truth timeseries
-		timeseries, err := data.FetchTimeseries(truthDataset, truthStorageName, timeseriesColName, xColName, yColName, timeseriesUris, operation, filterParams, false)
+		timeseries, err := data.FetchTimeseries(truthDataset, truthStorageName, "", timeseriesColName, xColName, yColName, timeseriesUris, api.TimeseriesOp(operation), filterParams, false)
 
 		if err != nil {
 			handleError(w, err)
@@ -124,17 +125,17 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 		}
 
 		// fetch the predicted timeseries
-		forecasts, err := data.FetchTimeseriesForecast(forecastDataset, predictedStorageName, timeseriesColName, xColName, yColName, timeseriesUris, res.ResultURI, filterParams)
+		forecasts, err := data.FetchTimeseriesForecast(forecastDataset, predictedStorageName, "", timeseriesColName, xColName, yColName, timeseriesUris, res.ResultURI, filterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		for key, v := range *timeseries {
+		for idx, t := range timeseries {
 			// Recompute train/test split info for visualization purposes
-			split := compute.SplitTimeSeries(v.Timeseries, trainTestSplitTimeSeries)
-			forecast := (*forecasts)[key]
-			result[key] = TimeseriesForecastResult{
-				Timeseries:        (*timeseries)[key].Timeseries,
+			split := compute.SplitTimeSeries(t.Timeseries, trainTestSplitTimeSeries)
+			forecast := forecasts[idx]
+			result[t.SeriesID] = TimeseriesForecastResult{
+				Timeseries:        t.Timeseries,
 				Forecast:          forecast.Timeseries,
 				ForecastTestRange: []float64{split.SplitValue, split.EndValue},
 				IsDateTime:        true,

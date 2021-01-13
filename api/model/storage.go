@@ -47,12 +47,31 @@ type TimeseriesObservation struct {
 
 // TimeseriesData represents the result of a timeseries request.
 type TimeseriesData struct {
-	Timeseries []*TimeseriesObservation
-	IsDateTime bool
-	Min        float64
-	Max        float64
-	Mean       float64
+	VarKey     string                   `json:"variableKey"`
+	SeriesID   string                   `json:"seriesID"`
+	Timeseries []*TimeseriesObservation `json:"timeseries"`
+	IsDateTime bool                     `json:"isDateTime"`
+	Min        float64                  `json:"min"`
+	Max        float64                  `json:"max"`
+	Mean       float64                  `json:"mean"`
 }
+
+// TimeseriesOp defines the operation to aggregate timeseries values that fall into the same
+// bucket.
+type TimeseriesOp string
+
+const (
+	// TimeseriesAddOp indicates that bucket values should be added
+	TimeseriesAddOp = "add"
+	// TimeseriesMinOp indicates that the min of bucket values should be taken
+	TimeseriesMinOp = "min"
+	// TimeseriesMaxOp indicates that the max of bucket values should be taken
+	TimeseriesMaxOp = "max"
+	// TimeseriesMeanOp indicates that the mean of bucket values should be taken
+	TimeseriesMeanOp = "mean"
+	// TimeseriesDefaultOp is the operation to use when none is specified
+	TimeseriesDefaultOp = TimeseriesAddOp
+)
 
 // DataStorageCtor represents a client constructor to instantiate a data
 // storage client.
@@ -78,8 +97,8 @@ type DataStorage interface {
 	FetchResidualsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
 	FetchExtrema(dataset string, storageName string, variable *model.Variable) (*Extrema, error)
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
-	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI []string, operation string, filterParams *FilterParams, invert bool) (*map[string]*TimeseriesData, error)
-	FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURIs []string, resultUUID string, filterParams *FilterParams) (*map[string]*TimeseriesData, error)
+	FetchTimeseries(dataset string, storageName string, variableKey string, seriesIDColName string, xColName string, yColName string, timeseriesURI []string, operation TimeseriesOp, filterParams *FilterParams, invert bool) ([]*TimeseriesData, error)
+	FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, seriesIDColName string, xColName string, yColName string, timeseriesURIs []string, resultUUID string, filterParams *FilterParams) ([]*TimeseriesData, error)
 	FetchCategoryCounts(storageName string, variable *model.Variable) (map[string]int, error)
 	FetchSolutionFeatureWeights(dataset string, storageName string, resultURI string, d3mIndex int64) (*SolutionFeatureWeight, error)
 	// Dataset manipulation

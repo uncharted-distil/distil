@@ -158,21 +158,29 @@ export function getTimeseriesSummaryTopCategories(
 export function getRandomInt(max: number): number {
   return Math.floor(Math.random() * Math.floor(max));
 }
+
 export function getTimeseriesGroupingsFromFields(
   variables: Variable[],
   fields: Dictionary<TableColumn>
 ): TimeseriesGrouping[] {
+  return getTimeseriesVariablesFromFields(variables, fields).map(
+    (v) => v.grouping as TimeseriesGrouping
+  );
+}
+
+export function getTimeseriesVariablesFromFields(
+  variables: Variable[],
+  fields: Dictionary<TableColumn>
+): Variable[] {
   // Check to see if any of the fields are the ID column of one of our variables
   const fieldKeys = _.map(fields, (_, key) => key);
-  return variables
-    .filter(
-      (v) =>
-        v.grouping &&
-        v.grouping.idCol &&
-        v.colType === TIMESERIES_TYPE &&
-        _.includes(fieldKeys, v.grouping.idCol)
-    )
-    .map((v) => v.grouping as TimeseriesGrouping);
+  return variables.filter(
+    (v) =>
+      v.grouping &&
+      v.grouping.idCol &&
+      v.colType === TIMESERIES_TYPE &&
+      _.includes(fieldKeys, v.key)
+  );
 }
 
 export function getComposedVariableKey(keys: string[]): string {
@@ -278,7 +286,7 @@ export async function fetchSummaryExemplars(
         const grouping = variable.grouping as TimeseriesGrouping;
         const args = {
           dataset: datasetName,
-          timeseriesColName: grouping.idCol,
+          variableKey: variable.key,
           xColName: grouping.xCol,
           yColName: grouping.yCol,
           timeseriesIds: exemplars,
@@ -322,7 +330,7 @@ export async function fetchResultExemplars(
         // if there a linked exemplars, fetch those before resolving
         return await resultsActions.fetchForecastedTimeseries(store, {
           dataset: datasetName,
-          timeseriesColName: grouping.idCol,
+          variableKey: grouping.idCol,
           xColName: grouping.xCol,
           yColName: grouping.yCol,
           timeseriesIds: exemplars,

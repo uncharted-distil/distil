@@ -527,9 +527,9 @@ export default Vue.extend({
       this.timeseriesGroupings.forEach((tsg) => {
         resultsActions.fetchForecastedTimeseries(this.$store, {
           dataset: this.dataset,
+          variableKey: tsg.idCol,
           xColName: tsg.xCol,
           yColName: tsg.yCol,
-          timeseriesColName: tsg.idCol,
           solutionId: this.solutionId,
           uniqueTrail: this.uniqueTrail,
           timeseriesIds: this.pageItems.map((item) => {

@@ -23,7 +23,6 @@ import {
   TimeSeriesValue,
   Variable,
   VariableSummary,
-  TableRow,
 } from "./index";
 
 function sortDatasets(a: Dataset, b: Dataset) {
@@ -49,6 +48,17 @@ function sortDatasets(a: Dataset, b: Dataset) {
   }
 
   return 0;
+}
+
+export interface TimeSeriesUpdate {
+  variableKey: string;
+  seriesID: string;
+  uniqueTrail: string;
+  timeseries: TimeSeriesValue[];
+  isDateTime: boolean;
+  min: number;
+  max: number;
+  mean: number;
 }
 
 export const mutations = {
@@ -252,50 +262,41 @@ export const mutations = {
   updateFile(state: DatasetState, args: { url: string; file: any }) {
     Vue.set(state.files, args.url, args.file);
   },
+
   removeFile(state: DatasetState, url: string) {
     Vue.delete(state.files, url);
   },
+
   bulkUpdateTimeseries(
     state: DatasetState,
     args: {
       dataset: string;
-      map: Map<
-        string,
-        {
-          Timeseries: TimeSeriesValue[];
-          IsDateTime: boolean;
-          Min: number;
-          Max: number;
-          Mean: number;
-        }
-      >;
       uniqueTrail?: string;
+      updates: TimeSeriesUpdate[];
     }
   ) {
-    args.map.forEach((val, key) => {
+    args.updates.forEach((update) => {
       mutations.updateTimeseries(state, {
         dataset: args.dataset,
-        id: key + (args.uniqueTrail ?? ""),
-        timeseries: val.Timeseries,
-        isDateTime: val.IsDateTime,
-        min: val.Min,
-        max: val.Max,
-        mean: val.Mean,
+        uniqueTrail: args.uniqueTrail,
+        update: update,
       });
     });
   },
+
   updateTimeseries(
     state: DatasetState,
     args: {
       dataset: string;
-      id: string;
-      timeseries: TimeSeriesValue[];
-      isDateTime: boolean;
-      min: number;
-      max: number;
-      mean: number;
+      uniqueTrail?: string;
+      update: TimeSeriesUpdate;
     }
   ) {
+    const timeseriesKey =
+      args.update.variableKey +
+      (args.update.seriesID ?? "") +
+      (args.uniqueTrail ?? "");
+
     if (!state.timeseries[args.dataset]) {
       Vue.set(state.timeseries, args.dataset, {});
     }
@@ -307,8 +308,8 @@ export const mutations = {
     // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(
       state.timeseries[args.dataset].timeseriesData,
-      args.id,
-      Object.freeze(args.timeseries)
+      timeseriesKey,
+      Object.freeze(args.update.timeseries)
     );
 
     if (!state.timeseries[args.dataset].isDateTime) {
@@ -316,21 +317,21 @@ export const mutations = {
     }
     Vue.set(
       state.timeseries[args.dataset].isDateTime,
-      args.id,
-      args.isDateTime
+      timeseriesKey,
+      args.update.isDateTime
     );
 
     // Set the min/max/mean for each timeseries data
     if (!state.timeseries[args.dataset].info) {
       Vue.set(state.timeseries[args.dataset], "info", {});
     }
-    Vue.set(state.timeseries[args.dataset].info, args.id, {
-      min: args.min as number,
-      max: args.max as number,
-      mean: args.mean as number,
+    Vue.set(state.timeseries[args.dataset].info, timeseriesKey, {
+      min: args.update.min as number,
+      max: args.update.max as number,
+      mean: args.update.mean as number,
     });
 
-    const validTimeseries = args.timeseries.filter((t) => !_.isNil(t));
+    const validTimeseries = args.update.timeseries.filter((t) => !_.isNil(t));
     const minX = _.minBy(validTimeseries, (d) => d.time).time;
     const maxX = _.maxBy(validTimeseries, (d) => d.time).time;
     const minY = _.minBy(validTimeseries, (d) => d.value).value;

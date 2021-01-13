@@ -925,9 +925,9 @@ export const actions = {
     context: ResultsContext,
     args: {
       dataset: string;
+      variableKey: string;
       xColName: string;
       yColName: string;
-      timeseriesColName: string;
       solutionId: string;
       timeseriesIds: string[];
       uniqueTrail?: string;
@@ -949,7 +949,7 @@ export const actions = {
       console.warn("`timeseriesIds` argument is missing");
       return null;
     }
-    if (!args.timeseriesColName) {
+    if (!args.variableKey) {
       console.warn("`timeseriesColName` argument is missing");
       return null;
     }
@@ -972,7 +972,7 @@ export const actions = {
         `distil/timeseries-forecast/` +
           `${encodeURIComponent(args.dataset)}/` +
           `${encodeURIComponent(args.dataset)}/` +
-          `${encodeURIComponent(args.timeseriesColName)}/` +
+          `${encodeURIComponent(args.variableKey)}/` +
           `${encodeURIComponent(args.xColName)}/` +
           `${encodeURIComponent(args.yColName)}/` +
           `${encodeURIComponent(solution.resultId)}`,

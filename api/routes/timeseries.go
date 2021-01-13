@@ -16,61 +16,47 @@
 package routes
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil/api/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"goji.io/v3/pat"
-	"net/http"
 )
-
-// TimeseriesResult represents the result of a timeseries request.
-type TimeseriesResult struct {
-	Timeseries []*api.TimeseriesObservation `json:"timeseries"`
-	IsDateTime bool                         `json:"isDateTime"`
-	Min        api.NullableFloat64          `json:"min"`
-	Max        api.NullableFloat64          `json:"max"`
-	Mean       api.NullableFloat64          `json:"mean"`
-}
 
 // TimeseriesHandler returns timeseries data.
 func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		dataset := pat.Param(r, "dataset")
-		timeseriesColName := pat.Param(r, "timeseriesColName")
 		xColName := pat.Param(r, "xColName")
 		yColName := pat.Param(r, "yColName")
 		invert := pat.Param(r, "invert")
 		invertBool := parseBoolParam(invert)
 
 		// parse POST params
-		params, err := getPostParameters(r)
-		if err != nil {
-			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
-			return
-		}
-		t, ok := params["timeseriesUris"].([]interface{})
-		if !ok {
-			handleError(w, errors.New("Missing timeseriesUris from query"))
-			return
-		}
-		operation, ok := params["duplicateOperation"].(string)
-		if !ok {
-			operation = "add" //default
-		}
-		timeseriesURIs := []string{}
-		for _, v := range t {
-			s, ok := v.(string)
-			if !ok {
-				return
-			}
-			timeseriesURIs = append(timeseriesURIs, s)
-		}
-
-		// get variable names and ranges out of the params
-		filterParams, err := api.ParseFilterParamsFromJSON(params)
+		params, err := parsePostParms(r)
 		if err != nil {
 			handleError(w, err)
 			return
+		}
+
+		// validate the bucket operation
+		operation := api.TimeseriesOp(params.DuplicateOperation)
+		if operation == "" {
+			operation = model.TimeseriesDefaultOp //default
+		}
+
+		// get variable names and ranges out of the params
+		var filterParams *model.FilterParams
+		if params.FilterParams != nil {
+			filterParams, err = api.ParseFilterParamsFromJSONRaw(params.FilterParams)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 		}
 
 		// get storage client
@@ -93,11 +79,23 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 		}
 		storageName := ds.StorageName
 
-		// fetch timeseries
-		timeseries, err := storage.FetchTimeseries(dataset, storageName, timeseriesColName, xColName, yColName, timeseriesURIs, operation, filterParams, invertBool)
-		if err != nil {
-			handleError(w, err)
-			return
+		// CDB TODO: - need to optimize query for multiple series, mutliple variables
+		timeseries := []*model.TimeseriesData{}
+		for _, t := range params.TimeseriesIDs {
+			// fetch the timeseries variable and find the grouping col
+			variable, err := meta.FetchVariable(dataset, t.VarKey)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+
+			// fetch timeseries
+			timeseriesData, err := storage.FetchTimeseries(dataset, storageName, t.VarKey, variable.Grouping.GetIDCol(), xColName, yColName, []string{t.SeriesID}, operation, filterParams, invertBool)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			timeseries = append(timeseries, timeseriesData...)
 		}
 
 		err = handleJSON(w, timeseries)
@@ -106,4 +104,29 @@ func TimeseriesHandler(metaCtor api.MetadataStorageCtor, ctorStorage api.DataSto
 			return
 		}
 	}
+}
+
+type timeseriesParams struct {
+	TimeseriesIDs []struct {
+		SeriesID string `json:"seriesID"`
+		VarKey   string `json:"varKey"`
+	} `json:"timeseries"`
+	DuplicateOperation string          `json:"duplicateOperation"`
+	FilterParams       json.RawMessage `json:"filterParams"`
+}
+
+// parse post parameters into a structure
+func parsePostParms(r *http.Request) (*timeseriesParams, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to parse POST request")
+	}
+
+	var params timeseriesParams
+	if err = json.Unmarshal(body, &params); err != nil {
+		return nil, errors.Wrap(err, "unable to unmarshall post request params")
+	}
+
+	return &params, nil
 }

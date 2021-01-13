@@ -26,6 +26,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // TimeSeriesField defines behaviour for the timeseries field type.
@@ -374,26 +375,30 @@ func (s *Storage) parseTimeSet(rows pgx.Rows) (*map[float64]float64, *[]float64,
 }
 
 // GetTimeseriesOperations returns the supported operations to deal with duplicates in the timeseries
-func GetTimeseriesOperations(operation string) func(float64, float64, int64) float64 {
+func GetTimeseriesOperations(operation api.TimeseriesOp) func(float64, float64, int64) float64 {
 	switch operation {
-	case "min":
+	case api.TimeseriesMinOp:
 		return minDuplicates
-	case "max":
+	case api.TimeseriesMaxOp:
 		return maxDuplicates
-	case "mean":
+	case api.TimeseriesMeanOp:
 		return averageDuplicates
+	case api.TimeseriesAddOp:
+		return addDuplicates
 	default:
+		log.Warnf("unhandled timeseries op %s", operation)
 		return addDuplicates
 	}
 }
 
 // FetchTimeseries fetches a timeseries.
-func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI []string, duplicateOperation string, filterParams *api.FilterParams, invert bool) (*map[string]*api.TimeseriesData, error) {
+func (s *Storage) FetchTimeseries(dataset string, storageName string, variableKey string, seriesIDColName string, xColName string, yColName string, timeseriesURI []string,
+	duplicateOperation api.TimeseriesOp, filterParams *api.FilterParams, invert bool) ([]*api.TimeseriesData, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 
-	if timeseriesColName != "null" && timeseriesColName != "" {
+	if seriesIDColName != "null" && seriesIDColName != "" {
 		// build ANY ARRAY values
 		paramString := ""
 		if len(timeseriesURI) == 0 {
@@ -403,7 +408,7 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 			paramString += "'" + v + "',"
 		}
 		paramString = paramString[:len(paramString)-1] // remove end comma
-		wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", timeseriesColName, paramString))
+		wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", seriesIDColName, paramString))
 	}
 
 	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, invert)
@@ -416,7 +421,7 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 	query := fmt.Sprintf("SELECT ARRAY_AGG(filteredEvents.TimeStamps ORDER BY filteredEvents.TimeStamps), ARRAY_AGG(COALESCE(filteredEvents.Counts, 'NaN') ORDER BY filteredEvents.TimeStamps), filteredEvents.series_key FROM "+
 		"(SELECT \"%s\" as TimeStamps, \"%s\" as Counts, \"%s\" as series_key FROM %s %s ) filteredEvents "+
 		"GROUP BY filteredEvents.series_key",
-		xColName, yColName, timeseriesColName, storageName, where)
+		xColName, yColName, seriesIDColName, storageName, where)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
@@ -458,23 +463,25 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 			return nil, err
 		}
 	}
-	result := map[string]*api.TimeseriesData{}
-	for key, el := range response {
+	result := []*api.TimeseriesData{}
+	for seriesID, el := range response {
 		// Calculate Min/Max/Mean
 		var min, max, mean = getMinMaxMean(el)
-		result[key] = &api.TimeseriesData{
+		result = append(result, &api.TimeseriesData{
+			VarKey:     variableKey,
+			SeriesID:   seriesID,
 			Timeseries: el,
 			IsDateTime: dateTime,
 			Min:        min,
 			Max:        max,
 			Mean:       mean,
-		}
+		})
 	}
-	return &result, nil
+	return result, nil
 }
 
 // FetchTimeseriesForecast fetches a timeseries.
-func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURIs []string, resultURI string, filterParams *api.FilterParams) (*map[string]*api.TimeseriesData, error) {
+func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, varKey string, seriesIDColName string, xColName string, yColName string, timeseriesURIs []string, resultURI string, filterParams *api.FilterParams) ([]*api.TimeseriesData, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -483,7 +490,7 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 		paramString += "'" + v + "',"
 	}
 	paramString = paramString[:len(paramString)-1]
-	wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", timeseriesColName, paramString))
+	wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", seriesIDColName, paramString))
 
 	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, false)
 
@@ -500,8 +507,8 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		%s
 		GROUP BY %s`,
-		xColName, timeseriesColName, storageName, s.getResultTable(storageName),
-		model.D3MIndexFieldName, where, timeseriesColName)
+		xColName, seriesIDColName, storageName, s.getResultTable(storageName),
+		model.D3MIndexFieldName, where, seriesIDColName)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
@@ -532,20 +539,22 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 			return nil, err
 		}
 	}
-	result := map[string]*api.TimeseriesData{}
+	result := []*api.TimeseriesData{}
 
-	for key, el := range response {
+	for seriesID, el := range response {
 		// Calculate Min/Max/Mean
 		var min, max, mean = getMinMaxMean(el)
-		result[key] = &api.TimeseriesData{
+		result = append(result, &api.TimeseriesData{
+			VarKey:     varKey,
+			SeriesID:   seriesID,
 			Timeseries: el,
 			IsDateTime: dateTime,
 			Min:        min,
 			Max:        max,
 			Mean:       mean,
-		}
+		})
 	}
-	return &result, nil
+	return result, nil
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
