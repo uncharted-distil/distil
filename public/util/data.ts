@@ -835,6 +835,9 @@ export function clearAreaOfInterest() {
   // result view store
   resultsMutations.clearAreaOfInterestInner(store);
   resultsMutations.clearAreaOfInterestOuter(store);
+  // prediction view store
+  predictionsMutations.clearAreaOfInterestInner(store);
+  predictionsMutations.clearAreaOfInterestOuter(store);
 }
 export function updateTableDataItems(
   data: TableData,

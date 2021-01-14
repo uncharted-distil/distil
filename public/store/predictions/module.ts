@@ -90,6 +90,8 @@ export const mutations = {
   //AreaofInterest for geoplot
   setAreaOfInterestInner: commit(moduleMutations.setAreaOfInterestInner),
   setAreaOfInterestOuter: commit(moduleMutations.setAreaOfInterestOuter),
+  clearAreaOfInterestInner: commit(moduleMutations.clearAreaOfInterestInner),
+  clearAreaOfInterestOuter: commit(moduleMutations.clearAreaOfInterestOuter),
   // training
   clearTrainingSummaries: commit(moduleMutations.clearTrainingSummaries),
   updateTrainingSummary: commit(moduleMutations.updateTrainingSummary),

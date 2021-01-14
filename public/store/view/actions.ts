@@ -656,7 +656,6 @@ export const actions = {
     const dataset = routeGetters.getRouteDataset(store);
     const produceRequestId = routeGetters.getRouteProduceRequestId(store);
     const highlight = routeGetters.getDecodedHighlight(store);
-    const dataMode = context.getters.getDataMode;
     const size = routeGetters.getRouteDataSize(store);
 
     return Promise.all([
