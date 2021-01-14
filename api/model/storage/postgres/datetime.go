@@ -86,7 +86,7 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert, api.MaxNumBuckets)
+		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), invert, api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +97,7 @@ func (f *DateTimeField) FetchSummaryData(resultURI string, filterParams *api.Fil
 			}
 		}
 	} else {
-		baseline, err = f.fetchHistogramByResult(resultURI, nil, extrema, api.MaxNumBuckets)
+		baseline, err = f.fetchHistogramByResult(resultURI, api.GetBaselineFilter(filterParams), extrema, api.MaxNumBuckets)
 		if err != nil {
 			return nil, err
 		}

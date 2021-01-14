@@ -555,7 +555,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert, mode)
+		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), invert, mode)
 		if err != nil {
 			return nil, err
 		}
@@ -566,7 +566,7 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 			}
 		}
 	} else {
-		baseline, err = f.fetchHistogramByResult(resultURI, nil, mode)
+		baseline, err = f.fetchHistogramByResult(resultURI, api.GetBaselineFilter(filterParams), mode)
 		if err != nil {
 			return nil, err
 		}
