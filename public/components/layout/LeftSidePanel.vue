@@ -1,5 +1,5 @@
 <template>
-  <aside class="left-side-panel-container">
+  <aside class="left-side-panel-container d-flex flex-column">
     <header class="panel-header">
       <h5>{{ panelTitle }}</h5>
       <!-- <close-button @close="onClose" /> -->
