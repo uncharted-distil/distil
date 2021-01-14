@@ -6,6 +6,9 @@ export interface PredictionState {
   // table data
   includedPredictionTableData: TableData;
   excludedPredictionTableData: TableData;
+  // areaOfInterest
+  areaOfInterestInner: TableData;
+  areaOfInterestOuter: TableData;
   // training / target
   trainingSummaries: Dictionary<Dictionary<VariableSummary>>;
   targetSummary: VariableSummary;
@@ -30,6 +33,9 @@ export const state: PredictionState = {
   // forecasts
   timeseries: {},
   forecasts: {},
+  // areaOfInterest
+  areaOfInterestInner: null,
+  areaOfInterestOuter: null,
   fittedSolutionId: null,
   produceRequestId: null,
 };

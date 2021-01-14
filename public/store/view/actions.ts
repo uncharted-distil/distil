@@ -651,6 +651,31 @@ export const actions = {
       }),
     ]);
   },
+  async updatePredictionAreaOfInterest(context: ViewContext, filter: Filter) {
+    // fetch new state
+    const dataset = routeGetters.getRouteDataset(store);
+    const produceRequestId = routeGetters.getRouteProduceRequestId(store);
+    const highlight = routeGetters.getDecodedHighlight(store);
+    const dataMode = context.getters.getDataMode;
+    const size = routeGetters.getRouteDataSize(store);
+
+    return Promise.all([
+      predictionActions.fetchAreaOfInterestInner(store, {
+        dataset: dataset,
+        produceRequestId,
+        highlight: highlight,
+        size,
+        filter: filter,
+      }),
+      predictionActions.fetchAreaOfInterestOuter(store, {
+        dataset: dataset,
+        produceRequestId,
+        highlight: highlight,
+        size,
+        filter: filter,
+      }),
+    ]);
+  },
   updateResultsSummaries(context: ViewContext) {
     const dataset = routeGetters.getRouteDataset(store);
     const trainingVariables = requestGetters.getActiveSolutionTrainingVariables(
