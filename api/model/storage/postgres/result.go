@@ -215,19 +215,6 @@ func (s *Storage) PersistExplainedResult(dataset string, storageName string, res
 
 // FetchResultDataset extracts the complete results and base table data.
 func (s *Storage) FetchResultDataset(dataset string, storageName string, predictionName string, features []string, resultURI string) ([][]string, error) {
-
-	// get data variables (to exclude metadata variables)
-	vars, err := s.metadata.FetchVariables(dataset, true, false, false)
-	if err != nil {
-		return nil, err
-	}
-	filteredVars := []*model.Variable{}
-	// only include data with distilrole data and index
-	for _, v := range vars {
-		if model.IsTA2Field(v.DistilRole, v.SelectedRole) {
-			filteredVars = append(filteredVars, v)
-		}
-	}
 	fields := []string{}
 	for _, v := range features {
 		fields = append(fields, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v, v))

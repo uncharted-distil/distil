@@ -25,6 +25,7 @@ import (
 	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
+	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
@@ -124,6 +125,7 @@ func CloningResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 			handleError(w, errors.Wrap(err, "unable to unescape dataset name"))
 			return
 		}
+		newDatasetID := model.NormalizeDatasetID(newDatasetName)
 		predictionRequestID, err := url.PathUnescape(pat.Param(r, "produce-request-id"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape produce request id"))
@@ -156,9 +158,14 @@ func CloningResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 			handleError(w, err)
 			return
 		}
-		features := []string{}
+		targetName := ""
+		features := []string{model.D3MIndexFieldName}
 		for _, f := range request.Features {
-			features = append(features, f.FeatureName)
+			if f.FeatureType != model.FeatureTypeTarget {
+				features = append(features, f.FeatureName)
+			} else {
+				targetName = f.FeatureName
+			}
 		}
 
 		// get needed request info
@@ -173,14 +180,27 @@ func CloningResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 			return
 		}
 
-		// extract the data from the database (result + base)
-		data, err := dataStorage.FetchResultDataset(prediction.Dataset, predictionDS.StorageName, newDatasetName, features, pred.ResultURI)
+		// read the source metadata for typing information
+		req, err := solutionStorage.FetchRequestByFittedSolutionID(prediction.FittedSolutionID)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		sourceDS, err := metaStorage.FetchDataset(req.Dataset, true, true, true)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		// read the prediction DS metadata from disk for the new dataset
+		// extract the data from the database (result + base)
+		data, err := dataStorage.FetchResultDataset(prediction.Dataset, predictionDS.StorageName, targetName, features, pred.ResultURI)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// read the source DS metadata from disk for the new dataset
+
 		predictionDSDatasetPath := env.ResolvePath(metadata.Augmented, path.Join(predictionDS.Folder, compute.D3MDataSchema))
 		metaDisk, err := metadata.LoadMetadataFromOriginalSchema(predictionDSDatasetPath, false)
 		if err != nil {
@@ -188,10 +208,33 @@ func CloningResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 			return
 		}
 
+		// map variables to get type info from source dataset and index from data
+		varsSource := map[string]*model.Variable{}
+		for _, v := range sourceDS.Variables {
+			varsSource[v.Key] = v
+		}
+		varsNewDataset := make([]*model.Variable, len(metaDisk.GetMainDataResource().Variables))
+		for i, v := range data[0] {
+			variable := varsSource[v]
+			variable.Index = i
+			varsNewDataset[i] = variable
+		}
+		metaDisk.GetMainDataResource().Variables = varsNewDataset
+
 		// store the dataset to disk
 		outputPath := env.ResolvePath(metadata.Augmented, newDatasetName)
 		writer := serialization.GetStorage(metaDisk.GetMainDataResource().ResPath)
 
+		newStorageName, err := dataStorage.GetStorageName(newDatasetName)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		metaDisk.ID = newDatasetID
+		metaDisk.Name = newDatasetName
+		metaDisk.StorageName = newStorageName
+		metaDisk.DatasetFolder = newDatasetName
 		rawDS := &api.RawDataset{
 			ID:              metaDisk.ID,
 			Name:            metaDisk.Name,
