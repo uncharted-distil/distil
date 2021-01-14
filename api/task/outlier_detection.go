@@ -42,14 +42,14 @@ func OutlierDetection(dataset *api.Dataset, variable string) (bool, []*OutlierPo
 	// needed for full set clustering
 	var imageVar *model.Variable
 	for _, v := range features {
-		if v.StorageName == variable {
+		if v.Key == variable {
 			imageVar = v
 		}
 	}
 
 	var step *description.FullySpecifiedPipeline
 	var err error
-	group := getGroup(imageVar.StorageName, features)
+	group := getGroup(imageVar.Key, features)
 	if model.IsImage(imageVar.Type) {
 		step, err = description.CreateImageOutlierDetectionPipeline("image_outlier_detection", "normal image outlier detection", []*model.Variable{imageVar})
 	} else if group != nil && model.IsMultiBandImage(group.GetType()) {
@@ -80,7 +80,7 @@ func OutlierDetection(dataset *api.Dataset, variable string) (bool, []*OutlierPo
 		// tabular/general outlier detection pipeline
 		selectedFeatures := make([]string, len(features))
 		for i, f := range features {
-			selectedFeatures[i] = f.StorageName
+			selectedFeatures[i] = f.Key
 		}
 		datasetDescription := &description.UserDatasetDescription{
 			AllFeatures:      features,
