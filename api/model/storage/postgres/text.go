@@ -61,22 +61,22 @@ func (f *TextField) FetchSummaryData(resultURI string, filterParams *api.FilterP
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert)
+		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), invert)
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogram(filterParams, invert)
 			if err != nil {
 				return nil, err
 			}
 		}
 	} else {
-		baseline, err = f.fetchHistogramByResult(resultURI, nil)
+		baseline, err = f.fetchHistogramByResult(resultURI, api.GetBaselineFilter(filterParams))
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams)
 			if err != nil {
 				return nil, err
@@ -229,7 +229,7 @@ func (f *TextField) FetchPredictedSummaryData(resultURI string, datasetResult st
 	if err != nil {
 		return nil, err
 	}
-	if !filterParams.Empty() {
+	if !filterParams.Empty(true) {
 		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema)
 		if err != nil {
 			return nil, err

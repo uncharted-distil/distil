@@ -171,7 +171,38 @@ export function getSelectedRows(): Row[] {
   });
   return rows;
 }
-
+// bulkRowSelectionUpdate takes an array of d3mIndices to update (this will remove and add depending on if the d3mIndex already exists within the selection)
+export function bulkRowSelectionUpdate(
+  router: VueRouter,
+  context: string,
+  selection: RowSelection,
+  d3mIndices: number[]
+) {
+  if (!selection || selection.context !== context) {
+    selection = {
+      context: context,
+      d3mIndices: [],
+    };
+  }
+  const rowSelectionMap = new Map(
+    selection.d3mIndices.map((i) => {
+      return [i, i];
+    })
+  );
+  d3mIndices.forEach((item) => {
+    if (rowSelectionMap.has(item)) {
+      rowSelectionMap.delete(item);
+      return;
+    }
+    rowSelectionMap.set(item, item);
+  });
+  selection.d3mIndices = Array.from(rowSelectionMap.keys());
+  const entry = overlayRouteEntry(routeGetters.getRoute(store), {
+    row: encodeRowSelection(selection),
+  });
+  router.push(entry).catch((err) => console.warn(err));
+  dataActions.updateRowSelectionData(store);
+}
 export function addRowSelection(
   router: VueRouter,
   context: string,

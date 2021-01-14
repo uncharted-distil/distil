@@ -91,13 +91,13 @@ export const mutations = {
     const oldVariables = new Map();
 
     state.variables.forEach((variable) => {
-      const { datasetName, colName } = variable;
-      oldVariables.set(`${datasetName}:${colName}`, variable);
+      const { datasetName, key } = variable;
+      oldVariables.set(`${datasetName}:${key}`, variable);
     });
 
     const newVariables = variables.map((variable) => {
-      const { datasetName, colName } = variable;
-      const variableKey = `${datasetName}:${colName}`;
+      const { datasetName, key } = variable;
+      const variableKey = `${datasetName}:${key}`;
       const oldVariable = oldVariables.get(variableKey);
 
       if (oldVariable) {
@@ -128,7 +128,7 @@ export const mutations = {
     // update dataset variables
     const dataset = state.datasets.find((d) => d.name === args.dataset);
     if (dataset) {
-      const variable = dataset.variables.find((v) => v.colName === args.field);
+      const variable = dataset.variables.find((v) => v.key === args.field);
       if (variable) {
         variable.colType = args.type;
       }
@@ -136,7 +136,7 @@ export const mutations = {
 
     // update variables
     const variable = state.variables.find((v) => {
-      return v.colName === args.field && v.datasetName === args.dataset;
+      return v.key === args.field && v.datasetName === args.dataset;
     });
 
     if (variable) {
@@ -171,7 +171,7 @@ export const mutations = {
   },
   reviewVariableType(state: DatasetState, update) {
     const index = _.findIndex(state.variables, (v) => {
-      return v.colName === update.field;
+      return v.key === update.field;
     });
     state.variables[index].isColTypeReviewed = update.isColTypeReviewed;
   },
@@ -213,8 +213,8 @@ export const mutations = {
     if (!_.isEmpty(rankings)) {
       state.variables.forEach((v) => {
         let rank = 0;
-        if (rankings[v.colName]) {
-          rank = rankings[v.colName];
+        if (rankings[v.key]) {
+          rank = rankings[v.key];
         }
         Vue.set(v, "ranking", rank);
       });

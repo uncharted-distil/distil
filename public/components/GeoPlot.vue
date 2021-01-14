@@ -319,7 +319,7 @@ export default Vue.extend({
         .filter((v) => v.datasetName === this.dataset);
       return variables
         .map((variable) => ({
-          variable: variable.colName,
+          variable: variable.key,
           order: _.isNumber(variable.ranking)
             ? variable.ranking
             : variable.importance,
@@ -387,14 +387,14 @@ export default Vue.extend({
         } else if (match.colType === REAL_VECTOR_TYPE) {
           fields.push({
             type: SINGLE_FIELD,
-            field: match.colName,
+            field: match.key,
           });
         } else {
           if (match.colType === LONGITUDE_TYPE) {
-            lng = match.colName;
+            lng = match.key;
           }
           if (match.colType === LATITUDE_TYPE) {
-            lat = match.colName;
+            lat = match.key;
           }
         }
 
@@ -1143,6 +1143,9 @@ export default Vue.extend({
         return "#999999";
       }
       if (this.isColoringByConfidence) {
+        if (item.confidence === undefined) {
+          return undefined;
+        }
         return this.colorScale(item.confidence?.value);
       }
       if (item[this.targetField] && item[this.predictedField]) {

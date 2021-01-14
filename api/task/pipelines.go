@@ -123,10 +123,10 @@ func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest
 			// check if needs to be featurized
 			if res.ResType == "timeseries" {
 				// create the new resource to hold the featured output
-				indexName := fmt.Sprintf("%s%s", prefix, v.StorageName)
+				indexName := fmt.Sprintf("%s%s", prefix, v.Key)
 
 				// add the feature variable
-				v := model.NewVariable(len(mainDR.Variables), indexName, "group", v.StorageName, v.StorageName, model.CategoricalType,
+				v := model.NewVariable(len(mainDR.Variables), indexName, "group", v.Key, v.Key, model.CategoricalType,
 					model.CategoricalType, "", []string{"attribute"}, model.VarDistilRoleMetadata, nil, mainDR.Variables, false)
 
 				// create the required pipeline
@@ -161,7 +161,7 @@ func getClusterVariables(meta *model.Metadata, prefix string) ([]*FeatureRequest
 func getD3MIndexField(dr *model.DataResource) int {
 	d3mIndexField := -1
 	for _, v := range dr.Variables {
-		if v.StorageName == model.D3MIndexName {
+		if v.Key == model.D3MIndexName {
 			d3mIndexField = v.Index
 		}
 	}
@@ -196,10 +196,10 @@ func getTimeValueCols(dr *model.DataResource) (*timeValueCols, bool) {
 		for _, v := range dr.Variables {
 			for _, r := range v.Role {
 				if r == "timeIndicator" && timeCol == "" {
-					timeCol = v.StorageName
+					timeCol = v.Key
 				}
 				if r == "attribute" && valueCol == "" {
-					valueCol = v.StorageName
+					valueCol = v.Key
 				}
 			}
 		}

@@ -338,7 +338,7 @@ func (d *Parquet) writeVariable(variable *model.Variable, extended bool) interfa
 		output[model.VarSelectedRoleField] = variable.SelectedRole
 		output[model.VarDistilRole] = variable.DistilRole
 		output[model.VarOriginalVariableField] = variable.OriginalVariable
-		output[model.VarStorageNameField] = variable.StorageName
+		output[model.VarKeyField] = variable.Key
 		output[model.VarDisplayVariableField] = variable.DisplayName
 		output[model.VarImportanceField] = variable.Importance
 		output[model.VarSuggestedTypesField] = variable.SuggestedTypes

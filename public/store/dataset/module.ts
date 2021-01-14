@@ -99,6 +99,7 @@ export const getters = {
 export const actions = {
   // dataset
   fetchDataset: dispatch(moduleActions.fetchDataset),
+  deleteDataset: dispatch(moduleActions.deleteDataset),
   searchDatasets: dispatch(moduleActions.searchDatasets),
   geocodeVariable: dispatch(moduleActions.geocodeVariable),
   importDataset: dispatch(moduleActions.importDataset),
@@ -171,6 +172,7 @@ export const actions = {
   addField: dispatch(moduleActions.addField),
   updateDataset: dispatch(moduleActions.updateDataset),
   extractDataset: dispatch(moduleActions.extractDataset),
+  saveDataset: dispatch(moduleActions.saveDataset),
 };
 
 // Typed mutations

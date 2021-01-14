@@ -147,7 +147,7 @@ func UpdateExtremas(dataset string, metaStorage api.MetadataStorage, dataStorage
 	}
 
 	for _, v := range d.Variables {
-		err = api.UpdateExtremas(dataset, v.StorageName, metaStorage, dataStorage)
+		err = api.UpdateExtremas(dataset, v.Key, metaStorage, dataStorage)
 		if err != nil {
 			return err
 		}

@@ -555,22 +555,22 @@ func (f *TimeSeriesField) FetchSummaryData(resultURI string, filterParams *api.F
 	}
 
 	if resultURI == "" {
-		baseline, err = f.fetchHistogram(nil, invert, mode)
+		baseline, err = f.fetchHistogram(api.GetBaselineFilter(filterParams), invert, mode)
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogram(filterParams, invert, mode)
 			if err != nil {
 				return nil, err
 			}
 		}
 	} else {
-		baseline, err = f.fetchHistogramByResult(resultURI, nil, mode)
+		baseline, err = f.fetchHistogramByResult(resultURI, api.GetBaselineFilter(filterParams), mode)
 		if err != nil {
 			return nil, err
 		}
-		if !filterParams.Empty() {
+		if !filterParams.Empty(true) {
 			filtered, err = f.fetchHistogramByResult(resultURI, filterParams, mode)
 			if err != nil {
 				return nil, err
@@ -797,7 +797,7 @@ func (f *TimeSeriesField) FetchPredictedSummaryData(resultURI string, datasetRes
 	if err != nil {
 		return nil, err
 	}
-	if !filterParams.Empty() {
+	if !filterParams.Empty(true) {
 		filtered, err = f.fetchPredictedSummaryData(resultURI, datasetResult, filterParams, extrema, mode)
 		if err != nil {
 			return nil, err

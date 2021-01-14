@@ -75,6 +75,7 @@ export interface Variable {
   datasetName: string;
   colDisplayName: string;
   colName: string;
+  key: string;
   colType: string;
   importance: number;
   ranking?: number;
@@ -105,6 +106,8 @@ export interface Dataset {
   source: string;
   joinSuggestion?: JoinSuggestion[];
   joinScore?: number;
+  storageName?: string;
+  clone?: boolean;
   type: string;
 }
 

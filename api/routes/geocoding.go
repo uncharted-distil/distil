@@ -41,7 +41,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
 		// get variable name
-		varName := pat.Param(r, "variable")
+		varKey := pat.Param(r, "variable")
 
 		// get storage clients
 		metaStorage, err := metaCtor()
@@ -62,8 +62,8 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 		}
 		storageName := ds.StorageName
 
-		latVarName := fmt.Sprintf("_lat_%s", varName)
-		lonVarName := fmt.Sprintf("_lon_%s", varName)
+		latVarName := fmt.Sprintf("_lat_%s", varKey)
+		lonVarName := fmt.Sprintf("_lon_%s", varKey)
 
 		// check if the lat and lon variables exist
 		latVarExist, err := metaStorage.DoesVariableExist(dataset, latVarName)
@@ -114,7 +114,7 @@ func GeocodingHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 		// get the variable to geocode
 		var variable *model.Variable
 		for _, v := range datasetMeta.Variables {
-			if v.StorageName == varName {
+			if v.Key == varKey {
 				variable = v
 			}
 		}

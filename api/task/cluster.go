@@ -110,14 +110,14 @@ func Cluster(dataset *api.Dataset, variable string, useKMeans bool) (bool, []*Cl
 	// needed for full set clustering
 	var clusteringVar *model.Variable
 	for _, v := range features {
-		if v.StorageName == variable {
+		if v.Key == variable {
 			clusteringVar = v
 		}
 	}
 
 	var step *description.FullySpecifiedPipeline
 	var err error
-	clusterGroup := getClusterGroup(clusteringVar.StorageName, features)
+	clusterGroup := getClusterGroup(clusteringVar.Key, features)
 	if model.IsImage(clusteringVar.Type) {
 		step, err = description.CreateImageClusteringPipeline("image_cluster", "basic image clustering", []*model.Variable{clusteringVar}, useKMeans)
 	} else if clusterGroup != nil && model.IsMultiBandImage(clusterGroup.GetType()) {
@@ -152,7 +152,7 @@ func Cluster(dataset *api.Dataset, variable string, useKMeans bool) (bool, []*Cl
 		// general clustering pipeline
 		selectedFeatures := make([]string, len(features))
 		for i, f := range features {
-			selectedFeatures[i] = f.StorageName
+			selectedFeatures[i] = f.Key
 		}
 		datasetDescription := &description.UserDatasetDescription{
 			AllFeatures:      features,

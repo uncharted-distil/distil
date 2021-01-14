@@ -58,9 +58,33 @@ type FilterParams struct {
 	DataMode  DataMode        `json:"dataMode"`
 }
 
+// GetBaselineFilter returns a filter params that only has the baseline filters.
+func GetBaselineFilter(filterParam *FilterParams) *FilterParams {
+	if filterParam == nil {
+		return nil
+	}
+
+	// highlights should not be applied to the baseline
+	clone := &FilterParams{}
+	for _, filter := range filterParam.Filters {
+		if filter.IsBaselineFilter {
+			clone.Filters = append(clone.Filters, filter)
+		}
+	}
+	clone.Variables = append(clone.Variables, filterParam.Variables...)
+	clone.Size = filterParam.Size
+	clone.DataMode = filterParam.DataMode
+	return clone
+}
+
 // Empty returns if the filter set is empty.
-func (f *FilterParams) Empty() bool {
-	return f.Filters == nil && f.Highlight == nil
+func (f *FilterParams) Empty(ignoreBaselineFilters bool) bool {
+	for _, filter := range f.Filters {
+		if !filter.IsBaselineFilter || !ignoreBaselineFilters {
+			return false
+		}
+	}
+	return f.Highlight == nil
 }
 
 // Clone returns a deep copy of the filter params.
@@ -173,7 +197,7 @@ func GetFilterVariables(filterVariables []string, variables []*model.Variable) [
 
 	variableLookup := make(map[string]*model.Variable)
 	for _, v := range variables {
-		variableLookup[v.StorageName] = v
+		variableLookup[v.Key] = v
 	}
 
 	filtered := make([]*model.Variable, 0)

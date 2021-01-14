@@ -117,11 +117,11 @@ func createVarMap(vars []*model.Variable, useDisplayName bool, keepOnlyDataVars 
 		if !model.IsTA2Field(v.DistilRole, v.SelectedRole) && keepOnlyDataVars {
 			continue
 		}
-		name := v.StorageName
+		key := v.Key
 		if useDisplayName {
-			name = v.DisplayName
+			key = v.DisplayName
 		}
-		varsMap[name] = v
+		varsMap[key] = v
 	}
 	return varsMap
 }
@@ -144,7 +144,7 @@ func createMergedVariables(varNames []string, leftVarsMap map[string]*model.Vari
 				if v.OriginalType != "" {
 					v.Type = v.OriginalType
 				}
-				v.StorageName = v.DisplayName
+				v.Key = v.DisplayName
 				v.OriginalVariable = v.DisplayName
 				v.HeaderName = v.DisplayName
 			}
@@ -227,7 +227,7 @@ func createFilteredData(csvFile string, variables []*model.Variable, lineCount i
 	for _, variable := range variables {
 		data.Columns = append(data.Columns, &apiModel.Column{
 			Label: variable.DisplayName,
-			Key:   variable.StorageName,
+			Key:   variable.Key,
 			Type:  variable.Type,
 		})
 	}

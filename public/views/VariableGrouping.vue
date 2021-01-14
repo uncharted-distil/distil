@@ -322,10 +322,10 @@ export default Vue.extend({
 
       const suggestions = this.variables
         .filter((v) => xFilterFunction(v.colType))
-        .filter((v) => !this.isIDCol(v.colName))
-        .filter((v) => !this.isYCol(v.colName))
+        .filter((v) => !this.isIDCol(v.key))
+        .filter((v) => !this.isYCol(v.key))
         .map((v) => {
-          return { value: v.colName, text: v.colDisplayName };
+          return { value: v.key, text: v.colDisplayName };
         });
       return [].concat([def], suggestions);
     },
@@ -352,10 +352,10 @@ export default Vue.extend({
 
       const suggestions = this.variables
         .filter((v) => yFilterFunction(v.colType))
-        .filter((v) => !this.isIDCol(v.colName))
-        .filter((v) => !this.isXCol(v.colName))
+        .filter((v) => !this.isIDCol(v.key))
+        .filter((v) => !this.isXCol(v.key))
         .map((v) => {
-          return { value: v.colName, text: v.colDisplayName };
+          return { value: v.key, text: v.colDisplayName };
         });
       return [].concat(def, suggestions);
     },
@@ -426,9 +426,9 @@ export default Vue.extend({
       };
       const suggestions = this.variables
         .filter((v) => ID_COL_TYPES[v.colType])
-        .filter((v) => v.colName === idCol || !this.isIDCol(v.colName))
+        .filter((v) => v.key === idCol || !this.isIDCol(v.key))
         .map((v) => {
-          return { value: v.colName, text: v.colDisplayName };
+          return { value: v.key, text: v.colDisplayName };
         });
 
       if (suggestions.length > 0) {

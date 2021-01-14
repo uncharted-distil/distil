@@ -10,7 +10,7 @@
       :per-page="perPage"
       :total-rows="itemCount"
       sticky-header="100%"
-      class="distil-table mb-1"
+      class="distil-table mb-1 noselect"
       @row-clicked="onRowClick"
     >
       <template
@@ -127,6 +127,7 @@ import {
   removeRowSelection,
   isRowSelected,
   updateTableRowSelection,
+  bulkRowSelectionUpdate,
 } from "../util/row";
 import {
   getTimeseriesGroupingsFromFields,
@@ -170,9 +171,9 @@ export default Vue.extend({
       perPage: 100,
       uniqueTrail: "selected-table",
       initialized: false,
+      shiftClickInfo: { first: null, second: null },
     };
   },
-
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
@@ -306,7 +307,12 @@ export default Vue.extend({
       }
     },
   },
-
+  destroyed() {
+    window.removeEventListener("keyup", this.shiftRelease);
+  },
+  mounted() {
+    window.addEventListener("keyup", this.shiftRelease);
+  },
   methods: {
     fetchTimeSeries() {
       if (!this.isTimeseries) {
@@ -336,12 +342,24 @@ export default Vue.extend({
       // fetch new data
       this.fetchTimeSeries();
     },
+    selectAll() {
+      bulkRowSelectionUpdate(
+        this.$router,
+        this.instanceName,
+        this.rowSelection,
+        this.pageItems.map((pi) => pi.d3mIndex)
+      );
+    },
     timeseriesInfo(id: string): Extrema {
       const timeseries = datasetGetters.getTimeseries(this.$store);
       return timeseries?.[this.dataset]?.info?.[id];
     },
 
-    onRowClick(row: TableRow) {
+    onRowClick(row: TableRow, idx: number, event) {
+      if (event.shiftKey) {
+        this.onRowShiftClick(row);
+        return;
+      }
       if (!isRowSelected(this.rowSelection, row[D3M_INDEX_FIELD])) {
         appActions.logUserEvent(this.$store, {
           feature: Feature.CHANGE_SELECTION,
@@ -372,7 +390,43 @@ export default Vue.extend({
         );
       }
     },
-
+    onRowShiftClick(data: TableRow) {
+      if (this.shiftClickInfo.first !== null) {
+        this.shiftClickInfo.second = this.items.findIndex(
+          (x) => x.d3mIndex === data.d3mIndex
+        );
+        this.onShiftSelect();
+        return;
+      }
+      this.shiftClickInfo.first = this.items.findIndex(
+        (x) => x.d3mIndex === data.d3mIndex
+      );
+    },
+    onShiftSelect() {
+      const start = Math.min(
+        this.shiftClickInfo.second,
+        this.shiftClickInfo.first
+      );
+      const end =
+        Math.max(this.shiftClickInfo.second, this.shiftClickInfo.first) + 1; // +1 deals with slicing being exclusive
+      const subSet = this.items.slice(start, end).map((item) => item.d3mIndex);
+      this.resetShiftClickInfo();
+      bulkRowSelectionUpdate(
+        this.$router,
+        this.instanceName,
+        this.rowSelection,
+        subSet
+      );
+    },
+    shiftRelease(event) {
+      if (event.key === "Shift") {
+        this.resetShiftClickInfo();
+      }
+    },
+    resetShiftClickInfo() {
+      this.shiftClickInfo.first = null;
+      this.shiftClickInfo.second = null;
+    },
     cellSlot(key: string): string {
       return formatSlot(key, "cell");
     },
@@ -402,7 +456,15 @@ table tr {
   border-left: 4px solid #ff0067;
   background-color: rgba(255, 0, 103, 0.4);
 }
-
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Old versions of Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+}
 /* 
   This keep the pagination from being squished by the table. 
   The double _.distil-table-container is to increase 

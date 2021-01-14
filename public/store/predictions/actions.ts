@@ -70,28 +70,28 @@ export const actions = {
     const routeKey = minimumRouteKey();
 
     args.training.forEach((variable) => {
-      const key = variable.colName;
+      const key = variable.key;
       const label = variable.colDisplayName;
       const description = variable.colDescription;
       const existingVariableSummary =
-        summariesByVariable?.[variable.colName]?.[routeKey];
+        summariesByVariable?.[variable.key]?.[routeKey];
 
       if (existingVariableSummary) {
         promises.push(existingVariableSummary);
       } else {
-        if (summariesByVariable[variable.colName]) {
+        if (summariesByVariable[variable.key]) {
           // if we have any saved state for that variable
           // use that as placeholder due to vue lifecycle
           const tempVariableSummaryKey = Object.keys(
-            summariesByVariable[variable.colName]
+            summariesByVariable[variable.key]
           )[0];
           promises.push(
-            summariesByVariable[variable.colName][tempVariableSummaryKey]
+            summariesByVariable[variable.key][tempVariableSummaryKey]
           );
         } else {
           // add a loading placeholder if nothing exists for that variable
           createPendingSummary(
-            variable.colName,
+            variable.key,
             variable.colDisplayName,
             variable.colDescription,
             args.dataset
@@ -105,8 +105,8 @@ export const actions = {
             variable: variable,
             resultID: resultId,
             highlight: args.highlight,
-            varMode: args.varModes.has(variable.colName)
-              ? args.varModes.get(variable.colName)
+            varMode: args.varModes.has(variable.key)
+              ? args.varModes.get(variable.key)
               : SummaryMode.Default,
           })
         );
@@ -150,18 +150,18 @@ export const actions = {
     filterParams = addHighlightToFilterParams(filterParams, args.highlight);
     try {
       const response = await axios.post(
-        `/distil/training-summary/${args.dataset}/${args.variable.colName}/${args.resultID}/${args.varMode}`,
+        `/distil/training-summary/${args.dataset}/${args.variable.key}/${args.resultID}/${args.varMode}`,
         filterParams
       );
       const summary = response.data.summary;
-      await fetchSummaryExemplars(args.dataset, args.variable.colName, summary);
+      await fetchSummaryExemplars(args.dataset, args.variable.key, summary);
       mutations.updateTrainingSummary(context, summary);
     } catch (error) {
       console.error(error);
       mutations.updateTrainingSummary(
         context,
         createErrorSummary(
-          args.variable.colName,
+          args.variable.key,
           args.variable.colDisplayName,
           args.dataset,
           error

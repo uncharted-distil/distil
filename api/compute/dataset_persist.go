@@ -294,10 +294,13 @@ func SplitTimeSeries(timeseries []*api.TimeseriesObservation, trainPercentage fl
 
 // SampleData shuffles a dataset's rows and takes a subsample, returning
 // the raw byte data of the sampled dataset.
-func SampleData(rawData [][]string, maxRows int, stratify bool) [][]string {
+func SampleData(rawData [][]string, maxRows int) [][]string {
 
-	sampler := createSampler(stratify, -1, -1)
-	return sampler.sample(rawData, maxRows)
+	sampler := createSampler(false, -1, -1)
+	sampled := sampler.sample(rawData, maxRows)
+	complete := [][]string{rawData[0]}
+	complete = append(complete, sampled...)
+	return complete
 }
 
 // SampleDataset shuffles a dataset's rows and stores a subsample, the schema doc URI.
@@ -374,7 +377,7 @@ func CreateBatches(schemaFile string, maxBatchSize int) ([]string, error) {
 	for _, v := range meta.GetMainDataResource().Variables {
 		if v.DistilRole == model.VarDistilRoleGrouping {
 			groupColIndex = v.Index
-		} else if v.StorageName == model.D3MIndexFieldName && groupColIndex == -1 {
+		} else if v.Key == model.D3MIndexFieldName && groupColIndex == -1 {
 			groupColIndex = v.Index
 		}
 	}
