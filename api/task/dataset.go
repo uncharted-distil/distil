@@ -139,6 +139,88 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 	return dataset, outputFolder, err
 }
 
+// CreateDatasetFromResult creates a new dataset based on a result set & the input
+// to the model
+func CreateDatasetFromResult(newDatasetName string, predictionDataset string, sourceDataset string, features []string,
+	targetName string, resultURI string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, config env.Config) (string, error) {
+	newDatasetID := model.NormalizeDatasetID(newDatasetName)
+	// get the prediction dataset
+	predictionDS, err := metaStorage.FetchDataset(predictionDataset, true, true, true)
+	if err != nil {
+		return "", err
+	}
+	sourceDS, err := metaStorage.FetchDataset(sourceDataset, true, true, true)
+	if err != nil {
+		return "", err
+	}
+
+	// extract the data from the database (result + base)
+	data, err := dataStorage.FetchResultDataset(predictionDataset, predictionDS.StorageName, targetName, features, resultURI)
+	if err != nil {
+		return "", err
+	}
+
+	// read the source DS metadata from disk for the new dataset
+	predictionDSDatasetPath := env.ResolvePath(metadata.Augmented, path.Join(predictionDS.Folder, compute.D3MDataSchema))
+	metaDisk, err := metadata.LoadMetadataFromOriginalSchema(predictionDSDatasetPath, false)
+	if err != nil {
+		return "", err
+	}
+
+	// map variables to get type info from source dataset and index from data
+	varsSource := map[string]*model.Variable{}
+	for _, v := range sourceDS.Variables {
+		varsSource[v.Key] = v
+	}
+	varsNewDataset := make([]*model.Variable, len(metaDisk.GetMainDataResource().Variables))
+	for i, v := range data[0] {
+		variable := varsSource[v]
+		variable.Index = i
+		varsNewDataset[i] = variable
+	}
+	metaDisk.GetMainDataResource().Variables = varsNewDataset
+
+	// store the dataset to disk
+	outputPath := env.ResolvePath(metadata.Augmented, newDatasetName)
+	writer := serialization.GetStorage(metaDisk.GetMainDataResource().ResPath)
+
+	newStorageName, err := dataStorage.GetStorageName(newDatasetName)
+	if err != nil {
+		return "", err
+	}
+
+	metaDisk.ID = newDatasetID
+	metaDisk.Name = newDatasetName
+	metaDisk.StorageName = newStorageName
+	metaDisk.DatasetFolder = newDatasetName
+	rawDS := &api.RawDataset{
+		ID:              metaDisk.ID,
+		Name:            metaDisk.Name,
+		Metadata:        metaDisk,
+		Data:            data,
+		DefinitiveTypes: true,
+	}
+	err = writer.WriteDataset(outputPath, rawDS)
+	if err != nil {
+		return "", err
+	}
+
+	// store new dataset metadata
+	err = metaStorage.IngestDataset(metadata.Augmented, metaDisk)
+	if err != nil {
+		return "", err
+	}
+
+	// ingest to postgres from disk
+	cloneSchemaPath := path.Join(outputPath, compute.D3MDataSchema)
+	err = IngestPostgres(cloneSchemaPath, cloneSchemaPath, metadata.Augmented, nil, NewConfig(config), false, false, true)
+	if err != nil {
+		return "", err
+	}
+
+	return metaDisk.ID, nil
+}
+
 // UpdateExtremas will update every field's extremas in the specified dataset.
 func UpdateExtremas(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
 	d, err := metaStorage.FetchDataset(dataset, false, false, false)
