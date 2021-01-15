@@ -6,7 +6,7 @@
     <b-dropdown-item
       v-for="item in colorScales"
       :key="item.name"
-      @click="onScaleClick(item.name)"
+      @click.stop="onScaleClick(item.name)"
     >
       {{ item.name[0].toUpperCase() + item.name.slice(1) }}
       <div class="w-100 bar" :style="item.gradient" />

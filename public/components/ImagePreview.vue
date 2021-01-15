@@ -126,7 +126,7 @@ export default Vue.extend({
       await this.handleImageAttention();
     },
     async colorScale() {
-      if (!!this.solutionId && !!this.row) {
+      if (!!this.solutionId && !!this.row && this.hasImageAttention) {
         await datasetActions.fetchImageAttention(this.$store, {
           dataset: this.dataset,
           resultId: this.solutionId,

@@ -139,9 +139,13 @@ func (p *predictionDataset) CreateDataset(rootDataPath string, datasetName strin
 	if err != nil {
 		return nil, err
 	}
-
+	dataResourcesMap := map[string]*model.DataResource{}
+	for _, dataResource := range ds.Metadata.DataResources {
+		dataResourcesMap[dataResource.ResID] = dataResource
+	}
 	// update the data resources to match those from the created dataset - they may have changed file types
-	for i, dataResource := range ds.Metadata.DataResources {
+	for i := range ds.Metadata.DataResources {
+		dataResource := dataResourcesMap[p.params.Meta.DataResources[i].ResID]
 		p.params.Meta.DataResources[i].ResFormat = dataResource.ResFormat
 		p.params.Meta.DataResources[i].ResPath = dataResource.ResPath
 	}
@@ -203,7 +207,7 @@ func ImportPredictionDataset(params *PredictParams) (string, string, error) {
 	for i, f := range rawHeader {
 		// TODO: col index not necessarily the same as index and thats what needs checking
 		// We check both name and display name as the pre-ingested datasets are keyed of display name
-		if mainDR.Variables[i].Key != f && mainDR.Variables[i].DisplayName != f {
+		if mainDR.Variables[i].Key != f && mainDR.Variables[i].HeaderName != f {
 			return "", "", errors.Errorf("variables in new prediction file do not match variables in original dataset")
 		}
 	}

@@ -5,6 +5,7 @@
       has-tabs
       :variables="variables"
       :available-variables="trainingVariables"
+      is-select-view
     >
       <b-nav-item
         class="font-weight-bold"

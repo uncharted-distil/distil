@@ -6,6 +6,7 @@
       :variables="variables"
     >
       <p class="font-weight-bold mr-auto">Samples Predicted</p>
+      <color-scale-drop-down v-if="isMultiBandImage" />
       <layer-selection v-if="isMultiBandImage" class="layer-button" />
     </view-type-toggle>
 
@@ -34,6 +35,9 @@
         :data-fields="dataFields"
         :data-items="dataItems"
         :instance-name="instanceName"
+        :summaries="summaries"
+        :areaOfInterestItems="{ inner: inner, outer: outer }"
+        @tileClicked="onTileClick"
       />
     </div>
   </div>
@@ -46,7 +50,7 @@ import DataSize from "../components/buttons/DataSize.vue";
 import PredictionsDataTable from "./PredictionsDataTable.vue";
 import ImageMosaic from "./ImageMosaic.vue";
 import ResultsTimeseriesView from "./ResultsTimeseriesView.vue";
-import GeoPlot from "./GeoPlot.vue";
+import GeoPlot, { TileClickData } from "./GeoPlot.vue";
 import { spinnerHTML } from "../util/spinner";
 import {
   Highlight,
@@ -54,6 +58,7 @@ import {
   TableColumn,
   Variable,
   RowSelection,
+  VariableSummary,
 } from "../store/dataset/index";
 import { getters as datasetGetters } from "../store/dataset/module";
 import {
@@ -66,7 +71,13 @@ import { PredictStatus } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
 import { updateTableRowSelection, getNumIncludedRows } from "../util/row";
 import ViewTypeToggle from "../components/ViewTypeToggle.vue";
-
+import { MULTIBAND_IMAGE_TYPE } from "../util/types";
+import ColorScaleDropDown from "./ColorScaleDropDown.vue";
+import LayerSelection from "./LayerSelection.vue";
+import { Filter, INCLUDE_FILTER } from "../util/filters";
+import { actions as viewActions } from "../store/view/module";
+import { isGeoLocatedType } from "../util/types";
+import { getVariableSummariesByState } from "../util/data";
 const TABLE_VIEW = "table";
 const IMAGE_VIEW = "image";
 const GRAPH_VIEW = "graph";
@@ -83,6 +94,8 @@ export default Vue.extend({
     PredictionsDataTable,
     ResultsTimeseriesView,
     ViewTypeToggle,
+    ColorScaleDropDown,
+    LayerSelection,
   },
 
   data() {
@@ -98,6 +111,23 @@ export default Vue.extend({
   },
 
   computed: {
+    summaries(): VariableSummary[] {
+      const summaryDictionary = predictionsGetters.getTrainingSummariesDictionary(
+        this.$store
+      );
+      const currentSummaries = getVariableSummariesByState(
+        1,
+        this.trainingVariables.length,
+        this.trainingVariables,
+        summaryDictionary
+      );
+      return currentSummaries.filter((cs) => {
+        return isGeoLocatedType(cs.varType);
+      });
+    },
+    trainingVariables(): Variable[] {
+      return requestGetters.getActivePredictionTrainingVariables(this.$store);
+    },
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
     },
@@ -182,9 +212,17 @@ export default Vue.extend({
     },
 
     isMultiBandImage(): boolean {
-      return routeGetters.isMultiBandImage(this.$store);
+      const variables = datasetGetters.getVariables(this.$store);
+      return variables.some((v) => {
+        return v.colType === MULTIBAND_IMAGE_TYPE;
+      });
     },
-
+    inner(): TableRow[] {
+      return predictionsGetters.getAreaOfInterestInnerDataItems(this.$store);
+    },
+    outer(): TableRow[] {
+      return predictionsGetters.getAreaOfInterestOuterDataItems(this.$store);
+    },
     /* Select which component to display the data. */
     viewComponent(): string {
       if (this.viewType === GEO_VIEW) return "GeoPlot";
@@ -200,6 +238,21 @@ export default Vue.extend({
   },
 
   methods: {
+    async onTileClick(data: TileClickData) {
+      // build filter
+      const filter: Filter = {
+        displayName: data.displayName,
+        key: data.key,
+        maxX: data.bounds[1][1],
+        maxY: data.bounds[0][0],
+        minX: data.bounds[0][1],
+        minY: data.bounds[1][0],
+        mode: INCLUDE_FILTER,
+        type: data.type,
+      };
+      // fetch surrounding tiles
+      await viewActions.updatePredictionAreaOfInterest(this.$store, filter);
+    },
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       predictionsActions.fetchPredictionTableData(this.$store, {
