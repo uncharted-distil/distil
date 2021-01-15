@@ -22,7 +22,18 @@ export const mutations = {
     // freezing the return to prevent slow, unnecessary deep reactivity.
     state.includedPredictionTableData = Object.freeze(predictionData);
   },
-
+  setAreaOfInterestInner(state: PredictionState, resultData: TableData) {
+    state.areaOfInterestInner = resultData;
+  },
+  setAreaOfInterestOuter(state: PredictionState, resultData: TableData) {
+    state.areaOfInterestOuter = resultData;
+  },
+  clearAreaOfInterestInner(state: PredictionState) {
+    state.areaOfInterestInner = null;
+  },
+  clearAreaOfInterestOuter(state: PredictionState) {
+    state.areaOfInterestOuter = null;
+  },
   // predicted
   updatePredictedSummary(state: PredictionState, summary: VariableSummary) {
     updateSummaries(summary, state.predictedSummaries);

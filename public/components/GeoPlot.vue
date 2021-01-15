@@ -311,7 +311,7 @@ export default Vue.extend({
       return routeGetters.getRouteTargetVariable(this.$store);
     },
     dataHasConfidence(): boolean {
-      return this.dataItems.length ? "confidence" in this.dataItems[0] : false;
+      return this.dataItems?.length ? "confidence" in this.dataItems[0] : false;
     },
     getTopVariables(): string[] {
       const variables = datasetGetters
@@ -541,7 +541,10 @@ export default Vue.extend({
     },
 
     isMultiBandImage(): boolean {
-      return routeGetters.isMultiBandImage(this.$store);
+      const variables = datasetGetters.getVariables(this.$store);
+      return variables.some((v) => {
+        return v.colType === MULTIBAND_IMAGE_TYPE;
+      });
     },
     isGeoSpatial(): boolean {
       return routeGetters.isGeoSpatial(this.$store);
@@ -1075,10 +1078,10 @@ export default Vue.extend({
     }) {
       if (
         this.highlight &&
-        this.highlight.value.minX === value.minX &&
-        this.highlight.value.maxX === value.maxX &&
-        this.highlight.value.minY === value.minY &&
-        this.highlight.value.maxY === value.maxY
+        this.highlight.value?.minX === value.minX &&
+        this.highlight.value?.maxX === value.maxX &&
+        this.highlight.value?.minY === value.minY &&
+        this.highlight.value?.maxY === value.maxY
       ) {
         // dont push existing highlight
         return;
