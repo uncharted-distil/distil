@@ -198,6 +198,17 @@ interface Quad {
   iB: number; // id second largest byte
   iA: number; // id largest byte
 }
+export interface SelectionHighlight {
+  context: string;
+  dataset: string;
+  key: string;
+  value: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  };
+}
 // contains the state of the map for things such as event callbacks and the quads to render
 // currently there is two states tiled and clustered
 interface MapState {
@@ -247,6 +258,10 @@ export default Vue.extend({
       default: null,
     },
     maxZoom: { type: Number, default: 17 }, // defaults to max zoom
+    enableSelectionToolEvent: {
+      type: Boolean as () => boolean,
+      default: false,
+    },
   },
 
   data() {
@@ -1099,6 +1114,15 @@ export default Vue.extend({
         key = this.summaries[0].key;
       } else {
         console.error("Error createHighlight no available key");
+        return;
+      }
+      if (this.enableSelectionToolEvent) {
+        this.$emit("selection-tool-event", {
+          context: this.instanceName,
+          dataset: this.dataset,
+          key: key,
+          value: value,
+        });
         return;
       }
       updateHighlight(this.$router, {
