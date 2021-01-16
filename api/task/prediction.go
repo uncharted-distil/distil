@@ -637,6 +637,8 @@ func getComponentVariables(variable *model.Variable) []string {
 		} else if model.IsTimeSeries(variable.Grouping.GetType()) {
 			tsg := variable.Grouping.(*model.TimeseriesGrouping)
 			componentVars = append(componentVars, tsg.XCol, tsg.YCol)
+		} else if model.IsGeoBounds(variable.Grouping.GetType()) {
+			componentVars = append(componentVars, variable.Grouping.GetHidden()...)
 		}
 	} else {
 		componentVars = append(componentVars, variable.Key)

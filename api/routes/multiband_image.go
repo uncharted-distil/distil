@@ -17,15 +17,19 @@ package routes
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
-	"github.com/uncharted-distil/distil/api/env"
-	api "github.com/uncharted-distil/distil/api/model"
-	"github.com/uncharted-distil/distil/api/util"
-	"goji.io/v3/pat"
 	"net/http"
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/metadata"
+	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil/api/env"
+	api "github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil/api/util"
+	"goji.io/v3/pat"
 )
 
 const (
@@ -63,7 +67,20 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 			return
 		}
 		sourcePath := env.ResolvePath(res.Source, res.Folder)
-		sourcePath = path.Join(sourcePath, imageFolder)
+
+		// need to read the dataset doc to determine the path to the data resource
+		metaDisk, err := metadata.LoadMetadataFromOriginalSchema(path.Join(sourcePath, compute.D3MDataSchema), false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		for _, dr := range metaDisk.DataResources {
+			if dr.IsCollection && dr.ResType == model.ResTypeImage {
+				sourcePath = dr.ResPath
+				break
+			}
+		}
+
 		if isThumbnail {
 			imageScale = util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 		}

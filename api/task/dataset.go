@@ -154,8 +154,22 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 		return "", err
 	}
 
+	// need to expand feature set to handle groups
+	varsSource := map[string]*model.Variable{}
+	groups := []*model.Variable{}
+	for _, v := range sourceDS.Variables {
+		varsSource[v.Key] = v
+		if v.IsGrouping() {
+			groups = append(groups, v)
+		}
+	}
+	featuresExpanded := []string{}
+	for _, f := range features {
+		featuresExpanded = append(featuresExpanded, getComponentVariables(varsSource[f])...)
+	}
+
 	// extract the data from the database (result + base)
-	data, err := dataStorage.FetchResultDataset(predictionDataset, predictionDS.StorageName, targetName, features, resultURI)
+	data, err := dataStorage.FetchResultDataset(predictionDataset, predictionDS.StorageName, targetName, featuresExpanded, resultURI)
 	if err != nil {
 		return "", err
 	}
@@ -168,11 +182,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	}
 
 	// map variables to get type info from source dataset and index from data
-	varsSource := map[string]*model.Variable{}
-	for _, v := range sourceDS.Variables {
-		varsSource[v.Key] = v
-	}
-	varsNewDataset := make([]*model.Variable, len(metaDisk.GetMainDataResource().Variables))
+	varsNewDataset := make([]*model.Variable, len(data[0]))
 	for i, v := range data[0] {
 		variable := varsSource[v]
 		variable.Index = i
@@ -204,6 +214,13 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	if err != nil {
 		return "", err
 	}
+	classificationOutputPath := path.Join(outputPath, config.ClassificationOutputPath)
+	classification := buildClassificationFromMetadata(metaDisk)
+	classification.Path = classificationOutputPath
+	err = metadata.WriteClassification(classification, classificationOutputPath)
+	if err != nil {
+		return "", err
+	}
 
 	// store new dataset metadata
 	err = metaStorage.IngestDataset(metadata.Augmented, metaDisk)
@@ -211,9 +228,23 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 		return "", err
 	}
 
+	// add all groups
+	newDS, err := metaStorage.FetchDataset(newDatasetID, true, true, true)
+	if err != nil {
+		return "", err
+	}
+	for _, v := range groups {
+		v.Index = len(newDS.Variables)
+		newDS.Variables = append(newDS.Variables, v)
+	}
+	err = metaStorage.UpdateDataset(newDS)
+	if err != nil {
+		return "", err
+	}
+
 	// ingest to postgres from disk
 	cloneSchemaPath := path.Join(outputPath, compute.D3MDataSchema)
-	err = IngestPostgres(cloneSchemaPath, cloneSchemaPath, metadata.Augmented, nil, NewConfig(config), false, false, true)
+	err = IngestPostgres(cloneSchemaPath, cloneSchemaPath, metadata.Augmented, nil, NewConfig(config), false, false, false)
 	if err != nil {
 		return "", err
 	}
