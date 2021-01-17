@@ -119,17 +119,27 @@ func CloningHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCt
 // a new dataset based on results.
 func CloningResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor, solutionCtor api.SolutionStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-
-		newDatasetName, err := url.PathUnescape(pat.Param(r, "dataset-name"))
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to unescape dataset name"))
-			return
-		}
 		predictionRequestID, err := url.PathUnescape(pat.Param(r, "produce-request-id"))
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to unescape produce request id"))
 			return
 		}
+
+		params, err := getPostParameters(r)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to parse post parameters"))
+			return
+		}
+		if params == nil {
+			missingParamErr(w, "parameters")
+			return
+		}
+		if params["datasetName"] == nil {
+			missingParamErr(w, "datasetName")
+			return
+		}
+		newDatasetName := params["datasetName"].(string)
+
 		metaStorage, err := metaCtor()
 		if err != nil {
 			handleError(w, err)

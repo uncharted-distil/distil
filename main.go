@@ -284,7 +284,7 @@ func main() {
 	registerRoutePost(mux, "/distil/cluster/:result-id", routes.ClusteringExplainHandler(pgSolutionStorageCtor, esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/upload/:dataset", routes.UploadHandler(&config))
 	registerRoutePost(mux, "/distil/update/:dataset", routes.UpdateHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
-	registerRoutePost(mux, "/distil/clone-result/:produce-request-id/:dataset-name", routes.CloningResultsHandler(esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, config))
+	registerRoutePost(mux, "/distil/clone-result/:produce-request-id", routes.CloningResultsHandler(esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, config))
 	registerRoutePost(mux, "/distil/clone/:dataset", routes.CloningHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/save-dataset/:dataset/:invert", routes.SaveDatasetHandler(esMetadataStorageCtor, pgDataStorageCtor, config))
 	registerRoutePost(mux, "/distil/add-field/:dataset", routes.AddFieldHandler(esMetadataStorageCtor, pgDataStorageCtor))

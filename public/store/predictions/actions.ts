@@ -382,4 +382,24 @@ export const actions = {
     }
     return null;
   },
+
+  async createDataset(
+    context: PredictionContext,
+    args: {
+      produceRequestId: string;
+      newDatasetName: string;
+    }
+  ): Promise<void> {
+    try {
+      const endPoint = "/distil/clone-result/";
+      const params = `${args.produceRequestId}`;
+      const response = await axios.post(
+        `/distil/clone-result/${encodeURIComponent(args.produceRequestId)}`,
+        { datasetName: args.newDatasetName }
+      );
+    } catch (error) {
+      console.error(error);
+    }
+    return null;
+  },
 };

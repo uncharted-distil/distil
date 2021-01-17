@@ -24,6 +24,21 @@
         </div>
       </div>
     </div>
+
+    <b-button variant="dark" v-b-modal.save> Create Dataset </b-button>
+
+    <b-modal id="save" title="Create Dataset" @ok="createDataset">
+      <div class="check-message-container d-flex justify-content-around">
+        <i class="fa fa-file-text-o fa-3x" aria-hidden="true"></i>
+        <div>
+          <b-form-input
+            v-model="newDatasetName"
+            placeholder="Enter dataset name to use for new dataset"
+          ></b-form-input>
+        </div>
+      </div>
+    </b-modal>
+
     <b-button variant="primary" class="float-right mt-2" v-b-modal.export>
       Export Predictions
     </b-button>
@@ -95,6 +110,7 @@ export default Vue.extend({
   data() {
     return {
       saveFileName: "",
+      newDatasetName: "",
     };
   },
 
@@ -263,6 +279,13 @@ export default Vue.extend({
       hiddenElement.target = "_blank";
       hiddenElement.download = `${fileName}.csv`;
       hiddenElement.click();
+    },
+
+    async createDataset() {
+      await predictionActions.createDataset(this.$store, {
+        produceRequestId: this.produceRequestId,
+        newDatasetName: this.newDatasetName,
+      });
     },
   },
 });

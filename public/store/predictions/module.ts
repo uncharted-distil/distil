@@ -75,6 +75,8 @@ export const actions = {
   fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries),
   // csv export data
   fetchExportData: dispatch(moduleActions.fetchExportData),
+  // cloning results of a prediction to a new dataset
+  createDataset: dispatch(moduleActions.createDataset),
 };
 
 // Typed mutations
