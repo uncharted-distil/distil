@@ -76,7 +76,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 		}
 		for _, dr := range metaDisk.DataResources {
 			if dr.IsCollection && dr.ResType == model.ResTypeImage {
-				sourcePath = dr.ResPath
+				sourcePath = model.GetResourcePathFromFolder(sourcePath, dr)
 				break
 			}
 		}

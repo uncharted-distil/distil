@@ -86,7 +86,7 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 	if ds.DefinitiveTypes {
 		outputPath := path.Join(formattedPath, config.ClassificationOutputPath)
 		log.Infof("write definitve types to '%s'", outputPath)
-		classification := buildClassificationFromMetadata(ds.Metadata)
+		classification := buildClassificationFromMetadata(ds.Metadata.GetMainDataResource().Variables)
 		classification.Path = outputPath
 		err := metadata.WriteClassification(classification, outputPath)
 		if err != nil {
@@ -175,20 +175,44 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	}
 
 	// read the source DS metadata from disk for the new dataset
-	predictionDSDatasetPath := env.ResolvePath(metadata.Augmented, path.Join(predictionDS.Folder, compute.D3MDataSchema))
-	metaDisk, err := metadata.LoadMetadataFromOriginalSchema(predictionDSDatasetPath, false)
+	sourceDSDatasetPath := path.Join(env.ResolvePath(sourceDS.Source, sourceDS.Folder), compute.D3MDataSchema)
+	metaDisk, err := metadata.LoadMetadataFromOriginalSchema(sourceDSDatasetPath, false)
 	if err != nil {
 		return "", err
 	}
+	mainDR := metaDisk.GetMainDataResource()
+
+	varsMeta := map[string]*model.Variable{}
+	for _, v := range mainDR.Variables {
+		varsMeta[v.Key] = v
+	}
 
 	// map variables to get type info from source dataset and index from data
+	// need the current types from the source dataset to have the proper definitive types
 	varsNewDataset := make([]*model.Variable, len(data[0]))
+	varsClassification := make([]*model.Variable, len(data[0]))
 	for i, v := range data[0] {
-		variable := varsSource[v]
-		variable.Index = i
-		varsNewDataset[i] = variable
+		// min meta datasets do not have every variable so use source ES dataset if not in metadata
+		variableMeta := varsMeta[v]
+		if variableMeta == nil {
+			variableMeta = varsSource[v]
+		}
+		variableMeta.Index = i
+		variableMeta.SuggestedTypes = nil
+		varsNewDataset[i] = variableMeta
+
+		variableClassification := varsSource[v]
+		variableClassification.Index = i
+		varsClassification[i] = variableClassification
 	}
 	metaDisk.GetMainDataResource().Variables = varsNewDataset
+
+	// make the data resource paths absolute
+	for _, dr := range metaDisk.DataResources {
+		if dr != mainDR {
+			dr.ResPath = model.GetResourcePath(sourceDSDatasetPath, dr)
+		}
+	}
 
 	// store the dataset to disk
 	outputPath := env.ResolvePath(metadata.Augmented, newDatasetName)
@@ -215,7 +239,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 		return "", err
 	}
 	classificationOutputPath := path.Join(outputPath, config.ClassificationOutputPath)
-	classification := buildClassificationFromMetadata(metaDisk)
+	classification := buildClassificationFromMetadata(varsClassification)
 	classification.Path = classificationOutputPath
 	err = metadata.WriteClassification(classification, classificationOutputPath)
 	if err != nil {
@@ -223,7 +247,10 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	}
 
 	// store new dataset metadata
-	err = metaStorage.IngestDataset(metadata.Augmented, metaDisk)
+	ingestConfig := NewConfig(config)
+	cloneSchemaPath := path.Join(outputPath, compute.D3MDataSchema)
+	_, err = IngestMetadata(cloneSchemaPath, cloneSchemaPath, nil, metaStorage,
+		metadata.Augmented, nil, api.DatasetTypeModelling, ingestConfig, false, false)
 	if err != nil {
 		return "", err
 	}
@@ -243,8 +270,7 @@ func CreateDatasetFromResult(newDatasetName string, predictionDataset string, so
 	}
 
 	// ingest to postgres from disk
-	cloneSchemaPath := path.Join(outputPath, compute.D3MDataSchema)
-	err = IngestPostgres(cloneSchemaPath, cloneSchemaPath, metadata.Augmented, nil, NewConfig(config), false, false, false)
+	err = IngestPostgres(cloneSchemaPath, cloneSchemaPath, metadata.Augmented, nil, ingestConfig, false, false, false)
 	if err != nil {
 		return "", err
 	}
@@ -302,14 +328,13 @@ func getUniqueString(base string, existing []string) string {
 	return unique
 }
 
-func buildClassificationFromMetadata(meta *model.Metadata) *model.ClassificationData {
+func buildClassificationFromMetadata(variables []*model.Variable) *model.ClassificationData {
 	// cycle through the variables and collect the types
-	mainDR := meta.GetMainDataResource()
 	classification := &model.ClassificationData{
-		Labels:        make([][]string, len(mainDR.Variables)),
-		Probabilities: make([][]float64, len(mainDR.Variables)),
+		Labels:        make([][]string, len(variables)),
+		Probabilities: make([][]float64, len(variables)),
 	}
-	for _, v := range mainDR.Variables {
+	for _, v := range variables {
 		classification.Labels[v.Index] = []string{v.Type}
 		classification.Probabilities[v.Index] = []float64{1}
 	}
