@@ -98,10 +98,13 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 	return nil, nil
 }
 func convertResultToRanking(results *[][]string) {
+	// index for result values
 	valueIdx := 1
-	length := len(*results)
-	for i, res := range *results {
-		res[valueIdx] = fmt.Sprintf("%d", 1.0-i/length)
+	length := float64(len(*results))
+	// skips header
+	for i, res := range (*results)[1:] {
+		idx := float64(i)
+		res[valueIdx] = fmt.Sprintf("%f", 1.0-idx/length)
 	}
 }
 
