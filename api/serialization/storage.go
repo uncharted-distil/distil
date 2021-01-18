@@ -68,3 +68,21 @@ func GetCSVStorage() Storage {
 func GetParquetStorage() Storage {
 	return parquetStorage
 }
+
+// ReadData reads the metadata to find the main data reference, then reads that.
+func ReadData(schemaPath string) ([][]string, error) {
+	// metadata can be read by CSV storage
+	meta, err := csvStorage.ReadMetadata(schemaPath)
+	if err != nil {
+		return nil, err
+	}
+
+	dataPath := model.GetResourcePath(schemaPath, meta.GetMainDataResource())
+	storage := GetStorage(dataPath)
+	data, err := storage.ReadData(dataPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}

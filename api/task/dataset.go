@@ -119,6 +119,9 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 	if err != nil {
 		return "", "", err
 	}
+
+	// need to update metadata variable order to match extracted data
+
 	// update the header with the proper variable names
 	data[0] = meta.GetMainDataResource().GenerateHeader()
 	dataRaw := &api.RawDataset{
@@ -134,6 +137,64 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 	err = storage.WriteDataset(outputFolder, dataRaw)
 	if err != nil {
 		return "", "", err
+	}
+
+	// need to write the prefeaturized version of the dataset if it exists
+	if metaDataset.ParentDataset != "" {
+		parentDS, err := metaStorage.FetchDataset(metaDataset.ParentDataset, false, false, false)
+		if err != nil {
+			return "", "", err
+		}
+
+		if parentDS.LearningDataset != "" {
+			// determine if there are new columns that were not part of the original dataset
+
+			parentVarMap := mapVariables(parentDS.Variables, func(variable *model.Variable) string { return variable.Key })
+			newVars := []*model.Variable{}
+			for _, v := range metaDataset.Variables {
+				if v.DistilRole == model.VarDistilRoleData {
+					if parentVarMap[v.Key] == nil {
+						newVars = append(newVars, v)
+					}
+				}
+			}
+
+			// copy the learning dataset
+			learningFolder := fmt.Sprintf("%s-featurized", meta.ID)
+			learningFolder = path.Join(path.Dir(parentDS.LearningDataset), learningFolder)
+			err = util.Copy(parentDS.LearningDataset, learningFolder)
+			if err != nil {
+				return "", "", err
+			}
+
+			// read the prefeaturized data (need to load the metadata to read the data)
+			preFeaturizedData, err := serialization.ReadData(path.Join(learningFolder, compute.D3MDataSchema))
+			if err != nil {
+				return "", "", err
+			}
+
+			// add the missing columns row by row
+			newDSD3MIndex := -1
+			for i, v := range data[0] {
+				if v == model.D3MIndexFieldName {
+					newDSD3MIndex = i
+				}
+			}
+			parentD3MIndex := parentDS.GetD3MIndexVariable()
+
+			newDataMap := map[string][]string{}
+			for _, r := range data[1:] {
+				newVarsData := []string{}
+				for i := 0; i < len(newVars); i++ {
+					newVarsData = append(newVarsData, r[newVars[i].Index])
+				}
+				newDataMap[r[newDSD3MIndex]] = newVarsData
+			}
+			for i, row := range preFeaturizedData[1:] {
+				log.Infof("something %v%v%v", i, row, parentD3MIndex)
+			}
+
+		}
 	}
 
 	return dataset, outputFolder, err
