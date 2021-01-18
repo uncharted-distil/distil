@@ -73,34 +73,32 @@
         </div>
       </div>
 
+      <!-- Description -->
+      <div v-if="expanded && !!highlightedDescription()" class="row mt-1">
+        <div class="col-12">
+          <b>Full Description:</b>
+          <div v-html="highlightedDescription()" />
+        </div>
+      </div>
+
+      <!-- Actions -->
       <div class="row mt-1">
         <div class="col-12 d-flex justify-content-center">
           <b-button
-            v-if="!expanded"
             class="flex-grow-1 hover"
             variant="outline-secondary"
             @click="toggleExpansion()"
           >
-            More Details...
+            <span v-if="!expanded">More</span>
+            <span v-else>Less</span> Details...
           </b-button>
-          <template v-else>
-            <span><b>Full Description:</b></span>
-            <p v-html="highlightedDescription" />
-            <b-button
-              class="flex-grow-1 hover"
-              variant="outline-secondary"
-              @click="toggleExpansion()"
-            >
-              Less Details...
-            </b-button>
-          </template>
           <b-button
             v-if="isPrototype"
             variant="outline-secondary"
             class="ml-2"
             @click="exploreDataset"
           >
-            Explore Dataset
+            <i class="fa fa-stack-overflow" /> Explore Dataset
           </b-button>
         </div>
       </div>
@@ -218,9 +216,11 @@ export default Vue.extend({
         details: { dataset: this.dataset.id },
       });
     },
+
     toggleExpansion() {
       this.expanded = !this.expanded;
     },
+
     highlightedDescription(): string {
       const terms = this.terms;
       if (_.isEmpty(terms)) {
@@ -234,6 +234,7 @@ export default Vue.extend({
         '<span class="highlight">$1</span>'
       );
     },
+
     addRecentDataset(dataset: string) {
       const datasets = localStorage.get("recent-datasets") || [];
       if (datasets.indexOf(dataset) === -1) {
