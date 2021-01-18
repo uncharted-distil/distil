@@ -28,6 +28,7 @@
         <labeling-data-slot
           :summaries="summaries"
           :variables="variables"
+          :has-confidence="hasConfidence"
           @DataChanged="onAnnotationChanged"
         />
         <create-labeling-form
@@ -127,6 +128,7 @@ export default Vue.extend({
       scorePopUpId: "modal-score-pop-up",
       loading: true,
       loadingState: "",
+      hasConfidence: false,
     };
   },
   computed: {
@@ -310,6 +312,7 @@ export default Vue.extend({
       addOrderBy(LOW_SHOT_SCORE_COLUMN_NAME);
       this.isLoadingData = false;
       await this.fetchData();
+      this.hasConfidence = true;
       const entry = overlayRouteEntry(routeGetters.getRoute(this.$store), {
         annotationHasChanged: false,
       });

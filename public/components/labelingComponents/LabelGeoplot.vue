@@ -4,28 +4,39 @@
     :data-fields="fields"
     :data-items="items"
     :summaries="summaries"
-    :areaOfInterestItems="{ inner: inner, outer: outer }"
+    :area-of-interest-items="{ inner: inner, outer: outer }"
+    :confidence-access-func="confidenceGetter"
+    enable-selection-tool-event
     @tileClicked="onTileClick"
-  >
-  </geo-plot>
+    @selection-tool-event="onToolSelection"
+  />
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import GeoPlot, { TileClickData } from "../GeoPlot.vue";
+import GeoPlot, { TileClickData, SelectionHighlight } from "../GeoPlot.vue";
 import { getters as datasetGetters } from "../../store/dataset/module";
 import { Dictionary } from "../../util/dict";
 import {
+  D3M_INDEX_FIELD,
   TableColumn,
   TableRow,
   Variable,
   VariableSummary,
 } from "../../store/dataset/index";
 import { getters as routeGetters } from "../../store/route/module";
-import { getVariableSummariesByState, getAllDataItems } from "../../util/data";
+import {
+  getVariableSummariesByState,
+  getAllDataItems,
+  LOW_SHOT_LABEL_COLUMN_NAME,
+  LowShotLabels,
+} from "../../util/data";
 import { isGeoLocatedType } from "../../util/types";
 import { actions as viewActions } from "../../store/view/module";
 import { INCLUDE_FILTER, Filter } from "../../util/filters";
+import { actions as datasetActions } from "../../store/dataset/module";
+import { bulkRowSelectionUpdate } from "../../util/row";
+
 export default Vue.extend({
   name: "label-geo-plot",
 
@@ -37,6 +48,7 @@ export default Vue.extend({
     instanceName: String as () => string,
     includedActive: Boolean as () => boolean,
     dataItems: { type: Array as () => TableRow[], default: null },
+    hasConfidence: { type: Boolean as () => boolean, default: false },
   },
 
   computed: {
@@ -86,8 +98,25 @@ export default Vue.extend({
         return isGeoLocatedType(cs.varType);
       });
     },
+    confidenceGetter(): Function {
+      if (!this.hasConfidence) {
+        return (item: TableRow, idx: number) => {
+          return undefined;
+        };
+      }
+      return this.getConfidenceRank;
+    },
   },
   methods: {
+    getConfidenceRank(item: TableRow, idx: number): number {
+      if (item[LOW_SHOT_LABEL_COLUMN_NAME] === LowShotLabels.positive) {
+        return 1.0;
+      }
+      if (item[LOW_SHOT_LABEL_COLUMN_NAME] === LowShotLabels.negative) {
+        return 0;
+      }
+      return 1.0 - idx / this.dataItems.length;
+    },
     async onTileClick(data: TileClickData) {
       // filter for area of interests
       const filter: Filter = {
@@ -102,6 +131,42 @@ export default Vue.extend({
       };
       // fetch area of interests
       await viewActions.updateAreaOfInterest(this.$store, filter);
+    },
+    async onToolSelection(selection: SelectionHighlight) {
+      const filterParams = routeGetters.getDecodedSolutionRequestFilterParams(
+        this.$store
+      );
+      filterParams.size = datasetGetters.getIncludedTableDataNumRows(
+        this.$store
+      );
+      // fetch data selected by map tool
+      const resp = await datasetActions.fetchTableData(this.$store, {
+        dataset: selection.dataset,
+        highlight: selection,
+        filterParams: filterParams,
+        dataMode: null,
+        include: true,
+      });
+      // find d3mIndex
+      const labelIndex = resp.columns.findIndex((c) => {
+        return c.key === D3M_INDEX_FIELD;
+      });
+      // if -1 then something failed
+      if (labelIndex === -1) {
+        return;
+      }
+      // map the values
+      const indices = resp.values.map((v) => {
+        return v[labelIndex].value.toString();
+      });
+      // update row selection
+      const rowSelection = routeGetters.getDecodedRowSelection(this.$store);
+      bulkRowSelectionUpdate(
+        this.$router,
+        selection.context,
+        rowSelection,
+        indices
+      );
     },
   },
 });
