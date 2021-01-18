@@ -1,7 +1,7 @@
 <template>
   <div class="container-fluid d-flex flex-column h-100 search-view">
     <!-- Spacer for the App.vue <navigation> component. -->
-    <div class="row flex-0-nav"></div>
+    <div class="row flex-0-nav" />
 
     <!-- Title of the page. -->
     <header class="header row justify-content-center">
@@ -31,14 +31,14 @@
 
     <!-- Search bar -->
     <section class="row justify-content-center">
-      <div class="col-12 col-md-8">
-        <search-bar class="search-search-bar"></search-bar>
+      <div class="col-12 col-md-11 col-lg-10 col-xl-8">
+        <search-bar class="search-search-bar" />
       </div>
     </section>
 
     <!-- Search navigation -->
     <section class="row justify-content-center">
-      <div class="col-12 col-md-8">
+      <div class="col-12 col-md-11 col-lg-10 col-xl-8">
         <nav class="search-nav">
           <button
             class="search-nav-tab"
@@ -106,12 +106,12 @@
 
     <!-- Main view. -->
     <section class="row flex-1 justify-content-center">
-      <div class="col-12 col-md-8 search-content-wrapper">
+      <div class="col-12 col-md-11 col-lg-10 col-xl-8 search-content-wrapper">
         <div
           v-if="isPending"
-          v-html="spinnerHTML"
           class="search-content-spinner"
-        ></div>
+          v-html="spinnerHTML"
+        />
         <p v-else-if="isSearchResultsEmpty" class="search-content-empty">
           No {{ tab === "all" ? "datasets or models" : tab }} found for search
         </p>
@@ -121,9 +121,9 @@
               v-if="result.type === 'dataset'"
               :key="result.dataset.id"
               :dataset="result.dataset"
-              @dataset-delete="onDeletionClicked"
               allow-join
               allow-import
+              @dataset-delete="onDeletionClicked"
             />
             <model-preview
               v-if="result.type === 'model'"
@@ -412,7 +412,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .row .file-uploader-status {
   padding: 0;
 }
@@ -477,6 +477,11 @@ export default Vue.extend({
   overflow: scroll;
 }
 
+.search-content .card-result {
+  margin-left: 0;
+  margin-right: 0;
+}
+
 .search-content-empty,
 .search-content-spinner {
   margin-top: 3rem;
@@ -492,10 +497,13 @@ export default Vue.extend({
 
 /* Version */
 .version {
-  bottom: 1em;
+  background-color: rgba(255, 255, 255, 0.8);
+  bottom: 0;
   color: var(--gray-500);
   font-size: 0.75rem;
+  padding: 1em;
+  pointer-events: none;
   position: absolute;
-  right: 1em;
+  right: 0;
 }
 </style>

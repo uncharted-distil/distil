@@ -9,16 +9,16 @@
       }"
       @click.stop="setActiveDataset()"
     >
-      <a class="nav-link">
+      <a class="nav-link dataset-name">
         <i class="fa fa-table" /> <b>Dataset Name:</b>
         {{ dataset.name }}
       </a>
       <a class="nav-link">
-        <b>Features:</b>
+        <b>Features</b>
         {{ filterVariablesByFeature(dataset.variables).length }}
       </a>
-      <a class="nav-link"><b>Rows:</b> {{ dataset.numRows }}</a>
-      <a class="nav-link"><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</a>
+      <a class="nav-link"><b>Rows</b> {{ dataset.numRows }}</a>
+      <a class="nav-link"><b>Size</b> {{ formatBytes(dataset.numBytes) }}</a>
       <b-button
         v-if="!dataset.immutable && !isImportReady"
         variant="danger"
@@ -26,7 +26,7 @@
         title="Delete dataset"
         @click.stop="onDeleteClicked(dataset)"
       >
-        <i class="fa fa-trash" aria-hidden="true"></i>
+        <i class="fa fa-trash" aria-hidden="true" />
       </b-button>
       <a v-if="isImportReady">
         <b-button
@@ -138,7 +138,7 @@ import { Feature, Activity, SubActivity } from "../util/userEvents";
 const NUM_TOP_FEATURES = 5;
 
 export default Vue.extend({
-  name: "dataset-preview",
+  name: "DatasetPreview",
 
   components: {
     ErrorModal,
@@ -283,6 +283,16 @@ export default Vue.extend({
   justify-content: space-between;
   border: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.dataset-header > *:not(.dataset-name) {
+  /* Keep everything but the title uncollaspable */
+  flex-shrink: 0;
+}
+
+.dataset-header > .nav-link:not(.dataset-name) b {
+  /* Put the value on a new line */
+  display: block;
 }
 
 .card-result .card-header {
