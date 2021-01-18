@@ -5,6 +5,7 @@
     :data-items="items"
     :summaries="summaries"
     :area-of-interest-items="{ inner: inner, outer: outer }"
+    :confidence-access-func="confidenceGetter"
     enable-selection-tool-event
     @tileClicked="onTileClick"
     @selection-tool-event="onToolSelection"
@@ -24,12 +25,18 @@ import {
   VariableSummary,
 } from "../../store/dataset/index";
 import { getters as routeGetters } from "../../store/route/module";
-import { getVariableSummariesByState, getAllDataItems } from "../../util/data";
+import {
+  getVariableSummariesByState,
+  getAllDataItems,
+  LOW_SHOT_LABEL_COLUMN_NAME,
+  LowShotLabels,
+} from "../../util/data";
 import { isGeoLocatedType } from "../../util/types";
 import { actions as viewActions } from "../../store/view/module";
 import { INCLUDE_FILTER, Filter } from "../../util/filters";
 import { actions as datasetActions } from "../../store/dataset/module";
 import { bulkRowSelectionUpdate } from "../../util/row";
+
 export default Vue.extend({
   name: "label-geo-plot",
 
@@ -41,6 +48,7 @@ export default Vue.extend({
     instanceName: String as () => string,
     includedActive: Boolean as () => boolean,
     dataItems: { type: Array as () => TableRow[], default: null },
+    hasConfidence: { type: Boolean as () => boolean, default: false },
   },
 
   computed: {
@@ -90,8 +98,25 @@ export default Vue.extend({
         return isGeoLocatedType(cs.varType);
       });
     },
+    confidenceGetter(): Function {
+      if (!this.hasConfidence) {
+        return (item: TableRow, idx: number) => {
+          return undefined;
+        };
+      }
+      return this.getConfidenceRank;
+    },
   },
   methods: {
+    getConfidenceRank(item: TableRow, idx: number): number {
+      if (item[LOW_SHOT_LABEL_COLUMN_NAME] === LowShotLabels.positive) {
+        return 1.0;
+      }
+      if (item[LOW_SHOT_LABEL_COLUMN_NAME] === LowShotLabels.negative) {
+        return 0;
+      }
+      return 1.0 - idx / this.dataItems.length;
+    },
     async onTileClick(data: TileClickData) {
       // filter for area of interests
       const filter: Filter = {

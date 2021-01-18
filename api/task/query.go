@@ -86,6 +86,7 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	convertResultToRanking(&resultData)
 	// update the database to have the results
 	// the results are the score for the search, between 0 and 1
 	// it is stored in a separate column from the label itself
@@ -95,6 +96,13 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 	}
 
 	return nil, nil
+}
+func convertResultToRanking(results *[][]string) {
+	valueIdx := 1
+	length := len(*results)
+	for i, res := range *results {
+		res[valueIdx] = fmt.Sprintf("%d", 1.0-i/length)
+	}
 }
 
 // getColumnIndices returns: target, d3mIndex
@@ -175,8 +183,8 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 		return err
 	}
 	if !exists {
-		// create the variable to hold the rank
-		err = params.DataStorage.AddVariable(params.Dataset, storageName, targetScore, model.RealType, "0")
+		// create the variable to hold the score
+		err = params.DataStorage.AddVariable(params.Dataset, storageName, targetScore, model.RealType, "0.0")
 		if err != nil {
 			return err
 		}
@@ -184,8 +192,9 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 		if err != nil {
 			return err
 		}
+
 	} else {
-		err = params.DataStorage.SetVariableValue(storageName, targetScore, "0")
+		err = params.DataStorage.SetVariableValue(storageName, targetScore, "0.0")
 		if err != nil {
 			return err
 		}

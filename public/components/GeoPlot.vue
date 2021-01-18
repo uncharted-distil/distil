@@ -244,7 +244,7 @@ export default Vue.extend({
 
   props: {
     instanceName: String as () => string,
-    dataItems: Array as () => any[],
+    dataItems: { type: Array as () => any[], default: [] },
     dataFields: Object as () => Dictionary<TableColumn>,
     summaries: {
       type: Array as () => VariableSummary[],
@@ -261,6 +261,12 @@ export default Vue.extend({
     enableSelectionToolEvent: {
       type: Boolean as () => boolean,
       default: false,
+    },
+    confidenceAccessFunc: {
+      type: Function,
+      default: (d, idx) => {
+        return d.confidence?.value;
+      },
     },
   },
 
@@ -326,7 +332,10 @@ export default Vue.extend({
       return routeGetters.getRouteTargetVariable(this.$store);
     },
     dataHasConfidence(): boolean {
-      return this.dataItems?.length ? "confidence" in this.dataItems[0] : false;
+      if (!this.dataItems.length) {
+        return false;
+      }
+      return this.confidenceAccessFunc(this.dataItems[0], 0) !== undefined;
     },
     getTopVariables(): string[] {
       const variables = datasetGetters
@@ -494,7 +503,7 @@ export default Vue.extend({
         };
 
         group.points = this.dataItems
-          .map((item) => {
+          .map((item, i) => {
             const lat = this.latValue(fieldSpec, item);
             const lng = this.lngValue(fieldSpec, item);
 
@@ -503,7 +512,7 @@ export default Vue.extend({
                 lng: lng,
                 lat: lat,
                 row: item,
-                color: this.tileColor(item),
+                color: this.tileColor(item, i),
               };
             }
 
@@ -998,7 +1007,7 @@ export default Vue.extend({
       return result;
     },
     tableDataToAreas(tableData: any[]): Area[] {
-      const areas = tableData.map((item) => {
+      const areas = tableData.map((item, i) => {
         const imageUrl = this.isMultiBandImage ? item.group_id.value : null;
         const fullCoordinates = item.coordinates.value.Elements;
         if (fullCoordinates.some((x) => x === undefined)) return;
@@ -1019,7 +1028,7 @@ export default Vue.extend({
           [fullCoordinates[5].Float, fullCoordinates[4].Float], // Corner C as [Lat, Lng]
         ] as LatLngBoundsLiteral;
 
-        const color = this.tileColor(item);
+        const color = this.tileColor(item, i);
 
         return { item, imageUrl, coordinates, color } as Area;
       });
@@ -1164,16 +1173,16 @@ export default Vue.extend({
       this.isImageDrilldown = false;
     },
 
-    tileColor(item: any) {
+    tileColor(item: any, idx: number) {
       let color = "#255DCC"; // Default
       if (item.isExcluded) {
         return "#999999";
       }
       if (this.isColoringByConfidence) {
-        if (item.confidence === undefined) {
+        if (this.confidenceAccessFunc(item, idx) === undefined) {
           return undefined;
         }
-        return this.colorScale(item.confidence?.value);
+        return this.colorScale(this.confidenceAccessFunc(item, idx));
       }
       if (item[this.targetField] && item[this.predictedField]) {
         color =

@@ -34,6 +34,7 @@
         :data-items="dataItems"
         :instance-name="instanceName"
         :summaries="summaries"
+        :has-confidence="hasConfidence"
         pagination
         includedActive
       />
@@ -91,6 +92,7 @@ export default Vue.extend({
     variables: Array as () => Variable[],
     summaries: Array as () => VariableSummary[],
     instanceName: { type: String, default: "label" },
+    hasConfidence: { type: Boolean as () => boolean, default: false },
   },
   data() {
     return {
@@ -131,26 +133,10 @@ export default Vue.extend({
       return !orderBy ? false : orderBy.includes(LOW_SHOT_SCORE_COLUMN_NAME);
     },
     dataItems(): TableRow[] {
-      const items = _.cloneDeep(
+      const items =
         this.viewTypeModel === GEO_VIEW
           ? getAllDataItems(true)
-          : datasetGetters.getIncludedTableDataItems(this.$store)
-      );
-      if (this.hasLowShotScores) {
-        const confidence = "confidence";
-        items?.forEach((d, i) => {
-          if (d[LOW_SHOT_LABEL_COLUMN_NAME].value === LowShotLabels.unlabeled) {
-            d[confidence] = { value: 1.0 - i / items.length };
-          } else {
-            d[confidence] = {
-              value:
-                d[LOW_SHOT_LABEL_COLUMN_NAME].value === LowShotLabels.positive
-                  ? 1.0
-                  : 0.0,
-            };
-          }
-        });
-      }
+          : datasetGetters.getIncludedTableDataItems(this.$store);
       return items;
     },
     numItems(): number {
