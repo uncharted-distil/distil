@@ -85,6 +85,7 @@
       <div class="row mt-1">
         <div class="col-12 d-flex justify-content-center">
           <b-button
+            v-if="!!highlightedDescription()"
             class="flex-grow-1 hover"
             variant="outline-secondary"
             @click="toggleExpansion()"
