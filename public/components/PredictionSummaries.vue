@@ -25,7 +25,7 @@
       </div>
     </div>
 
-    <b-button variant="dark" v-b-modal.save> Create Dataset </b-button>
+    <b-button v-b-modal.save> Create Dataset </b-button>
 
     <b-modal id="save" title="Create Dataset" @ok="createDataset">
       <div class="check-message-container d-flex justify-content-around">
