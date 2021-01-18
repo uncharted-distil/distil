@@ -9,9 +9,9 @@
       :fields="tableFields"
       :per-page="perPage"
       :total-rows="itemCount"
-      @row-clicked="onRowClick"
       sticky-header="100%"
       class="distil-table mb-1"
+      @row-clicked="onRowClick"
     >
       <template
         v-for="computedField in computedFields"
@@ -38,7 +38,7 @@
           :type="imageField.type"
           :image-url="data.item[imageField.key].value"
           :debounce="true"
-          :uniqueTrail="uniqueTrail"
+          :unique-trail="uniqueTrail"
         />
       </template>
 
@@ -78,21 +78,22 @@
           :timeseries-id="data.item[timeseriesGrouping.idCol].value"
           :predictions-id="predictions.requestId"
           :include-forecast="true"
-          :uniqueTrail="uniqueTrail"
+          :unique-trail="uniqueTrail"
         />
       </template>
     </b-table>
+
     <b-pagination
       v-if="items && items.length > perPage"
+      v-model="currentPage"
       align="center"
       first-number
       last-number
       size="sm"
-      v-model="currentPage"
       :per-page="perPage"
       :total-rows="itemCount"
       @change="onPagination"
-    ></b-pagination>
+    />
   </div>
 </template>
 
@@ -143,7 +144,7 @@ import {
 } from "../util/data";
 
 export default Vue.extend({
-  name: "predictions-data-table",
+  name: "PredictionsDataTable",
 
   components: {
     PredictionsDataSlot,
@@ -153,6 +154,17 @@ export default Vue.extend({
     IconFork,
   },
 
+  filters: {
+    /* Display number with only two decimal. */
+    cleanNumber(value) {
+      return _.isNumber(value) ? value.toFixed(2) : "—";
+    },
+  },
+
+  props: {
+    instanceName: String as () => string,
+  },
+
   data() {
     return {
       currentPage: 1,
@@ -160,17 +172,6 @@ export default Vue.extend({
       initialized: false,
       uniqueTrail: "predictions-table",
     };
-  },
-
-  props: {
-    instanceName: String as () => string,
-  },
-
-  filters: {
-    /* Display number with only two decimal. */
-    cleanNumber(value) {
-      return _.isNumber(value) ? value.toFixed(2) : "—";
-    },
   },
 
   computed: {
@@ -195,6 +196,7 @@ export default Vue.extend({
         this.$store
       );
     },
+
     pageItems(): TableRow[] {
       const end =
         this.currentPage * this.perPage > this.items.length
@@ -202,6 +204,7 @@ export default Vue.extend({
           : this.currentPage * this.perPage;
       return this.items.slice((this.currentPage - 1) * this.perPage, end);
     },
+
     items(): TableRow[] {
       let items = predictionsGetters.getIncludedPredictionTableDataItems(
         this.$store
@@ -222,9 +225,11 @@ export default Vue.extend({
         this.instanceName
       );
     },
+
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
     },
+
     itemCount(): number {
       return this.hasData ? this.items.length : 0;
     },
@@ -241,6 +246,13 @@ export default Vue.extend({
 
     tableFields(): TableColumn[] {
       const tableFields = formatFieldsAsArray(this.fields);
+
+      // Add a specific class to the predicted values
+      tableFields.forEach((tf) => {
+        if (this.predictedCol === tf.key) {
+          tf.class = "predicted-value"; // tdClass for the TD only
+        }
+      });
 
       if (!this.isTimeseries || _.isEmpty(tableFields)) return tableFields;
       // disable sorting for timeseries tables
@@ -285,6 +297,24 @@ export default Vue.extend({
 
     isTimeseries(): boolean {
       return routeGetters.isTimeseries(this.$store);
+    },
+  },
+
+  watch: {
+    highlight() {
+      this.initialized = false;
+    },
+
+    items() {
+      if (!this.initialized && this.items.length) {
+        this.fetchTimeseries();
+        this.initialized = true;
+      }
+      // if the itemCount changes such that it's less than page
+      // we were on, reset to page 1.
+      if (this.itemCount < this.perPage * this.currentPage) {
+        this.currentPage = 1;
+      }
     },
   },
 
@@ -379,22 +409,6 @@ export default Vue.extend({
       });
     },
   },
-  watch: {
-    highlight() {
-      this.initialized = false;
-    },
-    items() {
-      if (!this.initialized && this.items.length) {
-        this.fetchTimeseries();
-        this.initialized = true;
-      }
-      // if the itemCount changes such that it's less than page
-      // we were on, reset to page 1.
-      if (this.itemCount < this.perPage * this.currentPage) {
-        this.currentPage = 1;
-      }
-    },
-  },
 });
 </script>
 
@@ -411,5 +425,11 @@ table tr {
 .table-hover tbody .table-selected-row:hover {
   border-left: 4px solid #ff0067;
   background-color: rgba(255, 0, 103, 0.4);
+}
+
+/* Highlight the predicted column */
+.table td.predicted-value {
+  border-right: 2px solid var(--gray-900);
+  border-left: 2px solid var(--gray-900);
 }
 </style>
