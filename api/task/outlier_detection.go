@@ -34,7 +34,7 @@ type OutlierPoint struct {
 }
 
 // OutlierDetection finds outliers in either tabular or remote sensing data
-func OutlierDetection(dataset *api.Dataset, variable string) (bool, []*OutlierPoint, error) {
+func OutlierDetection(dataset *api.Dataset, variable string) ([]*OutlierPoint, error) {
 	datasetInputDir := env.ResolvePath(dataset.Source, dataset.Folder)
 	features := dataset.Variables
 
@@ -93,22 +93,22 @@ func OutlierDetection(dataset *api.Dataset, variable string) (bool, []*OutlierPo
 
 
 	if err != nil {
-		return false, nil, err
+		return nil, err
 	}
 
 	datasetURI, err := submitPipeline([]string{datasetInputDir}, step, true)
 	if err != nil {
-		return false, nil, err
+		return nil, err
 	}
 
 	res, err := result.ParseResultCSV(datasetURI)
 	if err != nil {
-		return false, nil, err
+		return nil, err
 	}
 
 	header, err := castTypeArray(res[0])
 	if err != nil {
-		return false, nil, err
+		return nil, err
 	}
 
 	outlierLabelIndex := getFieldIndex(header, "outlier_label")
@@ -132,7 +132,7 @@ func OutlierDetection(dataset *api.Dataset, variable string) (bool, []*OutlierPo
 		}
 	}
 
-	return true, outlierData, nil
+	return outlierData, nil
 }
 
 
