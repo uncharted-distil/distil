@@ -27,7 +27,7 @@ import (
 // SolutionVariableRankingHandler generates a route handler that returns the importances associated with
 // with a solution's features.  If a given pipeline produced feature level importances, we'll use those.
 // As a fallback we will rank by the feature/target combination.
-func SolutionVariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func SolutionVariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		solutionID := pat.Param(r, "solution-id")
