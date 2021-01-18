@@ -71,7 +71,6 @@ import ActionColumn, { Action } from "../components/layout/ActionColumn.vue";
 import AddVariablePane from "../components/panel/AddVariablePane.vue";
 import DataSize from "../components/buttons/DataSize.vue";
 import FacetListPane from "../components/panel/FacetListPane.vue";
-import FilterBadge from "../components/FilterBadge.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
 import SearchBar from "../components/layout/SearchBar.vue";
