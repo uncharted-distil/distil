@@ -1,6 +1,6 @@
 <template>
-  <aside class="left-side-panel-container d-flex flex-column">
-    <header class="panel-header">
+  <aside class="d-flex flex-column p-2 h-100 left-side-panel-container">
+    <header class="mb-1">
       <h5>{{ panelTitle }}</h5>
       <!-- <close-button @close="onClose" /> -->
     </header>
@@ -38,15 +38,7 @@ export default Vue.extend({
   border-color: var(--border-color);
   border-style: solid;
   border-width: 0 1px;
-  height: 100%;
-  overflow: hidden;
-  padding: 1rem;
-  position: relative;
   width: var(--width-left-side-panel);
   z-index: var(--z-index-left-side-panel);
-}
-
-.panel-header {
-  margin-bottom: 1rem;
 }
 </style>

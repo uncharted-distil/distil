@@ -42,6 +42,11 @@ import { decodeHighlights, createFilterFromHighlight } from "./highlights";
 
 const HIGHLIGHT = "highlight";
 
+/* 
+  These are the custom relation options for our distil lex grammar that map our
+  filter and highlight actions to lex bar style relation options. Should we
+  ever want even more complex filter relations, we can extend these options.
+*/
 const distilRelationOptions = [
   [INCLUDE_FILTER, "="],
   [EXCLUDE_FILTER, "≠"],
@@ -68,6 +73,14 @@ class DistilRelationState extends RelationState {
   }
 }
 
+/*
+  This is the core function that actually generates a Lex Bar language. It takes
+  a list of distil variables, converts them to an array of Lex Suggestions, then
+  combines that with branching logic based on the suggestion's type to provide
+  transitions to data entry states that fit that variable's type. As we add
+  variable types with distinct entry needs, we can extend this function and the
+  functions it depends on to support it in the Lex Bar language.
+*/
 export function variablesToLexLanguage(variables: Variable[]): Lex {
   const suggestions = variablesToLexSuggestions(variables);
   return Lex.from("field", ValueState, {
@@ -182,6 +195,11 @@ export function filterParamsToLexQuery(
   return lexQuery;
 }
 
+/*
+  This translates a lex query's relation and value states to generate a new 
+  highlight and filter state so that it can be used to update the route and so
+  update the filter and highlight state of the application.
+*/
 export function lexQueryToFiltersAndHighlight(
   lexQuery: any[][],
   dataset: string
@@ -266,6 +284,12 @@ function modeToRelation(mode: string): ValueStateValue {
   }
 }
 
+/* 
+  Formats distil variables to Lex Suggestions AKA ValueStateValues so they can
+  be used in the Lex Language and in translating filter/highlight state into a
+  lex query. Also ungroups some variables such that we can use them in lex 
+  queries as that reflects the current filter/highlight behavior. 
+*/
 function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
   if (!variables) return;
 
@@ -294,6 +318,8 @@ function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
         case MULTIBAND_IMAGE_TYPE:
         case GEOBOUNDS_TYPE:
         case GEOCOORDINATE_TYPE:
+          /* not currently ungrouping any information from these types
+          for lex suggestions, but not unknown either, so no logging */
           break;
         default:
           console.log("unknown grouped type");
@@ -313,13 +339,16 @@ function colTypeToOptionType(colType: string): string {
     return NUMERICAL_FILTER;
   } else if (colType === CATEGORICAL_TYPE || colType === TIMESERIES_TYPE) {
     return CATEGORICAL_FILTER;
-  } else if (isTextType(colType)) {
-    return TEXT_FILTER;
   } else {
     return TEXT_FILTER;
   }
 }
 
+/*
+  Convert Distil Variable Array To a Dictionary For O(1) look up. Used when 
+  converting a filter/highlight from the distil format to a lex query. Unpacks
+  grouped types as filters/highlights can be based on the underlying variable.
+*/
 function buildVariableDictionary(variables: Variable[]) {
   return variables.reduce((a, v) => {
     a[v.key] = v;
@@ -351,6 +380,7 @@ function buildVariableDictionary(variables: Variable[]) {
           break;
         case MULTIBAND_IMAGE_TYPE:
         case GEOBOUNDS_TYPE:
+          /* to do */
           break;
         default:
           console.warn("unknown grouped type");
