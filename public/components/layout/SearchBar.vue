@@ -18,21 +18,22 @@ import { FilterParams } from "../../util/filters";
 
 /** SearchBar component to display LexBar utility
  *
- * @param {string} [filters] - Accept filters to fill the LexBar with a query.
+ * @param {string} [filters] - Accept filter from queryString to fill the LexBar with a query.
+ * @param {string} [highlight] - Accept highlight from queryString to fill the LexBar with a query.
  * @param {Variable[]} [variables] - list of Variable used to fill the LexBar suggestions.
- * @event lexFilter - when the user interact with the search bar, this event fire with the new filters.
  */
 export default Vue.extend({
   name: "SearchBar",
 
+  props: {
+    highlight: { type: String, default: "" },
+    filters: { type: String, default: "" },
+    variables: { type: Array as () => Variable[], default: [] },
+  },
+
   data: () => ({
     lex: null,
   }),
-
-  props: {
-    filters: { type: String, default: "" }, // TODO - random type for now.
-    variables: { type: Array as () => Variable[], default: [] },
-  },
 
   computed: {
     language(): Lex {
@@ -42,6 +43,12 @@ export default Vue.extend({
 
   watch: {
     filters(n, o) {
+      if (n !== o) {
+        this.setQuery();
+      }
+    },
+
+    highlights(n, o) {
       if (n !== o) {
         this.setQuery();
       }
@@ -75,7 +82,11 @@ export default Vue.extend({
 
     setQuery(): void {
       if (!this.lex) return;
-      const lexQuery = filterParamsToLexQuery(this.filters, this.variables);
+      const lexQuery = filterParamsToLexQuery(
+        this.filters,
+        this.highlight,
+        this.variables
+      );
       this.lex.setQuery(lexQuery, false);
     },
   },

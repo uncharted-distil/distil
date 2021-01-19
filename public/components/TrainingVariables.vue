@@ -22,7 +22,9 @@
       :rows-per-page="numRowsPerPage"
       :summaries="trainingVariableSummaries"
     >
-      <div class="available-variables-menu">
+      <div
+        class="d-flex flex-row justify-content-between align-items-center my-2 mx-1"
+      >
         <div>
           {{ subtitle }}
         </div>
