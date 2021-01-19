@@ -135,7 +135,7 @@ export default Vue.extend({
       };
     },
     gridColStyle(): string {
-      return `grid-template-columns: repeat(${this.cols}, ${this.imageWidth}px); grid-template-rows: repeat(${this.rows}, ${this.imageHeight}px);`;
+      return `grid-template-columns: repeat(${this.cols}, ${this.imageWidth}px); grid-template-rows: repeat(${this.rows}, ${this.imageHeight}px);padding:5px;`;
     },
     title(): string {
       return `coordinates [${this.bounds[0][1].toFixed(
