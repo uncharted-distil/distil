@@ -124,7 +124,7 @@ func OutlierDetection(dataset *api.Dataset, variable string) ([]*OutlierPoint, e
 
 	outlierData := make([]*OutlierPoint, len(res)-1)
 	for i, v := range res[1:] {
-		label := createFriendlyLabel(v[outlierLabelIndex].(string))
+		label := createFriendlyOutlierLabel(v[outlierLabelIndex].(string))
 
 		outlierData[i] = &OutlierPoint{
 			D3MIndex:    v[d3mIndex].(string),

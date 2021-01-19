@@ -258,6 +258,13 @@ func createFriendlyLabel(label string) string {
 	return fmt.Sprintf("Pattern %s", string('A'-'0'+label[0]))
 }
 
+func createFriendlyOutlierLabel(label string) string {
+	if label == "-1" {
+		return "anomaly"
+	}
+	return "regular"
+}
+
 func getFieldIndex(header []string, fieldName string) int {
 	for i, f := range header {
 		if f == fieldName {
