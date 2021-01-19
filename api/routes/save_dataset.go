@@ -89,7 +89,13 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 			handleError(w, err)
 			return
 		}
-		// version dataset
+
+		// update properties on the dataset (pull latest from store to pick up any other changes)
+		ds, err = metaStorage.FetchDataset(dataset, true, true, true)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 		ds.Immutable = true
 		// is no longer a clone due to the dropping of the filterParams
 		ds.Clone = false

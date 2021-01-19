@@ -162,70 +162,83 @@ func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset,
 		return err
 	}
 
-	if parentDS.LearningDataset != "" {
-		// determine if there are new columns that were not part of the original dataset
-		parentVarMap := mapVariables(parentDS.Variables, func(variable *model.Variable) string { return variable.Key })
-		newVars := []*model.Variable{}
-		for _, v := range metaDataset.Variables {
-			if v.DistilRole == model.VarDistilRoleData {
-				if parentVarMap[v.Key] == nil {
-					newVars = append(newVars, v)
-				}
+	if parentDS.LearningDataset == "" {
+		return nil
+	}
+
+	// determine if there are new columns that were not part of the original dataset
+	parentVarMap := mapVariables(parentDS.Variables, func(variable *model.Variable) string { return variable.Key })
+	newVars := []*model.Variable{}
+	for _, v := range metaDataset.Variables {
+		if v.DistilRole == model.VarDistilRoleData {
+			if parentVarMap[v.Key] == nil {
+				newVars = append(newVars, v)
 			}
 		}
+	}
 
-		// copy the learning dataset
-		learningFolder := fmt.Sprintf("%s-featurized", newDataset.Metadata.ID)
-		learningFolder = path.Join(path.Dir(parentDS.LearningDataset), learningFolder)
-		err = util.Copy(parentDS.LearningDataset, learningFolder)
-		if err != nil {
-			return err
-		}
+	// copy the learning dataset
+	learningFolder := fmt.Sprintf("%s-featurized", newDataset.Metadata.ID)
+	learningFolder = path.Join(path.Dir(parentDS.LearningDataset), learningFolder)
+	err = util.Copy(parentDS.LearningDataset, learningFolder)
+	if err != nil {
+		return err
+	}
 
-		// read the prefeaturized data (need to load the metadata to read the data)
-		preFeaturizedDataset, err := serialization.ReadDataset(path.Join(learningFolder, compute.D3MDataSchema))
-		if err != nil {
-			return err
-		}
-		preFeaturizedMainDR := preFeaturizedDataset.Metadata.GetMainDataResource()
-		preFeaturizedVarMap := mapVariables(preFeaturizedMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
-		preFeaturizedD3MIndex := preFeaturizedVarMap[model.D3MIndexFieldName].Index
+	// read the prefeaturized data (need to load the metadata to read the data)
+	preFeaturizedDataset, err := serialization.ReadDataset(path.Join(learningFolder, compute.D3MDataSchema))
+	if err != nil {
+		return err
+	}
+	preFeaturizedMainDR := preFeaturizedDataset.Metadata.GetMainDataResource()
+	preFeaturizedVarMap := mapVariables(preFeaturizedMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
+	preFeaturizedD3MIndex := preFeaturizedVarMap[model.D3MIndexFieldName].Index
 
-		// add the missing columns row by row and only retain rows in the new dataset
-		// first build up the new variables by d3m index map
-		// then cycle through the featurized rows and append the variables
-		newDSD3MIndex := exportVarMap[model.D3MIndexFieldName].Index
-		newDataMap := map[string][]string{}
-		for _, r := range newDataset.Data[1:] {
-			newVarsData := []string{}
-			for i := 0; i < len(newVars); i++ {
-				newVarsData = append(newVarsData, r[newVars[i].Index])
-			}
-			newDataMap[r[newDSD3MIndex]] = newVarsData
-		}
-
-		// add the new fields to the metadata to generate the proper header
+	// add the missing columns row by row and only retain rows in the new dataset
+	// first build up the new variables by d3m index map
+	// then cycle through the featurized rows and append the variables
+	newDSD3MIndex := exportVarMap[model.D3MIndexFieldName].Index
+	newDataMap := map[string][]string{}
+	for _, r := range newDataset.Data[1:] {
+		newVarsData := []string{}
 		for i := 0; i < len(newVars); i++ {
-			newVar := newVars[i]
-			newVar.Index = i + len(preFeaturizedMainDR.Variables)
-			preFeaturizedMainDR.Variables = append(preFeaturizedMainDR.Variables, newVar)
+			newVarsData = append(newVarsData, r[newVars[i].Index])
 		}
+		newDataMap[r[newDSD3MIndex]] = newVarsData
+	}
 
-		preFeaturizedOutput := [][]string{preFeaturizedMainDR.GenerateHeader()}
-		for _, row := range preFeaturizedDataset.Data[1:] {
-			d3mIndexPre := row[preFeaturizedD3MIndex]
-			if newDataMap[d3mIndexPre] != nil {
-				rowComplete := append(row, newDataMap[d3mIndexPre]...)
-				preFeaturizedOutput = append(preFeaturizedOutput, rowComplete)
-			}
-		}
+	// add the new fields to the metadata to generate the proper header
+	for i := 0; i < len(newVars); i++ {
+		newVar := newVars[i]
+		newVar.Index = i + len(preFeaturizedMainDR.Variables)
+		preFeaturizedMainDR.Variables = append(preFeaturizedMainDR.Variables, newVar)
+	}
 
-		// output the new pre featurized data
-		preFeaturizedDataset.Data = preFeaturizedOutput
-		err = serialization.WriteDataset(learningFolder, preFeaturizedDataset)
-		if err != nil {
-			return err
+	preFeaturizedOutput := [][]string{preFeaturizedMainDR.GenerateHeader()}
+	for _, row := range preFeaturizedDataset.Data[1:] {
+		d3mIndexPre := row[preFeaturizedD3MIndex]
+		if newDataMap[d3mIndexPre] != nil {
+			rowComplete := append(row, newDataMap[d3mIndexPre]...)
+			preFeaturizedOutput = append(preFeaturizedOutput, rowComplete)
 		}
+	}
+
+	// output the new pre featurized data
+	preFeaturizedDataset.Data = preFeaturizedOutput
+	err = serialization.WriteDataset(learningFolder, preFeaturizedDataset)
+	if err != nil {
+		return err
+	}
+
+	// update the learning dataset for the new dataset
+	metaDataset, err = metaStorage.FetchDataset(metaDataset.ID, true, true, true)
+	if err != nil {
+		return err
+	}
+	metaDataset.LearningDataset = learningFolder
+	err = metaStorage.UpdateDataset(metaDataset)
+	if err != nil {
+		return err
 	}
 
 	return nil
