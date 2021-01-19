@@ -78,18 +78,7 @@ func ReadDataset(schemaPath string) (*api.RawDataset, error) {
 	}
 
 	dataPath := model.GetResourcePath(schemaPath, meta.GetMainDataResource())
-	storage := GetStorage(dataPath)
-	data, err := storage.ReadData(dataPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return &api.RawDataset{
-		Name:     meta.Name,
-		ID:       meta.ID,
-		Data:     data,
-		Metadata: meta,
-	}, nil
+	return GetStorage(dataPath).ReadDataset(schemaPath)
 }
 
 // WriteDataset determines which storage engine to use and then writes out the

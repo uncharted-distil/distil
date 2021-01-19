@@ -204,20 +204,20 @@ func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset,
 			newDataMap[r[newDSD3MIndex]] = newVarsData
 		}
 
-		preFeaturizedOutput := [][]string{}
+		// add the new fields to the metadata to generate the proper header
+		for i := 0; i < len(newVars); i++ {
+			newVar := newVars[i]
+			newVar.Index = i + len(preFeaturizedMainDR.Variables)
+			preFeaturizedMainDR.Variables = append(preFeaturizedMainDR.Variables, newVar)
+		}
+
+		preFeaturizedOutput := [][]string{preFeaturizedMainDR.GenerateHeader()}
 		for _, row := range preFeaturizedDataset.Data[1:] {
 			d3mIndexPre := row[preFeaturizedD3MIndex]
 			if newDataMap[d3mIndexPre] != nil {
 				rowComplete := append(row, newDataMap[d3mIndexPre]...)
 				preFeaturizedOutput = append(preFeaturizedOutput, rowComplete)
 			}
-		}
-
-		// add the new fields to the metadata
-		for i := 0; i < len(newVars); i++ {
-			newVar := newVars[i]
-			newVar.Index = i + len(preFeaturizedMainDR.Variables)
-			preFeaturizedMainDR.Variables = append(preFeaturizedMainDR.Variables, newVar)
 		}
 
 		// output the new pre featurized data
