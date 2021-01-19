@@ -430,6 +430,5 @@ table tr {
 /* Highlight the predicted column */
 .table td.predicted-value {
   border-right: 2px solid var(--gray-900);
-  border-left: 2px solid var(--gray-900);
 }
 </style>
