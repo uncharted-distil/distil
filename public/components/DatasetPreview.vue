@@ -9,16 +9,16 @@
       }"
       @click.stop="setActiveDataset()"
     >
-      <a class="nav-link">
+      <a class="nav-link dataset-name">
         <i class="fa fa-table" /> <b>Dataset Name:</b>
         {{ dataset.name }}
       </a>
       <a class="nav-link">
-        <b>Features:</b>
+        <b>Features</b>
         {{ filterVariablesByFeature(dataset.variables).length }}
       </a>
-      <a class="nav-link"><b>Rows:</b> {{ dataset.numRows }}</a>
-      <a class="nav-link"><b>Size:</b> {{ formatBytes(dataset.numBytes) }}</a>
+      <a class="nav-link"><b>Rows</b> {{ dataset.numRows }}</a>
+      <a class="nav-link"><b>Size</b> {{ formatBytes(dataset.numBytes) }}</a>
       <b-button
         v-if="!dataset.immutable && !isImportReady"
         variant="danger"
@@ -26,7 +26,7 @@
         title="Delete dataset"
         @click.stop="onDeleteClicked(dataset)"
       >
-        <i class="fa fa-trash" aria-hidden="true"></i>
+        <i class="fa fa-trash" aria-hidden="true" />
       </b-button>
       <a v-if="isImportReady">
         <b-button
@@ -73,34 +73,33 @@
         </div>
       </div>
 
+      <!-- Description -->
+      <div v-if="expanded && !!highlightedDescription()" class="row mt-1">
+        <div class="col-12">
+          <b>Full Description:</b>
+          <div v-html="highlightedDescription()" />
+        </div>
+      </div>
+
+      <!-- Actions -->
       <div class="row mt-1">
         <div class="col-12 d-flex justify-content-center">
           <b-button
-            v-if="!expanded"
+            v-if="!!highlightedDescription()"
             class="flex-grow-1 hover"
             variant="outline-secondary"
             @click="toggleExpansion()"
           >
-            More Details...
+            <span v-if="!expanded">More</span>
+            <span v-else>Less</span> Details...
           </b-button>
-          <template v-else>
-            <span><b>Full Description:</b></span>
-            <p v-html="highlightedDescription" />
-            <b-button
-              class="flex-grow-1 hover"
-              variant="outline-secondary"
-              @click="toggleExpansion()"
-            >
-              Less Details...
-            </b-button>
-          </template>
           <b-button
             v-if="isPrototype"
             variant="outline-secondary"
             class="ml-2"
             @click="exploreDataset"
           >
-            Explore Dataset
+            <i class="fa fa-stack-overflow" /> Explore Dataset
           </b-button>
         </div>
       </div>
@@ -138,7 +137,7 @@ import { Feature, Activity, SubActivity } from "../util/userEvents";
 const NUM_TOP_FEATURES = 5;
 
 export default Vue.extend({
-  name: "dataset-preview",
+  name: "DatasetPreview",
 
   components: {
     ErrorModal,
@@ -218,9 +217,11 @@ export default Vue.extend({
         details: { dataset: this.dataset.id },
       });
     },
+
     toggleExpansion() {
       this.expanded = !this.expanded;
     },
+
     highlightedDescription(): string {
       const terms = this.terms;
       if (_.isEmpty(terms)) {
@@ -234,6 +235,7 @@ export default Vue.extend({
         '<span class="highlight">$1</span>'
       );
     },
+
     addRecentDataset(dataset: string) {
       const datasets = localStorage.get("recent-datasets") || [];
       if (datasets.indexOf(dataset) === -1) {
@@ -283,6 +285,16 @@ export default Vue.extend({
   justify-content: space-between;
   border: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.dataset-header > *:not(.dataset-name) {
+  /* Keep everything but the title uncollaspable */
+  flex-shrink: 0;
+}
+
+.dataset-header > .nav-link:not(.dataset-name) b {
+  /* Put the value on a new line */
+  display: block;
 }
 
 .card-result .card-header {
