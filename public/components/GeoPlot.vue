@@ -990,6 +990,16 @@ export default Vue.extend({
         const p2 = this.renderer.latlngToNormalized(area.coordinates[1]);
         const color = Color(area.color).rgb().object(); // convert hex color to rgb
         const maxVal = 255;
+        const v = { x: p1.x - p2.x, y: p1.y - p2.y };
+        const magnitude = Math.sqrt(v.x * v.x + v.y * v.y);
+        v.x /= magnitude;
+        v.y /= magnitude;
+        // this add a little distance between tiles to make it easier to see individual tiles in contiguous areas
+        const distance = 0.000002;
+        p1.x = p1.x - v.x * distance;
+        p1.y = p1.y - v.y * distance;
+        p2.x = p2.x + v.x * distance;
+        p2.y = p2.y + v.y * distance;
         // normalize color values
         color.a = this.quadOpacity;
         color.r /= maxVal;
