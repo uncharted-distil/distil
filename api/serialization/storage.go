@@ -69,8 +69,8 @@ func GetParquetStorage() Storage {
 	return parquetStorage
 }
 
-// ReadData reads the metadata to find the main data reference, then reads that.
-func ReadData(schemaPath string) ([][]string, error) {
+// ReadDataset reads the metadata to find the main data reference, then reads that.
+func ReadDataset(schemaPath string) (*api.RawDataset, error) {
 	// metadata can be read by CSV storage
 	meta, err := csvStorage.ReadMetadata(schemaPath)
 	if err != nil {
@@ -84,5 +84,19 @@ func ReadData(schemaPath string) ([][]string, error) {
 		return nil, err
 	}
 
-	return data, nil
+	return &api.RawDataset{
+		Name:     meta.Name,
+		ID:       meta.ID,
+		Data:     data,
+		Metadata: meta,
+	}, nil
+}
+
+// WriteDataset determines which storage engine to use and then writes out the
+// metadata and the data using it.
+func WriteDataset(folderPath string, dataset *api.RawDataset) error {
+	// use the main data resource to determine the storage engine
+	storage := GetStorage(dataset.Metadata.GetMainDataResource().ResPath)
+
+	return storage.WriteDataset(folderPath, dataset)
 }
