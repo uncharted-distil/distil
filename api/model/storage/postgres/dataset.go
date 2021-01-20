@@ -168,15 +168,19 @@ func (s *Storage) dropTable(table string) error {
 	return nil
 }
 func (s *Storage) cloneTable(existingTable string, newTable string, copyData bool) error {
-	sql := fmt.Sprintf("CREATE TABLE %s AS TABLE %s", newTable, existingTable)
-	if !copyData {
-		sql = fmt.Sprintf("%s WITH NO DATA", sql)
-	}
-	sql = fmt.Sprintf("%s;", sql)
-
+	// copy indices and columns (this does not copy data need separate query for that)
+	sql := fmt.Sprintf("CREATE TABLE %s (LIKE %s INCLUDING ALL);", newTable, existingTable)
 	_, err := s.client.Exec(sql)
 	if err != nil {
 		return errors.Wrapf(err, "unable to clone table")
+	}
+	// if copy data insert data from other table
+	if copyData{
+		sql = fmt.Sprintf("INSERT INTO %s SELECT * FROM %s;", newTable, existingTable)
+		_, err := s.client.Exec(sql)
+		if err != nil {
+			return errors.Wrapf(err, "unable to clone table")
+		}
 	}
 
 	return nil
