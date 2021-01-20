@@ -293,7 +293,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	}
 
 	// Translate from display name to storage name.
-	targetDisplayName, err := s.getDisplayName(dataset, targetVariable.Key)
+	targetHeaderName, err := s.getHeaderName(dataset, targetVariable.Key)
 	if err != nil {
 		return errors.Wrap(err, "unable to map target name")
 	}
@@ -304,9 +304,9 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 	for i, v := range records[0] {
 		fieldsHeader[v] = i
 	}
-	targetIndex, ok := fieldsHeader[targetDisplayName]
+	targetIndex, ok := fieldsHeader[targetHeaderName]
 	if !ok {
-		return errors.Wrapf(err, "unable to find target col '%s' in result header", targetDisplayName)
+		return errors.Wrapf(err, "unable to find target col '%s' in result header", targetHeaderName)
 	}
 	d3mIndexIndex, ok := fieldsHeader[model.D3MIndexFieldName]
 	if !ok {
@@ -1001,20 +1001,13 @@ func (s *Storage) getIsWeighted(resultURI string, weightTableName string) (bool,
 	return bool(values[0].(bool)), nil
 }
 
-func (s *Storage) getDisplayName(dataset string, key string) (string, error) {
-	displayName := ""
-	variables, err := s.metadata.FetchVariables(dataset, false, false, false)
+func (s *Storage) getHeaderName(dataset string, key string) (string, error) {
+	variable, err := s.metadata.FetchVariable(dataset, key)
 	if err != nil {
-		return "", errors.Wrap(err, "unable fetch variables for name mapping")
+		return "", errors.Wrap(err, "unable fetch variable for name mapping")
 	}
 
-	for _, v := range variables {
-		if v.Key == key {
-			displayName = v.DisplayName
-		}
-	}
-
-	return displayName, nil
+	return variable.HeaderName, nil
 }
 
 func mapFields(fields []*model.Variable) map[string]*model.Variable {

@@ -432,6 +432,8 @@ func createFitSolutionRequest(datasetURI string, fittedSolutionID string) *pipel
 }
 
 func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, err error) {
+	log.Errorf("solution '%s' errored: %v", solutionID, err)
+
 	// Check to see if this is a cancellation error and use a specific code for it if so
 	progress := compute.SolutionErroredStatus
 	cause := errors.Cause(err)
@@ -452,8 +454,6 @@ func (s *SolutionRequest) persistSolutionError(statusChan chan SolutionStatus, s
 		Error:      err,
 		Timestamp:  time.Now(),
 	}
-
-	log.Errorf("solution '%s' errored: %v", solutionID, err)
 }
 
 func (s *SolutionRequest) persistSolution(statusChan chan SolutionStatus, solutionStorage api.SolutionStorage, searchID string, solutionID string, explainedSolutionID string) {
@@ -517,28 +517,30 @@ func (s *SolutionRequest) persistRequestStatus(statusChan chan SolutionStatus, s
 
 func (s *SolutionRequest) persistSolutionResults(statusChan chan SolutionStatus, client *compute.Client, solutionStorage api.SolutionStorage,
 	dataStorage api.DataStorage, initialSearchID string, dataset string, storageName string, initialSearchSolutionID string,
-	fittedSolutionID string, produceRequestID string, resultID string, resultURI string) {
+	fittedSolutionID string, produceRequestID string, resultID string, resultURI string) error {
 	// persist the completed state
 	err := solutionStorage.PersistSolutionState(initialSearchSolutionID, compute.SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-		return
+		return err
 	}
 	// persist result metadata
 	err = solutionStorage.PersistSolutionResult(initialSearchSolutionID, fittedSolutionID, produceRequestID, "test", resultID, resultURI, compute.SolutionCompletedStatus, time.Now())
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-		return
+		return err
 	}
 	// persist results
 	err = dataStorage.PersistResult(dataset, storageName, resultURI, s.TargetFeature.Key)
 	if err != nil {
 		// notify of error
 		s.persistSolutionError(statusChan, solutionStorage, initialSearchID, initialSearchSolutionID, err)
-		return
+		return err
 	}
+
+	return nil
 }
 
 func describeSolution(client *compute.Client, initialSearchSolutionID string) (*pipeline.DescribeSolutionResponse, error) {

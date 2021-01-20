@@ -51,6 +51,7 @@ func (s *Storage) CloneDataset(dataset string, datasetNew string, storageNameNew
 	ds.Name = datasetNew
 	ds.Folder = folderNew
 	ds.Source = metadata.Augmented
+	ds.ParentDataset = dataset
 	// cloned datasets CAN be altered
 	ds.Immutable = false
 	ds.Clone = true
@@ -77,6 +78,7 @@ func (s *Storage) UpdateDataset(dataset *api.Dataset) error {
 		"learningDataset": dataset.LearningDataset,
 		"clone":           dataset.Clone,
 		"immutable":       dataset.Immutable,
+		"parentDataset":   dataset.ParentDataset,
 	}
 
 	bytes, err := json.Marshal(source)
@@ -140,6 +142,7 @@ func (s *Storage) IngestDataset(datasetSource metadata.DatasetSource, meta *mode
 		"learningDataset":  meta.LearningDataset,
 		"clone":            meta.Clone,
 		"immutable":        meta.Immutable,
+		"parentDataset":    "",
 	}
 
 	bytes, err := json.Marshal(source)
@@ -209,6 +212,11 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 		learningDataset, ok := json.String(src, "learningDataset")
 		if !ok {
 			learningDataset = ""
+		}
+		// extract the learning dataset
+		parentDataset, ok := json.String(src, "parentDataset")
+		if !ok {
+			parentDataset = ""
 		}
 		// extract the machine learned summary
 		summaryMachine, ok := json.String(src, "summaryMachine")
@@ -304,6 +312,7 @@ func (s *Storage) parseDatasets(res *elastic.SearchResult, includeIndex bool, in
 			LearningDataset: learningDataset,
 			Immutable:       immutable,
 			Clone:           clone,
+			ParentDataset:   parentDataset,
 		})
 	}
 	return datasets, nil

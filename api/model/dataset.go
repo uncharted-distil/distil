@@ -65,6 +65,7 @@ type Dataset struct {
 	LearningDataset string                 `json:"learningDataset"`
 	Clone           bool                   `json:"clone"`
 	Immutable       bool                   `json:"immutable"`
+	ParentDataset   string                 `json:"parentDataset"`
 }
 
 // QueriedDataset wraps dataset querying components into a single entity.
