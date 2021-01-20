@@ -185,7 +185,7 @@ func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset,
 		return err
 	}
 
-	// read the prefeaturized data (need to load the metadata to read the data)
+	// read the prefeaturized data
 	preFeaturizedDataset, err := serialization.ReadDataset(path.Join(learningFolder, compute.D3MDataSchema))
 	if err != nil {
 		return err
@@ -222,6 +222,11 @@ func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset,
 			preFeaturizedOutput = append(preFeaturizedOutput, rowComplete)
 		}
 	}
+
+	// prefeaturized metadata needs to match the new dataset
+	preFeaturizedDataset.Metadata.ID = newDataset.Metadata.ID
+	preFeaturizedDataset.Metadata.Name = newDataset.Metadata.Name
+	preFeaturizedDataset.Metadata.StorageName = newDataset.Metadata.StorageName
 
 	// output the new pre featurized data
 	preFeaturizedDataset.Data = preFeaturizedOutput
