@@ -23,6 +23,7 @@
         class="mb-3"
         :variables="variables"
         :filters="filters"
+        :highlight="routeHighlight"
         @lex-query="updateFilterFromLexQuery"
       />
 
@@ -70,7 +71,6 @@ import ActionColumn, { Action } from "../components/layout/ActionColumn.vue";
 import AddVariablePane from "../components/panel/AddVariablePane.vue";
 import DataSize from "../components/buttons/DataSize.vue";
 import FacetListPane from "../components/panel/FacetListPane.vue";
-import FilterBadge from "../components/FilterBadge.vue";
 import LeftSidePanel from "../components/layout/LeftSidePanel.vue";
 import ImageMosaic from "../components/ImageMosaic.vue";
 import SearchBar from "../components/layout/SearchBar.vue";
@@ -94,7 +94,7 @@ import { actions as viewActions } from "../store/view/module";
 
 // Util
 import { deepUpdateFiltersInRoute } from "../util/filters";
-import { lexQueryToFilters } from "../util/lex";
+import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import { overlayRouteEntry } from "../util/routes";
 import { getNumIncludedRows } from "../util/row";
 import { spinnerHTML } from "../util/spinner";
@@ -184,6 +184,10 @@ export default Vue.extend({
       );
     },
 
+    dataset(): string {
+      return routeGetters.getRouteDataset(this.$store);
+    },
+
     filters(): string {
       return routeGetters.getRouteFilters(this.$store);
     },
@@ -198,6 +202,10 @@ export default Vue.extend({
 
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
+    },
+
+    routeHighlight(): string {
+      return routeGetters.getRouteHighlight(this.$store);
     },
 
     inactiveMetaTypes(): string[] {
@@ -323,8 +331,8 @@ export default Vue.extend({
     capitalize,
 
     updateFilterFromLexQuery(lexQuery) {
-      const updatedFilter = lexQueryToFilters(lexQuery, this.variables);
-      deepUpdateFiltersInRoute(this.$router, updatedFilter);
+      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
+      deepUpdateFiltersInRoute(this.$router, lqfh.filters);
     },
 
     /* When the user request to fetch a different size of data. */

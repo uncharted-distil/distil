@@ -7,8 +7,9 @@
         variant="secondary"
         class="remove-from-join-button"
         @click="removeFromJoin(dataset.id)"
-        ><i class="fa fa-times"></i
-      ></b-button>
+      >
+        <i class="fa fa-times" />
+      </b-button>
     </div>
     <div class="card-body">
       <div class="row align-items-center justify-content-center">
@@ -34,10 +35,9 @@
 </template>
 
 <script lang="ts">
-import _ from "lodash";
 import Vue from "vue";
 import {
-  sortVariablesByPCARanking,
+  // sortVariablesByPCARanking,
   filterVariablesByFeature,
 } from "../util/data";
 import { formatBytes } from "../util/bytes";
@@ -46,27 +46,28 @@ import { Dataset, Variable } from "../store/dataset/index";
 const NUM_TOP_FEATURES = 5;
 
 export default Vue.extend({
-  name: "dataset-preview-card",
+  name: "DatasetPreviewCard",
 
   props: {
     dataset: Object as () => Dataset,
   },
 
-  computed: {
-    topVariables(): Variable[] {
-      return sortVariablesByPCARanking(this.dataset.variables.slice(0)).slice(
-        0,
-        NUM_TOP_FEATURES
-      );
-    },
-  },
+  // computed: {
+  //   topVariables(): Variable[] {
+  //     const variables = this.dataset.variables.slice(0);
+  //     return sortVariablesByPCARanking(variables).slice(0, NUM_TOP_FEATURES);
+  //   },
+  // },
+
   methods: {
     formatBytes(n: number): string {
       return formatBytes(n);
     },
+
     filterVariablesByFeature(variables: Variable[]): Variable[] {
       return filterVariablesByFeature(variables);
     },
+
     removeFromJoin(arg) {
       this.$emit("remove-from-join", arg);
     },
@@ -74,7 +75,7 @@ export default Vue.extend({
 });
 </script>
 
-<style>
+<style scoped>
 .dataset-card-header {
   display: flex;
   padding: 4px 8px;
@@ -82,6 +83,7 @@ export default Vue.extend({
   justify-content: space-between;
   border: none;
 }
+
 .card-result .card-header {
   background-color: #424242;
 }

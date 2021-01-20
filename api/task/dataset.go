@@ -86,7 +86,7 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 	if ds.DefinitiveTypes {
 		outputPath := path.Join(formattedPath, config.ClassificationOutputPath)
 		log.Infof("write definitve types to '%s'", outputPath)
-		classification := buildClassificationFromMetadata(ds.Metadata)
+		classification := buildClassificationFromMetadata(ds.Metadata.GetMainDataResource().Variables)
 		classification.Path = outputPath
 		err := metadata.WriteClassification(classification, outputPath)
 		if err != nil {
@@ -249,6 +249,145 @@ func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset,
 	return nil
 }
 
+// CreateDatasetFromResult creates a new dataset based on a result set & the input
+// to the model
+func CreateDatasetFromResult(newDatasetName string, predictionDataset string, sourceDataset string, features []string,
+	targetName string, resultURI string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, config env.Config) (string, error) {
+	newDatasetID := model.NormalizeDatasetID(newDatasetName)
+	// get the prediction dataset
+	predictionDS, err := metaStorage.FetchDataset(predictionDataset, true, true, true)
+	if err != nil {
+		return "", err
+	}
+	sourceDS, err := metaStorage.FetchDataset(sourceDataset, true, true, true)
+	if err != nil {
+		return "", err
+	}
+
+	// need to expand feature set to handle groups
+	varsSource := map[string]*model.Variable{}
+	groups := []*model.Variable{}
+	for _, v := range sourceDS.Variables {
+		varsSource[v.Key] = v
+		if v.IsGrouping() {
+			groups = append(groups, v)
+		}
+	}
+	featuresExpanded := []string{}
+	for _, f := range features {
+		featuresExpanded = append(featuresExpanded, getComponentVariables(varsSource[f])...)
+	}
+
+	// extract the data from the database (result + base)
+	data, err := dataStorage.FetchResultDataset(predictionDataset, predictionDS.StorageName, targetName, featuresExpanded, resultURI)
+	if err != nil {
+		return "", err
+	}
+
+	// read the source DS metadata from disk for the new dataset
+	sourceDSDatasetPath := path.Join(env.ResolvePath(sourceDS.Source, sourceDS.Folder), compute.D3MDataSchema)
+	metaDisk, err := metadata.LoadMetadataFromOriginalSchema(sourceDSDatasetPath, false)
+	if err != nil {
+		return "", err
+	}
+	mainDR := metaDisk.GetMainDataResource()
+
+	varsMeta := map[string]*model.Variable{}
+	for _, v := range mainDR.Variables {
+		varsMeta[v.Key] = v
+	}
+
+	// map variables to get type info from source dataset and index from data
+	// need the current types from the source dataset to have the proper definitive types
+	varsNewDataset := make([]*model.Variable, len(data[0]))
+	varsClassification := make([]*model.Variable, len(data[0]))
+	for i, v := range data[0] {
+		// min meta datasets do not have every variable so use source ES dataset if not in metadata
+		variableMeta := varsMeta[v]
+		if variableMeta == nil {
+			variableMeta = varsSource[v]
+		}
+		variableMeta.Index = i
+		variableMeta.SuggestedTypes = nil
+		varsNewDataset[i] = variableMeta
+
+		variableClassification := varsSource[v]
+		variableClassification.Index = i
+		varsClassification[i] = variableClassification
+	}
+	metaDisk.GetMainDataResource().Variables = varsNewDataset
+
+	// make the data resource paths absolute
+	for _, dr := range metaDisk.DataResources {
+		if dr != mainDR {
+			dr.ResPath = model.GetResourcePath(sourceDSDatasetPath, dr)
+		}
+	}
+
+	// store the dataset to disk
+	outputPath := env.ResolvePath(metadata.Augmented, newDatasetName)
+	writer := serialization.GetStorage(metaDisk.GetMainDataResource().ResPath)
+
+	newStorageName, err := dataStorage.GetStorageName(newDatasetName)
+	if err != nil {
+		return "", err
+	}
+
+	metaDisk.ID = newDatasetID
+	metaDisk.Name = newDatasetName
+	metaDisk.StorageName = newStorageName
+	metaDisk.DatasetFolder = newDatasetName
+	rawDS := &api.RawDataset{
+		ID:              metaDisk.ID,
+		Name:            metaDisk.Name,
+		Metadata:        metaDisk,
+		Data:            data,
+		DefinitiveTypes: true,
+	}
+	err = writer.WriteDataset(outputPath, rawDS)
+	if err != nil {
+		return "", err
+	}
+	classificationOutputPath := path.Join(outputPath, config.ClassificationOutputPath)
+	classification := buildClassificationFromMetadata(varsClassification)
+	classification.Path = classificationOutputPath
+	err = metadata.WriteClassification(classification, classificationOutputPath)
+	if err != nil {
+		return "", err
+	}
+
+	// store new dataset metadata
+	ingestConfig := NewConfig(config)
+	cloneSchemaPath := path.Join(outputPath, compute.D3MDataSchema)
+	_, err = IngestMetadata(cloneSchemaPath, cloneSchemaPath, nil, metaStorage,
+		metadata.Augmented, nil, api.DatasetTypeModelling, ingestConfig, false, false)
+	if err != nil {
+		return "", err
+	}
+
+	// add all groups
+	newDS, err := metaStorage.FetchDataset(newDatasetID, true, true, true)
+	if err != nil {
+		return "", err
+	}
+	for _, v := range groups {
+		v.Index = len(newDS.Variables)
+		newDS.Variables = append(newDS.Variables, v)
+	}
+	err = metaStorage.UpdateDataset(newDS)
+	if err != nil {
+		return "", err
+	}
+
+	// ingest to postgres from disk
+	err = IngestPostgres(cloneSchemaPath, cloneSchemaPath, metadata.Augmented, nil, ingestConfig, false, false, false)
+	if err != nil {
+		return "", err
+	}
+
+	return metaDisk.ID, nil
+}
+
 // UpdateExtremas will update every field's extremas in the specified dataset.
 func UpdateExtremas(dataset string, metaStorage api.MetadataStorage, dataStorage api.DataStorage) error {
 	d, err := metaStorage.FetchDataset(dataset, false, false, false)
@@ -299,14 +438,13 @@ func getUniqueString(base string, existing []string) string {
 	return unique
 }
 
-func buildClassificationFromMetadata(meta *model.Metadata) *model.ClassificationData {
+func buildClassificationFromMetadata(variables []*model.Variable) *model.ClassificationData {
 	// cycle through the variables and collect the types
-	mainDR := meta.GetMainDataResource()
 	classification := &model.ClassificationData{
-		Labels:        make([][]string, len(mainDR.Variables)),
-		Probabilities: make([][]float64, len(mainDR.Variables)),
+		Labels:        make([][]string, len(variables)),
+		Probabilities: make([][]float64, len(variables)),
 	}
-	for _, v := range mainDR.Variables {
+	for _, v := range variables {
 		classification.Labels[v.Index] = []string{v.Type}
 		classification.Probabilities[v.Index] = []float64{1}
 	}

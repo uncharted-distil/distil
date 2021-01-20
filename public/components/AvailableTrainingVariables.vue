@@ -23,7 +23,9 @@
       :rows-per-page="numRowsPerPage"
       :summaries="availableVariableSummaries"
     >
-      <div class="available-variables-menu">
+      <div
+        class="d-flex flex-row justify-content-between align-items-center my-2 mx-1"
+      >
         <div>
           {{ subtitle }}
         </div>
@@ -239,13 +241,6 @@ export default Vue.extend({
 .available-training-variables {
   display: flex;
   flex-direction: column;
-}
-
-.available-variables-menu {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  line-height: 30px;
 }
 
 .available-training-variables /deep/ .variable-facets-wrapper {

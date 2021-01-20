@@ -206,6 +206,8 @@ export interface TableColumn {
   weight: number;
   headerTitle: string;
   sortable?: boolean;
+  class?: string;
+  tdClass?: string;
   variant?: string;
 }
 

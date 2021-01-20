@@ -198,6 +198,17 @@ interface Quad {
   iB: number; // id second largest byte
   iA: number; // id largest byte
 }
+export interface SelectionHighlight {
+  context: string;
+  dataset: string;
+  key: string;
+  value: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  };
+}
 // contains the state of the map for things such as event callbacks and the quads to render
 // currently there is two states tiled and clustered
 interface MapState {
@@ -233,7 +244,7 @@ export default Vue.extend({
 
   props: {
     instanceName: String as () => string,
-    dataItems: Array as () => any[],
+    dataItems: { type: Array as () => any[], default: [] },
     dataFields: Object as () => Dictionary<TableColumn>,
     summaries: {
       type: Array as () => VariableSummary[],
@@ -247,6 +258,16 @@ export default Vue.extend({
       default: null,
     },
     maxZoom: { type: Number, default: 17 }, // defaults to max zoom
+    enableSelectionToolEvent: {
+      type: Boolean as () => boolean,
+      default: false,
+    },
+    confidenceAccessFunc: {
+      type: Function,
+      default: (d, idx) => {
+        return d.confidence?.value;
+      },
+    },
   },
 
   data() {
@@ -311,7 +332,10 @@ export default Vue.extend({
       return routeGetters.getRouteTargetVariable(this.$store);
     },
     dataHasConfidence(): boolean {
-      return this.dataItems?.length ? "confidence" in this.dataItems[0] : false;
+      if (!this.dataItems.length) {
+        return false;
+      }
+      return this.confidenceAccessFunc(this.dataItems[0], 0) !== undefined;
     },
     getTopVariables(): string[] {
       const variables = datasetGetters
@@ -479,7 +503,7 @@ export default Vue.extend({
         };
 
         group.points = this.dataItems
-          .map((item) => {
+          .map((item, i) => {
             const lat = this.latValue(fieldSpec, item);
             const lng = this.lngValue(fieldSpec, item);
 
@@ -488,7 +512,7 @@ export default Vue.extend({
                 lng: lng,
                 lat: lat,
                 row: item,
-                color: this.tileColor(item),
+                color: this.tileColor(item, i),
               };
             }
 
@@ -966,6 +990,16 @@ export default Vue.extend({
         const p2 = this.renderer.latlngToNormalized(area.coordinates[1]);
         const color = Color(area.color).rgb().object(); // convert hex color to rgb
         const maxVal = 255;
+        const v = { x: p1.x - p2.x, y: p1.y - p2.y };
+        const magnitude = Math.sqrt(v.x * v.x + v.y * v.y);
+        v.x /= magnitude;
+        v.y /= magnitude;
+        // this add a little distance between tiles to make it easier to see individual tiles in contiguous areas
+        const distance = 0.000002;
+        p1.x = p1.x - v.x * distance;
+        p1.y = p1.y - v.y * distance;
+        p2.x = p2.x + v.x * distance;
+        p2.y = p2.y + v.y * distance;
         // normalize color values
         color.a = this.quadOpacity;
         color.r /= maxVal;
@@ -983,7 +1017,7 @@ export default Vue.extend({
       return result;
     },
     tableDataToAreas(tableData: any[]): Area[] {
-      const areas = tableData.map((item) => {
+      const areas = tableData.map((item, i) => {
         const imageUrl = this.isMultiBandImage ? item.group_id.value : null;
         const fullCoordinates = item.coordinates.value.Elements;
         if (fullCoordinates.some((x) => x === undefined)) return;
@@ -1004,7 +1038,7 @@ export default Vue.extend({
           [fullCoordinates[5].Float, fullCoordinates[4].Float], // Corner C as [Lat, Lng]
         ] as LatLngBoundsLiteral;
 
-        const color = this.tileColor(item);
+        const color = this.tileColor(item, i);
 
         return { item, imageUrl, coordinates, color } as Area;
       });
@@ -1101,6 +1135,15 @@ export default Vue.extend({
         console.error("Error createHighlight no available key");
         return;
       }
+      if (this.enableSelectionToolEvent) {
+        this.$emit("selection-tool-event", {
+          context: this.instanceName,
+          dataset: this.dataset,
+          key: key,
+          value: value,
+        });
+        return;
+      }
       updateHighlight(this.$router, {
         context: this.instanceName,
         dataset: this.dataset,
@@ -1140,16 +1183,16 @@ export default Vue.extend({
       this.isImageDrilldown = false;
     },
 
-    tileColor(item: any) {
+    tileColor(item: any, idx: number) {
       let color = "#255DCC"; // Default
       if (item.isExcluded) {
         return "#999999";
       }
       if (this.isColoringByConfidence) {
-        if (item.confidence === undefined) {
+        if (this.confidenceAccessFunc(item, idx) === undefined) {
           return undefined;
         }
-        return this.colorScale(item.confidence?.value);
+        return this.colorScale(this.confidenceAccessFunc(item, idx));
       }
       if (item[this.targetField] && item[this.predictedField]) {
         color =
