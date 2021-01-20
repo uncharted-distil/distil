@@ -169,7 +169,7 @@ type PredictParams struct {
 	FittedSolutionID   string
 	DatasetConstructor DatasetConstructor
 	OutputPath         string
-	IndexFields 	   []string
+	IndexFields        []string
 	Target             *model.Variable
 	MetaStorage        api.MetadataStorage
 	DataStorage        api.DataStorage
@@ -221,7 +221,7 @@ func ImportPredictionDataset(params *PredictParams) (string, string, error) {
 	meta.DatasetFolder = path.Base(datasetPath)
 	schemaPath = path.Join(datasetPath, compute.D3MDataSchema)
 	datasetStorage := serialization.GetStorage(rawDataPath)
-	variables:=updateMetaDataTypes(params.SolutionStorage, params.MetaStorage, params.DataStorage, meta, params.FittedSolutionID, params.Dataset, meta.StorageName)
+	variables := updateMetaDataTypes(params.SolutionStorage, params.MetaStorage, params.DataStorage, meta, params.FittedSolutionID, params.Dataset, meta.StorageName)
 	if err != nil {
 		return "", "", errors.Wrap(err, "unable to update metadata types")
 	}
@@ -230,7 +230,7 @@ func ImportPredictionDataset(params *PredictParams) (string, string, error) {
 		return "", "", errors.Wrap(err, "unable to update dataset doc")
 	}
 	log.Infof("wrote out schema doc for new dataset with id '%s' at location '%s'", meta.ID, schemaPath)
-	err=createClassification(params, datasetPath, variables)
+	err = createClassification(params, datasetPath, variables)
 	if err != nil {
 		return "", "", errors.Wrap(err, "unable to create classification")
 	}
@@ -249,7 +249,7 @@ func IngestPredictionDataset(params *PredictParams) error {
 	rawDataPath := path.Join(params.Meta.DatasetFolder, compute.D3MDataFolder, compute.D3MLearningData)
 	datasetStorage := serialization.GetStorage(rawDataPath)
 	err = datasetStorage.WriteMetadata(params.SchemaPath, params.Meta, true, false)
-	if err!=nil{
+	if err != nil {
 		return err
 	}
 	// copy the metadata from the source dataset as it should be an exact match
@@ -599,20 +599,20 @@ func createComposedFields(data []*api.FilteredDataValue, fields []string, mapped
 	}
 	return strings.Join(dataToJoin, separator)
 }
-func createClassification(params *PredictParams, datasetPath string, variables []*model.Variable) error{
+func createClassification(params *PredictParams, datasetPath string, variables []*model.Variable) error {
 	outputPath := path.Join(datasetPath, params.Config.ClassificationOutputPath)
 	log.Info("writing predicted dataset type classification to file")
 	classification := buildClassificationFromMetadata(variables)
 	classification.Path = outputPath
 	err := metadata.WriteClassification(classification, outputPath)
 	if err != nil {
-		return  err
+		return err
 	}
 	return nil
 }
 func updateMetaDataTypes(solutionStorage api.SolutionStorage, metaStorage api.MetadataStorage,
-	dataStorage api.DataStorage, meta *model.Metadata, fittedSolutionID string, dataset string, storageName string) [] *model.Variable {
-	variables:=meta.GetMainDataResource().Variables
+	dataStorage api.DataStorage, meta *model.Metadata, fittedSolutionID string, dataset string, storageName string) []*model.Variable {
+	variables := meta.GetMainDataResource().Variables
 	solutionRequest, err := solutionStorage.FetchRequestByFittedSolutionID(fittedSolutionID)
 	if err != nil {
 		return nil
@@ -622,14 +622,14 @@ func updateMetaDataTypes(solutionStorage api.SolutionStorage, metaStorage api.Me
 	if err != nil {
 		return nil
 	}
-	varMap := map[string] *model.Variable{}
-	for _,v:=range trainVariables{
+	varMap := map[string]*model.Variable{}
+	for _, v := range trainVariables {
 		varMap[v.Key] = v
 	}
-	result := [] *model.Variable{}
-	for _,v:=range variables{
+	result := []*model.Variable{}
+	for _, v := range variables {
 		tmp := varMap[v.Key]
-		if tmp != nil{
+		if tmp != nil {
 			tmp.Index = v.Index
 			result = append(result, tmp)
 		}

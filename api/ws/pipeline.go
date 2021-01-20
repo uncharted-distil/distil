@@ -485,12 +485,12 @@ func getTarget(request *apiModel.Request) string {
 }
 
 func createPredictionDataset(requestTask *api.Task, request *api.PredictRequest,
-	predictParams *task.PredictParams) (task.DatasetConstructor, []string,error) {
+	predictParams *task.PredictParams) (task.DatasetConstructor, []string, error) {
 	datasetID := request.DatasetID
 	datasetPath := request.DatasetPath
 	var ds task.DatasetConstructor
 	var err error
-	indexFields:= []string{}
+	indexFields := []string{}
 	if api.HasTaskType(requestTask, compute.RemoteSensingTask) {
 		ds, err = dataset.NewSatelliteDataset(datasetID, "tif", datasetPath)
 		indexFields = dataset.GetSatelliteIndexFields()
@@ -502,12 +502,12 @@ func createPredictionDataset(requestTask *api.Task, request *api.PredictRequest,
 		var data []byte
 		data, err = ioutil.ReadFile(datasetPath)
 		if err != nil {
-			return nil, nil,errors.Wrapf(err, "unable to read raw tabular data")
+			return nil, nil, errors.Wrapf(err, "unable to read raw tabular data")
 		}
 		ds, err = dataset.NewTableDataset(datasetID, data, false)
 	}
 	if err != nil {
-		return nil, nil,err
+		return nil, nil, err
 	}
 
 	return ds, indexFields, nil
