@@ -335,7 +335,40 @@ func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, 
 
 	return s.parseData(res)
 }
+func (s *Storage) createIndex(storageName string, colName string, colType string) error{
+	sql := postgres.GetIndexStatement(storageName, colName, colType)
 
+	_, err := s.client.Exec(sql)
+	if err != nil {
+		return errors.Wrapf(err, "unable to create postgres index")
+	}
+
+	return nil
+}
+// CreateIndices generates indices for the suppled fields on the "dataset"_base table
+func (s *Storage) CreateIndices(dataset string, indexFields []string) error{
+	variables, err:=s.metadata.FetchVariables(dataset, true, true, true)
+	if err != nil{
+		return err
+	}
+	ds,err:=s.metadata.FetchDataset(dataset, false, false, false)
+	if err != nil{
+		return err
+	}
+	mappedVariables:=map[string]*model.Variable{}
+	for _, v := range variables{
+		mappedVariables[v.Key] = v
+	}
+	for _, fieldName := range indexFields {
+		field := mappedVariables[fieldName]
+		log.Infof("creating index on %s", field.Key)
+		err := s.createIndex(getBaseTableName(ds.StorageName), field.Key, field.Type)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 // IsValidDataType checks to see if a specified type is valid for a variable.
 // Multiple simultaneous calls to the function can result in inaccurate.
 func (s *Storage) IsValidDataType(dataset string, storageName string, varName string, varType string) (bool, error) {

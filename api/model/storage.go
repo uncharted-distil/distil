@@ -105,6 +105,7 @@ type DataStorage interface {
 	CloneDataset(dataset string, storageName string, datasetNew string, storageNameNew string) error
 	// DeleteDataset drops all tables associated to storageName
 	DeleteDataset(storageName string) error
+	CreateIndices(dataset string, indexFields []string) error
 }
 
 // SolutionStorageCtor represents a client constructor to instantiate a
