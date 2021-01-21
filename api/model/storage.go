@@ -63,6 +63,7 @@ type DataStorage interface {
 	FetchNumRows(storageName string, variables []*model.Variable) (int, error)
 	FetchData(dataset string, storageName string, filterParams *FilterParams, invert bool, orderByVar *model.Variable) (*FilteredData, error)
 	FetchDataset(dataset string, storageName string, invert bool, filterParams *FilterParams) ([][]string, error)
+	FetchResultDataset(dataset string, storageName string, predictionName string, features []string, resultURI string) ([][]string, error)
 	FetchSummary(dataset string, storageName string, varName string, filterParams *FilterParams, invert bool, mode SummaryMode) (*VariableSummary, error)
 	FetchSummaryByResult(dataset string, storageName string, varName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
 	PersistResult(dataset string, storageName string, resultURI string, target string) error
@@ -104,6 +105,7 @@ type DataStorage interface {
 	CloneDataset(dataset string, storageName string, datasetNew string, storageNameNew string) error
 	// DeleteDataset drops all tables associated to storageName
 	DeleteDataset(storageName string) error
+	CreateIndices(dataset string, indexFields []string) error
 }
 
 // SolutionStorageCtor represents a client constructor to instantiate a

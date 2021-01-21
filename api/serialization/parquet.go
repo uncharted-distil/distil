@@ -49,18 +49,20 @@ func NewParquet() *Parquet {
 
 // ReadDataset reads a raw dataset from the file system, loading the parquet
 // data into memory.
-func (d *Parquet) ReadDataset(uri string) (*api.RawDataset, error) {
-	data, err := d.ReadData(uri)
+func (d *Parquet) ReadDataset(schemaFile string) (*api.RawDataset, error) {
+	meta, err := d.ReadMetadata(schemaFile)
 	if err != nil {
 		return nil, err
 	}
 
-	meta, err := d.ReadMetadata(uri)
+	data, err := d.ReadData(model.GetResourcePath(schemaFile, meta.GetMainDataResource()))
 	if err != nil {
 		return nil, err
 	}
 
 	return &api.RawDataset{
+		ID:       meta.ID,
+		Name:     meta.Name,
 		Data:     data,
 		Metadata: meta,
 	}, nil

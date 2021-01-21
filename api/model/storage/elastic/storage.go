@@ -207,6 +207,9 @@ func (s *Storage) InitializeMetadataStorage(overwrite bool) error {
 				"learningDataset": {
 					"type": "text"
 				},
+				"parentDataset": {
+					"type": "text"
+				},
 				"clone": {
 					"type": "boolean"
 				},

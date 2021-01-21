@@ -197,6 +197,12 @@ export default Vue.extend({
     },
   },
 
+  props: {
+    dataItems: Array as () => any[],
+    dataFields: Object as () => Dictionary<TableColumn>,
+    instanceName: String as () => string,
+  },
+
   data() {
     return {
       sortingBy: undefined,
@@ -205,12 +211,6 @@ export default Vue.extend({
       uniqueTrail: "result-table",
       initialized: false,
     };
-  },
-
-  props: {
-    dataItems: Array as () => any[],
-    dataFields: Object as () => Dictionary<TableColumn>,
-    instanceName: String as () => string,
   },
 
   computed: {
@@ -324,6 +324,13 @@ export default Vue.extend({
     tableFields(): TableColumn[] {
       const tableFields = formatFieldsAsArray(this.fields);
 
+      // Add a specific class to the predicted values
+      tableFields.forEach((tf) => {
+        if (this.predictedCol === tf.key) {
+          tf.class = "predicted-value"; // tdClass for the TD only
+        }
+      });
+
       if (!this.isTimeseries || _.isEmpty(tableFields)) return tableFields;
       // disable sorting for timeseries tables
       tableFields.forEach((tf) => {
@@ -384,6 +391,24 @@ export default Vue.extend({
     },
   },
 
+  watch: {
+    highlight() {
+      this.initialized = false;
+    },
+
+    items() {
+      // if the itemCount changes such that it's less than page
+      // we were on, reset to page 1.
+      if (!this.initialized && this.items.length) {
+        this.fetchTimeseries();
+        this.initialized = true;
+      }
+      if (this.itemCount < this.perPage * this.currentPage) {
+        this.currentPage = 1;
+      }
+    },
+  },
+
   methods: {
     timeserieInfo(id: string): Extrema {
       const timeseries = resultsGetters.getPredictedTimeseries(this.$store);
@@ -432,9 +457,11 @@ export default Vue.extend({
     errorBarWidth(error: number): string {
       return `${Math.abs(this.normalizeError(error) * 50)}%`;
     },
+
     highlight(): Highlight {
       return routeGetters.getDecodedHighlight(this.$store);
     },
+
     errorBarLeft(error: number): string {
       const nerr = this.normalizeError(error);
       if (nerr > 0) {
@@ -512,23 +539,6 @@ export default Vue.extend({
       });
     },
   },
-
-  watch: {
-    highlight() {
-      this.initialized = false;
-    },
-    items() {
-      // if the itemCount changes such that it's less than page
-      // we were on, reset to page 1.
-      if (!this.initialized && this.items.length) {
-        this.fetchTimeseries();
-        this.initialized = true;
-      }
-      if (this.itemCount < this.perPage * this.currentPage) {
-        this.currentPage = 1;
-      }
-    },
-  },
 });
 </script>
 
@@ -566,5 +576,10 @@ table tr {
 .table-hover tbody .table-selected-row:hover {
   border-left: 4px solid #ff0067;
   background-color: rgba(255, 0, 103, 0.4);
+}
+
+/* Highlight the predicted column */
+.table td.predicted-value {
+  border-right: 2px solid var(--gray-900);
 }
 </style>

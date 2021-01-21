@@ -145,7 +145,10 @@ export default Vue.extend({
       return this.currentBrightness.toFixed(2);
     },
     dataset(): string {
-      return routeGetters.getRouteDataset(this.$store);
+      const predDataset = routeGetters.getRoutePredictionsDataset(this.$store);
+      return !!predDataset
+        ? predDataset
+        : routeGetters.getRouteDataset(this.$store);
     },
     files(): Dictionary<any> {
       return datasetGetters.getFiles(this.$store);

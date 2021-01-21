@@ -2,7 +2,7 @@ import axios from "axios";
 import _ from "lodash";
 import { ActionContext } from "vuex";
 import { DistilState } from "../store";
-import { FilterParams } from "../../util/filters";
+import { FilterParams, EXCLUDE_FILTER, Filter } from "../../util/filters";
 import {
   Variable,
   Highlight,
@@ -114,7 +114,92 @@ export const actions = {
     });
     return Promise.all(promises);
   },
+  // fetches
+  async fetchAreaOfInterestInner(
+    context: PredictionContext,
+    args: {
+      produceRequestId: string;
+      dataset: string;
+      highlight: Highlight;
+      size?: number;
+      filter: Filter; // the area of interest
+    }
+  ) {
+    const filterParamsBlank = {
+      highlight: null,
+      variables: [],
+      filters: [],
+    };
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight
+    );
 
+    if (_.isInteger(args.size)) {
+      filterParams.size = args.size;
+    }
+    filterParams.filters.push(args.filter);
+    try {
+      const response = await axios.post(
+        `/distil/prediction-results/${encodeURIComponent(
+          args.produceRequestId
+        )}`,
+        filterParams
+      );
+      mutations.setAreaOfInterestInner(context, response.data);
+    } catch (error) {
+      console.error(
+        `Failed to fetch results from ${args.produceRequestId} with error ${error}`
+      );
+      mutations.setAreaOfInterestInner(context, createEmptyTableData());
+    }
+  },
+  // fetches the tiles that are within the bounds but are filtered by another highlight
+  async fetchAreaOfInterestOuter(
+    context: PredictionContext,
+    args: {
+      produceRequestId: string;
+      dataset: string;
+      highlight: Highlight;
+      size?: number;
+      filter: Filter;
+    }
+  ) {
+    const filterParamsBlank = {
+      highlight: null,
+      variables: [],
+      filters: [],
+    };
+    const filterParams = addHighlightToFilterParams(
+      filterParamsBlank,
+      args.highlight,
+      EXCLUDE_FILTER
+    );
+    // Add the size limit to results if provided.
+    if (_.isInteger(args.size)) {
+      filterParams.size = args.size;
+    }
+    filterParams.filters.push(args.filter);
+    // if highlight is null there is nothing to invert so return null
+    if (filterParams.highlight === null) {
+      mutations.setAreaOfInterestOuter(context, createEmptyTableData());
+      return;
+    }
+    try {
+      const response = await axios.post(
+        `/distil/prediction-results/${args.dataset}/${encodeURIComponent(
+          args.produceRequestId
+        )}`,
+        filterParams
+      );
+      mutations.setAreaOfInterestOuter(context, response.data);
+    } catch (error) {
+      console.error(
+        `Failed to fetch results from ${args.produceRequestId} with error ${error}`
+      );
+      mutations.setAreaOfInterestOuter(context, createEmptyTableData());
+    }
+  },
   async fetchTrainingSummary(
     context: PredictionContext,
     args: {
@@ -377,6 +462,26 @@ export const actions = {
       const params = `${args.produceRequestId}`;
       const response = await axios.get(endPoint + params);
       return response.data;
+    } catch (error) {
+      console.error(error);
+    }
+    return null;
+  },
+
+  async createDataset(
+    context: PredictionContext,
+    args: {
+      produceRequestId: string;
+      newDatasetName: string;
+    }
+  ): Promise<void> {
+    try {
+      const endPoint = "/distil/clone-result/";
+      const params = `${args.produceRequestId}`;
+      const response = await axios.post(
+        `/distil/clone-result/${encodeURIComponent(args.produceRequestId)}`,
+        { datasetName: args.newDatasetName }
+      );
     } catch (error) {
       console.error(error);
     }

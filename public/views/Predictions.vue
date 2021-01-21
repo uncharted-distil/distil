@@ -42,10 +42,10 @@
 <script lang="ts">
 import Vue from "vue";
 import VariableFacets from "../components/facets/VariableFacets.vue";
-import PredictionsDataSlot from "../components/PredictionsDataSlot";
-import PredictionSummaries from "../components/PredictionSummaries";
-import StatusPanel from "../components/StatusPanel";
-import StatusSidebar from "../components/StatusSidebar";
+import PredictionsDataSlot from "../components/PredictionsDataSlot.vue";
+import PredictionSummaries from "../components/PredictionSummaries.vue";
+import StatusPanel from "../components/StatusPanel.vue";
+import StatusSidebar from "../components/StatusSidebar.vue";
 import { VariableSummary, Variable } from "../store/dataset/index";
 import { actions as viewActions } from "../store/view/module";
 import { actions as datasetActions } from "../store/dataset/module";

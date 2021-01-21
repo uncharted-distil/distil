@@ -86,7 +86,7 @@ func CreateDataset(dataset string, datasetCtor DatasetConstructor, outputPath st
 	if ds.DefinitiveTypes {
 		outputPath := path.Join(formattedPath, config.ClassificationOutputPath)
 		log.Infof("write definitve types to '%s'", outputPath)
-		classification := buildClassificationFromMetadata(ds.Metadata)
+		classification := buildClassificationFromMetadata(ds.Metadata.GetMainDataResource().Variables)
 		classification.Path = outputPath
 		err := metadata.WriteClassification(classification, outputPath)
 		if err != nil {
@@ -119,6 +119,18 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 	if err != nil {
 		return "", "", err
 	}
+
+	// need to update metadata variable order to match extracted data
+	header := data[0]
+	exportedVariables := make([]*model.Variable, len(header))
+	exportVarMap := mapVariables(metaDataset.Variables, func(variable *model.Variable) string { return variable.Key })
+	for i, v := range header {
+		variable := exportVarMap[v]
+		variable.Index = i
+		exportedVariables[i] = variable
+	}
+	meta.GetMainDataResource().Variables = exportedVariables
+
 	// update the header with the proper variable names
 	data[0] = meta.GetMainDataResource().GenerateHeader()
 	dataRaw := &api.RawDataset{
@@ -136,7 +148,244 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 		return "", "", err
 	}
 
+	// need to write the prefeaturized version of the dataset if it exists
+	if metaDataset.ParentDataset != "" {
+		err = updateLearningDataset(dataRaw, metaDataset, exportVarMap, metaStorage)
+	}
+
 	return dataset, outputFolder, err
+}
+
+func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset, exportVarMap map[string]*model.Variable, metaStorage api.MetadataStorage) error {
+	parentDS, err := metaStorage.FetchDataset(metaDataset.ParentDataset, false, false, false)
+	if err != nil {
+		return err
+	}
+
+	if parentDS.LearningDataset == "" {
+		return nil
+	}
+
+	// determine if there are new columns that were not part of the original dataset
+	parentVarMap := mapVariables(parentDS.Variables, func(variable *model.Variable) string { return variable.Key })
+	newVars := []*model.Variable{}
+	for _, v := range metaDataset.Variables {
+		if v.DistilRole == model.VarDistilRoleData {
+			if parentVarMap[v.Key] == nil {
+				newVars = append(newVars, v)
+			}
+		}
+	}
+
+	// copy the learning dataset
+	learningFolder := fmt.Sprintf("%s-featurized", newDataset.Metadata.ID)
+	learningFolder = path.Join(path.Dir(parentDS.LearningDataset), learningFolder)
+	err = util.Copy(parentDS.LearningDataset, learningFolder)
+	if err != nil {
+		return err
+	}
+
+	// read the prefeaturized data
+	preFeaturizedDataset, err := serialization.ReadDataset(path.Join(learningFolder, compute.D3MDataSchema))
+	if err != nil {
+		return err
+	}
+	preFeaturizedMainDR := preFeaturizedDataset.Metadata.GetMainDataResource()
+	preFeaturizedVarMap := mapVariables(preFeaturizedMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
+	preFeaturizedD3MIndex := preFeaturizedVarMap[model.D3MIndexFieldName].Index
+
+	// add the missing columns row by row and only retain rows in the new dataset
+	// first build up the new variables by d3m index map
+	// then cycle through the featurized rows and append the variables
+	newDSD3MIndex := exportVarMap[model.D3MIndexFieldName].Index
+	newDataMap := map[string][]string{}
+	for _, r := range newDataset.Data[1:] {
+		newVarsData := []string{}
+		for i := 0; i < len(newVars); i++ {
+			newVarsData = append(newVarsData, r[newVars[i].Index])
+		}
+		newDataMap[r[newDSD3MIndex]] = newVarsData
+	}
+
+	// add the new fields to the metadata to generate the proper header
+	for i := 0; i < len(newVars); i++ {
+		newVar := newVars[i]
+		newVar.Index = i + len(preFeaturizedMainDR.Variables)
+		preFeaturizedMainDR.Variables = append(preFeaturizedMainDR.Variables, newVar)
+	}
+
+	preFeaturizedOutput := [][]string{preFeaturizedMainDR.GenerateHeader()}
+	for _, row := range preFeaturizedDataset.Data[1:] {
+		d3mIndexPre := row[preFeaturizedD3MIndex]
+		if newDataMap[d3mIndexPre] != nil {
+			rowComplete := append(row, newDataMap[d3mIndexPre]...)
+			preFeaturizedOutput = append(preFeaturizedOutput, rowComplete)
+		}
+	}
+
+	// prefeaturized metadata needs to match the new dataset
+	preFeaturizedDataset.Metadata.ID = newDataset.Metadata.ID
+	preFeaturizedDataset.Metadata.Name = newDataset.Metadata.Name
+	preFeaturizedDataset.Metadata.StorageName = newDataset.Metadata.StorageName
+
+	// output the new pre featurized data
+	preFeaturizedDataset.Data = preFeaturizedOutput
+	err = serialization.WriteDataset(learningFolder, preFeaturizedDataset)
+	if err != nil {
+		return err
+	}
+
+	// update the learning dataset for the new dataset
+	metaDataset, err = metaStorage.FetchDataset(metaDataset.ID, true, true, true)
+	if err != nil {
+		return err
+	}
+	metaDataset.LearningDataset = learningFolder
+	err = metaStorage.UpdateDataset(metaDataset)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// CreateDatasetFromResult creates a new dataset based on a result set & the input
+// to the model
+func CreateDatasetFromResult(newDatasetName string, predictionDataset string, sourceDataset string, features []string,
+	targetName string, resultURI string, metaStorage api.MetadataStorage, dataStorage api.DataStorage, config env.Config) (string, error) {
+	newDatasetID := model.NormalizeDatasetID(newDatasetName)
+	// get the prediction dataset
+	predictionDS, err := metaStorage.FetchDataset(predictionDataset, true, true, true)
+	if err != nil {
+		return "", err
+	}
+	sourceDS, err := metaStorage.FetchDataset(sourceDataset, true, true, true)
+	if err != nil {
+		return "", err
+	}
+
+	// need to expand feature set to handle groups
+	varsSource := map[string]*model.Variable{}
+	groups := []*model.Variable{}
+	for _, v := range sourceDS.Variables {
+		varsSource[v.Key] = v
+		if v.IsGrouping() {
+			groups = append(groups, v)
+		}
+	}
+	featuresExpanded := []string{}
+	for _, f := range features {
+		featuresExpanded = append(featuresExpanded, getComponentVariables(varsSource[f])...)
+	}
+
+	// extract the data from the database (result + base)
+	data, err := dataStorage.FetchResultDataset(predictionDataset, predictionDS.StorageName, targetName, featuresExpanded, resultURI)
+	if err != nil {
+		return "", err
+	}
+
+	// read the source DS metadata from disk for the new dataset
+	sourceDSDatasetPath := path.Join(env.ResolvePath(sourceDS.Source, sourceDS.Folder), compute.D3MDataSchema)
+	metaDisk, err := metadata.LoadMetadataFromOriginalSchema(sourceDSDatasetPath, false)
+	if err != nil {
+		return "", err
+	}
+	mainDR := metaDisk.GetMainDataResource()
+
+	varsMeta := map[string]*model.Variable{}
+	for _, v := range mainDR.Variables {
+		varsMeta[v.Key] = v
+	}
+
+	// map variables to get type info from source dataset and index from data
+	// need the current types from the source dataset to have the proper definitive types
+	varsNewDataset := make([]*model.Variable, len(data[0]))
+	varsClassification := make([]*model.Variable, len(data[0]))
+	for i, v := range data[0] {
+		// min meta datasets do not have every variable so use source ES dataset if not in metadata
+		variableMeta := varsMeta[v]
+		if variableMeta == nil {
+			variableMeta = varsSource[v]
+		}
+		variableMeta.Index = i
+		variableMeta.SuggestedTypes = nil
+		varsNewDataset[i] = variableMeta
+
+		variableClassification := varsSource[v]
+		variableClassification.Index = i
+		varsClassification[i] = variableClassification
+	}
+	metaDisk.GetMainDataResource().Variables = varsNewDataset
+
+	// make the data resource paths absolute
+	for _, dr := range metaDisk.DataResources {
+		if dr != mainDR {
+			dr.ResPath = model.GetResourcePath(sourceDSDatasetPath, dr)
+		}
+	}
+
+	// store the dataset to disk
+	outputPath := env.ResolvePath(metadata.Augmented, newDatasetName)
+	writer := serialization.GetStorage(metaDisk.GetMainDataResource().ResPath)
+
+	newStorageName, err := dataStorage.GetStorageName(newDatasetName)
+	if err != nil {
+		return "", err
+	}
+
+	metaDisk.ID = newDatasetID
+	metaDisk.Name = newDatasetName
+	metaDisk.StorageName = newStorageName
+	metaDisk.DatasetFolder = newDatasetName
+	rawDS := &api.RawDataset{
+		ID:              metaDisk.ID,
+		Name:            metaDisk.Name,
+		Metadata:        metaDisk,
+		Data:            data,
+		DefinitiveTypes: true,
+	}
+	err = writer.WriteDataset(outputPath, rawDS)
+	if err != nil {
+		return "", err
+	}
+	classificationOutputPath := path.Join(outputPath, config.ClassificationOutputPath)
+	classification := buildClassificationFromMetadata(varsClassification)
+	classification.Path = classificationOutputPath
+	err = metadata.WriteClassification(classification, classificationOutputPath)
+	if err != nil {
+		return "", err
+	}
+
+	// store new dataset metadata
+	ingestConfig := NewConfig(config)
+	cloneSchemaPath := path.Join(outputPath, compute.D3MDataSchema)
+	_, err = IngestMetadata(cloneSchemaPath, cloneSchemaPath, nil, metaStorage,
+		metadata.Augmented, nil, api.DatasetTypeModelling, ingestConfig, false, false)
+	if err != nil {
+		return "", err
+	}
+
+	// add all groups
+	newDS, err := metaStorage.FetchDataset(newDatasetID, true, true, true)
+	if err != nil {
+		return "", err
+	}
+	for _, v := range groups {
+		v.Index = len(newDS.Variables)
+		newDS.Variables = append(newDS.Variables, v)
+	}
+	err = metaStorage.UpdateDataset(newDS)
+	if err != nil {
+		return "", err
+	}
+
+	// ingest to postgres from disk
+	err = IngestPostgres(cloneSchemaPath, cloneSchemaPath, metadata.Augmented, nil, ingestConfig, false, false, false)
+	if err != nil {
+		return "", err
+	}
+
+	return metaDisk.ID, nil
 }
 
 // UpdateExtremas will update every field's extremas in the specified dataset.
@@ -189,14 +438,13 @@ func getUniqueString(base string, existing []string) string {
 	return unique
 }
 
-func buildClassificationFromMetadata(meta *model.Metadata) *model.ClassificationData {
+func buildClassificationFromMetadata(variables []*model.Variable) *model.ClassificationData {
 	// cycle through the variables and collect the types
-	mainDR := meta.GetMainDataResource()
 	classification := &model.ClassificationData{
-		Labels:        make([][]string, len(mainDR.Variables)),
-		Probabilities: make([][]float64, len(mainDR.Variables)),
+		Labels:        make([][]string, len(variables)),
+		Probabilities: make([][]float64, len(variables)),
 	}
-	for _, v := range mainDR.Variables {
+	for _, v := range variables {
 		classification.Labels[v.Index] = []string{v.Type}
 		classification.Probabilities[v.Index] = []float64{1}
 	}

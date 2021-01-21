@@ -44,8 +44,9 @@ var (
 
 // Cache is used to cache data in memory. It can be persisted to disk as needed.
 type Cache struct {
-	cache      *gc.Cache
-	sourceFile string
+	cache       *gc.Cache
+	sourceFile  string
+	readEnabled bool
 }
 
 // PersistCache stores the cache to disk.
@@ -191,7 +192,7 @@ func (q *Queue) Done() {
 
 // InitializeCache sets up an empty cache or if a source file provided, reads
 // the cache from the source file.
-func InitializeCache(sourceFile string) error {
+func InitializeCache(sourceFile string, readEnabled bool) error {
 	var c *gc.Cache
 	if util.FileExists(sourceFile) {
 		b, err := ioutil.ReadFile(sourceFile)
@@ -212,8 +213,9 @@ func InitializeCache(sourceFile string) error {
 	}
 
 	cache = &Cache{
-		cache:      c,
-		sourceFile: sourceFile,
+		cache:       c,
+		sourceFile:  sourceFile,
+		readEnabled: readEnabled,
 	}
 
 	return nil
@@ -243,17 +245,23 @@ func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce [
 		datasets:        datasets,
 		datasetsProduce: datasetsProduce,
 	}
+
 	// check cache to see if results are already available
+	// if cache isnt enabled, we should still persist it for future runs
 	hashedPipelineUniqueKey, err := queueTask.hashUnique()
-	if shouldCache {
-		if err != nil {
-			return "", err
+	if cache.readEnabled {
+		if shouldCache {
+			if err != nil {
+				return "", err
+			}
+			entry, found := cache.cache.Get(hashedPipelineUniqueKey)
+			if found {
+				log.Infof("returning cached entry for pipeline")
+				return entry.(string), nil
+			}
 		}
-		entry, found := cache.cache.Get(hashedPipelineUniqueKey)
-		if found {
-			log.Infof("returning cached entry for pipeline")
-			return entry.(string), nil
-		}
+	} else {
+		log.Infof("pipeline cache reading disabled")
 	}
 	// get equivalency key for enqueuing
 	hashedPipelineEquivKey, err := queueTask.hashEquivalent()

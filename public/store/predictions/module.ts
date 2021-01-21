@@ -5,7 +5,6 @@ import { actions as moduleActions } from "./actions";
 import { mutations as moduleMutations } from "./mutations";
 import { DistilState } from "../store";
 import { getStoreAccessors } from "vuex-typescript";
-import { namespace } from "d3";
 
 export const predictionsModule: Module<PredictionState, DistilState> = {
   getters: moduleGetters,
@@ -22,6 +21,12 @@ const { commit, read, dispatch } = getStoreAccessors<
 
 // Typed getters
 export const getters = {
+  getAreaOfInterestInnerDataItems: read(
+    moduleGetters.getAreaOfInterestInnerDataItems
+  ),
+  getAreaOfInterestOuterDataItems: read(
+    moduleGetters.getAreaOfInterestOuterDataItems
+  ),
   // result
   getFittedSolutionIdFromPrediction: read(
     moduleGetters.getFittedSolutionIdFromPrediction
@@ -58,6 +63,9 @@ export const getters = {
 
 // Typed actions
 export const actions = {
+  //areaOfInterest for geoplot
+  fetchAreaOfInterestInner: dispatch(moduleActions.fetchAreaOfInterestInner),
+  fetchAreaOfInterestOuter: dispatch(moduleActions.fetchAreaOfInterestOuter),
   // input inference data
   fetchTrainingSummaries: dispatch(moduleActions.fetchTrainingSummaries),
 
@@ -75,10 +83,17 @@ export const actions = {
   fetchForecastedTimeseries: dispatch(moduleActions.fetchForecastedTimeseries),
   // csv export data
   fetchExportData: dispatch(moduleActions.fetchExportData),
+  // cloning results of a prediction to a new dataset
+  createDataset: dispatch(moduleActions.createDataset),
 };
 
 // Typed mutations
 export const mutations = {
+  //AreaofInterest for geoplot
+  setAreaOfInterestInner: commit(moduleMutations.setAreaOfInterestInner),
+  setAreaOfInterestOuter: commit(moduleMutations.setAreaOfInterestOuter),
+  clearAreaOfInterestInner: commit(moduleMutations.clearAreaOfInterestInner),
+  clearAreaOfInterestOuter: commit(moduleMutations.clearAreaOfInterestOuter),
   // training
   clearTrainingSummaries: commit(moduleMutations.clearTrainingSummaries),
   updateTrainingSummary: commit(moduleMutations.updateTrainingSummary),

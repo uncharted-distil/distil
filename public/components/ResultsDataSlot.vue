@@ -26,7 +26,7 @@
         :data-items="dataItems"
         :instance-name="instanceName"
         :summaries="trainingSummaries"
-        :areaOfInterestItems="{ inner: inner, outer: outer }"
+        :area-of-interest-items="{ inner: inner, outer: outer }"
         @tileClicked="onTileClick"
       />
     </div>

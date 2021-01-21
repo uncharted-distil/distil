@@ -1,152 +1,142 @@
 <template>
-  <div class="variable-facets row h-100">
+  <div class="d-flex flex-column align-items-stretch h-100 w-100">
+    <div v-if="enableSearch" class="py-1">
+      <b-form-input v-model="search" size="sm" placeholder="Search" />
+    </div>
+    <!-- TODO: this should be passed in as title HTML -->
+    <div v-if="enableTitle" class="py-1">
+      <p>
+        <b>Select Feature to Predict</b> Select from potential features of
+        interest below. Each feature tile shown summarizes count of records by
+        value.
+      </p>
+    </div>
+    <div>
+      <!-- injectable slot -->
+      <slot />
+    </div>
     <div
-      class="variable-facets-list col-12 flex-column d-flex"
-      :class="{ pagination: pagination }"
+      class="my-2 flex-fill w-100 variable-facets-wrapper flex-wrap justify-content-between"
     >
-      <div v-if="enableSearch" class="row align-items-center facet-filters">
-        <div class="col-12 flex-column d-flex">
-          <b-form-input v-model="search" size="sm" placeholder="Search" />
-        </div>
-      </div>
-      <!-- TODO: this should be passed in as title HTML -->
-      <div v-if="enableTitle" class="row align-items-center">
-        <div class="col-12 flex-column d-flex">
-          <p>
-            <b>Select Feature to Predict</b> Select from potential features of
-            interest below. Each feature tile shown summarizes count of records
-            by value.
-          </p>
-        </div>
-      </div>
-      <div class="pl-1 pr-1">
-        <!-- injectable slot -->
-        <slot />
-      </div>
-      <div class="row flex-1 variable-facets-wrapper">
-        <div class="col-12 flex-column variable-facets-container">
-          <div
-            v-for="summary in summaries"
-            :key="summary.key"
-            class="variable-facets-item"
-          >
-            <template v-if="summary.pending">
-              <facet-loading :summary="summary" />
-            </template>
-            <template v-else-if="summary.err">
-              <facet-error
-                :summary="summary"
-                :enabled-type-changes="enabledTypeChanges"
-              />
-            </template>
-            <template v-else-if="summary.varType === 'timeseries'">
-              <facet-timeseries
-                :style="facetColors"
-                :summary="summary"
-                :highlight="highlight"
-                :row-selection="rowSelection"
-                :html="html"
-                :enabled-type-changes="enabledTypeChanges"
-                :enable-highlighting="[enableHighlighting, enableHighlighting]"
-                :ignore-highlights="[ignoreHighlights, ignoreHighlights]"
-                :instance-name="instanceName"
-                :expanded="expandGeoAndTimeseriesFacets"
-                @numerical-click="onNumericalClick"
-                @categorical-click="onCategoricalClick"
-                @facet-click="onFacetClick"
-                @range-change="onRangeChange"
-                @histogram-numerical-click="onNumericalClick"
-                @histogram-categorical-click="onCategoricalClick"
-                @histogram-range-change="onRangeChange"
-              />
-            </template>
-            <template v-else-if="isGeoLocated(summary.varType)">
-              <geocoordinate-facet
-                :summary="summary"
-                :enable-highlighting="enableHighlighting"
-                :ignore-highlights="ignoreHighlights"
-                :is-available-features="isAvailableFeatures"
-                :is-features-to-model="isFeaturesToModel"
-                :log-activity="logActivity"
-                :expanded="expandGeoAndTimeseriesFacets"
-                @histogram-numerical-click="onNumericalClick"
-                @histogram-range-change="onRangeChange"
-              />
-            </template>
-            <template v-else-if="isImage(summary.varType)">
-              <facet-image
-                :style="facetColors"
-                :summary="summary"
-                :highlight="highlight"
-                :row-selection="rowSelection"
-                :ranking="ranking[summary.key]"
-                :html="html"
-                :enabled-type-changes="enabledTypeChanges"
-                :enable-highlighting="enableHighlighting"
-                :ignore-highlights="ignoreHighlights"
-                :instance-name="instanceName"
-                @facet-click="onFacetClick"
-              />
-            </template>
-            <template v-else-if="summary.varType === 'dateTime'">
-              <facet-date-time
-                :style="facetColors"
-                :summary="summary"
-                :highlight="highlight"
-                :row-selection="rowSelection"
-                :importance="ranking[summary.key]"
-                :ranking="ranking[summary.key]"
-                :html="html"
-                :enabled-type-changes="enabledTypeChanges"
-                :enable-highlighting="enableHighlighting"
-                :ignore-highlights="ignoreHighlights"
-                :instance-name="instanceName"
-                @facet-click="onFacetClick"
-                @range-change="onRangeChange"
-              />
-            </template>
-            <template v-else-if="summary.type === 'categorical'">
-              <facet-categorical
-                :style="facetColors"
-                :summary="summary"
-                :highlight="highlight"
-                :row-selection="rowSelection"
-                :importance="ranking[summary.key]"
-                :html="html"
-                :enabled-type-changes="enabledTypeChanges"
-                :enable-highlighting="enableHighlighting"
-                :ignore-highlights="ignoreHighlights"
-                :instance-name="instanceName"
-                @facet-click="onFacetClick"
-              />
-            </template>
-            <template v-else-if="summary.type === 'numerical'">
-              <facet-numerical
-                :style="facetColors"
-                :summary="summary"
-                :highlight="highlight"
-                :row-selection="rowSelection"
-                :importance="ranking[summary.key]"
-                :html="html"
-                :enabled-type-changes="enabledTypeChanges"
-                :enable-highlighting="enableHighlighting"
-                :ignore-highlights="ignoreHighlights"
-                :instance-name="instanceName"
-                @numerical-click="onNumericalClick"
-                @categorical-click="onCategoricalClick"
-                @range-change="onRangeChange"
-                @facet-click="onFacetClick"
-              />
-            </template>
-          </div>
+      <div class="variable-facets-container">
+        <div
+          v-for="summary in summaries"
+          :key="summary.key"
+          class="variable-facets-item flex-fill my-2 mx-1"
+        >
+          <template v-if="summary.pending">
+            <facet-loading :summary="summary" />
+          </template>
+          <template v-else-if="summary.err">
+            <facet-error
+              :summary="summary"
+              :enabled-type-changes="enabledTypeChanges"
+            />
+          </template>
+          <template v-else-if="summary.varType === 'timeseries'">
+            <facet-timeseries
+              :style="facetColors"
+              :summary="summary"
+              :highlight="highlight"
+              :row-selection="rowSelection"
+              :html="html"
+              :enabled-type-changes="enabledTypeChanges"
+              :enable-highlighting="[enableHighlighting, enableHighlighting]"
+              :ignore-highlights="[ignoreHighlights, ignoreHighlights]"
+              :instance-name="instanceName"
+              :expanded="expandGeoAndTimeseriesFacets"
+              @numerical-click="onNumericalClick"
+              @categorical-click="onCategoricalClick"
+              @facet-click="onFacetClick"
+              @range-change="onRangeChange"
+              @histogram-numerical-click="onNumericalClick"
+              @histogram-categorical-click="onCategoricalClick"
+              @histogram-range-change="onRangeChange"
+            />
+          </template>
+          <template v-else-if="isGeoLocated(summary.varType)">
+            <geocoordinate-facet
+              :summary="summary"
+              :enable-highlighting="enableHighlighting"
+              :ignore-highlights="ignoreHighlights"
+              :is-available-features="isAvailableFeatures"
+              :is-features-to-model="isFeaturesToModel"
+              :log-activity="logActivity"
+              :expanded="expandGeoAndTimeseriesFacets"
+              @histogram-numerical-click="onNumericalClick"
+              @histogram-range-change="onRangeChange"
+            />
+          </template>
+          <template v-else-if="isImage(summary.varType)">
+            <facet-image
+              :style="facetColors"
+              :summary="summary"
+              :highlight="highlight"
+              :row-selection="rowSelection"
+              :ranking="ranking[summary.key]"
+              :html="html"
+              :enabled-type-changes="enabledTypeChanges"
+              :enable-highlighting="enableHighlighting"
+              :ignore-highlights="ignoreHighlights"
+              :instance-name="instanceName"
+              @facet-click="onFacetClick"
+            />
+          </template>
+          <template v-else-if="summary.varType === 'dateTime'">
+            <facet-date-time
+              :style="facetColors"
+              :summary="summary"
+              :highlight="highlight"
+              :row-selection="rowSelection"
+              :importance="ranking[summary.key]"
+              :ranking="ranking[summary.key]"
+              :html="html"
+              :enabled-type-changes="enabledTypeChanges"
+              :enable-highlighting="enableHighlighting"
+              :ignore-highlights="ignoreHighlights"
+              :instance-name="instanceName"
+              @facet-click="onFacetClick"
+              @range-change="onRangeChange"
+            />
+          </template>
+          <template v-else-if="summary.type === 'categorical'">
+            <facet-categorical
+              :style="facetColors"
+              :summary="summary"
+              :highlight="highlight"
+              :row-selection="rowSelection"
+              :importance="ranking[summary.key]"
+              :html="html"
+              :enabled-type-changes="enabledTypeChanges"
+              :enable-highlighting="enableHighlighting"
+              :ignore-highlights="ignoreHighlights"
+              :instance-name="instanceName"
+              @facet-click="onFacetClick"
+            />
+          </template>
+          <template v-else-if="summary.type === 'numerical'">
+            <facet-numerical
+              :style="facetColors"
+              :summary="summary"
+              :highlight="highlight"
+              :row-selection="rowSelection"
+              :importance="ranking[summary.key]"
+              :html="html"
+              :enabled-type-changes="enabledTypeChanges"
+              :enable-highlighting="enableHighlighting"
+              :ignore-highlights="ignoreHighlights"
+              :instance-name="instanceName"
+              @numerical-click="onNumericalClick"
+              @categorical-click="onCategoricalClick"
+              @range-change="onRangeChange"
+              @facet-click="onFacetClick"
+            />
+          </template>
         </div>
       </div>
     </div>
-    <div
-      v-if="pagination"
-      class="col-12 row align-items-center variable-page-nav"
-    >
-      <div class="col-12 flex-column">
+    <div v-if="pagination" class="p-1">
+      <div class="flex-fill">
         <b-pagination
           v-if="pagination"
           v-model="currentPage"
@@ -513,87 +503,9 @@ button {
   overflow-y: auto;
 }
 
-.variable-facets-container .variable-facets-item {
-  margin: 0.5rem 0;
+.variable-facets-wrapper .variable-facets-item {
   vertical-align: bottom;
 }
-
-.variable-facets-container .facets-root-container .facets-group-container {
-  background-color: inherit;
-}
-
-.variable-facets-container
-  .facets-root-container
-  .facets-group-container
-  .facets-group {
-  background: var(--white);
-  font-size: 0.867rem;
-  color: var(--color-text-base);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease-in-out;
-}
-
-.variable-facets-container
-  .facets-root-container
-  .facets-group-container
-  .facets-group
-  .group-header {
-  margin: 0px !important;
-  padding: 0 0 4px !important;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: flex-start;
-  align-content: center;
-  align-items: stretch;
-}
-
-.variable-facets-container
-  .facets-root-container
-  .facets-group-container
-  .facets-group
-  .group-header
-  .header-text {
-  order: 0;
-  flex: 1 1 auto;
-  align-self: auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin: 0 0 0 0.5rem;
-  height: 20px;
-  white-space: nowrap;
-}
-
-.variable-facets-container
-  .facets-root-container
-  .facets-group-container
-  .facets-group
-  .group-header
-  .fa-info {
-  margin: 5px 10px 5px 5px;
-  order: 1;
-  flex: 30 1 auto;
-  align-self: auto;
-  text-align: left;
-}
-
-.variable-facets-container
-  .facets-root-container
-  .facets-group-container
-  .facets-group
-  .group-header
-  .type-change-menu {
-  order: 2;
-  flex: none;
-  align-self: auto;
-  text-align: right;
-}
-
-.variable-facets-container .dropdown-menu {
-  max-height: 200px;
-  overflow-y: auto;
-}
-
 .facet-filters {
   margin: 0 -10px 4px -10px;
 }
@@ -609,21 +521,5 @@ button {
 .geocoordinate {
   max-width: 500px;
   height: 300px;
-}
-
-.variable-facets-container .facet-header-container {
-  overflow-y: scroll !important;
-}
-
-.variable-facets-container .facet-header-container .dropdown-menu {
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.variable-facets-list {
-  max-height: 100%;
-}
-.variable-facets-list.pagination {
-  max-height: calc(100% - 45px);
 }
 </style>

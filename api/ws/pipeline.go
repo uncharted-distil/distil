@@ -429,13 +429,13 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		SourceDatasetID:  meta.ID,
 	}
 
-	ds, err := createPredictionDataset(requestTask, request, predictParams)
+	ds, indexFields, err := createPredictionDataset(requestTask, request, predictParams)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to create raw dataset"))
 		return
 	}
 	predictParams.DatasetConstructor = ds
-
+	predictParams.IndexFields = indexFields
 	// import the dataset
 	datasetName, datasetPath, err := task.ImportPredictionDataset(predictParams)
 	if err != nil {
@@ -485,13 +485,15 @@ func getTarget(request *apiModel.Request) string {
 }
 
 func createPredictionDataset(requestTask *api.Task, request *api.PredictRequest,
-	predictParams *task.PredictParams) (task.DatasetConstructor, error) {
+	predictParams *task.PredictParams) (task.DatasetConstructor, []string, error) {
 	datasetID := request.DatasetID
 	datasetPath := request.DatasetPath
 	var ds task.DatasetConstructor
 	var err error
+	indexFields := []string{}
 	if api.HasTaskType(requestTask, compute.RemoteSensingTask) {
 		ds, err = dataset.NewSatelliteDataset(datasetID, "tif", datasetPath)
+		indexFields = dataset.GetSatelliteIndexFields()
 	} else if api.HasTaskType(requestTask, compute.ImageTask) {
 		ds, err = dataset.NewMediaDataset(datasetID, "png", "jpeg", datasetPath)
 	} else if api.HasTaskType(requestTask, compute.TimeSeriesTask) && api.HasTaskType(requestTask, compute.ForecastingTask) {
@@ -500,13 +502,13 @@ func createPredictionDataset(requestTask *api.Task, request *api.PredictRequest,
 		var data []byte
 		data, err = ioutil.ReadFile(datasetPath)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to read raw tabular data")
+			return nil, nil, errors.Wrapf(err, "unable to read raw tabular data")
 		}
 		ds, err = dataset.NewTableDataset(datasetID, data, false)
 	}
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return ds, nil
+	return ds, indexFields, nil
 }

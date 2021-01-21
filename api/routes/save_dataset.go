@@ -19,6 +19,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
@@ -78,18 +79,34 @@ func SaveDatasetHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStora
 			handleError(w, errors.New("can not mutate an immutable dataset"))
 			return
 		}
-		_, _, err = task.ExportDataset(dataset, metaStorage, dataStorage, invert, expandedFilterParams)
+
+		// export needs to invert the filters
+		filterModeReverse := map[string]string{model.IncludeFilter: model.ExcludeFilter, model.ExcludeFilter: model.IncludeFilter}
+		if expandedFilterParams != nil && expandedFilterParams.Highlight != nil {
+			expandedFilterParams.Highlight.Mode = filterModeReverse[expandedFilterParams.Highlight.Mode]
+		}
+		_, _, err = task.ExportDataset(dataset, metaStorage, dataStorage, !invert, expandedFilterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
+		if expandedFilterParams != nil && expandedFilterParams.Highlight != nil {
+			expandedFilterParams.Highlight.Mode = filterModeReverse[expandedFilterParams.Highlight.Mode]
+		}
+
 		// delete rows based on filterParams
 		err = dataStorage.SaveDataset(dataset, ds.StorageName, invert, expandedFilterParams)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-		// version dataset
+
+		// update properties on the dataset (pull latest from store to pick up any other changes)
+		ds, err = metaStorage.FetchDataset(dataset, true, true, true)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 		ds.Immutable = true
 		// is no longer a clone due to the dropping of the filterParams
 		ds.Clone = false

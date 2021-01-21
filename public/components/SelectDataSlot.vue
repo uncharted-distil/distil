@@ -5,6 +5,7 @@
       has-tabs
       :variables="variables"
       :available-variables="trainingVariables"
+      is-select-view
     >
       <b-nav-item
         class="font-weight-bold"
@@ -30,6 +31,15 @@
         :filter="filter"
       />
     </div>
+
+    <search-bar
+      v-show="isPrototype"
+      class="mb-3"
+      :variables="variables"
+      :filters="routeFilters"
+      :highlight="routeHighlight"
+      @lex-query="updateFilterAndHighlightFromLexQuery"
+    />
 
     <div class="table-title-container">
       <p class="selection-data-slot-summary">
@@ -95,6 +105,7 @@ import { spinnerHTML } from "../util/spinner";
 import DataSize from "../components/buttons/DataSize.vue";
 import SelectDataTable from "./SelectDataTable.vue";
 import ImageMosaic from "./ImageMosaic.vue";
+import SearchBar from "../components/layout/SearchBar.vue";
 import SelectTimeseriesView from "./SelectTimeseriesView.vue";
 import SelectGeoPlot from "./SelectGeoPlot.vue";
 import SelectGraphView from "./SelectGraphView.vue";
@@ -116,17 +127,26 @@ import { getters as routeGetters } from "../store/route/module";
 import {
   Filter,
   addFilterToRoute,
+  deepUpdateFiltersInRoute,
   EXCLUDE_FILTER,
   INCLUDE_FILTER,
 } from "../util/filters";
-import { clearHighlight, createFilterFromHighlight } from "../util/highlights";
+import {
+  clearHighlight,
+  createFilterFromHighlight,
+  updateHighlight,
+} from "../util/highlights";
+import { lexQueryToFiltersAndHighlight } from "../util/lex";
 import {
   clearRowSelection,
   getNumIncludedRows,
   getNumExcludedRows,
   createFilterFromRowSelection,
 } from "../util/row";
-import { actions as appActions } from "../store/app/module";
+import {
+  actions as appActions,
+  getters as appGetters,
+} from "../store/app/module";
 import { actions as viewActions } from "../store/view/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 
@@ -144,6 +164,7 @@ export default Vue.extend({
     FilterBadge,
     ImageMosaic,
     LayerSelection,
+    SearchBar,
     SelectDataTable,
     SelectGeoPlot,
     SelectGraphView,
@@ -184,6 +205,10 @@ export default Vue.extend({
     },
     includedActive(): boolean {
       return routeGetters.getRouteInclude(this.$store);
+    },
+
+    isPrototype(): boolean {
+      return appGetters.isPrototype(this.$store);
     },
 
     highlight(): Highlight {
@@ -259,6 +284,14 @@ export default Vue.extend({
       return routeGetters
         .getDecodedFilters(this.$store)
         .filter((f) => f.type !== "row");
+    },
+
+    routeFilters(): string {
+      return routeGetters.getRouteFilters(this.$store);
+    },
+
+    routeHighlight(): string {
+      return routeGetters.getRouteHighlight(this.$store);
     },
 
     rowSelection(): RowSelection {
@@ -384,6 +417,12 @@ export default Vue.extend({
       const entry = overlayRouteEntry(this.$route, { dataSize });
       this.$router.push(entry).catch((err) => console.warn(err));
       viewActions.updateSelectTrainingData(this.$store);
+    },
+
+    updateFilterAndHighlightFromLexQuery(lexQuery) {
+      const lqfh = lexQueryToFiltersAndHighlight(lexQuery, this.dataset);
+      deepUpdateFiltersInRoute(this.$router, lqfh.filters);
+      updateHighlight(this.$router, lqfh.highlight);
     },
   },
 });

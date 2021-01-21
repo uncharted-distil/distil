@@ -31,7 +31,12 @@ export const getters = {
   getIncludedPredictionTableData(state: PredictionState): TableData {
     return state.includedPredictionTableData;
   },
-
+  getAreaOfInterestInnerDataItems(state: PredictionState): TableRow[] {
+    return getTableDataItems(state.areaOfInterestInner);
+  },
+  getAreaOfInterestOuterDataItems(state: PredictionState): TableRow[] {
+    return getTableDataItems(state.areaOfInterestOuter);
+  },
   getIncludedPredictionTableDataItems(
     state: PredictionState,
     getters: any

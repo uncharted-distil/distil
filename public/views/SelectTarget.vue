@@ -340,22 +340,13 @@ export default Vue.extend({
 .available-target-variables /deep/ .variable-facets {
   height: 100%;
 }
-
-/* Render items as columns */
 .available-target-variables /deep/ .variable-facets-container {
   column-count: 3;
   column-gap: 1rem;
 }
-
 .available-target-variables /deep/ .variable-facets-item {
-  break-inside: avoid;
   display: inline-block;
-  margin-left: 0.5rem;
-  margin-right: 0.5rem;
-  page-break-inside: avoid;
   width: 100%;
-  -webkit-backface-visibility: hidden;
-  -webkit-column-break-inside: avoid;
 }
 
 .available-target-variables

@@ -290,8 +290,11 @@ func (s *SolutionRequest) dispatchSolutionSearchPipeline(statusChan chan Solutio
 
 		// persist results
 		log.Infof("persisting results in URI '%s'", resultURI)
-		s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchContext.searchID,
+		err = s.persistSolutionResults(statusChan, client, solutionStorage, dataStorage, searchContext.searchID,
 			searchContext.dataset, searchContext.storageName, searchSolutionID, fittedSolutionID, produceRequestID, resultID, resultURI)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if err != nil {
 		return nil, err

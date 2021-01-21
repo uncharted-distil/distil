@@ -28,6 +28,7 @@ import {
   CATEGORICAL_FILTER,
   CLUSTER_FILTER,
   TEXT_FILTER,
+  INCLUDE_FILTER,
 } from "../util/filters";
 import { clearHighlight } from "../util/highlights";
 
@@ -42,7 +43,11 @@ export default Vue.extend({
 
   computed: {
     isActive(): boolean {
-      return this.activeFilter || this.isHighlight;
+      return (
+        this.activeFilter ||
+        this.isHighlight ||
+        this.filter.mode === INCLUDE_FILTER
+      );
     },
 
     name(): string {

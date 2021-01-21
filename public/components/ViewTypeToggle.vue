@@ -15,7 +15,7 @@
             <b-form-radio
               :value="IMAGE_VIEW"
               v-if="hasImageVariables"
-              :disabled="!hasAvailableImageVariables"
+              :disabled="!hasImageVariables"
               class="view-button"
             >
               <i class="fa fa-image"></i>
@@ -30,7 +30,7 @@
             <b-form-radio
               :value="GEO_VIEW"
               v-if="hasGeoVariables"
-              :disabled="!hasAvailableGeoVariables"
+              :disabled="!hasGeoVariables"
               class="view-button"
             >
               <i class="fa fa-globe"></i>
@@ -83,6 +83,7 @@ export default Vue.extend({
       type: Array as () => Variable[],
       default: () => [] as Variable[],
     },
+    isSelectView: { type: Boolean as () => boolean, default: false },
   },
 
   data() {
@@ -107,6 +108,9 @@ export default Vue.extend({
       },
     },
     hasImageVariables(): boolean {
+      if (this.isSelectView) {
+        return this.hasAvailableImageVariables;
+      }
       return (
         this.variables.filter(
           (v) => v.colType === IMAGE_TYPE || v.colType === MULTIBAND_IMAGE_TYPE
@@ -125,6 +129,9 @@ export default Vue.extend({
       return false;
     },
     hasGeoVariables(): boolean {
+      if (this.isSelectView) {
+        return this.hasAvailableGeoVariables;
+      }
       const hasGeocoord = this.variables.some(
         (v) =>
           v.grouping &&
