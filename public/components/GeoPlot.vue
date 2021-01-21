@@ -563,7 +563,13 @@ export default Vue.extend({
     rowSelection(): RowSelection {
       return routeGetters.getDecodedRowSelection(this.$store);
     },
-
+    rowSelectionMap(): Map<number, number> {
+      return new Map(
+        this.rowSelection?.d3mIndices.map((di) => {
+          return [di, di];
+        })
+      );
+    },
     isMultiBandImage(): boolean {
       const variables = datasetGetters.getVariables(this.$store);
       return variables.some((v) => {
@@ -1185,6 +1191,9 @@ export default Vue.extend({
 
     tileColor(item: any, idx: number) {
       let color = "#255DCC"; // Default
+      if (this.rowSelectionMap.has(item.d3mIndex)) {
+        return "#ff0067";
+      }
       if (item.isExcluded) {
         return "#999999";
       }
