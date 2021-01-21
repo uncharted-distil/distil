@@ -93,7 +93,7 @@ func main() {
 
 	// initialize the pipeline cache and
 	pipelineCacheFilename := path.Join(env.GetTmpPath(), config.PipelineCacheFilename)
-	err = api.InitializeCache(pipelineCacheFilename)
+	err = api.InitializeCache(pipelineCacheFilename, config.PipelineCacheEnabled)
 	if err != nil {
 		log.Errorf("%+v", err)
 		os.Exit(1)

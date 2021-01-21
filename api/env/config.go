@@ -62,6 +62,7 @@ type Config struct {
 	MaxTestRows                        int     `env:"MAX_TEST_ROWS" envDefault:"100000"`
 	MinTrainingRows                    int     `env:"MIN_TRAINING_ROWS" envDefault:"100"`
 	MinTestRows                        int     `env:"MIN_TEST_ROWS" envDefault:"100"`
+	PipelineCacheEnabled               bool    `env:"PIPELINE_CACHE_ENABLED" envDefault:"true"`
 	PipelineCacheFilename              string  `env:"PIPELINE_CACHE_FILENAME" envDefault:"cache.bin"`
 	PipelineQueueSize                  int     `env:"PIPELINE_QUEUE_SIZE" envDefault:"10"`
 	PoolFeatures                       bool    `env:"POOL_FEATURES" envDefault:"true"`
