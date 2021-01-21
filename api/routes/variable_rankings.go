@@ -30,7 +30,7 @@ import (
 
 // VariableRankingHandler generates a route handler that allows ranking variables of a dataset relative to the importance
 // of a selected variable.  This ranking is potentially long running.
-func VariableRankingHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func VariableRankingHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get dataset name
 		dataset := pat.Param(r, "dataset")
