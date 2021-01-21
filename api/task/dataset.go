@@ -140,6 +140,33 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 		Metadata: meta,
 	}
 
+	// need to write the prefeaturized version of the dataset if it exists
+	if metaDataset.ParentDataset != "" {
+		parentDS, err := metaStorage.FetchDataset(metaDataset.ParentDataset, false, false, false)
+		if err != nil {
+			return "", "", err
+		}
+
+		err = updateLearningDataset(dataRaw, metaDataset, parentDS, exportVarMap, metaStorage)
+		if err != nil {
+			return "", "", err
+		}
+
+		// read metadata of the parent from disk to get the non main data resources
+		parentDatasetDoc := path.Join(env.ResolvePath(parentDS.Source, parentDS.Folder), compute.D3MDataSchema)
+		metaDisk, err := serialization.ReadMetadata(parentDatasetDoc)
+		if err != nil {
+			return "", "", err
+		}
+		metaDiskMainDR := metaDisk.GetMainDataResource()
+		for _, dr := range metaDisk.DataResources {
+			if dr != metaDiskMainDR {
+				dr.ResPath = model.GetResourcePath(parentDatasetDoc, dr)
+				meta.DataResources = append(meta.DataResources, dr)
+			}
+		}
+	}
+
 	// TODO: most likely need to either get a unique folder name for output or error if already exists
 	outputFolder := env.ResolvePath(metadata.Augmented, dataset)
 	storage := serialization.GetCSVStorage()
@@ -148,20 +175,10 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 		return "", "", err
 	}
 
-	// need to write the prefeaturized version of the dataset if it exists
-	if metaDataset.ParentDataset != "" {
-		err = updateLearningDataset(dataRaw, metaDataset, exportVarMap, metaStorage)
-	}
-
-	return dataset, outputFolder, err
+	return dataset, outputFolder, nil
 }
 
-func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset, exportVarMap map[string]*model.Variable, metaStorage api.MetadataStorage) error {
-	parentDS, err := metaStorage.FetchDataset(metaDataset.ParentDataset, false, false, false)
-	if err != nil {
-		return err
-	}
-
+func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset, parentDS *api.Dataset, exportVarMap map[string]*model.Variable, metaStorage api.MetadataStorage) error {
 	if parentDS.LearningDataset == "" {
 		return nil
 	}
@@ -180,7 +197,7 @@ func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset,
 	// copy the learning dataset
 	learningFolder := fmt.Sprintf("%s-featurized", newDataset.Metadata.ID)
 	learningFolder = path.Join(path.Dir(parentDS.LearningDataset), learningFolder)
-	err = util.Copy(parentDS.LearningDataset, learningFolder)
+	err := util.Copy(parentDS.LearningDataset, learningFolder)
 	if err != nil {
 		return err
 	}
