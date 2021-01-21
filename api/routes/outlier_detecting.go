@@ -49,6 +49,10 @@ func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor) func(http.Respons
 		}
 
 		outlierData, err := task.OutlierDetection(datasetMeta, variable)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
 
 		// marshal output into JSON
 		err = handleJSON(w, outlierData)
