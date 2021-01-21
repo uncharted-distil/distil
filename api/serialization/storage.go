@@ -89,3 +89,24 @@ func WriteDataset(folderPath string, dataset *api.RawDataset) error {
 
 	return storage.WriteDataset(folderPath, dataset)
 }
+
+// ReadMetadata reads the metadata in the specified path.
+func ReadMetadata(schemaPath string) (*model.Metadata, error) {
+	// metadata can be read by CSV storage
+	meta, err := csvStorage.ReadMetadata(schemaPath)
+	if err != nil {
+		return nil, err
+	}
+	dataPath := model.GetResourcePath(schemaPath, meta.GetMainDataResource())
+
+	// check to make sure the backing storage is csv, and if not then read the
+	// metadata using the right backing storage
+	storage := GetStorage(dataPath)
+	if storage != csvStorage {
+		meta, err = storage.ReadMetadata(schemaPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return meta, nil
+}

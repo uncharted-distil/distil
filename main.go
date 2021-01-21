@@ -242,7 +242,7 @@ func main() {
 	registerRoute(mux, "/distil/models/:model", routes.ModelHandler(esExportedModelStorageCtor))
 	registerRoute(mux, "/distil/join-suggestions/:dataset", routes.JoinSuggestionHandler(esMetadataStorageCtor, datamartCtors))
 	registerRoute(mux, "/distil/solution/:solution-id", routes.SolutionHandler(pgSolutionStorageCtor))
-	registerRoute(mux, "/distil/solutions/:dataset/:target", routes.SolutionsHandler(pgSolutionStorageCtor))
+	registerRoute(mux, "/distil/solutions/:dataset/:target", routes.SolutionsHandler(pgSolutionStorageCtor, esMetadataStorageCtor))
 	registerRoute(mux, "/distil/solution-requests/:dataset/:target", routes.SolutionRequestsHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/solution-request/:request-id", routes.SolutionRequestHandler(pgSolutionStorageCtor))
 	registerRoute(mux, "/distil/prediction/:request-id", routes.PredictionHandler(pgSolutionStorageCtor))

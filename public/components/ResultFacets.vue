@@ -172,7 +172,7 @@ export default Vue.extend({
         return {
           requestId: requestId,
           solutionId: solutionId,
-          groupName: solution.feature,
+          groupName: solution.featureLabel,
           predictedSummary: predictedSummary,
           residualsSummary: residualSummary,
           correctnessSummary: correctnessSummary,
