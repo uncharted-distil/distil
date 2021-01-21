@@ -410,8 +410,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 				columns = make([]*api.Column, 0)
 				for i := 0; i < len(fields); i++ {
 					key := string(fields[i].Name)
-					label := key
-					typ := "unknown"
+					var label, typ string
 					if api.IsPredictedKey(key) {
 						label = "Predicted " + api.StripKeySuffix(key)
 						typ = target.Type
@@ -426,14 +425,12 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 						explainCol = i
 						continue
 					} else {
+						v := getVariableByKey(key, variables)
+						label = v.DisplayName
 						if key == target.Key {
 							typ = target.Type
 						} else {
-							v := getVariableByKey(key, variables)
-							if v != nil {
-								typ = v.Type
-								label = v.DisplayName
-							}
+							typ = v.Type
 						}
 					}
 
@@ -724,7 +721,7 @@ func (s *Storage) FetchResults(dataset string, storageName string, resultURI str
 	}
 
 	// fetch variable metadata
-	variables, err := s.metadata.FetchVariables(dataset, false, true, false)
+	variables, err := s.metadata.FetchVariables(dataset, true, true, false)
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not pull variables from ES")
 	}
@@ -892,7 +889,7 @@ func (s *Storage) getAverageWeights(dataset string, storageName string, storageN
 	variables []*model.Variable, whereStatement string, params []interface{}) (map[string]float64, error) {
 	variablesSQL := []string{}
 	for _, v := range variables {
-		if model.IsTA2Field(v.DistilRole, v.SelectedRole) {
+		if model.IsTA2Field(v.DistilRole, v.SelectedRole) && !model.IsIndexRole(v.SelectedRole) {
 			variablesSQL = append(variablesSQL, fmt.Sprintf("AVG(weights.\"%s\") as \"%s\"", v.Key, v.Key))
 		}
 	}

@@ -22,29 +22,31 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-	"github.com/uncharted-distil/distil/api/model"
+	"github.com/uncharted-distil/distil-compute/model"
+	api "github.com/uncharted-distil/distil/api/model"
 )
 
 // SolutionResponse represents a pipeline solution.
 type SolutionResponse struct {
-	RequestID        string                 `json:"requestId"`
-	Feature          string                 `json:"feature"`
-	Dataset          string                 `json:"dataset"`
-	Features         []*model.Feature       `json:"features"`
-	Filters          *model.FilterParams    `json:"filters"`
-	SolutionID       string                 `json:"solutionId"`
-	FittedSolutionID string                 `json:"fittedSolutionId"`
-	ResultID         string                 `json:"resultId"`
-	Progress         string                 `json:"progress"`
-	Scores           []*model.SolutionScore `json:"scores"`
-	Timestamp        time.Time              `json:"timestamp"`
-	PredictedKey     string                 `json:"predictedKey"`
-	ErrorKey         string                 `json:"errorKey"`
-	ConfidenceKey    string                 `json:"confidenceKey"`
+	RequestID        string               `json:"requestId"`
+	Feature          string               `json:"feature"`
+	FeatureLabel     string               `json:"featureLabel"`
+	Dataset          string               `json:"dataset"`
+	Features         []*api.Feature       `json:"features"`
+	Filters          *api.FilterParams    `json:"filters"`
+	SolutionID       string               `json:"solutionId"`
+	FittedSolutionID string               `json:"fittedSolutionId"`
+	ResultID         string               `json:"resultId"`
+	Progress         string               `json:"progress"`
+	Scores           []*api.SolutionScore `json:"scores"`
+	Timestamp        time.Time            `json:"timestamp"`
+	PredictedKey     string               `json:"predictedKey"`
+	ErrorKey         string               `json:"errorKey"`
+	ConfidenceKey    string               `json:"confidenceKey"`
 }
 
 // SolutionsHandler fetches solutions associated with a given dataset and target.
-func SolutionsHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+func SolutionsHandler(solutionCtor api.SolutionStorageCtor, metadataCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		dataset := handleNullParameter(pat.Param(r, "dataset"))
@@ -54,6 +56,23 @@ func SolutionsHandler(solutionCtor model.SolutionStorageCtor) func(http.Response
 		if err != nil {
 			handleError(w, err)
 			return
+		}
+
+		meta, err := metadataCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// create a variable lookup to get the feature label
+		ds, err := meta.FetchDataset(dataset, true, true, true)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		varMap := map[string]*model.Variable{}
+		for _, v := range ds.Variables {
+			varMap[v.Key] = v
 		}
 
 		requests, err := solution.FetchRequestByDatasetTarget(dataset, target)
@@ -73,20 +92,21 @@ func SolutionsHandler(solutionCtor model.SolutionStorageCtor) func(http.Response
 			for _, sol := range reqSolutions {
 				solution := &SolutionResponse{
 					// request
-					RequestID: req.RequestID,
-					Dataset:   req.Dataset,
-					Feature:   req.TargetFeature(),
-					Features:  req.Features,
-					Filters:   req.Filters,
+					RequestID:    req.RequestID,
+					Dataset:      req.Dataset,
+					Feature:      req.TargetFeature(),
+					FeatureLabel: varMap[req.TargetFeature()].DisplayName,
+					Features:     req.Features,
+					Filters:      req.Filters,
 					// solution
 					SolutionID: sol.SolutionID,
 					Scores:     sol.Scores,
 					Timestamp:  sol.CreatedTime,
 					Progress:   sol.State.Progress,
 					// keys
-					PredictedKey:  model.GetPredictedKey(sol.SolutionID),
-					ErrorKey:      model.GetErrorKey(sol.SolutionID),
-					ConfidenceKey: model.GetConfidenceKey(sol.SolutionID),
+					PredictedKey:  api.GetPredictedKey(sol.SolutionID),
+					ErrorKey:      api.GetErrorKey(sol.SolutionID),
+					ConfidenceKey: api.GetConfidenceKey(sol.SolutionID),
 				}
 				if len(sol.Results) > 0 {
 					// result
@@ -107,7 +127,7 @@ func SolutionsHandler(solutionCtor model.SolutionStorageCtor) func(http.Response
 }
 
 // SolutionHandler fetches a solution by its ID.
-func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
+func SolutionHandler(solutionCtor api.SolutionStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// extract route parameters
 		solutionID := pat.Param(r, "solution-id")
@@ -152,9 +172,9 @@ func SolutionHandler(solutionCtor model.SolutionStorageCtor) func(http.ResponseW
 			ResultID:         resultID,
 			FittedSolutionID: fittedSolutionID,
 			// keys
-			PredictedKey:  model.GetPredictedKey(sol.SolutionID),
-			ErrorKey:      model.GetErrorKey(sol.SolutionID),
-			ConfidenceKey: model.GetConfidenceKey(sol.SolutionID),
+			PredictedKey:  api.GetPredictedKey(sol.SolutionID),
+			ErrorKey:      api.GetErrorKey(sol.SolutionID),
+			ConfidenceKey: api.GetConfidenceKey(sol.SolutionID),
 		}
 
 		// marshal data and sent the response back

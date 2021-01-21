@@ -56,6 +56,7 @@ export interface Solution extends SolutionRequest {
   errorKey: string;
   confidenceKey: string;
   isBad: boolean;
+  featureLabel: string;
 }
 
 export interface Predictions extends Request {
