@@ -88,6 +88,7 @@ export interface Variable {
   isColTypeReviewed: boolean;
   min: number;
   max: number;
+  values: string[];
   role: string[];
   distilRole: string;
 }

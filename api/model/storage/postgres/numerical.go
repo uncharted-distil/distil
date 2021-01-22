@@ -678,3 +678,26 @@ func (f *NumericalField) getFromClause(alias bool) string {
 func (f *NumericalField) getNaNFilter() string {
 	return fmt.Sprintf("\"%s\" != 'NaN'", f.Key)
 }
+
+func (f *NumericalField) fetchExtremaStorage() (*api.Extrema, error) {
+	aggQuery := f.Storage.getMinMaxAggsQuery(f.Key, f.Type)
+
+	// numerical columns need to filter NaN out
+	filter := fmt.Sprintf("WHERE \"%s\" != 'NaN'", f.Key)
+
+	// create a query that does min and max aggregations for each variable
+	queryString := fmt.Sprintf("SELECT %s FROM %s %s;", aggQuery, f.GetDatasetStorageName(), filter)
+
+	// execute the postgres query
+	// NOTE: We may want to use the regular Query operation since QueryRow
+	// hides db exceptions.
+	res, err := f.Storage.client.Query(queryString)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch extrema for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return f.parseExtrema(res)
+}

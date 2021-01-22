@@ -76,7 +76,7 @@ type DataStorage interface {
 	FetchConfidenceSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, mode SummaryMode) (map[string]*VariableSummary, error)
 	FetchResidualsSummary(dataset string, storageName string, resultURI string, filterParams *FilterParams, extrema *Extrema, mode SummaryMode) (*VariableSummary, error)
 	FetchResidualsExtremaByURI(dataset string, storageName string, resultURI string) (*Extrema, error)
-	FetchExtrema(storageName string, variable *model.Variable) (*Extrema, error)
+	FetchExtrema(dataset string, storageName string, variable *model.Variable) (*Extrema, error)
 	FetchExtremaByURI(dataset string, storageName string, resultURI string, variable string) (*Extrema, error)
 	FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI []string, operation string, filterParams *FilterParams, invert bool) (*map[string]*TimeseriesData, error)
 	FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURIs []string, resultUUID string, filterParams *FilterParams) (*map[string]*TimeseriesData, error)

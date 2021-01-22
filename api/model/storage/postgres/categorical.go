@@ -118,6 +118,45 @@ func (f *CategoricalField) FetchSummaryData(resultURI string, filterParams *api.
 	}, nil
 }
 
+func (f *CategoricalField) fetchExtremaStorage() (*api.Extrema, error) {
+	// pull all unique values from the database
+	sql := fmt.Sprintf("SELECT DISTINCT \"%s\" FROM %s;", f.Key, f.GetDatasetStorageName())
+	res, err := f.Storage.client.Query(sql)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch extrema for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return f.parseExtrema(res)
+}
+
+func (f *CategoricalField) parseExtrema(rows pgx.Rows) (*api.Extrema, error) {
+	result := &api.Extrema{
+		Key:    f.Key,
+		Type:   f.Type,
+		Values: []string{},
+	}
+	for rows.Next() {
+		var value string
+		err := rows.Scan(&value)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to scan categorical value")
+		}
+		if len(value) < 1 {
+			value = "<none>"
+		}
+		result.Values = append(result.Values, value)
+	}
+	err := rows.Err()
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading data from postgres")
+	}
+
+	return result, nil
+}
+
 func (f *CategoricalField) fetchHistogram(filterParams *api.FilterParams, invert bool) (*api.Histogram, error) {
 	fromClause := f.getFromClause(true)
 

@@ -400,6 +400,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 			model.VarDeleted:               v.Deleted,
 			model.VarGroupingField:         v.Grouping,
 			model.VarImmutableField:        v.Immutable,
+			model.VarValuesField:           v.Values,
 		})
 	}
 
@@ -452,6 +453,7 @@ func (s *Storage) SetExtrema(dataset string, key string, extrema *api.Extrema) e
 		if v.Key == key {
 			v.Min = extrema.Min
 			v.Max = extrema.Max
+			v.Values = extrema.Values
 		}
 	}
 
