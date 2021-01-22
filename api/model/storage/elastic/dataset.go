@@ -452,6 +452,7 @@ func (s *Storage) SetExtrema(dataset string, key string, extrema *api.Extrema) e
 		if v.Key == key {
 			v.Min = extrema.Min
 			v.Max = extrema.Max
+			v.Values = extrema.Values
 		}
 	}
 

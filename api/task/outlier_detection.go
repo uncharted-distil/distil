@@ -14,6 +14,7 @@
 //   limitations under the License.
 
 package task
+
 import (
 	"path"
 
@@ -29,8 +30,8 @@ import (
 
 // OutlierPoint contains whether or not a datapoint is an outlier or not
 type OutlierPoint struct {
-	D3MIndex    string
-	Label       string
+	D3MIndex string
+	Label    string
 }
 
 // OutlierDetection finds outliers in either tabular or remote sensing data
@@ -73,7 +74,7 @@ func OutlierDetection(dataset *api.Dataset, variable string) ([]*OutlierPoint, e
 			} else {
 				rsg := group.(*model.MultiBandImageGrouping)
 				step, err = description.CreateMultiBandImageOutlierDetectionPipeline("remote_sensing_cluster", "multiband image clustering",
-				features, false, envConfig.PoolFeatures, rsg, envConfig.RemoteSensingGPUBatchSize, envConfig.RemoteSensingNumJobs)
+					features, false, envConfig.PoolFeatures, rsg, envConfig.RemoteSensingGPUBatchSize, envConfig.RemoteSensingNumJobs)
 			}
 		}
 	} else {
@@ -90,7 +91,6 @@ func OutlierDetection(dataset *api.Dataset, variable string) ([]*OutlierPoint, e
 		step, err = description.CreateTabularOutlierDetectionPipeline("tabular_outlier_detection",
 			"isolation forest tabular outlier detection anomaly", datasetDescription, nil)
 	}
-
 
 	if err != nil {
 		return nil, err
@@ -127,14 +127,13 @@ func OutlierDetection(dataset *api.Dataset, variable string) ([]*OutlierPoint, e
 		label := createFriendlyOutlierLabel(v[outlierLabelIndex].(string))
 
 		outlierData[i] = &OutlierPoint{
-			D3MIndex:    v[d3mIndex].(string),
-			Label:       label,
+			D3MIndex: v[d3mIndex].(string),
+			Label:    label,
 		}
 	}
 
 	return outlierData, nil
 }
-
 
 func getGroup(imageVar string, features []*model.Variable) model.BaseGrouping {
 	for _, feature := range features {

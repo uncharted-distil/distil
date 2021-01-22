@@ -55,7 +55,6 @@ func VariablesHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 			handleError(w, err)
 			return
 		}
-		storageName := ds.StorageName
 
 		variables, err := api.FetchSummaryVariables(dataset, meta)
 		if err != nil {
@@ -65,7 +64,7 @@ func VariablesHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorage
 
 		for _, v := range variables {
 			if model.IsNumerical(v.Type) || model.IsDateTime(v.Type) {
-				extrema, err := data.FetchExtrema(storageName, v)
+				extrema, err := data.FetchExtrema(ds.ID, ds.StorageName, v)
 				if err != nil {
 					log.Warnf("defaulting extrema values due to error fetching extrema for '%s': %+v", v.Key, err)
 					extrema = getDefaultExtrema(v)

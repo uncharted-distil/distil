@@ -57,33 +57,6 @@ func (s *Storage) parseExtrema(row pgx.Rows, variable *model.Variable) (*api.Ext
 	}, nil
 }
 
-func (s *Storage) parseDateExtrema(row pgx.Rows, variable *model.Variable) (*api.Extrema, error) {
-	var minValue *int64
-	var maxValue *int64
-	if row != nil {
-		// Expect one row of data.
-		exists := row.Next()
-		if !exists {
-			return nil, fmt.Errorf("no row found")
-		}
-		err := row.Scan(&minValue, &maxValue)
-		if err != nil {
-			return nil, errors.Wrap(err, "no min / max aggregation found")
-		}
-	}
-	// check values exist
-	if minValue == nil || maxValue == nil {
-		return nil, errors.Errorf("no min / max aggregation values found")
-	}
-	// assign attributes
-	return &api.Extrema{
-		Key:  variable.Key,
-		Type: variable.Type,
-		Min:  float64(*minValue),
-		Max:  float64(*maxValue),
-	}, nil
-}
-
 func (s *Storage) getMinMaxAggsQuery(variableName string, variableType string) string {
 	// get min / max agg names
 	minAggName := api.MinAggPrefix + variableName
@@ -101,34 +74,13 @@ func (s *Storage) getMinMaxAggsQuery(variableName string, variableType string) s
 }
 
 // FetchExtrema return extrema of a variable in a result set.
-func (s *Storage) FetchExtrema(storageName string, variable *model.Variable) (*api.Extrema, error) {
-	// add min / max aggregation
-	aggQuery := s.getMinMaxAggsQuery(variable.Key, variable.Type)
-
-	// numerical columns need to filter NaN out
-	filter := ""
-	if model.IsNumerical(variable.Type) {
-		filter = fmt.Sprintf("WHERE \"%s\" != 'NaN'", variable.Key)
-	}
-
-	// create a query that does min and max aggregations for each variable
-	queryString := fmt.Sprintf("SELECT %s FROM %s %s;", aggQuery, storageName, filter)
-
-	// execute the postgres query
-	// NOTE: We may want to use the regular Query operation since QueryRow
-	// hides db exceptions.
-	res, err := s.client.Query(queryString)
+func (s *Storage) FetchExtrema(dataset string, storageName string, variable *model.Variable) (*api.Extrema, error) {
+	field, err := s.createField(dataset, storageName, variable, api.DefaultMode)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch extrema for variable summaries from postgres")
 	}
-	if res != nil {
-		defer res.Close()
-	}
 
-	if variable.Type == model.DateTimeType {
-		return s.parseDateExtrema(res, variable)
-	}
-	return s.parseExtrema(res, variable)
+	return field.fetchExtremaStorage()
 }
 
 func (s *Storage) fetchExtremaByURI(storageName string, resultURI string, variable *model.Variable) (*api.Extrema, error) {
@@ -179,67 +131,9 @@ func (s *Storage) fetchSummaryData(dataset string, storageName string, varName s
 	}
 
 	// get the histogram by using the variable type.
-	var field Field
-
-	if variable.IsGrouping() {
-
-		if model.IsTimeSeries(variable.Type) {
-			tsg := variable.Grouping.(*model.TimeseriesGrouping)
-
-			timeColVar, err := s.metadata.FetchVariable(dataset, tsg.XCol)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
-			}
-
-			valueColVar, err := s.metadata.FetchVariable(dataset, tsg.YCol)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
-			}
-
-			field = NewTimeSeriesField(s, dataset, storageName, tsg.ClusterCol, variable.Key, variable.DisplayName, variable.Type,
-				variable.Grouping.GetIDCol(), timeColVar.Key, timeColVar.Type, valueColVar.Key, valueColVar.Type)
-		} else if model.IsGeoCoordinate(variable.Grouping.GetType()) {
-			gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
-			field = NewCoordinateField(variable.Key, s, dataset, storageName, gcg.XCol, gcg.YCol, variable.DisplayName, variable.Grouping.GetType(), "")
-		} else if model.IsMultiBandImage(variable.Grouping.GetType()) {
-			rsg := variable.Grouping.(*model.MultiBandImageGrouping)
-			field = NewMultiBandImageField(s, dataset, storageName, rsg.ClusterCol, variable.Key, variable.DisplayName, variable.Grouping.GetType(), rsg.IDCol, rsg.BandCol)
-		} else if model.IsGeoBounds(variable.Type) {
-			gbg := variable.Grouping.(*model.GeoBoundsGrouping)
-			field = NewBoundsField(s, dataset, storageName, gbg.CoordinatesCol, gbg.PolygonCol, variable.Key, variable.DisplayName, variable.Grouping.GetType(), "")
-		} else {
-			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.GetIDCol(), variable.Grouping.GetType())
-		}
-	} else {
-		// if timeseries mode, get the grouping field and use that for counts
-		countCol := ""
-		if mode == api.TimeseriesMode || mode == api.MultiBandImageMode {
-			vars, err := s.metadata.FetchVariables(dataset, false, true, false)
-			if err != nil {
-				return nil, err
-			}
-			for _, v := range vars {
-				if v.IsGrouping() {
-					countCol = v.Grouping.GetIDCol()
-				}
-			}
-		}
-
-		if model.IsNumerical(variable.Type) || model.IsTimestamp(variable.Type) {
-			field = NewNumericalField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type, countCol)
-		} else if model.IsCategorical(variable.Type) {
-			field = NewCategoricalField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type, countCol)
-		} else if model.IsVector(variable.Type) || model.IsList(variable.Type) {
-			field = NewVectorField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type)
-		} else if model.IsText(variable.Type) {
-			field = NewTextField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type, countCol)
-		} else if model.IsImage(variable.Type) {
-			field = NewImageField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type, countCol)
-		} else if model.IsDateTime(variable.Type) {
-			field = NewDateTimeField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type, countCol)
-		} else {
-			return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Key, variable.Type)
-		}
+	field, err := s.createField(dataset, storageName, variable, mode)
+	if err != nil {
+		return nil, err
 	}
 
 	summary, err := field.FetchSummaryData(resultURI, filterParams, extrema, invert, mode)
@@ -353,4 +247,71 @@ func (s *Storage) DoesVariableExist(dataset string, storageName string, varName 
 	}
 
 	return exists, nil
+}
+
+func (s *Storage) createField(dataset string, storageName string, variable *model.Variable, mode api.SummaryMode) (Field, error) {
+	var field Field
+
+	if variable.IsGrouping() {
+
+		if model.IsTimeSeries(variable.Type) {
+			tsg := variable.Grouping.(*model.TimeseriesGrouping)
+
+			timeColVar, err := s.metadata.FetchVariable(dataset, tsg.XCol)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
+			}
+
+			valueColVar, err := s.metadata.FetchVariable(dataset, tsg.YCol)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to fetch variable description for summary")
+			}
+
+			field = NewTimeSeriesField(s, dataset, storageName, tsg.ClusterCol, variable.Key, variable.DisplayName, variable.Type,
+				variable.Grouping.GetIDCol(), timeColVar.Key, timeColVar.Type, valueColVar.Key, valueColVar.Type)
+		} else if model.IsGeoCoordinate(variable.Grouping.GetType()) {
+			gcg := variable.Grouping.(*model.GeoCoordinateGrouping)
+			field = NewCoordinateField(variable.Key, s, dataset, storageName, gcg.XCol, gcg.YCol, variable.DisplayName, variable.Grouping.GetType(), "")
+		} else if model.IsMultiBandImage(variable.Grouping.GetType()) {
+			rsg := variable.Grouping.(*model.MultiBandImageGrouping)
+			field = NewMultiBandImageField(s, dataset, storageName, rsg.ClusterCol, variable.Key, variable.DisplayName, variable.Grouping.GetType(), rsg.IDCol, rsg.BandCol)
+		} else if model.IsGeoBounds(variable.Type) {
+			gbg := variable.Grouping.(*model.GeoBoundsGrouping)
+			field = NewBoundsField(s, dataset, storageName, gbg.CoordinatesCol, gbg.PolygonCol, variable.Key, variable.DisplayName, variable.Grouping.GetType(), "")
+		} else {
+			return nil, errors.Errorf("variable grouping `%s` of type `%s` does not support summary", variable.Grouping.GetIDCol(), variable.Grouping.GetType())
+		}
+	} else {
+		// if timeseries mode, get the grouping field and use that for counts
+		countCol := ""
+		if mode == api.TimeseriesMode || mode == api.MultiBandImageMode {
+			vars, err := s.metadata.FetchVariables(dataset, false, true, false)
+			if err != nil {
+				return nil, err
+			}
+			for _, v := range vars {
+				if v.IsGrouping() {
+					countCol = v.Grouping.GetIDCol()
+				}
+			}
+		}
+
+		if model.IsNumerical(variable.Type) || model.IsTimestamp(variable.Type) {
+			field = NewNumericalField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type, countCol)
+		} else if model.IsCategorical(variable.Type) {
+			field = NewCategoricalField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type, countCol)
+		} else if model.IsVector(variable.Type) || model.IsList(variable.Type) {
+			field = NewVectorField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type)
+		} else if model.IsText(variable.Type) {
+			field = NewTextField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type, countCol)
+		} else if model.IsImage(variable.Type) {
+			field = NewImageField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type, countCol)
+		} else if model.IsDateTime(variable.Type) {
+			field = NewDateTimeField(s, dataset, storageName, variable.Key, variable.DisplayName, variable.Type, countCol)
+		} else {
+			return nil, errors.Errorf("variable `%s` of type `%s` does not support summary", variable.Key, variable.Type)
+		}
+	}
+
+	return field, nil
 }

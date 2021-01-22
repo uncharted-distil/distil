@@ -36,6 +36,7 @@ type Field interface {
 	GetKey() string
 	GetLabel() string
 	GetType() string
+	fetchExtremaStorage() (*api.Extrema, error)
 }
 
 // TimelineField defines the behaviour of a field which can be used as a timeline.
@@ -84,6 +85,10 @@ func (b *BasicField) GetLabel() string {
 // GetType returns the internal Distil type of the field.
 func (b *BasicField) GetType() string {
 	return b.Type
+}
+
+func (b *BasicField) fetchExtremaStorage() (*api.Extrema, error) {
+	return &api.Extrema{}, nil
 }
 
 func createJoinStatements(joins []*joinDefinition) string {
