@@ -92,6 +92,14 @@
             <b-dropdown-item-button @click="sortFeaturesDesc">
               <i class="fa fa-sort-numeric-desc"></i> Features
             </b-dropdown-item-button>
+            <b-dropdown-item-button @click="sortImportedAsc">
+              <i class="fa fa-long-arrow-down"></i
+              ><i class="fa fa-file"></i> Imported
+            </b-dropdown-item-button>
+            <b-dropdown-item-button @click="sortImportedDesc">
+              <i class="fa fa-long-arrow-down"></i
+              ><i class="fa fa-file-o"></i> Imported
+            </b-dropdown-item-button>
           </b-dropdown>
           <b-button
             class="add-new-datasets"
@@ -269,6 +277,14 @@ export default Vue.extend({
           b = this.getFeatureFromResult(b);
           return this.sorting.asc ? a - b : b - a;
         }
+
+        // Sort by import state
+        if (this.sorting.type === "imported") {
+          a = this.getStorageNameFromResult(a);
+          b = this.getStorageNameFromResult(b);
+          // reverse order because we want empty labels to be sorted last not first
+          return this.sorting.asc ? b.localeCompare(a) : a.localeCompare(b);
+        }
       });
     },
 
@@ -393,6 +409,15 @@ export default Vue.extend({
         : result.dataset.variables.length ?? 0;
     },
 
+    getStorageNameFromResult(result: any) {
+      return result.type === "model"
+        ? // for models which we always have saved, fall back to model name
+          result.model.modelName.toUpperCase()
+        : // otherwise, use storage name as unimported datasets return a blank here
+          // while imported ones populate this field, giving us something to sort on
+          result.dataset.storageName;
+    },
+
     sortRecentDesc() {
       this.sorting = { asc: false, type: "recent" };
     },
@@ -407,6 +432,12 @@ export default Vue.extend({
     },
     sortFeaturesDesc() {
       this.sorting = { asc: false, type: "features" };
+    },
+    sortImportedAsc() {
+      this.sorting = { asc: true, type: "imported" };
+    },
+    sortImportedDesc() {
+      this.sorting = { asc: false, type: "imported" };
     },
   },
 });
