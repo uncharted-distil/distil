@@ -1,12 +1,8 @@
+import { Dictionary } from "lodash";
 import Vue from "vue";
-import { Dictionary } from "vue-router/types/router";
 import { updateSummaries, updateSummariesPerVariable } from "../../util/data";
-import {
-  Extrema,
-  TableData,
-  TimeSeriesValue,
-  VariableSummary,
-} from "../dataset/index";
+import { Extrema, TableData, VariableSummary } from "../dataset/index";
+import { TimeSeriesForecastUpdate } from "../dataset/mutations";
 import { ResultsState } from "./index";
 
 export const mutations = {
@@ -117,47 +113,30 @@ export const mutations = {
       delete state.forecasts[args.solutionId].isDateTime[id];
     });
   },
+
   bulkUpdatePredictedTimeseries(
     state: ResultsState,
     args: {
-      map: Map<
-        string,
-        {
-          timeseries: number[][];
-          isDateTime: boolean;
-          min: number;
-          max: number;
-          mean: number;
-        }
-      >;
       solutionId: string;
       uniqueTrail?: string;
+      updates: TimeSeriesForecastUpdate[];
     }
   ) {
-    args.map.forEach((val, key) => {
+    args.updates.forEach((update) => {
       mutations.updatePredictedTimeseries(state, {
         solutionId: args.solutionId,
-        id: key + (args.uniqueTrail ?? ""),
-        timeseries: val.timeseries,
-        isDateTime: val.isDateTime,
-        min: val.min,
-        max: val.max,
-        mean: val.mean,
+        uniqueTrail: args.uniqueTrail,
+        update: update,
       });
     });
   },
-  // forecast
 
   updatePredictedTimeseries(
     state: ResultsState,
     args: {
       solutionId: string;
-      id: string;
-      timeseries: number[][];
-      isDateTime: boolean;
-      min: number;
-      max: number;
-      mean: number;
+      uniqueTrail: string;
+      update: TimeSeriesForecastUpdate;
     }
   ) {
     if (!state.timeseries[args.solutionId]) {
@@ -167,11 +146,17 @@ export const mutations = {
     if (!state.timeseries[args.solutionId].timeseriesData) {
       Vue.set(state.timeseries[args.solutionId], "timeseriesData", {});
     }
+
+    const timeseriesKey =
+      args.update.variableKey +
+      (args.update.seriesID ?? "") +
+      (args.uniqueTrail ?? "");
+
     // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(
       state.timeseries[args.solutionId].timeseriesData,
-      args.id,
-      Object.freeze(args.timeseries)
+      timeseriesKey,
+      Object.freeze(args.update.timeseries)
     );
 
     if (!state.timeseries[args.solutionId].isDateTime) {
@@ -179,55 +164,51 @@ export const mutations = {
     }
     Vue.set(
       state.timeseries[args.solutionId].isDateTime,
-      args.id,
-      args.isDateTime
+      timeseriesKey,
+      args.update.isDateTime
     );
 
     // Set the min/max/mean for each timeseries data
     if (!state.timeseries[args.solutionId].info) {
       Vue.set(state.timeseries[args.solutionId], "info", {});
     }
-    Vue.set(state.timeseries[args.solutionId].info, args.id, {
-      min: args.min as number,
-      max: args.max as number,
-      mean: args.mean as number,
+    Vue.set(state.timeseries[args.solutionId].info, timeseriesKey, {
+      min: args.update.min as number,
+      max: args.update.max as number,
+      mean: args.update.mean as number,
     });
   },
+
   bulkUpdatePredictedForecast(
     state: ResultsState,
     args: {
-      solutionId: string;
+      solutionID: string;
       uniqueTrail?: string;
-      map: Map<
-        string,
-        {
-          forecast: TimeSeriesValue[];
-          forecastTestRange: number[];
-          isDateTime: boolean;
-        }
-      >;
+      updates: TimeSeriesForecastUpdate[];
     }
   ) {
-    args.map.forEach((val, key) => {
+    args.updates.forEach((update) => {
       mutations.updatePredictedForecast(state, {
-        solutionId: args.solutionId,
-        id: key + (args.uniqueTrail ?? ""),
-        forecast: val.forecast,
-        forecastTestRange: val.forecastTestRange,
-        isDateTime: val.isDateTime,
+        solutionId: args.solutionID,
+        uniqueTrail: args.uniqueTrail,
+        update: update,
       });
     });
   },
+
   updatePredictedForecast(
     state: ResultsState,
     args: {
       solutionId: string;
-      id: string;
-      forecast: TimeSeriesValue[];
-      forecastTestRange: number[];
-      isDateTime: boolean;
+      uniqueTrail: string;
+      update: TimeSeriesForecastUpdate;
     }
   ) {
+    const timeseriesKey =
+      args.update.variableKey +
+      (args.update.seriesID ?? "") +
+      (args.uniqueTrail ?? "");
+
     if (!state.forecasts[args.solutionId]) {
       Vue.set(state.forecasts, args.solutionId, {});
     }
@@ -243,18 +224,18 @@ export const mutations = {
     // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(
       state.forecasts[args.solutionId].forecastData,
-      args.id,
-      Object.freeze(args.forecast)
+      timeseriesKey,
+      Object.freeze(args.update.forecast)
     );
     Vue.set(
       state.forecasts[args.solutionId].forecastRange,
-      args.id,
-      args.forecastTestRange
+      timeseriesKey,
+      args.update.forecastTestRange
     );
     Vue.set(
       state.forecasts[args.solutionId].isDateTime,
-      args.id,
-      args.isDateTime
+      timeseriesKey,
+      args.update.isDateTime
     );
   },
 

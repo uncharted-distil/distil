@@ -61,6 +61,11 @@ export interface TimeSeriesUpdate {
   mean: number;
 }
 
+export interface TimeSeriesForecastUpdate extends TimeSeriesUpdate {
+  forecast: TimeSeriesValue[];
+  forecastTestRange: number[];
+}
+
 export const mutations = {
   setDataset(state: DatasetState, dataset: Dataset) {
     const index = _.findIndex(state.datasets, (d) => {

@@ -432,14 +432,12 @@ func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVar
 	distincts := make([]string, 0)
 	fields := make([]string, 0)
 	indexIncluded := false
-	groupingCols := map[string]bool{}
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
 		if variable.IsGrouping() {
 			continue
 		}
 
-		if variable.DistilRole == model.VarDistilRoleGrouping && !groupingCols[variable.Key] {
-			groupingCols[variable.Key] = true
+		if variable.DistilRole == model.VarDistilRoleGrouping {
 			distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Key))
 		}
 
@@ -466,11 +464,16 @@ func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, tar
 
 	distincts := make([]string, 0)
 	fields := make([]string, 0)
+	groupingCols := map[string]bool{}
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
+		if variable.IsGrouping() {
+			continue
+		}
 
 		if strings.Compare(targetVariable.Key, variable.Key) != 0 {
 
-			if variable.DistilRole == model.VarDistilRoleGrouping {
+			if variable.DistilRole == model.VarDistilRoleGrouping && !groupingCols[variable.Key] {
+				groupingCols[variable.Key] = true // don't duplicate columns in our distinct
 				distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Key))
 			}
 

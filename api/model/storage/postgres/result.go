@@ -889,7 +889,7 @@ func (s *Storage) getAverageWeights(dataset string, storageName string, storageN
 	variables []*model.Variable, whereStatement string, params []interface{}) (map[string]float64, error) {
 	variablesSQL := []string{}
 	for _, v := range variables {
-		if model.IsTA2Field(v.DistilRole, v.SelectedRole) && !model.IsIndexRole(v.SelectedRole) {
+		if model.IsTA2Field(v.DistilRole, v.SelectedRole) && !model.IsIndexRole(v.SelectedRole) && !v.IsGrouping() {
 			variablesSQL = append(variablesSQL, fmt.Sprintf("AVG(weights.\"%s\") as \"%s\"", v.Key, v.Key))
 		}
 	}

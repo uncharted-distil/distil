@@ -402,7 +402,7 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, variableKe
 		// build ANY ARRAY values
 		paramString := ""
 		if len(timeseriesURI) == 0 {
-			return nil, errors.New("No timeseriesURIs passed in")
+			return nil, errors.New("No timeseries IDs passed in")
 		}
 		for _, v := range timeseriesURI {
 			paramString += "'" + v + "',"
@@ -481,12 +481,13 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, variableKe
 }
 
 // FetchTimeseriesForecast fetches a timeseries.
-func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, varKey string, seriesIDColName string, xColName string, yColName string, timeseriesURIs []string, resultURI string, filterParams *api.FilterParams) ([]*api.TimeseriesData, error) {
+func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, varKey string, seriesIDColName string, xColName string, yColName string,
+	seriesIDs []string, duplicateOperation api.TimeseriesOp, resultURI string, filterParams *api.FilterParams) ([]*api.TimeseriesData, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 	paramString := ""
-	for _, v := range timeseriesURIs {
+	for _, v := range seriesIDs {
 		paramString += "'" + v + "',"
 	}
 	paramString = paramString[:len(paramString)-1]
