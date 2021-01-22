@@ -91,6 +91,10 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 	if !ok {
 		max = 0
 	}
+	values, ok := json.StringArray(child, model.VarValuesField)
+	if !ok {
+		values = nil
+	}
 
 	grouping, err := s.parseGrouping(child)
 	if err != nil {
@@ -134,6 +138,7 @@ func (s *Storage) parseRawVariable(child map[string]interface{}) (*model.Variabl
 		Min:              min,
 		Max:              max,
 		Immutable:        immutable,
+		Values:           values,
 	}, nil
 }
 

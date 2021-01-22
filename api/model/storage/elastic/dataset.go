@@ -400,6 +400,7 @@ func (s *Storage) updateVariables(dataset string, variables []*model.Variable) e
 			model.VarDeleted:               v.Deleted,
 			model.VarGroupingField:         v.Grouping,
 			model.VarImmutableField:        v.Immutable,
+			model.VarValuesField:           v.Values,
 		})
 	}
 
