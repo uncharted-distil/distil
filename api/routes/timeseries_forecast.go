@@ -125,20 +125,22 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 			}
 
 			// fetch timeseries and forecast
-			timeseries, err = data.FetchTimeseries(truthDataset, truthStorageName, t.VarKey, variable.Grouping.GetIDCol(),
+			timeseriesData, err := data.FetchTimeseries(truthDataset, truthStorageName, t.VarKey, variable.Grouping.GetIDCol(),
 				xColName, yColName, []string{t.SeriesID}, operation, filterParams, false)
 			if err != nil {
 				handleError(w, err)
 				return
 			}
+			timeseries = append(timeseries, timeseriesData...)
 
 			// fetch the predicted timeseries
-			forecasts, err = data.FetchTimeseriesForecast(forecastDataset, forecastStorageName, t.VarKey, variable.Grouping.GetIDCol(),
+			forecastData, err := data.FetchTimeseriesForecast(forecastDataset, forecastStorageName, t.VarKey, variable.Grouping.GetIDCol(),
 				xColName, yColName, []string{t.SeriesID}, operation, res.ResultURI, filterParams)
 			if err != nil {
 				handleError(w, err)
 				return
 			}
+			forecasts = append(forecasts, forecastData...)
 		}
 
 		result := []*TimeseriesForecastResult{}

@@ -21,10 +21,7 @@ import {
 } from "../../util/solutions";
 import { DataMode, Highlight, SummaryMode, Variable } from "../dataset/index";
 import { getters as dataGetters } from "../dataset/module";
-import {
-  TimeSeriesForecastUpdate,
-  TimeSeriesUpdate,
-} from "../dataset/mutations";
+import { TimeSeriesForecastUpdate } from "../dataset/mutations";
 import { getters as resultGetters } from "../results/module";
 import store, { DistilState } from "../store";
 import { ResultsState } from "./index";

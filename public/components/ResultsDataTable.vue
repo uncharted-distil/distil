@@ -49,20 +49,21 @@
       </template>
 
       <template
-        v-for="timeseriesGrouping in timeseriesGroupings"
-        v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
+        v-for="variable in timeseriesVariables"
+        v-slot:[cellSlot(variable.key)]="data"
       >
-        <sparkline-preview
-          :key="data.item[timeseriesGrouping.idCol].value"
-          :truth-dataset="dataset"
-          :x-col="timeseriesGrouping.xCol"
-          :y-col="timeseriesGrouping.yCol"
-          :timeseries-col="timeseriesGrouping.idCol"
-          :timeseries-id="data.item[timeseriesGrouping.idCol].value"
-          :solution-id="solutionId"
-          :include-forecast="isTargetTimeseries"
-          :unique-trail="uniqueTrail"
-        />
+        <div :key="data.item[variable.key].value" class="container">
+          <sparkline-preview
+            :variable-key="variable.key"
+            :truth-dataset="dataset"
+            :x-col="variable.grouping.xCol"
+            :y-col="variable.grouping.yCol"
+            :timeseries-id="data.item[variable.key].value"
+            :solution-id="solutionId"
+            :include-forecast="isTargetTimeseries"
+            :unique-trail="uniqueTrail"
+          />
+        </div>
       </template>
 
       <template
@@ -162,7 +163,12 @@ import { actions as appActions } from "../store/app/module";
 import { Feature, Activity, SubActivity } from "../util/userEvents";
 import { Solution } from "../store/requests/index";
 import { Dictionary } from "../util/dict";
-import { getVarType, isTextType, hasComputedVarPrefix } from "../util/types";
+import {
+  getVarType,
+  isTextType,
+  hasComputedVarPrefix,
+  TIMESERIES_TYPE,
+} from "../util/types";
 import {
   addRowSelection,
   removeRowSelection,
@@ -170,13 +176,13 @@ import {
   updateTableRowSelection,
 } from "../util/row";
 import {
-  getTimeseriesGroupingsFromFields,
   formatSlot,
   formatFieldsAsArray,
   explainCellColor,
   getImageFields,
   getListFields,
   removeTimeseries,
+  getTimeseriesVariablesFromFields,
 } from "../util/data";
 import { getSolutionIndex } from "../util/solutions";
 
@@ -251,7 +257,7 @@ export default Vue.extend({
     },
 
     isTargetTimeseries(): boolean {
-      return getVarType(this.target) === "timeseries";
+      return getVarType(this.target) === TIMESERIES_TYPE;
     },
 
     predictedCol(): string {
@@ -283,9 +289,9 @@ export default Vue.extend({
         // In the case of timeseries, we add their Min/Max/Mean.
         if (this.isTimeseries) {
           items = items?.map((item) => {
-            const timeserieId = item[this.timeseriesGroupings[0].idCol].value;
+            const timeseriesId = item[this.timeseriesVariables[0].key].value;
             const minMaxMean = this.timeserieInfo(
-              timeserieId + this.uniqueTrail
+              timeseriesId + this.uniqueTrail
             );
             return { ...item, ...minMaxMean };
           });
@@ -367,8 +373,8 @@ export default Vue.extend({
       return getImageFields(this.fields);
     },
 
-    timeseriesGroupings(): TimeseriesGrouping[] {
-      return getTimeseriesGroupingsFromFields(this.variables, this.fields);
+    timeseriesVariables(): Variable[] {
+      return getTimeseriesVariablesFromFields(this.variables, this.fields);
     },
 
     isRegression(): boolean {
@@ -524,16 +530,17 @@ export default Vue.extend({
       if (!this.isTimeseries) {
         return;
       }
-      this.timeseriesGroupings.forEach((tsg) => {
+      this.timeseriesVariables.forEach((tsv) => {
+        const tsg = tsv.grouping as TimeseriesGrouping;
         resultsActions.fetchForecastedTimeseries(this.$store, {
           dataset: this.dataset,
-          variableKey: tsg.idCol,
+          variableKey: tsv.key,
           xColName: tsg.xCol,
           yColName: tsg.yCol,
           solutionId: this.solutionId,
           uniqueTrail: this.uniqueTrail,
           timeseriesIds: this.pageItems.map((item) => {
-            return item[tsg.idCol].value as string;
+            return item[tsv.key].value as string;
           }),
         });
       });

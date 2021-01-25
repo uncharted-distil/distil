@@ -26,6 +26,7 @@ import (
 )
 
 // ResidualsSummary contains a fetch result histogram.
+// CDB: Does this extra level need to be here?
 type ResidualsSummary struct {
 	ResidualsSummary *api.VariableSummary `json:"summary"`
 }

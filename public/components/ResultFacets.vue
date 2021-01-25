@@ -189,7 +189,7 @@ export default Vue.extend({
       // with their groups sorted by Scores DESC.
       return _.map(summariesByRequestId, (groups, requestId) => ({
         groups: groups.sort(this.sortByScoreDESC),
-        progress: requestsMap[requestId].progress,
+        progress: requestsMap[requestId]?.progress,
         requestId: requestId,
         requestIndex: this.getRequestIndex(requestId),
       })).sort(this.sortByRequestIndexDESC);

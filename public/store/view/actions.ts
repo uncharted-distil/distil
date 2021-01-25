@@ -772,15 +772,6 @@ export const actions = {
       solutionID: solutionId,
     });
 
-    resultActions.fetchConfidenceSummaries(store, {
-      dataset: dataset,
-      target: target,
-      requestIds: requestIds,
-      highlight: highlight,
-      dataMode: dataMode,
-      varModes: varModes,
-    });
-
     const task = routeGetters.getRouteTask(store);
 
     if (!task) {
@@ -804,6 +795,15 @@ export const actions = {
       });
     } else if (task.includes(TaskTypes.CLASSIFICATION)) {
       resultActions.fetchCorrectnessSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlight: highlight,
+        dataMode: dataMode,
+        varModes: varModes,
+      });
+
+      resultActions.fetchConfidenceSummaries(store, {
         dataset: dataset,
         target: target,
         requestIds: requestIds,

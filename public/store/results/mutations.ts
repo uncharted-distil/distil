@@ -182,14 +182,14 @@ export const mutations = {
   bulkUpdatePredictedForecast(
     state: ResultsState,
     args: {
-      solutionID: string;
+      solutionId: string;
       uniqueTrail?: string;
       updates: TimeSeriesForecastUpdate[];
     }
   ) {
     args.updates.forEach((update) => {
       mutations.updatePredictedForecast(state, {
-        solutionId: args.solutionID,
+        solutionId: args.solutionId,
         uniqueTrail: args.uniqueTrail,
         update: update,
       });

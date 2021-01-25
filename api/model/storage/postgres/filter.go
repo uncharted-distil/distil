@@ -523,9 +523,18 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 		return nil, nil, err
 	}
 
+	// Fetch the target variable.  For grouped variables, the target will be one of the component
+	// variables.
 	targetVariable, err := s.getResultTargetVariable(request.Dataset, request.TargetFeature())
 	if err != nil {
 		return nil, nil, err
+	}
+	if targetVariable.IsGrouping() && model.IsTimeSeries(targetVariable.Grouping.GetType()) {
+		tsg := targetVariable.Grouping.(*model.TimeseriesGrouping)
+		targetVariable, err = s.getResultTargetVariable(request.Dataset, tsg.YCol)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	typedError := getErrorTyped("", targetVariable.Key)

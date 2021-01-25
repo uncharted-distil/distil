@@ -319,8 +319,8 @@ export async function fetchResultExemplars(
   const variables = datasetGetters.getVariables(store);
   const variable = variables.find((v) => v.key === variableName);
 
-  const baselineExemplars = summary.baseline?.exemplars;
-  const filteredExemplars = summary.filtered?.exemplars;
+  const baselineExemplars = summary?.baseline?.exemplars;
+  const filteredExemplars = summary?.filtered?.exemplars;
   const exemplars = filteredExemplars ? filteredExemplars : baselineExemplars;
 
   if (exemplars) {
@@ -330,7 +330,7 @@ export async function fetchResultExemplars(
         // if there a linked exemplars, fetch those before resolving
         return await resultsActions.fetchForecastedTimeseries(store, {
           dataset: datasetName,
-          variableKey: grouping.idCol,
+          variableKey: variable.key,
           xColName: grouping.xCol,
           yColName: grouping.yCol,
           timeseriesIds: exemplars,
@@ -606,8 +606,11 @@ export async function fetchSolutionResultSummary(
       completeEndpoint,
       filterParams ? filterParams : {}
     );
-    // save the histogram data
+    // save the histogram data if this is summary data
     const summary = response.data[resultProperty];
+    if (!summary) {
+      return;
+    }
     await fetchResultExemplars(dataset, target, key, solutionId, summary);
     summary.solutionId = solutionId;
     summary.dataset = dataset;
