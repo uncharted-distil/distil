@@ -183,6 +183,7 @@ func parseNYUSearchResult(responseRaw []byte, baseDataset *api.Dataset) ([]*api.
 				Key:          c.Name,
 				DisplayName:  c.Name,
 				OriginalType: mapNYUDataTypesToDistil(c.StructuralType),
+				DistilRole:   model.VarDistilRoleData,
 			})
 		}
 
@@ -243,17 +244,5 @@ func materializeNYUDataset(datamart *Storage, id string, uri string) (string, er
 		return "", errors.Wrap(err, "unable to format datamart dataset")
 	}
 
-	// copy the formatted output to the datamart output path (delete existing copy)
-	err = util.RemoveContents(extractedArchivePath, false)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to delete raw datamart dataset")
-	}
-
-	err = util.Copy(formattedPath, extractedArchivePath)
-	if err != nil {
-		return "", errors.Wrap(err, "unable to copy formatted datamart dataset")
-	}
-
-	// return the location of the expanded dataset folder
 	return formattedPath, nil
 }
