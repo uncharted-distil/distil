@@ -13,9 +13,7 @@
           <div class="circle-spinner"></div>
         </div>
         <div v-else-if="isResolved" class="h-100">
-          <status-panel-join
-            v-if="this.statusType === 'JOIN_SUGGESTION'"
-          ></status-panel-join>
+          <status-panel-join v-if="this.statusType === 'JOIN_SUGGESTION'" />
           <div v-else>
             <div>
               <p>
@@ -50,6 +48,7 @@ import {
   DatasetPendingRequestStatus,
   GeocodingPendingRequest,
   ClusteringPendingRequest,
+  OutlierPendingRequest,
   SummaryMode,
   DataMode,
   isClusteredGrouping,
@@ -74,6 +73,7 @@ const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
   [DatasetPendingRequestType.GEOCODING, Feature.GEOCODE_FEATURES],
   [DatasetPendingRequestType.CLUSTERING, Feature.CLUSTER_DATA],
   [DatasetPendingRequestType.JOIN_SUGGESTION, Feature.JOIN_DATASETS],
+  [DatasetPendingRequestType.OUTLIER, Feature.OUTLIER_FEATURES],
 ]);
 
 export default Vue.extend({
@@ -164,6 +164,15 @@ export default Vue.extend({
             pendingMsg: "Compuing join suggestions...",
             errorMsg:
               "Unexpected error has happened while retreving join suggestions",
+          };
+        case DatasetPendingRequestType.OUTLIER:
+          return {
+            title: "Variable Outliers",
+            pendingMsg: "Computing variable outliers...",
+            resolvedMsg:
+              "Variable outliers has been processed. Would you like to apply the changes to the feature list?",
+            errorMsg:
+              "Unexpected error has happened while calculating variable outliers",
           };
         default:
           return {

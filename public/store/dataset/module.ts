@@ -140,6 +140,7 @@ export const actions = {
   importJoinDataset: dispatch(moduleActions.importJoinDataset),
   // clusters variables in a dataset for which the operation is meaningful (ie. timeseries)
   fetchClusters: dispatch(moduleActions.fetchClusters),
+  fetchOutliers: dispatch(moduleActions.fetchOutliers),
   // files
   fetchFiles: dispatch(moduleActions.fetchFiles),
   fetchImage: dispatch(moduleActions.fetchImage),

@@ -2,15 +2,30 @@
   <div class="status-sidebar">
     <div class="status-icons">
       <div class="status-icon-wrapper" @click="onStatusIconClick(0)">
-        <i class="status-icon fa fa-2x fa-info" aria-hidden="true"></i>
+        <i class="status-icon fa fa-2x fa-info" aria-hidden="true" />
         <i
           v-if="isNew(variableRankingStatus)"
           class="new-update-notification fa fa-refresh fa-circle"
-        ></i>
+        />
         <i
           v-if="isPending(variableRankingStatus)"
           class="new-update-notification fa fa-refresh fa-spin"
-        ></i>
+        />
+      </div>
+      <div
+        class="status-icon-wrapper"
+        title="Outlier Status"
+        @click="onStatusIconClick(4)"
+      >
+        <i class="status-icon fa fa-2x fa-crosshairs" aria-hidden="true" />
+        <i
+          v-if="isNew(outlierStatus)"
+          class="new-update-notification fa fa-refresh fa-circle"
+        />
+        <i
+          v-if="isPending(outlierStatus)"
+          class="new-update-notification fa fa-refresh fa-spin"
+        />
       </div>
       <!-- TODO
         * Disabled because the current solution is not responsive enough:
@@ -19,30 +34,30 @@
         <i
           class="status-icon fa fa-2x fa-location-arrow"
           aria-hidden="true"
-        ></i>
+        />
         <i
           v-if="isNew(geocodingStatus)"
           class="new-update-notification fa fa-circle"
-        ></i>
+        />
         <i
           v-if="isPending(geocodingStatus)"
           class="new-update-notification fa fa-refresh fa-spin"
-        ></i>
+        />
       </div>
       -->
       <div class="status-icon-wrapper" @click="onStatusIconClick(2)">
-        <i class="status-icon fa fa-2x fa-share-alt" aria-hidden="true"></i>
+        <i class="status-icon fa fa-2x fa-share-alt" aria-hidden="true" />
         <i
           v-if="isNew(clusterStatus) && !isClustered"
           class="new-update-notification fa fa-circle"
-        ></i>
+        />
         <i
           v-if="isPending(clusterStatus)"
           class="new-update-notification fa fa-refresh fa-spin"
-        ></i>
+        />
       </div>
       <div class="status-icon-wrapper" @click="onStatusIconClick(3)">
-        <i class="status-icon fa fa-2x fa-table" aria-hidden="true"></i>
+        <i class="status-icon fa fa-2x fa-table" aria-hidden="true" />
         <i
           v-if="isNew(joinSuggestionStatus)"
           class="new-update-notification fa fa-circle"
@@ -50,17 +65,17 @@
         <i
           v-if="isPending(joinSuggestionStatus)"
           class="new-update-notification fa fa-refresh fa-spin"
-        ></i>
+        />
         <i
           v-if="isReviewd(joinSuggestionStatus) && isNew(joinDataImportStatus)"
           class="new-update-notification fa fa-circle"
-        ></i>
+        />
         <i
           v-if="
             isReviewd(joinSuggestionStatus) && isPending(joinDataImportStatus)
           "
           class="new-update-notification fa fa-refresh fa-spin"
-        ></i>
+        />
       </div>
     </div>
   </div>
@@ -83,6 +98,7 @@ import {
   JoinSuggestionPendingRequest,
   JoinDatasetImportPendingRequest,
   ClusteringPendingRequest,
+  OutlierPendingRequest,
   DataMode,
 } from "../store/dataset/index";
 import { Feature, Activity } from "../util/userEvents";
@@ -93,10 +109,12 @@ const STATUS_TYPES = [
   DatasetPendingRequestType.GEOCODING,
   DatasetPendingRequestType.CLUSTERING,
   DatasetPendingRequestType.JOIN_SUGGESTION,
+  DatasetPendingRequestType.OUTLIER,
 ];
 
 export default Vue.extend({
-  name: "status-sidebar",
+  name: "StatusSidebar",
+
   computed: {
     dataset(): string {
       return routeGetters.getRouteDataset(this.$store);
@@ -109,13 +127,23 @@ export default Vue.extend({
         .filter((update) => update.dataset === this.dataset);
       return updates;
     },
+
     isClustered(): boolean {
       return routeGetters.getDataMode(this.$store) === DataMode.Cluster;
     },
+
     variableRankingRequestData(): VariableRankingPendingRequest {
       return <VariableRankingPendingRequest>(
         this.pendingRequests.find(
           (item) => item.type === DatasetPendingRequestType.VARIABLE_RANKING
+        )
+      );
+    },
+
+    outlierRequestData(): OutlierPendingRequest {
+      return <OutlierPendingRequest>(
+        this.pendingRequests.find(
+          (item) => item.type === DatasetPendingRequestType.OUTLIER
         )
       );
     },
@@ -165,6 +193,10 @@ export default Vue.extend({
       );
     },
 
+    outlierStatus(): DatasetPendingRequestStatus {
+      return this.outlierRequestData && this.outlierRequestData.status;
+    },
+
     geocodingStatus(): DatasetPendingRequestStatus {
       return this.geocodingRequestData && this.geocodingRequestData.status;
     },
@@ -178,12 +210,14 @@ export default Vue.extend({
         this.joinSuggestionRequestData && this.joinSuggestionRequestData.status
       );
     },
+
     joinDataImportStatus(): DatasetPendingRequestStatus {
       return (
         this.joinDataImportRequestData && this.joinDataImportRequestData.status
       );
     },
   },
+
   methods: {
     isNew(status) {
       return (
@@ -191,12 +225,15 @@ export default Vue.extend({
         status === DatasetPendingRequestStatus.ERROR
       );
     },
+
     isPending(status) {
-      return DatasetPendingRequestStatus.PENDING === status;
+      return status === DatasetPendingRequestStatus.PENDING;
     },
+
     isReviewd(status) {
       return status === DatasetPendingRequestStatus.REVIEWED;
     },
+
     onStatusIconClick(iconIndex) {
       const statusType = STATUS_TYPES[iconIndex];
       appActions.openStatusPanelWithContentType(this.$store, statusType);
@@ -207,25 +244,28 @@ export default Vue.extend({
 
 <style scoped>
 .status-sidebar {
-  background-color: #fff;
+  background-color: var(--light);
   width: 55px;
-  border-left: 1px solid #ccc;
+  border-left: 1px solid var(--gray-500);
   height: 100%;
   display: flex;
   flex-direction: column;
 }
-.status-sidebar .status-icon-wrapper {
+
+.status-icon-wrapper {
   padding-top: 15px;
   padding-bottom: 15px;
   text-align: center;
   position: relative;
 }
-.status-sidebar .status-icon {
+
+.status-icon {
   height: 30px;
   width: 30px;
   cursor: pointer;
 }
-.status-sidebar .new-update-notification {
+
+.new-update-notification {
   position: absolute;
   color: var(--red);
   top: 10px;

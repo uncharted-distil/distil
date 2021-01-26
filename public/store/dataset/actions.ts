@@ -43,10 +43,10 @@ import {
   JoinDatasetImportPendingRequest,
   JoinSuggestionPendingRequest,
   Metrics,
+  OutlierPendingRequest,
   SummaryMode,
   TableData,
   Task,
-  TimeSeriesValue,
   Variable,
   VariableRankingPendingRequest,
 } from "./index";
@@ -1030,6 +1030,50 @@ export const actions = {
       rankings: args.rankings,
     });
     mutations.updateVariableRankings(context, args.rankings);
+  },
+
+  async fetchOutliers(
+    context: DatasetContext,
+    args: { dataset: string; variable: string }
+  ) {
+    const id = _.uniqueId();
+    const { dataset, variable } = args;
+    const type = DatasetPendingRequestType.OUTLIER;
+    let status = DatasetPendingRequestStatus.PENDING;
+
+    const request: OutlierPendingRequest = {
+      id,
+      dataset,
+      outliers: null,
+      type,
+      status,
+      variable,
+    };
+
+    mutations.updatePendingRequests(context, request);
+
+    try {
+      const url = `/distil/outlier-detection/${dataset}/${variable}`;
+      const response = await axios.get(url);
+
+      const outliers = response.data;
+
+      // TODO - test the outliers and mutate the state
+      // test
+      // mutations.setVariableRankings(context, { dataset, outliers });
+      status = DatasetPendingRequestStatus.RESOLVED;
+
+      // Update the status.
+      mutations.updatePendingRequests(context, {
+        ...request,
+        status,
+        outliers,
+      });
+    } catch (error) {
+      status = DatasetPendingRequestStatus.ERROR;
+      mutations.updatePendingRequests(context, { ...request, status });
+      console.error(error);
+    }
   },
 
   updatePendingRequestStatus(
