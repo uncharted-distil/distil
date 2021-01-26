@@ -39,6 +39,7 @@ import {
   RelationState,
 } from "@uncharted.software/lex";
 import { decodeHighlights, createFilterFromHighlight } from "./highlights";
+import { Dictionary } from "./dict";
 
 const HIGHLIGHT = "highlight";
 
@@ -83,6 +84,7 @@ class DistilRelationState extends RelationState {
 */
 export function variablesToLexLanguage(variables: Variable[]): Lex {
   const suggestions = variablesToLexSuggestions(variables);
+  const catVarLexSuggestions = perCategoricalVariableLexSuggestions(variables);
   return Lex.from("field", ValueState, {
     name: "Choose a variable to filter",
     icon: '<i class="fa fa-filter" />',
@@ -92,8 +94,21 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
       ...TransitionFactory.valueMetaCompare({ type: TEXT_FILTER }),
     }).branch(Lex.from("value", TextEntryState)),
     Lex.from("relation", DistilRelationState, {
-      ...TransitionFactory.valueMetaCompare({ type: CATEGORICAL_FILTER }),
-    }).branch(Lex.from("value", TextEntryState)),
+      ...TransitionFactory.valueMetaCompare({ type: CATEGORICAL_TYPE }),
+    }).branch(
+      Lex.from("value", ValueState, {
+        allowUnknown: true,
+        icon: "",
+        name: "Type for suggestions",
+        fetchSuggestions: (hint, lexDefintion) => {
+          return catVarLexSuggestions[lexDefintion.field.key]
+            ? catVarLexSuggestions[lexDefintion.field.key].filter((cat) => {
+                return cat.key.toLowerCase().indexOf(hint.toLowerCase()) > -1;
+              })
+            : [];
+        },
+      })
+    ),
     Lex.from("relation", DistilRelationState, {
       ...TransitionFactory.valueMetaCompare({ type: NUMERICAL_FILTER }),
     }).branch(
@@ -328,6 +343,24 @@ function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
 
     return a;
   }, []);
+}
+
+/*
+  uses the value data in categorical variables to build a per variable dictionary
+  of suggestion lists whose values are LexBar ValueStateValues
+*/
+function perCategoricalVariableLexSuggestions(
+  variables: Variable[]
+): Dictionary<ValueStateValue[]> {
+  const categoryDict = new Object() as Dictionary<ValueStateValue[]>;
+
+  variables.forEach((v) => {
+    if (v.colType === CATEGORICAL_TYPE && v.values !== null) {
+      categoryDict[v.key] = v.values.map((c) => new ValueStateValue(c));
+    }
+  });
+
+  return categoryDict;
 }
 
 function colTypeToOptionType(colType: string): string {
