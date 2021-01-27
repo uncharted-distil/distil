@@ -227,6 +227,12 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	util.LoadImageUpscaleLibrary()
+	composedImage, err := util.LoadPNGImage("api/util/test/4_3_2.png")
+	if err != nil{
+		return
+	}
+	util.UpscaleImage(composedImage)
 
 	// register routes
 	mux := goji.NewMux()
