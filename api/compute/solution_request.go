@@ -753,11 +753,18 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 			return errors.New("Timestamp value supplied but no dateTime type existing on dataset")
 		}
 	}
+
+	// prefilter dataset if metadata fields are used in filters
+	filteredDatasetPath, err := filterData(client, datasetInput, s.Filters, dataStorage)
+	if err != nil {
+		return err
+	}
+
 	// when dealing with categorical data we want to stratify
 	stratify := model.IsCategorical(s.TargetFeature.Type)
 	// create the splitter to use for the train / test split
 	splitter := createSplitter(s.Task, targetIndex, groupingVariableIndex, stratify, s.Quality, s.TrainTestSplit, s.TimestampSplitValue)
-	datasetPathTrain, datasetPathTest, err := SplitDataset(path.Join(datasetInputDir, compute.D3MDataSchema), splitter)
+	datasetPathTrain, datasetPathTest, err := SplitDataset(path.Join(filteredDatasetPath, compute.D3MDataSchema), splitter)
 	if err != nil {
 		return err
 	}
