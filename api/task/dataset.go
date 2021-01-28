@@ -115,7 +115,7 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 	}
 	meta := metaDataset.ToMetadata()
 
-	data, err := dataStorage.FetchDataset(dataset, meta.StorageName, invert, filterParams)
+	data, err := dataStorage.FetchDataset(dataset, meta.StorageName, false, invert, filterParams)
 	if err != nil {
 		return "", "", err
 	}

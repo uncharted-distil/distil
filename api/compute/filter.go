@@ -18,10 +18,10 @@ package compute
 import (
 	"fmt"
 	"path"
-	"strings"
 
 	"github.com/mitchellh/hashstructure"
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
@@ -35,25 +35,28 @@ import (
 func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.FilterParams, dataStorage api.DataStorage) (string, error) {
 	inputPath := env.ResolvePath(ds.Source, ds.Folder)
 
+	log.Infof("checking if solution search for dataset %s found in '%s' needs prefiltering", ds.ID, inputPath)
 	// determine if filtering is needed
 	preFilters := getPreFiltering(ds, filterParams)
 	if preFilters.Empty(false) {
+		log.Infof("solution request for dataset %s does not need prefiltering", ds.ID)
 		return inputPath, nil
 	}
 
 	// check if the filtered results already exists
 	hash, err := hashFilter(inputPath, preFilters)
-	if preFilters.Empty(false) {
+	if err != nil {
 		return "", err
 	}
 	outputFolder := env.ResolvePath("tmp", fmt.Sprintf("%s-%v", ds.Folder, hash))
 	outputDataFile := path.Join(outputFolder, compute.D3MDataFolder, compute.D3MLearningData)
 	if util.FileExists(outputDataFile) {
+		log.Infof("solution request for dataset %s already prefiltered at '%s'", ds.ID, outputFolder)
 		return outputFolder, nil
 	}
 
 	// read the data from the database
-	data, err := dataStorage.FetchDataset(ds.ID, ds.StorageName, false, nil)
+	data, err := dataStorage.FetchDataset(ds.ID, ds.StorageName, true, false, nil)
 	if err != nil {
 		return "", err
 	}
@@ -86,6 +89,8 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 		return "", err
 	}
 
+	log.Infof("solution request for dataset %s filtered data written to '%s'", ds.ID, outputDataFile)
+
 	return outputFolder, nil
 }
 
@@ -111,13 +116,17 @@ func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) *api.Filte
 		vars[v.Key] = v
 	}
 	// filter if a clustering or outlier detection metadata feature exist
+	// TODO: NEED TO HANDLE OUTLIER FILTERS!
 	preFilters := &api.FilterParams{
 		Filters: []*model.Filter{},
 	}
 	for _, f := range filterParams.Filters {
-		if vars[f.Key].DistilRole == model.VarDistilRoleMetadata &&
-			(strings.HasPrefix(f.Key, "_cluster") || strings.HasPrefix(f.Key, "_outlier")) {
-			preFilters.Filters = append(preFilters.Filters, f)
+		variable := vars[f.Key]
+		if variable.IsGrouping() {
+			_, ok := variable.Grouping.(model.ClusteredGrouping)
+			if ok {
+				preFilters.Filters = append(preFilters.Filters, f)
+			}
 		}
 	}
 
