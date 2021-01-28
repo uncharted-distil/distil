@@ -227,13 +227,8 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	// Loads image enhancement library
 	util.LoadImageUpscaleLibrary()
-	composedImage, err := util.LoadPNGImage("api/util/test/4_3_2.png")
-	if err != nil{
-		return
-	}
-	util.UpscaleImage(composedImage)
-
 	// register routes
 	mux := goji.NewMux()
 	mux.Use(middleware.Log)
