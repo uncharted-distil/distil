@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
-
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/task"
 )
@@ -33,7 +32,6 @@ func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor) func(http.Respons
 		dataset := pat.Param(r, "dataset")
 		// get variable name
 		variable := pat.Param(r, "variable")
-
 
 		// get storage clients
 		metaStorage, err := metaCtor()

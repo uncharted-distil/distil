@@ -532,3 +532,24 @@ func (f *DateTimeField) getFromClause(alias bool) string {
 
 	return fromClause
 }
+
+func (f *DateTimeField) fetchExtremaStorage() (*api.Extrema, error) {
+	// add min / max aggregation
+	aggQuery := f.Storage.getMinMaxAggsQuery(f.Key, f.Type)
+
+	// create a query that does min and max aggregations for each variable
+	queryString := fmt.Sprintf("SELECT %s FROM %s;", aggQuery, f.GetDatasetStorageName())
+
+	// execute the postgres query
+	// NOTE: We may want to use the regular Query operation since QueryRow
+	// hides db exceptions.
+	res, err := f.Storage.client.Query(queryString)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch extrema for variable summaries from postgres")
+	}
+	if res != nil {
+		defer res.Close()
+	}
+
+	return f.parseExtrema(res)
+}

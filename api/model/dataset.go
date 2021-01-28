@@ -205,10 +205,11 @@ func UpdateExtremas(dataset string, varName string, storageMeta MetadataStorage,
 		}
 	}
 
-	// only care about datetime and numerical
-	if model.IsDateTime(v.Type) || model.IsNumerical(v.Type) {
+	// only care about datetime, categorical and numerical
+	// may want to consider building a map containing the types we care about
+	if model.IsDateTime(v.Type) || model.IsNumerical(v.Type) || model.IsCategorical(v.Type) {
 		// get the extrema
-		extrema, err := storageData.FetchExtrema(d.StorageName, v)
+		extrema, err := storageData.FetchExtrema(d.ID, d.StorageName, v)
 		if err != nil {
 			return err
 		}

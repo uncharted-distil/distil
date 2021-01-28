@@ -80,7 +80,7 @@ func NewPredictionTimeseriesDataset(params *PredictParams, interval float64, cou
 	}
 
 	// determine the start date via timestamp extrema
-	extrema, err := params.DataStorage.FetchExtrema(params.Meta.StorageName, timestampVar)
+	extrema, err := params.DataStorage.FetchExtrema(params.Meta.ID, params.Meta.StorageName, timestampVar)
 	if err != nil {
 		return nil, err
 	}

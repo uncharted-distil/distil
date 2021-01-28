@@ -42,8 +42,8 @@
         <nav class="search-nav">
           <button
             class="search-nav-tab"
-            @click="tab = 'all'"
             :class="{ active: tab === 'all' }"
+            @click="tab = 'all'"
           >
             All
             <span class="badge badge-pill badge-danger">{{
@@ -52,27 +52,27 @@
           </button>
           <button
             class="search-nav-tab"
-            @click="tab = 'models'"
             :class="{ active: tab === 'models' }"
+            @click="tab = 'models'"
           >
-            <i class="fa fa-connectdevelop"></i> Models
+            <i class="fa fa-connectdevelop" /> Models
             <span class="badge badge-pill badge-danger">{{
               nbSearchModels
             }}</span>
           </button>
           <button
             class="search-nav-tab"
-            @click="tab = 'datasets'"
             :class="{ active: tab === 'datasets' }"
+            @click="tab = 'datasets'"
           >
-            <i class="fa fa-table"></i> Datasets
+            <i class="fa fa-table" /> Datasets
             <span class="badge badge-pill badge-danger">{{
               nbSearchDatasets
             }}</span>
           </button>
           <b-dropdown variant="outline-dark" size="sm">
             <template v-slot:button-content>
-              <i :class="sortingIcon"></i> Sort by:
+              <i :class="sortingIcon" /> Sort by:
               <strong>{{ sortingDisplayName }}</strong>
             </template>
             <!-- <b-dropdown-item-button @click="sortRecentDesc">
@@ -80,23 +80,31 @@
             </b-dropdown-item-button>
             <b-dropdown-divider></b-dropdown-divider> -->
             <b-dropdown-item-button @click="sortNameAsc">
-              <i class="fa fa-sort-alpha-asc"></i> Name
+              <i class="fa fa-sort-alpha-asc" /> Name
             </b-dropdown-item-button>
             <b-dropdown-item-button @click="sortNameDesc">
-              <i class="fa fa-sort-alpha-desc"></i> Name
+              <i class="fa fa-sort-alpha-desc" /> Name
             </b-dropdown-item-button>
-            <b-dropdown-divider></b-dropdown-divider>
+            <b-dropdown-divider />
             <b-dropdown-item-button @click="sortFeaturesAsc">
-              <i class="fa fa-sort-numeric-asc"></i> Features
+              <i class="fa fa-sort-numeric-asc" /> Features
             </b-dropdown-item-button>
             <b-dropdown-item-button @click="sortFeaturesDesc">
-              <i class="fa fa-sort-numeric-desc"></i> Features
+              <i class="fa fa-sort-numeric-desc" /> Features
+            </b-dropdown-item-button>
+            <b-dropdown-item-button @click="sortImportedAsc">
+              <i class="fa fa-long-arrow-down" /><i class="fa fa-file" />
+              Imported
+            </b-dropdown-item-button>
+            <b-dropdown-item-button @click="sortImportedDesc">
+              <i class="fa fa-long-arrow-down" /><i class="fa fa-file-o" />
+              Imported
             </b-dropdown-item-button>
           </b-dropdown>
           <b-button
+            v-b-modal.add-dataset
             class="add-new-datasets"
             variant="primary"
-            v-b-modal.add-dataset
           >
             <i class="fa fa-plus-circle" /> Add Dataset
           </b-button>
@@ -165,6 +173,21 @@ import { getters as routeGetters } from "../store/route/module";
 import { actions as viewActions } from "../store/view/module";
 import { spinnerHTML } from "../util/spinner";
 
+interface SearchResult {
+  type: string;
+  name: string;
+  storageName: string;
+  features: number;
+}
+
+interface ModelResult extends SearchResult {
+  model: Model;
+}
+
+interface DatasetResult extends SearchResult {
+  dataset: Dataset;
+}
+
 export default Vue.extend({
   name: "SearchView",
 
@@ -203,7 +226,7 @@ export default Vue.extend({
       return datasetGetters.getFilteredDatasets(this.$store);
     },
 
-    filteredDatasetsIds(): Set<String> {
+    filteredDatasetsIds(): Set<string> {
       const ids = this.filteredDatasets.map((dataset) => dataset.id);
       return new Set(ids);
     },
@@ -226,13 +249,19 @@ export default Vue.extend({
     },
 
     /* List of search results to be displayed. */
-    searchResults(): any[] {
-      const results = [] as any[];
+    searchResults(): (ModelResult | DatasetResult)[] {
+      const results = [] as (ModelResult | DatasetResult)[];
 
       // If tab is either 'models' or 'all' we display the models.
       if (this.tab !== "datasets") {
         const models = this.filteredModels.map((model) => {
-          return { type: "model", model };
+          return {
+            type: "model",
+            name: model.modelName.toUpperCase(),
+            storageName: model.modelName.toUpperCase(),
+            features: model.variables.length ?? 0,
+            model,
+          };
         });
         results.push(...models);
       }
@@ -240,7 +269,13 @@ export default Vue.extend({
       // If tab is either 'datasets' or 'all' we display the datasets.
       if (this.tab !== "models") {
         const datasets = this.filteredDatasets.map((dataset) => {
-          return { type: "dataset", dataset };
+          return {
+            type: "dataset",
+            name: dataset.name.toUpperCase(),
+            storageName: dataset.storageName,
+            features: dataset.variables.length ?? 0,
+            dataset: dataset,
+          };
         });
         results.push(...datasets);
       }
@@ -249,7 +284,7 @@ export default Vue.extend({
     },
 
     /* Sort the results based on the sorting selected. */
-    sortedResults(): any[] {
+    sortedResults(): (ModelResult | DatasetResult)[] {
       return this.searchResults.slice().sort((a, b) => {
         // Sort by recent activity
         // if (this.sorting.type === "recent") {
@@ -258,16 +293,24 @@ export default Vue.extend({
 
         // Sort by name
         if (this.sorting.type === "name") {
-          a = this.getNameFromResult(a);
-          b = this.getNameFromResult(b);
-          return this.sorting.asc ? a.localeCompare(b) : b.localeCompare(a);
+          return this.sorting.asc
+            ? a.name.localeCompare(b.name)
+            : b.name.localeCompare(a.name);
         }
 
         // Sort by features
         if (this.sorting.type === "features") {
-          a = this.getFeatureFromResult(a);
-          b = this.getFeatureFromResult(b);
-          return this.sorting.asc ? a - b : b - a;
+          return this.sorting.asc
+            ? a.features - b.features
+            : b.features - a.features;
+        }
+
+        // Sort by import state
+        if (this.sorting.type === "imported") {
+          // reverse order because we want empty labels to be sorted last not first
+          return this.sorting.asc
+            ? b.storageName.localeCompare(a.storageName)
+            : a.storageName.localeCompare(b.storageName);
         }
       });
     },
@@ -381,18 +424,6 @@ export default Vue.extend({
       }
     },
 
-    getNameFromResult(result: any) {
-      return result.type === "model"
-        ? result.model.modelName.toUpperCase()
-        : result.dataset.name.toUpperCase();
-    },
-
-    getFeatureFromResult(result: any) {
-      return result.type === "model"
-        ? result.model.variables.length ?? 0
-        : result.dataset.variables.length ?? 0;
-    },
-
     sortRecentDesc() {
       this.sorting = { asc: false, type: "recent" };
     },
@@ -407,6 +438,12 @@ export default Vue.extend({
     },
     sortFeaturesDesc() {
       this.sorting = { asc: false, type: "features" };
+    },
+    sortImportedAsc() {
+      this.sorting = { asc: true, type: "imported" };
+    },
+    sortImportedDesc() {
+      this.sorting = { asc: false, type: "imported" };
     },
   },
 });

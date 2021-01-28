@@ -123,7 +123,7 @@ func (f *BoundsField) fetchHistogram(filterParams *api.FilterParams, invert bool
 	}
 
 	// get the extrema for each axis
-	xExtrema, yExtrema, err := f.fetchExtrema()
+	xExtrema, yExtrema, err := f.fetchCombinedExtrema()
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +201,7 @@ func (f *BoundsField) prepareBucketsForQuery(tx pgx.Tx, tmpTableName string, buc
 	return nil
 }
 
-func (f *BoundsField) fetchExtrema() (*api.Extrema, *api.Extrema, error) {
+func (f *BoundsField) fetchCombinedExtrema() (*api.Extrema, *api.Extrema, error) {
 	// add min / max aggregation
 	aggQueryX := f.getMinMaxAggsQuery(f.PolygonCol, "x", "X")
 	aggQueryY := f.getMinMaxAggsQuery(f.PolygonCol, "y", "Y")
@@ -285,7 +285,7 @@ func (f *BoundsField) fetchHistogramByResult(resultURI string, filterParams *api
 	}
 
 	// get the extrema for each axis
-	xExtrema, yExtrema, err := f.fetchExtrema()
+	xExtrema, yExtrema, err := f.fetchCombinedExtrema()
 	if err != nil {
 		return nil, err
 	}
