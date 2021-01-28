@@ -293,8 +293,8 @@ export const actions = {
       status: DatasetPendingRequestStatus.PENDING,
     };
 
-    // Find variables that require cluster requests.  If there are none, then
-    // quick exit.
+    // Find variables that require cluster requests;
+    // If there are none, then quick exit.
     const clusterVariables = getters
       .getVariables(context)
       .filter(
@@ -1036,17 +1036,13 @@ export const actions = {
     context: DatasetContext,
     args: { dataset: string; variable: string }
   ) {
-    const id = _.uniqueId();
     const { dataset, variable } = args;
-    const type = DatasetPendingRequestType.OUTLIER;
-    let status = DatasetPendingRequestStatus.PENDING;
-
     const request: OutlierPendingRequest = {
-      id,
+      id: _.uniqueId(),
       dataset,
       outliers: null,
-      type,
-      status,
+      type: DatasetPendingRequestType.OUTLIER,
+      status: DatasetPendingRequestStatus.PENDING,
       variable,
     };
 
@@ -1056,24 +1052,14 @@ export const actions = {
       const url = `/distil/outlier-detection/${dataset}/${variable}`;
       const response = await axios.get(url);
 
-      const outliers = response.data;
-
-      // TODO - test the outliers and mutate the state
-      // test
-      // mutations.setVariableRankings(context, { dataset, outliers });
-      status = DatasetPendingRequestStatus.RESOLVED;
-
-      // Update the status.
-      mutations.updatePendingRequests(context, {
-        ...request,
-        status,
-        outliers,
-      });
+      request.outliers = response.data;
+      request.status = DatasetPendingRequestStatus.RESOLVED;
     } catch (error) {
-      status = DatasetPendingRequestStatus.ERROR;
-      mutations.updatePendingRequests(context, { ...request, status });
+      request.status = DatasetPendingRequestStatus.ERROR;
       console.error(error);
     }
+
+    mutations.updatePendingRequests(context, request);
   },
 
   updatePendingRequestStatus(
