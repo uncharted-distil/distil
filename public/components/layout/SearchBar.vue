@@ -55,7 +55,13 @@ export default Vue.extend({
     },
 
     variables(n, o) {
-      if (n !== o) {
+      if (_.isEqual(n, o)) {
+        this.renderLex();
+      }
+    },
+
+    language(n, o) {
+      if (_.isEqual(n, o)) {
         this.renderLex();
       }
     },
