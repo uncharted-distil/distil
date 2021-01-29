@@ -352,9 +352,9 @@ export default Vue.extend({
           const grouping = timeseriesVar.grouping as TimeseriesGrouping;
           await datasetActions.fetchTimeseries(this.$store, {
             dataset: this.dataset,
+            variableKey: timeseriesVar.key,
             xColName: grouping.xCol,
             yColName: grouping.yCol,
-            timeseriesColName: grouping.idCol,
             timeseriesIds: ids,
           });
         });
