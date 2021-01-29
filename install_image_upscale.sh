@@ -10,14 +10,21 @@ image_upscale_url_linux_cpu="https://github.com/uncharted-distil/distil-image-up
 image_upscale_url_linux_gpu="https://github.com/uncharted-distil/distil-image-upscale/releases/download/1.0-linux-gpu/image-upscale.so"
 image_upscale_url_mac="https://github.com/uncharted-distil/distil-image-upscale/releases/download/1.0-mac-cpu/image-upscale.so"
 image_upscale_src="https://github.com/uncharted-distil/distil-image-upscale/archive/1.0-linux-gpu.tar.gz"
-image_upscale_src_tar="distil-image-upscale-1.0-linux-gpu.tar.gz"
+image_upscale_src_tar="1.0-linux-gpu.tar.gz"
 image_src_dir="distil-image-upscale-1.0-linux-gpu/src"
 uname=`uname`
 models_dir="./static_resources/models"
 user_lib_dir="/usr/local"
 source_dir="/usr/include/image-upscale"
 usr_include_dir="/usr/include"
-
+if [ "$uname" = Darwin ]; then
+    usr_include_dir="/usr/local/include"
+    source_dir="/usr/local/include/image-upscale"
+fi
+if ! command -v wget &> /dev/null;then
+    echo "missing required tool wget please install"
+    exit 1
+fi
 get_tensorflow(){
     local tensorflow_dir="/usr/local/tensorflow"
     echo $tensorflow_dir
@@ -40,6 +47,7 @@ if [ ! -d "$tensorflow_dir" ]; then
         fi 
     fi
     if [ "$uname" = 'Darwin' ]; then
+        echo "fetching mac tensorflow binaries"
         # get mac binaries for tensorflow c
         get_tensorflow $mac_tensorflow_tar $tensorflow_url_mac
     fi
@@ -63,9 +71,9 @@ fi
 # check if source is installed
 if [ ! -d "$source_dir" ]; then
     echo "fetching image-scale source"
-    wget $image_upscale_src -P $usr_include_dir
+    wget $image_upscale_src -P $user_lib_dir
     # extract
-    tar -C $user_lib_dir -xzf $user_lib_dir/$image_upscale_src_tar
+    tar -C $user_lib_dir -xvzf $user_lib_dir/$image_upscale_src_tar
     mkdir $source_dir
     # copy source over
     cp -a $user_lib_dir/$image_src_dir/. $source_dir
@@ -75,5 +83,4 @@ if [ ! -d "$models_dir" ]; then
     echo "unable to locate model weights"
     echo "fetching model weights"
     # should fetch model weights from somewhere
-
 fi
