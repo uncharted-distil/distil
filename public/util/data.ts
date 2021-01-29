@@ -1084,9 +1084,9 @@ export function getImageFields(
         v.grouping &&
         v.grouping.idCol &&
         v.colType === MULTIBAND_IMAGE_TYPE &&
-        _.includes(fieldKeys, v.grouping.idCol)
+        _.includes(fieldKeys, v.key)
     )
-    .map((v) => ({ key: v.grouping.idCol, type: v.colType }));
+    .map((v) => ({ key: v.key, type: v.colType }));
 
   // the two are probably mutually exclusive, but it doesn't hurt anything to allow for both
   return imageFields.concat(multiBandImageFields);
