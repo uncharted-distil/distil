@@ -3,14 +3,14 @@
     <!-- Status Panel and Sidebar -->
     <status-panel />
     <div class="sidebar-container d-flex flex-column h-100">
-      <div class="padding-nav"></div>
+      <div class="padding-nav" />
       <status-sidebar />
     </div>
 
     <!-- Main -->
     <div class="container-fluid d-flex flex-column h-100 select-view">
       <!-- Spacer for the navigation. -->
-      <div class="row flex-0-nav"></div>
+      <div class="row flex-0-nav" />
 
       <!-- Header -->
       <header class="header row align-items-center justify-content-center">
@@ -56,15 +56,15 @@ import SelectDataSlot from "../components/SelectDataSlot.vue";
 import AvailableTrainingVariables from "../components/AvailableTrainingVariables.vue";
 import TrainingVariables from "../components/TrainingVariables.vue";
 import TargetVariable from "../components/TargetVariable.vue";
-import TypeChangeMenu from "../components/TypeChangeMenu.vue";
 import { actions as viewActions } from "../store/view/module";
 import { getters as routeGetters } from "../store/route/module";
 import { DataMode } from "../store/dataset";
 import { overlayRouteEntry } from "../util/routes";
 import { Route } from "vue-router";
-import { Filter } from "../util/filters";
+
 export default Vue.extend({
-  name: "select-training-view",
+  name: "SelectTrainingView",
+
   components: {
     CreateSolutionsForm,
     SelectDataSlot,
@@ -179,6 +179,7 @@ export default Vue.extend({
       }
     },
   },
+
   beforeMount() {
     viewActions.fetchSelectTrainingData(this.$store, false);
   },

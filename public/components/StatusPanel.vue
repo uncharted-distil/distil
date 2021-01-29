@@ -264,6 +264,9 @@ export default Vue.extend({
         .fetchOutliers(this.$store, { dataset, variable })
         .then(() => {
           this.clearData();
+
+          // Update the variables, which should include the outlier variable
+          datasetActions.fetchVariables(this.$store, { dataset });
         });
     },
 
