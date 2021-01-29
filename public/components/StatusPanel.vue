@@ -48,7 +48,6 @@ import {
   GeocodingPendingRequest,
   SummaryMode,
   DataMode,
-  OutlierPendingRequest,
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
