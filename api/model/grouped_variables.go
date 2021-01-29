@@ -122,6 +122,8 @@ func ExpandFilterParams(dataset string, filterParams *FilterParams, includeHidde
 				for _, componentVarName := range componentVars {
 					updatedFilterParams.AddVariable(componentVarName)
 				}
+
+				updatedFilterParams.AddVariable(variable.Key)
 			} else if model.IsImage(variable.Type) {
 				// add the variable, and if it exists the cluster{
 				updatedFilterParams.AddVariable(variable.Key)

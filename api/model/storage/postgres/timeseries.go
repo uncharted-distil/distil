@@ -26,6 +26,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // TimeSeriesField defines behaviour for the timeseries field type.
@@ -374,44 +375,53 @@ func (s *Storage) parseTimeSet(rows pgx.Rows) (*map[float64]float64, *[]float64,
 }
 
 // GetTimeseriesOperations returns the supported operations to deal with duplicates in the timeseries
-func GetTimeseriesOperations(operation string) func(float64, float64, int64) float64 {
+func GetTimeseriesOperations(operation api.TimeseriesOp) func(float64, float64, int64) float64 {
 	switch operation {
-	case "min":
+	case api.TimeseriesMinOp:
 		return minDuplicates
-	case "max":
+	case api.TimeseriesMaxOp:
 		return maxDuplicates
-	case "mean":
+	case api.TimeseriesMeanOp:
 		return averageDuplicates
+	case api.TimeseriesAddOp:
+		return addDuplicates
 	default:
+		log.Warnf("unhandled timeseries op %s", operation)
 		return addDuplicates
 	}
 }
 
 // FetchTimeseries fetches a timeseries.
-func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURI []string, duplicateOperation string, filterParams *api.FilterParams, invert bool) (*map[string]*api.TimeseriesData, error) {
+func (s *Storage) FetchTimeseries(dataset string, storageName string, variableKey string, seriesIDColName string, xColName string, yColName string, timeseriesURI []string,
+	duplicateOperation api.TimeseriesOp, filterParams *api.FilterParams, invert bool) ([]*api.TimeseriesData, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 
-	// build ANY ARRAY values
-	paramString := ""
-	if len(timeseriesURI) == 0 {
-		return nil, errors.New("No timeseriesURIs passed in")
+	if seriesIDColName != "null" && seriesIDColName != "" {
+		// build ANY ARRAY values
+		paramString := ""
+		if len(timeseriesURI) == 0 {
+			return nil, errors.New("No timeseries IDs passed in")
+		}
+		for _, v := range timeseriesURI {
+			paramString += "'" + v + "',"
+		}
+		paramString = paramString[:len(paramString)-1] // remove end comma
+		wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", seriesIDColName, paramString))
 	}
-	for _, v := range timeseriesURI {
-		paramString += "'" + v + "',"
-	}
-	paramString = paramString[:len(paramString)-1] // remove end comma
-	wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", timeseriesColName, paramString))
 
 	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, invert)
-	where := fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	where := ""
+	if len(wheres) > 0 {
+		where = fmt.Sprintf("WHERE %s", strings.Join(wheres, " AND "))
+	}
 
 	// Get count by category.
 	query := fmt.Sprintf("SELECT ARRAY_AGG(filteredEvents.TimeStamps ORDER BY filteredEvents.TimeStamps), ARRAY_AGG(COALESCE(filteredEvents.Counts, 'NaN') ORDER BY filteredEvents.TimeStamps), filteredEvents.series_key FROM "+
 		"(SELECT \"%s\" as TimeStamps, \"%s\" as Counts, \"%s\" as series_key FROM %s %s ) filteredEvents "+
 		"GROUP BY filteredEvents.series_key",
-		xColName, yColName, timeseriesColName, storageName, where)
+		xColName, yColName, seriesIDColName, storageName, where)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
@@ -453,32 +463,35 @@ func (s *Storage) FetchTimeseries(dataset string, storageName string, timeseries
 			return nil, err
 		}
 	}
-	result := map[string]*api.TimeseriesData{}
-	for key, el := range response {
+	result := []*api.TimeseriesData{}
+	for seriesID, el := range response {
 		// Calculate Min/Max/Mean
 		var min, max, mean = getMinMaxMean(el)
-		result[key] = &api.TimeseriesData{
+		result = append(result, &api.TimeseriesData{
+			VarKey:     variableKey,
+			SeriesID:   seriesID,
 			Timeseries: el,
 			IsDateTime: dateTime,
 			Min:        min,
 			Max:        max,
 			Mean:       mean,
-		}
+		})
 	}
-	return &result, nil
+	return result, nil
 }
 
 // FetchTimeseriesForecast fetches a timeseries.
-func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, timeseriesColName string, xColName string, yColName string, timeseriesURIs []string, resultURI string, filterParams *api.FilterParams) (*map[string]*api.TimeseriesData, error) {
+func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, varKey string, seriesIDColName string, xColName string, yColName string,
+	seriesIDs []string, duplicateOperation api.TimeseriesOp, resultURI string, filterParams *api.FilterParams) ([]*api.TimeseriesData, error) {
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
 	paramString := ""
-	for _, v := range timeseriesURIs {
+	for _, v := range seriesIDs {
 		paramString += "'" + v + "',"
 	}
 	paramString = paramString[:len(paramString)-1]
-	wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", timeseriesColName, paramString))
+	wheres = append(wheres, fmt.Sprintf("\"%s\" = ANY(ARRAY[%s]::text[])", seriesIDColName, paramString))
 
 	wheres, params = s.buildFilteredQueryWhere(dataset, wheres, params, "", filterParams, false)
 
@@ -495,8 +508,8 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 		FROM %s data INNER JOIN %s result ON data."%s" = result.index
 		%s
 		GROUP BY %s`,
-		xColName, timeseriesColName, storageName, s.getResultTable(storageName),
-		model.D3MIndexFieldName, where, timeseriesColName)
+		xColName, seriesIDColName, storageName, s.getResultTable(storageName),
+		model.D3MIndexFieldName, where, seriesIDColName)
 
 	// execute the postgres query
 	res, err := s.client.Query(query, params...)
@@ -527,20 +540,22 @@ func (s *Storage) FetchTimeseriesForecast(dataset string, storageName string, ti
 			return nil, err
 		}
 	}
-	result := map[string]*api.TimeseriesData{}
+	result := []*api.TimeseriesData{}
 
-	for key, el := range response {
+	for seriesID, el := range response {
 		// Calculate Min/Max/Mean
 		var min, max, mean = getMinMaxMean(el)
-		result[key] = &api.TimeseriesData{
+		result = append(result, &api.TimeseriesData{
+			VarKey:     varKey,
+			SeriesID:   seriesID,
 			Timeseries: el,
 			IsDateTime: dateTime,
 			Min:        min,
 			Max:        max,
 			Mean:       mean,
-		}
+		})
 	}
-	return &result, nil
+	return result, nil
 }
 
 // FetchSummaryData pulls summary data from the database and builds a histogram.
@@ -649,6 +664,12 @@ func (f *TimeSeriesField) keyColName(mode api.SummaryMode) string {
 
 func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert bool, mode api.SummaryMode) (*api.Histogram, error) {
 
+	// When there's no grouping key we can
+	if f.IDCol == "" {
+		histogram := f.generateUngroupedData()
+		return histogram, nil
+	}
+
 	// create the filter for the query.
 	wheres := make([]string, 0)
 	params := make([]interface{}, 0)
@@ -661,6 +682,7 @@ func (f *TimeSeriesField) fetchHistogram(filterParams *api.FilterParams, invert 
 
 	// Get count by category.
 	colName := f.keyColName(mode)
+
 	query := fmt.Sprintf("SELECT \"%s\", COUNT(DISTINCT \"%s\") AS __count__ FROM %s %s GROUP BY \"%s\" ORDER BY __count__ desc, \"%s\" LIMIT %d;",
 		colName, f.IDCol, f.DatasetStorageName, where, colName, colName, timeSeriesCatResultLimit)
 
@@ -779,6 +801,25 @@ func (f *TimeSeriesField) parseHistogram(rows pgx.Rows, mode api.SummaryMode) (*
 			Max: float64(max),
 		},
 	}, nil
+}
+
+// For timeseries that exists as a single series in a file (ie. each row is just (timestamp, value))
+// we don't need to do any aggregation queries.  A single category is returned in the histogram,
+// and the exemplar name is set to the timeseries key.
+func (f *TimeSeriesField) generateUngroupedData() *api.Histogram {
+	return &api.Histogram{
+		Buckets: []*api.Bucket{
+			{
+				Key:   f.Key,
+				Count: 1,
+			},
+		},
+		Extrema: &api.Extrema{
+			Min: float64(1),
+			Max: float64(1),
+		},
+		Exemplars: []string{f.Key},
+	}
 }
 
 // FetchPredictedSummaryData pulls predicted data from the result table and builds

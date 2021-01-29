@@ -80,11 +80,6 @@ func (s *Storage) getResultTargetVariable(dataset string, targetName string) (*m
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to get target variable information")
 	}
-	if variable.IsGrouping() && model.IsTimeSeries(variable.Type) {
-		// extract the time series value column
-		tsg := variable.Grouping.(*model.TimeseriesGrouping)
-		return s.metadata.FetchVariable(dataset, tsg.YCol)
-	}
 	return variable, nil
 }
 
@@ -340,7 +335,7 @@ func (s *Storage) PersistResult(dataset string, storageName string, resultURI st
 		}
 		indicesParsed[parsedVal] = true
 
-		dataForInsert := []interface{}{resultURI, parsedVal, targetVariable.Key, records[i][targetIndex]}
+		dataForInsert := []interface{}{resultURI, parsedVal, targetHeaderName, records[i][targetIndex]}
 		explainValues, err := s.parseExplainValues(records[i], confidenceIndex, rankIndex)
 		if err != nil {
 			return err
@@ -426,6 +421,7 @@ func (s *Storage) parseFilteredResults(variables []*model.Variable, rows pgx.Row
 						continue
 					} else {
 						v := getVariableByKey(key, variables)
+						key = v.Key
 						label = v.DisplayName
 						if key == target.Key {
 							typ = target.Type
@@ -889,7 +885,7 @@ func (s *Storage) getAverageWeights(dataset string, storageName string, storageN
 	variables []*model.Variable, whereStatement string, params []interface{}) (map[string]float64, error) {
 	variablesSQL := []string{}
 	for _, v := range variables {
-		if model.IsTA2Field(v.DistilRole, v.SelectedRole) && !model.IsIndexRole(v.SelectedRole) {
+		if model.IsTA2Field(v.DistilRole, v.SelectedRole) && !model.IsIndexRole(v.SelectedRole) && !v.IsGrouping() {
 			variablesSQL = append(variablesSQL, fmt.Sprintf("AVG(weights.\"%s\") as \"%s\"", v.Key, v.Key))
 		}
 	}
@@ -1002,6 +998,14 @@ func (s *Storage) getHeaderName(dataset string, key string) (string, error) {
 	variable, err := s.metadata.FetchVariable(dataset, key)
 	if err != nil {
 		return "", errors.Wrap(err, "unable fetch variable for name mapping")
+	}
+
+	if variable.IsGrouping() && model.IsTimeSeries(variable.Grouping.GetType()) {
+		tsg := variable.Grouping.(*model.TimeseriesGrouping)
+		variable, err = s.metadata.FetchVariable(dataset, tsg.YCol)
+		if err != nil {
+			return "", errors.Wrap(err, "unable fetch variable for name mapping")
+		}
 	}
 
 	return variable.HeaderName, nil

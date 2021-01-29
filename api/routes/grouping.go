@@ -125,16 +125,28 @@ func RemoveGroupingHandler(dataCtor api.DataStorageCtor, metaCtor api.MetadataSt
 			}
 		}
 
-		// If there was an ID col associated with this group that was built from SubIDs, delete it now
-		if variable.Grouping.GetIDCol() != "" && len(variable.Grouping.GetSubIDs()) != 0 {
-			err = meta.DeleteVariable(dataset, variable.Grouping.GetIDCol())
+		// If there was a new variable created that specifically has the grouping role, then delete it.
+		groupingVarExists, err := meta.DoesVariableExist(dataset, variable.Grouping.GetIDCol())
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		if groupingVarExists {
+			idColVariable, err := meta.FetchVariable(dataset, variable.Grouping.GetIDCol())
 			if err != nil {
 				handleError(w, err)
 				return
 			}
+			if idColVariable.DistilRole == model.VarDistilRoleGrouping {
+				err = meta.DeleteVariable(dataset, variable.Grouping.GetIDCol())
+				if err != nil {
+					handleError(w, err)
+					return
+				}
+			}
 		}
 
-		// Delete the gropuing variable itself
+		// Delete the grouping variable itself
 		err = meta.DeleteVariable(dataset, variableName)
 		if err != nil {
 			handleError(w, err)
@@ -203,19 +215,17 @@ func createGrouping(dataset string, storageName string, groupingType string, raw
 			return err
 		}
 
-		if tsg.IDCol != "" {
-			// Create a new variable and column for the time series key.
-			if err := task.CreateComposedVariable(meta, data, dataset, storageName, tsg.IDCol, tsg.YCol, tsg.SubIDs); err != nil {
-				return errors.Wrapf(err, "unable to create new variable %s", tsg.IDCol)
-			}
-
-			// Set the name of the expected cluster column - it doesn't necessarily exist.
-			tsg.ClusterCol = model.ClusterVarPrefix + tsg.IDCol
+		// Create a new variable and column for the time series key.
+		if err := task.CreateComposedVariable(meta, data, dataset, storageName, tsg.IDCol, tsg.IDCol, tsg.SubIDs); err != nil {
+			return errors.Wrapf(err, "unable to create new variable %s", tsg.IDCol)
 		}
+
+		// Set the name of the expected cluster column - it doesn't necessarily exist.
+		tsg.ClusterCol = model.ClusterVarPrefix + tsg.IDCol
 
 		// Create a new grouped variable for the time series.
 		groupingVarName := strings.Join([]string{tsg.XCol, tsg.YCol}, task.DefaultSeparator)
-		err = meta.AddGroupedVariable(dataset, groupingVarName, tsg.YCol, model.TimeSeriesType, model.VarDistilRoleGrouping, tsg)
+		err = meta.AddGroupedVariable(dataset, groupingVarName, tsg.YCol, model.TimeSeriesType, model.VarDistilRoleData, tsg)
 		if err != nil {
 			return err
 		}

@@ -49,17 +49,17 @@
       </template>
 
       <template
-        v-for="timeseriesGrouping in timeseriesGroupings"
-        v-slot:[cellSlot(timeseriesGrouping.idCol)]="data"
+        v-for="variable in timeseriesVariables"
+        v-slot:[cellSlot(variable.key)]="data"
       >
-        <div :key="data.item[timeseriesGrouping.idCol].value" class="container">
+        <div :key="data.item[variable.key].value" class="container">
           <div class="row">
             <sparkline-preview
               :truth-dataset="dataset"
-              :x-col="timeseriesGrouping.xCol"
-              :y-col="timeseriesGrouping.yCol"
-              :timeseries-col="timeseriesGrouping.idCol"
-              :timeseries-id="data.item[timeseriesGrouping.idCol].value"
+              :x-col="variable.grouping.xCol"
+              :y-col="variable.grouping.yCol"
+              :variable-key="variable.key"
+              :timeseries-id="data.item[variable.key].value"
               :unique-trail="uniqueTrail"
             />
           </div>
@@ -131,6 +131,7 @@ import {
 } from "../util/row";
 import {
   getTimeseriesGroupingsFromFields,
+  getTimeseriesVariablesFromFields,
   formatSlot,
   formatFieldsAsArray,
   getImageFields,
@@ -160,7 +161,7 @@ export default Vue.extend({
   },
 
   props: {
-    instanceName: String as () => string,
+    instanceName: { type: String as () => string, default: "" },
     dataItems: { type: Array as () => TableRow[], default: null },
     includedActive: { type: Boolean, default: true },
   },
@@ -190,7 +191,7 @@ export default Vue.extend({
       // In the case of timeseries, we add their Min/Max/Mean.
       if (this.isTimeseries) {
         items = items?.map((item) => {
-          const timeserieId = item[this.timeseriesGroupings?.[0]?.idCol]?.value;
+          const timeserieId = item[this.timeseriesVariables?.[0]?.key]?.value;
           const minMaxMean = this.timeseriesInfo(
             timeserieId + this.uniqueTrail
           );
@@ -253,6 +254,10 @@ export default Vue.extend({
 
     timeseriesGroupings(): TimeseriesGrouping[] {
       return getTimeseriesGroupingsFromFields(this.variables, this.fields);
+    },
+
+    timeseriesVariables(): Variable[] {
+      return getTimeseriesVariablesFromFields(this.variables, this.fields);
     },
 
     computedFields(): string[] {
@@ -318,15 +323,16 @@ export default Vue.extend({
       if (!this.isTimeseries) {
         return;
       }
-      this.timeseriesGroupings.forEach((tsg) => {
+      this.timeseriesVariables.forEach((tsv) => {
+        const grouping = tsv.grouping as TimeseriesGrouping;
         datasetActions.fetchTimeseries(this.$store, {
           dataset: this.dataset,
-          xColName: tsg.xCol,
-          yColName: tsg.yCol,
-          timeseriesColName: tsg.idCol,
+          variableKey: tsv.key,
+          xColName: grouping.xCol,
+          yColName: grouping.yCol,
           uniqueTrail: this.uniqueTrail,
           timeseriesIds: this.pageItems.map((item) => {
-            return item[tsg.idCol].value as string;
+            return item[tsv.key].value as string;
           }),
         });
       });
@@ -465,9 +471,9 @@ table tr {
   user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome, Edge, Opera and Firefox */
 }
-/* 
-  This keep the pagination from being squished by the table. 
-  The double _.distil-table-container is to increase 
+/*
+  This keep the pagination from being squished by the table.
+  The double _.distil-table-container is to increase
   specificity over the <b-pagination> component style.
 */
 .distil-table-container.distil-table-container > .pagination {
