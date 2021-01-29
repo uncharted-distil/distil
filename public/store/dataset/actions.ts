@@ -21,6 +21,7 @@ import {
   IMAGE_TYPE,
   isImageType,
   isRankableVariableType,
+  isRemoteSensingType,
   MULTIBAND_IMAGE_TYPE,
   UNKNOWN_TYPE,
 } from "../../util/types";
@@ -335,6 +336,49 @@ export const actions = {
         });
         console.error(error);
       });
+  },
+
+  async fetchOutliers(context: DatasetContext, args: { dataset: string }) {
+    const { dataset } = args;
+
+    // Create the request and set its status to PENDING.
+    let status = DatasetPendingRequestStatus.PENDING;
+    const request: OutlierPendingRequest = {
+      id: _.uniqueId(),
+      dataset,
+      type: DatasetPendingRequestType.OUTLIER,
+      status,
+    };
+    mutations.updatePendingRequests(context, request);
+
+    // Find grouping variable, specially a remote-sensing one.
+    // This is needed in case the remote-sensing images have not
+    // been prefiturized.
+    const variables = getters.getVariables(context);
+    const groupingVariables = variables.filter((v) => v.grouping);
+    const remoteSensingVariable = groupingVariables.find((gv) =>
+      isRemoteSensingType(gv.colType)
+    );
+    // The variable sent, is, in order of availability:
+    //     - a remote-sensing variable first,
+    //     - a grouping variable second,
+    //     - or the first dataset variable
+    const variable =
+      remoteSensingVariable?.grouping.idCol ??
+      groupingVariables[0]?.grouping.idCol ??
+      variables[0].key;
+
+    // Run the outlier detection
+    try {
+      await axios.get(`/distil/outlier-detection/${dataset}/${variable}`);
+      status = DatasetPendingRequestStatus.RESOLVED;
+    } catch (error) {
+      console.error(error);
+      status = DatasetPendingRequestStatus.ERROR;
+    }
+
+    // Update the pending request status
+    mutations.updatePendingRequests(context, { ...request, status });
   },
 
   async uploadDataFile(
@@ -1030,36 +1074,6 @@ export const actions = {
       rankings: args.rankings,
     });
     mutations.updateVariableRankings(context, args.rankings);
-  },
-
-  async fetchOutliers(
-    context: DatasetContext,
-    args: { dataset: string; variable: string }
-  ) {
-    const { dataset, variable } = args;
-    const request: OutlierPendingRequest = {
-      id: _.uniqueId(),
-      dataset,
-      outliers: null,
-      type: DatasetPendingRequestType.OUTLIER,
-      status: DatasetPendingRequestStatus.PENDING,
-      variable,
-    };
-
-    mutations.updatePendingRequests(context, request);
-
-    try {
-      const url = `/distil/outlier-detection/${dataset}/${variable}`;
-      const response = await axios.get(url);
-
-      request.outliers = response.data;
-      request.status = DatasetPendingRequestStatus.RESOLVED;
-    } catch (error) {
-      request.status = DatasetPendingRequestStatus.ERROR;
-      console.error(error);
-    }
-
-    mutations.updatePendingRequests(context, request);
   },
 
   updatePendingRequestStatus(

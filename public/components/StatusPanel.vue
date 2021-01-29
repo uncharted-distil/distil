@@ -259,15 +259,10 @@ export default Vue.extend({
     },
 
     applyOutlierChange() {
-      const { dataset, variable } = <OutlierPendingRequest>this.requestData;
-      datasetActions
-        .fetchOutliers(this.$store, { dataset, variable })
-        .then(() => {
-          this.clearData();
+      this.clearData();
 
-          // Update the variables, which should include the outlier variable
-          datasetActions.fetchVariables(this.$store, { dataset });
-        });
+      // Update the variables, which should include the outlier variable
+      datasetActions.fetchVariables(this.$store, { dataset: this.dataset });
     },
 
     // Applies clustering changes and refetches update variable summaries

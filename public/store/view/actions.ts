@@ -251,7 +251,6 @@ const fetchOutliers = createCacheable(
   (context, args) => {
     datasetActions.fetchOutliers(store, {
       dataset: args.dataset,
-      variable: args.variable,
     });
   }
 );
@@ -455,7 +454,7 @@ export const actions = {
 
     fetchVariableRankings(context, { dataset, target });
     fetchClusters(context, { dataset });
-    fetchOutliers(context, { dataset, target });
+    fetchOutliers(context, { dataset });
 
     return actions.updateSelectTrainingData(context);
   },
@@ -619,7 +618,7 @@ export const actions = {
 
     // These are long running processes we won't wait on
     fetchClusters(context, { dataset });
-    fetchOutliers(context, { dataset, target });
+    fetchOutliers(context, { dataset });
 
     await Promise.all([
       fetchSolutionVariableRankings(context, { solutionID: solutionID }),

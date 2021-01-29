@@ -347,8 +347,6 @@ export interface OutlierPendingRequest {
   status: DatasetPendingRequestStatus;
   type: DatasetPendingRequestType.OUTLIER;
   dataset: string;
-  variable: string;
-  outliers: any; // TODO
 }
 
 export type DatasetPendingRequest =

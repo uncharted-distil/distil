@@ -83,10 +83,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import {
-  actions as datasetActions,
-  getters as datasetGetters,
-} from "../store/dataset/module";
+import { getters as datasetGetters } from "../store/dataset/module";
 import { actions as appActions } from "../store/app/module";
 import { getters as routeGetters } from "../store/route/module";
 import {
@@ -101,8 +98,6 @@ import {
   OutlierPendingRequest,
   DataMode,
 } from "../store/dataset/index";
-import { Feature, Activity } from "../util/userEvents";
-import { Dictionary } from "vue-router/types/router";
 
 const STATUS_TYPES = [
   DatasetPendingRequestType.VARIABLE_RANKING,
