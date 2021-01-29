@@ -211,6 +211,9 @@ export default Vue.extend({
       return facetData;
     },
     getSparkline(sparklineId: string) {
+      if (!this.variable) {
+        return;
+      }
       const grouping = this.variable.grouping as TimeseriesGrouping;
       const sp = new SparklinePreview({
         store: this.$store,

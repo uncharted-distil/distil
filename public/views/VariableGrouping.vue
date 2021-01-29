@@ -212,14 +212,11 @@ import {
   actions as datasetActions,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
-import { actions as viewActions } from "../store/view/module";
 import {
   INTEGER_TYPE,
   TEXT_TYPE,
   ORDINAL_TYPE,
-  TIMESTAMP_TYPE,
   CATEGORICAL_TYPE,
-  DATE_TIME_TYPE,
   REAL_TYPE,
   GEOCOORDINATE_TYPE,
   TIMESERIES_TYPE,
@@ -230,24 +227,28 @@ import {
   isTimeGroupType,
   isLatitudeGroupType,
   isValueGroupType,
+  DISTIL_ROLES,
 } from "../util/types";
 import {
-  filterSummariesByDataset,
   getComposedVariableKey,
   hasTimeseriesFeatures,
   hasGeoordinateFeatures,
   minimumRouteKey,
 } from "../util/data";
 import { getFacetByType } from "../util/facets";
-import { SELECT_TARGET_ROUTE } from "../store/route/index";
-import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 import FacetLoading from "../components/facets/FacetLoading.vue";
 import FacetTimeseries from "../components/facets/FacetTimeseries.vue";
 import GeocoordinateFacet from "../components/facets/GeocoordinateFacet.vue";
 import LabelingView from "../views/Labeling.vue";
 
+interface Options {
+  text: string;
+  value: string;
+  disabled: boolean;
+}
+
 export default Vue.extend({
-  name: "variable-grouping",
+  name: "VariableGrouping",
 
   components: {
     FacetLoading,
@@ -297,10 +298,12 @@ export default Vue.extend({
     isTimeseries(): boolean {
       return this.groupingType === TIMESERIES_TYPE;
     },
+
     isLabeling(): boolean {
       return this.groupingType === LABELING_TYPE;
     },
-    xColOptions(): Object[] {
+
+    xColOptions(): Options[] {
       if (!this.isGeocoordinate && !this.isTimeseries) {
         return [];
       }
@@ -324,13 +327,14 @@ export default Vue.extend({
         .filter((v) => xFilterFunction(v.colType))
         .filter((v) => !this.isIDCol(v.key))
         .filter((v) => !this.isYCol(v.key))
+        .filter((v) => !this.isGroupingCol(v))
         .map((v) => {
-          return { value: v.key, text: v.colDisplayName };
+          return { value: v.key, text: v.colDisplayName, disabled: false };
         });
       return [].concat([def], suggestions);
     },
 
-    yColOptions(): Object[] {
+    yColOptions(): Options[] {
       if (!this.isGeocoordinate && !this.isTimeseries) {
         return [];
       }
@@ -354,8 +358,9 @@ export default Vue.extend({
         .filter((v) => yFilterFunction(v.colType))
         .filter((v) => !this.isIDCol(v.key))
         .filter((v) => !this.isXCol(v.key))
+        .filter((v) => !this.isGroupingCol(v))
         .map((v) => {
-          return { value: v.key, text: v.colDisplayName };
+          return { value: v.key, text: v.colDisplayName, disabled: false };
         });
       return [].concat(def, suggestions);
     },
@@ -418,7 +423,7 @@ export default Vue.extend({
         });
       }
     },
-    idOptions(idCol: string): Object[] {
+    idOptions(idCol: string): Options[] {
       const ID_COL_TYPES = {
         [TEXT_TYPE]: true,
         [ORDINAL_TYPE]: true,
@@ -426,9 +431,12 @@ export default Vue.extend({
       };
       const suggestions = this.variables
         .filter((v) => ID_COL_TYPES[v.colType])
-        .filter((v) => v.key === idCol || !this.isIDCol(v.key))
+        .filter((v) => !this.isGroupingCol(v))
+        .filter(
+          (v) => v.key === idCol || (!this.isIDCol(v.key) && this.groupingType)
+        )
         .map((v) => {
-          return { value: v.key, text: v.colDisplayName };
+          return { value: v.key, text: v.colDisplayName, disabled: false };
         });
 
       if (suggestions.length > 0) {
@@ -438,7 +446,7 @@ export default Vue.extend({
       return [];
     },
 
-    onIdChange(arg: string) {
+    onIdChange() {
       const values = this.idCols.map((c) => c.value).filter((v) => v);
       if (values.length === this.prevIdCols) {
         return;
@@ -473,6 +481,10 @@ export default Vue.extend({
 
     isOtherCol(arg: string): boolean {
       return this.other.indexOf(arg) !== -1;
+    },
+
+    isGroupingCol(variable: Variable): boolean {
+      return variable.distilRole === DISTIL_ROLES.Grouping;
     },
 
     onChange() {
@@ -529,11 +541,12 @@ export default Vue.extend({
             [INTEGER_TYPE]: true,
             [REAL_TYPE]: true,
           };
-          const yCols = this.variables
+          this.variables
             .filter((v) => Y_COL_TYPES[v.colType])
             .filter((v) => !this.isIDCol(v.colName))
             .filter((v) => !this.isXCol(v.colName))
             .filter((v) => !this.isYCol(v.colName))
+            .filter((v) => !this.isGroupingCol(v))
             .map((v) => v.colName)
             .forEach((v) => {
               // create a new grouping entry for each value variable and add it to
