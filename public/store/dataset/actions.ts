@@ -341,17 +341,27 @@ export const actions = {
   async fetchOutliers(context: DatasetContext, args: { dataset: string }) {
     const { dataset } = args;
 
-    // Create the request and set its status to PENDING.
-    let status = DatasetPendingRequestStatus.PENDING;
+    // Create the request.
+    let status;
     const request: OutlierPendingRequest = {
       id: _.uniqueId(),
       dataset,
       type: DatasetPendingRequestType.OUTLIER,
       status,
     };
-    mutations.updatePendingRequests(context, request);
 
-    // Find grouping variable, specially a remote-sensing one.
+    // Check if the outlier detection has already been generated.
+    if (routeGetters.isOutlierGenerated(store)) {
+      status = DatasetPendingRequestStatus.REVIEWED;
+      mutations.updatePendingRequests(context, { ...request, status });
+      return;
+    }
+
+    // Set the request status as pending.
+    status = DatasetPendingRequestStatus.PENDING;
+    mutations.updatePendingRequests(context, { ...request, status });
+
+    // Find a grouping variable, specially a remote-sensing one.
     // This is needed in case the remote-sensing images have not
     // been prefiturized.
     const variables = getters.getVariables(context);
@@ -359,18 +369,19 @@ export const actions = {
     const remoteSensingVariable = groupingVariables.find((gv) =>
       isRemoteSensingType(gv.colType)
     );
-    // The variable sent, is, in order of availability:
+
+    // The variable name to be sent, is, in order of availability:
     //     - a remote-sensing variable first,
     //     - a grouping variable second,
     //     - or the first dataset variable
-    const variable =
+    const variableName =
       remoteSensingVariable?.grouping.idCol ??
       groupingVariables[0]?.grouping.idCol ??
       variables[0].key;
 
     // Run the outlier detection
     try {
-      await axios.get(`/distil/outlier-detection/${dataset}/${variable}`);
+      await axios.get(`/distil/outlier-detection/${dataset}/${variableName}`);
       status = DatasetPendingRequestStatus.RESOLVED;
     } catch (error) {
       console.error(error);

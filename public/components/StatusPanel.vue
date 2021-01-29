@@ -261,8 +261,12 @@ export default Vue.extend({
     applyOutlierChange() {
       this.clearData();
 
-      // Update the variables, which should include the outlier variable
+      // Update the variables, which should now include the outlier variable.
       datasetActions.fetchVariables(this.$store, { dataset: this.dataset });
+
+      // Update the route to know that the training variables have been ranked.
+      const entry = overlayRouteEntry(this.$route, { outlier: "1" });
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
 
     // Applies clustering changes and refetches update variable summaries
