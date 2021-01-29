@@ -25,12 +25,6 @@ import (
 	api "github.com/uncharted-distil/distil/api/model"
 )
 
-// ResidualsSummary contains a fetch result histogram.
-// CDB: Does this extra level need to be here?
-type ResidualsSummary struct {
-	ResidualsSummary *api.VariableSummary `json:"summary"`
-}
-
 // ResidualsSummaryHandler bins predicted result data for consumption in a downstream summary view.
 func ResidualsSummaryHandler(metaCtor api.MetadataStorageCtor, solutionCtor api.SolutionStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
