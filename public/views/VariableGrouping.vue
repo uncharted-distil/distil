@@ -529,7 +529,7 @@ export default Vue.extend({
       const groupings = [] as Grouping[];
 
       if (this.isTimeseries) {
-        const tsGrouping = _.cloneDeep(grouping) as TimeseriesGrouping;
+        const tsGrouping = { ...grouping } as TimeseriesGrouping;
         tsGrouping.xCol = this.xCol;
         tsGrouping.yCol = this.yCol;
         tsGrouping.clusterCol = null;
@@ -551,7 +551,7 @@ export default Vue.extend({
             .forEach((v) => {
               // create a new grouping entry for each value variable and add it to
               // the list to create
-              const tsGrouping = _.cloneDeep(grouping) as TimeseriesGrouping;
+              const tsGrouping = { ...grouping } as TimeseriesGrouping;
               tsGrouping.hidden = gotoTarget
                 ? this.getHiddenCols(idCol, this.xCol, v)
                 : [];
