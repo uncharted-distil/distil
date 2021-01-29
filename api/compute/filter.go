@@ -32,34 +32,47 @@ import (
 	"github.com/uncharted-distil/distil/api/util"
 )
 
-func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.FilterParams, dataStorage api.DataStorage) (string, error) {
+func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.FilterParams, dataStorage api.DataStorage) (string, *api.FilterParams, error) {
 	inputPath := env.ResolvePath(ds.Source, ds.Folder)
 
 	log.Infof("checking if solution search for dataset %s found in '%s' needs prefiltering", ds.ID, inputPath)
 	// determine if filtering is needed
-	preFilters := getPreFiltering(ds, filterParams)
+	updatedParams, preFilters := getPreFiltering(ds, filterParams)
 	if preFilters.Empty(false) {
 		log.Infof("solution request for dataset %s does not need prefiltering", ds.ID)
-		return inputPath, nil
+		return inputPath, updatedParams, nil
 	}
 
 	// check if the filtered results already exists
 	hash, err := hashFilter(inputPath, preFilters)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	outputFolder := env.ResolvePath("tmp", fmt.Sprintf("%s-%v", ds.Folder, hash))
 	outputDataFile := path.Join(outputFolder, compute.D3MDataFolder, compute.D3MLearningData)
 	if util.FileExists(outputDataFile) {
 		log.Infof("solution request for dataset %s already prefiltered at '%s'", ds.ID, outputFolder)
-		return outputFolder, nil
+		return outputFolder, updatedParams, nil
 	}
 
 	// read the data from the database
 	data, err := dataStorage.FetchDataset(ds.ID, ds.StorageName, true, false, nil)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
+
+	// update the metadata to match the data pulled from the data storage
+	// (mostly matching column index and dropping columns not pulled)
+	metaVarMap := map[string]*model.Variable{}
+	for _, v := range ds.Variables {
+		metaVarMap[v.Key] = v
+	}
+	variablesData := make([]*model.Variable, len(data[0]))
+	for i, f := range data[0] {
+		variablesData[i] = metaVarMap[f]
+		variablesData[i].Index = i
+	}
+	ds.Variables = variablesData
 
 	// write it out as a dataset
 	dsRaw := &api.RawDataset{
@@ -70,28 +83,28 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 	}
 	err = serialization.WriteDataset(outputFolder, dsRaw)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	// run the filtering pipeline
 	pipeline, err := description.CreateDataFilterPipeline("Pre Filtering", "pre filter a dataset that has metadata features", ds.Variables, preFilters.Filters)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	filteredData, err := SubmitPipeline(client, []string{outputFolder}, nil, nil, pipeline, true)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	// output the filtered results as the data in the filtered dataset
 	err = util.CopyFile(filteredData, outputDataFile)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	log.Infof("solution request for dataset %s filtered data written to '%s'", ds.ID, outputDataFile)
 
-	return outputFolder, nil
+	return outputFolder, updatedParams, nil
 }
 
 func hashFilter(schemaFile string, filterParams *api.FilterParams) (uint64, error) {
@@ -110,25 +123,32 @@ func hashFilter(schemaFile string, filterParams *api.FilterParams) (uint64, erro
 	return hash, nil
 }
 
-func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) *api.FilterParams {
+func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) (*api.FilterParams, *api.FilterParams) {
 	vars := map[string]*model.Variable{}
 	for _, v := range ds.Variables {
 		vars[v.Key] = v
 	}
+	clone := filterParams.Clone()
 	// filter if a clustering or outlier detection metadata feature exist
+	// remove pre filters from the rest of the filters since they should not be in the main pipeline
 	// TODO: NEED TO HANDLE OUTLIER FILTERS!
 	preFilters := &api.FilterParams{
 		Filters: []*model.Filter{},
 	}
-	for _, f := range filterParams.Filters {
+	filters := clone.Filters
+	clone.Filters = []*model.Filter{}
+	for _, f := range filters {
 		variable := vars[f.Key]
+		params := clone
 		if variable.IsGrouping() {
-			_, ok := variable.Grouping.(model.ClusteredGrouping)
+			cg, ok := variable.Grouping.(model.ClusteredGrouping)
 			if ok {
-				preFilters.Filters = append(preFilters.Filters, f)
+				f.Key = cg.GetClusterCol()
+				params = preFilters
 			}
 		}
+		params.Filters = append(params.Filters, f)
 	}
 
-	return preFilters
+	return clone, preFilters
 }

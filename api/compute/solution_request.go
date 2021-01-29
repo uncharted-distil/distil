@@ -755,10 +755,11 @@ func (s *SolutionRequest) PersistAndDispatch(client *compute.Client, solutionSto
 	}
 
 	// prefilter dataset if metadata fields are used in filters
-	filteredDatasetPath, err := filterData(client, datasetInput, s.Filters, dataStorage)
+	filteredDatasetPath, updatedFilters, err := filterData(client, datasetInput, s.Filters, dataStorage)
 	if err != nil {
 		return err
 	}
+	s.Filters = updatedFilters
 
 	// when dealing with categorical data we want to stratify
 	stratify := model.IsCategorical(s.TargetFeature.Type)

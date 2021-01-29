@@ -323,7 +323,11 @@ func (s *Storage) FetchDataset(dataset string, storageName string, includeMetada
 	}
 	varNames := []string{}
 	for _, v := range filteredVars {
-		varNames = append(varNames, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v.Key, v.Key))
+		fieldSelect := "COALESCE(CAST(\"%s\" as text), '') AS \"%s\""
+		if model.IsVector(v.Type) {
+			fieldSelect = "COALESCE(TRANSLATE(CAST(\"%s\" as text), '{}', ''), '') AS \"%s\""
+		}
+		varNames = append(varNames, fmt.Sprintf(fieldSelect, v.Key, v.Key))
 	}
 	wheres := []string{}
 	paramsFilter := make([]interface{}, 0)
