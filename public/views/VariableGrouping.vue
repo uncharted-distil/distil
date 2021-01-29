@@ -212,14 +212,11 @@ import {
   actions as datasetActions,
 } from "../store/dataset/module";
 import { getters as routeGetters } from "../store/route/module";
-import { actions as viewActions } from "../store/view/module";
 import {
   INTEGER_TYPE,
   TEXT_TYPE,
   ORDINAL_TYPE,
-  TIMESTAMP_TYPE,
   CATEGORICAL_TYPE,
-  DATE_TIME_TYPE,
   REAL_TYPE,
   GEOCOORDINATE_TYPE,
   TIMESERIES_TYPE,
@@ -230,24 +227,28 @@ import {
   isTimeGroupType,
   isLatitudeGroupType,
   isValueGroupType,
+  DISTIL_ROLES,
 } from "../util/types";
 import {
-  filterSummariesByDataset,
   getComposedVariableKey,
   hasTimeseriesFeatures,
   hasGeoordinateFeatures,
   minimumRouteKey,
 } from "../util/data";
 import { getFacetByType } from "../util/facets";
-import { SELECT_TARGET_ROUTE } from "../store/route/index";
-import { createRouteEntry, overlayRouteEntry } from "../util/routes";
 import FacetLoading from "../components/facets/FacetLoading.vue";
 import FacetTimeseries from "../components/facets/FacetTimeseries.vue";
 import GeocoordinateFacet from "../components/facets/GeocoordinateFacet.vue";
 import LabelingView from "../views/Labeling.vue";
 
+interface Options {
+  text: string;
+  value: string;
+  disabled: boolean;
+}
+
 export default Vue.extend({
-  name: "variable-grouping",
+  name: "VariableGrouping",
 
   components: {
     FacetLoading,
@@ -258,15 +259,15 @@ export default Vue.extend({
 
   data() {
     return {
-      idCols: [{ value: null }],
+      idCols: [{ value: null as string }],
       prevIdCols: 0,
-      xCol: null,
-      yCol: null,
+      xCol: null as string,
+      yCol: null as string,
       hideIdCol: [false],
       hideXCol: true,
       hideYCol: true,
       hideClusterCol: true,
-      other: [],
+      other: [] as string[],
       isPending: false,
       percentComplete: 100,
       isUpdating: false,
@@ -297,10 +298,12 @@ export default Vue.extend({
     isTimeseries(): boolean {
       return this.groupingType === TIMESERIES_TYPE;
     },
+
     isLabeling(): boolean {
       return this.groupingType === LABELING_TYPE;
     },
-    xColOptions(): Object[] {
+
+    xColOptions(): Options[] {
       if (!this.isGeocoordinate && !this.isTimeseries) {
         return [];
       }
@@ -324,13 +327,14 @@ export default Vue.extend({
         .filter((v) => xFilterFunction(v.colType))
         .filter((v) => !this.isIDCol(v.key))
         .filter((v) => !this.isYCol(v.key))
+        .filter((v) => !this.isGroupingCol(v))
         .map((v) => {
-          return { value: v.key, text: v.colDisplayName };
+          return { value: v.key, text: v.colDisplayName, disabled: false };
         });
       return [].concat([def], suggestions);
     },
 
-    yColOptions(): Object[] {
+    yColOptions(): Options[] {
       if (!this.isGeocoordinate && !this.isTimeseries) {
         return [];
       }
@@ -354,8 +358,9 @@ export default Vue.extend({
         .filter((v) => yFilterFunction(v.colType))
         .filter((v) => !this.isIDCol(v.key))
         .filter((v) => !this.isXCol(v.key))
+        .filter((v) => !this.isGroupingCol(v))
         .map((v) => {
-          return { value: v.key, text: v.colDisplayName };
+          return { value: v.key, text: v.colDisplayName, disabled: false };
         });
       return [].concat(def, suggestions);
     },
@@ -418,7 +423,7 @@ export default Vue.extend({
         });
       }
     },
-    idOptions(idCol): Object[] {
+    idOptions(idCol: string): Options[] {
       const ID_COL_TYPES = {
         [TEXT_TYPE]: true,
         [ORDINAL_TYPE]: true,
@@ -426,9 +431,12 @@ export default Vue.extend({
       };
       const suggestions = this.variables
         .filter((v) => ID_COL_TYPES[v.colType])
-        .filter((v) => v.key === idCol || !this.isIDCol(v.key))
+        .filter((v) => !this.isGroupingCol(v))
+        .filter(
+          (v) => v.key === idCol || (!this.isIDCol(v.key) && this.groupingType)
+        )
         .map((v) => {
-          return { value: v.key, text: v.colDisplayName };
+          return { value: v.key, text: v.colDisplayName, disabled: false };
         });
 
       if (suggestions.length > 0) {
@@ -449,7 +457,7 @@ export default Vue.extend({
       this.onChange();
     },
 
-    removeIdCol(value) {
+    removeIdCol(value: string) {
       this.idCols = this.idCols.filter((idCol) => idCol.value !== value);
       this.prevIdCols--;
       if (this.isReady) {
@@ -459,20 +467,24 @@ export default Vue.extend({
       }
     },
 
-    isIDCol(arg): boolean {
+    isIDCol(arg: string): boolean {
       return !!this.idCols.find((id) => id.value === arg);
     },
 
-    isXCol(arg): boolean {
+    isXCol(arg: string): boolean {
       return arg === this.xCol;
     },
 
-    isYCol(arg): boolean {
+    isYCol(arg: string): boolean {
       return arg === this.yCol;
     },
 
-    isOtherCol(arg): boolean {
+    isOtherCol(arg: string): boolean {
       return this.other.indexOf(arg) !== -1;
+    },
+
+    isGroupingCol(variable: Variable): boolean {
+      return variable.distilRole === DISTIL_ROLES.Grouping;
     },
 
     onChange() {
@@ -485,8 +497,8 @@ export default Vue.extend({
       this.submitGrouping(true);
     },
 
-    getHiddenCols(idCol) {
-      const hiddenCols = [this.xCol, this.yCol];
+    getHiddenCols(idCol: string, xCol: string, yCol: string): string[] {
+      const hiddenCols = [xCol, yCol];
       if (idCol !== null) {
         hiddenCols.push(idCol);
       }
@@ -503,31 +515,70 @@ export default Vue.extend({
       // generate the grouping structure that describes how the vars will be grouped
       const idCol = this.isTimeseries ? getComposedVariableKey(ids) : null;
 
-      const hiddenCols = gotoTarget ? this.getHiddenCols(idCol) : [];
-
+      const hidden = gotoTarget
+        ? this.getHiddenCols(idCol, this.xCol, this.yCol)
+        : [];
       const grouping: Grouping = {
         type: this.groupingType,
         dataset: this.dataset,
         idCol: idCol,
         subIds: ids,
-        hidden: hiddenCols,
+        hidden: hidden,
       };
 
+      const groupings = [] as Grouping[];
+
       if (this.isTimeseries) {
-        const tsGrouping = grouping as TimeseriesGrouping;
+        const tsGrouping = { ...grouping } as TimeseriesGrouping;
         tsGrouping.xCol = this.xCol;
         tsGrouping.yCol = this.yCol;
         tsGrouping.clusterCol = null;
+        groupings.push(tsGrouping);
+
+        if (gotoTarget) {
+          // We want to take any other numeric values and create groups for them as well.
+          const Y_COL_TYPES = {
+            [INTEGER_TYPE]: true,
+            [REAL_TYPE]: true,
+          };
+          this.variables
+            .filter((v) => Y_COL_TYPES[v.colType])
+            .filter((v) => !this.isIDCol(v.colName))
+            .filter((v) => !this.isXCol(v.colName))
+            .filter((v) => !this.isYCol(v.colName))
+            .filter((v) => !this.isGroupingCol(v))
+            .map((v) => v.colName)
+            .forEach((v) => {
+              // create a new grouping entry for each value variable and add it to
+              // the list to create
+              const tsGrouping = { ...grouping } as TimeseriesGrouping;
+              tsGrouping.hidden = gotoTarget
+                ? this.getHiddenCols(idCol, this.xCol, v)
+                : [];
+              tsGrouping.xCol = this.xCol;
+              tsGrouping.yCol = v;
+              tsGrouping.clusterCol = null;
+              tsGrouping.hidden = this.getHiddenCols(idCol, this.xCol, v);
+              groupings.push(tsGrouping);
+            });
+        }
       } else if (this.isGeocoordinate) {
-        const tsGrouping = grouping as GeoCoordinateGrouping;
-        tsGrouping.xCol = this.xCol;
-        tsGrouping.yCol = this.yCol;
+        const geoGrouping = grouping as GeoCoordinateGrouping;
+        geoGrouping.xCol = this.xCol;
+        geoGrouping.yCol = this.yCol;
+
+        groupings.push(geoGrouping);
       }
 
-      await datasetActions.setGrouping(this.$store, {
-        dataset: this.dataset,
-        grouping: grouping,
-      });
+      // Create all of the necessary groupings
+      for (const grouping of groupings) {
+        // CDB: This needs to be converted into an API call that can handle creation of
+        // multiple groups because the UI goes spastic updating after each individual operation.
+        await datasetActions.setGrouping(this.$store, {
+          dataset: this.dataset,
+          grouping: grouping,
+        });
+      }
 
       if (gotoTarget) {
         // If this dataset contains multiple timeseries,

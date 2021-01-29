@@ -375,6 +375,10 @@ export function isImageType(type: string): boolean {
   return IMAGE_TYPES.indexOf(type) !== -1;
 }
 
+export function isTimeSeriesType(type: string): boolean {
+  return type === TIMESERIES_TYPE;
+}
+
 export function hasComputedVarPrefix(varName: string): boolean {
   return Boolean(
     COMPUTED_VAR_PREFIXES.find((prefix) => varName.indexOf(prefix) === 0)

@@ -46,11 +46,11 @@ import {
   SummaryMode,
   TableData,
   Task,
-  TimeSeriesValue,
   Variable,
   VariableRankingPendingRequest,
 } from "./index";
 import { getters, mutations } from "./module";
+import { TimeSeriesUpdate } from "./mutations";
 
 // fetches variables and add dataset name to each variable
 async function getVariables(dataset: string): Promise<Variable[]> {
@@ -989,7 +989,7 @@ export const actions = {
         `/distil/variable-rankings/${dataset}/${args.target}`
       );
 
-      const rankings = <Dictionary<number>>response.data;
+      const rankings = response.data as Dictionary<number>;
 
       // check to see if we got any non-zero rank info back
       const computedRankings = _.filter(rankings, (r, v) => r !== 0).length > 0;
@@ -1111,39 +1111,32 @@ export const actions = {
     context: DatasetContext,
     args: {
       dataset: string;
+      variableKey: string;
       xColName: string;
       yColName: string;
-      timeseriesColName: string;
       timeseriesIds: string[];
       uniqueTrail?: string;
     }
   ) {
-    if (
-      !validateArgs(args, [
-        "dataset",
-        "xColName",
-        "yColName",
-        "timeseriesColName",
-      ])
-    ) {
-      return null;
-    }
+    // format the data
+    const timeseriesIDs = args.timeseriesIds.map((seriesID) => ({
+      seriesID: seriesID,
+      varKey: args.variableKey,
+    }));
 
     try {
-      const response = await axios.post(
+      const response = await axios.post<TimeSeriesUpdate[]>(
         `distil/timeseries/${encodeURIComponent(
           args.dataset
-        )}/${encodeURIComponent(args.timeseriesColName)}/${encodeURIComponent(
+        )}/${encodeURIComponent(args.variableKey)}/${encodeURIComponent(
           args.xColName
         )}/${encodeURIComponent(args.yColName)}/false`,
-        { timeseriesUris: args.timeseriesIds }
+        { timeseries: timeseriesIDs }
       );
       mutations.bulkUpdateTimeseries(context, {
         dataset: args.dataset,
         uniqueTrail: args.uniqueTrail,
-        map: new Map(
-          Object.keys(response.data).map((key) => [key, response.data[key]])
-        ),
+        updates: response.data,
       });
     } catch (error) {
       console.error(error);

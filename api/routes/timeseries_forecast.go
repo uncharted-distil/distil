@@ -16,22 +16,23 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil/api/compute"
+	"github.com/uncharted-distil/distil/api/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"goji.io/v3/pat"
-	"net/http"
 )
 
 // TimeseriesForecastResult represents the result of a timeseries request.
 type TimeseriesForecastResult struct {
+	VarKey            string                       `json:"variableKey"`
+	SeriesID          string                       `json:"seriesID"`
 	Timeseries        []*api.TimeseriesObservation `json:"timeseries"`
 	Forecast          []*api.TimeseriesObservation `json:"forecast"`
 	ForecastTestRange []float64                    `json:"forecastTestRange"`
 	IsDateTime        bool                         `json:"isDateTime"`
-	Min               api.NullableFloat64          `json:"min"`
-	Max               api.NullableFloat64          `json:"max"`
-	Mean              api.NullableFloat64          `json:"mean"`
 }
 
 // TimeseriesForecastHandler returns timeseries data.
@@ -40,39 +41,31 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 
 		truthDataset := pat.Param(r, "truthDataset")
 		forecastDataset := pat.Param(r, "forecastDataset")
-		timeseriesColName := pat.Param(r, "timeseriesColName")
 		xColName := pat.Param(r, "xColName")
 		yColName := pat.Param(r, "yColName")
 		resultUUID := pat.Param(r, "result-uuid")
-		result := map[string]TimeseriesForecastResult{}
+
 		// parse POST params
-		params, err := getPostParameters(r)
+		params, err := parsePostParms(r)
 		if err != nil {
 			handleError(w, errors.Wrap(err, "Unable to parse post parameters"))
 			return
 		}
-		t, ok := params["timeseriesUris"].([]interface{})
-		if !ok {
-			handleError(w, errors.New("Missing timeseriesUris from query"))
-			return
+
+		// validate the bucket operation
+		operation := api.TimeseriesOp(params.DuplicateOperation)
+		if operation == "" {
+			operation = model.TimeseriesDefaultOp //default
 		}
-		operation, ok := params["duplicateOperation"].(string)
-		if !ok {
-			operation = "add" //default
-		}
-		timeseriesUris := []string{}
-		for _, v := range t {
-			s, ok := v.(string)
-			if !ok {
+
+		// get variable names and ranges out of the params
+		var filterParams *model.FilterParams
+		if params.FilterParams != nil {
+			filterParams, err = api.ParseFilterParamsFromJSONRaw(params.FilterParams)
+			if err != nil {
+				handleError(w, err)
 				return
 			}
-			timeseriesUris = append(timeseriesUris, s)
-		}
-		// get variable names and ranges out of the params
-		filterParams, err := api.ParseFilterParamsFromJSON(params)
-		if err != nil {
-			handleError(w, err)
-			return
 		}
 
 		// get storage client
@@ -106,42 +99,63 @@ func TimeseriesForecastHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Da
 			handleError(w, err)
 			return
 		}
-		predictedStorageName := dsf.StorageName
-
-		// fetch the ground truth timeseries
-		timeseries, err := data.FetchTimeseries(truthDataset, truthStorageName, timeseriesColName, xColName, yColName, timeseriesUris, operation, filterParams, false)
+		forecastStorageName := dsf.StorageName
 
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		// get the result URI. Error ignored to make it ES compatible.
+		// get the result UUID
 		res, err := solution.FetchSolutionResultByUUID(resultUUID)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		// fetch the predicted timeseries
-		forecasts, err := data.FetchTimeseriesForecast(forecastDataset, predictedStorageName, timeseriesColName, xColName, yColName, timeseriesUris, res.ResultURI, filterParams)
-		if err != nil {
-			handleError(w, err)
-			return
+		// CDB TODO: - need to optimize query for multiple series, mutliple variables
+		timeseries := []*model.TimeseriesData{}
+		forecasts := []*model.TimeseriesData{}
+		for _, t := range params.TimeseriesIDs {
+			// fetch the timeseries variable and find the grouping col
+			variable, err := meta.FetchVariable(forecastDataset, t.VarKey)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+
+			// fetch timeseries and forecast
+			timeseriesData, err := data.FetchTimeseries(truthDataset, truthStorageName, t.VarKey, variable.Grouping.GetIDCol(),
+				xColName, yColName, []string{t.SeriesID}, operation, filterParams, false)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			timeseries = append(timeseries, timeseriesData...)
+
+			// fetch the predicted timeseries
+			forecastData, err := data.FetchTimeseriesForecast(forecastDataset, forecastStorageName, t.VarKey, variable.Grouping.GetIDCol(),
+				xColName, yColName, []string{t.SeriesID}, operation, res.ResultURI, filterParams)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			forecasts = append(forecasts, forecastData...)
 		}
-		for key, v := range *timeseries {
+
+		result := []*TimeseriesForecastResult{}
+		for idx, t := range timeseries {
 			// Recompute train/test split info for visualization purposes
-			split := compute.SplitTimeSeries(v.Timeseries, trainTestSplitTimeSeries)
-			forecast := (*forecasts)[key]
-			result[key] = TimeseriesForecastResult{
-				Timeseries:        (*timeseries)[key].Timeseries,
+			split := compute.SplitTimeSeries(t.Timeseries, trainTestSplitTimeSeries)
+			forecast := forecasts[idx]
+			result = append(result, &TimeseriesForecastResult{
+				VarKey:            t.VarKey,
+				SeriesID:          t.SeriesID,
+				Timeseries:        t.Timeseries,
 				Forecast:          forecast.Timeseries,
 				ForecastTestRange: []float64{split.SplitValue, split.EndValue},
 				IsDateTime:        true,
-				Min:               api.NullableFloat64(forecast.Min),
-				Max:               api.NullableFloat64(forecast.Max),
-				Mean:              api.NullableFloat64(forecast.Mean),
-			}
+			})
 		}
 		err = handleJSON(w, result)
 		if err != nil {

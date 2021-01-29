@@ -16,6 +16,7 @@
 package model
 
 import (
+	encoding "encoding/json"
 	"fmt"
 	"math"
 	"sort"
@@ -384,6 +385,15 @@ func parseFilter(filter map[string]interface{}) (*model.Filter, error) {
 	}
 
 	return nil, fmt.Errorf("filter not recognized")
+}
+
+// ParseFilterParamsFromJSONRaw parses filter parameters out of a json.RawMessage
+func ParseFilterParamsFromJSONRaw(raw encoding.RawMessage) (*FilterParams, error) {
+	filterParamsMap, err := json.Unmarshal(raw)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse raw filter params")
+	}
+	return ParseFilterParamsFromJSON(filterParamsMap)
 }
 
 // ParseFilterParamsFromJSON parses filter parameters out of a map[string]interface{}

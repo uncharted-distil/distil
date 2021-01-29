@@ -83,6 +83,7 @@ import {
   COLLAPSE_ACTION_TYPE,
   EXPAND_ACTION_TYPE,
   EXPLODE_ACTION_TYPE,
+  isTimeSeriesType,
 } from "../util/types";
 import { hasFilterInRoute } from "../util/filters";
 import { createRouteEntry } from "../util/routes";
@@ -281,11 +282,24 @@ export default Vue.extend({
         (type === COLLAPSE_ACTION_TYPE || type === EXPAND_ACTION_TYPE)
       ) {
         this.expandCollapse(type);
+      } else if (type === EXPLODE_ACTION_TYPE) {
+        // For timeseries, exploding one variable explodes them all
+        const toRemove = datasetGetters
+          .getGroupings(this.$store)
+          .filter(
+            (g) => isTimeSeriesType(g.colType) && g.datasetName === this.dataset
+          );
+
+        for (const g of toRemove) {
+          // CDB: This needs to be converted into an API call that can handle removal of
+          // multiple groups because the UI goes spastic updating after each invidiual operation.
+          await datasetActions.removeGrouping(this.$store, {
+            dataset: this.dataset,
+            variable: g.key,
+          });
+        }
       } else {
-        datasetActions.removeGrouping(this.$store, {
-          dataset: this.dataset,
-          variable: this.variable.key,
-        });
+        console.error(`Unhandled grouping action ${type}`);
       }
     },
 

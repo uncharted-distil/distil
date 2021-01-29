@@ -21,6 +21,7 @@ import {
 } from "../../util/solutions";
 import { DataMode, Highlight, SummaryMode, Variable } from "../dataset/index";
 import { getters as dataGetters } from "../dataset/module";
+import { TimeSeriesForecastUpdate } from "../dataset/mutations";
 import { getters as resultGetters } from "../results/module";
 import store, { DistilState } from "../store";
 import { ResultsState } from "./index";
@@ -925,38 +926,19 @@ export const actions = {
     context: ResultsContext,
     args: {
       dataset: string;
+      variableKey: string;
       xColName: string;
       yColName: string;
-      timeseriesColName: string;
       solutionId: string;
       timeseriesIds: string[];
       uniqueTrail?: string;
     }
   ) {
-    if (!args.dataset) {
-      console.warn("`dataset` argument is missing");
-      return null;
-    }
-    if (!args.xColName) {
-      console.warn("`xColName` argument is missing");
-      return null;
-    }
-    if (!args.yColName) {
-      console.warn("`yColName` argument is missing");
-      return null;
-    }
-    if (!args.timeseriesIds) {
-      console.warn("`timeseriesIds` argument is missing");
-      return null;
-    }
-    if (!args.timeseriesColName) {
-      console.warn("`timeseriesColName` argument is missing");
-      return null;
-    }
-    if (!args.solutionId) {
-      console.warn("`solutionId` argument is missing");
-      return null;
-    }
+    // format the data
+    const timeseriesIDs = args.timeseriesIds.map((seriesID) => ({
+      seriesID: seriesID,
+      varKey: args.variableKey,
+    }));
 
     const solution = getSolutionById(
       context.rootState.requestsModule.solutions,
@@ -968,30 +950,27 @@ export const actions = {
     }
 
     try {
-      const response = await axios.post(
+      const response = await axios.post<TimeSeriesForecastUpdate[]>(
         `distil/timeseries-forecast/` +
           `${encodeURIComponent(args.dataset)}/` +
           `${encodeURIComponent(args.dataset)}/` +
-          `${encodeURIComponent(args.timeseriesColName)}/` +
+          `${encodeURIComponent(args.variableKey)}/` +
           `${encodeURIComponent(args.xColName)}/` +
           `${encodeURIComponent(args.yColName)}/` +
           `${encodeURIComponent(solution.resultId)}`,
         {
-          timeseriesUris: args.timeseriesIds,
+          timeseries: timeseriesIDs,
         }
-      );
-      const responseMap = new Map(
-        Object.keys(response.data).map((k) => {
-          return [k + (args.uniqueTrail ?? ""), response.data[k]];
-        })
       );
       mutations.bulkUpdatePredictedTimeseries(context, {
         solutionId: args.solutionId,
-        map: responseMap,
+        uniqueTrail: args.uniqueTrail,
+        updates: response.data,
       });
       mutations.bulkUpdatePredictedForecast(context, {
         solutionId: args.solutionId,
-        map: responseMap,
+        uniqueTrail: args.uniqueTrail,
+        updates: response.data,
       });
     } catch (error) {
       console.error(error);
@@ -1007,7 +986,7 @@ export const actions = {
     const response = await axios.get(
       `/distil/solution-variable-rankings/${args.solutionID}`
     );
-    const rankings = <Dictionary<number>>response.data;
+    const rankings = response.data as Dictionary<number>;
     mutations.setFeatureImportanceRanking(store, {
       solutionID: args.solutionID,
       rankings: _.pickBy(rankings, (ranking) => ranking !== null),
