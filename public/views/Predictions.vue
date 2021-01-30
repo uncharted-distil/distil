@@ -141,6 +141,7 @@ export default Vue.extend({
   beforeMount() {
     viewActions.fetchPredictionsData(this.$store);
     datasetActions.fetchClusters(this.$store, { dataset: this.dataset });
+    datasetActions.fetchOutliers(this.$store, { dataset: this.dataset });
   },
 
   watch: {

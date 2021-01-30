@@ -355,6 +355,7 @@ export const actions = {
     if (routeGetters.isOutlierGenerated(store)) {
       status = DatasetPendingRequestStatus.REVIEWED;
       mutations.updatePendingRequests(context, { ...request, status });
+      this.fetchVariables(context, { dataset });
       return;
     }
 
