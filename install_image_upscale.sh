@@ -25,7 +25,6 @@ if ! command -v wget &> /dev/null;then
     echo "missing required tool wget please install"
     exit 1
 fi
-
 get_tensorflow(){
     local tensorflow_dir="/usr/local/tensorflow"
     echo $tensorflow_dir
