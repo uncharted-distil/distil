@@ -44,3 +44,4 @@ install:
 	@yarn install
 	@go get -u github.com/unchartedsoftware/witch
 	@go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.33.0
+	$(shell sudo ./install_image_upscale.sh)
