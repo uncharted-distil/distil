@@ -1,8 +1,9 @@
 package util
 
 /*
-#cgo linux LDFLAGS: /usr/lib/image-upscale/image-upscale.so -L/usr/local/lib/ltensorflow -ltensorflow
-#include <image-upscale/entry_functions.h>
+#cgo CFLAGS: -I /usr/local/tensorflow/include
+#cgo darwin LDFLAGS: -L/usr/local/tensorflow/lib -ltensorflow
+#include <image-upscale/entry_functions.c>
 #include <stdio.h>
 float *buffer;
 // assumes 4 dimensions because it is required
@@ -108,7 +109,7 @@ func UpscaleImage(img *image.RGBA) *image.RGBA {
 	// dimension of input {batchSize, width, height, colorDepth}
 	dimBuffer := []int64{1, int64(imgSize.X), int64(imgSize.Y), int64(colorDepth)}
 	// cast to c long *
-	dimensions := (*C.long)(unsafe.Pointer(&dimBuffer[0]))
+	dimensions := (*C.longlong)(unsafe.Pointer(&dimBuffer[0]))
 	// create memory to hold the image data
 	C.createBuffer(dimensions)
 	// free the memory
@@ -133,6 +134,7 @@ func UpscaleImage(img *image.RGBA) *image.RGBA {
 	C.freeOutputData(output)
 	return newImg
 }
+
 // decodes *image.RGBA into raw then puts the raw into C memory
 func decodeToRaw(img *image.RGBA) {
 	colorDepth := 3
@@ -156,6 +158,7 @@ func clamp(min float64, max float64, value float64) float64 {
 	val := math.Min(max, value)
 	return math.Max(min, val)
 }
+
 // reads from C memory and populates an *image.RGBA
 func encodeToImage(dimension [2]int, buffer *C.float) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, dimension[0], dimension[1]))
