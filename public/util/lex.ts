@@ -6,7 +6,6 @@ import {
 } from "../store/dataset";
 import {
   isNumericType,
-  isTextType,
   dateToNum,
   DATE_TIME_LOWER_TYPE,
   CATEGORICAL_TYPE,
@@ -49,20 +48,16 @@ const HIGHLIGHT = "highlight";
   ever want even more complex filter relations, we can extend these options.
 */
 const distilRelationOptions = [
-  [INCLUDE_FILTER, "="],
-  [EXCLUDE_FILTER, "≠"],
   [HIGHLIGHT, "☀"],
+  [EXCLUDE_FILTER, "≠"],
 ].map((o) => new ValueStateValue(o[0], {}, { displayKey: o[1] }));
 
 class DistilRelationState extends RelationState {
-  static get INCLUDE() {
+  static get HIGHLIGHT() {
     return distilRelationOptions[0];
   }
   static get EXCLUDE() {
     return distilRelationOptions[1];
-  }
-  static get HIGHLIGHT() {
-    return distilRelationOptions[2];
   }
   constructor(config) {
     if (config.name === undefined)
@@ -288,14 +283,12 @@ export function lexQueryToFiltersAndHighlight(
 
 function modeToRelation(mode: string): ValueStateValue {
   switch (mode) {
-    case INCLUDE_FILTER:
+    case HIGHLIGHT:
       return distilRelationOptions[0];
     case EXCLUDE_FILTER:
       return distilRelationOptions[1];
-    case HIGHLIGHT:
-      return distilRelationOptions[2];
     default:
-      return distilRelationOptions[1];
+      return distilRelationOptions[0];
   }
 }
 
