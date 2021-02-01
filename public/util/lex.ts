@@ -17,7 +17,6 @@ import {
 import {
   decodeFilters,
   Filter,
-  INCLUDE_FILTER,
   EXCLUDE_FILTER,
   CATEGORICAL_FILTER,
   DATETIME_FILTER,
