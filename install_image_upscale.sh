@@ -21,8 +21,12 @@ if [ "$uname" = Darwin ]; then
     usr_include_dir="/usr/local/include"
     source_dir="/usr/local/include/image-upscale"
 fi
-if ! command -v wget &> /dev/null;then
+if ! command -v wget > /dev/null 2>&1;then
     echo "missing required tool wget please install"
+    exit 1
+fi
+if ! command -v unzip > /dev/null 2>&1; then
+    echo "missing required tool unzip please install"
     exit 1
 fi
 get_tensorflow(){
@@ -38,7 +42,7 @@ if [ ! -d "$tensorflow_dir" ]; then
     echo "unable to locate tensorflow lib"
     if [ "$uname" = Linux ]; then
         # if it fails cuda is not installed so get the tensorflow cpu
-        if command -v nvcc &> /dev/null; then
+        if command -v nvcc &> /dev/null 2>&1; then
             echo "cuda not found fetching tensorflow cpu"
             get_tensorflow "$linux_tensorflow_cpu_tar" "$tensorflow_url_linux_cpu"
         else

@@ -76,6 +76,7 @@ import "C"
 import (
 	"image"
 	"math"
+	"runtime"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -109,7 +110,10 @@ func UpscaleImage(img *image.RGBA) *image.RGBA {
 	// dimension of input {batchSize, width, height, colorDepth}
 	dimBuffer := []int64{1, int64(imgSize.X), int64(imgSize.Y), int64(colorDepth)}
 	// cast to c long *
-	dimensions := (*C.longlong)(unsafe.Pointer(&dimBuffer[0]))
+	dimensions := (*C.long)(unsafe.Pointer(&dimBuffer[0]))
+	if runtime.GOOS == "darwin"{
+		dimensions = (*C.longlong)(unsafe.Pointer(&dimBuffer[0]))
+	}
 	// create memory to hold the image data
 	C.createBuffer(dimensions)
 	// free the memory
