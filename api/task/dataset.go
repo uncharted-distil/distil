@@ -123,7 +123,7 @@ func ExportDataset(dataset string, metaStorage api.MetadataStorage, dataStorage 
 	// need to update metadata variable order to match extracted data
 	header := data[0]
 	exportedVariables := make([]*model.Variable, len(header))
-	exportVarMap := mapVariables(metaDataset.Variables, func(variable *model.Variable) string { return variable.Key })
+	exportVarMap := apicompute.MapVariables(metaDataset.Variables, func(variable *model.Variable) string { return variable.Key })
 	for i, v := range header {
 		variable := exportVarMap[v]
 		variable.Index = i
@@ -184,7 +184,7 @@ func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset,
 	}
 
 	// determine if there are new columns that were not part of the original dataset
-	parentVarMap := mapVariables(parentDS.Variables, func(variable *model.Variable) string { return variable.Key })
+	parentVarMap := apicompute.MapVariables(parentDS.Variables, func(variable *model.Variable) string { return variable.Key })
 	newVars := []*model.Variable{}
 	for _, v := range metaDataset.Variables {
 		if v.DistilRole == model.VarDistilRoleData {
@@ -208,7 +208,7 @@ func updateLearningDataset(newDataset *api.RawDataset, metaDataset *api.Dataset,
 		return err
 	}
 	preFeaturizedMainDR := preFeaturizedDataset.Metadata.GetMainDataResource()
-	preFeaturizedVarMap := mapVariables(preFeaturizedMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
+	preFeaturizedVarMap := apicompute.MapVariables(preFeaturizedMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
 	preFeaturizedD3MIndex := preFeaturizedVarMap[model.D3MIndexFieldName].Index
 
 	// add the missing columns row by row and only retain rows in the new dataset

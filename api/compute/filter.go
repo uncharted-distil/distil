@@ -56,23 +56,32 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 	}
 
 	// prepare the data to use for filtering
-	outputFolder, err = preparePrefilteringDataset(outputFolder, ds, dataStorage)
+	outputFolder, resultingVariables, err := preparePrefilteringDataset(outputFolder, ds, dataStorage)
 	if err != nil {
 		return "", nil, err
 	}
 
 	// run the filtering pipeline
-	pipeline, err := description.CreateDataFilterPipeline("Pre Filtering", "pre filter a dataset that has metadata features", ds.Variables, preFilters.Filters)
+	pipeline, err := description.CreateDataFilterPipeline("Pre Filtering", "pre filter a dataset that has metadata features", resultingVariables, preFilters.Filters)
 	if err != nil {
 		return "", nil, err
 	}
-	filteredData, err := SubmitPipeline(client, []string{outputFolder}, nil, nil, pipeline, true)
+
+	allowableTypes := []string{compute.CSVURIValueType}
+	if ds.LearningDataset != "" {
+		allowableTypes = append(allowableTypes, compute.ParquetURIValueType)
+	}
+	filteredData, err := SubmitPipeline(client, []string{outputFolder}, nil, nil, pipeline, allowableTypes, true)
 	if err != nil {
 		return "", nil, err
 	}
 
 	// output the filtered results as the data in the filtered dataset
 	err = util.CopyFile(filteredData, outputDataFile)
+	if err != nil {
+		return "", nil, err
+	}
+	err = HarmonizeDataMetadata(outputFolder)
 	if err != nil {
 		return "", nil, err
 	}
@@ -128,11 +137,11 @@ func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) (*api.Filt
 	return clone, preFilters
 }
 
-func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset, dataStorage api.DataStorage) (string, error) {
+func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset, dataStorage api.DataStorage) (string, []*model.Variable, error) {
 	// read the data from the database
 	data, err := dataStorage.FetchDataset(sourceDataset.ID, sourceDataset.StorageName, true, false, nil)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	// if learning dataset, then update that
@@ -140,62 +149,79 @@ func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset,
 		return UpdatePrefeaturizedDataset(sourceDataset.LearningDataset, sourceDataset, data)
 	}
 
+	// read the metadata from disk to keep the reference data resources
+	// TODO: MAY WANT TO MAKE THIS A FUNCTION SOMEWHERE!
+	metadataSchemaPath := path.Join(env.ResolvePath(sourceDataset.Source, sourceDataset.Folder), compute.D3MDataSchema)
+	metadataSource, err := serialization.ReadMetadata(metadataSchemaPath)
+	if err != nil {
+		return "", nil, err
+	}
+	metadataSourceDR := metadataSource.GetMainDataResource()
+	metaVarMap := MapVariables(metadataSourceDR.Variables, func(variable *model.Variable) string { return variable.Key })
+	sourceVarMap := MapVariables(sourceDataset.Variables, func(variable *model.Variable) string { return variable.Key })
+
 	// update the metadata to match the data pulled from the data storage
 	// (mostly matching column index and dropping columns not pulled)
-	metaVarMap := map[string]*model.Variable{}
-	for _, v := range sourceDataset.Variables {
-		metaVarMap[v.Key] = v
-	}
 	variablesData := make([]*model.Variable, len(data[0]))
+	sourceVariables := []*model.Variable{}
 	for i, f := range data[0] {
-		variablesData[i] = metaVarMap[f]
-		variablesData[i].Index = i
+		metaVar := metaVarMap[f]
+		if metaVar == nil {
+			// variable does not exist in the disk metadata yet so add it
+			metaVar = sourceVarMap[f]
+			metadataSourceDR.Variables = append(metadataSourceDR.Variables, metaVar)
+		}
+		metaVar.Index = i
+		variablesData[i] = metaVar
+		sourceVariables = append(sourceVariables, sourceVarMap[f])
 	}
-	sourceDataset.Variables = variablesData
+
+	// update all non main data resources to be absolute
+	for _, dr := range metadataSource.DataResources {
+		if dr != metadataSourceDR {
+			dr.ResPath = model.GetResourcePath(metadataSchemaPath, dr)
+		}
+	}
 
 	// write it out as a dataset
 	dsRaw := &api.RawDataset{
 		ID:       sourceDataset.ID,
 		Name:     sourceDataset.Name,
 		Data:     data,
-		Metadata: sourceDataset.ToMetadata(),
+		Metadata: metadataSource,
 	}
 	err = serialization.WriteDataset(outputFolder, dsRaw)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return outputFolder, nil
+	return outputFolder, sourceVariables, nil
 }
 
 // UpdatePrefeaturizedDataset updates a featurized dataset that already exists
 // on disk to have new variables included
-func UpdatePrefeaturizedDataset(prefeaturizedPath string, sourceDataset *api.Dataset, storedData [][]string) (string, error) {
+func UpdatePrefeaturizedDataset(prefeaturizedPath string, sourceDataset *api.Dataset, storedData [][]string) (string, []*model.Variable, error) {
 	// load the dataset from disk
 	schemaPath := path.Join(prefeaturizedPath, compute.D3MDataSchema)
 	dsDisk, err := serialization.ReadDataset(schemaPath)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	metaDiskMainDR := dsDisk.Metadata.GetMainDataResource()
 
 	// determine if there are new columns that were not part of the original dataset
 	metaDiskVarMap := MapVariables(metaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.Key })
-	newVars := []*model.Variable{}
-	for _, v := range sourceDataset.Variables {
-		if metaDiskVarMap[v.Key] == nil {
-			newVars = append(newVars, v)
-		}
-	}
 
 	// get the index of the new fields in the extracted data
 	storedVarMap := MapVariables(sourceDataset.Variables, func(variable *model.Variable) string { return variable.Key })
 	storedDataD3MIndex := -1
+	newVars := []*model.Variable{}
 	for i, v := range storedData[0] {
 		if v == model.D3MIndexFieldName {
 			storedDataD3MIndex = i
-		} else if storedVarMap[v] != nil {
+		} else if storedVarMap[v] != nil && metaDiskVarMap[v] == nil {
 			storedVarMap[v].Index = i
+			newVars = append(newVars, storedVarMap[v])
 		}
 	}
 
@@ -206,7 +232,9 @@ func UpdatePrefeaturizedDataset(prefeaturizedPath string, sourceDataset *api.Dat
 	for _, r := range storedData[1:] {
 		newVarsData := []string{}
 		for i := 0; i < len(newVars); i++ {
-			newVarsData = append(newVarsData, r[newVars[i].Index])
+			newKey := newVars[i].Key
+			newIndex := storedVarMap[newKey].Index
+			newVarsData = append(newVarsData, r[newIndex])
 		}
 		newDataMap[r[storedDataD3MIndex]] = newVarsData
 	}
@@ -214,7 +242,7 @@ func UpdatePrefeaturizedDataset(prefeaturizedPath string, sourceDataset *api.Dat
 	// add the new fields to the metadata to generate the proper header
 	for i := 0; i < len(newVars); i++ {
 		newVar := newVars[i]
-		newVar.Index = i + len(metaDiskMainDR.Variables)
+		newVar.Index = len(metaDiskMainDR.Variables)
 		metaDiskMainDR.Variables = append(metaDiskMainDR.Variables, newVar)
 	}
 
@@ -232,10 +260,10 @@ func UpdatePrefeaturizedDataset(prefeaturizedPath string, sourceDataset *api.Dat
 	dsDisk.Data = preFeaturizedOutput
 	err = serialization.WriteDataset(prefeaturizedPath, dsDisk)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return prefeaturizedPath, nil
+	return prefeaturizedPath, sourceDataset.Variables, nil
 }
 
 // MapVariables creates a variable map using the mapper function to create the key.
@@ -246,4 +274,39 @@ func MapVariables(variables []*model.Variable, mapper func(variable *model.Varia
 	}
 
 	return mapped
+}
+
+// HarmonizeDataMetadata updates a dataset on disk to have the schema info
+// match the header of the backing data file, as well as limit
+// variables to valid auto ml fields.
+func HarmonizeDataMetadata(datasetFolder string) error {
+	// load the dataset
+	schemaPath := path.Join(datasetFolder, compute.D3MDataSchema)
+	ds, err := serialization.ReadDataset(schemaPath)
+	if err != nil {
+		return err
+	}
+
+	// assume metadata has the correct info, but with superflous metadata variables
+	// drop metadata variables
+	mainDR := ds.Metadata.GetMainDataResource()
+	finalVariables := []*model.Variable{}
+	for _, v := range mainDR.Variables {
+		if model.IsTA2Field(v.DistilRole, v.SelectedRole) {
+			v.Index = len(finalVariables)
+			finalVariables = append(finalVariables, v)
+		}
+	}
+	mainDR.Variables = finalVariables
+
+	// set the header to match what is in the metadata
+	ds.Data[0] = mainDR.GenerateHeader()
+
+	// output the dataset
+	err = serialization.WriteDataset(datasetFolder, ds)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
