@@ -47,9 +47,9 @@ const HIGHLIGHT = "highlight";
   ever want even more complex filter relations, we can extend these options.
 */
 const distilRelationOptions = [
-  [HIGHLIGHT, "☀"],
-  [EXCLUDE_FILTER, "≠"],
-].map((o) => new ValueStateValue(o[0], {}, { displayKey: o[1] }));
+  [HIGHLIGHT, "☀", false],
+  [EXCLUDE_FILTER, "≠", true],
+].map((o) => new ValueStateValue(o[0], {}, { displayKey: o[1], hidden: o[2] }));
 
 class DistilRelationState extends RelationState {
   static get HIGHLIGHT() {
@@ -59,11 +59,13 @@ class DistilRelationState extends RelationState {
     return distilRelationOptions[1];
   }
   constructor(config) {
-    if (config.name === undefined)
-      config.name = "Include, exclude or highlight";
+    config.name = "Highlight";
     config.options = function () {
       return distilRelationOptions;
     };
+    config.autoAdvanceDefault = true;
+    config.defaultValue = distilRelationOptions[0];
+    config.suggestionLimit = 1;
     super(config);
   }
 }
@@ -80,7 +82,7 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
   const suggestions = variablesToLexSuggestions(variables);
   const catVarLexSuggestions = perCategoricalVariableLexSuggestions(variables);
   return Lex.from("field", ValueState, {
-    name: "Choose a variable to filter",
+    name: "Choose a variable to search on",
     icon: '<i class="fa fa-filter" />',
     suggestions: suggestions,
   }).branch(
@@ -91,7 +93,7 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
       ...TransitionFactory.valueMetaCompare({ type: CATEGORICAL_TYPE }),
     }).branch(
       Lex.from("value", ValueState, {
-        allowUnknown: true,
+        allowUnknown: false,
         icon: "",
         name: "Type for suggestions",
         fetchSuggestions: (hint, lexDefintion) => {
@@ -157,11 +159,12 @@ export function filterParamsToLexQuery(
     return variableDict[f.key];
   });
   const highlightVariable = variableDict[decodedHighlight?.key];
+  const hasHighlight = !!highlight && !!highlightVariable;
 
-  const activeVariables = highlight
+  const activeVariables = hasHighlight
     ? [highlightVariable, ...filterVariables]
     : filterVariables;
-  const lexableElements = highlight
+  const lexableElements = hasHighlight
     ? [decodedHighlight, ...decodedFilters]
     : decodedFilters;
 
