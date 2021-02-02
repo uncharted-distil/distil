@@ -7,9 +7,9 @@
       :forecast-extrema="forecastExtrema"
       :highlight-range="highlightRange"
       :join-forecast="!!predictionsId"
-      :isDateTime="isDateTime()"
+      :is-date-time="isDateTime()"
     />
-    <i class="fa fa-plus zoom-sparkline-icon" @click.stop="onClick"></i>
+    <i class="fa fa-plus zoom-sparkline-icon" @click.stop="onClick" />
     <b-modal
       id="sparkline-zoom-modal"
       hide-footer
@@ -18,15 +18,15 @@
       @hide="hideModal"
     >
       <div v-if="forecast" class="sparkline-legend">
-        <div class="sparkline-legend-historical"></div>
+        <div class="sparkline-legend-historical" />
         <div class="sparkline-legend-label">Historical</div>
-        <div class="sparkline-legend-missing"></div>
+        <div class="sparkline-legend-missing" />
         <div class="sparkline-legend-label">Missing</div>
-        <div class="sparkline-legend-predicted"></div>
+        <div class="sparkline-legend-predicted" />
         <div class="sparkline-legend-label">Predicted</div>
-        <div class="sparkline-legend-variability"></div>
+        <div class="sparkline-legend-variability" />
         <div class="sparkline-legend-label">Variability</div>
-        <div class="sparkline-legend-scoring"></div>
+        <div class="sparkline-legend-scoring" />
         <div class="sparkline-legend-label">Scoring</div>
       </div>
       <sparkline-chart
@@ -54,7 +54,7 @@ import { getters as resultsGetters } from "../store/results/module";
 import { getters as predictionsGetters } from "../store/predictions/module";
 
 export default Vue.extend({
-  name: "sparkline-preview",
+  name: "SparklinePreview",
 
   components: {
     SparklineSvg,
@@ -67,7 +67,7 @@ export default Vue.extend({
     forecastDataset: String as () => string,
     xCol: String as () => string,
     yCol: String as () => string,
-    timeseriesCol: String as () => string,
+    variableKey: String as () => string,
     timeseriesId: String as () => string,
     solutionId: String as () => string,
     predictionsId: String as () => string,
@@ -88,7 +88,7 @@ export default Vue.extend({
         : "sparkline-preview-container";
     },
     timeseriesUniqueId(): string {
-      return this.timeseriesId + this.uniqueTrail;
+      return this.variableKey + this.timeseriesId + this.uniqueTrail;
     },
     timeseries(): TimeSeriesValue[] {
       if (this.solutionId) {

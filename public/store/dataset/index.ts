@@ -66,6 +66,10 @@ export interface GeoCoordinateGrouping extends Grouping {
   yCol: string;
 }
 
+export interface GeoBoundsGrouping extends Grouping {
+  coordinatesCol: string;
+}
+
 export interface MultiBandImageGrouping extends ClusteredGrouping {
   imageCol: string;
   bandCol: string;

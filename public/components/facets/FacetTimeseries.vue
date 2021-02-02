@@ -9,10 +9,10 @@
         Boolean(enableHighlighting) && enableHighlighting[0]
       "
       :ignore-highlights="Boolean(ignoreHighlights) && ignoreHighlights[0]"
-      :instanceName="instanceName"
+      :instance-name="instanceName"
       :html="customHtml"
-      :expandCollapse="expandCollapse"
-      :grouping="grouping"
+      :expand-collapse="expandCollapse"
+      :variable="variable"
       :expand="expand"
       @html-appended="onHtmlAppend"
       @numerical-click="onNumericalClick"
@@ -27,7 +27,7 @@
       :highlight="highlight"
       :row-selection="rowSelection"
       :enabled-type-changes="enabledTypeChanges"
-      :instanceName="instanceName"
+      :instance-name="instanceName"
       :enable-highlighting="
         Boolean(enableHighlighting) && enableHighlighting[1]
       "
@@ -46,22 +46,15 @@ import FacetDateTime from "./FacetDateTime.vue";
 import FacetNumerical from "./FacetNumerical.vue";
 import FacetSparklines from "./FacetSparklines.vue";
 import { getters as datasetGetters } from "../../store/dataset/module";
-import { getters as routeGetters } from "../../store/route/module";
 import {
-  Dataset,
   Variable,
   VariableSummary,
   Highlight,
   RowSelection,
-  Row,
   NUMERICAL_SUMMARY,
   TimeseriesGrouping,
 } from "../../store/dataset";
-import {
-  INTEGER_TYPE,
-  EXPAND_ACTION_TYPE,
-  COLLAPSE_ACTION_TYPE,
-} from "../../util/types";
+import { EXPAND_ACTION_TYPE, COLLAPSE_ACTION_TYPE } from "../../util/types";
 
 /**
  * Timeseries Facet.
