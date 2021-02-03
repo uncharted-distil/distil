@@ -197,11 +197,6 @@ export const getters = {
     return state.query.clustering && state.query.clustering === "1"; // Use "1" for truth.
   },
 
-  // Returns a boolean to say that the outlier detection for this dataset has been generated.
-  isOutlierGenerated(state: Route): boolean {
-    return state.query.outlier && state.query.outlier === "1"; // Use "1" for truth.
-  },
-
   getRouteJoinDatasetsVarsPage(state: Route): number {
     const pageVar = JOINED_VARS_INSTANCE_PAGE;
     return state.query[pageVar] ? _.toNumber(state.query[pageVar]) : 1;
