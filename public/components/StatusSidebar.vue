@@ -13,6 +13,7 @@
         />
       </div>
       <div
+        v-if="!isTimeseries"
         class="status-icon-wrapper"
         title="Outlier Status"
         @click="onStatusIconClick(4)"
@@ -45,7 +46,12 @@
         />
       </div>
       -->
-      <div class="status-icon-wrapper" @click="onStatusIconClick(2)">
+      <div
+        v-if="!isTimeseries"
+        class="status-icon-wrapper"
+        title="Cluster Status"
+        @click="onStatusIconClick(2)"
+      >
         <i class="status-icon fa fa-2x fa-share-alt" aria-hidden="true" />
         <i
           v-if="isNew(clusterStatus) && !isClustered"
@@ -125,6 +131,10 @@ export default Vue.extend({
 
     isClustered(): boolean {
       return routeGetters.getDataMode(this.$store) === DataMode.Cluster;
+    },
+
+    isTimeseries(): boolean {
+      return routeGetters.isTimeseries(this.$store);
     },
 
     variableRankingRequestData(): VariableRankingPendingRequest {
