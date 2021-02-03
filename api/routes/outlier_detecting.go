@@ -87,7 +87,7 @@ func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Data
 		if !(outlierVarMetaExist && outlierVarExistData) {
 
 			// add Variable to MetaData
-			err = metaStorage.AddVariable(dataset, outlierVarName, "Outlier", model.CategoricalType, "metadata")
+			err = metaStorage.AddVariable(dataset, outlierVarName, "Outlier", model.CategoricalType, "data")
 			if err != nil {
 				handleError(w, err)
 				return
