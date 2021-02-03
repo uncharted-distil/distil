@@ -33,9 +33,57 @@ type OutlierResult struct {
 
 // OutlierDetectionHandler generates a route handler that enables outlier detection
 // for either remote sensing or tabular data.
-// Generates a variable and the creation of the new column to hold the cluster label.
 // Return the name of the variable if the detection has run successfully.
-func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		dataset := pat.Param(r, "dataset")
+		variable := pat.Param(r, "variable")
+
+		// get storage clients
+		metaStorage, err := metaCtor()
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// get the metadata
+		datasetMeta, err := metaStorage.FetchDataset(dataset, false, false, false)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// find the outliers in the dataset
+		outlierData, err := task.OutlierDetection(datasetMeta, variable)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		// create a result
+		result := OutlierResult{
+			OutlierField: "false",
+		}
+
+		if outlierData != nil {
+			result = OutlierResult{
+				OutlierField: "_outlier",
+			}
+		}
+
+		// marshal output into JSON
+		err = handleJSON(w, result)
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal outlier variable name into JSON"))
+			return
+		}
+	}
+}
+
+// OutlierResultsHandler generates a route handler that enables outlier results to be saved as
+// a variable and the creation of the new column to hold the cluster label.
+// Return the name of the variable.
+func OutlierResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataStorageCtor) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		variable := pat.Param(r, "variable")
@@ -87,7 +135,7 @@ func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor, dataCtor api.Data
 		if !(outlierVarMetaExist && outlierVarExistData) {
 
 			// add Variable to MetaData
-			err = metaStorage.AddVariable(dataset, outlierVarName, "Outlier", model.CategoricalType, "data")
+			err = metaStorage.AddVariable(dataset, outlierVarName, "Outlier", model.CategoricalType, "metadata")
 			if err != nil {
 				handleError(w, err)
 				return

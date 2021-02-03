@@ -261,7 +261,8 @@ func main() {
 	registerRoute(mux, "/distil/model-metrics/:task", routes.ModelMetricsHandler(esMetadataStorageCtor))
 	registerRoute(mux, "/ws", ws.SolutionHandler(solutionClient, esMetadataStorageCtor, pgDataStorageCtor, pgSolutionStorageCtor, esExportedModelStorageCtor))
 	registerRoute(mux, "/distil/image-attention/:dataset/:result-id/:index/:opacity/:color-scale", routes.ImageAttentionHandler(pgSolutionStorageCtor, esMetadataStorageCtor))
-	registerRoute(mux, "/distil/outlier-detection/:dataset/:variable", routes.OutlierDetectionHandler(esMetadataStorageCtor, pgDataStorageCtor))
+	registerRoute(mux, "/distil/outlier-detection/:dataset/:variable", routes.OutlierDetectionHandler(esMetadataStorageCtor))
+	registerRoute(mux, "/distil/outlier-results/:dataset/:variable", routes.OutlierResultsHandler(esMetadataStorageCtor, pgDataStorageCtor))
 
 	// POST
 	registerRoutePost(mux, "/distil/grouping/:dataset", routes.GroupingHandler(pgDataStorageCtor, esMetadataStorageCtor))
@@ -296,6 +297,7 @@ func main() {
 	registerRoutePost(mux, "/distil/event", routes.UserEventHandler(discoveryLogger))
 	registerRoutePost(mux, "/distil/save/:solution-id/:fitted", routes.SaveHandler(esExportedModelStorageCtor, pgSolutionStorageCtor, esMetadataStorageCtor))
 	registerRoutePost(mux, "/distil/delete-dataset/:dataset", routes.DeletingDatasetHandler(esMetadataStorageCtor, pgDataStorageCtor))
+
 	// static
 	registerRoute(mux, "/distil/image/:dataset/:file", routes.ImageHandler(esMetadataStorageCtor, &config))
 	registerRoute(mux, "/distil/graphs/:dataset/:file", routes.GraphsHandler(config.D3MInputDir))

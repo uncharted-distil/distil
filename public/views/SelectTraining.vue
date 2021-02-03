@@ -165,6 +165,7 @@ export default Vue.extend({
     ranking() {
       viewActions.updateSelectTrainingData(this.$store);
     },
+
     $route(to: Route, from: Route) {
       const dataModeOld = from.query.dataMode as string;
       if (

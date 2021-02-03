@@ -65,6 +65,31 @@ async function getVariables(dataset: string): Promise<Variable[]> {
   }));
 }
 
+// Return the best variable name of a dataset for outlier detection
+function getOutlierVariableName(variables: Variable[]) {
+  /* 
+    Find a grouping variable, specially a remote-sensing one.
+    This is needed in case the remote-sensing images have not
+    been prefiturized.
+  */
+  const groupingVariables = variables.filter((v) => v.grouping);
+  const remoteSensingVariable = groupingVariables.find((gv) =>
+    isRemoteSensingType(gv.colType)
+  );
+
+  /*
+    The variable name to be sent, is, in order of availability:
+      - a remote-sensing variable first,
+      - a grouping variable second,
+      - or the first dataset variable
+  */
+  return (
+    remoteSensingVariable?.grouping.idCol ??
+    groupingVariables[0]?.grouping.idCol ??
+    variables[0].key
+  );
+}
+
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
 
 export const actions = {
@@ -96,6 +121,7 @@ export const actions = {
       mutations.setDatasets(context, []);
     }
   },
+
   async deleteDataset(
     context: DatasetContext,
     payload: { dataset: string; terms: string }
@@ -114,6 +140,7 @@ export const actions = {
       console.error(err);
     }
   },
+
   // fetches all variables for a single dataset.
   async fetchVariables(
     context: DatasetContext,
@@ -340,7 +367,12 @@ export const actions = {
   },
 
   async fetchOutliers(context: DatasetContext, args: { dataset: string }) {
+    // Check if the outlier detection has already been applied.
+    if (routeGetters.isOutlierApplied(store)) return;
+
     const { dataset } = args;
+    const variables = getters.getVariables(context);
+    const variableName = getOutlierVariableName(variables);
 
     // Create the request.
     let status;
@@ -350,34 +382,10 @@ export const actions = {
       type: DatasetPendingRequestType.OUTLIER,
       status,
     };
-    // Check if the outlier detection has already been generated.
-    if (routeGetters.isOutlierGenerated(store)) {
-      status = DatasetPendingRequestStatus.REVIEWED;
-      mutations.updatePendingRequests(context, { ...request, status });
-      return;
-    }
 
     // Set the request status as pending.
     status = DatasetPendingRequestStatus.PENDING;
     mutations.updatePendingRequests(context, { ...request, status });
-
-    // Find a grouping variable, specially a remote-sensing one.
-    // This is needed in case the remote-sensing images have not
-    // been prefiturized.
-    const variables = getters.getVariables(context);
-    const groupingVariables = variables.filter((v) => v.grouping);
-    const remoteSensingVariable = groupingVariables.find((gv) =>
-      isRemoteSensingType(gv.colType)
-    );
-
-    // The variable name to be sent, is, in order of availability:
-    //     - a remote-sensing variable first,
-    //     - a grouping variable second,
-    //     - or the first dataset variable
-    const variableName =
-      remoteSensingVariable?.grouping.idCol ??
-      groupingVariables[0]?.grouping.idCol ??
-      variables[0].key;
 
     // Run the outlier detection
     try {
@@ -390,6 +398,17 @@ export const actions = {
 
     // Update the pending request status
     mutations.updatePendingRequests(context, { ...request, status });
+  },
+
+  async applyOutliers(context: DatasetContext, dataset: string) {
+    const variables = getters.getVariables(context);
+    const variableName = getOutlierVariableName(variables);
+
+    try {
+      await axios.get(`/distil/outlier-results/${dataset}/${variableName}`);
+    } catch (error) {
+      console.error(error);
+    }
   },
 
   async uploadDataFile(

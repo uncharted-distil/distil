@@ -257,13 +257,14 @@ export default Vue.extend({
         });
     },
 
-    applyOutlierChange() {
+    async applyOutlierChange() {
       this.clearData();
+      await datasetActions.applyOutliers(this.$store, this.dataset);
 
       // Update the variables, which should now include the outlier variable.
       datasetActions.fetchVariables(this.$store, { dataset: this.dataset });
 
-      // Update the route to know that the training variables have been ranked.
+      // Update the route to know that the outlier has been applied.
       const entry = overlayRouteEntry(this.$route, { outlier: "1" });
       this.$router.push(entry).catch((err) => console.warn(err));
     },
