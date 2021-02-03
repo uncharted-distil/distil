@@ -1,6 +1,7 @@
 package util
 
 /*
+#cgo CXXFLAGS:'-D_GLIBCXX_USE_CXX11_ABI=0'
 #cgo CFLAGS: -I /usr/local/tensorflow/include
 #cgo LDFLAGS: -L/usr/local/tensorflow/lib -ltensorflow
 #include <image-upscale/entry_functions.c>
