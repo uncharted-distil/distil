@@ -42,7 +42,7 @@ if [ ! -d "$tensorflow_dir" ]; then
     echo "unable to locate tensorflow lib"
     if [ "$uname" = Linux ]; then
         # if it fails cuda is not installed so get the tensorflow cpu
-        if command -v nvcc &> /dev/null 2>&1; then
+        if command -v nvcc > /dev/null; then
             echo "cuda not found fetching tensorflow cpu"
             get_tensorflow "$linux_tensorflow_cpu_tar" "$tensorflow_url_linux_cpu"
         else
