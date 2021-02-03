@@ -269,9 +269,9 @@ export function lexQueryToFiltersAndHighlight(
         highlight.value.max = dateToNum(lq.max);
         highlight.type = DATETIME_FILTER;
       } else if (isNumericType(type)) {
-        highlight.value.min = parseFloat(lq.min.key);
-        highlight.value.max = parseFloat(lq.max.key);
-        highlight.type = NUMERICAL_FILTER;
+        highlight.value.from = parseFloat(lq.min.key);
+        highlight.value.to = parseFloat(lq.max.key);
+        highlight.value.type = NUMERICAL_FILTER;
       } else {
         highlight.value = lq.value.key;
       }

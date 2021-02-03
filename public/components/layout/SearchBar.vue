@@ -54,14 +54,8 @@ export default Vue.extend({
       }
     },
 
-    variables(n, o) {
-      if (_.isEqual(n, o)) {
-        this.renderLex();
-      }
-    },
-
     language(n, o) {
-      if (_.isEqual(n, o)) {
+      if (n !== o) {
         this.renderLex();
       }
     },
@@ -87,7 +81,7 @@ export default Vue.extend({
     },
 
     setQuery(): void {
-      if (!this.lex) return;
+      if (!this.lex || !(this.filters || this.highlight)) return;
       const lexQuery = filterParamsToLexQuery(
         this.filters,
         this.highlight,
