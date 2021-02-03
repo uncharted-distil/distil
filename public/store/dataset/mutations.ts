@@ -128,7 +128,12 @@ export const mutations = {
 
   updateVariableType(
     state: DatasetState,
-    args: { dataset: string; field: string; type: string }
+    args: {
+      dataset: string;
+      field: string;
+      type: string;
+      variables: Variable[];
+    }
   ) {
     // TODO: fix this, this is hacky and error prone manually changing the
     // type across the app state.
@@ -140,22 +145,20 @@ export const mutations = {
       Vue.set(state, "isGeocoordinateFacet", [LONGITUDE_TYPE, LATITUDE_TYPE]);
     }
 
-    // update dataset variables
+    // update dataset variables & active variables
     const dataset = state.datasets.find((d) => d.name === args.dataset);
     if (dataset) {
-      const variable = dataset.variables.find((v) => v.key === args.field);
-      if (variable) {
-        variable.colType = args.type;
+      const target = dataset.variables.findIndex((v) => v.key === args.field);
+
+      if (target > -1) {
+        Vue.set(dataset.variables[target], "colType", args.type);
+        Vue.set(state.variables[target], "colType", args.type);
+        Vue.set(
+          state.variables[target],
+          "values",
+          args.variables[target].values
+        );
       }
-    }
-
-    // update variables
-    const variable = state.variables.find((v) => {
-      return v.key === args.field && v.datasetName === args.dataset;
-    });
-
-    if (variable) {
-      variable.colType = args.type;
     }
 
     // update table data

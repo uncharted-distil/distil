@@ -745,11 +745,15 @@ export const actions = {
     }
 
     try {
-      await axios.post(`/distil/variables/${args.dataset}`, {
+      const response = await axios.post(`/distil/variables/${args.dataset}`, {
         field: args.field,
         type: args.type,
       });
-      mutations.updateVariableType(context, args);
+      const updatedArgs = {
+        ...args,
+        variables: response.data.variables as Variable[],
+      };
+      mutations.updateVariableType(context, updatedArgs);
       // update variable summary
       const filterParams =
         context.getters.getDecodedSolutionRequestFilterParams;
@@ -775,7 +779,11 @@ export const actions = {
         }),
       ]);
     } catch (error) {
-      mutations.updateVariableType(context, { ...args, type: UNKNOWN_TYPE });
+      mutations.updateVariableType(context, {
+        ...args,
+        type: UNKNOWN_TYPE,
+        variables: context.state.variables,
+      });
     }
   },
 

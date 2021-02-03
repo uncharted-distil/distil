@@ -21,8 +21,10 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil-compute/model"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/util/json"
 )
@@ -95,12 +97,29 @@ func VariableTypeHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataS
 			return
 		}
 
+		variables, err := api.FetchSummaryVariables(dataset, meta)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+
+		for _, v := range variables {
+			if model.IsNumerical(v.Type) || model.IsDateTime(v.Type) {
+				extrema, err := storage.FetchExtrema(ds.ID, ds.StorageName, v)
+				if err != nil {
+					log.Warnf("defaulting extrema values due to error fetching extrema for '%s': %+v", v.Key, err)
+					extrema = getDefaultExtrema(v)
+				}
+				v.Min = extrema.Min
+				v.Max = extrema.Max
+			}
+		}
 		// marshal data
-		err = handleJSON(w, map[string]interface{}{
-			"success": true,
+		err = handleJSON(w, VariablesResult{
+			Variables: variables,
 		})
 		if err != nil {
-			handleError(w, errors.Wrap(err, "unable marshal response into JSON"))
+			handleError(w, errors.Wrap(err, "unable marshal dataset result into JSON"))
 			return
 		}
 	}
