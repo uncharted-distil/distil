@@ -69,7 +69,7 @@ cp -a $local_dir/$image_src_dir/. $source_dir
 if [ ! -d "$models_dir" ]; then
     echo "unable to locate model weights"
     echo "fetching model weights"
-    mkdir "$static_resources/models"
+    mkdir -p "$static_resources/models"
     # should fetch model weights from somewhere
     cp -a $local_dir/$image_model_dir/ "$static_resources/models"
 fi
