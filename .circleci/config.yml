@@ -12,7 +12,7 @@ jobs:
       - setup_remote_docker
       - run:
           name: install C source
-          command: /bin/sh -c "/install_image_upscale.sh"
+          command: ./install_image_upscale.sh
       - run:
           name: build app binary
           command: /bin/sh -c "/build.sh"
