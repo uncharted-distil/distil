@@ -1,10 +1,10 @@
-FROM docker-hub.uncharted.software/alpine:3.11.6
-
-# add bash + packages to support CGO
-RUN apk update && apk add bash git make build-base
+FROM registry.gitlab.com/datadrivendiscovery/images/primitives:ubuntu-bionic-python36-stable-20201201-223410
 
 # add GDAL for geospatial support
-RUN apk add gdal gdal-dev
+RUN sudo apt-get update && apt-get install -y \
+    libgdal-dev \
+    git \
+    build-essential 
 
 RUN mkdir /distil
 
