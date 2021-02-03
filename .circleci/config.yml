@@ -15,8 +15,7 @@ jobs:
           command: /bin/sh -c "/build.sh"
       - run:
           name: install C source
-          command:
-            - bash ./install_image_upscale.sh
+          command: bash ./install_image_upscale.sh
       - run:
           name: run tests
           command: /bin/sh -c 'go test -v -vet=off ./...'
