@@ -36,6 +36,7 @@ export const getters = {
     moduleGetters.getRouteIsTrainingVariablesRanked
   ),
   getRouteIsClusterGenerated: read(moduleGetters.getRouteIsClusterGenerated),
+  isOutlierGenerated: read(moduleGetters.isOutlierGenerated),
   getDecodedTrainingVariableNames: read(
     moduleGetters.getDecodedTrainingVariableNames
   ),

@@ -341,7 +341,6 @@ export const actions = {
 
   async fetchOutliers(context: DatasetContext, args: { dataset: string }) {
     const { dataset } = args;
-    const variables = getters.getVariables(context);
 
     // Create the request.
     let status;
@@ -351,9 +350,8 @@ export const actions = {
       type: DatasetPendingRequestType.OUTLIER,
       status,
     };
-
     // Check if the outlier detection has already been generated.
-    if (variables.some((v) => v.key === "_outlier")) {
+    if (routeGetters.isOutlierGenerated(store)) {
       status = DatasetPendingRequestStatus.REVIEWED;
       mutations.updatePendingRequests(context, { ...request, status });
       return;
@@ -366,6 +364,7 @@ export const actions = {
     // Find a grouping variable, specially a remote-sensing one.
     // This is needed in case the remote-sensing images have not
     // been prefiturized.
+    const variables = getters.getVariables(context);
     const groupingVariables = variables.filter((v) => v.grouping);
     const remoteSensingVariable = groupingVariables.find((gv) =>
       isRemoteSensingType(gv.colType)
