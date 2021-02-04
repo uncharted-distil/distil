@@ -2,7 +2,8 @@ package util
 
 /*
 #cgo CFLAGS: -I/usr/local/include
-#cgo LDFLAGS: -ltensorflow
+#cgo darwin LDFLAGS: -L/usr/local/tensorflow -ltensorflow
+#cgo linux LDFLAGS: -ltensorflow
 #include <image-upscale/entry_functions.c>
 #include <stdio.h>
 float *buffer;

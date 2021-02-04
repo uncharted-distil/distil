@@ -34,10 +34,12 @@ get_tensorflow(){
     echo $tensorflow_dir
     mkdir $tensorflow_dir
     wget $2 -P $tensorflow_dir
-    tar -C /usr/local -xzf $tensorflow_dir/$1
     if [ "$uname" = Linux ]; then
         ldconfig
+        tar -C /usr/local -xzf $tensorflow_dir/$1
+        return
     fi
+    tar -C $tensorflow_dir -xzf $tensorflow_dir/$1
 }
 
 # check if tensorflow lib is installed
