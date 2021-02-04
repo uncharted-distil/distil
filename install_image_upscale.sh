@@ -34,7 +34,7 @@ get_tensorflow(){
     echo $tensorflow_dir
     mkdir $tensorflow_dir
     wget $2 -P $tensorflow_dir
-    tar -C /user/local -xzf $tensorflow_dir/$1
+    tar -C /usr/local -xzf $tensorflow_dir/$1
     if [ "$uname" = Linux ]; then
         ldconfig
     fi
