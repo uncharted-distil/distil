@@ -33,7 +33,7 @@ import (
 )
 
 func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.FilterParams, dataStorage api.DataStorage) (string, *api.FilterParams, error) {
-	inputPath := env.ResolvePath(ds.Source, ds.Folder)
+	inputPath := ds.GetLearningFolder()
 
 	log.Infof("checking if solution search for dataset %s found in '%s' needs prefiltering", ds.ID, inputPath)
 	// determine if filtering is needed
@@ -44,19 +44,22 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 	}
 
 	// check if the filtered results already exists
+	// TODO: JUST BECAUSE THE FILE EXISTS DOESNT MEAN THE CONTENTS IS GOOD
+	// SHOULD PROBABLY WRITE TO A TMP FOLDER AND COPY THE RESULTS OVER IF EVERYTHING WORKED!
+	// (OR DO SOMETHING ELSE TO GUARANTEE THAT FILE EXISTING = FILTERING WORKED)
 	hash, err := hashFilter(inputPath, preFilters)
 	if err != nil {
 		return "", nil, err
 	}
 	outputFolder := env.ResolvePath("tmp", fmt.Sprintf("%s-%v", ds.Folder, hash))
-	outputDataFile := path.Join(outputFolder, compute.D3MDataFolder, compute.D3MLearningData)
-	if util.FileExists(outputDataFile) {
+	outputExists, _ := getPreFilteringOutputDataFile(outputFolder)
+	if outputExists {
 		log.Infof("solution request for dataset %s already prefiltered at '%s'", ds.ID, outputFolder)
 		return outputFolder, updatedParams, nil
 	}
 
 	// prepare the data to use for filtering
-	outputFolder, resultingVariables, err := preparePrefilteringDataset(outputFolder, ds, dataStorage)
+	resultingVariables, err := preparePrefilteringDataset(outputFolder, ds, dataStorage)
 	if err != nil {
 		return "", nil, err
 	}
@@ -67,9 +70,12 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 		return "", nil, err
 	}
 
-	allowableTypes := []string{compute.CSVURIValueType}
-	if ds.LearningDataset != "" {
+	var allowableTypes []string
+	if ds.LearningDataset == "" {
+		allowableTypes = append(allowableTypes, compute.CSVURIValueType)
+	} else {
 		allowableTypes = append(allowableTypes, compute.ParquetURIValueType)
+		allowableTypes = append(allowableTypes, compute.CSVURIValueType)
 	}
 	filteredData, err := SubmitPipeline(client, []string{outputFolder}, nil, nil, pipeline, allowableTypes, true)
 	if err != nil {
@@ -77,6 +83,7 @@ func filterData(client *compute.Client, ds *api.Dataset, filterParams *api.Filte
 	}
 
 	// output the filtered results as the data in the filtered dataset
+	_, outputDataFile := getPreFilteringOutputDataFile(outputFolder)
 	err = util.CopyFile(filteredData, outputDataFile)
 	if err != nil {
 		return "", nil, err
@@ -137,16 +144,36 @@ func getPreFiltering(ds *api.Dataset, filterParams *api.FilterParams) (*api.Filt
 	return clone, preFilters
 }
 
-func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset, dataStorage api.DataStorage) (string, []*model.Variable, error) {
+func getPreFilteringOutputDataFile(folder string) (bool, string) {
+	// make sure the folder exists
+	if !util.FileExists(folder) {
+		return false, ""
+	}
+
+	// read the schema doc (if it exists)
+	schemaPath := path.Join(folder, compute.D3MDataSchema)
+	if !util.FileExists(schemaPath) {
+		return false, ""
+	}
+	ds, err := serialization.ReadMetadata(schemaPath)
+	if err != nil {
+		return false, ""
+	}
+
+	// get the main data resource path
+	return true, model.GetResourcePath(schemaPath, ds.GetMainDataResource())
+}
+
+func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset, dataStorage api.DataStorage) ([]*model.Variable, error) {
 	// read the data from the database
 	data, err := dataStorage.FetchDataset(sourceDataset.ID, sourceDataset.StorageName, true, false, nil)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	// if learning dataset, then update that
 	if sourceDataset.LearningDataset != "" {
-		return UpdatePrefeaturizedDataset(sourceDataset.LearningDataset, sourceDataset, data)
+		return UpdatePrefeaturizedDataset(outputFolder, sourceDataset.LearningDataset, sourceDataset, data)
 	}
 
 	// read the metadata from disk to keep the reference data resources
@@ -154,7 +181,7 @@ func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset,
 	metadataSchemaPath := path.Join(env.ResolvePath(sourceDataset.Source, sourceDataset.Folder), compute.D3MDataSchema)
 	metadataSource, err := serialization.ReadMetadata(metadataSchemaPath)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	metadataSourceDR := metadataSource.GetMainDataResource()
 	metaVarMap := MapVariables(metadataSourceDR.Variables, func(variable *model.Variable) string { return variable.Key })
@@ -192,20 +219,26 @@ func preparePrefilteringDataset(outputFolder string, sourceDataset *api.Dataset,
 	}
 	err = serialization.WriteDataset(outputFolder, dsRaw)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
-	return outputFolder, sourceVariables, nil
+	return sourceVariables, nil
 }
 
 // UpdatePrefeaturizedDataset updates a featurized dataset that already exists
 // on disk to have new variables included
-func UpdatePrefeaturizedDataset(prefeaturizedPath string, sourceDataset *api.Dataset, storedData [][]string) (string, []*model.Variable, error) {
+func UpdatePrefeaturizedDataset(outputFolder string, prefeaturizedPath string, sourceDataset *api.Dataset, storedData [][]string) ([]*model.Variable, error) {
+	// copy the prefeaturized dataset to the output folder
+	err := util.Copy(prefeaturizedPath, outputFolder)
+	if err != nil {
+		return nil, err
+	}
+
 	// load the dataset from disk
-	schemaPath := path.Join(prefeaturizedPath, compute.D3MDataSchema)
+	schemaPath := path.Join(outputFolder, compute.D3MDataSchema)
 	dsDisk, err := serialization.ReadDataset(schemaPath)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	metaDiskMainDR := dsDisk.Metadata.GetMainDataResource()
 
@@ -258,12 +291,27 @@ func UpdatePrefeaturizedDataset(prefeaturizedPath string, sourceDataset *api.Dat
 
 	// output the new pre featurized data
 	dsDisk.Data = preFeaturizedOutput
-	err = serialization.WriteDataset(prefeaturizedPath, dsDisk)
+	err = serialization.WriteDataset(outputFolder, dsDisk)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
-	return prefeaturizedPath, sourceDataset.Variables, nil
+	// capture the final set of variables to use
+	storedVarMap = MapVariables(sourceDataset.Variables, func(variable *model.Variable) string { return variable.HeaderName })
+	metaDiskVarMap = MapVariables(metaDiskMainDR.Variables, func(variable *model.Variable) string { return variable.HeaderName })
+	outputVariables := make([]*model.Variable, len(dsDisk.Data[0]))
+	for i, v := range dsDisk.Data[0] {
+		var variable *model.Variable
+		if storedVarMap[v] != nil {
+			variable = storedVarMap[v]
+		} else {
+			variable = metaDiskVarMap[v]
+		}
+		variable.Index = i
+		outputVariables[i] = variable
+	}
+
+	return outputVariables, nil
 }
 
 // MapVariables creates a variable map using the mapper function to create the key.
