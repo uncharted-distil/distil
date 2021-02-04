@@ -34,12 +34,16 @@ get_tensorflow(){
     echo $tensorflow_dir
     mkdir $tensorflow_dir
     wget $2 -P $tensorflow_dir
+    tar -C $tensorflow_dir -xzf $tensorflow_dir/$1
+    # make the dirs if they dont exist
+    mkdir -p /usr/local/lib
+    mkdir -p /usr/local/include
+    #copy them over
+    cp -a $tensorflow_dir/lib/. /usr/local/lib
+    cp -a $tensorflow_dir/include/. /usr/local/include 
     if [ "$uname" = Linux ]; then
         ldconfig
-        tar -C /usr/local -xzf $tensorflow_dir/$1
-        return
     fi
-    tar -C $tensorflow_dir -xzf $tensorflow_dir/$1
 }
 
 # check if tensorflow lib is installed
@@ -67,7 +71,7 @@ echo "fetching image-scale source"
 wget $image_upscale_url -P $local_dir
 # extract
 unzip $local_dir/$image_upscale_src_zip -d $local_dir
-mkdir $source_dir
+mkdir -p $source_dir
 # copy source over
 cp -a $local_dir/$image_src_dir/. $source_dir
 # check if models are in static folder
