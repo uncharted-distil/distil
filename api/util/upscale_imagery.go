@@ -1,7 +1,7 @@
 package util
 
 /*
-#cgo CFLAGS: -I/usr/local/tensorflow/include
+#cgo CFLAGS: -I/usr/local/include
 #cgo LDFLAGS: -ltensorflow
 #include <image-upscale/entry_functions.c>
 #include <stdio.h>

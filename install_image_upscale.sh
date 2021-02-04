@@ -41,7 +41,7 @@ get_tensorflow(){
 }
 
 # check if tensorflow lib is installed
-if [ ! -d "$tensorflow_dir" ]; then
+if [ ! -d "/usr/local/tensorflow" ]; then
     echo "unable to locate tensorflow lib"
     if [ "$uname" = Linux ]; then
         # if it fails cuda is not installed so get the tensorflow cpu
