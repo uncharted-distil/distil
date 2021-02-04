@@ -45,16 +45,22 @@ if [ ! -d "$tensorflow_dir" ]; then
         if ! [ -x "$(command -v nvcc)" ]; then
             echo "cuda not found fetching tensorflow cpu"
             get_tensorflow "$linux_tensorflow_cpu_tar" "$tensorflow_url_linux_cpu"
+            export LIBRARY_PATH=$LIBRARY_PATH:$tensorflow_dir/lib
+            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$tensorflow_dir/lib
         else
             # cuda exists get tensorflow for gpu
             echo "cuda found fetching tensorflow gpu"
             get_tensorflow $linux_tensorflow_gpu_tar $tensorflow_url_linux_gpu
+            export LIBRARY_PATH=$LIBRARY_PATH:$tensorflow_dir/lib
+            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$tensorflow_dir/lib
         fi 
     fi
     if [ "$uname" = 'Darwin' ]; then
         echo "fetching mac tensorflow binaries"
         # get mac binaries for tensorflow c
         get_tensorflow $mac_tensorflow_tar $tensorflow_url_mac
+        export LIBRARY_PATH=$LIBRARY_PATH:$tensorflow_dir/lib
+        export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$tensorflow_dir/lib
     fi
 fi
 rm -rf "$source_dir" || true
