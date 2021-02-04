@@ -1,4 +1,4 @@
-tensorflow_dir="/usr/local/tensorflow"
+tensorflow_dir="/usr/local"
 mac_tensorflow_tar="libtensorflow-cpu-darwin-x86_64-2.4.0.tar.gz"
 linux_tensorflow_cpu_tar="libtensorflow-cpu-linux-x86_64-2.4.0.tar.gz"
 linux_tensorflow_gpu_tar="libtensorflow-gpu-linux-x86_64-2.4.0.tar.gz"
@@ -34,7 +34,10 @@ get_tensorflow(){
     echo $tensorflow_dir
     mkdir $tensorflow_dir
     wget $2 -P $tensorflow_dir
-    tar -C $tensorflow_dir -xzf $tensorflow_dir/$1
+    tar -C /user/local -xzf $tensorflow_dir/$1
+    if [ "$uname" = Linux ]; then
+        ldconfig
+    fi
 }
 
 # check if tensorflow lib is installed
@@ -45,22 +48,16 @@ if [ ! -d "$tensorflow_dir" ]; then
         if ! [ -x "$(command -v nvcc)" ]; then
             echo "cuda not found fetching tensorflow cpu"
             get_tensorflow "$linux_tensorflow_cpu_tar" "$tensorflow_url_linux_cpu"
-            export LIBRARY_PATH=$LIBRARY_PATH:$tensorflow_dir/lib
-            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$tensorflow_dir/lib
         else
             # cuda exists get tensorflow for gpu
             echo "cuda found fetching tensorflow gpu"
             get_tensorflow $linux_tensorflow_gpu_tar $tensorflow_url_linux_gpu
-            export LIBRARY_PATH=$LIBRARY_PATH:$tensorflow_dir/lib
-            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$tensorflow_dir/lib
         fi 
     fi
     if [ "$uname" = 'Darwin' ]; then
         echo "fetching mac tensorflow binaries"
         # get mac binaries for tensorflow c
         get_tensorflow $mac_tensorflow_tar $tensorflow_url_mac
-        export LIBRARY_PATH=$LIBRARY_PATH:$tensorflow_dir/lib
-        export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$tensorflow_dir/lib
     fi
 fi
 rm -rf "$source_dir" || true
