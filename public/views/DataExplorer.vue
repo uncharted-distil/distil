@@ -28,7 +28,7 @@
       />
 
       <!-- Tabs to switch views -->
-      <b-tabs pills v-model="activeView" class="mb-3">
+      <b-tabs v-model="activeView" pills class="mb-3">
         <b-tab
           v-for="(view, index) in activeViews"
           :key="index"
@@ -50,8 +50,8 @@
           @submit="onDataSizeSubmit"
         />
         <strong class="matching-color">matching</strong> samples of
-        {{ totalNumRows }} to model<template v-if="selectionNumRows > 0"
-          >, {{ selectionNumRows }}
+        {{ totalNumRows }} to model<template v-if="selectionNumRows > 0">
+          , {{ selectionNumRows }}
           <strong class="selected-color">selected</strong>
         </template>
       </p>
@@ -101,10 +101,10 @@ import { spinnerHTML } from "../util/spinner";
 import { META_TYPES } from "../util/types";
 import {
   GEO_VIEW,
-  GRAPH_VIEW,
+  // GRAPH_VIEW,
   IMAGE_VIEW,
   TABLE_VIEW,
-  TIMESERIES_VIEW,
+  // TIMESERIES_VIEW,
   filterViews,
 } from "../util/view";
 
@@ -291,17 +291,12 @@ export default Vue.extend({
       if (viewType === GEO_VIEW) return "SelectGeoPlot";
       // if (viewType === GRAPH_VIEW) return "SelectGraphView";
       if (viewType === IMAGE_VIEW) return "ImageMosaic";
-      if (viewType === TABLE_VIEW) return "SelectDataTable";
       // if (viewType === TIMESERIES_VIEW) return "SelectTimeseriesView";
+
+      if (viewType === TABLE_VIEW) return "SelectDataTable";
+      // Default is TABLE_VIEW
+      return "SelectDataTable";
     },
-  },
-
-  async beforeMount() {
-    // First get the dataset informations
-    await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);
-
-    // Update the training data
-    viewActions.updateSelectTrainingData(this.$store);
   },
 
   // Update either the summaries or training data on user interaction.
@@ -325,6 +320,14 @@ export default Vue.extend({
       if (oldTraining === newTraining) return;
       viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
     },
+  },
+
+  async beforeMount() {
+    // First get the dataset informations
+    await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);
+
+    // Update the training data
+    viewActions.updateSelectTrainingData(this.$store);
   },
 
   methods: {
