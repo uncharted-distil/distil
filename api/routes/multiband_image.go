@@ -43,7 +43,7 @@ func getOptions(requestURI string) string {
 }
 
 // MultiBandImageHandler fetches individual band images and combines them into a single RGB image using the supplied mapping.
-func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWriter, *http.Request) {
+func MultiBandImageHandler(ctor api.MetadataStorageCtor, config env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dataset := pat.Param(r, "dataset")
 		imageID := pat.Param(r, "image-id")
@@ -80,11 +80,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 				break
 			}
 		}
-
-		if isThumbnail {
-			imageScale = util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
-		}
-		options := util.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0} // default options for color correction
+		options := util.Options{Gain: 2.5, Gamma: 2.2, GainL: 1.0, Scale: 0} // default options for color correction
 		if paramOption != "" {
 			err := json.Unmarshal([]byte(paramOption), &options)
 			if err != nil {
@@ -92,12 +88,26 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor) func(http.ResponseWrite
 				return
 			}
 		}
+		if isThumbnail {
+			imageScale = util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
+			// if thumbnail scale should be 0
+			options.Scale=0
+		}
 		img, err := util.ImageFromCombination(sourcePath, imageID, bandCombo, imageScale, options)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
-
+		if options.Scale > 0 && config.ShouldScaleImages {
+			if options.Scale > 3 {
+				// dont allow upscaling past factor of 6
+				options.Scale = 3
+			}
+			// multiple passes for increasing scale dramatically
+			for i:=0; i < options.Scale; i++ {
+				img = util.UpscaleImage(img)
+			}
+		}
 		imageBytes, err := util.ImageToJPEG(img)
 		if err != nil {
 			handleError(w, err)

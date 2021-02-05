@@ -231,7 +231,7 @@ export default Vue.extend({
         this.hidden = false;
         this.isFilteredToggled = this.hasImageAttention;
         this.carouselPosition = this.initialPosition;
-        this.requestImage();
+        this.requestImage({ gainL: 1.0, gamma: 2.2, gain: 2.5, scale: 1 });
         if (this.hasImageAttention) {
           this.requestFilter();
         }
@@ -260,7 +260,7 @@ export default Vue.extend({
       const val = Number(e) / this.brightnessMax;
       const gainL = val * MAX_GAINL;
       this.currentBrightness = val;
-      this.requestImage({ gainL, gamma: 2.2, gain: 2.5 }); // gamma, gain, are default. They are here if we need to edit them later down the road
+      this.requestImage({ gainL, gamma: 2.2, gain: 2.5, scale: 1 }); // gamma, gain, are default. They are here if we need to edit them later down the road
     },
 
     cleanUp() {
@@ -283,6 +283,7 @@ export default Vue.extend({
       gamma: number;
       gain: number;
       gainL: number;
+      scale: number;
     }) {
       if (this.isMultiBandImage) {
         await datasetActions.fetchMultiBandImage(this.$store, {
