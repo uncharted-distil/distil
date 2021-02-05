@@ -80,7 +80,7 @@ if [ ! -d "$models_dir" ]; then
     echo "fetching model weights"
     mkdir -p "$static_resources/models"
     # should fetch model weights from somewhere
-    cp -a $local_dir/$image_model_dir/ "$static_resources/models"
+    cp -a $local_dir/$image_model_dir/. "$static_resources/models"
 fi
 
 echo "cleaning up files"
