@@ -227,7 +227,8 @@ func main() {
 			os.Exit(1)
 		}
 	}
-
+	// Loads image enhancement library
+	util.LoadImageUpscaleLibrary()
 	// register routes
 	mux := goji.NewMux()
 	mux.Use(middleware.Log)
