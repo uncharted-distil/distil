@@ -77,8 +77,8 @@ import SearchBar from "../components/layout/SearchBar.vue";
 import SearchInput from "../components/SearchInput.vue";
 import SelectDataTable from "../components/SelectDataTable.vue";
 import SelectGeoPlot from "../components/SelectGeoPlot.vue";
-// import SelectGraphView from "../components/SelectGraphView.vue";
-// import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
+import SelectGraphView from "../components/SelectGraphView.vue";
+import SelectTimeseriesView from "../components/SelectTimeseriesView.vue";
 import StatusPanel from "../components/StatusPanel.vue";
 import StatusSidebar from "../components/StatusSidebar.vue";
 
@@ -101,10 +101,10 @@ import { spinnerHTML } from "../util/spinner";
 import { META_TYPES } from "../util/types";
 import {
   GEO_VIEW,
-  // GRAPH_VIEW,
+  GRAPH_VIEW,
   IMAGE_VIEW,
   TABLE_VIEW,
-  // TIMESERIES_VIEW,
+  TIMESERIES_VIEW,
   filterViews,
 } from "../util/view";
 
@@ -117,7 +117,6 @@ const ACTIONS = [
   { name: "Location Variables", icon: "map-o", paneId: "location" },
   { name: "Image Variables", icon: "image", paneId: "image" },
   { name: "Unknown Variables", icon: "question", paneId: "unknown" },
-  { name: "Selected Variables", icon: "check", paneId: "selected" },
   { name: "Create New Variable", icon: "plus", paneId: "add" },
 ] as Action[];
 
@@ -135,8 +134,8 @@ export default Vue.extend({
     SearchInput,
     SelectDataTable,
     SelectGeoPlot,
-    // SelectGraphView,
-    // SelectTimeseriesView,
+    SelectGraphView,
+    SelectTimeseriesView,
     StatusPanel,
     StatusSidebar,
   },
@@ -166,7 +165,7 @@ export default Vue.extend({
     },
 
     activeViews(): string[] {
-      return filterViews(this.selectedVariables);
+      return filterViews(this.variables);
     },
 
     /* Actions available based on the variables meta types */
@@ -234,12 +233,6 @@ export default Vue.extend({
       return getNumIncludedRows(this.rowSelection);
     },
 
-    selectedVariables(): Variable[] {
-      return this.variables.filter((v) =>
-        this.cleanTraining.includes(v.key.toLowerCase())
-      );
-    },
-
     spinnerHTML,
 
     totalNumRows(): number {
@@ -261,19 +254,13 @@ export default Vue.extend({
     },
 
     variablesPerActions() {
-      const nonSelectedVariables = this.variables.filter(
-        (v) => !this.cleanTraining.includes(v.key.toLowerCase())
-      );
-
       const variables = {};
       this.availableActions.forEach((action) => {
         if (action.paneId === "add") variables[action.paneId] = null;
-        else if (action.paneId === "selected") {
-          variables[action.paneId] = this.selectedVariables;
-        } else if (action.paneId === "available") {
-          variables[action.paneId] = nonSelectedVariables;
+        else if (action.paneId === "available") {
+          variables[action.paneId] = this.variables;
         } else {
-          variables[action.paneId] = nonSelectedVariables.filter((variable) =>
+          variables[action.paneId] = this.variables.filter((variable) =>
             META_TYPES[action.paneId].includes(variable.colType)
           );
         }
@@ -289,11 +276,11 @@ export default Vue.extend({
     viewComponent() {
       const viewType = this.activeViews[this.activeView] as string;
       if (viewType === GEO_VIEW) return "SelectGeoPlot";
-      // if (viewType === GRAPH_VIEW) return "SelectGraphView";
+      if (viewType === GRAPH_VIEW) return "SelectGraphView";
       if (viewType === IMAGE_VIEW) return "ImageMosaic";
-      // if (viewType === TIMESERIES_VIEW) return "SelectTimeseriesView";
-
       if (viewType === TABLE_VIEW) return "SelectDataTable";
+      if (viewType === TIMESERIES_VIEW) return "SelectTimeseriesView";
+
       // Default is TABLE_VIEW
       return "SelectDataTable";
     },
