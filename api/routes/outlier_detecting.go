@@ -26,9 +26,15 @@ import (
 	"github.com/uncharted-distil/distil/api/task"
 )
 
+const (
+	outlierVarName     = "_outlier"
+	outlierDisplayName = "Outlier"
+)
+
 // OutlierResult represents a outlier response for a variable.
 type OutlierResult struct {
-	OutlierField string `json:"outlier"`
+	OutlierSuccess bool   `json:"success"`
+	OutlierField   string `json:"outlier"`
 }
 
 // OutlierDetectionHandler generates a route handler that enables outlier detection
@@ -62,12 +68,13 @@ func OutlierDetectionHandler(metaCtor api.MetadataStorageCtor) func(http.Respons
 
 		// create a result
 		result := OutlierResult{
-			OutlierField: "false",
+			OutlierSuccess: false,
 		}
 
 		if outlierData != nil {
 			result = OutlierResult{
-				OutlierField: "_outlier",
+				OutlierSuccess: true,
+				OutlierField:   outlierVarName,
 			}
 		}
 
@@ -115,9 +122,6 @@ func OutlierResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 			return
 		}
 
-		// create a name for the outlier variable
-		outlierVarName := "_outlier"
-
 		// check if the outlier variable exist in the metadata
 		outlierVarMetaExist, err := metaStorage.DoesVariableExist(dataset, outlierVarName)
 		if err != nil {
@@ -135,7 +139,7 @@ func OutlierResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 		if !(outlierVarMetaExist && outlierVarExistData) {
 
 			// add Variable to MetaData
-			err = metaStorage.AddVariable(dataset, outlierVarName, "Outlier", model.CategoricalType, "metadata")
+			err = metaStorage.AddVariable(dataset, outlierVarName, outlierDisplayName, model.CategoricalType, model.VarDistilRoleMetadata)
 			if err != nil {
 				handleError(w, err)
 				return
@@ -164,7 +168,8 @@ func OutlierResultsHandler(metaCtor api.MetadataStorageCtor, dataCtor api.DataSt
 
 		// marshal output into JSON
 		err = handleJSON(w, OutlierResult{
-			OutlierField: outlierVarName,
+			OutlierSuccess: true,
+			OutlierField:   outlierVarName,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal outlier variable name into JSON"))
