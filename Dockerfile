@@ -7,18 +7,7 @@ RUN apt-get update && \
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - && apt-get install -y nodejs
 RUN add-apt-repository ppa:ubuntugis/ppa && \
 apt-get update && \
-apt-get -y install build-essential openssh-client git wget unzip gdal-bin gdal-data libgdal-dev libgdal-perl libgdal-perl-doc python3-gdal
-
-
-RUN wget -O go.tar.gz https://golang.org/dl/go1.15.7.linux-amd64.tar.gz && tar -C /usr/local -xzf go.tar.gz
-# setup golang env vars
-ENV PATH="/usr/local/go/bin:$PATH"
-ENV GOPATH=/opt/go
-ENV PATH=$PATH:$GOPATH/bin
-# gdal env vars
-ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
-ENV C_INCLUDE_PATH=/usr/include/gdal
-RUN npm install -g yarn
+apt-get -y install build-essential openssh-client git wget gdal-bin gdal-data libgdal-dev libgdal-perl libgdal-perl-doc python3-gdal
 
 RUN mkdir /distil
 
@@ -26,6 +15,12 @@ WORKDIR /distil
 
 COPY distil .
 COPY dist ./dist
+# copy tensorflow libs
+COPY /usr/local/tensorflow/lib/ /usr/local/lib
+# copy tensorflow include
+COPY /usr/local/tensorflow/include/ /usr/local/include
+# copy image-upscale source over
+COPY /usr/local/include/image-upscale /usr/local/include/image-upscale
 ENV PATH="${PATH}:/distil"
 
 EXPOSE 8080
