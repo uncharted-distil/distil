@@ -91,7 +91,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, config env.Config) func
 		if isThumbnail {
 			imageScale = util.ImageScale{Width: ThumbnailDimensions, Height: ThumbnailDimensions}
 			// if thumbnail scale should be 0
-			options.Scale=0
+			options.Scale = 0
 		}
 		img, err := util.ImageFromCombination(sourcePath, imageID, bandCombo, imageScale, options)
 		if err != nil {
@@ -104,7 +104,7 @@ func MultiBandImageHandler(ctor api.MetadataStorageCtor, config env.Config) func
 				options.Scale = 3
 			}
 			// multiple passes for increasing scale dramatically
-			for i:=0; i < options.Scale; i++ {
+			for i := 0; i < options.Scale; i++ {
 				img = util.UpscaleImage(img)
 			}
 		}

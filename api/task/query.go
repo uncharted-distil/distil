@@ -101,25 +101,25 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 
 	return nil, nil
 }
-func convertResultToRanking(results *[][]string) error{
+func convertResultToRanking(results *[][]string) error {
 	// index for result values
 	valueIdx := 1
-	end := len(*results)-1
+	end := len(*results) - 1
 	bitSize := 64
 	// max extrema
-	maxValue,err := strconv.ParseFloat((*results)[valueIdx][valueIdx],bitSize)
+	maxValue, err := strconv.ParseFloat((*results)[valueIdx][valueIdx], bitSize)
 	// if err while parsing normalize by index instead
 	if err != nil {
 		return err
 	}
 	// min extrema
-	minValue,err := strconv.ParseFloat((*results)[end][valueIdx], bitSize)
+	minValue, err := strconv.ParseFloat((*results)[end][valueIdx], bitSize)
 	if err != nil {
 		return err
 	}
 	// denominator
 	diff := maxValue - minValue
-	for _, res := range(*results)[1:]{
+	for _, res := range (*results)[1:] {
 		value, err := strconv.ParseFloat(res[valueIdx], bitSize)
 		if err != nil {
 			return err
