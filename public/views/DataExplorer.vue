@@ -260,7 +260,7 @@ export default Vue.extend({
       return datasetGetters.getVariables(this.$store);
     },
 
-    variablesPerActions(): any {
+    variablesPerActions() {
       const nonSelectedVariables = this.variables.filter(
         (v) => !this.cleanTraining.includes(v.key.toLowerCase())
       );
@@ -326,6 +326,9 @@ export default Vue.extend({
     // First get the dataset informations
     await viewActions.fetchDataExplorerData(this.$store, [] as Variable[]);
 
+    // Pre-select the top 5 variables by importance
+    this.preSelectTopVariables();
+
     // Update the training data
     viewActions.updateSelectTrainingData(this.$store);
   },
@@ -363,6 +366,21 @@ export default Vue.extend({
     updateRoute(args) {
       const entry = overlayRouteEntry(this.$route, args);
       this.$router.push(entry).catch((err) => console.warn(err));
+    },
+
+    preSelectTopVariables(number = 5): void {
+      // if training is already filled let's skip
+      if (!isEmpty(this.training)) return;
+
+      // get the top 5 variables sorted by importance
+      const top5Variables = [...this.variables]
+        .sort((a, b) => b.importance - a.importance)
+        .slice(0, number)
+        .map((variable) => variable.key)
+        .join(",");
+
+      // Update the route with the top 5 variable as training
+      this.updateRoute({ training: top5Variables });
     },
   },
 });
