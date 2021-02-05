@@ -5,7 +5,6 @@ import {
   filterArrayByPage,
   NUM_PER_PAGE,
   NUM_PER_TARGET_PAGE,
-  NUM_PER_DATA_EXPLORER_PAGE,
   searchVariables,
   sortVariablesByImportance,
 } from "../../util/data";
@@ -130,8 +129,6 @@ const fetchVariableSummaries = async (context, args) => {
   let pageLength = NUM_PER_PAGE;
   if (currentRoute === SELECT_TARGET_ROUTE) {
     pageLength = NUM_PER_TARGET_PAGE;
-  } else if (currentRoute === DATA_EXPLORER_ROUTE) {
-    pageLength = NUM_PER_DATA_EXPLORER_PAGE;
   }
 
   const searches = routeGetters.getAllSearchesByRoute(store);

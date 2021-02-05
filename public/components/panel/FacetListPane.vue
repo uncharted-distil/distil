@@ -28,7 +28,7 @@ import { actions as viewActions } from "../../store/view/module";
 
 import {
   getVariableSummariesByState,
-  NUM_PER_DATA_EXPLORER_PAGE,
+  NUM_PER_PAGE,
   searchVariables,
 } from "../../util/data";
 import { Group } from "../../util/facets";
@@ -38,6 +38,10 @@ import { Activity } from "../../util/userEvents";
 export default Vue.extend({
   name: "FacetListPane",
 
+  components: {
+    VariableFacets,
+  },
+
   props: {
     variables: {
       type: Array as () => Variable[],
@@ -45,14 +49,10 @@ export default Vue.extend({
     },
   },
 
-  components: {
-    VariableFacets,
-  },
-
   data() {
     return {
       instanceName: DATA_EXPLORER_VAR_INSTANCE,
-      numRowsPerPage: NUM_PER_DATA_EXPLORER_PAGE,
+      numRowsPerPage: NUM_PER_PAGE,
       search: "",
     };
   },
