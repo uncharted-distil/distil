@@ -16,9 +16,9 @@ WORKDIR /distil
 COPY distil .
 COPY dist ./dist
 # copy tensorflow libs
-COPY /usr/local/tensorflow/lib/ /usr/local/lib
+COPY /usr/local/tensorflow/lib /usr/local/lib
 # copy tensorflow include
-COPY /usr/local/tensorflow/include/ /usr/local/include
+COPY /usr/local/tensorflow/include /usr/local/include
 # copy image-upscale source over
 COPY /usr/local/include/image-upscale /usr/local/include/image-upscale
 ENV PATH="${PATH}:/distil"
