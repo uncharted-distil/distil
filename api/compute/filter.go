@@ -340,7 +340,7 @@ func HarmonizeDataMetadata(datasetFolder string) error {
 	mainDR := ds.Metadata.GetMainDataResource()
 	finalVariables := []*model.Variable{}
 	for _, v := range mainDR.Variables {
-		if model.IsTA2Field(v.DistilRole, v.SelectedRole) {
+		if model.IsTA2Field(v.DistilRole, v.SelectedRole) || v.DistilRole == model.VarDistilRoleSystemData {
 			v.Index = len(finalVariables)
 			finalVariables = append(finalVariables, v)
 		}
