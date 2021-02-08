@@ -386,16 +386,17 @@ export const getters = {
       size,
     });
 
-    // add training variables
-    const training = getters.getDecodedTrainingVariableNames;
-    // add target vars
-    const target = getters.getRouteTargetVariable as string;
-    // add data explorer variables
+    // If we have explore variables, we do not show the target & training ones
     const explore = getters.getExploreVariables;
-
-    // list of unique variables we request
-    const variables = [...training, target, ...explore].filter((v) => v);
-    filterParams.variables = Array.from(new Set(variables));
+    if (explore) {
+      filterParams.variables = explore;
+    }
+    // Otherwise, we list the target & training non-null variables
+    else {
+      const training = getters.getDecodedTrainingVariableNames;
+      const target = getters.getRouteTargetVariable as string;
+      filterParams.variables = [...training, target].filter((v) => v);
+    }
 
     return filterParams;
   },
