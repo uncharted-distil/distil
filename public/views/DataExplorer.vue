@@ -109,6 +109,7 @@ import {
 } from "../util/view";
 
 const ACTIONS = [
+  { name: "Create New Variable", icon: "plus", paneId: "add" },
   { name: "All Variables", icon: "database", paneId: "available" },
   { name: "Text Variables", icon: "font", paneId: "text" },
   { name: "Categorical Variables", icon: "align-left", paneId: "categorical" },
@@ -117,7 +118,8 @@ const ACTIONS = [
   { name: "Location Variables", icon: "map-o", paneId: "location" },
   { name: "Image Variables", icon: "image", paneId: "image" },
   { name: "Unknown Variables", icon: "question", paneId: "unknown" },
-  { name: "Create New Variable", icon: "plus", paneId: "add" },
+  { name: "Target Variable", icon: "crosshairs", paneId: "target" },
+  { name: "Training Variable", icon: "asterisk", paneId: "training" },
 ] as Action[];
 
 export default Vue.extend({
@@ -259,6 +261,10 @@ export default Vue.extend({
         if (action.paneId === "add") variables[action.paneId] = null;
         else if (action.paneId === "available") {
           variables[action.paneId] = this.variables;
+        } else if (action.paneId === "target") {
+          variables[action.paneId] = []; //TODO - this.variables;
+        } else if (action.paneId === "training") {
+          variables[action.paneId] = []; // TODO - this.variables;
         } else {
           variables[action.paneId] = this.variables.filter((variable) =>
             META_TYPES[action.paneId].includes(variable.colType)
