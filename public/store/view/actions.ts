@@ -388,10 +388,12 @@ export const actions = {
       }),
     ]);
   },
+
   clearDatasetTableData(context: ViewContext) {
     datasetMutations.setIncludedTableData(store, createEmptyTableData());
     datasetMutations.setExcludedTableData(store, createEmptyTableData());
   },
+
   async fetchSelectTargetData(context: ViewContext, clearSummaries: boolean) {
     // clear previous state
     if (clearSummaries) {
@@ -407,6 +409,28 @@ export const actions = {
     // fetch new state
     const dataset = context.getters.getRouteDataset;
     return fetchVariableSummaries(context, { dataset, variables });
+  },
+
+  updateDataExplorerData(context: ViewContext) {
+    const args = {
+      dataset: context.getters.getRouteDataset,
+      filterParams: context.getters.getDecodedSolutionRequestFilterParams,
+      highlight: context.getters.getDecodedHighlight,
+    };
+    const variableArgs = {
+      ...args,
+      varModes: context.getters.getDecodedVarModes,
+    };
+    const tableDataArgs = {
+      ...args,
+      dataMode: context.getters.getDataMode,
+    };
+
+    return Promise.all([
+      fetchVariableSummaries(context, variableArgs),
+      datasetActions.fetchIncludedTableData(store, tableDataArgs),
+      datasetActions.fetchExcludedTableData(store, tableDataArgs),
+    ]);
   },
 
   clearJoinDatasetsData(context) {
@@ -464,6 +488,7 @@ export const actions = {
       datasetActions.fetchExcludedTableData(store, tableDataArgs),
     ]);
   },
+
   updateLabelData(context: ViewContext) {
     // clear any previous state
     const dataset = context.getters.getRouteDataset;

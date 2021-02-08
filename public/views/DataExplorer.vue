@@ -189,6 +189,10 @@ export default Vue.extend({
       return routeGetters.getRouteDataset(this.$store);
     },
 
+    explore(): string[] {
+      return routeGetters.getExploreVariables(this.$store);
+    },
+
     filters(): string {
       return routeGetters.getRouteFilters(this.$store);
     },
@@ -237,6 +241,10 @@ export default Vue.extend({
 
     spinnerHTML,
 
+    target(): Variable {
+      return routeGetters.getTargetVariable(this.$store);
+    },
+
     totalNumRows(): number {
       return this.hasData
         ? datasetGetters.getIncludedTableDataNumRows(this.$store)
@@ -245,10 +253,6 @@ export default Vue.extend({
 
     training(): string[] {
       return routeGetters.getDecodedTrainingVariableNames(this.$store);
-    },
-
-    cleanTraining(): string[] {
-      return this.training.map((t) => t.toLowerCase());
     },
 
     variables(): Variable[] {
@@ -262,9 +266,11 @@ export default Vue.extend({
         else if (action.paneId === "available") {
           variables[action.paneId] = this.variables;
         } else if (action.paneId === "target") {
-          variables[action.paneId] = []; //TODO - this.variables;
+          variables[action.paneId] = [this.target];
         } else if (action.paneId === "training") {
-          variables[action.paneId] = []; // TODO - this.variables;
+          variables[action.paneId] = this.variables.filter((variable) =>
+            this.training.includes(variable.key)
+          );
         } else {
           variables[action.paneId] = this.variables.filter((variable) =>
             META_TYPES[action.paneId].includes(variable.colType)
@@ -292,25 +298,25 @@ export default Vue.extend({
     },
   },
 
-  // Update either the summaries or training data on user interaction.
+  // Update either the summaries or explore data on user interaction.
   watch: {
-    activeVariables(newVariables, oldVariables) {
-      if (oldVariables === newVariables) return;
+    activeVariables(n, o) {
+      if (n === o) return;
       viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
     },
 
-    filters(newFilters, oldFilters) {
-      if (oldFilters === newFilters) return;
-      viewActions.updateSelectTrainingData(this.$store);
+    filters(n, o) {
+      if (n === o) return;
+      viewActions.updateDataExplorerData(this.$store);
     },
 
-    highlight(newHighlight, oldHighlight) {
-      if (oldHighlight === newHighlight) return;
-      viewActions.updateSelectTrainingData(this.$store);
+    highlight(n, o) {
+      if (n === o) return;
+      viewActions.updateDataExplorerData(this.$store);
     },
 
-    training(newTraining, oldTraining) {
-      if (oldTraining === newTraining) return;
+    explore(n, o) {
+      if (n === o) return;
       viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
     },
   },
@@ -322,8 +328,8 @@ export default Vue.extend({
     // Pre-select the top 5 variables by importance
     this.preSelectTopVariables();
 
-    // Update the training data
-    viewActions.updateSelectTrainingData(this.$store);
+    // Update the explore data
+    viewActions.updateDataExplorerData(this.$store);
   },
 
   methods: {
@@ -337,7 +343,7 @@ export default Vue.extend({
     /* When the user request to fetch a different size of data. */
     onDataSizeSubmit(dataSize: number) {
       this.updateRoute({ dataSize });
-      viewActions.updateSelectTrainingData(this.$store);
+      viewActions.updateDataExplorerData(this.$store);
     },
 
     onSetActive(actionName: string): void {
@@ -362,8 +368,8 @@ export default Vue.extend({
     },
 
     preSelectTopVariables(number = 5): void {
-      // if training is already filled let's skip
-      if (!isEmpty(this.training)) return;
+      // if explore is already filled let's skip
+      if (!isEmpty(this.explore)) return;
 
       // get the top 5 variables sorted by importance
       const top5Variables = [...this.variables]
@@ -373,7 +379,7 @@ export default Vue.extend({
         .join(",");
 
       // Update the route with the top 5 variable as training
-      this.updateRoute({ training: top5Variables });
+      this.updateRoute({ explore: top5Variables });
     },
   },
 });

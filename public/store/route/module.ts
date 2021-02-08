@@ -31,6 +31,7 @@ export const getters = {
   getJoinDatasetsVariableSummaries: read(
     moduleGetters.getJoinDatasetsVariableSummaries
   ),
+  getExploreVariables: read(moduleGetters.getExploreVariables),
   getRouteTrainingVariables: read(moduleGetters.getRouteTrainingVariables),
   getRouteIsTrainingVariablesRanked: read(
     moduleGetters.getRouteIsTrainingVariablesRanked

@@ -33,6 +33,7 @@ export const actions = {
   clearJoinDatasetsData: dispatch(moduleActions.clearJoinDatasetsData),
   updateJoinDatasetsData: dispatch(moduleActions.updateJoinDatasetsData),
   fetchDataExplorerData: dispatch(moduleActions.fetchDataExplorerData),
+  updateDataExplorerData: dispatch(moduleActions.updateDataExplorerData),
   fetchSelectTargetData: dispatch(moduleActions.fetchSelectTargetData),
   fetchSelectTrainingData: dispatch(moduleActions.fetchSelectTrainingData),
   updateSelectTrainingData: dispatch(moduleActions.updateSelectTrainingData),

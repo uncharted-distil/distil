@@ -11,6 +11,7 @@ export interface RouteArgs {
   filters?: string;
   training?: string;
   target?: string;
+  explore?: string;
   include?: string;
   solutionId?: string;
   highlights?: string;

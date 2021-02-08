@@ -69,38 +69,30 @@ export default Vue.extend({
     button(): (group: Group) => HTMLElement {
       return (group: Group) => {
         const variable = group.key;
-        const training = routeGetters.getDecodedTrainingVariableNames(
-          this.$store
-        );
-        const isInTraining = training.includes(variable);
+        const explore = routeGetters.getExploreVariables(this.$store);
+        const isInExplore = explore.includes(variable);
 
         // create a button
         const button = document.createElement("button");
         button.className = "btn btn-sm";
-        button.className += isInTraining
+        button.className += isInExplore
           ? " btn-outline-secondary"
           : " btn-primary";
-        button.textContent = isInTraining ? "Hide" : "Display";
+        button.textContent = isInExplore ? "Hide" : "Display";
 
         const onClick = () => {
-          const task = routeGetters.getRouteTask(this.$store);
-          const training = routeGetters.getDecodedTrainingVariableNames(
-            this.$store
-          );
-          const updatedTraining = isInTraining
+          const explore = routeGetters.getExploreVariables(this.$store);
+          const updatedExplore = isInExplore
             ? // Remove the variable from the exploration
-              training.filter((v) => v !== variable)
+              explore.filter((v) => v !== variable)
             : // Add the variable to the exploration
-              training.concat([variable]);
+              explore.concat([variable]);
 
           // update route with training data
-          const args = {
-            training: updatedTraining.join(","),
-            task,
-          };
+          const args = { explore: updatedExplore.join(",") };
           const entry = overlayRouteEntry(this.$route, args);
           this.$router.push(entry).catch((err) => console.warn(err));
-          viewActions.updateSelectTrainingData(this.$store);
+          viewActions.updateDataExplorerData(this.$store);
         };
 
         // create a button
