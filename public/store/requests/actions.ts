@@ -67,6 +67,7 @@ interface SolutionStatusMsg extends StatusMessage {
 interface PredictRequestMsg {
   datasetId: string;
   datasetPath?: string; // path to previously uploaded dataset
+  existingDataset: boolean;
   fittedSolutionId: string;
   target: string;
   targetType: string;
