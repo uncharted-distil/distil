@@ -21,7 +21,7 @@ import {
   IMAGE_TYPE,
   isImageType,
   isRankableVariableType,
-  isRemoteSensingType,
+  isMultibandImageType,
   MULTIBAND_IMAGE_TYPE,
   UNKNOWN_TYPE,
 } from "../../util/types";
@@ -74,7 +74,7 @@ function getOutlierVariableName(variables: Variable[]) {
   */
   const groupingVariables = variables.filter((v) => v.grouping);
   const remoteSensingVariable = groupingVariables.find((gv) =>
-    isRemoteSensingType(gv.colType)
+    isMultibandImageType(gv.colType)
   );
 
   /*

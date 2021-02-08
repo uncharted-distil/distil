@@ -375,7 +375,7 @@ export function isImageType(type: string): boolean {
   return IMAGE_TYPES.indexOf(type) !== -1;
 }
 
-export function isRemoteSensingType(type: string): boolean {
+export function isMultibandImageType(type: string): boolean {
   return MULTIBAND_IMAGE_TYPE.indexOf(type) !== -1;
 }
 
