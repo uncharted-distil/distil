@@ -374,9 +374,13 @@ export default Vue.extend({
           }
 
           return null;
+        })
+        .then(() => {
+          return datasetActions.fetchOutliers(this.$store, { dataset });
         });
     },
   },
+
   mounted() {
     this.$root.$on("bv::dropdown::show", () => {
       const dataset = this.dataset;
