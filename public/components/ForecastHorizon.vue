@@ -153,6 +153,7 @@ export default Vue.extend({
         task: TaskTypes.TIME_SERIES,
         intervalCount: this.intervalCount,
         intervalLength: this.intervalLengthFormatted,
+        existingDataset: false,
       };
 
       try {
