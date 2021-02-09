@@ -21,6 +21,7 @@ import {
   IMAGE_TYPE,
   isImageType,
   isRankableVariableType,
+  isMultibandImageType,
   MULTIBAND_IMAGE_TYPE,
   UNKNOWN_TYPE,
 } from "../../util/types";
@@ -43,6 +44,7 @@ import {
   JoinDatasetImportPendingRequest,
   JoinSuggestionPendingRequest,
   Metrics,
+  OutlierPendingRequest,
   SummaryMode,
   TableData,
   Task,
@@ -61,6 +63,31 @@ async function getVariables(dataset: string): Promise<Variable[]> {
     datasetName: dataset,
     isColTypeReviewed: false,
   }));
+}
+
+// Return the best variable name of a dataset for outlier detection
+function getOutlierVariableName(variables: Variable[]) {
+  /* 
+    Find a grouping variable, specially a remote-sensing one.
+    This is needed in case the remote-sensing images have not
+    been prefiturized.
+  */
+  const groupingVariables = variables.filter((v) => v.grouping);
+  const remoteSensingVariable = groupingVariables.find((gv) =>
+    isMultibandImageType(gv.colType)
+  );
+
+  /*
+    The variable name to be sent, is, in order of availability:
+      - a remote-sensing variable first,
+      - a grouping variable second,
+      - or the first dataset variable
+  */
+  return (
+    remoteSensingVariable?.grouping.idCol ??
+    groupingVariables[0]?.grouping.idCol ??
+    variables[0].key
+  );
 }
 
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
@@ -94,6 +121,7 @@ export const actions = {
       mutations.setDatasets(context, []);
     }
   },
+
   async deleteDataset(
     context: DatasetContext,
     payload: { dataset: string; terms: string }
@@ -112,6 +140,7 @@ export const actions = {
       console.error(err);
     }
   },
+
   // fetches all variables for a single dataset.
   async fetchVariables(
     context: DatasetContext,
@@ -293,8 +322,8 @@ export const actions = {
       status: DatasetPendingRequestStatus.PENDING,
     };
 
-    // Find variables that require cluster requests.  If there are none, then
-    // quick exit.
+    // Find variables that require cluster requests;
+    // If there are none, then quick exit.
     const clusterVariables = getters
       .getVariables(context)
       .filter(
@@ -335,6 +364,51 @@ export const actions = {
         });
         console.error(error);
       });
+  },
+
+  async fetchOutliers(context: DatasetContext, args: { dataset: string }) {
+    // Check if the outlier detection has already been applied.
+    if (routeGetters.isOutlierApplied(store)) return;
+
+    const { dataset } = args;
+    const variables = getters.getVariables(context);
+    const variableName = getOutlierVariableName(variables);
+
+    // Create the request.
+    let status;
+    const request: OutlierPendingRequest = {
+      id: _.uniqueId(),
+      dataset,
+      type: DatasetPendingRequestType.OUTLIER,
+      status,
+    };
+
+    // Set the request status as pending.
+    status = DatasetPendingRequestStatus.PENDING;
+    mutations.updatePendingRequests(context, { ...request, status });
+
+    // Run the outlier detection
+    try {
+      await axios.get(`/distil/outlier-detection/${dataset}/${variableName}`);
+      status = DatasetPendingRequestStatus.RESOLVED;
+    } catch (error) {
+      console.error(error);
+      status = DatasetPendingRequestStatus.ERROR;
+    }
+
+    // Update the pending request status
+    mutations.updatePendingRequests(context, { ...request, status });
+  },
+
+  async applyOutliers(context: DatasetContext, dataset: string) {
+    const variables = getters.getVariables(context);
+    const variableName = getOutlierVariableName(variables);
+
+    try {
+      await axios.get(`/distil/outlier-results/${dataset}/${variableName}`);
+    } catch (error) {
+      console.error(error);
+    }
   },
 
   async uploadDataFile(

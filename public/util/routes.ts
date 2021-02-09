@@ -57,6 +57,7 @@ export interface RouteArgs {
   annotationHasChanged?: boolean;
   // orderBy contains variable names that will order the dataset
   orderBy?: string;
+  outlier?: string;
 }
 
 function validateQueryArgs(args: RouteArgs): RouteArgs {

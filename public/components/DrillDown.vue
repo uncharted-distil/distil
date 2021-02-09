@@ -88,6 +88,7 @@ interface Dimensions {
   width: number;
   height: number;
 }
+
 export default Vue.extend({
   name: "drill-down",
 

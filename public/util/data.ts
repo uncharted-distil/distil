@@ -655,7 +655,7 @@ export async function fetchPredictionResultSummary(
       `${endpoint}/${resultId}/${varMode}`,
       filterParams ? filterParams : {}
     );
-    const summary = <VariableSummary>response.data.summary;
+    const summary = response.data.summary as VariableSummary;
     summary.dataset = dataset;
     updateFunction(context, summary);
   } catch (error) {
@@ -940,50 +940,51 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
     const result: Dictionary<TableColumn> = {};
     const variables = datasetGetters.getVariablesMap(store);
 
-    for (const col of data.columns) {
-      if (col.key === D3M_INDEX_FIELD) {
-        continue;
-      }
+    data.columns.forEach((col, ind) => {
+      if (col.key !== D3M_INDEX_FIELD) {
+        // Error and predicted columns require unique handling.  They use a special key of the format
+        // <solution_id>:<predicted|error> and are not available in the variables list.
+        let variable: Variable = null;
+        let description: string = null;
+        let label: string = null;
+        if (isPredictedCol(col.key)) {
+          variable = requestGetters.getActiveSolutionTargetVariable(store)[0]; // always a single value
+          label = variable.colDisplayName;
+          description = `Model predicted value for ${variable.key}`;
 
-      // Error and predicted columns require unique handling.  They use a special key of the format
-      // <solution_id>:<predicted|error> and are not available in the variables list.
-      let variable: Variable = null;
-      let description: string = null;
-      let label: string = null;
-      if (isPredictedCol(col.key)) {
-        variable = requestGetters.getActiveSolutionTargetVariable(store)[0]; // always a single value
-        label = variable.colDisplayName;
-        description = `Model predicted value for ${variable.key}`;
+          // if we actually have defined confidence values, then let's add confidence to the table
+          if (data.values[0][ind]?.confidence !== null) {
+            result.confidence = {
+              label: "Confidence",
+              key: "confidence",
+              type: "numeric",
+              weight: null,
+              headerTitle: `Prediction confidence ${variable.key}`,
+              sortable: true,
+            };
+          }
+        } else if (isErrorCol(col.key)) {
+          variable = requestGetters.getActiveSolutionTargetVariable(store)[0];
+          label = "Error";
+          description = `Difference between actual and predicted value for ${variable.key}`;
+        } else {
+          variable = variables[col.key];
+          label = col.label;
+          if (variable) {
+            description = variable.colDescription;
+          }
+        }
 
-        result.confidence = {
-          label: "Confidence",
-          key: "confidence",
-          type: "numeric",
-          weight: null,
-          headerTitle: `Prediction confidence ${variable.key}`,
+        result[col.key] = {
+          label: label,
+          key: col.key,
+          type: col.type,
+          weight: col.weight,
+          headerTitle: description ? label.concat(": ", description) : label,
           sortable: true,
         };
-      } else if (isErrorCol(col.key)) {
-        variable = requestGetters.getActiveSolutionTargetVariable(store)[0];
-        label = "Error";
-        description = `Difference between actual and predicted value for ${variable.key}`;
-      } else {
-        variable = variables[col.key];
-        label = col.label;
-        if (variable) {
-          description = variable.colDescription;
-        }
       }
-
-      result[col.key] = {
-        label: label,
-        key: col.key,
-        type: col.type,
-        weight: col.weight,
-        headerTitle: description ? label.concat(": ", description) : label,
-        sortable: true,
-      };
-    }
+    });
 
     return result;
   }

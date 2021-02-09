@@ -13,9 +13,7 @@
           <div class="circle-spinner"></div>
         </div>
         <div v-else-if="isResolved" class="h-100">
-          <status-panel-join
-            v-if="this.statusType === 'JOIN_SUGGESTION'"
-          ></status-panel-join>
+          <status-panel-join v-if="this.statusType === 'JOIN_SUGGESTION'" />
           <div v-else>
             <div>
               <p>
@@ -41,7 +39,6 @@
 
 <script lang="ts">
 import Vue from "vue";
-import axios from "axios";
 import StatusPanelJoin from "../components/StatusPanelJoin.vue";
 import {
   DatasetPendingRequest,
@@ -49,10 +46,8 @@ import {
   VariableRankingPendingRequest,
   DatasetPendingRequestStatus,
   GeocodingPendingRequest,
-  ClusteringPendingRequest,
   SummaryMode,
   DataMode,
-  isClusteredGrouping,
 } from "../store/dataset/index";
 import {
   actions as datasetActions,
@@ -74,10 +69,12 @@ const STATUS_USER_EVENT = new Map<DatasetPendingRequestType, Feature>([
   [DatasetPendingRequestType.GEOCODING, Feature.GEOCODE_FEATURES],
   [DatasetPendingRequestType.CLUSTERING, Feature.CLUSTER_DATA],
   [DatasetPendingRequestType.JOIN_SUGGESTION, Feature.JOIN_DATASETS],
+  [DatasetPendingRequestType.OUTLIER, Feature.OUTLIER_FEATURES],
 ]);
 
 export default Vue.extend({
-  name: "status-panel",
+  name: "StatusPanel",
+
   components: {
     StatusPanelJoin,
   },
@@ -165,6 +162,15 @@ export default Vue.extend({
             errorMsg:
               "Unexpected error has happened while retreving join suggestions",
           };
+        case DatasetPendingRequestType.OUTLIER:
+          return {
+            title: "Variable Outliers",
+            pendingMsg: "Computing variable outliers...",
+            resolvedMsg:
+              "Variable outliers has been processed. Would you like to apply the changes to the feature list?",
+            errorMsg:
+              "Unexpected error has happened while calculating variable outliers",
+          };
         default:
           return {
             title: "",
@@ -172,7 +178,14 @@ export default Vue.extend({
       }
     },
   },
+
   methods: {
+    clearData() {
+      if (this.requestData) {
+        datasetActions.removePendingRequest(this.$store, this.requestData.id);
+      }
+    },
+
     close() {
       if (
         this.requestData &&
@@ -192,48 +205,21 @@ export default Vue.extend({
     applyChange() {
       switch (this.statusType) {
         case DatasetPendingRequestType.VARIABLE_RANKING:
-          const variableRequest = <VariableRankingPendingRequest>(
-            this.requestData
-          );
-          datasetActions.updateVariableRankings(this.$store, {
-            dataset: variableRequest.dataset,
-            rankings: variableRequest.rankings,
-          });
-
-          // Update the route to know that the training variables have been ranked.
-          const varRankedEntry = overlayRouteEntry(this.$route, {
-            varRanked: "1",
-          });
-          this.$router.push(varRankedEntry).catch((err) => console.warn(err));
-
-          this.clearData();
+          this.applyVariableRankingChange();
           break;
         case DatasetPendingRequestType.GEOCODING:
-          const geoRequest = <GeocodingPendingRequest>this.requestData;
-          datasetActions
-            .fetchGeocodingResults(this.$store, {
-              dataset: geoRequest.dataset,
-              field: geoRequest.field,
-            })
-            .then(() => {
-              this.clearData();
-            });
+          this.applyGeocodingChange();
           break;
-        case DatasetPendingRequestType.JOIN_SUGGESTION:
+        case DatasetPendingRequestType.OUTLIER:
+          this.applyOutlierChange();
           break;
         case DatasetPendingRequestType.CLUSTERING:
           this.applyClusteringChange();
-
-          // Update the route to know that the clustering has been applied.
-          const clusterEntry = overlayRouteEntry(this.$route, {
-            clustering: "1",
-          });
-          this.$router.push(clusterEntry).catch((err) => console.warn(err));
-
-          this.clearData();
           break;
         default:
       }
+
+      // Log changes
       const status = STATUS_USER_EVENT.get(this.statusType);
       appActions.logUserEvent(this.$store, {
         feature: status,
@@ -243,10 +229,44 @@ export default Vue.extend({
       });
     },
 
-    clearData() {
-      if (this.requestData) {
-        datasetActions.removePendingRequest(this.$store, this.requestData.id);
-      }
+    applyVariableRankingChange() {
+      const variableRequest = <VariableRankingPendingRequest>this.requestData;
+      datasetActions.updateVariableRankings(this.$store, {
+        dataset: variableRequest.dataset,
+        rankings: variableRequest.rankings,
+      });
+
+      // Update the route to know that the training variables have been ranked.
+      const varRankedEntry = overlayRouteEntry(this.$route, {
+        varRanked: "1",
+      });
+      this.$router.push(varRankedEntry).catch((err) => console.warn(err));
+
+      this.clearData();
+    },
+
+    applyGeocodingChange() {
+      const geoRequest = <GeocodingPendingRequest>this.requestData;
+      datasetActions
+        .fetchGeocodingResults(this.$store, {
+          dataset: geoRequest.dataset,
+          field: geoRequest.field,
+        })
+        .then(() => {
+          this.clearData();
+        });
+    },
+
+    async applyOutlierChange() {
+      this.clearData();
+      await datasetActions.applyOutliers(this.$store, this.dataset);
+
+      // Update the variables, which should now include the outlier variable.
+      datasetActions.fetchVariables(this.$store, { dataset: this.dataset });
+
+      // Update the route to know that the outlier has been applied.
+      const entry = overlayRouteEntry(this.$route, { outlier: "1" });
+      this.$router.push(entry).catch((err) => console.warn(err));
     },
 
     // Applies clustering changes and refetches update variable summaries
@@ -272,10 +292,12 @@ export default Vue.extend({
         });
 
       // serialize the modes map into a string and add to the route
+      // and update to know that the clustering has been applied.
       const varModesStr = varModesToString(varModesMap);
       const entry = overlayRouteEntry(this.$route, {
         varModes: varModesStr,
         dataMode: DataMode.Cluster,
+        clustering: "1",
       });
       this.$router.push(entry).catch((err) => console.warn(err));
 
@@ -296,12 +318,14 @@ export default Vue.extend({
           mode: $enum(SummaryMode).asValueOrDefault(v, SummaryMode.Default),
         });
       }
+
+      this.clearData();
     },
   },
 });
 </script>
 
-<style>
+<style scoped>
 .status-panel {
   box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12),
     0 2px 4px -1px rgba(0, 0, 0, 0.2);

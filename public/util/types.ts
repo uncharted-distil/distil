@@ -375,6 +375,10 @@ export function isImageType(type: string): boolean {
   return IMAGE_TYPES.indexOf(type) !== -1;
 }
 
+export function isMultibandImageType(type: string): boolean {
+  return MULTIBAND_IMAGE_TYPE.indexOf(type) !== -1;
+}
+
 export function isTimeSeriesType(type: string): boolean {
   return type === TIMESERIES_TYPE;
 }
