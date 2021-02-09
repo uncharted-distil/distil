@@ -16,6 +16,7 @@ type PredictRequest struct {
 	MaxTime          int
 	IntervalCount    int
 	IntervalLength   float64
+	ExistingDataset  bool
 
 	requestChannel chan PredictStatus
 	finished       chan error
@@ -71,6 +72,11 @@ func NewPredictRequest(data []byte) (*PredictRequest, error) {
 	req.IntervalLength, ok = json.Float(jsonMap, "intervalLength")
 	if !ok {
 		req.IntervalLength = 0
+	}
+
+	req.ExistingDataset, ok = json.Bool(jsonMap, "existingDataset")
+	if !ok {
+		req.ExistingDataset = false
 	}
 
 	return req, nil

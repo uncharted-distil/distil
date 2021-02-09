@@ -130,6 +130,7 @@ export default Vue.extend({
           target: this.target,
           targetType: this.targetType,
           datasetPath: uploadResponse.data.location,
+          existingDataset: false,
         };
         const predictResponse = await requestActions.createPredictRequest(
           this.$store,
