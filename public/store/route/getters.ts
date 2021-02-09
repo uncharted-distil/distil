@@ -192,9 +192,14 @@ export const getters = {
     return state.query.varRanked && state.query.varRanked === "1"; // Use "1" for truth.
   },
 
-  // Returns a boolean to say that the cluster for this dataset has been generated..
+  // Returns a boolean to say that the cluster for this dataset has been generated.
   getRouteIsClusterGenerated(state: Route): boolean {
     return state.query.clustering && state.query.clustering === "1"; // Use "1" for truth.
+  },
+
+  // Returns a boolean to say that the outlier detection for this dataset has been applied.
+  isOutlierApplied(state: Route): boolean {
+    return state.query.outlier && state.query.outlier === "1"; // Use "1" for truth.
   },
 
   getRouteJoinDatasetsVarsPage(state: Route): number {
@@ -515,6 +520,7 @@ export const getters = {
     }
     return $enum(DataMode).asValueOrDefault(mode, DataMode.Default);
   },
+
   getImageAttention(state: Route, getters: any): boolean {
     const imageAttention = state.query.imageAttention === "true";
     return imageAttention;

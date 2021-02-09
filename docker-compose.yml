@@ -23,19 +23,19 @@ postgres:
 #     - $D3MINPUTDIR:$D3MINPUTDIR
 #     - $D3MOUTPUTDIR:$D3MOUTPUTDIR
 
-distil-auto-ml:
-  image: docker.uncharted.software/distil-auto-ml:latest
-  environment:
-    - D3MINPUTDIR=$D3MINPUTDIR
-    - D3MOUTPUTDIR=$D3MOUTPUTDIR
-    - D3MSTATICDIR=$D3MSTATICDIR
-    - DATAMART_IMPORT_FOLDER=$DATAMART_IMPORT_FOLDER
-    - DATAMART_URL_NYU=https://auctus.vida-nyu.org
-    - HYPERPARAMETER_TUNING=False
-  volumes:
-    - $D3MINPUTDIR:$D3MINPUTDIR
-    - $D3MOUTPUTDIR:$D3MOUTPUTDIR
-    - $D3MSTATICDIR:$D3MSTATICDIR
-    - $DATAMART_IMPORT_FOLDER:$DATAMART_IMPORT_FOLDER
-  ports:
-    - "45042:45042"
+# distil-auto-ml:
+#   image: docker.uncharted.software/distil-auto-ml:latest
+#   environment:
+#     - D3MINPUTDIR=$D3MINPUTDIR
+#     - D3MOUTPUTDIR=$D3MOUTPUTDIR
+#     - D3MSTATICDIR=$D3MSTATICDIR
+#     - DATAMART_IMPORT_FOLDER=$DATAMART_IMPORT_FOLDER
+#     - DATAMART_URL_NYU=https://auctus.vida-nyu.org
+#     - HYPERPARAMETER_TUNING=False
+#   volumes:
+#     - $D3MINPUTDIR:$D3MINPUTDIR
+#     - $D3MOUTPUTDIR:$D3MOUTPUTDIR
+#     - $D3MSTATICDIR:$D3MSTATICDIR
+#     - $DATAMART_IMPORT_FOLDER:$DATAMART_IMPORT_FOLDER
+#   ports:
+#     - "45042:45042"

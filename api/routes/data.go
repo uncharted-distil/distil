@@ -62,7 +62,7 @@ func DataHandler(storageCtor api.DataStorageCtor, metaCtor api.MetadataStorageCt
 			handleError(w, err)
 			return
 		}
-		vars, err := metaStore.FetchVariables(dataset, true, false, true)
+		vars, err := metaStore.FetchVariables(dataset, true, true, true)
 		if err != nil {
 			handleError(w, err)
 			return

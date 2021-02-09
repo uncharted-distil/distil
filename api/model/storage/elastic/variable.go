@@ -426,7 +426,7 @@ func (s *Storage) FetchVariablesByName(dataset string, varKeys []string, include
 	// filter the returned variables to match our input list
 	filteredVariables := []*model.Variable{}
 	for _, variable := range fetchedVariables {
-		if varKeySet[variable.Key] {
+		if varKeySet[variable.Key] || (includeIndex && variable.DistilRole == model.VarDistilRoleIndex) {
 			filteredVariables = append(filteredVariables, variable)
 		}
 	}

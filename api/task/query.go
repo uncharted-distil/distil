@@ -18,6 +18,7 @@ package task
 import (
 	"fmt"
 	"path"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/uncharted-distil/distil-compute/model"
@@ -86,7 +87,10 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	convertResultToRanking(&resultData)
+	err = convertResultToRanking(&resultData)
+	if err != nil {
+		return nil, err
+	}
 	// update the database to have the results
 	// the results are the score for the search, between 0 and 1
 	// it is stored in a separate column from the label itself
@@ -97,15 +101,34 @@ func Query(params QueryParams) (map[string]interface{}, error) {
 
 	return nil, nil
 }
-func convertResultToRanking(results *[][]string) {
+func convertResultToRanking(results *[][]string) error {
 	// index for result values
 	valueIdx := 1
-	length := float64(len(*results))
-	// skips header
-	for i, res := range (*results)[1:] {
-		idx := float64(i)
-		res[valueIdx] = fmt.Sprintf("%f", 1.0-idx/length)
+	end := len(*results) - 1
+	bitSize := 64
+	// max extrema
+	maxValue, err := strconv.ParseFloat((*results)[valueIdx][valueIdx], bitSize)
+	// if err while parsing normalize by index instead
+	if err != nil {
+		return err
 	}
+	// min extrema
+	minValue, err := strconv.ParseFloat((*results)[end][valueIdx], bitSize)
+	if err != nil {
+		return err
+	}
+	// denominator
+	diff := maxValue - minValue
+	for _, res := range (*results)[1:] {
+		value, err := strconv.ParseFloat(res[valueIdx], bitSize)
+		if err != nil {
+			return err
+		}
+		// normalize between extrema
+		normalized := (value - minValue) / (diff)
+		res[valueIdx] = fmt.Sprintf("%f", normalized)
+	}
+	return nil
 }
 
 // getColumnIndices returns: target, d3mIndex
@@ -191,7 +214,7 @@ func persistQueryResults(params QueryParams, storageName string, resultData [][]
 		if err != nil {
 			return err
 		}
-		err = params.MetaStorage.AddVariable(params.Dataset, targetScore, targetScore, model.RealType, model.VarDistilRoleSystemData)
+		err = params.MetaStorage.AddVariable(params.Dataset, targetScore, "confidence", model.RealType, model.VarDistilRoleMetadata)
 		if err != nil {
 			return err
 		}

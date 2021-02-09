@@ -6,7 +6,6 @@ import {
 } from "../store/dataset";
 import {
   isNumericType,
-  isTextType,
   dateToNum,
   DATE_TIME_LOWER_TYPE,
   CATEGORICAL_TYPE,
@@ -18,7 +17,6 @@ import {
 import {
   decodeFilters,
   Filter,
-  INCLUDE_FILTER,
   EXCLUDE_FILTER,
   CATEGORICAL_FILTER,
   DATETIME_FILTER,
@@ -39,6 +37,7 @@ import {
   RelationState,
 } from "@uncharted.software/lex";
 import { decodeHighlights, createFilterFromHighlight } from "./highlights";
+import { Dictionary } from "./dict";
 
 const HIGHLIGHT = "highlight";
 
@@ -48,27 +47,25 @@ const HIGHLIGHT = "highlight";
   ever want even more complex filter relations, we can extend these options.
 */
 const distilRelationOptions = [
-  [INCLUDE_FILTER, "="],
-  [EXCLUDE_FILTER, "≠"],
-  [HIGHLIGHT, "☀"],
-].map((o) => new ValueStateValue(o[0], {}, { displayKey: o[1] }));
+  [HIGHLIGHT, "☀", false],
+  [EXCLUDE_FILTER, "≠", true],
+].map((o) => new ValueStateValue(o[0], {}, { displayKey: o[1], hidden: o[2] }));
 
 class DistilRelationState extends RelationState {
-  static get INCLUDE() {
+  static get HIGHLIGHT() {
     return distilRelationOptions[0];
   }
   static get EXCLUDE() {
     return distilRelationOptions[1];
   }
-  static get HIGHLIGHT() {
-    return distilRelationOptions[2];
-  }
   constructor(config) {
-    if (config.name === undefined)
-      config.name = "Include, exclude or highlight";
+    config.name = "Highlight";
     config.options = function () {
       return distilRelationOptions;
     };
+    config.autoAdvanceDefault = true;
+    config.defaultValue = distilRelationOptions[0];
+    config.suggestionLimit = 1;
     super(config);
   }
 }
@@ -83,8 +80,9 @@ class DistilRelationState extends RelationState {
 */
 export function variablesToLexLanguage(variables: Variable[]): Lex {
   const suggestions = variablesToLexSuggestions(variables);
+  const catVarLexSuggestions = perCategoricalVariableLexSuggestions(variables);
   return Lex.from("field", ValueState, {
-    name: "Choose a variable to filter",
+    name: "Choose a variable to search on",
     icon: '<i class="fa fa-filter" />',
     suggestions: suggestions,
   }).branch(
@@ -92,8 +90,21 @@ export function variablesToLexLanguage(variables: Variable[]): Lex {
       ...TransitionFactory.valueMetaCompare({ type: TEXT_FILTER }),
     }).branch(Lex.from("value", TextEntryState)),
     Lex.from("relation", DistilRelationState, {
-      ...TransitionFactory.valueMetaCompare({ type: CATEGORICAL_FILTER }),
-    }).branch(Lex.from("value", TextEntryState)),
+      ...TransitionFactory.valueMetaCompare({ type: CATEGORICAL_TYPE }),
+    }).branch(
+      Lex.from("value", ValueState, {
+        allowUnknown: false,
+        icon: "",
+        name: "Type for suggestions",
+        fetchSuggestions: (hint, lexDefintion) => {
+          return catVarLexSuggestions[lexDefintion.field.key]
+            ? catVarLexSuggestions[lexDefintion.field.key].filter((cat) => {
+                return cat.key.toLowerCase().indexOf(hint.toLowerCase()) > -1;
+              })
+            : [];
+        },
+      })
+    ),
     Lex.from("relation", DistilRelationState, {
       ...TransitionFactory.valueMetaCompare({ type: NUMERICAL_FILTER }),
     }).branch(
@@ -148,11 +159,12 @@ export function filterParamsToLexQuery(
     return variableDict[f.key];
   });
   const highlightVariable = variableDict[decodedHighlight?.key];
+  const hasHighlight = !!highlight && !!highlightVariable;
 
-  const activeVariables = highlight
+  const activeVariables = hasHighlight
     ? [highlightVariable, ...filterVariables]
     : filterVariables;
-  const lexableElements = highlight
+  const lexableElements = hasHighlight
     ? [decodedHighlight, ...decodedFilters]
     : decodedFilters;
 
@@ -257,9 +269,9 @@ export function lexQueryToFiltersAndHighlight(
         highlight.value.max = dateToNum(lq.max);
         highlight.type = DATETIME_FILTER;
       } else if (isNumericType(type)) {
-        highlight.value.min = parseFloat(lq.min.key);
-        highlight.value.max = parseFloat(lq.max.key);
-        highlight.type = NUMERICAL_FILTER;
+        highlight.value.from = parseFloat(lq.min.key);
+        highlight.value.to = parseFloat(lq.max.key);
+        highlight.value.type = NUMERICAL_FILTER;
       } else {
         highlight.value = lq.value.key;
       }
@@ -273,14 +285,12 @@ export function lexQueryToFiltersAndHighlight(
 
 function modeToRelation(mode: string): ValueStateValue {
   switch (mode) {
-    case INCLUDE_FILTER:
+    case HIGHLIGHT:
       return distilRelationOptions[0];
     case EXCLUDE_FILTER:
       return distilRelationOptions[1];
-    case HIGHLIGHT:
-      return distilRelationOptions[2];
     default:
-      return distilRelationOptions[1];
+      return distilRelationOptions[0];
   }
 }
 
@@ -328,6 +338,24 @@ function variablesToLexSuggestions(variables: Variable[]): ValueStateValue[] {
 
     return a;
   }, []);
+}
+
+/*
+  uses the value data in categorical variables to build a per variable dictionary
+  of suggestion lists whose values are LexBar ValueStateValues
+*/
+function perCategoricalVariableLexSuggestions(
+  variables: Variable[]
+): Dictionary<ValueStateValue[]> {
+  const categoryDict = new Object() as Dictionary<ValueStateValue[]>;
+
+  variables.forEach((v) => {
+    if (v.colType === CATEGORICAL_TYPE && v.values !== null) {
+      categoryDict[v.key] = v.values.map((c) => new ValueStateValue(c));
+    }
+  });
+
+  return categoryDict;
 }
 
 function colTypeToOptionType(colType: string): string {

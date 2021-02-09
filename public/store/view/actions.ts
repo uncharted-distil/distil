@@ -59,6 +59,7 @@ enum ParamCacheKey {
   PREDICTIONS = "PREDICTIONS",
   JOIN_SUGGESTIONS = "JOIN_SUGGESTIONS",
   CLUSTERS = "CLUSTERS",
+  OUTLIERS = "OUTLIERS",
 }
 
 function createCacheable(
@@ -240,6 +241,15 @@ const fetchClusters = createCacheable(
   ParamCacheKey.CLUSTERS,
   (context, args) => {
     datasetActions.fetchClusters(store, {
+      dataset: args.dataset,
+    });
+  }
+);
+
+const fetchOutliers = createCacheable(
+  ParamCacheKey.OUTLIERS,
+  (context, args) => {
+    datasetActions.fetchOutliers(store, {
       dataset: args.dataset,
     });
   }
@@ -441,8 +451,11 @@ export const actions = {
         dataset: dataset,
       }),
     ]);
+
     fetchVariableRankings(context, { dataset, target });
     fetchClusters(context, { dataset });
+    fetchOutliers(context, { dataset });
+
     return actions.updateSelectTrainingData(context);
   },
 
@@ -604,7 +617,8 @@ export const actions = {
     await modelActions.fetchModels(store); // Fetch saved models.
 
     // These are long running processes we won't wait on
-    fetchClusters(context, { dataset: dataset });
+    fetchClusters(context, { dataset });
+    fetchOutliers(context, { dataset });
 
     await Promise.all([
       fetchSolutionVariableRankings(context, { solutionID: solutionID }),
@@ -772,15 +786,6 @@ export const actions = {
       solutionID: solutionId,
     });
 
-    resultActions.fetchConfidenceSummaries(store, {
-      dataset: dataset,
-      target: target,
-      requestIds: requestIds,
-      highlight: highlight,
-      dataMode: dataMode,
-      varModes: varModes,
-    });
-
     const task = routeGetters.getRouteTask(store);
 
     if (!task) {
@@ -804,6 +809,15 @@ export const actions = {
       });
     } else if (task.includes(TaskTypes.CLASSIFICATION)) {
       resultActions.fetchCorrectnessSummaries(store, {
+        dataset: dataset,
+        target: target,
+        requestIds: requestIds,
+        highlight: highlight,
+        dataMode: dataMode,
+        varModes: varModes,
+      });
+
+      resultActions.fetchConfidenceSummaries(store, {
         dataset: dataset,
         target: target,
         requestIds: requestIds,

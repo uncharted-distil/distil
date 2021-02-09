@@ -45,21 +45,53 @@ func SetRandomSeed(seed float64) {
 
 func getVariableByKey(key string, variables []*model.Variable) *model.Variable {
 	for _, variable := range variables {
-		if variable.Key == key {
+		if variable.IsGrouping() && variable.Grouping.GetIDCol() == key {
+			return variable
+		}
+		if variable.Key == key && variable.DistilRole != model.VarDistilRoleGrouping {
 			return variable
 		}
 	}
 	return nil
 }
 
-func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable, numRows int, rows pgx.Rows) (*api.FilteredData, error) {
+func (s *Storage) parseFilteredData(dataset string, filterVariables []*model.Variable, numRows int, rows pgx.Rows) (*api.FilteredData, error) {
 	result := &api.FilteredData{
 		NumRows: numRows,
 		Values:  make([][]*api.FilteredDataValue, 0),
 	}
 
-	// Parse the columns.
 	if rows != nil {
+
+		// Parse the columns.  We can potentially have multiple variables map to the same result
+		// (timeries variables that use the same grouping column) so we iterate over the filter variable
+		// list to find any that map.
+		fields := rows.FieldDescriptions()
+		columns := []*api.Column{}
+		fieldIndexMap := []int{}
+		for _, variable := range filterVariables {
+			// loop through the filter vars and find the key associated with each
+			for fieldIdx, f := range fields {
+				fieldKey := string(f.Name)
+				if variable.IsGrouping() && variable.Grouping.GetIDCol() == fieldKey {
+					columns = append(columns, &api.Column{
+						Key:   variable.Key,
+						Label: variable.DisplayName,
+						Type:  variable.Type,
+					})
+					fieldIndexMap = append(fieldIndexMap, fieldIdx)
+				} else if fieldKey == variable.Key && variable.DistilRole != model.VarDistilRoleGrouping {
+					columns = append(columns, &api.Column{
+						Key:   variable.Key,
+						Label: variable.DisplayName,
+						Type:  variable.Type,
+					})
+					fieldIndexMap = append(fieldIndexMap, fieldIdx)
+				}
+			}
+		}
+		result.Columns = columns
+
 		// Parse the row data.
 		for rows.Next() {
 			columnValues, err := rows.Values()
@@ -68,10 +100,12 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 			}
 
 			// filtered data has no weights associated with it
-			weightedValues := make([]*api.FilteredDataValue, len(columnValues))
-			for i, cv := range columnValues {
-				weightedValues[i] = &api.FilteredDataValue{
-					Value: cv,
+			// we use the field index map to ensure that the column structure and row data structures
+			// align
+			weightedValues := make([]*api.FilteredDataValue, len(fieldIndexMap))
+			for colIdx, fieldIdx := range fieldIndexMap {
+				weightedValues[colIdx] = &api.FilteredDataValue{
+					Value: columnValues[fieldIdx],
 				}
 			}
 
@@ -81,23 +115,6 @@ func (s *Storage) parseFilteredData(dataset string, variables []*model.Variable,
 		if err != nil {
 			return nil, errors.Wrapf(err, "error reading data from postgres")
 		}
-
-		fields := rows.FieldDescriptions()
-		columns := make([]*api.Column, len(fields))
-		for i := 0; i < len(fields); i++ {
-			key := string(fields[i].Name)
-
-			v := getVariableByKey(key, variables)
-			if v == nil {
-				return nil, fmt.Errorf("unable to lookup variable for %s", key)
-			}
-			columns[i] = &api.Column{
-				Key:   key,
-				Label: v.DisplayName,
-				Type:  v.Type,
-			}
-		}
-		result.Columns = columns
 	} else {
 		result.Columns = make([]*api.Column, 0)
 	}
@@ -388,6 +405,10 @@ func (s *Storage) buildSelectStatement(variables []*model.Variable, filterVariab
 	fields := make([]string, 0)
 	indexIncluded := false
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
+		if variable.IsGrouping() {
+			continue
+		}
+
 		// derived metadata variables (ex: postgis geometry) should use the original variables
 		varName := variable.Key
 		if variable.DistilRole == model.VarDistilRoleMetadata && variable.OriginalVariable != variable.Key {
@@ -412,6 +433,9 @@ func (s *Storage) buildFilteredQueryField(variables []*model.Variable, filterVar
 	fields := make([]string, 0)
 	indexIncluded := false
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
+		if variable.IsGrouping() {
+			continue
+		}
 
 		if variable.DistilRole == model.VarDistilRoleGrouping {
 			distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Key))
@@ -440,11 +464,16 @@ func (s *Storage) buildFilteredResultQueryField(variables []*model.Variable, tar
 
 	distincts := make([]string, 0)
 	fields := make([]string, 0)
+	groupingCols := map[string]bool{}
 	for _, variable := range api.GetFilterVariables(filterVariables, variables) {
+		if variable.IsGrouping() {
+			continue
+		}
 
 		if strings.Compare(targetVariable.Key, variable.Key) != 0 {
 
-			if variable.DistilRole == model.VarDistilRoleGrouping {
+			if variable.DistilRole == model.VarDistilRoleGrouping && !groupingCols[variable.Key] {
+				groupingCols[variable.Key] = true // don't duplicate columns in our distinct
 				distincts = append(distincts, fmt.Sprintf("DISTINCT ON (\"%s\")", variable.Key))
 			}
 
@@ -494,9 +523,18 @@ func (s *Storage) buildErrorResultWhere(wheres []string, params []interface{}, r
 		return nil, nil, err
 	}
 
+	// Fetch the target variable.  For grouped variables, the target will be one of the component
+	// variables.
 	targetVariable, err := s.getResultTargetVariable(request.Dataset, request.TargetFeature())
 	if err != nil {
 		return nil, nil, err
+	}
+	if targetVariable.IsGrouping() && model.IsTimeSeries(targetVariable.Grouping.GetType()) {
+		tsg := targetVariable.Grouping.(*model.TimeseriesGrouping)
+		targetVariable, err = s.getResultTargetVariable(request.Dataset, tsg.YCol)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	typedError := getErrorTyped("", targetVariable.Key)
@@ -647,10 +685,12 @@ func (s *Storage) fetchNumRowsJoined(storageName string, variables []*model.Vari
 
 	countTarget := "*"
 
-	// match order by for distinct
-	var groupings []string
+	// ensure distinct ordering matches order by
+	groupings := []string{}
+	groupingSet := map[string]bool{}
 	for _, v := range variables {
-		if v.IsGrouping() && v.Grouping.GetIDCol() != "" {
+		if v.IsGrouping() && v.Grouping.GetIDCol() != "" && !groupingSet[v.Grouping.GetIDCol()] {
+			groupingSet[v.Grouping.GetIDCol()] = true
 			groupings = append(groupings, v.Grouping.GetIDCol())
 		}
 	}
@@ -743,8 +783,10 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 
 	// match order by for distinct
 	var groupings []string
+	includedGroupings := map[string]bool{}
 	for _, v := range variables {
-		if v.IsGrouping() && v.Grouping.GetIDCol() != "" {
+		if v.IsGrouping() && v.Grouping.GetIDCol() != "" && !includedGroupings[v.Grouping.GetIDCol()] {
+			includedGroupings[v.Grouping.GetIDCol()] = true
 			groupings = append(groupings, "\""+v.Grouping.GetIDCol()+"\"")
 		}
 	}
@@ -772,8 +814,14 @@ func (s *Storage) FetchData(dataset string, storageName string, filterParams *ap
 		defer res.Close()
 	}
 
+	// get the list of variables that are include by our current filter state
+	filterVariables, err := s.metadata.FetchVariablesByName(dataset, filterParams.Variables, true, false, false)
+	if err != nil {
+		return nil, err
+	}
+
 	// parse the result
-	filteredData, err := s.parseFilteredData(dataset, variables, numRows, res)
+	filteredData, err := s.parseFilteredData(dataset, filterVariables, numRows, res)
 	if err != nil {
 		return nil, err
 	}

@@ -60,6 +60,7 @@ import {
   Highlight,
   RowSelection,
   TimeseriesGrouping,
+  Variable,
   VariableSummary,
 } from "../../store/dataset";
 import {
@@ -72,14 +73,12 @@ import {
   facetTypeChangeState,
 } from "../../util/facets";
 import _ from "lodash";
-import { IMAGE_TYPE } from "../../util/types";
 
 export default Vue.extend({
   name: "facet-sparklines",
 
   components: {
     TypeChangeMenu,
-    SparklinePreview,
   },
 
   directives: {
@@ -96,7 +95,7 @@ export default Vue.extend({
     enableHighlighting: Boolean as () => boolean,
     expandCollapse: Function as () => Function,
     highlight: Object as () => Highlight,
-    grouping: Object as () => TimeseriesGrouping,
+    variable: Object as () => Variable,
     html: [
       String as () => string,
       Object as () => any,
@@ -105,7 +104,7 @@ export default Vue.extend({
     instanceName: String as () => string,
     rowSelection: Object as () => RowSelection,
     summary: Object as () => VariableSummary,
-    expand: Boolean as () => Boolean,
+    expand: Boolean as () => boolean,
   },
 
   data() {
@@ -118,7 +117,7 @@ export default Vue.extend({
   computed: {
     facetData(): FacetTermsData {
       let values = [];
-      if (hasBaseline(this.summary) && this.grouping) {
+      if (hasBaseline(this.summary)) {
         values = this.getFacetValues();
       }
       return {
@@ -212,16 +211,20 @@ export default Vue.extend({
       return facetData;
     },
     getSparkline(sparklineId: string) {
+      if (!this.variable) {
+        return;
+      }
+      const grouping = this.variable.grouping as TimeseriesGrouping;
       const sp = new SparklinePreview({
         store: this.$store,
         router: this.$router,
         propsData: {
           facetView: true,
-          timeseriesCol: this.grouping.idCol,
+          variableKey: this.variable.key,
           timeseriesId: sparklineId,
           truthDataset: this.summary.dataset,
-          xCol: this.grouping.xCol,
-          yCol: this.grouping.yCol,
+          xCol: grouping.xCol,
+          yCol: grouping.yCol,
         },
       });
       sp.$mount();

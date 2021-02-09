@@ -21,17 +21,18 @@
         :disabled="carouselPosition === imageUrls.length - 1"
         ><b>&gt</b></b-button
       >
-      <section
-        class="image-container"
-        :style="{ '--IMAGE_MAX_SIZE': IMAGE_MAX_SIZE + 'px' }"
-      >
-        <div ref="imageContainer" />
-        <div
-          v-show="isFilteredToggled"
-          ref="imageAttentionElem"
-          class="filter-elem"
-        />
-      </section>
+      <image-transformer
+        ref="transformer"
+        :width="width"
+        :height="height"
+        :img-srcs="imageSources"
+        :hidden="hidden"
+      />
+      <div
+        v-show="isFilteredToggled"
+        ref="imageAttentionElem"
+        class="filter-elem"
+      />
       <ul class="information">
         <li v-if="bandName"><label>Band:</label> {{ bandName }}</li>
         <li v-if="latLongValue"><label>Lat/Long:</label> {{ latLongValue }}</li>
@@ -80,6 +81,7 @@ import {
 import { getters as routeGetters } from "../store/route/module";
 import { Dictionary } from "../util/dict";
 import { IMAGE_TYPE, MULTIBAND_IMAGE_TYPE } from "../util/types";
+import ImageTransformer from "./ImageTransformer.vue";
 
 const IMAGE_MAX_SIZE = 750; // Maximum size of an image in the drill-down in pixels.
 const IMAGE_MAX_ZOOM = 2.5; // We don't want an image to be too magnified to avoid blurriness.
@@ -103,7 +105,9 @@ export interface DrillDownInfo {
  */
 export default Vue.extend({
   name: "ImageDrilldown",
-
+  components: {
+    ImageTransformer,
+  },
   props: {
     info: Object as () => DrillDownInfo,
     type: { type: String, default: IMAGE_TYPE },
@@ -123,6 +127,7 @@ export default Vue.extend({
       brightnessMin: 0,
       brightnessMax: 100,
       isFilteredToggled: true,
+      hidden: false,
     };
   },
 
@@ -168,6 +173,16 @@ export default Vue.extend({
         null
       );
     },
+    imageSources(): string[] {
+      const sources = [];
+      if (!!this.image) {
+        sources.push(this.image.src);
+      }
+      if (!!this.imageAttention && this.isFilteredToggled) {
+        sources.push(this.imageAttention.src);
+      }
+      return sources;
+    },
     imageAttention(): HTMLImageElement {
       return (
         this.files[
@@ -196,14 +211,27 @@ export default Vue.extend({
     solutionId(): string {
       return routeGetters.getRouteSolutionId(this.$store);
     },
+    ratio(): number {
+      return Math.min(
+        IMAGE_MAX_SIZE / Math.max(this.image?.height, this.image?.width),
+        IMAGE_MAX_ZOOM
+      );
+    },
+    height(): number {
+      return this.image?.height * this.ratio;
+    },
+    width(): number {
+      return this.image?.width * this.ratio;
+    },
   },
 
   watch: {
     visible() {
       if (this.visible) {
+        this.hidden = false;
         this.isFilteredToggled = this.hasImageAttention;
         this.carouselPosition = this.initialPosition;
-        this.requestImage();
+        this.requestImage({ gainL: 1.0, gamma: 2.2, gain: 2.5, scale: 1 });
         if (this.hasImageAttention) {
           this.requestFilter();
         }
@@ -223,6 +251,7 @@ export default Vue.extend({
       }
     },
     hide() {
+      this.hidden = true;
       this.$emit("hide");
     },
 
@@ -231,7 +260,7 @@ export default Vue.extend({
       const val = Number(e) / this.brightnessMax;
       const gainL = val * MAX_GAINL;
       this.currentBrightness = val;
-      this.requestImage({ gainL, gamma: 2.2, gain: 2.5 }); // gamma, gain, are default. They are here if we need to edit them later down the road
+      this.requestImage({ gainL, gamma: 2.2, gain: 2.5, scale: 1 }); // gamma, gain, are default. They are here if we need to edit them later down the road
     },
 
     cleanUp() {
@@ -242,68 +271,19 @@ export default Vue.extend({
         );
       }
     },
-
-    injectImage() {
-      const container = this.$refs.imageContainer as any;
-
-      if (!!this.image && container) {
-        const image = this.image.cloneNode() as HTMLImageElement;
-
-        // Calculate how much bigger we can make the image to fit in the modal box.
-        const ratio = Math.min(
-          IMAGE_MAX_SIZE / Math.max(this.image.height, this.image.width),
-          IMAGE_MAX_ZOOM
-        );
-
-        // Update the image to be bigger, but not bigger than the modal box.
-        image.height = this.image.height * ratio;
-        image.width = this.image.width * ratio;
-
-        // Remove previously injected image.
-        image.id = "injected-image";
-        container.querySelector("#" + image.id)?.remove();
-
-        // Add the image to the container.
-        container.appendChild(image);
-      }
-    },
     async requestFilter() {
       await datasetActions.fetchImageAttention(this.$store, {
         dataset: this.dataset,
         resultId: this.solutionId,
         d3mIndex: this.items[this.carouselPosition].d3mIndex,
       });
-      this.injectFilter();
     },
-    clearImage(elem?: any) {
-      const $elem = elem || (this.$refs.imageElem as any);
-      if ($elem) {
-        $elem.innerHTML = "";
-      }
-    },
-    injectFilter() {
-      if (!this.hasImageAttention) {
-        return;
-      }
-      const elem = this.$refs.imageAttentionElem as any;
-      const container = this.$refs.imageContainer as any;
-      if (elem) {
-        this.clearImage(elem);
-        const image = this.imageAttention.cloneNode() as HTMLImageElement;
-        const width = container.querySelector("#injected-image" + image.id)
-          ?.width;
-        const height = container.querySelector("#injected-image" + image.id)
-          ?.height;
-        // Update the image to be bigger, but not bigger than the modal box.
-        image.height = height;
-        image.width = width;
-        elem.appendChild(image);
-      }
-    },
+
     async requestImage(imageOptions?: {
       gamma: number;
       gain: number;
       gainL: number;
+      scale: number;
     }) {
       if (this.isMultiBandImage) {
         await datasetActions.fetchMultiBandImage(this.$store, {
@@ -319,8 +299,6 @@ export default Vue.extend({
           url: this.selectedImageUrl,
         });
       }
-
-      this.injectImage();
     },
   },
 });

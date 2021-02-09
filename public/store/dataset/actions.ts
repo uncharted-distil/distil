@@ -21,6 +21,7 @@ import {
   IMAGE_TYPE,
   isImageType,
   isRankableVariableType,
+  isMultibandImageType,
   MULTIBAND_IMAGE_TYPE,
   UNKNOWN_TYPE,
 } from "../../util/types";
@@ -43,14 +44,15 @@ import {
   JoinDatasetImportPendingRequest,
   JoinSuggestionPendingRequest,
   Metrics,
+  OutlierPendingRequest,
   SummaryMode,
   TableData,
   Task,
-  TimeSeriesValue,
   Variable,
   VariableRankingPendingRequest,
 } from "./index";
 import { getters, mutations } from "./module";
+import { TimeSeriesUpdate } from "./mutations";
 
 // fetches variables and add dataset name to each variable
 async function getVariables(dataset: string): Promise<Variable[]> {
@@ -61,6 +63,31 @@ async function getVariables(dataset: string): Promise<Variable[]> {
     datasetName: dataset,
     isColTypeReviewed: false,
   }));
+}
+
+// Return the best variable name of a dataset for outlier detection
+function getOutlierVariableName(variables: Variable[]) {
+  /* 
+    Find a grouping variable, specially a remote-sensing one.
+    This is needed in case the remote-sensing images have not
+    been prefiturized.
+  */
+  const groupingVariables = variables.filter((v) => v.grouping);
+  const remoteSensingVariable = groupingVariables.find((gv) =>
+    isMultibandImageType(gv.colType)
+  );
+
+  /*
+    The variable name to be sent, is, in order of availability:
+      - a remote-sensing variable first,
+      - a grouping variable second,
+      - or the first dataset variable
+  */
+  return (
+    remoteSensingVariable?.grouping.idCol ??
+    groupingVariables[0]?.grouping.idCol ??
+    variables[0].key
+  );
 }
 
 export type DatasetContext = ActionContext<DatasetState, DistilState>;
@@ -94,6 +121,7 @@ export const actions = {
       mutations.setDatasets(context, []);
     }
   },
+
   async deleteDataset(
     context: DatasetContext,
     payload: { dataset: string; terms: string }
@@ -112,6 +140,7 @@ export const actions = {
       console.error(err);
     }
   },
+
   // fetches all variables for a single dataset.
   async fetchVariables(
     context: DatasetContext,
@@ -293,8 +322,8 @@ export const actions = {
       status: DatasetPendingRequestStatus.PENDING,
     };
 
-    // Find variables that require cluster requests.  If there are none, then
-    // quick exit.
+    // Find variables that require cluster requests;
+    // If there are none, then quick exit.
     const clusterVariables = getters
       .getVariables(context)
       .filter(
@@ -335,6 +364,51 @@ export const actions = {
         });
         console.error(error);
       });
+  },
+
+  async fetchOutliers(context: DatasetContext, args: { dataset: string }) {
+    // Check if the outlier detection has already been applied.
+    if (routeGetters.isOutlierApplied(store)) return;
+
+    const { dataset } = args;
+    const variables = getters.getVariables(context);
+    const variableName = getOutlierVariableName(variables);
+
+    // Create the request.
+    let status;
+    const request: OutlierPendingRequest = {
+      id: _.uniqueId(),
+      dataset,
+      type: DatasetPendingRequestType.OUTLIER,
+      status,
+    };
+
+    // Set the request status as pending.
+    status = DatasetPendingRequestStatus.PENDING;
+    mutations.updatePendingRequests(context, { ...request, status });
+
+    // Run the outlier detection
+    try {
+      await axios.get(`/distil/outlier-detection/${dataset}/${variableName}`);
+      status = DatasetPendingRequestStatus.RESOLVED;
+    } catch (error) {
+      console.error(error);
+      status = DatasetPendingRequestStatus.ERROR;
+    }
+
+    // Update the pending request status
+    mutations.updatePendingRequests(context, { ...request, status });
+  },
+
+  async applyOutliers(context: DatasetContext, dataset: string) {
+    const variables = getters.getVariables(context);
+    const variableName = getOutlierVariableName(variables);
+
+    try {
+      await axios.get(`/distil/outlier-results/${dataset}/${variableName}`);
+    } catch (error) {
+      console.error(error);
+    }
   },
 
   async uploadDataFile(
@@ -745,11 +819,15 @@ export const actions = {
     }
 
     try {
-      await axios.post(`/distil/variables/${args.dataset}`, {
+      const response = await axios.post(`/distil/variables/${args.dataset}`, {
         field: args.field,
         type: args.type,
       });
-      mutations.updateVariableType(context, args);
+      const updatedArgs = {
+        ...args,
+        variables: response.data.variables as Variable[],
+      };
+      mutations.updateVariableType(context, updatedArgs);
       // update variable summary
       const filterParams =
         context.getters.getDecodedSolutionRequestFilterParams;
@@ -775,7 +853,11 @@ export const actions = {
         }),
       ]);
     } catch (error) {
-      mutations.updateVariableType(context, { ...args, type: UNKNOWN_TYPE });
+      mutations.updateVariableType(context, {
+        ...args,
+        type: UNKNOWN_TYPE,
+        variables: context.state.variables,
+      });
     }
   },
 
@@ -989,7 +1071,7 @@ export const actions = {
         `/distil/variable-rankings/${dataset}/${args.target}`
       );
 
-      const rankings = <Dictionary<number>>response.data;
+      const rankings = response.data as Dictionary<number>;
 
       // check to see if we got any non-zero rank info back
       const computedRankings = _.filter(rankings, (r, v) => r !== 0).length > 0;
@@ -1111,39 +1193,32 @@ export const actions = {
     context: DatasetContext,
     args: {
       dataset: string;
+      variableKey: string;
       xColName: string;
       yColName: string;
-      timeseriesColName: string;
       timeseriesIds: string[];
       uniqueTrail?: string;
     }
   ) {
-    if (
-      !validateArgs(args, [
-        "dataset",
-        "xColName",
-        "yColName",
-        "timeseriesColName",
-      ])
-    ) {
-      return null;
-    }
+    // format the data
+    const timeseriesIDs = args.timeseriesIds.map((seriesID) => ({
+      seriesID: seriesID,
+      varKey: args.variableKey,
+    }));
 
     try {
-      const response = await axios.post(
+      const response = await axios.post<TimeSeriesUpdate[]>(
         `distil/timeseries/${encodeURIComponent(
           args.dataset
-        )}/${encodeURIComponent(args.timeseriesColName)}/${encodeURIComponent(
+        )}/${encodeURIComponent(args.variableKey)}/${encodeURIComponent(
           args.xColName
         )}/${encodeURIComponent(args.yColName)}/false`,
-        { timeseriesUris: args.timeseriesIds }
+        { timeseries: timeseriesIDs }
       );
       mutations.bulkUpdateTimeseries(context, {
         dataset: args.dataset,
         uniqueTrail: args.uniqueTrail,
-        map: new Map(
-          Object.keys(response.data).map((key) => [key, response.data[key]])
-        ),
+        updates: response.data,
       });
     } catch (error) {
       console.error(error);

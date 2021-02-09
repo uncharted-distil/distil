@@ -5,19 +5,19 @@
     :class="{ 'selection-mode': isSelectionMode }"
   >
     <div
+      :id="mapID"
       ref="geoPlot"
       class="geo-plot"
-      :id="mapID"
-      @keydown.esc="onEsc"
       tabindex="0"
-    ></div>
+      @keydown.esc="onEsc"
+    />
 
     <drill-down
       v-if="showDrillDown"
-      :dataFields="dataFields"
-      :imageType="imageType"
+      :data-fields="dataFields"
+      :image-type="imageType"
       :tiles="drillDownState.tiles"
-      :centerTile="drillDownState.centerTile"
+      :center-tile="drillDownState.centerTile"
       :bounds="drillDownState.bounds"
       @close="onFocusOut"
     />
@@ -77,10 +77,10 @@
       <div class="geo-plot">
         <image-label
           class="image-label"
-          :dataFields="dataFields"
-          includedActive
-          shortenLabels
-          alignHorizontal
+          :data-fields="dataFields"
+          included-active
+          shorten-labels
+          align-horizontal
           :item="hoverItem"
         />
         <image-preview
@@ -90,14 +90,14 @@
           :width="imageWidth"
           :height="imageHeight"
           :type="imageType"
-        ></image-preview>
+        />
       </div>
     </b-toast>
     <button
+      v-show="showExit"
       type="button"
       class="close selection-exit"
       aria-label="Close"
-      v-show="showExit"
       :style="exitStyle"
     >
       <span aria-hidden="true">&times;</span>
@@ -130,6 +130,8 @@ import {
   RowSelection,
   GeoCoordinateGrouping,
   VariableSummary,
+  MultiBandImageGrouping,
+  GeoBoundsGrouping,
 } from "../store/dataset/index";
 import { updateHighlight, highlightsExist } from "../util/highlights";
 import ImagePreview from "../components/ImagePreview.vue";
@@ -139,6 +141,10 @@ import {
   REAL_VECTOR_TYPE,
   GEOCOORDINATE_TYPE,
   MULTIBAND_IMAGE_TYPE,
+  isGeoLocatedType,
+  DISTIL_ROLES,
+  isImageType,
+  GEOBOUNDS_TYPE,
 } from "../util/types";
 import { scaleThreshold } from "d3";
 import Color from "color";
@@ -232,7 +238,7 @@ export interface TileClickData {
 }
 
 export default Vue.extend({
-  name: "geo-plot",
+  name: "GeoPlot",
 
   components: {
     IconBase,
@@ -264,7 +270,7 @@ export default Vue.extend({
     },
     confidenceAccessFunc: {
       type: Function,
-      default: (d, idx) => {
+      default: (d) => {
         return d.confidence?.value;
       },
     },
@@ -570,19 +576,46 @@ export default Vue.extend({
         })
       );
     },
+
     isMultiBandImage(): boolean {
       const variables = datasetGetters.getVariables(this.$store);
       return variables.some((v) => {
         return v.colType === MULTIBAND_IMAGE_TYPE;
       });
     },
+
     isGeoSpatial(): boolean {
       return routeGetters.isGeoSpatial(this.$store);
+    },
+
+    // Return name of column containing geobounds associated with a multiband image
+    coordinateColumn(): string {
+      const coordinateColumns = datasetGetters
+        .getVariables(this.$store)
+        .filter((v) => v.colType === GEOBOUNDS_TYPE)
+        .map((v) => (v.grouping as GeoBoundsGrouping).coordinatesCol);
+      if (coordinateColumns.length > 1) {
+        console.error("only 1 coordinate column is supported");
+      }
+      return coordinateColumns[0];
+    },
+
+    // Return name of column used as grouping column for the table data
+    multibandImageGroupColumn(): string {
+      const groupColumns = datasetGetters
+        .getVariables(this.$store)
+        .filter((v) => v.colType === MULTIBAND_IMAGE_TYPE)
+        .map((v) => (v.grouping as MultiBandImageGrouping).idCol);
+      if (groupColumns.length > 1) {
+        console.error("only 1 grouping column is expected");
+      }
+      return groupColumns[0];
     },
 
     band(): string {
       return routeGetters.getBandCombinationId(this.$store);
     },
+
     tileRequest(): (x: number, y: number, z: number) => string {
       return this.isSatelliteView
         ? (x: number, y: number, z: number) => {
@@ -594,6 +627,7 @@ export default Vue.extend({
             return `https:/${s}.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png`;
           };
     },
+
     tileState(): MapState {
       return {
         onHover: (id: number) => {
@@ -621,6 +655,7 @@ export default Vue.extend({
         },
       };
     },
+
     clusterState(): MapState {
       return {
         onHover: (id: number) => {
@@ -659,6 +694,7 @@ export default Vue.extend({
         },
       };
     },
+
     pointState(): MapState {
       return {
         onHover: (id: number) => {
@@ -686,12 +722,57 @@ export default Vue.extend({
         },
       };
     },
+
     confidenceClass(): string {
       return this.confidenceIconClass;
     },
+
     exitStyle(): string {
       return `top:${this.selectionToolData.exit.top}px; right:${this.selectionToolData.exit.right}px;`;
     },
+  },
+
+  watch: {
+    dataItems() {
+      this.onNewData();
+    },
+    summaries(cur, prev) {
+      if (!prev.length && this.isClustering) {
+        if (this.map.getZoom() < this.zoomThreshold) {
+          this.currentState = this.clusterState;
+          this.updateMapState();
+        }
+      } else {
+        this.onNewData();
+      }
+    },
+    areaOfInterestItems() {
+      // if null return
+      if (
+        !this.areaOfInterestItems.inner?.length &&
+        !this.areaOfInterestItems.outer?.length
+      ) {
+        return;
+      }
+      const innerArea = this.tableDataToAreas(
+        this.areaOfInterestItems.inner
+      ) as any[];
+      innerArea.forEach((i) => {
+        i.gray = 0;
+      });
+      const outerArea = this.tableDataToAreas(
+        this.areaOfInterestItems.outer
+      ) as any[];
+      outerArea.forEach((i) => {
+        i.gray = 100;
+      });
+      this.drillDownState.tiles = innerArea.concat(outerArea);
+      this.isImageDrilldown = true;
+    },
+  },
+
+  mounted() {
+    this.createLumoMap();
   },
   methods: {
     createLumoMap() {
@@ -1024,8 +1105,10 @@ export default Vue.extend({
     },
     tableDataToAreas(tableData: any[]): Area[] {
       const areas = tableData.map((item, i) => {
-        const imageUrl = this.isMultiBandImage ? item.group_id.value : null;
-        const fullCoordinates = item.coordinates.value.Elements;
+        const imageUrl = this.isMultiBandImage
+          ? item[this.multibandImageGroupColumn]
+          : null;
+        const fullCoordinates = item[this.coordinateColumn].value.Elements;
         if (fullCoordinates.some((x) => x === undefined)) return;
 
         /*
@@ -1229,49 +1312,6 @@ export default Vue.extend({
         this.currentState.drawMode()
       );
     },
-  },
-
-  watch: {
-    dataItems() {
-      this.onNewData();
-    },
-    summaries(cur, prev) {
-      if (!prev.length && this.isClustering) {
-        if (this.map.getZoom() < this.zoomThreshold) {
-          this.currentState = this.clusterState;
-          this.updateMapState();
-        }
-      } else {
-        this.onNewData();
-      }
-    },
-    areaOfInterestItems() {
-      // if null return
-      if (
-        !this.areaOfInterestItems.inner?.length &&
-        !this.areaOfInterestItems.outer?.length
-      ) {
-        return;
-      }
-      const innerArea = this.tableDataToAreas(
-        this.areaOfInterestItems.inner
-      ) as any[];
-      innerArea.forEach((i) => {
-        i.gray = 0;
-      });
-      const outerArea = this.tableDataToAreas(
-        this.areaOfInterestItems.outer
-      ) as any[];
-      outerArea.forEach((i) => {
-        i.gray = 100;
-      });
-      this.drillDownState.tiles = innerArea.concat(outerArea);
-      this.isImageDrilldown = true;
-    },
-  },
-
-  mounted() {
-    this.createLumoMap();
   },
 });
 </script>

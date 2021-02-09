@@ -158,21 +158,29 @@ export function getTimeseriesSummaryTopCategories(
 export function getRandomInt(max: number): number {
   return Math.floor(Math.random() * Math.floor(max));
 }
+
 export function getTimeseriesGroupingsFromFields(
   variables: Variable[],
   fields: Dictionary<TableColumn>
 ): TimeseriesGrouping[] {
+  return getTimeseriesVariablesFromFields(variables, fields).map(
+    (v) => v.grouping as TimeseriesGrouping
+  );
+}
+
+export function getTimeseriesVariablesFromFields(
+  variables: Variable[],
+  fields: Dictionary<TableColumn>
+): Variable[] {
   // Check to see if any of the fields are the ID column of one of our variables
   const fieldKeys = _.map(fields, (_, key) => key);
-  return variables
-    .filter(
-      (v) =>
-        v.grouping &&
-        v.grouping.idCol &&
-        v.colType === TIMESERIES_TYPE &&
-        _.includes(fieldKeys, v.grouping.idCol)
-    )
-    .map((v) => v.grouping as TimeseriesGrouping);
+  return variables.filter(
+    (v) =>
+      v.grouping &&
+      v.grouping.idCol &&
+      v.colType === TIMESERIES_TYPE &&
+      _.includes(fieldKeys, v.key)
+  );
 }
 
 export function getComposedVariableKey(keys: string[]): string {
@@ -255,7 +263,7 @@ export function getTimeseriesAnalysisIntervals(
   ];
 }
 
-export function fetchSummaryExemplars(
+export async function fetchSummaryExemplars(
   datasetName: string,
   variableName: string,
   summary: VariableSummary
@@ -278,34 +286,30 @@ export function fetchSummaryExemplars(
         const grouping = variable.grouping as TimeseriesGrouping;
         const args = {
           dataset: datasetName,
-          timeseriesColName: grouping.idCol,
+          variableKey: variable.key,
           xColName: grouping.xCol,
           yColName: grouping.yCol,
           timeseriesIds: exemplars,
           solutionId: solutionId,
         };
-        return () => {
-          if (solutionId) {
-            return resultsActions.fetchForecastedTimeseries(store, args);
-          } else {
-            return datasetActions.fetchTimeseries(store, args);
-          }
-        };
+        if (solutionId) {
+          return await resultsActions.fetchForecastedTimeseries(store, args);
+        } else {
+          return await datasetActions.fetchTimeseries(store, args);
+        }
       }
     } else {
       // if there are linked files, fetch some of them before resolving
-      return datasetActions.fetchFiles(store, {
+      return await datasetActions.fetchFiles(store, {
         dataset: datasetName,
         variable: variableName,
         urls: exemplars.slice(0, 5),
       });
     }
   }
-
-  return new Promise<void>((res) => res());
 }
 
-export function fetchResultExemplars(
+export async function fetchResultExemplars(
   datasetName: string,
   variableName: string,
   key: string,
@@ -315,8 +319,8 @@ export function fetchResultExemplars(
   const variables = datasetGetters.getVariables(store);
   const variable = variables.find((v) => v.key === variableName);
 
-  const baselineExemplars = summary.baseline?.exemplars;
-  const filteredExemplars = summary.filtered?.exemplars;
+  const baselineExemplars = summary?.baseline?.exemplars;
+  const filteredExemplars = summary?.filtered?.exemplars;
   const exemplars = filteredExemplars ? filteredExemplars : baselineExemplars;
 
   if (exemplars) {
@@ -324,9 +328,9 @@ export function fetchResultExemplars(
       if (variable.grouping.type === TIMESERIES_TYPE) {
         const grouping = variable.grouping as TimeseriesGrouping;
         // if there a linked exemplars, fetch those before resolving
-        return resultsActions.fetchForecastedTimeseries(store, {
+        return await resultsActions.fetchForecastedTimeseries(store, {
           dataset: datasetName,
-          timeseriesColName: grouping.idCol,
+          variableKey: variable.key,
           xColName: grouping.xCol,
           yColName: grouping.yCol,
           timeseriesIds: exemplars,
@@ -335,15 +339,13 @@ export function fetchResultExemplars(
       }
     } else {
       // if there a linked files, fetch those before resolving
-      return datasetActions.fetchFiles(store, {
+      return await datasetActions.fetchFiles(store, {
         dataset: datasetName,
         variable: variableName,
         urls: exemplars,
       });
     }
   }
-
-  return new Promise<void>((res) => res());
 }
 
 /*
@@ -604,8 +606,11 @@ export async function fetchSolutionResultSummary(
       completeEndpoint,
       filterParams ? filterParams : {}
     );
-    // save the histogram data
+    // save the histogram data if this is summary data
     const summary = response.data[resultProperty];
+    if (!summary) {
+      return;
+    }
     await fetchResultExemplars(dataset, target, key, solutionId, summary);
     summary.solutionId = solutionId;
     summary.dataset = dataset;
@@ -651,7 +656,7 @@ export async function fetchPredictionResultSummary(
       `${endpoint}/${resultId}/${varMode}`,
       filterParams ? filterParams : {}
     );
-    const summary = <VariableSummary>response.data.summary;
+    const summary = response.data.summary as VariableSummary;
     summary.dataset = dataset;
     updateFunction(context, summary);
   } catch (error) {
@@ -936,50 +941,51 @@ export function getTableDataFields(data: TableData): Dictionary<TableColumn> {
     const result: Dictionary<TableColumn> = {};
     const variables = datasetGetters.getVariablesMap(store);
 
-    for (const col of data.columns) {
-      if (col.key === D3M_INDEX_FIELD) {
-        continue;
-      }
+    data.columns.forEach((col, ind) => {
+      if (col.key !== D3M_INDEX_FIELD) {
+        // Error and predicted columns require unique handling.  They use a special key of the format
+        // <solution_id>:<predicted|error> and are not available in the variables list.
+        let variable: Variable = null;
+        let description: string = null;
+        let label: string = null;
+        if (isPredictedCol(col.key)) {
+          variable = requestGetters.getActiveSolutionTargetVariable(store)[0]; // always a single value
+          label = variable.colDisplayName;
+          description = `Model predicted value for ${variable.key}`;
 
-      // Error and predicted columns require unique handling.  They use a special key of the format
-      // <solution_id>:<predicted|error> and are not available in the variables list.
-      let variable: Variable = null;
-      let description: string = null;
-      let label: string = null;
-      if (isPredictedCol(col.key)) {
-        variable = requestGetters.getActiveSolutionTargetVariable(store)[0]; // always a single value
-        label = variable.colDisplayName;
-        description = `Model predicted value for ${variable.key}`;
+          // if we actually have defined confidence values, then let's add confidence to the table
+          if (data.values[0][ind]?.confidence !== null) {
+            result.confidence = {
+              label: "Confidence",
+              key: "confidence",
+              type: "numeric",
+              weight: null,
+              headerTitle: `Prediction confidence ${variable.key}`,
+              sortable: true,
+            };
+          }
+        } else if (isErrorCol(col.key)) {
+          variable = requestGetters.getActiveSolutionTargetVariable(store)[0];
+          label = "Error";
+          description = `Difference between actual and predicted value for ${variable.key}`;
+        } else {
+          variable = variables[col.key];
+          label = col.label;
+          if (variable) {
+            description = variable.colDescription;
+          }
+        }
 
-        result.confidence = {
-          label: "Confidence",
-          key: "confidence",
-          type: "numeric",
-          weight: null,
-          headerTitle: `Prediction confidence ${variable.key}`,
+        result[col.key] = {
+          label: label,
+          key: col.key,
+          type: col.type,
+          weight: col.weight,
+          headerTitle: description ? label.concat(": ", description) : label,
           sortable: true,
         };
-      } else if (isErrorCol(col.key)) {
-        variable = requestGetters.getActiveSolutionTargetVariable(store)[0];
-        label = "Error";
-        description = `Difference between actual and predicted value for ${variable.key}`;
-      } else {
-        variable = variables[col.key];
-        label = col.label;
-        if (variable) {
-          description = variable.colDescription;
-        }
       }
-
-      result[col.key] = {
-        label: label,
-        key: col.key,
-        type: col.type,
-        weight: col.weight,
-        headerTitle: description ? label.concat(": ", description) : label,
-        sortable: true,
-      };
-    }
+    });
 
     return result;
   }
@@ -1079,9 +1085,9 @@ export function getImageFields(
         v.grouping &&
         v.grouping.idCol &&
         v.colType === MULTIBAND_IMAGE_TYPE &&
-        _.includes(fieldKeys, v.grouping.idCol)
+        _.includes(fieldKeys, v.key)
     )
-    .map((v) => ({ key: v.grouping.idCol, type: v.colType }));
+    .map((v) => ({ key: v.key, type: v.colType }));
 
   // the two are probably mutually exclusive, but it doesn't hurt anything to allow for both
   return imageFields.concat(multiBandImageFields);

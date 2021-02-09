@@ -121,7 +121,9 @@ func (s *Storage) FetchRequestBySolutionID(solutionID string) (*api.Request, err
 	if rows != nil {
 		defer rows.Close()
 	}
-	rows.Next()
+	if !rows.Next() {
+		return nil, errors.Errorf("no request for solution %s", solutionID)
+	}
 	err = rows.Err()
 	if err != nil {
 		return nil, errors.Wrapf(err, "error reading data from postgres")
@@ -144,7 +146,9 @@ func (s *Storage) FetchRequestByFittedSolutionID(fittedSolutionID string) (*api.
 	if rows != nil {
 		defer rows.Close()
 	}
-	rows.Next()
+	if !rows.Next() {
+		return nil, errors.Errorf("no request for solution %s", fittedSolutionID)
+	}
 	err = rows.Err()
 	if err != nil {
 		return nil, errors.Wrapf(err, "error reading data from postgres")

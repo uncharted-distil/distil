@@ -96,6 +96,7 @@ type Config struct {
 	TrainTestSplitTimeSeries           float64 `env:"TRAIN_TEST_SPLIT_TIMESERIES" envDefault:"0.9"`
 	UserProblemPath                    string  `env:"USER_PROBLEM_PATH" envDefault:"outputs/problems"`
 	VerboseError                       bool    `env:"VERBOSE_ERROR" envDefault:"false"`
+	ShouldScaleImages                  bool    `env:"SHOULD_SCALE_IMAGES" envDefault:"false"` // enables and disables image scaling
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a copy.

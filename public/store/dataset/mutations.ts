@@ -23,7 +23,6 @@ import {
   TimeSeriesValue,
   Variable,
   VariableSummary,
-  TableRow,
 } from "./index";
 
 function sortDatasets(a: Dataset, b: Dataset) {
@@ -49,6 +48,22 @@ function sortDatasets(a: Dataset, b: Dataset) {
   }
 
   return 0;
+}
+
+export interface TimeSeriesUpdate {
+  variableKey: string;
+  seriesID: string;
+  uniqueTrail: string;
+  timeseries: TimeSeriesValue[];
+  isDateTime: boolean;
+  min: number;
+  max: number;
+  mean: number;
+}
+
+export interface TimeSeriesForecastUpdate extends TimeSeriesUpdate {
+  forecast: TimeSeriesValue[];
+  forecastTestRange: number[];
 }
 
 export const mutations = {
@@ -113,7 +128,12 @@ export const mutations = {
 
   updateVariableType(
     state: DatasetState,
-    args: { dataset: string; field: string; type: string }
+    args: {
+      dataset: string;
+      field: string;
+      type: string;
+      variables: Variable[];
+    }
   ) {
     // TODO: fix this, this is hacky and error prone manually changing the
     // type across the app state.
@@ -125,22 +145,20 @@ export const mutations = {
       Vue.set(state, "isGeocoordinateFacet", [LONGITUDE_TYPE, LATITUDE_TYPE]);
     }
 
-    // update dataset variables
+    // update dataset variables & active variables
     const dataset = state.datasets.find((d) => d.name === args.dataset);
     if (dataset) {
-      const variable = dataset.variables.find((v) => v.key === args.field);
-      if (variable) {
-        variable.colType = args.type;
+      const target = dataset.variables.findIndex((v) => v.key === args.field);
+
+      if (target > -1) {
+        Vue.set(dataset.variables[target], "colType", args.type);
+        Vue.set(state.variables[target], "colType", args.type);
+        Vue.set(
+          state.variables[target],
+          "values",
+          args.variables[target].values
+        );
       }
-    }
-
-    // update variables
-    const variable = state.variables.find((v) => {
-      return v.key === args.field && v.datasetName === args.dataset;
-    });
-
-    if (variable) {
-      variable.colType = args.type;
     }
 
     // update table data
@@ -169,6 +187,7 @@ export const mutations = {
       }
     }
   },
+
   reviewVariableType(state: DatasetState, update) {
     const index = _.findIndex(state.variables, (v) => {
       return v.key === update.field;
@@ -252,50 +271,41 @@ export const mutations = {
   updateFile(state: DatasetState, args: { url: string; file: any }) {
     Vue.set(state.files, args.url, args.file);
   },
+
   removeFile(state: DatasetState, url: string) {
     Vue.delete(state.files, url);
   },
+
   bulkUpdateTimeseries(
     state: DatasetState,
     args: {
       dataset: string;
-      map: Map<
-        string,
-        {
-          Timeseries: TimeSeriesValue[];
-          IsDateTime: boolean;
-          Min: number;
-          Max: number;
-          Mean: number;
-        }
-      >;
       uniqueTrail?: string;
+      updates: TimeSeriesUpdate[];
     }
   ) {
-    args.map.forEach((val, key) => {
+    args.updates.forEach((update) => {
       mutations.updateTimeseries(state, {
         dataset: args.dataset,
-        id: key + (args.uniqueTrail ?? ""),
-        timeseries: val.Timeseries,
-        isDateTime: val.IsDateTime,
-        min: val.Min,
-        max: val.Max,
-        mean: val.Mean,
+        uniqueTrail: args.uniqueTrail,
+        update: update,
       });
     });
   },
+
   updateTimeseries(
     state: DatasetState,
     args: {
       dataset: string;
-      id: string;
-      timeseries: TimeSeriesValue[];
-      isDateTime: boolean;
-      min: number;
-      max: number;
-      mean: number;
+      uniqueTrail?: string;
+      update: TimeSeriesUpdate;
     }
   ) {
+    const timeseriesKey =
+      args.update.variableKey +
+      (args.update.seriesID ?? "") +
+      (args.uniqueTrail ?? "");
+
     if (!state.timeseries[args.dataset]) {
       Vue.set(state.timeseries, args.dataset, {});
     }
@@ -307,8 +317,8 @@ export const mutations = {
     // freezing the return to prevent slow, unnecessary deep reactivity.
     Vue.set(
       state.timeseries[args.dataset].timeseriesData,
-      args.id,
-      Object.freeze(args.timeseries)
+      timeseriesKey,
+      Object.freeze(args.update.timeseries)
     );
 
     if (!state.timeseries[args.dataset].isDateTime) {
@@ -316,21 +326,21 @@ export const mutations = {
     }
     Vue.set(
       state.timeseries[args.dataset].isDateTime,
-      args.id,
-      args.isDateTime
+      timeseriesKey,
+      args.update.isDateTime
     );
 
     // Set the min/max/mean for each timeseries data
     if (!state.timeseries[args.dataset].info) {
       Vue.set(state.timeseries[args.dataset], "info", {});
     }
-    Vue.set(state.timeseries[args.dataset].info, args.id, {
-      min: args.min as number,
-      max: args.max as number,
-      mean: args.mean as number,
+    Vue.set(state.timeseries[args.dataset].info, timeseriesKey, {
+      min: args.update.min as number,
+      max: args.update.max as number,
+      mean: args.update.mean as number,
     });
 
-    const validTimeseries = args.timeseries.filter((t) => !_.isNil(t));
+    const validTimeseries = args.update.timeseries.filter((t) => !_.isNil(t));
     const minX = _.minBy(validTimeseries, (d) => d.time).time;
     const maxX = _.maxBy(validTimeseries, (d) => d.time).time;
     const minY = _.minBy(validTimeseries, (d) => d.value).value;
@@ -413,6 +423,7 @@ export const mutations = {
   clearAreaOfInterestExcludeOuter(state: DatasetState) {
     state.areaOfInterestExcludeOuter = null;
   },
+
   // sets the current selected data into the store
   setIncludedTableData(state: DatasetState, tableData: TableData) {
     // freezing the return to prevent slow, unnecessary deep reactivity.

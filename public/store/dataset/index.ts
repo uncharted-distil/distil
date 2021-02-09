@@ -66,6 +66,10 @@ export interface GeoCoordinateGrouping extends Grouping {
   yCol: string;
 }
 
+export interface GeoBoundsGrouping extends Grouping {
+  coordinatesCol: string;
+}
+
 export interface MultiBandImageGrouping extends ClusteredGrouping {
   imageCol: string;
   bandCol: string;
@@ -287,6 +291,7 @@ export enum DatasetPendingRequestType {
   JOIN_SUGGESTION = "JOIN_SUGGESTION",
   JOIN_DATASET_IMPORT = "JOIN_DATASET_IMPORT",
   CLUSTERING = "CLUSTERING",
+  OUTLIER = "OUTLIER",
 }
 
 export enum DatasetPendingRequestStatus {
@@ -296,10 +301,12 @@ export enum DatasetPendingRequestStatus {
   REVIEWED = "REVIEWED",
   ERROR_REVIEWED = "ERROR_REVIEWED",
 }
+
 export interface ClonedInfo {
   success: boolean;
   clonedDatasetName: string;
 }
+
 export interface VariableRankingPendingRequest {
   id: string;
   status: DatasetPendingRequestStatus;
@@ -339,12 +346,20 @@ export interface ClusteringPendingRequest {
   dataset: string;
 }
 
+export interface OutlierPendingRequest {
+  id: string;
+  status: DatasetPendingRequestStatus;
+  type: DatasetPendingRequestType.OUTLIER;
+  dataset: string;
+}
+
 export type DatasetPendingRequest =
   | VariableRankingPendingRequest
   | GeocodingPendingRequest
   | JoinSuggestionPendingRequest
   | JoinDatasetImportPendingRequest
-  | ClusteringPendingRequest;
+  | ClusteringPendingRequest
+  | OutlierPendingRequest;
 
 export interface TimeSeriesValue {
   value: number;
