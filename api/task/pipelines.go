@@ -59,7 +59,7 @@ func SetClient(computeClient *compute.Client) {
 }
 
 func submitPipeline(datasets []string, step *description.FullySpecifiedPipeline, shouldCache bool) (string, error) {
-	return sr.SubmitPipeline(client, datasets, nil, nil, step, shouldCache)
+	return sr.SubmitPipeline(client, datasets, nil, nil, step, nil, shouldCache)
 }
 
 func appendFeature(dataset string, d3mIndexField int, hasHeader bool, feature *FeatureRequest, lines [][]string) ([][]string, error) {

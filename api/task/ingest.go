@@ -27,6 +27,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	log "github.com/unchartedsoftware/plog"
 
+	apicompute "github.com/uncharted-distil/distil/api/compute"
 	"github.com/uncharted-distil/distil/api/env"
 	api "github.com/uncharted-distil/distil/api/model"
 	"github.com/uncharted-distil/distil/api/postgres"
@@ -677,7 +678,7 @@ func getUniqueDatasetName(meta *model.Metadata, storage api.MetadataStorage) (st
 
 func createIndices(pg *postgres.Database, datasetID string, fields []string, meta *model.Metadata, config *IngestTaskConfig) error {
 	// build variable lookup
-	mappedVariables := mapVariables(meta.GetMainDataResource().Variables, func(variable *model.Variable) string { return variable.Key })
+	mappedVariables := apicompute.MapVariables(meta.GetMainDataResource().Variables, func(variable *model.Variable) string { return variable.Key })
 
 	// create indices for flagged fields
 	for _, fieldName := range fields {
@@ -690,13 +691,4 @@ func createIndices(pg *postgres.Database, datasetID string, fields []string, met
 	}
 
 	return nil
-}
-
-func mapVariables(variables []*model.Variable, mapper func(variable *model.Variable) string) map[string]*model.Variable {
-	mapped := map[string]*model.Variable{}
-	for _, d := range variables {
-		mapped[mapper(d)] = d
-	}
-
-	return mapped
 }

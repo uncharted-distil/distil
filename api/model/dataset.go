@@ -22,6 +22,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil/api/env"
 	"github.com/uncharted-distil/distil/api/util/json"
 )
 
@@ -186,6 +187,14 @@ func (d *Dataset) ToMetadata() *model.Metadata {
 	meta.DataResources = []*model.DataResource{dr}
 
 	return meta
+}
+
+// GetLearningFolder returns the folder on disk that has the data for learning.
+func (d *Dataset) GetLearningFolder() string {
+	if d.LearningDataset != "" {
+		return d.LearningDataset
+	}
+	return env.ResolvePath(d.Source, d.Folder)
 }
 
 // UpdateExtremas updates the variable extremas based on the data stored.
