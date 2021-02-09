@@ -70,12 +70,13 @@ func (c *Cache) PersistCache() error {
 }
 
 type pipelineQueueTask struct {
-	client          *compute.Client
-	request         *compute.ExecPipelineRequest
-	searchRequest   *pipeline.SearchSolutionsRequest
-	step            *description.FullySpecifiedPipeline
-	datasets        []string
-	datasetsProduce []string
+	client            *compute.Client
+	request           *compute.ExecPipelineRequest
+	searchRequest     *pipeline.SearchSolutionsRequest
+	step              *description.FullySpecifiedPipeline
+	datasets          []string
+	datasetsProduce   []string
+	allowedValueTypes []string
 }
 
 func (t *pipelineQueueTask) hashUnique() (string, error) {
@@ -232,18 +233,19 @@ func InitializeQueue(config *env.Config) {
 }
 
 // SubmitPipeline executes pipelines using the client and returns the result URI.
-func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce []string,
-	searchRequest *pipeline.SearchSolutionsRequest, fullySpecifiedStep *description.FullySpecifiedPipeline, shouldCache bool) (string, error) {
+func SubmitPipeline(client *compute.Client, datasets []string, datasetsProduce []string, searchRequest *pipeline.SearchSolutionsRequest,
+	fullySpecifiedStep *description.FullySpecifiedPipeline, allowedValueTypes []string, shouldCache bool) (string, error) {
 
 	request := compute.NewExecPipelineRequest(datasets, datasetsProduce, fullySpecifiedStep.Pipeline)
 
 	queueTask := &pipelineQueueTask{
-		request:         request,
-		searchRequest:   searchRequest,
-		client:          client,
-		step:            fullySpecifiedStep,
-		datasets:        datasets,
-		datasetsProduce: datasetsProduce,
+		request:           request,
+		searchRequest:     searchRequest,
+		client:            client,
+		step:              fullySpecifiedStep,
+		datasets:          datasets,
+		datasetsProduce:   datasetsProduce,
+		allowedValueTypes: allowedValueTypes,
 	}
 
 	// check cache to see if results are already available
@@ -303,7 +305,7 @@ func runPipelineQueue(queue *Queue) {
 			continue
 		}
 
-		err := pipelineTask.request.Dispatch(pipelineTask.client, pipelineTask.searchRequest)
+		err := pipelineTask.request.Dispatch(pipelineTask.client, pipelineTask.searchRequest, pipelineTask.allowedValueTypes)
 		if err != nil {
 			queueTask.returnResult(&QueueResponse{
 				Error: errors.Wrap(err, "unable to dispatch pipeline"),

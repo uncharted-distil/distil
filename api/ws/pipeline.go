@@ -429,28 +429,13 @@ func handlePredict(conn *Connection, client *compute.Client, metadataCtor apiMod
 		SourceDatasetID:  meta.ID,
 	}
 
-	ds, indexFields, err := createPredictionDataset(requestTask, request, predictParams)
+	datasetName, datasetPath, err := getPredictionDataset(requestTask, request, predictParams)
 	if err != nil {
 		handleErr(conn, msg, errors.Wrap(err, "unable to create raw dataset"))
 		return
 	}
-	predictParams.DatasetConstructor = ds
-	predictParams.IndexFields = indexFields
-	// import the dataset
-	datasetName, datasetPath, err := task.ImportPredictionDataset(predictParams)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
 	predictParams.Dataset = datasetName
 	predictParams.SchemaPath = datasetPath
-
-	// ingest the dataset
-	err = task.IngestPredictionDataset(predictParams)
-	if err != nil {
-		handleErr(conn, msg, err)
-		return
-	}
 
 	// run predictions - synchronous call for now
 	resultID, err := task.Predict(predictParams)
@@ -511,4 +496,40 @@ func createPredictionDataset(requestTask *api.Task, request *api.PredictRequest,
 	}
 
 	return ds, indexFields, nil
+}
+
+func getPredictionDataset(requestTask *api.Task, request *api.PredictRequest, predictParams *task.PredictParams) (string, string, error) {
+	// check if the dataset already exists
+	if request.ExistingDataset {
+		// read path from metadata storage
+		ds, err := predictParams.MetaStorage.FetchDataset(request.DatasetID, true, true, true)
+		if err != nil {
+			return "", "", err
+		}
+
+		return ds.ID, env.ResolvePath(ds.Source, ds.Folder), nil
+	}
+
+	// ingest the data as a new prediction dataset
+	ds, indexFields, err := createPredictionDataset(requestTask, request, predictParams)
+	if err != nil {
+		return "", "", err
+	}
+	predictParams.DatasetConstructor = ds
+	predictParams.IndexFields = indexFields
+	// import the dataset
+	datasetName, datasetPath, err := task.ImportPredictionDataset(predictParams)
+	if err != nil {
+		return "", "", err
+	}
+	predictParams.Dataset = datasetName
+	predictParams.SchemaPath = datasetPath
+
+	// ingest the dataset
+	err = task.IngestPredictionDataset(predictParams)
+	if err != nil {
+		return "", "", err
+	}
+
+	return predictParams.Dataset, predictParams.SchemaPath, nil
 }

@@ -307,22 +307,27 @@ func (s *Storage) parseData(rows pgx.Rows) ([][]string, error) {
 }
 
 // FetchDataset extracts the complete raw data from the database.
-func (s *Storage) FetchDataset(dataset string, storageName string, invert bool, filterParams *api.FilterParams) ([][]string, error) {
+func (s *Storage) FetchDataset(dataset string, storageName string, includeMetadata bool, invert bool, filterParams *api.FilterParams) ([][]string, error) {
 	// get data variables (to exclude metadata variables)
-	vars, err := s.metadata.FetchVariables(dataset, true, false, false)
+	vars, err := s.metadata.FetchVariables(dataset, true, includeMetadata, false)
 	if err != nil {
 		return nil, err
 	}
 	filteredVars := []*model.Variable{}
 	// only include data with distilrole data and index
 	for _, v := range vars {
-		if model.IsTA2Field(v.DistilRole, v.SelectedRole) {
+		if model.IsTA2Field(v.DistilRole, v.SelectedRole) ||
+			(v.DistilRole == model.VarDistilRoleMetadata && includeMetadata) {
 			filteredVars = append(filteredVars, v)
 		}
 	}
 	varNames := []string{}
 	for _, v := range filteredVars {
-		varNames = append(varNames, fmt.Sprintf("COALESCE(\"%s\", '') AS \"%s\"", v.Key, v.Key))
+		fieldSelect := "COALESCE(CAST(\"%s\" as text), '') AS \"%s\""
+		if model.IsVector(v.Type) {
+			fieldSelect = "COALESCE(TRANSLATE(CAST(\"%s\" as text), '{}', ''), '') AS \"%s\""
+		}
+		varNames = append(varNames, fmt.Sprintf(fieldSelect, v.Key, v.Key))
 	}
 	wheres := []string{}
 	paramsFilter := make([]interface{}, 0)
