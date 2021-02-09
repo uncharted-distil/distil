@@ -225,14 +225,17 @@ func getCloningParams(predictionRequestID string, metaStorage api.MetadataStorag
 
 	if includeDatasetFeatures {
 		// just select every feature in the source dataset
-		ds, err := metaStorage.FetchDataset(req.Dataset, false, false, false)
+		ds, err := metaStorage.FetchDataset(req.Dataset, true, false, false)
 		if err != nil {
 			return nil, err
 		}
 
-		features = make([]string, len(ds.Variables))
+		features = make([]string, len(ds.Variables)-1)
 		for i, v := range ds.Variables {
-			features[i] = v.Key
+			// the target is not a feature!
+			if v.Key != targetName {
+				features[i] = v.Key
+			}
 		}
 	}
 
