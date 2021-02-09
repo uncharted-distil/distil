@@ -1,6 +1,6 @@
 <template>
   <b-navbar toggleable="lg" type="dark" class="fixed-top">
-    <b-nav-toggle target="nav-collapse"></b-nav-toggle>
+    <b-nav-toggle target="nav-collapse" />
 
     <!-- Branding -->
     <img
@@ -17,52 +17,57 @@
     <!-- Left Side -->
     <b-collapse id="nav-collapse" is-nav>
       <b-navbar-nav>
-        <b-nav-item @click="onSearch" :active="isActive(SEARCH_ROUTE)">
-          <i class="fa fa-home nav-icon"></i> Select Model or Dataset
+        <b-nav-item :active="isActive(SEARCH_ROUTE)" @click="onSearch">
+          <i class="fa fa-home nav-icon" /> Select Model or Dataset
         </b-nav-item>
 
         <!-- If search produces a model of interest, select it for reuse: will start Apply Model workflow. -->
-        <template v-if="isApplyModel">
+        <template v-if="isApplyModel && !isActive(DATA_EXPLORER_ROUTE)">
           <b-nav-item
-            @click="onApplyModel"
             :active="isActive(APPLY_MODEL_ROUTE)"
+            @click="onApplyModel"
           >
-            <i class="fa fa-table nav-icon"></i> Apply Model: Select New Data
+            <i class="fa fa-table nav-icon" /> Apply Model: Select New Data
           </b-nav-item>
 
           <b-nav-item
-            @click="onPredictions"
             :active="isActive(PREDICTION_ROUTE)"
             :disabled="isActive(APPLY_MODEL_ROUTE)"
+            @click="onPredictions"
           >
-            <i class="fa fa-line-chart nav-icon"></i> View Predictions
+            <i class="fa fa-line-chart nav-icon" /> View Predictions
           </b-nav-item>
         </template>
 
         <!-- If no appropriate model exist, select a dataset: will start New Model workflow. -->
-        <template v-else-if="hasDataset">
+        <template v-else-if="hasDataset && !isActive(DATA_EXPLORER_ROUTE)">
           <b-nav-item
-            @click="onSelectTarget"
             :active="isActive(SELECT_TARGET_ROUTE)"
+            @click="onSelectTarget"
           >
-            <i class="fa fa-dot-circle-o nav-icon"></i> New Model: Select Target
+            <i class="fa fa-dot-circle-o nav-icon" /> New Model: Select Target
           </b-nav-item>
 
           <b-nav-item
-            @click="onSelectData"
             :active="isActive(SELECT_TRAINING_ROUTE)"
             :disabled="hasNoDatasetAndTarget"
+            @click="onSelectData"
           >
-            <i class="fa fa-sign-in nav-icon"></i> Select Model Features
+            <i class="fa fa-sign-in nav-icon" /> Select Model Features
           </b-nav-item>
 
           <b-nav-item
-            @click="onResults"
             :active="isActive(RESULTS_ROUTE)"
             :disabled="hasNoDatasetAndTarget"
+            @click="onResults"
           >
-            <i class="fa fa-check-circle nav-icon"></i> Check Models
+            <i class="fa fa-check-circle nav-icon" /> Check Models
           </b-nav-item>
+        </template>
+
+        <!-- in the case of the data explorer, we can create the model from here -->
+        <template v-else-if="isCreateModelPossible">
+          <b-nav-item><create-solutions-form /></b-nav-item>
         </template>
       </b-navbar-nav>
     </b-collapse>
@@ -108,12 +113,19 @@ import {
   SELECT_TRAINING_ROUTE,
   RESULTS_ROUTE,
   PREDICTION_ROUTE,
+  DATA_EXPLORER_ROUTE,
 } from "../store/route/index";
 import { restoreView } from "../util/view";
 import Vue from "vue";
+import { isNil } from "lodash";
+import CreateSolutionsForm from "../components/CreateSolutionsForm.vue";
 
 export default Vue.extend({
-  name: "nav-bar",
+  name: "NavBar",
+
+  components: {
+    CreateSolutionsForm,
+  },
 
   data() {
     return {
@@ -125,6 +137,7 @@ export default Vue.extend({
       SELECT_TRAINING_ROUTE: SELECT_TRAINING_ROUTE,
       RESULTS_ROUTE: RESULTS_ROUTE,
       PREDICTION_ROUTE: PREDICTION_ROUTE,
+      DATA_EXPLORER_ROUTE: DATA_EXPLORER_ROUTE,
     };
   },
 
@@ -182,6 +195,15 @@ export default Vue.extend({
 
     isPrototype(): boolean {
       return appGetters.isPrototype(this.$store);
+    },
+
+    isCreateModelPossible(): boolean {
+      // check that we are on the Data Explorer view, with some target and training variables.
+      return (
+        this.isActive(DATA_EXPLORER_ROUTE) &&
+        !isNil(this.target) &&
+        !isNil(routeGetters.getRouteTrainingVariables(this.$store))
+      );
     },
   },
 

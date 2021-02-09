@@ -35,6 +35,7 @@ import {
 import { Group } from "../../util/facets";
 import { overlayRouteEntry, RouteArgs } from "../../util/routes";
 import { Activity } from "../../util/userEvents";
+import { isUnsupportedTargetVar } from "../../util/types";
 
 export default Vue.extend({
   name: "FacetListPane",
@@ -141,8 +142,14 @@ export default Vue.extend({
     },
 
     training(): string[] {
-      return (
-        routeGetters.getRouteTrainingVariables(this.$store)?.split(",") ?? []
+      return routeGetters.getDecodedTrainingVariableNames(this.$store);
+    },
+
+    unsupportedTargets(): Set<string> {
+      return new Set(
+        this.variables
+          .filter((v) => isUnsupportedTargetVar(v.key, v.colType))
+          .map((v) => v.key)
       );
     },
   },
@@ -189,6 +196,9 @@ export default Vue.extend({
     },
 
     targetButton(variable: string): HTMLElement {
+      const isUnsupported = this.unsupportedTargets.has(variable);
+      if (isUnsupported) return;
+
       const isTarget = this.isTarget(variable);
 
       // Only display the button if no target has been selected,
