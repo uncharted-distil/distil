@@ -317,7 +317,7 @@ export default Vue.extend({
 
     explore(n, o) {
       if (n === o) return;
-      viewActions.fetchDataExplorerData(this.$store, this.activeVariables);
+      viewActions.updateDataExplorerData(this.$store);
     },
   },
 

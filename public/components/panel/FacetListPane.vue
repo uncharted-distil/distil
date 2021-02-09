@@ -6,7 +6,7 @@
     enable-type-filtering
     ignore-highlights
     :facet-count="searchedActiveVariables.length"
-    :html="button"
+    :html="buttons"
     :instance-name="instanceName"
     :log-activity="problemDefinition"
     :rows-per-page="numRowsPerPage"
@@ -17,6 +17,7 @@
 
 <script lang="ts">
 import Vue from "vue";
+import { isNil } from "lodash";
 
 import VariableFacets from "../../components/facets/VariableFacets.vue";
 
@@ -32,7 +33,7 @@ import {
   searchVariables,
 } from "../../util/data";
 import { Group } from "../../util/facets";
-import { overlayRouteEntry } from "../../util/routes";
+import { overlayRouteEntry, RouteArgs } from "../../util/routes";
 import { Activity } from "../../util/userEvents";
 
 export default Vue.extend({
@@ -66,38 +67,30 @@ export default Vue.extend({
       return routeGetters.getRouteDataExplorerVarsSearch(this.$store);
     },
 
-    button(): (group: Group) => HTMLElement {
+    buttons(): (group: Group) => HTMLElement {
       return (group: Group) => {
         const variable = group.key;
-        const explore = routeGetters.getExploreVariables(this.$store);
-        const isInExplore = explore.includes(variable);
 
-        // create a button
-        const button = document.createElement("button");
-        button.className = "btn btn-sm";
-        button.className += isInExplore
-          ? " btn-outline-secondary"
-          : " btn-primary";
-        button.textContent = isInExplore ? "Hide" : "Display";
+        // Display and Hide variables in the Data Explorer.
+        const exploreButton = this.displayButton(variable);
 
-        const onClick = () => {
-          const explore = routeGetters.getExploreVariables(this.$store);
-          const updatedExplore = isInExplore
-            ? // Remove the variable from the exploration
-              explore.filter((v) => v !== variable)
-            : // Add the variable to the exploration
-              explore.concat([variable]);
+        // Add/Remove a variable as training.
+        const trainingButton = this.trainingButton(variable);
 
-          // update route with training data
-          const args = { explore: updatedExplore.join(",") };
-          const entry = overlayRouteEntry(this.$route, args);
-          this.$router.push(entry).catch((err) => console.warn(err));
-          viewActions.updateDataExplorerData(this.$store);
-        };
+        // Add/Remove a variable as target.
+        const targetButton = this.targetButton(variable);
 
-        // create a button
-        button.addEventListener("click", onClick);
-        return button;
+        // List of model creation buttons to be added.
+        const buttons = [targetButton, trainingButton].filter((b) => !!b);
+        const modelButtons = document.createElement("div");
+        modelButtons.className = "btn-group ml-auto";
+        modelButtons.append(...buttons);
+
+        // Container to display the buttons with flex.
+        const container = document.createElement("div");
+        container.className = "d-flex";
+        container.append(exploreButton, modelButtons);
+        return container;
       };
     },
 
@@ -138,6 +131,20 @@ export default Vue.extend({
 
       return currentSummaries;
     },
+
+    explore(): string[] {
+      return routeGetters.getExploreVariables(this.$store);
+    },
+
+    target(): string {
+      return routeGetters.getRouteTargetVariable(this.$store);
+    },
+
+    training(): string[] {
+      return (
+        routeGetters.getRouteTrainingVariables(this.$store)?.split(",") ?? []
+      );
+    },
   },
 
   watch: {
@@ -153,6 +160,100 @@ export default Vue.extend({
   methods: {
     onSearch(term): void {
       this.search = term;
+    },
+
+    displayButton(variable: string): HTMLElement {
+      const isInExplore = this.isExplore(variable);
+      const button = document.createElement("button");
+      button.className = "btn btn-sm";
+      button.className += isInExplore ? " btn-outline-primary" : " btn-primary";
+      button.textContent = isInExplore ? "Hide" : "Display";
+      button.addEventListener("click", () => this.updateExplore(variable));
+      return button;
+    },
+
+    trainingButton(variable: string): HTMLElement {
+      // To do not allow selection as training if the variable is the target.
+      if (this.isTarget(variable)) return;
+
+      const isTraining = this.isTraining(variable);
+
+      const button = document.createElement("button");
+      button.className = "btn btn-sm";
+      button.className += isTraining
+        ? " btn-outline-secondary"
+        : " btn-secondary";
+      button.textContent = isTraining ? "Remove Training" : "Select Training";
+      button.addEventListener("click", () => this.updateTraining(variable));
+      return button;
+    },
+
+    targetButton(variable: string): HTMLElement {
+      const isTarget = this.isTarget(variable);
+
+      // Only display the button if no target has been selected,
+      // or this variable is the target and needs to be unselected.
+      if (!isNil(this.target) && !isTarget) return;
+
+      const button = document.createElement("button");
+      button.className = "btn btn-sm";
+      button.className += isTarget
+        ? " btn-outline-secondary"
+        : " btn-secondary";
+      button.textContent = isTarget ? "Remove Target" : "Select Target";
+      button.addEventListener("click", () => this.updateTarget(variable));
+      return button;
+    },
+
+    updateRoute(args: RouteArgs) {
+      const entry = overlayRouteEntry(this.$route, args);
+      this.$router.push(entry).catch((err) => console.warn(err));
+    },
+
+    isTarget(variable: string): boolean {
+      return variable === this.target;
+    },
+
+    isTraining(variable: string): boolean {
+      return this.training?.includes(variable) ?? false;
+    },
+
+    isExplore(variable: string): boolean {
+      return this.explore.includes(variable);
+    },
+
+    updateTarget(variable: string): void {
+      const args = {} as RouteArgs;
+      // Is the variable the current target?
+      if (this.isTarget(variable)) {
+        // Remove the variable as target
+        args.target = "";
+      } else {
+        // Or select it as target, but remove it from training
+        args.target = variable;
+        args.training = this.training.filter((v) => v !== variable).join(",");
+      }
+      this.updateRoute(args);
+    },
+
+    updateTraining(variable: string): void {
+      const args = {} as RouteArgs;
+      if (this.isTraining(variable)) {
+        args.training = this.training.filter((v) => v !== variable).join(",");
+      } else {
+        args.training = this.training.concat([variable]).join(",");
+      }
+      this.updateRoute(args);
+    },
+
+    updateExplore(variable: string): void {
+      const args = {} as RouteArgs;
+      if (this.isExplore(variable)) {
+        args.explore = this.explore.filter((v) => v !== variable).join(",");
+      } else {
+        args.explore = this.explore.concat([variable]).join(",");
+      }
+      this.updateRoute(args);
     },
   },
 });
