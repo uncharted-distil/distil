@@ -187,6 +187,7 @@ export const mutations = {
       }
     }
   },
+
   reviewVariableType(state: DatasetState, update) {
     const index = _.findIndex(state.variables, (v) => {
       return v.key === update.field;
@@ -422,6 +423,7 @@ export const mutations = {
   clearAreaOfInterestExcludeOuter(state: DatasetState) {
     state.areaOfInterestExcludeOuter = null;
   },
+
   // sets the current selected data into the store
   setIncludedTableData(state: DatasetState, tableData: TableData) {
     // freezing the return to prevent slow, unnecessary deep reactivity.

@@ -3,6 +3,7 @@ package util
 /*
 #cgo CFLAGS: -I/usr/local/include
 #cgo linux LDFLAGS: -ltensorflow
+#cgo darwin LDFLAGS: -ltensorflow
 #cgo windows CFLAGS: -IC:/usr/local/include
 #cgo windows LDFLAGS: -ltensorflow -LC:/usr/local/lib
 #include <image-upscale/entry_functions.c>
